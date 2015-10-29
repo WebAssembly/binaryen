@@ -56,6 +56,8 @@ emcc src.cpp -o a.html --separate-asm
 
 That will emit `a.html`, `a.js`, and `a.asm.js`. That last file is the asm.js module, which you can pass into `asm2wasm`.
 
+ * Note: you can try `-O1` or higher, but you should probably use `--profiling` which keeps the code semi-readable (otherwise, you'll get minified names, etc., and that code path is untested).
+
 ## TODO
 
  * We should optimize the emitted WebAssembly, as you can see in the example above.
@@ -74,5 +76,5 @@ That will emit `a.html`, `a.js`, and `a.asm.js`. That last file is the asm.js mo
 
 Same as Emscripten: MIT license.
 
-For changes to `src/`, please make pulls into emscripten's `asm2wasm` branch (this code is sync'ed with there, for convenience).
+For changes to `src/`, please make pulls into emscripten's `asm2wasm` branch (in `tools/optimizer`; this code is sync'ed with there, for convenience).
 
