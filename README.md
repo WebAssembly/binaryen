@@ -18,10 +18,12 @@ Just run
 bin/asm2wasm [input.asm.js file]
 ```
 
-This will print out a WebAssembly module in s-expression format to the console. For example, try
+This will print out a WebAssembly module in s-expression format to the console.
+
+For example, try
 
 ```
-$ bin/asm2wasm tests/hello_world.asm.js
+$ bin/asm2wasm test/hello_world.asm.js
 ```
 
 On Linux and Mac you should see pretty colors. Set `COLORS=0` in the env to disable colors if you prefer that. Set `COLORS=1` in the env to force colors (useful when piping to `more`, for example).
