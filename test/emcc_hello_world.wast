@@ -1,7 +1,7 @@
 (module
-  (type $FUNCSIG$ii (param i32) (result i32))
-  (type $FUNCSIG$iiii (param i32 i32 i32) (result i32))
-  (type $FUNCSIG$vi (param i32))
+  (type $FUNCSIG$ii (func (param i32) (result i32)))
+  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
+  (type $FUNCSIG$vi (func (param i32)))
   (import $Math_clz32 "global" "clz32"  (param i32) (result i32))
   (import $___lock "env" "___lock"  (param i32))
   (import $___syscall140 "env" "___syscall140"  (param i32 i32) (result i32))
