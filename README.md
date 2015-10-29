@@ -7,7 +7,7 @@ This repository contains an asm.js-to-WebAssembly compiler, **asm2wasm**, built 
 ## Building asm2wasm
 
 ```
-$ build.sh
+$ ./build.sh
 ```
 
 ## Running
