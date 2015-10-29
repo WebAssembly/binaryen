@@ -26,6 +26,10 @@ For example, try
 $ bin/asm2wasm test/hello_world.asm.js
 ```
 
+You should see something like this:
+
+![example output](https://raw.github.com/WebAssembly/wasm-emscripten/master/media/example.png)
+
 On Linux and Mac you should see pretty colors. Set `COLORS=0` in the env to disable colors if you prefer that. Set `COLORS=1` in the env to force colors (useful when piping to `more`, for example).
 
 Set `ASM2WASM_DEBUG=1` in the env to see debug info, about asm.js nodes as they are parsed, etc.
