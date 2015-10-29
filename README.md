@@ -28,6 +28,16 @@ For example, try
 $ bin/asm2wasm test/hello_world.asm.js
 ```
 
+That input file contains
+
+```
+  function add(x, y) {
+    x = x | 0;
+    y = y | 0;
+    return x + y | 0;
+  }
+```
+
 You should see something like this:
 
 ![example output](https://raw.github.com/WebAssembly/wasm-emscripten/master/media/example.png)
