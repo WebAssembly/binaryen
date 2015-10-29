@@ -10,6 +10,8 @@ This repository contains an asm.js-to-WebAssembly compiler, **asm2wasm**, built 
 $ ./build.sh
 ```
 
+This requires a C++11 compiler.
+
 ## Running
 
 Just run
