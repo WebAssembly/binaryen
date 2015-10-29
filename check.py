@@ -11,6 +11,7 @@ for asm in sorted(os.listdir('test')):
     actual, err = subprocess.Popen([os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err == '', 'bad err:' + err
     if not os.path.exists(os.path.join('test', wasm)):
+      print actual
       raise Exception('output .wast file does not exist')
     expected = open(os.path.join('test', wasm)).read()
     if actual != expected:
