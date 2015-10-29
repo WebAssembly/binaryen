@@ -1,15 +1,34 @@
 #!/usr/bin/env python
 
-import os, subprocess, difflib
+import os, sys, subprocess, difflib
+
+interpreter = None
+tests = []
+
+for arg in sys.argv[1:]:
+  if arg.startswith('--interpreter='):
+    interpreter = arg.split('=')[1]
+    print '[ using wasm interpreter at "%s" ]' % interpreter
+    assert os.path.exists(interpreter), 'interpreter not found'
+  else:
+    tests.append(arg)
+
+if not interpreter:
+  print '[ no wasm interpreter provided, you should pass one as --interpreter=path/to/interpreter ]'
 
 print '[ checking testcases... ]\n'
 
-for asm in sorted(os.listdir('test')):
+if len(tests) == 0:
+  tests = sorted(os.listdir('test'))
+
+for asm in tests:
   if asm.endswith('.asm.js'):
     print '  ', asm, ' ',
     wasm = asm.replace('.asm.js', '.wast')
     actual, err = subprocess.Popen([os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err == '', 'bad err:' + err
+    # verify in wasm
+    # verify output
     if not os.path.exists(os.path.join('test', wasm)):
       print actual
       raise Exception('output .wast file does not exist')
@@ -22,3 +41,4 @@ for asm in sorted(os.listdir('test')):
     print 'OK'
 
 print '\n[ success! ]'
+

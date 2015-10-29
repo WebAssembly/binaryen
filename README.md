@@ -73,6 +73,15 @@ That will emit `a.html`, `a.js`, and `a.asm.js`. That last file is the asm.js mo
 
 (or `python check.py`) will run `asm2wasm` on the testcases in `test/`, and verify their outputs.
 
+The `check.py` script supports some options:
+
+```
+./check.py [--interpreter=/path/to/interpreter] [TEST1] [TEST2]..
+```
+
+ * If an interpreter is provided, we run the output through it, checking for parse errors.
+ * If tests are provided, we run exactly those. If none are provided, we run them all.
+
 ## License & Contributing
 
 Same as Emscripten: MIT license.
