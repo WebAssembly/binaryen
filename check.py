@@ -2,7 +2,7 @@
 
 import os, subprocess, difflib
 
-print 'checking testcases...\n'
+print '[ checking testcases... ]\n'
 
 for asm in os.listdir('test'):
   if asm.endswith('.asm.js'):
@@ -20,4 +20,4 @@ for asm in os.listdir('test'):
       ))
     print 'OK'
 
-print '\nsuccess!'
+print '\n[ success! ]'
