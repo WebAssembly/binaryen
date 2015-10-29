@@ -4,7 +4,7 @@ import os, subprocess, difflib
 
 print '[ checking testcases... ]\n'
 
-for asm in os.listdir('test'):
+for asm in sorted(os.listdir('test')):
   if asm.endswith('.asm.js'):
     print '  ', asm, ' ',
     wasm = asm.replace('.asm.js', '.wast')
