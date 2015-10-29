@@ -30,7 +30,7 @@ $ bin/asm2wasm test/hello_world.asm.js
 
 That input file contains
 
-```
+```javascript
   function add(x, y) {
     x = x | 0;
     y = y | 0;
