@@ -34,8 +34,7 @@ for asm in tests:
       raise Exception('output .wast file does not exist')
     expected = open(os.path.join('test', wasm)).read()
     if actual != expected:
-      raise Exception("Expected to have '%s' == '%s', diff:\n\n%s" % (
-        expected, actual,
+      raise Exception("incorrect output, diff:\n\n%s" % (
         ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])
       ))
 
