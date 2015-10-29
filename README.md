@@ -60,6 +60,7 @@ That will emit `a.html`, `a.js`, and `a.asm.js`. That last file is the asm.js mo
 
 ## TODO
 
+ * Start running the output through WebAssembly interpreters. Right now it is likely wrong in many ways.
  * We should optimize the emitted WebAssembly, as you can see in the example above.
  * WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. You can do that with `emcc -s GLOBAL_BASE=1000`. We still need to write the code to copy the globals there.
  * Emscripten emits asm.js and JavaScript, that work together using web APIs to do things like print, render, etc. Need to figure out how to test that.
