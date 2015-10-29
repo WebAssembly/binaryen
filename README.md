@@ -39,6 +39,14 @@ Limitations:
  * WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. You can do that with `emcc -s GLOBAL_BASE=1000`. We still need to write the code to copy the globals there.
  * Emscripten emits asm.js and JavaScript, that work together using web APIs to do things like print, render, etc. Not sure if there is a way to test that full output yet.
 
+## Testing
+
+```
+./check.py
+```
+
+(or `python check.py`) will run `asm2wasm` on the testcases in `test/`, and verify their outputs.
+
 ## License & Contributing
 
 Same as Emscripten: MIT license. This code is sync'ed with Emscripten's repo.
