@@ -23,11 +23,11 @@ if len(tests) == 0:
 
 for asm in tests:
   if asm.endswith('.asm.js'):
-    print '  ', asm, ' ',
+    print '..', asm
     wasm = asm.replace('.asm.js', '.wast')
     actual, err = subprocess.Popen([os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err == '', 'bad err:' + err
-    # verify in wasm
+
     # verify output
     if not os.path.exists(os.path.join('test', wasm)):
       print actual
@@ -38,7 +38,26 @@ for asm in tests:
         expected, actual,
         ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])
       ))
-    print 'OK'
+
+    # verify in wasm
+    proc = subprocess.Popen([interpreter, os.path.join('test', wasm)], stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    if proc.returncode != 0:
+      try: # to parse the error
+        reported = err.split(':')[1]
+        start, end = reported.split('-')
+        start_line, start_col = map(int, start.split('.'))
+        lines = expected.split('\n')
+        print
+        print '='*80
+        print lines[start_line-1]
+        print (' '*(start_col-1)) + '^'
+        print (' '*(start_col-1)) + '|'
+        print '='*80
+        print err
+      except Exception, e:
+        raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
+      raise Exception('wasm interpreter error')
 
 print '\n[ success! ]'
 
