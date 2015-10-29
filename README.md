@@ -32,12 +32,18 @@ Set `ASM2WASM_DEBUG=1` in the env to see debug info, about asm.js nodes as they 
 
 ## Starting from C/C++ Source
 
-[Grab Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html), and build
+[Grab Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html), and build the source file into asm.js, for example using
 
-Limitations:
+```
+emcc src.cpp -o a.html --separate-asm
+```
+
+That will emit `a.html`, `a.js`, and `a.asm.js`. That last file is the asm.js module, which you can pass into `asm2wasm`.
+
+## TODO
 
  * WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. You can do that with `emcc -s GLOBAL_BASE=1000`. We still need to write the code to copy the globals there.
- * Emscripten emits asm.js and JavaScript, that work together using web APIs to do things like print, render, etc. Not sure if there is a way to test that full output yet.
+ * Emscripten emits asm.js and JavaScript, that work together using web APIs to do things like print, render, etc. Need to figure out how to test that.
 
 ## Testing
 
@@ -49,5 +55,7 @@ Limitations:
 
 ## License & Contributing
 
-Same as Emscripten: MIT license. This code is sync'ed with Emscripten's repo.
+Same as Emscripten: MIT license.
+
+For changes to `src/`, please make pulls into emscripten's `asm2wasm` branch (this code is sync'ed with there, for convenience).
 
