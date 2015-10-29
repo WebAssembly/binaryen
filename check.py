@@ -39,24 +39,25 @@ for asm in tests:
       ))
 
     # verify in wasm
-    proc = subprocess.Popen([interpreter, os.path.join('test', wasm)], stderr=subprocess.PIPE)
-    out, err = proc.communicate()
-    if proc.returncode != 0:
-      try: # to parse the error
-        reported = err.split(':')[1]
-        start, end = reported.split('-')
-        start_line, start_col = map(int, start.split('.'))
-        lines = expected.split('\n')
-        print
-        print '='*80
-        print lines[start_line-1]
-        print (' '*(start_col-1)) + '^'
-        print (' '*(start_col-1)) + '|'
-        print '='*80
-        print err
-      except Exception, e:
-        raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
-      raise Exception('wasm interpreter error')
+    if interpreter:
+      proc = subprocess.Popen([interpreter, os.path.join('test', wasm)], stderr=subprocess.PIPE)
+      out, err = proc.communicate()
+      if proc.returncode != 0:
+        try: # to parse the error
+          reported = err.split(':')[1]
+          start, end = reported.split('-')
+          start_line, start_col = map(int, start.split('.'))
+          lines = expected.split('\n')
+          print
+          print '='*80
+          print lines[start_line-1]
+          print (' '*(start_col-1)) + '^'
+          print (' '*(start_col-1)) + '|'
+          print '='*80
+          print err
+        except Exception, e:
+          raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
+        raise Exception('wasm interpreter error')
 
 print '\n[ success! ]'
 
