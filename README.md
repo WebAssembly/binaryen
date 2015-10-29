@@ -1,4 +1,4 @@
-# emscripten-wasm
+# wasm-emscripten
 
 This repository contains tools to compile C/C++ to WebAssembly s-expressions, using [Emscripten](http://emscripten.org/), by translating Emscripten's asm.js output into WebAssembly.
 
