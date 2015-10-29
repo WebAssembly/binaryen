@@ -16,7 +16,7 @@ for asm in os.listdir('test'):
     if actual != expected:
       raise Exception("Expected to have '%s' == '%s', diff:\n\n%s" % (
         expected, actual,
-        limit_size(''.join([a.rstrip()+'\n' for a in difflib.unified_diff(x.split('\n'), y.split('\n'), fromfile='expected', tofile='actual')]))
+        ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])
       ))
     print 'OK'
 
