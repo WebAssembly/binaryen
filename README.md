@@ -2,7 +2,7 @@
 
 This repository contains tools to compile C/C++ to WebAssembly s-expressions, using [Emscripten](http://emscripten.org/), by translating Emscripten's asm.js output into WebAssembly.
 
-This repository contains an asm.js-to-WebAssembly compiler, **asm2wasm**, built on Emscripten's asm optimizer infrastructure. That can directly compile asm.js to WebAssembly. You can use Emscripten to build C++ into asm.js, and together the two tools let you compile C/C++ to WebAssembly.
+More specifically, this repository contains an asm.js-to-WebAssembly compiler, **asm2wasm**, built on Emscripten's asm optimizer infrastructure. That can directly compile asm.js to WebAssembly. You can use Emscripten to build C++ into asm.js, and together the two tools let you compile C/C++ to WebAssembly.
 
 ## Building asm2wasm
 
