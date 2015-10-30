@@ -424,8 +424,7 @@
           (i32.const 2047)
         )
       )
-      (block $SWITCH_PLACEHOLDER
-      )
+      (nop)
       (break $topmost
         (convert sint32toDouble
           (get_local $$retval$0)
@@ -6049,8 +6048,7 @@
           )
           (loop $label$break$L9 $label$continue$L9
             (block
-              (block $SWITCH_PLACEHOLDER
-              )
+              (nop)
               (set_local $$incdec$ptr
                 (i32.add
                   (get_local $$incdec$ptr169274)
@@ -7911,8 +7909,7 @@
             )
           )
           (block $label$break$L75
-            (block $SWITCH_PLACEHOLDER
-            )
+            (nop)
           )
           (block $label$break$L308
             (if
@@ -9442,8 +9439,7 @@
             (i32.const 0)
           )
           (block $do-once$0
-            (block $SWITCH_PLACEHOLDER
-            )
+            (nop)
           )
         )
       )
