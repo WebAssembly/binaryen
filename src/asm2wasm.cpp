@@ -624,6 +624,12 @@ void Asm2WasmModule::processAsm(Ref ast) {
 }
 
 Function* Asm2WasmModule::processFunction(Ref ast) {
+  if (debug) {
+    std::cout << "func: ";
+    ast->stringify(std::cout);
+    std::cout << '\n';
+  }
+
   auto function = allocator.alloc<Function>();
   function->name = ast[1]->getIString();
   Ref params = ast[2];
@@ -684,9 +690,9 @@ Function* Asm2WasmModule::processFunction(Ref ast) {
   std::function<Expression* (Ref)> process = [&](Ref ast) -> Expression* {
     AstStackHelper astStackHelper(ast); // TODO: only create one when we need it?
     if (debug) {
-      std::cerr << "at: ";
-      ast->stringify(std::cerr);
-      std::cerr << '\n';
+      std::cout << "at: ";
+      ast->stringify(std::cout);
+      std::cout << '\n';
     }
     IString what = ast[0]->getIString();
     if (what == STAT) {
@@ -824,7 +830,7 @@ Function* Asm2WasmModule::processFunction(Ref ast) {
           ret->type = BasicType::f64;
           return ret;
         }
-        assert(childType == ASM_NONE); // e.g. a coercion on a call
+        assert(childType == ASM_NONE || childType == ASM_DOUBLE); // e.g. a coercion on a call or for a return
         auto ret = process(ast[2]); // just look through the +() coercion
         ret->type = BasicType::f64; // we add it here for e.g. call coercions
         return ret;
@@ -1203,7 +1209,7 @@ int main(int argc, char **argv) {
   }
 
   if (debug) std::cerr << "parsing...\n";
-  cashew::Parser<Ref, ValueBuilder> builder;
+  cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(input);
 
   if (debug) std::cerr << "wasming...\n";
