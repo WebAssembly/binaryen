@@ -26494,14 +26494,14 @@
               )
             )
             (set_local $$49
-              (unary clz
+              (i32.clz
                 (get_local $$d_sroa_1_4_extract_trunc)
               )
             )
             (set_local $$51
               (i32.sub
                 (get_local $$49)
-                (unary clz
+                (i32.clz
                   (get_local $$n_sroa_1_4_extract_trunc)
                 )
               )
@@ -26637,14 +26637,14 @@
               )
               (block
                 (set_local $$117
-                  (unary clz
+                  (i32.clz
                     (get_local $$d_sroa_1_4_extract_trunc)
                   )
                 )
                 (set_local $$119
                   (i32.sub
                     (get_local $$117)
-                    (unary clz
+                    (i32.clz
                       (get_local $$n_sroa_1_4_extract_trunc)
                     )
                   )
@@ -26805,7 +26805,7 @@
               (block
                 (set_local $$86
                   (i32.add
-                    (unary clz
+                    (i32.clz
                       (get_local $$d_sroa_0_0_extract_trunc)
                     )
                     (i32.const 33)
@@ -26814,7 +26814,7 @@
                 (set_local $$88
                   (i32.sub
                     (get_local $$86)
-                    (unary clz
+                    (i32.clz
                       (get_local $$n_sroa_1_4_extract_trunc)
                     )
                   )
