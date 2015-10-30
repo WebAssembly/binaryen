@@ -25579,7 +25579,7 @@
             (get_local $$a$1)
             (i32.const 31)
           )
-          (none.shl
+          (i32.shl
             (if
               (i32.lt_s
                 (get_local $$a$1)
@@ -25593,8 +25593,8 @@
         )
       )
       (set_local $$1$1
-        (none.or
-          (none.shr_s
+        (i32.or
+          (i32.shr_s
             (if
               (i32.lt_s
                 (get_local $$a$1)
@@ -25605,7 +25605,7 @@
             )
             (i32.const 31)
           )
-          (none.shl
+          (i32.shl
             (if
               (i32.lt_s
                 (get_local $$a$1)
@@ -25624,7 +25624,7 @@
             (get_local $$b$1)
             (i32.const 31)
           )
-          (none.shl
+          (i32.shl
             (if
               (i32.lt_s
                 (get_local $$b$1)
@@ -25638,8 +25638,8 @@
         )
       )
       (set_local $$2$1
-        (none.or
-          (none.shr_s
+        (i32.or
+          (i32.shr_s
             (if
               (i32.lt_s
                 (get_local $$b$1)
@@ -25650,7 +25650,7 @@
             )
             (i32.const 31)
           )
-          (none.shl
+          (i32.shl
             (if
               (i32.lt_s
                 (get_local $$b$1)
@@ -25776,7 +25776,7 @@
             (get_local $$a$1)
             (i32.const 31)
           )
-          (none.shl
+          (i32.shl
             (if
               (i32.lt_s
                 (get_local $$a$1)
@@ -25790,8 +25790,8 @@
         )
       )
       (set_local $$1$1
-        (none.or
-          (none.shr_s
+        (i32.or
+          (i32.shr_s
             (if
               (i32.lt_s
                 (get_local $$a$1)
@@ -25802,7 +25802,7 @@
             )
             (i32.const 31)
           )
-          (none.shl
+          (i32.shl
             (if
               (i32.lt_s
                 (get_local $$a$1)
@@ -25821,7 +25821,7 @@
             (get_local $$b$1)
             (i32.const 31)
           )
-          (none.shl
+          (i32.shl
             (if
               (i32.lt_s
                 (get_local $$b$1)
@@ -25835,8 +25835,8 @@
         )
       )
       (set_local $$2$1
-        (none.or
-          (none.shr_s
+        (i32.or
+          (i32.shr_s
             (if
               (i32.lt_s
                 (get_local $$b$1)
@@ -25847,7 +25847,7 @@
             )
             (i32.const 31)
           )
-          (none.shl
+          (i32.shl
             (if
               (i32.lt_s
                 (get_local $$b$1)
@@ -27198,7 +27198,7 @@
                     (get_local $$150$1)
                     (i32.const 31)
                   )
-                  (none.shl
+                  (i32.shl
                     (if
                       (i32.lt_s
                         (get_local $$150$1)
@@ -27225,9 +27225,9 @@
                     (get_local $$151$0)
                     (get_local $$d_sroa_0_0_insert_insert99$0)
                   )
-                  (none.and
-                    (none.or
-                      (none.shr_s
+                  (i32.and
+                    (i32.or
+                      (i32.shr_s
                         (if
                           (i32.lt_s
                             (get_local $$150$1)
@@ -27238,7 +27238,7 @@
                         )
                         (i32.const 31)
                       )
-                      (none.shl
+                      (i32.shl
                         (if
                           (i32.lt_s
                             (get_local $$150$1)
