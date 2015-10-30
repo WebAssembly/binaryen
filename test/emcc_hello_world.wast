@@ -426,7 +426,7 @@
       )
       (nop)
       (break $topmost
-        (convert sint32toDouble
+        (f64.convert_s/i32
           (get_local $$retval$0)
         )
       )
@@ -449,7 +449,7 @@
         )
       )
       (break $topmost
-        (convert sint32toDouble
+        (f64.convert_s/i32
           (get_local $$call)
         )
       )
