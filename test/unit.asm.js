@@ -15,6 +15,12 @@ function () {
     var temp = 0.0;
     temp = t + u + (-u) + (-t);
   }
+  function doubleCompares(x, y) {
+    x = +x;
+    y = +y;
+    if (x < y) return +x;
+    return +y;
+  }
 
   function z() {
   }

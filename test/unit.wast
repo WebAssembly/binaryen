@@ -51,6 +51,22 @@
       )
     )
   )
+  (func $doubleCompares (param $x f64) (param $y f64) (result f64)
+    (block $topmost
+      (if
+        (f64.lt
+          (get_local $x)
+          (get_local $y)
+        )
+        (break $topmost
+          (get_local $x)
+        )
+      )
+      (break $topmost
+        (get_local $y)
+      )
+    )
+  )
   (func $z
     (nop)
   )
