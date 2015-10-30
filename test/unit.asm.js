@@ -8,6 +8,8 @@ function () {
     temp = +-2147483648;
     temp = -2147483648.0;
     temp = -21474836480.0;
+    temp = 0.039625;
+    temp = -0.039625;
   }
   function importedDoubles() {
     var temp = 0.0;
