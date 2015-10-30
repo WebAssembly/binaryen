@@ -12,6 +12,8 @@ $ ./build.sh
 
 This requires a C++11 compiler.
 
+Note: the default is a debug build.
+
 ## Running
 
 Just run
