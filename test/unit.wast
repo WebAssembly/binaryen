@@ -5,7 +5,9 @@
     (local $temp f64)
     (block
       (set_local $temp
-        (i32.const -2147483648)
+        (f64.convert_s/i32
+          (i32.const -2147483648)
+        )
       )
       (set_local $temp
         (f64.const -2147483648)
@@ -16,4 +18,3 @@
     )
   )
 )
-
