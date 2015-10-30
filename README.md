@@ -82,6 +82,11 @@ The `check.py` script supports some options:
  * If an interpreter is provided, we run the output through it, checking for parse errors.
  * If tests are provided, we run exactly those. If none are provided, we run them all.
 
+## FAQ
+
+ * How does this relate to the new WebAssembly backend which is being developed in upstream LLVM?
+  * This is separate from that. This project focuses on compiling asm.js to WebAssembly, as emitted by Emscripten's asm.js backend. This is useful because while in the long term Emscripten hopes to use the new WebAssembly backend, the `asm2wasm` route is a very quick and easy way to generate WebAssembly output. It will also be useful for benchmarking the new backend as it progresses.
+
 ## License & Contributing
 
 Same as Emscripten: MIT license.
