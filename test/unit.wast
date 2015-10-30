@@ -17,4 +17,31 @@
       )
     )
   )
+  (func $importedDoubles
+    (local $temp f64)
+    (set_local $temp
+      (f64.add
+        (f64.add
+          (f64.add
+            (f64.load align=8
+              (i32.const 8)
+            )
+            (f64.load align=8
+              (i32.const 16)
+            )
+          )
+          (f64.neg
+            (f64.load align=8
+              (i32.const 16)
+            )
+          )
+        )
+        (f64.neg
+          (f64.load align=8
+            (i32.const 8)
+          )
+        )
+      )
+    )
+  )
 )
