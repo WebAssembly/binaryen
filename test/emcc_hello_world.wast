@@ -24758,8 +24758,7 @@
     )
   )
   (func $runPostSets
-    (block
-    )
+    (nop)
   )
   (func $_i64Subtract (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
     (local $l i32)
