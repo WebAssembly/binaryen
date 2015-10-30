@@ -424,9 +424,7 @@
           (i32.const 2047)
         )
       )
-      (switch $switch$0
-        (get_local $$conv)
-TODO: cases/default
+      (block $SWITCH_PLACEHOLDER
       )
       (break $topmost
         (convert sint32toDouble
@@ -6051,15 +6049,7 @@ TODO: cases/default
           )
           (loop $label$break$L9 $label$continue$L9
             (block
-              (switch $switch$1
-                (i32.shr_s
-                  (i32.shl
-                    (get_local $$1)
-                    (i32.const 24)
-                  )
-                  (i32.const 24)
-                )
-TODO: cases/default
+              (block $SWITCH_PLACEHOLDER
               )
               (set_local $$incdec$ptr
                 (i32.add
@@ -6086,7 +6076,7 @@ TODO: cases/default
                 (get_local $label)
                 (i32.const 9)
               )
-              (loop $while-out$2 $while-in$3
+              (loop $while-out$1 $while-in$2
                 (block
                   (set_local $label
                     (i32.const 0)
@@ -6179,7 +6169,7 @@ TODO: cases/default
                       (set_local $$z$0$lcssa
                         (get_local $$incdec$ptr23)
                       )
-                      (break $while-out$2
+                      (break $while-out$1
                       )
                     )
                   )
@@ -6418,7 +6408,7 @@ TODO: cases/default
                 (set_local $$storemerge$186309
                   (get_local $$storemerge)
                 )
-                (loop $while-out$4 $while-in$5
+                (loop $while-out$3 $while-in$4
                   (block
                     (set_local $$sub54
                       (i32.add
@@ -6545,7 +6535,7 @@ TODO: cases/default
                         (set_local $$storemerge$186282
                           (get_local $$incdec$ptr62)
                         )
-                        (break $while-out$4
+                        (break $while-out$3
                         )
                       )
                     )
@@ -6577,7 +6567,7 @@ TODO: cases/default
               (i32.const 42)
             )
           )
-          (block $do-once$6
+          (block $do-once$5
             (if
               (get_local $$cmp65)
               (block
@@ -6783,7 +6773,7 @@ TODO: cases/default
                         (set_local $$w$1
                           (i32.const 0)
                         )
-                        (break $do-once$6
+                        (break $do-once$5
                         )
                       )
                     )
@@ -6959,7 +6949,7 @@ TODO: cases/default
                     (set_local $$isdigittmp8$i
                       (get_local $$isdigittmp$5$i)
                     )
-                    (loop $while-out$7 $while-in$8
+                    (loop $while-out$6 $while-in$7
                       (block
                         (set_local $$mul$i
                           (i32.mul
@@ -7028,7 +7018,7 @@ TODO: cases/default
                             (set_local $$incdec$ptr$i$lcssa
                               (get_local $$incdec$ptr$i)
                             )
-                            (break $while-out$7
+                            (break $while-out$6
                             )
                           )
                         )
@@ -7181,7 +7171,7 @@ TODO: cases/default
                         )
                       )
                     )
-                    (loop $while-out$9 $while-in$10
+                    (loop $while-out$8 $while-in$9
                       (block
                         (set_local $$mul$i$202
                           (i32.mul
@@ -7536,7 +7526,7 @@ TODO: cases/default
           (set_local $$st$0
             (i32.const 0)
           )
-          (loop $while-out$11 $while-in$12
+          (loop $while-out$10 $while-in$11
             (block
               (set_local $$51
                 (i32.load8_s align=1
@@ -7647,7 +7637,7 @@ TODO: cases/default
                   (set_local $$st$0$lcssa415
                     (get_local $$st$0)
                   )
-                  (break $while-out$11
+                  (break $while-out$10
                   )
                 )
               )
@@ -7693,7 +7683,7 @@ TODO: cases/default
               (i32.const -1)
             )
           )
-          (block $do-once$13
+          (block $do-once$12
             (if
               (get_local $$cmp181)
               (if
@@ -7786,7 +7776,7 @@ TODO: cases/default
                     (set_local $label
                       (i32.const 52)
                     )
-                    (break $do-once$13
+                    (break $do-once$12
                     )
                   )
                 )
@@ -7921,9 +7911,7 @@ TODO: cases/default
             )
           )
           (block $label$break$L75
-            (switch $switch$14
-              (get_local $$t$0)
-TODO: cases/default
+            (block $SWITCH_PLACEHOLDER
             )
           )
           (block $label$break$L308
@@ -8017,7 +8005,7 @@ TODO: cases/default
                     (set_local $$s$addr$06$i
                       (get_local $$add$ptr205)
                     )
-                    (loop $while-out$74 $while-in$75
+                    (loop $while-out$13 $while-in$14
                       (block
                         (set_local $$idxprom$i
                           (i32.and
@@ -8100,7 +8088,7 @@ TODO: cases/default
                             (set_local $$incdec$ptr$i$212$lcssa
                               (get_local $$incdec$ptr$i$212)
                             )
-                            (break $while-out$74
+                            (break $while-out$13
                             )
                           )
                           (block
@@ -8367,7 +8355,7 @@ TODO: cases/default
                       (set_local $$ws$0317
                         (get_local $$176)
                       )
-                      (loop $while-out$76 $while-in$77
+                      (loop $while-out$15 $while-in$16
                         (block
                           (set_local $$177
                             (i32.load align=4
@@ -8389,7 +8377,7 @@ TODO: cases/default
                               (set_local $$l$2
                                 (get_local $$l$1315)
                               )
-                              (break $while-out$76
+                              (break $while-out$15
                               )
                             )
                           )
@@ -8438,7 +8426,7 @@ TODO: cases/default
                               (set_local $$l$2
                                 (get_local $$call384)
                               )
-                              (break $while-out$76
+                              (break $while-out$15
                               )
                             )
                           )
@@ -8486,7 +8474,7 @@ TODO: cases/default
                               (set_local $$l$2
                                 (get_local $$call384)
                               )
-                              (break $while-out$76
+                              (break $while-out$15
                               )
                             )
                           )
@@ -8543,7 +8531,7 @@ TODO: cases/default
                           (set_local $$ws$1326
                             (get_local $$178)
                           )
-                          (loop $while-out$78 $while-in$79
+                          (loop $while-out$17 $while-in$18
                             (block
                               (set_local $$179
                                 (i32.load align=4
@@ -8660,7 +8648,7 @@ TODO: cases/default
                                   (set_local $label
                                     (i32.const 98)
                                   )
-                                  (break $while-out$78
+                                  (break $while-out$17
                                   )
                                 )
                               )
@@ -9072,7 +9060,7 @@ TODO: cases/default
                     (set_local $$i$2299
                       (i32.const 1)
                     )
-                    (loop $while-out$80 $while-in$81
+                    (loop $while-out$19 $while-in$20
                       (block
                         (set_local $$arrayidx469
                           (i32.add
@@ -9100,7 +9088,7 @@ TODO: cases/default
                             (set_local $$i$2299$lcssa
                               (get_local $$i$2299)
                             )
-                            (break $while-out$80
+                            (break $while-out$19
                             )
                           )
                         )
@@ -9157,7 +9145,7 @@ TODO: cases/default
                         (set_local $$i$3296
                           (get_local $$i$2299$lcssa)
                         )
-                        (loop $while-out$82 $while-in$83
+                        (loop $while-out$21 $while-in$22
                           (block
                             (set_local $$arrayidx481
                               (i32.add
@@ -9213,7 +9201,7 @@ TODO: cases/default
                                 (set_local $$retval$0
                                   (i32.const 1)
                                 )
-                                (break $while-out$82
+                                (break $while-out$21
                                 )
                               )
                             )
@@ -9454,9 +9442,7 @@ TODO: cases/default
             (i32.const 0)
           )
           (block $do-once$0
-            (switch $switch$1
-              (get_local $$type)
-TODO: cases/default
+            (block $SWITCH_PLACEHOLDER
             )
           )
         )
