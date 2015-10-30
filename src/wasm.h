@@ -52,14 +52,15 @@ std::ostream &doIndent(std::ostream &o, unsigned indent) {
   }
   return o;
 }
-void incIndent(std::ostream &o, unsigned& indent) {
+std::ostream &incIndent(std::ostream &o, unsigned& indent) {
   o << '\n';
-  indent++;    
+  indent++;
+  return o; 
 }
-void decIndent(std::ostream &o, unsigned& indent) {
+std::ostream &decIndent(std::ostream &o, unsigned& indent) {
   indent--;
   doIndent(o, indent);
-  o << ')';
+  return o << ')';
 }
 
 // Basics
@@ -69,16 +70,15 @@ struct Name : public cashew::IString {
   Name(const char *str) : cashew::IString(str) {}
   Name(cashew::IString str) : cashew::IString(str) {}
 
-  std::ostream& print(std::ostream &o) {
-    assert(str);
-    o << '$' << str; // reference interpreter requires we prefix all names
-    return o;
+  friend std::ostream& operator<<(std::ostream &o, Name name) {
+    assert(name.str);
+    return o << '$' << name.str; // reference interpreter requires we prefix all names
   }
 };
 
 // Types
 
-enum BasicType {
+enum WasmType {
   none,
   i32,
   i64,
@@ -86,28 +86,27 @@ enum BasicType {
   f64
 };
 
-std::ostream& printBasicType(std::ostream &o, BasicType type) {
+const char* printWasmType(WasmType type) {
   switch (type) {
-    case BasicType::none: o << "none"; break;
-    case BasicType::i32: o << "i32"; break;
-    case BasicType::i64: o << "i64"; break;
-    case BasicType::f32: o << "f32"; break;
-    case BasicType::f64: o << "f64"; break;
-  }
-  return o;
-}
-
-unsigned getBasicTypeSize(BasicType type) {
-  switch (type) {
-    case BasicType::none: abort();
-    case BasicType::i32: return 4;
-    case BasicType::i64: return 8;
-    case BasicType::f32: return 4;
-    case BasicType::f64: return 8;
+    case WasmType::none: return "none";
+    case WasmType::i32: return "i32";
+    case WasmType::i64: return "i64";
+    case WasmType::f32: return "f32";
+    case WasmType::f64: return "f64";
   }
 }
 
-bool isFloat(BasicType type) {
+unsigned getWasmTypeSize(WasmType type) {
+  switch (type) {
+    case WasmType::none: abort();
+    case WasmType::i32: return 4;
+    case WasmType::i64: return 8;
+    case WasmType::f32: return 4;
+    case WasmType::f64: return 8;
+  }
+}
+
+bool isFloat(WasmType type) {
   switch (type) {
     case f32:
     case f64: return true;
@@ -115,29 +114,33 @@ bool isFloat(BasicType type) {
   return false;
 }
 
-BasicType getBasicType(unsigned size, bool float_) {
-  if (size < 4) return BasicType::i32;
-  if (size == 4) return float_ ? BasicType::f32 : BasicType::i32;
-  if (size == 8) return float_ ? BasicType::f64 : BasicType::i64;
+WasmType getWasmType(unsigned size, bool float_) {
+  if (size < 4) return WasmType::i32;
+  if (size == 4) return float_ ? WasmType::f32 : WasmType::i32;
+  if (size == 8) return float_ ? WasmType::f64 : WasmType::i64;
   abort();
 }
 
-void prepareMajorColor(std::ostream &o) {
+std::ostream &prepareMajorColor(std::ostream &o) {
   Colors::red(o);
   Colors::bold(o);
+  return o;
 }
 
-void prepareColor(std::ostream &o) {
+std::ostream &prepareColor(std::ostream &o) {
   Colors::magenta(o);
   Colors::bold(o);
+  return o;
 }
 
-void prepareMinorColor(std::ostream &o) {
+std::ostream &prepareMinorColor(std::ostream &o) {
   Colors::orange(o);
+  return o;
 }
 
-void restoreNormalColor(std::ostream &o) {
+std::ostream &restoreNormalColor(std::ostream &o) {
   Colors::normal(o);
+  return o;
 }
 
 std::ostream& printText(std::ostream &o, const char *str) {
@@ -145,12 +148,11 @@ std::ostream& printText(std::ostream &o, const char *str) {
   Colors::green(o);
   o << str;
   Colors::normal(o);
-  o << '"';
-  return o;
+  return o << '"';
 }
 
 struct Literal {
-  BasicType type;
+  WasmType type;
   union {
     int32_t i32;
     int64_t i64;
@@ -158,26 +160,24 @@ struct Literal {
     double f64;
   };
 
-  Literal() : type(BasicType::none) {}
-  Literal(int32_t init) : type(BasicType::i32), i32(init) {}
-  Literal(int64_t init) : type(BasicType::i64), i64(init) {}
-  Literal(float   init) : type(BasicType::f32), f32(init) {}
-  Literal(double  init) : type(BasicType::f64), f64(init) {}
+  Literal() : type(WasmType::none) {}
+  Literal(int32_t init) : type(WasmType::i32), i32(init) {}
+  Literal(int64_t init) : type(WasmType::i64), i64(init) {}
+  Literal(float   init) : type(WasmType::f32), f32(init) {}
+  Literal(double  init) : type(WasmType::f64), f64(init) {}
 
-  std::ostream& print(std::ostream &o) {
+  friend std::ostream& operator<<(std::ostream &o, Literal literal) {
     o << '(';
-    prepareMinorColor(o);
-    printBasicType(o, type) << ".const ";
-    switch (type) {
+    prepareMinorColor(o) << printWasmType(literal.type) << ".const ";
+    switch (literal.type) {
       case none: abort();
-      case BasicType::i32: o << i32; break;
-      case BasicType::i64: o << i64; break;
-      case BasicType::f32: o << JSPrinter::numToString(f32); break;
-      case BasicType::f64: o << JSPrinter::numToString(f64); break;
+      case WasmType::i32: o << literal.i32; break;
+      case WasmType::i64: o << literal.i64; break;
+      case WasmType::f32: o << JSPrinter::numToString(literal.f32); break;
+      case WasmType::f64: o << JSPrinter::numToString(literal.f64); break;
     }
     restoreNormalColor(o);
-    o << ')';
-    return o;
+    return o << ')';
   }
 };
 
@@ -213,7 +213,7 @@ enum HostOp {
 
 class Expression {
 public:
-  BasicType type;
+  WasmType type;
 
   Expression() : type(type) {}
 
@@ -251,28 +251,25 @@ typedef std::vector<Expression*> ExpressionList; // TODO: optimize
 
 class Nop : public Expression {
   std::ostream& print(std::ostream &o, unsigned indent) override {
-    printMinorOpening(o, "nop") << ')';
-    return o;
+    return printMinorOpening(o, "nop") << ')';
   }
 };
 
 class Block : public Expression {
 public:
-  Name var;
+  Name name;
   ExpressionList list;
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
     printOpening(o, "block");
-    if (var.is()) {
-      o << " ";
-      var.print(o);
+    if (name.is()) {
+      o << ' ' << name;
     }
     incIndent(o, indent);
     for (auto expression : list) {
       printFullLine(o, indent, expression);
     }
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -286,8 +283,7 @@ public:
     printFullLine(o, indent, condition);
     printFullLine(o, indent, ifTrue);
     if (ifFalse) printFullLine(o, indent, ifFalse);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -299,38 +295,33 @@ public:
   std::ostream& print(std::ostream &o, unsigned indent) override {
     printOpening(o, "loop");
     if (out.is()) {
-      o << " ";
-      out.print(o);
+      o << ' ' << out;
       if (in.is()) {
-        o << " ";
-        in.print(o);
-      }
+        o << ' ' << in;
+        }
     }
     incIndent(o, indent);
     printFullLine(o, indent, body);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
 class Label : public Expression {
 public:
-  Name var;
+  Name name;
 };
 
 class Break : public Expression {
 public:
-  Name var;
+  Name name;
   Expression *condition, *value;
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
-    printOpening(o, "break ");
-    var.print(o);
+    printOpening(o, "break ") << name;
     incIndent(o, indent);
     if (condition) printFullLine(o, indent, condition);
     if (value) printFullLine(o, indent, value);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -342,19 +333,17 @@ public:
     bool fallthru;
   };
 
-  Name var;
+  Name name;
   Expression *value;
   std::vector<Case> cases;
   Expression *default_;
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
-    printOpening(o, "switch ");
-    var.print(o);
+    printOpening(o, "switch ") << name;
     incIndent(o, indent);
     printFullLine(o, indent, value);
     o << "TODO: cases/default\n";
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 
 };
@@ -365,7 +354,7 @@ public:
   ExpressionList operands;
 
   std::ostream& printBody(std::ostream &o, unsigned indent) {
-    target.print(o);
+    o << target;
     if (operands.size() > 0) {
       incIndent(o, indent);
       for (auto operand : operands) {
@@ -394,27 +383,24 @@ class CallImport : public Call {
 class FunctionType {
 public:
   Name name;
-  BasicType result;
-  std::vector<BasicType> params;
+  WasmType result;
+  std::vector<WasmType> params;
 
   std::ostream& print(std::ostream &o, unsigned indent, bool full=false) {
     if (full) {
-      printOpening(o, "type") << ' ';
-      name.print(o) << " (func";
+      printOpening(o, "type") << ' ' << name << " (func";
     }
     if (params.size() > 0) {
       o << ' ';
       printMinorOpening(o, "param");
       for (auto& param : params) {
-        o << ' ';
-        printBasicType(o, param);
+        o << ' ' << printWasmType(param);
       }
       o << ')';
     }
     if (result != none) {
       o << ' ';
-      printMinorOpening(o, "result ");
-      printBasicType(o, result) << ')';
+      printMinorOpening(o, "result ") << printWasmType(result) << ')';
     }
     if (full) {
       o << "))";;
@@ -443,15 +429,13 @@ public:
   ExpressionList operands;
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
-    printOpening(o, "call_indirect ");
-    type->name.print(o);
+    printOpening(o, "call_indirect ") << type->name;
     incIndent(o, indent);
     printFullLine(o, indent, target);
     for (auto operand : operands) {
       printFullLine(o, indent, operand);
     }
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -460,9 +444,7 @@ public:
   Name id;
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
-    printOpening(o, "get_local ");
-    id.print(o) << ')';
-    return o;
+    return printOpening(o, "get_local ") << id << ')';
   }
 };
 
@@ -472,12 +454,10 @@ public:
   Expression *value;
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
-    printOpening(o, "set_local ");
-    id.print(o);
+    printOpening(o, "set_local ") << id;
     incIndent(o, indent);
     printFullLine(o, indent, value);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -492,8 +472,7 @@ public:
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
     o << '(';
-    prepareColor(o);
-    printBasicType(o, getBasicType(bytes, float_)) << ".load";
+    prepareColor(o) << printWasmType(getWasmType(bytes, float_)) << ".load";
     if (bytes < 4) {
       if (bytes == 1) {
         o << '8';
@@ -509,8 +488,7 @@ public:
     assert(!offset);
     incIndent(o, indent);
     printFullLine(o, indent, ptr);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -524,8 +502,7 @@ public:
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
     o << '(';
-    prepareColor(o);
-    printBasicType(o, getBasicType(bytes, float_)) << ".store";
+    prepareColor(o) << printWasmType(getWasmType(bytes, float_)) << ".store";
     if (bytes < 4) {
       if (bytes == 1) {
         o << '8';
@@ -541,8 +518,7 @@ public:
     incIndent(o, indent);
     printFullLine(o, indent, ptr);
     printFullLine(o, indent, value);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -556,8 +532,7 @@ public:
   }
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
-    value.print(o);
-    return o;
+    return o << value;
   }
 };
 
@@ -568,8 +543,7 @@ public:
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
     o << '(';
-    prepareColor(o);
-    printBasicType(o, type) << '.';
+    prepareColor(o) << printWasmType(type) << '.';
     switch (op) {
       case Clz: o << "clz"; break;
       case Neg: o << "neg"; break;
@@ -578,8 +552,7 @@ public:
     }
     incIndent(o, indent);
     printFullLine(o, indent, value);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -590,8 +563,7 @@ public:
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
     o << '(';
-    prepareColor(o);
-    printBasicType(o, type) << '.';
+    prepareColor(o) << printWasmType(type) << '.';
     switch (op) {
       case Add:      o << "add"; break;
       case Sub:      o << "sub"; break;
@@ -616,8 +588,7 @@ public:
     incIndent(o, indent);
     printFullLine(o, indent, left);
     printFullLine(o, indent, right);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -627,13 +598,12 @@ public:
   Expression *left, *right;
 
   Compare() {
-    type = BasicType::i32;
+    type = WasmType::i32;
   }
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
     o << '(';
-    prepareColor(o);
-    printBasicType(o, type) << '.';
+    prepareColor(o) << printWasmType(type) << '.';
     switch (op) {
       case Eq:  o << "eq"; break;
       case Ne:  o << "ne"; break;
@@ -655,8 +625,7 @@ public:
     incIndent(o, indent);
     printFullLine(o, indent, left);
     printFullLine(o, indent, right);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -667,8 +636,7 @@ public:
 
   std::ostream& print(std::ostream &o, unsigned indent) override {
     o << '(';
-    prepareColor(o);
-    printBasicType(o, type) << ".convert_";
+    prepareColor(o) << printWasmType(type) << ".convert_";
     switch (op) {
       case ConvertUInt32: o << "u/i32"; break;
       case ConvertSInt32: o << "s/i32"; break;
@@ -678,8 +646,7 @@ public:
     restoreNormalColor(o);
     incIndent(o, indent);
     printFullLine(o, indent, value);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -693,45 +660,38 @@ public:
 
 struct NameType {
   Name name;
-  BasicType type;
+  WasmType type;
   NameType() : name(nullptr), type(none) {}
-  NameType(Name name, BasicType type) : name(name), type(type) {}
+  NameType(Name name, WasmType type) : name(name), type(type) {}
 };
 
 class Function {
 public:
   Name name;
-  BasicType result;
+  WasmType result;
   std::vector<NameType> params;
   std::vector<NameType> locals;
   Expression *body;
 
   std::ostream& print(std::ostream &o, unsigned indent) {
-    printOpening(o, "func ", true);
-    name.print(o);
+    printOpening(o, "func ", true) << name;
     if (params.size() > 0) {
       for (auto& param : params) {
         o << ' ';
-        printMinorOpening(o, "param ");
-        param.name.print(o) << " ";
-        printBasicType(o, param.type) << ")";
+        printMinorOpening(o, "param ") << param.name << ' ' << printWasmType(param.type) << ")";
       }
     }
     if (result != none) {
       o << ' ';
-      printMinorOpening(o, "result ");
-      printBasicType(o, result) << ")";
+      printMinorOpening(o, "result ") << printWasmType(result) << ")";
     }
     incIndent(o, indent);
     for (auto& local : locals) {
       doIndent(o, indent);
-      printMinorOpening(o, "local ");
-      local.name.print(o) << " ";
-      printBasicType(o, local.type) << ")\n";
+      printMinorOpening(o, "local ") << local.name << ' ' << printWasmType(local.type) << ")\n";
     }
     printFullLine(o, indent, body);
-    decIndent(o, indent);
-    return o;
+    return decIndent(o, indent);
   }
 };
 
@@ -741,13 +701,11 @@ public:
   FunctionType type;
 
   std::ostream& print(std::ostream &o, unsigned indent) {
-    printOpening(o, "import ");
-    name.print(o) << ' ';
+    printOpening(o, "import ") << name << ' ';
     printText(o, module.str) << ' ';
     printText(o, base.str) << ' ';
     type.print(o, indent);
-    o << ')';
-    return o;
+    return o << ')';
   }
 };
 
@@ -757,26 +715,21 @@ public:
   Name value;
 
   std::ostream& print(std::ostream &o, unsigned indent) {
-    printOpening(o, "export") << ' ';
-    printText(o, name.str) << ' ';
-    value.print(o);
-    o << ')';
-    return o;
+    printOpening(o, "export ");
+    return printText(o, name.str) << ' ' << value << ')';
   }
 };
 
 class Table {
 public:
-  std::vector<Name> vars;
+  std::vector<Name> names;
 
   std::ostream& print(std::ostream &o, unsigned indent) {
     printOpening(o, "table");
-    for (auto var : vars) {
-      o << ' ';
-      var.print(o);
+    for (auto name : names) {
+      o << ' ' << name;
     }
-    o << ')';
-    return o;
+    return o << ')';
   }
 };
 
@@ -789,48 +742,44 @@ protected:
   Table table;
   std::vector<Function*> functions;
 
-  // internals
-  std::map<Name, void*> map; // maps var ids/names to things
-  unsigned nextVar;
-
 public:
-  Module() : nextVar(1) {}
+  Module() {}
 
-  std::ostream& print(std::ostream &o) {
+  friend std::ostream& operator<<(std::ostream &o, Module module) {
     unsigned indent = 0;
     printOpening(o, "module", true);
     incIndent(o, indent);
     doIndent(o, indent);
     printOpening(o, "memory") << " 16777216)\n"; // XXX
-    for (auto& curr : functionTypes) {
+    for (auto& curr : module.functionTypes) {
       doIndent(o, indent);
       curr.second->print(o, indent, true);
       o << '\n';
     }
 #if 0
-    for (auto& curr : imports) {
+    for (auto& curr : module.imports) {
       doIndent(o, indent);
       curr.second.print(o, indent);
       o << '\n';
     }
 #endif
-    for (auto& curr : exports) {
+    for (auto& curr : module.exports) {
       doIndent(o, indent);
       curr.print(o, indent);
       o << '\n';
     }
-    if (table.vars.size() > 0) {
+    if (module.table.names.size() > 0) {
       doIndent(o, indent);
-      table.print(o, indent);
+      module.table.print(o, indent);
       o << '\n';
     }
-    for (auto& curr : functions) {
+    for (auto& curr : module.functions) {
       doIndent(o, indent);
       curr->print(o, indent);
       o << '\n';
     }
     decIndent(o, indent);
-    o << '\n';
+    return o << '\n';
   }
 };
 
