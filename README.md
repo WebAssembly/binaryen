@@ -58,13 +58,6 @@ That will emit `a.html`, `a.js`, and `a.asm.js`. That last file is the asm.js mo
 
  * Note: you can try `-O1` or higher, but you should probably use `--profiling` which keeps the code semi-readable (otherwise, you'll get minified names, etc., and that code path is untested).
 
-## TODO
-
- * Start running the output through WebAssembly interpreters. Right now it is likely wrong in many ways.
- * WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. You can do that with `emcc -s GLOBAL_BASE=1000`. We still need to write the code to copy the globals there.
- * Emscripten emits asm.js and JavaScript, that work together using web APIs to do things like print, render, etc. Need to figure out how to test that.
- * We could probably optimize the emitted WebAssembly.
-
 ## Testing
 
 ```
@@ -92,4 +85,12 @@ The `check.py` script supports some options:
 Same as Emscripten: MIT license.
 
 For changes to `src/`, please make pulls into emscripten's `asm2wasm` branch (in `tools/optimizer`; this code is sync'ed with there, for convenience).
+
+## TODO
+
+ * Start running the output through WebAssembly interpreters. Right now it is likely wrong in many ways.
+ * WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. You can do that with `emcc -s GLOBAL_BASE=1000`. We still need to write the code to copy the globals there.
+ * Emscripten emits asm.js and JavaScript, that work together using web APIs to do things like print, render, etc. Need to figure out how to test that.
+ * We could probably optimize the emitted WebAssembly.
+ * Memory section needs the right size.
 

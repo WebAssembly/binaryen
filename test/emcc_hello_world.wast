@@ -1,4 +1,5 @@
 (module
+  (memory 16777216)
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$vi (func (param i32)))
