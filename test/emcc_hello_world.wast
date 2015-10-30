@@ -3,7 +3,6 @@
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$vi (func (param i32)))
-  (import $Math_clz32 "global" "clz32"  (param i32) (result i32))
   (import $___lock "env" "___lock"  (param i32))
   (import $___syscall140 "env" "___syscall140"  (param i32 i32) (result i32))
   (import $___syscall146 "env" "___syscall146"  (param i32 i32) (result i32))
@@ -26495,14 +26494,14 @@
               )
             )
             (set_local $$49
-              (call_import $Math_clz32
+              (unary clz
                 (get_local $$d_sroa_1_4_extract_trunc)
               )
             )
             (set_local $$51
               (i32.sub
                 (get_local $$49)
-                (call_import $Math_clz32
+                (unary clz
                   (get_local $$n_sroa_1_4_extract_trunc)
                 )
               )
@@ -26638,14 +26637,14 @@
               )
               (block
                 (set_local $$117
-                  (call_import $Math_clz32
+                  (unary clz
                     (get_local $$d_sroa_1_4_extract_trunc)
                   )
                 )
                 (set_local $$119
                   (i32.sub
                     (get_local $$117)
-                    (call_import $Math_clz32
+                    (unary clz
                       (get_local $$n_sroa_1_4_extract_trunc)
                     )
                   )
@@ -26806,7 +26805,7 @@
               (block
                 (set_local $$86
                   (i32.add
-                    (call_import $Math_clz32
+                    (unary clz
                       (get_local $$d_sroa_0_0_extract_trunc)
                     )
                     (i32.const 33)
@@ -26815,7 +26814,7 @@
                 (set_local $$88
                   (i32.sub
                     (get_local $$86)
-                    (call_import $Math_clz32
+                    (unary clz
                       (get_local $$n_sroa_1_4_extract_trunc)
                     )
                   )
