@@ -1,6 +1,7 @@
 (module
   (memory 16777216)
   (export "big_negative" $big_negative)
+  (table $z $big_negative $importedDoubles $z)
   (func $big_negative
     (local $temp f64)
     (block
@@ -43,5 +44,11 @@
         )
       )
     )
+  )
+  (func $z
+    (nop)
+  )
+  (func $w
+    (nop)
   )
 )

@@ -25,7 +25,7 @@
   (export "dynCall_ii" $dynCall_ii)
   (export "dynCall_iiii" $dynCall_iiii)
   (export "dynCall_vi" $dynCall_vi)
-  (table $b2 $___stdio_close $___stdout_write $___stdio_seek $___stdio_write $_cleanup $b2 $b2)
+  (table $b0 $___stdio_close $___stdout_write $___stdio_seek $___stdio_write $_cleanup $b1 $b1)
   (func $stackAlloc (param $size i32) (result i32)
     (local $ret i32)
     (block $topmost

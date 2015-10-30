@@ -14,6 +14,14 @@ function () {
     temp = t + u + (-u) + (-t);
   }
 
+  function z() {
+  }
+  function w() {
+  }
+
+  var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
+  var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
+
   return { big_negative: big_negative };
 }
 
