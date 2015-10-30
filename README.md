@@ -56,7 +56,13 @@ emcc src.cpp -o a.html --separate-asm
 
 That will emit `a.html`, `a.js`, and `a.asm.js`. That last file is the asm.js module, which you can pass into `asm2wasm`.
 
- * Note: you can try `-O1` or higher, but you should probably use `--profiling` which keeps the code semi-readable (otherwise, you'll get minified names, etc., and that code path is untested).
+If you want an optimized buid, use
+
+```
+emcc src.cpp -o a.html --separate-asm -O[2,3,etc.] -s ALIASING_FUNCTION_POINTERS=0
+```
+
+You need `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow aliased funciton pointers (there is a single table).
 
 ## Testing
 
