@@ -138,7 +138,7 @@
         (i32.load align=4
           (i32.const 24)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (get_local $ptr)
         )
       )
@@ -149,7 +149,7 @@
           )
           (i32.const 1)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (get_local $ptr)
             (i32.const 1)
@@ -163,7 +163,7 @@
           )
           (i32.const 2)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (get_local $ptr)
             (i32.const 2)
@@ -177,7 +177,7 @@
           )
           (i32.const 3)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (get_local $ptr)
             (i32.const 3)
@@ -192,7 +192,7 @@
         (i32.load align=4
           (i32.const 24)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (get_local $ptr)
         )
       )
@@ -203,7 +203,7 @@
           )
           (i32.const 1)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (get_local $ptr)
             (i32.const 1)
@@ -217,7 +217,7 @@
           )
           (i32.const 2)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (get_local $ptr)
             (i32.const 2)
@@ -231,7 +231,7 @@
           )
           (i32.const 3)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (get_local $ptr)
             (i32.const 3)
@@ -245,7 +245,7 @@
           )
           (i32.const 4)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (get_local $ptr)
             (i32.const 4)
@@ -259,7 +259,7 @@
           )
           (i32.const 5)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (get_local $ptr)
             (i32.const 5)
@@ -273,7 +273,7 @@
           )
           (i32.const 6)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (get_local $ptr)
             (i32.const 6)
@@ -287,7 +287,7 @@
           )
           (i32.const 7)
         )
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (get_local $ptr)
             (i32.const 7)
@@ -498,7 +498,7 @@ TODO: cases/default
             )
           )
           (set_local $$0
-            (i32.load8 align=1
+            (i32.load8_s align=1
               (get_local $$arrayidx)
             )
           )
@@ -607,7 +607,7 @@ TODO: cases/default
             (loop $while-out$4 $while-in$5
               (block
                 (set_local $$1
-                  (i32.load8 align=1
+                  (i32.load8_s align=1
                     (get_local $$s$1)
                   )
                 )
@@ -2438,7 +2438,7 @@ TODO: cases/default
             )
           )
           (set_local $$2
-            (i32.load8 align=1
+            (i32.load8_s align=1
               (get_local $$mode)
             )
           )
@@ -2892,7 +2892,7 @@ TODO: cases/default
               )
             )
             (set_local $$6
-              (i32.load8 align=1
+              (i32.load8_s align=1
                 (get_local $$lbf)
               )
             )
@@ -2955,7 +2955,7 @@ TODO: cases/default
                         )
                       )
                       (set_local $$7
-                        (i32.load8 align=1
+                        (i32.load8_s align=1
                           (get_local $$arrayidx)
                         )
                       )
@@ -3148,7 +3148,7 @@ TODO: cases/default
         )
       )
       (set_local $$0
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (get_local $$mode)
         )
       )
@@ -3921,7 +3921,7 @@ TODO: cases/default
             (loop $while-out$0 $while-in$1
               (block
                 (set_local $$2
-                  (i32.load8 align=1
+                  (i32.load8_s align=1
                     (get_local $$s$044)
                   )
                 )
@@ -4080,7 +4080,7 @@ TODO: cases/default
           )
           (block
             (set_local $$4
-              (i32.load8 align=1
+              (i32.load8_s align=1
                 (get_local $$s$0$lcssa60)
               )
             )
@@ -4308,7 +4308,7 @@ TODO: cases/default
                 (loop $while-out$4 $while-in$5
                   (block
                     (set_local $$7
-                      (i32.load8 align=1
+                      (i32.load8_s align=1
                         (get_local $$s$128)
                       )
                     )
@@ -6009,7 +6009,7 @@ TODO: cases/default
             )
           )
           (set_local $$0
-            (i32.load8 align=1
+            (i32.load8_s align=1
               (get_local $$incdec$ptr169275)
             )
           )
@@ -6068,7 +6068,7 @@ TODO: cases/default
                 )
               )
               (set_local $$$pre
-                (i32.load8 align=1
+                (i32.load8_s align=1
                   (get_local $$incdec$ptr)
                 )
               )
@@ -6098,7 +6098,7 @@ TODO: cases/default
                     )
                   )
                   (set_local $$2
-                    (i32.load8 align=1
+                    (i32.load8_s align=1
                       (get_local $$arrayidx16)
                     )
                   )
@@ -6143,7 +6143,7 @@ TODO: cases/default
                     )
                   )
                   (set_local $$3
-                    (i32.load8 align=1
+                    (i32.load8_s align=1
                       (get_local $$add$ptr)
                     )
                   )
@@ -6267,7 +6267,7 @@ TODO: cases/default
             )
           )
           (set_local $$5
-            (i32.load8 align=1
+            (i32.load8_s align=1
               (get_local $$arrayidx31)
             )
           )
@@ -6305,7 +6305,7 @@ TODO: cases/default
                 )
               )
               (set_local $$6
-                (i32.load8 align=1
+                (i32.load8_s align=1
                   (get_local $$arrayidx35)
                 )
               )
@@ -6349,7 +6349,7 @@ TODO: cases/default
                 )
               )
               (set_local $$$pre357
-                (i32.load8 align=1
+                (i32.load8_s align=1
                   (get_local $$add$ptr43$arrayidx31)
                 )
               )
@@ -6494,7 +6494,7 @@ TODO: cases/default
                       )
                     )
                     (set_local $$10
-                      (i32.load8 align=1
+                      (i32.load8_s align=1
                         (get_local $$incdec$ptr62)
                       )
                     )
@@ -6588,7 +6588,7 @@ TODO: cases/default
                   )
                 )
                 (set_local $$13
-                  (i32.load8 align=1
+                  (i32.load8_s align=1
                     (get_local $$arrayidx68)
                   )
                 )
@@ -6626,7 +6626,7 @@ TODO: cases/default
                       )
                     )
                     (set_local $$14
-                      (i32.load8 align=1
+                      (i32.load8_s align=1
                         (get_local $$arrayidx73)
                       )
                     )
@@ -6659,7 +6659,7 @@ TODO: cases/default
                           (i32.const 10)
                         )
                         (set_local $$15
-                          (i32.load8 align=1
+                          (i32.load8_s align=1
                             (get_local $$arrayidx68)
                           )
                         )
@@ -6980,7 +6980,7 @@ TODO: cases/default
                           )
                         )
                         (set_local $$30
-                          (i32.load8 align=1
+                          (i32.load8_s align=1
                             (get_local $$incdec$ptr$i)
                           )
                         )
@@ -7084,7 +7084,7 @@ TODO: cases/default
             )
           )
           (set_local $$31
-            (i32.load8 align=1
+            (i32.load8_s align=1
               (get_local $$incdec$ptr169269)
             )
           )
@@ -7111,7 +7111,7 @@ TODO: cases/default
                   )
                 )
                 (set_local $$32
-                  (i32.load8 align=1
+                  (i32.load8_s align=1
                     (get_local $$arrayidx114)
                   )
                 )
@@ -7202,7 +7202,7 @@ TODO: cases/default
                           )
                         )
                         (set_local $$50
-                          (i32.load8 align=1
+                          (i32.load8_s align=1
                             (get_local $$incdec$ptr$i$204)
                           )
                         )
@@ -7265,7 +7265,7 @@ TODO: cases/default
                   )
                 )
                 (set_local $$33
-                  (i32.load8 align=1
+                  (i32.load8_s align=1
                     (get_local $$arrayidx119)
                   )
                 )
@@ -7303,7 +7303,7 @@ TODO: cases/default
                       )
                     )
                     (set_local $$34
-                      (i32.load8 align=1
+                      (i32.load8_s align=1
                         (get_local $$arrayidx124)
                       )
                     )
@@ -7336,7 +7336,7 @@ TODO: cases/default
                           (i32.const 10)
                         )
                         (set_local $$35
-                          (i32.load8 align=1
+                          (i32.load8_s align=1
                             (get_local $$arrayidx119)
                           )
                         )
@@ -7539,7 +7539,7 @@ TODO: cases/default
           (loop $while-out$11 $while-in$12
             (block
               (set_local $$51
-                (i32.load8 align=1
+                (i32.load8_s align=1
                   (get_local $$incdec$ptr169271)
                 )
               )
@@ -7596,7 +7596,7 @@ TODO: cases/default
                 )
               )
               (set_local $$52
-                (i32.load8 align=1
+                (i32.load8_s align=1
                   (get_local $$arrayidx173)
                 )
               )
@@ -7845,7 +7845,7 @@ TODO: cases/default
             )
           )
           (set_local $$64
-            (i32.load8 align=1
+            (i32.load8_s align=1
               (get_local $$incdec$ptr169271$lcssa414)
             )
           )
@@ -8032,7 +8032,7 @@ TODO: cases/default
                           )
                         )
                         (set_local $$100
-                          (i32.load8 align=1
+                          (i32.load8_s align=1
                             (get_local $$arrayidx$i)
                           )
                         )
@@ -25205,7 +25205,7 @@ TODO: cases/default
                 )
                 (i32.store8 align=1
                   (get_local $dest)
-                  (i32.load8 align=1
+                  (i32.load8_s align=1
                     (get_local $src)
                   )
                 )
@@ -25279,7 +25279,7 @@ TODO: cases/default
           (block
             (i32.store8 align=1
               (get_local $dest)
-              (i32.load8 align=1
+              (i32.load8_s align=1
                 (get_local $src)
               )
             )
@@ -25380,7 +25380,7 @@ TODO: cases/default
     (local $ret i32)
     (block $topmost
       (set_local $ret
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (i32.load align=4
               (i32.const 40)
@@ -25402,7 +25402,7 @@ TODO: cases/default
         )
       )
       (set_local $ret
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (i32.load align=4
               (i32.const 40)
@@ -25430,7 +25430,7 @@ TODO: cases/default
         )
       )
       (set_local $ret
-        (i32.load8 align=1
+        (i32.load8_s align=1
           (i32.add
             (i32.load align=4
               (i32.const 40)
@@ -25459,7 +25459,7 @@ TODO: cases/default
       )
       (break $topmost
         (i32.add
-          (i32.load8 align=1
+          (i32.load8_s align=1
             (i32.add
               (i32.load align=4
                 (i32.const 40)
