@@ -88,6 +88,8 @@ For changes to `src/`, please make pulls into emscripten's `asm2wasm` branch (in
 
 ## TODO
 
+ * Waiting for switch to stablize on the spec repo; switches are Nop'ed.
+ * Waiting for an interpreter with module importing support; imports are Nop'ed.
  * Start running the output through WebAssembly interpreters. Right now it is likely wrong in many ways.
  * WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. You can do that with `emcc -s GLOBAL_BASE=1000`. We still need to write the code to copy the globals there.
  * Emscripten emits asm.js and JavaScript, that work together using web APIs to do things like print, render, etc. Need to figure out how to test that.
