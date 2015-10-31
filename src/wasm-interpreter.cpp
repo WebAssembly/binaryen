@@ -123,20 +123,41 @@ public:
       Flow visitSwitch(Switch *curr) override {
         abort();
       }
-      Flow visitCall(Call *curr) override {
-        LiteralList arguments;
-        arguments.reserve(curr->operands.size());
-        for (auto expression : curr->operands) {
+
+      Flow generateArguments(const ExpressionList& operands, LiteralList& arguments) {
+        arguments.reserve(operands.size());
+        for (auto expression : operands) {
           Flow flow = visit(expression);
           if (flow.breaking()) return flow;
           arguments.push_back(flow.value);
         }
+        return Flow();
+      }
+
+      Flow visitCall(Call *curr) override {
+        LiteralList arguments;
+        Flow flow = generateArguments(curr->operands, arguments);
+        if (flow.breaking()) return flow;
         return instance.callFunction(curr->target, arguments);
       }
       Flow visitCallImport(CallImport *curr) override {
+        LiteralList arguments;
+        Flow flow = generateArguments(curr->operands, arguments);
+        if (flow.breaking()) return flow;
+        return instance.externalInterface->callImport(curr->target, arguments);
       }
       Flow visitCallIndirect(CallIndirect *curr) override {
+        Flow target = visit(curr->target);
+        if (target.breaking()) return target;
+        size_t index = target.value.geti32();
+        assert(index < instance.wasm.table.names.size());
+        IString name = instance.wasm.table.names[index];
+        LiteralList arguments;
+        Flow flow = generateArguments(curr->operands, arguments);
+        if (flow.breaking()) return flow;
+        return instance.callFunction(name, arguments);
       }
+
       Flow visitGetLocal(GetLocal *curr) override {
         return scope.locals[curr->name];
       }
