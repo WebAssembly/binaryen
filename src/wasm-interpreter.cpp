@@ -24,67 +24,109 @@ public:
 
   Literal callFunction(IString name) {
     // Stuff that flows around during executing expressions: a literal, or a change in control flow
-    class Flow : public Literal {
+    class Flow {
     public:
+      Flow() {}
+      Flow(Literal value) : value(value) {}
+
+      Literal value;
       IString breakTo; // if non-null, a break is going on
+
+      bool breaking() { return breakTo.is(); }
+
+      void clearIf(IString target) {
+        if (breakTo == target) {
+          breakTo.clear();
+        }
+      }
     };
 
     // Execute a statement
     class ExpressionRunner : public WasmVisitor<Flow> {
-      virtual Flow visitBlock(Block *curr) {
+    private:
+      std::vector<Literal> arguments; // filled in before a call, cleared by the call
+
+    public:
+      Flow visitBlock(Block *curr) override {
         Flow flow;
         for (auto expression : curr->list) {
           flow = visit(expression);
-          if (flow.breakTo) {
-            if (flow.breakTo == curr->name) {
-              flow.breakTo.clear();
-            }
+          if (flow.breaking()) {
+            flow.clearIf(curr->name);
             return flow;
           }
         }
         return flow;
       }
-      virtual Flow visitIf(If *curr)  {
+      Flow visitIf(If *curr) override {
+        Flow flow = visit(curr->condition);
+        if (flow.breaking()) return flow;
+        if (flow.value.geti32()) return visit(curr->ifTrue);
+        if (curr->ifFalse) return visit(curr->ifFalse);
+        return Flow();
       }
-      virtual Flow visitLoop(Loop *curr)  {
+      Flow visitLoop(Loop *curr) override {
+        while (1) {
+          Flow flow = visit(curr->body);
+          if (flow.breaking()) {
+            if (flow.breakTo == curr->in) continue; // lol
+            flow.clearIf(curr->out);
+            return flow;
+          }
+        }
       }
-      virtual Flow visitLabel(Label *curr)  {
+      Flow visitLabel(Label *curr) override {
+        Flow flow = visit(curr->body);
+        flow.clearIf(curr->name);
+        return flow;
       }
-      virtual Flow visitBreak(Break *curr)  {
+      Flow visitBreak(Break *curr) override {
+        if (curr->condition) {
+          Flow flow = visit(curr->condition);
+          if (flow.breaking()) return flow;
+          if (!flow.value.geti32()) return Flow();
+        }
+        Flow flow = visit(curr->value);
+        if (!flow.breaking()) {
+          flow.breakTo = curr->name;
+        }
+        return flow;
       }
-      virtual Flow visitSwitch(Switch *curr)  {
+      Flow visitSwitch(Switch *curr) override {
+        abort();
       }
-      virtual Flow visitCall(Call *curr)  {
+      Flow visitCall(Call *curr) override {
       }
-      virtual Flow visitCallImport(CallImport *curr)  {
+      Flow visitCallImport(CallImport *curr) override {
       }
-      virtual Flow visitCallIndirect(CallIndirect *curr)  {
+      Flow visitCallIndirect(CallIndirect *curr) override {
       }
-      virtual Flow visitGetLocal(GetLocal *curr)  {
+      Flow visitGetLocal(GetLocal *curr) override {
       }
-      virtual Flow visitSetLocal(SetLocal *curr)  {
+      Flow visitSetLocal(SetLocal *curr) override {
       }
-      virtual Flow visitLoad(Load *curr)  {
+      Flow visitLoad(Load *curr) override {
       }
-      virtual Flow visitStore(Store *curr)  {
+      Flow visitStore(Store *curr) override {
       }
-      virtual Flow visitConst(Const *curr)  {
+      Flow visitConst(Const *curr) override {
+        return Flow(curr->value); // heh
       }
-      virtual Flow visitUnary(Unary *curr)  {
+      Flow visitUnary(Unary *curr) override {
       }
-      virtual Flow visitBinary(Binary *curr)  {
+      Flow visitBinary(Binary *curr) override {
       }
-      virtual Flow visitCompare(Compare *curr)  {
+      Flow visitCompare(Compare *curr) override {
       }
-      virtual Flow visitConvert(Convert *curr)  {
+      Flow visitConvert(Convert *curr) override {
       }
-      virtual Flow visitHost(Host *curr)  {
+      Flow visitHost(Host *curr) override {
       }
-      virtual Flow visitNop(Nop *curr)  {
+      Flow visitNop(Nop *curr) override {
       }
     };
 
-    return ExpressionRunner().visit(functions[name]->body);
+    return ExpressionRunner().visit(functions[name]->body).value;
   }
 
 private:
