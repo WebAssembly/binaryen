@@ -3,6 +3,9 @@
 // wasm intepreter for asm2wasm output, in a js environment. receives asm.js,
 // generates a runnable module suitable as a polyfill.
 //
+// this polyfills an emscripten --separate-asm *.asm.js file, as a drop-in
+// replacement. it writes the wasm module to Module.asm, and sets Module.buffer.
+//
 
 #include <emscripten.h>
 
