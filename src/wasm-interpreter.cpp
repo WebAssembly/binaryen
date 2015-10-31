@@ -183,8 +183,43 @@ public:
         return Flow(curr->value); // heh
       }
       Flow visitUnary(Unary *curr) override {
+        Flow flow = visit(curr->value);
+        if (flow.breaking()) return flow;
+        Literal value = flow.value;
+        switch (curr->op) { // rofl
+          case Clz:   return Flow(Literal((int32_t)__builtin_clz(value.geti32())));
+          case Neg:   return Flow(Literal(-value.getf64()));
+          case Floor: return Flow(Literal(floor(value.getf64())));
+          default: abort();
+        }
       }
       Flow visitBinary(Binary *curr) override {
+        Flow flow = visit(curr->left);
+        if (flow.breaking()) return flow;
+        Literal left = flow.value;
+        flow = visit(curr->left);
+        if (flow.breaking()) return flow;
+        Literal right = flow.value;
+        switch (curr->op) { // lmao
+          case Add:      return curr->type == i32 ? Flow(Literal(left.geti32() + right.geti32())) : Flow(Literal(left.getf64() + right.getf64()));
+          case Sub:      return curr->type == i32 ? Flow(Literal(left.geti32() - right.geti32())) : Flow(Literal(left.getf64() - right.getf64()));
+          case Mul:      return curr->type == i32 ? Flow(Literal(left.geti32() * right.geti32())) : Flow(Literal(left.getf64() * right.getf64()));
+          case DivS:     Flow(Literal(left.geti32() + right.geti32()));
+          case DivU:     Flow(Literal(int32_t(uint32_t(left.geti32()) + uint32_t(right.geti32()))));
+          case RemS:     Flow(Literal(left.geti32() % right.geti32()));
+          case RemU:     Flow(Literal(int32_t(uint32_t(left.geti32()) + uint32_t(right.geti32()))));
+          case And:      Flow(Literal(left.geti32() & right.geti32()));
+          case Or:       Flow(Literal(left.geti32() | right.geti32()));
+          case Xor:      Flow(Literal(left.geti32() ^ right.geti32()));
+          case Shl:      Flow(Literal(left.geti32() << right.geti32()));
+          case ShrU:     Flow(Literal(int32_t(uint32_t(left.geti32()) >> uint32_t(right.geti32()))));
+          case ShrS:     Flow(Literal(left.geti32() >> right.geti32()));
+          case Div:      Flow(Literal(left.getf64() / right.getf64()));
+          case CopySign: Flow(Literal(std::copysign(left.getf64(), right.getf64())));
+          case Min:      Flow(Literal(std::min(left.getf64(), right.getf64())));
+          case Max:      Flow(Literal(std::max(left.getf64(), right.getf64())));
+          default: abort();
+        }
       }
       Flow visitCompare(Compare *curr) override {
       }
