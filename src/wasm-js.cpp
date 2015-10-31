@@ -59,9 +59,59 @@ extern "C" ModuleInstance* EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     }
 
     Literal load(Load* load, Literal ptr) override {
+      size_t addr = ptr.geti32();
+      assert(load->align == load->bytes);
+      if (!load->float_) {
+        if (load->bytes == 1) {
+          if (load->signed_) {
+            return Literal(EM_ASM_INT({ return Module['instance'].parent['HEAP8'][$0] }, addr));
+          } else {
+            return Literal(EM_ASM_INT({ return Module['instance'].parent['HEAPU8'][$0] }, addr));
+          }
+        } else if (load->bytes == 2) {
+          if (load->signed_) {
+            return Literal(EM_ASM_INT({ return Module['instance'].parent['HEAP16'][$0] }, addr));
+          } else {
+            return Literal(EM_ASM_INT({ return Module['instance'].parent['HEAPU16'][$0] }, addr));
+          }
+        } else if (load->bytes == 4) {
+          if (load->signed_) {
+            return Literal(EM_ASM_INT({ return Module['instance'].parent['HEAP32'][$0] }, addr));
+          } else {
+            return Literal(EM_ASM_INT({ return Module['instance'].parent['HEAPU32'][$0] }, addr));
+          }
+        }
+        abort();
+      } else {
+        if (load->bytes == 4) {
+          return Literal(EM_ASM_DOUBLE({ return Module['instance'].parent['HEAPF32'][$0] }, addr));
+        } else if (load->bytes == 8) {
+          return Literal(EM_ASM_DOUBLE({ return Module['instance'].parent['HEAPF64'][$0] }, addr));
+        }
+        abort();
+      }
     }
 
-    Literal store(Store* store, Literal ptr, Literal value) override {
+    void store(Store* store, Literal ptr, Literal value) override {
+      size_t addr = ptr.geti32();
+      assert(store->align == store->bytes);
+      if (!store->float_) {
+        if (store->bytes == 1) {
+          EM_ASM_INT({ Module['instance'].parent['HEAP8'][$0] = $1 }, addr, value.geti32());
+        } else if (store->bytes == 2) {
+          EM_ASM_INT({ Module['instance'].parent['HEAP16'][$0] = $1 }, addr, value.geti32());
+        } else if (store->bytes == 4) {
+          EM_ASM_INT({ Module['instance'].parent['HEAP32'][$0] = $1 }, addr, value.geti32());
+        }
+        abort();
+      } else {
+        if (store->bytes == 4) {
+          EM_ASM_DOUBLE({ Module['instance'].parent['HEAPF32'][$0] = $1 }, addr, value.getf64());
+        } else if (store->bytes == 8) {
+          EM_ASM_DOUBLE({ Module['instance'].parent['HEAPF64'][$0] = $1 }, addr, value.getf64());
+        }
+        abort();
+      }
     }
   };
 

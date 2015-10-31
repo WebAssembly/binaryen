@@ -19,7 +19,7 @@ public:
   struct ExternalInterface {
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
     virtual Literal load(Load* load, Literal ptr) = 0;
-    virtual Literal store(Store* store, Literal ptr, Literal value) = 0;
+    virtual void store(Store* store, Literal ptr, Literal value) = 0;
   };
 
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
@@ -179,7 +179,8 @@ public:
         if (ptr.breaking()) return ptr;
         Flow value = visit(curr->value);
         if (value.breaking()) return value;
-        return instance.externalInterface->store(curr, ptr.value, value.value);
+        instance.externalInterface->store(curr, ptr.value, value.value);
+        return value;
       }
       Flow visitConst(Const *curr) override {
         return Flow(curr->value); // heh
