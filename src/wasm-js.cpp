@@ -56,6 +56,25 @@ extern "C" ModuleInstance* EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
     Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
+      EM_ASM({
+        Module['tempArguments'] = [];
+      });
+      for (auto& argument : arguments) {
+        if (argument.type == i32) {
+          EM_ASM({ Module['tempArguments'].push($0) }, argument.geti32());
+        } else if (argument.type == f64) {
+          EM_ASM({ Module['tempArguments'].push($0) }, argument.getf64());
+        } else {
+          abort();
+        }
+      }
+      return Literal(EM_ASM_DOUBLE({
+        var mod = Pointer_stringify($0);
+        var base = Pointer_stringify($1);
+        var tempArguments = Module['tempArguments'];
+        Module['tempArguments'] = null;
+        return Module['instance'][mod][base].apply(null, tempArguments);
+      }, import->module.str, import->base.str));
     }
 
     Literal load(Load* load, Literal ptr) override {
