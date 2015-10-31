@@ -64,6 +64,7 @@ public:
     // Execute a statement
     class ExpressionRunner : public WasmVisitor<Flow> {
       FunctionScope& scope;
+
     public:
       ExpressionRunner(FunctionScope& scope) : scope(scope) {}
 
@@ -130,8 +131,13 @@ public:
       Flow visitCallIndirect(CallIndirect *curr) override {
       }
       Flow visitGetLocal(GetLocal *curr) override {
+        return scope[curr->id];
       }
       Flow visitSetLocal(SetLocal *curr) override {
+        Flow flow = visit(curr->value);
+        if (flow.breaking()) return flow;
+        scope[curr->id] = flow.value;
+        return flow;
       }
       Flow visitLoad(Load *curr) override {
       }
