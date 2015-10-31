@@ -35,6 +35,12 @@ function () {
     var x = 0;
     return !x;
   }
+  function conversions() {
+    var i = 0, d = 0.0;
+    i = ~~d;
+    d = +(i | 0);
+    d = +(i >>> 0);
+  }
 
   function z() {
   }

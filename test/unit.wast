@@ -131,6 +131,30 @@
       (i32.const 0)
     )
   )
+  (func $conversions
+    (local $i i32)
+    (local $d f64)
+    (block
+      (set_local $i
+        (i32.trunc_s/f64
+          (get_local $d)
+        )
+      )
+      (set_local $d
+        (f64.convert_s/i32
+          (get_local $i)
+        )
+      )
+      (set_local $d
+        (f64.convert_u/i32
+          (i32.shr_u
+            (get_local $i)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
   (func $z
     (nop)
   )
