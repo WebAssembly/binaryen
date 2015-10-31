@@ -18,11 +18,31 @@ public:
     }
   }
 
-  Literal callFunction(const char *name) {
-    return callFunction(IString(name));
-  }
+  typedef std::vector<Literal> LiteralList;
 
   Literal callFunction(IString name) {
+    LiteralList empty;
+    return callFunction(name, empty);
+  }
+
+  Literal callFunction(IString name, LiteralList& arguments) {
+
+    class FunctionScope {
+    public:
+      std::map<IString, Literal> locals;
+
+      FunctionScope(Function* function, LiteralList& arguments) {
+        assert(function->params.size() == arguments.size());
+        for (size_t i = 0; i < arguments.size(); i++) {
+          assert(function->params[i].type == arguments[i].type);
+          locals[function->params[i].name] = arguments[i];
+        }
+        for (auto& local : function->locals) {
+          locals[local.name].type = local.type;
+        }
+      }
+    };
+
     // Stuff that flows around during executing expressions: a literal, or a change in control flow
     class Flow {
     public:
@@ -43,10 +63,10 @@ public:
 
     // Execute a statement
     class ExpressionRunner : public WasmVisitor<Flow> {
-    private:
-      std::vector<Literal> arguments; // filled in before a call, cleared by the call
-
+      FunctionScope& scope;
     public:
+      ExpressionRunner(FunctionScope& scope) : scope(scope) {}
+
       Flow visitBlock(Block *curr) override {
         Flow flow;
         for (auto expression : curr->list) {
@@ -96,6 +116,14 @@ public:
         abort();
       }
       Flow visitCall(Call *curr) override {
+        LiteralList arguments;
+        arguments.reserve(curr->operands.size());
+        for (auto expression : curr->operands) {
+          Flow flow = visit(expression);
+          if (flow.breaking()) return flow;
+          arguments.push_back(flow.value);
+        }
+        return callFunction(curr->target, arguments);
       }
       Flow visitCallImport(CallImport *curr) override {
       }
@@ -126,7 +154,9 @@ public:
       }
     };
 
-    return ExpressionRunner().visit(functions[name]->body).value;
+    Function *function = functions[name];
+    FunctionScope scope(function, arguments);
+    return ExpressionRunner(scope).visit(function->body).value;
   }
 
 private:
