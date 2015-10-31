@@ -2,6 +2,8 @@ function () {
   "use asm";
 
   var t = global.NaN, u = global.Infinity;
+  var Int = 0;
+  var Double = 0.0;
 
   function big_negative() {
     var temp = 0.0;
@@ -14,11 +16,18 @@ function () {
   function importedDoubles() {
     var temp = 0.0;
     temp = t + u + (-u) + (-t);
+    if (Int > 0) return -3.4;
+    if (Double > 0.0) return 5.6;
+    return 1.2;
   }
   function doubleCompares(x, y) {
     x = +x;
     y = +y;
-    if (x > 0.0) return 0.0;
+    var t = +0;
+    var Int = 0.0, Double = 0; // confusing with globals
+    if (x > 0.0) return 1.2;
+    if (Int > 0.0) return -3.4;
+    if (Double > 0) return 5.6;
     if (x < y) return +x;
     return +y;
   }

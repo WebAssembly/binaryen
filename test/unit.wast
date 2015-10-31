@@ -24,34 +24,64 @@
       )
     )
   )
-  (func $importedDoubles
+  (func $importedDoubles (result f64)
     (local $temp f64)
-    (set_local $temp
-      (f64.add
+    (block $topmost
+      (set_local $temp
         (f64.add
           (f64.add
-            (f64.load align=8
-              (i32.const 8)
+            (f64.add
+              (f64.load align=8
+                (i32.const 8)
+              )
+              (f64.load align=8
+                (i32.const 16)
+              )
             )
-            (f64.load align=8
-              (i32.const 16)
+            (f64.neg
+              (f64.load align=8
+                (i32.const 16)
+              )
             )
           )
           (f64.neg
             (f64.load align=8
-              (i32.const 16)
+              (i32.const 8)
             )
           )
         )
-        (f64.neg
-          (f64.load align=8
-            (i32.const 8)
+      )
+      (if
+        (i32.gt_s
+          (i32.load align=4
+            (i32.const 24)
           )
+          (i32.const 0)
         )
+        (break $topmost
+          (f64.const -3.4)
+        )
+      )
+      (if
+        (f64.gt
+          (f64.load align=8
+            (i32.const 32)
+          )
+          (f64.const 0)
+        )
+        (break $topmost
+          (f64.const 5.6)
+        )
+      )
+      (break $topmost
+        (f64.const 1.2)
       )
     )
   )
   (func $doubleCompares (param $x f64) (param $y f64) (result f64)
+    (local $t f64)
+    (local $Int f64)
+    (local $Double i32)
     (block $topmost
       (if
         (f64.gt
@@ -59,7 +89,25 @@
           (f64.const 0)
         )
         (break $topmost
+          (f64.const 1.2)
+        )
+      )
+      (if
+        (f64.gt
+          (get_local $Int)
           (f64.const 0)
+        )
+        (break $topmost
+          (f64.const -3.4)
+        )
+      )
+      (if
+        (i32.gt_s
+          (get_local $Double)
+          (i32.const 0)
+        )
+        (break $topmost
+          (f64.const 5.6)
         )
       )
       (if
