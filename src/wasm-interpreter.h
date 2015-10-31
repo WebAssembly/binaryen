@@ -17,7 +17,7 @@ public:
   typedef std::vector<Literal> LiteralList;
 
   struct ExternalInterface {
-    virtual Literal callImport(IString name, LiteralList& arguments) = 0;
+    virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
     virtual Literal load(Load* load, Literal ptr) = 0;
     virtual Literal store(Store* store, Literal ptr, Literal value) = 0;
   };
@@ -146,7 +146,7 @@ public:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        return instance.externalInterface->callImport(curr->target, arguments);
+        return instance.externalInterface->callImport(&instance.wasm.imports[curr->target], arguments);
       }
       Flow visitCallIndirect(CallIndirect *curr) override {
         Flow target = visit(curr->target);
