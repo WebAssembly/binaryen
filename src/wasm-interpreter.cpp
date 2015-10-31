@@ -9,7 +9,10 @@ using namespace wasm;
 
 namespace wasm {
 
-// An instance of a WebAssembly module
+//
+// An instance of a WebAssembly module, which can execute it via AST interpretation
+//
+
 class ModuleInstance {
 public:
   typedef std::vector<Literal> LiteralList;
