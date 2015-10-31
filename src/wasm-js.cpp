@@ -61,9 +61,9 @@ extern "C" ModuleInstance* EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
       });
       for (auto& argument : arguments) {
         if (argument.type == i32) {
-          EM_ASM({ Module['tempArguments'].push($0) }, argument.geti32());
+          EM_ASM_({ Module['tempArguments'].push($0) }, argument.geti32());
         } else if (argument.type == f64) {
-          EM_ASM({ Module['tempArguments'].push($0) }, argument.getf64());
+          EM_ASM_({ Module['tempArguments'].push($0) }, argument.getf64());
         } else {
           abort();
         }
