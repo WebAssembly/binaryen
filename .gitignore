@@ -2,4 +2,4 @@ bin/asm2wasm
 bin/wasm.js
 *~
 *.diff
-
+a.*

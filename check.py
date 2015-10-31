@@ -16,7 +16,7 @@ for arg in sys.argv[1:]:
 if not interpreter:
   print '[ no wasm interpreter provided, you should pass one as --interpreter=path/to/interpreter ]'
 
-print '[ checking testcases... ]\n'
+print '[ checking asm2wasm testcases... ]\n'
 
 if len(tests) == 0:
   tests = sorted(os.listdir('test'))
@@ -58,6 +58,17 @@ for asm in tests:
         except Exception, e:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
+
+print '\n[ checking emcc_to_polyfill testcases... (need both emcc and nodejs in your path) ]\n'
+
+print '..normal'
+
+if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
+subprocess.check_call(['./emcc_to_polyfill.sh', os.path.join('test', 'hello_world.c')])
+proc = subprocess.Popen(['nodejs', 'a.normal.js'], stdout=subprocess.PIPE)
+out, err = proc.communicate()
+assert proc.returncode == 0
+assert 'hello, world!' in out, out
 
 print '\n[ success! ]'
 
