@@ -4,6 +4,9 @@
 
 #include "wasm.h"
 
+using namespace cashew;
+using namespace wasm;
+
 namespace wasm {
 
 // An instance of a WebAssembly module
