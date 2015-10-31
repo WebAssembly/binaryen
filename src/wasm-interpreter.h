@@ -4,10 +4,9 @@
 
 #include "wasm.h"
 
-using namespace cashew;
-using namespace wasm;
-
 namespace wasm {
+
+using namespace cashew;
 
 //
 // An instance of a WebAssembly module, which can execute it via AST interpretation
