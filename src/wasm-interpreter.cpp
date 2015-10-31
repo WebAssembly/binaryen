@@ -12,13 +12,19 @@ namespace wasm {
 // An instance of a WebAssembly module
 class ModuleInstance {
 public:
-  ModuleInstance(Module& wasm) : wasm(wasm) {
+  typedef std::vector<Literal> LiteralList;
+
+  struct ExternalInterface {
+    virtual Literal callImport(IString name, LiteralList& arguments) = 0;
+    virtual Literal load(Load* load, Literal ptr) = 0;
+    virtual Literal store(Store* store, Literal ptr, Literal value) = 0;
+  };
+
+  ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
     for (auto function : wasm.functions) {
       functions[function->name] = function;
     }
   }
-
-  typedef std::vector<Literal> LiteralList;
 
   Literal callFunction(IString name) {
     LiteralList empty;
@@ -63,10 +69,11 @@ public:
 
     // Execute a statement
     class ExpressionRunner : public WasmVisitor<Flow> {
+      ModuleInstance& instance;
       FunctionScope& scope;
 
     public:
-      ExpressionRunner(FunctionScope& scope) : scope(scope) {}
+      ExpressionRunner(ModuleInstance& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
 
       Flow visitBlock(Block *curr) override {
         Flow flow;
@@ -124,24 +131,32 @@ public:
           if (flow.breaking()) return flow;
           arguments.push_back(flow.value);
         }
-        return callFunction(curr->target, arguments);
+        return instance.callFunction(curr->target, arguments);
       }
       Flow visitCallImport(CallImport *curr) override {
       }
       Flow visitCallIndirect(CallIndirect *curr) override {
       }
       Flow visitGetLocal(GetLocal *curr) override {
-        return scope[curr->id];
+        return scope.locals[curr->name];
       }
       Flow visitSetLocal(SetLocal *curr) override {
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
-        scope[curr->id] = flow.value;
+        scope.locals[curr->name] = flow.value;
         return flow;
       }
       Flow visitLoad(Load *curr) override {
+        Flow flow = visit(curr->ptr);
+        if (flow.breaking()) return flow;
+        return instance.externalInterface->load(curr, flow.value);
       }
       Flow visitStore(Store *curr) override {
+        Flow ptr = visit(curr->ptr);
+        if (ptr.breaking()) return ptr;
+        Flow value = visit(curr->value);
+        if (value.breaking()) return value;
+        return instance.externalInterface->store(curr, ptr.value, value.value);
       }
       Flow visitConst(Const *curr) override {
         return Flow(curr->value); // heh
@@ -157,19 +172,20 @@ public:
       Flow visitHost(Host *curr) override {
       }
       Flow visitNop(Nop *curr) override {
+        return Flow();
       }
     };
 
     Function *function = functions[name];
     FunctionScope scope(function, arguments);
-    return ExpressionRunner(scope).visit(function->body).value;
+    return ExpressionRunner(*this, scope).visit(function->body).value;
   }
 
 private:
   Module& wasm;
+  ExternalInterface* externalInterface;
 
   std::map<IString, Function*> functions;
-
 };
 
 } // namespace wasm
