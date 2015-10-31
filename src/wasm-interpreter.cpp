@@ -247,8 +247,18 @@ public:
         }
       }
       Flow visitConvert(Convert *curr) override {
+        Flow flow = visit(curr->value);
+        if (flow.breaking()) return flow;
+        Literal value = flow.value;
+        switch (curr->op) { // :-)
+          case ConvertUInt32: return Flow(Literal(double(uint32_t(value.geti32()))));
+          case ConvertSInt32: return Flow(Literal(double(value.geti32())));
+          case TruncSFloat64: return Flow(Literal(int32_t(value.getf64())));
+          default: abort();
+        }
       }
       Flow visitHost(Host *curr) override {
+        abort();
       }
       Flow visitNop(Nop *curr) override {
         return Flow();
