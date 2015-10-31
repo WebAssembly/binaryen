@@ -18,8 +18,13 @@ function () {
   function doubleCompares(x, y) {
     x = +x;
     y = +y;
+    if (x > 0.0) return 0.0;
     if (x < y) return +x;
     return +y;
+  }
+  function intOps() {
+    var x = 0;
+    return !x;
   }
 
   function z() {

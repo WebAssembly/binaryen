@@ -54,6 +54,15 @@
   (func $doubleCompares (param $x f64) (param $y f64) (result f64)
     (block $topmost
       (if
+        (f64.gt
+          (get_local $x)
+          (f64.const 0)
+        )
+        (break $topmost
+          (f64.const 0)
+        )
+      )
+      (if
         (f64.lt
           (get_local $x)
           (get_local $y)
@@ -65,6 +74,13 @@
       (break $topmost
         (get_local $y)
       )
+    )
+  )
+  (func $intOps (result i32)
+    (local $x i32)
+    (i32.eq
+      (get_local $x)
+      (i32.const 0)
     )
   )
   (func $z
