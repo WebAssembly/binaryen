@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "calling emcc"
-emcc $1 -o a.html --separate-asm
+emcc $1 -o a.html --separate-asm -O2 -profiling
 
 # we now have a.asm.js and a.js
 

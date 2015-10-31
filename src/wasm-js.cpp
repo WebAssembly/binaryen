@@ -39,6 +39,8 @@ extern "C" ModuleInstance* EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     end--;
   }
 
+  int debug = 0;
+
   if (debug) std::cerr << "parsing...\n";
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(input);
