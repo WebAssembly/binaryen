@@ -259,8 +259,8 @@ public:
         if (flow.breaking()) return flow;
         Literal right = flow.value;
         switch (curr->op) { // :)
-          case Eq:  return curr->type == i32 ? Flow(Literal(left.geti32() == right.geti32())) : Flow(Literal(left.getf64() == right.getf64()));
-          case Ne:  return curr->type == i32 ? Flow(Literal(left.geti32() != right.geti32())) : Flow(Literal(left.getf64() != right.getf64()));
+          case Eq:  return curr->left->type == i32 ? Flow(Literal(left.geti32() == right.geti32())) : Flow(Literal(left.getf64() == right.getf64()));
+          case Ne:  return curr->left->type == i32 ? Flow(Literal(left.geti32() != right.geti32())) : Flow(Literal(left.getf64() != right.getf64()));
           case LtS: return Flow(Literal(left.geti32() < right.geti32()));
           case LtU: return Flow(Literal(uint32_t(left.geti32()) < uint32_t(right.geti32())));
           case LeS: return Flow(Literal(left.geti32() <= right.geti32()));
