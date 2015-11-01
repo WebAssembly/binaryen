@@ -3,7 +3,7 @@
 set -e
 
 echo "calling emcc"
-emcc -o a.html --separate-asm -O3 -profiling -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=67108864 $@
+emcc -o a.html --separate-asm -profiling -s TOTAL_MEMORY=67108864 $@
 
 # we now have a.asm.js and a.js
 
