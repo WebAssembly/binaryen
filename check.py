@@ -62,7 +62,7 @@ for asm in tests:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
 
-print '\n[ checking emcc_to_polyfill testcases... (need both emcc and nodejs in your path) ]\n'
+print '\n[ checking wasm.js polyfill testcases... (need both emcc and nodejs in your path) ]\n'
 
 for c in tests:
   if c.endswith('.c'):

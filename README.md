@@ -1,8 +1,11 @@
 # wasm-emscripten
 
-This repository contains tools to compile C/C++ to WebAssembly s-expressions, using [Emscripten](http://emscripten.org/), by translating Emscripten's asm.js output into WebAssembly.
+This repository contains tools to compile C/C++ to WebAssembly s-expressions, using [Emscripten](http://emscripten.org/), by translating Emscripten's asm.js output into WebAssembly, as well as a WebAssembly interpreter that can run the translated code.
 
-More specifically, this repository contains an asm.js-to-WebAssembly compiler, **asm2wasm**, built on Emscripten's asm optimizer infrastructure. That can directly compile asm.js to WebAssembly. You can use Emscripten to build C++ into asm.js, and together the two tools let you compile C/C++ to WebAssembly.
+More specifically, this repository contains:
+
+ * **asm2wasm**: An asm.js-to-WebAssembly compiler, built on Emscripten's asm optimizer infrastructure. That can directly compile asm.js to WebAssembly. You can use Emscripten to build C++ into asm.js, and together the two tools let you compile C/C++ to WebAssembly.
+ * **wasm.js**: A polyfill for WebAssembly support in browsers. It receives an asm.js module, parses it using `asm2wasm`, and runs the resulting WebAssembly in a WebAssembly interpreter. It provides what looks like an asm.js module, while running WebAssembly inside.
 
 ## Building asm2wasm
 
@@ -12,9 +15,11 @@ $ ./build.sh
 
 This requires a C++11 compiler.
 
-Note: the default is a debug build.
+Note: you might want to add `-O2` or such.
 
 ## Running
+
+### asm2wasm
 
 Just run
 
@@ -48,9 +53,21 @@ On Linux and Mac you should see pretty colors as in that image. Set `COLORS=0` i
 
 Set `ASM2WASM_DEBUG=1` in the env to see debug info, about asm.js functions as they are parsed, etc. `2` will show even more info.
 
-## Starting from C/C++ Source
+### wasm.js
 
-[Grab Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html), and build the source file into asm.js, for example using
+Run
+
+```
+./emcc_to_polyfill.sh [filename.c ; whatever other emcc flags you want]
+```
+
+That will call `emcc` and then emit `a.normal.js`, a normal asm.js build for comparison purposes, and `a.wasm.js`, which contains the entire polyfill (`asm2wasm` translator + `wasm.js` interpreter).
+
+You will need `emcc`, so you should [grab Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
+
+### C/C++ Source => asm2wasm
+
+Using emcc you can generate asm.js files for direct parsing by `asm2wasm` on the commandline, for example using
 
 ```
 emcc src.cpp -o a.html --separate-asm
@@ -82,6 +99,7 @@ The `check.py` script supports some options:
 
  * If an interpreter is provided, we run the output through it, checking for parse errors.
  * If tests are provided, we run exactly those. If none are provided, we run them all.
+ * `asm2wasm` tests require no dependencies. `wasm.js` tests require `emcc` and `nodejs` in the path.
 
 ## FAQ
 
