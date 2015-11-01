@@ -22,7 +22,7 @@
   wasmJS._free(temp);
 
   // Generate memory XXX TODO get the right size
-  var theBuffer = Module['buffer'] = new ArrayBuffer(16*1024*1024);
+  var theBuffer = Module['buffer'] = new ArrayBuffer(64*1024*1024);
 
   // Information for the instance of the module.
   var info = wasmJS['info'] = {
