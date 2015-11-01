@@ -112,7 +112,7 @@ Same as Emscripten: MIT license.
 ## TODO
 
  * Waiting for switch to stablize on the spec repo; switches are Nop'ed.
- * Waiting for an interpreter with module importing support; imports are Nop'ed.
+ * Reference interpreter lacks module importing support; imports are Nop'ed in native builds, but enabled in emcc builds (so wasm.js works).
  * WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. You can do that with `emcc -s GLOBAL_BASE=1000`. We still need to write the code to copy the globals there.
  * Memory section needs the right size.
 
