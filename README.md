@@ -107,7 +107,7 @@ The `check.py` script supports some options:
 
 Same as Emscripten: MIT license.
 
-(parts of `src/` are synced with `tools/optimizer` in the main emscripten repo, for convenience)
+(parts of `src/` are synced with `tools/optimizer/` in the main emscripten repo, for convenience)
 
 ## TODO
 
