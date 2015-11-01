@@ -13,9 +13,7 @@ More specifically, this repository contains:
 $ ./build.sh
 ```
 
-This requires a C++11 compiler.
-
-Note: you might want to add `-O2` or such.
+`asm2wasm` requires a C++11 compiler. `wasm.js` requires Emscripten (which you can [get here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).
 
 ## Running
 
@@ -62,8 +60,6 @@ Run
 ```
 
 That will call `emcc` and then emit `a.normal.js`, a normal asm.js build for comparison purposes, and `a.wasm.js`, which contains the entire polyfill (`asm2wasm` translator + `wasm.js` interpreter).
-
-You will need `emcc`, so you should [grab Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
 
 ### C/C++ Source => asm2wasm
 
