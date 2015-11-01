@@ -77,7 +77,7 @@ If you want an optimized buid, use
 emcc src.cpp -o a.html --separate-asm -O[2,3,etc.] -s ALIASING_FUNCTION_POINTERS=0
 ```
 
-You need `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow aliased funciton pointers (there is a single table).
+You need `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow aliased function pointers (there is a single table).
 
 ## Testing
 
