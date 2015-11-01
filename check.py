@@ -13,6 +13,11 @@ for arg in sys.argv[1:]:
   else:
     tests.append(arg)
 
+def fail(actual, expected):
+  raise Exception("incorrect output, diff:\n\n%s" % (
+    ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])
+  ))
+
 if not interpreter:
   print '[ no wasm interpreter provided, you should pass one as --interpreter=path/to/interpreter ]'
 
@@ -34,9 +39,7 @@ for asm in tests:
       raise Exception('output .wast file does not exist')
     expected = open(os.path.join('test', wasm)).read()
     if actual != expected:
-      raise Exception("incorrect output, diff:\n\n%s" % (
-        ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])
-      ))
+      fail(actual, expected)
 
     # verify in wasm
     if interpreter:
@@ -61,14 +64,24 @@ for asm in tests:
 
 print '\n[ checking emcc_to_polyfill testcases... (need both emcc and nodejs in your path) ]\n'
 
-print '..normal'
-
-if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
-subprocess.check_call(['./emcc_to_polyfill.sh', os.path.join('test', 'hello_world.c')])
-proc = subprocess.Popen(['nodejs', 'a.normal.js'], stdout=subprocess.PIPE)
-out, err = proc.communicate()
-assert proc.returncode == 0
-assert 'hello, world!' in out, out
+for c in tests:
+  if c.endswith('.c'):
+    print '..', c
+    post = c.replace('.c', '.post.js')
+    try:
+      post = open(os.path.join('test', post)).read()
+    except:
+      post = None
+    expected = open(os.path.join('test', c.replace('.c', '.txt'))).read()
+    if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
+    subprocess.check_call(['./emcc_to_polyfill.sh', os.path.join('test', c)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if post:
+      open('a.normal.js', 'a').write(post)
+    proc = subprocess.Popen(['nodejs', 'a.normal.js'], stdout=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert proc.returncode == 0
+    if out.strip() != expected.strip():
+      fail(out, expected)
 
 print '\n[ success! ]'
 
