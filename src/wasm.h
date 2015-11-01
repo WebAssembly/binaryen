@@ -387,12 +387,11 @@ public:
   Break() : Expression(BreakId) {}
 
   Name name;
-  Expression *condition, *value;
+  Expression *value;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     printOpening(o, "break ") << name;
     incIndent(o, indent);
-    if (condition) printFullLine(o, indent, condition);
     if (value) printFullLine(o, indent, value);
     return decIndent(o, indent);
   }
@@ -1039,7 +1038,6 @@ struct WasmWalker : public WasmVisitor<Expression*> {
       }
       void visitLabel(Label *curr) override {}
       void visitBreak(Break *curr) override {
-        curr->condition = parent.walk(curr->condition);
         curr->value = parent.walk(curr->value);
       }
       void visitSwitch(Switch *curr) override {

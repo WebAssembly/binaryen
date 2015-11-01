@@ -123,11 +123,6 @@ public:
       }
       Flow visitBreak(Break *curr) override {
         NOTE_VISIT("Break");
-        if (curr->condition) {
-          Flow flow = visit(curr->condition);
-          if (flow.breaking()) return flow;
-          if (!flow.value.geti32()) return Flow();
-        }
         if (curr->value) {
           Flow flow = visit(curr->value);
           if (!flow.breaking()) {

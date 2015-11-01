@@ -2300,10 +2300,12 @@
               (i32.const 4)
             )
           )
-          (break $do-in$1
+          (if
             (i32.lt_s
               (get_local $dest)
               (get_local $stop)
+            )
+            (break $do-in$1
             )
           )
         )
@@ -24869,10 +24871,12 @@
               )
               (loop $while-out$0 $while-in$1
                 (block
-                  (break $while-in$1
+                  (if
                     (i32.lt_s
                       (get_local $ptr)
                       (get_local $unaligned)
+                    )
+                    (break $while-in$1
                     )
                   )
                   (block
@@ -24893,10 +24897,12 @@
           )
           (loop $while-out$2 $while-in$3
             (block
-              (break $while-in$3
+              (if
                 (i32.lt_s
                   (get_local $ptr)
                   (get_local $stop4)
+                )
+                (break $while-in$3
                 )
               )
               (block
@@ -24917,10 +24923,12 @@
       )
       (loop $while-out$4 $while-in$5
         (block
-          (break $while-in$5
+          (if
             (i32.lt_s
               (get_local $ptr)
               (get_local $stop)
+            )
+            (break $while-in$5
             )
           )
           (block
@@ -25100,10 +25108,12 @@
         (block
           (loop $while-out$0 $while-in$1
             (block
-              (break $while-in$1
+              (if
                 (i32.and
                   (get_local $dest)
                   (i32.const 3)
+                )
+                (break $while-in$1
                 )
               )
               (block
@@ -25145,10 +25155,12 @@
           )
           (loop $while-out$2 $while-in$3
             (block
-              (break $while-in$3
+              (if
                 (i32.ge_s
                   (get_local $num)
                   (i32.const 4)
+                )
+                (break $while-in$3
                 )
               )
               (block
@@ -25183,10 +25195,12 @@
       )
       (loop $while-out$4 $while-in$5
         (block
-          (break $while-in$5
+          (if
             (i32.gt_s
               (get_local $num)
               (i32.const 0)
+            )
+            (break $while-in$5
             )
           )
           (block

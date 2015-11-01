@@ -4654,10 +4654,12 @@
                         )
                       )
                     )
-                    (break $do-in$29
+                    (if
                       (i32.ne
                         (get_local $i63)
                         (i32.const 0)
+                      )
+                      (break $do-in$29
                       )
                     )
                   )
@@ -6677,7 +6679,7 @@
                       (get_local $i63)
                       (i32.const 7)
                     )
-                    (break $do-in$47
+                    (if
                       (i32.lt_u
                         (i32.shr_u
                           (i32.add
@@ -6690,6 +6692,8 @@
                           (get_local $i86)
                           (i32.const 0)
                         )
+                      )
+                      (break $do-in$47
                       )
                     )
                   )
@@ -7379,10 +7383,12 @@
                         (i32.const 1)
                       )
                     )
-                    (break $do-in$51
+                    (if
                       (i32.ne
                         (get_local $i5)
                         (i32.const 32)
+                      )
+                      (break $do-in$51
                       )
                     )
                   )
@@ -11450,10 +11456,12 @@
         (block
           (loop $while-out$0 $while-in$1
             (block
-              (break $while-in$1
+              (if
                 (i32.and
                   (get_local $i1)
                   (i32.const 3)
+                )
+                (break $while-in$1
                 )
               )
               (block
@@ -11495,10 +11503,12 @@
           )
           (loop $while-out$2 $while-in$3
             (block
-              (break $while-in$3
+              (if
                 (i32.ge_s
                   (get_local $i3)
                   (i32.const 4)
+                )
+                (break $while-in$3
                 )
               )
               (block
@@ -11533,10 +11543,12 @@
       )
       (loop $while-out$4 $while-in$5
         (block
-          (break $while-in$5
+          (if
             (i32.gt_s
               (get_local $i3)
               (i32.const 0)
+            )
+            (break $while-in$5
             )
           )
           (block
@@ -11649,10 +11661,12 @@
               )
               (loop $while-out$0 $while-in$1
                 (block
-                  (break $while-in$1
+                  (if
                     (i32.lt_s
                       (get_local $i1)
                       (get_local $i5)
+                    )
+                    (break $while-in$1
                     )
                   )
                   (block
@@ -11673,10 +11687,12 @@
           )
           (loop $while-out$2 $while-in$3
             (block
-              (break $while-in$3
+              (if
                 (i32.lt_s
                   (get_local $i1)
                   (get_local $i7)
+                )
+                (break $while-in$3
                 )
               )
               (block
@@ -11697,10 +11713,12 @@
       )
       (loop $while-out$4 $while-in$5
         (block
-          (break $while-in$5
+          (if
             (i32.lt_s
               (get_local $i1)
               (get_local $i4)
+            )
+            (break $while-in$5
             )
           )
           (block

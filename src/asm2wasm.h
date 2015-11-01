@@ -836,7 +836,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       needTopmost = true;
       auto ret = allocator.alloc<Break>();
       ret->name = TOPMOST;
-      ret->condition = nullptr;
       ret->value = !!ast[1] ? process(ast[1]) : nullptr;
       return ret;
     } else if (what == BLOCK) {
@@ -845,14 +844,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto ret = allocator.alloc<Break>();
       assert(breakStack.size() > 0);
       ret->name = !!ast[1] ? getBreakLabelName(ast[1]->getIString()) : breakStack.back();
-      ret->condition = nullptr;
       ret->value = nullptr;
       return ret;
     } else if (what == CONTINUE) {
       auto ret = allocator.alloc<Break>();
       assert(continueStack.size() > 0);
       ret->name = !!ast[1] ? getContinueLabelName(ast[1]->getIString()) : continueStack.back();
-      ret->condition = nullptr;
       ret->value = nullptr;
       return ret;
     } else if (what == WHILE) {
@@ -874,12 +871,15 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       if (forever) {
         ret->body = process(ast[2]);
       } else {
-        Break *continueWhile = allocator.alloc<Break>();
-        continueWhile->name = in;
-        continueWhile->condition = process(ast[1]);
-        continueWhile->value = nullptr;
+        Break *breakOut = allocator.alloc<Break>();
+        breakOut->name = in;
+        breakOut->value = nullptr;
+        If *condition = allocator.alloc<If>();
+        condition->condition = process(ast[1]);
+        condition->ifTrue = breakOut;
+        condition->ifFalse = nullptr;
         auto body = allocator.alloc<Block>();
-        body->list.push_back(continueWhile);
+        body->list.push_back(condition);
         body->list.push_back(process(ast[2]));
         ret->body = body;
       }
@@ -923,16 +923,19 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->body = process(ast[2]);
       continueStack.pop_back();
       breakStack.pop_back();
-      Break *continueIf = allocator.alloc<Break>();
-      continueIf->name = in;
-      continueIf->condition = process(ast[1]);
-      continueIf->value = nullptr;
+      Break *continueIn = allocator.alloc<Break>();
+      continueIn->name = in;
+      continueIn->value = nullptr;
+      If *condition = allocator.alloc<If>();
+      condition->condition = process(ast[1]);
+      condition->ifTrue = continueIn;
+      condition->ifFalse = nullptr;
       if (Block *block = ret->body->dyn_cast<Block>()) {
-        block->list.push_back(continueIf);
+        block->list.push_back(condition);
       } else {
         auto newBody = allocator.alloc<Block>();
         newBody->list.push_back(ret->body);
-        newBody->list.push_back(continueIf);
+        newBody->list.push_back(condition);
         ret->body = newBody;
       }
       return ret;
@@ -1054,7 +1057,6 @@ void Asm2WasmBuilder::optimize() {
 
       // look in the child's children to see if there are more uses of this name
       BreakSeeker breakSeeker(curr->name);
-      breakSeeker.walk(child->condition);
       breakSeeker.walk(child->value);
       if (breakSeeker.found == 0) return child->value;
 
