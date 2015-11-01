@@ -107,15 +107,12 @@ The `check.py` script supports some options:
 
 Same as Emscripten: MIT license.
 
-For changes to `src/`, please make pulls into emscripten's `asm2wasm` branch (in `tools/optimizer`; this code is sync'ed with there, for convenience).
+(parts of `src/` are synced with `tools/optimizer` in the main emscripten repo, for convenience)
 
 ## TODO
 
  * Waiting for switch to stablize on the spec repo; switches are Nop'ed.
  * Waiting for an interpreter with module importing support; imports are Nop'ed.
- * Start running the output through WebAssembly interpreters. Right now it is likely wrong in many ways.
  * WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. You can do that with `emcc -s GLOBAL_BASE=1000`. We still need to write the code to copy the globals there.
- * Emscripten emits asm.js and JavaScript, that work together using web APIs to do things like print, render, etc. Need to figure out how to test that.
- * We could probably optimize the emitted WebAssembly.
  * Memory section needs the right size.
 
