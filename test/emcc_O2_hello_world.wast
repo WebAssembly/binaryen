@@ -4659,7 +4659,8 @@
                         (get_local $i63)
                         (i32.const 0)
                       )
-                      (break $do-in$29
+                      (nop)
+                      (break $do-out$28
                       )
                     )
                   )
@@ -6693,7 +6694,8 @@
                           (i32.const 0)
                         )
                       )
-                      (break $do-in$47
+                      (nop)
+                      (break $do-out$46
                       )
                     )
                   )
@@ -7388,7 +7390,8 @@
                         (get_local $i5)
                         (i32.const 32)
                       )
-                      (break $do-in$51
+                      (nop)
+                      (break $do-out$50
                       )
                     )
                   )

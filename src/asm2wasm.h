@@ -923,13 +923,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->body = process(ast[2]);
       continueStack.pop_back();
       breakStack.pop_back();
-      Break *continueIn = allocator.alloc<Break>();
-      continueIn->name = in;
-      continueIn->value = nullptr;
+      Break *breakOut = allocator.alloc<Break>();
+      breakOut->name = out;
+      breakOut->value = nullptr;
       If *condition = allocator.alloc<If>();
       condition->condition = process(ast[1]);
-      condition->ifTrue = continueIn;
-      condition->ifFalse = nullptr;
+      condition->ifTrue = allocator.alloc<Nop>();
+      condition->ifFalse = breakOut;
       if (Block *block = ret->body->dyn_cast<Block>()) {
         block->list.push_back(condition);
       } else {

@@ -79,19 +79,22 @@ for c in tests:
     if os.path.exists(emcc):
       extra = json.loads(open(emcc).read())
     if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
-    subprocess.check_call(['./emcc_to_wasm.js.sh', os.path.join('test', c)] + extra, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if post:
-      open('a.normal.js', 'a').write(post)
-      open('a.wasm.js', 'a').write(post)
-    else:
-      print '     (no post)'
-    for which in ['normal', 'wasm']:
-      print '....', which
-      proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'], stdout=subprocess.PIPE)
-      out, err = proc.communicate()
-      assert proc.returncode == 0
-      if out.strip() != expected.strip():
-        fail(out, expected)
+    for opts in [[], ['-O1'], ['-O3', '--profiling']]:
+      command = ['./emcc_to_wasm.js.sh', os.path.join('test', c)] + opts + extra
+      subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      print '....' + ' '.join(command)
+      if post:
+        open('a.normal.js', 'a').write(post)
+        open('a.wasm.js', 'a').write(post)
+      else:
+        print '     (no post)'
+      for which in ['normal', 'wasm']:
+        print '......', which
+        proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'], stdout=subprocess.PIPE)
+        out, err = proc.communicate()
+        assert proc.returncode == 0
+        if out.strip() != expected.strip():
+          fail(out, expected)
 
 print '\n[ success! ]'
 

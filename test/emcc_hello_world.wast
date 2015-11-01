@@ -2305,7 +2305,8 @@
               (get_local $dest)
               (get_local $stop)
             )
-            (break $do-in$1
+            (nop)
+            (break $do-out$0
             )
           )
         )
