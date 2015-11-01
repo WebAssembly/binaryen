@@ -95,7 +95,19 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
         var base = Pointer_stringify($1);
         var tempArguments = Module['tempArguments'];
         Module['tempArguments'] = null;
-        return Module['info'][mod][base].apply(null, tempArguments);
+        var lookup = Module['info'];
+        if (mod.indexOf('.') < 0) {
+          lookup = (lookup || {})[mod];
+        } else {
+          var parts = mod.split('.');
+          lookup = (lookup || {})[parts[0]];
+          lookup = (lookup || {})[parts[1]];
+        }
+        lookup = (lookup || {})[base];
+        if (!lookup) {
+          abort('bad CallImport to (' + mod + ').' + base);
+        }
+        return lookup.apply(null, tempArguments);
       }, import->module.str, import->base.str));
     }
 

@@ -329,6 +329,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   auto addImport = [&](IString name, Ref imported, WasmType type) {
     assert(imported[0] == DOT);
     Ref module = imported[1];
+    IString moduleName;
     if (module[0] == DOT) {
       // we can have (global.Math).floor; skip the 'Math'
       assert(module[1][0] == NAME);
@@ -343,12 +344,17 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           return;
         }
       }
-      module = module[1];
+      std::string fullName = module[1][1]->getCString();
+      fullName += '.';
+      fullName += + module[2]->getCString();
+      moduleName = IString(fullName.c_str(), false);
+    } else {
+      assert(module[0] == NAME);
+      moduleName = module[1]->getIString();
     }
-    assert(module[0] == NAME);
     Import import;
     import.name = name;
-    import.module = module[1]->getIString();
+    import.module = moduleName;
     import.base = imported[2]->getIString();
     // special-case some asm builtins
     if (import.module == GLOBAL && (import.base == NAN_ || import.base == INFINITY_)) {
