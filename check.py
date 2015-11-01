@@ -78,7 +78,7 @@ for c in tests:
     if os.path.exists(emcc):
       extra = json.loads(open(emcc).read())
     if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
-    subprocess.check_call(['./emcc_to_polyfill.sh', os.path.join('test', c)] + extra, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.check_call(['./emcc_to_wasm.js.sh', os.path.join('test', c)] + extra, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if post:
       open('a.normal.js', 'a').write(post)
       open('a.wasm.js', 'a').write(post)

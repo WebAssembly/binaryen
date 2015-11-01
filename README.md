@@ -57,7 +57,7 @@ Set `ASM2WASM_DEBUG=1` in the env to see debug info, about asm.js functions as t
 Run
 
 ```
-./emcc_to_polyfill.sh [filename.c ; whatever other emcc flags you want]
+./emcc_to_wasm.js.sh [filename.c ; whatever other emcc flags you want]
 ```
 
 That will call `emcc` and then emit `a.normal.js`, a normal asm.js build for comparison purposes, and `a.wasm.js`, which contains the entire polyfill (`asm2wasm` translator + `wasm.js` interpreter).
