@@ -167,8 +167,17 @@ extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
   assert(instance->functions.find(name) != instance->functions.end());
   Function *function = instance->functions[name];
   size_t num = EM_ASM_INT_V({ return Module['tempArguments'].length });
-  assert(num == function->params.size()); // TODO: fake missing/extra args?
-
+  if (num != function->params.size()) {
+    std::cerr << "warning: bad # of arguments to " << target << ": got " << num << ", but expect " << function->params.size() << '\n';
+    abort(); // TODO: fake missing/extra args?
+#if 0
+    if (num > function->params.size()) {
+      num = function->params.size(); // ignore the rest
+    } else {
+      .. fake missing ..
+    }
+#endif
+  }
   ModuleInstance::LiteralList arguments;
   for (size_t i = 0; i < num; i++) {
     WasmType type = function->params[i].type;
