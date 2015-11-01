@@ -920,7 +920,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       continueIf->name = in;
       continueIf->condition = process(ast[1]);
       continueIf->value = nullptr;
-      if (Block *block = dynamic_cast<Block*>(ret->body)) {
+      if (Block *block = ret->body->dyn_cast<Block>()) {
         block->list.push_back(continueIf);
       } else {
         auto newBody = allocator.alloc<Block>();
@@ -1007,7 +1007,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   // body
   function->body = processStatements(body, start);
   if (needTopmost) {
-    Block* topmost = dynamic_cast<Block*>(function->body);
+    Block* topmost = function->body->dyn_cast<Block>();
     // if there's no block there, or there is a block but it already has a name, we need a new block.
     if (!topmost || topmost->name.is()) {
       topmost = allocator.alloc<Block>();
@@ -1031,7 +1031,7 @@ void Asm2WasmBuilder::optimize() {
       // just one element; maybe we can return just the element
       if (curr->name.isNull()) return curr->list[0];
       // we might be broken to, but if it's a trivial singleton child break, we can optimize here as well
-      Break *child = dynamic_cast<Break*>(curr->list[0]);
+      Break *child = curr->list[0]->dyn_cast<Break>();
       if (!child || child->name != curr->name || !child->value) return curr;
 
       struct BreakSeeker : public WasmWalker {
