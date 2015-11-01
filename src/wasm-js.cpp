@@ -18,7 +18,7 @@ using namespace wasm;
 ModuleInstance* instance = nullptr;
 
 // receives asm.js code, parses into wasm and returns an instance handle.
-// this creates a module, an external interface, and a module instance,
+// this creates a module, an external interface, a builder, and a module instance,
 // all of which are then the responsibility of the caller to free.
 // note: this modifies the input.
 extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
@@ -52,11 +52,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
   Module* wasm = new Module();
 
   if (debug) std::cerr << "wasming...\n";
-  Asm2WasmBuilder asm2wasm(*wasm);
-  asm2wasm.processAsm(asmjs);
+  Asm2WasmBuilder* asm2wasm = new Asm2WasmBuilder(*wasm);
+  asm2wasm->processAsm(asmjs);
 
   if (debug) std::cerr << "optimizing...\n";
-  asm2wasm.optimize();
+  asm2wasm->optimize();
 
   //std::cerr << *wasm << '\n';
 
