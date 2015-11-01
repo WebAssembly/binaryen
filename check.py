@@ -78,15 +78,17 @@ for c in tests:
     if os.path.exists(emcc):
       extra = json.loads(open(emcc).read())
     if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
-    subprocess.check_call(['./emcc_to_polyfill.sh', os.path.join('test', c)] + extra)
+    subprocess.check_call(['./emcc_to_polyfill.sh', os.path.join('test', c)] + extra, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if post:
       open('a.normal.js', 'a').write(post)
       open('a.wasm.js', 'a').write(post)
-    proc = subprocess.Popen(['nodejs', 'a.normal.js'], stdout=subprocess.PIPE)
-    out, err = proc.communicate()
-    assert proc.returncode == 0
-    if out.strip() != expected.strip():
-      fail(out, expected)
+    for which in ['normal', 'wasm']:
+      print '....', which
+      proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'], stdout=subprocess.PIPE)
+      out, err = proc.communicate()
+      assert proc.returncode == 0
+      if out.strip() != expected.strip():
+        fail(out, expected)
 
 print '\n[ success! ]'
 

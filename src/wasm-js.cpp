@@ -58,9 +58,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
   if (debug) std::cerr << "optimizing...\n";
   asm2wasm.optimize();
 
-#ifdef WASM_INTERPRETER_DEBUG
-  std::cerr << *wasm << '\n';
-#endif
+  //std::cerr << *wasm << '\n';
 
   if (debug) std::cerr << "generating exports...\n";
   EM_ASM({

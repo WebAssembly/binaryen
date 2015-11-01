@@ -226,7 +226,7 @@ public:
         Flow flow = visit(curr->left);
         if (flow.breaking()) return flow;
         Literal left = flow.value;
-        flow = visit(curr->left);
+        flow = visit(curr->right);
         if (flow.breaking()) return flow;
         Literal right = flow.value;
         switch (curr->op) { // lmao
@@ -255,7 +255,7 @@ public:
         Flow flow = visit(curr->left);
         if (flow.breaking()) return flow;
         Literal left = flow.value;
-        flow = visit(curr->left);
+        flow = visit(curr->right);
         if (flow.breaking()) return flow;
         Literal right = flow.value;
         switch (curr->op) { // :)
