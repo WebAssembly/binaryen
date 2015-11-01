@@ -8,17 +8,20 @@ Module.print(Module._clz(8));
 // binary
 function testBinary(name) {
   Module.print(name);
-  Module.print(Module['_' + name](0, 0));
-  Module.print(Module['_' + name](0, 1));
-  Module.print(Module['_' + name](1, 0));
-  Module.print(Module['_' + name](1, 1));
-  Module.print(Module['_' + name](5, 6));
-  Module.print(Module['_' + name](6, 5));
-  Module.print(Module['_' + name](101, -12));
-  Module.print(Module['_' + name](-12, 101));
-  Module.print(Module['_' + name](-1, 5));
-  Module.print(Module['_' + name](5, -1));
-  Module.print(Module['_' + name](-1, -1));
+  function doTest(x, y) {
+    Module.print('  ' + [x, y] + ' ==> ' + Module['_' + name](x, y));
+  }
+  doTest(0, 0);
+  doTest(0, 1);
+  doTest(1, 0);
+  doTest(1, 1);
+  doTest(5, 6);
+  doTest(6, 5);
+  doTest(101, -12);
+  doTest(-12, 101);
+  doTest(-1, 5);
+  doTest(5, -1);
+  doTest(-1, -1);
 }
 testBinary('add');
 testBinary('sub');
