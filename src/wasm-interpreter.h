@@ -233,10 +233,10 @@ public:
           case Add:      return curr->type == i32 ? Flow(Literal(left.geti32() + right.geti32())) : Flow(Literal(left.getf64() + right.getf64()));
           case Sub:      return curr->type == i32 ? Flow(Literal(left.geti32() - right.geti32())) : Flow(Literal(left.getf64() - right.getf64()));
           case Mul:      return curr->type == i32 ? Flow(Literal(left.geti32() * right.geti32())) : Flow(Literal(left.getf64() * right.getf64()));
-          case DivS:     return Flow(Literal(left.geti32() + right.geti32()));
-          case DivU:     return Flow(Literal(int32_t(uint32_t(left.geti32()) + uint32_t(right.geti32()))));
+          case DivS:     return Flow(Literal(left.geti32() / right.geti32()));
+          case DivU:     return Flow(Literal(int32_t(uint32_t(left.geti32()) / uint32_t(right.geti32()))));
           case RemS:     return Flow(Literal(left.geti32() % right.geti32()));
-          case RemU:     return Flow(Literal(int32_t(uint32_t(left.geti32()) + uint32_t(right.geti32()))));
+          case RemU:     return Flow(Literal(int32_t(uint32_t(left.geti32()) % uint32_t(right.geti32()))));
           case And:      return Flow(Literal(left.geti32() & right.geti32()));
           case Or:       return Flow(Literal(left.geti32() | right.geti32()));
           case Xor:      return Flow(Literal(left.geti32() ^ right.geti32()));
