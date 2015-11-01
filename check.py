@@ -77,6 +77,7 @@ for c in tests:
     subprocess.check_call(['./emcc_to_polyfill.sh', os.path.join('test', c)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if post:
       open('a.normal.js', 'a').write(post)
+      open('a.wasm.js', 'a').write(post)
     proc = subprocess.Popen(['nodejs', 'a.normal.js'], stdout=subprocess.PIPE)
     out, err = proc.communicate()
     assert proc.returncode == 0
