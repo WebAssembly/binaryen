@@ -73,9 +73,7 @@
           (f64.const 5.6)
         )
       )
-      (break $topmost
-        (f64.const 1.2)
-      )
+      (f64.const 1.2)
     )
   )
   (func $doubleCompares (param $x f64) (param $y f64) (result f64)
@@ -119,9 +117,7 @@
           (get_local $x)
         )
       )
-      (break $topmost
-        (get_local $y)
-      )
+      (get_local $y)
     )
   )
   (func $intOps (result i32)

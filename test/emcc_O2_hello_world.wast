@@ -7555,9 +7555,7 @@
       (set_local $i13
         (i32.const 0)
       )
-      (break $topmost
-        (get_local $i13)
-      )
+      (get_local $i13)
     )
   )
   (func $_free (param $i1 i32)
@@ -10410,9 +10408,7 @@
         (i32.const 8)
         (get_local $i4)
       )
-      (break $topmost
-        (get_local $i24)
-      )
+      (get_local $i24)
     )
   )
   (func $___fwritex (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
@@ -10685,9 +10681,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $i8)
-      )
+      (get_local $i8)
     )
   )
   (func $_fflush (param $i1 i32) (result i32)
@@ -10886,9 +10880,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $i2)
-      )
+      (get_local $i2)
     )
   )
   (func $_strlen (param $i1 i32) (result i32)
@@ -11091,11 +11083,9 @@
           )
         )
       )
-      (break $topmost
-        (i32.sub
-          (get_local $i7)
-          (get_local $i2)
-        )
+      (i32.sub
+        (get_local $i7)
+        (get_local $i2)
       )
     )
   )
@@ -11282,9 +11272,7 @@
         (i32.const 8)
         (get_local $i3)
       )
-      (break $topmost
-        (get_local $i10)
-      )
+      (get_local $i10)
     )
   )
   (func $___fflush_unlocked (param $i1 i32) (result i32)
@@ -11425,9 +11413,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $i4)
-      )
+      (get_local $i4)
     )
   )
   (func $_memcpy (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
@@ -11582,9 +11568,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $i4)
-      )
+      (get_local $i4)
     )
   )
   (func $runPostSets
@@ -11738,11 +11722,9 @@
           )
         )
       )
-      (break $topmost
-        (i32.sub
-          (get_local $i1)
-          (get_local $i3)
-        )
+      (i32.sub
+        (get_local $i1)
+        (get_local $i3)
       )
     )
   )
@@ -11870,14 +11852,12 @@
           (get_local $i2)
         )
       )
-      (break $topmost
-        (i32.shr_s
-          (i32.shl
-            (get_local $i4)
-            (i32.const 31)
-          )
+      (i32.shr_s
+        (i32.shl
+          (get_local $i4)
           (i32.const 31)
         )
+        (i32.const 31)
       )
     )
   )
@@ -11973,9 +11953,7 @@
         (i32.const 8)
         (get_local $i4)
       )
-      (break $topmost
-        (get_local $i7)
-      )
+      (get_local $i7)
     )
   )
   (func $___towrite (param $i1 i32) (result i32)
@@ -12086,9 +12064,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $i4)
-      )
+      (get_local $i4)
     )
   )
   (func $_fwrite (param $i1 i32) (param $i2 i32) (param $i3 i32) (param $i4 i32) (result i32)
@@ -12174,9 +12150,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $i9)
-      )
+      (get_local $i9)
     )
   )
   (func $___stdout_write (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
@@ -12275,9 +12249,7 @@
         (i32.const 8)
         (get_local $i4)
       )
-      (break $topmost
-        (get_local $i5)
-      )
+      (get_local $i5)
     )
   )
   (func $copyTempDouble (param $i1 i32)
@@ -12429,9 +12401,7 @@
         (i32.const 8)
         (get_local $i2)
       )
-      (break $topmost
-        (get_local $i1)
-      )
+      (get_local $i1)
     )
   )
   (func $copyTempFloat (param $i1 i32)
@@ -12515,9 +12485,7 @@
           (get_local $i1)
         )
       )
-      (break $topmost
-        (get_local $i2)
-      )
+      (get_local $i2)
     )
   )
   (func $dynCall_iiii (param $i1 i32) (param $i2 i32) (param $i3 i32) (param $i4 i32) (result i32)
@@ -12557,9 +12525,7 @@
           (i32.const -16)
         )
       )
-      (break $topmost
-        (get_local $i2)
-      )
+      (get_local $i2)
     )
   )
   (func $___errno_location (result i32)
@@ -12584,9 +12550,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $i1)
-      )
+      (get_local $i1)
     )
   )
   (func $setThrew (param $i1 i32) (param $i2 i32)
@@ -12669,9 +12633,7 @@
   (func $b1 (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
     (block $topmost
       (nop)
-      (break $topmost
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $stackRestore (param $i1 i32)
@@ -12689,9 +12651,7 @@
   (func $b0 (param $i1 i32) (result i32)
     (block $topmost
       (nop)
-      (break $topmost
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $___unlockfile (param $i1 i32)
@@ -12713,9 +12673,7 @@
       (call $_puts
         (i32.const 672)
       )
-      (break $topmost
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $stackSave (result i32)

@@ -1033,11 +1033,18 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 }
 
 void Asm2WasmBuilder::optimize() {
-  struct BlockRemover : public WasmWalker {
-    BlockRemover() : WasmWalker(nullptr) {}
+  struct BlockBreakOptimizer : public WasmWalker {
+    BlockBreakOptimizer() : WasmWalker(nullptr) {}
 
     Expression* visitBlock(Block *curr) override {
-      if (curr->list.size() != 1) return curr;
+      if (curr->list.size() > 1) {
+        // we can't remove the block, but if it ends in a break on this very block, then just put the value there
+        Break *last = curr->list[curr->list.size()-1]->dyn_cast<Break>();
+        if (last && last->value && last->name == curr->name) {
+          curr->list[curr->list.size()-1] = last->value;
+        }
+        return curr;
+      }
       // just one element; maybe we can return just the element
       if (curr->name.isNull()) return curr->list[0];
       // we might be broken to, but if it's a trivial singleton child break, we can optimize here as well
@@ -1064,9 +1071,9 @@ void Asm2WasmBuilder::optimize() {
     }
   };
 
-  BlockRemover blockRemover;
+  BlockBreakOptimizer blockBreakOptimizer;
   for (auto function : wasm.functions) {
-    blockRemover.startWalk(function);
+    blockBreakOptimizer.startWalk(function);
   }
 }
 

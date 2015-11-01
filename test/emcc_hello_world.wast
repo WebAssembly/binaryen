@@ -66,9 +66,7 @@
         )
         (nop)
       )
-      (break $topmost
-        (get_local $ret)
-      )
+      (get_local $ret)
     )
   )
   (func $stackSave (result i32)
@@ -334,9 +332,7 @@
         (i32.const 8)
         (get_local $sp)
       )
-      (break $topmost
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $_frexp (param $$x f64) (param $$e i32) (result f64)
@@ -407,9 +403,7 @@
         )
       )
       (nop)
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $_frexpl (param $$x f64) (param $$e i32) (result f64)
@@ -428,9 +422,7 @@
           (get_local $$e)
         )
       )
-      (break $topmost
-        (get_local $$call)
-      )
+      (get_local $$call)
     )
   )
   (func $_strerror (param $$e i32) (result i32)
@@ -655,9 +647,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $$s$0$lcssa)
-      )
+      (get_local $$s$0$lcssa)
     )
   )
   (func $___errno_location (result i32)
@@ -711,9 +701,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $___stdio_close (param $$f i32) (result i32)
@@ -780,9 +768,7 @@
         (i32.const 8)
         (get_local $sp)
       )
-      (break $topmost
-        (get_local $$call1)
-      )
+      (get_local $$call1)
     )
   )
   (func $___stdout_write (param $$f i32) (param $$buf i32) (param $$len i32) (result i32)
@@ -942,9 +928,7 @@
         (i32.const 8)
         (get_local $sp)
       )
-      (break $topmost
-        (get_local $$call3)
-      )
+      (get_local $$call3)
     )
   )
   (func $___stdio_seek (param $$f i32) (param $$off i32) (param $$whence i32) (result i32)
@@ -1093,9 +1077,7 @@
         (i32.const 8)
         (get_local $sp)
       )
-      (break $topmost
-        (get_local $$1)
-      )
+      (get_local $$1)
     )
   )
   (func $_fflush (param $$f i32) (result i32)
@@ -1428,9 +1410,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $_printf (param $$fmt i32) (param $$varargs i32) (result i32)
@@ -1488,9 +1468,7 @@
         (i32.const 8)
         (get_local $sp)
       )
-      (break $topmost
-        (get_local $$call)
-      )
+      (get_local $$call)
     )
   )
   (func $___lockfile (param $$f i32) (result i32)
@@ -1502,9 +1480,7 @@
           (i32.const 8)
         )
       )
-      (break $topmost
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $___unlockfile (param $$f i32)
@@ -2179,9 +2155,7 @@
         (i32.const 8)
         (get_local $sp)
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $_vfprintf (param $$f i32) (param $$fmt i32) (param $$ap i32) (result i32)
@@ -2653,9 +2627,7 @@
         (i32.const 8)
         (get_local $sp)
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $___fwritex (param $$s i32) (param $$l i32) (param $$f i32) (result i32)
@@ -3059,9 +3031,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $___towrite (param $$f i32) (result i32)
@@ -3258,9 +3228,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $_wcrtomb (param $$s i32) (param $$wc i32) (param $$st i32) (result i32)
@@ -3712,9 +3680,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $_wctomb (param $$s i32) (param $$wc i32) (result i32)
@@ -3753,9 +3719,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $_memchr (param $$src i32) (param $$c i32) (param $$n i32) (result i32)
@@ -4356,9 +4320,7 @@
           (i32.const 0)
         )
       )
-      (break $topmost
-        (get_local $$cond)
-      )
+      (get_local $$cond)
     )
   )
   (func $___syscall_ret (param $$r i32) (result i32)
@@ -4407,9 +4369,7 @@
           (get_local $$r)
         )
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $___fflush_unlocked (param $$f i32) (result i32)
@@ -4626,9 +4586,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $_cleanup (param $$p i32)
@@ -9180,9 +9138,7 @@
         (i32.const 8)
         (get_local $sp)
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $_pop_arg_336 (param $$arg i32) (param $$type i32) (param $$ap i32)
@@ -9724,9 +9680,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $$s$addr$1$lcssa)
-      )
+      (get_local $$s$addr$1$lcssa)
     )
   )
   (func $_pad (param $$f i32) (param $$c i32) (param $$w i32) (param $$l i32) (param $$fl i32)
@@ -21172,9 +21126,7 @@
       (set_local $$retval$0
         (i32.const 0)
       )
-      (break $topmost
-        (get_local $$retval$0)
-      )
+      (get_local $$retval$0)
     )
   )
   (func $_free (param $$mem i32)
@@ -24742,14 +24694,12 @@
           (i32.const 0)
         )
       )
-      (break $topmost
-        (block
-          (i32.store align=4
-            (i32.const 168)
-            (get_local $h)
-          )
-          (get_local $l)
+      (block
+        (i32.store align=4
+          (i32.const 168)
+          (get_local $h)
         )
+        (get_local $l)
       )
     )
   )
@@ -24787,14 +24737,12 @@
           (i32.const 0)
         )
       )
-      (break $topmost
-        (block
-          (i32.store align=4
-            (i32.const 168)
-            (get_local $h)
-          )
-          (get_local $l)
+      (block
+        (i32.store align=4
+          (i32.const 168)
+          (get_local $h)
         )
+        (get_local $l)
       )
     )
   )
@@ -24946,11 +24894,9 @@
           )
         )
       )
-      (break $topmost
-        (i32.sub
-          (get_local $ptr)
-          (get_local $num)
-        )
+      (i32.sub
+        (get_local $ptr)
+        (get_local $num)
       )
     )
   )
@@ -25003,13 +24949,11 @@
         (i32.const 168)
         (i32.const 0)
       )
-      (break $topmost
-        (i32.shr_u
-          (get_local $high)
-          (i32.sub
-            (get_local $bits)
-            (i32.const 32)
-          )
+      (i32.shr_u
+        (get_local $high)
+        (i32.sub
+          (get_local $bits)
+          (i32.const 32)
         )
       )
     )
@@ -25075,9 +25019,7 @@
           )
         )
       )
-      (break $topmost
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $_memcpy (param $dest i32) (param $src i32) (param $num i32) (result i32)
@@ -25232,9 +25174,7 @@
           )
         )
       )
-      (break $topmost
-        (get_local $ret)
-      )
+      (get_local $ret)
     )
   )
   (func $_bitshift64Ashr (param $low i32) (param $high i32) (param $bits i32) (result i32)
@@ -25293,13 +25233,11 @@
           (i32.const 0)
         )
       )
-      (break $topmost
-        (i32.shr_s
-          (get_local $high)
-          (i32.sub
-            (get_local $bits)
-            (i32.const 32)
-          )
+      (i32.shr_s
+        (get_local $high)
+        (i32.sub
+          (get_local $bits)
+          (i32.const 32)
         )
       )
     )
@@ -25385,21 +25323,19 @@
           )
         )
       )
-      (break $topmost
-        (i32.add
-          (i32.load8_s align=1
-            (i32.add
-              (i32.load align=4
-                (i32.const 40)
-              )
-              (i32.shr_u
-                (get_local $x)
-                (i32.const 24)
-              )
+      (i32.add
+        (i32.load8_s align=1
+          (i32.add
+            (i32.load align=4
+              (i32.const 40)
+            )
+            (i32.shr_u
+              (get_local $x)
+              (i32.const 24)
             )
           )
-          (i32.const 24)
         )
+        (i32.const 24)
       )
     )
   )
@@ -25460,47 +25396,45 @@
           (get_local $$1)
         )
       )
-      (break $topmost
-        (block
-          (i32.store align=4
-            (i32.const 168)
+      (block
+        (i32.store align=4
+          (i32.const 168)
+          (i32.add
             (i32.add
-              (i32.add
-                (i32.shr_u
-                  (get_local $$8)
-                  (i32.const 16)
-                )
-                (i32.mul
-                  (get_local $$11)
-                  (get_local $$6)
-                )
-              )
               (i32.shr_u
-                (i32.add
-                  (i32.and
-                    (get_local $$8)
-                    (i32.const 65535)
-                  )
-                  (get_local $$12)
-                )
+                (get_local $$8)
                 (i32.const 16)
+              )
+              (i32.mul
+                (get_local $$11)
+                (get_local $$6)
               )
             )
-          )
-          (i32.or
-            (i32.const 0)
-            (i32.or
-              (i32.shl
-                (i32.add
+            (i32.shr_u
+              (i32.add
+                (i32.and
                   (get_local $$8)
-                  (get_local $$12)
+                  (i32.const 65535)
                 )
-                (i32.const 16)
+                (get_local $$12)
               )
-              (i32.and
-                (get_local $$3)
-                (i32.const 65535)
+              (i32.const 16)
+            )
+          )
+        )
+        (i32.or
+          (i32.const 0)
+          (i32.or
+            (i32.shl
+              (i32.add
+                (get_local $$8)
+                (get_local $$12)
               )
+              (i32.const 16)
+            )
+            (i32.and
+              (get_local $$3)
+              (i32.const 65535)
             )
           )
         )
@@ -25682,9 +25616,7 @@
           (get_local $$7$1)
         )
       )
-      (break $topmost
-        (get_local $$10$0)
-      )
+      (get_local $$10$0)
     )
   )
   (func $___remdi3 (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
@@ -25879,14 +25811,12 @@
         (i32.const 8)
         (get_local $__stackBase__)
       )
-      (break $topmost
-        (block
-          (i32.store align=4
-            (i32.const 168)
-            (get_local $$10$1)
-          )
-          (get_local $$10$0)
+      (block
+        (i32.store align=4
+          (i32.const 168)
+          (get_local $$10$1)
         )
+        (get_local $$10$0)
       )
     )
   )
@@ -25920,33 +25850,31 @@
           (get_local $$y_sroa_0_0_extract_trunc)
         )
       )
-      (break $topmost
-        (block
-          (i32.store align=4
-            (i32.const 168)
-            (i32.or
+      (block
+        (i32.store align=4
+          (i32.const 168)
+          (i32.or
+            (i32.add
               (i32.add
-                (i32.add
-                  (i32.mul
-                    (get_local $$b$1)
-                    (get_local $$x_sroa_0_0_extract_trunc)
-                  )
-                  (get_local $$2)
+                (i32.mul
+                  (get_local $$b$1)
+                  (get_local $$x_sroa_0_0_extract_trunc)
                 )
-                (get_local $$1$1)
+                (get_local $$2)
               )
-              (i32.and
-                (get_local $$1$1)
-                (i32.const 0)
-              )
+              (get_local $$1$1)
+            )
+            (i32.and
+              (get_local $$1$1)
+              (i32.const 0)
             )
           )
-          (i32.or
-            (i32.const 0)
-            (i32.and
-              (get_local $$1$0)
-              (i32.const -1)
-            )
+        )
+        (i32.or
+          (i32.const 0)
+          (i32.and
+            (get_local $$1$0)
+            (i32.const -1)
           )
         )
       )
@@ -25964,9 +25892,7 @@
           (i32.const 0)
         )
       )
-      (break $topmost
-        (get_local $$1$0)
-      )
+      (get_local $$1$0)
     )
   )
   (func $___uremdi3 (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
@@ -26001,20 +25927,18 @@
         (i32.const 8)
         (get_local $__stackBase__)
       )
-      (break $topmost
-        (block
-          (i32.store align=4
-            (i32.const 168)
-            (i32.load align=4
-              (i32.add
-                (get_local $$rem)
-                (i32.const 4)
-              )
+      (block
+        (i32.store align=4
+          (i32.const 168)
+          (i32.load align=4
+            (i32.add
+              (get_local $$rem)
+              (i32.const 4)
             )
           )
-          (i32.load align=4
-            (get_local $$rem)
-          )
+        )
+        (i32.load align=4
+          (get_local $$rem)
         )
       )
     )
@@ -27350,14 +27274,12 @@
           (get_local $$carry_0_lcssa$0)
         )
       )
-      (break $topmost
-        (block
-          (i32.store align=4
-            (i32.const 168)
-            (get_local $$_0$1)
-          )
-          (get_local $$_0$0)
+      (block
+        (i32.store align=4
+          (i32.const 168)
+          (get_local $$_0$1)
         )
+        (get_local $$_0$0)
       )
     )
   )
@@ -27384,17 +27306,13 @@
   (func $b0 (param $p0 i32) (result i32)
     (block $topmost
       (nop)
-      (break $topmost
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $b1 (param $p0 i32) (param $p1 i32) (param $p2 i32) (result i32)
     (block $topmost
       (nop)
-      (break $topmost
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $b2 (param $p0 i32)
