@@ -273,11 +273,11 @@ public:
     return ExpressionRunner(*this, scope).visit(function->body).value;
   }
 
+  std::map<IString, Function*> functions;
+
 private:
   Module& wasm;
   ExternalInterface* externalInterface;
-
-  std::map<IString, Function*> functions;
 };
 
 } // namespace wasm

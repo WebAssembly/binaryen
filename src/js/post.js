@@ -18,14 +18,14 @@
 
   var temp = wasmJS._malloc(code.length + 1);
   wasmJS.writeAsciiToMemory(code, temp);
-  var instance = wasmJS._load_asm(temp);
+  wasmJS._load_asm(temp);
   wasmJS._free(temp);
 
   // Generate memory XXX TODO get the right size
   var theBuffer = Module['buffer'] = new ArrayBuffer(16*1024*1024);
 
   // Information for the instance of the module.
-  var instance = wasmJS['instance'] = {
+  var info = wasmJS['info'] = {
     global: null,
     env: null,
     parent: Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
@@ -35,8 +35,9 @@
   Module['asm'] = function(global, env, buffer) {
     assert(buffer === theBuffer); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
     // write the provided data to a location the wasm instance can get at it.
-    instance.global = global;
-    instance.env = env;
+    info.global = global;
+    info.env = env;
+    return wasmJS['asmExports'];
   };
 })();
 

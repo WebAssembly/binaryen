@@ -15,11 +15,15 @@
 using namespace cashew;
 using namespace wasm;
 
+ModuleInstance* instance = nullptr;
+
 // receives asm.js code, parses into wasm and returns an instance handle.
 // this creates a module, an external interface, and a module instance,
 // all of which are then the responsibility of the caller to free.
 // note: this modifies the input.
-extern "C" ModuleInstance* EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
+extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
+  assert(instance == nullptr); // singleton
+
   // emcc --separate-asm modules look like
   //
   //    Module["asm"] = (function(global, env, buffer) {
@@ -54,7 +58,21 @@ extern "C" ModuleInstance* EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
   if (debug) std::cerr << "optimizing...\n";
   asm2wasm.optimize();
 
-  if (debug) std::cerr << "returning instance.\n";
+  if (debug) std::cerr << "generating exports...\n";
+  EM_ASM({
+    Module['asmExports'] = {};
+  });
+  for (auto& curr : wasm->exports) {
+    EM_ASM_({
+      var name = Pointer_stringify($0);
+      Module['asmExports'][name] = function() {
+        Module['tempArguments'] = Array.prototype.slice.call(arguments);
+        return Module['_call_from_js']($0);
+      };
+    }, curr.name.str);
+  }
+
+  if (debug) std::cerr << "creating instance...\n";
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
     Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
@@ -136,6 +154,32 @@ extern "C" ModuleInstance* EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     }
   };
 
-  return new ModuleInstance(*wasm, new JSExternalInterface());
+  instance = new ModuleInstance(*wasm, new JSExternalInterface());
+}
+
+// Does a call from js into an export of the module.
+extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
+  IString name(target);
+  assert(instance->functions.find(name) != instance->functions.end());
+  Function *function = instance->functions[name];
+  size_t num = EM_ASM_INT_V({ return Module['tempArguments'].length });
+  assert(num == function->params.size()); // TODO: fake missing/extra args?
+
+  ModuleInstance::LiteralList arguments;
+  for (size_t i = 0; i < num; i++) {
+    WasmType type = function->params[i].type;
+    if (type == i32) {
+      arguments.push_back(Literal(EM_ASM_INT({ return Module['tempArguments'][$0] }, i)));
+    } else if (type == f64) {
+      arguments.push_back(Literal(EM_ASM_DOUBLE({ return Module['tempArguments'][$0] }, i)));
+    } else {
+      abort();
+    }
+  }
+
+  Literal ret = instance->callFunction(name, arguments);
+  if (ret.type == i32) return ret.i32;
+  if (ret.type == f64) return ret.f64;
+  abort();
 }
 
