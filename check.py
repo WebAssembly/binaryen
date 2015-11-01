@@ -83,6 +83,8 @@ for c in tests:
     if post:
       open('a.normal.js', 'a').write(post)
       open('a.wasm.js', 'a').write(post)
+    else:
+      print '     (no post)'
     for which in ['normal', 'wasm']:
       print '....', which
       proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'], stdout=subprocess.PIPE)
