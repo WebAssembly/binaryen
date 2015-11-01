@@ -141,15 +141,17 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
           EM_ASM_INT({ Module['info'].parent['HEAP16'][$0] = $1 }, addr, value.geti32());
         } else if (store->bytes == 4) {
           EM_ASM_INT({ Module['info'].parent['HEAP32'][$0] = $1 }, addr, value.geti32());
+        } else {
+          abort();
         }
-        abort();
       } else {
         if (store->bytes == 4) {
           EM_ASM_DOUBLE({ Module['info'].parent['HEAPF32'][$0] = $1 }, addr, value.getf64());
         } else if (store->bytes == 8) {
           EM_ASM_DOUBLE({ Module['info'].parent['HEAPF64'][$0] = $1 }, addr, value.getf64());
+        } else {
+          abort();
         }
-        abort();
       }
     }
   };
