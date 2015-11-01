@@ -65,15 +65,16 @@ for asm in tests:
 print '\n[ checking wasm.js polyfill testcases... (need both emcc and nodejs in your path) ]\n'
 
 for c in tests:
-  if c.endswith('.c'):
+  if c.endswith(('.c', '.cpp')):
     print '..', c
-    post = c.replace('.c', '.post.js')
+    base = c.replace('.cpp', '').replace('.c', '')
+    post = base + '.post.js'
     try:
       post = open(os.path.join('test', post)).read()
     except:
       post = None
-    expected = open(os.path.join('test', c.replace('.c', '.txt'))).read()
-    emcc = os.path.join('test', c.replace('.c', '.emcc'))
+    expected = open(os.path.join('test', base + '.txt')).read()
+    emcc = os.path.join('test', base + '.emcc')
     extra = []
     if os.path.exists(emcc):
       extra = json.loads(open(emcc).read())
