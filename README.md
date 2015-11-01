@@ -86,7 +86,7 @@ You need `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow alias
 ./check.py
 ```
 
-(or `python check.py`) will run `asm2wasm` on the testcases in `test/`, and verify their outputs.
+(or `python check.py`) will run `asm2wasm` and `wasm.js` on the testcases in `test/`, and verify their outputs.
 
 The `check.py` script supports some options:
 
