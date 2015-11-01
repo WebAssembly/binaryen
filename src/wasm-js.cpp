@@ -95,7 +95,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
         var base = Pointer_stringify($1);
         var tempArguments = Module['tempArguments'];
         Module['tempArguments'] = null;
-        return Module['instance'][mod][base].apply(null, tempArguments);
+        return Module['info'][mod][base].apply(null, tempArguments);
       }, import->module.str, import->base.str));
     }
 
