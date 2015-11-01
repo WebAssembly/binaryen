@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, subprocess, difflib
+import os, sys, subprocess, difflib, json
 
 interpreter = None
 tests = []
@@ -73,8 +73,12 @@ for c in tests:
     except:
       post = None
     expected = open(os.path.join('test', c.replace('.c', '.txt'))).read()
+    emcc = os.path.join('test', c.replace('.c', '.emcc'))
+    extra = []
+    if os.path.exists(emcc):
+      extra = json.loads(open(emcc).read())
     if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
-    subprocess.check_call(['./emcc_to_polyfill.sh', os.path.join('test', c)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.check_call(['./emcc_to_polyfill.sh', os.path.join('test', c)] + extra)
     if post:
       open('a.normal.js', 'a').write(post)
       open('a.wasm.js', 'a').write(post)
