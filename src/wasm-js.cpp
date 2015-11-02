@@ -81,6 +81,9 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
     Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
+#ifdef WASM_JS_DEBUG
+      std::cout << "calling import " << import->name.str << '\n';
+#endif
       EM_ASM({
         Module['tempArguments'] = [];
       });
@@ -101,6 +104,9 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
         var lookup = Module['lookupImport'](mod, base);
         return lookup.apply(null, tempArguments);
       }, import->module.str, import->base.str);
+#ifdef WASM_JS_DEBUG
+      std::cout << "calling import returning " << ret << '\n';
+#endif
       switch (import->type.result) {
         case none: return Literal(0);
         case i32: return Literal((int32_t)ret);
@@ -191,6 +197,9 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_mapped_globals() {
 
 // Does a call from js into an export of the module.
 extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
+#ifdef WASM_JS_DEBUG
+  std::cout << "call_from_js " << target << '\n';
+#endif
   IString name(target);
   assert(instance->functions.find(name) != instance->functions.end());
   Function *function = instance->functions[name];
@@ -210,8 +219,10 @@ extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
       abort();
     }
   }
-
   Literal ret = instance->callFunction(name, arguments);
+#ifdef WASM_JS_DEBUG
+  std::cout << "call_from_js returning " << ret << '\n';
+#endif
   if (ret.type == none) return 0;
   if (ret.type == i32) return ret.i32;
   if (ret.type == f32) return ret.f32;
