@@ -72,13 +72,10 @@ emcc src.cpp -o a.html --separate-asm
 
 That will emit `a.html`, `a.js`, and `a.asm.js`. That last file is the asm.js module, which you can pass into `asm2wasm`.
 
-If you want an optimized buid, use
+For basic tests, that command should work, but in general you need a few more arguments to emcc, see emcc's usage in `emcc_to_wasm.js.sh`, specifically
 
-```
-emcc src.cpp -o a.html --separate-asm -O[2,3,etc.] -s ALIASING_FUNCTION_POINTERS=0
-```
-
-You need `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow aliased function pointers (there is a single table).
+ * `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow aliased function pointers (there is a single table).
+ * `GLOBAL_BASE=1000` because WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. With that argument, we reserve the area up to `1000`.
 
 ## Testing
 
@@ -113,6 +110,5 @@ Same as Emscripten: MIT license.
 
  * Waiting for switch to stablize on the spec repo; switches are Nop'ed.
  * Reference interpreter lacks module importing support; imports are Nop'ed in native builds, but enabled in emcc builds (so wasm.js works).
- * WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. You can do that with `emcc -s GLOBAL_BASE=1000`. We still need to write the code to copy the globals there.
  * Memory section needs the right size.
 

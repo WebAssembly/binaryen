@@ -31,12 +31,29 @@
     parent: Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
   };
 
+  wasmJS['lookupImport'] = function(mod, base) {
+    var lookup = info;
+    if (mod.indexOf('.') < 0) {
+      lookup = (lookup || {})[mod];
+    } else {
+      var parts = mod.split('.');
+      lookup = (lookup || {})[parts[0]];
+      lookup = (lookup || {})[parts[1]];
+    }
+    lookup = (lookup || {})[base];
+    if (!lookup) {
+      abort('bad CallImport to (' + mod + ').' + base);
+    }
+    return lookup;
+  }
+
   // The asm.js function, called to "link" the asm.js module.
   Module['asm'] = function(global, env, buffer) {
     assert(buffer === theBuffer); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
     // write the provided data to a location the wasm instance can get at it.
     info.global = global;
     info.env = env;
+    wasmJS['_load_mapped_globals'](); // now that we have global and env, we can ready the provided imported globals, copying them to their mapped locations.
     return wasmJS['asmExports'];
   };
 })();
