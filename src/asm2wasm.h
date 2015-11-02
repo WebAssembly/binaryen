@@ -1031,20 +1031,23 @@ void Asm2WasmBuilder::optimize() {
   struct BlockBreakOptimizer : public WasmWalker {
     BlockBreakOptimizer() : WasmWalker(nullptr) {}
 
-    Expression* visitBlock(Block *curr) override {
+    void visitBlock(Block *curr) override {
       if (curr->list.size() > 1) {
         // we can't remove the block, but if it ends in a break on this very block, then just put the value there
         Break *last = curr->list[curr->list.size()-1]->dyn_cast<Break>();
         if (last && last->value && last->name == curr->name) {
           curr->list[curr->list.size()-1] = last->value;
         }
-        return curr;
+        return;
       }
       // just one element; maybe we can return just the element
-      if (curr->name.isNull()) return curr->list[0];
+      if (curr->name.isNull()) {
+        replaceCurrent(curr->list[0]);
+        return;
+      }
       // we might be broken to, but if it's a trivial singleton child break, we can optimize here as well
       Break *child = curr->list[0]->dyn_cast<Break>();
-      if (!child || child->name != curr->name || !child->value) return curr;
+      if (!child || child->name != curr->name || !child->value) return;
 
       struct BreakSeeker : public WasmWalker {
         IString target; // look for this one
@@ -1052,7 +1055,7 @@ void Asm2WasmBuilder::optimize() {
 
         BreakSeeker(IString target) : target(target), found(false) {}
 
-        Expression* visitBreak(Break *curr) override {
+        void visitBreak(Break *curr) override {
           if (curr->name == target) found++;
         }
       };
@@ -1060,9 +1063,9 @@ void Asm2WasmBuilder::optimize() {
       // look in the child's children to see if there are more uses of this name
       BreakSeeker breakSeeker(curr->name);
       breakSeeker.walk(child->value);
-      if (breakSeeker.found == 0) return child->value;
-
-      return curr; // failed to optimize
+      if (breakSeeker.found == 0) {
+        replaceCurrent(child->value);
+      }
     }
   };
 
