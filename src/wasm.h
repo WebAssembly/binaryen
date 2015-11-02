@@ -332,7 +332,7 @@ public:
 
 class If : public Expression {
 public:
-  If() : Expression(IfId) {}
+  If() : Expression(IfId), ifFalse(nullptr) {}
 
   Expression *condition, *ifTrue, *ifFalse;
 
@@ -384,7 +384,7 @@ public:
 
 class Break : public Expression {
 public:
-  Break() : Expression(BreakId) {}
+  Break() : Expression(BreakId), value(nullptr) {}
 
   Name name;
   Expression *value;
