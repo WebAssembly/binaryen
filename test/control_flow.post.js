@@ -17,4 +17,6 @@ test('loop');
 test('loop_break');
 test('loop_continue');
 test('do_loop');
+test('do_once');
+test('while_forever');
 
