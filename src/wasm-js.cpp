@@ -93,14 +93,21 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
           abort();
         }
       }
-      return Literal(EM_ASM_DOUBLE({
+      double ret = EM_ASM_DOUBLE({
         var mod = Pointer_stringify($0);
         var base = Pointer_stringify($1);
         var tempArguments = Module['tempArguments'];
         Module['tempArguments'] = null;
         var lookup = Module['lookupImport'](mod, base);
         return lookup.apply(null, tempArguments);
-      }, import->module.str, import->base.str));
+      }, import->module.str, import->base.str);
+      switch (import->type.result) {
+        case none: return Literal(0);
+        case i32: return Literal((int32_t)ret);
+        case f32: return Literal((float)ret);
+        case f64: return Literal((double)ret);
+        default: abort();
+      }
     }
 
     Literal load(Load* load, Literal ptr) override {
