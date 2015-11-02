@@ -33,6 +33,10 @@ public:
     return callFunction(name, empty);
   }
 
+#ifdef WASM_INTERPRETER_DEBUG
+  int indent = 0;
+#endif
+
   Literal callFunction(IString name, LiteralList& arguments) {
 
     class FunctionScope {
@@ -71,9 +75,29 @@ public:
     };
 
 #ifdef WASM_INTERPRETER_DEBUG
-  #define NOTE_VISIT(x) std::cout << "visit " << x << '\n';
+    struct IndentHandler {
+      int& indent;
+      const char *name;
+      IndentHandler(int& indent, const char *name) : indent(indent), name(name) {
+        doIndent(std::cout, indent);
+        std::cout << "visit " << name << '\n';
+        indent++;
+      }
+      ~IndentHandler() {
+        indent--;
+        doIndent(std::cout, indent);
+        std::cout << "exit " << name << '\n';
+      }
+    };
+    #define NOTE_ENTER(x) IndentHandler indentHandler(instance.indent, x);
+    #define NOTE_EVAL() { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '\n'; }
+    #define NOTE_EVAL1(p0) { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '('  << p0 << ")\n"; }
+    #define NOTE_EVAL2(p0, p1) { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
 #else
-  #define NOTE_VISIT(x)
+    #define NOTE_ENTER(x)
+    #define NOTE_EVAL()
+    #define NOTE_EVAL1(p0)
+    #define NOTE_EVAL2(p0, p1)
 #endif
 
     // Execute a statement
@@ -85,7 +109,7 @@ public:
       ExpressionRunner(ModuleInstance& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
 
       Flow visitBlock(Block *curr) override {
-        NOTE_VISIT("Block");
+        NOTE_ENTER("Block");
         Flow flow;
         for (auto expression : curr->list) {
           flow = visit(expression);
@@ -97,15 +121,16 @@ public:
         return flow;
       }
       Flow visitIf(If *curr) override {
-        NOTE_VISIT("If");
+        NOTE_ENTER("If");
         Flow flow = visit(curr->condition);
         if (flow.breaking()) return flow;
+        NOTE_EVAL1(flow.value);
         if (flow.value.geti32()) return visit(curr->ifTrue);
         if (curr->ifFalse) return visit(curr->ifFalse);
         return Flow();
       }
       Flow visitLoop(Loop *curr) override {
-        NOTE_VISIT("Loop");
+        NOTE_ENTER("Loop");
         while (1) {
           Flow flow = visit(curr->body);
           if (flow.breaking()) {
@@ -116,13 +141,13 @@ public:
         }
       }
       Flow visitLabel(Label *curr) override {
-        NOTE_VISIT("Label");
+        NOTE_ENTER("Label");
         Flow flow = visit(curr->body);
         flow.clearIf(curr->name);
         return flow;
       }
       Flow visitBreak(Break *curr) override {
-        NOTE_VISIT("Break");
+        NOTE_ENTER("Break");
         if (curr->value) {
           Flow flow = visit(curr->value);
           if (!flow.breaking()) {
@@ -133,7 +158,7 @@ public:
         return Flow(curr->name);
       }
       Flow visitSwitch(Switch *curr) override {
-        NOTE_VISIT("Switch");
+        NOTE_ENTER("Switch");
         abort();
       }
 
@@ -148,21 +173,21 @@ public:
       }
 
       Flow visitCall(Call *curr) override {
-        NOTE_VISIT("Call");
+        NOTE_ENTER("Call");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
         return instance.callFunction(curr->target, arguments);
       }
       Flow visitCallImport(CallImport *curr) override {
-        NOTE_VISIT("CallImport");
+        NOTE_ENTER("CallImport");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
         return instance.externalInterface->callImport(&instance.wasm.imports[curr->target], arguments);
       }
       Flow visitCallIndirect(CallIndirect *curr) override {
-        NOTE_VISIT("CallIndirect");
+        NOTE_ENTER("CallIndirect");
         Flow target = visit(curr->target);
         if (target.breaking()) return target;
         size_t index = target.value.geti32();
@@ -175,24 +200,25 @@ public:
       }
 
       Flow visitGetLocal(GetLocal *curr) override {
-        NOTE_VISIT("GetLocal");
+        NOTE_ENTER("GetLocal");
+        NOTE_EVAL1(scope.locals[curr->name]);
         return scope.locals[curr->name];
       }
       Flow visitSetLocal(SetLocal *curr) override {
-        NOTE_VISIT("SetLocal");
+        NOTE_ENTER("SetLocal");
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
         scope.locals[curr->name] = flow.value;
         return flow;
       }
       Flow visitLoad(Load *curr) override {
-        NOTE_VISIT("Load");
+        NOTE_ENTER("Load");
         Flow flow = visit(curr->ptr);
         if (flow.breaking()) return flow;
         return instance.externalInterface->load(curr, flow.value);
       }
       Flow visitStore(Store *curr) override {
-        NOTE_VISIT("Store");
+        NOTE_ENTER("Store");
         Flow ptr = visit(curr->ptr);
         if (ptr.breaking()) return ptr;
         Flow value = visit(curr->value);
@@ -201,14 +227,16 @@ public:
         return value;
       }
       Flow visitConst(Const *curr) override {
-        NOTE_VISIT("Const");
+        NOTE_ENTER("Const");
+        NOTE_EVAL1(curr->value);
         return Flow(curr->value); // heh
       }
       Flow visitUnary(Unary *curr) override {
-        NOTE_VISIT("Unary");
+        NOTE_ENTER("Unary");
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
         Literal value = flow.value;
+        NOTE_EVAL1(value);
         switch (curr->op) { // rofl
           case Clz:   return Flow(Literal((int32_t)__builtin_clz(value.geti32())));
           case Neg:   return Flow(Literal(-value.getf64()));
@@ -217,13 +245,14 @@ public:
         }
       }
       Flow visitBinary(Binary *curr) override {
-        NOTE_VISIT("Binary");
+        NOTE_ENTER("Binary");
         Flow flow = visit(curr->left);
         if (flow.breaking()) return flow;
         Literal left = flow.value;
         flow = visit(curr->right);
         if (flow.breaking()) return flow;
         Literal right = flow.value;
+        NOTE_EVAL2(left, right);
         switch (curr->op) { // lmao
           case Add:      return curr->type == i32 ? Flow(Literal(left.geti32() + right.geti32())) : Flow(Literal(left.getf64() + right.getf64()));
           case Sub:      return curr->type == i32 ? Flow(Literal(left.geti32() - right.geti32())) : Flow(Literal(left.getf64() - right.getf64()));
@@ -246,13 +275,14 @@ public:
         }
       }
       Flow visitCompare(Compare *curr) override {
-        NOTE_VISIT("Compare");
+        NOTE_ENTER("Compare");
         Flow flow = visit(curr->left);
         if (flow.breaking()) return flow;
         Literal left = flow.value;
         flow = visit(curr->right);
         if (flow.breaking()) return flow;
         Literal right = flow.value;
+        NOTE_EVAL2(left, right);
         switch (curr->op) { // :)
           case Eq:  return curr->left->type == i32 ? Flow(Literal(left.geti32() == right.geti32())) : Flow(Literal(left.getf64() == right.getf64()));
           case Ne:  return curr->left->type == i32 ? Flow(Literal(left.geti32() != right.geti32())) : Flow(Literal(left.getf64() != right.getf64()));
@@ -272,7 +302,7 @@ public:
         }
       }
       Flow visitConvert(Convert *curr) override {
-        NOTE_VISIT("Convert");
+        NOTE_ENTER("Convert");
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
         Literal value = flow.value;
@@ -284,11 +314,11 @@ public:
         }
       }
       Flow visitHost(Host *curr) override {
-        NOTE_VISIT("Host");
+        NOTE_ENTER("Host");
         abort();
       }
       Flow visitNop(Nop *curr) override {
-        NOTE_VISIT("Nop");
+        NOTE_ENTER("Nop");
         return Flow();
       }
     };
