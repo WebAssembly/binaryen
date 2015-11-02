@@ -25,5 +25,21 @@ int EMSCRIPTEN_KEEPALIVE dle(double x, double y) { return x <= y; }
 int EMSCRIPTEN_KEEPALIVE dgt(double x, double y) { return x > y; }
 int EMSCRIPTEN_KEEPALIVE dge(double x, double y) { return x >= y; }
 
+double EMSCRIPTEN_KEEPALIVE int_to_double(int x) {
+  double d = x;
+  return d + 1.23;
+}
+
+double EMSCRIPTEN_KEEPALIVE uint_to_double(unsigned x) {
+  double d = x;
+  return d + 1.23;
+}
+
+int EMSCRIPTEN_KEEPALIVE double_to_int(double d) {
+  d += 1.23;
+  int x = d;
+  return x;
+}
+
 }
 

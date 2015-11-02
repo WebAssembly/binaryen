@@ -14,6 +14,16 @@ function testUnary(name) {
   doTest(-1.4);
   doTest(1.6);
   doTest(-1.6);
+  doTest(5.1);
+  doTest(5.3);
+  doTest(5.7);
+  doTest(5.9);
+  doTest(-1 | 0);
+  doTest((-1 | 0) + 1);
+  doTest((-1 | 0) - 1);
+  doTest(-1 >>> 0);
+  doTest((-1 >>> 0) + 1);
+  doTest((-1 >>> 0) - 1);
 }
 testUnary('dfloor');
 
@@ -61,6 +71,11 @@ testBinary('dlt');
 testBinary('dle');
 testBinary('dgt');
 testBinary('dge');
+
+// conversions
+testUnary('int_to_double');
+testUnary('uint_to_double');
+testUnary('double_to_int');
 
 Module.print('done.');
 
