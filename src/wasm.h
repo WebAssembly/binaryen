@@ -191,7 +191,7 @@ struct Literal {
     o << '(';
     prepareMinorColor(o) << printWasmType(literal.type) << ".const ";
     switch (literal.type) {
-      case none: abort();
+      case none: o << "?"; break;
       case WasmType::i32: o << literal.i32; break;
       case WasmType::i64: o << literal.i64; break;
       case WasmType::f32: literal.printDouble(o, literal.f32); break;
