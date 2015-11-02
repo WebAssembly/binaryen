@@ -1028,26 +1028,24 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 }
 
 void Asm2WasmBuilder::optimize() {
+  // Optimization passes. Note: no effort is made to free nodes that are no longer held on to.
+
   struct BlockBreakOptimizer : public WasmWalker {
     BlockBreakOptimizer() : WasmWalker(nullptr) {}
 
     void visitBlock(Block *curr) override {
-      if (curr->list.size() > 1) {
-        // we can't remove the block, but if it ends in a break on this very block, then just put the value there
-        Break *last = curr->list[curr->list.size()-1]->dyn_cast<Break>();
-        if (last && last->value && last->name == curr->name) {
-          curr->list[curr->list.size()-1] = last->value;
-        }
-        return;
+      // if the block ends in a break on this very block, then just put the value there
+      Break *last = curr->list[curr->list.size()-1]->dyn_cast<Break>();
+      if (last && last->value && last->name == curr->name) {
+        curr->list[curr->list.size()-1] = last->value;
       }
+      if (curr->list.size() > 1) return; // no hope to remove the block
       // just one element; maybe we can return just the element
       if (curr->name.isNull()) {
-        replaceCurrent(curr->list[0]);
+        replaceCurrent(curr->list[0]); // cannot break into it
         return;
       }
-      // we might be broken to, but if it's a trivial singleton child break, we can optimize here as well
-      Break *child = curr->list[0]->dyn_cast<Break>();
-      if (!child || child->name != curr->name || !child->value) return;
+      // we might be broken to, but maybe there isn't a break (and we may have removed it, leading to this)
 
       struct BreakSeeker : public WasmWalker {
         IString target; // look for this one
@@ -1060,11 +1058,12 @@ void Asm2WasmBuilder::optimize() {
         }
       };
 
-      // look in the child's children to see if there are more uses of this name
+      // look for any breaks to this block
       BreakSeeker breakSeeker(curr->name);
-      breakSeeker.walk(child->value);
+      Expression *child = curr->list[0];
+      breakSeeker.walk(child);
       if (breakSeeker.found == 0) {
-        replaceCurrent(child->value);
+        replaceCurrent(child); // no breaks to here, so eliminate the block
       }
     }
   };

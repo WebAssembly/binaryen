@@ -7823,9 +7823,7 @@
               (get_local $$and219)
             )
           )
-          (block $label$break$L75
-            (nop)
-          )
+          (nop)
           (block $label$break$L308
             (if
               (i32.eq
@@ -9345,16 +9343,12 @@
           (i32.const 20)
         )
       )
-      (block $label$break$L1
-        (if
-          (i32.eq
-            (get_local $$cmp)
-            (i32.const 0)
-          )
-          (block $do-once$0
-            (nop)
-          )
+      (if
+        (i32.eq
+          (get_local $$cmp)
+          (i32.const 0)
         )
+        (nop)
       )
       (break $topmost
       )
