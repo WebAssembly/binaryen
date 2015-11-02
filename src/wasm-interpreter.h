@@ -72,6 +72,11 @@ public:
           breakTo.clear();
         }
       }
+
+      std::ostream& print(std::ostream& o) {
+        o << "(flow " << (breakTo.is() ? breakTo.str : "-") << " : " << value << ')';
+        return o;
+      }
     };
 
 #ifdef WASM_INTERPRETER_DEBUG
@@ -82,12 +87,12 @@ public:
         doIndent(std::cout, indent);
         std::cout << "visit " << name << " :\n";
         indent++;
-        doIndent(std::cout, indent);
-        expression->print(std::cout, indent) << '\n';
-        indent++;
+        //doIndent(std::cout, indent);
+        //expression->print(std::cout, indent) << '\n';
+        //indent++;
       }
       ~IndentHandler() {
-        indent--;
+        //indent--;
         indent--;
         doIndent(std::cout, indent);
         std::cout << "exit " << name << '\n';
@@ -168,6 +173,7 @@ public:
           flow.clearIf(curr->name);
           return flow;
         }
+        NOTE_EVAL1(flow.value);
         int32_t index = flow.value.geti32();
         Name target = curr->default_;
         if (index >= 0 && index < curr->targets.size()) {
@@ -184,7 +190,7 @@ public:
           Switch::Case& c = curr->cases[caseIndex];
           Flow flow = visit(c.body);
           if (flow.breaking()) {
-            flow.clearIf(c.name);
+            flow.clearIf(curr->name);
             return flow;
           }
           caseIndex++;
