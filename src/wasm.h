@@ -402,21 +402,39 @@ public:
   Switch() : Expression(SwitchId) {}
 
   struct Case {
-    Literal value;
+    Name name;
     Expression *body;
-    bool fallthru;
   };
 
   Name name;
   Expression *value;
+  std::vector<Name> targets;
+  Name default_;
   std::vector<Case> cases;
-  Expression *default_;
+  std::map<Name, size_t> caseMap; // name => index in cases
+
+  void updateCaseMap() {
+    for (size_t i = 0; i < cases.size(); i++) {
+      caseMap[cases[i].name] = i;
+    }
+  }
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     printOpening(o, "switch ") << name;
     incIndent(o, indent);
     printFullLine(o, indent, value);
-    o << "TODO: cases/default\n";
+    doIndent(o, indent) << "[ ";
+    for (auto& t : targets) {
+      o << t.str << ' ';
+    }
+    o << "] (default " << default_.str << ")\n";
+    for (auto& c : cases) {
+      doIndent(o, indent);
+      printMinorOpening(o, "case ") << c.name.str;
+      incIndent(o, indent);
+      printFullLine(o, indent, c.body);
+      decIndent(o, indent) << '\n';
+    }
     return decIndent(o, indent);
   }
 
@@ -1051,7 +1069,6 @@ struct WasmWalker : public WasmVisitor<void> {
         for (auto& case_ : curr->cases) {
           parent.walk(case_.body);
         }
-        parent.walk(curr->default_);
       }
       void visitCall(Call *curr) override {
         ExpressionList& list = curr->operands;

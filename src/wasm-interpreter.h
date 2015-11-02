@@ -163,7 +163,33 @@ public:
       }
       Flow visitSwitch(Switch *curr) override {
         NOTE_ENTER("Switch");
-        abort();
+        Flow flow = visit(curr->value);
+        if (flow.breaking()) {
+          flow.clearIf(curr->name);
+          return flow;
+        }
+        int32_t index = flow.value.geti32();
+        Name target = curr->default_;
+        if (index >= 0 && index < curr->targets.size()) {
+          target = curr->targets[index];
+        }
+        auto iter = curr->caseMap.find(target);
+        if (iter == curr->caseMap.end()) {
+          // not in the cases, so this is a break outside
+          return Flow(target);
+        }
+        size_t caseIndex = iter->second;
+        assert(caseIndex < curr->cases.size());
+        while (caseIndex < curr->cases.size()) {
+          Switch::Case& c = curr->cases[caseIndex];
+          Flow flow = visit(c.body);
+          if (flow.breaking()) {
+            flow.clearIf(c.name);
+            return flow;
+          }
+          caseIndex++;
+        }
+        return Flow();
       }
 
       Flow generateArguments(const ExpressionList& operands, LiteralList& arguments) {

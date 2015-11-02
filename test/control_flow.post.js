@@ -19,4 +19,8 @@ test('loop_continue');
 test('do_loop');
 test('do_once');
 test('while_forever');
+test('switch');
+test('switch_nodefault');
+test('switch_rdefault');
+test('switch_fallthrough');
 

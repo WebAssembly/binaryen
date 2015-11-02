@@ -65,5 +65,53 @@ int EMSCRIPTEN_KEEPALIVE check_while_forever(int x) {
   return x;
 }
 
+int EMSCRIPTEN_KEEPALIVE check_switch(int x) {
+  switch (x) {
+    case 1: return 10;
+    case 3: return 20;
+    case 5: return 30;
+    case 10: return 40;
+    case 11: return 50;
+    default: return 60;
+  }
+  return 70;
+}
+
+int EMSCRIPTEN_KEEPALIVE check_switch_nodefault(int x) {
+  switch (x) {
+    case 1: return 10;
+    case 3: return 20;
+    case 5: return 30;
+    case 10: return 40;
+    case 11: return 50;
+  }
+  return 70;
+}
+
+int EMSCRIPTEN_KEEPALIVE check_switch_rdefault(int x) {
+  switch (x) {
+    default: return -60;
+    case 1: return 10;
+    case 3: return 20;
+    case 5: return 30;
+    case 10: return 40;
+    case 11: return 50;
+  }
+  return 70;
+}
+
+int EMSCRIPTEN_KEEPALIVE check_switch_fallthrough(int x) {
+  switch (x) {
+    case 1: return 10;
+    case 2:
+    case 3: x++;
+    case 5: return x;
+    case 10: return 40;
+    case 11: return 50;
+    default: return 60;
+  }
+  return 70;
+}
+
 }
 

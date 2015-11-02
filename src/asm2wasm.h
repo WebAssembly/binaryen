@@ -965,9 +965,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 #ifndef __EMSCRIPTEN__
       return allocator.alloc<Nop>(); // ignore in reference interpreter
 #else
-      return allocator.alloc<Host>(); // XXX abort in wasm.js
-#endif
-#if 0
       IString name = getNextId("switch");
       breakStack.push_back(name);
       auto ret = allocator.alloc<Switch>();
@@ -978,17 +975,34 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         Ref curr = cases[i];
         Ref condition = curr[0];
         Ref body = curr[1];
+        Switch::Case case_;
+        case_.body = processStatements(body, 0);
         if (condition->isNull()) {
-          ret->default_ = processStatements(body, 0);
+          case_.name = ret->default_ = getNextId("switch-default");
         } else {
           assert(condition[0] == NUM || condition[0] == UNARY_PREFIX);
-          Switch::Case case_;
-          case_.value = getLiteral(condition);
-          case_.body = processStatements(body, 0);
-          case_.fallthru = false; // XXX we assume no fallthru, ever
-          ret->cases.push_back(case_);
+          int32_t index = getLiteral(condition).geti32();
+          assert(index >= 0); // TODO: apply an offset, and have an option to abort switching at all (or do it in emscripten?)
+          case_.name = getNextId("switch-case");
+          if (ret->targets.size() <= index) {
+            ret->targets.resize(index+1);
+          }
+          ret->targets[index] = case_.name;
         }
+        ret->cases.push_back(case_);
       }
+      // ensure a default
+      if (ret->default_.isNull()) {
+        Switch::Case defaultCase;
+        defaultCase.name = ret->default_ = getNextId("switch-default");
+        defaultCase.body = allocator.alloc<Nop>(); // ok if others fall through to this
+        ret->cases.push_back(defaultCase);
+      }
+      for (size_t i = 0; i < ret->targets.size(); i++) {
+        if (ret->targets[i].isNull()) ret->targets[i] = ret->default_;
+      }
+      // finalize
+      ret->updateCaseMap();
       breakStack.pop_back();
       return ret;
 #endif
