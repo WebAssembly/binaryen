@@ -10,3 +10,9 @@ fibo
   3 ==> 3
   4 ==> 5
   7 ==> 21
+run_script
+hello from called script
+9
+too many/few arguments
+2
+102

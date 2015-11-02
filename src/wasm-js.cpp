@@ -178,25 +178,16 @@ extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
   IString name(target);
   assert(instance->functions.find(name) != instance->functions.end());
   Function *function = instance->functions[name];
-  size_t num = EM_ASM_INT_V({ return Module['tempArguments'].length });
-  if (num != function->params.size()) {
-    std::cerr << "warning: bad # of arguments to " << target << ": got " << num << ", but expect " << function->params.size() << '\n';
-    abort(); // TODO: fake missing/extra args?
-#if 0
-    if (num > function->params.size()) {
-      num = function->params.size(); // ignore the rest
-    } else {
-      .. fake missing ..
-    }
-#endif
-  }
+  size_t seen = EM_ASM_INT_V({ return Module['tempArguments'].length });
+  size_t actual = function->params.size();
   ModuleInstance::LiteralList arguments;
-  for (size_t i = 0; i < num; i++) {
+  for (size_t i = 0; i < actual; i++) {
     WasmType type = function->params[i].type;
+    // add the parameter, with a zero value if JS did not provide it.
     if (type == i32) {
-      arguments.push_back(Literal(EM_ASM_INT({ return Module['tempArguments'][$0] }, i)));
+      arguments.push_back(Literal(i < seen ? EM_ASM_INT({ return Module['tempArguments'][$0] }, i) : (int32_t)0));
     } else if (type == f64) {
-      arguments.push_back(Literal(EM_ASM_DOUBLE({ return Module['tempArguments'][$0] }, i)));
+      arguments.push_back(Literal(i < seen ? EM_ASM_DOUBLE({ return Module['tempArguments'][$0] }, i) : (double)0.0));
     } else {
       abort();
     }

@@ -14,3 +14,10 @@ function test(name) {
 test('simple');
 test('fibo');
 
+Module.print('run_script');
+Module.print(Module['_run_script']());
+
+Module.print('too many/few arguments');
+Module.print(Module['_simple']());
+Module.print(Module['_simple'](10, 20));
+
