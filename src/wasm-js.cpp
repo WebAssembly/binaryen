@@ -137,7 +137,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
         abort();
       } else {
         if (load->bytes == 4) {
-          return Literal(EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF32'][$0] }, addr));
+          return Literal(EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF32'][$0] }, addr)); // XXX expands into double
         } else if (load->bytes == 8) {
           return Literal(EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF64'][$0] }, addr));
         }
@@ -186,6 +186,8 @@ extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
     // add the parameter, with a zero value if JS did not provide it.
     if (type == i32) {
       arguments.push_back(Literal(i < seen ? EM_ASM_INT({ return Module['tempArguments'][$0] }, i) : (int32_t)0));
+    } else if (type == f32) {
+      arguments.push_back(Literal(i < seen ? (float)EM_ASM_DOUBLE({ return Module['tempArguments'][$0] }, i) : (float)0.0));
     } else if (type == f64) {
       arguments.push_back(Literal(i < seen ? EM_ASM_DOUBLE({ return Module['tempArguments'][$0] }, i) : (double)0.0));
     } else {
@@ -194,7 +196,9 @@ extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
   }
 
   Literal ret = instance->callFunction(name, arguments);
+  if (ret.type == none) return 0;
   if (ret.type == i32) return ret.i32;
+  if (ret.type == f32) return ret.f32;
   if (ret.type == f64) return ret.f64;
   abort();
 }
