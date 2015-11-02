@@ -759,7 +759,7 @@ public:
   ExpressionList operands;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    abort();
+    return printOpening(o, "host") << ')';
   }
 };
 

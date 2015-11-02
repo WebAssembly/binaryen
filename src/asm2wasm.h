@@ -962,7 +962,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       return ret;
     } else if (what == SWITCH) {
       // XXX switch is still in flux in the spec repo, just emit a placeholder
-      return allocator.alloc<Nop>();
+#ifndef __EMSCRIPTEN__
+      return allocator.alloc<Nop>(); // ignore in reference interpreter
+#else
+      return allocator.alloc<Host>(); // XXX abort in wasm.js
+#endif
 #if 0
       IString name = getNextId("switch");
       breakStack.push_back(name);
