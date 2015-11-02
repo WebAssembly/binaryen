@@ -78,18 +78,22 @@ public:
     struct IndentHandler {
       int& indent;
       const char *name;
-      IndentHandler(int& indent, const char *name) : indent(indent), name(name) {
+      IndentHandler(int& indent, const char *name, Expression *expression) : indent(indent), name(name) {
         doIndent(std::cout, indent);
-        std::cout << "visit " << name << '\n';
+        std::cout << "visit " << name << " :\n";
+        indent++;
+        doIndent(std::cout, indent);
+        expression->print(std::cout, indent) << '\n';
         indent++;
       }
       ~IndentHandler() {
+        indent--;
         indent--;
         doIndent(std::cout, indent);
         std::cout << "exit " << name << '\n';
       }
     };
-    #define NOTE_ENTER(x) IndentHandler indentHandler(instance.indent, x);
+    #define NOTE_ENTER(x) IndentHandler indentHandler(instance.indent, x, curr);
     #define NOTE_EVAL() { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '\n'; }
     #define NOTE_EVAL1(p0) { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '('  << p0 << ")\n"; }
     #define NOTE_EVAL2(p0, p1) { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
@@ -208,6 +212,7 @@ public:
         NOTE_ENTER("SetLocal");
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
+        NOTE_EVAL1(flow.value);
         scope.locals[curr->name] = flow.value;
         return flow;
       }
