@@ -79,14 +79,18 @@ class Asm2WasmBuilder {
     unsigned address;
     WasmType type;
     bool import; // if true, this is an import - we should read the value, not just set a zero
+    IString module, base;
     MappedGlobal() : address(0), type(none), import(false) {}
-    MappedGlobal(unsigned address, WasmType type, bool import) : address(address), type(type), import(import) {}
+    MappedGlobal(unsigned address, WasmType type, bool import, IString module, IString base) : address(address), type(type), import(import), module(module), base(base) {}
   };
+
+public:
   std::map<IString, MappedGlobal> mappedGlobals;
 
-  void allocateGlobal(IString name, WasmType type, bool import) {
+private:
+  void allocateGlobal(IString name, WasmType type, bool import, IString module = IString(), IString base = IString()) {
     assert(mappedGlobals.find(name) == mappedGlobals.end());
-    mappedGlobals.emplace(name, MappedGlobal(nextGlobal, type, import));
+    mappedGlobals.emplace(name, MappedGlobal(nextGlobal, type, import, module, base));
     nextGlobal += 8;
     assert(nextGlobal < maxGlobal);
   }
@@ -369,7 +373,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
     if (type != WasmType::none) {
       // wasm has no imported constants, so allocate a global, and we need to write the value into that
-      allocateGlobal(name, type, true);
+      allocateGlobal(name, type, true, import.module, import.base);
     } else {
       wasm.imports.emplace(name, import);
     }

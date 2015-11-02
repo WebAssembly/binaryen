@@ -15,7 +15,10 @@
 using namespace cashew;
 using namespace wasm;
 
+// global singletons
+Asm2WasmBuilder* asm2wasm = nullptr;
 ModuleInstance* instance = nullptr;
+Module* module = nullptr;
 
 // receives asm.js code, parses into wasm and returns an instance handle.
 // this creates a module, an external interface, a builder, and a module instance,
@@ -49,22 +52,22 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(input);
 
-  Module* wasm = new Module();
+  module = new Module();
 
   if (debug) std::cerr << "wasming...\n";
-  Asm2WasmBuilder* asm2wasm = new Asm2WasmBuilder(*wasm);
+  asm2wasm = new Asm2WasmBuilder(*module);
   asm2wasm->processAsm(asmjs);
 
   if (debug) std::cerr << "optimizing...\n";
   asm2wasm->optimize();
 
-  //std::cerr << *wasm << '\n';
+  //std::cerr << *module << '\n';
 
   if (debug) std::cerr << "generating exports...\n";
   EM_ASM({
     Module['asmExports'] = {};
   });
-  for (auto& curr : wasm->exports) {
+  for (auto& curr : module->exports) {
     EM_ASM_({
       var name = Pointer_stringify($0);
       Module['asmExports'][name] = function() {
@@ -159,11 +162,24 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     }
   };
 
-  instance = new ModuleInstance(*wasm, new JSExternalInterface());
+  instance = new ModuleInstance(*module, new JSExternalInterface());
 }
 
 // Ready the provided imported globals, copying them to their mapped locations.
 extern "C" void EMSCRIPTEN_KEEPALIVE load_mapped_globals() {
+  for (auto& pair : asm2wasm->mappedGlobals) {
+    auto name = pair.first;
+    auto& global = pair.second;
+    if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
+    double value = EM_ASM_DOUBLE({ return Module['lookupImport'](Pointer_stringify($0), Pointer_stringify($1)) }, global.module.str, global.base.str);
+    unsigned address = global.address;
+    switch (global.type) {
+      case i32: EM_ASM_({ Module['info'].parent['HEAP32'][$0] = $1 }, address, value); break;
+      case f32: EM_ASM_({ Module['info'].parent['HEAPF32'][$0] = $1 }, address, value); break;
+      case f64: EM_ASM_({ Module['info'].parent['HEAPF64'][$0] = $1 }, address, value); break;
+      default: abort();
+    }
+  }
 }
 
 // Does a call from js into an export of the module.

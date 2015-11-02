@@ -41,8 +41,8 @@
       lookup = (lookup || {})[parts[1]];
     }
     lookup = (lookup || {})[base];
-    if (!lookup) {
-      abort('bad CallImport to (' + mod + ').' + base);
+    if (lookup === undefined) {
+      abort('bad lookupImport to (' + mod + ').' + base);
     }
     return lookup;
   }
