@@ -844,13 +844,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto ret = allocator.alloc<Break>();
       assert(breakStack.size() > 0);
       ret->name = !!ast[1] ? getBreakLabelName(ast[1]->getIString()) : breakStack.back();
-      ret->value = nullptr;
       return ret;
     } else if (what == CONTINUE) {
       auto ret = allocator.alloc<Break>();
       assert(continueStack.size() > 0);
       ret->name = !!ast[1] ? getContinueLabelName(ast[1]->getIString()) : continueStack.back();
-      ret->value = nullptr;
       return ret;
     } else if (what == WHILE) {
       bool forever = ast[1][0] == NUM && ast[1][1]->getInteger() == 1;
@@ -873,11 +871,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else {
         Break *breakOut = allocator.alloc<Break>();
         breakOut->name = in;
-        breakOut->value = nullptr;
         If *condition = allocator.alloc<If>();
         condition->condition = process(ast[1]);
         condition->ifTrue = breakOut;
-        condition->ifFalse = nullptr;
         auto body = allocator.alloc<Block>();
         body->list.push_back(condition);
         body->list.push_back(process(ast[2]));
@@ -925,7 +921,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       breakStack.pop_back();
       Break *breakOut = allocator.alloc<Break>();
       breakOut->name = out;
-      breakOut->value = nullptr;
       If *condition = allocator.alloc<If>();
       condition->condition = process(ast[1]);
       condition->ifTrue = allocator.alloc<Nop>();
