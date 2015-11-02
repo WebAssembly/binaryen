@@ -25,5 +25,10 @@ void EMSCRIPTEN_KEEPALIVE storeu32(size_t addr, uint32_t v) { ((uint32_t*)addr)[
 void EMSCRIPTEN_KEEPALIVE storef32(size_t addr, float v) { ((float*)addr)[0] = v; }
 void EMSCRIPTEN_KEEPALIVE storef64(size_t addr, double v) { ((double*)addr)[0] = v; }
 
+int* EMSCRIPTEN_KEEPALIVE get_stack() {
+  int t;
+  return &t;
+}
+
 }
 

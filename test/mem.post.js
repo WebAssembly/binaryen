@@ -49,3 +49,5 @@ test('u32');
 test('f32');
 test('f64');
 
+Module.print('stack: ' + Module['_get_stack']());
+
