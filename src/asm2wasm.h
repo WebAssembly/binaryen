@@ -190,16 +190,20 @@ private:
       case ASM_INT: return WasmType::i32;
       case ASM_DOUBLE: return WasmType::f64;
       case ASM_NONE: return WasmType::none;
-      default: abort_on("confused asmType", asmType);
+      default: {}
     }
+    abort_on("confused asmType", asmType);
+    return (WasmType)-1; // avoid warning
   }
   AsmType wasmToAsmType(WasmType type) {
     switch (type) {
       case WasmType::i32: return ASM_INT;
       case WasmType::f64: return ASM_DOUBLE;
       case WasmType::none: return ASM_NONE;
-      default: abort_on("confused wasmType", type);
+      default: {}
     }
+    abort_on("confused wasmType", type);
+    return (AsmType)-1; // avoid warning
   }
 
   AsmType detectAsmType(Ref ast, AsmData *data) {
@@ -284,6 +288,7 @@ private:
       { relational = RelationalOp::Lt; return false; }
     }
     abort_on("bad wasm binary op", op);
+    return false; // avoid warning
   }
 
   unsigned bytesToShift(unsigned bytes) {
@@ -292,8 +297,10 @@ private:
       case 2: return 1;
       case 4: return 2;
       case 8: return 3;
-      default: abort();
+      default: {}
     }
+    abort();
+    return -1; // avoid warning
   }
 
   wasm::Arena tempAllocator;
@@ -979,6 +986,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 #endif
     }
     abort_on("confusing expression", ast);
+    return (Expression*)nullptr; // avoid warning
   };
 
   // given HEAP32[addr >> 2], we need an absolute address, and would like to remove that shift.
@@ -997,6 +1005,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       return (Expression*)ret;
     }
     abort_on("bad processUnshifted", ptr);
+    return (Expression*)nullptr; // avoid warning
   };
 
   processStatements = [&](Ref ast, unsigned from) -> Expression* {
