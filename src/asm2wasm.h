@@ -179,7 +179,7 @@ class Asm2WasmBuilder {
   }
 
 public:
-  Asm2WasmBuilder(Module& wasm) : wasm(wasm), nextGlobal(8), maxGlobal(1000) {}
+  Asm2WasmBuilder(Module& wasm) : wasm(wasm), nextGlobal(8), maxGlobal(1000) {} // XXX sync with emcc
 
   void processAsm(Ref ast);
   void optimize();
