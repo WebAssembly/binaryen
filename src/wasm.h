@@ -2,12 +2,13 @@
 // wasm.js: WebAssembly representation and processing library
 //
 // This represents WebAssembly in an AST format, with a focus on making
-// it easy to process it. For example, some useful forms of processing
-// the AST include
+// it easy to not just inspect but also to process. For example, some
+// things that this enables are:
 //
 //  * Pretty-printing: Implemented in this file.
 //  * Interpreting: See wasm-interpreter.h.
-//  * Optimizing: See asm2wasm.h
+//  * Optimizing: See asm2wasm.h, which performs some optimizations
+//                after code generation.
 //
 
 #ifndef __wasm_h__
@@ -822,7 +823,9 @@ public:
 };
 
 //
-// Simple WebAssembly AST visiting
+// Simple WebAssembly AST visiting. Useful for anything that wants to do
+// something different for each AST node type, like printing, interpreting,
+// etc.
 //
 
 template<class ReturnType>
@@ -914,7 +917,8 @@ std::ostream& Expression::print(std::ostream &o, unsigned indent) {
 }
 
 //
-// Simple WebAssembly children-first walking
+// Simple WebAssembly children-first walking, with the ability to
+// replace the current node. Useful for writing optimization passes.
 //
 
 struct WasmWalker : public WasmVisitor<void> {
