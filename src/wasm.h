@@ -18,38 +18,6 @@ namespace wasm {
 
 // Utilities
 
-// Arena allocation for mixed-type data.
-struct Arena {
-  std::vector<char*> chunks;
-  int index; // in last chunk
-
-  template<class T>
-  T* alloc() {
-    const size_t CHUNK = 10000;
-    size_t currSize = (sizeof(T) + 7) & (-8); // same alignment as malloc TODO optimize?
-    assert(currSize < CHUNK);
-    if (chunks.size() == 0 || index + currSize >= CHUNK) {
-      chunks.push_back(new char[CHUNK]);
-      index = 0;
-    }
-    T* ret = (T*)(chunks.back() + index);
-    index += currSize;
-    new (ret) T();
-    return ret;
-  }
-
-  void clear() {
-    for (char* chunk : chunks) {
-      delete[] chunk;
-    }
-    chunks.clear();
-  }
-
-  ~Arena() {
-    clear();
-  }
-};
-
 std::ostream &doIndent(std::ostream &o, unsigned indent) {
   for (unsigned i = 0; i < indent; i++) {
     o << "  ";
@@ -1004,11 +972,9 @@ std::ostream& Expression::print(std::ostream &o, unsigned indent) {
 //
 
 struct WasmWalker : public WasmVisitor<void> {
-  wasm::Arena* allocator; // use an existing allocator, or null if no allocations
   Expression* replace;
 
-  WasmWalker() : allocator(nullptr), replace(nullptr) {}
-  WasmWalker(wasm::Arena* allocator) : allocator(allocator), replace(nullptr) {}
+  WasmWalker() : replace(nullptr) {}
 
   // the visit* methods can call this to replace the current node
   void replaceCurrent(Expression *expression) {

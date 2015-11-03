@@ -1,6 +1,7 @@
 
 #include "wasm.h"
 #include "optimizer.h"
+#include "mixed_arena.h"
 
 namespace wasm {
 
@@ -69,7 +70,7 @@ std::vector<Ref> AstStackHelper::astStack;
 class Asm2WasmBuilder {
   Module& wasm;
 
-  wasm::Arena allocator;
+  MixedArena allocator;
 
   // globals
 
@@ -307,8 +308,6 @@ private:
     return -1; // avoid warning
   }
 
-  wasm::Arena tempAllocator;
-
   std::map<unsigned, Ref> tempNums;
 
   Literal getLiteral(Ref ast) {
@@ -503,10 +502,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   for (auto curr : toErase) {
     wasm.imports.erase(curr);
   }
-
-  // cleanups
-
-  tempAllocator.clear();
 }
 
 Function* Asm2WasmBuilder::processFunction(Ref ast) {
@@ -1063,8 +1058,6 @@ void Asm2WasmBuilder::optimize() {
   // Optimization passes. Note: no effort is made to free nodes that are no longer held on to.
 
   struct BlockBreakOptimizer : public WasmWalker {
-    BlockBreakOptimizer() : WasmWalker(nullptr) {}
-
     void visitBlock(Block *curr) override {
       // if the block ends in a break on this very block, then just put the value there
       Break *last = curr->list[curr->list.size()-1]->dyn_cast<Break>();
