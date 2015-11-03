@@ -1,6 +1,7 @@
-
+//
 // Simple WebAssembly interpreter, designed to be embeddable in JavaScript, so it
 // can function as a polyfill.
+//
 
 #include "wasm.h"
 
@@ -16,6 +17,11 @@ class ModuleInstance {
 public:
   typedef std::vector<Literal> LiteralList;
 
+  //
+  // You need to implement one of these to create a concrete interpreter. The
+  // ExternalInterface provides embedding-specific functionality like calling
+  // an imported function or accessing memory.
+  //
   struct ExternalInterface {
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
     virtual Literal load(Load* load, Literal ptr) = 0;
@@ -28,15 +34,15 @@ public:
     }
   }
 
-  Literal callFunction(IString name) {
-    LiteralList empty;
-    return callFunction(name, empty);
-  }
-
 #ifdef WASM_INTERPRETER_DEBUG
   int indent = 0;
 #endif
 
+  //
+  // Calls a function. This can be used both internally (calls from
+  // the interpreter to another method), or when you want to call into
+  // the module.
+  //
   Literal callFunction(IString name, LiteralList& arguments) {
 
     class FunctionScope {
@@ -363,6 +369,12 @@ public:
     Function *function = functions[name];
     FunctionScope scope(function, arguments);
     return ExpressionRunner(*this, scope).visit(function->body).value;
+  }
+
+  // Convenience method, for the case where you have no arguments.
+  Literal callFunction(IString name) {
+    LiteralList empty;
+    return callFunction(name, empty);
   }
 
   std::map<IString, Function*> functions;

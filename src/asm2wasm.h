@@ -1,4 +1,9 @@
 
+//
+// asm.js-to-WebAssembly translator. Uses the Emscripten optimizer
+// infrastructure.
+//
+
 #include "wasm.h"
 #include "optimizer.h"
 #include "mixed_arena.h"
