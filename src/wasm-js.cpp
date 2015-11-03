@@ -130,23 +130,23 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
           }
         } else if (load->bytes == 2) {
           if (load->signed_) {
-            return Literal(EM_ASM_INT({ return Module['info'].parent['HEAP16'][$0] }, addr));
+            return Literal(EM_ASM_INT({ return Module['info'].parent['HEAP16'][$0 >> 1] }, addr));
           } else {
-            return Literal(EM_ASM_INT({ return Module['info'].parent['HEAPU16'][$0] }, addr));
+            return Literal(EM_ASM_INT({ return Module['info'].parent['HEAPU16'][$0 >> 1] }, addr));
           }
         } else if (load->bytes == 4) {
           if (load->signed_) {
-            return Literal(EM_ASM_INT({ return Module['info'].parent['HEAP32'][$0] }, addr));
+            return Literal(EM_ASM_INT({ return Module['info'].parent['HEAP32'][$0 >> 2] }, addr));
           } else {
-            return Literal(EM_ASM_INT({ return Module['info'].parent['HEAPU32'][$0] }, addr));
+            return Literal(EM_ASM_INT({ return Module['info'].parent['HEAPU32'][$0 >> 2] }, addr));
           }
         }
         abort();
       } else {
         if (load->bytes == 4) {
-          return Literal(EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF32'][$0] }, addr)); // XXX expands into double
+          return Literal(EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF32'][$0 >> 2] }, addr)); // XXX expands into double
         } else if (load->bytes == 8) {
-          return Literal(EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF64'][$0] }, addr));
+          return Literal(EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF64'][$0 >> 3] }, addr));
         }
         abort();
       }
@@ -159,17 +159,17 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
         if (store->bytes == 1) {
           EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, value.geti32());
         } else if (store->bytes == 2) {
-          EM_ASM_INT({ Module['info'].parent['HEAP16'][$0] = $1 }, addr, value.geti32());
+          EM_ASM_INT({ Module['info'].parent['HEAP16'][$0 >> 1] = $1 }, addr, value.geti32());
         } else if (store->bytes == 4) {
-          EM_ASM_INT({ Module['info'].parent['HEAP32'][$0] = $1 }, addr, value.geti32());
+          EM_ASM_INT({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, addr, value.geti32());
         } else {
           abort();
         }
       } else {
         if (store->bytes == 4) {
-          EM_ASM_DOUBLE({ Module['info'].parent['HEAPF32'][$0] = $1 }, addr, value.getf64());
+          EM_ASM_DOUBLE({ Module['info'].parent['HEAPF32'][$0 >> 2] = $1 }, addr, value.getf64());
         } else if (store->bytes == 8) {
-          EM_ASM_DOUBLE({ Module['info'].parent['HEAPF64'][$0] = $1 }, addr, value.getf64());
+          EM_ASM_DOUBLE({ Module['info'].parent['HEAPF64'][$0 >> 3] = $1 }, addr, value.getf64());
         } else {
           abort();
         }
@@ -189,9 +189,9 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_mapped_globals() {
     double value = EM_ASM_DOUBLE({ return Module['lookupImport'](Pointer_stringify($0), Pointer_stringify($1)) }, global.module.str, global.base.str);
     unsigned address = global.address;
     switch (global.type) {
-      case i32: EM_ASM_({ Module['info'].parent['HEAP32'][$0] = $1 }, address, value); break;
-      case f32: EM_ASM_({ Module['info'].parent['HEAPF32'][$0] = $1 }, address, value); break;
-      case f64: EM_ASM_({ Module['info'].parent['HEAPF64'][$0] = $1 }, address, value); break;
+      case i32: EM_ASM_({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, address, value); break;
+      case f32: EM_ASM_({ Module['info'].parent['HEAPF32'][$0 >> 2] = $1 }, address, value); break;
+      case f64: EM_ASM_({ Module['info'].parent['HEAPF64'][$0 >> 3] = $1 }, address, value); break;
       default: abort();
     }
   }
