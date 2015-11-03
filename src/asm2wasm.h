@@ -881,10 +881,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         ret->body = process(ast[2]);
       } else {
         Break *breakOut = allocator.alloc<Break>();
-        breakOut->name = in;
+        breakOut->name = out;
         If *condition = allocator.alloc<If>();
         condition->condition = process(ast[1]);
-        condition->ifTrue = breakOut;
+        condition->ifTrue = allocator.alloc<Nop>();
+        condition->ifFalse = breakOut;
         auto body = allocator.alloc<Block>();
         body->list.push_back(condition);
         body->list.push_back(process(ast[2]));
