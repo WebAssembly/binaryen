@@ -13,7 +13,6 @@ cat a.asm.js >> a.normal.js
 cat a.js >> a.normal.js
 
 echo 'constructing a.wasm.js' # use wasm polyfill in place of asm.js THIS IS NOT A DRILL
-cp a.asm.js a.asm.code.js
 cat src/templates/wasm.js > a.wasm.js
 cat bin/wasm.js >> a.wasm.js
 cat a.js >> a.wasm.js
