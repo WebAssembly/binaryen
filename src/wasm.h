@@ -12,28 +12,9 @@
 #include <vector>
 
 #include "simple_ast.h"
-#include "colors.h"
+#include "pretty_printing.h"
 
 namespace wasm {
-
-// Utilities
-
-std::ostream &doIndent(std::ostream &o, unsigned indent) {
-  for (unsigned i = 0; i < indent; i++) {
-    o << "  ";
-  }
-  return o;
-}
-std::ostream &incIndent(std::ostream &o, unsigned& indent) {
-  o << '\n';
-  indent++;
-  return o; 
-}
-std::ostream &decIndent(std::ostream &o, unsigned& indent) {
-  indent--;
-  doIndent(o, indent);
-  return o << ')';
-}
 
 // Basics
 
@@ -91,36 +72,6 @@ WasmType getWasmType(unsigned size, bool float_) {
   if (size == 4) return float_ ? WasmType::f32 : WasmType::i32;
   if (size == 8) return float_ ? WasmType::f64 : WasmType::i64;
   abort();
-}
-
-std::ostream &prepareMajorColor(std::ostream &o) {
-  Colors::red(o);
-  Colors::bold(o);
-  return o;
-}
-
-std::ostream &prepareColor(std::ostream &o) {
-  Colors::magenta(o);
-  Colors::bold(o);
-  return o;
-}
-
-std::ostream &prepareMinorColor(std::ostream &o) {
-  Colors::orange(o);
-  return o;
-}
-
-std::ostream &restoreNormalColor(std::ostream &o) {
-  Colors::normal(o);
-  return o;
-}
-
-std::ostream& printText(std::ostream &o, const char *str) {
-  o << '"';
-  Colors::green(o);
-  o << str;
-  Colors::normal(o);
-  return o << '"';
 }
 
 struct Literal {
@@ -249,22 +200,6 @@ std::ostream& printFullLine(std::ostream &o, unsigned indent, Expression *expres
   doIndent(o, indent);
   expression->print(o, indent);
   return o << '\n';
-}
-
-std::ostream& printOpening(std::ostream &o, const char *str, bool major=false) {
-  o << '(';
-  major ? prepareMajorColor(o) : prepareColor(o);
-  o << str;
-  restoreNormalColor(o);
-  return o;
-}
-
-std::ostream& printMinorOpening(std::ostream &o, const char *str) {
-  o << '(';
-  prepareMinorColor(o);
-  o << str;
-  restoreNormalColor(o);
-  return o;
 }
 
 typedef std::vector<Expression*> ExpressionList; // TODO: optimize  
