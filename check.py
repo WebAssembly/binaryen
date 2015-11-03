@@ -90,7 +90,12 @@ for c in tests:
         print '     (no post)'
       for which in ['normal', 'wasm']:
         print '......', which
-        proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'], stdout=subprocess.PIPE)
+        try:
+          args = json.loads(open(os.path.join('test', base + '.args')).read())
+        except:
+          args = []
+          print '     (no args)'
+        proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'] + args, stdout=subprocess.PIPE)
         out, err = proc.communicate()
         assert proc.returncode == 0
         if out.strip() != expected.strip():
