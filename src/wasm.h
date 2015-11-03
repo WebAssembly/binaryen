@@ -16,7 +16,9 @@
 
 namespace wasm {
 
-// Basics
+// We use a Name for all of the identifiers. These are IStrings, so they are
+// all interned - comparisons etc are just pointer comparisons, so there is no
+// perf loss. Having names everywhere makes using the AST much nicer.
 
 struct Name : public cashew::IString {
   Name() : cashew::IString() {}
@@ -59,7 +61,7 @@ unsigned getWasmTypeSize(WasmType type) {
   }
 }
 
-bool isFloat(WasmType type) {
+bool isWasmTypeFloat(WasmType type) {
   switch (type) {
     case f32:
     case f64: return true;

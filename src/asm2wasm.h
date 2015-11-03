@@ -597,7 +597,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         MappedGlobal global = mappedGlobals[name];
         auto ret = allocator.alloc<Store>();
         ret->bytes = getWasmTypeSize(global.type);
-        ret->float_ = isFloat(global.type);
+        ret->float_ = isWasmTypeFloat(global.type);
         ret->offset = 0;
         ret->align = ret->bytes;
         auto ptr = allocator.alloc<Const>();
@@ -676,7 +676,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto ret = allocator.alloc<Load>();
       ret->bytes = getWasmTypeSize(global.type);
       ret->signed_ = true; // but doesn't matter
-      ret->float_ = isFloat(global.type);
+      ret->float_ = isWasmTypeFloat(global.type);
       ret->offset = 0;
       ret->align = ret->bytes;
       auto ptr = allocator.alloc<Const>();
