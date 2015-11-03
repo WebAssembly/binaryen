@@ -574,8 +574,8 @@ public:
     o << '(';
     prepareColor(o) << printWasmType(type) << '.';
     switch (op) {
-      case Clz: o << "clz"; break;
-      case Neg: o << "neg"; break;
+      case Clz:   o << "clz";   break;
+      case Neg:   o << "neg";   break;
       case Floor: o << "floor"; break;
       default: abort();
     }
@@ -596,23 +596,23 @@ public:
     o << '(';
     prepareColor(o) << printWasmType(type) << '.';
     switch (op) {
-      case Add:      o << "add"; break;
-      case Sub:      o << "sub"; break;
-      case Mul:      o << "mul"; break;
-      case DivS:     o << "div_s"; break;
-      case DivU:     o << "div_u"; break;
-      case RemS:     o << "rem_s"; break;
-      case RemU:     o << "rem_u"; break;
-      case And:      o << "and"; break;
-      case Or:       o << "or"; break;
-      case Xor:      o << "xor"; break;
-      case Shl:      o << "shl"; break;
-      case ShrU:     o << "shr_u"; break;
-      case ShrS:     o << "shr_s"; break;
-      case Div:      o << "div"; break;
+      case Add:      o << "add";      break;
+      case Sub:      o << "sub";      break;
+      case Mul:      o << "mul";      break;
+      case DivS:     o << "div_s";    break;
+      case DivU:     o << "div_u";    break;
+      case RemS:     o << "rem_s";    break;
+      case RemU:     o << "rem_u";    break;
+      case And:      o << "and";      break;
+      case Or:       o << "or";       break;
+      case Xor:      o << "xor";      break;
+      case Shl:      o << "shl";      break;
+      case ShrU:     o << "shr_u";    break;
+      case ShrS:     o << "shr_s";    break;
+      case Div:      o << "div";      break;
       case CopySign: o << "copysign"; break;
-      case Min:      o << "min"; break;
-      case Max:      o << "max"; break;
+      case Min:      o << "min";      break;
+      case Max:      o << "max";      break;
       default: abort();
     }
     restoreNormalColor(o);
@@ -637,8 +637,8 @@ public:
     o << '(';
     prepareColor(o) << printWasmType(inputType) << '.';
     switch (op) {
-      case Eq:  o << "eq"; break;
-      case Ne:  o << "ne"; break;
+      case Eq:  o << "eq";   break;
+      case Ne:  o << "ne";   break;
       case LtS: o << "lt_s"; break;
       case LtU: o << "lt_u"; break;
       case LeS: o << "le_s"; break;
@@ -647,10 +647,10 @@ public:
       case GtU: o << "gt_u"; break;
       case GeS: o << "ge_s"; break;
       case GeU: o << "ge_u"; break;
-      case Lt:  o << "lt"; break;
-      case Le:  o << "le"; break;
-      case Gt:  o << "gt"; break;
-      case Ge:  o << "ge"; break;
+      case Lt:  o << "lt";  break;
+      case Le:  o << "le";  break;
+      case Gt:  o << "gt";  break;
+      case Ge:  o << "ge";  break;
       default: abort();
     }
     restoreNormalColor(o);
@@ -674,7 +674,7 @@ public:
     switch (op) {
       case ConvertUInt32: o << "f64.convert_u/i32"; break;
       case ConvertSInt32: o << "f64.convert_s/i32"; break;
-      case TruncSFloat64: o << "i32.trunc_s/f64"; break;
+      case TruncSFloat64: o << "i32.trunc_s/f64";   break;
       default: abort();
     }
     restoreNormalColor(o);
@@ -795,13 +795,11 @@ public:
       curr.second->print(o, indent, true);
       o << '\n';
     }
-#if 0
     for (auto& curr : module.imports) {
       doIndent(o, indent);
       curr.second.print(o, indent);
       o << '\n';
     }
-#endif
     for (auto& curr : module.exports) {
       doIndent(o, indent);
       curr.print(o, indent);
