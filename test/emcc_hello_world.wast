@@ -24819,7 +24819,8 @@
                       (get_local $ptr)
                       (get_local $unaligned)
                     )
-                    (break $while-in$1
+                    (nop)
+                    (break $while-out$0
                     )
                   )
                   (block
@@ -24845,7 +24846,8 @@
                   (get_local $ptr)
                   (get_local $stop4)
                 )
-                (break $while-in$3
+                (nop)
+                (break $while-out$2
                 )
               )
               (block
@@ -24871,7 +24873,8 @@
               (get_local $ptr)
               (get_local $stop)
             )
-            (break $while-in$5
+            (nop)
+            (break $while-out$4
             )
           )
           (block
@@ -25050,7 +25053,8 @@
                   (get_local $dest)
                   (i32.const 3)
                 )
-                (break $while-in$1
+                (nop)
+                (break $while-out$0
                 )
               )
               (block
@@ -25097,7 +25101,8 @@
                   (get_local $num)
                   (i32.const 4)
                 )
-                (break $while-in$3
+                (nop)
+                (break $while-out$2
                 )
               )
               (block
@@ -25137,7 +25142,8 @@
               (get_local $num)
               (i32.const 0)
             )
-            (break $while-in$5
+            (nop)
+            (break $while-out$4
             )
           )
           (block
