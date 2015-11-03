@@ -1,5 +1,13 @@
 //
-// WebAssembly representation and processing library
+// wasm.js: WebAssembly representation and processing library
+//
+// This represents WebAssembly in an AST format, with a focus on making
+// it easy to process it. For example, some useful forms of processing
+// the AST include
+//
+//  * Pretty-printing: Implemented in this file.
+//  * Interpreting: See wasm-interpreter.h.
+//  * Optimizing: See asm2wasm.h
 //
 
 #ifndef __wasm_h__
@@ -75,6 +83,8 @@ WasmType getWasmType(unsigned size, bool float_) {
   if (size == 8) return float_ ? WasmType::f64 : WasmType::i64;
   abort();
 }
+
+// Literals
 
 struct Literal {
   WasmType type;
@@ -183,7 +193,7 @@ public:
   Expression() : _id(InvalidId) {}
   Expression(Id id) : _id(id) {}
 
-  WasmType type; // the type of the expression: its output, not necessarily its input(s)
+  WasmType type; // the type of the expression: its *output*, not necessarily its input(s)
 
   std::ostream& print(std::ostream &o, unsigned indent); // avoid virtual here, for performance
 
@@ -196,15 +206,15 @@ public:
   T* dyn_cast() {
     return _id == T()._id ? (T*)this : nullptr;
   }
+
+  static std::ostream& printFullLine(std::ostream &o, unsigned indent, Expression *expression) {
+    doIndent(o, indent);
+    expression->print(o, indent);
+    return o << '\n';
+  }
 };
 
-std::ostream& printFullLine(std::ostream &o, unsigned indent, Expression *expression) {
-  doIndent(o, indent);
-  expression->print(o, indent);
-  return o << '\n';
-}
-
-typedef std::vector<Expression*> ExpressionList; // TODO: optimize  
+typedef std::vector<Expression*> ExpressionList; // TODO: optimize?
 
 class Nop : public Expression {
 public:
@@ -720,7 +730,7 @@ public:
       doIndent(o, indent);
       printMinorOpening(o, "local ") << local.name << ' ' << printWasmType(local.type) << ")\n";
     }
-    printFullLine(o, indent, body);
+    Expression::printFullLine(o, indent, body);
     return decIndent(o, indent);
   }
 };
