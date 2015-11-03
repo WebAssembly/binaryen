@@ -1,5 +1,5 @@
 (module
-  (memory 16777216)
+  (memory 16777216 16777216)
   (export "big_negative" $big_negative)
   (table $z $big_negative $importedDoubles $z)
   (func $big_negative

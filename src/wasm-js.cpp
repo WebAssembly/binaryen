@@ -53,6 +53,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
   Ref asmjs = builder.parseToplevel(input);
 
   module = new Module();
+  module->memorySize = 16*1024*1024; // TODO: receive this from emscripten
 
   if (debug) std::cerr << "wasming...\n";
   asm2wasm = new Asm2WasmBuilder(*module);

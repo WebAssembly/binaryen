@@ -781,6 +781,7 @@ public:
   std::vector<Export> exports;
   Table table;
   std::vector<Function*> functions;
+  size_t memorySize;
 
   Module() {}
 
@@ -789,7 +790,7 @@ public:
     printOpening(o, "module", true);
     incIndent(o, indent);
     doIndent(o, indent);
-    printOpening(o, "memory") << " 16777216)\n"; // XXX
+    printOpening(o, "memory") << " " << module.memorySize << " " << module.memorySize << ")\n";
     for (auto& curr : module.functionTypes) {
       doIndent(o, indent);
       curr.second->print(o, indent, true);
