@@ -40,7 +40,7 @@ public:
   Element() : isList_(true) {}
 
   bool isList() { return isList_; }
-  bool isString() { return !isList_; }
+  bool isStr() { return !isList_; }
 
   // list methods
 
@@ -367,6 +367,10 @@ private:
           if (str[1] == 'f') return makeIf(s);
           abort_on(str);
         }
+        case 'l': {
+          if (str[1] == 'o') return makeLoop(s);
+          abort_on(str);
+        }
         case 'n': {
           if (str[1] == 'o') return allocator.alloc<Nop>();
           abort_on(str);
@@ -432,7 +436,7 @@ private:
   Expression* makeBlock(Element& s) {
     auto ret = allocator.alloc<Block>();
     size_t i = 1;
-    if (s[1]->isString()) {
+    if (s[1]->isStr()) {
       ret->name = s[1]->str();
       i++;
     }
@@ -527,6 +531,21 @@ private:
     if (s.size() == 4) {
       ret->ifFalse = parseExpression(s[3]);
     }
+    return ret;
+  }
+
+  Expression* makeLoop(Element& s) {
+    auto ret = allocator.alloc<Loop>();
+    size_t i = 1;
+    if (s[i]->isStr()) {
+      ret->out = s[i]->str();
+      i++;
+    }
+    if (s[i]->isStr()) {
+      ret->in = s[i]->str();
+      i++;
+    }
+    ret->body = parseExpression(s[i]);
     return ret;
   }
 
