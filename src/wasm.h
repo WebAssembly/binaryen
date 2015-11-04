@@ -798,6 +798,19 @@ public:
   }
 };
 
+class Memory {
+public:
+  struct Segment {
+    size_t offset;
+    const char* data;
+  };
+
+  size_t initial, max;
+  std::vector<Segment> segments;
+
+  Memory() : initial(0), max(0) {}
+};
+
 class Module {
 public:
   // wasm contents
@@ -806,18 +819,20 @@ public:
   std::vector<Export> exports;
   Table table;
   std::vector<Function*> functions;
-  size_t memorySize;
+  Memory memory;
 
-  Module() : memorySize(0) {}
+  Module() {}
 
   friend std::ostream& operator<<(std::ostream &o, Module module) {
     unsigned indent = 0;
     printOpening(o, "module", true);
     incIndent(o, indent);
     doIndent(o, indent);
-    if (module.memorySize) {
-      printOpening(o, "memory") << " " << module.memorySize << " " << module.memorySize << ")\n";
+    printOpening(o, "memory") << " " << module.memory.initial << " " << module.memory.max;
+    for (auto segment : module.memory.segments) {
+      o << " (segment " << segment.offset << " \"" << segment.data << "\")";
     }
+    o << ")\n";
     for (auto& curr : module.functionTypes) {
       doIndent(o, indent);
       curr.second->print(o, indent, true);

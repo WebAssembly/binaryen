@@ -20,6 +20,7 @@ IString MODULE("module"),
         PARAM("param"),
         RESULT("result"),
         MEMORY("memory"),
+        SEGMENT("segment"),
         EXPORT("export"),
         IMPORT("import"),
         TABLE("table"),
@@ -611,7 +612,18 @@ private:
   }
 
   void parseMemory(Element& s) {
-    wasm.memorySize = atoi(s[1]->c_str());
+    wasm.memory.initial = atoi(s[1]->c_str());
+    if (s.size() == 2) return;
+    size_t i = 2;
+    if (s[i]->isStr()) {
+      wasm.memory.max = atoi(s[i]->c_str());
+      i++;
+    }
+    while (i < s.size()) {
+      Element& curr = *s[i];
+      assert(curr[0]->str() == SEGMENT);
+      
+    }
   }
 
   void parseExport(Element& s) {
