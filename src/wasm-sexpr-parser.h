@@ -62,6 +62,17 @@ public:
     return this;
   }
 
+  // printing
+
+  friend std::ostream& operator<<(std::ostream& o, Element& e) {
+    if (e.isList) {
+      o << '(';
+      for (auto item : e.list_) o << ' ' << *item << ' ';
+      o << ')';
+    } else {
+      o << e.str_.str;
+    }
+  }
 };
 
 //
@@ -122,7 +133,11 @@ private:
   Element* parseString() {
     char *start = input;
     while (input[0] && !isspace(input[0]) && input[0] != ')') input++;
-    return allocator.alloc<Element>()->setString(IString(start, false)); // TODO: reuse the string here, carefully
+    char temp = input[0];
+    input[0] = 0;
+    auto ret = allocator.alloc<Element>()->setString(IString(start, false)); // TODO: reuse the string here, carefully
+    input[0] = temp;
+    return ret;
   }
 };
 
@@ -140,6 +155,7 @@ public:
   // Assumes control of and modifies the input.
   SExpressionWasmBuilder(Module& wasm, char* input) : wasm(wasm), parser(input) {
     Element* root = parser.parseEverything();
+    if (debug) std::cout << *root << '\n';
     assert(root);
     assert((*root)[0]->str() == MODULE);
     for (unsigned i = 1; i < root->size(); i++) {
