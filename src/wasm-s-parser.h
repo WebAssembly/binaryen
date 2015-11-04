@@ -23,7 +23,10 @@ IString MODULE("module"),
         EXPORT("export"),
         TABLE("table"),
         LOCAL("local"),
-        TYPE("type");
+        TYPE("type"),
+        CALL("call"),
+        CALL_IMPORT("call_import"),
+        CALL_INDIRECT("call_indirect");
 
 //
 // An element in an S-Expression: a list or a string
@@ -359,6 +362,14 @@ private:
           if (str[1] == 'r') return makeBreak(s);
           abort_on(str);
         }
+        case 'c': {
+          if (str[1] == 'a') {
+            if (id == CALL) return makeCall(s);
+            if (id == CALL_IMPORT) return makeCallImport(s);
+            if (id == CALL_INDIRECT) return makeCallIndirect(s);
+          }
+          abort_on(str);
+        }
         case 'g': {
           if (str[1] == 'e') return makeGetLocal(s);
           abort_on(str);
@@ -547,6 +558,38 @@ private:
     }
     ret->body = parseExpression(s[i]);
     return ret;
+  }
+
+  Expression* makeCall(Element& s) {
+    auto ret = allocator.alloc<Call>();
+    ret->target = s[1]->str();
+    parseCallOperands(s, 2, ret);
+    return ret;
+  }
+
+  Expression* makeCallImport(Element& s) {
+    auto ret = allocator.alloc<CallImport>();
+    ret->target = s[1]->str();
+    parseCallOperands(s, 2, ret);
+    return ret;
+  }
+
+  Expression* makeCallIndirect(Element& s) {
+    auto ret = allocator.alloc<CallIndirect>();
+    IString type = s[1]->str();
+    assert(wasm.functionTypes.find(type) != wasm.functionTypes.end());
+    ret->type = wasm.functionTypes[type];
+    ret->target = parseExpression(s[2]);
+    parseCallOperands(s, 3, ret);
+    return ret;
+  }
+
+  template<class T>
+  void parseCallOperands(Element& s, size_t i, T* call) {
+    while (i < s.size()) {
+      call->operands.push_back(parseExpression(s[i]));
+      i++;
+    }
   }
 
   Expression* makeBreak(Element& s) {
