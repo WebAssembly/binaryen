@@ -16,7 +16,8 @@ using namespace cashew;
 IString MODULE("module"),
         FUNC("func"),
         PARAM("param"),
-        RESULT("result");
+        RESULT("result"),
+        MEMORY("memory");
 
 //
 // An element in an S-Expression: a list or a string
@@ -157,9 +158,10 @@ public:
     Element* root = parser.parseEverything();
     if (debug) std::cout << *root << '\n';
     assert(root);
-    assert((*root)[0]->str() == MODULE);
-    for (unsigned i = 1; i < root->size(); i++) {
-      parseModuleElement(*(*root)[i]);
+    Element* module = (*root)[0];
+    assert((*module)[0]->str() == MODULE);
+    for (unsigned i = 1; i < module->size(); i++) {
+      parseModuleElement(*(*module)[i]);
     }
   }
 
@@ -168,6 +170,7 @@ private:
   void parseModuleElement(Element& curr) {
     IString id = curr[0]->str();
     if (id == FUNC) return parseFunction(curr);
+    if (id == MEMORY) return parseMemory(curr);
     std::cerr << "bad module element " << id.str << '\n';
     abort();
   }
@@ -373,6 +376,10 @@ private:
     ret->value = parseExpression(*s[2]);
     ret->type = currLocalTypes[ret->name];
     return ret;
+  }
+
+  void parseMemory(Element& s) {
+    wasm.memorySize = atoi(s[1]->str().str);
   }
 };
 
