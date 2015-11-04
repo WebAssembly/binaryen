@@ -489,7 +489,7 @@ public:
 
   unsigned bytes;
   bool signed_;
-  int offset;
+  uint32_t offset;
   unsigned align;
   Expression *ptr;
 
@@ -524,7 +524,7 @@ public:
   Store() : Expression(StoreId) {}
 
   unsigned bytes;
-  int offset;
+  uint32_t offset;
   unsigned align;
   Expression *ptr, *value;
 

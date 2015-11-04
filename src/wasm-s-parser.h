@@ -495,7 +495,7 @@ private:
     ret->signed_ = extra[0] && extra[1] == 's';
     size_t i = 1;
     ret->offset = 0;
-    ret->align = -1;
+    ret->align = 0;
     while (!s[i]->isList()) {
       const char *str = s[i]->c_str();
       const char *eq = strchr(str, '=');
@@ -526,7 +526,7 @@ private:
     }
     size_t i = 1;
     ret->offset = 0;
-    ret->align = -1;
+    ret->align = 0;
     while (!s[i]->isList()) {
       const char *str = s[i]->c_str();
       const char *eq = strchr(str, '=');
