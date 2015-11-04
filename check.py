@@ -3,7 +3,7 @@
 import os, sys, subprocess, difflib, json
 
 interpreter = None
-tests = []
+requested = []
 
 for arg in sys.argv[1:]:
   if arg.startswith('--interpreter='):
@@ -11,7 +11,7 @@ for arg in sys.argv[1:]:
     print '[ using wasm interpreter at "%s" ]' % interpreter
     assert os.path.exists(interpreter), 'interpreter not found'
   else:
-    tests.append(arg)
+    requested.append(arg)
 
 def fail(actual, expected):
   raise Exception("incorrect output, diff:\n\n%s" % (
@@ -23,8 +23,10 @@ if not interpreter:
 
 print '[ checking asm2wasm testcases... ]\n'
 
-if len(tests) == 0:
+if len(requested) == 0:
   tests = sorted(os.listdir('test'))
+else:
+  tests = requested[:]
 
 for asm in tests:
   if asm.endswith('.asm.js'):
@@ -72,6 +74,29 @@ for t in tests:
     assert err == '', 'bad err:' + err
 
     expected = open(t).read()
+    if actual != expected:
+      fail(actual, expected)
+
+print '\n[ checking wasm-shell spec testcases... ]\n'
+
+if len(requested) == 0:
+  spec_tests = [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join('test', 'spec')))]
+else:
+  spec_tests = requested[:]
+
+for t in spec_tests:
+  if t.startswith('spec') and t.endswith('.wast'):
+    print '..', t
+    wast = os.path.join('test', t)
+    actual, err = subprocess.Popen([os.path.join('bin', 'wasm-shell'), wast], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    assert err == '', 'bad err:' + err
+
+    expected = os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log')
+    if os.path.exists(expected):
+      expected = open(expected).read()
+    else:
+      print '       (no expected output)'
+      expected = ''
     if actual != expected:
       fail(actual, expected)
 
