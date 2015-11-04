@@ -62,6 +62,19 @@ for asm in tests:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
 
+print '\n[ checking wasm-shell testcases... ]\n'
+
+for t in tests:
+  if t.endswith('.wast'):
+    print '..', t
+    t = os.path.join('test', t)
+    actual, err = subprocess.Popen([os.path.join('bin', 'wasm-shell'), t], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    assert err == '', 'bad err:' + err
+
+    expected = open(t).read()
+    if actual != expected:
+      fail(actual, expected)
+
 print '\n[ checking wasm.js polyfill testcases... (need both emcc and nodejs in your path) ]\n'
 
 for c in tests:
