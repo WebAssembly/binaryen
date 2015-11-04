@@ -622,7 +622,7 @@ private:
     while (i < s.size()) {
       Element& curr = *s[i];
       assert(curr[0]->str() == SEGMENT);
-      
+      i++;
     }
   }
 

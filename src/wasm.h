@@ -828,7 +828,8 @@ public:
     printOpening(o, "module", true);
     incIndent(o, indent);
     doIndent(o, indent);
-    printOpening(o, "memory") << " " << module.memory.initial << " " << module.memory.max;
+    printOpening(o, "memory") << " " << module.memory.initial;
+    if (module.memory.max) o << " " << module.memory.max;
     for (auto segment : module.memory.segments) {
       o << " (segment " << segment.offset << " \"" << segment.data << "\")";
     }
