@@ -784,14 +784,16 @@ public:
   std::vector<Function*> functions;
   size_t memorySize;
 
-  Module() {}
+  Module() : memorySize(0) {}
 
   friend std::ostream& operator<<(std::ostream &o, Module module) {
     unsigned indent = 0;
     printOpening(o, "module", true);
     incIndent(o, indent);
     doIndent(o, indent);
-    printOpening(o, "memory") << " " << module.memorySize << " " << module.memorySize << ")\n";
+    if (module.memorySize) {
+      printOpening(o, "memory") << " " << module.memorySize << " " << module.memorySize << ")\n";
+    }
     for (auto& curr : module.functionTypes) {
       doIndent(o, indent);
       curr.second->print(o, indent, true);
