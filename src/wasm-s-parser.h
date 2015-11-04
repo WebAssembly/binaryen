@@ -221,6 +221,7 @@ private:
         func->body = parseExpression(curr);
       }
     }
+    wasm.functions.push_back(func);
     currLocalTypes.clear();
   }
 
