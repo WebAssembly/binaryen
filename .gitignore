@@ -1,5 +1,6 @@
 bin/asm2wasm
 bin/wasm.js
+bin/wasm-shell
 *~
 *.diff
 a.*
