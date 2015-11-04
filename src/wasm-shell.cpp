@@ -9,7 +9,7 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, char **argv) {
-  int debug = getenv("WASM_SHELL_DEBUG") ? getenv("WASM_SHELL_DEBUG")[0] - '0' : 0;
+  debug = getenv("WASM_SHELL_DEBUG") ? getenv("WASM_SHELL_DEBUG")[0] - '0' : 0;
 
   char *infile = argv[1];
 

@@ -8,6 +8,8 @@
 
 namespace wasm {
 
+int debug;
+
 using namespace cashew;
 // Globals
 
@@ -67,13 +69,14 @@ public:
 //
 
 class SExpressionParser {
+  char *beginning;
   char* input;
 
   MixedArena allocator;
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionParser(char* input) : input(input) {}
+  SExpressionParser(char* input) : beginning(input), input(input) {}
 
   Element* parseEverything() {
     return parseInnerList();
@@ -93,13 +96,13 @@ private:
     while (1) {
       Element* curr = parse();
       if (!curr) return ret;
-      curr->list().push_back(curr);
+      ret->list().push_back(curr);
     }
   }
 
   Element* parse() {
     skipWhitespace();
-    if (!input) return nullptr;
+    if (input[0] == 0 || input[0] == ')') return nullptr;
     if (input[0] == '(') {
       // a list
       input++;
@@ -118,7 +121,7 @@ private:
 
   Element* parseString() {
     char *start = input;
-    while (input[0] && !isspace(input[0])) input++;
+    while (input[0] && !isspace(input[0]) && input[0] != ')') input++;
     return allocator.alloc<Element>()->setString(IString(start, false)); // TODO: reuse the string here, carefully
   }
 };
@@ -135,9 +138,7 @@ class SExpressionWasmBuilder {
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, char* input) : wasm(wasm), parser(input) {}
-
-  void parse() {
+  SExpressionWasmBuilder(Module& wasm, char* input) : wasm(wasm), parser(input) {
     Element* root = parser.parseEverything();
     assert(root);
     assert((*root)[0]->str() == MODULE);
