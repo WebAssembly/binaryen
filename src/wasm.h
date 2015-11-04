@@ -186,8 +186,9 @@ public:
     BinaryId = 16,
     CompareId = 17,
     ConvertId = 18,
-    HostId = 19,
-    NopId = 20
+    SelectId = 19,
+    HostId = 20,
+    NopId = 21
   };
   Id _id;
 
@@ -685,6 +686,23 @@ public:
   }
 };
 
+class Select : public Expression {
+public:
+  Select() : Expression(SelectId) {}
+
+  Expression *condition, *ifTrue, *ifFalse;
+
+  std::ostream& doPrint(std::ostream &o, unsigned indent) {
+    o << '(';
+    prepareColor(o) << printWasmType(type) << ".select";
+    incIndent(o, indent);
+    printFullLine(o, indent, condition);
+    printFullLine(o, indent, ifTrue);
+    printFullLine(o, indent, ifFalse);
+    return decIndent(o, indent);
+  }
+};
+
 class Host : public Expression {
 public:
   Host() : Expression(HostId) {}
@@ -850,6 +868,7 @@ struct WasmVisitor {
   virtual ReturnType visitBinary(Binary *curr) = 0;
   virtual ReturnType visitCompare(Compare *curr) = 0;
   virtual ReturnType visitConvert(Convert *curr) = 0;
+  virtual ReturnType visitSelect(Select *curr) = 0;
   virtual ReturnType visitHost(Host *curr) = 0;
   virtual ReturnType visitNop(Nop *curr) = 0;
 
@@ -874,6 +893,7 @@ struct WasmVisitor {
       case Expression::Id::BinaryId: return visitBinary((Binary*)curr);
       case Expression::Id::CompareId: return visitCompare((Compare*)curr);
       case Expression::Id::ConvertId: return visitConvert((Convert*)curr);
+      case Expression::Id::SelectId: return visitSelect((Select*)curr);
       case Expression::Id::HostId: return visitHost((Host*)curr);
       case Expression::Id::NopId: return visitNop((Nop*)curr);
       default: {
@@ -909,6 +929,7 @@ std::ostream& Expression::print(std::ostream &o, unsigned indent) {
     void visitBinary(Binary *curr) override { curr->doPrint(o, indent); }
     void visitCompare(Compare *curr) override { curr->doPrint(o, indent); }
     void visitConvert(Convert *curr) override { curr->doPrint(o, indent); }
+    void visitSelect(Select *curr) override { curr->doPrint(o, indent); }
     void visitHost(Host *curr) override { curr->doPrint(o, indent); }
     void visitNop(Nop *curr) override { curr->doPrint(o, indent); }
   };
@@ -952,6 +973,7 @@ struct WasmWalker : public WasmVisitor<void> {
   void visitBinary(Binary *curr) override {};
   void visitCompare(Compare *curr) override {};
   void visitConvert(Convert *curr) override {};
+  void visitSelect(Select *curr) override {};
   void visitHost(Host *curr) override {};
   void visitNop(Nop *curr) override {};
 
@@ -1032,6 +1054,11 @@ struct WasmWalker : public WasmVisitor<void> {
       }
       void visitConvert(Convert *curr) override {
         parent.walk(curr->value);
+      }
+      void visitSelect(Select *curr) override {
+        parent.walk(curr->condition);
+        parent.walk(curr->ifTrue);
+        parent.walk(curr->ifFalse);
       }
       void visitHost(Host *curr) override {
         ExpressionList& list = curr->operands;

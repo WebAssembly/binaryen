@@ -356,6 +356,17 @@ public:
           default: abort();
         }
       }
+      Flow visitSelect(Select *curr) override {
+        NOTE_ENTER("Select");
+        Flow condition = visit(curr->condition);
+        if (condition.breaking()) return condition;
+        NOTE_EVAL1(condition.value);
+        Flow ifTrue = visit(curr->ifTrue);
+        if (ifTrue.breaking()) return ifTrue;
+        Flow ifFalse = visit(curr->ifFalse);
+        if (ifFalse.breaking()) return ifFalse;
+        return condition.value.geti32() ? ifTrue : ifFalse; // ;-)
+      }
       Flow visitHost(Host *curr) override {
         NOTE_ENTER("Host");
         abort();
