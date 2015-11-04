@@ -331,7 +331,7 @@ private:
         }
         case 'r': {
           if (op[1] == 'e') {
-            return makeBinary(s, op[3] == 'u' ? BinaryOp::RemU : BinaryOp::RemS, type);
+            return makeBinary(s, op[4] == 'u' ? BinaryOp::RemU : BinaryOp::RemS, type);
           }
           abort_on(op);
         }
