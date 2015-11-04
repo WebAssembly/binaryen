@@ -120,7 +120,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     Literal load(Load* load, Literal ptr) override {
       size_t addr = ptr.geti32();
       assert(load->align == load->bytes);
-      if (!load->float_) {
+      if (!isWasmTypeFloat(load->type)) {
         if (load->bytes == 1) {
           if (load->signed_) {
             return Literal(EM_ASM_INT({ return Module['info'].parent['HEAP8'][$0] }, addr));
@@ -154,7 +154,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     void store(Store* store, Literal ptr, Literal value) override {
       size_t addr = ptr.geti32();
       assert(store->align == store->bytes);
-      if (!store->float_) {
+      if (!isWasmTypeFloat(store->type)) {
         if (store->bytes == 1) {
           EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, value.geti32());
         } else if (store->bytes == 2) {

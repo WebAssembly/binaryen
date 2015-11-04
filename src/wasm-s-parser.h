@@ -445,7 +445,6 @@ private:
     const char *extra = strchr(s[0]->c_str(), '.') + 5; // after "type.load"
     auto ret = allocator.alloc<Load>();
     ret->type = type;
-    ret->float_ = isWasmTypeFloat(type);
     ret->bytes = getWasmTypeSize(type);
     if (extra[0] == '8') {
       ret->bytes = 1;
@@ -475,7 +474,6 @@ private:
     const char *extra = strchr(s[0]->c_str(), '.') + 6; // after "type.store"
     auto ret = allocator.alloc<Store>();
     ret->type = type;
-    ret->float_ = isWasmTypeFloat(type);
     ret->bytes = getWasmTypeSize(type);
     if (extra[0] == '8') {
       ret->bytes = 1;

@@ -489,14 +489,13 @@ public:
 
   unsigned bytes;
   bool signed_;
-  bool float_; // XXX remove?
   int offset;
   unsigned align;
   Expression *ptr;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     o << '(';
-    prepareColor(o) << printWasmType(getWasmType(bytes, float_)) << ".load";
+    prepareColor(o) << printWasmType(type) << ".load";
     if (bytes < 4) {
       if (bytes == 1) {
         o << '8';
@@ -521,14 +520,13 @@ public:
   Store() : Expression(StoreId) {}
 
   unsigned bytes;
-  bool float_;
   int offset;
   unsigned align;
   Expression *ptr, *value;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     o << '(';
-    prepareColor(o) << printWasmType(getWasmType(bytes, float_)) << ".store";
+    prepareColor(o) << printWasmType(type) << ".store";
     if (bytes < 4) {
       if (bytes == 1) {
         o << '8';
