@@ -348,10 +348,19 @@ private:
       switch (str[0]) {
         case 'b': {
           if (str[1] == 'l') return makeBlock(s);
+          if (str[1] == 'r') return makeBreak(s);
           abort_on(str);
         }
         case 'g': {
           if (str[1] == 'e') return makeGetLocal(s);
+          abort_on(str);
+        }
+        case 'i': {
+          if (str[1] == 'f') return makeIf(s);
+          abort_on(str);
+        }
+        case 'n': {
+          if (str[1] == 'o') return allocator.alloc<Nop>();
           abort_on(str);
         }
         case 's': {
@@ -500,6 +509,25 @@ private:
     }
     ret->ptr = parseExpression(s[i]);
     ret->value = parseExpression(s[i+1]);
+    return ret;
+  }
+
+  Expression* makeIf(Element& s) {
+    auto ret = allocator.alloc<If>();
+    ret->condition = parseExpression(s[1]);
+    ret->ifTrue = parseExpression(s[2]);
+    if (s.size() == 4) {
+      ret->ifFalse = parseExpression(s[3]);
+    }
+    return ret;
+  }
+
+  Expression* makeBreak(Element& s) {
+    auto ret = allocator.alloc<Break>();
+    ret->name = s[1]->str();
+    if (s.size() == 3) {
+      ret->value = parseExpression(s[2]);
+    }
     return ret;
   }
 
