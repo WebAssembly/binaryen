@@ -28,9 +28,13 @@ int main(int argc, char **argv) {
   fclose(f);
   input[num] = 0;
 
-  if (debug) std::cerr << "parsing...\n";
+  if (debug) std::cerr << "parsing text to s-expressions...\n";
+  SExpressionParser parser(input);
+  if (debug) std::cout << *parser.root << '\n';
+
+  if (debug) std::cerr << "parsing s-expressions to wasm...\n";
   Module wasm;
-  SExpressionWasmBuilder builder(wasm, input);
+  SExpressionWasmBuilder builder(wasm, *(*parser.root)[0]);
 
   if (debug) std::cerr << "printing...\n";
   std::cout << wasm;

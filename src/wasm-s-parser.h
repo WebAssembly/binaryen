@@ -105,11 +105,11 @@ class SExpressionParser {
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionParser(char* input) : beginning(input), input(input) {}
-
-  Element* parseEverything() {
-    return parseInnerList();
+  SExpressionParser(char* input) : beginning(input), input(input) {
+    root = parseInnerList();
   }
+
+  Element* root;
 
 private:
   // parses the internal part of a list, inside the parens.
@@ -181,18 +181,13 @@ class SExpressionWasmBuilder {
   Module& wasm;
 
   MixedArena allocator;
-  SExpressionParser parser;
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, char* input) : wasm(wasm), parser(input) {
-    Element* root = parser.parseEverything();
-    if (debug) std::cout << *root << '\n';
-    assert(root);
-    Element* module = (*root)[0];
-    assert((*module)[0]->str() == MODULE);
-    for (unsigned i = 1; i < module->size(); i++) {
-      parseModuleElement(*(*module)[i]);
+  SExpressionWasmBuilder(Module& wasm, Element& module) : wasm(wasm) {
+    assert(module[0]->str() == MODULE);
+    for (unsigned i = 1; i < module.size(); i++) {
+      parseModuleElement(*module[i]);
     }
   }
 
