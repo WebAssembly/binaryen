@@ -402,7 +402,7 @@ private:
     ret->op = op;
     ret->left = parseExpression(s[1]);
     ret->right = parseExpression(s[2]);
-    ret->type = type;
+    ret->inputType = type;
     return ret;
   }
 
