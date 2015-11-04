@@ -507,7 +507,9 @@ public:
       o << (signed_ ? "_s" : "_u");
     }
     restoreNormalColor(o);
-    o << " align=" << align;
+    if (align) {
+      o << " align=" << align;
+    }
     if (offset) {
       o << " offset=" << offset;
     }
@@ -539,7 +541,9 @@ public:
       }
     }
     restoreNormalColor(o);
-    o << " align=" << align;
+    if (align) {
+      o << " align=" << align;
+    }
     if (offset) {
       o << " offset=" << offset;
     }
