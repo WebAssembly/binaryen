@@ -21,6 +21,7 @@ IString MODULE("module"),
         RESULT("result"),
         MEMORY("memory"),
         EXPORT("export"),
+        IMPORT("import"),
         TABLE("table"),
         LOCAL("local"),
         TYPE("type"),
@@ -194,6 +195,7 @@ private:
     if (id == FUNC) return parseFunction(curr);
     if (id == MEMORY) return parseMemory(curr);
     if (id == EXPORT) return parseExport(curr);
+    if (id == IMPORT) return parseImport(curr);
     if (id == TABLE) return parseTable(curr);
     if (id == TYPE) return parseType(curr);
     std::cerr << "bad module element " << id.str << '\n';
@@ -610,6 +612,23 @@ private:
     ex.name = s[1]->str();
     ex.value = s[2]->str();
     wasm.exports.push_back(ex);
+  }
+
+  void parseImport(Element& s) {
+    Import im;
+    im.name = s[1]->str();
+    im.module = s[2]->str();
+    im.base = s[3]->str();
+    Element& params = *s[4];
+    if (params[0]->str() == PARAM) {
+      for (size_t i = 1; i < params.size(); i++) {
+        im.type.params.push_back(stringToWasmType(params[i]->str()));
+      }
+    } else {
+      abort();
+    }
+    assert(s.size() == 5);
+    wasm.imports[im.name] = im;
   }
 
   void parseTable(Element& s) {
