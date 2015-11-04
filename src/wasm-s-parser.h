@@ -622,6 +622,7 @@ private:
     while (i < s.size()) {
       Element& curr = *s[i];
       assert(curr[0]->str() == SEGMENT);
+      wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), strdup(curr[2]->c_str()));
       i++;
     }
   }

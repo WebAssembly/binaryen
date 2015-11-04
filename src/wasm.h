@@ -803,6 +803,7 @@ public:
   struct Segment {
     size_t offset;
     const char* data;
+    Segment(size_t offset, const char *data) : offset(offset), data(data) {}
   };
 
   size_t initial, max;
