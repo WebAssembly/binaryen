@@ -22,7 +22,9 @@ IString MODULE("module"),
         MEMORY("memory"),
         EXPORT("export"),
         TABLE("table"),
-        LOCAL("local");
+        LOCAL("local"),
+        ALIGN("align"),
+        OFFSET("offset");
 
 //
 // An element in an S-Expression: a list or a string
@@ -63,6 +65,11 @@ public:
   IString str() {
     assert(!isList_);
     return str_;
+  }
+
+  const char* c_str() {
+    assert(!isList_);
+    return str_.str;
   }
 
   Element* setString(IString str__) {
@@ -228,6 +235,10 @@ private:
     abort();
   }
 
+  Expression* parseExpression(Element* s) {
+    return parseExpression(*s);
+  }
+
   Expression* parseExpression(Element& s) {
     if (debug) std::cerr << "parse expression " << s << '\n';
     IString id = s[0]->str();
@@ -289,6 +300,7 @@ private:
             if (op[2] == '_') return makeCompare(s, op[3] == 'u' ? RelationalOp::LeU : RelationalOp::LeS, type);
             if (op[2] == 0) return makeCompare(s, RelationalOp::Le, type);
           }
+          if (op[1] == 'o') return makeLoad(s, type);
           abort_on(op);
         }
         case 'm': {
@@ -319,7 +331,8 @@ private:
             if (op[2] == 'l') return makeBinary(s, BinaryOp::Shl, type);
             return makeBinary(s, op[4] == 'u' ? BinaryOp::ShrU : BinaryOp::ShrS, type);
           }
-          if (op[1] == 'u')  return makeBinary(s, BinaryOp::Sub, type);
+          if (op[1] == 'u') return makeBinary(s, BinaryOp::Sub, type);
+          if (op[1] == 't') return makeStore(s, type);
           abort_on(op);
         }
         case 't': {
@@ -355,8 +368,8 @@ private:
   Expression* makeBinary(Element& s, BinaryOp op, WasmType type) {
     auto ret = allocator.alloc<Binary>();
     ret->op = op;
-    ret->left = parseExpression(*s[1]);
-    ret->right = parseExpression(*s[2]);
+    ret->left = parseExpression(s[1]);
+    ret->right = parseExpression(s[2]);
     ret->type = type;
     return ret;
   }
@@ -364,7 +377,7 @@ private:
   Expression* makeUnary(Element& s, UnaryOp op, WasmType type) {
     auto ret = allocator.alloc<Unary>();
     ret->op = op;
-    ret->value = parseExpression(*s[1]);
+    ret->value = parseExpression(s[1]);
     ret->type = type;
     return ret;
   }
@@ -372,8 +385,8 @@ private:
   Expression* makeCompare(Element& s, RelationalOp op, WasmType type) {
     auto ret = allocator.alloc<Compare>();
     ret->op = op;
-    ret->left = parseExpression(*s[1]);
-    ret->right = parseExpression(*s[2]);
+    ret->left = parseExpression(s[1]);
+    ret->right = parseExpression(s[2]);
     ret->type = type;
     return ret;
   }
@@ -381,7 +394,7 @@ private:
   Expression* makeConvert(Element& s, ConvertOp op, WasmType type) {
     auto ret = allocator.alloc<Convert>();
     ret->op = op;
-    ret->value = parseExpression(*s[1]);
+    ret->value = parseExpression(s[1]);
     ret->type = type;
     return ret;
   }
@@ -396,7 +409,7 @@ private:
   Expression* makeSetLocal(Element& s) {
     auto ret = allocator.alloc<SetLocal>();
     ret->name = s[1]->str();
-    ret->value = parseExpression(*s[2]);
+    ret->value = parseExpression(s[2]);
     ret->type = currLocalTypes[ret->name];
     return ret;
   }
@@ -409,15 +422,15 @@ private:
       i++;
     }
     for (; i < s.size(); i++) {
-      ret->list.push_back(parseExpression(*s[i]));
+      ret->list.push_back(parseExpression(s[i]));
     }
     return ret;
   }
 
   Expression* makeConst(Element& s, WasmType type) {
     auto ret = allocator.alloc<Const>();
-    ret->value.type = type;
-    const char *value = s[1]->str().str;
+    ret->type = ret->value.type = type;
+    const char *value = s[1]->c_str();
     switch (type) {
       case i32: ret->value.i32 = atoi(value); break;
       case i64: ret->value.i64 = atol(value); break;
@@ -428,8 +441,68 @@ private:
     return ret;
   }
 
+  Expression* makeLoad(Element& s, WasmType type) {
+    const char *extra = strchr(s[0]->c_str(), '.') + 5; // after "type.load"
+    auto ret = allocator.alloc<Load>();
+    ret->type = type;
+    ret->float_ = isWasmTypeFloat(type);
+    ret->bytes = getWasmTypeSize(type);
+    if (extra[0] == '8') {
+      ret->bytes = 1;
+      extra++;
+    } else if (extra[0] == '1') {
+      assert(extra[1] == '6');
+      extra += 2;
+    }
+    ret->signed_ = extra[0] != 0;
+    size_t i = 1;
+    ret->offset = 0;
+    ret->align = -1;
+    while (s[i]->isList()) {
+      Element& curr = *s[i];
+      if (curr[0]->str() == ALIGN) {
+        ret->align = atoi(curr[1]->c_str());
+      } else if (curr[0]->str() == OFFSET) {
+        ret->offset = atoi(curr[1]->c_str());
+      } else abort();
+      i++;
+    }
+    ret->ptr = parseExpression(s[i]);
+    return ret;
+  }
+
+  Expression* makeStore(Element& s, WasmType type) {
+    const char *extra = strchr(s[0]->c_str(), '.') + 6; // after "type.store"
+    auto ret = allocator.alloc<Store>();
+    ret->type = type;
+    ret->float_ = isWasmTypeFloat(type);
+    ret->bytes = getWasmTypeSize(type);
+    if (extra[0] == '8') {
+      ret->bytes = 1;
+      extra++;
+    } else if (extra[0] == '1') {
+      assert(extra[1] == '6');
+      extra += 2;
+    }
+    size_t i = 1;
+    ret->offset = 0;
+    ret->align = -1;
+    while (s[i]->isList()) {
+      Element& curr = *s[i];
+      if (curr[0]->str() == ALIGN) {
+        ret->align = atoi(curr[1]->c_str());
+      } else if (curr[0]->str() == OFFSET) {
+        ret->offset = atoi(curr[1]->c_str());
+      } else abort();
+      i++;
+    }
+    ret->ptr = parseExpression(s[i]);
+    ret->value = parseExpression(s[i+1]);
+    return ret;
+  }
+
   void parseMemory(Element& s) {
-    wasm.memorySize = atoi(s[1]->str().str);
+    wasm.memorySize = atoi(s[1]->c_str());
   }
 
   void parseExport(Element& s) {

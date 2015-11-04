@@ -489,7 +489,7 @@ public:
 
   unsigned bytes;
   bool signed_;
-  bool float_;
+  bool float_; // XXX remove?
   int offset;
   unsigned align;
   Expression *ptr;
