@@ -32,10 +32,8 @@ class Element {
   typedef std::vector<Element*> List;
 
   bool isList_;
-  union {
-    List list_;
-    IString str_;
-  };
+  List list_;
+  IString str_;
 
 public:
   Element() : isList_(true) {}
