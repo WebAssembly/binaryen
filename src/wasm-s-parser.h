@@ -22,9 +22,7 @@ IString MODULE("module"),
         MEMORY("memory"),
         EXPORT("export"),
         TABLE("table"),
-        LOCAL("local"),
-        ALIGN("align"),
-        OFFSET("offset");
+        LOCAL("local");
 
 //
 // An element in an S-Expression: a list or a string
@@ -457,12 +455,15 @@ private:
     size_t i = 1;
     ret->offset = 0;
     ret->align = -1;
-    while (s[i]->isList()) {
-      Element& curr = *s[i];
-      if (curr[0]->str() == ALIGN) {
-        ret->align = atoi(curr[1]->c_str());
-      } else if (curr[0]->str() == OFFSET) {
-        ret->offset = atoi(curr[1]->c_str());
+    while (!s[i]->isList()) {
+      const char *str = s[i]->c_str();
+      const char *eq = strchr(str, '=');
+      assert(eq);
+      eq++;
+      if (str[0] == 'a') {
+        ret->align = atoi(eq);
+      } else if (str[0] == 'o') {
+        ret->offset = atoi(eq);
       } else abort();
       i++;
     }
@@ -485,12 +486,15 @@ private:
     size_t i = 1;
     ret->offset = 0;
     ret->align = -1;
-    while (s[i]->isList()) {
-      Element& curr = *s[i];
-      if (curr[0]->str() == ALIGN) {
-        ret->align = atoi(curr[1]->c_str());
-      } else if (curr[0]->str() == OFFSET) {
-        ret->offset = atoi(curr[1]->c_str());
+    while (!s[i]->isList()) {
+      const char *str = s[i]->c_str();
+      const char *eq = strchr(str, '=');
+      assert(eq);
+      eq++;
+      if (str[0] == 'a') {
+        ret->align = atoi(eq);
+      } else if (str[0] == 'o') {
+        ret->offset = atoi(eq);
       } else abort();
       i++;
     }
