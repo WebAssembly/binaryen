@@ -14,7 +14,7 @@ $ ./build.sh
 ```
 
 * `asm2wasm` requires a C++11 compiler. If you also want to compile C/C++ to asm.js and then to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten (the [stable SDK (or normal manual install)](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) is fine).
-* `wasm.js` requires Emscripten, using the `asm2wasm` branch in the main repo and `incoming` branches in the `fastcomp` and `fastcomp-clang` repos (the stable SDK, which is enough for `asm2wasm`, is not enough for `wasm.js`).
+* `wasm.js` requires Emscripten, using the `incoming` branch in the `emscripten`, `emscripten-fastcomp` and `emscripten-fastcomp-clang` repos (the stable SDK, which is enough for `asm2wasm`, is not enough for `wasm.js`).
 
 ## Running
 
