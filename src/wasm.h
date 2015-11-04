@@ -508,7 +508,9 @@ public:
     }
     restoreNormalColor(o);
     o << " align=" << align;
-    assert(!offset);
+    if (offset) {
+      o << " offset=" << offset;
+    }
     incIndent(o, indent);
     printFullLine(o, indent, ptr);
     return decIndent(o, indent);
@@ -538,7 +540,9 @@ public:
     }
     restoreNormalColor(o);
     o << " align=" << align;
-    assert(!offset);
+    if (offset) {
+      o << " offset=" << offset;
+    }
     incIndent(o, indent);
     printFullLine(o, indent, ptr);
     printFullLine(o, indent, value);
