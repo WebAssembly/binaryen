@@ -6,6 +6,8 @@
 #include "wasm.h"
 #include "mixed_arena.h"
 
+#define abort_on(str) { std::cerr << "aborting on " << str << '\n'; abort(); }
+
 namespace wasm {
 
 int debug;
@@ -17,7 +19,10 @@ IString MODULE("module"),
         FUNC("func"),
         PARAM("param"),
         RESULT("result"),
-        MEMORY("memory");
+        MEMORY("memory"),
+        EXPORT("export"),
+        TABLE("table"),
+        LOCAL("local");
 
 //
 // An element in an S-Expression: a list or a string
@@ -26,19 +31,22 @@ IString MODULE("module"),
 class Element {
   typedef std::vector<Element*> List;
 
-  bool isList;
+  bool isList_;
   union {
     List list_;
     IString str_;
   };
 
 public:
-  Element() : isList(true) {}
+  Element() : isList_(true) {}
+
+  bool isList() { return isList_; }
+  bool isString() { return !isList_; }
 
   // list methods
 
   List& list() {
-    assert(isList);
+    assert(isList_);
     return list_;
   }
 
@@ -53,12 +61,12 @@ public:
   // string methods
 
   IString str() {
-    assert(!isList);
+    assert(!isList_);
     return str_;
   }
 
   Element* setString(IString str__) {
-    isList = false;
+    isList_ = false;
     str_ = str__;
     return this;
   }
@@ -66,10 +74,10 @@ public:
   // printing
 
   friend std::ostream& operator<<(std::ostream& o, Element& e) {
-    if (e.isList) {
+    if (e.isList_) {
       o << '(';
-      for (auto item : e.list_) o << ' ' << *item << ' ';
-      o << ')';
+      for (auto item : e.list_) o << ' ' << *item;
+      o << " )";
     } else {
       o << e.str_.str;
     }
@@ -171,6 +179,8 @@ private:
     IString id = curr[0]->str();
     if (id == FUNC) return parseFunction(curr);
     if (id == MEMORY) return parseMemory(curr);
+    if (id == EXPORT) return parseExport(curr);
+    if (id == TABLE) return parseTable(curr);
     std::cerr << "bad module element " << id.str << '\n';
     abort();
   }
@@ -179,19 +189,24 @@ private:
 
   void parseFunction(Element& s) {
     auto func = allocator.alloc<Function>();
-    func->name = s[0]->str();
-    for (unsigned i = 1; i < s.size(); i++) {
-      Element *curr = s[i];
-      IString id = curr[0].str();
+    func->name = s[1]->str();
+    for (unsigned i = 2; i < s.size(); i++) {
+      Element& curr = *s[i];
+      IString id = curr[0]->str();
       if (id == PARAM) {
-        IString name = curr[1].str();
-        WasmType type = stringToWasmType(curr[2].str());
+        IString name = curr[1]->str();
+        WasmType type = stringToWasmType(curr[2]->str());
         func->params.emplace_back(name, type);
         currLocalTypes[name] = type;
       } else if (id == RESULT) {
-        func->result = stringToWasmType(curr[1].str());
+        func->result = stringToWasmType(curr[1]->str());
+      } else if (id == LOCAL) {
+        IString name = curr[1]->str();
+        WasmType type = stringToWasmType(curr[2]->str());
+        func->locals.emplace_back(name, type);
+        currLocalTypes[name] = type;
       } else {
-        func->body = parseExpression(*curr);
+        func->body = parseExpression(curr);
       }
     }
     currLocalTypes.clear();
@@ -214,6 +229,7 @@ private:
   }
 
   Expression* parseExpression(Element& s) {
+    if (debug) std::cerr << "parse expression " << s << '\n';
     IString id = s[0]->str();
     const char *str = id.str;
     const char *dot = strchr(str, '.');
@@ -225,30 +241,33 @@ private:
         case 'a': {
           if (op[1] == 'd') return makeBinary(s, BinaryOp::Add, type);
           if (op[1] == 'n') return makeBinary(s, BinaryOp::And, type);
-          abort();
+          abort_on(op);
         }
         case 'c': {
           if (op[1] == 'o') {
             if (op[2] == 'p') return makeBinary(s, BinaryOp::CopySign, type);
-            if (op[3] == 'n') return makeConvert(s, op[8] == 'u' ? ConvertOp::ConvertUInt32 : ConvertOp::ConvertSInt32, type);
+            if (op[2] == 'n') {
+              if (op[3] == 'v') return makeConvert(s, op[8] == 'u' ? ConvertOp::ConvertUInt32 : ConvertOp::ConvertSInt32, type);
+              if (op[3] == 's') return makeConst(s, type);
+            }
           }
           if (op[1] == 'l') return makeUnary(s, UnaryOp::Clz, type);
-          abort();
+          abort_on(op);
         }
         case 'd': {
           if (op[1] == 'i') {
             if (op[3] == '_') return makeBinary(s, op[4] == 'u' ? BinaryOp::DivU : BinaryOp::DivS, type);
             if (op[3] == 0) return makeBinary(s, BinaryOp::Div, type);
           }
-          abort();
+          abort_on(op);
         }
         case 'e': {
           if (op[1] == 'q') return makeCompare(s, RelationalOp::Eq, type);
-          abort();
+          abort_on(op);
         }
         case 'f': {
           if (op[1] == 'l') return makeUnary(s, UnaryOp::Floor, type);
-          abort();
+          abort_on(op);
         }
         case 'g': {
           if (op[1] == 't') {
@@ -259,7 +278,7 @@ private:
             if (op[2] == '_') return makeCompare(s, op[3] == 'u' ? RelationalOp::GeU : RelationalOp::GeS, type);
             if (op[2] == 0) return makeCompare(s, RelationalOp::Ge, type);
           }
-          abort();
+          abort_on(op);
         }
         case 'l': {
           if (op[1] == 't') {
@@ -270,30 +289,30 @@ private:
             if (op[2] == '_') return makeCompare(s, op[3] == 'u' ? RelationalOp::LeU : RelationalOp::LeS, type);
             if (op[2] == 0) return makeCompare(s, RelationalOp::Le, type);
           }
-          abort();
+          abort_on(op);
         }
         case 'm': {
           if (op[1] == 'i') return makeBinary(s, BinaryOp::Min, type);
           if (op[1] == 'a') return makeBinary(s, BinaryOp::Max, type);
           if (op[1] == 'u') return makeBinary(s, BinaryOp::Mul, type);
-          abort();
+          abort_on(op);
         }
         case 'n': {
           if (op[1] == 'e') {
             if (op[2] == 0) return makeCompare(s, RelationalOp::Ne, type);
             if (op[2] == 'g') return makeUnary(s, UnaryOp::Neg, type);
           }
-          abort();
+          abort_on(op);
         }
         case 'o': {
           if (op[1] == 'r') return makeBinary(s, BinaryOp::Or, type);
-          abort();
+          abort_on(op);
         }
         case 'r': {
           if (op[1] == 'e') {
             return makeBinary(s, op[3] == 'u' ? BinaryOp::RemU : BinaryOp::RemS, type);
           }
-          abort();
+          abort_on(op);
         }
         case 's': {
           if (op[1] == 'h') {
@@ -301,30 +320,34 @@ private:
             return makeBinary(s, op[4] == 'u' ? BinaryOp::ShrU : BinaryOp::ShrS, type);
           }
           if (op[1] == 'u')  return makeBinary(s, BinaryOp::Sub, type);
-          abort();
+          abort_on(op);
         }
         case 't': {
           if (op[1] == 'r') return makeConvert(s, ConvertOp::TruncSFloat64, type);
-          abort();
+          abort_on(op);
         }
         case 'x': {
           if (op[1] == 'o') return makeBinary(s, BinaryOp::Xor, type);
-          abort();
+          abort_on(op);
         }
-        default: abort();
+        default: abort_on(op);
       }
     } else {
       // other expression
       switch (str[0]) {
+        case 'b': {
+          if (str[1] == 'l') return makeBlock(s);
+          abort_on(str);
+        }
         case 'g': {
           if (str[1] == 'e') return makeGetLocal(s);
-          abort();
+          abort_on(str);
         }
         case 's': {
           if (str[1] == 'e') return makeSetLocal(s);
-          abort();
+          abort_on(str);
         }
-        default: abort();
+        default: abort_on(str);
       }
     }
   }
@@ -378,8 +401,48 @@ private:
     return ret;
   }
 
+  Expression* makeBlock(Element& s) {
+    auto ret = allocator.alloc<Block>();
+    size_t i = 1;
+    if (s[1]->isString()) {
+      ret->name = s[1]->str();
+      i++;
+    }
+    for (; i < s.size(); i++) {
+      ret->list.push_back(parseExpression(*s[i]));
+    }
+    return ret;
+  }
+
+  Expression* makeConst(Element& s, WasmType type) {
+    auto ret = allocator.alloc<Const>();
+    ret->value.type = type;
+    const char *value = s[1]->str().str;
+    switch (type) {
+      case i32: ret->value.i32 = atoi(value); break;
+      case i64: ret->value.i64 = atol(value); break;
+      case f32: ret->value.f32 = atof(value); break;
+      case f64: ret->value.f64 = atof(value); break;
+      default: abort();
+    }
+    return ret;
+  }
+
   void parseMemory(Element& s) {
     wasm.memorySize = atoi(s[1]->str().str);
+  }
+
+  void parseExport(Element& s) {
+    Export ex;
+    ex.name = s[1]->str();
+    ex.value = s[2]->str();
+    wasm.exports.push_back(ex);
+  }
+
+  void parseTable(Element& s) {
+    for (size_t i = 1; i < s.size(); i++) {
+      wasm.table.names.push_back(s[i]->str());
+    }
   }
 };
 
