@@ -22,7 +22,8 @@ IString MODULE("module"),
         MEMORY("memory"),
         EXPORT("export"),
         TABLE("table"),
-        LOCAL("local");
+        LOCAL("local"),
+        TYPE("type");
 
 //
 // An element in an S-Expression: a list or a string
@@ -191,6 +192,7 @@ private:
     if (id == MEMORY) return parseMemory(curr);
     if (id == EXPORT) return parseExport(curr);
     if (id == TABLE) return parseTable(curr);
+    if (id == TYPE) return parseType(curr);
     std::cerr << "bad module element " << id.str << '\n';
     abort();
   }
@@ -552,6 +554,24 @@ private:
     for (size_t i = 1; i < s.size(); i++) {
       wasm.table.names.push_back(s[i]->str());
     }
+  }
+
+  void parseType(Element& s) {
+    auto type = allocator.alloc<FunctionType>();
+    type->name = s[1]->str();
+    Element& func = *s[2];
+    assert(func.isList());
+    for (size_t i = 1; i < func.size(); i++) {
+      Element& curr = *func[i];
+      if (curr[0]->str() == PARAM) {
+        for (size_t j = 1; j < curr.size(); j++) {
+          type->params.push_back(stringToWasmType(curr[j]->str()));
+        }
+      } else if (curr[0]->str() == RESULT) {
+        type->result = stringToWasmType(curr[1]->str());
+      }
+    }
+    wasm.functionTypes[type->name] = type;
   }
 };
 
