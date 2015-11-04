@@ -483,7 +483,7 @@ private:
       assert(extra[1] == '6');
       extra += 2;
     }
-    ret->signed_ = extra[0] != 0;
+    ret->signed_ = extra[0] && extra[1] == 's';
     size_t i = 1;
     ret->offset = 0;
     ret->align = -1;
