@@ -175,9 +175,10 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
       }
     }
 
-    void trap() {
-      std::cerr << "wasm trap!\n";
-      abort();
+    void trap() override {
+      EM_ASM({
+        throw "wasm trap!";
+      });
     }
   };
 
