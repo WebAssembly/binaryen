@@ -367,8 +367,9 @@ public:
               if (val > (double)INT_MAX || val < (double)INT_MIN) instance.externalInterface->trap();
               return Flow(Literal(int32_t(val)));
             } else {
-              if (val > (double)LLONG_MAX || val < (double)LLONG_MIN) instance.externalInterface->trap();
-              return Flow(Literal(int64_t(val)));
+              int64_t converted = val;
+              if ((val > 0 && converted <= 0) || val < (double)LLONG_MIN) instance.externalInterface->trap();
+              return Flow(Literal(converted));
             }
           }
           case TruncUFloat32:
