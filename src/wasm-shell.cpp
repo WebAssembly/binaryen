@@ -13,6 +13,7 @@ using namespace wasm;
 
 IString ASSERT_RETURN("assert_return"),
         ASSERT_TRAP("assert_trap"),
+        PRINT("print"),
         INVOKE("invoke");
 
 //
@@ -37,6 +38,13 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
+    if (import->name == PRINT) {
+      for (auto argument : arguments) {
+        std::cout << argument << ' ';
+      }
+      std::cout << '\n';
+      return Literal();
+    }
     std::cout << "callImport " << import->name.str << "\n";
     abort();
   }
