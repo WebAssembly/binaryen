@@ -692,7 +692,7 @@ public:
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     o << '(';
-    prepareColor(o) << printWasmType(type);
+    prepareColor(o) << printWasmType(type) << '.';
     switch (op) {
       case ExtendSInt32:     o << "extend_s/i32"; break;
       case ExtendUInt32:     o << "extend_u/i32"; break;
