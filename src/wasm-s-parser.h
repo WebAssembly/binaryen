@@ -191,8 +191,6 @@ public:
     }
   }
 
-  Expression* parseExpression(Element& s); // useful in shell assert tests
-
 private:
 
   void parseModuleElement(Element& curr) {
@@ -251,6 +249,7 @@ private:
     abort();
   }
 
+public:
   Expression* parseExpression(Element* s) {
     return parseExpression(*s);
   }
@@ -402,6 +401,7 @@ private:
     }
   }
 
+private:
   Expression* makeBinary(Element& s, BinaryOp op, WasmType type) {
     auto ret = allocator.alloc<Binary>();
     ret->op = op;
