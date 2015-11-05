@@ -687,14 +687,14 @@ public:
       case TruncUFloat32:    o << "trunc_u/f32"; break;
       case TruncSFloat64:    o << "trunc_s/f64"; break;
       case TruncUFloat64:    o << "trunc_u/f64"; break;
-      case ReinterpretFloat: o << "reinterpret/f64"; break;
+      case ReinterpretFloat: o << "reinterpret/" << (type == i64 ? "f64" : "f32"); break;
       case ConvertUInt32:    o << "convert_u/i32"; break;
       case ConvertSInt32:    o << "convert_s/i32"; break;
       case ConvertUInt64:    o << "convert_u/i64"; break;
       case ConvertSInt64:    o << "convert_s/i64"; break;
       case PromoteFloat32:   o << "promote/f32"; break;
       case DemoteFloat64:    o << "demote/f64"; break;
-      case ReinterpretInt:   o << "reinterpret/i64"; break;
+      case ReinterpretInt:   o << "reinterpret" << (type == f64 ? "i64" : "i32"); break;
       default: abort();
     }
     restoreNormalColor(o);
