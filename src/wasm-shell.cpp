@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
         if (curr.size() >= 3) {
           expected = builder.parseExpression(*curr[2])->dyn_cast<Const>()->value;
         }
-        std::cerr << "seen " << result << ", expected " << expected << " from " << *curr[2] << '\n';
+        std::cerr << "seen " << result << ", expected " << expected << '\n';
         assert(expected == result);
       }
       if (id == ASSERT_TRAP) assert(trapped);

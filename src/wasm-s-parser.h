@@ -382,8 +382,8 @@ public:
         }
         case 't': {
           if (op[1] == 'r') {
-            if (type == i32) return makeConvert(s, op[6] == 's' ? ConvertOp::TruncSFloat32 : ConvertOp::TruncUFloat32, type);
-            if (type == i64) return makeConvert(s, op[6] == 's' ? ConvertOp::TruncSFloat64 : ConvertOp::TruncUFloat64, type);
+            if (op[6] == 's') return makeConvert(s, op[9] == '3' ? ConvertOp::TruncSFloat32 : ConvertOp::TruncSFloat64, type);
+            if (op[6] == 'u') return makeConvert(s, op[9] == '3' ? ConvertOp::TruncUFloat32 : ConvertOp::TruncUFloat64, type);
             abort();
           }
           abort_on(op);
