@@ -346,8 +346,14 @@ public:
             case Mul:      return Flow(Literal(l * r));
             case Div:      return Flow(Literal(l / r));
             case CopySign: return Flow(Literal(std::copysign(l, r)));
-            case Min:      return Flow(Literal(std::min(l, r)));
-            case Max:      return Flow(Literal(std::max(l, r)));
+            case Min: {
+              if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
+              return Literal(std::min(l, r));
+            }
+            case Max: {
+              if (l == r && l == 0) return Literal(1/l < 0 ? r : l);
+              return Literal(std::max(l, r));
+            }
             default: abort();
           }
         } else if (left.type == f64) {
