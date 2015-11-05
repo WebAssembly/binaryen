@@ -117,8 +117,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
       }
     }
 
-    Literal load(Load* load, Literal ptr) override {
-      size_t addr = ptr.geti32();
+    Literal load(Load* load, size_t addr) override {
       assert(load->align == load->bytes);
       if (!isWasmTypeFloat(load->type)) {
         if (load->bytes == 1) {
@@ -151,8 +150,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
       }
     }
 
-    void store(Store* store, Literal ptr, Literal value) override {
-      size_t addr = ptr.geti32();
+    void store(Store* store, size_t addr, Literal value) override {
       assert(store->align == store->bytes);
       if (!isWasmTypeFloat(store->type)) {
         if (store->bytes == 1) {

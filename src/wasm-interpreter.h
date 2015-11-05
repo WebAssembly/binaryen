@@ -27,8 +27,8 @@ public:
   struct ExternalInterface {
     virtual void init(Module& wasm) {}
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
-    virtual Literal load(Load* load, Literal ptr) = 0;
-    virtual void store(Store* store, Literal ptr, Literal value) = 0;
+    virtual Literal load(Load* load, size_t addr) = 0;
+    virtual void store(Store* store, size_t addr, Literal value) = 0;
     virtual void trap() = 0;
   };
 
@@ -36,7 +36,7 @@ public:
     for (auto function : wasm.functions) {
       functions[function->name] = function;
     }
-
+    memorySize = wasm.memory.initial;
     externalInterface->init(wasm);
   }
 
@@ -264,7 +264,7 @@ public:
         NOTE_ENTER("Load");
         Flow flow = visit(curr->ptr);
         if (flow.breaking()) return flow;
-        return instance.externalInterface->load(curr, flow.value);
+        return instance.externalInterface->load(curr, instance.getFinalAddress(curr, flow.value));
       }
       Flow visitStore(Store *curr) override {
         NOTE_ENTER("Store");
@@ -272,7 +272,7 @@ public:
         if (ptr.breaking()) return ptr;
         Flow value = visit(curr->value);
         if (value.breaking()) return value;
-        instance.externalInterface->store(curr, ptr.value, value.value);
+        instance.externalInterface->store(curr, instance.getFinalAddress(curr, ptr.value), value.value);
         return value;
       }
       Flow visitConst(Const *curr) override {
@@ -432,6 +432,18 @@ public:
   }
 
   std::map<IString, Function*> functions;
+  size_t memorySize;
+
+  template<class LS>
+  size_t getFinalAddress(LS *curr, Literal ptr) {
+    uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
+    if (memorySize < curr->offset) externalInterface->trap();
+    if (addr > memorySize - curr->offset) externalInterface->trap();
+    addr += curr->offset;
+    assert(memorySize >= curr->bytes);
+    if (addr > memorySize - curr->bytes) externalInterface->trap();
+    return addr;
+  }
 
 private:
   Module& wasm;

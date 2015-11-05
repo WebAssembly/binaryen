@@ -47,13 +47,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     abort();
   }
 
-  Literal load(Load* load, Literal ptr) override {
+  Literal load(Load* load, size_t addr) override {
     // ignore align - assume we are on x86 etc. which does that
-    size_t addr = ptr.geti32();
-    int64_t full = addr;
-    full += load->offset;
-    if (full + load->bytes > memorySize) trap();
-    addr = full;
     switch (load->type) {
       case i32: {
         switch (load->bytes) {
@@ -80,12 +75,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
-  void store(Store* store, Literal ptr, Literal value) override {
+  void store(Store* store, size_t addr, Literal value) override {
     // ignore align - assume we are on x86 etc. which does that
-    size_t addr = ptr.geti32();
-    int64_t full = addr;
-    full += store->offset;
-    if (full + store->bytes > memorySize) trap();
     switch (store->type) {
       case i32: {
         switch (store->bytes) {
