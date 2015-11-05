@@ -3,6 +3,8 @@
 // Parses WebAssembly code in S-Expression format, as in .wast files.
 //
 
+#include <sstream>
+
 #include "wasm.h"
 #include "mixed_arena.h"
 
@@ -491,12 +493,31 @@ private:
   Expression* makeConst(Element& s, WasmType type) {
     auto ret = allocator.alloc<Const>();
     ret->type = ret->value.type = type;
-    const char *value = s[1]->c_str();
+    const char *str = s[1]->c_str();
+    std::istringstream istr(str);
     switch (type) {
-      case i32: ret->value.i32 = atoi(value); break;
-      case i64: ret->value.i64 = atol(value); break;
-      case f32: ret->value.f32 = atof(value); break;
-      case f64: ret->value.f64 = atof(value); break;
+      case i32: {
+        int32_t temp;
+        if (str[0] == '0' && str[1] == 'x') {
+          istr >> std::hex >> temp;
+        } else {
+          istr >> temp;
+        }
+        ret->value.i32 = temp;
+        break;
+      }
+      case i64: {
+        int64_t temp;
+        if (str[0] == '0' && str[1] == 'x') {
+          istr >> std::hex >> temp;
+        } else {
+          istr >> temp;
+        }
+        ret->value.i64 = temp;
+        break;
+      }
+      case f32: istr >> ret->value.f32; break;
+      case f64: istr >> ret->value.f64; break;
       default: abort();
     }
     return ret;
