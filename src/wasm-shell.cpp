@@ -175,6 +175,10 @@ int main(int argc, char **argv) {
             longjmp(trapState, 1);
           });
         }
+        if (!invalid) {
+          // maybe parsed ok, but otherwise incorrect
+          invalid = !wasm.validate();
+        }
         assert(invalid);
       } else {
         // an invoke test

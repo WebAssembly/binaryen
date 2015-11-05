@@ -890,6 +890,21 @@ public:
     decIndent(o, indent);
     return o << '\n';
   }
+
+  bool validate() {
+    for (auto& exp : exports) {
+      Name name = exp.name;
+      bool found = false;
+      for (auto& func : functions) {
+        if (func->name == name) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) return false;
+    }
+    return true;
+  }
 };
 
 //
