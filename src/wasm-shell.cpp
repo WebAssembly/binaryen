@@ -187,7 +187,7 @@ int main(int argc, char **argv) {
         IString name = invoke[1]->str();
         ModuleInstance::LiteralList arguments;
         for (size_t j = 2; j < invoke.size(); j++) {
-          Expression* argument = builder.parseExpression(*invoke[2]);
+          Expression* argument = builder.parseExpression(*invoke[j]);
           arguments.push_back(argument->dyn_cast<Const>()->value);
         }
         bool trapped = false;
