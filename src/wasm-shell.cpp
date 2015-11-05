@@ -29,6 +29,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   void init(Module& wasm) override {
     memory = new char[wasm.memory.initial];
     memorySize = wasm.memory.initial;
+    // apply memory segments
+    for (auto segment : wasm.memory.segments) {
+      memcpy(memory + segment.offset, segment.data, segment.size);
+    }
   }
 
   jmp_buf trapState;

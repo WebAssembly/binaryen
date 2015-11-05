@@ -211,6 +211,7 @@ private:
   void parseFunction(Element& s) {
     auto func = allocator.alloc<Function>();
     func->name = s[1]->str();
+    func->body = nullptr;
     for (unsigned i = 2; i < s.size(); i++) {
       Element& curr = *s[i];
       IString id = curr[0]->str();
@@ -227,7 +228,18 @@ private:
         func->locals.emplace_back(name, type);
         currLocalTypes[name] = type;
       } else {
-        func->body = parseExpression(curr);
+        Expression* ex = parseExpression(curr);
+        if (!func->body) {
+          func->body = ex;
+        } else {
+          auto block = func->body->dyn_cast<Block>();
+          if (!block) {
+            block = allocator.alloc<Block>();
+            block->list.push_back(func->body);
+            func->body = block;
+          }
+          block->list.push_back(ex);
+        }
       }
     }
     wasm.functions.push_back(func);
@@ -620,7 +632,8 @@ private:
     while (i < s.size()) {
       Element& curr = *s[i];
       assert(curr[0]->str() == SEGMENT);
-      wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), strdup(curr[2]->c_str()));
+      char *data = strdup(curr[2]->c_str()); // TODO: handle non-null-terminated?
+      wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data, strlen(data));
       i++;
     }
   }
