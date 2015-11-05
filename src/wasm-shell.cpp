@@ -212,6 +212,11 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (debug) std::cerr << "done.\n";
+  if (debug) {
+    Colors::green(std::cerr);
+    Colors::bold(std::cerr);
+    std::cerr << "\ndone.\n";
+    Colors::normal(std::cerr);
+  }
 }
 
