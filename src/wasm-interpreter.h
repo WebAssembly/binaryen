@@ -353,9 +353,21 @@ public:
         if (flow.breaking()) return flow;
         Literal value = flow.value;
         switch (curr->op) { // :-)
-          case ConvertUInt32: return Flow(Literal(double(uint32_t(value.geti32()))));
-          case ConvertSInt32: return Flow(Literal(double(value.geti32())));
-          case TruncSFloat64: return Flow(Literal(int32_t(value.getf64())));
+          case ExtendSInt32:     return Flow(Literal(int64_t(value.geti32())));
+          case ExtendUInt32:     return Flow(Literal(int64_t((uint32_t)value.geti32())));
+          case WrapInt64:        return Flow(Literal(int32_t(value.geti64())));
+          case TruncSFloat32:    return Flow(Literal(int32_t(value.getf32())));
+          case TruncUFloat32:    return Flow(Literal(uint32_t(value.getf32())));
+          case TruncSFloat64:    return Flow(Literal(int32_t(value.getf64())));
+          case TruncUFloat64:    return Flow(Literal(int32_t((uint32_t)value.getf64())));
+          case ReinterpretFloat: return curr->type == i32 ? Flow(Literal(value.reinterpreti32())) : Flow(Literal(value.reinterpreti64()));
+          case ConvertUInt32:    return Flow(Literal(double(uint32_t(value.geti32()))));
+          case ConvertSInt32:    return Flow(Literal(double(int32_t(value.geti32()))));
+          case ConvertUInt64:    return Flow(Literal(double((uint64_t)value.geti64())));
+          case ConvertSInt64:    return Flow(Literal(double(value.geti64())));
+          case PromoteFloat32:   return Flow(Literal(double(value.getf32())));
+          case DemoteFloat64:    return Flow(Literal(float(value.getf64())));
+          case ReinterpretInt:   return curr->type == f32 ? Flow(Literal(value.reinterpretf32())) : Flow(Literal(value.reinterpretf64()));
           default: abort();
         }
       }

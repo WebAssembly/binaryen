@@ -98,7 +98,9 @@ struct Literal {
 
   Literal() : type(WasmType::none), f64(0) {}
   Literal(int32_t init) : type(WasmType::i32), i32(init) {}
+  Literal(uint32_t init) : type(WasmType::i32), i32(init) {}
   Literal(int64_t init) : type(WasmType::i64), i64(init) {}
+  Literal(uint64_t init) : type(WasmType::i64), i64(init) {}
   Literal(float   init) : type(WasmType::f32), f32(init) {}
   Literal(double  init) : type(WasmType::f64), f64(init) {}
 
@@ -106,6 +108,11 @@ struct Literal {
   int64_t geti64() { assert(type == WasmType::i64); return i64; }
   float   getf32() { assert(type == WasmType::f32); return f32; }
   double  getf64() { assert(type == WasmType::f64); return f64; }
+
+  int32_t reinterpreti32() { assert(type == WasmType::f32); return i32; }
+  int64_t reinterpreti64() { assert(type == WasmType::f64); return i64; }
+  float   reinterpretf32() { assert(type == WasmType::i32); return f32; }
+  double  reinterpretf64() { assert(type == WasmType::i64); return f64; }
 
   void printDouble(std::ostream &o, double d) {
     const char *text = cashew::JSPrinter::numToString(d);
