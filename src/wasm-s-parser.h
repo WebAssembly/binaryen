@@ -296,7 +296,10 @@ public:
           if (op[1] == 'o') {
             if (op[2] == 'p') return makeBinary(s, BinaryOp::CopySign, type);
             if (op[2] == 'n') {
-              if (op[3] == 'v') return makeConvert(s, op[8] == 'u' ? ConvertOp::ConvertUInt32 : ConvertOp::ConvertSInt32, type);
+              if (op[3] == 'v') {
+                if (op[8] == 's') return makeConvert(s, op[11] == '3' ? ConvertOp::ConvertSInt32 : ConvertOp::ConvertSInt64, type);
+                if (op[8] == 'u') return makeConvert(s, op[11] == '3' ? ConvertOp::ConvertUInt32 : ConvertOp::ConvertUInt64, type);
+              }
               if (op[3] == 's') return makeConst(s, type);
             }
           }
