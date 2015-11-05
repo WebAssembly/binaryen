@@ -308,12 +308,12 @@ public:
           float v = value.getf32();
           switch (curr->op) {
             case Neg:     return Literal(-v);
-            case Abs:     return Literal(fabs(v));
-            case Ceil:    return Literal(ceil(v));
-            case Floor:   return Literal(floor(v));
-            case Trunc:   return Literal(trunc(v));
-            case Nearest: return Literal(nearbyint(v));
-            case Sqrt:    return Literal(sqrtf(v));
+            case Abs:     return Literal(std::abs(v));
+            case Ceil:    return Literal(std::ceil(v));
+            case Floor:   return Literal(std::floor(v));
+            case Trunc:   return Literal(std::trunc(v));
+            case Nearest: return Literal(std::nearbyint(v));
+            case Sqrt:    return Literal(std::sqrt(v));
             default: abort();
           }
         }
@@ -322,11 +322,11 @@ public:
           switch (curr->op) {
             case Neg:     return Literal(-v);
             case Abs:     return Literal(std::abs(v));
-            case Ceil:    return Literal(ceil(v));
-            case Floor:   return Literal(floor(v));
-            case Trunc:   return Literal(trunc(v));
-            case Nearest: return Literal(nearbyint(v));
-            case Sqrt:    return Literal(sqrt(v));
+            case Ceil:    return Literal(std::ceil(v));
+            case Floor:   return Literal(std::floor(v));
+            case Trunc:   return Literal(std::trunc(v));
+            case Nearest: return Literal(std::nearbyint(v));
+            case Sqrt:    return Literal(std::sqrt(v));
             default: abort();
           }
         }
