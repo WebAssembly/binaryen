@@ -298,10 +298,12 @@ public:
             if (op[3] == '_') return makeBinary(s, op[4] == 'u' ? BinaryOp::DivU : BinaryOp::DivS, type);
             if (op[3] == 0) return makeBinary(s, BinaryOp::Div, type);
           }
+          if (op[1] == 'e') return makeConvert(s,  ConvertOp::DemoteFloat64, type);
           abort_on(op);
         }
         case 'e': {
           if (op[1] == 'q') return makeCompare(s, RelationalOp::Eq, type);
+          if (op[1] == 'x') return makeConvert(s, op[7] == 'u' ? ConvertOp::ExtendUInt32 : ConvertOp::ExtendSInt32, type);
           abort_on(op);
         }
         case 'f': {
@@ -348,6 +350,10 @@ public:
           if (op[1] == 'r') return makeBinary(s, BinaryOp::Or, type);
           abort_on(op);
         }
+        case 'p': {
+          if (op[1] == 'r') return makeConvert(s,  ConvertOp::PromoteFloat32, type);
+          abort_on(op);
+        }
         case 'r': {
           if (op[1] == 'e') {
             return makeBinary(s, op[4] == 'u' ? BinaryOp::RemU : BinaryOp::RemS, type);
@@ -365,6 +371,10 @@ public:
         }
         case 't': {
           if (op[1] == 'r') return makeConvert(s, ConvertOp::TruncSFloat64, type);
+          abort_on(op);
+        }
+        case 'w': {
+          if (op[1] == 'r') return makeConvert(s,  ConvertOp::WrapInt64, type);
           abort_on(op);
         }
         case 'x': {

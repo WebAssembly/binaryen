@@ -678,11 +678,23 @@ public:
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     o << '(';
-    prepareColor(o);
+    prepareColor(o) << printWasmType(type);
     switch (op) {
-      case ConvertUInt32: o << "f64.convert_u/i32"; break;
-      case ConvertSInt32: o << "f64.convert_s/i32"; break;
-      case TruncSFloat64: o << "i32.trunc_s/f64";   break;
+      case ExtendSInt32:     o << "extend_s/i32"; break;
+      case ExtendUInt32:     o << "extend_u/i32"; break;
+      case WrapInt64:        o << "wrap/i64"; break;
+      case TruncSFloat32:    o << "trunc_s/f32"; break;
+      case TruncUFloat32:    o << "trunc_u/f32"; break;
+      case TruncSFloat64:    o << "trunc_s/f64"; break;
+      case TruncUFloat64:    o << "trunc_u/f64"; break;
+      case ReinterpretFloat: o << "reinterpret/f64"; break;
+      case ConvertUInt32:    o << "convert_u/i32"; break;
+      case ConvertSInt32:    o << "convert_s/i32"; break;
+      case ConvertUInt64:    o << "convert_u/i64"; break;
+      case ConvertSInt64:    o << "convert_s/i64"; break;
+      case PromoteFloat32:   o << "promote/f32"; break;
+      case DemoteFloat64:    o << "demote/f64"; break;
+      case ReinterpretInt:   o << "reinterpret/i64"; break;
       default: abort();
     }
     restoreNormalColor(o);
