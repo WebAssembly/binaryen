@@ -156,12 +156,21 @@ int main(int argc, char **argv) {
         arguments.push_back(argument->dyn_cast<Const>()->value);
       }
       bool trapped = false;
+      Literal result;
       if (setjmp(interface->trapState) == 0) {
-        instance->callFunction(name, arguments);
+        result = instance->callFunction(name, arguments);
       } else {
         trapped = true;
       }
-      if (id == ASSERT_RETURN) assert(!trapped);
+      if (id == ASSERT_RETURN) {
+        assert(!trapped);
+        Literal expected;
+        if (curr.size() >= 3) {
+          expected = builder.parseExpression(*curr[2])->dyn_cast<Const>()->value;
+        }
+        std::cerr << "seen " << result << ", expected " << expected << '\n';
+        assert(expected == result);
+      }
       if (id == ASSERT_TRAP) assert(trapped);
       i++;
     }
