@@ -112,7 +112,10 @@ class SExpressionParser {
 public:
   // Assumes control of and modifies the input.
   SExpressionParser(char* input) : beginning(input), input(input) {
-    root = parseInnerList();
+    root = nullptr;
+    while (!root) { // keep parsing until we pass an initial comment
+      root = parseInnerList();
+    }
   }
 
   Element* root;
@@ -123,6 +126,10 @@ private:
     if (input[0] == ';') {
       // comment
       input++;
+      if (input[0] == ';') {
+        while (input[0] != '\n') input++;
+        return nullptr;
+      }
       input = strstr(input, ";)");
       assert(input);
       return nullptr;
