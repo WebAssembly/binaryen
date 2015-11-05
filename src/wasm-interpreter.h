@@ -23,6 +23,7 @@ public:
   // an imported function or accessing memory.
   //
   struct ExternalInterface {
+    virtual void init(Module& wasm) {}
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
     virtual Literal load(Load* load, Literal ptr) = 0;
     virtual void store(Store* store, Literal ptr, Literal value) = 0;
@@ -32,6 +33,8 @@ public:
     for (auto function : wasm.functions) {
       functions[function->name] = function;
     }
+
+    externalInterface->init(wasm);
   }
 
 #ifdef WASM_INTERPRETER_DEBUG
