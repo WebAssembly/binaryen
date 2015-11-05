@@ -157,7 +157,12 @@ int main(int argc, char **argv) {
       Element& curr = *root[i];
       IString id = curr[0]->str();
       if (id == MODULE) break;
-      std::cerr << i << '/' << (root.size()-1) << " CHECKING| " << curr << '\n';
+      Colors::red(std::cerr);
+      std::cerr << i << '/' << (root.size()-1);
+      Colors::green(std::cerr);
+      std::cerr << " CHECKING: ";
+      Colors::normal(std::cerr);
+      std::cerr << curr << '\n';
       Element& invoke = *curr[1];
       assert(invoke[0]->str() == INVOKE);
       IString name = invoke[1]->str();

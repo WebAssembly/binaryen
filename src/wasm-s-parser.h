@@ -278,7 +278,7 @@ public:
   }
 
   Expression* parseExpression(Element& s) {
-    if (debug) std::cerr << "parse expression " << s << '\n';
+    //if (debug) std::cerr << "parse expression " << s << '\n';
     IString id = s[0]->str();
     const char *str = id.str;
     const char *dot = strchr(str, '.');
@@ -584,6 +584,10 @@ private:
       assert(extra[1] == '6');
       ret->bytes = 2;
       extra += 2;
+    } else if (extra[0] == '3') {
+      assert(extra[1] == '2');
+      ret->bytes = 4;
+      extra += 2;
     }
     ret->signed_ = extra[0] && extra[1] == 's';
     size_t i = 1;
@@ -616,6 +620,10 @@ private:
     } else if (extra[0] == '1') {
       assert(extra[1] == '6');
       ret->bytes = 2;
+      extra += 2;
+    } else if (extra[0] == '3') {
+      assert(extra[1] == '2');
+      ret->bytes = 4;
       extra += 2;
     }
     size_t i = 1;
