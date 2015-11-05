@@ -3,6 +3,8 @@
 // can function as a polyfill.
 //
 
+#include <limits.h>
+
 #include "wasm.h"
 
 namespace wasm {
@@ -27,6 +29,7 @@ public:
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
     virtual Literal load(Load* load, Literal ptr) = 0;
     virtual void store(Store* store, Literal ptr, Literal value) = 0;
+    virtual void trap() = 0;
   };
 
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
@@ -356,7 +359,11 @@ public:
           case ExtendSInt32:     return Flow(Literal(int64_t(value.geti32())));
           case ExtendUInt32:     return Flow(Literal(uint64_t((uint32_t)value.geti32())));
           case WrapInt64:        return Flow(Literal(int32_t(value.geti64())));
-          case TruncSFloat32:    return Flow(Literal(int32_t(value.getf32())));
+          case TruncSFloat32:    {
+            float val = value.getf32();
+            if (val > (double)INT_MAX || val < (double)INT_MIN) instance.externalInterface->trap();
+            return Flow(Literal(int32_t(val)));
+          }
           case TruncUFloat32:    return Flow(Literal(uint32_t(value.getf32())));
           case TruncSFloat64:    return Flow(Literal(int32_t(value.getf64())));
           case TruncUFloat64:    return Flow(Literal(int32_t((uint32_t)value.getf64())));

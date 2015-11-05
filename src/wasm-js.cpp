@@ -174,6 +174,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
         }
       }
     }
+
+    void trap() {
+      std::cerr << "wasm trap!\n";
+      abort();
+    }
   };
 
   instance = new ModuleInstance(*module, new JSExternalInterface());

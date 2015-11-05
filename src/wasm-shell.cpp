@@ -35,12 +35,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
-  jmp_buf trapState;
-
-  void trap() {
-    longjmp(trapState, 1);
-  }
-
   Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
     if (import->name == PRINT) {
       for (auto argument : arguments) {
@@ -96,6 +90,12 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       case f64: ((double*)memory)[addr] = value.getf64();
       default: abort();
     }
+  }
+
+  jmp_buf trapState;
+
+  void trap() override {
+    longjmp(trapState, 1);
   }
 };
 
