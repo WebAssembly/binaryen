@@ -385,7 +385,10 @@ public:
               return Flow(Literal(converted));
             }
           }
-          case ReinterpretFloat: return curr->type == i32 ? Flow(Literal(value.reinterpreti32())) : Flow(Literal(value.reinterpreti64()));
+          case ReinterpretFloat: {
+            if (value.type == f64 && isnan(value.getf64())) return Flow(Literal((int64_t)0x7ff8000000000000)); // canonicalized
+            return curr->type == i32 ? Flow(Literal(value.reinterpreti32())) : Flow(Literal(value.reinterpreti64()));
+          }
           case ConvertUInt32:    return curr->type == f32 ? Flow(Literal(float(uint32_t(value.geti32())))) : Flow(Literal(double(uint32_t(value.geti32()))));
           case ConvertSInt32:    return curr->type == f32 ? Flow(Literal(float(int32_t(value.geti32())))) : Flow(Literal(double(int32_t(value.geti32()))));
           case ConvertUInt64:    return curr->type == f32 ? Flow(Literal(float((uint64_t)value.geti64()))) : Flow(Literal(double((uint64_t)value.geti64())));
