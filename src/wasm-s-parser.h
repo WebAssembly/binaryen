@@ -191,6 +191,8 @@ public:
     }
   }
 
+  Expression* parseExpression(Element& s); // useful in shell assert tests
+
 private:
 
   void parseModuleElement(Element& curr) {
