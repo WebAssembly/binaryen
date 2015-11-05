@@ -359,20 +359,30 @@ public:
           case ExtendSInt32:     return Flow(Literal(int64_t(value.geti32())));
           case ExtendUInt32:     return Flow(Literal(uint64_t((uint32_t)value.geti32())));
           case WrapInt64:        return Flow(Literal(int32_t(value.geti64())));
-          case TruncSFloat32: {
-            float val = value.getf32();
+          case TruncSFloat32:
+          case TruncSFloat64: {
+            double val = curr->op == TruncSFloat32 ? value.getf32() : value.getf64();
             if (isnan(val)) instance.externalInterface->trap();
-            if (val > (double)INT_MAX || val < (double)INT_MIN) instance.externalInterface->trap();
-            return Flow(Literal(int32_t(val)));
+            if (curr->type == i32) {
+              if (val > (double)INT_MAX || val < (double)INT_MIN) instance.externalInterface->trap();
+              return Flow(Literal(int32_t(val)));
+            } else {
+              if (val > (double)LLONG_MAX || val < (double)LLONG_MIN) instance.externalInterface->trap();
+              return Flow(Literal(int64_t(val)));
+            }
           }
-          case TruncUFloat32: {
-            float val = value.getf32();
+          case TruncUFloat32:
+          case TruncUFloat64: {
+            double val = curr->op == TruncUFloat32 ? value.getf32() : value.getf64();
             if (isnan(val)) instance.externalInterface->trap();
-            if (val > (double)UINT_MAX || val <= (double)-1) instance.externalInterface->trap();
-            return Flow(Literal(uint32_t(val)));
+            if (curr->type == i32) {
+              if (val > (double)UINT_MAX || val <= (double)-1) instance.externalInterface->trap();
+              return Flow(Literal(uint32_t(val)));
+            } else {
+              if (val > (double)ULLONG_MAX || val <= (double)-1) instance.externalInterface->trap();
+              return Flow(Literal(uint64_t(val)));
+            }
           }
-          case TruncSFloat64:    return Flow(Literal(int32_t(value.getf64())));
-          case TruncUFloat64:    return Flow(Literal(int32_t((uint32_t)value.getf64())));
           case ReinterpretFloat: return curr->type == i32 ? Flow(Literal(value.reinterpreti32())) : Flow(Literal(value.reinterpreti64()));
           case ConvertUInt32:    return Flow(Literal(double(uint32_t(value.geti32()))));
           case ConvertSInt32:    return Flow(Literal(double(int32_t(value.geti32()))));
