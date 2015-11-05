@@ -296,11 +296,13 @@ public:
       const char *op = dot + 1;
       switch (op[0]) {
         case 'a': {
+          if (op[1] == 'b') return makeUnary(s, UnaryOp::Abs, type);
           if (op[1] == 'd') return makeBinary(s, BinaryOp::Add, type);
           if (op[1] == 'n') return makeBinary(s, BinaryOp::And, type);
           abort_on(op);
         }
         case 'c': {
+          if (op[1] == 'e') return makeUnary(s, UnaryOp::Ceil, type);
           if (op[1] == 'o') {
             if (op[2] == 'p') return makeBinary(s, BinaryOp::CopySign, type);
             if (op[2] == 'n') {
@@ -363,6 +365,7 @@ public:
         case 'n': {
           if (op[1] == 'e') {
             if (op[2] == 0) return makeCompare(s, RelationalOp::Ne, type);
+            if (op[2] == 'a') return makeUnary(s, UnaryOp::Nearest, type);
             if (op[2] == 'g') return makeUnary(s, UnaryOp::Neg, type);
           }
           abort_on(op);
@@ -388,6 +391,7 @@ public:
             return makeBinary(s, op[4] == 'u' ? BinaryOp::ShrU : BinaryOp::ShrS, type);
           }
           if (op[1] == 'u') return makeBinary(s, BinaryOp::Sub, type);
+          if (op[1] == 'q') return makeUnary(s, UnaryOp::Sqrt, type);
           if (op[1] == 't') return makeStore(s, type);
           abort_on(op);
         }
@@ -395,7 +399,7 @@ public:
           if (op[1] == 'r') {
             if (op[6] == 's') return makeConvert(s, op[9] == '3' ? ConvertOp::TruncSFloat32 : ConvertOp::TruncSFloat64, type);
             if (op[6] == 'u') return makeConvert(s, op[9] == '3' ? ConvertOp::TruncUFloat32 : ConvertOp::TruncUFloat64, type);
-            onError();
+            if (op[2] == 'u') return makeUnary(s, UnaryOp::Trunc, type);
           }
           abort_on(op);
         }
