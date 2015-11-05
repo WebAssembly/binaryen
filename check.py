@@ -67,7 +67,7 @@ for asm in tests:
 print '\n[ checking wasm-shell testcases... ]\n'
 
 for t in tests:
-  if t.endswith('.wast'):
+  if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join('test', t)
     actual, err = subprocess.Popen([os.path.join('bin', 'wasm-shell'), t, 'print-wasm'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
@@ -88,15 +88,16 @@ for t in spec_tests:
   if t.startswith('spec') and t.endswith('.wast'):
     print '..', t
     wast = os.path.join('test', t)
-    actual, err = subprocess.Popen([os.path.join('bin', 'wasm-shell'), wast], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    assert err == '', 'bad err:' + err
+    proc = subprocess.Popen([os.path.join('bin', 'wasm-shell'), wast], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    actual, err = proc.communicate()
+    assert proc.returncode == 0, err
 
     expected = os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log')
     if os.path.exists(expected):
       expected = open(expected).read()
     else:
       print '       (no expected output)'
-      expected = ''
+      continue
     if actual != expected:
       fail(actual, expected)
 
