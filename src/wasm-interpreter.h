@@ -302,20 +302,42 @@ public:
         if (flow.breaking()) return flow;
         Literal right = flow.value;
         NOTE_EVAL2(left, right);
-        switch (curr->op) { // lmao
-          case Add:      return curr->type == i32 ? Flow(Literal(left.geti32() + right.geti32())) : Flow(Literal(left.getf64() + right.getf64()));
-          case Sub:      return curr->type == i32 ? Flow(Literal(left.geti32() - right.geti32())) : Flow(Literal(left.getf64() - right.getf64()));
-          case Mul:      return curr->type == i32 ? Flow(Literal(left.geti32() * right.geti32())) : Flow(Literal(left.getf64() * right.getf64()));
-          case DivS:     return Flow(Literal(left.geti32() / right.geti32()));
-          case DivU:     return Flow(Literal(int32_t(uint32_t(left.geti32()) / uint32_t(right.geti32()))));
-          case RemS:     return Flow(Literal(left.geti32() % right.geti32()));
-          case RemU:     return Flow(Literal(int32_t(uint32_t(left.geti32()) % uint32_t(right.geti32()))));
-          case And:      return Flow(Literal(left.geti32() & right.geti32()));
-          case Or:       return Flow(Literal(left.geti32() | right.geti32()));
-          case Xor:      return Flow(Literal(left.geti32() ^ right.geti32()));
-          case Shl:      return Flow(Literal(left.geti32() << right.geti32()));
-          case ShrU:     return Flow(Literal(int32_t(uint32_t(left.geti32()) >> uint32_t(right.geti32()))));
-          case ShrS:     return Flow(Literal(left.geti32() >> right.geti32()));
+        if (left.type == i32) {
+          switch (curr->op) {
+            case Add:      return Flow(Literal(left.geti32() + right.geti32()));
+            case Sub:      return Flow(Literal(left.geti32() - right.geti32()));
+            case Mul:      return Flow(Literal(left.geti32() * right.geti32()));
+            case DivS:     return Flow(Literal(left.geti32() / right.geti32()));
+            case DivU:     return Flow(Literal(int32_t(uint32_t(left.geti32()) / uint32_t(right.geti32()))));
+            case RemS:     return Flow(Literal(left.geti32() % right.geti32()));
+            case RemU:     return Flow(Literal(int32_t(uint32_t(left.geti32()) % uint32_t(right.geti32()))));
+            case And:      return Flow(Literal(left.geti32() & right.geti32()));
+            case Or:       return Flow(Literal(left.geti32() | right.geti32()));
+            case Xor:      return Flow(Literal(left.geti32() ^ right.geti32()));
+            case Shl:      return Flow(Literal(left.geti32() << right.geti32()));
+            case ShrU:     return Flow(Literal(int32_t(uint32_t(left.geti32()) >> uint32_t(right.geti32()))));
+            case ShrS:     return Flow(Literal(left.geti32() >> right.geti32()));
+            default: abort();
+          }
+        } else if (left.type == i64) {
+          switch (curr->op) {
+            case Add:      return Flow(Literal(left.geti64() + right.geti64()));
+            case Sub:      return Flow(Literal(left.geti64() - right.geti64()));
+            case Mul:      return Flow(Literal(left.geti64() * right.geti64()));
+            case DivS:     return Flow(Literal(left.geti64() / right.geti64()));
+            case DivU:     return Flow(Literal(int64_t(uint64_t(left.geti64()) / uint64_t(right.geti64()))));
+            case RemS:     return Flow(Literal(left.geti64() % right.geti64()));
+            case RemU:     return Flow(Literal(int64_t(uint64_t(left.geti64()) % uint64_t(right.geti64()))));
+            case And:      return Flow(Literal(left.geti64() & right.geti64()));
+            case Or:       return Flow(Literal(left.geti64() | right.geti64()));
+            case Xor:      return Flow(Literal(left.geti64() ^ right.geti64()));
+            case Shl:      return Flow(Literal(left.geti64() << right.geti64()));
+            case ShrU:     return Flow(Literal(int64_t(uint64_t(left.geti64()) >> uint64_t(right.geti64()))));
+            case ShrS:     return Flow(Literal(left.geti64() >> right.geti64()));
+            default: abort();
+          }
+        }
+        switch (curr->op) {
           case Div:      return Flow(Literal(left.getf64() / right.getf64()));
           case CopySign: return Flow(Literal(std::copysign(left.getf64(), right.getf64())));
           case Min:      return Flow(Literal(std::min(left.getf64(), right.getf64())));
@@ -332,17 +354,36 @@ public:
         if (flow.breaking()) return flow;
         Literal right = flow.value;
         NOTE_EVAL2(left, right);
-        switch (curr->op) { // :)
-          case Eq:  return curr->left->type == i32 ? Flow(Literal(left.geti32() == right.geti32())) : Flow(Literal(left.getf64() == right.getf64()));
-          case Ne:  return curr->left->type == i32 ? Flow(Literal(left.geti32() != right.geti32())) : Flow(Literal(left.getf64() != right.getf64()));
-          case LtS: return Flow(Literal(left.geti32() < right.geti32()));
-          case LtU: return Flow(Literal(uint32_t(left.geti32()) < uint32_t(right.geti32())));
-          case LeS: return Flow(Literal(left.geti32() <= right.geti32()));
-          case LeU: return Flow(Literal(uint32_t(left.geti32()) <= uint32_t(right.geti32())));
-          case GtS: return Flow(Literal(left.geti32() > right.geti32()));
-          case GtU: return Flow(Literal(uint32_t(left.geti32()) > uint32_t(right.geti32())));
-          case GeS: return Flow(Literal(left.geti32() >= right.geti32()));
-          case GeU: return Flow(Literal(uint32_t(left.geti32()) >= uint32_t(right.geti32())));
+        if (left.type == i32) {
+          switch (curr->op) {
+            case Eq:  return Flow(Literal(left.geti32() == right.geti32()));
+            case Ne:  return Flow(Literal(left.geti32() != right.geti32()));
+            case LtS: return Flow(Literal(left.geti32() < right.geti32()));
+            case LtU: return Flow(Literal(uint32_t(left.geti32()) < uint32_t(right.geti32())));
+            case LeS: return Flow(Literal(left.geti32() <= right.geti32()));
+            case LeU: return Flow(Literal(uint32_t(left.geti32()) <= uint32_t(right.geti32())));
+            case GtS: return Flow(Literal(left.geti32() > right.geti32()));
+            case GtU: return Flow(Literal(uint32_t(left.geti32()) > uint32_t(right.geti32())));
+            case GeS: return Flow(Literal(left.geti32() >= right.geti32()));
+            case GeU: return Flow(Literal(uint32_t(left.geti32()) >= uint32_t(right.geti32())));
+            default: abort();
+          }
+        } else if (left.type == i64) {
+          switch (curr->op) {
+            case Eq:  return Flow(Literal(left.getf64() == right.getf64()));
+            case Ne:  return Flow(Literal(left.getf64() != right.getf64()));
+            case LtS: return Flow(Literal(left.geti64() < right.geti64()));
+            case LtU: return Flow(Literal(uint64_t(left.geti64()) < uint64_t(right.geti64())));
+            case LeS: return Flow(Literal(left.geti64() <= right.geti64()));
+            case LeU: return Flow(Literal(uint64_t(left.geti64()) <= uint64_t(right.geti64())));
+            case GtS: return Flow(Literal(left.geti64() > right.geti64()));
+            case GtU: return Flow(Literal(uint64_t(left.geti64()) > uint64_t(right.geti64())));
+            case GeS: return Flow(Literal(left.geti64() >= right.geti64()));
+            case GeU: return Flow(Literal(uint64_t(left.geti64()) >= uint64_t(right.geti64())));
+            default: abort();
+          }
+        }
+        switch (curr->op) {
           case Lt:  return Flow(Literal(left.getf64() < right.getf64()));
           case Le:  return Flow(Literal(left.getf64() <= right.getf64()));
           case Gt:  return Flow(Literal(left.getf64() > right.getf64()));
