@@ -96,12 +96,12 @@ public:
         doIndent(std::cout, indent);
         std::cout << "visit " << name << " :\n";
         indent++;
-        //doIndent(std::cout, indent);
-        //expression->print(std::cout, indent) << '\n';
-        //indent++;
+        doIndent(std::cout, indent);
+        expression->print(std::cout, indent) << '\n';
+        indent++;
       }
       ~IndentHandler() {
-        //indent--;
+        indent--;
         indent--;
         doIndent(std::cout, indent);
         std::cout << "exit " << name << '\n';
