@@ -117,7 +117,7 @@ struct Literal {
   bool operator==(Literal& other) {
     if (type != other.type) return false;
     if (type == none) return true;
-    if (type == i32 || type == f32) return i32 == other.i32;
+    if (type == WasmType::i32 || type == WasmType::f32) return i32 == other.i32;
     return i64 == other.i64;
   }
 

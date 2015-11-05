@@ -499,7 +499,9 @@ private:
       case i32: {
         int32_t temp;
         if (str[0] == '0' && str[1] == 'x') {
-          istr >> std::hex >> temp;
+          uint32_t temp2;
+          istr >> std::hex >> temp2;
+          temp = temp2;
         } else {
           istr >> temp;
         }
@@ -509,7 +511,9 @@ private:
       case i64: {
         int64_t temp;
         if (str[0] == '0' && str[1] == 'x') {
-          istr >> std::hex >> temp;
+          uint64_t temp2;
+          istr >> std::hex >> temp2;
+          temp = temp2;
         } else {
           istr >> temp;
         }

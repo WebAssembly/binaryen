@@ -354,7 +354,7 @@ public:
         Literal value = flow.value;
         switch (curr->op) { // :-)
           case ExtendSInt32:     return Flow(Literal(int64_t(value.geti32())));
-          case ExtendUInt32:     return Flow(Literal(int64_t((uint32_t)value.geti32())));
+          case ExtendUInt32:     return Flow(Literal(uint64_t((uint32_t)value.geti32())));
           case WrapInt64:        return Flow(Literal(int32_t(value.geti64())));
           case TruncSFloat32:    return Flow(Literal(int32_t(value.getf32())));
           case TruncUFloat32:    return Flow(Literal(uint32_t(value.getf32())));
