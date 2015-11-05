@@ -33,7 +33,8 @@ IString MODULE("module"),
         CALL_IMPORT("call_import"),
         CALL_INDIRECT("call_indirect"),
         INFINITY_("infinity"),
-        NEG_INFINITY("-infinity");
+        NEG_INFINITY("-infinity"),
+        NAN_("nan");
 
 //
 // An element in an S-Expression: a list or a string
@@ -513,6 +514,14 @@ private:
         switch (type) {
           case f32: ret->value.f32 = -std::numeric_limits<float>::infinity(); break;
           case f64: ret->value.f64 = -std::numeric_limits<double>::infinity(); break;
+          default: abort();
+        }
+        return ret;
+      }
+      if (s[1]->str() == NAN_) {
+        switch (type) {
+          case f32: ret->value.f32 = std::nan(""); break;
+          case f64: ret->value.f64 = std::nan(""); break;
           default: abort();
         }
         return ret;

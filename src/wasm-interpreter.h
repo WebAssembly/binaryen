@@ -361,6 +361,7 @@ public:
           case WrapInt64:        return Flow(Literal(int32_t(value.geti64())));
           case TruncSFloat32:    {
             float val = value.getf32();
+            if (isnan(val)) instance.externalInterface->trap();
             if (val > (double)INT_MAX || val < (double)INT_MIN) instance.externalInterface->trap();
             return Flow(Literal(int32_t(val)));
           }
