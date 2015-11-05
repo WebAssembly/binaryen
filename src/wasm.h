@@ -114,6 +114,13 @@ struct Literal {
   float   reinterpretf32() { assert(type == WasmType::i32); return f32; }
   double  reinterpretf64() { assert(type == WasmType::i64); return f64; }
 
+  bool operator==(Literal& other) {
+    if (type != other.type) return false;
+    if (type == none) return true;
+    if (type == i32 || type == f32) return i32 == other.i32;
+    return i64 == other.i64;
+  }
+
   void printDouble(std::ostream &o, double d) {
     const char *text = cashew::JSPrinter::numToString(d);
     // spec interpreter hates floats starting with '.'
