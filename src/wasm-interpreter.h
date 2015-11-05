@@ -286,12 +286,51 @@ public:
         if (flow.breaking()) return flow;
         Literal value = flow.value;
         NOTE_EVAL1(value);
-        switch (curr->op) { // rofl
-          case Clz:   return Flow(Literal((int32_t)__builtin_clz(value.geti32())));
-          case Neg:   return Flow(Literal(-value.getf64()));
-          case Floor: return Flow(Literal(floor(value.getf64())));
-          default: abort();
+        if (value.type == i32) {
+          int32_t v = value.geti32();
+          switch (curr->op) {
+            case Clz:    return Literal((int32_t)__builtin_clz(v));
+            case Ctz:    return Literal((int32_t)__builtin_ctz(v));
+            case Popcnt: return Literal((int32_t)__builtin_popcount(v));
+            default: abort();
+          }
         }
+        if (value.type == i64) {
+          int64_t v = value.geti64();
+          switch (curr->op) {
+            case Clz:    return Literal((int64_t)__builtin_clz(v));
+            case Ctz:    return Literal((int64_t)__builtin_ctz(v));
+            case Popcnt: return Literal((int64_t)__builtin_popcount(v));
+            default: abort();
+          }
+        }
+        if (value.type == f32) {
+          float v = value.getf32();
+          switch (curr->op) {
+            case Neg:     return Literal(-v);
+            case Abs:     return Literal(fabs(v));
+            case Ceil:    return Literal(ceil(v));
+            case Floor:   return Literal(floor(v));
+            case Trunc:   return Literal(trunc(v));
+            case Nearest: return Literal(nearbyint(v));
+            case Sqrt:    return Literal(sqrtf(v));
+            default: abort();
+          }
+        }
+        if (value.type == f64) {
+          double v = value.getf64();
+          switch (curr->op) {
+            case Neg:     return Literal(-v);
+            case Abs:     return Literal(std::abs(v));
+            case Ceil:    return Literal(ceil(v));
+            case Floor:   return Literal(floor(v));
+            case Trunc:   return Literal(trunc(v));
+            case Nearest: return Literal(nearbyint(v));
+            case Sqrt:    return Literal(sqrt(v));
+            default: abort();
+          }
+        }
+        abort();
       }
       Flow visitBinary(Binary *curr) override {
         NOTE_ENTER("Binary");
