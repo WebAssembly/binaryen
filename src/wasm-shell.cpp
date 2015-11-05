@@ -13,6 +13,7 @@ using namespace wasm;
 
 IString ASSERT_RETURN("assert_return"),
         ASSERT_TRAP("assert_trap"),
+        ASSERT_INVALID("assert_invalid"),
         PRINT("print"),
         INVOKE("invoke");
 
@@ -141,7 +142,7 @@ int main(int argc, char **argv) {
   while (i < root.size()) {
     if (debug) std::cerr << "parsing s-expressions to wasm...\n";
     Module wasm;
-    SExpressionWasmBuilder builder(wasm, *root[i]);
+    SExpressionWasmBuilder builder(wasm, *root[i], [&]() { abort(); });
     i++;
 
     auto interface = new ShellExternalInterface();
@@ -163,31 +164,46 @@ int main(int argc, char **argv) {
       std::cerr << " CHECKING: ";
       Colors::normal(std::cerr);
       std::cerr << curr << '\n';
-      Element& invoke = *curr[1];
-      assert(invoke[0]->str() == INVOKE);
-      IString name = invoke[1]->str();
-      ModuleInstance::LiteralList arguments;
-      for (size_t j = 2; j < invoke.size(); j++) {
-        Expression* argument = builder.parseExpression(*invoke[2]);
-        arguments.push_back(argument->dyn_cast<Const>()->value);
-      }
-      bool trapped = false;
-      Literal result;
-      if (setjmp(interface->trapState) == 0) {
-        result = instance->callFunction(name, arguments);
-      } else {
-        trapped = true;
-      }
-      if (id == ASSERT_RETURN) {
-        assert(!trapped);
-        Literal expected;
-        if (curr.size() >= 3) {
-          expected = builder.parseExpression(*curr[2])->dyn_cast<Const>()->value;
+      if (id == ASSERT_INVALID) {
+        // a module invalidity test
+        Module wasm;
+        bool invalid = false;
+        jmp_buf trapState;
+        if (setjmp(trapState) == 0) {
+          SExpressionWasmBuilder builder(wasm, *curr[1], [&]() {
+            invalid = true;
+            longjmp(trapState, 1);
+          });
         }
-        std::cerr << "seen " << result << ", expected " << expected << '\n';
-        assert(expected == result);
+        assert(invalid);
+      } else {
+        // an invoke test
+        Element& invoke = *curr[1];
+        assert(invoke[0]->str() == INVOKE);
+        IString name = invoke[1]->str();
+        ModuleInstance::LiteralList arguments;
+        for (size_t j = 2; j < invoke.size(); j++) {
+          Expression* argument = builder.parseExpression(*invoke[2]);
+          arguments.push_back(argument->dyn_cast<Const>()->value);
+        }
+        bool trapped = false;
+        Literal result;
+        if (setjmp(interface->trapState) == 0) {
+          result = instance->callFunction(name, arguments);
+        } else {
+          trapped = true;
+        }
+        if (id == ASSERT_RETURN) {
+          assert(!trapped);
+          Literal expected;
+          if (curr.size() >= 3) {
+            expected = builder.parseExpression(*curr[2])->dyn_cast<Const>()->value;
+          }
+          std::cerr << "seen " << result << ", expected " << expected << '\n';
+          assert(expected == result);
+        }
+        if (id == ASSERT_TRAP) assert(trapped);
       }
-      if (id == ASSERT_TRAP) assert(trapped);
       i++;
     }
   }

@@ -9,8 +9,6 @@
 #include "wasm.h"
 #include "mixed_arena.h"
 
-#define abort_on(str) { std::cerr << "aborting on " << str << '\n'; abort(); }
-
 namespace wasm {
 
 int debug;
@@ -193,9 +191,11 @@ class SExpressionWasmBuilder {
 
   MixedArena allocator;
 
+  std::function<void ()> onError;
+
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, Element& module) : wasm(wasm) {
+  SExpressionWasmBuilder(Module& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), onError(onError) {
     assert(module[0]->str() == MODULE);
     for (unsigned i = 1; i < module.size(); i++) {
       parseModuleElement(*module[i]);
@@ -213,14 +213,19 @@ private:
     if (id == TABLE) return parseTable(curr);
     if (id == TYPE) return parseType(curr);
     std::cerr << "bad module element " << id.str << '\n';
-    abort();
+    onError();
   }
 
   std::map<Name, WasmType> currLocalTypes;
 
   void parseFunction(Element& s) {
     auto func = allocator.alloc<Function>();
-    func->name = s[1]->str();
+    if (s[1]->isStr()) {
+      func->name = s[1]->str();
+    } else {
+      // unnamed, use an index
+      func->name = IString(std::to_string(wasm.functions.size()).c_str(), false);
+    }
     func->body = nullptr;
     for (unsigned i = 2; i < s.size(); i++) {
       Element& curr = *s[i];
@@ -256,11 +261,11 @@ private:
     currLocalTypes.clear();
   }
 
-  static WasmType stringToWasmType(IString str) {
+  WasmType stringToWasmType(IString str) {
     return stringToWasmType(str.str);
   }
 
-  static WasmType stringToWasmType(const char* str) {
+  WasmType stringToWasmType(const char* str) {
     if (str[0] == 'i') {
       if (str[1] == '3') return i32;
       return i64;
@@ -269,6 +274,7 @@ private:
       if (str[1] == '3') return f32;
       return f64;
     }
+    onError();
     abort();
   }
 
@@ -276,6 +282,8 @@ public:
   Expression* parseExpression(Element* s) {
     return parseExpression(*s);
   }
+
+  #define abort_on(str) { std::cerr << "aborting on " << str << '\n'; onError(); }
 
   Expression* parseExpression(Element& s) {
     //if (debug) std::cerr << "parse expression " << s << '\n';
@@ -387,7 +395,7 @@ public:
           if (op[1] == 'r') {
             if (op[6] == 's') return makeConvert(s, op[9] == '3' ? ConvertOp::TruncSFloat32 : ConvertOp::TruncSFloat64, type);
             if (op[6] == 'u') return makeConvert(s, op[9] == '3' ? ConvertOp::TruncUFloat32 : ConvertOp::TruncUFloat64, type);
-            abort();
+            onError();
           }
           abort_on(op);
         }
@@ -440,6 +448,7 @@ public:
         default: abort_on(str);
       }
     }
+    abort();
   }
 
 private:
@@ -513,7 +522,7 @@ private:
         switch (type) {
           case f32: ret->value.f32 = std::numeric_limits<float>::infinity(); break;
           case f64: ret->value.f64 = std::numeric_limits<double>::infinity(); break;
-          default: abort();
+          default: onError();
         }
         return ret;
       }
@@ -521,7 +530,7 @@ private:
         switch (type) {
           case f32: ret->value.f32 = -std::numeric_limits<float>::infinity(); break;
           case f64: ret->value.f64 = -std::numeric_limits<double>::infinity(); break;
-          default: abort();
+          default: onError();
         }
         return ret;
       }
@@ -529,7 +538,7 @@ private:
         switch (type) {
           case f32: ret->value.f32 = std::nan(""); break;
           case f64: ret->value.f64 = std::nan(""); break;
-          default: abort();
+          default: onError();
         }
         return ret;
       }
@@ -567,7 +576,7 @@ private:
       }
       case f32: ret->value.f32 = std::stof(str, &size);  break;
       case f64: ret->value.f64 = std::stod(str, &size);  break;
-      default: abort();
+      default: onError();
     }
     return ret;
   }
@@ -602,7 +611,7 @@ private:
         ret->align = atoi(eq);
       } else if (str[0] == 'o') {
         ret->offset = atoi(eq);
-      } else abort();
+      } else onError();
       i++;
     }
     ret->ptr = parseExpression(s[i]);
@@ -638,7 +647,7 @@ private:
         ret->align = atoi(eq);
       } else if (str[0] == 'o') {
         ret->offset = atoi(eq);
-      } else abort();
+      } else onError();
       i++;
     }
     ret->ptr = parseExpression(s[i]);
@@ -747,7 +756,7 @@ private:
         im.type.params.push_back(stringToWasmType(params[i]->str()));
       }
     } else {
-      abort();
+      onError();
     }
     assert(s.size() == 5);
     wasm.imports[im.name] = im;
