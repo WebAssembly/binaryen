@@ -82,6 +82,7 @@ print '\n[ checking wasm-shell spec testcases... ]\n'
 if len(requested) == 0:
   #spec_tests = [] # XXX [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join('test', 'spec')))]
   # 'address' : filed issue, test looks invalid
+  # 'exports' : has a "return" https://github.com/WebAssembly/spec/issues/164
   spec_tests = [os.path.join('spec', t + '.wast') for t in ['conversions', 'endianness']]
 else:
   spec_tests = requested[:]

@@ -405,7 +405,7 @@ public:
             default: abort();
           }
         } else if (left.type == f32) {
-          float l = left.getf64(), r = right.getf64();
+          float l = left.getf32(), r = right.getf32();
           switch (curr->op) {
             case Eq:  return Flow(Literal(l == r));
             case Ne:  return Flow(Literal(l != r));
