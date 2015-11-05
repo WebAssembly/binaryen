@@ -80,7 +80,8 @@ for t in tests:
 print '\n[ checking wasm-shell spec testcases... ]\n'
 
 if len(requested) == 0:
-  spec_tests = [] # XXX [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join('test', 'spec')))]
+  #spec_tests = [] # XXX [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join('test', 'spec')))]
+  spec_tests = [os.path.join('spec', t + '.wast') for t in ['address']]
 else:
   spec_tests = requested[:]
 
