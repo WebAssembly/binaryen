@@ -79,15 +79,16 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     switch (store->type) {
       case i32: {
         switch (store->bytes) {
-          case 1: ((int8_t*)memory)[addr] = value.geti32();
-          case 2: ((int16_t*)memory)[addr] = value.geti32();
-          case 4: ((int32_t*)memory)[addr] = value.geti32();
+          case 1: ((int8_t*)memory)[addr] = value.geti32(); break;
+          case 2: ((int16_t*)memory)[addr] = value.geti32(); break;
+          case 4: ((int32_t*)memory)[addr] = value.geti32(); break;
+          case 8: ((int64_t*)memory)[addr] = value.geti64(); break;
           default: abort();
         }
         break;
       }
-      case f32: ((float*)memory)[addr] = value.getf32();
-      case f64: ((double*)memory)[addr] = value.getf64();
+      case f32: ((float*)memory)[addr] = value.getf32(); break;
+      case f64: ((double*)memory)[addr] = value.getf64(); break;
       default: abort();
     }
   }
