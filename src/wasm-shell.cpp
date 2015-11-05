@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
       Element& curr = *root[i];
       IString id = curr[0]->str();
       if (id == MODULE) break;
-      std::cerr << "CHECKING| " << curr << '\n';
+      std::cerr << i << '/' << root.size() << " CHECKING| " << curr << '\n';
       Element& invoke = *curr[1];
       assert(invoke[0]->str() == INVOKE);
       IString name = invoke[1]->str();

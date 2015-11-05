@@ -380,8 +380,9 @@ public:
               if (val > (double)UINT_MAX || val <= (double)-1) instance.externalInterface->trap();
               return Flow(Literal(uint32_t(val)));
             } else {
-              if (val > (double)ULLONG_MAX || val <= (double)-1) instance.externalInterface->trap();
-              return Flow(Literal(uint64_t(val)));
+              uint64_t converted = val;
+              if (converted < val - 1 || val <= (double)-1) instance.externalInterface->trap();
+              return Flow(Literal(converted));
             }
           }
           case ReinterpretFloat: return curr->type == i32 ? Flow(Literal(value.reinterpreti32())) : Flow(Literal(value.reinterpreti64()));
