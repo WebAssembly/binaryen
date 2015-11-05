@@ -58,7 +58,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     size_t addr = ptr.geti32();
     int64_t full = addr;
     full += load->offset;
-    if (full + load->bytes >= memorySize) trap();
+    if (full + load->bytes > memorySize) trap();
     addr = full;
     switch (load->type) {
       case i32: {
@@ -81,7 +81,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     size_t addr = ptr.geti32();
     int64_t full = addr;
     full += store->offset;
-    if (full + store->bytes >= memorySize) trap();
+    if (full + store->bytes > memorySize) trap();
     switch (store->type) {
       case i32: {
         switch (store->bytes) {
@@ -146,6 +146,7 @@ int main(int argc, char **argv) {
       Element& curr = *root[i];
       IString id = curr[0]->str();
       if (id == MODULE) break;
+      std::cerr << curr << '\n';
       Element& invoke = *curr[1];
       assert(invoke[0]->str() == INVOKE);
       IString name = invoke[1]->str();
