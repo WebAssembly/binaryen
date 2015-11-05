@@ -373,7 +373,7 @@ public:
           abort_on(op);
         }
         case 't': {
-          if (op[1] == 'r') return makeConvert(s, ConvertOp::TruncSFloat64, type);
+          if (op[1] == 'r') return makeConvert(s, type == i32 ? ConvertOp::TruncSFloat32 : ConvertOp::TruncSFloat64, type);
           abort_on(op);
         }
         case 'w': {
