@@ -3,6 +3,7 @@
 // Parses WebAssembly code in S-Expression format, as in .wast files.
 //
 
+#include <cmath>
 #include <sstream>
 
 #include "wasm.h"
@@ -30,7 +31,9 @@ IString MODULE("module"),
         TYPE("type"),
         CALL("call"),
         CALL_IMPORT("call_import"),
-        CALL_INDIRECT("call_indirect");
+        CALL_INDIRECT("call_indirect"),
+        INFINITY_("infinity"),
+        NEG_INFINITY("-infinity");
 
 //
 // An element in an S-Expression: a list or a string
@@ -497,6 +500,24 @@ private:
   Expression* makeConst(Element& s, WasmType type) {
     auto ret = allocator.alloc<Const>();
     ret->type = ret->value.type = type;
+    if (isWasmTypeFloat(type)) {
+      if (s[1]->str() == INFINITY_) {
+        switch (type) {
+          case f32: ret->value.f32 = std::numeric_limits<float>::infinity(); break;
+          case f64: ret->value.f64 = std::numeric_limits<double>::infinity(); break;
+          default: abort();
+        }
+        return ret;
+      }
+      if (s[1]->str() == NEG_INFINITY) {
+        switch (type) {
+          case f32: ret->value.f32 = -std::numeric_limits<float>::infinity(); break;
+          case f64: ret->value.f64 = -std::numeric_limits<double>::infinity(); break;
+          default: abort();
+        }
+        return ret;
+      }
+    }
     const char *str = s[1]->c_str();
     std::istringstream istr(str);
     switch (type) {
