@@ -196,9 +196,7 @@ private:
 
 class SExpressionWasmBuilder {
   Module& wasm;
-
   MixedArena allocator;
-
   std::function<void ()> onError;
 
 public:
@@ -225,22 +223,38 @@ private:
   }
 
   std::map<Name, WasmType> currLocalTypes;
+  size_t localUnnamed;
+
+  IString getNameWhenPossiblyUnnamed(Element& s, size_t& i, size_t& unnamed) {
+    if (s[i]->isStr()) return s[i++]->str();
+    return IString(std::to_string(unnamed++).c_str(), false);
+  }
 
   void parseFunction(Element& s) {
     auto func = allocator.alloc<Function>();
-    if (s[1]->isStr()) {
-      func->name = s[1]->str();
+    size_t i = 1;
+    if (s[i]->isStr()) {
+      func->name = s[i]->str();
+      i++;
     } else {
       // unnamed, use an index
       func->name = IString(std::to_string(wasm.functions.size()).c_str(), false);
     }
     func->body = nullptr;
-    for (unsigned i = 2; i < s.size(); i++) {
+    localUnnamed = 0;
+    for (;i < s.size(); i++) {
       Element& curr = *s[i];
       IString id = curr[0]->str();
       if (id == PARAM) {
-        IString name = curr[1]->str();
-        WasmType type = stringToWasmType(curr[2]->str());
+        size_t j = 1;
+        IString name;
+        if (curr.size() == 2) {
+          name = IString(std::to_string(localUnnamed++).c_str(), false);
+        } else {
+          name = curr[j]->str();
+          j++;
+        }
+        WasmType type = stringToWasmType(curr[j]->str());
         func->params.emplace_back(name, type);
         currLocalTypes[name] = type;
       } else if (id == RESULT) {
@@ -446,6 +460,7 @@ public:
           abort_on(str);
         }
         case 'l': {
+          if (str[1] == 'a') return makeLabel(s);
           if (str[1] == 'o') return makeLoop(s);
           abort_on(str);
         }
@@ -692,6 +707,14 @@ private:
     if (s.size() == 4) {
       ret->ifFalse = parseExpression(s[3]);
     }
+    return ret;
+  }
+
+  Expression* makeLabel(Element& s) {
+    auto ret = allocator.alloc<Label>();
+    size_t i = 1;
+    ret->name = getNameWhenPossiblyUnnamed(s, i, localUnnamed);
+    ret->body = parseExpression(s[i]);
     return ret;
   }
 
