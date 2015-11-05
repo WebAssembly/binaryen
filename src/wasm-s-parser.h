@@ -535,9 +535,11 @@ private:
       }
     }
     const char *str = s[1]->c_str();
-    std::istringstream istr(str);
+    size_t size;
     switch (type) {
       case i32: {
+        const char *str = s[1]->c_str();
+        std::istringstream istr(str);
         int32_t temp;
         if (str[0] == '0' && str[1] == 'x') {
           uint32_t temp2;
@@ -550,6 +552,8 @@ private:
         break;
       }
       case i64: {
+        const char *str = s[1]->c_str();
+        std::istringstream istr(str);
         int64_t temp;
         if (str[0] == '0' && str[1] == 'x') {
           uint64_t temp2;
@@ -561,8 +565,8 @@ private:
         ret->value.i64 = temp;
         break;
       }
-      case f32: istr >> ret->value.f32; break;
-      case f64: istr >> ret->value.f64; break;
+      case f32: ret->value.f32 = std::stof(str, &size);  break;
+      case f64: ret->value.f64 = std::stod(str, &size);  break;
       default: abort();
     }
     return ret;

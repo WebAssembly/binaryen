@@ -368,7 +368,7 @@ public:
               return Flow(Literal(int32_t(val)));
             } else {
               int64_t converted = val;
-              if ((val > 0 && converted <= 0) || val < (double)LLONG_MIN) instance.externalInterface->trap();
+              if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) instance.externalInterface->trap();
               return Flow(Literal(converted));
             }
           }
