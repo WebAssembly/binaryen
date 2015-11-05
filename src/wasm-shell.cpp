@@ -3,7 +3,10 @@
 // A WebAssembly shell, loads a .wast file (WebAssembly in S-Expression format) and executes it.
 //
 
+#include <setjmp.h>
+
 #include "wasm-s-parser.h"
+#include "wasm-interpreter.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -11,6 +14,78 @@ using namespace wasm;
 IString ASSERT_RETURN("assert_return"),
         ASSERT_TRAP("assert_trap"),
         INVOKE("invoke");
+
+//
+// Implementation of the shell interpreter execution environment
+//
+
+struct ShellExternalInterface : ModuleInstance::ExternalInterface {
+  char *memory;
+  size_t memorySize;
+
+  ShellExternalInterface() : memory(nullptr) {}
+
+  void init(Module& wasm) override {
+    memory = new char[wasm.memory.initial];
+    memorySize = wasm.memory.initial;
+  }
+
+  jmp_buf trapState;
+
+  void trap() {
+    longjmp(trapState, 1);
+  }
+
+  Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
+    std::cout << "callImport " << import->name.str << "\n";
+    abort();
+  }
+
+  Literal load(Load* load, Literal ptr) override {
+    // ignore align - assume we are on x86 etc. which does that
+    size_t addr = ptr.geti32();
+    int64_t full = addr;
+    full += load->offset;
+    if (full + load->bytes >= memorySize) trap();
+    addr = full;
+    switch (load->type) {
+      case i32: {
+        switch (load->bytes) {
+          case 1: return load->signed_ ? (int32_t)((int8_t*)memory)[addr]  : (int32_t)((uint8_t*)memory)[addr];
+          case 2: return load->signed_ ? (int32_t)((int16_t*)memory)[addr] : (int32_t)((uint16_t*)memory)[addr];
+          case 4: return load->signed_ ? (int32_t)((int32_t*)memory)[addr] : (int32_t)((uint32_t*)memory)[addr];
+          default: abort();
+        }
+        break;
+      }
+      case f32: return ((float*)memory)[addr];
+      case f64: return ((double*)memory)[addr];
+      default: abort();
+    }
+  }
+
+  void store(Store* store, Literal ptr, Literal value) override {
+    // ignore align - assume we are on x86 etc. which does that
+    size_t addr = ptr.geti32();
+    int64_t full = addr;
+    full += store->offset;
+    if (full + store->bytes >= memorySize) trap();
+    switch (store->type) {
+      case i32: {
+        switch (store->bytes) {
+          case 1: ((int8_t*)memory)[addr] = value.geti32();
+          case 2: ((int16_t*)memory)[addr] = value.geti32();
+          case 4: ((int32_t*)memory)[addr] = value.geti32();
+          default: abort();
+        }
+        break;
+      }
+      case f32: ((float*)memory)[addr] = value.getf32();
+      case f64: ((double*)memory)[addr] = value.getf64();
+      default: abort();
+    }
+  }
+};
 
 int main(int argc, char **argv) {
   debug = getenv("WASM_SHELL_DEBUG") ? getenv("WASM_SHELL_DEBUG")[0] - '0' : 0;
@@ -46,6 +121,9 @@ int main(int argc, char **argv) {
     SExpressionWasmBuilder builder(wasm, *root[i]);
     i++;
 
+    auto interface = new ShellExternalInterface();
+    auto instance = new ModuleInstance(wasm, interface);
+
     if (print_wasm) {
       if (debug) std::cerr << "printing...\n";
       std::cout << wasm;
@@ -59,12 +137,16 @@ int main(int argc, char **argv) {
       Element& invoke = *curr[1];
       assert(invoke[0]->str() == INVOKE);
       IString name = invoke[1]->str();
-      LiteralList arguments;
+      ModuleInstance::LiteralList arguments;
       for (size_t j = 2; j < invoke.size(); j++) {
         Expression* argument = builder.parseExpression(*invoke[2]);
         arguments.push_back(argument->dyn_cast<Const>()->value);
       }
-      interpreter.callFunction(name, arguments);
+      if (setjmp(interface->trapState) == 0) {
+        instance->callFunction(name, arguments);
+      } else {
+        std::cout << "TRAPPED\n";
+      }
       i++;
     }
   }

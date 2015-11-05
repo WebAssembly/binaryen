@@ -90,6 +90,7 @@ public:
     } else {
       o << e.str_.str;
     }
+    return o;
   }
 };
 
