@@ -544,10 +544,8 @@ private:
       }
     }
     const char *str = s[1]->c_str();
-    size_t size;
     switch (type) {
       case i32: {
-        const char *str = s[1]->c_str();
         std::istringstream istr(str);
         int32_t temp;
         if (str[0] == '0' && str[1] == 'x') {
@@ -561,7 +559,6 @@ private:
         break;
       }
       case i64: {
-        const char *str = s[1]->c_str();
         std::istringstream istr(str);
         int64_t temp;
         if (str[0] == '0' && str[1] == 'x') {
@@ -574,8 +571,16 @@ private:
         ret->value.i64 = temp;
         break;
       }
-      case f32: ret->value.f32 = std::stof(str, &size);  break;
-      case f64: ret->value.f64 = std::stod(str, &size);  break;
+      case f32: {
+        char *end;
+        ret->value.f32 = strtof(str, &end);
+        break;
+      }
+      case f64: {
+        char *end;
+        ret->value.f64 = strtod(str, &end);
+        break;
+      }
       default: onError();
     }
     return ret;
