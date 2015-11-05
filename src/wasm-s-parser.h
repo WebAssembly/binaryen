@@ -160,13 +160,17 @@ private:
 
   Element* parseString() {
     if (input[0] == '$') input++; // names begin with $, but we don't need that internally
+    char *start = input;
     bool quoted = false;
     if (input[0] == '"') {
       quoted = true;
+      start++;
+      input = strchr(start, '"');
+      assert(input);
       input++;
+    } else {
+      while (input[0] && !isspace(input[0]) && input[0] != ')') input++;
     }
-    char *start = input;
-    while (input[0] && !isspace(input[0]) && input[0] != ')') input++;
     char temp = input[0];
     input[0] = 0;
     if (quoted) input[-1] = 0;
