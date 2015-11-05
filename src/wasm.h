@@ -122,6 +122,10 @@ struct Literal {
   }
 
   void printDouble(std::ostream &o, double d) {
+    if (d == 0 && 1/d < 0) {
+      o << "-0";
+      return;
+    }
     const char *text = cashew::JSPrinter::numToString(d);
     // spec interpreter hates floats starting with '.'
     if (text[0] == '.') {
