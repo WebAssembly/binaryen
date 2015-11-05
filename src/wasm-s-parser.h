@@ -615,6 +615,7 @@ private:
       extra++;
     } else if (extra[0] == '1') {
       assert(extra[1] == '6');
+      ret->bytes = 2;
       extra += 2;
     }
     size_t i = 1;
