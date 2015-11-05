@@ -345,10 +345,7 @@ public:
             case Sub:      return Flow(Literal(l - r));
             case Mul:      return Flow(Literal(l * r));
             case Div:      return Flow(Literal(l / r));
-            case CopySign: {
-              if (isnan(r)) r = 0;
-              return Literal(std::copysign(l, r));
-            }
+            case CopySign: return Literal(std::copysign(l, r));
             case Min: {
               if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
               return Literal(std::min(l, r));
@@ -366,10 +363,7 @@ public:
             case Sub:      return Flow(Literal(l - r));
             case Mul:      return Flow(Literal(l * r));
             case Div:      return Flow(Literal(l / r));
-            case CopySign: {
-              if (isnan(r)) r = 0;
-              return Literal(std::copysign(l, r));
-            }
+            case CopySign: return Literal(std::copysign(l, r));
             case Min: {
               if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
               return Literal(std::min(l, r));

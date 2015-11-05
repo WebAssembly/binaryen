@@ -32,7 +32,8 @@ IString MODULE("module"),
         CALL_INDIRECT("call_indirect"),
         INFINITY_("infinity"),
         NEG_INFINITY("-infinity"),
-        NAN_("nan");
+        NAN_("nan"),
+        NEG_NAN("-nan");
 
 //
 // An element in an S-Expression: a list or a string
@@ -519,6 +520,7 @@ private:
   }
 
   Expression* makeConst(Element& s, WasmType type) {
+    const char *str = s[1]->c_str();
     auto ret = allocator.alloc<Const>();
     ret->type = ret->value.type = type;
     if (isWasmTypeFloat(type)) {
@@ -528,6 +530,7 @@ private:
           case f64: ret->value.f64 = std::numeric_limits<double>::infinity(); break;
           default: onError();
         }
+        //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
         return ret;
       }
       if (s[1]->str() == NEG_INFINITY) {
@@ -536,6 +539,7 @@ private:
           case f64: ret->value.f64 = -std::numeric_limits<double>::infinity(); break;
           default: onError();
         }
+        //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
         return ret;
       }
       if (s[1]->str() == NAN_) {
@@ -544,10 +548,19 @@ private:
           case f64: ret->value.f64 = std::nan(""); break;
           default: onError();
         }
+        //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
+        return ret;
+      }
+      if (s[1]->str() == NEG_NAN) {
+        switch (type) {
+          case f32: ret->value.f32 = -std::nan(""); break;
+          case f64: ret->value.f64 = -std::nan(""); break;
+          default: onError();
+        }
+        //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
         return ret;
       }
     }
-    const char *str = s[1]->c_str();
     switch (type) {
       case i32: {
         std::istringstream istr(str);
@@ -587,6 +600,7 @@ private:
       }
       default: onError();
     }
+    //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
     return ret;
   }
 
