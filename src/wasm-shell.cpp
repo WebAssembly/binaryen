@@ -154,11 +154,14 @@ int main(int argc, char **argv) {
         Expression* argument = builder.parseExpression(*invoke[2]);
         arguments.push_back(argument->dyn_cast<Const>()->value);
       }
+      bool trapped = false;
       if (setjmp(interface->trapState) == 0) {
         instance->callFunction(name, arguments);
       } else {
-        std::cout << "TRAPPED\n";
+        trapped = true;
       }
+      if (id == ASSERT_RETURN) assert(!trapped);
+      if (id == ASSERT_TRAP) assert(trapped);
       i++;
     }
   }
