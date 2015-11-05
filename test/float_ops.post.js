@@ -21,9 +21,6 @@ function testUnary(name) {
   doTest(-1 | 0);
   doTest((-1 | 0) + 1);
   doTest((-1 | 0) - 1);
-  doTest(-1 >>> 0);
-  doTest((-1 >>> 0) + 1);
-  doTest((-1 >>> 0) - 1);
 }
 testUnary('dfloor');
 
