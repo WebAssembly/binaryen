@@ -222,12 +222,25 @@ private:
     onError();
   }
 
+  // function parsing state
   std::map<Name, WasmType> currLocalTypes;
-  size_t localUnnamed;
+  size_t localIndex; // params and locals
+  size_t labelIndex;
 
-  IString getNameWhenPossiblyUnnamed(Element& s, size_t& i, size_t& unnamed) {
-    if (s[i]->isStr()) return s[i++]->str();
-    return IString(std::to_string(unnamed++).c_str(), false);
+  IString getNameWhenNextNotString(Element& s, size_t& i, size_t& index) {
+    if (s[i]->isStr()) {
+      index++;
+      return s[i++]->str();
+    }
+    return IString(std::to_string(index++).c_str(), false);
+  }
+
+  IString getNameOnCondition(Element& s, size_t& i, size_t& index, bool givenName) {
+    if (givenName) {
+      index++;
+      return s[i++]->str();
+    }
+    return IString(std::to_string(index++).c_str(), false);
   }
 
   void parseFunction(Element& s) {
@@ -241,29 +254,23 @@ private:
       func->name = IString(std::to_string(wasm.functions.size()).c_str(), false);
     }
     func->body = nullptr;
-    localUnnamed = 0;
+    localIndex = 0;
+    labelIndex = 0;
     for (;i < s.size(); i++) {
       Element& curr = *s[i];
       IString id = curr[0]->str();
-      if (id == PARAM) {
+      if (id == PARAM || id == LOCAL) {
         size_t j = 1;
-        IString name;
-        if (curr.size() == 2) {
-          name = IString(std::to_string(localUnnamed++).c_str(), false);
-        } else {
-          name = curr[j]->str();
-          j++;
-        }
+        IString name = getNameOnCondition(curr, j, localIndex, curr.size() == 3);
         WasmType type = stringToWasmType(curr[j]->str());
-        func->params.emplace_back(name, type);
+        if (id == PARAM) {
+          func->params.emplace_back(name, type);
+        } else {
+          func->locals.emplace_back(name, type);
+        }
         currLocalTypes[name] = type;
       } else if (id == RESULT) {
         func->result = stringToWasmType(curr[1]->str());
-      } else if (id == LOCAL) {
-        IString name = curr[1]->str();
-        WasmType type = stringToWasmType(curr[2]->str());
-        func->locals.emplace_back(name, type);
-        currLocalTypes[name] = type;
       } else {
         Expression* ex = parseExpression(curr);
         if (!func->body) {
@@ -713,7 +720,7 @@ private:
   Expression* makeLabel(Element& s) {
     auto ret = allocator.alloc<Label>();
     size_t i = 1;
-    ret->name = getNameWhenPossiblyUnnamed(s, i, localUnnamed);
+    ret->name = getNameWhenNextNotString(s, i, labelIndex);
     ret->body = parseExpression(s[i]);
     return ret;
   }
