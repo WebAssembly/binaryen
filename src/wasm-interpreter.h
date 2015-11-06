@@ -690,7 +690,7 @@ private:
     if (memorySize < curr->offset) externalInterface->trap();
     if (addr > memorySize - curr->offset) externalInterface->trap();
     addr += curr->offset;
-    assert(memorySize >= curr->bytes);
+    if (curr->bytes > memorySize) externalInterface->trap();
     if (addr > memorySize - curr->bytes) externalInterface->trap();
     return addr;
   }
