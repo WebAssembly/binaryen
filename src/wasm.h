@@ -1139,27 +1139,27 @@ struct WasmWalker : public WasmVisitor<void> {
   }
 
   // By default, do nothing
-  void visitBlock(Block *curr) override {};
-  void visitIf(If *curr) override {};
-  void visitLoop(Loop *curr) override {};
-  void visitLabel(Label *curr) override {};
-  void visitBreak(Break *curr) override {};
-  void visitSwitch(Switch *curr) override {};
-  void visitCall(Call *curr) override {};
-  void visitCallImport(CallImport *curr) override {};
-  void visitCallIndirect(CallIndirect *curr) override {};
-  void visitGetLocal(GetLocal *curr) override {};
-  void visitSetLocal(SetLocal *curr) override {};
-  void visitLoad(Load *curr) override {};
-  void visitStore(Store *curr) override {};
-  void visitConst(Const *curr) override {};
-  void visitUnary(Unary *curr) override {};
-  void visitBinary(Binary *curr) override {};
-  void visitCompare(Compare *curr) override {};
-  void visitConvert(Convert *curr) override {};
-  void visitSelect(Select *curr) override {};
-  void visitHost(Host *curr) override {};
-  void visitNop(Nop *curr) override {};
+  void visitBlock(Block *curr) override {}
+  void visitIf(If *curr) override {}
+  void visitLoop(Loop *curr) override {}
+  void visitLabel(Label *curr) override {}
+  void visitBreak(Break *curr) override {}
+  void visitSwitch(Switch *curr) override {}
+  void visitCall(Call *curr) override {}
+  void visitCallImport(CallImport *curr) override {}
+  void visitCallIndirect(CallIndirect *curr) override {}
+  void visitGetLocal(GetLocal *curr) override {}
+  void visitSetLocal(SetLocal *curr) override {}
+  void visitLoad(Load *curr) override {}
+  void visitStore(Store *curr) override {}
+  void visitConst(Const *curr) override {}
+  void visitUnary(Unary *curr) override {}
+  void visitBinary(Binary *curr) override {}
+  void visitCompare(Compare *curr) override {}
+  void visitConvert(Convert *curr) override {}
+  void visitSelect(Select *curr) override {}
+  void visitHost(Host *curr) override {}
+  void visitNop(Nop *curr) override {}
 
   // children-first
   void walk(Expression*& curr) {
@@ -1272,6 +1272,13 @@ bool Module::validateFunction(Function *func) {
   struct Validator : public WasmWalker {
     bool valid = true;
 
+    void should(bool result) {
+      if (!result) valid = false;
+    }
+
+    void visitSetLocal(SetLocal *curr) override {
+      should(curr->type == curr->value->type);
+    }
     void visitLoad(Load *curr) override {
       if (!validateAlignment(curr->align)) valid = false;
     }
