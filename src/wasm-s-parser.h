@@ -162,6 +162,8 @@ private:
       while (isspace(input[0])) input++;
       if (input[0] == ';' && input[1] == ';') {
         while (input[0] != '\n') input++;
+      } else if (input[0] == '(' && input[1] == ';') {
+        input = strstr(input, ";)") + 2;
       } else {
         return;
       }
@@ -353,6 +355,7 @@ public:
         }
         case 'c': {
           if (op[1] == 'e') return makeUnary(s, UnaryOp::Ceil, type);
+          if (op[1] == 'l') return makeUnary(s, UnaryOp::Clz, type);
           if (op[1] == 'o') {
             if (op[2] == 'p') return makeBinary(s, BinaryOp::CopySign, type);
             if (op[2] == 'n') {
@@ -363,7 +366,7 @@ public:
               if (op[3] == 's') return makeConst(s, type);
             }
           }
-          if (op[1] == 'l') return makeUnary(s, UnaryOp::Clz, type);
+          if (op[1] == 't') return makeUnary(s, UnaryOp::Ctz, type);
           abort_on(op);
         }
         case 'd': {
@@ -426,6 +429,7 @@ public:
         }
         case 'p': {
           if (op[1] == 'r') return makeConvert(s,  ConvertOp::PromoteFloat32, type);
+          if (op[1] == 'o') return makeUnary(s, UnaryOp::Popcnt, type);
           abort_on(op);
         }
         case 'r': {
