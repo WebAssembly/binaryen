@@ -366,58 +366,58 @@ public:
         if (left.type == i32) {
           int32_t l = left.geti32(), r = right.geti32();
           switch (curr->op) {
-            case Add:      return Flow(Literal(l + r));
-            case Sub:      return Flow(Literal(l - r));
-            case Mul:      return Flow(Literal(l * r));
+            case Add:      return Literal(l + r);
+            case Sub:      return Literal(l - r);
+            case Mul:      return Literal(l * r);
             case DivS: {
               if (r == 0) trap();
-              return Flow(Literal(l / r));
+              return Literal(l / r);
             }
             case DivU: {
               if (r == 0) trap();
-              return Flow(Literal(int32_t(uint32_t(l) / uint32_t(r))));
+              return Literal(int32_t(uint32_t(l) / uint32_t(r)));
             }
-            case RemS:     return Flow(Literal(l % r));
-            case RemU:     return Flow(Literal(int32_t(uint32_t(l) % uint32_t(r))));
-            case And:      return Flow(Literal(l & r));
-            case Or:       return Flow(Literal(l | r));
-            case Xor:      return Flow(Literal(l ^ r));
-            case Shl:      return Flow(Literal(l << r));
-            case ShrU:     return Flow(Literal(int32_t(uint32_t(l) >> uint32_t(r))));
-            case ShrS:     return Flow(Literal(l >> r));
+            case RemS:     return Literal(l % r);
+            case RemU:     return Literal(int32_t(uint32_t(l) % uint32_t(r)));
+            case And:      return Literal(l & r);
+            case Or:       return Literal(l | r);
+            case Xor:      return Literal(l ^ r);
+            case Shl:      return Literal(l << r);
+            case ShrU:     return Literal(int32_t(uint32_t(l) >> uint32_t(r)));
+            case ShrS:     return Literal(l >> r);
             default: abort();
           }
         } else if (left.type == i64) {
           int64_t l = left.geti64(), r = right.geti64();
           switch (curr->op) {
-            case Add:      return Flow(Literal(l + r));
-            case Sub:      return Flow(Literal(l - r));
-            case Mul:      return Flow(Literal(l * r));
+            case Add:      return Literal(l + r);
+            case Sub:      return Literal(l - r);
+            case Mul:      return Literal(l * r);
             case DivS: {
               if (r == 0) trap();
-              return Flow(Literal(l / r));
+              return Literal(l / r);
             }
             case DivU: {
               if (r == 0) trap();
-              return Flow(Literal(int32_t(uint32_t(l) / uint32_t(r))));
+              return Literal(int32_t(uint32_t(l) / uint32_t(r)));
             }
-            case RemS:     return Flow(Literal(l % r));
-            case RemU:     return Flow(Literal(int64_t(uint64_t(l) % uint64_t(r))));
-            case And:      return Flow(Literal(l & r));
-            case Or:       return Flow(Literal(l | r));
-            case Xor:      return Flow(Literal(l ^ r));
-            case Shl:      return Flow(Literal(l << r));
-            case ShrU:     return Flow(Literal(int64_t(uint64_t(l) >> uint64_t(r))));
-            case ShrS:     return Flow(Literal(l >> r));
+            case RemS:     return Literal(l % r);
+            case RemU:     return Literal(int64_t(uint64_t(l) % uint64_t(r)));
+            case And:      return Literal(l & r);
+            case Or:       return Literal(l | r);
+            case Xor:      return Literal(l ^ r);
+            case Shl:      return Literal(l << r);
+            case ShrU:     return Literal(int64_t(uint64_t(l) >> uint64_t(r)));
+            case ShrS:     return Literal(l >> r);
             default: abort();
           }
         } else if (left.type == f32) {
           float l = left.getf32(), r = right.getf32();
           switch (curr->op) {
-            case Add:      return Flow(Literal(l + r));
-            case Sub:      return Flow(Literal(l - r));
-            case Mul:      return Flow(Literal(l * r));
-            case Div:      return Flow(Literal(l / r));
+            case Add:      return Literal(l + r);
+            case Sub:      return Literal(l - r);
+            case Mul:      return Literal(l * r);
+            case Div:      return Literal(l / r);
             case CopySign: return Literal(std::copysign(l, r));
             case Min: {
               if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
@@ -432,10 +432,10 @@ public:
         } else if (left.type == f64) {
           double l = left.getf64(), r = right.getf64();
           switch (curr->op) {
-            case Add:      return Flow(Literal(l + r));
-            case Sub:      return Flow(Literal(l - r));
-            case Mul:      return Flow(Literal(l * r));
-            case Div:      return Flow(Literal(l / r));
+            case Add:      return Literal(l + r);
+            case Sub:      return Literal(l - r);
+            case Mul:      return Literal(l * r);
+            case Div:      return Literal(l / r);
             case CopySign: return Literal(std::copysign(l, r));
             case Min: {
               if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
@@ -462,53 +462,53 @@ public:
         if (left.type == i32) {
           int32_t l = left.geti32(), r = right.geti32();
           switch (curr->op) {
-            case Eq:  return Flow(Literal(l == r));
-            case Ne:  return Flow(Literal(l != r));
-            case LtS: return Flow(Literal(l < r));
-            case LtU: return Flow(Literal(uint32_t(l) < uint32_t(r)));
-            case LeS: return Flow(Literal(l <= r));
-            case LeU: return Flow(Literal(uint32_t(l) <= uint32_t(r)));
-            case GtS: return Flow(Literal(l > r));
-            case GtU: return Flow(Literal(uint32_t(l) > uint32_t(r)));
-            case GeS: return Flow(Literal(l >= r));
-            case GeU: return Flow(Literal(uint32_t(l) >= uint32_t(r)));
+            case Eq:  return Literal(l == r);
+            case Ne:  return Literal(l != r);
+            case LtS: return Literal(l < r);
+            case LtU: return Literal(uint32_t(l) < uint32_t(r));
+            case LeS: return Literal(l <= r);
+            case LeU: return Literal(uint32_t(l) <= uint32_t(r));
+            case GtS: return Literal(l > r);
+            case GtU: return Literal(uint32_t(l) > uint32_t(r));
+            case GeS: return Literal(l >= r);
+            case GeU: return Literal(uint32_t(l) >= uint32_t(r));
             default: abort();
           }
         } else if (left.type == i64) {
           int64_t l = left.geti64(), r = right.geti64();
           switch (curr->op) {
-            case Eq:  return Flow(Literal(l == r));
-            case Ne:  return Flow(Literal(l != r));
-            case LtS: return Flow(Literal(l < r));
-            case LtU: return Flow(Literal(uint64_t(l) < uint64_t(r)));
-            case LeS: return Flow(Literal(l <= r));
-            case LeU: return Flow(Literal(uint64_t(l) <= uint64_t(r)));
-            case GtS: return Flow(Literal(l > r));
-            case GtU: return Flow(Literal(uint64_t(l) > uint64_t(r)));
-            case GeS: return Flow(Literal(l >= r));
-            case GeU: return Flow(Literal(uint64_t(l) >= uint64_t(r)));
+            case Eq:  return Literal(l == r);
+            case Ne:  return Literal(l != r);
+            case LtS: return Literal(l < r);
+            case LtU: return Literal(uint64_t(l) < uint64_t(r));
+            case LeS: return Literal(l <= r);
+            case LeU: return Literal(uint64_t(l) <= uint64_t(r));
+            case GtS: return Literal(l > r);
+            case GtU: return Literal(uint64_t(l) > uint64_t(r));
+            case GeS: return Literal(l >= r);
+            case GeU: return Literal(uint64_t(l) >= uint64_t(r));
             default: abort();
           }
         } else if (left.type == f32) {
           float l = left.getf32(), r = right.getf32();
           switch (curr->op) {
-            case Eq:  return Flow(Literal(l == r));
-            case Ne:  return Flow(Literal(l != r));
-            case Lt:  return Flow(Literal(l <  r));
-            case Le:  return Flow(Literal(l <= r));
-            case Gt:  return Flow(Literal(l >  r));
-            case Ge:  return Flow(Literal(l >= r));
+            case Eq:  return Literal(l == r);
+            case Ne:  return Literal(l != r);
+            case Lt:  return Literal(l <  r);
+            case Le:  return Literal(l <= r);
+            case Gt:  return Literal(l >  r);
+            case Ge:  return Literal(l >= r);
             default: abort();
           }
         } else if (left.type == f64) {
           double l = left.getf64(), r = right.getf64();
           switch (curr->op) {
-            case Eq:  return Flow(Literal(l == r));
-            case Ne:  return Flow(Literal(l != r));
-            case Lt:  return Flow(Literal(l <  r));
-            case Le:  return Flow(Literal(l <= r));
-            case Gt:  return Flow(Literal(l >  r));
-            case Ge:  return Flow(Literal(l >= r));
+            case Eq:  return Literal(l == r);
+            case Ne:  return Literal(l != r);
+            case Lt:  return Literal(l <  r);
+            case Le:  return Literal(l <= r);
+            case Gt:  return Literal(l >  r);
+            case Ge:  return Literal(l >= r);
             default: abort();
           }
         }
@@ -520,20 +520,20 @@ public:
         if (flow.breaking()) return flow;
         Literal value = flow.value;
         switch (curr->op) { // :-)
-          case ExtendSInt32:     return Flow(Literal(int64_t(value.geti32())));
-          case ExtendUInt32:     return Flow(Literal(uint64_t((uint32_t)value.geti32())));
-          case WrapInt64:        return Flow(Literal(int32_t(value.geti64())));
+          case ExtendSInt32:     return Literal(int64_t(value.geti32()));
+          case ExtendUInt32:     return Literal(uint64_t((uint32_t)value.geti32()));
+          case WrapInt64:        return Literal(int32_t(value.geti64()));
           case TruncSFloat32:
           case TruncSFloat64: {
             double val = curr->op == TruncSFloat32 ? value.getf32() : value.getf64();
             if (isnan(val)) trap();
             if (curr->type == i32) {
               if (val > (double)INT_MAX || val < (double)INT_MIN) trap();
-              return Flow(Literal(int32_t(val)));
+              return Literal(int32_t(val));
             } else {
               int64_t converted = val;
               if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap();
-              return Flow(Literal(converted));
+              return Literal(converted);
             }
           }
           case TruncUFloat32:
@@ -542,24 +542,24 @@ public:
             if (isnan(val)) trap();
             if (curr->type == i32) {
               if (val > (double)UINT_MAX || val <= (double)-1) trap();
-              return Flow(Literal(uint32_t(val)));
+              return Literal(uint32_t(val));
             } else {
               uint64_t converted = val;
               if (converted < val - 1 || val <= (double)-1) trap();
-              return Flow(Literal(converted));
+              return Literal(converted);
             }
           }
           case ReinterpretFloat: {
-            if (value.type == f64 && isnan(value.getf64())) return Flow(Literal((int64_t)0x7ff8000000000000)); // canonicalized
-            return curr->type == i32 ? Flow(Literal(value.reinterpreti32())) : Flow(Literal(value.reinterpreti64()));
+            if (value.type == f64 && isnan(value.getf64())) return Literal((int64_t)0x7ff8000000000000); // canonicalized
+            return curr->type == i32 ? Literal(value.reinterpreti32()) : Literal(value.reinterpreti64());
           }
-          case ConvertUInt32:    return curr->type == f32 ? Flow(Literal(float(uint32_t(value.geti32())))) : Flow(Literal(double(uint32_t(value.geti32()))));
-          case ConvertSInt32:    return curr->type == f32 ? Flow(Literal(float(int32_t(value.geti32())))) : Flow(Literal(double(int32_t(value.geti32()))));
-          case ConvertUInt64:    return curr->type == f32 ? Flow(Literal(float((uint64_t)value.geti64()))) : Flow(Literal(double((uint64_t)value.geti64())));
-          case ConvertSInt64:    return curr->type == f32 ? Flow(Literal(float(value.geti64()))) : Flow(Literal(double(value.geti64())));
-          case PromoteFloat32:   return Flow(Literal(double(value.getf32())));
-          case DemoteFloat64:    return Flow(Literal(float(value.getf64())));
-          case ReinterpretInt:   return curr->type == f32 ? Flow(Literal(value.reinterpretf32())) : Flow(Literal(value.reinterpretf64()));
+          case ConvertUInt32:    return curr->type == f32 ? Literal(float(uint32_t(value.geti32()))) : Literal(double(uint32_t(value.geti32())));
+          case ConvertSInt32:    return curr->type == f32 ? Literal(float(int32_t(value.geti32()))) : Literal(double(int32_t(value.geti32())));
+          case ConvertUInt64:    return curr->type == f32 ? Literal(float((uint64_t)value.geti64())) : Literal(double((uint64_t)value.geti64()));
+          case ConvertSInt64:    return curr->type == f32 ? Literal(float(value.geti64())) : Literal(double(value.geti64()));
+          case PromoteFloat32:   return Literal(double(value.getf32()));
+          case DemoteFloat64:    return Literal(float(value.getf64()));
+          case ReinterpretInt:   return curr->type == f32 ? Literal(value.reinterpretf32()) : Literal(value.reinterpretf64());
           default: abort();
         }
       }
