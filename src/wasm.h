@@ -860,35 +860,47 @@ public:
 
   Memory memory;
 
-  Module() {}
+  Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0) {}
 
   void addFunctionType(FunctionType* curr) {
+    Name numericName = getNumericName(functionTypeIndex);
     if (!curr->name) {
-      curr->name = cashew::IString(std::to_string(functionTypes.size()).c_str(), false);
+      curr->name = numericName;
     }
     functionTypes.push_back(curr);
     functionTypesMap[curr->name] = curr;
+    functionTypesMap[numericName] = curr;
+    functionTypeIndex++;
   }
   void addImport(Import* curr) {
+    Name numericName = getNumericName(importIndex);
     if (!curr->name) {
-      curr->name = cashew::IString(std::to_string(imports.size()).c_str(), false);
+      curr->name = numericName;
     }
     imports.push_back(curr);
     importsMap[curr->name] = curr;
+    importsMap[numericName] = curr;
+    importIndex++;
   }
   void addExport(Export* curr) {
+    Name numericName = getNumericName(exportIndex);
     if (!curr->name) {
-      curr->name = cashew::IString(std::to_string(exports.size()).c_str(), false);
+      curr->name = numericName;
     }
     exports.push_back(curr);
     exportsMap[curr->name] = curr;
+    exportsMap[numericName] = curr;
+    exportIndex++;
   }
   void addFunction(Function* curr) {
+    Name numericName = getNumericName(functionIndex);
     if (!curr->name) {
-      curr->name = cashew::IString(std::to_string(functions.size()).c_str(), false);
+      curr->name = numericName;
     }
     functions.push_back(curr);
     functionsMap[curr->name] = curr;
+    functionsMap[numericName] = curr;
+    functionIndex++;
   }
 
   void removeImport(Name name) {
@@ -955,6 +967,13 @@ public:
     }
     return true;
   }
+
+private:
+  Name getNumericName(size_t i) {
+    return cashew::IString(std::to_string(i).c_str(), false);
+  }
+
+  size_t functionTypeIndex, importIndex, exportIndex, functionIndex;
 };
 
 //

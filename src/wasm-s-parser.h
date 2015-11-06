@@ -826,10 +826,15 @@ private:
     im->module = s[2]->str();
     im->base = s[3]->str();
     Element& params = *s[4];
-    if (params[0]->str() == PARAM) {
+    IString id = params[0]->str();
+    if (id == PARAM) {
       for (size_t i = 1; i < params.size(); i++) {
         im->type.params.push_back(stringToWasmType(params[i]->str()));
       }
+    } else if (id == TYPE) {
+      IString name = params[1]->str();
+      assert(wasm.functionTypesMap.find(name) != wasm.functionTypesMap.end());
+      im->type = *wasm.functionTypesMap[name];
     } else {
       onError();
     }
