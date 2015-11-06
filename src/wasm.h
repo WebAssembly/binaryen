@@ -604,9 +604,16 @@ public:
     o << '(';
     prepareColor(o) << printWasmType(type) << '.';
     switch (op) {
-      case Clz:   o << "clz";   break;
-      case Neg:   o << "neg";   break;
-      case Floor: o << "floor"; break;
+      case Clz:     o << "clz";     break;
+      case Ctz:     o << "ctz";     break;
+      case Popcnt:  o << "popcnt";  break;
+      case Neg:     o << "neg";     break;
+      case Abs:     o << "abs";     break;
+      case Ceil:    o << "ceil";    break;
+      case Floor:   o << "floor";   break;
+      case Trunc:   o << "trunc";   break;
+      case Nearest: o << "nearest"; break;
+      case Sqrt:    o << "sqrt";    break;
       default: abort();
     }
     incIndent(o, indent);
