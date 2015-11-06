@@ -111,6 +111,33 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 };
 
+//
+// An invocation into a module
+//
+
+struct Invocation {
+  ModuleInstance* instance;
+  IString name;
+  ModuleInstance::LiteralList arguments;
+
+  Invocation(Element& invoke, ModuleInstance* instance, SExpressionWasmBuilder& builder) : instance(instance) {
+    assert(invoke[0]->str() == INVOKE);
+    name = invoke[1]->str();
+    for (size_t j = 2; j < invoke.size(); j++) {
+      Expression* argument = builder.parseExpression(*invoke[j]);
+      arguments.push_back(argument->dyn_cast<Const>()->value);
+    }
+  }
+
+  Literal invoke() {
+    return instance->callFunction(name, arguments);
+  }
+};
+
+//
+// main
+//
+
 int main(int argc, char **argv) {
   debug = getenv("WASM_SHELL_DEBUG") ? getenv("WASM_SHELL_DEBUG")[0] - '0' : 0;
 
@@ -180,20 +207,16 @@ int main(int argc, char **argv) {
           invalid = !wasm.validate();
         }
         assert(invalid);
+      } else if (id == INVOKE) {
+        Invocation invocation(curr, instance, builder);
+        invocation.invoke();
       } else {
         // an invoke test
-        Element& invoke = *curr[1];
-        assert(invoke[0]->str() == INVOKE);
-        IString name = invoke[1]->str();
-        ModuleInstance::LiteralList arguments;
-        for (size_t j = 2; j < invoke.size(); j++) {
-          Expression* argument = builder.parseExpression(*invoke[j]);
-          arguments.push_back(argument->dyn_cast<Const>()->value);
-        }
+        Invocation invocation(*curr[1], instance, builder);
         bool trapped = false;
         Literal result;
         if (setjmp(interface->trapState) == 0) {
-          result = instance->callFunction(name, arguments);
+          result = invocation.invoke();
         } else {
           trapped = true;
         }
