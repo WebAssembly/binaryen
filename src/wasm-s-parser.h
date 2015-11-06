@@ -183,8 +183,12 @@ private:
     bool quoted = false;
     if (input[0] == '"') {
       quoted = true;
-      start++;
-      input = strchr(start, '"');
+      while (1) {
+        start++;
+        input = strchr(start, '"');
+        assert(input);
+        if (input[-1] != '\\') break;
+      }
       assert(input);
       input++;
     } else {
