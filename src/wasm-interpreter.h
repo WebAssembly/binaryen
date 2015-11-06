@@ -26,7 +26,8 @@ int32_t safe_ctz(int32_t v) {
 }
 
 enum {
-  pageSize = 64*1024
+  pageSize = 64*1024,
+  maxCallDepth = 5000
 };
 
 //
@@ -65,6 +66,8 @@ public:
   }
 
 private:
+
+  size_t callDepth = 0;
 
 #ifdef WASM_INTERPRETER_DEBUG
   int indent = 0;
@@ -680,6 +683,9 @@ private:
       }
     };
 
+    if (callDepth > maxCallDepth) externalInterface->trap();
+    callDepth++;
+
     Function *function = wasm.functionsMap[name];
     assert(function);
     FunctionScope scope(function, arguments);
@@ -687,6 +693,7 @@ private:
     Literal ret = ExpressionRunner(*this, scope).visit(function->body).value;
     if (function->result == none) ret = Literal();
     assert(function->result == ret.type);
+    callDepth--;
     return ret;
   }
 

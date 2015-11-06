@@ -84,7 +84,7 @@ if len(requested) == 0:
   # 'address' : filed issue, test looks invalid
   # 'exports', 'int_literals' : has a "return" https://github.com/WebAssembly/spec/issues/164
   # 'switch': todo once stable
-  spec_tests = [os.path.join('spec', t + '.wast') for t in ['conversions', 'endianness', 'f32_cmp', 'f32', 'f64_cmp', 'f64', 'float_exprs', 'forward', 'func_ptrs', 'functions', 'has_feature', 'i32', 'i64', 'imports', 'int_exprs', 'left-to-right', 'memory_redundancy', 'memory_trap', 'names', 'resizing']]
+  spec_tests = [os.path.join('spec', t + '.wast') for t in ['conversions', 'endianness', 'f32_cmp', 'f32', 'f64_cmp', 'f64', 'float_exprs', 'forward', 'func_ptrs', 'functions', 'has_feature', 'i32', 'i64', 'imports', 'int_exprs', 'left-to-right', 'memory_redundancy', 'memory_trap', 'names', 'resizing', 'runaway-recursion']]
 else:
   spec_tests = requested[:]
 
