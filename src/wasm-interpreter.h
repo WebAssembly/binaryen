@@ -47,13 +47,20 @@ public:
     virtual void trap() = 0;
   };
 
+  Module& wasm;
+
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
-    for (auto function : wasm.functions) {
-      functions[function->name] = function;
-    }
     memorySize = wasm.memory.initial;
     externalInterface->init(wasm);
   }
+
+  Literal callExport(IString name, LiteralList& arguments) {
+    Export *export_ = wasm.exportsMap[name];
+    if (!export_) externalInterface->trap();
+    return callFunction(export_->value, arguments);
+  }
+
+private:
 
 #ifdef WASM_INTERPRETER_DEBUG
   int indent = 0;
@@ -665,7 +672,8 @@ public:
       }
     };
 
-    Function *function = functions[name];
+    Function *function = wasm.functionsMap[name];
+    assert(function);
     FunctionScope scope(function, arguments);
 
     Literal ret = ExpressionRunner(*this, scope).visit(function->body).value;
@@ -674,13 +682,6 @@ public:
     return ret;
   }
 
-  // Convenience method, for the case where you have no arguments.
-  Literal callFunction(IString name) {
-    LiteralList empty;
-    return callFunction(name, empty);
-  }
-
-  std::map<IString, Function*> functions;
   size_t memorySize;
 
   template<class LS>
@@ -694,8 +695,6 @@ public:
     return addr;
   }
 
-private:
-  Module& wasm;
   ExternalInterface* externalInterface;
 };
 

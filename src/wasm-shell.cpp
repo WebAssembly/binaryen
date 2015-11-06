@@ -133,7 +133,7 @@ struct Invocation {
   }
 
   Literal invoke() {
-    return instance->callFunction(name, arguments);
+    return instance->callExport(name, arguments);
   }
 };
 
