@@ -390,9 +390,18 @@ public:
             case And:      return Literal(l & r);
             case Or:       return Literal(l | r);
             case Xor:      return Literal(l ^ r);
-            case Shl:      return Literal(l << r);
-            case ShrU:     return Literal(int32_t(uint32_t(l) >> uint32_t(r)));
-            case ShrS:     return Literal(l >> r);
+            case Shl: {
+              if (uint32_t(r) >= 32) return Literal(int32_t(0));
+              return Literal(l << r);
+            }
+            case ShrU: {
+              if (uint32_t(r) >= 32) return Literal(int32_t(0));
+              return Literal(int32_t(uint32_t(l) >> uint32_t(r)));
+            }
+            case ShrS: {
+              if (uint32_t(r) >= 32) return Literal(int32_t(l < 0 ? -1 : 0));
+              return Literal(l >> r);
+            }
             default: abort();
           }
         } else if (left.type == i64) {
@@ -422,9 +431,18 @@ public:
             case And:      return Literal(l & r);
             case Or:       return Literal(l | r);
             case Xor:      return Literal(l ^ r);
-            case Shl:      return Literal(l << r);
-            case ShrU:     return Literal(int64_t(uint64_t(l) >> uint64_t(r)));
-            case ShrS:     return Literal(l >> r);
+            case Shl: {
+              if (uint64_t(r) >= 64) return Literal(int64_t(0));
+              return Literal(l << r);
+            }
+            case ShrU: {
+              if (uint64_t(r) >= 64) return Literal(int64_t(0));
+              return Literal(int64_t(uint64_t(l) >> uint64_t(r)));
+            }
+            case ShrS: {
+              if (uint64_t(r) >= 64) return Literal(int64_t(l < 0 ? -1 : 0));
+              return Literal(l >> r);
+            }
             default: abort();
           }
         } else if (left.type == f32) {
