@@ -371,14 +371,22 @@ public:
             case Mul:      return Literal(l * r);
             case DivS: {
               if (r == 0) trap();
+              if (l == INT32_MIN && r == -1) trap(); // signed division overflow
               return Literal(l / r);
             }
             case DivU: {
               if (r == 0) trap();
               return Literal(int32_t(uint32_t(l) / uint32_t(r)));
             }
-            case RemS:     return Literal(l % r);
-            case RemU:     return Literal(int32_t(uint32_t(l) % uint32_t(r)));
+            case RemS: {
+              if (r == 0) trap();
+              if (l == INT32_MIN && r == -1) return Literal(int32_t(0));
+              return Literal(l % r);
+            }
+            case RemU: {
+              if (r == 0) trap();
+              return Literal(int32_t(uint32_t(l) % uint32_t(r)));
+            }
             case And:      return Literal(l & r);
             case Or:       return Literal(l | r);
             case Xor:      return Literal(l ^ r);
@@ -395,14 +403,22 @@ public:
             case Mul:      return Literal(l * r);
             case DivS: {
               if (r == 0) trap();
+              if (l == LLONG_MIN && r == -1) trap(); // signed division overflow
               return Literal(l / r);
             }
             case DivU: {
               if (r == 0) trap();
-              return Literal(int32_t(uint32_t(l) / uint32_t(r)));
+              return Literal(int64_t(uint64_t(l) / uint64_t(r)));
             }
-            case RemS:     return Literal(l % r);
-            case RemU:     return Literal(int64_t(uint64_t(l) % uint64_t(r)));
+            case RemS: {
+              if (r == 0) trap();
+              if (l == LLONG_MIN && r == -1) return Literal(int64_t(0));
+              return Literal(l % r);
+            }
+            case RemU: {
+              if (r == 0) trap();
+              return Literal(int64_t(uint64_t(l) % uint64_t(r)));
+            }
             case And:      return Literal(l & r);
             case Or:       return Literal(l | r);
             case Xor:      return Literal(l ^ r);
