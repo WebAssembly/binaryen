@@ -118,6 +118,22 @@ struct Literal {
   float   reinterpretf32() { assert(type == WasmType::i32); return f32; }
   double  reinterpretf64() { assert(type == WasmType::i64); return f64; }
 
+  int64_t getInteger() {
+    switch (type) {
+      case WasmType::i32: return i32;
+      case WasmType::i64: return i64;
+      default: abort();
+    }
+  }
+
+  double getFloat() {
+    switch (type) {
+      case WasmType::f32: return f32;
+      case WasmType::f64: return f64;
+      default: abort();
+    }
+  }
+
   bool operator==(Literal& other) {
     if (type != other.type) return false;
     if (type == none) return true;
