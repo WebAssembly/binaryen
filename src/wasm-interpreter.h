@@ -576,7 +576,11 @@ public:
 
     Function *function = functions[name];
     FunctionScope scope(function, arguments);
-    return ExpressionRunner(*this, scope).visit(function->body).value;
+
+    Literal ret = ExpressionRunner(*this, scope).visit(function->body).value;
+    if (function->result == none) ret = Literal();
+    assert(function->result == ret.type);
+    return ret;
   }
 
   // Convenience method, for the case where you have no arguments.
