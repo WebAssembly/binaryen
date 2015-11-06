@@ -11,11 +11,23 @@ namespace wasm {
 
 using namespace cashew;
 
+// Utilities
+
+IString WASM("wasm");
+
+int32_t safe_clz(int32_t v) {
+  if (v == 0) return 32;
+  return __builtin_clz(v);
+}
+
+int32_t safe_ctz(int32_t v) {
+  if (v == 0) return 32;
+  return __builtin_ctz(v);
+}
+
 //
 // An instance of a WebAssembly module, which can execute it via AST interpretation
 //
-
-IString WASM("wasm");
 
 class ModuleInstance {
 public:
@@ -311,13 +323,10 @@ public:
         if (value.type == i32) {
           int32_t v = value.geti32();
           switch (curr->op) {
-            case Clz: {
-              if (v == 0) return Literal(32);
-              return Literal((int32_t)__builtin_clz(v));
-            }
+            case Clz: return Literal(safe_clz(v));
             case Ctz: {
               if (v == 0) return Literal(32);
-              return Literal((int32_t)__builtin_ctz(v));
+              return Literal((int32_t)safe_ctz(v));
             }
             case Popcnt: return Literal((int32_t)__builtin_popcount(v));
             default: abort();
@@ -328,11 +337,15 @@ public:
           switch (curr->op) {
             case Clz: {
               if (v == 0) return Literal((int64_t)64);
-              return Literal((int64_t)__builtin_clz(v));
+              int32_t high = v >> 32, low = v;
+              if (high == 0) return Literal(32+(int64_t)safe_clz(low));
+              return Literal((int64_t)safe_clz(high));
             }
             case Ctz: {
               if (v == 0) return Literal((int64_t)64);
-              return Literal((int64_t)__builtin_ctz(v));
+              int32_t high = v >> 32, low = v;
+              if (low == 0) return Literal(32+(int64_t)safe_ctz(high));
+              return Literal((int64_t)safe_ctz(low));
             }
             case Popcnt: return Literal((int64_t)__builtin_popcount(v));
             default: abort();
