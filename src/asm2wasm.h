@@ -174,7 +174,7 @@ private:
       str += getSigFromType(operand->type);
     }
     IString sig(str.c_str(), false);
-    if (wasm.functionTypes.find(sig) == wasm.functionTypes.end()) {
+    if (wasm.functionTypesMap.find(sig) == wasm.functionTypesMap.end()) {
       // add new type
       auto type = allocator.alloc<FunctionType>();
       type->name = sig;
@@ -182,10 +182,9 @@ private:
       for (auto operand : operands) {
         type->params.push_back(operand->type);
       }
-      wasm.functionTypes[sig] = type;
-      assert(wasm.functionTypes.find(sig) != wasm.functionTypes.end());
+      wasm.addFunctionType(type);
     }
-    return wasm.functionTypes[sig];
+    return wasm.functionTypesMap[sig];
   }
 
 public:
@@ -367,19 +366,19 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       assert(module[0] == NAME);
       moduleName = module[1]->getIString();
     }
-    Import import;
-    import.name = name;
-    import.module = moduleName;
-    import.base = imported[2]->getIString();
+    auto import = allocator.alloc<Import>();
+    import->name = name;
+    import->module = moduleName;
+    import->base = imported[2]->getIString();
     // special-case some asm builtins
-    if (import.module == GLOBAL && (import.base == NAN_ || import.base == INFINITY_)) {
+    if (import->module == GLOBAL && (import->base == NAN_ || import->base == INFINITY_)) {
       type = WasmType::f64;
     }
     if (type != WasmType::none) {
       // wasm has no imported constants, so allocate a global, and we need to write the value into that
-      allocateGlobal(name, type, true, import.module, import.base);
+      allocateGlobal(name, type, true, import->module, import->base);
     } else {
-      wasm.imports.emplace(name, import);
+      wasm.addImport(import);
     }
   };
 
@@ -481,9 +480,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         IString key = pair[0]->getIString();
         Ref value = pair[1];
         assert(value[0] == NAME);
-        Export export_;
-        export_.name = key;
-        export_.value = value[1]->getIString();
+        auto export_ = allocator.alloc<Export>();
+        export_->name = key;
+        export_->value = value[1]->getIString();
         wasm.exports.push_back(export_);
       }
     }
@@ -493,9 +492,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   std::vector<IString> toErase;
 
-  for (auto& pair : wasm.imports) {
+  for (auto& pair : wasm.importsMap) {
     IString name = pair.first;
-    Import& import = pair.second;
+    Import& import = *pair.second;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       import.type = importedFunctionTypes[name];
     } else {
@@ -505,7 +504,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   }
 
   for (auto curr : toErase) {
-    wasm.imports.erase(curr);
+    wasm.removeImport(curr);
   }
 }
 
@@ -799,7 +798,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           return ret;
         }
         Call* ret;
-        if (wasm.imports.find(name) != wasm.imports.end()) {
+        if (wasm.importsMap.find(name) != wasm.importsMap.end()) {
 #ifndef __EMSCRIPTEN__
           // no imports yet in reference interpreter, fake it
           AsmType asmType = detectAsmType(astStackHelper.getParent(), &asmData);

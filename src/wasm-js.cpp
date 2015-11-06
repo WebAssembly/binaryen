@@ -75,7 +75,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
         Module['tempArguments'] = Array.prototype.slice.call(arguments);
         return Module['_call_from_js']($0);
       };
-    }, curr.name.str);
+    }, curr->name.str);
   }
 
   if (debug) std::cerr << "creating instance...\n";

@@ -846,14 +846,60 @@ public:
 class Module {
 public:
   // wasm contents
-  std::map<Name, FunctionType*> functionTypes;
-  std::map<Name, Import> imports;
-  std::vector<Export> exports;
+  std::vector<FunctionType*> functionTypes;
+  std::vector<Import*> imports;
+  std::vector<Export*> exports;
   Table table;
   std::vector<Function*> functions;
+
+  // utility maps
+  std::map<Name, FunctionType*> functionTypesMap;
+  std::map<Name, Import*> importsMap;
+  std::map<Name, Export*> exportsMap;
+  std::map<Name, Function*> functionsMap;
+
   Memory memory;
 
   Module() {}
+
+  void addFunctionType(FunctionType* curr) {
+    if (!curr->name) {
+      curr->name = cashew::IString(std::to_string(functionTypes.size()).c_str(), false);
+    }
+    functionTypes.push_back(curr);
+    functionTypesMap[curr->name] = curr;
+  }
+  void addImport(Import* curr) {
+    if (!curr->name) {
+      curr->name = cashew::IString(std::to_string(imports.size()).c_str(), false);
+    }
+    imports.push_back(curr);
+    importsMap[curr->name] = curr;
+  }
+  void addExport(Export* curr) {
+    if (!curr->name) {
+      curr->name = cashew::IString(std::to_string(exports.size()).c_str(), false);
+    }
+    exports.push_back(curr);
+    exportsMap[curr->name] = curr;
+  }
+  void addFunction(Function* curr) {
+    if (!curr->name) {
+      curr->name = cashew::IString(std::to_string(functions.size()).c_str(), false);
+    }
+    functions.push_back(curr);
+    functionsMap[curr->name] = curr;
+  }
+
+  void removeImport(Name name) {
+    for (size_t i = 0; i < imports.size(); i++) {
+      if (imports[i]->name == name) {
+        imports.erase(imports.begin() + i);
+        break;
+      }
+    }
+    importsMap.erase(name);
+  }
 
   friend std::ostream& operator<<(std::ostream &o, Module module) {
     unsigned indent = 0;
@@ -868,17 +914,17 @@ public:
     o << ")\n";
     for (auto& curr : module.functionTypes) {
       doIndent(o, indent);
-      curr.second->print(o, indent, true);
+      curr->print(o, indent, true);
       o << '\n';
     }
     for (auto& curr : module.imports) {
       doIndent(o, indent);
-      curr.second.print(o, indent);
+      curr->print(o, indent);
       o << '\n';
     }
     for (auto& curr : module.exports) {
       doIndent(o, indent);
-      curr.print(o, indent);
+      curr->print(o, indent);
       o << '\n';
     }
     if (module.table.names.size() > 0) {
@@ -897,7 +943,7 @@ public:
 
   bool validate() {
     for (auto& exp : exports) {
-      Name name = exp.name;
+      Name name = exp->name;
       bool found = false;
       for (auto& func : functions) {
         if (func->name == name) {

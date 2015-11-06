@@ -232,7 +232,7 @@ public:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        return instance.externalInterface->callImport(&instance.wasm.imports[curr->target], arguments);
+        return instance.externalInterface->callImport(instance.wasm.importsMap[curr->target], arguments);
       }
       Flow visitCallIndirect(CallIndirect *curr) override {
         NOTE_ENTER("CallIndirect");

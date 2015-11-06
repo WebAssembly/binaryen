@@ -757,8 +757,8 @@ private:
   Expression* makeCallIndirect(Element& s) {
     auto ret = allocator.alloc<CallIndirect>();
     IString type = s[1]->str();
-    assert(wasm.functionTypes.find(type) != wasm.functionTypes.end());
-    ret->type = wasm.functionTypes[type];
+    assert(wasm.functionTypesMap.find(type) != wasm.functionTypesMap.end());
+    ret->type = wasm.functionTypesMap[type];
     ret->target = parseExpression(s[2]);
     parseCallOperands(s, 3, ret);
     return ret;
@@ -799,27 +799,27 @@ private:
   }
 
   void parseExport(Element& s) {
-    Export ex;
-    ex.name = s[1]->str();
-    ex.value = s[2]->str();
-    wasm.exports.push_back(ex);
+    auto ex = allocator.alloc<Export>();
+    ex->name = s[1]->str();
+    ex->value = s[2]->str();
+    wasm.addExport(ex);
   }
 
   void parseImport(Element& s) {
-    Import im;
-    im.name = s[1]->str();
-    im.module = s[2]->str();
-    im.base = s[3]->str();
+    auto im = allocator.alloc<Import>();
+    im->name = s[1]->str();
+    im->module = s[2]->str();
+    im->base = s[3]->str();
     Element& params = *s[4];
     if (params[0]->str() == PARAM) {
       for (size_t i = 1; i < params.size(); i++) {
-        im.type.params.push_back(stringToWasmType(params[i]->str()));
+        im->type.params.push_back(stringToWasmType(params[i]->str()));
       }
     } else {
       onError();
     }
     assert(s.size() == 5);
-    wasm.imports[im.name] = im;
+    wasm.addImport(im);
   }
 
   void parseTable(Element& s) {
@@ -830,8 +830,12 @@ private:
 
   void parseType(Element& s) {
     auto type = allocator.alloc<FunctionType>();
-    type->name = s[1]->str();
-    Element& func = *s[2];
+    size_t i = 1;
+    if (s[i]->isStr()) {
+      type->name = s[i]->str();
+      i++;
+    }
+    Element& func = *s[i];
     assert(func.isList());
     for (size_t i = 1; i < func.size(); i++) {
       Element& curr = *func[i];
@@ -843,7 +847,7 @@ private:
         type->result = stringToWasmType(curr[1]->str());
       }
     }
-    wasm.functionTypes[type->name] = type;
+    wasm.addFunctionType(type);
   }
 };
 
