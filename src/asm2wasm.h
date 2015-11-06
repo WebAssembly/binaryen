@@ -470,7 +470,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       }
     } else if (curr[0] == DEFUN) {
       // function
-      wasm.functions.push_back(processFunction(curr));
+      wasm.addFunction(processFunction(curr));
     } else if (curr[0] == RETURN) {
       // exports
       Ref object = curr[1];
