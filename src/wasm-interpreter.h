@@ -334,20 +334,19 @@ public:
         }
         if (value.type == i64) {
           int64_t v = value.geti64();
+          int32_t high = v >> 32, low = v;
           switch (curr->op) {
             case Clz: {
               if (v == 0) return Literal((int64_t)64);
-              int32_t high = v >> 32, low = v;
               if (high == 0) return Literal(32+(int64_t)safe_clz(low));
               return Literal((int64_t)safe_clz(high));
             }
             case Ctz: {
               if (v == 0) return Literal((int64_t)64);
-              int32_t high = v >> 32, low = v;
               if (low == 0) return Literal(32+(int64_t)safe_ctz(high));
               return Literal((int64_t)safe_ctz(low));
             }
-            case Popcnt: return Literal((int64_t)__builtin_popcount(v));
+            case Popcnt: return Literal(int64_t(__builtin_popcount(low) + __builtin_popcount(high)));
             default: abort();
           }
         }
