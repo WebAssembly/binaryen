@@ -278,7 +278,7 @@ private:
         func->result = stringToWasmType(curr[1]->str());
       } else if (id == TYPE) {
         Name name = curr[1]->str();
-        assert(wasm.functionTypesMap.find(name) != wasm.functionTypesMap.end());
+        if (wasm.functionTypesMap.find(name) == wasm.functionTypesMap.end()) onError();
         FunctionType* type = wasm.functionTypesMap[name];
         func->result = type->result;
         for (size_t j = 0; j < type->params.size(); j++) {
@@ -829,6 +829,7 @@ private:
     auto im = allocator.alloc<Import>();
     im->name = s[1]->str();
     im->module = s[2]->str();
+    if (!s[3]->isStr()) onError();
     im->base = s[3]->str();
     Element& params = *s[4];
     IString id = params[0]->str();
