@@ -882,7 +882,7 @@ public:
   size_t initial, max;
   std::vector<Segment> segments;
 
-  Memory() : initial(0), max(0) {}
+  Memory() : initial(0), max(-1) {}
 };
 
 class Module {
