@@ -260,6 +260,7 @@ private:
     func->body = nullptr;
     localIndex = 0;
     labelIndex = 0;
+    std::vector<NameType> typeParams; // we may have both params and a type. store the type info here
     for (;i < s.size(); i++) {
       Element& curr = *s[i];
       IString id = curr[0]->str();
@@ -283,7 +284,7 @@ private:
         for (size_t j = 0; j < type->params.size(); j++) {
           IString name = getName(j);
           WasmType currType = type->params[j];
-          func->params.emplace_back(name, currType);
+          typeParams.emplace_back(name, currType);
           currLocalTypes[name] = currType;
         }
       } else {
@@ -300,6 +301,9 @@ private:
           block->list.push_back(ex);
         }
       }
+    }
+    if (typeParams.size() > 0 && func->params.size() == 0) {
+      func->params = typeParams;
     }
     if (!func->body) func->body = allocator.alloc<Nop>();
     wasm.functions.push_back(func);
