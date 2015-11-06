@@ -280,7 +280,7 @@ private:
         assert(wasm.functionTypesMap.find(name) != wasm.functionTypesMap.end());
         FunctionType* type = wasm.functionTypesMap[name];
         func->result = type->result;
-        for (size_t j = 0; i < type->params.size(); j++) {
+        for (size_t j = 0; j < type->params.size(); j++) {
           IString name = getName(j);
           WasmType currType = type->params[j];
           func->params.emplace_back(name, currType);
@@ -301,6 +301,7 @@ private:
         }
       }
     }
+    if (!func->body) func->body = allocator.alloc<Nop>();
     wasm.functions.push_back(func);
     currLocalTypes.clear();
   }
