@@ -775,7 +775,20 @@ public:
   ExpressionList operands;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    return printOpening(o, "host") << ')';
+    switch (op) {
+      case PageSize: printOpening(o, "pagesize") << ')'; break;
+      case MemorySize: printOpening(o, "memorysize") << ')'; break;
+      case GrowMemory: {
+        printOpening(o, "grow_memory");
+        incIndent(o, indent);
+        printFullLine(o, indent, operands[0]);
+        decIndent(o, indent);
+        break;
+      }
+      case HasFeature: printOpening(o, "hasfeature ") << nameOperand << ')'; break;
+      default: abort();
+    }
+    return o;
   }
 };
 
