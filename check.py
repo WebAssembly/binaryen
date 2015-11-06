@@ -98,9 +98,18 @@ for t in spec_tests:
     expected = os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log')
     if os.path.exists(expected):
       expected = open(expected).read()
+      # fix it up, our pretty (i32.const 83) must become compared to a homely 83 : i32
+      def fix(x):
+        x = x.strip()
+        if not x: return x
+        v, t = x.split(' : ')
+        return '(' + t + '.const ' + v + ')'
+      expected = '\n'.join(map(fix, expected.split('\n')))
     else:
       print '       (no expected output)'
       continue
+    actual = actual.strip()
+    expected = expected.strip()
     if actual != expected:
       fail(actual, expected)
 
