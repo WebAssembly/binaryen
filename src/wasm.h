@@ -893,7 +893,7 @@ public:
 
   void addFunctionType(FunctionType* curr) {
     Name numericName = Name::fromInt(functionTypeIndex);
-    if (!curr->name) {
+    if (curr->name.isNull()) {
       curr->name = numericName;
     }
     functionTypes.push_back(curr);
@@ -903,7 +903,7 @@ public:
   }
   void addImport(Import* curr) {
     Name numericName = Name::fromInt(importIndex);
-    if (!curr->name) {
+    if (curr->name.isNull()) {
       curr->name = numericName;
     }
     imports.push_back(curr);
@@ -913,7 +913,7 @@ public:
   }
   void addExport(Export* curr) {
     Name numericName = Name::fromInt(exportIndex);
-    if (!curr->name) {
+    if (curr->name.isNull()) {
       curr->name = numericName;
     }
     exports.push_back(curr);
@@ -923,7 +923,7 @@ public:
   }
   void addFunction(Function* curr) {
     Name numericName = Name::fromInt(functionIndex);
-    if (!curr->name) {
+    if (curr->name.isNull()) {
       curr->name = numericName;
     }
     functions.push_back(curr);
