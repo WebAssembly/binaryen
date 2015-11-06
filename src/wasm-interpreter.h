@@ -25,6 +25,10 @@ int32_t safe_ctz(int32_t v) {
   return __builtin_ctz(v);
 }
 
+enum {
+  pageSize = 64*1024
+};
+
 //
 // An instance of a WebAssembly module, which can execute it via AST interpretation
 //
@@ -643,12 +647,16 @@ private:
       Flow visitHost(Host *curr) override {
         NOTE_ENTER("Host");
         switch (curr->op) {
-          case PageSize:   return Literal(64*1024);
+          case PageSize:   return Literal(pageSize);
           case MemorySize: return Literal(instance.memorySize);
           case GrowMemory: {
             Flow flow = visit(curr->operands[0]);
             if (flow.breaking()) return flow;
-            size_t newSize = instance.memorySize + flow.value.getInteger();
+            uint32_t delta = flow.value.geti32();
+            if (delta % pageSize != 0) trap();
+            if (delta > uint32_t(-1) - pageSize) trap();
+            if (instance.memorySize >= uint32_t(-1) - delta) trap();
+            uint32_t newSize = instance.memorySize + delta;
             if (newSize > instance.wasm.memory.max) trap();
             instance.externalInterface->growMemory(instance.memorySize, newSize);
             instance.memorySize = newSize;
