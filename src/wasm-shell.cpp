@@ -53,25 +53,25 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     switch (load->type) {
       case i32: {
         switch (load->bytes) {
-          case 1: return load->signed_ ? (int32_t)((int8_t*)memory)[addr]  : (int32_t)((uint8_t*)memory)[addr];
-          case 2: return load->signed_ ? (int32_t)((int16_t*)memory)[addr] : (int32_t)((uint16_t*)memory)[addr];
-          case 4: return load->signed_ ? (int32_t)((int32_t*)memory)[addr] : (int32_t)((uint32_t*)memory)[addr];
+          case 1: return load->signed_ ? (int32_t)*((int8_t*)(memory+addr))  : (int32_t)*((uint8_t*)(memory+addr));
+          case 2: return load->signed_ ? (int32_t)*((int16_t*)(memory+addr)) : (int32_t)*((uint16_t*)(memory+addr));
+          case 4: return load->signed_ ? (int32_t)*((int32_t*)(memory+addr)) : (int32_t)*((uint32_t*)(memory+addr));
           default: abort();
         }
         break;
       }
       case i64: {
         switch (load->bytes) {
-          case 1: return load->signed_ ? (int64_t)((int8_t*)memory)[addr]  : (int64_t)((uint8_t*)memory)[addr];
-          case 2: return load->signed_ ? (int64_t)((int16_t*)memory)[addr] : (int64_t)((uint16_t*)memory)[addr];
-          case 4: return load->signed_ ? (int64_t)((int32_t*)memory)[addr] : (int64_t)((uint32_t*)memory)[addr];
-          case 8: return load->signed_ ? (int64_t)((int64_t*)memory)[addr] : (int64_t)((uint64_t*)memory)[addr];
+          case 1: return load->signed_ ? (int64_t)*((int8_t*)(memory+addr))  : (int64_t)*((uint8_t*)(memory+addr));
+          case 2: return load->signed_ ? (int64_t)*((int16_t*)(memory+addr)) : (int64_t)*((uint16_t*)(memory+addr));
+          case 4: return load->signed_ ? (int64_t)*((int32_t*)(memory+addr)) : (int64_t)*((uint32_t*)(memory+addr));
+          case 8: return load->signed_ ? (int64_t)*((int64_t*)(memory+addr)) : (int64_t)*((uint64_t*)(memory+addr));
           default: abort();
         }
         break;
       }
-      case f32: return ((float*)memory)[addr];
-      case f64: return ((double*)memory)[addr];
+      case f32: return *((float*)(memory+addr));
+      case f64: return *((double*)(memory+addr));
       default: abort();
     }
   }
@@ -81,25 +81,25 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     switch (store->type) {
       case i32: {
         switch (store->bytes) {
-          case 1: ((int8_t*)memory)[addr] = value.geti32(); break;
-          case 2: ((int16_t*)memory)[addr] = value.geti32(); break;
-          case 4: ((int32_t*)memory)[addr] = value.geti32(); break;
+          case 1: *((int8_t*)(memory+addr)) = value.geti32(); break;
+          case 2: *((int16_t*)(memory+addr)) = value.geti32(); break;
+          case 4: *((int32_t*)(memory+addr)) = value.geti32(); break;
           default: abort();
         }
         break;
       }
       case i64: {
         switch (store->bytes) {
-          case 1: ((int8_t*)memory)[addr] = value.geti64(); break;
-          case 2: ((int16_t*)memory)[addr] = value.geti64(); break;
-          case 4: ((int32_t*)memory)[addr] = value.geti64(); break;
-          case 8: ((int64_t*)memory)[addr] = value.geti64(); break;
+          case 1: *((int8_t*)(memory+addr)) = value.geti64(); break;
+          case 2: *((int16_t*)(memory+addr)) = value.geti64(); break;
+          case 4: *((int32_t*)(memory+addr)) = value.geti64(); break;
+          case 8: *((int64_t*)(memory+addr)) = value.geti64(); break;
           default: abort();
         }
         break;
       }
-      case f32: ((float*)memory)[addr] = value.getf32(); break;
-      case f64: ((double*)memory)[addr] = value.getf64(); break;
+      case f32: *((float*)(memory+addr)) = value.getf32(); break;
+      case f64: *((double*)(memory+addr)) = value.getf64(); break;
       default: abort();
     }
   }
