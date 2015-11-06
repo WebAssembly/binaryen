@@ -336,7 +336,7 @@ public:
   #define abort_on(str) { std::cerr << "aborting on " << str << '\n'; onError(); }
 
   Expression* parseExpression(Element& s) {
-    //if (debug) std::cerr << "parse expression " << s << '\n';
+    //std::cerr << "parse expression " << s << '\n';
     IString id = s[0]->str();
     const char *str = id.str;
     const char *dot = strchr(str, '.');
@@ -483,6 +483,10 @@ public:
           if (str[1] == 'e') return makeGetLocal(s);
           abort_on(str);
         }
+        case 'h': {
+          if (str[1] == 'a') return makeHost(s, HostOp::HasFeature);
+          abort_on(str);
+        }
         case 'i': {
           if (str[1] == 'f') return makeIf(s);
           abort_on(str);
@@ -545,6 +549,17 @@ private:
     auto ret = allocator.alloc<GetLocal>();
     ret->name = s[1]->str();
     ret->type = currLocalTypes[ret->name];
+    return ret;
+  }
+
+  Expression* makeHost(Element& s, HostOp op) {
+    auto ret = allocator.alloc<Host>();
+    ret->op = op;
+    if (op == HostOp::HasFeature) {
+      ret->nameOperand = s[1]->str();
+    } else {
+      parseCallOperands(s, 1, ret);
+    }
     return ret;
   }
 

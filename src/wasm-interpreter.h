@@ -15,6 +15,8 @@ using namespace cashew;
 // An instance of a WebAssembly module, which can execute it via AST interpretation
 //
 
+IString WASM("wasm");
+
 class ModuleInstance {
 public:
   typedef std::vector<Literal> LiteralList;
@@ -562,7 +564,18 @@ public:
       }
       Flow visitHost(Host *curr) override {
         NOTE_ENTER("Host");
-        abort();
+
+        switch (curr->op) {
+          case PageSize:   return Literal(64*1024);
+          case MemorySize: return Literal(instance.memorySize);
+          case GrowMemory: abort();
+          case HasFeature: {
+            IString id = curr->nameOperand;
+            if (id == WASM) return Literal(1);
+            return Literal(0);
+          }
+          default: abort();
+        }
       }
       Flow visitNop(Nop *curr) override {
         NOTE_ENTER("Nop");

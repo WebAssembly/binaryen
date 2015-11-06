@@ -748,6 +748,7 @@ public:
   Host() : Expression(HostId) {}
 
   HostOp op;
+  Name nameOperand;
   ExpressionList operands;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
