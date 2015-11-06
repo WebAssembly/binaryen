@@ -770,6 +770,7 @@ public:
   WasmType result;
   std::vector<NameType> params;
   std::vector<NameType> locals;
+  Name type; // if null, it is implicit in params and result
   Expression *body;
 
   std::ostream& print(std::ostream &o, unsigned indent) {

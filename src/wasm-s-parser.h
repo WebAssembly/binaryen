@@ -278,6 +278,7 @@ private:
         func->result = stringToWasmType(curr[1]->str());
       } else if (id == TYPE) {
         Name name = curr[1]->str();
+        func->type = name;
         if (wasm.functionTypesMap.find(name) == wasm.functionTypesMap.end()) onError();
         FunctionType* type = wasm.functionTypesMap[name];
         func->result = type->result;
@@ -306,7 +307,7 @@ private:
       func->params = typeParams;
     }
     if (!func->body) func->body = allocator.alloc<Nop>();
-    wasm.functions.push_back(func);
+    wasm.addFunction(func);
     currLocalTypes.clear();
   }
 
