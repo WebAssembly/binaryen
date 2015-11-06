@@ -43,6 +43,7 @@ public:
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
     virtual Literal load(Load* load, size_t addr) = 0;
     virtual void store(Store* store, size_t addr, Literal value) = 0;
+    virtual void growMemory(size_t oldSize, size_t newSize) = 0;
     virtual void trap() = 0;
   };
 
@@ -634,11 +635,18 @@ public:
       }
       Flow visitHost(Host *curr) override {
         NOTE_ENTER("Host");
-
         switch (curr->op) {
           case PageSize:   return Literal(64*1024);
           case MemorySize: return Literal(instance.memorySize);
-          case GrowMemory: abort();
+          case GrowMemory: {
+            Flow flow = visit(curr->operands[0]);
+            if (flow.breaking()) return flow;
+            size_t newSize = flow.value.getInteger();
+            if (newSize > instance.wasm.memory.max) trap();
+            instance.externalInterface->growMemory(instance.memorySize, newSize);
+            instance.memorySize = newSize;
+            return Literal();
+          }
           case HasFeature: {
             IString id = curr->nameOperand;
             if (id == WASM) return Literal(1);

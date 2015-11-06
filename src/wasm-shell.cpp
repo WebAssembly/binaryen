@@ -24,13 +24,11 @@ IString ASSERT_RETURN("assert_return"),
 
 struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   char *memory;
-  size_t memorySize;
 
   ShellExternalInterface() : memory(nullptr) {}
 
   void init(Module& wasm) override {
     memory = new char[wasm.memory.initial];
-    memorySize = wasm.memory.initial;
     // apply memory segments
     for (auto segment : wasm.memory.segments) {
       memcpy(memory + segment.offset, segment.data, segment.size);
@@ -102,6 +100,11 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       case f64: *((double*)(memory+addr)) = value.getf64(); break;
       default: abort();
     }
+  }
+
+  void growMemory(size_t oldSize, size_t newSize) override {
+    delete memory;
+    memory = new char[newSize];
   }
 
   jmp_buf trapState;

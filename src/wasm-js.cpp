@@ -173,6 +173,10 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
       }
     }
 
+    void growMemory(size_t oldSize, size_t newSize) override {
+      abort();
+    }
+
     void trap() override {
       EM_ASM({
         abort("wasm trap!");

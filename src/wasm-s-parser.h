@@ -500,6 +500,7 @@ public:
         }
         case 'g': {
           if (str[1] == 'e') return makeGetLocal(s);
+          if (str[1] == 'r') return makeHost(s, HostOp::GrowMemory);
           abort_on(str);
         }
         case 'h': {
@@ -515,8 +516,16 @@ public:
           if (str[1] == 'o') return makeLoop(s);
           abort_on(str);
         }
+        case 'm': {
+          if (str[1] == 'e') return makeHost(s, HostOp::MemorySize);
+          abort_on(str);
+        }
         case 'n': {
           if (str[1] == 'o') return allocator.alloc<Nop>();
+          abort_on(str);
+        }
+        case 'p': {
+          if (str[1] == 'a') return makeHost(s, HostOp::PageSize);
           abort_on(str);
         }
         case 's': {
