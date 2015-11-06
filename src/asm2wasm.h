@@ -483,7 +483,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         auto export_ = allocator.alloc<Export>();
         export_->name = key;
         export_->value = value[1]->getIString();
-        wasm.exports.push_back(export_);
+        wasm.addExport(export_);
       }
     }
   }
