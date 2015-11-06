@@ -227,12 +227,16 @@ private:
   size_t localIndex; // params and locals
   size_t labelIndex;
 
+  IString getName(size_t index) {
+    return IString(std::to_string(index).c_str(), false);
+  }
+
   IString getNameWhenNextNotString(Element& s, size_t& i, size_t& index) {
     if (s[i]->isStr()) {
       index++;
       return s[i++]->str();
     }
-    return IString(std::to_string(index++).c_str(), false);
+    return getName(index++);
   }
 
   IString getNameOnCondition(Element& s, size_t& i, size_t& index, bool givenName) {
@@ -240,7 +244,7 @@ private:
       index++;
       return s[i++]->str();
     }
-    return IString(std::to_string(index++).c_str(), false);
+    return getName(index++);
   }
 
   void parseFunction(Element& s) {
@@ -271,6 +275,17 @@ private:
         currLocalTypes[name] = type;
       } else if (id == RESULT) {
         func->result = stringToWasmType(curr[1]->str());
+      } else if (id == TYPE) {
+        Name name = curr[1]->str();
+        assert(wasm.functionTypesMap.find(name) != wasm.functionTypesMap.end());
+        FunctionType* type = wasm.functionTypesMap[name];
+        func->result = type->result;
+        for (size_t j = 0; i < type->params.size(); j++) {
+          IString name = getName(j);
+          WasmType currType = type->params[j];
+          func->params.emplace_back(name, currType);
+          currLocalTypes[name] = currType;
+        }
       } else {
         Expression* ex = parseExpression(curr);
         if (!func->body) {
