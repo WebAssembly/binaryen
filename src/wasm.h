@@ -38,6 +38,10 @@ struct Name : public cashew::IString {
     assert(name.str);
     return o << '$' << name.str; // reference interpreter requires we prefix all names
   }
+
+  static Name fromInt(size_t i) {
+    return cashew::IString(std::to_string(i).c_str(), false);
+  }
 };
 
 // Types
@@ -863,7 +867,7 @@ public:
   Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0) {}
 
   void addFunctionType(FunctionType* curr) {
-    Name numericName = getNumericName(functionTypeIndex);
+    Name numericName = Name::fromInt(functionTypeIndex);
     if (!curr->name) {
       curr->name = numericName;
     }
@@ -873,7 +877,7 @@ public:
     functionTypeIndex++;
   }
   void addImport(Import* curr) {
-    Name numericName = getNumericName(importIndex);
+    Name numericName = Name::fromInt(importIndex);
     if (!curr->name) {
       curr->name = numericName;
     }
@@ -883,7 +887,7 @@ public:
     importIndex++;
   }
   void addExport(Export* curr) {
-    Name numericName = getNumericName(exportIndex);
+    Name numericName = Name::fromInt(exportIndex);
     if (!curr->name) {
       curr->name = numericName;
     }
@@ -893,7 +897,7 @@ public:
     exportIndex++;
   }
   void addFunction(Function* curr) {
-    Name numericName = getNumericName(functionIndex);
+    Name numericName = Name::fromInt(functionIndex);
     if (!curr->name) {
       curr->name = numericName;
     }
@@ -969,10 +973,6 @@ public:
   }
 
 private:
-  Name getNumericName(size_t i) {
-    return cashew::IString(std::to_string(i).c_str(), false);
-  }
-
   size_t functionTypeIndex, importIndex, exportIndex, functionIndex;
 };
 
