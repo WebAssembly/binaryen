@@ -311,8 +311,14 @@ public:
         if (value.type == i32) {
           int32_t v = value.geti32();
           switch (curr->op) {
-            case Clz:    return Literal((int32_t)__builtin_clz(v));
-            case Ctz:    return Literal((int32_t)__builtin_ctz(v));
+            case Clz: {
+              if (v == 0) return Literal(32);
+              return Literal((int32_t)__builtin_clz(v));
+            }
+            case Ctz: {
+              if (v == 0) return Literal(32);
+              return Literal((int32_t)__builtin_ctz(v));
+            }
             case Popcnt: return Literal((int32_t)__builtin_popcount(v));
             default: abort();
           }
@@ -320,8 +326,14 @@ public:
         if (value.type == i64) {
           int64_t v = value.geti64();
           switch (curr->op) {
-            case Clz:    return Literal((int64_t)__builtin_clz(v));
-            case Ctz:    return Literal((int64_t)__builtin_ctz(v));
+            case Clz: {
+              if (v == 0) return Literal(32);
+              return Literal((int64_t)__builtin_clz(v));
+            }
+            case Ctz: {
+              if (v == 0) return Literal(32);
+              return Literal((int64_t)__builtin_ctz(v));
+            }
             case Popcnt: return Literal((int64_t)__builtin_popcount(v));
             default: abort();
           }
