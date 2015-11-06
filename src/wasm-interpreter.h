@@ -279,30 +279,15 @@ private:
         return instance.callFunction(name, arguments);
       }
 
-      Name getLocalName(Name name) {
-        if (scope.locals.find(name) != scope.locals.end()) {
-          return name;
-        }
-        // this is a numeric index
-        size_t id = std::stoi(name.str);
-        size_t numParams = scope.function->params.size();
-        if (id < numParams) {
-          return scope.function->params[id].name;
-        }
-        id -= numParams;
-        assert(id < scope.function->locals.size());
-        return scope.function->locals[id].name;
-      }
-
       Flow visitGetLocal(GetLocal *curr) override {
         NOTE_ENTER("GetLocal");
-        IString name = getLocalName(curr->name);
+        IString name = curr->name;
         NOTE_EVAL1(scope.locals[name]);
         return scope.locals[name];
       }
       Flow visitSetLocal(SetLocal *curr) override {
         NOTE_ENTER("SetLocal");
-        IString name = getLocalName(curr->name);
+        IString name = curr->name;
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
         NOTE_EVAL1(flow.value);

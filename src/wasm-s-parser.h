@@ -236,6 +236,7 @@ private:
   }
 
   // function parsing state
+  Function *currFunction = nullptr;
   std::map<Name, WasmType> currLocalTypes;
   size_t localIndex; // params and locals
   size_t labelIndex;
@@ -253,7 +254,7 @@ private:
   }
 
   void parseFunction(Element& s) {
-    auto func = allocator.alloc<Function>();
+    auto func = currFunction = allocator.alloc<Function>();
     size_t i = 1;
     if (s[i]->isStr()) {
       func->name = s[i]->str();
@@ -309,6 +310,10 @@ private:
           currLocalTypes[name] = currType;
         }
       } else {
+        // body
+        if (typeParams.size() > 0 && func->params.size() == 0) {
+          func->params = typeParams;
+        }
         Expression* ex = parseExpression(curr);
         if (!func->body) {
           func->body = ex;
@@ -323,12 +328,10 @@ private:
         }
       }
     }
-    if (typeParams.size() > 0 && func->params.size() == 0) {
-      func->params = typeParams;
-    }
     if (!func->body) func->body = allocator.alloc<Nop>();
     wasm.addFunction(func);
     currLocalTypes.clear();
+    currFunction = nullptr;
   }
 
   WasmType stringToWasmType(IString str, bool allowError=false, bool prefix=false) {
@@ -577,13 +580,6 @@ private:
     return ret;
   }
 
-  Expression* makeGetLocal(Element& s) {
-    auto ret = allocator.alloc<GetLocal>();
-    ret->name = s[1]->str();
-    ret->type = currLocalTypes[ret->name];
-    return ret;
-  }
-
   Expression* makeHost(Element& s, HostOp op) {
     auto ret = allocator.alloc<Host>();
     ret->op = op;
@@ -595,9 +591,28 @@ private:
     return ret;
   }
 
+  Name getLocalName(Element& s) {
+    if (s.dollared()) return s.str();
+    // this is a numeric index
+    size_t i = atoi(s.c_str());
+    size_t numParams = currFunction->params.size();
+    if (i < numParams) {
+      return currFunction->params[i].name;
+    } else {
+      return currFunction->locals[i - currFunction->params.size()].name;
+    }
+  }
+
+  Expression* makeGetLocal(Element& s) {
+    auto ret = allocator.alloc<GetLocal>();
+    ret->name = getLocalName(*s[1]);
+    ret->type = currLocalTypes[ret->name];
+    return ret;
+  }
+
   Expression* makeSetLocal(Element& s) {
     auto ret = allocator.alloc<SetLocal>();
-    ret->name = s[1]->str();
+    ret->name = getLocalName(*s[1]);
     ret->value = parseExpression(s[2]);
     ret->type = currLocalTypes[ret->name];
     return ret;
