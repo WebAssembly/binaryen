@@ -45,12 +45,14 @@ class Element {
   bool isList_;
   List list_;
   IString str_;
+  bool dollared_;
 
 public:
   Element() : isList_(true) {}
 
   bool isList() { return isList_; }
   bool isStr() { return !isList_; }
+  bool dollared() { return dollared_; }
 
   // list methods
 
@@ -79,9 +81,10 @@ public:
     return str_.str;
   }
 
-  Element* setString(IString str__) {
+  Element* setString(IString str__, bool dollared__) {
     isList_ = false;
     str_ = str__;
+    dollared_ = dollared__;
     return this;
   }
 
@@ -171,7 +174,11 @@ private:
   }
 
   Element* parseString() {
-    if (input[0] == '$') input++; // names begin with $, but we don't need that internally
+    bool dollared = false;
+    if (input[0] == '$') {
+      input++;
+      dollared = true;
+    }
     char *start = input;
     bool quoted = false;
     if (input[0] == '"') {
@@ -186,7 +193,7 @@ private:
     char temp = input[0];
     input[0] = 0;
     if (quoted) input[-1] = 0;
-    auto ret = allocator.alloc<Element>()->setString(IString(start, false)); // TODO: reuse the string here, carefully
+    auto ret = allocator.alloc<Element>()->setString(IString(start, false), dollared); // TODO: reuse the string here, carefully
     input[0] = temp;
     return ret;
   }
@@ -241,14 +248,6 @@ private:
     return getName(index++);
   }
 
-  IString getNameOnCondition(Element& s, size_t& i, size_t& index, bool givenName) {
-    if (givenName) {
-      index++;
-      return s[i++]->str();
-    }
-    return getName(index++);
-  }
-
   void parseFunction(Element& s) {
     auto func = allocator.alloc<Function>();
     size_t i = 1;
@@ -268,14 +267,29 @@ private:
       IString id = curr[0]->str();
       if (id == PARAM || id == LOCAL) {
         size_t j = 1;
-        IString name = getNameOnCondition(curr, j, localIndex, curr.size() == 3);
-        WasmType type = stringToWasmType(curr[j]->str());
-        if (id == PARAM) {
-          func->params.emplace_back(name, type);
-        } else {
-          func->locals.emplace_back(name, type);
+        while (j < curr.size()) {
+          IString name;
+          WasmType type = none;
+          if (!curr[j]->dollared()) { // dollared input symbols cannot be types
+            type = stringToWasmType(curr[j]->str(), true);
+          }
+          if (type != none) {
+            // a type, so an unnamed parameter
+            name = getName(localIndex);
+          } else {
+            name = curr[j]->str();
+            type = stringToWasmType(curr[j+1]->str());
+            j++;
+          }
+          j++;
+          if (id == PARAM) {
+            func->params.emplace_back(name, type);
+          } else {
+            func->locals.emplace_back(name, type);
+          }
+          localIndex++;
+          currLocalTypes[name] = type;
         }
-        currLocalTypes[name] = type;
       } else if (id == RESULT) {
         func->result = stringToWasmType(curr[1]->str());
       } else if (id == TYPE) {
@@ -313,19 +327,20 @@ private:
     currLocalTypes.clear();
   }
 
-  WasmType stringToWasmType(IString str) {
-    return stringToWasmType(str.str);
+  WasmType stringToWasmType(IString str, bool allowError=false, bool prefix=false) {
+    return stringToWasmType(str.str, allowError, prefix);
   }
 
-  WasmType stringToWasmType(const char* str) {
+  WasmType stringToWasmType(const char* str, bool allowError=false, bool prefix=false) {
     if (str[0] == 'i') {
-      if (str[1] == '3') return i32;
-      return i64;
+      if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) return i32;
+      if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) return i64;
     }
     if (str[0] == 'f') {
-      if (str[1] == '3') return f32;
-      return f64;
+      if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) return f32;
+      if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) return f64;
     }
+    if (allowError) return none;
     onError();
     abort();
   }
@@ -344,7 +359,7 @@ public:
     const char *dot = strchr(str, '.');
     if (dot) {
       // type.operation (e.g. i32.add)
-      WasmType type = stringToWasmType(str);
+      WasmType type = stringToWasmType(str, false, true);
       const char *op = dot + 1;
       switch (op[0]) {
         case 'a': {
