@@ -14,6 +14,7 @@ using namespace wasm;
 IString ASSERT_RETURN("assert_return"),
         ASSERT_TRAP("assert_trap"),
         ASSERT_INVALID("assert_invalid"),
+        STDIO("stdio"),
         PRINT("print"),
         INVOKE("invoke");
 
@@ -37,11 +38,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
-    if (import->name == PRINT) {
+    if (import->module == STDIO && import->base == PRINT) {
       for (auto argument : arguments) {
-        std::cout << argument << ' ';
+        std::cout << argument << '\n';
       }
-      std::cout << '\n';
       return Literal();
     }
     std::cout << "callImport " << import->name.str << "\n";

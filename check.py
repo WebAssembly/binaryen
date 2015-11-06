@@ -83,7 +83,7 @@ if len(requested) == 0:
   #spec_tests = [] # XXX [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join('test', 'spec')))]
   # 'address' : filed issue, test looks invalid
   # 'exports' : has a "return" https://github.com/WebAssembly/spec/issues/164
-  spec_tests = [os.path.join('spec', t + '.wast') for t in ['conversions', 'endianness', 'f32_cmp', 'f32', 'f64_cmp', 'f64', 'float_exprs', 'forward', 'func_ptrs', 'functions', 'has_feature', 'i32']]
+  spec_tests = [os.path.join('spec', t + '.wast') for t in ['conversions', 'endianness', 'f32_cmp', 'f32', 'f64_cmp', 'f64', 'float_exprs', 'forward', 'func_ptrs', 'functions', 'has_feature', 'i32', 'i64', 'imports']]
 else:
   spec_tests = requested[:]
 
@@ -103,6 +103,7 @@ for t in spec_tests:
         x = x.strip()
         if not x: return x
         v, t = x.split(' : ')
+        if v.endswith('.'): v = v[:-1] # remove trailing '.'
         return '(' + t + '.const ' + v + ')'
       expected = '\n'.join(map(fix, expected.split('\n')))
     else:
