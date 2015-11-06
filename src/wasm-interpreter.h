@@ -369,8 +369,14 @@ public:
             case Add:      return Flow(Literal(l + r));
             case Sub:      return Flow(Literal(l - r));
             case Mul:      return Flow(Literal(l * r));
-            case DivS:     return Flow(Literal(l / r));
-            case DivU:     return Flow(Literal(int32_t(uint32_t(l) / uint32_t(r))));
+            case DivS: {
+              if (r == 0) trap();
+              return Flow(Literal(l / r));
+            }
+            case DivU: {
+              if (r == 0) trap();
+              return Flow(Literal(int32_t(uint32_t(l) / uint32_t(r))));
+            }
             case RemS:     return Flow(Literal(l % r));
             case RemU:     return Flow(Literal(int32_t(uint32_t(l) % uint32_t(r))));
             case And:      return Flow(Literal(l & r));
@@ -387,8 +393,14 @@ public:
             case Add:      return Flow(Literal(l + r));
             case Sub:      return Flow(Literal(l - r));
             case Mul:      return Flow(Literal(l * r));
-            case DivS:     return Flow(Literal(l / r));
-            case DivU:     return Flow(Literal(int64_t(uint64_t(l) / uint64_t(r))));
+            case DivS: {
+              if (r == 0) trap();
+              return Flow(Literal(l / r));
+            }
+            case DivU: {
+              if (r == 0) trap();
+              return Flow(Literal(int32_t(uint32_t(l) / uint32_t(r))));
+            }
             case RemS:     return Flow(Literal(l % r));
             case RemU:     return Flow(Literal(int64_t(uint64_t(l) % uint64_t(r))));
             case And:      return Flow(Literal(l & r));
