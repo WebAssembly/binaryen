@@ -983,6 +983,13 @@ public:
   }
 
   bool validate() {
+    if (memory.initial > memory.max) return false;
+    size_t top = 0;
+    for (auto segment : memory.segments) {
+      if (segment.offset < top) return false;
+      top = segment.offset + segment.size;
+    }
+    if (top > memory.initial) return false;
     for (auto& exp : exports) {
       Name name = exp->name;
       bool found = false;
@@ -994,8 +1001,13 @@ public:
       }
       if (!found) return false;
     }
+    for (auto& curr : functions) {
+      if (!validateFunction(curr)) return false;
+    }
     return true;
   }
+
+  bool validateFunction(Function *func);
 
 private:
   size_t functionTypeIndex, importIndex, exportIndex, functionIndex;
@@ -1242,6 +1254,33 @@ struct WasmWalker : public WasmVisitor<void> {
     walk(func->body);
   }
 };
+
+bool Module::validateFunction(Function *func) {
+  struct Validator : public WasmWalker {
+    bool valid = true;
+
+    void visitLoad(Load *curr) override {
+      if (!validateAlignment(curr->align)) valid = false;
+    }
+    void visitStore(Store *curr) override {
+      if (!validateAlignment(curr->align)) valid = false;
+    }
+
+    bool validateAlignment(size_t align) {
+      switch (align) {
+        case 1:
+        case 2:
+        case 4:
+        case 8: return true;
+        default: return false;
+      }
+    }
+  };
+
+  Validator validator;
+  validator.walk(func->body);
+  return validator.valid;
+}
 
 } // namespace wasm
 
