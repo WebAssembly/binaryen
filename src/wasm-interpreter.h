@@ -648,7 +648,7 @@ private:
           case GrowMemory: {
             Flow flow = visit(curr->operands[0]);
             if (flow.breaking()) return flow;
-            size_t newSize = flow.value.getInteger();
+            size_t newSize = instance.memorySize + flow.value.getInteger();
             if (newSize > instance.wasm.memory.max) trap();
             instance.externalInterface->growMemory(instance.memorySize, newSize);
             instance.memorySize = newSize;
