@@ -327,11 +327,11 @@ public:
           int64_t v = value.geti64();
           switch (curr->op) {
             case Clz: {
-              if (v == 0) return Literal(32);
+              if (v == 0) return Literal((int64_t)64);
               return Literal((int64_t)__builtin_clz(v));
             }
             case Ctz: {
-              if (v == 0) return Literal(32);
+              if (v == 0) return Literal((int64_t)64);
               return Literal((int64_t)__builtin_ctz(v));
             }
             case Popcnt: return Literal((int64_t)__builtin_popcount(v));
