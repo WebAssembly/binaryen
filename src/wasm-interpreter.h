@@ -240,8 +240,10 @@ public:
         Flow target = visit(curr->target);
         if (target.breaking()) return target;
         size_t index = target.value.geti32();
-        assert(index < instance.wasm.table.names.size());
-        IString name = instance.wasm.table.names[index];
+        if (index >= instance.wasm.table.names.size()) trap();
+        Name name = instance.wasm.table.names[index];
+        Function *func = instance.wasm.functionsMap[name];
+        if (func->type.is() && func->type != curr->type->name) trap();
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
@@ -510,26 +512,26 @@ public:
           case TruncSFloat32:
           case TruncSFloat64: {
             double val = curr->op == TruncSFloat32 ? value.getf32() : value.getf64();
-            if (isnan(val)) instance.externalInterface->trap();
+            if (isnan(val)) trap();
             if (curr->type == i32) {
-              if (val > (double)INT_MAX || val < (double)INT_MIN) instance.externalInterface->trap();
+              if (val > (double)INT_MAX || val < (double)INT_MIN) trap();
               return Flow(Literal(int32_t(val)));
             } else {
               int64_t converted = val;
-              if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) instance.externalInterface->trap();
+              if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap();
               return Flow(Literal(converted));
             }
           }
           case TruncUFloat32:
           case TruncUFloat64: {
             double val = curr->op == TruncUFloat32 ? value.getf32() : value.getf64();
-            if (isnan(val)) instance.externalInterface->trap();
+            if (isnan(val)) trap();
             if (curr->type == i32) {
-              if (val > (double)UINT_MAX || val <= (double)-1) instance.externalInterface->trap();
+              if (val > (double)UINT_MAX || val <= (double)-1) trap();
               return Flow(Literal(uint32_t(val)));
             } else {
               uint64_t converted = val;
-              if (converted < val - 1 || val <= (double)-1) instance.externalInterface->trap();
+              if (converted < val - 1 || val <= (double)-1) trap();
               return Flow(Literal(converted));
             }
           }
@@ -565,6 +567,10 @@ public:
       Flow visitNop(Nop *curr) override {
         NOTE_ENTER("Nop");
         return Flow();
+      }
+
+      void trap() {
+        instance.externalInterface->trap();
       }
     };
 
