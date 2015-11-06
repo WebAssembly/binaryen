@@ -6,6 +6,7 @@ More specifically, this repository contains:
 
  * **asm2wasm**: An asm.js-to-WebAssembly compiler, built on Emscripten's asm optimizer infrastructure. That can directly compile asm.js to WebAssembly. You can use Emscripten to build C++ into asm.js, and together the two tools let you compile C/C++ to WebAssembly.
  * **wasm.js**: A polyfill for WebAssembly support in browsers. It receives an asm.js module, parses it using `asm2wasm`, and runs the resulting WebAssembly in a WebAssembly interpreter. It provides what looks like an asm.js module, while running WebAssembly inside.
+ * **wasm-shell**: A WebAssembly interpreter that can parse S-Expression format and run the spec tests.
 
 ## Building asm2wasm
 
@@ -13,8 +14,9 @@ More specifically, this repository contains:
 $ ./build.sh
 ```
 
-* `asm2wasm` requires a C++11 compiler. If you also want to compile C/C++ to asm.js and then to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten (the [stable SDK (or normal manual install)](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) is fine).
+* `asm2wasm` and `wasm-shell` require a C++11 compiler. If you also want to compile C/C++ to asm.js and then to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten (the [stable SDK (or normal manual install)](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) is fine).
 * `wasm.js` requires Emscripten, using the `incoming` branch in the `emscripten`, `emscripten-fastcomp` and `emscripten-fastcomp-clang` repos (the stable SDK, which is enough for `asm2wasm`, is not enough for `wasm.js`).
+* Older versions of gcc hit [this bug](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51048). You probably need gcc 5.0 or later, or a recent version of clang. If you have Emscripten, you can just use the native clang++ from that, it is recent enough.
 
 ## Running
 
@@ -76,6 +78,16 @@ For basic tests, that command should work, but in general you need a few more ar
 
  * `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow aliased function pointers (there is a single table).
  * `GLOBAL_BASE=1000` because WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. With that argument, we reserve the area up to `1000`.
+
+### wasm-shell
+
+Run
+
+````
+bin/wasm-shell file.wast [print AST before running]
+````
+
+ * Setting `WASM_SHELL_DEBUG=1` in the env will emit a lot of debugging info.
 
 ## Testing
 
