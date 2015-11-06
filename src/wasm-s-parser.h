@@ -462,6 +462,7 @@ public:
           abort_on(op);
         }
         case 's': {
+          if (op[1] == 'e') return makeSelect(s, type);
           if (op[1] == 'h') {
             if (op[2] == 'l') return makeBinary(s, BinaryOp::Shl, type);
             return makeBinary(s, op[4] == 'u' ? BinaryOp::ShrU : BinaryOp::ShrS, type);
@@ -576,6 +577,15 @@ private:
     auto ret = allocator.alloc<Convert>();
     ret->op = op;
     ret->value = parseExpression(s[1]);
+    ret->type = type;
+    return ret;
+  }
+
+  Expression* makeSelect(Element& s, WasmType type) {
+    auto ret = allocator.alloc<Select>();
+    ret->condition = parseExpression(s[1]);
+    ret->ifTrue = parseExpression(s[2]);
+    ret->ifFalse = parseExpression(s[3]);
     ret->type = type;
     return ret;
   }
