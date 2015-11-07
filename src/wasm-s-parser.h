@@ -14,6 +14,7 @@ namespace wasm {
 int debug;
 
 using namespace cashew;
+
 // Globals
 
 IString MODULE("module"),
@@ -35,6 +36,13 @@ IString MODULE("module"),
         NAN_("nan"),
         NEG_NAN("-nan"),
         FAKE_RETURN("fake_return_waka123");
+
+int unhex(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  abort();
+}
 
 //
 // An element in an S-Expression: a list or a string
@@ -181,23 +189,35 @@ private:
       dollared = true;
     }
     char *start = input;
-    bool quoted = false;
     if (input[0] == '"') {
-      quoted = true;
-      while (1) {
-        start++;
-        input = strchr(start, '"');
-        assert(input);
-        if (input[-1] != '\\') break;
-      }
-      assert(input);
+      // parse escaping \", and \a7 into 0xa7 the character code
       input++;
-    } else {
-      while (input[0] && !isspace(input[0]) && input[0] != ')') input++;
+      std::string str;
+      while (1) {
+        if (input[0] == '"') break;
+        if (input[0] == '\\') {
+          if (input[1] == '"') {
+            str += '"';
+            input += 2;
+            continue;
+          } else if (input[1] == '\\') {
+            str += '\\';
+            input += 2;
+          } else {
+            str += (char)(unhex(input[1])*16 + unhex(input[2]));
+            input += 3;
+            continue;
+          }
+        }
+        str += input[0];
+        input++;
+      }
+      input++;
+      return allocator.alloc<Element>()->setString(IString(str.c_str(), false), dollared);
     }
+    while (input[0] && !isspace(input[0]) && input[0] != ')') input++;
     char temp = input[0];
     input[0] = 0;
-    if (quoted) input[-1] = 0;
     auto ret = allocator.alloc<Element>()->setString(IString(start, false), dollared); // TODO: reuse the string here, carefully
     input[0] = temp;
     return ret;
