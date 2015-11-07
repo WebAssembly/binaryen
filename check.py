@@ -82,9 +82,8 @@ print '\n[ checking wasm-shell spec testcases... ]\n'
 if len(requested) == 0:
   #spec_tests = [] # XXX [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join('test', 'spec')))]
   # 'address' : filed issue, test looks invalid
-  # 'exports', 'int_literals' : has a "return" https://github.com/WebAssembly/spec/issues/164
   # 'switch': todo once stable
-  spec_tests = [os.path.join('spec', t + '.wast') for t in ['conversions', 'endianness', 'f32_cmp', 'f32', 'f64_cmp', 'f64', 'float_exprs', 'forward', 'func_ptrs', 'functions', 'has_feature', 'i32', 'i64', 'imports', 'int_exprs', 'left-to-right', 'memory_redundancy', 'memory_trap', 'names', 'resizing', 'runaway-recursion', 'select', 'store_retval', 'traps']]
+  spec_tests = [os.path.join('spec', t + '.wast') for t in ['conversions', 'endianness', 'exports', 'f32_cmp', 'f32', 'f64_cmp', 'f64', 'float_exprs', 'forward', 'func_ptrs', 'functions', 'has_feature', 'i32', 'i64', 'imports', 'int_exprs', 'int_literals', 'left-to-right', 'memory_redundancy', 'memory_trap', 'names', 'resizing', 'runaway-recursion', 'select', 'store_retval', 'traps']]
 else:
   spec_tests = requested[:]
 

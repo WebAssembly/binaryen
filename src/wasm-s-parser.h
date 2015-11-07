@@ -690,29 +690,35 @@ private:
     }
     switch (type) {
       case i32: {
-        std::istringstream istr(str);
-        int32_t temp;
-        if (str[0] == '0' && str[1] == 'x') {
-          uint32_t temp2;
-          istr >> std::hex >> temp2;
-          temp = temp2;
+        if ((str[0] == '0' && str[1] == 'x') || (str[0] == '-' && str[1] == '0' && str[2] == 'x')) {
+          bool negative = str[0] == '-';
+          if (negative) str++;
+          std::istringstream istr(str);
+          uint32_t temp;
+          istr >> std::hex >> temp;
+          ret->value.i32 = negative ? -temp : temp;
         } else {
+          std::istringstream istr(str);
+          int32_t temp;
           istr >> temp;
+          ret->value.i32 = temp;
         }
-        ret->value.i32 = temp;
         break;
       }
       case i64: {
-        std::istringstream istr(str);
-        int64_t temp;
-        if (str[0] == '0' && str[1] == 'x') {
-          uint64_t temp2;
-          istr >> std::hex >> temp2;
-          temp = temp2;
+        if ((str[0] == '0' && str[1] == 'x') || (str[0] == '-' && str[1] == '0' && str[2] == 'x')) {
+          bool negative = str[0] == '-';
+          if (negative) str++;
+          std::istringstream istr(str);
+          uint64_t temp;
+          istr >> std::hex >> temp;
+          ret->value.i64 = negative ? -temp : temp;
         } else {
+          std::istringstream istr(str);
+          int64_t temp;
           istr >> temp;
+          ret->value.i64 = temp;
         }
-        ret->value.i64 = temp;
         break;
       }
       case f32: {
