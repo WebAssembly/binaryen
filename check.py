@@ -131,7 +131,7 @@ for c in tests:
     if os.path.exists(emcc):
       extra = json.loads(open(emcc).read())
     if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
-    for opts in [[], ['-O1'], ['-O3', '--profiling']]:
+    for opts in [[], ['-O1'], ['-O2'], ['-O3'], ['-Oz']]:
       command = ['./emcc_to_wasm.js.sh', os.path.join('test', c)] + opts + extra
       subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
       print '....' + ' '.join(command)
