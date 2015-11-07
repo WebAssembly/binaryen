@@ -27,7 +27,7 @@ int32_t safe_ctz(int32_t v) {
 
 enum {
   pageSize = 64*1024,
-  maxCallDepth = 5000
+  maxCallDepth = 250
 };
 
 //
