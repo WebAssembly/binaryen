@@ -209,8 +209,9 @@ extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
 #ifdef WASM_JS_DEBUG
   std::cout << "call_from_js " << target << '\n';
 #endif
-  IString name(target);
-  Function *function = instance->wasm.functionsMap[name];
+  IString exportName(target);
+  IString functionName = instance->wasm.exportsMap[exportName]->value;
+  Function *function = instance->wasm.functionsMap[functionName];
   assert(function);
   size_t seen = EM_ASM_INT_V({ return Module['tempArguments'].length });
   size_t actual = function->params.size();
@@ -228,7 +229,7 @@ extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
       abort();
     }
   }
-  Literal ret = instance->callExport(name, arguments);
+  Literal ret = instance->callExport(exportName, arguments);
 #ifdef WASM_JS_DEBUG
   std::cout << "call_from_js returning " << ret << '\n';
 #endif
