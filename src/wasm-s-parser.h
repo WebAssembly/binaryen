@@ -33,7 +33,8 @@ IString MODULE("module"),
         INFINITY_("infinity"),
         NEG_INFINITY("-infinity"),
         NAN_("nan"),
-        NEG_NAN("-nan");
+        NEG_NAN("-nan"),
+        FAKE_RETURN("fake_return_waka123");
 
 //
 // An element in an S-Expression: a list or a string
@@ -540,6 +541,10 @@ public:
           if (str[1] == 'e') return makeSetLocal(s);
           abort_on(str);
         }
+        case 'r': {
+          if (str[1] == 'e') return makeReturn(s);
+          abort_on(str);
+        }
         default: abort_on(str);
       }
     }
@@ -871,6 +876,22 @@ private:
     if (s.size() == 3) {
       ret->value = parseExpression(s[2]);
     }
+    return ret;
+  }
+
+  Expression* makeReturn(Element& s) {
+    // return will likely not remain in wasm, but is in the testcases, for now. fake it
+    Block *temp;
+    if (!(currFunction->body && (temp = currFunction->body->dyn_cast<Block>()) && temp->name == FAKE_RETURN)) {
+      Expression* old = currFunction->body;
+      temp = allocator.alloc<Block>();
+      temp->name = FAKE_RETURN;
+      if (old) temp->list.push_back(old);
+      currFunction->body = temp;
+    }
+    auto ret = allocator.alloc<Break>();
+    ret->name = FAKE_RETURN;
+    ret->value = parseExpression(s[1]);
     return ret;
   }
 
