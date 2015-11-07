@@ -1,3 +1,4 @@
+
 //
 // Simple WebAssembly interpreter, designed to be embeddable in JavaScript, so it
 // can function as a polyfill.
@@ -129,12 +130,12 @@ private:
         doIndent(std::cout, indent);
         std::cout << "visit " << name << " :\n";
         indent++;
-        doIndent(std::cout, indent);
-        expression->print(std::cout, indent) << '\n';
-        indent++;
+        //doIndent(std::cout, indent);
+        //expression->print(std::cout, indent) << '\n';
+        //indent++;
       }
       ~IndentHandler() {
-        indent--;
+        //indent--;
         indent--;
         doIndent(std::cout, indent);
         std::cout << "exit " << name << '\n';
@@ -675,10 +676,17 @@ private:
     assert(function);
     FunctionScope scope(function, arguments);
 
+#ifdef WASM_INTERPRETER_DEBUG
+    std::cout << "entering " << function->name << '\n';
+#endif
+
     Literal ret = ExpressionRunner(*this, scope).visit(function->body).value;
     if (function->result == none) ret = Literal();
     assert(function->result == ret.type);
     callDepth--;
+#ifdef WASM_INTERPRETER_DEBUG
+    std::cout << "exiting " << function->name << '\n';
+#endif
     return ret;
   }
 

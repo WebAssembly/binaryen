@@ -849,6 +849,15 @@ private:
     return ret;
   }
 
+  Expression* makeMaybeBlock(Element &s, size_t i) {
+    if (s.size() == i+1) return parseExpression(s[i]);
+    auto ret = allocator.alloc<Block>();
+    for (; i < s.size(); i++) {
+      ret->list.push_back(parseExpression(s[i]));
+    }
+    return ret;
+  }
+
   Expression* makeLoop(Element& s) {
     auto ret = allocator.alloc<Loop>();
     size_t i = 1;
@@ -860,7 +869,7 @@ private:
       ret->in = s[i]->str();
       i++;
     }
-    ret->body = parseExpression(s[i]);
+    ret->body = makeMaybeBlock(s, i);
     return ret;
   }
 

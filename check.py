@@ -84,7 +84,7 @@ if len(requested) == 0:
   # 'address' : filed issue, test looks invalid
   # 'labels', 'switch': todo once switch is stable
   # 'memory' XXX TODO
-  spec_tests = [os.path.join('spec', t + '.wast') for t in ['conversions', 'endianness', 'exports', 'f32_cmp', 'f32', 'f64_cmp', 'f64', 'fac', 'float_exprs', 'forward', 'func_ptrs', 'functions', 'has_feature', 'i32', 'i64', 'imports', 'int_exprs', 'int_literals', 'left-to-right', 'memory_redundancy', 'memory_trap', 'names', 'resizing', 'runaway-recursion', 'select', 'store_retval', 'traps']]
+  spec_tests = [os.path.join('spec', t + '.wast') for t in ['conversions', 'endianness', 'exports', 'f32_cmp', 'f32', 'f64_cmp', 'f64', 'fac', 'float_exprs', 'forward', 'func_ptrs', 'functions', 'has_feature', 'i32', 'i64', 'imports', 'int_exprs', 'int_literals', 'left-to-right', 'memory', 'memory_redundancy', 'memory_trap', 'names', 'resizing', 'runaway-recursion', 'select', 'store_retval', 'traps']]
 else:
   spec_tests = requested[:]
 
