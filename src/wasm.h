@@ -530,7 +530,7 @@ public:
 
   unsigned bytes;
   bool signed_;
-  uint32_t offset;
+  uint64_t offset; // XXX https://github.com/WebAssembly/spec/issues/161
   unsigned align;
   Expression *ptr;
 
