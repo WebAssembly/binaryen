@@ -706,17 +706,20 @@ private:
         std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
         return ret;
       }
-      if (str[0] == 'n' && str[1] == 'a' && str[2] == 'n' && str[3] == ':') {
-        assert(str[4] == '0' && str[5] == 'x');
+      bool negative = str[0] == '-';
+      const char *positive = negative ? str + 1 : str;
+      if (positive[0] == 'n' && positive[1] == 'a' && positive[2] == 'n' && positive[3] == ':') {
+        assert(positive[4] == '0' && positive[5] == 'x');
         switch (type) {
           case f32: {
             union {
               uint32_t pattern;
               float f;
             } u;
-            std::istringstream istr(str+4);
+            std::istringstream istr(positive+4);
             istr >> std::hex >> u.pattern;
             u.pattern |= 0x7f800000;
+            if (negative) u.pattern |= -1;
             if (!isnan(u.f)) u.pattern |= 1;
             assert(isnan(u.f));
             ret->value.f32 = u.f;
@@ -727,9 +730,10 @@ private:
               uint64_t pattern;
               double d;
             } u;
-            std::istringstream istr(str+4);
+            std::istringstream istr(positive+4);
             istr >> std::hex >> u.pattern;
             u.pattern |= 0x7ff0000000000000LL;
+            if (negative) u.pattern |= -1LL;
             if (!isnan(u.d)) u.pattern |= 1;
             assert(isnan(u.d));
             ret->value.f64 = u.d;
