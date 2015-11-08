@@ -640,8 +640,8 @@ private:
       Flow visitHost(Host *curr) override {
         NOTE_ENTER("Host");
         switch (curr->op) {
-          case PageSize:   return Literal(pageSize);
-          case MemorySize: return Literal(instance.memorySize);
+          case PageSize:   return Literal((int32_t)pageSize);
+          case MemorySize: return Literal((int32_t)instance.memorySize);
           case GrowMemory: {
             Flow flow = visit(curr->operands[0]);
             if (flow.breaking()) return flow;
@@ -658,7 +658,7 @@ private:
           case HasFeature: {
             IString id = curr->nameOperand;
             if (id == WASM) return Literal(1);
-            return Literal(0);
+            return Literal((int32_t)0);
           }
           default: abort();
         }
