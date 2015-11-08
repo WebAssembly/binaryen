@@ -154,7 +154,7 @@ struct Literal {
         uint32_t ll;
       } u;
       u.ff = f;
-      o << "nan:" << std::hex << u.ll;
+      o << "nan:" << std::hex << u.ll << std::dec;
       return;
     }
     printDouble(o, f);
@@ -171,7 +171,7 @@ struct Literal {
         uint64_t ll;
       } u;
       u.dd = d;
-      o << "nan:" << std::hex << u.ll;
+      o << "nan:" << std::hex << u.ll << std::dec;
       return;
     }
     const char *text = cashew::JSPrinter::numToString(d);
