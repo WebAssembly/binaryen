@@ -80,8 +80,7 @@ for t in tests:
 print '\n[ checking wasm-shell spec testcases... ]\n'
 
 if len(requested) == 0:
-  BLACKLIST = []
-  spec_tests = [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join('test', 'spec'))) if t not in BLACKLIST]
+  spec_tests = [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join('test', 'spec')))]
 else:
   spec_tests = requested[:]
 
