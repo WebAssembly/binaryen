@@ -104,8 +104,9 @@ private:
   struct View {
     unsigned bytes;
     bool integer, signed_;
+    AsmType type;
     View() : bytes(0) {}
-    View(unsigned bytes, bool integer, bool signed_) : bytes(bytes), integer(integer), signed_(signed_) {}
+    View(unsigned bytes, bool integer, bool signed_, AsmType type) : bytes(bytes), integer(integer), signed_(signed_), type(type) {}
   };
 
   std::map<IString, View> views; // name (e.g. HEAP8) => view info
@@ -222,6 +223,12 @@ private:
         // must be global
         assert(mappedGlobals.find(name) != mappedGlobals.end());
         return wasmToAsmType(mappedGlobals[name].type);
+      }
+    } else if (ast[0] == SUB && ast[1][0] == NAME) {
+      // could be a heap access, use view info
+      auto view = views.find(ast[1][1]->getIString());
+      if (view != views.end()) {
+        return view->second.type;
       }
     }
     return detectType(ast, data);
@@ -425,25 +432,26 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           IString heap = constructor[2]->getIString();
           unsigned bytes;
           bool integer, signed_;
+          AsmType asmType;
           if (heap == INT8ARRAY) {
-            bytes = 1; integer = true; signed_ = true;
+            bytes = 1; integer = true; signed_ = true; asmType = ASM_INT;
           } else if (heap == INT16ARRAY) {
-            bytes = 2; integer = true; signed_ = true;
+            bytes = 2; integer = true; signed_ = true; asmType = ASM_INT;
           } else if (heap == INT32ARRAY) {
-            bytes = 4; integer = true; signed_ = true;
+            bytes = 4; integer = true; signed_ = true; asmType = ASM_INT;
           } else if (heap == UINT8ARRAY) {
-            bytes = 1; integer = true; signed_ = false;
+            bytes = 1; integer = true; signed_ = false; asmType = ASM_INT;
           } else if (heap == UINT16ARRAY) {
-            bytes = 2; integer = true; signed_ = false;
+            bytes = 2; integer = true; signed_ = false; asmType = ASM_INT;
           } else if (heap == UINT32ARRAY) {
-            bytes = 4; integer = true; signed_ = false;
+            bytes = 4; integer = true; signed_ = false; asmType = ASM_INT;
           } else if (heap == FLOAT32ARRAY) {
-            bytes = 4; integer = false; signed_ = true;
+            bytes = 4; integer = false; signed_ = true; asmType = ASM_DOUBLE;
           } else if (heap == FLOAT64ARRAY) {
-            bytes = 8; integer = false; signed_ = true;
+            bytes = 8; integer = false; signed_ = true; asmType = ASM_DOUBLE;
           }
           assert(views.find(name) == views.end());
-          views.emplace(name, View(bytes, integer, signed_));
+          views.emplace(name, View(bytes, integer, signed_, asmType));
         } else if (value[0] == ARRAY) {
           // function table. we "merge" them, so e.g.   [foo, b1] , [b2, bar]  =>  [foo, bar] , assuming b* are the aborting thunks
           // when minified, we can't tell from the name b\d+, but null thunks appear multiple times in a table; others never do
