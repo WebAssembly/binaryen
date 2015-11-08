@@ -491,6 +491,7 @@ public:
           if (op[1] == 'u') return makeBinary(s, BinaryOp::Sub, type);
           if (op[1] == 'q') return makeUnary(s, UnaryOp::Sqrt, type);
           if (op[1] == 't') return makeStore(s, type);
+          if (op[1] == 'w') return makeSwitch(s, type);
           abort_on(op);
         }
         case 't': {
@@ -927,6 +928,32 @@ private:
     auto ret = allocator.alloc<Break>();
     ret->name = FAKE_RETURN;
     ret->value = parseExpression(s[1]);
+    return ret;
+  }
+
+  Expression* makeSwitch(Element& s, WasmType type) {
+    abort();
+    auto ret = allocator.alloc<Switch>();
+    ret->type = type;
+    size_t i = 1;
+    if (s[i]->isStr()) {
+      ret->name = s[i]->str();
+      i++;
+    }
+    ret->value =  parseExpression(s[i]);
+    i++;
+    Element& targets = *s[i];
+    i++;
+    for (size_t j = 0; j < targets.size(); j++) {
+      ret->targets.push_back(targets[i]->str());
+    }
+    Element& cases = *s[i];
+    i++;
+    for (size_t j = 0; j < cases.size(); j++) {
+      Element& curr = *cases[i];
+      ret->cases.emplace_back(curr[0]->str(), parseExpression(curr[1]));
+    }
+    ret->updateCaseMap();
     return ret;
   }
 

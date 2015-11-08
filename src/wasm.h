@@ -359,6 +359,8 @@ public:
   struct Case {
     Name name;
     Expression *body;
+    Case() {}
+    Case(Name name, Expression *body) : name(name), body(body) {}
   };
 
   Name name;
