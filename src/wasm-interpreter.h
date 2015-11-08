@@ -142,8 +142,8 @@ private:
       }
     };
     #define NOTE_ENTER(x) IndentHandler indentHandler(instance.indent, x, curr);
-    #define NOTE_EVAL1(p0) { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '('  << p0 << ")\n"; }
-    #define NOTE_EVAL2(p0, p1) { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
+    #define NOTE_EVAL1(p0) { doIndent(std::cout, instance.indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ")\n"; }
+    #define NOTE_EVAL2(p0, p1) { doIndent(std::cout, instance.indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
 #else
     #define NOTE_ENTER(x)
     #define NOTE_EVAL1(p0)
@@ -215,7 +215,7 @@ private:
           return flow;
         }
         NOTE_EVAL1(flow.value);
-        int32_t index = flow.value.geti32();
+        int64_t index = flow.value.getInteger();
         Name target = curr->default_;
         if (index >= 0 && index < curr->targets.size()) {
           target = curr->targets[index];
