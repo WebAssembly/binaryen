@@ -708,6 +708,7 @@ private:
       }
       bool negative = str[0] == '-';
       const char *positive = negative ? str + 1 : str;
+      if (positive[0] == '+') positive++;
       if (positive[0] == 'n' && positive[1] == 'a' && positive[2] == 'n' && positive[3] == ':') {
         assert(positive[4] == '0' && positive[5] == 'x');
         switch (type) {
