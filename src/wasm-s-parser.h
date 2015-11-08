@@ -703,6 +703,36 @@ private:
           case f64: ret->value.f64 = std::nan(""); break;
           default: onError();
         }
+        std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
+        return ret;
+      }
+      if (str[0] == 'n' && str[1] == 'a' && str[2] == 'n' && str[3] == ':') {
+        assert(str[4] == '0' && str[5] == 'x');
+        switch (type) {
+          case f32: {
+            union {
+              uint32_t pattern;
+              float f;
+            } u;
+            u.pattern = atoi(str + 6);
+            u.pattern |= 0x7f800000;
+            assert(isnan(u.f));
+            ret->value.f32 = u.f;
+            break;
+          }
+          case f64: {
+            union {
+              uint64_t pattern;
+              double d;
+            } u;
+            u.pattern = atol(str + 6);
+            u.pattern |= 0x7ff0000000000000LL;
+            assert(isnan(u.d));
+            ret->value.f64 = u.d;
+            break;
+          }
+          default: onError();
+        }
         //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
         return ret;
       }
