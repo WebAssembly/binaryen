@@ -945,14 +945,14 @@ private:
     if (s[i]->isStr()) {
       ret->name = s[i]->str();
       i++;
+    } else {
+      ret->name = getPrefixedName(otherIndex++, "switch");
     }
     ret->value =  parseExpression(s[i]);
     i++;
-    Element& cases = *s[i];
-    i++;
     ret->default_ = getPrefixedName(otherIndex++, "switch-default");
-    for (; i < cases.size(); i++) {
-      Element& curr = *cases[i];
+    for (; i < s.size(); i++) {
+      Element& curr = *s[i];
       if (curr[0]->str() == CASE) {
         int32_t caseIndex = atoi(curr[1]->c_str());
         while (ret->targets.size() < caseIndex) {
@@ -960,7 +960,18 @@ private:
         }
         Name name = getPrefixedName(otherIndex++, "switch-case");
         ret->targets.push_back(name);
-        ret->cases.emplace_back(name, parseExpression(curr[2]));
+        // if there is no body at all, this is a trivial fallthrough
+        auto body = curr.size() < 3 ? allocator.alloc<Nop>() : parseExpression(curr[2]);
+        // if not fallthrough, add a break on the switch itself
+        if (curr.size() == 4) {
+          assert(curr[3]->str() == IString("fallthru"));
+        } else if (curr.size() == 3) {
+          Break *exit = allocator.alloc<Break>();
+          exit->name = ret->name;
+          exit->value = body;
+          body = exit;
+        }
+        ret->cases.emplace_back(name, body);
       } else {
         // the default
         ret->cases.emplace_back(ret->default_, parseExpression(curr));

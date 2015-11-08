@@ -142,12 +142,10 @@ private:
       }
     };
     #define NOTE_ENTER(x) IndentHandler indentHandler(instance.indent, x, curr);
-    #define NOTE_EVAL() { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '\n'; }
     #define NOTE_EVAL1(p0) { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '('  << p0 << ")\n"; }
     #define NOTE_EVAL2(p0, p1) { doIndent(std::cout, instance.indent); std::cout << "eval " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
 #else
     #define NOTE_ENTER(x)
-    #define NOTE_EVAL()
     #define NOTE_EVAL1(p0)
     #define NOTE_EVAL2(p0, p1)
 #endif

@@ -377,7 +377,8 @@ public:
   }
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "switch ") << name;
+    printOpening(o, "switch ");
+    if (name.is()) o << name;
     incIndent(o, indent);
     printFullLine(o, indent, value);
     doIndent(o, indent) << "[ ";
