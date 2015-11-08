@@ -611,7 +611,6 @@ private:
             }
           }
           case ReinterpretFloat: {
-            if (value.type == f64 && isnan(value.getf64())) return Literal((int64_t)0x7ff8000000000000); // canonicalized
             return curr->type == i32 ? Literal(value.reinterpreti32()) : Literal(value.reinterpreti64());
           }
           case ConvertUInt32:    return curr->type == f32 ? Literal(float(uint32_t(value.geti32()))) : Literal(double(uint32_t(value.geti32())));

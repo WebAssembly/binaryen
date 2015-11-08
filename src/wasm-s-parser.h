@@ -709,16 +709,21 @@ private:
       bool negative = str[0] == '-';
       const char *positive = negative ? str + 1 : str;
       if (positive[0] == '+') positive++;
-      if (positive[0] == 'n' && positive[1] == 'a' && positive[2] == 'n' && positive[3] == ':') {
-        assert(positive[4] == '0' && positive[5] == 'x');
+      if (positive[0] == 'n' && positive[1] == 'a' && positive[2] == 'n') {
+        const char * modifier = positive[3] == ':' ? positive + 4 : nullptr;
+        assert(modifier ? positive[4] == '0' && positive[5] == 'x' : 1);
         switch (type) {
           case f32: {
             union {
               uint32_t pattern;
               float f;
             } u;
-            std::istringstream istr(positive+4);
-            istr >> std::hex >> u.pattern;
+            if (modifier) {
+              std::istringstream istr(modifier);
+              istr >> std::hex >> u.pattern;
+            } else {
+              u.pattern = 0x7fc00000;
+            }
             u.pattern |= 0x7f800000;
             if (negative) u.pattern |= 0x80000000;
             if (!isnan(u.f)) u.pattern |= 1;
@@ -731,8 +736,12 @@ private:
               uint64_t pattern;
               double d;
             } u;
-            std::istringstream istr(positive+4);
-            istr >> std::hex >> u.pattern;
+            if (modifier) {
+              std::istringstream istr(modifier);
+              istr >> std::hex >> u.pattern;
+            } else {
+              u.pattern = 0x7ff8000000000000;
+            }
             u.pattern |= 0x7ff0000000000000LL;
             if (negative) u.pattern |= 0x8000000000000000LL;
             if (!isnan(u.d)) u.pattern |= 1;
@@ -791,11 +800,13 @@ private:
       case f32: {
         char *end;
         ret->value.f32 = strtof(str, &end);
+        assert(!isnan(ret->value.f32));
         break;
       }
       case f64: {
         char *end;
         ret->value.f64 = strtod(str, &end);
+        assert(!isnan(ret->value.f64));
         break;
       }
       default: onError();
