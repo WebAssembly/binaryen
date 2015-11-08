@@ -256,7 +256,11 @@ private:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        return instance.callFunction(curr->target, arguments);
+        Flow ret = instance.callFunction(curr->target, arguments);
+#ifdef WASM_INTERPRETER_DEBUG
+        std::cout << "(returned to " << scope.function->name << ")\n";
+#endif
+        return ret;
       }
       Flow visitCallImport(CallImport *curr) override {
         NOTE_ENTER("CallImport");
