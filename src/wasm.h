@@ -136,14 +136,42 @@ struct Literal {
 
   bool operator==(Literal& other) {
     if (type != other.type) return false;
-    if (type == none) return true;
-    if (type == WasmType::i32 || type == WasmType::f32) return i32 == other.i32;
-    return i64 == other.i64;
+    switch (type) {
+      case WasmType::none: return true;
+      case WasmType::i32: return i32 == other.i32;
+      case WasmType::i64: return i64 == other.i64;
+      // reinterpret floating-point, to avoid nan != nan
+      case WasmType::f32: return reinterpreti32() == other.reinterpreti32();
+      case WasmType::f64: return reinterpreti64() == other.reinterpreti64();
+      default: abort();
+    }
+  }
+
+  void printFloat(std::ostream &o, float f) {
+    if (isnan(f)) {
+      union {
+        float ff;
+        uint32_t ll;
+      } u;
+      u.ff = f;
+      o << "nan:" << std::hex << u.ll;
+      return;
+    }
+    printDouble(o, f);
   }
 
   void printDouble(std::ostream &o, double d) {
     if (d == 0 && 1/d < 0) {
       o << "-0";
+      return;
+    }
+    if (isnan(d)) {
+      union {
+        double dd;
+        uint64_t ll;
+      } u;
+      u.dd = d;
+      o << "nan:" << std::hex << u.ll;
       return;
     }
     const char *text = cashew::JSPrinter::numToString(d);
@@ -164,7 +192,7 @@ struct Literal {
       case none: o << "?"; break;
       case WasmType::i32: o << literal.i32; break;
       case WasmType::i64: o << literal.i64; break;
-      case WasmType::f32: literal.printDouble(o, literal.f32); break;
+      case WasmType::f32: literal.printFloat(o, literal.f32); break;
       case WasmType::f64: literal.printDouble(o, literal.f64); break;
     }
     restoreNormalColor(o);
