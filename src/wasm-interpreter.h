@@ -231,14 +231,14 @@ private:
         assert(caseIndex < curr->cases.size());
         while (caseIndex < curr->cases.size()) {
           Switch::Case& c = curr->cases[caseIndex];
-          Flow flow = visit(c.body);
+          flow = visit(c.body);
           if (flow.breaking()) {
             flow.clearIf(curr->name);
-            return flow;
+            break;
           }
           caseIndex++;
         }
-        return Flow();
+        return flow;
       }
 
       Flow generateArguments(const ExpressionList& operands, LiteralList& arguments) {
