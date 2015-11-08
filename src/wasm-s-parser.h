@@ -857,10 +857,10 @@ private:
     return ret;
   }
 
-  Expression* makeMaybeBlock(Element &s, size_t i) {
+  Expression* makeMaybeBlock(Element& s, size_t i, size_t stopAt=-1) {
     if (s.size() == i+1) return parseExpression(s[i]);
     auto ret = allocator.alloc<Block>();
-    for (; i < s.size(); i++) {
+    for (; i < s.size() && i < stopAt; i++) {
       ret->list.push_back(parseExpression(s[i]));
     }
     return ret;
@@ -960,16 +960,20 @@ private:
         }
         Name name = getPrefixedName(otherIndex++, "switch-case");
         ret->targets.push_back(name);
-        // if there is no body at all, this is a trivial fallthrough
-        auto body = curr.size() < 3 ? allocator.alloc<Nop>() : parseExpression(curr[2]);
-        // if not fallthrough, add a break on the switch itself
-        if (curr.size() == 4) {
-          assert(curr[3]->str() == IString("fallthru"));
-        } else if (curr.size() == 3) {
-          Break *exit = allocator.alloc<Break>();
-          exit->name = ret->name;
-          exit->value = body;
-          body = exit;
+        Expression* body;
+        size_t size = curr.size();
+        if (size == 2) {
+          body = allocator.alloc<Nop>(); // trivial fallthrough
+        } else {
+          size_t j = 2;
+          bool fallThrough = curr[size-1]->isStr() && curr[size-1]->str() == IString("fallthrough");
+          body = makeMaybeBlock(curr, j, fallThrough ? size-1 : size);
+          if (!fallThrough) {
+            Break *exit = allocator.alloc<Break>();
+            exit->name = ret->name;
+            exit->value = body;
+            body = exit;
+          }
         }
         ret->cases.emplace_back(name, body);
       } else {
