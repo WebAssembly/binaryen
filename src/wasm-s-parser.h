@@ -35,6 +35,7 @@ IString MODULE("module"),
         NEG_INFINITY("-infinity"),
         NAN_("nan"),
         NEG_NAN("-nan"),
+        CASE("case"),
         FAKE_RETURN("fake_return_waka123");
 
 int unhex(char c) {
@@ -261,9 +262,14 @@ private:
   std::map<Name, WasmType> currLocalTypes;
   size_t localIndex; // params and locals
   size_t labelIndex;
+  size_t otherIndex;
 
   IString getName(size_t index) {
     return IString(std::to_string(index).c_str(), false);
+  }
+
+  IString getPrefixedName(size_t index, std::string prefix) {
+    return IString((prefix + std::to_string(index)).c_str(), false);
   }
 
   IString getNameWhenNextNotString(Element& s, size_t& i, size_t& index) {
@@ -287,6 +293,7 @@ private:
     func->body = nullptr;
     localIndex = 0;
     labelIndex = 0;
+    otherIndex = 0;
     std::vector<NameType> typeParams; // we may have both params and a type. store the type info here
     for (;i < s.size(); i++) {
       Element& curr = *s[i];
@@ -932,7 +939,6 @@ private:
   }
 
   Expression* makeSwitch(Element& s, WasmType type) {
-    abort();
     auto ret = allocator.alloc<Switch>();
     ret->type = type;
     size_t i = 1;
@@ -942,16 +948,23 @@ private:
     }
     ret->value =  parseExpression(s[i]);
     i++;
-    Element& targets = *s[i];
-    i++;
-    for (size_t j = 0; j < targets.size(); j++) {
-      ret->targets.push_back(targets[i]->str());
-    }
     Element& cases = *s[i];
     i++;
-    for (size_t j = 0; j < cases.size(); j++) {
+    ret->default_ = getPrefixedName(otherIndex++, "switch-default");
+    for (; i < cases.size(); i++) {
       Element& curr = *cases[i];
-      ret->cases.emplace_back(curr[0]->str(), parseExpression(curr[1]));
+      if (curr[0]->str() == CASE) {
+        int32_t caseIndex = atoi(curr[1]->c_str());
+        while (ret->targets.size() < caseIndex) {
+          ret->targets.push_back(ret->default_);
+        }
+        Name name = getPrefixedName(otherIndex++, "switch-case");
+        ret->targets.push_back(name);
+        ret->cases.emplace_back(name, parseExpression(curr[2]));
+      } else {
+        // the default
+        ret->cases.emplace_back(ret->default_, parseExpression(curr));
+      }
     }
     ret->updateCaseMap();
     return ret;
