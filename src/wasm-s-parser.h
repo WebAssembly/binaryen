@@ -714,6 +714,8 @@ private:
               uint32_t pattern;
               float f;
             } u;
+            std::istringstream istr(str);
+            istr >> std::hex >> u.pattern;
             u.pattern = atoi(str + 6);
             u.pattern |= 0x7f800000;
             assert(isnan(u.f));
@@ -725,7 +727,8 @@ private:
               uint64_t pattern;
               double d;
             } u;
-            u.pattern = atol(str + 6);
+            std::istringstream istr(str);
+            istr >> std::hex >> u.pattern;
             u.pattern |= 0x7ff0000000000000LL;
             assert(isnan(u.d));
             ret->value.f64 = u.d;
