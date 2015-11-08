@@ -720,7 +720,7 @@ private:
             std::istringstream istr(positive+4);
             istr >> std::hex >> u.pattern;
             u.pattern |= 0x7f800000;
-            if (negative) u.pattern |= -1;
+            if (negative) u.pattern |= 0x80000000;
             if (!isnan(u.f)) u.pattern |= 1;
             assert(isnan(u.f));
             ret->value.f32 = u.f;
@@ -734,7 +734,7 @@ private:
             std::istringstream istr(positive+4);
             istr >> std::hex >> u.pattern;
             u.pattern |= 0x7ff0000000000000LL;
-            if (negative) u.pattern |= -1LL;
+            if (negative) u.pattern |= 0x8000000000000000LL;
             if (!isnan(u.d)) u.pattern |= 1;
             assert(isnan(u.d));
             ret->value.f64 = u.d;
