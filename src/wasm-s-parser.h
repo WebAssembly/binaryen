@@ -718,6 +718,7 @@ private:
             istr >> std::hex >> u.pattern;
             u.pattern = atoi(str + 6);
             u.pattern |= 0x7f800000;
+            if (!isnan(u.f)) u.pattern |= 1;
             assert(isnan(u.f));
             ret->value.f32 = u.f;
             break;
@@ -730,6 +731,7 @@ private:
             std::istringstream istr(str);
             istr >> std::hex >> u.pattern;
             u.pattern |= 0x7ff0000000000000LL;
+            if (!isnan(u.d)) u.pattern |= 1;
             assert(isnan(u.d));
             ret->value.f64 = u.d;
             break;
