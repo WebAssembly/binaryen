@@ -1,4 +1,8 @@
 
+//
+// Pretty printing helpers
+//
+
 #include <ostream>
 
 #include "colors.h"

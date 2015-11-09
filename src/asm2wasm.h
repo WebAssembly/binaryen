@@ -12,7 +12,7 @@ namespace wasm {
 
 using namespace cashew;
 
-int debug = 0;
+int debug = 0; // wasm::debug is set in main(), typically from an env var
 
 // Utilities
 

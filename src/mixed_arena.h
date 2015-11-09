@@ -1,7 +1,10 @@
 
 #include <vector>
 
+//
 // Arena allocation for mixed-type data.
+//
+
 struct MixedArena {
   std::vector<char*> chunks;
   int index; // in last chunk

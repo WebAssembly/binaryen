@@ -1,5 +1,7 @@
+
 //
-// wasm.js: WebAssembly representation and processing library
+// wasm.h: WebAssembly representation and processing library, in one
+//         header file.
 //
 // This represents WebAssembly in an AST format, with a focus on making
 // it easy to not just inspect but also to process. For example, some

@@ -1,6 +1,7 @@
 
 //
-// Parses WebAssembly code in S-Expression format, as in .wast files.
+// Parses WebAssembly code in S-Expression format, as in .wast files
+// such as are in the spec test suite.
 //
 
 #include <cmath>
@@ -11,7 +12,7 @@
 
 namespace wasm {
 
-int debug;
+int debug = 0; // wasm::debug is set in main(), typically from an env var
 
 using namespace cashew;
 

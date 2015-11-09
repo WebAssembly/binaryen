@@ -1,7 +1,8 @@
 
 //
-// Simple WebAssembly interpreter, designed to be embeddable in JavaScript, so it
-// can function as a polyfill.
+// Simple WebAssembly interpreter. This operates directly on the AST,
+// for simplicity and clarity. A goal is for it to be possible for
+// people to read this code and understand WebAssembly semantics.
 //
 
 #include <limits.h>
@@ -32,7 +33,13 @@ enum {
 };
 
 //
-// An instance of a WebAssembly module, which can execute it via AST interpretation
+// An instance of a WebAssembly module, which can execute it via AST interpretation.
+//
+// To embed this interpreter, you need to provide an ExternalInterface instance
+// (see below) which provides the embedding-specific details, that is, how to
+// connect to the embedding implementation.
+//
+// To call into the interpreter, use callExport.
 //
 
 class ModuleInstance {

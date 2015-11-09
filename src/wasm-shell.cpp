@@ -1,6 +1,8 @@
 
 //
-// A WebAssembly shell, loads a .wast file (WebAssembly in S-Expression format) and executes it.
+// A WebAssembly shell, loads a .wast file (WebAssembly in S-Expression format)
+// and executes it. This provides similar functionality as the reference
+// interpreter, like assert_* calls, so it can run the spec test suite.
 //
 
 #include <setjmp.h>

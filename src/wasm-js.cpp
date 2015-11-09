@@ -1,3 +1,4 @@
+
 //
 // WebAssembly intepreter for asm2wasm output, in a js environment.
 //
@@ -44,27 +45,33 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     end--;
   }
 
-  int debug = 0;
-
-  if (debug) std::cerr << "parsing...\n";
+#if WASM_JS_DEBUG
+  std::cerr << "parsing...\n";
+#endif
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(input);
 
   module = new Module();
   module->memory.initial = module->memory.max = 16*1024*1024; // TODO: receive this from emscripten
 
-  if (debug) std::cerr << "wasming...\n";
+#if WASM_JS_DEBUG
+  std::cerr << "wasming...\n";
+#endif
   asm2wasm = new Asm2WasmBuilder(*module);
   asm2wasm->processAsm(asmjs);
 
-  if (debug) std::cerr << "optimizing...\n";
+#if WASM_JS_DEBUG
+  std::cerr << "optimizing...\n";
+#endif
   asm2wasm->optimize();
 
 #if WASM_JS_DEBUG
   std::cerr << *module << '\n';
 #endif
 
-  if (debug) std::cerr << "generating exports...\n";
+#if WASM_JS_DEBUG
+  std::cerr << "generating exports...\n";
+#endif
   EM_ASM({
     Module['asmExports'] = {};
   });
@@ -78,7 +85,9 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     }, curr->name.str);
   }
 
-  if (debug) std::cerr << "creating instance...\n";
+#if WASM_JS_DEBUG
+  std::cerr << "creating instance...\n";
+#endif
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
     Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
