@@ -103,8 +103,8 @@ for t in spec_tests:
         if v.endswith('.'): v = v[:-1] # remove trailing '.'
         return '(' + t + '.const ' + v + ')'
       expected = '\n'.join(map(fix, expected.split('\n')))
+      print '       (using expected output)'
     else:
-      print '       (no expected output)'
       continue
     actual = actual.strip()
     expected = expected.strip()
