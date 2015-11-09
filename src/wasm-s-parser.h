@@ -570,6 +570,10 @@ public:
           if (str[1] == 'a') return makeSwitch(s); // aka tableswitch
           abort_on(str);
         }
+        case 'u': {
+          if (str[1] == 'n') return allocator.alloc<Unreachable>();
+          abort_on(str);
+        }
         default: abort_on(str);
       }
     }

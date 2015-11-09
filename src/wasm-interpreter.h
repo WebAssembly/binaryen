@@ -671,6 +671,11 @@ private:
         NOTE_ENTER("Nop");
         return Flow();
       }
+      Flow visitUnreachable(Unreachable *curr) override {
+        NOTE_ENTER("Unreachable");
+        trap();
+        return Flow();
+      }
 
       void trap() {
         instance.externalInterface->trap();

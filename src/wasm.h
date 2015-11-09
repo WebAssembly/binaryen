@@ -256,7 +256,8 @@ public:
     ConvertId = 18,
     SelectId = 19,
     HostId = 20,
-    NopId = 21
+    NopId = 21,
+    UnreachableId = 22
   };
   Id _id;
 
@@ -826,6 +827,15 @@ public:
   }
 };
 
+class Unreachable : public Expression {
+public:
+  Unreachable() : Expression(UnreachableId) {}
+
+  std::ostream& doPrint(std::ostream &o, unsigned indent) {
+    return printMinorOpening(o, "unreachable") << ')';
+  }
+};
+
 // Globals
 
 struct NameType {
@@ -1090,6 +1100,7 @@ struct WasmVisitor {
   virtual ReturnType visitSelect(Select *curr) { abort(); }
   virtual ReturnType visitHost(Host *curr) { abort(); }
   virtual ReturnType visitNop(Nop *curr) { abort(); }
+  virtual ReturnType visitUnreachable(Unreachable *curr) { abort(); }
 
   ReturnType visit(Expression *curr) {
     assert(curr);
@@ -1115,6 +1126,7 @@ struct WasmVisitor {
       case Expression::Id::SelectId: return visitSelect((Select*)curr);
       case Expression::Id::HostId: return visitHost((Host*)curr);
       case Expression::Id::NopId: return visitNop((Nop*)curr);
+      case Expression::Id::UnreachableId: return visitUnreachable((Unreachable*)curr);
       default: {
         std::cerr << "visiting unknown expression " << curr->_id << '\n';
         abort();
@@ -1151,6 +1163,7 @@ std::ostream& Expression::print(std::ostream &o, unsigned indent) {
     void visitSelect(Select *curr) override { curr->doPrint(o, indent); }
     void visitHost(Host *curr) override { curr->doPrint(o, indent); }
     void visitNop(Nop *curr) override { curr->doPrint(o, indent); }
+    void visitUnreachable(Unreachable *curr) override { curr->doPrint(o, indent); }
   };
 
   ExpressionPrinter(o, indent).visit(this);
@@ -1195,6 +1208,7 @@ struct WasmWalker : public WasmVisitor<void> {
   void visitSelect(Select *curr) override {}
   void visitHost(Host *curr) override {}
   void visitNop(Nop *curr) override {}
+  void visitUnreachable(Unreachable *curr) override {}
 
   // children-first
   void walk(Expression*& curr) {
@@ -1286,6 +1300,7 @@ struct WasmWalker : public WasmVisitor<void> {
         }
       }
       void visitNop(Nop *curr) override {}
+      void visitUnreachable(Unreachable *curr) override {}
     };
 
     ChildWalker(*this).visit(curr);
