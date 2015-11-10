@@ -490,7 +490,6 @@ public:
           if (op[1] == 'u') return makeBinary(s, BinaryOp::Sub, type);
           if (op[1] == 'q') return makeUnary(s, UnaryOp::Sqrt, type);
           if (op[1] == 't') return makeStore(s, type);
-          if (op[1] == 'w') return makeSwitch(s, type);
           abort_on(op);
         }
         case 't': {
@@ -563,6 +562,10 @@ public:
         }
         case 'r': {
           if (str[1] == 'e') return makeReturn(s);
+          abort_on(str);
+        }
+        case 't': {
+          if (str[1] == 'a') return makeSwitch(s); // aka tableswitch
           abort_on(str);
         }
         default: abort_on(str);
@@ -918,17 +921,17 @@ private:
   Expression* makeLoop(Element& s) {
     auto ret = allocator.alloc<Loop>();
     size_t i = 1;
+    if (s[i]->isStr() && s[i+1]->isStr()) { // out can only be named if both are
+      ret->out = s[i]->str();
+      i++;
+    } else {
+      ret->out = getPrefixedName("loop-out");
+    }
     if (s[i]->isStr()) {
       ret->in = s[i]->str();
       i++;
     } else {
       ret->in = getPrefixedName("loop-in");
-    }
-    if (s[i]->isStr()) {
-      ret->out = s[i]->str();
-      i++;
-    } else {
-      ret->out = getPrefixedName("loop-out");
     }
     labelStack.push_back(ret->out);
     labelStack.push_back(ret->in);
@@ -1002,9 +1005,8 @@ private:
     return ret;
   }
 
-  Expression* makeSwitch(Element& s, WasmType type) {
+  Expression* makeSwitch(Element& s) {
     auto ret = allocator.alloc<Switch>();
-    ret->type = type;
     size_t i = 1;
     if (s[i]->isStr()) {
       ret->name = s[i]->str();
@@ -1014,38 +1016,20 @@ private:
     }
     ret->value =  parseExpression(s[i]);
     i++;
-    ret->default_ = getPrefixedName("switch-default");
+    Element& table = *s[i];
+    i++;
+    for (size_t j = 1; j < table.size(); j++) {
+      ret->targets.push_back((*table[j])[1]->str());
+    }
+    ret->default_ = (*s[i])[1]->str();
+    i++;
     for (; i < s.size(); i++) {
       Element& curr = *s[i];
-      if (curr[0]->str() == CASE) {
-        int32_t caseIndex = atoi(curr[1]->c_str());
-        while (ret->targets.size() < caseIndex) {
-          ret->targets.push_back(ret->default_);
-        }
-        Name name = getPrefixedName("switch-case");
-        ret->targets.push_back(name);
-        Expression* body;
-        size_t size = curr.size();
-        if (size == 2) {
-          body = allocator.alloc<Nop>(); // trivial fallthrough
-        } else {
-          size_t j = 2;
-          bool fallThrough = curr[size-1]->isStr() && curr[size-1]->str() == IString("fallthrough");
-          body = makeMaybeBlock(curr, j, fallThrough ? size-1 : size);
-          if (!fallThrough) {
-            Break *exit = allocator.alloc<Break>();
-            exit->name = ret->name;
-            exit->value = body;
-            body = exit;
-          }
-        }
-        ret->cases.emplace_back(name, body);
-      } else {
-        // the default
-        ret->cases.emplace_back(ret->default_, parseExpression(curr));
-      }
+      assert(curr[0]->str() == CASE);
+      ret->cases.emplace_back(curr[1]->str(), makeMaybeBlock(curr, 2, curr.size()));
     }
     ret->updateCaseMap();
+    ret->type = ret->cases[0].body->type;
     return ret;
   }
 

@@ -338,11 +338,12 @@ public:
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     printOpening(o, "loop");
+    if (out.is()) {
+      o << ' ' << out;
+      assert(in.is()); // if just one is printed, it must be the in
+    }
     if (in.is()) {
       o << ' ' << in;
-      if (out.is()) {
-        o << ' ' << out;
-      }
     }
     incIndent(o, indent);
     printFullLine(o, indent, body);
@@ -405,7 +406,7 @@ public:
   }
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "switch ");
+    printOpening(o, "tableswitch ");
     if (name.is()) o << name;
     incIndent(o, indent);
     printFullLine(o, indent, value);
