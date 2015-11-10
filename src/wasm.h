@@ -412,9 +412,9 @@ public:
     printFullLine(o, indent, value);
     doIndent(o, indent) << "[ ";
     for (auto& t : targets) {
-      o << t.str << ' ';
+      o << (t.is() ? t.str : "br-out") << ' ';
     }
-    o << "] (default " << default_.str << ")\n";
+    o << "] (default " << (default_.is() ? default_.str : "br-out") << ")\n";
     for (auto& c : cases) {
       doIndent(o, indent);
       printMinorOpening(o, "case ") << c.name.str;
@@ -1316,6 +1316,23 @@ bool Module::validateFunction(Function *func) {
     }
     void visitStore(Store *curr) override {
       if (!validateAlignment(curr->align)) valid = false;
+    }
+    void visitSwitch(Switch *curr) override {
+std::cerr << "validate switch ";
+curr->doPrint(std::cerr, 0) << "\n";
+      std::set<Name> inTable;
+      for (auto target : curr->targets) {
+        if (target.is()) {
+          inTable.insert(target);
+std::cerr << "in table: " << target << '\n';
+        }
+      }
+      for (auto& c : curr->cases) {
+std::cerr << "chack: " << c.name.is() << " : " << (c.name.is() ? c.name.str : "ASSDAS") << '\n';
+        if (c.name.is() && inTable.find(c.name) == inTable.end()) {
+          valid = false;
+        }
+      }
     }
 
     bool validateAlignment(size_t align) {

@@ -36,6 +36,7 @@ IString MODULE("module"),
         NAN_("nan"),
         NEG_NAN("-nan"),
         CASE("case"),
+        BR("br"),
         FAKE_RETURN("fake_return_waka123");
 
 int unhex(char c) {
@@ -1019,9 +1020,22 @@ private:
     Element& table = *s[i];
     i++;
     for (size_t j = 1; j < table.size(); j++) {
-      ret->targets.push_back((*table[j])[1]->str());
+      Element& curr = *table[j];
+      if (curr[0]->str() == CASE) {
+        ret->targets.push_back(curr[1]->str());
+      } else {
+        assert(curr[0]->str() == BR);
+        assert(curr[1]->str() == ret->name);
+        ret->targets.push_back(Name());
+      }
     }
-    ret->default_ = (*s[i])[1]->str();
+    Element& curr = *s[i];
+    if (curr[0]->str() == CASE) {
+      ret->default_ = curr[1]->str();
+    } else {
+      assert(curr[0]->str() == BR);
+      assert(curr[1]->str() == ret->name);
+    }
     i++;
     for (; i < s.size(); i++) {
       Element& curr = *s[i];
