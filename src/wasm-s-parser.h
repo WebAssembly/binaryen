@@ -1029,7 +1029,7 @@ private:
       ret->cases.emplace_back(curr[1]->str(), makeMaybeBlock(curr, 2, curr.size()));
     }
     ret->updateCaseMap();
-    ret->type = ret->cases[0].body->type;
+    ret->type = ret->cases.size() > 0 ? ret->cases[0].body->type : none;
     return ret;
   }
 
