@@ -320,7 +320,7 @@ public:
   Expression *condition, *ifTrue, *ifFalse;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "if");
+    printOpening(o, ifFalse ? "if_else" : "if");
     incIndent(o, indent);
     printFullLine(o, indent, condition);
     printFullLine(o, indent, ifTrue);
