@@ -1066,27 +1066,28 @@ private:
 
 template<class ReturnType>
 struct WasmVisitor {
-  virtual ReturnType visitBlock(Block *curr) = 0;
-  virtual ReturnType visitIf(If *curr) = 0;
-  virtual ReturnType visitLoop(Loop *curr) = 0;
-  virtual ReturnType visitLabel(Label *curr) = 0;
-  virtual ReturnType visitBreak(Break *curr) = 0;
-  virtual ReturnType visitSwitch(Switch *curr) = 0;
-  virtual ReturnType visitCall(Call *curr) = 0;
-  virtual ReturnType visitCallImport(CallImport *curr) = 0;
-  virtual ReturnType visitCallIndirect(CallIndirect *curr) = 0;
-  virtual ReturnType visitGetLocal(GetLocal *curr) = 0;
-  virtual ReturnType visitSetLocal(SetLocal *curr) = 0;
-  virtual ReturnType visitLoad(Load *curr) = 0;
-  virtual ReturnType visitStore(Store *curr) = 0;
-  virtual ReturnType visitConst(Const *curr) = 0;
-  virtual ReturnType visitUnary(Unary *curr) = 0;
-  virtual ReturnType visitBinary(Binary *curr) = 0;
-  virtual ReturnType visitCompare(Compare *curr) = 0;
-  virtual ReturnType visitConvert(Convert *curr) = 0;
-  virtual ReturnType visitSelect(Select *curr) = 0;
-  virtual ReturnType visitHost(Host *curr) = 0;
-  virtual ReturnType visitNop(Nop *curr) = 0;
+  // should be pure virtual, but https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51048
+  virtual ReturnType visitBlock(Block *curr) { abort(); }
+  virtual ReturnType visitIf(If *curr) { abort(); }
+  virtual ReturnType visitLoop(Loop *curr) { abort(); }
+  virtual ReturnType visitLabel(Label *curr) { abort(); }
+  virtual ReturnType visitBreak(Break *curr) { abort(); }
+  virtual ReturnType visitSwitch(Switch *curr) { abort(); }
+  virtual ReturnType visitCall(Call *curr) { abort(); }
+  virtual ReturnType visitCallImport(CallImport *curr) { abort(); }
+  virtual ReturnType visitCallIndirect(CallIndirect *curr) { abort(); }
+  virtual ReturnType visitGetLocal(GetLocal *curr) { abort(); }
+  virtual ReturnType visitSetLocal(SetLocal *curr) { abort(); }
+  virtual ReturnType visitLoad(Load *curr) { abort(); }
+  virtual ReturnType visitStore(Store *curr) { abort(); }
+  virtual ReturnType visitConst(Const *curr) { abort(); }
+  virtual ReturnType visitUnary(Unary *curr) { abort(); }
+  virtual ReturnType visitBinary(Binary *curr) { abort(); }
+  virtual ReturnType visitCompare(Compare *curr) { abort(); }
+  virtual ReturnType visitConvert(Convert *curr) { abort(); }
+  virtual ReturnType visitSelect(Select *curr) { abort(); }
+  virtual ReturnType visitHost(Host *curr) { abort(); }
+  virtual ReturnType visitNop(Nop *curr) { abort(); }
 
   ReturnType visit(Expression *curr) {
     assert(curr);
