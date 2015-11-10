@@ -1040,6 +1040,7 @@ private:
     for (; i < s.size(); i++) {
       Element& curr = *s[i];
       assert(curr[0]->str() == CASE);
+      if (curr.size() < 2) onError();
       ret->cases.emplace_back(curr[1]->str(), makeMaybeBlock(curr, 2, curr.size()));
     }
     ret->updateCaseMap();

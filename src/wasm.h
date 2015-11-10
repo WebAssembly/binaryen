@@ -1319,20 +1319,19 @@ bool Module::validateFunction(Function *func) {
       if (!validateAlignment(curr->align)) valid = false;
     }
     void visitSwitch(Switch *curr) override {
-std::cerr << "validate switch ";
-curr->doPrint(std::cerr, 0) << "\n";
       std::set<Name> inTable;
       for (auto target : curr->targets) {
         if (target.is()) {
           inTable.insert(target);
-std::cerr << "in table: " << target << '\n';
         }
       }
       for (auto& c : curr->cases) {
-std::cerr << "chack: " << c.name.is() << " : " << (c.name.is() ? c.name.str : "ASSDAS") << '\n';
         if (c.name.is() && inTable.find(c.name) == inTable.end()) {
           valid = false;
         }
+      }
+      if (curr->default_.is() && inTable.find(curr->default_) == inTable.end()) {
+        valid = false;
       }
     }
 
