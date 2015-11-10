@@ -261,23 +261,15 @@ private:
   Function *currFunction = nullptr;
   std::map<Name, WasmType> currLocalTypes;
   size_t localIndex; // params and locals
-  size_t labelIndex;
   size_t otherIndex;
+  std::vector<Name> labelStack;
 
   IString getName(size_t index) {
     return IString(std::to_string(index).c_str(), false);
   }
 
-  IString getPrefixedName(size_t index, std::string prefix) {
-    return IString((prefix + std::to_string(index)).c_str(), false);
-  }
-
-  IString getNameWhenNextNotString(Element& s, size_t& i, size_t& index) {
-    if (s[i]->isStr()) {
-      index++;
-      return s[i++]->str();
-    }
-    return getName(index++);
+  IString getPrefixedName(std::string prefix) {
+    return IString((prefix + std::to_string(otherIndex++)).c_str(), false);
   }
 
   void parseFunction(Element& s) {
@@ -292,7 +284,6 @@ private:
     }
     func->body = nullptr;
     localIndex = 0;
-    labelIndex = 0;
     otherIndex = 0;
     std::vector<NameType> typeParams; // we may have both params and a type. store the type info here
     for (;i < s.size(); i++) {
@@ -359,6 +350,7 @@ private:
     if (!func->body) func->body = allocator.alloc<Nop>();
     wasm.addFunction(func);
     currLocalTypes.clear();
+    labelStack.clear();
     currFunction = nullptr;
   }
 
@@ -902,8 +894,15 @@ private:
   Expression* makeLabel(Element& s) {
     auto ret = allocator.alloc<Label>();
     size_t i = 1;
-    ret->name = getNameWhenNextNotString(s, i, labelIndex);
+    if (s[i]->isStr()) {
+      ret->name = s[i]->str();
+      i++;
+    } else {
+      ret->name = getPrefixedName("label");
+    }
+    labelStack.push_back(ret->name);
     ret->body = parseExpression(s[i]);
+    labelStack.pop_back();
     return ret;
   }
 
@@ -920,14 +919,22 @@ private:
     auto ret = allocator.alloc<Loop>();
     size_t i = 1;
     if (s[i]->isStr()) {
-      ret->out = s[i]->str();
-      i++;
-    }
-    if (s[i]->isStr()) {
       ret->in = s[i]->str();
       i++;
+    } else {
+      ret->in = getPrefixedName("loop-in");
     }
+    if (s[i]->isStr()) {
+      ret->out = s[i]->str();
+      i++;
+    } else {
+      ret->out = getPrefixedName("loop-out");
+    }
+    labelStack.push_back(ret->out);
+    labelStack.push_back(ret->in);
     ret->body = makeMaybeBlock(s, i);
+    labelStack.pop_back();
+    labelStack.pop_back();
     return ret;
   }
 
@@ -965,7 +972,14 @@ private:
 
   Expression* makeBreak(Element& s) {
     auto ret = allocator.alloc<Break>();
-    ret->name = s[1]->str();
+    if (s[1]->dollared()) {
+      ret->name = s[1]->str();
+    } else {
+      // offset, break to nth outside label
+      size_t offset = atol(s[1]->c_str());
+      assert(offset < labelStack.size());
+      ret->name = labelStack[labelStack.size() - 1 - offset];
+    }
     if (s.size() == 3) {
       ret->value = parseExpression(s[2]);
     }
@@ -996,11 +1010,11 @@ private:
       ret->name = s[i]->str();
       i++;
     } else {
-      ret->name = getPrefixedName(otherIndex++, "switch");
+      ret->name = getPrefixedName("switch");
     }
     ret->value =  parseExpression(s[i]);
     i++;
-    ret->default_ = getPrefixedName(otherIndex++, "switch-default");
+    ret->default_ = getPrefixedName("switch-default");
     for (; i < s.size(); i++) {
       Element& curr = *s[i];
       if (curr[0]->str() == CASE) {
@@ -1008,7 +1022,7 @@ private:
         while (ret->targets.size() < caseIndex) {
           ret->targets.push_back(ret->default_);
         }
-        Name name = getPrefixedName(otherIndex++, "switch-case");
+        Name name = getPrefixedName("switch-case");
         ret->targets.push_back(name);
         Expression* body;
         size_t size = curr.size();

@@ -338,11 +338,11 @@ public:
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     printOpening(o, "loop");
-    if (out.is()) {
-      o << ' ' << out;
-      if (in.is()) {
-        o << ' ' << in;
-        }
+    if (in.is()) {
+      o << ' ' << in;
+      if (out.is()) {
+        o << ' ' << out;
+      }
     }
     incIndent(o, indent);
     printFullLine(o, indent, body);
