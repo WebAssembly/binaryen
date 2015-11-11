@@ -9,6 +9,7 @@
 
 #include "wasm-s-parser.h"
 #include "wasm-interpreter.h"
+#include "wasm-validator.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -208,7 +209,7 @@ int main(int argc, char **argv) {
         }
         if (!invalid) {
           // maybe parsed ok, but otherwise incorrect
-          invalid = !wasm.validate();
+          invalid = !WasmValidator().validate(wasm);
         }
         assert(invalid);
       } else if (id == INVOKE) {
