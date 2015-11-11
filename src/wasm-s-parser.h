@@ -235,10 +235,11 @@ class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena allocator;
   std::function<void ()> onError;
+  int functionCounter;
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), onError(onError) {
+  SExpressionWasmBuilder(Module& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), onError(onError), functionCounter(0) {
     assert(module[0]->str() == MODULE);
     for (unsigned i = 1; i < module.size(); i++) {
       parseModuleElement(*module[i]);
@@ -282,8 +283,9 @@ private:
       i++;
     } else {
       // unnamed, use an index
-      func->name = IString(std::to_string(wasm.functions.size()).c_str(), false);
+      func->name = IString(std::to_string(functionCounter).c_str(), false);
     }
+    functionCounter++;
     func->body = nullptr;
     localIndex = 0;
     otherIndex = 0;

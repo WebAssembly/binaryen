@@ -924,20 +924,20 @@ public:
 };
 
 class Module {
-public:
-  // wasm contents
+  // wasm contents (don't access these from outside; use add*() and the *Map objects)
   std::vector<FunctionType*> functionTypes;
   std::vector<Import*> imports;
   std::vector<Export*> exports;
-  Table table;
   std::vector<Function*> functions;
 
+public:
   // utility maps
   std::map<Name, FunctionType*> functionTypesMap;
   std::map<Name, Import*> importsMap;
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
 
+  Table table;
   Memory memory;
 
   Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0) {}

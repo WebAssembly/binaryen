@@ -75,7 +75,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
   EM_ASM({
     Module['asmExports'] = {};
   });
-  for (auto& curr : module->exports) {
+  for (auto& pair : module->exportsMap) {
+    auto& curr = pair.second;
     EM_ASM_({
       var name = Pointer_stringify($0);
       Module['asmExports'][name] = function() {

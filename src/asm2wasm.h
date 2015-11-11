@@ -1101,8 +1101,8 @@ void Asm2WasmBuilder::optimize() {
   };
 
   BlockBreakOptimizer blockBreakOptimizer;
-  for (auto function : wasm.functions) {
-    blockBreakOptimizer.startWalk(function);
+  for (auto pair : wasm.functionsMap) {
+    blockBreakOptimizer.startWalk(pair.second);
   }
 }
 
