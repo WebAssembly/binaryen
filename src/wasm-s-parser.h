@@ -847,7 +847,9 @@ private:
       if (str[0] == 'a') {
         ret->align = atoi(eq);
       } else if (str[0] == 'o') {
-        ret->offset = atol(eq); // XXX https://github.com/WebAssembly/spec/issues/161
+        uint64_t offset = atol(eq);
+        if (offset > 0xffffffff) onError();
+        ret->offset = offset;
       } else onError();
       i++;
     }
