@@ -722,10 +722,10 @@ private:
             if (modifier) {
               std::istringstream istr(modifier);
               istr >> std::hex >> u.pattern;
+              u.pattern |= 0x7f800000;
             } else {
-              u.pattern = 0;
+              u.pattern = 0x7fc00000;
             }
-            u.pattern |= 0x7fc00000;
             if (negative) u.pattern |= 0x80000000;
             if (!isnan(u.f)) u.pattern |= 1;
             assert(isnan(u.f));
@@ -740,10 +740,10 @@ private:
             if (modifier) {
               std::istringstream istr(modifier);
               istr >> std::hex >> u.pattern;
+              u.pattern |= 0x7ff0000000000000LL;
             } else {
-              u.pattern = 0;
+              u.pattern = 0x7ff8000000000000L;
             }
-            u.pattern |= 0x7ff0000000000000LL;
             if (negative) u.pattern |= 0x8000000000000000LL;
             if (!isnan(u.d)) u.pattern |= 1;
             assert(isnan(u.d));

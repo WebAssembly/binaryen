@@ -648,7 +648,7 @@ private:
             if (curr->type == f32) {
               float v = value.reinterpretf32();
               if (isnan(v)) {
-                return Literal(Literal(value.geti32() | 0x7fc00000).reinterpretf32());
+                return Literal(Literal(value.geti32() | 0x7f800000).reinterpretf32());
               }
               return Literal(value.reinterpretf32());
             } else {
