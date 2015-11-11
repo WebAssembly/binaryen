@@ -704,7 +704,7 @@ private:
           case f64: ret->value.f64 = std::nan(""); break;
           default: onError();
         }
-        std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
+        //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
         return ret;
       }
       bool negative = str[0] == '-';
