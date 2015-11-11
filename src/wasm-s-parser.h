@@ -267,11 +267,7 @@ private:
   size_t otherIndex;
   std::vector<Name> labelStack;
 
-  IString getName(size_t index) {
-    return IString(std::to_string(index).c_str(), false);
-  }
-
-  IString getPrefixedName(std::string prefix) {
+  Name getPrefixedName(std::string prefix) {
     return IString((prefix + std::to_string(otherIndex++)).c_str(), false);
   }
 
@@ -283,7 +279,7 @@ private:
       i++;
     } else {
       // unnamed, use an index
-      func->name = IString(std::to_string(functionCounter).c_str(), false);
+      func->name = Name::fromInt(functionCounter);
     }
     functionCounter++;
     func->body = nullptr;
@@ -303,7 +299,7 @@ private:
           }
           if (type != none) {
             // a type, so an unnamed parameter
-            name = getName(localIndex);
+            name = Name::fromInt(localIndex);
           } else {
             name = curr[j]->str();
             type = stringToWasmType(curr[j+1]->str());
@@ -327,7 +323,7 @@ private:
         FunctionType* type = wasm.functionTypesMap[name];
         func->result = type->result;
         for (size_t j = 0; j < type->params.size(); j++) {
-          IString name = getName(j);
+          IString name = Name::fromInt(j);
           WasmType currType = type->params[j];
           typeParams.emplace_back(name, currType);
           currLocalTypes[name] = currType;
