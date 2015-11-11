@@ -257,7 +257,7 @@
                             (get_local $i8)
                             (get_local $i11)
                           )
-                          (break $do-once$1
+                          (br $do-once$1
                           )
                         )
                         (nop)
@@ -315,7 +315,7 @@
                 (set_local $i13
                   (get_local $i10)
                 )
-                (break $topmost
+                (br $topmost
                   (get_local $i13)
                 )
               )
@@ -546,7 +546,7 @@
                                   (i32.const 184)
                                 )
                               )
-                              (break $do-once$2
+                              (br $do-once$2
                               )
                             )
                             (nop)
@@ -749,7 +749,7 @@
                     (set_local $i13
                       (get_local $i12)
                     )
-                    (break $topmost
+                    (br $topmost
                       (get_local $i13)
                     )
                   )
@@ -928,7 +928,7 @@
                                 (set_local $i22
                                   (get_local $i7)
                                 )
-                                (break $while-out$3
+                                (br $while-out$3
                                 )
                               )
                               (set_local $i23
@@ -1082,7 +1082,7 @@
                                   (set_local $i24
                                     (i32.const 0)
                                   )
-                                  (break $do-once$5
+                                  (br $do-once$5
                                   )
                                 )
                                 (block
@@ -1126,7 +1126,7 @@
                                   (set_local $i26
                                     (get_local $i14)
                                   )
-                                  (break $while-in$7
+                                  (br $while-in$7
                                   )
                                 )
                               )
@@ -1153,7 +1153,7 @@
                                   (set_local $i28
                                     (get_local $i26)
                                   )
-                                  (break $while-out$6
+                                  (br $while-out$6
                                   )
                                 )
                                 (block
@@ -1187,7 +1187,7 @@
                               (set_local $i24
                                 (get_local $i27)
                               )
-                              (break $do-once$5
+                              (br $do-once$5
                               )
                             )
                           )
@@ -1254,7 +1254,7 @@
                               (set_local $i24
                                 (get_local $i12)
                               )
-                              (break $do-once$5
+                              (br $do-once$5
                               )
                             )
                             (nop)
@@ -1316,7 +1316,7 @@
                                       )
                                     )
                                   )
-                                  (break $do-once$8
+                                  (br $do-once$8
                                   )
                                 )
                               )
@@ -1367,7 +1367,7 @@
                                   (get_local $i24)
                                   (i32.const 0)
                                 )
-                                (break $do-once$8
+                                (br $do-once$8
                                 )
                               )
                             )
@@ -1435,7 +1435,7 @@
                                     )
                                     (get_local $i24)
                                   )
-                                  (break $do-once$9
+                                  (br $do-once$9
                                   )
                                 )
                               )
@@ -1480,7 +1480,7 @@
                                   )
                                   (get_local $i24)
                                 )
-                                (break $do-once$8
+                                (br $do-once$8
                                 )
                               )
                             )
@@ -1705,7 +1705,7 @@
                         (i32.const 8)
                       )
                     )
-                    (break $topmost
+                    (br $topmost
                       (get_local $i13)
                     )
                   )
@@ -1978,7 +1978,7 @@
                                   (set_local $i36
                                     (i32.const 90)
                                   )
-                                  (break $label$break$L123
+                                  (br $label$break$L123
                                   )
                                 )
                                 (block
@@ -2061,7 +2061,7 @@
                                 (set_local $i36
                                   (i32.const 86)
                                 )
-                                (break $while-out$10
+                                (br $while-out$10
                                 )
                               )
                               (block
@@ -2138,7 +2138,7 @@
                               (set_local $i31
                                 (get_local $i5)
                               )
-                              (break $do-once$0
+                              (br $do-once$0
                               )
                             )
                           )
@@ -2360,7 +2360,7 @@
                             (set_local $i36
                               (i32.const 90)
                             )
-                            (break $while-in$13
+                            (br $while-in$13
                             )
                           )
                         )
@@ -2384,7 +2384,7 @@
                             (set_local $i44
                               (get_local $i8)
                             )
-                            (break $while-out$12
+                            (br $while-out$12
                             )
                           )
                           (block
@@ -2523,7 +2523,7 @@
                                     (set_local $i45
                                       (i32.const 0)
                                     )
-                                    (break $do-once$14
+                                    (br $do-once$14
                                     )
                                   )
                                   (block
@@ -2567,7 +2567,7 @@
                                     (set_local $i47
                                       (get_local $i2)
                                     )
-                                    (break $while-in$16
+                                    (br $while-in$16
                                     )
                                   )
                                 )
@@ -2594,7 +2594,7 @@
                                     (set_local $i49
                                       (get_local $i47)
                                     )
-                                    (break $while-out$15
+                                    (br $while-out$15
                                     )
                                   )
                                   (block
@@ -2628,7 +2628,7 @@
                                 (set_local $i45
                                   (get_local $i48)
                                 )
-                                (break $do-once$14
+                                (br $do-once$14
                                 )
                               )
                             )
@@ -2695,7 +2695,7 @@
                                 (set_local $i45
                                   (get_local $i7)
                                 )
-                                (break $do-once$14
+                                (br $do-once$14
                                 )
                               )
                               (nop)
@@ -2757,7 +2757,7 @@
                                         )
                                       )
                                     )
-                                    (break $do-once$17
+                                    (br $do-once$17
                                     )
                                   )
                                 )
@@ -2808,7 +2808,7 @@
                                     (get_local $i45)
                                     (i32.const 0)
                                   )
-                                  (break $do-once$17
+                                  (br $do-once$17
                                   )
                                 )
                               )
@@ -2876,7 +2876,7 @@
                                       )
                                       (get_local $i45)
                                     )
-                                    (break $do-once$18
+                                    (br $do-once$18
                                     )
                                   )
                                 )
@@ -2921,7 +2921,7 @@
                                     )
                                     (get_local $i45)
                                   )
-                                  (break $do-once$17
+                                  (br $do-once$17
                                   )
                                 )
                               )
@@ -3089,7 +3089,7 @@
                                   )
                                   (get_local $i15)
                                 )
-                                (break $do-once$19
+                                (br $do-once$19
                                 )
                               )
                             )
@@ -3291,7 +3291,7 @@
                                   )
                                   (get_local $i8)
                                 )
-                                (break $do-once$19
+                                (br $do-once$19
                                 )
                               )
                             )
@@ -3341,7 +3341,7 @@
                                     (set_local $i36
                                       (i32.const 148)
                                     )
-                                    (break $while-out$20
+                                    (br $while-out$20
                                     )
                                   )
                                 )
@@ -3380,7 +3380,7 @@
                                     (set_local $i36
                                       (i32.const 145)
                                     )
-                                    (break $while-out$20
+                                    (br $while-out$20
                                     )
                                   )
                                   (block
@@ -3442,7 +3442,7 @@
                                     )
                                     (get_local $i8)
                                   )
-                                  (break $do-once$19
+                                  (br $do-once$19
                                   )
                                 )
                               )
@@ -3524,7 +3524,7 @@
                                         )
                                         (i32.const 0)
                                       )
-                                      (break $do-once$19
+                                      (br $do-once$19
                                       )
                                     )
                                     (nop)
@@ -3577,7 +3577,7 @@
                           (i32.const 8)
                         )
                       )
-                      (break $topmost
+                      (br $topmost
                         (get_local $i13)
                       )
                     )
@@ -3721,7 +3721,7 @@
               (i32.const 8)
             )
           )
-          (break $topmost
+          (br $topmost
             (get_local $i13)
           )
         )
@@ -3794,7 +3794,7 @@
               (i32.const 8)
             )
           )
-          (break $topmost
+          (br $topmost
             (get_local $i13)
           )
         )
@@ -3857,7 +3857,7 @@
                     (i32.const 1431655768)
                   )
                 )
-                (break $do-once$22
+                (br $do-once$22
                 )
               )
               (nop)
@@ -3915,7 +3915,7 @@
           (set_local $i13
             (i32.const 0)
           )
-          (break $topmost
+          (br $topmost
             (get_local $i13)
           )
         )
@@ -3974,7 +3974,7 @@
           (set_local $i13
             (i32.const 0)
           )
-          (break $topmost
+          (br $topmost
             (get_local $i13)
           )
         )
@@ -4054,7 +4054,7 @@
                           (set_local $i57
                             (get_local $i45)
                           )
-                          (break $while-out$23
+                          (br $while-out$23
                           )
                         )
                       )
@@ -4075,7 +4075,7 @@
                           (set_local $i36
                             (i32.const 173)
                           )
-                          (break $label$break$L259
+                          (br $label$break$L259
                           )
                         )
                       )
@@ -4131,7 +4131,7 @@
                             (set_local $i36
                               (i32.const 193)
                             )
-                            (break $label$break$L257
+                            (br $label$break$L257
                             )
                           )
                         )
@@ -4285,7 +4285,7 @@
                           )
                           (i32.const 0)
                         )
-                        (break $do-once$25
+                        (br $do-once$25
                         )
                       )
                       (set_local $i45
@@ -4306,7 +4306,7 @@
                           (set_local $i36
                             (i32.const 193)
                           )
-                          (break $label$break$L257
+                          (br $label$break$L257
                           )
                         )
                         (block
@@ -4407,7 +4407,7 @@
                         )
                         (block
                           (i32.const 0)
-                          (break $label$break$L279
+                          (br $label$break$L279
                           )
                         )
                         (block
@@ -4417,7 +4417,7 @@
                               (get_local $i61)
                             )
                           )
-                          (break $do-once$26
+                          (br $do-once$26
                           )
                         )
                       )
@@ -4441,7 +4441,7 @@
                       (set_local $i36
                         (i32.const 193)
                       )
-                      (break $label$break$L257
+                      (br $label$break$L257
                       )
                     )
                   )
@@ -4642,7 +4642,7 @@
                         (set_local $i36
                           (i32.const 203)
                         )
-                        (break $do-out$28
+                        (br $do-out$28
                         )
                       )
                     )
@@ -4660,7 +4660,7 @@
                         (i32.const 0)
                       )
                       (nop)
-                      (break $do-out$28
+                      (br $do-out$28
                       )
                     )
                   )
@@ -4794,7 +4794,7 @@
                         (i32.const 664)
                       )
                     )
-                    (break $do-once$27
+                    (br $do-once$27
                     )
                   )
                 )
@@ -4855,7 +4855,7 @@
                         (set_local $i36
                           (i32.const 211)
                         )
-                        (break $while-out$30
+                        (br $while-out$30
                         )
                       )
                     )
@@ -4876,7 +4876,7 @@
                         (set_local $i71
                           (i32.const 624)
                         )
-                        (break $while-out$30
+                        (br $while-out$30
                         )
                       )
                     )
@@ -5049,7 +5049,7 @@
                                   )
                                   (get_local $i62)
                                 )
-                                (break $do-once$32
+                                (br $do-once$32
                                 )
                               )
                             )
@@ -5152,7 +5152,7 @@
                                                     (set_local $i72
                                                       (i32.const 0)
                                                     )
-                                                    (break $do-once$33
+                                                    (br $do-once$33
                                                     )
                                                   )
                                                   (block
@@ -5196,7 +5196,7 @@
                                                     (set_local $i74
                                                       (get_local $i5)
                                                     )
-                                                    (break $while-in$35
+                                                    (br $while-in$35
                                                     )
                                                   )
                                                 )
@@ -5223,7 +5223,7 @@
                                                     (set_local $i76
                                                       (get_local $i74)
                                                     )
-                                                    (break $while-out$34
+                                                    (br $while-out$34
                                                     )
                                                   )
                                                   (block
@@ -5257,7 +5257,7 @@
                                                 (set_local $i72
                                                   (get_local $i75)
                                                 )
-                                                (break $do-once$33
+                                                (br $do-once$33
                                                 )
                                               )
                                             )
@@ -5324,7 +5324,7 @@
                                                 (set_local $i72
                                                   (get_local $i55)
                                                 )
-                                                (break $do-once$33
+                                                (br $do-once$33
                                                 )
                                               )
                                               (nop)
@@ -5337,7 +5337,7 @@
                                           (get_local $i54)
                                           (i32.const 0)
                                         )
-                                        (break $label$break$L331
+                                        (br $label$break$L331
                                         )
                                       )
                                       (set_local $i55
@@ -5411,7 +5411,7 @@
                                                 (get_local $i72)
                                                 (i32.const 0)
                                               )
-                                              (break $label$break$L331
+                                              (br $label$break$L331
                                               )
                                             )
                                           )
@@ -5422,7 +5422,7 @@
                                             )
                                             (if
                                               (get_local $i72)
-                                              (break $do-once$36
+                                              (br $do-once$36
                                               )
                                             )
                                             (i32.store align=4
@@ -5440,7 +5440,7 @@
                                                 )
                                               )
                                             )
-                                            (break $label$break$L331
+                                            (br $label$break$L331
                                             )
                                           )
                                         )
@@ -5511,7 +5511,7 @@
                                                 )
                                                 (get_local $i72)
                                               )
-                                              (break $do-once$37
+                                              (br $do-once$37
                                               )
                                             )
                                           )
@@ -5530,7 +5530,7 @@
                                           (get_local $i45)
                                           (i32.const 0)
                                         )
-                                        (break $label$break$L331
+                                        (br $label$break$L331
                                         )
                                       )
                                       (if_else
@@ -5562,7 +5562,7 @@
                                             )
                                             (get_local $i72)
                                           )
-                                          (break $label$break$L331
+                                          (br $label$break$L331
                                           )
                                         )
                                       )
@@ -5626,7 +5626,7 @@
                                                 )
                                                 (get_local $i43)
                                               )
-                                              (break $do-once$38
+                                              (br $do-once$38
                                               )
                                             )
                                             (nop)
@@ -5654,7 +5654,7 @@
                                               )
                                             )
                                           )
-                                          (break $label$break$L331
+                                          (br $label$break$L331
                                           )
                                         )
                                       )
@@ -5701,7 +5701,7 @@
                                                 (set_local $i77
                                                   (get_local $i5)
                                                 )
-                                                (break $do-once$39
+                                                (br $do-once$39
                                                 )
                                               )
                                             )
@@ -5874,7 +5874,7 @@
                                           (set_local $i81
                                             (get_local $i52)
                                           )
-                                          (break $do-once$40
+                                          (br $do-once$40
                                           )
                                         )
                                       )
@@ -5907,7 +5907,7 @@
                                   )
                                   (get_local $i62)
                                 )
-                                (break $do-once$32
+                                (br $do-once$32
                                 )
                               )
                             )
@@ -5939,7 +5939,7 @@
                                       (set_local $i82
                                         (i32.const 31)
                                       )
-                                      (break $do-once$41
+                                      (br $do-once$41
                                       )
                                     )
                                   )
@@ -6118,7 +6118,7 @@
                                   )
                                   (get_local $i63)
                                 )
-                                (break $do-once$32
+                                (br $do-once$32
                                 )
                               )
                             )
@@ -6168,7 +6168,7 @@
                                     (set_local $i36
                                       (i32.const 281)
                                     )
-                                    (break $while-out$42
+                                    (br $while-out$42
                                     )
                                   )
                                 )
@@ -6207,7 +6207,7 @@
                                     (set_local $i36
                                       (i32.const 278)
                                     )
-                                    (break $while-out$42
+                                    (br $while-out$42
                                     )
                                   )
                                   (block
@@ -6269,7 +6269,7 @@
                                     )
                                     (get_local $i63)
                                   )
-                                  (break $do-once$32
+                                  (br $do-once$32
                                   )
                                 )
                               )
@@ -6351,7 +6351,7 @@
                                         )
                                         (i32.const 0)
                                       )
-                                      (break $do-once$32
+                                      (br $do-once$32
                                       )
                                     )
                                     (nop)
@@ -6396,7 +6396,7 @@
                           (i32.const 8)
                         )
                       )
-                      (break $topmost
+                      (br $topmost
                         (get_local $i13)
                       )
                     )
@@ -6453,7 +6453,7 @@
                         (set_local $i86
                           (get_local $i53)
                         )
-                        (break $while-out$44
+                        (br $while-out$44
                         )
                       )
                     )
@@ -6695,7 +6695,7 @@
                         )
                       )
                       (nop)
-                      (break $do-out$46
+                      (br $do-out$46
                       )
                     )
                   )
@@ -6858,7 +6858,7 @@
                           )
                           (get_local $i61)
                         )
-                        (break $do-once$27
+                        (br $do-once$27
                         )
                       )
                     )
@@ -7054,7 +7054,7 @@
                           )
                           (get_local $i60)
                         )
-                        (break $do-once$27
+                        (br $do-once$27
                         )
                       )
                     )
@@ -7104,7 +7104,7 @@
                             (set_local $i36
                               (i32.const 307)
                             )
-                            (break $while-out$48
+                            (br $while-out$48
                             )
                           )
                         )
@@ -7143,7 +7143,7 @@
                             (set_local $i36
                               (i32.const 304)
                             )
-                            (break $while-out$48
+                            (br $while-out$48
                             )
                           )
                           (block
@@ -7205,7 +7205,7 @@
                             )
                             (get_local $i60)
                           )
-                          (break $do-once$27
+                          (br $do-once$27
                           )
                         )
                       )
@@ -7287,7 +7287,7 @@
                                 )
                                 (i32.const 0)
                               )
-                              (break $do-once$27
+                              (br $do-once$27
                               )
                             )
                             (nop)
@@ -7391,7 +7391,7 @@
                         (i32.const 32)
                       )
                       (nop)
-                      (break $do-out$50
+                      (br $do-out$50
                       )
                     )
                   )
@@ -7541,7 +7541,7 @@
                   (i32.const 8)
                 )
               )
-              (break $topmost
+              (br $topmost
                 (get_local $i13)
               )
             )
@@ -7601,7 +7601,7 @@
           (get_local $i1)
           (i32.const 0)
         )
-        (break $topmost
+        (br $topmost
         )
       )
       (set_local $i2
@@ -7681,7 +7681,7 @@
                 (get_local $i1)
                 (i32.const 0)
               )
-              (break $topmost
+              (br $topmost
               )
             )
             (set_local $i8
@@ -7746,7 +7746,7 @@
                     (set_local $i13
                       (get_local $i9)
                     )
-                    (break $do-once$0
+                    (br $do-once$0
                     )
                   )
                 )
@@ -7778,7 +7778,7 @@
                   )
                   (get_local $i9)
                 )
-                (break $topmost
+                (br $topmost
                 )
               )
             )
@@ -7885,7 +7885,7 @@
                     (set_local $i13
                       (get_local $i9)
                     )
-                    (break $do-once$0
+                    (br $do-once$0
                     )
                   )
                 )
@@ -7951,7 +7951,7 @@
                 (set_local $i13
                   (get_local $i9)
                 )
-                (break $do-once$0
+                (br $do-once$0
                 )
               )
             )
@@ -8015,7 +8015,7 @@
                           (set_local $i18
                             (i32.const 0)
                           )
-                          (break $do-once$1
+                          (br $do-once$1
                           )
                         )
                         (block
@@ -8059,7 +8059,7 @@
                           (set_local $i20
                             (get_local $i11)
                           )
-                          (break $while-in$3
+                          (br $while-in$3
                           )
                         )
                       )
@@ -8086,7 +8086,7 @@
                           (set_local $i22
                             (get_local $i20)
                           )
-                          (break $while-out$2
+                          (br $while-out$2
                           )
                         )
                         (block
@@ -8120,7 +8120,7 @@
                       (set_local $i18
                         (get_local $i21)
                       )
-                      (break $do-once$1
+                      (br $do-once$1
                       )
                     )
                   )
@@ -8187,7 +8187,7 @@
                       (set_local $i18
                         (get_local $i10)
                       )
-                      (break $do-once$1
+                      (br $do-once$1
                       )
                     )
                     (nop)
@@ -8254,7 +8254,7 @@
                         (set_local $i13
                           (get_local $i9)
                         )
-                        (break $do-once$0
+                        (br $do-once$0
                         )
                       )
                     )
@@ -8312,7 +8312,7 @@
                         (set_local $i13
                           (get_local $i9)
                         )
-                        (break $do-once$0
+                        (br $do-once$0
                         )
                       )
                     )
@@ -8384,7 +8384,7 @@
                           )
                           (get_local $i18)
                         )
-                        (break $do-once$4
+                        (br $do-once$4
                         )
                       )
                     )
@@ -8435,7 +8435,7 @@
                       (set_local $i13
                         (get_local $i9)
                       )
-                      (break $do-once$0
+                      (br $do-once$0
                       )
                     )
                   )
@@ -8553,7 +8553,7 @@
                     (i32.const 196)
                   )
                 )
-                (break $topmost
+                (br $topmost
                 )
               )
               (i32.store align=4
@@ -8564,7 +8564,7 @@
                 (i32.const 184)
                 (i32.const 0)
               )
-              (break $topmost
+              (br $topmost
               )
             )
           )
@@ -8609,7 +8609,7 @@
                 )
                 (get_local $i18)
               )
-              (break $topmost
+              (br $topmost
               )
             )
           )
@@ -8698,7 +8698,7 @@
                               (set_local $i23
                                 (i32.const 0)
                               )
-                              (break $do-once$6
+                              (br $do-once$6
                               )
                             )
                             (block
@@ -8742,7 +8742,7 @@
                               (set_local $i25
                                 (get_local $i19)
                               )
-                              (break $while-in$8
+                              (br $while-in$8
                               )
                             )
                           )
@@ -8769,7 +8769,7 @@
                               (set_local $i27
                                 (get_local $i25)
                               )
-                              (break $while-out$7
+                              (br $while-out$7
                               )
                             )
                             (block
@@ -8805,7 +8805,7 @@
                           (set_local $i23
                             (get_local $i26)
                           )
-                          (break $do-once$6
+                          (br $do-once$6
                           )
                         )
                       )
@@ -8874,7 +8874,7 @@
                           (set_local $i23
                             (get_local $i22)
                           )
-                          (break $do-once$6
+                          (br $do-once$6
                           )
                         )
                         (nop)
@@ -8935,7 +8935,7 @@
                                 )
                               )
                             )
-                            (break $do-once$5
+                            (br $do-once$5
                             )
                           )
                         )
@@ -8986,7 +8986,7 @@
                             (get_local $i23)
                             (i32.const 0)
                           )
-                          (break $do-once$5
+                          (br $do-once$5
                           )
                         )
                       )
@@ -9057,7 +9057,7 @@
                               )
                               (get_local $i23)
                             )
-                            (break $do-once$9
+                            (br $do-once$9
                             )
                           )
                         )
@@ -9102,7 +9102,7 @@
                             )
                             (get_local $i23)
                           )
-                          (break $do-once$5
+                          (br $do-once$5
                           )
                         )
                       )
@@ -9195,7 +9195,7 @@
                         )
                       )
                     )
-                    (break $do-once$5
+                    (br $do-once$5
                     )
                   )
                 )
@@ -9289,7 +9289,7 @@
                 (i32.const 184)
                 (get_local $i18)
               )
-              (break $topmost
+              (br $topmost
               )
             )
             (set_local $i29
@@ -9450,7 +9450,7 @@
             )
             (get_local $i2)
           )
-          (break $topmost
+          (br $topmost
           )
         )
       )
@@ -9661,7 +9661,7 @@
                     (set_local $i34
                       (i32.const 130)
                     )
-                    (break $while-out$11
+                    (br $while-out$11
                     )
                   )
                 )
@@ -9700,7 +9700,7 @@
                     (set_local $i34
                       (i32.const 127)
                     )
-                    (break $while-out$11
+                    (br $while-out$11
                     )
                   )
                   (block
@@ -9762,7 +9762,7 @@
                     )
                     (get_local $i12)
                   )
-                  (break $do-once$10
+                  (br $do-once$10
                   )
                 )
               )
@@ -9844,7 +9844,7 @@
                         )
                         (i32.const 0)
                       )
-                      (break $do-once$10
+                      (br $do-once$10
                       )
                     )
                     (nop)
@@ -9909,7 +9909,7 @@
         (set_local $i37
           (i32.const 632)
         )
-        (break $topmost
+        (br $topmost
         )
       )
       (loop $while-out$13 $while-in$14
@@ -9924,7 +9924,7 @@
               (get_local $i12)
               (i32.const 0)
             )
-            (break $while-out$13
+            (br $while-out$13
             )
             (set_local $i37
               (i32.add
@@ -9939,7 +9939,7 @@
         (i32.const 208)
         (i32.const -1)
       )
-      (break $topmost
+      (br $topmost
       )
     )
   )
@@ -10147,7 +10147,7 @@
               (set_local $i15
                 (i32.const 6)
               )
-              (break $while-out$0
+              (br $while-out$0
               )
             )
           )
@@ -10166,7 +10166,7 @@
               (set_local $i15
                 (i32.const 8)
               )
-              (break $while-out$0
+              (br $while-out$0
               )
             )
           )
@@ -10520,7 +10520,7 @@
                     (get_local $i2)
                   )
                 )
-                (break $label$break$L5
+                (br $label$break$L5
                 )
               )
             )
@@ -10559,7 +10559,7 @@
                           (set_local $i13
                             (i32.const 0)
                           )
-                          (break $label$break$L10
+                          (br $label$break$L10
                           )
                         )
                       )
@@ -10583,7 +10583,7 @@
                           (set_local $i15
                             (get_local $i4)
                           )
-                          (break $while-out$0
+                          (br $while-out$0
                           )
                         )
                         (set_local $i4
@@ -10617,7 +10617,7 @@
                       (set_local $i8
                         (get_local $i15)
                       )
-                      (break $label$break$L5
+                      (br $label$break$L5
                       )
                     )
                   )
@@ -10713,7 +10713,7 @@
                     (get_local $i1)
                   )
                 )
-                (break $do-once$0
+                (br $do-once$0
                 )
               )
             )
@@ -10862,7 +10862,7 @@
                         (set_local $i6
                           (get_local $i8)
                         )
-                        (break $while-out$1
+                        (br $while-out$1
                         )
                       )
                       (set_local $i4
@@ -10935,7 +10935,7 @@
                     (set_local $i7
                       (get_local $i6)
                     )
-                    (break $label$break$L1
+                    (br $label$break$L1
                     )
                   )
                 )
@@ -10963,7 +10963,7 @@
                     (set_local $i4
                       (i32.const 4)
                     )
-                    (break $while-out$0
+                    (br $while-out$0
                     )
                   )
                   (set_local $i5
@@ -11021,7 +11021,7 @@
                   (set_local $i10
                     (get_local $i4)
                   )
-                  (break $while-out$2
+                  (br $while-out$2
                   )
                 )
               )
@@ -11067,7 +11067,7 @@
                       (set_local $i11
                         (get_local $i10)
                       )
-                      (break $while-out$4
+                      (br $while-out$4
                       )
                     )
                     (set_local $i9
@@ -11237,7 +11237,7 @@
                 (set_local $i10
                   (get_local $i11)
                 )
-                (break $do-once$0
+                (br $do-once$0
                 )
               )
             )
@@ -11424,7 +11424,7 @@
           (get_local $i3)
           (i32.const 4096)
         )
-        (break $topmost
+        (br $topmost
           (i32.const 0)
         )
       )
@@ -11451,7 +11451,7 @@
                   (i32.const 3)
                 )
                 (nop)
-                (break $while-out$0
+                (br $while-out$0
                 )
               )
               (block
@@ -11460,7 +11460,7 @@
                     (get_local $i3)
                     (i32.const 0)
                   )
-                  (break $topmost
+                  (br $topmost
                     (get_local $i4)
                   )
                 )
@@ -11499,7 +11499,7 @@
                   (i32.const 4)
                 )
                 (nop)
-                (break $while-out$2
+                (br $while-out$2
                 )
               )
               (block
@@ -11540,7 +11540,7 @@
               (i32.const 0)
             )
             (nop)
-            (break $while-out$4
+            (br $while-out$4
             )
           )
           (block
@@ -11657,7 +11657,7 @@
                       (get_local $i5)
                     )
                     (nop)
-                    (break $while-out$0
+                    (br $while-out$0
                     )
                   )
                   (block
@@ -11684,7 +11684,7 @@
                   (get_local $i7)
                 )
                 (nop)
-                (break $while-out$2
+                (br $while-out$2
                 )
               )
               (block
@@ -11711,7 +11711,7 @@
               (get_local $i4)
             )
             (nop)
-            (break $while-out$4
+            (br $while-out$4
             )
           )
           (block
@@ -11836,7 +11836,7 @@
                 (set_local $i4
                   (i32.const 0)
                 )
-                (break $do-once$0
+                (br $do-once$0
                 )
               )
             )
@@ -12614,7 +12614,7 @@
           (get_local $i1)
         )
       )
-      (break $topmost
+      (br $topmost
       )
     )
   )
@@ -12662,7 +12662,7 @@
   )
   (func $___unlockfile (param $i1 i32)
     (block $topmost
-      (break $topmost
+      (br $topmost
       )
     )
   )

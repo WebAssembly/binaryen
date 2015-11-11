@@ -58,7 +58,7 @@
           )
           (i32.const 0)
         )
-        (break $topmost
+        (br $topmost
           (f64.const -3.4)
         )
       )
@@ -69,7 +69,7 @@
           )
           (f64.const 0)
         )
-        (break $topmost
+        (br $topmost
           (f64.const 5.6)
         )
       )
@@ -86,7 +86,7 @@
           (get_local $x)
           (f64.const 0)
         )
-        (break $topmost
+        (br $topmost
           (f64.const 1.2)
         )
       )
@@ -95,7 +95,7 @@
           (get_local $Int)
           (f64.const 0)
         )
-        (break $topmost
+        (br $topmost
           (f64.const -3.4)
         )
       )
@@ -104,7 +104,7 @@
           (get_local $Double)
           (i32.const 0)
         )
-        (break $topmost
+        (br $topmost
           (f64.const 5.6)
         )
       )
@@ -113,7 +113,7 @@
           (get_local $x)
           (get_local $y)
         )
-        (break $topmost
+        (br $topmost
           (get_local $x)
         )
       )

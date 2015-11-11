@@ -377,7 +377,7 @@ public:
   Expression *value;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "break ") << name;
+    printOpening(o, "br ") << name;
     incIndent(o, indent);
     if (value) printFullLine(o, indent, value);
     return decIndent(o, indent);
