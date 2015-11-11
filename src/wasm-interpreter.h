@@ -481,40 +481,48 @@ private:
           }
         } else if (left.type == f32) {
           float l = left.getf32(), r = right.getf32();
+          float ret;
           switch (curr->op) {
-            case Add:      return Literal(l + r);
-            case Sub:      return Literal(l - r);
-            case Mul:      return Literal(l * r);
-            case Div:      return Literal(l / r);
-            case CopySign: return Literal(std::copysign(l, r));
+            case Add:      ret = l + r; break;
+            case Sub:      ret = l - r; break;
+            case Mul:      ret = l * r; break;
+            case Div:      ret = l / r; break;
+            case CopySign: ret = std::copysign(l, r); break;
             case Min: {
-              if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
-              return Literal(std::min(l, r));
+              if (l == r && l == 0) ret = 1/l < 0 ? l : r;
+              else ret = std::min(l, r);
+              break;
             }
             case Max: {
-              if (l == r && l == 0) return Literal(1/l < 0 ? r : l);
-              return Literal(std::max(l, r));
+              if (l == r && l == 0) ret = 1/l < 0 ? r : l;
+              else ret = std::max(l, r);
+              break;
             }
             default: abort();
           }
+          return Literal(fixNaN(l, r, ret));
         } else if (left.type == f64) {
           double l = left.getf64(), r = right.getf64();
+          double ret;
           switch (curr->op) {
-            case Add:      return Literal(l + r);
-            case Sub:      return Literal(l - r);
-            case Mul:      return Literal(l * r);
-            case Div:      return Literal(l / r);
-            case CopySign: return Literal(std::copysign(l, r));
+            case Add:      ret = l + r; break;
+            case Sub:      ret = l - r; break;
+            case Mul:      ret = l * r; break;
+            case Div:      ret = l / r; break;
+            case CopySign: ret = std::copysign(l, r); break;
             case Min: {
-              if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
-              return Literal(std::min(l, r));
+              if (l == r && l == 0) ret = 1/l < 0 ? l : r;
+              else ret = std::min(l, r);
+              break;
             }
             case Max: {
-              if (l == r && l == 0) return Literal(1/l < 0 ? r : l);
-              return Literal(std::max(l, r));
+              if (l == r && l == 0) ret = 1/l < 0 ? r : l;
+              else ret = std::max(l, r);
+              break;
             }
             default: abort();
           }
+          return Literal(fixNaN(l, r, ret));
         }
         abort();
       }
@@ -675,6 +683,24 @@ private:
         NOTE_ENTER("Unreachable");
         trap();
         return Flow();
+      }
+
+      float fixNaN(float l, float r, float result) {
+        if (!isnan(result)) return result;
+        bool lnan = isnan(l), rnan = isnan(r);
+        if (!lnan && !rnan) {
+          return Literal((int32_t)0x7fc00000).reinterpretf32();
+        }
+        return result;
+      }
+
+      double fixNaN(double l, double r, double result) {
+        if (!isnan(result)) return result;
+        bool lnan = isnan(l), rnan = isnan(r);
+        if (!lnan && !rnan) {
+          return Literal((int64_t)0x7ff8000000000001LL).reinterpretf64();
+        }
+        return result;
       }
 
       void trap() {
