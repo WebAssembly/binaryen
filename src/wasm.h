@@ -7,7 +7,8 @@
 // it easy to not just inspect but also to process. For example, some
 // things that this enables are:
 //
-//  * Pretty-printing: Implemented in this file.
+//  * Pretty-printing: Implemented in this file (printing can help
+//                     understand the data structures here).
 //  * Interpreting: See wasm-interpreter.h.
 //  * Optimizing: See asm2wasm.h, which performs some optimizations
 //                after code generation.
