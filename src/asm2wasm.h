@@ -1006,7 +1006,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (ret->targets[i].isNull()) ret->targets[i] = ret->default_;
       }
       // finalize
-      ret->updateCaseMap();
       breakStack.pop_back();
       return ret;
 #endif

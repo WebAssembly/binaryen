@@ -227,8 +227,13 @@ private:
         if (index >= 0 && index < curr->targets.size()) {
           target = curr->targets[index];
         }
-        auto iter = curr->caseMap.find(target);
-        if (iter == curr->caseMap.end()) {
+        // This is obviously very inefficient. This should be a cached data structure
+        std::map<Name, size_t> caseMap; // name => index in cases
+        for (size_t i = 0; i < curr->cases.size(); i++) {
+          caseMap[curr->cases[i].name] = i;
+        }
+        auto iter = caseMap.find(target);
+        if (iter == caseMap.end()) {
           // not in the cases, so this is a break outside
           return Flow(target);
         }

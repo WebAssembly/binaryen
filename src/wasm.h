@@ -103,12 +103,12 @@ struct Literal {
   };
 
   Literal() : type(WasmType::none), f64(0) {}
-  Literal(int32_t init) : type(WasmType::i32), i32(init) {}
+  Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
   Literal(uint32_t init) : type(WasmType::i32), i32(init) {}
-  Literal(int64_t init) : type(WasmType::i64), i64(init) {}
+  Literal(int64_t  init) : type(WasmType::i64), i64(init) {}
   Literal(uint64_t init) : type(WasmType::i64), i64(init) {}
-  Literal(float   init) : type(WasmType::f32), f32(init) {}
-  Literal(double  init) : type(WasmType::f64), f64(init) {}
+  Literal(float    init) : type(WasmType::f32), f32(init) {}
+  Literal(double   init) : type(WasmType::f64), f64(init) {}
 
   int32_t geti32() { assert(type == WasmType::i32); return i32; }
   int64_t geti64() { assert(type == WasmType::i64); return i64; }
@@ -400,13 +400,6 @@ public:
   std::vector<Name> targets;
   Name default_;
   std::vector<Case> cases;
-  std::map<Name, size_t> caseMap; // name => index in cases
-
-  void updateCaseMap() {
-    for (size_t i = 0; i < cases.size(); i++) {
-      caseMap[cases[i].name] = i;
-    }
-  }
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     printOpening(o, "tableswitch ");
