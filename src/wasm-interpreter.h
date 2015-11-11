@@ -362,29 +362,33 @@ private:
         }
         if (value.type == f32) {
           float v = value.getf32();
+          float ret;
           switch (curr->op) {
-            case Neg:     return Literal(-v);
-            case Abs:     return Literal(std::abs(v));
-            case Ceil:    return Literal(std::ceil(v));
-            case Floor:   return Literal(std::floor(v));
-            case Trunc:   return Literal(std::trunc(v));
-            case Nearest: return Literal(std::nearbyint(v));
-            case Sqrt:    return Literal(std::sqrt(v));
+            case Neg:     ret = -v; break;
+            case Abs:     ret = std::abs(v); break;
+            case Ceil:    ret = std::ceil(v); break;
+            case Floor:   ret = std::floor(v); break;
+            case Trunc:   ret = std::trunc(v); break;
+            case Nearest: ret = std::nearbyint(v); break;
+            case Sqrt:    ret = std::sqrt(v); break;
             default: abort();
           }
+          return Literal(fixNaN(v, ret));
         }
         if (value.type == f64) {
           double v = value.getf64();
+          double ret;
           switch (curr->op) {
-            case Neg:     return Literal(-v);
-            case Abs:     return Literal(std::abs(v));
-            case Ceil:    return Literal(std::ceil(v));
-            case Floor:   return Literal(std::floor(v));
-            case Trunc:   return Literal(std::trunc(v));
-            case Nearest: return Literal(std::nearbyint(v));
-            case Sqrt:    return Literal(std::sqrt(v));
+            case Neg:     ret = -v; break;
+            case Abs:     ret = std::abs(v); break;
+            case Ceil:    ret = std::ceil(v); break;
+            case Floor:   ret = std::floor(v); break;
+            case Trunc:   ret = std::trunc(v); break;
+            case Nearest: ret = std::nearbyint(v); break;
+            case Sqrt:    ret = std::sqrt(v); break;
             default: abort();
           }
+          return Literal(fixNaN(v, ret));
         }
         abort();
       }
@@ -487,7 +491,10 @@ private:
             case Sub:      ret = l - r; break;
             case Mul:      ret = l * r; break;
             case Div:      ret = l / r; break;
-            case CopySign: ret = std::copysign(l, r); break;
+            case CopySign: {
+              ret = std::copysign(l, r);
+              return Literal(ret);
+            }
             case Min: {
               if (l == r && l == 0) ret = 1/l < 0 ? l : r;
               else ret = std::min(l, r);
@@ -509,7 +516,10 @@ private:
             case Sub:      ret = l - r; break;
             case Mul:      ret = l * r; break;
             case Div:      ret = l / r; break;
-            case CopySign: ret = std::copysign(l, r); break;
+            case CopySign: {
+              ret = std::copysign(l, r);
+              return Literal(ret);
+            }
             case Min: {
               if (l == r && l == 0) ret = 1/l < 0 ? l : r;
               else ret = std::min(l, r);
@@ -634,7 +644,17 @@ private:
           case ConvertSInt64:    return curr->type == f32 ? Literal(float(value.geti64())) : Literal(double(value.geti64()));
           case PromoteFloat32:   return Literal(double(value.getf32()));
           case DemoteFloat64:    return Literal(float(value.getf64()));
-          case ReinterpretInt:   return curr->type == f32 ? Literal(value.reinterpretf32()) : Literal(value.reinterpretf64());
+          case ReinterpretInt: {
+            if (curr->type == f32) {
+              float v = value.reinterpretf32();
+              if (isnan(v)) {
+                return Literal(Literal(value.geti32() | 0x7fc00000).reinterpretf32());
+              }
+              return Literal(value.reinterpretf32());
+            } else {
+              return Literal(value.reinterpretf64());
+            }
+          }
           default: abort();
         }
       }
@@ -685,22 +705,40 @@ private:
         return Flow();
       }
 
-      float fixNaN(float l, float r, float result) {
+      float fixNaN(float u, float result) {
         if (!isnan(result)) return result;
-        bool lnan = isnan(l), rnan = isnan(r);
-        if (!lnan && !rnan) {
+        bool unan = isnan(u);
+        if (!unan) {
           return Literal((int32_t)0x7fc00000).reinterpretf32();
         }
         return result;
       }
 
-      double fixNaN(double l, double r, double result) {
+      double fixNaN(double u, double result) {
         if (!isnan(result)) return result;
-        bool lnan = isnan(l), rnan = isnan(r);
-        if (!lnan && !rnan) {
-          return Literal((int64_t)0x7ff8000000000001LL).reinterpretf64();
+        bool unan = isnan(u);
+        if (!unan) {
+          return Literal((int64_t)0x7ff8000000000000LL).reinterpretf64();
         }
         return result;
+      }
+
+      float fixNaN(float l, float r, float result) {
+        bool lnan = isnan(l), rnan = isnan(r);
+        if (!isnan(result) && !lnan && !rnan) return result;
+        if (!lnan && !rnan) {
+          return Literal((int32_t)0x7fc00000).reinterpretf32();
+        }
+        return Literal(Literal(lnan ? l : r).reinterpreti32() | 0xc00000).reinterpretf32();
+      }
+
+      double fixNaN(double l, double r, double result) {
+        bool lnan = isnan(l), rnan = isnan(r);
+        if (!isnan(result) && !lnan && !rnan) return result;
+        if (!lnan && !rnan) {
+          return Literal((int64_t)0x7ff8000000000000LL).reinterpretf64();
+        }
+        return Literal(int64_t(Literal(lnan ? l : r).reinterpreti64() | 0x8000000000000LL)).reinterpretf64();
       }
 
       void trap() {
