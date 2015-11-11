@@ -456,7 +456,7 @@
       (set_local $$i$012
         (i32.const 0)
       )
-      (loop $while-in$1 $while-out$0
+      (loop $while-out$0 $while-in$1
         (block
           (set_local $$arrayidx
             (i32.add
@@ -563,7 +563,7 @@
           (get_local $label)
           (i32.const 5)
         )
-        (loop $while-in$3 $while-out$2
+        (loop $while-out$2 $while-in$3
           (block
             (set_local $label
               (i32.const 0)
@@ -571,7 +571,7 @@
             (set_local $$s$1
               (get_local $$s$010)
             )
-            (loop $while-in$5 $while-out$4
+            (loop $while-out$4 $while-in$5
               (block
                 (set_local $$1
                   (i32.load8_s align=1
@@ -1191,7 +1191,7 @@
                 (set_local $$r$021
                   (get_local $$cond10)
                 )
-                (loop $while-in$2 $while-out$1
+                (loop $while-out$1 $while-in$2
                   (block
                     (set_local $$lock13
                       (i32.add
@@ -1698,7 +1698,7 @@
       (set_local $$rem$0
         (get_local $$add)
       )
-      (loop $while-in$1 $while-out$0
+      (loop $while-out$0 $while-in$1
         (block
           (set_local $$2
             (i32.load align=4
@@ -2262,7 +2262,7 @@
           (i32.const 40)
         )
       )
-      (loop $do-in$1 $do-out$0
+      (loop $do-out$0 $do-in$1
         (block
           (i32.store align=4
             (get_local $dest)
@@ -2841,7 +2841,7 @@
                   (set_local $$i$0
                     (get_local $$l)
                   )
-                  (loop $while-in$1 $while-out$0
+                  (loop $while-out$0 $while-in$1
                     (block
                       (set_local $$tobool9
                         (i32.eq
@@ -3836,7 +3836,7 @@
             (set_local $$s$044
               (get_local $$src)
             )
-            (loop $while-in$1 $while-out$0
+            (loop $while-out$0 $while-in$1
               (block
                 (set_local $$2
                   (i32.load8_s align=1
@@ -4062,7 +4062,7 @@
                       (set_local $$w$034
                         (get_local $$s$0$lcssa60)
                       )
-                      (loop $while-in$3 $while-out$2
+                      (loop $while-out$2 $while-in$3
                         (block
                           (set_local $$6
                             (i32.load align=4
@@ -4223,7 +4223,7 @@
                     )
                   )
                 )
-                (loop $while-in$5 $while-out$4
+                (loop $while-out$4 $while-in$5
                   (block
                     (set_local $$7
                       (i32.load8_s align=1
@@ -5860,7 +5860,7 @@
       (set_local $$l10n$0
         (i32.const 0)
       )
-      (loop $label$continue$L1 $label$break$L1
+      (loop $label$break$L1 $label$continue$L1
         (block
           (set_local $$cmp
             (i32.gt_s
@@ -5961,7 +5961,7 @@
               )
             )
           )
-          (loop $label$continue$L9 $label$break$L9
+          (loop $label$break$L9 $label$continue$L9
             (block
               (nop)
               (set_local $$incdec$ptr
@@ -5989,7 +5989,7 @@
                 (get_local $label)
                 (i32.const 9)
               )
-              (loop $while-in$2 $while-out$1
+              (loop $while-out$1 $while-in$2
                 (block
                   (set_local $label
                     (i32.const 0)
@@ -6321,7 +6321,7 @@
                 (set_local $$storemerge$186309
                   (get_local $$storemerge)
                 )
-                (loop $while-in$4 $while-out$3
+                (loop $while-out$3 $while-in$4
                   (block
                     (set_local $$sub54
                       (i32.add
@@ -6862,7 +6862,7 @@
                     (set_local $$isdigittmp8$i
                       (get_local $$isdigittmp$5$i)
                     )
-                    (loop $while-in$7 $while-out$6
+                    (loop $while-out$6 $while-in$7
                       (block
                         (set_local $$mul$i
                           (i32.mul
@@ -7084,7 +7084,7 @@
                         )
                       )
                     )
-                    (loop $while-in$9 $while-out$8
+                    (loop $while-out$8 $while-in$9
                       (block
                         (set_local $$mul$i$202
                           (i32.mul
@@ -7439,7 +7439,7 @@
           (set_local $$st$0
             (i32.const 0)
           )
-          (loop $while-in$11 $while-out$10
+          (loop $while-out$10 $while-in$11
             (block
               (set_local $$51
                 (i32.load8_s align=1
@@ -7915,7 +7915,7 @@
                     (set_local $$s$addr$06$i
                       (get_local $$add$ptr205)
                     )
-                    (loop $while-in$14 $while-out$13
+                    (loop $while-out$13 $while-in$14
                       (block
                         (set_local $$idxprom$i
                           (i32.and
@@ -8265,7 +8265,7 @@
                       (set_local $$ws$0317
                         (get_local $$176)
                       )
-                      (loop $while-in$16 $while-out$15
+                      (loop $while-out$15 $while-in$16
                         (block
                           (set_local $$177
                             (i32.load align=4
@@ -8441,7 +8441,7 @@
                           (set_local $$ws$1326
                             (get_local $$178)
                           )
-                          (loop $while-in$18 $while-out$17
+                          (loop $while-out$17 $while-in$18
                             (block
                               (set_local $$179
                                 (i32.load align=4
@@ -8970,7 +8970,7 @@
                     (set_local $$i$2299
                       (i32.const 1)
                     )
-                    (loop $while-in$20 $while-out$19
+                    (loop $while-out$19 $while-in$20
                       (block
                         (set_local $$arrayidx469
                           (i32.add
@@ -9055,7 +9055,7 @@
                         (set_local $$i$3296
                           (get_local $$i$2299$lcssa)
                         )
-                        (loop $while-in$22 $while-out$21
+                        (loop $while-out$21 $while-in$22
                           (block
                             (set_local $$arrayidx481
                               (i32.add
@@ -9446,7 +9446,7 @@
           (set_local $$s$addr$013
             (get_local $$s)
           )
-          (loop $while-in$1 $while-out$0
+          (loop $while-out$0 $while-in$1
             (block
               (set_local $$9
                 (call $___uremdi3
@@ -9595,7 +9595,7 @@
           (set_local $$y$010
             (get_local $$x$addr$0$lcssa$off0)
           )
-          (loop $while-in$3 $while-out$2
+          (loop $while-out$2 $while-in$3
             (block
               (set_local $$rem4
                 (i32.and
@@ -9832,7 +9832,7 @@
                 (set_local $$tobool$i18
                   (get_local $$tobool$i$16)
                 )
-                (loop $while-in$2 $while-out$1
+                (loop $while-out$1 $while-in$2
                   (block
                     (if_else
                       (get_local $$tobool$i18)
@@ -12197,7 +12197,7 @@
                     (set_local $$v$0$i
                       (get_local $$20)
                     )
-                    (loop $while-in$4 $while-out$3
+                    (loop $while-out$3 $while-in$4
                       (block
                         (set_local $$arrayidx23$i
                           (i32.add
@@ -12460,7 +12460,7 @@
                               )
                             )
                           )
-                          (loop $while-in$7 $while-out$6
+                          (loop $while-out$6 $while-in$7
                             (block
                               (set_local $$arrayidx71$i
                                 (i32.add
@@ -13601,7 +13601,7 @@
                           (set_local $$v$0$i$153
                             (i32.const 0)
                           )
-                          (loop $while-in$11 $while-out$10
+                          (loop $while-out$10 $while-in$11
                             (block
                               (set_local $$head$i$154
                                 (i32.add
@@ -14073,7 +14073,7 @@
                         (get_local $label)
                         (i32.const 90)
                       )
-                      (loop $while-in$13 $while-out$12
+                      (loop $while-out$12 $while-in$13
                         (block
                           (set_local $label
                             (i32.const 0)
@@ -14394,7 +14394,7 @@
                                       )
                                     )
                                   )
-                                  (loop $while-in$16 $while-out$15
+                                  (loop $while-out$15 $while-in$16
                                     (block
                                       (set_local $$arrayidx161$i
                                         (i32.add
@@ -15518,7 +15518,7 @@
                                   (set_local $$T$0$i
                                     (get_local $$87)
                                   )
-                                  (loop $while-in$21 $while-out$20
+                                  (loop $while-out$20 $while-in$21
                                     (block
                                       (set_local $$head386$i
                                         (i32.add
@@ -16345,7 +16345,7 @@
                   (set_local $$sp$0$i$i
                     (i32.const 624)
                   )
-                  (loop $while-in$24 $while-out$23
+                  (loop $while-out$23 $while-in$24
                     (block
                       (set_local $$105
                         (i32.load align=4
@@ -17200,7 +17200,7 @@
                 (set_local $$i$01$i$i
                   (i32.const 0)
                 )
-                (loop $while-in$29 $while-out$28
+                (loop $while-out$28 $while-in$29
                   (block
                     (set_local $$shl$i$i
                       (i32.shl
@@ -17371,7 +17371,7 @@
                 (set_local $$sp$0108$i
                   (i32.const 624)
                 )
-                (loop $while-in$31 $while-out$30
+                (loop $while-out$30 $while-in$31
                   (block
                     (set_local $$127
                       (i32.load align=4
@@ -17686,7 +17686,7 @@
                 (set_local $$sp$1107$i
                   (i32.const 624)
                 )
-                (loop $while-in$33 $while-out$32
+                (loop $while-out$32 $while-in$33
                   (block
                     (set_local $$136
                       (i32.load align=4
@@ -18410,7 +18410,7 @@
                                                   )
                                                 )
                                               )
-                                              (loop $while-in$39 $while-out$38
+                                              (loop $while-out$38 $while-in$39
                                                 (block
                                                   (set_local $$arrayidx103$i$i
                                                     (i32.add
@@ -19514,7 +19514,7 @@
                               (set_local $$T$0$i$58$i
                                 (get_local $$178)
                               )
-                              (loop $while-in$45 $while-out$44
+                              (loop $while-out$44 $while-in$45
                                 (block
                                   (set_local $$head317$i$i
                                     (i32.add
@@ -19808,7 +19808,7 @@
                     )
                   )
                 )
-                (loop $while-in$47 $while-out$46
+                (loop $while-out$46 $while-in$47
                   (block
                     (set_local $$185
                       (i32.load align=4
@@ -20157,7 +20157,7 @@
                 (set_local $$p$0$i$i
                   (get_local $$add$ptr15$i$i)
                 )
-                (loop $while-in$49 $while-out$48
+                (loop $while-out$48 $while-in$49
                   (block
                     (set_local $$add$ptr24$i$i
                       (i32.add
@@ -20740,7 +20740,7 @@
                     (set_local $$T$0$i$i
                       (get_local $$200)
                     )
-                    (loop $while-in$51 $while-out$50
+                    (loop $while-out$50 $while-in$51
                       (block
                         (set_local $$head118$i$i
                           (i32.add
@@ -22061,7 +22061,7 @@
                       )
                     )
                   )
-                  (loop $while-in$3 $while-out$2
+                  (loop $while-out$2 $while-in$3
                     (block
                       (set_local $$arrayidx108
                         (i32.add
@@ -23179,7 +23179,7 @@
                           )
                         )
                       )
-                      (loop $while-in$8 $while-out$7
+                      (loop $while-out$7 $while-in$8
                         (block
                           (set_local $$arrayidx374
                             (i32.add
@@ -24301,7 +24301,7 @@
             (set_local $$T$0
               (get_local $$67)
             )
-            (loop $while-in$12 $while-out$11
+            (loop $while-out$11 $while-in$12
               (block
                 (set_local $$head591
                   (i32.add
@@ -24605,7 +24605,7 @@
         (break $topmost
         )
       )
-      (loop $while-in$14 $while-out$13
+      (loop $while-out$13 $while-in$14
         (block
           (set_local $$sp$0$i
             (i32.load align=4
@@ -24812,7 +24812,7 @@
                   (get_local $unaligned)
                 )
               )
-              (loop $while-in$1 $while-out$0
+              (loop $while-out$0 $while-in$1
                 (block
                   (if_else
                     (i32.lt_s
@@ -24839,7 +24839,7 @@
               )
             )
           )
-          (loop $while-in$3 $while-out$2
+          (loop $while-out$2 $while-in$3
             (block
               (if_else
                 (i32.lt_s
@@ -24866,7 +24866,7 @@
           )
         )
       )
-      (loop $while-in$5 $while-out$4
+      (loop $while-out$4 $while-in$5
         (block
           (if_else
             (i32.lt_s
@@ -25046,7 +25046,7 @@
           )
         )
         (block
-          (loop $while-in$1 $while-out$0
+          (loop $while-out$0 $while-in$1
             (block
               (if_else
                 (i32.and
@@ -25094,7 +25094,7 @@
               )
             )
           )
-          (loop $while-in$3 $while-out$2
+          (loop $while-out$2 $while-in$3
             (block
               (if_else
                 (i32.ge_s
@@ -25135,7 +25135,7 @@
           )
         )
       )
-      (loop $while-in$5 $while-out$4
+      (loop $while-out$4 $while-in$5
         (block
           (if_else
             (i32.gt_s
@@ -27002,7 +27002,7 @@
           (set_local $$carry_0203
             (i32.const 0)
           )
-          (loop $while-in$2 $while-out$1
+          (loop $while-out$1 $while-in$2
             (block
               (set_local $$147
                 (i32.or
