@@ -1,11 +1,18 @@
 
+//
+// Tiny example, using Binaryen to walk a WebAssembly module in search
+// for direct integer divisions by zero. To do so, we inherit from
+// WasmWalker, and implement visitBinary, which is called on every
+// Binary node in the module's functions.
+//
+
 #include <ostream>
 #include <wasm.h>
 
 using namespace wasm;
 
 int main() {
-  // A module with a function with a division by zero in the body
+  // A module with a function with a division by zero in the body.
   Module module;
   Function func;
   func.name = "func";

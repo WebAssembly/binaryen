@@ -127,7 +127,7 @@ The `check.py` script supports some options:
 
 Same as Emscripten: MIT license.
 
-(parts of `src/` are synced with `tools/optimizer/` in the main emscripten repo, for convenience)
+(`src/emscripten-optimizer` is synced with `tools/optimizer/` in the main emscripten repo, for convenience)
 
 ## TODO
 
@@ -138,5 +138,5 @@ Same as Emscripten: MIT license.
 
 **Binaryen** is a combination of **binary** - since WebAssembly is a *binary* format for the web - and **Emscripten** - which it can integrate with in order to compile C and C++ all the way to WebAssembly, via asm.js. Binaryen began as Emscripten's WebAssembly processing library (`wasm-emscripten`).
 
-"Binaryen" is pronounced [in the same manner](http://www.makinggameofthrones.com/production-diary/2011/2/11/official-pronunciation-guide-for-game-of-thrones.html) as "[Targaryen](https://en.wikipedia.org/wiki/List_of_A_Song_of_Ice_and_Fire_characters#House_Targaryen)": bi-NAIR-ee-in.
+"Binaryen" is pronounced [in the same manner](http://www.makinggameofthrones.com/production-diary/2011/2/11/official-pronunciation-guide-for-game-of-thrones.html) as "[Targaryen](https://en.wikipedia.org/wiki/List_of_A_Song_of_Ice_and_Fire_characters#House_Targaryen)": bi-NAIR-ee-in. Valar Morcodeis.
 
