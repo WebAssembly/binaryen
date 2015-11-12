@@ -24,7 +24,7 @@
 #include <map>
 #include <vector>
 
-#include "simple_ast.h"
+#include "emscripten-optimizer/simple_ast.h"
 #include "pretty_printing.h"
 
 namespace wasm {
@@ -263,12 +263,10 @@ public:
   };
   Id _id;
 
-  Expression() : _id(InvalidId) {}
-  Expression(Id id) : _id(id) {}
-
   WasmType type; // the type of the expression: its *output*, not necessarily its input(s)
 
-  std::ostream& print(std::ostream &o, unsigned indent); // avoid virtual here, for performance
+  Expression() : _id(InvalidId), type(none) {}
+  Expression(Id id) : _id(id), type(none) {}
 
   template<class T>
   bool is() {
@@ -278,6 +276,12 @@ public:
   template<class T>
   T* dyn_cast() {
     return _id == T()._id ? (T*)this : nullptr;
+  }
+
+  std::ostream& print(std::ostream &o, unsigned indent); // avoid virtual here, for performance
+
+  friend std::ostream& operator<<(std::ostream &o, Expression* expression) {
+    return expression->print(o, 0);
   }
 
   static std::ostream& printFullLine(std::ostream &o, unsigned indent, Expression *expression) {
@@ -704,6 +708,11 @@ public:
     printFullLine(o, indent, right);
     return decIndent(o, indent);
   }
+
+  // the type is always the type of the operands
+  void finalize() {
+    type = left->type;
+  }
 };
 
 class Compare : public Expression {
@@ -848,6 +857,8 @@ public:
   std::vector<NameType> locals;
   Name type; // if null, it is implicit in params and result
   Expression *body;
+
+  Function() : result(none) {}
 
   std::ostream& print(std::ostream &o, unsigned indent) {
     printOpening(o, "func ", true) << name;

@@ -5,7 +5,7 @@
 
 #include <ostream>
 
-#include "colors.h"
+#include "emscripten-optimizer/colors.h"
 
 std::ostream &doIndent(std::ostream &o, unsigned indent) {
   for (unsigned i = 0; i < indent; i++) {

@@ -77,6 +77,14 @@ for t in tests:
     if actual != expected:
       fail(actual, expected)
 
+print '\n[ checking example testcases... ]\n'
+
+subprocess.check_call(['g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g'])
+actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
+expected = open(os.path.join('test', 'example', 'find_div0s.txt')).read()
+if actual != expected:
+  fail(actual, expected)
+
 print '\n[ checking binaryen-shell spec testcases... ]\n'
 
 if len(requested) == 0:
