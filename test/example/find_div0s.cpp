@@ -8,25 +8,30 @@
 
 #include <ostream>
 #include <wasm.h>
+#include <wasm-s-parser.h>
 
 using namespace wasm;
 
 int main() {
-  // A module with a function with a division by zero in the body.
+  // A simple WebAssembly module in S-Expression format.
+  char input[] =
+    "(module"
+    "  (func $has_div_zero"
+    "    (i32.div_s"
+    "      (i32.const 5)"
+    "      (i32.const 0)"
+    "    )"
+    "  )"
+    ")";
+
+  // Parse the S-Expression text, and prepare to build a WebAssembly module.
+  SExpressionParser parser(input);
+  Element& root = *parser.root;
   Module module;
-  Function func;
-  func.name = "func";
-  Binary div;
-  div.op = BinaryOp::DivS;
-  Const left;
-  left.value = 5;
-  Const right;
-  right.value = 0;
-  div.left = &left;
-  div.right = &right;
-  div.finalize();
-  func.body = &div;
-  module.addFunction(&func);
+
+  // The parsed code has just one element, the module. Build the module
+  // from that (and abort on any errors, but there won't be one here).
+  SExpressionWasmBuilder builder(module, *root[0], [&]() { abort(); });
 
   // Print it out
   std::cout << module;
