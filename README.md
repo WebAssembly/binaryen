@@ -3,7 +3,7 @@
 Binaryen is a C++ library for WebAssembly. It can:
 
  * **Interpret** WebAssembly. It passes 100% of the spec test suite.
- * **Compile** asm.js to WebAssembly, which together with [Emscripten](http://emscripten.org), gives you a complete compiler toolchain from C and C++ to WebAssembly (Emscripten compiles C and C++ to asm.js, Binaryen compile that to WebAssembly).
+ * **Compile** asm.js to WebAssembly, which together with [Emscripten](http://emscripten.org), gives you a complete compiler toolchain from C and C++ to WebAssembly (Emscripten compiles C and C++ to asm.js, Binaryen compiles that to WebAssembly).
  * **Polyfill** WebAssembly, by running it in the interpreter compiled to JavaScript, if the browser does not yet have native support.
 
 To provide those capabilities, Binaryen has a simple and flexible API for **representing and processing** WebAssembly modules. The interpreter, validator, pretty-printer, etc. are built on that foundation. The core of this is in [wasm.h](https://github.com/WebAssembly/binaryen/blob/master/src/wasm.h), which contains classes that define a WebAssembly module, and tools to process those. For a simple example of how to use Binaryen, see [test/example/find_div0s.cpp](https://github.com/WebAssembly/binaryen/blob/master/test/example/find_div0s.cpp), which creates a module and then searches it for a specific pattern.
@@ -85,7 +85,7 @@ Run
 
 That will call `emcc` and then emit `a.normal.js`, a normal asm.js build for comparison purposes, and `a.wasm.js`, which contains the entire polyfill (`asm2wasm` translator + `wasm.js` interpreter).
 
-### C/C++ Source => asm2wasm
+### C/C++ Source => asm2wasm => WebAssembly
 
 Using emcc you can generate asm.js files for direct parsing by `asm2wasm` on the commandline, for example using
 
