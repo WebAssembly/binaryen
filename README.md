@@ -2,12 +2,11 @@
 
 Binaryen is a C++ library for processing WebAssembly. It can:
 
- * **Represent** WebAssembly, including pretty-printing XXX
  * **Interpret** WebAssembly. It passes 100% of the spec test suite.
  * **Compile** asm.js to WebAssembly, which together with [Emscripten](http://emscripten.org), gives you a complete compiler toolchain from C and C++ to WebAssembly.
  * **Polyfill** WebAssembly, by running it in the interpreter compiled to JavaScript, if the browser does not yet have native support.
 
-To provide those capabilities, Binaryen has a simple and flexible way to process, inspect and manipulate WebAssembly modules. The interpreter, validator, etc. are built on that foundation. (TODO: an example of writing a new processing pass.)
+To provide those capabilities, Binaryen has a simple and flexible API for representing and processing WebAssembly modules. The interpreter, validator, pretty-printer, etc. are built on that foundation. (TODO: an example of writing a new processing pass.)
 
 ## Tools
 
