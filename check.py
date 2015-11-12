@@ -64,20 +64,28 @@ for asm in tests:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
 
-print '\n[ checking wasm-shell testcases... ]\n'
+print '\n[ checking binaryen-shell testcases... ]\n'
 
 for t in tests:
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join('test', t)
-    actual, err = subprocess.Popen([os.path.join('bin', 'wasm-shell'), t, 'print-wasm'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), t, '--print-before'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err == '', 'bad err:' + err
 
     expected = open(t).read()
     if actual != expected:
       fail(actual, expected)
 
-print '\n[ checking wasm-shell spec testcases... ]\n'
+print '\n[ checking example testcases... ]\n'
+
+subprocess.check_call(['g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g'])
+actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
+expected = open(os.path.join('test', 'example', 'find_div0s.txt')).read()
+if actual != expected:
+  fail(actual, expected)
+
+print '\n[ checking binaryen-shell spec testcases... ]\n'
 
 if len(requested) == 0:
   BLACKLIST = []
@@ -89,7 +97,7 @@ for t in spec_tests:
   if t.startswith('spec') and t.endswith('.wast'):
     print '..', t
     wast = os.path.join('test', t)
-    proc = subprocess.Popen([os.path.join('bin', 'wasm-shell'), wast], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), wast], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     actual, err = proc.communicate()
     assert proc.returncode == 0, err
 

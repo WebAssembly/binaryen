@@ -5,7 +5,7 @@
 //
 
 #include "wasm.h"
-#include "optimizer.h"
+#include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 
 namespace wasm {

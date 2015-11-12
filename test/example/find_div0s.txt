@@ -1,0 +1,10 @@
+(module
+  (memory 0 4294967295)
+  (func $has_div_zero
+    (i32.div_s
+      (i32.const 5)
+      (i32.const 0)
+    )
+  )
+)
+We found that (i32.const 5) is divided by zero

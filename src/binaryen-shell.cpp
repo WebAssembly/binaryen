@@ -144,14 +144,43 @@ struct Invocation {
 //
 
 int main(int argc, char **argv) {
-  debug = getenv("WASM_SHELL_DEBUG") ? getenv("WASM_SHELL_DEBUG")[0] - '0' : 0;
+  debug = getenv("BINARYEN_DEBUG") ? getenv("BINARYEN_DEBUG")[0] - '0' : 0;
 
-  char *infile = argv[1];
-  bool print_wasm = argc >= 3; // second arg means print it out
+  char *infile = nullptr;
+  bool print_before = false;
+
+  for (size_t i = 1; i < argc; i++) {
+    char* curr = argv[i];
+    if (curr[0] == '-') {
+      std::string arg = curr;
+      if (arg == "--print-before") {
+        print_before = true;
+      } else {
+        if (infile) {
+          printf("error: unrecognized argument: %s\n", curr);
+          exit(1);
+        }
+      }
+    } else {
+      if (infile) {
+        printf("error: too many input files provided.\n");
+        exit(1);
+      }
+      infile = curr;
+    }
+  }
+
+  if (!infile) {
+    printf("error: no input file provided.\n");
+    exit(1);
+  }
 
   if (debug) std::cerr << "loading '" << infile << "'...\n";
   FILE *f = fopen(argv[1], "r");
-  assert(f);
+  if (!f) {
+    printf("error: could not open input file: %s\n", infile);
+    exit(1);
+  }
   fseek(f, 0, SEEK_END);
   int size = ftell(f);
   char *input = new char[size+1];
@@ -170,6 +199,7 @@ int main(int argc, char **argv) {
   if (debug) std::cout << root << '\n';
 
   // A .wast may have multiple modules, with some asserts after them
+  bool checked = false;
   size_t i = 0;
   while (i < root.size()) {
     if (debug) std::cerr << "parsing s-expressions to wasm...\n";
@@ -180,7 +210,7 @@ int main(int argc, char **argv) {
     auto interface = new ShellExternalInterface();
     auto instance = new ModuleInstance(wasm, interface);
 
-    if (print_wasm) {
+    if (print_before) {
       if (debug) std::cerr << "printing...\n";
       std::cout << wasm;
     }
@@ -190,6 +220,7 @@ int main(int argc, char **argv) {
       Element& curr = *root[i];
       IString id = curr[0]->str();
       if (id == MODULE) break;
+      checked = true;
       Colors::red(std::cerr);
       std::cerr << i << '/' << (root.size()-1);
       Colors::green(std::cerr);
@@ -240,10 +271,10 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (debug) {
+  if (checked) {
     Colors::green(std::cerr);
     Colors::bold(std::cerr);
-    std::cerr << "\ndone.\n";
+    std::cerr << "all checks passed.\n";
     Colors::normal(std::cerr);
   }
 }
