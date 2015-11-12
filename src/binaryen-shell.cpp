@@ -199,6 +199,7 @@ int main(int argc, char **argv) {
   if (debug) std::cout << root << '\n';
 
   // A .wast may have multiple modules, with some asserts after them
+  bool checked = false;
   size_t i = 0;
   while (i < root.size()) {
     if (debug) std::cerr << "parsing s-expressions to wasm...\n";
@@ -219,6 +220,7 @@ int main(int argc, char **argv) {
       Element& curr = *root[i];
       IString id = curr[0]->str();
       if (id == MODULE) break;
+      checked = true;
       Colors::red(std::cerr);
       std::cerr << i << '/' << (root.size()-1);
       Colors::green(std::cerr);
@@ -269,10 +271,10 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (debug) {
+  if (checked) {
     Colors::green(std::cerr);
     Colors::bold(std::cerr);
-    std::cerr << "\ndone.\n";
+    std::cerr << "all checks passed.\n";
     Colors::normal(std::cerr);
   }
 }
