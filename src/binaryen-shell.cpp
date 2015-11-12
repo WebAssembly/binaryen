@@ -144,7 +144,7 @@ struct Invocation {
 //
 
 int main(int argc, char **argv) {
-  debug = getenv("WASM_SHELL_DEBUG") ? getenv("WASM_SHELL_DEBUG")[0] - '0' : 0;
+  debug = getenv("BINARYEN_DEBUG") ? getenv("BINARYEN_DEBUG")[0] - '0' : 0;
 
   char *infile = nullptr;
   bool print_before = false;
