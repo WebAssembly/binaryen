@@ -118,11 +118,6 @@ The `check.py` script supports some options:
  * If tests are provided, we run exactly those. If none are provided, we run them all.
  * `asm2wasm` tests require no dependencies. `wasm.js` tests require `emcc` and `nodejs` in the path.
 
-## FAQ
-
- * How does `asm2wasm` relate to the new WebAssembly backend which is being developed in upstream LLVM?
-  * This is separate from that. `asm2wasm` focuses on compiling asm.js to WebAssembly, as emitted by Emscripten's asm.js backend. This is useful because while in the long term Emscripten hopes to use the new WebAssembly backend, the `asm2wasm` route is a very quick and easy way to generate WebAssembly output. It will also be useful for benchmarking the new backend as it progresses.
-
 ## License & Contributing
 
 Same as Emscripten: MIT license.
@@ -134,7 +129,13 @@ Same as Emscripten: MIT license.
  * Reference interpreter lacks module importing support; imports are Nop'ed in native builds, but enabled in emcc builds (so wasm.js works).
  * Memory section needs the right size.
 
-## Why the weird name for the project?
+## FAQ
+
+### How does `asm2wasm` relate to the new WebAssembly backend which is being developed in upstream LLVM?
+
+This is separate from that. `asm2wasm` focuses on compiling asm.js to WebAssembly, as emitted by Emscripten's asm.js backend. This is useful because while in the long term Emscripten hopes to use the new WebAssembly backend, the `asm2wasm` route is a very quick and easy way to generate WebAssembly output. It will also be useful for benchmarking the new backend as it progresses.
+
+### Why the weird name for the project?
 
 **Binaryen** is a combination of **binary** - since WebAssembly is a *binary* format for the web - and **Emscripten** - which it can integrate with in order to compile C and C++ all the way to WebAssembly, via asm.js. Binaryen began as Emscripten's WebAssembly processing library (`wasm-emscripten`).
 
