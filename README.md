@@ -131,11 +131,11 @@ Same as Emscripten: MIT license.
 
 ## FAQ
 
-### How does `asm2wasm` relate to the new WebAssembly backend which is being developed in upstream LLVM?
+#### How does `asm2wasm` relate to the new WebAssembly backend which is being developed in upstream LLVM?
 
 This is separate from that. `asm2wasm` focuses on compiling asm.js to WebAssembly, as emitted by Emscripten's asm.js backend. This is useful because while in the long term Emscripten hopes to use the new WebAssembly backend, the `asm2wasm` route is a very quick and easy way to generate WebAssembly output. It will also be useful for benchmarking the new backend as it progresses.
 
-### Why the weird name for the project?
+#### Why the weird name for the project?
 
 **Binaryen** is a combination of **binary** - since WebAssembly is a *binary* format for the web - and **Emscripten** - which it can integrate with in order to compile C and C++ all the way to WebAssembly, via asm.js. Binaryen began as Emscripten's WebAssembly processing library (`wasm-emscripten`).
 
