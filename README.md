@@ -1,24 +1,43 @@
-# wasm-emscripten
+# Binaryen
 
-This repository contains tools to compile C/C++ to WebAssembly s-expressions, using [Emscripten](http://emscripten.org/), by translating Emscripten's asm.js output into WebAssembly, as well as a WebAssembly interpreter that can run the translated code.
+Binaryen is a C++ library for processing WebAssembly. It can:
 
-More specifically, this repository contains:
+ * **Represent** WebAssembly, including pretty-printing XXX
+ * **Interpret** WebAssembly. It passes 100% of the spec test suite.
+ * **Compile** asm.js to WebAssembly, which together with [Emscripten](http://emscripten.org), gives you a complete compiler toolchain from C and C++ to WebAssembly.
+ * **Polyfill** WebAssembly, by running it in the interpreter compiled to JavaScript, if the browser does not yet have native support.
 
- * **asm2wasm**: An asm.js-to-WebAssembly compiler, built on Emscripten's asm optimizer infrastructure. That can directly compile asm.js to WebAssembly. You can use Emscripten to build C++ into asm.js, and together the two tools let you compile C/C++ to WebAssembly.
- * **wasm.js**: A polyfill for WebAssembly support in browsers. It receives an asm.js module, parses it using `asm2wasm`, and runs the resulting WebAssembly in a WebAssembly interpreter. It provides what looks like an asm.js module, while running WebAssembly inside.
- * **wasm-shell**: A WebAssembly interpreter that can parse S-Expression format and run the spec tests.
+To provide those capabilities, Binaryen has a simple and flexible way to process, inspect and manipulate WebAssembly modules. The interpreter, validator, etc. are built on that foundation. (TODO: an example of writing a new processing pass.)
 
-## Building asm2wasm
+## Tools
+
+This repository contains code that builds the following tools in `bin/`:
+
+ * **binaryen-shell**: A shell that can load and interpret WebAssembly code in S-Expression format, and can run the spec test suite.
+ * **asm2wasm**: An asm.js-to-WebAssembly compiler, built on Emscripten's asm optimizer infrastructure. That can directly compile asm.js to WebAssembly.
+ * **wasm.js**: A polyfill for WebAssembly support in browsers. It receives an asm.js module, parses it using an internal build of `asm2wasm`, and runs the resulting WebAssembly in a WebAssembly interpreter. It provides what looks like an asm.js module, while running WebAssembly inside.
+
+## Building
 
 ```
 $ ./build.sh
 ```
 
-* `asm2wasm` and `wasm-shell` require a C++11 compiler. If you also want to compile C/C++ to asm.js and then to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten (the [stable SDK (or normal manual install)](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) is fine).
-* `wasm.js` requires Emscripten, using the `incoming` branch in the `emscripten`, `emscripten-fastcomp` and `emscripten-fastcomp-clang` repos (the stable SDK, which is enough for `asm2wasm`, is not enough for `wasm.js`).
-* Older versions of gcc hit [this bug](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51048). You probably need gcc 5.0 or later, or a recent version of clang. If you have Emscripten, you can just use the native clang++ from that, it is recent enough.
+* `binaryen-shell` and `asm2wasm` require a C++11 compiler.
+* If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten. You'll need the `incoming` branch there (which you can get via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).
+* `wasm.js` also requires Emscripten.
 
 ## Running
+
+### binaryen-shell
+
+Run
+
+````
+bin/binaryen-shell file.wast [print AST before running]
+````
+
+ * Setting `BINARYEN_DEBUG=1` in the env will emit a lot of debugging info.
 
 ### asm2wasm
 
@@ -78,16 +97,6 @@ For basic tests, that command should work, but in general you need a few more ar
 
  * `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow aliased function pointers (there is a single table).
  * `GLOBAL_BASE=1000` because WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. With that argument, we reserve the area up to `1000`.
-
-### wasm-shell
-
-Run
-
-````
-bin/wasm-shell file.wast [print AST before running]
-````
-
- * Setting `WASM_SHELL_DEBUG=1` in the env will emit a lot of debugging info.
 
 ## Testing
 
