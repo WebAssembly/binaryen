@@ -35,10 +35,10 @@ $ ./build.sh
 Run
 
 ````
-bin/binaryen-shell [.wast file] [--print-before]
+bin/binaryen-shell [.wast file] [options] [passes, see --help] [--help]
 ````
 
- * `--print-before` will print the module before running it.
+ * See `bin/binaryen-shell --help` for the full list of options and passes.
  * Setting `BINARYEN_DEBUG=1` in the env will emit a lot of debugging info.
 
 ### asm2wasm

@@ -58,7 +58,7 @@ enum WasmType {
   f64
 };
 
-const char* printWasmType(WasmType type) {
+inline const char* printWasmType(WasmType type) {
   switch (type) {
     case WasmType::none: return "none";
     case WasmType::i32: return "i32";
@@ -68,7 +68,7 @@ const char* printWasmType(WasmType type) {
   }
 }
 
-unsigned getWasmTypeSize(WasmType type) {
+inline unsigned getWasmTypeSize(WasmType type) {
   switch (type) {
     case WasmType::none: abort();
     case WasmType::i32: return 4;
@@ -78,7 +78,7 @@ unsigned getWasmTypeSize(WasmType type) {
   }
 }
 
-bool isWasmTypeFloat(WasmType type) {
+inline bool isWasmTypeFloat(WasmType type) {
   switch (type) {
     case f32:
     case f64: return true;
@@ -86,7 +86,7 @@ bool isWasmTypeFloat(WasmType type) {
   }
 }
 
-WasmType getWasmType(unsigned size, bool float_) {
+inline WasmType getWasmType(unsigned size, bool float_) {
   if (size < 4) return WasmType::i32;
   if (size == 4) return float_ ? WasmType::f32 : WasmType::i32;
   if (size == 8) return float_ ? WasmType::f64 : WasmType::i64;
@@ -278,7 +278,7 @@ public:
     return _id == T()._id ? (T*)this : nullptr;
   }
 
-  std::ostream& print(std::ostream &o, unsigned indent); // avoid virtual here, for performance
+  inline std::ostream& print(std::ostream &o, unsigned indent); // avoid virtual here, for performance
 
   friend std::ostream& operator<<(std::ostream &o, Expression* expression) {
     return expression->print(o, 0);

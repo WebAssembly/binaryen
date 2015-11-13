@@ -70,7 +70,7 @@ for t in tests:
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join('test', t)
-    actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), t, '--print-before'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), t, '-print-before'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err == '', 'bad err:' + err
 
     expected = open(t).read()

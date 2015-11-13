@@ -1,4 +1,7 @@
 
+#ifndef mixed_arena_h
+#define mixed_arena_h
+
 #include <vector>
 
 //
@@ -35,4 +38,8 @@ struct MixedArena {
     clear();
   }
 };
+
+extern MixedArena globalAllocator;
+
+#endif // mixed_arena_h
 

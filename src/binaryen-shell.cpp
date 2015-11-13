@@ -10,9 +10,14 @@
 #include "wasm-s-parser.h"
 #include "wasm-interpreter.h"
 #include "wasm-validator.h"
+#include "pass.h"
 
 using namespace cashew;
 using namespace wasm;
+
+// Globals
+
+MixedArena globalAllocator;
 
 IString ASSERT_RETURN("assert_return"),
         ASSERT_TRAP("assert_trap"),
@@ -148,18 +153,39 @@ int main(int argc, char **argv) {
 
   char *infile = nullptr;
   bool print_before = false;
+  bool print_after = false;
+  std::vector<std::string> passes;
 
   for (size_t i = 1; i < argc; i++) {
     char* curr = argv[i];
     if (curr[0] == '-') {
       std::string arg = curr;
-      if (arg == "--print-before") {
+      if (arg == "-print-before") {
         print_before = true;
+      } else if (arg == "-print-after") {
+        print_after = true;
+      } else if (arg == "--help") {
+        std::cout << "binaryen shell\n";
+        std::cout << "--------------\n\n";
+        std::cout << "options:\n";
+        std::cout << "  -print-before : print modules before processing them\n";
+        std::cout << "\n";
+        std::cout << "passes:\n";
+        auto allPasses = PassRegistry::get()->getRegisteredNames();
+        for (auto& name : allPasses) {
+          std::cout << "  -" << name << "\n";
+        }
+        exit(0);
       } else {
-        if (infile) {
-          printf("error: unrecognized argument: %s\n", curr);
+        // otherwise, assumed to be a pass
+        const char* name = curr + 1;
+        auto check = PassRegistry::get()->createPass(name);
+        if (!check) {
+          printf("error: invalid option %s\n", curr);
           exit(1);
         }
+        delete check;
+        passes.push_back(name);
       }
     } else {
       if (infile) {
@@ -211,6 +237,22 @@ int main(int argc, char **argv) {
     auto instance = new ModuleInstance(wasm, interface);
 
     if (print_before) {
+      if (debug) std::cerr << "printing...\n";
+      std::cout << wasm;
+    }
+
+    MixedArena moreModuleAllocations;
+
+    if (passes.size() > 0) {
+      if (debug) std::cerr << "running passes...\n";
+      PassRunner passRunner(&moreModuleAllocations);
+      for (auto& passName : passes) {
+        passRunner.add(passName);
+      }
+      passRunner.run(&wasm);
+    }
+
+    if (print_after) {
       if (debug) std::cerr << "printing...\n";
       std::cout << wasm;
     }
