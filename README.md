@@ -124,11 +124,6 @@ Same as Emscripten: MIT license.
 
 (`src/emscripten-optimizer` is synced with `tools/optimizer/` in the main emscripten repo, for convenience)
 
-## TODO
-
- * Reference interpreter lacks module importing support; imports are Nop'ed in native builds, but enabled in emcc builds (so wasm.js works).
- * Memory section needs the right size.
-
 ## FAQ
 
 * How does `asm2wasm` relate to the new WebAssembly backend which is being developed in upstream LLVM?
