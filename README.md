@@ -39,7 +39,7 @@ bin/binaryen-shell [.wast file] [options] [passes, see --help] [--help]
 ````
 
  * See `bin/binaryen-shell --help` for the full list of options and passes.
- * Setting `BINARYEN_DEBUG=1` in the env will emit a lot of debugging info.
+ * Setting `BINARYEN_DEBUG=1` in the env will emit some debugging info.
 
 ### asm2wasm
 
