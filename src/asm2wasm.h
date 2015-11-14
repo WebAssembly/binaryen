@@ -963,6 +963,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto ret = allocator.alloc<Block>();
       ret->list.push_back(process(ast[1]));
       ret->list.push_back(process(ast[2]));
+      ret->type = ret->list[1]->type;
       return ret;
     } else if (what == SWITCH) {
       // XXX switch is still in flux in the spec repo, just emit a placeholder

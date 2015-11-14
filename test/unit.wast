@@ -151,6 +151,21 @@
       )
     )
   )
+  (func $seq
+    (local $J f64)
+    (set_local $J
+      (f64.sub
+        (block
+          (f64.const 0.1)
+          (f64.const 5.1)
+        )
+        (block
+          (f64.const 3.2)
+          (f64.const 4.2)
+        )
+      )
+    )
+  )
   (func $z
     (nop)
   )

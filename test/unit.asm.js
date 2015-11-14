@@ -41,6 +41,10 @@ function () {
     d = +(i | 0);
     d = +(i >>> 0);
   }
+  function seq() {
+    var J = 0.0;
+    J = (0.1, 5.1) - (3.2, 4.2);
+  }
 
   function z() {
   }
