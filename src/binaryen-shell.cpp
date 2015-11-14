@@ -165,16 +165,19 @@ int main(int argc, char **argv) {
       } else if (arg == "-print-after") {
         print_after = true;
       } else if (arg == "--help") {
+        std::cout << "\n";
         std::cout << "binaryen shell\n";
         std::cout << "--------------\n\n";
         std::cout << "options:\n";
         std::cout << "  -print-before : print modules before processing them\n";
+        std::cout << "  -print-after  : print modules after processing them\n";
         std::cout << "\n";
         std::cout << "passes:\n";
         auto allPasses = PassRegistry::get()->getRegisteredNames();
         for (auto& name : allPasses) {
           std::cout << "  -" << name << "\n";
         }
+        std::cout << "\n";
         exit(0);
       } else {
         // otherwise, assumed to be a pass
@@ -202,7 +205,7 @@ int main(int argc, char **argv) {
   }
 
   if (debug) std::cerr << "loading '" << infile << "'...\n";
-  FILE *f = fopen(argv[1], "r");
+  FILE *f = fopen(infile, "r");
   if (!f) {
     printf("error: could not open input file: %s\n", infile);
     exit(1);
@@ -237,7 +240,7 @@ int main(int argc, char **argv) {
     auto instance = new ModuleInstance(wasm, interface);
 
     if (print_before) {
-      if (debug) std::cerr << "printing...\n";
+      std::cout << "printing before:\n";
       std::cout << wasm;
     }
 
@@ -253,7 +256,7 @@ int main(int argc, char **argv) {
     }
 
     if (print_after) {
-      if (debug) std::cerr << "printing...\n";
+      std::cout << "printing after:\n";
       std::cout << wasm;
     }
 

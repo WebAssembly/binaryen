@@ -18,6 +18,14 @@ def fail(actual, expected):
     ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])
   ))
 
+def fail_if_not_identical(actual, expected):
+  if expected != actual:
+    fail(actual, expected)
+
+def fail_if_not_contained(actual, expected):
+  if expected not in actual:
+    fail(actual, expected)
+
 if not interpreter:
   print '[ no wasm interpreter provided, you should pass one as --interpreter=path/to/interpreter ]'
 
@@ -63,6 +71,18 @@ for asm in tests:
         except Exception, e:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
+
+print '\n[ checking binaryen-shell... ]\n'
+
+actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), '--help'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+fail_if_not_contained(actual, 'binaryen shell')
+fail_if_not_contained(actual, 'options:')
+fail_if_not_contained(actual, 'passes:')
+fail_if_not_contained(actual, '  -lower-if-else')
+
+print ' '.join([os.path.join('bin', 'binaryen-shell'), '-print-before', '-print-after', '-lower-if-else', os.path.join('test', 'if_else.wast')])
+actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), '-print-before', '-print-after', '-lower-if-else', os.path.join('test', 'if_else.wast')], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+fail_if_not_identical(actual, open(os.path.join('test', 'if_else.txt')).read())
 
 print '\n[ checking binaryen-shell testcases... ]\n'
 
