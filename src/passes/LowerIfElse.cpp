@@ -17,8 +17,6 @@
 namespace wasm {
 
 struct LowerIfElse : public Pass {
-  LowerIfElse() : Pass("lower-if-else") {}
-
   MixedArena* allocator;
   std::unique_ptr<NameManager> namer;
 
@@ -45,7 +43,7 @@ struct LowerIfElse : public Pass {
   }
 };
 
-static RegisterPass<LowerIfElse> registerPass;
+static RegisterPass<LowerIfElse> registerPass("lower-if-else", "lowers if-elses into ifs, blocks and branches");
 
 } // namespace wasm
 

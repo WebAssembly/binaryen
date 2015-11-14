@@ -80,7 +80,7 @@ fail_if_not_contained(actual, 'options:')
 fail_if_not_contained(actual, 'passes:')
 fail_if_not_contained(actual, '  -lower-if-else')
 
-print ' '.join([os.path.join('bin', 'binaryen-shell'), '-print-before', '-print-after', '-lower-if-else', os.path.join('test', 'if_else.wast')])
+print '  ', ' '.join([os.path.join('bin', 'binaryen-shell'), '-print-before', '-print-after', '-lower-if-else', os.path.join('test', 'if_else.wast')])
 actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), '-print-before', '-print-after', '-lower-if-else', os.path.join('test', 'if_else.wast')], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 fail_if_not_identical(actual, open(os.path.join('test', 'if_else.txt')).read())
 
@@ -92,6 +92,7 @@ for t in tests:
     t = os.path.join('test', t)
     actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), t, '-print-before'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err == '', 'bad err:' + err
+    actual = actual.replace('printing before:\n', '')
 
     expected = open(t).read()
     if actual != expected:

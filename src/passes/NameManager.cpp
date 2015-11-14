@@ -62,7 +62,7 @@ void NameManager::visitExport(Export* curr) {
   names.insert(curr->name);
 }
 
-static RegisterPass<NameManager> registerPass;
+static RegisterPass<NameManager> registerPass("name-manager", "utility pass to manage names in modules");
 
 } // namespace wasm
 

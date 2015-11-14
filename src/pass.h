@@ -16,12 +16,19 @@ struct PassRegistry {
 
   typedef std::function<Pass* ()> Creator;
 
-  void registerPass(const char* name, Creator create);
+  void registerPass(const char* name, const char *description, Creator create);
   Pass* createPass(std::string name);
   std::vector<std::string> getRegisteredNames();
+  std::string getPassDescription(std::string name);
 
 private:
-  std::map<std::string, Creator> passCreatorMap;
+  struct PassInfo {
+    std::string description;
+    Creator create;
+    PassInfo() {}
+    PassInfo(std::string description, Creator create) : description(description), create(create) {}
+  };
+  std::map<std::string, PassInfo> passInfos;
 };
 
 //
@@ -29,8 +36,8 @@ private:
 //
 template<class P>
 struct RegisterPass {
-  RegisterPass() {
-    PassRegistry::get()->registerPass(P().name, []() {
+  RegisterPass(const char* name, const char *description) {
+    PassRegistry::get()->registerPass(name, description, []() {
       return new P();
     });
   }
@@ -64,10 +71,6 @@ struct PassRunner {
 // Core pass class
 //
 struct Pass : public WasmWalker {
-  const char* name;
-
-  Pass(const char* name) : name(name) {}
-
   // Override this to perform preparation work before the pass runs
   virtual void prepare(PassRunner* runner, Module *module) {}
 
@@ -83,8 +86,6 @@ struct Pass : public WasmWalker {
 
 // Handles names in a module, in particular adding names without duplicates
 struct NameManager : public Pass {
-  NameManager() : Pass("name-manager") {}
-
   Name getUnique(std::string prefix);
   // TODO: getUniqueInFunction
 

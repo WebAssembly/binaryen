@@ -13,23 +13,27 @@ PassRegistry* PassRegistry::get() {
   return manager;
 }
 
-void PassRegistry::registerPass(const char* name, Creator create) {
-  assert(passCreatorMap.find(name) == passCreatorMap.end());
-  passCreatorMap[name] = create;
+void PassRegistry::registerPass(const char* name, const char *description, Creator create) {
+  assert(passInfos.find(name) == passInfos.end());
+  passInfos[name] = PassInfo(description, create);
 }
 
 Pass* PassRegistry::createPass(std::string name) {
-  Creator creator = passCreatorMap[name];
-  if (!creator) return nullptr;
-  return creator();
+  if (passInfos.find(name) == passInfos.end()) return nullptr;
+  return passInfos[name].create();
 }
 
 std::vector<std::string> PassRegistry::getRegisteredNames() {
   std::vector<std::string> ret;
-  for (auto pair : passCreatorMap) {
+  for (auto pair : passInfos) {
     ret.push_back(pair.first);
   }
   return ret;
+}
+
+std::string PassRegistry::getPassDescription(std::string name) {
+  assert(passInfos.find(name) != passInfos.end());
+  return passInfos[name].description;
 }
 
 // PassRunner

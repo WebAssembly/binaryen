@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
         std::cout << "passes:\n";
         auto allPasses = PassRegistry::get()->getRegisteredNames();
         for (auto& name : allPasses) {
-          std::cout << "  -" << name << "\n";
+          std::cout << "  -" << name << " : " << PassRegistry::get()->getPassDescription(name) << "\n";
         }
         std::cout << "\n";
         exit(0);
