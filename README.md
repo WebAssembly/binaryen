@@ -1,8 +1,9 @@
 # Binaryen
 
-Binaryen is a C++ library for WebAssembly. It can:
+Binaryen is a compiler and toolchain infrastructure library for WebAssembly, written in C++. It can:
 
- * **Interpret** WebAssembly. It passes 100% of the spec test suite.
+ * **Parse** and **emit** WebAssembly, supporting the current S-Expression format.
+ * **Interpret** WebAssembly. The interpreter passes 100% of the spec test suite.
  * **Compile** asm.js to WebAssembly, which together with [Emscripten](http://emscripten.org), gives you a complete compiler toolchain from C and C++ to WebAssembly (Emscripten compiles C and C++ to asm.js, Binaryen compiles that to WebAssembly).
  * **Polyfill** WebAssembly, by running it in the interpreter compiled to JavaScript, if the browser does not yet have native support.
 
