@@ -32,6 +32,8 @@ namespace wasm {
 // We use a Name for all of the identifiers. These are IStrings, so they are
 // all interned - comparisons etc are just pointer comparisons, so there is no
 // perf loss. Having names everywhere makes using the AST much nicer.
+// TODO: as an optimization, IString values < some threshold could be considered
+//       numerical indices directly.
 
 struct Name : public cashew::IString {
   Name() : cashew::IString() {}
@@ -232,7 +234,20 @@ enum HostOp {
   PageSize, MemorySize, GrowMemory, HasFeature
 };
 
+//
 // Expressions
+//
+// Note that little is provided in terms of constructors for these. The rationale
+// is that writing  new Something(a, b, c, d, e)  is not the clearest, and it would
+// be better to write   new Something(name=a, leftOperand=b...  etc., but C++
+// lacks named operands, so in asm2wasm etc. you will see things like
+//   auto x = new Something();
+//   x->name = a;
+//   x->leftOperand = b;
+//   ..
+// which is less compact but less ambiguous. But hopefully we can do better,
+// suggestions for API improvements here are welcome.
+//
 
 class Expression {
 public:
