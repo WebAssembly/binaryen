@@ -149,6 +149,16 @@ Same as Emscripten: MIT license.
 
 This is separate from that. `asm2wasm` focuses on compiling asm.js to WebAssembly, as emitted by Emscripten's asm.js backend. This is useful because while in the long term Emscripten hopes to use the new WebAssembly backend, the `asm2wasm` route is a very quick and easy way to generate WebAssembly output. It will also be useful for benchmarking the new backend as it progresses.
 
+* How about compiling asm.js to WebAssembly (the opposite direction of `asm2wasm`)? Wouldn't that be useful for polyfilling?
+
+It would be useful, but it is a much harder task, due to some decisions made in WebAssembly. For example, WebAssembly can have control flow nested inside expressions, which can't directly map to asm.js. It could be supported by outlining the code to another function, or to compiling it down into new basic blocks and control-flow-free instructions, but it is hard to do so in a way that is both fast to do and emits code that is fast to execute. On the other hand, compiling asm.js to WebAssembly is almost straightforward.
+
+* Can `asm2wasm` compile any asm.js code?
+
+Almost. Some decisions made in WebAssembly preclude that, for example, there are no global variables. That means that `asm2wasm` has to map asm.js global variables onto locations in memory, but then it must know of a safe zone in memory in which to do so, and that information is not directly available in asm.js.
+
+`asm2wasm` and `emcc_to_wasm.js.sh` do some integration with Emscripten in order to work around these issues, like asking Emscripten to reserve same space for the globals, etc.
+
 * Why the weird name for the project?
 
 "Binaryen" is a combination of **binary** - since WebAssembly is a binary format for the web - and **Emscripten** - with which it can integrate in order to compile C and C++ all the way to WebAssembly, via asm.js. Binaryen began as Emscripten's WebAssembly processing library (`wasm-emscripten`).
