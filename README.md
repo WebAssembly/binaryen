@@ -96,13 +96,13 @@ Set `ASM2WASM_DEBUG=1` in the env to see debug info, about asm.js functions as t
 
 ### wasm.js
 
-Run
+Run Emscripten's `emcc` command, passing it an additional flag:
 
 ```
-./emcc_to_wasm.js.sh [.c or .cpp file] [whatever other emcc flags you want]
+emcc -s 'BINARYEN="path-to-this-dir"' [whatever other emcc flags you want]
 ```
 
-That will call `emcc` and then emit `a.normal.js`, a normal asm.js build for comparison purposes, and `a.wasm.js`, which contains the entire polyfill (`asm2wasm` translator + `wasm.js` interpreter).
+(Note the need for quotes on the path, and on the entire `BINARYEN=..` argument, due to how shell argument parsing works.) The `BINARYEN` flag tells it to emit code using `wasm.js`, and where to find `wasm.js` itself. The output `*.js` file will then contain the entire polyfill (`asm2wasm` translator + `wasm.js` interpreter). The asm.js code will be in `*.asm.js`.
 
 ### C/C++ Source => asm2wasm => WebAssembly
 
@@ -114,7 +114,7 @@ emcc src.cpp -o a.html --separate-asm
 
 That will emit `a.html`, `a.js`, and `a.asm.js`. That last file is the asm.js module, which you can pass into `asm2wasm`.
 
-For basic tests, that command should work, but in general you need a few more arguments to emcc, see emcc's usage in `emcc_to_wasm.js.sh`, specifically:
+For basic tests, that command should work, but in general you need a few more arguments to emcc, see what emcc.py does when given the `BINARYEN` option, including:
 
  * `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow aliased function pointers (there is a single table).
  * `GLOBAL_BASE=1000` because WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. With that argument, we reserve the area up to `1000`.
