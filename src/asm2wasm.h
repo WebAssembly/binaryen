@@ -61,8 +61,11 @@ struct AstStackHelper {
     astStack.pop_back();
   }
   Ref getParent() {
-    assert(astStack.size() >= 2);
-    return astStack[astStack.size()-2];
+    if (astStack.size() >= 2) {
+      return astStack[astStack.size()-2];
+    } else {
+      return Ref();
+    }
   }
 };
 
@@ -118,12 +121,12 @@ private:
 
   std::map<IString, FunctionType> importedFunctionTypes;
 
-  void noteImportedFunctionCall(Ref ast, Ref parent, AsmData *asmData) {
+  void noteImportedFunctionCall(Ref ast, WasmType resultType, AsmData *asmData) {
     assert(ast[0] == CALL && ast[1][0] == NAME);
     IString importName = ast[1][1]->getIString();
     FunctionType type;
     type.name = IString((std::string("type$") + importName.str).c_str(), false); // TODO: make a list of such types
-    type.result = detectWasmType(parent, asmData);
+    type.result = resultType;
     Ref args = ast[2];
     for (unsigned i = 0; i < args->size(); i++) {
       type.params.push_back(detectWasmType(args[i], asmData));
@@ -807,16 +810,17 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         Call* ret;
         if (wasm.importsMap.find(name) != wasm.importsMap.end()) {
+          Ref parent = astStackHelper.getParent();
+          WasmType type = !!parent ? detectWasmType(parent, &asmData) : none;
 #ifndef __EMSCRIPTEN__
           // no imports yet in reference interpreter, fake it
-          AsmType asmType = detectAsmType(astStackHelper.getParent(), &asmData);
-          if (asmType == ASM_NONE) return allocator.alloc<Nop>();
-          if (asmType == ASM_INT) return allocator.alloc<Const>()->set(Literal((int32_t)0));
-          if (asmType == ASM_DOUBLE) return allocator.alloc<Const>()->set(Literal((double)0.0));
+          if (type == none) return allocator.alloc<Nop>();
+          if (type == i32) return allocator.alloc<Const>()->set(Literal((int32_t)0));
+          if (type == f64) return allocator.alloc<Const>()->set(Literal((double)0.0));
           abort();
 #else
           ret = allocator.alloc<CallImport>();
-          noteImportedFunctionCall(ast, astStackHelper.getParent(), &asmData);
+          noteImportedFunctionCall(ast, type, &asmData);
 #endif
         } else {
           ret = allocator.alloc<Call>();
