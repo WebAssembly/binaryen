@@ -30,6 +30,7 @@ IString GLOBAL("global"), NAN_("NaN"), INFINITY_("Infinity"),
         MATH("Math"),
         IMUL("imul"),
         CLZ32("clz32"),
+        FROUND("fround"),
         ASM2WASM("asm2wasm"),
         F64_REM("f64-rem");
 
@@ -117,6 +118,7 @@ private:
   std::map<IString, View> views; // name (e.g. HEAP8) => view info
   IString Math_imul; // imported name of Math.imul
   IString Math_clz32; // imported name of Math.imul
+  IString Math_fround; // imported name of Math.fround
 
   // function types. we fill in this information as we see
   // uses, in the first pass
@@ -368,6 +370,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           assert(Math_clz32.isNull());
           Math_clz32 = name;
           return;
+        } else if (imported[2] == FROUND) {
+          assert(Math_fround.isNull());
+          Math_fround = name;
+          return;
         }
       }
       std::string fullName = module[1][1]->getCString();
@@ -425,6 +431,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             // import
             addImport(name, import, WasmType::f64);
           }
+        } else if (value[0] == CALL) {
+          assert(value[1][0] == NAME && value[1][1] == Math_fround && value[2][0][0] == NUM && value[2][0][1]->getNumber() == 0);
+          allocateGlobal(name, WasmType::f32, false);
         } else if (value[0] == DOT) {
           // function import
           addImport(name, value, WasmType::none);
