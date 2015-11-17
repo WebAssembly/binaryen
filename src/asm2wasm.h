@@ -967,15 +967,35 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       return ret;
     } else if (what == SWITCH) {
       // XXX switch is still in flux in the spec repo, just emit a placeholder
-#ifndef __EMSCRIPTEN__
-      return allocator.alloc<Nop>(); // ignore in reference interpreter
-#else
       IString name = getNextId("switch");
       breakStack.push_back(name);
       auto ret = allocator.alloc<Switch>();
       ret->name = name;
-      ret->value =  process(ast[1]);
+      ret->value = process(ast[1]);
+      assert(ret->value->type == i32);
       Ref cases = ast[2];
+      bool seen = false;
+      int min = 0; // the lowest index we see; we will offset to it
+      for (unsigned i = 0; i < cases->size(); i++) {
+        Ref curr = cases[i];
+        Ref condition = curr[0];
+        if (!condition->isNull()) {
+          assert(condition[0] == NUM || condition[0] == UNARY_PREFIX);
+          int32_t index = getLiteral(condition).geti32();
+          if (!seen) {
+            seen = true;
+            min = index;
+          } else {
+            if (index < min) min = index;
+          }
+        }
+      }
+      Binary* offsetor = allocator.alloc<Binary>();
+      offsetor->op = BinaryOp::Sub;
+      offsetor->left = ret->value;
+      offsetor->right = allocator.alloc<Const>()->set(Literal(min));
+      offsetor->type = i32;
+      ret->value = offsetor;
       for (unsigned i = 0; i < cases->size(); i++) {
         Ref curr = cases[i];
         Ref condition = curr[0];
@@ -987,7 +1007,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         } else {
           assert(condition[0] == NUM || condition[0] == UNARY_PREFIX);
           int32_t index = getLiteral(condition).geti32();
-          assert(index >= 0); // TODO: apply an offset, and have an option to abort switching at all (or do it in emscripten?)
+          assert(index >= min);
+          index -= min;
+          assert(index >= 0);
           case_.name = getNextId("switch-case");
           if (ret->targets.size() <= index) {
             ret->targets.resize(index+1);
@@ -1009,7 +1031,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       // finalize
       breakStack.pop_back();
       return ret;
-#endif
     }
     abort_on("confusing expression", ast);
     return (Expression*)nullptr; // avoid warning
