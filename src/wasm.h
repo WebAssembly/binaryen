@@ -427,11 +427,12 @@ public:
     if (name.is()) o << name;
     incIndent(o, indent);
     printFullLine(o, indent, value);
-    doIndent(o, indent) << "[ ";
+    doIndent(o, indent) << "(table";
+    assert(default_.is());
     for (auto& t : targets) {
-      o << (t.is() ? t.str : "br-out") << ' ';
+      o << " (case " << (t.is() ? t : default_) << ")";
     }
-    o << "] (default " << (default_.is() ? default_.str : "br-out") << ")\n";
+    o << ") (case " << default_ << ")\n";
     for (auto& c : cases) {
       doIndent(o, indent);
       printMinorOpening(o, "case ") << c.name.str;
