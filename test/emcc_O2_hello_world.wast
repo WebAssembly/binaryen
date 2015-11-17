@@ -21,7 +21,7 @@
   (export "dynCall_ii" $dynCall_ii)
   (export "dynCall_iiii" $dynCall_iiii)
   (export "dynCall_vi" $dynCall_vi)
-  (table $b0 $___stdio_close $___stdout_write $___stdio_seek $_cleanup_418 $___stdio_write $b1 $b1)
+  (table $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $b1 $___stdio_write $b1 $b1 $b2 $b2 $b2 $b2 $_cleanup_418 $b2 $b2 $b2)
   (func $_malloc (param $i1 i32) (result i32)
     (local $i2 i32)
     (local $i3 i32)
@@ -10509,11 +10509,17 @@
               (block
                 (set_local $i8
                   (call_indirect $FUNCSIG$iiii
-                    (i32.load align=4
-                      (i32.add
-                        (get_local $i3)
-                        (i32.const 36)
+                    (i32.add
+                      (i32.and
+                        (i32.load align=4
+                          (i32.add
+                            (get_local $i3)
+                            (i32.const 36)
+                          )
+                        )
+                        (i32.const 7)
                       )
+                      (i32.const 2)
                     )
                     (get_local $i3)
                     (get_local $i1)
@@ -10596,11 +10602,17 @@
                     (i32.lt_u
                       (i32.shr_u
                         (call_indirect $FUNCSIG$iiii
-                          (i32.load align=4
-                            (i32.add
-                              (get_local $i3)
-                              (i32.const 36)
+                          (i32.add
+                            (i32.and
+                              (i32.load align=4
+                                (i32.add
+                                  (get_local $i3)
+                                  (i32.const 36)
+                                )
+                              )
+                              (i32.const 7)
                             )
+                            (i32.const 2)
                           )
                           (get_local $i3)
                           (get_local $i1)
@@ -11244,11 +11256,17 @@
             (if_else
               (i32.eq
                 (call_indirect $FUNCSIG$iiii
-                  (i32.load align=4
-                    (i32.add
-                      (get_local $i1)
-                      (i32.const 36)
+                  (i32.add
+                    (i32.and
+                      (i32.load align=4
+                        (i32.add
+                          (get_local $i1)
+                          (i32.const 36)
+                        )
+                      )
+                      (i32.const 7)
                     )
+                    (i32.const 2)
                   )
                   (get_local $i1)
                   (get_local $i4)
@@ -11314,11 +11332,17 @@
           )
           (block
             (call_indirect $FUNCSIG$iiii
-              (i32.load align=4
-                (i32.add
-                  (get_local $i1)
-                  (i32.const 36)
+              (i32.add
+                (i32.and
+                  (i32.load align=4
+                    (i32.add
+                      (get_local $i1)
+                      (i32.const 36)
+                    )
+                  )
+                  (i32.const 7)
                 )
+                (i32.const 2)
               )
               (get_local $i1)
               (i32.const 0)
@@ -11371,11 +11395,17 @@
               )
             )
             (call_indirect $FUNCSIG$iiii
-              (i32.load align=4
-                (i32.add
-                  (get_local $i1)
-                  (i32.const 40)
+              (i32.add
+                (i32.and
+                  (i32.load align=4
+                    (i32.add
+                      (get_local $i1)
+                      (i32.const 40)
+                    )
+                  )
+                  (i32.const 7)
                 )
+                (i32.const 2)
               )
               (get_local $i1)
               (i32.sub
@@ -12496,7 +12526,13 @@
   )
   (func $dynCall_iiii (param $i1 i32) (param $i2 i32) (param $i3 i32) (param $i4 i32) (result i32)
     (call_indirect $FUNCSIG$iiii
-      (get_local $i1)
+      (i32.add
+        (i32.and
+          (get_local $i1)
+          (i32.const 7)
+        )
+        (i32.const 2)
+      )
       (get_local $i2)
       (get_local $i3)
       (get_local $i4)
@@ -12594,7 +12630,13 @@
   )
   (func $dynCall_ii (param $i1 i32) (param $i2 i32) (result i32)
     (call_indirect $FUNCSIG$ii
-      (get_local $i1)
+      (i32.add
+        (i32.and
+          (get_local $i1)
+          (i32.const 1)
+        )
+        (i32.const 0)
+      )
       (get_local $i2)
     )
   )
@@ -12632,7 +12674,13 @@
   )
   (func $dynCall_vi (param $i1 i32) (param $i2 i32)
     (call_indirect $FUNCSIG$vi
-      (get_local $i1)
+      (i32.add
+        (i32.and
+          (get_local $i1)
+          (i32.const 7)
+        )
+        (i32.const 10)
+      )
       (get_local $i2)
     )
   )

@@ -25,7 +25,7 @@
   (export "dynCall_ii" $dynCall_ii)
   (export "dynCall_iiii" $dynCall_iiii)
   (export "dynCall_vi" $dynCall_vi)
-  (table $b0 $___stdio_close $___stdout_write $___stdio_seek $___stdio_write $_cleanup $b1 $b1)
+  (table $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
   (func $stackAlloc (param $size i32) (result i32)
     (local $ret i32)
     (block $topmost
@@ -2632,7 +2632,13 @@
                     )
                   )
                   (call_indirect $FUNCSIG$iiii
-                    (get_local $$5)
+                    (i32.add
+                      (i32.and
+                        (get_local $$5)
+                        (i32.const 7)
+                      )
+                      (i32.const 2)
+                    )
                     (get_local $$f)
                     (i32.const 0)
                     (i32.const 0)
@@ -2925,7 +2931,13 @@
                 )
                 (set_local $$call4
                   (call_indirect $FUNCSIG$iiii
-                    (get_local $$5)
+                    (i32.add
+                      (i32.and
+                        (get_local $$5)
+                        (i32.const 7)
+                      )
+                      (i32.const 2)
+                    )
                     (get_local $$f)
                     (get_local $$s)
                     (get_local $$l)
@@ -3052,7 +3064,13 @@
                   )
                   (set_local $$call16
                     (call_indirect $FUNCSIG$iiii
-                      (get_local $$8)
+                      (i32.add
+                        (i32.and
+                          (get_local $$8)
+                          (i32.const 7)
+                        )
+                        (i32.const 2)
+                      )
                       (get_local $$f)
                       (get_local $$s)
                       (get_local $$i$0$lcssa36)
@@ -4578,7 +4596,13 @@
             )
           )
           (call_indirect $FUNCSIG$iiii
-            (get_local $$2)
+            (i32.add
+              (i32.and
+                (get_local $$2)
+                (i32.const 7)
+              )
+              (i32.const 2)
+            )
             (get_local $$f)
             (i32.const 0)
             (i32.const 0)
@@ -4675,7 +4699,13 @@
                 )
               )
               (call_indirect $FUNCSIG$iiii
-                (get_local $$6)
+                (i32.add
+                  (i32.and
+                    (get_local $$6)
+                    (i32.const 7)
+                  )
+                  (i32.const 2)
+                )
                 (get_local $$f)
                 (get_local $$sub$ptr$sub)
                 (i32.const 1)
@@ -34174,13 +34204,25 @@
   )
   (func $dynCall_ii (param $index i32) (param $a1 i32) (result i32)
     (call_indirect $FUNCSIG$ii
-      (get_local $index)
+      (i32.add
+        (i32.and
+          (get_local $index)
+          (i32.const 1)
+        )
+        (i32.const 0)
+      )
       (get_local $a1)
     )
   )
   (func $dynCall_iiii (param $index i32) (param $a1 i32) (param $a2 i32) (param $a3 i32) (result i32)
     (call_indirect $FUNCSIG$iiii
-      (get_local $index)
+      (i32.add
+        (i32.and
+          (get_local $index)
+          (i32.const 7)
+        )
+        (i32.const 2)
+      )
       (get_local $a1)
       (get_local $a2)
       (get_local $a3)
@@ -34188,7 +34230,13 @@
   )
   (func $dynCall_vi (param $index i32) (param $a1 i32)
     (call_indirect $FUNCSIG$vi
-      (get_local $index)
+      (i32.add
+        (i32.and
+          (get_local $index)
+          (i32.const 7)
+        )
+        (i32.const 10)
+      )
       (get_local $a1)
     )
   )
