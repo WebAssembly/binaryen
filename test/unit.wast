@@ -1,5 +1,6 @@
 (module
   (memory 16777216 16777216)
+  (import $f64-rem "asm2wasm" "f64-rem"  (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
   (table $z $big_negative $importedDoubles $z)
   (func $big_negative
@@ -208,6 +209,12 @@
           (nop)
         )
       )
+    )
+  )
+  (func $frem (result f64)
+    (call_import $f64-rem
+      (f64.const 5.5)
+      (f64.const 1.2)
     )
   )
   (func $z

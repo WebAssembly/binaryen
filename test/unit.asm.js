@@ -56,6 +56,9 @@ function () {
       case 5: return 51;
     }
   }
+  function frem() {
+    return +(5.5 % 1.2);
+  }
 
   function z() {
   }
