@@ -81,7 +81,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
       var name = Pointer_stringify($0);
       Module['asmExports'][name] = function() {
         Module['tempArguments'] = Array.prototype.slice.call(arguments);
-        return Module['_call_from_js']($0);
+        Module['_call_from_js']($0);
+        return Module['tempReturn'];
       };
     }, curr->name.str);
   }
@@ -215,7 +216,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_mapped_globals() {
 }
 
 // Does a call from js into an export of the module.
-extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
+extern "C" void EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
 #ifdef WASM_JS_DEBUG
   std::cout << "call_from_js " << target << '\n';
 #endif
@@ -243,10 +244,10 @@ extern "C" double EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
 #ifdef WASM_JS_DEBUG
   std::cout << "call_from_js returning " << ret << '\n';
 #endif
-  if (ret.type == none) return 0;
-  if (ret.type == i32) return ret.i32;
-  if (ret.type == f32) return ret.f32;
-  if (ret.type == f64) return ret.f64;
-  abort();
+  if (ret.type == none) EM_ASM({ Module['tempReturn'] = undefined });
+  else if (ret.type == i32) EM_ASM_({ Module['tempReturn'] = $0 }, ret.i32);
+  else if (ret.type == f32) EM_ASM_({ Module['tempReturn'] = $0 }, ret.f32);
+  else if (ret.type == f64) EM_ASM_({ Module['tempReturn'] = $0 }, ret.f64);
+  else abort();
 }
 
