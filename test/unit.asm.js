@@ -45,6 +45,17 @@ function () {
     var J = 0.0;
     J = (0.1, 5.1) - (3.2, 4.2);
   }
+  function switcher(x) {
+    x = x | 0;
+    switch (x | 0) {
+      case 1: return 1;
+      case 2: return 2;
+    }
+    switch (x | 0) {
+      case 12: return 121;
+      case 5: return 51;
+    }
+  }
 
   function z() {
   }

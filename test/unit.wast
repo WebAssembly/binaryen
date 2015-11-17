@@ -166,6 +166,50 @@
       )
     )
   )
+  (func $switcher (param $x i32) (result i32)
+    (block $topmost
+      (tableswitch $switch$0
+        (i32.sub
+          (get_local $x)
+          (i32.const 1)
+        )
+        (table (case $switch-case$1) (case $switch-case$2)) (case $switch-default$3)
+        (case switch-case$1
+          (br $topmost
+            (i32.const 1)
+          )
+        )
+        (case switch-case$2
+          (br $topmost
+            (i32.const 2)
+          )
+        )
+        (case switch-default$3
+          (nop)
+        )
+      )
+      (tableswitch $switch$4
+        (i32.sub
+          (get_local $x)
+          (i32.const 5)
+        )
+        (table (case $switch-case$6) (case $switch-default$7) (case $switch-default$7) (case $switch-default$7) (case $switch-default$7) (case $switch-default$7) (case $switch-default$7) (case $switch-case$5)) (case $switch-default$7)
+        (case switch-case$5
+          (br $topmost
+            (i32.const 121)
+          )
+        )
+        (case switch-case$6
+          (br $topmost
+            (i32.const 51)
+          )
+        )
+        (case switch-default$7
+          (nop)
+        )
+      )
+    )
+  )
   (func $z
     (nop)
   )
