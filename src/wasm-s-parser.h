@@ -1095,7 +1095,11 @@ private:
     } else {
       onError();
     }
-    assert(s.size() == 5);
+    if (s.size() > 5) {
+      Element& result = *s[5];
+      assert(result[0]->str() == RESULT);
+      im->type.result = stringToWasmType(result[1]->str());
+    }
     wasm.addImport(im);
   }
 
