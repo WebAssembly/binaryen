@@ -29,7 +29,9 @@ IString GLOBAL("global"), NAN_("NaN"), INFINITY_("Infinity"),
         IMPOSSIBLE_CONTINUE("impossible-continue"),
         MATH("Math"),
         IMUL("imul"),
-        CLZ32("clz32");
+        CLZ32("clz32"),
+        ASM2WASM("asm2wasm"),
+        F64_REM("f64-rem");
 
 
 static void abort_on(std::string why) {
@@ -280,7 +282,7 @@ private:
       if (isInteger) {
         { binary = isUnsigned ? BinaryOp::RemU : BinaryOp::RemS; return true; }
       }
-      abort_on("non-integer rem");
+      { binary = BinaryOp::RemS; return true; } // XXX no floating-point remainder op, this must be handled by the caller
     }
     if (op == GE) {
       if (isInteger) {
@@ -508,7 +510,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     Import& import = *pair.second;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       import.type = importedFunctionTypes[name];
-    } else {
+    } else if (import.module != ASM2WASM) { // special-case the special module
       // never actually used
       toErase.push_back(name);
     }
@@ -652,6 +654,28 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         ret->left = process(ast[2]);
         ret->right = process(ast[3]);
         ret->type = ret->left->type;
+        if (binary == BinaryOp::RemS && isWasmTypeFloat(ret->type)) {
+          // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
+          CallImport *call = allocator.alloc<CallImport>();
+          call->target = F64_REM;
+          call->operands.push_back(ret->left);
+          call->operands.push_back(ret->right);
+          call->type = f64;
+          static bool addedImport = false;
+          if (!addedImport) {
+            addedImport = true;
+            auto import = allocator.alloc<Import>(); // f64-rem = asm2wasm.f64-rem;
+            import->name = F64_REM;
+            import->module = ASM2WASM;
+            import->base = F64_REM;
+            import->type.name = F64_REM;
+            import->type.result = f64;
+            import->type.params.push_back(f64);
+            import->type.params.push_back(f64);
+            wasm.addImport(import);
+          }
+          return call;
+        }
         return ret;
       } else {
         auto ret = allocator.alloc<Compare>();

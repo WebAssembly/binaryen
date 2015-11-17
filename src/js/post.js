@@ -28,6 +28,11 @@
   var info = wasmJS['info'] = {
     global: null,
     env: null,
+    asm2wasm: { // special asm2wasm imports
+      "f64-rem": function(x, y) {
+        return x % y;
+      },
+    },
     parent: Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
   };
 
