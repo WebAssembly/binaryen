@@ -137,10 +137,6 @@ The `check.py` script supports some options:
  * If tests are provided, we run exactly those. If none are provided, we run them all.
  * `asm2wasm` tests require no dependencies. `wasm.js` tests require `emcc` and `nodejs` in the path.
 
-## License & Contributing
-
-Same as Emscripten: MIT license.
-
 (`src/emscripten-optimizer` is synced with `tools/optimizer/` in the main emscripten repo, for convenience)
 
 ## FAQ
