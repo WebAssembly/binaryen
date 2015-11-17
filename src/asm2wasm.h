@@ -96,6 +96,10 @@ class Asm2WasmBuilder {
     MappedGlobal(unsigned address, WasmType type, bool import, IString module, IString base) : address(address), type(type), import(import), module(module), base(base) {}
   };
 
+  // function table
+  std::map<IString, int> functionTableStarts; // each asm function table gets a range in the one wasm table, starting at a location
+  std::map<CallIndirect*, IString> callIndirects; // track these, as we need to fix them after we know the functionTableStarts. this maps call => its function table
+
 public:
   std::map<IString, MappedGlobal> mappedGlobals;
 
@@ -402,7 +406,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
   };
 
-  // first pass - do almost everything, but function imports
+  // first pass - do almost everything, but function imports and indirect calls
 
   for (unsigned i = 1; i < body->size(); i++) {
     Ref curr = body[i];
@@ -469,24 +473,15 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           assert(views.find(name) == views.end());
           views.emplace(name, View(bytes, integer, signed_, asmType));
         } else if (value[0] == ARRAY) {
-          // function table. we "merge" them, so e.g.   [foo, b1] , [b2, bar]  =>  [foo, bar] , assuming b* are the aborting thunks
-          // when minified, we can't tell from the name b\d+, but null thunks appear multiple times in a table; others never do
-          // TODO: we can drop some b*s at the end of the table
+          // function table. we merge them into one big table, so e.g.   [foo, b1] , [b2, bar]  =>  [foo, b1, b2, bar]
+          // TODO: when not using aliasing function pointers, we could merge them by noticing that
+          //       index 0 in each table is the null func, and each other index should only have one
+          //       non-null func. However, that breaks down when function pointer casts are emulated.
+          functionTableStarts[name] = wasm.table.names.size(); // this table starts here
           Ref contents = value[1];
-          std::map<IString, unsigned> counts; // name -> how many times seen
           for (unsigned k = 0; k < contents->size(); k++) {
             IString curr = contents[k][1]->getIString();
-            counts[curr]++;
-          }
-          for (unsigned k = 0; k < contents->size(); k++) {
-            IString curr = contents[k][1]->getIString();
-            if (wasm.table.names.size() <= k) {
-              wasm.table.names.push_back(curr);
-            } else {
-              if (counts[curr] == 1) { // if just one appearance, not a null thunk
-                wasm.table.names[k] = curr;
-              }
-            }
+            wasm.table.names.push_back(curr);
           }
         } else {
           abort_on("invalid var element", pair);
@@ -512,7 +507,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
   }
 
-  // second pass - function imports
+  // second pass. first, function imports
 
   std::vector<IString> toErase;
 
@@ -529,6 +524,21 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   for (auto curr : toErase) {
     wasm.removeImport(curr);
+  }
+
+  // finalize indirect calls
+
+  for (auto& pair : callIndirects) {
+    CallIndirect* call = pair.first;
+    IString tableName = pair.second;
+    assert(functionTableStarts.find(tableName) != functionTableStarts.end());
+    auto sub = allocator.alloc<Binary>();
+    // note that the target is already masked, so we just offset it, we don't need to guard against overflow (which would be an error anyhow)
+    sub->op = Add;
+    sub->left = call->target;
+    sub->right = allocator.alloc<Const>()->set(Literal((int32_t)functionTableStarts[tableName]));
+    sub->type = WasmType::i32;
+    call->target = sub;
   }
 }
 
@@ -871,12 +881,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto ret = allocator.alloc<CallIndirect>();
       Ref target = ast[1];
       assert(target[0] == SUB && target[1][0] == NAME && target[2][0] == BINARY && target[2][1] == AND && target[2][3][0] == NUM); // FUNCTION_TABLE[(expr) & mask]
-      ret->target = process(target[2][2]);
+      ret->target = process(target[2]); // TODO: as an optimization, we could look through the mask
       Ref args = ast[2];
       for (unsigned i = 0; i < args->size(); i++) {
         ret->operands.push_back(process(args[i]));
       }
       ret->type = getFunctionType(astStackHelper.getParent(), ret->operands);
+      callIndirects[ret] = target[1][1]->getIString(); // we need to fix this up later, when we know how asm function tables are layed out inside the wasm table.
       return ret;
     } else if (what == RETURN) {
       WasmType type = !!ast[1] ? detectWasmType(ast[1], &asmData) : none;
