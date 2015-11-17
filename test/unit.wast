@@ -217,6 +217,21 @@
       (f64.const 1.2)
     )
   )
+  (func $big_uint_div_u (result i32)
+    (local $x i32)
+    (block $topmost
+      (set_local $x
+        (i32.and
+          (i32.div_u
+            (i32.const -2147483648)
+            (i32.const 2)
+          )
+          (i32.const -1)
+        )
+      )
+      (get_local $x)
+    )
+  )
   (func $z
     (nop)
   )

@@ -59,6 +59,11 @@ function () {
   function frem() {
     return +(5.5 % 1.2);
   }
+  function big_uint_div_u() {
+    var x = 0;
+    x = (4294967295 / 2)&-1;
+    return x | 0;
+  }
 
   function z() {
   }

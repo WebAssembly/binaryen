@@ -251,9 +251,8 @@ private:
     return asmToWasmType(detectAsmType(ast, data));
   }
 
-  bool isUnsignedCoercion(Ref ast) { // TODO: use detectSign?
-    if (ast[0] == BINARY && ast[1] == TRSHIFT) return true;
-    return false;
+  bool isUnsignedCoercion(Ref ast) {
+    return detectSign(ast) == ASM_UNSIGNED;
   }
 
   // an asm.js binary op can either be a binary or a relational in wasm
