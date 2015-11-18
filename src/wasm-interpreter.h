@@ -57,7 +57,7 @@ public:
     virtual Literal load(Load* load, size_t addr) = 0;
     virtual void store(Store* store, size_t addr, Literal value) = 0;
     virtual void growMemory(size_t oldSize, size_t newSize) = 0;
-    virtual void trap() = 0;
+    virtual void trap(const char* why) = 0;
   };
 
   Module& wasm;
@@ -69,7 +69,7 @@ public:
 
   Literal callExport(IString name, LiteralList& arguments) {
     Export *export_ = wasm.exportsMap[name];
-    if (!export_) externalInterface->trap();
+    if (!export_) externalInterface->trap("callExport not found");
     return callFunction(export_->value, arguments);
   }
 
@@ -284,10 +284,10 @@ private:
         Flow target = visit(curr->target);
         if (target.breaking()) return target;
         size_t index = target.value.geti32();
-        if (index >= instance.wasm.table.names.size()) trap();
+        if (index >= instance.wasm.table.names.size()) trap("callIndirect: overflow");
         Name name = instance.wasm.table.names[index];
         Function *func = instance.wasm.functionsMap[name];
-        if (func->type.is() && func->type != curr->type->name) trap();
+        if (func->type.is() && func->type != curr->type->name) trap("callIndirect: bad type");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
@@ -413,21 +413,21 @@ private:
             case Sub:      return Literal(l - r);
             case Mul:      return Literal(l * r);
             case DivS: {
-              if (r == 0) trap();
-              if (l == INT32_MIN && r == -1) trap(); // signed division overflow
+              if (r == 0) trap("i32.div_s by 0");
+              if (l == INT32_MIN && r == -1) trap("i32.div_s overflow"); // signed division overflow
               return Literal(l / r);
             }
             case DivU: {
-              if (r == 0) trap();
+              if (r == 0) trap("i32.div_u by 0");
               return Literal(int32_t(uint32_t(l) / uint32_t(r)));
             }
             case RemS: {
-              if (r == 0) trap();
+              if (r == 0) trap("i32.rem_s by 0");
               if (l == INT32_MIN && r == -1) return Literal(int32_t(0));
               return Literal(l % r);
             }
             case RemU: {
-              if (r == 0) trap();
+              if (r == 0) trap("i32.rem_u by 0");
               return Literal(int32_t(uint32_t(l) % uint32_t(r)));
             }
             case And:      return Literal(l & r);
@@ -454,21 +454,21 @@ private:
             case Sub:      return Literal(l - r);
             case Mul:      return Literal(l * r);
             case DivS: {
-              if (r == 0) trap();
-              if (l == LLONG_MIN && r == -1) trap(); // signed division overflow
+              if (r == 0) trap("i64.div_s by 0");
+              if (l == LLONG_MIN && r == -1) trap("i64.div_s overflow"); // signed division overflow
               return Literal(l / r);
             }
             case DivU: {
-              if (r == 0) trap();
+              if (r == 0) trap("i64.div_u by 0");
               return Literal(int64_t(uint64_t(l) / uint64_t(r)));
             }
             case RemS: {
-              if (r == 0) trap();
+              if (r == 0) trap("i64.rem_s by 0");
               if (l == LLONG_MIN && r == -1) return Literal(int64_t(0));
               return Literal(l % r);
             }
             case RemU: {
-              if (r == 0) trap();
+              if (r == 0) trap("i64.rem_u by 0");
               return Literal(int64_t(uint64_t(l) % uint64_t(r)));
             }
             case And:      return Literal(l & r);
@@ -617,26 +617,26 @@ private:
           case TruncSFloat32:
           case TruncSFloat64: {
             double val = curr->op == TruncSFloat32 ? value.getf32() : value.getf64();
-            if (isnan(val)) trap();
+            if (isnan(val)) trap("truncSFloat of nan");
             if (curr->type == i32) {
-              if (val > (double)INT_MAX || val < (double)INT_MIN) trap();
+              if (val > (double)INT_MAX || val < (double)INT_MIN) trap("truncSFloat overflow");
               return Literal(int32_t(val));
             } else {
               int64_t converted = val;
-              if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap();
+              if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap("truncSFloat overflow");
               return Literal(converted);
             }
           }
           case TruncUFloat32:
           case TruncUFloat64: {
             double val = curr->op == TruncUFloat32 ? value.getf32() : value.getf64();
-            if (isnan(val)) trap();
+            if (isnan(val)) trap("truncUFloat of nan");
             if (curr->type == i32) {
-              if (val > (double)UINT_MAX || val <= (double)-1) trap();
+              if (val > (double)UINT_MAX || val <= (double)-1) trap("truncUFloat overflow");
               return Literal(uint32_t(val));
             } else {
               uint64_t converted = val;
-              if (converted < val - 1 || val <= (double)-1) trap();
+              if (converted < val - 1 || val <= (double)-1) trap("truncUFloat overflow");
               return Literal(converted);
             }
           }
@@ -683,11 +683,11 @@ private:
             Flow flow = visit(curr->operands[0]);
             if (flow.breaking()) return flow;
             uint32_t delta = flow.value.geti32();
-            if (delta % pageSize != 0) trap();
-            if (delta > uint32_t(-1) - pageSize) trap();
-            if (instance.memorySize >= uint32_t(-1) - delta) trap();
+            if (delta % pageSize != 0) trap("growMemory: delta not multiple");
+            if (delta > uint32_t(-1) - pageSize) trap("growMemory: delta relatively too big");
+            if (instance.memorySize >= uint32_t(-1) - delta) trap("growMemory: delta objectively too big");
             uint32_t newSize = instance.memorySize + delta;
-            if (newSize > instance.wasm.memory.max) trap();
+            if (newSize > instance.wasm.memory.max) trap("growMemory: exceeds max");
             instance.externalInterface->growMemory(instance.memorySize, newSize);
             instance.memorySize = newSize;
             return Literal();
@@ -706,7 +706,7 @@ private:
       }
       Flow visitUnreachable(Unreachable *curr) override {
         NOTE_ENTER("Unreachable");
-        trap();
+        trap("unreachable");
         return Flow();
       }
 
@@ -746,12 +746,12 @@ private:
         return Literal(int64_t(Literal(lnan ? l : r).reinterpreti64() | 0x8000000000000LL)).reinterpretf64();
       }
 
-      void trap() {
-        instance.externalInterface->trap();
+      void trap(const char* why) {
+        instance.externalInterface->trap(why);
       }
     };
 
-    if (callDepth > maxCallDepth) externalInterface->trap();
+    if (callDepth > maxCallDepth) externalInterface->trap("stack limit");
     callDepth++;
 
     Function *function = wasm.functionsMap[name];
@@ -777,11 +777,11 @@ private:
   template<class LS>
   size_t getFinalAddress(LS *curr, Literal ptr) {
     uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
-    if (memorySize < curr->offset) externalInterface->trap();
-    if (addr > memorySize - curr->offset) externalInterface->trap();
+    if (memorySize < curr->offset) externalInterface->trap("offset > memory");
+    if (addr > memorySize - curr->offset) externalInterface->trap("final > memory");
     addr += curr->offset;
-    if (curr->bytes > memorySize) externalInterface->trap();
-    if (addr > memorySize - curr->bytes) externalInterface->trap();
+    if (curr->bytes > memorySize) externalInterface->trap("bytes > memory");
+    if (addr > memorySize - curr->bytes) externalInterface->trap("highest > memory");
     return addr;
   }
 

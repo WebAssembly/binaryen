@@ -188,10 +188,10 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
       abort();
     }
 
-    void trap() override {
-      EM_ASM({
-        abort("wasm trap!");
-      });
+    void trap(const char* why) override {
+      EM_ASM_({
+        abort("wasm trap: " + Pointer_stringify($0));
+      }, why);
     }
   };
 

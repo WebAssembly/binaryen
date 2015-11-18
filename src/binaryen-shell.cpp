@@ -116,7 +116,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   jmp_buf trapState;
 
-  void trap() override {
+  void trap(const char* why) override {
+    std::cerr << "[trap " << why << "]\n";
     longjmp(trapState, 1);
   }
 };
