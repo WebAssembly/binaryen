@@ -346,6 +346,9 @@ private:
         assert(isInteger32(num));
         return Literal((int32_t)num);
       }
+      if (ast[1] == PLUS && ast[2][0] == UNARY_PREFIX && ast[2][1] == MINUS && ast[2][2][0] == NUM) {
+        return Literal((double)-ast[2][2][1]->getNumber());
+      }
       if (ast[1] == MINUS && ast[2][0] == UNARY_PREFIX && ast[2][1] == PLUS && ast[2][2][0] == NUM) {
         return Literal((double)-ast[2][2][1]->getNumber());
       }
@@ -785,12 +788,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       return ret;
     } else if (what == UNARY_PREFIX) {
       if (ast[1] == PLUS) {
-        if (ast[2][0] == NUM) {
-          auto ret = allocator.alloc<Const>();
-          ret->value.type = WasmType::f64;
-          ret->value.f64 = ast[2][1]->getNumber();
-          ret->type = ret->value.type;
-          return ret;
+        Literal literal = checkLiteral(ast);
+        if (literal.type != none) {
+          return allocator.alloc<Const>()->set(literal);
         }
         auto ret = process(ast[2]); // we are a +() coercion
         if (ret->type == i32) {

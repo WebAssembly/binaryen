@@ -75,6 +75,9 @@ function () {
     Math_fround(5.0);
     Math_fround(0.0);
   }
+  function negZero() {
+    return +-0;
+  }
 
   function z() {
   }

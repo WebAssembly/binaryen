@@ -8,9 +8,7 @@
     (local $temp f64)
     (block
       (set_local $temp
-        (f64.convert_s/i32
-          (i32.const -2147483648)
-        )
+        (f64.const -2147483648)
       )
       (set_local $temp
         (f64.const -2147483648)
@@ -246,6 +244,9 @@
       (f32.const 5)
       (f32.const 0)
     )
+  )
+  (func $negZero (result f64)
+    (f64.const -0)
   )
   (func $z
     (nop)
