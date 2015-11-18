@@ -102,6 +102,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
       for (auto& argument : arguments) {
         if (argument.type == i32) {
           EM_ASM_({ Module['tempArguments'].push($0) }, argument.geti32());
+        } else if (argument.type == f32) {
+          EM_ASM_({ Module['tempArguments'].push($0) }, argument.getf32());
         } else if (argument.type == f64) {
           EM_ASM_({ Module['tempArguments'].push($0) }, argument.getf64());
         } else {
