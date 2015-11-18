@@ -236,6 +236,7 @@ class SExpressionWasmBuilder {
   MixedArena allocator;
   std::function<void ()> onError;
   int functionCounter;
+  std::vector<Call*> calls; // we only know call types afterwards, so we set their type in a post-pass
 
 public:
   // Assumes control of and modifies the input.
@@ -244,6 +245,11 @@ public:
     for (unsigned i = 1; i < module.size(); i++) {
       parseModuleElement(*module[i]);
     }
+    // post-pass, fix up call types
+    for (auto call : calls) {
+      call->type = wasm.functionsMap[call->target]->result;
+    }
+    calls.clear();
   }
 
 private:
@@ -949,6 +955,7 @@ private:
 
   Expression* makeCall(Element& s) {
     auto ret = allocator.alloc<Call>();
+    calls.push_back(ret);
     ret->target = s[1]->str();
     parseCallOperands(s, 2, ret);
     return ret;
