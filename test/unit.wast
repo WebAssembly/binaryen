@@ -1,5 +1,6 @@
 (module
   (memory 16777216 16777216)
+  (import $f64-to-int "asm2wasm" "f64-to-int"  (param f64) (result i32))
   (import $f64-rem "asm2wasm" "f64-rem"  (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
   (table $z $big_negative $z $z $w $w $importedDoubles $w)
@@ -133,7 +134,7 @@
     (local $d f64)
     (block
       (set_local $i
-        (i32.trunc_s/f64
+        (call_import $f64-to-int
           (get_local $d)
         )
       )

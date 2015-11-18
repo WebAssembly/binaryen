@@ -32,7 +32,8 @@ IString GLOBAL("global"), NAN_("NaN"), INFINITY_("Infinity"),
         CLZ32("clz32"),
         FROUND("fround"),
         ASM2WASM("asm2wasm"),
-        F64_REM("f64-rem");
+        F64_REM("f64-rem"),
+        F64_TO_INT("f64-to-int");
 
 
 static void abort_on(std::string why) {
@@ -802,10 +803,30 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else if (ast[1] == B_NOT) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2][0] == UNARY_PREFIX && ast[2][1] == B_NOT) {
+#if 0
           auto ret = allocator.alloc<Convert>();
           ret->op = TruncSFloat64; // equivalent to U, except for error handling, which asm.js doesn't have anyhow
           ret->value = process(ast[2][2]);
           ret->type = WasmType::i32;
+          return ret;
+#endif
+          // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
+          CallImport *ret = allocator.alloc<CallImport>();
+          ret->target = F64_TO_INT;
+          ret->operands.push_back(process(ast[2][2]));
+          ret->type = i32;
+          static bool addedImport = false;
+          if (!addedImport) {
+            addedImport = true;
+            auto import = allocator.alloc<Import>(); // f64-to-int = asm2wasm.f64-to-int;
+            import->name = F64_TO_INT;
+            import->module = ASM2WASM;
+            import->base = F64_TO_INT;
+            import->type.name = F64_TO_INT;
+            import->type.result = i32;
+            import->type.params.push_back(f64);
+            wasm.addImport(import);
+          }
           return ret;
         }
         // no bitwise unary not, so do xor with -1

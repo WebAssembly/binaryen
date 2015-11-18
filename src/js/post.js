@@ -32,6 +32,9 @@
       "f64-rem": function(x, y) {
         return x % y;
       },
+      "f64-to-int": function(x) {
+        return x | 0;
+      },
     },
     parent: Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
   };

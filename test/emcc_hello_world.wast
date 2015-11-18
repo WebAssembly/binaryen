@@ -3,6 +3,7 @@
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$vi (func (param i32)))
+  (import $f64-to-int "asm2wasm" "f64-to-int"  (param f64) (result i32))
   (export "_i64Subtract" $_i64Subtract)
   (export "_free" $_free)
   (export "_main" $_main)
@@ -9642,7 +9643,7 @@
                             (loop $while-out$53 $while-in$54
                               (block
                                 (set_local $$conv116$i
-                                  (i32.trunc_s/f64
+                                  (call_import $f64-to-int
                                     (get_local $$y$addr$2$i)
                                   )
                                 )
@@ -10110,7 +10111,7 @@
                           (block
                             (set_local $$conv216$i
                               (i32.shr_u
-                                (i32.trunc_s/f64
+                                (call_import $f64-to-int
                                   (get_local $$y$addr$4$i)
                                 )
                                 (i32.const 0)
