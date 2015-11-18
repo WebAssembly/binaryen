@@ -137,12 +137,16 @@ private:
         doIndent(std::cout, indent);
         std::cout << "visit " << name << " :\n";
         indent++;
-        //doIndent(std::cout, indent);
-        //expression->print(std::cout, indent) << '\n';
-        //indent++;
+#if WASM_INTERPRETER_DEBUG == 2
+        doIndent(std::cout, indent);
+        expression->print(std::cout, indent) << '\n';
+        indent++;
+#endif
       }
       ~IndentHandler() {
-        //indent--;
+#if WASM_INTERPRETER_DEBUG == 2
+        indent--;
+#endif
         indent--;
         doIndent(std::cout, indent);
         std::cout << "exit " << name << '\n';
