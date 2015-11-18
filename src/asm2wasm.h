@@ -359,6 +359,12 @@ private:
     return ret;
   }
 
+  void fixCallType(Expression* call, WasmType type) {
+    if (call->is<Call>()) call->type = type;
+    if (call->is<CallImport>()) call->type = type;
+    else if (call->is<CallIndirect>()) call->type = type;
+  }
+
   Function* processFunction(Ref ast);
 };
 
@@ -672,7 +678,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     } else if (what == BINARY) {
       if (ast[1] == OR && ast[3][0] == NUM && ast[3][1]->getNumber() == 0) {
         auto ret = process(ast[2]); // just look through the ()|0 coercion
-        ret->type = WasmType::i32; // we add it here for e.g. call coercions
+        fixCallType(ret, i32);
         return ret;
       }
       BinaryOp binary;
@@ -791,7 +797,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         assert(childType == ASM_NONE || childType == ASM_DOUBLE); // e.g. a coercion on a call or for a return
         auto ret = process(ast[2]); // just look through the +() coercion
-        ret->type = WasmType::f64; // we add it here for e.g. call coercions
+        fixCallType(ret, f64);
         return ret;
       } else if (ast[1] == MINUS) {
         if (ast[2][0] == NUM || (ast[2][0] == UNARY_PREFIX && ast[2][1] == PLUS && ast[2][2][0] == NUM)) {
