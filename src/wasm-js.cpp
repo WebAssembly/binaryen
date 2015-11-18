@@ -153,7 +153,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
         abort();
       } else {
         if (load->bytes == 4) {
-          return Literal(EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF32'][$0 >> 2] }, addr)); // XXX expands into double
+          return Literal((float)EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF32'][$0 >> 2] }, addr));
         } else if (load->bytes == 8) {
           return Literal(EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF64'][$0 >> 3] }, addr));
         }
