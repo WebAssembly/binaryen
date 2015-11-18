@@ -233,6 +233,20 @@
       (get_local $x)
     )
   )
+  (func $fr (param $x f32)
+    (local $y f32)
+    (local $z f64)
+    (block
+      (f32.demote/f64
+        (get_local $z)
+      )
+      (get_local $y)
+      (f32.const 5)
+      (f32.const 0)
+      (f32.const 5)
+      (f32.const 0)
+    )
+  )
   (func $z
     (nop)
   )

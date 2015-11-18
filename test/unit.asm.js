@@ -4,6 +4,7 @@ function () {
   var t = global.NaN, u = global.Infinity;
   var Int = 0;
   var Double = 0.0;
+  var Math_fround = global.Math.fround;
 
   function big_negative() {
     var temp = 0.0;
@@ -63,6 +64,16 @@ function () {
     var x = 0;
     x = (4294967295 / 2)&-1;
     return x | 0;
+  }
+  function fr(x) {
+    x = Math_fround(x);
+    var y = Math_fround(0), z = 0.0;
+    Math_fround(z);
+    Math_fround(y);
+    Math_fround(5);
+    Math_fround(0);
+    Math_fround(5.0);
+    Math_fround(0.0);
   }
 
   function z() {

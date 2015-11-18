@@ -334,10 +334,13 @@ private:
 
   std::map<unsigned, Ref> tempNums;
 
-  Literal getLiteral(Ref ast) {
+  Literal checkLiteral(Ref ast) {
     if (ast[0] == NUM) {
       return Literal((int32_t)ast[1]->getInteger());
     } else if (ast[0] == UNARY_PREFIX) {
+      if (ast[1] == PLUS && ast[2][0] == NUM) {
+        return Literal((double)ast[2][1]->getNumber());
+      }
       if (ast[1] == MINUS && ast[2][0] == NUM) {
         double num = -ast[2][1]->getNumber();
         assert(isInteger32(num));
@@ -347,7 +350,13 @@ private:
         return Literal((double)-ast[2][2][1]->getNumber());
       }
     }
-    abort();
+    return Literal();
+  }
+
+  Literal getLiteral(Ref ast) {
+    Literal ret = checkLiteral(ast);
+    if (ret.type == none) abort();
+    return ret;
   }
 
   Function* processFunction(Ref ast);
@@ -878,6 +887,28 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->op = Clz;
           ret->value = process(ast[2][0]);
           ret->type = WasmType::i32;
+          return ret;
+        }
+        if (name == Math_fround) {
+          assert(ast[2]->size() == 1);
+          Literal lit = checkLiteral(ast[2][0]);
+          if (lit.type == i32) {
+            return allocator.alloc<Const>()->set(Literal((float)lit.geti32()));
+          } else if (lit.type == f64) {
+            return allocator.alloc<Const>()->set(Literal((float)lit.getf64()));
+          }
+          auto ret = allocator.alloc<Convert>();
+          ret->value = process(ast[2][0]);
+          if (ret->value->type == f64) {
+            ret->op = DemoteFloat64;
+          } else if (ret->value->type == i32) {
+            ret->op = ConvertSInt32;
+          } else if (ret->value->type == f32) {
+            return ret->value;
+          } else {
+            abort_on("confusing fround target", ast[2][0]);
+          }
+          ret->type = WasmType::f32;
           return ret;
         }
         Call* ret;
