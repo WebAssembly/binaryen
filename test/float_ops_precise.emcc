@@ -1,0 +1,1 @@
+["-s", "ASSERTIONS=0", "-s", "PRECISE_F32=1"]
