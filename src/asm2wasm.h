@@ -780,23 +780,21 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->type = ret->value.type;
           return ret;
         }
-        AsmType childType = detectAsmType(ast[2], &asmData);
-        if (childType == ASM_INT) {
-          auto ret = allocator.alloc<Convert>();
-          ret->op = isUnsignedCoercion(ast[2]) ? ConvertUInt32 : ConvertSInt32;
-          ret->value = process(ast[2]);
-          ret->type = WasmType::f64;
-          return ret;
+        auto ret = process(ast[2]); // we are a +() coercion
+        if (ret->type == i32) {
+          auto conv = allocator.alloc<Convert>();
+          conv->op = isUnsignedCoercion(ast[2]) ? ConvertUInt32 : ConvertSInt32;
+          conv->value = ret;
+          conv->type = WasmType::f64;
+          return conv;
         }
-        if (childType == ASM_FLOAT) {
-          auto ret = allocator.alloc<Convert>();
-          ret->op = PromoteFloat32;
-          ret->value = process(ast[2]);
-          ret->type = WasmType::f64;
-          return ret;
+        if (ret->type == f32) {
+          auto conv = allocator.alloc<Convert>();
+          conv->op = PromoteFloat32;
+          conv->value = ret;
+          conv->type = WasmType::f64;
+          return conv;
         }
-        assert(childType == ASM_NONE || childType == ASM_DOUBLE); // e.g. a coercion on a call or for a return
-        auto ret = process(ast[2]); // just look through the +() coercion
         fixCallType(ret, f64);
         return ret;
       } else if (ast[1] == MINUS) {
