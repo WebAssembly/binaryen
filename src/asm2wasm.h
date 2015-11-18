@@ -33,7 +33,8 @@ IString GLOBAL("global"), NAN_("NaN"), INFINITY_("Infinity"),
         FROUND("fround"),
         ASM2WASM("asm2wasm"),
         F64_REM("f64-rem"),
-        F64_TO_INT("f64-to-int");
+        F64_TO_INT("f64-to-int"),
+        DEBUGGER("debugger");
 
 
 static void abort_on(std::string why) {
@@ -757,6 +758,23 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         ret->name = name;
         ret->type = asmToWasmType(asmData.getType(name));
         return ret;
+      }
+      if (name == DEBUGGER) {
+        CallImport *call = allocator.alloc<CallImport>();
+        call->target = DEBUGGER;
+        call->type = none;
+        static bool addedImport = false;
+        if (!addedImport) {
+          addedImport = true;
+          auto import = allocator.alloc<Import>(); // debugger = asm2wasm.debugger;
+          import->name = DEBUGGER;
+          import->module = ASM2WASM;
+          import->base = DEBUGGER;
+          import->type.name = DEBUGGER;
+          import->type.result = none;
+          wasm.addImport(import);
+        }
+        return call;
       }
       // global var, do a load from memory
       assert(mappedGlobals.find(name) != mappedGlobals.end());

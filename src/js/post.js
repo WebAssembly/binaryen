@@ -35,6 +35,9 @@
       "f64-to-int": function(x) {
         return x | 0;
       },
+      "debugger": function() {
+        debugger;
+      },
     },
     parent: Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
   };
