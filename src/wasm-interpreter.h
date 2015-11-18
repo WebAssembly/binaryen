@@ -306,6 +306,7 @@ private:
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
         NOTE_EVAL1(flow.value);
+        assert(flow.value.type == curr->type);
         scope.locals[name] = flow.value;
         return flow;
       }
@@ -406,6 +407,8 @@ private:
         if (flow.breaking()) return flow;
         Literal right = flow.value;
         NOTE_EVAL2(left, right);
+        assert(left.type == curr->left->type);
+        assert(right.type == curr->right->type);
         if (left.type == i32) {
           int32_t l = left.geti32(), r = right.geti32();
           switch (curr->op) {
