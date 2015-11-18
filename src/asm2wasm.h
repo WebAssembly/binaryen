@@ -481,7 +481,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           } else if (heap == UINT32ARRAY) {
             bytes = 4; integer = true; signed_ = false; asmType = ASM_INT;
           } else if (heap == FLOAT32ARRAY) {
-            bytes = 4; integer = false; signed_ = true; asmType = ASM_DOUBLE;
+            bytes = 4; integer = false; signed_ = true; asmType = ASM_FLOAT;
           } else if (heap == FLOAT64ARRAY) {
             bytes = 8; integer = false; signed_ = true; asmType = ASM_DOUBLE;
           }
@@ -671,7 +671,19 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         ret->align = view.bytes;
         ret->ptr = processUnshifted(target[2], view.bytes);
         ret->value = process(ast[3]);
-        ret->type = ret->value->type;
+        ret->type = asmToWasmType(view.type);
+        if (ret->type != ret->value->type) {
+          // in asm.js we have some implicit coercions that we must do explicitly here
+          if (ret->type == f32 && ret->value->type == f64) {
+            auto conv = allocator.alloc<Convert>();
+            conv->op = DemoteFloat64;
+            conv->value = ret->value;
+            conv->type = WasmType::f32;
+            ret->value = conv;
+          } else {
+            abort();
+          }
+        }
         return ret;
       }
       abort_on("confusing assign", ast);
