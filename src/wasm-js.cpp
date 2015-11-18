@@ -175,7 +175,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
         }
       } else {
         if (store->bytes == 4) {
-          EM_ASM_DOUBLE({ Module['info'].parent['HEAPF32'][$0 >> 2] = $1 }, addr, value.getf64());
+          EM_ASM_DOUBLE({ Module['info'].parent['HEAPF32'][$0 >> 2] = $1 }, addr, value.getf32());
         } else if (store->bytes == 8) {
           EM_ASM_DOUBLE({ Module['info'].parent['HEAPF64'][$0 >> 3] = $1 }, addr, value.getf64());
         } else {
