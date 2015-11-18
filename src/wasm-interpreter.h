@@ -619,11 +619,11 @@ private:
             double val = curr->op == TruncSFloat32 ? value.getf32() : value.getf64();
             if (isnan(val)) trap("truncSFloat of nan");
             if (curr->type == i32) {
-              if (val > (double)INT_MAX || val < (double)INT_MIN) trap("truncSFloat overflow");
+              if (val > (double)INT_MAX || val < (double)INT_MIN) trap("i32.truncSFloat overflow");
               return Literal(int32_t(val));
             } else {
               int64_t converted = val;
-              if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap("truncSFloat overflow");
+              if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap("i32.truncSFloat overflow");
               return Literal(converted);
             }
           }
@@ -632,11 +632,11 @@ private:
             double val = curr->op == TruncUFloat32 ? value.getf32() : value.getf64();
             if (isnan(val)) trap("truncUFloat of nan");
             if (curr->type == i32) {
-              if (val > (double)UINT_MAX || val <= (double)-1) trap("truncUFloat overflow");
+              if (val > (double)UINT_MAX || val <= (double)-1) trap("i64.truncUFloat overflow");
               return Literal(uint32_t(val));
             } else {
               uint64_t converted = val;
-              if (converted < val - 1 || val <= (double)-1) trap("truncUFloat overflow");
+              if (converted < val - 1 || val <= (double)-1) trap("i64.truncUFloat overflow");
               return Literal(converted);
             }
           }
