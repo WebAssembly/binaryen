@@ -845,6 +845,20 @@ public:
     }
     return o;
   }
+
+  void finalize() {
+    switch (op) {
+      case PageSize: case MemorySize: case HasFeature: {
+        type = i32;
+        break;
+      }
+      case GrowMemory: {
+        type = none;
+        break;
+      }
+      default: abort();
+    }
+  }
 };
 
 class Unreachable : public Expression {

@@ -636,6 +636,7 @@ private:
     } else {
       parseCallOperands(s, 1, ret);
     }
+    ret->finalize();
     return ret;
   }
 
