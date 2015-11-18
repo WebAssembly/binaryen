@@ -905,10 +905,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             ret->op = ConvertSInt32;
           } else if (ret->value->type == f32) {
             return ret->value;
+          } else if (ret->value->type == none) { // call, etc.
+            ret->value->type = f32;
+            return ret->value;
           } else {
             abort_on("confusing fround target", ast[2][0]);
           }
-          ret->type = WasmType::f32;
+          ret->type = f32;
           return ret;
         }
         Call* ret;
