@@ -773,6 +773,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->type = WasmType::f64;
           return ret;
         }
+        if (childType == ASM_FLOAT) {
+          auto ret = allocator.alloc<Convert>();
+          ret->op = PromoteFloat32;
+          ret->value = process(ast[2]);
+          ret->type = WasmType::f64;
+          return ret;
+        }
         assert(childType == ASM_NONE || childType == ASM_DOUBLE); // e.g. a coercion on a call or for a return
         auto ret = process(ast[2]); // just look through the +() coercion
         ret->type = WasmType::f64; // we add it here for e.g. call coercions
