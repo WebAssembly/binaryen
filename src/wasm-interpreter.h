@@ -153,10 +153,12 @@ private:
       }
     };
     #define NOTE_ENTER(x) IndentHandler indentHandler(instance.indent, x, curr);
+    #define NOTE_NAME(p0) { doIndent(std::cout, instance.indent); std::cout << "name in " << indentHandler.name << '('  << Name(p0) << ")\n"; }
     #define NOTE_EVAL1(p0) { doIndent(std::cout, instance.indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ")\n"; }
     #define NOTE_EVAL2(p0, p1) { doIndent(std::cout, instance.indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
 #else
     #define NOTE_ENTER(x)
+    #define NOTE_NAME(p0)
     #define NOTE_EVAL1(p0)
     #define NOTE_EVAL2(p0, p1)
 #endif
@@ -267,6 +269,7 @@ private:
 
       Flow visitCall(Call *curr) override {
         NOTE_ENTER("Call");
+        NOTE_NAME(curr->target);
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
@@ -301,6 +304,7 @@ private:
       Flow visitGetLocal(GetLocal *curr) override {
         NOTE_ENTER("GetLocal");
         IString name = curr->name;
+        NOTE_NAME(name);
         NOTE_EVAL1(scope.locals[name]);
         return scope.locals[name];
       }
@@ -309,6 +313,7 @@ private:
         IString name = curr->name;
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
+        NOTE_NAME(name);
         NOTE_EVAL1(flow.value);
         assert(flow.value.type == curr->type);
         scope.locals[name] = flow.value;
