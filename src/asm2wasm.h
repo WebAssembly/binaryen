@@ -1044,7 +1044,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             select->ifTrue = flip;
             select->ifFalse = get();
             select->type = i32;
-            block->list.push_back(set);
+            block->list.push_back(select);
             block->type = i32;
             return block;
           } else if (value->type == f32 || value->type == f64) {
