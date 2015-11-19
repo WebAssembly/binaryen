@@ -371,6 +371,21 @@ private:
     else if (call->is<CallIndirect>()) call->type = type;
   }
 
+  FunctionType* getBuiltinFunctionType(Name module, Name base) {
+    if (module == GLOBAL_MATH) {
+      if (base == ABS /* XXX, this should be overloaded */) {
+        static FunctionType* builtin = nullptr;
+        if (!builtin) {
+          builtin = new FunctionType();
+          builtin->params.push_back(f64);
+          builtin->result = f64;
+        }
+        return builtin;
+      }
+    }
+    return nullptr;
+  }
+
   Function* processFunction(Ref ast);
 };
 
@@ -537,14 +552,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     Import& import = *pair.second;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       // special math builtins
-      if (import.module == GLOBAL_MATH) {
-        IString base = import.base;
-        if (base == ABS /* XXX, this should be overloaded */) {
-          import.type = FunctionType();
-          import.type.params.push_back(f64);
-          import.type.result = f64;
-          continue;
-        }
+      FunctionType* builtin = getBuiltinFunctionType(import.module, import.base);
+      if (builtin) {
+        import.type = *builtin;
+        continue;
       }
       import.type = importedFunctionTypes[name];
     } else if (import.module != ASM2WASM) { // special-case the special module
@@ -973,6 +984,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 #else
           ret = allocator.alloc<CallImport>();
           noteImportedFunctionCall(ast, type, &asmData);
+          Import* import = wasm.importsMap[name];
+          auto builtin = getBuiltinFunctionType(import->module, import->base);
+          if (builtin) ret->type = builtin->result;
 #endif
         } else {
           ret = allocator.alloc<Call>();
