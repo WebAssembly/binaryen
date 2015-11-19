@@ -646,7 +646,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   IStringSet functionVariables; // params or locals 
 
-  IString parentLabel; // set in LABEL, then read in WHILE/DO
+  IString parentLabel; // set in LABEL, then read in WHILE/DO/SWITCH
   std::vector<IString> breakStack; // where a break will go
   std::vector<IString> continueStack; // where a continue will go
 
@@ -1212,8 +1212,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->type = ret->list[1]->type;
       return ret;
     } else if (what == SWITCH) {
-      // XXX switch is still in flux in the spec repo, just emit a placeholder
-      IString name = getNextId("switch");
+      IString name;
+      if (!parentLabel.isNull()) {
+        name = getBreakLabelName(parentLabel);
+        parentLabel = IString();
+      } else {
+        name = getNextId("switch");
+      }
       breakStack.push_back(name);
       auto ret = allocator.alloc<Switch>();
       ret->name = name;

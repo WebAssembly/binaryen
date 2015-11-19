@@ -57,6 +57,22 @@ function () {
       case 12: return 121;
       case 5: return 51;
     }
+    Lout: switch (x | 0) {
+      case 12: break;
+      case 10: break Lout;
+      case 5: {
+        while (1) {
+          break;
+        }
+        break;
+      }
+      case 2: {
+        while (1) {
+          break Lout;
+        }
+        break;
+      }
+    }
   }
   function frem() {
     return +(5.5 % 1.2);
