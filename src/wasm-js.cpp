@@ -18,6 +18,7 @@ using namespace wasm;
 Asm2WasmBuilder* asm2wasm = nullptr;
 ModuleInstance* instance = nullptr;
 Module* module = nullptr;
+bool wasmJSDebug = false;
 
 // receives asm.js code, parses into wasm and returns an instance handle.
 // this creates a module, an external interface, a builder, and a module instance,
@@ -25,6 +26,12 @@ Module* module = nullptr;
 // note: this modifies the input.
 extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
   assert(instance == nullptr); // singleton
+
+#if WASM_JS_DEBUG
+  wasmJSDebug = 1;
+#else
+  wasmJSDebug = EM_ASM_INT_V({ return !!Module['outside']['WASM_JS_DEBUG'] }); // Set WASM_JS_DEBUG on the outside Module to get debugging
+#endif
 
   // emcc --separate-asm modules look like
   //
@@ -45,9 +52,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     end--;
   }
 
-#if WASM_JS_DEBUG
-  std::cerr << "parsing...\n";
-#endif
+  if (wasmJSDebug) std::cerr << "parsing...\n";
+
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(input);
 
@@ -56,24 +62,16 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     return Module['providedTotalMemory']; // we receive the size of memory from emscripten
   });
 
-#if WASM_JS_DEBUG
-  std::cerr << "wasming...\n";
-#endif
+  if (wasmJSDebug) std::cerr << "wasming...\n";
   asm2wasm = new Asm2WasmBuilder(*module);
   asm2wasm->processAsm(asmjs);
 
-#if WASM_JS_DEBUG
-  std::cerr << "optimizing...\n";
-#endif
+  if (wasmJSDebug) std::cerr << "optimizing...\n";
   asm2wasm->optimize();
 
-#if WASM_JS_DEBUG
-  std::cerr << *module << '\n';
-#endif
+  if (wasmJSDebug) std::cerr << *module << '\n';
 
-#if WASM_JS_DEBUG
-  std::cerr << "generating exports...\n";
-#endif
+  if (wasmJSDebug) std::cerr << "generating exports...\n";
   EM_ASM({
     Module['asmExports'] = {};
   });
@@ -89,15 +87,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     }, curr->name.str);
   }
 
-#if WASM_JS_DEBUG
-  std::cerr << "creating instance...\n";
-#endif
+  if (wasmJSDebug) std::cerr << "creating instance...\n";
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
     Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
-#ifdef WASM_JS_DEBUG
-      std::cout << "calling import " << import->name.str << '\n';
-#endif
+      if (wasmJSDebug) std::cout << "calling import " << import->name.str << '\n';
       EM_ASM({
         Module['tempArguments'] = [];
       });
@@ -120,9 +114,9 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
         var lookup = Module['lookupImport'](mod, base);
         return lookup.apply(null, tempArguments);
       }, import->module.str, import->base.str);
-#ifdef WASM_JS_DEBUG
-      std::cout << "calling import returning " << ret << '\n';
-#endif
+
+      if (wasmJSDebug) std::cout << "calling import returning " << ret << '\n';
+
       switch (import->type.result) {
         case none: return Literal(0);
         case i32: return Literal((int32_t)ret);
@@ -221,9 +215,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_mapped_globals() {
 
 // Does a call from js into an export of the module.
 extern "C" void EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
-#ifdef WASM_JS_DEBUG
-  std::cout << "call_from_js " << target << '\n';
-#endif
+  if (wasmJSDebug) std::cout << "call_from_js " << target << '\n';
+
   IString exportName(target);
   IString functionName = instance->wasm.exportsMap[exportName]->value;
   Function *function = instance->wasm.functionsMap[functionName];
@@ -245,9 +238,9 @@ extern "C" void EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
     }
   }
   Literal ret = instance->callExport(exportName, arguments);
-#ifdef WASM_JS_DEBUG
-  std::cout << "call_from_js returning " << ret << '\n';
-#endif
+
+  if (wasmJSDebug) std::cout << "call_from_js returning " << ret << '\n';
+
   if (ret.type == none) EM_ASM({ Module['tempReturn'] = undefined });
   else if (ret.type == i32) EM_ASM_({ Module['tempReturn'] = $0 }, ret.i32);
   else if (ret.type == f32) EM_ASM_({ Module['tempReturn'] = $0 }, ret.f32);

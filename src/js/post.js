@@ -3,6 +3,7 @@
   var wasmJS = WasmJS({}); // do not use the normal Module in the current scope
 
   // XXX don't be confused. Module here is in the outside program. wasmJS is the inner wasm-js.cpp.
+  wasmJS['outside'] = Module; // Inside wasm-js.cpp, Module['outside'] reaches the outside module.
 
   // Generate a module instance of the asm.js converted into wasm.
   var code;
