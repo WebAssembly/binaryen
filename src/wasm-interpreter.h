@@ -774,7 +774,9 @@ private:
     std::cout << "entering " << function->name << '\n';
 #endif
 
-    Literal ret = ExpressionRunner(*this, scope).visit(function->body).value;
+    Flow flow = ExpressionRunner(*this, scope).visit(function->body);
+    assert(!flow.breaking()); // cannot still be breaking, it means we missed our stop
+    Literal ret = flow.value;
     if (function->result == none) ret = Literal();
     assert(function->result == ret.type);
     callDepth--;
