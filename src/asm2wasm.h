@@ -975,19 +975,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (wasm.importsMap.find(name) != wasm.importsMap.end()) {
           Ref parent = astStackHelper.getParent();
           WasmType type = !!parent ? detectWasmType(parent, &asmData) : none;
-#ifndef __EMSCRIPTEN__
-          // no imports yet in reference interpreter, fake it
-          if (type == none) return allocator.alloc<Nop>();
-          if (type == i32) return allocator.alloc<Const>()->set(Literal((int32_t)0));
-          if (type == f64) return allocator.alloc<Const>()->set(Literal((double)0.0));
-          abort();
-#else
           ret = allocator.alloc<CallImport>();
           noteImportedFunctionCall(ast, type, &asmData);
           Import* import = wasm.importsMap[name];
           auto builtin = getBuiltinFunctionType(import->module, import->base);
           if (builtin) ret->type = builtin->result;
-#endif
         } else {
           ret = allocator.alloc<Call>();
         }
