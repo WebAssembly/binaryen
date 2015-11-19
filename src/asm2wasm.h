@@ -34,6 +34,8 @@ IString GLOBAL("global"), NAN_("NaN"), INFINITY_("Infinity"),
         ASM2WASM("asm2wasm"),
         F64_REM("f64-rem"),
         F64_TO_INT("f64-to-int"),
+        GLOBAL_MATH("global.Math"),
+        ABS("abs"),
         DEBUGGER("debugger");
 
 
@@ -534,6 +536,16 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     IString name = pair.first;
     Import& import = *pair.second;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
+      // special math builtins
+      if (import.module == GLOBAL_MATH) {
+        IString base = import.base;
+        if (base == ABS /* XXX, this should be overloaded */) {
+          import.type = FunctionType();
+          import.type.params.push_back(f64);
+          import.type.result = f64;
+          continue;
+        }
+      }
       import.type = importedFunctionTypes[name];
     } else if (import.module != ASM2WASM) { // special-case the special module
       // never actually used
