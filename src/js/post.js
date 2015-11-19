@@ -16,13 +16,13 @@
     throw 'TODO: loading in other platforms';
   }
 
+  var theBuffer = Module['buffer'] = new ArrayBuffer(Module['providedTotalMemory'] || 64*1024*1024);
+  wasmJS['providedTotalMemory'] = theBuffer.byteLength;
+
   var temp = wasmJS._malloc(code.length + 1);
   wasmJS.writeAsciiToMemory(code, temp);
   wasmJS._load_asm(temp);
   wasmJS._free(temp);
-
-  // Generate memory XXX TODO get the right size
-  var theBuffer = Module['buffer'] = new ArrayBuffer(Module['providedTotalMemory'] || 64*1024*1024);
 
   // Information for the instance of the module.
   var info = wasmJS['info'] = {

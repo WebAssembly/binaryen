@@ -52,7 +52,9 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
   Ref asmjs = builder.parseToplevel(input);
 
   module = new Module();
-  module->memory.initial = module->memory.max = 16*1024*1024; // TODO: receive this from emscripten
+  module->memory.initial = module->memory.max = EM_ASM_INT_V({
+    return Module['providedTotalMemory']; // we receive the size of memory from emscripten
+  });
 
 #if WASM_JS_DEBUG
   std::cerr << "wasming...\n";
