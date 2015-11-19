@@ -1196,6 +1196,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       }
       return ret;
     } else if (what == LABEL) {
+      assert(parentLabel.isNull());
       parentLabel = ast[1]->getIString();
       return process(ast[2]);
     } else if (what == CONDITIONAL) {
@@ -1330,6 +1331,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   }
   // cleanups/checks
   assert(breakStack.size() == 0 && continueStack.size() == 0);
+  assert(parentLabel.isNull());
 
   return function;
 }
