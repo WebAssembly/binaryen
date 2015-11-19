@@ -5,6 +5,7 @@ function () {
   var Int = 0;
   var Double = 0.0;
   var Math_fround = global.Math.fround;
+  var Math_abs = global.Math.abs;
 
   function big_negative() {
     var temp = 0.0;
@@ -77,6 +78,12 @@ function () {
   }
   function negZero() {
     return +-0;
+  }
+  function abs() {
+    var x = 0, y = 0.0, z = Math_fround(0);
+    x = Math_abs(0) | 0;
+    y = +Math_abs(0.0);
+    z = Math_fround(Math_abs(Math_fround(0)));
   }
 
   function z() {

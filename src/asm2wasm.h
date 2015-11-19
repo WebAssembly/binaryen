@@ -36,6 +36,7 @@ IString GLOBAL("global"), NAN_("NaN"), INFINITY_("Infinity"),
         F64_TO_INT("f64-to-int"),
         GLOBAL_MATH("global.Math"),
         ABS("abs"),
+        I32_TEMP("asm2wasm_i32_temp"),
         DEBUGGER("debugger");
 
 
@@ -124,9 +125,12 @@ private:
   };
 
   std::map<IString, View> views; // name (e.g. HEAP8) => view info
-  IString Math_imul; // imported name of Math.imul
-  IString Math_clz32; // imported name of Math.imul
-  IString Math_fround; // imported name of Math.fround
+
+  // Imported names of Math.*
+  IString Math_imul;
+  IString Math_clz32;
+  IString Math_fround;
+  IString Math_abs;
 
   // function types. we fill in this information as we see
   // uses, in the first pass
@@ -371,16 +375,39 @@ private:
     else if (call->is<CallIndirect>()) call->type = type;
   }
 
-  FunctionType* getBuiltinFunctionType(Name module, Name base) {
+  FunctionType* getBuiltinFunctionType(Name module, Name base, ExpressionList* operands = nullptr) {
     if (module == GLOBAL_MATH) {
-      if (base == ABS /* XXX, this should be overloaded */) {
-        static FunctionType* builtin = nullptr;
-        if (!builtin) {
-          builtin = new FunctionType();
-          builtin->params.push_back(f64);
-          builtin->result = f64;
+      if (base == ABS) {
+        assert(operands && operands->size() == 1);
+        WasmType type = (*operands)[0]->type;
+        if (type == i32) {
+          static FunctionType* builtin = nullptr;
+          if (!builtin) {
+            builtin = new FunctionType();
+            builtin->params.push_back(i32);
+            builtin->result = i32;
+          }
+          return builtin;
         }
-        return builtin;
+        if (type == f32) {
+          static FunctionType* builtin = nullptr;
+          if (!builtin) {
+            builtin = new FunctionType();
+            builtin->params.push_back(f32);
+            builtin->result = f32;
+          }
+          return builtin;
+        }
+        if (type == f64) {
+          static FunctionType* builtin = nullptr;
+          if (!builtin) {
+            builtin = new FunctionType();
+            builtin->params.push_back(f64);
+            builtin->result = f64;
+          }
+          return builtin;
+        }
+
       }
     }
     return nullptr;
@@ -415,6 +442,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         } else if (imported[2] == FROUND) {
           assert(Math_fround.isNull());
           Math_fround = name;
+          return;
+        } else if (imported[2] == ABS) {
+          assert(Math_abs.isNull());
+          Math_abs = name;
           return;
         }
       }
@@ -645,6 +676,15 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     }
     start++;
   }
+
+  bool addedI32Temp = false;
+  auto ensureI32Temp = [&]() {
+    if (addedI32Temp) return;
+    addedI32Temp = true;
+    function->locals.emplace_back(I32_TEMP, i32);
+    functionVariables.insert(I32_TEMP);
+    asmData.addVar(I32_TEMP, ASM_INT);
+  };
 
   bool seenReturn = false; // function->result is updated if we see a return
   bool needTopmost = false; // we label the topmost b lock if we need one for a return
@@ -971,15 +1011,58 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->type = f32;
           return ret;
         }
+        if (name == Math_abs) {
+          // overloaded on type: i32, f32 or f64
+          Expression* value = process(ast[2][0]);
+          if (value->type == i32) {
+            // No wasm support, so use a temp local
+            ensureI32Temp();
+            auto set = allocator.alloc<SetLocal>();
+            set->name = I32_TEMP;
+            set->value = value;
+            set->type = i32;
+            auto get = [&]() {
+              auto ret = allocator.alloc<GetLocal>();
+              ret->name = I32_TEMP;
+              ret->type = i32;
+              return ret;
+            };
+            auto isNegative = allocator.alloc<Compare>();
+            isNegative->op = LtS;
+            isNegative->inputType = i32;
+            isNegative->left = get();
+            isNegative->right = allocator.alloc<Const>()->set(0);
+            auto block = allocator.alloc<Block>();
+            block->list.push_back(set);
+            auto flip = allocator.alloc<Binary>();
+            flip->op = Sub;
+            flip->left = allocator.alloc<Const>()->set(0);
+            flip->right = get();
+            flip->type = i32;
+            auto select = allocator.alloc<Select>();
+            select->condition = isNegative;
+            select->ifTrue = flip;
+            select->ifFalse = get();
+            select->type = i32;
+            block->list.push_back(set);
+            block->type = i32;
+            return block;
+          } else if (value->type == f32 || value->type == f64) {
+            auto ret = allocator.alloc<Unary>();
+            ret->op = Abs;
+            ret->value = value;
+            ret->type = value->type;
+            return ret;
+          } else {
+            abort();
+          }
+        }
         Call* ret;
         if (wasm.importsMap.find(name) != wasm.importsMap.end()) {
           Ref parent = astStackHelper.getParent();
           WasmType type = !!parent ? detectWasmType(parent, &asmData) : none;
           ret = allocator.alloc<CallImport>();
           noteImportedFunctionCall(ast, type, &asmData);
-          Import* import = wasm.importsMap[name];
-          auto builtin = getBuiltinFunctionType(import->module, import->base);
-          if (builtin) ret->type = builtin->result;
         } else {
           ret = allocator.alloc<Call>();
         }
