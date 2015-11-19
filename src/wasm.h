@@ -1190,7 +1190,7 @@ std::ostream& Expression::print(std::ostream &o, unsigned indent) {
 
 //
 // Simple WebAssembly children-first walking (i.e., post-order, if you look
-// at the children as subtrees of the current node), with the ability to
+// at the children as subtrees of the current node), with the ability to replace
 // the current expression node. Useful for writing optimization passes.
 //
 
