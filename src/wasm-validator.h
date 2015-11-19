@@ -19,6 +19,26 @@ public:
 
   // visitors
 
+  void visitLoop(Loop *curr) override {
+    if (curr->in.is()) {
+      // the "in" label has a none type, since no one can receive its value. make sure no one breaks to it with a value.
+      struct ChildChecker : public WasmWalker {
+        Name in;
+        bool valid = true;
+
+        ChildChecker(Name in) : in(in) {}
+
+        void visitBreak(Break *curr) override {
+          if (curr->name == in && curr->value) {
+            valid = false;
+          }
+        }
+      };
+      ChildChecker childChecker(curr->in);
+      childChecker.walk(curr->body);
+      shouldBeTrue(childChecker.valid);
+    }
+  }
   void visitSetLocal(SetLocal *curr) override {
     shouldBeTrue(curr->type == curr->value->type);
   }
