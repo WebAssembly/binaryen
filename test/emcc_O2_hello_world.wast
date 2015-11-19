@@ -3,6 +3,21 @@
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$vi (func (param i32)))
+  (import $abort "env" "abort"  (param i32))
+  (import $_pthread_cleanup_pop "env" "_pthread_cleanup_pop"  (param i32))
+  (import $_pthread_self "env" "_pthread_self"  (result i32))
+  (import $_sysconf "env" "_sysconf"  (param i32) (result i32))
+  (import $___lock "env" "___lock"  (param i32))
+  (import $___syscall6 "env" "___syscall6"  (param i32 i32) (result i32))
+  (import $_abort "env" "_abort" )
+  (import $_sbrk "env" "_sbrk"  (param i32) (result i32))
+  (import $_time "env" "_time"  (param i32) (result i32))
+  (import $_pthread_cleanup_push "env" "_pthread_cleanup_push"  (param i32 i32))
+  (import $_emscripten_memcpy_big "env" "_emscripten_memcpy_big"  (param i32 i32 i32) (result i32))
+  (import $___syscall54 "env" "___syscall54"  (param i32 i32) (result i32))
+  (import $___unlock "env" "___unlock"  (param i32))
+  (import $___syscall140 "env" "___syscall140"  (param i32 i32) (result i32))
+  (import $___syscall146 "env" "___syscall146"  (param i32 i32) (result i32))
   (export "_free" $_free)
   (export "_main" $_main)
   (export "_memset" $_memset)
@@ -233,7 +248,7 @@
                             (i32.const 0)
                           )
                         )
-                        (nop)
+                        (call_import $_abort)
                       )
                       (set_local $i12
                         (i32.add
@@ -260,7 +275,7 @@
                           (br $do-once$1
                           )
                         )
-                        (nop)
+                        (call_import $_abort)
                       )
                     )
                     (i32.store align=4
@@ -517,7 +532,7 @@
                                 (i32.const 0)
                               )
                             )
-                            (nop)
+                            (call_import $_abort)
                           )
                           (set_local $i11
                             (i32.add
@@ -549,7 +564,7 @@
                               (br $do-once$2
                               )
                             )
-                            (nop)
+                            (call_import $_abort)
                           )
                         )
                         (block
@@ -681,7 +696,7 @@
                                   (i32.const 0)
                                 )
                               )
-                              (nop)
+                              (call_import $_abort)
                               (block
                                 (set_local $i19
                                   (get_local $i16)
@@ -1001,7 +1016,7 @@
                           (i32.const 0)
                         )
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                     (set_local $i3
                       (i32.add
@@ -1020,7 +1035,7 @@
                           (i32.const 0)
                         )
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                     (set_local $i5
                       (i32.load align=4
@@ -1178,7 +1193,7 @@
                                 (i32.const 0)
                               )
                             )
-                            (nop)
+                            (call_import $_abort)
                             (block
                               (i32.store align=4
                                 (get_local $i28)
@@ -1212,7 +1227,7 @@
                                 (i32.const 0)
                               )
                             )
-                            (nop)
+                            (call_import $_abort)
                           )
                           (set_local $i17
                             (i32.add
@@ -1227,7 +1242,7 @@
                               )
                               (get_local $i22)
                             )
-                            (nop)
+                            (call_import $_abort)
                           )
                           (set_local $i15
                             (i32.add
@@ -1257,7 +1272,7 @@
                               (br $do-once$5
                               )
                             )
-                            (nop)
+                            (call_import $_abort)
                           )
                         )
                       )
@@ -1335,7 +1350,7 @@
                                     (i32.const 0)
                                   )
                                 )
-                                (nop)
+                                (call_import $_abort)
                               )
                               (set_local $i12
                                 (i32.add
@@ -1388,7 +1403,7 @@
                                 (i32.const 0)
                               )
                             )
-                            (nop)
+                            (call_import $_abort)
                           )
                           (i32.store align=4
                             (i32.add
@@ -1419,7 +1434,7 @@
                                     (i32.const 0)
                                   )
                                 )
-                                (nop)
+                                (call_import $_abort)
                                 (block
                                   (i32.store align=4
                                     (i32.add
@@ -1464,7 +1479,7 @@
                                   (i32.const 0)
                                 )
                               )
-                              (nop)
+                              (call_import $_abort)
                               (block
                                 (i32.store align=4
                                   (i32.add
@@ -1632,7 +1647,7 @@
                                       (i32.const 0)
                                     )
                                   )
-                                  (nop)
+                                  (call_import $_abort)
                                   (block
                                     (set_local $i29
                                       (get_local $i12)
@@ -2442,7 +2457,7 @@
                             (i32.const 0)
                           )
                         )
-                        (nop)
+                        (call_import $_abort)
                       )
                       (set_local $i8
                         (i32.add
@@ -2461,7 +2476,7 @@
                             (i32.const 0)
                           )
                         )
-                        (nop)
+                        (call_import $_abort)
                       )
                       (set_local $i3
                         (i32.load align=4
@@ -2619,7 +2634,7 @@
                                   (i32.const 0)
                                 )
                               )
-                              (nop)
+                              (call_import $_abort)
                               (block
                                 (i32.store align=4
                                   (get_local $i49)
@@ -2653,7 +2668,7 @@
                                   (i32.const 0)
                                 )
                               )
-                              (nop)
+                              (call_import $_abort)
                             )
                             (set_local $i14
                               (i32.add
@@ -2668,7 +2683,7 @@
                                 )
                                 (get_local $i44)
                               )
-                              (nop)
+                              (call_import $_abort)
                             )
                             (set_local $i4
                               (i32.add
@@ -2698,7 +2713,7 @@
                                 (br $do-once$14
                                 )
                               )
-                              (nop)
+                              (call_import $_abort)
                             )
                           )
                         )
@@ -2776,7 +2791,7 @@
                                       (i32.const 0)
                                     )
                                   )
-                                  (nop)
+                                  (call_import $_abort)
                                 )
                                 (set_local $i7
                                   (i32.add
@@ -2829,7 +2844,7 @@
                                   (i32.const 0)
                                 )
                               )
-                              (nop)
+                              (call_import $_abort)
                             )
                             (i32.store align=4
                               (i32.add
@@ -2860,7 +2875,7 @@
                                       (i32.const 0)
                                     )
                                   )
-                                  (nop)
+                                  (call_import $_abort)
                                   (block
                                     (i32.store align=4
                                       (i32.add
@@ -2905,7 +2920,7 @@
                                     (i32.const 0)
                                   )
                                 )
-                                (nop)
+                                (call_import $_abort)
                                 (block
                                   (i32.store align=4
                                     (i32.add
@@ -3034,7 +3049,7 @@
                                           (i32.const 0)
                                         )
                                       )
-                                      (nop)
+                                      (call_import $_abort)
                                       (block
                                         (set_local $i50
                                           (get_local $i3)
@@ -3415,7 +3430,7 @@
                                     (i32.const 0)
                                   )
                                 )
-                                (nop)
+                                (call_import $_abort)
                                 (block
                                   (i32.store align=4
                                     (get_local $i54)
@@ -3527,7 +3542,7 @@
                                       (br $do-once$19
                                       )
                                     )
-                                    (nop)
+                                    (call_import $_abort)
                                   )
                                 )
                               )
@@ -3809,7 +3824,9 @@
           )
           (block
             (set_local $i53
-              (i32.const 0)
+              (call_import $_sysconf
+                (i32.const 30)
+              )
             )
             (if_else
               (i32.eq
@@ -3851,7 +3868,9 @@
                   (i32.const 648)
                   (i32.xor
                     (i32.and
-                      (i32.const 0)
+                      (call_import $_time
+                        (i32.const 0)
+                      )
                       (i32.const -16)
                     )
                     (i32.const 1431655768)
@@ -3860,7 +3879,7 @@
                 (br $do-once$22
                 )
               )
-              (nop)
+              (call_import $_abort)
             )
           )
         )
@@ -4102,7 +4121,9 @@
                     )
                     (block
                       (set_local $i45
-                        (i32.const 0)
+                        (call_import $_sbrk
+                          (get_local $i50)
+                        )
                       )
                       (if_else
                         (i32.eq
@@ -4164,7 +4185,9 @@
                   )
                   (block
                     (set_local $i52
-                      (i32.const 0)
+                      (call_import $_sbrk
+                        (i32.const 0)
+                      )
                     )
                     (i32.ne
                       (get_local $i52)
@@ -4289,7 +4312,9 @@
                         )
                       )
                       (set_local $i45
-                        (i32.const 0)
+                        (call_import $_sbrk
+                          (get_local $i62)
+                        )
                       )
                       (if_else
                         (i32.eq
@@ -4402,11 +4427,15 @@
                       )
                       (if_else
                         (i32.eq
-                          (i32.const 0)
+                          (call_import $_sbrk
+                            (get_local $i5)
+                          )
                           (i32.const -1)
                         )
                         (block
-                          (i32.const 0)
+                          (call_import $_sbrk
+                            (get_local $i45)
+                          )
                           (br $label$break$L279
                           )
                         )
@@ -4485,11 +4514,15 @@
             )
             (block
               (set_local $i63
-                (i32.const 0)
+                (call_import $_sbrk
+                  (get_local $i43)
+                )
               )
               (block
                 (set_local $i43
-                  (i32.const 0)
+                  (call_import $_sbrk
+                    (i32.const 0)
+                  )
                 )
                 (i32.and
                   (i32.lt_u
@@ -5248,7 +5281,7 @@
                                                   (i32.const 0)
                                                 )
                                               )
-                                              (nop)
+                                              (call_import $_abort)
                                               (block
                                                 (i32.store align=4
                                                   (get_local $i76)
@@ -5282,7 +5315,7 @@
                                                   (i32.const 0)
                                                 )
                                               )
-                                              (nop)
+                                              (call_import $_abort)
                                             )
                                             (set_local $i52
                                               (i32.add
@@ -5297,7 +5330,7 @@
                                                 )
                                                 (get_local $i43)
                                               )
-                                              (nop)
+                                              (call_import $_abort)
                                             )
                                             (set_local $i45
                                               (i32.add
@@ -5327,7 +5360,7 @@
                                                 (br $do-once$33
                                                 )
                                               )
-                                              (nop)
+                                              (call_import $_abort)
                                             )
                                           )
                                         )
@@ -5379,7 +5412,7 @@
                                                   (i32.const 0)
                                                 )
                                               )
-                                              (nop)
+                                              (call_import $_abort)
                                             )
                                             (set_local $i45
                                               (i32.add
@@ -5461,7 +5494,7 @@
                                             (i32.const 0)
                                           )
                                         )
-                                        (nop)
+                                        (call_import $_abort)
                                       )
                                       (i32.store align=4
                                         (i32.add
@@ -5495,7 +5528,7 @@
                                                 (i32.const 0)
                                               )
                                             )
-                                            (nop)
+                                            (call_import $_abort)
                                             (block
                                               (i32.store align=4
                                                 (i32.add
@@ -5546,7 +5579,7 @@
                                             (i32.const 0)
                                           )
                                         )
-                                        (nop)
+                                        (call_import $_abort)
                                         (block
                                           (i32.store align=4
                                             (i32.add
@@ -5614,7 +5647,7 @@
                                                   (i32.const 0)
                                                 )
                                               )
-                                              (nop)
+                                              (call_import $_abort)
                                             )
                                             (if
                                               (i32.eq
@@ -5629,7 +5662,7 @@
                                               (br $do-once$38
                                               )
                                             )
-                                            (nop)
+                                            (call_import $_abort)
                                           )
                                         )
                                       )
@@ -5682,7 +5715,7 @@
                                                   (i32.const 0)
                                                 )
                                               )
-                                              (nop)
+                                              (call_import $_abort)
                                             )
                                             (set_local $i5
                                               (i32.add
@@ -5705,7 +5738,7 @@
                                                 )
                                               )
                                             )
-                                            (nop)
+                                            (call_import $_abort)
                                           )
                                         )
                                       )
@@ -5878,7 +5911,7 @@
                                           )
                                         )
                                       )
-                                      (nop)
+                                      (call_import $_abort)
                                     )
                                   )
                                 )
@@ -6242,7 +6275,7 @@
                                     (i32.const 0)
                                   )
                                 )
-                                (nop)
+                                (call_import $_abort)
                                 (block
                                   (i32.store align=4
                                     (get_local $i84)
@@ -6354,7 +6387,7 @@
                                       (br $do-once$32
                                       )
                                     )
-                                    (nop)
+                                    (call_import $_abort)
                                   )
                                 )
                               )
@@ -6803,7 +6836,7 @@
                                   (i32.const 0)
                                 )
                               )
-                              (nop)
+                              (call_import $_abort)
                               (block
                                 (set_local $i87
                                   (get_local $i43)
@@ -7178,7 +7211,7 @@
                             (i32.const 0)
                           )
                         )
-                        (nop)
+                        (call_import $_abort)
                         (block
                           (i32.store align=4
                             (get_local $i91)
@@ -7290,7 +7323,7 @@
                               (br $do-once$27
                               )
                             )
-                            (nop)
+                            (call_import $_abort)
                           )
                         )
                       )
@@ -7626,7 +7659,7 @@
             (i32.const 0)
           )
         )
-        (nop)
+        (call_import $_abort)
       )
       (set_local $i4
         (i32.load align=4
@@ -7647,7 +7680,7 @@
           (get_local $i1)
           (i32.const 1)
         )
-        (nop)
+        (call_import $_abort)
       )
       (set_local $i5
         (i32.and
@@ -7710,7 +7743,7 @@
                   (i32.const 0)
                 )
               )
-              (nop)
+              (call_import $_abort)
             )
             (if
               (i32.eq
@@ -7842,7 +7875,7 @@
                           (i32.const 0)
                         )
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                     (if
                       (i32.ne
@@ -7854,7 +7887,7 @@
                         )
                         (get_local $i8)
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                   )
                 )
@@ -7906,7 +7939,7 @@
                           (i32.const 0)
                         )
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                     (set_local $i14
                       (i32.add
@@ -7924,7 +7957,7 @@
                       (set_local $i15
                         (get_local $i14)
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                   )
                   (set_local $i15
@@ -8111,7 +8144,7 @@
                         (i32.const 0)
                       )
                     )
-                    (nop)
+                    (call_import $_abort)
                     (block
                       (i32.store align=4
                         (get_local $i22)
@@ -8145,7 +8178,7 @@
                         (i32.const 0)
                       )
                     )
-                    (nop)
+                    (call_import $_abort)
                   )
                   (set_local $i16
                     (i32.add
@@ -8160,7 +8193,7 @@
                       )
                       (get_local $i8)
                     )
-                    (nop)
+                    (call_import $_abort)
                   )
                   (set_local $i14
                     (i32.add
@@ -8190,7 +8223,7 @@
                       (br $do-once$1
                       )
                     )
-                    (nop)
+                    (call_import $_abort)
                   )
                 )
               )
@@ -8273,7 +8306,7 @@
                           (i32.const 0)
                         )
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                     (set_local $i10
                       (i32.add
@@ -8334,7 +8367,7 @@
                       (i32.const 0)
                     )
                   )
-                  (nop)
+                  (call_import $_abort)
                 )
                 (i32.store align=4
                   (i32.add
@@ -8368,7 +8401,7 @@
                           (i32.const 0)
                         )
                       )
-                      (nop)
+                      (call_import $_abort)
                       (block
                         (i32.store align=4
                           (i32.add
@@ -8413,7 +8446,7 @@
                         (i32.const 0)
                       )
                     )
-                    (nop)
+                    (call_import $_abort)
                     (block
                       (i32.store align=4
                         (i32.add
@@ -8480,7 +8513,7 @@
             (i32.const 0)
           )
         )
-        (nop)
+        (call_import $_abort)
       )
       (set_local $i5
         (i32.add
@@ -8501,7 +8534,7 @@
           )
           (i32.const 0)
         )
-        (nop)
+        (call_import $_abort)
       )
       (if_else
         (i32.eq
@@ -8796,7 +8829,7 @@
                             (i32.const 0)
                           )
                         )
-                        (nop)
+                        (call_import $_abort)
                         (block
                           (i32.store align=4
                             (get_local $i27)
@@ -8832,7 +8865,7 @@
                             (i32.const 0)
                           )
                         )
-                        (nop)
+                        (call_import $_abort)
                       )
                       (set_local $i15
                         (i32.add
@@ -8847,7 +8880,7 @@
                           )
                           (get_local $i6)
                         )
-                        (nop)
+                        (call_import $_abort)
                       )
                       (set_local $i20
                         (i32.add
@@ -8877,7 +8910,7 @@
                           (br $do-once$6
                           )
                         )
-                        (nop)
+                        (call_import $_abort)
                       )
                     )
                   )
@@ -8954,7 +8987,7 @@
                               (i32.const 0)
                             )
                           )
-                          (nop)
+                          (call_import $_abort)
                         )
                         (set_local $i22
                           (i32.add
@@ -9007,7 +9040,7 @@
                           (i32.const 0)
                         )
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                     (i32.store align=4
                       (i32.add
@@ -9041,7 +9074,7 @@
                               (i32.const 0)
                             )
                           )
-                          (nop)
+                          (call_import $_abort)
                           (block
                             (i32.store align=4
                               (i32.add
@@ -9086,7 +9119,7 @@
                             (i32.const 0)
                           )
                         )
-                        (nop)
+                        (call_import $_abort)
                         (block
                           (i32.store align=4
                             (i32.add
@@ -9158,7 +9191,7 @@
                           (i32.const 0)
                         )
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                     (if
                       (i32.ne
@@ -9170,7 +9203,7 @@
                         )
                         (get_local $i6)
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                   )
                 )
@@ -9218,7 +9251,7 @@
                           (i32.const 0)
                         )
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                     (set_local $i21
                       (i32.add
@@ -9236,7 +9269,7 @@
                       (set_local $i28
                         (get_local $i21)
                       )
-                      (nop)
+                      (call_import $_abort)
                     )
                   )
                   (set_local $i28
@@ -9395,7 +9428,7 @@
                     (i32.const 0)
                   )
                 )
-                (nop)
+                (call_import $_abort)
                 (block
                   (set_local $i30
                     (get_local $i13)
@@ -9735,7 +9768,7 @@
                     (i32.const 0)
                   )
                 )
-                (nop)
+                (call_import $_abort)
                 (block
                   (i32.store align=4
                     (get_local $i35)
@@ -9847,7 +9880,7 @@
                       (br $do-once$10
                       )
                     )
-                    (nop)
+                    (call_import $_abort)
                   )
                 )
               )
@@ -10101,12 +10134,18 @@
               )
               (set_local $i14
                 (call $___syscall_ret
-                  (i32.const 0)
+                  (call_import $___syscall146
+                    (i32.const 146)
+                    (get_local $i5)
+                  )
                 )
               )
             )
             (block
-              (nop)
+              (call_import $_pthread_cleanup_push
+                (i32.const 4)
+                (get_local $i1)
+              )
               (i32.store align=4
                 (get_local $i6)
                 (i32.load align=4
@@ -10129,10 +10168,15 @@
               )
               (set_local $i11
                 (call $___syscall_ret
-                  (i32.const 0)
+                  (call_import $___syscall146
+                    (i32.const 146)
+                    (get_local $i6)
+                  )
                 )
               )
-              (nop)
+              (call_import $_pthread_cleanup_pop
+                (i32.const 0)
+              )
               (set_local $i14
                 (get_local $i11)
               )
@@ -10776,7 +10820,9 @@
                 )
               )
             )
-            (nop)
+            (call_import $___lock
+              (i32.const 36)
+            )
             (set_local $i4
               (i32.load align=4
                 (i32.const 32)
@@ -10885,7 +10931,9 @@
                 )
               )
             )
-            (nop)
+            (call_import $___unlock
+              (i32.const 36)
+            )
             (set_local $i2
               (get_local $i6)
             )
@@ -11455,7 +11503,11 @@
           (i32.const 4096)
         )
         (br $topmost
-          (i32.const 0)
+          (call_import $_emscripten_memcpy_big
+            (get_local $i1)
+            (get_local $i2)
+            (get_local $i3)
+          )
         )
       )
       (set_local $i4
@@ -11966,7 +12018,10 @@
       (if_else
         (i32.lt_s
           (call $___syscall_ret
-            (i32.const 0)
+            (call_import $___syscall140
+              (i32.const 140)
+              (get_local $i5)
+            )
           )
           (i32.const 0)
         )
@@ -12258,7 +12313,10 @@
                   )
                 )
                 (i32.ne
-                  (i32.const 0)
+                  (call_import $___syscall54
+                    (i32.const 54)
+                    (get_local $i5)
+                  )
                   (i32.const 0)
                 )
               )
@@ -12430,7 +12488,10 @@
       )
       (set_local $i1
         (call $___syscall_ret
-          (i32.const 0)
+          (call_import $___syscall6
+            (i32.const 6)
+            (get_local $i3)
+          )
         )
       )
       (i32.store align=4
@@ -12586,7 +12647,7 @@
         (set_local $i1
           (i32.load align=4
             (i32.add
-              (i32.const 0)
+              (call_import $_pthread_self)
               (i32.const 60)
             )
           )
@@ -12686,7 +12747,9 @@
   )
   (func $b1 (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
     (block $topmost
-      (nop)
+      (call_import $abort
+        (i32.const 1)
+      )
       (i32.const 0)
     )
   )
@@ -12704,7 +12767,9 @@
   )
   (func $b0 (param $i1 i32) (result i32)
     (block $topmost
-      (nop)
+      (call_import $abort
+        (i32.const 0)
+      )
       (i32.const 0)
     )
   )
@@ -12736,6 +12801,8 @@
     )
   )
   (func $b2 (param $i1 i32)
-    (nop)
+    (call_import $abort
+      (i32.const 2)
+    )
   )
 )

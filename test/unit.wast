@@ -248,6 +248,34 @@
   (func $negZero (result f64)
     (f64.const -0)
   )
+  (func $abs
+    (local $x i32)
+    (local $y f64)
+    (local $z f32)
+    (local $asm2wasm_i32_temp i32)
+    (block
+      (set_local $x
+        (block
+          (set_local $asm2wasm_i32_temp
+            (i32.const 0)
+          )
+          (set_local $asm2wasm_i32_temp
+            (i32.const 0)
+          )
+        )
+      )
+      (set_local $y
+        (f64.abs
+          (f64.const 0)
+        )
+      )
+      (set_local $z
+        (f32.abs
+          (f32.const 0)
+        )
+      )
+    )
+  )
   (func $z
     (nop)
   )
