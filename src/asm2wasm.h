@@ -473,6 +473,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
   };
 
+  IString Int8Array, Int16Array, Int32Array, UInt8Array, UInt16Array, UInt32Array, Float32Array, Float64Array;
+
   // first pass - do almost everything, but function imports and indirect calls
 
   for (unsigned i = 1; i < body->size(); i++) {
@@ -508,34 +510,83 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           assert(value[1][0] == NAME && value[1][1] == Math_fround && value[2][0][0] == NUM && value[2][0][1]->getNumber() == 0);
           allocateGlobal(name, WasmType::f32, false);
         } else if (value[0] == DOT) {
+          // simple module.base import. can be a view, or a function.
+          if (value[1][0] == NAME) {
+            IString module = value[1][1]->getIString();
+            IString base = value[2]->getIString();
+            if (module == GLOBAL) {
+              if (base == INT8ARRAY) {
+                Int8Array = name;
+              } else if (base == INT16ARRAY) {
+                Int16Array = name;
+              } else if (base == INT32ARRAY) {
+                Int32Array = name;
+              } else if (base == UINT8ARRAY) {
+                UInt8Array = name;
+              } else if (base == UINT16ARRAY) {
+                UInt16Array = name;
+              } else if (base == UINT32ARRAY) {
+                UInt32Array = name;
+              } else if (base == FLOAT32ARRAY) {
+                Float32Array = name;
+              } else if (base == FLOAT64ARRAY) {
+                Float64Array = name;
+              }
+            }
+          }
           // function import
           addImport(name, value, WasmType::none);
         } else if (value[0] == NEW) {
           // ignore imports of typed arrays, but note the names of the arrays
           value = value[1];
           assert(value[0] == CALL);
-          Ref constructor = value[1];
-          assert(constructor[0] == DOT); // global.*Array
-          IString heap = constructor[2]->getIString();
           unsigned bytes;
           bool integer, signed_;
           AsmType asmType;
-          if (heap == INT8ARRAY) {
-            bytes = 1; integer = true; signed_ = true; asmType = ASM_INT;
-          } else if (heap == INT16ARRAY) {
-            bytes = 2; integer = true; signed_ = true; asmType = ASM_INT;
-          } else if (heap == INT32ARRAY) {
-            bytes = 4; integer = true; signed_ = true; asmType = ASM_INT;
-          } else if (heap == UINT8ARRAY) {
-            bytes = 1; integer = true; signed_ = false; asmType = ASM_INT;
-          } else if (heap == UINT16ARRAY) {
-            bytes = 2; integer = true; signed_ = false; asmType = ASM_INT;
-          } else if (heap == UINT32ARRAY) {
-            bytes = 4; integer = true; signed_ = false; asmType = ASM_INT;
-          } else if (heap == FLOAT32ARRAY) {
-            bytes = 4; integer = false; signed_ = true; asmType = ASM_FLOAT;
-          } else if (heap == FLOAT64ARRAY) {
-            bytes = 8; integer = false; signed_ = true; asmType = ASM_DOUBLE;
+          Ref constructor = value[1];
+          if (constructor[0] == DOT) { // global.*Array
+            IString heap = constructor[2]->getIString();
+            if (heap == INT8ARRAY) {
+              bytes = 1; integer = true; signed_ = true; asmType = ASM_INT;
+            } else if (heap == INT16ARRAY) {
+              bytes = 2; integer = true; signed_ = true; asmType = ASM_INT;
+            } else if (heap == INT32ARRAY) {
+              bytes = 4; integer = true; signed_ = true; asmType = ASM_INT;
+            } else if (heap == UINT8ARRAY) {
+              bytes = 1; integer = true; signed_ = false; asmType = ASM_INT;
+            } else if (heap == UINT16ARRAY) {
+              bytes = 2; integer = true; signed_ = false; asmType = ASM_INT;
+            } else if (heap == UINT32ARRAY) {
+              bytes = 4; integer = true; signed_ = false; asmType = ASM_INT;
+            } else if (heap == FLOAT32ARRAY) {
+              bytes = 4; integer = false; signed_ = true; asmType = ASM_FLOAT;
+            } else if (heap == FLOAT64ARRAY) {
+              bytes = 8; integer = false; signed_ = true; asmType = ASM_DOUBLE;
+            } else {
+              abort_on("invalid view import", heap);
+            }
+          } else { // *ArrayView that was previously imported
+            assert(constructor[0] == NAME);
+            IString viewName = constructor[1]->getIString();
+            if (viewName == Int8Array) {
+              bytes = 1; integer = true; signed_ = true; asmType = ASM_INT;
+            } else if (viewName == Int16Array) {
+              bytes = 2; integer = true; signed_ = true; asmType = ASM_INT;
+            } else if (viewName == Int32Array) {
+              bytes = 4; integer = true; signed_ = true; asmType = ASM_INT;
+            } else if (viewName == UInt8Array) {
+              bytes = 1; integer = true; signed_ = false; asmType = ASM_INT;
+            } else if (viewName == UInt16Array) {
+              bytes = 2; integer = true; signed_ = false; asmType = ASM_INT;
+            } else if (viewName == UInt32Array) {
+              bytes = 4; integer = true; signed_ = false; asmType = ASM_INT;
+            } else if (viewName == Float32Array) {
+              bytes = 4; integer = false; signed_ = true; asmType = ASM_FLOAT;
+            } else if (viewName == Float64Array) {
+              bytes = 8; integer = false; signed_ = true; asmType = ASM_DOUBLE;
+            } else {
+              abort_on("invalid short view import", viewName);
+            }
           }
           assert(views.find(name) == views.end());
           views.emplace(name, View(bytes, integer, signed_, asmType));

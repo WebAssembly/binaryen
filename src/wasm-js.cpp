@@ -52,6 +52,30 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     end--;
   }
 
+  // asm.js memory growth uses a quite elaborate pattern. Instead of parsing and
+  // matching it, we do a simpler detection on emscripten's asm.js output format
+  bool memoryGrowth = false;
+  const char* START_FUNCS = "// EMSCRIPTEN_START_FUNCS";
+  char *marker = strstr(input, START_FUNCS);
+  assert(marker && "must have '// EMSCRIPTEN_START_FUNCS' marker (for now)");
+  *marker = 0; // look for memory growth code just up to here
+  char *growthSign = strstr(input, "return true;"); // this can only show up in growth code, as normal asm.js lacks "true"
+  if (growthSign) {
+    memoryGrowth = true;
+    // clean out this function, we don't need it
+    char *growthFuncStart = strstr(input, "function ");
+    assert(strstr(growthFuncStart + 1, "function ") == 0); // should be only this one function in this area, so no confusion for us
+    char *growthFuncEnd = strchr(growthSign, '}');
+    assert(growthFuncEnd > growthFuncStart + 5);
+    growthFuncStart[0] = '/';
+    growthFuncStart[1] = '*';
+    growthFuncEnd--;
+    growthFuncEnd[0] = '*';
+    growthFuncEnd[1] = '/';
+  }
+  *marker = START_FUNCS[0];
+
+  // proceed to parse and wasmify
   if (wasmJSDebug) std::cerr << "parsing...\n";
 
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
