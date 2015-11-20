@@ -60,6 +60,9 @@ public:
     }
     shouldBeFalse(curr->default_.is() && inTable.find(curr->default_) == inTable.end());
   }
+  void visitUnary(Unary *curr) override {
+    shouldBeTrue(curr->value->type == curr->type);
+  }
   void visitMemory(Memory *curr) override {
     shouldBeFalse(curr->initial > curr->max);
     size_t top = 0;
