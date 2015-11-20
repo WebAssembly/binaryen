@@ -211,14 +211,19 @@ private:
       }
       Flow visitBreak(Break *curr) override {
         NOTE_ENTER("Break");
-        if (curr->value) {
-          Flow flow = visit(curr->value);
-          if (!flow.breaking()) {
-            flow.breakTo = curr->name;
-          }
-          return flow;
+        bool condition = true;
+        if (curr->condition) {
+          Flow flow = visit(curr->condition);
+          if (flow.breaking()) return flow;
+          condition = flow.value.getInteger();
         }
-        return Flow(curr->name);
+        Flow flow(curr->name);
+        if (curr->value) {
+          flow = visit(curr->value);
+          if (flow.breaking()) return flow;
+          flow.breakTo = curr->name;
+        }
+        return condition ? flow : Flow();
       }
       Flow visitSwitch(Switch *curr) override {
         NOTE_ENTER("Switch");

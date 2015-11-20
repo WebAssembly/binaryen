@@ -32,6 +32,7 @@ IString MODULE("module"),
         CALL("call"),
         CALL_IMPORT("call_import"),
         CALL_INDIRECT("call_indirect"),
+        BR_IF("br_if"),
         INFINITY_("infinity"),
         NEG_INFINITY("-infinity"),
         NAN_("nan"),
@@ -989,16 +990,22 @@ private:
 
   Expression* makeBreak(Element& s) {
     auto ret = allocator.alloc<Break>();
-    if (s[1]->dollared()) {
-      ret->name = s[1]->str();
+    size_t i = 1;
+    if (s[0]->str() == BR_IF) {
+      ret->condition = parseExpression(s[i]);
+      i++;
+    }
+    if (s[i]->dollared()) {
+      ret->name = s[i]->str();
     } else {
       // offset, break to nth outside label
-      size_t offset = atol(s[1]->c_str());
+      size_t offset = atol(s[i]->c_str());
       assert(offset < labelStack.size());
       ret->name = labelStack[labelStack.size() - 1 - offset];
     }
-    if (s.size() == 3) {
-      ret->value = parseExpression(s[2]);
+    i++;
+    if (i < s.size()) {
+      ret->value = parseExpression(s[i]);
     }
     return ret;
   }
