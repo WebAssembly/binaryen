@@ -63,6 +63,10 @@ public:
   void visitUnary(Unary *curr) override {
     shouldBeTrue(curr->value->type == curr->type);
   }
+
+  void visitFunction(Function *curr) override {
+    shouldBeTrue(curr->result == curr->body->type);
+  }
   void visitMemory(Memory *curr) override {
     shouldBeFalse(curr->initial > curr->max);
     size_t top = 0;
