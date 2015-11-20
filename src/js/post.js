@@ -20,6 +20,12 @@
   var theBuffer = Module['buffer'] = new ArrayBuffer(Module['providedTotalMemory'] || 64*1024*1024);
   wasmJS['providedTotalMemory'] = theBuffer.byteLength;
 
+  Module['reallocBuffer'] = function(size) {
+    var old = Module['buffer']
+    Module['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
+    return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
+  };
+
   var temp = wasmJS._malloc(code.length + 1);
   wasmJS.writeAsciiToMemory(code, temp);
   wasmJS._load_asm(temp);
@@ -61,7 +67,7 @@
 
   // The asm.js function, called to "link" the asm.js module.
   Module['asm'] = function(global, env, buffer) {
-    assert(buffer === theBuffer); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
+    assert(buffer === Module['buffer']); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
     // write the provided data to a location the wasm instance can get at it.
     info.global = global;
     info.env = env;
