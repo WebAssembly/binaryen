@@ -14,7 +14,7 @@
 using namespace cashew;
 using namespace wasm;
 
-IString GROW_WASM_MEMORY("_growWasmMemory"),
+IString GROW_WASM_MEMORY("__growWasmMemory"),
         NEW_SIZE("newSize");
 
 // global singletons

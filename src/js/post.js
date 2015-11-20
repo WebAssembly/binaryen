@@ -21,8 +21,8 @@
   wasmJS['providedTotalMemory'] = theBuffer.byteLength;
 
   Module['reallocBuffer'] = function(size) {
-    var old = Module['buffer']
-    Module['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
+    var old = Module['buffer'];
+    wasmJS['asmExports']['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
     return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
   };
 
