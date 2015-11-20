@@ -6,6 +6,7 @@
 //
 
 #include <setjmp.h>
+#include <memory>
 
 #include "wasm-s-parser.h"
 #include "wasm-interpreter.h"
@@ -282,11 +283,18 @@ int main(int argc, char **argv) {
         Module wasm;
         bool invalid = false;
         jmp_buf trapState;
+        std::unique_ptr<SExpressionWasmBuilder> builder;
         if (setjmp(trapState) == 0) {
-          SExpressionWasmBuilder builder(wasm, *curr[1], [&]() {
+          builder = std::unique_ptr<SExpressionWasmBuilder>(new SExpressionWasmBuilder(wasm, *curr[1], [&]() {
             invalid = true;
             longjmp(trapState, 1);
-          });
+          }));
+        }
+        if (print_before || print_after) {
+          Colors::bold(std::cout);
+          std::cout << "printing in module invalidity test:\n";
+          Colors::normal(std::cout);
+          std::cout << wasm;
         }
         if (!invalid) {
           // maybe parsed ok, but otherwise incorrect
