@@ -228,8 +228,20 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
     }
 
     void growMemory(size_t oldSize, size_t newSize) override {
-      // never called from compiled asm.js directly, we have special support for it as the request arrives from outside js
-      abort();
+      EM_ASM_({
+        var size = $0;
+        var buffer;
+        try {
+          buffer = new ArrayBuffer(size);
+        } catch(e) {
+          // fail to grow memory. post.js notices this since the buffer is unchanged
+          return;
+        }
+        var oldHEAP8 = Module['outside']['HEAP8'];
+        var temp = new Int8Array(buffer);
+        temp.set(oldHEAP8);
+        Module['outside']['buffer'] = buffer;
+      }, newSize);
     }
 
     void trap(const char* why) override {
