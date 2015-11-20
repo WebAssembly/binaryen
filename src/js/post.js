@@ -1,6 +1,6 @@
 
-(function() {
-  var wasmJS = WasmJS({}); // do not use the normal Module in the current scope
+function integrateWasmJS(Module) {
+  var wasmJS = WasmJS({});
 
   // XXX don't be confused. Module here is in the outside program. wasmJS is the inner wasm-js.cpp.
   wasmJS['outside'] = Module; // Inside wasm-js.cpp, Module['outside'] reaches the outside module.
@@ -26,10 +26,10 @@
     return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
   };
 
-  var temp = wasmJS._malloc(code.length + 1);
-  wasmJS.writeAsciiToMemory(code, temp);
-  wasmJS._load_asm(temp);
-  wasmJS._free(temp);
+  var temp = wasmJS['_malloc'](code.length + 1);
+  wasmJS['writeAsciiToMemory'](code, temp);
+  wasmJS['_load_asm'](temp);
+  wasmJS['_free'](temp);
 
   // Information for the instance of the module.
   var info = wasmJS['info'] = {
@@ -74,5 +74,5 @@
     wasmJS['_load_mapped_globals'](); // now that we have global and env, we can ready the provided imported globals, copying them to their mapped locations.
     return wasmJS['asmExports'];
   };
-})();
+}
 
