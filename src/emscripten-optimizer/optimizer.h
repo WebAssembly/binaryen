@@ -39,7 +39,7 @@ enum AsmType {
 
 struct AsmData;
 
-AsmType detectType(cashew::Ref node, AsmData *asmData=nullptr, bool inVarDef=false);
+AsmType detectType(cashew::Ref node, AsmData *asmData=nullptr, bool inVarDef=false, cashew::IString minifiedFround=cashew::IString());
 
 struct AsmData {
   struct Local {

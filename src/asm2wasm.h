@@ -252,7 +252,7 @@ private:
         return view->second.type;
       }
     }
-    return detectType(ast, data);
+    return detectType(ast, data, false, Math_fround);
   }
 
   WasmType detectWasmType(Ref ast, AsmData *data) {
