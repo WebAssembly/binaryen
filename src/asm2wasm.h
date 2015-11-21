@@ -1150,7 +1150,24 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->value = !!ast[1] ? process(ast[1]) : nullptr;
       return ret;
     } else if (what == BLOCK) {
-      return processStatements(ast[1], 0);
+      Name name;
+      if (parentLabel.is()) {
+        name = getBreakLabelName(parentLabel);
+        parentLabel = IString();
+      }
+      auto ret = processStatements(ast[1], 0);
+      if (name.is()) {
+        Block* block = ret->dyn_cast<Block>();
+        if (block && block->name.isNull()) {
+          block->name = name;
+        } else {
+          block = allocator.alloc<Block>();
+          block->name = name;
+          block->list.push_back(ret);
+          ret = block;
+        }
+      }
+      return ret;
     } else if (what == BREAK) {
       auto ret = allocator.alloc<Break>();
       assert(breakStack.size() > 0);
