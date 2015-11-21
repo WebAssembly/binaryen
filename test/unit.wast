@@ -248,6 +248,12 @@
       )
     )
   )
+  (func $blocker
+    (block $label$break$L
+      (br $label$break$L
+      )
+    )
+  )
   (func $frem (result f64)
     (call_import $f64-rem
       (f64.const 5.5)

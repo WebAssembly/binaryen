@@ -74,6 +74,11 @@ function () {
       }
     }
   }
+  function blocker() {
+    L: {
+      break L;
+    }
+  }
   function frem() {
     return +(5.5 % 1.2);
   }
