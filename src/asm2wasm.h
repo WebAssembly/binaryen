@@ -1154,9 +1154,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       if (parentLabel.is()) {
         name = getBreakLabelName(parentLabel);
         parentLabel = IString();
+        breakStack.push_back(name);
       }
       auto ret = processStatements(ast[1], 0);
       if (name.is()) {
+        breakStack.pop_back();
         Block* block = ret->dyn_cast<Block>();
         if (block && block->name.isNull()) {
           block->name = name;
