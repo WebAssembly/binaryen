@@ -123,6 +123,12 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef) {
   return ASM_NONE;
 }
 
+static void abort_on(Ref node) {
+  node->stringify(std::cerr);
+  std::cerr << '\n';
+  abort();
+}
+
 AsmSign detectSign(Ref node) {
   IString type = node[0]->getIString();
   if (type == BINARY) {
@@ -135,7 +141,7 @@ AsmSign detectSign(Ref node) {
       case '|': case '&': case '^': case '<': case '=': case '!': return ASM_SIGNED;
       case '+': case '-': return ASM_FLEXIBLE;
       case '*': case '/': return ASM_NONSIGNED; // without a coercion, these are double
-      default: abort();
+      default: abort_on(node);
     }
   } else if (type == UNARY_PREFIX) {
     IString op = node[1]->getIString();
@@ -143,7 +149,7 @@ AsmSign detectSign(Ref node) {
       case '-': return ASM_FLEXIBLE;
       case '+': return ASM_NONSIGNED; // XXX double
       case '~': return ASM_SIGNED;
-      default: abort();
+      default: abort_on(node);
     }
   } else if (type == NUM) {
     double value = node[1]->getNumber();
@@ -157,7 +163,10 @@ AsmSign detectSign(Ref node) {
     return detectSign(node[2]);
   } else if (type == CALL) {
     if (node[1][0] == NAME && node[1][1] == MATH_FROUND) return ASM_NONSIGNED;
+  } else if (type == SEQ) {
+    return detectSign(node[2]);
   }
-  abort();
+  abort_on(node);
+  abort(); // avoid warning
 }
 
