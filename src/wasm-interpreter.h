@@ -32,6 +32,30 @@ enum {
   maxCallDepth = 250
 };
 
+// Stuff that flows around during executing expressions: a literal, or a change in control flow
+class Flow {
+public:
+  Flow() {}
+  Flow(Literal value) : value(value) {}
+  Flow(IString breakTo) : breakTo(breakTo) {}
+
+  Literal value;
+  IString breakTo; // if non-null, a break is going on
+
+  bool breaking() { return breakTo.is(); }
+
+  void clearIf(IString target) {
+    if (breakTo == target) {
+      breakTo.clear();
+    }
+  }
+
+  friend std::ostream& operator<<(std::ostream& o, Flow& flow) {
+    o << "(flow " << (flow.breakTo.is() ? flow.breakTo.str : "-") << " : " << flow.value << ')';
+    return o;
+  }
+};
+
 //
 // An instance of a WebAssembly module, which can execute it via AST interpretation.
 //
@@ -102,30 +126,6 @@ private:
         for (auto& local : function->locals) {
           locals[local.name].type = local.type;
         }
-      }
-    };
-
-    // Stuff that flows around during executing expressions: a literal, or a change in control flow
-    class Flow {
-    public:
-      Flow() {}
-      Flow(Literal value) : value(value) {}
-      Flow(IString breakTo) : breakTo(breakTo) {}
-
-      Literal value;
-      IString breakTo; // if non-null, a break is going on
-
-      bool breaking() { return breakTo.is(); }
-
-      void clearIf(IString target) {
-        if (breakTo == target) {
-          breakTo.clear();
-        }
-      }
-
-      std::ostream& print(std::ostream& o) {
-        o << "(flow " << (breakTo.is() ? breakTo.str : "-") << " : " << value << ')';
-        return o;
       }
     };
 
@@ -786,7 +786,7 @@ private:
     assert(function->result == ret.type);
     callDepth--;
 #ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "exiting " << function->name << '\n';
+    std::cout << "exiting " << function->name << " with " << ret << '\n';
 #endif
     return ret;
   }
