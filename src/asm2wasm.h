@@ -260,7 +260,7 @@ private:
   }
 
   bool isUnsignedCoercion(Ref ast) {
-    return detectSign(ast) == ASM_UNSIGNED;
+    return detectSign(ast, Math_fround) == ASM_UNSIGNED;
   }
 
   // an asm.js binary op can either be a binary or a relational in wasm

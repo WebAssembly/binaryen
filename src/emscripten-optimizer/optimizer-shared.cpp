@@ -129,7 +129,7 @@ static void abort_on(Ref node) {
   abort();
 }
 
-AsmSign detectSign(Ref node) {
+AsmSign detectSign(Ref node, IString minifiedFround) {
   IString type = node[0]->getIString();
   if (type == BINARY) {
     IString op = node[1]->getIString();
@@ -160,11 +160,11 @@ AsmSign detectSign(Ref node) {
   } else if (type == NAME) {
     return ASM_FLEXIBLE;
   } else if (type == CONDITIONAL) {
-    return detectSign(node[2]);
+    return detectSign(node[2], minifiedFround);
   } else if (type == CALL) {
-    if (node[1][0] == NAME && node[1][1] == MATH_FROUND) return ASM_NONSIGNED;
+    if (node[1][0] == NAME && (node[1][1] == MATH_FROUND || node[1][1] == minifiedFround)) return ASM_NONSIGNED;
   } else if (type == SEQ) {
-    return detectSign(node[2]);
+    return detectSign(node[2], minifiedFround);
   }
   abort_on(node);
   abort(); // avoid warning

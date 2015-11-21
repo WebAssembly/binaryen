@@ -130,7 +130,7 @@ enum AsmSign {
   ASM_NONSIGNED = 3,
 };
 
-extern AsmSign detectSign(cashew::Ref node);
+extern AsmSign detectSign(cashew::Ref node, cashew::IString minifiedFround);
 
 #endif // __optimizer_h__
 
