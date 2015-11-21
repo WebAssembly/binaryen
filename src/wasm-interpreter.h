@@ -188,7 +188,11 @@ private:
         Flow flow = visit(curr->condition);
         if (flow.breaking()) return flow;
         NOTE_EVAL1(flow.value);
-        if (flow.value.geti32()) return visit(curr->ifTrue);
+        if (flow.value.geti32()) {
+          Flow flow = visit(curr->ifTrue);
+          if (!flow.breaking() && !curr->ifFalse) flow.value = Literal(); // if_else returns a value, but if does not
+          return flow;
+        }
         if (curr->ifFalse) return visit(curr->ifFalse);
         return Flow();
       }
