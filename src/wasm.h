@@ -933,7 +933,7 @@ public:
   std::ostream& print(std::ostream &o, unsigned indent) {
     printOpening(o, "import ") << name << ' ';
     printText(o, module.str) << ' ';
-    printText(o, base.str) << ' ';
+    printText(o, base.str);
     type.print(o, indent);
     return o << ')';
   }
