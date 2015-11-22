@@ -998,6 +998,8 @@
                             (get_local $i7)
                           )
                         )
+                        (br $while-in$4
+                        )
                       )
                     )
                     (set_local $i7
@@ -1179,6 +1181,8 @@
                                     (get_local $i14)
                                   )
                                 )
+                              )
+                              (br $while-in$7
                               )
                             )
                           )
@@ -2103,6 +2107,8 @@
                                 )
                               )
                             )
+                            (br $while-in$11
+                            )
                           )
                         )
                       )
@@ -2414,6 +2420,8 @@
                             )
                           )
                         )
+                        (br $while-in$13
+                        )
                       )
                     )
                   )
@@ -2620,6 +2628,8 @@
                                       (get_local $i2)
                                     )
                                   )
+                                )
+                                (br $while-in$16
                                 )
                               )
                             )
@@ -3410,6 +3420,8 @@
                                     )
                                   )
                                 )
+                                (br $while-in$21
+                                )
                               )
                             )
                             (if_else
@@ -4097,6 +4109,8 @@
                           (br $label$break$L259
                           )
                         )
+                      )
+                      (br $while-in$24
                       )
                     )
                   )
@@ -4913,6 +4927,8 @@
                         )
                       )
                     )
+                    (br $while-in$31
+                    )
                   )
                 )
                 (if
@@ -5267,6 +5283,8 @@
                                                       (get_local $i5)
                                                     )
                                                   )
+                                                )
+                                                (br $while-in$35
                                                 )
                                               )
                                             )
@@ -6255,6 +6273,8 @@
                                     )
                                   )
                                 )
+                                (br $while-in$43
+                                )
                               )
                             )
                             (if_else
@@ -6497,6 +6517,8 @@
                           (i32.const 8)
                         )
                       )
+                    )
+                    (br $while-in$45
                     )
                   )
                 )
@@ -7190,6 +7212,8 @@
                               (get_local $i57)
                             )
                           )
+                        )
+                        (br $while-in$49
                         )
                       )
                     )
@@ -8131,6 +8155,8 @@
                           )
                         )
                       )
+                      (br $while-in$3
+                      )
                     )
                   )
                   (if_else
@@ -8813,6 +8839,8 @@
                                 (get_local $i19)
                               )
                             )
+                          )
+                          (br $while-in$8
                           )
                         )
                       )
@@ -9748,6 +9776,8 @@
                     )
                   )
                 )
+                (br $while-in$12
+                )
               )
             )
             (if_else
@@ -9965,6 +9995,8 @@
                 (i32.const 8)
               )
             )
+          )
+          (br $while-in$14
           )
         )
       )
@@ -10352,6 +10384,8 @@
           (set_local $i13
             (get_local $i11)
           )
+          (br $while-in$1
+          )
         )
       )
       (if_else
@@ -10640,6 +10674,8 @@
                           (get_local $i14)
                         )
                       )
+                      (br $while-in$1
+                      )
                     )
                   )
                   (if
@@ -10927,6 +10963,8 @@
                         (get_local $i8)
                       )
                     )
+                    (br $while-in$2
+                    )
                   )
                 )
               )
@@ -11030,6 +11068,8 @@
                     (get_local $i8)
                   )
                 )
+                (br $while-in$1
+                )
               )
             )
           )
@@ -11085,6 +11125,8 @@
                   )
                 )
               )
+              (br $while-in$3
+              )
             )
           )
           (if_else
@@ -11133,6 +11175,8 @@
                     (set_local $i9
                       (get_local $i10)
                     )
+                  )
+                  (br $while-in$5
                   )
                 )
               )
@@ -11571,6 +11615,8 @@
                   )
                 )
               )
+              (br $while-in$1
+              )
             )
           )
           (loop $while-out$2 $while-in$3
@@ -11609,6 +11655,8 @@
                     (i32.const 4)
                   )
                 )
+              )
+              (br $while-in$3
               )
             )
           )
@@ -11650,6 +11698,8 @@
                 (i32.const 1)
               )
             )
+          )
+          (br $while-in$5
           )
         )
       )
@@ -11754,6 +11804,8 @@
                       )
                     )
                   )
+                  (br $while-in$1
+                  )
                 )
               )
             )
@@ -11781,6 +11833,8 @@
                   )
                 )
               )
+              (br $while-in$3
+              )
             )
           )
         )
@@ -11807,6 +11861,8 @@
                 (i32.const 1)
               )
             )
+          )
+          (br $while-in$5
           )
         )
       )

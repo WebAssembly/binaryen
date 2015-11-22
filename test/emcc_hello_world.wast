@@ -671,6 +671,8 @@
               (get_local $$inc)
             )
           )
+          (br $while-in$1
+          )
         )
       )
       (if
@@ -755,6 +757,8 @@
                     (get_local $$incdec$ptr)
                   )
                 )
+                (br $while-in$5
+                )
               )
             )
             (set_local $$dec
@@ -789,6 +793,8 @@
                   (i32.const 5)
                 )
               )
+            )
+            (br $while-in$3
             )
           )
         )
@@ -1488,6 +1494,8 @@
                           (get_local $$r$1)
                         )
                       )
+                    )
+                    (br $while-in$2
                     )
                   )
                 )
@@ -2189,6 +2197,8 @@
           )
           (set_local $$rem$0
             (get_local $$sub26)
+          )
+          (br $while-in$1
           )
         )
       )
@@ -3091,6 +3101,8 @@
                         (set_local $$i$0
                           (get_local $$sub)
                         )
+                      )
+                      (br $while-in$1
                       )
                     )
                   )
@@ -4131,6 +4143,8 @@
                     )
                   )
                 )
+                (br $while-in$1
+                )
               )
             )
           )
@@ -4354,6 +4368,8 @@
                               )
                             )
                           )
+                          (br $while-in$3
+                          )
                         )
                       )
                       (set_local $$n$addr$227
@@ -4487,6 +4503,8 @@
                           (get_local $$incdec$ptr33)
                         )
                       )
+                    )
+                    (br $while-in$5
                     )
                   )
                 )
@@ -6227,6 +6245,8 @@
               (set_local $$incdec$ptr169274
                 (get_local $$incdec$ptr)
               )
+              (br $label$continue$L9
+              )
             )
           )
           (block $label$break$L12
@@ -6331,6 +6351,8 @@
                       (br $while-out$5
                       )
                     )
+                  )
+                  (br $while-in$6
                   )
                 )
               )
@@ -6697,6 +6719,8 @@
                         (br $while-out$7
                         )
                       )
+                    )
+                    (br $while-in$8
                     )
                   )
                 )
@@ -7181,6 +7205,8 @@
                             )
                           )
                         )
+                        (br $while-in$11
+                        )
                       )
                     )
                     (set_local $$cmp105
@@ -7402,6 +7428,8 @@
                             (br $label$break$L46
                             )
                           )
+                        )
+                        (br $while-in$13
                         )
                       )
                     )
@@ -7799,6 +7827,8 @@
                   (br $while-out$14
                   )
                 )
+              )
+              (br $while-in$15
               )
             )
           )
@@ -8591,6 +8621,8 @@
                                 (get_local $$incdec$ptr$i$225)
                               )
                             )
+                          )
+                          (br $while-in$32
                           )
                         )
                       )
@@ -9462,6 +9494,8 @@
                                           )
                                         )
                                       )
+                                      (br $while-in$52
+                                      )
                                     )
                                   )
                                   (set_local $$197
@@ -9834,6 +9868,8 @@
                                     (br $while-out$53
                                     )
                                   )
+                                )
+                                (br $while-in$54
                                 )
                               )
                             )
@@ -10213,6 +10249,8 @@
                                 )
                               )
                             )
+                            (br $while-in$57
+                            )
                           )
                         )
                         (set_local $$$pr$i
@@ -10382,6 +10420,8 @@
                                               )
                                             )
                                           )
+                                          (br $while-in$62
+                                          )
                                         )
                                       )
                                       (set_local $$tobool244$i
@@ -10476,6 +10516,8 @@
                                         )
                                       )
                                     )
+                                    (br $while-in$64
+                                    )
                                   )
                                 )
                                 (set_local $$222
@@ -10525,6 +10567,8 @@
                                     (br $while-out$58
                                     )
                                   )
+                                )
+                                (br $while-in$59
                                 )
                               )
                             )
@@ -10718,6 +10762,8 @@
                                               )
                                             )
                                           )
+                                          (br $while-in$69
+                                          )
                                         )
                                       )
                                       (set_local $$226
@@ -10906,6 +10952,8 @@
                                     )
                                   )
                                 )
+                                (br $while-in$66
+                                )
                               )
                             )
                           )
@@ -11030,6 +11078,8 @@
                                         (get_local $$mul328$i)
                                       )
                                     )
+                                  )
+                                  (br $while-in$72
                                   )
                                 )
                               )
@@ -11230,6 +11280,8 @@
                                           (get_local $$j$0$i)
                                         )
                                       )
+                                    )
+                                    (br $while-in$74
                                     )
                                   )
                                 )
@@ -11611,6 +11663,8 @@
                                               )
                                             )
                                           )
+                                          (br $while-in$78
+                                          )
                                         )
                                       )
                                     )
@@ -11731,6 +11785,8 @@
                                             (get_local $$mul437$i)
                                           )
                                         )
+                                      )
+                                      (br $while-in$80
                                       )
                                     )
                                   )
@@ -11855,6 +11911,8 @@
                                 (br $while-out$81
                                 )
                               )
+                            )
+                            (br $while-in$82
                             )
                           )
                         )
@@ -12097,6 +12155,8 @@
                                             (br $while-out$85
                                             )
                                           )
+                                        )
+                                        (br $while-in$86
                                         )
                                       )
                                     )
@@ -12414,6 +12474,8 @@
                                         )
                                       )
                                     )
+                                    (br $while-in$88
+                                    )
                                   )
                                 )
                               )
@@ -12697,6 +12759,8 @@
                                                 )
                                               )
                                             )
+                                            (br $while-in$94
+                                            )
                                           )
                                         )
                                       )
@@ -12768,6 +12832,8 @@
                                     (set_local $$d$5494$i
                                       (get_local $$incdec$ptr698$i)
                                     )
+                                  )
+                                  (br $while-in$91
                                   )
                                 )
                               )
@@ -12919,6 +12985,8 @@
                                                   )
                                                 )
                                               )
+                                              (br $while-in$99
+                                              )
                                             )
                                           )
                                         )
@@ -13019,6 +13087,8 @@
                                           (br $while-out$96
                                           )
                                         )
+                                      )
+                                      (br $while-in$97
                                       )
                                     )
                                   )
@@ -13276,6 +13346,8 @@
                                                     )
                                                   )
                                                 )
+                                                (br $while-in$104
+                                                )
                                               )
                                             )
                                           )
@@ -13383,6 +13455,8 @@
                                           (br $while-out$100
                                           )
                                         )
+                                      )
+                                      (br $while-in$101
                                       )
                                     )
                                   )
@@ -13863,6 +13937,8 @@
                             )
                           )
                         )
+                        (br $while-in$108
+                        )
                       )
                     )
                     (set_local $$107
@@ -14238,6 +14314,8 @@
                               )
                             )
                           )
+                          (br $while-in$110
+                          )
                         )
                       )
                       (set_local $$cmp397
@@ -14411,6 +14489,8 @@
                                   (br $while-out$111
                                   )
                                 )
+                              )
+                              (br $while-in$112
                               )
                             )
                           )
@@ -14787,6 +14867,8 @@
           (set_local $$l10n$0
             (get_local $$l10n$3)
           )
+          (br $label$continue$L1
+          )
         )
       )
       (block $label$break$L343
@@ -14891,6 +14973,8 @@
                             )
                           )
                         )
+                        (br $while-in$114
+                        )
                       )
                     )
                     (set_local $$cmp478$295
@@ -14964,6 +15048,8 @@
                                 (br $while-out$115
                                 )
                               )
+                            )
+                            (br $while-in$116
                             )
                           )
                         )
@@ -16521,6 +16607,8 @@
                   )
                 )
               )
+              (br $while-in$1
+              )
             )
           )
           (set_local $$s$addr$0$lcssa
@@ -16631,6 +16719,8 @@
                     (get_local $$div9)
                   )
                 )
+              )
+              (br $while-in$3
               )
             )
           )
@@ -16859,6 +16949,8 @@
                       )
                       (br $while-out$1
                       )
+                    )
+                    (br $while-in$2
                     )
                   )
                 )
@@ -19277,6 +19369,8 @@
                         (set_local $$v$0$i
                           (get_local $$cond$v$0$i)
                         )
+                        (br $while-in$4
+                        )
                       )
                     )
                     (set_local $$25
@@ -19494,6 +19588,8 @@
                                     (get_local $$arrayidx75$i)
                                   )
                                 )
+                              )
+                              (br $while-in$7
                               )
                             )
                           )
@@ -20765,6 +20861,8 @@
                                   )
                                 )
                               )
+                              (br $while-in$11
+                              )
                             )
                           )
                         )
@@ -21172,6 +21270,8 @@
                               )
                             )
                           )
+                          (br $while-in$13
+                          )
                         )
                       )
                     )
@@ -21428,6 +21528,8 @@
                                             (get_local $$arrayidx165$i$169)
                                           )
                                         )
+                                      )
+                                      (br $while-in$16
                                       )
                                     )
                                   )
@@ -22577,6 +22679,8 @@
                                           )
                                         )
                                       )
+                                      (br $while-in$21
+                                      )
                                     )
                                   )
                                   (if_else
@@ -23410,6 +23514,8 @@
                           (get_local $$107)
                         )
                       )
+                      (br $while-in$24
+                      )
                     )
                   )
                   (set_local $$112
@@ -24237,6 +24343,8 @@
                         (get_local $$inc$i$i)
                       )
                     )
+                    (br $while-in$29
+                    )
                   )
                 )
                 (set_local $$sub172$i
@@ -24427,6 +24535,8 @@
                       (set_local $$sp$0108$i
                         (get_local $$129)
                       )
+                    )
+                    (br $while-in$31
                     )
                   )
                 )
@@ -24724,6 +24834,8 @@
                       (set_local $$sp$1107$i
                         (get_local $$137)
                       )
+                    )
+                    (br $while-in$33
                     )
                   )
                 )
@@ -25462,6 +25574,8 @@
                                                         (get_local $$arrayidx107$i$i)
                                                       )
                                                     )
+                                                  )
+                                                  (br $while-in$39
                                                   )
                                                 )
                                               )
@@ -26591,6 +26705,8 @@
                                       )
                                     )
                                   )
+                                  (br $while-in$45
+                                  )
                                 )
                               )
                               (if_else
@@ -26867,6 +26983,8 @@
                     )
                     (set_local $$sp$0$i$i$i
                       (get_local $$187)
+                    )
+                    (br $while-in$47
                     )
                   )
                 )
@@ -27174,6 +27292,8 @@
                       )
                       (br $while-out$48
                       )
+                    )
+                    (br $while-in$49
                     )
                   )
                 )
@@ -27816,6 +27936,8 @@
                               (get_local $$202)
                             )
                           )
+                        )
+                        (br $while-in$51
                         )
                       )
                     )
@@ -29114,6 +29236,8 @@
                           )
                         )
                       )
+                      (br $while-in$3
+                      )
                     )
                   )
                   (set_local $$cmp118
@@ -30231,6 +30355,8 @@
                                 (get_local $$arrayidx379)
                               )
                             )
+                          )
+                          (br $while-in$8
                           )
                         )
                       )
@@ -31378,6 +31504,8 @@
                     )
                   )
                 )
+                (br $while-in$12
+                )
               )
             )
             (if_else
@@ -31612,6 +31740,8 @@
               (get_local $$next4$i)
             )
           )
+          (br $while-in$14
+          )
         )
       )
       (i32.store align=4
@@ -31815,6 +31945,8 @@
                       )
                     )
                   )
+                  (br $while-in$1
+                  )
                 )
               )
             )
@@ -31842,6 +31974,8 @@
                   )
                 )
               )
+              (br $while-in$3
+              )
             )
           )
         )
@@ -31868,6 +32002,8 @@
                 (i32.const 1)
               )
             )
+          )
+          (br $while-in$5
           )
         )
       )
@@ -32076,6 +32212,8 @@
                   )
                 )
               )
+              (br $while-in$1
+              )
             )
           )
           (loop $while-out$2 $while-in$3
@@ -32114,6 +32252,8 @@
                     (i32.const 4)
                   )
                 )
+              )
+              (br $while-in$3
               )
             )
           )
@@ -32155,6 +32295,8 @@
                 (i32.const 1)
               )
             )
+          )
+          (br $while-in$5
           )
         )
       )
@@ -34150,6 +34292,8 @@
                     (get_local $$152)
                   )
                 )
+              )
+              (br $while-in$2
               )
             )
           )

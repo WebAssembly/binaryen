@@ -225,7 +225,11 @@
         (case switch-case$12
           (block
             (loop $while-out$10 $while-in$11
-              (br $while-out$10
+              (block
+                (br $while-out$10
+                )
+                (br $while-in$11
+                )
               )
             )
             (br $label$break$Lout
@@ -235,7 +239,11 @@
         (case switch-case$15
           (block
             (loop $while-out$13 $while-in$14
-              (br $label$break$Lout
+              (block
+                (br $label$break$Lout
+                )
+                (br $while-in$14
+                )
               )
             )
             (br $label$break$Lout
