@@ -215,39 +215,31 @@
         )
         (table (case $switch-case$15) (case $switch-default$16) (case $switch-default$16) (case $switch-case$12) (case $switch-default$16) (case $switch-default$16) (case $switch-default$16) (case $switch-default$16) (case $switch-case$9) (case $switch-default$16) (case $switch-case$8)) (case $switch-default$16)
         (case switch-case$8
-          (br $label$break$Lout
-          )
+          (br $label$break$Lout)
         )
         (case switch-case$9
-          (br $label$break$Lout
-          )
+          (br $label$break$Lout)
         )
         (case switch-case$12
           (block
             (loop $while-out$10 $while-in$11
               (block
-                (br $while-out$10
-                )
-                (br $while-in$11
-                )
+                (br $while-out$10)
+                (br $while-in$11)
               )
             )
-            (br $label$break$Lout
-            )
+            (br $label$break$Lout)
           )
         )
         (case switch-case$15
           (block
             (loop $while-out$13 $while-in$14
               (block
-                (br $label$break$Lout
-                )
-                (br $while-in$14
-                )
+                (br $label$break$Lout)
+                (br $while-in$14)
               )
             )
-            (br $label$break$Lout
-            )
+            (br $label$break$Lout)
           )
         )
         (case switch-default$16
@@ -258,8 +250,7 @@
   )
   (func $blocker
     (block $label$break$L
-      (br $label$break$L
-      )
+      (br $label$break$L)
     )
   )
   (func $frem (result f64)
