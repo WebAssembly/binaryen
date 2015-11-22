@@ -101,7 +101,7 @@ for t in tests:
     print '..', t
     t = os.path.join('test', t)
     actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), t, '-print-before'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    assert err == '', 'bad err:' + err
+    assert err.replace('printing before:', '').strip() == '', 'bad err:' + err
     actual = actual.replace('printing before:\n', '')
 
     expected = open(t).read()
