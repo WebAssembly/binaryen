@@ -965,11 +965,16 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->type = WasmType::i32;
           return ret;
         }
-        assert(asmType == ASM_DOUBLE);
         auto ret = allocator.alloc<Unary>();
         ret->op = Neg;
         ret->value = process(ast[2]);
-        ret->type = WasmType::f64;
+        if (asmType == ASM_DOUBLE) {
+          ret->type = WasmType::f64;
+        } else if (asmType == ASM_FLOAT) {
+          ret->type = WasmType::f32;
+        } else {
+          abort();
+        }
         return ret;
       } else if (ast[1] == B_NOT) {
         // ~, might be ~~ as a coercion or just a not

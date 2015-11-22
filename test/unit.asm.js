@@ -106,6 +106,10 @@ function () {
     y = +Math_abs(0.0);
     z = Math_fround(Math_abs(Math_fround(0)));
   }
+  function neg() {
+    var x = Math_fround(0);
+    x = -x;
+  }
 
   function z() {
   }

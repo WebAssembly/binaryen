@@ -327,6 +327,14 @@
       )
     )
   )
+  (func $neg
+    (local $x f32)
+    (set_local $x
+      (f32.neg
+        (get_local $x)
+      )
+    )
+  )
   (func $z
     (nop)
   )
