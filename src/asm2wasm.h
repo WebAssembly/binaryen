@@ -162,9 +162,9 @@ private:
           if (previous.params.size() > i) {
             if (previous.params[i] == none) {
               previous.params[i] = type.params[i]; // use a more concrete type
-            } else {
-              previous.params.push_back(type.params[i]); // add a new param
             }
+          } else {
+            previous.params.push_back(type.params[i]); // add a new param
           }
         }
         if (previous.result == none) {
