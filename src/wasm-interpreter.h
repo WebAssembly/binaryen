@@ -203,8 +203,8 @@ private:
           if (flow.breaking()) {
             if (flow.breakTo == curr->in) continue; // lol
             flow.clearIf(curr->out);
-            return flow;
           }
+          return flow; // loop does not loop automatically, only continue achieves that
         }
       }
       Flow visitLabel(Label *curr) override {
