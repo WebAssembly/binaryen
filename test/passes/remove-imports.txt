@@ -1,0 +1,15 @@
+printing before:
+(module
+  (memory 1024 1024)
+  (import $waka "somewhere" "waka")
+  (func $nada
+    (call_import $f64-to-int)
+  )
+)
+printing after:
+(module
+  (memory 1024 1024)
+  (func $nada
+    (nop)
+  )
+)
