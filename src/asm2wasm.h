@@ -36,6 +36,8 @@ IString GLOBAL("global"), NAN_("NaN"), INFINITY_("Infinity"),
         F64_TO_INT("f64-to-int"),
         GLOBAL_MATH("global.Math"),
         ABS("abs"),
+        FLOOR("floor"),
+        SQRT("sqrt"),
         I32_TEMP("asm2wasm_i32_temp"),
         DEBUGGER("debugger");
 
@@ -131,6 +133,8 @@ private:
   IString Math_clz32;
   IString Math_fround;
   IString Math_abs;
+  IString Math_floor;
+  IString Math_sqrt;
 
   // function types. we fill in this information as we see
   // uses, in the first pass
@@ -454,6 +458,14 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         } else if (imported[2] == ABS) {
           assert(Math_abs.isNull());
           Math_abs = name;
+          return;
+        } else if (imported[2] == FLOOR) {
+          assert(Math_floor.isNull());
+          Math_floor = name;
+          return;
+        } else if (imported[2] == SQRT) {
+          assert(Math_sqrt.isNull());
+          Math_sqrt = name;
           return;
         }
       }
@@ -1114,6 +1126,19 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           } else if (value->type == f32 || value->type == f64) {
             auto ret = allocator.alloc<Unary>();
             ret->op = Abs;
+            ret->value = value;
+            ret->type = value->type;
+            return ret;
+          } else {
+            abort();
+          }
+        }
+        if (name == Math_floor || name == Math_sqrt) {
+          // overloaded on type: f32 or f64
+          Expression* value = process(ast[2][0]);
+          if (value->type == f32 || value->type == f64) {
+            auto ret = allocator.alloc<Unary>();
+            ret->op = name == Math_floor ? Floor : Sqrt;
             ret->value = value;
             ret->type = value->type;
             return ret;
