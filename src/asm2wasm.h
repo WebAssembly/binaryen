@@ -1263,12 +1263,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->body = process(ast[2]);
       continueStack.pop_back();
       breakStack.pop_back();
-      Break *breakOut = allocator.alloc<Break>();
-      breakOut->name = out;
+      Break *continuer = allocator.alloc<Break>();
+      continuer->name = in;
       If *condition = allocator.alloc<If>();
       condition->condition = process(ast[1]);
-      condition->ifTrue = allocator.alloc<Nop>();
-      condition->ifFalse = breakOut;
+      condition->ifTrue = continuer;
       Block *block = blockify(ret->body);
       block->list.push_back(condition);
       ret->body = block;
