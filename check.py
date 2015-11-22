@@ -80,9 +80,14 @@ fail_if_not_contained(actual, 'options:')
 fail_if_not_contained(actual, 'passes:')
 fail_if_not_contained(actual, '  -lower-if-else')
 
-print '  ', ' '.join([os.path.join('bin', 'binaryen-shell'), '-print-before', '-print-after', '-lower-if-else', os.path.join('test', 'if_else.wast')])
-actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), '-print-before', '-print-after', '-lower-if-else', os.path.join('test', 'if_else.wast')], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-fail_if_not_identical(actual, open(os.path.join('test', 'if_else.txt')).read())
+print '\n[ checking binaryen-shell passes... ]\n'
+
+for t in sorted(os.listdir(os.path.join('test', 'passes'))):
+  if t.endswith('.wast'):
+    print '..', t
+    passname = os.path.basename(t).replace('.wast', '')
+    actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), '-print-before', '-print-after', '-' + passname, os.path.join('test', 'passes', t)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
 
 print '\n[ checking binaryen-shell testcases... ]\n'
 
