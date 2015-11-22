@@ -5,31 +5,15 @@ function integrateWasmJS(Module) {
     // the wasm module at that time, and it receives imports and provides exports and so forth, the app
     // doesn't need to care that it is wasm and not asm.
     Module['asm'] = function(global, env, providedBuffer) {
-      // Load the binary wasm module
-      var filename = Module['wasmCodeFile'];
-      var binary;
-      if (typeof read === 'function') {
-        // spidermonkey or v8 shells
-        if (typeof readbuffer === 'function') {
-          binary = new Uint8Array(readbuffer(filename));
-        } else {
-          binary = read(f, 'binary');
-        }
-      } else if (typeof process === 'object' && typeof require === 'function') {
-        // node.js
-        binary = require('fs')['readFileSync'](filename);
-        if (!binary.buffer) { // handle older node.js not returning a proper typed array
-          binary = new Uint8Array(ret);
-        }
-      } else {
-        throw 'TODO: binary loading in other platforms';
-      }
-      assert(binary.buffer);
+      // Load the wasm module
+      var binary = Module['readBinary'](Module['wasmCodeFile']);
+
       // Create an instance of the module using native support in the JS engine.
       var instance = WASM.instantiateModule(binary, {
         "global.Math": global.Math,
         "env": env
       });
+
       // The wasm instance creates its memory. But static init code might have written to
       // buffer already, and we must copy it over.
       // TODO: avoid this copy, by avoiding such static init writes
@@ -43,6 +27,7 @@ function integrateWasmJS(Module) {
       Module['reallocBuffer'] = function(size) {
         abort('no memory growth quite yet, but easy to add');
       };
+
       return instance;
     };
     return;
@@ -94,16 +79,7 @@ function integrateWasmJS(Module) {
     assert(providedBuffer === Module['buffer']); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
 
     // Generate a module instance of the asm.js converted into wasm.
-    var code;
-    if (typeof read === 'function') {
-      // spidermonkey or v8 shells
-      code = read(Module['asmjsCodeFile']);
-    } else if (typeof process === 'object' && typeof require === 'function') {
-      // node.js
-      code = require('fs')['readFileSync'](Module['asmjsCodeFile']).toString();
-    } else {
-      throw 'TODO: loading in other platforms';
-    }
+    var code = Module['read'](Module['asmjsCodeFile']);
 
     // wasm code would create its own buffer, at this time. But static init code might have
     // written to the buffer already, and we must copy it over. We could just avoid
