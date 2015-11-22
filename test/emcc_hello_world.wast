@@ -2454,13 +2454,12 @@
               (i32.const 4)
             )
           )
-          (if_else
+          (if
             (i32.lt_s
               (get_local $dest)
               (get_local $stop)
             )
-            (nop)
-            (br $do-out$0
+            (br $do-in$1
             )
           )
         )
