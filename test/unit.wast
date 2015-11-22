@@ -1,9 +1,10 @@
 (module
   (memory 16777216 16777216)
+  (type $FUNCSIG$vf (func (param f32)))
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
-  (table $z $big_negative $z $z $w $w $importedDoubles $w)
+  (table $z $big_negative $z $z $w $w $importedDoubles $w $z $neg)
   (func $big_negative
     (local $temp f64)
     (block
@@ -329,8 +330,20 @@
   )
   (func $neg
     (local $x f32)
-    (set_local $x
-      (f32.neg
+    (block
+      (set_local $x
+        (f32.neg
+          (get_local $x)
+        )
+      )
+      (call_indirect $FUNCSIG$vf
+        (i32.add
+          (i32.and
+            (i32.const 1)
+            (i32.const 7)
+          )
+          (i32.const 8)
+        )
         (get_local $x)
       )
     )

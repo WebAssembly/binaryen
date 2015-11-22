@@ -109,6 +109,7 @@ function () {
   function neg() {
     var x = Math_fround(0);
     x = -x;
+    FUNCTION_TABLE_c[1 & 7](x);
   }
 
   function z() {
@@ -118,6 +119,7 @@ function () {
 
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
+  var FUNCTION_TABLE_c = [ z, neg ];
 
   return { big_negative: big_negative };
 }

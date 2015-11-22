@@ -179,6 +179,7 @@ private:
   char getSigFromType(WasmType type) {
     switch (type) {
       case i32:  return 'i';
+      case f32:  return 'f';
       case f64:  return 'd';
       case none: return 'v';
       default: abort();
