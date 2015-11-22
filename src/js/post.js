@@ -1,5 +1,54 @@
 
 function integrateWasmJS(Module) {
+  if (typeof WASM === 'object') {
+    // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
+    // the wasm module at that time, and it receives imports and provides exports and so forth, the app
+    // doesn't need to care that it is wasm and not asm.
+    Module['asm'] = function(global, env, providedBuffer) {
+      // Load the binary wasm module
+      var filename = Module['wasmCodeFile'];
+      var binary;
+      if (typeof read === 'function') {
+        // spidermonkey or v8 shells
+        if (typeof readbuffer === 'function') {
+          binary = new Uint8Array(readbuffer(filename));
+        } else {
+          binary = read(f, 'binary');
+        }
+      } else if (typeof process === 'object' && typeof require === 'function') {
+        // node.js
+        binary = require('fs')['readFileSync'](filename);
+        if (!binary.buffer) { // handle older node.js not returning a proper typed array
+          binary = new Uint8Array(ret);
+        }
+      } else {
+        throw 'TODO: binary loading in other platforms';
+      }
+      assert(binary.buffer);
+      // Create an instance of the module using native support in the JS engine.
+      var instance = WASM.instantiateModule(binary, {
+        "global.Math": global.Math,
+        "env": env
+      });
+      // The wasm instance creates its memory. But static init code might have written to
+      // buffer already, and we must copy it over.
+      // TODO: avoid this copy, by avoiding such static init writes
+      // TODO: in shorter term, just copy up to the last static init write
+      var oldBuffer = Module['buffer'];
+      var newBuffer = instance.memory;
+      assert(newBuffer.byteLength >= oldBuffer.byteLength, 'we might fail if we allocated more than TOTAL_MEMORY');
+      (new Int8Array(newBuffer)).set(new Int8Array(oldBuffer));
+      updateGlobalBuffer(newBuffer);
+      updateGlobalBufferViews();
+      Module['reallocBuffer'] = function(size) {
+        abort('no memory growth quite yet, but easy to add');
+      };
+      return instance;
+    };
+    return;
+  }
+
+  // Use wasm.js to polyfill and execute code in a wasm interpreter.
   var wasmJS = WasmJS({});
 
   // XXX don't be confused. Module here is in the outside program. wasmJS is the inner wasm-js.cpp.
