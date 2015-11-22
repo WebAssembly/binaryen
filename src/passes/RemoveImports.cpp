@@ -13,20 +13,27 @@ namespace wasm {
 
 struct RemoveImports : public Pass {
   MixedArena* allocator;
+  std::map<Name, Import*> importsMap;
 
   void prepare(PassRunner* runner, Module *module) override {
     allocator = runner->allocator;
+    importsMap = module->importsMap;
   }
 
   void visitCallImport(CallImport *curr) override {
-    replaceCurrent(allocator->alloc<Nop>());
+    WasmType type = importsMap[curr->target]->type.result;
+    if (type == none) {
+      replaceCurrent(allocator->alloc<Nop>());
+    } else {
+      Literal nopLiteral;
+      nopLiteral.type = type;
+      replaceCurrent(allocator->alloc<Const>()->set(nopLiteral));
+    }
   }
 
   void visitModule(Module *curr) {
-    auto imports = curr->imports;
-    for (auto import : imports) {
-      curr->removeImport(import->name);
-    }
+    curr->importsMap.clear();
+    curr->imports.clear();
   }
 };
 

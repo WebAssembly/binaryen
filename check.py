@@ -89,7 +89,9 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
-    actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), '-print-before', '-print-after', '-' + passname, os.path.join('test', 'passes', t)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    cmd = [os.path.join('bin', 'binaryen-shell'), '-print-before', '-print-after', '-' + passname, os.path.join('test', 'passes', t)]
+    print '    ', ' '.join(cmd)
+    actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
 
 print '\n[ checking binaryen-shell testcases... ]\n'

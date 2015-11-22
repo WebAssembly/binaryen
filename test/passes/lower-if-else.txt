@@ -1,4 +1,3 @@
-printing before:
 (module
   (memory 16777216 16777216)
   (func $ifs
@@ -20,7 +19,6 @@ printing before:
     )
   )
 )
-printing after:
 (module
   (memory 16777216 16777216)
   (func $ifs
