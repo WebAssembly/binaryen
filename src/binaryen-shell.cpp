@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
 
     if (print_before) {
       Colors::bold(std::cout);
-      std::cout << "printing before:\n";
+      std::cerr << "printing before:\n";
       Colors::normal(std::cout);
       std::cout << wasm;
     }
@@ -261,7 +261,7 @@ int main(int argc, char **argv) {
 
     if (print_after) {
       Colors::bold(std::cout);
-      std::cout << "printing after:\n";
+      std::cerr << "printing after:\n";
       Colors::normal(std::cout);
       std::cout << wasm;
     }
@@ -292,7 +292,7 @@ int main(int argc, char **argv) {
         }
         if (print_before || print_after) {
           Colors::bold(std::cout);
-          std::cout << "printing in module invalidity test:\n";
+          std::cerr << "printing in module invalidity test:\n";
           Colors::normal(std::cout);
           std::cout << wasm;
         }
