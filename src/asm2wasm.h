@@ -413,6 +413,13 @@ private:
     return nullptr;
   }
 
+  Block* blockify(Expression* expression) {
+    if (expression->is<Block>()) return expression->dyn_cast<Block>();
+    auto ret = allocator.alloc<Block>();
+    ret->list.push_back(expression);
+    return ret;
+  }
+
   Function* processFunction(Ref ast);
 };
 
@@ -1210,6 +1217,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         body->list.push_back(process(ast[2]));
         ret->body = body;
       }
+      // loops do not automatically loop, add a branch back
+      Block* block = blockify(ret->body);
+      auto continuer = allocator.alloc<Break>();
+      continuer->name = ret->in;
+      block->list.push_back(continuer);
+      ret->body = block;
       continueStack.pop_back();
       breakStack.pop_back();
       return ret;
@@ -1256,14 +1269,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       condition->condition = process(ast[1]);
       condition->ifTrue = allocator.alloc<Nop>();
       condition->ifFalse = breakOut;
-      if (Block *block = ret->body->dyn_cast<Block>()) {
-        block->list.push_back(condition);
-      } else {
-        auto newBody = allocator.alloc<Block>();
-        newBody->list.push_back(ret->body);
-        newBody->list.push_back(condition);
-        ret->body = newBody;
-      }
+      Block *block = blockify(ret->body);
+      block->list.push_back(condition);
+      ret->body = block;
       return ret;
     } else if (what == LABEL) {
       assert(parentLabel.isNull());
