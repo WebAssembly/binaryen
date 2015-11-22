@@ -53,7 +53,9 @@ for asm in tests:
 
     # verify in wasm
     if interpreter:
-      proc = subprocess.Popen([interpreter, os.path.join('test', wasm)], stderr=subprocess.PIPE)
+      # remove imports, spec interpreter doesn't know what to do with them
+      subprocess.check_call([os.path.join('bin', 'binaryen-shell'), '-remove-imports', '-print-after', os.path.join('test', wasm)], stdout=open('temp.wast', 'w'))      
+      proc = subprocess.Popen([interpreter, 'temp.wast'], stderr=subprocess.PIPE)
       out, err = proc.communicate()
       if proc.returncode != 0:
         try: # to parse the error
