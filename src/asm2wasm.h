@@ -716,7 +716,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     curr = curr[1];
     assert(curr[0] == ASSIGN && curr[2][0] == NAME);
     IString name = curr[2][1]->getIString();
-    AsmType asmType = detectType(curr[3]);
+    AsmType asmType = detectType(curr[3], nullptr, false, Math_fround);
     function->params.emplace_back(name, asmToWasmType(asmType));
     functionVariables.insert(name);
     asmData.addParam(name, asmType);
@@ -727,7 +727,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     for (unsigned j = 0; j < curr[1]->size(); j++) {
       Ref pair = curr[1][j];
       IString name = pair[0]->getIString();
-      AsmType asmType = detectType(pair[1], nullptr, true);
+      AsmType asmType = detectType(pair[1], nullptr, true, Math_fround);
       function->locals.emplace_back(name, asmToWasmType(asmType));
       functionVariables.insert(name);
       asmData.addVar(name, asmType);
