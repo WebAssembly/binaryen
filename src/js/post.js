@@ -1,5 +1,6 @@
 
 function integrateWasmJS(Module) {
+
   if (typeof WASM === 'object') {
     // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
     // the wasm module at that time, and it receives imports and provides exports and so forth, the app
@@ -30,6 +31,7 @@ function integrateWasmJS(Module) {
 
       return instance;
     };
+
     return;
   }
 
