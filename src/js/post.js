@@ -26,7 +26,9 @@ function integrateWasmJS(Module) {
       updateGlobalBuffer(newBuffer);
       updateGlobalBufferViews();
       Module['reallocBuffer'] = function(size) {
-        abort('no memory growth quite yet, but easy to add');
+        var old = Module['buffer'];
+        wasmJS['asmExports']['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
+        return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
       };
 
       return instance;
