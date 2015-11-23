@@ -143,6 +143,11 @@ Same as Emscripten: MIT license.
 
 (`src/emscripten-optimizer` is synced with `tools/optimizer/` in the main emscripten repo, for convenience)
 
+## Design Principles
+
+ * **Interned strings for names**: It's very convenient to have names on nodes, instead of just numeric indices etc. To avoid most of the performance difference between strings and numeric indices, all strings are interned, which means there is a single copy of each string in memory, string comparisons are just a pointer comparison, etc.
+ * **Allocate in arenas**: Based on experience with other optimizing/transformating toolchains, it's not worth the overhead to carefully track memory of individual nodes. Instead, we allocate all elements of a module in an arena, and the entire arena can be freed when the module is no longer needed.
+
 ## FAQ
 
 * How does `asm2wasm` relate to the new WebAssembly backend which is being developed in upstream LLVM?
