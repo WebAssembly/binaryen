@@ -82,6 +82,62 @@ struct AstStackHelper {
 std::vector<Ref> AstStackHelper::astStack;
 
 //
+// Asm2WasmPreProcessor - does some initial parsing/processing
+// of asm.js code.
+//
+
+struct Asm2WasmPreProcessor {
+  bool memoryGrowth = false;
+
+  char* process(char* input) {
+    // emcc --separate-asm modules can look like
+    //
+    //    Module["asm"] = (function(global, env, buffer) {
+    //      ..
+    //    });
+    //
+    // we need to clean that up.
+    if (*input == 'M') {
+      size_t num = strlen(input);
+      while (*input != 'f') {
+        input++;
+        num--;
+      }
+      char *end = input + num - 1;
+      while (*end != '}') {
+        *end = 0;
+        end--;
+      }
+    }
+
+    // asm.js memory growth uses a quite elaborate pattern. Instead of parsing and
+    // matching it, we do a simpler detection on emscripten's asm.js output format
+    const char* START_FUNCS = "// EMSCRIPTEN_START_FUNCS";
+    char *marker = strstr(input, START_FUNCS);
+    if (marker) {
+      *marker = 0; // look for memory growth code just up to here
+      char *growthSign = strstr(input, "return true;"); // this can only show up in growth code, as normal asm.js lacks "true"
+      if (growthSign) {
+        memoryGrowth = true;
+        // clean out this function, we don't need it
+        char *growthFuncStart = strstr(input, "function ");
+        assert(strstr(growthFuncStart + 1, "function ") == 0); // should be only this one function in this area, so no confusion for us
+        char *growthFuncEnd = strchr(growthSign, '}');
+        assert(growthFuncEnd > growthFuncStart + 5);
+        growthFuncStart[0] = '/';
+        growthFuncStart[1] = '*';
+        growthFuncEnd--;
+        growthFuncEnd[0] = '*';
+        growthFuncEnd[1] = '/';
+      }
+      *marker = START_FUNCS[0];
+    }
+
+    return input;
+  }
+};
+
+//
 // Asm2WasmBuilder - converts an asm.js module into WebAssembly
 //
 
@@ -213,7 +269,7 @@ private:
   }
 
 public:
-  Asm2WasmBuilder(Module& wasm) : wasm(wasm), nextGlobal(8), maxGlobal(1000) {} // XXX sync with emcc
+  Asm2WasmBuilder(Module& wasm) : wasm(wasm), nextGlobal(8), maxGlobal(1000) {}
 
   void processAsm(Ref ast);
   void optimize();

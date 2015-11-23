@@ -27,24 +27,8 @@ int main(int argc, char **argv) {
   fclose(f);
   input[num] = 0;
 
-  // emcc --separate-asm modules look like
-  //
-  //    Module["asm"] = (function(global, env, buffer) {
-  //      ..
-  //    });
-  //
-  // we need to clean that up.
-  if (*input == 'M') {
-    while (*input != 'f') {
-      input++;
-      num--;
-    }
-    char *end = input + num - 1;
-    while (*end != '}') {
-      *end = 0;
-      end--;
-    }
-  }
+  Asm2WasmPreProcessor pre;
+  input = pre.process(input);
 
   if (debug) std::cerr << "parsing...\n";
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
