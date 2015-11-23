@@ -39,8 +39,9 @@ IString GLOBAL("global"), NAN_("NaN"), INFINITY_("Infinity"),
         FLOOR("floor"),
         SQRT("sqrt"),
         I32_TEMP("asm2wasm_i32_temp"),
-        DEBUGGER("debugger");
-
+        DEBUGGER("debugger"),
+        GROW_WASM_MEMORY("__growWasmMemory"),
+        NEW_SIZE("newSize");
 
 static void abort_on(std::string why) {
   std::cerr << why << '\n';
@@ -163,6 +164,8 @@ class Asm2WasmBuilder {
   std::map<IString, int> functionTableStarts; // each asm function table gets a range in the one wasm table, starting at a location
   std::map<CallIndirect*, IString> callIndirects; // track these, as we need to fix them after we know the functionTableStarts. this maps call => its function table
 
+  bool memoryGrowth;
+
 public:
   std::map<IString, MappedGlobal> mappedGlobals;
 
@@ -269,7 +272,7 @@ private:
   }
 
 public:
-  Asm2WasmBuilder(Module& wasm) : wasm(wasm), nextGlobal(8), maxGlobal(1000) {}
+  Asm2WasmBuilder(Module& wasm, bool memoryGrowth) : wasm(wasm), nextGlobal(8), maxGlobal(1000), memoryGrowth(memoryGrowth) {}
 
   void processAsm(Ref ast);
   void optimize();
@@ -740,6 +743,25 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     sub->type = WasmType::i32;
     call->target = sub;
   }
+
+  // apply memory growth, if relevant
+  if (memoryGrowth) {
+    // create and export a function that just calls memory growth
+    auto growWasmMemory = allocator.alloc<Function>();
+    growWasmMemory->name = GROW_WASM_MEMORY;
+    growWasmMemory->params.emplace_back(NEW_SIZE, i32); // the new size
+    auto get = allocator.alloc<GetLocal>();
+    get->name = NEW_SIZE;
+    auto grow = allocator.alloc<Host>();
+    grow->op = GrowMemory;
+    grow->operands.push_back(get);
+    growWasmMemory->body = grow;
+    wasm.addFunction(growWasmMemory);
+    auto export_ = allocator.alloc<Export>();
+    export_->name = export_->value = GROW_WASM_MEMORY;
+    wasm.addExport(export_);
+  }
+
 }
 
 Function* Asm2WasmBuilder::processFunction(Ref ast) {

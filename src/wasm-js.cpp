@@ -14,9 +14,6 @@
 using namespace cashew;
 using namespace wasm;
 
-IString GROW_WASM_MEMORY("__growWasmMemory"),
-        NEW_SIZE("newSize");
-
 // global singletons
 Asm2WasmBuilder* asm2wasm = nullptr;
 ModuleInstance* instance = nullptr;
@@ -52,25 +49,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
   module->memory.max = pre.memoryGrowth ? -1 : module->memory.initial;
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
-  asm2wasm = new Asm2WasmBuilder(*module);
+  asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth);
   asm2wasm->processAsm(asmjs);
-
-  if (pre.memoryGrowth) {
-    // create and export a function that just calls memory growth
-    auto growWasmMemory = new Function();
-    growWasmMemory->name = GROW_WASM_MEMORY;
-    growWasmMemory->params.emplace_back(NEW_SIZE, i32); // the new size
-    auto get = new GetLocal();
-    get->name = NEW_SIZE;
-    auto grow = new Host();
-    grow->op = GrowMemory;
-    grow->operands.push_back(get);
-    growWasmMemory->body = grow;
-    module->addFunction(growWasmMemory);
-    auto export_ = new Export();
-    export_->name = export_->value = GROW_WASM_MEMORY;
-    module->addExport(export_);
-  }
 
   if (wasmJSDebug) std::cerr << "optimizing...\n";
   asm2wasm->optimize();

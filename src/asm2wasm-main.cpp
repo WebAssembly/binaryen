@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
   if (debug) std::cerr << "wasming...\n";
   Module wasm;
   wasm.memory.initial = wasm.memory.max = 16*1024*1024; // we would normally receive this from the compiler
-  Asm2WasmBuilder asm2wasm(wasm);
+  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth);
   asm2wasm.processAsm(asmjs);
 
   if (debug) std::cerr << "optimizing...\n";
