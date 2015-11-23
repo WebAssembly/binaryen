@@ -247,6 +247,7 @@
           (nop)
         )
       )
+      (i32.const 0)
     )
   )
   (func $blocker

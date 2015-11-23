@@ -73,6 +73,7 @@ function () {
         break;
       }
     }
+    return 0;
   }
   function blocker() {
     L: {
