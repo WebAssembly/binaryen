@@ -448,7 +448,7 @@ public:
     o << ") (case " << default_ << ")\n";
     for (auto& c : cases) {
       doIndent(o, indent);
-      printMinorOpening(o, "case ") << c.name.str;
+      printMinorOpening(o, "case ") << c.name;
       incIndent(o, indent);
       printFullLine(o, indent, c.body);
       decIndent(o, indent) << '\n';

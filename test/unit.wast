@@ -175,17 +175,17 @@
           (i32.const 1)
         )
         (table (case $switch-case$1) (case $switch-case$2)) (case $switch-default$3)
-        (case switch-case$1
+        (case $switch-case$1
           (br $topmost
             (i32.const 1)
           )
         )
-        (case switch-case$2
+        (case $switch-case$2
           (br $topmost
             (i32.const 2)
           )
         )
-        (case switch-default$3
+        (case $switch-default$3
           (nop)
         )
       )
@@ -195,17 +195,17 @@
           (i32.const 5)
         )
         (table (case $switch-case$6) (case $switch-default$7) (case $switch-default$7) (case $switch-default$7) (case $switch-default$7) (case $switch-default$7) (case $switch-default$7) (case $switch-case$5)) (case $switch-default$7)
-        (case switch-case$5
+        (case $switch-case$5
           (br $topmost
             (i32.const 121)
           )
         )
-        (case switch-case$6
+        (case $switch-case$6
           (br $topmost
             (i32.const 51)
           )
         )
-        (case switch-default$7
+        (case $switch-default$7
           (nop)
         )
       )
@@ -215,13 +215,13 @@
           (i32.const 2)
         )
         (table (case $switch-case$15) (case $switch-default$16) (case $switch-default$16) (case $switch-case$12) (case $switch-default$16) (case $switch-default$16) (case $switch-default$16) (case $switch-default$16) (case $switch-case$9) (case $switch-default$16) (case $switch-case$8)) (case $switch-default$16)
-        (case switch-case$8
+        (case $switch-case$8
           (br $label$break$Lout)
         )
-        (case switch-case$9
+        (case $switch-case$9
           (br $label$break$Lout)
         )
-        (case switch-case$12
+        (case $switch-case$12
           (block
             (loop $while-out$10 $while-in$11
               (block
@@ -232,7 +232,7 @@
             (br $label$break$Lout)
           )
         )
-        (case switch-case$15
+        (case $switch-case$15
           (block
             (loop $while-out$13 $while-in$14
               (block
@@ -243,7 +243,7 @@
             (br $label$break$Lout)
           )
         )
-        (case switch-default$16
+        (case $switch-default$16
           (nop)
         )
       )

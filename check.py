@@ -63,7 +63,6 @@ for asm in tests:
           start, end = reported.split('-')
           start_line, start_col = map(int, start.split('.'))
           lines = open('temp.wast').read().split('\n')
-          print start_line, start_col
           print
           print '='*80
           print lines[start_line-1]

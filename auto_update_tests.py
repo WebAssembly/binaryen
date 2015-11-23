@@ -9,7 +9,6 @@ for asm in sorted(os.listdir('test')):
     print '..', asm
     wasm = asm.replace('.asm.js', '.wast')
     actual, err = subprocess.Popen([os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    assert err == '', 'bad err:' + err
 
     # verify output
     if not os.path.exists(os.path.join('test', wasm)):
@@ -22,7 +21,6 @@ for t in sorted(os.listdir('test')):
     print '..', t
     t = os.path.join('test', t)
     actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), t, '-print-before'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    assert err == '', 'bad err:' + err
     actual = actual.replace('printing before:\n', '')
 
     open(t, 'w').write(actual)
