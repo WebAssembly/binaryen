@@ -41,5 +41,16 @@ struct MixedArena {
 
 extern MixedArena globalAllocator;
 
+#ifdef __wasm_h__
+namespace wasm {
+
+class AllocatingModule : public Module {
+public:
+  MixedArena allocator;
+};
+
+}
+#endif
+
 #endif // mixed_arena_h
 

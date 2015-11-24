@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
   Ref asmjs = builder.parseToplevel(input);
 
   if (debug) std::cerr << "wasming...\n";
-  Module wasm;
+  AllocatingModule wasm;
   wasm.memory.initial = wasm.memory.max = 16*1024*1024; // we would normally receive this from the compiler
   Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth);
   asm2wasm.processAsm(asmjs);

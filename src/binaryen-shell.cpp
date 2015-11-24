@@ -234,7 +234,7 @@ int main(int argc, char **argv) {
   size_t i = 0;
   while (i < root.size()) {
     if (debug) std::cerr << "parsing s-expressions to wasm...\n";
-    Module wasm;
+    AllocatingModule wasm;
     SExpressionWasmBuilder builder(wasm, *root[i], [&]() { abort(); });
     i++;
 
@@ -280,7 +280,7 @@ int main(int argc, char **argv) {
       std::cerr << curr << '\n';
       if (id == ASSERT_INVALID) {
         // a module invalidity test
-        Module wasm;
+        AllocatingModule wasm;
         bool invalid = false;
         jmp_buf trapState;
         std::unique_ptr<SExpressionWasmBuilder> builder;

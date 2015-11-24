@@ -17,7 +17,7 @@ using namespace wasm;
 // global singletons
 Asm2WasmBuilder* asm2wasm = nullptr;
 ModuleInstance* instance = nullptr;
-Module* module = nullptr;
+AllocatingModule* module = nullptr;
 bool wasmJSDebug = false;
 
 // receives asm.js code, parses into wasm and returns an instance handle.
@@ -42,7 +42,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(input);
 
-  module = new Module();
+  module = new AllocatingModule();
   module->memory.initial = EM_ASM_INT_V({
     return Module['providedTotalMemory']; // we receive the size of memory from emscripten
   });

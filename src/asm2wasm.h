@@ -143,9 +143,9 @@ struct Asm2WasmPreProcessor {
 //
 
 class Asm2WasmBuilder {
-  Module& wasm;
+  AllocatingModule& wasm;
 
-  MixedArena allocator;
+  MixedArena &allocator;
 
   // globals
 
@@ -272,7 +272,7 @@ private:
   }
 
 public:
-  Asm2WasmBuilder(Module& wasm, bool memoryGrowth) : wasm(wasm), nextGlobal(8), maxGlobal(1000), memoryGrowth(memoryGrowth) {}
+  Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth) : wasm(wasm), allocator(wasm.allocator), nextGlobal(8), maxGlobal(1000), memoryGrowth(memoryGrowth) {}
 
   void processAsm(Ref ast);
   void optimize();

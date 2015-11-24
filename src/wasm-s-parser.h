@@ -233,15 +233,15 @@ private:
 //
 
 class SExpressionWasmBuilder {
-  Module& wasm;
-  MixedArena allocator;
+  AllocatingModule& wasm;
+  MixedArena& allocator;
   std::function<void ()> onError;
   int functionCounter;
   std::vector<Call*> calls; // we only know call types afterwards, so we set their type in a post-pass
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), onError(onError), functionCounter(0) {
+  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), allocator(wasm.allocator), onError(onError), functionCounter(0) {
     assert(module[0]->str() == MODULE);
     for (unsigned i = 1; i < module.size(); i++) {
       parseModuleElement(*module[i]);
