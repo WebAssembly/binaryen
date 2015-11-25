@@ -30,15 +30,6 @@ public:
   Ref processWasm(Module* wasm);
   Ref processFunction(Function* func);
 
-  //
-  // Tracks state while converting a function. We need to add new
-  // temporaries, and overall handle the fact that statements ==
-  // expressions in wasm, but not asm.js. That means that a wasm
-  // expression may be turned into an asm.js statement, which we
-  // cannot just place into an expression, but need to keep
-  // creating statements until we reach a statement context.
-  //
-
   // @param result Whether the context we are in receives a value,
   //               and its type, or if not, then we can drop our return,
   //               if we have one.
@@ -50,6 +41,28 @@ public:
   void freeTemp(IString temp);
   // Get and immediately free a temp var.
   IString getTempAndFree(WasmType type);
+
+  // break and continue stacks
+  void pushBreak(Name name) {
+    breakStack.push_back(name);
+  }
+  void popBreak() {
+    breakStack.pop_back();
+  }
+  void pushContinue(Name name) {
+    continueStack.push_back(name);
+  }
+  void popContinue() {
+    continueStack.pop_back();
+  }
+
+  IString fromName(Name name) {
+    return name; // TODO: add a "$" or other prefixing? sanitization of bad chars?
+  }
+
+private:
+  std::vector<Name> breakStack;
+  std::vector<Name> continueStack;
 };
 
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
@@ -75,6 +88,8 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   // body
   ret[3]->push_back(processExpression(func->body, func->result));
   // locals, including new temp locals XXX
+  // checks
+  assert(breakStack.empty() && continueStack.empty());
   return ret;
 }
 
@@ -159,8 +174,19 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       return condition;
     }
     void visitLoop(Loop *curr) override {
+      if (curr->out.is()) parent->pushBreak(curr->out);
+      if (curr->in.is()) parent->pushContinue(curr->in);
+      Ref body = processExpression(curr->body, none);
+      if (curr->in.is()) parent->popContinue();
+      if (curr->out.is()) parent->popBreak();
+      return ValueBuilder::makeDo(ValueBuilder::makeInt(0), body);
     }
     void visitLabel(Label *curr) override {
+      assert(result == none);
+      parent->pushBreak(curr->name);
+      Ref ret = ValueBuilder::makeLabel(fromName(curr->name), blockify(processExpression(curr->body, none)));
+      parent->popBreak();
+      return ret;
     }
     void visitBreak(Break *curr) override {
     }
