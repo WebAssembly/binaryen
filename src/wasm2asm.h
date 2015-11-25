@@ -21,9 +21,6 @@ IString ASM_FUNC("asmFunc");
 class Wasm2AsmBuilder {
   MixedArena& allocator;
 
-  // How many temp vars we need
-  int i32s = 0, f32s = 0, f64s = 0;
-
 public:
   Asm2WasmBuilder(MixedArena& allocator) : allocator(allocator) {}
 
@@ -65,6 +62,11 @@ public:
   }
 
 private:
+  // How many temp vars we need
+  int i32s = 0, f32s = 0, f64s = 0;
+  // Which are currently free to use
+  std::vector<int> i32sFree, f32sFree, f64sFree;
+
   std::vector<Name> breakStack;
   std::vector<Name> continueStack;
 };
@@ -94,6 +96,9 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   // locals, including new temp locals XXX
   // checks
   assert(breakStack.empty() && continueStack.empty());
+  assert(i32sFree.size() == i32s); // all temp vars should be free at the end
+  assert(f32sFree.size() == f32s);
+  assert(f64sFree.size() == f64s);
   return ret;
 }
 
@@ -229,8 +234,22 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       return condition;
     }
     void visitSwitch(Switch *curr) override {
+      abort();
     }
     void visitCall(Call *curr) override {
+      std::vector<Ref> operands;
+      bool hasStatement = false;
+      for (auto operand : curr->operands) {
+        Ref temp = processTypedExpression(curr->value);
+        temp = temp || isStatement(temp)
+        operands.push_back(temp);
+      }
+      // if any is statement, we must statementize them all
+      if (hasStatement) {
+        for (auto& operand : operands) {
+          operand = blockifyWithTemp(// XXX);
+        }
+      }
     }
     void visitCallImport(CallImport *curr) override {
     }
