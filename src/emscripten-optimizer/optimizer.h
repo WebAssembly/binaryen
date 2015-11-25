@@ -132,5 +132,10 @@ enum AsmSign {
 
 extern AsmSign detectSign(cashew::Ref node, cashew::IString minifiedFround);
 
+inline cashew::Ref deStat(cashew::Ref node) {
+  if (node[0] == cashew::STAT) return node[1];
+  return node;
+}
+
 #endif // __optimizer_h__
 
