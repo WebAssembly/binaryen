@@ -35,6 +35,10 @@ public:
   //               if we have one.
   Ref processExpression(Expression* curr, WasmType result);
 
+  Ref processTypedExpression(Expression* curr) {
+    return processExpression(curr, curr->type);
+  }
+
   // Get a temp var.
   IString getTemp(WasmType type);
   // Free a temp var.
@@ -99,10 +103,16 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
     WasmType result;
     ExpressionProcessor(Wasm2AsmBuilder* parent, WasmType result) : parent(parent), result(result) {}
 
+    bool isStatement(Ref ast) {
+      if (!ast) return false;
+      IString what = ast[0]->getIString();
+      return what == BLOCK || what == BREAK || what == IF || what == DO;
+    }
+
     // Expressions with control flow turn into a block, which we must
     // then handle, even if we are an expression.
     bool isBlock(Ref ast) {
-      return ast[0] == BLOCK;
+      return !!ast && ast[0] == BLOCK;
     }
 
     // Looks for a standard assign at the end of a block, which if this
@@ -110,7 +120,7 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
     Ref getBlockAssign(Ref ast) {
       if (!(ast.size() >= 2 && ast[1].size() > 0)) return Ref();
       Ref last = deStat(ast[1][ast[1].size()-1]);
-      if (!(last[0] == ASSIGN && last[2][0] == NAME)) return Ref;
+      if (!(last[0] == ASSIGN && last[2][0] == NAME)) return Ref();
       return last;
     }
 
@@ -130,7 +140,7 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       return ret;
     }
 
-    Ref blockifyWithResult(Ref ast, IString temp) {
+    Ref blockifyWithTemp(Ref ast, IString temp) {
       if (isBlock(ast)) {
         Ref assign = getBlockAssign(ast);
         assert(!!assign); // if a block, must have a value returned
@@ -141,6 +151,10 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       Ref ret = ValueBuilder::makeBlock();
       ret[1]->push_back(makeAssign(makeName(temp), ast));
       return ret;
+    }
+
+    Ref blockifyWithResult(Ref ast, WasmType type) {
+      return blockifyWithTemp(ast, parent->getTemp(type));
     }
 
     // Visitors
@@ -155,7 +169,7 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
     }
     void visitIf(If *curr) override {
       assert(result ? !!curr->ifFalse : true); // an if without an else cannot be in a receiving context
-      Ref condition = processExpression(curr->condition, result);
+      Ref condition = processTypedExpression(curr->condition);
       Ref ifTrue = processExpression(curr->ifTrue, result);
       Ref ifFalse;
       if (curr->ifFalse) {
@@ -163,12 +177,13 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       }
       if (result != none) {
         IString temp = parent->getTempAndFree(result);
-        ifTrue = blockifyWithResult(ifTrue, temp);
-        if (curr->ifFalse) ifFalse = blockifyWithResult(ifFalse, temp);
+        ifTrue = blockifyWithTemp(ifTrue, temp);
+        if (curr->ifFalse) ifFalse = blockifyWithTemp(ifFalse, temp);
       }
-      if (!isBlock(condition)) {
+      if (!isStatement(condition)) {
         return ValueBuilder::makeIf(condition, ifTrue, ifFalse); // simple if
       }
+      condition = blockify(condition);
       // just add an if to the block
       condition[1]->push_back(ValueBuilder::makeIf(getBlockValue(condition), ifTrue, ifFalse));
       return condition;
@@ -179,7 +194,7 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       Ref body = processExpression(curr->body, none);
       if (curr->in.is()) parent->popContinue();
       if (curr->out.is()) parent->popBreak();
-      return ValueBuilder::makeDo(ValueBuilder::makeInt(0), body);
+      return ValueBuilder::makeDo(body, ValueBuilder::makeInt(0));
     }
     void visitLabel(Label *curr) override {
       assert(result == none);
@@ -189,6 +204,29 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       return ret;
     }
     void visitBreak(Break *curr) override {
+      Ref theBreak = ValueBuilder::makeBreak(fromName(curr->name));
+      if (!curr->condition && !curr->value) {
+        return theBreak;
+      }
+      Ref ret = ValueBuilder::makeBlock();
+      Ref condition;
+      if (curr->condition) {
+        condition = processTypedExpression(curr->condition);
+      }
+      Ref value;
+      if (curr->value) {
+        value = processTypedExpression(curr->value);
+        value = blockifyWithResult(value);
+        value[1]->push_back(theBreak);
+        theBreak = value; // theBreak now sets the return value, then breaks
+      }
+      if (!condition) return theBreak;
+      if (!isStatement(condition)) {
+        return ValueBuilder::makeIf(condition, theBreak, Ref());
+      }
+      condition = blockify(condition);
+      condition[1]->push_back(ValueBuilder::makeIf(getBlockValue(condition), theBreak, Ref()));
+      return condition;
     }
     void visitSwitch(Switch *curr) override {
     }
