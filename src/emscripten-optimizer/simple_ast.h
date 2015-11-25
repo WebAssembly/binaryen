@@ -1526,6 +1526,13 @@ public:
     array[1]->push_back(&makeRawArray(2)->push_back(makeRawString(key))
                                          .push_back(value));
   }
+
+  static Ref makeAssign(Ref obj, Ref target, Ref value) {
+    return &makeRawArray(3)->push_back(makeRawString(ASSIGN))
+                            .push_back(&arena.alloc()->setBool(true))
+                            .push_back(target)
+                            .push_back(value);
+  }
 };
 
 // Tolerates 0.0 in the input; does not trust a +() to be there.

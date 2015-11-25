@@ -39,9 +39,17 @@ public:
   // creating statements until we reach a statement context.
   //
 
-  // @param receives Whether the context we are in receives a value, or if not,
-  //                 then we can drop our return, if we have one.
-  Ref processExpression(Expression* curr, bool XXX WasmType receives);
+  // @param result Whether the context we are in receives a value,
+  //               and its type, or if not, then we can drop our return,
+  //               if we have one.
+  Ref processExpression(Expression* curr, WasmType result);
+
+  // Get a temp var.
+  IString getTemp(WasmType type);
+  // Free a temp var.
+  void freeTemp(IString temp);
+  // Get and immediately free a temp var.
+  IString getTempAndFree(WasmType type);
 };
 
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
@@ -65,15 +73,16 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   ret[1] = ValueBuilder::makeRawString(func->name);
   // arguments XXX
   // body
-  ret[3]->push_back(processExpression(func->body, func->result != none));
+  ret[3]->push_back(processExpression(func->body, func->result));
   // locals, including new temp locals XXX
   return ret;
 }
 
 Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
   struct ExpressionProcessor : public WasmVisitor<Ref> {
-    bool receives;
-    ExpressionProcessor(bool receives) : receives(receives) {}
+    Wasm2AsmBuilder* parent;
+    WasmType result;
+    ExpressionProcessor(Wasm2AsmBuilder* parent, WasmType result) : parent(parent), result(result) {}
 
     // Expressions with control flow turn into a block, which we must
     // then handle, even if we are an expression.
@@ -81,14 +90,22 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       return ast[0] == BLOCK;
     }
 
+    // Looks for a standard assign at the end of a block, which if this
+    // block returns a value, it will have.
+    Ref getBlockAssign(Ref ast) {
+      if (!(ast.size() >= 2 && ast[1].size() > 0)) return Ref();
+      Ref last = deStat(ast[1][ast[1].size()-1]);
+      if (!(last[0] == ASSIGN && last[2][0] == NAME)) return Ref;
+      return last;
+    }
+
     // If we replace an expression with a block, and we need to return
     // a value, it will show up in the last element, as an assign. This
     // returns it.
     IString getBlockValue(Ref ast) {
-      assert(ast.size() >= 2 && ast[1].size() > 0);
-      Ref last = deStat(ast[1][ast[1].size()-1]);
-      assert(last[0] == ASSIGN && last[2][0] == NAME);
-      return last[2][1]->getIString();
+      Ref assign = getBlockAssign(ast);
+      assert(!!assign);
+      return assign[2][1]->getIString();
     }
 
     Ref blockify(Ref ast) {
@@ -98,10 +115,16 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       return ret;
     }
 
-    Ref blockifyWithValue(Ref ast) {
-      if (isBlock(ast)) return ast;
+    Ref blockifyWithResult(Ref ast, IString temp) {
+      if (isBlock(ast)) {
+        Ref assign = getBlockAssign(ast);
+        assert(!!assign); // if a block, must have a value returned
+        assign[2][1]->setString(temp); // replace existing assign target
+        return ast;
+      }
+      // not a block, so an expression. Just assign to the temp var.
       Ref ret = ValueBuilder::makeBlock();
-      ret[1]->push_back(ast);
+      ret[1]->push_back(makeAssign(makeName(temp), ast));
       return ret;
     }
 
@@ -111,33 +134,29 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
       for (size_t i = 0; i < size; i++) {
-        ret[1]->push_back(processExpression(func->body, i < size-1 ? false : receives);
+        ret[1]->push_back(processExpression(func->body, i < size-1 ? false : result);
       }
       return ret;
     }
     void visitIf(If *curr) override {
-      assert(receives ? !!curr->ifFalse : true); // an if without an else cannot be in a receiving context
-      Ref condition = processExpression(curr->condition, receives);
-      Ref ifTrue = processExpression(curr->ifTrue, receives);
+      assert(result ? !!curr->ifFalse : true); // an if without an else cannot be in a receiving context
+      Ref condition = processExpression(curr->condition, result);
+      Ref ifTrue = processExpression(curr->ifTrue, result);
       Ref ifFalse;
       if (curr->ifFalse) {
-        ifFalse = processExpression(curr->ifFalse, receives);
+        ifFalse = processExpression(curr->ifFalse, result);
       }
-      if (!isBlock(condition) && !receives) {
+      if (result != none) {
+        IString temp = parent->getTempAndFree(result);
+        ifTrue = blockifyWithResult(ifTrue, temp);
+        if (curr->ifFalse) ifFalse = blockifyWithResult(ifFalse, temp);
+      }
+      if (!isBlock(condition)) {
         return ValueBuilder::makeIf(condition, ifTrue, ifFalse); // simple if
       }
-      if (receives) {
-        IString parent->getTemp();
-        ifTrue = blockifyWithValue(ifTrue);
-        ifFalse = blockifyWithValue(ifFalse);
-      }
-      condition = blockify(blockify);
-        // just add an if to the block
-        IString check = getBlockValue(condition);
-        condition[1]->push_back(ValueBuilder::makeIf(condition, ifTrue, ifFalse));
-        return condition;
-      if (isBlock(condition)) {
-      }
+      // just add an if to the block
+      condition[1]->push_back(ValueBuilder::makeIf(getBlockValue(condition), ifTrue, ifFalse));
+      return condition;
     }
     void visitLoop(Loop *curr) override {
     }
@@ -180,7 +199,7 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
     void visitUnreachable(Unreachable *curr) override {
     }
   };
-  return ExpressionProcessor(state).visit(curr);
+  return ExpressionProcessor(this, result).visit(curr);
 }
 
 } // namespace wasm
