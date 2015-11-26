@@ -264,14 +264,32 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     IString result;
     ExpressionProcessor(Wasm2AsmBuilder* parent) : parent(parent) {}
 
+    // A scoped temporary variable.
     struct ScopedTemp {
       Wasm2AsmBuilder* parent;
       IString temp;
-      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent) : parent(parent) {
-        temp = parent->getTemp(type);
+      bool needFree;
+      // @param possible if provided, this is a variable we can use as our temp. it has already been
+      //                 allocated in a higher scope, and we can just assign to it as our result is
+      //                 going there anyhow.
+      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent, IString possible = IString()) : parent(parent) {
+        assert(possible != EXPRESSION_RESULT);
+        if (possible == NO_RESULT) {
+          temp = parent->getTemp(type);
+          needFree = true;
+        } else {
+          temp = possible;
+          needFree = false;
+        }
       }
       ~ScopedTemp() {
-        parent->freeTemp(temp);
+        if (needFree) {
+          parent->freeTemp(temp);
+        }
+      }
+
+      Ref getAstName() {
+        return ValueBuilder::makeName(temp);
       }
     };
 
@@ -474,9 +492,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       if (!isStatement(curr)) {
         return ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), visit(curr->value, EXPRESSION_RESULT));
       }
-      Ref ret = blockify(visit(curr->value, result));
+      ScopedTemp temp(curr->type, parent, result); // if result was provided, our child can just assign there. otherwise, allocate a temp for it to assign to.
+      Ref ret = blockify(visit(curr->value, temp));
       // the output was assigned to result, so we can just assign it to our target
-      ret[1]->push_back(ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), ValueBuilder::makeName(result)));
+      ret[1]->push_back(ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), temp.getAstName());
       return ret;
     }
     void visitLoad(Load *curr) override {
