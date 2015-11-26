@@ -17,6 +17,49 @@ IString ASM_FUNC("asmFunc");
 //
 // Wasm2AsmBuilder - converts a WebAssembly module into asm.js
 //
+// In general, asm.js => wasm is very straightforward, as can
+// be seen in asm2wasm.h. Just a single pass, plus a little
+// state bookkeeping (breakStack, etc.), and a few after-the
+// fact corrections for imports, etc. However, wasm => asm.js
+// is tricky because wasm has statements == expressions, or in
+// other words, things like `break` and `if` can show up
+// in places where asm.js can't handle them, like inside an
+// a loop's condition check.
+//
+// We therefore need the ability to lower an expression into
+// a block of statements, and we keep statementizing until we
+// reach a context in which we can emit those statments. This
+// requires that we create temp variables to store values
+// that would otherwise flow directly into their targets if
+// we were an expression (e.g. if a loop's condition check
+// is a bunch of statements, we execute those statements,
+// then use the computed value in the loop's condition;
+// we might also be able to avoid an assign to a temp var
+// at the end of those statements, and put just that
+// value in the loop's condition).
+//
+// It is possible to do this in a single pass, if we just
+// allocate temp vars freely. However, pathological cases
+// can easily show bad behavior here, with many unnecessary
+// temp vars. We could rely on optimization passes like
+// Emscripten's eliminate/registerize pair, but we want
+// wasm2asm to be fairly fast to run, as it might run on
+// the client.
+//
+// The approach taken here therefore performs 2 passes on
+// each function. First, it finds which expression will need to
+// be statementized. It also sees which labels can receive a break
+// with a value. Given that information, in the second pass we can
+// allocate // temp vars in an efficient manner, as we know when we
+// need them and when their use is finished. They are allocated
+// using an RAII class, so that they are automatically freed
+// when the scope ends. This means that a node cannot allocate
+// its own temp var; instead, the parent - which knows the
+// child will return a value in a temp var - allocates it,
+// and tells the child what temp var to emit to. The child
+// can then pass forward that temp var to its children,
+// optimizing away unnecessary forwarding.
+
 
 class Wasm2AsmBuilder {
   MixedArena& allocator;
@@ -27,12 +70,19 @@ public:
   Ref processWasm(Module* wasm);
   Ref processFunction(Function* func);
 
+  // The first pass on an expression: scan it to see whether it will
+  // need to be statementized, and note spooky returns of values at
+  // a distance (aka break with a value).
+  bool scanFunctionBody(Expression* curr);
+
+  // The second pass on an expression: process it fully, generating
+  // asm.js
   // @param result Whether the context we are in receives a value,
   //               and its type, or if not, then we can drop our return,
   //               if we have one.
-  Ref processExpression(Expression* curr, WasmType result);
+  Ref processFunctionBody(Expression* curr, WasmType result);
 
-  Ref processTypedExpression(Expression* curr) {
+  Ref XXX processTypedExpression(Expression* curr) {
     return processExpression(curr, curr->type);
   }
 
@@ -61,11 +111,31 @@ public:
     return name; // TODO: add a "$" or other prefixing? sanitization of bad chars?
   }
 
+  void setStatement(Expression* curr) {
+    willBeStatement.insert(curr);
+  }
+  bool isStatement(Expression* curr) {
+    return curr && willBeStatement.find(curr) != willBeStatement.end();
+  }
+
+  void setBreakedWithValue(Name name) {
+    breakedWithValue.insert(name);
+  }
+  bool isBreakedWithValue(Name name) {
+    return breakedWithValue.find(name) != breakedWithValue.end();
+  }
+
 private:
   // How many temp vars we need
   int i32s = 0, f32s = 0, f64s = 0;
   // Which are currently free to use
   std::vector<int> i32sFree, f32sFree, f64sFree;
+
+  // Expressions that will be a statement.
+  std::set<Expression*> willBeStatement;
+
+  // Label names to which we break with a value aka spooky-return-at-a-distance
+  std::set<Name> breakedWithValue;
 
   std::vector<Name> breakStack;
   std::vector<Name> continueStack;
@@ -92,17 +162,123 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   ret[1] = ValueBuilder::makeRawString(func->name);
   // arguments XXX
   // body
-  ret[3]->push_back(processExpression(func->body, func->result));
+  scanFunctionBody(func->body);
+  ret[3]->push_back(processFunctionBody(func->body, func->result));
   // locals, including new temp locals XXX
   // checks
   assert(breakStack.empty() && continueStack.empty());
   assert(i32sFree.size() == i32s); // all temp vars should be free at the end
   assert(f32sFree.size() == f32s);
   assert(f64sFree.size() == f64s);
+  // cleanups
+  willBeStatement.clear();
   return ret;
 }
 
-Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
+void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
+  struct ExpressionScanner : public WasmWalker {
+    ExpressionScanner(Wasm2AsmBuilder* parent) : parent(parent) {}
+
+    // Visitors
+
+    void visitBlock(Block *curr) override {
+      parent->setStatement(curr);
+    }
+    void visitIf(If *curr) override {
+      parent->setStatement(curr);
+    }
+    void visitLoop(Loop *curr) override {
+      parent->setStatement(curr);
+    }
+    void visitLabel(Label *curr) override {
+      parent->setStatement(curr);
+    }
+    void visitBreak(Break *curr) override {
+      if (curr->value) {
+        // spooky return-at-a-distance
+        parent->setBreakedWithValue(curr->name);
+      }
+      parent->setStatement(curr);
+    }
+    void visitSwitch(Switch *curr) override {
+      parent->setStatement(curr);
+    }
+    void visitCall(Call *curr) override {
+      for (auto item : curr->operands) {
+        if (parent->isStatement(item)) {
+          parent->setStatement(curr);
+          break;
+        }
+      }
+    }
+    void visitCallImport(CallImport *curr) override {
+      visitCall(curr);
+    }
+    void visitCallIndirect(CallIndirect *curr) override {
+      if (parent->isStatement(curr->target)) {
+        parent->setStatement(curr);
+        return;
+      }
+      for (auto item : curr->operands) {
+        if (parent->isStatement(item)) {
+          parent->setStatement(curr);
+          break;
+        }
+      }
+    }
+    void visitSetLocal(SetLocal *curr) override {
+      if (parent->isStatement(curr->value)) {
+        parent->setStatement(curr);
+      }
+    }
+    void visitLoad(Load *curr) override {
+      if (parent->isStatement(curr->ptr)) {
+        parent->setStatement(curr);
+      }
+    }
+    void visitStore(Store *curr) override {
+      if (parent->isStatement(curr->ptr) || parent->isStatement(curr->value)) {
+        parent->setStatement(curr);
+      }
+    }
+    void visitUnary(Unary *curr) override {
+      if (parent->isStatement(curr->value)) {
+        parent->setStatement(curr);
+      }
+    }
+    void visitBinary(Binary *curr) override {
+      if (parent->isStatement(curr->left) || parent->isStatement(curr->right)) {
+        parent->setStatement(curr);
+      }
+    }
+    void visitCompare(Compare *curr) override {
+      if (parent->isStatement(curr->left) || parent->isStatement(curr->right)) {
+        parent->setStatement(curr);
+      }
+    }
+    void visitConvert(Convert *curr) override {
+      if (parent->isStatement(curr->value)) {
+        parent->setStatement(curr);
+      }
+    }
+    void visitSelect(Select *curr) override {
+      if (parent->isStatement(curr->condition) || parent->isStatement(curr->ifTrue) || parent->isStatement(curr->ifFalse)) {
+        parent->setStatement(curr);
+      }
+    }
+    void visitHost(Host *curr) override {
+      for (auto item : curr->operands) {
+        if (parent->isStatement(item)) {
+          parent->setStatement(curr);
+          break;
+        }
+      }
+    }
+  };
+  ExpressionScanner(this).visit(curr);
+}
+
+Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr) {
   struct ExpressionProcessor : public WasmVisitor<Ref> {
     Wasm2AsmBuilder* parent;
     WasmType result;
@@ -168,7 +344,7 @@ Ref Wasm2AsmBuilder::processExpression(Expression* curr) {
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
       for (size_t i = 0; i < size; i++) {
-        ret[1]->push_back(processExpression(func->body, i < size-1 ? false : result);
+        ret[1]->push_back(processExpression( XXX func->body XXX , i < size-1 ? false : result);
       }
       return ret;
     }
