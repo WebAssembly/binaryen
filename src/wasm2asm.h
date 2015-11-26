@@ -12,7 +12,9 @@ namespace wasm {
 
 using namespace cashew;
 
-IString ASM_FUNC("asmFunc");
+IString ASM_FUNC("asmFunc"),
+        NO_RESULT("wasm2asm$noresult"), // no result at all
+        EXPRESSION_RESULT("wasm2asm$expresult"); // result in an expression, no temp var
 
 //
 // Wasm2AsmBuilder - converts a WebAssembly module into asm.js
@@ -80,18 +82,12 @@ public:
   // @param result Whether the context we are in receives a value,
   //               and its type, or if not, then we can drop our return,
   //               if we have one.
-  Ref processFunctionBody(Expression* curr, WasmType result);
-
-  Ref XXX processTypedExpression(Expression* curr) {
-    return processExpression(curr, curr->type);
-  }
+  Ref processFunctionBody(Expression* curr, IString result);
 
   // Get a temp var.
   IString getTemp(WasmType type);
   // Free a temp var.
   void freeTemp(IString temp);
-  // Get and immediately free a temp var.
-  IString getTempAndFree(WasmType type);
 
   // break and continue stacks
   void pushBreak(Name name) {
@@ -118,7 +114,7 @@ public:
     return curr && willBeStatement.find(curr) != willBeStatement.end();
   }
 
-  void setBreakedWithValue(Name name) {
+  void setBreakedWithValue(Name name) { // XXX needed? maybe we should just fill breakResults unconditionally?
     breakedWithValue.insert(name);
   }
   bool isBreakedWithValue(Name name) {
@@ -163,7 +159,9 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   // arguments XXX
   // body
   scanFunctionBody(func->body);
-  ret[3]->push_back(processFunctionBody(func->body, func->result));
+  IString result = func->result != none ? getTemp(func->result) : NO_RESULT;
+  ret[3]->push_back(processFunctionBody(func->body, result));
+  if (result != NO_RESULT) freeTemp(result);
   // locals, including new temp locals XXX
   // checks
   assert(breakStack.empty() && continueStack.empty());
@@ -278,13 +276,46 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
   ExpressionScanner(this).visit(curr);
 }
 
-Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr) {
+Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
   struct ExpressionProcessor : public WasmVisitor<Ref> {
     Wasm2AsmBuilder* parent;
-    WasmType result;
-    ExpressionProcessor(Wasm2AsmBuilder* parent, WasmType result) : parent(parent), result(result) {}
+    IString result;
+    ExpressionProcessor(Wasm2AsmBuilder* parent) : parent(parent) {}
 
-    bool isStatement(Ref ast) {
+    struct ScopedTemp {
+      Wasm2AsmBuilder* parent;
+      IString temp;
+      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent) : parent(parent) {
+        temp = parent->getTemp(type);
+      }
+      ~ScopedTemp() {
+        parent->freeTemp(temp);
+      }
+    };
+
+    Ast visit(Expression* curr, IString nextResult) {
+      result = nextResult;
+      return visit(curr);
+    }
+
+    Ast visit(Expression* curr, ScopedTemp& temp) {
+      return visit(curr, temp.temp);
+    }
+
+    Ref visitForExpression(Expression* curr, WasmType type) { // this result is for an asm expression slot, but it might be a statement
+      if (isStatement(curr)) {
+        ScopedTemp temp(type, parent);
+        return visit(curr, temp);
+      } else {
+        return visitExpression(curr, EXPRESSION_RESULT);
+      }
+    }
+
+    bool isStatement(Expression* curr) {
+      return parent->isStatement(curr);
+    }
+
+    bool isStatement(Ref ast) { // XXX needed?
       if (!ast) return false;
       IString what = ast[0]->getIString();
       return what == BLOCK || what == BREAK || what == IF || what == DO;
@@ -292,13 +323,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr) {
 
     // Expressions with control flow turn into a block, which we must
     // then handle, even if we are an expression.
-    bool isBlock(Ref ast) {
+    bool isBlock(Ref ast) { // XXX needed?
       return !!ast && ast[0] == BLOCK;
     }
 
     // Looks for a standard assign at the end of a block, which if this
     // block returns a value, it will have.
-    Ref getBlockAssign(Ref ast) {
+    Ref getBlockAssign(Ref ast) { // XXX needed?
       if (!(ast.size() >= 2 && ast[1].size() > 0)) return Ref();
       Ref last = deStat(ast[1][ast[1].size()-1]);
       if (!(last[0] == ASSIGN && last[2][0] == NAME)) return Ref();
@@ -308,20 +339,20 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr) {
     // If we replace an expression with a block, and we need to return
     // a value, it will show up in the last element, as an assign. This
     // returns it.
-    IString getBlockValue(Ref ast) {
+    IString getBlockValue(Ref ast) { // XXX needed?
       Ref assign = getBlockAssign(ast);
       assert(!!assign);
       return assign[2][1]->getIString();
     }
 
-    Ref blockify(Ref ast) {
+    Ref blockify(Ref ast) { // XXX needed?
       if (isBlock(ast)) return ast;
       Ref ret = ValueBuilder::makeBlock();
       ret[1]->push_back(ast);
       return ret;
     }
 
-    Ref blockifyWithTemp(Ref ast, IString temp) {
+    Ref blockifyWithTemp(Ref ast, IString temp) { // XXX needed?
       if (isBlock(ast)) {
         Ref assign = getBlockAssign(ast);
         assert(!!assign); // if a block, must have a value returned
@@ -334,30 +365,37 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr) {
       return ret;
     }
 
-    Ref blockifyWithResult(Ref ast, WasmType type) {
+    Ref blockifyWithResult(Ref ast, WasmType type) { // XXX needed?
       return blockifyWithTemp(ast, parent->getTemp(type));
     }
+
+    // For spooky return-at-a-distance/break-with-result, this tells us
+    // what the result var is for a specific label.
+    std::map<Name, IString> breakResults;
 
     // Visitors
 
     void visitBlock(Block *curr) override {
+      breakResults[curr->name] = result;
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
       for (size_t i = 0; i < size; i++) {
-        ret[1]->push_back(processExpression( XXX func->body XXX , i < size-1 ? false : result);
+        ret[1]->push_back(visit(curr->list[i], i < size-1 ? none : result);
       }
       return ret;
     }
     void visitIf(If *curr) override {
-      assert(result ? !!curr->ifFalse : true); // an if without an else cannot be in a receiving context
-      Ref condition = processTypedExpression(curr->condition);
+      Ref condition = visitForExpression(curr->condition);
+
+
+
       Ref ifTrue = processExpression(curr->ifTrue, result);
       Ref ifFalse;
       if (curr->ifFalse) {
         ifFalse = processExpression(curr->ifFalse, result);
       }
       if (result != none) {
-        IString temp = parent->getTempAndFree(result);
+        IString temp = parent->getTemp XXX (result);
         ifTrue = blockifyWithTemp(ifTrue, temp);
         if (curr->ifFalse) ifFalse = blockifyWithTemp(ifFalse, temp);
       }
@@ -392,11 +430,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr) {
       Ref ret = ValueBuilder::makeBlock();
       Ref condition;
       if (curr->condition) {
-        condition = processTypedExpression(curr->condition);
+        condition = visitTyped(curr->condition);
       }
       Ref value;
       if (curr->value) {
-        value = processTypedExpression(curr->value);
+        value = visitTyped(curr->value);
         value = blockifyWithResult(value);
         value[1]->push_back(theBreak);
         theBreak = value; // theBreak now sets the return value, then breaks
@@ -416,7 +454,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr) {
       std::vector<Ref> operands;
       bool hasStatement = false;
       for (auto operand : curr->operands) {
-        Ref temp = processTypedExpression(curr->value);
+        Ref temp = visitTyped(curr->value);
         temp = temp || isStatement(temp)
         operands.push_back(temp);
       }
@@ -458,7 +496,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr) {
     void visitUnreachable(Unreachable *curr) override {
     }
   };
-  return ExpressionProcessor(this, result).visit(curr);
+  return ExpressionProcessor(this).visit(curr, result);
 }
 
 } // namespace wasm
