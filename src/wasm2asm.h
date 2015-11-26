@@ -89,20 +89,6 @@ public:
   // Free a temp var.
   void freeTemp(IString temp);
 
-  // break and continue stacks
-  void pushBreak(Name name) {
-    breakStack.push_back(name);
-  }
-  void popBreak() {
-    breakStack.pop_back();
-  }
-  void pushContinue(Name name) {
-    continueStack.push_back(name);
-  }
-  void popContinue() {
-    continueStack.pop_back();
-  }
-
   IString fromName(Name name) {
     return name; // TODO: add a "$" or other prefixing? sanitization of bad chars?
   }
@@ -132,9 +118,6 @@ private:
 
   // Label names to which we break with a value aka spooky-return-at-a-distance
   std::set<Name> breakedWithValue;
-
-  std::vector<Name> breakStack;
-  std::vector<Name> continueStack;
 };
 
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
@@ -164,7 +147,6 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   if (result != NO_RESULT) freeTemp(result);
   // locals, including new temp locals XXX
   // checks
-  assert(breakStack.empty() && continueStack.empty());
   assert(i32sFree.size() == i32s); // all temp vars should be free at the end
   assert(f32sFree.size() == f32s);
   assert(f64sFree.size() == f64s);
@@ -293,9 +275,12 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
     };
 
-    Ast visit(Expression* curr, IString nextResult) {
+    Ref visit(Expression* curr, IString nextResult) {
+      IString old = result;
       result = nextResult;
-      return visit(curr);
+      Ref ret = visit(curr);
+      result = old; // keep it consistent for the rest of this frame, which may call visit on multiple children
+      return ret;
     }
 
     Ast visit(Expression* curr, ScopedTemp& temp) {
@@ -310,6 +295,16 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       } else {
         return visitExpression(curr, EXPRESSION_RESULT);
       }
+    }
+
+    Ref visitAndAssign(Expression* curr, IString result) {
+      Ref ret = visit(curr, result);
+      // if it's not already a statement, then it's an expression, and we need to assign it
+      // (if it is a statement, it already assigns to the result var)
+      if (!isStatement(curr)) {
+        ret = ValueBuilder::makeStatement(ValueBuilder::makeAssign(makeName(result), ret)));
+      }
+      return ret;
     }
 
     bool isStatement(Expression* curr) {
@@ -368,6 +363,15 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     // what the result var is for a specific label.
     std::map<Name, IString> breakResults;
 
+    // Breaks to the top of a loop should be emitted as continues, to that loop's main label
+    std::map<Name, Name> actualBreakLabel;
+
+    Name getActualBreakLabel(Name name) {
+      auto iter = actualBreakLabel.find(name);
+      if (iter == actualBreakLabel.end()) return name;
+      return iter->second;
+    }
+
     // Visitors
 
     void visitBlock(Block *curr) override {
@@ -377,6 +381,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       for (size_t i = 0; i < size; i++) {
         // TODO: flatten out, if we receive a block, just insert the elements
         ret[1]->push_back(visit(curr->list[i], i < size-1 ? none : result);
+      }
+      if (curr->name.is()) {
+        ret = ValueBuilder::makeLabel(fromName(curr->name), ret);
       }
       return ret;
     }
@@ -396,46 +403,35 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       condition[1]->push_back(ValueBuilder::makeIf(ValueBuilder::makeName(temp), ifTrue, ifFalse));
       return condition;
     }
-XXX
     void visitLoop(Loop *curr) override {
-      if (curr->out.is()) parent->pushBreak(curr->out);
-      if (curr->in.is()) parent->pushContinue(curr->in);
-      Ref body = processExpression(curr->body, none);
-      if (curr->in.is()) parent->popContinue();
-      if (curr->out.is()) parent->popBreak();
+      Name asmLabel = curr->out.is() ? curr->out : curr->in; // label using the outside, normal for breaks. if no outside, then inside
+      if (curr->in.is()) continues[curr->in] = asmLabel;
+      Ref body = visit(curr->body, result);
+      if (asmLabel.is()) {
+        body = ValueBuilder::makeLabel(fromName(asmLabel), body);
+      }
       return ValueBuilder::makeDo(body, ValueBuilder::makeInt(0));
     }
     void visitLabel(Label *curr) override {
-      assert(result == none);
-      parent->pushBreak(curr->name);
-      Ref ret = ValueBuilder::makeLabel(fromName(curr->name), blockify(processExpression(curr->body, none)));
-      parent->popBreak();
-      return ret;
+      return ValueBuilder::makeLabel(fromName(curr->name), visit(curr->body, result)));
     }
     void visitBreak(Break *curr) override {
-      Ref theBreak = ValueBuilder::makeBreak(fromName(curr->name));
-      if (!curr->condition && !curr->value) {
-        return theBreak;
-      }
-      Ref ret = ValueBuilder::makeBlock();
-      Ref condition;
       if (curr->condition) {
-        condition = visitTyped(curr->condition);
+        // we need an equivalent to an if here, so use that code
+        Break fakeBreak = *curr;
+        fakeBreak->condition = nullptr;
+        If fakeIf;
+        fakeIf.condition = curr->condition;
+        fakeIf.ifTrue = fakeBreak;
+        return visit(fake, result);
       }
-      Ref value;
-      if (curr->value) {
-        value = visitTyped(curr->value);
-        value = blockifyWithResult(value);
-        value[1]->push_back(theBreak);
-        theBreak = value; // theBreak now sets the return value, then breaks
-      }
-      if (!condition) return theBreak;
-      if (!isStatement(condition)) {
-        return ValueBuilder::makeIf(condition, theBreak, Ref());
-      }
-      condition = blockify(condition);
-      condition[1]->push_back(ValueBuilder::makeIf(getBlockValue(condition), theBreak, Ref()));
-      return condition;
+      Ref theBreak = ValueBuilder::makeBreak(fromName(getActualBreakLabel(curr->name)));
+      if (!curr->value) return theBreak;
+      // generate the value, including assigning to the result, and then do the break
+      Ref ret = visitAndAssign(curr->value, result);
+      ret = blockify(ret);
+      ret[1]->push_back(theBreak);
+      return ret;
     }
     void visitSwitch(Switch *curr) override {
       abort();

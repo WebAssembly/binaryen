@@ -1527,7 +1527,7 @@ public:
                                          .push_back(value));
   }
 
-  static Ref makeAssign(Ref obj, Ref target, Ref value) {
+  static Ref makeAssign(Ref target, Ref value) {
     return &makeRawArray(3)->push_back(makeRawString(ASSIGN))
                             .push_back(&arena.alloc()->setBool(true))
                             .push_back(target)
