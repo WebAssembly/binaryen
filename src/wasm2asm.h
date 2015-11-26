@@ -456,7 +456,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         theCall[2]->push_back(makeName(temp));
       }
       if (result != NO_RESULT) {
-        theCall = ValueBuilder::makeAssign(makeName(result), theCall);
+        theCall = ValueBuilder::makeAssign(ValueBuilder::makeName(result), theCall);
       }
       ret[1]->push_back(theCall);
       return ret;
@@ -468,8 +468,16 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       abort(); // XXX TODO
     }
     void visitGetLocal(GetLocal *curr) override {
+      return ValueBuilder::makeName(fromName(curr->name));
     }
     void visitSetLocal(SetLocal *curr) override {
+      if (!isStatement(curr)) {
+        return ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), visit(curr->value, EXPRESSION_RESULT));
+      }
+      Ref ret = blockify(visit(curr->value, result));
+      // the output was assigned to result, so we can just assign it to our target
+      ret[1]->push_back(ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), ValueBuilder::makeName(result)));
+      return ret;
     }
     void visitLoad(Load *curr) override {
     }
