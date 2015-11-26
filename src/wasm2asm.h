@@ -302,9 +302,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return visit(curr, temp.temp);
     }
 
-    Ref visitForExpression(Expression* curr, WasmType type) { // this result is for an asm expression slot, but it might be a statement
+    Ref visitForExpression(Expression* curr, WasmType type, IString& tempName) { // this result is for an asm expression slot, but it might be a statement
       if (isStatement(curr)) {
         ScopedTemp temp(type, parent);
+        tempName = temp.temp;
         return visit(curr, temp);
       } else {
         return visitExpression(curr, EXPRESSION_RESULT);
@@ -313,12 +314,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
 
     bool isStatement(Expression* curr) {
       return parent->isStatement(curr);
-    }
-
-    bool isStatement(Ref ast) { // XXX needed?
-      if (!ast) return false;
-      IString what = ast[0]->getIString();
-      return what == BLOCK || what == BREAK || what == IF || what == DO;
     }
 
     // Expressions with control flow turn into a block, which we must
@@ -380,33 +375,28 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
       for (size_t i = 0; i < size; i++) {
+        // TODO: flatten out, if we receive a block, just insert the elements
         ret[1]->push_back(visit(curr->list[i], i < size-1 ? none : result);
       }
       return ret;
     }
     void visitIf(If *curr) override {
-      Ref condition = visitForExpression(curr->condition);
-
-
-
-      Ref ifTrue = processExpression(curr->ifTrue, result);
+      IString temp;
+      Ref condition = visitForExpression(curr->condition, i32, temp);
+      Ref ifTrue = visit(curr->ifTrue, result);
       Ref ifFalse;
       if (curr->ifFalse) {
-        ifFalse = processExpression(curr->ifFalse, result);
+        ifFalse = visit(curr->ifFalse, result);
       }
-      if (result != none) {
-        IString temp = parent->getTemp XXX (result);
-        ifTrue = blockifyWithTemp(ifTrue, temp);
-        if (curr->ifFalse) ifFalse = blockifyWithTemp(ifFalse, temp);
-      }
-      if (!isStatement(condition)) {
+      if (temp.isNull()) {
         return ValueBuilder::makeIf(condition, ifTrue, ifFalse); // simple if
       }
       condition = blockify(condition);
       // just add an if to the block
-      condition[1]->push_back(ValueBuilder::makeIf(getBlockValue(condition), ifTrue, ifFalse));
+      condition[1]->push_back(ValueBuilder::makeIf(ValueBuilder::makeName(temp), ifTrue, ifFalse));
       return condition;
     }
+XXX
     void visitLoop(Loop *curr) override {
       if (curr->out.is()) parent->pushBreak(curr->out);
       if (curr->in.is()) parent->pushContinue(curr->in);
