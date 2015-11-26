@@ -434,26 +434,38 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return ret;
     }
     void visitSwitch(Switch *curr) override {
-      abort();
+      abort(); // XXX TODO
     }
     void visitCall(Call *curr) override {
-      std::vector<Ref> operands;
-      bool hasStatement = false;
-      for (auto operand : curr->operands) {
-        Ref temp = visitTyped(curr->value);
-        temp = temp || isStatement(temp)
-        operands.push_back(temp);
-      }
-      // if any is statement, we must statementize them all
-      if (hasStatement) {
-        for (auto& operand : operands) {
-          operand = blockifyWithTemp(// XXX);
+      Ref theCall = ValueBuilder::makeCall(fromName(curr->target));
+      if (!isStatement(curr)) {
+        // none of our operands is a statement; go right ahead and create a simple expression
+        Ref theCall = ValueBuilder::makeCall(fromName(curr->target));
+        for (auto operand : curr->operands) {
+          theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
         }
+        return theCall;
       }
+      // we must statementize them all
+      Ref ret = ValueBuilder::makeBlock();
+      std::vector<ScopedTemp> temps;
+      for (auto& operand : operands) {
+        temps.emplace_back(operand->type, parent);
+        IString temp = temps.back().temp;
+        ret[1]->push_back(visitAndAssign(operand, temp));
+        theCall[2]->push_back(makeName(temp));
+      }
+      if (result != NO_RESULT) {
+        theCall = ValueBuilder::makeAssign(makeName(result), theCall);
+      }
+      ret[1]->push_back(theCall);
+      return ret;
     }
     void visitCallImport(CallImport *curr) override {
+      return visitCall(curr);
     }
     void visitCallIndirect(CallIndirect *curr) override {
+      abort(); // XXX TODO
     }
     void visitGetLocal(GetLocal *curr) override {
     }
