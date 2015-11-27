@@ -583,6 +583,41 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
     }
     void visitUnary(Unary *curr) override {
+      if (isStatement(curr)) {
+        ScopedTemp temp(curr->value->type, parent);
+        GetLocal fakeLocal;
+        fakeLocal.name = temp.getName();
+        Unary fakeUnary = *curr;
+        fakeUnary.value = &fakeLocal;
+        Ref ret = blockify(visitAndAssign(curr->value, temp));
+        ret[1]->push_back(visit(&fakeUnary, result));
+        return ret;
+      }
+      // normal unary
+      Ref value = visit(curr->value, EXPRESSION_RESULT);
+      switch (curr-type) {
+        case i32: {
+          switch (curr->op) {
+            case Clz:     return ValueBuilder::makeCall(MATH_CLZ32, value);
+            case Ctz:     return ValueBuilder::makeCall(MATH_CTZ32, value);
+            case Popcnt:  return ValueBuilder::makeCall(MATH_POPCNT32, value);
+            default: abort();
+          }
+        }
+        case f64: {
+          switch (curr->op) {
+            case Neg:     return ValueBuilder::makeBinary(ValueBuilder::makeDouble(0), MINUS, value);
+            case Abs:     return ValueBuilder::makeCall(MATH_ABS, value);
+            case Ceil:    return ValueBuilder::makeCall(MATH_CEIL, value);
+            case Floor:   return ValueBuilder::makeCall(MATH_FLOOR, value);
+            case Trunc:   return ValueBuilder::makeCall(MATH_TRUNC, value);
+            case Nearest: return ValueBuilder::makeCall(MATH_NEAREST, value);
+            case Sqrt:    return ValueBuilder::makeCall(MATH_SQRT, value);
+            default: abort();
+          }
+        }
+        default: abort();
+      }
     }
     void visitBinary(Binary *curr) override {
     }
