@@ -288,6 +288,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         }
       }
 
+      IString getName() {
+        return temp;
+      }
       Ref getAstName() {
         return ValueBuilder::makeName(temp);
       }
@@ -499,6 +502,32 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return ret;
     }
     void visitLoad(Load *curr) override {
+      if (isStatement(curr)) {
+        ScopedTemp temp(i32, parent);
+        GetLocal fakeLocal;
+        fakeLocal.name = temp.getName();
+        Load fakeLoad = *curr;
+        fakeLoad.ptr = &fakeLocal;
+        Ref ret = blockify(visit(curr->value, temp));
+        ret[1]->push_back(visit(&fakeLoad, result));
+        return ret;
+      }
+      // normal load
+      assert(curr->bytes == curr->align); // TODO: unaligned, i64
+      Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
+      switch (curr->type) {
+        case i32: {
+          switch (curr->bytes) {
+            case 1: return ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP8  : HEAPU8 ), ValueBuilder::makePtrShift(ptr, 0));
+            case 2: return ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP16 : HEAPU16), ValueBuilder::makePtrShift(ptr, 1));
+            case 4: return ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32), ValueBuilder::makePtrShift(ptr, 2));
+            default: abort();
+          }
+        }
+        case f32: return ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2));
+        case f64: return ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3));
+        default: abort();
+      }
     }
     void visitStore(Store *curr) override {
     }

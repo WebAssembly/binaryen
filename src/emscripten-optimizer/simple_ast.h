@@ -1533,6 +1533,16 @@ public:
                             .push_back(target)
                             .push_back(value);
   }
+
+  static Ref makeSub(Ref obj, Ref index) {
+    return &makeRawArray(2)->push_back(makeRawString(SUB))
+                            .push_back(obj)
+                            .push_back(index);
+  }
+
+  static Ref makePtrShift(Ref ptr, int shifts) {
+    return makeBinary(ptr, RSHIFT, makeInt(shifts));
+  }
 };
 
 // Tolerates 0.0 in the input; does not trust a +() to be there.
