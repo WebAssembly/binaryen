@@ -570,6 +570,17 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return ValueBuilder::makeAssign(ret, value);
     }
     void visitConst(Const *curr) override {
+      switch (curr->type) {
+        case i32: return ValueBuilder::makeInt(curr->value.i32);
+        // TODO: i64. statementize?
+        case f32: {
+          Ref ret = ValueBuilder:makeCall(MATH_FROUND);
+          ret[2]->push_back(ValueBuilder::makeDouble(curr->value.f32));
+          return ret;
+        }
+        case f64: return ValueBuilder::makeDouble(curr->value.f64);
+        default: abort();
+      }
     }
     void visitUnary(Unary *curr) override {
     }
