@@ -328,6 +328,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return ret;
     }
 
+    Ref visitAndAssign(Expression* curr, ScopedTemp& temp) {
+      return visitAndAssign(curr, temp.getName());
+    }
+
     bool isStatement(Expression* curr) {
       return parent->isStatement(curr);
     }
@@ -508,7 +512,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         fakeLocal.name = temp.getName();
         Load fakeLoad = *curr;
         fakeLoad.ptr = &fakeLocal;
-        Ref ret = blockify(visit(curr->value, temp));
+        Ref ret = blockify(visitAndAssign(curr->ptr, temp));
         ret[1]->push_back(visit(&fakeLoad, result));
         return ret;
       }
@@ -530,6 +534,40 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
     }
     void visitStore(Store *curr) override {
+      if (isStatement(curr)) {
+        ScopedTemp tempPtr(i32, parent);
+        ScopedTemp tempValue(curr->type, parent);
+        GetLocal fakeLocalPtr;
+        fakeLocalPtr.name = tempPtr.getName();
+        GetLocal fakeLocalValue;
+        fakeLocalValue.name = tempValue.getName();
+        Load fakeStore = *curr;
+        fakeStore.ptr = &fakeLocalPtr;
+        fakeStore.value = &fakeLocalValue;
+        Ref ret = blockify(visitAndAssign(curr->ptr, tempPtr));
+        ret[1]->push_back(visitAndAssign(curr->value, tempValue));
+        ret[1]->push_back(visit(&fakeStore, result));
+        return ret;
+      }
+      // normal store
+      assert(curr->bytes == curr->align); // TODO: unaligned, i64
+      Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
+      Ref value = visit(curr->value, EXPRESSION_RESULT);
+      Ret ret;
+      switch (curr->type) {
+        case i32: {
+          switch (curr->bytes) {
+            case 1: ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP8  : HEAPU8 ), ValueBuilder::makePtrShift(ptr, 0)); break;
+            case 2: ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP16 : HEAPU16), ValueBuilder::makePtrShift(ptr, 1)); break;
+            case 4: ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32), ValueBuilder::makePtrShift(ptr, 2)); break;
+            default: abort();
+          }
+        }
+        case f32: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2)); break;
+        case f64: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3)); break;
+        default: abort();
+      }
+      return ValueBuilder::makeAssign(ret, value);
     }
     void visitConst(Const *curr) override {
     }
