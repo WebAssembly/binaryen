@@ -622,6 +622,56 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
     }
     void visitBinary(Binary *curr) override {
+      if (isStatement(curr)) {
+        ScopedTemp tempLeft(curr->left->type, parent);
+        GetLocal fakeLocalLeft;
+        fakeLocalLeft.name = temp.getName();
+        ScopedTemp tempRight(curr->right->type, parent);
+        GetLocal fakeLocalRight;
+        fakeLocalRight.name = temp.getName();
+        Binary fakeBinary = *curr;
+        fakeBinary.value = &fakeLocal;
+        Ref ret = blockify(visitAndAssign(curr->left, tempLeft));
+        ret[1]->push_back(visitAndAssign(curr->right, tempRight));
+        ret[1]->push_back(visit(&fakeBinary, result));
+        return ret;
+      }
+      // normal binary
+      Ref left = visit(curr->left, EXPRESSION_RESULT);
+      Ref right = visit(curr->right, EXPRESSION_RESULT);
+      switch (curr->op) {
+        case Add:      return ValueBuilder::makeBinary(left, PLUS, right);
+        case Sub:      return ValueBuilder::makeBinary(left, MINUS, right);
+        case Mul:      return ValueBuilder::makeBinary(left, MUL, right);
+        case DivS:     return ValueBuilder::makeBinary(left, DIV, right);
+        case DivU:     return ValueBuilder::makeBinary(left, DIV, right);
+        case RemS:     return ValueBuilder::makeBinary(left, REM, right);
+        case RemU:     return ValueBuilder::makeBinary(left, REM, right);
+        case And:      return ValueBuilder::makeBinary(left, AND, right);
+        case Or:       return ValueBuilder::makeBinary(left, OR, right);
+        case Xor:      return ValueBuilder::makeBinary(left, XOR, right);
+        case Shl:      return ValueBuilder::makeBinary(left, SHL, right);
+        case ShrU:     return ValueBuilder::makeBinary(left, TRSHR, right);
+        case ShrS:     return ValueBuilder::makeBinary(left, ASHR, right);
+        case Div:      return ValueBuilder::makeBinary(left, DIV, right);
+        case Min:      return ValueBuilder::makeCall(MATH_MIN, left, right);
+        case Max:      return ValueBuilder::makeCall(MATH_MAX, left, right);
+        case Eq:       return ValueBuilder::makeBinary(left, EQ, right);
+        case Ne:       return ValueBuilder::makeBinary(left, NE, right);
+        case LtS:      return ValueBuilder::makeBinary(left, LT, right);
+        case LtU:      return ValueBuilder::makeBinary(left, LT, right);
+        case LeS:      return ValueBuilder::makeBinary(left, LE, right);
+        case LeU:      return ValueBuilder::makeBinary(left, LE, right);
+        case GtS:      return ValueBuilder::makeBinary(left, GT, right);
+        case GtU:      return ValueBuilder::makeBinary(left, GT, right);
+        case GeS:      return ValueBuilder::makeBinary(left, GE, right);
+        case GeU:      return ValueBuilder::makeBinary(left, GE, right);
+        case Lt:       return ValueBuilder::makeBinary(left, LT, right);
+        case Le:       return ValueBuilder::makeBinary(left, LE, right);
+        case Gt:       return ValueBuilder::makeBinary(left, GT, right);
+        case Ge:       return ValueBuilder::makeBinary(left, GE, right);
+        default: abort();
+      }
     }
     void visitSelect(Select *curr) override {
     }

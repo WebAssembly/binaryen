@@ -1343,6 +1343,14 @@ public:
     ret[2]->push_back(arg);
     return ret;
   }
+  static Ref makeCall(IString target, Ref arg1, Ref arg2) {
+    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
+                               .push_back(makeName(target))
+                               .push_back(makeRawArray());
+    ret[2]->push_back(arg1);
+    ret[2]->push_back(arg2);
+    return ret;
+  }
 
   static void appendToCall(Ref call, Ref element) {
     assert(call[0] == CALL);
