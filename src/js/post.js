@@ -84,10 +84,6 @@ function integrateWasmJS(Module) {
   Module['asm'] = function(global, env, providedBuffer) {
     assert(providedBuffer === Module['buffer']); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
 
-    // Generate a module instance of the asm.js converted into wasm.
-    var code = Module['read'](Module['asmjsCodeFile']);
-    // TODO: support wasm s-expression loading here
-
     // wasm code would create its own buffer, at this time. But static init code might have
     // written to the buffer already, and we must copy it over. We could just avoid
     // this copy in wasm.js polyfilling, but to be as close as possible to real wasm,
@@ -107,9 +103,17 @@ function integrateWasmJS(Module) {
       return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
     };
 
+    // Prepare to generate wasm, using either asm2wasm or wasm-s-parser
+    var method = Module['wasmJSMethod'] || 'asm2wasm';
+    assert(method == 'asm2wasm' || method == 'wasm-s-parser');
+    var code = Module['read'](method == 'asm2wasm' ? Module['asmjsCodeFile'] : Module['wasmCodeFile']);
     var temp = wasmJS['_malloc'](code.length + 1);
     wasmJS['writeAsciiToMemory'](code, temp);
-    wasmJS['_load_asm2wasm'](temp);
+    if (method == 'asm2wasm') {
+      wasmJS['_load_asm2wasm'](temp);
+    } else {
+      wasmJS['_load_s_expr2wasm'](temp);
+    }
     wasmJS['_free'](temp);
 
     wasmJS['_instantiate'](temp);
