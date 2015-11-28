@@ -21,12 +21,14 @@ int debug = 0;
 
 // global singletons
 Asm2WasmBuilder* asm2wasm = nullptr;
+SExpressionParser* sExpressionParser = nullptr;
+SExpressionWasmBuilder* sExpressionWasmBuilder = nullptr;
 ModuleInstance* instance = nullptr;
 AllocatingModule* module = nullptr;
 bool wasmJSDebug = false;
 
 static void prepare2wasm() {
-  assert(instance == nullptr); // singleton
+  assert(asm2wasm == nullptr && sExpressionParser == nullptr && sExpressionWasmBuilder == nullptr && instance == nullptr); // singletons
 #if WASM_JS_DEBUG
   wasmJSDebug = 1;
 #else
@@ -43,7 +45,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   input = pre.process(input);
 
   // proceed to parse and wasmify
-  if (wasmJSDebug) std::cerr << "parsing...\n";
+  if (wasmJSDebug) std::cerr << "asm parsing...\n";
 
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(input);
@@ -65,7 +67,21 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
 // loads wasm code in s-expression format
 extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input) {
   prepare2wasm();
-  abort();
+
+  if (wasmJSDebug) std::cerr << "wasm-s-expression parsing...\n";
+
+  sExpressionParser = new SExpressionParser(input);
+  Element& root = *sExpressionParser->root;
+  if (wasmJSDebug) std::cout << root << '\n';
+
+  if (wasmJSDebug) std::cerr << "wasming...\n";
+
+  module = new AllocatingModule();
+  // A .wast may have multiple modules, with some asserts after them, but we just read the first here.
+  sExpressionWasmBuilder = new SExpressionWasmBuilder(*module, *root[0], [&]() {
+    std::cerr << "error in parsing s-expressions to wasm\n";
+    abort();
+  });
 }
 
 // instantiates the loaded wasm (which might be from asm2wasm, or
