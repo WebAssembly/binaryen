@@ -606,13 +606,15 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         }
         case f64: {
           switch (curr->op) {
-            case Neg:     return ValueBuilder::makeBinary(ValueBuilder::makeDouble(0), MINUS, value);
-            case Abs:     return ValueBuilder::makeCall(MATH_ABS, value);
-            case Ceil:    return ValueBuilder::makeCall(MATH_CEIL, value);
-            case Floor:   return ValueBuilder::makeCall(MATH_FLOOR, value);
-            case Trunc:   return ValueBuilder::makeCall(MATH_TRUNC, value);
-            case Nearest: return ValueBuilder::makeCall(MATH_NEAREST, value);
-            case Sqrt:    return ValueBuilder::makeCall(MATH_SQRT, value);
+            case Neg:           return ValueBuilder::makeBinary(ValueBuilder::makeDouble(0), MINUS, value);
+            case Abs:           return ValueBuilder::makeCall(MATH_ABS, value);
+            case Ceil:          return ValueBuilder::makeCall(MATH_CEIL, value);
+            case Floor:         return ValueBuilder::makeCall(MATH_FLOOR, value);
+            case Trunc:         return ValueBuilder::makeCall(MATH_TRUNC, value);
+            case Nearest:       return ValueBuilder::makeCall(MATH_NEAREST, value);
+            case Sqrt:          return ValueBuilder::makeCall(MATH_SQRT, value);
+            case TruncSFloat32: return ValueBuilder::makePrefix(BNOT, ValueBuilder::makePrefix(BNOT, value));
+            case ConvertSInt32: return ValueBuilder::makePrefix(PLUS, value);
             default: abort();
           }
         }
@@ -620,10 +622,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
     }
     void visitBinary(Binary *curr) override {
-    }
-    void visitCompare(Compare *curr) override {
-    }
-    void visitConvert(Convert *curr) override {
     }
     void visitSelect(Select *curr) override {
     }
