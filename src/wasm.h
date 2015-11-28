@@ -449,11 +449,12 @@ public:
     incIndent(o, indent);
     printFullLine(o, indent, value);
     doIndent(o, indent) << "(table";
-    assert(default_.is());
     for (auto& t : targets) {
       o << " (case " << (t.is() ? t : default_) << ")";
     }
-    o << ") (case " << default_ << ")\n";
+    o << ")";
+    if (default_.is()) o << " (case " << default_ << ")";
+    o << "\n";
     for (auto& c : cases) {
       doIndent(o, indent);
       printMinorOpening(o, "case ") << c.name;
