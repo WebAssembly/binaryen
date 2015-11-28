@@ -303,7 +303,7 @@ private:
         if (index >= instance.wasm.table.names.size()) trap("callIndirect: overflow");
         Name name = instance.wasm.table.names[index];
         Function *func = instance.wasm.functionsMap[name];
-        if (func->type.is() && func->type != curr->type->name) trap("callIndirect: bad type");
+        if (func->type.is() && func->type != curr->fullType->name) trap("callIndirect: bad type");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
@@ -363,6 +363,17 @@ private:
               return Literal((int32_t)safe_ctz(v));
             }
             case Popcnt: return Literal((int32_t)__builtin_popcount(v));
+            case ReinterpretInt: {
+              float v = value.reinterpretf32();
+              if (isnan(v)) {
+                return Literal(Literal(value.geti32() | 0x7f800000).reinterpretf32());
+              }
+              return Literal(value.reinterpretf32());
+            }
+            case ExtendSInt32: return Literal(int64_t(value.geti32()));
+            case ExtendUInt32: return Literal(uint64_t((uint32_t)value.geti32()));
+            case ConvertUInt32: return curr->type == f32 ? Literal(float(uint32_t(value.geti32()))) : Literal(double(uint32_t(value.geti32())));
+            case ConvertSInt32: return curr->type == f32 ? Literal(float(int32_t(value.geti32())))  : Literal(double(int32_t(value.geti32())));
             default: abort();
           }
         }
@@ -381,6 +392,12 @@ private:
               return Literal((int64_t)safe_ctz(low));
             }
             case Popcnt: return Literal(int64_t(__builtin_popcount(low) + __builtin_popcount(high)));
+            case WrapInt64: return Literal(int32_t(value.geti64()));
+            case ReinterpretInt: {
+              return Literal(value.reinterpretf64());
+            }
+            case ConvertUInt64: return curr->type == f32 ? Literal(float((uint64_t)value.geti64())) : Literal(double((uint64_t)value.geti64()));
+            case ConvertSInt64: return curr->type == f32 ? Literal(float(value.geti64())) : Literal(double(value.geti64()));
             default: abort();
           }
         }
@@ -395,6 +412,10 @@ private:
             case Trunc:   ret = std::trunc(v); break;
             case Nearest: ret = std::nearbyint(v); break;
             case Sqrt:    ret = std::sqrt(v); break;
+            case TruncSFloat32:    return truncSFloat(curr, value);
+            case TruncUFloat32:    return truncUFloat(curr, value);
+            case ReinterpretFloat: return Literal(value.reinterpreti32());
+            case PromoteFloat32:   return Literal(double(value.getf32()));
             default: abort();
           }
           return Literal(fixNaN(v, ret));
@@ -410,6 +431,10 @@ private:
             case Trunc:   ret = std::trunc(v); break;
             case Nearest: ret = std::nearbyint(v); break;
             case Sqrt:    ret = std::sqrt(v); break;
+            case TruncSFloat64:    return truncSFloat(curr, value);
+            case TruncUFloat64:    return truncUFloat(curr, value);
+            case ReinterpretFloat: return Literal(value.reinterpreti64());
+            case DemoteFloat64:    return Literal(float(value.getf64()));
             default: abort();
           }
           return Literal(fixNaN(v, ret));
@@ -466,6 +491,16 @@ private:
               r = r & 31;
               return Literal(l >> r);
             }
+            case Eq:  return Literal(l == r);
+            case Ne:  return Literal(l != r);
+            case LtS: return Literal(l < r);
+            case LtU: return Literal(uint32_t(l) < uint32_t(r));
+            case LeS: return Literal(l <= r);
+            case LeU: return Literal(uint32_t(l) <= uint32_t(r));
+            case GtS: return Literal(l > r);
+            case GtU: return Literal(uint32_t(l) > uint32_t(r));
+            case GeS: return Literal(l >= r);
+            case GeU: return Literal(uint32_t(l) >= uint32_t(r));
             default: abort();
           }
         } else if (left.type == i64) {
@@ -507,6 +542,16 @@ private:
               r = r & 63;
               return Literal(l >> r);
             }
+            case Eq:  return Literal(l == r);
+            case Ne:  return Literal(l != r);
+            case LtS: return Literal(l < r);
+            case LtU: return Literal(uint64_t(l) < uint64_t(r));
+            case LeS: return Literal(l <= r);
+            case LeU: return Literal(uint64_t(l) <= uint64_t(r));
+            case GtS: return Literal(l > r);
+            case GtU: return Literal(uint64_t(l) > uint64_t(r));
+            case GeS: return Literal(l >= r);
+            case GeU: return Literal(uint64_t(l) >= uint64_t(r));
             default: abort();
           }
         } else if (left.type == f32) {
@@ -531,6 +576,12 @@ private:
               else ret = std::max(l, r);
               break;
             }
+            case Eq:  return Literal(l == r);
+            case Ne:  return Literal(l != r);
+            case Lt:  return Literal(l <  r);
+            case Le:  return Literal(l <= r);
+            case Gt:  return Literal(l >  r);
+            case Ge:  return Literal(l >= r);
             default: abort();
           }
           return Literal(fixNaN(l, r, ret));
@@ -556,133 +607,17 @@ private:
               else ret = std::max(l, r);
               break;
             }
+            case Eq:  return Literal(l == r);
+            case Ne:  return Literal(l != r);
+            case Lt:  return Literal(l <  r);
+            case Le:  return Literal(l <= r);
+            case Gt:  return Literal(l >  r);
+            case Ge:  return Literal(l >= r);
             default: abort();
           }
           return Literal(fixNaN(l, r, ret));
         }
         abort();
-      }
-      Flow visitCompare(Compare *curr) override {
-        NOTE_ENTER("Compare");
-        Flow flow = visit(curr->left);
-        if (flow.breaking()) return flow;
-        Literal left = flow.value;
-        flow = visit(curr->right);
-        if (flow.breaking()) return flow;
-        Literal right = flow.value;
-        NOTE_EVAL2(left, right);
-        if (left.type == i32) {
-          int32_t l = left.geti32(), r = right.geti32();
-          switch (curr->op) {
-            case Eq:  return Literal(l == r);
-            case Ne:  return Literal(l != r);
-            case LtS: return Literal(l < r);
-            case LtU: return Literal(uint32_t(l) < uint32_t(r));
-            case LeS: return Literal(l <= r);
-            case LeU: return Literal(uint32_t(l) <= uint32_t(r));
-            case GtS: return Literal(l > r);
-            case GtU: return Literal(uint32_t(l) > uint32_t(r));
-            case GeS: return Literal(l >= r);
-            case GeU: return Literal(uint32_t(l) >= uint32_t(r));
-            default: abort();
-          }
-        } else if (left.type == i64) {
-          int64_t l = left.geti64(), r = right.geti64();
-          switch (curr->op) {
-            case Eq:  return Literal(l == r);
-            case Ne:  return Literal(l != r);
-            case LtS: return Literal(l < r);
-            case LtU: return Literal(uint64_t(l) < uint64_t(r));
-            case LeS: return Literal(l <= r);
-            case LeU: return Literal(uint64_t(l) <= uint64_t(r));
-            case GtS: return Literal(l > r);
-            case GtU: return Literal(uint64_t(l) > uint64_t(r));
-            case GeS: return Literal(l >= r);
-            case GeU: return Literal(uint64_t(l) >= uint64_t(r));
-            default: abort();
-          }
-        } else if (left.type == f32) {
-          float l = left.getf32(), r = right.getf32();
-          switch (curr->op) {
-            case Eq:  return Literal(l == r);
-            case Ne:  return Literal(l != r);
-            case Lt:  return Literal(l <  r);
-            case Le:  return Literal(l <= r);
-            case Gt:  return Literal(l >  r);
-            case Ge:  return Literal(l >= r);
-            default: abort();
-          }
-        } else if (left.type == f64) {
-          double l = left.getf64(), r = right.getf64();
-          switch (curr->op) {
-            case Eq:  return Literal(l == r);
-            case Ne:  return Literal(l != r);
-            case Lt:  return Literal(l <  r);
-            case Le:  return Literal(l <= r);
-            case Gt:  return Literal(l >  r);
-            case Ge:  return Literal(l >= r);
-            default: abort();
-          }
-        }
-        abort();
-      }
-      Flow visitConvert(Convert *curr) override {
-        NOTE_ENTER("Convert");
-        Flow flow = visit(curr->value);
-        if (flow.breaking()) return flow;
-        Literal value = flow.value;
-        switch (curr->op) { // :-)
-          case ExtendSInt32:     return Literal(int64_t(value.geti32()));
-          case ExtendUInt32:     return Literal(uint64_t((uint32_t)value.geti32()));
-          case WrapInt64:        return Literal(int32_t(value.geti64()));
-          case TruncSFloat32:
-          case TruncSFloat64: {
-            double val = curr->op == TruncSFloat32 ? value.getf32() : value.getf64();
-            if (isnan(val)) trap("truncSFloat of nan");
-            if (curr->type == i32) {
-              if (val > (double)INT_MAX || val < (double)INT_MIN) trap("i32.truncSFloat overflow");
-              return Literal(int32_t(val));
-            } else {
-              int64_t converted = val;
-              if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap("i32.truncSFloat overflow");
-              return Literal(converted);
-            }
-          }
-          case TruncUFloat32:
-          case TruncUFloat64: {
-            double val = curr->op == TruncUFloat32 ? value.getf32() : value.getf64();
-            if (isnan(val)) trap("truncUFloat of nan");
-            if (curr->type == i32) {
-              if (val > (double)UINT_MAX || val <= (double)-1) trap("i64.truncUFloat overflow");
-              return Literal(uint32_t(val));
-            } else {
-              uint64_t converted = val;
-              if (converted < val - 1 || val <= (double)-1) trap("i64.truncUFloat overflow");
-              return Literal(converted);
-            }
-          }
-          case ReinterpretFloat: {
-            return curr->type == i32 ? Literal(value.reinterpreti32()) : Literal(value.reinterpreti64());
-          }
-          case ConvertUInt32:    return curr->type == f32 ? Literal(float(uint32_t(value.geti32()))) : Literal(double(uint32_t(value.geti32())));
-          case ConvertSInt32:    return curr->type == f32 ? Literal(float(int32_t(value.geti32()))) : Literal(double(int32_t(value.geti32())));
-          case ConvertUInt64:    return curr->type == f32 ? Literal(float((uint64_t)value.geti64())) : Literal(double((uint64_t)value.geti64()));
-          case ConvertSInt64:    return curr->type == f32 ? Literal(float(value.geti64())) : Literal(double(value.geti64()));
-          case PromoteFloat32:   return Literal(double(value.getf32()));
-          case DemoteFloat64:    return Literal(float(value.getf64()));
-          case ReinterpretInt: {
-            if (curr->type == f32) {
-              float v = value.reinterpretf32();
-              if (isnan(v)) {
-                return Literal(Literal(value.geti32() | 0x7f800000).reinterpretf32());
-              }
-              return Literal(value.reinterpretf32());
-            } else {
-              return Literal(value.reinterpretf64());
-            }
-          }
-          default: abort();
-        }
       }
       Flow visitSelect(Select *curr) override {
         NOTE_ENTER("Select");
@@ -765,6 +700,32 @@ private:
           return Literal((int64_t)0x7ff8000000000000LL).reinterpretf64();
         }
         return Literal(int64_t(Literal(lnan ? l : r).reinterpreti64() | 0x8000000000000LL)).reinterpretf64();
+      }
+
+      Literal truncSFloat(Unary* curr, Literal value) {
+        double val = curr->op == TruncSFloat32 ? value.getf32() : value.getf64();
+        if (isnan(val)) trap("truncSFloat of nan");
+        if (curr->type == i32) {
+          if (val > (double)INT_MAX || val < (double)INT_MIN) trap("i32.truncSFloat overflow");
+          return Literal(int32_t(val));
+        } else {
+          int64_t converted = val;
+          if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap("i32.truncSFloat overflow");
+          return Literal(converted);
+        }
+      }
+
+      Literal truncUFloat(Unary* curr, Literal value) {
+        double val = curr->op == TruncUFloat32 ? value.getf32() : value.getf64();
+        if (isnan(val)) trap("truncUFloat of nan");
+        if (curr->type == i32) {
+          if (val > (double)UINT_MAX || val <= (double)-1) trap("i64.truncUFloat overflow");
+          return Literal(uint32_t(val));
+        } else {
+          uint64_t converted = val;
+          if (converted < val - 1 || val <= (double)-1) trap("i64.truncUFloat overflow");
+          return Literal(converted);
+        }
       }
 
       void trap(const char* why) {

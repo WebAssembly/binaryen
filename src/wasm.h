@@ -15,6 +15,16 @@
 //  * Validation: See wasm-validator.h.
 //
 
+//
+// wasm.js internal WebAssembly representation design:
+//
+//  * Optimize for size. This justifies separating if and if_else
+//    (so that if doesn't have an always-empty else)
+//  * Unify where possible. Where size isn't a concern, combine
+//    classes, so binary ops and relational ops are joined. This
+//    simplifies that AST and makes traversals easier.
+//
+
 #ifndef __wasm_h__
 #define __wasm_h__
 
@@ -153,7 +163,7 @@ struct Literal {
     }
   }
 
-  void printFloat(std::ostream &o, float f) {
+  static void printFloat(std::ostream &o, float f) {
     if (isnan(f)) {
       union {
         float ff;
@@ -166,7 +176,7 @@ struct Literal {
     printDouble(o, f);
   }
 
-  void printDouble(std::ostream &o, double d) {
+  static void printDouble(std::ostream &o, double d) {
     if (d == 0 && 1/d < 0) {
       o << "-0";
       return;
@@ -210,24 +220,20 @@ struct Literal {
 
 enum UnaryOp {
   Clz, Ctz, Popcnt, // int
-  Neg, Abs, Ceil, Floor, Trunc, Nearest, Sqrt // float
+  Neg, Abs, Ceil, Floor, Trunc, Nearest, Sqrt, // float
+  // conversions
+  ExtendSInt32, ExtendUInt32, WrapInt64, TruncSFloat32, TruncUFloat32, TruncSFloat64, TruncUFloat64, ReinterpretFloat, // int
+  ConvertSInt32, ConvertUInt32, ConvertSInt64, ConvertUInt64, PromoteFloat32, DemoteFloat64, ReinterpretInt // float
 };
 
 enum BinaryOp {
   Add, Sub, Mul, // int or float
   DivS, DivU, RemS, RemU, And, Or, Xor, Shl, ShrU, ShrS, // int
-  Div, CopySign, Min, Max // float
-};
-
-enum RelationalOp {
+  Div, CopySign, Min, Max, // float
+  // relational ops
   Eq, Ne, // int or float
   LtS, LtU, LeS, LeU, GtS, GtU, GeS, GeU, // int
   Lt, Le, Gt, Ge // float
-};
-
-enum ConvertOp {
-  ExtendSInt32, ExtendUInt32, WrapInt64, TruncSFloat32, TruncUFloat32, TruncSFloat64, TruncUFloat64, ReinterpretFloat, // int
-  ConvertSInt32, ConvertUInt32, ConvertSInt64, ConvertUInt64, PromoteFloat32, DemoteFloat64, ReinterpretInt // float
 };
 
 enum HostOp {
@@ -269,12 +275,10 @@ public:
     ConstId = 14,
     UnaryId = 15,
     BinaryId = 16,
-    CompareId = 17,
-    ConvertId = 18,
-    SelectId = 19,
-    HostId = 20,
-    NopId = 21,
-    UnreachableId = 22
+    SelectId = 17,
+    HostId = 18,
+    NopId = 19,
+    UnreachableId = 20
   };
   Id _id;
 
@@ -319,7 +323,9 @@ public:
 
 class Block : public Expression {
 public:
-  Block() : Expression(BlockId) {}
+  Block() : Expression(BlockId) {
+    type = none; // blocks by default do not return, but if their last statement does, they might
+  }
 
   Name name;
   ExpressionList list;
@@ -339,7 +345,9 @@ public:
 
 class If : public Expression {
 public:
-  If() : Expression(IfId), ifFalse(nullptr) {}
+  If() : Expression(IfId), ifFalse(nullptr) {
+    type = none; // by default none; if-else can have one, though
+  }
 
   Expression *condition, *ifTrue, *ifFalse;
 
@@ -543,12 +551,12 @@ class CallIndirect : public Expression {
 public:
   CallIndirect() : Expression(CallIndirectId) {}
 
-  FunctionType *type;
+  FunctionType *fullType;
   Expression *target;
   ExpressionList operands;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "call_indirect ") << type->name;
+    printOpening(o, "call_indirect ") << fullType->name;
     incIndent(o, indent);
     printFullLine(o, indent, target);
     for (auto operand : operands) {
@@ -683,16 +691,31 @@ public:
     o << '(';
     prepareColor(o) << printWasmType(type) << '.';
     switch (op) {
-      case Clz:     o << "clz";     break;
-      case Ctz:     o << "ctz";     break;
-      case Popcnt:  o << "popcnt";  break;
-      case Neg:     o << "neg";     break;
-      case Abs:     o << "abs";     break;
-      case Ceil:    o << "ceil";    break;
-      case Floor:   o << "floor";   break;
-      case Trunc:   o << "trunc";   break;
-      case Nearest: o << "nearest"; break;
-      case Sqrt:    o << "sqrt";    break;
+      case Clz:              o << "clz";     break;
+      case Ctz:              o << "ctz";     break;
+      case Popcnt:           o << "popcnt";  break;
+      case Neg:              o << "neg";     break;
+      case Abs:              o << "abs";     break;
+      case Ceil:             o << "ceil";    break;
+      case Floor:            o << "floor";   break;
+      case Trunc:            o << "trunc";   break;
+      case Nearest:          o << "nearest"; break;
+      case Sqrt:             o << "sqrt";    break;
+      case ExtendSInt32:     o << "extend_s/i32"; break;
+      case ExtendUInt32:     o << "extend_u/i32"; break;
+      case WrapInt64:        o << "wrap/i64"; break;
+      case TruncSFloat32:    o << "trunc_s/f32"; break;
+      case TruncUFloat32:    o << "trunc_u/f32"; break;
+      case TruncSFloat64:    o << "trunc_s/f64"; break;
+      case TruncUFloat64:    o << "trunc_u/f64"; break;
+      case ReinterpretFloat: o << "reinterpret/" << (type == i64 ? "f64" : "f32"); break;
+      case ConvertUInt32:    o << "convert_u/i32"; break;
+      case ConvertSInt32:    o << "convert_s/i32"; break;
+      case ConvertUInt64:    o << "convert_u/i64"; break;
+      case ConvertSInt64:    o << "convert_s/i64"; break;
+      case PromoteFloat32:   o << "promote/f32"; break;
+      case DemoteFloat64:    o << "demote/f64"; break;
+      case ReinterpretInt:   o << "reinterpret" << (type == f64 ? "i64" : "i32"); break;
       default: abort();
     }
     incIndent(o, indent);
@@ -710,7 +733,7 @@ public:
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     o << '(';
-    prepareColor(o) << printWasmType(type) << '.';
+    prepareColor(o) << printWasmType(isRelational() ? left->type : type) << '.';
     switch (op) {
       case Add:      o << "add";      break;
       case Sub:      o << "sub";      break;
@@ -729,7 +752,21 @@ public:
       case CopySign: o << "copysign"; break;
       case Min:      o << "min";      break;
       case Max:      o << "max";      break;
-      default: abort();
+      case Eq:       o << "eq";       break;
+      case Ne:       o << "ne";       break;
+      case LtS:      o << "lt_s";     break;
+      case LtU:      o << "lt_u";     break;
+      case LeS:      o << "le_s";     break;
+      case LeU:      o << "le_u";     break;
+      case GtS:      o << "gt_s";     break;
+      case GtU:      o << "gt_u";     break;
+      case GeS:      o << "ge_s";     break;
+      case GeU:      o << "ge_u";     break;
+      case Lt:       o << "lt";       break;
+      case Le:       o << "le";       break;
+      case Gt:       o << "gt";       break;
+      case Ge:       o << "ge";       break;
+      default:       abort();
     }
     restoreNormalColor(o);
     incIndent(o, indent);
@@ -738,82 +775,18 @@ public:
     return decIndent(o, indent);
   }
 
-  // the type is always the type of the operands
+  // the type is always the type of the operands,
+  // except for relationals
+
+  bool isRelational() { return op >= Eq; }
+
   void finalize() {
-    type = left->type;
-  }
-};
-
-class Compare : public Expression {
-public:
-  Compare() : Expression(CompareId) {
-    type = WasmType::i32; // output is always i32
-  }
-
-  RelationalOp op;
-  WasmType inputType;
-  Expression *left, *right;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    o << '(';
-    prepareColor(o) << printWasmType(inputType) << '.';
-    switch (op) {
-      case Eq:  o << "eq";   break;
-      case Ne:  o << "ne";   break;
-      case LtS: o << "lt_s"; break;
-      case LtU: o << "lt_u"; break;
-      case LeS: o << "le_s"; break;
-      case LeU: o << "le_u"; break;
-      case GtS: o << "gt_s"; break;
-      case GtU: o << "gt_u"; break;
-      case GeS: o << "ge_s"; break;
-      case GeU: o << "ge_u"; break;
-      case Lt:  o << "lt";  break;
-      case Le:  o << "le";  break;
-      case Gt:  o << "gt";  break;
-      case Ge:  o << "ge";  break;
-      default: abort();
+    if (isRelational()) {
+      type = i32;
+    } else {
+      assert(left->type == right->type);
+      type = left->type;
     }
-    restoreNormalColor(o);
-    incIndent(o, indent);
-    printFullLine(o, indent, left);
-    printFullLine(o, indent, right);
-    return decIndent(o, indent);
-  }
-};
-
-class Convert : public Expression {
-public:
-  Convert() : Expression(ConvertId) {}
-
-  ConvertOp op;
-  Expression *value;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    o << '(';
-    prepareColor(o) << printWasmType(type) << '.';
-    switch (op) {
-      case ExtendSInt32:     o << "extend_s/i32"; break;
-      case ExtendUInt32:     o << "extend_u/i32"; break;
-      case WrapInt64:        o << "wrap/i64"; break;
-      case TruncSFloat32:    o << "trunc_s/f32"; break;
-      case TruncUFloat32:    o << "trunc_u/f32"; break;
-      case TruncSFloat64:    o << "trunc_s/f64"; break;
-      case TruncUFloat64:    o << "trunc_u/f64"; break;
-      case ReinterpretFloat: o << "reinterpret/" << (type == i64 ? "f64" : "f32"); break;
-      case ConvertUInt32:    o << "convert_u/i32"; break;
-      case ConvertSInt32:    o << "convert_s/i32"; break;
-      case ConvertUInt64:    o << "convert_u/i64"; break;
-      case ConvertSInt64:    o << "convert_s/i64"; break;
-      case PromoteFloat32:   o << "promote/f32"; break;
-      case DemoteFloat64:    o << "demote/f64"; break;
-      case ReinterpretInt:   o << "reinterpret" << (type == f64 ? "i64" : "i32"); break;
-      default: abort();
-    }
-    restoreNormalColor(o);
-    incIndent(o, indent);
-    printFullLine(o, indent, value);
-    return decIndent(o, indent);
   }
 };
 
@@ -1117,8 +1090,6 @@ struct WasmVisitor {
   virtual ReturnType visitConst(Const *curr) { abort(); }
   virtual ReturnType visitUnary(Unary *curr) { abort(); }
   virtual ReturnType visitBinary(Binary *curr) { abort(); }
-  virtual ReturnType visitCompare(Compare *curr) { abort(); }
-  virtual ReturnType visitConvert(Convert *curr) { abort(); }
   virtual ReturnType visitSelect(Select *curr) { abort(); }
   virtual ReturnType visitHost(Host *curr) { abort(); }
   virtual ReturnType visitNop(Nop *curr) { abort(); }
@@ -1151,8 +1122,6 @@ struct WasmVisitor {
       case Expression::Id::ConstId: return visitConst((Const*)curr);
       case Expression::Id::UnaryId: return visitUnary((Unary*)curr);
       case Expression::Id::BinaryId: return visitBinary((Binary*)curr);
-      case Expression::Id::CompareId: return visitCompare((Compare*)curr);
-      case Expression::Id::ConvertId: return visitConvert((Convert*)curr);
       case Expression::Id::SelectId: return visitSelect((Select*)curr);
       case Expression::Id::HostId: return visitHost((Host*)curr);
       case Expression::Id::NopId: return visitNop((Nop*)curr);
@@ -1188,8 +1157,6 @@ std::ostream& Expression::print(std::ostream &o, unsigned indent) {
     void visitConst(Const *curr) override { curr->doPrint(o, indent); }
     void visitUnary(Unary *curr) override { curr->doPrint(o, indent); }
     void visitBinary(Binary *curr) override { curr->doPrint(o, indent); }
-    void visitCompare(Compare *curr) override { curr->doPrint(o, indent); }
-    void visitConvert(Convert *curr) override { curr->doPrint(o, indent); }
     void visitSelect(Select *curr) override { curr->doPrint(o, indent); }
     void visitHost(Host *curr) override { curr->doPrint(o, indent); }
     void visitNop(Nop *curr) override { curr->doPrint(o, indent); }
@@ -1234,8 +1201,6 @@ struct WasmWalker : public WasmVisitor<void> {
   void visitConst(Const *curr) override {}
   void visitUnary(Unary *curr) override {}
   void visitBinary(Binary *curr) override {}
-  void visitCompare(Compare *curr) override {}
-  void visitConvert(Convert *curr) override {}
   void visitSelect(Select *curr) override {}
   void visitHost(Host *curr) override {}
   void visitNop(Nop *curr) override {}
@@ -1320,13 +1285,6 @@ struct WasmWalker : public WasmVisitor<void> {
       void visitBinary(Binary *curr) override {
         parent.walk(curr->left);
         parent.walk(curr->right);
-      }
-      void visitCompare(Compare *curr) override {
-        parent.walk(curr->left);
-        parent.walk(curr->right);
-      }
-      void visitConvert(Convert *curr) override {
-        parent.walk(curr->value);
       }
       void visitSelect(Select *curr) override {
         parent.walk(curr->condition);

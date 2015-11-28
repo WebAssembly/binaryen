@@ -327,19 +327,18 @@ private:
     return detectSign(ast, Math_fround) == ASM_UNSIGNED;
   }
 
-  // an asm.js binary op can either be a binary or a relational in wasm
-  bool parseAsmBinaryOp(IString op, Ref left, Ref right, BinaryOp &binary, RelationalOp &relational, AsmData *asmData) {
-    if (op == PLUS) { binary = BinaryOp::Add; return true; }
-    if (op == MINUS) { binary = BinaryOp::Sub; return true; }
-    if (op == MUL) { binary = BinaryOp::Mul; return true; }
-    if (op == AND) { binary = BinaryOp::And; return true; }
-    if (op == OR) { binary = BinaryOp::Or; return true; }
-    if (op == XOR) { binary = BinaryOp::Xor; return true; }
-    if (op == LSHIFT) { binary = BinaryOp::Shl; return true; }
-    if (op == RSHIFT) { binary = BinaryOp::ShrS; return true; }
-    if (op == TRSHIFT) { binary = BinaryOp::ShrU; return true; }
-    if (op == EQ) { relational = RelationalOp::Eq; return false; }
-    if (op == NE) { relational = RelationalOp::Ne; return false; }
+  BinaryOp parseAsmBinaryOp(IString op, Ref left, Ref right, AsmData *asmData) {
+    if (op == PLUS) return BinaryOp::Add;
+    if (op == MINUS) return BinaryOp::Sub;
+    if (op == MUL) return BinaryOp::Mul;
+    if (op == AND) return BinaryOp::And;
+    if (op == OR) return BinaryOp::Or;
+    if (op == XOR) return BinaryOp::Xor;
+    if (op == LSHIFT) return BinaryOp::Shl;
+    if (op == RSHIFT) return BinaryOp::ShrS;
+    if (op == TRSHIFT) return BinaryOp::ShrU;
+    if (op == EQ) return BinaryOp::Eq;
+    if (op == NE) return BinaryOp::Ne;
     WasmType leftType = detectWasmType(left, asmData);
 #if 0
     std::cout << "CHECK\n";
@@ -353,42 +352,42 @@ private:
     bool isUnsigned = isUnsignedCoercion(left) || isUnsignedCoercion(right);
     if (op == DIV) {
       if (isInteger) {
-        { binary = isUnsigned ? BinaryOp::DivU : BinaryOp::DivS; return true; }
+        return isUnsigned ? BinaryOp::DivU : BinaryOp::DivS;
       }
-      { binary = BinaryOp::Div; return true; }
+      return BinaryOp::Div;
     }
     if (op == MOD) {
       if (isInteger) {
-        { binary = isUnsigned ? BinaryOp::RemU : BinaryOp::RemS; return true; }
+        return isUnsigned ? BinaryOp::RemU : BinaryOp::RemS;
       }
-      { binary = BinaryOp::RemS; return true; } // XXX no floating-point remainder op, this must be handled by the caller
+      return BinaryOp::RemS; // XXX no floating-point remainder op, this must be handled by the caller
     }
     if (op == GE) {
       if (isInteger) {
-        { relational = isUnsigned ? RelationalOp::GeU : RelationalOp::GeS; return false; }
+        return isUnsigned ? BinaryOp::GeU : BinaryOp::GeS;
       }
-      { relational = RelationalOp::Ge; return false; }
+      return BinaryOp::Ge;
     }
     if (op == GT) {
       if (isInteger) {
-        { relational = isUnsigned ? RelationalOp::GtU : RelationalOp::GtS; return false; }
+        return isUnsigned ? BinaryOp::GtU : BinaryOp::GtS;
       }
-      { relational = RelationalOp::Gt; return false; }
+      return BinaryOp::Gt;
     }
     if (op == LE) {
       if (isInteger) {
-        { relational = isUnsigned ? RelationalOp::LeU : RelationalOp::LeS; return false; }
+        return isUnsigned ? BinaryOp::LeU : BinaryOp::LeS;
       }
-      { relational = RelationalOp::Le; return false; }
+      return BinaryOp::Le;
     }
     if (op == LT) {
       if (isInteger) {
-        { relational = isUnsigned ? RelationalOp::LtU : RelationalOp::LtS; return false; }
+        return isUnsigned ? BinaryOp::LtU : BinaryOp::LtS;
       }
-      { relational = RelationalOp::Lt; return false; }
+      return BinaryOp::Lt;
     }
     abort_on("bad wasm binary op", op);
-    return false; // avoid warning
+    abort(); // avoid warning
   }
 
   unsigned bytesToShift(unsigned bytes) {
@@ -891,7 +890,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (ret->type != ret->value->type) {
           // in asm.js we have some implicit coercions that we must do explicitly here
           if (ret->type == f32 && ret->value->type == f64) {
-            auto conv = allocator.alloc<Convert>();
+            auto conv = allocator.alloc<Unary>();
             conv->op = DemoteFloat64;
             conv->value = ret->value;
             conv->type = WasmType::f32;
@@ -909,47 +908,35 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         fixCallType(ret, i32);
         return ret;
       }
-      BinaryOp binary;
-      RelationalOp relational;
-      bool isBinary = parseAsmBinaryOp(ast[1]->getIString(), ast[2], ast[3], binary, relational, &asmData);
-      if (isBinary) {
-        auto ret = allocator.alloc<Binary>();
-        ret->op = binary;
-        ret->left = process(ast[2]);
-        ret->right = process(ast[3]);
-        ret->type = ret->left->type;
-        if (binary == BinaryOp::RemS && isWasmTypeFloat(ret->type)) {
-          // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
-          CallImport *call = allocator.alloc<CallImport>();
-          call->target = F64_REM;
-          call->operands.push_back(ret->left);
-          call->operands.push_back(ret->right);
-          call->type = f64;
-          static bool addedImport = false;
-          if (!addedImport) {
-            addedImport = true;
-            auto import = allocator.alloc<Import>(); // f64-rem = asm2wasm.f64-rem;
-            import->name = F64_REM;
-            import->module = ASM2WASM;
-            import->base = F64_REM;
-            import->type.name = F64_REM;
-            import->type.result = f64;
-            import->type.params.push_back(f64);
-            import->type.params.push_back(f64);
-            wasm.addImport(import);
-          }
-          return call;
+      BinaryOp binary = parseAsmBinaryOp(ast[1]->getIString(), ast[2], ast[3], &asmData);
+      auto ret = allocator.alloc<Binary>();
+      ret->op = binary;
+      ret->left = process(ast[2]);
+      ret->right = process(ast[3]);
+      ret->finalize();
+      if (binary == BinaryOp::RemS && isWasmTypeFloat(ret->type)) {
+        // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
+        CallImport *call = allocator.alloc<CallImport>();
+        call->target = F64_REM;
+        call->operands.push_back(ret->left);
+        call->operands.push_back(ret->right);
+        call->type = f64;
+        static bool addedImport = false;
+        if (!addedImport) {
+          addedImport = true;
+          auto import = allocator.alloc<Import>(); // f64-rem = asm2wasm.f64-rem;
+          import->name = F64_REM;
+          import->module = ASM2WASM;
+          import->base = F64_REM;
+          import->type.name = F64_REM;
+          import->type.result = f64;
+          import->type.params.push_back(f64);
+          import->type.params.push_back(f64);
+          wasm.addImport(import);
         }
-        return ret;
-      } else {
-        auto ret = allocator.alloc<Compare>();
-        ret->op = relational;
-        ret->left = process(ast[2]);
-        ret->right = process(ast[3]);
-        assert(ret->left->type == ret->right->type);
-        ret->inputType = ret->left->type;
-        return ret;
+        return call;
       }
+      return ret;
     } else if (what == NUM) {
       auto ret = allocator.alloc<Const>();
       double num = ast[1]->getNumber();
@@ -1024,14 +1011,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         auto ret = process(ast[2]); // we are a +() coercion
         if (ret->type == i32) {
-          auto conv = allocator.alloc<Convert>();
+          auto conv = allocator.alloc<Unary>();
           conv->op = isUnsignedCoercion(ast[2]) ? ConvertUInt32 : ConvertSInt32;
           conv->value = ret;
           conv->type = WasmType::f64;
           return conv;
         }
         if (ret->type == f32) {
-          auto conv = allocator.alloc<Convert>();
+          auto conv = allocator.alloc<Unary>();
           conv->op = PromoteFloat32;
           conv->value = ret;
           conv->type = WasmType::f64;
@@ -1071,7 +1058,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2][0] == UNARY_PREFIX && ast[2][1] == B_NOT) {
 #if 0
-          auto ret = allocator.alloc<Convert>();
+          auto ret = allocator.alloc<Unary>();
           ret->op = TruncSFloat64; // equivalent to U, except for error handling, which asm.js doesn't have anyhow
           ret->value = process(ast[2][2]);
           ret->type = WasmType::i32;
@@ -1105,12 +1092,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return ret;
       } else if (ast[1] == L_NOT) {
         // no logical unary not, so do == 0
-        auto ret = allocator.alloc<Compare>();
+        auto ret = allocator.alloc<Binary>();
         ret->op = Eq;
         ret->left = process(ast[2]);
         ret->right = allocator.alloc<Const>()->set(Literal(0));
         assert(ret->left->type == ret->right->type);
-        ret->inputType = ret->left->type;
+        ret->finalize();
         return ret;
       }
       abort_on("bad unary", ast);
@@ -1148,7 +1135,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           } else if (lit.type == f64) {
             return allocator.alloc<Const>()->set(Literal((float)lit.getf64()));
           }
-          auto ret = allocator.alloc<Convert>();
+          auto ret = allocator.alloc<Unary>();
           ret->value = process(ast[2][0]);
           if (ret->value->type == f64) {
             ret->op = DemoteFloat64;
@@ -1181,11 +1168,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               ret->type = i32;
               return ret;
             };
-            auto isNegative = allocator.alloc<Compare>();
+            auto isNegative = allocator.alloc<Binary>();
             isNegative->op = LtS;
-            isNegative->inputType = i32;
             isNegative->left = get();
             isNegative->right = allocator.alloc<Const>()->set(0);
+            isNegative->finalize();
             auto block = allocator.alloc<Block>();
             block->list.push_back(set);
             auto flip = allocator.alloc<Binary>();
@@ -1249,7 +1236,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       for (unsigned i = 0; i < args->size(); i++) {
         ret->operands.push_back(process(args[i]));
       }
-      ret->type = getFunctionType(astStackHelper.getParent(), ret->operands);
+      ret->fullType = getFunctionType(astStackHelper.getParent(), ret->operands);
+      ret->type = ret->fullType->result;
       callIndirects[ret] = target[1][1]->getIString(); // we need to fix this up later, when we know how asm function tables are layed out inside the wasm table.
       return ret;
     } else if (what == RETURN) {

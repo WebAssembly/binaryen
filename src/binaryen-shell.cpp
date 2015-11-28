@@ -105,8 +105,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
         }
         break;
       }
-      case f32: *((float*)(memory+addr)) = value.getf32(); break;
-      case f64: *((double*)(memory+addr)) = value.getf64(); break;
+      // write floats carefully, ensuring all bits reach memory
+      case f32: *((int32_t*)(memory+addr)) = value.reinterpreti32(); break;
+      case f64: *((int64_t*)(memory+addr)) = value.reinterpreti64(); break;
       default: abort();
     }
   }
