@@ -91,7 +91,7 @@ function integrateWasmJS(Module) {
     // TODO: avoid this copy, by avoiding such static init writes
     // TODO: in shorter term, just copy up to the last static init write
     var oldBuffer = Module['buffer'];
-    var newBuffer = ArrayBuffer(oldBuffer.byteLength);
+    var newBuffer = new ArrayBuffer(oldBuffer.byteLength);
     (new Int8Array(newBuffer)).set(new Int8Array(oldBuffer));
     updateGlobalBuffer(newBuffer);
     updateGlobalBufferViews();
