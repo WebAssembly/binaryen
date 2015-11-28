@@ -18,11 +18,12 @@
 //
 // wasm.js internal WebAssembly representation design:
 //
-//  * Optimize for size. This justifies separating if and if_else
-//    (so that if doesn't have an always-empty else)
 //  * Unify where possible. Where size isn't a concern, combine
 //    classes, so binary ops and relational ops are joined. This
 //    simplifies that AST and makes traversals easier.
+//  * Optimize for size? This might justify separating if and if_else
+//    (so that if doesn't have an always-empty else; also it avoids
+//    a branch).
 //
 
 #ifndef __wasm_h__
