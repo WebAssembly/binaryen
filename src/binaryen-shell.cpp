@@ -37,7 +37,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   ShellExternalInterface() : memory(nullptr) {}
 
   void init(Module& wasm) override {
-    memory = (char*)malloc(wasm.memory.initial);
+    memory = (char*)calloc(wasm.memory.initial, 1);
     // apply memory segments
     for (auto segment : wasm.memory.segments) {
       memcpy(memory + segment.offset, segment.data, segment.size);
@@ -114,6 +114,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   void growMemory(size_t oldSize, size_t newSize) override {
     memory = (char*)realloc(memory, newSize);
+    if (newSize > oldSize) {
+      memset(memory + oldSize, 0, newSize - oldSize);
+    }
   }
 
   jmp_buf trapState;
