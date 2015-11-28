@@ -946,7 +946,9 @@ private:
     for (; i < s.size() && i < stopAt; i++) {
       ret->list.push_back(parseExpression(s[i]));
     }
-    ret->type = ret->list.back()->type;
+    if (ret->list.size() > 0) {
+      ret->type = ret->list.back()->type;
+    }
     return ret;
   }
 
