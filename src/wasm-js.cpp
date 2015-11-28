@@ -10,9 +10,14 @@
 
 #include "asm2wasm.h"
 #include "wasm-interpreter.h"
+#include "wasm-s-parser.h"
 
 using namespace cashew;
 using namespace wasm;
+
+namespace wasm {
+int debug = 0;
+}
 
 // global singletons
 Asm2WasmBuilder* asm2wasm = nullptr;
@@ -20,18 +25,19 @@ ModuleInstance* instance = nullptr;
 AllocatingModule* module = nullptr;
 bool wasmJSDebug = false;
 
-// receives asm.js code, parses into wasm and returns an instance handle.
-// this creates a module, an external interface, a builder, and a module instance,
-// all of which are then the responsibility of the caller to free.
-// note: this modifies the input.
-extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
+static void prepare2wasm() {
   assert(instance == nullptr); // singleton
-
 #if WASM_JS_DEBUG
   wasmJSDebug = 1;
 #else
   wasmJSDebug = EM_ASM_INT_V({ return !!Module['outside']['WASM_JS_DEBUG'] }); // Set WASM_JS_DEBUG on the outside Module to get debugging
 #endif
+}
+
+// receives asm.js code, parses into wasm.
+// note: this modifies the input.
+extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
+  prepare2wasm();
 
   Asm2WasmPreProcessor pre;
   input = pre.process(input);
@@ -54,10 +60,21 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm(char *input) {
 
   if (wasmJSDebug) std::cerr << "optimizing...\n";
   asm2wasm->optimize();
+}
 
-  if (wasmJSDebug) std::cerr << *module << '\n';
+// loads wasm code in s-expression format
+extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input) {
+  prepare2wasm();
+  abort();
+}
+
+// instantiates the loaded wasm (which might be from asm2wasm, or
+// s-expressions, or something else) with a JS external interface.
+extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
+  if (wasmJSDebug) std::cerr << "instantiating module: \n" << *module << '\n';
 
   if (wasmJSDebug) std::cerr << "generating exports...\n";
+
   EM_ASM({
     Module['asmExports'] = {};
   });

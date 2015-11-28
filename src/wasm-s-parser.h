@@ -9,37 +9,13 @@
 
 #include "wasm.h"
 #include "mixed_arena.h"
+#include "shared-constants.h"
 
 namespace wasm {
-
-int debug = 0; // wasm::debug is set in main(), typically from an env var
 
 using namespace cashew;
 
 // Globals
-
-IString MODULE("module"),
-        FUNC("func"),
-        PARAM("param"),
-        RESULT("result"),
-        MEMORY("memory"),
-        SEGMENT("segment"),
-        EXPORT("export"),
-        IMPORT("import"),
-        TABLE("table"),
-        LOCAL("local"),
-        TYPE("type"),
-        CALL("call"),
-        CALL_IMPORT("call_import"),
-        CALL_INDIRECT("call_indirect"),
-        BR_IF("br_if"),
-        INFINITY_("infinity"),
-        NEG_INFINITY("-infinity"),
-        NAN_("nan"),
-        NEG_NAN("-nan"),
-        CASE("case"),
-        BR("br"),
-        FAKE_RETURN("fake_return_waka123");
 
 int unhex(char c) {
   if (c >= '0' && c <= '9') return c - '0';

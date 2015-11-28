@@ -7,41 +7,15 @@
 #include "wasm.h"
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
+#include "shared-constants.h"
 
 namespace wasm {
 
 using namespace cashew;
 
-int debug = 0; // wasm::debug is set in main(), typically from an env var
+extern int debug; // wasm::debug is set in main(), typically from an env var
 
 // Utilities
-
-IString GLOBAL("global"), NAN_("NaN"), INFINITY_("Infinity"),
-        TOPMOST("topmost"),
-        INT8ARRAY("Int8Array"),
-        INT16ARRAY("Int16Array"),
-        INT32ARRAY("Int32Array"),
-        UINT8ARRAY("Uint8Array"),
-        UINT16ARRAY("Uint16Array"),
-        UINT32ARRAY("Uint32Array"),
-        FLOAT32ARRAY("Float32Array"),
-        FLOAT64ARRAY("Float64Array"),
-        IMPOSSIBLE_CONTINUE("impossible-continue"),
-        MATH("Math"),
-        IMUL("imul"),
-        CLZ32("clz32"),
-        FROUND("fround"),
-        ASM2WASM("asm2wasm"),
-        F64_REM("f64-rem"),
-        F64_TO_INT("f64-to-int"),
-        GLOBAL_MATH("global.Math"),
-        ABS("abs"),
-        FLOOR("floor"),
-        SQRT("sqrt"),
-        I32_TEMP("asm2wasm_i32_temp"),
-        DEBUGGER("debugger"),
-        GROW_WASM_MEMORY("__growWasmMemory"),
-        NEW_SIZE("newSize");
 
 static void abort_on(std::string why) {
   std::cerr << why << '\n';

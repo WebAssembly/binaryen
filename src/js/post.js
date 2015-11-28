@@ -84,6 +84,7 @@ function integrateWasmJS(Module) {
 
     // Generate a module instance of the asm.js converted into wasm.
     var code = Module['read'](Module['asmjsCodeFile']);
+    // TODO: support wasm s-expression loading here
 
     // wasm code would create its own buffer, at this time. But static init code might have
     // written to the buffer already, and we must copy it over. We could just avoid
@@ -106,8 +107,10 @@ function integrateWasmJS(Module) {
 
     var temp = wasmJS['_malloc'](code.length + 1);
     wasmJS['writeAsciiToMemory'](code, temp);
-    wasmJS['_load_asm'](temp);
+    wasmJS['_load_asm2wasm'](temp);
     wasmJS['_free'](temp);
+
+    wasmJS['_instantiate'](temp);
 
     // write the provided data to a location the wasm instance can get at it.
     info.global = global;

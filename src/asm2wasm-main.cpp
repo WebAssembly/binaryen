@@ -7,6 +7,10 @@
 using namespace cashew;
 using namespace wasm;
 
+namespace wasm {
+int debug = 0;
+}
+
 int main(int argc, char **argv) {
   debug = getenv("ASM2WASM_DEBUG") ? getenv("ASM2WASM_DEBUG")[0] - '0' : 0;
 
