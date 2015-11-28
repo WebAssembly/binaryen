@@ -168,25 +168,28 @@ for c in tests:
       extra = json.loads(open(emcc).read())
     if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
     for opts in [[], ['-O1'], ['-O2'], ['-O3'], ['-Oz']]:
-      command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', c)] + opts + extra
-      subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      print '....' + ' '.join(command)
-      if post:
-        open('a.wasm.js', 'a').write(post)
-      else:
-        print '     (no post)'
-      for which in ['wasm']:
-        print '......', which
-        try:
-          args = json.loads(open(os.path.join('test', base + '.args')).read())
-        except:
-          args = []
-          print '     (no args)'
-        proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'] + args, stdout=subprocess.PIPE)
-        out, err = proc.communicate()
-        assert proc.returncode == 0
-        if out.strip() != expected.strip():
-          fail(out, expected)
+      for method in [None, 'asm2wasm']:#, 'wasm-s-parser']:
+        command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', c)] + opts + extra
+        if method:
+          command += ['-s', 'BINARYEN_METHOD="' + method + '"']
+        subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print '....' + ' '.join(command)
+        if post:
+          open('a.wasm.js', 'a').write(post)
+        else:
+          print '     (no post)'
+        for which in ['wasm']:
+          print '......', which
+          try:
+            args = json.loads(open(os.path.join('test', base + '.args')).read())
+          except:
+            args = []
+            print '     (no args)'
+          proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'] + args, stdout=subprocess.PIPE)
+          out, err = proc.communicate()
+          assert proc.returncode == 0
+          if out.strip() != expected.strip():
+            fail(out, expected)
 
 print '\n[ success! ]'
 
