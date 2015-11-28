@@ -22,7 +22,9 @@ function integrateWasmJS(Module) {
       var oldBuffer = Module['buffer'];
       var newBuffer = instance.memory;
       assert(newBuffer.byteLength >= oldBuffer.byteLength, 'we might fail if we allocated more than TOTAL_MEMORY');
-      (new Int8Array(newBuffer)).set(new Int8Array(oldBuffer));
+      // the wasm module does write out the memory initialization, in range STATIC_BASE..STATIC_BUMP, so avoid that
+      (new Int8Array(newBuffer).subarray(0, STATIC_BASE)).set(new Int8Array(oldBuffer).subarray(0, STATIC_BASE));
+      (new Int8Array(newBuffer).subarray(STATIC_BASE + STATIC_BUMP)).set(new Int8Array(oldBuffer).subarray(STATIC_BASE + STATIC_BUMP));
       updateGlobalBuffer(newBuffer);
       updateGlobalBufferViews();
       Module['reallocBuffer'] = function(size) {
