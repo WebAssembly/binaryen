@@ -39,6 +39,14 @@ function integrateWasmJS(Module) {
     return;
   }
 
+  var WasmTypes = {
+    none: 0,
+    i32: 1,
+    i64: 2,
+    f32: 3,
+    f64: 4
+  };
+
   // Use wasm.js to polyfill and execute code in a wasm interpreter.
   var wasmJS = WasmJS({});
 
@@ -115,7 +123,20 @@ function integrateWasmJS(Module) {
     if (method == 'asm2wasm') {
       wasmJS['_load_asm2wasm'](temp);
     } else {
-      wasmJS['_load_s_expr2wasm'](temp, Module['read'](Module['wasmCodeFile'] + '.mappedGlobals'));
+      wasmJS['_load_s_expr2wasm'](temp);
+      var mappedGlobals = JSON.parse(Module['read'](Module['wasmCodeFile'] + '.mappedGlobals'));
+      for (var name in mappedGlobals) {
+        var global = mappedGlobals[name];
+        if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
+        var value = wasmJS['lookupImport'](global.module, global.base);
+        var address = global.address;
+        switch (global.type) {
+          case WasmTypes.i32: Module['HEAP32'][address >> 2] = value; break;
+          case WasmTypes.f32: Module['HEAPF32'][address >> 2] = value; break;
+          case WasmTypes.f64: Module['HEAPF64'][address >> 3] = value; break;
+          default: abort();
+        }
+      }
     }
     wasmJS['_free'](temp);
 

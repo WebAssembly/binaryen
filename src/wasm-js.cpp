@@ -98,25 +98,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input, char *mappedG
     abort();
   });
 
-  if (wasmJSDebug) std::cerr << "mapping globals...\n";
-  EM_ASM_({
-    var mappedGlobals = JSON.parse($0);
-    var i32 = $1;
-    var f32 = $2;
-    var f64 = $3;
-    for (var name in mappedGlobals) {
-      var global = mappedGlobals[name];
-      if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
-      var value = Module['lookupImport'](global.module, global.base);
-      var address = global.address;
-      switch (global.type) {
-        case i32: Module['info'].parent['HEAP32'][address >> 2] = value; break;
-        case f32: Module['info'].parent['HEAPF32'][address >> 2] = value; break;
-        case f64: Module['info'].parent['HEAPF64'][address >> 3] = value; break;
-        default: abort();
-      }
-    }
-  }, mappedGlobals, i32, f32, f64);
+  // global mapping is done in js in post.js
 }
 
 // instantiates the loaded wasm (which might be from asm2wasm, or
