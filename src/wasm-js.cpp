@@ -98,6 +98,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input, char *mappedG
     abort();
   });
 
+  module->memory.initial = EM_ASM_INT_V({
+    return Module['providedTotalMemory']; // we receive the size of memory from emscripten
+  });
+  module->memory.max = (module->exportsMap.find(GROW_WASM_MEMORY) != module->exportsMap.end()) ? -1 : module->memory.initial;
+
   // global mapping is done in js in post.js
 }
 
