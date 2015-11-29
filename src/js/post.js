@@ -137,7 +137,7 @@ function integrateWasmJS(Module) {
     };
 
     // Prepare to generate wasm, using either asm2wasm or wasm-s-parser
-    var method = Module['wasmJSMethod'] || 'asm2wasm';
+    var method = Module['wasmJSMethod'] || 'wasm-s-parser';
     assert(method == 'asm2wasm' || method == 'wasm-s-parser');
     var code = Module['read'](method == 'asm2wasm' ? Module['asmjsCodeFile'] : Module['wasmCodeFile']);
     var temp = wasmJS['_malloc'](code.length + 1);
