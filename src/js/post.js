@@ -1,6 +1,26 @@
 
 function integrateWasmJS(Module) {
 
+  // wasm lacks globals, so asm2wasm maps them into locations in memory. that information cannot
+  // be present in the wasm output of asm2wasm, so we store it in a side file. If we load asm2wasm
+  // output, either generated ahead of time or on the client, we need to apply those mapped
+  // globals after loading the module.
+  function applyMappedGlobals() {
+    var mappedGlobals = JSON.parse(Module['read'](Module['wasmCodeFile'] + '.mappedGlobals'));
+    for (var name in mappedGlobals) {
+      var global = mappedGlobals[name];
+      if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
+      var value = wasmJS['lookupImport'](global.module, global.base);
+      var address = global.address;
+      switch (global.type) {
+        case WasmTypes.i32: Module['HEAP32'][address >> 2] = value; break;
+        case WasmTypes.f32: Module['HEAPF32'][address >> 2] = value; break;
+        case WasmTypes.f64: Module['HEAPF64'][address >> 3] = value; break;
+        default: abort();
+      }
+    }
+  }
+
   if (typeof WASM === 'object') {
     // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
     // the wasm module at that time, and it receives imports and provides exports and so forth, the app
@@ -32,6 +52,8 @@ function integrateWasmJS(Module) {
         wasmJS['asmExports']['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
         return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
       };
+
+      applyMappedGlobals();
 
       return instance;
     };
@@ -124,19 +146,7 @@ function integrateWasmJS(Module) {
       wasmJS['_load_asm2wasm'](temp);
     } else {
       wasmJS['_load_s_expr2wasm'](temp);
-      var mappedGlobals = JSON.parse(Module['read'](Module['wasmCodeFile'] + '.mappedGlobals'));
-      for (var name in mappedGlobals) {
-        var global = mappedGlobals[name];
-        if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
-        var value = wasmJS['lookupImport'](global.module, global.base);
-        var address = global.address;
-        switch (global.type) {
-          case WasmTypes.i32: Module['HEAP32'][address >> 2] = value; break;
-          case WasmTypes.f32: Module['HEAPF32'][address >> 2] = value; break;
-          case WasmTypes.f64: Module['HEAPF64'][address >> 3] = value; break;
-          default: abort();
-        }
-      }
+      applyMappedGlobals();
     }
     wasmJS['_free'](temp);
 
