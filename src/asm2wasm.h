@@ -143,6 +143,25 @@ class Asm2WasmBuilder {
 public:
   std::map<IString, MappedGlobal> mappedGlobals;
 
+  // the global mapping info is not present in the output wasm. We need to save it on the side
+  // if we intend to load and run this module's wasm.
+  void serializeMappedGlobals(const char *filename) {
+    FILE *f = fopen(filename, "w");
+    assert(f);
+    fprintf(f, "{\n");
+    bool first = true;
+    for (auto& pair : mappedGlobals) {
+      auto name = pair.first;
+      auto& global = pair.second;
+      if (first) first = false;
+      else fprintf(f, ",");
+      fprintf(f, "\"%s\": { \"address\": %d, \"type\": %d, \"import\": %d, \"module\": \"%s\", \"base\": \"%s\" }\n",
+                 name.str, global.address, global.type, global.import, global.module.str, global.base.str);
+    }
+    fprintf(f, "}");
+    fclose(f);
+  }
+
 private:
   void allocateGlobal(IString name, WasmType type, bool import, IString module = IString(), IString base = IString()) {
     assert(mappedGlobals.find(name) == mappedGlobals.end());

@@ -62,10 +62,25 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
 
   if (wasmJSDebug) std::cerr << "optimizing...\n";
   asm2wasm->optimize();
+
+  if (wasmJSDebug) std::cerr << "mapping globals...\n";
+  for (auto& pair : asm2wasm->mappedGlobals) {
+    auto name = pair.first;
+    auto& global = pair.second;
+    if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
+    double value = EM_ASM_DOUBLE({ return Module['lookupImport'](Pointer_stringify($0), Pointer_stringify($1)) }, global.module.str, global.base.str);
+    unsigned address = global.address;
+    switch (global.type) {
+      case i32: EM_ASM_({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, address, value); break;
+      case f32: EM_ASM_({ Module['info'].parent['HEAPF32'][$0 >> 2] = $1 }, address, value); break;
+      case f64: EM_ASM_({ Module['info'].parent['HEAPF64'][$0 >> 3] = $1 }, address, value); break;
+      default: abort();
+    }
+  }
 }
 
 // loads wasm code in s-expression format
-extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input) {
+extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input, char *mappedGlobals) {
   prepare2wasm();
 
   if (wasmJSDebug) std::cerr << "wasm-s-expression parsing...\n";
@@ -82,6 +97,26 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input) {
     std::cerr << "error in parsing s-expressions to wasm\n";
     abort();
   });
+
+  if (wasmJSDebug) std::cerr << "mapping globals...\n";
+  EM_ASM_({
+    var mappedGlobals = JSON.parse($0);
+    var i32 = $1;
+    var f32 = $2;
+    var f64 = $3;
+    for (var name in mappedGlobals) {
+      var global = mappedGlobals[name];
+      if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
+      var value = Module['lookupImport'](global.module, global.base);
+      var address = global.address;
+      switch (global.type) {
+        case i32: Module['info'].parent['HEAP32'][address >> 2] = value; break;
+        case f32: Module['info'].parent['HEAPF32'][address >> 2] = value; break;
+        case f64: Module['info'].parent['HEAPF64'][address >> 3] = value; break;
+        default: abort();
+      }
+    }
+  }, mappedGlobals, i32, f32, f64);
 }
 
 // instantiates the loaded wasm (which might be from asm2wasm, or
@@ -226,23 +261,6 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
   };
 
   instance = new ModuleInstance(*module, new JSExternalInterface());
-}
-
-// Ready the provided imported globals, copying them to their mapped locations.
-extern "C" void EMSCRIPTEN_KEEPALIVE load_mapped_globals() {
-  for (auto& pair : asm2wasm->mappedGlobals) {
-    auto name = pair.first;
-    auto& global = pair.second;
-    if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
-    double value = EM_ASM_DOUBLE({ return Module['lookupImport'](Pointer_stringify($0), Pointer_stringify($1)) }, global.module.str, global.base.str);
-    unsigned address = global.address;
-    switch (global.type) {
-      case i32: EM_ASM_({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, address, value); break;
-      case f32: EM_ASM_({ Module['info'].parent['HEAPF32'][$0 >> 2] = $1 }, address, value); break;
-      case f64: EM_ASM_({ Module['info'].parent['HEAPF64'][$0 >> 3] = $1 }, address, value); break;
-      default: abort();
-    }
-  }
 }
 
 // Does a call from js into an export of the module.

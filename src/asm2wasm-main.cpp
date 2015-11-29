@@ -15,6 +15,7 @@ int main(int argc, char **argv) {
   debug = getenv("ASM2WASM_DEBUG") ? getenv("ASM2WASM_DEBUG")[0] - '0' : 0;
 
   char *infile = argv[1];
+  char *mappedGlobals = argc < 3 ? nullptr : argv[2];
 
   if (debug) std::cerr << "loading '" << infile << "'...\n";
   FILE *f = fopen(argv[1], "r");
@@ -49,6 +50,11 @@ int main(int argc, char **argv) {
 
   if (debug) std::cerr << "printing...\n";
   std::cout << wasm;
+
+  if (mappedGlobals) {
+    if (debug) std::cerr << "serializing mapped globals...\n";
+    asm2wasm.serializeMappedGlobals(mappedGlobals);
+  }
 
   if (debug) std::cerr << "done.\n";
 }

@@ -84,6 +84,9 @@ function integrateWasmJS(Module) {
   Module['asm'] = function(global, env, providedBuffer) {
     assert(providedBuffer === Module['buffer']); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
 
+    info.global = global;
+    info.env = env;
+
     // wasm code would create its own buffer, at this time. But static init code might have
     // written to the buffer already, and we must copy it over. We could just avoid
     // this copy in wasm.js polyfilling, but to be as close as possible to real wasm,
@@ -112,16 +115,12 @@ function integrateWasmJS(Module) {
     if (method == 'asm2wasm') {
       wasmJS['_load_asm2wasm'](temp);
     } else {
-      wasmJS['_load_s_expr2wasm'](temp);
+      wasmJS['_load_s_expr2wasm'](temp, Module['read'](Module['wasmCodeFile'] + '.mappedGlobals'));
     }
     wasmJS['_free'](temp);
 
     wasmJS['_instantiate'](temp);
 
-    // write the provided data to a location the wasm instance can get at it.
-    info.global = global;
-    info.env = env;
-    wasmJS['_load_mapped_globals'](); // now that we have global and env, we can ready the provided imported globals, copying them to their mapped locations.
     return wasmJS['asmExports'];
   };
 }
