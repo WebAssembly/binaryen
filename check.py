@@ -168,7 +168,7 @@ for c in tests:
       extra = json.loads(open(emcc).read())
     if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
     for opts in [[], ['-O1'], ['-O2'], ['-O3'], ['-Oz']]:
-      for method in [None, 'asm2wasm']:#, 'wasm-s-parser']:
+      for method in [None, 'asm2wasm', 'wasm-s-parser']:
         command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', c)] + opts + extra
         if method:
           command += ['-s', 'BINARYEN_METHOD="' + method + '"']
