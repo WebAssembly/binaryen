@@ -15,7 +15,7 @@ This repository contains code that builds the following tools in `bin/`:
 
  * **binaryen-shell**: A shell that can load and interpret WebAssembly code in S-Expression format, as well as run transformation passes on it. It can also run the spec test suite.
  * **asm2wasm**: An asm.js-to-WebAssembly compiler, built on Emscripten's asm optimizer infrastructure. That can directly compile asm.js to WebAssembly.
- * **wasm.js**: A polyfill for WebAssembly support in browsers. It receives an asm.js module, parses it using an internal build of `asm2wasm`, and runs the resulting WebAssembly in a WebAssembly interpreter. It provides what looks like an asm.js module, while running WebAssembly inside.
+ * **wasm.js**: A WebAssembly-to-JavaScript bridge. wasm.js contains Binaryen components compiled to JavaScript, including the interpreter, asm2wasm, the S-Expression parser, etc., which allow you to load WebAssembly and execute it even if the browser doesn't have native support yet. Having `asm2wasm` also gives the option to take an asm.js build and execute it as WebAssembly, which is useful for testing.
 
 Usage instructions for each are below.
 
