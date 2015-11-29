@@ -1730,7 +1730,7 @@
                 (get_local $i1)
                 (i32.const 0)
               )
-              (i32.const -2147483648)
+              (i32.const -65)
             )
             (block
               (set_local $i7
@@ -12453,7 +12453,7 @@
             (get_local $i1)
             (i32.const 0)
           )
-          (i32.const -2147483648)
+          (i32.const -4096)
         )
         (block
           (i32.store align=4

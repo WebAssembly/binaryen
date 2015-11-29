@@ -267,7 +267,7 @@
       (set_local $x
         (i32.and
           (i32.div_u
-            (i32.const -2147483648)
+            (i32.const -1)
             (i32.const 2)
           )
           (i32.const -1)
@@ -347,6 +347,16 @@
         )
         (get_local $x)
       )
+    )
+  )
+  (func $___syscall_ret
+    (local $$0 i32)
+    (i32.gt_u
+      (i32.shr_u
+        (get_local $$0)
+        (i32.const 0)
+      )
+      (i32.const -4096)
     )
   )
   (func $z

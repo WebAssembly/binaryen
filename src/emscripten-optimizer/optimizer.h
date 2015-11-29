@@ -102,8 +102,8 @@ struct AsmData {
 };
 
 bool isInteger(double x);
-
 bool isInteger32(double x);
+int32_t toInteger32(double x);
 
 extern cashew::IString ASM_FLOAT_ZERO;
 

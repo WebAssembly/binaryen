@@ -4510,7 +4510,7 @@
             (get_local $$r)
             (i32.const 0)
           )
-          (i32.const -2147483648)
+          (i32.const -4096)
         )
       )
       (if_else
@@ -16251,7 +16251,7 @@
             (get_local $$0)
             (i32.const 0)
           )
-          (i32.const -2147483648)
+          (i32.const -1)
         )
       )
       (set_local $$4
@@ -16349,7 +16349,7 @@
                     (get_local $$7)
                     (i32.const 0)
                   )
-                  (i32.const -2147483648)
+                  (i32.const -1)
                 )
               )
               (set_local $$17
@@ -20126,7 +20126,7 @@
                   (get_local $$bytes)
                   (i32.const 0)
                 )
-                (i32.const -2147483648)
+                (i32.const -65)
               )
             )
             (if_else

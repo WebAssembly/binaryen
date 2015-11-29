@@ -19,6 +19,12 @@ bool isInteger32(double x) {
   return isInteger(x) && (x == (int32_t)x || x == (uint32_t)x);
 }
 
+int32_t toInteger32(double x) {
+  if (x == (int32_t)x) return (int32_t)x;
+  assert(x == (uint32_t)x);
+  return (uint32_t)x;
+}
+
 int parseInt(const char *str) {
   int ret = *str - '0';
   while (*(++str)) {

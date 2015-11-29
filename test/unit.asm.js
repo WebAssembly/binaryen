@@ -112,6 +112,10 @@ function () {
     x = -x;
     FUNCTION_TABLE_c[1 & 7](x);
   }
+  function ___syscall_ret() {
+   var $0 = 0;
+   ($0>>>0) > 4294963200; // -4096
+  }
 
   function z() {
   }

@@ -935,7 +935,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       double num = ast[1]->getNumber();
       if (isInteger32(num)) {
         ret->value.type = WasmType::i32;
-        ret->value.i32 = num;
+        ret->value.i32 = toInteger32(num);
       } else {
         ret->value.type = WasmType::f64;
         ret->value.f64 = num;
