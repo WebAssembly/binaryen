@@ -15,7 +15,7 @@ for arg in sys.argv[1:]:
 
 def fail(actual, expected):
   raise Exception("incorrect output, diff:\n\n%s" % (
-    ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])
+    ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])[-1000:]
   ))
 
 def fail_if_not_identical(actual, expected):
