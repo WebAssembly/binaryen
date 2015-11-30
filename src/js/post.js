@@ -1,5 +1,17 @@
 
 function integrateWasmJS(Module) {
+  // wasm.js has several methods for creating the compiled code module here:
+  //  * 'wasm-s-parser': load s-expression code from a .wast and create wasm
+  //  * 'asm2wasm': load asm.js code and translate to wasm
+  //  * 'just-asm': no wasm, just load the asm.js code and use that (good for testing)
+  // The method can be set at compile time (BINARYEN_METHOD), or runtime by setting Module['wasmJSMethod'].
+  var method = Module['wasmJSMethod'] || 'wasm-s-parser';
+  assert(method == 'asm2wasm' || method == 'wasm-s-parser' || method == 'just-asm');
+
+  if (method == 'just-asm') {
+    eval(Module['read'](Module['asmjsCodeFile']));
+    return;
+  }
 
   // wasm lacks globals, so asm2wasm maps them into locations in memory. that information cannot
   // be present in the wasm output of asm2wasm, so we store it in a side file. If we load asm2wasm
@@ -137,8 +149,6 @@ function integrateWasmJS(Module) {
     };
 
     // Prepare to generate wasm, using either asm2wasm or wasm-s-parser
-    var method = Module['wasmJSMethod'] || 'wasm-s-parser';
-    assert(method == 'asm2wasm' || method == 'wasm-s-parser');
     var code = Module['read'](method == 'asm2wasm' ? Module['asmjsCodeFile'] : Module['wasmCodeFile']);
     var temp = wasmJS['_malloc'](code.length + 1);
     wasmJS['writeAsciiToMemory'](code, temp);

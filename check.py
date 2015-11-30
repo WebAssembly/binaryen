@@ -143,14 +143,54 @@ for t in spec_tests:
       fail(actual, expected)
 
 print '\n[ checking example testcases... ]\n'
-
+'''
 subprocess.check_call(['g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g'])
 actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
 expected = open(os.path.join('test', 'example', 'find_div0s.txt')).read()
 if actual != expected:
   fail(actual, expected)
+'''
+print '\n[ checking wasm.js methods... (need both emcc and nodejs in your path) ]\n'
 
-print '\n[ checking wasm.js polyfill testcases... (need both emcc and nodejs in your path) ]\n'
+for method in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm']:
+  for success in [1, 0]:
+    command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'hello_world.c') ]
+    if method:
+      command += ['-s', 'BINARYEN_METHOD="' + method + '"']
+    else:
+      method = 'wasm-s-parser' # this is the default
+    print method, ' : ', command, ' => ', success
+    subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    def break_cashew():
+      asm = open('a.wasm.asm.js').read()
+      asm = asm.replace('"almost asm"', '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
+      asm = asm.replace("'almost asm'", '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
+      open('a.wasm.asm.js', 'w').write(asm)
+    if method == 'asm2wasm':
+      os.unlink('a.wasm.wast') # we should not need the .wast
+      if not success:
+        break_cashew() # we need cashew
+    elif method == 'wasm-s-parser':
+      os.unlink('a.wasm.asm.js') # we should not need the .asm.js
+      if not success:
+        os.unlink('a.wasm.wast.mappedGlobals')
+    elif method == 'just-asm':
+      os.unlink('a.wasm.wast') # we should not need the .wast
+      break_cashew() # we don't use cashew, so ok to break it
+      if not success:
+        os.unlink('a.wasm.js')
+    else:
+      1/0
+    proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    if success:
+      assert proc.returncode == 0
+      assert 'hello, world!' in out
+    else:
+      assert proc.returncode != 0
+      assert 'hello, world!' not in out
+
+print '\n[ checking wasm.js testcases... (need both emcc and nodejs in your path) ]\n'
 
 for c in tests:
   if c.endswith(('.c', '.cpp')):
