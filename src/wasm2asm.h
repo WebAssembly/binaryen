@@ -625,10 +625,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       if (isStatement(curr)) {
         ScopedTemp tempLeft(curr->left->type, parent);
         GetLocal fakeLocalLeft;
-        fakeLocalLeft.name = temp.getName();
+        fakeLocalLeft.name = fakeLocalLeft.getName();
         ScopedTemp tempRight(curr->right->type, parent);
         GetLocal fakeLocalRight;
-        fakeLocalRight.name = temp.getName();
+        fakeLocalRight.name = fakeLocalRight.getName();
         Binary fakeBinary = *curr;
         fakeBinary.value = &fakeLocal;
         Ref ret = blockify(visitAndAssign(curr->left, tempLeft));
@@ -674,6 +674,42 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
     }
     void visitSelect(Select *curr) override {
+      if (isStatement(curr)) {
+        ScopedTemp tempCondition(i32, parent);
+        GetLocal fakeCondition;
+        fakeCondition.name = tempCondition.getName();
+        ScopedTemp tempLeft(curr->left->type, parent);
+        GetLocal fakeLocalLeft;
+        fakeLocalLeft.name = fakeLocalLeft.getName();
+        ScopedTemp tempRight(curr->right->type, parent);
+        GetLocal fakeLocalRight;
+        fakeLocalRight.name = fakeLocalRight.getName();
+        Select fakeSelect = *curr;
+        fakeSelect.value = &fakeLocal;
+        Ref ret = blockify(visitAndAssign(curr->condition, condition));
+        ret[1]->push_back(visitAndAssign(curr->left, tempLeft));
+        ret[1]->push_back(visitAndAssign(curr->right, tempRight));
+        ret[1]->push_back(visit(&fakeSelect, result));
+        return ret;
+      }
+      // normal select
+      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
+      Ref left = visit(curr->left, EXPRESSION_RESULT);
+      Ref right = visit(curr->right, EXPRESSION_RESULT);
+      ScopedTemp tempCondition(i32, parent),
+                 tempLeft(curr->type, parent),
+                 tempRight(curr->type, parent);
+      return
+        ValueBuilder::makeSeq(
+          ValueBuilder::makeAssign(tempCondition.getAstName(), condition),
+          ValueBuilder::makeSeq(
+            ValueBuilder::makeAssign(tempLeft.getAstName(), left),
+            ValueBuilder::makeSeq(
+              ValueBuilder::makeAssign(tempRight.getAstName(), right),
+              ValueBuilder::makeConditional(tempCondition.getAstName(), tempLeft.getAstName(), tempRight.getAstName())
+            )
+          )
+        );
     }
     void visitHost(Host *curr) override {
     }

@@ -1447,6 +1447,12 @@ public:
                             .push_back(ifFalse);
   }
 
+  static Ref makeSeq(Ref left, Ref right) {
+    return &makeRawArray(3)->push_back(makeRawString(SEQ))
+                            .push_back(left)
+                            .push_back(right);
+  }
+
   static Ref makeDo(Ref body, Ref condition) {
     return &makeRawArray(3)->push_back(makeRawString(DO))
                             .push_back(condition)
