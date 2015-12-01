@@ -13,6 +13,29 @@ function integrateWasmJS(Module) {
     return;
   }
 
+  var asm2wasmImports = { // special asm2wasm imports
+    "f64-rem": function(x, y) {
+      return x % y;
+    },
+    "f64-to-int": function(x) {
+      return x | 0;
+    },
+    "debugger": function() {
+      debugger;
+    },
+  };
+
+  function flatten(obj) {
+    var ret = {};
+    for (var x in obj) {
+      for (var y in obj[x]) {
+        if (ret[y]) Module['printErr']('warning: flatten dupe: ' + y);
+        ret[y] = obj[x][y];
+      }
+    }
+    return ret;
+  }
+
   // wasm lacks globals, so asm2wasm maps them into locations in memory. that information cannot
   // be present in the wasm output of asm2wasm, so we store it in a side file. If we load asm2wasm
   // output, either generated ahead of time or on the client, we need to apply those mapped
@@ -42,10 +65,11 @@ function integrateWasmJS(Module) {
       var binary = Module['readBinary'](Module['wasmCodeFile']);
 
       // Create an instance of the module using native support in the JS engine.
-      var instance = WASM.instantiateModule(binary, {
+      var instance = WASM.instantiateModule(binary, flatten({ // XXX for now, flatten the imports
         "global.Math": global.Math,
-        "env": env
-      });
+        "env": env,
+        "asm2wasm": asm2wasmImports
+      }));
 
       // The wasm instance creates its memory. But static init code might have written to
       // buffer already, and we must copy it over.
@@ -91,17 +115,7 @@ function integrateWasmJS(Module) {
   var info = wasmJS['info'] = {
     global: null,
     env: null,
-    asm2wasm: { // special asm2wasm imports
-      "f64-rem": function(x, y) {
-        return x % y;
-      },
-      "f64-to-int": function(x) {
-        return x | 0;
-      },
-      "debugger": function() {
-        debugger;
-      },
-    },
+    asm2wasm: asm2wasmImports,
     parent: Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
   };
 
