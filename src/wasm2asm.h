@@ -13,6 +13,7 @@ namespace wasm {
 using namespace cashew;
 
 IString ASM_FUNC("asmFunc"),
+        ABORT_FUNC("abort"),
         NO_RESULT("wasm2asm$noresult"), // no result at all
         EXPRESSION_RESULT("wasm2asm$expresult"); // result in an expression, no temp var
 
@@ -712,10 +713,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         );
     }
     void visitHost(Host *curr) override {
+      abort();
     }
     void visitNop(Nop *curr) override {
+      return ValueBuilder::makeTopLevel()
     }
     void visitUnreachable(Unreachable *curr) override {
+      return ValueBuilder::makeCall(ABORT_FUNC);
     }
   };
   return ExpressionProcessor(this).visit(curr, result);
