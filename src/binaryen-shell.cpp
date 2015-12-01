@@ -27,7 +27,7 @@ MixedArena globalAllocator;
 IString ASSERT_RETURN("assert_return"),
         ASSERT_TRAP("assert_trap"),
         ASSERT_INVALID("assert_invalid"),
-        STDIO("stdio"),
+        SPECTEST("spectest"),
         PRINT("print"),
         INVOKE("invoke");
 
@@ -49,7 +49,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
-    if (import->module == STDIO && import->base == PRINT) {
+    if (import->module == SPECTEST && import->base == PRINT) {
       for (auto argument : arguments) {
         std::cout << argument << '\n';
       }
