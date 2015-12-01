@@ -86,9 +86,19 @@ public:
   Ref processFunctionBody(Expression* curr, IString result);
 
   // Get a temp var.
-  IString getTemp(WasmType type);
+  IString getTemp(WasmType type) {
+    if (frees[type].size() > 0) {
+      IString ret = frees[type].back();
+      frees[type].pop_back();
+      return ret;
+    }
+    size_t index = temps[type]++;
+    return IString((std::string("wasm2asm_") + printWasmType(type) + "$" + std::to_string(index)).c_str(), false);
+  }
   // Free a temp var.
-  void freeTemp(IString temp);
+  void freeTemp(WasmType type, IString temp) {
+    frees[type].push_back(temp);
+  }
 
   IString fromName(Name name) {
     return name; // TODO: add a "$" or other prefixing? sanitization of bad chars?
@@ -110,9 +120,9 @@ public:
 
 private:
   // How many temp vars we need
-  int i32s = 0, f32s = 0, f64s = 0;
+  std::vector<int> temps; // type => num temps
   // Which are currently free to use
-  std::vector<int> i32sFree, f32sFree, f64sFree;
+  std::vector<std::vector<IString>> frees; // type => list of free names
 
   // Expressions that will be a statement.
   std::set<Expression*> willBeStatement;
@@ -140,17 +150,22 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
   Ref ret = ValueBuilder::makeFunction();
   ret[1] = ValueBuilder::makeRawString(func->name);
+  frees.clear();
+  frees.resize(std::max(i32, std::max(f32, f64)));
+  temps.clear();
+  temps.resize(std::max(i32, std::max(f32, f64)));
+  temps[i32] = temps[f32] = temps[f64] = 0;
   // arguments XXX
   // body
   scanFunctionBody(func->body);
   IString result = func->result != none ? getTemp(func->result) : NO_RESULT;
   ret[3]->push_back(processFunctionBody(func->body, result));
-  if (result != NO_RESULT) freeTemp(result);
+  if (result != NO_RESULT) freeTemp(func->result, result);
   // locals, including new temp locals XXX
   // checks
-  assert(i32sFree.size() == i32s); // all temp vars should be free at the end
-  assert(f32sFree.size() == f32s);
-  assert(f64sFree.size() == f64s);
+  assert(frees[i32].size() == temps[i32]); // all temp vars should be free at the end
+  assert(frees[f32].size() == temps[f32]); // all temp vars should be free at the end
+  assert(frees[f64].size() == temps[f64]); // all temp vars should be free at the end
   // cleanups
   willBeStatement.clear();
   return ret;
@@ -268,12 +283,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     // A scoped temporary variable.
     struct ScopedTemp {
       Wasm2AsmBuilder* parent;
+      WasmType type;
       IString temp;
       bool needFree;
       // @param possible if provided, this is a variable we can use as our temp. it has already been
       //                 allocated in a higher scope, and we can just assign to it as our result is
       //                 going there anyhow.
-      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent, IString possible = IString()) : parent(parent) {
+      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent, IString possible = IString()) : parent(parent), type(type) {
         assert(possible != EXPRESSION_RESULT);
         if (possible == NO_RESULT) {
           temp = parent->getTemp(type);
@@ -285,7 +301,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       ~ScopedTemp() {
         if (needFree) {
-          parent->freeTemp(temp);
+          parent->freeTemp(type, temp);
         }
       }
 
