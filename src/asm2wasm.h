@@ -8,6 +8,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "shared-constants.h"
+#include "asm_v_wasm.h"
 
 namespace wasm {
 
@@ -271,29 +272,6 @@ public:
   void optimize();
 
 private:
-  WasmType asmToWasmType(AsmType asmType) {
-    switch (asmType) {
-      case ASM_INT: return WasmType::i32;
-      case ASM_DOUBLE: return WasmType::f64;
-      case ASM_FLOAT: return WasmType::f32;
-      case ASM_NONE: return WasmType::none;
-      default: {}
-    }
-    abort_on("confused asmType", asmType);
-    return (WasmType)-1; // avoid warning
-  }
-  AsmType wasmToAsmType(WasmType type) {
-    switch (type) {
-      case WasmType::i32: return ASM_INT;
-      case WasmType::f32: return ASM_FLOAT;
-      case WasmType::f64: return ASM_DOUBLE;
-      case WasmType::none: return ASM_NONE;
-      default: {}
-    }
-    abort_on("confused wasmType", type);
-    return (AsmType)-1; // avoid warning
-  }
-
   AsmType detectAsmType(Ref ast, AsmData *data) {
     if (ast[0] == NAME) {
       IString name = ast[1]->getIString();

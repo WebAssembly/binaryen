@@ -1289,15 +1289,15 @@ class ValueBuilder {
     return &arena.alloc()->setString(s);
   }
 
-  static Ref makeRawArray(int size_hint=0) {
-    return &arena.alloc()->setArray(size_hint);
-  }
-
   static Ref makeNull() {
     return &arena.alloc()->setNull();
   }
 
 public:
+  static Ref makeRawArray(int size_hint=0) {
+    return &arena.alloc()->setArray(size_hint);
+  }
+
   static Ref makeToplevel() {
     return &makeRawArray(2)->push_back(makeRawString(TOPLEVEL))
                             .push_back(makeRawArray());
@@ -1345,16 +1345,62 @@ public:
   static Ref makeCall(IString target, Ref arg) {
     Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
                                .push_back(makeName(target))
-                               .push_back(makeRawArray());
+                               .push_back(makeRawArray(1));
     ret[2]->push_back(arg);
     return ret;
   }
   static Ref makeCall(IString target, Ref arg1, Ref arg2) {
     Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
                                .push_back(makeName(target))
-                               .push_back(makeRawArray());
+                               .push_back(makeRawArray(2));
     ret[2]->push_back(arg1);
     ret[2]->push_back(arg2);
+    return ret;
+  }
+  static Ref makeCall(IString target, Ref arg1, Ref arg2, Ref arg3, Ref arg4) {
+    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
+                               .push_back(makeName(target))
+                               .push_back(makeRawArray(4));
+    ret[2]->push_back(arg1);
+    ret[2]->push_back(arg2);
+    ret[2]->push_back(arg3);
+    ret[2]->push_back(arg4);
+    return ret;
+  }
+  static Ref makeCall(IString target, Ref arg1, Ref arg2, Ref arg3, Ref arg4, Ref arg5, Ref arg6, Ref arg7, Ref arg8) {
+    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
+                               .push_back(makeName(target))
+                               .push_back(makeRawArray(8));
+    ret[2]->push_back(arg1);
+    ret[2]->push_back(arg2);
+    ret[2]->push_back(arg3);
+    ret[2]->push_back(arg4);
+    ret[2]->push_back(arg5);
+    ret[2]->push_back(arg6);
+    ret[2]->push_back(arg7);
+    ret[2]->push_back(arg8);
+    return ret;
+  }
+  static Ref makeCall(IString target, Ref arg1, Ref arg2, Ref arg3, Ref arg4, Ref arg5, Ref arg6, Ref arg7, Ref arg8, Ref arg9, Ref arg10, Ref arg11, Ref arg12, Ref arg13, Ref arg14, Ref arg15, Ref arg16) {
+    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
+                               .push_back(makeName(target))
+                               .push_back(makeRawArray(16));
+    ret[2]->push_back(arg1);
+    ret[2]->push_back(arg2);
+    ret[2]->push_back(arg3);
+    ret[2]->push_back(arg4);
+    ret[2]->push_back(arg5);
+    ret[2]->push_back(arg6);
+    ret[2]->push_back(arg7);
+    ret[2]->push_back(arg8);
+    ret[2]->push_back(arg9);
+    ret[2]->push_back(arg10);
+    ret[2]->push_back(arg11);
+    ret[2]->push_back(arg12);
+    ret[2]->push_back(arg13);
+    ret[2]->push_back(arg14);
+    ret[2]->push_back(arg15);
+    ret[2]->push_back(arg16);
     return ret;
   }
 
@@ -1378,6 +1424,15 @@ public:
   }
   static Ref makeInt(uint32_t num) {
     return makeDouble(double(num));
+  }
+  static Ref makeNum(double num) {
+    return makeDouble(num);
+  }
+
+  static Ref makeUnary(IString op, Ref value) {
+    return &makeRawArray(3)->push_back(makeRawString(UNARY_PREFIX))
+                            .push_back(makeRawString(op))
+                            .push_back(value);
   }
 
   static Ref makeBinary(Ref left, IString op, Ref right) {

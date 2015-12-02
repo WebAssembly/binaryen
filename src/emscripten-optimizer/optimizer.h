@@ -137,5 +137,8 @@ inline cashew::Ref deStat(cashew::Ref node) {
   return node;
 }
 
+cashew::Ref makeAsmCoercedZero(AsmType type);
+cashew::Ref makeAsmCoercion(cashew::Ref node, AsmType type);
+
 #endif // __optimizer_h__
 

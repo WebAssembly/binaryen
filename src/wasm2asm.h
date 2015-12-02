@@ -7,6 +7,7 @@
 #include "wasm.h"
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
+#include "asm_v_wasm.h"
 
 namespace wasm {
 
@@ -65,11 +66,7 @@ IString ASM_FUNC("asmFunc"),
 
 
 class Wasm2AsmBuilder {
-  MixedArena& allocator;
-
 public:
-  Asm2WasmBuilder(MixedArena& allocator) : allocator(allocator) {}
-
   Ref processWasm(Module* wasm);
   Ref processFunction(Function* func);
 
@@ -155,13 +152,37 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   temps.clear();
   temps.resize(std::max(i32, std::max(f32, f64)));
   temps[i32] = temps[f32] = temps[f64] = 0;
-  // arguments XXX
+  // arguments
+  for (auto& param : func->params) {
+    IString name = fromName(param.name)
+    ret[2]->push_back(name);
+    ret[3]->push_back(
+      ValueBuilder::makeAssign(
+        ValueBuilder::makeName(name),
+        makeAsmCoercion(ValueBuilder::makeName(name), wasmToAsmType(param.type))
+      )
+    );
+  }
+  Ref theVar = ValueBuilder::makeVar();
+  ret[3]->push_back(theVar);
   // body
   scanFunctionBody(func->body);
   IString result = func->result != none ? getTemp(func->result) : NO_RESULT;
   ret[3]->push_back(processFunctionBody(func->body, result));
   if (result != NO_RESULT) freeTemp(func->result, result);
-  // locals, including new temp locals XXX
+  // locals, including new temp locals
+  for (auto& local : func->locals) {
+    ValueBuilder::appendToVar(theVar, fromName(local.name), makeAsmCoercedZero(wasmToAsmType(param.type));
+  }
+  for (auto free : frees[i32]) {
+    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(i32));
+  }
+  for (auto free : frees[f32]) {
+    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(f32));
+  }
+  for (auto free : frees[f64]) {
+    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(f64));
+  }
   // checks
   assert(frees[i32].size() == temps[i32]); // all temp vars should be free at the end
   assert(frees[f32].size() == temps[f32]); // all temp vars should be free at the end

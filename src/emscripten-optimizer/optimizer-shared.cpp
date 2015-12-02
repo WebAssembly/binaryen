@@ -176,3 +176,55 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
   abort(); // avoid warning
 }
 
+Ref makeAsmCoercedZero(AsmType type) {
+  switch (type) {
+    case ASM_INT: return ValueBuilder::makeNum(0); break;
+    case ASM_DOUBLE: return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeNum(0)); break;
+    case ASM_FLOAT: {
+      if (!ASM_FLOAT_ZERO.isNull()) {
+        return ValueBuilder::makeName(ASM_FLOAT_ZERO);
+      } else {
+        return ValueBuilder::makeCall(MATH_FROUND, ValueBuilder::makeNum(0));
+      }
+      break;
+    }
+    case ASM_FLOAT32X4: {
+      return ValueBuilder::makeCall(SIMD_FLOAT32X4, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
+      break;
+    }
+    case ASM_FLOAT64X2: {
+      return ValueBuilder::makeCall(SIMD_FLOAT64X2, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
+      break;
+    }
+    case ASM_INT8X16: {
+      return ValueBuilder::makeCall(SIMD_INT8X16, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
+      break;
+    }
+    case ASM_INT16X8: {
+      return ValueBuilder::makeCall(SIMD_INT16X8, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
+      break;
+    }
+    case ASM_INT32X4: {
+      return ValueBuilder::makeCall(SIMD_INT32X4, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
+      break;
+    }
+    default: assert(0);
+  }
+  abort();
+}
+
+Ref makeAsmCoercion(Ref node, AsmType type) {
+  switch (type) {
+    case ASM_INT: return ValueBuilder::makeBinary(node, OR, ValueBuilder::makeNum(0));
+    case ASM_DOUBLE: return ValueBuilder::makeUnary(PLUS, node);
+    case ASM_FLOAT: return ValueBuilder::makeCall(MATH_FROUND, node);
+    case ASM_FLOAT32X4: return ValueBuilder::makeCall(SIMD_FLOAT32X4_CHECK, node);
+    case ASM_FLOAT64X2: return ValueBuilder::makeCall(SIMD_FLOAT64X2_CHECK, node);
+    case ASM_INT8X16: return ValueBuilder::makeCall(SIMD_INT8X16_CHECK, node);
+    case ASM_INT16X8: return ValueBuilder::makeCall(SIMD_INT16X8_CHECK, node);
+    case ASM_INT32X4: return ValueBuilder::makeCall(SIMD_INT32X4_CHECK, node);
+    case ASM_NONE:
+    default: return node; // non-validating code, emit nothing XXX this is dangerous, we should only allow this when we know we are not validating
+  }
+}
+
