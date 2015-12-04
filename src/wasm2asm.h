@@ -73,7 +73,7 @@ public:
   // The first pass on an expression: scan it to see whether it will
   // need to be statementized, and note spooky returns of values at
   // a distance (aka break with a value).
-  bool scanFunctionBody(Expression* curr);
+  void scanFunctionBody(Expression* curr);
 
   // The second pass on an expression: process it fully, generating
   // asm.js
@@ -129,10 +129,8 @@ private:
 };
 
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
-  Ref ret = ValueBuilder::makeTopLevel();
-  Ref asmFunc = ValueBuilder::makeFunction();
-  asmFunc[1] = ValueBuilder::makeRawString(ASM_FUNC);
-  ret[1]->push_back(asmFunc);
+  Ref ret = ValueBuilder::makeToplevel();
+  Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);
   // imports XXX
   // exports XXX
   // functions
@@ -145,8 +143,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
 }
 
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
-  Ref ret = ValueBuilder::makeFunction();
-  ret[1] = ValueBuilder::makeRawString(func->name);
+  Ref ret = ValueBuilder::makeFunction(fromName(func->name));
   frees.clear();
   frees.resize(std::max(i32, std::max(f32, f64)));
   temps.clear();
@@ -154,9 +151,9 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   temps[i32] = temps[f32] = temps[f64] = 0;
   // arguments
   for (auto& param : func->params) {
-    IString name = fromName(param.name)
-    ret[2]->push_back(name);
-    ret[3]->push_back(
+    IString name = fromName(param.name);
+    ValueBuilder::appendArgumentToFunction(ret, name);
+    ValueBuilder::appendToVar(ret[3], name,
       ValueBuilder::makeAssign(
         ValueBuilder::makeName(name),
         makeAsmCoercion(ValueBuilder::makeName(name), wasmToAsmType(param.type))
@@ -172,16 +169,16 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   if (result != NO_RESULT) freeTemp(func->result, result);
   // locals, including new temp locals
   for (auto& local : func->locals) {
-    ValueBuilder::appendToVar(theVar, fromName(local.name), makeAsmCoercedZero(wasmToAsmType(param.type));
+    ValueBuilder::appendToVar(theVar, fromName(local.name), makeAsmCoercedZero(wasmToAsmType(local.type)));
   }
   for (auto free : frees[i32]) {
-    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(i32));
+    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(ASM_INT));
   }
   for (auto free : frees[f32]) {
-    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(f32));
+    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(ASM_FLOAT));
   }
   for (auto free : frees[f64]) {
-    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(f64));
+    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(ASM_DOUBLE));
   }
   // checks
   assert(frees[i32].size() == temps[i32]); // all temp vars should be free at the end
@@ -753,7 +750,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       abort();
     }
     void visitNop(Nop *curr) override {
-      return ValueBuilder::makeTopLevel()
+      return ValueBuilder::makeToplevel()
     }
     void visitUnreachable(Unreachable *curr) override {
       return ValueBuilder::makeCall(ABORT_FUNC);
