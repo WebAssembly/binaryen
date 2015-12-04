@@ -265,16 +265,6 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
         parent->setStatement(curr);
       }
     }
-    void visitCompare(Compare *curr) override {
-      if (parent->isStatement(curr->left) || parent->isStatement(curr->right)) {
-        parent->setStatement(curr);
-      }
-    }
-    void visitConvert(Convert *curr) override {
-      if (parent->isStatement(curr->value)) {
-        parent->setStatement(curr);
-      }
-    }
     void visitSelect(Select *curr) override {
       if (parent->isStatement(curr->condition) || parent->isStatement(curr->ifTrue) || parent->isStatement(curr->ifFalse)) {
         parent->setStatement(curr);
