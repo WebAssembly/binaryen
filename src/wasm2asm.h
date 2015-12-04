@@ -327,7 +327,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     Ref visit(Expression* curr, IString nextResult) {
       IString old = result;
       result = nextResult;
-      Ref ret = visit(curr);
+      Ref ret = WasmVisitor::visit(curr);
       result = old; // keep it consistent for the rest of this frame, which may call visit on multiple children
       return ret;
     }

@@ -3,6 +3,7 @@
 //
 
 #include "wasm2asm.h"
+#include "wasm-s-parser.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -31,18 +32,17 @@ int main(int argc, char **argv) {
   fclose(f);
   input[num] = 0;
 
+  if (debug) std::cerr << "s-parsing...\n";
   SExpressionParser parser(input);
   Element& root = *parser.root;
+
+  if (debug) std::cerr << "w-parsing...\n";
   AllocatingModule wasm;
   SExpressionWasmBuilder builder(wasm, *root[0], [&]() { abort(); });
 
-  if (debug) std::cerr << "parsing...\n";
-  cashew::Parser<Ref, DotZeroValueBuilder> builder;
-  Ref asmjs = builder.parseToplevel(input);
-
   if (debug) std::cerr << "asming...\n";
   Wasm2AsmBuilder wasm2asm;
-  Ref asmjs = wasm2asm.processWasm(wasm);
+  Ref asmjs = wasm2asm.processWasm(&wasm);
 
   if (debug) std::cerr << "printing...\n";
   asmjs->stringify(std::cout);
