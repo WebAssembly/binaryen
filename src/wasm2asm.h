@@ -416,13 +416,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     std::map<Name, IString> breakResults;
 
     // Breaks to the top of a loop should be emitted as continues, to that loop's main label
-    std::map<Name, Name> actualBreakLabel;
-
-    Name getActualBreakLabel(Name name) {
-      auto iter = actualBreakLabel.find(name);
-      if (iter == actualBreakLabel.end()) return name;
-      return iter->second;
-    }
+    std::map<Name, Name> continueLabels;
 
     IString fromName(Name name) {
       return parent->fromName(name);
@@ -461,7 +455,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     }
     Ref visitLoop(Loop *curr) override {
       Name asmLabel = curr->out.is() ? curr->out : curr->in; // label using the outside, normal for breaks. if no outside, then inside
-      if (curr->in.is()) continues[curr->in] = asmLabel;
+      if (curr->in.is()) continueLabels[curr->in] = asmLabel;
       Ref body = visit(curr->body, result);
       if (asmLabel.is()) {
         body = ValueBuilder::makeLabel(fromName(asmLabel), body);
@@ -481,7 +475,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         fakeIf.ifTrue = fakeBreak;
         return visit(fake, result);
       }
-      Ref theBreak = ValueBuilder::makeBreak(fromName(getActualBreakLabel(curr->name)));
+      Ref theBreak;
+      Name iter = continueLabels.find(curr->name);
+      if (iter == continueLabels.end()) {
+        theBreak = ValueBuilder::makeBreak(fromName(curr->name));
+      } else {
+        theBreak = ValueBuilder::makeContinue(fromName(iter.second));
+      }
       if (!curr->value) return theBreak;
       // generate the value, including assigning to the result, and then do the break
       Ref ret = visitAndAssign(curr->value, result);
