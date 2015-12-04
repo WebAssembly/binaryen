@@ -52,7 +52,18 @@ cashew::IString GLOBAL("global"),
                 NEG_NAN("-nan"),
                 CASE("case"),
                 BR("br"),
-                FAKE_RETURN("fake_return_waka123");
+                FAKE_RETURN("fake_return_waka123"),
+                MATH_CLZ32("Math_clz32"),
+                MATH_CTZ32("Math_ctz32"),
+                MATH_POPCNT32("Math_popcnt32"),
+                MATH_ABS("Math_abs"),
+                MATH_CEIL("Math_ceil"),
+                MATH_FLOOR("Math_floor"),
+                MATH_TRUNC("Math_trunc"),
+                MATH_NEAREST("Math_NEAREST"),
+                MATH_SQRT("Math_sqrt"),
+                MATH_MIN("Math_max"),
+                MATH_MAX("Math_min");
 
 }
 
