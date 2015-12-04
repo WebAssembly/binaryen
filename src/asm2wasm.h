@@ -1333,11 +1333,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       breakStack.pop_back();
       Break *continuer = allocator.alloc<Break>();
       continuer->name = in;
-      If *condition = allocator.alloc<If>();
-      condition->condition = process(ast[1]);
-      condition->ifTrue = continuer;
+      continuer->condition = process(ast[1]);
       Block *block = blockify(ret->body);
-      block->list.push_back(condition);
+      block->list.push_back(continuer);
       ret->body = block;
       return ret;
     } else if (what == LABEL) {
