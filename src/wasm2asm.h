@@ -97,7 +97,7 @@ public:
     frees[type].push_back(temp);
   }
 
-  IString fromName(Name name) {
+  static IString fromName(Name name) {
     return name; // TODO: add a "$" or other prefixing? sanitization of bad chars?
   }
 
@@ -191,6 +191,8 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
 
 void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
   struct ExpressionScanner : public WasmWalker {
+    Wasm2AsmBuilder* parent;
+
     ExpressionScanner(Wasm2AsmBuilder* parent) : parent(parent) {}
 
     // Visitors
@@ -329,7 +331,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return ret;
     }
 
-    Ast visit(Expression* curr, ScopedTemp& temp) {
+    Ref visit(Expression* curr, ScopedTemp& temp) {
       return visit(curr, temp.temp);
     }
 
@@ -339,7 +341,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         tempName = temp.temp;
         return visit(curr, temp);
       } else {
-        return visitExpression(curr, EXPRESSION_RESULT);
+        return visit(curr, EXPRESSION_RESULT);
       }
     }
 
@@ -348,7 +350,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       // if it's not already a statement, then it's an expression, and we need to assign it
       // (if it is a statement, it already assigns to the result var)
       if (!isStatement(curr)) {
-        ret = ValueBuilder::makeStatement(ValueBuilder::makeAssign(makeName(result), ret)));
+        ret = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), ret));
       }
       return ret;
     }
@@ -370,8 +372,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     // Looks for a standard assign at the end of a block, which if this
     // block returns a value, it will have.
     Ref getBlockAssign(Ref ast) { // XXX needed?
-      if (!(ast.size() >= 2 && ast[1].size() > 0)) return Ref();
-      Ref last = deStat(ast[1][ast[1].size()-1]);
+      if (!(ast->size() >= 2 && ast[1]->size() > 0)) return Ref();
+      Ref last = deStat(ast[1][ast[1]->size()-1]);
       if (!(last[0] == ASSIGN && last[2][0] == NAME)) return Ref();
       return last;
     }
@@ -401,7 +403,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       // not a block, so an expression. Just assign to the temp var.
       Ref ret = ValueBuilder::makeBlock();
-      ret[1]->push_back(makeAssign(makeName(temp), ast));
+      ret[1]->push_back(ValueBuilder::makeAssign(ValueBuilder::makeName(temp), ast));
       return ret;
     }
 
@@ -422,22 +424,26 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return iter->second;
     }
 
+    IString fromName(Name name) {
+      return parent->fromName(name);
+    }
+
     // Visitors
 
-    void visitBlock(Block *curr) override {
+    Ref visitBlock(Block *curr) override {
       breakResults[curr->name] = result;
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
       for (size_t i = 0; i < size; i++) {
         // TODO: flatten out, if we receive a block, just insert the elements
-        ret[1]->push_back(visit(curr->list[i], i < size-1 ? none : result);
+        ret[1]->push_back(visit(curr->list[i], i < size-1 ? NO_RESULT : result));
       }
       if (curr->name.is()) {
         ret = ValueBuilder::makeLabel(fromName(curr->name), ret);
       }
       return ret;
     }
-    void visitIf(If *curr) override {
+    Ref visitIf(If *curr) override {
       IString temp;
       Ref condition = visitForExpression(curr->condition, i32, temp);
       Ref ifTrue = visit(curr->ifTrue, result);
@@ -453,7 +459,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       condition[1]->push_back(ValueBuilder::makeIf(ValueBuilder::makeName(temp), ifTrue, ifFalse));
       return condition;
     }
-    void visitLoop(Loop *curr) override {
+    Ref visitLoop(Loop *curr) override {
       Name asmLabel = curr->out.is() ? curr->out : curr->in; // label using the outside, normal for breaks. if no outside, then inside
       if (curr->in.is()) continues[curr->in] = asmLabel;
       Ref body = visit(curr->body, result);
@@ -462,10 +468,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       return ValueBuilder::makeDo(body, ValueBuilder::makeInt(0));
     }
-    void visitLabel(Label *curr) override {
+    Ref visitLabel(Label *curr) override {
       return ValueBuilder::makeLabel(fromName(curr->name), visit(curr->body, result)));
     }
-    void visitBreak(Break *curr) override {
+    Ref visitBreak(Break *curr) override {
       if (curr->condition) {
         // we need an equivalent to an if here, so use that code
         Break fakeBreak = *curr;
@@ -483,10 +489,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       ret[1]->push_back(theBreak);
       return ret;
     }
-    void visitSwitch(Switch *curr) override {
+    Ref visitSwitch(Switch *curr) override {
       abort(); // XXX TODO
     }
-    void visitCall(Call *curr) override {
+    Ref visitCall(Call *curr) override {
       Ref theCall = ValueBuilder::makeCall(fromName(curr->target));
       if (!isStatement(curr)) {
         // none of our operands is a statement; go right ahead and create a simple expression
@@ -503,7 +509,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         temps.emplace_back(operand->type, parent);
         IString temp = temps.back().temp;
         ret[1]->push_back(visitAndAssign(operand, temp));
-        theCall[2]->push_back(makeName(temp));
+        theCall[2]->push_back(ValueBuilder::makeName(temp));
       }
       if (result != NO_RESULT) {
         theCall = ValueBuilder::makeAssign(ValueBuilder::makeName(result), theCall);
@@ -511,16 +517,16 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       ret[1]->push_back(theCall);
       return ret;
     }
-    void visitCallImport(CallImport *curr) override {
+    Ref visitCallImport(CallImport *curr) override {
       return visitCall(curr);
     }
-    void visitCallIndirect(CallIndirect *curr) override {
+    Ref visitCallIndirect(CallIndirect *curr) override {
       abort(); // XXX TODO
     }
-    void visitGetLocal(GetLocal *curr) override {
+    Ref visitGetLocal(GetLocal *curr) override {
       return ValueBuilder::makeName(fromName(curr->name));
     }
-    void visitSetLocal(SetLocal *curr) override {
+    Ref visitSetLocal(SetLocal *curr) override {
       if (!isStatement(curr)) {
         return ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), visit(curr->value, EXPRESSION_RESULT));
       }
@@ -530,7 +536,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       ret[1]->push_back(ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), temp.getAstName());
       return ret;
     }
-    void visitLoad(Load *curr) override {
+    Ref visitLoad(Load *curr) override {
       if (isStatement(curr)) {
         ScopedTemp temp(i32, parent);
         GetLocal fakeLocal;
@@ -558,7 +564,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         default: abort();
       }
     }
-    void visitStore(Store *curr) override {
+    Ref visitStore(Store *curr) override {
       if (isStatement(curr)) {
         ScopedTemp tempPtr(i32, parent);
         ScopedTemp tempValue(curr->type, parent);
@@ -594,7 +600,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       return ValueBuilder::makeAssign(ret, value);
     }
-    void visitConst(Const *curr) override {
+    Ref visitConst(Const *curr) override {
       switch (curr->type) {
         case i32: return ValueBuilder::makeInt(curr->value.i32);
         // TODO: i64. statementize?
@@ -607,7 +613,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         default: abort();
       }
     }
-    void visitUnary(Unary *curr) override {
+    Ref visitUnary(Unary *curr) override {
       if (isStatement(curr)) {
         ScopedTemp temp(curr->value->type, parent);
         GetLocal fakeLocal;
@@ -646,7 +652,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         default: abort();
       }
     }
-    void visitBinary(Binary *curr) override {
+    Ref visitBinary(Binary *curr) override {
       if (isStatement(curr)) {
         ScopedTemp tempLeft(curr->left->type, parent);
         GetLocal fakeLocalLeft;
@@ -698,7 +704,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         default: abort();
       }
     }
-    void visitSelect(Select *curr) override {
+    Ref visitSelect(Select *curr) override {
       if (isStatement(curr)) {
         ScopedTemp tempCondition(i32, parent);
         GetLocal fakeCondition;
@@ -736,13 +742,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
           )
         );
     }
-    void visitHost(Host *curr) override {
+    Ref visitHost(Host *curr) override {
       abort();
     }
-    void visitNop(Nop *curr) override {
+    Ref visitNop(Nop *curr) override {
       return ValueBuilder::makeToplevel()
     }
-    void visitUnreachable(Unreachable *curr) override {
+    Ref visitUnreachable(Unreachable *curr) override {
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
   };
