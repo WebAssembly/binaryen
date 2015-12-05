@@ -132,6 +132,7 @@ private:
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);
+  ret[1]->push_back(asmFunc);
   // imports XXX
   // exports XXX
   // functions
