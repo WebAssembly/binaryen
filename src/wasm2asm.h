@@ -171,7 +171,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   scanFunctionBody(func->body);
   if (isStatement(func->body)) {
     IString result = func->result != none ? getTemp(func->result) : NO_RESULT;
-    ret[3]->push_back(processFunctionBody(func->body, result));
+    ret[3]->push_back(ValueBuilder::makeStatement(processFunctionBody(func->body, result)));
     if (func->result != none) {
       // do the actual return
       ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(ValueBuilder::makeName(result))));
@@ -407,7 +407,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     Ref blockify(Ref ast) { // XXX needed?
       if (isBlock(ast)) return ast;
       Ref ret = ValueBuilder::makeBlock();
-      ret[1]->push_back(ast);
+      ret[1]->push_back(ValueBuilder::makeStatement(ast));
       return ret;
     }
 
@@ -420,7 +420,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       // not a block, so an expression. Just assign to the temp var.
       Ref ret = ValueBuilder::makeBlock();
-      ret[1]->push_back(ValueBuilder::makeAssign(ValueBuilder::makeName(temp), ast));
+      ret[1]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(temp), ast)));
       return ret;
     }
 
@@ -538,7 +538,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         theCall[2]->push_back(ValueBuilder::makeName(temp));
       }
       if (result != NO_RESULT) {
-        theCall = ValueBuilder::makeAssign(ValueBuilder::makeName(result), theCall);
+        theCall = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), theCall));
       }
       ret[1]->push_back(theCall);
       return ret;
@@ -559,7 +559,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       ScopedTemp temp(curr->type, parent, result); // if result was provided, our child can just assign there. otherwise, allocate a temp for it to assign to.
       Ref ret = blockify(visit(curr->value, temp));
       // the output was assigned to result, so we can just assign it to our target
-      ret[1]->push_back(ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), temp.getAstName()));
+      ret[1]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), temp.getAstName())));
       return ret;
     }
     Ref visitLoad(Load *curr) override {
