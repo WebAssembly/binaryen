@@ -2,9 +2,9 @@ function asmFunc() {
  function big_negative() {
   var temp = 0.0;
   {
-   temp = -2147483648;
-   temp = -2147483648;
-   temp = -21474836480;
+   temp = -2147483648.0;
+   temp = -2147483648.0;
+   temp = -21474836480.0;
    temp = .039625;
    temp = -.039625;
   }
@@ -18,7 +18,7 @@ function asmFunc() {
     wasm2asm$noresult = -3.4;
     break topmost;
    };
-   if (HEAPF64[32 >> 3] > 0 | 0) {
+   if (HEAPF64[32 >> 3] > 0.0 | 0) {
     wasm2asm$noresult = 5.6;
     break topmost;
    };
@@ -32,11 +32,11 @@ function asmFunc() {
   y = +y;
   var t = 0.0, Int = 0.0, Double = 0, wasm2asm_f64$0 = 0.0;
   topmost : {
-   if (x > 0 | 0) {
+   if (x > 0.0 | 0) {
     wasm2asm$noresult = 1.2;
     break topmost;
    };
-   if (Int > 0 | 0) {
+   if (Int > 0.0 | 0) {
     wasm2asm$noresult = -3.4;
     break topmost;
    };
@@ -126,7 +126,7 @@ function asmFunc() {
  }
  
  function negZero() {
-  return 0;
+  return 0.0;
  }
  
  function abs() {
@@ -137,7 +137,7 @@ function asmFunc() {
     wasm2asm_i32$0 = (wasm2asm_i32$1 = asm2wasm_i32_temp < 0 | 0, wasm2asm_i32$2 = 0 - asm2wasm_i32_temp | 0, wasm2asm_i32$3 = asm2wasm_i32_temp, wasm2asm_i32$1 ? wasm2asm_i32$2 : wasm2asm_i32$3);
     x = wasm2asm_i32$0;
    }
-   y = Math_abs(0);
+   y = Math_abs(0.0);
    z = Math_fround(Math_abs(Math_fround(0)));
   }
  }

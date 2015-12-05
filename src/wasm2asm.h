@@ -679,7 +679,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
           ret[2]->push_back(ValueBuilder::makeDouble(curr->value.f32));
           return ret;
         }
-        case f64: return ValueBuilder::makeDouble(curr->value.f64);
+        case f64: return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeDouble(curr->value.f64));
         default: abort();
       }
     }
