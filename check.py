@@ -79,7 +79,7 @@ print '\n[ checking wasm2asm testcases... ]\n'
 for wasm in ['min.wast', 'hello_world.wast']:
   if wasm.endswith('.wast'):
     print '..', wasm
-    asm = wasm.replace('.wast', '.wasm2asm.js')
+    asm = wasm.replace('.wast', '.2asm.js')
     actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err == '', 'bad err:' + err
 
