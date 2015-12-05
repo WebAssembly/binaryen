@@ -44,9 +44,11 @@ int main(int argc, char **argv) {
   Wasm2AsmBuilder wasm2asm;
   Ref asmjs = wasm2asm.processWasm(&wasm);
 
-  if (debug) std::cerr << "a-printing...\n";
-  asmjs->stringify(std::cout);
-  std::cout << '\n';
+  if (debug) {
+    std::cerr << "a-printing...\n";
+    asmjs->stringify(std::cout);
+    std::cout << '\n';
+  }
 
   if (debug) std::cerr << "j-printing...\n";
   JSPrinter jser(true, true, asmjs);

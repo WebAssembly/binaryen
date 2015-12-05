@@ -76,18 +76,19 @@ for asm in tests:
 
 print '\n[ checking wasm2asm testcases... ]\n'
 
-for wasm in []:#tests:
+for wasm in ['min.wast']:
   if wasm.endswith('.wast'):
     print '..', wasm
-    asm = asm.replace('.wast', '.wasm2asm.js')
+    asm = wasm.replace('.wast', '.wasm2asm.js')
     actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err == '', 'bad err:' + err
 
     # verify output
-    if not os.path.exists(os.path.join('test', asm)):
+    expected_file = os.path.join('test', asm)
+    if not os.path.exists(expected_file):
       print actual
-      raise Exception('output .wast file does not exist')
-    expected = open(os.path.join('test', aasm)).read()
+      raise Exception('output ' + expected_file + ' does not exist')
+    expected = open(expected_file).read()
     if actual != expected:
       fail(actual, expected)
 
