@@ -445,9 +445,18 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       breakResults[curr->name] = result;
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
-      for (size_t i = 0; i < size; i++) {
+      int noResults = result == NO_RESULT ? size : size-1;
+      for (size_t i = 0; i < noResults; i++) {
         // TODO: flatten out, if we receive a block, just insert the elements
-        ret[1]->push_back(ValueBuilder::makeStatement(visit(curr->list[i], i < size-1 ? NO_RESULT : result)));
+        ret[1]->push_back(ValueBuilder::makeStatement(visit(curr->list[i], NO_RESULT)));
+      }
+      if (result != NO_RESULT) {
+        ret[1]->push_back(ValueBuilder::makeStatement(
+          ValueBuilder::makeAssign(
+            ValueBuilder::makeName(result),
+            visit(curr->list[size-1], result)
+          )
+        ));
       }
       if (curr->name.is()) {
         ret = ValueBuilder::makeLabel(fromName(curr->name), ret);
