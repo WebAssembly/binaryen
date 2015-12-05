@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 
   if (debug) {
     std::cerr << "a-printing...\n";
-    asmjs->stringify(std::cout);
+    asmjs->stringify(std::cout, true);
     std::cout << '\n';
   }
 
