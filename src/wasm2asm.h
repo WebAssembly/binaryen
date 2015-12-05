@@ -154,7 +154,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   for (auto& param : func->params) {
     IString name = fromName(param.name);
     ValueBuilder::appendArgumentToFunction(ret, name);
-    ValueBuilder::appendToVar(ret[3], name,
+    ret[3]->push_back(
       ValueBuilder::makeAssign(
         ValueBuilder::makeName(name),
         makeAsmCoercion(ValueBuilder::makeName(name), wasmToAsmType(param.type))
@@ -647,7 +647,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
             case Sqrt:          return ValueBuilder::makeCall(MATH_SQRT, value);
             case TruncSFloat32: return ValueBuilder::makePrefix(B_NOT, ValueBuilder::makePrefix(B_NOT, value));
             case ConvertSInt32: return ValueBuilder::makePrefix(PLUS, value);
-            default: abort();
+            default: std::cerr << curr->op << '\n'; abort();
           }
         }
         default: abort();
