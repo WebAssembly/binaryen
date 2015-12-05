@@ -16,6 +16,7 @@ using namespace cashew;
 
 IString ASM_FUNC("asmFunc"),
         ABORT_FUNC("abort"),
+        FUNCTION_TABLE("FUNCTION_TABLE"),
         NO_RESULT("wasm2asm$noresult"), // no result at all
         EXPRESSION_RESULT("wasm2asm$expresult"); // result in an expression, no temp var
 
@@ -544,20 +545,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       return ret;
     }
-    Ref visitCall(Call *curr) override {
-      Ref theCall = ValueBuilder::makeCall(fromName(curr->target));
-      if (!isStatement(curr)) {
-        // none of our operands is a statement; go right ahead and create a simple expression
-        Ref theCall = ValueBuilder::makeCall(fromName(curr->target));
-        for (auto operand : curr->operands) {
-          theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
-        }
-        return theCall;
-      }
-      // we must statementize them all
-      Ref ret = ValueBuilder::makeBlock();
+
+    Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result) {
       std::vector<ScopedTemp> temps;
-      for (auto& operand : curr->operands) {
+      for (auto& operand : operands) {
         temps.emplace_back(operand->type, parent);
         IString temp = temps.back().temp;
         ret[1]->push_back(visitAndAssign(operand, temp));
@@ -569,11 +560,37 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       ret[1]->push_back(theCall);
       return ret;
     }
+
+    Ref visitCall(Call *curr) override {
+      Ref theCall = ValueBuilder::makeCall(fromName(curr->target));
+      if (!isStatement(curr)) {
+        // none of our operands is a statement; go right ahead and create a simple expression
+        for (auto operand : curr->operands) {
+          theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
+        }
+        return theCall;
+      }
+      // we must statementize them all
+      return makeStatementizedCall(curr->operands, ValueBuilder::makeBlock(), theCall, result);
+    }
     Ref visitCallImport(CallImport *curr) override {
       return visitCall(curr);
     }
     Ref visitCallIndirect(CallIndirect *curr) override {
-      abort(); // XXX TODO
+      if (!isStatement(curr)) {
+        // none of our operands is a statement; go right ahead and create a simple expression
+        Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), visit(curr->target, EXPRESSION_RESULT)));
+        for (auto operand : curr->operands) {
+          theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
+        }
+        return theCall;
+      }
+      // we must statementize them all
+      Ref ret = ValueBuilder::makeBlock();
+      ScopedTemp temp(i32, parent);
+      ret[1]->push_back(visit(curr->target, temp));
+      Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), temp.getAstName()));
+      return makeStatementizedCall(curr->operands, ret, theCall, result);
     }
     Ref visitGetLocal(GetLocal *curr) override {
       return ValueBuilder::makeName(fromName(curr->name));
