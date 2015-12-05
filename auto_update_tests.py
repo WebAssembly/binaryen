@@ -16,6 +16,13 @@ for asm in sorted(os.listdir('test')):
       raise Exception('output .wast file does not exist')
     open(os.path.join('test', wasm), 'w').write(actual)
 
+for wasm in sorted(os.listdir('test')):
+  if wasm.endswith('.wast'):
+    print '..', wasm
+    asm = wasm.replace('.wast', '.2asm.js')
+    actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    open(os.path.join('test', asm), 'w').write(actual)
+
 for t in sorted(os.listdir('test')):
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
