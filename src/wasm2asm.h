@@ -146,9 +146,9 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
   Ref ret = ValueBuilder::makeFunction(fromName(func->name));
   frees.clear();
-  frees.resize(std::max(i32, std::max(f32, f64)));
+  frees.resize(std::max(i32, std::max(f32, f64)) + 1);
   temps.clear();
-  temps.resize(std::max(i32, std::max(f32, f64)));
+  temps.resize(std::max(i32, std::max(f32, f64)) + 1);
   temps[i32] = temps[f32] = temps[f64] = 0;
   // arguments
   for (auto& param : func->params) {
@@ -172,14 +172,14 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   for (auto& local : func->locals) {
     ValueBuilder::appendToVar(theVar, fromName(local.name), makeAsmCoercedZero(wasmToAsmType(local.type)));
   }
-  for (auto free : frees[i32]) {
-    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(ASM_INT));
+  for (auto f : frees[i32]) {
+    ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_INT));
   }
-  for (auto free : frees[f32]) {
-    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(ASM_FLOAT));
+  for (auto f : frees[f32]) {
+    ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_FLOAT));
   }
-  for (auto free : frees[f64]) {
-    ValueBuilder::appendToVar(theVar, free, makeAsmCoercedZero(ASM_DOUBLE));
+  for (auto f : frees[f64]) {
+    ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_DOUBLE));
   }
   // checks
   assert(frees[i32].size() == temps[i32]); // all temp vars should be free at the end
