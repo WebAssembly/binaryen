@@ -453,7 +453,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       if (result != NO_RESULT) {
         ret[1]->push_back(ValueBuilder::makeStatement(
           ValueBuilder::makeAssign(
-            ValueBuilder::makeName(result),
+            result,
             visit(curr->list[size-1], result)
           )
         ));
@@ -648,7 +648,12 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         Unary fakeUnary = *curr;
         fakeUnary.value = &fakeLocal;
         Ref ret = blockify(visitAndAssign(curr->value, temp));
-        ret[1]->push_back(visit(&fakeUnary, result));
+        ret[1]->push_back(ValueBuilder::makeStatement(
+          ValueBuilder::makeAssign(
+            result,
+            visit(&fakeUnary, result)
+          )
+        ));
         return ret;
       }
       // normal unary
@@ -666,7 +671,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         case f64: {
           Ref ret;
           switch (curr->op) {
-            case Neg:           ret = ValueBuilder::makeBinary(ValueBuilder::makeDouble(0), MINUS, value); break;
+            case Neg:           ret = ValueBuilder::makeUnary(MINUS, value); break;
             case Abs:           ret = ValueBuilder::makeCall(MATH_ABS, value); break;
             case Ceil:          ret = ValueBuilder::makeCall(MATH_CEIL, value); break;
             case Floor:         ret = ValueBuilder::makeCall(MATH_FLOOR, value); break;

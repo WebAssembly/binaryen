@@ -1615,6 +1615,12 @@ public:
                             .push_back(target)
                             .push_back(value);
   }
+  static Ref makeAssign(IString target, Ref value) {
+    return &makeRawArray(3)->push_back(makeRawString(ASSIGN))
+                            .push_back(&arena.alloc()->setBool(true))
+                            .push_back(makeName(target))
+                            .push_back(value);
+  }
 
   static Ref makeSub(Ref obj, Ref index) {
     return &makeRawArray(2)->push_back(makeRawString(SUB))
