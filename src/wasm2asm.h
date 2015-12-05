@@ -648,19 +648,25 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
             default: abort();
           }
         }
+        case f32:
         case f64: {
+          Ref ret;
           switch (curr->op) {
-            case Neg:           return ValueBuilder::makeBinary(ValueBuilder::makeDouble(0), MINUS, value);
-            case Abs:           return ValueBuilder::makeCall(MATH_ABS, value);
-            case Ceil:          return ValueBuilder::makeCall(MATH_CEIL, value);
-            case Floor:         return ValueBuilder::makeCall(MATH_FLOOR, value);
-            case Trunc:         return ValueBuilder::makeCall(MATH_TRUNC, value);
-            case Nearest:       return ValueBuilder::makeCall(MATH_NEAREST, value);
-            case Sqrt:          return ValueBuilder::makeCall(MATH_SQRT, value);
-            case TruncSFloat32: return ValueBuilder::makePrefix(B_NOT, ValueBuilder::makePrefix(B_NOT, value));
-            case ConvertSInt32: return ValueBuilder::makePrefix(PLUS, value);
+            case Neg:           ret = ValueBuilder::makeBinary(ValueBuilder::makeDouble(0), MINUS, value); break;
+            case Abs:           ret = ValueBuilder::makeCall(MATH_ABS, value); break;
+            case Ceil:          ret = ValueBuilder::makeCall(MATH_CEIL, value); break;
+            case Floor:         ret = ValueBuilder::makeCall(MATH_FLOOR, value); break;
+            case Trunc:         ret = ValueBuilder::makeCall(MATH_TRUNC, value); break;
+            case Nearest:       ret = ValueBuilder::makeCall(MATH_NEAREST, value); break;
+            case Sqrt:          ret = ValueBuilder::makeCall(MATH_SQRT, value); break;
+            case TruncSFloat32: ret = ValueBuilder::makePrefix(B_NOT, ValueBuilder::makePrefix(B_NOT, value)); break;
+            case ConvertSInt32: ret = ValueBuilder::makePrefix(PLUS, value); break;
             default: std::cerr << curr->op << '\n'; abort();
           }
+          if (curr->type == f32) { // doubles need much less coercing
+            return makeAsmCoercion(ret, ASM_FLOAT);
+          }
+          return ret;
         }
         default: abort();
       }
