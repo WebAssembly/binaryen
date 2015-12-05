@@ -168,9 +168,14 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   ret[3]->push_back(theVar);
   // body
   scanFunctionBody(func->body);
-  IString result = func->result != none ? getTemp(func->result) : NO_RESULT;
-  ret[3]->push_back(processFunctionBody(func->body, result));
-  if (result != NO_RESULT) freeTemp(func->result, result);
+  if (isStatement(func->body)) {
+    IString result = func->result != none ? getTemp(func->result) : NO_RESULT;
+    ret[3]->push_back(processFunctionBody(func->body, result));
+    if (result != NO_RESULT) freeTemp(func->result, result);
+  } else {
+    // whole thing is an expression, just do a return
+    ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(processFunctionBody(func->body, EXPRESSION_RESULT))));
+  }
   // locals, including new temp locals
   for (auto& local : func->locals) {
     ValueBuilder::appendToVar(theVar, fromName(local.name), makeAsmCoercedZero(wasmToAsmType(local.type)));
