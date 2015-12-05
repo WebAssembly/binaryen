@@ -511,7 +511,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       if (!curr->value) return theBreak;
       // generate the value, including assigning to the result, and then do the break
-      Ref ret = visitAndAssign(curr->value, result);
+      Ref ret = visitAndAssign(curr->value, breakResults[curr->name]);
       ret = blockify(ret);
       ret[1]->push_back(theBreak);
       return ret;

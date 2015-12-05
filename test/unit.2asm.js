@@ -15,11 +15,11 @@ function asmFunc() {
   topmost : {
    temp = +(+(+(HEAPF64[8 >> 3] + HEAPF64[16 >> 3]) + -HEAPF64[16 >> 3]) + -HEAPF64[8 >> 3]);
    if ((HEAPU32[24 >> 2] | 0) > (0 | 0)) {
-    wasm2asm$noresult = -3.4;
+    wasm2asm_f64$0 = -3.4;
     break topmost;
    };
    if (HEAPF64[32 >> 3] > 0.0) {
-    wasm2asm$noresult = 5.6;
+    wasm2asm_f64$0 = 5.6;
     break topmost;
    };
    wasm2asm_f64$0 = 1.2;
@@ -33,19 +33,19 @@ function asmFunc() {
   var t = 0.0, Int = 0.0, Double = 0, wasm2asm_f64$0 = 0.0;
   topmost : {
    if (x > 0.0) {
-    wasm2asm$noresult = 1.2;
+    wasm2asm_f64$0 = 1.2;
     break topmost;
    };
    if (Int > 0.0) {
-    wasm2asm$noresult = -3.4;
+    wasm2asm_f64$0 = -3.4;
     break topmost;
    };
    if ((Double | 0) > (0 | 0)) {
-    wasm2asm$noresult = 5.6;
+    wasm2asm_f64$0 = 5.6;
     break topmost;
    };
    if (x < y) {
-    wasm2asm$noresult = x;
+    wasm2asm_f64$0 = x;
     break topmost;
    };
    wasm2asm_f64$0 = y;
