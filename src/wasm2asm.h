@@ -294,7 +294,7 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
       }
     }
   };
-  ExpressionScanner(this).visit(curr);
+  ExpressionScanner(this).walk(curr);
 }
 
 Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
@@ -312,7 +312,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       // @param possible if provided, this is a variable we can use as our temp. it has already been
       //                 allocated in a higher scope, and we can just assign to it as our result is
       //                 going there anyhow.
-      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent, IString possible = IString()) : parent(parent), type(type) {
+      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent, IString possible = NO_RESULT) : parent(parent), type(type) {
         assert(possible != EXPRESSION_RESULT);
         if (possible == NO_RESULT) {
           temp = parent->getTemp(type);
