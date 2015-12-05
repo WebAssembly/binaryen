@@ -725,7 +725,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
             case PromoteFloat32:
             case ConvertSInt32: ret = ValueBuilder::makePrefix(PLUS, value); break;
             case ConvertUInt32: ret = ValueBuilder::makePrefix(PLUS, ValueBuilder::makeBinary(value, TRSHIFT, ValueBuilder::makeNum(0))); break;
-            case DemoteFloat64: break;
+            case DemoteFloat64: ret = value; break;
             default: std::cerr << curr << '\n'; abort();
           }
           if (curr->type == f32) { // doubles need much less coercing
