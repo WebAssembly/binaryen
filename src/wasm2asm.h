@@ -156,9 +156,11 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
     IString name = fromName(param.name);
     ValueBuilder::appendArgumentToFunction(ret, name);
     ret[3]->push_back(
-      ValueBuilder::makeAssign(
-        ValueBuilder::makeName(name),
-        makeAsmCoercion(ValueBuilder::makeName(name), wasmToAsmType(param.type))
+      ValueBuilder::makeStatement(
+        ValueBuilder::makeAssign(
+          ValueBuilder::makeName(name),
+          makeAsmCoercion(ValueBuilder::makeName(name), wasmToAsmType(param.type))
+        )
       )
     );
   }
@@ -432,7 +434,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       size_t size = curr->list.size();
       for (size_t i = 0; i < size; i++) {
         // TODO: flatten out, if we receive a block, just insert the elements
-        ret[1]->push_back(visit(curr->list[i], i < size-1 ? NO_RESULT : result));
+        ret[1]->push_back(ValueBuilder::makeStatement(visit(curr->list[i], i < size-1 ? NO_RESULT : result)));
       }
       if (curr->name.is()) {
         ret = ValueBuilder::makeLabel(fromName(curr->name), ret);
