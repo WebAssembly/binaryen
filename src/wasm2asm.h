@@ -516,7 +516,33 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return ret;
     }
     Ref visitSwitch(Switch *curr) override {
-      abort(); // XXX TODO
+      Ref ret = ValueBuilder::makeLabel(fromName(curr->name), ValueBuilder::makeBlock());
+      Ref value;
+      if (isStatement(curr->value)) {
+        ScopedTemp temp(i32, parent);
+        ret[2]->push_back(visit(curr->value, temp));
+        value = temp.getAstName();
+      } else {
+        value = visit(curr->value, EXPRESSION_RESULT);
+      }
+      Ref theSwitch = ValueBuilder::makeSwitch(value);
+      ret[2]->push_back(theSwitch);
+      for (auto& c : curr->cases) {
+        bool added = false;
+        for (size_t i = 0; i < curr->targets.size(); i++) {
+          if (curr->targets[i] == c.name) {
+            ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
+            added = true;
+          }
+        }
+        if (c.name == curr->default_) {
+          ValueBuilder::appendDefaultToSwitch(theSwitch);
+          added = true;
+        }
+        assert(added);
+        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(visit(c.body, NO_RESULT)), false);
+      }
+      return ret;
     }
     Ref visitCall(Call *curr) override {
       Ref theCall = ValueBuilder::makeCall(fromName(curr->target));
