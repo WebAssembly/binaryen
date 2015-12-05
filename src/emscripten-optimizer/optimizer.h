@@ -140,5 +140,7 @@ inline cashew::Ref deStat(cashew::Ref node) {
 cashew::Ref makeAsmCoercedZero(AsmType type);
 cashew::Ref makeAsmCoercion(cashew::Ref node, AsmType type);
 
+cashew::Ref makeSigning(cashew::Ref node, AsmSign sign);
+
 #endif // __optimizer_h__
 

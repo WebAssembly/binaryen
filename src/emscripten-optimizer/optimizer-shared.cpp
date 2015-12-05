@@ -228,3 +228,8 @@ Ref makeAsmCoercion(Ref node, AsmType type) {
   }
 }
 
+Ref makeSigning(Ref node, AsmSign sign) {
+  assert(sign == ASM_SIGNED || sign == ASM_UNSIGNED);
+  return ValueBuilder::makeBinary(node, sign == ASM_SIGNED ? OR : TRSHIFT, ValueBuilder::makeNum(0));
+}
+
