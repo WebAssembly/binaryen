@@ -172,7 +172,11 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   if (isStatement(func->body)) {
     IString result = func->result != none ? getTemp(func->result) : NO_RESULT;
     ret[3]->push_back(processFunctionBody(func->body, result));
-    if (result != NO_RESULT) freeTemp(func->result, result);
+    if (func->result != none) {
+      // do the actual return
+      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(ValueBuilder::makeName(result))));
+      freeTemp(func->result, result);
+    }
   } else {
     // whole thing is an expression, just do a return
     ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(processFunctionBody(func->body, EXPRESSION_RESULT))));
