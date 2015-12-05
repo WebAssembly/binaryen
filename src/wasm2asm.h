@@ -165,6 +165,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
     );
   }
   Ref theVar = ValueBuilder::makeVar();
+  size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
   scanFunctionBody(func->body);
@@ -188,6 +189,9 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   }
   for (auto f : frees[f64]) {
     ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_DOUBLE));
+  }
+  if (theVar[1]->size() == 0) {
+    ret[3]->splice(theVarIndex, 1);
   }
   // checks
   assert(frees[i32].size() == temps[i32]); // all temp vars should be free at the end
@@ -680,39 +684,41 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       // normal binary
       Ref left = visit(curr->left, EXPRESSION_RESULT);
       Ref right = visit(curr->right, EXPRESSION_RESULT);
+      Ref ret;
       switch (curr->op) {
-        case Add:      return ValueBuilder::makeBinary(left, PLUS, right);
-        case Sub:      return ValueBuilder::makeBinary(left, MINUS, right);
-        case Mul:      return ValueBuilder::makeBinary(left, MUL, right);
-        case DivS:     return ValueBuilder::makeBinary(left, DIV, right);
-        case DivU:     return ValueBuilder::makeBinary(left, DIV, right);
-        case RemS:     return ValueBuilder::makeBinary(left, MOD, right);
-        case RemU:     return ValueBuilder::makeBinary(left, MOD, right);
-        case And:      return ValueBuilder::makeBinary(left, AND, right);
-        case Or:       return ValueBuilder::makeBinary(left, OR, right);
-        case Xor:      return ValueBuilder::makeBinary(left, XOR, right);
-        case Shl:      return ValueBuilder::makeBinary(left, LSHIFT, right);
-        case ShrU:     return ValueBuilder::makeBinary(left, TRSHIFT, right);
-        case ShrS:     return ValueBuilder::makeBinary(left, RSHIFT, right);
-        case Div:      return ValueBuilder::makeBinary(left, DIV, right);
-        case Min:      return ValueBuilder::makeCall(MATH_MIN, left, right);
-        case Max:      return ValueBuilder::makeCall(MATH_MAX, left, right);
-        case Eq:       return ValueBuilder::makeBinary(left, EQ, right);
-        case Ne:       return ValueBuilder::makeBinary(left, NE, right);
-        case LtS:      return ValueBuilder::makeBinary(left, LT, right);
-        case LtU:      return ValueBuilder::makeBinary(left, LT, right);
-        case LeS:      return ValueBuilder::makeBinary(left, LE, right);
-        case LeU:      return ValueBuilder::makeBinary(left, LE, right);
-        case GtS:      return ValueBuilder::makeBinary(left, GT, right);
-        case GtU:      return ValueBuilder::makeBinary(left, GT, right);
-        case GeS:      return ValueBuilder::makeBinary(left, GE, right);
-        case GeU:      return ValueBuilder::makeBinary(left, GE, right);
-        case Lt:       return ValueBuilder::makeBinary(left, LT, right);
-        case Le:       return ValueBuilder::makeBinary(left, LE, right);
-        case Gt:       return ValueBuilder::makeBinary(left, GT, right);
-        case Ge:       return ValueBuilder::makeBinary(left, GE, right);
+        case Add:      ret = ValueBuilder::makeBinary(left, PLUS, right); break;
+        case Sub:      ret = ValueBuilder::makeBinary(left, MINUS, right); break;
+        case Mul:      ret = ValueBuilder::makeBinary(left, MUL, right); break;
+        case DivS:     ret = ValueBuilder::makeBinary(left, DIV, right); break;
+        case DivU:     ret = ValueBuilder::makeBinary(left, DIV, right); break;
+        case RemS:     ret = ValueBuilder::makeBinary(left, MOD, right); break;
+        case RemU:     ret = ValueBuilder::makeBinary(left, MOD, right); break;
+        case And:      ret = ValueBuilder::makeBinary(left, AND, right); break;
+        case Or:       ret = ValueBuilder::makeBinary(left, OR, right); break;
+        case Xor:      ret = ValueBuilder::makeBinary(left, XOR, right); break;
+        case Shl:      ret = ValueBuilder::makeBinary(left, LSHIFT, right); break;
+        case ShrU:     ret = ValueBuilder::makeBinary(left, TRSHIFT, right); break;
+        case ShrS:     ret = ValueBuilder::makeBinary(left, RSHIFT, right); break;
+        case Div:      ret = ValueBuilder::makeBinary(left, DIV, right); break;
+        case Min:      ret = ValueBuilder::makeCall(MATH_MIN, left, right); break;
+        case Max:      ret = ValueBuilder::makeCall(MATH_MAX, left, right); break;
+        case Eq:       ret = ValueBuilder::makeBinary(left, EQ, right); break;
+        case Ne:       ret = ValueBuilder::makeBinary(left, NE, right); break;
+        case LtS:      ret = ValueBuilder::makeBinary(left, LT, right); break;
+        case LtU:      ret = ValueBuilder::makeBinary(left, LT, right); break;
+        case LeS:      ret = ValueBuilder::makeBinary(left, LE, right); break;
+        case LeU:      ret = ValueBuilder::makeBinary(left, LE, right); break;
+        case GtS:      ret = ValueBuilder::makeBinary(left, GT, right); break;
+        case GtU:      ret = ValueBuilder::makeBinary(left, GT, right); break;
+        case GeS:      ret = ValueBuilder::makeBinary(left, GE, right); break;
+        case GeU:      ret = ValueBuilder::makeBinary(left, GE, right); break;
+        case Lt:       ret = ValueBuilder::makeBinary(left, LT, right); break;
+        case Le:       ret = ValueBuilder::makeBinary(left, LE, right); break;
+        case Gt:       ret = ValueBuilder::makeBinary(left, GT, right); break;
+        case Ge:       ret = ValueBuilder::makeBinary(left, GE, right); break;
         default: abort();
       }
+      return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
     Ref visitSelect(Select *curr) override {
       if (isStatement(curr)) {
