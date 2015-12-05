@@ -132,11 +132,9 @@ function asmFunc() {
  function abs() {
   var x = 0, y = 0.0, z = Math_fround(0), asm2wasm_i32_temp = 0, wasm2asm_i32$3 = 0, wasm2asm_i32$2 = 0, wasm2asm_i32$1 = 0, wasm2asm_i32$0 = 0;
   {
-   {
-    asm2wasm_i32_temp = 0;
-    wasm2asm_i32$0 = (wasm2asm_i32$1 = (asm2wasm_i32_temp | 0) < (0 | 0), wasm2asm_i32$2 = 0 - asm2wasm_i32_temp | 0, wasm2asm_i32$3 = asm2wasm_i32_temp, wasm2asm_i32$1 ? wasm2asm_i32$2 : wasm2asm_i32$3);
-    x = wasm2asm_i32$0;
-   }
+   asm2wasm_i32_temp = 0;
+   wasm2asm_i32$0 = (wasm2asm_i32$1 = (asm2wasm_i32_temp | 0) < (0 | 0), wasm2asm_i32$2 = 0 - asm2wasm_i32_temp | 0, wasm2asm_i32$3 = asm2wasm_i32_temp, wasm2asm_i32$1 ? wasm2asm_i32$2 : wasm2asm_i32$3);
+   x = wasm2asm_i32$0;
    y = Math_abs(0.0);
    z = Math_fround(Math_abs(Math_fround(0)));
   }
