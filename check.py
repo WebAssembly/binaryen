@@ -29,12 +29,12 @@ def fail_if_not_contained(actual, expected):
 if not interpreter:
   print '[ no wasm interpreter provided, you should pass one as --interpreter=path/to/interpreter ]'
 
-print '[ checking asm2wasm testcases... ]\n'
-
 if len(requested) == 0:
   tests = sorted(os.listdir('test'))
 else:
   tests = requested[:]
+
+print '[ checking asm2wasm testcases... ]\n'
 
 for asm in tests:
   if asm.endswith('.asm.js'):
@@ -73,6 +73,23 @@ for asm in tests:
         except Exception, e:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
+
+print '\n[ checking wasm2asm testcases... ]\n'
+
+for wasm in []:#tests:
+  if wasm.endswith('.wast'):
+    print '..', wasm
+    asm = asm.replace('.wast', '.wasm2asm.js')
+    actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    assert err == '', 'bad err:' + err
+
+    # verify output
+    if not os.path.exists(os.path.join('test', asm)):
+      print actual
+      raise Exception('output .wast file does not exist')
+    expected = open(os.path.join('test', aasm)).read()
+    if actual != expected:
+      fail(actual, expected)
 
 print '\n[ checking binaryen-shell... ]\n'
 
