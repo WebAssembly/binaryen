@@ -710,12 +710,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         Unary fakeUnary = *curr;
         fakeUnary.value = &fakeLocal;
         Ref ret = blockify(visitAndAssign(curr->value, temp));
-        ret[1]->push_back(ValueBuilder::makeStatement(
-          ValueBuilder::makeAssign(
-            result,
-            visit(&fakeUnary, result)
-          )
-        ));
+        ret[1]->push_back(visitAndAssign(&fakeUnary, result));
         return ret;
       }
       // normal unary
@@ -768,7 +763,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         fakeBinary.right = &fakeLocalRight;
         Ref ret = blockify(visitAndAssign(curr->left, tempLeft));
         ret[1]->push_back(visitAndAssign(curr->right, tempRight));
-        ret[1]->push_back(visit(&fakeBinary, result));
+        ret[1]->push_back(visitAndAssign(&fakeBinary, result));
         return ret;
       }
       // normal binary

@@ -76,7 +76,7 @@ function asmFunc() {
     3.2;
     wasm2asm_f64$2 = 4.2;
    }
-   +(wasm2asm_f64$1 - wasm2asm_f64$2)
+   wasm2asm_f64$0 = +(wasm2asm_f64$1 - wasm2asm_f64$2);
    J = wasm2asm_f64$0;
   }
  }
