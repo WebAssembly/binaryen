@@ -61,7 +61,7 @@ function asmFunc() {
  function conversions() {
   var i = 0, d = 0.0;
   {
-   i = f64-to-int(d);
+   i = f64-to-int(d) | 0;
    d = +i;
    d = +((i >>> 0 | 0) >>> 0);
   }
@@ -100,7 +100,7 @@ function asmFunc() {
  }
  
  function frem() {
-  return f64-rem(5.5, 1.2);
+  return +f64-rem(5.5, 1.2);
  }
  
  function big_uint_div_u() {

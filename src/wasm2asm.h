@@ -553,7 +553,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return ret;
     }
 
-    Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result) {
+    Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result, WasmType type) {
       std::vector<ScopedTemp> temps;
       for (auto& operand : operands) {
         temps.emplace_back(operand->type, parent);
@@ -561,6 +561,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         ret[1]->push_back(visitAndAssign(operand, temp));
         theCall[2]->push_back(ValueBuilder::makeName(temp));
       }
+      theCall = makeAsmCoercion(theCall, wasmToAsmType(type));
       if (result != NO_RESULT) {
         theCall = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), theCall));
       }
@@ -575,10 +576,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         for (auto operand : curr->operands) {
           theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
         }
-        return theCall;
+        return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
       }
       // we must statementize them all
-      return makeStatementizedCall(curr->operands, ValueBuilder::makeBlock(), theCall, result);
+      return makeStatementizedCall(curr->operands, ValueBuilder::makeBlock(), theCall, result, curr->type);
     }
     Ref visitCallImport(CallImport *curr) override {
       return visitCall(curr);
@@ -590,14 +591,14 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         for (auto operand : curr->operands) {
           theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
         }
-        return theCall;
+        return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
       }
       // we must statementize them all
       Ref ret = ValueBuilder::makeBlock();
       ScopedTemp temp(i32, parent);
       ret[1]->push_back(visit(curr->target, temp));
       Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), temp.getAstName()));
-      return makeStatementizedCall(curr->operands, ret, theCall, result);
+      return makeStatementizedCall(curr->operands, ret, theCall, result, curr->type);
     }
     Ref visitGetLocal(GetLocal *curr) override {
       return ValueBuilder::makeName(fromName(curr->name));
