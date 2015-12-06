@@ -632,7 +632,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         Load fakeLoad = *curr;
         fakeLoad.ptr = &fakeLocal;
         Ref ret = blockify(visitAndAssign(curr->ptr, temp));
-        ret[1]->push_back(visit(&fakeLoad, result));
+        ret[1]->push_back(visitAndAssign(&fakeLoad, result));
         return ret;
       }
       // normal load
@@ -665,7 +665,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         fakeStore.value = &fakeLocalValue;
         Ref ret = blockify(visitAndAssign(curr->ptr, tempPtr));
         ret[1]->push_back(visitAndAssign(curr->value, tempValue));
-        ret[1]->push_back(visit(&fakeStore, result));
+        ret[1]->push_back(visitAndAssign(&fakeStore, result));
         return ret;
       }
       // normal store
@@ -823,7 +823,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         Ref ret = blockify(visitAndAssign(curr->condition, tempCondition));
         ret[1]->push_back(visitAndAssign(curr->ifTrue, tempIfTrue));
         ret[1]->push_back(visitAndAssign(curr->ifFalse, tempIfFalse));
-        ret[1]->push_back(visit(&fakeSelect, result));
+        ret[1]->push_back(visitAndAssign(&fakeSelect, result));
         return ret;
       }
       // normal select
