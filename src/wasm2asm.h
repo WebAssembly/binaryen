@@ -699,10 +699,19 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         // TODO: i64. statementize?
         case f32: {
           Ref ret = ValueBuilder::makeCall(MATH_FROUND);
-          ret[2]->push_back(ValueBuilder::makeDouble(curr->value.f32));
+          Const fake;
+          fake.value = double(curr->value.f32);
+          fake.type = f64;
+          ret[2]->push_back(visitConst(&fake));
           return ret;
         }
-        case f64: return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeDouble(curr->value.f64));
+        case f64: {
+          double d = curr->value.f64;
+          if (d == 0 && 1/d < 0) { // negative zero
+            return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeUnary(MINUS, ValueBuilder::makeDouble(0)));
+          }
+          return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeDouble(curr->value.f64));
+        }
         default: abort();
       }
     }

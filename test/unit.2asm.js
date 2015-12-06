@@ -169,15 +169,15 @@ function asmFunc() {
   {
    Math_fround(z);
    y;
-   Math_fround(5);
-   Math_fround(0);
-   Math_fround(5);
-   Math_fround(0);
+   Math_fround(5.0);
+   Math_fround(0.0);
+   Math_fround(5.0);
+   Math_fround(0.0);
   }
  }
  
  function negZero() {
-  return 0.0;
+  return -0.0;
  }
  
  function abs() {
@@ -187,7 +187,7 @@ function asmFunc() {
    wasm2asm_i32$0 = (wasm2asm_i32$1 = (asm2wasm_i32_temp | 0) < (0 | 0), wasm2asm_i32$2 = 0 - asm2wasm_i32_temp | 0, wasm2asm_i32$3 = asm2wasm_i32_temp, wasm2asm_i32$1 ? wasm2asm_i32$2 : wasm2asm_i32$3);
    x = wasm2asm_i32$0;
    y = Math_abs(0.0);
-   z = Math_fround(Math_abs(Math_fround(0)));
+   z = Math_fround(Math_abs(Math_fround(0.0)));
   }
  }
  
