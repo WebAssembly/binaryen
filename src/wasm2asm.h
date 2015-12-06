@@ -481,12 +481,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         flattenAppend(ret, ValueBuilder::makeStatement(visit(curr->list[i], NO_RESULT)));
       }
       if (result != NO_RESULT) {
-        ret[1]->push_back(ValueBuilder::makeStatement(
-          ValueBuilder::makeAssign(
-            result,
-            visit(curr->list[size-1], result)
-          )
-        ));
+        flattenAppend(ret, visitAndAssign(curr->list[size-1], result));
       }
       if (curr->name.is()) {
         ret = ValueBuilder::makeLabel(fromName(curr->name), ret);
