@@ -15,11 +15,11 @@ function asmFunc() {
    if ((HEAPU32[24 >> 2] | 0) > (0 | 0)) {
     wasm2asm_f64$0 = -3.4;
     break topmost;
-   };
+   }
    if (HEAPF64[32 >> 3] > 0.0) {
     wasm2asm_f64$0 = 5.6;
     break topmost;
-   };
+   }
    wasm2asm_f64$0 = 1.2;
   }
   return wasm2asm_f64$0;
@@ -33,19 +33,19 @@ function asmFunc() {
    if (x > 0.0) {
     wasm2asm_f64$0 = 1.2;
     break topmost;
-   };
+   }
    if (Int > 0.0) {
     wasm2asm_f64$0 = -3.4;
     break topmost;
-   };
+   }
    if ((Double | 0) > (0 | 0)) {
     wasm2asm_f64$0 = 5.6;
     break topmost;
-   };
+   }
    if (x < y) {
     wasm2asm_f64$0 = x;
     break topmost;
-   };
+   }
    wasm2asm_f64$0 = y;
   }
   return wasm2asm_f64$0;
