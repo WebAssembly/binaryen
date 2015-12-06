@@ -189,15 +189,15 @@ function asmFunc() {
  
  function ___syscall_ret() {
   var $0 = 0;
-  return ($0 >>> 0 | 0) >>> 0 > 4294963200 >>> 0;
+  ($0 >>> 0 | 0) >>> 0 > 4294963200 >>> 0
  }
  
  function z() {
-  return ;
+  
  }
  
  function w() {
-  return ;
+  
  }
  
 }

@@ -206,7 +206,11 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
     }
   } else {
     // whole thing is an expression, just do a return
-    ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(processFunctionBody(func->body, EXPRESSION_RESULT))));
+    if (func->result != none) {
+      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(processFunctionBody(func->body, EXPRESSION_RESULT))));
+    } else {
+      flattenAppend(ret, processFunctionBody(func->body, NO_RESULT));
+    }
   }
   // locals, including new temp locals
   for (auto& local : func->locals) {
