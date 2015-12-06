@@ -543,13 +543,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       Ref value;
       if (isStatement(curr->value)) {
         ScopedTemp temp(i32, parent);
-        ret[2]->push_back(visit(curr->value, temp));
+        flattenAppend(ret[2], visit(curr->value, temp));
         value = temp.getAstName();
       } else {
         value = visit(curr->value, EXPRESSION_RESULT);
       }
       Ref theSwitch = ValueBuilder::makeSwitch(value);
-      ret[2]->push_back(theSwitch);
+      ret[2][1]->push_back(theSwitch);
       for (auto& c : curr->cases) {
         bool added = false;
         for (size_t i = 0; i < curr->targets.size(); i++) {

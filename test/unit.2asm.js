@@ -83,9 +83,62 @@ function asmFunc() {
   x = x | 0;
   var wasm2asm_i32$0 = 0;
   topmost : {
-   switch$0 : {}
-   switch$4 : {}
-   label$break$Lout : {}
+   switch$0 : {
+    switch (x - 1 | 0) {
+    case 0:
+     wasm2asm_i32$0 = 1;
+     break topmost;
+    case 1:
+     wasm2asm_i32$0 = 2;
+     break topmost;
+    default:
+    }
+   }
+   switch$4 : {
+    switch (x - 5 | 0) {
+    case 7:
+     wasm2asm_i32$0 = 121;
+     break topmost;
+    case 0:
+     wasm2asm_i32$0 = 51;
+     break topmost;
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    default:
+    }
+   }
+   label$break$Lout : {
+    switch (x - 2 | 0) {
+    case 10:
+     break label$break$Lout;
+    case 8:
+     break label$break$Lout;
+    case 3:
+     do while_out$10 : {
+      break while_out$10;
+      continue while_out$10;
+     } while (0);
+     break label$break$Lout;
+    case 0:
+     do while_out$13 : {
+      break label$break$Lout;
+      continue while_out$13;
+     } while (0);
+     break label$break$Lout;
+    case 1:
+    case 2:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 9:
+    default:
+    }
+   }
    wasm2asm_i32$0 = 0;
   }
   return wasm2asm_i32$0;
