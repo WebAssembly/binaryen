@@ -513,10 +513,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       Name asmLabel = curr->out.is() ? curr->out : curr->in; // label using the outside, normal for breaks. if no outside, then inside
       if (curr->in.is()) continueLabels[curr->in] = asmLabel;
       Ref body = visit(curr->body, result);
+      Ref ret = ValueBuilder::makeDo(body, ValueBuilder::makeInt(0));
       if (asmLabel.is()) {
-        body = ValueBuilder::makeLabel(fromName(asmLabel), body);
+        ret = ValueBuilder::makeLabel(fromName(asmLabel), ret);
       }
-      return ValueBuilder::makeDo(body, ValueBuilder::makeInt(0));
+      return ret;
     }
     Ref visitLabel(Label *curr) override {
       return ValueBuilder::makeLabel(fromName(curr->name), visit(curr->body, result));

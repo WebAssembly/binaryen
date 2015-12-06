@@ -112,13 +112,13 @@ function asmFunc() {
     case 8:
      break label$break$Lout;
     case 3:
-     do while_out$10 : {
+     while_out$10 : do {
       break while_out$10;
       continue while_out$10;
      } while (0);
      break label$break$Lout;
     case 0:
-     do while_out$13 : {
+     while_out$13 : do {
       break label$break$Lout;
       continue while_out$13;
      } while (0);
