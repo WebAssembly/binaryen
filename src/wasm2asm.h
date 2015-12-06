@@ -100,7 +100,18 @@ public:
   }
 
   static IString fromName(Name name) {
-    return name; // TODO: add a "$" or other prefixing? sanitization of bad chars?
+    // TODO: more clever name fixing, including checking we do not collide
+    const char *str = name.str;
+    if (strchr(str, '-')) {
+      char *mod = strdup(str);
+      str = mod;
+      while (*mod) {
+        if (*mod == '-') *mod = '_';
+        mod++;
+      }
+      name = IString(str, false);
+    }
+    return name;
   }
 
   void setStatement(Expression* curr) {
