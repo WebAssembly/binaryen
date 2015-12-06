@@ -570,7 +570,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         temps.emplace_back(operand->type, parent);
         IString temp = temps.back().temp;
         ret[1]->push_back(visitAndAssign(operand, temp));
-        theCall[2]->push_back(ValueBuilder::makeName(temp));
+        theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
       }
       theCall = makeAsmCoercion(theCall, wasmToAsmType(type));
       if (result != NO_RESULT) {
@@ -585,7 +585,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       if (!isStatement(curr)) {
         // none of our operands is a statement; go right ahead and create a simple expression
         for (auto operand : curr->operands) {
-          theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
+          theCall[2]->push_back(makeAsmCoercion(visit(operand, EXPRESSION_RESULT), wasmToAsmType(operand->type)));
         }
         return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
       }
@@ -600,7 +600,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         // none of our operands is a statement; go right ahead and create a simple expression
         Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), visit(curr->target, EXPRESSION_RESULT)));
         for (auto operand : curr->operands) {
-          theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
+          theCall[2]->push_back(makeAsmCoercion(visit(operand, EXPRESSION_RESULT), wasmToAsmType(operand->type)));
         }
         return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
       }

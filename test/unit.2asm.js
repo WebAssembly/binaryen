@@ -61,7 +61,7 @@ function asmFunc() {
  function conversions() {
   var i = 0, d = 0.0;
   {
-   i = f64_to_int(d) | 0;
+   i = f64_to_int(+d) | 0;
    d = +i;
    d = +((i >>> 0 | 0) >>> 0);
   }
@@ -100,7 +100,7 @@ function asmFunc() {
  }
  
  function frem() {
-  return +f64_rem(5.5, 1.2);
+  return +f64_rem(+(5.5), +(1.2));
  }
  
  function big_uint_div_u() {
@@ -144,7 +144,7 @@ function asmFunc() {
   var x = Math_fround(0);
   {
    x = Math_fround(-x);
-   FUNCTION_TABLE[(1 & 7 | 0) + 8 | 0](x);
+   FUNCTION_TABLE[(1 & 7 | 0) + 8 | 0](Math_fround(x));
   }
  }
  
