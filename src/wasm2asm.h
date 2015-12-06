@@ -20,6 +20,21 @@ IString ASM_FUNC("asmFunc"),
         NO_RESULT("wasm2asm$noresult"), // no result at all
         EXPRESSION_RESULT("wasm2asm$expresult"); // result in an expression, no temp var
 
+// Appends extra to block, flattening out if extra is a block as well
+void flattenAppend(Ref ast, Ref extra) {
+  int index;
+  if (ast[0] == BLOCK) index = 1;
+  else if (ast[0] == DEFUN) index = 3;
+  else abort();
+  if (extra[0] == BLOCK) {
+    for (int i = 0; i < extra[1]->size(); i++) {
+      ast[index]->push_back(extra[1][i]);
+    }
+  } else {
+    ast[index]->push_back(extra);
+  }
+}
+
 //
 // Wasm2AsmBuilder - converts a WebAssembly module into asm.js
 //
@@ -183,7 +198,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   scanFunctionBody(func->body);
   if (isStatement(func->body)) {
     IString result = func->result != none ? getTemp(func->result) : NO_RESULT;
-    ret[3]->push_back(ValueBuilder::makeStatement(processFunctionBody(func->body, result)));
+    flattenAppend(ret, ValueBuilder::makeStatement(processFunctionBody(func->body, result)));
     if (func->result != none) {
       // do the actual return
       ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(ValueBuilder::makeName(result))));
@@ -449,18 +464,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
 
     IString fromName(Name name) {
       return parent->fromName(name);
-    }
-
-    // Appends extra to block, flattening out if extra is a block as well
-    void flattenAppend(Ref block, Ref extra) {
-      // add to our return block. if we receive a block, can just flatten it out here
-      if (extra[0] == BLOCK) {
-        for (int i = 0; i < extra[1]->size(); i++) {
-          block[1]->push_back(extra[1][i]);
-        }
-      } else {
-        block[1]->push_back(extra);
-      }
     }
 
     // Visitors
