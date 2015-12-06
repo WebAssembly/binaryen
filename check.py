@@ -76,7 +76,7 @@ for asm in tests:
 
 print '\n[ checking wasm2asm testcases... ]\n'
 
-for wasm in ['min.wast', 'hello_world.wast', 'unit.wast']:
+for wasm in ['min.wast', 'hello_world.wast', 'unit.wast', 'emcc_O2_hello_world.wast']:
   if wasm.endswith('.wast'):
     print '..', wasm
     asm = wasm.replace('.wast', '.2asm.js')
