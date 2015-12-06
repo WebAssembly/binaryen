@@ -86,7 +86,7 @@ function asmFunc() {
         if (i3 & i5 | 0) {
          i16 = i15 + 8 | 0;
          i10 = HEAPU32[i16 >> 2];
-         if ((i10 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+         if ((i10 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
           i19 = i16;
           i20 = i10;
          };
@@ -185,7 +185,7 @@ function asmFunc() {
           };
           continue while_out$6;
          } while (0);
-         if ((i28 >>> 0 | 0) >>> 0 < (i7 >>> 0 | 0) >>> 0) _abort() else {
+         if ((i28 >>> 0 | 0) >>> 0 < (i7 >>> 0 | 0) >>> 0) _abort(); else {
           HEAP32[i28 >> 2] = 0;
           i24 = i27;
           break do_once$5;
@@ -217,7 +217,7 @@ function asmFunc() {
          } else {
           if ((i5 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort();
           i12 = i5 + 16 | 0;
-          if (HEAPU32[i12 >> 2] == i22) HEAP32[i12 >> 2] = i24 else HEAP32[(i5 + 20 | 0) >> 2] = i24;
+          if (HEAPU32[i12 >> 2] == i22) HEAP32[i12 >> 2] = i24; else HEAP32[(i5 + 20 | 0) >> 2] = i24;
           if (i24 == 0) break do_once$8;
          };
          i12 = HEAPU32[192 >> 2];
@@ -225,14 +225,14 @@ function asmFunc() {
          HEAP32[(i24 + 24 | 0) >> 2] = i5;
          i7 = HEAPU32[(i22 + 16 | 0) >> 2];
          do_once$9 : {
-          if (i7) if ((i7 >>> 0 | 0) >>> 0 < (i12 >>> 0 | 0) >>> 0) _abort() else {
+          if (i7) if ((i7 >>> 0 | 0) >>> 0 < (i12 >>> 0 | 0) >>> 0) _abort(); else {
            HEAP32[(i24 + 16 | 0) >> 2] = i7;
            HEAP32[(i7 + 24 | 0) >> 2] = i24;
            break do_once$9;
           };
          }
          i7 = HEAPU32[(i22 + 20 | 0) >> 2];
-         if (i7) if ((i7 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+         if (i7) if ((i7 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
           HEAP32[(i24 + 20 | 0) >> 2] = i7;
           HEAP32[(i7 + 24 | 0) >> 2] = i24;
           break do_once$8;
@@ -258,7 +258,7 @@ function asmFunc() {
          if (i14 & i15 | 0) {
           i12 = i7 + 8 | 0;
           i17 = HEAPU32[i12 >> 2];
-          if ((i17 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+          if ((i17 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
            i29 = i12;
            i30 = i17;
           };
@@ -287,7 +287,7 @@ function asmFunc() {
      if (i15) {
       i14 = 0 - i5 | 0;
       i17 = i7 >>> 8 | 0;
-      if (i17) if ((i5 >>> 0 | 0) >>> 0 > 16777215 >>> 0) i32 = 31 else {
+      if (i17) if ((i5 >>> 0 | 0) >>> 0 > 16777215 >>> 0) i32 = 31; else {
        i7 = ((i17 + 1048320 | 0) >>> 16 | 0) & 8 | 0;
        i12 = i17 << i7 | 0;
        i17 = ((i12 + 520192 | 0) >>> 16 | 0) & 4 | 0;
@@ -324,7 +324,7 @@ function asmFunc() {
          } else {
           i40 = i9;
           i41 = i17;
-         } else {
+         }; else {
           i40 = i12;
           i41 = i8;
          };
@@ -453,7 +453,7 @@ function asmFunc() {
           };
           continue while_out$15;
          } while (0);
-         if ((i49 >>> 0 | 0) >>> 0 < (i15 >>> 0 | 0) >>> 0) _abort() else {
+         if ((i49 >>> 0 | 0) >>> 0 < (i15 >>> 0 | 0) >>> 0) _abort(); else {
           HEAP32[i49 >> 2] = 0;
           i45 = i48;
           break do_once$14;
@@ -485,7 +485,7 @@ function asmFunc() {
          } else {
           if ((i3 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort();
           i7 = i3 + 16 | 0;
-          if (HEAPU32[i7 >> 2] == i44) HEAP32[i7 >> 2] = i45 else HEAP32[(i3 + 20 | 0) >> 2] = i45;
+          if (HEAPU32[i7 >> 2] == i44) HEAP32[i7 >> 2] = i45; else HEAP32[(i3 + 20 | 0) >> 2] = i45;
           if (i45 == 0) break do_once$17;
          };
          i7 = HEAPU32[192 >> 2];
@@ -493,14 +493,14 @@ function asmFunc() {
          HEAP32[(i45 + 24 | 0) >> 2] = i3;
          i15 = HEAPU32[(i44 + 16 | 0) >> 2];
          do_once$18 : {
-          if (i15) if ((i15 >>> 0 | 0) >>> 0 < (i7 >>> 0 | 0) >>> 0) _abort() else {
+          if (i15) if ((i15 >>> 0 | 0) >>> 0 < (i7 >>> 0 | 0) >>> 0) _abort(); else {
            HEAP32[(i45 + 16 | 0) >> 2] = i15;
            HEAP32[(i15 + 24 | 0) >> 2] = i45;
            break do_once$18;
           };
          }
          i15 = HEAPU32[(i44 + 20 | 0) >> 2];
-         if (i15) if ((i15 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+         if (i15) if ((i15 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
           HEAP32[(i45 + 20 | 0) >> 2] = i15;
           HEAP32[(i15 + 24 | 0) >> 2] = i45;
           break do_once$17;
@@ -520,7 +520,7 @@ function asmFunc() {
           if (i7 & i2 | 0) {
            i3 = i15 + 8 | 0;
            i4 = HEAPU32[i3 >> 2];
-           if ((i4 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+           if ((i4 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
             i50 = i3;
             i51 = i4;
            };
@@ -536,7 +536,7 @@ function asmFunc() {
           break do_once$19;
          };
          i15 = i43 >>> 8 | 0;
-         if (i15) if ((i43 >>> 0 | 0) >>> 0 > 16777215 >>> 0) i52 = 31 else {
+         if (i15) if ((i43 >>> 0 | 0) >>> 0 > 16777215 >>> 0) i52 = 31; else {
           i2 = ((i15 + 1048320 | 0) >>> 16 | 0) & 8 | 0;
           i7 = i15 << i2 | 0;
           i15 = ((i7 + 520192 | 0) >>> 16 | 0) & 4 | 0;
@@ -544,7 +544,7 @@ function asmFunc() {
           i7 = ((i4 + 245760 | 0) >>> 16 | 0) & 2 | 0;
           i3 = (14 - (i15 | i2 | 0 | i7 | 0) | 0) + ((i4 << i7 | 0) >>> 15 | 0) | 0;
           i52 = (i43 >>> (i3 + 7 | 0) | 0) & 1 | 0 | (i3 << 1 | 0) | 0;
-         } else i52 = 0;
+         }; else i52 = 0;
          i3 = 480 + (i52 << 2 | 0) | 0;
          HEAP32[(i8 + 28 | 0) >> 2] = i52;
          i7 = i8 + 16 | 0;
@@ -584,13 +584,13 @@ function asmFunc() {
           };
           continue while_out$20;
          } while (0);
-         if (i36 == 145) if ((i54 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+         if (i36 == 145) if ((i54 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
           HEAP32[i54 >> 2] = i8;
           HEAP32[(i8 + 24 | 0) >> 2] = i55;
           HEAP32[(i8 + 12 | 0) >> 2] = i8;
           HEAP32[(i8 + 8 | 0) >> 2] = i8;
           break do_once$19;
-         } else if (i36 == 148) {
+         }; else if (i36 == 148) {
           i7 = i53 + 8 | 0;
           i4 = HEAPU32[i7 >> 2];
           i2 = HEAPU32[192 >> 2];
@@ -613,7 +613,7 @@ function asmFunc() {
        i13 = i44 + 8 | 0;
        wasm2asm_i32$0 = i13;
        break topmost;
-      } else i31 = i5
+      } else i31 = i5;
      } else i31 = i5;
     } else i31 = 4294967295;
    }
@@ -718,14 +718,12 @@ function asmFunc() {
        i50 = (i55 - HEAPU32[188 >> 2] | 0) & i54 | 0;
        if ((i50 >>> 0 | 0) >>> 0 < 2147483647 >>> 0) {
         i45 = _sbrk(i50 | 0) | 0;
-        if (i45 == (HEAPU32[i56 >> 2] + HEAPU32[i57 >> 2] | 0)) {
-         if (i45 != 4294967295) {
-          i58 = i45;
-          i59 = i50;
-          i36 = 193;
-          break label$break$L257;
-         }
-        } else {
+        if (i45 == (HEAPU32[i56 >> 2] + HEAPU32[i57 >> 2] | 0)) if (i45 != 4294967295) {
+         i58 = i45;
+         i59 = i50;
+         i36 = 193;
+         break label$break$L257;
+        }; else {
          i60 = i45;
          i61 = i50;
          i36 = 183;
@@ -742,7 +740,7 @@ function asmFunc() {
        i5 = i52;
        i50 = HEAPU32[652 >> 2];
        i45 = i50 + 4294967295 | 0;
-       if ((i45 & i5 | 0) == 0) i62 = i43 else i62 = (i43 - i5 | 0) + ((i45 + i5 | 0) & (0 - i50 | 0) | 0) | 0;
+       if ((i45 & i5 | 0) == 0) i62 = i43; else i62 = (i43 - i5 | 0) + ((i45 + i5 | 0) & (0 - i50 | 0) | 0) | 0;
        i50 = HEAPU32[608 >> 2];
        i5 = i50 + i62 | 0;
        if ((i62 >>> 0 | 0) >>> 0 > (i31 >>> 0 | 0) >>> 0 & (i62 >>> 0 | 0) >>> 0 < 2147483647 >>> 0 | 0) {
@@ -780,7 +778,7 @@ function asmFunc() {
         } else {
          i63 = i5 + i61 | 0;
          break do_once$26;
-        } else i63 = i61
+        }; else i63 = i61;
        }
        if (i60 != 4294967295) {
         i58 = i60;
@@ -944,7 +942,7 @@ function asmFunc() {
                };
                continue while_out$34;
               } while (0);
-              if ((i76 >>> 0 | 0) >>> 0 < (i68 >>> 0 | 0) >>> 0) _abort() else {
+              if ((i76 >>> 0 | 0) >>> 0 < (i68 >>> 0 | 0) >>> 0) _abort(); else {
                HEAP32[i76 >> 2] = 0;
                i72 = i75;
                break do_once$33;
@@ -970,7 +968,7 @@ function asmFunc() {
              if (i43 != HEAPU32[i5 >> 2]) {
               if ((i54 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort();
               i45 = i54 + 16 | 0;
-              if (HEAPU32[i45 >> 2] == i43) HEAP32[i45 >> 2] = i72 else HEAP32[(i54 + 20 | 0) >> 2] = i72;
+              if (HEAPU32[i45 >> 2] == i43) HEAP32[i45 >> 2] = i72; else HEAP32[(i54 + 20 | 0) >> 2] = i72;
               if (i72 == 0) break label$break$L331;
              } else {
               HEAP32[i5 >> 2] = i72;
@@ -985,7 +983,7 @@ function asmFunc() {
             i5 = i43 + 16 | 0;
             i45 = HEAPU32[i5 >> 2];
             do_once$37 : {
-             if (i45) if ((i45 >>> 0 | 0) >>> 0 < (i55 >>> 0 | 0) >>> 0) _abort() else {
+             if (i45) if ((i45 >>> 0 | 0) >>> 0 < (i55 >>> 0 | 0) >>> 0) _abort(); else {
               HEAP32[(i72 + 16 | 0) >> 2] = i45;
               HEAP32[(i45 + 24 | 0) >> 2] = i72;
               break do_once$37;
@@ -993,7 +991,7 @@ function asmFunc() {
             }
             i45 = HEAPU32[(i5 + 4 | 0) >> 2];
             if (i45 == 0) break label$break$L331;
-            if ((i45 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+            if ((i45 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
              HEAP32[(i72 + 20 | 0) >> 2] = i45;
              HEAP32[(i45 + 24 | 0) >> 2] = i72;
              break label$break$L331;
@@ -1014,7 +1012,7 @@ function asmFunc() {
              break label$break$L331;
             };
             do_once$39 : {
-             if (i55 == i54) i77 = i55 + 8 | 0 else {
+             if (i55 == i54) i77 = i55 + 8 | 0; else {
               if ((i55 >>> 0 | 0) >>> 0 < (i68 >>> 0 | 0) >>> 0) _abort();
               i5 = i55 + 8 | 0;
               if (HEAPU32[i5 >> 2] == i43) {
@@ -1067,7 +1065,7 @@ function asmFunc() {
          };
          i5 = i79 >>> 8 | 0;
          do_once$41 : {
-          if (i5 == 0) i82 = 0 else {
+          if (i5 == 0) i82 = 0; else {
            if ((i79 >>> 0 | 0) >>> 0 > 16777215 >>> 0) {
             i82 = 31;
             break do_once$41;
@@ -1120,13 +1118,13 @@ function asmFunc() {
           };
           continue while_out$42;
          } while (0);
-         if (i36 == 278) if ((i84 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+         if (i36 == 278) if ((i84 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
           HEAP32[i84 >> 2] = i63;
           HEAP32[(i63 + 24 | 0) >> 2] = i85;
           HEAP32[(i63 + 12 | 0) >> 2] = i63;
           HEAP32[(i63 + 8 | 0) >> 2] = i63;
           break do_once$32;
-         } else if (i36 == 281) {
+         }; else if (i36 == 281) {
           i62 = i83 + 8 | 0;
           i50 = HEAPU32[i62 >> 2];
           i57 = HEAPU32[192 >> 2];
@@ -1212,7 +1210,7 @@ function asmFunc() {
         if (i62 & i57 | 0) {
          i43 = i61 + 8 | 0;
          i5 = HEAPU32[i43 >> 2];
-         if ((i5 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+         if ((i5 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
           i87 = i43;
           i88 = i5;
          };
@@ -1228,7 +1226,7 @@ function asmFunc() {
         break do_once$27;
        };
        i61 = i63 >>> 8 | 0;
-       if (i61) if ((i63 >>> 0 | 0) >>> 0 > 16777215 >>> 0) i89 = 31 else {
+       if (i61) if ((i63 >>> 0 | 0) >>> 0 > 16777215 >>> 0) i89 = 31; else {
         i57 = ((i61 + 1048320 | 0) >>> 16 | 0) & 8 | 0;
         i62 = i61 << i57 | 0;
         i61 = ((i62 + 520192 | 0) >>> 16 | 0) & 4 | 0;
@@ -1236,7 +1234,7 @@ function asmFunc() {
         i62 = ((i5 + 245760 | 0) >>> 16 | 0) & 2 | 0;
         i43 = (14 - (i61 | i57 | 0 | i62 | 0) | 0) + ((i5 << i62 | 0) >>> 15 | 0) | 0;
         i89 = (i63 >>> (i43 + 7 | 0) | 0) & 1 | 0 | (i43 << 1 | 0) | 0;
-       } else i89 = 0;
+       }; else i89 = 0;
        i43 = 480 + (i89 << 2 | 0) | 0;
        HEAP32[(i60 + 28 | 0) >> 2] = i89;
        HEAP32[(i60 + 20 | 0) >> 2] = 0;
@@ -1275,13 +1273,13 @@ function asmFunc() {
         };
         continue while_out$48;
        } while (0);
-       if (i36 == 304) if ((i91 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+       if (i36 == 304) if ((i91 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
         HEAP32[i91 >> 2] = i60;
         HEAP32[(i60 + 24 | 0) >> 2] = i92;
         HEAP32[(i60 + 12 | 0) >> 2] = i60;
         HEAP32[(i60 + 8 | 0) >> 2] = i60;
         break do_once$27;
-       } else if (i36 == 307) {
+       }; else if (i36 == 307) {
         i62 = i90 + 8 | 0;
         i5 = HEAPU32[i62 >> 2];
         i63 = HEAPU32[192 >> 2];
@@ -1396,7 +1394,7 @@ function asmFunc() {
       if (i10 != i14) {
        if ((i10 >>> 0 | 0) >>> 0 < (i3 >>> 0 | 0) >>> 0) _abort();
        i14 = i10 + 8 | 0;
-       if (HEAPU32[i14 >> 2] == i8) i15 = i14 else _abort();
+       if (HEAPU32[i14 >> 2] == i8) i15 = i14; else _abort();
       } else i15 = i10 + 8 | 0;
       HEAP32[(i7 + 12 | 0) >> 2] = i10;
       HEAP32[i15 >> 2] = i7;
@@ -1444,7 +1442,7 @@ function asmFunc() {
         };
         continue while_out$2;
        } while (0);
-       if ((i22 >>> 0 | 0) >>> 0 < (i3 >>> 0 | 0) >>> 0) _abort() else {
+       if ((i22 >>> 0 | 0) >>> 0 < (i3 >>> 0 | 0) >>> 0) _abort(); else {
         HEAP32[i22 >> 2] = 0;
         i18 = i21;
         break do_once$1;
@@ -1477,7 +1475,7 @@ function asmFunc() {
       } else {
        if ((i7 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort();
        i10 = i7 + 16 | 0;
-       if (HEAPU32[i10 >> 2] == i8) HEAP32[i10 >> 2] = i18 else HEAP32[(i7 + 20 | 0) >> 2] = i18;
+       if (HEAPU32[i10 >> 2] == i8) HEAP32[i10 >> 2] = i18; else HEAP32[(i7 + 20 | 0) >> 2] = i18;
        if (i18 == 0) {
         i12 = i8;
         i13 = i9;
@@ -1490,20 +1488,20 @@ function asmFunc() {
       i11 = i8 + 16 | 0;
       i14 = HEAPU32[i11 >> 2];
       do_once$4 : {
-       if (i14) if ((i14 >>> 0 | 0) >>> 0 < (i10 >>> 0 | 0) >>> 0) _abort() else {
+       if (i14) if ((i14 >>> 0 | 0) >>> 0 < (i10 >>> 0 | 0) >>> 0) _abort(); else {
         HEAP32[(i18 + 16 | 0) >> 2] = i14;
         HEAP32[(i14 + 24 | 0) >> 2] = i18;
         break do_once$4;
        };
       }
       i14 = HEAPU32[(i11 + 4 | 0) >> 2];
-      if (i14) if ((i14 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+      if (i14) if ((i14 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
        HEAP32[(i18 + 20 | 0) >> 2] = i14;
        HEAP32[(i14 + 24 | 0) >> 2] = i18;
        i12 = i8;
        i13 = i9;
        break do_once$0;
-      } else {
+      }; else {
        i12 = i8;
        i13 = i9;
       };
@@ -1583,7 +1581,7 @@ function asmFunc() {
          };
          continue while_out$7;
         } while (0);
-        if ((i27 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+        if ((i27 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
          HEAP32[i27 >> 2] = 0;
          i23 = i26;
          break do_once$6;
@@ -1614,7 +1612,7 @@ function asmFunc() {
        } else {
         if ((i21 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort();
         i22 = i21 + 16 | 0;
-        if (HEAPU32[i22 >> 2] == i6) HEAP32[i22 >> 2] = i23 else HEAP32[(i21 + 20 | 0) >> 2] = i23;
+        if (HEAPU32[i22 >> 2] == i6) HEAP32[i22 >> 2] = i23; else HEAP32[(i21 + 20 | 0) >> 2] = i23;
         if (i23 == 0) break do_once$5;
        };
        i22 = HEAPU32[192 >> 2];
@@ -1623,14 +1621,14 @@ function asmFunc() {
        i9 = i6 + 16 | 0;
        i8 = HEAPU32[i9 >> 2];
        do_once$9 : {
-        if (i8) if ((i8 >>> 0 | 0) >>> 0 < (i22 >>> 0 | 0) >>> 0) _abort() else {
+        if (i8) if ((i8 >>> 0 | 0) >>> 0 < (i22 >>> 0 | 0) >>> 0) _abort(); else {
          HEAP32[(i23 + 16 | 0) >> 2] = i8;
          HEAP32[(i8 + 24 | 0) >> 2] = i23;
          break do_once$9;
         };
        }
        i8 = HEAPU32[(i9 + 4 | 0) >> 2];
-       if (i8) if ((i8 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+       if (i8) if ((i8 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
         HEAP32[(i23 + 20 | 0) >> 2] = i8;
         HEAP32[(i8 + 24 | 0) >> 2] = i23;
         break do_once$5;
@@ -1651,7 +1649,7 @@ function asmFunc() {
       if (i22 != i21) {
        if ((i22 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort();
        i21 = i22 + 8 | 0;
-       if (HEAPU32[i21 >> 2] == i6) i28 = i21 else _abort();
+       if (HEAPU32[i21 >> 2] == i6) i28 = i21; else _abort();
       } else i28 = i22 + 8 | 0;
       HEAP32[(i8 + 12 | 0) >> 2] = i22;
       HEAP32[i28 >> 2] = i8;
@@ -1677,7 +1675,7 @@ function asmFunc() {
     if (i5 & i18 | 0) {
      i13 = i2 + 8 | 0;
      i28 = HEAPU32[i13 >> 2];
-     if ((i28 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+     if ((i28 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
       i30 = i13;
       i31 = i28;
      };
@@ -1693,7 +1691,7 @@ function asmFunc() {
     break topmost;
    };
    i2 = i29 >>> 8 | 0;
-   if (i2) if ((i29 >>> 0 | 0) >>> 0 > 16777215 >>> 0) i32 = 31 else {
+   if (i2) if ((i29 >>> 0 | 0) >>> 0 > 16777215 >>> 0) i32 = 31; else {
     i31 = ((i2 + 1048320 | 0) >>> 16 | 0) & 8 | 0;
     i30 = i2 << i31 | 0;
     i2 = ((i30 + 520192 | 0) >>> 16 | 0) & 4 | 0;
@@ -1701,7 +1699,7 @@ function asmFunc() {
     i30 = ((i18 + 245760 | 0) >>> 16 | 0) & 2 | 0;
     i5 = (14 - (i2 | i31 | 0 | i30 | 0) | 0) + ((i18 << i30 | 0) >>> 15 | 0) | 0;
     i32 = (i29 >>> (i5 + 7 | 0) | 0) & 1 | 0 | (i5 << 1 | 0) | 0;
-   } else i32 = 0;
+   }; else i32 = 0;
    i5 = 480 + (i32 << 2 | 0) | 0;
    HEAP32[(i12 + 28 | 0) >> 2] = i32;
    HEAP32[(i12 + 20 | 0) >> 2] = 0;
@@ -1734,13 +1732,13 @@ function asmFunc() {
       };
       continue while_out$11;
      } while (0);
-     if (i34 == 127) if ((i35 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort() else {
+     if (i34 == 127) if ((i35 >>> 0 | 0) >>> 0 < (HEAPU32[192 >> 2] >>> 0 | 0) >>> 0) _abort(); else {
       HEAP32[i35 >> 2] = i12;
       HEAP32[(i12 + 24 | 0) >> 2] = i36;
       HEAP32[(i12 + 12 | 0) >> 2] = i12;
       HEAP32[(i12 + 8 | 0) >> 2] = i12;
       break do_once$10;
-     } else if (i34 == 130) {
+     }; else if (i34 == 130) {
       i2 = i33 + 8 | 0;
       i31 = HEAPU32[i2 >> 2];
       i9 = HEAPU32[192 >> 2];
@@ -1763,7 +1761,7 @@ function asmFunc() {
    }
    i12 = HEAPU32[208 >> 2] + 4294967295 | 0;
    HEAP32[208 >> 2] = i12;
-   if (i12 == 0) i37 = 632 else break topmost;
+   if (i12 == 0) i37 = 632; else break topmost;
    while_out$13 : do {
     i12 = HEAPU32[i37 >> 2];
     if (i12 == 0) break while_out$13; else i37 = i12 + 8 | 0;
@@ -1836,7 +1834,7 @@ function asmFunc() {
      i20 = i14;
      i21 = i12;
      i22 = i7;
-    } else {
+    }; else {
      i23 = HEAPU32[i9 >> 2];
      HEAP32[i8 >> 2] = i23;
      HEAP32[i10 >> 2] = i23;
@@ -1864,7 +1862,7 @@ function asmFunc() {
     HEAP32[i8 >> 2] = 0;
     HEAP32[i10 >> 2] = 0;
     HEAP32[i1 >> 2] = HEAPU32[i1 >> 2] | 32 | 0;
-    if (i17 == 2) i24 = 0 else i24 = i3 - HEAPU32[(i16 + 4 | 0) >> 2] | 0;
+    if (i17 == 2) i24 = 0; else i24 = i3 - HEAPU32[(i16 + 4 | 0) >> 2] | 0;
    };
    HEAP32[8 >> 2] = i4;
    wasm2asm_i32$0 = i24;
@@ -1883,7 +1881,7 @@ function asmFunc() {
    if (i5 == 0) if ((___towrite(i3 | 0) | 0) == 0) {
     i6 = HEAPU32[i4 >> 2];
     i7 = 5;
-   } else i8 = 0 else {
+   } else i8 = 0; else {
     i6 = i5;
     i7 = 5;
    };
@@ -1951,20 +1949,20 @@ function asmFunc() {
      };
      i3 = (___lockfile(i1 | 0) | 0) == 0;
      i4 = ___fflush_unlocked(i1 | 0) | 0;
-     if (i3) i2 = i4 else {
+     if (i3) i2 = i4; else {
       ___unlockfile(i1 | 0);
       i2 = i4;
      };
     } else {
-     if (HEAPU32[56 >> 2] == 0) i5 = 0 else i5 = _fflush(HEAPU32[56 >> 2] | 0) | 0;
+     if (HEAPU32[56 >> 2] == 0) i5 = 0; else i5 = _fflush(HEAPU32[56 >> 2] | 0) | 0;
      ___lock(36 | 0);
      i4 = HEAPU32[32 >> 2];
-     if (i4 == 0) i6 = i5 else {
+     if (i4 == 0) i6 = i5; else {
       i3 = i4;
       i4 = i5;
       while_out$1 : do {
-       if ((HEAPU32[(i3 + 76 | 0) >> 2] | 0) > (4294967295 | 0)) i7 = ___lockfile(i3 | 0) | 0 else i7 = 0;
-       if ((HEAPU32[(i3 + 20 | 0) >> 2] >>> 0 | 0) >>> 0 > (HEAPU32[(i3 + 28 | 0) >> 2] >>> 0 | 0) >>> 0) i8 = ___fflush_unlocked(i3 | 0) | 0 | i4 | 0 else i8 = i4;
+       if ((HEAPU32[(i3 + 76 | 0) >> 2] | 0) > (4294967295 | 0)) i7 = ___lockfile(i3 | 0) | 0; else i7 = 0;
+       if ((HEAPU32[(i3 + 20 | 0) >> 2] >>> 0 | 0) >>> 0 > (HEAPU32[(i3 + 28 | 0) >> 2] >>> 0 | 0) >>> 0) i8 = ___fflush_unlocked(i3 | 0) | 0 | i4 | 0; else i8 = i4;
        if (i7) ___unlockfile(i3 | 0);
        i3 = HEAPU32[(i3 + 56 | 0) >> 2];
        if (i3 == 0) {
@@ -2015,14 +2013,14 @@ function asmFunc() {
     i4 = i3;
     while_out$2 : do {
      i3 = HEAPU32[i4 >> 2];
-     if ((((i3 & 2155905152 | 0) ^ 2155905152 | 0) & (i3 + 4278124287 | 0) | 0) == 0) i4 = i4 + 4 | 0 else {
+     if ((((i3 & 2155905152 | 0) ^ 2155905152 | 0) & (i3 + 4278124287 | 0) | 0) == 0) i4 = i4 + 4 | 0; else {
       i9 = i3;
       i10 = i4;
       break while_out$2;
      };
      continue while_out$2;
     } while (0);
-    if ((((i9 & 255 | 0) << 24 | 0) >> 24 | 0) == 0) i11 = i10 else {
+    if ((((i9 & 255 | 0) << 24 | 0) >> 24 | 0) == 0) i11 = i10; else {
      i9 = i10;
      while_out$4 : do {
       i10 = i9 + 1 | 0;
@@ -2055,7 +2053,7 @@ function asmFunc() {
    if (i7 == 0) if ((___towrite(i1 | 0) | 0) == 0) {
     i8 = HEAPU32[i6 >> 2];
     i9 = 4;
-   } else i10 = 4294967295 else {
+   } else i10 = 4294967295; else {
     i8 = i7;
     i9 = 4;
    };
@@ -2073,7 +2071,7 @@ function asmFunc() {
       i10 = i11;
       break do_once$0;
      }
-     if ((FUNCTION_TABLE[(HEAPU32[(i1 + 36 | 0) >> 2] & 7 | 0) + 2 | 0](i1 | 0, i4 | 0, 1 | 0) | 0) == 1) i10 = HEAPU8[i4 >> 0] else i10 = 4294967295;
+     if ((FUNCTION_TABLE[(HEAPU32[(i1 + 36 | 0) >> 2] & 7 | 0) + 2 | 0](i1 | 0, i4 | 0, 1 | 0) | 0) == 1) i10 = HEAPU8[i4 >> 0]; else i10 = 4294967295;
     };
    }
    HEAP32[8 >> 2] = i3;
@@ -2092,7 +2090,7 @@ function asmFunc() {
     FUNCTION_TABLE[(HEAPU32[(i1 + 36 | 0) >> 2] & 7 | 0) + 2 | 0](i1 | 0, 0 | 0, 0 | 0) | 0;
     wasm2asm_i32$1 = HEAPU32[i2 >> 2] == 0;
    } else wasm2asm_i32$1 = 0;
-   if (wasm2asm_i32$1) i4 = 4294967295 else {
+   if (wasm2asm_i32$1) i4 = 4294967295; else {
     i5 = i1 + 4 | 0;
     i6 = HEAPU32[i5 >> 2];
     i7 = i1 + 8 | 0;
@@ -2204,9 +2202,9 @@ function asmFunc() {
   var i2 = 0, i3 = 0, i4 = 0, i5 = 0, i6 = 0, wasm2asm_i32$1 = 0, wasm2asm_i32$0 = 0;
   topmost : {
    i2 = HEAPU32[52 >> 2];
-   if ((HEAPU32[(i2 + 76 | 0) >> 2] | 0) > (4294967295 | 0)) i3 = ___lockfile(i2 | 0) | 0 else i3 = 0;
+   if ((HEAPU32[(i2 + 76 | 0) >> 2] | 0) > (4294967295 | 0)) i3 = ___lockfile(i2 | 0) | 0; else i3 = 0;
    do_once$0 : {
-    if ((_fputs(i1 | 0, i2 | 0) | 0 | 0) < (0 | 0)) i4 = 1 else {
+    if ((_fputs(i1 | 0, i2 | 0) | 0 | 0) < (0 | 0)) i4 = 1; else {
      if (HEAP8[(i2 + 75 | 0) >> 0] != 10) {
       i5 = i2 + 20 | 0;
       wasm2asm_i32$1 = {
@@ -2290,12 +2288,12 @@ function asmFunc() {
    if ((HEAPU32[(i4 + 76 | 0) >> 2] | 0) > (4294967295 | 0)) {
     i6 = (___lockfile(i4 | 0) | 0) == 0;
     i7 = ___fwritex(i1 | 0, i5 | 0, i4 | 0) | 0;
-    if (i6) i8 = i7 else {
+    if (i6) i8 = i7; else {
      ___unlockfile(i4 | 0);
      i8 = i7;
     };
    } else i8 = ___fwritex(i1 | 0, i5 | 0, i4 | 0) | 0;
-   if (i8 == i5) i9 = i3 else i9 = (i8 >>> 0 | 0) / (i2 >>> 0 | 0) | 0;
+   if (i8 == i5) i9 = i3; else i9 = (i8 >>> 0 | 0) / (i2 >>> 0 | 0) | 0;
    wasm2asm_i32$0 = i9;
   }
   return wasm2asm_i32$0;
@@ -2321,7 +2319,7 @@ function asmFunc() {
      };
     };
    } else wasm2asm_i32$1 = 0;
-   if (wasm2asm_i32$1) HEAP8[(i1 + 75 | 0) >> 0] = 4294967295
+   if (wasm2asm_i32$1) HEAP8[(i1 + 75 | 0) >> 0] = 4294967295;
    i5 = ___stdio_write(i1 | 0, i2 | 0, i3 | 0) | 0;
    HEAP32[8 >> 2] = i4;
    wasm2asm_i32$0 = i5;
@@ -2400,7 +2398,7 @@ function asmFunc() {
  function ___errno_location() {
   var i1 = 0, wasm2asm_i32$0 = 0;
   topmost : {
-   if (HEAPU32[8 >> 2] == 0) i1 = 60 else i1 = HEAPU32[((_pthread_self() | 0) + 60 | 0) >> 2];
+   if (HEAPU32[8 >> 2] == 0) i1 = 60; else i1 = HEAPU32[((_pthread_self() | 0) + 60 | 0) >> 2];
    wasm2asm_i32$0 = i1;
   }
   return wasm2asm_i32$0;

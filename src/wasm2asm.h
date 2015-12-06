@@ -496,10 +496,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     Ref visitIf(If *curr) override {
       IString temp;
       Ref condition = visitForExpression(curr->condition, i32, temp);
-      Ref ifTrue = visitAndAssign(curr->ifTrue, result);
+      Ref ifTrue = ValueBuilder::makeStatement(visitAndAssign(curr->ifTrue, result));
       Ref ifFalse;
       if (curr->ifFalse) {
-        ifFalse = visitAndAssign(curr->ifFalse, result);
+        ifFalse = ValueBuilder::makeStatement(visitAndAssign(curr->ifFalse, result));
       }
       if (temp.isNull()) {
         return ValueBuilder::makeIf(condition, ifTrue, ifFalse); // simple if
