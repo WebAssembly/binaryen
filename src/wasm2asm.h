@@ -451,6 +451,18 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return parent->fromName(name);
     }
 
+    // Appends extra to block, flattening out if extra is a block as well
+    void flattenAppend(Ref block, Ref extra) {
+      // add to our return block. if we receive a block, can just flatten it out here
+      if (extra[0] == BLOCK) {
+        for (int i = 0; i < extra[1]->size(); i++) {
+          block[1]->push_back(extra[1][i]);
+        }
+      } else {
+        block[1]->push_back(extra);
+      }
+    }
+
     // Visitors
 
     Ref visitBlock(Block *curr) override {
@@ -459,15 +471,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       size_t size = curr->list.size();
       int noResults = result == NO_RESULT ? size : size-1;
       for (size_t i = 0; i < noResults; i++) {
-        // add to our return block. if we receive a block, can just flatten it out here
-        Ref ast = ValueBuilder::makeStatement(visit(curr->list[i], NO_RESULT));
-        if (ast[0] == BLOCK) {
-          for (int j = 0; j < ast[1]->size(); j++) {
-            ret[1]->push_back(ast[1][j]);
-          }
-        } else {
-          ret[1]->push_back(ast);
-        }
+        flattenAppend(ret, ValueBuilder::makeStatement(visit(curr->list[i], NO_RESULT)));
       }
       if (result != NO_RESULT) {
         ret[1]->push_back(ValueBuilder::makeStatement(
@@ -569,14 +573,14 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       for (auto& operand : operands) {
         temps.emplace_back(operand->type, parent);
         IString temp = temps.back().temp;
-        ret[1]->push_back(visitAndAssign(operand, temp));
+        flattenAppend(ret, visitAndAssign(operand, temp));
         theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
       }
       theCall = makeAsmCoercion(theCall, wasmToAsmType(type));
       if (result != NO_RESULT) {
         theCall = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), theCall));
       }
-      ret[1]->push_back(theCall);
+      flattenAppend(ret, theCall);
       return ret;
     }
 
@@ -607,7 +611,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       // we must statementize them all
       Ref ret = ValueBuilder::makeBlock();
       ScopedTemp temp(i32, parent);
-      ret[1]->push_back(visit(curr->target, temp));
+      flattenAppend(ret, visit(curr->target, temp));
       Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), temp.getAstName()));
       return makeStatementizedCall(curr->operands, ret, theCall, result, curr->type);
     }
@@ -632,7 +636,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         Load fakeLoad = *curr;
         fakeLoad.ptr = &fakeLocal;
         Ref ret = blockify(visitAndAssign(curr->ptr, temp));
-        ret[1]->push_back(visitAndAssign(&fakeLoad, result));
+        flattenAppend(ret, visitAndAssign(&fakeLoad, result));
         return ret;
       }
       // normal load
@@ -664,8 +668,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         fakeStore.ptr = &fakeLocalPtr;
         fakeStore.value = &fakeLocalValue;
         Ref ret = blockify(visitAndAssign(curr->ptr, tempPtr));
-        ret[1]->push_back(visitAndAssign(curr->value, tempValue));
-        ret[1]->push_back(visitAndAssign(&fakeStore, result));
+        flattenAppend(ret, visitAndAssign(curr->value, tempValue));
+        flattenAppend(ret, visitAndAssign(&fakeStore, result));
         return ret;
       }
       // normal store
@@ -710,7 +714,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         Unary fakeUnary = *curr;
         fakeUnary.value = &fakeLocal;
         Ref ret = blockify(visitAndAssign(curr->value, temp));
-        ret[1]->push_back(visitAndAssign(&fakeUnary, result));
+        flattenAppend(ret, visitAndAssign(&fakeUnary, result));
         return ret;
       }
       // normal unary
@@ -762,8 +766,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         fakeBinary.left = &fakeLocalLeft;
         fakeBinary.right = &fakeLocalRight;
         Ref ret = blockify(visitAndAssign(curr->left, tempLeft));
-        ret[1]->push_back(visitAndAssign(curr->right, tempRight));
-        ret[1]->push_back(visitAndAssign(&fakeBinary, result));
+        flattenAppend(ret, visitAndAssign(curr->right, tempRight));
+        flattenAppend(ret, visitAndAssign(&fakeBinary, result));
         return ret;
       }
       // normal binary
@@ -821,9 +825,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         fakeSelect.ifTrue = &fakeLocalIfTrue;
         fakeSelect.ifFalse = &fakeLocalIfFalse;
         Ref ret = blockify(visitAndAssign(curr->condition, tempCondition));
-        ret[1]->push_back(visitAndAssign(curr->ifTrue, tempIfTrue));
-        ret[1]->push_back(visitAndAssign(curr->ifFalse, tempIfFalse));
-        ret[1]->push_back(visitAndAssign(&fakeSelect, result));
+        flattenAppend(ret, visitAndAssign(curr->ifTrue, tempIfTrue));
+        flattenAppend(ret, visitAndAssign(curr->ifFalse, tempIfFalse));
+        flattenAppend(ret, visitAndAssign(&fakeSelect, result));
         return ret;
       }
       // normal select
