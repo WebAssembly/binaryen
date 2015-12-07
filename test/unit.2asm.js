@@ -212,5 +212,7 @@ function asmFunc(global, env, buffer) {
   
  }
  
+ var FUNCTION_TABLE_d = [importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles];
+ var FUNCTION_TABLE_v = [z, big_negative, z, z, w, w, z, w, z, neg, z, z, z, z, z, z];
 }
 

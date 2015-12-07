@@ -164,6 +164,7 @@ private:
 
   void addBasics(Ref ast);
   void addImport(Ref ast, Import *import);
+  void addTables(Ref ast, Module *wasm);
 };
 
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
@@ -192,6 +193,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   for (auto func : wasm->functions) {
     asmFunc[3]->push_back(processFunction(func));
   }
+  addTables(asmFunc[3], wasm);
   // table XXX
   // memory XXX
   return ret;
@@ -251,6 +253,39 @@ void Wasm2AsmBuilder::addImport(Ref ast, Import *import) {
       fromName(import->base)
     )
   );
+}
+
+void Wasm2AsmBuilder::addTables(Ref ast, Module *wasm) {
+  std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
+  for (size_t i = 0; i < wasm->table.names.size(); i++) {
+    Name name = wasm->table.names[i];
+    auto func = wasm->functionsMap[name];
+    std::string sig = getSig(func);
+    auto& table = tables[sig];
+    if (table.size() == 0) {
+      // fill it with the first of its type seen. we have to fill with something; and for asm2wasm output, the first is the null anyhow
+      table.resize(tableSize);
+      for (int j = 0; j < tableSize; j++) {
+        table[j] = fromName(name);
+      }
+    } else {
+      table[i] = fromName(name);
+    }
+  }
+  for (auto& pair : tables) {
+    auto& sig = pair.first;
+    auto& table = pair.second;
+    std::string stable = std::string("FUNCTION_TABLE_") + sig;
+    IString asmName = IString(stable.c_str(), false);
+    // add to asm module
+    Ref theVar = ValueBuilder::makeVar();
+    ast->push_back(theVar);
+    Ref theArray = ValueBuilder::makeArray();
+    ValueBuilder::appendToVar(theVar, asmName, theArray);
+    for (auto& name : table) {
+      ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
+    }
+  }
 }
 
 Ref Wasm2AsmBuilder::processFunction(Function* func) {

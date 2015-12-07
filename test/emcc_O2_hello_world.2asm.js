@@ -2527,5 +2527,8 @@ function asmFunc(global, env, buffer) {
   abort(2 | 0)
  }
  
+ var FUNCTION_TABLE_ii = [b0, ___stdio_close, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0, b0];
+ var FUNCTION_TABLE_iiii = [b1, b1, b1, b1, ___stdout_write, ___stdio_seek, b1, ___stdio_write, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1];
+ var FUNCTION_TABLE_vi = [b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, _cleanup_418, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2];
 }
 

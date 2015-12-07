@@ -47,6 +47,16 @@ std::string getSig(FunctionType *type) {
   return ret;
 }
 
+std::string getSig(Function *func) {
+  // generate signature
+  std::string ret;
+  ret += getSig(func->result);
+  for (auto param : func->params) {
+    ret += getSig(param.type);
+  }
+  return ret;
+}
+
 } // namespace wasm
 
 #endif // _asm_v_wasm_h_
