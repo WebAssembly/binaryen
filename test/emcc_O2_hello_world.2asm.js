@@ -2531,24 +2531,24 @@ function asmFunc(global, env, buffer) {
  var FUNCTION_TABLE_iiii = [b1, b1, b1, b1, ___stdout_write, ___stdio_seek, b1, ___stdio_write, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1];
  var FUNCTION_TABLE_vi = [b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, _cleanup_418, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2, b2];
  return {
-  "_free": _free, 
-  "_main": _main, 
-  "_memset": _memset, 
-  "_malloc": _malloc, 
-  "_memcpy": _memcpy, 
-  "_fflush": _fflush, 
-  "___errno_location": ___errno_location, 
-  "runPostSets": runPostSets, 
-  "stackAlloc": stackAlloc, 
-  "stackSave": stackSave, 
-  "stackRestore": stackRestore, 
-  "establishStackSpace": establishStackSpace, 
-  "setThrew": setThrew, 
-  "setTempRet0": setTempRet0, 
-  "getTempRet0": getTempRet0, 
-  "dynCall_ii": dynCall_ii, 
-  "dynCall_iiii": dynCall_iiii, 
-  "dynCall_vi": dynCall_vi
+  _free: _free, 
+  _main: _main, 
+  _memset: _memset, 
+  _malloc: _malloc, 
+  _memcpy: _memcpy, 
+  _fflush: _fflush, 
+  ___errno_location: ___errno_location, 
+  runPostSets: runPostSets, 
+  stackAlloc: stackAlloc, 
+  stackSave: stackSave, 
+  stackRestore: stackRestore, 
+  establishStackSpace: establishStackSpace, 
+  setThrew: setThrew, 
+  setTempRet0: setTempRet0, 
+  getTempRet0: getTempRet0, 
+  dynCall_ii: dynCall_ii, 
+  dynCall_iiii: dynCall_iiii, 
+  dynCall_vi: dynCall_vi
  };
 }
 

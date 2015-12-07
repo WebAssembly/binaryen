@@ -1268,9 +1268,20 @@ struct JSPrinter {
         pretty ? emit(", ") : emit(',');
         newline();
       }
-      emit('"');
-      emit(args[i][0]->getCString());
-      emit("\":");
+      const char *str = args[i][0]->getCString();
+      const char *check = str;
+      bool needQuote = false;
+      while (*check) {
+        if (!isalnum(*check) && *check != '_' && *check != '$') {
+          needQuote = true;
+          break;
+        }
+        check++;
+      }
+      if (needQuote) emit('"');
+      emit(str);
+      if (needQuote) emit('"');
+      emit(":");
       space();
       print(args[i][1]);
     }

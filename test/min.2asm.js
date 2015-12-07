@@ -26,7 +26,7 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  "floats": floats
+  floats: floats
  };
 }
 

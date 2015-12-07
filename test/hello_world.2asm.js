@@ -16,7 +16,7 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  "add": add
+  add: add
  };
 }
 
