@@ -233,23 +233,13 @@ private:
     }
   }
 
-  char getSigFromType(WasmType type) {
-    switch (type) {
-      case i32:  return 'i';
-      case f32:  return 'f';
-      case f64:  return 'd';
-      case none: return 'v';
-      default: abort();
-    }
-  }
-
   FunctionType *getFunctionType(Ref parent, ExpressionList& operands) {
     // generate signature
     WasmType result = detectWasmType(parent, nullptr);
     std::string str = "FUNCSIG$";
-    str += getSigFromType(result);
+    str += getSig(result);
     for (auto operand : operands) {
-      str += getSigFromType(operand->type);
+      str += getSig(operand->type);
     }
     IString sig(str.c_str(), false);
     if (wasm.functionTypesMap.find(sig) == wasm.functionTypesMap.end()) {

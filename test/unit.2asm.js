@@ -193,7 +193,7 @@ function asmFunc(global, env, buffer) {
  function neg() {
   var x = Math_fround(0);
   x = Math_fround(-x);
-  FUNCTION_TABLE[(1 & 7 | 0) + 8 | 0](Math_fround(x));
+  FUNCTION_TABLE_vf[((1 & 7 | 0) + 8 | 0) & 15](Math_fround(x));
  }
  
  function ___syscall_ret() {

@@ -27,7 +27,27 @@ AsmType wasmToAsmType(WasmType type) {
   abort();
 }
 
+char getSig(WasmType type) {
+  switch (type) {
+    case i32:  return 'i';
+    case f32:  return 'f';
+    case f64:  return 'd';
+    case none: return 'v';
+    default: abort();
+  }
 }
+
+std::string getSig(FunctionType *type) {
+  // generate signature
+  std::string ret;
+  ret += getSig(type->result);
+  for (auto param : type->params) {
+    ret += getSig(param);
+  }
+  return ret;
+}
+
+} // namespace wasm
 
 #endif // _asm_v_wasm_h_
 

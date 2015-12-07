@@ -1896,7 +1896,7 @@ function asmFunc(global, env, buffer) {
      i4 = HEAPU32[i5 >> 2] | 0;
      i9 = i4;
      if (((i6 - i4 | 0) >>> 0 | 0) >>> 0 < (i2 >>> 0 | 0) >>> 0) {
-      i8 = FUNCTION_TABLE[((HEAPU32[(i3 + 36 | 0) >> 2] | 0) & 7 | 0) + 2 | 0](i3 | 0, i1 | 0, i2 | 0) | 0;
+      i8 = FUNCTION_TABLE_iiii[(((HEAPU32[(i3 + 36 | 0) >> 2] | 0) & 7 | 0) + 2 | 0) & 31](i3 | 0, i1 | 0, i2 | 0) | 0;
       break label$break$L5;
      }
      label$break$L10 : {
@@ -1917,7 +1917,7 @@ function asmFunc(global, env, buffer) {
         } else i4 = i14;
         continue while_out$0;
        } while (0);
-       if (((FUNCTION_TABLE[((HEAPU32[(i3 + 36 | 0) >> 2] | 0) & 7 | 0) + 2 | 0](i3 | 0, i1 | 0, i15 | 0) | 0) >>> 0 | 0) >>> 0 < (i15 >>> 0 | 0) >>> 0) {
+       if (((FUNCTION_TABLE_iiii[(((HEAPU32[(i3 + 36 | 0) >> 2] | 0) & 7 | 0) + 2 | 0) & 31](i3 | 0, i1 | 0, i15 | 0) | 0) >>> 0 | 0) >>> 0 < (i15 >>> 0 | 0) >>> 0) {
         i8 = i15;
         break label$break$L5;
        }
@@ -2076,7 +2076,7 @@ function asmFunc(global, env, buffer) {
       i10 = i11;
       break do_once$0;
      }
-     if ((FUNCTION_TABLE[((HEAPU32[(i1 + 36 | 0) >> 2] | 0) & 7 | 0) + 2 | 0](i1 | 0, i4 | 0, 1 | 0) | 0 | 0) == (1 | 0)) i10 = HEAPU8[i4 >> 0] | 0; else i10 = 4294967295;
+     if ((FUNCTION_TABLE_iiii[(((HEAPU32[(i1 + 36 | 0) >> 2] | 0) & 7 | 0) + 2 | 0) & 31](i1 | 0, i4 | 0, 1 | 0) | 0 | 0) == (1 | 0)) i10 = HEAPU8[i4 >> 0] | 0; else i10 = 4294967295;
     }
    }
    HEAP32[8 >> 2] = i3;
@@ -2092,7 +2092,7 @@ function asmFunc(global, env, buffer) {
    i2 = i1 + 20 | 0;
    i3 = i1 + 28 | 0;
    if (((HEAPU32[i2 >> 2] | 0) >>> 0 | 0) >>> 0 > ((HEAPU32[i3 >> 2] | 0) >>> 0 | 0) >>> 0) {
-    FUNCTION_TABLE[((HEAPU32[(i1 + 36 | 0) >> 2] | 0) & 7 | 0) + 2 | 0](i1 | 0, 0 | 0, 0 | 0) | 0;
+    FUNCTION_TABLE_iiii[(((HEAPU32[(i1 + 36 | 0) >> 2] | 0) & 7 | 0) + 2 | 0) & 31](i1 | 0, 0 | 0, 0 | 0) | 0;
     wasm2asm_i32$1 = (HEAPU32[i2 >> 2] | 0 | 0) == (0 | 0);
    } else wasm2asm_i32$1 = 0;
    if (wasm2asm_i32$1) i4 = 4294967295; else {
@@ -2100,7 +2100,7 @@ function asmFunc(global, env, buffer) {
     i6 = HEAPU32[i5 >> 2] | 0;
     i7 = i1 + 8 | 0;
     i8 = HEAPU32[i7 >> 2] | 0;
-    if ((i6 >>> 0 | 0) >>> 0 < (i8 >>> 0 | 0) >>> 0) FUNCTION_TABLE[((HEAPU32[(i1 + 40 | 0) >> 2] | 0) & 7 | 0) + 2 | 0](i1 | 0, i6 - i8 | 0 | 0, 1 | 0) | 0;
+    if ((i6 >>> 0 | 0) >>> 0 < (i8 >>> 0 | 0) >>> 0) FUNCTION_TABLE_iiii[(((HEAPU32[(i1 + 40 | 0) >> 2] | 0) & 7 | 0) + 2 | 0) & 31](i1 | 0, i6 - i8 | 0 | 0, 1 | 0) | 0;
     HEAP32[(i1 + 16 | 0) >> 2] = 0;
     HEAP32[i3 >> 2] = 0;
     HEAP32[i2 >> 2] = 0;
@@ -2379,7 +2379,7 @@ function asmFunc(global, env, buffer) {
   i2 = i2 | 0;
   i3 = i3 | 0;
   i4 = i4 | 0;
-  return FUNCTION_TABLE[(i1 & 7 | 0) + 2 | 0](i2 | 0, i3 | 0, i4 | 0) | 0 | 0;
+  return FUNCTION_TABLE_iiii[((i1 & 7 | 0) + 2 | 0) & 31](i2 | 0, i3 | 0, i4 | 0) | 0 | 0;
  }
  
  function stackAlloc(i1) {
@@ -2421,7 +2421,7 @@ function asmFunc(global, env, buffer) {
  function dynCall_ii(i1, i2) {
   i1 = i1 | 0;
   i2 = i2 | 0;
-  return FUNCTION_TABLE[(i1 & 1 | 0) + 0 | 0](i2 | 0) | 0 | 0;
+  return FUNCTION_TABLE_ii[((i1 & 1 | 0) + 0 | 0) & 31](i2 | 0) | 0 | 0;
  }
  
  function _cleanup_418(i1) {
@@ -2442,7 +2442,7 @@ function asmFunc(global, env, buffer) {
  function dynCall_vi(i1, i2) {
   i1 = i1 | 0;
   i2 = i2 | 0;
-  FUNCTION_TABLE[(i1 & 7 | 0) + 10 | 0](i2 | 0)
+  FUNCTION_TABLE_vi[((i1 & 7 | 0) + 10 | 0) & 31](i2 | 0)
  }
  
  function b1(i1, i2, i3) {

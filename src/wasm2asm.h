@@ -143,6 +143,10 @@ public:
     return breakedWithValue.find(name) != breakedWithValue.end();
   }
 
+  size_t getTableSize() {
+    return tableSize;
+  }
+
 private:
   // How many temp vars we need
   std::vector<int> temps; // type => num temps
@@ -155,6 +159,9 @@ private:
   // Label names to which we break with a value aka spooky-return-at-a-distance
   std::set<Name> breakedWithValue;
 
+  // All our function tables have the same size TODO: optimize?
+  size_t tableSize;
+
   void addHeaps(Ref ast);
 };
 
@@ -166,7 +173,15 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
   ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
   asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
+  // create heaps
   addHeaps(asmFunc[3]);
+  // figure out the table size
+  tableSize = wasm->table.names.size();
+  size_t pow2ed = 1;
+  while (pow2ed < tableSize) {
+    pow2ed <<= 1;
+  }
+  tableSize = pow2ed;
   // imports XXX
   // exports XXX
   // functions
@@ -638,9 +653,17 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return visitCall(curr);
     }
     Ref visitCallIndirect(CallIndirect *curr) override {
+      std::string stable = std::string("FUNCTION_TABLE_") + getSig(curr->fullType);
+      IString table = IString(stable.c_str(), false);
+      auto makeTableCall = [&](Ref target) {
+        return ValueBuilder::makeCall(ValueBuilder::makeSub(
+          ValueBuilder::makeName(table),
+          ValueBuilder::makeBinary(target, AND, ValueBuilder::makeInt(parent->getTableSize()-1))
+        ));
+      };
       if (!isStatement(curr)) {
         // none of our operands is a statement; go right ahead and create a simple expression
-        Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), visit(curr->target, EXPRESSION_RESULT)));
+        Ref theCall = makeTableCall(visit(curr->target, EXPRESSION_RESULT));
         for (auto operand : curr->operands) {
           theCall[2]->push_back(makeAsmCoercion(visit(operand, EXPRESSION_RESULT), wasmToAsmType(operand->type)));
         }
@@ -650,7 +673,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       Ref ret = ValueBuilder::makeBlock();
       ScopedTemp temp(i32, parent);
       flattenAppend(ret, visit(curr->target, temp));
-      Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), temp.getAstName()));
+      Ref theCall = makeTableCall(temp.getAstName());
       return makeStatementizedCall(curr->operands, ret, theCall, result, curr->type);
     }
     Ref visitGetLocal(GetLocal *curr) override {
