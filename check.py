@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, subprocess, difflib, json
+import os, sys, subprocess, difflib, json, time
 
 interpreter = None
 requested = []
@@ -12,6 +12,31 @@ for arg in sys.argv[1:]:
     assert os.path.exists(interpreter), 'interpreter not found'
   else:
     requested.append(arg)
+
+# external tools
+
+has_node = False
+try:
+  subprocess.check_call(['nodejs', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  has_node = True
+except:
+  pass
+
+has_mozjs = False
+try:
+  subprocess.check_call(['mozjs', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  has_mozjs = True
+except:
+  pass
+
+has_emcc = False
+try:
+  subprocess.check_call(['emcc', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  has_emcc = True
+except:
+  pass
+
+# utilities
 
 def fail(actual, expected):
   raise Exception("incorrect output, diff:\n\n%s" % (
@@ -26,13 +51,23 @@ def fail_if_not_contained(actual, expected):
   if expected not in actual:
     fail(actual, expected)
 
-if not interpreter:
-  print '[ no wasm interpreter provided, you should pass one as --interpreter=path/to/interpreter ]'
-
 if len(requested) == 0:
   tests = sorted(os.listdir('test'))
 else:
   tests = requested[:]
+
+if not interpreter:
+  print 'warning: no interpreter provided (not testing spec interpreter validation)'
+  time.sleep(0.5)
+if not has_node:
+  print 'warning: no node found (not checking proper js form)'
+  time.sleep(0.5)
+if not has_mozjs:
+  print 'warning: no mozjs found (not checking asm.js validation)'
+  time.sleep(0.5)
+if not has_emcc:
+  print 'warning: no emcc found (not checking emscripten/binaryen integration)'
+  time.sleep(0.5)
 
 print '[ checking asm2wasm testcases... ]\n'
 
@@ -74,7 +109,7 @@ for asm in tests:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
 
-print '\n[ checking wasm2asm testcases... (need nodejs in your path) ]\n'
+print '\n[ checking wasm2asm testcases... ]\n'
 
 for wasm in ['min.wast', 'hello_world.wast', 'unit.wast', 'emcc_O2_hello_world.wast']:
   if wasm.endswith('.wast'):
@@ -92,12 +127,13 @@ for wasm in ['min.wast', 'hello_world.wast', 'unit.wast', 'emcc_O2_hello_world.w
     if actual != expected:
       fail(actual, expected)
 
-    # verify asm.js is valid js
-    open('a.2asm.js', 'w').write(actual)
-    proc = subprocess.Popen(['nodejs', 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = proc.communicate()
-    assert proc.returncode == 0
-    assert not out and not err, [out, err]
+    if has_node:
+      # verify asm.js is valid js
+      open('a.2asm.js', 'w').write(actual)
+      proc = subprocess.Popen(['nodejs', 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      out, err = proc.communicate()
+      assert proc.returncode == 0
+      assert not out and not err, [out, err]
 
 print '\n[ checking binaryen-shell... ]\n'
 
@@ -175,85 +211,89 @@ expected = open(os.path.join('test', 'example', 'find_div0s.txt')).read()
 if actual != expected:
   fail(actual, expected)
 '''
-print '\n[ checking wasm.js methods... (need both emcc and nodejs in your path) ]\n'
 
-for method in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm']:
-  for success in [1, 0]:
-    command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'hello_world.c') ]
-    if method:
-      command += ['-s', 'BINARYEN_METHOD="' + method + '"']
-    else:
-      method = 'wasm-s-parser' # this is the default
-    print method, ' : ', command, ' => ', success
-    subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    def break_cashew():
-      asm = open('a.wasm.asm.js').read()
-      asm = asm.replace('"almost asm"', '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
-      asm = asm.replace("'almost asm'", '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
-      open('a.wasm.asm.js', 'w').write(asm)
-    if method == 'asm2wasm':
-      os.unlink('a.wasm.wast') # we should not need the .wast
-      if not success:
-        break_cashew() # we need cashew
-    elif method == 'wasm-s-parser':
-      os.unlink('a.wasm.asm.js') # we should not need the .asm.js
-      if not success:
-        os.unlink('a.wasm.wast.mappedGlobals')
-    elif method == 'just-asm':
-      os.unlink('a.wasm.wast') # we should not need the .wast
-      break_cashew() # we don't use cashew, so ok to break it
-      if not success:
-        os.unlink('a.wasm.js')
-    else:
-      1/0
-    proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = proc.communicate()
-    if success:
-      assert proc.returncode == 0
-      assert 'hello, world!' in out
-    else:
-      assert proc.returncode != 0
-      assert 'hello, world!' not in out
+if has_emcc:
+  print '\n[ checking wasm.js methods... ]\n'
 
-print '\n[ checking wasm.js testcases... (need both emcc and nodejs in your path) ]\n'
-
-for c in tests:
-  if c.endswith(('.c', '.cpp')):
-    print '..', c
-    base = c.replace('.cpp', '').replace('.c', '')
-    post = base + '.post.js'
-    try:
-      post = open(os.path.join('test', post)).read()
-    except:
-      post = None
-    expected = open(os.path.join('test', base + '.txt')).read()
-    emcc = os.path.join('test', base + '.emcc')
-    extra = []
-    if os.path.exists(emcc):
-      extra = json.loads(open(emcc).read())
-    if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
-    for opts in [[], ['-O1'], ['-O2'], ['-O3'], ['-Oz']]:
-      for method in ['asm2wasm', 'wasm-s-parser', 'just-asm']:
-        command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', c)] + opts + extra
+  for method in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm']:
+    for success in [1, 0]:
+      command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'hello_world.c') ]
+      if method:
         command += ['-s', 'BINARYEN_METHOD="' + method + '"']
-        subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print '....' + ' '.join(command)
-        if post:
-          open('a.wasm.js', 'a').write(post)
-        else:
-          print '     (no post)'
-        for which in ['wasm']:
-          print '......', which
-          try:
-            args = json.loads(open(os.path.join('test', base + '.args')).read())
-          except:
-            args = []
-            print '     (no args)'
-          proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'] + args, stdout=subprocess.PIPE)
-          out, err = proc.communicate()
+      else:
+        method = 'wasm-s-parser' # this is the default
+      print method, ' : ', command, ' => ', success
+      subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      def break_cashew():
+        asm = open('a.wasm.asm.js').read()
+        asm = asm.replace('"almost asm"', '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
+        asm = asm.replace("'almost asm'", '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
+        open('a.wasm.asm.js', 'w').write(asm)
+      if method == 'asm2wasm':
+        os.unlink('a.wasm.wast') # we should not need the .wast
+        if not success:
+          break_cashew() # we need cashew
+      elif method == 'wasm-s-parser':
+        os.unlink('a.wasm.asm.js') # we should not need the .asm.js
+        if not success:
+          os.unlink('a.wasm.wast.mappedGlobals')
+      elif method == 'just-asm':
+        os.unlink('a.wasm.wast') # we should not need the .wast
+        break_cashew() # we don't use cashew, so ok to break it
+        if not success:
+          os.unlink('a.wasm.js')
+      else:
+        1/0
+      if has_node:
+        proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        if success:
           assert proc.returncode == 0
-          if out.strip() != expected.strip():
-            fail(out, expected)
+          assert 'hello, world!' in out
+        else:
+          assert proc.returncode != 0
+          assert 'hello, world!' not in out
+
+  print '\n[ checking wasm.js testcases... (need emcc in your path) ]\n'
+
+  for c in tests:
+    if c.endswith(('.c', '.cpp')):
+      print '..', c
+      base = c.replace('.cpp', '').replace('.c', '')
+      post = base + '.post.js'
+      try:
+        post = open(os.path.join('test', post)).read()
+      except:
+        post = None
+      expected = open(os.path.join('test', base + '.txt')).read()
+      emcc = os.path.join('test', base + '.emcc')
+      extra = []
+      if os.path.exists(emcc):
+        extra = json.loads(open(emcc).read())
+      if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
+      for opts in [[], ['-O1'], ['-O2'], ['-O3'], ['-Oz']]:
+        for method in ['asm2wasm', 'wasm-s-parser', 'just-asm']:
+          command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', c)] + opts + extra
+          command += ['-s', 'BINARYEN_METHOD="' + method + '"']
+          subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+          print '....' + ' '.join(command)
+          if post:
+            open('a.wasm.js', 'a').write(post)
+          else:
+            print '     (no post)'
+          for which in ['wasm']:
+            print '......', which
+            try:
+              args = json.loads(open(os.path.join('test', base + '.args')).read())
+            except:
+              args = []
+              print '     (no args)'
+            if has_node:
+              proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'] + args, stdout=subprocess.PIPE)
+              out, err = proc.communicate()
+              assert proc.returncode == 0
+              if out.strip() != expected.strip():
+                fail(out, expected)
 
 print '\n[ success! ]'
 
