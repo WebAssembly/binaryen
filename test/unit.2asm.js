@@ -9,6 +9,7 @@ function asmFunc(global, env, buffer) {
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
+ var Math_fround = global.Math.fround;
  var f64_to_int = asm2wasm.f64_to_int;
  var f64_rem = asm2wasm.f64_rem;
  function big_negative() {
