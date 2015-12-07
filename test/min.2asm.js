@@ -10,6 +10,7 @@ function asmFunc(global, env, buffer) {
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
  var Math_fround = global.Math.fround;
+ var Math_abs = global.Math.abs;
  function floats(f) {
   f = Math_fround(f);
   var t = Math_fround(0);

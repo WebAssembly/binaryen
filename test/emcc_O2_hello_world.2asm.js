@@ -10,6 +10,7 @@ function asmFunc(global, env, buffer) {
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
  var Math_fround = global.Math.fround;
+ var Math_abs = global.Math.abs;
  var abort = env.abort;
  var _pthread_cleanup_pop = env._pthread_cleanup_pop;
  var _pthread_self = env._pthread_self;
