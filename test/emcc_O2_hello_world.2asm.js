@@ -2287,7 +2287,7 @@ function asmFunc(global, env, buffer) {
   i4 = i4 | 0;
   var i5 = 0, i6 = 0, i7 = 0, i8 = 0, i9 = 0, wasm2asm_i32$0 = 0;
   topmost : {
-   i5 = i3 * i2 | 0;
+   i5 = Math_imul(i3, i2);
    if ((HEAPU32[(i4 + 76 | 0) >> 2] | 0 | 0) > (4294967295 | 0)) {
     i6 = (___lockfile(i4 | 0) | 0 | 0) == (0 | 0);
     i7 = ___fwritex(i1 | 0, i5 | 0, i4 | 0) | 0;
