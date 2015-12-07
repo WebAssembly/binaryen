@@ -72,7 +72,7 @@ function asmFunc(global, env, buffer) {
  function conversions() {
   var i = 0, d = 0.0;
   i = f64_to_int(+d) | 0;
-  d = +i;
+  d = +(i | 0);
   d = +((i >>> 0 | 0) >>> 0);
  }
  
