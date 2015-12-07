@@ -62,7 +62,7 @@ function asmFunc(global, env, buffer) {
  
  function intOps() {
   var x = 0;
-  return x == 0;
+  return (x | 0) == (0 | 0);
  }
  
  function conversions() {

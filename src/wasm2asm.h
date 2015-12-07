@@ -841,8 +841,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         case Div:      ret = ValueBuilder::makeBinary(left, DIV, right); break;
         case Min:      ret = ValueBuilder::makeCall(MATH_MIN, left, right); break;
         case Max:      ret = ValueBuilder::makeCall(MATH_MAX, left, right); break;
-        case Eq:       return ValueBuilder::makeBinary(left, EQ, right);
-        case Ne:       return ValueBuilder::makeBinary(left, NE, right);
+        case Eq:       return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), EQ, makeSigning(right, ASM_SIGNED));
+        case Ne:       return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), NE, makeSigning(right, ASM_SIGNED));
         case LtS:      return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),   LT, makeSigning(right, ASM_SIGNED));
         case LtU:      return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LT, makeSigning(right, ASM_UNSIGNED));
         case LeS:      return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),   LE, makeSigning(right, ASM_SIGNED));
