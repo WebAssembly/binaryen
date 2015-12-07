@@ -127,13 +127,22 @@ for wasm in ['min.wast', 'hello_world.wast', 'unit.wast', 'emcc_O2_hello_world.w
     if actual != expected:
       fail(actual, expected)
 
+    open('a.2asm.js', 'w').write(actual)
+
     if has_node:
       # verify asm.js is valid js
-      open('a.2asm.js', 'w').write(actual)
       proc = subprocess.Popen(['nodejs', 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
       out, err = proc.communicate()
       assert proc.returncode == 0
       assert not out and not err, [out, err]
+
+    if has_mozjs:
+      # verify asm.js validates
+      open('a.2asm.js', 'w').write(actual)
+      proc = subprocess.Popen(['mozjs', '-w', 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      out, err = proc.communicate()
+      assert proc.returncode == 0
+      fail_if_not_contained(err, 'Successfully compiled asm.js code')
 
 print '\n[ checking binaryen-shell... ]\n'
 
