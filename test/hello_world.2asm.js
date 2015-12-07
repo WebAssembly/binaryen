@@ -15,5 +15,8 @@ function asmFunc(global, env, buffer) {
   return x + y | 0 | 0;
  }
  
+ return {
+  "add": add
+ };
 }
 

@@ -25,5 +25,8 @@ function asmFunc(global, env, buffer) {
   n = wasm2asm_f32$0;
  }
  
+ return {
+  "floats": floats
+ };
 }
 
