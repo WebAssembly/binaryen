@@ -1,5 +1,6 @@
 bin/binaryen-shell
 bin/asm2wasm
+bin/wasm2asm
 bin/wasm.js
 *~
 *.diff
