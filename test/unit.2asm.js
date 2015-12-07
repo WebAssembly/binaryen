@@ -20,12 +20,12 @@ function asmFunc(global, env, buffer) {
  function importedDoubles() {
   var temp = 0.0, wasm2asm_f64$0 = 0.0;
   topmost : {
-   temp = +(+(+(HEAPF64[8 >> 3] + HEAPF64[16 >> 3]) + -HEAPF64[16 >> 3]) + -HEAPF64[8 >> 3]);
-   if ((HEAPU32[24 >> 2] | 0) > (0 | 0)) {
+   temp = +(+(+(+HEAPF64[8 >> 3] + +HEAPF64[16 >> 3]) + -+HEAPF64[16 >> 3]) + -+HEAPF64[8 >> 3]);
+   if ((HEAPU32[24 >> 2] | 0 | 0) > (0 | 0)) {
     wasm2asm_f64$0 = -3.4;
     break topmost;
    }
-   if (HEAPF64[32 >> 3] > 0.0) {
+   if (+HEAPF64[32 >> 3] > 0.0) {
     wasm2asm_f64$0 = 5.6;
     break topmost;
    }

@@ -680,19 +680,22 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       // normal load
       assert(curr->bytes == curr->align); // TODO: unaligned, i64
       Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
+      Ref ret;
       switch (curr->type) {
         case i32: {
           switch (curr->bytes) {
-            case 1: return ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP8  : HEAPU8 ), ValueBuilder::makePtrShift(ptr, 0));
-            case 2: return ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP16 : HEAPU16), ValueBuilder::makePtrShift(ptr, 1));
-            case 4: return ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32), ValueBuilder::makePtrShift(ptr, 2));
+            case 1: ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP8  : HEAPU8 ), ValueBuilder::makePtrShift(ptr, 0)); break;
+            case 2: ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP16 : HEAPU16), ValueBuilder::makePtrShift(ptr, 1)); break;
+            case 4: ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32), ValueBuilder::makePtrShift(ptr, 2)); break;
             default: abort();
           }
+          break;
         }
-        case f32: return ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2));
-        case f64: return ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3));
+        case f32: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2)); break;
+        case f64: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3)); break;
         default: abort();
       }
+      return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
     Ref visitStore(Store *curr) override {
       if (isStatement(curr)) {
