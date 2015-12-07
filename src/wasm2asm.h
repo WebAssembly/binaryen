@@ -163,6 +163,7 @@ private:
   size_t tableSize;
 
   void addBasics(Ref ast);
+  void addImport(Ref ast, Import *import);
 };
 
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
@@ -175,6 +176,9 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
   // create heaps, etc
   addBasics(asmFunc[3]);
+  for (auto import : wasm->imports) {
+    addImport(asmFunc[3], import);
+  }
   // figure out the table size
   tableSize = wasm->table.names.size();
   size_t pow2ed = 1;
@@ -235,6 +239,18 @@ void Wasm2AsmBuilder::addBasics(Ref ast) {
     );
   };
   addMath(MATH_IMUL, IMUL);
+}
+
+void Wasm2AsmBuilder::addImport(Ref ast, Import *import) {
+  Ref theVar = ValueBuilder::makeVar();
+  ast->push_back(theVar);
+  ValueBuilder::appendToVar(theVar,
+    fromName(import->name),
+    ValueBuilder::makeDot(
+      ValueBuilder::makeName(fromName(import->module)),
+      fromName(import->base)
+    )
+  );
 }
 
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
