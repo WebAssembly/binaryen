@@ -248,10 +248,11 @@ void Wasm2AsmBuilder::addBasics(Ref ast) {
 void Wasm2AsmBuilder::addImport(Ref ast, Import *import) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
+  Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
   ValueBuilder::appendToVar(theVar,
     fromName(import->name),
     ValueBuilder::makeDot(
-      ValueBuilder::makeName(fromName(import->module)),
+      module,
       fromName(import->base)
     )
   );
