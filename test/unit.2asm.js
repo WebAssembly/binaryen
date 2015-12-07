@@ -201,6 +201,11 @@ function asmFunc(global, env, buffer) {
   FUNCTION_TABLE_vf[((1 & 7 | 0) + 8 | 0) & 15](Math_fround(x));
  }
  
+ function cneg(x) {
+  x = Math_fround(x);
+  FUNCTION_TABLE_vf[((1 & 7 | 0) + 8 | 0) & 15](Math_fround(x))
+ }
+ 
  function ___syscall_ret() {
   var $0 = 0;
   ($0 >>> 0 | 0) >>> 0 > 4294963200 >>> 0
@@ -215,7 +220,8 @@ function asmFunc(global, env, buffer) {
  }
  
  var FUNCTION_TABLE_d = [importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles];
- var FUNCTION_TABLE_v = [z, big_negative, z, z, w, w, z, w, z, neg, z, z, z, z, z, z];
+ var FUNCTION_TABLE_v = [z, big_negative, z, z, w, w, z, w, z, z, z, z, z, z, z, z];
+ var FUNCTION_TABLE_vf = [cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg];
  return {
   big_negative: big_negative
  };

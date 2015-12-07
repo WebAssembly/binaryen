@@ -112,6 +112,10 @@ function () {
     x = -x;
     FUNCTION_TABLE_c[1 & 7](x);
   }
+  function cneg(x) {
+    x = Math_fround(x);
+    FUNCTION_TABLE_c[1 & 7](x);
+  }
   function ___syscall_ret() {
    var $0 = 0;
    ($0>>>0) > 4294963200; // -4096
@@ -124,7 +128,7 @@ function () {
 
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
-  var FUNCTION_TABLE_c = [ z, neg ];
+  var FUNCTION_TABLE_c = [ z, cneg ];
 
   return { big_negative: big_negative };
 }

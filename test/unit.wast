@@ -4,7 +4,7 @@
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
-  (table $z $big_negative $z $z $w $w $importedDoubles $w $z $neg)
+  (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative
     (local $temp f64)
     (block
@@ -347,6 +347,18 @@
         )
         (get_local $x)
       )
+    )
+  )
+  (func $cneg (param $x f32)
+    (call_indirect $FUNCSIG$vf
+      (i32.add
+        (i32.and
+          (i32.const 1)
+          (i32.const 7)
+        )
+        (i32.const 8)
+      )
+      (get_local $x)
     )
   )
   (func $___syscall_ret
