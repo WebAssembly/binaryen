@@ -162,7 +162,7 @@ private:
   // All our function tables have the same size TODO: optimize?
   size_t tableSize;
 
-  void addHeaps(Ref ast);
+  void addBasics(Ref ast);
 };
 
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
@@ -173,8 +173,8 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
   ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
   asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
-  // create heaps
-  addHeaps(asmFunc[3]);
+  // create heaps, etc
+  addBasics(asmFunc[3]);
   // figure out the table size
   tableSize = wasm->table.names.size();
   size_t pow2ed = 1;
@@ -193,9 +193,9 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   return ret;
 }
 
-void Wasm2AsmBuilder::addHeaps(Ref ast) {
-  // var HEAP8 = new global.Int8Array(buffer); etc
-  auto add = [&](IString name, IString view) {
+void Wasm2AsmBuilder::addBasics(Ref ast) {
+  // heaps, var HEAP8 = new global.Int8Array(buffer); etc
+  auto addHeap = [&](IString name, IString view) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     ValueBuilder::appendToVar(theVar,
@@ -211,14 +211,30 @@ void Wasm2AsmBuilder::addHeaps(Ref ast) {
       )
     );
   };
-  add(HEAP8,  INT8ARRAY);
-  add(HEAP16, INT16ARRAY);
-  add(HEAP32, INT32ARRAY);
-  add(HEAPU8,  UINT8ARRAY);
-  add(HEAPU16, UINT16ARRAY);
-  add(HEAPU32, UINT32ARRAY);
-  add(HEAPF32, FLOAT32ARRAY);
-  add(HEAPF64, FLOAT64ARRAY);
+  addHeap(HEAP8,  INT8ARRAY);
+  addHeap(HEAP16, INT16ARRAY);
+  addHeap(HEAP32, INT32ARRAY);
+  addHeap(HEAPU8,  UINT8ARRAY);
+  addHeap(HEAPU16, UINT16ARRAY);
+  addHeap(HEAPU32, UINT32ARRAY);
+  addHeap(HEAPF32, FLOAT32ARRAY);
+  addHeap(HEAPF64, FLOAT64ARRAY);
+  // core asm.js imports
+  auto addMath = [&](IString name, IString base) {
+    Ref theVar = ValueBuilder::makeVar();
+    ast->push_back(theVar);
+    ValueBuilder::appendToVar(theVar,
+      name,
+      ValueBuilder::makeDot(
+        ValueBuilder::makeDot(
+          ValueBuilder::makeName(GLOBAL),
+          MATH
+        ),
+        base
+      )
+    );
+  };
+  addMath(MATH_IMUL, IMUL);
 }
 
 Ref Wasm2AsmBuilder::processFunction(Function* func) {

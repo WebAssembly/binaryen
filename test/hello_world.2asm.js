@@ -8,6 +8,7 @@ function asmFunc(global, env, buffer) {
  var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
+ var Math_imul = global.Math.imul;
  function add(x, y) {
   x = x | 0;
   y = y | 0;
