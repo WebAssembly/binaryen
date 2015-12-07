@@ -11,7 +11,7 @@ function asmFunc(global, env, buffer) {
  function floats(f) {
   f = Math_fround(f);
   var t = Math_fround(0);
-  return Math_fround(t + f);
+  return Math_fround(Math_fround(t + f));
  }
  
  function neg(k, p) {

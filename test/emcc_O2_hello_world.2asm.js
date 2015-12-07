@@ -1344,7 +1344,7 @@ function asmFunc(global, env, buffer) {
    i13 = 0;
    wasm2asm_i32$0 = i13;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function _free(i1) {
@@ -1872,7 +1872,7 @@ function asmFunc(global, env, buffer) {
    HEAP32[8 >> 2] = i4;
    wasm2asm_i32$0 = i24;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function ___fwritex(i1, i2, i3) {
@@ -1939,7 +1939,7 @@ function asmFunc(global, env, buffer) {
    }
    wasm2asm_i32$0 = i8;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function _fflush(i1) {
@@ -1983,7 +1983,7 @@ function asmFunc(global, env, buffer) {
    }
    wasm2asm_i32$0 = i2;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function _strlen(i1) {
@@ -2040,7 +2040,7 @@ function asmFunc(global, env, buffer) {
    }
    wasm2asm_i32$0 = i7 - i2 | 0;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function ___overflow(i1, i2) {
@@ -2082,7 +2082,7 @@ function asmFunc(global, env, buffer) {
    HEAP32[8 >> 2] = i3;
    wasm2asm_i32$0 = i10;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function ___fflush_unlocked(i1) {
@@ -2110,7 +2110,7 @@ function asmFunc(global, env, buffer) {
    }
    wasm2asm_i32$0 = i4;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function _memcpy(i1, i2, i3) {
@@ -2156,7 +2156,7 @@ function asmFunc(global, env, buffer) {
    } while (0);
    wasm2asm_i32$0 = i4;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function runPostSets() {
@@ -2199,7 +2199,7 @@ function asmFunc(global, env, buffer) {
    } while (0);
    wasm2asm_i32$0 = i1 - i3 | 0;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function _puts(i1) {
@@ -2227,7 +2227,7 @@ function asmFunc(global, env, buffer) {
    if (i3) ___unlockfile(i2 | 0);
    wasm2asm_i32$0 = (i4 << 31 | 0) >> 31 | 0;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function ___stdio_seek(i1, i2, i3) {
@@ -2252,7 +2252,7 @@ function asmFunc(global, env, buffer) {
    HEAP32[8 >> 2] = i4;
    wasm2asm_i32$0 = i7;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function ___towrite(i1) {
@@ -2277,7 +2277,7 @@ function asmFunc(global, env, buffer) {
    }
    wasm2asm_i32$0 = i4;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function _fwrite(i1, i2, i3, i4) {
@@ -2299,7 +2299,7 @@ function asmFunc(global, env, buffer) {
    if ((i8 | 0) == (i5 | 0)) i9 = i3; else i9 = (i8 >>> 0 | 0) / (i2 >>> 0 | 0) | 0;
    wasm2asm_i32$0 = i9;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function ___stdout_write(i1, i2, i3) {
@@ -2323,7 +2323,7 @@ function asmFunc(global, env, buffer) {
    HEAP32[8 >> 2] = i4;
    wasm2asm_i32$0 = i5;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function copyTempDouble(i1) {
@@ -2350,7 +2350,7 @@ function asmFunc(global, env, buffer) {
    HEAP32[8 >> 2] = i2;
    wasm2asm_i32$0 = i1;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function copyTempFloat(i1) {
@@ -2371,7 +2371,7 @@ function asmFunc(global, env, buffer) {
    } else i2 = i1;
    wasm2asm_i32$0 = i2;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function dynCall_iiii(i1, i2, i3, i4) {
@@ -2379,7 +2379,7 @@ function asmFunc(global, env, buffer) {
   i2 = i2 | 0;
   i3 = i3 | 0;
   i4 = i4 | 0;
-  return FUNCTION_TABLE[(i1 & 7 | 0) + 2 | 0](i2 | 0, i3 | 0, i4 | 0) | 0;
+  return FUNCTION_TABLE[(i1 & 7 | 0) + 2 | 0](i2 | 0, i3 | 0, i4 | 0) | 0 | 0;
  }
  
  function stackAlloc(i1) {
@@ -2391,7 +2391,7 @@ function asmFunc(global, env, buffer) {
    HEAP32[8 >> 2] = ((HEAPU32[8 >> 2] | 0) + 15 | 0) & 4294967280 | 0;
    wasm2asm_i32$0 = i2;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function ___errno_location() {
@@ -2400,7 +2400,7 @@ function asmFunc(global, env, buffer) {
    if ((HEAPU32[8 >> 2] | 0 | 0) == (0 | 0)) i1 = 60; else i1 = HEAPU32[((_pthread_self() | 0) + 60 | 0) >> 2] | 0;
    wasm2asm_i32$0 = i1;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function setThrew(i1, i2) {
@@ -2415,13 +2415,13 @@ function asmFunc(global, env, buffer) {
  function _fputs(i1, i2) {
   i1 = i1 | 0;
   i2 = i2 | 0;
-  return (_fwrite(i1 | 0, _strlen(i1 | 0) | 0 | 0, 1 | 0, i2 | 0) | 0) + 4294967295 | 0;
+  return (_fwrite(i1 | 0, _strlen(i1 | 0) | 0 | 0, 1 | 0, i2 | 0) | 0) + 4294967295 | 0 | 0;
  }
  
  function dynCall_ii(i1, i2) {
   i1 = i1 | 0;
   i2 = i2 | 0;
-  return FUNCTION_TABLE[(i1 & 1 | 0) + 0 | 0](i2 | 0) | 0;
+  return FUNCTION_TABLE[(i1 & 1 | 0) + 0 | 0](i2 | 0) | 0 | 0;
  }
  
  function _cleanup_418(i1) {
@@ -2454,7 +2454,7 @@ function asmFunc(global, env, buffer) {
    abort(1 | 0);
    wasm2asm_i32$0 = 0;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function stackRestore(i1) {
@@ -2474,7 +2474,7 @@ function asmFunc(global, env, buffer) {
    abort(0 | 0);
    wasm2asm_i32$0 = 0;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function ___unlockfile(i1) {
@@ -2486,11 +2486,11 @@ function asmFunc(global, env, buffer) {
  
  function ___lockfile(i1) {
   i1 = i1 | 0;
-  return 0;
+  return 0 | 0;
  }
  
  function getTempRet0() {
-  return HEAPU32[160 >> 2] | 0;
+  return HEAPU32[160 >> 2] | 0 | 0;
  }
  
  function _main() {
@@ -2499,11 +2499,11 @@ function asmFunc(global, env, buffer) {
    _puts(672 | 0) | 0;
    wasm2asm_i32$0 = 0;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function stackSave() {
-  return HEAPU32[8 >> 2] | 0;
+  return HEAPU32[8 >> 2] | 0 | 0;
  }
  
  function b2(i1) {

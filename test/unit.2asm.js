@@ -31,7 +31,7 @@ function asmFunc(global, env, buffer) {
    }
    wasm2asm_f64$0 = 1.2;
   }
-  return wasm2asm_f64$0;
+  return +wasm2asm_f64$0;
  }
  
  function doubleCompares(x, y) {
@@ -57,12 +57,12 @@ function asmFunc(global, env, buffer) {
    }
    wasm2asm_f64$0 = y;
   }
-  return wasm2asm_f64$0;
+  return +wasm2asm_f64$0;
  }
  
  function intOps() {
   var x = 0;
-  return (x | 0) == (0 | 0);
+  return (x | 0) == (0 | 0) | 0;
  }
  
  function conversions() {
@@ -144,7 +144,7 @@ function asmFunc(global, env, buffer) {
    }
    wasm2asm_i32$0 = 0;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function blocker() {
@@ -154,7 +154,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function frem() {
-  return +f64_rem(+(5.5), +(1.2));
+  return +(+f64_rem(+(5.5), +(1.2)));
  }
  
  function big_uint_div_u() {
@@ -163,7 +163,7 @@ function asmFunc(global, env, buffer) {
    x = (4294967295 / 2 | 0) & 4294967295 | 0;
    wasm2asm_i32$0 = x;
   }
-  return wasm2asm_i32$0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function fr(x) {
@@ -178,7 +178,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function negZero() {
-  return -0.0;
+  return +(-0.0);
  }
  
  function abs() {

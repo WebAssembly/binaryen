@@ -236,13 +236,13 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
     flattenAppend(ret, ValueBuilder::makeStatement(processFunctionBody(func->body, result)));
     if (func->result != none) {
       // do the actual return
-      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(ValueBuilder::makeName(result))));
+      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(makeAsmCoercion(ValueBuilder::makeName(result), wasmToAsmType(func->result)))));
       freeTemp(func->result, result);
     }
   } else {
     // whole thing is an expression, just do a return
     if (func->result != none) {
-      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(processFunctionBody(func->body, EXPRESSION_RESULT))));
+      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(makeAsmCoercion(processFunctionBody(func->body, EXPRESSION_RESULT), wasmToAsmType(func->result)))));
     } else {
       flattenAppend(ret, processFunctionBody(func->body, NO_RESULT));
     }
