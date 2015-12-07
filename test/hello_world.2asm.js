@@ -1,4 +1,5 @@
 function asmFunc() {
+ "use asm";
  function add(x, y) {
   x = x | 0;
   y = y | 0;

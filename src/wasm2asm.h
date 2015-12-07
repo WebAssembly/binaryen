@@ -160,6 +160,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);
   ret[1]->push_back(asmFunc);
+  asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
   // imports XXX
   // exports XXX
   // functions

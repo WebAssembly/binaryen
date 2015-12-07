@@ -1,4 +1,5 @@
 function asmFunc() {
+ "use asm";
  function big_negative() {
   var temp = 0.0;
   temp = -2147483648.0;

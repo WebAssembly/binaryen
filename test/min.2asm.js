@@ -1,4 +1,5 @@
 function asmFunc() {
+ "use asm";
  function floats(f) {
   f = Math_fround(f);
   var t = Math_fround(0);
