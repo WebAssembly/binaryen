@@ -154,13 +154,19 @@ private:
 
   // Label names to which we break with a value aka spooky-return-at-a-distance
   std::set<Name> breakedWithValue;
+
+  void addHeaps(Ref ast);
 };
 
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);
   ret[1]->push_back(asmFunc);
+  ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
+  ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
+  ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
   asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
+  addHeaps(asmFunc[3]);
   // imports XXX
   // exports XXX
   // functions
@@ -170,6 +176,34 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   // table XXX
   // memory XXX
   return ret;
+}
+
+void Wasm2AsmBuilder::addHeaps(Ref ast) {
+  // var HEAP8 = new global.Int8Array(buffer); etc
+  auto add = [&](IString name, IString view) {
+    Ref theVar = ValueBuilder::makeVar();
+    ast->push_back(theVar);
+    ValueBuilder::appendToVar(theVar,
+      name,
+      ValueBuilder::makeNew(
+        ValueBuilder::makeCall(
+          ValueBuilder::makeDot(
+            ValueBuilder::makeName(GLOBAL),
+            view
+          ),
+          ValueBuilder::makeName(BUFFER)
+        )
+      )
+    );
+  };
+  add(HEAP8,  INT8ARRAY);
+  add(HEAP16, INT16ARRAY);
+  add(HEAP32, INT32ARRAY);
+  add(HEAPU8,  UINT8ARRAY);
+  add(HEAPU16, UINT16ARRAY);
+  add(HEAPU32, UINT32ARRAY);
+  add(HEAPF32, FLOAT32ARRAY);
+  add(HEAPF64, FLOAT64ARRAY);
 }
 
 Ref Wasm2AsmBuilder::processFunction(Function* func) {

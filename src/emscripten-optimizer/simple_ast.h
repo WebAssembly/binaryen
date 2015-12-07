@@ -1336,6 +1336,13 @@ public:
                             .push_back(target)
                             .push_back(makeRawArray());
   }
+  static Ref makeCall(Ref target, Ref arg) {
+    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
+                               .push_back(target)
+                               .push_back(makeRawArray());
+    ret[2]->push_back(arg);
+    return ret;
+  }
   static Ref makeCall(IString target) {
     Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
                                .push_back(makeName(target))
