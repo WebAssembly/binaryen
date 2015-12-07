@@ -74,7 +74,7 @@ for asm in tests:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
 
-print '\n[ checking wasm2asm testcases... ]\n'
+print '\n[ checking wasm2asm testcases... (need nodejs in your path) ]\n'
 
 for wasm in ['min.wast', 'hello_world.wast', 'unit.wast', 'emcc_O2_hello_world.wast']:
   if wasm.endswith('.wast'):
@@ -91,6 +91,13 @@ for wasm in ['min.wast', 'hello_world.wast', 'unit.wast', 'emcc_O2_hello_world.w
     expected = open(expected_file).read()
     if actual != expected:
       fail(actual, expected)
+
+    # verify asm.js is valid js
+    open('a.2asm.js', 'w').write(actual)
+    proc = subprocess.Popen(['nodejs', 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert proc.returncode == 0
+    assert not out and not err, [out, err]
 
 print '\n[ checking binaryen-shell... ]\n'
 
