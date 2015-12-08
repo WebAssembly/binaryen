@@ -12,6 +12,8 @@
 
 namespace wasm {
 
+extern int debug;
+
 using namespace cashew;
 
 IString ASM_FUNC("asmFunc"),
@@ -101,13 +103,15 @@ public:
 
   // Get a temp var.
   IString getTemp(WasmType type) {
+    IString ret;
     if (frees[type].size() > 0) {
-      IString ret = frees[type].back();
+      ret = frees[type].back();
       frees[type].pop_back();
-      return ret;
+    } else {
+      size_t index = temps[type]++;
+      ret = IString((std::string("wasm2asm_") + printWasmType(type) + "$" + std::to_string(index)).c_str(), false);
     }
-    size_t index = temps[type]++;
-    return IString((std::string("wasm2asm_") + printWasmType(type) + "$" + std::to_string(index)).c_str(), false);
+    return ret;
   }
   // Free a temp var.
   void freeTemp(WasmType type, IString temp) {
@@ -301,6 +305,7 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module *wasm) {
 }
 
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
+  if (debug) std::cerr << "  processFunction " << func->name << '\n';
   Ref ret = ValueBuilder::makeFunction(fromName(func->name));
   frees.clear();
   frees.resize(std::max(i32, std::max(f32, f64)) + 1);
@@ -584,10 +589,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return ret;
     }
 
-    Ref blockifyWithResult(Ref ast, WasmType type) { // XXX needed?
-      return blockifyWithTemp(ast, parent->getTemp(type));
-    }
-
     // For spooky return-at-a-distance/break-with-result, this tells us
     // what the result var is for a specific label.
     std::map<Name, IString> breakResults;
@@ -701,10 +702,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     }
 
     Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result, WasmType type) {
-      std::vector<ScopedTemp> temps;
+      std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
       for (auto& operand : operands) {
-        temps.emplace_back(operand->type, parent);
-        IString temp = temps.back().temp;
+        temps.push_back(new ScopedTemp(operand->type, parent));
+        IString temp = temps.back()->temp;
         flattenAppend(ret, visitAndAssign(operand, temp));
         theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
       }
@@ -713,6 +714,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         theCall = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), theCall));
       }
       flattenAppend(ret, theCall);
+      for (auto temp : temps) {
+        delete temp;
+      }
       return ret;
     }
 
