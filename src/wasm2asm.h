@@ -933,7 +933,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       switch (curr->op) {
         case Add:      ret = ValueBuilder::makeBinary(left, PLUS, right); break;
         case Sub:      ret = ValueBuilder::makeBinary(left, MINUS, right); break;
-        case Mul:      return ValueBuilder::makeCall(MATH_IMUL, left, right); // TODO: when one operand is a small int, emit a multiply
+        case Mul: {
+          if (curr->type == i32) {
+            return ValueBuilder::makeCall(MATH_IMUL, left, right); // TODO: when one operand is a small int, emit a multiply
+          } else {
+            return ValueBuilder::makeBinary(left, MINUS, right); break;
+          }
+        }
         case DivS:     ret = ValueBuilder::makeBinary(left, DIV, right); break;
         case DivU:     ret = ValueBuilder::makeBinary(left, DIV, right); break;
         case RemS:     ret = ValueBuilder::makeBinary(left, MOD, right); break;
