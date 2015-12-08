@@ -188,8 +188,6 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
     pow2ed <<= 1;
   }
   tableSize = pow2ed;
-  // imports XXX
-  // exports XXX
   // functions
   for (auto func : wasm->functions) {
     asmFunc[3]->push_back(processFunction(func));
