@@ -940,10 +940,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
             return ValueBuilder::makeBinary(left, MINUS, right); break;
           }
         }
-        case DivS:     ret = ValueBuilder::makeBinary(left, DIV, right); break;
-        case DivU:     ret = ValueBuilder::makeBinary(left, DIV, right); break;
-        case RemS:     ret = ValueBuilder::makeBinary(left, MOD, right); break;
-        case RemU:     ret = ValueBuilder::makeBinary(left, MOD, right); break;
+        case DivS:     ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),   DIV, makeSigning(right, ASM_SIGNED)); break;
+        case DivU:     ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), DIV, makeSigning(right, ASM_UNSIGNED)); break;
+        case RemS:     ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),   MOD, makeSigning(right, ASM_SIGNED)); break;
+        case RemU:     ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), MOD, makeSigning(right, ASM_UNSIGNED)); break;
         case And:      ret = ValueBuilder::makeBinary(left, AND, right); break;
         case Or:       ret = ValueBuilder::makeBinary(left, OR, right); break;
         case Xor:      ret = ValueBuilder::makeBinary(left, XOR, right); break;

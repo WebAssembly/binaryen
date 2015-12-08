@@ -2314,7 +2314,7 @@ function asmFunc(global, env, buffer) {
      i8 = i7;
     }
    } else i8 = ___fwritex(i1 | 0, i5 | 0, i4 | 0) | 0;
-   if ((i8 | 0) == (i5 | 0)) i9 = i3; else i9 = (i8 >>> 0 | 0) / (i2 >>> 0 | 0) | 0;
+   if ((i8 | 0) == (i5 | 0)) i9 = i3; else i9 = ((i8 >>> 0 | 0) >>> 0) / ((i2 >>> 0 | 0) >>> 0) | 0;
    wasm2asm_i32$0 = i9;
   }
   return wasm2asm_i32$0 | 0;

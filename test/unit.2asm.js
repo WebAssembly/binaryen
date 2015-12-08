@@ -165,7 +165,7 @@ function asmFunc(global, env, buffer) {
  function big_uint_div_u() {
   var x = 0, wasm2asm_i32$0 = 0;
   topmost : {
-   x = (4294967295 / 2 | 0) & 4294967295 | 0;
+   x = ((4294967295 >>> 0) / (2 >>> 0) | 0) & 4294967295 | 0;
    wasm2asm_i32$0 = x;
   }
   return wasm2asm_i32$0 | 0;
