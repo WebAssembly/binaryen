@@ -11,6 +11,7 @@ function asmFunc(global, env, buffer) {
  var Math_imul = global.Math.imul;
  var Math_fround = global.Math.fround;
  var Math_abs = global.Math.abs;
+ var Math_clz32 = global.Math.clz32;
  function add(x, y) {
   x = x | 0;
   y = y | 0;
