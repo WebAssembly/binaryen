@@ -146,13 +146,6 @@ public:
     return curr && willBeStatement.find(curr) != willBeStatement.end();
   }
 
-  void setBreakedWithValue(Name name) { // XXX needed? maybe we should just fill breakResults unconditionally?
-    breakedWithValue.insert(name);
-  }
-  bool isBreakedWithValue(Name name) {
-    return breakedWithValue.find(name) != breakedWithValue.end();
-  }
-
   size_t getTableSize() {
     return tableSize;
   }
@@ -165,9 +158,6 @@ private:
 
   // Expressions that will be a statement.
   std::set<Expression*> willBeStatement;
-
-  // Label names to which we break with a value aka spooky-return-at-a-distance
-  std::set<Name> breakedWithValue;
 
   // All our function tables have the same size TODO: optimize?
   size_t tableSize;
@@ -399,10 +389,6 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
       parent->setStatement(curr);
     }
     void visitBreak(Break *curr) override {
-      if (curr->value) {
-        // spooky return-at-a-distance
-        parent->setBreakedWithValue(curr->name);
-      }
       parent->setStatement(curr);
     }
     void visitSwitch(Switch *curr) override {
