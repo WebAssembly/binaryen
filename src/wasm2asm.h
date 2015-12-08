@@ -780,7 +780,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         return ret;
       }
       // normal store
-      assert(curr->bytes == curr->align); // TODO: unaligned, i64
+      assert(curr->bytes == curr->align); // TODO: unaligned
       Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
@@ -803,7 +803,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     Ref visitConst(Const *curr) override {
       switch (curr->type) {
         case i32: return ValueBuilder::makeInt(curr->value.i32);
-        // TODO: i64. statementize?
         case f32: {
           Ref ret = ValueBuilder::makeCall(MATH_FROUND);
           Const fake;
