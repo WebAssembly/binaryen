@@ -522,7 +522,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       Ref ret = visit(curr, result);
       // if it's not already a statement, then it's an expression, and we need to assign it
       // (if it is a statement, it already assigns to the result var)
-      if (!isStatement(curr) && result != NO_RESULT) { // XXX also not EXPRESSION_RESULT?
+      if (!isStatement(curr) && result != NO_RESULT) {
         ret = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), ret));
       }
       return ret;
