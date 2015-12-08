@@ -121,14 +121,20 @@ public:
   static IString fromName(Name name) {
     // TODO: more clever name fixing, including checking we do not collide
     const char *str = name.str;
+    // check the various issues, and recurse so we check the others
     if (strchr(str, '-')) {
-      char *mod = strdup(str);
+      char *mod = strdup(str); // XXX leak
       str = mod;
       while (*mod) {
         if (*mod == '-') *mod = '_';
         mod++;
       }
-      name = IString(str, false);
+      return fromName(IString(str, false));
+    }
+    if (isdigit(str[0])) {
+      std::string prefixed = "$$";
+      prefixed += name.str;
+      return fromName(IString(prefixed.c_str(), false));
     }
     return name;
   }
@@ -785,7 +791,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         return ret;
       }
       // normal load
-      assert(curr->bytes == curr->align); // TODO: unaligned, i64
+      assert(curr->bytes == curr->align); // TODO: unaligned
       Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
       Ref ret;
       switch (curr->type) {
