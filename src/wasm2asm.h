@@ -538,45 +538,14 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
 
     // Expressions with control flow turn into a block, which we must
     // then handle, even if we are an expression.
-    bool isBlock(Ref ast) { // XXX needed?
+    bool isBlock(Ref ast) {
       return !!ast && ast[0] == BLOCK;
     }
 
-    // Looks for a standard assign at the end of a block, which if this
-    // block returns a value, it will have.
-    Ref getBlockAssign(Ref ast) { // XXX needed?
-      if (!(ast->size() >= 2 && ast[1]->size() > 0)) return Ref();
-      Ref last = deStat(ast[1][ast[1]->size()-1]);
-      if (!(last[0] == ASSIGN && last[2][0] == NAME)) return Ref();
-      return last;
-    }
-
-    // If we replace an expression with a block, and we need to return
-    // a value, it will show up in the last element, as an assign. This
-    // returns it.
-    IString getBlockValue(Ref ast) { // XXX needed?
-      Ref assign = getBlockAssign(ast);
-      assert(!!assign);
-      return assign[2][1]->getIString();
-    }
-
-    Ref blockify(Ref ast) { // XXX needed?
+    Ref blockify(Ref ast) {
       if (isBlock(ast)) return ast;
       Ref ret = ValueBuilder::makeBlock();
       ret[1]->push_back(ValueBuilder::makeStatement(ast));
-      return ret;
-    }
-
-    Ref blockifyWithTemp(Ref ast, IString temp) { // XXX needed?
-      if (isBlock(ast)) {
-        Ref assign = getBlockAssign(ast);
-        assert(!!assign); // if a block, must have a value returned
-        assign[2][1]->setString(temp); // replace existing assign target
-        return ast;
-      }
-      // not a block, so an expression. Just assign to the temp var.
-      Ref ret = ValueBuilder::makeBlock();
-      ret[1]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(temp), ast)));
       return ret;
     }
 
