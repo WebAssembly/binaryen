@@ -5,7 +5,6 @@
 //
 
 #include <cmath>
-#include <sstream>
 
 #include "wasm.h"
 #include "mixed_arena.h"

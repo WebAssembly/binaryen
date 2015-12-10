@@ -1,4 +1,6 @@
 
+#include <sstream>
+
 #include "wasm.h"
 #include "shared-constants.h"
 #include "mixed_arena.h"

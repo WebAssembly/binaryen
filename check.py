@@ -212,6 +212,23 @@ for t in spec_tests:
     if actual != expected:
       fail(actual, expected)
 
+print '\n[ checking .s testcases... ]\n'
+
+for s in ['minimal.s']:
+  print '..', s
+  wasm = s.replace('.s', '.wast')
+  actual, err = subprocess.Popen([os.path.join('bin', 's2wasm'), os.path.join('test', 'dot_s', s)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+  assert err == '', 'bad err:' + err
+
+  # verify output
+  expected_file = os.path.join('test', 'dot_s', wasm)
+  if not os.path.exists(expected_file):
+    print actual
+    raise Exception('output ' + expected_file + ' does not exist')
+  expected = open(expected_file).read()
+  if actual != expected:
+    fail(actual, expected)
+
 print '\n[ checking example testcases... ]\n'
 
 subprocess.check_call(['g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g'])
