@@ -212,7 +212,6 @@ private:
       }
     };
     auto setOutput = [&](Expression* curr, Name assign) {
-std::cerr << "assign: " << assign.str << '\n';
       if (assign.str[1] == 'p') { // push
         stack.push_back(curr);
       } else if (assign.str[1] == 'd') { // discard
@@ -242,6 +241,12 @@ std::cerr << "assign: " << assign.str << '\n';
       skipWhitespace();
       if (match("i32.")) {
         switch (*s) {
+          case 'a': {
+            if (match("add")) makeBinary(BinaryOp::Add, i32);
+            else if (match("and")) makeBinary(BinaryOp::And, i32);
+            else abort_on("i32.a");
+            break;
+          }
           case 'c': {
             if (match("const")) {
               mustMatch("$push");
@@ -259,9 +264,15 @@ std::cerr << "assign: " << assign.str << '\n';
             } else abort_on("i32.c");
             break;
           }
+          case 'n': {
+            if (match("ne")) makeBinary(BinaryOp::Ne, i32);
+            else abort_on("i32.n");
+            break;
+          }
           case 's': {
             if (match("shr_s")) makeBinary(BinaryOp::ShrS, i32);
             else if (match("shr_u")) makeBinary(BinaryOp::ShrU, i32);
+            else if (match("sub")) makeBinary(BinaryOp::Sub, i32);
             else abort_on("i32.s");
             break;
           }
