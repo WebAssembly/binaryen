@@ -368,7 +368,7 @@ private:
           auto block = allocator.alloc<Block>();
           curr->body = block;
           bstack.push_back(block);
-        } else { // block end
+        } else { // block or loop end
           assert(!bstack.empty());
           bstack.pop_back();
         }
