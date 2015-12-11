@@ -25,6 +25,10 @@ public:
   }
 
 private:
+  // state
+
+  size_t nextStatic = 0; // location of next static allocation, i.e., the data segment
+
   // utilities
 
   void skipWhitespace() {
@@ -84,7 +88,7 @@ private:
   }
 
   Name getStr() {
-    std::string str;
+    std::string str; // TODO: optimize this and the other get* methods
     while (*s && !isspace(*s)) {
       str += *s;
       s++;
@@ -141,6 +145,7 @@ private:
       str += *s;
       s++;
     }
+    s++;
     skipWhitespace();
     return cashew::IString(str.c_str(), false);
   }
@@ -175,7 +180,10 @@ private:
       s++;
       if (match("file")) parseFile();
       else if (match("globl")) parseGlobl();
-      else break;
+      else {
+        s--;
+        break;
+      }
     }
   }
 
@@ -432,7 +440,9 @@ private:
 
   void parseType() {
     Name name = getStrToComma();
+    skipComma();
     mustMatch("@object");
+    mustMatch(".data");
     mustMatch(name.str);
     mustMatch(":");
     mustMatch(".asciz");
@@ -440,7 +450,13 @@ private:
     mustMatch(".size");
     mustMatch(name.str);
     mustMatch(",");
-    Name size = getStr();
+    size_t size = atoi(getStr().str); // TODO: optimize
+    assert(strlen(buffer.str) == size);
+    const int ALIGN = 16;
+    if (nextStatic == 0) nextStatic = ALIGN;
+    wasm.memory.segments.emplace_back(nextStatic, buffer.str, size);
+    nextStatic += size;
+    nextStatic = (nextStatic + ALIGN - 1) & -ALIGN;
   }
 };
 
