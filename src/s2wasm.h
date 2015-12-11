@@ -372,6 +372,7 @@ private:
         // this may also be a loop beginning
         if (*s == 'l') {
           auto curr = allocator.alloc<Loop>();
+          bstack.back()->list.push_back(curr);
           curr->out = name;
           mustMatch("loop");
           curr->in = getStr();
