@@ -87,6 +87,15 @@ private:
     return cashew::IString(str.c_str(), false);
   }
 
+  Name getStrToComma() {
+    std::string str;
+    while (*s && !isspace(*s) && *s != ',') {
+      str += *s;
+      s++;
+    }
+    return cashew::IString(str.c_str(), false);
+  }
+
   Name getCommaSeparated() {
     skipWhitespace();
     std::string str;
@@ -96,11 +105,6 @@ private:
     }
     skipWhitespace();
     return cashew::IString(str.c_str(), false);
-  }
-
-  Name getAssign() {
-    if (match("$discard=")) return Name();
-    findComma();
   }
 
   WasmType getType() {
@@ -202,34 +206,66 @@ private:
         return pop();
       } else {
         auto curr = allocator.alloc<GetLocal>();
-        curr->name = getStr();
+        curr->name = getStrToComma();
         curr->type = localTypes[curr->name];
         return (Expression*)curr;
       }
     };
     auto setOutput = [&](Expression* curr, Name assign) {
-      if (assign.is()) {
+std::cerr << "assign: " << assign.str << '\n';
+      if (assign.str[1] == 'p') { // push
         stack.push_back(curr);
-      } else {
+      } else if (assign.str[1] == 'd') { // discard
         currBlock->list.push_back(curr);
+      } else { // set to a local
+        auto set = allocator.alloc<SetLocal>();
+        set->name = assign;
+        set->value = curr;
+        set->type = curr->type;
+        currBlock->list.push_back(set);
       }
     };
+    auto makeBinary = [&](BinaryOp op, WasmType type) {
+      Name assign = getCommaSeparated();
+      skipComma();
+      auto curr = allocator.alloc<Binary>();
+      curr->op = op;
+      curr->right = getInput();
+      skipComma();
+      curr->left = getInput();
+      curr->finalize();
+      assert(curr->type == type);
+      setOutput(curr, assign);
+    };
+    // main loop
     while (1) {
       skipWhitespace();
       if (match("i32.")) {
-        if (match("const")) {
-          mustMatch("$push");
-          findComma();
-          if (*s == '.') {
-            // global address
-            auto curr = allocator.alloc<Const>();
-            curr->type = i32;
-            addressings.emplace_back(curr, getStr());
-            push(curr);
-          } else {
-            // constant
-            push(parseConst(getStr(), i32, allocator));
+        switch (*s) {
+          case 'c': {
+            if (match("const")) {
+              mustMatch("$push");
+              findComma();
+              if (*s == '.') {
+                // global address
+                auto curr = allocator.alloc<Const>();
+                curr->type = i32;
+                addressings.emplace_back(curr, getStr());
+                push(curr);
+              } else {
+                // constant
+                push(parseConst(getStr(), i32, allocator));
+              }
+            } else abort_on("i32.c");
+            break;
           }
+          case 's': {
+            if (match("shr_s")) makeBinary(BinaryOp::ShrS, i32);
+            else if (match("shr_u")) makeBinary(BinaryOp::ShrU, i32);
+            else abort_on("i32.s");
+            break;
+          }
+          default: abort_on("i32.?");
         }
       } else if (match("call")) {
         Name assign = getCommaSeparated();
