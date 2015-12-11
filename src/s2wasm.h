@@ -71,7 +71,12 @@ private:
   }
 
   void dump(const char *text) {
-    std::cerr << text << "\n==========\n" << s << "\n==========\n";
+    std::cerr << "[[" << text << "]]:\n==========\n";
+    for (size_t i = 0; i < 60; i++) {
+      if (!s[i]) break;
+      std::cerr << s[i];
+    }
+    std::cerr << "\n==========\n";
   }
 
   void unget(Name str) {
@@ -113,6 +118,18 @@ private:
       s++;
     }
     skipWhitespace();
+    return cashew::IString(str.c_str(), false);
+  }
+
+  Name getAssign() {
+    skipWhitespace();
+    std::string str;
+    while (*s && *s != '=') {
+      str += *s;
+      s++;
+    }
+    s++;
+    skipComma();
     return cashew::IString(str.c_str(), false);
   }
 
@@ -215,14 +232,19 @@ private:
     bstack.push_back(func->body->dyn_cast<Block>());
     std::vector<Expression*> estack;
     auto push = [&](Expression* curr) {
+      //std::cerr << "push " << curr << '\n';
       estack.push_back(curr);
     };
     auto pop = [&]() {
+      assert(!estack.empty());
       Expression* ret = estack.back();
+      assert(ret);
       estack.pop_back();
+      //std::cerr << "pop " << ret << '\n';
       return ret;
     };
     auto getInput = [&]() {
+      //dump("getinput");
       if (match("$pop")) {
         while (isdigit(*s)) s++;
         return pop();
@@ -247,7 +269,7 @@ private:
       }
     };
     auto makeBinary = [&](BinaryOp op, WasmType type) {
-      Name assign = getCommaSeparated();
+      Name assign = getAssign();
       skipComma();
       auto curr = allocator.alloc<Binary>();
       curr->op = op;
@@ -261,6 +283,7 @@ private:
     // main loop
     while (1) {
       skipWhitespace();
+      //dump("main function loop");
       if (match("i32.")) {
         switch (*s) {
           case 'a': {
@@ -317,7 +340,7 @@ private:
           default: abort_on("i32.?");
         }
       } else if (match("call")) {
-        Name assign = getCommaSeparated();
+        Name assign = getAssign();
         skipComma();
         auto curr = allocator.alloc<Call>();
         curr->target = getCommaSeparated();
@@ -330,6 +353,7 @@ private:
       } else if (match("block")) {
         auto curr = allocator.alloc<Block>();
         curr->name = getStr();
+        bstack.back()->list.push_back(curr);
         bstack.push_back(curr);
       } else if (match("BB")) {
         s -= 2;
@@ -345,6 +369,7 @@ private:
           curr->body = block;
           bstack.push_back(block);
         } else { // block end
+          assert(!bstack.empty());
           bstack.pop_back();
         }
       } else if (match("br")) {
@@ -368,8 +393,7 @@ private:
         auto curr = allocator.alloc<Break>();
         curr->name = FAKE_RETURN;
         if (*s == '$') {
-          getStr();
-          curr->value = pop();
+          curr->value = getInput();
         }
         bstack.back()->list.push_back(curr);
       } else if (match("func_end0:")) {
@@ -382,6 +406,8 @@ private:
         abort_on("function element");
       }
     }
+    assert(bstack.empty());
+    assert(estack.empty());
   }
 
   void parseType() {
