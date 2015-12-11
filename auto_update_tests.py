@@ -32,5 +32,13 @@ for t in sorted(os.listdir('test')):
 
     open(t, 'w').write(actual)
 
+for s in ['minimal.s', 'basics.s']:
+  print '..', s
+  wasm = s.replace('.s', '.wast')
+  actual, err = subprocess.Popen([os.path.join('bin', 's2wasm'), os.path.join('test', 'dot_s', s)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+  assert err == '', 'bad err:' + err
+  expected_file = os.path.join('test', 'dot_s', wasm)
+  open(expected_file, 'w').write(actual)
+
 print '\n[ success! ]'
 

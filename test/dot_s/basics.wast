@@ -30,16 +30,16 @@
               )
               $BB0_4
             )
-            (set_local $$0
-              (i32.add
-                (i32.const -12)
-                (get_local $$0)
-              )
+          )
+          (set_local $$0
+            (i32.add
+              (i32.const -12)
+              (get_local $$0)
             )
           )
-          (br $fake_return_waka123
-            (get_local $$0)
-          )
+        )
+        (br $fake_return_waka123
+          (get_local $$0)
         )
       )
     )

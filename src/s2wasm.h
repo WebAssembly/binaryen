@@ -153,11 +153,6 @@ private:
     abort_on("getType");
   }
 
-  // state
-
-  typedef std::pair<Const*, Name> Addressing;
-  std::vector<Addressing> addressings;
-
   // processors
 
   void process() {
@@ -280,6 +275,10 @@ private:
       assert(curr->type == type);
       setOutput(curr, assign);
     };
+    // fixups
+    typedef std::pair<Const*, Name> Addressing;
+    std::vector<Addressing> addressings;
+    std::vector<Block*> loopBlocks; // we need to clear their names
     // main loop
     while (1) {
       skipWhitespace();
@@ -360,17 +359,27 @@ private:
         Name name = getStrToColon();
         s++;
         skipWhitespace();
-        if (*s == 'l') { // loop
+        // pop all blocks/loops that reach this target
+        // pop all targets with this label
+        while (!bstack.empty()) {
+          auto curr = bstack.back();
+          if (curr->name == name) {
+            bstack.pop_back();
+            continue;
+          }
+          break;
+        }
+        // this may also be a loop beginning
+        if (*s == 'l') {
           auto curr = allocator.alloc<Loop>();
           curr->out = name;
           mustMatch("loop");
           curr->in = getStr();
           auto block = allocator.alloc<Block>();
+          block->name = curr->in; // temporary, fake
           curr->body = block;
+          loopBlocks.push_back(block);
           bstack.push_back(block);
-        } else { // block or loop end
-          assert(!bstack.empty());
-          bstack.pop_back();
         }
       } else if (match("br")) {
         auto curr = allocator.alloc<Break>();
@@ -400,14 +409,19 @@ private:
         mustMatch(".size");
         mustMatch("main,");
         mustMatch("func_end0-main");
-        wasm.addFunction(func);
-        return; // the function is done
+        break; // the function is done
       } else {
         abort_on("function element");
       }
     }
+    // finishing touches
+    bstack.pop_back(); // remove the base block for the function body
     assert(bstack.empty());
     assert(estack.empty());
+    for (auto block : loopBlocks) {
+      block->name = Name();
+    }
+    wasm.addFunction(func);
   }
 
   void parseType() {
