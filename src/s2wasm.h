@@ -96,6 +96,15 @@ private:
     return cashew::IString(str.c_str(), false);
   }
 
+  Name getStrToColon() {
+    std::string str;
+    while (*s && !isspace(*s) && *s != ':') {
+      str += *s;
+      s++;
+    }
+    return cashew::IString(str.c_str(), false);
+  }
+
   Name getCommaSeparated() {
     skipWhitespace();
     std::string str;
@@ -189,15 +198,16 @@ private:
       } else break;
     }
     // parse body
-    auto currBlock = allocator.alloc<Block>();
-    func->body = currBlock;
-    std::vector<Expression*> stack;
+    func->body = allocator.alloc<Block>();
+    std::vector<Block*> bstack;
+    bstack.push_back(func->body->dyn_cast<Block>());
+    std::vector<Expression*> estack;
     auto push = [&](Expression* curr) {
-      stack.push_back(curr);
+      estack.push_back(curr);
     };
     auto pop = [&]() {
-      Expression* ret = stack.back();
-      stack.pop_back();
+      Expression* ret = estack.back();
+      estack.pop_back();
       return ret;
     };
     auto getInput = [&]() {
@@ -213,15 +223,15 @@ private:
     };
     auto setOutput = [&](Expression* curr, Name assign) {
       if (assign.str[1] == 'p') { // push
-        stack.push_back(curr);
+        estack.push_back(curr);
       } else if (assign.str[1] == 'd') { // discard
-        currBlock->list.push_back(curr);
+        bstack.back()->list.push_back(curr);
       } else { // set to a local
         auto set = allocator.alloc<SetLocal>();
         set->name = assign;
         set->value = curr;
         set->type = curr->type;
-        currBlock->list.push_back(set);
+        bstack.back()->list.push_back(set);
       }
     };
     auto makeBinary = [&](BinaryOp op, WasmType type) {
@@ -289,6 +299,35 @@ private:
         }
         std::reverse(curr->operands.begin(), curr->operands.end());
         setOutput(curr, assign);
+      } else if (match("block")) {
+        auto curr = allocator.alloc<Block>();
+        curr->name = getStr();
+        bstack.push_back(curr);
+      } else if (match("BB")) {
+        s -= 2;
+        Name name = getStrToColon();
+        s++;
+        skipWhitespace();
+        if (*s == 'l') { // loop
+          auto curr = allocator.alloc<Loop>();
+          curr->out = name;
+          mustMatch("loop");
+          curr->in = getStr();
+          auto block = allocator.alloc<Block>();
+          curr->body = block;
+          bstack.push_back(block);
+        } else { // block end
+          bstack.pop_back();
+        }
+      } else if (match("br")) {
+        auto curr = allocator.alloc<Break>();
+        if (*s == '_') {
+          mustMatch("_if");
+          curr->condition = getInput();
+          skipComma();
+        }
+        curr->name = getStr();
+        bstack.back()->list.push_back(curr);
       } else if (match("return")) {
         Block *temp;
         if (!(func->body && (temp = func->body->dyn_cast<Block>()) && temp->name == FAKE_RETURN)) {
@@ -304,7 +343,7 @@ private:
           getStr();
           curr->value = pop();
         }
-        currBlock->list.push_back(curr);
+        bstack.back()->list.push_back(curr);
       } else if (match("func_end0:")) {
         mustMatch(".size");
         mustMatch("main,");
