@@ -35,6 +35,14 @@ private:
     }
   }
 
+  bool skipComma() {
+    skipWhitespace();
+    if (*s != ',') return false;
+    s++;
+    skipWhitespace();
+    return true;
+  }
+
   void findComma() {
     while (*s && *s != ',') s++;
     s++;
@@ -66,6 +74,10 @@ private:
     std::cerr << text << "\n==========\n" << s << "\n==========\n";
   }
 
+  void unget(Name str) {
+    s -= strlen(str.str);
+  }
+
   Name getStr() {
     std::string str;
     while (*s && !isspace(*s)) {
@@ -73,6 +85,22 @@ private:
       s++;
     }
     return cashew::IString(str.c_str(), false);
+  }
+
+  Name getCommaSeparated() {
+    skipWhitespace();
+    std::string str;
+    while (*s && *s != ',') {
+      str += *s;
+      s++;
+    }
+    skipWhitespace();
+    return cashew::IString(str.c_str(), false);
+  }
+
+  Name getAssign() {
+    if (match("$discard=")) return Name();
+    findComma();
   }
 
   WasmType getType() {
@@ -140,11 +168,15 @@ private:
     mustMatch(name.str);
     mustMatch(":");
     auto func = allocator.alloc<Function>();
+    std::map<Name, WasmType> localTypes;
     // params and result
     while (1) {
       if (match(".param")) {
         while (1) {
-          func->params.emplace_back(getNextId(), getType());
+          Name name = getNextId();
+          WasmType type = getType();
+          func->params.emplace_back(name, type);
+          localTypes[name] = type;
           skipWhitespace();
           if (!match(",")) break;
         }
@@ -164,6 +196,24 @@ private:
       stack.pop_back();
       return ret;
     };
+    auto getInput = [&]() {
+      if (match("$pop")) {
+        while (isdigit(*s)) s++;
+        return pop();
+      } else {
+        auto curr = allocator.alloc<GetLocal>();
+        curr->name = getStr();
+        curr->type = localTypes[curr->name];
+        return (Expression*)curr;
+      }
+    };
+    auto setOutput = [&](Expression* curr, Name assign) {
+      if (assign.is()) {
+        stack.push_back(curr);
+      } else {
+        currBlock->list.push_back(curr);
+      }
+    };
     while (1) {
       skipWhitespace();
       if (match("i32.")) {
@@ -181,6 +231,17 @@ private:
             push(parseConst(getStr(), i32, allocator));
           }
         }
+      } else if (match("call")) {
+        Name assign = getCommaSeparated();
+        skipComma();
+        auto curr = allocator.alloc<Call>();
+        curr->target = getCommaSeparated();
+        while (1) {
+          if (!skipComma()) break;
+          curr->operands.push_back(getInput());
+        }
+        std::reverse(curr->operands.begin(), curr->operands.end());
+        setOutput(curr, assign);
       } else if (match("return")) {
         Block *temp;
         if (!(func->body && (temp = func->body->dyn_cast<Block>()) && temp->name == FAKE_RETURN)) {
@@ -204,7 +265,7 @@ private:
         wasm.addFunction(func);
         return; // the function is done
       } else {
-        break;
+        abort_on("function element");
       }
     }
   }
