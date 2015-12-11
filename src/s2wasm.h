@@ -28,6 +28,9 @@ private:
   // state
 
   size_t nextStatic = 0; // location of next static allocation, i.e., the data segment
+  std::map<Name, size_t> staticAddresses; // name => address
+  typedef std::pair<Const*, Name> Addressing;
+  std::vector<Addressing> addressings; // we fix these up
 
   // utilities
 
@@ -284,8 +287,6 @@ private:
       setOutput(curr, assign);
     };
     // fixups
-    typedef std::pair<Const*, Name> Addressing;
-    std::vector<Addressing> addressings;
     std::vector<Block*> loopBlocks; // we need to clear their names
     std::set<Name> seenLabels; // if we already used a label, we don't need it in a loop (there is a block above it, with that label)
     // main loop
@@ -454,6 +455,8 @@ private:
     assert(strlen(buffer.str) == size);
     const int ALIGN = 16;
     if (nextStatic == 0) nextStatic = ALIGN;
+    // assign the address, add to memory, and increment for the next one
+    staticAddresses[name] = nextStatic;
     wasm.memory.segments.emplace_back(nextStatic, buffer.str, size);
     nextStatic += size;
     nextStatic = (nextStatic + ALIGN - 1) & -ALIGN;
