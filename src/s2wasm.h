@@ -116,6 +116,18 @@ private:
     return cashew::IString(str.c_str(), false);
   }
 
+  Name getQuoted() { // TODO: support 0 in the middle, etc., use a raw buffer, etc.
+    assert(*s == '"');
+    s++;
+    std::string str;
+    while (*s && *s != '\"') {
+      str += *s;
+      s++;
+    }
+    skipWhitespace();
+    return cashew::IString(str.c_str(), false);
+  }
+
   WasmType getType() {
     if (match("i32")) return i32;
     if (match("i64")) return i64;
@@ -138,7 +150,7 @@ private:
       if (*s != '.') break;
       s++;
       if (match("text")) parseText();
-      else if (match("data")) parseData();
+      else if (match("type")) parseType();
       else abort_on(s);
     }
   }
@@ -151,7 +163,7 @@ private:
       s++;
       if (match("file")) parseFile();
       else if (match("globl")) parseGlobl();
-      else abort_on(s);
+      else break;
     }
   }
 
@@ -274,8 +286,24 @@ private:
             } else abort_on("i32.c");
             break;
           }
+          case 'e': {
+            if (match("eq")) makeBinary(BinaryOp::Eq, i32);
+            break;
+          }
+          case 'g': {
+            if (match("gt_s")) makeBinary(BinaryOp::GtS, i32);
+            else if (match("gt_u")) makeBinary(BinaryOp::GtU, i32);
+            else abort_on("i32.g");
+            break;
+          }
           case 'n': {
             if (match("ne")) makeBinary(BinaryOp::Ne, i32);
+            else abort_on("i32.n");
+            break;
+          }
+          case 'r': {
+            if (match("rem_s")) makeBinary(BinaryOp::RemS, i32);
+            else if (match("rem_u")) makeBinary(BinaryOp::RemU, i32);
             else abort_on("i32.n");
             break;
           }
@@ -356,8 +384,17 @@ private:
     }
   }
 
-  void parseData() {
-    abort();
+  void parseType() {
+    Name name = getStrToComma();
+    mustMatch("@object");
+    mustMatch(name.str);
+    mustMatch(":");
+    mustMatch(".asciz");
+    Name buffer = getQuoted();
+    mustMatch(".size");
+    mustMatch(name.str);
+    mustMatch(",");
+    Name size = getStr();
   }
 };
 
