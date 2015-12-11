@@ -59,6 +59,3 @@ func_end0:
 	.size	.str, 15
 
 
-	.imports
-	.import puts "" puts (param i32) (result i32)
-
