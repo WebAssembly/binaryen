@@ -30,7 +30,7 @@
               )
               $BB0_4
             )
-            (loop $BB0_1 $BB0_4
+            (loop $BB0_1
               (block
                 (set_local $$0
                   (i32.add

@@ -279,6 +279,7 @@ private:
     typedef std::pair<Const*, Name> Addressing;
     std::vector<Addressing> addressings;
     std::vector<Block*> loopBlocks; // we need to clear their names
+    std::set<Name> seenLabels; // if we already used a label, we don't need it in a loop (there is a block above it, with that label)
     // main loop
     while (1) {
       skipWhitespace();
@@ -354,6 +355,7 @@ private:
         curr->name = getStr();
         bstack.back()->list.push_back(curr);
         bstack.push_back(curr);
+        seenLabels.insert(curr->name);
       } else if (match("BB")) {
         s -= 2;
         Name name = getStrToColon();
@@ -373,11 +375,14 @@ private:
         if (*s == 'l') {
           auto curr = allocator.alloc<Loop>();
           bstack.back()->list.push_back(curr);
-          curr->out = name;
+          curr->in = name;
           mustMatch("loop");
-          curr->in = getStr();
+          Name out = getStr();
+          if (seenLabels.count(out) == 0) {
+            curr->out = out;
+          }
           auto block = allocator.alloc<Block>();
-          block->name = curr->in; // temporary, fake
+          block->name = out; // temporary, fake
           curr->body = block;
           loopBlocks.push_back(block);
           bstack.push_back(block);
