@@ -4,7 +4,7 @@
     (block $fake_return_waka123
       (block
         (call $puts
-          (none.const ?)
+          (i32.const 16)
         )
         (block $BB0_5
           (block $BB0_4

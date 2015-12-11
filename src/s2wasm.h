@@ -22,13 +22,14 @@ class S2WasmBuilder {
 public:
   S2WasmBuilder(AllocatingModule& wasm, char *s) : wasm(wasm), allocator(wasm.allocator), s(s) {
     process();
+    fix();
   }
 
 private:
   // state
 
   size_t nextStatic = 0; // location of next static allocation, i.e., the data segment
-  std::map<Name, size_t> staticAddresses; // name => address
+  std::map<Name, int32_t> staticAddresses; // name => address
   typedef std::pair<Const*, Name> Addressing;
   std::vector<Addressing> addressings; // we fix these up
 
@@ -461,6 +462,17 @@ private:
     nextStatic += size;
     nextStatic = (nextStatic + ALIGN - 1) & -ALIGN;
   }
+
+  void fix() {
+    for (auto& pair : addressings) {
+      Const* curr = pair.first;
+      Name name = pair.second;
+      curr->value = Literal(staticAddresses[name]);
+      assert(curr->value.i32 > 0);
+      curr->type = i32;
+    }
+  }
+
 };
 
 } // namespace wasm
