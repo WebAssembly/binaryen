@@ -406,6 +406,7 @@ private:
         case 'a': {
           if (match("add")) makeBinary(BinaryOp::Add, type);
           else if (match("and")) makeBinary(BinaryOp::And, type);
+          else if (match("abs")) makeUnary(UnaryOp::Abs, type);
           else abort_on("type.a");
           break;
         }
@@ -430,6 +431,8 @@ private:
           else if (match("convert_u/i64")) makeUnary(UnaryOp::ConvertUInt64, type);
           else if (match("clz")) makeUnary(UnaryOp::Clz, type);
           else if (match("ctz")) makeUnary(UnaryOp::Ctz, type);
+          else if (match("copysign")) makeBinary(BinaryOp::CopySign, type);
+          else if (match("ceil")) makeUnary(UnaryOp::Ceil, type);
           else abort_on("type.c");
           break;
         }
@@ -445,6 +448,11 @@ private:
           if (match("eq")) makeBinary(BinaryOp::Eq, i32);
           else if (match("extend_s/i32")) makeUnary(UnaryOp::ExtendSInt32, type);
           else if (match("extend_u/i32")) makeUnary(UnaryOp::ExtendUInt32, type);
+          else abort_on("type.e");
+          break;
+        }
+        case 'f': {
+          if (match("floor")) makeUnary(UnaryOp::Floor, type);
           else abort_on("type.e");
           break;
         }
@@ -471,11 +479,15 @@ private:
         }
         case 'm': {
           if (match("mul")) makeBinary(BinaryOp::Mul, type);
+          else if (match("min")) makeBinary(BinaryOp::Min, type);
+          else if (match("max")) makeBinary(BinaryOp::Max, type);
           else abort_on("type.m");
           break;
         }
         case 'n': {
-          if (match("ne")) makeBinary(BinaryOp::Ne, i32);
+          if (match("neg")) makeUnary(UnaryOp::Neg, i32);
+          else if (match("nearest")) makeUnary(UnaryOp::Nearest, i32);
+          else if (match("ne")) makeBinary(BinaryOp::Ne, i32);
           else abort_on("type.n");
           break;
         }
@@ -505,6 +517,7 @@ private:
           else if (match("sub")) makeBinary(BinaryOp::Sub, type);
           else if (match("store")) makeStore(type);
           else if (match("select")) makeSelect(type);
+          else if (match("sqrt")) makeUnary(UnaryOp::Sqrt, type);
           else abort_on("type.s");
           break;
         }
@@ -513,6 +526,7 @@ private:
           else if (match("trunc_u/f32")) makeUnary(UnaryOp::TruncUFloat32, type);
           else if (match("trunc_s/f64")) makeUnary(UnaryOp::TruncSFloat64, type);
           else if (match("trunc_u/f64")) makeUnary(UnaryOp::TruncUFloat64, type);
+          else if (match("trunc")) makeUnary(UnaryOp::Trunc, type);
           else abort_on("type.t");
           break;
         }
