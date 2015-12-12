@@ -110,7 +110,7 @@
     (block $fake_return_waka123
       (block
         (set_local $$3
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 0)
           )
@@ -121,13 +121,13 @@
               (get_local $$0)
               $BB3_2
             )
-            (i32.store align=8
+            (i32.store align=4
               (get_local $$2)
               (i32.const 1)
             )
             (br $BB3_5)
           )
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 2)
           )
@@ -136,18 +136,18 @@
               (get_local $$1)
               $BB3_4
             )
-            (i32.store align=8
+            (i32.store align=4
               (get_local $$2)
               (i32.const 3)
             )
             (br $BB3_5)
           )
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 4)
           )
         )
-        (i32.store align=8
+        (i32.store align=4
           (get_local $$2)
           (i32.const 5)
         )
@@ -162,7 +162,7 @@
     (block $fake_return_waka123
       (block
         (set_local $$2
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$0)
             (i32.const 0)
           )
@@ -172,12 +172,12 @@
             (get_local $$1)
             $BB4_2
           )
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$0)
             (i32.const 1)
           )
         )
-        (i32.store align=8
+        (i32.store align=4
           (get_local $$0)
           (i32.const 2)
         )
@@ -192,7 +192,7 @@
     (block $fake_return_waka123
       (block
         (set_local $$2
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$0)
             (i32.const 0)
           )
@@ -203,18 +203,18 @@
               (get_local $$1)
               $BB5_2
             )
-            (i32.store align=8
+            (i32.store align=4
               (get_local $$0)
               (i32.const 1)
             )
             (br $BB5_3)
           )
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$0)
             (i32.const 2)
           )
         )
-        (i32.store align=8
+        (i32.store align=4
           (get_local $$0)
           (i32.const 3)
         )
@@ -228,7 +228,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$0)
             (i32.const 0)
           )
@@ -238,13 +238,13 @@
   )
   (func $minimal_loop (param $$0 i32) (result i32)
     (block
-      (i32.store align=8
+      (i32.store align=4
         (get_local $$0)
         (i32.const 0)
       )
       (loop $BB7_2 $BB7_1
         (block
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$0)
             (i32.const 1)
           )
@@ -258,14 +258,14 @@
     (block $fake_return_waka123
       (block
         (set_local $$2
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$0)
             (i32.const 0)
           )
         )
         (loop $BB8_2 $BB8_1
           (block
-            (i32.store align=8
+            (i32.store align=4
               (get_local $$0)
               (i32.const 1)
             )
@@ -278,7 +278,7 @@
             )
           )
         )
-        (i32.store align=8
+        (i32.store align=4
           (get_local $$0)
           (i32.const 2)
         )
@@ -293,7 +293,7 @@
     (block $fake_return_waka123
       (block
         (set_local $$3
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 0)
           )
@@ -303,7 +303,7 @@
             (get_local $$0)
             $BB9_4
           )
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 2)
           )
@@ -312,17 +312,17 @@
               (get_local $$1)
               $BB9_3
             )
-            (i32.store align=8
+            (i32.store align=4
               (get_local $$2)
               (i32.const 3)
             )
           )
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 4)
           )
         )
-        (i32.store align=8
+        (i32.store align=4
           (get_local $$2)
           (i32.const 5)
         )
@@ -337,7 +337,7 @@
     (block $fake_return_waka123
       (block
         (set_local $$3
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 0)
           )
@@ -348,13 +348,13 @@
               (get_local $$0)
               $BB10_2
             )
-            (i32.store align=8
+            (i32.store align=4
               (get_local $$2)
               (i32.const 1)
             )
             (br $BB10_4)
           )
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 2)
           )
@@ -362,12 +362,12 @@
             (get_local $$1)
             $BB10_4
           )
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 3)
           )
         )
-        (i32.store align=8
+        (i32.store align=4
           (get_local $$2)
           (i32.const 4)
         )
@@ -381,7 +381,7 @@
     (block
       (loop $BB11_7 $BB11_1
         (block
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 0)
           )
@@ -391,13 +391,13 @@
                 (get_local $$0)
                 $BB11_3
               )
-              (i32.store align=8
+              (i32.store align=4
                 (get_local $$2)
                 (i32.const 1)
               )
               (br $BB11_6)
             )
-            (i32.store align=8
+            (i32.store align=4
               (get_local $$2)
               (i32.const 2)
             )
@@ -406,18 +406,18 @@
                 (get_local $$1)
                 $BB11_5
               )
-              (i32.store align=8
+              (i32.store align=4
                 (get_local $$2)
                 (i32.const 3)
               )
               (br $BB11_6)
             )
-            (i32.store align=8
+            (i32.store align=4
               (get_local $$2)
               (i32.const 4)
             )
           )
-          (i32.store align=8
+          (i32.store align=4
             (get_local $$2)
             (i32.const 5)
           )
