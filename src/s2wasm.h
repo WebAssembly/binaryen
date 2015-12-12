@@ -307,6 +307,15 @@ private:
       assert(curr->type == type);
       setOutput(curr, assign);
     };
+    auto makeUnary = [&](UnaryOp op, WasmType type) {
+      Name assign = getAssign();
+      skipComma();
+      auto curr = allocator.alloc<Unary>();
+      curr->op = op;
+      curr->value = getInput();
+      curr->type = type;
+      setOutput(curr, assign);
+    };
     auto makeLoad = [&](WasmType type) {
       Name assign = getAssign();
       skipComma();
@@ -384,11 +393,23 @@ private:
               // constant
               setOutput(parseConst(getStr(), type, allocator), assign);
             }
-          } else abort_on("type.c");
+          } else if (match("convert_s/i32")) makeUnary(UnaryOp::ConvertSInt32, type);
+          else if (match("convert_u/i32")) makeUnary(UnaryOp::ConvertUInt32, type);
+          else if (match("convert_s/i64")) makeUnary(UnaryOp::ConvertSInt64, type);
+          else if (match("convert_u/i64")) makeUnary(UnaryOp::ConvertUInt64, type);
+          else abort_on("type.c");
+          break;
+        }
+        case 'd': {
+          if (match("demote/f64")) makeUnary(UnaryOp::DemoteFloat64, type);
+          else abort_on("type.g");
           break;
         }
         case 'e': {
           if (match("eq")) makeBinary(BinaryOp::Eq, i32);
+          else if (match("extend_s/i32")) makeUnary(UnaryOp::ExtendSInt32, type);
+          else if (match("extend_u/i32")) makeUnary(UnaryOp::ExtendUInt32, type);
+          else abort_on("type.e");
           break;
         }
         case 'g': {
@@ -424,26 +445,47 @@ private:
         }
         case 'o': {
           if (match("or")) makeBinary(BinaryOp::Or, type);
-          else abort_on("type.n");
+          else abort_on("type.o");
+          break;
+        }
+        case 'p': {
+          if (match("promote/f32")) makeUnary(UnaryOp::PromoteFloat32, type);
+          else abort_on("type.p");
           break;
         }
         case 'r': {
           if (match("rem_s")) makeBinary(BinaryOp::RemS, type);
           else if (match("rem_u")) makeBinary(BinaryOp::RemU, type);
-          else abort_on("type.n");
+          else if (match("reinterpret/i32") || match("reinterpret/i64")) makeUnary(UnaryOp::ReinterpretInt, type);
+          else if (match("reinterpret/f32") || match("reinterpret/f64")) makeUnary(UnaryOp::ReinterpretFloat, type);
+          else abort_on("type.r");
           break;
         }
         case 's': {
           if (match("shr_s")) makeBinary(BinaryOp::ShrS, type);
           else if (match("shr_u")) makeBinary(BinaryOp::ShrU, type);
+          else if (match("shl")) makeBinary(BinaryOp::Shl, type);
           else if (match("sub")) makeBinary(BinaryOp::Sub, type);
           else if (match("store")) makeStore(type);
           else abort_on("type.s");
           break;
         }
+        case 't': {
+          if (match("trunc_s/f32")) makeUnary(UnaryOp::TruncSFloat32, type);
+          else if (match("trunc_u/f32")) makeUnary(UnaryOp::TruncUFloat32, type);
+          else if (match("trunc_s/f64")) makeUnary(UnaryOp::TruncSFloat64, type);
+          else if (match("trunc_u/f64")) makeUnary(UnaryOp::TruncUFloat64, type);
+          else abort_on("type.t");
+          break;
+        }
+        case 'w': {
+          if (match("wrap/i64")) makeUnary(UnaryOp::WrapInt64, type);
+          else abort_on("type.w");
+          break;
+        }
         case 'x': {
           if (match("or")) makeBinary(BinaryOp::Xor, type);
-          else abort_on("type.n");
+          else abort_on("type.x");
           break;
         }
         default: abort_on("type.?");

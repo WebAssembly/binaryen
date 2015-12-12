@@ -32,7 +32,7 @@ for t in sorted(os.listdir('test')):
 
     open(t, 'w').write(actual)
 
-for s in ['minimal.s', 'basics.s', 'call.s', 'cfg-stackify.s', 'comparisons_f32.s', 'comparisons_f64.s', 'comparisons_i32.s', 'comparisons_i64.s']:
+for s in ['minimal.s', 'basics.s', 'call.s', 'cfg-stackify.s', 'comparisons_f32.s', 'comparisons_f64.s', 'comparisons_i32.s', 'comparisons_i64.s', 'conv.s']:
   print '..', s
   wasm = s.replace('.s', '.wast')
   full = os.path.join('test', 'dot_s', s)
