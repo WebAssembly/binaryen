@@ -95,9 +95,9 @@ private:
     return cashew::IString(str.c_str(), false);
   }
 
-  Name getStrToComma() {
+  Name getStrToSep() {
     std::string str;
-    while (*s && !isspace(*s) && *s != ',') {
+    while (*s && !isspace(*s) && *s != ',' && *s != ')') {
       str += *s;
       s++;
     }
@@ -111,6 +111,16 @@ private:
       s++;
     }
     return cashew::IString(str.c_str(), false);
+  }
+
+  int32_t getInt() {
+    int32_t ret = 0;
+    while (isdigit(*s)) {
+      ret *= 10;
+      ret += (*s - '0');
+      s++;
+    }
+    return ret;
   }
 
   Name getCommaSeparated() {
@@ -267,7 +277,7 @@ private:
         return pop();
       } else {
         auto curr = allocator.alloc<GetLocal>();
-        curr->name = getStrToComma();
+        curr->name = getStrToSep();
         curr->type = localTypes[curr->name];
         return (Expression*)curr;
       }
@@ -295,6 +305,62 @@ private:
       curr->left = getInput();
       curr->finalize();
       assert(curr->type == type);
+      setOutput(curr, assign);
+    };
+    auto makeLoad = [&](WasmType type) {
+      Name assign = getAssign();
+      skipComma();
+      auto curr = allocator.alloc<Load>();
+      curr->type = type;
+      switch (type) {
+        case i32: {
+          curr->bytes = 4;
+          curr->signed_ = false; // XXX
+        }
+        case i64: {
+          curr->bytes = 8;
+          curr->signed_ = false; // XXX
+        }
+        case f32: {
+          curr->bytes = 4;
+        }
+        case f64: {
+          curr->bytes = 8;
+        }
+      }
+      curr->offset = getInt();
+      curr->align = curr->bytes; // XXX
+      mustMatch("(");
+      curr->ptr = getInput();
+      mustMatch(")");
+      setOutput(curr, assign);
+    };
+    auto makeStore = [&](WasmType type) {
+      Name assign = getAssign();
+      skipComma();
+      auto curr = allocator.alloc<Store>();
+      curr->type = type;
+      switch (type) {
+        case i32: {
+          curr->bytes = 4;
+        }
+        case i64: {
+          curr->bytes = 8;
+        }
+        case f32: {
+          curr->bytes = 4;
+        }
+        case f64: {
+          curr->bytes = 8;
+        }
+      }
+      curr->offset = getInt();
+      curr->align = curr->bytes; // XXX
+      mustMatch("(");
+      curr->ptr = getInput();
+      mustMatch(")");
+      skipComma();
+      curr->value = getInput();
       setOutput(curr, assign);
     };
     auto handleTyped = [&](WasmType type) {
@@ -338,7 +404,13 @@ private:
           else if (match("lt_u")) makeBinary(BinaryOp::LtU, i32);
           else if (match("le_s")) makeBinary(BinaryOp::LeS, i32);
           else if (match("le_u")) makeBinary(BinaryOp::LeU, i32);
+          else if (match("load")) makeLoad(type);
           else abort_on("i32.g");
+          break;
+        }
+        case 'm': {
+          if (match("mul")) makeBinary(BinaryOp::Mul, type);
+          else abort_on("i32.m");
           break;
         }
         case 'n': {
@@ -356,6 +428,7 @@ private:
           if (match("shr_s")) makeBinary(BinaryOp::ShrS, type);
           else if (match("shr_u")) makeBinary(BinaryOp::ShrU, type);
           else if (match("sub")) makeBinary(BinaryOp::Sub, type);
+          else if (match("store")) makeStore(type);
           else abort_on("i32.s");
           break;
         }
@@ -497,7 +570,7 @@ private:
   }
 
   void parseType() {
-    Name name = getStrToComma();
+    Name name = getStrToSep();
     skipComma();
     mustMatch("@object");
     mustMatch(".data");
