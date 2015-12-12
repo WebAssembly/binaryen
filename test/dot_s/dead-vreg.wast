@@ -60,7 +60,7 @@
                         (get_local $$9)
                       )
                     )
-                    (i32.store align=8
+                    (i32.store align=4
                       (get_local $$8)
                       (get_local $$7)
                     )
