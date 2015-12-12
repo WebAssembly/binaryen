@@ -132,9 +132,14 @@ private:
   Name getAssign() {
     skipWhitespace();
     std::string str;
-    while (*s && *s != '=') {
+    char *before = s;
+    while (*s && *s != '=' && *s != '\n' && *s != ',') {
       str += *s;
       s++;
+    }
+    if (*s != '=') { // not an assign
+      s = before;
+      return Name();
     }
     s++;
     skipComma();
@@ -172,6 +177,7 @@ private:
       s++;
       if (match("text")) parseText();
       else if (match("type")) parseType();
+      else if (match("imports")) skipImports();
       else abort_on("process");
     }
   }
@@ -209,6 +215,7 @@ private:
       return cashew::IString(('$' + std::to_string(nextId++)).c_str(), false);
     };
 
+    if (debug) dump("func");
     Name name = getStr();
     skipWhitespace();
     mustMatch(".type");
@@ -294,7 +301,7 @@ private:
     // main loop
     while (1) {
       skipWhitespace();
-      //dump("main function loop");
+      if (debug) dump("main function loop");
       if (match("i32.")) {
         switch (*s) {
           case 'a': {
@@ -351,13 +358,26 @@ private:
           default: abort_on("i32.?");
         }
       } else if (match("call")) {
+        CallBase* curr;
+        if (match("_import")) {
+          curr = allocator.alloc<CallImport>();
+        } else if (match("_indirect")) {
+          curr = allocator.alloc<CallImport>();
+        } else {
+          curr = allocator.alloc<Call>();
+        }
         Name assign;
         if (*s == '$') {
           assign = getAssign();
           skipComma();
         }
-        auto curr = allocator.alloc<Call>();
-        curr->target = getCommaSeparated();
+        if (curr->is<Call>()) {
+          curr->dyn_cast<Call>()->target = getCommaSeparated();
+        } else if (curr->is<CallImport>()) {
+          curr->dyn_cast<CallImport>()->target = getCommaSeparated();
+        } else {
+          curr->dyn_cast<CallIndirect>()->target = getInput();
+        }
         while (1) {
           if (!skipComma()) break;
           curr->operands.push_back(getInput());
@@ -465,6 +485,17 @@ private:
     wasm.memory.segments.emplace_back(nextStatic, buffer.str, size);
     nextStatic += size;
     nextStatic = (nextStatic + ALIGN - 1) & -ALIGN;
+  }
+
+  void skipImports() {
+    while (1) {
+      if (match(".import")) {
+        s = strchr(s, '\n');
+        skipWhitespace();
+        continue;
+      }
+      break;
+    }
   }
 
   void fix() {

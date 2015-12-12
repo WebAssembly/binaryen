@@ -12,7 +12,7 @@ int debug = 0;
 }
 
 int main(int argc, char **argv) {
-  debug = getenv("WASM2ASM_DEBUG") ? getenv("WASM2ASM_DEBUG")[0] - '0' : 0;
+  debug = getenv("S2WASM_DEBUG") ? getenv("S2WASM_DEBUG")[0] - '0' : 0;
 
   char *infile = argv[1];
 
