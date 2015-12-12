@@ -594,6 +594,10 @@ private:
         }
         curr->name = getStr();
         bstack.back()->list.push_back(curr);
+      } else if (match("copy_local")) {
+        Name assign = getAssign();
+        skipComma();
+        setOutput(getInput(), assign);
       } else if (match("return")) {
         Block *temp;
         if (!(func->body && (temp = func->body->dyn_cast<Block>()) && temp->name == FAKE_RETURN)) {
