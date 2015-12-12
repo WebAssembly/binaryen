@@ -550,6 +550,8 @@ private:
           curr->value = getInput();
         }
         bstack.back()->list.push_back(curr);
+      } else if (match("unreachable")) {
+        bstack.back()->list.push_back(allocator.alloc<Unreachable>());
       } else if (match("func_end")) {
         s = strchr(s, '\n');
         s++;
