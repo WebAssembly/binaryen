@@ -181,19 +181,24 @@ private:
     assert(*s == '"');
     s++;
     std::vector<char> str;
-    auto ESCAPES = "nrtfb\\\"";
     while (*s && *s != '\"') {
       if (s[0] == '\\') {
-        if (strchr(ESCAPES, s[1])) {
-          str.push_back(s[1]);
-          s += 2;
-          continue;
-        } else if (isdigit(s[1])) {
-          int code = (s[1] - '0')*8*8 + (s[2] - '0')*8 + (s[3] - '0');
-          str.push_back(char(code));
-          s += 4;
-          continue;
-        } else abort_on("getQuoted-escape");
+        switch (s[1]) {
+          case 'n': str.push_back('\n'); s += 2; continue;
+          case 'r': str.push_back('\r'); s += 2; continue;
+          case 't': str.push_back('\t'); s += 2; continue;
+          case 'f': str.push_back('\f'); s += 2; continue;
+          case 'b': str.push_back('\b'); s += 2; continue;
+          case '\\': str.push_back('\\'); s += 2; continue;
+          default: {
+            if (isdigit(s[1])) {
+              int code = (s[1] - '0')*8*8 + (s[2] - '0')*8 + (s[3] - '0');
+              str.push_back(char(code));
+              s += 4;
+              continue;
+            } else abort_on("getQuoted-escape");
+          }
+        }
       }
       str.push_back(*s);
       s++;
@@ -740,10 +745,10 @@ private:
       }
     } else if (match(".int32")) {
       raw->resize(4);
-      (*(int32_t*)(&raw[0])) = getInt();
+      (*(int32_t*)(&(*raw)[0])) = getInt();
     } else if (match(".int64")) {
       raw->resize(8);
-      (*(int64_t*)(&raw[0])) = getInt();
+      (*(int64_t*)(&(*raw)[0])) = getInt();
     } else abort_on("data form");
     skipWhitespace();
     mustMatch(".size");
@@ -754,7 +759,7 @@ private:
     while (nextStatic % align) nextStatic++;
     // assign the address, add to memory
     staticAddresses[name] = nextStatic;
-    wasm.memory.segments.emplace_back(nextStatic, (const char*)&raw[0], seenSize);
+    wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], seenSize);
     nextStatic += seenSize;
   }
 

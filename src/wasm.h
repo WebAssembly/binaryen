@@ -1035,7 +1035,21 @@ public:
     printOpening(o, "memory") << " " << module.memory.initial;
     if (module.memory.max) o << " " << module.memory.max;
     for (auto segment : module.memory.segments) {
-      o << " (segment " << segment.offset << " \"" << segment.data << "\")";
+      o << " (segment " << segment.offset << " \"";
+      for (size_t i = 0; i < segment.size; i++) {
+        char c = segment.data[i];
+        switch (c) {
+          case '\n': o << "\\n"; break;
+          case '\r': o << "\\r"; break;
+          case '\t': o << "\\t"; break;
+          case '\f': o << "\\f"; break;
+          case '\b': o << "\\b"; break;
+          case '\\': o << "\\\\"; break;
+          case 0:    o << "\\0"; break;
+          default: o << c; // TODO: escaping
+        }
+      }
+      o << "\")";
     }
     o << ")\n";
     for (auto& curr : module.functionTypes) {
