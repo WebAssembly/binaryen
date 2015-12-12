@@ -363,7 +363,8 @@ private:
       curr->type = type;
       int32_t bytes = getInt();
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
-      curr->signed_ = match("_u");
+      curr->signed_ = match("_s");
+      match("_u");
       Name assign = getAssign();
       curr->offset = getInt();
       curr->align = curr->bytes; // XXX
