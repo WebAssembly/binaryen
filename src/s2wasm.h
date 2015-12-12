@@ -52,6 +52,11 @@ private:
     return true;
   }
 
+  #define abort_on(why) { \
+    dump(why ":");        \
+    abort();              \
+  }
+
   // match and skip the pattern, if matched
   bool match(const char *pattern) {
     size_t size = strlen(pattern);
@@ -65,7 +70,10 @@ private:
 
   void mustMatch(const char *pattern) {
     bool matched = match(pattern);
-    assert(matched);
+    if (!matched) {
+      std::cerr << "<< " << pattern << " >>\n";
+      abort_on("bad mustMatch");
+    }
   }
 
   void dump(const char *text) {
@@ -75,11 +83,6 @@ private:
       std::cerr << s[i];
     }
     std::cerr << "\n==========\n";
-  }
-
-  #define abort_on(why) { \
-    dump(why ":");        \
-    abort();              \
   }
 
   void unget(Name str) {
@@ -320,26 +323,13 @@ private:
       setOutput(curr, assign);
     };
     auto makeLoad = [&](WasmType type) {
-      Name assign = getAssign();
       skipComma();
       auto curr = allocator.alloc<Load>();
       curr->type = type;
-      switch (type) {
-        case i32: {
-          curr->bytes = 4;
-          curr->signed_ = false; // XXX
-        }
-        case i64: {
-          curr->bytes = 8;
-          curr->signed_ = false; // XXX
-        }
-        case f32: {
-          curr->bytes = 4;
-        }
-        case f64: {
-          curr->bytes = 8;
-        }
-      }
+      int32_t bytes = getInt();
+      curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
+      curr->signed_ = match("_u");
+      Name assign = getAssign();
       curr->offset = getInt();
       curr->align = curr->bytes; // XXX
       mustMatch("(");
@@ -348,24 +338,12 @@ private:
       setOutput(curr, assign);
     };
     auto makeStore = [&](WasmType type) {
-      Name assign = getAssign();
       skipComma();
       auto curr = allocator.alloc<Store>();
       curr->type = type;
-      switch (type) {
-        case i32: {
-          curr->bytes = 4;
-        }
-        case i64: {
-          curr->bytes = 8;
-        }
-        case f32: {
-          curr->bytes = 4;
-        }
-        case f64: {
-          curr->bytes = 8;
-        }
-      }
+      int32_t bytes = getInt();
+      curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
+      Name assign = getAssign();
       curr->offset = getInt();
       curr->align = curr->bytes; // XXX
       mustMatch("(");
