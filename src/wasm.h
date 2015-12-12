@@ -1040,10 +1040,10 @@ public:
         unsigned char c = segment.data[i];
         switch (c) {
           case '\n': o << "\\n"; break;
-          case '\r': o << "\\r"; break;
+          case '\r': o << "\\0d"; break;
           case '\t': o << "\\t"; break;
-          case '\f': o << "\\f"; break;
-          case '\b': o << "\\b"; break;
+          case '\f': o << "\\0c"; break;
+          case '\b': o << "\\08"; break;
           case '\\': o << "\\\\"; break;
           case '"' : o << "\\\""; break;
           case '\'' : o << "\\'"; break;
