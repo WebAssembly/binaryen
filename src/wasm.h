@@ -468,12 +468,18 @@ public:
 
 };
 
-class Call : public Expression {
+class CallBase : public Expression {
 public:
-  Call() : Expression(CallId) {}
+  CallBase(Id which) : Expression(which) {}
+
+  ExpressionList operands;
+};
+
+class Call : public CallBase {
+public:
+  Call() : CallBase(CallId) {}
 
   Name target;
-  ExpressionList operands;
 
   std::ostream& printBody(std::ostream &o, unsigned indent) {
     o << target;
@@ -549,13 +555,12 @@ public:
   }
 };
 
-class CallIndirect : public Expression {
+class CallIndirect : public CallBase {
 public:
-  CallIndirect() : Expression(CallIndirectId) {}
+  CallIndirect() : CallBase(CallIndirectId) {}
 
   FunctionType *fullType;
   Expression *target;
-  ExpressionList operands;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     printOpening(o, "call_indirect ") << fullType->name;
