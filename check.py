@@ -214,10 +214,13 @@ for t in spec_tests:
 
 print '\n[ checking .s testcases... ]\n'
 
-for s in ['minimal.s', 'basics.s']:
+for s in ['minimal.s', 'basics.s', 'call.s']:
   print '..', s
   wasm = s.replace('.s', '.wast')
-  actual, err = subprocess.Popen([os.path.join('bin', 's2wasm'), os.path.join('test', 'dot_s', s)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+  full = os.path.join('test', 'dot_s', s)
+  if not os.path.exists(full):
+    full = os.path.join('test', 'experimental', 'prototype-wasmate', 'test', s)
+  actual, err = subprocess.Popen([os.path.join('bin', 's2wasm'), full], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
   assert err == '', 'bad err:' + err
 
   # verify output
