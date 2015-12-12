@@ -396,6 +396,8 @@ private:
           else if (match("gt_u")) makeBinary(BinaryOp::GtU, i32);
           else if (match("ge_s")) makeBinary(BinaryOp::GeS, i32);
           else if (match("ge_u")) makeBinary(BinaryOp::GeU, i32);
+          else if (match("gt")) makeBinary(BinaryOp::Gt, i32);
+          else if (match("ge")) makeBinary(BinaryOp::Ge, i32);
           else abort_on("i32.g");
           break;
         }
@@ -405,6 +407,8 @@ private:
           else if (match("le_s")) makeBinary(BinaryOp::LeS, i32);
           else if (match("le_u")) makeBinary(BinaryOp::LeU, i32);
           else if (match("load")) makeLoad(type);
+          else if (match("lt")) makeBinary(BinaryOp::Lt, i32);
+          else if (match("le")) makeBinary(BinaryOp::Le, i32);
           else abort_on("i32.g");
           break;
         }
@@ -415,6 +419,11 @@ private:
         }
         case 'n': {
           if (match("ne")) makeBinary(BinaryOp::Ne, i32);
+          else abort_on("i32.n");
+          break;
+        }
+        case 'o': {
+          if (match("or")) makeBinary(BinaryOp::Or, type);
           else abort_on("i32.n");
           break;
         }
@@ -430,6 +439,11 @@ private:
           else if (match("sub")) makeBinary(BinaryOp::Sub, type);
           else if (match("store")) makeStore(type);
           else abort_on("i32.s");
+          break;
+        }
+        case 'x': {
+          if (match("or")) makeBinary(BinaryOp::Xor, type);
+          else abort_on("i32.n");
           break;
         }
         default: abort_on("i32.?");

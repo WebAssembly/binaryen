@@ -214,7 +214,7 @@ for t in spec_tests:
 
 print '\n[ checking .s testcases... ]\n'
 
-for s in ['minimal.s', 'basics.s', 'call.s', 'cfg-stackify.s']:
+for s in ['minimal.s', 'basics.s', 'call.s', 'cfg-stackify.s', 'comparisons_f32.s']:
   print '..', s
   wasm = s.replace('.s', '.wast')
   full = os.path.join('test', 'dot_s', s)
