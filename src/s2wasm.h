@@ -118,11 +118,33 @@ private:
 
   int32_t getInt() {
     int32_t ret = 0;
+    bool neg = false;
+    if (*s == '-') {
+      neg = true;
+      s++;
+    }
     while (isdigit(*s)) {
       ret *= 10;
       ret += (*s - '0');
       s++;
     }
+    if (neg) ret = -ret;
+    return ret;
+  }
+
+  int64_t getInt64() {
+    int64_t ret = 0;
+    bool neg = false;
+    if (*s == '-') {
+      neg = true;
+      s++;
+    }
+    while (isdigit(*s)) {
+      ret *= 10;
+      ret += (*s - '0');
+      s++;
+    }
+    if (neg) ret = -ret;
     return ret;
   }
 
@@ -652,39 +674,55 @@ private:
   }
 
   void parseType() {
+    if (debug) dump("type");
     Name name = getStrToSep();
     skipComma();
     mustMatch("@object");
-    mustMatch(".data");
+    match(".data");
     size_t align = 16; // XXX default?
     if (match(".globl")) {
       mustMatch(name.str);
-      if (match(".align")) {
-        align = getInt();
-      } else abort_on(".global in type");
+      skipWhitespace();
     }
-    skipWhitespace();
+    if (match(".align")) {
+      align = getInt();
+      skipWhitespace();
+    }
+    if (match(".lcomm")) {
+      mustMatch(name.str);
+      skipComma();
+      getInt();
+      skipComma();
+      getInt();
+      return; // XXX wtf is this thing and what do we do with it
+    }
     mustMatch(name.str);
     mustMatch(":");
     const char* data;
-    char type;
+    size_t expectedSize;
     if (match(".asciz")) {
       Name buffer = getQuoted();
       data = buffer.str;
-      type = 0;
+      expectedSize = strlen(data);
     } else if (match(".zero")) {
       int32_t size = getInt();
       data = (const char*)calloc(size, 1);
-      type = 1;
+      expectedSize = size;
+    } else if (match(".int32")) {
+      auto i = new int32_t(getInt());
+      data = (const char*)i;
+      expectedSize = 4;
+    } else if (match(".int64")) {
+      auto i = new int64_t(getInt64());
+      data = (const char*)i;
+      expectedSize = 8;
     } else abort_on("data");
     skipWhitespace();
     mustMatch(".size");
     mustMatch(name.str);
     mustMatch(",");
     size_t size = atoi(getStr().str); // TODO: optimize
-    if (type == 0) {
-      assert(strlen(data) == size);
-    }
+    assert(size == expectedSize);
     while (nextStatic % align) nextStatic++;
     // assign the address, add to memory
     staticAddresses[name] = nextStatic;
