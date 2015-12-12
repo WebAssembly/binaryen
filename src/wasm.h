@@ -1037,7 +1037,7 @@ public:
     for (auto segment : module.memory.segments) {
       o << " (segment " << segment.offset << " \"";
       for (size_t i = 0; i < segment.size; i++) {
-        char c = segment.data[i];
+        unsigned char c = segment.data[i];
         switch (c) {
           case '\n': o << "\\n"; break;
           case '\r': o << "\\r"; break;
@@ -1045,6 +1045,8 @@ public:
           case '\f': o << "\\f"; break;
           case '\b': o << "\\b"; break;
           case '\\': o << "\\\\"; break;
+          case '"' : o << "\\\""; break;
+          case '\'' : o << "\\'"; break;
           default: {
             if (c >= 32 && c < 127) {
               o << c;
