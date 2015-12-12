@@ -177,21 +177,30 @@ private:
     return cashew::IString(str.c_str(), false);
   }
 
-  Name getQuoted() { // TODO: support 0 in the middle, etc., use a raw buffer, etc.
+  std::vector<char> getQuoted() { // TODO: support 0 in the middle, etc., use a raw buffer, etc.
     assert(*s == '"');
     s++;
-    std::string str;
+    std::vector<char> str;
+    auto ESCAPES = "nrtfb\\\"";
     while (*s && *s != '\"') {
-      if (s[0] == '\\' && s[1] == '"') {
-        str += '"';
-        s += 2;
+      if (s[0] == '\\') {
+        if (strchr(ESCAPES, s[1])) {
+          str.push_back(s[1]);
+          s += 2;
+          continue;
+        } else if (isdigit(s[1])) {
+          int code = (s[1] - '0')*8*8 + (s[2] - '0')*8 + (s[3] - '0');
+          str.push_back(char(code));
+          s += 4;
+          continue;
+        } else abort_on("getQuoted-escape");
       }
-      str += *s;
+      str.push_back(*s);
       s++;
     }
     s++;
     skipWhitespace();
-    return cashew::IString(str.c_str(), false);
+    return str;
   }
 
   WasmType getType() {
@@ -718,42 +727,40 @@ private:
     }
     mustMatch(name.str);
     mustMatch(":");
-    const char* data;
-    size_t expectedSize;
-    size_t realSize; // including null terminator if any
+    auto raw = new std::vector<char>(); // leaked intentionally, no new allocation in Memory
     if (match(".asciz")) {
-      Name buffer = getQuoted();
-      data = buffer.str;
-      expectedSize = strlen(data);
-      realSize = expectedSize + 1;
+      *raw = getQuoted();
+      raw->push_back(0);
     } else if (match(".ascii")) {
-      Name buffer = getQuoted();
-      data = buffer.str;
-      realSize = expectedSize = strlen(data);
+      *raw = getQuoted();
     } else if (match(".zero")) {
       int32_t size = getInt();
-      data = (const char*)calloc(size, 1);
-      realSize = expectedSize = size;
+      for (size_t i = 0; i < size; i++) {
+        raw->push_back(0);
+      }
     } else if (match(".int32")) {
-      auto i = new int32_t(getInt());
-      data = (const char*)i;
-      realSize = expectedSize = 4;
+      raw->resize(4);
+      (*(int32_t*)(&raw[0])) = getInt();
     } else if (match(".int64")) {
-      auto i = new int64_t(getInt64());
-      data = (const char*)i;
-      realSize = expectedSize = 8;
+      raw->resize(8);
+      (*(int64_t*)(&raw[0])) = getInt();
     } else abort_on("data form");
     skipWhitespace();
     mustMatch(".size");
     mustMatch(name.str);
     mustMatch(",");
     size_t seenSize = atoi(getStr().str); // TODO: optimize
-    assert(seenSize == expectedSize);
+    
+//for (int i = 0; i < expectedSize; i++) {
+//  std::cerr << "   " << i << ": " << (unsigned char)(data[i]) << '\n';
+//}
+
+    assert(seenSize == raw->size());
     while (nextStatic % align) nextStatic++;
     // assign the address, add to memory
     staticAddresses[name] = nextStatic;
-    wasm.memory.segments.emplace_back(nextStatic, data, realSize);
-    nextStatic += realSize;
+    wasm.memory.segments.emplace_back(nextStatic, (const char*)&raw[0], seenSize);
+    nextStatic += seenSize;
   }
 
   void skipImports() {
