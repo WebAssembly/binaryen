@@ -217,6 +217,7 @@ private:
     mustMatch(name.str);
     mustMatch(":");
     auto func = allocator.alloc<Function>();
+    func->name = name;
     std::map<Name, WasmType> localTypes;
     // params and result
     while (1) {
