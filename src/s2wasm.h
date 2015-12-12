@@ -375,6 +375,19 @@ private:
       curr->value = getInput();
       setOutput(curr, assign);
     };
+    auto makeSelect = [&](WasmType type) {
+      Name assign = getAssign();
+      skipComma();
+      auto curr = allocator.alloc<Select>();
+      curr->condition = getInput();
+      skipComma();
+      curr->ifTrue = getInput();
+      skipComma();
+      curr->ifFalse = getInput();
+      skipComma();
+      curr->type = type;
+      setOutput(curr, assign);
+    };
     auto handleTyped = [&](WasmType type) {
       switch (*s) {
         case 'a': {
@@ -400,11 +413,16 @@ private:
           else if (match("convert_u/i32")) makeUnary(UnaryOp::ConvertUInt32, type);
           else if (match("convert_s/i64")) makeUnary(UnaryOp::ConvertSInt64, type);
           else if (match("convert_u/i64")) makeUnary(UnaryOp::ConvertUInt64, type);
+          else if (match("clz")) makeUnary(UnaryOp::Clz, type);
+          else if (match("ctz")) makeUnary(UnaryOp::Ctz, type);
           else abort_on("type.c");
           break;
         }
         case 'd': {
           if (match("demote/f64")) makeUnary(UnaryOp::DemoteFloat64, type);
+          else if (match("div_s")) makeBinary(BinaryOp::DivS, type);
+          else if (match("div_u")) makeBinary(BinaryOp::DivU, type);
+          else if (match("div")) makeBinary(BinaryOp::Div, type);
           else abort_on("type.g");
           break;
         }
@@ -453,6 +471,7 @@ private:
         }
         case 'p': {
           if (match("promote/f32")) makeUnary(UnaryOp::PromoteFloat32, type);
+          else if (match("popcnt")) makeUnary(UnaryOp::Popcnt, type);
           else abort_on("type.p");
           break;
         }
@@ -470,6 +489,7 @@ private:
           else if (match("shl")) makeBinary(BinaryOp::Shl, type);
           else if (match("sub")) makeBinary(BinaryOp::Sub, type);
           else if (match("store")) makeStore(type);
+          else if (match("select")) makeSelect(type);
           else abort_on("type.s");
           break;
         }
@@ -487,7 +507,7 @@ private:
           break;
         }
         case 'x': {
-          if (match("or")) makeBinary(BinaryOp::Xor, type);
+          if (match("xor")) makeBinary(BinaryOp::Xor, type);
           else abort_on("type.x");
           break;
         }
