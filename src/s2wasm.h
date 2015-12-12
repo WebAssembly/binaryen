@@ -264,10 +264,10 @@ private:
       }
     };
     auto setOutput = [&](Expression* curr, Name assign) {
-      if (assign.str[1] == 'p') { // push
-        estack.push_back(curr);
-      } else if (assign.str[1] == 'd') { // discard
+      if (assign.isNull() || assign.str[1] == 'd') { // discard
         bstack.back()->list.push_back(curr);
+      } else if (assign.str[1] == 'p') { // push
+        estack.push_back(curr);
       } else { // set to a local
         auto set = allocator.alloc<SetLocal>();
         set->name = assign;
@@ -351,8 +351,11 @@ private:
           default: abort_on("i32.?");
         }
       } else if (match("call")) {
-        Name assign = getAssign();
-        skipComma();
+        Name assign;
+        if (*s == '$') {
+          assign = getAssign();
+          skipComma();
+        }
         auto curr = allocator.alloc<Call>();
         curr->target = getCommaSeparated();
         while (1) {
