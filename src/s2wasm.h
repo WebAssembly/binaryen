@@ -182,6 +182,10 @@ private:
     s++;
     std::string str;
     while (*s && *s != '\"') {
+      if (s[0] == '\\' && s[1] == '"') {
+        str += '"';
+        s += 2;
+      }
       str += *s;
       s++;
     }
@@ -209,6 +213,7 @@ private:
       if (match("text")) parseText();
       else if (match("type")) parseType();
       else if (match("imports")) skipImports();
+      else if (match("data")) {}
       else abort_on("process");
     }
   }
@@ -715,34 +720,40 @@ private:
     mustMatch(":");
     const char* data;
     size_t expectedSize;
+    size_t realSize; // including null terminator if any
     if (match(".asciz")) {
       Name buffer = getQuoted();
       data = buffer.str;
       expectedSize = strlen(data);
+      realSize = expectedSize + 1;
+    } else if (match(".ascii")) {
+      Name buffer = getQuoted();
+      data = buffer.str;
+      realSize = expectedSize = strlen(data);
     } else if (match(".zero")) {
       int32_t size = getInt();
       data = (const char*)calloc(size, 1);
-      expectedSize = size;
+      realSize = expectedSize = size;
     } else if (match(".int32")) {
       auto i = new int32_t(getInt());
       data = (const char*)i;
-      expectedSize = 4;
+      realSize = expectedSize = 4;
     } else if (match(".int64")) {
       auto i = new int64_t(getInt64());
       data = (const char*)i;
-      expectedSize = 8;
-    } else abort_on("data");
+      realSize = expectedSize = 8;
+    } else abort_on("data form");
     skipWhitespace();
     mustMatch(".size");
     mustMatch(name.str);
     mustMatch(",");
-    size_t size = atoi(getStr().str); // TODO: optimize
-    assert(size == expectedSize);
+    size_t seenSize = atoi(getStr().str); // TODO: optimize
+    assert(seenSize == expectedSize);
     while (nextStatic % align) nextStatic++;
     // assign the address, add to memory
     staticAddresses[name] = nextStatic;
-    wasm.memory.segments.emplace_back(nextStatic, data, size);
-    nextStatic += size;
+    wasm.memory.segments.emplace_back(nextStatic, data, realSize);
+    nextStatic += realSize;
   }
 
   void skipImports() {
