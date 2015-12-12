@@ -322,6 +322,19 @@ private:
       curr->type = type;
       setOutput(curr, assign);
     };
+    auto makeHost = [&](HostOp op) {
+      Name assign = getAssign();
+      auto curr = allocator.alloc<Host>();
+      curr->op = MemorySize;
+      setOutput(curr, assign);
+    };
+    auto makeHost1 = [&](HostOp op) {
+      Name assign = getAssign();
+      auto curr = allocator.alloc<Host>();
+      curr->op = MemorySize;
+      curr->operands.push_back(getInput());
+      setOutput(curr, assign);
+    };
     auto makeLoad = [&](WasmType type) {
       skipComma();
       auto curr = allocator.alloc<Load>();
@@ -377,15 +390,17 @@ private:
         case 'c': {
           if (match("const")) {
             Name assign = getAssign();
-            if (*s == '.') {
+            char start = *s;
+            cashew::IString str = getStr();
+            if (start == '.' || (isalpha(*s) && str != NAN_ && str != INFINITY_)) {
               // global address
               auto curr = allocator.alloc<Const>();
               curr->type = i32;
-              addressings.emplace_back(curr, getStr());
+              addressings.emplace_back(curr, str);
               setOutput(curr, assign);
             } else {
               // constant
-              setOutput(parseConst(getStr(), type, allocator), assign);
+              setOutput(parseConst(str, type, allocator), assign);
             }
           } else if (match("convert_s/i32")) makeUnary(UnaryOp::ConvertSInt32, type);
           else if (match("convert_u/i32")) makeUnary(UnaryOp::ConvertUInt32, type);
@@ -613,6 +628,10 @@ private:
         bstack.back()->list.push_back(curr);
       } else if (match("unreachable")) {
         bstack.back()->list.push_back(allocator.alloc<Unreachable>());
+      } else if (match("memory_size")) {
+        makeHost(MemorySize);
+      } else if (match("grow_memory")) {
+        makeHost1(GrowMemory);
       } else if (match("func_end")) {
         s = strchr(s, '\n');
         s++;
