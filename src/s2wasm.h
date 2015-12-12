@@ -368,7 +368,7 @@ private:
         case 'a': {
           if (match("add")) makeBinary(BinaryOp::Add, type);
           else if (match("and")) makeBinary(BinaryOp::And, type);
-          else abort_on("i32.a");
+          else abort_on("type.a");
           break;
         }
         case 'c': {
@@ -384,7 +384,7 @@ private:
               // constant
               setOutput(parseConst(getStr(), type, allocator), assign);
             }
-          } else abort_on("i32.c");
+          } else abort_on("type.c");
           break;
         }
         case 'e': {
@@ -398,7 +398,7 @@ private:
           else if (match("ge_u")) makeBinary(BinaryOp::GeU, i32);
           else if (match("gt")) makeBinary(BinaryOp::Gt, i32);
           else if (match("ge")) makeBinary(BinaryOp::Ge, i32);
-          else abort_on("i32.g");
+          else abort_on("type.g");
           break;
         }
         case 'l': {
@@ -409,28 +409,28 @@ private:
           else if (match("load")) makeLoad(type);
           else if (match("lt")) makeBinary(BinaryOp::Lt, i32);
           else if (match("le")) makeBinary(BinaryOp::Le, i32);
-          else abort_on("i32.g");
+          else abort_on("type.g");
           break;
         }
         case 'm': {
           if (match("mul")) makeBinary(BinaryOp::Mul, type);
-          else abort_on("i32.m");
+          else abort_on("type.m");
           break;
         }
         case 'n': {
           if (match("ne")) makeBinary(BinaryOp::Ne, i32);
-          else abort_on("i32.n");
+          else abort_on("type.n");
           break;
         }
         case 'o': {
           if (match("or")) makeBinary(BinaryOp::Or, type);
-          else abort_on("i32.n");
+          else abort_on("type.n");
           break;
         }
         case 'r': {
           if (match("rem_s")) makeBinary(BinaryOp::RemS, type);
           else if (match("rem_u")) makeBinary(BinaryOp::RemU, type);
-          else abort_on("i32.n");
+          else abort_on("type.n");
           break;
         }
         case 's': {
@@ -438,15 +438,15 @@ private:
           else if (match("shr_u")) makeBinary(BinaryOp::ShrU, type);
           else if (match("sub")) makeBinary(BinaryOp::Sub, type);
           else if (match("store")) makeStore(type);
-          else abort_on("i32.s");
+          else abort_on("type.s");
           break;
         }
         case 'x': {
           if (match("or")) makeBinary(BinaryOp::Xor, type);
-          else abort_on("i32.n");
+          else abort_on("type.n");
           break;
         }
-        default: abort_on("i32.?");
+        default: abort_on("type.?");
       }
     };
     // fixups
