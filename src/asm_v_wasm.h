@@ -38,7 +38,6 @@ char getSig(WasmType type) {
 }
 
 std::string getSig(FunctionType *type) {
-  // generate signature
   std::string ret;
   ret += getSig(type->result);
   for (auto param : type->params) {
@@ -48,11 +47,19 @@ std::string getSig(FunctionType *type) {
 }
 
 std::string getSig(Function *func) {
-  // generate signature
   std::string ret;
   ret += getSig(func->result);
   for (auto param : func->params) {
     ret += getSig(param.type);
+  }
+  return ret;
+}
+
+std::string getSig(CallBase *call) {
+  std::string ret;
+  ret += getSig(call->type);
+  for (auto operand : call->operands) {
+    ret += getSig(operand->type);
   }
   return ret;
 }

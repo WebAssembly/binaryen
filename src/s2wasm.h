@@ -5,6 +5,7 @@
 
 #include "wasm.h"
 #include "parsing.h"
+#include "asm_v_wasm.h"
 
 namespace wasm {
 
@@ -362,7 +363,7 @@ private:
         if (match("_import")) {
           curr = allocator.alloc<CallImport>();
         } else if (match("_indirect")) {
-          curr = allocator.alloc<CallImport>();
+          curr = allocator.alloc<CallIndirect>();
         } else {
           curr = allocator.alloc<Call>();
         }
@@ -384,6 +385,16 @@ private:
         }
         std::reverse(curr->operands.begin(), curr->operands.end());
         setOutput(curr, assign);
+        if (curr->is<CallIndirect>()) {
+          auto call = curr->dyn_cast<CallIndirect>();
+          auto type = allocator.alloc<FunctionType>();
+          call->fullType = type;
+          type->name = cashew::IString((std::string("FUNCSIG_") + getSig(call)).c_str(), false);
+          // TODO type->result
+          for (auto operand : call->operands) {
+            type->params.push_back(operand->type);
+          }
+        }
       } else if (match("block")) {
         auto curr = allocator.alloc<Block>();
         curr->name = getStr();

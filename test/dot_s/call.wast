@@ -70,7 +70,9 @@
   (func $call_indirect_void (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (call_import $$0)
+        (call_indirect $FUNCSIG_v
+          (get_local $$0)
+        )
         (br $fake_return_waka123)
       )
     )
@@ -79,7 +81,9 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call_import $$0)
+          (call_indirect $FUNCSIG_v
+            (get_local $$0)
+          )
         )
       )
     )
