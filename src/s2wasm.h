@@ -73,11 +73,6 @@ private:
     assert(matched);
   }
 
-  #define abort_on(why) {          \
-    printf("%s : %20s\n", why, s); \
-    abort();                       \
-  }
-
   void dump(const char *text) {
     std::cerr << "[[" << text << "]]:\n==========\n";
     for (size_t i = 0; i < 60; i++) {
@@ -85,6 +80,11 @@ private:
       std::cerr << s[i];
     }
     std::cerr << "\n==========\n";
+  }
+
+  #define abort_on(why) { \
+    dump(why ":");        \
+    abort();              \
   }
 
   void unget(Name str) {
@@ -172,7 +172,7 @@ private:
       s++;
       if (match("text")) parseText();
       else if (match("type")) parseType();
-      else abort_on(s);
+      else abort_on("process");
     }
   }
 
