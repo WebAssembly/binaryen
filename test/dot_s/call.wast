@@ -1,5 +1,6 @@
 (module
   (memory 0 4294967295)
+  (type $FUNCSIG_v (func))
   (func $call_i32_nullary (result i32)
     (block $fake_return_waka123
       (block

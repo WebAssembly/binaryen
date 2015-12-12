@@ -402,12 +402,18 @@ private:
         setOutput(curr, assign);
         if (curr->is<CallIndirect>()) {
           auto call = curr->dyn_cast<CallIndirect>();
-          auto type = allocator.alloc<FunctionType>();
-          call->fullType = type;
-          type->name = cashew::IString((std::string("FUNCSIG_") + getSig(call)).c_str(), false);
-          // TODO type->result
-          for (auto operand : call->operands) {
-            type->params.push_back(operand->type);
+          auto typeName = cashew::IString((std::string("FUNCSIG_") + getSig(call)).c_str(), false);
+          if (wasm.functionTypesMap.count(typeName) == 0) {
+            auto type = allocator.alloc<FunctionType>();
+            type->name = typeName;
+            // TODO type->result
+            for (auto operand : call->operands) {
+              type->params.push_back(operand->type);
+            }
+            wasm.addFunctionType(type);
+            call->fullType = type;
+          } else {
+            call->fullType = wasm.functionTypesMap[typeName];
           }
         }
       } else if (match("block")) {
