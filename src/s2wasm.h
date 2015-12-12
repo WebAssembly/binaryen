@@ -29,7 +29,7 @@ public:
 private:
   // state
 
-  size_t nextStatic = 0; // location of next static allocation, i.e., the data segment
+  size_t nextStatic = 1; // location of next static allocation, i.e., the data segment
   std::map<Name, int32_t> staticAddresses; // name => address
   typedef std::pair<Const*, Name> Addressing;
   std::vector<Addressing> addressings; // we fix these up
@@ -656,22 +656,40 @@ private:
     skipComma();
     mustMatch("@object");
     mustMatch(".data");
+    size_t align = 16; // XXX default?
+    if (match(".globl")) {
+      mustMatch(name.str);
+      if (match(".align")) {
+        align = getInt();
+      } else abort_on(".global in type");
+    }
+    skipWhitespace();
     mustMatch(name.str);
     mustMatch(":");
-    mustMatch(".asciz");
-    Name buffer = getQuoted();
+    const char* data;
+    char type;
+    if (match(".asciz")) {
+      Name buffer = getQuoted();
+      data = buffer.str;
+      type = 0;
+    } else if (match(".zero")) {
+      int32_t size = getInt();
+      data = (const char*)calloc(size, 1);
+      type = 1;
+    } else abort_on("data");
+    skipWhitespace();
     mustMatch(".size");
     mustMatch(name.str);
     mustMatch(",");
     size_t size = atoi(getStr().str); // TODO: optimize
-    assert(strlen(buffer.str) == size);
-    const int ALIGN = 16;
-    if (nextStatic == 0) nextStatic = ALIGN;
-    // assign the address, add to memory, and increment for the next one
+    if (type == 0) {
+      assert(strlen(data) == size);
+    }
+    while (nextStatic % align) nextStatic++;
+    // assign the address, add to memory
     staticAddresses[name] = nextStatic;
-    wasm.memory.segments.emplace_back(nextStatic, buffer.str, size);
+    wasm.memory.segments.emplace_back(nextStatic, data, size);
     nextStatic += size;
-    nextStatic = (nextStatic + ALIGN - 1) & -ALIGN;
   }
 
   void skipImports() {
