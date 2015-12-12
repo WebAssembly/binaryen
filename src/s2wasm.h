@@ -190,6 +190,7 @@ private:
           case 'f': str.push_back('\f'); s += 2; continue;
           case 'b': str.push_back('\b'); s += 2; continue;
           case '\\': str.push_back('\\'); s += 2; continue;
+          case '"': str.push_back('"'); s += 2; continue;
           default: {
             if (isdigit(s[1])) {
               int code = (s[1] - '0')*8*8 + (s[2] - '0')*8 + (s[3] - '0');

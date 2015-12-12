@@ -1045,8 +1045,13 @@ public:
           case '\f': o << "\\f"; break;
           case '\b': o << "\\b"; break;
           case '\\': o << "\\\\"; break;
-          case 0:    o << "\\0"; break;
-          default: o << c; // TODO: escaping
+          default: {
+            if (c >= 32 && c < 127) {
+              o << c;
+            } else {
+              o << std::hex << '\\' << (c/16) << (c%16) << std::dec;
+            }
+          }
         }
       }
       o << "\")";
