@@ -297,6 +297,71 @@ private:
       assert(curr->type == type);
       setOutput(curr, assign);
     };
+    auto handleTyped = [&](WasmType type) {
+      switch (*s) {
+        case 'a': {
+          if (match("add")) makeBinary(BinaryOp::Add, type);
+          else if (match("and")) makeBinary(BinaryOp::And, type);
+          else abort_on("i32.a");
+          break;
+        }
+        case 'c': {
+          if (match("const")) {
+            Name assign = getAssign();
+            if (*s == '.') {
+              // global address
+              auto curr = allocator.alloc<Const>();
+              curr->type = i32;
+              addressings.emplace_back(curr, getStr());
+              setOutput(curr, assign);
+            } else {
+              // constant
+              setOutput(parseConst(getStr(), type, allocator), assign);
+            }
+          } else abort_on("i32.c");
+          break;
+        }
+        case 'e': {
+          if (match("eq")) makeBinary(BinaryOp::Eq, i32);
+          break;
+        }
+        case 'g': {
+          if (match("gt_s")) makeBinary(BinaryOp::GtS, i32);
+          else if (match("gt_u")) makeBinary(BinaryOp::GtU, i32);
+          else if (match("ge_s")) makeBinary(BinaryOp::GeS, i32);
+          else if (match("ge_u")) makeBinary(BinaryOp::GeU, i32);
+          else abort_on("i32.g");
+          break;
+        }
+        case 'l': {
+          if (match("lt_s")) makeBinary(BinaryOp::LtS, i32);
+          else if (match("lt_u")) makeBinary(BinaryOp::LtU, i32);
+          else if (match("le_s")) makeBinary(BinaryOp::LeS, i32);
+          else if (match("le_u")) makeBinary(BinaryOp::LeU, i32);
+          else abort_on("i32.g");
+          break;
+        }
+        case 'n': {
+          if (match("ne")) makeBinary(BinaryOp::Ne, i32);
+          else abort_on("i32.n");
+          break;
+        }
+        case 'r': {
+          if (match("rem_s")) makeBinary(BinaryOp::RemS, type);
+          else if (match("rem_u")) makeBinary(BinaryOp::RemU, type);
+          else abort_on("i32.n");
+          break;
+        }
+        case 's': {
+          if (match("shr_s")) makeBinary(BinaryOp::ShrS, type);
+          else if (match("shr_u")) makeBinary(BinaryOp::ShrU, type);
+          else if (match("sub")) makeBinary(BinaryOp::Sub, type);
+          else abort_on("i32.s");
+          break;
+        }
+        default: abort_on("i32.?");
+      }
+    };
     // fixups
     std::vector<Block*> loopBlocks; // we need to clear their names
     std::set<Name> seenLabels; // if we already used a label, we don't need it in a loop (there is a block above it, with that label)
@@ -305,69 +370,13 @@ private:
       skipWhitespace();
       if (debug) dump("main function loop");
       if (match("i32.")) {
-        switch (*s) {
-          case 'a': {
-            if (match("add")) makeBinary(BinaryOp::Add, i32);
-            else if (match("and")) makeBinary(BinaryOp::And, i32);
-            else abort_on("i32.a");
-            break;
-          }
-          case 'c': {
-            if (match("const")) {
-              Name assign = getAssign();
-              if (*s == '.') {
-                // global address
-                auto curr = allocator.alloc<Const>();
-                curr->type = i32;
-                addressings.emplace_back(curr, getStr());
-                setOutput(curr, assign);
-              } else {
-                // constant
-                setOutput(parseConst(getStr(), i32, allocator), assign);
-              }
-            } else abort_on("i32.c");
-            break;
-          }
-          case 'e': {
-            if (match("eq")) makeBinary(BinaryOp::Eq, i32);
-            break;
-          }
-          case 'g': {
-            if (match("gt_s")) makeBinary(BinaryOp::GtS, i32);
-            else if (match("gt_u")) makeBinary(BinaryOp::GtU, i32);
-            else if (match("ge_s")) makeBinary(BinaryOp::GeS, i32);
-            else if (match("ge_u")) makeBinary(BinaryOp::GeU, i32);
-            else abort_on("i32.g");
-            break;
-          }
-          case 'l': {
-            if (match("lt_s")) makeBinary(BinaryOp::LtS, i32);
-            else if (match("lt_u")) makeBinary(BinaryOp::LtU, i32);
-            else if (match("le_s")) makeBinary(BinaryOp::LeS, i32);
-            else if (match("le_u")) makeBinary(BinaryOp::LeU, i32);
-            else abort_on("i32.g");
-            break;
-          }
-          case 'n': {
-            if (match("ne")) makeBinary(BinaryOp::Ne, i32);
-            else abort_on("i32.n");
-            break;
-          }
-          case 'r': {
-            if (match("rem_s")) makeBinary(BinaryOp::RemS, i32);
-            else if (match("rem_u")) makeBinary(BinaryOp::RemU, i32);
-            else abort_on("i32.n");
-            break;
-          }
-          case 's': {
-            if (match("shr_s")) makeBinary(BinaryOp::ShrS, i32);
-            else if (match("shr_u")) makeBinary(BinaryOp::ShrU, i32);
-            else if (match("sub")) makeBinary(BinaryOp::Sub, i32);
-            else abort_on("i32.s");
-            break;
-          }
-          default: abort_on("i32.?");
-        }
+        handleTyped(i32);
+      } else if (match("i64.")) {
+        handleTyped(i64);
+      } else if (match("f32.")) {
+        handleTyped(f32);
+      } else if (match("f64.")) {
+        handleTyped(f64);
       } else if (match("call")) {
         CallBase* curr;
         if (match("_import")) {
