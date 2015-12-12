@@ -246,11 +246,14 @@ private:
       } else if (match(".result")) {
         func->result = getType();
       } else if (match(".local")) {
-        Name name = getNextId();
-        WasmType type = getType();
-        func->locals.emplace_back(name, type);
-        localTypes[name] = type;
-        skipWhitespace();
+        while (1) {
+          Name name = getNextId();
+          WasmType type = getType();
+          func->locals.emplace_back(name, type);
+          localTypes[name] = type;
+          skipWhitespace();
+          if (!match(",")) break;
+        }
       } else break;
     }
     // parse body
