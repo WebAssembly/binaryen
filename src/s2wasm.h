@@ -52,12 +52,6 @@ private:
     return true;
   }
 
-  void findComma() {
-    while (*s && *s != ',') s++;
-    s++;
-    skipWhitespace();
-  }
-
   // match and skip the pattern, if matched
   bool match(const char *pattern) {
     size_t size = strlen(pattern);
@@ -132,6 +126,7 @@ private:
 
   Name getAssign() {
     skipWhitespace();
+    if (*s != '$') return Name();
     std::string str;
     char *before = s;
     while (*s && *s != '=' && *s != '\n' && *s != ',') {
@@ -240,6 +235,12 @@ private:
         }
       } else if (match(".result")) {
         func->result = getType();
+      } else if (match(".local")) {
+        Name name = getNextId();
+        WasmType type = getType();
+        func->locals.emplace_back(name, type);
+        localTypes[name] = type;
+        skipWhitespace();
       } else break;
     }
     // parse body
@@ -313,17 +314,16 @@ private:
           }
           case 'c': {
             if (match("const")) {
-              mustMatch("$push");
-              findComma();
+              Name assign = getAssign();
               if (*s == '.') {
                 // global address
                 auto curr = allocator.alloc<Const>();
                 curr->type = i32;
                 addressings.emplace_back(curr, getStr());
-                push(curr);
+                setOutput(curr, assign);
               } else {
                 // constant
-                push(parseConst(getStr(), i32, allocator));
+                setOutput(parseConst(getStr(), i32, allocator), assign);
               }
             } else abort_on("i32.c");
             break;
@@ -335,6 +335,16 @@ private:
           case 'g': {
             if (match("gt_s")) makeBinary(BinaryOp::GtS, i32);
             else if (match("gt_u")) makeBinary(BinaryOp::GtU, i32);
+            else if (match("ge_s")) makeBinary(BinaryOp::GeS, i32);
+            else if (match("ge_u")) makeBinary(BinaryOp::GeU, i32);
+            else abort_on("i32.g");
+            break;
+          }
+          case 'l': {
+            if (match("lt_s")) makeBinary(BinaryOp::LtS, i32);
+            else if (match("lt_u")) makeBinary(BinaryOp::LtU, i32);
+            else if (match("le_s")) makeBinary(BinaryOp::LeS, i32);
+            else if (match("le_u")) makeBinary(BinaryOp::LeU, i32);
             else abort_on("i32.g");
             break;
           }
@@ -367,11 +377,7 @@ private:
         } else {
           curr = allocator.alloc<Call>();
         }
-        Name assign;
-        if (*s == '$') {
-          assign = getAssign();
-          skipComma();
-        }
+        Name assign = getAssign();
         if (curr->is<Call>()) {
           curr->dyn_cast<Call>()->target = getCommaSeparated();
         } else if (curr->is<CallImport>()) {
