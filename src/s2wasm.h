@@ -121,7 +121,7 @@ private:
   Name getCommaSeparated() {
     skipWhitespace();
     std::string str;
-    while (*s && *s != ',') {
+    while (*s && *s != ',' && *s != '\n') {
       str += *s;
       s++;
     }
@@ -421,10 +421,10 @@ private:
           curr->value = getInput();
         }
         bstack.back()->list.push_back(curr);
-      } else if (match("func_end0:")) {
-        mustMatch(".size");
-        mustMatch("main,");
-        mustMatch("func_end0-main");
+      } else if (match("func_end")) {
+        s = strchr(s, '\n');
+        s++;
+        s = strchr(s, '\n');
         break; // the function is done
       } else {
         abort_on("function element");
