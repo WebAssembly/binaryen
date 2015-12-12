@@ -825,7 +825,7 @@ public:
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     switch (op) {
       case PageSize: printOpening(o, "pagesize") << ')'; break;
-      case MemorySize: printOpening(o, "memorysize") << ')'; break;
+      case MemorySize: printOpening(o, "memory_size") << ')'; break;
       case GrowMemory: {
         printOpening(o, "grow_memory");
         incIndent(o, indent);
