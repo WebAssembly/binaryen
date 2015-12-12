@@ -750,11 +750,6 @@ private:
     mustMatch(name.str);
     mustMatch(",");
     size_t seenSize = atoi(getStr().str); // TODO: optimize
-    
-//for (int i = 0; i < expectedSize; i++) {
-//  std::cerr << "   " << i << ": " << (unsigned char)(data[i]) << '\n';
-//}
-
     assert(seenSize == raw->size());
     while (nextStatic % align) nextStatic++;
     // assign the address, add to memory
