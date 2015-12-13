@@ -121,6 +121,26 @@ For basic tests, that command should work, but in general you need a few more ar
  * `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow aliased function pointers (there is a single table).
  * `GLOBAL_BASE=1000` because WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. With that argument, we reserve the area up to `1000`.
 
+### C/C++ Source => WebAssembly LLVM backend => s2wasm => WebAssembly
+
+Binaryen's `s2wasm` tool can translate the `.s` output from the LLVM WebAssembly backend into WebAssembly. You can receive `.s` output from `llc`, and then run `s2wasm` on that:
+
+````
+llc code.ll -march=wasm32 -filetype=asm -o code.s
+s2wasm code.s > code.wast
+````
+
+You can also use Emscripten, which will do those steps for you (as well as link to system libraries, etc.):
+
+````
+./emcc input.cpp -s WASM_BACKEND=1 -s 'BINARYEN="path-to-binaryen"'
+````
+
+The `WASM_BACKEND` option tells it to use the WebAssembly backend instead of the asm.js backend.
+
+ * Due to current limitations of the WebAssembly backend, you might want to build with `-s ONLY_MY_CODE=1 -O1`, which will avoid linking in libc (which contains varargs, which are not yet supported), and optimizes so that the stack is not used (which is also not yet supported).
+ * The output when building in this mode is similar to what you get in general when building with Binaryen in Emscripten: a main `.js` file, and the compiled code in a `.wast` file alongside it.
+
 ## Testing
 
 ```
