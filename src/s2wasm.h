@@ -21,7 +21,10 @@ class S2WasmBuilder {
   char *s;
 
 public:
-  S2WasmBuilder(AllocatingModule& wasm, char *s) : wasm(wasm), allocator(wasm.allocator), s(s) {
+  S2WasmBuilder(AllocatingModule& wasm, char *input) : wasm(wasm), allocator(wasm.allocator) {
+    s = input;
+    scan();
+    s = input;
     process();
     fix();
   }
@@ -33,6 +36,8 @@ private:
   std::map<Name, int32_t> staticAddresses; // name => address
   typedef std::pair<Const*, Name> Addressing;
   std::vector<Addressing> addressings; // we fix these up
+
+  std::map<Name, WasmType> functionResults; // function name => result type. we scan this early, then use it during processing.
 
   // utilities
 
@@ -218,6 +223,27 @@ private:
   }
 
   // processors
+
+  void scan() {
+    while (*s) {
+      s = strstr(s, "\n	.type	");
+      if (!s) break;
+      mustMatch("\n	.type	");
+      Name name = getCommaSeparated();
+      skipComma();
+      if (!match("@function")) continue;
+      mustMatch(name.str);
+      mustMatch(":");
+      while (1) {
+        skipWhitespace();
+        if (match(".param")) s = strchr(s, '\n');
+        else if (match(".result")) {
+          functionResults[name] = getType();
+          break;
+        } else break;
+      }
+    }
+  }
 
   void process() {
     while (*s) {
@@ -590,11 +616,14 @@ private:
         }
         Name assign = getAssign();
         if (curr->is<Call>()) {
-          curr->dyn_cast<Call>()->target = getCommaSeparated();
+          Name name = curr->dyn_cast<Call>()->target = getCommaSeparated();
+          curr->type = functionResults[name];
         } else if (curr->is<CallImport>()) {
-          curr->dyn_cast<CallImport>()->target = getCommaSeparated();
+          Name name = curr->dyn_cast<CallImport>()->target = getCommaSeparated();
+          // XXX import definitions would help here, but still undecided in .s format
         } else {
           curr->dyn_cast<CallIndirect>()->target = getInput();
+          // XXX no way to know return type, https://github.com/WebAssembly/experimental/issues/53
         }
         while (1) {
           if (!skipComma()) break;
