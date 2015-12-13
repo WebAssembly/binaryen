@@ -140,6 +140,7 @@ The `WASM_BACKEND` option tells it to use the WebAssembly backend instead of the
 
  * Due to current limitations of the WebAssembly backend, you might want to build with `-s ONLY_MY_CODE=1 -O1`, which will avoid linking in libc (which contains varargs, which are not yet supported), and optimizes so that the stack is not used (which is also not yet supported).
  * The output when building in this mode is similar to what you get in general when building with Binaryen in Emscripten: a main `.js` file, and the compiled code in a `.wast` file alongside it.
+ * Build with `EMCC_DEBUG=1` in the env to see Emscripten's debug output as it runs the various tools, and also to save the intermediate files in `/tmp/emscripten_temp`. It will save both the `.s` and `.wast` files there (in addition to other files it normally saves).
 
 ## Testing
 
