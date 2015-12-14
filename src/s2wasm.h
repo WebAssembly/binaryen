@@ -37,8 +37,6 @@ private:
   typedef std::pair<Const*, Name> Addressing;
   std::vector<Addressing> addressings; // we fix these up
 
-  std::map<Name, WasmType> functionResults; // function name => result type. we scan this early, then use it during processing.
-
   // utilities
 
   void skipWhitespace() {
@@ -225,24 +223,6 @@ private:
   // processors
 
   void scan() {
-    while (*s) {
-      s = strstr(s, "\n	.type	");
-      if (!s) break;
-      mustMatch("\n	.type	");
-      Name name = getCommaSeparated();
-      skipComma();
-      if (!match("@function")) continue;
-      mustMatch(name.str);
-      mustMatch(":");
-      while (1) {
-        skipWhitespace();
-        if (match(".param")) s = strchr(s, '\n');
-        else if (match(".result")) {
-          functionResults[name] = getType();
-          break;
-        } else break;
-      }
-    }
   }
 
   void process() {
@@ -448,6 +428,49 @@ private:
       curr->type = type;
       setOutput(curr, assign);
     };
+    auto makeCall = [&](WasmType type) {
+      CallBase* curr;
+      if (match("_import")) {
+        curr = allocator.alloc<CallImport>();
+      } else if (match("_indirect")) {
+        curr = allocator.alloc<CallIndirect>();
+      } else {
+        curr = allocator.alloc<Call>();
+      }
+      Name assign = getAssign();
+      if (curr->is<Call>()) {
+        Name name = curr->dyn_cast<Call>()->target = getCommaSeparated();
+        curr->type = type;
+      } else if (curr->is<CallImport>()) {
+        Name name = curr->dyn_cast<CallImport>()->target = getCommaSeparated();
+        // XXX import definitions would help here, but still undecided in .s format
+      } else {
+        curr->dyn_cast<CallIndirect>()->target = getInput();
+        // XXX no way to know return type, https://github.com/WebAssembly/experimental/issues/53
+      }
+      while (1) {
+        if (!skipComma()) break;
+        curr->operands.push_back(getInput());
+      }
+      std::reverse(curr->operands.begin(), curr->operands.end());
+      setOutput(curr, assign);
+      if (curr->is<CallIndirect>()) {
+        auto call = curr->dyn_cast<CallIndirect>();
+        auto typeName = cashew::IString((std::string("FUNCSIG_") + getSig(call)).c_str(), false);
+        if (wasm.functionTypesMap.count(typeName) == 0) {
+          auto type = allocator.alloc<FunctionType>();
+          type->name = typeName;
+          // TODO type->result
+          for (auto operand : call->operands) {
+            type->params.push_back(operand->type);
+          }
+          wasm.addFunctionType(type);
+          call->fullType = type;
+        } else {
+          call->fullType = wasm.functionTypesMap[typeName];
+        }
+      }
+    };
     auto handleTyped = [&](WasmType type) {
       switch (*s) {
         case 'a': {
@@ -472,7 +495,9 @@ private:
               // constant
               setOutput(parseConst(str, type, allocator), assign);
             }
-          } else if (match("convert_s/i32")) makeUnary(UnaryOp::ConvertSInt32, type);
+          }
+          else if (match("call")) makeCall(type);
+          else if (match("convert_s/i32")) makeUnary(UnaryOp::ConvertSInt32, type);
           else if (match("convert_u/i32")) makeUnary(UnaryOp::ConvertUInt32, type);
           else if (match("convert_s/i64")) makeUnary(UnaryOp::ConvertSInt64, type);
           else if (match("convert_u/i64")) makeUnary(UnaryOp::ConvertUInt64, type);
@@ -605,48 +630,6 @@ private:
         handleTyped(f32);
       } else if (match("f64.")) {
         handleTyped(f64);
-      } else if (match("call")) {
-        CallBase* curr;
-        if (match("_import")) {
-          curr = allocator.alloc<CallImport>();
-        } else if (match("_indirect")) {
-          curr = allocator.alloc<CallIndirect>();
-        } else {
-          curr = allocator.alloc<Call>();
-        }
-        Name assign = getAssign();
-        if (curr->is<Call>()) {
-          Name name = curr->dyn_cast<Call>()->target = getCommaSeparated();
-          curr->type = functionResults[name];
-        } else if (curr->is<CallImport>()) {
-          Name name = curr->dyn_cast<CallImport>()->target = getCommaSeparated();
-          // XXX import definitions would help here, but still undecided in .s format
-        } else {
-          curr->dyn_cast<CallIndirect>()->target = getInput();
-          // XXX no way to know return type, https://github.com/WebAssembly/experimental/issues/53
-        }
-        while (1) {
-          if (!skipComma()) break;
-          curr->operands.push_back(getInput());
-        }
-        std::reverse(curr->operands.begin(), curr->operands.end());
-        setOutput(curr, assign);
-        if (curr->is<CallIndirect>()) {
-          auto call = curr->dyn_cast<CallIndirect>();
-          auto typeName = cashew::IString((std::string("FUNCSIG_") + getSig(call)).c_str(), false);
-          if (wasm.functionTypesMap.count(typeName) == 0) {
-            auto type = allocator.alloc<FunctionType>();
-            type->name = typeName;
-            // TODO type->result
-            for (auto operand : call->operands) {
-              type->params.push_back(operand->type);
-            }
-            wasm.addFunctionType(type);
-            call->fullType = type;
-          } else {
-            call->fullType = wasm.functionTypesMap[typeName];
-          }
-        }
       } else if (match("block")) {
         auto curr = allocator.alloc<Block>();
         curr->name = getStr();
@@ -693,6 +676,8 @@ private:
         }
         curr->name = getStr();
         bstack.back()->list.push_back(curr);
+      } else if (match("call")) {
+        makeCall(none);
       } else if (match("copy_local")) {
         Name assign = getAssign();
         skipComma();
