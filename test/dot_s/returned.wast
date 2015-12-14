@@ -1,5 +1,7 @@
 (module
   (memory 0 4294967295)
+  (export "_Z3foov" $_Z3foov)
+  (export "_Z3barPvS_l" $_Z3barPvS_l)
   (func $_Z3foov (result i32)
     (block $fake_return_waka123
       (block

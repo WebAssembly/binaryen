@@ -1,5 +1,20 @@
 (module
   (memory 0 4294967295)
+  (export "fadd32" $fadd32)
+  (export "fsub32" $fsub32)
+  (export "fmul32" $fmul32)
+  (export "fdiv32" $fdiv32)
+  (export "fabs32" $fabs32)
+  (export "fneg32" $fneg32)
+  (export "copysign32" $copysign32)
+  (export "sqrt32" $sqrt32)
+  (export "ceil32" $ceil32)
+  (export "floor32" $floor32)
+  (export "trunc32" $trunc32)
+  (export "nearest32" $nearest32)
+  (export "nearest32_via_rint" $nearest32_via_rint)
+  (export "fmin32" $fmin32)
+  (export "fmax32" $fmax32)
   (func $fadd32 (param $$0 f32) (param $$1 f32) (result f32)
     (block $fake_return_waka123
       (block

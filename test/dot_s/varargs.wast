@@ -1,5 +1,11 @@
 (module
   (memory 0 4294967295)
+  (export "end" $end)
+  (export "copy" $copy)
+  (export "arg_i8" $arg_i8)
+  (export "arg_i32" $arg_i32)
+  (export "arg_i128" $arg_i128)
+  (export "caller_none" $caller_none)
   (func $end (param $$0 i32)
     (block $fake_return_waka123
       (block

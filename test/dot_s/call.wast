@@ -1,6 +1,18 @@
 (module
   (memory 0 4294967295)
   (type $FUNCSIG_v (func))
+  (export "call_i32_nullary" $call_i32_nullary)
+  (export "call_i64_nullary" $call_i64_nullary)
+  (export "call_float_nullary" $call_float_nullary)
+  (export "call_double_nullary" $call_double_nullary)
+  (export "call_void_nullary" $call_void_nullary)
+  (export "call_i32_unary" $call_i32_unary)
+  (export "call_i32_binary" $call_i32_binary)
+  (export "call_indirect_void" $call_indirect_void)
+  (export "call_indirect_i32" $call_indirect_i32)
+  (export "tail_call_void_nullary" $tail_call_void_nullary)
+  (export "fastcc_tail_call_void_nullary" $fastcc_tail_call_void_nullary)
+  (export "coldcc_tail_call_void_nullary" $coldcc_tail_call_void_nullary)
   (func $call_i32_nullary (result i32)
     (block $fake_return_waka123
       (block

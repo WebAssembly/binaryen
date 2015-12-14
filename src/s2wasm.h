@@ -735,6 +735,10 @@ private:
       block->name = Name();
     }
     wasm.addFunction(func);
+    // XXX for now, export all functions
+    auto exp = allocator.alloc<Export>();
+    exp->name = exp->value = func->name;
+    wasm.addExport(exp);
   }
 
   void parseType() {

@@ -1,5 +1,10 @@
 (module
   (memory 0 4294967295)
+  (export "no0" $no0)
+  (export "no1" $no1)
+  (export "yes0" $yes0)
+  (export "yes1" $yes1)
+  (export "stack_uses" $stack_uses)
   (func $no0 (param $$0 i32) (param $$1 i32) (result i32)
     (block $fake_return_waka123
       (block

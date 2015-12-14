@@ -1,5 +1,15 @@
 (module
   (memory 0 4294967295)
+  (export "sext_i8_i32" $sext_i8_i32)
+  (export "zext_i8_i32" $zext_i8_i32)
+  (export "sext_i16_i32" $sext_i16_i32)
+  (export "zext_i16_i32" $zext_i16_i32)
+  (export "sext_i8_i64" $sext_i8_i64)
+  (export "zext_i8_i64" $zext_i8_i64)
+  (export "sext_i16_i64" $sext_i16_i64)
+  (export "zext_i16_i64" $zext_i16_i64)
+  (export "sext_i32_i64" $sext_i32_i64)
+  (export "zext_i32_i64" $zext_i32_i64)
   (func $sext_i8_i32 (param $$0 i32) (result i32)
     (block $fake_return_waka123
       (block

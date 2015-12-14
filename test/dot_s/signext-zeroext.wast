@@ -1,5 +1,9 @@
 (module
   (memory 0 4294967295)
+  (export "z2s_func" $z2s_func)
+  (export "s2z_func" $s2z_func)
+  (export "z2s_call" $z2s_call)
+  (export "s2z_call" $s2z_call)
   (func $z2s_func (param $$0 i32) (result i32)
     (local $$1 i32)
     (block $fake_return_waka123

@@ -1,5 +1,17 @@
 (module
   (memory 0 4294967295)
+  (export "select_i32_bool" $select_i32_bool)
+  (export "select_i32_eq" $select_i32_eq)
+  (export "select_i32_ne" $select_i32_ne)
+  (export "select_i64_bool" $select_i64_bool)
+  (export "select_i64_eq" $select_i64_eq)
+  (export "select_i64_ne" $select_i64_ne)
+  (export "select_f32_bool" $select_f32_bool)
+  (export "select_f32_eq" $select_f32_eq)
+  (export "select_f32_ne" $select_f32_ne)
+  (export "select_f64_bool" $select_f64_bool)
+  (export "select_f64_eq" $select_f64_eq)
+  (export "select_f64_ne" $select_f64_ne)
   (func $select_i32_bool (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
     (block $fake_return_waka123
       (block

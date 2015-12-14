@@ -1,5 +1,11 @@
 (module
   (memory 0 4294967295)
+  (export "trunc_i8_i32" $trunc_i8_i32)
+  (export "trunc_i16_i32" $trunc_i16_i32)
+  (export "trunc_i8_i64" $trunc_i8_i64)
+  (export "trunc_i16_i64" $trunc_i16_i64)
+  (export "trunc_i32_i64" $trunc_i32_i64)
+  (export "trunc_i8_i32_off" $trunc_i8_i32_off)
   (func $trunc_i8_i32 (param $$0 i32) (param $$1 i32)
     (block $fake_return_waka123
       (block

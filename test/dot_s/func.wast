@@ -1,5 +1,11 @@
 (module
   (memory 0 4294967295)
+  (export "f0" $f0)
+  (export "f1" $f1)
+  (export "f2" $f2)
+  (export "f3" $f3)
+  (export "f4" $f4)
+  (export "f5" $f5)
   (func $f0
     (block $fake_return_waka123
       (block

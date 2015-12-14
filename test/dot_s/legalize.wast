@@ -1,5 +1,10 @@
 (module
   (memory 0 4294967295)
+  (export "shl_i3" $shl_i3)
+  (export "shl_i53" $shl_i53)
+  (export "sext_in_reg_i32_i64" $sext_in_reg_i32_i64)
+  (export "fpext_f32_f64" $fpext_f32_f64)
+  (export "fpconv_f64_f32" $fpconv_f64_f32)
   (func $shl_i3 (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
     (block $fake_return_waka123
       (block

@@ -1,5 +1,11 @@
 (module
   (memory 0 4294967295)
+  (export "load_u_i1_i32" $load_u_i1_i32)
+  (export "load_s_i1_i32" $load_s_i1_i32)
+  (export "load_u_i1_i64" $load_u_i1_i64)
+  (export "load_s_i1_i64" $load_s_i1_i64)
+  (export "store_i32_i1" $store_i32_i1)
+  (export "store_i64_i1" $store_i64_i1)
   (func $load_u_i1_i32 (param $$0 i32) (result i32)
     (block $fake_return_waka123
       (block

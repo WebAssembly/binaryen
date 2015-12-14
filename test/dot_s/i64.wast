@@ -1,5 +1,23 @@
 (module
   (memory 0 4294967295)
+  (export "add64" $add64)
+  (export "sub64" $sub64)
+  (export "mul64" $mul64)
+  (export "sdiv64" $sdiv64)
+  (export "udiv64" $udiv64)
+  (export "srem64" $srem64)
+  (export "urem64" $urem64)
+  (export "and64" $and64)
+  (export "or64" $or64)
+  (export "xor64" $xor64)
+  (export "shl64" $shl64)
+  (export "shr64" $shr64)
+  (export "sar64" $sar64)
+  (export "clz64" $clz64)
+  (export "clz64_zero_undef" $clz64_zero_undef)
+  (export "ctz64" $ctz64)
+  (export "ctz64_zero_undef" $ctz64_zero_undef)
+  (export "popcnt64" $popcnt64)
   (func $add64 (param $$0 i64) (param $$1 i64) (result i64)
     (block $fake_return_waka123
       (block

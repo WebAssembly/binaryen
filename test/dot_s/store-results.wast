@@ -1,5 +1,8 @@
 (module
   (memory 0 4294967295 (segment 2 "\00\00\00\00\00\00\00\00\00\00\00\00"))
+  (export "single_block" $single_block)
+  (export "foo" $foo)
+  (export "bar" $bar)
   (func $single_block (param $$0 i32) (result i32)
     (block $fake_return_waka123
       (block

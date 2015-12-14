@@ -1,5 +1,18 @@
 (module
   (memory 0 4294967295)
+  (export "test0" $test0)
+  (export "test1" $test1)
+  (export "test2" $test2)
+  (export "doublediamond" $doublediamond)
+  (export "triangle" $triangle)
+  (export "diamond" $diamond)
+  (export "single_block" $single_block)
+  (export "minimal_loop" $minimal_loop)
+  (export "simple_loop" $simple_loop)
+  (export "doubletriangle" $doubletriangle)
+  (export "ifelse_earlyexits" $ifelse_earlyexits)
+  (export "doublediamond_in_a_loop" $doublediamond_in_a_loop)
+  (export "test3" $test3)
   (func $test0 (param $$0 i32)
     (local $$1 i32)
     (block $fake_return_waka123

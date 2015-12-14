@@ -1,5 +1,20 @@
 (module
   (memory 0 4294967295)
+  (export "fadd64" $fadd64)
+  (export "fsub64" $fsub64)
+  (export "fmul64" $fmul64)
+  (export "fdiv64" $fdiv64)
+  (export "fabs64" $fabs64)
+  (export "fneg64" $fneg64)
+  (export "copysign64" $copysign64)
+  (export "sqrt64" $sqrt64)
+  (export "ceil64" $ceil64)
+  (export "floor64" $floor64)
+  (export "trunc64" $trunc64)
+  (export "nearest64" $nearest64)
+  (export "nearest64_via_rint" $nearest64_via_rint)
+  (export "fmin64" $fmin64)
+  (export "fmax64" $fmax64)
   (func $fadd64 (param $$0 f64) (param $$1 f64) (result f64)
     (block $fake_return_waka123
       (block

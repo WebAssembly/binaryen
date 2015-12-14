@@ -1,5 +1,10 @@
 (module
   (memory 0 4294967295)
+  (export "ldi32" $ldi32)
+  (export "ldi64" $ldi64)
+  (export "ldf32" $ldf32)
+  (export "ldf64" $ldf64)
+  (export "ldoff" $ldoff)
   (func $ldi32 (param $$0 i32) (result i32)
     (block $fake_return_waka123
       (block

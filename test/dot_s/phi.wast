@@ -1,5 +1,7 @@
 (module
   (memory 0 4294967295)
+  (export "test0" $test0)
+  (export "test1" $test1)
   (func $test0 (param $$0 i32) (result i32)
     (block $fake_return_waka123
       (block

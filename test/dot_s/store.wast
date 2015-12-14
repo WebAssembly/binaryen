@@ -1,5 +1,10 @@
 (module
   (memory 0 4294967295)
+  (export "sti32" $sti32)
+  (export "sti64" $sti64)
+  (export "stf32" $stf32)
+  (export "stf64" $stf64)
+  (export "stoff" $stoff)
   (func $sti32 (param $$0 i32) (param $$1 i32)
     (block $fake_return_waka123
       (block
