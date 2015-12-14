@@ -15,6 +15,7 @@
   (export "nearest64_via_rint" $nearest64_via_rint)
   (export "fmin64" $fmin64)
   (export "fmax64" $fmax64)
+  (export "fma64" $fma64)
   (func $fadd64 (param $$0 f64) (param $$1 f64) (result f64)
     (block $fake_return_waka123
       (block
@@ -181,6 +182,19 @@
         (br $fake_return_waka123
           (f64.max
             (f64.const 0)
+            (get_local $$0)
+          )
+        )
+      )
+    )
+  )
+  (func $fma64 (param $$0 f64) (param $$1 f64) (param $$2 f64) (result f64)
+    (block $fake_return_waka123
+      (block
+        (br $fake_return_waka123
+          (call $fma
+            (get_local $$2)
+            (get_local $$1)
             (get_local $$0)
           )
         )

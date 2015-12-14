@@ -618,6 +618,7 @@ private:
     // fixups
     std::vector<Block*> loopBlocks; // we need to clear their names
     std::set<Name> seenLabels; // if we already used a label, we don't need it in a loop (there is a block above it, with that label)
+    Name lastLabel; // A loop has an 'in' label which appears before it. There might also be a block in between it and the loop, so we have to remember the last label
     // main loop
     while (1) {
       skipWhitespace();
@@ -638,35 +639,32 @@ private:
         seenLabels.insert(curr->name);
       } else if (match("BB")) {
         s -= 2;
-        Name name = getStrToColon();
+        lastLabel = getStrToColon();
         s++;
         skipWhitespace();
         // pop all blocks/loops that reach this target
         // pop all targets with this label
         while (!bstack.empty()) {
           auto curr = bstack.back();
-          if (curr->name == name) {
+          if (curr->name == lastLabel) {
             bstack.pop_back();
             continue;
           }
           break;
         }
-        // this may also be a loop beginning
-        if (*s == 'l') {
-          auto curr = allocator.alloc<Loop>();
-          bstack.back()->list.push_back(curr);
-          curr->in = name;
-          mustMatch("loop");
-          Name out = getStr();
-          if (seenLabels.count(out) == 0) {
-            curr->out = out;
-          }
-          auto block = allocator.alloc<Block>();
-          block->name = out; // temporary, fake
-          curr->body = block;
-          loopBlocks.push_back(block);
-          bstack.push_back(block);
+      } else if (match("loop")) {
+        auto curr = allocator.alloc<Loop>();
+        bstack.back()->list.push_back(curr);
+        curr->in = lastLabel;
+        Name out = getStr();
+        if (seenLabels.count(out) == 0) {
+          curr->out = out;
         }
+        auto block = allocator.alloc<Block>();
+        block->name = out; // temporary, fake
+        curr->body = block;
+        loopBlocks.push_back(block);
+        bstack.push_back(block);
       } else if (match("br")) {
         auto curr = allocator.alloc<Break>();
         if (*s == '_') {

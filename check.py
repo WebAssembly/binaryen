@@ -214,7 +214,7 @@ for t in spec_tests:
 
 print '\n[ checking .s testcases... ]\n'
 
-for s in ['minimal.s', 'basics.s', 'call.s', 'conv.s', 'fast-isel.s', 'i64.s', 'load.s', 'phi.s', 'select.s', 'unreachable.s', 'cfg-stackify.s', 'cpus.s', 'frem.s', 'immediates.s', 'load-store-i1.s', 'reg-stackify.s', 'unused-argument.s', 'comparisons_f32.s', 'dead-vreg.s', 'func.s', 'import.s', 'memory-addr32.s', 'store-results.s', 'varargs.s', 'comparisons_f64.s', 'exit.s', 'global.s', 'memory-addr64.s', 'returned.s', 'store.s', 'comparisons_i32.s', 'f32.s', 'globl.s', 'legalize.s', 'offset-folding.s', 'return-int32.s', 'store-trunc.s', 'comparisons_i64.s', 'f64.s', 'i32.s', 'load-ext.s', 'permute.s', 'return-void.s', 'signext-zeroext.s']: # TODO: 'relocation.s', 'inline-asm.s', 'switch.s'
+for s in ['minimal.s', 'basics.s', 'call.s', 'conv.s', 'fast-isel.s', 'i64.s', 'load.s', 'phi.s', 'select.s', 'unreachable.s', 'cpus.s', 'frem.s', 'immediates.s', 'load-store-i1.s', 'reg-stackify.s', 'unused-argument.s', 'comparisons_f32.s', 'dead-vreg.s', 'func.s', 'import.s', 'memory-addr32.s', 'store-results.s', 'varargs.s', 'comparisons_f64.s', 'exit.s', 'global.s', 'memory-addr64.s', 'returned.s', 'store.s', 'comparisons_i32.s', 'f32.s', 'globl.s', 'legalize.s', 'offset-folding.s', 'return-int32.s', 'store-trunc.s', 'comparisons_i64.s', 'f64.s', 'i32.s', 'load-ext.s', 'permute.s', 'return-void.s', 'signext-zeroext.s']: # TODO: 'relocation.s', 'inline-asm.s', 'switch.s', 'cfg-stackify.s'
   print '..', s
   wasm = s.replace('.s', '.wast')
   full = os.path.join('test', 'dot_s', s)

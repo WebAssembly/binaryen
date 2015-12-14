@@ -15,6 +15,7 @@
   (export "nearest32_via_rint" $nearest32_via_rint)
   (export "fmin32" $fmin32)
   (export "fmax32" $fmax32)
+  (export "fma32" $fma32)
   (func $fadd32 (param $$0 f32) (param $$1 f32) (result f32)
     (block $fake_return_waka123
       (block
@@ -181,6 +182,19 @@
         (br $fake_return_waka123
           (f32.max
             (f32.const 0)
+            (get_local $$0)
+          )
+        )
+      )
+    )
+  )
+  (func $fma32 (param $$0 f32) (param $$1 f32) (param $$2 f32) (result f32)
+    (block $fake_return_waka123
+      (block
+        (br $fake_return_waka123
+          (call $fmaf
+            (get_local $$2)
+            (get_local $$1)
             (get_local $$0)
           )
         )
