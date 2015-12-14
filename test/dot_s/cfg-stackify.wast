@@ -13,6 +13,15 @@
   (export "ifelse_earlyexits" $ifelse_earlyexits)
   (export "doublediamond_in_a_loop" $doublediamond_in_a_loop)
   (export "test3" $test3)
+  (export "test4" $test4)
+  (export "test5" $test5)
+  (export "test6" $test6)
+  (export "test7" $test7)
+  (export "test8" $test8)
+  (export "test9" $test9)
+  (export "test10" $test10)
+  (export "test11" $test11)
+  (export "test12" $test12)
   (func $test0 (param $$0 i32)
     (local $$1 i32)
     (block $fake_return_waka123
@@ -471,6 +480,604 @@
           (unreachable)
         )
         (br $fake_return_waka123)
+      )
+    )
+  )
+  (func $test4 (param $$0 i32)
+    (block $fake_return_waka123
+      (block
+        (block $BB13_8
+          (block $BB13_7
+            (block $BB13_4
+              (br_if
+                (i32.gt_s
+                  (i32.const 3)
+                  (get_local $$0)
+                )
+                $BB13_4
+              )
+              (block $BB13_3
+                (br_if
+                  (i32.eq
+                    (i32.const 0)
+                    (get_local $$0)
+                  )
+                  $BB13_3
+                )
+                (br_if
+                  (i32.ne
+                    (i32.const 2)
+                    (get_local $$0)
+                  )
+                  $BB13_7
+                )
+              )
+              (br $fake_return_waka123)
+            )
+            (br_if
+              (i32.eq
+                (i32.const 4)
+                (get_local $$0)
+              )
+              $BB13_8
+            )
+            (br_if
+              (i32.ne
+                (i32.const 622)
+                (get_local $$0)
+              )
+              $BB13_7
+            )
+            (br $fake_return_waka123)
+          )
+          (br $fake_return_waka123)
+        )
+        (br $fake_return_waka123)
+      )
+    )
+  )
+  (func $test5 (param $$0 i32) (param $$1 i32)
+    (local $$2 i32)
+    (local $$3 i32)
+    (block $fake_return_waka123
+      (block
+        (block $BB14_4
+          (loop $BB14_3 $BB14_1
+            (block
+              (set_local $$2
+                (i32.const 0)
+              )
+              (set_local $$3
+                (i32.store align=4
+                  (get_local $$2)
+                  (get_local $$2)
+                )
+              )
+              (set_local $$2
+                (i32.const 1)
+              )
+              (br_if
+                (i32.eq
+                  (i32.and
+                    (get_local $$2)
+                    (get_local $$0)
+                  )
+                  (i32.const 0)
+                )
+                $BB14_4
+              )
+              (br_if
+                (i32.and
+                  (i32.store align=4
+                    (get_local $$3)
+                    (get_local $$2)
+                  )
+                  (get_local $$1)
+                )
+                $BB14_1
+              )
+            )
+          )
+          (i32.store align=4
+            (get_local $$3)
+            (i32.const 3)
+          )
+          (br $fake_return_waka123)
+        )
+        (i32.store align=4
+          (get_local $$3)
+          (i32.const 2)
+        )
+        (br $fake_return_waka123)
+      )
+    )
+  )
+  (func $test6 (param $$0 i32) (param $$1 i32)
+    (local $$2 i32)
+    (local $$3 i32)
+    (local $$4 i32)
+    (block $fake_return_waka123
+      (block
+        (block $BB15_6
+          (block $BB15_5
+            (loop $BB15_4 $BB15_1
+              (block
+                (set_local $$2
+                  (i32.const 0)
+                )
+                (i32.store align=4
+                  (get_local $$2)
+                  (get_local $$2)
+                )
+                (set_local $$3
+                  (i32.const 1)
+                )
+                (br_if
+                  (i32.eq
+                    (i32.and
+                      (get_local $$3)
+                      (get_local $$0)
+                    )
+                    (i32.const 0)
+                  )
+                  $BB15_6
+                )
+                (i32.store align=4
+                  (get_local $$2)
+                  (get_local $$3)
+                )
+                (set_local $$4
+                  (i32.and
+                    (get_local $$3)
+                    (get_local $$1)
+                  )
+                )
+                (br_if
+                  (i32.eq
+                    (i32.const 0)
+                    (get_local $$4)
+                  )
+                  $BB15_5
+                )
+                (i32.store align=4
+                  (get_local $$2)
+                  (get_local $$3)
+                )
+                (br_if
+                  (get_local $$4)
+                  $BB15_1
+                )
+              )
+            )
+            (i32.store align=4
+              (get_local $$2)
+              (i32.const 2)
+            )
+            (br $fake_return_waka123)
+          )
+          (i32.store align=4
+            (get_local $$2)
+            (i32.const 3)
+          )
+        )
+        (i32.store align=4
+          (get_local $$2)
+          (i32.const 4)
+        )
+        (br $fake_return_waka123)
+      )
+    )
+  )
+  (func $test7 (param $$0 i32) (param $$1 i32)
+    (local $$2 i32)
+    (local $$3 i32)
+    (block
+      (set_local $$3
+        (i32.const 0)
+      )
+      (set_local $$2
+        (i32.store align=4
+          (get_local $$3)
+          (get_local $$3)
+        )
+      )
+      (loop $BB16_5 $BB16_1
+        (block
+          (set_local $$3
+            (i32.store align=4
+              (get_local $$2)
+              (i32.const 1)
+            )
+          )
+          (block $BB16_4
+            (br_if
+              (i32.and
+                (get_local $$3)
+                (get_local $$0)
+              )
+              $BB16_4
+            )
+            (i32.store align=4
+              (get_local $$2)
+              (i32.const 2)
+            )
+            (br_if
+              (i32.and
+                (get_local $$3)
+                (get_local $$1)
+              )
+              $BB16_1
+            )
+            (i32.store align=4
+              (get_local $$2)
+              (i32.const 4)
+            )
+            (unreachable)
+          )
+          (i32.store align=4
+            (get_local $$2)
+            (i32.const 3)
+          )
+          (br_if
+            (i32.and
+              (get_local $$3)
+              (get_local $$1)
+            )
+            $BB16_1
+          )
+        )
+      )
+      (i32.store align=4
+        (get_local $$2)
+        (i32.const 5)
+      )
+      (unreachable)
+    )
+  )
+  (func $test8 (result i32)
+    (local $$0 i32)
+    (block
+      (set_local $$0
+        (i32.const 0)
+      )
+      (loop $BB17_4 $BB17_1
+        (block
+          (block $BB17_3
+            (br_if
+              (i32.eq
+                (i32.const 0)
+                (get_local $$0)
+              )
+              $BB17_3
+            )
+            (br_if
+              (i32.eq
+                (i32.const 0)
+                (get_local $$0)
+              )
+              $BB17_1
+            )
+          )
+          (loop $BB17_4 $BB17_3
+            (block
+              (br_if
+                (get_local $$0)
+                $BB17_3
+              )
+              (br $BB17_1)
+            )
+          )
+        )
+      )
+    )
+  )
+  (func $test9
+    (local $$0 i32)
+    (local $$1 i32)
+    (block $fake_return_waka123
+      (block
+        (set_local $$1
+          (i32.const 0)
+        )
+        (set_local $$0
+          (i32.store align=4
+            (get_local $$1)
+            (get_local $$1)
+          )
+        )
+        (loop $BB18_5 $BB18_1
+          (block
+            (set_local $$1
+              (i32.store align=4
+                (get_local $$0)
+                (i32.const 1)
+              )
+            )
+            (br_if
+              (i32.eq
+                (i32.and
+                  (get_local $$1)
+                  (call $a)
+                )
+                (i32.const 0)
+              )
+              $BB18_5
+            )
+            (loop $BB18_5 $BB18_2
+              (block
+                (i32.store align=4
+                  (get_local $$0)
+                  (i32.const 2)
+                )
+                (block $BB18_4
+                  (br_if
+                    (i32.eq
+                      (i32.and
+                        (get_local $$1)
+                        (call $a)
+                      )
+                      (i32.const 0)
+                    )
+                    $BB18_4
+                  )
+                  (i32.store align=4
+                    (get_local $$0)
+                    (i32.const 3)
+                  )
+                  (br_if
+                    (i32.and
+                      (get_local $$1)
+                      (call $a)
+                    )
+                    $BB18_2
+                  )
+                  (br $BB18_1)
+                )
+                (i32.store align=4
+                  (get_local $$0)
+                  (i32.const 4)
+                )
+                (br_if
+                  (i32.and
+                    (get_local $$1)
+                    (call $a)
+                  )
+                  $BB18_2
+                )
+                (br $BB18_1)
+              )
+            )
+          )
+        )
+        (i32.store align=4
+          (get_local $$0)
+          (i32.const 5)
+        )
+        (br $fake_return_waka123)
+      )
+    )
+  )
+  (func $test10
+    (local $$0 i32)
+    (local $$1 i32)
+    (local $$2 i32)
+    (local $$3 i32)
+    (local $$4 i32)
+    (block $fake_return_waka123
+      (block
+        (set_local $$0
+          (i32.const 2)
+        )
+        (loop $BB19_7 $BB19_1
+          (block
+            (set_local $$4
+              (get_local $$1)
+            )
+            (set_local $$3
+              (get_local $$0)
+            )
+            (set_local $$1
+              (i32.const 0)
+            )
+            (set_local $$0
+              (i32.const 3)
+            )
+            (set_local $$2
+              (i32.const 4)
+            )
+            (br_if
+              (get_local $$4)
+              $BB19_1
+            )
+            (block $BB19_6
+              (loop $BB19_5 $BB19_2
+                (block
+                  (set_local $$4
+                    (get_local $$3)
+                  )
+                  (set_local $$3
+                    (get_local $$2)
+                  )
+                  (loop $BB19_5 $BB19_3
+                    (block
+                      (set_local $$2
+                        (get_local $$4)
+                      )
+                      (br_if
+                        (i32.gt_u
+                          (i32.const 4)
+                          (get_local $$2)
+                        )
+                        $BB19_1
+                      )
+                      (set_local $$4
+                        (get_local $$3)
+                      )
+                      (tableswitch 
+                        (get_local $$2)
+                        (table (case $BB19_3) (case $BB19_5) (case $BB19_1) (case $BB19_2) (case $BB19_6)) (case $BB19_3)
+                      )
+                    )
+                  )
+                )
+              )
+              (br $fake_return_waka123)
+            )
+            (set_local $$1
+              (i32.const 1)
+            )
+            (br $BB19_1)
+          )
+        )
+      )
+    )
+  )
+  (func $test11
+    (local $$0 i32)
+    (block $fake_return_waka123
+      (block
+        (set_local $$0
+          (i32.const 0)
+        )
+        (i32.store align=4
+          (get_local $$0)
+          (get_local $$0)
+        )
+        (block $BB20_8
+          (block $BB20_7
+            (block $BB20_6
+              (block $BB20_4
+                (br_if
+                  (get_local $$0)
+                  $BB20_4
+                )
+                (i32.store align=4
+                  (get_local $$0)
+                  (i32.const 1)
+                )
+                (block $BB20_3
+                  (br_if
+                    (get_local $$0)
+                    $BB20_3
+                  )
+                  (i32.store align=4
+                    (get_local $$0)
+                    (i32.const 2)
+                  )
+                  (br_if
+                    (get_local $$0)
+                    $BB20_6
+                  )
+                )
+                (i32.store align=4
+                  (get_local $$0)
+                  (i32.const 3)
+                )
+                (br $fake_return_waka123)
+              )
+              (i32.store align=4
+                (get_local $$0)
+                (i32.const 4)
+              )
+              (br_if
+                (get_local $$0)
+                $BB20_8
+              )
+              (i32.store align=4
+                (get_local $$0)
+                (i32.const 5)
+              )
+              (br_if
+                (i32.eq
+                  (i32.const 0)
+                  (get_local $$0)
+                )
+                $BB20_7
+              )
+            )
+            (i32.store align=4
+              (get_local $$0)
+              (i32.const 7)
+            )
+            (br $fake_return_waka123)
+          )
+          (i32.store align=4
+            (get_local $$0)
+            (i32.const 6)
+          )
+          (br $fake_return_waka123)
+        )
+        (i32.store align=4
+          (get_local $$0)
+          (i32.const 8)
+        )
+        (br $fake_return_waka123)
+      )
+    )
+  )
+  (func $test12 (param $$0 i32)
+    (local $$1 i32)
+    (block $fake_return_waka123
+      (block
+        (loop $BB21_8 $BB21_1
+          (block
+            (set_local $$1
+              (i32.load align=8
+                (get_local $$0)
+              )
+            )
+            (block $BB21_7
+              (block $BB21_6
+                (block $BB21_4
+                  (br_if
+                    (i32.gt_s
+                      (i32.const 103)
+                      (get_local $$1)
+                    )
+                    $BB21_4
+                  )
+                  (br_if
+                    (i32.eq
+                      (i32.const 42)
+                      (get_local $$1)
+                    )
+                    $BB21_7
+                  )
+                  (br_if
+                    (i32.eq
+                      (i32.const 76)
+                      (get_local $$1)
+                    )
+                    $BB21_7
+                  )
+                  (br $BB21_6)
+                )
+                (br_if
+                  (i32.eq
+                    (i32.const 108)
+                    (get_local $$1)
+                  )
+                  $BB21_7
+                )
+                (br_if
+                  (i32.eq
+                    (i32.const 104)
+                    (get_local $$1)
+                  )
+                  $BB21_7
+                )
+              )
+              (br $fake_return_waka123)
+            )
+            (set_local $$0
+              (i32.add
+                (i32.const 1)
+                (get_local $$0)
+              )
+            )
+            (br $BB21_1)
+          )
+        )
       )
     )
   )

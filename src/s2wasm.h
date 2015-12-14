@@ -695,6 +695,15 @@ private:
           curr->value = getInput();
         }
         bstack.back()->list.push_back(curr);
+      } else if (match("tableswitch")) {
+        auto curr = allocator.alloc<Switch>();
+        curr->value = getInput();
+        skipComma();
+        curr->default_ = getCommaSeparated();
+        while (skipComma()) {
+          curr->targets.push_back(getCommaSeparated());
+        }
+        bstack.back()->list.push_back(curr);
       } else if (match("unreachable")) {
         bstack.back()->list.push_back(allocator.alloc<Unreachable>());
       } else if (match("memory_size")) {
