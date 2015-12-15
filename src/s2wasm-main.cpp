@@ -35,9 +35,13 @@ int main(int argc, char **argv) {
   AllocatingModule wasm;
   S2WasmBuilder s2wasm(wasm, input);
 
+  if (debug) std::cerr << "emscripten gluing...\n";
+  std::stringstream meta;
+  s2wasm.emscriptenGlue(meta);
+
   if (debug) std::cerr << "printing...\n";
   std::cout << wasm;
-  s2wasm.printMeta(std::cout);
+  std::cout << meta.str();
 
   if (debug) std::cerr << "done.\n";
 }

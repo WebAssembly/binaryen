@@ -864,8 +864,8 @@ private:
 
 public:
 
-  // emit metadata for emscripten integration
-  void printMeta(std::ostream& o) {
+  // extra emscripten processing
+  void emscriptenGlue(std::ostream& o) {
     o << "; METADATA: { ";
     // find asmConst calls, and emit their metadata
     struct AsmConstWalker : public WasmWalker {
@@ -888,6 +888,9 @@ public:
           }
           std::string sig = getSig(curr);
           sigsForCode[code].insert(sig);
+          std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str;
+          fixedTarget += '_' + sig;
+          curr->target = cashew::IString(fixedTarget.c_str(), false);
         }
       }
 
