@@ -1,6 +1,6 @@
 (module
   (memory 0 4294967295 (segment 16 "{ Module.print(\"hello, world!\"); }\00"))
-  (import $emscripten_asm_const "env" "emscripten_asm_const")
+  (import $emscripten_asm_const_vi "env" "emscripten_asm_const_vi")
   (export "main" $main)
   (func $main (result i32)
     (block $fake_return_waka123

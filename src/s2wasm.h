@@ -866,6 +866,8 @@ public:
 
   // extra emscripten processing
   void emscriptenGlue(std::ostream& o) {
+    wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
+
     o << "; METADATA: { ";
     // find asmConst calls, and emit their metadata
     struct AsmConstWalker : public WasmWalker {
@@ -874,6 +876,7 @@ public:
 
       std::map<std::string, std::set<std::string>> sigsForCode;
       std::map<std::string, size_t> ids;
+      std::set<std::string> allSigs;
 
       AsmConstWalker(S2WasmBuilder* parent) : parent(parent), o(o) {}
 
@@ -895,6 +898,14 @@ public:
           fixedTarget += '_' + sig;
           curr->target = cashew::IString(fixedTarget.c_str(), false);
           arg->value = Literal(id);
+          // add import, if necessary
+          if (allSigs.count(sig) == 0) {
+            allSigs.insert(sig);
+            auto import = parent->allocator.alloc<Import>();
+            import->name = import->base = curr->target;
+            import->module = ENV;
+            parent->wasm.addImport(import);
+          }
         }
       }
 
@@ -922,6 +933,7 @@ public:
     };
     AsmConstWalker walker(this);
     walker.startWalk(&wasm);
+    // print
     o << "\"asmConsts\": {";
     bool first = true;
     for (auto& pair : walker.sigsForCode) {
