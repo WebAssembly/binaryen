@@ -1,5 +1,6 @@
 (module
   (memory 0 4294967295)
+  (import $callee "env" "callee")
   (export "end" $end)
   (export "copy" $copy)
   (export "arg_i8" $arg_i8)

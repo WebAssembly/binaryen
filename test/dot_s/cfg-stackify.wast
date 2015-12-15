@@ -1,5 +1,8 @@
 (module
   (memory 0 4294967295)
+  (import $something "env" "something")
+  (import $bar "env" "bar")
+  (import $a "env" "a")
   (export "test0" $test0)
   (export "test1" $test1)
   (export "test2" $test2)

@@ -1,5 +1,7 @@
 (module
   (memory 0 4294967295)
+  (import $fmodf "env" "fmodf")
+  (import $fmod "env" "fmod")
   (export "frem32" $frem32)
   (export "frem64" $frem64)
   (func $frem32 (param $$0 f32) (param $$1 f32) (result f32)

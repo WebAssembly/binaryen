@@ -1,5 +1,11 @@
 (module
   (memory 0 4294967295)
+  (import $printi "env" "printi")
+  (import $printf "env" "printf")
+  (import $printv "env" "printv")
+  (import $split_arg "env" "split_arg")
+  (import $expanded_arg "env" "expanded_arg")
+  (import $lowered_result "env" "lowered_result")
   (export "f" $f)
   (func $f (param $$0 i32) (param $$1 f32) (param $$2 i64) (param $$3 i64) (param $$4 i32)
     (block $fake_return_waka123

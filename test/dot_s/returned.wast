@@ -1,5 +1,8 @@
 (module
   (memory 0 4294967295)
+  (import $_Znwm "env" "_Znwm")
+  (import $_ZN5AppleC1Ev "env" "_ZN5AppleC1Ev")
+  (import $memcpy "env" "memcpy")
   (export "_Z3foov" $_Z3foov)
   (export "_Z3barPvS_l" $_Z3barPvS_l)
   (func $_Z3foov (result i32)

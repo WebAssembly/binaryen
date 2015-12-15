@@ -449,21 +449,27 @@ private:
       CallBase* curr;
       Name assign;
       if (match("_indirect")) {
-        auto indirect = allocator.alloc<CallIndirect>();
+        auto specific = allocator.alloc<CallIndirect>();
         assign = getAssign();
-        indirect->target = getInput();
-        curr = indirect;
+        specific->target = getInput();
+        curr = specific;
       } else {
         assign = getAssign();
         Name target = getCommaSeparated();
         if (implementedFunctions.count(target) > 0) {
-          auto plain = allocator.alloc<Call>();
-          plain->target = target;
-          curr = plain;
+          auto specific = allocator.alloc<Call>();
+          specific->target = target;
+          curr = specific;
         } else {
-          auto import = allocator.alloc<CallImport>();
-          import->target = target;
-          curr = import;
+          auto specific = allocator.alloc<CallImport>();
+          specific->target = target;
+          curr = specific;
+          if (wasm.importsMap.count(target) == 0) {
+            auto import = allocator.alloc<Import>();
+            import->name = import->base = target;
+            import->module = ENV;
+            wasm.addImport(import);
+          }
         }
       }
       curr->type = type;

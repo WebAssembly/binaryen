@@ -1,5 +1,11 @@
 (module
   (memory 0 4294967295)
+  (import $foo0 "env" "foo0")
+  (import $foo1 "env" "foo1")
+  (import $foo2 "env" "foo2")
+  (import $foo3 "env" "foo3")
+  (import $foo4 "env" "foo4")
+  (import $foo5 "env" "foo5")
   (export "bar32" $bar32)
   (export "bar64" $bar64)
   (func $bar32 (param $$0 i32)

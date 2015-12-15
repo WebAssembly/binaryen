@@ -1,5 +1,6 @@
 (module
   (memory 0 4294967295)
+  (import $fma "env" "fma")
   (export "fadd64" $fadd64)
   (export "fsub64" $fsub64)
   (export "fmul64" $fmul64)
