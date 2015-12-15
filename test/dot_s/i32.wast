@@ -23,8 +23,8 @@
       (block
         (br $fake_return_waka123
           (i32.add
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -35,8 +35,8 @@
       (block
         (br $fake_return_waka123
           (i32.sub
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -47,8 +47,8 @@
       (block
         (br $fake_return_waka123
           (i32.mul
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -59,8 +59,8 @@
       (block
         (br $fake_return_waka123
           (i32.div_s
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -71,8 +71,8 @@
       (block
         (br $fake_return_waka123
           (i32.div_u
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -83,8 +83,8 @@
       (block
         (br $fake_return_waka123
           (i32.rem_s
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -95,8 +95,8 @@
       (block
         (br $fake_return_waka123
           (i32.rem_u
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -107,8 +107,8 @@
       (block
         (br $fake_return_waka123
           (i32.and
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -119,8 +119,8 @@
       (block
         (br $fake_return_waka123
           (i32.or
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -131,8 +131,8 @@
       (block
         (br $fake_return_waka123
           (i32.xor
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -143,8 +143,8 @@
       (block
         (br $fake_return_waka123
           (i32.shl
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -155,8 +155,8 @@
       (block
         (br $fake_return_waka123
           (i32.shr_u
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -167,8 +167,8 @@
       (block
         (br $fake_return_waka123
           (i32.shr_s
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )

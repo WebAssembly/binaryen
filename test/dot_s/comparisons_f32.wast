@@ -55,8 +55,8 @@
       (block
         (br $fake_return_waka123
           (f32.eq
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -67,8 +67,8 @@
       (block
         (br $fake_return_waka123
           (f32.ne
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -79,8 +79,8 @@
       (block
         (br $fake_return_waka123
           (f32.lt
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -91,8 +91,8 @@
       (block
         (br $fake_return_waka123
           (f32.le
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -103,8 +103,8 @@
       (block
         (br $fake_return_waka123
           (f32.gt
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -115,8 +115,8 @@
       (block
         (br $fake_return_waka123
           (f32.ge
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -128,8 +128,8 @@
         (br $fake_return_waka123
           (i32.or
             (f32.eq
-              (get_local $$1)
               (get_local $$0)
+              (get_local $$1)
             )
             (i32.or
               (f32.ne
@@ -152,8 +152,8 @@
         (br $fake_return_waka123
           (i32.and
             (f32.ne
-              (get_local $$1)
               (get_local $$0)
+              (get_local $$1)
             )
             (i32.and
               (f32.eq
@@ -176,8 +176,8 @@
         (br $fake_return_waka123
           (i32.or
             (f32.lt
-              (get_local $$1)
               (get_local $$0)
+              (get_local $$1)
             )
             (i32.or
               (f32.ne
@@ -200,8 +200,8 @@
         (br $fake_return_waka123
           (i32.or
             (f32.le
-              (get_local $$1)
               (get_local $$0)
+              (get_local $$1)
             )
             (i32.or
               (f32.ne
@@ -224,8 +224,8 @@
         (br $fake_return_waka123
           (i32.or
             (f32.gt
-              (get_local $$1)
               (get_local $$0)
+              (get_local $$1)
             )
             (i32.or
               (f32.ne
@@ -248,8 +248,8 @@
         (br $fake_return_waka123
           (i32.or
             (f32.ge
-              (get_local $$1)
               (get_local $$0)
+              (get_local $$1)
             )
             (i32.or
               (f32.ne

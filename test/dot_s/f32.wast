@@ -22,8 +22,8 @@
       (block
         (br $fake_return_waka123
           (f32.add
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -34,8 +34,8 @@
       (block
         (br $fake_return_waka123
           (f32.sub
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -46,8 +46,8 @@
       (block
         (br $fake_return_waka123
           (f32.mul
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -58,8 +58,8 @@
       (block
         (br $fake_return_waka123
           (f32.div
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -92,8 +92,8 @@
       (block
         (br $fake_return_waka123
           (f32.copysign
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -170,8 +170,8 @@
       (block
         (br $fake_return_waka123
           (f32.min
-            (f32.const 0)
             (get_local $$0)
+            (f32.const 0)
           )
         )
       )
@@ -182,8 +182,8 @@
       (block
         (br $fake_return_waka123
           (f32.max
-            (f32.const 0)
             (get_local $$0)
+            (f32.const 0)
           )
         )
       )

@@ -13,11 +13,11 @@
         )
         (br $fake_return_waka123
           (i32.shr_s
-            (get_local $$1)
             (i32.shl
-              (get_local $$1)
               (get_local $$0)
+              (get_local $$1)
             )
+            (get_local $$1)
           )
         )
       )
@@ -28,8 +28,8 @@
       (block
         (br $fake_return_waka123
           (i32.and
-            (i32.const 255)
             (get_local $$0)
+            (i32.const 255)
           )
         )
       )
@@ -41,8 +41,8 @@
         (br $fake_return_waka123
           (call $z2s_func
             (i32.and
-              (i32.const 255)
               (get_local $$0)
+              (i32.const 255)
             )
           )
         )
@@ -58,19 +58,19 @@
         )
         (br $fake_return_waka123
           (i32.shr_s
-            (get_local $$1)
             (i32.shl
-              (get_local $$1)
               (call $s2z_func
                 (i32.shr_s
-                  (get_local $$1)
                   (i32.shl
-                    (get_local $$1)
                     (get_local $$0)
+                    (get_local $$1)
                   )
+                  (get_local $$1)
                 )
               )
+              (get_local $$1)
             )
+            (get_local $$1)
           )
         )
       )

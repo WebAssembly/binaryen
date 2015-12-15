@@ -17,15 +17,15 @@
         (block $BB0_5
           (br_if
             (i32.lt_s
-              (get_local $$4)
               (get_local $$2)
+              (get_local $$4)
             )
             $BB0_5
           )
           (set_local $$3
             (i32.shl
-              (i32.const 2)
               (get_local $$1)
+              (i32.const 2)
             )
           )
           (set_local $$5
@@ -48,8 +48,8 @@
               (block $BB0_4
                 (br_if
                   (i32.lt_s
-                    (get_local $$4)
                     (get_local $$1)
+                    (get_local $$4)
                   )
                   $BB0_4
                 )
@@ -57,8 +57,8 @@
                   (block
                     (set_local $$9
                       (i32.add
-                        (i32.const -1)
                         (get_local $$9)
+                        (i32.const -1)
                       )
                     )
                     (i32.store align=4
@@ -67,14 +67,14 @@
                     )
                     (set_local $$8
                       (i32.add
-                        (i32.const 4)
                         (get_local $$8)
+                        (i32.const 4)
                       )
                     )
                     (set_local $$7
                       (i32.add
-                        (get_local $$6)
                         (get_local $$7)
+                        (get_local $$6)
                       )
                     )
                     (br_if
@@ -86,20 +86,20 @@
               )
               (set_local $$6
                 (i32.add
-                  (get_local $$4)
                   (get_local $$6)
+                  (get_local $$4)
                 )
               )
               (set_local $$0
                 (i32.add
-                  (get_local $$3)
                   (get_local $$0)
+                  (get_local $$3)
                 )
               )
               (br_if
                 (i32.ne
-                  (get_local $$2)
                   (get_local $$6)
+                  (get_local $$2)
                 )
                 $BB0_2
               )

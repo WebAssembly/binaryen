@@ -10,11 +10,11 @@
       (block
         (br $fake_return_waka123
           (i32.shl
-            (i32.and
-              (i32.const 7)
-              (get_local $$1)
-            )
             (get_local $$0)
+            (i32.and
+              (get_local $$1)
+              (i32.const 7)
+            )
           )
         )
       )
@@ -25,11 +25,11 @@
       (block
         (br $fake_return_waka123
           (i64.shl
-            (i64.and
-              (i64.const 9007199254740991)
-              (get_local $$1)
-            )
             (get_local $$0)
+            (i64.and
+              (get_local $$1)
+              (i64.const 9007199254740991)
+            )
           )
         )
       )
@@ -44,11 +44,11 @@
         )
         (br $fake_return_waka123
           (i64.shr_s
-            (get_local $$1)
             (i64.shl
-              (get_local $$1)
               (get_local $$0)
+              (get_local $$1)
             )
+            (get_local $$1)
           )
         )
       )

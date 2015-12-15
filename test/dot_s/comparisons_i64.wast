@@ -15,8 +15,8 @@
       (block
         (br $fake_return_waka123
           (i64.eq
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -27,8 +27,8 @@
       (block
         (br $fake_return_waka123
           (i64.ne
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -39,8 +39,8 @@
       (block
         (br $fake_return_waka123
           (i64.lt_s
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -51,8 +51,8 @@
       (block
         (br $fake_return_waka123
           (i64.le_s
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -63,8 +63,8 @@
       (block
         (br $fake_return_waka123
           (i64.lt_u
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -75,8 +75,8 @@
       (block
         (br $fake_return_waka123
           (i64.le_u
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -87,8 +87,8 @@
       (block
         (br $fake_return_waka123
           (i64.gt_s
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -99,8 +99,8 @@
       (block
         (br $fake_return_waka123
           (i64.ge_s
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -111,8 +111,8 @@
       (block
         (br $fake_return_waka123
           (i64.gt_u
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )
@@ -123,8 +123,8 @@
       (block
         (br $fake_return_waka123
           (i64.ge_u
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
           )
         )
       )

@@ -36,14 +36,14 @@
           (block
             (set_local $$1
               (i32.add
-                (i32.const 1)
                 (get_local $$1)
+                (i32.const 1)
               )
             )
             (br_if
               (i32.ge_s
-                (get_local $$0)
                 (get_local $$1)
+                (get_local $$0)
               )
               $BB0_3
             )
@@ -66,14 +66,14 @@
           (block
             (set_local $$1
               (i32.add
-                (i32.const 1)
                 (get_local $$1)
+                (i32.const 1)
               )
             )
             (br_if
               (i32.ge_s
-                (get_local $$0)
                 (get_local $$1)
+                (get_local $$0)
               )
               $BB1_3
             )
@@ -91,8 +91,8 @@
         (block $BB2_2
           (br_if
             (i32.lt_s
-              (i32.const 1)
               (get_local $$1)
+              (i32.const 1)
             )
             $BB2_2
           )
@@ -109,14 +109,14 @@
               )
               (set_local $$1
                 (i32.add
-                  (i32.const -1)
                   (get_local $$1)
+                  (i32.const -1)
                 )
               )
               (set_local $$0
                 (i32.add
-                  (i32.const 8)
                   (get_local $$0)
+                  (i32.const 8)
                 )
               )
               (br_if
@@ -296,8 +296,8 @@
             )
             (br_if
               (i32.eq
-                (i32.const 0)
                 (get_local $$1)
+                (i32.const 0)
               )
               $BB8_1
             )
@@ -494,23 +494,23 @@
             (block $BB13_4
               (br_if
                 (i32.gt_s
-                  (i32.const 3)
                   (get_local $$0)
+                  (i32.const 3)
                 )
                 $BB13_4
               )
               (block $BB13_3
                 (br_if
                   (i32.eq
-                    (i32.const 0)
                     (get_local $$0)
+                    (i32.const 0)
                   )
                   $BB13_3
                 )
                 (br_if
                   (i32.ne
-                    (i32.const 2)
                     (get_local $$0)
+                    (i32.const 2)
                   )
                   $BB13_7
                 )
@@ -519,15 +519,15 @@
             )
             (br_if
               (i32.eq
-                (i32.const 4)
                 (get_local $$0)
+                (i32.const 4)
               )
               $BB13_8
             )
             (br_if
               (i32.ne
-                (i32.const 622)
                 (get_local $$0)
+                (i32.const 622)
               )
               $BB13_7
             )
@@ -562,8 +562,8 @@
               (br_if
                 (i32.eq
                   (i32.and
-                    (get_local $$2)
                     (get_local $$0)
+                    (get_local $$2)
                   )
                   (i32.const 0)
                 )
@@ -571,11 +571,11 @@
               )
               (br_if
                 (i32.and
+                  (get_local $$1)
                   (i32.store align=4
                     (get_local $$3)
                     (get_local $$2)
                   )
-                  (get_local $$1)
                 )
                 $BB14_1
               )
@@ -618,8 +618,8 @@
                 (br_if
                   (i32.eq
                     (i32.and
-                      (get_local $$3)
                       (get_local $$0)
+                      (get_local $$3)
                     )
                     (i32.const 0)
                   )
@@ -631,14 +631,14 @@
                 )
                 (set_local $$4
                   (i32.and
-                    (get_local $$3)
                     (get_local $$1)
+                    (get_local $$3)
                   )
                 )
                 (br_if
                   (i32.eq
-                    (i32.const 0)
                     (get_local $$4)
+                    (i32.const 0)
                   )
                   $BB15_5
                 )
@@ -695,8 +695,8 @@
           (block $BB16_4
             (br_if
               (i32.and
-                (get_local $$3)
                 (get_local $$0)
+                (get_local $$3)
               )
               $BB16_4
             )
@@ -706,8 +706,8 @@
             )
             (br_if
               (i32.and
-                (get_local $$3)
                 (get_local $$1)
+                (get_local $$3)
               )
               $BB16_1
             )
@@ -723,8 +723,8 @@
           )
           (br_if
             (i32.and
-              (get_local $$3)
               (get_local $$1)
+              (get_local $$3)
             )
             $BB16_1
           )
@@ -748,15 +748,15 @@
           (block $BB17_3
             (br_if
               (i32.eq
-                (i32.const 0)
                 (get_local $$0)
+                (i32.const 0)
               )
               $BB17_3
             )
             (br_if
               (i32.eq
-                (i32.const 0)
                 (get_local $$0)
+                (i32.const 0)
               )
               $BB17_1
             )
@@ -799,8 +799,8 @@
             (br_if
               (i32.eq
                 (i32.and
-                  (get_local $$1)
                   (call_import $a)
+                  (get_local $$1)
                 )
                 (i32.const 0)
               )
@@ -816,8 +816,8 @@
                   (br_if
                     (i32.eq
                       (i32.and
-                        (get_local $$1)
                         (call_import $a)
+                        (get_local $$1)
                       )
                       (i32.const 0)
                     )
@@ -829,8 +829,8 @@
                   )
                   (br_if
                     (i32.and
-                      (get_local $$1)
                       (call_import $a)
+                      (get_local $$1)
                     )
                     $BB18_2
                   )
@@ -842,8 +842,8 @@
                 )
                 (br_if
                   (i32.and
-                    (get_local $$1)
                     (call_import $a)
+                    (get_local $$1)
                   )
                   $BB18_2
                 )
@@ -908,8 +908,8 @@
                       )
                       (br_if
                         (i32.gt_u
-                          (i32.const 4)
                           (get_local $$2)
+                          (i32.const 4)
                         )
                         $BB19_1
                       )
@@ -992,8 +992,8 @@
               )
               (br_if
                 (i32.eq
-                  (i32.const 0)
                   (get_local $$0)
+                  (i32.const 0)
                 )
                 $BB20_7
               )
@@ -1034,22 +1034,22 @@
                 (block $BB21_4
                   (br_if
                     (i32.gt_s
-                      (i32.const 103)
                       (get_local $$1)
+                      (i32.const 103)
                     )
                     $BB21_4
                   )
                   (br_if
                     (i32.eq
-                      (i32.const 42)
                       (get_local $$1)
+                      (i32.const 42)
                     )
                     $BB21_7
                   )
                   (br_if
                     (i32.eq
-                      (i32.const 76)
                       (get_local $$1)
+                      (i32.const 76)
                     )
                     $BB21_7
                   )
@@ -1057,15 +1057,15 @@
                 )
                 (br_if
                   (i32.eq
-                    (i32.const 108)
                     (get_local $$1)
+                    (i32.const 108)
                   )
                   $BB21_7
                 )
                 (br_if
                   (i32.eq
-                    (i32.const 104)
                     (get_local $$1)
+                    (i32.const 104)
                   )
                   $BB21_7
                 )
@@ -1074,8 +1074,8 @@
             )
             (set_local $$0
               (i32.add
-                (i32.const 1)
                 (get_local $$0)
+                (i32.const 1)
               )
             )
             (br $BB21_1)

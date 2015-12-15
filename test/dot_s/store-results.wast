@@ -34,14 +34,14 @@
             )
             (set_local $$1
               (i32.add
-                (i32.const 1)
                 (get_local $$1)
+                (i32.const 1)
               )
             )
             (br_if
               (i32.ne
-                (i32.const 256)
                 (get_local $$1)
+                (i32.const 256)
               )
               $BB1_1
             )
@@ -70,14 +70,14 @@
             )
             (set_local $$1
               (f32.add
-                (f32.const 1)
                 (get_local $$1)
+                (f32.const 1)
               )
             )
             (br_if
               (f32.ne
-                (f32.const 256)
                 (get_local $$1)
+                (f32.const 256)
               )
               $BB2_1
             )

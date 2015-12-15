@@ -111,6 +111,12 @@ private:
     return cashew::IString(str.c_str(), false);
   }
 
+  void skipToSep() {
+    while (*s && !isspace(*s) && *s != ',' && *s != ')') {
+      s++;
+    }
+  }
+
   Name getStrToSep() {
     std::string str;
     while (*s && !isspace(*s) && *s != ',' && *s != ')') {
@@ -345,17 +351,42 @@ private:
       //std::cerr << "pop " << ret << '\n';
       return ret;
     };
-    auto getInput = [&]() {
-      //dump("getinput");
-      if (match("$pop")) {
-        while (isdigit(*s)) s++;
-        return pop();
-      } else {
-        auto curr = allocator.alloc<GetLocal>();
-        curr->name = getStrToSep();
-        curr->type = localTypes[curr->name];
-        return (Expression*)curr;
+    auto getNumInputs = [&]() {
+      int ret = 1;
+      char *t = s;
+      while (*t != '\n') {
+        if (*t == ',') ret++;
+        t++;
       }
+      return ret;
+    };
+    auto getInputs = [&](int num) {
+      // we may have       $pop, $0, $pop, $1     etc., which are getlocals
+      // interleaved with stack pops, and the stack pops must be done in
+      // *reverse* order, i.e., that input should turn into
+      //         lastpop, getlocal(0), firstpop, getlocal(1)
+      std::vector<Expression*> inputs; // TODO: optimize (if .s format doesn't change)
+      inputs.resize(num);
+      for (int i = 0; i < num; i++) {
+        if (match("$pop")) {
+          skipToSep();
+          inputs[i] = nullptr;
+        } else {
+          auto curr = allocator.alloc<GetLocal>();
+          curr->name = getStrToSep();
+          curr->type = localTypes[curr->name];
+          inputs[i] = curr;
+        }
+        if (*s == ')') s++; // tolerate 0(argument) syntax, where we started at the 'a'
+        if (i < num - 1) skipComma();
+      }
+      for (int i = num-1; i >= 0; i--) {
+        if (inputs[i] == nullptr) inputs[i] = pop();
+      }
+      return inputs;
+    };
+    auto getInput = [&]() {
+      return getInputs(1)[0];
     };
     auto setOutput = [&](Expression* curr, Name assign) {
       if (assign.isNull() || assign.str[1] == 'd') { // discard
@@ -375,9 +406,9 @@ private:
       skipComma();
       auto curr = allocator.alloc<Binary>();
       curr->op = op;
-      curr->right = getInput();
-      skipComma();
-      curr->left = getInput();
+      auto inputs = getInputs(2);
+      curr->left = inputs[0];
+      curr->right = inputs[1];
       curr->finalize();
       assert(curr->type == type);
       setOutput(curr, assign);
@@ -417,7 +448,6 @@ private:
       curr->align = curr->bytes; // XXX
       mustMatch("(");
       curr->ptr = getInput();
-      mustMatch(")");
       setOutput(curr, assign);
     };
     auto makeStore = [&](WasmType type) {
@@ -426,26 +456,23 @@ private:
       curr->type = type;
       int32_t bytes = getInt();
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
+      curr->align = curr->bytes; // XXX
       Name assign = getAssign();
       curr->offset = getInt();
-      curr->align = curr->bytes; // XXX
       mustMatch("(");
-      curr->ptr = getInput();
-      mustMatch(")");
-      skipComma();
-      curr->value = getInput();
+      auto inputs = getInputs(2);
+      curr->ptr = inputs[0];
+      curr->value = inputs[1];
       setOutput(curr, assign);
     };
     auto makeSelect = [&](WasmType type) {
       Name assign = getAssign();
       skipComma();
       auto curr = allocator.alloc<Select>();
-      curr->condition = getInput();
-      skipComma();
-      curr->ifTrue = getInput();
-      skipComma();
-      curr->ifFalse = getInput();
-      skipComma();
+      auto inputs = getInputs(3);
+      curr->condition = inputs[0];
+      curr->ifTrue = inputs[1];
+      curr->ifFalse = inputs[2];
       curr->type = type;
       setOutput(curr, assign);
     };
@@ -477,9 +504,14 @@ private:
         }
       }
       curr->type = type;
-      while (1) {
-        if (!skipComma()) break;
-        curr->operands.push_back(getInput());
+      skipWhitespace();
+      if (*s == ',') {
+        skipComma();
+        int num = getNumInputs();
+        auto inputs = getInputs(num);
+        for (int i = 0; i < num; i++) {
+          curr->operands.push_back(inputs[i]);
+        }
       }
       std::reverse(curr->operands.begin(), curr->operands.end());
       setOutput(curr, assign);

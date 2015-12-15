@@ -8,15 +8,15 @@
         (block $BB0_2
           (br_if
             (i32.gt_s
-              (i32.const -1)
               (get_local $$0)
+              (i32.const -1)
             )
             $BB0_2
           )
           (set_local $$0
             (i32.div_s
-              (i32.const 3)
               (get_local $$0)
+              (i32.const 3)
             )
           )
         )
@@ -50,8 +50,8 @@
           (block
             (set_local $$5
               (i32.add
-                (get_local $$2)
                 (get_local $$5)
+                (get_local $$2)
               )
             )
             (set_local $$1
@@ -65,8 +65,8 @@
             )
             (br_if
               (i32.lt_s
-                (get_local $$0)
                 (get_local $$5)
+                (get_local $$0)
               )
               $BB1_1
             )

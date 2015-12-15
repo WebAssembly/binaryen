@@ -14,8 +14,8 @@
         (block $BB0_8
           (br_if
             (i32.gt_u
-              (i32.const 23)
               (get_local $$0)
+              (i32.const 23)
             )
             $BB0_8
           )
@@ -57,8 +57,8 @@
         (block $BB1_8
           (br_if
             (i64.gt_u
-              (i64.const 23)
               (get_local $$0)
+              (i64.const 23)
             )
             $BB1_8
           )

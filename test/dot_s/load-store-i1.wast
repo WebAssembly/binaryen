@@ -26,13 +26,13 @@
         )
         (br $fake_return_waka123
           (i32.shr_s
-            (get_local $$1)
             (i32.shl
-              (get_local $$1)
               (i32.load align=8
                 (get_local $$0)
               )
+              (get_local $$1)
             )
+            (get_local $$1)
           )
         )
       )
@@ -58,13 +58,13 @@
         )
         (br $fake_return_waka123
           (i64.shr_s
-            (get_local $$1)
             (i64.shl
-              (get_local $$1)
               (i64.load align=8
                 (get_local $$0)
               )
+              (get_local $$1)
             )
+            (get_local $$1)
           )
         )
       )
@@ -76,8 +76,8 @@
         (i32.store align=8
           (get_local $$0)
           (i32.and
-            (i32.const 1)
             (get_local $$1)
+            (i32.const 1)
           )
         )
         (br $fake_return_waka123)
@@ -90,8 +90,8 @@
         (i64.store align=8
           (get_local $$0)
           (i64.and
-            (i64.const 1)
             (get_local $$1)
+            (i64.const 1)
           )
         )
         (br $fake_return_waka123)

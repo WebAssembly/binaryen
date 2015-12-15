@@ -81,29 +81,29 @@
         (block $BB4_2
           (br_if
             (i32.ne
-              (get_local $$4)
               (i32.xor
                 (i32.xor
                   (i32.lt_s
-                    (get_local $$4)
                     (get_local $$0)
+                    (get_local $$4)
                   )
                   (i32.lt_s
-                    (get_local $$5)
                     (get_local $$1)
+                    (get_local $$5)
                   )
                 )
                 (i32.xor
                   (i32.lt_s
-                    (get_local $$4)
                     (get_local $$2)
+                    (get_local $$4)
                   )
                   (i32.lt_s
-                    (get_local $$5)
                     (get_local $$3)
+                    (get_local $$5)
                   )
                 )
               )
+              (get_local $$4)
             )
             $BB4_2
           )
