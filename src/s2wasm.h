@@ -873,6 +873,7 @@ public:
       std::ostream& o;
 
       std::map<std::string, std::set<std::string>> sigsForCode;
+      std::map<std::string, size_t> ids;
 
       AsmConstWalker(S2WasmBuilder* parent) : parent(parent), o(o) {}
 
@@ -881,6 +882,10 @@ public:
           auto arg = curr->operands[0]->cast<Const>();
           size_t segmentIndex = parent->addressSegments[arg->value.geti32()];
           std::string code = escape(parent->wasm.memory.segments[segmentIndex].data);
+          if (ids.count(code) == 0) {
+            size_t id = ids.size();
+            ids[code] = id;
+          }
           std::string sig = getSig(curr);
           sigsForCode[code].insert(sig);
         }
@@ -917,8 +922,9 @@ public:
       auto& sigs = pair.second;
       if (first) first = false;
       else o << ",";
-      o << '"' << code << '"' << ":";
+      o << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
       printSet(o, sigs);
+      o << "]";
     }
     o << "}";
 

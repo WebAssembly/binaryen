@@ -15,4 +15,4 @@
     )
   )
 )
-; METADATA: { "asmConsts": {"{ Module.print(\"hello, world!\"); }":["vi"]} }
+; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world!\"); }", ["vi"]]} }
