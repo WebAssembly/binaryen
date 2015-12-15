@@ -880,10 +880,32 @@ public:
         if (curr->target == EMSCRIPTEN_ASM_CONST) {
           auto arg = curr->operands[0]->cast<Const>();
           size_t segmentIndex = parent->addressSegments[arg->value.geti32()];
-          std::string code = parent->wasm.memory.segments[segmentIndex].data;
+          std::string code = escape(parent->wasm.memory.segments[segmentIndex].data);
           std::string sig = getSig(curr);
           sigsForCode[code].insert(sig);
         }
+      }
+
+      std::string escape(const char *input) {
+        std::string code = input;
+        // replace newlines quotes with escaped newlines
+        size_t curr = 0;
+        while ((curr = code.find("\\n", curr)) != std::string::npos) {
+          code = code.replace(curr, 2, "\\\\n");
+          curr += 3; // skip this one
+        }
+        // replace double quotes with escaped single quotes
+        curr = 0;
+        while ((curr = code.find('"', curr)) != std::string::npos) {
+          if (curr == 0 || code[curr-1] != '\\') {
+            code = code.replace(curr, 1, "\\" "\"");
+            curr += 2; // skip this one
+          } else { // already escaped, escape the slash as well
+            code = code.replace(curr, 1, "\\" "\\" "\"");
+            curr += 3; // skip this one
+          }
+        }
+        return code;
       }
     };
     AsmConstWalker walker(this);
