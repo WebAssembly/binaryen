@@ -119,7 +119,7 @@ private:
 
   Name getStrToSep() {
     std::string str;
-    while (*s && !isspace(*s) && *s != ',' && *s != ')') {
+    while (*s && !isspace(*s) && *s != ',' && *s != ')' && *s != ':') {
       str += *s;
       s++;
     }
@@ -274,6 +274,7 @@ private:
       s++;
       if (match("file")) parseFile();
       else if (match("globl")) parseGlobl();
+      else if (match("type")) parseType();
       else {
         s--;
         break;
@@ -294,19 +295,20 @@ private:
   }
 
   void parseGlobl() {
+    Name name = getStr();
+    skipWhitespace();
+  }
+
+  void parseFunction() {
+    if (debug) dump("func");
+    Name name = getStrToSep();
+    mustMatch(":");
+
     unsigned nextId = 0;
     auto getNextId = [&nextId]() {
       return cashew::IString(('$' + std::to_string(nextId++)).c_str(), false);
     };
 
-    if (debug) dump("func");
-    Name name = getStr();
-    skipWhitespace();
-    mustMatch(".type");
-    mustMatch(name.str);
-    mustMatch(",@function");
-    mustMatch(name.str);
-    mustMatch(":");
     auto func = allocator.alloc<Function>();
     func->name = name;
     std::map<Name, WasmType> localTypes;
@@ -798,7 +800,12 @@ private:
     if (debug) dump("type");
     Name name = getStrToSep();
     skipComma();
-    mustMatch("@object");
+    if (match("@function")) return parseFunction();
+    else if (match("@object")) return parseObject(name);
+    abort_on("parseType");
+  }
+
+  void parseObject(Name name) {
     match(".data");
     size_t align = 16; // XXX default?
     if (match(".globl")) {
