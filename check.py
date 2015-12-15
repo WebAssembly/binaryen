@@ -241,6 +241,7 @@ if actual != expected:
   fail(actual, expected)
 
 if has_emcc:
+
   print '\n[ checking wasm.js methods... ]\n'
 
   for method in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm']:
@@ -282,7 +283,23 @@ if has_emcc:
           assert proc.returncode != 0
           assert 'hello, world!' not in out
 
-  print '\n[ checking wasm.js testcases... (need emcc in your path) ]\n'
+  print '\n[ checking emcc WASM_BACKEND testcases... ]\n'
+
+  for c in ['hello_world.cpp']:
+    print '..', c
+    base = c.replace('.cpp', '').replace('.c', '')
+    expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
+    command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'WASM_BACKEND=1', '-s', 'ONLY_MY_CODE=1']
+    print '....' + ' '.join(command)
+    subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if has_node:
+      proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE)
+      out, err = proc.communicate()
+      assert proc.returncode == 0
+      if out.strip() != expected.strip():
+        fail(out, expected)
+
+  print '\n[ checking wasm.js testcases... ]\n'
 
   for c in tests:
     if c.endswith(('.c', '.cpp')):
