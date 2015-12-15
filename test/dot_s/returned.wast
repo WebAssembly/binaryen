@@ -6,8 +6,8 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call $_ZN5AppleC1Ev
-            (call $_Znwm
+          (call_import $_ZN5AppleC1Ev
+            (call_import $_Znwm
               (i32.const 1)
             )
           )
@@ -19,7 +19,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call $memcpy
+          (call_import $memcpy
             (get_local $$2)
             (get_local $$1)
             (get_local $$0)

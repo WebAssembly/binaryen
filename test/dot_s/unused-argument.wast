@@ -24,7 +24,7 @@
   (func $call_something
     (block $fake_return_waka123
       (block
-        (call $return_something)
+        (call_import $return_something)
         (br $fake_return_waka123)
       )
     )

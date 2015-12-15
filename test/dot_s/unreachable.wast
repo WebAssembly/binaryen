@@ -5,7 +5,7 @@
   (export "f3" $f3)
   (func $f1 (result i32)
     (block
-      (call $abort)
+      (call_import $abort)
       (unreachable)
     )
   )

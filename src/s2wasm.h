@@ -41,6 +41,8 @@ private:
   typedef std::pair<std::vector<char>*, Name> Relocation; // the data, and the name whose address we should place there
   std::vector<Relocation> relocations;
 
+  std::set<Name> implementedFunctions;
+
   // utilities
 
   void skipWhitespace() {
@@ -227,6 +229,17 @@ private:
   // processors
 
   void scan() {
+    while (*s) {
+      s = strstr(s, "\n	.type	");
+      if (!s) break;
+      mustMatch("\n	.type	");
+      Name name = getCommaSeparated();
+      skipComma();
+      if (!match("@function")) continue;
+      mustMatch(name.str);
+      mustMatch(":");
+      implementedFunctions.insert(name);
+    }
   }
 
   void process() {
@@ -434,24 +447,26 @@ private:
     };
     auto makeCall = [&](WasmType type) {
       CallBase* curr;
-      if (match("_import")) {
-        curr = allocator.alloc<CallImport>();
-      } else if (match("_indirect")) {
-        curr = allocator.alloc<CallIndirect>();
+      Name assign;
+      if (match("_indirect")) {
+        auto indirect = allocator.alloc<CallIndirect>();
+        assign = getAssign();
+        indirect->target = getInput();
+        curr = indirect;
       } else {
-        curr = allocator.alloc<Call>();
+        assign = getAssign();
+        Name target = getCommaSeparated();
+        if (implementedFunctions.count(target) > 0) {
+          auto plain = allocator.alloc<Call>();
+          plain->target = target;
+          curr = plain;
+        } else {
+          auto import = allocator.alloc<CallImport>();
+          import->target = target;
+          curr = import;
+        }
       }
-      Name assign = getAssign();
-      if (curr->is<Call>()) {
-        Name name = curr->dyn_cast<Call>()->target = getCommaSeparated();
-        curr->type = type;
-      } else if (curr->is<CallImport>()) {
-        Name name = curr->dyn_cast<CallImport>()->target = getCommaSeparated();
-        // XXX import definitions would help here, but still undecided in .s format
-      } else {
-        curr->dyn_cast<CallIndirect>()->target = getInput();
-        // XXX no way to know return type, https://github.com/WebAssembly/experimental/issues/53
-      }
+      curr->type = type;
       while (1) {
         if (!skipComma()) break;
         curr->operands.push_back(getInput());

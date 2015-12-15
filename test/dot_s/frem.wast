@@ -6,7 +6,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call $fmodf
+          (call_import $fmodf
             (get_local $$1)
             (get_local $$0)
           )
@@ -18,7 +18,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call $fmod
+          (call_import $fmod
             (get_local $$1)
             (get_local $$0)
           )

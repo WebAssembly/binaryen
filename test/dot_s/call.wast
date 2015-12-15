@@ -1,6 +1,7 @@
 (module
   (memory 0 4294967295)
   (type $FUNCSIG_v (func))
+  (type $FUNCSIG_i (func))
   (export "call_i32_nullary" $call_i32_nullary)
   (export "call_i64_nullary" $call_i64_nullary)
   (export "call_float_nullary" $call_float_nullary)
@@ -17,7 +18,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call $i32_nullary)
+          (call_import $i32_nullary)
         )
       )
     )
@@ -26,7 +27,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call $i64_nullary)
+          (call_import $i64_nullary)
         )
       )
     )
@@ -35,7 +36,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call $float_nullary)
+          (call_import $float_nullary)
         )
       )
     )
@@ -44,7 +45,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call $double_nullary)
+          (call_import $double_nullary)
         )
       )
     )
@@ -52,7 +53,7 @@
   (func $call_void_nullary
     (block $fake_return_waka123
       (block
-        (call $void_nullary)
+        (call_import $void_nullary)
         (br $fake_return_waka123)
       )
     )
@@ -61,7 +62,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call $i32_unary
+          (call_import $i32_unary
             (get_local $$0)
           )
         )
@@ -72,7 +73,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call $i32_binary
+          (call_import $i32_binary
             (get_local $$1)
             (get_local $$0)
           )
@@ -94,7 +95,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (call_indirect $FUNCSIG_v
+          (call_indirect $FUNCSIG_i
             (get_local $$0)
           )
         )
@@ -104,7 +105,7 @@
   (func $tail_call_void_nullary
     (block $fake_return_waka123
       (block
-        (call $void_nullary)
+        (call_import $void_nullary)
         (br $fake_return_waka123)
       )
     )
@@ -112,7 +113,7 @@
   (func $fastcc_tail_call_void_nullary
     (block $fake_return_waka123
       (block
-        (call $void_nullary)
+        (call_import $void_nullary)
         (br $fake_return_waka123)
       )
     )
@@ -120,7 +121,7 @@
   (func $coldcc_tail_call_void_nullary
     (block $fake_return_waka123
       (block
-        (call $void_nullary)
+        (call_import $void_nullary)
         (br $fake_return_waka123)
       )
     )

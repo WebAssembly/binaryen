@@ -142,7 +142,7 @@
   (func $caller_none
     (block $fake_return_waka123
       (block
-        (call $callee)
+        (call_import $callee)
         (br $fake_return_waka123)
       )
     )

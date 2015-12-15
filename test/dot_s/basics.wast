@@ -4,7 +4,7 @@
   (func $main (param $$0 i32) (param $$1 i32) (result i32)
     (block $fake_return_waka123
       (block
-        (call $puts
+        (call_import $puts
           (i32.const 16)
         )
         (block $BB0_5

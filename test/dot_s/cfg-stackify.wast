@@ -44,7 +44,7 @@
               )
               $BB0_3
             )
-            (call $something)
+            (call_import $something)
             (br $BB0_1)
           )
         )
@@ -74,7 +74,7 @@
               )
               $BB1_3
             )
-            (call $something)
+            (call_import $something)
             (br $BB1_1)
           )
         )
@@ -473,7 +473,7 @@
                   )
                 )
               )
-              (call $bar)
+              (call_import $bar)
               (br $BB12_1)
             )
           )
@@ -797,7 +797,7 @@
               (i32.eq
                 (i32.and
                   (get_local $$1)
-                  (call $a)
+                  (call_import $a)
                 )
                 (i32.const 0)
               )
@@ -814,7 +814,7 @@
                     (i32.eq
                       (i32.and
                         (get_local $$1)
-                        (call $a)
+                        (call_import $a)
                       )
                       (i32.const 0)
                     )
@@ -827,7 +827,7 @@
                   (br_if
                     (i32.and
                       (get_local $$1)
-                      (call $a)
+                      (call_import $a)
                     )
                     $BB18_2
                   )
@@ -840,7 +840,7 @@
                 (br_if
                   (i32.and
                     (get_local $$1)
-                    (call $a)
+                    (call_import $a)
                   )
                   $BB18_2
                 )
