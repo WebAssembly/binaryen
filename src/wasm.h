@@ -298,6 +298,12 @@ public:
     return _id == T()._id ? (T*)this : nullptr;
   }
 
+  template<class T>
+  T* cast() {
+    assert(_id == T()._id);
+    return (T*)this;
+  }
+
   inline std::ostream& print(std::ostream &o, unsigned indent); // avoid virtual here, for performance
 
   friend std::ostream& operator<<(std::ostream &o, Expression* expression) {

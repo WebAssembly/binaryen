@@ -11,6 +11,8 @@ namespace wasm {
 
 extern int debug; // wasm::debug is set in main(), typically from an env var
 
+cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
+
 //
 // S2WasmBuilder - parses a .s file into WebAssembly
 //
@@ -42,6 +44,8 @@ private:
   std::vector<Relocation> relocations;
 
   std::set<Name> implementedFunctions;
+
+  std::map<size_t, size_t> addressSegments; // address => segment index
 
   // utilities
 
@@ -815,6 +819,7 @@ private:
     while (nextStatic % align) nextStatic++;
     // assign the address, add to memory
     staticAddresses[name] = nextStatic;
+    addressSegments[nextStatic] = wasm.memory.segments.size();
     wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], seenSize);
     nextStatic += seenSize;
   }
@@ -843,6 +848,59 @@ private:
       auto name = pair.second;
       (*(int32_t*)(&(*raw)[0])) = staticAddresses[name];
     }
+  }
+
+  template<class C>
+  void printSet(std::ostream& o, C& c) {
+    o << "[";
+    bool first = true;
+    for (auto& item : c) {
+      if (first) first = false;
+      else o << ",";
+      o << '"' << item << '"';
+    }
+    o << "]";
+  }
+
+public:
+
+  // emit metadata for emscripten integration
+  void printMeta(std::ostream& o) {
+    o << "; METADATA: { ";
+    // find asmConst calls, and emit their metadata
+    struct AsmConstWalker : public WasmWalker {
+      S2WasmBuilder* parent;
+      std::ostream& o;
+
+      std::map<std::string, std::set<std::string>> sigsForCode;
+
+      AsmConstWalker(S2WasmBuilder* parent) : parent(parent), o(o) {}
+
+      void visitCallImport(CallImport* curr) override {
+        if (curr->target == EMSCRIPTEN_ASM_CONST) {
+          auto arg = curr->operands[0]->cast<Const>();
+          size_t segmentIndex = parent->addressSegments[arg->value.geti32()];
+          std::string code = parent->wasm.memory.segments[segmentIndex].data;
+          std::string sig = getSig(curr);
+          sigsForCode[code].insert(sig);
+        }
+      }
+    };
+    AsmConstWalker walker(this);
+    walker.startWalk(&wasm);
+    o << "\"asmConsts\": {";
+    bool first = true;
+    for (auto& pair : walker.sigsForCode) {
+      auto& code = pair.first;
+      auto& sigs = pair.second;
+      if (first) first = false;
+      else o << ",";
+      o << '"' << code << '"' << ":";
+      printSet(o, sigs);
+    }
+    o << "}";
+
+    o << " }";
   }
 };
 

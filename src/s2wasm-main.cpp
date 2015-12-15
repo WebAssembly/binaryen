@@ -37,6 +37,7 @@ int main(int argc, char **argv) {
 
   if (debug) std::cerr << "printing...\n";
   std::cout << wasm;
+  s2wasm.printMeta(std::cout);
 
   if (debug) std::cerr << "done.\n";
 }
