@@ -882,15 +882,19 @@ public:
           auto arg = curr->operands[0]->cast<Const>();
           size_t segmentIndex = parent->addressSegments[arg->value.geti32()];
           std::string code = escape(parent->wasm.memory.segments[segmentIndex].data);
+          int32_t id;
           if (ids.count(code) == 0) {
-            size_t id = ids.size();
+            id = ids.size();
             ids[code] = id;
+          } else {
+            id = ids[code];
           }
           std::string sig = getSig(curr);
           sigsForCode[code].insert(sig);
           std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str;
           fixedTarget += '_' + sig;
           curr->target = cashew::IString(fixedTarget.c_str(), false);
+          arg->value = Literal(id);
         }
       }
 

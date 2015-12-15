@@ -6,7 +6,7 @@
     (block $fake_return_waka123
       (block
         (call_import $emscripten_asm_const_vi
-          (i32.const 16)
+          (i32.const 0)
         )
         (br $fake_return_waka123
           (i32.const 0)
