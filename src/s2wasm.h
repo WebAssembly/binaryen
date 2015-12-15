@@ -34,8 +34,12 @@ private:
 
   size_t nextStatic = 1; // location of next static allocation, i.e., the data segment
   std::map<Name, int32_t> staticAddresses; // name => address
+
   typedef std::pair<Const*, Name> Addressing;
   std::vector<Addressing> addressings; // we fix these up
+
+  typedef std::pair<std::vector<char>*, Name> Relocation; // the data, and the name whose address we should place there
+  std::vector<Relocation> relocations;
 
   // utilities
 
@@ -771,7 +775,12 @@ private:
       }
     } else if (match(".int32")) {
       raw->resize(4);
-      (*(int32_t*)(&(*raw)[0])) = getInt();
+      if (isdigit(*s)) {
+        (*(int32_t*)(&(*raw)[0])) = getInt();
+      } else {
+        // relocation, the address of something
+        relocations.emplace_back(raw, getStr());
+      }
     } else if (match(".int64")) {
       raw->resize(8);
       (*(int64_t*)(&(*raw)[0])) = getInt();
@@ -808,8 +817,12 @@ private:
       assert(curr->value.i32 > 0);
       curr->type = i32;
     }
+    for (auto& pair : relocations) {
+      auto raw = pair.first;
+      auto name = pair.second;
+      (*(int32_t*)(&(*raw)[0])) = staticAddresses[name];
+    }
   }
-
 };
 
 } // namespace wasm
