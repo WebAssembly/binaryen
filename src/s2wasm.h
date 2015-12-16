@@ -40,7 +40,12 @@ private:
   typedef std::pair<Const*, Name> Addressing;
   std::vector<Addressing> addressings; // we fix these up
 
-  typedef std::pair<std::vector<char>*, Name> Relocation; // the data, and the name whose address we should place there
+  struct Relocation {
+    std::vector<char>* data;
+    Name value;
+    int offset;
+    Relocation(std::vector<char>* data, Name value, int offset) : data(data), value(value), offset(offset) {}
+  };
   std::vector<Relocation> relocations;
 
   std::set<Name> implementedFunctions;
@@ -112,14 +117,14 @@ private:
   }
 
   void skipToSep() {
-    while (*s && !isspace(*s) && *s != ',' && *s != ')') {
+    while (*s && !isspace(*s) && *s != ',' && *s != ')' && *s != ':' && *s != '+') {
       s++;
     }
   }
 
   Name getStrToSep() {
     std::string str;
-    while (*s && !isspace(*s) && *s != ',' && *s != ')' && *s != ':') {
+    while (*s && !isspace(*s) && *s != ',' && *s != ')' && *s != ':' && *s != '+') {
       str += *s;
       s++;
     }
@@ -843,24 +848,32 @@ private:
         (*(int32_t*)(&(*raw)[0])) = getInt();
       } else {
         // relocation, the address of something
-        relocations.emplace_back(raw, getStr());
+        Name value = getStrToSep();
+        int offset = 0;
+        if (*s == '+') {
+          s++;
+          offset = getInt();
+        }
+        relocations.emplace_back(raw, value, offset);
       }
     } else if (match(".int64")) {
       raw->resize(8);
       (*(int64_t*)(&(*raw)[0])) = getInt();
     } else abort_on("data form");
     skipWhitespace();
-    mustMatch(".size");
-    mustMatch(name.str);
-    mustMatch(",");
-    size_t seenSize = atoi(getStr().str); // TODO: optimize
-    assert(seenSize == raw->size());
+    size_t size = raw->size();
+    if (match(".size")) {
+      mustMatch(name.str);
+      mustMatch(",");
+      size_t seenSize = atoi(getStr().str); // TODO: optimize
+      assert(seenSize == size);
+    }
     while (nextStatic % align) nextStatic++;
     // assign the address, add to memory
     staticAddresses[name] = nextStatic;
     addressSegments[nextStatic] = wasm.memory.segments.size();
-    wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], seenSize);
-    nextStatic += seenSize;
+    wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], size);
+    nextStatic += size;
   }
 
   void skipImports() {
@@ -882,10 +895,8 @@ private:
       assert(curr->value.i32 > 0);
       curr->type = i32;
     }
-    for (auto& pair : relocations) {
-      auto raw = pair.first;
-      auto name = pair.second;
-      (*(int32_t*)(&(*raw)[0])) = staticAddresses[name];
+    for (auto& relocation : relocations) {
+      (*(int32_t*)(&(*relocation.data)[0])) = staticAddresses[relocation.value] + relocation.offset;
     }
   }
 
