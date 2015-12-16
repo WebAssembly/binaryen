@@ -832,12 +832,14 @@ private:
     mustMatch(name.str);
     mustMatch(":");
     auto raw = new std::vector<char>(); // leaked intentionally, no new allocation in Memory
+    bool zero = false;
     if (match(".asciz")) {
       *raw = getQuoted();
       raw->push_back(0);
     } else if (match(".ascii")) {
       *raw = getQuoted();
     } else if (match(".zero")) {
+      zero = true;
       int32_t size = getInt();
       for (size_t i = 0; i < size; i++) {
         raw->push_back(0);
@@ -871,8 +873,10 @@ private:
     while (nextStatic % align) nextStatic++;
     // assign the address, add to memory
     staticAddresses[name] = nextStatic;
-    addressSegments[nextStatic] = wasm.memory.segments.size();
-    wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], size);
+    if (!zero) {
+      addressSegments[nextStatic] = wasm.memory.segments.size();
+      wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], size);
+    }
     nextStatic += size;
   }
 
