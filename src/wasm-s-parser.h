@@ -665,10 +665,14 @@ private:
     if (s[1]->isStr()) {
       ret->name = s[1]->str();
       i++;
+    } else {
+      ret->name = getPrefixedName("block");
     }
+    labelStack.push_back(ret->name);
     for (; i < s.size(); i++) {
       ret->list.push_back(parseExpression(s[i]));
     }
+    labelStack.pop_back();
     ret->type = ret->list.back()->type;
     return ret;
   }
