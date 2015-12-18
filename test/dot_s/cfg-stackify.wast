@@ -25,6 +25,7 @@
   (export "test10" $test10)
   (export "test11" $test11)
   (export "test12" $test12)
+  (export "test13" $test13)
   (func $test0 (param $$0 i32)
     (local $$1 i32)
     (block $fake_return_waka123
@@ -1081,6 +1082,48 @@
             (br $BB21_1)
           )
         )
+      )
+    )
+  )
+  (func $test13
+    (local $$0 i32)
+    (block $fake_return_waka123
+      (block
+        (block $BB22_2
+          (br_if
+            (i32.eq
+              (i32.const 0)
+              (i32.const 0)
+            )
+            $BB22_2
+          )
+          (br $fake_return_waka123)
+        )
+        (set_local $$0
+          (i32.const 0)
+        )
+        (block $BB22_4
+          (br_if
+            (get_local $$0)
+            $BB22_4
+          )
+          (set_local $$0
+            (i32.const 0)
+          )
+        )
+        (block $BB22_5
+          (br_if
+            (i32.eq
+              (i32.and
+                (get_local $$0)
+                (i32.const 1)
+              )
+              (i32.const 0)
+            )
+            $BB22_5
+          )
+        )
+        (unreachable)
       )
     )
   )

@@ -41,23 +41,16 @@ private:
   std::vector<Addressing> addressings; // we fix these up
 
   struct Relocation {
-    std::vector<char>* data;
+    uint32_t* data;
     Name value;
     int offset;
-    Relocation(std::vector<char>* data, Name value, int offset) : data(data), value(value), offset(offset) {}
+    Relocation(uint32_t* data, Name value, int offset) : data(data), value(value), offset(offset) {}
   };
   std::vector<Relocation> relocations;
 
   std::set<Name> implementedFunctions;
 
   std::map<size_t, size_t> addressSegments; // address => segment index
-
-  struct Offsetting {
-    Name value;
-    uint32_t* target;
-    Offsetting(Name value, uint32_t* target) : value(value), target(target) {}
-  };
-  std::vector<Offsetting> offsettings;
 
   // utilities
 
@@ -168,7 +161,13 @@ private:
       *target = getInt();
     } else {
       // a global constant, we need to fix it up later
-      offsettings.emplace_back(getStrToSep(), target);
+      Name name = getStrToSep();
+      int offset = 0;
+      if (*s == '+') {
+        s++;
+        offset = getInt();
+      }      
+      relocations.emplace_back(target, name, offset);
     }
   }
 
@@ -856,36 +855,35 @@ private:
     mustMatch(name.str);
     mustMatch(":");
     auto raw = new std::vector<char>(); // leaked intentionally, no new allocation in Memory
-    bool zero = false;
-    if (match(".asciz")) {
-      *raw = getQuoted();
-      raw->push_back(0);
-    } else if (match(".ascii")) {
-      *raw = getQuoted();
-    } else if (match(".zero")) {
-      zero = true;
-      int32_t size = getInt();
-      for (size_t i = 0; i < size; i++) {
+    bool zero = true;
+    while (1) {
+      skipWhitespace();
+      if (match(".asciz")) {
+        *raw = getQuoted();
         raw->push_back(0);
-      }
-    } else if (match(".int32")) {
-      raw->resize(4);
-      if (isdigit(*s)) {
-        (*(int32_t*)(&(*raw)[0])) = getInt();
-      } else {
-        // relocation, the address of something
-        Name value = getStrToSep();
-        int offset = 0;
-        if (*s == '+') {
-          s++;
-          offset = getInt();
+        zero = false;
+      } else if (match(".ascii")) {
+        *raw = getQuoted();
+        zero = false;
+      } else if (match(".zero")) {
+        int32_t size = getInt();
+        for (size_t i = 0; i < size; i++) {
+          raw->push_back(0);
         }
-        relocations.emplace_back(raw, value, offset);
+      } else if (match(".int32")) {
+        size_t size = raw->size();
+        raw->resize(size + 4);
+        getConst((uint32_t*)&(*raw)[size]);
+        zero = false;
+      } else if (match(".int64")) {
+        size_t size = raw->size();
+        raw->resize(size + 8);
+        (*(int64_t*)(&(*raw)[size])) = getInt();
+        zero = false;
+      } else {
+        break;
       }
-    } else if (match(".int64")) {
-      raw->resize(8);
-      (*(int64_t*)(&(*raw)[0])) = getInt();
-    } else abort_on("data form");
+    }
     skipWhitespace();
     size_t size = raw->size();
     if (match(".size")) {
@@ -924,10 +922,7 @@ private:
       curr->type = i32;
     }
     for (auto& relocation : relocations) {
-      (*(int32_t*)(&(*relocation.data)[0])) = staticAddresses[relocation.value] + relocation.offset;
-    }
-    for (auto& offsetting : offsettings) {
-      *(offsetting.target) = staticAddresses[offsetting.value];
+      *(relocation.data) = staticAddresses[relocation.value] + relocation.offset;
     }
   }
 

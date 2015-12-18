@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295 (segment 2 "9\05\00\00") (segment 10 "\01\00\00\00") (segment 14 "*\00\00\00") (segment 18 "\ff\ff\ff\ff") (segment 33 "\00\00\00\00\00\00\00\00") (segment 42 "\ff\ff\ff\ff\ff\ff\ff\ff") (segment 54 "\00\00\00\80") (segment 58 "\00\00\00@") (segment 72 "\00\00\00\00\00\00\00\00") (segment 81 "\00\00\00\00\00\00\00\00"))
+  (memory 0 4294967295 (segment 2 "9\05\00\00"))
   (import $memcpy "env" "memcpy")
   (export "foo" $foo)
   (export "call_memcpy" $call_memcpy)

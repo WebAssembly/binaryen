@@ -7,6 +7,7 @@
   (export "arg_i32" $arg_i32)
   (export "arg_i128" $arg_i128)
   (export "caller_none" $caller_none)
+  (export "caller_some" $caller_some)
   (func $end (param $$0 i32)
     (block $fake_return_waka123
       (block
@@ -144,6 +145,13 @@
     (block $fake_return_waka123
       (block
         (call_import $callee)
+        (br $fake_return_waka123)
+      )
+    )
+  )
+  (func $caller_some
+    (block $fake_return_waka123
+      (block
         (br $fake_return_waka123)
       )
     )
