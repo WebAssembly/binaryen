@@ -922,7 +922,7 @@ public:
   void emscriptenGlue(std::ostream& o) {
     wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
 
-    o << "; METADATA: { ";
+    o << ";; METADATA: { ";
     // find asmConst calls, and emit their metadata
     struct AsmConstWalker : public WasmWalker {
       S2WasmBuilder* parent;
