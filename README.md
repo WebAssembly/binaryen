@@ -177,7 +177,7 @@ Same as Emscripten: MIT license.
 
 This is separate from that. `asm2wasm` focuses on compiling asm.js to WebAssembly, as emitted by Emscripten's asm.js backend. This is useful because while in the long term Emscripten hopes to use the new WebAssembly backend, the `asm2wasm` route is a very quick and easy way to generate WebAssembly output. It will also be useful for benchmarking the new backend as it progresses.
 
-* How about compiling asm.js to WebAssembly (the opposite direction of `asm2wasm`)? Wouldn't that be useful for polyfilling?
+* How about compiling WebAssembly to asm.js (the opposite direction of `asm2wasm`)? Wouldn't that be useful for polyfilling?
 
 It would be useful, but it is a much harder task, due to some decisions made in WebAssembly. For example, WebAssembly can have control flow nested inside expressions, which can't directly map to asm.js. It could be supported by outlining the code to another function, or to compiling it down into new basic blocks and control-flow-free instructions, but it is hard to do so in a way that is both fast to do and emits code that is fast to execute. On the other hand, compiling asm.js to WebAssembly is almost straightforward.
 
