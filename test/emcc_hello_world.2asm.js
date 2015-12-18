@@ -56,14 +56,16 @@ function asmFunc(global, env, buffer) {
  function establishStackSpace(stackBase, stackMax) {
   stackBase = stackBase | 0;
   stackMax = stackMax | 0;
-  HEAP32[8 >> 2] = stackBase;
-  HEAP32[16 >> 2] = stackMax;
+  block0 : {
+   HEAP32[8 >> 2] = stackBase;
+   HEAP32[16 >> 2] = stackMax;
+  }
  }
  
  function setThrew(threw, value) {
   threw = threw | 0;
   value = value | 0;
-  if ((HEAPU32[48 >> 2] | 0 | 0) == (0 | 0)) {
+  if ((HEAPU32[48 >> 2] | 0 | 0) == (0 | 0)) block0 : {
    HEAP32[48 >> 2] = threw;
    HEAP32[56 >> 2] = value;
   }
@@ -71,22 +73,26 @@ function asmFunc(global, env, buffer) {
  
  function copyTempFloat(ptr) {
   ptr = ptr | 0;
-  HEAP8[(HEAPU32[24 >> 2] | 0) >> 0] = HEAP8[ptr >> 0] | 0;
-  HEAP8[((HEAPU32[24 >> 2] | 0) + 1 | 0) >> 0] = HEAP8[(ptr + 1 | 0) >> 0] | 0;
-  HEAP8[((HEAPU32[24 >> 2] | 0) + 2 | 0) >> 0] = HEAP8[(ptr + 2 | 0) >> 0] | 0;
-  HEAP8[((HEAPU32[24 >> 2] | 0) + 3 | 0) >> 0] = HEAP8[(ptr + 3 | 0) >> 0] | 0;
+  block0 : {
+   HEAP8[(HEAPU32[24 >> 2] | 0) >> 0] = HEAP8[ptr >> 0] | 0;
+   HEAP8[((HEAPU32[24 >> 2] | 0) + 1 | 0) >> 0] = HEAP8[(ptr + 1 | 0) >> 0] | 0;
+   HEAP8[((HEAPU32[24 >> 2] | 0) + 2 | 0) >> 0] = HEAP8[(ptr + 2 | 0) >> 0] | 0;
+   HEAP8[((HEAPU32[24 >> 2] | 0) + 3 | 0) >> 0] = HEAP8[(ptr + 3 | 0) >> 0] | 0;
+  }
  }
  
  function copyTempDouble(ptr) {
   ptr = ptr | 0;
-  HEAP8[(HEAPU32[24 >> 2] | 0) >> 0] = HEAP8[ptr >> 0] | 0;
-  HEAP8[((HEAPU32[24 >> 2] | 0) + 1 | 0) >> 0] = HEAP8[(ptr + 1 | 0) >> 0] | 0;
-  HEAP8[((HEAPU32[24 >> 2] | 0) + 2 | 0) >> 0] = HEAP8[(ptr + 2 | 0) >> 0] | 0;
-  HEAP8[((HEAPU32[24 >> 2] | 0) + 3 | 0) >> 0] = HEAP8[(ptr + 3 | 0) >> 0] | 0;
-  HEAP8[((HEAPU32[24 >> 2] | 0) + 4 | 0) >> 0] = HEAP8[(ptr + 4 | 0) >> 0] | 0;
-  HEAP8[((HEAPU32[24 >> 2] | 0) + 5 | 0) >> 0] = HEAP8[(ptr + 5 | 0) >> 0] | 0;
-  HEAP8[((HEAPU32[24 >> 2] | 0) + 6 | 0) >> 0] = HEAP8[(ptr + 6 | 0) >> 0] | 0;
-  HEAP8[((HEAPU32[24 >> 2] | 0) + 7 | 0) >> 0] = HEAP8[(ptr + 7 | 0) >> 0] | 0;
+  block0 : {
+   HEAP8[(HEAPU32[24 >> 2] | 0) >> 0] = HEAP8[ptr >> 0] | 0;
+   HEAP8[((HEAPU32[24 >> 2] | 0) + 1 | 0) >> 0] = HEAP8[(ptr + 1 | 0) >> 0] | 0;
+   HEAP8[((HEAPU32[24 >> 2] | 0) + 2 | 0) >> 0] = HEAP8[(ptr + 2 | 0) >> 0] | 0;
+   HEAP8[((HEAPU32[24 >> 2] | 0) + 3 | 0) >> 0] = HEAP8[(ptr + 3 | 0) >> 0] | 0;
+   HEAP8[((HEAPU32[24 >> 2] | 0) + 4 | 0) >> 0] = HEAP8[(ptr + 4 | 0) >> 0] | 0;
+   HEAP8[((HEAPU32[24 >> 2] | 0) + 5 | 0) >> 0] = HEAP8[(ptr + 5 | 0) >> 0] | 0;
+   HEAP8[((HEAPU32[24 >> 2] | 0) + 6 | 0) >> 0] = HEAP8[(ptr + 6 | 0) >> 0] | 0;
+   HEAP8[((HEAPU32[24 >> 2] | 0) + 7 | 0) >> 0] = HEAP8[(ptr + 7 | 0) >> 0] | 0;
+  }
  }
  
  function setTempRet0(value) {
@@ -128,24 +134,28 @@ function asmFunc(global, env, buffer) {
    switch$0 : {
     switch ($conv - 0 | 0) {
     case 0:
-     $tobool1 = $x != 0.0;
-     if ($tobool1) {
-      $mul = $x - 18446744073709551616.0;
-      $call = +_frexp(+$mul, $e | 0);
-      $4 = HEAPU32[$e >> 2] | 0;
-      $sub = $4 + 4294967232 | 0;
-      $storemerge = $sub;
-      $x$addr$0 = $call;
-     } else {
-      $storemerge = 0;
-      $x$addr$0 = $x;
+     block0 : {
+      $tobool1 = $x != 0.0;
+      if ($tobool1) block1 : {
+       $mul = $x - 18446744073709551616.0;
+       $call = +_frexp(+$mul, $e | 0);
+       $4 = HEAPU32[$e >> 2] | 0;
+       $sub = $4 + 4294967232 | 0;
+       $storemerge = $sub;
+       $x$addr$0 = $call;
+      } else block2 : {
+       $storemerge = 0;
+       $x$addr$0 = $x;
+      }
+      HEAP32[$e >> 2] = $storemerge;
+      $retval$0 = $x$addr$0;
+      break switch$0;
      }
-     HEAP32[$e >> 2] = $storemerge;
-     $retval$0 = $x$addr$0;
-     break switch$0;
     case 2047:
-     $retval$0 = $x;
-     break switch$0;
+     block3 : {
+      $retval$0 = $x;
+      break switch$0;
+     }
     case 1:
     case 2:
     case 3:
@@ -2193,14 +2203,16 @@ function asmFunc(global, env, buffer) {
     case 2045:
     case 2046:
     default:
-     $sub8 = $conv + 4294966274 | 0;
-     HEAP32[$e >> 2] = $sub8;
-     $5 = $1 & 2148532223 | 0;
-     $6 = $5 | 1071644672 | 0;
-     HEAP32[(HEAPU32[24 >> 2] | 0) >> 2] = $0;
-     HEAP32[((HEAPU32[24 >> 2] | 0) + 4 | 0) >> 2] = $6;
-     $7 = +HEAPF64[(HEAPU32[24 >> 2] | 0) >> 3];
-     $retval$0 = $7;
+     block4 : {
+      $sub8 = $conv + 4294966274 | 0;
+      HEAP32[$e >> 2] = $sub8;
+      $5 = $1 & 2148532223 | 0;
+      $6 = $5 | 1071644672 | 0;
+      HEAP32[(HEAPU32[24 >> 2] | 0) >> 2] = $0;
+      HEAP32[((HEAPU32[24 >> 2] | 0) + 4 | 0) >> 2] = $6;
+      $7 = +HEAPF64[(HEAPU32[24 >> 2] | 0) >> 3];
+      $retval$0 = $7;
+     }
     }
    }
    wasm2asm_f64$0 = $retval$0;
@@ -2226,19 +2238,19 @@ function asmFunc(global, env, buffer) {
   topmost : {
    sp = HEAPU32[8 >> 2] | 0;
    $i$012 = 0;
-   while_out$0 : do {
+   while_out$0 : do block0 : {
     $arrayidx = 687 + $i$012 | 0;
     $0 = HEAP8[$arrayidx >> 0] | 0;
     $conv = $0 & 255 | 0;
     $cmp = ($conv | 0) == ($e | 0);
-    if ($cmp) {
+    if ($cmp) block1 : {
      $i$012$lcssa = $i$012;
      label = 2;
      break while_out$0;
     }
     $inc = $i$012 + 1 | 0;
     $tobool = ($inc | 0) == (87 | 0);
-    if ($tobool) {
+    if ($tobool) block2 : {
      $i$111 = 87;
      $s$010 = 775;
      label = 5;
@@ -2246,22 +2258,22 @@ function asmFunc(global, env, buffer) {
     } else $i$012 = $inc;
     continue while_out$0;
    } while (0);
-   if ((label | 0) == (2 | 0)) {
+   if ((label | 0) == (2 | 0)) block3 : {
     $tobool5$9 = ($i$012$lcssa | 0) == (0 | 0);
-    if ($tobool5$9) $s$0$lcssa = 775; else {
+    if ($tobool5$9) $s$0$lcssa = 775; else block4 : {
      $i$111 = $i$012$lcssa;
      $s$010 = 775;
      label = 5;
     }
    }
-   if ((label | 0) == (5 | 0)) while_out$2 : do {
+   if ((label | 0) == (5 | 0)) while_out$2 : do block5 : {
     label = 0;
     $s$1 = $s$010;
-    while_out$4 : do {
+    while_out$4 : do block6 : {
      $1 = HEAP8[$s$1 >> 0] | 0;
      $tobool8 = (($1 << 24 | 0) >> 24 | 0 | 0) == (0 | 0);
      $incdec$ptr = $s$1 + 1 | 0;
-     if ($tobool8) {
+     if ($tobool8) block7 : {
       $incdec$ptr$lcssa = $incdec$ptr;
       break while_out$4;
      } else $s$1 = $incdec$ptr;
@@ -2269,10 +2281,10 @@ function asmFunc(global, env, buffer) {
     } while (0);
     $dec = $i$111 + 4294967295 | 0;
     $tobool5 = ($dec | 0) == (0 | 0);
-    if ($tobool5) {
+    if ($tobool5) block8 : {
      $s$0$lcssa = $incdec$ptr$lcssa;
      break while_out$2;
-    } else {
+    } else block9 : {
      $i$111 = $dec;
      $s$010 = $incdec$ptr$lcssa;
      label = 5;
@@ -2290,7 +2302,7 @@ function asmFunc(global, env, buffer) {
    sp = HEAPU32[8 >> 2] | 0;
    $0 = HEAPU32[16 >> 2] | 0;
    $tobool = ($0 | 0) == (0 | 0);
-   if ($tobool) $retval$0 = 60; else {
+   if ($tobool) $retval$0 = 60; else block0 : {
     $call$i = _pthread_self() | 0;
     $errno_ptr = $call$i + 60 | 0;
     $1 = HEAPU32[$errno_ptr >> 2] | 0;
@@ -2336,7 +2348,7 @@ function asmFunc(global, env, buffer) {
    $0 = HEAPU32[$f >> 2] | 0;
    $and = $0 & 64 | 0;
    $tobool = ($and | 0) == (0 | 0);
-   if ($tobool) {
+   if ($tobool) block0 : {
     $fd = $f + 60 | 0;
     $1 = HEAPU32[$fd >> 2] | 0;
     HEAP32[$vararg_buffer >> 2] = $1;
@@ -2346,7 +2358,7 @@ function asmFunc(global, env, buffer) {
     HEAP32[$vararg_ptr2 >> 2] = $tio;
     $call = ___syscall54(54 | 0, $vararg_buffer | 0) | 0;
     $tobool2 = ($call | 0) == (0 | 0);
-    if (($tobool2 | 0) == (0 | 0)) {
+    if (($tobool2 | 0) == (0 | 0)) block1 : {
      $lbf = $f + 75 | 0;
      HEAP8[$lbf >> 0] = 4294967295;
     }
@@ -2383,10 +2395,10 @@ function asmFunc(global, env, buffer) {
    $call = ___syscall140(140 | 0, $vararg_buffer | 0) | 0;
    $call1 = ___syscall_ret($call | 0) | 0;
    $cmp = ($call1 | 0) < (0 | 0);
-   if ($cmp) {
+   if ($cmp) block0 : {
     HEAP32[$ret >> 2] = 4294967295;
     $1 = 4294967295;
-   } else {
+   } else block1 : {
     $$pre = HEAPU32[$ret >> 2] | 0;
     $1 = $$pre;
    }
@@ -2403,10 +2415,10 @@ function asmFunc(global, env, buffer) {
    sp = HEAPU32[8 >> 2] | 0;
    $tobool = ($f | 0) == (0 | 0);
    do_once$0 : {
-    if ($tobool) {
+    if ($tobool) block0 : {
      $1 = HEAPU32[12 >> 2] | 0;
      $tobool5 = ($1 | 0) == (0 | 0);
-     if ($tobool5) $cond10 = 0; else {
+     if ($tobool5) $cond10 = 0; else block1 : {
       $2 = HEAPU32[12 >> 2] | 0;
       $call7 = _fflush($2 | 0) | 0;
       $cond10 = $call7;
@@ -2414,14 +2426,14 @@ function asmFunc(global, env, buffer) {
      ___lock(44 | 0);
      $f$addr$0$19 = HEAPU32[40 >> 2] | 0;
      $tobool11$20 = ($f$addr$0$19 | 0) == (0 | 0);
-     if ($tobool11$20) $r$0$lcssa = $cond10; else {
+     if ($tobool11$20) $r$0$lcssa = $cond10; else block2 : {
       $f$addr$022 = $f$addr$0$19;
       $r$021 = $cond10;
-      while_out$1 : do {
+      while_out$1 : do block3 : {
        $lock13 = $f$addr$022 + 76 | 0;
        $3 = HEAPU32[$lock13 >> 2] | 0;
        $cmp14 = ($3 | 0) > (4294967295 | 0);
-       if ($cmp14) {
+       if ($cmp14) block4 : {
         $call16 = ___lockfile($f$addr$022 | 0) | 0;
         $cond19 = $call16;
        } else $cond19 = 0;
@@ -2430,7 +2442,7 @@ function asmFunc(global, env, buffer) {
        $wbase = $f$addr$022 + 28 | 0;
        $5 = HEAPU32[$wbase >> 2] | 0;
        $cmp20 = ($4 >>> 0 | 0) >>> 0 > ($5 >>> 0 | 0) >>> 0;
-       if ($cmp20) {
+       if ($cmp20) block5 : {
         $call22 = ___fflush_unlocked($f$addr$022 | 0) | 0;
         $or = $call22 | $r$021 | 0;
         $r$1 = $or;
@@ -2440,10 +2452,10 @@ function asmFunc(global, env, buffer) {
        $next = $f$addr$022 + 56 | 0;
        $f$addr$0 = HEAPU32[$next >> 2] | 0;
        $tobool11 = ($f$addr$0 | 0) == (0 | 0);
-       if ($tobool11) {
+       if ($tobool11) block6 : {
         $r$0$lcssa = $r$1;
         break while_out$1;
-       } else {
+       } else block7 : {
         $f$addr$022 = $f$addr$0;
         $r$021 = $r$1;
        }
@@ -2452,11 +2464,11 @@ function asmFunc(global, env, buffer) {
      }
      ___unlock(44 | 0);
      $retval$0 = $r$0$lcssa;
-    } else {
+    } else block8 : {
      $lock = $f + 76 | 0;
      $0 = HEAPU32[$lock >> 2] | 0;
      $cmp = ($0 | 0) > (4294967295 | 0);
-     if (($cmp | 0) == (0 | 0)) {
+     if (($cmp | 0) == (0 | 0)) block9 : {
       $call1$18 = ___fflush_unlocked($f | 0) | 0;
       $retval$0 = $call1$18;
       break do_once$0;
@@ -2464,7 +2476,7 @@ function asmFunc(global, env, buffer) {
      $call = ___lockfile($f | 0) | 0;
      $phitmp = ($call | 0) == (0 | 0);
      $call1 = ___fflush_unlocked($f | 0) | 0;
-     if ($phitmp) $retval$0 = $call1; else {
+     if ($phitmp) $retval$0 = $call1; else block10 : {
       ___unlockfile($f | 0);
       $retval$0 = $call1;
      }
@@ -2542,10 +2554,10 @@ function asmFunc(global, env, buffer) {
    $iov$0 = $iovs;
    $iovcnt$0 = 2;
    $rem$0 = $add;
-   while_out$0 : do {
+   while_out$0 : do block0 : {
     $2 = HEAPU32[16 >> 2] | 0;
     $tobool = ($2 | 0) == (0 | 0);
-    if ($tobool) {
+    if ($tobool) block1 : {
      $4 = HEAPU32[$fd8 >> 2] | 0;
      HEAP32[$vararg_buffer3 >> 2] = $4;
      $vararg_ptr6 = $vararg_buffer3 + 4 | 0;
@@ -2555,7 +2567,7 @@ function asmFunc(global, env, buffer) {
      $call9 = ___syscall146(146 | 0, $vararg_buffer3 | 0) | 0;
      $call10 = ___syscall_ret($call9 | 0) | 0;
      $cnt$0 = $call10;
-    } else {
+    } else block2 : {
      _pthread_cleanup_push(5 | 0, $f | 0);
      $3 = HEAPU32[$fd8 >> 2] | 0;
      HEAP32[$vararg_buffer >> 2] = $3;
@@ -2569,12 +2581,12 @@ function asmFunc(global, env, buffer) {
      $cnt$0 = $call7;
     }
     $cmp = ($rem$0 | 0) == ($cnt$0 | 0);
-    if ($cmp) {
+    if ($cmp) block3 : {
      label = 6;
      break while_out$0;
     }
     $cmp17 = ($cnt$0 | 0) < (0 | 0);
-    if ($cmp17) {
+    if ($cmp17) block4 : {
      $iov$0$lcssa57 = $iov$0;
      $iovcnt$0$lcssa58 = $iovcnt$0;
      label = 8;
@@ -2584,7 +2596,7 @@ function asmFunc(global, env, buffer) {
     $iov_len28 = $iov$0 + 4 | 0;
     $10 = HEAPU32[$iov_len28 >> 2] | 0;
     $cmp29 = ($cnt$0 >>> 0 | 0) >>> 0 > ($10 >>> 0 | 0) >>> 0;
-    if ($cmp29) {
+    if ($cmp29) block5 : {
      $11 = HEAPU32[$buf31 >> 2] | 0;
      HEAP32[$wbase >> 2] = $11;
      HEAP32[$wpos >> 2] = $11;
@@ -2597,9 +2609,9 @@ function asmFunc(global, env, buffer) {
      $cnt$1 = $sub36;
      $iov$1 = $incdec$ptr;
      $iovcnt$1 = $dec;
-    } else {
+    } else block6 : {
      $cmp38 = ($iovcnt$0 | 0) == (2 | 0);
-     if ($cmp38) {
+     if ($cmp38) block7 : {
       $12 = HEAPU32[$wbase >> 2] | 0;
       $add$ptr41 = $12 + $cnt$0 | 0;
       HEAP32[$wbase >> 2] = $add$ptr41;
@@ -2607,7 +2619,7 @@ function asmFunc(global, env, buffer) {
       $cnt$1 = $cnt$0;
       $iov$1 = $iov$0;
       $iovcnt$1 = 2;
-     } else {
+     } else block8 : {
       $14 = $10;
       $cnt$1 = $cnt$0;
       $iov$1 = $iov$0;
@@ -2625,7 +2637,7 @@ function asmFunc(global, env, buffer) {
     $rem$0 = $sub26;
     continue while_out$0;
    } while (0);
-   if ((label | 0) == (6 | 0)) {
+   if ((label | 0) == (6 | 0)) block9 : {
     $5 = HEAPU32[$buf31 >> 2] | 0;
     $buf_size = $f + 48 | 0;
     $6 = HEAPU32[$buf_size >> 2] | 0;
@@ -2636,7 +2648,7 @@ function asmFunc(global, env, buffer) {
     HEAP32[$wbase >> 2] = $7;
     HEAP32[$wpos >> 2] = $7;
     $retval$0 = $len;
-   } else if ((label | 0) == (8 | 0)) {
+   } else if ((label | 0) == (8 | 0)) block10 : {
     $wend19 = $f + 16 | 0;
     HEAP32[$wend19 >> 2] = 0;
     HEAP32[$wbase >> 2] = 0;
@@ -2645,7 +2657,7 @@ function asmFunc(global, env, buffer) {
     $or = $8 | 32 | 0;
     HEAP32[$f >> 2] = $or;
     $cmp22 = ($iovcnt$0$lcssa58 | 0) == (2 | 0);
-    if ($cmp22) $retval$0 = 0; else {
+    if ($cmp22) $retval$0 = 0; else block11 : {
      $iov_len24 = $iov$0$lcssa57 + 4 | 0;
      $9 = HEAPU32[$iov_len24 >> 2] | 0;
      $sub = $len - $9 | 0;
@@ -2673,7 +2685,7 @@ function asmFunc(global, env, buffer) {
    $internal_buf = sp + 136 | 0;
    dest = $nl_type;
    stop = dest + 40 | 0;
-   do_out$0 : do {
+   do_out$0 : do block0 : {
     HEAP32[dest >> 2] = 0;
     dest = dest + 4 | 0;
     if ((dest | 0) < (stop | 0)) continue do_out$0;
@@ -2682,11 +2694,11 @@ function asmFunc(global, env, buffer) {
    HEAP32[$ap2 >> 2] = $vacopy_currentptr;
    $call = _printf_core(0 | 0, $fmt | 0, $ap2 | 0, $nl_arg | 0, $nl_type | 0) | 0;
    $cmp = ($call | 0) < (0 | 0);
-   if ($cmp) $retval$0 = 4294967295; else {
+   if ($cmp) $retval$0 = 4294967295; else block1 : {
     $lock = $f + 76 | 0;
     $0 = HEAPU32[$lock >> 2] | 0;
     $cmp5 = ($0 | 0) > (4294967295 | 0);
-    if ($cmp5) {
+    if ($cmp5) block2 : {
      $call6 = ___lockfile($f | 0) | 0;
      $cond = $call6;
     } else $cond = 0;
@@ -2695,14 +2707,14 @@ function asmFunc(global, env, buffer) {
     $mode = $f + 74 | 0;
     $2 = HEAP8[$mode >> 0] | 0;
     $cmp7 = (($2 << 24 | 0) >> 24 | 0 | 0) < (1 | 0);
-    if ($cmp7) {
+    if ($cmp7) block3 : {
      $and11 = $1 & 4294967263 | 0;
      HEAP32[$f >> 2] = $and11;
     }
     $buf_size = $f + 48 | 0;
     $3 = HEAPU32[$buf_size >> 2] | 0;
     $tobool = ($3 | 0) == (0 | 0);
-    if ($tobool) {
+    if ($tobool) block4 : {
      $buf = $f + 44 | 0;
      $4 = HEAPU32[$buf >> 2] | 0;
      HEAP32[$buf >> 2] = $internal_buf;
@@ -2716,7 +2728,7 @@ function asmFunc(global, env, buffer) {
      HEAP32[$wend >> 2] = $add$ptr;
      $call21 = _printf_core($f | 0, $fmt | 0, $ap2 | 0, $nl_arg | 0, $nl_type | 0) | 0;
      $tobool22 = ($4 | 0) == (0 | 0);
-     if ($tobool22) $ret$1 = $call21; else {
+     if ($tobool22) $ret$1 = $call21; else block5 : {
       $write = $f + 36 | 0;
       $5 = HEAPU32[$write >> 2] | 0;
       FUNCTION_TABLE_iiii[(($5 & 7 | 0) + 2 | 0) & 31]($f | 0, 0 | 0, 0 | 0) | 0;
@@ -2731,7 +2743,7 @@ function asmFunc(global, env, buffer) {
       HEAP32[$wpos >> 2] = 0;
       $ret$1 = $$call21;
      }
-    } else {
+    } else block6 : {
      $call21$30 = _printf_core($f | 0, $fmt | 0, $ap2 | 0, $nl_arg | 0, $nl_type | 0) | 0;
      $ret$1 = $call21$30;
     }
@@ -2762,27 +2774,27 @@ function asmFunc(global, env, buffer) {
    $wend = $f + 16 | 0;
    $0 = HEAPU32[$wend >> 2] | 0;
    $tobool = ($0 | 0) == (0 | 0);
-   if ($tobool) {
+   if ($tobool) block0 : {
     $call = ___towrite($f | 0) | 0;
     $tobool1 = ($call | 0) == (0 | 0);
-    if ($tobool1) {
+    if ($tobool1) block1 : {
      $$pre = HEAPU32[$wend >> 2] | 0;
      $3 = $$pre;
      label = 5;
     } else $retval$0 = 0;
-   } else {
+   } else block2 : {
     $1 = $0;
     $3 = $1;
     label = 5;
    }
    label$break$L5 : {
-    if ((label | 0) == (5 | 0)) {
+    if ((label | 0) == (5 | 0)) block3 : {
      $wpos = $f + 20 | 0;
      $2 = HEAPU32[$wpos >> 2] | 0;
      $sub$ptr$sub = $3 - $2 | 0;
      $cmp = ($sub$ptr$sub >>> 0 | 0) >>> 0 < ($l >>> 0 | 0) >>> 0;
      $4 = $2;
-     if ($cmp) {
+     if ($cmp) block4 : {
       $write = $f + 36 | 0;
       $5 = HEAPU32[$write >> 2] | 0;
       $call4 = FUNCTION_TABLE_iiii[(($5 & 7 | 0) + 2 | 0) & 31]($f | 0, $s | 0, $l | 0) | 0;
@@ -2793,11 +2805,11 @@ function asmFunc(global, env, buffer) {
      $6 = HEAP8[$lbf >> 0] | 0;
      $cmp6 = (($6 << 24 | 0) >> 24 | 0 | 0) > (4294967295 | 0);
      label$break$L10 : {
-      if ($cmp6) {
+      if ($cmp6) block5 : {
        $i$0 = $l;
-       while_out$0 : do {
+       while_out$0 : do block6 : {
         $tobool9 = ($i$0 | 0) == (0 | 0);
-        if ($tobool9) {
+        if ($tobool9) block7 : {
          $9 = $4;
          $i$1 = 0;
          $l$addr$0 = $l;
@@ -2808,7 +2820,7 @@ function asmFunc(global, env, buffer) {
         $arrayidx = $s + $sub | 0;
         $7 = HEAP8[$arrayidx >> 0] | 0;
         $cmp11 = (($7 << 24 | 0) >> 24 | 0 | 0) == (10 | 0);
-        if ($cmp11) {
+        if ($cmp11) block8 : {
          $i$0$lcssa36 = $i$0;
          break while_out$0;
         } else $i$0 = $sub;
@@ -2818,7 +2830,7 @@ function asmFunc(global, env, buffer) {
        $8 = HEAPU32[$write15 >> 2] | 0;
        $call16 = FUNCTION_TABLE_iiii[(($8 & 7 | 0) + 2 | 0) & 31]($f | 0, $s | 0, $i$0$lcssa36 | 0) | 0;
        $cmp17 = ($call16 >>> 0 | 0) >>> 0 < ($i$0$lcssa36 >>> 0 | 0) >>> 0;
-       if ($cmp17) {
+       if ($cmp17) block9 : {
         $retval$0 = $i$0$lcssa36;
         break label$break$L5;
        }
@@ -2829,7 +2841,7 @@ function asmFunc(global, env, buffer) {
        $i$1 = $i$0$lcssa36;
        $l$addr$0 = $sub21;
        $s$addr$0 = $add$ptr;
-      } else {
+      } else block10 : {
        $9 = $4;
        $i$1 = 0;
        $l$addr$0 = $l;
@@ -2864,7 +2876,7 @@ function asmFunc(global, env, buffer) {
    $1 = HEAPU32[$f >> 2] | 0;
    $and = $1 & 8 | 0;
    $tobool = ($and | 0) == (0 | 0);
-   if ($tobool) {
+   if ($tobool) block0 : {
     $rend = $f + 8 | 0;
     HEAP32[$rend >> 2] = 0;
     $rpos = $f + 4 | 0;
@@ -2882,7 +2894,7 @@ function asmFunc(global, env, buffer) {
     $wend = $f + 16 | 0;
     HEAP32[$wend >> 2] = $add$ptr;
     $retval$0 = 0;
-   } else {
+   } else block1 : {
     $or5 = $1 | 32 | 0;
     HEAP32[$f >> 2] = $or5;
     $retval$0 = 4294967295;
@@ -2901,16 +2913,16 @@ function asmFunc(global, env, buffer) {
    sp = HEAPU32[8 >> 2] | 0;
    $tobool = ($s | 0) == (0 | 0);
    do_once$0 : {
-    if ($tobool) $retval$0 = 1; else {
+    if ($tobool) $retval$0 = 1; else block0 : {
      $cmp = ($wc >>> 0 | 0) >>> 0 < 128 >>> 0;
-     if ($cmp) {
+     if ($cmp) block1 : {
       $conv = $wc & 255 | 0;
       HEAP8[$s >> 0] = $conv;
       $retval$0 = 1;
       break do_once$0;
      }
      $cmp2 = ($wc >>> 0 | 0) >>> 0 < 2048 >>> 0;
-     if ($cmp2) {
+     if ($cmp2) block2 : {
       $shr$28 = $wc >>> 6 | 0;
       $or = $shr$28 | 192 | 0;
       $conv5 = $or & 255 | 0;
@@ -2927,7 +2939,7 @@ function asmFunc(global, env, buffer) {
      $0 = $wc & 4294959104 | 0;
      $cmp11 = ($0 | 0) == (57344 | 0);
      $or$cond = $cmp9 | $cmp11 | 0;
-     if ($or$cond) {
+     if ($or$cond) block3 : {
       $shr14$26 = $wc >>> 12 | 0;
       $or15 = $shr14$26 | 224 | 0;
       $conv16 = $or15 & 255 | 0;
@@ -2948,7 +2960,7 @@ function asmFunc(global, env, buffer) {
      }
      $sub27 = $wc + 4294901760 | 0;
      $cmp28 = ($sub27 >>> 0 | 0) >>> 0 < 1048576 >>> 0;
-     if ($cmp28) {
+     if ($cmp28) block4 : {
       $shr31$23 = $wc >>> 18 | 0;
       $or32 = $shr31$23 | 240 | 0;
       $conv33 = $or32 & 255 | 0;
@@ -2972,7 +2984,7 @@ function asmFunc(global, env, buffer) {
       HEAP8[$incdec$ptr44 >> 0] = $conv47;
       $retval$0 = 4;
       break do_once$0;
-     } else {
+     } else block5 : {
       $call = ___errno_location() | 0;
       HEAP32[$call >> 2] = 84;
       $retval$0 = 4294967295;
@@ -2992,7 +3004,7 @@ function asmFunc(global, env, buffer) {
   topmost : {
    sp = HEAPU32[8 >> 2] | 0;
    $tobool = ($s | 0) == (0 | 0);
-   if ($tobool) $retval$0 = 0; else {
+   if ($tobool) $retval$0 = 0; else block0 : {
     $call = _wcrtomb($s | 0, $wc | 0, 0 | 0) | 0;
     $retval$0 = $call;
    }
@@ -3015,14 +3027,14 @@ function asmFunc(global, env, buffer) {
    $tobool2$41 = ($n | 0) != (0 | 0);
    $or$cond$42 = $tobool2$41 & $tobool$40 | 0;
    label$break$L1 : {
-    if ($or$cond$42) {
+    if ($or$cond$42) block0 : {
      $1 = $c & 255 | 0;
      $n$addr$043 = $n;
      $s$044 = $src;
-     while_out$0 : do {
+     while_out$0 : do block1 : {
       $2 = HEAP8[$s$044 >> 0] | 0;
       $cmp = (($2 << 24 | 0) >> 24 | 0 | 0) == (($1 << 24 | 0) >> 24 | 0 | 0);
-      if ($cmp) {
+      if ($cmp) block2 : {
        $n$addr$0$lcssa61 = $n$addr$043;
        $s$0$lcssa60 = $s$044;
        label = 6;
@@ -3035,10 +3047,10 @@ function asmFunc(global, env, buffer) {
       $tobool = ($and | 0) != (0 | 0);
       $tobool2 = ($dec | 0) != (0 | 0);
       $or$cond = $tobool2 & $tobool | 0;
-      if ($or$cond) {
+      if ($or$cond) block3 : {
        $n$addr$043 = $dec;
        $s$044 = $incdec$ptr;
-      } else {
+      } else block4 : {
        $n$addr$0$lcssa = $dec;
        $s$0$lcssa = $incdec$ptr;
        $tobool2$lcssa = $tobool2;
@@ -3047,37 +3059,37 @@ function asmFunc(global, env, buffer) {
       }
       continue while_out$0;
      } while (0);
-    } else {
+    } else block5 : {
      $n$addr$0$lcssa = $n;
      $s$0$lcssa = $src;
      $tobool2$lcssa = $tobool2$41;
      label = 5;
     }
    }
-   if ((label | 0) == (5 | 0)) if ($tobool2$lcssa) {
+   if ((label | 0) == (5 | 0)) if ($tobool2$lcssa) block6 : {
     $n$addr$0$lcssa61 = $n$addr$0$lcssa;
     $s$0$lcssa60 = $s$0$lcssa;
     label = 6;
-   } else {
+   } else block7 : {
     $n$addr$3 = 0;
     $s$2 = $s$0$lcssa;
    }
    label$break$L8 : {
-    if ((label | 0) == (6 | 0)) {
+    if ((label | 0) == (6 | 0)) block8 : {
      $4 = HEAP8[$s$0$lcssa60 >> 0] | 0;
      $5 = $c & 255 | 0;
      $cmp8 = (($4 << 24 | 0) >> 24 | 0 | 0) == (($5 << 24 | 0) >> 24 | 0 | 0);
-     if ($cmp8) {
+     if ($cmp8) block9 : {
       $n$addr$3 = $n$addr$0$lcssa61;
       $s$2 = $s$0$lcssa60;
-     } else {
+     } else block10 : {
       $mul = Math_imul($conv1, 16843009);
       $cmp11$32 = ($n$addr$0$lcssa61 >>> 0 | 0) >>> 0 > 3 >>> 0;
       label$break$L11 : {
-       if ($cmp11$32) {
+       if ($cmp11$32) block11 : {
         $n$addr$133 = $n$addr$0$lcssa61;
         $w$034 = $s$0$lcssa60;
-        while_out$2 : do {
+        while_out$2 : do block12 : {
          $6 = HEAPU32[$w$034 >> 2] | 0;
          $xor = $6 ^ $mul | 0;
          $sub = $xor + 4278124287 | 0;
@@ -3085,7 +3097,7 @@ function asmFunc(global, env, buffer) {
          $and15 = $neg ^ 2155905152 | 0;
          $and16 = $and15 & $sub | 0;
          $lnot = ($and16 | 0) == (0 | 0);
-         if (($lnot | 0) == (0 | 0)) {
+         if (($lnot | 0) == (0 | 0)) block13 : {
           $n$addr$133$lcssa = $n$addr$133;
           $w$034$lcssa = $w$034;
           break while_out$2;
@@ -3093,10 +3105,10 @@ function asmFunc(global, env, buffer) {
          $incdec$ptr21 = $w$034 + 4 | 0;
          $sub22 = $n$addr$133 + 4294967292 | 0;
          $cmp11 = ($sub22 >>> 0 | 0) >>> 0 > 3 >>> 0;
-         if ($cmp11) {
+         if ($cmp11) block14 : {
           $n$addr$133 = $sub22;
           $w$034 = $incdec$ptr21;
-         } else {
+         } else block15 : {
           $n$addr$1$lcssa = $sub22;
           $w$0$lcssa = $incdec$ptr21;
           label = 11;
@@ -3106,27 +3118,27 @@ function asmFunc(global, env, buffer) {
         } while (0);
         $n$addr$227 = $n$addr$133$lcssa;
         $s$128 = $w$034$lcssa;
-       } else {
+       } else block16 : {
         $n$addr$1$lcssa = $n$addr$0$lcssa61;
         $w$0$lcssa = $s$0$lcssa60;
         label = 11;
        }
       }
-      if ((label | 0) == (11 | 0)) {
+      if ((label | 0) == (11 | 0)) block17 : {
        $tobool25$26 = ($n$addr$1$lcssa | 0) == (0 | 0);
-       if ($tobool25$26) {
+       if ($tobool25$26) block18 : {
         $n$addr$3 = 0;
         $s$2 = $w$0$lcssa;
         break label$break$L8;
-       } else {
+       } else block19 : {
         $n$addr$227 = $n$addr$1$lcssa;
         $s$128 = $w$0$lcssa;
        }
       }
-      while_out$4 : do {
+      while_out$4 : do block20 : {
        $7 = HEAP8[$s$128 >> 0] | 0;
        $cmp28 = (($7 << 24 | 0) >> 24 | 0 | 0) == (($5 << 24 | 0) >> 24 | 0 | 0);
-       if ($cmp28) {
+       if ($cmp28) block21 : {
         $n$addr$3 = $n$addr$227;
         $s$2 = $s$128;
         break label$break$L8;
@@ -3134,11 +3146,11 @@ function asmFunc(global, env, buffer) {
        $incdec$ptr33 = $s$128 + 1 | 0;
        $dec34 = $n$addr$227 + 4294967295 | 0;
        $tobool25 = ($dec34 | 0) == (0 | 0);
-       if ($tobool25) {
+       if ($tobool25) block22 : {
         $n$addr$3 = 0;
         $s$2 = $incdec$ptr33;
         break while_out$4;
-       } else {
+       } else block23 : {
         $n$addr$227 = $dec34;
         $s$128 = $incdec$ptr33;
        }
@@ -3161,7 +3173,7 @@ function asmFunc(global, env, buffer) {
   topmost : {
    sp = HEAPU32[8 >> 2] | 0;
    $cmp = ($r >>> 0 | 0) >>> 0 > 4294963200 >>> 0;
-   if ($cmp) {
+   if ($cmp) block0 : {
     $sub = 0 - $r | 0;
     $call = ___errno_location() | 0;
     HEAP32[$call >> 2] = $sub;
@@ -3182,7 +3194,7 @@ function asmFunc(global, env, buffer) {
    $wbase = $f + 28 | 0;
    $1 = HEAPU32[$wbase >> 2] | 0;
    $cmp = ($0 >>> 0 | 0) >>> 0 > ($1 >>> 0 | 0) >>> 0;
-   if ($cmp) {
+   if ($cmp) block0 : {
     $write = $f + 36 | 0;
     $2 = HEAPU32[$write >> 2] | 0;
     FUNCTION_TABLE_iiii[(($2 & 7 | 0) + 2 | 0) & 31]($f | 0, 0 | 0, 0 | 0) | 0;
@@ -3190,13 +3202,13 @@ function asmFunc(global, env, buffer) {
     $tobool = ($3 | 0) == (0 | 0);
     if ($tobool) $retval$0 = 4294967295; else label = 3;
    } else label = 3;
-   if ((label | 0) == (3 | 0)) {
+   if ((label | 0) == (3 | 0)) block1 : {
     $rpos = $f + 4 | 0;
     $4 = HEAPU32[$rpos >> 2] | 0;
     $rend = $f + 8 | 0;
     $5 = HEAPU32[$rend >> 2] | 0;
     $cmp4 = ($4 >>> 0 | 0) >>> 0 < ($5 >>> 0 | 0) >>> 0;
-    if ($cmp4) {
+    if ($cmp4) block2 : {
      $seek = $f + 40 | 0;
      $6 = HEAPU32[$seek >> 2] | 0;
      $sub$ptr$lhs$cast = $4;
@@ -3269,18 +3281,18 @@ function asmFunc(global, env, buffer) {
    $incdec$ptr169275 = $fmt;
    $l$0 = 0;
    $l10n$0 = 0;
-   label$break$L1 : do {
+   label$break$L1 : do block0 : {
     $cmp = ($cnt$0 | 0) > (4294967295 | 0);
     do_once$0 : {
-     if ($cmp) {
+     if ($cmp) block1 : {
       $sub = 2147483647 - $cnt$0 | 0;
       $cmp1 = ($l$0 | 0) > ($sub | 0);
-      if ($cmp1) {
+      if ($cmp1) block2 : {
        $call = ___errno_location() | 0;
        HEAP32[$call >> 2] = 75;
        $cnt$1 = 4294967295;
        break do_once$0;
-      } else {
+      } else block3 : {
        $add = $l$0 + $cnt$0 | 0;
        $cnt$1 = $add;
        break do_once$0;
@@ -3289,29 +3301,33 @@ function asmFunc(global, env, buffer) {
     }
     $0 = HEAP8[$incdec$ptr169275 >> 0] | 0;
     $tobool = (($0 << 24 | 0) >> 24 | 0 | 0) == (0 | 0);
-    if ($tobool) {
+    if ($tobool) block4 : {
      $cnt$1$lcssa = $cnt$1;
      $l10n$0$lcssa = $l10n$0;
      label = 242;
      break label$break$L1;
-    } else {
+    } else block5 : {
      $1 = $0;
      $incdec$ptr169274 = $incdec$ptr169275;
     }
-    label$break$L9 : do {
+    label$break$L9 : do block6 : {
      switch$1 : {
       switch ((($1 << 24 | 0) >> 24 | 0) - 0 | 0) {
       case 37:
-       $incdec$ptr169276301 = $incdec$ptr169274;
-       $z$0302 = $incdec$ptr169274;
-       label = 9;
-       break label$break$L9;
-       break switch$1;
+       block7 : {
+        $incdec$ptr169276301 = $incdec$ptr169274;
+        $z$0302 = $incdec$ptr169274;
+        label = 9;
+        break label$break$L9;
+        break switch$1;
+       }
       case 0:
-       $incdec$ptr169276$lcssa = $incdec$ptr169274;
-       $z$0$lcssa = $incdec$ptr169274;
-       break label$break$L9;
-       break switch$1;
+       block8 : {
+        $incdec$ptr169276$lcssa = $incdec$ptr169274;
+        $z$0$lcssa = $incdec$ptr169274;
+        break label$break$L9;
+        break switch$1;
+       }
       case 1:
       case 2:
       case 3:
@@ -3358,12 +3374,12 @@ function asmFunc(global, env, buffer) {
      continue label$break$L9;
     } while (0);
     label$break$L12 : {
-     if ((label | 0) == (9 | 0)) while_out$5 : do {
+     if ((label | 0) == (9 | 0)) while_out$5 : do block9 : {
       label = 0;
       $arrayidx16 = $incdec$ptr169276301 + 1 | 0;
       $2 = HEAP8[$arrayidx16 >> 0] | 0;
       $cmp18 = (($2 << 24 | 0) >> 24 | 0 | 0) == (37 | 0);
-      if (($cmp18 | 0) == (0 | 0)) {
+      if (($cmp18 | 0) == (0 | 0)) block10 : {
        $incdec$ptr169276$lcssa = $incdec$ptr169276301;
        $z$0$lcssa = $z$0302;
        break label$break$L12;
@@ -3372,11 +3388,11 @@ function asmFunc(global, env, buffer) {
       $add$ptr = $incdec$ptr169276301 + 2 | 0;
       $3 = HEAP8[$add$ptr >> 0] | 0;
       $cmp13 = (($3 << 24 | 0) >> 24 | 0 | 0) == (37 | 0);
-      if ($cmp13) {
+      if ($cmp13) block11 : {
        $incdec$ptr169276301 = $add$ptr;
        $z$0302 = $incdec$ptr23;
        label = 9;
-      } else {
+      } else block12 : {
        $incdec$ptr169276$lcssa = $add$ptr;
        $z$0$lcssa = $incdec$ptr23;
        break while_out$5;
@@ -3387,14 +3403,14 @@ function asmFunc(global, env, buffer) {
     $sub$ptr$lhs$cast = $z$0$lcssa;
     $sub$ptr$rhs$cast = $incdec$ptr169275;
     $sub$ptr$sub = $sub$ptr$lhs$cast - $sub$ptr$rhs$cast | 0;
-    if ($tobool25) {
+    if ($tobool25) block13 : {
      $4 = HEAPU32[$f >> 2] | 0;
      $and$i = $4 & 32 | 0;
      $tobool$i = ($and$i | 0) == (0 | 0);
      if ($tobool$i) ___fwritex($incdec$ptr169275 | 0, $sub$ptr$sub | 0, $f | 0) | 0;
     }
     $tobool28 = ($z$0$lcssa | 0) == ($incdec$ptr169275 | 0);
-    if (($tobool28 | 0) == (0 | 0)) {
+    if (($tobool28 | 0) == (0 | 0)) block14 : {
      $l10n$0$phi = $l10n$0;
      $cnt$0 = $cnt$1;
      $incdec$ptr169275 = $incdec$ptr169276$lcssa;
@@ -3407,7 +3423,7 @@ function asmFunc(global, env, buffer) {
     $conv32 = ($5 << 24 | 0) >> 24 | 0;
     $isdigittmp = $conv32 + 4294967248 | 0;
     $isdigit = ($isdigittmp >>> 0 | 0) >>> 0 < 10 >>> 0;
-    if ($isdigit) {
+    if ($isdigit) block15 : {
      $arrayidx35 = $incdec$ptr169276$lcssa + 2 | 0;
      $6 = HEAP8[$arrayidx35 >> 0] | 0;
      $cmp37 = (($6 << 24 | 0) >> 24 | 0 | 0) == (36 | 0);
@@ -3423,7 +3439,7 @@ function asmFunc(global, env, buffer) {
      $argpos$0 = $isdigittmp$;
      $l10n$1 = $$l10n$0;
      $storemerge = $add$ptr43$arrayidx31;
-    } else {
+    } else block16 : {
      $7 = $5;
      $argpos$0 = 4294967295;
      $l10n$1 = $l10n$0;
@@ -3433,17 +3449,17 @@ function asmFunc(global, env, buffer) {
     $8 = $conv48$307 & 4294967264 | 0;
     $cmp50$308 = ($8 | 0) == (32 | 0);
     label$break$L25 : {
-     if ($cmp50$308) {
+     if ($cmp50$308) block17 : {
       $9 = $7;
       $conv48311 = $conv48$307;
       $fl$0310 = 0;
       $storemerge$186309 = $storemerge;
-      while_out$7 : do {
+      while_out$7 : do block18 : {
        $sub54 = $conv48311 + 4294967264 | 0;
        $shl = 1 << $sub54 | 0;
        $and = $shl & 75913 | 0;
        $tobool55 = ($and | 0) == (0 | 0);
-       if ($tobool55) {
+       if ($tobool55) block19 : {
         $12 = $9;
         $fl$0284 = $fl$0310;
         $storemerge$186282 = $storemerge$186309;
@@ -3458,12 +3474,12 @@ function asmFunc(global, env, buffer) {
        $conv48 = ($10 << 24 | 0) >> 24 | 0;
        $11 = $conv48 & 4294967264 | 0;
        $cmp50 = ($11 | 0) == (32 | 0);
-       if ($cmp50) {
+       if ($cmp50) block20 : {
         $9 = $10;
         $conv48311 = $conv48;
         $fl$0310 = $or;
         $storemerge$186309 = $incdec$ptr62;
-       } else {
+       } else block21 : {
         $12 = $10;
         $fl$0284 = $or;
         $storemerge$186282 = $incdec$ptr62;
@@ -3471,7 +3487,7 @@ function asmFunc(global, env, buffer) {
        }
        continue while_out$7;
       } while (0);
-     } else {
+     } else block22 : {
       $12 = $7;
       $fl$0284 = 0;
       $storemerge$186282 = $storemerge;
@@ -3479,17 +3495,17 @@ function asmFunc(global, env, buffer) {
     }
     $cmp65 = (($12 << 24 | 0) >> 24 | 0 | 0) == (42 | 0);
     do_once$9 : {
-     if ($cmp65) {
+     if ($cmp65) block23 : {
       $arrayidx68 = $storemerge$186282 + 1 | 0;
       $13 = HEAP8[$arrayidx68 >> 0] | 0;
       $conv69 = ($13 << 24 | 0) >> 24 | 0;
       $isdigittmp189 = $conv69 + 4294967248 | 0;
       $isdigit190 = ($isdigittmp189 >>> 0 | 0) >>> 0 < 10 >>> 0;
-      if ($isdigit190) {
+      if ($isdigit190) block24 : {
        $arrayidx73 = $storemerge$186282 + 2 | 0;
        $14 = HEAP8[$arrayidx73 >> 0] | 0;
        $cmp75 = (($14 << 24 | 0) >> 24 | 0 | 0) == (36 | 0);
-       if ($cmp75) {
+       if ($cmp75) block25 : {
         $arrayidx81 = $nl_type + ($isdigittmp189 << 2 | 0) | 0;
         HEAP32[$arrayidx81 >> 2] = 10;
         $15 = HEAP8[$arrayidx68 >> 0] | 0;
@@ -3508,14 +3524,14 @@ function asmFunc(global, env, buffer) {
         $w$0 = $18;
        } else label = 24;
       } else label = 24;
-      if ((label | 0) == (24 | 0)) {
+      if ((label | 0) == (24 | 0)) block26 : {
        label = 0;
        $tobool90 = ($l10n$1 | 0) == (0 | 0);
-       if (($tobool90 | 0) == (0 | 0)) {
+       if (($tobool90 | 0) == (0 | 0)) block27 : {
         $retval$0 = 4294967295;
         break label$break$L1;
        }
-       if (($tobool25 | 0) == (0 | 0)) {
+       if (($tobool25 | 0) == (0 | 0)) block28 : {
         $fl$1 = $fl$0284;
         $incdec$ptr169269 = $arrayidx68;
         $l10n$3 = 0;
@@ -3542,28 +3558,28 @@ function asmFunc(global, env, buffer) {
        $w$0 = $28;
       }
       $cmp97 = ($w$0 | 0) < (0 | 0);
-      if ($cmp97) {
+      if ($cmp97) block29 : {
        $or100 = $fl$0284 | 8192 | 0;
        $sub101 = 0 - $w$0 | 0;
        $fl$1 = $or100;
        $incdec$ptr169269 = $storemerge$191;
        $l10n$3 = $l10n$2;
        $w$1 = $sub101;
-      } else {
+      } else block30 : {
        $fl$1 = $fl$0284;
        $incdec$ptr169269 = $storemerge$191;
        $l10n$3 = $l10n$2;
        $w$1 = $w$0;
       }
-     } else {
+     } else block31 : {
       $conv$4$i = ($12 << 24 | 0) >> 24 | 0;
       $isdigittmp$5$i = $conv$4$i + 4294967248 | 0;
       $isdigit$6$i = ($isdigittmp$5$i >>> 0 | 0) >>> 0 < 10 >>> 0;
-      if ($isdigit$6$i) {
+      if ($isdigit$6$i) block32 : {
        $29 = $storemerge$186282;
        $i$07$i = 0;
        $isdigittmp8$i = $isdigittmp$5$i;
-       while_out$10 : do {
+       while_out$10 : do block33 : {
         $mul$i = Math_imul($i$07$i, 10);
         $add$i = $mul$i + $isdigittmp8$i | 0;
         $incdec$ptr$i = $29 + 1 | 0;
@@ -3571,11 +3587,11 @@ function asmFunc(global, env, buffer) {
         $conv$i = ($30 << 24 | 0) >> 24 | 0;
         $isdigittmp$i = $conv$i + 4294967248 | 0;
         $isdigit$i = ($isdigittmp$i >>> 0 | 0) >>> 0 < 10 >>> 0;
-        if ($isdigit$i) {
+        if ($isdigit$i) block34 : {
          $29 = $incdec$ptr$i;
          $i$07$i = $add$i;
          $isdigittmp8$i = $isdigittmp$i;
-        } else {
+        } else block35 : {
          $add$i$lcssa = $add$i;
          $incdec$ptr$i$lcssa = $incdec$ptr$i;
          break while_out$10;
@@ -3583,16 +3599,16 @@ function asmFunc(global, env, buffer) {
         continue while_out$10;
        } while (0);
        $cmp105 = ($add$i$lcssa | 0) < (0 | 0);
-       if ($cmp105) {
+       if ($cmp105) block36 : {
         $retval$0 = 4294967295;
         break label$break$L1;
-       } else {
+       } else block37 : {
         $fl$1 = $fl$0284;
         $incdec$ptr169269 = $incdec$ptr$i$lcssa;
         $l10n$3 = $l10n$1;
         $w$1 = $add$i$lcssa;
        }
-      } else {
+      } else block38 : {
        $fl$1 = $fl$0284;
        $incdec$ptr169269 = $storemerge$186282;
        $l10n$3 = $l10n$1;
@@ -3603,24 +3619,24 @@ function asmFunc(global, env, buffer) {
     $31 = HEAP8[$incdec$ptr169269 >> 0] | 0;
     $cmp111 = (($31 << 24 | 0) >> 24 | 0 | 0) == (46 | 0);
     label$break$L46 : {
-     if ($cmp111) {
+     if ($cmp111) block39 : {
       $arrayidx114 = $incdec$ptr169269 + 1 | 0;
       $32 = HEAP8[$arrayidx114 >> 0] | 0;
       $cmp116 = (($32 << 24 | 0) >> 24 | 0 | 0) == (42 | 0);
-      if (($cmp116 | 0) == (0 | 0)) {
+      if (($cmp116 | 0) == (0 | 0)) block40 : {
        $conv$4$i$197 = ($32 << 24 | 0) >> 24 | 0;
        $isdigittmp$5$i$198 = $conv$4$i$197 + 4294967248 | 0;
        $isdigit$6$i$199 = ($isdigittmp$5$i$198 >>> 0 | 0) >>> 0 < 10 >>> 0;
-       if ($isdigit$6$i$199) {
+       if ($isdigit$6$i$199) block41 : {
         $49 = $arrayidx114;
         $i$07$i$201 = 0;
         $isdigittmp8$i$200 = $isdigittmp$5$i$198;
-       } else {
+       } else block42 : {
         $incdec$ptr169272 = $arrayidx114;
         $p$0 = 0;
         break label$break$L46;
        }
-       while_out$12 : do {
+       while_out$12 : do block43 : {
         $mul$i$202 = Math_imul($i$07$i$201, 10);
         $add$i$203 = $mul$i$202 + $isdigittmp8$i$200 | 0;
         $incdec$ptr$i$204 = $49 + 1 | 0;
@@ -3628,11 +3644,11 @@ function asmFunc(global, env, buffer) {
         $conv$i$205 = ($50 << 24 | 0) >> 24 | 0;
         $isdigittmp$i$206 = $conv$i$205 + 4294967248 | 0;
         $isdigit$i$207 = ($isdigittmp$i$206 >>> 0 | 0) >>> 0 < 10 >>> 0;
-        if ($isdigit$i$207) {
+        if ($isdigit$i$207) block44 : {
          $49 = $incdec$ptr$i$204;
          $i$07$i$201 = $add$i$203;
          $isdigittmp8$i$200 = $isdigittmp$i$206;
-        } else {
+        } else block45 : {
          $incdec$ptr169272 = $incdec$ptr$i$204;
          $p$0 = $add$i$203;
          break label$break$L46;
@@ -3645,11 +3661,11 @@ function asmFunc(global, env, buffer) {
       $conv120 = ($33 << 24 | 0) >> 24 | 0;
       $isdigittmp187 = $conv120 + 4294967248 | 0;
       $isdigit188 = ($isdigittmp187 >>> 0 | 0) >>> 0 < 10 >>> 0;
-      if ($isdigit188) {
+      if ($isdigit188) block46 : {
        $arrayidx124 = $incdec$ptr169269 + 3 | 0;
        $34 = HEAP8[$arrayidx124 >> 0] | 0;
        $cmp126 = (($34 << 24 | 0) >> 24 | 0 | 0) == (36 | 0);
-       if ($cmp126) {
+       if ($cmp126) block47 : {
         $arrayidx132 = $nl_type + ($isdigittmp187 << 2 | 0) | 0;
         HEAP32[$arrayidx132 >> 2] = 10;
         $35 = HEAP8[$arrayidx119 >> 0] | 0;
@@ -3669,11 +3685,11 @@ function asmFunc(global, env, buffer) {
        }
       }
       $tobool141 = ($l10n$3 | 0) == (0 | 0);
-      if (($tobool141 | 0) == (0 | 0)) {
+      if (($tobool141 | 0) == (0 | 0)) block48 : {
        $retval$0 = 4294967295;
        break label$break$L1;
       }
-      if ($tobool25) {
+      if ($tobool25) block49 : {
        $arglist_current2 = HEAPU32[$ap >> 2] | 0;
        $42 = $arglist_current2;
        $43 = 0 + 4 | 0;
@@ -3691,23 +3707,23 @@ function asmFunc(global, env, buffer) {
        HEAP32[$ap >> 2] = $arglist_next3;
        $incdec$ptr169272 = $arrayidx119;
        $p$0 = $48;
-      } else {
+      } else block50 : {
        $incdec$ptr169272 = $arrayidx119;
        $p$0 = 0;
       }
-     } else {
+     } else block51 : {
       $incdec$ptr169272 = $incdec$ptr169269;
       $p$0 = 4294967295;
      }
     }
     $incdec$ptr169271 = $incdec$ptr169272;
     $st$0 = 0;
-    while_out$14 : do {
+    while_out$14 : do block52 : {
      $51 = HEAP8[$incdec$ptr169271 >> 0] | 0;
      $conv163 = ($51 << 24 | 0) >> 24 | 0;
      $sub164 = $conv163 + 4294967231 | 0;
      $cmp165 = ($sub164 >>> 0 | 0) >>> 0 > 57 >>> 0;
-     if ($cmp165) {
+     if ($cmp165) block53 : {
       $retval$0 = 4294967295;
       break label$break$L1;
      }
@@ -3717,10 +3733,10 @@ function asmFunc(global, env, buffer) {
      $conv174 = $52 & 255 | 0;
      $sub175 = $conv174 + 4294967295 | 0;
      $cmp176 = ($sub175 >>> 0 | 0) >>> 0 < 8 >>> 0;
-     if ($cmp176) {
+     if ($cmp176) block54 : {
       $incdec$ptr169271 = $incdec$ptr169;
       $st$0 = $conv174;
-     } else {
+     } else block55 : {
       $$lcssa = $52;
       $conv174$lcssa = $conv174;
       $incdec$ptr169$lcssa = $incdec$ptr169;
@@ -3731,18 +3747,18 @@ function asmFunc(global, env, buffer) {
      continue while_out$14;
     } while (0);
     $tobool178 = (($$lcssa << 24 | 0) >> 24 | 0 | 0) == (0 | 0);
-    if ($tobool178) {
+    if ($tobool178) block56 : {
      $retval$0 = 4294967295;
      break label$break$L1;
     }
     $cmp181 = (($$lcssa << 24 | 0) >> 24 | 0 | 0) == (19 | 0);
     $cmp184 = ($argpos$0 | 0) > (4294967295 | 0);
     do_once$16 : {
-     if ($cmp181) if ($cmp184) {
+     if ($cmp181) if ($cmp184) block57 : {
       $retval$0 = 4294967295;
       break label$break$L1;
-     } else label = 52; else {
-      if ($cmp184) {
+     } else label = 52; else block58 : {
+      if ($cmp184) block59 : {
        $arrayidx192 = $nl_type + ($argpos$0 << 2 | 0) | 0;
        HEAP32[$arrayidx192 >> 2] = $conv174$lcssa;
        $53 = $nl_arg + ($argpos$0 << 3 | 0) | 0;
@@ -3761,16 +3777,16 @@ function asmFunc(global, env, buffer) {
        label = 52;
        break do_once$16;
       }
-      if (($tobool25 | 0) == (0 | 0)) {
+      if (($tobool25 | 0) == (0 | 0)) block60 : {
        $retval$0 = 0;
        break label$break$L1;
       }
       _pop_arg_336($arg | 0, $conv174$lcssa | 0, $ap | 0);
      }
     }
-    if ((label | 0) == (52 | 0)) {
+    if ((label | 0) == (52 | 0)) block61 : {
      label = 0;
-     if (($tobool25 | 0) == (0 | 0)) {
+     if (($tobool25 | 0) == (0 | 0)) block62 : {
       $cnt$0 = $cnt$1;
       $incdec$ptr169275 = $incdec$ptr169$lcssa;
       $l$0 = $sub$ptr$sub;
@@ -3796,287 +3812,325 @@ function asmFunc(global, env, buffer) {
      switch$17 : {
       switch ($t$0 - 65 | 0) {
       case 45:
-       switch$18 : {
-        switch ($st$0$lcssa415 - 0 | 0) {
-        case 0:
-         $71 = HEAPU32[$arg >> 2] | 0;
-         HEAP32[$71 >> 2] = $cnt$1;
-         $cnt$0 = $cnt$1;
-         $incdec$ptr169275 = $incdec$ptr169$lcssa;
-         $l$0 = $sub$ptr$sub;
-         $l10n$0 = $l10n$3;
-         continue label$break$L1;
-         break switch$18;
-        case 1:
-         $72 = HEAPU32[$arg >> 2] | 0;
-         HEAP32[$72 >> 2] = $cnt$1;
-         $cnt$0 = $cnt$1;
-         $incdec$ptr169275 = $incdec$ptr169$lcssa;
-         $l$0 = $sub$ptr$sub;
-         $l10n$0 = $l10n$3;
-         continue label$break$L1;
-         break switch$18;
-        case 2:
-         $73 = ($cnt$1 | 0) < (0 | 0);
-         $74 = ($73 << 31 | 0) >> 31 | 0;
-         $75 = HEAPU32[$arg >> 2] | 0;
-         $76 = $75;
-         $77 = $76;
-         HEAP32[$77 >> 2] = $cnt$1;
-         $78 = $76 + 4 | 0;
-         $79 = $78;
-         HEAP32[$79 >> 2] = $74;
-         $cnt$0 = $cnt$1;
-         $incdec$ptr169275 = $incdec$ptr169$lcssa;
-         $l$0 = $sub$ptr$sub;
-         $l10n$0 = $l10n$3;
-         continue label$break$L1;
-         break switch$18;
-        case 3:
-         $conv229 = $cnt$1 & 65535 | 0;
-         $80 = HEAPU32[$arg >> 2] | 0;
-         HEAP16[$80 >> 1] = $conv229;
-         $cnt$0 = $cnt$1;
-         $incdec$ptr169275 = $incdec$ptr169$lcssa;
-         $l$0 = $sub$ptr$sub;
-         $l10n$0 = $l10n$3;
-         continue label$break$L1;
-         break switch$18;
-        case 4:
-         $conv232 = $cnt$1 & 255 | 0;
-         $81 = HEAPU32[$arg >> 2] | 0;
-         HEAP8[$81 >> 0] = $conv232;
-         $cnt$0 = $cnt$1;
-         $incdec$ptr169275 = $incdec$ptr169$lcssa;
-         $l$0 = $sub$ptr$sub;
-         $l10n$0 = $l10n$3;
-         continue label$break$L1;
-         break switch$18;
-        case 6:
-         $82 = HEAPU32[$arg >> 2] | 0;
-         HEAP32[$82 >> 2] = $cnt$1;
-         $cnt$0 = $cnt$1;
-         $incdec$ptr169275 = $incdec$ptr169$lcssa;
-         $l$0 = $sub$ptr$sub;
-         $l10n$0 = $l10n$3;
-         continue label$break$L1;
-         break switch$18;
-        case 7:
-         $83 = ($cnt$1 | 0) < (0 | 0);
-         $84 = ($83 << 31 | 0) >> 31 | 0;
-         $85 = HEAPU32[$arg >> 2] | 0;
-         $86 = $85;
-         $87 = $86;
-         HEAP32[$87 >> 2] = $cnt$1;
-         $88 = $86 + 4 | 0;
-         $89 = $88;
-         HEAP32[$89 >> 2] = $84;
-         $cnt$0 = $cnt$1;
-         $incdec$ptr169275 = $incdec$ptr169$lcssa;
-         $l$0 = $sub$ptr$sub;
-         $l10n$0 = $l10n$3;
-         continue label$break$L1;
-         break switch$18;
-        case 5:
-        default:
-         $cnt$0 = $cnt$1;
-         $incdec$ptr169275 = $incdec$ptr169$lcssa;
-         $l$0 = $sub$ptr$sub;
-         $l10n$0 = $l10n$3;
-         continue label$break$L1;
+       block63 : {
+        switch$18 : {
+         switch ($st$0$lcssa415 - 0 | 0) {
+         case 0:
+          block64 : {
+           $71 = HEAPU32[$arg >> 2] | 0;
+           HEAP32[$71 >> 2] = $cnt$1;
+           $cnt$0 = $cnt$1;
+           $incdec$ptr169275 = $incdec$ptr169$lcssa;
+           $l$0 = $sub$ptr$sub;
+           $l10n$0 = $l10n$3;
+           continue label$break$L1;
+           break switch$18;
+          }
+         case 1:
+          block65 : {
+           $72 = HEAPU32[$arg >> 2] | 0;
+           HEAP32[$72 >> 2] = $cnt$1;
+           $cnt$0 = $cnt$1;
+           $incdec$ptr169275 = $incdec$ptr169$lcssa;
+           $l$0 = $sub$ptr$sub;
+           $l10n$0 = $l10n$3;
+           continue label$break$L1;
+           break switch$18;
+          }
+         case 2:
+          block66 : {
+           $73 = ($cnt$1 | 0) < (0 | 0);
+           $74 = ($73 << 31 | 0) >> 31 | 0;
+           $75 = HEAPU32[$arg >> 2] | 0;
+           $76 = $75;
+           $77 = $76;
+           HEAP32[$77 >> 2] = $cnt$1;
+           $78 = $76 + 4 | 0;
+           $79 = $78;
+           HEAP32[$79 >> 2] = $74;
+           $cnt$0 = $cnt$1;
+           $incdec$ptr169275 = $incdec$ptr169$lcssa;
+           $l$0 = $sub$ptr$sub;
+           $l10n$0 = $l10n$3;
+           continue label$break$L1;
+           break switch$18;
+          }
+         case 3:
+          block67 : {
+           $conv229 = $cnt$1 & 65535 | 0;
+           $80 = HEAPU32[$arg >> 2] | 0;
+           HEAP16[$80 >> 1] = $conv229;
+           $cnt$0 = $cnt$1;
+           $incdec$ptr169275 = $incdec$ptr169$lcssa;
+           $l$0 = $sub$ptr$sub;
+           $l10n$0 = $l10n$3;
+           continue label$break$L1;
+           break switch$18;
+          }
+         case 4:
+          block68 : {
+           $conv232 = $cnt$1 & 255 | 0;
+           $81 = HEAPU32[$arg >> 2] | 0;
+           HEAP8[$81 >> 0] = $conv232;
+           $cnt$0 = $cnt$1;
+           $incdec$ptr169275 = $incdec$ptr169$lcssa;
+           $l$0 = $sub$ptr$sub;
+           $l10n$0 = $l10n$3;
+           continue label$break$L1;
+           break switch$18;
+          }
+         case 6:
+          block69 : {
+           $82 = HEAPU32[$arg >> 2] | 0;
+           HEAP32[$82 >> 2] = $cnt$1;
+           $cnt$0 = $cnt$1;
+           $incdec$ptr169275 = $incdec$ptr169$lcssa;
+           $l$0 = $sub$ptr$sub;
+           $l10n$0 = $l10n$3;
+           continue label$break$L1;
+           break switch$18;
+          }
+         case 7:
+          block70 : {
+           $83 = ($cnt$1 | 0) < (0 | 0);
+           $84 = ($83 << 31 | 0) >> 31 | 0;
+           $85 = HEAPU32[$arg >> 2] | 0;
+           $86 = $85;
+           $87 = $86;
+           HEAP32[$87 >> 2] = $cnt$1;
+           $88 = $86 + 4 | 0;
+           $89 = $88;
+           HEAP32[$89 >> 2] = $84;
+           $cnt$0 = $cnt$1;
+           $incdec$ptr169275 = $incdec$ptr169$lcssa;
+           $l$0 = $sub$ptr$sub;
+           $l10n$0 = $l10n$3;
+           continue label$break$L1;
+           break switch$18;
+          }
+         case 5:
+         default:
+          block71 : {
+           $cnt$0 = $cnt$1;
+           $incdec$ptr169275 = $incdec$ptr169$lcssa;
+           $l$0 = $sub$ptr$sub;
+           $l10n$0 = $l10n$3;
+           continue label$break$L1;
+          }
+         }
         }
+        break switch$17;
        }
-       break switch$17;
       case 47:
-       $cmp240 = ($p$0 >>> 0 | 0) >>> 0 > 8 >>> 0;
-       if ($cmp240) wasm2asm_i32$1 = $p$0; else wasm2asm_i32$1 = 8;
-       $cond245 = wasm2asm_i32$1;
-       $or246 = $fl$1$and219 | 8 | 0;
-       $fl$3 = $or246;
-       $p$1 = $cond245;
-       $t$1 = 120;
-       label = 64;
-       break switch$17;
+       block72 : {
+        $cmp240 = ($p$0 >>> 0 | 0) >>> 0 > 8 >>> 0;
+        if ($cmp240) wasm2asm_i32$1 = $p$0; else wasm2asm_i32$1 = 8;
+        $cond245 = wasm2asm_i32$1;
+        $or246 = $fl$1$and219 | 8 | 0;
+        $fl$3 = $or246;
+        $p$1 = $cond245;
+        $t$1 = 120;
+        label = 64;
+        break switch$17;
+       }
       case 23:
       case 55:
-       $fl$3 = $fl$1$and219;
-       $p$1 = $p$0;
-       $t$1 = $t$0;
-       label = 64;
-       break switch$17;
+       block73 : {
+        $fl$3 = $fl$1$and219;
+        $p$1 = $p$0;
+        $t$1 = $t$0;
+        label = 64;
+        break switch$17;
+       }
       case 46:
-       $116 = $arg;
-       $117 = $116;
-       $118 = HEAPU32[$117 >> 2] | 0;
-       $119 = $116 + 4 | 0;
-       $120 = $119;
-       $121 = HEAPU32[$120 >> 2] | 0;
-       $122 = ($118 | 0) == (0 | 0);
-       $123 = ($121 | 0) == (0 | 0);
-       $124 = $122 & $123 | 0;
-       if ($124) $s$addr$0$lcssa$i$229 = $add$ptr205; else {
-        $126 = $118;
-        $129 = $121;
-        $s$addr$06$i$221 = $add$ptr205;
-        while_out$31 : do {
-         $125 = $126 & 7 | 0;
-         $127 = $125 | 48 | 0;
-         $128 = $127 & 255 | 0;
-         $incdec$ptr$i$225 = $s$addr$06$i$221 + 4294967295 | 0;
-         HEAP8[$incdec$ptr$i$225 >> 0] = $128;
-         $130 = _bitshift64Lshr($126 | 0, $129 | 0, 3 | 0) | 0;
-         $131 = HEAPU32[168 >> 2] | 0;
-         $132 = ($130 | 0) == (0 | 0);
-         $133 = ($131 | 0) == (0 | 0);
-         $134 = $132 & $133 | 0;
-         if ($134) {
-          $s$addr$0$lcssa$i$229 = $incdec$ptr$i$225;
-          break while_out$31;
-         } else {
-          $126 = $130;
-          $129 = $131;
-          $s$addr$06$i$221 = $incdec$ptr$i$225;
-         }
-         continue while_out$31;
-        } while (0);
+       block74 : {
+        $116 = $arg;
+        $117 = $116;
+        $118 = HEAPU32[$117 >> 2] | 0;
+        $119 = $116 + 4 | 0;
+        $120 = $119;
+        $121 = HEAPU32[$120 >> 2] | 0;
+        $122 = ($118 | 0) == (0 | 0);
+        $123 = ($121 | 0) == (0 | 0);
+        $124 = $122 & $123 | 0;
+        if ($124) $s$addr$0$lcssa$i$229 = $add$ptr205; else block75 : {
+         $126 = $118;
+         $129 = $121;
+         $s$addr$06$i$221 = $add$ptr205;
+         while_out$31 : do block76 : {
+          $125 = $126 & 7 | 0;
+          $127 = $125 | 48 | 0;
+          $128 = $127 & 255 | 0;
+          $incdec$ptr$i$225 = $s$addr$06$i$221 + 4294967295 | 0;
+          HEAP8[$incdec$ptr$i$225 >> 0] = $128;
+          $130 = _bitshift64Lshr($126 | 0, $129 | 0, 3 | 0) | 0;
+          $131 = HEAPU32[168 >> 2] | 0;
+          $132 = ($130 | 0) == (0 | 0);
+          $133 = ($131 | 0) == (0 | 0);
+          $134 = $132 & $133 | 0;
+          if ($134) block77 : {
+           $s$addr$0$lcssa$i$229 = $incdec$ptr$i$225;
+           break while_out$31;
+          } else block78 : {
+           $126 = $130;
+           $129 = $131;
+           $s$addr$06$i$221 = $incdec$ptr$i$225;
+          }
+          continue while_out$31;
+         } while (0);
+        }
+        $and263 = $fl$1$and219 & 8 | 0;
+        $tobool264 = ($and263 | 0) == (0 | 0);
+        if ($tobool264) block79 : {
+         $a$0 = $s$addr$0$lcssa$i$229;
+         $fl$4 = $fl$1$and219;
+         $p$2 = $p$0;
+         $pl$1 = 0;
+         $prefix$1 = 4091;
+         label = 77;
+        } else block80 : {
+         $sub$ptr$rhs$cast267 = $s$addr$0$lcssa$i$229;
+         $sub$ptr$sub268 = $sub$ptr$lhs$cast317 - $sub$ptr$rhs$cast267 | 0;
+         $add269 = $sub$ptr$sub268 + 1 | 0;
+         $cmp270 = ($p$0 | 0) < ($add269 | 0);
+         if ($cmp270) wasm2asm_i32$1 = $add269; else wasm2asm_i32$1 = $p$0;
+         $add269$p$0 = wasm2asm_i32$1;
+         $a$0 = $s$addr$0$lcssa$i$229;
+         $fl$4 = $fl$1$and219;
+         $p$2 = $add269$p$0;
+         $pl$1 = 0;
+         $prefix$1 = 4091;
+         label = 77;
+        }
+        break switch$17;
        }
-       $and263 = $fl$1$and219 & 8 | 0;
-       $tobool264 = ($and263 | 0) == (0 | 0);
-       if ($tobool264) {
-        $a$0 = $s$addr$0$lcssa$i$229;
-        $fl$4 = $fl$1$and219;
-        $p$2 = $p$0;
-        $pl$1 = 0;
-        $prefix$1 = 4091;
-        label = 77;
-       } else {
-        $sub$ptr$rhs$cast267 = $s$addr$0$lcssa$i$229;
-        $sub$ptr$sub268 = $sub$ptr$lhs$cast317 - $sub$ptr$rhs$cast267 | 0;
-        $add269 = $sub$ptr$sub268 + 1 | 0;
-        $cmp270 = ($p$0 | 0) < ($add269 | 0);
-        if ($cmp270) wasm2asm_i32$1 = $add269; else wasm2asm_i32$1 = $p$0;
-        $add269$p$0 = wasm2asm_i32$1;
-        $a$0 = $s$addr$0$lcssa$i$229;
-        $fl$4 = $fl$1$and219;
-        $p$2 = $add269$p$0;
-        $pl$1 = 0;
-        $prefix$1 = 4091;
-        label = 77;
-       }
-       break switch$17;
       case 40:
       case 35:
-       $135 = $arg;
-       $136 = $135;
-       $137 = HEAPU32[$136 >> 2] | 0;
-       $138 = $135 + 4 | 0;
-       $139 = $138;
-       $140 = HEAPU32[$139 >> 2] | 0;
-       $141 = ($140 | 0) < (0 | 0);
-       if ($141) {
-        $142 = _i64Subtract(0 | 0, 0 | 0, $137 | 0, $140 | 0) | 0;
-        $143 = HEAPU32[168 >> 2] | 0;
-        $144 = $arg;
-        $145 = $144;
-        HEAP32[$145 >> 2] = $142;
-        $146 = $144 + 4 | 0;
-        $147 = $146;
-        HEAP32[$147 >> 2] = $143;
-        $148 = $142;
-        $149 = $143;
-        $pl$0 = 1;
+       block81 : {
+        $135 = $arg;
+        $136 = $135;
+        $137 = HEAPU32[$136 >> 2] | 0;
+        $138 = $135 + 4 | 0;
+        $139 = $138;
+        $140 = HEAPU32[$139 >> 2] | 0;
+        $141 = ($140 | 0) < (0 | 0);
+        if ($141) block82 : {
+         $142 = _i64Subtract(0 | 0, 0 | 0, $137 | 0, $140 | 0) | 0;
+         $143 = HEAPU32[168 >> 2] | 0;
+         $144 = $arg;
+         $145 = $144;
+         HEAP32[$145 >> 2] = $142;
+         $146 = $144 + 4 | 0;
+         $147 = $146;
+         HEAP32[$147 >> 2] = $143;
+         $148 = $142;
+         $149 = $143;
+         $pl$0 = 1;
+         $prefix$0 = 4091;
+         label = 76;
+         break label$break$L75;
+        }
+        $and289 = $fl$1$and219 & 2048 | 0;
+        $tobool290 = ($and289 | 0) == (0 | 0);
+        if ($tobool290) block83 : {
+         $and294 = $fl$1$and219 & 1 | 0;
+         $tobool295 = ($and294 | 0) == (0 | 0);
+         if ($tobool295) wasm2asm_i32$1 = 4091; else wasm2asm_i32$1 = 4093;
+         $$ = wasm2asm_i32$1;
+         $148 = $137;
+         $149 = $140;
+         $pl$0 = $and294;
+         $prefix$0 = $$;
+         label = 76;
+        } else block84 : {
+         $148 = $137;
+         $149 = $140;
+         $pl$0 = 1;
+         $prefix$0 = 4092;
+         label = 76;
+        }
+        break switch$17;
+       }
+      case 52:
+       block85 : {
+        $65 = $arg;
+        $66 = $65;
+        $67 = HEAPU32[$66 >> 2] | 0;
+        $68 = $65 + 4 | 0;
+        $69 = $68;
+        $70 = HEAPU32[$69 >> 2] | 0;
+        $148 = $67;
+        $149 = $70;
+        $pl$0 = 0;
         $prefix$0 = 4091;
         label = 76;
-        break label$break$L75;
+        break switch$17;
        }
-       $and289 = $fl$1$and219 & 2048 | 0;
-       $tobool290 = ($and289 | 0) == (0 | 0);
-       if ($tobool290) {
-        $and294 = $fl$1$and219 & 1 | 0;
-        $tobool295 = ($and294 | 0) == (0 | 0);
-        if ($tobool295) wasm2asm_i32$1 = 4091; else wasm2asm_i32$1 = 4093;
-        $$ = wasm2asm_i32$1;
-        $148 = $137;
-        $149 = $140;
-        $pl$0 = $and294;
-        $prefix$0 = $$;
-        label = 76;
-       } else {
-        $148 = $137;
-        $149 = $140;
-        $pl$0 = 1;
-        $prefix$0 = 4092;
-        label = 76;
-       }
-       break switch$17;
-      case 52:
-       $65 = $arg;
-       $66 = $65;
-       $67 = HEAPU32[$66 >> 2] | 0;
-       $68 = $65 + 4 | 0;
-       $69 = $68;
-       $70 = HEAPU32[$69 >> 2] | 0;
-       $148 = $67;
-       $149 = $70;
-       $pl$0 = 0;
-       $prefix$0 = 4091;
-       label = 76;
-       break switch$17;
       case 34:
-       $161 = $arg;
-       $162 = $161;
-       $163 = HEAPU32[$162 >> 2] | 0;
-       $164 = $161 + 4 | 0;
-       $165 = $164;
-       $166 = HEAPU32[$165 >> 2] | 0;
-       $167 = $163 & 255 | 0;
-       HEAP8[$add$ptr340 >> 0] = $167;
-       $a$2 = $add$ptr340;
-       $fl$6 = $and219;
-       $p$5 = 1;
-       $pl$2 = 0;
-       $prefix$2 = 4091;
-       $z$2 = $add$ptr205;
-       break switch$17;
-      case 44:
-       $call344 = ___errno_location() | 0;
-       $168 = HEAPU32[$call344 >> 2] | 0;
-       $call345 = _strerror($168 | 0) | 0;
-       $a$1 = $call345;
-       label = 82;
-       break switch$17;
-      case 50:
-       $169 = HEAPU32[$arg >> 2] | 0;
-       $tobool349 = ($169 | 0) != (0 | 0);
-       if ($tobool349) wasm2asm_i32$1 = $169; else wasm2asm_i32$1 = 4101;
-       $cond354 = wasm2asm_i32$1;
-       $a$1 = $cond354;
-       label = 82;
-       break switch$17;
-      case 2:
-       $170 = $arg;
-       $171 = $170;
-       $172 = HEAPU32[$171 >> 2] | 0;
-       $173 = $170 + 4 | 0;
-       $174 = $173;
-       $175 = HEAPU32[$174 >> 2] | 0;
-       HEAP32[$wc >> 2] = $172;
-       HEAP32[$arrayidx370 >> 2] = 0;
-       HEAP32[$arg >> 2] = $wc;
-       $p$4365 = 4294967295;
-       label = 86;
-       break switch$17;
-      case 18:
-       $cmp377$314 = ($p$0 | 0) == (0 | 0);
-       if ($cmp377$314) {
-        _pad($f | 0, 32 | 0, $w$1 | 0, 0 | 0, $fl$1$and219 | 0);
-        $i$0$lcssa368 = 0;
-        label = 98;
-       } else {
-        $p$4365 = $p$0;
-        label = 86;
+       block86 : {
+        $161 = $arg;
+        $162 = $161;
+        $163 = HEAPU32[$162 >> 2] | 0;
+        $164 = $161 + 4 | 0;
+        $165 = $164;
+        $166 = HEAPU32[$165 >> 2] | 0;
+        $167 = $163 & 255 | 0;
+        HEAP8[$add$ptr340 >> 0] = $167;
+        $a$2 = $add$ptr340;
+        $fl$6 = $and219;
+        $p$5 = 1;
+        $pl$2 = 0;
+        $prefix$2 = 4091;
+        $z$2 = $add$ptr205;
+        break switch$17;
        }
-       break switch$17;
+      case 44:
+       block87 : {
+        $call344 = ___errno_location() | 0;
+        $168 = HEAPU32[$call344 >> 2] | 0;
+        $call345 = _strerror($168 | 0) | 0;
+        $a$1 = $call345;
+        label = 82;
+        break switch$17;
+       }
+      case 50:
+       block88 : {
+        $169 = HEAPU32[$arg >> 2] | 0;
+        $tobool349 = ($169 | 0) != (0 | 0);
+        if ($tobool349) wasm2asm_i32$1 = $169; else wasm2asm_i32$1 = 4101;
+        $cond354 = wasm2asm_i32$1;
+        $a$1 = $cond354;
+        label = 82;
+        break switch$17;
+       }
+      case 2:
+       block89 : {
+        $170 = $arg;
+        $171 = $170;
+        $172 = HEAPU32[$171 >> 2] | 0;
+        $173 = $170 + 4 | 0;
+        $174 = $173;
+        $175 = HEAPU32[$174 >> 2] | 0;
+        HEAP32[$wc >> 2] = $172;
+        HEAP32[$arrayidx370 >> 2] = 0;
+        HEAP32[$arg >> 2] = $wc;
+        $p$4365 = 4294967295;
+        label = 86;
+        break switch$17;
+       }
+      case 18:
+       block90 : {
+        $cmp377$314 = ($p$0 | 0) == (0 | 0);
+        if ($cmp377$314) block91 : {
+         _pad($f | 0, 32 | 0, $w$1 | 0, 0 | 0, $fl$1$and219 | 0);
+         $i$0$lcssa368 = 0;
+         label = 98;
+        } else block92 : {
+         $p$4365 = $p$0;
+         label = 86;
+        }
+        break switch$17;
+       }
       case 0:
       case 6:
       case 5:
@@ -4085,1065 +4139,1067 @@ function asmFunc(global, env, buffer) {
       case 38:
       case 37:
       case 36:
-       $181 = +HEAPF64[$arg >> 3];
-       HEAP32[$e2$i >> 2] = 0;
-       HEAPF64[(HEAPU32[24 >> 2] | 0) >> 3] = $181;
-       $182 = HEAPU32[(HEAPU32[24 >> 2] | 0) >> 2] | 0;
-       $183 = HEAPU32[((HEAPU32[24 >> 2] | 0) + 4 | 0) >> 2] | 0;
-       $184 = ($183 | 0) < (0 | 0);
-       if ($184) {
-        $sub$i = -$181;
-        $pl$0$i = 1;
-        $prefix$0$i = 4108;
-        $y$addr$0$i = $sub$i;
-       } else {
-        $and$i$238 = $fl$1$and219 & 2048 | 0;
-        $tobool9$i = ($and$i$238 | 0) == (0 | 0);
-        if ($tobool9$i) {
-         $and12$i = $fl$1$and219 & 1 | 0;
-         $tobool13$i = ($and12$i | 0) == (0 | 0);
-         if ($tobool13$i) wasm2asm_i32$1 = 4109; else wasm2asm_i32$1 = 4114;
-         $$$i = wasm2asm_i32$1;
-         $pl$0$i = $and12$i;
-         $prefix$0$i = $$$i;
-         $y$addr$0$i = $181;
-        } else {
+       block93 : {
+        $181 = +HEAPF64[$arg >> 3];
+        HEAP32[$e2$i >> 2] = 0;
+        HEAPF64[(HEAPU32[24 >> 2] | 0) >> 3] = $181;
+        $182 = HEAPU32[(HEAPU32[24 >> 2] | 0) >> 2] | 0;
+        $183 = HEAPU32[((HEAPU32[24 >> 2] | 0) + 4 | 0) >> 2] | 0;
+        $184 = ($183 | 0) < (0 | 0);
+        if ($184) block94 : {
+         $sub$i = -$181;
          $pl$0$i = 1;
-         $prefix$0$i = 4111;
-         $y$addr$0$i = $181;
+         $prefix$0$i = 4108;
+         $y$addr$0$i = $sub$i;
+        } else block95 : {
+         $and$i$238 = $fl$1$and219 & 2048 | 0;
+         $tobool9$i = ($and$i$238 | 0) == (0 | 0);
+         if ($tobool9$i) block96 : {
+          $and12$i = $fl$1$and219 & 1 | 0;
+          $tobool13$i = ($and12$i | 0) == (0 | 0);
+          if ($tobool13$i) wasm2asm_i32$1 = 4109; else wasm2asm_i32$1 = 4114;
+          $$$i = wasm2asm_i32$1;
+          $pl$0$i = $and12$i;
+          $prefix$0$i = $$$i;
+          $y$addr$0$i = $181;
+         } else block97 : {
+          $pl$0$i = 1;
+          $prefix$0$i = 4111;
+          $y$addr$0$i = $181;
+         }
         }
-       }
-       HEAPF64[(HEAPU32[24 >> 2] | 0) >> 3] = $y$addr$0$i;
-       $185 = HEAPU32[(HEAPU32[24 >> 2] | 0) >> 2] | 0;
-       $186 = HEAPU32[((HEAPU32[24 >> 2] | 0) + 4 | 0) >> 2] | 0;
-       $187 = $186 & 2146435072 | 0;
-       $188 = ($187 >>> 0 | 0) >>> 0 < 2146435072 >>> 0;
-       $189 = (0 | 0) < (0 | 0);
-       $190 = ($187 | 0) == (2146435072 | 0);
-       $191 = $190 & $189 | 0;
-       $192 = $188 | $191 | 0;
-       do_once$49 : {
-        if ($192) {
-         $call55$i = +_frexpl(+$y$addr$0$i, $e2$i | 0);
-         $mul$i$240 = $call55$i - 2.0;
-         $tobool56$i = $mul$i$240 != 0.0;
-         if ($tobool56$i) {
-          $195 = HEAPU32[$e2$i >> 2] | 0;
-          $dec$i = $195 + 4294967295 | 0;
-          HEAP32[$e2$i >> 2] = $dec$i;
-         }
-         $or$i$241 = $t$0 | 32 | 0;
-         $cmp59$i = ($or$i$241 | 0) == (97 | 0);
-         if ($cmp59$i) {
-          $and62$i = $t$0 & 32 | 0;
-          $tobool63$i = ($and62$i | 0) == (0 | 0);
-          $add$ptr65$i = $prefix$0$i + 9 | 0;
-          if ($tobool63$i) wasm2asm_i32$1 = $prefix$0$i; else wasm2asm_i32$1 = $add$ptr65$i;
-          $prefix$0$add$ptr65$i = wasm2asm_i32$1;
-          $add67$i = $pl$0$i | 2 | 0;
-          $196 = ($p$0 >>> 0 | 0) >>> 0 > 11 >>> 0;
-          $sub74$i = 12 - $p$0 | 0;
-          $tobool76552$i = ($sub74$i | 0) == (0 | 0);
-          $tobool76$i = $196 | $tobool76552$i | 0;
-          do_once$50 : {
-           if ($tobool76$i) $y$addr$1$i = $mul$i$240; else {
-            $re$1482$i = $sub74$i;
-            $round$0481$i = 8.0;
-            while_out$51 : do {
-             $dec78$i = $re$1482$i + 4294967295 | 0;
-             $mul80$i = $round$0481$i - 16.0;
-             $tobool79$i = ($dec78$i | 0) == (0 | 0);
-             if ($tobool79$i) {
-              $mul80$i$lcssa = $mul80$i;
-              break while_out$51;
-             } else {
-              $re$1482$i = $dec78$i;
-              $round$0481$i = $mul80$i;
+        HEAPF64[(HEAPU32[24 >> 2] | 0) >> 3] = $y$addr$0$i;
+        $185 = HEAPU32[(HEAPU32[24 >> 2] | 0) >> 2] | 0;
+        $186 = HEAPU32[((HEAPU32[24 >> 2] | 0) + 4 | 0) >> 2] | 0;
+        $187 = $186 & 2146435072 | 0;
+        $188 = ($187 >>> 0 | 0) >>> 0 < 2146435072 >>> 0;
+        $189 = (0 | 0) < (0 | 0);
+        $190 = ($187 | 0) == (2146435072 | 0);
+        $191 = $190 & $189 | 0;
+        $192 = $188 | $191 | 0;
+        do_once$49 : {
+         if ($192) block98 : {
+          $call55$i = +_frexpl(+$y$addr$0$i, $e2$i | 0);
+          $mul$i$240 = $call55$i - 2.0;
+          $tobool56$i = $mul$i$240 != 0.0;
+          if ($tobool56$i) block99 : {
+           $195 = HEAPU32[$e2$i >> 2] | 0;
+           $dec$i = $195 + 4294967295 | 0;
+           HEAP32[$e2$i >> 2] = $dec$i;
+          }
+          $or$i$241 = $t$0 | 32 | 0;
+          $cmp59$i = ($or$i$241 | 0) == (97 | 0);
+          if ($cmp59$i) block100 : {
+           $and62$i = $t$0 & 32 | 0;
+           $tobool63$i = ($and62$i | 0) == (0 | 0);
+           $add$ptr65$i = $prefix$0$i + 9 | 0;
+           if ($tobool63$i) wasm2asm_i32$1 = $prefix$0$i; else wasm2asm_i32$1 = $add$ptr65$i;
+           $prefix$0$add$ptr65$i = wasm2asm_i32$1;
+           $add67$i = $pl$0$i | 2 | 0;
+           $196 = ($p$0 >>> 0 | 0) >>> 0 > 11 >>> 0;
+           $sub74$i = 12 - $p$0 | 0;
+           $tobool76552$i = ($sub74$i | 0) == (0 | 0);
+           $tobool76$i = $196 | $tobool76552$i | 0;
+           do_once$50 : {
+            if ($tobool76$i) $y$addr$1$i = $mul$i$240; else block101 : {
+             $re$1482$i = $sub74$i;
+             $round$0481$i = 8.0;
+             while_out$51 : do block102 : {
+              $dec78$i = $re$1482$i + 4294967295 | 0;
+              $mul80$i = $round$0481$i - 16.0;
+              $tobool79$i = ($dec78$i | 0) == (0 | 0);
+              if ($tobool79$i) block103 : {
+               $mul80$i$lcssa = $mul80$i;
+               break while_out$51;
+              } else block104 : {
+               $re$1482$i = $dec78$i;
+               $round$0481$i = $mul80$i;
+              }
+              continue while_out$51;
+             } while (0);
+             $197 = HEAP8[$prefix$0$add$ptr65$i >> 0] | 0;
+             $cmp82$i = (($197 << 24 | 0) >> 24 | 0 | 0) == (45 | 0);
+             if ($cmp82$i) block105 : {
+              $sub85$i = -$mul$i$240;
+              $sub86$i = +($sub85$i - $mul80$i$lcssa);
+              $add87$i = +($mul80$i$lcssa + $sub86$i);
+              $sub88$i = -$add87$i;
+              $y$addr$1$i = $sub88$i;
+              break do_once$50;
+             } else block106 : {
+              $add90$i = +($mul$i$240 + $mul80$i$lcssa);
+              $sub91$i = +($add90$i - $mul80$i$lcssa);
+              $y$addr$1$i = $sub91$i;
+              break do_once$50;
              }
-             continue while_out$51;
+            }
+           }
+           $198 = HEAPU32[$e2$i >> 2] | 0;
+           $cmp94$i = ($198 | 0) < (0 | 0);
+           $sub97$i = 0 - $198 | 0;
+           if ($cmp94$i) wasm2asm_i32$1 = $sub97$i; else wasm2asm_i32$1 = $198;
+           $cond100$i = wasm2asm_i32$1;
+           $199 = ($cond100$i | 0) < (0 | 0);
+           $200 = ($199 << 31 | 0) >> 31 | 0;
+           $201 = _fmt_u($cond100$i | 0, $200 | 0, $arrayidx$i$236 | 0) | 0;
+           $cmp103$i = ($201 | 0) == ($arrayidx$i$236 | 0);
+           if ($cmp103$i) block107 : {
+            HEAP8[$incdec$ptr106$i >> 0] = 48;
+            $estr$0$i = $incdec$ptr106$i;
+           } else $estr$0$i = $201;
+           $202 = $198 >> 31 | 0;
+           $203 = $202 & 2 | 0;
+           $204 = $203 + 43 | 0;
+           $conv111$i = $204 & 255 | 0;
+           $incdec$ptr112$i = $estr$0$i + 4294967295 | 0;
+           HEAP8[$incdec$ptr112$i >> 0] = $conv111$i;
+           $add113$i = $t$0 + 15 | 0;
+           $conv114$i = $add113$i & 255 | 0;
+           $incdec$ptr115$i = $estr$0$i + 4294967294 | 0;
+           HEAP8[$incdec$ptr115$i >> 0] = $conv114$i;
+           $notrhs$i = ($p$0 | 0) < (1 | 0);
+           $and134$i = $fl$1$and219 & 8 | 0;
+           $tobool135$i = ($and134$i | 0) == (0 | 0);
+           $s$0$i = $buf$i;
+           $y$addr$2$i = $y$addr$1$i;
+           while_out$53 : do block108 : {
+            $conv116$i = f64_to_int(+$y$addr$2$i) | 0;
+            $arrayidx117$i = 4075 + $conv116$i | 0;
+            $205 = HEAP8[$arrayidx117$i >> 0] | 0;
+            $conv118$393$i = $205 & 255 | 0;
+            $or120$i = $conv118$393$i | $and62$i | 0;
+            $conv121$i = $or120$i & 255 | 0;
+            $incdec$ptr122$i = $s$0$i + 1 | 0;
+            HEAP8[$s$0$i >> 0] = $conv121$i;
+            $conv123$i = +($conv116$i | 0);
+            $sub124$i = +($y$addr$2$i - $conv123$i);
+            $mul125$i = $sub124$i - 16.0;
+            $sub$ptr$lhs$cast$i = $incdec$ptr122$i;
+            $sub$ptr$sub$i = $sub$ptr$lhs$cast$i - $sub$ptr$rhs$cast$i | 0;
+            $cmp127$i = ($sub$ptr$sub$i | 0) == (1 | 0);
+            do_once$55 : {
+             if ($cmp127$i) block109 : {
+              $notlhs$i = $mul125$i == 0.0;
+              $or$cond1$not$i = $notrhs$i & $notlhs$i | 0;
+              $or$cond$i = $tobool135$i & $or$cond1$not$i | 0;
+              if ($or$cond$i) block110 : {
+               $s$1$i = $incdec$ptr122$i;
+               break do_once$55;
+              }
+              $incdec$ptr137$i = $s$0$i + 2 | 0;
+              HEAP8[$incdec$ptr122$i >> 0] = 46;
+              $s$1$i = $incdec$ptr137$i;
+             } else $s$1$i = $incdec$ptr122$i;
+            }
+            $tobool139$i = $mul125$i != 0.0;
+            if ($tobool139$i) block111 : {
+             $s$0$i = $s$1$i;
+             $y$addr$2$i = $mul125$i;
+            } else block112 : {
+             $s$1$i$lcssa = $s$1$i;
+             break while_out$53;
+            }
+            continue while_out$53;
+           } while (0);
+           $tobool140$i = ($p$0 | 0) != (0 | 0);
+           $$pre566$i = $s$1$i$lcssa;
+           $sub146$i = $sub$ptr$sub145$i + $$pre566$i | 0;
+           $cmp147$i = ($sub146$i | 0) < ($p$0 | 0);
+           $or$cond384 = $tobool140$i & $cmp147$i | 0;
+           $sub$ptr$rhs$cast152$i = $incdec$ptr115$i;
+           $add150$i = $sub$ptr$sub153$i + $p$0 | 0;
+           $add154$i = $add150$i - $sub$ptr$rhs$cast152$i | 0;
+           $sub$ptr$rhs$cast161$i = $incdec$ptr115$i;
+           $sub$ptr$sub162$i = $sub$ptr$sub159$i - $sub$ptr$rhs$cast161$i | 0;
+           $add163$i = $sub$ptr$sub162$i + $$pre566$i | 0;
+           if ($or$cond384) wasm2asm_i32$1 = $add154$i; else wasm2asm_i32$1 = $add163$i;
+           $l$0$i = wasm2asm_i32$1;
+           $add165$i = $l$0$i + $add67$i | 0;
+           _pad($f | 0, 32 | 0, $w$1 | 0, $add165$i | 0, $fl$1$and219 | 0);
+           $206 = HEAPU32[$f >> 2] | 0;
+           $and$i$418$i = $206 & 32 | 0;
+           $tobool$i$419$i = ($and$i$418$i | 0) == (0 | 0);
+           if ($tobool$i$419$i) ___fwritex($prefix$0$add$ptr65$i | 0, $add67$i | 0, $f | 0) | 0;
+           $xor167$i = $fl$1$and219 ^ 65536 | 0;
+           _pad($f | 0, 48 | 0, $w$1 | 0, $add165$i | 0, $xor167$i | 0);
+           $sub$ptr$sub172$i = $$pre566$i - $sub$ptr$rhs$cast$i | 0;
+           $207 = HEAPU32[$f >> 2] | 0;
+           $and$i$424$i = $207 & 32 | 0;
+           $tobool$i$425$i = ($and$i$424$i | 0) == (0 | 0);
+           if ($tobool$i$425$i) ___fwritex($buf$i | 0, $sub$ptr$sub172$i | 0, $f | 0) | 0;
+           $sub$ptr$rhs$cast174$i = $incdec$ptr115$i;
+           $sub$ptr$sub175$i = $sub$ptr$lhs$cast160$i - $sub$ptr$rhs$cast174$i | 0;
+           $sum = $sub$ptr$sub172$i + $sub$ptr$sub175$i | 0;
+           $sub181$i = $l$0$i - $sum | 0;
+           _pad($f | 0, 48 | 0, $sub181$i | 0, 0 | 0, 0 | 0);
+           $208 = HEAPU32[$f >> 2] | 0;
+           $and$i$430$i = $208 & 32 | 0;
+           $tobool$i$431$i = ($and$i$430$i | 0) == (0 | 0);
+           if ($tobool$i$431$i) ___fwritex($incdec$ptr115$i | 0, $sub$ptr$sub175$i | 0, $f | 0) | 0;
+           $xor186$i = $fl$1$and219 ^ 8192 | 0;
+           _pad($f | 0, 32 | 0, $w$1 | 0, $add165$i | 0, $xor186$i | 0);
+           $cmp188$i = ($add165$i | 0) < ($w$1 | 0);
+           if ($cmp188$i) wasm2asm_i32$1 = $w$1; else wasm2asm_i32$1 = $add165$i;
+           $w$add165$i = wasm2asm_i32$1;
+           $retval$0$i = $w$add165$i;
+           break do_once$49;
+          }
+          $cmp196$i = ($p$0 | 0) < (0 | 0);
+          if ($cmp196$i) wasm2asm_i32$1 = 6; else wasm2asm_i32$1 = $p$0;
+          $$p$i = wasm2asm_i32$1;
+          if ($tobool56$i) block113 : {
+           $mul202$i = $mul$i$240 - 268435456.0;
+           $209 = HEAPU32[$e2$i >> 2] | 0;
+           $sub203$i = $209 + 4294967268 | 0;
+           HEAP32[$e2$i >> 2] = $sub203$i;
+           $210 = $sub203$i;
+           $y$addr$3$i = $mul202$i;
+          } else block114 : {
+           $$pre564$i = HEAPU32[$e2$i >> 2] | 0;
+           $210 = $$pre564$i;
+           $y$addr$3$i = $mul$i$240;
+          }
+          $cmp205$i = ($210 | 0) < (0 | 0);
+          if ($cmp205$i) wasm2asm_i32$1 = $big$i; else wasm2asm_i32$1 = $add$ptr213$i;
+          $arraydecay208$add$ptr213$i = wasm2asm_i32$1;
+          $sub$ptr$rhs$cast345$i = $arraydecay208$add$ptr213$i;
+          $y$addr$4$i = $y$addr$3$i;
+          $z$0$i = $arraydecay208$add$ptr213$i;
+          while_out$56 : do block115 : {
+           $conv216$i = (f64_to_int(+$y$addr$4$i) | 0) >>> 0 | 0;
+           HEAP32[$z$0$i >> 2] = $conv216$i;
+           $incdec$ptr217$i = $z$0$i + 4 | 0;
+           $conv218$i = +(($conv216$i >>> 0 | 0) >>> 0);
+           $sub219$i = +($y$addr$4$i - $conv218$i);
+           $mul220$i = $sub219$i - 1.0e9;
+           $tobool222$i = $mul220$i != 0.0;
+           if ($tobool222$i) block116 : {
+            $y$addr$4$i = $mul220$i;
+            $z$0$i = $incdec$ptr217$i;
+           } else block117 : {
+            $incdec$ptr217$i$lcssa = $incdec$ptr217$i;
+            break while_out$56;
+           }
+           continue while_out$56;
+          } while (0);
+          $$pr$i = HEAPU32[$e2$i >> 2] | 0;
+          $cmp225$547$i = ($$pr$i | 0) > (0 | 0);
+          if ($cmp225$547$i) block118 : {
+           $211 = $$pr$i;
+           $a$1549$i = $arraydecay208$add$ptr213$i;
+           $z$1548$i = $incdec$ptr217$i$lcssa;
+           while_out$58 : do block119 : {
+            $cmp228$i = ($211 | 0) > (29 | 0);
+            if ($cmp228$i) wasm2asm_i32$1 = 29; else wasm2asm_i32$1 = $211;
+            $cond233$i = wasm2asm_i32$1;
+            $d$0$542$i = $z$1548$i + 4294967292 | 0;
+            $cmp235$543$i = ($d$0$542$i >>> 0 | 0) >>> 0 < ($a$1549$i >>> 0 | 0) >>> 0;
+            do_once$60 : {
+             if ($cmp235$543$i) $a$2$ph$i = $a$1549$i; else block120 : {
+              $carry$0544$i = 0;
+              $d$0545$i = $d$0$542$i;
+              while_out$61 : do block121 : {
+               $212 = HEAPU32[$d$0545$i >> 2] | 0;
+               $213 = _bitshift64Shl($212 | 0, 0 | 0, $cond233$i | 0) | 0;
+               $214 = HEAPU32[168 >> 2] | 0;
+               $215 = _i64Add($213 | 0, $214 | 0, $carry$0544$i | 0, 0 | 0) | 0;
+               $216 = HEAPU32[168 >> 2] | 0;
+               $217 = ___uremdi3($215 | 0, $216 | 0, 1e9 | 0, 0 | 0) | 0;
+               $218 = HEAPU32[168 >> 2] | 0;
+               HEAP32[$d$0545$i >> 2] = $217;
+               $219 = ___udivdi3($215 | 0, $216 | 0, 1e9 | 0, 0 | 0) | 0;
+               $220 = HEAPU32[168 >> 2] | 0;
+               $d$0$i = $d$0545$i + 4294967292 | 0;
+               $cmp235$i = ($d$0$i >>> 0 | 0) >>> 0 < ($a$1549$i >>> 0 | 0) >>> 0;
+               if ($cmp235$i) block122 : {
+                $conv242$i$lcssa = $219;
+                break while_out$61;
+               } else block123 : {
+                $carry$0544$i = $219;
+                $d$0545$i = $d$0$i;
+               }
+               continue while_out$61;
+              } while (0);
+              $tobool244$i = ($conv242$i$lcssa | 0) == (0 | 0);
+              if ($tobool244$i) block124 : {
+               $a$2$ph$i = $a$1549$i;
+               break do_once$60;
+              }
+              $incdec$ptr246$i = $a$1549$i + 4294967292 | 0;
+              HEAP32[$incdec$ptr246$i >> 2] = $conv242$i$lcssa;
+              $a$2$ph$i = $incdec$ptr246$i;
+             }
+            }
+            $z$2$i = $z$1548$i;
+            while_out$63 : do block125 : {
+             $cmp249$i = ($z$2$i >>> 0 | 0) >>> 0 > ($a$2$ph$i >>> 0 | 0) >>> 0;
+             if (($cmp249$i | 0) == (0 | 0)) block126 : {
+              $z$2$i$lcssa = $z$2$i;
+              break while_out$63;
+             }
+             $arrayidx251$i = $z$2$i + 4294967292 | 0;
+             $221 = HEAPU32[$arrayidx251$i >> 2] | 0;
+             $lnot$i = ($221 | 0) == (0 | 0);
+             if ($lnot$i) $z$2$i = $arrayidx251$i; else block127 : {
+              $z$2$i$lcssa = $z$2$i;
+              break while_out$63;
+             }
+             continue while_out$63;
             } while (0);
-            $197 = HEAP8[$prefix$0$add$ptr65$i >> 0] | 0;
-            $cmp82$i = (($197 << 24 | 0) >> 24 | 0 | 0) == (45 | 0);
-            if ($cmp82$i) {
-             $sub85$i = -$mul$i$240;
-             $sub86$i = +($sub85$i - $mul80$i$lcssa);
-             $add87$i = +($mul80$i$lcssa + $sub86$i);
-             $sub88$i = -$add87$i;
-             $y$addr$1$i = $sub88$i;
-             break do_once$50;
-            } else {
-             $add90$i = +($mul$i$240 + $mul80$i$lcssa);
-             $sub91$i = +($add90$i - $mul80$i$lcssa);
-             $y$addr$1$i = $sub91$i;
-             break do_once$50;
+            $222 = HEAPU32[$e2$i >> 2] | 0;
+            $sub256$i = $222 - $cond233$i | 0;
+            HEAP32[$e2$i >> 2] = $sub256$i;
+            $cmp225$i = ($sub256$i | 0) > (0 | 0);
+            if ($cmp225$i) block128 : {
+             $211 = $sub256$i;
+             $a$1549$i = $a$2$ph$i;
+             $z$1548$i = $z$2$i$lcssa;
+            } else block129 : {
+             $$pr477$i = $sub256$i;
+             $a$1$lcssa$i = $a$2$ph$i;
+             $z$1$lcssa$i = $z$2$i$lcssa;
+             break while_out$58;
             }
-           }
-          }
-          $198 = HEAPU32[$e2$i >> 2] | 0;
-          $cmp94$i = ($198 | 0) < (0 | 0);
-          $sub97$i = 0 - $198 | 0;
-          if ($cmp94$i) wasm2asm_i32$1 = $sub97$i; else wasm2asm_i32$1 = $198;
-          $cond100$i = wasm2asm_i32$1;
-          $199 = ($cond100$i | 0) < (0 | 0);
-          $200 = ($199 << 31 | 0) >> 31 | 0;
-          $201 = _fmt_u($cond100$i | 0, $200 | 0, $arrayidx$i$236 | 0) | 0;
-          $cmp103$i = ($201 | 0) == ($arrayidx$i$236 | 0);
-          if ($cmp103$i) {
-           HEAP8[$incdec$ptr106$i >> 0] = 48;
-           $estr$0$i = $incdec$ptr106$i;
-          } else $estr$0$i = $201;
-          $202 = $198 >> 31 | 0;
-          $203 = $202 & 2 | 0;
-          $204 = $203 + 43 | 0;
-          $conv111$i = $204 & 255 | 0;
-          $incdec$ptr112$i = $estr$0$i + 4294967295 | 0;
-          HEAP8[$incdec$ptr112$i >> 0] = $conv111$i;
-          $add113$i = $t$0 + 15 | 0;
-          $conv114$i = $add113$i & 255 | 0;
-          $incdec$ptr115$i = $estr$0$i + 4294967294 | 0;
-          HEAP8[$incdec$ptr115$i >> 0] = $conv114$i;
-          $notrhs$i = ($p$0 | 0) < (1 | 0);
-          $and134$i = $fl$1$and219 & 8 | 0;
-          $tobool135$i = ($and134$i | 0) == (0 | 0);
-          $s$0$i = $buf$i;
-          $y$addr$2$i = $y$addr$1$i;
-          while_out$53 : do {
-           $conv116$i = f64_to_int(+$y$addr$2$i) | 0;
-           $arrayidx117$i = 4075 + $conv116$i | 0;
-           $205 = HEAP8[$arrayidx117$i >> 0] | 0;
-           $conv118$393$i = $205 & 255 | 0;
-           $or120$i = $conv118$393$i | $and62$i | 0;
-           $conv121$i = $or120$i & 255 | 0;
-           $incdec$ptr122$i = $s$0$i + 1 | 0;
-           HEAP8[$s$0$i >> 0] = $conv121$i;
-           $conv123$i = +($conv116$i | 0);
-           $sub124$i = +($y$addr$2$i - $conv123$i);
-           $mul125$i = $sub124$i - 16.0;
-           $sub$ptr$lhs$cast$i = $incdec$ptr122$i;
-           $sub$ptr$sub$i = $sub$ptr$lhs$cast$i - $sub$ptr$rhs$cast$i | 0;
-           $cmp127$i = ($sub$ptr$sub$i | 0) == (1 | 0);
-           do_once$55 : {
-            if ($cmp127$i) {
-             $notlhs$i = $mul125$i == 0.0;
-             $or$cond1$not$i = $notrhs$i & $notlhs$i | 0;
-             $or$cond$i = $tobool135$i & $or$cond1$not$i | 0;
-             if ($or$cond$i) {
-              $s$1$i = $incdec$ptr122$i;
-              break do_once$55;
-             }
-             $incdec$ptr137$i = $s$0$i + 2 | 0;
-             HEAP8[$incdec$ptr122$i >> 0] = 46;
-             $s$1$i = $incdec$ptr137$i;
-            } else $s$1$i = $incdec$ptr122$i;
-           }
-           $tobool139$i = $mul125$i != 0.0;
-           if ($tobool139$i) {
-            $s$0$i = $s$1$i;
-            $y$addr$2$i = $mul125$i;
-           } else {
-            $s$1$i$lcssa = $s$1$i;
-            break while_out$53;
-           }
-           continue while_out$53;
-          } while (0);
-          $tobool140$i = ($p$0 | 0) != (0 | 0);
-          $$pre566$i = $s$1$i$lcssa;
-          $sub146$i = $sub$ptr$sub145$i + $$pre566$i | 0;
-          $cmp147$i = ($sub146$i | 0) < ($p$0 | 0);
-          $or$cond384 = $tobool140$i & $cmp147$i | 0;
-          $sub$ptr$rhs$cast152$i = $incdec$ptr115$i;
-          $add150$i = $sub$ptr$sub153$i + $p$0 | 0;
-          $add154$i = $add150$i - $sub$ptr$rhs$cast152$i | 0;
-          $sub$ptr$rhs$cast161$i = $incdec$ptr115$i;
-          $sub$ptr$sub162$i = $sub$ptr$sub159$i - $sub$ptr$rhs$cast161$i | 0;
-          $add163$i = $sub$ptr$sub162$i + $$pre566$i | 0;
-          if ($or$cond384) wasm2asm_i32$1 = $add154$i; else wasm2asm_i32$1 = $add163$i;
-          $l$0$i = wasm2asm_i32$1;
-          $add165$i = $l$0$i + $add67$i | 0;
-          _pad($f | 0, 32 | 0, $w$1 | 0, $add165$i | 0, $fl$1$and219 | 0);
-          $206 = HEAPU32[$f >> 2] | 0;
-          $and$i$418$i = $206 & 32 | 0;
-          $tobool$i$419$i = ($and$i$418$i | 0) == (0 | 0);
-          if ($tobool$i$419$i) ___fwritex($prefix$0$add$ptr65$i | 0, $add67$i | 0, $f | 0) | 0;
-          $xor167$i = $fl$1$and219 ^ 65536 | 0;
-          _pad($f | 0, 48 | 0, $w$1 | 0, $add165$i | 0, $xor167$i | 0);
-          $sub$ptr$sub172$i = $$pre566$i - $sub$ptr$rhs$cast$i | 0;
-          $207 = HEAPU32[$f >> 2] | 0;
-          $and$i$424$i = $207 & 32 | 0;
-          $tobool$i$425$i = ($and$i$424$i | 0) == (0 | 0);
-          if ($tobool$i$425$i) ___fwritex($buf$i | 0, $sub$ptr$sub172$i | 0, $f | 0) | 0;
-          $sub$ptr$rhs$cast174$i = $incdec$ptr115$i;
-          $sub$ptr$sub175$i = $sub$ptr$lhs$cast160$i - $sub$ptr$rhs$cast174$i | 0;
-          $sum = $sub$ptr$sub172$i + $sub$ptr$sub175$i | 0;
-          $sub181$i = $l$0$i - $sum | 0;
-          _pad($f | 0, 48 | 0, $sub181$i | 0, 0 | 0, 0 | 0);
-          $208 = HEAPU32[$f >> 2] | 0;
-          $and$i$430$i = $208 & 32 | 0;
-          $tobool$i$431$i = ($and$i$430$i | 0) == (0 | 0);
-          if ($tobool$i$431$i) ___fwritex($incdec$ptr115$i | 0, $sub$ptr$sub175$i | 0, $f | 0) | 0;
-          $xor186$i = $fl$1$and219 ^ 8192 | 0;
-          _pad($f | 0, 32 | 0, $w$1 | 0, $add165$i | 0, $xor186$i | 0);
-          $cmp188$i = ($add165$i | 0) < ($w$1 | 0);
-          if ($cmp188$i) wasm2asm_i32$1 = $w$1; else wasm2asm_i32$1 = $add165$i;
-          $w$add165$i = wasm2asm_i32$1;
-          $retval$0$i = $w$add165$i;
-          break do_once$49;
-         }
-         $cmp196$i = ($p$0 | 0) < (0 | 0);
-         if ($cmp196$i) wasm2asm_i32$1 = 6; else wasm2asm_i32$1 = $p$0;
-         $$p$i = wasm2asm_i32$1;
-         if ($tobool56$i) {
-          $mul202$i = $mul$i$240 - 268435456.0;
-          $209 = HEAPU32[$e2$i >> 2] | 0;
-          $sub203$i = $209 + 4294967268 | 0;
-          HEAP32[$e2$i >> 2] = $sub203$i;
-          $210 = $sub203$i;
-          $y$addr$3$i = $mul202$i;
-         } else {
-          $$pre564$i = HEAPU32[$e2$i >> 2] | 0;
-          $210 = $$pre564$i;
-          $y$addr$3$i = $mul$i$240;
-         }
-         $cmp205$i = ($210 | 0) < (0 | 0);
-         if ($cmp205$i) wasm2asm_i32$1 = $big$i; else wasm2asm_i32$1 = $add$ptr213$i;
-         $arraydecay208$add$ptr213$i = wasm2asm_i32$1;
-         $sub$ptr$rhs$cast345$i = $arraydecay208$add$ptr213$i;
-         $y$addr$4$i = $y$addr$3$i;
-         $z$0$i = $arraydecay208$add$ptr213$i;
-         while_out$56 : do {
-          $conv216$i = (f64_to_int(+$y$addr$4$i) | 0) >>> 0 | 0;
-          HEAP32[$z$0$i >> 2] = $conv216$i;
-          $incdec$ptr217$i = $z$0$i + 4 | 0;
-          $conv218$i = +(($conv216$i >>> 0 | 0) >>> 0);
-          $sub219$i = +($y$addr$4$i - $conv218$i);
-          $mul220$i = $sub219$i - 1.0e9;
-          $tobool222$i = $mul220$i != 0.0;
-          if ($tobool222$i) {
-           $y$addr$4$i = $mul220$i;
-           $z$0$i = $incdec$ptr217$i;
-          } else {
-           $incdec$ptr217$i$lcssa = $incdec$ptr217$i;
-           break while_out$56;
-          }
-          continue while_out$56;
-         } while (0);
-         $$pr$i = HEAPU32[$e2$i >> 2] | 0;
-         $cmp225$547$i = ($$pr$i | 0) > (0 | 0);
-         if ($cmp225$547$i) {
-          $211 = $$pr$i;
-          $a$1549$i = $arraydecay208$add$ptr213$i;
-          $z$1548$i = $incdec$ptr217$i$lcssa;
-          while_out$58 : do {
-           $cmp228$i = ($211 | 0) > (29 | 0);
-           if ($cmp228$i) wasm2asm_i32$1 = 29; else wasm2asm_i32$1 = $211;
-           $cond233$i = wasm2asm_i32$1;
-           $d$0$542$i = $z$1548$i + 4294967292 | 0;
-           $cmp235$543$i = ($d$0$542$i >>> 0 | 0) >>> 0 < ($a$1549$i >>> 0 | 0) >>> 0;
-           do_once$60 : {
-            if ($cmp235$543$i) $a$2$ph$i = $a$1549$i; else {
-             $carry$0544$i = 0;
-             $d$0545$i = $d$0$542$i;
-             while_out$61 : do {
-              $212 = HEAPU32[$d$0545$i >> 2] | 0;
-              $213 = _bitshift64Shl($212 | 0, 0 | 0, $cond233$i | 0) | 0;
-              $214 = HEAPU32[168 >> 2] | 0;
-              $215 = _i64Add($213 | 0, $214 | 0, $carry$0544$i | 0, 0 | 0) | 0;
-              $216 = HEAPU32[168 >> 2] | 0;
-              $217 = ___uremdi3($215 | 0, $216 | 0, 1e9 | 0, 0 | 0) | 0;
-              $218 = HEAPU32[168 >> 2] | 0;
-              HEAP32[$d$0545$i >> 2] = $217;
-              $219 = ___udivdi3($215 | 0, $216 | 0, 1e9 | 0, 0 | 0) | 0;
-              $220 = HEAPU32[168 >> 2] | 0;
-              $d$0$i = $d$0545$i + 4294967292 | 0;
-              $cmp235$i = ($d$0$i >>> 0 | 0) >>> 0 < ($a$1549$i >>> 0 | 0) >>> 0;
-              if ($cmp235$i) {
-               $conv242$i$lcssa = $219;
-               break while_out$61;
-              } else {
-               $carry$0544$i = $219;
-               $d$0545$i = $d$0$i;
-              }
-              continue while_out$61;
-             } while (0);
-             $tobool244$i = ($conv242$i$lcssa | 0) == (0 | 0);
-             if ($tobool244$i) {
-              $a$2$ph$i = $a$1549$i;
-              break do_once$60;
-             }
-             $incdec$ptr246$i = $a$1549$i + 4294967292 | 0;
-             HEAP32[$incdec$ptr246$i >> 2] = $conv242$i$lcssa;
-             $a$2$ph$i = $incdec$ptr246$i;
-            }
-           }
-           $z$2$i = $z$1548$i;
-           while_out$63 : do {
-            $cmp249$i = ($z$2$i >>> 0 | 0) >>> 0 > ($a$2$ph$i >>> 0 | 0) >>> 0;
-            if (($cmp249$i | 0) == (0 | 0)) {
-             $z$2$i$lcssa = $z$2$i;
-             break while_out$63;
-            }
-            $arrayidx251$i = $z$2$i + 4294967292 | 0;
-            $221 = HEAPU32[$arrayidx251$i >> 2] | 0;
-            $lnot$i = ($221 | 0) == (0 | 0);
-            if ($lnot$i) $z$2$i = $arrayidx251$i; else {
-             $z$2$i$lcssa = $z$2$i;
-             break while_out$63;
-            }
-            continue while_out$63;
+            continue while_out$58;
            } while (0);
-           $222 = HEAPU32[$e2$i >> 2] | 0;
-           $sub256$i = $222 - $cond233$i | 0;
-           HEAP32[$e2$i >> 2] = $sub256$i;
-           $cmp225$i = ($sub256$i | 0) > (0 | 0);
-           if ($cmp225$i) {
-            $211 = $sub256$i;
-            $a$1549$i = $a$2$ph$i;
-            $z$1548$i = $z$2$i$lcssa;
-           } else {
-            $$pr477$i = $sub256$i;
-            $a$1$lcssa$i = $a$2$ph$i;
-            $z$1$lcssa$i = $z$2$i$lcssa;
-            break while_out$58;
-           }
-           continue while_out$58;
-          } while (0);
-         } else {
-          $$pr477$i = $$pr$i;
-          $a$1$lcssa$i = $arraydecay208$add$ptr213$i;
-          $z$1$lcssa$i = $incdec$ptr217$i$lcssa;
-         }
-         $cmp259$537$i = ($$pr477$i | 0) < (0 | 0);
-         if ($cmp259$537$i) {
-          $add273$i = $$p$i + 25 | 0;
-          $div274$i = (($add273$i | 0) / (9 | 0) | 0) & 4294967295 | 0;
-          $add275$i = $div274$i + 1 | 0;
-          $cmp299$i = ($or$i$241 | 0) == (102 | 0);
-          $223 = $$pr477$i;
-          $a$3539$i = $a$1$lcssa$i;
-          $z$3538$i = $z$1$lcssa$i;
-          while_out$65 : do {
-           $sub264$i = 0 - $223 | 0;
-           $cmp265$i = ($sub264$i | 0) > (9 | 0);
-           if ($cmp265$i) wasm2asm_i32$1 = 9; else wasm2asm_i32$1 = $sub264$i;
-           $cond271$i = wasm2asm_i32$1;
-           $cmp277$533$i = ($a$3539$i >>> 0 | 0) >>> 0 < ($z$3538$i >>> 0 | 0) >>> 0;
-           do_once$67 : {
-            if ($cmp277$533$i) {
-             $shl280$i = 1 << $cond271$i | 0;
-             $sub281$i = $shl280$i + 4294967295 | 0;
-             $shr285$i = 1e9 >>> $cond271$i | 0;
-             $carry262$0535$i = 0;
-             $d$1534$i = $a$3539$i;
-             while_out$68 : do {
-              $225 = HEAPU32[$d$1534$i >> 2] | 0;
-              $and282$i = $225 & $sub281$i | 0;
-              $shr283$i = $225 >>> $cond271$i | 0;
-              $add284$i = $shr283$i + $carry262$0535$i | 0;
-              HEAP32[$d$1534$i >> 2] = $add284$i;
-              $mul286$i = Math_imul($and282$i, $shr285$i);
-              $incdec$ptr288$i = $d$1534$i + 4 | 0;
-              $cmp277$i = ($incdec$ptr288$i >>> 0 | 0) >>> 0 < ($z$3538$i >>> 0 | 0) >>> 0;
-              if ($cmp277$i) {
-               $carry262$0535$i = $mul286$i;
-               $d$1534$i = $incdec$ptr288$i;
-              } else {
-               $mul286$i$lcssa = $mul286$i;
-               break while_out$68;
+          } else block130 : {
+           $$pr477$i = $$pr$i;
+           $a$1$lcssa$i = $arraydecay208$add$ptr213$i;
+           $z$1$lcssa$i = $incdec$ptr217$i$lcssa;
+          }
+          $cmp259$537$i = ($$pr477$i | 0) < (0 | 0);
+          if ($cmp259$537$i) block131 : {
+           $add273$i = $$p$i + 25 | 0;
+           $div274$i = (($add273$i | 0) / (9 | 0) | 0) & 4294967295 | 0;
+           $add275$i = $div274$i + 1 | 0;
+           $cmp299$i = ($or$i$241 | 0) == (102 | 0);
+           $223 = $$pr477$i;
+           $a$3539$i = $a$1$lcssa$i;
+           $z$3538$i = $z$1$lcssa$i;
+           while_out$65 : do block132 : {
+            $sub264$i = 0 - $223 | 0;
+            $cmp265$i = ($sub264$i | 0) > (9 | 0);
+            if ($cmp265$i) wasm2asm_i32$1 = 9; else wasm2asm_i32$1 = $sub264$i;
+            $cond271$i = wasm2asm_i32$1;
+            $cmp277$533$i = ($a$3539$i >>> 0 | 0) >>> 0 < ($z$3538$i >>> 0 | 0) >>> 0;
+            do_once$67 : {
+             if ($cmp277$533$i) block133 : {
+              $shl280$i = 1 << $cond271$i | 0;
+              $sub281$i = $shl280$i + 4294967295 | 0;
+              $shr285$i = 1e9 >>> $cond271$i | 0;
+              $carry262$0535$i = 0;
+              $d$1534$i = $a$3539$i;
+              while_out$68 : do block134 : {
+               $225 = HEAPU32[$d$1534$i >> 2] | 0;
+               $and282$i = $225 & $sub281$i | 0;
+               $shr283$i = $225 >>> $cond271$i | 0;
+               $add284$i = $shr283$i + $carry262$0535$i | 0;
+               HEAP32[$d$1534$i >> 2] = $add284$i;
+               $mul286$i = Math_imul($and282$i, $shr285$i);
+               $incdec$ptr288$i = $d$1534$i + 4 | 0;
+               $cmp277$i = ($incdec$ptr288$i >>> 0 | 0) >>> 0 < ($z$3538$i >>> 0 | 0) >>> 0;
+               if ($cmp277$i) block135 : {
+                $carry262$0535$i = $mul286$i;
+                $d$1534$i = $incdec$ptr288$i;
+               } else block136 : {
+                $mul286$i$lcssa = $mul286$i;
+                break while_out$68;
+               }
+               continue while_out$68;
+              } while (0);
+              $226 = HEAPU32[$a$3539$i >> 2] | 0;
+              $tobool290$i = ($226 | 0) == (0 | 0);
+              $incdec$ptr292$i = $a$3539$i + 4 | 0;
+              if ($tobool290$i) wasm2asm_i32$1 = $incdec$ptr292$i; else wasm2asm_i32$1 = $a$3539$i;
+              $incdec$ptr292$a$3$i = wasm2asm_i32$1;
+              $tobool294$i = ($mul286$i$lcssa | 0) == (0 | 0);
+              if ($tobool294$i) block137 : {
+               $incdec$ptr292$a$3573$i = $incdec$ptr292$a$3$i;
+               $z$4$i = $z$3538$i;
+               break do_once$67;
               }
-              continue while_out$68;
-             } while (0);
-             $226 = HEAPU32[$a$3539$i >> 2] | 0;
-             $tobool290$i = ($226 | 0) == (0 | 0);
-             $incdec$ptr292$i = $a$3539$i + 4 | 0;
-             if ($tobool290$i) wasm2asm_i32$1 = $incdec$ptr292$i; else wasm2asm_i32$1 = $a$3539$i;
-             $incdec$ptr292$a$3$i = wasm2asm_i32$1;
-             $tobool294$i = ($mul286$i$lcssa | 0) == (0 | 0);
-             if ($tobool294$i) {
+              $incdec$ptr296$i = $z$3538$i + 4 | 0;
+              HEAP32[$z$3538$i >> 2] = $mul286$i$lcssa;
               $incdec$ptr292$a$3573$i = $incdec$ptr292$a$3$i;
+              $z$4$i = $incdec$ptr296$i;
+             } else block138 : {
+              $224 = HEAPU32[$a$3539$i >> 2] | 0;
+              $tobool290$569$i = ($224 | 0) == (0 | 0);
+              $incdec$ptr292$570$i = $a$3539$i + 4 | 0;
+              if ($tobool290$569$i) wasm2asm_i32$1 = $incdec$ptr292$570$i; else wasm2asm_i32$1 = $a$3539$i;
+              $incdec$ptr292$a$3$571$i = wasm2asm_i32$1;
+              $incdec$ptr292$a$3573$i = $incdec$ptr292$a$3$571$i;
               $z$4$i = $z$3538$i;
-              break do_once$67;
-             }
-             $incdec$ptr296$i = $z$3538$i + 4 | 0;
-             HEAP32[$z$3538$i >> 2] = $mul286$i$lcssa;
-             $incdec$ptr292$a$3573$i = $incdec$ptr292$a$3$i;
-             $z$4$i = $incdec$ptr296$i;
-            } else {
-             $224 = HEAPU32[$a$3539$i >> 2] | 0;
-             $tobool290$569$i = ($224 | 0) == (0 | 0);
-             $incdec$ptr292$570$i = $a$3539$i + 4 | 0;
-             if ($tobool290$569$i) wasm2asm_i32$1 = $incdec$ptr292$570$i; else wasm2asm_i32$1 = $a$3539$i;
-             $incdec$ptr292$a$3$571$i = wasm2asm_i32$1;
-             $incdec$ptr292$a$3573$i = $incdec$ptr292$a$3$571$i;
-             $z$4$i = $z$3538$i;
-            }
-           }
-           if ($cmp299$i) wasm2asm_i32$1 = $arraydecay208$add$ptr213$i; else wasm2asm_i32$1 = $incdec$ptr292$a$3573$i;
-           $cond304$i = wasm2asm_i32$1;
-           $sub$ptr$lhs$cast305$i = $z$4$i;
-           $sub$ptr$rhs$cast306$i = $cond304$i;
-           $sub$ptr$sub307$i = $sub$ptr$lhs$cast305$i - $sub$ptr$rhs$cast306$i | 0;
-           $sub$ptr$div$i = $sub$ptr$sub307$i >> 2 | 0;
-           $cmp308$i = ($sub$ptr$div$i | 0) > ($add275$i | 0);
-           $add$ptr311$i = $cond304$i + ($add275$i << 2 | 0) | 0;
-           if ($cmp308$i) wasm2asm_i32$1 = $add$ptr311$i; else wasm2asm_i32$1 = $z$4$i;
-           $add$ptr311$z$4$i = wasm2asm_i32$1;
-           $227 = HEAPU32[$e2$i >> 2] | 0;
-           $add313$i = $227 + $cond271$i | 0;
-           HEAP32[$e2$i >> 2] = $add313$i;
-           $cmp259$i = ($add313$i | 0) < (0 | 0);
-           if ($cmp259$i) {
-            $223 = $add313$i;
-            $a$3539$i = $incdec$ptr292$a$3573$i;
-            $z$3538$i = $add$ptr311$z$4$i;
-           } else {
-            $a$3$lcssa$i = $incdec$ptr292$a$3573$i;
-            $z$3$lcssa$i = $add$ptr311$z$4$i;
-            break while_out$65;
-           }
-           continue while_out$65;
-          } while (0);
-         } else {
-          $a$3$lcssa$i = $a$1$lcssa$i;
-          $z$3$lcssa$i = $z$1$lcssa$i;
-         }
-         $cmp315$i = ($a$3$lcssa$i >>> 0 | 0) >>> 0 < ($z$3$lcssa$i >>> 0 | 0) >>> 0;
-         do_once$70 : {
-          if ($cmp315$i) {
-           $sub$ptr$rhs$cast319$i = $a$3$lcssa$i;
-           $sub$ptr$sub320$i = $sub$ptr$rhs$cast345$i - $sub$ptr$rhs$cast319$i | 0;
-           $sub$ptr$div321$i = $sub$ptr$sub320$i >> 2 | 0;
-           $mul322$i = Math_imul($sub$ptr$div321$i, 9);
-           $228 = HEAPU32[$a$3$lcssa$i >> 2] | 0;
-           $cmp324$529$i = ($228 >>> 0 | 0) >>> 0 < 10 >>> 0;
-           if ($cmp324$529$i) {
-            $e$1$i = $mul322$i;
-            break do_once$70;
-           } else {
-            $e$0531$i = $mul322$i;
-            $i$0530$i = 10;
-           }
-           while_out$71 : do {
-            $mul328$i = Math_imul($i$0530$i, 10);
-            $inc$i = $e$0531$i + 1 | 0;
-            $cmp324$i = ($228 >>> 0 | 0) >>> 0 < ($mul328$i >>> 0 | 0) >>> 0;
-            if ($cmp324$i) {
-             $e$1$i = $inc$i;
-             break while_out$71;
-            } else {
-             $e$0531$i = $inc$i;
-             $i$0530$i = $mul328$i;
-            }
-            continue while_out$71;
-           } while (0);
-          } else $e$1$i = 0;
-         }
-         $cmp333$i = ($or$i$241 | 0) != (102 | 0);
-         if ($cmp333$i) wasm2asm_i32$1 = $e$1$i; else wasm2asm_i32$1 = 0;
-         $mul335$i = wasm2asm_i32$1;
-         $sub336$i = $$p$i - $mul335$i | 0;
-         $cmp338$i = ($or$i$241 | 0) == (103 | 0);
-         $tobool341$i = ($$p$i | 0) != (0 | 0);
-         $229 = $tobool341$i & $cmp338$i | 0;
-         $land$ext$neg$i = ($229 << 31 | 0) >> 31 | 0;
-         $sub343$i = $sub336$i + $land$ext$neg$i | 0;
-         $sub$ptr$lhs$cast344$i = $z$3$lcssa$i;
-         $sub$ptr$sub346$i = $sub$ptr$lhs$cast344$i - $sub$ptr$rhs$cast345$i | 0;
-         $sub$ptr$div347$i = $sub$ptr$sub346$i >> 2 | 0;
-         $230 = Math_imul($sub$ptr$div347$i, 9);
-         $mul349$i = $230 + 4294967287 | 0;
-         $cmp350$i = ($sub343$i | 0) < ($mul349$i | 0);
-         if ($cmp350$i) {
-          $add$ptr354$i = $arraydecay208$add$ptr213$i + 4 | 0;
-          $add355$i = $sub343$i + 9216 | 0;
-          $div356$i = (($add355$i | 0) / (9 | 0) | 0) & 4294967295 | 0;
-          $sub357$i = $div356$i + 4294966272 | 0;
-          $add$ptr358$i = $add$ptr354$i + ($sub357$i << 2 | 0) | 0;
-          $rem360$i = (($add355$i | 0) % (9 | 0) | 0) & 4294967295 | 0;
-          $j$0$524$i = $rem360$i + 1 | 0;
-          $cmp363$525$i = ($j$0$524$i | 0) < (9 | 0);
-          if ($cmp363$525$i) {
-           $i$1526$i = 10;
-           $j$0527$i = $j$0$524$i;
-           while_out$73 : do {
-            $mul367$i = Math_imul($i$1526$i, 10);
-            $j$0$i = $j$0527$i + 1 | 0;
-            $exitcond$i = ($j$0$i | 0) == (9 | 0);
-            if ($exitcond$i) {
-             $i$1$lcssa$i = $mul367$i;
-             break while_out$73;
-            } else {
-             $i$1526$i = $mul367$i;
-             $j$0527$i = $j$0$i;
-            }
-            continue while_out$73;
-           } while (0);
-          } else $i$1$lcssa$i = 10;
-          $231 = HEAPU32[$add$ptr358$i >> 2] | 0;
-          $rem370$i = ((($231 >>> 0 | 0) >>> 0) % (($i$1$lcssa$i >>> 0 | 0) >>> 0) | 0) & 4294967295 | 0;
-          $tobool371$i = ($rem370$i | 0) == (0 | 0);
-          $add$ptr373$i = $add$ptr358$i + 4 | 0;
-          $cmp374$i = ($add$ptr373$i | 0) == ($z$3$lcssa$i | 0);
-          $or$cond395$i = $cmp374$i & $tobool371$i | 0;
-          do_once$75 : {
-           if ($or$cond395$i) {
-            $a$8$i = $a$3$lcssa$i;
-            $d$4$i = $add$ptr358$i;
-            $e$4$i = $e$1$i;
-           } else {
-            $div378$i = ((($231 >>> 0 | 0) >>> 0) / (($i$1$lcssa$i >>> 0 | 0) >>> 0) | 0) & 4294967295 | 0;
-            $and379$i = $div378$i & 1 | 0;
-            $tobool380$i = ($and379$i | 0) == (0 | 0);
-            if ($tobool380$i) wasm2asm_f64$0 = 9007199254740992.0; else wasm2asm_f64$0 = 9007199254740994.0;
-            $$396$i = wasm2asm_f64$0;
-            $div384$i = (($i$1$lcssa$i | 0) / (2 | 0) | 0) & 4294967295 | 0;
-            $cmp385$i = ($rem370$i >>> 0 | 0) >>> 0 < ($div384$i >>> 0 | 0) >>> 0;
-            if ($cmp385$i) $small$0$i = .5; else {
-             $cmp390$i = ($rem370$i | 0) == ($div384$i | 0);
-             $or$cond397$i = $cmp374$i & $cmp390$i | 0;
-             if ($or$cond397$i) wasm2asm_f64$0 = 1.0; else wasm2asm_f64$0 = 1.5;
-             $$404$i = wasm2asm_f64$0;
-             $small$0$i = $$404$i;
-            }
-            $tobool400$i = ($pl$0$i | 0) == (0 | 0);
-            do_once$76 : {
-             if ($tobool400$i) {
-              $round377$1$i = $$396$i;
-              $small$1$i = $small$0$i;
-             } else {
-              $232 = HEAP8[$prefix$0$i >> 0] | 0;
-              $cmp403$i = (($232 << 24 | 0) >> 24 | 0 | 0) == (45 | 0);
-              if (($cmp403$i | 0) == (0 | 0)) {
-               $round377$1$i = $$396$i;
-               $small$1$i = $small$0$i;
-               break do_once$76;
-              }
-              $mul406$i = -$$396$i;
-              $mul407$i = -$small$0$i;
-              $round377$1$i = $mul406$i;
-              $small$1$i = $mul407$i;
              }
             }
-            $sub409$i = $231 - $rem370$i | 0;
-            HEAP32[$add$ptr358$i >> 2] = $sub409$i;
-            $add410$i = +($round377$1$i + $small$1$i);
-            $cmp411$i = $add410$i != $round377$1$i;
-            if (($cmp411$i | 0) == (0 | 0)) {
+            if ($cmp299$i) wasm2asm_i32$1 = $arraydecay208$add$ptr213$i; else wasm2asm_i32$1 = $incdec$ptr292$a$3573$i;
+            $cond304$i = wasm2asm_i32$1;
+            $sub$ptr$lhs$cast305$i = $z$4$i;
+            $sub$ptr$rhs$cast306$i = $cond304$i;
+            $sub$ptr$sub307$i = $sub$ptr$lhs$cast305$i - $sub$ptr$rhs$cast306$i | 0;
+            $sub$ptr$div$i = $sub$ptr$sub307$i >> 2 | 0;
+            $cmp308$i = ($sub$ptr$div$i | 0) > ($add275$i | 0);
+            $add$ptr311$i = $cond304$i + ($add275$i << 2 | 0) | 0;
+            if ($cmp308$i) wasm2asm_i32$1 = $add$ptr311$i; else wasm2asm_i32$1 = $z$4$i;
+            $add$ptr311$z$4$i = wasm2asm_i32$1;
+            $227 = HEAPU32[$e2$i >> 2] | 0;
+            $add313$i = $227 + $cond271$i | 0;
+            HEAP32[$e2$i >> 2] = $add313$i;
+            $cmp259$i = ($add313$i | 0) < (0 | 0);
+            if ($cmp259$i) block139 : {
+             $223 = $add313$i;
+             $a$3539$i = $incdec$ptr292$a$3573$i;
+             $z$3538$i = $add$ptr311$z$4$i;
+            } else block140 : {
+             $a$3$lcssa$i = $incdec$ptr292$a$3573$i;
+             $z$3$lcssa$i = $add$ptr311$z$4$i;
+             break while_out$65;
+            }
+            continue while_out$65;
+           } while (0);
+          } else block141 : {
+           $a$3$lcssa$i = $a$1$lcssa$i;
+           $z$3$lcssa$i = $z$1$lcssa$i;
+          }
+          $cmp315$i = ($a$3$lcssa$i >>> 0 | 0) >>> 0 < ($z$3$lcssa$i >>> 0 | 0) >>> 0;
+          do_once$70 : {
+           if ($cmp315$i) block142 : {
+            $sub$ptr$rhs$cast319$i = $a$3$lcssa$i;
+            $sub$ptr$sub320$i = $sub$ptr$rhs$cast345$i - $sub$ptr$rhs$cast319$i | 0;
+            $sub$ptr$div321$i = $sub$ptr$sub320$i >> 2 | 0;
+            $mul322$i = Math_imul($sub$ptr$div321$i, 9);
+            $228 = HEAPU32[$a$3$lcssa$i >> 2] | 0;
+            $cmp324$529$i = ($228 >>> 0 | 0) >>> 0 < 10 >>> 0;
+            if ($cmp324$529$i) block143 : {
+             $e$1$i = $mul322$i;
+             break do_once$70;
+            } else block144 : {
+             $e$0531$i = $mul322$i;
+             $i$0530$i = 10;
+            }
+            while_out$71 : do block145 : {
+             $mul328$i = Math_imul($i$0530$i, 10);
+             $inc$i = $e$0531$i + 1 | 0;
+             $cmp324$i = ($228 >>> 0 | 0) >>> 0 < ($mul328$i >>> 0 | 0) >>> 0;
+             if ($cmp324$i) block146 : {
+              $e$1$i = $inc$i;
+              break while_out$71;
+             } else block147 : {
+              $e$0531$i = $inc$i;
+              $i$0530$i = $mul328$i;
+             }
+             continue while_out$71;
+            } while (0);
+           } else $e$1$i = 0;
+          }
+          $cmp333$i = ($or$i$241 | 0) != (102 | 0);
+          if ($cmp333$i) wasm2asm_i32$1 = $e$1$i; else wasm2asm_i32$1 = 0;
+          $mul335$i = wasm2asm_i32$1;
+          $sub336$i = $$p$i - $mul335$i | 0;
+          $cmp338$i = ($or$i$241 | 0) == (103 | 0);
+          $tobool341$i = ($$p$i | 0) != (0 | 0);
+          $229 = $tobool341$i & $cmp338$i | 0;
+          $land$ext$neg$i = ($229 << 31 | 0) >> 31 | 0;
+          $sub343$i = $sub336$i + $land$ext$neg$i | 0;
+          $sub$ptr$lhs$cast344$i = $z$3$lcssa$i;
+          $sub$ptr$sub346$i = $sub$ptr$lhs$cast344$i - $sub$ptr$rhs$cast345$i | 0;
+          $sub$ptr$div347$i = $sub$ptr$sub346$i >> 2 | 0;
+          $230 = Math_imul($sub$ptr$div347$i, 9);
+          $mul349$i = $230 + 4294967287 | 0;
+          $cmp350$i = ($sub343$i | 0) < ($mul349$i | 0);
+          if ($cmp350$i) block148 : {
+           $add$ptr354$i = $arraydecay208$add$ptr213$i + 4 | 0;
+           $add355$i = $sub343$i + 9216 | 0;
+           $div356$i = (($add355$i | 0) / (9 | 0) | 0) & 4294967295 | 0;
+           $sub357$i = $div356$i + 4294966272 | 0;
+           $add$ptr358$i = $add$ptr354$i + ($sub357$i << 2 | 0) | 0;
+           $rem360$i = (($add355$i | 0) % (9 | 0) | 0) & 4294967295 | 0;
+           $j$0$524$i = $rem360$i + 1 | 0;
+           $cmp363$525$i = ($j$0$524$i | 0) < (9 | 0);
+           if ($cmp363$525$i) block149 : {
+            $i$1526$i = 10;
+            $j$0527$i = $j$0$524$i;
+            while_out$73 : do block150 : {
+             $mul367$i = Math_imul($i$1526$i, 10);
+             $j$0$i = $j$0527$i + 1 | 0;
+             $exitcond$i = ($j$0$i | 0) == (9 | 0);
+             if ($exitcond$i) block151 : {
+              $i$1$lcssa$i = $mul367$i;
+              break while_out$73;
+             } else block152 : {
+              $i$1526$i = $mul367$i;
+              $j$0527$i = $j$0$i;
+             }
+             continue while_out$73;
+            } while (0);
+           } else $i$1$lcssa$i = 10;
+           $231 = HEAPU32[$add$ptr358$i >> 2] | 0;
+           $rem370$i = ((($231 >>> 0 | 0) >>> 0) % (($i$1$lcssa$i >>> 0 | 0) >>> 0) | 0) & 4294967295 | 0;
+           $tobool371$i = ($rem370$i | 0) == (0 | 0);
+           $add$ptr373$i = $add$ptr358$i + 4 | 0;
+           $cmp374$i = ($add$ptr373$i | 0) == ($z$3$lcssa$i | 0);
+           $or$cond395$i = $cmp374$i & $tobool371$i | 0;
+           do_once$75 : {
+            if ($or$cond395$i) block153 : {
              $a$8$i = $a$3$lcssa$i;
              $d$4$i = $add$ptr358$i;
              $e$4$i = $e$1$i;
-             break do_once$75;
-            }
-            $add414$i = $sub409$i + $i$1$lcssa$i | 0;
-            HEAP32[$add$ptr358$i >> 2] = $add414$i;
-            $cmp416$519$i = ($add414$i >>> 0 | 0) >>> 0 > 999999999 >>> 0;
-            if ($cmp416$519$i) {
-             $a$5521$i = $a$3$lcssa$i;
-             $d$2520$i = $add$ptr358$i;
-             while_out$77 : do {
-              $incdec$ptr419$i = $d$2520$i + 4294967292 | 0;
-              HEAP32[$d$2520$i >> 2] = 0;
-              $cmp420$i = ($incdec$ptr419$i >>> 0 | 0) >>> 0 < ($a$5521$i >>> 0 | 0) >>> 0;
-              if ($cmp420$i) {
-               $incdec$ptr423$i = $a$5521$i + 4294967292 | 0;
-               HEAP32[$incdec$ptr423$i >> 2] = 0;
-               $a$6$i = $incdec$ptr423$i;
-              } else $a$6$i = $a$5521$i;
-              $233 = HEAPU32[$incdec$ptr419$i >> 2] | 0;
-              $inc425$i = $233 + 1 | 0;
-              HEAP32[$incdec$ptr419$i >> 2] = $inc425$i;
-              $cmp416$i = ($inc425$i >>> 0 | 0) >>> 0 > 999999999 >>> 0;
-              if ($cmp416$i) {
-               $a$5521$i = $a$6$i;
-               $d$2520$i = $incdec$ptr419$i;
-              } else {
-               $a$5$lcssa$i = $a$6$i;
-               $d$2$lcssa$i = $incdec$ptr419$i;
-               break while_out$77;
+            } else block154 : {
+             $div378$i = ((($231 >>> 0 | 0) >>> 0) / (($i$1$lcssa$i >>> 0 | 0) >>> 0) | 0) & 4294967295 | 0;
+             $and379$i = $div378$i & 1 | 0;
+             $tobool380$i = ($and379$i | 0) == (0 | 0);
+             if ($tobool380$i) wasm2asm_f64$0 = 9007199254740992.0; else wasm2asm_f64$0 = 9007199254740994.0;
+             $$396$i = wasm2asm_f64$0;
+             $div384$i = (($i$1$lcssa$i | 0) / (2 | 0) | 0) & 4294967295 | 0;
+             $cmp385$i = ($rem370$i >>> 0 | 0) >>> 0 < ($div384$i >>> 0 | 0) >>> 0;
+             if ($cmp385$i) $small$0$i = .5; else block155 : {
+              $cmp390$i = ($rem370$i | 0) == ($div384$i | 0);
+              $or$cond397$i = $cmp374$i & $cmp390$i | 0;
+              if ($or$cond397$i) wasm2asm_f64$0 = 1.0; else wasm2asm_f64$0 = 1.5;
+              $$404$i = wasm2asm_f64$0;
+              $small$0$i = $$404$i;
+             }
+             $tobool400$i = ($pl$0$i | 0) == (0 | 0);
+             do_once$76 : {
+              if ($tobool400$i) block156 : {
+               $round377$1$i = $$396$i;
+               $small$1$i = $small$0$i;
+              } else block157 : {
+               $232 = HEAP8[$prefix$0$i >> 0] | 0;
+               $cmp403$i = (($232 << 24 | 0) >> 24 | 0 | 0) == (45 | 0);
+               if (($cmp403$i | 0) == (0 | 0)) block158 : {
+                $round377$1$i = $$396$i;
+                $small$1$i = $small$0$i;
+                break do_once$76;
+               }
+               $mul406$i = -$$396$i;
+               $mul407$i = -$small$0$i;
+               $round377$1$i = $mul406$i;
+               $small$1$i = $mul407$i;
               }
-              continue while_out$77;
-             } while (0);
-            } else {
-             $a$5$lcssa$i = $a$3$lcssa$i;
-             $d$2$lcssa$i = $add$ptr358$i;
-            }
-            $sub$ptr$rhs$cast428$i = $a$5$lcssa$i;
-            $sub$ptr$sub429$i = $sub$ptr$rhs$cast345$i - $sub$ptr$rhs$cast428$i | 0;
-            $sub$ptr$div430$i = $sub$ptr$sub429$i >> 2 | 0;
-            $mul431$i = Math_imul($sub$ptr$div430$i, 9);
-            $234 = HEAPU32[$a$5$lcssa$i >> 2] | 0;
-            $cmp433$515$i = ($234 >>> 0 | 0) >>> 0 < 10 >>> 0;
-            if ($cmp433$515$i) {
-             $a$8$i = $a$5$lcssa$i;
-             $d$4$i = $d$2$lcssa$i;
-             $e$4$i = $mul431$i;
-             break do_once$75;
-            } else {
-             $e$2517$i = $mul431$i;
-             $i$2516$i = 10;
-            }
-            while_out$79 : do {
-             $mul437$i = Math_imul($i$2516$i, 10);
-             $inc438$i = $e$2517$i + 1 | 0;
-             $cmp433$i = ($234 >>> 0 | 0) >>> 0 < ($mul437$i >>> 0 | 0) >>> 0;
-             if ($cmp433$i) {
+             }
+             $sub409$i = $231 - $rem370$i | 0;
+             HEAP32[$add$ptr358$i >> 2] = $sub409$i;
+             $add410$i = +($round377$1$i + $small$1$i);
+             $cmp411$i = $add410$i != $round377$1$i;
+             if (($cmp411$i | 0) == (0 | 0)) block159 : {
+              $a$8$i = $a$3$lcssa$i;
+              $d$4$i = $add$ptr358$i;
+              $e$4$i = $e$1$i;
+              break do_once$75;
+             }
+             $add414$i = $sub409$i + $i$1$lcssa$i | 0;
+             HEAP32[$add$ptr358$i >> 2] = $add414$i;
+             $cmp416$519$i = ($add414$i >>> 0 | 0) >>> 0 > 999999999 >>> 0;
+             if ($cmp416$519$i) block160 : {
+              $a$5521$i = $a$3$lcssa$i;
+              $d$2520$i = $add$ptr358$i;
+              while_out$77 : do block161 : {
+               $incdec$ptr419$i = $d$2520$i + 4294967292 | 0;
+               HEAP32[$d$2520$i >> 2] = 0;
+               $cmp420$i = ($incdec$ptr419$i >>> 0 | 0) >>> 0 < ($a$5521$i >>> 0 | 0) >>> 0;
+               if ($cmp420$i) block162 : {
+                $incdec$ptr423$i = $a$5521$i + 4294967292 | 0;
+                HEAP32[$incdec$ptr423$i >> 2] = 0;
+                $a$6$i = $incdec$ptr423$i;
+               } else $a$6$i = $a$5521$i;
+               $233 = HEAPU32[$incdec$ptr419$i >> 2] | 0;
+               $inc425$i = $233 + 1 | 0;
+               HEAP32[$incdec$ptr419$i >> 2] = $inc425$i;
+               $cmp416$i = ($inc425$i >>> 0 | 0) >>> 0 > 999999999 >>> 0;
+               if ($cmp416$i) block163 : {
+                $a$5521$i = $a$6$i;
+                $d$2520$i = $incdec$ptr419$i;
+               } else block164 : {
+                $a$5$lcssa$i = $a$6$i;
+                $d$2$lcssa$i = $incdec$ptr419$i;
+                break while_out$77;
+               }
+               continue while_out$77;
+              } while (0);
+             } else block165 : {
+              $a$5$lcssa$i = $a$3$lcssa$i;
+              $d$2$lcssa$i = $add$ptr358$i;
+             }
+             $sub$ptr$rhs$cast428$i = $a$5$lcssa$i;
+             $sub$ptr$sub429$i = $sub$ptr$rhs$cast345$i - $sub$ptr$rhs$cast428$i | 0;
+             $sub$ptr$div430$i = $sub$ptr$sub429$i >> 2 | 0;
+             $mul431$i = Math_imul($sub$ptr$div430$i, 9);
+             $234 = HEAPU32[$a$5$lcssa$i >> 2] | 0;
+             $cmp433$515$i = ($234 >>> 0 | 0) >>> 0 < 10 >>> 0;
+             if ($cmp433$515$i) block166 : {
               $a$8$i = $a$5$lcssa$i;
               $d$4$i = $d$2$lcssa$i;
-              $e$4$i = $inc438$i;
-              break while_out$79;
-             } else {
-              $e$2517$i = $inc438$i;
-              $i$2516$i = $mul437$i;
+              $e$4$i = $mul431$i;
+              break do_once$75;
+             } else block167 : {
+              $e$2517$i = $mul431$i;
+              $i$2516$i = 10;
              }
-             continue while_out$79;
-            } while (0);
-           }
-          }
-          $add$ptr442$i = $d$4$i + 4 | 0;
-          $cmp443$i = ($z$3$lcssa$i >>> 0 | 0) >>> 0 > ($add$ptr442$i >>> 0 | 0) >>> 0;
-          if ($cmp443$i) wasm2asm_i32$1 = $add$ptr442$i; else wasm2asm_i32$1 = $z$3$lcssa$i;
-          $add$ptr442$z$3$i = wasm2asm_i32$1;
-          $a$9$ph$i = $a$8$i;
-          $e$5$ph$i = $e$4$i;
-          $z$7$ph$i = $add$ptr442$z$3$i;
-         } else {
-          $a$9$ph$i = $a$3$lcssa$i;
-          $e$5$ph$i = $e$1$i;
-          $z$7$ph$i = $z$3$lcssa$i;
-         }
-         $sub626$le$i = 0 - $e$5$ph$i | 0;
-         $z$7$i = $z$7$ph$i;
-         while_out$81 : do {
-          $cmp450$i = ($z$7$i >>> 0 | 0) >>> 0 > ($a$9$ph$i >>> 0 | 0) >>> 0;
-          if (($cmp450$i | 0) == (0 | 0)) {
-           $cmp450$lcssa$i = 0;
-           $z$7$i$lcssa = $z$7$i;
-           break while_out$81;
-          }
-          $arrayidx453$i = $z$7$i + 4294967292 | 0;
-          $235 = HEAPU32[$arrayidx453$i >> 2] | 0;
-          $lnot455$i = ($235 | 0) == (0 | 0);
-          if ($lnot455$i) $z$7$i = $arrayidx453$i; else {
-           $cmp450$lcssa$i = 1;
-           $z$7$i$lcssa = $z$7$i;
-           break while_out$81;
-          }
-          continue while_out$81;
-         } while (0);
-         do_once$83 : {
-          if ($cmp338$i) {
-           $236 = $tobool341$i & 1 | 0;
-           $inc468$i = $236 ^ 1 | 0;
-           $$p$inc468$i = $inc468$i + $$p$i | 0;
-           $cmp470$i = ($$p$inc468$i | 0) > ($e$5$ph$i | 0);
-           $cmp473$i = ($e$5$ph$i | 0) > (4294967291 | 0);
-           $or$cond2$i = $cmp470$i & $cmp473$i | 0;
-           if ($or$cond2$i) {
-            $dec476$i = $t$0 + 4294967295 | 0;
-            $add477$neg$i = $$p$inc468$i + 4294967295 | 0;
-            $sub478$i = $add477$neg$i - $e$5$ph$i | 0;
-            $p$addr$2$i = $sub478$i;
-            $t$addr$0$i = $dec476$i;
-           } else {
-            $sub480$i = $t$0 + 4294967294 | 0;
-            $dec481$i = $$p$inc468$i + 4294967295 | 0;
-            $p$addr$2$i = $dec481$i;
-            $t$addr$0$i = $sub480$i;
-           }
-           $and483$i = $fl$1$and219 & 8 | 0;
-           $tobool484$i = ($and483$i | 0) == (0 | 0);
-           if (($tobool484$i | 0) == (0 | 0)) {
-            $and610$pre$phi$iZ2D = $and483$i;
-            $p$addr$3$i = $p$addr$2$i;
-            $t$addr$1$i = $t$addr$0$i;
-            break do_once$83;
-           }
-           do_once$84 : {
-            if ($cmp450$lcssa$i) {
-             $arrayidx489$i = $z$7$i$lcssa + 4294967292 | 0;
-             $237 = HEAPU32[$arrayidx489$i >> 2] | 0;
-             $tobool490$i = ($237 | 0) == (0 | 0);
-             if ($tobool490$i) {
-              $j$2$i = 9;
-              break do_once$84;
-             }
-             $rem494$510$i = ((($237 >>> 0 | 0) >>> 0) % (10 >>> 0) | 0) & 4294967295 | 0;
-             $cmp495$511$i = ($rem494$510$i | 0) == (0 | 0);
-             if ($cmp495$511$i) {
-              $i$3512$i = 10;
-              $j$1513$i = 0;
-             } else {
-              $j$2$i = 0;
-              break do_once$84;
-             }
-             while_out$85 : do {
-              $mul499$i = Math_imul($i$3512$i, 10);
-              $inc500$i = $j$1513$i + 1 | 0;
-              $rem494$i = ((($237 >>> 0 | 0) >>> 0) % (($mul499$i >>> 0 | 0) >>> 0) | 0) & 4294967295 | 0;
-              $cmp495$i = ($rem494$i | 0) == (0 | 0);
-              if ($cmp495$i) {
-               $i$3512$i = $mul499$i;
-               $j$1513$i = $inc500$i;
-              } else {
-               $j$2$i = $inc500$i;
-               break while_out$85;
+             while_out$79 : do block168 : {
+              $mul437$i = Math_imul($i$2516$i, 10);
+              $inc438$i = $e$2517$i + 1 | 0;
+              $cmp433$i = ($234 >>> 0 | 0) >>> 0 < ($mul437$i >>> 0 | 0) >>> 0;
+              if ($cmp433$i) block169 : {
+               $a$8$i = $a$5$lcssa$i;
+               $d$4$i = $d$2$lcssa$i;
+               $e$4$i = $inc438$i;
+               break while_out$79;
+              } else block170 : {
+               $e$2517$i = $inc438$i;
+               $i$2516$i = $mul437$i;
               }
-              continue while_out$85;
+              continue while_out$79;
              } while (0);
-            } else $j$2$i = 9;
+            }
            }
-           $or504$i = $t$addr$0$i | 32 | 0;
-           $cmp505$i = ($or504$i | 0) == (102 | 0);
-           $sub$ptr$lhs$cast508$i = $z$7$i$lcssa;
-           $sub$ptr$sub510$i = $sub$ptr$lhs$cast508$i - $sub$ptr$rhs$cast345$i | 0;
-           $sub$ptr$div511$i = $sub$ptr$sub510$i >> 2 | 0;
-           $238 = Math_imul($sub$ptr$div511$i, 9);
-           $mul513$i = $238 + 4294967287 | 0;
-           if ($cmp505$i) {
-            $sub514$i = $mul513$i - $j$2$i | 0;
-            $cmp515$i = ($sub514$i | 0) < (0 | 0);
-            if ($cmp515$i) wasm2asm_i32$1 = 0; else wasm2asm_i32$1 = $sub514$i;
-            $$sub514$i = wasm2asm_i32$1;
-            $cmp528$i = ($p$addr$2$i | 0) < ($$sub514$i | 0);
-            if ($cmp528$i) wasm2asm_i32$1 = $p$addr$2$i; else wasm2asm_i32$1 = $$sub514$i;
-            $p$addr$2$$sub514398$i = wasm2asm_i32$1;
-            $and610$pre$phi$iZ2D = 0;
-            $p$addr$3$i = $p$addr$2$$sub514398$i;
-            $t$addr$1$i = $t$addr$0$i;
-            break do_once$83;
-           } else {
-            $add561$i = $mul513$i + $e$5$ph$i | 0;
-            $sub562$i = $add561$i - $j$2$i | 0;
-            $cmp563$i = ($sub562$i | 0) < (0 | 0);
-            if ($cmp563$i) wasm2asm_i32$1 = 0; else wasm2asm_i32$1 = $sub562$i;
-            $$sub562$i = wasm2asm_i32$1;
-            $cmp577$i = ($p$addr$2$i | 0) < ($$sub562$i | 0);
-            if ($cmp577$i) wasm2asm_i32$1 = $p$addr$2$i; else wasm2asm_i32$1 = $$sub562$i;
-            $p$addr$2$$sub562399$i = wasm2asm_i32$1;
-            $and610$pre$phi$iZ2D = 0;
-            $p$addr$3$i = $p$addr$2$$sub562399$i;
-            $t$addr$1$i = $t$addr$0$i;
-            break do_once$83;
-           }
-          } else {
-           $$pre567$i = $fl$1$and219 & 8 | 0;
-           $and610$pre$phi$iZ2D = $$pre567$i;
-           $p$addr$3$i = $$p$i;
-           $t$addr$1$i = $t$0;
+           $add$ptr442$i = $d$4$i + 4 | 0;
+           $cmp443$i = ($z$3$lcssa$i >>> 0 | 0) >>> 0 > ($add$ptr442$i >>> 0 | 0) >>> 0;
+           if ($cmp443$i) wasm2asm_i32$1 = $add$ptr442$i; else wasm2asm_i32$1 = $z$3$lcssa$i;
+           $add$ptr442$z$3$i = wasm2asm_i32$1;
+           $a$9$ph$i = $a$8$i;
+           $e$5$ph$i = $e$4$i;
+           $z$7$ph$i = $add$ptr442$z$3$i;
+          } else block171 : {
+           $a$9$ph$i = $a$3$lcssa$i;
+           $e$5$ph$i = $e$1$i;
+           $z$7$ph$i = $z$3$lcssa$i;
           }
-         }
-         $239 = $p$addr$3$i | $and610$pre$phi$iZ2D | 0;
-         $240 = ($239 | 0) != (0 | 0);
-         $lor$ext$i = $240 & 1 | 0;
-         $or613$i = $t$addr$1$i | 32 | 0;
-         $cmp614$i = ($or613$i | 0) == (102 | 0);
-         if ($cmp614$i) {
-          $cmp617$i = ($e$5$ph$i | 0) > (0 | 0);
-          if ($cmp617$i) wasm2asm_i32$1 = $e$5$ph$i; else wasm2asm_i32$1 = 0;
-          $add620$i = wasm2asm_i32$1;
-          $estr$2$i = 0;
-          $sub$ptr$sub650$pn$i = $add620$i;
-         } else {
-          $cmp623$i = ($e$5$ph$i | 0) < (0 | 0);
-          if ($cmp623$i) wasm2asm_i32$1 = $sub626$le$i; else wasm2asm_i32$1 = $e$5$ph$i;
-          $cond629$i = wasm2asm_i32$1;
-          $241 = ($cond629$i | 0) < (0 | 0);
-          $242 = ($241 << 31 | 0) >> 31 | 0;
-          $243 = _fmt_u($cond629$i | 0, $242 | 0, $arrayidx$i$236 | 0) | 0;
-          $sub$ptr$rhs$cast634$504$i = $243;
-          $sub$ptr$sub635$505$i = $sub$ptr$lhs$cast160$i - $sub$ptr$rhs$cast634$504$i | 0;
-          $cmp636$506$i = ($sub$ptr$sub635$505$i | 0) < (2 | 0);
-          if ($cmp636$506$i) {
-           $estr$1507$i = $243;
-           while_out$87 : do {
-            $incdec$ptr639$i = $estr$1507$i + 4294967295 | 0;
-            HEAP8[$incdec$ptr639$i >> 0] = 48;
-            $sub$ptr$rhs$cast634$i = $incdec$ptr639$i;
-            $sub$ptr$sub635$i = $sub$ptr$lhs$cast160$i - $sub$ptr$rhs$cast634$i | 0;
-            $cmp636$i = ($sub$ptr$sub635$i | 0) < (2 | 0);
-            if ($cmp636$i) $estr$1507$i = $incdec$ptr639$i; else {
-             $estr$1$lcssa$i = $incdec$ptr639$i;
-             break while_out$87;
-            }
-            continue while_out$87;
-           } while (0);
-          } else $estr$1$lcssa$i = $243;
-          $244 = $e$5$ph$i >> 31 | 0;
-          $245 = $244 & 2 | 0;
-          $246 = $245 + 43 | 0;
-          $conv644$i = $246 & 255 | 0;
-          $incdec$ptr645$i = $estr$1$lcssa$i + 4294967295 | 0;
-          HEAP8[$incdec$ptr645$i >> 0] = $conv644$i;
-          $conv646$i = $t$addr$1$i & 255 | 0;
-          $incdec$ptr647$i = $estr$1$lcssa$i + 4294967294 | 0;
-          HEAP8[$incdec$ptr647$i >> 0] = $conv646$i;
-          $sub$ptr$rhs$cast649$i = $incdec$ptr647$i;
-          $sub$ptr$sub650$i = $sub$ptr$lhs$cast160$i - $sub$ptr$rhs$cast649$i | 0;
-          $estr$2$i = $incdec$ptr647$i;
-          $sub$ptr$sub650$pn$i = $sub$ptr$sub650$i;
-         }
-         $add608$i = $pl$0$i + 1 | 0;
-         $add612$i = $add608$i + $p$addr$3$i | 0;
-         $l$1$i = $add612$i + $lor$ext$i | 0;
-         $add653$i = $l$1$i + $sub$ptr$sub650$pn$i | 0;
-         _pad($f | 0, 32 | 0, $w$1 | 0, $add653$i | 0, $fl$1$and219 | 0);
-         $247 = HEAPU32[$f >> 2] | 0;
-         $and$i$436$i = $247 & 32 | 0;
-         $tobool$i$437$i = ($and$i$436$i | 0) == (0 | 0);
-         if ($tobool$i$437$i) ___fwritex($prefix$0$i | 0, $pl$0$i | 0, $f | 0) | 0;
-         $xor655$i = $fl$1$and219 ^ 65536 | 0;
-         _pad($f | 0, 48 | 0, $w$1 | 0, $add653$i | 0, $xor655$i | 0);
-         do_once$89 : {
-          if ($cmp614$i) {
-           $cmp660$i = ($a$9$ph$i >>> 0 | 0) >>> 0 > ($arraydecay208$add$ptr213$i >>> 0 | 0) >>> 0;
-           if ($cmp660$i) wasm2asm_i32$1 = $arraydecay208$add$ptr213$i; else wasm2asm_i32$1 = $a$9$ph$i;
-           $r$0$a$9$i = wasm2asm_i32$1;
-           $d$5494$i = $r$0$a$9$i;
-           while_out$90 : do {
-            $248 = HEAPU32[$d$5494$i >> 2] | 0;
-            $249 = _fmt_u($248 | 0, 0 | 0, $add$ptr671$i | 0) | 0;
-            $cmp673$i = ($d$5494$i | 0) == ($r$0$a$9$i | 0);
-            do_once$92 : {
-             if ($cmp673$i) {
-              $cmp686$i = ($249 | 0) == ($add$ptr671$i | 0);
-              if (($cmp686$i | 0) == (0 | 0)) {
-               $s668$1$i = $249;
-               break do_once$92;
-              }
-              HEAP8[$incdec$ptr689$i >> 0] = 48;
-              $s668$1$i = $incdec$ptr689$i;
-             } else {
-              $cmp678$491$i = ($249 >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
-              if ($cmp678$491$i) $s668$0492$i = $249; else {
-               $s668$1$i = $249;
-               break do_once$92;
-              }
-              while_out$93 : do {
-               $incdec$ptr681$i = $s668$0492$i + 4294967295 | 0;
-               HEAP8[$incdec$ptr681$i >> 0] = 48;
-               $cmp678$i = ($incdec$ptr681$i >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
-               if ($cmp678$i) $s668$0492$i = $incdec$ptr681$i; else {
-                $s668$1$i = $incdec$ptr681$i;
-                break while_out$93;
-               }
-               continue while_out$93;
-              } while (0);
-             }
-            }
-            $250 = HEAPU32[$f >> 2] | 0;
-            $and$i$442$i = $250 & 32 | 0;
-            $tobool$i$443$i = ($and$i$442$i | 0) == (0 | 0);
-            if ($tobool$i$443$i) {
-             $sub$ptr$rhs$cast695$i = $s668$1$i;
-             $sub$ptr$sub696$i = $sub$ptr$lhs$cast694$i - $sub$ptr$rhs$cast695$i | 0;
-             ___fwritex($s668$1$i | 0, $sub$ptr$sub696$i | 0, $f | 0) | 0;
-            }
-            $incdec$ptr698$i = $d$5494$i + 4 | 0;
-            $cmp665$i = ($incdec$ptr698$i >>> 0 | 0) >>> 0 > ($arraydecay208$add$ptr213$i >>> 0 | 0) >>> 0;
-            if ($cmp665$i) {
-             $incdec$ptr698$i$lcssa = $incdec$ptr698$i;
-             break while_out$90;
-            } else $d$5494$i = $incdec$ptr698$i;
-            continue while_out$90;
-           } while (0);
-           $251 = ($239 | 0) == (0 | 0);
-           do_once$95 : {
-            if (($251 | 0) == (0 | 0)) {
-             $252 = HEAPU32[$f >> 2] | 0;
-             $and$i$448$i = $252 & 32 | 0;
-             $tobool$i$449$i = ($and$i$448$i | 0) == (0 | 0);
-             if (($tobool$i$449$i | 0) == (0 | 0)) break do_once$95;
-             ___fwritex(4143 | 0, 1 | 0, $f | 0) | 0;
-            }
+          $sub626$le$i = 0 - $e$5$ph$i | 0;
+          $z$7$i = $z$7$ph$i;
+          while_out$81 : do block172 : {
+           $cmp450$i = ($z$7$i >>> 0 | 0) >>> 0 > ($a$9$ph$i >>> 0 | 0) >>> 0;
+           if (($cmp450$i | 0) == (0 | 0)) block173 : {
+            $cmp450$lcssa$i = 0;
+            $z$7$i$lcssa = $z$7$i;
+            break while_out$81;
            }
-           $cmp707$486$i = ($incdec$ptr698$i$lcssa >>> 0 | 0) >>> 0 < ($z$7$i$lcssa >>> 0 | 0) >>> 0;
-           $cmp710$487$i = ($p$addr$3$i | 0) > (0 | 0);
-           $253 = $cmp710$487$i & $cmp707$486$i | 0;
-           if ($253) {
-            $d$6488$i = $incdec$ptr698$i$lcssa;
-            $p$addr$4489$i = $p$addr$3$i;
-            while_out$96 : do {
-             $254 = HEAPU32[$d$6488$i >> 2] | 0;
-             $255 = _fmt_u($254 | 0, 0 | 0, $add$ptr671$i | 0) | 0;
-             $cmp722$483$i = ($255 >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
-             if ($cmp722$483$i) {
-              $s715$0484$i = $255;
-              while_out$98 : do {
-               $incdec$ptr725$i = $s715$0484$i + 4294967295 | 0;
-               HEAP8[$incdec$ptr725$i >> 0] = 48;
-               $cmp722$i = ($incdec$ptr725$i >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
-               if ($cmp722$i) $s715$0484$i = $incdec$ptr725$i; else {
-                $s715$0$lcssa$i = $incdec$ptr725$i;
-                break while_out$98;
+           $arrayidx453$i = $z$7$i + 4294967292 | 0;
+           $235 = HEAPU32[$arrayidx453$i >> 2] | 0;
+           $lnot455$i = ($235 | 0) == (0 | 0);
+           if ($lnot455$i) $z$7$i = $arrayidx453$i; else block174 : {
+            $cmp450$lcssa$i = 1;
+            $z$7$i$lcssa = $z$7$i;
+            break while_out$81;
+           }
+           continue while_out$81;
+          } while (0);
+          do_once$83 : {
+           if ($cmp338$i) block175 : {
+            $236 = $tobool341$i & 1 | 0;
+            $inc468$i = $236 ^ 1 | 0;
+            $$p$inc468$i = $inc468$i + $$p$i | 0;
+            $cmp470$i = ($$p$inc468$i | 0) > ($e$5$ph$i | 0);
+            $cmp473$i = ($e$5$ph$i | 0) > (4294967291 | 0);
+            $or$cond2$i = $cmp470$i & $cmp473$i | 0;
+            if ($or$cond2$i) block176 : {
+             $dec476$i = $t$0 + 4294967295 | 0;
+             $add477$neg$i = $$p$inc468$i + 4294967295 | 0;
+             $sub478$i = $add477$neg$i - $e$5$ph$i | 0;
+             $p$addr$2$i = $sub478$i;
+             $t$addr$0$i = $dec476$i;
+            } else block177 : {
+             $sub480$i = $t$0 + 4294967294 | 0;
+             $dec481$i = $$p$inc468$i + 4294967295 | 0;
+             $p$addr$2$i = $dec481$i;
+             $t$addr$0$i = $sub480$i;
+            }
+            $and483$i = $fl$1$and219 & 8 | 0;
+            $tobool484$i = ($and483$i | 0) == (0 | 0);
+            if (($tobool484$i | 0) == (0 | 0)) block178 : {
+             $and610$pre$phi$iZ2D = $and483$i;
+             $p$addr$3$i = $p$addr$2$i;
+             $t$addr$1$i = $t$addr$0$i;
+             break do_once$83;
+            }
+            do_once$84 : {
+             if ($cmp450$lcssa$i) block179 : {
+              $arrayidx489$i = $z$7$i$lcssa + 4294967292 | 0;
+              $237 = HEAPU32[$arrayidx489$i >> 2] | 0;
+              $tobool490$i = ($237 | 0) == (0 | 0);
+              if ($tobool490$i) block180 : {
+               $j$2$i = 9;
+               break do_once$84;
+              }
+              $rem494$510$i = ((($237 >>> 0 | 0) >>> 0) % (10 >>> 0) | 0) & 4294967295 | 0;
+              $cmp495$511$i = ($rem494$510$i | 0) == (0 | 0);
+              if ($cmp495$511$i) block181 : {
+               $i$3512$i = 10;
+               $j$1513$i = 0;
+              } else block182 : {
+               $j$2$i = 0;
+               break do_once$84;
+              }
+              while_out$85 : do block183 : {
+               $mul499$i = Math_imul($i$3512$i, 10);
+               $inc500$i = $j$1513$i + 1 | 0;
+               $rem494$i = ((($237 >>> 0 | 0) >>> 0) % (($mul499$i >>> 0 | 0) >>> 0) | 0) & 4294967295 | 0;
+               $cmp495$i = ($rem494$i | 0) == (0 | 0);
+               if ($cmp495$i) block184 : {
+                $i$3512$i = $mul499$i;
+                $j$1513$i = $inc500$i;
+               } else block185 : {
+                $j$2$i = $inc500$i;
+                break while_out$85;
                }
-               continue while_out$98;
+               continue while_out$85;
               } while (0);
-             } else $s715$0$lcssa$i = $255;
-             $256 = HEAPU32[$f >> 2] | 0;
-             $and$i$454$i = $256 & 32 | 0;
-             $tobool$i$455$i = ($and$i$454$i | 0) == (0 | 0);
-             if ($tobool$i$455$i) {
-              $cmp727$i = ($p$addr$4489$i | 0) > (9 | 0);
-              if ($cmp727$i) wasm2asm_i32$1 = 9; else wasm2asm_i32$1 = $p$addr$4489$i;
-              $cond732$i = wasm2asm_i32$1;
-              ___fwritex($s715$0$lcssa$i | 0, $cond732$i | 0, $f | 0) | 0;
+             } else $j$2$i = 9;
+            }
+            $or504$i = $t$addr$0$i | 32 | 0;
+            $cmp505$i = ($or504$i | 0) == (102 | 0);
+            $sub$ptr$lhs$cast508$i = $z$7$i$lcssa;
+            $sub$ptr$sub510$i = $sub$ptr$lhs$cast508$i - $sub$ptr$rhs$cast345$i | 0;
+            $sub$ptr$div511$i = $sub$ptr$sub510$i >> 2 | 0;
+            $238 = Math_imul($sub$ptr$div511$i, 9);
+            $mul513$i = $238 + 4294967287 | 0;
+            if ($cmp505$i) block186 : {
+             $sub514$i = $mul513$i - $j$2$i | 0;
+             $cmp515$i = ($sub514$i | 0) < (0 | 0);
+             if ($cmp515$i) wasm2asm_i32$1 = 0; else wasm2asm_i32$1 = $sub514$i;
+             $$sub514$i = wasm2asm_i32$1;
+             $cmp528$i = ($p$addr$2$i | 0) < ($$sub514$i | 0);
+             if ($cmp528$i) wasm2asm_i32$1 = $p$addr$2$i; else wasm2asm_i32$1 = $$sub514$i;
+             $p$addr$2$$sub514398$i = wasm2asm_i32$1;
+             $and610$pre$phi$iZ2D = 0;
+             $p$addr$3$i = $p$addr$2$$sub514398$i;
+             $t$addr$1$i = $t$addr$0$i;
+             break do_once$83;
+            } else block187 : {
+             $add561$i = $mul513$i + $e$5$ph$i | 0;
+             $sub562$i = $add561$i - $j$2$i | 0;
+             $cmp563$i = ($sub562$i | 0) < (0 | 0);
+             if ($cmp563$i) wasm2asm_i32$1 = 0; else wasm2asm_i32$1 = $sub562$i;
+             $$sub562$i = wasm2asm_i32$1;
+             $cmp577$i = ($p$addr$2$i | 0) < ($$sub562$i | 0);
+             if ($cmp577$i) wasm2asm_i32$1 = $p$addr$2$i; else wasm2asm_i32$1 = $$sub562$i;
+             $p$addr$2$$sub562399$i = wasm2asm_i32$1;
+             $and610$pre$phi$iZ2D = 0;
+             $p$addr$3$i = $p$addr$2$$sub562399$i;
+             $t$addr$1$i = $t$addr$0$i;
+             break do_once$83;
+            }
+           } else block188 : {
+            $$pre567$i = $fl$1$and219 & 8 | 0;
+            $and610$pre$phi$iZ2D = $$pre567$i;
+            $p$addr$3$i = $$p$i;
+            $t$addr$1$i = $t$0;
+           }
+          }
+          $239 = $p$addr$3$i | $and610$pre$phi$iZ2D | 0;
+          $240 = ($239 | 0) != (0 | 0);
+          $lor$ext$i = $240 & 1 | 0;
+          $or613$i = $t$addr$1$i | 32 | 0;
+          $cmp614$i = ($or613$i | 0) == (102 | 0);
+          if ($cmp614$i) block189 : {
+           $cmp617$i = ($e$5$ph$i | 0) > (0 | 0);
+           if ($cmp617$i) wasm2asm_i32$1 = $e$5$ph$i; else wasm2asm_i32$1 = 0;
+           $add620$i = wasm2asm_i32$1;
+           $estr$2$i = 0;
+           $sub$ptr$sub650$pn$i = $add620$i;
+          } else block190 : {
+           $cmp623$i = ($e$5$ph$i | 0) < (0 | 0);
+           if ($cmp623$i) wasm2asm_i32$1 = $sub626$le$i; else wasm2asm_i32$1 = $e$5$ph$i;
+           $cond629$i = wasm2asm_i32$1;
+           $241 = ($cond629$i | 0) < (0 | 0);
+           $242 = ($241 << 31 | 0) >> 31 | 0;
+           $243 = _fmt_u($cond629$i | 0, $242 | 0, $arrayidx$i$236 | 0) | 0;
+           $sub$ptr$rhs$cast634$504$i = $243;
+           $sub$ptr$sub635$505$i = $sub$ptr$lhs$cast160$i - $sub$ptr$rhs$cast634$504$i | 0;
+           $cmp636$506$i = ($sub$ptr$sub635$505$i | 0) < (2 | 0);
+           if ($cmp636$506$i) block191 : {
+            $estr$1507$i = $243;
+            while_out$87 : do block192 : {
+             $incdec$ptr639$i = $estr$1507$i + 4294967295 | 0;
+             HEAP8[$incdec$ptr639$i >> 0] = 48;
+             $sub$ptr$rhs$cast634$i = $incdec$ptr639$i;
+             $sub$ptr$sub635$i = $sub$ptr$lhs$cast160$i - $sub$ptr$rhs$cast634$i | 0;
+             $cmp636$i = ($sub$ptr$sub635$i | 0) < (2 | 0);
+             if ($cmp636$i) $estr$1507$i = $incdec$ptr639$i; else block193 : {
+              $estr$1$lcssa$i = $incdec$ptr639$i;
+              break while_out$87;
              }
-             $incdec$ptr734$i = $d$6488$i + 4 | 0;
-             $sub735$i = $p$addr$4489$i + 4294967287 | 0;
-             $cmp707$i = ($incdec$ptr734$i >>> 0 | 0) >>> 0 < ($z$7$i$lcssa >>> 0 | 0) >>> 0;
-             $cmp710$i = ($p$addr$4489$i | 0) > (9 | 0);
-             $257 = $cmp710$i & $cmp707$i | 0;
-             if ($257) {
-              $d$6488$i = $incdec$ptr734$i;
-              $p$addr$4489$i = $sub735$i;
-             } else {
-              $p$addr$4$lcssa$i = $sub735$i;
-              break while_out$96;
-             }
-             continue while_out$96;
+             continue while_out$87;
             } while (0);
-           } else $p$addr$4$lcssa$i = $p$addr$3$i;
-           $add737$i = $p$addr$4$lcssa$i + 9 | 0;
-           _pad($f | 0, 48 | 0, $add737$i | 0, 9 | 0, 0 | 0);
-          } else {
-           $add$ptr742$i = $a$9$ph$i + 4 | 0;
-           if ($cmp450$lcssa$i) wasm2asm_i32$1 = $z$7$i$lcssa; else wasm2asm_i32$1 = $add$ptr742$i;
-           $z$7$add$ptr742$i = wasm2asm_i32$1;
-           $cmp748$499$i = ($p$addr$3$i | 0) > (4294967295 | 0);
-           if ($cmp748$499$i) {
-            $tobool781$i = ($and610$pre$phi$iZ2D | 0) == (0 | 0);
-            $d$7500$i = $a$9$ph$i;
-            $p$addr$5501$i = $p$addr$3$i;
-            while_out$100 : do {
-             $258 = HEAPU32[$d$7500$i >> 2] | 0;
-             $259 = _fmt_u($258 | 0, 0 | 0, $add$ptr671$i | 0) | 0;
-             $cmp760$i = ($259 | 0) == ($add$ptr671$i | 0);
-             if ($cmp760$i) {
-              HEAP8[$incdec$ptr689$i >> 0] = 48;
-              $s753$0$i = $incdec$ptr689$i;
-             } else $s753$0$i = $259;
-             $cmp765$i = ($d$7500$i | 0) == ($a$9$ph$i | 0);
-             do_once$102 : {
-              if ($cmp765$i) {
-               $incdec$ptr776$i = $s753$0$i + 1 | 0;
-               $260 = HEAPU32[$f >> 2] | 0;
-               $and$i$460$i = $260 & 32 | 0;
-               $tobool$i$461$i = ($and$i$460$i | 0) == (0 | 0);
-               if ($tobool$i$461$i) ___fwritex($s753$0$i | 0, 1 | 0, $f | 0) | 0;
-               $cmp777$i = ($p$addr$5501$i | 0) < (1 | 0);
-               $or$cond401$i = $tobool781$i & $cmp777$i | 0;
-               if ($or$cond401$i) {
-                $s753$2$i = $incdec$ptr776$i;
-                break do_once$102;
+           } else $estr$1$lcssa$i = $243;
+           $244 = $e$5$ph$i >> 31 | 0;
+           $245 = $244 & 2 | 0;
+           $246 = $245 + 43 | 0;
+           $conv644$i = $246 & 255 | 0;
+           $incdec$ptr645$i = $estr$1$lcssa$i + 4294967295 | 0;
+           HEAP8[$incdec$ptr645$i >> 0] = $conv644$i;
+           $conv646$i = $t$addr$1$i & 255 | 0;
+           $incdec$ptr647$i = $estr$1$lcssa$i + 4294967294 | 0;
+           HEAP8[$incdec$ptr647$i >> 0] = $conv646$i;
+           $sub$ptr$rhs$cast649$i = $incdec$ptr647$i;
+           $sub$ptr$sub650$i = $sub$ptr$lhs$cast160$i - $sub$ptr$rhs$cast649$i | 0;
+           $estr$2$i = $incdec$ptr647$i;
+           $sub$ptr$sub650$pn$i = $sub$ptr$sub650$i;
+          }
+          $add608$i = $pl$0$i + 1 | 0;
+          $add612$i = $add608$i + $p$addr$3$i | 0;
+          $l$1$i = $add612$i + $lor$ext$i | 0;
+          $add653$i = $l$1$i + $sub$ptr$sub650$pn$i | 0;
+          _pad($f | 0, 32 | 0, $w$1 | 0, $add653$i | 0, $fl$1$and219 | 0);
+          $247 = HEAPU32[$f >> 2] | 0;
+          $and$i$436$i = $247 & 32 | 0;
+          $tobool$i$437$i = ($and$i$436$i | 0) == (0 | 0);
+          if ($tobool$i$437$i) ___fwritex($prefix$0$i | 0, $pl$0$i | 0, $f | 0) | 0;
+          $xor655$i = $fl$1$and219 ^ 65536 | 0;
+          _pad($f | 0, 48 | 0, $w$1 | 0, $add653$i | 0, $xor655$i | 0);
+          do_once$89 : {
+           if ($cmp614$i) block194 : {
+            $cmp660$i = ($a$9$ph$i >>> 0 | 0) >>> 0 > ($arraydecay208$add$ptr213$i >>> 0 | 0) >>> 0;
+            if ($cmp660$i) wasm2asm_i32$1 = $arraydecay208$add$ptr213$i; else wasm2asm_i32$1 = $a$9$ph$i;
+            $r$0$a$9$i = wasm2asm_i32$1;
+            $d$5494$i = $r$0$a$9$i;
+            while_out$90 : do block195 : {
+             $248 = HEAPU32[$d$5494$i >> 2] | 0;
+             $249 = _fmt_u($248 | 0, 0 | 0, $add$ptr671$i | 0) | 0;
+             $cmp673$i = ($d$5494$i | 0) == ($r$0$a$9$i | 0);
+             do_once$92 : {
+              if ($cmp673$i) block196 : {
+               $cmp686$i = ($249 | 0) == ($add$ptr671$i | 0);
+               if (($cmp686$i | 0) == (0 | 0)) block197 : {
+                $s668$1$i = $249;
+                break do_once$92;
                }
-               $261 = HEAPU32[$f >> 2] | 0;
-               $and$i$466$i = $261 & 32 | 0;
-               $tobool$i$467$i = ($and$i$466$i | 0) == (0 | 0);
-               if (($tobool$i$467$i | 0) == (0 | 0)) {
-                $s753$2$i = $incdec$ptr776$i;
-                break do_once$102;
+               HEAP8[$incdec$ptr689$i >> 0] = 48;
+               $s668$1$i = $incdec$ptr689$i;
+              } else block198 : {
+               $cmp678$491$i = ($249 >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
+               if ($cmp678$491$i) $s668$0492$i = $249; else block199 : {
+                $s668$1$i = $249;
+                break do_once$92;
                }
-               ___fwritex(4143 | 0, 1 | 0, $f | 0) | 0;
-               $s753$2$i = $incdec$ptr776$i;
-              } else {
-               $cmp770$495$i = ($s753$0$i >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
-               if ($cmp770$495$i) $s753$1496$i = $s753$0$i; else {
-                $s753$2$i = $s753$0$i;
-                break do_once$102;
-               }
-               while_out$103 : do {
-                $incdec$ptr773$i = $s753$1496$i + 4294967295 | 0;
-                HEAP8[$incdec$ptr773$i >> 0] = 48;
-                $cmp770$i = ($incdec$ptr773$i >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
-                if ($cmp770$i) $s753$1496$i = $incdec$ptr773$i; else {
-                 $s753$2$i = $incdec$ptr773$i;
-                 break while_out$103;
+               while_out$93 : do block200 : {
+                $incdec$ptr681$i = $s668$0492$i + 4294967295 | 0;
+                HEAP8[$incdec$ptr681$i >> 0] = 48;
+                $cmp678$i = ($incdec$ptr681$i >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
+                if ($cmp678$i) $s668$0492$i = $incdec$ptr681$i; else block201 : {
+                 $s668$1$i = $incdec$ptr681$i;
+                 break while_out$93;
                 }
-                continue while_out$103;
+                continue while_out$93;
                } while (0);
               }
              }
-             $sub$ptr$rhs$cast788$i = $s753$2$i;
-             $sub$ptr$sub789$i = $sub$ptr$lhs$cast694$i - $sub$ptr$rhs$cast788$i | 0;
-             $262 = HEAPU32[$f >> 2] | 0;
-             $and$i$472$i = $262 & 32 | 0;
-             $tobool$i$473$i = ($and$i$472$i | 0) == (0 | 0);
-             if ($tobool$i$473$i) {
-              $cmp790$i = ($p$addr$5501$i | 0) > ($sub$ptr$sub789$i | 0);
-              if ($cmp790$i) wasm2asm_i32$1 = $sub$ptr$sub789$i; else wasm2asm_i32$1 = $p$addr$5501$i;
-              $cond800$i = wasm2asm_i32$1;
-              ___fwritex($s753$2$i | 0, $cond800$i | 0, $f | 0) | 0;
+             $250 = HEAPU32[$f >> 2] | 0;
+             $and$i$442$i = $250 & 32 | 0;
+             $tobool$i$443$i = ($and$i$442$i | 0) == (0 | 0);
+             if ($tobool$i$443$i) block202 : {
+              $sub$ptr$rhs$cast695$i = $s668$1$i;
+              $sub$ptr$sub696$i = $sub$ptr$lhs$cast694$i - $sub$ptr$rhs$cast695$i | 0;
+              ___fwritex($s668$1$i | 0, $sub$ptr$sub696$i | 0, $f | 0) | 0;
              }
-             $sub806$i = $p$addr$5501$i - $sub$ptr$sub789$i | 0;
-             $incdec$ptr808$i = $d$7500$i + 4 | 0;
-             $cmp745$i = ($incdec$ptr808$i >>> 0 | 0) >>> 0 < ($z$7$add$ptr742$i >>> 0 | 0) >>> 0;
-             $cmp748$i = ($sub806$i | 0) > (4294967295 | 0);
-             $263 = $cmp745$i & $cmp748$i | 0;
-             if ($263) {
-              $d$7500$i = $incdec$ptr808$i;
-              $p$addr$5501$i = $sub806$i;
-             } else {
-              $p$addr$5$lcssa$i = $sub806$i;
-              break while_out$100;
-             }
-             continue while_out$100;
+             $incdec$ptr698$i = $d$5494$i + 4 | 0;
+             $cmp665$i = ($incdec$ptr698$i >>> 0 | 0) >>> 0 > ($arraydecay208$add$ptr213$i >>> 0 | 0) >>> 0;
+             if ($cmp665$i) block203 : {
+              $incdec$ptr698$i$lcssa = $incdec$ptr698$i;
+              break while_out$90;
+             } else $d$5494$i = $incdec$ptr698$i;
+             continue while_out$90;
             } while (0);
-           } else $p$addr$5$lcssa$i = $p$addr$3$i;
-           $add810$i = $p$addr$5$lcssa$i + 18 | 0;
-           _pad($f | 0, 48 | 0, $add810$i | 0, 18 | 0, 0 | 0);
-           $264 = HEAPU32[$f >> 2] | 0;
-           $and$i$i = $264 & 32 | 0;
-           $tobool$i$i = ($and$i$i | 0) == (0 | 0);
-           if (($tobool$i$i | 0) == (0 | 0)) break do_once$89;
-           $sub$ptr$rhs$cast812$i = $estr$2$i;
-           $sub$ptr$sub813$i = $sub$ptr$lhs$cast160$i - $sub$ptr$rhs$cast812$i | 0;
-           ___fwritex($estr$2$i | 0, $sub$ptr$sub813$i | 0, $f | 0) | 0;
+            $251 = ($239 | 0) == (0 | 0);
+            do_once$95 : {
+             if (($251 | 0) == (0 | 0)) block204 : {
+              $252 = HEAPU32[$f >> 2] | 0;
+              $and$i$448$i = $252 & 32 | 0;
+              $tobool$i$449$i = ($and$i$448$i | 0) == (0 | 0);
+              if (($tobool$i$449$i | 0) == (0 | 0)) break do_once$95;
+              ___fwritex(4143 | 0, 1 | 0, $f | 0) | 0;
+             }
+            }
+            $cmp707$486$i = ($incdec$ptr698$i$lcssa >>> 0 | 0) >>> 0 < ($z$7$i$lcssa >>> 0 | 0) >>> 0;
+            $cmp710$487$i = ($p$addr$3$i | 0) > (0 | 0);
+            $253 = $cmp710$487$i & $cmp707$486$i | 0;
+            if ($253) block205 : {
+             $d$6488$i = $incdec$ptr698$i$lcssa;
+             $p$addr$4489$i = $p$addr$3$i;
+             while_out$96 : do block206 : {
+              $254 = HEAPU32[$d$6488$i >> 2] | 0;
+              $255 = _fmt_u($254 | 0, 0 | 0, $add$ptr671$i | 0) | 0;
+              $cmp722$483$i = ($255 >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
+              if ($cmp722$483$i) block207 : {
+               $s715$0484$i = $255;
+               while_out$98 : do block208 : {
+                $incdec$ptr725$i = $s715$0484$i + 4294967295 | 0;
+                HEAP8[$incdec$ptr725$i >> 0] = 48;
+                $cmp722$i = ($incdec$ptr725$i >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
+                if ($cmp722$i) $s715$0484$i = $incdec$ptr725$i; else block209 : {
+                 $s715$0$lcssa$i = $incdec$ptr725$i;
+                 break while_out$98;
+                }
+                continue while_out$98;
+               } while (0);
+              } else $s715$0$lcssa$i = $255;
+              $256 = HEAPU32[$f >> 2] | 0;
+              $and$i$454$i = $256 & 32 | 0;
+              $tobool$i$455$i = ($and$i$454$i | 0) == (0 | 0);
+              if ($tobool$i$455$i) block210 : {
+               $cmp727$i = ($p$addr$4489$i | 0) > (9 | 0);
+               if ($cmp727$i) wasm2asm_i32$1 = 9; else wasm2asm_i32$1 = $p$addr$4489$i;
+               $cond732$i = wasm2asm_i32$1;
+               ___fwritex($s715$0$lcssa$i | 0, $cond732$i | 0, $f | 0) | 0;
+              }
+              $incdec$ptr734$i = $d$6488$i + 4 | 0;
+              $sub735$i = $p$addr$4489$i + 4294967287 | 0;
+              $cmp707$i = ($incdec$ptr734$i >>> 0 | 0) >>> 0 < ($z$7$i$lcssa >>> 0 | 0) >>> 0;
+              $cmp710$i = ($p$addr$4489$i | 0) > (9 | 0);
+              $257 = $cmp710$i & $cmp707$i | 0;
+              if ($257) block211 : {
+               $d$6488$i = $incdec$ptr734$i;
+               $p$addr$4489$i = $sub735$i;
+              } else block212 : {
+               $p$addr$4$lcssa$i = $sub735$i;
+               break while_out$96;
+              }
+              continue while_out$96;
+             } while (0);
+            } else $p$addr$4$lcssa$i = $p$addr$3$i;
+            $add737$i = $p$addr$4$lcssa$i + 9 | 0;
+            _pad($f | 0, 48 | 0, $add737$i | 0, 9 | 0, 0 | 0);
+           } else block213 : {
+            $add$ptr742$i = $a$9$ph$i + 4 | 0;
+            if ($cmp450$lcssa$i) wasm2asm_i32$1 = $z$7$i$lcssa; else wasm2asm_i32$1 = $add$ptr742$i;
+            $z$7$add$ptr742$i = wasm2asm_i32$1;
+            $cmp748$499$i = ($p$addr$3$i | 0) > (4294967295 | 0);
+            if ($cmp748$499$i) block214 : {
+             $tobool781$i = ($and610$pre$phi$iZ2D | 0) == (0 | 0);
+             $d$7500$i = $a$9$ph$i;
+             $p$addr$5501$i = $p$addr$3$i;
+             while_out$100 : do block215 : {
+              $258 = HEAPU32[$d$7500$i >> 2] | 0;
+              $259 = _fmt_u($258 | 0, 0 | 0, $add$ptr671$i | 0) | 0;
+              $cmp760$i = ($259 | 0) == ($add$ptr671$i | 0);
+              if ($cmp760$i) block216 : {
+               HEAP8[$incdec$ptr689$i >> 0] = 48;
+               $s753$0$i = $incdec$ptr689$i;
+              } else $s753$0$i = $259;
+              $cmp765$i = ($d$7500$i | 0) == ($a$9$ph$i | 0);
+              do_once$102 : {
+               if ($cmp765$i) block217 : {
+                $incdec$ptr776$i = $s753$0$i + 1 | 0;
+                $260 = HEAPU32[$f >> 2] | 0;
+                $and$i$460$i = $260 & 32 | 0;
+                $tobool$i$461$i = ($and$i$460$i | 0) == (0 | 0);
+                if ($tobool$i$461$i) ___fwritex($s753$0$i | 0, 1 | 0, $f | 0) | 0;
+                $cmp777$i = ($p$addr$5501$i | 0) < (1 | 0);
+                $or$cond401$i = $tobool781$i & $cmp777$i | 0;
+                if ($or$cond401$i) block218 : {
+                 $s753$2$i = $incdec$ptr776$i;
+                 break do_once$102;
+                }
+                $261 = HEAPU32[$f >> 2] | 0;
+                $and$i$466$i = $261 & 32 | 0;
+                $tobool$i$467$i = ($and$i$466$i | 0) == (0 | 0);
+                if (($tobool$i$467$i | 0) == (0 | 0)) block219 : {
+                 $s753$2$i = $incdec$ptr776$i;
+                 break do_once$102;
+                }
+                ___fwritex(4143 | 0, 1 | 0, $f | 0) | 0;
+                $s753$2$i = $incdec$ptr776$i;
+               } else block220 : {
+                $cmp770$495$i = ($s753$0$i >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
+                if ($cmp770$495$i) $s753$1496$i = $s753$0$i; else block221 : {
+                 $s753$2$i = $s753$0$i;
+                 break do_once$102;
+                }
+                while_out$103 : do block222 : {
+                 $incdec$ptr773$i = $s753$1496$i + 4294967295 | 0;
+                 HEAP8[$incdec$ptr773$i >> 0] = 48;
+                 $cmp770$i = ($incdec$ptr773$i >>> 0 | 0) >>> 0 > ($buf$i >>> 0 | 0) >>> 0;
+                 if ($cmp770$i) $s753$1496$i = $incdec$ptr773$i; else block223 : {
+                  $s753$2$i = $incdec$ptr773$i;
+                  break while_out$103;
+                 }
+                 continue while_out$103;
+                } while (0);
+               }
+              }
+              $sub$ptr$rhs$cast788$i = $s753$2$i;
+              $sub$ptr$sub789$i = $sub$ptr$lhs$cast694$i - $sub$ptr$rhs$cast788$i | 0;
+              $262 = HEAPU32[$f >> 2] | 0;
+              $and$i$472$i = $262 & 32 | 0;
+              $tobool$i$473$i = ($and$i$472$i | 0) == (0 | 0);
+              if ($tobool$i$473$i) block224 : {
+               $cmp790$i = ($p$addr$5501$i | 0) > ($sub$ptr$sub789$i | 0);
+               if ($cmp790$i) wasm2asm_i32$1 = $sub$ptr$sub789$i; else wasm2asm_i32$1 = $p$addr$5501$i;
+               $cond800$i = wasm2asm_i32$1;
+               ___fwritex($s753$2$i | 0, $cond800$i | 0, $f | 0) | 0;
+              }
+              $sub806$i = $p$addr$5501$i - $sub$ptr$sub789$i | 0;
+              $incdec$ptr808$i = $d$7500$i + 4 | 0;
+              $cmp745$i = ($incdec$ptr808$i >>> 0 | 0) >>> 0 < ($z$7$add$ptr742$i >>> 0 | 0) >>> 0;
+              $cmp748$i = ($sub806$i | 0) > (4294967295 | 0);
+              $263 = $cmp745$i & $cmp748$i | 0;
+              if ($263) block225 : {
+               $d$7500$i = $incdec$ptr808$i;
+               $p$addr$5501$i = $sub806$i;
+              } else block226 : {
+               $p$addr$5$lcssa$i = $sub806$i;
+               break while_out$100;
+              }
+              continue while_out$100;
+             } while (0);
+            } else $p$addr$5$lcssa$i = $p$addr$3$i;
+            $add810$i = $p$addr$5$lcssa$i + 18 | 0;
+            _pad($f | 0, 48 | 0, $add810$i | 0, 18 | 0, 0 | 0);
+            $264 = HEAPU32[$f >> 2] | 0;
+            $and$i$i = $264 & 32 | 0;
+            $tobool$i$i = ($and$i$i | 0) == (0 | 0);
+            if (($tobool$i$i | 0) == (0 | 0)) break do_once$89;
+            $sub$ptr$rhs$cast812$i = $estr$2$i;
+            $sub$ptr$sub813$i = $sub$ptr$lhs$cast160$i - $sub$ptr$rhs$cast812$i | 0;
+            ___fwritex($estr$2$i | 0, $sub$ptr$sub813$i | 0, $f | 0) | 0;
+           }
           }
+          $xor816$i = $fl$1$and219 ^ 8192 | 0;
+          _pad($f | 0, 32 | 0, $w$1 | 0, $add653$i | 0, $xor816$i | 0);
+          $cmp818$i = ($add653$i | 0) < ($w$1 | 0);
+          if ($cmp818$i) wasm2asm_i32$1 = $w$1; else wasm2asm_i32$1 = $add653$i;
+          $w$add653$i = wasm2asm_i32$1;
+          $retval$0$i = $w$add653$i;
+         } else block227 : {
+          $and36$i = $t$0 & 32 | 0;
+          $tobool37$i = ($and36$i | 0) != (0 | 0);
+          if ($tobool37$i) wasm2asm_i32$1 = 4127; else wasm2asm_i32$1 = 4131;
+          $cond$i = wasm2asm_i32$1;
+          $cmp38$i = $y$addr$0$i != $y$addr$0$i | 0.0 != 0.0 | 0;
+          if ($tobool37$i) wasm2asm_i32$1 = 4135; else wasm2asm_i32$1 = 4139;
+          $cond43$i = wasm2asm_i32$1;
+          if ($cmp38$i) wasm2asm_i32$1 = 0; else wasm2asm_i32$1 = $pl$0$i;
+          $pl$1$i = wasm2asm_i32$1;
+          if ($cmp38$i) wasm2asm_i32$1 = $cond43$i; else wasm2asm_i32$1 = $cond$i;
+          $s35$0$i = wasm2asm_i32$1;
+          $add$i$239 = $pl$1$i + 3 | 0;
+          _pad($f | 0, 32 | 0, $w$1 | 0, $add$i$239 | 0, $and219 | 0);
+          $193 = HEAPU32[$f >> 2] | 0;
+          $and$i$406$i = $193 & 32 | 0;
+          $tobool$i$407$i = ($and$i$406$i | 0) == (0 | 0);
+          if ($tobool$i$407$i) block228 : {
+           ___fwritex($prefix$0$i | 0, $pl$1$i | 0, $f | 0) | 0;
+           $$pre$i = HEAPU32[$f >> 2] | 0;
+           $194 = $$pre$i;
+          } else $194 = $193;
+          $and$i$412$i = $194 & 32 | 0;
+          $tobool$i$413$i = ($and$i$412$i | 0) == (0 | 0);
+          if ($tobool$i$413$i) ___fwritex($s35$0$i | 0, 3 | 0, $f | 0) | 0;
+          $xor$i = $fl$1$and219 ^ 8192 | 0;
+          _pad($f | 0, 32 | 0, $w$1 | 0, $add$i$239 | 0, $xor$i | 0);
+          $cmp48$i = ($add$i$239 | 0) < ($w$1 | 0);
+          if ($cmp48$i) wasm2asm_i32$1 = $w$1; else wasm2asm_i32$1 = $add$i$239;
+          $cond53$i = wasm2asm_i32$1;
+          $retval$0$i = $cond53$i;
          }
-         $xor816$i = $fl$1$and219 ^ 8192 | 0;
-         _pad($f | 0, 32 | 0, $w$1 | 0, $add653$i | 0, $xor816$i | 0);
-         $cmp818$i = ($add653$i | 0) < ($w$1 | 0);
-         if ($cmp818$i) wasm2asm_i32$1 = $w$1; else wasm2asm_i32$1 = $add653$i;
-         $w$add653$i = wasm2asm_i32$1;
-         $retval$0$i = $w$add653$i;
-        } else {
-         $and36$i = $t$0 & 32 | 0;
-         $tobool37$i = ($and36$i | 0) != (0 | 0);
-         if ($tobool37$i) wasm2asm_i32$1 = 4127; else wasm2asm_i32$1 = 4131;
-         $cond$i = wasm2asm_i32$1;
-         $cmp38$i = $y$addr$0$i != $y$addr$0$i | 0.0 != 0.0 | 0;
-         if ($tobool37$i) wasm2asm_i32$1 = 4135; else wasm2asm_i32$1 = 4139;
-         $cond43$i = wasm2asm_i32$1;
-         if ($cmp38$i) wasm2asm_i32$1 = 0; else wasm2asm_i32$1 = $pl$0$i;
-         $pl$1$i = wasm2asm_i32$1;
-         if ($cmp38$i) wasm2asm_i32$1 = $cond43$i; else wasm2asm_i32$1 = $cond$i;
-         $s35$0$i = wasm2asm_i32$1;
-         $add$i$239 = $pl$1$i + 3 | 0;
-         _pad($f | 0, 32 | 0, $w$1 | 0, $add$i$239 | 0, $and219 | 0);
-         $193 = HEAPU32[$f >> 2] | 0;
-         $and$i$406$i = $193 & 32 | 0;
-         $tobool$i$407$i = ($and$i$406$i | 0) == (0 | 0);
-         if ($tobool$i$407$i) {
-          ___fwritex($prefix$0$i | 0, $pl$1$i | 0, $f | 0) | 0;
-          $$pre$i = HEAPU32[$f >> 2] | 0;
-          $194 = $$pre$i;
-         } else $194 = $193;
-         $and$i$412$i = $194 & 32 | 0;
-         $tobool$i$413$i = ($and$i$412$i | 0) == (0 | 0);
-         if ($tobool$i$413$i) ___fwritex($s35$0$i | 0, 3 | 0, $f | 0) | 0;
-         $xor$i = $fl$1$and219 ^ 8192 | 0;
-         _pad($f | 0, 32 | 0, $w$1 | 0, $add$i$239 | 0, $xor$i | 0);
-         $cmp48$i = ($add$i$239 | 0) < ($w$1 | 0);
-         if ($cmp48$i) wasm2asm_i32$1 = $w$1; else wasm2asm_i32$1 = $add$i$239;
-         $cond53$i = wasm2asm_i32$1;
-         $retval$0$i = $cond53$i;
         }
+        $cnt$0 = $cnt$1;
+        $incdec$ptr169275 = $incdec$ptr169$lcssa;
+        $l$0 = $retval$0$i;
+        $l10n$0 = $l10n$3;
+        continue label$break$L1;
+        break switch$17;
        }
-       $cnt$0 = $cnt$1;
-       $incdec$ptr169275 = $incdec$ptr169$lcssa;
-       $l$0 = $retval$0$i;
-       $l10n$0 = $l10n$3;
-       continue label$break$L1;
-       break switch$17;
       case 1:
       case 3:
       case 7:
@@ -5180,17 +5236,19 @@ function asmFunc(global, env, buffer) {
       case 53:
       case 54:
       default:
-       $a$2 = $incdec$ptr169275;
-       $fl$6 = $fl$1$and219;
-       $p$5 = $p$0;
-       $pl$2 = 0;
-       $prefix$2 = 4091;
-       $z$2 = $add$ptr205;
+       block229 : {
+        $a$2 = $incdec$ptr169275;
+        $fl$6 = $fl$1$and219;
+        $p$5 = $p$0;
+        $pl$2 = 0;
+        $prefix$2 = 4091;
+        $z$2 = $add$ptr205;
+       }
       }
      }
     }
     label$break$L308 : {
-     if ((label | 0) == (64 | 0)) {
+     if ((label | 0) == (64 | 0)) block230 : {
       label = 0;
       $90 = $arg;
       $91 = $90;
@@ -5202,18 +5260,18 @@ function asmFunc(global, env, buffer) {
       $96 = ($92 | 0) == (0 | 0);
       $97 = ($95 | 0) == (0 | 0);
       $98 = $96 & $97 | 0;
-      if ($98) {
+      if ($98) block231 : {
        $a$0 = $add$ptr205;
        $fl$4 = $fl$3;
        $p$2 = $p$1;
        $pl$1 = 0;
        $prefix$1 = 4091;
        label = 77;
-      } else {
+      } else block232 : {
        $101 = $95;
        $99 = $92;
        $s$addr$06$i = $add$ptr205;
-       while_out$107 : do {
+       while_out$107 : do block233 : {
         $idxprom$i = $99 & 15 | 0;
         $arrayidx$i = 4075 + $idxprom$i | 0;
         $100 = HEAP8[$arrayidx$i >> 0] | 0;
@@ -5227,10 +5285,10 @@ function asmFunc(global, env, buffer) {
         $104 = ($102 | 0) == (0 | 0);
         $105 = ($103 | 0) == (0 | 0);
         $106 = $104 & $105 | 0;
-        if ($106) {
+        if ($106) block234 : {
          $incdec$ptr$i$212$lcssa = $incdec$ptr$i$212;
          break while_out$107;
-        } else {
+        } else block235 : {
          $101 = $103;
          $99 = $102;
          $s$addr$06$i = $incdec$ptr$i$212;
@@ -5249,14 +5307,14 @@ function asmFunc(global, env, buffer) {
        $and254 = $fl$3 & 8 | 0;
        $tobool255 = ($and254 | 0) == (0 | 0);
        $or$cond193 = $tobool255 | $115 | 0;
-       if ($or$cond193) {
+       if ($or$cond193) block236 : {
         $a$0 = $incdec$ptr$i$212$lcssa;
         $fl$4 = $fl$3;
         $p$2 = $p$1;
         $pl$1 = 0;
         $prefix$1 = 4091;
         label = 77;
-       } else {
+       } else block237 : {
         $shr = $t$1 >> 4 | 0;
         $add$ptr257 = 4091 + $shr | 0;
         $a$0 = $incdec$ptr$i$212$lcssa;
@@ -5267,7 +5325,7 @@ function asmFunc(global, env, buffer) {
         label = 77;
        }
       }
-     } else if ((label | 0) == (76 | 0)) {
+     } else if ((label | 0) == (76 | 0)) block238 : {
       label = 0;
       $150 = _fmt_u($148 | 0, $149 | 0, $add$ptr205 | 0) | 0;
       $a$0 = $150;
@@ -5276,7 +5334,7 @@ function asmFunc(global, env, buffer) {
       $pl$1 = $pl$0;
       $prefix$1 = $prefix$0;
       label = 77;
-     } else if ((label | 0) == (82 | 0)) {
+     } else if ((label | 0) == (82 | 0)) block239 : {
       label = 0;
       $call356 = _memchr($a$1 | 0, 0 | 0, $p$0 | 0) | 0;
       $tobool357 = ($call356 | 0) == (0 | 0);
@@ -5294,16 +5352,16 @@ function asmFunc(global, env, buffer) {
       $pl$2 = 0;
       $prefix$2 = 4091;
       $z$2 = $z$1;
-     } else if ((label | 0) == (86 | 0)) {
+     } else if ((label | 0) == (86 | 0)) block240 : {
       label = 0;
       $176 = HEAPU32[$arg >> 2] | 0;
       $i$0316 = 0;
       $l$1315 = 0;
       $ws$0317 = $176;
-      while_out$109 : do {
+      while_out$109 : do block241 : {
        $177 = HEAPU32[$ws$0317 >> 2] | 0;
        $tobool380 = ($177 | 0) == (0 | 0);
-       if ($tobool380) {
+       if ($tobool380) block242 : {
         $i$0$lcssa = $i$0316;
         $l$2 = $l$1315;
         break while_out$109;
@@ -5313,7 +5371,7 @@ function asmFunc(global, env, buffer) {
        $sub389 = $p$4365 - $i$0316 | 0;
        $cmp390 = ($call384 >>> 0 | 0) >>> 0 > ($sub389 >>> 0 | 0) >>> 0;
        $or$cond195 = $cmp385 | $cmp390 | 0;
-       if ($or$cond195) {
+       if ($or$cond195) block243 : {
         $i$0$lcssa = $i$0316;
         $l$2 = $call384;
         break while_out$109;
@@ -5321,11 +5379,11 @@ function asmFunc(global, env, buffer) {
        $incdec$ptr383 = $ws$0317 + 4 | 0;
        $add395 = $call384 + $i$0316 | 0;
        $cmp377 = ($p$4365 >>> 0 | 0) >>> 0 > ($add395 >>> 0 | 0) >>> 0;
-       if ($cmp377) {
+       if ($cmp377) block244 : {
         $i$0316 = $add395;
         $l$1315 = $call384;
         $ws$0317 = $incdec$ptr383;
-       } else {
+       } else block245 : {
         $i$0$lcssa = $add395;
         $l$2 = $call384;
         break while_out$109;
@@ -5333,23 +5391,23 @@ function asmFunc(global, env, buffer) {
        continue while_out$109;
       } while (0);
       $cmp397 = ($l$2 | 0) < (0 | 0);
-      if ($cmp397) {
+      if ($cmp397) block246 : {
        $retval$0 = 4294967295;
        break label$break$L1;
       }
       _pad($f | 0, 32 | 0, $w$1 | 0, $i$0$lcssa | 0, $fl$1$and219 | 0);
       $cmp404$324 = ($i$0$lcssa | 0) == (0 | 0);
-      if ($cmp404$324) {
+      if ($cmp404$324) block247 : {
        $i$0$lcssa368 = 0;
        label = 98;
-      } else {
+      } else block248 : {
        $178 = HEAPU32[$arg >> 2] | 0;
        $i$1325 = 0;
        $ws$1326 = $178;
-       while_out$111 : do {
+       while_out$111 : do block249 : {
         $179 = HEAPU32[$ws$1326 >> 2] | 0;
         $tobool407 = ($179 | 0) == (0 | 0);
-        if ($tobool407) {
+        if ($tobool407) block250 : {
          $i$0$lcssa368 = $i$0$lcssa;
          label = 98;
          break label$break$L308;
@@ -5358,7 +5416,7 @@ function asmFunc(global, env, buffer) {
         $call411 = _wctomb($mb | 0, $179 | 0) | 0;
         $add412 = $call411 + $i$1325 | 0;
         $cmp413 = ($add412 | 0) > ($i$0$lcssa | 0);
-        if ($cmp413) {
+        if ($cmp413) block251 : {
          $i$0$lcssa368 = $i$0$lcssa;
          label = 98;
          break label$break$L308;
@@ -5368,10 +5426,10 @@ function asmFunc(global, env, buffer) {
         $tobool$i$232 = ($and$i$231 | 0) == (0 | 0);
         if ($tobool$i$232) ___fwritex($mb | 0, $call411 | 0, $f | 0) | 0;
         $cmp404 = ($add412 >>> 0 | 0) >>> 0 < ($i$0$lcssa >>> 0 | 0) >>> 0;
-        if ($cmp404) {
+        if ($cmp404) block252 : {
          $i$1325 = $add412;
          $ws$1326 = $incdec$ptr410;
-        } else {
+        } else block253 : {
          $i$0$lcssa368 = $i$0$lcssa;
          label = 98;
          break while_out$111;
@@ -5381,7 +5439,7 @@ function asmFunc(global, env, buffer) {
       }
      }
     }
-    if ((label | 0) == (98 | 0)) {
+    if ((label | 0) == (98 | 0)) block254 : {
      label = 0;
      $xor = $fl$1$and219 ^ 8192 | 0;
      _pad($f | 0, 32 | 0, $w$1 | 0, $i$0$lcssa368 | 0, $xor | 0);
@@ -5394,7 +5452,7 @@ function asmFunc(global, env, buffer) {
      $l10n$0 = $l10n$3;
      continue label$break$L1;
     }
-    if ((label | 0) == (77 | 0)) {
+    if ((label | 0) == (77 | 0)) block255 : {
      label = 0;
      $cmp306 = ($p$2 | 0) > (4294967295 | 0);
      $and309 = $fl$4 & 4294901759 | 0;
@@ -5411,7 +5469,7 @@ function asmFunc(global, env, buffer) {
      $159 = $157 | $158 | 0;
      $tobool314 = ($p$2 | 0) != (0 | 0);
      $or$cond = $tobool314 | $159 | 0;
-     if ($or$cond) {
+     if ($or$cond) block256 : {
       $sub$ptr$rhs$cast318 = $a$0;
       $sub$ptr$sub319 = $sub$ptr$lhs$cast317 - $sub$ptr$rhs$cast318 | 0;
       $160 = $159 & 1 | 0;
@@ -5426,7 +5484,7 @@ function asmFunc(global, env, buffer) {
       $pl$2 = $pl$1;
       $prefix$2 = $prefix$1;
       $z$2 = $add$ptr205;
-     } else {
+     } else block257 : {
       $a$2 = $add$ptr205;
       $fl$6 = $and309$fl$4;
       $p$5 = 0;
@@ -5466,17 +5524,17 @@ function asmFunc(global, env, buffer) {
     continue label$break$L1;
    } while (0);
    label$break$L343 : {
-    if ((label | 0) == (242 | 0)) {
+    if ((label | 0) == (242 | 0)) block258 : {
      $tobool459 = ($f | 0) == (0 | 0);
-     if ($tobool459) {
+     if ($tobool459) block259 : {
       $tobool462 = ($l10n$0$lcssa | 0) == (0 | 0);
-      if ($tobool462) $retval$0 = 0; else {
+      if ($tobool462) $retval$0 = 0; else block260 : {
        $i$2299 = 1;
-       while_out$113 : do {
+       while_out$113 : do block261 : {
         $arrayidx469 = $nl_type + ($i$2299 << 2 | 0) | 0;
         $267 = HEAPU32[$arrayidx469 >> 2] | 0;
         $tobool470 = ($267 | 0) == (0 | 0);
-        if ($tobool470) {
+        if ($tobool470) block262 : {
          $i$2299$lcssa = $i$2299;
          break while_out$113;
         }
@@ -5484,26 +5542,26 @@ function asmFunc(global, env, buffer) {
         _pop_arg_336($add$ptr473 | 0, $267 | 0, $ap | 0);
         $inc = $i$2299 + 1 | 0;
         $cmp466 = ($inc | 0) < (10 | 0);
-        if ($cmp466) $i$2299 = $inc; else {
+        if ($cmp466) $i$2299 = $inc; else block263 : {
          $retval$0 = 1;
          break label$break$L343;
         }
         continue while_out$113;
        } while (0);
        $cmp478$295 = ($i$2299$lcssa | 0) < (10 | 0);
-       if ($cmp478$295) {
+       if ($cmp478$295) block264 : {
         $i$3296 = $i$2299$lcssa;
-        while_out$115 : do {
+        while_out$115 : do block265 : {
          $arrayidx481 = $nl_type + ($i$3296 << 2 | 0) | 0;
          $268 = HEAPU32[$arrayidx481 >> 2] | 0;
          $lnot483 = ($268 | 0) == (0 | 0);
          $inc488 = $i$3296 + 1 | 0;
-         if (($lnot483 | 0) == (0 | 0)) {
+         if (($lnot483 | 0) == (0 | 0)) block266 : {
           $retval$0 = 4294967295;
           break label$break$L343;
          }
          $cmp478 = ($inc488 | 0) < (10 | 0);
-         if ($cmp478) $i$3296 = $inc488; else {
+         if ($cmp478) $i$3296 = $inc488; else block267 : {
           $retval$0 = 1;
           break while_out$115;
          }
@@ -5532,247 +5590,267 @@ function asmFunc(global, env, buffer) {
     if (($cmp | 0) == (0 | 0)) switch$1 : {
      switch ($type - 9 | 0) {
      case 0:
-      $arglist_current = HEAPU32[$ap >> 2] | 0;
-      $0 = $arglist_current;
-      $1 = 0 + 4 | 0;
-      $expanded28 = $1;
-      $expanded = $expanded28 - 1 | 0;
-      $2 = $0 + $expanded | 0;
-      $3 = 0 + 4 | 0;
-      $expanded32 = $3;
-      $expanded31 = $expanded32 - 1 | 0;
-      $expanded30 = $expanded31 ^ 4294967295 | 0;
-      $4 = $2 & $expanded30 | 0;
-      $5 = $4;
-      $6 = HEAPU32[$5 >> 2] | 0;
-      $arglist_next = $5 + 4 | 0;
-      HEAP32[$ap >> 2] = $arglist_next;
-      HEAP32[$arg >> 2] = $6;
-      break label$break$L1;
-      break switch$1;
+      block0 : {
+       $arglist_current = HEAPU32[$ap >> 2] | 0;
+       $0 = $arglist_current;
+       $1 = 0 + 4 | 0;
+       $expanded28 = $1;
+       $expanded = $expanded28 - 1 | 0;
+       $2 = $0 + $expanded | 0;
+       $3 = 0 + 4 | 0;
+       $expanded32 = $3;
+       $expanded31 = $expanded32 - 1 | 0;
+       $expanded30 = $expanded31 ^ 4294967295 | 0;
+       $4 = $2 & $expanded30 | 0;
+       $5 = $4;
+       $6 = HEAPU32[$5 >> 2] | 0;
+       $arglist_next = $5 + 4 | 0;
+       HEAP32[$ap >> 2] = $arglist_next;
+       HEAP32[$arg >> 2] = $6;
+       break label$break$L1;
+       break switch$1;
+      }
      case 1:
-      $arglist_current2 = HEAPU32[$ap >> 2] | 0;
-      $7 = $arglist_current2;
-      $8 = 0 + 4 | 0;
-      $expanded35 = $8;
-      $expanded34 = $expanded35 - 1 | 0;
-      $9 = $7 + $expanded34 | 0;
-      $10 = 0 + 4 | 0;
-      $expanded39 = $10;
-      $expanded38 = $expanded39 - 1 | 0;
-      $expanded37 = $expanded38 ^ 4294967295 | 0;
-      $11 = $9 & $expanded37 | 0;
-      $12 = $11;
-      $13 = HEAPU32[$12 >> 2] | 0;
-      $arglist_next3 = $12 + 4 | 0;
-      HEAP32[$ap >> 2] = $arglist_next3;
-      $14 = ($13 | 0) < (0 | 0);
-      $15 = ($14 << 31 | 0) >> 31 | 0;
-      $16 = $arg;
-      $17 = $16;
-      HEAP32[$17 >> 2] = $13;
-      $18 = $16 + 4 | 0;
-      $19 = $18;
-      HEAP32[$19 >> 2] = $15;
-      break label$break$L1;
-      break switch$1;
+      block1 : {
+       $arglist_current2 = HEAPU32[$ap >> 2] | 0;
+       $7 = $arglist_current2;
+       $8 = 0 + 4 | 0;
+       $expanded35 = $8;
+       $expanded34 = $expanded35 - 1 | 0;
+       $9 = $7 + $expanded34 | 0;
+       $10 = 0 + 4 | 0;
+       $expanded39 = $10;
+       $expanded38 = $expanded39 - 1 | 0;
+       $expanded37 = $expanded38 ^ 4294967295 | 0;
+       $11 = $9 & $expanded37 | 0;
+       $12 = $11;
+       $13 = HEAPU32[$12 >> 2] | 0;
+       $arglist_next3 = $12 + 4 | 0;
+       HEAP32[$ap >> 2] = $arglist_next3;
+       $14 = ($13 | 0) < (0 | 0);
+       $15 = ($14 << 31 | 0) >> 31 | 0;
+       $16 = $arg;
+       $17 = $16;
+       HEAP32[$17 >> 2] = $13;
+       $18 = $16 + 4 | 0;
+       $19 = $18;
+       HEAP32[$19 >> 2] = $15;
+       break label$break$L1;
+       break switch$1;
+      }
      case 2:
-      $arglist_current5 = HEAPU32[$ap >> 2] | 0;
-      $20 = $arglist_current5;
-      $21 = 0 + 4 | 0;
-      $expanded42 = $21;
-      $expanded41 = $expanded42 - 1 | 0;
-      $22 = $20 + $expanded41 | 0;
-      $23 = 0 + 4 | 0;
-      $expanded46 = $23;
-      $expanded45 = $expanded46 - 1 | 0;
-      $expanded44 = $expanded45 ^ 4294967295 | 0;
-      $24 = $22 & $expanded44 | 0;
-      $25 = $24;
-      $26 = HEAPU32[$25 >> 2] | 0;
-      $arglist_next6 = $25 + 4 | 0;
-      HEAP32[$ap >> 2] = $arglist_next6;
-      $27 = $arg;
-      $28 = $27;
-      HEAP32[$28 >> 2] = $26;
-      $29 = $27 + 4 | 0;
-      $30 = $29;
-      HEAP32[$30 >> 2] = 0;
-      break label$break$L1;
-      break switch$1;
+      block2 : {
+       $arglist_current5 = HEAPU32[$ap >> 2] | 0;
+       $20 = $arglist_current5;
+       $21 = 0 + 4 | 0;
+       $expanded42 = $21;
+       $expanded41 = $expanded42 - 1 | 0;
+       $22 = $20 + $expanded41 | 0;
+       $23 = 0 + 4 | 0;
+       $expanded46 = $23;
+       $expanded45 = $expanded46 - 1 | 0;
+       $expanded44 = $expanded45 ^ 4294967295 | 0;
+       $24 = $22 & $expanded44 | 0;
+       $25 = $24;
+       $26 = HEAPU32[$25 >> 2] | 0;
+       $arglist_next6 = $25 + 4 | 0;
+       HEAP32[$ap >> 2] = $arglist_next6;
+       $27 = $arg;
+       $28 = $27;
+       HEAP32[$28 >> 2] = $26;
+       $29 = $27 + 4 | 0;
+       $30 = $29;
+       HEAP32[$30 >> 2] = 0;
+       break label$break$L1;
+       break switch$1;
+      }
      case 3:
-      $arglist_current8 = HEAPU32[$ap >> 2] | 0;
-      $31 = $arglist_current8;
-      $32 = 0 + 8 | 0;
-      $expanded49 = $32;
-      $expanded48 = $expanded49 - 1 | 0;
-      $33 = $31 + $expanded48 | 0;
-      $34 = 0 + 8 | 0;
-      $expanded53 = $34;
-      $expanded52 = $expanded53 - 1 | 0;
-      $expanded51 = $expanded52 ^ 4294967295 | 0;
-      $35 = $33 & $expanded51 | 0;
-      $36 = $35;
-      $37 = $36;
-      $38 = $37;
-      $39 = HEAPU32[$38 >> 2] | 0;
-      $40 = $37 + 4 | 0;
-      $41 = $40;
-      $42 = HEAPU32[$41 >> 2] | 0;
-      $arglist_next9 = $36 + 8 | 0;
-      HEAP32[$ap >> 2] = $arglist_next9;
-      $43 = $arg;
-      $44 = $43;
-      HEAP32[$44 >> 2] = $39;
-      $45 = $43 + 4 | 0;
-      $46 = $45;
-      HEAP32[$46 >> 2] = $42;
-      break label$break$L1;
-      break switch$1;
+      block3 : {
+       $arglist_current8 = HEAPU32[$ap >> 2] | 0;
+       $31 = $arglist_current8;
+       $32 = 0 + 8 | 0;
+       $expanded49 = $32;
+       $expanded48 = $expanded49 - 1 | 0;
+       $33 = $31 + $expanded48 | 0;
+       $34 = 0 + 8 | 0;
+       $expanded53 = $34;
+       $expanded52 = $expanded53 - 1 | 0;
+       $expanded51 = $expanded52 ^ 4294967295 | 0;
+       $35 = $33 & $expanded51 | 0;
+       $36 = $35;
+       $37 = $36;
+       $38 = $37;
+       $39 = HEAPU32[$38 >> 2] | 0;
+       $40 = $37 + 4 | 0;
+       $41 = $40;
+       $42 = HEAPU32[$41 >> 2] | 0;
+       $arglist_next9 = $36 + 8 | 0;
+       HEAP32[$ap >> 2] = $arglist_next9;
+       $43 = $arg;
+       $44 = $43;
+       HEAP32[$44 >> 2] = $39;
+       $45 = $43 + 4 | 0;
+       $46 = $45;
+       HEAP32[$46 >> 2] = $42;
+       break label$break$L1;
+       break switch$1;
+      }
      case 4:
-      $arglist_current11 = HEAPU32[$ap >> 2] | 0;
-      $47 = $arglist_current11;
-      $48 = 0 + 4 | 0;
-      $expanded56 = $48;
-      $expanded55 = $expanded56 - 1 | 0;
-      $49 = $47 + $expanded55 | 0;
-      $50 = 0 + 4 | 0;
-      $expanded60 = $50;
-      $expanded59 = $expanded60 - 1 | 0;
-      $expanded58 = $expanded59 ^ 4294967295 | 0;
-      $51 = $49 & $expanded58 | 0;
-      $52 = $51;
-      $53 = HEAPU32[$52 >> 2] | 0;
-      $arglist_next12 = $52 + 4 | 0;
-      HEAP32[$ap >> 2] = $arglist_next12;
-      $conv12 = $53 & 65535 | 0;
-      $54 = ($conv12 << 16 | 0) >> 16 | 0;
-      $55 = ($54 | 0) < (0 | 0);
-      $56 = ($55 << 31 | 0) >> 31 | 0;
-      $57 = $arg;
-      $58 = $57;
-      HEAP32[$58 >> 2] = $54;
-      $59 = $57 + 4 | 0;
-      $60 = $59;
-      HEAP32[$60 >> 2] = $56;
-      break label$break$L1;
-      break switch$1;
+      block4 : {
+       $arglist_current11 = HEAPU32[$ap >> 2] | 0;
+       $47 = $arglist_current11;
+       $48 = 0 + 4 | 0;
+       $expanded56 = $48;
+       $expanded55 = $expanded56 - 1 | 0;
+       $49 = $47 + $expanded55 | 0;
+       $50 = 0 + 4 | 0;
+       $expanded60 = $50;
+       $expanded59 = $expanded60 - 1 | 0;
+       $expanded58 = $expanded59 ^ 4294967295 | 0;
+       $51 = $49 & $expanded58 | 0;
+       $52 = $51;
+       $53 = HEAPU32[$52 >> 2] | 0;
+       $arglist_next12 = $52 + 4 | 0;
+       HEAP32[$ap >> 2] = $arglist_next12;
+       $conv12 = $53 & 65535 | 0;
+       $54 = ($conv12 << 16 | 0) >> 16 | 0;
+       $55 = ($54 | 0) < (0 | 0);
+       $56 = ($55 << 31 | 0) >> 31 | 0;
+       $57 = $arg;
+       $58 = $57;
+       HEAP32[$58 >> 2] = $54;
+       $59 = $57 + 4 | 0;
+       $60 = $59;
+       HEAP32[$60 >> 2] = $56;
+       break label$break$L1;
+       break switch$1;
+      }
      case 5:
-      $arglist_current14 = HEAPU32[$ap >> 2] | 0;
-      $61 = $arglist_current14;
-      $62 = 0 + 4 | 0;
-      $expanded63 = $62;
-      $expanded62 = $expanded63 - 1 | 0;
-      $63 = $61 + $expanded62 | 0;
-      $64 = 0 + 4 | 0;
-      $expanded67 = $64;
-      $expanded66 = $expanded67 - 1 | 0;
-      $expanded65 = $expanded66 ^ 4294967295 | 0;
-      $65 = $63 & $expanded65 | 0;
-      $66 = $65;
-      $67 = HEAPU32[$66 >> 2] | 0;
-      $arglist_next15 = $66 + 4 | 0;
-      HEAP32[$ap >> 2] = $arglist_next15;
-      $conv17$mask = $67 & 65535 | 0;
-      $68 = $arg;
-      $69 = $68;
-      HEAP32[$69 >> 2] = $conv17$mask;
-      $70 = $68 + 4 | 0;
-      $71 = $70;
-      HEAP32[$71 >> 2] = 0;
-      break label$break$L1;
-      break switch$1;
+      block5 : {
+       $arglist_current14 = HEAPU32[$ap >> 2] | 0;
+       $61 = $arglist_current14;
+       $62 = 0 + 4 | 0;
+       $expanded63 = $62;
+       $expanded62 = $expanded63 - 1 | 0;
+       $63 = $61 + $expanded62 | 0;
+       $64 = 0 + 4 | 0;
+       $expanded67 = $64;
+       $expanded66 = $expanded67 - 1 | 0;
+       $expanded65 = $expanded66 ^ 4294967295 | 0;
+       $65 = $63 & $expanded65 | 0;
+       $66 = $65;
+       $67 = HEAPU32[$66 >> 2] | 0;
+       $arglist_next15 = $66 + 4 | 0;
+       HEAP32[$ap >> 2] = $arglist_next15;
+       $conv17$mask = $67 & 65535 | 0;
+       $68 = $arg;
+       $69 = $68;
+       HEAP32[$69 >> 2] = $conv17$mask;
+       $70 = $68 + 4 | 0;
+       $71 = $70;
+       HEAP32[$71 >> 2] = 0;
+       break label$break$L1;
+       break switch$1;
+      }
      case 6:
-      $arglist_current17 = HEAPU32[$ap >> 2] | 0;
-      $72 = $arglist_current17;
-      $73 = 0 + 4 | 0;
-      $expanded70 = $73;
-      $expanded69 = $expanded70 - 1 | 0;
-      $74 = $72 + $expanded69 | 0;
-      $75 = 0 + 4 | 0;
-      $expanded74 = $75;
-      $expanded73 = $expanded74 - 1 | 0;
-      $expanded72 = $expanded73 ^ 4294967295 | 0;
-      $76 = $74 & $expanded72 | 0;
-      $77 = $76;
-      $78 = HEAPU32[$77 >> 2] | 0;
-      $arglist_next18 = $77 + 4 | 0;
-      HEAP32[$ap >> 2] = $arglist_next18;
-      $conv22 = $78 & 255 | 0;
-      $79 = ($conv22 << 24 | 0) >> 24 | 0;
-      $80 = ($79 | 0) < (0 | 0);
-      $81 = ($80 << 31 | 0) >> 31 | 0;
-      $82 = $arg;
-      $83 = $82;
-      HEAP32[$83 >> 2] = $79;
-      $84 = $82 + 4 | 0;
-      $85 = $84;
-      HEAP32[$85 >> 2] = $81;
-      break label$break$L1;
-      break switch$1;
+      block6 : {
+       $arglist_current17 = HEAPU32[$ap >> 2] | 0;
+       $72 = $arglist_current17;
+       $73 = 0 + 4 | 0;
+       $expanded70 = $73;
+       $expanded69 = $expanded70 - 1 | 0;
+       $74 = $72 + $expanded69 | 0;
+       $75 = 0 + 4 | 0;
+       $expanded74 = $75;
+       $expanded73 = $expanded74 - 1 | 0;
+       $expanded72 = $expanded73 ^ 4294967295 | 0;
+       $76 = $74 & $expanded72 | 0;
+       $77 = $76;
+       $78 = HEAPU32[$77 >> 2] | 0;
+       $arglist_next18 = $77 + 4 | 0;
+       HEAP32[$ap >> 2] = $arglist_next18;
+       $conv22 = $78 & 255 | 0;
+       $79 = ($conv22 << 24 | 0) >> 24 | 0;
+       $80 = ($79 | 0) < (0 | 0);
+       $81 = ($80 << 31 | 0) >> 31 | 0;
+       $82 = $arg;
+       $83 = $82;
+       HEAP32[$83 >> 2] = $79;
+       $84 = $82 + 4 | 0;
+       $85 = $84;
+       HEAP32[$85 >> 2] = $81;
+       break label$break$L1;
+       break switch$1;
+      }
      case 7:
-      $arglist_current20 = HEAPU32[$ap >> 2] | 0;
-      $86 = $arglist_current20;
-      $87 = 0 + 4 | 0;
-      $expanded77 = $87;
-      $expanded76 = $expanded77 - 1 | 0;
-      $88 = $86 + $expanded76 | 0;
-      $89 = 0 + 4 | 0;
-      $expanded81 = $89;
-      $expanded80 = $expanded81 - 1 | 0;
-      $expanded79 = $expanded80 ^ 4294967295 | 0;
-      $90 = $88 & $expanded79 | 0;
-      $91 = $90;
-      $92 = HEAPU32[$91 >> 2] | 0;
-      $arglist_next21 = $91 + 4 | 0;
-      HEAP32[$ap >> 2] = $arglist_next21;
-      $conv27$mask = $92 & 255 | 0;
-      $93 = $arg;
-      $94 = $93;
-      HEAP32[$94 >> 2] = $conv27$mask;
-      $95 = $93 + 4 | 0;
-      $96 = $95;
-      HEAP32[$96 >> 2] = 0;
-      break label$break$L1;
-      break switch$1;
+      block7 : {
+       $arglist_current20 = HEAPU32[$ap >> 2] | 0;
+       $86 = $arglist_current20;
+       $87 = 0 + 4 | 0;
+       $expanded77 = $87;
+       $expanded76 = $expanded77 - 1 | 0;
+       $88 = $86 + $expanded76 | 0;
+       $89 = 0 + 4 | 0;
+       $expanded81 = $89;
+       $expanded80 = $expanded81 - 1 | 0;
+       $expanded79 = $expanded80 ^ 4294967295 | 0;
+       $90 = $88 & $expanded79 | 0;
+       $91 = $90;
+       $92 = HEAPU32[$91 >> 2] | 0;
+       $arglist_next21 = $91 + 4 | 0;
+       HEAP32[$ap >> 2] = $arglist_next21;
+       $conv27$mask = $92 & 255 | 0;
+       $93 = $arg;
+       $94 = $93;
+       HEAP32[$94 >> 2] = $conv27$mask;
+       $95 = $93 + 4 | 0;
+       $96 = $95;
+       HEAP32[$96 >> 2] = 0;
+       break label$break$L1;
+       break switch$1;
+      }
      case 8:
-      $arglist_current23 = HEAPU32[$ap >> 2] | 0;
-      $97 = $arglist_current23;
-      $98 = 0 + 8 | 0;
-      $expanded84 = $98;
-      $expanded83 = $expanded84 - 1 | 0;
-      $99 = $97 + $expanded83 | 0;
-      $100 = 0 + 8 | 0;
-      $expanded88 = $100;
-      $expanded87 = $expanded88 - 1 | 0;
-      $expanded86 = $expanded87 ^ 4294967295 | 0;
-      $101 = $99 & $expanded86 | 0;
-      $102 = $101;
-      $103 = +HEAPF64[$102 >> 3];
-      $arglist_next24 = $102 + 8 | 0;
-      HEAP32[$ap >> 2] = $arglist_next24;
-      HEAPF64[$arg >> 3] = $103;
-      break label$break$L1;
-      break switch$1;
+      block8 : {
+       $arglist_current23 = HEAPU32[$ap >> 2] | 0;
+       $97 = $arglist_current23;
+       $98 = 0 + 8 | 0;
+       $expanded84 = $98;
+       $expanded83 = $expanded84 - 1 | 0;
+       $99 = $97 + $expanded83 | 0;
+       $100 = 0 + 8 | 0;
+       $expanded88 = $100;
+       $expanded87 = $expanded88 - 1 | 0;
+       $expanded86 = $expanded87 ^ 4294967295 | 0;
+       $101 = $99 & $expanded86 | 0;
+       $102 = $101;
+       $103 = +HEAPF64[$102 >> 3];
+       $arglist_next24 = $102 + 8 | 0;
+       HEAP32[$ap >> 2] = $arglist_next24;
+       HEAPF64[$arg >> 3] = $103;
+       break label$break$L1;
+       break switch$1;
+      }
      case 9:
-      $arglist_current26 = HEAPU32[$ap >> 2] | 0;
-      $104 = $arglist_current26;
-      $105 = 0 + 8 | 0;
-      $expanded91 = $105;
-      $expanded90 = $expanded91 - 1 | 0;
-      $106 = $104 + $expanded90 | 0;
-      $107 = 0 + 8 | 0;
-      $expanded95 = $107;
-      $expanded94 = $expanded95 - 1 | 0;
-      $expanded93 = $expanded94 ^ 4294967295 | 0;
-      $108 = $106 & $expanded93 | 0;
-      $109 = $108;
-      $110 = +HEAPF64[$109 >> 3];
-      $arglist_next27 = $109 + 8 | 0;
-      HEAP32[$ap >> 2] = $arglist_next27;
-      HEAPF64[$arg >> 3] = $110;
-      break label$break$L1;
-      break switch$1;
+      block9 : {
+       $arglist_current26 = HEAPU32[$ap >> 2] | 0;
+       $104 = $arglist_current26;
+       $105 = 0 + 8 | 0;
+       $expanded91 = $105;
+       $expanded90 = $expanded91 - 1 | 0;
+       $106 = $104 + $expanded90 | 0;
+       $107 = 0 + 8 | 0;
+       $expanded95 = $107;
+       $expanded94 = $expanded95 - 1 | 0;
+       $expanded93 = $expanded94 ^ 4294967295 | 0;
+       $108 = $106 & $expanded93 | 0;
+       $109 = $108;
+       $110 = +HEAPF64[$109 >> 3];
+       $arglist_next27 = $109 + 8 | 0;
+       HEAP32[$ap >> 2] = $arglist_next27;
+       HEAPF64[$arg >> 3] = $110;
+       break label$break$L1;
+       break switch$1;
+      }
      default:
       break label$break$L1;
      }
@@ -5794,11 +5872,11 @@ function asmFunc(global, env, buffer) {
    $4 = ($1 | 0) == (0 | 0);
    $5 = $4 & $3 | 0;
    $6 = $2 | $5 | 0;
-   if ($6) {
+   if ($6) block0 : {
     $7 = $0;
     $8 = $1;
     $s$addr$013 = $s;
-    while_out$0 : do {
+    while_out$0 : do block1 : {
      $9 = ___uremdi3($7 | 0, $8 | 0, 10 | 0, 0 | 0) | 0;
      $10 = HEAPU32[168 >> 2] | 0;
      $11 = $9 | 48 | 0;
@@ -5812,11 +5890,11 @@ function asmFunc(global, env, buffer) {
      $17 = ($8 | 0) == (9 | 0);
      $18 = $17 & $16 | 0;
      $19 = $15 | $18 | 0;
-     if ($19) {
+     if ($19) block2 : {
       $7 = $13;
       $8 = $14;
       $s$addr$013 = $incdec$ptr;
-     } else {
+     } else block3 : {
       $21 = $13;
       $22 = $14;
       $incdec$ptr$lcssa = $incdec$ptr;
@@ -5826,15 +5904,15 @@ function asmFunc(global, env, buffer) {
     } while (0);
     $s$addr$0$lcssa = $incdec$ptr$lcssa;
     $x$addr$0$lcssa$off0 = $21;
-   } else {
+   } else block4 : {
     $s$addr$0$lcssa = $s;
     $x$addr$0$lcssa$off0 = $0;
    }
    $tobool$8 = ($x$addr$0$lcssa$off0 | 0) == (0 | 0);
-   if ($tobool$8) $s$addr$1$lcssa = $s$addr$0$lcssa; else {
+   if ($tobool$8) $s$addr$1$lcssa = $s$addr$0$lcssa; else block5 : {
     $s$addr$19 = $s$addr$0$lcssa;
     $y$010 = $x$addr$0$lcssa$off0;
-    while_out$2 : do {
+    while_out$2 : do block6 : {
      $rem4 = ((($y$010 >>> 0 | 0) >>> 0) % (10 >>> 0) | 0) & 4294967295 | 0;
      $add5 = $rem4 | 48 | 0;
      $conv6 = $add5 & 255 | 0;
@@ -5842,10 +5920,10 @@ function asmFunc(global, env, buffer) {
      HEAP8[$incdec$ptr7 >> 0] = $conv6;
      $div9 = ((($y$010 >>> 0 | 0) >>> 0) / (10 >>> 0) | 0) & 4294967295 | 0;
      $20 = ($y$010 >>> 0 | 0) >>> 0 < 10 >>> 0;
-     if ($20) {
+     if ($20) block7 : {
       $s$addr$1$lcssa = $incdec$ptr7;
       break while_out$2;
-     } else {
+     } else block8 : {
       $s$addr$19 = $incdec$ptr7;
       $y$010 = $div9;
      }
@@ -5874,7 +5952,7 @@ function asmFunc(global, env, buffer) {
    $cmp = ($w | 0) > ($l | 0);
    $or$cond = $cmp & $tobool | 0;
    do_once$0 : {
-    if ($or$cond) {
+    if ($or$cond) block0 : {
      $sub = $w - $l | 0;
      $cmp1 = ($sub >>> 0 | 0) >>> 0 > 256 >>> 0;
      if ($cmp1) wasm2asm_i32$0 = 256; else wasm2asm_i32$0 = $sub;
@@ -5884,13 +5962,13 @@ function asmFunc(global, env, buffer) {
      $0 = HEAPU32[$f >> 2] | 0;
      $and$i$15 = $0 & 32 | 0;
      $tobool$i$16 = ($and$i$15 | 0) == (0 | 0);
-     if ($cmp3$14) {
+     if ($cmp3$14) block1 : {
       $1 = $w - $l | 0;
       $4 = $0;
       $l$addr$017 = $sub;
       $tobool$i18 = $tobool$i$16;
-      while_out$1 : do {
-       if ($tobool$i18) {
+      while_out$1 : do block2 : {
+       if ($tobool$i18) block3 : {
         ___fwritex($pad | 0, 256 | 0, $f | 0) | 0;
         $$pre = HEAPU32[$f >> 2] | 0;
         $2 = $$pre;
@@ -5899,7 +5977,7 @@ function asmFunc(global, env, buffer) {
        $cmp3 = ($sub5 >>> 0 | 0) >>> 0 > 255 >>> 0;
        $and$i = $2 & 32 | 0;
        $tobool$i = ($and$i | 0) == (0 | 0);
-       if ($cmp3) {
+       if ($cmp3) block4 : {
         $4 = $2;
         $l$addr$017 = $sub5;
         $tobool$i18 = $tobool$i;
@@ -5924,7 +6002,7 @@ function asmFunc(global, env, buffer) {
    sp = HEAPU32[8 >> 2] | 0;
    $cmp = ($bytes >>> 0 | 0) >>> 0 < 245 >>> 0;
    do_once$0 : {
-    if ($cmp) {
+    if ($cmp) block0 : {
      $cmp1 = ($bytes >>> 0 | 0) >>> 0 < 11 >>> 0;
      $add2 = $bytes + 11 | 0;
      $and = $add2 & 4294967288 | 0;
@@ -5935,7 +6013,7 @@ function asmFunc(global, env, buffer) {
      $shr3 = $0 >>> $shr | 0;
      $and4 = $shr3 & 3 | 0;
      $cmp5 = ($and4 | 0) == (0 | 0);
-     if (($cmp5 | 0) == (0 | 0)) {
+     if (($cmp5 | 0) == (0 | 0)) block1 : {
       $neg = $shr3 & 1 | 0;
       $and7 = $neg ^ 1 | 0;
       $add8 = $and7 + $shr | 0;
@@ -5947,19 +6025,19 @@ function asmFunc(global, env, buffer) {
       $3 = HEAPU32[$fd9 >> 2] | 0;
       $cmp10 = ($arrayidx | 0) == ($3 | 0);
       do_once$1 : {
-       if ($cmp10) {
+       if ($cmp10) block2 : {
         $shl12 = 1 << $add8 | 0;
         $neg13 = $shl12 ^ 4294967295 | 0;
         $and14 = $0 & $neg13 | 0;
         HEAP32[176 >> 2] = $and14;
-       } else {
+       } else block3 : {
         $4 = HEAPU32[192 >> 2] | 0;
         $cmp15 = ($3 >>> 0 | 0) >>> 0 < ($4 >>> 0 | 0) >>> 0;
         if ($cmp15) _abort();
         $bk = $3 + 12 | 0;
         $5 = HEAPU32[$bk >> 2] | 0;
         $cmp16 = ($5 | 0) == ($2 | 0);
-        if ($cmp16) {
+        if ($cmp16) block4 : {
          HEAP32[$bk >> 2] = $arrayidx;
          HEAP32[$1 >> 2] = $3;
          break do_once$1;
@@ -5981,9 +6059,9 @@ function asmFunc(global, env, buffer) {
      }
      $7 = HEAPU32[184 >> 2] | 0;
      $cmp29 = ($cond >>> 0 | 0) >>> 0 > ($7 >>> 0 | 0) >>> 0;
-     if ($cmp29) {
+     if ($cmp29) block5 : {
       $cmp31 = ($shr3 | 0) == (0 | 0);
-      if (($cmp31 | 0) == (0 | 0)) {
+      if (($cmp31 | 0) == (0 | 0)) block6 : {
        $shl35 = $shr3 << $shr | 0;
        $shl37 = 2 << $shr | 0;
        $sub = 0 - $shl37 | 0;
@@ -6020,20 +6098,20 @@ function asmFunc(global, env, buffer) {
        $10 = HEAPU32[$fd69 >> 2] | 0;
        $cmp70 = ($arrayidx66 | 0) == ($10 | 0);
        do_once$2 : {
-        if ($cmp70) {
+        if ($cmp70) block7 : {
          $shl72 = 1 << $add64 | 0;
          $neg73 = $shl72 ^ 4294967295 | 0;
          $and74 = $0 & $neg73 | 0;
          HEAP32[176 >> 2] = $and74;
          $13 = $7;
-        } else {
+        } else block8 : {
          $11 = HEAPU32[192 >> 2] | 0;
          $cmp76 = ($10 >>> 0 | 0) >>> 0 < ($11 >>> 0 | 0) >>> 0;
          if ($cmp76) _abort();
          $bk78 = $10 + 12 | 0;
          $12 = HEAPU32[$bk78 >> 2] | 0;
          $cmp79 = ($12 | 0) == ($9 | 0);
-         if ($cmp79) {
+         if ($cmp79) block9 : {
           HEAP32[$bk78 >> 2] = $arrayidx66;
           HEAP32[$8 >> 2] = $10;
           $$pre = HEAPU32[184 >> 2] | 0;
@@ -6054,7 +6132,7 @@ function asmFunc(global, env, buffer) {
        $add$ptr98 = $add$ptr95 + $sub91 | 0;
        HEAP32[$add$ptr98 >> 2] = $sub91;
        $cmp99 = ($13 | 0) == (0 | 0);
-       if (($cmp99 | 0) == (0 | 0)) {
+       if (($cmp99 | 0) == (0 | 0)) block10 : {
         $14 = HEAPU32[196 >> 2] | 0;
         $shr101 = $13 >>> 3 | 0;
         $shl102 = $shr101 << 1 | 0;
@@ -6063,18 +6141,18 @@ function asmFunc(global, env, buffer) {
         $shl105 = 1 << $shr101 | 0;
         $and106 = $15 & $shl105 | 0;
         $tobool107 = ($and106 | 0) == (0 | 0);
-        if ($tobool107) {
+        if ($tobool107) block11 : {
          $or110 = $15 | $shl105 | 0;
          HEAP32[176 >> 2] = $or110;
          $$pre241 = $arrayidx103 + 8 | 0;
          $$pre$phiZ2D = $$pre241;
          $F104$0 = $arrayidx103;
-        } else {
+        } else block12 : {
          $16 = $arrayidx103 + 8 | 0;
          $17 = HEAPU32[$16 >> 2] | 0;
          $18 = HEAPU32[192 >> 2] | 0;
          $cmp113 = ($17 >>> 0 | 0) >>> 0 < ($18 >>> 0 | 0) >>> 0;
-         if ($cmp113) _abort(); else {
+         if ($cmp113) _abort(); else block13 : {
           $$pre$phiZ2D = $16;
           $F104$0 = $17;
          }
@@ -6095,7 +6173,7 @@ function asmFunc(global, env, buffer) {
       }
       $19 = HEAPU32[180 >> 2] | 0;
       $cmp128 = ($19 | 0) == (0 | 0);
-      if ($cmp128) $nb$0 = $cond; else {
+      if ($cmp128) $nb$0 = $cond; else block14 : {
        $sub$i = 0 - $19 | 0;
        $and$i = $19 & $sub$i | 0;
        $sub2$i = $and$i + 4294967295 | 0;
@@ -6128,15 +6206,15 @@ function asmFunc(global, env, buffer) {
        $rsize$0$i = $sub22$i;
        $t$0$i = $20;
        $v$0$i = $20;
-       while_out$3 : do {
+       while_out$3 : do block15 : {
         $arrayidx23$i = $t$0$i + 16 | 0;
         $22 = HEAPU32[$arrayidx23$i >> 2] | 0;
         $cmp$i = ($22 | 0) == (0 | 0);
-        if ($cmp$i) {
+        if ($cmp$i) block16 : {
          $arrayidx27$i = $t$0$i + 20 | 0;
          $23 = HEAPU32[$arrayidx27$i >> 2] | 0;
          $cmp28$i = ($23 | 0) == (0 | 0);
-         if ($cmp28$i) {
+         if ($cmp28$i) block17 : {
           $rsize$0$i$lcssa = $rsize$0$i;
           $v$0$i$lcssa = $v$0$i;
           break while_out$3;
@@ -6168,30 +6246,30 @@ function asmFunc(global, env, buffer) {
        $27 = HEAPU32[$bk$i >> 2] | 0;
        $cmp40$i = ($27 | 0) == ($v$0$i$lcssa | 0);
        do_once$5 : {
-        if ($cmp40$i) {
+        if ($cmp40$i) block18 : {
          $arrayidx61$i = $v$0$i$lcssa + 20 | 0;
          $31 = HEAPU32[$arrayidx61$i >> 2] | 0;
          $cmp62$i = ($31 | 0) == (0 | 0);
-         if ($cmp62$i) {
+         if ($cmp62$i) block19 : {
           $arrayidx65$i = $v$0$i$lcssa + 16 | 0;
           $32 = HEAPU32[$arrayidx65$i >> 2] | 0;
           $cmp66$i = ($32 | 0) == (0 | 0);
-          if ($cmp66$i) {
+          if ($cmp66$i) block20 : {
            $R$3$i = 0;
            break do_once$5;
-          } else {
+          } else block21 : {
            $R$1$i = $32;
            $RP$1$i = $arrayidx65$i;
           }
-         } else {
+         } else block22 : {
           $R$1$i = $31;
           $RP$1$i = $arrayidx61$i;
          }
-         while_out$6 : do {
+         while_out$6 : do block23 : {
           $arrayidx71$i = $R$1$i + 20 | 0;
           $33 = HEAPU32[$arrayidx71$i >> 2] | 0;
           $cmp72$i = ($33 | 0) == (0 | 0);
-          if (($cmp72$i | 0) == (0 | 0)) {
+          if (($cmp72$i | 0) == (0 | 0)) block24 : {
            $R$1$i = $33;
            $RP$1$i = $arrayidx71$i;
            continue while_out$6;
@@ -6199,23 +6277,23 @@ function asmFunc(global, env, buffer) {
           $arrayidx75$i = $R$1$i + 16 | 0;
           $34 = HEAPU32[$arrayidx75$i >> 2] | 0;
           $cmp76$i = ($34 | 0) == (0 | 0);
-          if ($cmp76$i) {
+          if ($cmp76$i) block25 : {
            $R$1$i$lcssa = $R$1$i;
            $RP$1$i$lcssa = $RP$1$i;
            break while_out$6;
-          } else {
+          } else block26 : {
            $R$1$i = $34;
            $RP$1$i = $arrayidx75$i;
           }
           continue while_out$6;
          } while (0);
          $cmp81$i = ($RP$1$i$lcssa >>> 0 | 0) >>> 0 < ($25 >>> 0 | 0) >>> 0;
-         if ($cmp81$i) _abort(); else {
+         if ($cmp81$i) _abort(); else block27 : {
           HEAP32[$RP$1$i$lcssa >> 2] = 0;
           $R$3$i = $R$1$i$lcssa;
           break do_once$5;
          }
-        } else {
+        } else block28 : {
          $fd$i = $v$0$i$lcssa + 8 | 0;
          $28 = HEAPU32[$fd$i >> 2] | 0;
          $cmp45$i = ($28 >>> 0 | 0) >>> 0 < ($25 >>> 0 | 0) >>> 0;
@@ -6227,7 +6305,7 @@ function asmFunc(global, env, buffer) {
          $fd50$i = $27 + 8 | 0;
          $30 = HEAPU32[$fd50$i >> 2] | 0;
          $cmp51$i = ($30 | 0) == ($v$0$i$lcssa | 0);
-         if ($cmp51$i) {
+         if ($cmp51$i) block29 : {
           HEAP32[$bk47$i >> 2] = $27;
           HEAP32[$fd50$i >> 2] = $28;
           $R$3$i = $27;
@@ -6237,16 +6315,16 @@ function asmFunc(global, env, buffer) {
        }
        $cmp90$i = ($26 | 0) == (0 | 0);
        do_once$8 : {
-        if (($cmp90$i | 0) == (0 | 0)) {
+        if (($cmp90$i | 0) == (0 | 0)) block30 : {
          $index$i = $v$0$i$lcssa + 28 | 0;
          $35 = HEAPU32[$index$i >> 2] | 0;
          $arrayidx94$i = 480 + ($35 << 2 | 0) | 0;
          $36 = HEAPU32[$arrayidx94$i >> 2] | 0;
          $cmp95$i = ($v$0$i$lcssa | 0) == ($36 | 0);
-         if ($cmp95$i) {
+         if ($cmp95$i) block31 : {
           HEAP32[$arrayidx94$i >> 2] = $R$3$i;
           $cond2$i = ($R$3$i | 0) == (0 | 0);
-          if ($cond2$i) {
+          if ($cond2$i) block32 : {
            $shl$i = 1 << $35 | 0;
            $neg$i = $shl$i ^ 4294967295 | 0;
            $37 = HEAPU32[180 >> 2] | 0;
@@ -6254,14 +6332,14 @@ function asmFunc(global, env, buffer) {
            HEAP32[180 >> 2] = $and103$i;
            break do_once$8;
           }
-         } else {
+         } else block33 : {
           $38 = HEAPU32[192 >> 2] | 0;
           $cmp107$i = ($26 >>> 0 | 0) >>> 0 < ($38 >>> 0 | 0) >>> 0;
           if ($cmp107$i) _abort();
           $arrayidx113$i = $26 + 16 | 0;
           $39 = HEAPU32[$arrayidx113$i >> 2] | 0;
           $cmp114$i = ($39 | 0) == ($v$0$i$lcssa | 0);
-          if ($cmp114$i) HEAP32[$arrayidx113$i >> 2] = $R$3$i; else {
+          if ($cmp114$i) HEAP32[$arrayidx113$i >> 2] = $R$3$i; else block34 : {
            $arrayidx121$i = $26 + 20 | 0;
            HEAP32[$arrayidx121$i >> 2] = $R$3$i;
           }
@@ -6277,9 +6355,9 @@ function asmFunc(global, env, buffer) {
          $41 = HEAPU32[$arrayidx137$i >> 2] | 0;
          $cmp138$i = ($41 | 0) == (0 | 0);
          do_once$9 : {
-          if (($cmp138$i | 0) == (0 | 0)) {
+          if (($cmp138$i | 0) == (0 | 0)) block35 : {
            $cmp142$i = ($41 >>> 0 | 0) >>> 0 < ($40 >>> 0 | 0) >>> 0;
-           if ($cmp142$i) _abort(); else {
+           if ($cmp142$i) _abort(); else block36 : {
             $arrayidx148$i = $R$3$i + 16 | 0;
             HEAP32[$arrayidx148$i >> 2] = $41;
             $parent149$i = $41 + 24 | 0;
@@ -6291,10 +6369,10 @@ function asmFunc(global, env, buffer) {
          $arrayidx154$i = $v$0$i$lcssa + 20 | 0;
          $42 = HEAPU32[$arrayidx154$i >> 2] | 0;
          $cmp155$i = ($42 | 0) == (0 | 0);
-         if (($cmp155$i | 0) == (0 | 0)) {
+         if (($cmp155$i | 0) == (0 | 0)) block37 : {
           $43 = HEAPU32[192 >> 2] | 0;
           $cmp159$i = ($42 >>> 0 | 0) >>> 0 < ($43 >>> 0 | 0) >>> 0;
-          if ($cmp159$i) _abort(); else {
+          if ($cmp159$i) _abort(); else block38 : {
            $arrayidx165$i = $R$3$i + 20 | 0;
            HEAP32[$arrayidx165$i >> 2] = $42;
            $parent166$i = $42 + 24 | 0;
@@ -6305,7 +6383,7 @@ function asmFunc(global, env, buffer) {
         }
        }
        $cmp174$i = ($rsize$0$i$lcssa >>> 0 | 0) >>> 0 < 16 >>> 0;
-       if ($cmp174$i) {
+       if ($cmp174$i) block39 : {
         $add177$i = $rsize$0$i$lcssa + $cond | 0;
         $or178$i = $add177$i | 3 | 0;
         $head179$i = $v$0$i$lcssa + 4 | 0;
@@ -6315,7 +6393,7 @@ function asmFunc(global, env, buffer) {
         $44 = HEAPU32[$head182$i >> 2] | 0;
         $or183$i = $44 | 1 | 0;
         HEAP32[$head182$i >> 2] = $or183$i;
-       } else {
+       } else block40 : {
         $or186$i = $cond | 3 | 0;
         $head187$i = $v$0$i$lcssa + 4 | 0;
         HEAP32[$head187$i >> 2] = $or186$i;
@@ -6326,7 +6404,7 @@ function asmFunc(global, env, buffer) {
         HEAP32[$add$ptr190$i >> 2] = $rsize$0$i$lcssa;
         $45 = HEAPU32[184 >> 2] | 0;
         $cmp191$i = ($45 | 0) == (0 | 0);
-        if (($cmp191$i | 0) == (0 | 0)) {
+        if (($cmp191$i | 0) == (0 | 0)) block41 : {
          $46 = HEAPU32[196 >> 2] | 0;
          $shr194$i = $45 >>> 3 | 0;
          $shl195$i = $shr194$i << 1 | 0;
@@ -6335,18 +6413,18 @@ function asmFunc(global, env, buffer) {
          $shl198$i = 1 << $shr194$i | 0;
          $and199$i = $47 & $shl198$i | 0;
          $tobool200$i = ($and199$i | 0) == (0 | 0);
-         if ($tobool200$i) {
+         if ($tobool200$i) block42 : {
           $or204$i = $47 | $shl198$i | 0;
           HEAP32[176 >> 2] = $or204$i;
           $$pre$i = $arrayidx196$i + 8 | 0;
           $$pre$phi$iZ2D = $$pre$i;
           $F197$0$i = $arrayidx196$i;
-         } else {
+         } else block43 : {
           $48 = $arrayidx196$i + 8 | 0;
           $49 = HEAPU32[$48 >> 2] | 0;
           $50 = HEAPU32[192 >> 2] | 0;
           $cmp208$i = ($49 >>> 0 | 0) >>> 0 < ($50 >>> 0 | 0) >>> 0;
-          if ($cmp208$i) _abort(); else {
+          if ($cmp208$i) _abort(); else block44 : {
            $$pre$phi$iZ2D = $48;
            $F197$0$i = $49;
           }
@@ -6368,20 +6446,20 @@ function asmFunc(global, env, buffer) {
        break topmost;
       }
      } else $nb$0 = $cond;
-    } else {
+    } else block45 : {
      $cmp139 = ($bytes >>> 0 | 0) >>> 0 > 4294967231 >>> 0;
-     if ($cmp139) $nb$0 = 4294967295; else {
+     if ($cmp139) $nb$0 = 4294967295; else block46 : {
       $add144 = $bytes + 11 | 0;
       $and145 = $add144 & 4294967288 | 0;
       $51 = HEAPU32[180 >> 2] | 0;
       $cmp146 = ($51 | 0) == (0 | 0);
-      if ($cmp146) $nb$0 = $and145; else {
+      if ($cmp146) $nb$0 = $and145; else block47 : {
        $sub$i$138 = 0 - $and145 | 0;
        $shr$i$139 = $add144 >>> 8 | 0;
        $cmp$i$140 = ($shr$i$139 | 0) == (0 | 0);
-       if ($cmp$i$140) $idx$0$i = 0; else {
+       if ($cmp$i$140) $idx$0$i = 0; else block48 : {
         $cmp1$i = ($and145 >>> 0 | 0) >>> 0 > 16777215 >>> 0;
-        if ($cmp1$i) $idx$0$i = 31; else {
+        if ($cmp1$i) $idx$0$i = 31; else block49 : {
          $sub4$i = $shr$i$139 + 1048320 | 0;
          $shr5$i$142 = $sub4$i >>> 16 | 0;
          $and$i$143 = $shr5$i$142 & 8 | 0;
@@ -6411,12 +6489,12 @@ function asmFunc(global, env, buffer) {
        $52 = HEAPU32[$arrayidx$i$150 >> 2] | 0;
        $cmp24$i = ($52 | 0) == (0 | 0);
        label$break$L123 : {
-        if ($cmp24$i) {
+        if ($cmp24$i) block50 : {
          $rsize$3$i = $sub$i$138;
          $t$2$i = 0;
          $v$3$i = 0;
          label = 86;
-        } else {
+        } else block51 : {
          $cmp26$i = ($idx$0$i | 0) == (31 | 0);
          $shr27$i = $idx$0$i >>> 1 | 0;
          $sub30$i = 25 - $shr27$i | 0;
@@ -6428,25 +6506,25 @@ function asmFunc(global, env, buffer) {
          $sizebits$0$i = $shl31$i;
          $t$0$i$151 = $52;
          $v$0$i$153 = 0;
-         while_out$10 : do {
+         while_out$10 : do block52 : {
           $head$i$154 = $t$0$i$151 + 4 | 0;
           $53 = HEAPU32[$head$i$154 >> 2] | 0;
           $and32$i = $53 & 4294967288 | 0;
           $sub33$i = $and32$i - $and145 | 0;
           $cmp34$i = ($sub33$i >>> 0 | 0) >>> 0 < ($rsize$0$i$152 >>> 0 | 0) >>> 0;
-          if ($cmp34$i) {
+          if ($cmp34$i) block53 : {
            $cmp36$i = ($and32$i | 0) == ($and145 | 0);
-           if ($cmp36$i) {
+           if ($cmp36$i) block54 : {
             $rsize$49$i = $sub33$i;
             $t$48$i = $t$0$i$151;
             $v$410$i = $t$0$i$151;
             label = 90;
             break label$break$L123;
-           } else {
+           } else block55 : {
             $rsize$1$i = $sub33$i;
             $v$1$i = $t$0$i$151;
            }
-          } else {
+          } else block56 : {
            $rsize$1$i = $rsize$0$i$152;
            $v$1$i = $v$0$i$153;
           }
@@ -6464,13 +6542,13 @@ function asmFunc(global, env, buffer) {
           $56 = $cmp49$i & 1 | 0;
           $shl52$i = $56 ^ 1 | 0;
           $sizebits$0$shl52$i = $sizebits$0$i << $shl52$i | 0;
-          if ($cmp49$i) {
+          if ($cmp49$i) block57 : {
            $rsize$3$i = $rsize$1$i;
            $t$2$i = $rst$1$i;
            $v$3$i = $v$1$i;
            label = 86;
            break while_out$10;
-          } else {
+          } else block58 : {
            $rsize$0$i$152 = $rsize$1$i;
            $rst$0$i = $rst$1$i;
            $sizebits$0$i = $sizebits$0$shl52$i;
@@ -6481,17 +6559,17 @@ function asmFunc(global, env, buffer) {
          } while (0);
         }
        }
-       if ((label | 0) == (86 | 0)) {
+       if ((label | 0) == (86 | 0)) block59 : {
         $cmp55$i = ($t$2$i | 0) == (0 | 0);
         $cmp57$i = ($v$3$i | 0) == (0 | 0);
         $or$cond$i = $cmp55$i & $cmp57$i | 0;
-        if ($or$cond$i) {
+        if ($or$cond$i) block60 : {
          $shl60$i = 2 << $idx$0$i | 0;
          $sub63$i = 0 - $shl60$i | 0;
          $or$i = $shl60$i | $sub63$i | 0;
          $and64$i = $51 & $or$i | 0;
          $cmp65$i = ($and64$i | 0) == (0 | 0);
-         if ($cmp65$i) {
+         if ($cmp65$i) block61 : {
           $nb$0 = $and145;
           break do_once$0;
          }
@@ -6523,17 +6601,17 @@ function asmFunc(global, env, buffer) {
          $t$4$ph$i = $57;
         } else $t$4$ph$i = $t$2$i;
         $cmp97$7$i = ($t$4$ph$i | 0) == (0 | 0);
-        if ($cmp97$7$i) {
+        if ($cmp97$7$i) block62 : {
          $rsize$4$lcssa$i = $rsize$3$i;
          $v$4$lcssa$i = $v$3$i;
-        } else {
+        } else block63 : {
          $rsize$49$i = $rsize$3$i;
          $t$48$i = $t$4$ph$i;
          $v$410$i = $v$3$i;
          label = 90;
         }
        }
-       if ((label | 0) == (90 | 0)) while_out$12 : do {
+       if ((label | 0) == (90 | 0)) while_out$12 : do block64 : {
         label = 0;
         $head99$i = $t$48$i + 4 | 0;
         $58 = HEAPU32[$head99$i >> 2] | 0;
@@ -6547,7 +6625,7 @@ function asmFunc(global, env, buffer) {
         $arrayidx106$i = $t$48$i + 16 | 0;
         $59 = HEAPU32[$arrayidx106$i >> 2] | 0;
         $cmp107$i$157 = ($59 | 0) == (0 | 0);
-        if (($cmp107$i$157 | 0) == (0 | 0)) {
+        if (($cmp107$i$157 | 0) == (0 | 0)) block65 : {
          $rsize$49$i = $sub101$rsize$4$i;
          $t$48$i = $59;
          $v$410$i = $t$4$v$4$i;
@@ -6557,11 +6635,11 @@ function asmFunc(global, env, buffer) {
         $arrayidx113$i$159 = $t$48$i + 20 | 0;
         $60 = HEAPU32[$arrayidx113$i$159 >> 2] | 0;
         $cmp97$i = ($60 | 0) == (0 | 0);
-        if ($cmp97$i) {
+        if ($cmp97$i) block66 : {
          $rsize$4$lcssa$i = $sub101$rsize$4$i;
          $v$4$lcssa$i = $t$4$v$4$i;
          break while_out$12;
-        } else {
+        } else block67 : {
          $rsize$49$i = $sub101$rsize$4$i;
          $t$48$i = $60;
          $v$410$i = $t$4$v$4$i;
@@ -6570,11 +6648,11 @@ function asmFunc(global, env, buffer) {
         continue while_out$12;
        } while (0);
        $cmp116$i = ($v$4$lcssa$i | 0) == (0 | 0);
-       if ($cmp116$i) $nb$0 = $and145; else {
+       if ($cmp116$i) $nb$0 = $and145; else block68 : {
         $61 = HEAPU32[184 >> 2] | 0;
         $sub118$i = $61 - $and145 | 0;
         $cmp119$i = ($rsize$4$lcssa$i >>> 0 | 0) >>> 0 < ($sub118$i >>> 0 | 0) >>> 0;
-        if ($cmp119$i) {
+        if ($cmp119$i) block69 : {
          $62 = HEAPU32[192 >> 2] | 0;
          $cmp121$i = ($v$4$lcssa$i >>> 0 | 0) >>> 0 < ($62 >>> 0 | 0) >>> 0;
          if ($cmp121$i) _abort();
@@ -6587,30 +6665,30 @@ function asmFunc(global, env, buffer) {
          $64 = HEAPU32[$bk$i$163 >> 2] | 0;
          $cmp128$i = ($64 | 0) == ($v$4$lcssa$i | 0);
          do_once$14 : {
-          if ($cmp128$i) {
+          if ($cmp128$i) block70 : {
            $arrayidx151$i = $v$4$lcssa$i + 20 | 0;
            $68 = HEAPU32[$arrayidx151$i >> 2] | 0;
            $cmp152$i = ($68 | 0) == (0 | 0);
-           if ($cmp152$i) {
+           if ($cmp152$i) block71 : {
             $arrayidx155$i = $v$4$lcssa$i + 16 | 0;
             $69 = HEAPU32[$arrayidx155$i >> 2] | 0;
             $cmp156$i = ($69 | 0) == (0 | 0);
-            if ($cmp156$i) {
+            if ($cmp156$i) block72 : {
              $R$3$i$171 = 0;
              break do_once$14;
-            } else {
+            } else block73 : {
              $R$1$i$168 = $69;
              $RP$1$i$167 = $arrayidx155$i;
             }
-           } else {
+           } else block74 : {
             $R$1$i$168 = $68;
             $RP$1$i$167 = $arrayidx151$i;
            }
-           while_out$15 : do {
+           while_out$15 : do block75 : {
             $arrayidx161$i = $R$1$i$168 + 20 | 0;
             $70 = HEAPU32[$arrayidx161$i >> 2] | 0;
             $cmp162$i = ($70 | 0) == (0 | 0);
-            if (($cmp162$i | 0) == (0 | 0)) {
+            if (($cmp162$i | 0) == (0 | 0)) block76 : {
              $R$1$i$168 = $70;
              $RP$1$i$167 = $arrayidx161$i;
              continue while_out$15;
@@ -6618,23 +6696,23 @@ function asmFunc(global, env, buffer) {
             $arrayidx165$i$169 = $R$1$i$168 + 16 | 0;
             $71 = HEAPU32[$arrayidx165$i$169 >> 2] | 0;
             $cmp166$i = ($71 | 0) == (0 | 0);
-            if ($cmp166$i) {
+            if ($cmp166$i) block77 : {
              $R$1$i$168$lcssa = $R$1$i$168;
              $RP$1$i$167$lcssa = $RP$1$i$167;
              break while_out$15;
-            } else {
+            } else block78 : {
              $R$1$i$168 = $71;
              $RP$1$i$167 = $arrayidx165$i$169;
             }
             continue while_out$15;
            } while (0);
            $cmp171$i = ($RP$1$i$167$lcssa >>> 0 | 0) >>> 0 < ($62 >>> 0 | 0) >>> 0;
-           if ($cmp171$i) _abort(); else {
+           if ($cmp171$i) _abort(); else block79 : {
             HEAP32[$RP$1$i$167$lcssa >> 2] = 0;
             $R$3$i$171 = $R$1$i$168$lcssa;
             break do_once$14;
            }
-          } else {
+          } else block80 : {
            $fd$i$164 = $v$4$lcssa$i + 8 | 0;
            $65 = HEAPU32[$fd$i$164 >> 2] | 0;
            $cmp133$i = ($65 >>> 0 | 0) >>> 0 < ($62 >>> 0 | 0) >>> 0;
@@ -6646,7 +6724,7 @@ function asmFunc(global, env, buffer) {
            $fd139$i = $64 + 8 | 0;
            $67 = HEAPU32[$fd139$i >> 2] | 0;
            $cmp140$i = ($67 | 0) == ($v$4$lcssa$i | 0);
-           if ($cmp140$i) {
+           if ($cmp140$i) block81 : {
             HEAP32[$bk136$i >> 2] = $64;
             HEAP32[$fd139$i >> 2] = $65;
             $R$3$i$171 = $64;
@@ -6656,16 +6734,16 @@ function asmFunc(global, env, buffer) {
          }
          $cmp180$i = ($63 | 0) == (0 | 0);
          do_once$17 : {
-          if (($cmp180$i | 0) == (0 | 0)) {
+          if (($cmp180$i | 0) == (0 | 0)) block82 : {
            $index$i$172 = $v$4$lcssa$i + 28 | 0;
            $72 = HEAPU32[$index$i$172 >> 2] | 0;
            $arrayidx184$i = 480 + ($72 << 2 | 0) | 0;
            $73 = HEAPU32[$arrayidx184$i >> 2] | 0;
            $cmp185$i = ($v$4$lcssa$i | 0) == ($73 | 0);
-           if ($cmp185$i) {
+           if ($cmp185$i) block83 : {
             HEAP32[$arrayidx184$i >> 2] = $R$3$i$171;
             $cond3$i = ($R$3$i$171 | 0) == (0 | 0);
-            if ($cond3$i) {
+            if ($cond3$i) block84 : {
              $shl192$i = 1 << $72 | 0;
              $neg$i$173 = $shl192$i ^ 4294967295 | 0;
              $74 = HEAPU32[180 >> 2] | 0;
@@ -6673,14 +6751,14 @@ function asmFunc(global, env, buffer) {
              HEAP32[180 >> 2] = $and194$i;
              break do_once$17;
             }
-           } else {
+           } else block85 : {
             $75 = HEAPU32[192 >> 2] | 0;
             $cmp198$i = ($63 >>> 0 | 0) >>> 0 < ($75 >>> 0 | 0) >>> 0;
             if ($cmp198$i) _abort();
             $arrayidx204$i = $63 + 16 | 0;
             $76 = HEAPU32[$arrayidx204$i >> 2] | 0;
             $cmp205$i = ($76 | 0) == ($v$4$lcssa$i | 0);
-            if ($cmp205$i) HEAP32[$arrayidx204$i >> 2] = $R$3$i$171; else {
+            if ($cmp205$i) HEAP32[$arrayidx204$i >> 2] = $R$3$i$171; else block86 : {
              $arrayidx212$i = $63 + 20 | 0;
              HEAP32[$arrayidx212$i >> 2] = $R$3$i$171;
             }
@@ -6696,9 +6774,9 @@ function asmFunc(global, env, buffer) {
            $78 = HEAPU32[$arrayidx228$i >> 2] | 0;
            $cmp229$i = ($78 | 0) == (0 | 0);
            do_once$18 : {
-            if (($cmp229$i | 0) == (0 | 0)) {
+            if (($cmp229$i | 0) == (0 | 0)) block87 : {
              $cmp233$i = ($78 >>> 0 | 0) >>> 0 < ($77 >>> 0 | 0) >>> 0;
-             if ($cmp233$i) _abort(); else {
+             if ($cmp233$i) _abort(); else block88 : {
               $arrayidx239$i = $R$3$i$171 + 16 | 0;
               HEAP32[$arrayidx239$i >> 2] = $78;
               $parent240$i = $78 + 24 | 0;
@@ -6710,10 +6788,10 @@ function asmFunc(global, env, buffer) {
            $arrayidx245$i = $v$4$lcssa$i + 20 | 0;
            $79 = HEAPU32[$arrayidx245$i >> 2] | 0;
            $cmp246$i = ($79 | 0) == (0 | 0);
-           if (($cmp246$i | 0) == (0 | 0)) {
+           if (($cmp246$i | 0) == (0 | 0)) block89 : {
             $80 = HEAPU32[192 >> 2] | 0;
             $cmp250$i = ($79 >>> 0 | 0) >>> 0 < ($80 >>> 0 | 0) >>> 0;
-            if ($cmp250$i) _abort(); else {
+            if ($cmp250$i) _abort(); else block90 : {
              $arrayidx256$i = $R$3$i$171 + 20 | 0;
              HEAP32[$arrayidx256$i >> 2] = $79;
              $parent257$i = $79 + 24 | 0;
@@ -6725,7 +6803,7 @@ function asmFunc(global, env, buffer) {
          }
          $cmp265$i = ($rsize$4$lcssa$i >>> 0 | 0) >>> 0 < 16 >>> 0;
          do_once$19 : {
-          if ($cmp265$i) {
+          if ($cmp265$i) block91 : {
            $add268$i = $rsize$4$lcssa$i + $and145 | 0;
            $or270$i = $add268$i | 3 | 0;
            $head271$i = $v$4$lcssa$i + 4 | 0;
@@ -6735,7 +6813,7 @@ function asmFunc(global, env, buffer) {
            $81 = HEAPU32[$head274$i >> 2] | 0;
            $or275$i = $81 | 1 | 0;
            HEAP32[$head274$i >> 2] = $or275$i;
-          } else {
+          } else block92 : {
            $or278$i = $and145 | 3 | 0;
            $head279$i = $v$4$lcssa$i + 4 | 0;
            HEAP32[$head279$i >> 2] = $or278$i;
@@ -6746,25 +6824,25 @@ function asmFunc(global, env, buffer) {
            HEAP32[$add$ptr282$i >> 2] = $rsize$4$lcssa$i;
            $shr283$i = $rsize$4$lcssa$i >>> 3 | 0;
            $cmp284$i = ($rsize$4$lcssa$i >>> 0 | 0) >>> 0 < 256 >>> 0;
-           if ($cmp284$i) {
+           if ($cmp284$i) block93 : {
             $shl288$i = $shr283$i << 1 | 0;
             $arrayidx289$i = 216 + ($shl288$i << 2 | 0) | 0;
             $82 = HEAPU32[176 >> 2] | 0;
             $shl291$i = 1 << $shr283$i | 0;
             $and292$i = $82 & $shl291$i | 0;
             $tobool293$i = ($and292$i | 0) == (0 | 0);
-            if ($tobool293$i) {
+            if ($tobool293$i) block94 : {
              $or297$i = $82 | $shl291$i | 0;
              HEAP32[176 >> 2] = $or297$i;
              $$pre$i$177 = $arrayidx289$i + 8 | 0;
              $$pre$phi$i$178Z2D = $$pre$i$177;
              $F290$0$i = $arrayidx289$i;
-            } else {
+            } else block95 : {
              $83 = $arrayidx289$i + 8 | 0;
              $84 = HEAPU32[$83 >> 2] | 0;
              $85 = HEAPU32[192 >> 2] | 0;
              $cmp301$i = ($84 >>> 0 | 0) >>> 0 < ($85 >>> 0 | 0) >>> 0;
-             if ($cmp301$i) _abort(); else {
+             if ($cmp301$i) _abort(); else block96 : {
               $$pre$phi$i$178Z2D = $83;
               $F290$0$i = $84;
              }
@@ -6780,9 +6858,9 @@ function asmFunc(global, env, buffer) {
            }
            $shr318$i = $rsize$4$lcssa$i >>> 8 | 0;
            $cmp319$i = ($shr318$i | 0) == (0 | 0);
-           if ($cmp319$i) $I316$0$i = 0; else {
+           if ($cmp319$i) $I316$0$i = 0; else block97 : {
             $cmp323$i = ($rsize$4$lcssa$i >>> 0 | 0) >>> 0 > 16777215 >>> 0;
-            if ($cmp323$i) $I316$0$i = 31; else {
+            if ($cmp323$i) $I316$0$i = 31; else block98 : {
              $sub329$i = $shr318$i + 1048320 | 0;
              $shr330$i = $sub329$i >>> 16 | 0;
              $and331$i = $shr330$i & 8 | 0;
@@ -6819,7 +6897,7 @@ function asmFunc(global, env, buffer) {
            $shl362$i = 1 << $I316$0$i | 0;
            $and363$i = $86 & $shl362$i | 0;
            $tobool364$i = ($and363$i | 0) == (0 | 0);
-           if ($tobool364$i) {
+           if ($tobool364$i) block99 : {
             $or368$i = $86 | $shl362$i | 0;
             HEAP32[180 >> 2] = $or368$i;
             HEAP32[$arrayidx355$i >> 2] = $add$ptr$i$161;
@@ -6840,12 +6918,12 @@ function asmFunc(global, env, buffer) {
            $shl384$i = $rsize$4$lcssa$i << $cond383$i | 0;
            $K373$0$i = $shl384$i;
            $T$0$i = $87;
-           while_out$20 : do {
+           while_out$20 : do block100 : {
             $head386$i = $T$0$i + 4 | 0;
             $88 = HEAPU32[$head386$i >> 2] | 0;
             $and387$i = $88 & 4294967288 | 0;
             $cmp388$i = ($and387$i | 0) == ($rsize$4$lcssa$i | 0);
-            if ($cmp388$i) {
+            if ($cmp388$i) block101 : {
              $T$0$i$lcssa = $T$0$i;
              label = 148;
              break while_out$20;
@@ -6855,21 +6933,21 @@ function asmFunc(global, env, buffer) {
             $shl395$i = $K373$0$i << 1 | 0;
             $89 = HEAPU32[$arrayidx394$i >> 2] | 0;
             $cmp396$i = ($89 | 0) == (0 | 0);
-            if ($cmp396$i) {
+            if ($cmp396$i) block102 : {
              $T$0$i$lcssa293 = $T$0$i;
              $arrayidx394$i$lcssa = $arrayidx394$i;
              label = 145;
              break while_out$20;
-            } else {
+            } else block103 : {
              $K373$0$i = $shl395$i;
              $T$0$i = $89;
             }
             continue while_out$20;
            } while (0);
-           if ((label | 0) == (145 | 0)) {
+           if ((label | 0) == (145 | 0)) block104 : {
             $90 = HEAPU32[192 >> 2] | 0;
             $cmp401$i = ($arrayidx394$i$lcssa >>> 0 | 0) >>> 0 < ($90 >>> 0 | 0) >>> 0;
-            if ($cmp401$i) _abort(); else {
+            if ($cmp401$i) _abort(); else block105 : {
              HEAP32[$arrayidx394$i$lcssa >> 2] = $add$ptr$i$161;
              $parent406$i = $add$ptr$i$161 + 24 | 0;
              HEAP32[$parent406$i >> 2] = $T$0$i$lcssa293;
@@ -6879,14 +6957,14 @@ function asmFunc(global, env, buffer) {
              HEAP32[$fd408$i >> 2] = $add$ptr$i$161;
              break do_once$19;
             }
-           } else if ((label | 0) == (148 | 0)) {
+           } else if ((label | 0) == (148 | 0)) block106 : {
             $fd416$i = $T$0$i$lcssa + 8 | 0;
             $91 = HEAPU32[$fd416$i >> 2] | 0;
             $92 = HEAPU32[192 >> 2] | 0;
             $cmp422$i = ($91 >>> 0 | 0) >>> 0 >= ($92 >>> 0 | 0) >>> 0;
             $not$cmp418$i = ($T$0$i$lcssa >>> 0 | 0) >>> 0 >= ($92 >>> 0 | 0) >>> 0;
             $93 = $cmp422$i & $not$cmp418$i | 0;
-            if ($93) {
+            if ($93) block107 : {
              $bk429$i = $91 + 12 | 0;
              HEAP32[$bk429$i >> 2] = $add$ptr$i$161;
              HEAP32[$fd416$i >> 2] = $add$ptr$i$161;
@@ -6913,11 +6991,11 @@ function asmFunc(global, env, buffer) {
    }
    $94 = HEAPU32[184 >> 2] | 0;
    $cmp156 = ($94 >>> 0 | 0) >>> 0 < ($nb$0 >>> 0 | 0) >>> 0;
-   if (($cmp156 | 0) == (0 | 0)) {
+   if (($cmp156 | 0) == (0 | 0)) block108 : {
     $sub160 = $94 - $nb$0 | 0;
     $95 = HEAPU32[196 >> 2] | 0;
     $cmp162 = ($sub160 >>> 0 | 0) >>> 0 > 15 >>> 0;
-    if ($cmp162) {
+    if ($cmp162) block109 : {
      $add$ptr166 = $95 + $nb$0 | 0;
      HEAP32[196 >> 2] = $add$ptr166;
      HEAP32[184 >> 2] = $sub160;
@@ -6929,7 +7007,7 @@ function asmFunc(global, env, buffer) {
      $or172 = $nb$0 | 3 | 0;
      $head173 = $95 + 4 | 0;
      HEAP32[$head173 >> 2] = $or172;
-    } else {
+    } else block110 : {
      HEAP32[184 >> 2] = 0;
      HEAP32[196 >> 2] = 0;
      $or176 = $94 | 3 | 0;
@@ -6948,7 +7026,7 @@ function asmFunc(global, env, buffer) {
    }
    $97 = HEAPU32[188 >> 2] | 0;
    $cmp186 = ($97 >>> 0 | 0) >>> 0 > ($nb$0 >>> 0 | 0) >>> 0;
-   if ($cmp186) {
+   if ($cmp186) block111 : {
     $sub190 = $97 - $nb$0 | 0;
     HEAP32[188 >> 2] = $sub190;
     $98 = HEAPU32[200 >> 2] | 0;
@@ -6968,12 +7046,12 @@ function asmFunc(global, env, buffer) {
    $99 = HEAPU32[648 >> 2] | 0;
    $cmp$i$179 = ($99 | 0) == (0 | 0);
    do_once$22 : {
-    if ($cmp$i$179) {
+    if ($cmp$i$179) block112 : {
      $call$i$i = _sysconf(30 | 0) | 0;
      $sub$i$i = $call$i$i + 4294967295 | 0;
      $and$i$i = $sub$i$i & $call$i$i | 0;
      $cmp1$i$i = ($and$i$i | 0) == (0 | 0);
-     if ($cmp1$i$i) {
+     if ($cmp1$i$i) block113 : {
       HEAP32[656 >> 2] = $call$i$i;
       HEAP32[652 >> 2] = $call$i$i;
       HEAP32[660 >> 2] = 4294967295;
@@ -6995,20 +7073,20 @@ function asmFunc(global, env, buffer) {
    $neg$i$182 = 0 - $100 | 0;
    $and11$i = $add9$i & $neg$i$182 | 0;
    $cmp12$i = ($and11$i >>> 0 | 0) >>> 0 > ($nb$0 >>> 0 | 0) >>> 0;
-   if (($cmp12$i | 0) == (0 | 0)) {
+   if (($cmp12$i | 0) == (0 | 0)) block114 : {
     $retval$0 = 0;
     wasm2asm_i32$0 = $retval$0;
     break topmost;
    }
    $101 = HEAPU32[616 >> 2] | 0;
    $cmp15$i = ($101 | 0) == (0 | 0);
-   if (($cmp15$i | 0) == (0 | 0)) {
+   if (($cmp15$i | 0) == (0 | 0)) block115 : {
     $102 = HEAPU32[608 >> 2] | 0;
     $add17$i$183 = $102 + $and11$i | 0;
     $cmp19$i = ($add17$i$183 >>> 0 | 0) >>> 0 <= ($102 >>> 0 | 0) >>> 0;
     $cmp21$i = ($add17$i$183 >>> 0 | 0) >>> 0 > ($101 >>> 0 | 0) >>> 0;
     $or$cond1$i$184 = $cmp19$i | $cmp21$i | 0;
-    if ($or$cond1$i$184) {
+    if ($or$cond1$i$184) block116 : {
      $retval$0 = 0;
      wasm2asm_i32$0 = $retval$0;
      break topmost;
@@ -7018,21 +7096,21 @@ function asmFunc(global, env, buffer) {
    $and29$i = $103 & 4 | 0;
    $tobool30$i = ($and29$i | 0) == (0 | 0);
    label$break$L257 : {
-    if ($tobool30$i) {
+    if ($tobool30$i) block117 : {
      $104 = HEAPU32[200 >> 2] | 0;
      $cmp32$i$185 = ($104 | 0) == (0 | 0);
      label$break$L259 : {
-      if ($cmp32$i$185) label = 173; else {
+      if ($cmp32$i$185) label = 173; else block118 : {
        $sp$0$i$i = 624;
-       while_out$23 : do {
+       while_out$23 : do block119 : {
         $105 = HEAPU32[$sp$0$i$i >> 2] | 0;
         $cmp$i$9$i = ($105 >>> 0 | 0) >>> 0 > ($104 >>> 0 | 0) >>> 0;
-        if (($cmp$i$9$i | 0) == (0 | 0)) {
+        if (($cmp$i$9$i | 0) == (0 | 0)) block120 : {
          $size$i$i = $sp$0$i$i + 4 | 0;
          $106 = HEAPU32[$size$i$i >> 2] | 0;
          $add$ptr$i$i = $105 + $106 | 0;
          $cmp2$i$i = ($add$ptr$i$i >>> 0 | 0) >>> 0 > ($104 >>> 0 | 0) >>> 0;
-         if ($cmp2$i$i) {
+         if ($cmp2$i$i) block121 : {
           $base$i$i$lcssa = $sp$0$i$i;
           $size$i$i$lcssa = $size$i$i;
           break while_out$23;
@@ -7041,7 +7119,7 @@ function asmFunc(global, env, buffer) {
         $next$i$i = $sp$0$i$i + 8 | 0;
         $107 = HEAPU32[$next$i$i >> 2] | 0;
         $cmp3$i$i = ($107 | 0) == (0 | 0);
-        if ($cmp3$i$i) {
+        if ($cmp3$i$i) block122 : {
          label = 173;
          break label$break$L259;
         } else $sp$0$i$i = $107;
@@ -7051,21 +7129,21 @@ function asmFunc(global, env, buffer) {
        $add77$i = $add9$i - $112 | 0;
        $and80$i = $add77$i & $neg$i$182 | 0;
        $cmp81$i$191 = ($and80$i >>> 0 | 0) >>> 0 < 2147483647 >>> 0;
-       if ($cmp81$i$191) {
+       if ($cmp81$i$191) block123 : {
         $call83$i = _sbrk($and80$i | 0) | 0;
         $113 = HEAPU32[$base$i$i$lcssa >> 2] | 0;
         $114 = HEAPU32[$size$i$i$lcssa >> 2] | 0;
         $add$ptr$i$193 = $113 + $114 | 0;
         $cmp85$i = ($call83$i | 0) == ($add$ptr$i$193 | 0);
-        if ($cmp85$i) {
+        if ($cmp85$i) block124 : {
          $cmp89$i = ($call83$i | 0) == (4294967295 | 0);
-         if (($cmp89$i | 0) == (0 | 0)) {
+         if (($cmp89$i | 0) == (0 | 0)) block125 : {
           $tbase$796$i = $call83$i;
           $tsize$795$i = $and80$i;
           label = 193;
           break label$break$L257;
          }
-        } else {
+        } else block126 : {
          $br$2$ph$i = $call83$i;
          $ssize$2$ph$i = $and80$i;
          label = 183;
@@ -7074,16 +7152,16 @@ function asmFunc(global, env, buffer) {
       }
      }
      do_once$25 : {
-      if ((label | 0) == (173 | 0)) {
+      if ((label | 0) == (173 | 0)) block127 : {
        $call37$i = _sbrk(0 | 0) | 0;
        $cmp38$i = ($call37$i | 0) == (4294967295 | 0);
-       if (($cmp38$i | 0) == (0 | 0)) {
+       if (($cmp38$i | 0) == (0 | 0)) block128 : {
         $108 = $call37$i;
         $109 = HEAPU32[652 >> 2] | 0;
         $sub41$i = $109 + 4294967295 | 0;
         $and42$i = $sub41$i & $108 | 0;
         $cmp43$i = ($and42$i | 0) == (0 | 0);
-        if ($cmp43$i) $ssize$0$i = $and11$i; else {
+        if ($cmp43$i) $ssize$0$i = $and11$i; else block129 : {
          $add46$i = $sub41$i + $108 | 0;
          $neg48$i = 0 - $109 | 0;
          $and49$i = $add46$i & $neg48$i | 0;
@@ -7096,10 +7174,10 @@ function asmFunc(global, env, buffer) {
         $cmp55$i$187 = ($ssize$0$i >>> 0 | 0) >>> 0 > ($nb$0 >>> 0 | 0) >>> 0;
         $cmp57$i$188 = ($ssize$0$i >>> 0 | 0) >>> 0 < 2147483647 >>> 0;
         $or$cond$i$189 = $cmp55$i$187 & $cmp57$i$188 | 0;
-        if ($or$cond$i$189) {
+        if ($or$cond$i$189) block130 : {
          $111 = HEAPU32[616 >> 2] | 0;
          $cmp60$i = ($111 | 0) == (0 | 0);
-         if (($cmp60$i | 0) == (0 | 0)) {
+         if (($cmp60$i | 0) == (0 | 0)) block131 : {
           $cmp63$i = ($add54$i >>> 0 | 0) >>> 0 <= ($110 >>> 0 | 0) >>> 0;
           $cmp66$i$190 = ($add54$i >>> 0 | 0) >>> 0 > ($111 >>> 0 | 0) >>> 0;
           $or$cond2$i = $cmp63$i | $cmp66$i$190 | 0;
@@ -7107,12 +7185,12 @@ function asmFunc(global, env, buffer) {
          }
          $call68$i = _sbrk($ssize$0$i | 0) | 0;
          $cmp69$i = ($call68$i | 0) == ($call37$i | 0);
-         if ($cmp69$i) {
+         if ($cmp69$i) block132 : {
           $tbase$796$i = $call37$i;
           $tsize$795$i = $ssize$0$i;
           label = 193;
           break label$break$L257;
-         } else {
+         } else block133 : {
           $br$2$ph$i = $call68$i;
           $ssize$2$ph$i = $ssize$0$i;
           label = 183;
@@ -7122,7 +7200,7 @@ function asmFunc(global, env, buffer) {
       }
      }
      label$break$L279 : {
-      if ((label | 0) == (183 | 0)) {
+      if ((label | 0) == (183 | 0)) block134 : {
        $sub112$i = 0 - $ssize$2$ph$i | 0;
        $cmp91$i = ($br$2$ph$i | 0) != (4294967295 | 0);
        $cmp93$i = ($ssize$2$ph$i >>> 0 | 0) >>> 0 < 2147483647 >>> 0;
@@ -7130,20 +7208,20 @@ function asmFunc(global, env, buffer) {
        $cmp96$i = ($add$i$180 >>> 0 | 0) >>> 0 > ($ssize$2$ph$i >>> 0 | 0) >>> 0;
        $or$cond3$i = $cmp96$i & $or$cond5$i | 0;
        do_once$26 : {
-        if ($or$cond3$i) {
+        if ($or$cond3$i) block135 : {
          $115 = HEAPU32[656 >> 2] | 0;
          $sub99$i = $sub$i$181 - $ssize$2$ph$i | 0;
          $add101$i = $sub99$i + $115 | 0;
          $neg103$i = 0 - $115 | 0;
          $and104$i = $add101$i & $neg103$i | 0;
          $cmp105$i = ($and104$i >>> 0 | 0) >>> 0 < 2147483647 >>> 0;
-         if ($cmp105$i) {
+         if ($cmp105$i) block136 : {
           $call107$i = _sbrk($and104$i | 0) | 0;
           $cmp108$i = ($call107$i | 0) == (4294967295 | 0);
-          if ($cmp108$i) {
+          if ($cmp108$i) block137 : {
            _sbrk($sub112$i | 0) | 0;
            break label$break$L279;
-          } else {
+          } else block138 : {
            $add110$i = $and104$i + $ssize$2$ph$i | 0;
            $ssize$5$i = $add110$i;
            break do_once$26;
@@ -7152,7 +7230,7 @@ function asmFunc(global, env, buffer) {
         } else $ssize$5$i = $ssize$2$ph$i;
        }
        $cmp118$i = ($br$2$ph$i | 0) == (4294967295 | 0);
-       if (($cmp118$i | 0) == (0 | 0)) {
+       if (($cmp118$i | 0) == (0 | 0)) block139 : {
         $tbase$796$i = $br$2$ph$i;
         $tsize$795$i = $ssize$5$i;
         label = 193;
@@ -7166,9 +7244,9 @@ function asmFunc(global, env, buffer) {
      label = 190;
     } else label = 190;
    }
-   if ((label | 0) == (190 | 0)) {
+   if ((label | 0) == (190 | 0)) block140 : {
     $cmp127$i = ($and11$i >>> 0 | 0) >>> 0 < 2147483647 >>> 0;
-    if ($cmp127$i) {
+    if ($cmp127$i) block141 : {
      $call131$i = _sbrk($and11$i | 0) | 0;
      $call132$i = _sbrk(0 | 0) | 0;
      $cmp133$i$196 = ($call131$i | 0) != (4294967295 | 0);
@@ -7176,13 +7254,13 @@ function asmFunc(global, env, buffer) {
      $or$cond4$i = $cmp133$i$196 & $cmp135$i | 0;
      $cmp137$i$197 = ($call131$i >>> 0 | 0) >>> 0 < ($call132$i >>> 0 | 0) >>> 0;
      $or$cond7$i = $cmp137$i$197 & $or$cond4$i | 0;
-     if ($or$cond7$i) {
+     if ($or$cond7$i) block142 : {
       $sub$ptr$lhs$cast$i = $call132$i;
       $sub$ptr$rhs$cast$i = $call131$i;
       $sub$ptr$sub$i = $sub$ptr$lhs$cast$i - $sub$ptr$rhs$cast$i | 0;
       $add140$i = $nb$0 + 40 | 0;
       $cmp141$not$i = ($sub$ptr$sub$i >>> 0 | 0) >>> 0 > ($add140$i >>> 0 | 0) >>> 0;
-      if ($cmp141$not$i) {
+      if ($cmp141$not$i) block143 : {
        $tbase$796$i = $call131$i;
        $tsize$795$i = $sub$ptr$sub$i;
        label = 193;
@@ -7190,7 +7268,7 @@ function asmFunc(global, env, buffer) {
      }
     }
    }
-   if ((label | 0) == (193 | 0)) {
+   if ((label | 0) == (193 | 0)) block144 : {
     $117 = HEAPU32[608 >> 2] | 0;
     $add150$i = $117 + $tsize$795$i | 0;
     HEAP32[608 >> 2] = $add150$i;
@@ -7200,7 +7278,7 @@ function asmFunc(global, env, buffer) {
     $119 = HEAPU32[200 >> 2] | 0;
     $cmp157$i = ($119 | 0) == (0 | 0);
     do_once$27 : {
-     if ($cmp157$i) {
+     if ($cmp157$i) block145 : {
       $120 = HEAPU32[192 >> 2] | 0;
       $cmp159$i$199 = ($120 | 0) == (0 | 0);
       $cmp162$i$200 = ($tbase$796$i >>> 0 | 0) >>> 0 < ($120 >>> 0 | 0) >>> 0;
@@ -7213,7 +7291,7 @@ function asmFunc(global, env, buffer) {
       HEAP32[212 >> 2] = $121;
       HEAP32[208 >> 2] = 4294967295;
       $i$01$i$i = 0;
-      while_out$28 : do {
+      while_out$28 : do block146 : {
        $shl$i$i = $i$01$i$i << 1 | 0;
        $arrayidx$i$i = 216 + ($shl$i$i << 2 | 0) | 0;
        $122 = $arrayidx$i$i + 12 | 0;
@@ -7246,15 +7324,15 @@ function asmFunc(global, env, buffer) {
       HEAP32[$head7$i$i >> 2] = 40;
       $126 = HEAPU32[664 >> 2] | 0;
       HEAP32[204 >> 2] = $126;
-     } else {
+     } else block147 : {
       $sp$0108$i = 624;
-      while_out$30 : do {
+      while_out$30 : do block148 : {
        $127 = HEAPU32[$sp$0108$i >> 2] | 0;
        $size188$i = $sp$0108$i + 4 | 0;
        $128 = HEAPU32[$size188$i >> 2] | 0;
        $add$ptr189$i = $127 + $128 | 0;
        $cmp190$i = ($tbase$796$i | 0) == ($add$ptr189$i | 0);
-       if ($cmp190$i) {
+       if ($cmp190$i) block149 : {
         $$lcssa = $127;
         $$lcssa290 = $128;
         $size188$i$lcssa = $size188$i;
@@ -7268,16 +7346,16 @@ function asmFunc(global, env, buffer) {
        if ($cmp186$i) break while_out$30; else $sp$0108$i = $129;
        continue while_out$30;
       } while (0);
-      if ((label | 0) == (203 | 0)) {
+      if ((label | 0) == (203 | 0)) block150 : {
        $sflags193$i = $sp$0108$i$lcssa + 12 | 0;
        $130 = HEAPU32[$sflags193$i >> 2] | 0;
        $and194$i$204 = $130 & 8 | 0;
        $tobool195$i = ($and194$i$204 | 0) == (0 | 0);
-       if ($tobool195$i) {
+       if ($tobool195$i) block151 : {
         $cmp203$i = ($119 >>> 0 | 0) >>> 0 >= ($$lcssa >>> 0 | 0) >>> 0;
         $cmp209$i = ($119 >>> 0 | 0) >>> 0 < ($tbase$796$i >>> 0 | 0) >>> 0;
         $or$cond98$i = $cmp209$i & $cmp203$i | 0;
-        if ($or$cond98$i) {
+        if ($or$cond98$i) block152 : {
          $add212$i = $$lcssa290 + $tsize$795$i | 0;
          HEAP32[$size188$i$lcssa >> 2] = $add212$i;
          $131 = HEAPU32[188 >> 2] | 0;
@@ -7308,16 +7386,16 @@ function asmFunc(global, env, buffer) {
       }
       $135 = HEAPU32[192 >> 2] | 0;
       $cmp218$i = ($tbase$796$i >>> 0 | 0) >>> 0 < ($135 >>> 0 | 0) >>> 0;
-      if ($cmp218$i) {
+      if ($cmp218$i) block153 : {
        HEAP32[192 >> 2] = $tbase$796$i;
        $150 = $tbase$796$i;
       } else $150 = $135;
       $add$ptr227$i = $tbase$796$i + $tsize$795$i | 0;
       $sp$1107$i = 624;
-      while_out$32 : do {
+      while_out$32 : do block154 : {
        $136 = HEAPU32[$sp$1107$i >> 2] | 0;
        $cmp228$i = ($136 | 0) == ($add$ptr227$i | 0);
-       if ($cmp228$i) {
+       if ($cmp228$i) block155 : {
         $base226$i$lcssa = $sp$1107$i;
         $sp$1107$i$lcssa = $sp$1107$i;
         label = 211;
@@ -7326,18 +7404,18 @@ function asmFunc(global, env, buffer) {
        $next231$i = $sp$1107$i + 8 | 0;
        $137 = HEAPU32[$next231$i >> 2] | 0;
        $cmp224$i = ($137 | 0) == (0 | 0);
-       if ($cmp224$i) {
+       if ($cmp224$i) block156 : {
         $sp$0$i$i$i = 624;
         break while_out$32;
        } else $sp$1107$i = $137;
        continue while_out$32;
       } while (0);
-      if ((label | 0) == (211 | 0)) {
+      if ((label | 0) == (211 | 0)) block157 : {
        $sflags235$i = $sp$1107$i$lcssa + 12 | 0;
        $138 = HEAPU32[$sflags235$i >> 2] | 0;
        $and236$i = $138 & 8 | 0;
        $tobool237$i = ($and236$i | 0) == (0 | 0);
-       if ($tobool237$i) {
+       if ($tobool237$i) block158 : {
         HEAP32[$base226$i$lcssa >> 2] = $tbase$796$i;
         $size245$i = $sp$1107$i$lcssa + 4 | 0;
         $139 = HEAPU32[$size245$i >> 2] | 0;
@@ -7371,7 +7449,7 @@ function asmFunc(global, env, buffer) {
         HEAP32[$head$i$42$i >> 2] = $or19$i$i;
         $cmp20$i$i = ($add$ptr16$i$i | 0) == ($119 | 0);
         do_once$34 : {
-         if ($cmp20$i$i) {
+         if ($cmp20$i$i) block159 : {
           $144 = HEAPU32[188 >> 2] | 0;
           $add$i$i = $144 + $sub18$i$i | 0;
           HEAP32[188 >> 2] = $add$i$i;
@@ -7379,10 +7457,10 @@ function asmFunc(global, env, buffer) {
           $or22$i$i = $add$i$i | 1 | 0;
           $head23$i$i = $add$ptr17$i$i + 4 | 0;
           HEAP32[$head23$i$i >> 2] = $or22$i$i;
-         } else {
+         } else block160 : {
           $145 = HEAPU32[196 >> 2] | 0;
           $cmp24$i$i = ($add$ptr16$i$i | 0) == ($145 | 0);
-          if ($cmp24$i$i) {
+          if ($cmp24$i$i) block161 : {
            $146 = HEAPU32[184 >> 2] | 0;
            $add26$i$i = $146 + $sub18$i$i | 0;
            HEAP32[184 >> 2] = $add26$i$i;
@@ -7398,12 +7476,12 @@ function asmFunc(global, env, buffer) {
           $147 = HEAPU32[$head32$i$i >> 2] | 0;
           $and33$i$i = $147 & 3 | 0;
           $cmp34$i$i = ($and33$i$i | 0) == (1 | 0);
-          if ($cmp34$i$i) {
+          if ($cmp34$i$i) block162 : {
            $and37$i$i = $147 & 4294967288 | 0;
            $shr$i$45$i = $147 >>> 3 | 0;
            $cmp38$i$i = ($147 >>> 0 | 0) >>> 0 < 256 >>> 0;
            label$break$L331 : {
-            if ($cmp38$i$i) {
+            if ($cmp38$i$i) block163 : {
              $fd$i$i = $add$ptr16$i$i + 8 | 0;
              $148 = HEAPU32[$fd$i$i >> 2] | 0;
              $bk$i$46$i = $add$ptr16$i$i + 12 | 0;
@@ -7412,7 +7490,7 @@ function asmFunc(global, env, buffer) {
              $arrayidx$i$48$i = 216 + ($shl$i$47$i << 2 | 0) | 0;
              $cmp41$i$i = ($148 | 0) == ($arrayidx$i$48$i | 0);
              do_once$35 : {
-              if (($cmp41$i$i | 0) == (0 | 0)) {
+              if (($cmp41$i$i | 0) == (0 | 0)) block164 : {
                $cmp42$i$i = ($148 >>> 0 | 0) >>> 0 < ($150 >>> 0 | 0) >>> 0;
                if ($cmp42$i$i) _abort();
                $bk43$i$i = $148 + 12 | 0;
@@ -7423,7 +7501,7 @@ function asmFunc(global, env, buffer) {
               }
              }
              $cmp46$i$49$i = ($149 | 0) == ($148 | 0);
-             if ($cmp46$i$49$i) {
+             if ($cmp46$i$49$i) block165 : {
               $shl48$i$i = 1 << $shr$i$45$i | 0;
               $neg$i$i = $shl48$i$i ^ 4294967295 | 0;
               $152 = HEAPU32[176 >> 2] | 0;
@@ -7433,16 +7511,16 @@ function asmFunc(global, env, buffer) {
              }
              $cmp54$i$i = ($149 | 0) == ($arrayidx$i$48$i | 0);
              do_once$36 : {
-              if ($cmp54$i$i) {
+              if ($cmp54$i$i) block166 : {
                $$pre5$i$i = $149 + 8 | 0;
                $fd68$pre$phi$i$iZ2D = $$pre5$i$i;
-              } else {
+              } else block167 : {
                $cmp57$i$i = ($149 >>> 0 | 0) >>> 0 < ($150 >>> 0 | 0) >>> 0;
                if ($cmp57$i$i) _abort();
                $fd59$i$i = $149 + 8 | 0;
                $153 = HEAPU32[$fd59$i$i >> 2] | 0;
                $cmp60$i$i = ($153 | 0) == ($add$ptr16$i$i | 0);
-               if ($cmp60$i$i) {
+               if ($cmp60$i$i) block168 : {
                 $fd68$pre$phi$i$iZ2D = $fd59$i$i;
                 break do_once$36;
                }
@@ -7452,37 +7530,37 @@ function asmFunc(global, env, buffer) {
              $bk67$i$i = $148 + 12 | 0;
              HEAP32[$bk67$i$i >> 2] = $149;
              HEAP32[$fd68$pre$phi$i$iZ2D >> 2] = $148;
-            } else {
+            } else block169 : {
              $parent$i$51$i = $add$ptr16$i$i + 24 | 0;
              $154 = HEAPU32[$parent$i$51$i >> 2] | 0;
              $bk74$i$i = $add$ptr16$i$i + 12 | 0;
              $155 = HEAPU32[$bk74$i$i >> 2] | 0;
              $cmp75$i$i = ($155 | 0) == ($add$ptr16$i$i | 0);
              do_once$37 : {
-              if ($cmp75$i$i) {
+              if ($cmp75$i$i) block170 : {
                $child$i$i = $add$ptr16$i$i + 16 | 0;
                $arrayidx96$i$i = $child$i$i + 4 | 0;
                $159 = HEAPU32[$arrayidx96$i$i >> 2] | 0;
                $cmp97$i$i = ($159 | 0) == (0 | 0);
-               if ($cmp97$i$i) {
+               if ($cmp97$i$i) block171 : {
                 $160 = HEAPU32[$child$i$i >> 2] | 0;
                 $cmp100$i$i = ($160 | 0) == (0 | 0);
-                if ($cmp100$i$i) {
+                if ($cmp100$i$i) block172 : {
                  $R$3$i$i = 0;
                  break do_once$37;
-                } else {
+                } else block173 : {
                  $R$1$i$i = $160;
                  $RP$1$i$i = $child$i$i;
                 }
-               } else {
+               } else block174 : {
                 $R$1$i$i = $159;
                 $RP$1$i$i = $arrayidx96$i$i;
                }
-               while_out$38 : do {
+               while_out$38 : do block175 : {
                 $arrayidx103$i$i = $R$1$i$i + 20 | 0;
                 $161 = HEAPU32[$arrayidx103$i$i >> 2] | 0;
                 $cmp104$i$i = ($161 | 0) == (0 | 0);
-                if (($cmp104$i$i | 0) == (0 | 0)) {
+                if (($cmp104$i$i | 0) == (0 | 0)) block176 : {
                  $R$1$i$i = $161;
                  $RP$1$i$i = $arrayidx103$i$i;
                  continue while_out$38;
@@ -7490,23 +7568,23 @@ function asmFunc(global, env, buffer) {
                 $arrayidx107$i$i = $R$1$i$i + 16 | 0;
                 $162 = HEAPU32[$arrayidx107$i$i >> 2] | 0;
                 $cmp108$i$i = ($162 | 0) == (0 | 0);
-                if ($cmp108$i$i) {
+                if ($cmp108$i$i) block177 : {
                  $R$1$i$i$lcssa = $R$1$i$i;
                  $RP$1$i$i$lcssa = $RP$1$i$i;
                  break while_out$38;
-                } else {
+                } else block178 : {
                  $R$1$i$i = $162;
                  $RP$1$i$i = $arrayidx107$i$i;
                 }
                 continue while_out$38;
                } while (0);
                $cmp112$i$i = ($RP$1$i$i$lcssa >>> 0 | 0) >>> 0 < ($150 >>> 0 | 0) >>> 0;
-               if ($cmp112$i$i) _abort(); else {
+               if ($cmp112$i$i) _abort(); else block179 : {
                 HEAP32[$RP$1$i$i$lcssa >> 2] = 0;
                 $R$3$i$i = $R$1$i$i$lcssa;
                 break do_once$37;
                }
-              } else {
+              } else block180 : {
                $fd78$i$i = $add$ptr16$i$i + 8 | 0;
                $156 = HEAPU32[$fd78$i$i >> 2] | 0;
                $cmp81$i$i = ($156 >>> 0 | 0) >>> 0 < ($150 >>> 0 | 0) >>> 0;
@@ -7518,7 +7596,7 @@ function asmFunc(global, env, buffer) {
                $fd85$i$i = $155 + 8 | 0;
                $158 = HEAPU32[$fd85$i$i >> 2] | 0;
                $cmp86$i$i = ($158 | 0) == ($add$ptr16$i$i | 0);
-               if ($cmp86$i$i) {
+               if ($cmp86$i$i) block181 : {
                 HEAP32[$bk82$i$i >> 2] = $155;
                 HEAP32[$fd85$i$i >> 2] = $156;
                 $R$3$i$i = $155;
@@ -7534,7 +7612,7 @@ function asmFunc(global, env, buffer) {
              $164 = HEAPU32[$arrayidx123$i$i >> 2] | 0;
              $cmp124$i$i = ($add$ptr16$i$i | 0) == ($164 | 0);
              do_once$40 : {
-              if ($cmp124$i$i) {
+              if ($cmp124$i$i) block182 : {
                HEAP32[$arrayidx123$i$i >> 2] = $R$3$i$i;
                $cond2$i$i = ($R$3$i$i | 0) == (0 | 0);
                if (($cond2$i$i | 0) == (0 | 0)) break do_once$40;
@@ -7544,14 +7622,14 @@ function asmFunc(global, env, buffer) {
                $and133$i$i = $165 & $neg132$i$i | 0;
                HEAP32[180 >> 2] = $and133$i$i;
                break label$break$L331;
-              } else {
+              } else block183 : {
                $166 = HEAPU32[192 >> 2] | 0;
                $cmp137$i$i = ($154 >>> 0 | 0) >>> 0 < ($166 >>> 0 | 0) >>> 0;
                if ($cmp137$i$i) _abort();
                $arrayidx143$i$i = $154 + 16 | 0;
                $167 = HEAPU32[$arrayidx143$i$i >> 2] | 0;
                $cmp144$i$i = ($167 | 0) == ($add$ptr16$i$i | 0);
-               if ($cmp144$i$i) HEAP32[$arrayidx143$i$i >> 2] = $R$3$i$i; else {
+               if ($cmp144$i$i) HEAP32[$arrayidx143$i$i >> 2] = $R$3$i$i; else block184 : {
                 $arrayidx151$i$i = $154 + 20 | 0;
                 HEAP32[$arrayidx151$i$i >> 2] = $R$3$i$i;
                }
@@ -7568,9 +7646,9 @@ function asmFunc(global, env, buffer) {
              $169 = HEAPU32[$child166$i$i >> 2] | 0;
              $cmp168$i$i = ($169 | 0) == (0 | 0);
              do_once$41 : {
-              if (($cmp168$i$i | 0) == (0 | 0)) {
+              if (($cmp168$i$i | 0) == (0 | 0)) block185 : {
                $cmp172$i$i = ($169 >>> 0 | 0) >>> 0 < ($168 >>> 0 | 0) >>> 0;
-               if ($cmp172$i$i) _abort(); else {
+               if ($cmp172$i$i) _abort(); else block186 : {
                 $arrayidx178$i$i = $R$3$i$i + 16 | 0;
                 HEAP32[$arrayidx178$i$i >> 2] = $169;
                 $parent179$i$i = $169 + 24 | 0;
@@ -7585,7 +7663,7 @@ function asmFunc(global, env, buffer) {
              if ($cmp185$i$i) break label$break$L331;
              $171 = HEAPU32[192 >> 2] | 0;
              $cmp189$i$i = ($170 >>> 0 | 0) >>> 0 < ($171 >>> 0 | 0) >>> 0;
-             if ($cmp189$i$i) _abort(); else {
+             if ($cmp189$i$i) _abort(); else block187 : {
               $arrayidx195$i$i = $R$3$i$i + 20 | 0;
               HEAP32[$arrayidx195$i$i >> 2] = $170;
               $parent196$i$i = $170 + 24 | 0;
@@ -7598,7 +7676,7 @@ function asmFunc(global, env, buffer) {
            $add206$i$i = $and37$i$i + $sub18$i$i | 0;
            $oldfirst$0$i$i = $add$ptr205$i$i;
            $qsize$0$i$i = $add206$i$i;
-          } else {
+          } else block188 : {
            $oldfirst$0$i$i = $add$ptr16$i$i;
            $qsize$0$i$i = $sub18$i$i;
           }
@@ -7613,7 +7691,7 @@ function asmFunc(global, env, buffer) {
           HEAP32[$add$ptr212$i$i >> 2] = $qsize$0$i$i;
           $shr214$i$i = $qsize$0$i$i >>> 3 | 0;
           $cmp215$i$i = ($qsize$0$i$i >>> 0 | 0) >>> 0 < 256 >>> 0;
-          if ($cmp215$i$i) {
+          if ($cmp215$i$i) block189 : {
            $shl221$i$i = $shr214$i$i << 1 | 0;
            $arrayidx223$i$i = 216 + ($shl221$i$i << 2 | 0) | 0;
            $173 = HEAPU32[176 >> 2] | 0;
@@ -7621,18 +7699,18 @@ function asmFunc(global, env, buffer) {
            $and227$i$i = $173 & $shl226$i$i | 0;
            $tobool228$i$i = ($and227$i$i | 0) == (0 | 0);
            do_once$42 : {
-            if ($tobool228$i$i) {
+            if ($tobool228$i$i) block190 : {
              $or232$i$i = $173 | $shl226$i$i | 0;
              HEAP32[176 >> 2] = $or232$i$i;
              $$pre$i$56$i = $arrayidx223$i$i + 8 | 0;
              $$pre$phi$i$57$iZ2D = $$pre$i$56$i;
              $F224$0$i$i = $arrayidx223$i$i;
-            } else {
+            } else block191 : {
              $174 = $arrayidx223$i$i + 8 | 0;
              $175 = HEAPU32[$174 >> 2] | 0;
              $176 = HEAPU32[192 >> 2] | 0;
              $cmp236$i$i = ($175 >>> 0 | 0) >>> 0 < ($176 >>> 0 | 0) >>> 0;
-             if (($cmp236$i$i | 0) == (0 | 0)) {
+             if (($cmp236$i$i | 0) == (0 | 0)) block192 : {
               $$pre$phi$i$57$iZ2D = $174;
               $F224$0$i$i = $175;
               break do_once$42;
@@ -7652,9 +7730,9 @@ function asmFunc(global, env, buffer) {
           $shr253$i$i = $qsize$0$i$i >>> 8 | 0;
           $cmp254$i$i = ($shr253$i$i | 0) == (0 | 0);
           do_once$43 : {
-           if ($cmp254$i$i) $I252$0$i$i = 0; else {
+           if ($cmp254$i$i) $I252$0$i$i = 0; else block193 : {
             $cmp258$i$i = ($qsize$0$i$i >>> 0 | 0) >>> 0 > 16777215 >>> 0;
-            if ($cmp258$i$i) {
+            if ($cmp258$i$i) block194 : {
              $I252$0$i$i = 31;
              break do_once$43;
             }
@@ -7694,7 +7772,7 @@ function asmFunc(global, env, buffer) {
           $shl294$i$i = 1 << $I252$0$i$i | 0;
           $and295$i$i = $177 & $shl294$i$i | 0;
           $tobool296$i$i = ($and295$i$i | 0) == (0 | 0);
-          if ($tobool296$i$i) {
+          if ($tobool296$i$i) block195 : {
            $or300$i$i = $177 | $shl294$i$i | 0;
            HEAP32[180 >> 2] = $or300$i$i;
            HEAP32[$arrayidx287$i$i >> 2] = $add$ptr17$i$i;
@@ -7715,12 +7793,12 @@ function asmFunc(global, env, buffer) {
           $shl316$i$i = $qsize$0$i$i << $cond315$i$i | 0;
           $K305$0$i$i = $shl316$i$i;
           $T$0$i$58$i = $178;
-          while_out$44 : do {
+          while_out$44 : do block196 : {
            $head317$i$i = $T$0$i$58$i + 4 | 0;
            $179 = HEAPU32[$head317$i$i >> 2] | 0;
            $and318$i$i = $179 & 4294967288 | 0;
            $cmp319$i$i = ($and318$i$i | 0) == ($qsize$0$i$i | 0);
-           if ($cmp319$i$i) {
+           if ($cmp319$i$i) block197 : {
             $T$0$i$58$i$lcssa = $T$0$i$58$i;
             label = 281;
             break while_out$44;
@@ -7730,21 +7808,21 @@ function asmFunc(global, env, buffer) {
            $shl326$i$i = $K305$0$i$i << 1 | 0;
            $180 = HEAPU32[$arrayidx325$i$i >> 2] | 0;
            $cmp327$i$i = ($180 | 0) == (0 | 0);
-           if ($cmp327$i$i) {
+           if ($cmp327$i$i) block198 : {
             $T$0$i$58$i$lcssa283 = $T$0$i$58$i;
             $arrayidx325$i$i$lcssa = $arrayidx325$i$i;
             label = 278;
             break while_out$44;
-           } else {
+           } else block199 : {
             $K305$0$i$i = $shl326$i$i;
             $T$0$i$58$i = $180;
            }
            continue while_out$44;
           } while (0);
-          if ((label | 0) == (278 | 0)) {
+          if ((label | 0) == (278 | 0)) block200 : {
            $181 = HEAPU32[192 >> 2] | 0;
            $cmp332$i$i = ($arrayidx325$i$i$lcssa >>> 0 | 0) >>> 0 < ($181 >>> 0 | 0) >>> 0;
-           if ($cmp332$i$i) _abort(); else {
+           if ($cmp332$i$i) _abort(); else block201 : {
             HEAP32[$arrayidx325$i$i$lcssa >> 2] = $add$ptr17$i$i;
             $parent337$i$i = $add$ptr17$i$i + 24 | 0;
             HEAP32[$parent337$i$i >> 2] = $T$0$i$58$i$lcssa283;
@@ -7754,14 +7832,14 @@ function asmFunc(global, env, buffer) {
             HEAP32[$fd339$i$i >> 2] = $add$ptr17$i$i;
             break do_once$34;
            }
-          } else if ((label | 0) == (281 | 0)) {
+          } else if ((label | 0) == (281 | 0)) block202 : {
            $fd344$i$i = $T$0$i$58$i$lcssa + 8 | 0;
            $182 = HEAPU32[$fd344$i$i >> 2] | 0;
            $183 = HEAPU32[192 >> 2] | 0;
            $cmp350$i$i = ($182 >>> 0 | 0) >>> 0 >= ($183 >>> 0 | 0) >>> 0;
            $not$cmp346$i$i = ($T$0$i$58$i$lcssa >>> 0 | 0) >>> 0 >= ($183 >>> 0 | 0) >>> 0;
            $184 = $cmp350$i$i & $not$cmp346$i$i | 0;
-           if ($184) {
+           if ($184) block203 : {
             $bk357$i$i = $182 + 12 | 0;
             HEAP32[$bk357$i$i >> 2] = $add$ptr17$i$i;
             HEAP32[$fd344$i$i >> 2] = $add$ptr17$i$i;
@@ -7782,15 +7860,15 @@ function asmFunc(global, env, buffer) {
         break topmost;
        } else $sp$0$i$i$i = 624;
       }
-      while_out$46 : do {
+      while_out$46 : do block204 : {
        $185 = HEAPU32[$sp$0$i$i$i >> 2] | 0;
        $cmp$i$i$i = ($185 >>> 0 | 0) >>> 0 > ($119 >>> 0 | 0) >>> 0;
-       if (($cmp$i$i$i | 0) == (0 | 0)) {
+       if (($cmp$i$i$i | 0) == (0 | 0)) block205 : {
         $size$i$i$i = $sp$0$i$i$i + 4 | 0;
         $186 = HEAPU32[$size$i$i$i >> 2] | 0;
         $add$ptr$i$i$i = $185 + $186 | 0;
         $cmp2$i$i$i = ($add$ptr$i$i$i >>> 0 | 0) >>> 0 > ($119 >>> 0 | 0) >>> 0;
-        if ($cmp2$i$i$i) {
+        if ($cmp2$i$i$i) block206 : {
          $add$ptr$i$i$i$lcssa = $add$ptr$i$i$i;
          break while_out$46;
         }
@@ -7848,7 +7926,7 @@ function asmFunc(global, env, buffer) {
       HEAP32[636 >> 2] = 0;
       HEAP32[632 >> 2] = $add$ptr14$i$i;
       $p$0$i$i = $add$ptr15$i$i;
-      while_out$48 : do {
+      while_out$48 : do block207 : {
        $add$ptr24$i$i = $p$0$i$i + 4 | 0;
        HEAP32[$add$ptr24$i$i >> 2] = 7;
        $193 = $add$ptr24$i$i + 4 | 0;
@@ -7857,7 +7935,7 @@ function asmFunc(global, env, buffer) {
        continue while_out$48;
       } while (0);
       $cmp28$i$i = ($cond13$i$i | 0) == ($119 | 0);
-      if (($cmp28$i$i | 0) == (0 | 0)) {
+      if (($cmp28$i$i | 0) == (0 | 0)) block208 : {
        $sub$ptr$lhs$cast$i$i = $cond13$i$i;
        $sub$ptr$rhs$cast$i$i = $119;
        $sub$ptr$sub$i$i = $sub$ptr$lhs$cast$i$i - $sub$ptr$rhs$cast$i$i | 0;
@@ -7870,25 +7948,25 @@ function asmFunc(global, env, buffer) {
        HEAP32[$cond13$i$i >> 2] = $sub$ptr$sub$i$i;
        $shr$i$i = $sub$ptr$sub$i$i >>> 3 | 0;
        $cmp36$i$i = ($sub$ptr$sub$i$i >>> 0 | 0) >>> 0 < 256 >>> 0;
-       if ($cmp36$i$i) {
+       if ($cmp36$i$i) block209 : {
         $shl$i$19$i = $shr$i$i << 1 | 0;
         $arrayidx$i$20$i = 216 + ($shl$i$19$i << 2 | 0) | 0;
         $195 = HEAPU32[176 >> 2] | 0;
         $shl39$i$i = 1 << $shr$i$i | 0;
         $and40$i$i = $195 & $shl39$i$i | 0;
         $tobool$i$i = ($and40$i$i | 0) == (0 | 0);
-        if ($tobool$i$i) {
+        if ($tobool$i$i) block210 : {
          $or44$i$i = $195 | $shl39$i$i | 0;
          HEAP32[176 >> 2] = $or44$i$i;
          $$pre$i$i = $arrayidx$i$20$i + 8 | 0;
          $$pre$phi$i$iZ2D = $$pre$i$i;
          $F$0$i$i = $arrayidx$i$20$i;
-        } else {
+        } else block211 : {
          $196 = $arrayidx$i$20$i + 8 | 0;
          $197 = HEAPU32[$196 >> 2] | 0;
          $198 = HEAPU32[192 >> 2] | 0;
          $cmp46$i$i = ($197 >>> 0 | 0) >>> 0 < ($198 >>> 0 | 0) >>> 0;
-         if ($cmp46$i$i) _abort(); else {
+         if ($cmp46$i$i) _abort(); else block212 : {
           $$pre$phi$i$iZ2D = $196;
           $F$0$i$i = $197;
          }
@@ -7904,9 +7982,9 @@ function asmFunc(global, env, buffer) {
        }
        $shr58$i$i = $sub$ptr$sub$i$i >>> 8 | 0;
        $cmp59$i$i = ($shr58$i$i | 0) == (0 | 0);
-       if ($cmp59$i$i) $I57$0$i$i = 0; else {
+       if ($cmp59$i$i) $I57$0$i$i = 0; else block213 : {
         $cmp63$i$i = ($sub$ptr$sub$i$i >>> 0 | 0) >>> 0 > 16777215 >>> 0;
-        if ($cmp63$i$i) $I57$0$i$i = 31; else {
+        if ($cmp63$i$i) $I57$0$i$i = 31; else block214 : {
          $sub67$i$i = $shr58$i$i + 1048320 | 0;
          $shr68$i$i = $sub67$i$i >>> 16 | 0;
          $and69$i$i = $shr68$i$i & 8 | 0;
@@ -7942,7 +8020,7 @@ function asmFunc(global, env, buffer) {
        $shl95$i$i = 1 << $I57$0$i$i | 0;
        $and96$i$i = $199 & $shl95$i$i | 0;
        $tobool97$i$i = ($and96$i$i | 0) == (0 | 0);
-       if ($tobool97$i$i) {
+       if ($tobool97$i$i) block215 : {
         $or101$i$i = $199 | $shl95$i$i | 0;
         HEAP32[180 >> 2] = $or101$i$i;
         HEAP32[$arrayidx91$i$i >> 2] = $119;
@@ -7963,12 +8041,12 @@ function asmFunc(global, env, buffer) {
        $shl116$i$i = $sub$ptr$sub$i$i << $cond115$i$i | 0;
        $K105$0$i$i = $shl116$i$i;
        $T$0$i$i = $200;
-       while_out$50 : do {
+       while_out$50 : do block216 : {
         $head118$i$i = $T$0$i$i + 4 | 0;
         $201 = HEAPU32[$head118$i$i >> 2] | 0;
         $and119$i$i = $201 & 4294967288 | 0;
         $cmp120$i$i = ($and119$i$i | 0) == ($sub$ptr$sub$i$i | 0);
-        if ($cmp120$i$i) {
+        if ($cmp120$i$i) block217 : {
          $T$0$i$i$lcssa = $T$0$i$i;
          label = 307;
          break while_out$50;
@@ -7978,21 +8056,21 @@ function asmFunc(global, env, buffer) {
         $shl127$i$i = $K105$0$i$i << 1 | 0;
         $202 = HEAPU32[$arrayidx126$i$i >> 2] | 0;
         $cmp128$i$i = ($202 | 0) == (0 | 0);
-        if ($cmp128$i$i) {
+        if ($cmp128$i$i) block218 : {
          $T$0$i$i$lcssa284 = $T$0$i$i;
          $arrayidx126$i$i$lcssa = $arrayidx126$i$i;
          label = 304;
          break while_out$50;
-        } else {
+        } else block219 : {
          $K105$0$i$i = $shl127$i$i;
          $T$0$i$i = $202;
         }
         continue while_out$50;
        } while (0);
-       if ((label | 0) == (304 | 0)) {
+       if ((label | 0) == (304 | 0)) block220 : {
         $203 = HEAPU32[192 >> 2] | 0;
         $cmp133$i$i = ($arrayidx126$i$i$lcssa >>> 0 | 0) >>> 0 < ($203 >>> 0 | 0) >>> 0;
-        if ($cmp133$i$i) _abort(); else {
+        if ($cmp133$i$i) _abort(); else block221 : {
          HEAP32[$arrayidx126$i$i$lcssa >> 2] = $119;
          $parent138$i$i = $119 + 24 | 0;
          HEAP32[$parent138$i$i >> 2] = $T$0$i$i$lcssa284;
@@ -8002,14 +8080,14 @@ function asmFunc(global, env, buffer) {
          HEAP32[$fd140$i$i >> 2] = $119;
          break do_once$27;
         }
-       } else if ((label | 0) == (307 | 0)) {
+       } else if ((label | 0) == (307 | 0)) block222 : {
         $fd148$i$i = $T$0$i$i$lcssa + 8 | 0;
         $204 = HEAPU32[$fd148$i$i >> 2] | 0;
         $205 = HEAPU32[192 >> 2] | 0;
         $cmp153$i$i = ($204 >>> 0 | 0) >>> 0 >= ($205 >>> 0 | 0) >>> 0;
         $not$cmp150$i$i = ($T$0$i$i$lcssa >>> 0 | 0) >>> 0 >= ($205 >>> 0 | 0) >>> 0;
         $206 = $cmp153$i$i & $not$cmp150$i$i | 0;
-        if ($206) {
+        if ($206) block223 : {
          $bk158$i$i = $204 + 12 | 0;
          HEAP32[$bk158$i$i >> 2] = $119;
          HEAP32[$fd148$i$i >> 2] = $119;
@@ -8027,7 +8105,7 @@ function asmFunc(global, env, buffer) {
     }
     $207 = HEAPU32[188 >> 2] | 0;
     $cmp257$i = ($207 >>> 0 | 0) >>> 0 > ($nb$0 >>> 0 | 0) >>> 0;
-    if ($cmp257$i) {
+    if ($cmp257$i) block224 : {
      $sub260$i = $207 - $nb$0 | 0;
      HEAP32[188 >> 2] = $sub260$i;
      $208 = HEAPU32[200 >> 2] | 0;
@@ -8074,7 +8152,7 @@ function asmFunc(global, env, buffer) {
    $and8 = $1 & 1 | 0;
    $tobool9 = ($and8 | 0) == (0 | 0);
    do_once$0 : {
-    if ($tobool9) {
+    if ($tobool9) block0 : {
      $2 = HEAPU32[$add$ptr >> 2] | 0;
      $cmp13 = ($and | 0) == (0 | 0);
      if ($cmp13) break topmost;
@@ -8085,12 +8163,12 @@ function asmFunc(global, env, buffer) {
      if ($cmp18) _abort();
      $3 = HEAPU32[196 >> 2] | 0;
      $cmp22 = ($add$ptr16 | 0) == ($3 | 0);
-     if ($cmp22) {
+     if ($cmp22) block1 : {
       $head209 = $add$ptr6 + 4 | 0;
       $27 = HEAPU32[$head209 >> 2] | 0;
       $and210 = $27 & 3 | 0;
       $cmp211 = ($and210 | 0) == (3 | 0);
-      if (($cmp211 | 0) == (0 | 0)) {
+      if (($cmp211 | 0) == (0 | 0)) block2 : {
        $p$1 = $add$ptr16;
        $psize$1 = $add17;
        break do_once$0;
@@ -8107,7 +8185,7 @@ function asmFunc(global, env, buffer) {
      }
      $shr = $2 >>> 3 | 0;
      $cmp25 = ($2 >>> 0 | 0) >>> 0 < 256 >>> 0;
-     if ($cmp25) {
+     if ($cmp25) block3 : {
       $fd = $add$ptr16 + 8 | 0;
       $4 = HEAPU32[$fd >> 2] | 0;
       $bk = $add$ptr16 + 12 | 0;
@@ -8115,7 +8193,7 @@ function asmFunc(global, env, buffer) {
       $shl = $shr << 1 | 0;
       $arrayidx = 216 + ($shl << 2 | 0) | 0;
       $cmp29 = ($4 | 0) == ($arrayidx | 0);
-      if (($cmp29 | 0) == (0 | 0)) {
+      if (($cmp29 | 0) == (0 | 0)) block4 : {
        $cmp31 = ($4 >>> 0 | 0) >>> 0 < ($0 >>> 0 | 0) >>> 0;
        if ($cmp31) _abort();
        $bk34 = $4 + 12 | 0;
@@ -8124,7 +8202,7 @@ function asmFunc(global, env, buffer) {
        if (($cmp35 | 0) == (0 | 0)) _abort();
       }
       $cmp42 = ($5 | 0) == ($4 | 0);
-      if ($cmp42) {
+      if ($cmp42) block5 : {
        $shl45 = 1 << $shr | 0;
        $neg = $shl45 ^ 4294967295 | 0;
        $7 = HEAPU32[176 >> 2] | 0;
@@ -8135,10 +8213,10 @@ function asmFunc(global, env, buffer) {
        break do_once$0;
       }
       $cmp50 = ($5 | 0) == ($arrayidx | 0);
-      if ($cmp50) {
+      if ($cmp50) block6 : {
        $$pre313 = $5 + 8 | 0;
        $fd67$pre$phiZ2D = $$pre313;
-      } else {
+      } else block7 : {
        $cmp53 = ($5 >>> 0 | 0) >>> 0 < ($0 >>> 0 | 0) >>> 0;
        if ($cmp53) _abort();
        $fd56 = $5 + 8 | 0;
@@ -8159,30 +8237,30 @@ function asmFunc(global, env, buffer) {
      $10 = HEAPU32[$bk73 >> 2] | 0;
      $cmp74 = ($10 | 0) == ($add$ptr16 | 0);
      do_once$1 : {
-      if ($cmp74) {
+      if ($cmp74) block8 : {
        $child = $add$ptr16 + 16 | 0;
        $arrayidx99 = $child + 4 | 0;
        $14 = HEAPU32[$arrayidx99 >> 2] | 0;
        $cmp100 = ($14 | 0) == (0 | 0);
-       if ($cmp100) {
+       if ($cmp100) block9 : {
         $15 = HEAPU32[$child >> 2] | 0;
         $cmp104 = ($15 | 0) == (0 | 0);
-        if ($cmp104) {
+        if ($cmp104) block10 : {
          $R$3 = 0;
          break do_once$1;
-        } else {
+        } else block11 : {
          $R$1 = $15;
          $RP$1 = $child;
         }
-       } else {
+       } else block12 : {
         $R$1 = $14;
         $RP$1 = $arrayidx99;
        }
-       while_out$2 : do {
+       while_out$2 : do block13 : {
         $arrayidx108 = $R$1 + 20 | 0;
         $16 = HEAPU32[$arrayidx108 >> 2] | 0;
         $cmp109 = ($16 | 0) == (0 | 0);
-        if (($cmp109 | 0) == (0 | 0)) {
+        if (($cmp109 | 0) == (0 | 0)) block14 : {
          $R$1 = $16;
          $RP$1 = $arrayidx108;
          continue while_out$2;
@@ -8190,23 +8268,23 @@ function asmFunc(global, env, buffer) {
         $arrayidx113 = $R$1 + 16 | 0;
         $17 = HEAPU32[$arrayidx113 >> 2] | 0;
         $cmp114 = ($17 | 0) == (0 | 0);
-        if ($cmp114) {
+        if ($cmp114) block15 : {
          $R$1$lcssa = $R$1;
          $RP$1$lcssa = $RP$1;
          break while_out$2;
-        } else {
+        } else block16 : {
          $R$1 = $17;
          $RP$1 = $arrayidx113;
         }
         continue while_out$2;
        } while (0);
        $cmp118 = ($RP$1$lcssa >>> 0 | 0) >>> 0 < ($0 >>> 0 | 0) >>> 0;
-       if ($cmp118) _abort(); else {
+       if ($cmp118) _abort(); else block17 : {
         HEAP32[$RP$1$lcssa >> 2] = 0;
         $R$3 = $R$1$lcssa;
         break do_once$1;
        }
-      } else {
+      } else block18 : {
        $fd78 = $add$ptr16 + 8 | 0;
        $11 = HEAPU32[$fd78 >> 2] | 0;
        $cmp80 = ($11 >>> 0 | 0) >>> 0 < ($0 >>> 0 | 0) >>> 0;
@@ -8218,7 +8296,7 @@ function asmFunc(global, env, buffer) {
        $fd86 = $10 + 8 | 0;
        $13 = HEAPU32[$fd86 >> 2] | 0;
        $cmp87 = ($13 | 0) == ($add$ptr16 | 0);
-       if ($cmp87) {
+       if ($cmp87) block19 : {
         HEAP32[$bk82 >> 2] = $10;
         HEAP32[$fd86 >> 2] = $11;
         $R$3 = $10;
@@ -8227,19 +8305,19 @@ function asmFunc(global, env, buffer) {
       }
      }
      $cmp127 = ($9 | 0) == (0 | 0);
-     if ($cmp127) {
+     if ($cmp127) block20 : {
       $p$1 = $add$ptr16;
       $psize$1 = $add17;
-     } else {
+     } else block21 : {
       $index = $add$ptr16 + 28 | 0;
       $18 = HEAPU32[$index >> 2] | 0;
       $arrayidx130 = 480 + ($18 << 2 | 0) | 0;
       $19 = HEAPU32[$arrayidx130 >> 2] | 0;
       $cmp131 = ($add$ptr16 | 0) == ($19 | 0);
-      if ($cmp131) {
+      if ($cmp131) block22 : {
        HEAP32[$arrayidx130 >> 2] = $R$3;
        $cond291 = ($R$3 | 0) == (0 | 0);
-       if ($cond291) {
+       if ($cond291) block23 : {
         $shl138 = 1 << $18 | 0;
         $neg139 = $shl138 ^ 4294967295 | 0;
         $20 = HEAPU32[180 >> 2] | 0;
@@ -8249,19 +8327,19 @@ function asmFunc(global, env, buffer) {
         $psize$1 = $add17;
         break do_once$0;
        }
-      } else {
+      } else block24 : {
        $21 = HEAPU32[192 >> 2] | 0;
        $cmp143 = ($9 >>> 0 | 0) >>> 0 < ($21 >>> 0 | 0) >>> 0;
        if ($cmp143) _abort();
        $arrayidx149 = $9 + 16 | 0;
        $22 = HEAPU32[$arrayidx149 >> 2] | 0;
        $cmp150 = ($22 | 0) == ($add$ptr16 | 0);
-       if ($cmp150) HEAP32[$arrayidx149 >> 2] = $R$3; else {
+       if ($cmp150) HEAP32[$arrayidx149 >> 2] = $R$3; else block25 : {
         $arrayidx157 = $9 + 20 | 0;
         HEAP32[$arrayidx157 >> 2] = $R$3;
        }
        $cmp162 = ($R$3 | 0) == (0 | 0);
-       if ($cmp162) {
+       if ($cmp162) block26 : {
         $p$1 = $add$ptr16;
         $psize$1 = $add17;
         break do_once$0;
@@ -8276,9 +8354,9 @@ function asmFunc(global, env, buffer) {
       $24 = HEAPU32[$child171 >> 2] | 0;
       $cmp173 = ($24 | 0) == (0 | 0);
       do_once$4 : {
-       if (($cmp173 | 0) == (0 | 0)) {
+       if (($cmp173 | 0) == (0 | 0)) block27 : {
         $cmp176 = ($24 >>> 0 | 0) >>> 0 < ($23 >>> 0 | 0) >>> 0;
-        if ($cmp176) _abort(); else {
+        if ($cmp176) _abort(); else block28 : {
          $arrayidx182 = $R$3 + 16 | 0;
          HEAP32[$arrayidx182 >> 2] = $24;
          $parent183 = $24 + 24 | 0;
@@ -8290,13 +8368,13 @@ function asmFunc(global, env, buffer) {
       $arrayidx188 = $child171 + 4 | 0;
       $25 = HEAPU32[$arrayidx188 >> 2] | 0;
       $cmp189 = ($25 | 0) == (0 | 0);
-      if ($cmp189) {
+      if ($cmp189) block29 : {
        $p$1 = $add$ptr16;
        $psize$1 = $add17;
-      } else {
+      } else block30 : {
        $26 = HEAPU32[192 >> 2] | 0;
        $cmp192 = ($25 >>> 0 | 0) >>> 0 < ($26 >>> 0 | 0) >>> 0;
-       if ($cmp192) _abort(); else {
+       if ($cmp192) _abort(); else block31 : {
         $arrayidx198 = $R$3 + 20 | 0;
         HEAP32[$arrayidx198 >> 2] = $25;
         $parent199 = $25 + 24 | 0;
@@ -8307,7 +8385,7 @@ function asmFunc(global, env, buffer) {
        }
       }
      }
-    } else {
+    } else block32 : {
      $p$1 = $add$ptr;
      $psize$1 = $and5;
     }
@@ -8321,10 +8399,10 @@ function asmFunc(global, env, buffer) {
    if ($tobool233) _abort();
    $and240 = $28 & 2 | 0;
    $tobool241 = ($and240 | 0) == (0 | 0);
-   if ($tobool241) {
+   if ($tobool241) block33 : {
     $29 = HEAPU32[200 >> 2] | 0;
     $cmp243 = ($add$ptr6 | 0) == ($29 | 0);
-    if ($cmp243) {
+    if ($cmp243) block34 : {
      $30 = HEAPU32[188 >> 2] | 0;
      $add246 = $30 + $psize$1 | 0;
      HEAP32[188 >> 2] = $add246;
@@ -8341,7 +8419,7 @@ function asmFunc(global, env, buffer) {
     }
     $32 = HEAPU32[196 >> 2] | 0;
     $cmp255 = ($add$ptr6 | 0) == ($32 | 0);
-    if ($cmp255) {
+    if ($cmp255) block35 : {
      $33 = HEAPU32[184 >> 2] | 0;
      $add258 = $33 + $psize$1 | 0;
      HEAP32[184 >> 2] = $add258;
@@ -8358,7 +8436,7 @@ function asmFunc(global, env, buffer) {
     $shr268 = $28 >>> 3 | 0;
     $cmp269 = ($28 >>> 0 | 0) >>> 0 < 256 >>> 0;
     do_once$5 : {
-     if ($cmp269) {
+     if ($cmp269) block36 : {
       $fd273 = $add$ptr6 + 8 | 0;
       $34 = HEAPU32[$fd273 >> 2] | 0;
       $bk275 = $add$ptr6 + 12 | 0;
@@ -8366,7 +8444,7 @@ function asmFunc(global, env, buffer) {
       $shl278 = $shr268 << 1 | 0;
       $arrayidx279 = 216 + ($shl278 << 2 | 0) | 0;
       $cmp280 = ($34 | 0) == ($arrayidx279 | 0);
-      if (($cmp280 | 0) == (0 | 0)) {
+      if (($cmp280 | 0) == (0 | 0)) block37 : {
        $36 = HEAPU32[192 >> 2] | 0;
        $cmp283 = ($34 >>> 0 | 0) >>> 0 < ($36 >>> 0 | 0) >>> 0;
        if ($cmp283) _abort();
@@ -8376,7 +8454,7 @@ function asmFunc(global, env, buffer) {
        if (($cmp287 | 0) == (0 | 0)) _abort();
       }
       $cmp296 = ($35 | 0) == ($34 | 0);
-      if ($cmp296) {
+      if ($cmp296) block38 : {
        $shl299 = 1 << $shr268 | 0;
        $neg300 = $shl299 ^ 4294967295 | 0;
        $38 = HEAPU32[176 >> 2] | 0;
@@ -8385,10 +8463,10 @@ function asmFunc(global, env, buffer) {
        break do_once$5;
       }
       $cmp305 = ($35 | 0) == ($arrayidx279 | 0);
-      if ($cmp305) {
+      if ($cmp305) block39 : {
        $$pre312 = $35 + 8 | 0;
        $fd322$pre$phiZ2D = $$pre312;
-      } else {
+      } else block40 : {
        $39 = HEAPU32[192 >> 2] | 0;
        $cmp308 = ($35 >>> 0 | 0) >>> 0 < ($39 >>> 0 | 0) >>> 0;
        if ($cmp308) _abort();
@@ -8400,37 +8478,37 @@ function asmFunc(global, env, buffer) {
       $bk321 = $34 + 12 | 0;
       HEAP32[$bk321 >> 2] = $35;
       HEAP32[$fd322$pre$phiZ2D >> 2] = $34;
-     } else {
+     } else block41 : {
       $parent331 = $add$ptr6 + 24 | 0;
       $41 = HEAPU32[$parent331 >> 2] | 0;
       $bk333 = $add$ptr6 + 12 | 0;
       $42 = HEAPU32[$bk333 >> 2] | 0;
       $cmp334 = ($42 | 0) == ($add$ptr6 | 0);
       do_once$6 : {
-       if ($cmp334) {
+       if ($cmp334) block42 : {
         $child361 = $add$ptr6 + 16 | 0;
         $arrayidx362 = $child361 + 4 | 0;
         $47 = HEAPU32[$arrayidx362 >> 2] | 0;
         $cmp363 = ($47 | 0) == (0 | 0);
-        if ($cmp363) {
+        if ($cmp363) block43 : {
          $48 = HEAPU32[$child361 >> 2] | 0;
          $cmp368 = ($48 | 0) == (0 | 0);
-         if ($cmp368) {
+         if ($cmp368) block44 : {
           $R332$3 = 0;
           break do_once$6;
-         } else {
+         } else block45 : {
           $R332$1 = $48;
           $RP360$1 = $child361;
          }
-        } else {
+        } else block46 : {
          $R332$1 = $47;
          $RP360$1 = $arrayidx362;
         }
-        while_out$7 : do {
+        while_out$7 : do block47 : {
          $arrayidx374 = $R332$1 + 20 | 0;
          $49 = HEAPU32[$arrayidx374 >> 2] | 0;
          $cmp375 = ($49 | 0) == (0 | 0);
-         if (($cmp375 | 0) == (0 | 0)) {
+         if (($cmp375 | 0) == (0 | 0)) block48 : {
           $R332$1 = $49;
           $RP360$1 = $arrayidx374;
           continue while_out$7;
@@ -8438,11 +8516,11 @@ function asmFunc(global, env, buffer) {
          $arrayidx379 = $R332$1 + 16 | 0;
          $50 = HEAPU32[$arrayidx379 >> 2] | 0;
          $cmp380 = ($50 | 0) == (0 | 0);
-         if ($cmp380) {
+         if ($cmp380) block49 : {
           $R332$1$lcssa = $R332$1;
           $RP360$1$lcssa = $RP360$1;
           break while_out$7;
-         } else {
+         } else block50 : {
           $R332$1 = $50;
           $RP360$1 = $arrayidx379;
          }
@@ -8450,12 +8528,12 @@ function asmFunc(global, env, buffer) {
         } while (0);
         $51 = HEAPU32[192 >> 2] | 0;
         $cmp386 = ($RP360$1$lcssa >>> 0 | 0) >>> 0 < ($51 >>> 0 | 0) >>> 0;
-        if ($cmp386) _abort(); else {
+        if ($cmp386) _abort(); else block51 : {
          HEAP32[$RP360$1$lcssa >> 2] = 0;
          $R332$3 = $R332$1$lcssa;
          break do_once$6;
         }
-       } else {
+       } else block52 : {
         $fd338 = $add$ptr6 + 8 | 0;
         $43 = HEAPU32[$fd338 >> 2] | 0;
         $44 = HEAPU32[192 >> 2] | 0;
@@ -8468,7 +8546,7 @@ function asmFunc(global, env, buffer) {
         $fd347 = $42 + 8 | 0;
         $46 = HEAPU32[$fd347 >> 2] | 0;
         $cmp348 = ($46 | 0) == ($add$ptr6 | 0);
-        if ($cmp348) {
+        if ($cmp348) block53 : {
          HEAP32[$bk343 >> 2] = $42;
          HEAP32[$fd347 >> 2] = $43;
          $R332$3 = $42;
@@ -8477,16 +8555,16 @@ function asmFunc(global, env, buffer) {
        }
       }
       $cmp395 = ($41 | 0) == (0 | 0);
-      if (($cmp395 | 0) == (0 | 0)) {
+      if (($cmp395 | 0) == (0 | 0)) block54 : {
        $index399 = $add$ptr6 + 28 | 0;
        $52 = HEAPU32[$index399 >> 2] | 0;
        $arrayidx400 = 480 + ($52 << 2 | 0) | 0;
        $53 = HEAPU32[$arrayidx400 >> 2] | 0;
        $cmp401 = ($add$ptr6 | 0) == ($53 | 0);
-       if ($cmp401) {
+       if ($cmp401) block55 : {
         HEAP32[$arrayidx400 >> 2] = $R332$3;
         $cond292 = ($R332$3 | 0) == (0 | 0);
-        if ($cond292) {
+        if ($cond292) block56 : {
          $shl408 = 1 << $52 | 0;
          $neg409 = $shl408 ^ 4294967295 | 0;
          $54 = HEAPU32[180 >> 2] | 0;
@@ -8494,14 +8572,14 @@ function asmFunc(global, env, buffer) {
          HEAP32[180 >> 2] = $and410;
          break do_once$5;
         }
-       } else {
+       } else block57 : {
         $55 = HEAPU32[192 >> 2] | 0;
         $cmp413 = ($41 >>> 0 | 0) >>> 0 < ($55 >>> 0 | 0) >>> 0;
         if ($cmp413) _abort();
         $arrayidx419 = $41 + 16 | 0;
         $56 = HEAPU32[$arrayidx419 >> 2] | 0;
         $cmp420 = ($56 | 0) == ($add$ptr6 | 0);
-        if ($cmp420) HEAP32[$arrayidx419 >> 2] = $R332$3; else {
+        if ($cmp420) HEAP32[$arrayidx419 >> 2] = $R332$3; else block58 : {
          $arrayidx427 = $41 + 20 | 0;
          HEAP32[$arrayidx427 >> 2] = $R332$3;
         }
@@ -8517,9 +8595,9 @@ function asmFunc(global, env, buffer) {
        $58 = HEAPU32[$child443 >> 2] | 0;
        $cmp445 = ($58 | 0) == (0 | 0);
        do_once$9 : {
-        if (($cmp445 | 0) == (0 | 0)) {
+        if (($cmp445 | 0) == (0 | 0)) block59 : {
          $cmp448 = ($58 >>> 0 | 0) >>> 0 < ($57 >>> 0 | 0) >>> 0;
-         if ($cmp448) _abort(); else {
+         if ($cmp448) _abort(); else block60 : {
           $arrayidx454 = $R332$3 + 16 | 0;
           HEAP32[$arrayidx454 >> 2] = $58;
           $parent455 = $58 + 24 | 0;
@@ -8531,10 +8609,10 @@ function asmFunc(global, env, buffer) {
        $arrayidx460 = $child443 + 4 | 0;
        $59 = HEAPU32[$arrayidx460 >> 2] | 0;
        $cmp461 = ($59 | 0) == (0 | 0);
-       if (($cmp461 | 0) == (0 | 0)) {
+       if (($cmp461 | 0) == (0 | 0)) block61 : {
         $60 = HEAPU32[192 >> 2] | 0;
         $cmp464 = ($59 >>> 0 | 0) >>> 0 < ($60 >>> 0 | 0) >>> 0;
-        if ($cmp464) _abort(); else {
+        if ($cmp464) _abort(); else block62 : {
          $arrayidx470 = $R332$3 + 20 | 0;
          HEAP32[$arrayidx470 >> 2] = $59;
          $parent471 = $59 + 24 | 0;
@@ -8552,11 +8630,11 @@ function asmFunc(global, env, buffer) {
     HEAP32[$add$ptr482 >> 2] = $add267;
     $61 = HEAPU32[196 >> 2] | 0;
     $cmp484 = ($p$1 | 0) == ($61 | 0);
-    if ($cmp484) {
+    if ($cmp484) block63 : {
      HEAP32[184 >> 2] = $add267;
      break topmost;
     } else $psize$2 = $add267;
-   } else {
+   } else block64 : {
     $and495 = $28 & 4294967294 | 0;
     HEAP32[$head231 >> 2] = $and495;
     $or496 = $psize$1 | 1 | 0;
@@ -8568,25 +8646,25 @@ function asmFunc(global, env, buffer) {
    }
    $shr501 = $psize$2 >>> 3 | 0;
    $cmp502 = ($psize$2 >>> 0 | 0) >>> 0 < 256 >>> 0;
-   if ($cmp502) {
+   if ($cmp502) block65 : {
     $shl508 = $shr501 << 1 | 0;
     $arrayidx509 = 216 + ($shl508 << 2 | 0) | 0;
     $62 = HEAPU32[176 >> 2] | 0;
     $shl511 = 1 << $shr501 | 0;
     $and512 = $62 & $shl511 | 0;
     $tobool513 = ($and512 | 0) == (0 | 0);
-    if ($tobool513) {
+    if ($tobool513) block66 : {
      $or516 = $62 | $shl511 | 0;
      HEAP32[176 >> 2] = $or516;
      $$pre = $arrayidx509 + 8 | 0;
      $$pre$phiZ2D = $$pre;
      $F510$0 = $arrayidx509;
-    } else {
+    } else block67 : {
      $63 = $arrayidx509 + 8 | 0;
      $64 = HEAPU32[$63 >> 2] | 0;
      $65 = HEAPU32[192 >> 2] | 0;
      $cmp519 = ($64 >>> 0 | 0) >>> 0 < ($65 >>> 0 | 0) >>> 0;
-     if ($cmp519) _abort(); else {
+     if ($cmp519) _abort(); else block68 : {
       $$pre$phiZ2D = $63;
       $F510$0 = $64;
      }
@@ -8602,9 +8680,9 @@ function asmFunc(global, env, buffer) {
    }
    $shr535 = $psize$2 >>> 8 | 0;
    $cmp536 = ($shr535 | 0) == (0 | 0);
-   if ($cmp536) $I534$0 = 0; else {
+   if ($cmp536) $I534$0 = 0; else block69 : {
     $cmp540 = ($psize$2 >>> 0 | 0) >>> 0 > 16777215 >>> 0;
-    if ($cmp540) $I534$0 = 31; else {
+    if ($cmp540) $I534$0 = 31; else block70 : {
      $sub = $shr535 + 1048320 | 0;
      $shr544 = $sub >>> 16 | 0;
      $and545 = $shr544 & 8 | 0;
@@ -8642,7 +8720,7 @@ function asmFunc(global, env, buffer) {
    $and574 = $66 & $shl573 | 0;
    $tobool575 = ($and574 | 0) == (0 | 0);
    do_once$10 : {
-    if ($tobool575) {
+    if ($tobool575) block71 : {
      $or578 = $66 | $shl573 | 0;
      HEAP32[180 >> 2] = $or578;
      HEAP32[$arrayidx567 >> 2] = $p$1;
@@ -8652,7 +8730,7 @@ function asmFunc(global, env, buffer) {
      HEAP32[$bk580 >> 2] = $p$1;
      $fd581 = $p$1 + 8 | 0;
      HEAP32[$fd581 >> 2] = $p$1;
-    } else {
+    } else block72 : {
      $67 = HEAPU32[$arrayidx567 >> 2] | 0;
      $cmp584 = ($I534$0 | 0) == (31 | 0);
      $shr586 = $I534$0 >>> 1 | 0;
@@ -8662,12 +8740,12 @@ function asmFunc(global, env, buffer) {
      $shl590 = $psize$2 << $cond | 0;
      $K583$0 = $shl590;
      $T$0 = $67;
-     while_out$11 : do {
+     while_out$11 : do block73 : {
       $head591 = $T$0 + 4 | 0;
       $68 = HEAPU32[$head591 >> 2] | 0;
       $and592 = $68 & 4294967288 | 0;
       $cmp593 = ($and592 | 0) == ($psize$2 | 0);
-      if ($cmp593) {
+      if ($cmp593) block74 : {
        $T$0$lcssa = $T$0;
        label = 130;
        break while_out$11;
@@ -8677,21 +8755,21 @@ function asmFunc(global, env, buffer) {
       $shl600 = $K583$0 << 1 | 0;
       $69 = HEAPU32[$arrayidx599 >> 2] | 0;
       $cmp601 = ($69 | 0) == (0 | 0);
-      if ($cmp601) {
+      if ($cmp601) block75 : {
        $T$0$lcssa319 = $T$0;
        $arrayidx599$lcssa = $arrayidx599;
        label = 127;
        break while_out$11;
-      } else {
+      } else block76 : {
        $K583$0 = $shl600;
        $T$0 = $69;
       }
       continue while_out$11;
      } while (0);
-     if ((label | 0) == (127 | 0)) {
+     if ((label | 0) == (127 | 0)) block77 : {
       $70 = HEAPU32[192 >> 2] | 0;
       $cmp605 = ($arrayidx599$lcssa >>> 0 | 0) >>> 0 < ($70 >>> 0 | 0) >>> 0;
-      if ($cmp605) _abort(); else {
+      if ($cmp605) _abort(); else block78 : {
        HEAP32[$arrayidx599$lcssa >> 2] = $p$1;
        $parent610 = $p$1 + 24 | 0;
        HEAP32[$parent610 >> 2] = $T$0$lcssa319;
@@ -8701,14 +8779,14 @@ function asmFunc(global, env, buffer) {
        HEAP32[$fd612 >> 2] = $p$1;
        break do_once$10;
       }
-     } else if ((label | 0) == (130 | 0)) {
+     } else if ((label | 0) == (130 | 0)) block79 : {
       $fd620 = $T$0$lcssa + 8 | 0;
       $71 = HEAPU32[$fd620 >> 2] | 0;
       $72 = HEAPU32[192 >> 2] | 0;
       $cmp624 = ($71 >>> 0 | 0) >>> 0 >= ($72 >>> 0 | 0) >>> 0;
       $not$cmp621 = ($T$0$lcssa >>> 0 | 0) >>> 0 >= ($72 >>> 0 | 0) >>> 0;
       $73 = $cmp624 & $not$cmp621 | 0;
-      if ($73) {
+      if ($73) block80 : {
        $bk631 = $71 + 12 | 0;
        HEAP32[$bk631 >> 2] = $p$1;
        HEAP32[$fd620 >> 2] = $p$1;
@@ -8728,7 +8806,7 @@ function asmFunc(global, env, buffer) {
    HEAP32[208 >> 2] = $dec;
    $cmp640 = ($dec | 0) == (0 | 0);
    if ($cmp640) $sp$0$in$i = 632; else break topmost;
-   while_out$13 : do {
+   while_out$13 : do block81 : {
     $sp$0$i = HEAPU32[$sp$0$in$i >> 2] | 0;
     $cmp$i = ($sp$0$i | 0) == (0 | 0);
     $next4$i = $sp$0$i + 8 | 0;
@@ -8754,8 +8832,10 @@ function asmFunc(global, env, buffer) {
    l = (a - c | 0) >>> 0 | 0;
    h = (b - d | 0) >>> 0 | 0;
    h = ((b - d | 0) - ((c >>> 0 | 0) >>> 0 > (a >>> 0 | 0) >>> 0) | 0) >>> 0 | 0;
-   HEAP32[168 >> 2] = h;
-   wasm2asm_i32$0 = l;
+   block0 : {
+    HEAP32[168 >> 2] = h;
+    wasm2asm_i32$0 = l;
+   }
   }
   return wasm2asm_i32$0 | 0;
  }
@@ -8769,8 +8849,10 @@ function asmFunc(global, env, buffer) {
   topmost : {
    l = (a + c | 0) >>> 0 | 0;
    h = ((b + d | 0) + ((l >>> 0 | 0) >>> 0 < (a >>> 0 | 0) >>> 0) | 0) >>> 0 | 0;
-   HEAP32[168 >> 2] = h;
-   wasm2asm_i32$0 = l;
+   block0 : {
+    HEAP32[168 >> 2] = h;
+    wasm2asm_i32$0 = l;
+   }
   }
   return wasm2asm_i32$0 | 0;
  }
@@ -8782,31 +8864,37 @@ function asmFunc(global, env, buffer) {
   var stop = 0, value4 = 0, stop4 = 0, unaligned = 0, wasm2asm_i32$0 = 0;
   topmost : {
    stop = ptr + num | 0;
-   if ((num | 0) >= (20 | 0)) {
+   if ((num | 0) >= (20 | 0)) block0 : {
     value = value & 255 | 0;
     unaligned = ptr & 3 | 0;
     value4 = value | (value << 8 | 0) | 0 | (value << 16 | 0) | 0 | (value << 24 | 0) | 0;
     stop4 = stop & (3 ^ 4294967295 | 0) | 0;
-    if (unaligned) {
+    if (unaligned) block1 : {
      unaligned = (ptr + 4 | 0) - unaligned | 0;
-     while_out$0 : do {
+     while_out$0 : do block2 : {
       if ((ptr | 0) < (unaligned | 0)) {} else break while_out$0;
-      HEAP8[ptr >> 0] = value;
-      ptr = ptr + 1 | 0;
+      block3 : {
+       HEAP8[ptr >> 0] = value;
+       ptr = ptr + 1 | 0;
+      }
       continue while_out$0;
      } while (0);
     }
-    while_out$2 : do {
+    while_out$2 : do block4 : {
      if ((ptr | 0) < (stop4 | 0)) {} else break while_out$2;
-     HEAP32[ptr >> 2] = value4;
-     ptr = ptr + 4 | 0;
+     block5 : {
+      HEAP32[ptr >> 2] = value4;
+      ptr = ptr + 4 | 0;
+     }
      continue while_out$2;
     } while (0);
    }
-   while_out$4 : do {
+   while_out$4 : do block6 : {
     if ((ptr | 0) < (stop | 0)) {} else break while_out$4;
-    HEAP8[ptr >> 0] = value;
-    ptr = ptr + 1 | 0;
+    block7 : {
+     HEAP8[ptr >> 0] = value;
+     ptr = ptr + 1 | 0;
+    }
     continue while_out$4;
    } while (0);
    wasm2asm_i32$0 = ptr - num | 0;
@@ -8820,7 +8908,7 @@ function asmFunc(global, env, buffer) {
   bits = bits | 0;
   var ander = 0, wasm2asm_i32$0 = 0;
   topmost : {
-   if ((bits | 0) < (32 | 0)) {
+   if ((bits | 0) < (32 | 0)) block0 : {
     ander = (1 << bits | 0) - 1 | 0;
     HEAP32[168 >> 2] = high >>> bits | 0;
     wasm2asm_i32$0 = low >>> bits | 0 | ((high & ander | 0) << (32 - bits | 0) | 0) | 0;
@@ -8838,7 +8926,7 @@ function asmFunc(global, env, buffer) {
   bits = bits | 0;
   var ander = 0, wasm2asm_i32$0 = 0;
   topmost : {
-   if ((bits | 0) < (32 | 0)) {
+   if ((bits | 0) < (32 | 0)) block0 : {
     ander = (1 << bits | 0) - 1 | 0;
     HEAP32[168 >> 2] = high << bits | 0 | ((low & (ander << (32 - bits | 0) | 0) | 0) >>> (32 - bits | 0) | 0) | 0;
     wasm2asm_i32$0 = low << bits | 0;
@@ -8861,34 +8949,40 @@ function asmFunc(global, env, buffer) {
     break topmost;
    }
    ret = dest;
-   if ((dest & 3 | 0 | 0) == (src & 3 | 0 | 0)) {
-    while_out$0 : do {
+   if ((dest & 3 | 0 | 0) == (src & 3 | 0 | 0)) block0 : {
+    while_out$0 : do block1 : {
      if (dest & 3 | 0) {} else break while_out$0;
-     if ((num | 0) == (0 | 0)) {
-      wasm2asm_i32$0 = ret;
-      break topmost;
+     block2 : {
+      if ((num | 0) == (0 | 0)) {
+       wasm2asm_i32$0 = ret;
+       break topmost;
+      }
+      HEAP8[dest >> 0] = HEAP8[src >> 0] | 0;
+      dest = dest + 1 | 0;
+      src = src + 1 | 0;
+      num = num - 1 | 0;
      }
+     continue while_out$0;
+    } while (0);
+    while_out$2 : do block3 : {
+     if ((num | 0) >= (4 | 0)) {} else break while_out$2;
+     block4 : {
+      HEAP32[dest >> 2] = HEAPU32[src >> 2] | 0;
+      dest = dest + 4 | 0;
+      src = src + 4 | 0;
+      num = num - 4 | 0;
+     }
+     continue while_out$2;
+    } while (0);
+   }
+   while_out$4 : do block5 : {
+    if ((num | 0) > (0 | 0)) {} else break while_out$4;
+    block6 : {
      HEAP8[dest >> 0] = HEAP8[src >> 0] | 0;
      dest = dest + 1 | 0;
      src = src + 1 | 0;
      num = num - 1 | 0;
-     continue while_out$0;
-    } while (0);
-    while_out$2 : do {
-     if ((num | 0) >= (4 | 0)) {} else break while_out$2;
-     HEAP32[dest >> 2] = HEAPU32[src >> 2] | 0;
-     dest = dest + 4 | 0;
-     src = src + 4 | 0;
-     num = num - 4 | 0;
-     continue while_out$2;
-    } while (0);
-   }
-   while_out$4 : do {
-    if ((num | 0) > (0 | 0)) {} else break while_out$4;
-    HEAP8[dest >> 0] = HEAP8[src >> 0] | 0;
-    dest = dest + 1 | 0;
-    src = src + 1 | 0;
-    num = num - 1 | 0;
+    }
     continue while_out$4;
    } while (0);
    wasm2asm_i32$0 = ret;
@@ -8902,7 +8996,7 @@ function asmFunc(global, env, buffer) {
   bits = bits | 0;
   var ander = 0, wasm2asm_i32$2 = 0, wasm2asm_i32$1 = 0, wasm2asm_i32$0 = 0;
   topmost : {
-   if ((bits | 0) < (32 | 0)) {
+   if ((bits | 0) < (32 | 0)) block0 : {
     ander = (1 << bits | 0) - 1 | 0;
     HEAP32[168 >> 2] = high >> bits | 0;
     wasm2asm_i32$0 = low >>> bits | 0 | ((high & ander | 0) << (32 - bits | 0) | 0) | 0;
@@ -8952,8 +9046,10 @@ function asmFunc(global, env, buffer) {
    $8 = ($3 >>> 16 | 0) + Math_imul($2, $6) | 0;
    $11 = $b >>> 16 | 0;
    $12 = Math_imul($11, $1);
-   HEAP32[168 >> 2] = (($8 >>> 16 | 0) + Math_imul($11, $6) | 0) + ((($8 & 65535 | 0) + $12 | 0) >>> 16 | 0) | 0;
-   wasm2asm_i32$0 = 0 | (($8 + $12 | 0) << 16 | 0 | ($3 & 65535 | 0) | 0) | 0;
+   block0 : {
+    HEAP32[168 >> 2] = (($8 >>> 16 | 0) + Math_imul($11, $6) | 0) + ((($8 & 65535 | 0) + $12 | 0) >>> 16 | 0) | 0;
+    wasm2asm_i32$0 = 0 | (($8 + $12 | 0) << 16 | 0 | ($3 & 65535 | 0) | 0) | 0;
+   }
   }
   return wasm2asm_i32$0 | 0;
  }
@@ -9050,8 +9146,10 @@ function asmFunc(global, env, buffer) {
    $10$0 = _i64Subtract((HEAPU32[$rem >> 2] | 0) ^ $1$0 | 0 | 0, (HEAPU32[($rem + 4 | 0) >> 2] | 0) ^ $1$1 | 0 | 0, $1$0 | 0, $1$1 | 0) | 0;
    $10$1 = HEAPU32[168 >> 2] | 0;
    HEAP32[8 >> 2] = __stackBase__;
-   HEAP32[168 >> 2] = $10$1;
-   wasm2asm_i32$0 = $10$0;
+   block0 : {
+    HEAP32[168 >> 2] = $10$1;
+    wasm2asm_i32$0 = $10$0;
+   }
   }
   return wasm2asm_i32$0 | 0;
  }
@@ -9068,8 +9166,10 @@ function asmFunc(global, env, buffer) {
    $1$0 = ___muldsi3($x_sroa_0_0_extract_trunc | 0, $y_sroa_0_0_extract_trunc | 0) | 0;
    $1$1 = HEAPU32[168 >> 2] | 0;
    $2 = Math_imul($a$1, $y_sroa_0_0_extract_trunc);
-   HEAP32[168 >> 2] = (Math_imul($b$1, $x_sroa_0_0_extract_trunc) + $2 | 0) + $1$1 | 0 | ($1$1 & 0 | 0) | 0;
-   wasm2asm_i32$0 = 0 | ($1$0 & 4294967295 | 0) | 0;
+   block0 : {
+    HEAP32[168 >> 2] = (Math_imul($b$1, $x_sroa_0_0_extract_trunc) + $2 | 0) + $1$1 | 0 | ($1$1 & 0 | 0) | 0;
+    wasm2asm_i32$0 = 0 | ($1$0 & 4294967295 | 0) | 0;
+   }
   }
   return wasm2asm_i32$0 | 0;
  }
@@ -9099,8 +9199,10 @@ function asmFunc(global, env, buffer) {
    $rem = __stackBase__;
    ___udivmoddi4($a$0 | 0, $a$1 | 0, $b$0 | 0, $b$1 | 0, $rem | 0) | 0;
    HEAP32[8 >> 2] = __stackBase__;
-   HEAP32[168 >> 2] = HEAPU32[($rem + 4 | 0) >> 2] | 0;
-   wasm2asm_i32$0 = HEAPU32[$rem >> 2] | 0;
+   block0 : {
+    HEAP32[168 >> 2] = HEAPU32[($rem + 4 | 0) >> 2] | 0;
+    wasm2asm_i32$0 = HEAPU32[$rem >> 2] | 0;
+   }
   }
   return wasm2asm_i32$0 | 0;
  }
@@ -9119,75 +9221,87 @@ function asmFunc(global, env, buffer) {
    $d_sroa_0_0_extract_trunc = $b$0;
    $d_sroa_1_4_extract_shift$0 = $b$1;
    $d_sroa_1_4_extract_trunc = $d_sroa_1_4_extract_shift$0;
-   if (($n_sroa_1_4_extract_trunc | 0) == (0 | 0)) {
+   if (($n_sroa_1_4_extract_trunc | 0) == (0 | 0)) block0 : {
     $4 = ($rem | 0) != (0 | 0);
-    if (($d_sroa_1_4_extract_trunc | 0) == (0 | 0)) {
-     if ($4) {
+    if (($d_sroa_1_4_extract_trunc | 0) == (0 | 0)) block1 : {
+     if ($4) block2 : {
       HEAP32[$rem >> 2] = (($n_sroa_0_0_extract_trunc >>> 0 | 0) >>> 0) % (($d_sroa_0_0_extract_trunc >>> 0 | 0) >>> 0) | 0;
       HEAP32[($rem + 4 | 0) >> 2] = 0;
      }
      $_0$1 = 0;
      $_0$0 = ((($n_sroa_0_0_extract_trunc >>> 0 | 0) >>> 0) / (($d_sroa_0_0_extract_trunc >>> 0 | 0) >>> 0) | 0) >>> 0 | 0;
-     HEAP32[168 >> 2] = $_0$1;
-     wasm2asm_i32$0 = $_0$0;
-     break topmost;
-    } else {
-     if (($4 | 0) == (0 | 0)) {
-      $_0$1 = 0;
-      $_0$0 = 0;
+     block3 : {
       HEAP32[168 >> 2] = $_0$1;
       wasm2asm_i32$0 = $_0$0;
+     }
+     break topmost;
+    } else block4 : {
+     if (($4 | 0) == (0 | 0)) block5 : {
+      $_0$1 = 0;
+      $_0$0 = 0;
+      block6 : {
+       HEAP32[168 >> 2] = $_0$1;
+       wasm2asm_i32$0 = $_0$0;
+      }
       break topmost;
      }
      HEAP32[$rem >> 2] = $a$0 & 4294967295 | 0;
      HEAP32[($rem + 4 | 0) >> 2] = $a$1 & 0 | 0;
      $_0$1 = 0;
      $_0$0 = 0;
-     HEAP32[168 >> 2] = $_0$1;
-     wasm2asm_i32$0 = $_0$0;
+     block7 : {
+      HEAP32[168 >> 2] = $_0$1;
+      wasm2asm_i32$0 = $_0$0;
+     }
      break topmost;
     }
    }
    $17 = ($d_sroa_1_4_extract_trunc | 0) == (0 | 0);
    do_once$0 : {
-    if (($d_sroa_0_0_extract_trunc | 0) == (0 | 0)) {
-     if ($17) {
-      if (($rem | 0) != (0 | 0)) {
+    if (($d_sroa_0_0_extract_trunc | 0) == (0 | 0)) block8 : {
+     if ($17) block9 : {
+      if (($rem | 0) != (0 | 0)) block10 : {
        HEAP32[$rem >> 2] = (($n_sroa_1_4_extract_trunc >>> 0 | 0) >>> 0) % (($d_sroa_0_0_extract_trunc >>> 0 | 0) >>> 0) | 0;
        HEAP32[($rem + 4 | 0) >> 2] = 0;
       }
       $_0$1 = 0;
       $_0$0 = ((($n_sroa_1_4_extract_trunc >>> 0 | 0) >>> 0) / (($d_sroa_0_0_extract_trunc >>> 0 | 0) >>> 0) | 0) >>> 0 | 0;
-      HEAP32[168 >> 2] = $_0$1;
-      wasm2asm_i32$0 = $_0$0;
+      block11 : {
+       HEAP32[168 >> 2] = $_0$1;
+       wasm2asm_i32$0 = $_0$0;
+      }
       break topmost;
      }
-     if (($n_sroa_0_0_extract_trunc | 0) == (0 | 0)) {
-      if (($rem | 0) != (0 | 0)) {
+     if (($n_sroa_0_0_extract_trunc | 0) == (0 | 0)) block12 : {
+      if (($rem | 0) != (0 | 0)) block13 : {
        HEAP32[$rem >> 2] = 0;
        HEAP32[($rem + 4 | 0) >> 2] = (($n_sroa_1_4_extract_trunc >>> 0 | 0) >>> 0) % (($d_sroa_1_4_extract_trunc >>> 0 | 0) >>> 0) | 0;
       }
       $_0$1 = 0;
       $_0$0 = ((($n_sroa_1_4_extract_trunc >>> 0 | 0) >>> 0) / (($d_sroa_1_4_extract_trunc >>> 0 | 0) >>> 0) | 0) >>> 0 | 0;
-      HEAP32[168 >> 2] = $_0$1;
-      wasm2asm_i32$0 = $_0$0;
+      block14 : {
+       HEAP32[168 >> 2] = $_0$1;
+       wasm2asm_i32$0 = $_0$0;
+      }
       break topmost;
      }
      $37 = $d_sroa_1_4_extract_trunc - 1 | 0;
-     if (($37 & $d_sroa_1_4_extract_trunc | 0 | 0) == (0 | 0)) {
-      if (($rem | 0) != (0 | 0)) {
+     if (($37 & $d_sroa_1_4_extract_trunc | 0 | 0) == (0 | 0)) block15 : {
+      if (($rem | 0) != (0 | 0)) block16 : {
        HEAP32[$rem >> 2] = 0 | ($a$0 & 4294967295 | 0) | 0;
        HEAP32[($rem + 4 | 0) >> 2] = $37 & $n_sroa_1_4_extract_trunc | 0 | ($a$1 & 0 | 0) | 0;
       }
       $_0$1 = 0;
       $_0$0 = $n_sroa_1_4_extract_trunc >>> ((_llvm_cttz_i32($d_sroa_1_4_extract_trunc | 0) | 0) >>> 0 | 0) | 0;
-      HEAP32[168 >> 2] = $_0$1;
-      wasm2asm_i32$0 = $_0$0;
+      block17 : {
+       HEAP32[168 >> 2] = $_0$1;
+       wasm2asm_i32$0 = $_0$0;
+      }
       break topmost;
      }
      $49 = Math_clz32($d_sroa_1_4_extract_trunc);
      $51 = $49 - Math_clz32($n_sroa_1_4_extract_trunc) | 0;
-     if (($51 >>> 0 | 0) >>> 0 <= 30 >>> 0) {
+     if (($51 >>> 0 | 0) >>> 0 <= 30 >>> 0) block18 : {
       $57 = $51 + 1 | 0;
       $58 = 31 - $51 | 0;
       $sr_1_ph = $57;
@@ -9197,25 +9311,29 @@ function asmFunc(global, env, buffer) {
       $q_sroa_1_1_ph = $n_sroa_0_0_extract_trunc << $58 | 0;
       break do_once$0;
      }
-     if (($rem | 0) == (0 | 0)) {
+     if (($rem | 0) == (0 | 0)) block19 : {
       $_0$1 = 0;
       $_0$0 = 0;
-      HEAP32[168 >> 2] = $_0$1;
-      wasm2asm_i32$0 = $_0$0;
+      block20 : {
+       HEAP32[168 >> 2] = $_0$1;
+       wasm2asm_i32$0 = $_0$0;
+      }
       break topmost;
      }
      HEAP32[$rem >> 2] = 0 | ($a$0 & 4294967295 | 0) | 0;
      HEAP32[($rem + 4 | 0) >> 2] = $n_sroa_1_4_extract_shift$0 | ($a$1 & 0 | 0) | 0;
      $_0$1 = 0;
      $_0$0 = 0;
-     HEAP32[168 >> 2] = $_0$1;
-     wasm2asm_i32$0 = $_0$0;
+     block21 : {
+      HEAP32[168 >> 2] = $_0$1;
+      wasm2asm_i32$0 = $_0$0;
+     }
      break topmost;
-    } else {
-     if (($17 | 0) == (0 | 0)) {
+    } else block22 : {
+     if (($17 | 0) == (0 | 0)) block23 : {
       $117 = Math_clz32($d_sroa_1_4_extract_trunc);
       $119 = $117 - Math_clz32($n_sroa_1_4_extract_trunc) | 0;
-      if (($119 >>> 0 | 0) >>> 0 <= 31 >>> 0) {
+      if (($119 >>> 0 | 0) >>> 0 <= 31 >>> 0) block24 : {
        $125 = $119 + 1 | 0;
        $126 = 31 - $119 | 0;
        $130 = ($119 - 31 | 0) >> 31 | 0;
@@ -9226,23 +9344,27 @@ function asmFunc(global, env, buffer) {
        $q_sroa_1_1_ph = $n_sroa_0_0_extract_trunc << $126 | 0;
        break do_once$0;
       }
-      if (($rem | 0) == (0 | 0)) {
+      if (($rem | 0) == (0 | 0)) block25 : {
        $_0$1 = 0;
        $_0$0 = 0;
-       HEAP32[168 >> 2] = $_0$1;
-       wasm2asm_i32$0 = $_0$0;
+       block26 : {
+        HEAP32[168 >> 2] = $_0$1;
+        wasm2asm_i32$0 = $_0$0;
+       }
        break topmost;
       }
       HEAP32[$rem >> 2] = 0 | ($a$0 & 4294967295 | 0) | 0;
       HEAP32[($rem + 4 | 0) >> 2] = $n_sroa_1_4_extract_shift$0 | ($a$1 & 0 | 0) | 0;
       $_0$1 = 0;
       $_0$0 = 0;
-      HEAP32[168 >> 2] = $_0$1;
-      wasm2asm_i32$0 = $_0$0;
+      block27 : {
+       HEAP32[168 >> 2] = $_0$1;
+       wasm2asm_i32$0 = $_0$0;
+      }
       break topmost;
      }
      $66 = $d_sroa_0_0_extract_trunc - 1 | 0;
-     if (($66 & $d_sroa_0_0_extract_trunc | 0 | 0) != (0 | 0)) {
+     if (($66 & $d_sroa_0_0_extract_trunc | 0 | 0) != (0 | 0)) block28 : {
       $86 = Math_clz32($d_sroa_0_0_extract_trunc) + 33 | 0;
       $88 = $86 - Math_clz32($n_sroa_1_4_extract_trunc) | 0;
       $89 = 64 - $88 | 0;
@@ -9257,34 +9379,38 @@ function asmFunc(global, env, buffer) {
       $q_sroa_1_1_ph = ($n_sroa_1_4_extract_trunc << $89 | 0 | ($n_sroa_0_0_extract_trunc >>> ($95 >>> 0 | 0) | 0) | 0) & $92 | 0 | (($n_sroa_0_0_extract_trunc << $91 | 0) & (($88 - 33 | 0) >> 31 | 0) | 0) | 0;
       break do_once$0;
      }
-     if (($rem | 0) != (0 | 0)) {
+     if (($rem | 0) != (0 | 0)) block29 : {
       HEAP32[$rem >> 2] = $66 & $n_sroa_0_0_extract_trunc | 0;
       HEAP32[($rem + 4 | 0) >> 2] = 0;
      }
-     if (($d_sroa_0_0_extract_trunc | 0) == (1 | 0)) {
+     if (($d_sroa_0_0_extract_trunc | 0) == (1 | 0)) block30 : {
       $_0$1 = $n_sroa_1_4_extract_shift$0 | ($a$1 & 0 | 0) | 0;
       $_0$0 = 0 | ($a$0 & 4294967295 | 0) | 0;
-      HEAP32[168 >> 2] = $_0$1;
-      wasm2asm_i32$0 = $_0$0;
+      block31 : {
+       HEAP32[168 >> 2] = $_0$1;
+       wasm2asm_i32$0 = $_0$0;
+      }
       break topmost;
-     } else {
+     } else block32 : {
       $78 = _llvm_cttz_i32($d_sroa_0_0_extract_trunc | 0) | 0;
       $_0$1 = 0 | ($n_sroa_1_4_extract_trunc >>> ($78 >>> 0 | 0) | 0) | 0;
       $_0$0 = $n_sroa_1_4_extract_trunc << (32 - $78 | 0) | 0 | ($n_sroa_0_0_extract_trunc >>> ($78 >>> 0 | 0) | 0) | 0;
-      HEAP32[168 >> 2] = $_0$1;
-      wasm2asm_i32$0 = $_0$0;
+      block33 : {
+       HEAP32[168 >> 2] = $_0$1;
+       wasm2asm_i32$0 = $_0$0;
+      }
       break topmost;
      }
     }
    }
-   if (($sr_1_ph | 0) == (0 | 0)) {
+   if (($sr_1_ph | 0) == (0 | 0)) block34 : {
     $q_sroa_1_1_lcssa = $q_sroa_1_1_ph;
     $q_sroa_0_1_lcssa = $q_sroa_0_1_ph;
     $r_sroa_1_1_lcssa = $r_sroa_1_1_ph;
     $r_sroa_0_1_lcssa = $r_sroa_0_1_ph;
     $carry_0_lcssa$1 = 0;
     $carry_0_lcssa$0 = 0;
-   } else {
+   } else block35 : {
     $d_sroa_0_0_insert_insert99$0 = 0 | ($b$0 & 4294967295 | 0) | 0;
     $d_sroa_0_0_insert_insert99$1 = $d_sroa_1_4_extract_shift$0 | ($b$1 & 0 | 0) | 0;
     $137$0 = _i64Add($d_sroa_0_0_insert_insert99$0 | 0, $d_sroa_0_0_insert_insert99$1 | 0, 4294967295 | 0, 4294967295 | 0) | 0;
@@ -9295,7 +9421,7 @@ function asmFunc(global, env, buffer) {
     $r_sroa_0_1201 = $r_sroa_0_1_ph;
     $sr_1202 = $sr_1_ph;
     $carry_0203 = 0;
-    while_out$1 : do {
+    while_out$1 : do block36 : {
      $147 = $q_sroa_0_1199 >>> 31 | 0 | ($q_sroa_1_1198 << 1 | 0) | 0;
      $149 = $carry_0203 | ($q_sroa_0_1199 << 1 | 0) | 0;
      $r_sroa_0_0_insert_insert42$0 = 0 | ($r_sroa_0_1201 << 1 | 0 | ($q_sroa_1_1198 >>> 31 | 0) | 0) | 0;
@@ -9326,7 +9452,7 @@ function asmFunc(global, env, buffer) {
      $r_sroa_0_0_extract_trunc = $154$0;
      $r_sroa_1_4_extract_trunc = HEAPU32[168 >> 2] | 0;
      $155 = $sr_1202 - 1 | 0;
-     if (($155 | 0) == (0 | 0)) break while_out$1; else {
+     if (($155 | 0) == (0 | 0)) break while_out$1; else block37 : {
       $q_sroa_1_1198 = $147;
       $q_sroa_0_1199 = $149;
       $r_sroa_1_1200 = $r_sroa_1_4_extract_trunc;
@@ -9346,14 +9472,16 @@ function asmFunc(global, env, buffer) {
    $q_sroa_0_0_insert_ext75$0 = $q_sroa_0_1_lcssa;
    $q_sroa_0_0_insert_ext75$1 = 0;
    $q_sroa_0_0_insert_insert77$1 = $q_sroa_1_1_lcssa | $q_sroa_0_0_insert_ext75$1 | 0;
-   if (($rem | 0) != (0 | 0)) {
+   if (($rem | 0) != (0 | 0)) block38 : {
     HEAP32[$rem >> 2] = 0 | $r_sroa_0_1_lcssa | 0;
     HEAP32[($rem + 4 | 0) >> 2] = $r_sroa_1_1_lcssa;
    }
    $_0$1 = (0 | $q_sroa_0_0_insert_ext75$0 | 0) >>> 31 | 0 | ($q_sroa_0_0_insert_insert77$1 << 1 | 0) | 0 | (($q_sroa_0_0_insert_ext75$1 << 1 | 0 | ($q_sroa_0_0_insert_ext75$0 >>> 31 | 0) | 0) & 0 | 0) | 0 | $carry_0_lcssa$1 | 0;
    $_0$0 = ($q_sroa_0_0_insert_ext75$0 << 1 | 0 | (0 >>> 31 | 0) | 0) & 4294967294 | 0 | $carry_0_lcssa$0 | 0;
-   HEAP32[168 >> 2] = $_0$1;
-   wasm2asm_i32$0 = $_0$0;
+   block39 : {
+    HEAP32[168 >> 2] = $_0$1;
+    wasm2asm_i32$0 = $_0$0;
+   }
   }
   return wasm2asm_i32$0 | 0;
  }

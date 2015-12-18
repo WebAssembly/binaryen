@@ -16,11 +16,13 @@ function asmFunc(global, env, buffer) {
  var f64_rem = env.f64_rem;
  function big_negative() {
   var temp = 0.0;
-  temp = -2147483648.0;
-  temp = -2147483648.0;
-  temp = -21474836480.0;
-  temp = .039625;
-  temp = -.039625;
+  block0 : {
+   temp = -2147483648.0;
+   temp = -2147483648.0;
+   temp = -21474836480.0;
+   temp = .039625;
+   temp = -.039625;
+  }
  }
  
  function importedDoubles() {
@@ -73,17 +75,23 @@ function asmFunc(global, env, buffer) {
  
  function conversions() {
   var i = 0, d = 0.0;
-  i = f64_to_int(+d) | 0;
-  d = +(i | 0);
-  d = +((i >>> 0 | 0) >>> 0);
+  block0 : {
+   i = f64_to_int(+d) | 0;
+   d = +(i | 0);
+   d = +((i >>> 0 | 0) >>> 0);
+  }
  }
  
  function seq() {
   var J = 0.0, wasm2asm_f64$2 = 0.0, wasm2asm_f64$1 = 0.0, wasm2asm_f64$0 = 0.0;
-  .1;
-  wasm2asm_f64$1 = 5.1;
-  3.2;
-  wasm2asm_f64$2 = 4.2;
+  block0 : {
+   .1;
+   wasm2asm_f64$1 = 5.1;
+  }
+  block1 : {
+   3.2;
+   wasm2asm_f64$2 = 4.2;
+  }
   wasm2asm_f64$0 = +(wasm2asm_f64$1 - wasm2asm_f64$2);
   J = wasm2asm_f64$0;
  }
@@ -127,17 +135,21 @@ function asmFunc(global, env, buffer) {
     case 8:
      break label$break$Lout;
     case 3:
-     while_out$10 : do {
-      break while_out$10;
-      continue while_out$10;
-     } while (0);
-     break label$break$Lout;
-    case 0:
-     while_out$13 : do {
+     block0 : {
+      while_out$10 : do block1 : {
+       break while_out$10;
+       continue while_out$10;
+      } while (0);
       break label$break$Lout;
-      continue while_out$13;
-     } while (0);
-     break label$break$Lout;
+     }
+    case 0:
+     block2 : {
+      while_out$13 : do block3 : {
+       break label$break$Lout;
+       continue while_out$13;
+      } while (0);
+      break label$break$Lout;
+     }
     case 1:
     case 2:
     case 4:
@@ -175,12 +187,14 @@ function asmFunc(global, env, buffer) {
  function fr(x) {
   x = Math_fround(x);
   var y = Math_fround(0), z = 0.0;
-  Math_fround(z);
-  y;
-  Math_fround(5.0);
-  Math_fround(0.0);
-  Math_fround(5.0);
-  Math_fround(0.0);
+  block0 : {
+   Math_fround(z);
+   y;
+   Math_fround(5.0);
+   Math_fround(0.0);
+   Math_fround(5.0);
+   Math_fround(0.0);
+  }
  }
  
  function negZero() {
@@ -189,17 +203,23 @@ function asmFunc(global, env, buffer) {
  
  function abs() {
   var x = 0, y = 0.0, z = Math_fround(0), asm2wasm_i32_temp = 0, wasm2asm_i32$3 = 0, wasm2asm_i32$2 = 0, wasm2asm_i32$1 = 0, wasm2asm_i32$0 = 0;
-  asm2wasm_i32_temp = 0;
-  wasm2asm_i32$0 = (wasm2asm_i32$1 = (asm2wasm_i32_temp | 0) < (0 | 0), wasm2asm_i32$2 = 0 - asm2wasm_i32_temp | 0, wasm2asm_i32$3 = asm2wasm_i32_temp, wasm2asm_i32$1 ? wasm2asm_i32$2 : wasm2asm_i32$3);
-  x = wasm2asm_i32$0;
-  y = Math_abs(0.0);
-  z = Math_fround(Math_abs(Math_fround(0.0)));
+  block0 : {
+   block1 : {
+    asm2wasm_i32_temp = 0;
+    wasm2asm_i32$0 = (wasm2asm_i32$1 = (asm2wasm_i32_temp | 0) < (0 | 0), wasm2asm_i32$2 = 0 - asm2wasm_i32_temp | 0, wasm2asm_i32$3 = asm2wasm_i32_temp, wasm2asm_i32$1 ? wasm2asm_i32$2 : wasm2asm_i32$3);
+   }
+   x = wasm2asm_i32$0;
+   y = Math_abs(0.0);
+   z = Math_fround(Math_abs(Math_fround(0.0)));
+  }
  }
  
  function neg() {
   var x = Math_fround(0);
-  x = Math_fround(-x);
-  FUNCTION_TABLE_vf[((1 & 7 | 0) + 8 | 0) & 15](Math_fround(x));
+  block0 : {
+   x = Math_fround(-x);
+   FUNCTION_TABLE_vf[((1 & 7 | 0) + 8 | 0) & 15](Math_fround(x));
+  }
  }
  
  function cneg(x) {

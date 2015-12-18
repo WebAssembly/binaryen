@@ -12,7 +12,7 @@
     (local $n f32)
     (set_local $n
       (f32.neg
-        (block $block0
+        (block
           (i32.store align=4
             (get_local $k)
             (get_local $p)

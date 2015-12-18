@@ -7,7 +7,7 @@
   (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative
     (local $temp f64)
-    (block $block0
+    (block
       (set_local $temp
         (f64.const -2147483648)
       )
@@ -131,7 +131,7 @@
   (func $conversions
     (local $i i32)
     (local $d f64)
-    (block $block0
+    (block
       (set_local $i
         (call_import $f64-to-int
           (get_local $d)
@@ -156,11 +156,11 @@
     (local $J f64)
     (set_local $J
       (f64.sub
-        (block $block0
+        (block
           (f64.const 0.1)
           (f64.const 5.1)
         )
-        (block $block1
+        (block
           (f64.const 3.2)
           (f64.const 4.2)
         )
@@ -222,9 +222,9 @@
           (br $label$break$Lout)
         )
         (case $switch-case$12
-          (block $block0
+          (block
             (loop $while-out$10 $while-in$11
-              (block $block1
+              (block
                 (br $while-out$10)
                 (br $while-in$11)
               )
@@ -233,9 +233,9 @@
           )
         )
         (case $switch-case$15
-          (block $block2
+          (block
             (loop $while-out$13 $while-in$14
-              (block $block3
+              (block
                 (br $label$break$Lout)
                 (br $while-in$14)
               )
@@ -279,7 +279,7 @@
   (func $fr (param $x f32)
     (local $y f32)
     (local $z f64)
-    (block $block0
+    (block
       (f32.demote/f64
         (get_local $z)
       )
@@ -298,9 +298,9 @@
     (local $y f64)
     (local $z f32)
     (local $asm2wasm_i32_temp i32)
-    (block $block0
+    (block
       (set_local $x
-        (block $block1
+        (block
           (set_local $asm2wasm_i32_temp
             (i32.const 0)
           )
@@ -331,7 +331,7 @@
   )
   (func $neg
     (local $x f32)
-    (block $block0
+    (block
       (set_local $x
         (f32.neg
           (get_local $x)
