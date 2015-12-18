@@ -483,7 +483,7 @@ private:
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
       curr->align = curr->bytes; // XXX
       Name assign = getAssign();
-      curr->offset = getInt();
+      getConst(&curr->offset);
       mustMatch("(");
       auto inputs = getInputs(2);
       curr->ptr = inputs[0];
