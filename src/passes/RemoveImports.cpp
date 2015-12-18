@@ -31,7 +31,7 @@ struct RemoveImports : public Pass {
     }
   }
 
-  void visitModule(Module *curr) {
+  void visitModule(Module *curr) override {
     curr->importsMap.clear();
     curr->imports.clear();
   }
