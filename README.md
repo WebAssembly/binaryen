@@ -158,7 +158,8 @@ The `check.py` script supports some options:
 
  * If an interpreter is provided, we run the output through it, checking for parse errors.
  * If tests are provided, we run exactly those. If none are provided, we run them all.
- * `asm2wasm` tests require no dependencies. `wasm.js` tests require `emcc` and `nodejs` in the path.
+ * Some tests require `emcc` or `nodejs` in the path. They will not run if the tool cannot be found, and you'll see a warning.
+ * We have tests from upstream in `tests/spec` and `tests/experimental`, in git submodules. Running `./build.sh` should update those.
 
 ## License & Contributing
 
