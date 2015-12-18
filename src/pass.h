@@ -92,7 +92,6 @@ struct NameManager : public Pass {
   // visitors
   void visitBlock(Block* curr) override;
   void visitLoop(Loop* curr) override;
-  void visitLabel(Label* curr) override;
   void visitBreak(Break* curr) override;
   void visitSwitch(Switch* curr) override;
   void visitCall(Call* curr) override;

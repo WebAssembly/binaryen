@@ -207,12 +207,6 @@ private:
           return flow; // loop does not loop automatically, only continue achieves that
         }
       }
-      Flow visitLabel(Label *curr) override {
-        NOTE_ENTER("Label");
-        Flow flow = visit(curr->body);
-        flow.clearIf(curr->name);
-        return flow;
-      }
       Flow visitBreak(Break *curr) override {
         NOTE_ENTER("Break");
         bool condition = true;

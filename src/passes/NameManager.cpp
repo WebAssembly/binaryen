@@ -24,9 +24,6 @@ void NameManager::visitLoop(Loop* curr) {
   names.insert(curr->out);
   names.insert(curr->in);
 }
-void NameManager::visitLabel(Label* curr) {
-  names.insert(curr->name);
-}
 void NameManager::visitBreak(Break* curr) {
   names.insert(curr->name);
 }

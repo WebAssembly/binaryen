@@ -260,26 +260,25 @@ class Expression {
 public:
   enum Id {
     InvalidId = 0,
-    BlockId = 1,
-    IfId = 2,
-    LoopId = 3,
-    LabelId = 4,
-    BreakId = 5,
-    SwitchId =6 ,
-    CallId = 7,
-    CallImportId = 8,
-    CallIndirectId = 9,
-    GetLocalId = 10,
-    SetLocalId = 11,
-    LoadId = 12,
-    StoreId = 13,
-    ConstId = 14,
-    UnaryId = 15,
-    BinaryId = 16,
-    SelectId = 17,
-    HostId = 18,
-    NopId = 19,
-    UnreachableId = 20
+    BlockId,
+    IfId,
+    LoopId,
+    BreakId,
+    SwitchId,
+    CallId,
+    CallImportId,
+    CallIndirectId,
+    GetLocalId,
+    SetLocalId,
+    LoadId,
+    StoreId,
+    ConstId,
+    UnaryId,
+    BinaryId,
+    SelectId,
+    HostId,
+    NopId,
+    UnreachableId
   };
   Id _id;
 
@@ -384,21 +383,6 @@ public:
     if (in.is()) {
       o << ' ' << in;
     }
-    incIndent(o, indent);
-    printFullLine(o, indent, body);
-    return decIndent(o, indent);
-  }
-};
-
-class Label : public Expression {
-public:
-  Label() : Expression(LabelId) {}
-
-  Name name;
-  Expression* body;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "label ") << name;
     incIndent(o, indent);
     printFullLine(o, indent, body);
     return decIndent(o, indent);
@@ -1111,7 +1095,6 @@ struct WasmVisitor {
   virtual ReturnType visitBlock(Block *curr) { abort(); }
   virtual ReturnType visitIf(If *curr) { abort(); }
   virtual ReturnType visitLoop(Loop *curr) { abort(); }
-  virtual ReturnType visitLabel(Label *curr) { abort(); }
   virtual ReturnType visitBreak(Break *curr) { abort(); }
   virtual ReturnType visitSwitch(Switch *curr) { abort(); }
   virtual ReturnType visitCall(Call *curr) { abort(); }
@@ -1143,7 +1126,6 @@ struct WasmVisitor {
       case Expression::Id::BlockId: return visitBlock((Block*)curr);
       case Expression::Id::IfId: return visitIf((If*)curr);
       case Expression::Id::LoopId: return visitLoop((Loop*)curr);
-      case Expression::Id::LabelId: return visitLabel((Label*)curr);
       case Expression::Id::BreakId: return visitBreak((Break*)curr);
       case Expression::Id::SwitchId: return visitSwitch((Switch*)curr);
       case Expression::Id::CallId: return visitCall((Call*)curr);
@@ -1178,7 +1160,6 @@ std::ostream& Expression::print(std::ostream &o, unsigned indent) {
     void visitBlock(Block *curr) override { curr->doPrint(o, indent); }
     void visitIf(If *curr) override { curr->doPrint(o, indent); }
     void visitLoop(Loop *curr) override { curr->doPrint(o, indent); }
-    void visitLabel(Label *curr) override { curr->doPrint(o, indent); }
     void visitBreak(Break *curr) override { curr->doPrint(o, indent); }
     void visitSwitch(Switch *curr) override { curr->doPrint(o, indent); }
     void visitCall(Call *curr) override { curr->doPrint(o, indent); }
@@ -1222,7 +1203,6 @@ struct WasmWalker : public WasmVisitor<void> {
   void visitBlock(Block *curr) override {}
   void visitIf(If *curr) override {}
   void visitLoop(Loop *curr) override {}
-  void visitLabel(Label *curr) override {}
   void visitBreak(Break *curr) override {}
   void visitSwitch(Switch *curr) override {}
   void visitCall(Call *curr) override {}
@@ -1271,7 +1251,6 @@ struct WasmWalker : public WasmVisitor<void> {
       void visitLoop(Loop *curr) override {
         parent.walk(curr->body);
       }
-      void visitLabel(Label *curr) override {}
       void visitBreak(Break *curr) override {
         parent.walk(curr->condition);
         parent.walk(curr->value);

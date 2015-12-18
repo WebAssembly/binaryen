@@ -555,7 +555,6 @@ public:
           abort_on(str);
         }
         case 'l': {
-          if (str[1] == 'a') return makeLabel(s);
           if (str[1] == 'o') return makeLoop(s);
           abort_on(str);
         }
@@ -767,21 +766,6 @@ private:
       ret->ifFalse = parseExpression(s[3]);
       ret->type = ret->ifTrue->type == ret->ifFalse->type ? ret->ifTrue->type : none; // if not the same type, this does not return a value
     }
-    return ret;
-  }
-
-  Expression* makeLabel(Element& s) {
-    auto ret = allocator.alloc<Label>();
-    size_t i = 1;
-    if (s[i]->isStr()) {
-      ret->name = s[i]->str();
-      i++;
-    } else {
-      ret->name = getPrefixedName("label");
-    }
-    labelStack.push_back(ret->name);
-    ret->body = parseExpression(s[i]);
-    labelStack.pop_back();
     return ret;
   }
 

@@ -383,9 +383,6 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
     void visitLoop(Loop *curr) override {
       parent->setStatement(curr);
     }
-    void visitLabel(Label *curr) override {
-      parent->setStatement(curr);
-    }
     void visitBreak(Break *curr) override {
       parent->setStatement(curr);
     }
@@ -603,9 +600,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         ret = ValueBuilder::makeLabel(fromName(asmLabel), ret);
       }
       return ret;
-    }
-    Ref visitLabel(Label *curr) override {
-      return ValueBuilder::makeLabel(fromName(curr->name), visit(curr->body, result));
     }
     Ref visitBreak(Break *curr) override {
       if (curr->condition) {
