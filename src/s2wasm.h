@@ -52,6 +52,13 @@ private:
 
   std::map<size_t, size_t> addressSegments; // address => segment index
 
+  struct Offsetting {
+    Name value;
+    uint32_t* target;
+    Offsetting(Name value, uint32_t* target) : value(value), target(target) {}
+  };
+  std::vector<Offsetting> offsettings;
+
   // utilities
 
   void skipWhitespace() {
@@ -117,14 +124,14 @@ private:
   }
 
   void skipToSep() {
-    while (*s && !isspace(*s) && *s != ',' && *s != ')' && *s != ':' && *s != '+') {
+    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+') {
       s++;
     }
   }
 
   Name getStrToSep() {
     std::string str;
-    while (*s && !isspace(*s) && *s != ',' && *s != ')' && *s != ':' && *s != '+') {
+    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+') {
       str += *s;
       s++;
     }
@@ -154,6 +161,15 @@ private:
     }
     if (neg) ret = -ret;
     return ret;
+  }
+
+  void getConst(uint32_t* target) {
+    if (isdigit(*s)) {
+      *target = getInt();
+    } else {
+      // a global constant, we need to fix it up later
+      offsettings.emplace_back(getStrToSep(), target);
+    }
   }
 
   int64_t getInt64() {
@@ -267,6 +283,7 @@ private:
       else if (match("type")) parseType();
       else if (match("imports")) skipImports();
       else if (match("data")) {}
+      else if (match("section")) s = strchr(s, '\n');
       else abort_on("process");
     }
   }
@@ -451,7 +468,7 @@ private:
       curr->signed_ = match("_s");
       match("_u");
       Name assign = getAssign();
-      curr->offset = getInt();
+      getConst(&curr->offset);
       curr->align = curr->bytes; // XXX
       mustMatch("(");
       curr->ptr = getInput();
@@ -901,6 +918,9 @@ private:
     }
     for (auto& relocation : relocations) {
       (*(int32_t*)(&(*relocation.data)[0])) = staticAddresses[relocation.value] + relocation.offset;
+    }
+    for (auto& offsetting : offsettings) {
+      *(offsetting.target) = staticAddresses[offsetting.value];
     }
   }
 
