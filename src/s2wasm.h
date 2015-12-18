@@ -283,6 +283,7 @@ private:
       else if (match("type")) parseType();
       else if (match("imports")) skipImports();
       else if (match("data")) {}
+      else if (match("ident")) {}
       else if (match("section")) s = strchr(s, '\n');
       else abort_on("process");
     }
@@ -828,7 +829,13 @@ private:
   }
 
   void parseObject(Name name) {
-    match(".data");
+    if (match(".data") || match(".bss")) {
+    } else if (match(".lcomm")) {
+      mustMatch(name.str);
+      skipComma();
+      getInt();
+      return;
+    }
     size_t align = 16; // XXX default?
     if (match(".globl")) {
       mustMatch(name.str);
