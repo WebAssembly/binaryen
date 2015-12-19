@@ -948,13 +948,12 @@ public:
     // find asmConst calls, and emit their metadata
     struct AsmConstWalker : public WasmWalker {
       S2WasmBuilder* parent;
-      std::ostream& o;
 
       std::map<std::string, std::set<std::string>> sigsForCode;
       std::map<std::string, size_t> ids;
       std::set<std::string> allSigs;
 
-      AsmConstWalker(S2WasmBuilder* parent) : parent(parent), o(o) {}
+      AsmConstWalker(S2WasmBuilder* parent) : parent(parent) {}
 
       void visitCallImport(CallImport* curr) override {
         if (curr->target == EMSCRIPTEN_ASM_CONST) {
