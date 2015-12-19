@@ -153,7 +153,7 @@ private:
     while (1) {
       while (isspace(input[0])) input++;
       if (input[0] == ';' && input[1] == ';') {
-        while (input[0] != '\n') input++;
+        while (input[0] && input[0] != '\n') input++;
       } else if (input[0] == '(' && input[1] == ';') {
         input = strstr(input, ";)") + 2;
       } else {
