@@ -6,3 +6,6 @@ bin/wasm.js
 *~
 *.diff
 a.*
+b.*
+CMakeFiles/
+CMakeCache.txt
