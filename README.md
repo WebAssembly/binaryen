@@ -30,6 +30,7 @@ $ ./build.sh
 * `binaryen-shell` and `asm2wasm` require a C++11 compiler.
 * If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten. You'll need the `incoming` branch there (which you can get via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).
 * `wasm.js` also requires Emscripten.
+* There is work-in-progress CMake support, but it isn't stable or finished yet.
 
 ## Running
 
