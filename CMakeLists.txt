@@ -5,6 +5,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 
+SET(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+
 # clang doesn't print colored diagnostics when invoked from Ninja
 IF (UNIX AND
     CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
