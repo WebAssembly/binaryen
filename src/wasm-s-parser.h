@@ -222,6 +222,7 @@ public:
     functionCounter = 0;
     for (unsigned i = 1; i < module.size(); i++) {
       preParseFunctionType(*module[i]);
+      preParseImports(*module[i]);
     }
     functionCounter = 0;
     for (unsigned i = 1; i < module.size(); i++) {
@@ -263,12 +264,17 @@ private:
     functionTypes[name] = none;
   }
 
+  void preParseImports(Element& curr) {
+    IString id = curr[0]->str();
+    if (id == IMPORT) parseImport(curr);
+  }
+
   void parseModuleElement(Element& curr) {
     IString id = curr[0]->str();
     if (id == FUNC) return parseFunction(curr);
     if (id == MEMORY) return parseMemory(curr);
     if (id == EXPORT) return parseExport(curr);
-    if (id == IMPORT) return parseImport(curr);
+    if (id == IMPORT) return; // already done
     if (id == TABLE) return parseTable(curr);
     if (id == TYPE) return; // already done
     std::cerr << "bad module element " << id.str << '\n';
