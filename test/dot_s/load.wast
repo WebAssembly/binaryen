@@ -4,7 +4,6 @@
   (export "ldi64" $ldi64)
   (export "ldf32" $ldf32)
   (export "ldf64" $ldf64)
-  (export "ldoff" $ldoff)
   (func $ldi32 (param $$0 i32) (result i32)
     (block $fake_return_waka123
       (block
@@ -43,17 +42,6 @@
       (block
         (br $fake_return_waka123
           (f64.load align=8
-            (get_local $$0)
-          )
-        )
-      )
-    )
-  )
-  (func $ldoff (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load align=4
             (get_local $$0)
           )
         )

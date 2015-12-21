@@ -4,7 +4,6 @@
   (export "sti64" $sti64)
   (export "stf32" $stf32)
   (export "stf64" $stf64)
-  (export "stoff" $stoff)
   (func $sti32 (param $$0 i32) (param $$1 i32)
     (block $fake_return_waka123
       (block
@@ -42,17 +41,6 @@
     (block $fake_return_waka123
       (block
         (f64.store align=8
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
-    )
-  )
-  (func $stoff (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=4 offset=1
           (get_local $$0)
           (get_local $$1)
         )

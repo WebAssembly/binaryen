@@ -142,25 +142,31 @@
           )
         )
         (block $BB3_5
-          (block $BB3_2
+          (block $BB3_4
             (br_if
-              (get_local $$0)
-              $BB3_2
+              (i32.eq
+                (get_local $$0)
+                (i32.const 0)
+              )
+              $BB3_4
             )
             (i32.store align=4
               (get_local $$2)
-              (i32.const 1)
+              (i32.const 2)
             )
-            (br $BB3_5)
-          )
-          (i32.store align=4
-            (get_local $$2)
-            (i32.const 2)
-          )
-          (block $BB3_4
-            (br_if
-              (get_local $$1)
-              $BB3_4
+            (block $BB3_3
+              (br_if
+                (i32.eq
+                  (get_local $$1)
+                  (i32.const 0)
+                )
+                $BB3_3
+              )
+              (i32.store align=4
+                (get_local $$2)
+                (i32.const 4)
+              )
+              (br $BB3_5)
             )
             (i32.store align=4
               (get_local $$2)
@@ -170,7 +176,7 @@
           )
           (i32.store align=4
             (get_local $$2)
-            (i32.const 4)
+            (i32.const 1)
           )
         )
         (i32.store align=4
@@ -226,18 +232,21 @@
         (block $BB5_3
           (block $BB5_2
             (br_if
-              (get_local $$1)
+              (i32.eq
+                (get_local $$1)
+                (i32.const 0)
+              )
               $BB5_2
             )
             (i32.store align=4
               (get_local $$0)
-              (i32.const 1)
+              (i32.const 2)
             )
             (br $BB5_3)
           )
           (i32.store align=4
             (get_local $$0)
-            (i32.const 2)
+            (i32.const 1)
           )
         )
         (i32.store align=4
@@ -369,28 +378,31 @@
           )
         )
         (block $BB10_4
-          (block $BB10_2
+          (block $BB10_3
             (br_if
-              (get_local $$0)
-              $BB10_2
+              (i32.eq
+                (get_local $$0)
+                (i32.const 0)
+              )
+              $BB10_3
             )
             (i32.store align=4
               (get_local $$2)
-              (i32.const 1)
+              (i32.const 2)
+            )
+            (br_if
+              (get_local $$1)
+              $BB10_4
+            )
+            (i32.store align=4
+              (get_local $$2)
+              (i32.const 3)
             )
             (br $BB10_4)
           )
           (i32.store align=4
             (get_local $$2)
-            (i32.const 2)
-          )
-          (br_if
-            (get_local $$1)
-            $BB10_4
-          )
-          (i32.store align=4
-            (get_local $$2)
-            (i32.const 3)
+            (i32.const 1)
           )
         )
         (i32.store align=4
@@ -412,25 +424,31 @@
             (i32.const 0)
           )
           (block $BB11_6
-            (block $BB11_3
+            (block $BB11_5
               (br_if
-                (get_local $$0)
-                $BB11_3
+                (i32.eq
+                  (get_local $$0)
+                  (i32.const 0)
+                )
+                $BB11_5
               )
               (i32.store align=4
                 (get_local $$2)
-                (i32.const 1)
+                (i32.const 2)
               )
-              (br $BB11_6)
-            )
-            (i32.store align=4
-              (get_local $$2)
-              (i32.const 2)
-            )
-            (block $BB11_5
-              (br_if
-                (get_local $$1)
-                $BB11_5
+              (block $BB11_4
+                (br_if
+                  (i32.eq
+                    (get_local $$1)
+                    (i32.const 0)
+                  )
+                  $BB11_4
+                )
+                (i32.store align=4
+                  (get_local $$2)
+                  (i32.const 4)
+                )
+                (br $BB11_6)
               )
               (i32.store align=4
                 (get_local $$2)
@@ -440,7 +458,7 @@
             )
             (i32.store align=4
               (get_local $$2)
-              (i32.const 4)
+              (i32.const 1)
             )
           )
           (i32.store align=4
@@ -455,35 +473,38 @@
   (func $test3 (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (block $BB12_5
+        (block $BB12_2
           (br_if
-            (i32.const 0)
-            $BB12_5
+            (i32.eq
+              (i32.const 0)
+              (i32.const 0)
+            )
+            $BB12_2
           )
-          (loop $BB12_4 $BB12_1
-            (block
-              (br_if
-                (get_local $$0)
-                $BB12_4
-              )
-              (loop $BB12_3 $BB12_2
-                (block
-                  (br_if
-                    (i32.ne
-                      (get_local $$0)
-                      (get_local $$0)
-                    )
-                    $BB12_2
+          (br $fake_return_waka123)
+        )
+        (loop $BB12_5 $BB12_2
+          (block
+            (br_if
+              (get_local $$0)
+              $BB12_5
+            )
+            (loop $BB12_4 $BB12_3
+              (block
+                (br_if
+                  (i32.ne
+                    (get_local $$0)
+                    (get_local $$0)
                   )
+                  $BB12_3
                 )
               )
-              (call_import $bar)
-              (br $BB12_1)
             )
+            (call_import $bar)
+            (br $BB12_2)
           )
-          (unreachable)
         )
-        (br $fake_return_waka123)
+        (unreachable)
       )
     )
   )
@@ -695,15 +716,18 @@
           )
           (block $BB16_4
             (br_if
-              (i32.and
-                (get_local $$0)
-                (get_local $$3)
+              (i32.eq
+                (i32.and
+                  (get_local $$0)
+                  (get_local $$3)
+                )
+                (i32.const 0)
               )
               $BB16_4
             )
             (i32.store align=4
               (get_local $$2)
-              (i32.const 2)
+              (i32.const 3)
             )
             (br_if
               (i32.and
@@ -714,13 +738,13 @@
             )
             (i32.store align=4
               (get_local $$2)
-              (i32.const 4)
+              (i32.const 5)
             )
             (unreachable)
           )
           (i32.store align=4
             (get_local $$2)
-            (i32.const 3)
+            (i32.const 2)
           )
           (br_if
             (i32.and
@@ -733,7 +757,7 @@
       )
       (i32.store align=4
         (get_local $$2)
-        (i32.const 5)
+        (i32.const 4)
       )
       (unreachable)
     )
@@ -948,62 +972,60 @@
           (get_local $$0)
         )
         (block $BB20_8
-          (block $BB20_7
-            (block $BB20_6
-              (block $BB20_4
-                (br_if
-                  (get_local $$0)
-                  $BB20_4
-                )
-                (i32.store align=4
-                  (get_local $$0)
-                  (i32.const 1)
-                )
-                (block $BB20_3
-                  (br_if
-                    (get_local $$0)
-                    $BB20_3
-                  )
-                  (i32.store align=4
-                    (get_local $$0)
-                    (i32.const 2)
-                  )
-                  (br_if
-                    (get_local $$0)
-                    $BB20_6
-                  )
-                )
-                (i32.store align=4
-                  (get_local $$0)
-                  (i32.const 3)
-                )
-                (br $fake_return_waka123)
+          (block $BB20_4
+            (br_if
+              (get_local $$0)
+              $BB20_4
+            )
+            (i32.store align=4
+              (get_local $$0)
+              (i32.const 1)
+            )
+            (block $BB20_3
+              (br_if
+                (get_local $$0)
+                $BB20_3
               )
               (i32.store align=4
                 (get_local $$0)
-                (i32.const 4)
+                (i32.const 2)
               )
               (br_if
                 (get_local $$0)
                 $BB20_8
               )
-              (i32.store align=4
-                (get_local $$0)
-                (i32.const 5)
-              )
-              (br_if
-                (i32.eq
-                  (get_local $$0)
-                  (i32.const 0)
-                )
-                $BB20_7
-              )
             )
             (i32.store align=4
               (get_local $$0)
-              (i32.const 7)
+              (i32.const 3)
             )
             (br $fake_return_waka123)
+          )
+          (i32.store align=4
+            (get_local $$0)
+            (i32.const 4)
+          )
+          (block $BB20_6
+            (br_if
+              (i32.eq
+                (get_local $$0)
+                (i32.const 0)
+              )
+              $BB20_6
+            )
+            (i32.store align=4
+              (get_local $$0)
+              (i32.const 8)
+            )
+            (br $fake_return_waka123)
+          )
+          (i32.store align=4
+            (get_local $$0)
+            (i32.const 5)
+          )
+          (br_if
+            (get_local $$0)
+            $BB20_8
           )
           (i32.store align=4
             (get_local $$0)
@@ -1013,7 +1035,7 @@
         )
         (i32.store align=4
           (get_local $$0)
-          (i32.const 8)
+          (i32.const 7)
         )
         (br $fake_return_waka123)
       )

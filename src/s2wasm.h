@@ -830,12 +830,15 @@ private:
 
   void parseObject(Name name) {
     if (match(".data") || match(".bss")) {
+    } else if (match(".section")) {
+      s = strchr(s, '\n');
     } else if (match(".lcomm")) {
       mustMatch(name.str);
       skipComma();
       getInt();
       return;
     }
+    skipWhitespace();
     size_t align = 16; // XXX default?
     if (match(".globl")) {
       mustMatch(name.str);
