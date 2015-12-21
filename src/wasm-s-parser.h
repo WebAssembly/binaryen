@@ -15,6 +15,8 @@ namespace wasm {
 
 using namespace cashew;
 
+extern int debug;
+
 // Globals
 
 int unhex(char c) {
@@ -401,7 +403,7 @@ public:
   #define abort_on(str) { std::cerr << "aborting on " << str << '\n'; onError(); }
 
   Expression* parseExpression(Element& s) {
-    //std::cerr << "parse expression " << s << '\n';
+    if (debug) std::cerr << "parse expression " << s << '\n';
     IString id = s[0]->str();
     const char *str = id.str;
     const char *dot = strchr(str, '.');
