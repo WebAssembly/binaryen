@@ -880,7 +880,9 @@ private:
     }
     auto ret = allocator.alloc<Break>();
     ret->name = FAKE_RETURN;
-    ret->value = parseExpression(s[1]);
+    if (s.size() >= 2) {
+      ret->value = parseExpression(s[1]);
+    }
     return ret;
   }
 
