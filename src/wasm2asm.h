@@ -755,6 +755,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       // normal load
       assert(curr->bytes == curr->align); // TODO: unaligned
       Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
+      if (curr->offset) {
+        ptr = makeAsmCoercion(ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)), ASM_INT);
+      }
       Ref ret;
       switch (curr->type) {
         case i32: {
@@ -791,6 +794,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       // normal store
       assert(curr->bytes == curr->align); // TODO: unaligned
       Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
+      if (curr->offset) {
+        ptr = makeAsmCoercion(ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)), ASM_INT);
+      }
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
       switch (curr->type) {
