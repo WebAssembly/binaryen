@@ -195,8 +195,18 @@ private:
             str += '"';
             input += 2;
             continue;
+          } else if (input[1] == '\'') {
+            str += '\'';
+            input += 2;
+            continue;
           } else if (input[1] == '\\') {
             str += '\\';
+            input += 2;
+          } else if (input[1] == 'n') {
+            str += '\n';
+            input += 2;
+          } else if (input[1] == 't') {
+            str += '\t';
             input += 2;
           } else {
             str += (char)(unhex(input[1])*16 + unhex(input[2]));
