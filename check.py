@@ -212,6 +212,22 @@ for t in spec_tests:
     if actual != expected:
       fail(actual, expected)
 
+print '\n[ checking binaryen-shell experimental testcases... ]\n'
+
+if len(requested) == 0:
+  BLACKLIST = ['call.wast', 'cfg-stackify.wast', 'inline-asm.wast', 'permute.wast', 'switch.wast', 'vtable.wast']
+  experimental_tests = [os.path.join('experimental', 'prototype-wasmate', 'test', 'expected-output', t) for t in sorted(os.listdir(os.path.join('test', 'experimental', 'prototype-wasmate', 'test', 'expected-output'))) if t not in BLACKLIST]
+else:
+  experimental_tests = requested[:]
+
+for t in experimental_tests:
+  if t.startswith('experimental') and t.endswith('.wast'):
+    print '..', t
+    wast = os.path.join('test', t)
+    proc = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), wast], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    actual, err = proc.communicate()
+    assert proc.returncode == 0, err
+
 print '\n[ checking .s testcases... ]\n'
 
 for s in sorted(os.listdir(os.path.join('test', 'dot_s'))) + sorted(os.listdir(os.path.join('test', 'experimental', 'prototype-wasmate', 'test'))):
