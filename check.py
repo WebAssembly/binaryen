@@ -199,10 +199,10 @@ for t in experimental_tests:
 
 print '\n[ checking wasm2asm testcases... ]\n'
 
-for wasm in tests:
+for wasm in tests + [os.path.join('spec', name) for name in ['address.wast']]:#spec_tests:
   if wasm.endswith('.wast'):
     print '..', wasm
-    asm = wasm.replace('.wast', '.2asm.js')
+    asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
     actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err == '', 'bad err:' + err
 

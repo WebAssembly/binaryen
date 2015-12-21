@@ -49,6 +49,15 @@ for wasm in ['min.wast', 'hello_world.wast', 'unit.wast', 'emcc_O2_hello_world.w
     expected_file = os.path.join('test', asm)
     open(expected_file, 'w').write(actual)
 
+for wasm in ['address.wast']:#os.listdir(os.path.join('test', 'spec')):
+  if wasm.endswith('.wast'):
+    print '..', wasm
+    asm = wasm.replace('.wast', '.2asm.js')
+    actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', 'spec', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    assert err == '', 'bad err:' + err
+    expected_file = os.path.join('test', asm)
+    open(expected_file, 'w').write(actual)
+
 for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):
     print '..', t
