@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #ifndef __optimizer_h__
 #define __optimizer_h__
@@ -143,4 +158,3 @@ cashew::Ref makeAsmCoercion(cashew::Ref node, AsmType type);
 cashew::Ref makeSigning(cashew::Ref node, AsmSign sign);
 
 #endif // __optimizer_h__
-
