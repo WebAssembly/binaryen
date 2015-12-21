@@ -864,8 +864,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       }
       abort_on("confusing assign", ast);
     } else if (what == BINARY) {
-      if (ast[1] == OR && ast[3][0] == NUM && ast[3][1]->getNumber() == 0) {
-        auto ret = process(ast[2]); // just look through the ()|0 coercion
+      if ((ast[1] == OR || ast[1] == TRSHIFT) && ast[3][0] == NUM && ast[3][1]->getNumber() == 0) {
+        auto ret = process(ast[2]); // just look through the ()|0 or ()>>>0 coercion
         fixCallType(ret, i32);
         return ret;
       }

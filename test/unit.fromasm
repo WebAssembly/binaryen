@@ -144,10 +144,7 @@
       )
       (set_local $d
         (f64.convert_u/i32
-          (i32.shr_u
-            (get_local $i)
-            (i32.const 0)
-          )
+          (get_local $i)
         )
       )
     )
@@ -364,11 +361,39 @@
   (func $___syscall_ret
     (local $$0 i32)
     (i32.gt_u
-      (i32.shr_u
-        (get_local $$0)
-        (i32.const 0)
-      )
+      (get_local $$0)
       (i32.const -4096)
+    )
+  )
+  (func $smallCompare (result i32)
+    (local $i i32)
+    (local $j i32)
+    (block $topmost
+      (if
+        (i32.lt_s
+          (get_local $i)
+          (get_local $j)
+        )
+        (set_local $i
+          (i32.add
+            (get_local $i)
+            (i32.const 1)
+          )
+        )
+      )
+      (if
+        (i32.lt_u
+          (get_local $i)
+          (get_local $j)
+        )
+        (set_local $i
+          (i32.add
+            (get_local $i)
+            (i32.const 1)
+          )
+        )
+      )
+      (get_local $i)
     )
   )
   (func $z

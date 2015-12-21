@@ -120,6 +120,12 @@ function () {
    var $0 = 0;
    ($0>>>0) > 4294963200; // -4096
   }
+  function smallCompare() {
+    var i = 0, j = 0;
+    if ((i | 0) < (j | 0)) i = i + 1 | 0;
+    if ((i >>> 0) < (j >>> 0)) i = i + 1 | 0;
+    return i | 0;
+  }
 
   function z() {
   }
