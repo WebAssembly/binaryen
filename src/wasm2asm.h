@@ -752,8 +752,36 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         flattenAppend(ret, visitAndAssign(&fakeLoad, result));
         return ret;
       }
+      if (curr->align != 0 && curr->align < curr->bytes) {
+        // set the pointer to a local
+        ScopedTemp temp(i32, parent);
+        SetLocal set;
+        set.name = temp.getName();
+        set.value = curr->ptr;
+        Ref ptrSet = visit(&set, NO_RESULT);
+        GetLocal get;
+        get.name = temp.getName();
+        // fake loads
+        Load load = *curr;
+        load.ptr = &get;
+        load.bytes = 1; // do the worst
+        Ref rest;
+        switch (curr->type) {
+          case i32: {
+            rest = makeAsmCoercion(visit(&load, EXPRESSION_RESULT), ASM_INT);
+            for (int i = 1; i < curr->bytes; i++) {
+              load.offset += 1;
+              Ref add = makeAsmCoercion(visit(&load, EXPRESSION_RESULT), ASM_INT);
+              add = ValueBuilder::makeBinary(add, LSHIFT, ValueBuilder::makeNum(8*i));
+              rest = ValueBuilder::makeBinary(rest, OR, add);
+            }
+            break;
+          }
+          default: abort();
+        }
+        return ValueBuilder::makeSeq(ptrSet, rest);
+      }
       // normal load
-      assert(curr->bytes == curr->align); // TODO: unaligned
       Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
       if (curr->offset) {
         ptr = makeAsmCoercion(ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)), ASM_INT);
@@ -791,8 +819,63 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         flattenAppend(ret, visitAndAssign(&fakeStore, result));
         return ret;
       }
+      if (curr->align != 0 && curr->align < curr->bytes) {
+        // set the pointer to a local
+        ScopedTemp temp(i32, parent);
+        SetLocal set;
+        set.name = temp.getName();
+        set.value = curr->ptr;
+        Ref ptrSet = visit(&set, NO_RESULT);
+        GetLocal get;
+        get.name = temp.getName();
+        // set the value to a local
+        ScopedTemp tempValue(curr->value->type, parent);
+        SetLocal setValue;
+        setValue.name = tempValue.getName();
+        setValue.value = curr->value;
+        Ref valueSet = visit(&setValue, NO_RESULT);
+        GetLocal getValue;
+        getValue.name = tempValue.getName();
+        // fake stores
+        Store store = *curr;
+        store.ptr = &get;
+        store.bytes = 1; // do the worst
+        Ref rest;
+        switch (curr->type) {
+          case i32: {
+            Const _255;
+            _255.value = Literal(int32_t(255));
+            _255.type = i32;
+            for (int i = 0; i < curr->bytes; i++) {
+              Const shift;
+              shift.value = Literal(int32_t(8*i));
+              shift.type = i32;
+              Binary shifted;
+              shifted.op = ShrU;
+              shifted.left = &getValue;
+              shifted.right = &shift;
+              shifted.type = i32;
+              Binary anded;
+              anded.op = And;
+              anded.left = i > 0 ? static_cast<Expression*>(&shifted) : static_cast<Expression*>(&getValue);
+              anded.right = &_255;
+              anded.type = i32;
+              store.value = &anded;
+              Ref part = visit(&store, NO_RESULT);
+              if (i == 0) {
+                rest = part;
+              } else {
+                rest = ValueBuilder::makeSeq(rest, part);
+              }
+              store.offset += 1;
+            }
+            break;
+          }
+          default: abort();
+        }
+        return ValueBuilder::makeSeq(ValueBuilder::makeSeq(ptrSet, valueSet), rest);
+      }
       // normal store
-      assert(curr->bytes == curr->align); // TODO: unaligned
       Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
       if (curr->offset) {
         ptr = makeAsmCoercion(ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)), ASM_INT);
