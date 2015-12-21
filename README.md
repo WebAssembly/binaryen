@@ -162,10 +162,6 @@ The `check.py` script supports some options:
  * Some tests require `emcc` or `nodejs` in the path. They will not run if the tool cannot be found, and you'll see a warning.
  * We have tests from upstream in `tests/spec` and `tests/experimental`, in git submodules. Running `./build.sh` should update those.
 
-## License & Contributing
-
-Same as Emscripten: MIT license.
-
 (`src/emscripten-optimizer` is synced with `tools/optimizer/` in the main emscripten repo, for convenience)
 
 ## Design Principles
