@@ -109,41 +109,6 @@ for asm in tests:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
 
-print '\n[ checking wasm2asm testcases... ]\n'
-
-for wasm in ['min.wast', 'hello_world.wast', 'unit.wast', 'emcc_O2_hello_world.wast', 'emcc_hello_world.wast']:
-  if wasm.endswith('.wast'):
-    print '..', wasm
-    asm = wasm.replace('.wast', '.2asm.js')
-    actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    assert err == '', 'bad err:' + err
-
-    # verify output
-    expected_file = os.path.join('test', asm)
-    if not os.path.exists(expected_file):
-      print actual
-      raise Exception('output ' + expected_file + ' does not exist')
-    expected = open(expected_file).read()
-    if actual != expected:
-      fail(actual, expected)
-
-    open('a.2asm.js', 'w').write(actual)
-
-    if has_node:
-      # verify asm.js is valid js
-      proc = subprocess.Popen(['nodejs', 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      out, err = proc.communicate()
-      assert proc.returncode == 0
-      assert not out and not err, [out, err]
-
-    if has_mozjs:
-      # verify asm.js validates
-      open('a.2asm.js', 'w').write(actual)
-      proc = subprocess.Popen(['mozjs', '-w', 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      out, err = proc.communicate()
-      assert proc.returncode == 0
-      fail_if_not_contained(err, 'Successfully compiled asm.js code')
-
 print '\n[ checking binaryen-shell... ]\n'
 
 actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), '--help'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
@@ -231,6 +196,41 @@ for t in experimental_tests:
     proc = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), wast], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     actual, err = proc.communicate()
     assert proc.returncode == 0, err
+
+print '\n[ checking wasm2asm testcases... ]\n'
+
+for wasm in tests:
+  if wasm.endswith('.wast'):
+    print '..', wasm
+    asm = wasm.replace('.wast', '.2asm.js')
+    actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    assert err == '', 'bad err:' + err
+
+    # verify output
+    expected_file = os.path.join('test', asm)
+    if not os.path.exists(expected_file):
+      print actual
+      raise Exception('output ' + expected_file + ' does not exist')
+    expected = open(expected_file).read()
+    if actual != expected:
+      fail(actual, expected)
+
+    open('a.2asm.js', 'w').write(actual)
+
+    if has_node:
+      # verify asm.js is valid js
+      proc = subprocess.Popen(['nodejs', 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      out, err = proc.communicate()
+      assert proc.returncode == 0
+      assert not out and not err, [out, err]
+
+    if has_mozjs:
+      # verify asm.js validates
+      open('a.2asm.js', 'w').write(actual)
+      proc = subprocess.Popen(['mozjs', '-w', 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      out, err = proc.communicate()
+      assert proc.returncode == 0
+      fail_if_not_contained(err, 'Successfully compiled asm.js code')
 
 print '\n[ checking .s testcases... ]\n'
 
