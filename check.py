@@ -215,7 +215,12 @@ for t in spec_tests:
 print '\n[ checking binaryen-shell experimental testcases... ]\n'
 
 if len(requested) == 0:
-  BLACKLIST = ['call.wast', 'cfg-stackify.wast', 'inline-asm.wast', 'permute.wast', 'switch.wast', 'vtable.wast']
+  BLACKLIST = ['call.wast', # bad indirect_call
+               'cfg-stackify.wast', # bad and on import with no return value
+               'inline-asm.wast',
+               'permute.wast',
+               'switch.wast',
+               'vtable.wast']
   experimental_tests = [os.path.join('experimental', 'prototype-wasmate', 'test', 'expected-output', t) for t in sorted(os.listdir(os.path.join('test', 'experimental', 'prototype-wasmate', 'test', 'expected-output'))) if t not in BLACKLIST]
 else:
   experimental_tests = requested[:]
