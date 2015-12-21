@@ -11,3 +11,6 @@ CMakeFiles/
 CMakeCache.txt
 Makefile
 cmake_install.cmake
+*.ninja
+.ninja_deps
+.ninja_log
