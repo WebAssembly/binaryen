@@ -18,6 +18,9 @@
 // .s to WebAssembly translator.
 //
 
+#ifndef wasm_s2wasm_h
+#define wasm_s2wasm_h
+
 #include "wasm.h"
 #include "parsing.h"
 #include "asm_v_wasm.h"
@@ -1048,3 +1051,5 @@ public:
 };
 
 } // namespace wasm
+
+#endif // wasm_s2wasm_h

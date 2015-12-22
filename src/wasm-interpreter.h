@@ -20,6 +20,9 @@
 // people to read this code and understand WebAssembly semantics.
 //
 
+#ifndef wasm_wasm_interpreter_h
+#define wasm_wasm_interpreter_h
+
 #include <limits.h>
 
 #include "wasm.h"
@@ -782,3 +785,5 @@ private:
 };
 
 } // namespace wasm
+
+#endif // wasm_wasm_interpreter_h

@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef wasm_pass_h
+#define wasm_pass_h
+
 #include <functional>
 
 #include "wasm.h"
@@ -124,3 +127,5 @@ private:
 };
 
 } // namespace wasm
+
+#endif // wasm_pass_h

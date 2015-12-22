@@ -18,6 +18,9 @@
 // Simple WebAssembly module validator.
 //
 
+#ifndef wasm_wasm_validator_h
+#define wasm_wasm_validator_h
+
 #include "wasm.h"
 
 namespace wasm {
@@ -130,3 +133,5 @@ private:
 };
 
 } // namespace wasm
+
+#endif // wasm_wasm_validator_h

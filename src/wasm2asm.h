@@ -19,6 +19,9 @@
 // infrastructure.
 //
 
+#ifndef wasm_wasm2asm_h
+#define wasm_wasm2asm_h
+
 #include "wasm.h"
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
@@ -1094,3 +1097,5 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
 }
 
 } // namespace wasm
+
+#endif // wasm_wasm2asm_h

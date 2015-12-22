@@ -18,8 +18,8 @@
 // Pretty printing helpers
 //
 
-#ifndef _pretty_printing_h
-#define _pretty_printing_h
+#ifndef wasm_pretty_printing_h
+#define wasm_pretty_printing_h
 
 #include <ostream>
 
@@ -90,4 +90,4 @@ inline std::ostream& printMinorOpening(std::ostream &o, const char *str) {
   return o;
 }
 
-#endif //  _pretty_printing_h
+#endif //  wasm_pretty_printing_h

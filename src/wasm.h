@@ -41,8 +41,8 @@
 //    a branch).
 //
 
-#ifndef __wasm_h__
-#define __wasm_h__
+#ifndef wasm_wasm_h
+#define wasm_wasm_h
 
 #include <cassert>
 #include <cstddef>
@@ -54,6 +54,7 @@
 
 #include "compiler-support.h"
 #include "emscripten-optimizer/simple_ast.h"
+#include "mixed_arena.h"
 #include "pretty_printing.h"
 
 namespace wasm {
@@ -1102,6 +1103,11 @@ private:
   size_t functionTypeIndex, importIndex, exportIndex, functionIndex;
 };
 
+class AllocatingModule : public Module {
+ public:
+  MixedArena allocator;
+};
+
 //
 // Simple WebAssembly AST visiting. Useful for anything that wants to do
 // something different for each AST node type, like printing, interpreting,
@@ -1378,4 +1384,4 @@ struct WasmWalker : public WasmVisitor<void> {
 
 } // namespace wasm
 
-#endif // __wasm_h__
+#endif // wasm_wasm_h

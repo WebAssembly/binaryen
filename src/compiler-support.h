@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef __compiler_support_h__
-#define __compiler_support_h__
+#ifndef wasm_compiler_support_h
+#define wasm_compiler_support_h
 
 #ifndef __has_feature
 # define __has_feature(x) 0
@@ -35,4 +35,4 @@
 # define WASM_UNREACHABLE() abort()
 #endif
 
-#endif // __compiler_support_h__
+#endif // wasm_compiler_support_h

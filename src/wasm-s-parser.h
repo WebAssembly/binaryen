@@ -19,6 +19,9 @@
 // such as are in the spec test suite.
 //
 
+#ifndef wasm_wasm_s_parser_h
+#define wasm_wasm_s_parser_h
+
 #include <cmath>
 
 #include "wasm.h"
@@ -1036,3 +1039,5 @@ private:
 };
 
 } // namespace wasm
+
+#endif // wasm_wasm_s_parser_h
