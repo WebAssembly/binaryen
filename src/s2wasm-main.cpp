@@ -24,40 +24,99 @@ using namespace cashew;
 using namespace wasm;
 
 namespace wasm {
-int debug = 0;
+struct Options {
+  bool debug;
+  std::string infile;
+  std::string outfile;
+  Options() : debug(false) {}
+};
+
+bool optionIs(const char *arg, const char *LongOpt, const char *ShortOpt) {
+  return strcmp(arg, LongOpt) == 0 || strcmp(arg, ShortOpt) == 0;
 }
 
-int main(int argc, char **argv) {
-  debug = getenv("S2WASM_DEBUG") ? getenv("S2WASM_DEBUG")[0] - '0' : 0;
+void processCommandLine(int argc, const char *argv[], Options *options) {
+  for (size_t i = 1; i != argc; ++i) {
+    if (optionIs(argv[i], "--help", "-h")) {
+      std::cerr << "s2wasm INFILE\n\n"
+                   "Link .s file into .wast\n\n"
+                   "Optional arguments:\n"
+                   "  -n, --help    Show this help message and exit\n"
+                   "  -d, --debug   Print debug information to stderr\n"
+                   "  -o, --output  Output file (stdout if not specified)\n"
+                << std::endl;
+      exit(EXIT_SUCCESS);
+    } else if (optionIs(argv[i], "--debug", "-d")) {
+      options->debug = true;
+    } else if (optionIs(argv[i], "--output", "-o")) {
+      if (i + 1 == argc) {
+        std::cerr << "No output file" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      if (options->outfile.size()) {
+        std::cerr << "Expected only one output file, got '" << options->outfile
+                  << "' and '" << argv[i] << "'" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      options->outfile = argv[++i];
+    } else {
+      if (options->infile.size()) {
+        std::cerr << "Expected only one input file, got '" << options->infile
+                  << "' and '" << argv[i] << "'" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      options->infile = argv[i];
+    }
+  }
+}
 
-  char *infile = argv[1];
+}  // namespace wasm
 
-  if (debug) std::cerr << "loading '" << infile << "'...\n";
-  FILE *f = fopen(argv[1], "r");
-  assert(f);
-  fseek(f, 0, SEEK_END);
-  int size = ftell(f);
-  char *input = new char[size+1];
-  rewind(f);
-  int num = fread(input, 1, size, f);
-  // On Windows, ftell() gives the byte position (\r\n counts as two bytes), but when
-  // reading, fread() returns the number of characters read (\r\n is read as one char \n, and counted as one),
-  // so return value of fread can be less than size reported by ftell, and that is normal.
-  assert((num > 0 || size == 0) && num <= size);
-  fclose(f);
-  input[num] = 0;
+int main(int argc, const char *argv[]) {
+  Options options;
+  processCommandLine(argc, argv, &options);
 
-  if (debug) std::cerr << "parsing and wasming...\n";
+  std::string input;
+  {
+    if (options.debug)
+      std::cerr << "Loading '" << options.infile << "'..." << std::endl;
+    std::ifstream infile(options.infile);
+    if (!infile.is_open()) {
+      std::cerr << "Failed opening '" << options.infile << "'" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    infile.seekg(0, std::ios::end);
+    size_t insize = infile.tellg();
+    input.resize(insize + 1);
+    infile.seekg(0);
+    infile.read(&input[0], insize);
+  }
+
+  std::streambuf *buffer;
+  std::ofstream outfile;
+  if (options.outfile.size()) {
+    if (options.debug) std::cerr << "Opening '" << options.outfile << std::endl;
+    outfile.open(options.outfile, std::ofstream::out | std::ofstream::trunc);
+    if (!outfile.is_open()) {
+      std::cerr << "Failed opening '" << options.outfile << "'" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    buffer = outfile.rdbuf();
+  } else {
+    buffer = std::cout.rdbuf();
+  }
+  std::ostream out(buffer);
+
+  if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
   AllocatingModule wasm;
-  S2WasmBuilder s2wasm(wasm, input);
+  S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug);
 
-  if (debug) std::cerr << "emscripten gluing...\n";
+  if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
   std::stringstream meta;
   s2wasm.emscriptenGlue(meta);
 
-  if (debug) std::cerr << "printing...\n";
-  std::cout << wasm;
-  std::cout << meta.str();
+  if (options.debug) std::cerr << "Printing..." << std::endl;
+  out << wasm << meta.str() << std::endl;
 
-  if (debug) std::cerr << "done.\n";
+  if (options.debug) std::cerr << "Done." << std::endl;
 }

@@ -47,6 +47,8 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <fstream>
 #include <map>
 #include <vector>
 

@@ -24,8 +24,6 @@
 
 namespace wasm {
 
-extern int debug; // wasm::debug is set in main(), typically from an env var
-
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 
 //
@@ -35,15 +33,17 @@ cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 class S2WasmBuilder {
   AllocatingModule& wasm;
   MixedArena& allocator;
-  char *s;
+  const char *s;
+  bool debug;
 
 public:
-  S2WasmBuilder(AllocatingModule& wasm, char *input) : wasm(wasm), allocator(wasm.allocator) {
-    s = input;
-    scan();
-    s = input;
-    process();
-    fix();
+ S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug)
+     : wasm(wasm), allocator(wasm.allocator), debug(debug) {
+   s = input;
+   scan();
+   s = input;
+   process();
+   fix();
   }
 
 private:
@@ -217,7 +217,7 @@ private:
     skipWhitespace();
     if (*s != '$') return Name();
     std::string str;
-    char *before = s;
+    const char *before = s;
     while (*s && *s != '=' && *s != '\n' && *s != ',') {
       str += *s;
       s++;
@@ -393,7 +393,7 @@ private:
     };
     auto getNumInputs = [&]() {
       int ret = 1;
-      char *t = s;
+      const char *t = s;
       while (*t != '\n') {
         if (*t == ',') ret++;
         t++;
