@@ -27,6 +27,7 @@
 #include <ostream>
 #include <iostream>
 #include <iomanip>
+#include <limits>
 #include <functional>
 #include <algorithm>
 #include <set>
@@ -837,7 +838,8 @@ struct JSPrinter {
     #define BUFFERSIZE 1000
     static char full_storage_f[BUFFERSIZE], full_storage_e[BUFFERSIZE]; // f is normal, e is scientific for float, x for integer
     static char *storage_f = full_storage_f + 1, *storage_e = full_storage_e + 1; // full has one more char, for a possible '-'
-    double err_f, err_e;
+    auto err_f = std::numeric_limits<double>::quiet_NaN();
+    auto err_e = std::numeric_limits<double>::quiet_NaN();
     for (int e = 0; e <= 1; e++) {
       char *buffer = e ? storage_e : storage_f;
       double temp;
