@@ -333,7 +333,7 @@ private:
   }
 
   void parseGlobl() {
-    // Name name = getStr();
+    (void)getStr();
     skipWhitespace();
   }
 
