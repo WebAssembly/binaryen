@@ -358,7 +358,7 @@ private:
     abort(); // avoid warning
   }
 
-  int64_t bytesToShift(unsigned bytes) {
+  int32_t bytesToShift(unsigned bytes) {
     switch (bytes) {
       case 1: return 0;
       case 2: return 1;
