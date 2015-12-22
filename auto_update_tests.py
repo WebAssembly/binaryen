@@ -53,7 +53,9 @@ for wasm in ['address.wast']:#os.listdir(os.path.join('test', 'spec')):
   if wasm.endswith('.wast'):
     print '..', wasm
     asm = wasm.replace('.wast', '.2asm.js')
-    actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', 'spec', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    proc = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', 'spec', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    actual, err = proc.communicate()
+    assert proc.returncode == 0, err
     assert err == '', 'bad err:' + err
     expected_file = os.path.join('test', asm)
     open(expected_file, 'w').write(actual)
