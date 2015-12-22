@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef __optimizer_h__
-#define __optimizer_h__
+#ifndef wasm_optimizer_h
+#define wasm_optimizer_h
 
 #include "simple_ast.h"
 
@@ -157,4 +157,4 @@ cashew::Ref makeAsmCoercion(cashew::Ref node, AsmType type);
 
 cashew::Ref makeSigning(cashew::Ref node, AsmSign sign);
 
-#endif // __optimizer_h__
+#endif // wasm_optimizer_h

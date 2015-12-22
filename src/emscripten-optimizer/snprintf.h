@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef wasm_snprintf_h
+#define wasm_snprintf_h
+
 #include <stdarg.h>
 
 // Visual Studio does not support C99, so emulate snprintf support for it manually.
@@ -46,3 +49,5 @@ inline int c99_snprintf(char* str, size_t size, const char* format, ...)
 	return count;
 }
 #endif
+
+#endif // wasm_snprintf_h

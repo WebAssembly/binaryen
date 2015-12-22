@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef wasm_color_h
+#define wasm_color_h
+
 #include <unistd.h>
 #include <cstdlib>
 #include <ostream>
@@ -73,3 +76,5 @@ namespace Colors {
 #endif
   }
 };
+
+#endif // wasm_color_h

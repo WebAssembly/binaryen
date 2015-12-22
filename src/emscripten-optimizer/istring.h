@@ -16,8 +16,8 @@
 
 // Interned String type, 100% interned on creation. Comparisons are always just a pointer comparison
 
-#ifndef __istring_h__
-#define __istring_h__
+#ifndef wasm_istring_h
+#define wasm_istring_h
 
 #include <unordered_set>
 #include <unordered_map>
@@ -173,4 +173,4 @@ public:
 
 } // namespace cashew
 
-#endif // __istring_h__
+#endif // wasm_istring_h

@@ -19,8 +19,8 @@
 // XXX All parsing methods assume they take ownership of the input string. This lets them reuse
 //     parts of it. You will segfault if the input string cannot be reused and written to.
 
-#ifndef __parser_h__
-#define __parser_h__
+#ifndef wasm_parser_h
+#define wasm_parser_h
 
 #include <vector>
 #include <iostream>
@@ -927,4 +927,4 @@ public:
 
 } // namespace cashew
 
-#endif // __parser_h__
+#endif // wasm_parser_h

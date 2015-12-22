@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _asm_v_wasm_h_
-#define _asm_v_wasm_h_
+#ifndef wasm_asm_v_wasm_h
+#define wasm_asm_v_wasm_h
 
 #include "emscripten-optimizer/optimizer.h"
 
@@ -82,4 +82,4 @@ std::string getSig(CallBase *call) {
 
 } // namespace wasm
 
-#endif // _asm_v_wasm_h_
+#endif // wasm_asm_v_wasm_h

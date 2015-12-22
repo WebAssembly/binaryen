@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _shared_constants_h_
-#define _shared_constants_h_
+#ifndef wasm_shared_constants_h
+#define wasm_shared_constants_h
 
 #include "emscripten-optimizer/optimizer.h"
 
@@ -87,4 +87,4 @@ cashew::IString GLOBAL("global"),
 
 }
 
-#endif // _shared_constants_h_
+#endif // wasm_shared_constants_h

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef __simple_ast_h__
-#define __simple_ast_h__
+#ifndef wasm_simple_ast_h
+#define wasm_simple_ast_h
 
 #include <assert.h>
 #include <stdlib.h>
@@ -1678,4 +1678,4 @@ public:
 
 } // namespace cashew
 
-#endif // __simple_ast_h__
+#endif // wasm_simple_ast_h

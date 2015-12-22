@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef mixed_arena_h
-#define mixed_arena_h
+#ifndef wasm_mixed_arena_h
+#define wasm_mixed_arena_h
 
 #include <vector>
 
@@ -56,15 +56,4 @@ struct MixedArena {
 
 extern MixedArena globalAllocator;
 
-#ifdef __wasm_h__
-namespace wasm {
-
-class AllocatingModule : public Module {
-public:
-  MixedArena allocator;
-};
-
-}
-#endif
-
-#endif // mixed_arena_h
+#endif // wasm_mixed_arena_h

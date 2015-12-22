@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef wasm_parsing_h
+#define wasm_parsing_h
+
 #include <sstream>
 
 #include "wasm.h"
@@ -165,3 +168,5 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
 
 
 } // namespace wasm
+
+#endif // wasm_parsing_h
