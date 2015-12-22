@@ -1107,6 +1107,7 @@ private:
 
 template<class ReturnType>
 struct WasmVisitor {
+  virtual ~WasmVisitor() {}
   // should be pure virtual, but https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51048
   // Expression visitors
   virtual ReturnType visitBlock(Block *curr) { abort(); }
