@@ -85,11 +85,12 @@ struct PassRunner {
 //
 // Core pass class
 //
-struct Pass : public WasmWalker {
+class Pass : public WasmWalker {
+ public:
   // Override this to perform preparation work before the pass runs
-  virtual void prepare(PassRunner* runner, Module *module) {}
+  virtual void prepare(PassRunner* runner, Module* module) {}
 
-  void run(PassRunner* runner, Module *module) {
+  void run(PassRunner* runner, Module* module) {
     prepare(runner, module);
     startWalk(module);
   }
@@ -100,7 +101,8 @@ struct Pass : public WasmWalker {
 // e.g. through PassRunner::getLast
 
 // Handles names in a module, in particular adding names without duplicates
-struct NameManager : public Pass {
+class NameManager : public Pass {
+ public:
   Name getUnique(std::string prefix);
   // TODO: getUniqueInFunction
 
