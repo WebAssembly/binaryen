@@ -119,8 +119,8 @@ struct LowerInt64 : public Pass {
   }
 
   // sets an expression to a local, and returns a block
-  Block* setToLocalForBlock(Expression *value, Name& local) {
-    auto ret = allocator->alloc<Block>();
+  Block* setToLocalForBlock(Expression *value, Name& local, Block *ret = nullptr) {
+    if (!ret) ret = allocator->alloc<Block>();
     if (value->is<GetLocal>()) {
       local = value->name;
     } else if (value->is<SetLocal>()) {
@@ -153,13 +153,30 @@ struct LowerInt64 : public Pass {
       *high = *curr;
       high->ptr = getLocal(local);
       high->offset += 4;
-      ret->list.push_back(high);
       ret->list.push_back(curr);
       fixes[ret] = high;
       replaceCurrent(ret);
     }
   }
   void visitStore(Store *curr) override {
+    if (curr->type == i64) {
+      Name localPtr, localValue;
+      auto ret = setToLocalForBlock(curr->ptr, localPtr);
+      setToLocalForBlock(curr->value, localValue);
+      curr->ptr = getLocal(localPtr);
+      curr->value = getLocal(localValue);
+      curr->type = i32;
+      curr->bytes = 4;
+      auto high = allocator->alloc<Load>();
+      *high = *curr;
+      high->ptr = getLocal(localPtr);
+      high->value = getLocal(localValue);
+      high->offset += 4;
+      ret->list.push_back(high);
+      ret->list.push_back(curr);
+      fixes[ret] = high;
+      replaceCurrent(ret);
+    }
   }
   void visitConst(Const *curr) override {
   }
