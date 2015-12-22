@@ -358,7 +358,7 @@ private:
     abort(); // avoid warning
   }
 
-  unsigned bytesToShift(unsigned bytes) {
+  int64_t bytesToShift(unsigned bytes) {
     switch (bytes) {
       case 1: return 0;
       case 2: return 1;
@@ -1402,11 +1402,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           assert(index >= min);
           index -= min;
           assert(index >= 0);
+          size_t index_s = index;
           case_.name = getNextId("switch-case");
-          if (ret->targets.size() <= index) {
-            ret->targets.resize(index+1);
+          if (ret->targets.size() <= index_s) {
+            ret->targets.resize(index_s+1);
           }
-          ret->targets[index] = case_.name;
+          ret->targets[index_s] = case_.name;
         }
         ret->cases.push_back(case_);
       }
@@ -1431,7 +1432,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   // given HEAP32[addr >> 2], we need an absolute address, and would like to remove that shift.
   // if there is a shift, we can just look through it, etc.
   processUnshifted = [&](Ref ptr, unsigned bytes) {
-    unsigned shifts = bytesToShift(bytes);
+    auto shifts = bytesToShift(bytes);
     if (ptr[0] == BINARY && ptr[1] == RSHIFT && ptr[3][0] == NUM && ptr[3][1]->getInteger() == shifts) {
       return process(ptr[2]); // look through it
     } else if (ptr[0] == NUM) {

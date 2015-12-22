@@ -170,7 +170,7 @@ struct Value {
     *arr = a;
     return *this;
   }
-  Value& setArray(int size_hint=0) {
+  Value& setArray(size_t size_hint=0) {
     free();
     type = Array;
     arr = arena.allocArray();
@@ -395,7 +395,7 @@ struct Value {
           os << std::endl;
           indent++;
         }
-        for (unsigned i = 0; i < arr->size(); i++) {
+        for (size_t i = 0; i < arr->size(); i++) {
           if (i > 0) {
             if (pretty) os << "," << std::endl;
             else os << ", ";
@@ -450,17 +450,17 @@ struct Value {
 
   // Array operations
 
-  unsigned size() {
+  size_t size() {
     assert(isArray());
     return arr->size();
   }
 
-  void setSize(unsigned size) {
+  void setSize(size_t size) {
     assert(isArray());
-    unsigned old = arr->size();
+    auto old = arr->size();
     if (old != size) arr->resize(size);
     if (old < size) {
-      for (unsigned i = old; i < size; i++) {
+      for (auto i = old; i < size; i++) {
         (*arr)[i] = arena.alloc();
       }
     }
@@ -503,7 +503,7 @@ struct Value {
 
   int indexOf(Ref other) {
     assert(isArray());
-    for (unsigned i = 0; i < arr->size(); i++) {
+    for (size_t i = 0; i < arr->size(); i++) {
       if (other == (*arr)[i]) return i;
     }
     return -1;
@@ -513,7 +513,7 @@ struct Value {
     assert(isArray());
     Ref ret = arena.alloc();
     ret->setArray();
-    for (unsigned i = 0; i < arr->size(); i++) {
+    for (size_t i = 0; i < arr->size(); i++) {
       ret->push_back(func((*arr)[i]));
     }
     return ret;
@@ -523,7 +523,7 @@ struct Value {
     assert(isArray());
     Ref ret = arena.alloc();
     ret->setArray();
-    for (unsigned i = 0; i < arr->size(); i++) {
+    for (size_t i = 0; i < arr->size(); i++) {
       Ref curr = (*arr)[i];
       if (func(curr)) ret->push_back(curr);
     }
@@ -532,7 +532,7 @@ struct Value {
 
   /*
   void forEach(std::function<void (Ref)> func) {
-    for (unsigned i = 0; i < arr->size(); i++) {
+    for (size_t i = 0; i < arr->size(); i++) {
       func((*arr)[i]);
     }
   }
@@ -575,7 +575,7 @@ struct JSPrinter {
   bool pretty, finalize;
 
   char *buffer;
-  int size, used;
+  size_t size, used;
 
   int indent;
   bool possibleSpace; // add a space to separate identifiers
@@ -593,18 +593,18 @@ struct JSPrinter {
 
   void ensure(int safety=100) {
     if (size < used + safety) {
-      size = std::max(1024, size*2) + safety;
+      size = std::max((size_t)1024, size * 2) + safety;
       if (!buffer) {
         buffer = (char*)malloc(size);
         if (!buffer) {
-          printf("Out of memory allocating %d bytes for output buffer!", size);
+          printf("Out of memory allocating %zd bytes for output buffer!", size);
           abort();
         }
       } else {
         char *buf = (char*)realloc(buffer, size);
         if (!buf) {
           free(buffer);
-          printf("Out of memory allocating %d bytes for output buffer!", size);
+          printf("Out of memory allocating %zd bytes for output buffer!", size);
           abort();
         }
         buffer = buf;
@@ -745,7 +745,7 @@ struct JSPrinter {
 
   // print a node, and if nothing is emitted, emit something instead
   void print(Ref node, const char *otherwise) {
-    int last = used;
+    auto last = used;
     print(node);
     if (used == last) emit(otherwise);
   }
@@ -1118,7 +1118,7 @@ struct JSPrinter {
       if (c[1]->size() > 0) {
         indent++;
         newline();
-        int curr = used;
+        auto curr = used;
         printStats(c[1]);
         indent--;
         if (curr != used) newline();

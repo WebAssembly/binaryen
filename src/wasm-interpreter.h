@@ -248,7 +248,7 @@ private:
         NOTE_EVAL1(flow.value);
         int64_t index = flow.value.getInteger();
         Name target = curr->default_;
-        if (index >= 0 && index < curr->targets.size()) {
+        if (index >= 0 && (size_t)index < curr->targets.size()) {
           target = curr->targets[index];
         }
         // This is obviously very inefficient. This should be a cached data structure

@@ -35,7 +35,8 @@ bool optionIs(const char *arg, const char *LongOpt, const char *ShortOpt) {
 
 // TODO(jfb) Make this configurable: callers should pass in option handlers.
 void processCommandLine(int argc, const char *argv[], Options *options) {
-  for (size_t i = 1; i != argc; ++i) {
+  assert(argc > 0 && "expect at least program name as an argument");
+  for (size_t i = 1, e = argc; i != e; ++i) {
     if (optionIs(argv[i], "--help", "-h")) {
       std::cerr << "s2wasm INFILE\n\n"
                    "Link .s file into .wast\n\n"
@@ -48,7 +49,7 @@ void processCommandLine(int argc, const char *argv[], Options *options) {
     } else if (optionIs(argv[i], "--debug", "-d")) {
       options->debug = true;
     } else if (optionIs(argv[i], "--output", "-o")) {
-      if (i + 1 == argc) {
+      if (i + 1 == e) {
         std::cerr << "No output file" << std::endl;
         exit(EXIT_FAILURE);
       }

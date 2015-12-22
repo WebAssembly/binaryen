@@ -181,7 +181,8 @@ int main(int argc, char **argv) {
   bool print_after = false;
   std::vector<std::string> passes;
 
-  for (size_t i = 1; i < argc; i++) {
+  assert(argc > 0 && "expect at least program name as an argument");
+  for (size_t i = 1, e = argc; i != e; i++) {
     char* curr = argv[i];
     if (curr[0] == '-') {
       std::string arg = curr;

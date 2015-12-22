@@ -886,7 +886,9 @@ private:
         zero = false;
       } else if (match(".zero")) {
         int32_t size = getInt();
-        for (size_t i = 0; i < size; i++) {
+        if (size <= 0)
+          abort_on(".zero with zero or negative size");
+        for (size_t i = 0, e = size; i < e; i++) {
           raw->push_back(0);
         }
       } else if (match(".int32")) {
