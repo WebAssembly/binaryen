@@ -33,14 +33,6 @@ extern int debug; // wasm::debug is set in main(), typically from an env var
 
 // Utilities
 
-static void abort_on(std::string why) {
-  std::cerr << why << '\n';
-  abort();
-}
-static void abort_on(std::string why, int x) {
-  std::cerr << why << ' ' << x << '\n';
-  abort();
-}
 static void abort_on(std::string why, Ref element) {
   std::cerr << why << ' ';
   element->stringify(std::cerr);
@@ -665,7 +657,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     } else if (curr[0] == RETURN) {
       // exports
       Ref object = curr[1];
-      Ref contents = curr[1][1];
+      Ref contents = object[1];
       for (unsigned k = 0; k < contents->size(); k++) {
         Ref pair = contents[k];
         IString key = pair[0]->getIString();

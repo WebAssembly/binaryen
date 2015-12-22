@@ -333,7 +333,7 @@ private:
   }
 
   void parseGlobl() {
-    Name name = getStr();
+    // Name name = getStr();
     skipWhitespace();
   }
 
@@ -432,7 +432,7 @@ private:
       if (assign.isNull() || assign.str[1] == 'd') { // discard
         bstack.back()->list.push_back(curr);
       } else if (assign.str[1] == 'p') { // push
-        estack.push_back(curr);
+        push(curr);
       } else { // set to a local
         auto set = allocator.alloc<SetLocal>();
         set->name = assign;

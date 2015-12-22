@@ -111,14 +111,13 @@ public:
 //
 
 class SExpressionParser {
-  char *beginning;
   char* input;
 
   MixedArena allocator;
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionParser(char* input) : beginning(input), input(input) {
+  SExpressionParser(char* input) : input(input) {
     root = nullptr;
     while (!root) { // keep parsing until we pass an initial comment
       root = parseInnerList();
