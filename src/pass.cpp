@@ -86,7 +86,7 @@ P* PassRunner::getLast() {
 
 PassRunner::~PassRunner() {
   for (auto pass : passes) {
-    delete(pass);
+    delete pass;
   }
 }
 
