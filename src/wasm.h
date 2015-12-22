@@ -52,6 +52,7 @@
 #include <map>
 #include <vector>
 
+#include "compiler-support.h"
 #include "emscripten-optimizer/simple_ast.h"
 #include "pretty_printing.h"
 
@@ -95,6 +96,7 @@ inline const char* printWasmType(WasmType type) {
     case WasmType::i64: return "i64";
     case WasmType::f32: return "f32";
     case WasmType::f64: return "f64";
+    default: WASM_UNREACHABLE();
   }
 }
 
@@ -105,6 +107,7 @@ inline unsigned getWasmTypeSize(WasmType type) {
     case WasmType::i64: return 8;
     case WasmType::f32: return 4;
     case WasmType::f64: return 8;
+    default: WASM_UNREACHABLE();
   }
 }
 

@@ -44,7 +44,7 @@ void flattenAppend(Ref ast, Ref extra) {
   else if (ast[0] == DEFUN) index = 3;
   else abort();
   if (extra[0] == BLOCK) {
-    for (int i = 0; i < extra[1]->size(); i++) {
+    for (size_t i = 0; i < extra[1]->size(); i++) {
       ast[index]->push_back(extra[1][i]);
     }
   } else {
@@ -167,7 +167,7 @@ public:
 
 private:
   // How many temp vars we need
-  std::vector<int> temps; // type => num temps
+  std::vector<size_t> temps; // type => num temps
   // Which are currently free to use
   std::vector<std::vector<IString>> frees; // type => list of free names
 
@@ -283,7 +283,7 @@ void Wasm2AsmBuilder::addTables(Ref ast, Module *wasm) {
     if (table.size() == 0) {
       // fill it with the first of its type seen. we have to fill with something; and for asm2wasm output, the first is the null anyhow
       table.resize(tableSize);
-      for (int j = 0; j < tableSize; j++) {
+      for (size_t j = 0; j < tableSize; j++) {
         table[j] = fromName(name);
       }
     } else {
@@ -578,7 +578,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       breakResults[curr->name] = result;
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
-      int noResults = result == NO_RESULT ? size : size-1;
+      auto noResults = result == NO_RESULT ? size : size-1;
       for (size_t i = 0; i < noResults; i++) {
         flattenAppend(ret, ValueBuilder::makeStatement(visit(curr->list[i], NO_RESULT)));
       }
@@ -769,7 +769,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         switch (curr->type) {
           case i32: {
             rest = makeAsmCoercion(visit(&load, EXPRESSION_RESULT), ASM_INT);
-            for (int i = 1; i < curr->bytes; i++) {
+            for (size_t i = 1; i < curr->bytes; i++) {
               load.offset += 1;
               Ref add = makeAsmCoercion(visit(&load, EXPRESSION_RESULT), ASM_INT);
               add = ValueBuilder::makeBinary(add, LSHIFT, ValueBuilder::makeNum(8*i));
@@ -846,7 +846,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
             Const _255;
             _255.value = Literal(int32_t(255));
             _255.type = i32;
-            for (int i = 0; i < curr->bytes; i++) {
+            for (size_t i = 0; i < curr->bytes; i++) {
               Const shift;
               shift.value = Literal(int32_t(8*i));
               shift.type = i32;
