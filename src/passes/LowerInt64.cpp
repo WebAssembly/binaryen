@@ -143,6 +143,12 @@ struct LowerInt64 : public Pass {
   void visitExport(Export *curr) override {
   }
   void visitFunction(Function *curr) override {
+    // TODO: new params
+    for (auto localPair : locals) { // TODO: ignore params
+      curr->locals.emplace_back(localPair.second, i32);
+    }
+    fixes.clear();
+    locals.clear();
   }
   void visitTable(Table *curr) override {
   }
