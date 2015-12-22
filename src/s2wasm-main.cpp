@@ -18,59 +18,11 @@
 // wasm2asm console tool
 //
 
+#include "command-line.h"
 #include "s2wasm.h"
 
 using namespace cashew;
 using namespace wasm;
-
-namespace wasm {
-struct Options {
-  bool debug;
-  std::string infile;
-  std::string outfile;
-  Options() : debug(false) {}
-};
-
-bool optionIs(const char *arg, const char *LongOpt, const char *ShortOpt) {
-  return strcmp(arg, LongOpt) == 0 || strcmp(arg, ShortOpt) == 0;
-}
-
-void processCommandLine(int argc, const char *argv[], Options *options) {
-  for (size_t i = 1; i != argc; ++i) {
-    if (optionIs(argv[i], "--help", "-h")) {
-      std::cerr << "s2wasm INFILE\n\n"
-                   "Link .s file into .wast\n\n"
-                   "Optional arguments:\n"
-                   "  -n, --help    Show this help message and exit\n"
-                   "  -d, --debug   Print debug information to stderr\n"
-                   "  -o, --output  Output file (stdout if not specified)\n"
-                << std::endl;
-      exit(EXIT_SUCCESS);
-    } else if (optionIs(argv[i], "--debug", "-d")) {
-      options->debug = true;
-    } else if (optionIs(argv[i], "--output", "-o")) {
-      if (i + 1 == argc) {
-        std::cerr << "No output file" << std::endl;
-        exit(EXIT_FAILURE);
-      }
-      if (options->outfile.size()) {
-        std::cerr << "Expected only one output file, got '" << options->outfile
-                  << "' and '" << argv[i] << "'" << std::endl;
-        exit(EXIT_FAILURE);
-      }
-      options->outfile = argv[++i];
-    } else {
-      if (options->infile.size()) {
-        std::cerr << "Expected only one input file, got '" << options->infile
-                  << "' and '" << argv[i] << "'" << std::endl;
-        exit(EXIT_FAILURE);
-      }
-      options->infile = argv[i];
-    }
-  }
-}
-
-}  // namespace wasm
 
 int main(int argc, const char *argv[]) {
   Options options;
@@ -78,8 +30,9 @@ int main(int argc, const char *argv[]) {
 
   std::string input;
   {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "Loading '" << options.infile << "'..." << std::endl;
+    }
     std::ifstream infile(options.infile);
     if (!infile.is_open()) {
       std::cerr << "Failed opening '" << options.infile << "'" << std::endl;
