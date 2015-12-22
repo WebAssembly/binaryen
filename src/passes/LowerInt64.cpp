@@ -117,7 +117,47 @@ struct LowerInt64 : public Pass {
       replaceCurrent(ret);
     }
   }
+
+  // sets an expression to a local, and returns a block
+  Block* setToLocalForBlock(Expression *value, Name& local) {
+    auto ret = allocator->alloc<Block>();
+    if (value->is<GetLocal>()) {
+      local = value->name;
+    } else if (value->is<SetLocal>()) {
+      local = value->name;
+    } else {
+      auto set = allocator.alloc<SetLocal>();
+      set->name = local = namer->getUnique("temp");
+      set->value = value;
+      set->type = value->type;
+      ret->list.push_back(set);
+    }
+    return ret;
+  }
+
+  GetLocal* getLocal(Name name) {
+    auto ret = allocator->alloc<GetLocal>();
+    ret->name = name;
+    ret->type = i32;
+    return ret;
+  }
+
   void visitLoad(Load *curr) override {
+    if (curr->type == i64) {
+      Name local;
+      auto ret = setToLocalForBlock(curr->ptr, local);
+      curr->ptr = getLocal(local);
+      curr->type = i32;
+      curr->bytes = 4;
+      auto high = allocator->alloc<Load>();
+      *high = *curr;
+      high->ptr = getLocal(local);
+      high->offset += 4;
+      ret->list.push_back(high);
+      ret->list.push_back(curr);
+      fixes[ret] = high;
+      replaceCurrent(ret);
+    }
   }
   void visitStore(Store *curr) override {
   }
