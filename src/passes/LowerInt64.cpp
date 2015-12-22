@@ -20,6 +20,8 @@
 // This is useful for wasm2asm, as JS has no native 64-bit integer support.
 //
 
+#include <memory>
+
 #include <wasm.h>
 #include <pass.h>
 
@@ -29,12 +31,16 @@ cashew::IString GET_HIGH("getHigh");
 
 struct LowerInt64 : public Pass {
   MixedArena* allocator;
-
-  std::map<Expression*, Expression*> fixes; // fixed nodes, outputs of lowering, mapped to their high bits
+  std::unique_ptr<NameManager> namer;
 
   void prepare(PassRunner* runner, Module *module) override {
     allocator = runner->allocator;
+    namer = std::unique_ptr<NameManager>(new NameManager());
+    namer->run(runner, module);
   }
+
+  std::map<Expression*, Expression*> fixes; // fixed nodes, outputs of lowering, mapped to their high bits
+  std::map<Name, Name> locals; // maps locals which were i64->i32 to their high bits
 
   void makeGetHigh() {
     auto ret = allocator->alloc<CallImport>();
@@ -53,7 +59,7 @@ struct LowerInt64 : public Pass {
     }
     if (curr->type == i64) {
       curr->type = i32;
-      fixes[curr] = makeGetHigh();
+      fixes[curr] = makeGetHigh(); // called function will setHigh
     }
   }
 
@@ -67,8 +73,49 @@ struct LowerInt64 : public Pass {
     fixCall(curr);
   }
   void visitGetLocal(GetLocal *curr) override {
+    if (curr->type == i64) {
+      if (locals.count(curr->name) == 0) {
+        Name highName = namer->getUnique("high");
+        locals[curr->name] = highName;
+      };
+      curr->type = i32;
+      auto high = allocator->alloc<GetLocal>();
+      high->name = locals[curr->name];
+      high->type = i32;
+      fixes[curr] = high;
+    }
   }
   void visitSetLocal(SetLocal *curr) override {
+    if (curr->type == i64) {
+      Name highName;
+      if (locals.count(curr->name) == 0) {
+        highName = namer->getUnique("high");
+        locals[curr->name] = highName;
+      } else {
+        highName = locals[curr->name];
+      }
+      curr->type = i32;
+      auto high = allocator->alloc<GetLocal>();
+      high->name = highName;
+      high->type = i32;
+      fixes[curr] = high;
+      // Set the high bits
+      auto set = allocator.alloc<SetLocal>();
+      set->name = highName;
+      set->value = fixes[curr->value];
+      set->type = i32;
+      assert(set->value);
+      auto low = allocator->alloc<GetLocal>();
+      low->name = curr->name;
+      low->type = i32;
+      auto ret = allocator.alloc<Block>();
+      ret->list.push_back(curr);
+      ret->list.push_back(set);
+      ret->list.push_back(low); // so the block returns the low bits
+      ret->type = i32;
+      fixes[ret] = high;
+      replaceCurrent(ret);
+    }
   }
   void visitLoad(Load *curr) override {
   }
