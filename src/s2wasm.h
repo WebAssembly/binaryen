@@ -40,8 +40,8 @@ class S2WasmBuilder {
   bool debug;
 
 public:
- S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug, size_t nextStatic)
-     : wasm(wasm), allocator(wasm.allocator), debug(debug), nextStatic(nextStatic) {
+ S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug, size_t globalBase)
+     : wasm(wasm), allocator(wasm.allocator), debug(debug), globalBase(globalBase), nextStatic(globalBase) {
    s = input;
    scan();
    s = input;
@@ -52,7 +52,8 @@ public:
 private:
   // state
 
-  size_t nextStatic; // location of next static allocation, i.e., the data segment
+  size_t globalBase, // where globals can start to be statically allocated, i.e., the data segment
+         nextStatic; // location of next static allocation
   std::map<Name, int32_t> staticAddresses; // name => address
 
   struct Addressing {
@@ -1069,6 +1070,8 @@ public:
       o << "]";
     }
     o << "}";
+    o << ",";
+    o << "\"staticBump\": " << (nextStatic - globalBase);
 
     o << " }";
   }
