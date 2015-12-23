@@ -744,7 +744,7 @@ private:
       if (str[0] == 'a') {
         ret->align = atoi(eq);
       } else if (str[0] == 'o') {
-        uint64_t offset = atol(eq);
+        uint64_t offset = atoll(eq);
         if (offset > 0xffffffff) onError();
         ret->offset = offset;
       } else onError();
