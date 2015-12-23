@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295 (segment 16 "hello, world!\n\00"))
+  (memory 0 4294967295 (segment 16 "hello, world!\n\00") (segment 32 "vcq"))
   (import $puts "env" "puts")
   (export "main" $main)
   (func $main (param $$0 i32) (param $$1 i32) (result i32)
@@ -92,4 +92,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 30 }
+;; METADATA: { "asmConsts": {},"staticBump": 34 }

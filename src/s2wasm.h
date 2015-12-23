@@ -889,12 +889,17 @@ private:
     bool zero = true;
     while (1) {
       skipWhitespace();
-      if (match(".asciz")) {
-        *raw = getQuoted();
-        raw->push_back(0);
-        zero = false;
-      } else if (match(".ascii")) {
-        *raw = getQuoted();
+      if (match(".asci")) {
+        bool z;
+        if (match("i")) {
+          z = false;
+        } else {
+          mustMatch("z");
+          z = true;
+        }
+        auto quoted = getQuoted();
+        raw->insert(raw->end(), quoted.begin(), quoted.end());
+        if (z) raw->push_back(0);
         zero = false;
       } else if (match(".zero")) {
         int32_t size = getInt();
@@ -934,7 +939,11 @@ private:
       mustMatch(name.str);
       mustMatch(",");
       size_t seenSize = atoi(getStr().str); // TODO: optimize
-      assert(seenSize == size);
+      assert(seenSize >= size);
+      while (raw->size() < seenSize) {
+        raw->push_back(0);
+      }
+      size = seenSize;
     }
     while (nextStatic % align) nextStatic++;
     // assign the address, add to memory

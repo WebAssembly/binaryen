@@ -58,4 +58,10 @@ func_end0:
 	.asciz	"hello, world!\n"
 	.size	.str, 15
 
+	.type	a2,@object              # @a2
+	.globl	a2
+a2:
+	.int8	118                     # 0x76
+	.ascii	"cq"
+	.size	a2, 3 # surprisingly large size
 
