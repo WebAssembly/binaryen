@@ -25,6 +25,7 @@
 
 #include <limits.h>
 
+#include "bits.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -34,39 +35,6 @@ using namespace cashew;
 // Utilities
 
 IString WASM("wasm");
-
-
-#ifdef WIN32
-#include <intrin.h>
-
-int32_t safe_clz(int32_t v) {
-  unsigned long result;
-  return _BitScanReverse(&result,v) ? result : 32;
-}
-
-int32_t safe_ctz(int32_t v) {
-  unsigned long result;
-  return _BitScanForward(&result,v) ? result : 32;
-}
-
-int32_t platform_popcount(int32_t v) {
-  return __popcnt(v);
-}
-#else
-int32_t safe_clz(int32_t v) {
-  if (v == 0) return 32;
-  return __builtin_clz(v);
-}
-
-int32_t safe_ctz(int32_t v) {
-  if (v == 0) return 32;
-  return __builtin_ctz(v);
-}
-
-int32_t platform_popcount(int32_t v) {
-  return __builtin_popcount(v);
-}
-#endif
 
 enum {
   pageSize = 64*1024,
@@ -392,12 +360,12 @@ private:
         if (value.type == i32) {
           int32_t v = value.geti32();
           switch (curr->op) {
-            case Clz: return Literal(safe_clz(v));
+            case Clz: return Literal(CountLeadingZeroes((uint32_t)v));
             case Ctz: {
               if (v == 0) return Literal(32);
-              return Literal((int32_t)safe_ctz(v));
+              return Literal(CountTrailingZeroes((uint32_t)v));
             }
-            case Popcnt: return Literal((int32_t)platform_popcount(v));
+            case Popcnt: return Literal(PopCount((uint32_t)v));
             case ReinterpretInt: {
               float v = value.reinterpretf32();
               if (isnan(v)) {
@@ -418,15 +386,15 @@ private:
           switch (curr->op) {
             case Clz: {
               if (v == 0) return Literal((int64_t)64);
-              if (high == 0) return Literal(32+(int64_t)safe_clz(low));
-              return Literal((int64_t)safe_clz(high));
+              if (high == 0) return Literal(32+(int64_t)CountLeadingZeroes((uint32_t)low));
+              return Literal((int64_t)CountLeadingZeroes((uint32_t)high));
             }
             case Ctz: {
               if (v == 0) return Literal((int64_t)64);
-              if (low == 0) return Literal(32+(int64_t)safe_ctz(high));
-              return Literal((int64_t)safe_ctz(low));
+              if (low == 0) return Literal(32+(int64_t)CountTrailingZeroes((uint32_t)high));
+              return Literal((int64_t)CountTrailingZeroes((uint32_t)low));
             }
-            case Popcnt: return Literal(int64_t(platform_popcount(low) + platform_popcount(high)));
+            case Popcnt: return Literal(PopCount((uint64_t)v));
             case WrapInt64: return Literal(int32_t(value.geti64()));
             case ReinterpretInt: {
               return Literal(value.reinterpretf64());
