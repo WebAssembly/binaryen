@@ -39,7 +39,7 @@ public:
 
   void visitLoop(Loop *curr) override {
     if (curr->in.is()) {
-      ChildChecker childChecker(curr->in);
+      LoopChildChecker childChecker(curr->in);
       childChecker.walk(curr->body);
       shouldBeTrue(childChecker.valid);
     }
@@ -98,11 +98,11 @@ public:
 private:
 
   // the "in" label has a none type, since no one can receive its value. make sure no one breaks to it with a value.
-  struct ChildChecker : public WasmWalker {
+  struct LoopChildChecker : public WasmWalker {
     Name in;
     bool valid = true;
 
-    ChildChecker(Name in) : in(in) {}
+    LoopChildChecker(Name in) : in(in) {}
 
     void visitBreak(Break *curr) override {
       if (curr->name == in && curr->value) {

@@ -49,8 +49,7 @@ int32_t safe_ctz(int32_t v) {
   return _BitScanForward(&result,v) ? result : 32;
 }
 
-int32_t platform_popcount(int32_t v)
-{
+int32_t platform_popcount(int32_t v) {
   return __popcnt(v);
 }
 #else
@@ -64,8 +63,7 @@ int32_t safe_ctz(int32_t v) {
   return __builtin_ctz(v);
 }
 
-int32_t platform_popcount(int32_t v)
-{
+int32_t platform_popcount(int32_t v) {
   return __buildin_popcount(v);
 }
 #endif
