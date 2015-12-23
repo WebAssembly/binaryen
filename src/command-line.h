@@ -26,9 +26,12 @@
 namespace wasm {
 
 struct Options {
+  // standard options
   bool debug;
   std::string infile;
   std::string outfile;
+  // extra options
+  std::map<std::string, const char*> extra;
   Options() : debug(false) {}
 };
 
@@ -37,17 +40,11 @@ bool optionIs(const char *arg, const char *LongOpt, const char *ShortOpt) {
 }
 
 // TODO(jfb) Make this configurable: callers should pass in option handlers.
-void processCommandLine(int argc, const char *argv[], Options *options) {
+void processCommandLine(int argc, const char *argv[], Options *options, const char *help) {
   assert(argc > 0 && "expect at least program name as an argument");
   for (size_t i = 1, e = argc; i != e; ++i) {
     if (optionIs(argv[i], "--help", "-h")) {
-      std::cerr << "s2wasm INFILE\n\n"
-                   "Link .s file into .wast\n\n"
-                   "Optional arguments:\n"
-                   "  -n, --help    Show this help message and exit\n"
-                   "  -d, --debug   Print debug information to stderr\n"
-                   "  -o, --output  Output file (stdout if not specified)\n"
-                << std::endl;
+      std::cerr << help;
       exit(EXIT_SUCCESS);
     } else if (optionIs(argv[i], "--debug", "-d")) {
       options->debug = true;
@@ -62,6 +59,14 @@ void processCommandLine(int argc, const char *argv[], Options *options) {
         exit(EXIT_FAILURE);
       }
       options->outfile = argv[++i];
+    } else if (argv[i][0] == '-' && argv[i][1] == '-') {
+      size_t j = 2;
+      std::string name;
+      while (argv[i][j] && argv[i][j] != '=') {
+        name += argv[i][j];
+        j++;
+      }
+      options->extra[name] = argv[i][j] == '=' ? &argv[i][j+1] : "(no value)";
     } else {
       if (options->infile.size()) {
         std::cerr << "Expected only one input file, got '" << options->infile

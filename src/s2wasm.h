@@ -40,8 +40,8 @@ class S2WasmBuilder {
   bool debug;
 
 public:
- S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug)
-     : wasm(wasm), allocator(wasm.allocator), debug(debug) {
+ S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug, size_t nextStatic)
+     : wasm(wasm), allocator(wasm.allocator), debug(debug), nextStatic(nextStatic) {
    s = input;
    scan();
    s = input;
@@ -52,7 +52,7 @@ public:
 private:
   // state
 
-  size_t nextStatic = 1; // location of next static allocation, i.e., the data segment
+  size_t nextStatic; // location of next static allocation, i.e., the data segment
   std::map<Name, int32_t> staticAddresses; // name => address
 
   struct Addressing {

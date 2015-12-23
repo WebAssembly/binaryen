@@ -26,7 +26,14 @@ using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   Options options;
-  processCommandLine(argc, argv, &options);
+  processCommandLine(argc, argv, &options,
+                     "s2wasm INFILE\n\n"
+                     "Link .s file into .wast\n\n"
+                     "Optional arguments:\n"
+                     "  -n, --help        Show this help message and exit\n"
+                     "  -d, --debug       Print debug information to stderr\n"
+                     "  -o, --output      Output file (stdout if not specified)\n"
+                     "  --global-base=N   Where to start to place globals\n");
 
   std::string input;
   {
@@ -62,7 +69,8 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
   AllocatingModule wasm;
-  S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug);
+  size_t globalBase = options.extra["global-base"] ? atoi(options.extra["global-base"]) : 1;
+  S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, globalBase);
 
   if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
   std::stringstream meta;
