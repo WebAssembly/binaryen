@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295 (segment 2 "9\05\00\00"))
+  (memory 0 4294967295 (segment 4 "9\05\00\00"))
   (import $memcpy "env" "memcpy")
   (export "foo" $foo)
   (export "call_memcpy" $call_memcpy)

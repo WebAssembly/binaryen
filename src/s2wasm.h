@@ -55,7 +55,12 @@ private:
   size_t nextStatic = 1; // location of next static allocation, i.e., the data segment
   std::map<Name, int32_t> staticAddresses; // name => address
 
-  typedef std::pair<Const*, Name> Addressing;
+  struct Addressing {
+    Const* value;
+    Name name;
+    int32_t offset;
+    Addressing(Const* value, Name name, int32_t offset) : value(value), name(name), offset(offset) {}
+  };
   std::vector<Addressing> addressings; // we fix these up
 
   struct Relocation {
@@ -588,12 +593,14 @@ private:
           if (match("const")) {
             Name assign = getAssign();
             char start = *s;
-            cashew::IString str = getStr();
-            if (start == '.' || (isalpha(start) && str != NAN_ && str != INFINITY_)) {
+            cashew::IString str = getStrToSep();
+            if (start == '.' || (isalpha(start) && str != NAN__ && str != INFINITY__)) {
               // global address
+              int32_t offset = 0;
+              if (match("+")) offset = getInt();
               auto curr = allocator.alloc<Const>();
               curr->type = i32;
-              addressings.emplace_back(curr, str);
+              addressings.emplace_back(curr, str, offset);
               setOutput(curr, assign);
             } else {
               // constant
@@ -950,10 +957,11 @@ private:
   }
 
   void fix() {
-    for (auto& pair : addressings) {
-      Const* curr = pair.first;
-      Name name = pair.second;
-      curr->value = Literal(staticAddresses[name]);
+    for (auto& triple : addressings) {
+      Const* curr = triple.value;
+      Name name = triple.name;
+      size_t offset = triple.offset;
+      curr->value = Literal(staticAddresses[name] + offset);
       assert(curr->value.i32 > 0);
       curr->type = i32;
     }

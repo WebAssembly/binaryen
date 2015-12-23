@@ -1,10 +1,10 @@
 (module
-  (memory 0 4294967295 (segment 2 "\01\00\00\00\00\00\00\00\00\00\00\00"))
+  (memory 0 4294967295 (segment 4 "\01\00\00\00\00\00\00\00\00\00\00\00"))
   (export "f" $f)
   (func $f (param $$0 i32) (param $$1 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=6
+        (i32.store align=4 offset=8
           (get_local $$0)
           (get_local $$1)
         )

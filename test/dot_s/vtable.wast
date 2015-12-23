@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295 (segment 16 "1A\00") (segment 32 "1B\00") (segment 48 "1C\00") (segment 64 "1D\00") (segment 68 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") (segment 88 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") (segment 108 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") (segment 128 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") (segment 150 "\00\00\00\00\10\00\00\00") (segment 159 "\00\00\00\00\00\00\00\00\96\00\00\00") (segment 171 "\00\00\00\00\00\00\00\00\96\00\00\00") (segment 183 "\00\00\00\00\00\00\00\00\9f\00\00\00") (segment 196 "\00\00\00\00"))
+  (memory 0 4294967295 (segment 16 "1A\00") (segment 32 "1B\00") (segment 48 "1C\00") (segment 64 "1D\00") (segment 68 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") (segment 88 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") (segment 108 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") (segment 128 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") (segment 152 "\00\00\00\00\10\00\00\00") (segment 160 "\00\00\00\00\00\00\00\00\98\00\00\00") (segment 176 "\00\00\00\00\00\00\00\00\98\00\00\00") (segment 192 "\00\00\00\00\00\00\00\00\a0\00\00\00") (segment 204 "\00\00\00\00"))
   (import $_ZdlPv "env" "_ZdlPv")
   (export "_ZN1A3fooEv" $_ZN1A3fooEv)
   (export "_ZN1B3fooEv" $_ZN1B3fooEv)
@@ -13,7 +13,7 @@
   (func $_ZN1A3fooEv (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=196
+        (i32.store align=4 offset=204
           (i32.const 0)
           (i32.const 2)
         )
@@ -24,7 +24,7 @@
   (func $_ZN1B3fooEv (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=196
+        (i32.store align=4 offset=204
           (i32.const 0)
           (i32.const 4)
         )
@@ -35,7 +35,7 @@
   (func $_ZN1C3fooEv (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=196
+        (i32.store align=4 offset=204
           (i32.const 0)
           (i32.const 6)
         )
@@ -46,7 +46,7 @@
   (func $_ZN1D3fooEv (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=196
+        (i32.store align=4 offset=204
           (i32.const 0)
           (i32.const 8)
         )

@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295 (segment 2 "\00\00\00\00"))
+  (memory 0 4294967295 (segment 4 "\00\00\00\00"))
   (export "load_i32_with_folded_offset" $load_i32_with_folded_offset)
   (export "load_i32_with_unfolded_offset" $load_i32_with_unfolded_offset)
   (export "load_i64_with_folded_offset" $load_i64_with_folded_offset)
@@ -130,7 +130,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=4 offset=2
+          (i32.load align=4 offset=4
             (i32.const 0)
           )
         )
@@ -159,7 +159,7 @@
         (set_local $$0
           (i32.const 0)
         )
-        (i32.store align=4 offset=2
+        (i32.store align=4 offset=4
           (get_local $$0)
           (get_local $$0)
         )
@@ -171,7 +171,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=8 offset=24
+          (i32.load8_s align=1 offset=24
             (get_local $$0)
           )
         )
@@ -182,7 +182,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=8 offset=24
+          (i32.load8_u align=1 offset=24
             (get_local $$0)
           )
         )

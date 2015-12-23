@@ -14,7 +14,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=8
+          (i32.load8_s align=1
             (get_local $$0)
           )
         )
@@ -25,7 +25,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=8
+          (i32.load8_u align=1
             (get_local $$0)
           )
         )
@@ -36,7 +36,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=16
+          (i32.load16_s align=2
             (get_local $$0)
           )
         )
@@ -47,7 +47,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=16
+          (i32.load16_u align=2
             (get_local $$0)
           )
         )
@@ -58,7 +58,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i64.load align=8
+          (i64.load8_s align=1
             (get_local $$0)
           )
         )
@@ -69,7 +69,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i64.load align=8
+          (i64.load8_u align=1
             (get_local $$0)
           )
         )
@@ -80,7 +80,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i64.load align=16
+          (i64.load16_s align=2
             (get_local $$0)
           )
         )
@@ -91,7 +91,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i64.load align=16
+          (i64.load16_u align=2
             (get_local $$0)
           )
         )
@@ -102,7 +102,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i64.load align=32
+          (i64.load align=4
             (get_local $$0)
           )
         )
@@ -113,7 +113,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i64.load align=32
+          (i64.load align=4
             (get_local $$0)
           )
         )

@@ -1048,7 +1048,7 @@
         (loop $BB21_8 $BB21_1
           (block
             (set_local $$1
-              (i32.load align=8
+              (i32.load8_u align=1
                 (get_local $$0)
               )
             )

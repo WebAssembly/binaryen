@@ -10,7 +10,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=8
+          (i32.load8_u align=1
             (get_local $$0)
           )
         )
@@ -27,7 +27,7 @@
         (br $fake_return_waka123
           (i32.shr_s
             (i32.shl
-              (i32.load align=8
+              (i32.load8_u align=1
                 (get_local $$0)
               )
               (get_local $$1)
@@ -42,7 +42,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i64.load align=8
+          (i64.load8_u align=1
             (get_local $$0)
           )
         )
@@ -59,7 +59,7 @@
         (br $fake_return_waka123
           (i64.shr_s
             (i64.shl
-              (i64.load align=8
+              (i64.load8_u align=1
                 (get_local $$0)
               )
               (get_local $$1)

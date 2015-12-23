@@ -132,7 +132,7 @@
                 (set_local $$6
                   (i32.add
                     (i32.and
-                      (i32.load align=8
+                      (i32.load8_u align=1
                         (i32.add
                           (get_local $$11)
                           (get_local $$5)
