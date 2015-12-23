@@ -146,6 +146,23 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
   if (wasmJSDebug) std::cerr << "creating instance...\n";
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
+    void init(Module& wasm) override {
+      // if we have memory segments, create a new buffer here, just like native wasm support would.
+      // otherwise, no need to.
+      if (wasm.memory.segments.size() > 0) {
+        EM_ASM_({
+          Module['outside']['newBuffer'] = new ArrayBuffer($0);
+        }, wasm.memory.initial);
+        for (auto segment : wasm.memory.segments) {
+          EM_ASM_({
+            var source = Module['HEAP8'].subarray($1, $1 + $2);
+            var target = new Int8Array(Module['outside']['newBuffer']);
+            target.set(source, $0);
+          }, segment.offset, segment.data, segment.size);
+        }
+      }
+    }
+
     Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
       if (wasmJSDebug) std::cout << "calling import " << import->name.str << '\n';
       EM_ASM({

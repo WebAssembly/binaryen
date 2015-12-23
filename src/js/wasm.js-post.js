@@ -51,6 +51,25 @@ function integrateWasmJS(Module) {
     return ret;
   }
 
+  function mergeMemory(newBuffer) {
+    // The wasm instance creates its memory. But static init code might have written to
+    // buffer already, and we must copy it over in a proper merge.
+    // TODO: avoid this copy, by avoiding such static init writes
+    // TODO: in shorter term, just copy up to the last static init write
+    var oldBuffer = Module['buffer'];
+    assert(newBuffer.byteLength >= oldBuffer.byteLength, 'we might fail if we allocated more than TOTAL_MEMORY');
+    // the wasm module does write out the memory initialization, in range STATIC_BASE..STATIC_BUMP, so avoid that
+    (new Int8Array(newBuffer).subarray(0, STATIC_BASE)).set(new Int8Array(oldBuffer).subarray(0, STATIC_BASE));
+    (new Int8Array(newBuffer).subarray(STATIC_BASE + STATIC_BUMP)).set(new Int8Array(oldBuffer).subarray(STATIC_BASE + STATIC_BUMP));
+    updateGlobalBuffer(newBuffer);
+    updateGlobalBufferViews();
+    Module['reallocBuffer'] = function(size) {
+      var old = Module['buffer'];
+      wasmJS['asmExports']['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
+      return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
+    };
+  }
+
   // wasm lacks globals, so asm2wasm maps them into locations in memory. that information cannot
   // be present in the wasm output of asm2wasm, so we store it in a side file. If we load asm2wasm
   // output, either generated ahead of time or on the client, we need to apply those mapped
@@ -86,23 +105,7 @@ function integrateWasmJS(Module) {
         "asm2wasm": asm2wasmImports
       }));
 
-      // The wasm instance creates its memory. But static init code might have written to
-      // buffer already, and we must copy it over.
-      // TODO: avoid this copy, by avoiding such static init writes
-      // TODO: in shorter term, just copy up to the last static init write
-      var oldBuffer = Module['buffer'];
-      var newBuffer = instance.memory;
-      assert(newBuffer.byteLength >= oldBuffer.byteLength, 'we might fail if we allocated more than TOTAL_MEMORY');
-      // the wasm module does write out the memory initialization, in range STATIC_BASE..STATIC_BUMP, so avoid that
-      (new Int8Array(newBuffer).subarray(0, STATIC_BASE)).set(new Int8Array(oldBuffer).subarray(0, STATIC_BASE));
-      (new Int8Array(newBuffer).subarray(STATIC_BASE + STATIC_BUMP)).set(new Int8Array(oldBuffer).subarray(STATIC_BASE + STATIC_BUMP));
-      updateGlobalBuffer(newBuffer);
-      updateGlobalBufferViews();
-      Module['reallocBuffer'] = function(size) {
-        var old = Module['buffer'];
-        wasmJS['asmExports']['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
-        return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
-      };
+      mergeMemory(instance.memory);
 
       applyMappedGlobals();
 
@@ -158,19 +161,6 @@ function integrateWasmJS(Module) {
     info.global = global;
     info.env = env;
 
-    // wasm code would create its own buffer, at this time. But static init code might have
-    // written to the buffer already, and we must copy it over. We could just avoid
-    // this copy in wasm.js polyfilling, but to be as close as possible to real wasm,
-    // we do what wasm would do.
-    // TODO: avoid this copy, by avoiding such static init writes
-    // TODO: in shorter term, just copy up to the last static init write
-    var oldBuffer = Module['buffer'];
-    var newBuffer = new ArrayBuffer(oldBuffer.byteLength);
-    (new Int8Array(newBuffer)).set(new Int8Array(oldBuffer));
-    updateGlobalBuffer(newBuffer);
-    updateGlobalBufferViews();
-    wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
-
     Module['reallocBuffer'] = function(size) {
       var old = Module['buffer'];
       wasmJS['asmExports']['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
@@ -185,11 +175,21 @@ function integrateWasmJS(Module) {
       wasmJS['_load_asm2wasm'](temp);
     } else {
       wasmJS['_load_s_expr2wasm'](temp);
-      applyMappedGlobals();
     }
     wasmJS['_free'](temp);
 
+    wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
+
     wasmJS['_instantiate'](temp);
+
+    if (Module['newBuffer']) {
+      mergeMemory(Module['newBuffer']);
+      Module['newBuffer'] = null;
+    }
+
+    if (method == 'wasm-s-parser') {
+      applyMappedGlobals();
+    }
 
     return wasmJS['asmExports'];
   };
