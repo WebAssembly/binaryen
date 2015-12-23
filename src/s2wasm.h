@@ -895,6 +895,16 @@ private:
         for (size_t i = 0, e = size; i < e; i++) {
           raw->push_back(0);
         }
+      } else if (match(".int8")) {
+        size_t size = raw->size();
+        raw->resize(size + 1);
+        (*(int8_t*)(&(*raw)[size])) = getInt();
+        zero = false;
+      } else if (match(".int16")) {
+        size_t size = raw->size();
+        raw->resize(size + 2);
+        (*(int16_t*)(&(*raw)[size])) = getInt();
+        zero = false;
       } else if (match(".int32")) {
         size_t size = raw->size();
         raw->resize(size + 4);
