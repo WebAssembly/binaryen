@@ -1,6 +1,7 @@
 (module
   (memory 16777216 16777216)
   (type $FUNCSIG$vf (func (param f32)))
+  (type $FUNCSIG$vi (func (param i32)))
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
@@ -394,6 +395,18 @@
         )
       )
       (get_local $i)
+    )
+  )
+  (func $cneg_nosemicolon
+    (call_indirect $FUNCSIG$vi
+      (i32.add
+        (i32.and
+          (i32.const 1)
+          (i32.const 7)
+        )
+        (i32.const 8)
+      )
+      (i32.const 1)
     )
   )
   (func $z

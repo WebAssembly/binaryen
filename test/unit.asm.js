@@ -126,6 +126,9 @@ function () {
     if ((i >>> 0) < (j >>> 0)) i = i + 1 | 0;
     return i | 0;
   }
+  function cneg_nosemicolon() {
+    FUNCTION_TABLE_c[1 & 7](1) // no semicolon
+  }
 
   function z() {
   }

@@ -245,7 +245,7 @@ private:
 
   FunctionType *getFunctionType(Ref parent, ExpressionList& operands) {
     // generate signature
-    WasmType result = detectWasmType(parent, nullptr);
+    WasmType result = !!parent ? detectWasmType(parent, nullptr) : none;
     std::string str = "FUNCSIG$";
     str += getSig(result);
     for (auto operand : operands) {
