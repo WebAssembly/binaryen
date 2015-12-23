@@ -963,6 +963,7 @@ private:
       size_t offset = triple.offset;
       const auto &symbolAddress = staticAddresses.find(name);
       if (symbolAddress == staticAddresses.end()) {
+        std::cerr << "Unknown symbol: " << name << '\n';
         abort_on("Unknown symbol");
       }
       curr->value = Literal(symbolAddress->second + offset);
