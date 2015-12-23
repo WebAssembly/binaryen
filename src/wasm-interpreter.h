@@ -35,6 +35,24 @@ using namespace cashew;
 
 IString WASM("wasm");
 
+
+#ifdef WIN32
+#include <intrin.h>
+
+int32_t safe_clz(int32_t v) {
+  unsigned long result;
+  return _BitScanReverse(&result,v) ? result : 32;
+}
+
+int32_t safe_ctz(int32_t v) {
+  unsigned long result;
+  return _BitScanForward(&result,v) ? result : 32;
+}
+
+int32_t platform_popcount(int32_t v) {
+  return __popcnt(v);
+}
+#else
 int32_t safe_clz(int32_t v) {
   if (v == 0) return 32;
   return __builtin_clz(v);
@@ -44,6 +62,11 @@ int32_t safe_ctz(int32_t v) {
   if (v == 0) return 32;
   return __builtin_ctz(v);
 }
+
+int32_t platform_popcount(int32_t v) {
+  return __buildin_popcount(v);
+}
+#endif
 
 enum {
   pageSize = 64*1024,
@@ -374,7 +397,7 @@ private:
               if (v == 0) return Literal(32);
               return Literal((int32_t)safe_ctz(v));
             }
-            case Popcnt: return Literal((int32_t)__builtin_popcount(v));
+            case Popcnt: return Literal((int32_t)platform_popcount(v));
             case ReinterpretInt: {
               float v = value.reinterpretf32();
               if (isnan(v)) {
@@ -403,7 +426,7 @@ private:
               if (low == 0) return Literal(32+(int64_t)safe_ctz(high));
               return Literal((int64_t)safe_ctz(low));
             }
-            case Popcnt: return Literal(int64_t(__builtin_popcount(low) + __builtin_popcount(high)));
+            case Popcnt: return Literal(int64_t(platform_popcount(low) + platform_popcount(high)));
             case WrapInt64: return Literal(int32_t(value.geti64()));
             case ReinterpretInt: {
               return Literal(value.reinterpretf64());

@@ -51,6 +51,7 @@
 #include <fstream>
 #include <map>
 #include <vector>
+#include <string>
 
 #include "compiler-support.h"
 #include "emscripten-optimizer/simple_ast.h"

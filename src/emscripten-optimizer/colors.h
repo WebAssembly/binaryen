@@ -17,64 +17,32 @@
 #ifndef wasm_color_h
 #define wasm_color_h
 
-#include <unistd.h>
 #include <cstdlib>
 #include <ostream>
 
-namespace Colors {
-  inline bool use() {
-    return (getenv("COLORS") && getenv("COLORS")[0] == '1') || // forced
-           (isatty(STDOUT_FILENO) && (!getenv("COLORS") || getenv("COLORS")[0] != '0')); // implicit
-  }
+#if defined(__linux__) || defined(__apple__)
+#include <unistd.h>
 
-  inline void normal(std::ostream& stream) {
-    if (!use()) return;
-#if defined(__linux__) || defined(__apple__)
-    stream << "\033[0m";
-#endif
+namespace Colors {
+  inline void outputColorCode(std::ostream& stream,const char* colorCode) {
+    if((getenv("COLORS") && getenv("COLORS")[0] == '1') || // forced
+           (isatty(STDOUT_FILENO) && (!getenv("COLORS") || getenv("COLORS")[0] != '0'))) { // implicit
+      stream << colorCode;
+    }
   }
-  inline void red(std::ostream& stream) {
-    if (!use()) return;
-#if defined(__linux__) || defined(__apple__)
-    stream << "\033[31m";
+#else
+namespace Colors {
+  inline void outputColorCode(std::ostream& stream,const char* colorCode) {}
 #endif
-  }
-  inline void magenta(std::ostream& stream) {
-    if (!use()) return;
-#if defined(__linux__) || defined(__apple__)
-    stream << "\033[35m";
-#endif
-  }
-  inline void orange(std::ostream& stream) {
-    if (!use()) return;
-#if defined(__linux__) || defined(__apple__)
-    stream << "\033[33m";
-#endif
-  }
-  inline void grey(std::ostream& stream) {
-    if (!use()) return;
-#if defined(__linux__) || defined(__apple__)
-    stream << "\033[37m";
-#endif
-  }
-  inline void green(std::ostream& stream) {
-    if (!use()) return;
-#if defined(__linux__) || defined(__apple__)
-    stream << "\033[32m";
-#endif
-  }
-  inline void blue(std::ostream& stream) {
-    if (!use()) return;
-#if defined(__linux__) || defined(__apple__)
-    stream << "\033[34m";
-#endif
-  }
-  inline void bold(std::ostream& stream) {
-    if (!use()) return;
-#if defined(__linux__) || defined(__apple__)
-    stream << "\033[1m";
-#endif
-  }
+
+  inline void normal(std::ostream& stream) { outputColorCode(stream,"\033[0m"); }
+  inline void red(std::ostream& stream) { outputColorCode(stream,"\033[31m"); }
+  inline void magenta(std::ostream& stream) { outputColorCode(stream,"\033[35m"); }
+  inline void orange(std::ostream& stream) { outputColorCode(stream,"\033[33m"); }
+  inline void grey(std::ostream& stream) { outputColorCode(stream,"\033[37m"); }
+  inline void green(std::ostream& stream) { outputColorCode(stream,"\033[32m"); }
+  inline void blue(std::ostream& stream) { outputColorCode(stream,"\033[34m"); }
+  inline void bold(std::ostream& stream) { outputColorCode(stream,"\033[1m"); }
 };
 
 #endif // wasm_color_h
