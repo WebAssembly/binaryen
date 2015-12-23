@@ -64,7 +64,7 @@ int32_t safe_ctz(int32_t v) {
 }
 
 int32_t platform_popcount(int32_t v) {
-  return __buildin_popcount(v);
+  return __builtin_popcount(v);
 }
 #endif
 
