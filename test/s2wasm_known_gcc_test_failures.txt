@@ -10,14 +10,8 @@
 20071220-1.c.s
 20071220-2.c.s
 930930-1.c.s
-950426-1.c.s
-961125-1.c.s
 align-3.c.s
 pr27285.c.s
-pr34415.c.s
 pr35800.c.s
 pr51933.c.s
-pr53084.c.s
 pr60017.c.s
-string-opt-17.c.s
-string-opt-5.c.s
