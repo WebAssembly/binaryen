@@ -47,6 +47,7 @@ BB0_3:                                  #   in Loop: Header=BB0_1 Depth=1
 BB0_4:
 	i32.const	$push11=, -12
 	i32.add 	$0=, $0, $pop11
+	i32.const	$discard=, main # just take address for testing
 BB0_5:                                  # %.loopexit
 	return  	$0
 func_end0:

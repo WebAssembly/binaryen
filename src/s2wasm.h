@@ -76,6 +76,8 @@ private:
 
   std::map<size_t, size_t> addressSegments; // address => segment index
 
+  std::map<Name, size_t> functionIndexes;
+
   // utilities
 
   void skipWhitespace() {
@@ -972,11 +974,20 @@ private:
       Name name = triple.name;
       size_t offset = triple.offset;
       const auto &symbolAddress = staticAddresses.find(name);
-      if (symbolAddress == staticAddresses.end()) {
-        std::cerr << "Unknown symbol: " << name << '\n';
-        abort_on("Unknown symbol");
+      if (symbolAddress != staticAddresses.end()) {
+        curr->value = Literal(symbolAddress->second + offset);
+      } else {
+        // must be a function address
+        if (wasm.functionsMap.count(name) == 0) {
+          std::cerr << "Unknown symbol: " << name << '\n';
+          abort_on("Unknown symbol");
+        }
+        if (functionIndexes.count(name) == 0) {
+          functionIndexes[name] = functionIndexes.size();
+          wasm.table.names.push_back(name);
+        }
+        curr->value = Literal(functionIndexes[name] + offset);
       }
-      curr->value = Literal(symbolAddress->second + offset);
       assert(curr->value.i32 > 0);
       curr->type = i32;
     }

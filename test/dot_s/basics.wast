@@ -2,6 +2,7 @@
   (memory 0 4294967295 (segment 16 "hello, world!\n\00") (segment 32 "vcq"))
   (import $puts "env" "puts")
   (export "main" $main)
+  (table $main)
   (func $main (param $$0 i32) (param $$1 i32) (result i32)
     (block $fake_return_waka123
       (block
@@ -84,6 +85,7 @@
               (i32.const -12)
             )
           )
+          (i32.const 1)
         )
         (br $fake_return_waka123
           (get_local $$0)
