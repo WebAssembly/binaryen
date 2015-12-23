@@ -1,17 +1,10 @@
 # Expected failures from running s2wasm on the linked GCC torture test output
 # files.
 
-# https://llvm.org/bugs/show_bug.cgi?id=25931
-20010924-1.c.s
-
-# Unclassified:
-20031215-1.c.s
 20050929-1.c.s
 20071220-1.c.s
 20071220-2.c.s
 930930-1.c.s
 align-3.c.s
-pr27285.c.s
 pr35800.c.s
 pr51933.c.s
-pr60017.c.s
