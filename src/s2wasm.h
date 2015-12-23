@@ -961,7 +961,11 @@ private:
       Const* curr = triple.value;
       Name name = triple.name;
       size_t offset = triple.offset;
-      curr->value = Literal(staticAddresses[name] + offset);
+      const auto &symbolAddress = staticAddresses.find(name);
+      if (symbolAddress == staticAddresses.end()) {
+        abort_on("Unknown symbol");
+      }
+      curr->value = Literal(symbolAddress->second + offset);
       assert(curr->value.i32 > 0);
       curr->type = i32;
     }
