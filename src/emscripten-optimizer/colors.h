@@ -17,6 +17,7 @@
 #ifndef wasm_color_h
 #define wasm_color_h
 
+#ifndef WIN32
 #include <unistd.h>
 #include <cstdlib>
 #include <ostream>
@@ -76,5 +77,18 @@ namespace Colors {
 #endif
   }
 };
+#else
+namespace Colors {
+  inline bool use() { return false; }
+  inline void normal(std::ostream& stream) {}
+  inline void red(std::ostream& stream) {}
+  inline void magenta(std::ostream& stream) {}
+  inline void orange(std::ostream& stream) {}
+  inline void grey(std::ostream& stream) {}
+  inline void green(std::ostream& stream) {}
+  inline void blue(std::ostream& stream) {}
+  inline void bold(std::ostream& stream) {}
+};
+#endif
 
 #endif // wasm_color_h
