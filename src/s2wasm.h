@@ -482,7 +482,7 @@ private:
       skipComma();
       auto curr = allocator.alloc<Load>();
       curr->type = type;
-      int32_t bytes = getInt();
+      int32_t bytes = getInt()/8;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
       curr->signed_ = match("_s");
       match("_u");
@@ -589,7 +589,7 @@ private:
             Name assign = getAssign();
             char start = *s;
             cashew::IString str = getStr();
-            if (start == '.' || (isalpha(*s) && str != NAN_ && str != INFINITY_)) {
+            if (start == '.' || (isalpha(start) && str != NAN_ && str != INFINITY_)) {
               // global address
               auto curr = allocator.alloc<Const>();
               curr->type = i32;
@@ -857,7 +857,7 @@ private:
       return;
     }
     skipWhitespace();
-    size_t align = 16; // XXX default?
+    size_t align = 4; // XXX default?
     if (match(".globl")) {
       mustMatch(name.str);
       skipWhitespace();
@@ -866,6 +866,7 @@ private:
       align = getInt();
       skipWhitespace();
     }
+    align = pow(2, align); // convert from power to actual bytes
     if (match(".lcomm")) {
       mustMatch(name.str);
       skipComma();
