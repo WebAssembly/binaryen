@@ -273,7 +273,7 @@ if has_emcc:
         command += ['-s', 'BINARYEN_METHOD="' + method + '"']
       else:
         method = 'wasm-s-parser' # this is the default
-      print method, ' : ', command, ' => ', success
+      print method, ' : ', ' '.join(command), ' => ', success
       subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
       def break_cashew():
         asm = open('a.wasm.asm.js').read()
