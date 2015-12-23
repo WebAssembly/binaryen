@@ -1,6 +1,7 @@
 (module
-  (memory 16777216 16777216)
+  (memory 4096 4096 (segment 1026 "\14\00"))
   (type $FUNCSIG$vf (func (param f32)))
+  (import $_emscripten_asm_const_vi "env" "_emscripten_asm_const_vi")
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)

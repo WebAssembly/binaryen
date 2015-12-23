@@ -219,4 +219,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }", ["vi"]]} }
+;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }", ["vi"]]},"staticBump": 66 }

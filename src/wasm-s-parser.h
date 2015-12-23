@@ -187,34 +187,16 @@ private:
     }
     char *start = input;
     if (input[0] == '"') {
-      // parse escaping \", and \a7 into 0xa7 the character code
+      // parse escaping \", but leave code escaped - we'll handle escaping in memory segments specifically
       input++;
       std::string str;
       while (1) {
         if (input[0] == '"') break;
         if (input[0] == '\\') {
-          if (input[1] == '"') {
-            str += '"';
-            input += 2;
-            continue;
-          } else if (input[1] == '\'') {
-            str += '\'';
-            input += 2;
-            continue;
-          } else if (input[1] == '\\') {
-            str += '\\';
-            input += 2;
-          } else if (input[1] == 'n') {
-            str += '\n';
-            input += 2;
-          } else if (input[1] == 't') {
-            str += '\t';
-            input += 2;
-          } else {
-            str += (char)(unhex(input[1])*16 + unhex(input[2]));
-            input += 3;
-            continue;
-          }
+          str += input[0];
+          str += input[1];
+          input += 2;
+          continue;
         }
         str += input[0];
         input++;
@@ -965,8 +947,39 @@ private:
     while (i < s.size()) {
       Element& curr = *s[i];
       assert(curr[0]->str() == SEGMENT);
-      char *data = strdup(curr[2]->c_str()); // TODO: handle non-null-terminated?
-      wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data, strlen(data));
+      const char *input = curr[2]->c_str();
+      char *data = (char*)malloc(strlen(input)); // over-allocated, since escaping collapses, but whatever
+      char *write = data;
+      while (1) {
+        if (input[0] == 0) break;
+        if (input[0] == '\\') {
+          if (input[1] == '"') {
+            *write++ = '"';
+            input += 2;
+            continue;
+          } else if (input[1] == '\'') {
+            *write++ = '\'';
+            input += 2;
+            continue;
+          } else if (input[1] == '\\') {
+            *write++ = '\\';
+            input += 2;
+          } else if (input[1] == 'n') {
+            *write++ = '\n';
+            input += 2;
+          } else if (input[1] == 't') {
+            *write++ = '\t';
+            input += 2;
+          } else {
+            *write++ = (char)(unhex(input[1])*16 + unhex(input[2]));
+            input += 3;
+            continue;
+          }
+        }
+        *write++ = input[0];
+        input++;
+      }
+      wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data, write - data);
       i++;
     }
   }
