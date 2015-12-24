@@ -4,10 +4,52 @@
 # https://llvm.org/bugs/show_bug.cgi?id=25938
 930930-1.c.s
 
-# Others:
+# Unknown symbol (likely an external symbol).
+20030714-1.c.s
+20041212-1.c.s
+20041218-1.c.s
+20060905-1.c.s
+20071108-1.c.s
+20080424-1.c.s
+20080522-1.c.s
+20101011-1.c.s
+960117-1.c.s
+990628-1.c.s
+eeprof-1.c.s
+loop-11.c.s
+loop-5.c.s
+memcpy-2.c.s
+memset-1.c.s
+memset-2.c.s
+memset-3.c.s
+pr24716.c.s
+pr28289.c.s
+pr34456.c.s
+pr34768-1.c.s
+pr34768-2.c.s
+pr43784.c.s
+pr47237.c.s
+pr47337.c.s
+pr51877.c.s
+pr51933.c.s
+pr54937.c.s
+pr56982.c.s
+pr58209.c.s
+pr58365.c.s
+pr58570.c.s
+strcmp-1.c.s
+strcpy-1.c.s
+strlen-1.c.s
+strncmp-1.c.s
+struct-cpy-1.c.s
+
+# No output, it just fails.
 20050929-1.c.s
+pr35800.c.s
+
+# Something about alignment?
+align-3.c.s
+
+# Block address taken.
 20071220-1.c.s
 20071220-2.c.s
-align-3.c.s
-pr35800.c.s
-pr51933.c.s
