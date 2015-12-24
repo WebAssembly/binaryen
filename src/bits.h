@@ -17,6 +17,8 @@
 #ifndef wasm_bits_h
 #define wasm_bits_h
 
+#include <type_traits>
+
 /*
  * Portable bit functions.
  *
@@ -36,6 +38,18 @@ template<typename T> inline int PopCount(T /* v */);
 template<typename T> inline T BitReverse(T /* v */);
 template<typename T> inline int CountTrailingZeroes(T /* v */);
 template<typename T> inline int CountLeadingZeroes(T /* v */);
+
+// Convenience signed -> unsigned. It usually doesn't make much sense to use bit
+// functions on signed types.
+template <typename T> inline int PopCount(T v) {
+  return PopCount(typename std::make_unsigned<T>::type(v));
+}
+template <typename T> inline int CountTrailingZeroes(T v) {
+  return CountTrailingZeroes(typename std::make_unsigned<T>::type(v));
+}
+template <typename T> inline int CountLeadingZeroes(T v) {
+  return CountLeadingZeroes(typename std::make_unsigned<T>::type(v));
+}
 
 // Implementations for the above templates.
 
@@ -84,6 +98,11 @@ template<> inline int CountTrailingZeroes<uint32_t>(uint32_t v) {
       32;
 }
 
+template<> inline int CountTrailingZeroes<uint64_t>(uint64_t v) {
+  return (uint32_t)v ? CountTrailingZeroes<uint32_t>(v)
+                     : 32 + CountTrailingZeroes<uint32_t>(v >> 32);
+}
+
 template<> inline int CountLeadingZeroes<uint32_t>(uint32_t v) {
   // See Stanford bithacks, find the log base 2 of an N-bit integer in
   // O(lg(N)) operations with multiply and lookup:
@@ -100,6 +119,11 @@ template<> inline int CountLeadingZeroes<uint32_t>(uint32_t v) {
   return v ?
       (int)tbl[((uint32_t)(v * 0x07C4ACDDU)) >> 27] :
       32;
+}
+
+template<> inline int CountLeadingZeroes<uint64_t>(uint64_t v) {
+  return v >> 32 ? CountLeadingZeroes<uint32_t>(v >> 32)
+                 : 32 + CountLeadingZeroes<uint32_t>(v);
 }
 
 } // namespace wasm
