@@ -43,9 +43,6 @@ strlen-1.c.s
 strncmp-1.c.s
 struct-cpy-1.c.s
 
-# No output, it just fails.
-pr35800.c.s
-
 # Something about alignment?
 align-3.c.s
 
