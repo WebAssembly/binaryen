@@ -360,15 +360,9 @@ private:
         if (value.type == i32) {
           int32_t v = value.geti32();
           switch (curr->op) {
-            case Clz: {
-              if (v == 0) return Literal(32);
-              return Literal(CountLeadingZeroes((uint32_t)v));
-            }
-            case Ctz: {
-              if (v == 0) return Literal(32);
-              return Literal(CountTrailingZeroes((uint32_t)v));
-            }
-            case Popcnt: return Literal((int32_t)PopCount((uint32_t)v));
+            case Clz: return Literal((int32_t)CountLeadingZeroes(v));
+            case Ctz: return Literal((int32_t)CountTrailingZeroes(v));
+            case Popcnt: return Literal((int32_t)PopCount(v));
             case ReinterpretInt: {
               float v = value.reinterpretf32();
               if (isnan(v)) {
@@ -385,19 +379,10 @@ private:
         }
         if (value.type == i64) {
           int64_t v = value.geti64();
-          int32_t high = v >> 32, low = v;
           switch (curr->op) {
-            case Clz: {
-              if (v == 0) return Literal((int64_t)64);
-              if (high == 0) return Literal(32+(int64_t)CountLeadingZeroes((uint32_t)low));
-              return Literal((int64_t)CountLeadingZeroes((uint32_t)high));
-            }
-            case Ctz: {
-              if (v == 0) return Literal((int64_t)64);
-              if (low == 0) return Literal(32+(int64_t)CountTrailingZeroes((uint32_t)high));
-              return Literal((int64_t)CountTrailingZeroes((uint32_t)low));
-            }
-            case Popcnt: return Literal((int64_t)PopCount((uint64_t)v));
+            case Clz: return Literal((int64_t)CountLeadingZeroes(v));
+            case Ctz: return Literal((int64_t)CountTrailingZeroes(v));
+            case Popcnt: return Literal((int64_t)PopCount(v));
             case WrapInt64: return Literal(int32_t(value.geti64()));
             case ReinterpretInt: {
               return Literal(value.reinterpretf64());
