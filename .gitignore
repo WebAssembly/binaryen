@@ -3,6 +3,7 @@ bin/asm2wasm
 bin/wasm2asm
 bin/s2wasm
 bin/wasm.js
+*.a
 *~
 *.diff
 a.*

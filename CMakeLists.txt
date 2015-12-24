@@ -21,6 +21,11 @@ IF (UNIX AND
   SET(CMAKE_CXX_FLAGS "-fcolor-diagnostics ${CMAKE_CXX_FLAGS}")
 ENDIF()
 
+SET(support_SOURCES
+  src/support/colors.cpp
+)
+ADD_LIBRARY(support STATIC ${support_SOURCES})
+
 SET(binaryen-shell_SOURCES
   src/binaryen-shell.cpp
   src/pass.cpp
@@ -30,6 +35,7 @@ SET(binaryen-shell_SOURCES
 )
 ADD_EXECUTABLE(binaryen-shell
                ${binaryen-shell_SOURCES})
+TARGET_LINK_LIBRARIES(binaryen-shell support)
 SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS binaryen-shell DESTINATION bin)
@@ -42,6 +48,7 @@ SET(asm2wasm_SOURCES
 )
 ADD_EXECUTABLE(asm2wasm
                ${asm2wasm_SOURCES})
+TARGET_LINK_LIBRARIES(asm2wasm support)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION bin)
@@ -54,6 +61,7 @@ SET(wasm2asm_SOURCES
 )
 ADD_EXECUTABLE(wasm2asm
                ${wasm2asm_SOURCES})
+TARGET_LINK_LIBRARIES(wasm2asm support)
 SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm2asm DESTINATION bin)
@@ -63,6 +71,7 @@ SET(s2wasm_SOURCES
 )
 ADD_EXECUTABLE(s2wasm
                ${s2wasm_SOURCES})
+TARGET_LINK_LIBRARIES(s2wasm support)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS s2wasm DESTINATION bin)
