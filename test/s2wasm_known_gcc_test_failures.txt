@@ -44,7 +44,6 @@ strncmp-1.c.s
 struct-cpy-1.c.s
 
 # No output, it just fails.
-20050929-1.c.s
 pr35800.c.s
 
 # Something about alignment?

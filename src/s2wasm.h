@@ -182,9 +182,12 @@ private:
     return ret;
   }
 
-  void getConst(uint32_t* target) {
+  // gets a constant, which may be a relocation for later.
+  // returns whether this is a relocation
+  bool getConst(uint32_t* target) {
     if (isdigit(*s)) {
       *target = getInt();
+      return false;
     } else {
       // a global constant, we need to fix it up later
       Name name = getStrToSep();
@@ -194,6 +197,7 @@ private:
         offset = getInt();
       }      
       relocations.emplace_back(target, name, offset);
+      return true;
     }
   }
 
@@ -889,6 +893,7 @@ private:
     mustMatch(":");
     auto raw = new std::vector<char>(); // leaked intentionally, no new allocation in Memory
     bool zero = true;
+    std::vector<std::pair<size_t, size_t>> currRelocations; // [index in relocations, offset in raw]
     while (1) {
       skipWhitespace();
       if (match(".asci")) {
@@ -924,7 +929,9 @@ private:
       } else if (match(".int32")) {
         size_t size = raw->size();
         raw->resize(size + 4);
-        getConst((uint32_t*)&(*raw)[size]);
+        if (getConst((uint32_t*)&(*raw)[size])) { // just the size, as we may reallocate; we must fix this later, if it's a relocation
+          currRelocations.emplace_back(relocations.size()-1, size);
+        }
         zero = false;
       } else if (match(".int64")) {
         size_t size = raw->size();
@@ -947,8 +954,14 @@ private:
       }
       size = seenSize;
     }
-    while (nextStatic % align) nextStatic++;
+    // raw is now finalized, prepare relocations
+    for (auto& curr : currRelocations) {
+      auto r = curr.first;
+      auto i = curr.second;
+      relocations[r].data = (uint32_t*)&(*raw)[i];
+    }
     // assign the address, add to memory
+    while (nextStatic % align) nextStatic++;
     staticAddresses[name] = nextStatic;
     if (!zero) {
       addressSegments[nextStatic] = wasm.memory.segments.size();
