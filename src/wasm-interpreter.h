@@ -360,7 +360,10 @@ private:
         if (value.type == i32) {
           int32_t v = value.geti32();
           switch (curr->op) {
-            case Clz: return Literal(CountLeadingZeroes((uint32_t)v));
+            case Clz: {
+              if (v == 0) return Literal(32);
+              return Literal(CountLeadingZeroes((uint32_t)v));
+            }
             case Ctz: {
               if (v == 0) return Literal(32);
               return Literal(CountTrailingZeroes((uint32_t)v));
