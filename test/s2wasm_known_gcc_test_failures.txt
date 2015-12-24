@@ -43,9 +43,6 @@ strlen-1.c.s
 strncmp-1.c.s
 struct-cpy-1.c.s
 
-# Something about alignment?
-align-3.c.s
-
 # Block address taken.
 20071220-1.c.s
 20071220-2.c.s

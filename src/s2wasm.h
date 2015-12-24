@@ -314,7 +314,8 @@ private:
       else if (match("imports")) skipImports();
       else if (match("data")) {}
       else if (match("ident")) {}
-      else if (match("section")) s = strchr(s, '\n');
+      else if (match("section") || match("align")) s = strchr(s, '\n');
+      else if (match("globl")) parseGlobl();
       else abort_on("process");
     }
   }
