@@ -368,7 +368,7 @@ private:
               if (v == 0) return Literal(32);
               return Literal(CountTrailingZeroes((uint32_t)v));
             }
-            case Popcnt: return Literal(PopCount((uint32_t)v));
+            case Popcnt: return Literal((int32_t)PopCount((uint32_t)v));
             case ReinterpretInt: {
               float v = value.reinterpretf32();
               if (isnan(v)) {
@@ -397,7 +397,7 @@ private:
               if (low == 0) return Literal(32+(int64_t)CountTrailingZeroes((uint32_t)high));
               return Literal((int64_t)CountTrailingZeroes((uint32_t)low));
             }
-            case Popcnt: return Literal(PopCount((uint64_t)v));
+            case Popcnt: return Literal((int64_t)PopCount((uint64_t)v));
             case WrapInt64: return Literal(int32_t(value.geti64()));
             case ReinterpretInt: {
               return Literal(value.reinterpretf64());
