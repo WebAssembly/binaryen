@@ -81,7 +81,7 @@ template<> inline int CountTrailingZeroes<uint32_t>(uint32_t v) {
   };
   return v ?
       (int)tbl[((uint32_t)((v & -(int32_t)v) * 0x077CB531U)) >> 27] :
-      -1;
+      32;
 }
 
 template<> inline int CountLeadingZeroes<uint32_t>(uint32_t v) {
@@ -99,7 +99,7 @@ template<> inline int CountLeadingZeroes<uint32_t>(uint32_t v) {
   v = v | (v >> 16);
   return v ?
       (int)tbl[((uint32_t)(v * 0x07C4ACDDU)) >> 27] :
-      -1;
+      32;
 }
 
 } // namespace wasm
