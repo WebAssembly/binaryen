@@ -983,6 +983,12 @@ private:
   }
 
   void fix() {
+    auto ensureFunctionIndex = [&](Name name) {
+      if (functionIndexes.count(name) == 0) {
+        functionIndexes[name] = functionIndexes.size();
+        wasm.table.names.push_back(name);
+      }
+    };
     for (auto& triple : addressings) {
       Const* curr = triple.value;
       Name name = triple.name;
@@ -996,17 +1002,26 @@ private:
           std::cerr << "Unknown symbol: " << name << '\n';
           abort_on("Unknown symbol");
         }
-        if (functionIndexes.count(name) == 0) {
-          functionIndexes[name] = functionIndexes.size();
-          wasm.table.names.push_back(name);
-        }
+        ensureFunctionIndex(name);
         curr->value = Literal(int32_t(functionIndexes[name] + offset));
       }
       assert(curr->value.i32 > 0);
       curr->type = i32;
     }
     for (auto& relocation : relocations) {
-      *(relocation.data) = staticAddresses[relocation.value] + relocation.offset;
+      Name name = relocation.value;
+      const auto &symbolAddress = staticAddresses.find(name);
+      if (symbolAddress != staticAddresses.end()) {
+        *(relocation.data) = symbolAddress->second + relocation.offset;
+      } else {
+        // must be a function address
+        if (wasm.functionsMap.count(name) == 0) {
+          std::cerr << "Unknown symbol: " << name << '\n';
+          abort_on("Unknown symbol");
+        }
+        ensureFunctionIndex(name);
+        *(relocation.data) = functionIndexes[name] + relocation.offset;
+      }
     }
   }
 
