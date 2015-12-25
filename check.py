@@ -307,7 +307,8 @@ if has_emcc:
 
   print '\n[ checking emcc WASM_BACKEND testcases... ]\n'
 
-  for c in ['hello_world.cpp', 'hello_num.cpp', 'globals.cpp']:
+  for c in sorted(os.listdir(os.path.join('test', 'wasm_backend'))):
+    if not c.endswith('cpp'): continue
     print '..', c
     base = c.replace('.cpp', '').replace('.c', '')
     expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
