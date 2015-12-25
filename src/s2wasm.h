@@ -985,8 +985,9 @@ private:
   void fix() {
     auto ensureFunctionIndex = [&](Name name) {
       if (functionIndexes.count(name) == 0) {
-        functionIndexes[name] = functionIndexes.size();
+        functionIndexes[name] = wasm.table.names.size();
         wasm.table.names.push_back(name);
+        if (debug) std::cerr << "function index: " << name << ": " << functionIndexes[name] << '\n';
       }
     };
     for (auto& triple : addressings) {
@@ -1007,7 +1008,6 @@ private:
         ensureFunctionIndex(name);
         curr->value = Literal(int32_t(functionIndexes[name] + offset));
       }
-      assert(curr->value.i32 > 0);
       curr->type = i32;
     }
     for (auto& relocation : relocations) {
