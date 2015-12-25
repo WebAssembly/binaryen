@@ -602,7 +602,7 @@ private:
             Name assign = getAssign();
             char start = *s;
             cashew::IString str = getStrToSep();
-            if (start == '.' || (isalpha(start) && str != NAN__ && str != INFINITY__)) {
+            if (start == '.' || start == '_' || (isalpha(start) && str != NAN__ && str != INFINITY__)) {
               // global address
               int32_t offset = 0;
               if (match("+")) offset = getInt();
@@ -995,8 +995,10 @@ private:
       Name name = triple.name;
       size_t offset = triple.offset;
       const auto &symbolAddress = staticAddresses.find(name);
+      if (debug) std::cerr << "fix addressing " << name << '\n';
       if (symbolAddress != staticAddresses.end()) {
         curr->value = Literal(int32_t(symbolAddress->second + offset));
+        if (debug) std::cerr << "  ==> " << curr->value << '\n';
       } else {
         // must be a function address
         if (wasm.functionsMap.count(name) == 0) {
@@ -1011,9 +1013,11 @@ private:
     }
     for (auto& relocation : relocations) {
       Name name = relocation.value;
+      if (debug) std::cerr << "fix relocation " << name << '\n';
       const auto &symbolAddress = staticAddresses.find(name);
       if (symbolAddress != staticAddresses.end()) {
         *(relocation.data) = symbolAddress->second + relocation.offset;
+        if (debug) std::cerr << "  ==> " << *(relocation.data) << '\n';
       } else {
         // must be a function address
         if (wasm.functionsMap.count(name) == 0) {
