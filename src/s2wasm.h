@@ -989,7 +989,7 @@ private:
       size_t offset = triple.offset;
       const auto &symbolAddress = staticAddresses.find(name);
       if (symbolAddress != staticAddresses.end()) {
-        curr->value = Literal(symbolAddress->second + offset);
+        curr->value = Literal(int32_t(symbolAddress->second + offset));
       } else {
         // must be a function address
         if (wasm.functionsMap.count(name) == 0) {
@@ -1000,7 +1000,7 @@ private:
           functionIndexes[name] = functionIndexes.size();
           wasm.table.names.push_back(name);
         }
-        curr->value = Literal(functionIndexes[name] + offset);
+        curr->value = Literal(int32_t(functionIndexes[name] + offset));
       }
       assert(curr->value.i32 > 0);
       curr->type = i32;
@@ -1026,6 +1026,10 @@ public:
 
   // extra emscripten processing
   void emscriptenGlue(std::ostream& o) {
+    if (debug) {
+      std::cerr << wasm << '\n';
+    }
+
     wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
 
     o << ";; METADATA: { ";
