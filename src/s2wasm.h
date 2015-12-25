@@ -969,6 +969,7 @@ private:
       wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], size);
     }
     nextStatic += size;
+    wasm.memory.initial = nextStatic;
   }
 
   void skipImports() {
