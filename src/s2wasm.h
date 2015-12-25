@@ -569,7 +569,6 @@ private:
           curr->operands.push_back(inputs[i]);
         }
       }
-      std::reverse(curr->operands.begin(), curr->operands.end());
       setOutput(curr, assign);
       if (curr->is<CallIndirect>()) {
         auto call = curr->dyn_cast<CallIndirect>();
