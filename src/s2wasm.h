@@ -305,6 +305,7 @@ private:
   void process() {
     while (*s) {
       skipWhitespace();
+      if (debug) dump("process");
       if (!*s) break;
       if (*s != '.') break;
       s++;
@@ -861,13 +862,13 @@ private:
   }
 
   void parseObject(Name name) {
+    if (debug) std::cerr << "parseObject " << name << '\n';
     if (match(".data") || match(".bss")) {
     } else if (match(".section")) {
       s = strchr(s, '\n');
     } else if (match(".lcomm")) {
-      mustMatch(name.str);
-      skipComma();
-      getInt();
+      s = strchr(s, '\n');
+      // TODO
       return;
     }
     skipWhitespace();
