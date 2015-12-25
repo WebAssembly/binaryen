@@ -18,11 +18,11 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 # XXX this was 1 short in the backend output, an extra one was added manually
 # BB#0:
-	i32.const	$7=, __stack_pointer
+	i32.const	$7=, 0
 	i32.load	$7=, 0($7)
 	i32.const	$8=, 1048576
 	i32.sub 	$12=, $7, $8
-	i32.const	$8=, __stack_pointer
+	i32.const	$8=, 0
 	i32.store	$12=, 0($8), $12
 	i32.const	$1=, 0
 	copy_local	$0=, $1
@@ -79,7 +79,7 @@ BB1_5:
 	i32.const	$push17=, 0
 	i32.const	$9=, 1048576
 	i32.add 	$12=, $12, $9
-	i32.const	$9=, __stack_pointer
+	i32.const	$9=, 0
 	i32.store	$12=, 0($9), $12
 	return  	$pop17
 func_end1:

@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295 (segment 16 "{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }\00"))
+  (memory 67 4294967295 (segment 16 "{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }\00"))
   (import $_emscripten_asm_const_vi "env" "_emscripten_asm_const_vi")
   (export "_Z6reporti" $_Z6reporti)
   (export "main" $main)

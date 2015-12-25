@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295 (segment 16 "hello, world!\n\00") (segment 32 "vcq"))
+  (memory 35 4294967295 (segment 16 "hello, world!\n\00") (segment 32 "vcq"))
   (import $puts "env" "puts")
   (export "main" $main)
   (table $main)
@@ -85,7 +85,7 @@
               (i32.const -12)
             )
           )
-          (i32.const 1)
+          (i32.const 0)
         )
         (br $fake_return_waka123
           (get_local $$0)
