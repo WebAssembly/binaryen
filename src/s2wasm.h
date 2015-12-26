@@ -42,11 +42,12 @@ class S2WasmBuilder {
 public:
  S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug, size_t globalBase)
      : wasm(wasm), allocator(wasm.allocator), debug(debug), globalBase(globalBase), nextStatic(globalBase) {
-   s = input;
-   scan();
-   s = input;
-   process();
-   fix();
+    s = input;
+    scan();
+    s = input;
+    prepare();
+    process();
+    fix();
   }
 
 private:
@@ -300,6 +301,10 @@ private:
       mustMatch(":");
       implementedFunctions.insert(name);
     }
+  }
+
+  void prepare() {
+    staticAddresses["__stack_pointer"] = 0; // XXX HACK for now
   }
 
   void process() {
