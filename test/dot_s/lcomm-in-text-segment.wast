@@ -1,4 +1,4 @@
 (module
-  (memory 0 4294967295)
+  (memory 16 4294967295 (segment 12 "\05\00\00\00"))
 )
-;; METADATA: { "asmConsts": {},"staticBump": 0 }
+;; METADATA: { "asmConsts": {},"staticBump": 15 }

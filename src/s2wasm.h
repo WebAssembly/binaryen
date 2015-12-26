@@ -867,8 +867,7 @@ private:
     } else if (match(".section")) {
       s = strchr(s, '\n');
     } else if (match(".lcomm")) {
-      s = strchr(s, '\n');
-      // TODO
+      parseLcomm(name);
       return;
     }
     skipWhitespace();
@@ -883,12 +882,8 @@ private:
     }
     align = pow(2, align); // convert from power to actual bytes
     if (match(".lcomm")) {
-      mustMatch(name.str);
-      skipComma();
-      getInt();
-      skipComma();
-      getInt();
-      return; // XXX wtf is this thing and what do we do with it
+      parseLcomm(name, align);
+      return;
     }
     mustMatch(name.str);
     mustMatch(":");
@@ -968,6 +963,20 @@ private:
       addressSegments[nextStatic] = wasm.memory.segments.size();
       wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], size);
     }
+    nextStatic += size;
+    wasm.memory.initial = nextStatic;
+  }
+
+  void parseLcomm(Name name, size_t align=1) {
+    mustMatch(name.str);
+    skipComma();
+    size_t size = getInt();
+    if (*s == ',') {
+      skipComma();
+      getInt();
+    }
+    while (nextStatic % align) nextStatic++;
+    staticAddresses[name] = nextStatic;
     nextStatic += size;
     wasm.memory.initial = nextStatic;
   }
