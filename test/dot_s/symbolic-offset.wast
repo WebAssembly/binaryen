@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295 (segment 4 "\01\00\00\00\00\00\00\00\00\00\00\00"))
+  (memory 16 4294967295 (segment 4 "\01\00\00\00\00\00\00\00\00\00\00\00"))
   (export "f" $f)
   (func $f (param $$0 i32) (param $$1 i32)
     (block $fake_return_waka123

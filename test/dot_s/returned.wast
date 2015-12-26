@@ -23,9 +23,9 @@
       (block
         (br $fake_return_waka123
           (call_import $memcpy
-            (get_local $$2)
-            (get_local $$1)
             (get_local $$0)
+            (get_local $$1)
+            (get_local $$2)
           )
         )
       )

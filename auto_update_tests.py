@@ -29,7 +29,7 @@ for t in sorted(os.listdir('test')):
 
 for s in sorted(os.listdir(os.path.join('test', 'dot_s'))) + sorted(os.listdir(os.path.join('test', 'experimental', 'prototype-wasmate', 'test'))):
   if not s.endswith('.s'): continue
-  if s in ['inline-asm.s', 'userstack.s', 'offset-folding.s']: continue
+  if s in ['inline-asm.s', 'userstack.s', 'offset-folding.s', 'legalize.s']: continue
   print '..', s
   wasm = s.replace('.s', '.wast')
   full = os.path.join('test', 'dot_s', s)
