@@ -66,3 +66,8 @@ a2:
 	.ascii	"cq"
 	.size	a2, 3 # surprisingly large size
 
+	.type	a3,@object              # @a3
+	.globl	a3
+a3:
+	.int32 a2-10
+

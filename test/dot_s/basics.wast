@@ -1,5 +1,5 @@
 (module
-  (memory 35 4294967295 (segment 16 "hello, world!\n\00") (segment 32 "vcq"))
+  (memory 52 4294967295 (segment 16 "hello, world!\n\00") (segment 32 "vcq") (segment 48 "\16\00\00\00"))
   (import $puts "env" "puts")
   (export "main" $main)
   (table $main)
@@ -94,4 +94,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 34 }
+;; METADATA: { "asmConsts": {},"staticBump": 51 }
