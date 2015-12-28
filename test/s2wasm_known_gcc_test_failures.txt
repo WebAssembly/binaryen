@@ -2,10 +2,8 @@
 # files.
 
 # Unknown symbol (likely an external symbol).
-20060905-1.c.s # $s-384
 pr24716.c.s # $W
 pr54937.c.s # $exit
-pr58209.c.s # $buf-4
 
 # Unknown symbol ($abort, $stdout, $stderr).
 921110-1.c.s
