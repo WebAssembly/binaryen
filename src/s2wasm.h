@@ -57,14 +57,6 @@ private:
          nextStatic; // location of next static allocation
   std::map<Name, int32_t> staticAddresses; // name => address
 
-  struct Addressing {
-    Const* value;
-    Name name;
-    int32_t offset;
-    Addressing(Const* value, Name name, int32_t offset) : value(value), name(name), offset(offset) {}
-  };
-  std::vector<Addressing> addressings; // we fix these up
-
   struct Relocation {
     uint32_t* data;
     Name value;
@@ -144,14 +136,14 @@ private:
   }
 
   void skipToSep() {
-    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+') {
+    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+' && *s != '-') {
       s++;
     }
   }
 
   Name getStrToSep() {
     std::string str;
-    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+') {
+    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+' && *s != '-') {
       str += *s;
       s++;
     }
@@ -186,7 +178,7 @@ private:
   // gets a constant, which may be a relocation for later.
   // returns whether this is a relocation
   bool getConst(uint32_t* target) {
-    if (isdigit(*s)) {
+    if (isdigit(*s) || *s == '-') {
       *target = getInt();
       return false;
     } else {
@@ -196,7 +188,10 @@ private:
       if (*s == '+') {
         s++;
         offset = getInt();
-      }      
+      } else if (*s == '-') {
+        s++;
+        offset = -getInt();
+      }
       relocations.emplace_back(target, name, offset);
       return true;
     }
@@ -605,18 +600,14 @@ private:
         case 'c': {
           if (match("const")) {
             Name assign = getAssign();
-            char start = *s;
-            cashew::IString str = getStrToSep();
-            if (start == '.' || start == '_' || (isalpha(start) && str != NAN__ && str != INFINITY__)) {
-              // global address
-              int32_t offset = 0;
-              if (match("+")) offset = getInt();
+            if (type == i32) {
+              // may be a relocation
               auto curr = allocator.alloc<Const>();
-              curr->type = i32;
-              addressings.emplace_back(curr, str, offset);
+              curr->type = curr->value.type = i32;
+              getConst((uint32_t*)&curr->value.i32);
               setOutput(curr, assign);
             } else {
-              // constant
+              cashew::IString str = getStr();
               setOutput(parseConst(str, type, allocator), assign);
             }
           }
@@ -1005,26 +996,6 @@ private:
         if (debug) std::cerr << "function index: " << name << ": " << functionIndexes[name] << '\n';
       }
     };
-    for (auto& triple : addressings) {
-      Const* curr = triple.value;
-      Name name = triple.name;
-      size_t offset = triple.offset;
-      const auto &symbolAddress = staticAddresses.find(name);
-      if (debug) std::cerr << "fix addressing " << name << '\n';
-      if (symbolAddress != staticAddresses.end()) {
-        curr->value = Literal(int32_t(symbolAddress->second + offset));
-        if (debug) std::cerr << "  ==> " << curr->value << '\n';
-      } else {
-        // must be a function address
-        if (wasm.functionsMap.count(name) == 0) {
-          std::cerr << "Unknown symbol: " << name << '\n';
-          abort_on("Unknown symbol");
-        }
-        ensureFunctionIndex(name);
-        curr->value = Literal(int32_t(functionIndexes[name] + offset));
-      }
-      curr->type = i32;
-    }
     for (auto& relocation : relocations) {
       Name name = relocation.value;
       if (debug) std::cerr << "fix relocation " << name << '\n';
