@@ -1,6 +1,20 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 
-import os, sys, subprocess, difflib, json, time
+#   Copyright 2015 WebAssembly Community Group participants
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+import os, sys, subprocess, difflib, json, time, urllib2
 
 interpreter = None
 requested = []
@@ -34,6 +48,28 @@ try:
   subprocess.check_call(['emcc', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   has_emcc = True
 except:
+  pass
+
+# Downloads
+
+try:
+  storage_base = 'https://storage.googleapis.com/wasm-llvm/builds/git/'
+  if not os.path.isdir('buildbot'):
+    os.mkdir('buildbot')
+  lkgr_path = os.path.join('buildbot', 'lkgr')
+  with open(lkgr_path, 'w+') as f:
+    f.write(urllib2.urlopen(storage_base + 'lkgr').read())
+    f.seek(0)
+    lkgr = f.read()
+  torture = 'wasm-torture-s-%s.tbz2' % lkgr
+  torture_path = os.path.join('buildbot', torture)
+  if not os.path.isfile(torture_path):
+    with open(torture_path, 'w+') as f:
+      f.write(urllib2.urlopen(storage_base + torture).read())
+  subprocess.check_call(['tar', '-xvf', torture], cwd='buildbot',
+                        stdout=open('untar', 'w'))
+except:
+  sys.stderr.write('buildbot download caught: %s %s %s\n' % sys.exc_info())
   pass
 
 # utilities
@@ -254,6 +290,20 @@ for s in sorted(os.listdir(os.path.join('test', 'dot_s'))) + sorted(os.listdir(o
   if actual != expected:
     fail(actual, expected)
 
+print '\n[ checking torture testcases... ]\n'
+
+import test.experimental.link_assembly_files
+s2wasm_out = os.path.join('buildbot', 's2wasm-out')
+if not os.isdir(s2wasm_out):
+  os.mkdir(s2wasm_out)
+unexpected_result_count = test.experimental.link_assembly_files.run(
+      linker=os.path.join('bin', 's2wasm'),
+      files=os.path.join('buildbot', 'torture-s', '*.s'),
+      fails=os.path.join('test', 's2wasm_known_gcc_test_failures.txt'),
+      out=s2wasm_out)
+if unexpected_result_count:
+  fail(unexpected_result_count, 0)
+
 print '\n[ checking example testcases... ]\n'
 
 subprocess.check_call(['g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.'])
@@ -364,4 +414,3 @@ if has_emcc:
                 fail(out, expected)
 
 print '\n[ success! ]'
-
