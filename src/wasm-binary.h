@@ -328,7 +328,7 @@ public:
       size_t index = function->params.size();
       Name name = local.name;
       WasmType type = local.type;
-      currLocalsByType[type]++; // increment now for simplicity, must decremebt it in returns
+      currLocalsByType[type]++; // increment now for simplicity, must decrement it in returns
       if (type == i32) {
         mappedLocals[name] = index + currLocalsByType[i32] - 1;
         break;
