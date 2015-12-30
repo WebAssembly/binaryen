@@ -518,6 +518,35 @@ public:
     }
   }
   void visitUnary(Unary *curr) {
+    switch (op) {
+      case Clz:              o << int8_t(curr->type == i32 ? I32Clz : I64Clz); break;
+      case Ctz:              o << int8_t(curr->type == i32 ? I32Ctz : I64Ctz); break;
+      case Popcnt:           o << int8_t(curr->type == i32 ? I32Popcnt : I64Popcnt); break;
+      case Neg:              o << int8_t(curr->type == f32 ? F32Neg : F64Neg); break;
+      case Abs:              o << int8_t(curr->type == f32 ? F32Abs : F64Abs); break;
+      case Ceil:             o << int8_t(curr->type == f32 ? F32Ceil : F64Ceil); break;
+      case Floor:            o << int8_t(curr->type == f32 ? F32Floor : F64Floor); break;
+      case Trunc:            o << int8_t(curr->type == f32 ? F32Trunc : F64Trunc); break;;
+      case Nearest:          o << int8_t(curr->type == f32 ? F32NearestInt : F64NearestInt); break;
+      case Sqrt:             o << int8_t(curr->type == f32 ? F32Sqrt : F64Sqrt); break;
+      case ExtendSInt32:     o << "extend_s/i32"; break;
+      case ExtendUInt32:     o << "extend_u/i32"; break;
+      case WrapInt64:        o << "wrap/i64"; break;
+      case TruncSFloat32:    // XXX no signe/dunsigned versions of trunc?
+      case TruncUFloat32:    // XXX
+      case TruncSFloat64:    // XXX
+      case TruncUFloat64:    // XXX
+      case ReinterpretFloat: // XXX missing
+      case ConvertUInt32:    o << int8_t(curr->type == f32 ? I32UConvertF32 : I32UConvertF64); break;
+      case ConvertSInt32:    o << int8_t(curr->type == f32 ? I32SConvertF32 : I32SConvertF64); break;
+      case ConvertUInt64:    o << int8_t(curr->type == f32 ? I64UConvertF32 : I64UConvertF64); break;
+      case ConvertSInt64:    o << int8_t(curr->type == f32 ? I64UConvertF32 : I64UConvertF64); break;
+      case PromoteFloat32:   // XXX
+      case DemoteFloat64:    // XXX
+      case ReinterpretInt:   // XXX
+      default: abort();
+    }
+    visit(curr->value);
   }
   void visitBinary(Binary *curr) {
   }
