@@ -172,9 +172,31 @@ public:
   }
 
   writeDataSegments() {
+    o << Section::DataSegments << LEB128(wasm.memory.segments.size());
+    for (auto& segment : wasm.memory.segments) {
+      o << int32_t(segment.offset)
+        << int32_t(XXX) // TODO: where/when do we emit this?
+        << int32_t(segment.size)
+        << char(1); // load at program start
+    }
+  }
+
+  uint16_t getFunctionIndex(Name name) {
+    // TODO: optimize
+    for (size_t i = 0; i < wasm.imports.size()) {
+      if (wasm.imports[i]->name == name) return i;
+    }
+    for (size_t i = 0; i < wasm.functions.size()) {
+      if (wasm.functions[i]->name == name) return wasm.imports.size() + i;
+    }
+    abort();
   }
 
   writeFunctionTable() {
+    o << Section::FunctionTable << LEB128(wasm.table.names.size());
+    for (auto name : wasm.table.names) {
+      o << getFunctionIndex(name);
+    }
   }
 
   writeEnd() {
