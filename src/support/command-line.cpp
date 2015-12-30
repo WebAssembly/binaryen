@@ -20,6 +20,9 @@ namespace {
 bool optionIs(const char *arg, const char *LongOpt, const char *ShortOpt) {
   return strcmp(arg, LongOpt) == 0 || strcmp(arg, ShortOpt) == 0;
 }
+bool startsWith(const char *str, const char *prefix) {
+  return strncmp(str, prefix, strlen(prefix)) == 0;
+}
 }  // anonymous namespace
 
 void wasm::processCommandLine(int argc, const char *argv[], Options *options,
@@ -42,7 +45,7 @@ void wasm::processCommandLine(int argc, const char *argv[], Options *options,
         exit(EXIT_FAILURE);
       }
       options->outfile = argv[++i];
-    } else if (argv[i][0] == '-' && argv[i][1] == '-') {
+    } else if (startsWith(argv[i], "--")) {
       size_t j = 2;
       std::string name;
       while (argv[i][j] && argv[i][j] != '=') {
