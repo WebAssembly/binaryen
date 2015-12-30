@@ -14,33 +14,16 @@
  * limitations under the License.
  */
 
-//
-// Command line helpers.
-//
+#include "support/command-line.h"
 
-#ifndef wasm_command_line_h
-#define wasm_command_line_h
-
-#include "wasm.h"
-
-namespace wasm {
-
-struct Options {
-  // standard options
-  bool debug;
-  std::string infile;
-  std::string outfile;
-  // extra options
-  std::map<std::string, const char*> extra;
-  Options() : debug(false) {}
-};
-
+namespace {
 bool optionIs(const char *arg, const char *LongOpt, const char *ShortOpt) {
   return strcmp(arg, LongOpt) == 0 || strcmp(arg, ShortOpt) == 0;
 }
+}  // anonymous namespace
 
-// TODO(jfb) Make this configurable: callers should pass in option handlers.
-void processCommandLine(int argc, const char *argv[], Options *options, const char *help) {
+void wasm::processCommandLine(int argc, const char *argv[], Options *options,
+                              const char *help) {
   assert(argc > 0 && "expect at least program name as an argument");
   for (size_t i = 1, e = argc; i != e; ++i) {
     if (optionIs(argv[i], "--help", "-h")) {
@@ -66,7 +49,7 @@ void processCommandLine(int argc, const char *argv[], Options *options, const ch
         name += argv[i][j];
         j++;
       }
-      options->extra[name] = argv[i][j] == '=' ? &argv[i][j+1] : "(no value)";
+      options->extra[name] = argv[i][j] == '=' ? &argv[i][j + 1] : "(no value)";
     } else {
       if (options->infile.size()) {
         std::cerr << "Expected only one input file, got '" << options->infile
@@ -77,7 +60,3 @@ void processCommandLine(int argc, const char *argv[], Options *options, const ch
     }
   }
 }
-
-}  // namespace wasm
-
-#endif // wasm_command_line_h

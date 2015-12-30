@@ -18,7 +18,7 @@
 // wasm2asm console tool
 //
 
-#include "command-line.h"
+#include "support/command-line.h"
 #include "s2wasm.h"
 
 using namespace cashew;
