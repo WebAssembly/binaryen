@@ -293,14 +293,14 @@ for s in sorted(os.listdir(os.path.join('test', 'dot_s'))) + sorted(os.listdir(o
 print '\n[ checking torture testcases... ]\n'
 
 import test.experimental.buildbot.link_assembly_files as link_assembly_files
-s2wasm_out = os.path.join('buildbot', 's2wasm-out')
+s2wasm_out = os.path.abspath(os.path.join('buildbot', 's2wasm-out'))
 if not os.path.isdir(s2wasm_out):
   os.mkdir(s2wasm_out)
 unexpected_result_count = link_assembly_files.run(
-      linker=os.path.join('bin', 's2wasm'),
-      files=os.path.join('buildbot', 'torture-s', '*.s'),
-      fails=os.path.join('test', 's2wasm_known_gcc_test_failures.txt'),
-      out=s2wasm_out)
+    linker=os.path.abspath(os.path.join('bin', 's2wasm')),
+    files=os.path.abspath(os.path.join('buildbot', 'torture-s', '*.s')),
+    fails=os.path.abspath(os.path.join('test', 's2wasm_known_gcc_test_failures.txt')),
+    out=s2wasm_out)
 if unexpected_result_count:
   fail(unexpected_result_count, 0)
 
