@@ -18,8 +18,8 @@
 // Command line helpers.
 //
 
-#ifndef wasm_command_line_h
-#define wasm_command_line_h
+#ifndef wasm_support_command_line_h
+#define wasm_support_command_line_h
 
 #include "wasm.h"
 
@@ -40,4 +40,4 @@ void processCommandLine(int argc, const char *argv[], Options *options,
 
 }  // namespace wasm
 
-#endif // wasm_command_line_h
+#endif // wasm_support_command_line_h
