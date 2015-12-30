@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_color_h
-#define wasm_color_h
+#ifndef wasm_support_color_h
+#define wasm_support_color_h
 
 #include <iosfwd>
 
@@ -31,4 +31,4 @@ inline void blue(std::ostream& stream) { outputColorCode(stream,"\033[34m"); }
 inline void bold(std::ostream& stream) { outputColorCode(stream,"\033[1m"); }
 };
 
-#endif // wasm_color_h
+#endif // wasm_support_color_h
