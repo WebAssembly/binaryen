@@ -577,7 +577,6 @@ private:
         if (wasm.functionTypesMap.count(typeName) == 0) {
           auto type = allocator.alloc<FunctionType>();
           type->name = typeName;
-          // TODO type->result
           for (auto operand : call->operands) {
             type->params.push_back(operand->type);
           }
