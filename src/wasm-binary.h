@@ -29,6 +29,64 @@
 
 namespace wasm {
 
+struct LEB128 {
+  int32_t value;
+  LEB128(int32_t value) : value(value) {}
+};
+
+// We mostly stream into a buffer as we create the binary format, however,
+// sometimes we need to backtrack and write to a location behind us.
+class BufferWithRandomAccess : public std::vector<unsigned char> {
+public:
+  BufferWithRandomAccess& operator<<(int8_t x) {
+    push_back(x);
+    return *this;
+  }
+  BufferWithRandomAccess& operator<<(int16_t x) {
+    push_back(x & 0xff);
+    push_back(x >> 8);
+    return *this;
+  }
+  BufferWithRandomAccess& operator<<(int32_t x) {
+    push_back(x & 0xff); x >>= 8;
+    push_back(x & 0xff); x >>= 8;
+    push_back(x & 0xff); x >>= 8;
+    push_back(x & 0xff);
+    return *this;
+  }
+  BufferWithRandomAccess& operator<<(int64_t x) {
+    push_back(x & 0xff); x >>= 8;
+    push_back(x & 0xff); x >>= 8;
+    push_back(x & 0xff); x >>= 8;
+    push_back(x & 0xff); x >>= 8;
+    push_back(x & 0xff); x >>= 8;
+    push_back(x & 0xff); x >>= 8;
+    push_back(x & 0xff); x >>= 8;
+    push_back(x & 0xff);
+    return *this;
+  }
+  BufferWithRandomAccess& operator<<(LEB128 x) {
+    // XXX TODO
+    magic
+    return *this;
+  }
+
+  void writeAt(size_t i, int16_t x) {
+    (*this)[i] = x & 0xff;
+    (*this)[i+1] = x >> 8;
+  }
+  void writeAt(size_t i, int32_t x) {
+    (*this)[i] = x & 0xff; x >>= 8;
+    (*this)[i+1] = x & 0xff; x >>= 8;
+    (*this)[i+2] = x & 0xff; x >>= 8;
+    (*this)[i+3] = x & 0xff;
+  }
+
+  friend ostream& operator<<(ostream& o, BufferWithRandomAccess& b) {
+    for (auto c : b) o << c;
+  }
+};
+
 enum Section {
   Memory = 0,
   Signatures = 1,
@@ -215,10 +273,10 @@ char binaryWasmType(WasmType type) {
 
 class WasmBinaryWriter : public WasmVisitor<void> {
   Module* wasm;
-  ostream& o;
+  BufferWithRandomAccess& o;
 
 public:
-  WasmBinaryWriter(Module* wasm, ostream& o) : wasm(wasm), o(o) {}
+  WasmBinaryWriter(Module* wasm, BufferWithRandomAccess& o) : wasm(wasm), o(o) {}
 
   void write() {
     writeMemory();
