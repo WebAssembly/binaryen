@@ -549,6 +549,52 @@ public:
     visit(curr->value);
   }
   void visitBinary(Binary *curr) {
+    #define TYPED_CODE(code) { \
+      switch (curr->left->type) { \
+        case i32: o << int8_t(I32##code); break; \
+        case i64: o << int8_t(I64##code); break; \
+        case f32: o << int8_t(F32##code); break; \
+        case f64: o << int8_t(F64##code); break; \
+        default: abort(); \
+      } \
+    }
+
+    switch (op) {
+      case Add:      TYPED_CODE(Add);
+      case Sub:      TYPED_CODE(Sub);
+      case Mul:      TYPED_CODE(Mul);
+      case DivS:     int8_t(curr->type == i32 ? I32DivS : I64DivS); break;
+      case DivU:     int8_t(curr->type == i32 ? I32DivU : I64DivU); break;
+      case RemS:     int8_t(curr->type == i32 ? I32RemS : I64RemS); break;
+      case RemU:     int8_t(curr->type == i32 ? I32RemU : I64RemU); break;
+      case And:      int8_t(curr->type == i32 ? I32And : I64And); break;
+      case Or:       int8_t(curr->type == i32 ? I32Or : I64Or); break;
+      case Xor:      int8_t(curr->type == i32 ? I32Xor : I64Xor); break;
+      case Shl:      int8_t(curr->type == i32 ? I32Shl : I64Shl); break;
+      case ShrU:     int8_t(curr->type == i32 ? I32ShrU : I64ShrU); break;
+      case ShrS:     int8_t(curr->type == i32 ? I32ShrS : I64ShrS); break;
+      case Div:      int8_t(curr->type == f32 ? F32Div : F64Div); break;
+      case CopySign: int8_t(curr->type == f32 ? F32CopySign : F64CopySign); break;
+      case Min:      int8_t(curr->type == f32 ? F32Min : F64Min); break;
+      case Max:      int8_t(curr->type == f32 ? F32Max : F64Max); break;
+      case Eq:       TYPED_CODE(Eq);
+      case Ne:       TYPED_CODE(Ne);
+      case LtS:      TYPED_CODE(LtS);
+      case LtU:      TYPED_CODE(LtU);
+      case LeS:      TYPED_CODE(LeS);
+      case LeU:      TYPED_CODE(LeU);
+      case GtS:      TYPED_CODE(GtS);
+      case GtU:      TYPED_CODE(GtU);
+      case GeS:      TYPED_CODE(GeS);
+      case GeU:      TYPED_CODE(GeU);
+      case Lt:       TYPED_CODE(Lt);
+      case Le:       TYPED_CODE(Le);
+      case Gt:       TYPED_CODE(Gt);
+      case Ge:       TYPED_CODE(Ge);
+      default:       abort();
+    }
+    visit(curr->left);
+    visit(curr->right);
   }
   void visitSelect(Select *curr) {
     o << int8_t(ASTNodes::Select);
