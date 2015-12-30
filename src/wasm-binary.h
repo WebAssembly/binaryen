@@ -189,6 +189,7 @@ enum ASTNodes {
   CallFunction = 0x12,
   CallIndirect = 0x13,
 
+  Nop = 0x00,
   Block = 0x01,
   Loop = 0x02,
   If = 0x03,
@@ -521,27 +522,31 @@ public:
   void visitBinary(Binary *curr) {
   }
   void visitSelect(Select *curr) {
+    o << int8_t(ASTNodes::Select);
+    visit(curr->ifTrue);
+    visit(curr->ifFalse);
+    visit(curr->condition);
   }
   void visitHost(Host *curr) {
+    switch (curr->op) {
+      case MemorySize: {
+        o << int8_t(ASTNodes::MemorySize);
+        break;
+      }
+      case GrowMemory: {
+        o << int8_t(ASTNodes::GrowMemory);
+        visit(curr->operands[0]);
+        break;
+      }
+      default: abort();
+    }
+    return o;
   }
   void visitNop(Nop *curr) {
+    o << int8_t(ASTNodes::Nop);
   }
   void visitUnreachable(Unreachable *curr) {
-  }
-  // Module-level visitors
-  void visitFunctionType(FunctionType *curr) {
-  }
-  void visitImport(Import *curr) {
-  }
-  void visitExport(Export *curr) {
-  }
-  void visitFunction(Function *curr) {
-  }
-  void visitTable(Table *curr) {
-  }
-  void visitMemory(Memory *curr) {
-  }
-  void visitModule(Module *curr) {
+    o << int8_t(ASTNodes::Unreachable);
   }
 };
 
@@ -553,7 +558,7 @@ public:
   WasmBinaryBuilder(AllocatingModule& wasm, istream& i) : wasm(wasm), allocator(wasm.allocator), i(i) {}
 
   void read() {
-    //
+    abort(); // TODO
   }
 };
 
