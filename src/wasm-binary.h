@@ -245,7 +245,7 @@ public:
     }
   }
 
-  int16_t functionTypeIndex(Name type) {
+  int16_t getFunctionTypeIndex(Name type) {
     // TODO: optimize
     for (size_t i = 0; i < wasm.functionTypes.size(); i++) {
       if (wasm.functionTypes[i].name == type) return i;
@@ -257,12 +257,16 @@ public:
   std::map<WasmType, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
   void mapLocals(Function* function) {
+    for (auto& param : function->params) {
+      size_t curr = mappedLocals.size();
+      mappedLocals[param.name] = curr;
+    }
     for (auto& local : function->locals) {
       numLocalsByType[local.type]++;
     }
     std::map<WasmType, size_t> currLocalsByType;
     for (auto& local : function->locals) {
-      size_t index = 0;
+      size_t index = function->params.size();
       Name name = local.name;
       WasmType type = local.type;
       currLocalsByType[type]++; // increment now for simplicity, must decremebt it in returns
@@ -302,7 +306,7 @@ public:
         name = function->name;
         type = function->type;
       }
-      o << functionTypeIndex(type);
+      o << getFunctionTypeIndex(type);
       o << char(FunctionEntry::Named |
                 (FunctionEntry::Import * !!import) |
                 (FunctionEntry::Locals * (function && function->locals.size() > 0) |
@@ -357,33 +361,134 @@ public:
 
   // AST writing via visitors
 
+  std::vector<Name> breakStack;
+
   void visitBlock(Block *curr) {
     o << char(ASTNodes::Block) << char(curr->list.size());
+    breakStack.push_back(curr->name);
     for (auto child : curr->list) {
       visit(child);
     }
+    breakStack.pop_back();
   }
   void visitIf(If *curr) {
+    o << char(curr->ifFalse ? ASTNodes::IfElse : ASTNodes::If);
+    visit(curr->condition);
+    visit(curr->ifTrue);
+    if (curr->ifFalse) visit(curr->ifFalse);
   }
   void visitLoop(Loop *curr) {
+    // TODO: optimize, as we usually have a block as our singleton child
+    o << char(ASTNodes::Loop) << char(1);
+    breakStack.push_back(curr->out);
+    breakStack.push_back(curr->in);
+    visit(curr->body);
+    breakStack.pop_back();
+    breakStack.pop_back();
   }
   void visitBreak(Break *curr) {
+    o << char(ASTNodes::Br);
+    for (int i = breakStack.size() - 1; i >= 0; i--) {
+      if (breakStack[i] == curr->name) {
+        o << char(breakStack.size() - 1 - i);
+        return;
+      }
+    }
+    abort();
   }
   void visitSwitch(Switch *curr) {
+    o << char(ASTNodes::TableSwitch) << int16_t(curr->cases.size())
+                                     << int16_t(curr->targets.size());
+    abort(); // WTF
   }
   void visitCall(Call *curr) {
+    o << char(ASTNodes::CallFunction) << LEB128(getFunctionIndex(curr->target));
+    for (auto operand : curr->operands) {
+      visit(operand);
+    }
   }
   void visitCallImport(CallImport *curr) {
+    o << char(ASTNodes::CallFunction) << LEB128(getFunctionIndex(curr->target));
+    for (auto operand : curr->operands) {
+      visit(operand);
+    }
   }
   void visitCallIndirect(CallIndirect *curr) {
+    o << char(ASTNodes::CallFunction) << LEB128(getFunctionTypeIndex(curr->functionType));
+    for (auto operand : curr->operands) {
+      visit(operand);
+    }
   }
   void visitGetLocal(GetLocal *curr) {
+    o << char(ASTNodes::GetLocal) << LEB128(mappedLocals[curr->name]);
   }
   void visitSetLocal(SetLocal *curr) {
+    o << char(ASTNodes::SetLocal) << LEB128(mappedLocals[curr->name]);
+    visit(curr->value);
   }
+
+  void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset)
+    o << char( (alignment == bytes || alignment == 0) ? 0 : 128) |
+               (offset ? 8 : 0) );
+    if (offset) o << LEB128(offset);
+  }
+
   void visitLoad(Load *curr) {
+    switch (curr->type) {
+      case i32: {
+        switch (curr->bytes) {
+          case 1: o << char(curr->signed_ ? ASTNodes::I32LoadMem8S : ASTNodes::I32LoadMem8U); break;
+          case 2: o << char(curr->signed_ ? ASTNodes::I32LoadMem16S : ASTNodes::I32LoadMem16U); break;
+          case 4: o << char(ASTNodes::I32LoadMem); break;
+          default: abort();
+        }
+        break;
+      }
+      case i64: {
+        switch (curr->bytes) {
+          case 1: o << char(curr->signed_ ? ASTNodes::I64LoadMem8S : ASTNodes::I64LoadMem8U); break;
+          case 2: o << char(curr->signed_ ? ASTNodes::I64LoadMem16S : ASTNodes::I64LoadMem16U); break;
+          case 4: o << char(curr->signed_ ? ASTNodes::I64LoadMem32S : ASTNodes::I64LoadMem32U); break;
+          case 8: o << char(ASTNodes::I64LoadMem); break;
+          default: abort();
+        }
+        break;
+      }
+      case f32: o << char(ASTNodes::F32LoadMem); break;
+      case f64: o << char(ASTNodes::F64LoadMem); break;
+      default: abort();
+    }
+    emitMemoryAccess(curr->alignment, curr->bytes, curr->offset);
+    visit(curr->ptr);
   }
   void visitStore(Store *curr) {
+    switch (curr->type) {
+      case i32: {
+        switch (curr->bytes) {
+          case 1: o << char(ASTNodes::I32StoreMem8); break;
+          case 2: o << char(ASTNodes::I32StoreMem16); break;
+          case 4: o << char(ASTNodes::I32StoreMem); break;
+          default: abort();
+        }
+        break;
+      }
+      case i64: {
+        switch (curr->bytes) {
+          case 1: o << char(ASTNodes::I64StoreMem8); break;
+          case 2: o << char(ASTNodes::I64StoreMem16); break;
+          case 4: o << char(ASTNodes::I64StoreMem32); break;
+          case 8: o << char(ASTNodes::I64StoreMem); break;
+          default: abort();
+        }
+        break;
+      }
+      case f32: o << char(ASTNodes::F32StoreMem); break;
+      case f64: o << char(ASTNodes::F64StoreMem); break;
+      default: abort();
+    }
+    emitMemoryAccess(curr->alignment, curr->bytes, curr->offset);
+    visit(curr->ptr);
+    visit(curr->value);
   }
   void visitConst(Const *curr) {
   }
