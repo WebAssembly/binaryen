@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
   while (i < root.size()) {
     if (debug) std::cerr << "parsing s-expressions to wasm...\n";
     AllocatingModule wasm;
-    SExpressionWasmBuilder builder(wasm, *root[i], [&]() { abort(); });
+    SExpressionWasmBuilder builder(wasm, *root[i], [&]() { abort(); }, debug);
     i++;
 
     auto interface = new ShellExternalInterface();
