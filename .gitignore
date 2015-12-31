@@ -8,6 +8,7 @@ bin/wasm.js
 *.diff
 a.*
 b.*
+*.pyc
 CMakeFiles/
 CMakeCache.txt
 Makefile
