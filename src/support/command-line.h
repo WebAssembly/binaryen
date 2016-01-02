@@ -21,22 +21,52 @@
 #ifndef wasm_support_command_line_h
 #define wasm_support_command_line_h
 
+#include <functional>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "wasm.h"
+
 
 namespace wasm {
 
-struct Options {
-  // standard options
-  bool debug;
-  std::string infile;
-  std::string outfile;
-  // extra options
-  std::map<std::string, const char *> extra;
-  Options() : debug(false) {}
-};
+class Options {
+ public:
+  typedef std::function<void(Options *, const std::string &)> Action;
+  enum class Arguments { Zero, One, N };
 
-void processCommandLine(int argc, const char *argv[], Options *options,
-                        const char *help);
+  bool debug;
+  std::map<std::string, std::string> extra;
+
+  Options(const std::string &command, const std::string &description);
+  ~Options();
+  Options &add(const std::string &longName, const std::string &shortName,
+               const std::string &description, Arguments arguments,
+               const Action &action);
+  Options &add_positional(const std::string &name, Arguments arguments,
+                          const Action &action);
+  void parse(int argc, const char *argv[]);
+
+ private:
+  Options() = delete;
+  Options(const Options &) = delete;
+  Options &operator=(const Options &) = delete;
+
+  struct Option {
+    std::string longName;
+    std::string shortName;
+    std::string description;
+    Arguments arguments;
+    Action action;
+    size_t seen;
+  };
+  std::vector<Option> options;
+  Arguments positional;
+  std::string positionalName;
+  Action positionalAction;
+};
 
 }  // namespace wasm
 
