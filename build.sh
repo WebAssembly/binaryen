@@ -1,7 +1,4 @@
-echo "updating git submodules"
-git submodule sync --quiet
-git submodule init --quiet
-git submodule update --quiet
+./update.py
 echo "building binaryen shell"
 g++ -O2 -std=c++11 src/binaryen-shell.cpp src/pass.cpp src/passes/LowerIfElse.cpp src/passes/NameManager.cpp src/passes/RemoveImports.cpp src/support/colors.cpp -o bin/binaryen-shell -Isrc/ -msse2 -mfpmath=sse # use sse for math, avoid x87, necessarily for proper float rounding on 32-bit
 echo "building asm2wasm"
