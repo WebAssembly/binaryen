@@ -25,24 +25,33 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  Options options;
-  processCommandLine(argc, argv, &options,
-                     "s2wasm INFILE\n\n"
-                     "Link .s file into .wast\n\n"
-                     "Optional arguments:\n"
-                     "  -n, --help        Show this help message and exit\n"
-                     "  -d, --debug       Print debug information to stderr\n"
-                     "  -o, --output      Output file (stdout if not specified)\n"
-                     "  --global-base=N   Where to start to place globals\n");
+  Options options("s2wasm", "Link .s file into .wast");
+  options.add("--output", "-o", "Output file (stdout if not specified)",
+              Options::Arguments::One,
+              [](Options *o, const std::string &argument) {
+                o->extra["output"] = argument;
+              })
+      .add("--global-base", "-g", "Where to start to place globals",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["global-base"] = argument;
+           })
+      .add_positional("INFILE", Options::Arguments::One,
+                      [](Options *o, const std::string &argument) {
+                        o->extra["infile"] = argument;
+                      });
+  options.parse(argc, argv);
 
   std::string input;
   {
     if (options.debug) {
-      std::cerr << "Loading '" << options.infile << "'..." << std::endl;
+      std::cerr << "Loading '" << options.extra["infile"] << "'..."
+                << std::endl;
     }
-    std::ifstream infile(options.infile);
+    std::ifstream infile(options.extra["infile"]);
     if (!infile.is_open()) {
-      std::cerr << "Failed opening '" << options.infile << "'" << std::endl;
+      std::cerr << "Failed opening '" << options.extra["infile"] << "'"
+                << std::endl;
       exit(EXIT_FAILURE);
     }
     infile.seekg(0, std::ios::end);
@@ -54,11 +63,15 @@ int main(int argc, const char *argv[]) {
 
   std::streambuf *buffer;
   std::ofstream outfile;
-  if (options.outfile.size()) {
-    if (options.debug) std::cerr << "Opening '" << options.outfile << std::endl;
-    outfile.open(options.outfile, std::ofstream::out | std::ofstream::trunc);
+  if (options.extra["output"].size()) {
+    if (options.debug) {
+      std::cerr << "Opening '" << options.extra["output"] << std::endl;
+    }
+    outfile.open(options.extra["output"],
+                 std::ofstream::out | std::ofstream::trunc);
     if (!outfile.is_open()) {
-      std::cerr << "Failed opening '" << options.outfile << "'" << std::endl;
+      std::cerr << "Failed opening '" << options.extra["output"] << "'"
+                << std::endl;
       exit(EXIT_FAILURE);
     }
     buffer = outfile.rdbuf();
@@ -69,7 +82,10 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
   AllocatingModule wasm;
-  size_t globalBase = options.extra["global-base"] ? atoi(options.extra["global-base"]) : 1;
+  size_t globalBase = options.extra.find("global-base") != options.extra.end()
+                          ? std::stoull(options.extra["global-base"])
+                          : 1;
+  if (options.debug) std::cerr << "Global base " << globalBase << '\n';
   S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, globalBase);
 
   if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
