@@ -23,6 +23,8 @@ Usage instructions for each are below.
 
 ## Building
 
+First run `update.py` to initialize the git submodules and fetch the test files. You may need to re-run `update.py` from time to time.
+
 ```
 $ ./build.sh
 ```
@@ -165,7 +167,7 @@ The `check.py` script supports some options:
  * If an interpreter is provided, we run the output through it, checking for parse errors.
  * If tests are provided, we run exactly those. If none are provided, we run them all.
  * Some tests require `emcc` or `nodejs` in the path. They will not run if the tool cannot be found, and you'll see a warning.
- * We have tests from upstream in `tests/spec` and `tests/experimental`, in git submodules. Running `./build.sh` should update those.
+ * We have tests from upstream in `tests/spec` and `tests/experimental`, in git submodules. Running `./update.py` should update those.
 
 (`src/emscripten-optimizer` is synced with `tools/optimizer/` in the main emscripten repo, for convenience)
 
