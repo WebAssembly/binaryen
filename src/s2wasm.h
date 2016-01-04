@@ -242,7 +242,7 @@ private:
     return cashew::IString(str.c_str(), false);
   }
 
-  std::vector<char> getQuoted() { // TODO: support 0 in the middle, etc., use a raw buffer, etc.
+  std::vector<char> getQuoted() {
     assert(*s == '"');
     s++;
     std::vector<char> str;
@@ -577,7 +577,6 @@ private:
         if (wasm.functionTypesMap.count(typeName) == 0) {
           auto type = allocator.alloc<FunctionType>();
           type->name = typeName;
-          // TODO type->result
           for (auto operand : call->operands) {
             type->params.push_back(operand->type);
           }

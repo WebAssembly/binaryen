@@ -216,10 +216,10 @@ for t in spec_tests:
 print '\n[ checking binaryen-shell experimental testcases... ]\n'
 
 if len(requested) == 0:
-  BLACKLIST = ['call.wast', # bad indirect_call
-               'cfg-stackify.wast', # bad and on import with no return value
-               'inline-asm.wast',
-               'switch.wast', # bad tableswitch
+  BLACKLIST = ['call.wast', # bad indirect_call, no type
+               'cfg-stackify.wast', # call an import $ which no return value, but in a context with a return value
+               'inline-asm.wast', # there is a (foo ..) s-expression block, perhaps inline asm? not a valid s-expression
+               'switch.wast', # bad tableswitch, no (table ..) inside it
               ]
   experimental_tests = [os.path.join('experimental', 'prototype-wasmate', 'test', 'expected-output', t) for t in sorted(os.listdir(os.path.join('test', 'experimental', 'prototype-wasmate', 'test', 'expected-output'))) if t not in BLACKLIST]
 else:
@@ -272,7 +272,9 @@ print '\n[ checking .s testcases... ]\n'
 
 for s in sorted(os.listdir(os.path.join('test', 'dot_s'))) + sorted(os.listdir(os.path.join('test', 'experimental', 'prototype-wasmate', 'test'))):
   if not s.endswith('.s'): continue
-  if s in ['inline-asm.s', 'offset-folding.s',]: continue
+  if s in ['inline-asm.s',    # what is this?
+           'offset-folding.s' # unresolved symbol x
+          ]: continue
   print '..', s
   wasm = s.replace('.s', '.wast')
   full = os.path.join('test', 'dot_s', s)

@@ -223,10 +223,11 @@ class SExpressionWasmBuilder {
   std::function<void ()> onError;
   int functionCounter;
   std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
+  bool debug;
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), allocator(wasm.allocator), onError(onError) {
+  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, std::function<void ()> onError, bool debug=false) : wasm(wasm), allocator(wasm.allocator), onError(onError), debug(debug) {
     assert(module[0]->str() == MODULE);
     functionCounter = 0;
     for (unsigned i = 1; i < module.size(); i++) {
@@ -410,7 +411,7 @@ public:
   #define abort_on(str) { std::cerr << "aborting on " << str << '\n'; onError(); }
 
   Expression* parseExpression(Element& s) {
-    //std::cerr << "parse expression " << s << '\n';
+    if (debug) std::cerr << "parse expression " << s << '\n';
     IString id = s[0]->str();
     const char *str = id.str;
     const char *dot = strchr(str, '.');
