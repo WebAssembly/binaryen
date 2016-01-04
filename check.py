@@ -270,6 +270,11 @@ for s in sorted(os.listdir(os.path.join('test', 'dot_s'))) + sorted(os.listdir(o
   if actual != expected:
     fail(actual, expected)
 
+  # verify with options
+  proc = subprocess.Popen([os.path.join('bin', 's2wasm'), full, '--global-base=1024'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  out, err = proc.communicate()
+  assert proc.returncode == 0, err
+
 print '\n[ checking example testcases... ]\n'
 
 subprocess.check_call(['g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.'])
