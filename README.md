@@ -158,6 +158,10 @@ The `WASM_BACKEND` option tells it to use the WebAssembly backend instead of the
 
 (or `python check.py`) will run `binaryen-shell`, `asm2wasm`, and `wasm.js` on the testcases in `test/`, and verify their outputs.
 
+It will also run `s2wasm` through the last known good LLVM output from the [build waterfall][], as fetched by `update.py`.
+
+  [build waterfall]: https://build.chromium.org/p/client.wasm.llvm/console
+
 The `check.py` script supports some options:
 
 ```

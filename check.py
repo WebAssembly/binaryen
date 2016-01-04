@@ -275,6 +275,20 @@ for s in sorted(os.listdir(os.path.join('test', 'dot_s'))) + sorted(os.listdir(o
   out, err = proc.communicate()
   assert proc.returncode == 0, err
 
+print '\n[ checking torture testcases... ]\n'
+
+import test.experimental.buildbot.link_assembly_files as link_assembly_files
+s2wasm_out = os.path.abspath(os.path.join('buildbot', 's2wasm-out'))
+if not os.path.isdir(s2wasm_out):
+  os.mkdir(s2wasm_out)
+unexpected_result_count = link_assembly_files.run(
+    linker=os.path.abspath(os.path.join('bin', 's2wasm')),
+    files=os.path.abspath(os.path.join('buildbot', 'torture-s', '*.s')),
+    fails=os.path.abspath(os.path.join('test', 's2wasm_known_gcc_test_failures.txt')),
+    out=s2wasm_out)
+if unexpected_result_count:
+  fail(unexpected_result_count, 0)
+
 print '\n[ checking example testcases... ]\n'
 
 subprocess.check_call(['g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.'])
