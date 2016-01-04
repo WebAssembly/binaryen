@@ -97,7 +97,7 @@ void Options::parse(int argc, const char *argv[]) {
     auto equal = currentOption.find_first_of('=');
     if (equal != std::string::npos) {
       argument = currentOption.substr(equal + 1);
-      currentOption = currentOption.substr(0, equal - 1);
+      currentOption = currentOption.substr(0, equal);
     }
     Option *option = nullptr;
     for (auto &o : options)
