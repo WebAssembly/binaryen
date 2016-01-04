@@ -1,4 +1,4 @@
-function () {
+function asm() {
   "use asm";
 
   var t = global.NaN, u = global.Infinity;
@@ -128,6 +128,12 @@ function () {
   }
   function cneg_nosemicolon() {
     FUNCTION_TABLE_c[1 & 7](1) // no semicolon
+  }
+  function forLoop() {
+    var i = 0;
+    for (i = 1; (i | 0) < 200; i = i + 1 | 0) {
+      h(i | 0);
+    }
   }
 
   function z() {

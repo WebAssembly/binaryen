@@ -380,7 +380,11 @@ struct Value {
     #define indentify() { for (int i = 0; i < indent; i++) os << "  "; }
     switch (type) {
       case String:
-        os << '"' << str.str << '"';
+        if (str.str) {
+          os << '"' << str.str << '"';
+        } else {
+          os << "\"(null)\"";
+        }
         break;
       case Number:
         os << std::setprecision(17) << num; // doubles can have 17 digits of precision
@@ -1558,6 +1562,14 @@ public:
   static Ref makeWhile(Ref condition, Ref body) {
     return &makeRawArray(3)->push_back(makeRawString(WHILE))
                             .push_back(condition)
+                            .push_back(body);
+  }
+
+  static Ref makeFor(Ref init, Ref condition, Ref inc, Ref body) {
+    return &makeRawArray(5)->push_back(makeRawString(FOR))
+                            .push_back(init)
+                            .push_back(condition)
+                            .push_back(inc)
                             .push_back(body);
   }
 

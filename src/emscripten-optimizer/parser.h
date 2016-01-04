@@ -386,6 +386,7 @@ class Parser {
     else if (frag.str == CONTINUE) return parseContinue(src, seps);
     else if (frag.str == SWITCH) return parseSwitch(src, seps);
     else if (frag.str == NEW) return parseNew(src, seps);
+    else if (frag.str == FOR) return parseFor(src, seps);
     dump(frag.str.str, src);
     abort();
     return nullptr;
@@ -490,6 +491,26 @@ class Parser {
     NodeRef condition = parseParenned(src);
     NodeRef body = parseMaybeBracketed(src, seps);
     return Builder::makeWhile(condition, body);
+  }
+
+  NodeRef parseFor(char*& src, const char* seps) {
+    skipSpace(src);
+    assert(*src == '(');
+    src++;
+    NodeRef init = parseElement(src, ";");
+    skipSpace(src);
+    assert(*src == ';');
+    src++;
+    NodeRef condition = parseElement(src, ";");
+    skipSpace(src);
+    assert(*src == ';');
+    src++;
+    NodeRef inc = parseElement(src, ")");
+    skipSpace(src);
+    assert(*src == ')');
+    src++;
+    NodeRef body = parseMaybeBracketed(src, seps);
+    return Builder::makeFor(init, condition, inc, body);
   }
 
   NodeRef parseBreak(char*& src, const char* seps) {

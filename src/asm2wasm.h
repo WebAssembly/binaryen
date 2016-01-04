@@ -1338,6 +1338,49 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       block->list.push_back(continuer);
       ret->body = block;
       return ret;
+    } else if (what == FOR) {
+      Ref finit = ast[1],
+          fcond = ast[2],
+          finc = ast[3],
+          fbody = ast[4];
+      auto ret = allocator.alloc<Loop>();
+      IString out, in;
+      if (!parentLabel.isNull()) {
+        out = getBreakLabelName(parentLabel);
+        in = getContinueLabelName(parentLabel);
+        parentLabel = IString();
+      } else {
+        out = getNextId("for-out");
+        in = getNextId("for-in");
+      }
+      ret->out = out;
+      ret->in = in;
+      breakStack.push_back(out);
+      continueStack.push_back(in);
+      Break *breakOut = allocator.alloc<Break>();
+      breakOut->name = out;
+      If *condition = allocator.alloc<If>();
+      condition->condition = process(fcond);
+      condition->ifTrue = allocator.alloc<Nop>();
+      condition->ifFalse = breakOut;
+      auto body = allocator.alloc<Block>();
+      body->list.push_back(condition);
+      body->list.push_back(process(fbody));
+      body->list.push_back(process(finc));
+      ret->body = body;
+      // loops do not automatically loop, add a branch back
+      Block* block = blockify(ret->body);
+      auto continuer = allocator.alloc<Break>();
+      continuer->name = ret->in;
+      block->list.push_back(continuer);
+      ret->body = block;
+      continueStack.pop_back();
+      breakStack.pop_back();
+      Block *outer = allocator.alloc<Block>();
+      // add an outer block for the init as well
+      outer->list.push_back(process(finit));
+      outer->list.push_back(ret);
+      return outer;
     } else if (what == LABEL) {
       assert(parentLabel.isNull());
       parentLabel = ast[1]->getIString();

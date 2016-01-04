@@ -409,6 +409,36 @@
       (i32.const 1)
     )
   )
+  (func $forLoop
+    (local $i i32)
+    (block
+      (set_local $i
+        (i32.const 1)
+      )
+      (loop $for-out$0 $for-in$1
+        (block
+          (if_else
+            (i32.lt_s
+              (get_local $i)
+              (i32.const 200)
+            )
+            (nop)
+            (br $for-out$0)
+          )
+          (call $h
+            (get_local $i)
+          )
+          (set_local $i
+            (i32.add
+              (get_local $i)
+              (i32.const 1)
+            )
+          )
+          (br $for-in$1)
+        )
+      )
+    )
+  )
   (func $z
     (nop)
   )
