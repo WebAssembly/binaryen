@@ -26,9 +26,10 @@ Options::Options(const std::string &command, const std::string &description)
         if (positional != Arguments::Zero) std::cerr << ' ' << positionalName;
         std::cerr << "\n\n" << description << "\n\nOptions:\n";
         size_t optionWidth = 0;
-        for (const auto &o : options)
+        for (const auto &o : options) {
           optionWidth =
               std::max(optionWidth, o.longName.size() + o.shortName.size());
+        }
         // TODO: line-wrap description.
         for (const auto &o : options) {
           size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
@@ -63,8 +64,9 @@ void Options::parse(int argc, const char *argv[]) {
   assert(argc > 0 && "expect at least program name as an argument");
   size_t positionalsSeen = 0;
   auto dashes = [](const std::string &s) {
-    for (size_t i = 0;; ++i)
+    for (size_t i = 0;; ++i) {
       if (s[i] != '-') return i;
+    }
   };
   for (size_t i = 1, e = argc; i != e; ++i) {
     std::string currentOption = argv[i];

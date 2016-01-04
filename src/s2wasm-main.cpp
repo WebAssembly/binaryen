@@ -64,8 +64,9 @@ int main(int argc, const char *argv[]) {
   std::streambuf *buffer;
   std::ofstream outfile;
   if (options.extra["output"].size()) {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "Opening '" << options.extra["output"] << std::endl;
+    }
     outfile.open(options.extra["output"],
                  std::ofstream::out | std::ofstream::trunc);
     if (!outfile.is_open()) {
