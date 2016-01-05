@@ -20,6 +20,7 @@
 #include <iosfwd>
 
 namespace Colors {
+void disable();
 void outputColorCode(std::ostream&stream, const char *colorCode);
 inline void normal(std::ostream& stream) { outputColorCode(stream,"\033[0m"); }
 inline void red(std::ostream& stream) { outputColorCode(stream,"\033[31m"); }
