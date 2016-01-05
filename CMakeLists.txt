@@ -35,6 +35,7 @@ SET(binaryen-shell_SOURCES
   src/passes/LowerIfElse.cpp
   src/passes/NameManager.cpp
   src/passes/RemoveImports.cpp
+  src/passes/RemoveUnusedNames.cpp
 )
 ADD_EXECUTABLE(binaryen-shell
                ${binaryen-shell_SOURCES})
