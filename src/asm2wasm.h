@@ -1571,6 +1571,7 @@ void Asm2WasmBuilder::optimize() {
   // Standard passes
 
   PassRunner passRunner(&allocator);
+  passRunner.add("remove-unused-brs");
   passRunner.add("remove-unused-names");
   passRunner.run(&wasm);
 }

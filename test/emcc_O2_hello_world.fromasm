@@ -9255,7 +9255,6 @@
         (i32.const 208)
         (i32.const -1)
       )
-      (br $topmost)
     )
   )
   (func $___stdio_write (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
@@ -11883,22 +11882,19 @@
     )
   )
   (func $_cleanup_418 (param $i1 i32)
-    (block $topmost
-      (if
-        (i32.eq
-          (i32.load align=4
-            (i32.add
-              (get_local $i1)
-              (i32.const 68)
-            )
+    (if
+      (i32.eq
+        (i32.load align=4
+          (i32.add
+            (get_local $i1)
+            (i32.const 68)
           )
-          (i32.const 0)
         )
-        (call $___unlockfile
-          (get_local $i1)
-        )
+        (i32.const 0)
       )
-      (br $topmost)
+      (call $___unlockfile
+        (get_local $i1)
+      )
     )
   )
   (func $establishStackSpace (param $i1 i32) (param $i2 i32)
@@ -11948,9 +11944,6 @@
     (i32.const 0)
   )
   (func $___unlockfile (param $i1 i32)
-    (block $topmost
-      (br $topmost)
-    )
   )
   (func $___lockfile (param $i1 i32) (result i32)
     (i32.const 0)
