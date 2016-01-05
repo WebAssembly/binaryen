@@ -317,6 +317,7 @@ private:
     localIndex = 0;
     otherIndex = 0;
     std::vector<NameType> typeParams; // we may have both params and a type. store the type info here
+    Block* autoBlock = nullptr; // we may need to add a block for the very top level
     for (;i < s.size(); i++) {
       Element& curr = *s[i];
       IString id = curr[0]->str();
@@ -368,13 +369,12 @@ private:
         if (!func->body) {
           func->body = ex;
         } else {
-          auto block = func->body->dyn_cast<Block>();
-          if (!block) {
-            block = allocator.alloc<Block>();
-            block->list.push_back(func->body);
-            func->body = block;
+          if (!autoBlock) {
+            autoBlock = allocator.alloc<Block>();
+            autoBlock->list.push_back(func->body);
+            func->body = autoBlock;
           }
-          block->list.push_back(ex);
+          autoBlock->list.push_back(ex);
         }
       }
     }

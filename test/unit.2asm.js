@@ -241,6 +241,16 @@ function asmFunc(global, env, buffer) {
   
  }
  
+ function block_and_after() {
+  var wasm2asm_i32$0 = 0;
+  waka : {
+   1;
+   break waka;
+  }
+  wasm2asm_i32$0 = 0;
+  return wasm2asm_i32$0 | 0;
+ }
+ 
  var FUNCTION_TABLE_d = [importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles, importedDoubles];
  var FUNCTION_TABLE_v = [z, big_negative, z, z, w, w, z, w, z, z, z, z, z, z, z, z];
  var FUNCTION_TABLE_vf = [cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg, cneg];

@@ -378,4 +378,11 @@
   (func $w
     (nop)
   )
+  (func $block_and_after (result i32)
+    (block $waka
+      (i32.const 1)
+      (br $waka)
+    )
+    (i32.const 0)
+  )
 )
