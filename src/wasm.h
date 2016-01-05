@@ -912,7 +912,16 @@ public:
       doIndent(o, indent);
       printMinorOpening(o, "local ") << local.name << ' ' << printWasmType(local.type) << ")\n";
     }
-    Expression::printFullLine(o, indent, body);
+    // It is ok to emit a block here, as a function can directly contain a list, even if our
+    // ast avoids that for simplicity. We can just do that optimization here..
+    if (body->is<Block>() && body->cast<Block>()->name.isNull()) {
+      Block* block = body->cast<Block>();
+      for (auto item : block->list) {
+        Expression::printFullLine(o, indent, item);
+      }
+    } else {
+      Expression::printFullLine(o, indent, body);
+    }
     return decIndent(o, indent);
   }
 };

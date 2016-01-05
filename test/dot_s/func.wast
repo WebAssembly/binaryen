@@ -67,9 +67,7 @@
     )
   )
   (func $f5 (result f32)
-    (block
-      (unreachable)
-    )
+    (unreachable)
   )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 0 }

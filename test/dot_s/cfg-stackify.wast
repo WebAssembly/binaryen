@@ -272,19 +272,17 @@
     )
   )
   (func $minimal_loop (param $$0 i32) (result i32)
-    (block
-      (i32.store align=4
-        (get_local $$0)
-        (i32.const 0)
-      )
-      (loop $BB7_2 $BB7_1
-        (block
-          (i32.store align=4
-            (get_local $$0)
-            (i32.const 1)
-          )
-          (br $BB7_1)
+    (i32.store align=4
+      (get_local $$0)
+      (i32.const 0)
+    )
+    (loop $BB7_2 $BB7_1
+      (block
+        (i32.store align=4
+          (get_local $$0)
+          (i32.const 1)
         )
+        (br $BB7_1)
       )
     )
   )
@@ -416,57 +414,55 @@
     )
   )
   (func $doublediamond_in_a_loop (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
-    (block
-      (loop $BB11_7 $BB11_1
-        (block
-          (i32.store align=4
-            (get_local $$2)
-            (i32.const 0)
-          )
-          (block $BB11_6
-            (block $BB11_5
+    (loop $BB11_7 $BB11_1
+      (block
+        (i32.store align=4
+          (get_local $$2)
+          (i32.const 0)
+        )
+        (block $BB11_6
+          (block $BB11_5
+            (br_if
+              (i32.eq
+                (get_local $$0)
+                (i32.const 0)
+              )
+              $BB11_5
+            )
+            (i32.store align=4
+              (get_local $$2)
+              (i32.const 2)
+            )
+            (block $BB11_4
               (br_if
                 (i32.eq
-                  (get_local $$0)
+                  (get_local $$1)
                   (i32.const 0)
                 )
-                $BB11_5
+                $BB11_4
               )
               (i32.store align=4
                 (get_local $$2)
-                (i32.const 2)
-              )
-              (block $BB11_4
-                (br_if
-                  (i32.eq
-                    (get_local $$1)
-                    (i32.const 0)
-                  )
-                  $BB11_4
-                )
-                (i32.store align=4
-                  (get_local $$2)
-                  (i32.const 4)
-                )
-                (br $BB11_6)
-              )
-              (i32.store align=4
-                (get_local $$2)
-                (i32.const 3)
+                (i32.const 4)
               )
               (br $BB11_6)
             )
             (i32.store align=4
               (get_local $$2)
-              (i32.const 1)
+              (i32.const 3)
             )
+            (br $BB11_6)
           )
           (i32.store align=4
             (get_local $$2)
-            (i32.const 5)
+            (i32.const 1)
           )
-          (br $BB11_1)
         )
+        (i32.store align=4
+          (get_local $$2)
+          (i32.const 5)
+        )
+        (br $BB11_1)
       )
     )
   )
@@ -696,55 +692,37 @@
   (func $test7 (param $$0 i32) (param $$1 i32)
     (local $$2 i32)
     (local $$3 i32)
-    (block
-      (set_local $$3
-        (i32.const 0)
+    (set_local $$3
+      (i32.const 0)
+    )
+    (set_local $$2
+      (i32.store align=4
+        (get_local $$3)
+        (get_local $$3)
       )
-      (set_local $$2
-        (i32.store align=4
-          (get_local $$3)
-          (get_local $$3)
-        )
-      )
-      (loop $BB16_5 $BB16_1
-        (block
-          (set_local $$3
-            (i32.store align=4
-              (get_local $$2)
-              (i32.const 1)
-            )
+    )
+    (loop $BB16_5 $BB16_1
+      (block
+        (set_local $$3
+          (i32.store align=4
+            (get_local $$2)
+            (i32.const 1)
           )
-          (block $BB16_4
-            (br_if
-              (i32.eq
-                (i32.and
-                  (get_local $$0)
-                  (get_local $$3)
-                )
-                (i32.const 0)
-              )
-              $BB16_4
-            )
-            (i32.store align=4
-              (get_local $$2)
-              (i32.const 3)
-            )
-            (br_if
+        )
+        (block $BB16_4
+          (br_if
+            (i32.eq
               (i32.and
-                (get_local $$1)
+                (get_local $$0)
                 (get_local $$3)
               )
-              $BB16_1
+              (i32.const 0)
             )
-            (i32.store align=4
-              (get_local $$2)
-              (i32.const 5)
-            )
-            (unreachable)
+            $BB16_4
           )
           (i32.store align=4
             (get_local $$2)
-            (i32.const 2)
+            (i32.const 3)
           )
           (br_if
             (i32.and
@@ -753,47 +731,61 @@
             )
             $BB16_1
           )
+          (i32.store align=4
+            (get_local $$2)
+            (i32.const 5)
+          )
+          (unreachable)
+        )
+        (i32.store align=4
+          (get_local $$2)
+          (i32.const 2)
+        )
+        (br_if
+          (i32.and
+            (get_local $$1)
+            (get_local $$3)
+          )
+          $BB16_1
         )
       )
-      (i32.store align=4
-        (get_local $$2)
-        (i32.const 4)
-      )
-      (unreachable)
     )
+    (i32.store align=4
+      (get_local $$2)
+      (i32.const 4)
+    )
+    (unreachable)
   )
   (func $test8 (result i32)
     (local $$0 i32)
-    (block
-      (set_local $$0
-        (i32.const 0)
-      )
-      (loop $BB17_4 $BB17_1
-        (block
-          (block $BB17_3
+    (set_local $$0
+      (i32.const 0)
+    )
+    (loop $BB17_4 $BB17_1
+      (block
+        (block $BB17_3
+          (br_if
+            (i32.eq
+              (get_local $$0)
+              (i32.const 0)
+            )
+            $BB17_3
+          )
+          (br_if
+            (i32.eq
+              (get_local $$0)
+              (i32.const 0)
+            )
+            $BB17_1
+          )
+        )
+        (loop $BB17_4 $BB17_3
+          (block
             (br_if
-              (i32.eq
-                (get_local $$0)
-                (i32.const 0)
-              )
+              (get_local $$0)
               $BB17_3
             )
-            (br_if
-              (i32.eq
-                (get_local $$0)
-                (i32.const 0)
-              )
-              $BB17_1
-            )
-          )
-          (loop $BB17_4 $BB17_3
-            (block
-              (br_if
-                (get_local $$0)
-                $BB17_3
-              )
-              (br $BB17_1)
-            )
+            (br $BB17_1)
           )
         )
       )

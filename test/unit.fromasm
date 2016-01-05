@@ -8,22 +8,20 @@
   (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative
     (local $temp f64)
-    (block
-      (set_local $temp
-        (f64.const -2147483648)
-      )
-      (set_local $temp
-        (f64.const -2147483648)
-      )
-      (set_local $temp
-        (f64.const -21474836480)
-      )
-      (set_local $temp
-        (f64.const 0.039625)
-      )
-      (set_local $temp
-        (f64.const -0.039625)
-      )
+    (set_local $temp
+      (f64.const -2147483648)
+    )
+    (set_local $temp
+      (f64.const -2147483648)
+    )
+    (set_local $temp
+      (f64.const -21474836480)
+    )
+    (set_local $temp
+      (f64.const 0.039625)
+    )
+    (set_local $temp
+      (f64.const -0.039625)
     )
   )
   (func $importedDoubles (result f64)
@@ -132,21 +130,19 @@
   (func $conversions
     (local $i i32)
     (local $d f64)
-    (block
-      (set_local $i
-        (call_import $f64-to-int
-          (get_local $d)
-        )
+    (set_local $i
+      (call_import $f64-to-int
+        (get_local $d)
       )
-      (set_local $d
-        (f64.convert_s/i32
-          (get_local $i)
-        )
+    )
+    (set_local $d
+      (f64.convert_s/i32
+        (get_local $i)
       )
-      (set_local $d
-        (f64.convert_u/i32
-          (get_local $i)
-        )
+    )
+    (set_local $d
+      (f64.convert_u/i32
+        (get_local $i)
       )
     )
   )
@@ -261,32 +257,28 @@
   )
   (func $big_uint_div_u (result i32)
     (local $x i32)
-    (block
-      (set_local $x
-        (i32.and
-          (i32.div_u
-            (i32.const -1)
-            (i32.const 2)
-          )
+    (set_local $x
+      (i32.and
+        (i32.div_u
           (i32.const -1)
+          (i32.const 2)
         )
+        (i32.const -1)
       )
-      (get_local $x)
     )
+    (get_local $x)
   )
   (func $fr (param $x f32)
     (local $y f32)
     (local $z f64)
-    (block
-      (f32.demote/f64
-        (get_local $z)
-      )
-      (get_local $y)
-      (f32.const 5)
-      (f32.const 0)
-      (f32.const 5)
-      (f32.const 0)
+    (f32.demote/f64
+      (get_local $z)
     )
+    (get_local $y)
+    (f32.const 5)
+    (f32.const 0)
+    (f32.const 5)
+    (f32.const 0)
   )
   (func $negZero (result f64)
     (f64.const -0)
@@ -296,55 +288,51 @@
     (local $y f64)
     (local $z f32)
     (local $asm2wasm_i32_temp i32)
-    (block
-      (set_local $x
-        (block
-          (set_local $asm2wasm_i32_temp
+    (set_local $x
+      (block
+        (set_local $asm2wasm_i32_temp
+          (i32.const 0)
+        )
+        (i32.select
+          (i32.lt_s
+            (get_local $asm2wasm_i32_temp)
             (i32.const 0)
           )
-          (i32.select
-            (i32.lt_s
-              (get_local $asm2wasm_i32_temp)
-              (i32.const 0)
-            )
-            (i32.sub
-              (i32.const 0)
-              (get_local $asm2wasm_i32_temp)
-            )
+          (i32.sub
+            (i32.const 0)
             (get_local $asm2wasm_i32_temp)
           )
+          (get_local $asm2wasm_i32_temp)
         )
       )
-      (set_local $y
-        (f64.abs
-          (f64.const 0)
-        )
+    )
+    (set_local $y
+      (f64.abs
+        (f64.const 0)
       )
-      (set_local $z
-        (f32.abs
-          (f32.const 0)
-        )
+    )
+    (set_local $z
+      (f32.abs
+        (f32.const 0)
       )
     )
   )
   (func $neg
     (local $x f32)
-    (block
-      (set_local $x
-        (f32.neg
-          (get_local $x)
-        )
-      )
-      (call_indirect $FUNCSIG$vf
-        (i32.add
-          (i32.and
-            (i32.const 1)
-            (i32.const 7)
-          )
-          (i32.const 8)
-        )
+    (set_local $x
+      (f32.neg
         (get_local $x)
       )
+    )
+    (call_indirect $FUNCSIG$vf
+      (i32.add
+        (i32.and
+          (i32.const 1)
+          (i32.const 7)
+        )
+        (i32.const 8)
+      )
+      (get_local $x)
     )
   )
   (func $cneg (param $x f32)
@@ -369,33 +357,31 @@
   (func $smallCompare (result i32)
     (local $i i32)
     (local $j i32)
-    (block
-      (if
-        (i32.lt_s
+    (if
+      (i32.lt_s
+        (get_local $i)
+        (get_local $j)
+      )
+      (set_local $i
+        (i32.add
           (get_local $i)
-          (get_local $j)
-        )
-        (set_local $i
-          (i32.add
-            (get_local $i)
-            (i32.const 1)
-          )
+          (i32.const 1)
         )
       )
-      (if
-        (i32.lt_u
-          (get_local $i)
-          (get_local $j)
-        )
-        (set_local $i
-          (i32.add
-            (get_local $i)
-            (i32.const 1)
-          )
-        )
-      )
-      (get_local $i)
     )
+    (if
+      (i32.lt_u
+        (get_local $i)
+        (get_local $j)
+      )
+      (set_local $i
+        (i32.add
+          (get_local $i)
+          (i32.const 1)
+        )
+      )
+    )
+    (get_local $i)
   )
   (func $cneg_nosemicolon
     (call_indirect $FUNCSIG$vi
@@ -411,31 +397,29 @@
   )
   (func $forLoop
     (local $i i32)
-    (block
-      (set_local $i
-        (i32.const 1)
-      )
-      (loop $for-out$0 $for-in$1
-        (block
-          (if_else
-            (i32.lt_s
-              (get_local $i)
-              (i32.const 200)
-            )
-            (nop)
-            (br $for-out$0)
-          )
-          (call $h
+    (set_local $i
+      (i32.const 1)
+    )
+    (loop $for-out$0 $for-in$1
+      (block
+        (if_else
+          (i32.lt_s
             (get_local $i)
+            (i32.const 200)
           )
-          (set_local $i
-            (i32.add
-              (get_local $i)
-              (i32.const 1)
-            )
-          )
-          (br $for-in$1)
+          (nop)
+          (br $for-out$0)
         )
+        (call $h
+          (get_local $i)
+        )
+        (set_local $i
+          (i32.add
+            (get_local $i)
+            (i32.const 1)
+          )
+        )
+        (br $for-in$1)
       )
     )
   )

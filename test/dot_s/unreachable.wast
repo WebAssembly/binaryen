@@ -5,10 +5,8 @@
   (export "f2" $f2)
   (export "f3" $f3)
   (func $f1 (result i32)
-    (block
-      (call_import $abort)
-      (unreachable)
-    )
+    (call_import $abort)
+    (unreachable)
   )
   (func $f2
     (block $fake_return_waka123
