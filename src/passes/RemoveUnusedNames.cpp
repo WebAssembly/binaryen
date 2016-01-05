@@ -24,24 +24,22 @@
 namespace wasm {
 
 struct RemoveUnusedNames : public Pass {
-  std::set<Name> used;
+  // We maintain a list of branches that we saw in children, then when we reach
+  // a parent block, we know if it was branched to
+  std::set<Name> branchesSeen;
 
-  void prepare(PassRunner* runner, Module *module) override {
-    struct Scanner : public WasmWalker {
-      std::set<Name>& used;
-      Scanner(std::set<Name>& used) : used(used) {}
-      void visitBreak(Break *curr) override {
-        used.insert(curr->name);
-      }
-    };
-    Scanner scanner(used);
-    scanner.startWalk(module);
+  void visitBreak(Break *curr) override {
+    branchesSeen.insert(curr->name);
   }
 
   void visitBlock(Block *curr) override {
-    if (curr->name.is() && used.count(curr->name) == 0) {
+    if (curr->name.is() && branchesSeen.count(curr->name) == 0) {
       curr->name = Name();
     }
+  }
+
+  void visitFunction(Function *curr) override {
+    branchesSeen.clear();
   }
 };
 

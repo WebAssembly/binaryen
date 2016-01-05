@@ -261,7 +261,7 @@
   )
   (func $big_uint_div_u (result i32)
     (local $x i32)
-    (block $topmost
+    (block
       (set_local $x
         (i32.and
           (i32.div_u
@@ -369,7 +369,7 @@
   (func $smallCompare (result i32)
     (local $i i32)
     (local $j i32)
-    (block $topmost
+    (block
       (if
         (i32.lt_s
           (get_local $i)
