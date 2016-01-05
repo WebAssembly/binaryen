@@ -2,7 +2,7 @@
 echo "building binaryen shell"
 g++ -O2 -std=c++11 src/binaryen-shell.cpp src/pass.cpp src/passes/LowerIfElse.cpp src/passes/NameManager.cpp src/passes/RemoveImports.cpp src/passes/RemoveUnusedNames.cpp src/support/colors.cpp -o bin/binaryen-shell -Isrc/ -msse2 -mfpmath=sse # use sse for math, avoid x87, necessarily for proper float rounding on 32-bit
 echo "building asm2wasm"
-g++ -O2 -std=c++11 src/asm2wasm-main.cpp src/emscripten-optimizer/parser.cpp src/emscripten-optimizer/simple_ast.cpp src/emscripten-optimizer/optimizer-shared.cpp src/support/colors.cpp -Isrc/ -o bin/asm2wasm
+g++ -O2 -std=c++11 src/asm2wasm-main.cpp src/passes/RemoveUnusedNames.cpp src/emscripten-optimizer/parser.cpp src/emscripten-optimizer/simple_ast.cpp src/emscripten-optimizer/optimizer-shared.cpp src/support/colors.cpp -Isrc/ -o bin/asm2wasm
 echo "building wasm2asm"
 g++ -O2 -std=c++11 src/wasm2asm-main.cpp src/emscripten-optimizer/parser.cpp src/emscripten-optimizer/simple_ast.cpp src/emscripten-optimizer/optimizer-shared.cpp src/support/colors.cpp -Isrc/ -o bin/wasm2asm
 echo "building s2wasm"

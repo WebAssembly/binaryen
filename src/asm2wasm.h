@@ -27,6 +27,7 @@
 #include "mixed_arena.h"
 #include "shared-constants.h"
 #include "asm_v_wasm.h"
+#include "pass.h"
 
 namespace wasm {
 
@@ -1566,6 +1567,12 @@ void Asm2WasmBuilder::optimize() {
   for (auto pair : wasm.functionsMap) {
     blockBreakOptimizer.startWalk(pair.second);
   }
+
+  // Standard passes
+
+  PassRunner passRunner(&allocator);
+  passRunner.add("remove-unused-names");
+  passRunner.run(&wasm);
 }
 
 } // namespace wasm

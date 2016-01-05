@@ -46,6 +46,8 @@ INSTALL(TARGETS binaryen-shell DESTINATION bin)
 
 SET(asm2wasm_SOURCES
   src/asm2wasm-main.cpp
+  src/pass.cpp
+  src/passes/RemoveUnusedNames.cpp
   src/emscripten-optimizer/parser.cpp
   src/emscripten-optimizer/simple_ast.cpp
   src/emscripten-optimizer/optimizer-shared.cpp

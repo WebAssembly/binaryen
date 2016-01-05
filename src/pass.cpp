@@ -54,7 +54,9 @@ std::string PassRegistry::getPassDescription(std::string name) {
 // PassRunner
 
 void PassRunner::add(std::string passName) {
-  passes.push_back(PassRegistry::get()->createPass(passName));
+  auto pass = PassRegistry::get()->createPass(passName);
+  assert(pass);
+  passes.push_back(pass);
 }
 
 template<class P>
