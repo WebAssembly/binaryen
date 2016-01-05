@@ -18,6 +18,7 @@
 // wasm2asm console tool
 //
 
+#include "support/colors.h"
 #include "support/command-line.h"
 #include "s2wasm.h"
 
@@ -30,6 +31,7 @@ int main(int argc, const char *argv[]) {
               Options::Arguments::One,
               [](Options *o, const std::string &argument) {
                 o->extra["output"] = argument;
+                Colors::disable();
               })
       .add("--global-base", "-g", "Where to start to place globals",
            Options::Arguments::One,

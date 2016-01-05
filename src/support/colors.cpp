@@ -24,15 +24,19 @@
 # include <unistd.h>
 #endif
 
-namespace Colors {
-void outputColorCode(std::ostream& stream, const char* colorCode) {
+namespace {
+bool colors_disabled = false;
+}  // anonymous namespace
+
+void Colors::disable() { colors_disabled = true; }
+
+void Colors::outputColorCode(std::ostream& stream, const char* colorCode) {
 #if defined(CAN_HAZ_COLOR)
   const static bool has_color = []() {
     return (getenv("COLORS") && getenv("COLORS")[0] == '1') ||  // forced
            (isatty(STDOUT_FILENO) &&
             (!getenv("COLORS") || getenv("COLORS")[0] != '0'));  // implicit
   }();
-  if (has_color) stream << colorCode;
+  if (has_color && !colors_disabled) stream << colorCode;
 #endif
 }
-}  // namespace Colors
