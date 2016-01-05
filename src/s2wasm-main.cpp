@@ -19,6 +19,7 @@
 //
 
 #include "support/command-line.h"
+#include "support/file.h"
 #include "s2wasm.h"
 
 using namespace cashew;
@@ -42,43 +43,8 @@ int main(int argc, const char *argv[]) {
                       });
   options.parse(argc, argv);
 
-  std::string input;
-  {
-    if (options.debug) {
-      std::cerr << "Loading '" << options.extra["infile"] << "'..."
-                << std::endl;
-    }
-    std::ifstream infile(options.extra["infile"]);
-    if (!infile.is_open()) {
-      std::cerr << "Failed opening '" << options.extra["infile"] << "'"
-                << std::endl;
-      exit(EXIT_FAILURE);
-    }
-    infile.seekg(0, std::ios::end);
-    size_t insize = infile.tellg();
-    input.resize(insize + 1);
-    infile.seekg(0);
-    infile.read(&input[0], insize);
-  }
-
-  std::streambuf *buffer;
-  std::ofstream outfile;
-  if (options.extra["output"].size()) {
-    if (options.debug) {
-      std::cerr << "Opening '" << options.extra["output"] << std::endl;
-    }
-    outfile.open(options.extra["output"],
-                 std::ofstream::out | std::ofstream::trunc);
-    if (!outfile.is_open()) {
-      std::cerr << "Failed opening '" << options.extra["output"] << "'"
-                << std::endl;
-      exit(EXIT_FAILURE);
-    }
-    buffer = outfile.rdbuf();
-  } else {
-    buffer = std::cout.rdbuf();
-  }
-  std::ostream out(buffer);
+  std::string input(read_file(options.extra["infile"], options.debug));
+  Output output(options.extra["output"], options.debug);
 
   if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
   AllocatingModule wasm;
@@ -93,7 +59,7 @@ int main(int argc, const char *argv[]) {
   s2wasm.emscriptenGlue(meta);
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
-  out << wasm << meta.str() << std::endl;
+  output << wasm << meta.str() << std::endl;
 
   if (options.debug) std::cerr << "Done." << std::endl;
 }

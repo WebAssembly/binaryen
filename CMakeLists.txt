@@ -26,6 +26,7 @@ ENDIF()
 SET(support_SOURCES
   src/support/colors.cpp
   src/support/command-line.cpp
+  src/support/file.cpp
 )
 ADD_LIBRARY(support STATIC ${support_SOURCES})
 
