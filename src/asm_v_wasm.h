@@ -46,6 +46,7 @@ AsmType wasmToAsmType(WasmType type) {
 char getSig(WasmType type) {
   switch (type) {
     case i32:  return 'i';
+    case i64:  return 'j';
     case f32:  return 'f';
     case f64:  return 'd';
     case none: return 'v';
@@ -76,6 +77,26 @@ std::string getSig(CallBase *call) {
   ret += getSig(call->type);
   for (auto operand : call->operands) {
     ret += getSig(operand->type);
+  }
+  return ret;
+}
+
+WasmType sigToWasmType(char sig) {
+  switch (sig) {
+    case 'i': return i32;
+    case 'j': return i64;
+    case 'f': return f32;
+    case 'd': return f64;
+    case 'v': return none;
+    default: abort();
+  }
+}
+
+FunctionType sigToFunctionType(std::string sig) {
+  FunctionType ret;
+  ret.result = sigToWasmType(sig[0]);
+  for (size_t i = 1; i < sig.size(); i++) {
+    ret.params.push_back(sigToWasmType(sig[i]));
   }
   return ret;
 }

@@ -1,6 +1,6 @@
 (module
   (memory 0 4294967295)
-  (import $fmaf "env" "fmaf")
+  (import $fmaf "env" "fmaf" (param f32 f32 f32) (result f32))
   (export "fadd32" $fadd32)
   (export "fsub32" $fsub32)
   (export "fmul32" $fmul32)

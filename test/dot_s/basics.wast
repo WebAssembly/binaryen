@@ -1,6 +1,6 @@
 (module
   (memory 52 4294967295 (segment 16 "hello, world!\n\00") (segment 32 "vcq") (segment 48 "\16\00\00\00"))
-  (import $puts "env" "puts")
+  (import $puts "env" "puts" (param i32))
   (export "main" $main)
   (table $main)
   (func $main (param $$0 i32) (param $$1 i32) (result i32)

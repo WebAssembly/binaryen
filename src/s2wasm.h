@@ -552,12 +552,6 @@ private:
           auto specific = allocator.alloc<CallImport>();
           specific->target = target;
           curr = specific;
-          if (wasm.importsMap.count(target) == 0) {
-            auto import = allocator.alloc<Import>();
-            import->name = import->base = target;
-            import->module = ENV;
-            wasm.addImport(import);
-          }
         }
       }
       curr->type = type;
@@ -584,6 +578,15 @@ private:
           call->fullType = type;
         } else {
           call->fullType = wasm.functionTypesMap[typeName];
+        }
+      } else if (curr->is<CallImport>()) {
+        auto target = curr->cast<CallImport>()->target;
+        if (wasm.importsMap.count(target) == 0) {
+          auto import = allocator.alloc<Import>();
+          import->name = import->base = target;
+          import->module = ENV;
+          import->type = sigToFunctionType(getSig(curr));
+          wasm.addImport(import);
         }
       }
     };
@@ -1070,6 +1073,7 @@ public:
             auto import = parent->allocator.alloc<Import>();
             import->name = import->base = curr->target;
             import->module = ENV;
+            import->type = sigToFunctionType(getSig(curr));
             parent->wasm.addImport(import);
           }
         }

@@ -1,7 +1,7 @@
 (module
   (memory 0 4294967295)
-  (import $__lshrti3 "env" "__lshrti3")
-  (import $__ashlti3 "env" "__ashlti3")
+  (import $__lshrti3 "env" "__lshrti3" (param i32 i64 i64 i64))
+  (import $__ashlti3 "env" "__ashlti3" (param i32 i64 i64 i64))
   (export "shl_i3" $shl_i3)
   (export "shl_i53" $shl_i53)
   (export "sext_in_reg_i32_i64" $sext_in_reg_i32_i64)

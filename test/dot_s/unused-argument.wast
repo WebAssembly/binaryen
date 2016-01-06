@@ -1,6 +1,6 @@
 (module
   (memory 0 4294967295)
-  (import $return_something "env" "return_something")
+  (import $return_something "env" "return_something" (result i32))
   (export "unused_first" $unused_first)
   (export "unused_second" $unused_second)
   (export "call_something" $call_something)
