@@ -213,6 +213,10 @@ struct Literal {
       o << "nan:" << std::hex << u.ll << std::dec;
       return;
     }
+    if (!std::isfinite(d)) {
+      o << (d < 0 ? "-infinity" : "infinity");
+      return;
+    }
     const char *text = cashew::JSPrinter::numToString(d);
     // spec interpreter hates floats starting with '.'
     if (text[0] == '.') {
