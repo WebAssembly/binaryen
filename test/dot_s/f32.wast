@@ -80,7 +80,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.neg
+          (f32.neg
             (get_local $$0)
           )
         )
@@ -147,7 +147,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.nearest
+          (f32.nearest
             (get_local $$0)
           )
         )
@@ -158,7 +158,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.nearest
+          (f32.nearest
             (get_local $$0)
           )
         )

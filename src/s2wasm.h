@@ -674,8 +674,8 @@ private:
           break;
         }
         case 'n': {
-          if (match("neg")) makeUnary(UnaryOp::Neg, i32);
-          else if (match("nearest")) makeUnary(UnaryOp::Nearest, i32);
+          if (match("neg")) makeUnary(UnaryOp::Neg, type);
+          else if (match("nearest")) makeUnary(UnaryOp::Nearest, type);
           else if (match("ne")) makeBinary(BinaryOp::Ne, i32);
           else abort_on("type.n");
           break;
