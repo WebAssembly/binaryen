@@ -297,6 +297,7 @@ private:
   size_t localIndex; // params and locals
   size_t otherIndex;
   std::vector<Name> labelStack;
+  bool hasReturn;
 
   Name getPrefixedName(std::string prefix) {
     return IString((prefix + std::to_string(otherIndex++)).c_str(), false);
@@ -316,6 +317,7 @@ private:
     func->body = nullptr;
     localIndex = 0;
     otherIndex = 0;
+    hasReturn = false;
     std::vector<NameType> typeParams; // we may have both params and a type. store the type info here
     Block* autoBlock = nullptr; // we may need to add a block for the very top level
     for (;i < s.size(); i++) {
@@ -379,6 +381,20 @@ private:
       }
     }
     if (!func->body) func->body = allocator.alloc<Nop>();
+    if (hasReturn) {
+      Block* body = func->body->dyn_cast<Block>();
+      if (!body) {
+        body = allocator.alloc<Block>();
+        body->list.push_back(func->body);
+        func->body = body;
+      }
+      if (body->name.is()) {
+        body = allocator.alloc<Block>();
+        body->list.push_back(func->body);
+        func->body = body;
+      }
+      body->name = FAKE_RETURN;
+    }
     wasm.addFunction(func);
     currLocalTypes.clear();
     labelStack.clear();
@@ -880,14 +896,7 @@ private:
 
   Expression* makeReturn(Element& s) {
     // return will likely not remain in wasm, but is in the testcases, for now. fake it
-    Block *temp;
-    if (!(currFunction->body && (temp = currFunction->body->dyn_cast<Block>()) && temp->name == FAKE_RETURN)) {
-      Expression* old = currFunction->body;
-      temp = allocator.alloc<Block>();
-      temp->name = FAKE_RETURN;
-      if (old) temp->list.push_back(old);
-      currFunction->body = temp;
-    }
+    hasReturn = true;
     auto ret = allocator.alloc<Break>();
     ret->name = FAKE_RETURN;
     if (s.size() >= 2) {
