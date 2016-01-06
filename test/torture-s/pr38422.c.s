@@ -1,0 +1,49 @@
+	.text
+	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr38422.c"
+	.globl	foo
+	.type	foo,@function
+foo:                                    # @foo
+	.local  	i32, i32
+# BB#0:                                 # %entry
+	i32.const	$0=, 0
+	i32.load	$1=, s($0)
+	i32.const	$push0=, 1
+	i32.shl 	$push1=, $1, $pop0
+	i32.const	$push2=, 1073741822
+	i32.and 	$push3=, $pop1, $pop2
+	i32.const	$push4=, -1073741824
+	i32.and 	$push5=, $1, $pop4
+	i32.or  	$push6=, $pop3, $pop5
+	i32.store	$discard=, s($0), $pop6
+	return
+func_end0:
+	.size	foo, func_end0-foo
+
+	.globl	main
+	.type	main,@function
+main:                                   # @main
+	.result 	i32
+	.local  	i32
+# BB#0:                                 # %if.end
+	i32.const	$0=, 0
+	i32.load	$push0=, s($0)
+	i32.const	$push1=, -1073741824
+	i32.and 	$push2=, $pop0, $pop1
+	i32.const	$push3=, 48
+	i32.or  	$push4=, $pop2, $pop3
+	i32.store	$discard=, s($0), $pop4
+	return  	$0
+func_end1:
+	.size	main, func_end1-main
+
+	.type	s,@object               # @s
+	.bss
+	.globl	s
+	.align	2
+s:
+	.zero	4
+	.size	s, 4
+
+
+	.ident	"clang version 3.8.0 "
+	.section	".note.GNU-stack","",@progbits

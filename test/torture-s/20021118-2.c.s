@@ -1,0 +1,117 @@
+	.text
+	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021118-2.c"
+	.globl	t1
+	.type	t1,@function
+t1:                                     # @t1
+	.param  	i32, i32, i32, i32
+	.result 	i32
+# BB#0:                                 # %entry
+	f64.const	$push0=, 0x1.8p1
+	call_indirect	$2, $pop0
+	i32.const	$push1=, 2
+	i32.shl 	$push2=, $1, $pop1
+	i32.add 	$0=, $0, $pop2
+	i32.const	$push3=, 4
+	i32.add 	$push4=, $0, $pop3
+	i32.load	$push5=, 0($pop4)
+	i32.store	$discard=, 0($0), $pop5
+	f32.const	$push7=, 0x1.4p1
+	f32.const	$push6=, 0x1.cp1
+	call_indirect	$3, $pop7, $pop6
+	return  	$0
+func_end0:
+	.size	t1, func_end0-t1
+
+	.globl	t2
+	.type	t2,@function
+t2:                                     # @t2
+	.param  	i32, i32, i32, i32, i32
+	.result 	i32
+# BB#0:                                 # %entry
+	f32.const	$push0=, 0x1.8p2
+	call_indirect	$4, $pop0
+	f64.const	$push1=, 0x1.8p1
+	call_indirect	$2, $pop1
+	i32.const	$push2=, 2
+	i32.shl 	$push3=, $1, $pop2
+	i32.add 	$0=, $0, $pop3
+	i32.const	$push4=, 4
+	i32.add 	$push5=, $0, $pop4
+	i32.load	$push6=, 0($pop5)
+	i32.store	$discard=, 0($0), $pop6
+	f32.const	$push8=, 0x1.4p1
+	f32.const	$push7=, 0x1.cp1
+	call_indirect	$3, $pop8, $pop7
+	return  	$0
+func_end1:
+	.size	t2, func_end1-t2
+
+	.globl	f1
+	.type	f1,@function
+f1:                                     # @f1
+	.param  	f64
+# BB#0:                                 # %entry
+	block   	BB2_2
+	f64.const	$push0=, 0x1.8p1
+	f64.ne  	$push1=, $0, $pop0
+	br_if   	$pop1, BB2_2
+# BB#1:                                 # %if.end
+	return
+BB2_2:                                  # %if.then
+	call    	abort
+	unreachable
+func_end2:
+	.size	f1, func_end2-f1
+
+	.globl	f2
+	.type	f2,@function
+f2:                                     # @f2
+	.param  	f32, f32
+# BB#0:                                 # %entry
+	block   	BB3_3
+	f32.const	$push0=, 0x1.4p1
+	f32.ne  	$push1=, $0, $pop0
+	br_if   	$pop1, BB3_3
+# BB#1:                                 # %entry
+	f32.const	$push2=, 0x1.cp1
+	f32.ne  	$push3=, $1, $pop2
+	br_if   	$pop3, BB3_3
+# BB#2:                                 # %if.end
+	return
+BB3_3:                                  # %if.then
+	call    	abort
+	unreachable
+func_end3:
+	.size	f2, func_end3-f2
+
+	.globl	f3
+	.type	f3,@function
+f3:                                     # @f3
+	.param  	f32
+# BB#0:                                 # %entry
+	block   	BB4_2
+	f32.const	$push0=, 0x1.8p2
+	f32.ne  	$push1=, $0, $pop0
+	br_if   	$pop1, BB4_2
+# BB#1:                                 # %if.end
+	return
+BB4_2:                                  # %if.then
+	call    	abort
+	unreachable
+func_end4:
+	.size	f3, func_end4-f3
+
+	.globl	main
+	.type	main,@function
+main:                                   # @main
+	.result 	i32
+# BB#0:                                 # %if.end
+	i32.const	$push0=, 0
+	call    	exit, $pop0
+	unreachable
+func_end5:
+	.size	main, func_end5-main
+
+
+	.ident	"clang version 3.8.0 "
+	.section	".note.GNU-stack","",@progbits

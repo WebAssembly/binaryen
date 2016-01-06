@@ -1,0 +1,88 @@
+	.text
+	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/900409-1.c"
+	.globl	f1
+	.type	f1,@function
+f1:                                     # @f1
+	.param  	i32
+	.result 	i32
+# BB#0:                                 # %entry
+	i32.const	$push0=, -16777216
+	i32.and 	$push1=, $0, $pop0
+	return  	$pop1
+func_end0:
+	.size	f1, func_end0-f1
+
+	.globl	f2
+	.type	f2,@function
+f2:                                     # @f2
+	.param  	i32
+	.result 	i32
+# BB#0:                                 # %entry
+	i32.const	$push0=, 16777215
+	i32.and 	$push1=, $0, $pop0
+	return  	$pop1
+func_end1:
+	.size	f2, func_end1-f2
+
+	.globl	f3
+	.type	f3,@function
+f3:                                     # @f3
+	.param  	i32
+	.result 	i32
+# BB#0:                                 # %entry
+	i32.const	$push0=, 255
+	i32.and 	$push1=, $0, $pop0
+	return  	$pop1
+func_end2:
+	.size	f3, func_end2-f3
+
+	.globl	f4
+	.type	f4,@function
+f4:                                     # @f4
+	.param  	i32
+	.result 	i32
+# BB#0:                                 # %entry
+	i32.const	$push0=, -256
+	i32.and 	$push1=, $0, $pop0
+	return  	$pop1
+func_end3:
+	.size	f4, func_end3-f4
+
+	.globl	f5
+	.type	f5,@function
+f5:                                     # @f5
+	.param  	i32
+	.result 	i32
+# BB#0:                                 # %entry
+	i32.const	$push0=, 65535
+	i32.and 	$push1=, $0, $pop0
+	return  	$pop1
+func_end4:
+	.size	f5, func_end4-f5
+
+	.globl	f6
+	.type	f6,@function
+f6:                                     # @f6
+	.param  	i32
+	.result 	i32
+# BB#0:                                 # %entry
+	i32.const	$push0=, -65536
+	i32.and 	$push1=, $0, $pop0
+	return  	$pop1
+func_end5:
+	.size	f6, func_end5-f6
+
+	.globl	main
+	.type	main,@function
+main:                                   # @main
+	.result 	i32
+# BB#0:                                 # %if.end
+	i32.const	$push0=, 0
+	call    	exit, $pop0
+	unreachable
+func_end6:
+	.size	main, func_end6-main
+
+
+	.ident	"clang version 3.8.0 "
+	.section	".note.GNU-stack","",@progbits

@@ -1,0 +1,88 @@
+	.text
+	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44202-1.c"
+	.globl	add512
+	.type	add512,@function
+add512:                                 # @add512
+	.param  	i32, i32
+	.result 	i32
+	.local  	i32
+# BB#0:                                 # %entry
+	block   	BB0_2
+	i32.const	$push0=, 512
+	i32.add 	$2=, $0, $pop0
+	i32.const	$push1=, 0
+	i32.eq  	$push2=, $2, $pop1
+	br_if   	$pop2, BB0_2
+# BB#1:                                 # %if.then
+	i32.store	$discard=, 0($1), $0
+BB0_2:                                  # %if.end
+	return  	$2
+func_end0:
+	.size	add512, func_end0-add512
+
+	.globl	add513
+	.type	add513,@function
+add513:                                 # @add513
+	.param  	i32, i32
+	.result 	i32
+	.local  	i32
+# BB#0:                                 # %entry
+	block   	BB1_2
+	i32.const	$push0=, 513
+	i32.add 	$2=, $0, $pop0
+	br_if   	$2, BB1_2
+# BB#1:                                 # %if.then
+	i32.store	$discard=, 0($1), $0
+BB1_2:                                  # %if.end
+	return  	$2
+func_end1:
+	.size	add513, func_end1-add513
+
+	.globl	main
+	.type	main,@function
+main:                                   # @main
+	.result 	i32
+	.local  	i32, i32, i32, i32, i32, i32
+# BB#0:                                 # %entry
+	i32.const	$1=, __stack_pointer
+	i32.load	$1=, 0($1)
+	i32.const	$2=, 16
+	i32.sub 	$5=, $1, $2
+	i32.const	$2=, __stack_pointer
+	i32.store	$5=, 0($2), $5
+	i32.const	$push1=, -1
+	i32.store	$push2=, 12($5), $pop1
+	i32.store	$0=, 8($5), $pop2
+	i32.const	$push3=, -512
+	i32.const	$3=, 12
+	i32.add 	$3=, $5, $3
+	block   	BB2_5
+	i32.call	$push4=, add512, $pop3, $3
+	br_if   	$pop4, BB2_5
+# BB#1:                                 # %entry
+	i32.load	$push0=, 12($5)
+	i32.ne  	$push5=, $pop0, $0
+	br_if   	$pop5, BB2_5
+# BB#2:                                 # %lor.lhs.false2
+	i32.const	$0=, -513
+	i32.const	$4=, 8
+	i32.add 	$4=, $5, $4
+	i32.call	$push7=, add513, $0, $4
+	br_if   	$pop7, BB2_5
+# BB#3:                                 # %lor.lhs.false2
+	i32.load	$push6=, 8($5)
+	i32.ne  	$push8=, $pop6, $0
+	br_if   	$pop8, BB2_5
+# BB#4:                                 # %if.end
+	i32.const	$push9=, 0
+	call    	exit, $pop9
+	unreachable
+BB2_5:                                  # %if.then
+	call    	abort
+	unreachable
+func_end2:
+	.size	main, func_end2-main
+
+
+	.ident	"clang version 3.8.0 "
+	.section	".note.GNU-stack","",@progbits
