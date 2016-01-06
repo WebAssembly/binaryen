@@ -14,7 +14,7 @@
   (func $_ZN1A3fooEv (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=204
+        (i32.store offset=204 align=4
           (i32.const 0)
           (i32.const 2)
         )
@@ -25,7 +25,7 @@
   (func $_ZN1B3fooEv (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=204
+        (i32.store offset=204 align=4
           (i32.const 0)
           (i32.const 4)
         )
@@ -36,7 +36,7 @@
   (func $_ZN1C3fooEv (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=204
+        (i32.store offset=204 align=4
           (i32.const 0)
           (i32.const 6)
         )
@@ -47,7 +47,7 @@
   (func $_ZN1D3fooEv (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=204
+        (i32.store offset=204 align=4
           (i32.const 0)
           (i32.const 8)
         )
