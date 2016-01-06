@@ -275,7 +275,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (f32.reinterpreti32
+          (f32.reinterpret/i32
             (get_local $$0)
           )
         )
@@ -297,7 +297,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (f64.reinterpreti64
+          (f64.reinterpret/i64
             (get_local $$0)
           )
         )

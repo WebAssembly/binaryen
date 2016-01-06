@@ -734,7 +734,7 @@ public:
       case ConvertSInt64:    o << "convert_s/i64"; break;
       case PromoteFloat32:   o << "promote/f32"; break;
       case DemoteFloat64:    o << "demote/f64"; break;
-      case ReinterpretInt:   o << "reinterpret" << (type == f64 ? "i64" : "i32"); break;
+      case ReinterpretInt:   o << "reinterpret/" << (type == f64 ? "i64" : "i32"); break;
       default: abort();
     }
     incIndent(o, indent);
