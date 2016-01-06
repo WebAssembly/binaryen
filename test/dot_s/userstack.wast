@@ -37,7 +37,7 @@
             (get_local $$3)
           )
         )
-        (i32.store align=4 offset=12
+        (i32.store offset=12 align=4
           (get_local $$3)
           (i32.const 0)
         )
@@ -96,7 +96,7 @@
             (get_local $$3)
           )
         )
-        (i32.store align=4 offset=12
+        (i32.store offset=12 align=4
           (get_local $$3)
           (i32.const 0)
         )
@@ -162,7 +162,7 @@
           )
         )
         (set_local $$0
-          (i32.store align=4 offset=12
+          (i32.store offset=12 align=4
             (get_local $$5)
             (i32.const 1)
           )

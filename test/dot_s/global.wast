@@ -7,7 +7,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=4 offset=24
+          (i32.load offset=24 align=4
             (i32.const 0)
           )
         )

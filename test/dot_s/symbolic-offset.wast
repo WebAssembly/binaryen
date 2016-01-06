@@ -4,7 +4,7 @@
   (func $f (param $$0 i32) (param $$1 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=8
+        (i32.store offset=8 align=4
           (get_local $$0)
           (get_local $$1)
         )

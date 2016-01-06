@@ -635,11 +635,11 @@ public:
       o << (signed_ ? "_s" : "_u");
     }
     restoreNormalColor(o);
-    if (align) {
-      o << " align=" << align;
-    }
     if (offset) {
       o << " offset=" << offset;
+    }
+    if (align) {
+      o << " align=" << align;
     }
     incIndent(o, indent);
     printFullLine(o, indent, ptr);
@@ -669,11 +669,11 @@ public:
       }
     }
     restoreNormalColor(o);
-    if (align) {
-      o << " align=" << align;
-    }
     if (offset) {
       o << " offset=" << offset;
+    }
+    if (align) {
+      o << " align=" << align;
     }
     incIndent(o, indent);
     printFullLine(o, indent, ptr);

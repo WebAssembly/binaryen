@@ -19,7 +19,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=4 offset=24
+          (i32.load offset=24 align=4
             (get_local $$0)
           )
         )
@@ -44,7 +44,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i64.load align=8 offset=24
+          (i64.load offset=24 align=8
             (get_local $$0)
           )
         )
@@ -68,7 +68,7 @@
   (func $store_i32_with_folded_offset (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4 offset=24
+        (i32.store offset=24 align=4
           (get_local $$0)
           (i32.const 0)
         )
@@ -93,7 +93,7 @@
   (func $store_i64_with_folded_offset (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i64.store align=8 offset=24
+        (i64.store offset=24 align=8
           (get_local $$0)
           (i64.const 0)
         )
@@ -119,7 +119,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=4 offset=42
+          (i32.load offset=42 align=4
             (i32.const 0)
           )
         )
@@ -130,7 +130,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load align=4 offset=4
+          (i32.load offset=4 align=4
             (i32.const 0)
           )
         )
@@ -144,7 +144,7 @@
         (set_local $$0
           (i32.const 0)
         )
-        (i32.store align=4 offset=42
+        (i32.store offset=42 align=4
           (get_local $$0)
           (get_local $$0)
         )
@@ -159,7 +159,7 @@
         (set_local $$0
           (i32.const 0)
         )
-        (i32.store align=4 offset=4
+        (i32.store offset=4 align=4
           (get_local $$0)
           (get_local $$0)
         )
@@ -171,7 +171,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load8_s align=1 offset=24
+          (i32.load8_s offset=24 align=1
             (get_local $$0)
           )
         )
@@ -182,7 +182,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load8_u align=1 offset=24
+          (i32.load8_u offset=24 align=1
             (get_local $$0)
           )
         )
@@ -192,7 +192,7 @@
   (func $store_i8_with_folded_offset (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=8 offset=24
+        (i32.store offset=24 align=8
           (get_local $$0)
           (i32.const 0)
         )

@@ -34,7 +34,7 @@
                 (i32.const 1)
               )
             )
-            (i32.store align=4 offset=4
+            (i32.store offset=4 align=4
               (get_local $$0)
               (get_local $$0)
             )
@@ -70,7 +70,7 @@
                 (f32.const 1)
               )
             )
-            (i32.store align=4 offset=4
+            (i32.store offset=4 align=4
               (get_local $$0)
               (get_local $$0)
             )
