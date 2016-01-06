@@ -154,7 +154,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (f32.const inf)
+          (f32.const infinity)
         )
       )
     )
@@ -163,7 +163,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (f32.const -inf)
+          (f32.const -infinity)
         )
       )
     )
@@ -226,7 +226,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (f64.const inf)
+          (f64.const infinity)
         )
       )
     )
@@ -235,7 +235,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (f64.const -inf)
+          (f64.const -infinity)
         )
       )
     )
