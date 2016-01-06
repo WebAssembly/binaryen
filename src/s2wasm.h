@@ -570,10 +570,8 @@ private:
         auto typeName = cashew::IString((std::string("FUNCSIG_") + getSig(call)).c_str(), false);
         if (wasm.functionTypesMap.count(typeName) == 0) {
           auto type = allocator.alloc<FunctionType>();
+          *type = sigToFunctionType(getSig(curr));
           type->name = typeName;
-          for (auto operand : call->operands) {
-            type->params.push_back(operand->type);
-          }
           wasm.addFunctionType(type);
           call->fullType = type;
         } else {

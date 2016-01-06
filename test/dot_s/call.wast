@@ -1,7 +1,7 @@
 (module
   (memory 0 4294967295)
   (type $FUNCSIG_v (func))
-  (type $FUNCSIG_i (func))
+  (type $FUNCSIG_i (func (result i32)))
   (import $i32_nullary "env" "i32_nullary" (result i32))
   (import $i64_nullary "env" "i64_nullary" (result i64))
   (import $float_nullary "env" "float_nullary" (result f32))
