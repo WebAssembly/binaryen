@@ -311,7 +311,7 @@ private:
       s++;
       if (match("text")) parseText();
       else if (match("type")) parseType();
-      else if (match("weak")) getStr(); // contents are in the type that follows
+      else if (match("weak") || match("hidden") || match("protected") || match("internal")) getStr(); // contents are in the content that follows
       else if (match("imports")) skipImports();
       else if (match("data")) {}
       else if (match("ident")) {}
