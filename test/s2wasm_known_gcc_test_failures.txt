@@ -2,7 +2,6 @@
 # files.
 
 # Unknown symbol (likely an external symbol).
-pr24716.c.s # $W
 pr54937.c.s # $exit
 
 # Unknown symbol ($abort, $stdout, $stderr).

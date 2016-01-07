@@ -905,8 +905,13 @@ private:
         if (size <= 0) {
           abort_on(".zero with zero or negative size");
         }
+        unsigned char value = 0;
+        if (skipComma()) {
+          value = getInt();
+          if (value != 0) zero = false;
+        }
         for (size_t i = 0, e = size; i < e; i++) {
-          raw->push_back(0);
+          raw->push_back(value);
         }
       } else if (match(".int8")) {
         size_t size = raw->size();
