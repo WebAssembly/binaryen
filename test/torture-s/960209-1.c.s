@@ -8,21 +8,21 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push1=, -1
 	i32.select	$1=, $1, $pop1, $2
 	i32.load	$push0=, yabba($2)
-	br_if   	$pop0, BB0_2
+	br_if   	$pop0, .LBB0_2
 # BB#1:                                 # %if.end24
 	i32.const	$push4=, an_array
 	i32.const	$push2=, 255
 	i32.and 	$push3=, $0, $pop2
 	i32.add 	$push5=, $pop4, $pop3
 	i32.store	$discard=, a_ptr($2), $pop5
-BB0_2:                                  # %cleanup
+.LBB0_2:                                  # %cleanup
 	return  	$1
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -31,17 +31,17 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.load	$push0=, yabba($0)
-	br_if   	$pop0, BB1_2
+	br_if   	$pop0, .LBB1_2
 # BB#1:                                 # %if.end24.i
 	i32.const	$push1=, an_array+1
 	i32.store	$discard=, a_ptr($0), $pop1
-BB1_2:                                  # %if.end
+.LBB1_2:                                  # %if.end
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	yabba,@object           # @yabba
 	.data

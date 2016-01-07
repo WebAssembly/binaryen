@@ -11,8 +11,8 @@ main:                                   # @main
 	i64.const	$push3=, -1
 	i64.ne  	$push4=, $pop2, $pop3
 	return  	$pop4
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	foo,@function
 foo:                                    # @foo
@@ -25,8 +25,8 @@ foo:                                    # @foo
 	i64.shl 	$push1=, $pop0, $1
 	i64.shr_s	$push2=, $pop1, $1
 	return  	$pop2
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.type	s,@object               # @s
 	.data

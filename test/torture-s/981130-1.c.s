@@ -5,18 +5,18 @@
 check:                                  # @check
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.ne  	$push0=, $0, $1
-	br_if   	$pop0, BB0_2
+	br_if   	$pop0, .LBB0_2
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 0
 	call    	exit, $pop1
 	unreachable
-BB0_2:                                  # %if.else
+.LBB0_2:                                  # %if.else
 	call    	abort
 	unreachable
-func_end0:
-	.size	check, func_end0-check
+.Lfunc_end0:
+	.size	check, .Lfunc_end0-check
 
 	.globl	main
 	.type	main,@function
@@ -25,21 +25,21 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB1_2
+	block   	.LBB1_2
 	i64.load	$push0=, s2($0)
 	i64.store	$push1=, s1($0), $pop0
 	i32.wrap/i64	$push2=, $pop1
 	i32.const	$push3=, 1
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, BB1_2
+	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %if.then.i
 	call    	exit, $0
 	unreachable
-BB1_2:                                  # %if.else.i
+.LBB1_2:                                  # %if.else.i
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	s2,@object              # @s2
 	.data

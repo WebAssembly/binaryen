@@ -8,10 +8,10 @@ check:                                  # @check
 	.local  	i64, i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 1
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.load16_u	$push0=, 0($0)
 	i32.ne  	$push1=, $pop0, $2
-	br_if   	$pop1, BB0_3
+	br_if   	$pop1, .LBB0_3
 # BB#1:                                 # %lor.lhs.false
 	i64.const	$1=, 16
 	i32.const	$push2=, 8
@@ -34,13 +34,13 @@ check:                                  # @check
 	f64.reinterpret/i64	$push19=, $pop18
 	f64.const	$push20=, 0x1p4
 	f64.ne  	$push21=, $pop19, $pop20
-	br_if   	$pop21, BB0_3
+	br_if   	$pop21, .LBB0_3
 # BB#2:                                 # %if.end
 	i32.const	$2=, 0
-BB0_3:                                  # %return
+.LBB0_3:                                  # %return
 	return  	$2
-func_end0:
-	.size	check, func_end0-check
+.Lfunc_end0:
+	.size	check, .Lfunc_end0-check
 
 	.globl	main
 	.type	main,@function
@@ -50,8 +50,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

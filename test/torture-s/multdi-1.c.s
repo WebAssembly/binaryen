@@ -10,8 +10,8 @@ mpy:                                    # @mpy
 	i64.extend_s/i32	$push0=, $0
 	i64.mul 	$push2=, $pop1, $pop0
 	return  	$pop2
-func_end0:
-	.size	mpy, func_end0-mpy
+.Lfunc_end0:
+	.size	mpy, .Lfunc_end0-mpy
 
 	.globl	main
 	.type	main,@function
@@ -23,8 +23,8 @@ main:                                   # @main
 	i64.const	$push0=, -1
 	i64.store	$discard=, mpy_res($0), $pop0
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	mpy_res,@object         # @mpy_res
 	.bss

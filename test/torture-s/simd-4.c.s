@@ -10,8 +10,8 @@ main:                                   # @main
 	i64.const	$push0=, -4294967295
 	i64.store	$discard=, s64($0), $pop0
 	return  	$0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	s64,@object             # @s64
 	.bss

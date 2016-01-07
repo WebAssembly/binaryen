@@ -9,8 +9,8 @@ ns_name_skip:                           # @ns_name_skip
 	i32.const	$push0=, 0
 	i32.store	$push1=, 0($0), $pop0
 	return  	$pop1
-func_end0:
-	.size	ns_name_skip, func_end0-ns_name_skip
+.Lfunc_end0:
+	.size	ns_name_skip, .Lfunc_end0-ns_name_skip
 
 	.globl	dn_skipname
 	.type	dn_skipname,@function
@@ -21,26 +21,26 @@ dn_skipname:                            # @dn_skipname
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $0
 	return  	$pop1
-func_end1:
-	.size	dn_skipname, func_end1-dn_skipname
+.Lfunc_end1:
+	.size	dn_skipname, .Lfunc_end1-dn_skipname
 
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push0=, a
-	br_if   	$pop0, BB2_2
+	br_if   	$pop0, .LBB2_2
 # BB#1:                                 # %if.then
 	call    	abort
 	unreachable
-BB2_2:                                  # %if.end
+.LBB2_2:                                  # %if.end
 	i32.const	$push1=, 0
 	call    	exit, $pop1
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	a,@object               # @a
 	.bss

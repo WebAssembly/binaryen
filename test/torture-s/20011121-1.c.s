@@ -8,8 +8,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	s1,@object              # @s1
 	.bss

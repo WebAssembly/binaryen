@@ -4,8 +4,8 @@
 	.type	foo,@function
 foo:
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 
 	.section	".note.GNU-stack","",@progbits

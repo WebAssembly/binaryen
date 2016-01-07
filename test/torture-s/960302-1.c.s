@@ -20,8 +20,8 @@ foo:                                    # @foo
 	i32.select	$push7=, $pop5, $2, $pop6
 	i32.select	$push8=, $1, $pop7, $0
 	return  	$pop8
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -31,7 +31,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load	$1=, a($0)
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 31
 	i32.shr_u	$push1=, $1, $pop0
 	i32.add 	$push2=, $1, $pop1
@@ -40,15 +40,15 @@ main:                                   # @main
 	i32.sub 	$push5=, $1, $pop4
 	i32.const	$push6=, 1
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, BB1_2
+	br_if   	$pop7, .LBB1_2
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	a,@object               # @a
 	.data

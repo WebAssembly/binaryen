@@ -21,8 +21,8 @@ bar:                                    # @bar
 	i32.store	$discard=, global($0), $pop7
 	i32.xor 	$push8=, $2, $3
 	return  	$pop8
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	main
 	.type	main,@function
@@ -34,8 +34,8 @@ main:                                   # @main
 	i32.const	$push0=, 2
 	i32.store	$discard=, global($0), $pop0
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	global,@object          # @global
 	.bss

@@ -5,65 +5,65 @@
 f:                                      # @f
 	.param  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.ge_s	$push1=, $3, $4
-	br_if   	$pop1, BB0_2
-BB0_1:                                  # %l0
+	br_if   	$pop1, .LBB0_2
+.LBB0_1:                                  # %l0
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
-	br      	BB0_1
-BB0_2:                                  # %if.end.split
+	loop    	.LBB0_2
+	br      	.LBB0_1
+.LBB0_2:                                  # %if.end.split
 	i32.const	$4=, 0
-	block   	BB0_12
-	block   	BB0_11
-	block   	BB0_10
-	block   	BB0_7
+	block   	.LBB0_12
+	block   	.LBB0_11
+	block   	.LBB0_10
+	block   	.LBB0_7
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $3, $pop12
-	br_if   	$pop13, BB0_7
+	br_if   	$pop13, .LBB0_7
 # BB#3:                                 # %if.end3
 	copy_local	$4=, $5
-	br_if   	$5, BB0_7
+	br_if   	$5, .LBB0_7
 # BB#4:                                 # %if.end6
-	block   	BB0_6
+	block   	.LBB0_6
 	i32.const	$push3=, 4
 	i32.add 	$push4=, $1, $pop3
 	i32.load	$push0=, 0($1)
 	i32.load	$push2=, 0($pop0)
 	i32.store	$push5=, 0($pop4), $pop2
-	br_if   	$pop5, BB0_6
+	br_if   	$pop5, .LBB0_6
 # BB#5:                                 # %if.end12
 	i32.const	$push6=, 0
 	i32.const	$push7=, -1
 	i32.store	$discard=, 12($pop6), $pop7
-	br      	BB0_10
-BB0_6:                                  # %if.then11
+	br      	.LBB0_10
+.LBB0_6:                                  # %if.then11
 	call    	g, $3, $3
 	unreachable
-BB0_7:                                  # %l3
+.LBB0_7:                                  # %l3
 	i32.const	$push8=, 4
 	i32.add 	$push9=, $1, $pop8
 	i32.store	$discard=, 0($pop9), $4
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $1, $pop10
 	i32.load	$3=, 0($pop11)
-	br_if   	$3, BB0_12
+	br_if   	$3, .LBB0_12
 # BB#8:                                 # %if.end19
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $4, $pop14
-	br_if   	$pop15, BB0_11
+	br_if   	$pop15, .LBB0_11
 # BB#9:                                 # %if.end24
 	i32.store	$discard=, 8($4), $3
-BB0_10:                                 # %l4
+.LBB0_10:                                 # %l4
 	return
-BB0_11:                                 # %if.then23
+.LBB0_11:                                 # %if.then23
 	call    	g, $3, $3
 	unreachable
-BB0_12:                                 # %if.then18
+.LBB0_12:                                 # %if.then18
 	call    	g, $3, $3
 	unreachable
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	g
 	.type	g,@function
@@ -72,8 +72,8 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	call    	abort
 	unreachable
-func_end1:
-	.size	g, func_end1-g
+.Lfunc_end1:
+	.size	g, .Lfunc_end1-g
 
 	.globl	main
 	.type	main,@function
@@ -134,12 +134,12 @@ main:                                   # @main
 	i32.load	$push19=, 0($pop18)
 	i32.const	$14=, 32
 	i32.add 	$14=, $16, $14
-	block   	BB2_7
+	block   	.LBB2_7
 	i32.ne  	$push20=, $pop19, $14
-	br_if   	$pop20, BB2_7
+	br_if   	$pop20, .LBB2_7
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push21=, 0($1)
-	br_if   	$pop21, BB2_7
+	br_if   	$pop21, .LBB2_7
 # BB#2:                                 # %lor.lhs.false6
 	i32.const	$push22=, 12
 	i32.const	$15=, 8
@@ -148,30 +148,30 @@ main:                                   # @main
 	i32.load	$push24=, 0($pop23)
 	i32.const	$push25=, 999
 	i32.ne  	$push26=, $pop24, $pop25
-	br_if   	$pop26, BB2_7
+	br_if   	$pop26, .LBB2_7
 # BB#3:                                 # %lor.lhs.false11
 	i32.load	$push27=, 0($3)
 	i32.const	$push28=, 777
 	i32.ne  	$push29=, $pop27, $pop28
-	br_if   	$pop29, BB2_7
+	br_if   	$pop29, .LBB2_7
 # BB#4:                                 # %lor.lhs.false16
 	i64.load	$push30=, 32($16)
 	i64.const	$push31=, 953482739823
 	i64.ne  	$push32=, $pop30, $pop31
-	br_if   	$pop32, BB2_7
+	br_if   	$pop32, .LBB2_7
 # BB#5:                                 # %lor.lhs.false24
 	i64.load	$push33=, 0($2)
 	i64.const	$push34=, 1906965479424
 	i64.ne  	$push35=, $pop33, $pop34
-	br_if   	$pop35, BB2_7
+	br_if   	$pop35, .LBB2_7
 # BB#6:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB2_7:                                  # %if.then
+.LBB2_7:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	main.uv,@object         # @main.uv
 	.section	.rodata.cst16,"aM",@progbits,16

@@ -17,8 +17,8 @@ ini:                                    # @ini
 	i64.const	$push3=, 8589934593
 	i64.store	$discard=, pty+40($0), $pop3
 	return
-func_end0:
-	.size	ini, func_end0-ini
+.Lfunc_end0:
+	.size	ini, .Lfunc_end0-ini
 
 	.globl	main
 	.type	main,@function
@@ -38,8 +38,8 @@ main:                                   # @main
 	i64.const	$push3=, 8589934593
 	i64.store	$discard=, pty+40($0), $pop3
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	pty,@object             # @pty
 	.lcomm	pty,88,3

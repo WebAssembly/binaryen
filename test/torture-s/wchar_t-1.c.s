@@ -8,29 +8,29 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.const	$1=, 196
-	block   	BB0_5
+	block   	.LBB0_5
 	i32.load	$push1=, x($0)
 	i32.ne  	$push2=, $pop1, $1
-	br_if   	$pop2, BB0_5
+	br_if   	$pop2, .LBB0_5
 # BB#1:                                 # %entry
 	i32.load	$push0=, x+4($0)
-	br_if   	$pop0, BB0_5
+	br_if   	$pop0, .LBB0_5
 # BB#2:                                 # %if.end
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.load	$push3=, y($0)
 	i32.ne  	$push4=, $pop3, $1
-	br_if   	$pop4, BB0_4
+	br_if   	$pop4, .LBB0_4
 # BB#3:                                 # %if.end4
 	call    	exit, $0
 	unreachable
-BB0_4:                                  # %if.then3
+.LBB0_4:                                  # %if.then3
 	call    	abort
 	unreachable
-BB0_5:                                  # %if.then
+.LBB0_5:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	x,@object               # @x
 	.data

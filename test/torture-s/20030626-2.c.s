@@ -11,8 +11,8 @@ main:                                   # @main
 	call    	memcpy, $pop1, $pop0, $pop2
 	i32.const	$push3=, 0
 	return  	$pop3
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	buf,@object             # @buf
 	.bss

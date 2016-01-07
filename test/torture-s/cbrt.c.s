@@ -23,31 +23,31 @@ cbrtl:                                  # @cbrtl
 	i32.const	$push2=, -2147483648
 	i32.and 	$2=, $4, $pop2
 	i32.xor 	$4=, $2, $4
-	block   	BB0_7
-	block   	BB0_2
+	block   	.LBB0_7
+	block   	.LBB0_2
 	i32.const	$push3=, 2146435072
 	i32.lt_s	$push4=, $4, $pop3
-	br_if   	$pop4, BB0_2
+	br_if   	$pop4, .LBB0_2
 # BB#1:                                 # %if.then
 	f64.add 	$0=, $0, $0
-	br      	BB0_7
-BB0_2:                                  # %if.end
+	br      	.LBB0_7
+.LBB0_2:                                  # %if.end
 	i32.wrap/i64	$push5=, $1
 	i32.or  	$push6=, $pop5, $4
 	i32.const	$push62=, 0
 	i32.eq  	$push63=, $pop6, $pop62
-	br_if   	$pop63, BB0_7
+	br_if   	$pop63, .LBB0_7
 # BB#3:                                 # %if.end13
 	i32.const	$5=, 4
 	i32.const	$12=, 0
 	i32.add 	$12=, $15, $12
-	block   	BB0_6
-	block   	BB0_5
+	block   	.LBB0_6
+	block   	.LBB0_5
 	i32.or  	$push7=, $12, $5
 	i32.store	$discard=, 0($pop7), $4
 	i32.const	$push8=, 1048575
 	i32.gt_s	$push9=, $4, $pop8
-	br_if   	$pop9, BB0_5
+	br_if   	$pop9, .LBB0_5
 # BB#4:                                 # %if.then18
 	i32.const	$13=, 8
 	i32.add 	$13=, $15, $13
@@ -65,8 +65,8 @@ BB0_2:                                  # %if.end
 	i32.const	$push23=, 696219795
 	i32.add 	$push24=, $pop22, $pop23
 	i32.store	$discard=, 0($4), $pop24
-	br      	BB0_6
-BB0_5:                                  # %if.else
+	br      	.LBB0_6
+.LBB0_5:                                  # %if.else
 	i32.const	$push10=, 3
 	i32.div_s	$4=, $4, $pop10
 	i32.const	$15=, 8
@@ -75,7 +75,7 @@ BB0_5:                                  # %if.else
 	i32.const	$push11=, 715094163
 	i32.add 	$push12=, $4, $pop11
 	i32.store	$discard=, 0($pop13), $pop12
-BB0_6:                                  # %if.end31
+.LBB0_6:                                  # %if.end31
 	f64.load	$8=, 8($15)
 	f64.load	$6=, 0($15)
 	f64.mul 	$push25=, $8, $8
@@ -127,14 +127,14 @@ BB0_6:                                  # %if.end31
 	f64.const	$push60=, -0x1.5555555555555p-2
 	f64.mul 	$push61=, $pop59, $pop60
 	f64.add 	$0=, $8, $pop61
-BB0_7:                                  # %cleanup
+.LBB0_7:                                  # %cleanup
 	i32.const	$11=, 16
 	i32.add 	$15=, $15, $11
 	i32.const	$11=, __stack_pointer
 	i32.store	$15=, 0($11), $15
 	return  	$0
-func_end0:
-	.size	cbrtl, func_end0-cbrtl
+.Lfunc_end0:
+	.size	cbrtl, .Lfunc_end0-cbrtl
 
 	.globl	main
 	.type	main,@function
@@ -144,8 +144,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

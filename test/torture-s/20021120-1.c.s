@@ -39,13 +39,13 @@ foo:                                    # @foo
 	f64.load	$159=, gd+232($1)
 	f64.load	$160=, gd+240($1)
 	f64.load	$161=, gd+248($1)
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_2
-BB0_1:                                  # %for.body
+	br_if   	$pop1, .LBB0_2
+.LBB0_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	f32.load	$2=, gf($1)
 	f32.load	$3=, gf+4($1)
 	f32.load	$4=, gf+8($1)
@@ -304,8 +304,8 @@ BB0_1:                                  # %for.body
 	i32.const	$push66=, -1
 	i32.add 	$0=, $0, $pop66
 	f32.store	$discard=, gf+124($1), $33
-	br_if   	$0, BB0_1
-BB0_2:                                  # %for.end
+	br_if   	$0, .LBB0_1
+.LBB0_2:                                  # %for.end
 	f64.store	$discard=, gd($1), $130
 	f64.store	$discard=, gd+8($1), $131
 	f64.store	$discard=, gd+16($1), $132
@@ -339,8 +339,8 @@ BB0_2:                                  # %for.end
 	f64.store	$discard=, gd+240($1), $160
 	f64.store	$discard=, gd+248($1), $161
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -352,9 +352,9 @@ main:                                   # @main
 	i32.const	$4=, 0
 	i32.const	$6=, gd
 	i32.const	$5=, gf
-BB1_1:                                  # %for.body
+.LBB1_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_2
+	loop    	.LBB1_2
 	f64.store	$push0=, 0($6), $3
 	f64.const	$push2=, 0x1p0
 	f64.add 	$3=, $pop0, $pop2
@@ -368,45 +368,45 @@ BB1_1:                                  # %for.body
 	i32.add 	$5=, $5, $2
 	i32.const	$push3=, 32
 	i32.ne  	$push4=, $4, $pop3
-	br_if   	$pop4, BB1_1
-BB1_2:                                  # %for.end
+	br_if   	$pop4, .LBB1_1
+.LBB1_2:                                  # %for.end
 	call    	foo, $0
 	i32.const	$4=, 0
 	i32.const	$5=, gd
 	copy_local	$6=, $4
-BB1_3:                                  # %for.body6
+.LBB1_3:                                  # %for.body6
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB1_7
-	loop    	BB1_6
+	block   	.LBB1_7
+	loop    	.LBB1_6
 	f64.load	$push5=, 0($5)
 	f64.convert_s/i32	$push6=, $4
 	f64.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, BB1_7
+	br_if   	$pop7, .LBB1_7
 # BB#4:                                 # %lor.lhs.false
-                                        #   in Loop: Header=BB1_3 Depth=1
+                                        #   in Loop: Header=.LBB1_3 Depth=1
 	i32.const	$push8=, gf
 	i32.add 	$push9=, $pop8, $4
 	f32.load	$push10=, 0($pop9)
 	f32.convert_s/i32	$push11=, $6
 	f32.ne  	$push12=, $pop10, $pop11
-	br_if   	$pop12, BB1_7
+	br_if   	$pop12, .LBB1_7
 # BB#5:                                 # %for.cond3
-                                        #   in Loop: Header=BB1_3 Depth=1
+                                        #   in Loop: Header=.LBB1_3 Depth=1
 	i32.add 	$6=, $6, $0
 	i32.add 	$5=, $5, $1
 	i32.add 	$4=, $4, $2
 	i32.const	$push13=, 31
 	i32.le_s	$push14=, $6, $pop13
-	br_if   	$pop14, BB1_3
-BB1_6:                                  # %for.end17
+	br_if   	$pop14, .LBB1_3
+.LBB1_6:                                  # %for.end17
 	i32.const	$push15=, 0
 	call    	exit, $pop15
 	unreachable
-BB1_7:                                  # %if.then
+.LBB1_7:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	gd,@object              # @gd
 	.bss

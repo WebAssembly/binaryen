@@ -10,16 +10,16 @@ foo:                                    # @foo
 	i32.sub 	$push1=, $0, $pop0
 	i32.store	$discard=, x($0), $pop1
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
 # BB#0:                                 # %entry
 	return
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	test
 	.type	test,@function
@@ -37,8 +37,8 @@ test:                                   # @test
 	i32.load	$push3=, x($1)
 	i32.add 	$push4=, $pop3, $2
 	return  	$pop4
-func_end2:
-	.size	test, func_end2-test
+.Lfunc_end2:
+	.size	test, .Lfunc_end2-test
 
 	.globl	main
 	.type	main,@function
@@ -47,18 +47,18 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB3_2
+	block   	.LBB3_2
 	i32.const	$push0=, 1
 	i32.store	$push1=, x($0), $pop0
 	i32.call	$push2=, test, $pop1
-	br_if   	$pop2, BB3_2
+	br_if   	$pop2, .LBB3_2
 # BB#1:                                 # %if.end
 	return  	$0
-BB3_2:                                  # %if.then
+.LBB3_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	x,@object               # @x
 	.bss

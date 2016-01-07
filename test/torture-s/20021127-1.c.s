@@ -7,8 +7,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	llabs
 	.type	llabs,@function
@@ -18,8 +18,8 @@ llabs:                                  # @llabs
 # BB#0:                                 # %entry
 	call    	abort
 	unreachable
-func_end1:
-	.size	llabs, func_end1-llabs
+.Lfunc_end1:
+	.size	llabs, .Lfunc_end1-llabs
 
 	.type	a,@object               # @a
 	.data

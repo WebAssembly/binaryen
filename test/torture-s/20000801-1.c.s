@@ -8,12 +8,12 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.add 	$2=, $0, $1
 	i32.const	$3=, 1
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.lt_s	$push0=, $1, $3
-	br_if   	$pop0, BB0_2
-BB0_1:                                  # %while.body
+	br_if   	$pop0, .LBB0_2
+.LBB0_1:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.const	$push1=, 3
 	i32.add 	$1=, $0, $pop1
 	i32.load8_u	$5=, 0($1)
@@ -30,11 +30,11 @@ BB0_1:                                  # %while.body
 	i32.const	$push5=, 4
 	i32.add 	$0=, $0, $pop5
 	i32.lt_u	$push6=, $0, $2
-	br_if   	$pop6, BB0_1
-BB0_2:                                  # %while.end
+	br_if   	$pop6, .LBB0_1
+.LBB0_2:                                  # %while.end
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -48,21 +48,21 @@ main:                                   # @main
 	i32.sub 	$2=, $0, $1
 	i32.const	$1=, __stack_pointer
 	i32.store	$2=, 0($1), $2
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 1
 	i32.store	$push1=, 12($2), $pop0
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $pop1, $pop3
-	br_if   	$pop4, BB1_2
+	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit, $pop2
 	unreachable
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

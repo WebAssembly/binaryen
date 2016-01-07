@@ -63,8 +63,8 @@ init_addrs:                             # @init_addrs
 	i64.const	$push4=, 2199023255808
 	i64.store	$discard=, bad_addr+32($0), $pop4
 	return
-func_end0:
-	.size	init_addrs, func_end0-init_addrs
+.Lfunc_end0:
+	.size	init_addrs, .Lfunc_end0-init_addrs
 
 	.globl	prefetch_for_read
 	.type	prefetch_for_read,@function
@@ -72,16 +72,16 @@ prefetch_for_read:                      # @prefetch_for_read
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, -260
-BB1_1:                                  # %for.body
+.LBB1_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_2
+	loop    	.LBB1_2
 	i32.const	$push0=, 4
 	i32.add 	$0=, $0, $pop0
-	br_if   	$0, BB1_1
-BB1_2:                                  # %for.end
+	br_if   	$0, .LBB1_1
+.LBB1_2:                                  # %for.end
 	return
-func_end1:
-	.size	prefetch_for_read, func_end1-prefetch_for_read
+.Lfunc_end1:
+	.size	prefetch_for_read, .Lfunc_end1-prefetch_for_read
 
 	.globl	prefetch_for_write
 	.type	prefetch_for_write,@function
@@ -89,16 +89,16 @@ prefetch_for_write:                     # @prefetch_for_write
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, -260
-BB2_1:                                  # %for.body
+.LBB2_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB2_2
+	loop    	.LBB2_2
 	i32.const	$push0=, 4
 	i32.add 	$0=, $0, $pop0
-	br_if   	$0, BB2_1
-BB2_2:                                  # %for.end
+	br_if   	$0, .LBB2_1
+.LBB2_2:                                  # %for.end
 	return
-func_end2:
-	.size	prefetch_for_write, func_end2-prefetch_for_write
+.Lfunc_end2:
+	.size	prefetch_for_write, .Lfunc_end2-prefetch_for_write
 
 	.globl	main
 	.type	main,@function
@@ -165,25 +165,25 @@ main:                                   # @main
 	i64.const	$push4=, 2199023255808
 	i64.store	$discard=, bad_addr+32($1), $pop4
 	copy_local	$2=, $0
-BB3_1:                                  # %for.body.i5.for.body.i5_crit_edge
+.LBB3_1:                                  # %for.body.i5.for.body.i5_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB3_2
+	loop    	.LBB3_2
 	i32.add 	$2=, $2, $0
 	i32.const	$3=, -260
 	i32.const	$push28=, 260
 	i32.ne  	$push29=, $2, $pop28
-	br_if   	$pop29, BB3_1
-BB3_2:                                  # %for.body.i
+	br_if   	$pop29, .LBB3_1
+.LBB3_2:                                  # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB3_3
+	loop    	.LBB3_3
 	i32.const	$push30=, 4
 	i32.add 	$3=, $3, $pop30
-	br_if   	$3, BB3_2
-BB3_3:                                  # %prefetch_for_write.exit
+	br_if   	$3, .LBB3_2
+.LBB3_3:                                  # %prefetch_for_write.exit
 	call    	exit, $1
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	bad_addr,@object        # @bad_addr
 	.bss

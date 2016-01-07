@@ -12,8 +12,8 @@ main:                                   # @main
 	i64.const	$push1=, 4803089003686395904
 	i64.store	$discard=, foo.tmp($0), $pop1
 	return  	$0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	foo
 	.type	foo,@function
@@ -36,8 +36,8 @@ foo:                                    # @foo
 	i64.shr_u	$push7=, $pop5, $pop6
 	i64.store32	$discard=, 12($0), $pop7
 	return
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.type	foo.tmp,@object         # @foo.tmp
 	.lcomm	foo.tmp,16,4

@@ -6,8 +6,8 @@ foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -19,8 +19,8 @@ main:                                   # @main
 	i32.const	$2=, 0
 	i32.load	$discard=, v($2)
 	return  	$2
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	v,@object               # @v
 	.bss

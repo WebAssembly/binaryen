@@ -18,8 +18,8 @@ get_id:                                 # @get_id
 	i32.or  	$push7=, $pop5, $pop6
 	i32.store8	$discard=, 0($pop7), $0
 	return  	$1
-func_end0:
-	.size	get_id, func_end0-get_id
+.Lfunc_end0:
+	.size	get_id, .Lfunc_end0-get_id
 
 	.globl	get_tok
 	.type	get_tok,@function
@@ -40,8 +40,8 @@ get_tok:                                # @get_tok
 	i32.const	$push6=, 99
 	i32.store8	$discard=, id_space($0), $pop6
 	return  	$0
-func_end1:
-	.size	get_tok, func_end1-get_tok
+.Lfunc_end1:
+	.size	get_tok, .Lfunc_end1-get_tok
 
 	.globl	main
 	.type	main,@function
@@ -63,8 +63,8 @@ main:                                   # @main
 	i32.store8	$discard=, id_space($0), $pop6
 	call    	exit, $0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	curval,@object          # @curval
 	.bss

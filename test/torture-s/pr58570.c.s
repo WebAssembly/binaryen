@@ -7,11 +7,11 @@ main:                                   # @main
 	.local  	i32, i32, i32, i64
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.load	$push0=, e($0)
 	i32.const	$push29=, 0
 	i32.eq  	$push30=, $pop0, $pop29
-	br_if   	$pop30, BB0_2
+	br_if   	$pop30, .LBB0_2
 # BB#1:                                 # %if.then
 	i32.const	$push4=, d
 	i32.load	$push1=, i($0)
@@ -30,8 +30,8 @@ main:                                   # @main
 	i64.const	$push10=, 61440
 	i64.and 	$push11=, $3, $pop10
 	i64.store16	$discard=, 0($2), $pop11
-BB0_2:                                  # %if.end
-	block   	BB0_4
+.LBB0_2:                                  # %if.end
+	block   	.LBB0_4
 	i64.load32_u	$push18=, d($0)
 	i32.const	$push12=, d
 	i32.const	$push13=, 4
@@ -49,14 +49,14 @@ BB0_2:                                  # %if.end
 	i32.wrap/i64	$push26=, $pop25
 	i32.const	$push27=, 1
 	i32.ne  	$push28=, $pop26, $pop27
-	br_if   	$pop28, BB0_4
+	br_if   	$pop28, .LBB0_4
 # BB#3:                                 # %if.end7
 	return  	$0
-BB0_4:                                  # %if.then6
+.LBB0_4:                                  # %if.then6
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	e,@object               # @e
 	.data

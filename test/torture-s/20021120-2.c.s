@@ -13,8 +13,8 @@ foo:                                    # @foo
 	i32.div_s	$push2=, $pop1, $0
 	i32.store	$discard=, g2($1), $pop2
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -28,8 +28,8 @@ main:                                   # @main
 	i32.store	$discard=, g2($0), $pop1
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	g1,@object              # @g1
 	.bss

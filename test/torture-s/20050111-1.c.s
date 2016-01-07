@@ -14,8 +14,8 @@ foo:                                    # @foo
 	i32.wrap/i64	$push4=, $pop3
 	i32.select	$push6=, $pop1, $pop5, $pop4
 	return  	$pop6
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
@@ -27,8 +27,8 @@ bar:                                    # @bar
 	i64.const	$push1=, 32
 	i64.shl 	$push2=, $pop0, $pop1
 	return  	$pop2
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	main
 	.type	main,@function
@@ -37,8 +37,8 @@ main:                                   # @main
 # BB#0:                                 # %if.end16
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

@@ -5,19 +5,19 @@
 foo:                                    # @foo
 	.param  	i64
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i64.const	$push0=, -1220975898975746
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	#APP
 	#NO_APP
 	return
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -30,10 +30,10 @@ main:                                   # @main
 	i32.const	$push1=, 16
 	call    	memcpy, $pop2, $pop0, $pop1
 	i32.const	$0=, 0
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.load	$push3=, i($0)
 	i32.gt_s	$push4=, $pop3, $0
-	br_if   	$pop4, BB1_3
+	br_if   	$pop4, .LBB1_3
 # BB#1:                                 # %for.body.preheader
 	i64.const	$push5=, -1220975898975746
 	call    	foo, $pop5
@@ -43,10 +43,10 @@ main:                                   # @main
 	i32.store	$discard=, i($0), $pop6
 	i32.const	$push7=, -1
 	i32.gt_s	$push8=, $2, $pop7
-	br_if   	$pop8, BB1_3
-BB1_2:                                  # %for.body.for.body_crit_edge
+	br_if   	$pop8, .LBB1_3
+.LBB1_2:                                  # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_3
+	loop    	.LBB1_3
 	i32.const	$2=, s+24
 	i64.load32_u	$push20=, s+24($0)
 	i32.const	$push14=, 4
@@ -76,11 +76,11 @@ BB1_2:                                  # %for.body.for.body_crit_edge
 	i32.add 	$push32=, $2, $1
 	i32.store	$discard=, i($0), $pop32
 	i32.lt_s	$push33=, $2, $0
-	br_if   	$pop33, BB1_2
-BB1_3:                                  # %for.end
+	br_if   	$pop33, .LBB1_2
+.LBB1_3:                                  # %for.end
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	main.t,@object          # @main.t
 	.section	.rodata.cst16,"aM",@progbits,16

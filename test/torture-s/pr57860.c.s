@@ -12,19 +12,19 @@ foo:                                    # @foo
 	i32.load	$3=, h($5)
 	i32.load	$4=, f($5)
 	i64.extend_s/i32	$1=, $0
-BB0_1:                                  # %for.cond1thread-pre-split
+.LBB0_1:                                  # %for.cond1thread-pre-split
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_5
-	block   	BB0_3
+	loop    	.LBB0_5
+	block   	.LBB0_3
 	i32.load	$push0=, c($5)
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $pop0, $pop15
-	br_if   	$pop16, BB0_3
+	br_if   	$pop16, .LBB0_3
 # BB#2:                                 # %for.inc.preheader
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.store	$discard=, c($5), $5
-BB0_3:                                  # %for.end
-                                        #   in Loop: Header=BB0_1 Depth=1
+.LBB0_3:                                  # %for.end
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i64.load32_s	$push4=, 0($2)
 	i64.load32_s	$push1=, a($5)
 	i64.const	$push2=, 8589934591
@@ -39,17 +39,17 @@ BB0_3:                                  # %for.end
 	i32.shl 	$push9=, $0, $pop8
 	i32.add 	$push11=, $pop10, $pop9
 	i32.load	$push12=, 0($pop11)
-	br_if   	$pop12, BB0_5
+	br_if   	$pop12, .LBB0_5
 # BB#4:                                 # %for.inc6
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push13=, 1
 	i32.add 	$push14=, $0, $pop13
 	i32.store	$discard=, g($5), $pop14
-	br      	BB0_1
-BB0_5:                                  # %if.then
+	br      	.LBB0_1
+.LBB0_5:                                  # %if.then
 	return  	$5
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -62,19 +62,19 @@ main:                                   # @main
 	i32.load	$1=, h($4)
 	i32.load	$2=, f($4)
 	i64.const	$5=, 8589934591
-BB1_1:                                  # %for.cond1thread-pre-split.i
+.LBB1_1:                                  # %for.cond1thread-pre-split.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_5
-	block   	BB1_3
+	loop    	.LBB1_5
+	block   	.LBB1_3
 	i32.load	$push0=, c($4)
 	i32.const	$push18=, 0
 	i32.eq  	$push19=, $pop0, $pop18
-	br_if   	$pop19, BB1_3
+	br_if   	$pop19, .LBB1_3
 # BB#2:                                 # %for.inc.preheader.i
-                                        #   in Loop: Header=BB1_1 Depth=1
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.store	$discard=, c($4), $4
-BB1_3:                                  # %for.end.i
-                                        #   in Loop: Header=BB1_1 Depth=1
+.LBB1_3:                                  # %for.end.i
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i64.load32_s	$push3=, 0($0)
 	i64.load32_s	$push1=, a($4)
 	i64.xor 	$push2=, $pop1, $5
@@ -89,26 +89,26 @@ BB1_3:                                  # %for.end.i
 	i32.shl 	$push9=, $3, $pop8
 	i32.add 	$push11=, $pop10, $pop9
 	i32.load	$push12=, 0($pop11)
-	br_if   	$pop12, BB1_5
+	br_if   	$pop12, .LBB1_5
 # BB#4:                                 # %for.inc6.i
-                                        #   in Loop: Header=BB1_1 Depth=1
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.const	$push16=, 1
 	i32.add 	$push17=, $3, $pop16
 	i32.store	$discard=, g($4), $pop17
-	br      	BB1_1
-BB1_5:                                  # %foo.exit
-	block   	BB1_7
+	br      	.LBB1_1
+.LBB1_5:                                  # %foo.exit
+	block   	.LBB1_7
 	i32.load	$push13=, d($4)
 	i32.const	$push14=, 1
 	i32.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, BB1_7
+	br_if   	$pop15, .LBB1_7
 # BB#6:                                 # %if.end
 	return  	$4
-BB1_7:                                  # %if.then
+.LBB1_7:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	a,@object               # @a
 	.bss

@@ -19,8 +19,8 @@ t1:                                     # @t1
 	f32.const	$push6=, 0x1.cp1
 	call_indirect	$3, $pop7, $pop6
 	return  	$0
-func_end0:
-	.size	t1, func_end0-t1
+.Lfunc_end0:
+	.size	t1, .Lfunc_end0-t1
 
 	.globl	t2
 	.type	t2,@function
@@ -43,63 +43,63 @@ t2:                                     # @t2
 	f32.const	$push7=, 0x1.cp1
 	call_indirect	$3, $pop8, $pop7
 	return  	$0
-func_end1:
-	.size	t2, func_end1-t2
+.Lfunc_end1:
+	.size	t2, .Lfunc_end1-t2
 
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
 	.param  	f64
 # BB#0:                                 # %entry
-	block   	BB2_2
+	block   	.LBB2_2
 	f64.const	$push0=, 0x1.8p1
 	f64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB2_2
+	br_if   	$pop1, .LBB2_2
 # BB#1:                                 # %if.end
 	return
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	f1, func_end2-f1
+.Lfunc_end2:
+	.size	f1, .Lfunc_end2-f1
 
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
 	.param  	f32, f32
 # BB#0:                                 # %entry
-	block   	BB3_3
+	block   	.LBB3_3
 	f32.const	$push0=, 0x1.4p1
 	f32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB3_3
+	br_if   	$pop1, .LBB3_3
 # BB#1:                                 # %entry
 	f32.const	$push2=, 0x1.cp1
 	f32.ne  	$push3=, $1, $pop2
-	br_if   	$pop3, BB3_3
+	br_if   	$pop3, .LBB3_3
 # BB#2:                                 # %if.end
 	return
-BB3_3:                                  # %if.then
+.LBB3_3:                                  # %if.then
 	call    	abort
 	unreachable
-func_end3:
-	.size	f2, func_end3-f2
+.Lfunc_end3:
+	.size	f2, .Lfunc_end3-f2
 
 	.globl	f3
 	.type	f3,@function
 f3:                                     # @f3
 	.param  	f32
 # BB#0:                                 # %entry
-	block   	BB4_2
+	block   	.LBB4_2
 	f32.const	$push0=, 0x1.8p2
 	f32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB4_2
+	br_if   	$pop1, .LBB4_2
 # BB#1:                                 # %if.end
 	return
-BB4_2:                                  # %if.then
+.LBB4_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end4:
-	.size	f3, func_end4-f3
+.Lfunc_end4:
+	.size	f3, .Lfunc_end4-f3
 
 	.globl	main
 	.type	main,@function
@@ -109,8 +109,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end5:
-	.size	main, func_end5-main
+.Lfunc_end5:
+	.size	main, .Lfunc_end5-main
 
 
 	.ident	"clang version 3.8.0 "

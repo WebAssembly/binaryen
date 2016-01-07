@@ -10,32 +10,32 @@ strtoul1:                               # @strtoul1
 	i32.add 	$push1=, $0, $pop0
 	i32.store	$discard=, 0($1), $pop1
 	i32.const	$1=, 192
-	block   	BB0_5
+	block   	.LBB0_5
 	i32.const	$push2=, temp
 	i32.eq  	$push3=, $0, $pop2
-	br_if   	$pop3, BB0_5
+	br_if   	$pop3, .LBB0_5
 # BB#1:                                 # %if.else
 	i32.const	$1=, 168
 	i32.const	$push4=, temp+4
 	i32.eq  	$push5=, $0, $pop4
-	br_if   	$pop5, BB0_5
+	br_if   	$pop5, .LBB0_5
 # BB#2:                                 # %if.else3
 	i32.const	$1=, 190
 	i32.const	$push6=, temp+8
 	i32.eq  	$push7=, $0, $pop6
-	br_if   	$pop7, BB0_5
+	br_if   	$pop7, .LBB0_5
 # BB#3:                                 # %if.else6
 	i32.const	$1=, 160
 	i32.const	$push8=, temp+12
 	i32.eq  	$push9=, $0, $pop8
-	br_if   	$pop9, BB0_5
+	br_if   	$pop9, .LBB0_5
 # BB#4:                                 # %if.end11
 	call    	abort
 	unreachable
-BB0_5:                                  # %return
+.LBB0_5:                                  # %return
 	return  	$1
-func_end0:
-	.size	strtoul1, func_end0-strtoul1
+.Lfunc_end0:
+	.size	strtoul1, .Lfunc_end0-strtoul1
 
 	.globl	string_to_ip
 	.type	string_to_ip,@function
@@ -51,10 +51,10 @@ string_to_ip:                           # @string_to_ip
 	i32.const	$7=, __stack_pointer
 	i32.store	$12=, 0($7), $12
 	i32.const	$5=, 0
-	block   	BB1_7
+	block   	.LBB1_7
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $0, $pop14
-	br_if   	$pop15, BB1_7
+	br_if   	$pop15, .LBB1_7
 # BB#1:                                 # %if.end9
 	i32.const	$9=, 12
 	i32.add 	$9=, $12, $9
@@ -65,14 +65,14 @@ string_to_ip:                           # @string_to_ip
 	i32.add 	$push1=, $0, $3
 	i32.select	$1=, $pop0, $pop1, $0
 	i32.const	$0=, 8
-	block   	BB1_6
-	block   	BB1_5
+	block   	.LBB1_6
+	block   	.LBB1_5
 	i32.shl 	$push2=, $5, $0
 	i32.const	$push3=, 65280
 	i32.and 	$5=, $pop2, $pop3
 	i32.const	$push16=, 0
 	i32.eq  	$push17=, $1, $pop16
-	br_if   	$pop17, BB1_5
+	br_if   	$pop17, .LBB1_5
 # BB#2:                                 # %if.end9.1
 	i32.const	$10=, 12
 	i32.add 	$10=, $12, $10
@@ -86,7 +86,7 @@ string_to_ip:                           # @string_to_ip
 	i32.or  	$5=, $pop4, $5
 	i32.const	$push18=, 0
 	i32.eq  	$push19=, $2, $pop18
-	br_if   	$pop19, BB1_5
+	br_if   	$pop19, .LBB1_5
 # BB#3:                                 # %if.end9.2
 	i32.const	$11=, 12
 	i32.add 	$11=, $12, $11
@@ -100,7 +100,7 @@ string_to_ip:                           # @string_to_ip
 	i32.or  	$5=, $pop8, $pop7
 	i32.const	$push20=, 0
 	i32.eq  	$push21=, $3, $pop20
-	br_if   	$pop21, BB1_6
+	br_if   	$pop21, .LBB1_6
 # BB#4:                                 # %if.then3.3
 	i32.const	$12=, 12
 	i32.add 	$12=, $12, $12
@@ -108,19 +108,19 @@ string_to_ip:                           # @string_to_ip
 	i32.and 	$push13=, $pop11, $1
 	i32.shl 	$push12=, $5, $0
 	i32.or  	$5=, $pop13, $pop12
-	br      	BB1_7
-BB1_5:                                  # %if.end9.2.thread
+	br      	.LBB1_7
+.LBB1_5:                                  # %if.end9.2.thread
 	i32.shl 	$5=, $5, $0
-BB1_6:                                  # %cond.end.3
+.LBB1_6:                                  # %cond.end.3
 	i32.shl 	$5=, $5, $0
-BB1_7:                                  # %cleanup
+.LBB1_7:                                  # %cleanup
 	i32.const	$8=, 16
 	i32.add 	$12=, $12, $8
 	i32.const	$8=, __stack_pointer
 	i32.store	$12=, 0($8), $12
 	return  	$5
-func_end1:
-	.size	string_to_ip, func_end1-string_to_ip
+.Lfunc_end1:
+	.size	string_to_ip, .Lfunc_end1-string_to_ip
 
 	.globl	main
 	.type	main,@function
@@ -167,10 +167,10 @@ main:                                   # @main
 	i32.add 	$14=, $9, $10
 	i32.const	$10=, __stack_pointer
 	i32.store	$14=, 0($10), $14
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.load	$push2=, result($2)
 	i32.ne  	$push3=, $0, $pop2
-	br_if   	$pop3, BB2_2
+	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, str
 	i32.call	$discard=, puts, $pop4
@@ -179,11 +179,11 @@ main:                                   # @main
 	i32.const	$13=, __stack_pointer
 	i32.store	$14=, 0($13), $14
 	return  	$2
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	temp,@object            # @temp
 	.data

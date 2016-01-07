@@ -16,28 +16,28 @@ sort:                                   # @sort
 	i32.const	$push5=, 0
 	i32.select	$push6=, $pop1, $pop4, $pop5
 	return  	$pop6
-func_end0:
-	.size	sort, func_end0-sort
+.Lfunc_end0:
+	.size	sort, .Lfunc_end0-sort
 
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 5
 	i32.call	$push1=, sort, $pop0
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB1_2
+	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

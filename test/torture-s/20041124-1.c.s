@@ -15,8 +15,8 @@ foo:                                    # @foo
 	i32.shr_u	$push5=, $1, $pop4
 	i32.store16	$discard=, 0($pop3), $pop5
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -36,11 +36,11 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.load	$1=, gs($0)
 	i32.const	$2=, 65535
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.load16_u	$push2=, 8($7)
 	i32.and 	$push5=, $1, $2
 	i32.ne  	$push7=, $pop2, $pop5
-	br_if   	$pop7, BB1_3
+	br_if   	$pop7, .LBB1_3
 # BB#1:                                 # %entry
 	i32.const	$push3=, 2
 	i32.const	$6=, 8
@@ -51,15 +51,15 @@ main:                                   # @main
 	i32.const	$push6=, 16
 	i32.shr_u	$push1=, $1, $pop6
 	i32.ne  	$push9=, $pop8, $pop1
-	br_if   	$pop9, BB1_3
+	br_if   	$pop9, .LBB1_3
 # BB#2:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB1_3:                                  # %if.then
+.LBB1_3:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	gs,@object              # @gs
 	.data

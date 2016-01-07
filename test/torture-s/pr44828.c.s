@@ -7,7 +7,7 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.load8_u	$push0=, a($0)
 	i32.const	$push1=, -939524096
 	i32.mul 	$push2=, $pop0, $pop1
@@ -15,14 +15,14 @@ main:                                   # @main
 	i32.shr_s	$push4=, $pop2, $pop3
 	i32.const	$push5=, 1
 	i32.ge_s	$push6=, $pop4, $pop5
-	br_if   	$pop6, BB0_2
+	br_if   	$pop6, .LBB0_2
 # BB#1:                                 # %if.end
 	return  	$0
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	a,@object               # @a
 	.data

@@ -6,8 +6,8 @@ good_const:                             # @good_const
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	good_const, func_end0-good_const
+.Lfunc_end0:
+	.size	good_const, .Lfunc_end0-good_const
 
 	.globl	good_enum
 	.type	good_enum,@function
@@ -15,8 +15,8 @@ good_enum:                              # @good_enum
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end1:
-	.size	good_enum, func_end1-good_enum
+.Lfunc_end1:
+	.size	good_enum, .Lfunc_end1-good_enum
 
 	.globl	good_expr
 	.type	good_expr,@function
@@ -24,8 +24,8 @@ good_expr:                              # @good_expr
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end2:
-	.size	good_expr, func_end2-good_expr
+.Lfunc_end2:
+	.size	good_expr, .Lfunc_end2-good_expr
 
 	.globl	good_vararg
 	.type	good_vararg,@function
@@ -33,8 +33,8 @@ good_vararg:                            # @good_vararg
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end3:
-	.size	good_vararg, func_end3-good_vararg
+.Lfunc_end3:
+	.size	good_vararg, .Lfunc_end3-good_vararg
 
 	.globl	main
 	.type	main,@function
@@ -44,8 +44,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end4:
-	.size	main, func_end4-main
+.Lfunc_end4:
+	.size	main, .Lfunc_end4-main
 
 	.type	arr,@object             # @arr
 	.bss

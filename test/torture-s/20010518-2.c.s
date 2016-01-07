@@ -12,7 +12,7 @@ main:                                   # @main
 	i32.sub 	$8=, $6, $7
 	i32.const	$7=, __stack_pointer
 	i32.store	$8=, 0($7), $8
-	block   	BB0_6
+	block   	.LBB0_6
 	i32.const	$push0=, 1
 	i32.store16	$0=, 28($8), $pop0
 	i32.const	$push1=, 2
@@ -43,31 +43,31 @@ main:                                   # @main
 	i32.store8	$5=, 31($8), $pop14
 	i32.load16_u	$push15=, 46($8)
 	i32.ne  	$push16=, $pop15, $0
-	br_if   	$pop16, BB0_6
+	br_if   	$pop16, .LBB0_6
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push17=, 40($8)
 	i32.ne  	$push18=, $pop17, $1
-	br_if   	$pop18, BB0_6
+	br_if   	$pop18, .LBB0_6
 # BB#2:                                 # %lor.lhs.false9
 	i32.load16_u	$push19=, 38($8)
 	i32.ne  	$push20=, $pop19, $2
-	br_if   	$pop20, BB0_6
+	br_if   	$pop20, .LBB0_6
 # BB#3:                                 # %lor.lhs.false14
 	i32.load16_u	$push21=, 36($8)
 	i32.ne  	$push22=, $pop21, $3
-	br_if   	$pop22, BB0_6
+	br_if   	$pop22, .LBB0_6
 # BB#4:                                 # %lor.lhs.false19
 	i32.load8_u	$push23=, 31($8)
 	i32.ne  	$push24=, $pop23, $5
-	br_if   	$pop24, BB0_6
+	br_if   	$pop24, .LBB0_6
 # BB#5:                                 # %if.end
 	call    	exit, $4
 	unreachable
-BB0_6:                                  # %if.then
+.LBB0_6:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 
 	.ident	"clang version 3.8.0 "

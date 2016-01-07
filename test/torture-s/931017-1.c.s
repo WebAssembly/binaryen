@@ -8,8 +8,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	h1
 	.type	h1,@function
@@ -18,8 +18,8 @@ h1:                                     # @h1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	h1, func_end1-h1
+.Lfunc_end1:
+	.size	h1, .Lfunc_end1-h1
 
 	.globl	h2
 	.type	h2,@function
@@ -27,18 +27,18 @@ h2:                                     # @h2
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push0=, v
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB2_2
+	br_if   	$pop1, .LBB2_2
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	return  	$pop2
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	h2, func_end2-h2
+.Lfunc_end2:
+	.size	h2, .Lfunc_end2-h2
 
 	.globl	g
 	.type	g,@function
@@ -48,8 +48,8 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end3:
-	.size	g, func_end3-g
+.Lfunc_end3:
+	.size	g, .Lfunc_end3-g
 
 	.globl	f
 	.type	f,@function
@@ -58,8 +58,8 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
-func_end4:
-	.size	f, func_end4-f
+.Lfunc_end4:
+	.size	f, .Lfunc_end4-f
 
 	.type	v,@object               # @v
 	.bss

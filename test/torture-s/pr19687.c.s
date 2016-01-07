@@ -7,8 +7,8 @@ main:                                   # @main
 # BB#0:                                 # %for.cond.3
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 
 	.ident	"clang version 3.8.0 "

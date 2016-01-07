@@ -6,8 +6,8 @@ arg_ptr:                                # @arg_ptr
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	arg_ptr, func_end0-arg_ptr
+.Lfunc_end0:
+	.size	arg_ptr, .Lfunc_end0-arg_ptr
 
 	.globl	arg_idx
 	.type	arg_idx,@function
@@ -15,24 +15,24 @@ arg_idx:                                # @arg_idx
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
-func_end1:
-	.size	arg_idx, func_end1-arg_idx
+.Lfunc_end1:
+	.size	arg_idx, .Lfunc_end1-arg_idx
 
 	.globl	glob_ptr
 	.type	glob_ptr,@function
 glob_ptr:                               # @glob_ptr
 # BB#0:                                 # %entry
 	return
-func_end2:
-	.size	glob_ptr, func_end2-glob_ptr
+.Lfunc_end2:
+	.size	glob_ptr, .Lfunc_end2-glob_ptr
 
 	.globl	glob_idx
 	.type	glob_idx,@function
 glob_idx:                               # @glob_idx
 # BB#0:                                 # %entry
 	return
-func_end3:
-	.size	glob_idx, func_end3-glob_idx
+.Lfunc_end3:
+	.size	glob_idx, .Lfunc_end3-glob_idx
 
 	.globl	main
 	.type	main,@function
@@ -51,8 +51,8 @@ main:                                   # @main
 	i32.store	$discard=, idx($0), $pop3
 	call    	exit, $0
 	unreachable
-func_end4:
-	.size	main, func_end4-main
+.Lfunc_end4:
+	.size	main, .Lfunc_end4-main
 
 	.type	arr,@object             # @arr
 	.bss

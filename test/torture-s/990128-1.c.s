@@ -31,40 +31,40 @@ main:                                   # @main
 	i32.store	$discard=, sss+32($2), $pop10
 	i32.const	$push0=, ss
 	i32.store	$2=, p($2), $pop0
-BB0_1:                                  # %for.inc.i.preheader.i
+.LBB0_1:                                  # %for.inc.i.preheader.i
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB0_2 Depth 2
-	loop    	BB0_4
+                                        #     Child Loop .LBB0_2 Depth 2
+	loop    	.LBB0_4
 	copy_local	$0=, $3
 	copy_local	$3=, $2
-BB0_2:                                  # %for.inc.i.i
-                                        #   Parent Loop BB0_1 Depth=1
+.LBB0_2:                                  # %for.inc.i.i
+                                        #   Parent Loop .LBB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	BB0_3
+	loop    	.LBB0_3
 	i32.load	$3=, 0($3)
-	br_if   	$3, BB0_2
-BB0_3:                                  # %if.then.i
-                                        #   in Loop: Header=BB0_1 Depth=1
+	br_if   	$3, .LBB0_2
+.LBB0_3:                                  # %if.then.i
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.load	$2=, 0($2)
 	i32.const	$push11=, 1
 	i32.add 	$3=, $0, $pop11
-	br_if   	$2, BB0_1
-BB0_4:                                  # %sub.exit
-	block   	BB0_6
+	br_if   	$2, .LBB0_1
+.LBB0_4:                                  # %sub.exit
+	block   	.LBB0_6
 	i32.const	$push12=, 2
 	i32.add 	$push13=, $0, $pop12
 	i32.store	$push14=, count($1), $pop13
 	i32.const	$push15=, 12
 	i32.ne  	$push16=, $pop14, $pop15
-	br_if   	$pop16, BB0_6
+	br_if   	$pop16, .LBB0_6
 # BB#5:                                 # %if.end
 	call    	exit, $1
 	unreachable
-BB0_6:                                  # %if.then
+.LBB0_6:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	sub
 	.type	sub,@function
@@ -74,38 +74,38 @@ sub:                                    # @sub
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	i32.load	$3=, count($2)
-	block   	BB1_5
+	block   	.LBB1_5
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, BB1_5
-BB1_1:                                  # %for.inc.i.preheader
+	br_if   	$pop4, .LBB1_5
+.LBB1_1:                                  # %for.inc.i.preheader
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB1_2 Depth 2
-	loop    	BB1_4
+                                        #     Child Loop .LBB1_2 Depth 2
+	loop    	.LBB1_4
 	copy_local	$4=, $0
-BB1_2:                                  # %for.inc.i
-                                        #   Parent Loop BB1_1 Depth=1
+.LBB1_2:                                  # %for.inc.i
+                                        #   Parent Loop .LBB1_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	BB1_3
+	loop    	.LBB1_3
 	i32.load	$4=, 0($4)
-	br_if   	$4, BB1_2
-BB1_3:                                  # %if.then
-                                        #   in Loop: Header=BB1_1 Depth=1
+	br_if   	$4, .LBB1_2
+.LBB1_3:                                  # %if.then
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.store	$4=, 0($1), $2
 	i32.load	$0=, 0($0)
 	i32.const	$push0=, 1
 	i32.add 	$3=, $3, $pop0
-	br_if   	$0, BB1_1
-BB1_4:                                  # %for.cond.look.exit.thread_crit_edge
+	br_if   	$0, .LBB1_1
+.LBB1_4:                                  # %for.cond.look.exit.thread_crit_edge
 	i32.store	$discard=, count($4), $3
-BB1_5:                                  # %for.end
+.LBB1_5:                                  # %for.end
 	i32.store	$4=, 0($1), $2
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $3, $pop1
 	i32.store	$discard=, count($4), $pop2
 	return
-func_end1:
-	.size	sub, func_end1-sub
+.Lfunc_end1:
+	.size	sub, .Lfunc_end1-sub
 
 	.globl	look
 	.type	look,@function
@@ -113,16 +113,16 @@ look:                                   # @look
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, BB2_2
-BB2_1:                                  # %for.inc
+	br_if   	$pop4, .LBB2_2
+.LBB2_1:                                  # %for.inc
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB2_2
+	loop    	.LBB2_2
 	i32.load	$0=, 0($0)
-	br_if   	$0, BB2_1
-BB2_2:                                  # %for.end
+	br_if   	$0, .LBB2_1
+.LBB2_2:                                  # %for.end
 	i32.const	$push0=, 0
 	i32.store	$0=, 0($1), $pop0
 	i32.const	$1=, 1
@@ -130,8 +130,8 @@ BB2_2:                                  # %for.end
 	i32.add 	$push2=, $pop1, $1
 	i32.store	$discard=, count($0), $pop2
 	return  	$1
-func_end2:
-	.size	look, func_end2-look
+.Lfunc_end2:
+	.size	look, .Lfunc_end2-look
 
 	.type	count,@object           # @count
 	.bss

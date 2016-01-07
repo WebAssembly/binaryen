@@ -14,8 +14,8 @@ foo:                                    # @foo
 	i64.store	$discard=, 0($pop1), $pop0
 	i32.select	$push2=, $0, $1, $2
 	return  	$pop2
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -25,17 +25,17 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
 	i32.const	$4=, -20
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.load	$push0=, b($3)
 	i32.eq  	$push1=, $pop0, $4
-	br_if   	$pop1, BB1_3
+	br_if   	$pop1, .LBB1_3
 # BB#1:                                 # %for.body.lr.ph
 	i32.load	$0=, a($3)
 	i32.load	$1=, e($3)
 	i32.load	$2=, g($3)
-BB1_2:                                  # %for.body
+.LBB1_2:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_3
+	loop    	.LBB1_3
 	i64.load	$discard=, f($3)
 	i32.store	$5=, 0($1), $3
 	i32.load	$6=, b($5)
@@ -48,11 +48,11 @@ BB1_2:                                  # %for.body
 	i32.add 	$push6=, $pop4, $pop5
 	i32.store	$push7=, b($5), $pop6
 	i32.ne  	$push8=, $pop7, $4
-	br_if   	$pop8, BB1_2
-BB1_3:                                  # %for.end
+	br_if   	$pop8, .LBB1_2
+.LBB1_3:                                  # %for.end
 	return  	$3
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	a,@object               # @a
 	.data

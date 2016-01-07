@@ -8,8 +8,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	adjust_xy
 	.type	adjust_xy,@function
@@ -19,8 +19,8 @@ adjust_xy:                              # @adjust_xy
 	i32.const	$push0=, 1
 	i32.store16	$discard=, 0($0), $pop0
 	return
-func_end1:
-	.size	adjust_xy, func_end1-adjust_xy
+.Lfunc_end1:
+	.size	adjust_xy, .Lfunc_end1-adjust_xy
 
 
 	.ident	"clang version 3.8.0 "

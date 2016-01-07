@@ -8,8 +8,8 @@ foo:                                    # @foo
 	i32.const	$push0=, 0
 	i32.load8_s	$push1=, i($pop0)
 	return  	$pop1
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -24,12 +24,12 @@ main:                                   # @main
 	i32.const	$6=, __stack_pointer
 	i32.store	$16=, 0($6), $16
 	i32.const	$0=, 0
-	block   	BB1_3
-	block   	BB1_2
+	block   	.LBB1_3
+	block   	.LBB1_2
 	i32.load8_u	$push0=, i($0)
 	i32.const	$push36=, 0
 	i32.eq  	$push37=, $pop0, $pop36
-	br_if   	$pop37, BB1_2
+	br_if   	$pop37, .LBB1_2
 # BB#1:                                 # %if.then.i
 	i32.const	$push2=, 16
 	i32.const	$14=, 8
@@ -57,8 +57,8 @@ main:                                   # @main
 	i64.shl 	$push14=, $2, $1
 	i64.or  	$push15=, $pop14, $3
 	i64.store	$discard=, 8($16), $pop15
-	br      	BB1_3
-BB1_2:                                  # %if.end.i
+	br      	.LBB1_3
+.LBB1_2:                                  # %if.end.i
 	i32.const	$push16=, 16
 	i32.const	$8=, 8
 	i32.add 	$8=, $16, $8
@@ -71,7 +71,7 @@ BB1_2:                                  # %if.end.i
 	i64.const	$push20=, 0
 	i64.store	$push21=, 0($pop19), $pop20
 	i64.store	$discard=, 8($16), $pop21
-BB1_3:                                  # %bar.exit
+.LBB1_3:                                  # %bar.exit
 	i32.load	$push22=, 8($16)
 	i32.store	$discard=, h($0), $pop22
 	i32.const	$push23=, 16
@@ -99,21 +99,21 @@ BB1_3:                                  # %bar.exit
 	i32.load	$push34=, 0($pop33)
 	i32.store	$discard=, h+4($0), $pop34
 	i32.load	$4=, h+4($0)
-	block   	BB1_5
+	block   	.LBB1_5
 	i32.const	$push35=, 1
 	i32.store	$discard=, f+4($0), $pop35
-	br_if   	$4, BB1_5
+	br_if   	$4, .LBB1_5
 # BB#4:                                 # %if.end
 	i32.const	$7=, 32
 	i32.add 	$16=, $16, $7
 	i32.const	$7=, __stack_pointer
 	i32.store	$16=, 0($7), $16
 	return  	$0
-BB1_5:                                  # %if.then
+.LBB1_5:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	i,@object               # @i
 	.data

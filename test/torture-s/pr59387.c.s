@@ -10,9 +10,9 @@ main:                                   # @main
 	i32.load8_u	$2=, c($0)
 	i32.const	$push1=, -19
 	i32.store	$1=, a($0), $pop1
-BB0_1:                                  # %for.body2
+.LBB0_1:                                  # %for.body2
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_3
+	loop    	.LBB0_3
 	i32.load	$push3=, e($0)
 	i32.const	$push4=, f
 	i32.store	$discard=, 0($pop3), $pop4
@@ -21,20 +21,20 @@ BB0_1:                                  # %for.body2
 	i32.load	$push5=, d($0)
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $pop5, $pop8
-	br_if   	$pop9, BB0_3
+	br_if   	$pop9, .LBB0_3
 # BB#2:                                 # %for.inc4
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push6=, 1
 	i32.add 	$push0=, $1, $pop6
 	i32.store	$1=, a($0), $pop0
-	br_if   	$1, BB0_1
-BB0_3:                                  # %return
+	br_if   	$1, .LBB0_1
+.LBB0_3:                                  # %return
 	i32.store8	$discard=, c($0), $2
 	i32.const	$push7=, 24
 	i32.store	$discard=, b($0), $pop7
 	return  	$0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	d,@object               # @d
 	.bss

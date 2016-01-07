@@ -13,8 +13,8 @@ main:                                   # @main
 	i32.store16	$0=, 0($pop2), $pop3
 	i32.store16	$push4=, t+2($0), $0
 	return  	$pop4
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	t,@object               # @t
 	.bss

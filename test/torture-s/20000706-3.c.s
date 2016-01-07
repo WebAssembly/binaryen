@@ -9,54 +9,54 @@ baz:                                    # @baz
 	i32.load	$push0=, 0($0)
 	i32.store	$discard=, c($pop1), $pop0
 	return
-func_end0:
-	.size	baz, func_end0-baz
+.Lfunc_end0:
+	.size	baz, .Lfunc_end0-baz
 
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $0, $pop2
-	br_if   	$pop3, BB1_3
+	br_if   	$pop3, .LBB1_3
 # BB#1:                                 # %entry
 	i32.const	$push1=, 0
 	i32.load	$push0=, c($pop1)
 	i32.const	$push4=, 1
 	i32.ne  	$push5=, $pop0, $pop4
-	br_if   	$pop5, BB1_3
+	br_if   	$pop5, .LBB1_3
 # BB#2:                                 # %if.end
 	return
-BB1_3:                                  # %if.then
+.LBB1_3:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	BB2_3
+	block   	.LBB2_3
 	i32.const	$push0=, 0
 	i32.store	$push1=, c($pop0), $0
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB2_3
+	br_if   	$pop3, .LBB2_3
 # BB#1:                                 # %entry
 	i32.const	$push4=, 2
 	i32.ne  	$push5=, $1, $pop4
-	br_if   	$pop5, BB2_3
+	br_if   	$pop5, .LBB2_3
 # BB#2:                                 # %bar.exit
 	return
-BB2_3:                                  # %if.then.i
+.LBB2_3:                                  # %if.then.i
 	call    	abort
 	unreachable
-func_end2:
-	.size	foo, func_end2-foo
+.Lfunc_end2:
+	.size	foo, .Lfunc_end2-foo
 
 	.globl	main
 	.type	main,@function
@@ -69,8 +69,8 @@ main:                                   # @main
 	i32.store	$discard=, c($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	c,@object               # @c
 	.bss

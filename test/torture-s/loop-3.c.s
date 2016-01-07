@@ -13,8 +13,8 @@ g:                                      # @g
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, n($1), $pop2
 	return  	$1
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	f
 	.type	f,@function
@@ -36,8 +36,8 @@ f:                                      # @f
 	i32.add 	$push8=, $pop6, $pop7
 	i32.store	$discard=, n($1), $pop8
 	return  	$0
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -47,19 +47,19 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load	$1=, n($0)
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $1, $pop0
 	i32.store	$discard=, n($0), $pop1
-	br_if   	$1, BB2_2
+	br_if   	$1, .LBB2_2
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	n,@object               # @n
 	.bss

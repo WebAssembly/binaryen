@@ -8,8 +8,8 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 3
 	return  	$pop0
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -18,21 +18,21 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.load	$push1=, y($0)
-	br_if   	$pop1, BB1_3
+	br_if   	$pop1, .LBB1_3
 # BB#1:                                 # %entry
 	i32.load	$push0=, z($0)
 	i32.const	$push2=, 3
 	i32.ne  	$push3=, $pop0, $pop2
-	br_if   	$pop3, BB1_3
+	br_if   	$pop3, .LBB1_3
 # BB#2:                                 # %lor.lhs.false1
 	return  	$0
-BB1_3:                                  # %if.then
+.LBB1_3:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	z,@object               # @z
 	.data

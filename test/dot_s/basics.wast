@@ -9,8 +9,8 @@
         (call_import $puts
           (i32.const 16)
         )
-        (block $BB0_5
-          (block $BB0_4
+        (block $.LBB0_5
+          (block $.LBB0_4
             (br_if
               (i32.ne
                 (i32.sub
@@ -31,9 +31,9 @@
                 )
                 (i32.const 1)
               )
-              $BB0_4
+              $.LBB0_4
             )
-            (loop $BB0_1
+            (loop $.LBB0_1
               (block
                 (set_local $$0
                   (i32.add
@@ -44,7 +44,7 @@
                     (get_local $$0)
                   )
                 )
-                (block $BB0_3
+                (block $.LBB0_3
                   (br_if
                     (i32.ne
                       (i32.rem_s
@@ -53,7 +53,7 @@
                       )
                       (i32.const 3)
                     )
-                    $BB0_3
+                    $.LBB0_3
                   )
                   (set_local $$0
                     (i32.add
@@ -73,9 +73,9 @@
                     )
                     (i32.const 0)
                   )
-                  $BB0_5
+                  $.LBB0_5
                 )
-                (br $BB0_1)
+                (br $.LBB0_1)
               )
             )
           )

@@ -7,8 +7,8 @@ g:                                      # @g
 	.result 	f32
 # BB#0:                                 # %entry
 	return  	$4
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	f
 	.type	f,@function
@@ -17,8 +17,8 @@ f:                                      # @f
 	.result 	f32
 # BB#0:                                 # %entry
 	return  	$3
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -27,8 +27,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

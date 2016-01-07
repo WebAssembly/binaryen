@@ -13,8 +13,8 @@ buggy:                                  # @buggy
 	i32.const	$push0=, -1
 	i32.select	$push1=, $1, $pop0, $2
 	return  	$pop1
-func_end0:
-	.size	buggy, func_end0-buggy
+.Lfunc_end0:
+	.size	buggy, .Lfunc_end0-buggy
 
 	.globl	main
 	.type	main,@function
@@ -23,8 +23,8 @@ main:                                   # @main
 # BB#0:                                 # %if.end3
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

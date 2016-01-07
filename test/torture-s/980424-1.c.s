@@ -5,23 +5,23 @@
 f:                                      # @f
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	g
 	.type	g,@function
 g:                                      # @g
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push6=, a
 	i32.const	$push0=, 0
 	i32.load	$push1=, i($pop0)
@@ -33,14 +33,14 @@ g:                                      # @g
 	i32.load	$push8=, 0($pop7)
 	i32.const	$push9=, 1
 	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, BB1_2
+	br_if   	$pop10, .LBB1_2
 # BB#1:                                 # %f.exit
 	return
-BB1_2:                                  # %if.then.i
+.LBB1_2:                                  # %if.then.i
 	call    	abort
 	unreachable
-func_end1:
-	.size	g, func_end1-g
+.Lfunc_end1:
+	.size	g, .Lfunc_end1-g
 
 	.globl	main
 	.type	main,@function
@@ -55,8 +55,8 @@ main:                                   # @main
 	i32.store	$discard=, i($0), $pop1
 	call    	exit, $0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	i,@object               # @i
 	.bss

@@ -10,8 +10,8 @@ main:                                   # @main
 	i32.gt_s	$push1=, $0, $pop0
 	i32.call	$push2=, ox, $pop1
 	return  	$pop2
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	ox,@function
 ox:                                     # @ox
@@ -20,8 +20,8 @@ ox:                                     # @ox
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	ox, func_end1-ox
+.Lfunc_end1:
+	.size	ox, .Lfunc_end1-ox
 
 
 	.ident	"clang version 3.8.0 "

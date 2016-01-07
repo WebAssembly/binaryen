@@ -15,8 +15,8 @@ f:                                      # @f
 	i32.store	$discard=, 4($2), $pop1
 	i32.store	$discard=, 8($2), $1
 	return  	$2
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -26,8 +26,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

@@ -18,12 +18,12 @@ main:                                   # @main
 	i32.sub 	$push8=, $0, $pop7
 	i32.const	$push9=, 1
 	i32.ne  	$push10=, $pop8, $pop9
-	block   	BB0_5
-	block   	BB0_4
-	br_if   	$pop10, BB0_4
-BB0_1:                                  # %.preheader
+	block   	.LBB0_5
+	block   	.LBB0_4
+	br_if   	$pop10, .LBB0_4
+.LBB0_1:                                  # %.preheader
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_4
+	loop    	.LBB0_4
 	i32.const	$push12=, 10
 	i32.gt_s	$push13=, $0, $pop12
 	i32.add 	$0=, $pop13, $0
@@ -31,27 +31,27 @@ BB0_1:                                  # %.preheader
 	i32.rem_s	$push15=, $0, $pop14
 	i32.const	$push16=, 3
 	i32.ne  	$push17=, $pop15, $pop16
-	block   	BB0_3
-	br_if   	$pop17, BB0_3
-# BB#2:                                 #   in Loop: Header=BB0_1 Depth=1
+	block   	.LBB0_3
+	br_if   	$pop17, .LBB0_3
+# BB#2:                                 #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push18=, 111
 	i32.rem_s	$push19=, $0, $pop18
 	i32.add 	$0=, $pop19, $0
-BB0_3:                                  #   in Loop: Header=BB0_1 Depth=1
+.LBB0_3:                                  #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push20=, 7
 	i32.rem_s	$push21=, $0, $pop20
 	i32.const	$push22=, 0
 	i32.eq  	$push23=, $pop21, $pop22
-	br_if   	$pop23, BB0_5
-	br      	BB0_1
-BB0_4:
+	br_if   	$pop23, .LBB0_5
+	br      	.LBB0_1
+.LBB0_4:
 	i32.const	$push11=, -12
 	i32.add 	$0=, $0, $pop11
 	i32.const	$discard=, main # just take address for testing
-BB0_5:                                  # %.loopexit
+.LBB0_5:                                  # %.loopexit
 	return  	$0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	.str,@object            # @.str
 	.data

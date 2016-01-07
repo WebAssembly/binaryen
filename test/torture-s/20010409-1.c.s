@@ -12,8 +12,8 @@ foo:                                    # @foo
 	i32.add 	$push3=, $pop0, $pop2
 	i32.store	$discard=, c($pop4), $pop3
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
@@ -21,17 +21,17 @@ bar:                                    # @bar
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
-	br_if   	$1, BB1_2
+	block   	.LBB1_2
+	br_if   	$1, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	test
 	.type	test,@function
@@ -41,18 +41,18 @@ test:                                   # @test
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	i32.load	$3=, b($2)
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push0=, 5000
 	i32.store	$discard=, c($2), $pop0
-	br_if   	$3, BB2_2
+	br_if   	$3, .LBB2_2
 # BB#1:                                 # %if.then.i
 	call    	abort
 	unreachable
-BB2_2:                                  # %if.end.i
+.LBB2_2:                                  # %if.end.i
 	call    	exit, $2
 	unreachable
-func_end2:
-	.size	test, func_end2-test
+.Lfunc_end2:
+	.size	test, .Lfunc_end2-test
 
 	.globl	main
 	.type	main,@function
@@ -63,20 +63,20 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.store	$discard=, d+4($0), $0
 	i32.load	$1=, b($0)
-	block   	BB3_2
+	block   	.LBB3_2
 	i32.const	$push0=, a
 	i32.store	$discard=, d($0), $pop0
 	i32.const	$push1=, 5000
 	i32.store	$discard=, c($0), $pop1
-	br_if   	$1, BB3_2
+	br_if   	$1, .LBB3_2
 # BB#1:                                 # %if.then.i.i
 	call    	abort
 	unreachable
-BB3_2:                                  # %if.end.i.i
+.LBB3_2:                                  # %if.end.i.i
 	call    	exit, $0
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	b,@object               # @b
 	.data

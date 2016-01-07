@@ -15,16 +15,16 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	i32.store	$discard=, dummy($1), $0
-	block   	BB0_2
-	br_if   	$2, BB0_2
+	block   	.LBB0_2
+	br_if   	$2, .LBB0_2
 # BB#1:                                 # %if.end
 	call    	exit, $1
 	unreachable
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	count,@object           # @count
 	.bss

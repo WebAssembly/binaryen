@@ -64,8 +64,8 @@ get_addrs:                              # @get_addrs
 	i32.add 	$push47=, $pop45, $pop46
 	i32.store	$discard=, 28($0), $pop47
 	return
-func_end0:
-	.size	get_addrs, func_end0-get_addrs
+.Lfunc_end0:
+	.size	get_addrs, .Lfunc_end0-get_addrs
 
 	.globl	main
 	.type	main,@function
@@ -75,8 +75,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

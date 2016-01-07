@@ -7,43 +7,43 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.load	$push0=, test($1)
 	i32.const	$push1=, -1
 	i32.add 	$0=, $pop0, $pop1
 	i32.const	$push2=, 3
 	i32.le_u	$push3=, $0, $pop2
-	br_if   	$pop3, BB0_2
+	br_if   	$pop3, .LBB0_2
 # BB#1:                                 # %sw.epilog
 	return  	$1
-BB0_2:                                  # %entry
-	block   	BB0_6
-	block   	BB0_5
-	block   	BB0_4
-	block   	BB0_3
-	tableswitch	$0, BB0_3, BB0_3, BB0_4, BB0_5, BB0_6
-BB0_3:                                  # %sw.bb
+.LBB0_2:                                  # %entry
+	block   	.LBB0_6
+	block   	.LBB0_5
+	block   	.LBB0_4
+	block   	.LBB0_3
+	tableswitch	$0, .LBB0_3, .LBB0_3, .LBB0_4, .LBB0_5, .LBB0_6
+.LBB0_3:                                  # %sw.bb
 	call    	y
 	unreachable
-BB0_4:                                  # %sw.bb1
+.LBB0_4:                                  # %sw.bb1
 	call    	y
 	unreachable
-BB0_5:                                  # %sw.bb2
+.LBB0_5:                                  # %sw.bb2
 	call    	y
 	unreachable
-BB0_6:                                  # %sw.bb3
+.LBB0_6:                                  # %sw.bb3
 	call    	y
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	y,@function
 y:                                      # @y
 # BB#0:                                 # %entry
 	call    	abort
 	unreachable
-func_end1:
-	.size	y, func_end1-y
+.Lfunc_end1:
+	.size	y, .Lfunc_end1-y
 
 	.type	test,@object            # @test
 	.lcomm	test,4,2

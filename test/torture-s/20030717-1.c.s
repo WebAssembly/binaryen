@@ -21,19 +21,19 @@ bar:                                    # @bar
 	i32.xor 	$5=, $pop3, $8
 	copy_local	$1=, $2
 	copy_local	$10=, $2
-BB0_1:                                  # %do.body
+.LBB0_1:                                  # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_4
-	block   	BB0_3
+	loop    	.LBB0_4
+	block   	.LBB0_3
 	i32.const	$push4=, 0
 	i32.gt_s	$push5=, $1, $pop4
-	br_if   	$pop5, BB0_3
+	br_if   	$pop5, .LBB0_3
 # BB#2:                                 # %if.then
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.add 	$push6=, $0, $6
 	i32.load	$1=, 0($pop6)
-BB0_3:                                  # %if.end
-                                        #   in Loop: Header=BB0_1 Depth=1
+.LBB0_3:                                  # %if.end
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push7=, -1
 	i32.add 	$1=, $1, $pop7
 	i32.mul 	$push8=, $1, $6
@@ -46,8 +46,8 @@ BB0_3:                                  # %if.end
 	i32.lt_u	$push13=, $pop12, $5
 	i32.select	$10=, $pop13, $1, $10
 	i32.ne  	$push14=, $1, $2
-	br_if   	$pop14, BB0_1
-BB0_4:                                  # %do.end
+	br_if   	$pop14, .LBB0_1
+.LBB0_4:                                  # %do.end
 	i32.mul 	$push18=, $10, $6
 	i32.add 	$push19=, $0, $pop18
 	i32.const	$push15=, 9
@@ -55,8 +55,8 @@ BB0_4:                                  # %do.end
 	i32.add 	$push17=, $pop16, $4
 	i32.store	$discard=, 12($pop19), $pop17
 	return  	$10
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	main
 	.type	main,@function
@@ -65,8 +65,8 @@ main:                                   # @main
 # BB#0:                                 # %bar.exit
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

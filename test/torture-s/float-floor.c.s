@@ -11,21 +11,21 @@ main:                                   # @main
 	f64.floor	$0=, $pop0
 	i32.trunc_s/f64	$2=, $0
 	i32.const	$3=, 1023
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.ne  	$push1=, $2, $3
-	br_if   	$pop1, BB0_3
+	br_if   	$pop1, .LBB0_3
 # BB#1:                                 # %lor.lhs.false
 	f32.demote/f64	$push2=, $0
 	i32.trunc_s/f32	$push3=, $pop2
 	i32.ne  	$push4=, $pop3, $3
-	br_if   	$pop4, BB0_3
+	br_if   	$pop4, .LBB0_3
 # BB#2:                                 # %if.end
 	return  	$1
-BB0_3:                                  # %if.then
+.LBB0_3:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	d,@object               # @d
 	.data

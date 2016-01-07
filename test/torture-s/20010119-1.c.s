@@ -6,8 +6,8 @@ bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	baz
 	.type	baz,@function
@@ -15,8 +15,8 @@ baz:                                    # @baz
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end1:
-	.size	baz, func_end1-baz
+.Lfunc_end1:
+	.size	baz, .Lfunc_end1-baz
 
 	.globl	main
 	.type	main,@function
@@ -26,8 +26,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

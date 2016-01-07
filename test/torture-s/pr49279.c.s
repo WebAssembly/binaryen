@@ -9,8 +9,8 @@ bar:                                    # @bar
 	#APP
 	#NO_APP
 	return  	$0
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	foo
 	.type	foo,@function
@@ -46,8 +46,8 @@ foo:                                    # @foo
 	i32.const	$5=, __stack_pointer
 	i32.store	$6=, 0($5), $6
 	return  	$pop4
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.globl	main
 	.type	main,@function
@@ -65,11 +65,11 @@ main:                                   # @main
 	i32.add 	$3=, $5, $3
 	i32.const	$4=, 8
 	i32.add 	$4=, $5, $4
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.call	$push0=, foo, $3, $4
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB2_2
+	br_if   	$pop2, .LBB2_2
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
 	i32.const	$2=, 16
@@ -77,11 +77,11 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$5=, 0($2), $5
 	return  	$pop3
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

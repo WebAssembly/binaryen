@@ -9,8 +9,8 @@ test1:                                  # @test1
 	i32.const	$push0=, 2
 	i32.select	$push1=, $0, $0, $pop0
 	return  	$pop1
-func_end0:
-	.size	test1, func_end0-test1
+.Lfunc_end0:
+	.size	test1, .Lfunc_end0-test1
 
 	.globl	test2
 	.type	test2,@function
@@ -21,8 +21,8 @@ test2:                                  # @test2
 	i32.const	$push0=, 2
 	i32.select	$push1=, $0, $0, $pop0
 	return  	$pop1
-func_end1:
-	.size	test2, func_end1-test2
+.Lfunc_end1:
+	.size	test2, .Lfunc_end1-test2
 
 	.globl	test3
 	.type	test3,@function
@@ -37,8 +37,8 @@ test3:                                  # @test3
 	i32.ne  	$push2=, $0, $pop1
 	i32.select	$push3=, $pop0, $1, $pop2
 	return  	$pop3
-func_end2:
-	.size	test3, func_end2-test3
+.Lfunc_end2:
+	.size	test3, .Lfunc_end2-test3
 
 	.globl	main
 	.type	main,@function
@@ -48,8 +48,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 
 	.ident	"clang version 3.8.0 "

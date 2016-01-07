@@ -39,8 +39,8 @@ foo:                                    # @foo
 	f32.add 	$push10=, $pop9, $10
 	f32.store	$discard=, v($0), $pop10
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -69,7 +69,7 @@ main:                                   # @main
 	i32.store16	$2=, u($0), $pop7
 	i32.const	$15=, 65535
 	f32.const	$10=, 0x0p0
-	block   	BB1_9
+	block   	.LBB1_9
 	f32.load	$push8=, v+12($0)
 	f32.add 	$push9=, $pop8, $10
 	f32.add 	$push3=, $pop9, $10
@@ -85,41 +85,41 @@ main:                                   # @main
 	f32.store	$13=, v($0), $pop0
 	i32.and 	$push13=, $2, $15
 	i32.ne  	$push14=, $pop13, $3
-	br_if   	$pop14, BB1_9
+	br_if   	$pop14, .LBB1_9
 # BB#1:                                 # %entry
 	i32.and 	$push15=, $1, $15
 	i32.ne  	$push16=, $pop15, $4
-	br_if   	$pop16, BB1_9
+	br_if   	$pop16, .LBB1_9
 # BB#2:                                 # %entry
 	i32.or  	$push5=, $5, $6
 	i32.and 	$push17=, $pop5, $15
-	br_if   	$pop17, BB1_9
+	br_if   	$pop17, .LBB1_9
 # BB#3:                                 # %if.end
-	block   	BB1_8
+	block   	.LBB1_8
 	f32.const	$push18=, 0x1.2p5
 	f32.ne  	$push19=, $13, $pop18
-	br_if   	$pop19, BB1_8
+	br_if   	$pop19, .LBB1_8
 # BB#4:                                 # %if.end
 	f32.const	$push20=, 0x1.4p5
 	f32.ne  	$push21=, $12, $pop20
-	br_if   	$pop21, BB1_8
+	br_if   	$pop21, .LBB1_8
 # BB#5:                                 # %if.end
 	f32.const	$push22=, 0x1.6p5
 	f32.ne  	$push23=, $11, $pop22
-	br_if   	$pop23, BB1_8
+	br_if   	$pop23, .LBB1_8
 # BB#6:                                 # %if.end
 	f32.ne  	$push24=, $14, $10
-	br_if   	$pop24, BB1_8
+	br_if   	$pop24, .LBB1_8
 # BB#7:                                 # %if.end26
 	return  	$0
-BB1_8:                                  # %if.then25
+.LBB1_8:                                  # %if.then25
 	call    	abort
 	unreachable
-BB1_9:                                  # %if.then
+.LBB1_9:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	u,@object               # @u
 	.bss

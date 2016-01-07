@@ -11,26 +11,26 @@ pure_alloc:                             # @pure_alloc
 	i32.load	$0=, bar($2)
 	i32.load	$1=, baz($2)
 	i32.const	$3=, 2
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.add 	$push0=, $4, $3
 	i32.store	$push1=, foo($2), $pop0
 	i32.lt_u	$push2=, $pop1, $1
-	br_if   	$pop2, BB0_3
-BB0_1:                                  # %if.end
+	br_if   	$pop2, .LBB0_3
+.LBB0_1:                                  # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.le_u	$push3=, $1, $3
-	br_if   	$pop3, BB0_1
-BB0_2:                                  # %while.body.if.then_crit_edge
+	br_if   	$pop3, .LBB0_1
+.LBB0_2:                                  # %while.body.if.then_crit_edge
 	i32.store	$discard=, foo($2), $3
 	copy_local	$4=, $2
-BB0_3:                                  # %if.then
+.LBB0_3:                                  # %if.then
 	i32.add 	$push4=, $0, $4
 	i32.const	$push5=, -2
 	i32.and 	$push6=, $pop4, $pop5
 	return  	$pop6
-func_end0:
-	.size	pure_alloc, func_end0-pure_alloc
+.Lfunc_end0:
+	.size	pure_alloc, .Lfunc_end0-pure_alloc
 
 	.globl	main
 	.type	main,@function
@@ -41,34 +41,34 @@ main:                                   # @main
 	i32.const	$1=, 0
 	i32.load	$0=, baz($1)
 	i32.const	$2=, 2
-	block   	BB1_6
-	block   	BB1_5
-	block   	BB1_3
+	block   	.LBB1_6
+	block   	.LBB1_5
+	block   	.LBB1_3
 	i32.load	$push1=, foo($1)
 	i32.add 	$push0=, $pop1, $2
 	i32.store	$3=, foo($1), $pop0
 	i32.ge_u	$push2=, $3, $0
-	br_if   	$pop2, BB1_3
+	br_if   	$pop2, .LBB1_3
 # BB#1:                                 # %pure_alloc.exit
-	br_if   	$3, BB1_5
+	br_if   	$3, .LBB1_5
 # BB#2:                                 # %if.then
 	call    	abort
 	unreachable
-BB1_3:                                  # %if.end.lr.ph.i
+.LBB1_3:                                  # %if.end.lr.ph.i
 	i32.const	$push3=, 3
 	i32.lt_u	$push4=, $0, $pop3
-	br_if   	$pop4, BB1_6
+	br_if   	$pop4, .LBB1_6
 # BB#4:                                 # %pure_alloc.exit.thread.split
 	i32.store	$discard=, foo($1), $2
-BB1_5:                                  # %if.end
+.LBB1_5:                                  # %if.end
 	return  	$1
-BB1_6:                                  # %if.end.i
+.LBB1_6:                                  # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_7
-	br      	BB1_6
-BB1_7:
-func_end1:
-	.size	main, func_end1-main
+	loop    	.LBB1_7
+	br      	.LBB1_6
+.LBB1_7:
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	foo,@object             # @foo
 	.bss

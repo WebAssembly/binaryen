@@ -7,33 +7,33 @@ aim_callhandler:                        # @aim_callhandler
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	BB0_5
+	block   	.LBB0_5
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $1, $pop5
-	br_if   	$pop6, BB0_5
+	br_if   	$pop6, .LBB0_5
 # BB#1:                                 # %entry
 	i32.const	$push0=, 65535
 	i32.eq  	$push1=, $3, $pop0
-	br_if   	$pop1, BB0_5
+	br_if   	$pop1, .LBB0_5
 # BB#2:                                 # %if.end3
 	i32.const	$1=, 0
 	i32.load	$3=, aim_callhandler.i($1)
 	i32.const	$4=, 1
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.ge_s	$push2=, $3, $4
-	br_if   	$pop2, BB0_4
+	br_if   	$pop2, .LBB0_4
 # BB#3:                                 # %if.end7
 	i32.add 	$push3=, $3, $4
 	i32.store	$discard=, aim_callhandler.i($1), $pop3
-	br      	BB0_5
-BB0_4:                                  # %if.then6
+	br      	.LBB0_5
+.LBB0_4:                                  # %if.then6
 	call    	abort
 	unreachable
-BB0_5:                                  # %return
+.LBB0_5:                                  # %return
 	i32.const	$push4=, 0
 	return  	$pop4
-func_end0:
-	.size	aim_callhandler, func_end0-aim_callhandler
+.Lfunc_end0:
+	.size	aim_callhandler, .Lfunc_end0-aim_callhandler
 
 	.globl	main
 	.type	main,@function
@@ -44,19 +44,19 @@ main:                                   # @main
 	i32.const	$1=, 0
 	i32.load	$0=, aim_callhandler.i($1)
 	i32.const	$2=, 1
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.lt_s	$push0=, $0, $2
-	br_if   	$pop0, BB1_2
+	br_if   	$pop0, .LBB1_2
 # BB#1:                                 # %if.then6.i
 	call    	abort
 	unreachable
-BB1_2:                                  # %aim_callhandler.exit
+.LBB1_2:                                  # %aim_callhandler.exit
 	i32.add 	$push1=, $0, $2
 	i32.store	$discard=, aim_callhandler.i($1), $pop1
 	call    	exit, $1
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	aim_callhandler.i,@object # @aim_callhandler.i
 	.lcomm	aim_callhandler.i,4,2

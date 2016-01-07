@@ -17,19 +17,19 @@ main:                                   # @main
 	call    	foo, $3
 	i32.load8_s	$0=, 15($4)
 	call    	bar
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
 	call    	exit, $pop2
 	unreachable
-BB0_2:                                  # %if.else
+.LBB0_2:                                  # %if.else
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	foo,@function
 foo:                                    # @foo
@@ -38,8 +38,8 @@ foo:                                    # @foo
 	i32.const	$push0=, 129
 	i32.store8	$discard=, 0($0), $pop0
 	return
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.type	bar,@function
 bar:                                    # @bar
@@ -47,8 +47,8 @@ bar:                                    # @bar
 	#APP
 	#NO_APP
 	return
-func_end2:
-	.size	bar, func_end2-bar
+.Lfunc_end2:
+	.size	bar, .Lfunc_end2-bar
 
 
 	.ident	"clang version 3.8.0 "

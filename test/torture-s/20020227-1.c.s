@@ -8,16 +8,16 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
 # BB#0:                                 # %f2.exit
 	return
-func_end1:
-	.size	f1, func_end1-f1
+.Lfunc_end1:
+	.size	f1, .Lfunc_end1-f1
 
 	.globl	f2
 	.type	f2,@function
@@ -27,7 +27,7 @@ f2:                                     # @f2
 # BB#0:                                 # %entry
 	i32.const	$1=, 8
 	i32.const	$2=, 16
-	block   	BB2_4
+	block   	.LBB2_4
 	i32.const	$push1=, 4
 	i32.add 	$push2=, $0, $pop1
 	i32.load8_u	$push3=, 0($pop2)
@@ -47,7 +47,7 @@ f2:                                     # @f2
 	f32.reinterpret/i32	$push17=, $pop16
 	f32.const	$push35=, 0x1p0
 	f32.ne  	$push36=, $pop17, $pop35
-	br_if   	$pop36, BB2_4
+	br_if   	$pop36, .LBB2_4
 # BB#1:                                 # %entry
 	i32.add 	$push26=, $0, $1
 	i32.load8_u	$push27=, 0($pop26)
@@ -69,19 +69,19 @@ f2:                                     # @f2
 	f32.reinterpret/i32	$push0=, $pop34
 	f32.const	$push37=, 0x0p0
 	f32.ne  	$push38=, $pop0, $pop37
-	br_if   	$pop38, BB2_4
+	br_if   	$pop38, .LBB2_4
 # BB#2:                                 # %lor.lhs.false
 	i32.load8_u	$push39=, 0($0)
 	i32.const	$push40=, 42
 	i32.ne  	$push41=, $pop39, $pop40
-	br_if   	$pop41, BB2_4
+	br_if   	$pop41, .LBB2_4
 # BB#3:                                 # %if.end
 	return
-BB2_4:                                  # %if.then
+.LBB2_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	f2, func_end2-f2
+.Lfunc_end2:
+	.size	f2, .Lfunc_end2-f2
 
 
 	.ident	"clang version 3.8.0 "

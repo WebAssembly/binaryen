@@ -29,8 +29,8 @@ ll_to_ld:                               # @ll_to_ld
 	i32.const	$5=, __stack_pointer
 	i32.store	$6=, 0($5), $6
 	return
-func_end0:
-	.size	ll_to_ld, func_end0-ll_to_ld
+.Lfunc_end0:
+	.size	ll_to_ld, .Lfunc_end0-ll_to_ld
 
 	.globl	ld_to_ll
 	.type	ld_to_ll,@function
@@ -40,8 +40,8 @@ ld_to_ll:                               # @ld_to_ll
 # BB#0:                                 # %entry
 	i64.call	$push0=, __fixtfdi, $0, $1
 	return  	$pop0
-func_end1:
-	.size	ld_to_ll, func_end1-ld_to_ll
+.Lfunc_end1:
+	.size	ld_to_ll, .Lfunc_end1-ld_to_ll
 
 	.globl	main
 	.type	main,@function
@@ -51,8 +51,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

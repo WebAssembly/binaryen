@@ -11,8 +11,8 @@ foo:                                    # @foo
 	i32.const	$push0=, 2
 	i32.add 	$push1=, $0, $pop0
 	return  	$pop1
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -25,20 +25,20 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	i32.const	$2=, 1
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.add 	$push0=, $0, $2
 	i32.sub 	$push1=, $pop0, $1
 	i32.ne  	$push2=, $pop1, $2
-	br_if   	$pop2, BB1_2
+	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %bar.exit
 	i32.const	$push3=, 0
 	call    	exit, $pop3
 	unreachable
-BB1_2:                                  # %if.then.i
+.LBB1_2:                                  # %if.then.i
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	buf,@object             # @buf
 	.bss

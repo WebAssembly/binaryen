@@ -11,39 +11,39 @@
   (func $bar32 (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (block $BB0_8
+        (block $.LBB0_8
           (br_if
             (i32.gt_u
               (get_local $$0)
               (i32.const 23)
             )
-            $BB0_8
+            $.LBB0_8
           )
-          (block $BB0_7
-            (block $BB0_6
-              (block $BB0_5
-                (block $BB0_4
-                  (block $BB0_3
-                    (block $BB0_2
+          (block $.LBB0_7
+            (block $.LBB0_6
+              (block $.LBB0_5
+                (block $.LBB0_4
+                  (block $.LBB0_3
+                    (block $.LBB0_2
                       (tableswitch 
                         (get_local $$0)
-                        (table (br $BB0_2) (br $BB0_2) (br $BB0_2) (br $BB0_2) (br $BB0_2) (br $BB0_2) (br $BB0_2) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_4) (br $BB0_4) (br $BB0_4) (br $BB0_4) (br $BB0_4) (br $BB0_4) (br $BB0_5) (br $BB0_6) (br $BB0_7)) (br $BB0_2)
+                        (table (br $.LBB0_2) (br $.LBB0_2) (br $.LBB0_2) (br $.LBB0_2) (br $.LBB0_2) (br $.LBB0_2) (br $.LBB0_2) (br $.LBB0_3) (br $.LBB0_3) (br $.LBB0_3) (br $.LBB0_3) (br $.LBB0_3) (br $.LBB0_3) (br $.LBB0_3) (br $.LBB0_3) (br $.LBB0_4) (br $.LBB0_4) (br $.LBB0_4) (br $.LBB0_4) (br $.LBB0_4) (br $.LBB0_4) (br $.LBB0_5) (br $.LBB0_6) (br $.LBB0_7)) (br $.LBB0_2)
                       )
                     )
                     (call_import $foo0)
-                    (br $BB0_8)
+                    (br $.LBB0_8)
                   )
                   (call_import $foo1)
-                  (br $BB0_8)
+                  (br $.LBB0_8)
                 )
                 (call_import $foo2)
-                (br $BB0_8)
+                (br $.LBB0_8)
               )
               (call_import $foo3)
-              (br $BB0_8)
+              (br $.LBB0_8)
             )
             (call_import $foo4)
-            (br $BB0_8)
+            (br $.LBB0_8)
           )
           (call_import $foo5)
         )
@@ -54,41 +54,41 @@
   (func $bar64 (param $$0 i64)
     (block $fake_return_waka123
       (block
-        (block $BB1_8
+        (block $.LBB1_8
           (br_if
             (i64.gt_u
               (get_local $$0)
               (i64.const 23)
             )
-            $BB1_8
+            $.LBB1_8
           )
-          (block $BB1_7
-            (block $BB1_6
-              (block $BB1_5
-                (block $BB1_4
-                  (block $BB1_3
-                    (block $BB1_2
+          (block $.LBB1_7
+            (block $.LBB1_6
+              (block $.LBB1_5
+                (block $.LBB1_4
+                  (block $.LBB1_3
+                    (block $.LBB1_2
                       (tableswitch 
                         (i32.wrap/i64
                           (get_local $$0)
                         )
-                        (table (br $BB1_2) (br $BB1_2) (br $BB1_2) (br $BB1_2) (br $BB1_2) (br $BB1_2) (br $BB1_2) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_4) (br $BB1_4) (br $BB1_4) (br $BB1_4) (br $BB1_4) (br $BB1_4) (br $BB1_5) (br $BB1_6) (br $BB1_7)) (br $BB1_2)
+                        (table (br $.LBB1_2) (br $.LBB1_2) (br $.LBB1_2) (br $.LBB1_2) (br $.LBB1_2) (br $.LBB1_2) (br $.LBB1_2) (br $.LBB1_3) (br $.LBB1_3) (br $.LBB1_3) (br $.LBB1_3) (br $.LBB1_3) (br $.LBB1_3) (br $.LBB1_3) (br $.LBB1_3) (br $.LBB1_4) (br $.LBB1_4) (br $.LBB1_4) (br $.LBB1_4) (br $.LBB1_4) (br $.LBB1_4) (br $.LBB1_5) (br $.LBB1_6) (br $.LBB1_7)) (br $.LBB1_2)
                       )
                     )
                     (call_import $foo0)
-                    (br $BB1_8)
+                    (br $.LBB1_8)
                   )
                   (call_import $foo1)
-                  (br $BB1_8)
+                  (br $.LBB1_8)
                 )
                 (call_import $foo2)
-                (br $BB1_8)
+                (br $.LBB1_8)
               )
               (call_import $foo3)
-              (br $BB1_8)
+              (br $.LBB1_8)
             )
             (call_import $foo4)
-            (br $BB1_8)
+            (br $.LBB1_8)
           )
           (call_import $foo5)
         )

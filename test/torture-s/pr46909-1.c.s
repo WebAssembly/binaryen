@@ -19,8 +19,8 @@ foo:                                    # @foo
 	i32.select	$push7=, $pop2, $2, $pop6
 	i32.select	$push8=, $pop5, $2, $pop7
 	return  	$pop8
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -29,10 +29,10 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, -14
-BB1_1:                                  # %for.body
+.LBB1_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB1_4
-	loop    	BB1_3
+	block   	.LBB1_4
+	loop    	.LBB1_3
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $3, $pop0
 	i32.call	$0=, foo, $pop1
@@ -42,22 +42,22 @@ BB1_1:                                  # %for.body
 	i32.shl 	$push3=, $pop2, $2
 	i32.sub 	$push4=, $2, $pop3
 	i32.ne  	$push5=, $0, $pop4
-	br_if   	$pop5, BB1_4
+	br_if   	$pop5, .LBB1_4
 # BB#2:                                 # %for.cond
-                                        #   in Loop: Header=BB1_1 Depth=1
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.const	$push6=, 5
 	i32.add 	$0=, $3, $pop6
 	i32.add 	$3=, $3, $2
 	i32.const	$push7=, 9
 	i32.le_s	$push8=, $0, $pop7
-	br_if   	$pop8, BB1_1
-BB1_3:                                  # %for.end
+	br_if   	$pop8, .LBB1_1
+.LBB1_3:                                  # %for.end
 	return  	$1
-BB1_4:                                  # %if.then
+.LBB1_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

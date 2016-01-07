@@ -13,8 +13,8 @@ main:                                   # @main
 	i32.store	$discard=, i($0), $pop0
 	call    	fn1, $1
 	return  	$0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	fn2,@function
 fn2:                                    # @fn2
@@ -25,8 +25,8 @@ fn2:                                    # @fn2
 	i32.const	$push1=, 42
 	i32.store	$discard=, f($pop0), $pop1
 	return
-func_end1:
-	.size	fn2, func_end1-fn2
+.Lfunc_end1:
+	.size	fn2, .Lfunc_end1-fn2
 
 	.type	fn1,@function
 fn1:                                    # @fn1
@@ -34,27 +34,27 @@ fn1:                                    # @fn1
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.load	$push0=, p($1)
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $pop0, $pop7
-	br_if   	$pop8, BB2_2
-BB2_1:                                  # %for.body
+	br_if   	$pop8, .LBB2_2
+.LBB2_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB2_2
+	loop    	.LBB2_2
 	i32.const	$push1=, 1
 	i32.store	$2=, 0($0), $pop1
 	i32.load	$push2=, p($1)
 	i32.add 	$push3=, $pop2, $2
 	i32.store	$push4=, p($1), $pop3
-	br_if   	$pop4, BB2_1
-BB2_2:                                  # %for.end
+	br_if   	$pop4, .LBB2_1
+.LBB2_2:                                  # %for.end
 	i32.const	$push5=, d
 	i32.store	$push6=, r($1), $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
-func_end2:
-	.size	fn1, func_end2-fn1
+.Lfunc_end2:
+	.size	fn1, .Lfunc_end2-fn1
 
 	.type	i,@object               # @i
 	.bss

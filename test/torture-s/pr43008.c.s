@@ -11,8 +11,8 @@ my_alloc:                               # @my_alloc
 	i32.const	$push1=, i
 	i32.store	$discard=, 0($0), $pop1
 	return  	$0
-func_end0:
-	.size	my_alloc, func_end0-my_alloc
+.Lfunc_end0:
+	.size	my_alloc, .Lfunc_end0-my_alloc
 
 	.globl	main
 	.type	main,@function
@@ -31,16 +31,16 @@ main:                                   # @main
 	i32.store	$discard=, 0($0), $pop3
 	i32.const	$1=, 0
 	i32.store	$discard=, i($1), $1
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.load	$push4=, 0($0)
-	br_if   	$pop4, BB1_2
+	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$1
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	i,@object               # @i
 	.bss

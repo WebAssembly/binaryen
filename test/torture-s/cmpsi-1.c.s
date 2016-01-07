@@ -7,17 +7,17 @@ f1:                                     # @f1
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.sub 	$1=, $0, $1
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 0
 	i32.ge_s	$push1=, $1, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end3
 	return  	$1
-BB0_2:                                  # %if.then2
+.LBB0_2:                                  # %if.then2
 	call    	abort
 	unreachable
-func_end0:
-	.size	f1, func_end0-f1
+.Lfunc_end0:
+	.size	f1, .Lfunc_end0-f1
 
 	.globl	f2
 	.type	f2,@function
@@ -26,17 +26,17 @@ f2:                                     # @f2
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.sub 	$1=, $0, $1
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 0
 	i32.ge_s	$push1=, $1, $pop0
-	br_if   	$pop1, BB1_2
+	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end3
 	return  	$1
-BB1_2:                                  # %if.then2
+.LBB1_2:                                  # %if.then2
 	call    	abort
 	unreachable
-func_end1:
-	.size	f2, func_end1-f2
+.Lfunc_end1:
+	.size	f2, .Lfunc_end1-f2
 
 	.globl	dummy
 	.type	dummy,@function
@@ -45,8 +45,8 @@ dummy:                                  # @dummy
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
-func_end2:
-	.size	dummy, func_end2-dummy
+.Lfunc_end2:
+	.size	dummy, .Lfunc_end2-dummy
 
 	.globl	main
 	.type	main,@function
@@ -56,8 +56,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 
 	.ident	"clang version 3.8.0 "

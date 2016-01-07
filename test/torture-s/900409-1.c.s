@@ -9,8 +9,8 @@ f1:                                     # @f1
 	i32.const	$push0=, -16777216
 	i32.and 	$push1=, $0, $pop0
 	return  	$pop1
-func_end0:
-	.size	f1, func_end0-f1
+.Lfunc_end0:
+	.size	f1, .Lfunc_end0-f1
 
 	.globl	f2
 	.type	f2,@function
@@ -21,8 +21,8 @@ f2:                                     # @f2
 	i32.const	$push0=, 16777215
 	i32.and 	$push1=, $0, $pop0
 	return  	$pop1
-func_end1:
-	.size	f2, func_end1-f2
+.Lfunc_end1:
+	.size	f2, .Lfunc_end1-f2
 
 	.globl	f3
 	.type	f3,@function
@@ -33,8 +33,8 @@ f3:                                     # @f3
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $0, $pop0
 	return  	$pop1
-func_end2:
-	.size	f3, func_end2-f3
+.Lfunc_end2:
+	.size	f3, .Lfunc_end2-f3
 
 	.globl	f4
 	.type	f4,@function
@@ -45,8 +45,8 @@ f4:                                     # @f4
 	i32.const	$push0=, -256
 	i32.and 	$push1=, $0, $pop0
 	return  	$pop1
-func_end3:
-	.size	f4, func_end3-f4
+.Lfunc_end3:
+	.size	f4, .Lfunc_end3-f4
 
 	.globl	f5
 	.type	f5,@function
@@ -57,8 +57,8 @@ f5:                                     # @f5
 	i32.const	$push0=, 65535
 	i32.and 	$push1=, $0, $pop0
 	return  	$pop1
-func_end4:
-	.size	f5, func_end4-f5
+.Lfunc_end4:
+	.size	f5, .Lfunc_end4-f5
 
 	.globl	f6
 	.type	f6,@function
@@ -69,8 +69,8 @@ f6:                                     # @f6
 	i32.const	$push0=, -65536
 	i32.and 	$push1=, $0, $pop0
 	return  	$pop1
-func_end5:
-	.size	f6, func_end5-f6
+.Lfunc_end5:
+	.size	f6, .Lfunc_end5-f6
 
 	.globl	main
 	.type	main,@function
@@ -80,8 +80,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end6:
-	.size	main, func_end6-main
+.Lfunc_end6:
+	.size	main, .Lfunc_end6-main
 
 
 	.ident	"clang version 3.8.0 "

@@ -6,8 +6,8 @@ test1:                                  # @test1
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	test1, func_end0-test1
+.Lfunc_end0:
+	.size	test1, .Lfunc_end0-test1
 
 	.globl	test2
 	.type	test2,@function
@@ -16,18 +16,18 @@ test2:                                  # @test2
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 8
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.call	$push0=, mempcpy, $0, $0, $1
 	i32.add 	$push1=, $0, $1
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB1_2
+	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %if.end
 	return
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	test2, func_end1-test2
+.Lfunc_end1:
+	.size	test2, .Lfunc_end1-test2
 
 	.globl	test3
 	.type	test3,@function
@@ -35,8 +35,8 @@ test3:                                  # @test3
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end2:
-	.size	test3, func_end2-test3
+.Lfunc_end2:
+	.size	test3, .Lfunc_end2-test3
 
 	.globl	test4
 	.type	test4,@function
@@ -44,8 +44,8 @@ test4:                                  # @test4
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end3:
-	.size	test4, func_end3-test4
+.Lfunc_end3:
+	.size	test4, .Lfunc_end3-test4
 
 	.globl	test5
 	.type	test5,@function
@@ -53,8 +53,8 @@ test5:                                  # @test5
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end4:
-	.size	test5, func_end4-test5
+.Lfunc_end4:
+	.size	test5, .Lfunc_end4-test5
 
 	.globl	test6
 	.type	test6,@function
@@ -62,8 +62,8 @@ test6:                                  # @test6
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end5:
-	.size	test6, func_end5-test6
+.Lfunc_end5:
+	.size	test6, .Lfunc_end5-test6
 
 	.globl	test7
 	.type	test7,@function
@@ -71,8 +71,8 @@ test7:                                  # @test7
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end6:
-	.size	test7, func_end6-test7
+.Lfunc_end6:
+	.size	test7, .Lfunc_end6-test7
 
 	.globl	main
 	.type	main,@function
@@ -94,10 +94,10 @@ main:                                   # @main
 	i32.call	$push0=, mempcpy, $4, $5, $0
 	i32.const	$6=, 6
 	i32.add 	$6=, $7, $6
-	block   	BB7_2
+	block   	.LBB7_2
 	i32.add 	$push1=, $6, $0
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB7_2
+	br_if   	$pop2, .LBB7_2
 # BB#1:                                 # %test2.exit
 	i32.const	$push3=, 0
 	i32.const	$3=, 16
@@ -105,11 +105,11 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$7=, 0($3), $7
 	return  	$pop3
-BB7_2:                                  # %if.then.i
+.LBB7_2:                                  # %if.then.i
 	call    	abort
 	unreachable
-func_end7:
-	.size	main, func_end7-main
+.Lfunc_end7:
+	.size	main, .Lfunc_end7-main
 
 
 	.ident	"clang version 3.8.0 "

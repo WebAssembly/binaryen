@@ -9,12 +9,12 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$1=, 1
 	i32.const	$2=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.and 	$push0=, $0, $1
-	br_if   	$pop0, BB0_2
-BB0_1:                                  # %while.body
+	br_if   	$pop0, .LBB0_2
+.LBB0_1:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.const	$push1=, 16
 	i32.shl 	$push2=, $0, $pop1
 	i32.const	$push3=, 17
@@ -23,11 +23,11 @@ BB0_1:                                  # %while.body
 	i32.and 	$push4=, $0, $1
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop4, $pop5
-	br_if   	$pop6, BB0_1
-BB0_2:                                  # %while.end
+	br_if   	$pop6, .LBB0_1
+.LBB0_2:                                  # %while.end
 	return  	$2
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -37,8 +37,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

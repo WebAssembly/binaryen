@@ -7,8 +7,8 @@ vfswrap_lock:                           # @vfswrap_lock
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$5
-func_end0:
-	.size	vfswrap_lock, func_end0-vfswrap_lock
+.Lfunc_end0:
+	.size	vfswrap_lock, .Lfunc_end0-vfswrap_lock
 
 	.globl	fcntl_lock
 	.type	fcntl_lock,@function
@@ -17,8 +17,8 @@ fcntl_lock:                             # @fcntl_lock
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$4
-func_end1:
-	.size	fcntl_lock, func_end1-fcntl_lock
+.Lfunc_end1:
+	.size	fcntl_lock, .Lfunc_end1-fcntl_lock
 
 	.globl	main
 	.type	main,@function
@@ -27,8 +27,8 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

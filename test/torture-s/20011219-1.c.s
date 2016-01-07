@@ -6,8 +6,8 @@ bar:                                    # @bar
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	foo
 	.type	foo,@function
@@ -19,35 +19,35 @@ foo:                                    # @foo
 	i32.const	$push0=, -10
 	i32.add 	$0=, $0, $pop0
                                         # implicit-def: %vreg13
-	block   	BB1_7
+	block   	.LBB1_7
 	i32.const	$push1=, 4
 	i32.gt_u	$push2=, $0, $pop1
-	br_if   	$pop2, BB1_7
+	br_if   	$pop2, .LBB1_7
 # BB#1:                                 # %entry
-	block   	BB1_6
-	block   	BB1_5
-	block   	BB1_4
-	block   	BB1_3
-	block   	BB1_2
-	tableswitch	$0, BB1_2, BB1_2, BB1_3, BB1_4, BB1_5, BB1_6
-BB1_2:                                  # %sw.bb
+	block   	.LBB1_6
+	block   	.LBB1_5
+	block   	.LBB1_4
+	block   	.LBB1_3
+	block   	.LBB1_2
+	tableswitch	$0, .LBB1_2, .LBB1_2, .LBB1_3, .LBB1_4, .LBB1_5, .LBB1_6
+.LBB1_2:                                  # %sw.bb
 	i32.load	$2=, 0($1)
-	br      	BB1_7
-BB1_3:                                  # %sw.bb1
+	br      	.LBB1_7
+.LBB1_3:                                  # %sw.bb1
 	i32.load	$2=, 0($1)
-	br      	BB1_7
-BB1_4:                                  # %sw.bb2
+	br      	.LBB1_7
+.LBB1_4:                                  # %sw.bb2
 	i32.load	$2=, 0($1)
-	br      	BB1_7
-BB1_5:                                  # %sw.bb3
+	br      	.LBB1_7
+.LBB1_5:                                  # %sw.bb3
 	i32.load	$2=, 0($1)
-	br      	BB1_7
-BB1_6:                                  # %sw.bb4
+	br      	.LBB1_7
+.LBB1_6:                                  # %sw.bb4
 	i32.load	$2=, 0($1)
-BB1_7:                                  # %sw.epilog
+.LBB1_7:                                  # %sw.epilog
 	return  	$2
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.globl	main
 	.type	main,@function
@@ -57,8 +57,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

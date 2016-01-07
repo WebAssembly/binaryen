@@ -8,22 +8,22 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.const	$1=, buf
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 6513249
 	i32.store	$discard=, buf($0), $pop0
 	i32.const	$push1=, .str
 	i32.call	$push2=, strcmp, $1, $pop1
-	br_if   	$pop2, BB0_2
+	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %foo.exit
 	i32.const	$push3=, .str.1
 	i32.const	$push4=, 9
 	call    	memcpy, $1, $pop3, $pop4
 	return  	$0
-BB0_2:                                  # %if.then1.i
+.LBB0_2:                                  # %if.then1.i
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	buf,@object             # @buf
 	.bss

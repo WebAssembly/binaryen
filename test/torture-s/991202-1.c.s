@@ -13,8 +13,8 @@ main:                                   # @main
 	i32.store	$discard=, y($0), $pop1
 	call    	exit, $0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	x,@object               # @x
 	.bss

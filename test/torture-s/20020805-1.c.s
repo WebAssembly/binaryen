@@ -5,17 +5,17 @@
 check:                                  # @check
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, -1
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	check, func_end0-check
+.Lfunc_end0:
+	.size	check, .Lfunc_end0-check
 
 	.globl	main
 	.type	main,@function
@@ -25,7 +25,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load	$1=, n($0)
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 2
 	i32.sub 	$push1=, $pop0, $1
 	i32.sub 	$push2=, $0, $1
@@ -34,15 +34,15 @@ main:                                   # @main
 	i32.or  	$push5=, $pop3, $pop4
 	i32.const	$push6=, -1
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, BB1_2
+	br_if   	$pop7, .LBB1_2
 # BB#1:                                 # %check.exit
 	call    	exit, $0
 	unreachable
-BB1_2:                                  # %if.then.i
+.LBB1_2:                                  # %if.then.i
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	n,@object               # @n
 	.data

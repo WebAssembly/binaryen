@@ -12,8 +12,8 @@ foo:                                    # @foo
 	i32.const	$push3=, 0
 	i32.store	$discard=, 4($0), $pop3
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
@@ -21,7 +21,7 @@ bar:                                    # @bar
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.load	$push0=, 0($0)
 	i32.const	$push1=, 1
 	i32.shl 	$1=, $pop0, $pop1
@@ -33,14 +33,14 @@ bar:                                    # @bar
 	i64.store32	$discard=, 0($0), $pop2
 	i32.const	$push6=, 2
 	i32.ne  	$push7=, $1, $pop6
-	br_if   	$pop7, BB1_2
+	br_if   	$pop7, .LBB1_2
 # BB#1:                                 # %if.end
 	return
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	main
 	.type	main,@function
@@ -49,8 +49,8 @@ main:                                   # @main
 # BB#0:                                 # %bar.exit
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

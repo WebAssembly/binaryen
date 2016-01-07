@@ -15,8 +15,8 @@ sub1:                                   # @sub1
 	i32.mul 	$push3=, $0, $pop2
 	i32.select	$push4=, $pop0, $pop1, $pop3
 	return  	$pop4
-func_end0:
-	.size	sub1, func_end0-sub1
+.Lfunc_end0:
+	.size	sub1, .Lfunc_end0-sub1
 
 	.globl	main
 	.type	main,@function
@@ -25,8 +25,8 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

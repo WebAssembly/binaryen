@@ -6,39 +6,39 @@ bar:                                    # @bar
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	BB0_6
+	block   	.LBB0_6
 	i32.const	$push0=, .str
 	i32.const	$push1=, 8
 	i32.call	$push2=, memcmp, $0, $pop0, $pop1
-	br_if   	$pop2, BB0_6
+	br_if   	$pop2, .LBB0_6
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push3=, 7
 	i32.add 	$1=, $0, $pop3
 	i32.const	$0=, 0
-BB0_2:                                  # %for.body
+.LBB0_2:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB0_5
-	loop    	BB0_4
+	block   	.LBB0_5
+	loop    	.LBB0_4
 	i32.add 	$push4=, $1, $0
 	i32.load8_u	$push5=, 0($pop4)
-	br_if   	$pop5, BB0_5
+	br_if   	$pop5, .LBB0_5
 # BB#3:                                 # %for.cond
-                                        #   in Loop: Header=BB0_2 Depth=1
+                                        #   in Loop: Header=.LBB0_2 Depth=1
 	i32.const	$push6=, 1
 	i32.add 	$0=, $0, $pop6
 	i32.const	$push7=, 2040
 	i32.le_u	$push8=, $0, $pop7
-	br_if   	$pop8, BB0_2
-BB0_4:                                  # %for.end
+	br_if   	$pop8, .LBB0_2
+.LBB0_4:                                  # %for.end
 	return
-BB0_5:                                  # %if.then2
+.LBB0_5:                                  # %if.then2
 	call    	abort
 	unreachable
-BB0_6:                                  # %if.then
+.LBB0_6:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	foo
 	.type	foo,@function
@@ -64,37 +64,37 @@ foo:                                    # @foo
 	i32.store8	$3=, a($1), $pop1
 	i32.const	$4=, 8
 	i32.store8	$2=, a+6($1), $3
-	block   	BB1_5
+	block   	.LBB1_5
 	i32.const	$push7=, .str
 	i32.call	$push8=, memcmp, $0, $pop7, $4
-	br_if   	$pop8, BB1_5
-BB1_1:                                  # %for.cond.i
+	br_if   	$pop8, .LBB1_5
+.LBB1_1:                                  # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB1_4
-	loop    	BB1_3
+	block   	.LBB1_4
+	loop    	.LBB1_3
 	i32.const	$push9=, -7
 	i32.add 	$push10=, $4, $pop9
 	i32.const	$push11=, 2040
 	i32.gt_u	$push12=, $pop10, $pop11
-	br_if   	$pop12, BB1_4
+	br_if   	$pop12, .LBB1_4
 # BB#2:                                 # %for.cond.i.for.body.i_crit_edge
-                                        #   in Loop: Header=BB1_1 Depth=1
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.add 	$3=, $0, $4
 	i32.add 	$4=, $4, $2
 	i32.load8_u	$push13=, 0($3)
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $pop13, $pop14
-	br_if   	$pop15, BB1_1
-BB1_3:                                  # %if.then2.i
+	br_if   	$pop15, .LBB1_1
+.LBB1_3:                                  # %if.then2.i
 	call    	abort
 	unreachable
-BB1_4:                                  # %bar.exit
+.LBB1_4:                                  # %bar.exit
 	return  	$1
-BB1_5:                                  # %if.then.i
+.LBB1_5:                                  # %if.then.i
 	call    	abort
 	unreachable
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.globl	main
 	.type	main,@function
@@ -120,37 +120,37 @@ main:                                   # @main
 	i32.store8	$3=, a($1), $pop1
 	i32.const	$4=, 8
 	i32.store8	$2=, a+6($1), $3
-	block   	BB2_5
+	block   	.LBB2_5
 	i32.const	$push7=, .str
 	i32.call	$push8=, memcmp, $0, $pop7, $4
-	br_if   	$pop8, BB2_5
-BB2_1:                                  # %for.cond.i.i
+	br_if   	$pop8, .LBB2_5
+.LBB2_1:                                  # %for.cond.i.i
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB2_4
-	loop    	BB2_3
+	block   	.LBB2_4
+	loop    	.LBB2_3
 	i32.const	$push9=, -7
 	i32.add 	$push10=, $4, $pop9
 	i32.const	$push11=, 2040
 	i32.gt_u	$push12=, $pop10, $pop11
-	br_if   	$pop12, BB2_4
+	br_if   	$pop12, .LBB2_4
 # BB#2:                                 # %for.cond.i.for.body.i_crit_edge.i
-                                        #   in Loop: Header=BB2_1 Depth=1
+                                        #   in Loop: Header=.LBB2_1 Depth=1
 	i32.add 	$3=, $0, $4
 	i32.add 	$4=, $4, $2
 	i32.load8_u	$push13=, 0($3)
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $pop13, $pop14
-	br_if   	$pop15, BB2_1
-BB2_3:                                  # %if.then2.i.i
+	br_if   	$pop15, .LBB2_1
+.LBB2_3:                                  # %if.then2.i.i
 	call    	abort
 	unreachable
-BB2_4:                                  # %foo.exit
+.LBB2_4:                                  # %foo.exit
 	return  	$1
-BB2_5:                                  # %if.then.i.i
+.LBB2_5:                                  # %if.then.i.i
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

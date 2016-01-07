@@ -8,8 +8,8 @@ g1:                                     # @g1
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$2
-func_end0:
-	.size	g1, func_end0-g1
+.Lfunc_end0:
+	.size	g1, .Lfunc_end0-g1
 
 	.globl	g2
 	.type	g2,@function
@@ -17,19 +17,19 @@ g2:                                     # @g2
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, -559038737
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB1_2
+	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit, $pop2
 	unreachable
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	g2, func_end1-g2
+.Lfunc_end1:
+	.size	g2, .Lfunc_end1-g2
 
 	.globl	f
 	.type	f,@function
@@ -38,22 +38,22 @@ f:                                      # @f
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	BB2_3
+	block   	.LBB2_3
 	i32.load	$push1=, parsefile($1)
 	i32.load	$0=, 0($pop1)
-	br_if   	$0, BB2_3
+	br_if   	$0, .LBB2_3
 # BB#1:                                 # %entry
 	i32.load	$push0=, el($1)
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop0, $pop2
-	br_if   	$pop3, BB2_3
+	br_if   	$pop3, .LBB2_3
 # BB#2:                                 # %if.end
 	return  	$1
-BB2_3:                                  # %alabel
+.LBB2_3:                                  # %alabel
 	i32.call	$discard=, g2, $0
 	unreachable
-func_end2:
-	.size	f, func_end2-f
+.Lfunc_end2:
+	.size	f, .Lfunc_end2-f
 
 	.globl	main
 	.type	main,@function
@@ -68,8 +68,8 @@ main:                                   # @main
 	i32.store	$push3=, 0($pop1), $pop2
 	i32.call	$discard=, g2, $pop3
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	basepf,@object          # @basepf
 	.bss

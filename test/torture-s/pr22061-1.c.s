@@ -5,8 +5,8 @@
 foo:                                    # @foo
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
@@ -19,8 +19,8 @@ bar:                                    # @bar
 	i32.add 	$push1=, $0, $1
 	i32.store8	$discard=, 0($pop1), $1
 	return
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	main
 	.type	main,@function
@@ -33,8 +33,8 @@ main:                                   # @main
 	i32.store	$discard=, N($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	N,@object               # @N
 	.data

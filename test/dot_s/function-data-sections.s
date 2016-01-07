@@ -4,8 +4,8 @@
 	.type	foo,@function
 foo:
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.section	.text.bar,"ax",@progbits
 	.globl	bar
@@ -14,8 +14,8 @@ bar:
 	.param  	i32
 	.result 	i32
 	return  	$0
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.section	.text.qux,"ax",@progbits
 	.globl	qux
@@ -25,8 +25,8 @@ qux:
 	.result 	f64
 	f64.add 	$push0=, $0, $1
 	return  	$pop0
-func_end2:
-	.size	qux, func_end2-qux
+.Lfunc_end2:
+	.size	qux, .Lfunc_end2-qux
 
 	.type	aaa,@object
 	.section	.bss.aaa,"aw",@nobits

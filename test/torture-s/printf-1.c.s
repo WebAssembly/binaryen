@@ -16,26 +16,26 @@ main:                                   # @main
 	i32.call	$discard=, iprintf, $0
 	i32.call	$6=, iprintf, $0
 	i32.const	$1=, 5
-	block   	BB0_20
+	block   	.LBB0_20
 	i32.ne  	$push0=, $6, $1
-	br_if   	$pop0, BB0_20
+	br_if   	$pop0, .LBB0_20
 # BB#1:                                 # %if.end
 	i32.call	$discard=, puts, $0
 	i32.const	$2=, .str.1
 	i32.call	$6=, iprintf, $2
 	i32.const	$3=, 6
-	block   	BB0_19
+	block   	.LBB0_19
 	i32.ne  	$push1=, $6, $3
-	br_if   	$pop1, BB0_19
+	br_if   	$pop1, .LBB0_19
 # BB#2:                                 # %if.end6
 	i32.const	$push2=, 97
 	i32.call	$discard=, putchar, $pop2
 	i32.const	$4=, .str.2
 	i32.call	$6=, iprintf, $4
 	i32.const	$5=, 1
-	block   	BB0_18
+	block   	.LBB0_18
 	i32.ne  	$push3=, $6, $5
-	br_if   	$pop3, BB0_18
+	br_if   	$pop3, .LBB0_18
 # BB#3:                                 # %if.end16
 	i32.const	$7=, __stack_pointer
 	i32.load	$7=, 0($7)
@@ -66,9 +66,9 @@ main:                                   # @main
 	i32.add 	$58=, $13, $14
 	i32.const	$14=, __stack_pointer
 	i32.store	$58=, 0($14), $58
-	block   	BB0_17
+	block   	.LBB0_17
 	i32.ne  	$push4=, $0, $1
-	br_if   	$pop4, BB0_17
+	br_if   	$pop4, .LBB0_17
 # BB#4:                                 # %if.end21
 	i32.const	$15=, __stack_pointer
 	i32.load	$15=, 0($15)
@@ -98,9 +98,9 @@ main:                                   # @main
 	i32.add 	$58=, $21, $22
 	i32.const	$22=, __stack_pointer
 	i32.store	$58=, 0($22), $58
-	block   	BB0_16
+	block   	.LBB0_16
 	i32.ne  	$push5=, $1, $3
-	br_if   	$pop5, BB0_16
+	br_if   	$pop5, .LBB0_16
 # BB#5:                                 # %if.end26
 	i32.const	$23=, __stack_pointer
 	i32.load	$23=, 0($23)
@@ -130,9 +130,9 @@ main:                                   # @main
 	i32.add 	$58=, $29, $30
 	i32.const	$30=, __stack_pointer
 	i32.store	$58=, 0($30), $58
-	block   	BB0_15
+	block   	.LBB0_15
 	i32.ne  	$push6=, $1, $5
-	br_if   	$pop6, BB0_15
+	br_if   	$pop6, .LBB0_15
 # BB#6:                                 # %if.end31
 	i32.const	$31=, __stack_pointer
 	i32.load	$31=, 0($31)
@@ -163,8 +163,8 @@ main:                                   # @main
 	i32.add 	$58=, $37, $38
 	i32.const	$38=, __stack_pointer
 	i32.store	$58=, 0($38), $58
-	block   	BB0_14
-	br_if   	$6, BB0_14
+	block   	.LBB0_14
+	br_if   	$6, .LBB0_14
 # BB#7:                                 # %if.end36
 	i32.const	$6=, 120
 	i32.call	$discard=, putchar, $6
@@ -183,9 +183,9 @@ main:                                   # @main
 	i32.add 	$58=, $41, $42
 	i32.const	$42=, __stack_pointer
 	i32.store	$58=, 0($42), $58
-	block   	BB0_13
+	block   	.LBB0_13
 	i32.ne  	$push9=, $6, $5
-	br_if   	$pop9, BB0_13
+	br_if   	$pop9, .LBB0_13
 # BB#8:                                 # %if.end41
 	i32.call	$discard=, puts, $0
 	i32.const	$43=, __stack_pointer
@@ -203,10 +203,10 @@ main:                                   # @main
 	i32.add 	$58=, $45, $46
 	i32.const	$46=, __stack_pointer
 	i32.store	$58=, 0($46), $58
-	block   	BB0_12
+	block   	.LBB0_12
 	i32.const	$push11=, 7
 	i32.ne  	$push12=, $6, $pop11
-	br_if   	$pop12, BB0_12
+	br_if   	$pop12, .LBB0_12
 # BB#9:                                 # %if.end46
 	i32.const	$47=, __stack_pointer
 	i32.load	$47=, 0($47)
@@ -238,48 +238,48 @@ main:                                   # @main
 	i32.add 	$58=, $53, $54
 	i32.const	$54=, __stack_pointer
 	i32.store	$58=, 0($54), $58
-	block   	BB0_11
+	block   	.LBB0_11
 	i32.const	$push14=, 2
 	i32.ne  	$push15=, $6, $pop14
-	br_if   	$pop15, BB0_11
+	br_if   	$pop15, .LBB0_11
 # BB#10:                                # %if.end51
 	i32.const	$57=, 16
 	i32.add 	$58=, $58, $57
 	i32.const	$57=, __stack_pointer
 	i32.store	$58=, 0($57), $58
 	return  	$0
-BB0_11:                                 # %if.then50
+.LBB0_11:                                 # %if.then50
 	call    	abort
 	unreachable
-BB0_12:                                 # %if.then45
+.LBB0_12:                                 # %if.then45
 	call    	abort
 	unreachable
-BB0_13:                                 # %if.then40
+.LBB0_13:                                 # %if.then40
 	call    	abort
 	unreachable
-BB0_14:                                 # %if.then35
+.LBB0_14:                                 # %if.then35
 	call    	abort
 	unreachable
-BB0_15:                                 # %if.then30
+.LBB0_15:                                 # %if.then30
 	call    	abort
 	unreachable
-BB0_16:                                 # %if.then25
+.LBB0_16:                                 # %if.then25
 	call    	abort
 	unreachable
-BB0_17:                                 # %if.then20
+.LBB0_17:                                 # %if.then20
 	call    	abort
 	unreachable
-BB0_18:                                 # %if.then10
+.LBB0_18:                                 # %if.then10
 	call    	abort
 	unreachable
-BB0_19:                                 # %if.then5
+.LBB0_19:                                 # %if.then5
 	call    	abort
 	unreachable
-BB0_20:                                 # %if.then
+.LBB0_20:                                 # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	.str.1,@object          # @.str.1
 	.section	.rodata.str1.1,"aMS",@progbits,1

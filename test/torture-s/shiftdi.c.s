@@ -21,8 +21,8 @@ g:                                      # @g
 	i64.or  	$push11=, $pop10, $pop9
 	i64.store	$discard=, 0($3), $pop11
 	return
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	main
 	.type	main,@function
@@ -31,8 +31,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

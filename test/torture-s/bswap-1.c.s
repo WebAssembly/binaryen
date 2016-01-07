@@ -39,8 +39,8 @@ g:                                      # @g
 	i64.or  	$push12=, $pop11, $pop4
 	i64.or  	$push26=, $pop25, $pop12
 	return  	$pop26
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	f
 	.type	f,@function
@@ -81,98 +81,98 @@ f:                                      # @f
 	i64.or  	$push12=, $pop11, $pop4
 	i64.or  	$push26=, $pop25, $pop12
 	return  	$pop26
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB2_16
+	block   	.LBB2_16
 	i64.const	$push0=, 18
 	i64.call	$push1=, g, $pop0
 	i64.const	$push2=, 1297036692682702848
 	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB2_16
+	br_if   	$pop3, .LBB2_16
 # BB#1:                                 # %if.end
-	block   	BB2_15
+	block   	.LBB2_15
 	i64.const	$push4=, 4660
 	i64.call	$push5=, g, $pop4
 	i64.const	$push6=, 3752061439553044480
 	i64.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, BB2_15
+	br_if   	$pop7, .LBB2_15
 # BB#2:                                 # %if.end6
-	block   	BB2_14
+	block   	.LBB2_14
 	i64.const	$push8=, 1193046
 	i64.call	$push9=, g, $pop8
 	i64.const	$push10=, 6211609577260056576
 	i64.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, BB2_14
+	br_if   	$pop11, .LBB2_14
 # BB#3:                                 # %if.end11
-	block   	BB2_13
+	block   	.LBB2_13
 	i64.const	$push12=, 305419896
 	i64.call	$push13=, g, $pop12
 	i64.const	$push14=, 8671175384462524416
 	i64.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, BB2_13
+	br_if   	$pop15, .LBB2_13
 # BB#4:                                 # %if.end16
-	block   	BB2_12
+	block   	.LBB2_12
 	i64.const	$push16=, 78187493520
 	i64.call	$push17=, g, $pop16
 	i64.const	$push18=, -8036578753402372096
 	i64.ne  	$push19=, $pop17, $pop18
-	br_if   	$pop19, BB2_12
+	br_if   	$pop19, .LBB2_12
 # BB#5:                                 # %if.end21
-	block   	BB2_11
+	block   	.LBB2_11
 	i64.const	$push20=, 20015998341138
 	i64.call	$push21=, g, $pop20
 	i64.const	$push22=, 1337701400965152768
 	i64.ne  	$push23=, $pop21, $pop22
-	br_if   	$pop23, BB2_11
+	br_if   	$pop23, .LBB2_11
 # BB#6:                                 # %if.end26
-	block   	BB2_10
+	block   	.LBB2_10
 	i64.const	$push24=, 5124095575331380
 	i64.call	$push25=, g, $pop24
 	i64.const	$push26=, 3752220286069772800
 	i64.ne  	$push27=, $pop25, $pop26
-	br_if   	$pop27, BB2_10
+	br_if   	$pop27, .LBB2_10
 # BB#7:                                 # %if.end31
-	block   	BB2_9
+	block   	.LBB2_9
 	i64.const	$push28=, 1311768467284833366
 	i64.call	$push29=, g, $pop28
 	i64.const	$push30=, 6211610197754262546
 	i64.ne  	$push31=, $pop29, $pop30
-	br_if   	$pop31, BB2_9
+	br_if   	$pop31, .LBB2_9
 # BB#8:                                 # %if.end36
 	i32.const	$push32=, 0
 	return  	$pop32
-BB2_9:                                  # %if.then35
+.LBB2_9:                                  # %if.then35
 	call    	abort
 	unreachable
-BB2_10:                                 # %if.then30
+.LBB2_10:                                 # %if.then30
 	call    	abort
 	unreachable
-BB2_11:                                 # %if.then25
+.LBB2_11:                                 # %if.then25
 	call    	abort
 	unreachable
-BB2_12:                                 # %if.then20
+.LBB2_12:                                 # %if.then20
 	call    	abort
 	unreachable
-BB2_13:                                 # %if.then15
+.LBB2_13:                                 # %if.then15
 	call    	abort
 	unreachable
-BB2_14:                                 # %if.then10
+.LBB2_14:                                 # %if.then10
 	call    	abort
 	unreachable
-BB2_15:                                 # %if.then5
+.LBB2_15:                                 # %if.then5
 	call    	abort
 	unreachable
-BB2_16:                                 # %if.then
+.LBB2_16:                                 # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

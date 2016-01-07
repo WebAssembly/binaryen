@@ -17,23 +17,23 @@ foo:                                    # @foo
 	i32.add 	$2=, $pop3, $pop4
 	i32.rem_u	$5=, $2, $3
 	i64.const	$6=, -1
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.sub 	$push5=, $2, $5
 	i32.lt_u	$push6=, $3, $pop5
-	br_if   	$pop6, BB0_3
+	br_if   	$pop6, .LBB0_3
 # BB#1:                                 # %if.end
 	i64.sub 	$6=, $1, $4
 	i32.load	$push7=, 4($0)
 	i32.le_u	$push8=, $pop7, $3
-	br_if   	$pop8, BB0_3
+	br_if   	$pop8, .LBB0_3
 # BB#2:                                 # %if.then13
 	i32.const	$push9=, 4
 	i32.add 	$push10=, $0, $pop9
 	i32.store	$discard=, 0($pop10), $3
-BB0_3:                                  # %cleanup
+.LBB0_3:                                  # %cleanup
 	return  	$6
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -42,8 +42,8 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

@@ -10,8 +10,8 @@ t:                                      # @t
 	f64.call	$push1=, sin, $pop0
 	f32.demote/f64	$push2=, $pop1
 	return  	$pop2
-func_end0:
-	.size	t, func_end0-t
+.Lfunc_end0:
+	.size	t, .Lfunc_end0-t
 
 	.globl	sin
 	.type	sin,@function
@@ -20,8 +20,8 @@ sin:                                    # @sin
 	.result 	f64
 # BB#0:                                 # %entry
 	return  	$0
-func_end1:
-	.size	sin, func_end1-sin
+.Lfunc_end1:
+	.size	sin, .Lfunc_end1-sin
 
 	.globl	q
 	.type	q,@function
@@ -31,8 +31,8 @@ q:                                      # @q
 	.local  	f32
 # BB#0:                                 # %entry
 	return  	$1
-func_end2:
-	.size	q, func_end2-q
+.Lfunc_end2:
+	.size	q, .Lfunc_end2-q
 
 	.globl	floor
 	.type	floor,@function
@@ -42,8 +42,8 @@ floor:                                  # @floor
 # BB#0:                                 # %entry
 	call    	abort
 	unreachable
-func_end3:
-	.size	floor, func_end3-floor
+.Lfunc_end3:
+	.size	floor, .Lfunc_end3-floor
 
 	.globl	q1
 	.type	q1,@function
@@ -53,8 +53,8 @@ q1:                                     # @q1
 	.local  	f64
 # BB#0:                                 # %entry
 	return  	$1
-func_end4:
-	.size	q1, func_end4-q1
+.Lfunc_end4:
+	.size	q1, .Lfunc_end4-q1
 
 	.globl	main
 	.type	main,@function
@@ -63,8 +63,8 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	call    	abort
 	unreachable
-func_end5:
-	.size	main, func_end5-main
+.Lfunc_end5:
+	.size	main, .Lfunc_end5-main
 
 	.globl	floorf
 	.type	floorf,@function
@@ -73,8 +73,8 @@ floorf:                                 # @floorf
 	.result 	f32
 # BB#0:                                 # %entry
 	return  	$0
-func_end6:
-	.size	floorf, func_end6-floorf
+.Lfunc_end6:
+	.size	floorf, .Lfunc_end6-floorf
 
 	.globl	sinf
 	.type	sinf,@function
@@ -84,8 +84,8 @@ sinf:                                   # @sinf
 # BB#0:                                 # %entry
 	call    	abort
 	unreachable
-func_end7:
-	.size	sinf, func_end7-sinf
+.Lfunc_end7:
+	.size	sinf, .Lfunc_end7-sinf
 
 
 	.ident	"clang version 3.8.0 "

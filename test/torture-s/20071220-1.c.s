@@ -10,8 +10,8 @@ baz:                                    # @baz
 	#NO_APP
 	i32.load	$push0=, 0($0)
 	return  	$pop0
-func_end0:
-	.size	baz, func_end0-baz
+.Lfunc_end0:
+	.size	baz, .Lfunc_end0-baz
 
 	.globl	f1
 	.type	f1,@function
@@ -21,8 +21,8 @@ f1:                                     # @f1
 	i32.call	$discard=, bar
 	i32.const	$push0=, 17
 	return  	$pop0
-func_end1:
-	.size	f1, func_end1-f1
+.Lfunc_end1:
+	.size	f1, .Lfunc_end1-f1
 
 	.type	bar,@function
 bar:                                    # @bar
@@ -34,8 +34,8 @@ bar:                                    # @bar
 tmp0:                                   # Block address taken
 # BB#1:                                 # %addr
 	return  	$0
-func_end2:
-	.size	bar, func_end2-bar
+.Lfunc_end2:
+	.size	bar, .Lfunc_end2-bar
 
 	.globl	f2
 	.type	f2,@function
@@ -45,8 +45,8 @@ f2:                                     # @f2
 	i32.call	$discard=, bar
 	i32.const	$push0=, 17
 	return  	$pop0
-func_end3:
-	.size	f2, func_end3-f2
+.Lfunc_end3:
+	.size	f2, .Lfunc_end3-f2
 
 	.globl	main
 	.type	main,@function
@@ -59,8 +59,8 @@ main:                                   # @main
 	i32.call	$discard=, f2
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end4:
-	.size	main, func_end4-main
+.Lfunc_end4:
+	.size	main, .Lfunc_end4-main
 
 	.type	bar.b,@object           # @bar.b
 	.data

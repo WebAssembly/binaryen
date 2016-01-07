@@ -19,17 +19,17 @@ ba_compute_psd:                         # @ba_compute_psd
 	i32.load16_u	$push0=, 0($2)
 	i32.store16	$5=, 0($1), $pop0
 	i32.const	$3=, 3
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.add 	$push7=, $0, $4
 	i32.gt_s	$push8=, $pop7, $3
-	br_if   	$pop8, BB0_4
+	br_if   	$pop8, .LBB0_4
 # BB#1:                                 # %for.body.preheader
 	i32.sub 	$4=, $3, $0
 	i32.const	$3=, 2
 	i32.add 	$0=, $2, $3
-BB0_2:                                  # %for.body
+.LBB0_2:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_3
+	loop    	.LBB0_3
 	i32.load16_u	$push11=, 0($0)
 	i32.const	$push9=, 65535
 	i32.and 	$push10=, $5, $pop9
@@ -37,13 +37,13 @@ BB0_2:                                  # %for.body
 	i32.const	$push12=, -1
 	i32.add 	$4=, $4, $pop12
 	i32.add 	$0=, $0, $3
-	br_if   	$4, BB0_2
-BB0_3:                                  # %for.cond.for.end_crit_edge
+	br_if   	$4, .LBB0_2
+.LBB0_3:                                  # %for.cond.for.end_crit_edge
 	i32.store16	$discard=, 0($1), $5
-BB0_4:                                  # %for.end
+.LBB0_4:                                  # %for.end
 	return
-func_end0:
-	.size	ba_compute_psd, func_end0-ba_compute_psd
+.Lfunc_end0:
+	.size	ba_compute_psd, .Lfunc_end0-ba_compute_psd
 
 	.globl	logadd
 	.type	logadd,@function
@@ -59,8 +59,8 @@ logadd:                                 # @logadd
 	i32.shl 	$push3=, $pop2, $2
 	i32.shr_s	$push4=, $pop3, $2
 	return  	$pop4
-func_end1:
-	.size	logadd, func_end1-logadd
+.Lfunc_end1:
+	.size	logadd, .Lfunc_end1-logadd
 
 	.globl	main
 	.type	main,@function
@@ -69,7 +69,7 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push3=, bndpsd
 	i32.load16_s	$push0=, masktab($0)
 	i32.const	$push1=, 1
@@ -86,14 +86,14 @@ main:                                   # @main
 	i32.load16_u	$push12=, bndpsd+2($0)
 	i32.const	$push13=, 140
 	i32.ne  	$push14=, $pop12, $pop13
-	br_if   	$pop14, BB2_2
+	br_if   	$pop14, .LBB2_2
 # BB#1:                                 # %if.end
 	return  	$0
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	masktab,@object         # @masktab
 	.data

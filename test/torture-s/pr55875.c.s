@@ -6,26 +6,26 @@ t:                                      # @t
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, BB0_4
+	br_if   	$pop4, .LBB0_4
 # BB#1:                                 # %if.end
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.const	$push0=, 256
 	i32.ge_s	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_3
+	br_if   	$pop1, .LBB0_3
 # BB#2:                                 # %if.end3
 	return  	$0
-BB0_3:                                  # %if.then2
+.LBB0_3:                                  # %if.then2
 	call    	abort
 	unreachable
-BB0_4:                                  # %if.then
+.LBB0_4:                                  # %if.then
 	i32.const	$push2=, 0
 	call    	exit, $pop2
 	unreachable
-func_end0:
-	.size	t, func_end0-t
+.Lfunc_end0:
+	.size	t, .Lfunc_end0-t
 
 	.globl	main
 	.type	main,@function
@@ -34,18 +34,18 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 5
-BB1_1:                                  # %for.cond
+.LBB1_1:                                  # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_2
+	loop    	.LBB1_2
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $0, $pop0
 	i32.call	$discard=, t, $pop1
 	i32.const	$push2=, 1
 	i32.add 	$0=, $0, $pop2
-	br      	BB1_1
-BB1_2:
-func_end1:
-	.size	main, func_end1-main
+	br      	.LBB1_1
+.LBB1_2:
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	a,@object               # @a
 	.bss

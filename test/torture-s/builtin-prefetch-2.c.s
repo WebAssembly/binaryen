@@ -5,24 +5,24 @@
 simple_global:                          # @simple_global
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	simple_global, func_end0-simple_global
+.Lfunc_end0:
+	.size	simple_global, .Lfunc_end0-simple_global
 
 	.globl	simple_file
 	.type	simple_file,@function
 simple_file:                            # @simple_file
 # BB#0:                                 # %entry
 	return
-func_end1:
-	.size	simple_file, func_end1-simple_file
+.Lfunc_end1:
+	.size	simple_file, .Lfunc_end1-simple_file
 
 	.globl	simple_static_local
 	.type	simple_static_local,@function
 simple_static_local:                    # @simple_static_local
 # BB#0:                                 # %entry
 	return
-func_end2:
-	.size	simple_static_local, func_end2-simple_static_local
+.Lfunc_end2:
+	.size	simple_static_local, .Lfunc_end2-simple_static_local
 
 	.globl	simple_local
 	.type	simple_local,@function
@@ -40,8 +40,8 @@ simple_local:                           # @simple_local
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return
-func_end3:
-	.size	simple_local, func_end3-simple_local
+.Lfunc_end3:
+	.size	simple_local, .Lfunc_end3-simple_local
 
 	.globl	simple_arg
 	.type	simple_arg,@function
@@ -61,16 +61,16 @@ simple_arg:                             # @simple_arg
 	i32.const	$5=, __stack_pointer
 	i32.store	$3=, 0($5), $3
 	return
-func_end4:
-	.size	simple_arg, func_end4-simple_arg
+.Lfunc_end4:
+	.size	simple_arg, .Lfunc_end4-simple_arg
 
 	.globl	expr_global
 	.type	expr_global,@function
 expr_global:                            # @expr_global
 # BB#0:                                 # %entry
 	return
-func_end5:
-	.size	expr_global, func_end5-expr_global
+.Lfunc_end5:
+	.size	expr_global, .Lfunc_end5-expr_global
 
 	.globl	expr_local
 	.type	expr_local,@function
@@ -88,8 +88,8 @@ expr_local:                             # @expr_local
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return
-func_end6:
-	.size	expr_local, func_end6-expr_local
+.Lfunc_end6:
+	.size	expr_local, .Lfunc_end6-expr_local
 
 	.globl	main
 	.type	main,@function
@@ -110,8 +110,8 @@ main:                                   # @main
 	i32.store	$discard=, str+16($0), $pop1
 	call    	exit, $0
 	unreachable
-func_end7:
-	.size	main, func_end7-main
+.Lfunc_end7:
+	.size	main, .Lfunc_end7-main
 
 	.type	glob_int_arr,@object    # @glob_int_arr
 	.bss

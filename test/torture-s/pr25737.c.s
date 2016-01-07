@@ -10,8 +10,8 @@ time_enqueue:                           # @time_enqueue
 	i32.store	$push1=, 0($0), $pop0
 	i32.load	$push2=, Timer_Queue($pop1)
 	return  	$pop2
-func_end0:
-	.size	time_enqueue, func_end0-time_enqueue
+.Lfunc_end0:
+	.size	time_enqueue, .Lfunc_end0-time_enqueue
 
 	.globl	main
 	.type	main,@function
@@ -22,8 +22,8 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.store	$push0=, Timer_Queue($0), $0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	Timer_Queue,@object     # @Timer_Queue
 	.lcomm	Timer_Queue,4,2

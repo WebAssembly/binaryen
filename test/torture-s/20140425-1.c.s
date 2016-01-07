@@ -16,13 +16,13 @@ main:                                   # @main
 	i32.add 	$4=, $5, $4
 	call    	set, $4
 	i32.load	$0=, 12($5)
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $pop0, $0
 	i32.store	$discard=, 12($5), $pop1
 	i32.const	$push2=, 30
 	i32.le_u	$push3=, $0, $pop2
-	br_if   	$pop3, BB0_2
+	br_if   	$pop3, .LBB0_2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	i32.const	$3=, 16
@@ -30,11 +30,11 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$5=, 0($3), $5
 	return  	$pop4
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	set,@function
 set:                                    # @set
@@ -43,8 +43,8 @@ set:                                    # @set
 	i32.const	$push0=, 31
 	i32.store	$discard=, 0($0), $pop0
 	return
-func_end1:
-	.size	set, func_end1-set
+.Lfunc_end1:
+	.size	set, .Lfunc_end1-set
 
 
 	.ident	"clang version 3.8.0 "

@@ -8,8 +8,8 @@ g:                                      # @g
 	#APP
 	#NO_APP
 	return
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	f
 	.type	f,@function
@@ -23,8 +23,8 @@ f:                                      # @f
 	i32.const	$push2=, -1
 	i32.select	$push3=, $pop1, $1, $pop2
 	return  	$pop3
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -40,26 +40,26 @@ main:                                   # @main
 	i32.add 	$1=, $2, $pop0
 	i32.const	$4=, 1
 	i32.add 	$0=, $2, $4
-	block   	BB2_4
+	block   	.LBB2_4
 	i32.call	$push1=, f, $2, $0, $1
 	i32.const	$push2=, -1
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB2_4
+	br_if   	$pop3, .LBB2_4
 # BB#1:                                 # %if.end
-	block   	BB2_3
+	block   	.LBB2_3
 	i32.call	$push4=, f, $1, $0, $1
 	i32.ne  	$push5=, $pop4, $4
-	br_if   	$pop5, BB2_3
+	br_if   	$pop5, .LBB2_3
 # BB#2:                                 # %if.end9
 	return  	$3
-BB2_3:                                  # %if.then8
+.LBB2_3:                                  # %if.then8
 	call    	abort
 	unreachable
-BB2_4:                                  # %if.then
+.LBB2_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

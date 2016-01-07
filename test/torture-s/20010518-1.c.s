@@ -19,8 +19,8 @@ add:                                    # @add
 	i32.add 	$push10=, $pop9, $11
 	i32.add 	$push11=, $pop10, $12
 	return  	$pop11
-func_end0:
-	.size	add, func_end0-add
+.Lfunc_end0:
+	.size	add, .Lfunc_end0-add
 
 	.globl	main
 	.type	main,@function
@@ -30,8 +30,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

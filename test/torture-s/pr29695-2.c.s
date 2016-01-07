@@ -10,8 +10,8 @@ f1:                                     # @f1
 	i32.const	$push2=, 128
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
-func_end0:
-	.size	f1, func_end0-f1
+.Lfunc_end0:
+	.size	f1, .Lfunc_end0-f1
 
 	.globl	f2
 	.type	f2,@function
@@ -25,8 +25,8 @@ f2:                                     # @f2
 	i32.const	$push2=, 7
 	i32.shl 	$push3=, $pop1, $pop2
 	return  	$pop3
-func_end1:
-	.size	f2, func_end1-f2
+.Lfunc_end1:
+	.size	f2, .Lfunc_end1-f2
 
 	.globl	f3
 	.type	f3,@function
@@ -40,8 +40,8 @@ f3:                                     # @f3
 	i32.const	$push4=, 896
 	i32.and 	$push5=, $pop3, $pop4
 	return  	$pop5
-func_end2:
-	.size	f3, func_end2-f3
+.Lfunc_end2:
+	.size	f3, .Lfunc_end2-f3
 
 	.globl	f4
 	.type	f4,@function
@@ -55,8 +55,8 @@ f4:                                     # @f4
 	i32.const	$push4=, -128
 	i32.and 	$push5=, $pop3, $pop4
 	return  	$pop5
-func_end3:
-	.size	f4, func_end3-f4
+.Lfunc_end3:
+	.size	f4, .Lfunc_end3-f4
 
 	.globl	f5
 	.type	f5,@function
@@ -71,8 +71,8 @@ f5:                                     # @f5
 	i64.const	$push3=, 31
 	i64.shl 	$push4=, $pop2, $pop3
 	return  	$pop4
-func_end4:
-	.size	f5, func_end4-f5
+.Lfunc_end4:
+	.size	f5, .Lfunc_end4-f5
 
 	.globl	f6
 	.type	f6,@function
@@ -87,8 +87,8 @@ f6:                                     # @f6
 	i64.const	$push3=, 31
 	i64.shl 	$push4=, $pop2, $pop3
 	return  	$pop4
-func_end5:
-	.size	f6, func_end5-f6
+.Lfunc_end5:
+	.size	f6, .Lfunc_end5-f6
 
 	.globl	f7
 	.type	f7,@function
@@ -103,8 +103,8 @@ f7:                                     # @f7
 	i64.const	$push2=, 0
 	i64.select	$push4=, $pop1, $pop3, $pop2
 	return  	$pop4
-func_end6:
-	.size	f7, func_end6-f7
+.Lfunc_end6:
+	.size	f7, .Lfunc_end6-f7
 
 	.globl	f8
 	.type	f8,@function
@@ -119,8 +119,8 @@ f8:                                     # @f8
 	i64.const	$push2=, 0
 	i64.select	$push4=, $pop1, $pop3, $pop2
 	return  	$pop4
-func_end7:
-	.size	f8, func_end7-f8
+.Lfunc_end7:
+	.size	f8, .Lfunc_end7-f8
 
 	.globl	main
 	.type	main,@function
@@ -129,44 +129,44 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB8_8
+	block   	.LBB8_8
 	i32.load8_u	$push0=, a($0)
 	i32.const	$push1=, 7
 	i32.shr_u	$push2=, $pop0, $pop1
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $pop2, $pop9
-	br_if   	$pop10, BB8_8
+	br_if   	$pop10, .LBB8_8
 # BB#1:                                 # %if.end
-	block   	BB8_7
+	block   	.LBB8_7
 	i32.load8_s	$push3=, b($0)
 	i32.ge_s	$push4=, $pop3, $0
-	br_if   	$pop4, BB8_7
+	br_if   	$pop4, .LBB8_7
 # BB#2:                                 # %if.end12
-	block   	BB8_6
+	block   	.LBB8_6
 	i32.load	$push5=, c($0)
 	i32.ge_s	$push6=, $pop5, $0
-	br_if   	$pop6, BB8_6
+	br_if   	$pop6, .LBB8_6
 # BB#3:                                 # %if.end16
-	block   	BB8_5
+	block   	.LBB8_5
 	i32.load	$push7=, d($0)
 	i32.ge_s	$push8=, $pop7, $0
-	br_if   	$pop8, BB8_5
+	br_if   	$pop8, .LBB8_5
 # BB#4:                                 # %if.end28
 	return  	$0
-BB8_5:                                  # %if.then19
+.LBB8_5:                                  # %if.then19
 	call    	abort
 	unreachable
-BB8_6:                                  # %if.then15
+.LBB8_6:                                  # %if.then15
 	call    	abort
 	unreachable
-BB8_7:                                  # %if.then3
+.LBB8_7:                                  # %if.then3
 	call    	abort
 	unreachable
-BB8_8:                                  # %if.then
+.LBB8_8:                                  # %if.then
 	call    	abort
 	unreachable
-func_end8:
-	.size	main, func_end8-main
+.Lfunc_end8:
+	.size	main, .Lfunc_end8-main
 
 	.type	a,@object               # @a
 	.data

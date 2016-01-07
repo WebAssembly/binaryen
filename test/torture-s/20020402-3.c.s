@@ -12,13 +12,13 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	i32.const	$4=, 1
 	i32.const	$8=, 0
 	copy_local	$7=, $1
-	block   	BB0_6
-	block   	BB0_3
+	block   	.LBB0_6
+	block   	.LBB0_3
 	i32.le_s	$push0=, $1, $4
-	br_if   	$pop0, BB0_3
-BB0_1:                                  # %while.body
+	br_if   	$pop0, .LBB0_3
+.LBB0_1:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.add 	$push1=, $1, $4
 	i32.shr_s	$5=, $pop1, $4
 	i32.add 	$1=, $5, $8
@@ -36,40 +36,40 @@ BB0_1:                                  # %while.body
 	i32.select	$1=, $6, $5, $pop9
 	copy_local	$7=, $3
 	i32.gt_s	$push10=, $1, $4
-	br_if   	$pop10, BB0_1
-BB0_2:                                  # %while.cond8.preheader
+	br_if   	$pop10, .LBB0_1
+.LBB0_2:                                  # %while.cond8.preheader
 	i32.const	$7=, 0
 	i32.const	$push11=, -1
 	i32.le_s	$push12=, $8, $pop11
-	br_if   	$pop12, BB0_6
-BB0_3:                                  # %while.body10.preheader
+	br_if   	$pop12, .LBB0_6
+.LBB0_3:                                  # %while.body10.preheader
 	i32.const	$push13=, 2
 	i32.shl 	$push14=, $8, $pop13
 	i32.add 	$push15=, $pop14, $2
 	i32.const	$push16=, 4
 	i32.add 	$1=, $pop15, $pop16
 	i32.add 	$6=, $8, $4
-BB0_4:                                  # %while.body10
+.LBB0_4:                                  # %while.body10
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_6
+	loop    	.LBB0_6
 	copy_local	$7=, $2
 	i32.load	$push17=, 0($1)
 	i64.load	$push18=, 8($pop17)
 	i64.gt_u	$push19=, $pop18, $0
-	br_if   	$pop19, BB0_6
+	br_if   	$pop19, .LBB0_6
 # BB#5:                                 # %while.cond8
-                                        #   in Loop: Header=BB0_4 Depth=1
+                                        #   in Loop: Header=.LBB0_4 Depth=1
 	i32.const	$push20=, -1
 	i32.add 	$6=, $6, $pop20
 	i32.const	$push21=, -4
 	i32.add 	$1=, $1, $pop21
 	i32.const	$7=, 0
 	i32.ge_s	$push22=, $6, $4
-	br_if   	$pop22, BB0_4
-BB0_6:                                  # %cleanup
+	br_if   	$pop22, .LBB0_4
+.LBB0_6:                                  # %cleanup
 	return  	$7
-func_end0:
-	.size	blockvector_for_pc_sect, func_end0-blockvector_for_pc_sect
+.Lfunc_end0:
+	.size	blockvector_for_pc_sect, .Lfunc_end0-blockvector_for_pc_sect
 
 	.globl	main
 	.type	main,@function
@@ -78,8 +78,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

@@ -7,25 +7,25 @@ func:                                   # @func
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
-func_end0:
-	.size	func, func_end0-func
+.Lfunc_end0:
+	.size	func, .Lfunc_end0-func
 
 	.globl	testit
 	.type	testit,@function
 testit:                                 # @testit
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 20
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB1_2
+	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end
 	return
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	testit, func_end1-testit
+.Lfunc_end1:
+	.size	testit, .Lfunc_end1-testit
 
 	.globl	main
 	.type	main,@function
@@ -35,8 +35,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	b,@object               # @b
 	.bss

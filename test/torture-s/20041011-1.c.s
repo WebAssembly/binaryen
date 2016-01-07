@@ -7,19 +7,19 @@ t1:                                     # @t1
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, BB0_4
+	br_if   	$pop6, .LBB0_4
 # BB#1:                                 # %while.body.preheader
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$push1=, $pop0
 	i64.const	$push2=, 11
 	i64.shl 	$2=, $pop1, $pop2
-BB0_2:                                  # %while.body
+.LBB0_2:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_3
+	loop    	.LBB0_3
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -82,15 +82,15 @@ BB0_2:                                  # %while.body
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
-	br_if   	$0, BB0_2
-BB0_3:                                  # %while.end.loopexit
+	br_if   	$0, .LBB0_2
+.LBB0_3:                                  # %while.end.loopexit
 	i64.const	$push3=, -2048
 	i64.add 	$push4=, $1, $pop3
 	i64.sub 	$1=, $pop4, $2
-BB0_4:                                  # %while.end
+.LBB0_4:                                  # %while.end
 	return  	$1
-func_end0:
-	.size	t1, func_end0-t1
+.Lfunc_end0:
+	.size	t1, .Lfunc_end0-t1
 
 	.globl	t2
 	.type	t2,@function
@@ -99,17 +99,17 @@ t2:                                     # @t2
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i64
 # BB#0:                                 # %entry
-	block   	BB1_4
+	block   	.LBB1_4
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, BB1_4
+	br_if   	$pop4, .LBB1_4
 # BB#1:                                 # %while.body.preheader
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$2=, $pop0
-BB1_2:                                  # %while.body
+.LBB1_2:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_3
+	loop    	.LBB1_3
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -172,16 +172,16 @@ BB1_2:                                  # %while.body
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
-	br_if   	$0, BB1_2
-BB1_3:                                  # %while.end.loopexit
+	br_if   	$0, .LBB1_2
+.LBB1_3:                                  # %while.end.loopexit
 	i64.const	$35=, -513
 	i64.mul 	$push1=, $2, $35
 	i64.add 	$push2=, $1, $pop1
 	i64.add 	$1=, $pop2, $35
-BB1_4:                                  # %while.end
+.LBB1_4:                                  # %while.end
 	return  	$1
-func_end1:
-	.size	t2, func_end1-t2
+.Lfunc_end1:
+	.size	t2, .Lfunc_end1-t2
 
 	.globl	t3
 	.type	t3,@function
@@ -190,19 +190,19 @@ t3:                                     # @t3
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB2_4
+	block   	.LBB2_4
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, BB2_4
+	br_if   	$pop6, .LBB2_4
 # BB#1:                                 # %while.body.preheader
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$push1=, $pop0
 	i64.const	$push2=, 9
 	i64.shl 	$2=, $pop1, $pop2
-BB2_2:                                  # %while.body
+.LBB2_2:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB2_3
+	loop    	.LBB2_3
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -265,15 +265,15 @@ BB2_2:                                  # %while.body
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
-	br_if   	$0, BB2_2
-BB2_3:                                  # %while.end.loopexit
+	br_if   	$0, .LBB2_2
+.LBB2_3:                                  # %while.end.loopexit
 	i64.const	$push3=, -512
 	i64.add 	$push4=, $1, $pop3
 	i64.sub 	$1=, $pop4, $2
-BB2_4:                                  # %while.end
+.LBB2_4:                                  # %while.end
 	return  	$1
-func_end2:
-	.size	t3, func_end2-t3
+.Lfunc_end2:
+	.size	t3, .Lfunc_end2-t3
 
 	.globl	t4
 	.type	t4,@function
@@ -282,17 +282,17 @@ t4:                                     # @t4
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i64
 # BB#0:                                 # %entry
-	block   	BB3_4
+	block   	.LBB3_4
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, BB3_4
+	br_if   	$pop4, .LBB3_4
 # BB#1:                                 # %while.body.preheader
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$2=, $pop0
-BB3_2:                                  # %while.body
+.LBB3_2:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB3_3
+	loop    	.LBB3_3
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -355,16 +355,16 @@ BB3_2:                                  # %while.body
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
-	br_if   	$0, BB3_2
-BB3_3:                                  # %while.end.loopexit
+	br_if   	$0, .LBB3_2
+.LBB3_3:                                  # %while.end.loopexit
 	i64.const	$35=, -511
 	i64.mul 	$push1=, $2, $35
 	i64.add 	$push2=, $1, $pop1
 	i64.add 	$1=, $pop2, $35
-BB3_4:                                  # %while.end
+.LBB3_4:                                  # %while.end
 	return  	$1
-func_end3:
-	.size	t4, func_end3-t4
+.Lfunc_end3:
+	.size	t4, .Lfunc_end3-t4
 
 	.globl	t5
 	.type	t5,@function
@@ -373,17 +373,17 @@ t5:                                     # @t5
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB4_4
+	block   	.LBB4_4
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, BB4_4
+	br_if   	$pop4, .LBB4_4
 # BB#1:                                 # %while.body.preheader
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$2=, $pop0
-BB4_2:                                  # %while.body
+.LBB4_2:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB4_3
+	loop    	.LBB4_3
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -446,15 +446,15 @@ BB4_2:                                  # %while.body
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
-	br_if   	$0, BB4_2
-BB4_3:                                  # %while.end.loopexit
+	br_if   	$0, .LBB4_2
+.LBB4_3:                                  # %while.end.loopexit
 	i64.const	$push1=, -1
 	i64.add 	$push2=, $1, $pop1
 	i64.sub 	$1=, $pop2, $2
-BB4_4:                                  # %while.end
+.LBB4_4:                                  # %while.end
 	return  	$1
-func_end4:
-	.size	t5, func_end4-t5
+.Lfunc_end4:
+	.size	t5, .Lfunc_end4-t5
 
 	.globl	t6
 	.type	t6,@function
@@ -463,18 +463,18 @@ t6:                                     # @t6
 	.result 	i64
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB5_4
+	block   	.LBB5_4
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, BB5_4
+	br_if   	$pop4, .LBB5_4
 # BB#1:                                 # %while.body.preheader
 	i32.const	$2=, -1
 	i32.add 	$push0=, $0, $2
 	i64.extend_u/i32	$push1=, $pop0
 	i64.add 	$1=, $pop1, $1
-BB5_2:                                  # %while.body
+.LBB5_2:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB5_3
+	loop    	.LBB5_3
 	i32.const	$3=, 0
 	i32.load	$4=, gvol+4($3)
 	i32.load	$5=, gvol+8($3)
@@ -537,14 +537,14 @@ BB5_2:                                  # %while.body
 	i32.store	$discard=, gvol+116($3), $32
 	i32.store	$discard=, gvol+120($3), $33
 	i32.add 	$0=, $0, $2
-	br_if   	$0, BB5_2
-BB5_3:                                  # %while.end.loopexit
+	br_if   	$0, .LBB5_2
+.LBB5_3:                                  # %while.end.loopexit
 	i64.const	$push2=, 1
 	i64.add 	$1=, $1, $pop2
-BB5_4:                                  # %while.end
+.LBB5_4:                                  # %while.end
 	return  	$1
-func_end5:
-	.size	t6, func_end5-t6
+.Lfunc_end5:
+	.size	t6, .Lfunc_end5-t6
 
 	.globl	t7
 	.type	t7,@function
@@ -553,10 +553,10 @@ t7:                                     # @t7
 	.result 	i64
 	.local  	i32, i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB6_4
+	block   	.LBB6_4
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, BB6_4
+	br_if   	$pop4, .LBB6_4
 # BB#1:                                 # %while.body.preheader
 	i32.const	$2=, -1
 	i64.const	$3=, 511
@@ -564,9 +564,9 @@ t7:                                     # @t7
 	i64.extend_u/i32	$push1=, $pop0
 	i64.mul 	$push2=, $pop1, $3
 	i64.add 	$1=, $pop2, $1
-BB6_2:                                  # %while.body
+.LBB6_2:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB6_3
+	loop    	.LBB6_3
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -629,13 +629,13 @@ BB6_2:                                  # %while.body
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $2
-	br_if   	$0, BB6_2
-BB6_3:                                  # %while.end.loopexit
+	br_if   	$0, .LBB6_2
+.LBB6_3:                                  # %while.end.loopexit
 	i64.add 	$1=, $1, $3
-BB6_4:                                  # %while.end
+.LBB6_4:                                  # %while.end
 	return  	$1
-func_end6:
-	.size	t7, func_end6-t7
+.Lfunc_end6:
+	.size	t7, .Lfunc_end6-t7
 
 	.globl	t8
 	.type	t8,@function
@@ -644,10 +644,10 @@ t8:                                     # @t8
 	.result 	i64
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB7_4
+	block   	.LBB7_4
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, BB7_4
+	br_if   	$pop6, .LBB7_4
 # BB#1:                                 # %while.body.preheader
 	i32.const	$2=, -1
 	i32.add 	$push0=, $0, $2
@@ -655,9 +655,9 @@ t8:                                     # @t8
 	i64.const	$push2=, 9
 	i64.shl 	$push3=, $pop1, $pop2
 	i64.add 	$1=, $pop3, $1
-BB7_2:                                  # %while.body
+.LBB7_2:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB7_3
+	loop    	.LBB7_3
 	i32.const	$3=, 0
 	i32.load	$4=, gvol+4($3)
 	i32.load	$5=, gvol+8($3)
@@ -720,14 +720,14 @@ BB7_2:                                  # %while.body
 	i32.store	$discard=, gvol+116($3), $32
 	i32.store	$discard=, gvol+120($3), $33
 	i32.add 	$0=, $0, $2
-	br_if   	$0, BB7_2
-BB7_3:                                  # %while.end.loopexit
+	br_if   	$0, .LBB7_2
+.LBB7_3:                                  # %while.end.loopexit
 	i64.const	$push4=, 512
 	i64.add 	$1=, $1, $pop4
-BB7_4:                                  # %while.end
+.LBB7_4:                                  # %while.end
 	return  	$1
-func_end7:
-	.size	t8, func_end7-t8
+.Lfunc_end7:
+	.size	t8, .Lfunc_end7-t8
 
 	.globl	t9
 	.type	t9,@function
@@ -736,10 +736,10 @@ t9:                                     # @t9
 	.result 	i64
 	.local  	i32, i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB8_4
+	block   	.LBB8_4
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, BB8_4
+	br_if   	$pop4, .LBB8_4
 # BB#1:                                 # %while.body.preheader
 	i32.const	$2=, -1
 	i64.const	$3=, 513
@@ -747,9 +747,9 @@ t9:                                     # @t9
 	i64.extend_u/i32	$push1=, $pop0
 	i64.mul 	$push2=, $pop1, $3
 	i64.add 	$1=, $pop2, $1
-BB8_2:                                  # %while.body
+.LBB8_2:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB8_3
+	loop    	.LBB8_3
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -812,13 +812,13 @@ BB8_2:                                  # %while.body
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $2
-	br_if   	$0, BB8_2
-BB8_3:                                  # %while.end.loopexit
+	br_if   	$0, .LBB8_2
+.LBB8_3:                                  # %while.end.loopexit
 	i64.add 	$1=, $1, $3
-BB8_4:                                  # %while.end
+.LBB8_4:                                  # %while.end
 	return  	$1
-func_end8:
-	.size	t9, func_end8-t9
+.Lfunc_end8:
+	.size	t9, .Lfunc_end8-t9
 
 	.globl	t10
 	.type	t10,@function
@@ -827,10 +827,10 @@ t10:                                    # @t10
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB9_4
+	block   	.LBB9_4
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, BB9_4
+	br_if   	$pop6, .LBB9_4
 # BB#1:                                 # %while.body.lr.ph
 	i32.const	$3=, 0
 	i32.const	$4=, -1
@@ -840,9 +840,9 @@ t10:                                    # @t10
 	i64.const	$push3=, 1
 	i64.add 	$push4=, $pop2, $pop3
 	i64.mul 	$2=, $pop0, $pop4
-BB9_2:                                  # %while.body
+.LBB9_2:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB9_3
+	loop    	.LBB9_3
 	i32.load	$5=, gvol+4($3)
 	i32.load	$6=, gvol+8($3)
 	i32.load	$7=, gvol+12($3)
@@ -904,13 +904,13 @@ BB9_2:                                  # %while.body
 	i32.store	$discard=, gvol+116($3), $33
 	i32.store	$discard=, gvol+120($3), $34
 	i32.add 	$0=, $0, $4
-	br_if   	$0, BB9_2
-BB9_3:                                  # %while.end.loopexit
+	br_if   	$0, .LBB9_2
+.LBB9_3:                                  # %while.end.loopexit
 	i64.add 	$1=, $2, $1
-BB9_4:                                  # %while.end
+.LBB9_4:                                  # %while.end
 	return  	$1
-func_end9:
-	.size	t10, func_end9-t10
+.Lfunc_end9:
+	.size	t10, .Lfunc_end9-t10
 
 	.globl	t11
 	.type	t11,@function
@@ -919,10 +919,10 @@ t11:                                    # @t11
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB10_4
+	block   	.LBB10_4
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, BB10_4
+	br_if   	$pop6, .LBB10_4
 # BB#1:                                 # %while.body.lr.ph
 	i32.const	$3=, 0
 	i32.const	$4=, -1
@@ -932,9 +932,9 @@ t11:                                    # @t11
 	i64.const	$push3=, -1
 	i64.xor 	$push4=, $pop2, $pop3
 	i64.mul 	$2=, $pop0, $pop4
-BB10_2:                                 # %while.body
+.LBB10_2:                                 # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB10_3
+	loop    	.LBB10_3
 	i32.load	$5=, gvol+4($3)
 	i32.load	$6=, gvol+8($3)
 	i32.load	$7=, gvol+12($3)
@@ -996,13 +996,13 @@ BB10_2:                                 # %while.body
 	i32.store	$discard=, gvol+116($3), $33
 	i32.store	$discard=, gvol+120($3), $34
 	i32.add 	$0=, $0, $4
-	br_if   	$0, BB10_2
-BB10_3:                                 # %while.end.loopexit
+	br_if   	$0, .LBB10_2
+.LBB10_3:                                 # %while.end.loopexit
 	i64.add 	$1=, $2, $1
-BB10_4:                                 # %while.end
+.LBB10_4:                                 # %while.end
 	return  	$1
-func_end10:
-	.size	t11, func_end10-t11
+.Lfunc_end10:
+	.size	t11, .Lfunc_end10-t11
 
 	.globl	neg
 	.type	neg,@function
@@ -1013,8 +1013,8 @@ neg:                                    # @neg
 	i64.const	$push0=, 0
 	i64.sub 	$push1=, $pop0, $0
 	return  	$pop1
-func_end11:
-	.size	neg, func_end11-neg
+.Lfunc_end11:
+	.size	neg, .Lfunc_end11-neg
 
 	.globl	main
 	.type	main,@function
@@ -1025,228 +1025,228 @@ main:                                   # @main
 	i64.const	$2=, -1
 	i32.const	$0=, 0
 	i32.const	$3=, 3
-	block   	BB12_46
+	block   	.LBB12_46
 	i64.const	$push0=, 100
 	i64.store	$1=, gull($0), $pop0
 	i64.call	$push1=, t1, $3, $2
 	i64.const	$push2=, -6145
 	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB12_46
+	br_if   	$pop3, .LBB12_46
 # BB#1:                                 # %if.end
 	i64.const	$4=, 4294967295
-	block   	BB12_45
+	block   	.LBB12_45
 	i64.call	$push4=, t1, $3, $4
 	i64.const	$push5=, 4294961151
 	i64.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, BB12_45
+	br_if   	$pop6, .LBB12_45
 # BB#2:                                 # %if.end4
-	block   	BB12_44
+	block   	.LBB12_44
 	i64.call	$push7=, t2, $3, $2
 	i64.const	$push8=, -1540
 	i64.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, BB12_44
+	br_if   	$pop9, .LBB12_44
 # BB#3:                                 # %if.end8
-	block   	BB12_43
+	block   	.LBB12_43
 	i64.call	$push10=, t2, $3, $4
 	i64.const	$push11=, 4294965756
 	i64.ne  	$push12=, $pop10, $pop11
-	br_if   	$pop12, BB12_43
+	br_if   	$pop12, .LBB12_43
 # BB#4:                                 # %if.end12
-	block   	BB12_42
+	block   	.LBB12_42
 	i64.call	$push13=, t3, $3, $2
 	i64.const	$push14=, -1537
 	i64.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, BB12_42
+	br_if   	$pop15, .LBB12_42
 # BB#5:                                 # %if.end16
-	block   	BB12_41
+	block   	.LBB12_41
 	i64.call	$push16=, t3, $3, $4
 	i64.const	$push17=, 4294965759
 	i64.ne  	$push18=, $pop16, $pop17
-	br_if   	$pop18, BB12_41
+	br_if   	$pop18, .LBB12_41
 # BB#6:                                 # %if.end20
-	block   	BB12_40
+	block   	.LBB12_40
 	i64.call	$push19=, t4, $3, $2
 	i64.const	$push20=, -1534
 	i64.ne  	$push21=, $pop19, $pop20
-	br_if   	$pop21, BB12_40
+	br_if   	$pop21, .LBB12_40
 # BB#7:                                 # %if.end24
-	block   	BB12_39
+	block   	.LBB12_39
 	i64.call	$push22=, t4, $3, $4
 	i64.const	$push23=, 4294965762
 	i64.ne  	$push24=, $pop22, $pop23
-	br_if   	$pop24, BB12_39
+	br_if   	$pop24, .LBB12_39
 # BB#8:                                 # %if.end28
-	block   	BB12_38
+	block   	.LBB12_38
 	i64.call	$push25=, t5, $3, $2
 	i64.const	$push26=, -4
 	i64.ne  	$push27=, $pop25, $pop26
-	br_if   	$pop27, BB12_38
+	br_if   	$pop27, .LBB12_38
 # BB#9:                                 # %if.end32
-	block   	BB12_37
+	block   	.LBB12_37
 	i64.call	$push28=, t5, $3, $4
 	i64.const	$push29=, 4294967292
 	i64.ne  	$push30=, $pop28, $pop29
-	br_if   	$pop30, BB12_37
+	br_if   	$pop30, .LBB12_37
 # BB#10:                                # %if.end36
-	block   	BB12_36
+	block   	.LBB12_36
 	i64.call	$push31=, t6, $3, $2
 	i64.const	$push32=, 2
 	i64.ne  	$push33=, $pop31, $pop32
-	br_if   	$pop33, BB12_36
+	br_if   	$pop33, .LBB12_36
 # BB#11:                                # %if.end40
-	block   	BB12_35
+	block   	.LBB12_35
 	i64.call	$push34=, t6, $3, $4
 	i64.const	$push35=, 4294967298
 	i64.ne  	$push36=, $pop34, $pop35
-	br_if   	$pop36, BB12_35
+	br_if   	$pop36, .LBB12_35
 # BB#12:                                # %if.end44
-	block   	BB12_34
+	block   	.LBB12_34
 	i64.call	$push37=, t7, $3, $2
 	i64.const	$push38=, 1532
 	i64.ne  	$push39=, $pop37, $pop38
-	br_if   	$pop39, BB12_34
+	br_if   	$pop39, .LBB12_34
 # BB#13:                                # %if.end48
-	block   	BB12_33
+	block   	.LBB12_33
 	i64.call	$push40=, t7, $3, $4
 	i64.const	$push41=, 4294968828
 	i64.ne  	$push42=, $pop40, $pop41
-	br_if   	$pop42, BB12_33
+	br_if   	$pop42, .LBB12_33
 # BB#14:                                # %if.end52
-	block   	BB12_32
+	block   	.LBB12_32
 	i64.call	$push43=, t8, $3, $2
 	i64.const	$push44=, 1535
 	i64.ne  	$push45=, $pop43, $pop44
-	br_if   	$pop45, BB12_32
+	br_if   	$pop45, .LBB12_32
 # BB#15:                                # %if.end56
-	block   	BB12_31
+	block   	.LBB12_31
 	i64.call	$push46=, t8, $3, $4
 	i64.const	$push47=, 4294968831
 	i64.ne  	$push48=, $pop46, $pop47
-	br_if   	$pop48, BB12_31
+	br_if   	$pop48, .LBB12_31
 # BB#16:                                # %if.end60
-	block   	BB12_30
+	block   	.LBB12_30
 	i64.call	$push49=, t9, $3, $2
 	i64.const	$push50=, 1538
 	i64.ne  	$push51=, $pop49, $pop50
-	br_if   	$pop51, BB12_30
+	br_if   	$pop51, .LBB12_30
 # BB#17:                                # %if.end64
-	block   	BB12_29
+	block   	.LBB12_29
 	i64.call	$push52=, t9, $3, $4
 	i64.const	$push53=, 4294968834
 	i64.ne  	$push54=, $pop52, $pop53
-	br_if   	$pop54, BB12_29
+	br_if   	$pop54, .LBB12_29
 # BB#18:                                # %if.end68
 	i64.call	$5=, t10, $3, $2
 	i64.const	$6=, 3
-	block   	BB12_28
+	block   	.LBB12_28
 	i64.load	$push55=, gull($0)
 	i64.mul 	$push56=, $pop55, $6
 	i64.add 	$push57=, $pop56, $2
 	i64.ne  	$push58=, $5, $pop57
-	br_if   	$pop58, BB12_28
+	br_if   	$pop58, .LBB12_28
 # BB#19:                                # %if.end72
 	i64.call	$5=, t10, $3, $4
-	block   	BB12_27
+	block   	.LBB12_27
 	i64.load	$push59=, gull($0)
 	i64.mul 	$push60=, $pop59, $6
 	i64.add 	$push61=, $pop60, $4
 	i64.ne  	$push62=, $5, $pop61
-	br_if   	$pop62, BB12_27
+	br_if   	$pop62, .LBB12_27
 # BB#20:                                # %if.end77
 	i64.call	$5=, t11, $3, $2
 	i64.const	$6=, -3
-	block   	BB12_26
+	block   	.LBB12_26
 	i64.load	$push63=, gull($0)
 	i64.mul 	$push64=, $pop63, $6
 	i64.add 	$push65=, $pop64, $2
 	i64.ne  	$push66=, $5, $pop65
-	br_if   	$pop66, BB12_26
+	br_if   	$pop66, .LBB12_26
 # BB#21:                                # %if.end84
 	i64.call	$5=, t11, $3, $4
 	i64.load	$2=, gull($0)
-	block   	BB12_25
+	block   	.LBB12_25
 	i64.mul 	$push67=, $2, $6
 	i64.add 	$push68=, $pop67, $4
 	i64.ne  	$push69=, $5, $pop68
-	br_if   	$pop69, BB12_25
+	br_if   	$pop69, .LBB12_25
 # BB#22:                                # %if.end91
-	block   	BB12_24
+	block   	.LBB12_24
 	i64.ne  	$push70=, $2, $1
-	br_if   	$pop70, BB12_24
+	br_if   	$pop70, .LBB12_24
 # BB#23:                                # %if.end95
 	call    	exit, $0
 	unreachable
-BB12_24:                                # %if.then94
+.LBB12_24:                                # %if.then94
 	call    	abort
 	unreachable
-BB12_25:                                # %if.then90
+.LBB12_25:                                # %if.then90
 	call    	abort
 	unreachable
-BB12_26:                                # %if.then83
+.LBB12_26:                                # %if.then83
 	call    	abort
 	unreachable
-BB12_27:                                # %if.then76
+.LBB12_27:                                # %if.then76
 	call    	abort
 	unreachable
-BB12_28:                                # %if.then71
+.LBB12_28:                                # %if.then71
 	call    	abort
 	unreachable
-BB12_29:                                # %if.then67
+.LBB12_29:                                # %if.then67
 	call    	abort
 	unreachable
-BB12_30:                                # %if.then63
+.LBB12_30:                                # %if.then63
 	call    	abort
 	unreachable
-BB12_31:                                # %if.then59
+.LBB12_31:                                # %if.then59
 	call    	abort
 	unreachable
-BB12_32:                                # %if.then55
+.LBB12_32:                                # %if.then55
 	call    	abort
 	unreachable
-BB12_33:                                # %if.then51
+.LBB12_33:                                # %if.then51
 	call    	abort
 	unreachable
-BB12_34:                                # %if.then47
+.LBB12_34:                                # %if.then47
 	call    	abort
 	unreachable
-BB12_35:                                # %if.then43
+.LBB12_35:                                # %if.then43
 	call    	abort
 	unreachable
-BB12_36:                                # %if.then39
+.LBB12_36:                                # %if.then39
 	call    	abort
 	unreachable
-BB12_37:                                # %if.then35
+.LBB12_37:                                # %if.then35
 	call    	abort
 	unreachable
-BB12_38:                                # %if.then31
+.LBB12_38:                                # %if.then31
 	call    	abort
 	unreachable
-BB12_39:                                # %if.then27
+.LBB12_39:                                # %if.then27
 	call    	abort
 	unreachable
-BB12_40:                                # %if.then23
+.LBB12_40:                                # %if.then23
 	call    	abort
 	unreachable
-BB12_41:                                # %if.then19
+.LBB12_41:                                # %if.then19
 	call    	abort
 	unreachable
-BB12_42:                                # %if.then15
+.LBB12_42:                                # %if.then15
 	call    	abort
 	unreachable
-BB12_43:                                # %if.then11
+.LBB12_43:                                # %if.then11
 	call    	abort
 	unreachable
-BB12_44:                                # %if.then7
+.LBB12_44:                                # %if.then7
 	call    	abort
 	unreachable
-BB12_45:                                # %if.then3
+.LBB12_45:                                # %if.then3
 	call    	abort
 	unreachable
-BB12_46:                                # %if.then
+.LBB12_46:                                # %if.then
 	call    	abort
 	unreachable
-func_end12:
-	.size	main, func_end12-main
+.Lfunc_end12:
+	.size	main, .Lfunc_end12-main
 
 	.type	gvol,@object            # @gvol
 	.bss

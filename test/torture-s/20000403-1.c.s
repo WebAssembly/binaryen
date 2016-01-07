@@ -7,22 +7,22 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.load	$push0=, aa($0)
 	i32.const	$push2=, 4096
 	i32.add 	$push3=, $pop0, $pop2
 	i32.load	$push1=, bb($0)
 	i32.sub 	$push4=, $pop3, $pop1
 	i32.le_s	$push5=, $pop4, $0
-	br_if   	$pop5, BB0_2
+	br_if   	$pop5, .LBB0_2
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	seqgt
 	.type	seqgt,@function
@@ -35,8 +35,8 @@ seqgt:                                  # @seqgt
 	i32.const	$push2=, 0
 	i32.gt_s	$push3=, $pop1, $pop2
 	return  	$pop3
-func_end1:
-	.size	seqgt, func_end1-seqgt
+.Lfunc_end1:
+	.size	seqgt, .Lfunc_end1-seqgt
 
 	.globl	seqgt2
 	.type	seqgt2,@function
@@ -49,8 +49,8 @@ seqgt2:                                 # @seqgt2
 	i32.const	$push2=, 0
 	i32.gt_s	$push3=, $pop1, $pop2
 	return  	$pop3
-func_end2:
-	.size	seqgt2, func_end2-seqgt2
+.Lfunc_end2:
+	.size	seqgt2, .Lfunc_end2-seqgt2
 
 	.type	aa,@object              # @aa
 	.data

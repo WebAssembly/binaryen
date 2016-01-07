@@ -198,20 +198,20 @@ main:                                   # @main
 	i64.load	$push33=, 0($pop32)
 	i64.store	$discard=, Y1+8($0), $pop33
 	i64.store	$discard=, Y1($0), $2
-	block   	BB0_2
+	block   	.LBB0_2
 	i64.const	$push34=, 4612108230892453888
 	i32.call	$push35=, __eqtf2, $12, $13, $1, $pop34
 	i32.const	$push36=, 0
 	i32.eq  	$push37=, $pop35, $pop36
-	br_if   	$pop37, BB0_2
+	br_if   	$pop37, .LBB0_2
 # BB#1:                                 # %if.then
 	call    	abort
 	unreachable
-BB0_2:                                  # %if.end
+.LBB0_2:                                  # %if.end
 	call    	exit, $0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	C,@object               # @C
 	.data

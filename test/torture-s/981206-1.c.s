@@ -10,8 +10,8 @@ foo:                                    # @foo
 	i32.store8	$push1=, x($0), $pop0
 	i32.store8	$discard=, y($0), $pop1
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -25,8 +25,8 @@ main:                                   # @main
 	i32.store8	$discard=, y($0), $pop1
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	x,@object               # @x
 	.lcomm	x,1

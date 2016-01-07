@@ -13,8 +13,8 @@ main:                                   # @main
 	i32.const	$push3=, 0
 	call    	exit, $pop3
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	lookup_table,@object    # @lookup_table
 	.bss

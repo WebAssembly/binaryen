@@ -9,8 +9,8 @@ foo:                                    # @foo
 	i32.const	$push1=, 4044
 	i32.store	$push2=, blah($pop0), $pop1
 	return  	$pop2
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -23,8 +23,8 @@ main:                                   # @main
 	i32.store	$discard=, blah($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	blah,@object            # @blah
 	.bss

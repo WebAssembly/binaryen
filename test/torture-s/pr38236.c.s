@@ -29,8 +29,8 @@ foo:                                    # @foo
 	i32.const	$6=, __stack_pointer
 	i32.store	$6=, 0($6), $6
 	return  	$pop3
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -40,17 +40,17 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 1
 	i32.const	$1=, 0
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.call	$push0=, foo, $1, $0, $0, $0
 	i32.ne  	$push1=, $pop0, $0
-	br_if   	$pop1, BB1_2
+	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$1
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

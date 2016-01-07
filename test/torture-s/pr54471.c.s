@@ -14,13 +14,13 @@ foo:                                    # @foo
 	i32.store	$10=, 0($8), $10
 	i64.const	$6=, 0
 	i64.const	$5=, 1
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $3, $pop7
-	br_if   	$pop8, BB0_4
-BB0_1:                                  # %for.body
+	br_if   	$pop8, .LBB0_4
+.LBB0_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.const	$10=, 0
 	i32.add 	$10=, $10, $10
 	call    	__multi3, $10, $1, $2, $5, $6
@@ -40,14 +40,14 @@ BB0_1:                                  # %for.body
 	i64.load	$1=, 16($10)
 	i32.const	$push2=, -1
 	i32.add 	$3=, $3, $pop2
-	br_if   	$3, BB0_1
-BB0_2:                                  # %for.end
+	br_if   	$3, .LBB0_1
+.LBB0_2:                                  # %for.end
 	i64.const	$2=, 14348907
 	i64.const	$1=, 0
 	i64.xor 	$push3=, $5, $2
 	i64.or  	$push4=, $pop3, $6
 	i64.ne  	$push5=, $pop4, $1
-	br_if   	$pop5, BB0_4
+	br_if   	$pop5, .LBB0_4
 # BB#3:                                 # %if.end
 	i64.store	$discard=, 0($0), $2
 	i32.add 	$push6=, $0, $4
@@ -57,11 +57,11 @@ BB0_2:                                  # %for.end
 	i32.const	$9=, __stack_pointer
 	i32.store	$10=, 0($9), $10
 	return
-BB0_4:                                  # %if.then
+.LBB0_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -87,8 +87,8 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$4=, 0($2), $4
 	return  	$pop3
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

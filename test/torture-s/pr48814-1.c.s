@@ -12,8 +12,8 @@ incr:                                   # @incr
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$push3=, count($0), $pop2
 	return  	$pop3
-func_end0:
-	.size	incr, func_end0-incr
+.Lfunc_end0:
+	.size	incr, .Lfunc_end0-incr
 
 	.globl	main
 	.type	main,@function
@@ -25,7 +25,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 	i32.load	$2=, count($1)
 	i32.const	$3=, 2
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.const	$push5=, arr
 	i32.shl 	$push4=, $2, $3
 	i32.add 	$push6=, $pop5, $pop4
@@ -34,19 +34,19 @@ main:                                   # @main
 	i32.add 	$push2=, $2, $pop1
 	i32.store	$push3=, count($1), $pop2
 	i32.ne  	$push7=, $pop3, $3
-	br_if   	$pop7, BB1_3
+	br_if   	$pop7, .LBB1_3
 # BB#1:                                 # %entry
 	i32.load	$push0=, arr+8($1)
 	i32.const	$push8=, 3
 	i32.ne  	$push9=, $pop0, $pop8
-	br_if   	$pop9, BB1_3
+	br_if   	$pop9, .LBB1_3
 # BB#2:                                 # %if.end
 	return  	$1
-BB1_3:                                  # %if.then
+.LBB1_3:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	arr,@object             # @arr
 	.data

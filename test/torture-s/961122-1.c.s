@@ -15,8 +15,8 @@ addhi:                                  # @addhi
 	i64.add 	$push4=, $pop3, $pop2
 	i64.store	$discard=, acc($1), $pop4
 	return  	$1
-func_end0:
-	.size	addhi, func_end0-addhi
+.Lfunc_end0:
+	.size	addhi, .Lfunc_end0-addhi
 
 	.globl	subhi
 	.type	subhi,@function
@@ -33,8 +33,8 @@ subhi:                                  # @subhi
 	i64.sub 	$push4=, $pop3, $pop2
 	i64.store	$discard=, acc($1), $pop4
 	return  	$1
-func_end1:
-	.size	subhi, func_end1-subhi
+.Lfunc_end1:
+	.size	subhi, .Lfunc_end1-subhi
 
 	.globl	main
 	.type	main,@function
@@ -47,8 +47,8 @@ main:                                   # @main
 	i64.store	$discard=, acc($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	acc,@object             # @acc
 	.bss

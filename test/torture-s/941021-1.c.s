@@ -10,8 +10,8 @@ f:                                      # @f
 	i32.select	$push1=, $0, $0, $pop0
 	f64.store	$discard=, 0($pop1), $1
 	return  	$0
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -24,8 +24,8 @@ main:                                   # @main
 	i64.store	$discard=, glob_dbl($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	glob_dbl,@object        # @glob_dbl
 	.bss

@@ -8,8 +8,8 @@ ff:                                     # @ff
 	#APP
 	#NO_APP
 	return
-func_end0:
-	.size	ff, func_end0-ff
+.Lfunc_end0:
+	.size	ff, .Lfunc_end0-ff
 
 	.globl	f
 	.type	f,@function
@@ -21,25 +21,25 @@ f:                                      # @f
 	i32.add 	$1=, $0, $pop0
 	call    	ff, $0
 	i32.const	$2=, 65535
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.and 	$push1=, $1, $2
-	br_if   	$pop1, BB1_2
+	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.then
 	#APP
 	#NO_APP
-BB1_2:                                  # %for.inc
+.LBB1_2:                                  # %for.inc
 	call    	ff, $0
-	block   	BB1_4
+	block   	.LBB1_4
 	i32.add 	$push2=, $1, $0
 	i32.and 	$push3=, $pop2, $2
-	br_if   	$pop3, BB1_4
+	br_if   	$pop3, .LBB1_4
 # BB#3:                                 # %if.then.1
 	#APP
 	#NO_APP
-BB1_4:                                  # %for.inc.1
+.LBB1_4:                                  # %for.inc.1
 	return
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -50,8 +50,8 @@ main:                                   # @main
 	call    	f, $pop0
 	i32.const	$push1=, 0
 	return  	$pop1
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	nunmap,@object          # @nunmap
 	.section	.rodata,"a",@progbits

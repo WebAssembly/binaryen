@@ -16,8 +16,8 @@ xxx:                                    # @xxx
 	i32.select	$push4=, $pop1, $pop3, $pop2
 	i32.select	$push8=, $pop6, $pop7, $pop4
 	return  	$pop8
-func_end0:
-	.size	xxx, func_end0-xxx
+.Lfunc_end0:
+	.size	xxx, .Lfunc_end0-xxx
 
 	.globl	main
 	.type	main,@function
@@ -26,8 +26,8 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	cfb_tab8_be,@object     # @cfb_tab8_be
 	.section	.rodata,"a",@progbits

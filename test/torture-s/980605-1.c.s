@@ -18,8 +18,8 @@ f2:                                     # @f2
 	i32.const	$push4=, 45
 	i32.add 	$push5=, $pop3, $pop4
 	return  	$pop5
-func_end0:
-	.size	f2, func_end0-f2
+.Lfunc_end0:
+	.size	f2, .Lfunc_end0-f2
 
 	.globl	getval
 	.type	getval,@function
@@ -33,8 +33,8 @@ getval:                                 # @getval
 	i32.add 	$push1=, $1, $pop0
 	i32.store	$discard=, x($0), $pop1
 	return  	$1
-func_end1:
-	.size	getval, func_end1-getval
+.Lfunc_end1:
+	.size	getval, .Lfunc_end1-getval
 
 	.globl	f
 	.type	f,@function
@@ -71,21 +71,21 @@ f:                                      # @f
 	i32.add 	$10=, $5, $6
 	i32.const	$6=, __stack_pointer
 	i32.store	$10=, 0($6), $10
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push6=, 227
 	i32.ne  	$push7=, $0, $pop6
-	br_if   	$pop7, BB2_2
+	br_if   	$pop7, .LBB2_2
 # BB#1:                                 # %if.end
 	i32.const	$9=, 16
 	i32.add 	$10=, $10, $9
 	i32.const	$9=, __stack_pointer
 	i32.store	$10=, 0($9), $10
 	return
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	f, func_end2-f
+.Lfunc_end2:
+	.size	f, .Lfunc_end2-f
 
 	.globl	main
 	.type	main,@function
@@ -123,18 +123,18 @@ main:                                   # @main
 	i32.add 	$9=, $5, $6
 	i32.const	$6=, __stack_pointer
 	i32.store	$9=, 0($6), $9
-	block   	BB3_2
+	block   	.LBB3_2
 	i32.const	$push6=, 227
 	i32.ne  	$push7=, $1, $pop6
-	br_if   	$pop7, BB3_2
+	br_if   	$pop7, .LBB3_2
 # BB#1:                                 # %f.exit
 	call    	exit, $0
 	unreachable
-BB3_2:                                  # %if.then.i
+.LBB3_2:                                  # %if.then.i
 	call    	abort
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	x,@object               # @x
 	.data

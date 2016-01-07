@@ -5,17 +5,17 @@
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, v+232
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	foo
 	.type	foo,@function
@@ -56,8 +56,8 @@ foo:                                    # @foo
 	i64.add 	$push17=, $9, $8
 	i64.store	$discard=, 0($pop21), $pop17
 	return
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.globl	main
 	.type	main,@function
@@ -70,8 +70,8 @@ main:                                   # @main
 	call    	foo, $pop0, $pop2, $pop1
 	i32.const	$push3=, 0
 	return  	$pop3
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	v,@object               # @v
 	.bss

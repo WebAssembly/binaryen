@@ -8,17 +8,17 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i64.const	$4=, 0
 	i32.const	$10=, zext
-BB0_1:                                  # %for.body
+.LBB0_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB0_13
-	loop    	BB0_3
+	block   	.LBB0_13
+	loop    	.LBB0_3
 	i64.const	$0=, 8526495107234113920
 	i64.shr_u	$push0=, $0, $4
 	i64.load	$push1=, 0($10)
 	i64.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB0_13
+	br_if   	$pop2, .LBB0_13
 # BB#2:                                 # %for.cond
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i64.const	$1=, 1
 	i64.add 	$4=, $4, $1
 	i32.const	$2=, 8
@@ -27,34 +27,34 @@ BB0_1:                                  # %for.body
 	i64.const	$3=, 63
 	i32.const	$11=, sext
 	i64.le_s	$push3=, $4, $3
-	br_if   	$pop3, BB0_1
-BB0_3:                                  # %for.body4
+	br_if   	$pop3, .LBB0_1
+.LBB0_3:                                  # %for.body4
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB0_12
-	loop    	BB0_5
+	block   	.LBB0_12
+	loop    	.LBB0_5
 	i64.const	$4=, -8152436031399644656
 	i64.shr_s	$push4=, $4, $7
 	i64.load	$push5=, 0($11)
 	i64.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, BB0_12
+	br_if   	$pop6, .LBB0_12
 # BB#4:                                 # %for.cond2
-                                        #   in Loop: Header=BB0_3 Depth=1
+                                        #   in Loop: Header=.LBB0_3 Depth=1
 	i64.add 	$7=, $7, $1
 	i32.add 	$11=, $11, $2
 	i32.const	$9=, 0
 	i32.const	$8=, zext
 	i64.le_s	$push7=, $7, $3
-	br_if   	$pop7, BB0_3
-BB0_5:                                  # %for.body16
+	br_if   	$pop7, .LBB0_3
+.LBB0_5:                                  # %for.body16
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB0_11
-	loop    	BB0_7
+	block   	.LBB0_11
+	loop    	.LBB0_7
 	i64.call	$push8=, constant_shift, $0, $9
 	i64.load	$push9=, 0($8)
 	i64.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, BB0_11
+	br_if   	$pop10, .LBB0_11
 # BB#6:                                 # %for.cond14
-                                        #   in Loop: Header=BB0_5 Depth=1
+                                        #   in Loop: Header=.LBB0_5 Depth=1
 	i32.const	$5=, 1
 	i32.add 	$9=, $9, $5
 	i32.add 	$8=, $8, $2
@@ -62,373 +62,373 @@ BB0_5:                                  # %for.body16
 	i32.const	$10=, sext
 	i32.const	$6=, 63
 	i32.le_s	$push11=, $9, $6
-	br_if   	$pop11, BB0_5
-BB0_7:                                  # %for.body28
+	br_if   	$pop11, .LBB0_5
+.LBB0_7:                                  # %for.body28
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB0_10
-	loop    	BB0_9
+	block   	.LBB0_10
+	loop    	.LBB0_9
 	i64.call	$push12=, constant_shift, $4, $11
 	i64.load	$push13=, 0($10)
 	i64.ne  	$push14=, $pop12, $pop13
-	br_if   	$pop14, BB0_10
+	br_if   	$pop14, .LBB0_10
 # BB#8:                                 # %for.cond26
-                                        #   in Loop: Header=BB0_7 Depth=1
+                                        #   in Loop: Header=.LBB0_7 Depth=1
 	i32.add 	$11=, $11, $5
 	i32.add 	$10=, $10, $2
 	i32.le_s	$push15=, $11, $6
-	br_if   	$pop15, BB0_7
-BB0_9:                                  # %for.end37
+	br_if   	$pop15, .LBB0_7
+.LBB0_9:                                  # %for.end37
 	i32.const	$push16=, 0
 	call    	exit, $pop16
 	unreachable
-BB0_10:                                 # %if.then33
+.LBB0_10:                                 # %if.then33
 	call    	abort
 	unreachable
-BB0_11:                                 # %if.then21
+.LBB0_11:                                 # %if.then21
 	call    	abort
 	unreachable
-BB0_12:                                 # %if.then9
+.LBB0_12:                                 # %if.then9
 	call    	abort
 	unreachable
-BB0_13:                                 # %if.then
+.LBB0_13:                                 # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	constant_shift,@function
 constant_shift:                         # @constant_shift
 	.param  	i64, i32
 	.result 	i64
 # BB#0:                                 # %entry
-	block   	BB1_66
+	block   	.LBB1_66
 	i32.const	$push0=, 63
 	i32.gt_u	$push1=, $1, $pop0
-	br_if   	$pop1, BB1_66
+	br_if   	$pop1, .LBB1_66
 # BB#1:                                 # %entry
-	block   	BB1_65
-	block   	BB1_64
-	block   	BB1_63
-	block   	BB1_62
-	block   	BB1_61
-	block   	BB1_60
-	block   	BB1_59
-	block   	BB1_58
-	block   	BB1_57
-	block   	BB1_56
-	block   	BB1_55
-	block   	BB1_54
-	block   	BB1_53
-	block   	BB1_52
-	block   	BB1_51
-	block   	BB1_50
-	block   	BB1_49
-	block   	BB1_48
-	block   	BB1_47
-	block   	BB1_46
-	block   	BB1_45
-	block   	BB1_44
-	block   	BB1_43
-	block   	BB1_42
-	block   	BB1_41
-	block   	BB1_40
-	block   	BB1_39
-	block   	BB1_38
-	block   	BB1_37
-	block   	BB1_36
-	block   	BB1_35
-	block   	BB1_34
-	block   	BB1_33
-	block   	BB1_32
-	block   	BB1_31
-	block   	BB1_30
-	block   	BB1_29
-	block   	BB1_28
-	block   	BB1_27
-	block   	BB1_26
-	block   	BB1_25
-	block   	BB1_24
-	block   	BB1_23
-	block   	BB1_22
-	block   	BB1_21
-	block   	BB1_20
-	block   	BB1_19
-	block   	BB1_18
-	block   	BB1_17
-	block   	BB1_16
-	block   	BB1_15
-	block   	BB1_14
-	block   	BB1_13
-	block   	BB1_12
-	block   	BB1_11
-	block   	BB1_10
-	block   	BB1_9
-	block   	BB1_8
-	block   	BB1_7
-	block   	BB1_6
-	block   	BB1_5
-	block   	BB1_4
-	block   	BB1_3
-	block   	BB1_2
-	tableswitch	$1, BB1_65, BB1_65, BB1_2, BB1_3, BB1_4, BB1_5, BB1_6, BB1_7, BB1_8, BB1_9, BB1_10, BB1_11, BB1_12, BB1_13, BB1_14, BB1_15, BB1_16, BB1_17, BB1_18, BB1_19, BB1_20, BB1_21, BB1_22, BB1_23, BB1_24, BB1_25, BB1_26, BB1_27, BB1_28, BB1_29, BB1_30, BB1_31, BB1_32, BB1_33, BB1_34, BB1_35, BB1_36, BB1_37, BB1_38, BB1_39, BB1_40, BB1_41, BB1_42, BB1_43, BB1_44, BB1_45, BB1_46, BB1_47, BB1_48, BB1_49, BB1_50, BB1_51, BB1_52, BB1_53, BB1_54, BB1_55, BB1_56, BB1_57, BB1_58, BB1_59, BB1_60, BB1_61, BB1_62, BB1_63, BB1_64
-BB1_2:                                  # %sw.bb1
+	block   	.LBB1_65
+	block   	.LBB1_64
+	block   	.LBB1_63
+	block   	.LBB1_62
+	block   	.LBB1_61
+	block   	.LBB1_60
+	block   	.LBB1_59
+	block   	.LBB1_58
+	block   	.LBB1_57
+	block   	.LBB1_56
+	block   	.LBB1_55
+	block   	.LBB1_54
+	block   	.LBB1_53
+	block   	.LBB1_52
+	block   	.LBB1_51
+	block   	.LBB1_50
+	block   	.LBB1_49
+	block   	.LBB1_48
+	block   	.LBB1_47
+	block   	.LBB1_46
+	block   	.LBB1_45
+	block   	.LBB1_44
+	block   	.LBB1_43
+	block   	.LBB1_42
+	block   	.LBB1_41
+	block   	.LBB1_40
+	block   	.LBB1_39
+	block   	.LBB1_38
+	block   	.LBB1_37
+	block   	.LBB1_36
+	block   	.LBB1_35
+	block   	.LBB1_34
+	block   	.LBB1_33
+	block   	.LBB1_32
+	block   	.LBB1_31
+	block   	.LBB1_30
+	block   	.LBB1_29
+	block   	.LBB1_28
+	block   	.LBB1_27
+	block   	.LBB1_26
+	block   	.LBB1_25
+	block   	.LBB1_24
+	block   	.LBB1_23
+	block   	.LBB1_22
+	block   	.LBB1_21
+	block   	.LBB1_20
+	block   	.LBB1_19
+	block   	.LBB1_18
+	block   	.LBB1_17
+	block   	.LBB1_16
+	block   	.LBB1_15
+	block   	.LBB1_14
+	block   	.LBB1_13
+	block   	.LBB1_12
+	block   	.LBB1_11
+	block   	.LBB1_10
+	block   	.LBB1_9
+	block   	.LBB1_8
+	block   	.LBB1_7
+	block   	.LBB1_6
+	block   	.LBB1_5
+	block   	.LBB1_4
+	block   	.LBB1_3
+	block   	.LBB1_2
+	tableswitch	$1, .LBB1_65, .LBB1_65, .LBB1_2, .LBB1_3, .LBB1_4, .LBB1_5, .LBB1_6, .LBB1_7, .LBB1_8, .LBB1_9, .LBB1_10, .LBB1_11, .LBB1_12, .LBB1_13, .LBB1_14, .LBB1_15, .LBB1_16, .LBB1_17, .LBB1_18, .LBB1_19, .LBB1_20, .LBB1_21, .LBB1_22, .LBB1_23, .LBB1_24, .LBB1_25, .LBB1_26, .LBB1_27, .LBB1_28, .LBB1_29, .LBB1_30, .LBB1_31, .LBB1_32, .LBB1_33, .LBB1_34, .LBB1_35, .LBB1_36, .LBB1_37, .LBB1_38, .LBB1_39, .LBB1_40, .LBB1_41, .LBB1_42, .LBB1_43, .LBB1_44, .LBB1_45, .LBB1_46, .LBB1_47, .LBB1_48, .LBB1_49, .LBB1_50, .LBB1_51, .LBB1_52, .LBB1_53, .LBB1_54, .LBB1_55, .LBB1_56, .LBB1_57, .LBB1_58, .LBB1_59, .LBB1_60, .LBB1_61, .LBB1_62, .LBB1_63, .LBB1_64
+.LBB1_2:                                  # %sw.bb1
 	i64.const	$push64=, 1
 	i64.shr_s	$0=, $0, $pop64
-	br      	BB1_65
-BB1_3:                                  # %sw.bb3
+	br      	.LBB1_65
+.LBB1_3:                                  # %sw.bb3
 	i64.const	$push63=, 2
 	i64.shr_s	$0=, $0, $pop63
-	br      	BB1_65
-BB1_4:                                  # %sw.bb5
+	br      	.LBB1_65
+.LBB1_4:                                  # %sw.bb5
 	i64.const	$push62=, 3
 	i64.shr_s	$0=, $0, $pop62
-	br      	BB1_65
-BB1_5:                                  # %sw.bb7
+	br      	.LBB1_65
+.LBB1_5:                                  # %sw.bb7
 	i64.const	$push61=, 4
 	i64.shr_s	$0=, $0, $pop61
-	br      	BB1_65
-BB1_6:                                  # %sw.bb9
+	br      	.LBB1_65
+.LBB1_6:                                  # %sw.bb9
 	i64.const	$push60=, 5
 	i64.shr_s	$0=, $0, $pop60
-	br      	BB1_65
-BB1_7:                                  # %sw.bb11
+	br      	.LBB1_65
+.LBB1_7:                                  # %sw.bb11
 	i64.const	$push59=, 6
 	i64.shr_s	$0=, $0, $pop59
-	br      	BB1_65
-BB1_8:                                  # %sw.bb13
+	br      	.LBB1_65
+.LBB1_8:                                  # %sw.bb13
 	i64.const	$push58=, 7
 	i64.shr_s	$0=, $0, $pop58
-	br      	BB1_65
-BB1_9:                                  # %sw.bb15
+	br      	.LBB1_65
+.LBB1_9:                                  # %sw.bb15
 	i64.const	$push57=, 8
 	i64.shr_s	$0=, $0, $pop57
-	br      	BB1_65
-BB1_10:                                 # %sw.bb17
+	br      	.LBB1_65
+.LBB1_10:                                 # %sw.bb17
 	i64.const	$push56=, 9
 	i64.shr_s	$0=, $0, $pop56
-	br      	BB1_65
-BB1_11:                                 # %sw.bb19
+	br      	.LBB1_65
+.LBB1_11:                                 # %sw.bb19
 	i64.const	$push55=, 10
 	i64.shr_s	$0=, $0, $pop55
-	br      	BB1_65
-BB1_12:                                 # %sw.bb21
+	br      	.LBB1_65
+.LBB1_12:                                 # %sw.bb21
 	i64.const	$push54=, 11
 	i64.shr_s	$0=, $0, $pop54
-	br      	BB1_65
-BB1_13:                                 # %sw.bb23
+	br      	.LBB1_65
+.LBB1_13:                                 # %sw.bb23
 	i64.const	$push53=, 12
 	i64.shr_s	$0=, $0, $pop53
-	br      	BB1_65
-BB1_14:                                 # %sw.bb25
+	br      	.LBB1_65
+.LBB1_14:                                 # %sw.bb25
 	i64.const	$push52=, 13
 	i64.shr_s	$0=, $0, $pop52
-	br      	BB1_65
-BB1_15:                                 # %sw.bb27
+	br      	.LBB1_65
+.LBB1_15:                                 # %sw.bb27
 	i64.const	$push51=, 14
 	i64.shr_s	$0=, $0, $pop51
-	br      	BB1_65
-BB1_16:                                 # %sw.bb29
+	br      	.LBB1_65
+.LBB1_16:                                 # %sw.bb29
 	i64.const	$push50=, 15
 	i64.shr_s	$0=, $0, $pop50
-	br      	BB1_65
-BB1_17:                                 # %sw.bb31
+	br      	.LBB1_65
+.LBB1_17:                                 # %sw.bb31
 	i64.const	$push49=, 16
 	i64.shr_s	$0=, $0, $pop49
-	br      	BB1_65
-BB1_18:                                 # %sw.bb33
+	br      	.LBB1_65
+.LBB1_18:                                 # %sw.bb33
 	i64.const	$push48=, 17
 	i64.shr_s	$0=, $0, $pop48
-	br      	BB1_65
-BB1_19:                                 # %sw.bb35
+	br      	.LBB1_65
+.LBB1_19:                                 # %sw.bb35
 	i64.const	$push47=, 18
 	i64.shr_s	$0=, $0, $pop47
-	br      	BB1_65
-BB1_20:                                 # %sw.bb37
+	br      	.LBB1_65
+.LBB1_20:                                 # %sw.bb37
 	i64.const	$push46=, 19
 	i64.shr_s	$0=, $0, $pop46
-	br      	BB1_65
-BB1_21:                                 # %sw.bb39
+	br      	.LBB1_65
+.LBB1_21:                                 # %sw.bb39
 	i64.const	$push45=, 20
 	i64.shr_s	$0=, $0, $pop45
-	br      	BB1_65
-BB1_22:                                 # %sw.bb41
+	br      	.LBB1_65
+.LBB1_22:                                 # %sw.bb41
 	i64.const	$push44=, 21
 	i64.shr_s	$0=, $0, $pop44
-	br      	BB1_65
-BB1_23:                                 # %sw.bb43
+	br      	.LBB1_65
+.LBB1_23:                                 # %sw.bb43
 	i64.const	$push43=, 22
 	i64.shr_s	$0=, $0, $pop43
-	br      	BB1_65
-BB1_24:                                 # %sw.bb45
+	br      	.LBB1_65
+.LBB1_24:                                 # %sw.bb45
 	i64.const	$push42=, 23
 	i64.shr_s	$0=, $0, $pop42
-	br      	BB1_65
-BB1_25:                                 # %sw.bb47
+	br      	.LBB1_65
+.LBB1_25:                                 # %sw.bb47
 	i64.const	$push41=, 24
 	i64.shr_s	$0=, $0, $pop41
-	br      	BB1_65
-BB1_26:                                 # %sw.bb49
+	br      	.LBB1_65
+.LBB1_26:                                 # %sw.bb49
 	i64.const	$push40=, 25
 	i64.shr_s	$0=, $0, $pop40
-	br      	BB1_65
-BB1_27:                                 # %sw.bb51
+	br      	.LBB1_65
+.LBB1_27:                                 # %sw.bb51
 	i64.const	$push39=, 26
 	i64.shr_s	$0=, $0, $pop39
-	br      	BB1_65
-BB1_28:                                 # %sw.bb53
+	br      	.LBB1_65
+.LBB1_28:                                 # %sw.bb53
 	i64.const	$push38=, 27
 	i64.shr_s	$0=, $0, $pop38
-	br      	BB1_65
-BB1_29:                                 # %sw.bb55
+	br      	.LBB1_65
+.LBB1_29:                                 # %sw.bb55
 	i64.const	$push37=, 28
 	i64.shr_s	$0=, $0, $pop37
-	br      	BB1_65
-BB1_30:                                 # %sw.bb57
+	br      	.LBB1_65
+.LBB1_30:                                 # %sw.bb57
 	i64.const	$push36=, 29
 	i64.shr_s	$0=, $0, $pop36
-	br      	BB1_65
-BB1_31:                                 # %sw.bb59
+	br      	.LBB1_65
+.LBB1_31:                                 # %sw.bb59
 	i64.const	$push35=, 30
 	i64.shr_s	$0=, $0, $pop35
-	br      	BB1_65
-BB1_32:                                 # %sw.bb61
+	br      	.LBB1_65
+.LBB1_32:                                 # %sw.bb61
 	i64.const	$push34=, 31
 	i64.shr_s	$0=, $0, $pop34
-	br      	BB1_65
-BB1_33:                                 # %sw.bb63
+	br      	.LBB1_65
+.LBB1_33:                                 # %sw.bb63
 	i64.const	$push33=, 32
 	i64.shr_s	$0=, $0, $pop33
-	br      	BB1_65
-BB1_34:                                 # %sw.bb65
+	br      	.LBB1_65
+.LBB1_34:                                 # %sw.bb65
 	i64.const	$push32=, 33
 	i64.shr_s	$0=, $0, $pop32
-	br      	BB1_65
-BB1_35:                                 # %sw.bb67
+	br      	.LBB1_65
+.LBB1_35:                                 # %sw.bb67
 	i64.const	$push31=, 34
 	i64.shr_s	$0=, $0, $pop31
-	br      	BB1_65
-BB1_36:                                 # %sw.bb69
+	br      	.LBB1_65
+.LBB1_36:                                 # %sw.bb69
 	i64.const	$push30=, 35
 	i64.shr_s	$0=, $0, $pop30
-	br      	BB1_65
-BB1_37:                                 # %sw.bb71
+	br      	.LBB1_65
+.LBB1_37:                                 # %sw.bb71
 	i64.const	$push29=, 36
 	i64.shr_s	$0=, $0, $pop29
-	br      	BB1_65
-BB1_38:                                 # %sw.bb73
+	br      	.LBB1_65
+.LBB1_38:                                 # %sw.bb73
 	i64.const	$push28=, 37
 	i64.shr_s	$0=, $0, $pop28
-	br      	BB1_65
-BB1_39:                                 # %sw.bb75
+	br      	.LBB1_65
+.LBB1_39:                                 # %sw.bb75
 	i64.const	$push27=, 38
 	i64.shr_s	$0=, $0, $pop27
-	br      	BB1_65
-BB1_40:                                 # %sw.bb77
+	br      	.LBB1_65
+.LBB1_40:                                 # %sw.bb77
 	i64.const	$push26=, 39
 	i64.shr_s	$0=, $0, $pop26
-	br      	BB1_65
-BB1_41:                                 # %sw.bb79
+	br      	.LBB1_65
+.LBB1_41:                                 # %sw.bb79
 	i64.const	$push25=, 40
 	i64.shr_s	$0=, $0, $pop25
-	br      	BB1_65
-BB1_42:                                 # %sw.bb81
+	br      	.LBB1_65
+.LBB1_42:                                 # %sw.bb81
 	i64.const	$push24=, 41
 	i64.shr_s	$0=, $0, $pop24
-	br      	BB1_65
-BB1_43:                                 # %sw.bb83
+	br      	.LBB1_65
+.LBB1_43:                                 # %sw.bb83
 	i64.const	$push23=, 42
 	i64.shr_s	$0=, $0, $pop23
-	br      	BB1_65
-BB1_44:                                 # %sw.bb85
+	br      	.LBB1_65
+.LBB1_44:                                 # %sw.bb85
 	i64.const	$push22=, 43
 	i64.shr_s	$0=, $0, $pop22
-	br      	BB1_65
-BB1_45:                                 # %sw.bb87
+	br      	.LBB1_65
+.LBB1_45:                                 # %sw.bb87
 	i64.const	$push21=, 44
 	i64.shr_s	$0=, $0, $pop21
-	br      	BB1_65
-BB1_46:                                 # %sw.bb89
+	br      	.LBB1_65
+.LBB1_46:                                 # %sw.bb89
 	i64.const	$push20=, 45
 	i64.shr_s	$0=, $0, $pop20
-	br      	BB1_65
-BB1_47:                                 # %sw.bb91
+	br      	.LBB1_65
+.LBB1_47:                                 # %sw.bb91
 	i64.const	$push19=, 46
 	i64.shr_s	$0=, $0, $pop19
-	br      	BB1_65
-BB1_48:                                 # %sw.bb93
+	br      	.LBB1_65
+.LBB1_48:                                 # %sw.bb93
 	i64.const	$push18=, 47
 	i64.shr_s	$0=, $0, $pop18
-	br      	BB1_65
-BB1_49:                                 # %sw.bb95
+	br      	.LBB1_65
+.LBB1_49:                                 # %sw.bb95
 	i64.const	$push17=, 48
 	i64.shr_s	$0=, $0, $pop17
-	br      	BB1_65
-BB1_50:                                 # %sw.bb97
+	br      	.LBB1_65
+.LBB1_50:                                 # %sw.bb97
 	i64.const	$push16=, 49
 	i64.shr_s	$0=, $0, $pop16
-	br      	BB1_65
-BB1_51:                                 # %sw.bb99
+	br      	.LBB1_65
+.LBB1_51:                                 # %sw.bb99
 	i64.const	$push15=, 50
 	i64.shr_s	$0=, $0, $pop15
-	br      	BB1_65
-BB1_52:                                 # %sw.bb101
+	br      	.LBB1_65
+.LBB1_52:                                 # %sw.bb101
 	i64.const	$push14=, 51
 	i64.shr_s	$0=, $0, $pop14
-	br      	BB1_65
-BB1_53:                                 # %sw.bb103
+	br      	.LBB1_65
+.LBB1_53:                                 # %sw.bb103
 	i64.const	$push13=, 52
 	i64.shr_s	$0=, $0, $pop13
-	br      	BB1_65
-BB1_54:                                 # %sw.bb105
+	br      	.LBB1_65
+.LBB1_54:                                 # %sw.bb105
 	i64.const	$push12=, 53
 	i64.shr_s	$0=, $0, $pop12
-	br      	BB1_65
-BB1_55:                                 # %sw.bb107
+	br      	.LBB1_65
+.LBB1_55:                                 # %sw.bb107
 	i64.const	$push11=, 54
 	i64.shr_s	$0=, $0, $pop11
-	br      	BB1_65
-BB1_56:                                 # %sw.bb109
+	br      	.LBB1_65
+.LBB1_56:                                 # %sw.bb109
 	i64.const	$push10=, 55
 	i64.shr_s	$0=, $0, $pop10
-	br      	BB1_65
-BB1_57:                                 # %sw.bb111
+	br      	.LBB1_65
+.LBB1_57:                                 # %sw.bb111
 	i64.const	$push9=, 56
 	i64.shr_s	$0=, $0, $pop9
-	br      	BB1_65
-BB1_58:                                 # %sw.bb113
+	br      	.LBB1_65
+.LBB1_58:                                 # %sw.bb113
 	i64.const	$push8=, 57
 	i64.shr_s	$0=, $0, $pop8
-	br      	BB1_65
-BB1_59:                                 # %sw.bb115
+	br      	.LBB1_65
+.LBB1_59:                                 # %sw.bb115
 	i64.const	$push7=, 58
 	i64.shr_s	$0=, $0, $pop7
-	br      	BB1_65
-BB1_60:                                 # %sw.bb117
+	br      	.LBB1_65
+.LBB1_60:                                 # %sw.bb117
 	i64.const	$push6=, 59
 	i64.shr_s	$0=, $0, $pop6
-	br      	BB1_65
-BB1_61:                                 # %sw.bb119
+	br      	.LBB1_65
+.LBB1_61:                                 # %sw.bb119
 	i64.const	$push5=, 60
 	i64.shr_s	$0=, $0, $pop5
-	br      	BB1_65
-BB1_62:                                 # %sw.bb121
+	br      	.LBB1_65
+.LBB1_62:                                 # %sw.bb121
 	i64.const	$push4=, 61
 	i64.shr_s	$0=, $0, $pop4
-	br      	BB1_65
-BB1_63:                                 # %sw.bb123
+	br      	.LBB1_65
+.LBB1_63:                                 # %sw.bb123
 	i64.const	$push3=, 62
 	i64.shr_s	$0=, $0, $pop3
-	br      	BB1_65
-BB1_64:                                 # %sw.bb125
+	br      	.LBB1_65
+.LBB1_64:                                 # %sw.bb125
 	i64.const	$push2=, 63
 	i64.shr_s	$0=, $0, $pop2
-BB1_65:                                 # %sw.epilog
+.LBB1_65:                                 # %sw.epilog
 	return  	$0
-BB1_66:                                 # %sw.default
+.LBB1_66:                                 # %sw.default
 	call    	abort
 	unreachable
-func_end1:
-	.size	constant_shift, func_end1-constant_shift
+.Lfunc_end1:
+	.size	constant_shift, .Lfunc_end1-constant_shift
 
 	.type	zext,@object            # @zext
 	.section	.rodata,"a",@progbits

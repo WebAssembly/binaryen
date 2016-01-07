@@ -6,8 +6,8 @@ b:                                      # @b
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	b, func_end0-b
+.Lfunc_end0:
+	.size	b, .Lfunc_end0-b
 
 	.globl	main
 	.type	main,@function
@@ -27,8 +27,8 @@ main:                                   # @main
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$discard=, k($0), $pop4
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	g,@object               # @g
 	.data

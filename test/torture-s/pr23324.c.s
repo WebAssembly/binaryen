@@ -8,48 +8,48 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	f64.load	$1=, wv6+32($0)
-	block   	BB0_10
+	block   	.LBB0_10
 	f64.ne  	$push0=, $1, $1
-	br_if   	$pop0, BB0_10
+	br_if   	$pop0, .LBB0_10
 # BB#1:                                 # %caller_bf6.exit
 	f32.load	$2=, yv7($0)
-	block   	BB0_9
+	block   	.LBB0_9
 	f32.ne  	$push1=, $2, $2
-	br_if   	$pop1, BB0_9
+	br_if   	$pop1, .LBB0_9
 # BB#2:                                 # %if.end26.i.i
 	f64.load	$1=, yv7+16($0)
-	block   	BB0_8
+	block   	.LBB0_8
 	f64.ne  	$push2=, $1, $1
-	br_if   	$pop2, BB0_8
+	br_if   	$pop2, .LBB0_8
 # BB#3:                                 # %if.end30.i.i
 	f32.load	$2=, yv7+24($0)
-	block   	BB0_7
+	block   	.LBB0_7
 	f32.ne  	$push3=, $2, $2
-	br_if   	$pop3, BB0_7
+	br_if   	$pop3, .LBB0_7
 # BB#4:                                 # %if.end34.i.i
 	f32.load	$2=, zv7($0)
-	block   	BB0_6
+	block   	.LBB0_6
 	f32.ne  	$push4=, $2, $2
-	br_if   	$pop4, BB0_6
+	br_if   	$pop4, .LBB0_6
 # BB#5:                                 # %caller_bf7.exit
 	return  	$0
-BB0_6:                                  # %if.then37.i.i
+.LBB0_6:                                  # %if.then37.i.i
 	call    	abort
 	unreachable
-BB0_7:                                  # %if.then33.i.i
+.LBB0_7:                                  # %if.then33.i.i
 	call    	abort
 	unreachable
-BB0_8:                                  # %if.then29.i.i
+.LBB0_8:                                  # %if.then29.i.i
 	call    	abort
 	unreachable
-BB0_9:                                  # %if.then5.i.i
+.LBB0_9:                                  # %if.then5.i.i
 	call    	abort
 	unreachable
-BB0_10:                                 # %if.then109.i.i
+.LBB0_10:                                 # %if.then109.i.i
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	wv6,@object             # @wv6
 	.data

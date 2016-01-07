@@ -7,8 +7,8 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 32768
 	return  	$pop0
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	main
 	.type	main,@function
@@ -17,8 +17,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

@@ -8,17 +8,17 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i64.const	$2=, 0
 	i32.const	$1=, switch.table
-BB0_1:                                  # %for.body
+.LBB0_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB0_7
-	loop    	BB0_3
+	block   	.LBB0_7
+	loop    	.LBB0_3
 	i64.const	$push0=, -8690466092652643696
 	i64.shr_u	$push1=, $pop0, $2
 	i64.load	$push2=, 0($1)
 	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB0_7
+	br_if   	$pop3, .LBB0_7
 # BB#2:                                 # %for.cond
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i64.const	$push4=, 1
 	i64.add 	$2=, $2, $pop4
 	i32.const	$0=, 8
@@ -27,34 +27,34 @@ BB0_1:                                  # %for.body
 	i32.const	$3=, switch.table
 	i64.const	$push5=, 63
 	i64.le_s	$push6=, $2, $pop5
-	br_if   	$pop6, BB0_1
-BB0_3:                                  # %constant_shift.exit
+	br_if   	$pop6, .LBB0_1
+.LBB0_3:                                  # %constant_shift.exit
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB0_6
-	loop    	BB0_5
+	block   	.LBB0_6
+	loop    	.LBB0_5
 	i32.const	$1=, 1
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $1, $pop10
-	br_if   	$pop11, BB0_6
+	br_if   	$pop11, .LBB0_6
 # BB#4:                                 # %for.cond2
-                                        #   in Loop: Header=BB0_3 Depth=1
+                                        #   in Loop: Header=.LBB0_3 Depth=1
 	i32.add 	$4=, $4, $1
 	i32.add 	$3=, $3, $0
 	i32.const	$push7=, 63
 	i32.le_s	$push8=, $4, $pop7
-	br_if   	$pop8, BB0_3
-BB0_5:                                  # %for.end13
+	br_if   	$pop8, .LBB0_3
+.LBB0_5:                                  # %for.end13
 	i32.const	$push9=, 0
 	call    	exit, $pop9
 	unreachable
-BB0_6:                                  # %if.then9
+.LBB0_6:                                  # %if.then9
 	call    	abort
 	unreachable
-BB0_7:                                  # %if.then
+.LBB0_7:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	switch.table,@object    # @switch.table
 	.section	.rodata,"a",@progbits

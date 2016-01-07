@@ -6,7 +6,7 @@ test1:                                  # @test1
 	.param  	i64
 	.local  	i64
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 0
 	i64.load	$push1=, x($pop0)
 	i64.const	$push2=, 1099511627775
@@ -17,14 +17,14 @@ test1:                                  # @test1
 	i64.shr_u	$push6=, $1, $pop5
 	i64.or  	$push7=, $pop4, $pop6
 	i64.ne  	$push8=, $pop7, $0
-	br_if   	$pop8, BB0_2
+	br_if   	$pop8, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	test1, func_end0-test1
+.Lfunc_end0:
+	.size	test1, .Lfunc_end0-test1
 
 	.globl	main
 	.type	main,@function
@@ -41,8 +41,8 @@ main:                                   # @main
 	i64.store	$discard=, x($0), $pop4
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	x,@object               # @x
 	.bss

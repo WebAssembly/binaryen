@@ -25,8 +25,8 @@ bad:                                    # @bad
 	i32.const	$4=, __stack_pointer
 	i32.store	$4=, 0($4), $4
 	return  	$pop2
-func_end0:
-	.size	bad, func_end0-bad
+.Lfunc_end0:
+	.size	bad, .Lfunc_end0-bad
 
 	.globl	main
 	.type	main,@function
@@ -36,8 +36,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

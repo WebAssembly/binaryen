@@ -27,7 +27,7 @@ main:                                   # @main
 	i64.load32_u	$5=, 28($10)
 	i32.load	$0=, 24($10)
 	i32.load	$6=, 20($10)
-	block   	BB0_2
+	block   	.LBB0_2
 	i64.load	$push10=, 8($10)
 	i64.shl 	$push5=, $4, $5
 	i64.mul 	$push6=, $pop5, $3
@@ -36,18 +36,18 @@ main:                                   # @main
 	i64.div_s	$push9=, $pop6, $pop8
 	i64.add 	$push11=, $pop10, $pop9
 	i64.ne  	$push12=, $pop11, $2
-	br_if   	$pop12, BB0_2
+	br_if   	$pop12, .LBB0_2
 # BB#1:                                 # %if.end
 	i32.const	$9=, 48
 	i32.add 	$10=, $10, $9
 	i32.const	$9=, __stack_pointer
 	i32.store	$10=, 0($9), $10
 	return  	$1
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 
 	.ident	"clang version 3.8.0 "
