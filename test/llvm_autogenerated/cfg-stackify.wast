@@ -911,7 +911,7 @@
                       )
                       (tableswitch 
                         (get_local $$2)
-                        (table (br $BB19_3) (br $BB19_5) (br $BB19_1) (br $BB19_2) (br $BB19_6)) (case $BB19_3)
+                        (table (br $BB19_3) (br $BB19_5) (br $BB19_1) (br $BB19_2) (br $BB19_6)) (br $BB19_3)
                       )
                     )
                   )

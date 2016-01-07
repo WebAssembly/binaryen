@@ -474,7 +474,7 @@ public:
       o << " (" << (caseNames.count(t) == 0 ? "br" : "case") << " " << (t.is() ? t : default_) << ")";
     }
     o << ")";
-    if (default_.is()) o << " (case " << default_ << ")";
+    if (default_.is()) o << " (" << (caseNames.count(default_) == 0 ? "br" : "case") << " " << default_ << ")";
     o << "\n";
     for (auto& c : cases) {
       doIndent(o, indent);

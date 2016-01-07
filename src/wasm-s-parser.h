@@ -923,12 +923,7 @@ private:
       ret->targets.push_back(curr[1]->str());
     }
     Element& curr = *s[i];
-    if (curr[0]->str() == CASE) {
-      ret->default_ = curr[1]->str();
-    } else {
-      assert(curr[0]->str() == BR);
-      assert(curr[1]->str() == ret->name);
-    }
+    ret->default_ = curr[1]->str();
     i++;
     for (; i < s.size(); i++) {
       Element& curr = *s[i];
