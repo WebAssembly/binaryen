@@ -14,6 +14,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import filecmp
 import glob
 import os
 import shutil
@@ -24,17 +25,19 @@ import urllib2
 
 
 STORAGE_BASE = 'https://storage.googleapis.com/wasm-llvm/builds/git/'
-BASE_DIR = 'test'
+BASE_DIR = os.path.abspath('test')
 LKGR_PATH = os.path.join(BASE_DIR, 'lkgr')
 TORTURE_TAR = 'wasm-torture-s-%s.tbz2'
-TORTURE_FOLDER = os.path.join(BASE_DIR, 'torture-s')
+TORTURE_DIR = os.path.join(BASE_DIR, 'torture-s')
 
 
 def download_last_known_good_revision():
-  with open(LKGR_PATH, 'w+') as f:
-    lkgr = urllib2.urlopen(STORAGE_BASE + 'lkgr').read().strip()
+  return urllib2.urlopen(STORAGE_BASE + 'lkgr').read().strip()
+
+
+def write_lkgr(lkgr):
+  with open(LKGR_PATH, 'w') as f:
     f.write(lkgr)
-  return lkgr
 
 
 def download_tar_at_lkgr(tar_pattern, lkgr):
@@ -50,18 +53,32 @@ def download_tar_at_lkgr(tar_pattern, lkgr):
   return lkgr_tar_path
 
 
-def untar(tarfile, outfolder):
-  if os.path.exists(outfolder):
-    shutil.rmtree(outfolder)
-  with tempfile.TemporaryFile(mode='w+') as f:
-    try:
-      base = os.path.basename(tarfile)
-      subprocess.check_call(['tar', '-xvf', base], cwd=BASE_DIR, stdout=f)
-    except:
-      f.seek(0)
-      sys.stderr.write(f.read())
-      raise
-  assert os.path.isdir(outfolder), 'Expected to untar into %s' % outfolder
+def untar(tarfile, outdir):
+  """Returns True if the untar dir differs from a pre-existing dir."""
+  tmp_dir = tempfile.mkdtemp()
+  try:
+    with tempfile.TemporaryFile(mode='w+') as f:
+      try:
+        subprocess.check_call(['tar', '-xvf', tarfile], cwd=tmp_dir, stdout=f)
+      except:
+        f.seek(0)
+        sys.stderr.write(f.read())
+        raise
+    untar_outdir = os.path.join(tmp_dir, os.path.basename(outdir))
+    if os.path.exists(outdir):
+      diff = filecmp.dircmp(untar_outdir, outdir)
+      if not (diff.left_only + diff.right_only + diff.diff_files +
+              diff.common_funny + diff.funny_files):
+        # outdir already existed with exactly the same content.
+        return False
+      shutil.rmtree(outdir)
+    # The untar files are different, or there was no previous outdir.
+    print 'Updating', outdir
+    shutil.move(untar_outdir, outdir)
+    return True
+  finally:
+    if os.path.isdir(tmp_dir):
+      shutil.rmtree(tmp_dir)
 
 
 def main():
@@ -70,8 +87,13 @@ def main():
   subprocess.check_call(['git', 'submodule', 'update', '--quiet'])
   subprocess.check_call(['git', 'submodule', 'foreach',
                          'git', 'pull', 'origin', 'master', '--quiet'])
+  updates = 0
   lkgr = download_last_known_good_revision()
-  untar(download_tar_at_lkgr(TORTURE_TAR, lkgr), TORTURE_FOLDER)
+  updates += untar(download_tar_at_lkgr(TORTURE_TAR, lkgr), TORTURE_DIR)
+  if updates:
+    # Only update lkgr if the files it downloaded are different.
+    print 'Updating lkgr to', lkgr
+    write_lkgr(lkgr)
 
 
 if __name__ == '__main__':
