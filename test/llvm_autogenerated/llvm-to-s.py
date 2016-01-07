@@ -52,6 +52,14 @@ def main(args):
     tests = FindTestFiles(LLVM_TEST_DIR, '.ll')
     for ll_test in tests:
         name_noext = os.path.splitext(os.path.basename(ll_test))[0]
+
+        BLACKLIST = ['inline-asm', # inline asm containing invalid syntax
+                     'returned',   # external global symbol
+                     'vtable',     # external global symbol
+                     ]
+        if name_noext in BLACKLIST:
+          continue
+
         s = os.path.join(S_TEST_DIR, name_noext + '.s')
         run_line = GetRunLine(ll_test)
         cmd = shlex.split(run_line)

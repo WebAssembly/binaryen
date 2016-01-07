@@ -5,6 +5,7 @@
   (export "yes0" $yes0)
   (export "yes1" $yes1)
   (export "stack_uses" $stack_uses)
+  (export "multiple_uses" $multiple_uses)
   (func $no0 (param $$0 i32) (param $$1 i32) (result i32)
     (block $fake_return_waka123
       (block
@@ -72,11 +73,11 @@
     (local $$5 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$4
-          (i32.const 1)
-        )
         (set_local $$5
           (i32.const 2)
+        )
+        (set_local $$4
+          (i32.const 1)
         )
         (block $BB4_2
           (br_if
@@ -114,6 +115,39 @@
         (br $fake_return_waka123
           (get_local $$4)
         )
+      )
+    )
+  )
+  (func $multiple_uses (param $$0 i32) (param $$1 i32) (param $$2 i32)
+    (local $$3 i32)
+    (block $fake_return_waka123
+      (block
+        (set_local $$3
+          (i32.load align=4
+            (get_local $$2)
+          )
+        )
+        (block $BB5_3
+          (br_if
+            (i32.ge_u
+              (get_local $$3)
+              (get_local $$1)
+            )
+            $BB5_3
+          )
+          (br_if
+            (i32.lt_u
+              (get_local $$3)
+              (get_local $$0)
+            )
+            $BB5_3
+          )
+          (i32.store align=4
+            (get_local $$2)
+            (get_local $$3)
+          )
+        )
+        (br $fake_return_waka123)
       )
     )
   )

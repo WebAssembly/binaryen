@@ -22,14 +22,14 @@
             )
             $BB0_5
           )
+          (set_local $$5
+            (i32.const 0)
+          )
           (set_local $$3
             (i32.shl
               (get_local $$1)
               (i32.const 2)
             )
-          )
-          (set_local $$5
-            (i32.const 0)
           )
           (set_local $$6
             (get_local $$5)

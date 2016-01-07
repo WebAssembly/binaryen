@@ -193,7 +193,7 @@ struct Literal {
         uint32_t ll;
       } u;
       u.ff = f;
-      o << "nan:" << std::hex << u.ll << std::dec;
+      o << "nan:0x" << std::hex << u.ll << std::dec;
       return;
     }
     printDouble(o, f);
@@ -210,7 +210,7 @@ struct Literal {
         uint64_t ll;
       } u;
       u.dd = d;
-      o << "nan:" << std::hex << u.ll << std::dec;
+      o << "nan:0x" << std::hex << u.ll << std::dec;
       return;
     }
     if (!std::isfinite(d)) {

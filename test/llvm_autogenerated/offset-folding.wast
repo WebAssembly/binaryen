@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 216 4294967295)
   (export "test0" $test0)
   (export "test1" $test1)
   (export "test2" $test2)
@@ -8,7 +8,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.const 0)
+          (i32.const 192)
         )
       )
     )
@@ -17,7 +17,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.const 0)
+          (i32.const 204)
         )
       )
     )
@@ -26,7 +26,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.const 0)
+          (i32.const 4)
         )
       )
     )
@@ -35,10 +35,10 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.const 0)
+          (i32.const 16)
         )
       )
     )
   )
 )
-;; METADATA: { "asmConsts": {} }
+;; METADATA: { "asmConsts": {},"staticBump": 215 }

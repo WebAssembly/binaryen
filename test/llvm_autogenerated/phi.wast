@@ -48,17 +48,17 @@
         )
         (loop $BB1_2 $BB1_1
           (block
-            (set_local $$5
-              (i32.add
-                (get_local $$5)
-                (get_local $$2)
-              )
-            )
             (set_local $$1
               (get_local $$4)
             )
             (set_local $$4
               (get_local $$3)
+            )
+            (set_local $$5
+              (i32.add
+                (get_local $$5)
+                (get_local $$2)
+              )
             )
             (set_local $$3
               (get_local $$1)
