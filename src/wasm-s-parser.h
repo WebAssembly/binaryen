@@ -920,13 +920,7 @@ private:
     i++;
     for (size_t j = 1; j < table.size(); j++) {
       Element& curr = *table[j];
-      if (curr[0]->str() == CASE) {
-        ret->targets.push_back(curr[1]->str());
-      } else {
-        assert(curr[0]->str() == BR);
-        assert(curr[1]->str() == ret->name);
-        ret->targets.push_back(Name());
-      }
+      ret->targets.push_back(curr[1]->str());
     }
     Element& curr = *s[i];
     if (curr[0]->str() == CASE) {

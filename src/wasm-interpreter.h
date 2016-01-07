@@ -252,8 +252,10 @@ private:
         }
         auto iter = caseMap.find(target);
         if (iter == caseMap.end()) {
-          // not in the cases, so this is a break outside
-          return Flow(target);
+          // not in the cases, so this is a break
+          Flow flow(target);
+          flow.clearIf(curr->name);
+          return flow;
         }
         size_t caseIndex = iter->second;
         assert(caseIndex < curr->cases.size());
