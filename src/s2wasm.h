@@ -900,7 +900,7 @@ private:
         raw->insert(raw->end(), quoted.begin(), quoted.end());
         if (z) raw->push_back(0);
         zero = false;
-      } else if (match(".zero")) {
+      } else if (match(".zero") || match(".skip")) {
         int32_t size = getInt();
         if (size <= 0) {
           abort_on(".zero with zero or negative size");
