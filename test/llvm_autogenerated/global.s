@@ -7,8 +7,8 @@ foo:
 	i32.const	$push0=, 0
 	i32.load	$push1=, answer($pop0)
 	return  	$pop1
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	call_memcpy
 	.type	call_memcpy,@function
@@ -17,15 +17,15 @@ call_memcpy:
 	.result 	i32
 	call    	memcpy, $0, $1, $2
 	return  	$0
-func_end1:
-	.size	call_memcpy, func_end1-call_memcpy
+.Lfunc_end1:
+	.size	call_memcpy, .Lfunc_end1-call_memcpy
 
-	.type	g,@object
+	.type	.Lg,@object
 	.data
 	.align	2
-g:
+.Lg:
 	.int32	1337
-	.size	g, 4
+	.size	.Lg, 4
 
 	.type	ud,@object
 	.align	2

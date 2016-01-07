@@ -8,16 +8,16 @@ foo:                                    # @foo
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
 # BB#0:                                 # %entry
 	return
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	main
 	.type	main,@function
@@ -26,8 +26,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.call	$discard=, foo
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

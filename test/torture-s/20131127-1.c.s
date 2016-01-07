@@ -9,8 +9,8 @@ fn1:                                    # @fn1
 	i32.const	$push1=, 14
 	call    	memcpy, $0, $pop0, $pop1
 	return
-func_end0:
-	.size	fn1, func_end0-fn1
+.Lfunc_end0:
+	.size	fn1, .Lfunc_end0-fn1
 
 	.globl	fn2
 	.type	fn2,@function
@@ -110,8 +110,8 @@ fn2:                                    # @fn2
 	i32.const	$12=, __stack_pointer
 	i32.store	$16=, 0($12), $16
 	return
-func_end1:
-	.size	fn2, func_end1-fn2
+.Lfunc_end1:
+	.size	fn2, .Lfunc_end1-fn2
 
 	.globl	main
 	.type	main,@function
@@ -212,8 +212,8 @@ main:                                   # @main
 	i32.const	$12=, __stack_pointer
 	i32.store	$16=, 0($12), $16
 	return  	$pop56
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	a,@object               # @a
 	.data

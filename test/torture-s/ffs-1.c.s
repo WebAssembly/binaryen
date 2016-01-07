@@ -7,17 +7,17 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.load	$push0=, a($0)
-	br_if   	$pop0, BB0_2
+	br_if   	$pop0, .LBB0_2
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	a,@object               # @a
 	.bss

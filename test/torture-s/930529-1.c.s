@@ -8,8 +8,8 @@ dd:                                     # @dd
 # BB#0:                                 # %entry
 	i32.div_s	$push0=, $0, $1
 	return  	$pop0
-func_end0:
-	.size	dd, func_end0-dd
+.Lfunc_end0:
+	.size	dd, .Lfunc_end0-dd
 
 	.globl	main
 	.type	main,@function
@@ -19,8 +19,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

@@ -7,8 +7,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	func0
 	.type	func0,@function
@@ -20,8 +20,8 @@ func0:                                  # @func0
 	i32.load	$push1=, i($pop0)
 	i32.sub 	$push2=, $0, $pop1
 	return  	$pop2
-func_end1:
-	.size	func0, func_end1-func0
+.Lfunc_end1:
+	.size	func0, .Lfunc_end1-func0
 
 	.globl	func1
 	.type	func1,@function
@@ -31,8 +31,8 @@ func1:                                  # @func1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end2:
-	.size	func1, func_end2-func1
+.Lfunc_end2:
+	.size	func1, .Lfunc_end2-func1
 
 	.type	i,@object               # @i
 	.data

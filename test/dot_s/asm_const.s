@@ -9,8 +9,8 @@ main:                                   # @main
 	call    	emscripten_asm_const, $pop0
 	i32.const	$push1=, 0
 	return  	$pop1
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	.str,@object            # @.str
 	.data

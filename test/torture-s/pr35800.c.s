@@ -8,30 +8,30 @@ stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.const	$push0=, -34
 	i32.lt_u	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_4
+	br_if   	$pop1, .LBB0_4
 # BB#1:                                 # %if.end
 	i32.const	$push2=, -2
 	i32.sub 	$0=, $pop2, $0
 	i32.const	$1=, .str
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.const	$push3=, 32
 	i32.gt_u	$push4=, $0, $pop3
-	br_if   	$pop4, BB0_3
+	br_if   	$pop4, .LBB0_3
 # BB#2:                                 # %switch.lookup
 	i32.const	$push7=, switch.table
 	i32.const	$push5=, 2
 	i32.shl 	$push6=, $0, $pop5
 	i32.add 	$push8=, $pop7, $pop6
 	i32.load	$1=, 0($pop8)
-BB0_3:                                  # %sw.epilog
+.LBB0_3:                                  # %sw.epilog
 	i32.load8_s	$1=, 0($1)
-BB0_4:                                  # %cleanup
+.LBB0_4:                                  # %cleanup
 	return  	$1
-func_end0:
-	.size	stab_xcoff_builtin_type, func_end0-stab_xcoff_builtin_type
+.Lfunc_end0:
+	.size	stab_xcoff_builtin_type, .Lfunc_end0-stab_xcoff_builtin_type
 
 	.globl	main
 	.type	main,@function
@@ -41,32 +41,32 @@ main:                                   # @main
 # BB#0:                                 # %if.end8
 	i32.const	$1=, -4
 	i32.const	$0=, switch.table+8
-BB1_1:                                  # %stab_xcoff_builtin_type.exit
+.LBB1_1:                                  # %stab_xcoff_builtin_type.exit
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB1_4
-	loop    	BB1_3
+	block   	.LBB1_4
+	loop    	.LBB1_3
 	i32.load	$push0=, 0($0)
 	i32.load8_u	$push1=, 0($pop0)
 	i32.const	$push2=, 105
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB1_4
+	br_if   	$pop3, .LBB1_4
 # BB#2:                                 # %for.cond
-                                        #   in Loop: Header=BB1_1 Depth=1
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.const	$push4=, -1
 	i32.add 	$1=, $1, $pop4
 	i32.const	$push5=, 4
 	i32.add 	$0=, $0, $pop5
 	i32.const	$push6=, -34
 	i32.ge_s	$push7=, $1, $pop6
-	br_if   	$pop7, BB1_1
-BB1_3:                                  # %if.end21
+	br_if   	$pop7, .LBB1_1
+.LBB1_3:                                  # %if.end21
 	i32.const	$push8=, 0
 	return  	$pop8
-BB1_4:                                  # %if.then16
+.LBB1_4:                                  # %if.then16
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

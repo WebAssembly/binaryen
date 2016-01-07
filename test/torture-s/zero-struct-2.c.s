@@ -11,8 +11,8 @@ one_raw_spinlock:                       # @one_raw_spinlock
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, ii($0), $pop2
 	return
-func_end0:
-	.size	one_raw_spinlock, func_end0-one_raw_spinlock
+.Lfunc_end0:
+	.size	one_raw_spinlock, .Lfunc_end0-one_raw_spinlock
 
 	.globl	main
 	.type	main,@function
@@ -22,18 +22,18 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load	$1=, ii($0)
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
 	i32.store	$discard=, ii($0), $pop1
-	br_if   	$1, BB1_2
+	br_if   	$1, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	ii,@object              # @ii
 	.bss

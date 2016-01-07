@@ -6,17 +6,17 @@ bar:                                    # @bar
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $1, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return  	$1
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	foo
 	.type	foo,@function
@@ -24,10 +24,10 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.const	$push2=, 1
 	i32.lt_s	$push3=, $1, $pop2
-	br_if   	$pop3, BB1_3
+	br_if   	$pop3, .LBB1_3
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$3=, 0
 	i32.gt_s	$push0=, $0, $3
@@ -37,16 +37,16 @@ foo:                                    # @foo
 	i32.gt_s	$push4=, $2, $0
 	i32.sub 	$push5=, $3, $2
 	i32.select	$3=, $pop4, $3, $pop5
-BB1_2:                                  # %for.body
+.LBB1_2:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_3
+	loop    	.LBB1_3
 	i32.call	$discard=, bar, $1, $3
 	i32.add 	$1=, $1, $0
-	br_if   	$1, BB1_2
-BB1_3:                                  # %for.end
+	br_if   	$1, .LBB1_2
+.LBB1_3:                                  # %for.end
 	return
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.globl	main
 	.type	main,@function
@@ -58,8 +58,8 @@ main:                                   # @main
 	call    	foo, $0, $0
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

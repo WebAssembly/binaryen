@@ -8,48 +8,48 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
 	i32.load	$5=, i($3)
-	block   	BB0_9
+	block   	.LBB0_9
 	i32.gt_s	$push0=, $5, $3
-	br_if   	$pop0, BB0_9
+	br_if   	$pop0, .LBB0_9
 # BB#1:                                 # %for.body.lr.ph
 	i32.load	$0=, d($3)
 	i32.load	$1=, c($3)
-BB0_2:                                  # %for.body
+.LBB0_2:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_8
-	block   	BB0_7
-	br_if   	$0, BB0_7
+	loop    	.LBB0_8
+	block   	.LBB0_7
+	br_if   	$0, .LBB0_7
 # BB#3:                                 # %if.then
-                                        #   in Loop: Header=BB0_2 Depth=1
-	block   	BB0_6
-	block   	BB0_5
+                                        #   in Loop: Header=.LBB0_2 Depth=1
+	block   	.LBB0_6
+	block   	.LBB0_5
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $1, $pop14
-	br_if   	$pop15, BB0_5
+	br_if   	$pop15, .LBB0_5
 # BB#4:                                 # %if.then.if.end_crit_edge
-                                        #   in Loop: Header=BB0_2 Depth=1
+                                        #   in Loop: Header=.LBB0_2 Depth=1
 	i32.load	$2=, f($3)
-	br      	BB0_6
-BB0_5:                                  # %if.then2
-                                        #   in Loop: Header=BB0_2 Depth=1
+	br      	.LBB0_6
+.LBB0_5:                                  # %if.then2
+                                        #   in Loop: Header=.LBB0_2 Depth=1
 	i32.const	$push1=, 2
 	i32.store	$2=, f($3), $pop1
-BB0_6:                                  # %if.end
-                                        #   in Loop: Header=BB0_2 Depth=1
+.LBB0_6:                                  # %if.end
+                                        #   in Loop: Header=.LBB0_2 Depth=1
 	i32.load8_u	$push2=, e($3)
 	i32.and 	$push3=, $pop2, $2
 	i32.store8	$discard=, e($3), $pop3
-BB0_7:                                  # %for.inc
-                                        #   in Loop: Header=BB0_2 Depth=1
+.LBB0_7:                                  # %for.inc
+                                        #   in Loop: Header=.LBB0_2 Depth=1
 	i32.const	$push4=, 1
 	i32.add 	$2=, $5, $pop4
 	i32.lt_s	$4=, $5, $3
 	copy_local	$5=, $2
-	br_if   	$4, BB0_2
-BB0_8:                                  # %for.cond.for.end_crit_edge
+	br_if   	$4, .LBB0_2
+.LBB0_8:                                  # %for.cond.for.end_crit_edge
 	i32.store	$discard=, i($3), $2
-BB0_9:                                  # %for.end
-	block   	BB0_11
+.LBB0_9:                                  # %for.end
+	block   	.LBB0_11
 	i32.const	$push10=, a
 	i32.load8_u	$push5=, e($3)
 	i32.const	$push6=, 1
@@ -59,14 +59,14 @@ BB0_9:                                  # %for.end
 	i32.add 	$push11=, $pop10, $pop9
 	i32.load	$push12=, 0($pop11)
 	i32.store	$push13=, b($3), $pop12
-	br_if   	$pop13, BB0_11
+	br_if   	$pop13, .LBB0_11
 # BB#10:                                # %if.end10
 	return  	$3
-BB0_11:                                 # %if.then9
+.LBB0_11:                                 # %if.then9
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	i,@object               # @i
 	.bss

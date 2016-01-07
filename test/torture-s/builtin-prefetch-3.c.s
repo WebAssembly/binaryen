@@ -9,8 +9,8 @@ simple_vol_global:                      # @simple_vol_global
 	i32.load	$discard=, glob_vol_ptr_int($0)
 	i32.load	$discard=, glob_vol_ptr_vol_int($0)
 	return
-func_end0:
-	.size	simple_vol_global, func_end0-simple_vol_global
+.Lfunc_end0:
+	.size	simple_vol_global, .Lfunc_end0-simple_vol_global
 
 	.globl	simple_vol_file
 	.type	simple_vol_file,@function
@@ -21,8 +21,8 @@ simple_vol_file:                        # @simple_vol_file
 	i32.load	$discard=, stat_vol_ptr_int($0)
 	i32.load	$discard=, stat_vol_ptr_vol_int($0)
 	return
-func_end1:
-	.size	simple_vol_file, func_end1-simple_vol_file
+.Lfunc_end1:
+	.size	simple_vol_file, .Lfunc_end1-simple_vol_file
 
 	.globl	expr_vol_global
 	.type	expr_vol_global,@function
@@ -61,8 +61,8 @@ expr_vol_global:                        # @expr_vol_global
 	i32.load	$discard=, glob_vol_ptr_vol_int($0)
 	i32.load	$discard=, glob_vol_int($0)
 	return
-func_end2:
-	.size	expr_vol_global, func_end2-expr_vol_global
+.Lfunc_end2:
+	.size	expr_vol_global, .Lfunc_end2-expr_vol_global
 
 	.globl	main
 	.type	main,@function
@@ -81,8 +81,8 @@ main:                                   # @main
 	call    	expr_vol_global
 	call    	exit, $0
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	glob_int,@object        # @glob_int
 	.data

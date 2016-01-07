@@ -11,19 +11,19 @@ foo:                                    # @foo
 	i32.store	$discard=, 0($0), $pop0
 	i32.const	$2=, 4
 	i32.add 	$3=, $0, $2
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $1, $pop3
-	br_if   	$pop4, BB0_2
+	br_if   	$pop4, .LBB0_2
 # BB#1:                                 # %if.then
 	i32.add 	$push2=, $0, $2
 	i32.store	$discard=, 0($pop2), $1
 	i32.const	$push1=, 8
 	i32.add 	$3=, $0, $pop1
-BB0_2:                                  # %if.end
+.LBB0_2:                                  # %if.end
 	return  	$3
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -33,8 +33,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

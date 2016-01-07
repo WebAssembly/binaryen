@@ -7,14 +7,14 @@ foo:                                    # @foo
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.load	$push0=, b($0)
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $pop0, $pop6
-	br_if   	$pop7, BB0_2
-BB0_1:                                  # %for.body
+	br_if   	$pop7, .LBB0_2
+.LBB0_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.const	$1=, 1
 	#APP
 	#NO_APP
@@ -22,12 +22,12 @@ BB0_1:                                  # %for.body
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$push4=, b($0), $pop3
-	br_if   	$pop4, BB0_1
-BB0_2:                                  # %if.end
+	br_if   	$pop4, .LBB0_1
+.LBB0_2:                                  # %if.end
 	i32.const	$push5=, -1
 	return  	$pop5
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -36,14 +36,14 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.load	$push0=, b($0)
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop0, $pop5
-	br_if   	$pop6, BB1_2
-BB1_1:                                  # %for.body.i
+	br_if   	$pop6, .LBB1_2
+.LBB1_1:                                  # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_2
+	loop    	.LBB1_2
 	i32.const	$1=, 1
 	#APP
 	#NO_APP
@@ -51,11 +51,11 @@ BB1_1:                                  # %for.body.i
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$push4=, b($0), $pop3
-	br_if   	$pop4, BB1_1
-BB1_2:                                  # %foo.exit
+	br_if   	$pop4, .LBB1_1
+.LBB1_2:                                  # %foo.exit
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	b,@object               # @b
 	.data

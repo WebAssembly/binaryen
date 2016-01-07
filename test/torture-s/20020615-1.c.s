@@ -31,15 +31,15 @@ line_hints:                             # @line_hints
 	i32.add 	$push9=, $2, $6
 	i32.xor 	$7=, $pop9, $6
 	i32.const	$6=, 4
-	block   	BB0_6
-	block   	BB0_3
+	block   	.LBB0_6
+	block   	.LBB0_3
 	i32.const	$push25=, 0
 	i32.eq  	$push26=, $1, $pop25
-	br_if   	$pop26, BB0_3
+	br_if   	$pop26, .LBB0_3
 # BB#1:                                 # %entry
 	i32.shr_s	$push1=, $8, $6
 	i32.gt_s	$push10=, $7, $pop1
-	br_if   	$pop10, BB0_3
+	br_if   	$pop10, .LBB0_3
 # BB#2:                                 # %if.then21
 	i32.gt_s	$push12=, $1, $0
 	i32.const	$push14=, 2
@@ -49,15 +49,15 @@ line_hints:                             # @line_hints
 	i32.const	$push15=, 3
 	i32.xor 	$push16=, $0, $pop15
 	i32.select	$0=, $pop11, $pop16, $0
-	br      	BB0_6
-BB0_3:                                  # %if.else
+	br      	.LBB0_6
+.LBB0_3:                                  # %if.else
 	i32.const	$push27=, 0
 	i32.eq  	$push28=, $2, $pop27
-	br_if   	$pop28, BB0_6
+	br_if   	$pop28, .LBB0_6
 # BB#4:                                 # %if.else
 	i32.shr_s	$push17=, $7, $6
 	i32.gt_s	$push18=, $8, $pop17
-	br_if   	$pop18, BB0_6
+	br_if   	$pop18, .LBB0_6
 # BB#5:                                 # %if.then31
 	i32.const	$push19=, 29
 	i32.shr_u	$push20=, $2, $pop19
@@ -68,10 +68,10 @@ BB0_3:                                  # %if.else
 	i32.xor 	$push23=, $0, $pop22
 	i32.select	$push24=, $pop0, $pop23, $0
 	return  	$pop24
-BB0_6:                                  # %if.end40
+.LBB0_6:                                  # %if.end40
 	return  	$0
-func_end0:
-	.size	line_hints, func_end0-line_hints
+.Lfunc_end0:
+	.size	line_hints, .Lfunc_end0-line_hints
 
 	.globl	main
 	.type	main,@function
@@ -100,10 +100,10 @@ main:                                   # @main
 	i32.sub 	$push11=, $6, $10
 	i32.select	$12=, $1, $pop11, $10
 	i32.select	$3=, $2, $11, $12
-	block   	BB1_14
+	block   	.LBB1_14
 	i32.const	$push53=, 0
 	i32.eq  	$push54=, $3, $pop53
-	br_if   	$pop54, BB1_14
+	br_if   	$pop54, .LBB1_14
 # BB#1:                                 # %entry
 	i32.const	$10=, 31
 	i32.shr_s	$13=, $3, $10
@@ -116,7 +116,7 @@ main:                                   # @main
 	i32.xor 	$push13=, $pop12, $13
 	i32.shr_s	$push3=, $pop13, $14
 	i32.gt_s	$push15=, $pop2, $pop3
-	br_if   	$pop15, BB1_14
+	br_if   	$pop15, .LBB1_14
 # BB#2:                                 # %line_hints.exit
 	i32.const	$11=, 1
 	i32.gt_s	$push17=, $3, $6
@@ -127,7 +127,7 @@ main:                                   # @main
 	i32.xor 	$push20=, $3, $pop19
 	i32.select	$push21=, $pop16, $pop20, $3
 	i32.ne  	$push22=, $pop21, $11
-	br_if   	$pop22, BB1_14
+	br_if   	$pop22, .LBB1_14
 # BB#3:                                 # %lor.lhs.false
 	i64.load	$8=, main.gsf+24($6)
 	i64.load	$15=, main.gsf+16($6)
@@ -153,24 +153,24 @@ main:                                   # @main
 	i32.xor 	$13=, $pop31, $13
 	i32.select	$2=, $11, $2, $1
 	i32.shr_s	$1=, $2, $10
-	block   	BB1_5
+	block   	.LBB1_5
 	i32.add 	$push32=, $2, $1
 	i32.xor 	$1=, $pop32, $1
 	i32.const	$push55=, 0
 	i32.eq  	$push56=, $3, $pop55
-	br_if   	$pop56, BB1_5
+	br_if   	$pop56, .LBB1_5
 # BB#4:                                 # %lor.lhs.false
 	i32.shr_s	$push23=, $13, $14
 	i32.le_s	$push33=, $1, $pop23
-	br_if   	$pop33, BB1_14
-BB1_5:                                  # %if.else.i82
+	br_if   	$pop33, .LBB1_14
+.LBB1_5:                                  # %if.else.i82
 	i32.const	$push57=, 0
 	i32.eq  	$push58=, $2, $pop57
-	br_if   	$pop58, BB1_14
+	br_if   	$pop58, .LBB1_14
 # BB#6:                                 # %if.else.i82
 	i32.shr_s	$push34=, $1, $14
 	i32.gt_s	$push35=, $13, $pop34
-	br_if   	$pop35, BB1_14
+	br_if   	$pop35, .LBB1_14
 # BB#7:                                 # %line_hints.exit89
 	i32.const	$1=, 29
 	i32.shr_u	$push36=, $2, $1
@@ -182,7 +182,7 @@ BB1_5:                                  # %if.else.i82
 	i32.select	$push39=, $pop0, $pop38, $3
 	i32.const	$push40=, 8
 	i32.ne  	$push41=, $pop39, $pop40
-	br_if   	$pop41, BB1_14
+	br_if   	$pop41, .LBB1_14
 # BB#8:                                 # %lor.lhs.false3
 	i32.load	$16=, main.fh+28($6)
 	i32.load	$17=, main.fh+32($6)
@@ -195,24 +195,24 @@ BB1_5:                                  # %if.else.i82
 	i32.xor 	$0=, $pop43, $0
 	i32.select	$11=, $13, $12, $11
 	i32.shr_s	$10=, $11, $10
-	block   	BB1_10
+	block   	.LBB1_10
 	i32.add 	$push44=, $11, $10
 	i32.xor 	$10=, $pop44, $10
 	i32.const	$push59=, 0
 	i32.eq  	$push60=, $3, $pop59
-	br_if   	$pop60, BB1_10
+	br_if   	$pop60, .LBB1_10
 # BB#9:                                 # %lor.lhs.false3
 	i32.shr_s	$push42=, $0, $14
 	i32.le_s	$push45=, $10, $pop42
-	br_if   	$pop45, BB1_14
-BB1_10:                                 # %if.else.i40
+	br_if   	$pop45, .LBB1_14
+.LBB1_10:                                 # %if.else.i40
 	i32.const	$push61=, 0
 	i32.eq  	$push62=, $11, $pop61
-	br_if   	$pop62, BB1_14
+	br_if   	$pop62, .LBB1_14
 # BB#11:                                # %if.else.i40
 	i32.shr_s	$push46=, $10, $14
 	i32.gt_s	$push47=, $0, $pop46
-	br_if   	$pop47, BB1_14
+	br_if   	$pop47, .LBB1_14
 # BB#12:                                # %line_hints.exit47
 	i32.shr_u	$push48=, $11, $1
 	i32.and 	$push49=, $pop48, $14
@@ -221,15 +221,15 @@ BB1_10:                                 # %if.else.i40
 	i32.xor 	$push50=, $3, $2
 	i32.select	$push51=, $pop1, $pop50, $3
 	i32.ne  	$push52=, $pop51, $14
-	br_if   	$pop52, BB1_14
+	br_if   	$pop52, .LBB1_14
 # BB#13:                                # %if.end
 	call    	exit, $6
 	unreachable
-BB1_14:                                 # %if.then
+.LBB1_14:                                 # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	main.fh,@object         # @main.fh
 	.data

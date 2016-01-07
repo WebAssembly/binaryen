@@ -19,36 +19,36 @@ fn1:                                    # @fn1
 	i32.select	$1=, $0, $pop4, $5
 	i32.const	$push5=, 147
 	i32.mul 	$2=, $1, $pop5
-BB0_1:                                  # %for.cond
+.LBB0_1:                                  # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_5
-	block   	BB0_4
-	block   	BB0_3
+	loop    	.LBB0_5
+	block   	.LBB0_4
+	block   	.LBB0_3
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $3, $pop9
-	br_if   	$pop10, BB0_3
+	br_if   	$pop10, .LBB0_3
 # BB#2:                                 # %if.then
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push6=, 1
 	i32.store	$discard=, c($5), $pop6
-	br      	BB0_4
-BB0_3:                                  # %if.else
-                                        #   in Loop: Header=BB0_1 Depth=1
+	br      	.LBB0_4
+.LBB0_3:                                  # %if.else
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push7=, 9
 	i32.store	$push8=, i($5), $pop7
 	i32.store	$discard=, h($5), $pop8
-BB0_4:                                  # %if.end
-                                        #   in Loop: Header=BB0_1 Depth=1
+.LBB0_4:                                  # %if.end
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push11=, 0
 	i32.eq  	$push12=, $4, $pop11
-	br_if   	$pop12, BB0_1
-BB0_5:                                  # %if.then15
+	br_if   	$pop12, .LBB0_1
+.LBB0_5:                                  # %if.then15
 	i32.store	$discard=, k($5), $0
 	i32.store8	$discard=, j($5), $1
 	i32.store8	$discard=, g($5), $2
 	return
-func_end0:
-	.size	fn1, func_end0-fn1
+.Lfunc_end0:
+	.size	fn1, .Lfunc_end0-fn1
 
 	.globl	main
 	.type	main,@function
@@ -68,49 +68,49 @@ main:                                   # @main
 	i32.and 	$0=, $pop1, $pop3
 	i32.const	$push4=, 54
 	i32.select	$1=, $0, $pop4, $5
-BB1_1:                                  # %for.cond.i
+.LBB1_1:                                  # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_5
-	block   	BB1_4
-	block   	BB1_3
+	loop    	.LBB1_5
+	block   	.LBB1_4
+	block   	.LBB1_3
 	i32.const	$push13=, 0
 	i32.eq  	$push14=, $2, $pop13
-	br_if   	$pop14, BB1_3
+	br_if   	$pop14, .LBB1_3
 # BB#2:                                 # %if.then.i
-                                        #   in Loop: Header=BB1_1 Depth=1
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.const	$push6=, 0
 	i32.const	$push5=, 1
 	i32.store	$5=, c($pop6), $pop5
-	br      	BB1_4
-BB1_3:                                  # %if.else.i
-                                        #   in Loop: Header=BB1_1 Depth=1
+	br      	.LBB1_4
+.LBB1_3:                                  # %if.else.i
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.const	$4=, 0
 	i32.const	$push7=, 9
 	i32.store	$push8=, i($4), $pop7
 	i32.store	$discard=, h($4), $pop8
-BB1_4:                                  # %if.end.i
-                                        #   in Loop: Header=BB1_1 Depth=1
+.LBB1_4:                                  # %if.end.i
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $3, $pop15
-	br_if   	$pop16, BB1_1
-BB1_5:                                  # %fn1.exit
+	br_if   	$pop16, .LBB1_1
+.LBB1_5:                                  # %fn1.exit
 	i32.const	$4=, 0
 	i32.store	$discard=, k($4), $0
 	i32.store8	$discard=, j($4), $1
-	block   	BB1_7
+	block   	.LBB1_7
 	i32.const	$push9=, 147
 	i32.mul 	$push10=, $1, $pop9
 	i32.store8	$discard=, g($4), $pop10
 	i32.const	$push11=, 1
 	i32.ne  	$push12=, $5, $pop11
-	br_if   	$pop12, BB1_7
+	br_if   	$pop12, .LBB1_7
 # BB#6:                                 # %if.end
 	return  	$4
-BB1_7:                                  # %if.then
+.LBB1_7:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	d,@object               # @d
 	.data

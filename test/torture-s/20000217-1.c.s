@@ -17,8 +17,8 @@ showbug:                                # @showbug
 	i32.const	$push6=, 7
 	i32.gt_u	$push7=, $pop5, $pop6
 	return  	$pop7
-func_end0:
-	.size	showbug, func_end0-showbug
+.Lfunc_end0:
+	.size	showbug, .Lfunc_end0-showbug
 
 	.globl	main
 	.type	main,@function
@@ -28,8 +28,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

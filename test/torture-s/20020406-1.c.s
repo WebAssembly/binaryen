@@ -7,8 +7,8 @@ FFmul:                                  # @FFmul
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$0
-func_end0:
-	.size	FFmul, func_end0-FFmul
+.Lfunc_end0:
+	.size	FFmul, .Lfunc_end0-FFmul
 
 	.globl	DUPFFdeg
 	.type	DUPFFdeg,@function
@@ -18,8 +18,8 @@ DUPFFdeg:                               # @DUPFFdeg
 # BB#0:                                 # %entry
 	i32.load	$push0=, 4($0)
 	return  	$pop0
-func_end1:
-	.size	DUPFFdeg, func_end1-DUPFFdeg
+.Lfunc_end1:
+	.size	DUPFFdeg, .Lfunc_end1-DUPFFdeg
 
 	.globl	DUPFFnew
 	.type	DUPFFnew,@function
@@ -28,13 +28,13 @@ DUPFFnew:                               # @DUPFFnew
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push0=, 12
 	i32.call	$1=, malloc, $pop0
 	i32.const	$push1=, 0
 	i32.store	$push2=, 8($1), $pop1
 	i32.lt_s	$push3=, $0, $pop2
-	br_if   	$pop3, BB2_2
+	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.then
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $0, $pop4
@@ -43,13 +43,13 @@ DUPFFnew:                               # @DUPFFnew
 	i32.const	$push7=, 8
 	i32.add 	$push8=, $1, $pop7
 	i32.store	$discard=, 0($pop8), $2
-BB2_2:                                  # %if.end
+.LBB2_2:                                  # %if.end
 	i32.store	$discard=, 0($1), $0
 	i32.const	$push9=, -1
 	i32.store	$discard=, 4($1), $pop9
 	return  	$1
-func_end2:
-	.size	DUPFFnew, func_end2-DUPFFnew
+.Lfunc_end2:
+	.size	DUPFFnew, .Lfunc_end2-DUPFFnew
 
 	.globl	DUPFFfree
 	.type	DUPFFfree,@function
@@ -57,8 +57,8 @@ DUPFFfree:                              # @DUPFFfree
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end3:
-	.size	DUPFFfree, func_end3-DUPFFfree
+.Lfunc_end3:
+	.size	DUPFFfree, .Lfunc_end3-DUPFFfree
 
 	.globl	DUPFFswap
 	.type	DUPFFswap,@function
@@ -66,8 +66,8 @@ DUPFFswap:                              # @DUPFFswap
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
-func_end4:
-	.size	DUPFFswap, func_end4-DUPFFswap
+.Lfunc_end4:
+	.size	DUPFFswap, .Lfunc_end4-DUPFFswap
 
 	.globl	DUPFFcopy
 	.type	DUPFFcopy,@function
@@ -76,8 +76,8 @@ DUPFFcopy:                              # @DUPFFcopy
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$0
-func_end5:
-	.size	DUPFFcopy, func_end5-DUPFFcopy
+.Lfunc_end5:
+	.size	DUPFFcopy, .Lfunc_end5-DUPFFcopy
 
 	.globl	DUPFFshift_add
 	.type	DUPFFshift_add,@function
@@ -85,8 +85,8 @@ DUPFFshift_add:                         # @DUPFFshift_add
 	.param  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	return
-func_end6:
-	.size	DUPFFshift_add, func_end6-DUPFFshift_add
+.Lfunc_end6:
+	.size	DUPFFshift_add, .Lfunc_end6-DUPFFshift_add
 
 	.globl	DUPFFexgcd
 	.type	DUPFFexgcd,@function
@@ -103,9 +103,9 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.store	$13=, 0($15), $13
 	i32.load	$9=, 4($2)
 	i32.load	$8=, 4($3)
-BB7_1:                                  # %tailrecurse
+.LBB7_1:                                  # %tailrecurse
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB7_2
+	loop    	.LBB7_2
 	copy_local	$5=, $3
 	copy_local	$3=, $2
 	copy_local	$4=, $1
@@ -133,23 +133,23 @@ BB7_1:                                  # %tailrecurse
 	copy_local	$0=, $4
 	copy_local	$2=, $5
 	i32.lt_s	$push2=, $8, $9
-	br_if   	$pop2, BB7_1
-BB7_2:                                  # %if.end
+	br_if   	$pop2, .LBB7_1
+.LBB7_2:                                  # %if.end
 	i32.const	$2=, 2
-	block   	BB7_11
+	block   	.LBB7_11
 	i32.ne  	$push3=, $8, $2
-	br_if   	$pop3, BB7_11
+	br_if   	$pop3, .LBB7_11
 # BB#3:                                 # %if.end
 	i32.const	$8=, 1
 	i32.ne  	$push4=, $9, $8
-	br_if   	$pop4, BB7_11
+	br_if   	$pop4, .LBB7_11
 # BB#4:                                 # %if.end11
-	block   	BB7_10
+	block   	.LBB7_10
 	i32.load	$push5=, 8($3)
 	i32.load	$push6=, 0($pop5)
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $pop6, $pop15
-	br_if   	$pop16, BB7_10
+	br_if   	$pop16, .LBB7_10
 # BB#5:                                 # %DUPFFnew.exit
 	i32.const	$0=, 12
 	i32.call	$9=, malloc, $0
@@ -164,39 +164,39 @@ BB7_2:                                  # %if.end
 	i32.call	$0=, calloc, $pop10, $6
 	i32.store	$discard=, 8($8), $0
 	i32.store	$discard=, 0($8), $2
-	block   	BB7_9
+	block   	.LBB7_9
 	i32.const	$push11=, -1
 	i32.store	$discard=, 4($8), $pop11
 	i32.add 	$push12=, $5, $6
 	i32.load	$5=, 0($pop12)
 	i32.lt_s	$push13=, $5, $7
-	br_if   	$pop13, BB7_9
+	br_if   	$pop13, .LBB7_9
 # BB#6:                                 # %while.cond40.preheader.lr.ph
 	i32.add 	$push14=, $3, $6
 	i32.load	$push0=, 0($pop14)
 	i32.lt_s	$3=, $pop0, $5
-BB7_7:                                  # %while.cond40.preheader
+.LBB7_7:                                  # %while.cond40.preheader
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB7_8
-	br_if   	$3, BB7_7
-BB7_8:                                  # %while.cond40
+	loop    	.LBB7_8
+	br_if   	$3, .LBB7_7
+.LBB7_8:                                  # %while.cond40
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB7_9
-	br      	BB7_8
-BB7_9:                                  # %if.end57
+	loop    	.LBB7_9
+	br      	.LBB7_8
+.LBB7_9:                                  # %if.end57
 	i32.store	$discard=, 0($1), $9
 	i32.store	$discard=, 0($4), $8
-BB7_10:                                 # %cleanup
+.LBB7_10:                                 # %cleanup
 	i32.const	$16=, 16
 	i32.add 	$13=, $13, $16
 	i32.const	$16=, __stack_pointer
 	i32.store	$13=, 0($16), $13
 	return  	$3
-BB7_11:                                 # %if.then10
+.LBB7_11:                                 # %if.then10
 	call    	abort
 	unreachable
-func_end7:
-	.size	DUPFFexgcd, func_end7-DUPFFexgcd
+.Lfunc_end7:
+	.size	DUPFFexgcd, .Lfunc_end7-DUPFFexgcd
 
 	.globl	main
 	.type	main,@function
@@ -255,8 +255,8 @@ main:                                   # @main
 	i32.const	$12=, __stack_pointer
 	i32.store	$15=, 0($12), $15
 	return  	$pop7
-func_end8:
-	.size	main, func_end8-main
+.Lfunc_end8:
+	.size	main, .Lfunc_end8-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

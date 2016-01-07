@@ -7,19 +7,19 @@ sub:                                    # @sub
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.const	$push0=, 2
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_4
+	br_if   	$pop1, .LBB0_4
 # BB#1:                                 # %if.then
 	i32.const	$2=, 1
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.const	$push3=, 31
 	i32.shr_u	$push4=, $0, $pop3
 	i32.add 	$push5=, $0, $pop4
 	i32.shr_s	$1=, $pop5, $2
 	i32.and 	$push2=, $0, $2
-	br_if   	$pop2, BB0_3
+	br_if   	$pop2, .LBB0_3
 # BB#2:                                 # %if.then2
 	i32.call	$0=, sub, $1
 	i32.const	$push10=, -1
@@ -29,7 +29,7 @@ sub:                                    # @sub
 	i32.add 	$push14=, $pop13, $0
 	i32.mul 	$push15=, $pop14, $0
 	return  	$pop15
-BB0_3:                                  # %if.else
+.LBB0_3:                                  # %if.else
 	i32.add 	$push6=, $1, $2
 	i32.call	$0=, sub, $pop6
 	i32.call	$2=, sub, $1
@@ -37,10 +37,10 @@ BB0_3:                                  # %if.else
 	i32.mul 	$push7=, $0, $0
 	i32.add 	$push9=, $pop8, $pop7
 	return  	$pop9
-BB0_4:                                  # %cleanup
+.LBB0_4:                                  # %cleanup
 	return  	$0
-func_end0:
-	.size	sub, func_end0-sub
+.Lfunc_end0:
+	.size	sub, .Lfunc_end0-sub
 
 	.globl	main
 	.type	main,@function
@@ -52,25 +52,25 @@ main:                                   # @main
 	i32.call	$1=, sub, $pop0
 	i32.const	$2=, 0
 	i32.load	$0=, flg($2)
-	block   	BB1_4
-	block   	BB1_3
+	block   	.LBB1_4
+	block   	.LBB1_3
 	i32.const	$push1=, 832040
 	i32.ne  	$push2=, $1, $pop1
-	br_if   	$pop2, BB1_3
+	br_if   	$pop2, .LBB1_3
 # BB#1:                                 # %if.end
-	br_if   	$0, BB1_4
+	br_if   	$0, .LBB1_4
 # BB#2:                                 # %if.end2
 	call    	exit, $2
 	unreachable
-BB1_3:                                  # %if.end.thread
+.LBB1_3:                                  # %if.end.thread
 	i32.const	$push3=, 256
 	i32.or  	$push4=, $0, $pop3
 	i32.store	$discard=, flg($2), $pop4
-BB1_4:                                  # %if.then1
+.LBB1_4:                                  # %if.then1
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	flg,@object             # @flg
 	.bss

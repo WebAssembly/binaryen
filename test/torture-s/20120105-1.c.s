@@ -36,8 +36,8 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$7=, 0($3), $7
 	return  	$0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	extract,@function
 extract:                                # @extract
@@ -64,8 +64,8 @@ extract:                                # @extract
 	i32.or  	$push15=, $pop13, $pop14
 	i32.or  	$push16=, $pop9, $pop15
 	return  	$pop16
-func_end1:
-	.size	extract, func_end1-extract
+.Lfunc_end1:
+	.size	extract, .Lfunc_end1-extract
 
 	.type	i,@object               # @i
 	.bss

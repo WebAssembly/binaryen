@@ -7,8 +7,8 @@ proc1:                                  # @proc1
 # BB#0:                                 # %entry
 	i64.const	$push0=, 1
 	return  	$pop0
-func_end0:
-	.size	proc1, func_end0-proc1
+.Lfunc_end0:
+	.size	proc1, .Lfunc_end0-proc1
 
 	.globl	proc2
 	.type	proc2,@function
@@ -17,8 +17,8 @@ proc2:                                  # @proc2
 # BB#0:                                 # %entry
 	i64.const	$push0=, 305419896
 	return  	$pop0
-func_end1:
-	.size	proc2, func_end1-proc2
+.Lfunc_end1:
+	.size	proc2, .Lfunc_end1-proc2
 
 	.globl	proc3
 	.type	proc3,@function
@@ -27,8 +27,8 @@ proc3:                                  # @proc3
 # BB#0:                                 # %entry
 	i64.const	$push0=, -6144092016751651208
 	return  	$pop0
-func_end2:
-	.size	proc3, func_end2-proc3
+.Lfunc_end2:
+	.size	proc3, .Lfunc_end2-proc3
 
 	.globl	proc4
 	.type	proc4,@function
@@ -37,8 +37,8 @@ proc4:                                  # @proc4
 # BB#0:                                 # %entry
 	i64.const	$push0=, -1
 	return  	$pop0
-func_end3:
-	.size	proc4, func_end3-proc4
+.Lfunc_end3:
+	.size	proc4, .Lfunc_end3-proc4
 
 	.globl	proc5
 	.type	proc5,@function
@@ -47,8 +47,8 @@ proc5:                                  # @proc5
 # BB#0:                                 # %entry
 	i64.const	$push0=, 2864434397
 	return  	$pop0
-func_end4:
-	.size	proc5, func_end4-proc5
+.Lfunc_end4:
+	.size	proc5, .Lfunc_end4-proc5
 
 	.globl	print_longlong
 	.type	print_longlong,@function
@@ -67,11 +67,11 @@ print_longlong:                         # @print_longlong
 	i64.shr_u	$push1=, $0, $pop0
 	i32.wrap/i64	$2=, $pop1
 	i32.wrap/i64	$3=, $0
-	block   	BB5_3
-	block   	BB5_2
+	block   	.LBB5_3
+	block   	.LBB5_2
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $2, $pop5
-	br_if   	$pop6, BB5_2
+	br_if   	$pop6, .LBB5_2
 # BB#1:                                 # %if.then
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
@@ -91,8 +91,8 @@ print_longlong:                         # @print_longlong
 	i32.add 	$13=, $6, $7
 	i32.const	$7=, __stack_pointer
 	i32.store	$13=, 0($7), $13
-	br      	BB5_3
-BB5_2:                                  # %if.else
+	br      	.LBB5_3
+.LBB5_2:                                  # %if.else
 	i32.const	$8=, __stack_pointer
 	i32.load	$8=, 0($8)
 	i32.const	$9=, 4
@@ -108,14 +108,14 @@ BB5_2:                                  # %if.else
 	i32.add 	$13=, $10, $11
 	i32.const	$11=, __stack_pointer
 	i32.store	$13=, 0($11), $13
-BB5_3:                                  # %if.end
+.LBB5_3:                                  # %if.end
 	i32.const	$14=, 16
 	i32.add 	$13=, $13, $14
 	i32.const	$14=, __stack_pointer
 	i32.store	$13=, 0($14), $13
 	return  	$2
-func_end5:
-	.size	print_longlong, func_end5-print_longlong
+.Lfunc_end5:
+	.size	print_longlong, .Lfunc_end5-print_longlong
 
 	.globl	main
 	.type	main,@function
@@ -150,9 +150,9 @@ main:                                   # @main
 	i32.const	$push1=, .str.2
 	i32.const	$29=, 16
 	i32.add 	$29=, $38, $29
-	block   	BB6_10
+	block   	.LBB6_10
 	i32.call	$1=, strcmp, $pop1, $29
-	br_if   	$1, BB6_10
+	br_if   	$1, .LBB6_10
 # BB#1:                                 # %if.end
 	i32.const	$10=, __stack_pointer
 	i32.load	$10=, 0($10)
@@ -174,9 +174,9 @@ main:                                   # @main
 	i32.const	$push3=, .str.3
 	i32.const	$31=, 16
 	i32.add 	$31=, $38, $31
-	block   	BB6_9
+	block   	.LBB6_9
 	i32.call	$1=, strcmp, $pop3, $31
-	br_if   	$1, BB6_9
+	br_if   	$1, .LBB6_9
 # BB#2:                                 # %if.end11
 	i32.const	$14=, __stack_pointer
 	i32.load	$14=, 0($14)
@@ -202,9 +202,9 @@ main:                                   # @main
 	i32.const	$push5=, .str.4
 	i32.const	$33=, 16
 	i32.add 	$33=, $38, $33
-	block   	BB6_8
+	block   	.LBB6_8
 	i32.call	$2=, strcmp, $pop5, $33
-	br_if   	$2, BB6_8
+	br_if   	$2, .LBB6_8
 # BB#3:                                 # %if.end19
 	i32.const	$18=, __stack_pointer
 	i32.load	$18=, 0($18)
@@ -228,9 +228,9 @@ main:                                   # @main
 	i32.const	$push7=, .str.5
 	i32.const	$35=, 16
 	i32.add 	$35=, $38, $35
-	block   	BB6_7
+	block   	.LBB6_7
 	i32.call	$1=, strcmp, $pop7, $35
-	br_if   	$1, BB6_7
+	br_if   	$1, .LBB6_7
 # BB#4:                                 # %if.end27
 	i32.const	$22=, __stack_pointer
 	i32.load	$22=, 0($22)
@@ -251,30 +251,30 @@ main:                                   # @main
 	i32.const	$push8=, .str.6
 	i32.const	$37=, 16
 	i32.add 	$37=, $38, $37
-	block   	BB6_6
+	block   	.LBB6_6
 	i32.call	$0=, strcmp, $pop8, $37
-	br_if   	$0, BB6_6
+	br_if   	$0, .LBB6_6
 # BB#5:                                 # %if.end35
 	i32.const	$push9=, 0
 	call    	exit, $pop9
 	unreachable
-BB6_6:                                  # %if.then34
+.LBB6_6:                                  # %if.then34
 	call    	abort
 	unreachable
-BB6_7:                                  # %if.then26
+.LBB6_7:                                  # %if.then26
 	call    	abort
 	unreachable
-BB6_8:                                  # %if.then18
+.LBB6_8:                                  # %if.then18
 	call    	abort
 	unreachable
-BB6_9:                                  # %if.then10
+.LBB6_9:                                  # %if.then10
 	call    	abort
 	unreachable
-BB6_10:                                 # %if.then
+.LBB6_10:                                 # %if.then
 	call    	abort
 	unreachable
-func_end6:
-	.size	main, func_end6-main
+.Lfunc_end6:
+	.size	main, .Lfunc_end6-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

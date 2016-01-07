@@ -7,8 +7,8 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	i32.const	$push0=, 10
 	return  	$pop0
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	f
 	.type	f,@function
@@ -99,9 +99,9 @@ f:                                      # @f
 	i32.const	$14=, 0
 	i32.add 	$14=, $15, $14
 	i32.add 	$8=, $14, $pop56
-BB1_1:                                  # %while.cond
+.LBB1_1:                                  # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_2
+	loop    	.LBB1_2
 	i32.const	$push57=, -2
 	i32.add 	$7=, $8, $pop57
 	i32.const	$push61=, -1
@@ -109,27 +109,27 @@ BB1_1:                                  # %while.cond
 	i32.load8_u	$push58=, 0($7)
 	i32.const	$push59=, 48
 	i32.eq  	$push60=, $pop58, $pop59
-	br_if   	$pop60, BB1_1
-BB1_2:                                  # %while.end
-	block   	BB1_4
+	br_if   	$pop60, .LBB1_1
+.LBB1_2:                                  # %while.end
+	block   	.LBB1_4
 	i32.const	$push62=, 88
 	i32.store8	$7=, 0($8), $pop62
 	i32.add 	$push63=, $8, $0
 	i32.store8	$discard=, 0($pop63), $1
 	i32.load8_u	$push64=, 0($2)
 	i32.ne  	$push65=, $pop64, $7
-	br_if   	$pop65, BB1_4
+	br_if   	$pop65, .LBB1_4
 # BB#3:                                 # %if.end
 	i32.const	$11=, 16
 	i32.add 	$15=, $15, $11
 	i32.const	$11=, __stack_pointer
 	i32.store	$15=, 0($11), $15
 	return  	$8
-BB1_4:                                  # %if.then
+.LBB1_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -220,9 +220,9 @@ main:                                   # @main
 	i32.const	$13=, 0
 	i32.add 	$13=, $14, $13
 	i32.add 	$8=, $13, $pop56
-BB2_1:                                  # %while.cond.i
+.LBB2_1:                                  # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB2_2
+	loop    	.LBB2_2
 	i32.const	$push57=, -2
 	i32.add 	$7=, $8, $pop57
 	i32.const	$push61=, -1
@@ -230,24 +230,24 @@ BB2_1:                                  # %while.cond.i
 	i32.load8_u	$push58=, 0($7)
 	i32.const	$push59=, 48
 	i32.eq  	$push60=, $pop58, $pop59
-	br_if   	$pop60, BB2_1
-BB2_2:                                  # %while.end.i
-	block   	BB2_4
+	br_if   	$pop60, .LBB2_1
+.LBB2_2:                                  # %while.end.i
+	block   	.LBB2_4
 	i32.const	$push62=, 88
 	i32.store8	$7=, 0($8), $pop62
 	i32.add 	$push63=, $8, $0
 	i32.store8	$8=, 0($pop63), $1
 	i32.load8_u	$push64=, 0($2)
 	i32.ne  	$push65=, $pop64, $7
-	br_if   	$pop65, BB2_4
+	br_if   	$pop65, .LBB2_4
 # BB#3:                                 # %f.exit
 	call    	exit, $8
 	unreachable
-BB2_4:                                  # %if.then.i
+.LBB2_4:                                  # %if.then.i
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	f.s,@object             # @f.s
 	.section	.rodata.str1.1,"aMS",@progbits,1

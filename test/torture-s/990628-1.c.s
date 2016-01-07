@@ -7,8 +7,8 @@ num_records:                            # @num_records
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
-func_end0:
-	.size	num_records, func_end0-num_records
+.Lfunc_end0:
+	.size	num_records, .Lfunc_end0-num_records
 
 	.globl	fetch
 	.type	fetch,@function
@@ -29,8 +29,8 @@ fetch:                                  # @fetch
 	i32.select	$push7=, $pop5, $pop6, $0
 	i32.store	$discard=, sqlca($0), $pop7
 	return
-func_end1:
-	.size	fetch, func_end1-fetch
+.Lfunc_end1:
+	.size	fetch, .Lfunc_end1-fetch
 
 	.globl	load_data
 	.type	load_data,@function
@@ -52,13 +52,13 @@ load_data:                              # @load_data
 	i32.store	$discard=, fetch.fetch_count($2), $pop2
 	i32.gt_s	$0=, $7, $2
 	i32.const	$6=, 100
-	block   	BB2_3
+	block   	.LBB2_3
 	i32.select	$push3=, $0, $6, $2
 	i32.store	$discard=, sqlca($2), $pop3
-	br_if   	$0, BB2_3
-BB2_1:                                  # %while.body
+	br_if   	$0, .LBB2_3
+.LBB2_1:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB2_2
+	loop    	.LBB2_2
 	copy_local	$0=, $7
 	i32.add 	$7=, $8, $1
 	call    	memcpy, $8, $3, $1
@@ -66,16 +66,16 @@ BB2_1:                                  # %while.body
 	copy_local	$8=, $7
 	i32.add 	$7=, $0, $5
 	i32.lt_s	$push5=, $7, $5
-	br_if   	$pop5, BB2_1
-BB2_2:                                  # %while.cond.while.end_crit_edge
+	br_if   	$pop5, .LBB2_1
+.LBB2_2:                                  # %while.cond.while.end_crit_edge
 	i32.const	$push4=, 2
 	i32.add 	$push0=, $0, $pop4
 	i32.store	$discard=, fetch.fetch_count($2), $pop0
 	i32.store	$discard=, sqlca($2), $6
-BB2_3:                                  # %while.end
+.LBB2_3:                                  # %while.end
 	return
-func_end2:
-	.size	load_data, func_end2-load_data
+.Lfunc_end2:
+	.size	load_data, .Lfunc_end2-load_data
 
 	.globl	main
 	.type	main,@function
@@ -98,40 +98,40 @@ main:                                   # @main
 	i32.store	$discard=, fetch.fetch_count($3), $pop1
 	i32.gt_s	$9=, $8, $3
 	i32.const	$7=, 100
-	block   	BB3_4
+	block   	.LBB3_4
 	i32.select	$push2=, $9, $7, $3
 	i32.store	$discard=, sqlca($3), $pop2
-	br_if   	$9, BB3_4
+	br_if   	$9, .LBB3_4
 # BB#1:                                 # %while.body.lr.ph.i
 	copy_local	$9=, $0
-BB3_2:                                  # %while.body.i
+.LBB3_2:                                  # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB3_3
+	loop    	.LBB3_3
 	i32.add 	$1=, $9, $2
 	call    	memcpy, $9, $4, $2
 	call    	memset, $4, $5, $2
 	i32.add 	$8=, $8, $6
 	copy_local	$9=, $1
 	i32.lt_s	$push3=, $8, $6
-	br_if   	$pop3, BB3_2
-BB3_3:                                  # %while.cond.while.end_crit_edge.i
+	br_if   	$pop3, .LBB3_2
+.LBB3_3:                                  # %while.cond.while.end_crit_edge.i
 	i32.const	$push4=, 2
 	i32.store	$discard=, fetch.fetch_count($3), $pop4
 	i32.store	$discard=, sqlca($3), $7
-BB3_4:                                  # %load_data.exit
-	block   	BB3_6
+.LBB3_4:                                  # %load_data.exit
+	block   	.LBB3_6
 	i32.load	$push5=, 0($0)
 	i32.const	$push6=, 1431655765
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, BB3_6
+	br_if   	$pop7, .LBB3_6
 # BB#5:                                 # %if.end
 	call    	exit, $3
 	unreachable
-BB3_6:                                  # %if.then
+.LBB3_6:                                  # %if.then
 	call    	abort
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	fetch.fetch_count,@object # @fetch.fetch_count
 	.lcomm	fetch.fetch_count,4,2

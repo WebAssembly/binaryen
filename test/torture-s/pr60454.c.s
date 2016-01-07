@@ -21,28 +21,28 @@ fake_swap32:                            # @fake_swap32
 	i32.and 	$push3=, $pop2, $2
 	i32.or  	$push8=, $pop7, $pop3
 	return  	$pop8
-func_end0:
-	.size	fake_swap32, func_end0-fake_swap32
+.Lfunc_end0:
+	.size	fake_swap32, .Lfunc_end0-fake_swap32
 
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 305419896
 	i32.call	$push1=, fake_swap32, $pop0
 	i32.const	$push2=, 2018934290
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB1_2
+	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

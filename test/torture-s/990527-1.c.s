@@ -11,8 +11,8 @@ g:                                      # @g
 	i32.add 	$push1=, $pop0, $0
 	i32.store	$discard=, sum($1), $pop1
 	return
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	f
 	.type	f,@function
@@ -27,8 +27,8 @@ f:                                      # @f
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$discard=, sum($1), $pop3
 	return
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -38,19 +38,19 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load	$1=, sum($0)
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push0=, 81
 	i32.add 	$push1=, $1, $pop0
 	i32.store	$discard=, sum($0), $pop1
-	br_if   	$1, BB2_2
+	br_if   	$1, .LBB2_2
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	sum,@object             # @sum
 	.bss

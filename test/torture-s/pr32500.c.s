@@ -8,8 +8,8 @@ foo:                                    # @foo
 	i32.const	$push0=, 0
 	i32.store	$discard=, x($pop0), $0
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
@@ -18,8 +18,8 @@ bar:                                    # @bar
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	main
 	.type	main,@function
@@ -37,8 +37,8 @@ main:                                   # @main
 	call    	foo, $pop3
 	call    	bar
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	x,@object               # @x
 	.bss

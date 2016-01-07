@@ -7,8 +7,8 @@ baz:                                    # @baz
 	#APP
 	#NO_APP
 	return
-func_end0:
-	.size	baz, func_end0-baz
+.Lfunc_end0:
+	.size	baz, .Lfunc_end0-baz
 
 	.globl	f
 	.type	f,@function
@@ -17,31 +17,31 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.load	$push0=, 0($0)
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop0, $pop5
-	br_if   	$pop6, BB1_2
+	br_if   	$pop6, .LBB1_2
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 1
 	return  	$pop1
-BB1_2:                                  # %if.end
+.LBB1_2:                                  # %if.end
 	i32.const	$1=, env
 	#APP
 	#NO_APP
-	block   	BB1_4
+	block   	.LBB1_4
 	i32.call	$push2=, _setjmp, $1
-	br_if   	$pop2, BB1_4
+	br_if   	$pop2, .LBB1_4
 # BB#3:                                 # %if.end6
 	i32.const	$push4=, 42
 	call    	longjmp, $1, $pop4
 	unreachable
-BB1_4:                                  # %if.then2
+.LBB1_4:                                  # %if.then2
 	i32.const	$push3=, 0
 	call    	exit, $pop3
 	unreachable
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -67,8 +67,8 @@ main:                                   # @main
 	i32.const	$4=, __stack_pointer
 	i32.store	$4=, 0($4), $4
 	return  	$pop1
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	env,@object             # @env
 	.lcomm	env,156,4

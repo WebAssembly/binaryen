@@ -5,17 +5,17 @@
 t1:                                     # @t1
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 4100
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	t1, func_end0-t1
+.Lfunc_end0:
+	.size	t1, .Lfunc_end0-t1
 
 	.globl	t2
 	.type	t2,@function
@@ -24,25 +24,25 @@ t2:                                     # @t2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4096
 	return  	$pop0
-func_end1:
-	.size	t2, func_end1-t2
+.Lfunc_end1:
+	.size	t2, .Lfunc_end1-t2
 
 	.globl	t3
 	.type	t3,@function
 t3:                                     # @t3
 	.param  	i64
 # BB#0:                                 # %entry
-	block   	BB2_2
+	block   	.LBB2_2
 	i64.const	$push0=, 2147487743
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB2_2
+	br_if   	$pop1, .LBB2_2
 # BB#1:                                 # %if.end
 	return
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	t3, func_end2-t3
+.Lfunc_end2:
+	.size	t3, .Lfunc_end2-t3
 
 	.globl	t4
 	.type	t4,@function
@@ -51,8 +51,8 @@ t4:                                     # @t4
 # BB#0:                                 # %entry
 	i64.const	$push0=, 4096
 	return  	$pop0
-func_end3:
-	.size	t4, func_end3-t4
+.Lfunc_end3:
+	.size	t4, .Lfunc_end3-t4
 
 	.globl	main
 	.type	main,@function
@@ -62,8 +62,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end4:
-	.size	main, func_end4-main
+.Lfunc_end4:
+	.size	main, .Lfunc_end4-main
 
 
 	.ident	"clang version 3.8.0 "

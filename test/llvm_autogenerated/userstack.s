@@ -17,8 +17,8 @@ alloca32:
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return
-func_end0:
-	.size	alloca32, func_end0-alloca32
+.Lfunc_end0:
+	.size	alloca32, .Lfunc_end0-alloca32
 
 	.globl	alloca3264
 	.type	alloca3264,@function
@@ -39,8 +39,8 @@ alloca3264:
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return
-func_end1:
-	.size	alloca3264, func_end1-alloca3264
+.Lfunc_end1:
+	.size	alloca3264, .Lfunc_end1-alloca3264
 
 	.globl	allocarray
 	.type	allocarray,@function
@@ -64,16 +64,16 @@ allocarray:
 	i32.const	$3=, __stack_pointer
 	i32.store	$5=, 0($3), $5
 	return
-func_end2:
-	.size	allocarray, func_end2-allocarray
+.Lfunc_end2:
+	.size	allocarray, .Lfunc_end2-allocarray
 
 	.globl	dynamic_alloca
 	.type	dynamic_alloca,@function
 dynamic_alloca:
 	.param  	i32
 	return
-func_end3:
-	.size	dynamic_alloca, func_end3-dynamic_alloca
+.Lfunc_end3:
+	.size	dynamic_alloca, .Lfunc_end3-dynamic_alloca
 
 
 	.section	".note.GNU-stack","",@progbits

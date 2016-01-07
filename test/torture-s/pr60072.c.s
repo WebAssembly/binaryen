@@ -10,8 +10,8 @@ main:                                   # @main
 	i32.const	$push0=, 2
 	i32.store	$discard=, c($0), $pop0
 	return  	$0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	c,@object               # @c
 	.data

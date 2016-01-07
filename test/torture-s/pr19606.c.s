@@ -10,8 +10,8 @@ foo:                                    # @foo
 	i32.const	$push2=, 1
 	i32.shr_u	$push3=, $pop1, $pop2
 	return  	$pop3
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
@@ -23,8 +23,8 @@ bar:                                    # @bar
 	i32.const	$push2=, 5
 	i32.rem_u	$push3=, $pop1, $pop2
 	return  	$pop3
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	main
 	.type	main,@function
@@ -34,30 +34,30 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	i32.load8_s	$0=, a($1)
-	block   	BB2_4
+	block   	.LBB2_4
 	i32.const	$push0=, 1
 	i32.shr_u	$push1=, $0, $pop0
 	i32.const	$push2=, 2147483646
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB2_4
+	br_if   	$pop3, .LBB2_4
 # BB#1:                                 # %if.end
-	block   	BB2_3
+	block   	.LBB2_3
 	i32.const	$push4=, 5
 	i32.rem_u	$push5=, $0, $pop4
 	i32.const	$push6=, 2
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, BB2_3
+	br_if   	$pop7, .LBB2_3
 # BB#2:                                 # %if.end7
 	call    	exit, $1
 	unreachable
-BB2_3:                                  # %if.then6
+.LBB2_3:                                  # %if.then6
 	call    	abort
 	unreachable
-BB2_4:                                  # %if.then
+.LBB2_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	a,@object               # @a
 	.data

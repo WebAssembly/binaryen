@@ -9,9 +9,9 @@ main:                                   # @main
 	i32.const	$5=, 0
 	i32.load	$0=, num($5)
 	i32.const	$6=, 1
-	block   	BB0_11
+	block   	.LBB0_11
 	i32.lt_s	$push0=, $0, $6
-	br_if   	$pop0, BB0_11
+	br_if   	$pop0, .LBB0_11
 # BB#1:                                 # %for.cond1.preheader.preheader
 	i32.const	$8=, ops
 	i32.const	$push1=, 2
@@ -22,73 +22,73 @@ main:                                   # @main
 	i32.const	$7=, -1
 	i32.add 	$1=, $0, $7
 	copy_local	$10=, $5
-BB0_2:                                  # %for.cond1.preheader
+.LBB0_2:                                  # %for.cond1.preheader
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB0_3 Depth 2
-	loop    	BB0_7
+                                        #     Child Loop .LBB0_3 Depth 2
+	loop    	.LBB0_7
 	copy_local	$11=, $2
 	copy_local	$12=, $1
-	block   	BB0_6
+	block   	.LBB0_6
 	i32.le_s	$push5=, $1, $10
-	br_if   	$pop5, BB0_6
-BB0_3:                                  # %for.body3
-                                        #   Parent Loop BB0_2 Depth=1
+	br_if   	$pop5, .LBB0_6
+.LBB0_3:                                  # %for.body3
+                                        #   Parent Loop .LBB0_2 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	BB0_6
+	loop    	.LBB0_6
 	i32.const	$push6=, 4
 	i32.add 	$9=, $11, $pop6
 	i32.load	$3=, 0($11)
 	i32.load	$4=, 0($9)
-	block   	BB0_5
+	block   	.LBB0_5
 	i32.ge_s	$push7=, $3, $4
-	br_if   	$pop7, BB0_5
+	br_if   	$pop7, .LBB0_5
 # BB#4:                                 # %if.then
-                                        #   in Loop: Header=BB0_3 Depth=2
+                                        #   in Loop: Header=.LBB0_3 Depth=2
 	i32.store	$discard=, 0($9), $3
 	i32.store	$discard=, 0($11), $4
-BB0_5:                                  # %for.cond1.backedge
-                                        #   in Loop: Header=BB0_3 Depth=2
+.LBB0_5:                                  # %for.cond1.backedge
+                                        #   in Loop: Header=.LBB0_3 Depth=2
 	i32.const	$push8=, -4
 	i32.add 	$11=, $11, $pop8
 	i32.add 	$12=, $12, $7
 	i32.gt_s	$push9=, $12, $10
-	br_if   	$pop9, BB0_3
-BB0_6:                                  # %for.end
-                                        #   in Loop: Header=BB0_2 Depth=1
+	br_if   	$pop9, .LBB0_3
+.LBB0_6:                                  # %for.end
+                                        #   in Loop: Header=.LBB0_2 Depth=1
 	i32.add 	$10=, $10, $6
 	i32.lt_s	$push10=, $10, $0
-	br_if   	$pop10, BB0_2
-BB0_7:                                  # %for.cond15.preheader
+	br_if   	$pop10, .LBB0_2
+.LBB0_7:                                  # %for.cond15.preheader
 	i32.const	$11=, 0
 	copy_local	$12=, $11
 	i32.le_s	$push11=, $0, $11
-	br_if   	$pop11, BB0_11
-BB0_8:                                  # %for.body17
+	br_if   	$pop11, .LBB0_11
+.LBB0_8:                                  # %for.body17
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_10
+	loop    	.LBB0_10
 	i32.add 	$push12=, $8, $11
 	i32.load	$push13=, 0($pop12)
 	i32.const	$push14=, correct
 	i32.add 	$push15=, $pop14, $11
 	i32.load	$push16=, 0($pop15)
 	i32.ne  	$push17=, $pop13, $pop16
-	br_if   	$pop17, BB0_10
+	br_if   	$pop17, .LBB0_10
 # BB#9:                                 # %for.cond15
-                                        #   in Loop: Header=BB0_8 Depth=1
+                                        #   in Loop: Header=.LBB0_8 Depth=1
 	i32.const	$push18=, 4
 	i32.add 	$11=, $11, $pop18
 	i32.add 	$12=, $12, $6
 	i32.lt_s	$push19=, $12, $0
-	br_if   	$pop19, BB0_8
-	br      	BB0_11
-BB0_10:                                 # %if.then21
+	br_if   	$pop19, .LBB0_8
+	br      	.LBB0_11
+.LBB0_10:                                 # %if.then21
 	call    	abort
 	unreachable
-BB0_11:                                 # %for.end25
+.LBB0_11:                                 # %for.end25
 	call    	exit, $5
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	ops,@object             # @ops
 	.data

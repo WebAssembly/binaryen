@@ -14,8 +14,8 @@ h:                                      # @h
 	i32.add 	$push2=, $1, $2
 	i32.store	$discard=, ff($0), $pop2
 	return
-func_end0:
-	.size	h, func_end0-h
+.Lfunc_end0:
+	.size	h, .Lfunc_end0-h
 
 	.globl	main
 	.type	main,@function
@@ -27,29 +27,29 @@ main:                                   # @main
 	i32.load	$1=, f($0)
 	i32.load	$2=, ff($0)
 	i32.const	$3=, 2
-	block   	BB1_4
+	block   	.LBB1_4
 	i32.add 	$push1=, $1, $3
 	i32.store	$discard=, f($0), $pop1
 	i32.add 	$push0=, $2, $3
 	i32.store	$3=, ff($0), $pop0
 	i32.const	$push2=, y
 	i32.ne  	$push3=, $1, $pop2
-	br_if   	$pop3, BB1_4
+	br_if   	$pop3, .LBB1_4
 # BB#1:                                 # %if.end
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.const	$push4=, y+2
 	i32.ne  	$push5=, $3, $pop4
-	br_if   	$pop5, BB1_3
+	br_if   	$pop5, .LBB1_3
 # BB#2:                                 # %if.end3
 	return  	$0
-BB1_3:                                  # %if.then2
+.LBB1_3:                                  # %if.then2
 	call    	abort
 	unreachable
-BB1_4:                                  # %if.then
+.LBB1_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	y,@object               # @y
 	.bss

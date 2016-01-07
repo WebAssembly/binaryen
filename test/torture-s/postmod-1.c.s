@@ -20,10 +20,10 @@ foo:                                    # @foo
 	i32.add 	$20=, $pop5, $6
 	i32.const	$push6=, array5
 	i32.add 	$19=, $pop6, $6
-BB0_1:                                  # %do.body
+.LBB0_1:                                  # %do.body
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB0_2 Depth 2
-	loop    	BB0_4
+                                        #     Child Loop .LBB0_2 Depth 2
+	loop    	.LBB0_4
 	i32.const	$0=, 0
 	f32.load	$8=, 0($23)
 	f32.load	$9=, counter1($0)
@@ -86,10 +86,10 @@ BB0_1:                                  # %do.body
 	i32.load	$4=, vol($0)
 	i32.load	$5=, vol($0)
 	i32.const	$25=, 10
-BB0_2:                                  # %for.body
-                                        #   Parent Loop BB0_1 Depth=1
+.LBB0_2:                                  # %for.body
+                                        #   Parent Loop .LBB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	BB0_3
+	loop    	.LBB0_3
 	i32.load	$push32=, vol($0)
 	i32.add 	$push33=, $pop32, $1
 	i32.store	$discard=, vol($0), $pop33
@@ -107,17 +107,17 @@ BB0_2:                                  # %for.body
 	i32.store	$discard=, vol($0), $pop41
 	i32.const	$push42=, -1
 	i32.add 	$25=, $25, $pop42
-	br_if   	$25, BB0_2
-BB0_3:                                  # %for.end
-                                        #   in Loop: Header=BB0_1 Depth=1
+	br_if   	$25, .LBB0_2
+.LBB0_3:                                  # %for.end
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.load	$push43=, stop($0)
 	i32.const	$push44=, 0
 	i32.eq  	$push45=, $pop43, $pop44
-	br_if   	$pop45, BB0_1
-BB0_4:                                  # %do.end
+	br_if   	$pop45, .LBB0_1
+.LBB0_4:                                  # %do.end
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -161,8 +161,8 @@ main:                                   # @main
 	f32.ne  	$push28=, $pop27, $1
 	i32.or  	$push29=, $pop26, $pop28
 	return  	$pop29
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	counter0,@object        # @counter0
 	.bss

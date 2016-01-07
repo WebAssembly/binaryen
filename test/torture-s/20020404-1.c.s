@@ -18,8 +18,8 @@ main:                                   # @main
 	i64.store	$discard=, bfd_make_section_anyway.foo_section+24($0), $pop5
 	call    	exit, $0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	bfd_make_section_anyway.foo_section,@object # @bfd_make_section_anyway.foo_section
 	.lcomm	bfd_make_section_anyway.foo_section,32,3

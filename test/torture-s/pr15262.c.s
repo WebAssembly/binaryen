@@ -8,8 +8,8 @@ bar:                                    # @bar
 	i32.const	$push0=, 1084647014
 	i32.store	$discard=, 0($0), $pop0
 	return
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	foo
 	.type	foo,@function
@@ -38,8 +38,8 @@ foo:                                    # @foo
 	i32.const	$5=, __stack_pointer
 	i32.store	$5=, 0($5), $5
 	return  	$pop3
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.globl	main
 	.type	main,@function
@@ -48,8 +48,8 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

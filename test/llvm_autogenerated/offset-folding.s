@@ -6,8 +6,8 @@ test0:
 	.result 	i32
 	i32.const	$push0=, x+188
 	return  	$pop0
-func_end0:
-	.size	test0, func_end0-test0
+.Lfunc_end0:
+	.size	test0, .Lfunc_end0-test0
 
 	.globl	test1
 	.type	test1,@function
@@ -15,8 +15,8 @@ test1:
 	.result 	i32
 	i32.const	$push0=, y+188
 	return  	$pop0
-func_end1:
-	.size	test1, func_end1-test1
+.Lfunc_end1:
+	.size	test1, .Lfunc_end1-test1
 
 	.globl	test2
 	.type	test2,@function
@@ -24,8 +24,8 @@ test2:
 	.result 	i32
 	i32.const	$push0=, x
 	return  	$pop0
-func_end2:
-	.size	test2, func_end2-test2
+.Lfunc_end2:
+	.size	test2, .Lfunc_end2-test2
 
 	.globl	test3
 	.type	test3,@function
@@ -33,8 +33,8 @@ test3:
 	.result 	i32
 	i32.const	$push0=, y
 	return  	$pop0
-func_end3:
-	.size	test3, func_end3-test3
+.Lfunc_end3:
+	.size	test3, .Lfunc_end3-test3
 
 	.type	x,@object
 	.bss

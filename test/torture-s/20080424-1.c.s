@@ -8,7 +8,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
 	i32.load	$2=, bar.i($3)
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.const	$push0=, 36
 	i32.mul 	$push1=, $2, $pop0
 	i32.const	$push2=, g
@@ -16,20 +16,20 @@ bar:                                    # @bar
 	i32.const	$push3=, 288
 	i32.add 	$push4=, $4, $pop3
 	i32.ne  	$push5=, $pop4, $0
-	br_if   	$pop5, BB0_3
+	br_if   	$pop5, .LBB0_3
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push6=, 1
 	i32.add 	$push7=, $2, $pop6
 	i32.store	$discard=, bar.i($3), $pop7
 	i32.ne  	$push8=, $4, $1
-	br_if   	$pop8, BB0_3
+	br_if   	$pop8, .LBB0_3
 # BB#2:                                 # %if.end
 	return
-BB0_3:                                  # %if.then
+.LBB0_3:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	main
 	.type	main,@function
@@ -62,8 +62,8 @@ main:                                   # @main
 	call    	bar, $pop15, $pop14
 	i32.const	$push16=, 0
 	return  	$pop16
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	bar.i,@object           # @bar.i
 	.lcomm	bar.i,4,2

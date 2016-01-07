@@ -7,8 +7,8 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	i32.const	$push0=, .str
 	return  	$pop0
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	f
 	.type	f,@function
@@ -21,8 +21,8 @@ f:                                      # @f
 	i32.const	$push2=, .str
 	i32.select	$push4=, $pop1, $pop3, $pop2
 	return  	$pop4
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -35,8 +35,8 @@ main:                                   # @main
 	i32.store	$discard=, v($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

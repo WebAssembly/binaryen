@@ -17,8 +17,8 @@ main:                                   # @main
 	i32.store	$discard=, s1+16($0), $pop3
 	call    	exit, $0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	func1
 	.type	func1,@function
@@ -28,8 +28,8 @@ func1:                                  # @func1
 # BB#0:                                 # %entry
 	i32.load	$push0=, 0($0)
 	return  	$pop0
-func_end1:
-	.size	func1, func_end1-func1
+.Lfunc_end1:
+	.size	func1, .Lfunc_end1-func1
 
 	.globl	foo
 	.type	foo,@function
@@ -39,8 +39,8 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$1
-func_end2:
-	.size	foo, func_end2-foo
+.Lfunc_end2:
+	.size	foo, .Lfunc_end2-foo
 
 	.type	s1,@object              # @s1
 	.bss

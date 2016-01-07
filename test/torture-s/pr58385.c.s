@@ -9,8 +9,8 @@ foo:                                    # @foo
 	i32.const	$0=, 0
 	i32.store	$push0=, b($0), $0
 	return  	$pop0
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -21,8 +21,8 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.store	$push0=, b($0), $0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	b,@object               # @b
 	.data

@@ -17,8 +17,8 @@ build:                                  # @build
 	i64.or  	$push6=, $pop3, $pop5
 	i64.store	$push7=, back($2), $pop6
 	return  	$pop7
-func_end0:
-	.size	build, func_end0-build
+.Lfunc_end0:
+	.size	build, .Lfunc_end0-build
 
 	.globl	main
 	.type	main,@function
@@ -35,8 +35,8 @@ main:                                   # @main
 	i64.store	$discard=, back($0), $pop2
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	hpart,@object           # @hpart
 	.bss

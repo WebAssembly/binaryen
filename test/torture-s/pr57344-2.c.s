@@ -5,19 +5,19 @@
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, -3161
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	#APP
 	#NO_APP
 	return
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -27,11 +27,11 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load	$2=, i($0)
-	block   	BB1_3
+	block   	.LBB1_3
 	i64.const	$push0=, 562525691183104
 	i64.store	$discard=, s+8($0), $pop0
 	i32.gt_s	$push1=, $2, $0
-	br_if   	$pop1, BB1_3
+	br_if   	$pop1, .LBB1_3
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push2=, -3161
 	call    	foo, $pop2
@@ -41,10 +41,10 @@ main:                                   # @main
 	i32.store	$discard=, i($0), $pop3
 	i32.const	$push4=, -1
 	i32.gt_s	$push5=, $2, $pop4
-	br_if   	$pop5, BB1_3
-BB1_2:                                  # %for.body.for.body_crit_edge
+	br_if   	$pop5, .LBB1_3
+.LBB1_2:                                  # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_3
+	loop    	.LBB1_3
 	i32.const	$2=, s+8
 	i64.load32_u	$push17=, s+8($0)
 	i32.const	$push11=, 4
@@ -69,11 +69,11 @@ BB1_2:                                  # %for.body.for.body_crit_edge
 	i32.add 	$push24=, $2, $1
 	i32.store	$discard=, i($0), $pop24
 	i32.lt_s	$push25=, $2, $0
-	br_if   	$pop25, BB1_2
-BB1_3:                                  # %for.end
+	br_if   	$pop25, .LBB1_2
+.LBB1_3:                                  # %for.end
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	s,@object               # @s
 	.bss

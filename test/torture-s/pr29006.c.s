@@ -30,8 +30,8 @@ foo:                                    # @foo
 	i32.add 	$push14=, $0, $pop13
 	i64.store8	$discard=, 0($pop14), $1
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -141,8 +141,8 @@ main:                                   # @main
 	i32.const	$11=, __stack_pointer
 	i32.store	$18=, 0($11), $18
 	return  	$pop65
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	main.s,@object          # @main.s
 	.section	.rodata,"a",@progbits

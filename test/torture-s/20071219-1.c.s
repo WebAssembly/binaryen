@@ -7,38 +7,38 @@ foo:                                    # @foo
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
-BB0_1:                                  # %for.body
+.LBB0_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB0_6
-	loop    	BB0_5
+	block   	.LBB0_6
+	loop    	.LBB0_5
 	i32.add 	$2=, $0, $3
 	i32.load8_u	$push0=, 0($2)
-	br_if   	$pop0, BB0_6
+	br_if   	$pop0, .LBB0_6
 # BB#2:                                 # %if.else
-                                        #   in Loop: Header=BB0_1 Depth=1
-	block   	BB0_4
+                                        #   in Loop: Header=.LBB0_1 Depth=1
+	block   	.LBB0_4
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $1, $pop5
-	br_if   	$pop6, BB0_4
+	br_if   	$pop6, .LBB0_4
 # BB#3:                                 # %if.then3
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.store8	$discard=, 0($2), $1
-BB0_4:                                  # %for.inc
-                                        #   in Loop: Header=BB0_1 Depth=1
+.LBB0_4:                                  # %for.inc
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push1=, 1
 	i32.add 	$3=, $3, $pop1
 	i32.const	$push2=, 25
 	i32.lt_u	$push3=, $3, $pop2
-	br_if   	$pop3, BB0_1
-BB0_5:                                  # %for.end
+	br_if   	$pop3, .LBB0_1
+.LBB0_5:                                  # %for.end
 	i32.const	$push4=, 0
 	i32.store	$discard=, p($pop4), $0
 	return
-BB0_6:                                  # %if.then
+.LBB0_6:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	test1
 	.type	test1,@function
@@ -109,8 +109,8 @@ test1:                                  # @test1
 	i32.const	$12=, __stack_pointer
 	i32.store	$22=, 0($12), $22
 	return
-func_end1:
-	.size	test1, func_end1-test1
+.Lfunc_end1:
+	.size	test1, .Lfunc_end1-test1
 
 	.globl	test2
 	.type	test2,@function
@@ -300,8 +300,8 @@ test2:                                  # @test2
 	i32.const	$16=, __stack_pointer
 	i32.store	$26=, 0($16), $26
 	return
-func_end2:
-	.size	test2, func_end2-test2
+.Lfunc_end2:
+	.size	test2, .Lfunc_end2-test2
 
 	.globl	test3
 	.type	test3,@function
@@ -372,8 +372,8 @@ test3:                                  # @test3
 	i32.const	$11=, __stack_pointer
 	i32.store	$23=, 0($11), $23
 	return
-func_end3:
-	.size	test3, func_end3-test3
+.Lfunc_end3:
+	.size	test3, .Lfunc_end3-test3
 
 	.globl	main
 	.type	main,@function
@@ -385,8 +385,8 @@ main:                                   # @main
 	call    	test3
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end4:
-	.size	main, func_end4-main
+.Lfunc_end4:
+	.size	main, .Lfunc_end4-main
 
 	.type	p,@object               # @p
 	.bss

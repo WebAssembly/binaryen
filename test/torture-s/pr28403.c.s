@@ -16,8 +16,8 @@ foo:                                    # @foo
 	i32.add 	$push6=, $pop5, $7
 	i32.store	$discard=, global($pop7), $pop6
 	return  	$7
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
@@ -36,29 +36,29 @@ bar:                                    # @bar
 	i64.load32_u	$push5=, global($pop4)
 	i64.shr_u	$push6=, $0, $pop5
 	return  	$pop6
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB2_2
+	block   	.LBB2_2
 	i64.const	$push0=, 81985529216486895
 	i64.call	$push1=, bar, $pop0
 	i64.const	$push2=, 312749974122
 	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB2_2
+	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	call    	exit, $pop4
 	unreachable
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	global,@object          # @global
 	.bss

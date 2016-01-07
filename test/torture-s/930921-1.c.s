@@ -13,8 +13,8 @@ f:                                      # @f
 	i64.shr_u	$push4=, $pop2, $pop3
 	i32.wrap/i64	$push5=, $pop4
 	return  	$pop5
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -24,10 +24,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i64.const	$0=, 2863311531
 	i32.const	$2=, 0
-BB1_1:                                  # %for.body
+.LBB1_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB1_4
-	loop    	BB1_3
+	block   	.LBB1_4
+	loop    	.LBB1_3
 	i32.const	$push5=, 3
 	i32.div_u	$1=, $2, $pop5
 	i64.extend_u/i32	$push0=, $2
@@ -36,23 +36,23 @@ BB1_1:                                  # %for.body
 	i64.shr_u	$push3=, $pop1, $pop2
 	i32.wrap/i64	$push4=, $pop3
 	i32.ne  	$push6=, $pop4, $1
-	br_if   	$pop6, BB1_4
+	br_if   	$pop6, .LBB1_4
 # BB#2:                                 # %for.cond
-                                        #   in Loop: Header=BB1_1 Depth=1
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.const	$push7=, 1
 	i32.add 	$2=, $2, $pop7
 	i32.const	$push8=, 9999
 	i32.le_u	$push9=, $2, $pop8
-	br_if   	$pop9, BB1_1
-BB1_3:                                  # %for.end
+	br_if   	$pop9, .LBB1_1
+.LBB1_3:                                  # %for.end
 	i32.const	$push10=, 0
 	call    	exit, $pop10
 	unreachable
-BB1_4:                                  # %if.then
+.LBB1_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

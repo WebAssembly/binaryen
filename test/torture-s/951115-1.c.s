@@ -10,8 +10,8 @@ g:                                      # @g
 	i32.const	$push1=, 1
 	i32.store	$discard=, var($pop0), $pop1
 	return  	$0
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	f
 	.type	f,@function
@@ -23,8 +23,8 @@ f:                                      # @f
 	i32.const	$push1=, 1
 	i32.store	$discard=, var($pop0), $pop1
 	return  	$0
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -37,8 +37,8 @@ main:                                   # @main
 	i32.store	$discard=, var($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	var,@object             # @var
 	.bss

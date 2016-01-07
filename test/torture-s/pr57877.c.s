@@ -9,22 +9,22 @@ main:                                   # @main
 	i32.const	$3=, 0
 	i32.load	$7=, g($3)
 	i32.const	$4=, 1
-	block   	BB0_5
-	block   	BB0_2
+	block   	.LBB0_5
+	block   	.LBB0_2
 	i32.lt_s	$push2=, $7, $4
-	br_if   	$pop2, BB0_2
+	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %entry.foo.exit_crit_edge
 	i32.load	$6=, e($3)
-	br      	BB0_5
-BB0_2:                                  # %for.body.lr.ph.i
+	br      	.LBB0_5
+.LBB0_2:                                  # %for.body.lr.ph.i
 	i64.load32_s	$0=, f($3)
 	i32.load	$1=, c($3)
 	i32.load	$2=, a($3)
 	i32.const	$push3=, -1
 	i32.add 	$7=, $7, $pop3
-BB0_3:                                  # %for.body.i
+.LBB0_3:                                  # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_4
+	loop    	.LBB0_4
 	i32.load	$push0=, 0($1)
 	i32.store	$5=, h($3), $pop0
 	i32.const	$6=, 16
@@ -39,20 +39,20 @@ BB0_3:                                  # %for.body.i
 	i32.store	$6=, e($3), $pop1
 	i32.add 	$7=, $7, $4
 	i32.lt_s	$push10=, $7, $3
-	br_if   	$pop10, BB0_3
-BB0_4:                                  # %for.cond.for.end_crit_edge.i
+	br_if   	$pop10, .LBB0_3
+.LBB0_4:                                  # %for.cond.for.end_crit_edge.i
 	i32.store16	$discard=, d($3), $5
-BB0_5:                                  # %foo.exit
-	block   	BB0_7
+.LBB0_5:                                  # %foo.exit
+	block   	.LBB0_7
 	i32.ne  	$push11=, $6, $4
-	br_if   	$pop11, BB0_7
+	br_if   	$pop11, .LBB0_7
 # BB#6:                                 # %if.end
 	return  	$3
-BB0_7:                                  # %if.then
+.LBB0_7:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	b,@object               # @b
 	.bss

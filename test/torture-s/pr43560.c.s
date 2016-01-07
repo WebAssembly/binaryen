@@ -7,13 +7,13 @@ test:                                   # @test
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.load	$3=, 4($0)
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.const	$push0=, 2
 	i32.lt_s	$push1=, $3, $pop0
-	br_if   	$pop1, BB0_3
-BB0_1:                                  # %land.rhs
+	br_if   	$pop1, .LBB0_3
+.LBB0_1:                                  # %land.rhs
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_3
+	loop    	.LBB0_3
 	i32.const	$push2=, -1
 	i32.add 	$3=, $3, $pop2
 	i32.add 	$push3=, $0, $3
@@ -22,9 +22,9 @@ BB0_1:                                  # %land.rhs
 	i32.load8_u	$push5=, 0($1)
 	i32.const	$push6=, 47
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, BB0_3
+	br_if   	$pop7, .LBB0_3
 # BB#2:                                 # %while.body
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push8=, 4
 	i32.add 	$2=, $0, $pop8
 	i32.store	$discard=, 0($2), $3
@@ -33,11 +33,11 @@ BB0_1:                                  # %land.rhs
 	i32.load	$3=, 0($2)
 	i32.const	$push10=, 1
 	i32.gt_s	$push11=, $3, $pop10
-	br_if   	$pop11, BB0_1
-BB0_3:                                  # %while.end
+	br_if   	$pop11, .LBB0_1
+.LBB0_3:                                  # %while.end
 	return
-func_end0:
-	.size	test, func_end0-test
+.Lfunc_end0:
+	.size	test, .Lfunc_end0-test
 
 	.globl	main
 	.type	main,@function
@@ -51,8 +51,8 @@ main:                                   # @main
 	call    	test, $0
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	s,@object               # @s
 	.section	.rodata,"a",@progbits

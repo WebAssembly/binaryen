@@ -8,29 +8,29 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$7=, 1
-	block   	BB0_5
+	block   	.LBB0_5
 	i32.const	$push3=, 255
 	i32.and 	$push4=, $6, $pop3
 	i32.ne  	$push5=, $pop4, $7
-	br_if   	$pop5, BB0_5
+	br_if   	$pop5, .LBB0_5
 # BB#1:                                 # %entry
 	i32.xor 	$push0=, $3, $7
-	br_if   	$pop0, BB0_5
+	br_if   	$pop0, .LBB0_5
 # BB#2:                                 # %entry
 	i32.xor 	$push1=, $4, $7
-	br_if   	$pop1, BB0_5
+	br_if   	$pop1, .LBB0_5
 # BB#3:                                 # %entry
 	i32.xor 	$push2=, $5, $7
-	br_if   	$pop2, BB0_5
+	br_if   	$pop2, .LBB0_5
 # BB#4:                                 # %if.end
 	i32.add 	$push6=, $1, $0
 	i32.add 	$push7=, $pop6, $2
 	return  	$pop7
-BB0_5:                                  # %if.then
+.LBB0_5:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -40,8 +40,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

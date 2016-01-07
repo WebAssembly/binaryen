@@ -19,8 +19,8 @@ f:                                      # @f
 	i32.store	$discard=, j($3), $pop5
 	i32.add 	$push0=, $0, $1
 	return  	$pop0
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -34,8 +34,8 @@ main:                                   # @main
 	i32.store	$discard=, j($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	i,@object               # @i
 	.bss

@@ -20,8 +20,8 @@ main:                                   # @main
 	i64.store	$discard=, f($2), $pop4
 	call    	exit, $2
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	s,@object               # @s
 	.bss

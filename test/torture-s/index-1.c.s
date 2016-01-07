@@ -14,8 +14,8 @@ f:                                      # @f
 	i32.add 	$push5=, $pop3, $pop4
 	i32.load	$push6=, 0($pop5)
 	return  	$pop6
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -24,19 +24,19 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.load	$push0=, a+120($0)
 	i32.const	$push1=, 30
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB1_2
+	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	a,@object               # @a
 	.data

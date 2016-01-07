@@ -10,8 +10,8 @@ foo:                                    # @foo
 	i32.const	$push1=, 0
 	i32.store	$discard=, p($pop1), $1
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	test
 	.type	test,@function
@@ -104,22 +104,22 @@ test:                                   # @test
 	i32.const	$28=, 0
 	i32.add 	$28=, $29, $28
 	call    	memcpy, $0, $28, $2
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.load	$push18=, 0($29)
 	i32.const	$push19=, -1
 	i32.ne  	$push20=, $pop18, $pop19
-	br_if   	$pop20, BB1_2
+	br_if   	$pop20, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$10=, 128
 	i32.add 	$29=, $29, $10
 	i32.const	$10=, __stack_pointer
 	i32.store	$29=, 0($10), $29
 	return
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	test, func_end1-test
+.Lfunc_end1:
+	.size	test, .Lfunc_end1-test
 
 	.globl	main
 	.type	main,@function
@@ -213,22 +213,22 @@ main:                                   # @main
 	i32.const	$28=, 0
 	i32.add 	$28=, $29, $28
 	call    	memcpy, $0, $28, $2
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.load	$push17=, 0($29)
 	i32.const	$push18=, -1
 	i32.ne  	$push19=, $pop17, $pop18
-	br_if   	$pop19, BB2_2
+	br_if   	$pop19, .LBB2_2
 # BB#1:                                 # %test.exit
 	i32.const	$10=, 128
 	i32.add 	$29=, $29, $10
 	i32.const	$10=, __stack_pointer
 	i32.store	$29=, 0($10), $29
 	return  	$3
-BB2_2:                                  # %if.then.i
+.LBB2_2:                                  # %if.then.i
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	p,@object               # @p
 	.bss

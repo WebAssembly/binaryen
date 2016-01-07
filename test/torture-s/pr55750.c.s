@@ -14,8 +14,8 @@ foo:                                    # @foo
 	i32.add 	$push3=, $pop2, $1
 	i32.store8	$discard=, 0($0), $pop3
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -29,25 +29,25 @@ main:                                   # @main
 	i32.const	$push2=, 254
 	i32.store8	$discard=, arr+4($0), $pop2
 	call    	foo, $0
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.const	$push3=, 1
 	call    	foo, $pop3
 	i32.load8_u	$push4=, arr($0)
 	i32.const	$push5=, 129
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, BB1_3
+	br_if   	$pop6, .LBB1_3
 # BB#1:                                 # %entry
 	i32.load8_u	$push0=, arr+4($0)
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop0, $pop7
-	br_if   	$pop8, BB1_3
+	br_if   	$pop8, .LBB1_3
 # BB#2:                                 # %if.end
 	return  	$0
-BB1_3:                                  # %if.then
+.LBB1_3:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	arr,@object             # @arr
 	.bss

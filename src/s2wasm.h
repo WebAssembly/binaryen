@@ -752,8 +752,8 @@ private:
         bstack.back()->list.push_back(curr);
         bstack.push_back(curr);
         seenLabels.insert(curr->name);
-      } else if (match("BB")) {
-        s -= 2;
+      } else if (match(".LBB")) {
+        s -= 4;
         lastLabel = getStrToColon();
         s++;
         skipWhitespace();
@@ -825,7 +825,7 @@ private:
         makeHost(MemorySize);
       } else if (match("grow_memory")) {
         makeHost1(GrowMemory);
-      } else if (match("func_end")) {
+      } else if (match(".Lfunc_end")) {
         s = strchr(s, '\n');
         s++;
         s = strchr(s, '\n');

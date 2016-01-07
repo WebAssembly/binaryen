@@ -16,8 +16,8 @@ main:                                   # @main
 	i32.store	$discard=, level($0), $pop3
 	call    	exit, $0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	foo
 	.type	foo,@function
@@ -35,8 +35,8 @@ foo:                                    # @foo
 	i32.store	$discard=, level($0), $pop3
 	i32.const	$push4=, -42
 	return  	$pop4
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.globl	bar
 	.type	bar,@function
@@ -47,17 +47,17 @@ bar:                                    # @bar
 	i32.const	$push0=, 0
 	i32.load	$0=, level($pop0)
 	i32.const	$1=, -42
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push1=, 499
 	i32.gt_s	$push2=, $0, $pop1
-	br_if   	$pop2, BB2_2
+	br_if   	$pop2, .LBB2_2
 # BB#1:                                 # %cond.false
 	i32.call	$1=, foo
-BB2_2:                                  # %cond.end
+.LBB2_2:                                  # %cond.end
 	i32.sub 	$push3=, $1, $0
 	return  	$pop3
-func_end2:
-	.size	bar, func_end2-bar
+.Lfunc_end2:
+	.size	bar, .Lfunc_end2-bar
 
 	.type	level,@object           # @level
 	.bss

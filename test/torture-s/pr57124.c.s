@@ -6,20 +6,20 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.load16_u	$push0=, 0($0)
 	i32.const	$push1=, 4095
 	i32.gt_u	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB0_2
+	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %if.then
 	call    	abort
 	unreachable
-BB0_2:                                  # %if.end
+.LBB0_2:                                  # %if.end
 	i32.const	$push3=, 0
 	call    	exit, $pop3
 	unreachable
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -43,8 +43,8 @@ main:                                   # @main
 	i32.add 	$3=, $4, $3
 	i32.call	$discard=, foo, $2, $3
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

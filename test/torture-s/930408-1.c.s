@@ -7,8 +7,8 @@ p:                                      # @p
 # BB#0:                                 # %entry
 	call    	abort
 	unreachable
-func_end0:
-	.size	p, func_end0-p
+.Lfunc_end0:
+	.size	p, .Lfunc_end0-p
 
 	.globl	f
 	.type	f,@function
@@ -16,19 +16,19 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 0
 	i32.load	$push1=, s($pop0)
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB1_2
+	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %sw.epilog
 	return  	$0
-BB1_2:                                  # %sw.bb
+.LBB1_2:                                  # %sw.bb
 	i32.call	$discard=, p
 	unreachable
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -41,8 +41,8 @@ main:                                   # @main
 	i32.store	$discard=, s($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	s,@object               # @s
 	.bss

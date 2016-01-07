@@ -8,41 +8,41 @@ f:                                      # @f
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	copy_local	$6=, $0
-	block   	BB0_7
+	block   	.LBB0_7
 	i32.lt_u	$push0=, $3, $4
-	br_if   	$pop0, BB0_7
-BB0_1:                                  # %if.end
+	br_if   	$pop0, .LBB0_7
+.LBB0_1:                                  # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_5
+	loop    	.LBB0_5
 	i32.load	$5=, 0($3)
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.ge_u	$push1=, $5, $2
-	br_if   	$pop1, BB0_4
+	br_if   	$pop1, .LBB0_4
 # BB#2:                                 # %if.end
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.lt_u	$push2=, $5, $1
-	br_if   	$pop2, BB0_4
+	br_if   	$pop2, .LBB0_4
 # BB#3:                                 # %if.then3
-                                        #   in Loop: Header=BB0_1 Depth=1
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push3=, -4
 	i32.add 	$6=, $6, $pop3
 	i32.store	$discard=, 0($6), $5
-BB0_4:                                  # %if.end4
-                                        #   in Loop: Header=BB0_1 Depth=1
+.LBB0_4:                                  # %if.end4
+                                        #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push4=, -4
 	i32.add 	$3=, $3, $pop4
 	i32.ge_u	$push5=, $3, $4
-	br_if   	$pop5, BB0_1
-BB0_5:                                  # %out
+	br_if   	$pop5, .LBB0_1
+.LBB0_5:                                  # %out
 	i32.eq  	$push6=, $6, $0
-	br_if   	$pop6, BB0_7
+	br_if   	$pop6, .LBB0_7
 # BB#6:                                 # %if.then7
 	call    	abort
 	unreachable
-BB0_7:                                  # %if.end8
+.LBB0_7:                                  # %if.end8
 	return  	$3
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -55,8 +55,8 @@ main:                                   # @main
 	i32.store	$discard=, mem+396($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	mem,@object             # @mem
 	.bss

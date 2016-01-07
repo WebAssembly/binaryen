@@ -12,8 +12,8 @@ test1:                                  # @test1
 	i32.const	$push4=, 8388607
 	i32.xor 	$push5=, $pop3, $pop4
 	return  	$pop5
-func_end0:
-	.size	test1, func_end0-test1
+.Lfunc_end0:
+	.size	test1, .Lfunc_end0-test1
 
 	.globl	test2
 	.type	test2,@function
@@ -22,8 +22,8 @@ test2:                                  # @test2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 8388607
 	return  	$pop0
-func_end1:
-	.size	test2, func_end1-test2
+.Lfunc_end1:
+	.size	test2, .Lfunc_end1-test2
 
 	.globl	main
 	.type	main,@function
@@ -36,8 +36,8 @@ main:                                   # @main
 	i32.store8	$push1=, a($0), $pop0
 	i32.store8	$discard=, b($0), $pop1
 	return  	$0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	a,@object               # @a
 	.bss

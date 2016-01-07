@@ -9,8 +9,8 @@ foo:                                    # @foo
 	i32.const	$push0=, 8
 	i32.store	$discard=, 0($0), $pop0
 	return  	$0
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bugger
 	.type	bugger,@function
@@ -19,8 +19,8 @@ bugger:                                 # @bugger
 # BB#0:                                 # %sw.epilog
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	bugger, func_end1-bugger
+.Lfunc_end1:
+	.size	bugger, .Lfunc_end1-bugger
 
 	.globl	main
 	.type	main,@function
@@ -30,8 +30,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

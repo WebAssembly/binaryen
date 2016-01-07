@@ -21,8 +21,8 @@ bar:                                    # @bar
 	i32.const	$push5=, 2
 	i32.select	$push7=, $0, $pop6, $pop5
 	return  	$pop7
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	main
 	.type	main,@function
@@ -42,8 +42,8 @@ main:                                   # @main
 	i32.store16	$discard=, foo($0), $pop5
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	foo,@object             # @foo
 	.bss

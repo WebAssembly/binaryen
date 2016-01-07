@@ -23,25 +23,25 @@ main:                                   # @main
 	i64.store	$discard=, 0($6), $pop3
 	i32.const	$5=, 0
 	i32.add 	$5=, $6, $5
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.call	$push4=, strlen, $5
 	i32.store8	$push5=, 0($6), $pop4
 	i32.const	$push6=, 255
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push8=, 10
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, BB0_2
+	br_if   	$pop9, .LBB0_2
 # BB#1:                                 # %if.end
 	i32.const	$3=, 16
 	i32.add 	$6=, $6, $3
 	i32.const	$3=, __stack_pointer
 	i32.store	$6=, 0($3), $6
 	return  	$0
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	main.buf,@object        # @main.buf
 	.section	.rodata.cst16,"aM",@progbits,16

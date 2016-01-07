@@ -5,19 +5,19 @@
 do_mknod:                               # @do_mknod
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 360710264
 	i32.ne  	$push1=, $2, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
 	call    	exit, $pop2
 	unreachable
-BB0_2:                                  # %if.else
+.LBB0_2:                                  # %if.else
 	call    	abort
 	unreachable
-func_end0:
-	.size	do_mknod, func_end0-do_mknod
+.Lfunc_end0:
+	.size	do_mknod, .Lfunc_end0-do_mknod
 
 	.globl	getname
 	.type	getname,@function
@@ -65,8 +65,8 @@ getname:                                # @getname
 	i32.add 	$push34=, $pop33, $pop30
 	i32.add 	$push35=, $pop34, $1
 	return  	$pop35
-func_end1:
-	.size	getname, func_end1-getname
+.Lfunc_end1:
+	.size	getname, .Lfunc_end1-getname
 
 	.globl	sys_mknod
 	.type	sys_mknod,@function
@@ -74,7 +74,7 @@ sys_mknod:                              # @sys_mknod
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push0=, 14
 	i32.shl 	$push1=, $2, $pop0
 	i32.const	$push2=, -4194304
@@ -84,16 +84,16 @@ sys_mknod:                              # @sys_mknod
 	i32.or  	$push6=, $pop3, $pop5
 	i32.const	$push7=, 360710264
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, BB2_2
+	br_if   	$pop8, .LBB2_2
 # BB#1:                                 # %if.then.i
 	i32.const	$push9=, 0
 	call    	exit, $pop9
 	unreachable
-BB2_2:                                  # %if.else.i
+.LBB2_2:                                  # %if.else.i
 	call    	abort
 	unreachable
-func_end2:
-	.size	sys_mknod, func_end2-sys_mknod
+.Lfunc_end2:
+	.size	sys_mknod, .Lfunc_end2-sys_mknod
 
 	.globl	main
 	.type	main,@function
@@ -105,8 +105,8 @@ main:                                   # @main
 	i32.const	$push1=, 305419896
 	i32.call	$discard=, sys_mknod, $pop0, $0, $pop1
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

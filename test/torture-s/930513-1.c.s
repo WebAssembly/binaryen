@@ -35,8 +35,8 @@ f:                                      # @f
 	i32.const	$7=, __stack_pointer
 	i32.store	$7=, 0($7), $7
 	return  	$0
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -68,24 +68,24 @@ main:                                   # @main
 	i32.const	$4=, __stack_pointer
 	i32.store	$7=, 0($4), $7
 	i32.const	$0=, 0
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.load8_u	$push4=, buf($0)
 	i32.const	$push5=, 53
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, BB1_3
+	br_if   	$pop6, .LBB1_3
 # BB#1:                                 # %entry
 	i32.load8_u	$push0=, buf+1($0)
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop0, $pop7
-	br_if   	$pop8, BB1_3
+	br_if   	$pop8, .LBB1_3
 # BB#2:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB1_3:                                  # %if.then
+.LBB1_3:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	buf,@object             # @buf
 	.bss

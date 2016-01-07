@@ -7,7 +7,7 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push1=, 512
 	i32.load16_u	$push0=, buf($0)
 	i32.sub 	$push2=, $pop1, $pop0
@@ -19,15 +19,15 @@ main:                                   # @main
 	i32.and 	$push8=, $pop6, $pop7
 	i32.const	$push9=, 491
 	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, BB0_2
+	br_if   	$pop10, .LBB0_2
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	bug
 	.type	bug,@function
@@ -35,12 +35,12 @@ bug:                                    # @bug
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.ge_u	$push0=, $1, $2
-	br_if   	$pop0, BB1_2
-BB1_1:                                  # %for.body
+	br_if   	$pop0, .LBB1_2
+.LBB1_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_2
+	loop    	.LBB1_2
 	i32.const	$push2=, 65535
 	i32.and 	$push3=, $0, $pop2
 	i32.load16_u	$push1=, 0($1)
@@ -48,13 +48,13 @@ BB1_1:                                  # %for.body
 	i32.const	$push4=, 2
 	i32.add 	$1=, $1, $pop4
 	i32.lt_u	$push5=, $1, $2
-	br_if   	$pop5, BB1_1
-BB1_2:                                  # %for.end
+	br_if   	$pop5, .LBB1_1
+.LBB1_2:                                  # %for.end
 	i32.const	$push6=, 65535
 	i32.and 	$push7=, $0, $pop6
 	return  	$pop7
-func_end1:
-	.size	bug, func_end1-bug
+.Lfunc_end1:
+	.size	bug, .Lfunc_end1-bug
 
 	.type	buf,@object             # @buf
 	.data

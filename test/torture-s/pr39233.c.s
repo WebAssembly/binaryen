@@ -5,21 +5,21 @@
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_3
+	br_if   	$pop1, .LBB0_3
 # BB#1:                                 # %entry
 	i32.const	$push2=, 7
 	i32.ge_s	$push3=, $0, $pop2
-	br_if   	$pop3, BB0_3
+	br_if   	$pop3, .LBB0_3
 # BB#2:                                 # %if.end
 	return
-BB0_3:                                  # %if.then
+.LBB0_3:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -42,8 +42,8 @@ main:                                   # @main
 	i32.const	$0=, 0
 	call    	foo, $0
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

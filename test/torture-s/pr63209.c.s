@@ -21,8 +21,8 @@ Predictor:                              # @Predictor
 	i32.le_s	$push8=, $pop7, $pop1
 	i32.select	$push9=, $pop8, $2, $0
 	return  	$pop9
-func_end0:
-	.size	Predictor, func_end0-Predictor
+.Lfunc_end0:
+	.size	Predictor, .Lfunc_end0-Predictor
 
 	.globl	main
 	.type	main,@function
@@ -35,8 +35,8 @@ main:                                   # @main
 	i32.call	$push1=, Predictor, $0, $pop0
 	i32.ne  	$push2=, $pop1, $0
 	return  	$pop2
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	main.top,@object        # @main.top
 	.section	.rodata,"a",@progbits

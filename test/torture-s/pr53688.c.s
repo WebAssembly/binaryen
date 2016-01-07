@@ -40,8 +40,8 @@ init:                                   # @init
 	i64.const	$push23=, 83
 	i64.store8	$discard=, p+9($pop22), $pop23
 	return
-func_end0:
-	.size	init, func_end0-init
+.Lfunc_end0:
+	.size	init, .Lfunc_end0-init
 
 	.globl	main
 	.type	main,@function
@@ -91,7 +91,7 @@ main:                                   # @main
 	i64.store16	$discard=, 0($pop25), $pop12
 	i32.const	$1=, 0
 	i64.load8_u	$6=, p+9($1)
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.add 	$push26=, $11, $4
 	i64.shl 	$push5=, $2, $3
 	i64.or  	$push7=, $pop5, $5
@@ -107,14 +107,14 @@ main:                                   # @main
 	i32.and 	$push32=, $pop30, $pop31
 	i32.const	$push33=, 83
 	i32.ne  	$push34=, $pop32, $pop33
-	br_if   	$pop34, BB1_2
+	br_if   	$pop34, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$1
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	p,@object               # @p
 	.bss

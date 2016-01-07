@@ -8,29 +8,29 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.load	$push0=, Upgd_minor_ID($2)
 	i32.load	$push1=, 0($pop0)
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB0_4
+	br_if   	$pop3, .LBB0_4
 # BB#1:                                 # %if.end
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.load	$push4=, Upgd_minor_ID1($2)
 	i32.load	$push5=, 0($pop4)
 	i32.const	$push6=, 1
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, BB0_3
+	br_if   	$pop7, .LBB0_3
 # BB#2:                                 # %if.end3
 	return  	$2
-BB0_3:                                  # %if.then2
+.LBB0_3:                                  # %if.then2
 	call    	abort
 	unreachable
-BB0_4:                                  # %if.then
+.LBB0_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

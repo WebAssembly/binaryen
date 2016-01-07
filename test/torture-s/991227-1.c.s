@@ -12,8 +12,8 @@ doit:                                   # @doit
 	i32.const	$push3=, 1
 	i32.add 	$push4=, $pop2, $pop3
 	return  	$pop4
-func_end0:
-	.size	doit, func_end0-doit
+.Lfunc_end0:
+	.size	doit, .Lfunc_end0-doit
 
 	.globl	main
 	.type	main,@function
@@ -23,8 +23,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.cst8,"aM",@progbits,8

@@ -8,8 +8,8 @@ sigfpe:                                 # @sigfpe
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end0:
-	.size	sigfpe, func_end0-sigfpe
+.Lfunc_end0:
+	.size	sigfpe, .Lfunc_end0-sigfpe
 
 	.globl	main
 	.type	main,@function
@@ -21,8 +21,8 @@ main:                                   # @main
 	i32.call	$discard=, signal, $pop1, $pop0
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	k,@object               # @k
 	.bss

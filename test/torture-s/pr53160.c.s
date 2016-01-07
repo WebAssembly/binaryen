@@ -8,8 +8,8 @@ foo:                                    # @foo
 	i32.const	$0=, 0
 	i32.store	$discard=, e($0), $0
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -18,32 +18,32 @@ main:                                   # @main
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.load	$push0=, g($0)
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $pop0, $pop6
-	br_if   	$pop7, BB1_2
+	br_if   	$pop7, .LBB1_2
 # BB#1:                                 # %if.then
 	i32.load	$discard=, b($0)
-BB1_2:                                  # %if.end
+.LBB1_2:                                  # %if.end
 	i32.store	$discard=, e($0), $0
 	i32.load8_s	$1=, f($0)
 	i32.load	$2=, c($0)
-	block   	BB1_4
+	block   	.LBB1_4
 	i32.const	$push2=, -1
 	i32.store	$discard=, d($0), $pop2
 	i32.store16	$push1=, i($0), $1
 	i32.select	$push3=, $2, $pop1, $0
 	i32.store	$push4=, h($0), $pop3
 	i32.store	$push5=, a($0), $pop4
-	br_if   	$pop5, BB1_4
+	br_if   	$pop5, .LBB1_4
 # BB#3:                                 # %if.end16
 	return  	$0
-BB1_4:                                  # %if.then15
+.LBB1_4:                                  # %if.then15
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	c,@object               # @c
 	.data

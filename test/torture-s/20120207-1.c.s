@@ -12,30 +12,30 @@ test:                                   # @test
 	i32.add 	$push3=, $pop1, $pop2
 	i32.load8_s	$push4=, 0($pop3)
 	return  	$pop4
-func_end0:
-	.size	test, func_end0-test
+.Lfunc_end0:
+	.size	test, .Lfunc_end0-test
 
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 2
 	i32.call	$push1=, test, $pop0
 	i32.const	$push2=, 255
 	i32.and 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 49
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, BB1_2
+	br_if   	$pop5, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push6=, 0
 	return  	$pop6
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.16,"aMS",@progbits,1

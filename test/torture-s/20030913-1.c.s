@@ -8,8 +8,8 @@ fn2:                                    # @fn2
 	i32.const	$push0=, glob
 	i32.store	$discard=, 0($0), $pop0
 	return
-func_end0:
-	.size	fn2, func_end0-fn2
+.Lfunc_end0:
+	.size	fn2, .Lfunc_end0-fn2
 
 	.globl	test
 	.type	test,@function
@@ -19,8 +19,8 @@ test:                                   # @test
 	i32.const	$push1=, 42
 	i32.store	$discard=, glob($pop0), $pop1
 	return
-func_end1:
-	.size	test, func_end1-test
+.Lfunc_end1:
+	.size	test, .Lfunc_end1-test
 
 	.globl	main
 	.type	main,@function
@@ -33,8 +33,8 @@ main:                                   # @main
 	i32.store	$discard=, glob($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	glob,@object            # @glob
 	.bss

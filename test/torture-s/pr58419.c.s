@@ -12,8 +12,8 @@ foo:                                    # @foo
 	i32.shl 	$push1=, $pop0, $2
 	i32.shr_s	$push2=, $pop1, $2
 	return  	$pop2
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
@@ -27,8 +27,8 @@ bar:                                    # @bar
 	i32.store16	$discard=, c($0), $pop0
 	i32.store	$push1=, 0($1), $0
 	return  	$pop1
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	main
 	.type	main,@function
@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.const	$6=, 1
 	i32.const	$3=, 255
 	copy_local	$4=, $6
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.load	$push1=, k($1)
 	i32.ne  	$push4=, $pop1, $1
 	i32.and 	$push2=, $5, $2
@@ -55,16 +55,16 @@ main:                                   # @main
 	i32.lt_s	$push7=, $pop6, $6
 	i32.sub 	$push8=, $pop5, $pop7
 	i32.and 	$push9=, $pop8, $3
-	br_if   	$pop9, BB2_2
+	br_if   	$pop9, .LBB2_2
 # BB#1:                                 # %lor.rhs
 	i32.const	$4=, 0
 	i32.const	$push10=, 1
 	i32.store16	$5=, c($4), $pop10
 	i32.store	$discard=, 0($0), $4
-BB2_2:                                  # %lor.end
+.LBB2_2:                                  # %lor.end
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
-	block   	BB2_4
+	block   	.LBB2_4
 	i32.load	$push11=, k($1)
 	i32.ne  	$push14=, $pop11, $1
 	i32.and 	$push12=, $5, $2
@@ -74,16 +74,16 @@ BB2_2:                                  # %lor.end
 	i32.lt_s	$push17=, $pop16, $6
 	i32.sub 	$push18=, $pop15, $pop17
 	i32.and 	$push19=, $pop18, $3
-	br_if   	$pop19, BB2_4
+	br_if   	$pop19, .LBB2_4
 # BB#3:                                 # %lor.rhs.1
 	i32.const	$4=, 0
 	i32.const	$push20=, 1
 	i32.store16	$5=, c($4), $pop20
 	i32.store	$discard=, 0($0), $4
-BB2_4:                                  # %lor.end.1
+.LBB2_4:                                  # %lor.end.1
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
-	block   	BB2_6
+	block   	.LBB2_6
 	i32.load	$push21=, k($1)
 	i32.ne  	$push24=, $pop21, $1
 	i32.and 	$push22=, $5, $2
@@ -93,16 +93,16 @@ BB2_4:                                  # %lor.end.1
 	i32.lt_s	$push27=, $pop26, $6
 	i32.sub 	$push28=, $pop25, $pop27
 	i32.and 	$push29=, $pop28, $3
-	br_if   	$pop29, BB2_6
+	br_if   	$pop29, .LBB2_6
 # BB#5:                                 # %lor.rhs.2
 	i32.const	$4=, 0
 	i32.const	$push30=, 1
 	i32.store16	$5=, c($4), $pop30
 	i32.store	$discard=, 0($0), $4
-BB2_6:                                  # %lor.end.2
+.LBB2_6:                                  # %lor.end.2
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
-	block   	BB2_8
+	block   	.LBB2_8
 	i32.load	$push31=, k($1)
 	i32.ne  	$push34=, $pop31, $1
 	i32.and 	$push32=, $5, $2
@@ -112,16 +112,16 @@ BB2_6:                                  # %lor.end.2
 	i32.lt_s	$push37=, $pop36, $6
 	i32.sub 	$push38=, $pop35, $pop37
 	i32.and 	$push39=, $pop38, $3
-	br_if   	$pop39, BB2_8
+	br_if   	$pop39, .LBB2_8
 # BB#7:                                 # %lor.rhs.3
 	i32.const	$4=, 0
 	i32.const	$push40=, 1
 	i32.store16	$5=, c($4), $pop40
 	i32.store	$discard=, 0($0), $4
-BB2_8:                                  # %lor.end.3
+.LBB2_8:                                  # %lor.end.3
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
-	block   	BB2_10
+	block   	.LBB2_10
 	i32.load	$push41=, k($1)
 	i32.ne  	$push44=, $pop41, $1
 	i32.and 	$push42=, $5, $2
@@ -131,16 +131,16 @@ BB2_8:                                  # %lor.end.3
 	i32.lt_s	$push47=, $pop46, $6
 	i32.sub 	$push48=, $pop45, $pop47
 	i32.and 	$push49=, $pop48, $3
-	br_if   	$pop49, BB2_10
+	br_if   	$pop49, .LBB2_10
 # BB#9:                                 # %lor.rhs.4
 	i32.const	$4=, 0
 	i32.const	$push50=, 1
 	i32.store16	$5=, c($4), $pop50
 	i32.store	$discard=, 0($0), $4
-BB2_10:                                 # %lor.end.4
+.LBB2_10:                                 # %lor.end.4
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
-	block   	BB2_12
+	block   	.LBB2_12
 	i32.load	$push51=, k($1)
 	i32.ne  	$push54=, $pop51, $1
 	i32.and 	$push52=, $5, $2
@@ -150,16 +150,16 @@ BB2_10:                                 # %lor.end.4
 	i32.lt_s	$push57=, $pop56, $6
 	i32.sub 	$push58=, $pop55, $pop57
 	i32.and 	$push59=, $pop58, $3
-	br_if   	$pop59, BB2_12
+	br_if   	$pop59, .LBB2_12
 # BB#11:                                # %lor.rhs.5
 	i32.const	$4=, 0
 	i32.const	$push60=, 1
 	i32.store16	$5=, c($4), $pop60
 	i32.store	$discard=, 0($0), $4
-BB2_12:                                 # %lor.end.5
+.LBB2_12:                                 # %lor.end.5
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
-	block   	BB2_14
+	block   	.LBB2_14
 	i32.load	$push61=, k($1)
 	i32.ne  	$push64=, $pop61, $1
 	i32.and 	$push62=, $5, $2
@@ -169,13 +169,13 @@ BB2_12:                                 # %lor.end.5
 	i32.lt_s	$push67=, $pop66, $6
 	i32.sub 	$push68=, $pop65, $pop67
 	i32.and 	$push69=, $pop68, $3
-	br_if   	$pop69, BB2_14
+	br_if   	$pop69, .LBB2_14
 # BB#13:                                # %lor.rhs.6
 	i32.const	$4=, 0
 	i32.const	$push70=, 1
 	i32.store16	$5=, c($4), $pop70
 	i32.store	$discard=, 0($0), $4
-BB2_14:                                 # %lor.end.6
+.LBB2_14:                                 # %lor.end.6
 	i32.store	$discard=, g($1), $4
 	i32.load	$push71=, k($1)
 	i32.ne  	$push74=, $pop71, $1
@@ -183,17 +183,17 @@ BB2_14:                                 # %lor.end.6
 	i32.ne  	$push73=, $pop72, $1
 	i32.and 	$5=, $pop74, $pop73
 	i32.load	$2=, a($1)
-	block   	BB2_16
+	block   	.LBB2_16
 	i32.load	$push75=, i($1)
 	i32.lt_s	$push76=, $pop75, $6
 	i32.sub 	$push77=, $5, $pop76
 	i32.and 	$push78=, $pop77, $3
-	br_if   	$pop78, BB2_16
+	br_if   	$pop78, .LBB2_16
 # BB#15:                                # %lor.rhs.7
 	i32.const	$push79=, 1
 	i32.store16	$discard=, c($1), $pop79
 	i32.store	$6=, 0($0), $1
-BB2_16:                                 # %lor.end.7
+.LBB2_16:                                 # %lor.end.7
 	i32.store	$discard=, g($1), $6
 	i32.store16	$discard=, h($1), $2
 	i32.store8	$discard=, e($1), $5
@@ -201,8 +201,8 @@ BB2_16:                                 # %lor.end.7
 	i32.store8	$discard=, b($1), $pop80
 	i32.call	$discard=, getpid
 	return  	$1
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	c,@object               # @c
 	.bss

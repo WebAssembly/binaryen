@@ -7,9 +7,9 @@ f883b:                                  # @f883b
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$7=, 0
-BB0_1:                                  # %for.body
+.LBB0_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.load16_s	$5=, 0($1)
 	i32.const	$6=, 1
 	i32.add 	$push16=, $0, $7
@@ -39,11 +39,11 @@ BB0_1:                                  # %for.body
 	i32.add 	$3=, $3, $pop19
 	i32.const	$push20=, 96
 	i32.ne  	$push21=, $7, $pop20
-	br_if   	$pop21, BB0_1
-BB0_2:                                  # %for.end
+	br_if   	$pop21, .LBB0_1
+.LBB0_2:                                  # %for.end
 	return
-func_end0:
-	.size	f883b, func_end0-f883b
+.Lfunc_end0:
+	.size	f883b, .Lfunc_end0-f883b
 
 	.globl	main
 	.type	main,@function
@@ -58,9 +58,9 @@ main:                                   # @main
 	i32.const	$12=, arg1
 	copy_local	$5=, $10
 	copy_local	$6=, $9
-BB1_1:                                  # %for.body
+.LBB1_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_2
+	loop    	.LBB1_2
 	i32.const	$push1=, arg4
 	i32.add 	$push2=, $pop1, $7
 	i32.store8	$8=, 0($pop2), $7
@@ -83,10 +83,10 @@ BB1_1:                                  # %for.body
 	i32.const	$8=, -192
 	i32.const	$push7=, 96
 	i32.ne  	$push8=, $7, $pop7
-	br_if   	$pop8, BB1_1
-BB1_2:                                  # %for.body.i
+	br_if   	$pop8, .LBB1_1
+.LBB1_2:                                  # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_3
+	loop    	.LBB1_3
 	i32.const	$push9=, arg1
 	i32.add 	$push10=, $pop9, $8
 	i32.const	$push11=, 192
@@ -115,32 +115,32 @@ BB1_2:                                  # %for.body.i
 	i32.add 	$8=, $8, $2
 	i32.const	$7=, 0
 	i32.const	$12=, main.correct
-	br_if   	$8, BB1_2
-BB1_3:                                  # %for.body10
+	br_if   	$8, .LBB1_2
+.LBB1_3:                                  # %for.body10
                                         # =>This Inner Loop Header: Depth=1
-	block   	BB1_6
-	loop    	BB1_5
+	block   	.LBB1_6
+	loop    	.LBB1_5
 	i32.const	$push29=, result
 	i32.add 	$push30=, $pop29, $7
 	i32.load8_s	$push31=, 0($pop30)
 	i32.load	$push32=, 0($12)
 	i32.ne  	$push33=, $pop31, $pop32
-	br_if   	$pop33, BB1_6
+	br_if   	$pop33, .LBB1_6
 # BB#4:                                 # %for.cond7
-                                        #   in Loop: Header=BB1_3 Depth=1
+                                        #   in Loop: Header=.LBB1_3 Depth=1
 	i32.add 	$7=, $7, $1
 	i32.add 	$12=, $12, $3
 	i32.const	$push34=, 95
 	i32.le_s	$push35=, $7, $pop34
-	br_if   	$pop35, BB1_3
-BB1_5:                                  # %for.end18
+	br_if   	$pop35, .LBB1_3
+.LBB1_5:                                  # %for.end18
 	i32.const	$push36=, 0
 	return  	$pop36
-BB1_6:                                  # %if.then
+.LBB1_6:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	main.correct,@object    # @main.correct
 	.section	.rodata,"a",@progbits

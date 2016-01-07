@@ -12,9 +12,9 @@ f:                                      # @f
 	i32.shl 	$push1=, $0, $pop0
 	i32.add 	$2=, $1, $pop1
 	i32.const	$3=, 256
-BB0_1:                                  # %do.body
+.LBB0_1:                                  # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.const	$push2=, 1
 	i32.shr_s	$3=, $3, $pop2
 	i32.const	$push3=, 2
@@ -27,11 +27,11 @@ BB0_1:                                  # %do.body
 	i32.add 	$2=, $2, $pop7
 	i32.const	$push8=, 1073741840
 	i32.lt_s	$push9=, $0, $pop8
-	br_if   	$pop9, BB0_1
-BB0_2:                                  # %do.end
+	br_if   	$pop9, .LBB0_1
+.LBB0_2:                                  # %do.end
 	return  	$0
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -51,8 +51,8 @@ main:                                   # @main
 	i32.store	$discard=, a+64($0), $pop3
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	a,@object               # @a
 	.bss

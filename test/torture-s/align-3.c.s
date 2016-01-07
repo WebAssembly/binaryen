@@ -6,8 +6,8 @@
 func:                                   # @func
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	func, func_end0-func
+.Lfunc_end0:
+	.size	func, .Lfunc_end0-func
 
 	.globl	main
 	.type	main,@function
@@ -16,8 +16,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

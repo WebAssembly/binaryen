@@ -6,12 +6,12 @@ f:                                      # @f
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, -1026
 	i32.add 	$0=, $0, $pop0
 	i32.const	$push1=, 5
 	i32.gt_u	$push2=, $0, $pop1
-	br_if   	$pop2, BB0_2
+	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %switch.lookup
 	i32.const	$push6=, switch.table
 	i32.const	$push4=, 2
@@ -19,11 +19,11 @@ f:                                      # @f
 	i32.add 	$push7=, $pop6, $pop5
 	i32.load	$push8=, 0($pop7)
 	return  	$pop8
-BB0_2:                                  # %return
+.LBB0_2:                                  # %return
 	i32.const	$push3=, 0
 	return  	$pop3
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -33,8 +33,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	switch.table,@object    # @switch.table
 	.section	.rodata,"a",@progbits

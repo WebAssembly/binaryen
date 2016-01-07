@@ -18,8 +18,8 @@ gstate_path_memory:                     # @gstate_path_memory
 	i32.load	$push6=, gstate_initial($1)
 	i32.store	$discard=, 0($0), $pop6
 	return
-func_end0:
-	.size	gstate_path_memory, func_end0-gstate_path_memory
+.Lfunc_end0:
+	.size	gstate_path_memory, .Lfunc_end0-gstate_path_memory
 
 	.globl	gs_state_update_overprint
 	.type	gs_state_update_overprint,@function
@@ -28,8 +28,8 @@ gs_state_update_overprint:              # @gs_state_update_overprint
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
-func_end1:
-	.size	gs_state_update_overprint, func_end1-gs_state_update_overprint
+.Lfunc_end1:
+	.size	gs_state_update_overprint, .Lfunc_end1-gs_state_update_overprint
 
 	.globl	main
 	.type	main,@function
@@ -38,8 +38,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	gstate_initial,@object  # @gstate_initial
 	.section	.rodata,"a",@progbits

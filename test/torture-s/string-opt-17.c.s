@@ -12,8 +12,8 @@ test1:                                  # @test1
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
 	return  	$pop1
-func_end0:
-	.size	test1, func_end0-test1
+.Lfunc_end0:
+	.size	test1, .Lfunc_end0-test1
 
 	.globl	check2
 	.type	check2,@function
@@ -22,20 +22,20 @@ check2:                                 # @check2
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.load	$push0=, check2.r($0)
 	i32.const	$push1=, 5
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB1_2
+	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 6
 	i32.store	$push4=, check2.r($0), $pop3
 	return  	$pop4
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	check2, func_end1-check2
+.Lfunc_end1:
+	.size	check2, .Lfunc_end1-check2
 
 	.globl	test2
 	.type	test2,@function
@@ -44,11 +44,11 @@ test2:                                  # @test2
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.load	$push0=, check2.r($1)
 	i32.const	$push1=, 5
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB2_2
+	br_if   	$pop2, .LBB2_2
 # BB#1:                                 # %check2.exit
 	i32.const	$push3=, 6
 	i32.store	$discard=, check2.r($1), $pop3
@@ -66,11 +66,11 @@ test2:                                  # @test2
 	i32.const	$push12=, 98
 	i32.store8	$discard=, 0($0), $pop12
 	return
-BB2_2:                                  # %if.then.i
+.LBB2_2:                                  # %if.then.i
 	call    	abort
 	unreachable
-func_end2:
-	.size	test2, func_end2-test2
+.Lfunc_end2:
+	.size	test2, .Lfunc_end2-test2
 
 	.globl	main
 	.type	main,@function
@@ -104,38 +104,38 @@ main:                                   # @main
 	i32.const	$push11=, 3
 	i32.const	$5=, 4
 	i32.add 	$5=, $6, $5
-	block   	BB3_6
+	block   	.LBB3_6
 	i32.call	$push12=, memcmp, $5, $pop10, $pop11
-	br_if   	$pop12, BB3_6
+	br_if   	$pop12, .LBB3_6
 # BB#1:                                 # %if.end
-	block   	BB3_5
+	block   	.LBB3_5
 	i32.load	$push13=, check2.r($0)
 	i32.const	$push14=, 5
 	i32.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, BB3_5
+	br_if   	$pop15, .LBB3_5
 # BB#2:                                 # %test2.exit
-	block   	BB3_4
+	block   	.LBB3_4
 	i32.const	$push16=, 6
 	i32.store	$discard=, check2.r($0), $pop16
 	i32.const	$push17=, 8020322
 	i32.store	$discard=, 4($6), $pop17
 	i32.const	$push18=, 0
 	i32.eq  	$push19=, $1, $pop18
-	br_if   	$pop19, BB3_4
+	br_if   	$pop19, .LBB3_4
 # BB#3:                                 # %if.end8
 	call    	exit, $0
 	unreachable
-BB3_4:                                  # %if.then7
+.LBB3_4:                                  # %if.then7
 	call    	abort
 	unreachable
-BB3_5:                                  # %if.then.i.i
+.LBB3_5:                                  # %if.then.i.i
 	call    	abort
 	unreachable
-BB3_6:                                  # %if.then
+.LBB3_6:                                  # %if.then
 	call    	abort
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

@@ -84,8 +84,8 @@ InitCache:                              # @InitCache
 	i32.const	$push36=, MyPte+152
 	i32.store	$discard=, RDbf12($1), $pop36
 	return
-func_end0:
-	.size	InitCache, func_end0-InitCache
+.Lfunc_end0:
+	.size	InitCache, .Lfunc_end0-InitCache
 
 	.globl	main
 	.type	main,@function
@@ -172,8 +172,8 @@ main:                                   # @main
 	i32.const	$push37=, MyPte+152
 	i32.store	$discard=, RDbf12($3), $pop37
 	return  	$3
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	Local1,@object          # @Local1
 	.bss

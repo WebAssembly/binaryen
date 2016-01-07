@@ -7,8 +7,8 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	f64.const	$push0=, 0x1p0
 	return  	$pop0
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	f
 	.type	f,@function
@@ -17,8 +17,8 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$push0=, 3
 	return  	$pop0
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -28,8 +28,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

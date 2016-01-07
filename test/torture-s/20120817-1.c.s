@@ -15,28 +15,28 @@ f:                                      # @f
 	i64.const	$push7=, 40
 	i64.add 	$push8=, $pop6, $pop7
 	return  	$pop8
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i64.call	$push0=, f
 	i64.const	$push1=, 16
 	i64.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB1_2
+	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
 	call    	exit, $pop3
 	unreachable
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	foo,@object             # @foo
 	.bss

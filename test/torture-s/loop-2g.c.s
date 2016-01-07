@@ -6,13 +6,13 @@ f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 39
 	i32.gt_u	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_2
-BB0_1:                                  # %for.body
+	br_if   	$pop1, .LBB0_2
+.LBB0_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.add 	$push2=, $1, $0
 	i32.const	$push3=, 254
 	i32.store8	$discard=, 0($pop2), $pop3
@@ -20,11 +20,11 @@ BB0_1:                                  # %for.body
 	i32.add 	$0=, $0, $pop4
 	i32.const	$push5=, 40
 	i32.ne  	$push6=, $0, $pop5
-	br_if   	$pop6, BB0_1
-BB0_2:                                  # %for.end
+	br_if   	$pop6, .LBB0_1
+.LBB0_2:                                  # %for.end
 	return  	$0
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -33,7 +33,7 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, .str
 	i32.call	$0=, open, $pop0, $1
 	i32.const	$push4=, 2147450880
@@ -43,7 +43,7 @@ main:                                   # @main
 	i32.call	$0=, mmap, $pop4, $pop3, $pop2, $pop1, $0, $1
 	i32.const	$push5=, -1
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, BB1_2
+	br_if   	$pop6, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push7=, 254
 	i32.store8	$push8=, 32766($0), $pop7
@@ -86,11 +86,11 @@ main:                                   # @main
 	i32.store8	$push45=, 32803($0), $pop44
 	i32.store8	$discard=, 32804($0), $pop45
 	i32.store8	$discard=, 32805($0), $1
-BB1_2:                                  # %if.end15
+.LBB1_2:                                  # %if.end15
 	call    	exit, $1
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

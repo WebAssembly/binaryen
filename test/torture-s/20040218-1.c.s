@@ -10,8 +10,8 @@ xb:                                     # @xb
 	i32.load	$push1=, 4($0)
 	i32.add 	$push2=, $pop0, $pop1
 	return  	$pop2
-func_end0:
-	.size	xb, func_end0-xb
+.Lfunc_end0:
+	.size	xb, .Lfunc_end0-xb
 
 	.globl	xw
 	.type	xw,@function
@@ -23,8 +23,8 @@ xw:                                     # @xw
 	i32.load	$push1=, 4($0)
 	i32.add 	$push2=, $pop0, $pop1
 	return  	$pop2
-func_end1:
-	.size	xw, func_end1-xw
+.Lfunc_end1:
+	.size	xw, .Lfunc_end1-xw
 
 	.globl	yb
 	.type	yb,@function
@@ -40,8 +40,8 @@ yb:                                     # @yb
 	i32.shl 	$push3=, $pop2, $1
 	i32.shr_s	$push4=, $pop3, $1
 	return  	$pop4
-func_end2:
-	.size	yb, func_end2-yb
+.Lfunc_end2:
+	.size	yb, .Lfunc_end2-yb
 
 	.globl	main
 	.type	main,@function
@@ -63,16 +63,16 @@ main:                                   # @main
 	i32.add 	$4=, $7, $4
 	i32.call	$0=, xb, $4
 	i32.const	$1=, 16255
-	block   	BB3_4
+	block   	.LBB3_4
 	i32.ne  	$push2=, $0, $1
-	br_if   	$pop2, BB3_4
+	br_if   	$pop2, .LBB3_4
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$5=, 8
 	i32.add 	$5=, $7, $5
 	i32.call	$push3=, xw, $5
 	i32.const	$push4=, 81535
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, BB3_4
+	br_if   	$pop5, .LBB3_4
 # BB#2:                                 # %lor.lhs.false4
 	i32.const	$6=, 4
 	i32.add 	$6=, $7, $6
@@ -80,16 +80,16 @@ main:                                   # @main
 	i32.const	$push7=, 65535
 	i32.and 	$push8=, $pop6, $pop7
 	i32.ne  	$push9=, $pop8, $1
-	br_if   	$pop9, BB3_4
+	br_if   	$pop9, .LBB3_4
 # BB#3:                                 # %if.end
 	i32.const	$push10=, 0
 	call    	exit, $pop10
 	unreachable
-BB3_4:                                  # %if.then
+.LBB3_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 
 	.ident	"clang version 3.8.0 "

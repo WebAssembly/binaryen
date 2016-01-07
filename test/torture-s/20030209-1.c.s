@@ -11,8 +11,8 @@ main:                                   # @main
 	i64.store	$discard=, x+79200($0), $pop0
 	call    	exit, $0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	x,@object               # @x
 	.bss

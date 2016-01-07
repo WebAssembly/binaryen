@@ -8,8 +8,8 @@ ap_check_cmd_context:                   # @ap_check_cmd_context
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end0:
-	.size	ap_check_cmd_context, func_end0-ap_check_cmd_context
+.Lfunc_end0:
+	.size	ap_check_cmd_context, .Lfunc_end0-ap_check_cmd_context
 
 	.globl	server_type
 	.type	server_type,@function
@@ -22,24 +22,24 @@ server_type:                            # @server_type
 	i32.call	$4=, strcmp, $2, $pop0
 	i32.const	$3=, 0
 	copy_local	$5=, $3
-	block   	BB1_3
-	block   	BB1_2
+	block   	.LBB1_3
+	block   	.LBB1_2
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $4, $pop2
-	br_if   	$pop3, BB1_2
+	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %if.else
 	i32.const	$push1=, .str.1
 	i32.call	$4=, strcmp, $2, $pop1
 	i32.const	$2=, .str.2
 	i32.const	$5=, 1
-	br_if   	$4, BB1_3
-BB1_2:                                  # %if.end9
+	br_if   	$4, .LBB1_3
+.LBB1_2:                                  # %if.end9
 	i32.store	$discard=, ap_standalone($3), $5
 	copy_local	$2=, $3
-BB1_3:                                  # %cleanup
+.LBB1_3:                                  # %cleanup
 	return  	$2
-func_end1:
-	.size	server_type, func_end1-server_type
+.Lfunc_end1:
+	.size	server_type, .Lfunc_end1-server_type
 
 	.globl	main
 	.type	main,@function
@@ -51,8 +51,8 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$discard=, ap_standalone($0), $pop0
 	return  	$0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

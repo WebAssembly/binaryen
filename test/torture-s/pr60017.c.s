@@ -22,8 +22,8 @@ func:                                   # @func
 	i32.store	$discard=, 0($pop6), $pop7
 	i32.store	$discard=, 0($0), $2
 	return
-func_end0:
-	.size	func, func_end0-func
+.Lfunc_end0:
+	.size	func, .Lfunc_end0-func
 
 	.globl	main
 	.type	main,@function
@@ -32,18 +32,18 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.load16_u	$push0=, x+12($0)
 	i32.const	$push1=, 9
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB1_2
+	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	x,@object               # @x
 	.data

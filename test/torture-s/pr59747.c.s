@@ -12,8 +12,8 @@ fn1:                                    # @fn1
 	i32.add 	$push3=, $pop2, $pop1
 	i32.load	$push4=, 0($pop3)
 	return  	$pop4
-func_end0:
-	.size	fn1, func_end0-fn1
+.Lfunc_end0:
+	.size	fn1, .Lfunc_end0-fn1
 
 	.globl	main
 	.type	main,@function
@@ -24,19 +24,19 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.load	$1=, c($0)
 	i32.load16_u	$2=, e($0)
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push1=, 1
 	i32.store	$discard=, a($0), $pop1
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $1, $pop12
-	br_if   	$pop13, BB1_2
+	br_if   	$pop13, .LBB1_2
 # BB#1:                                 # %if.then
 	i32.const	$push2=, -1
 	i32.add 	$push0=, $2, $pop2
 	i32.store16	$2=, e($0), $pop0
-BB1_2:                                  # %if.end
+.LBB1_2:                                  # %if.end
 	i32.const	$1=, 16
-	block   	BB1_4
+	block   	.LBB1_4
 	i32.shl 	$push3=, $2, $1
 	i32.shr_s	$push4=, $pop3, $1
 	i32.store	$discard=, d($0), $pop4
@@ -47,15 +47,15 @@ BB1_2:                                  # %if.end
 	i64.shr_u	$push9=, $pop7, $pop8
 	i32.wrap/i64	$push10=, $pop9
 	i32.call	$push11=, fn1, $pop10
-	br_if   	$pop11, BB1_4
+	br_if   	$pop11, .LBB1_4
 # BB#3:                                 # %if.end5
 	call    	exit, $0
 	unreachable
-BB1_4:                                  # %if.then4
+.LBB1_4:                                  # %if.then4
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	c,@object               # @c
 	.data

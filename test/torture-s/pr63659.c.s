@@ -7,44 +7,44 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.load	$push1=, a($0)
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $pop1, $pop10
-	br_if   	$pop11, BB0_2
+	br_if   	$pop11, .LBB0_2
 # BB#1:                                 # %for.cond.preheader
 	i32.store	$discard=, a($0), $0
-BB0_2:                                  # %while.end
+.LBB0_2:                                  # %while.end
 	i32.const	$1=, 255
 	i32.load8_s	$push2=, c($0)
 	i32.load	$push3=, h($0)
 	i32.shr_s	$push0=, $pop2, $pop3
 	i32.store	$2=, g($0), $pop0
 	copy_local	$3=, $1
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $2, $pop12
-	br_if   	$pop13, BB0_4
+	br_if   	$pop13, .LBB0_4
 # BB#3:                                 # %cond.false
 	i32.const	$push4=, -1
 	i32.rem_s	$3=, $pop4, $2
-BB0_4:                                  # %cond.end
+.LBB0_4:                                  # %cond.end
 	i32.load	$2=, d($0)
-	block   	BB0_6
+	block   	.LBB0_6
 	i32.store8	$push5=, f($0), $3
 	i32.store8	$push6=, e($0), $pop5
 	i32.and 	$push7=, $pop6, $1
 	i32.store	$discard=, 0($2), $pop7
 	i32.load	$push8=, b($0)
 	i32.ne  	$push9=, $pop8, $1
-	br_if   	$pop9, BB0_6
+	br_if   	$pop9, .LBB0_6
 # BB#5:                                 # %if.end23
 	return  	$0
-BB0_6:                                  # %if.then22
+.LBB0_6:                                  # %if.then22
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	b,@object               # @b
 	.bss

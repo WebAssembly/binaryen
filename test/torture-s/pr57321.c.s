@@ -7,17 +7,17 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.load	$push0=, a($0)
-	br_if   	$pop0, BB0_2
+	br_if   	$pop0, .LBB0_2
 # BB#1:                                 # %if.then.i
 	i32.load	$push1=, b($0)
 	i32.const	$push2=, 1
 	i32.store	$discard=, 0($pop1), $pop2
-BB0_2:                                  # %foo.exit
+.LBB0_2:                                  # %foo.exit
 	return  	$0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	a,@object               # @a
 	.data

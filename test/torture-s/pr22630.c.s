@@ -5,19 +5,19 @@
 bla:                                    # @bla
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, j
 	i32.select	$push1=, $0, $0, $pop0
 	i32.eq  	$push2=, $pop1, $0
-	br_if   	$pop2, BB0_2
+	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %if.then1
 	i32.const	$push3=, 0
 	i32.const	$push4=, 1
 	i32.store	$discard=, j($pop3), $pop4
-BB0_2:                                  # %if.end2
+.LBB0_2:                                  # %if.end2
 	return
-func_end0:
-	.size	bla, func_end0-bla
+.Lfunc_end0:
+	.size	bla, .Lfunc_end0-bla
 
 	.globl	main
 	.type	main,@function
@@ -29,8 +29,8 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$discard=, j($0), $pop0
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	j,@object               # @j
 	.bss

@@ -24,16 +24,16 @@ main:                                   # @main
 	i32.add 	$push2=, $11, $pop1
 	i64.load	$6=, 0($pop2)
 	i64.const	$2=, 0
-	block   	BB0_2
+	block   	.LBB0_2
 	i64.eq  	$push6=, $6, $2
 	i64.const	$push4=, 10
 	i64.gt_u	$push5=, $5, $pop4
 	i64.gt_s	$push3=, $6, $2
 	i32.select	$push7=, $pop6, $pop5, $pop3
-	br_if   	$pop7, BB0_2
-BB0_1:                                  # %do.body
+	br_if   	$pop7, .LBB0_2
+.LBB0_1:                                  # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i64.const	$3=, 1
 	i64.add 	$0=, $5, $3
 	i64.lt_u	$4=, $0, $5
@@ -48,15 +48,15 @@ BB0_1:                                  # %do.body
 	i64.xor 	$push9=, $0, $pop8
 	i64.or  	$push10=, $pop9, $6
 	i64.ne  	$push11=, $pop10, $2
-	br_if   	$pop11, BB0_1
-BB0_2:                                  # %if.end
+	br_if   	$pop11, .LBB0_1
+.LBB0_2:                                  # %if.end
 	i32.const	$9=, 16
 	i32.add 	$12=, $12, $9
 	i32.const	$9=, __stack_pointer
 	i32.store	$12=, 0($9), $12
 	return  	$1
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	f,@object               # @f
 	.bss

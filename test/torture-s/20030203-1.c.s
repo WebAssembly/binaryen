@@ -11,8 +11,8 @@ do_layer3:                              # @do_layer3
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
 	return  	$pop3
-func_end0:
-	.size	do_layer3, func_end0-do_layer3
+.Lfunc_end0:
+	.size	do_layer3, .Lfunc_end0-do_layer3
 
 	.globl	f
 	.type	f,@function
@@ -20,8 +20,8 @@ f:                                      # @f
 	.param  	i32
 # BB#0:                                 # %entry
 	return
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -30,8 +30,8 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

@@ -10,8 +10,8 @@ bar1:                                   # @bar1
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo1, $pop1
 	return  	$pop2
-func_end0:
-	.size	bar1, func_end0-bar1
+.Lfunc_end0:
+	.size	bar1, .Lfunc_end0-bar1
 
 	.type	foo1,@function
 foo1:                                   # @foo1
@@ -19,8 +19,8 @@ foo1:                                   # @foo1
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$0
-func_end1:
-	.size	foo1, func_end1-foo1
+.Lfunc_end1:
+	.size	foo1, .Lfunc_end1-foo1
 
 	.globl	bar2
 	.type	bar2,@function
@@ -34,8 +34,8 @@ bar2:                                   # @bar2
 	i32.const	$push3=, 65535
 	i32.and 	$push4=, $pop2, $pop3
 	return  	$pop4
-func_end2:
-	.size	bar2, func_end2-bar2
+.Lfunc_end2:
+	.size	bar2, .Lfunc_end2-bar2
 
 	.type	foo2,@function
 foo2:                                   # @foo2
@@ -47,8 +47,8 @@ foo2:                                   # @foo2
 	i32.shl 	$push0=, $0, $1
 	i32.shr_s	$push1=, $pop0, $1
 	return  	$pop1
-func_end3:
-	.size	foo2, func_end3-foo2
+.Lfunc_end3:
+	.size	foo2, .Lfunc_end3-foo2
 
 	.globl	bar3
 	.type	bar3,@function
@@ -62,8 +62,8 @@ bar3:                                   # @bar3
 	i32.const	$push3=, 255
 	i32.and 	$push4=, $pop2, $pop3
 	return  	$pop4
-func_end4:
-	.size	bar3, func_end4-bar3
+.Lfunc_end4:
+	.size	bar3, .Lfunc_end4-bar3
 
 	.type	foo3,@function
 foo3:                                   # @foo3
@@ -75,8 +75,8 @@ foo3:                                   # @foo3
 	i32.shl 	$push0=, $0, $1
 	i32.shr_s	$push1=, $pop0, $1
 	return  	$pop1
-func_end5:
-	.size	foo3, func_end5-foo3
+.Lfunc_end5:
+	.size	foo3, .Lfunc_end5-foo3
 
 	.globl	bar4
 	.type	bar4,@function
@@ -88,8 +88,8 @@ bar4:                                   # @bar4
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo4, $pop1
 	return  	$pop2
-func_end6:
-	.size	bar4, func_end6-bar4
+.Lfunc_end6:
+	.size	bar4, .Lfunc_end6-bar4
 
 	.type	foo4,@function
 foo4:                                   # @foo4
@@ -97,8 +97,8 @@ foo4:                                   # @foo4
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$0
-func_end7:
-	.size	foo4, func_end7-foo4
+.Lfunc_end7:
+	.size	foo4, .Lfunc_end7-foo4
 
 	.globl	bar5
 	.type	bar5,@function
@@ -114,8 +114,8 @@ bar5:                                   # @bar5
 	i32.shl 	$push2=, $1, $0
 	i32.shr_s	$push3=, $pop2, $0
 	return  	$pop3
-func_end8:
-	.size	bar5, func_end8-bar5
+.Lfunc_end8:
+	.size	bar5, .Lfunc_end8-bar5
 
 	.type	foo5,@function
 foo5:                                   # @foo5
@@ -125,8 +125,8 @@ foo5:                                   # @foo5
 	i32.const	$push0=, 65535
 	i32.and 	$push1=, $0, $pop0
 	return  	$pop1
-func_end9:
-	.size	foo5, func_end9-foo5
+.Lfunc_end9:
+	.size	foo5, .Lfunc_end9-foo5
 
 	.globl	bar6
 	.type	bar6,@function
@@ -142,8 +142,8 @@ bar6:                                   # @bar6
 	i32.shl 	$push2=, $1, $0
 	i32.shr_s	$push3=, $pop2, $0
 	return  	$pop3
-func_end10:
-	.size	bar6, func_end10-bar6
+.Lfunc_end10:
+	.size	bar6, .Lfunc_end10-bar6
 
 	.type	foo6,@function
 foo6:                                   # @foo6
@@ -153,8 +153,8 @@ foo6:                                   # @foo6
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $0, $pop0
 	return  	$pop1
-func_end11:
-	.size	foo6, func_end11-foo6
+.Lfunc_end11:
+	.size	foo6, .Lfunc_end11-foo6
 
 	.globl	main
 	.type	main,@function
@@ -165,62 +165,62 @@ main:                                   # @main
 	i32.const	$0=, -10
 	i32.call	$1=, bar1, $0
 	i32.const	$2=, 0
-	block   	BB12_12
+	block   	.LBB12_12
 	i32.load	$push0=, l1($2)
 	i32.ne  	$push1=, $1, $pop0
-	br_if   	$pop1, BB12_12
+	br_if   	$pop1, .LBB12_12
 # BB#1:                                 # %if.end
-	block   	BB12_11
+	block   	.LBB12_11
 	i32.call	$push2=, bar2, $0
 	i32.load	$push3=, l2($2)
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, BB12_11
+	br_if   	$pop4, .LBB12_11
 # BB#2:                                 # %if.end5
-	block   	BB12_10
+	block   	.LBB12_10
 	i32.call	$push5=, bar3, $0
 	i32.load	$push6=, l3($2)
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, BB12_10
+	br_if   	$pop7, .LBB12_10
 # BB#3:                                 # %if.end11
-	block   	BB12_9
+	block   	.LBB12_9
 	i32.call	$push8=, bar4, $0
 	i32.load	$push9=, l4($2)
 	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, BB12_9
+	br_if   	$pop10, .LBB12_9
 # BB#4:                                 # %if.end16
-	block   	BB12_8
+	block   	.LBB12_8
 	i32.call	$push11=, bar5, $0
 	i32.load	$push12=, l5($2)
 	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	$pop13, BB12_8
+	br_if   	$pop13, .LBB12_8
 # BB#5:                                 # %if.end22
-	block   	BB12_7
+	block   	.LBB12_7
 	i32.call	$push14=, bar6, $0
 	i32.load	$push15=, l6($2)
 	i32.ne  	$push16=, $pop14, $pop15
-	br_if   	$pop16, BB12_7
+	br_if   	$pop16, .LBB12_7
 # BB#6:                                 # %if.end28
 	return  	$2
-BB12_7:                                 # %if.then27
+.LBB12_7:                                 # %if.then27
 	call    	abort
 	unreachable
-BB12_8:                                 # %if.then21
+.LBB12_8:                                 # %if.then21
 	call    	abort
 	unreachable
-BB12_9:                                 # %if.then15
+.LBB12_9:                                 # %if.then15
 	call    	abort
 	unreachable
-BB12_10:                                # %if.then10
+.LBB12_10:                                # %if.then10
 	call    	abort
 	unreachable
-BB12_11:                                # %if.then4
+.LBB12_11:                                # %if.then4
 	call    	abort
 	unreachable
-BB12_12:                                # %if.then
+.LBB12_12:                                # %if.then
 	call    	abort
 	unreachable
-func_end12:
-	.size	main, func_end12-main
+.Lfunc_end12:
+	.size	main, .Lfunc_end12-main
 
 	.type	l1,@object              # @l1
 	.data

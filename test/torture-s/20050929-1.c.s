@@ -9,53 +9,53 @@ main:                                   # @main
 	i32.const	$2=, 0
 	i32.load	$0=, e($2)
 	i32.load	$1=, 0($0)
-	block   	BB0_9
+	block   	.LBB0_9
 	i32.load	$push0=, 0($1)
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB0_9
+	br_if   	$pop2, .LBB0_9
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push3=, 4($1)
 	i32.const	$push4=, 2
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, BB0_9
+	br_if   	$pop5, .LBB0_9
 # BB#2:                                 # %if.end
 	i32.load	$1=, 4($0)
-	block   	BB0_8
+	block   	.LBB0_8
 	i32.load	$push6=, 0($1)
 	i32.const	$push7=, 3
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, BB0_8
+	br_if   	$pop8, .LBB0_8
 # BB#3:                                 # %lor.lhs.false5
 	i32.load	$push9=, 4($1)
 	i32.const	$push10=, 4
 	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, BB0_8
+	br_if   	$pop11, .LBB0_8
 # BB#4:                                 # %if.end10
 	i32.load	$1=, e+4($2)
-	block   	BB0_7
+	block   	.LBB0_7
 	i32.load	$push12=, 0($1)
 	i32.const	$push13=, 5
 	i32.ne  	$push14=, $pop12, $pop13
-	br_if   	$pop14, BB0_7
+	br_if   	$pop14, .LBB0_7
 # BB#5:                                 # %lor.lhs.false13
 	i32.load	$push15=, 4($1)
 	i32.const	$push16=, 6
 	i32.ne  	$push17=, $pop15, $pop16
-	br_if   	$pop17, BB0_7
+	br_if   	$pop17, .LBB0_7
 # BB#6:                                 # %if.end17
 	return  	$2
-BB0_7:                                  # %if.then16
+.LBB0_7:                                  # %if.then16
 	call    	abort
 	unreachable
-BB0_8:                                  # %if.then9
+.LBB0_8:                                  # %if.then9
 	call    	abort
 	unreachable
-BB0_9:                                  # %if.then
+.LBB0_9:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	.compoundliteral,@object # @.compoundliteral
 	.data

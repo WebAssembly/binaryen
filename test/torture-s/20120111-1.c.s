@@ -11,28 +11,28 @@ f0a:                                    # @f0a
 	i32.const	$push2=, -1
 	i32.xor 	$push3=, $pop1, $pop2
 	return  	$pop3
-func_end0:
-	.size	f0a, func_end0-f0a
+.Lfunc_end0:
+	.size	f0a, .Lfunc_end0-f0a
 
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i64.const	$push0=, -6352373499721454287
 	i32.call	$push1=, f0a, $pop0
 	i32.const	$push2=, -1
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB1_2
+	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

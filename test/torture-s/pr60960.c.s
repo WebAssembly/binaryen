@@ -28,8 +28,8 @@ f1:                                     # @f1
 	i32.shr_u	$push5=, $pop4, $5
 	i32.store8	$discard=, 0($0), $pop5
 	return
-func_end0:
-	.size	f1, func_end0-f1
+.Lfunc_end0:
+	.size	f1, .Lfunc_end0-f1
 
 	.globl	f2
 	.type	f2,@function
@@ -57,8 +57,8 @@ f2:                                     # @f2
 	i32.shr_u	$push4=, $pop3, $6
 	i32.store8	$discard=, 0($0), $pop4
 	return
-func_end1:
-	.size	f2, func_end1-f2
+.Lfunc_end1:
+	.size	f2, .Lfunc_end1-f2
 
 	.globl	f3
 	.type	f3,@function
@@ -90,8 +90,8 @@ f3:                                     # @f3
 	i32.store8	$discard=, 0($pop13), $6
 	i32.store8	$discard=, 0($0), $5
 	return
-func_end2:
-	.size	f3, func_end2-f3
+.Lfunc_end2:
+	.size	f3, .Lfunc_end2-f3
 
 	.globl	main
 	.type	main,@function
@@ -130,7 +130,7 @@ main:                                   # @main
 	i32.load8_u	$push4=, 0($pop3)
 	i32.const	$14=, 12
 	i32.add 	$14=, $23, $14
-	block   	BB3_6
+	block   	.LBB3_6
 	i32.or  	$push0=, $14, $1
 	i32.load8_u	$push1=, 0($pop0)
 	i32.shl 	$push2=, $pop1, $2
@@ -138,7 +138,7 @@ main:                                   # @main
 	i32.shl 	$push6=, $pop5, $4
 	i32.or  	$push13=, $pop12, $pop6
 	i32.ne  	$push14=, $pop13, $7
-	br_if   	$pop14, BB3_6
+	br_if   	$pop14, .LBB3_6
 # BB#1:                                 # %if.end
 	i32.const	$15=, 8
 	i32.add 	$15=, $23, $15
@@ -157,7 +157,7 @@ main:                                   # @main
 	i32.load8_u	$push19=, 0($pop18)
 	i32.const	$18=, 8
 	i32.add 	$18=, $23, $18
-	block   	BB3_5
+	block   	.LBB3_5
 	i32.or  	$push15=, $18, $1
 	i32.load8_u	$push16=, 0($pop15)
 	i32.shl 	$push17=, $pop16, $2
@@ -165,7 +165,7 @@ main:                                   # @main
 	i32.shl 	$push21=, $pop20, $4
 	i32.or  	$push28=, $pop27, $pop21
 	i32.ne  	$push29=, $pop28, $7
-	br_if   	$pop29, BB3_5
+	br_if   	$pop29, .LBB3_5
 # BB#2:                                 # %if.end6
 	i32.const	$19=, 4
 	i32.add 	$19=, $23, $19
@@ -184,7 +184,7 @@ main:                                   # @main
 	i32.load8_u	$push34=, 0($pop33)
 	i32.const	$22=, 4
 	i32.add 	$22=, $23, $22
-	block   	BB3_4
+	block   	.LBB3_4
 	i32.or  	$push30=, $22, $1
 	i32.load8_u	$push31=, 0($pop30)
 	i32.shl 	$push32=, $pop31, $2
@@ -192,7 +192,7 @@ main:                                   # @main
 	i32.shl 	$push36=, $pop35, $4
 	i32.or  	$push43=, $pop42, $pop36
 	i32.ne  	$push44=, $pop43, $7
-	br_if   	$pop44, BB3_4
+	br_if   	$pop44, .LBB3_4
 # BB#3:                                 # %if.end11
 	i32.const	$push45=, 0
 	i32.const	$10=, 16
@@ -200,17 +200,17 @@ main:                                   # @main
 	i32.const	$10=, __stack_pointer
 	i32.store	$23=, 0($10), $23
 	return  	$pop45
-BB3_4:                                  # %if.then10
+.LBB3_4:                                  # %if.then10
 	call    	abort
 	unreachable
-BB3_5:                                  # %if.then5
+.LBB3_5:                                  # %if.then5
 	call    	abort
 	unreachable
-BB3_6:                                  # %if.then
+.LBB3_6:                                  # %if.then
 	call    	abort
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 
 	.ident	"clang version 3.8.0 "

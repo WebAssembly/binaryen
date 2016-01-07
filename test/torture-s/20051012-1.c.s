@@ -10,8 +10,8 @@ foo:                                    # @foo
 	i32.const	$push2=, 511
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -27,8 +27,8 @@ main:                                   # @main
 	i32.or  	$push4=, $pop2, $pop3
 	i32.store	$discard=, t+4($0), $pop4
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	t,@object               # @t
 	.bss

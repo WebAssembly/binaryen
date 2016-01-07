@@ -9,7 +9,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.load	$1=, t($0)
 	i32.const	$2=, 1073741823
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $1, $pop1
 	i32.and 	$push3=, $pop2, $2
@@ -18,15 +18,15 @@ main:                                   # @main
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, t($0), $pop6
 	i32.and 	$push0=, $1, $2
-	br_if   	$pop0, BB0_2
+	br_if   	$pop0, .LBB0_2
 # BB#1:                                 # %if.then
 	call    	exit, $0
 	unreachable
-BB0_2:                                  # %if.else
+.LBB0_2:                                  # %if.else
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	t,@object               # @t
 	.bss

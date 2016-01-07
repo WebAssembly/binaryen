@@ -6,8 +6,8 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -85,33 +85,33 @@ main:                                   # @main
 	i32.add 	$12=, $13, $12
 	i32.or  	$6=, $12, $5
 	copy_local	$5=, $0
-BB1_1:                                  # %while.cond
+.LBB1_1:                                  # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_5
-	block   	BB1_4
+	loop    	.LBB1_5
+	block   	.LBB1_4
 	i32.const	$push45=, 255
 	i32.and 	$5=, $5, $pop45
 	i32.eq  	$push46=, $5, $0
-	br_if   	$pop46, BB1_4
+	br_if   	$pop46, .LBB1_4
 # BB#2:                                 # %while.cond
-                                        #   in Loop: Header=BB1_1 Depth=1
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.const	$push47=, 13
 	i32.eq  	$push48=, $5, $pop47
-	br_if   	$pop48, BB1_4
+	br_if   	$pop48, .LBB1_4
 # BB#3:                                 # %while.end
 	i32.const	$9=, 16
 	i32.add 	$13=, $13, $9
 	i32.const	$9=, __stack_pointer
 	i32.store	$13=, 0($9), $13
 	return  	$1
-BB1_4:                                  # %while.body
-                                        #   in Loop: Header=BB1_1 Depth=1
+.LBB1_4:                                  # %while.body
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.load8_u	$5=, 0($6)
 	i32.add 	$6=, $6, $2
-	br      	BB1_1
-BB1_5:
-func_end1:
-	.size	main, func_end1-main
+	br      	.LBB1_1
+.LBB1_5:
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	main.str,@object        # @main.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

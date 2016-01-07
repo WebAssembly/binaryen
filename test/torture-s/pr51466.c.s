@@ -25,8 +25,8 @@ foo:                                    # @foo
 	i32.const	$3=, __stack_pointer
 	i32.store	$4=, 0($3), $4
 	return  	$pop4
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	bar
 	.type	bar,@function
@@ -56,8 +56,8 @@ bar:                                    # @bar
 	i32.const	$3=, __stack_pointer
 	i32.store	$4=, 0($3), $4
 	return  	$pop4
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	baz
 	.type	baz,@function
@@ -87,8 +87,8 @@ baz:                                    # @baz
 	i32.const	$3=, __stack_pointer
 	i32.store	$4=, 0($3), $4
 	return  	$pop4
-func_end2:
-	.size	baz, func_end2-baz
+.Lfunc_end2:
+	.size	baz, .Lfunc_end2-baz
 
 	.globl	main
 	.type	main,@function
@@ -101,27 +101,27 @@ main:                                   # @main
 	i32.const	$push1=, 2
 	i32.call	$1=, bar, $pop1
 	i32.const	$0=, 8
-	block   	BB3_4
+	block   	.LBB3_4
 	i32.ne  	$push2=, $1, $0
-	br_if   	$pop2, BB3_4
+	br_if   	$pop2, .LBB3_4
 # BB#1:                                 # %lor.lhs.false3
 	i32.const	$1=, 0
 	i32.call	$push3=, baz, $1
 	i32.ne  	$push4=, $pop3, $0
-	br_if   	$pop4, BB3_4
+	br_if   	$pop4, .LBB3_4
 # BB#2:                                 # %lor.lhs.false6
 	i32.const	$push5=, 1
 	i32.call	$push6=, baz, $pop5
 	i32.const	$push7=, 6
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, BB3_4
+	br_if   	$pop8, .LBB3_4
 # BB#3:                                 # %if.end
 	return  	$1
-BB3_4:                                  # %if.then
+.LBB3_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 
 	.ident	"clang version 3.8.0 "

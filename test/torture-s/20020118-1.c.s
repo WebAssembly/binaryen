@@ -6,9 +6,9 @@ foo:                                    # @foo
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-BB0_1:                                  # %for.cond
+.LBB0_1:                                  # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.load	$1=, q($0)
 	i32.load8_s	$push0=, 2($1)
 	i32.store	$discard=, n($0), $pop0
@@ -36,10 +36,10 @@ BB0_1:                                  # %for.cond
 	i32.load	$push10=, q($0)
 	i32.load8_s	$push11=, 2($pop10)
 	i32.store	$discard=, n($0), $pop11
-	br      	BB0_1
-BB0_2:
-func_end0:
-	.size	foo, func_end0-foo
+	br      	.LBB0_1
+.LBB0_2:
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -49,8 +49,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	q,@object               # @q
 	.bss

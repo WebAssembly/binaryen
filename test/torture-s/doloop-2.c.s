@@ -8,9 +8,9 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	copy_local	$1=, $0
-BB0_1:                                  # %do.body
+.LBB0_1:                                  # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.load	$push0=, i($0)
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop0, $pop1
@@ -19,22 +19,22 @@ BB0_1:                                  # %do.body
 	i32.add 	$1=, $1, $pop3
 	i32.const	$push4=, 65535
 	i32.and 	$push5=, $1, $pop4
-	br_if   	$pop5, BB0_1
-BB0_2:                                  # %do.end
+	br_if   	$pop5, .LBB0_1
+.LBB0_2:                                  # %do.end
 	i32.const	$1=, 0
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.load	$push6=, i($1)
 	i32.const	$push7=, 65536
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, BB0_4
+	br_if   	$pop8, .LBB0_4
 # BB#3:                                 # %if.end
 	call    	exit, $1
 	unreachable
-BB0_4:                                  # %if.then
+.LBB0_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	i,@object               # @i
 	.bss

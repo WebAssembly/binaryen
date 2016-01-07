@@ -25,8 +25,8 @@ g:                                      # @g
 	i32.const	$6=, __stack_pointer
 	i32.store	$4=, 0($6), $4
 	return  	$pop2
-func_end0:
-	.size	g, func_end0-g
+.Lfunc_end0:
+	.size	g, .Lfunc_end0-g
 
 	.globl	main
 	.type	main,@function
@@ -35,8 +35,8 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

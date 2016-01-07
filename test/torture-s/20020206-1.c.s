@@ -12,36 +12,36 @@ bar:                                    # @bar
 	i32.const	$push2=, 31
 	i32.store	$discard=, 8($0), $pop2
 	return
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB1_4
+	block   	.LBB1_4
 	i32.load	$push0=, 0($0)
 	i32.const	$push1=, 176
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB1_4
+	br_if   	$pop2, .LBB1_4
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push3=, 4($0)
 	i32.const	$push4=, 52
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, BB1_4
+	br_if   	$pop5, .LBB1_4
 # BB#2:                                 # %lor.lhs.false3
 	i32.load	$push6=, 8($0)
 	i32.const	$push7=, 31
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, BB1_4
+	br_if   	$pop8, .LBB1_4
 # BB#3:                                 # %if.end
 	return
-BB1_4:                                  # %if.then
+.LBB1_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	baz, func_end1-baz
+.Lfunc_end1:
+	.size	baz, .Lfunc_end1-baz
 
 	.globl	main
 	.type	main,@function
@@ -51,8 +51,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

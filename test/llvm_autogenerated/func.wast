@@ -45,7 +45,7 @@
         (set_local $$1
           (i32.const 1)
         )
-        (block $BB4_2
+        (block $.LBB4_2
           (br_if
             (i32.eq
               (i32.and
@@ -54,7 +54,7 @@
               )
               (i32.const 0)
             )
-            $BB4_2
+            $.LBB4_2
           )
           (br $fake_return_waka123
             (i32.const 0)

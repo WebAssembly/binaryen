@@ -68,12 +68,12 @@
         (set_local $$6
           (get_local $$1)
         )
-        (loop $BB1_5 $BB1_1
+        (loop $.LBB1_5 $.LBB1_1
           (block
             (set_local $$4
               (get_local $$1)
             )
-            (loop $BB1_3 $BB1_2
+            (loop $.LBB1_3 $.LBB1_2
               (block
                 (set_local $$10
                   (i32.const 0)
@@ -114,11 +114,11 @@
                     (get_local $$4)
                     (get_local $$3)
                   )
-                  $BB1_2
+                  $.LBB1_2
                 )
               )
             )
-            (loop $BB1_4 $BB1_3
+            (loop $.LBB1_4 $.LBB1_3
               (block
                 (set_local $$11
                   (i32.const 0)
@@ -154,7 +154,7 @@
                     (get_local $$5)
                     (get_local $$3)
                   )
-                  $BB1_3
+                  $.LBB1_3
                 )
               )
             )
@@ -187,7 +187,7 @@
                 (get_local $$0)
                 (i32.const 100)
               )
-              $BB1_1
+              $.LBB1_1
             )
           )
         )

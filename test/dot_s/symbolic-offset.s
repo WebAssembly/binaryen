@@ -6,8 +6,8 @@ f:
         .param          i32
         i32.store       $discard=, m+4($0), $1
         return
-func_end0:
-        .size   f, func_end0-f
+.Lfunc_end0:
+        .size   f, .Lfunc_end0-f
 
         .type   m,@object
         .data

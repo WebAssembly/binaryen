@@ -12,8 +12,8 @@ f:                                      # @f
 	i64.shl 	$push1=, $pop0, $2
 	i64.shr_s	$push2=, $pop1, $2
 	return  	$pop2
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -23,7 +23,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i64.const	$1=, 32
-	block   	BB1_2
+	block   	.LBB1_2
 	i64.load	$push1=, b($0)
 	i64.load	$push0=, a($0)
 	i64.add 	$push2=, $pop1, $pop0
@@ -31,14 +31,14 @@ main:                                   # @main
 	i64.shr_s	$push4=, $pop3, $1
 	i64.load	$push5=, c($0)
 	i64.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, BB1_2
+	br_if   	$pop6, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	a,@object               # @a
 	.data

@@ -8,24 +8,24 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	func
 	.type	func,@function
 func:                                   # @func
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.ne  	$push0=, $0, $1
-	br_if   	$pop0, BB1_2
+	br_if   	$pop0, .LBB1_2
 # BB#1:                                 # %if.then
 	return
-BB1_2:                                  # %if.else
+.LBB1_2:                                  # %if.else
 	call    	abort
 	unreachable
-func_end1:
-	.size	func, func_end1-func
+.Lfunc_end1:
+	.size	func, .Lfunc_end1-func
 
 
 	.ident	"clang version 3.8.0 "

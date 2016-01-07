@@ -9,13 +9,13 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	i32.const	$1=, a
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, BB0_2
-BB0_1:                                  # %for.body
+	br_if   	$pop6, .LBB0_2
+.LBB0_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.const	$push0=, -2
 	i32.add 	$push1=, $2, $pop0
 	i32.store	$discard=, 0($1), $pop1
@@ -24,11 +24,11 @@ BB0_1:                                  # %for.body
 	i32.const	$push3=, 4
 	i32.add 	$1=, $1, $pop3
 	i32.ne  	$push4=, $0, $2
-	br_if   	$pop4, BB0_1
-BB0_2:                                  # %for.end
+	br_if   	$pop4, .LBB0_1
+.LBB0_2:                                  # %for.end
 	return  	$2
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -43,8 +43,8 @@ main:                                   # @main
 	i32.store	$discard=, a+4($0), $pop1
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	a,@object               # @a
 	.bss

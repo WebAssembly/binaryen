@@ -4,19 +4,19 @@
 	.type	foo,@function
 foo:                                    # @foo
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, 0
 	i32.load	$push1=, x($pop0)
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop1, $pop2
-	br_if   	$pop3, BB0_2
+	br_if   	$pop3, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	baz
 	.type	baz,@function
@@ -43,8 +43,8 @@ baz:                                    # @baz
 	i32.const	$3=, __stack_pointer
 	i32.store	$4=, 0($3), $4
 	return
-func_end1:
-	.size	baz, func_end1-baz
+.Lfunc_end1:
+	.size	baz, .Lfunc_end1-baz
 
 	.globl	main
 	.type	main,@function
@@ -58,8 +58,8 @@ main:                                   # @main
 	i32.store	$push1=, x($0), $pop0
 	i32.store	$discard=, x($0), $pop1
 	return  	$0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	x,@object               # @x
 	.bss

@@ -35,8 +35,8 @@ foo:                                    # @foo
 	i32.const	$8=, __stack_pointer
 	i32.store	$7=, 0($8), $7
 	return  	$pop1
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -77,8 +77,8 @@ main:                                   # @main
 	i32.const	$6=, __stack_pointer
 	i32.store	$9=, 0($6), $9
 	return  	$pop3
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

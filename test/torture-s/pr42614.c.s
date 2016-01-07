@@ -8,33 +8,33 @@ init:                                   # @init
 	i32.const	$push0=, 2
 	i32.call	$push1=, malloc, $pop0
 	return  	$pop1
-func_end0:
-	.size	init, func_end0-init
+.Lfunc_end0:
+	.size	init, .Lfunc_end0-init
 
 	.globl	expect_func
 	.type	expect_func,@function
 expect_func:                            # @expect_func
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	BB1_4
+	block   	.LBB1_4
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $0, $pop0
-	br_if   	$pop1, BB1_4
+	br_if   	$pop1, .LBB1_4
 # BB#1:                                 # %if.end
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $1, $pop2
-	br_if   	$pop3, BB1_3
+	br_if   	$pop3, .LBB1_3
 # BB#2:                                 # %if.end6
 	return
-BB1_3:                                  # %if.then5
+.LBB1_3:                                  # %if.then5
 	call    	abort
 	unreachable
-BB1_4:                                  # %if.then
+.LBB1_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	expect_func, func_end1-expect_func
+.Lfunc_end1:
+	.size	expect_func, .Lfunc_end1-expect_func
 
 	.globl	main
 	.type	main,@function
@@ -59,8 +59,8 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$4=, 0($2), $4
 	return  	$pop1
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

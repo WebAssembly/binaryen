@@ -42,8 +42,8 @@ main:                                   # @main
 	i64.store	$push31=, bid_Kx192+728($0), $pop30
 	i64.store	$discard=, bid_Kx192+752($0), $pop31
 	return  	$0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	bid_Kx192,@object       # @bid_Kx192
 	.bss

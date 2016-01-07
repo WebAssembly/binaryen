@@ -8,44 +8,44 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$5=, 255
-	block   	BB0_8
+	block   	.LBB0_8
 	i32.and 	$push0=, $1, $5
 	i32.const	$push1=, 10
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB0_8
+	br_if   	$pop2, .LBB0_8
 # BB#1:                                 # %if.end
-	block   	BB0_7
+	block   	.LBB0_7
 	i32.and 	$push3=, $2, $5
 	i32.const	$push4=, 11
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, BB0_7
+	br_if   	$pop5, .LBB0_7
 # BB#2:                                 # %if.end9
-	block   	BB0_6
+	block   	.LBB0_6
 	i32.and 	$push6=, $3, $5
 	i32.const	$push7=, 12
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, BB0_6
+	br_if   	$pop8, .LBB0_6
 # BB#3:                                 # %if.end15
-	block   	BB0_5
+	block   	.LBB0_5
 	i32.const	$push9=, 123
 	i32.ne  	$push10=, $4, $pop9
-	br_if   	$pop10, BB0_5
+	br_if   	$pop10, .LBB0_5
 # BB#4:                                 # %if.end19
 	return  	$5
-BB0_5:                                  # %if.then18
+.LBB0_5:                                  # %if.then18
 	call    	abort
 	unreachable
-BB0_6:                                  # %if.then14
+.LBB0_6:                                  # %if.then14
 	call    	abort
 	unreachable
-BB0_7:                                  # %if.then8
+.LBB0_7:                                  # %if.then8
 	call    	abort
 	unreachable
-BB0_8:                                  # %if.then
+.LBB0_8:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -55,8 +55,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

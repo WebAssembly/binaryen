@@ -16,8 +16,8 @@ foo:                                    # @foo
 	i64.and 	$push2=, $2, $pop1
 	i64.store	$discard=, 0($0), $pop2
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -40,13 +40,13 @@ main:                                   # @main
 	i32.const	$push2=, 8
 	i32.const	$4=, 0
 	i32.add 	$4=, $5, $4
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.or  	$push3=, $4, $pop2
 	i64.load	$push4=, 0($pop3)
 	i64.const	$push7=, -8905435550453399112
 	i64.const	$push6=, 4611846683310179025
 	i32.call	$push8=, __eqtf2, $pop5, $pop4, $pop7, $pop6
-	br_if   	$pop8, BB1_2
+	br_if   	$pop8, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 0
 	i32.const	$2=, 16
@@ -54,11 +54,11 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$5=, 0($2), $5
 	return  	$pop9
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

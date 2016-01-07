@@ -11,8 +11,8 @@ ix86_split_ashr:                        # @ix86_split_ashr
 	i32.const	$push3=, 0
 	i32.call_indirect	$discard=, $pop2, $pop3
 	return
-func_end0:
-	.size	ix86_split_ashr, func_end0-ix86_split_ashr
+.Lfunc_end0:
+	.size	ix86_split_ashr, .Lfunc_end0-ix86_split_ashr
 
 	.globl	ok
 	.type	ok,@function
@@ -22,8 +22,8 @@ ok:                                     # @ok
 # BB#0:                                 # %entry
 	call    	exit, $0
 	unreachable
-func_end1:
-	.size	ok, func_end1-ok
+.Lfunc_end1:
+	.size	ok, .Lfunc_end1-ok
 
 	.type	gen_x86_64_shrd,@function
 gen_x86_64_shrd:                        # @gen_x86_64_shrd
@@ -32,8 +32,8 @@ gen_x86_64_shrd:                        # @gen_x86_64_shrd
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end2:
-	.size	gen_x86_64_shrd, func_end2-gen_x86_64_shrd
+.Lfunc_end2:
+	.size	gen_x86_64_shrd, .Lfunc_end2-gen_x86_64_shrd
 
 	.globl	main
 	.type	main,@function
@@ -49,8 +49,8 @@ main:                                   # @main
 	i32.call_indirect	$discard=, $pop3, $0
 	i32.const	$push4=, 1
 	return  	$pop4
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	one,@object             # @one
 	.data

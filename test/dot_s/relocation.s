@@ -8,8 +8,8 @@ main:
 	i32.const $push0=, a
 	i32.load $push1=, 0($pop0)
 	return $pop1
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	b,@object
 	.data

@@ -15,8 +15,8 @@ main:                                   # @main
 	i32.store	$push3=, x01($2), $pop2
 	i32.store	$discard=, y01($2), $pop3
 	return  	$2
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	x00,@object             # @x00
 	.bss

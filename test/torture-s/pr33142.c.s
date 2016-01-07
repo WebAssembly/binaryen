@@ -8,14 +8,14 @@ lisp_atan2:                             # @lisp_atan2
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
-	block   	BB0_3
+	block   	.LBB0_3
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_3
+	br_if   	$pop1, .LBB0_3
 # BB#1:                                 # %entry
 	i32.const	$push2=, 0
 	i32.gt_s	$push3=, $1, $pop2
-	br_if   	$pop3, BB0_3
+	br_if   	$pop3, .LBB0_3
 # BB#2:                                 # %if.then2
 	i32.const	$3=, 31
 	i32.shr_s	$2=, $1, $3
@@ -25,10 +25,10 @@ lisp_atan2:                             # @lisp_atan2
 	i32.add 	$push6=, $0, $3
 	i32.xor 	$push7=, $pop6, $3
 	i32.le_s	$3=, $pop5, $pop7
-BB0_3:                                  # %return
+.LBB0_3:                                  # %return
 	return  	$3
-func_end0:
-	.size	lisp_atan2, func_end0-lisp_atan2
+.Lfunc_end0:
+	.size	lisp_atan2, .Lfunc_end0-lisp_atan2
 
 	.globl	main
 	.type	main,@function
@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.sub 	$3=, $0, $1
 	i32.const	$1=, __stack_pointer
 	i32.store	$3=, 0($1), $3
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 63
 	i32.store	$discard=, 12($3), $pop0
 	i32.const	$push1=, -77
@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.load	$push2=, 12($3)
 	i32.load	$push3=, 8($3)
 	i32.call	$push4=, lisp_atan2, $pop2, $pop3
-	br_if   	$pop4, BB1_2
+	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 0
 	i32.const	$2=, 16
@@ -58,11 +58,11 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return  	$pop5
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

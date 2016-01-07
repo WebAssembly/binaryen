@@ -12,9 +12,9 @@ reset_palette:                          # @reset_palette
 	i32.add 	$1=, $pop2, $pop1
 	i32.const	$3=, 6
 	i32.const	$0=, -64
-BB0_1:                                  # %for.body
+.LBB0_1:                                  # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.const	$2=, 64
 	i32.load	$push7=, 0($1)
 	i32.add 	$push8=, $pop7, $3
@@ -45,28 +45,28 @@ BB0_1:                                  # %for.body
 	i32.add 	$3=, $3, $pop25
 	i32.const	$push26=, 4
 	i32.add 	$0=, $0, $pop26
-	br_if   	$0, BB0_1
-BB0_2:                                  # %bar.exit
+	br_if   	$0, .LBB0_1
+.LBB0_2:                                  # %bar.exit
 	return
-func_end0:
-	.size	reset_palette, func_end0-reset_palette
+.Lfunc_end0:
+	.size	reset_palette, .Lfunc_end0-reset_palette
 
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.const	$push0=, 48
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB1_2
+	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end
 	return
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	bar, func_end1-bar
+.Lfunc_end1:
+	.size	bar, .Lfunc_end1-bar
 
 	.globl	main
 	.type	main,@function
@@ -77,9 +77,9 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.const	$2=, 6
 	copy_local	$1=, $0
-BB2_1:                                  # %for.body.i
+.LBB2_1:                                  # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB2_2
+	loop    	.LBB2_2
 	i32.load	$push3=, vc_cons($0)
 	i32.add 	$push4=, $pop3, $2
 	i32.const	$push5=, -2
@@ -108,13 +108,13 @@ BB2_1:                                  # %for.body.i
 	i32.add 	$1=, $1, $pop20
 	i32.const	$push21=, 54
 	i32.ne  	$push22=, $2, $pop21
-	br_if   	$pop22, BB2_1
-BB2_2:                                  # %reset_palette.exit
+	br_if   	$pop22, .LBB2_1
+.LBB2_2:                                  # %reset_palette.exit
 	i32.const	$push23=, 0
 	call    	exit, $pop23
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	a_con,@object           # @a_con
 	.bss

@@ -11,8 +11,8 @@ f:                                      # @f
 	i32.const	$push2=, 1
 	i32.or  	$push3=, $pop1, $pop2
 	return  	$pop3
-func_end0:
-	.size	f, func_end0-f
+.Lfunc_end0:
+	.size	f, .Lfunc_end0-f
 
 	.globl	main
 	.type	main,@function
@@ -25,21 +25,21 @@ main:                                   # @main
 	i32.load	$4=, one($0)
 	i32.const	$2=, 31
 	i32.const	$3=, 1
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.shr_s	$push0=, $1, $2
 	i32.or  	$push1=, $pop0, $3
 	i32.sub 	$push2=, $0, $4
 	i32.shr_s	$push3=, $pop2, $2
 	i32.or  	$push4=, $pop3, $3
 	i32.eq  	$push5=, $pop1, $pop4
-	br_if   	$pop5, BB1_2
+	br_if   	$pop5, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	one,@object             # @one
 	.data

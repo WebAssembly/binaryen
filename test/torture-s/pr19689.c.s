@@ -15,8 +15,8 @@ foo:                                    # @foo
 	i32.or  	$push5=, $pop4, $pop2
 	i32.store	$discard=, f($1), $pop5
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -32,8 +32,8 @@ main:                                   # @main
 	i32.or  	$push4=, $pop2, $pop3
 	i32.store	$discard=, f($0), $pop4
 	return  	$0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	f,@object               # @f
 	.bss

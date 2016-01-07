@@ -8,8 +8,8 @@ main:                                   # @main
 	call    	build_ref_for_offset
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	build_ref_for_offset,@function
 build_ref_for_offset:                   # @build_ref_for_offset
@@ -33,8 +33,8 @@ build_ref_for_offset:                   # @build_ref_for_offset
 	i32.const	$2=, __stack_pointer
 	i32.store	$4=, 0($2), $4
 	return
-func_end1:
-	.size	build_ref_for_offset, func_end1-build_ref_for_offset
+.Lfunc_end1:
+	.size	build_ref_for_offset, .Lfunc_end1-build_ref_for_offset
 
 	.type	get_addr_base_and_unit_offset,@function
 get_addr_base_and_unit_offset:          # @get_addr_base_and_unit_offset
@@ -43,24 +43,24 @@ get_addr_base_and_unit_offset:          # @get_addr_base_and_unit_offset
 	i64.const	$push0=, 0
 	i64.store	$discard=, 0($0), $pop0
 	return
-func_end2:
-	.size	get_addr_base_and_unit_offset, func_end2-get_addr_base_and_unit_offset
+.Lfunc_end2:
+	.size	get_addr_base_and_unit_offset, .Lfunc_end2-get_addr_base_and_unit_offset
 
 	.type	build_int_cst,@function
 build_int_cst:                          # @build_int_cst
 	.param  	i64
 # BB#0:                                 # %entry
-	block   	BB3_2
+	block   	.LBB3_2
 	i64.const	$push0=, 4
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, BB3_2
+	br_if   	$pop1, .LBB3_2
 # BB#1:                                 # %if.end
 	return
-BB3_2:                                  # %if.then
+.LBB3_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end3:
-	.size	build_int_cst, func_end3-build_int_cst
+.Lfunc_end3:
+	.size	build_int_cst, .Lfunc_end3-build_int_cst
 
 
 	.ident	"clang version 3.8.0 "

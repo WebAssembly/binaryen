@@ -11,9 +11,9 @@ main:                                   # @main
 	i32.const	$push1=, .str.1
 	i32.call	$0=, strcmp, $pop0, $pop1
 	i32.const	$4=, -1024
-BB0_1:                                  # %for.cond2.preheader
+.LBB0_1:                                  # %for.cond2.preheader
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.const	$2=, a
 	i32.add 	$push2=, $2, $4
 	i32.const	$push3=, 1024
@@ -22,13 +22,13 @@ BB0_1:                                  # %for.cond2.preheader
 	i32.store	$3=, 0($pop4), $pop5
 	i32.const	$push6=, 4
 	i32.add 	$4=, $4, $pop6
-	br_if   	$4, BB0_1
-BB0_2:                                  # %for.cond7.preheader
+	br_if   	$4, .LBB0_1
+.LBB0_2:                                  # %for.cond7.preheader
 	i32.store	$discard=, d($1), $1
-	block   	BB0_4
+	block   	.LBB0_4
 	i32.const	$push40=, 0
 	i32.eq  	$push41=, $0, $pop40
-	br_if   	$pop41, BB0_4
+	br_if   	$pop41, .LBB0_4
 # BB#3:                                 # %fnx.exit
 	i32.const	$4=, 2
 	i32.load	$push7=, b($1)
@@ -65,10 +65,10 @@ BB0_2:                                  # %for.cond7.preheader
 	i32.add 	$push38=, $2, $pop37
 	i32.load	$push39=, 0($pop38)
 	i32.store	$discard=, b($1), $pop39
-BB0_4:                                  # %if.end25
+.LBB0_4:                                  # %if.end25
 	return  	$1
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	.str,@object            # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1

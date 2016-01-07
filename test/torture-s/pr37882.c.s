@@ -14,8 +14,8 @@ main:                                   # @main
 	i32.or  	$push4=, $pop2, $pop3
 	i32.store8	$discard=, s($0), $pop4
 	return  	$0
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	s,@object               # @s
 	.bss

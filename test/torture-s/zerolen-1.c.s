@@ -12,8 +12,8 @@ main:                                   # @main
 	i32.store8	$push1=, entry+1($0), $0
 	call    	exit, $pop1
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	set
 	.type	set,@function
@@ -25,8 +25,8 @@ set:                                    # @set
 	i32.const	$push1=, 0
 	i32.store8	$discard=, 1($0), $pop1
 	return
-func_end1:
-	.size	set, func_end1-set
+.Lfunc_end1:
+	.size	set, .Lfunc_end1-set
 
 	.type	entry,@object           # @entry
 	.bss

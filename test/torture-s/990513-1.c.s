@@ -7,9 +7,9 @@ foo:                                    # @foo
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$5=, 1024
-BB0_1:                                  # %while.body
+.LBB0_1:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.add 	$2=, $0, $5
 	i32.const	$push0=, -4
 	i32.add 	$push1=, $2, $pop0
@@ -24,11 +24,11 @@ BB0_1:                                  # %while.body
 	i32.add 	$push6=, $2, $4
 	i32.store	$discard=, 0($pop6), $3
 	i32.add 	$5=, $5, $4
-	br_if   	$5, BB0_1
-BB0_2:                                  # %while.end
+	br_if   	$5, .LBB0_1
+.LBB0_2:                                  # %while.end
 	return
-func_end0:
-	.size	foo, func_end0-foo
+.Lfunc_end0:
+	.size	foo, .Lfunc_end0-foo
 
 	.globl	main
 	.type	main,@function
@@ -47,9 +47,9 @@ main:                                   # @main
 	i32.const	$8=, 0
 	i32.add 	$8=, $10, $8
 	call    	memset, $8, $0, $4
-BB1_1:                                  # %while.body.i
+.LBB1_1:                                  # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_2
+	loop    	.LBB1_2
 	i32.const	$9=, 0
 	i32.add 	$9=, $10, $9
 	i32.add 	$1=, $9, $4
@@ -67,23 +67,23 @@ BB1_1:                                  # %while.body.i
 	i32.add 	$push7=, $1, $3
 	i32.store	$1=, 0($pop7), $2
 	i32.add 	$4=, $4, $3
-	br_if   	$4, BB1_1
-BB1_2:                                  # %foo.exit
-	block   	BB1_4
+	br_if   	$4, .LBB1_1
+.LBB1_2:                                  # %foo.exit
+	block   	.LBB1_4
 	i32.load	$push8=, 0($10)
 	i32.ne  	$push9=, $pop8, $1
-	br_if   	$pop9, BB1_4
+	br_if   	$pop9, .LBB1_4
 # BB#3:                                 # %if.end
 	i32.const	$7=, 1024
 	i32.add 	$10=, $10, $7
 	i32.const	$7=, __stack_pointer
 	i32.store	$10=, 0($7), $10
 	return  	$0
-BB1_4:                                  # %if.then
+.LBB1_4:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

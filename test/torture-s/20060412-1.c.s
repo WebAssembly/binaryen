@@ -7,22 +7,22 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %while.body.preheader
 	i32.const	$0=, t+328
-BB0_1:                                  # %while.body
+.LBB0_1:                                  # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB0_2
+	loop    	.LBB0_2
 	i32.const	$push0=, -1
 	i32.store	$discard=, 0($0), $pop0
 	i32.const	$push1=, -4
 	i32.add 	$0=, $0, $pop1
 	i32.const	$push2=, t+4
 	i32.gt_u	$push3=, $0, $pop2
-	br_if   	$pop3, BB0_1
-BB0_2:                                  # %if.end5
+	br_if   	$pop3, .LBB0_1
+.LBB0_2:                                  # %if.end5
 	i32.const	$0=, 0
 	i32.store	$push4=, t+4($0), $0
 	return  	$pop4
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	t,@object               # @t
 	.bss

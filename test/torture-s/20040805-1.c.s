@@ -5,20 +5,20 @@
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.call	$push0=, foo
 	i32.const	$push1=, 102
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB0_2
+	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
 	call    	exit, $pop3
 	unreachable
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	foo,@function
 foo:                                    # @foo
@@ -33,8 +33,8 @@ foo:                                    # @foo
 	i32.call	$push3=, bar, $pop2
 	i32.add 	$push5=, $pop4, $pop3
 	return  	$pop5
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.type	bar,@function
 bar:                                    # @bar
@@ -48,8 +48,8 @@ bar:                                    # @bar
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, a($1), $pop2
 	return  	$0
-func_end2:
-	.size	bar, func_end2-bar
+.Lfunc_end2:
+	.size	bar, .Lfunc_end2-bar
 
 	.type	a,@object               # @a
 	.data

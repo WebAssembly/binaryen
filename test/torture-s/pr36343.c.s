@@ -8,8 +8,8 @@ bar:                                    # @bar
 	i32.const	$push0=, 0
 	i32.store	$discard=, 0($0), $pop0
 	return
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	foo
 	.type	foo,@function
@@ -34,26 +34,26 @@ foo:                                    # @foo
 	i32.const	$push1=, 1065353216
 	i32.store	$discard=, 8($7), $pop1
 	call    	bar, $1
-	block   	BB1_3
-	block   	BB1_2
+	block   	.LBB1_3
+	block   	.LBB1_2
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $0, $pop4
-	br_if   	$pop5, BB1_2
+	br_if   	$pop5, .LBB1_2
 # BB#1:                                 # %if.then2
 	i32.load	$push2=, 0($1)
 	i32.load	$push3=, 0($pop2)
 	f32.convert_s/i32	$2=, $pop3
-	br      	BB1_3
-BB1_2:                                  # %if.end3
+	br      	.LBB1_3
+.LBB1_2:                                  # %if.end3
 	f32.load	$2=, 8($7)
-BB1_3:                                  # %cleanup
+.LBB1_3:                                  # %cleanup
 	i32.const	$5=, 16
 	i32.add 	$7=, $7, $5
 	i32.const	$5=, __stack_pointer
 	i32.store	$7=, 0($5), $7
 	return  	$2
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.globl	main
 	.type	main,@function
@@ -62,18 +62,18 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	BB2_2
+	block   	.LBB2_2
 	f32.call	$push0=, foo, $0
 	f32.const	$push1=, 0x0p0
 	f32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB2_2
+	br_if   	$pop2, .LBB2_2
 # BB#1:                                 # %if.end
 	return  	$0
-BB2_2:                                  # %if.then
+.LBB2_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

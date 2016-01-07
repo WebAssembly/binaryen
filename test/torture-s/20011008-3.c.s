@@ -8,8 +8,8 @@ log_compare:                            # @log_compare
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
-func_end0:
-	.size	log_compare, func_end0-log_compare
+.Lfunc_end0:
+	.size	log_compare, .Lfunc_end0-log_compare
 
 	.globl	__db_txnlist_lsnadd
 	.type	__db_txnlist_lsnadd,@function
@@ -21,29 +21,29 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i32.const	$5=, 1
 	i32.and 	$4=, $3, $5
 	i32.const	$3=, 0
-BB1_1:                                  # %for.cond
+.LBB1_1:                                  # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	BB1_5
+	loop    	.LBB1_5
 	copy_local	$7=, $5
-	block   	BB1_3
+	block   	.LBB1_3
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $4, $pop10
-	br_if   	$pop11, BB1_3
+	br_if   	$pop11, .LBB1_3
 # BB#2:                                 # %cond.false
-                                        #   in Loop: Header=BB1_1 Depth=1
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.const	$push1=, 12
 	i32.add 	$push2=, $1, $pop1
 	i32.load	$7=, 0($pop2)
-BB1_3:                                  # %cond.end
-                                        #   in Loop: Header=BB1_1 Depth=1
+.LBB1_3:                                  # %cond.end
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.ge_s	$push3=, $3, $7
-	br_if   	$pop3, BB1_5
+	br_if   	$pop3, .LBB1_5
 # BB#4:                                 # %for.body
-                                        #   in Loop: Header=BB1_1 Depth=1
+                                        #   in Loop: Header=.LBB1_1 Depth=1
 	i32.const	$push9=, 1
 	i32.add 	$3=, $3, $pop9
-	br      	BB1_1
-BB1_5:                                  # %for.end35
+	br      	.LBB1_1
+.LBB1_5:                                  # %for.end35
 	i32.const	$push4=, 20
 	i32.add 	$push5=, $1, $pop4
 	i32.load	$7=, 0($pop5)
@@ -56,8 +56,8 @@ BB1_5:                                  # %for.end35
 	i64.store32	$discard=, 0($2), $6
 	i32.add 	$push0=, $0, $3
 	return  	$pop0
-func_end1:
-	.size	__db_txnlist_lsnadd, func_end1-__db_txnlist_lsnadd
+.Lfunc_end1:
+	.size	__db_txnlist_lsnadd, .Lfunc_end1-__db_txnlist_lsnadd
 
 	.globl	main
 	.type	main,@function
@@ -67,8 +67,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

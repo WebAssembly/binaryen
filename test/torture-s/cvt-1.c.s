@@ -8,8 +8,8 @@ g2:                                     # @g2
 # BB#0:                                 # %entry
 	i32.trunc_s/f64	$push0=, $0
 	return  	$pop0
-func_end0:
-	.size	g2, func_end0-g2
+.Lfunc_end0:
+	.size	g2, .Lfunc_end0-g2
 
 	.globl	f
 	.type	f,@function
@@ -19,8 +19,8 @@ f:                                      # @f
 # BB#0:                                 # %if.end
 	f64.convert_s/i32	$push0=, $0
 	return  	$pop0
-func_end1:
-	.size	f, func_end1-f
+.Lfunc_end1:
+	.size	f, .Lfunc_end1-f
 
 	.globl	main
 	.type	main,@function
@@ -30,8 +30,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 
 	.ident	"clang version 3.8.0 "

@@ -7,8 +7,8 @@ do_exit:                                # @do_exit
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end0:
-	.size	do_exit, func_end0-do_exit
+.Lfunc_end0:
+	.size	do_exit, .Lfunc_end0-do_exit
 
 	.globl	do_abort
 	.type	do_abort,@function
@@ -16,25 +16,25 @@ do_abort:                               # @do_abort
 # BB#0:                                 # %entry
 	call    	abort
 	unreachable
-func_end1:
-	.size	do_abort, func_end1-do_abort
+.Lfunc_end1:
+	.size	do_abort, .Lfunc_end1-do_abort
 
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.ge_s	$push0=, $0, $1
-	br_if   	$pop0, BB2_2
+	br_if   	$pop0, .LBB2_2
 # BB#1:                                 # %doit
 	call    	do_abort
 	unreachable
-BB2_2:                                  # %if.end
+.LBB2_2:                                  # %if.end
 	call    	do_exit
 	unreachable
-func_end2:
-	.size	foo, func_end2-foo
+.Lfunc_end2:
+	.size	foo, .Lfunc_end2-foo
 
 	.globl	main
 	.type	main,@function
@@ -43,8 +43,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	call    	do_exit
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 
 	.ident	"clang version 3.8.0 "

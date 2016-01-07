@@ -15,8 +15,8 @@ uint128_central_bitsi_ior:              # @uint128_central_bitsi_ior
 	i64.and 	$push6=, $pop4, $pop5
 	i64.or  	$push7=, $pop6, $2
 	return  	$pop7
-func_end0:
-	.size	uint128_central_bitsi_ior, func_end0-uint128_central_bitsi_ior
+.Lfunc_end0:
+	.size	uint128_central_bitsi_ior, .Lfunc_end0-uint128_central_bitsi_ior
 
 	.globl	main
 	.type	main,@function
@@ -24,22 +24,22 @@ main:                                   # @main
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	BB1_2
+	block   	.LBB1_2
 	i64.const	$push2=, 0
 	i64.const	$push1=, 1
 	i64.const	$push0=, 2
 	i64.call	$push3=, uint128_central_bitsi_ior, $pop2, $pop1, $pop0
 	i64.const	$push4=, 258
 	i64.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, BB1_2
+	br_if   	$pop5, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push6=, 0
 	return  	$pop6
-BB1_2:                                  # %if.then
+.LBB1_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 
 	.ident	"clang version 3.8.0 "

@@ -8,8 +8,8 @@ func0:                                  # @func0
 	i32.const	$push1=, 1
 	i32.store	$discard=, dummy($pop0), $pop1
 	return
-func_end0:
-	.size	func0, func_end0-func0
+.Lfunc_end0:
+	.size	func0, .Lfunc_end0-func0
 
 	.globl	func1
 	.type	func1,@function
@@ -59,8 +59,8 @@ func1:                                  # @func1
 	i32.store16	$push15=, w2($0), $pop4
 	i32.store16	$discard=, w4($0), $pop15
 	return
-func_end1:
-	.size	func1, func_end1-func1
+.Lfunc_end1:
+	.size	func1, .Lfunc_end1-func1
 
 	.globl	func2
 	.type	func2,@function
@@ -110,8 +110,8 @@ func2:                                  # @func2
 	i32.store16	$push15=, z2($0), $pop4
 	i32.store16	$discard=, z4($0), $pop15
 	return
-func_end2:
-	.size	func2, func_end2-func2
+.Lfunc_end2:
+	.size	func2, .Lfunc_end2-func2
 
 	.globl	main
 	.type	main,@function
@@ -121,45 +121,45 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	call    	func2
 	i32.const	$0=, 0
-	block   	BB3_8
+	block   	.LBB3_8
 	i64.load	$push0=, w1($0)
 	i64.load	$push1=, w3($0)
 	i64.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, BB3_8
+	br_if   	$pop2, .LBB3_8
 # BB#1:                                 # %if.end
-	block   	BB3_7
+	block   	.LBB3_7
 	i64.load	$push3=, w2($0)
 	i64.load	$push4=, w4($0)
 	i64.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, BB3_7
+	br_if   	$pop5, .LBB3_7
 # BB#2:                                 # %if.end4
-	block   	BB3_6
+	block   	.LBB3_6
 	i64.load	$push6=, z1($0)
 	i64.load	$push7=, z3($0)
 	i64.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, BB3_6
+	br_if   	$pop8, .LBB3_6
 # BB#3:                                 # %if.end8
-	block   	BB3_5
+	block   	.LBB3_5
 	i64.load	$push9=, z2($0)
 	i64.load	$push10=, z4($0)
 	i64.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, BB3_5
+	br_if   	$pop11, .LBB3_5
 # BB#4:                                 # %if.end12
 	return  	$0
-BB3_5:                                  # %if.then11
+.LBB3_5:                                  # %if.then11
 	call    	abort
 	unreachable
-BB3_6:                                  # %if.then7
+.LBB3_6:                                  # %if.then7
 	call    	abort
 	unreachable
-BB3_7:                                  # %if.then3
+.LBB3_7:                                  # %if.then3
 	call    	abort
 	unreachable
-BB3_8:                                  # %if.then
+.LBB3_8:                                  # %if.then
 	call    	abort
 	unreachable
-func_end3:
-	.size	main, func_end3-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 
 	.type	q1,@object              # @q1
 	.data

@@ -17,8 +17,8 @@ test:                                   # @test
 	i32.and 	$push6=, $pop4, $pop5
 	i32.eq  	$push7=, $pop6, $0
 	return  	$pop7
-func_end0:
-	.size	test, func_end0-test
+.Lfunc_end0:
+	.size	test, .Lfunc_end0-test
 
 	.globl	main
 	.type	main,@function
@@ -37,8 +37,8 @@ main:                                   # @main
 	i32.and 	$push6=, $pop4, $pop5
 	i32.ne  	$push7=, $pop6, $0
 	return  	$pop7
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	a,@object               # @a
 	.data

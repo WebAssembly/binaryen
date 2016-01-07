@@ -8,8 +8,8 @@ func_1:                                 # @func_1
 	i32.const	$0=, 0
 	i32.store8	$discard=, g_5($0), $0
 	return
-func_end0:
-	.size	func_1, func_end0-func_1
+.Lfunc_end0:
+	.size	func_1, .Lfunc_end0-func_1
 
 	.globl	main
 	.type	main,@function
@@ -20,8 +20,8 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.store8	$push0=, g_5($0), $0
 	return  	$pop0
-func_end1:
-	.size	main, func_end1-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
 
 	.type	g_5,@object             # @g_5
 	.bss

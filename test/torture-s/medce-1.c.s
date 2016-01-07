@@ -8,8 +8,8 @@ bar:                                    # @bar
 	i32.const	$push1=, 1
 	i32.store8	$discard=, ok($pop0), $pop1
 	return
-func_end0:
-	.size	bar, func_end0-bar
+.Lfunc_end0:
+	.size	bar, .Lfunc_end0-bar
 
 	.globl	foo
 	.type	foo,@function
@@ -18,16 +18,16 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 1
-	block   	BB1_2
+	block   	.LBB1_2
 	i32.ne  	$push0=, $0, $1
-	br_if   	$pop0, BB1_2
+	br_if   	$pop0, .LBB1_2
 # BB#1:                                 # %sw.bb1
 	i32.const	$push1=, 0
 	i32.store8	$discard=, ok($pop1), $1
-BB1_2:                                  # %sw.epilog
+.LBB1_2:                                  # %sw.epilog
 	return
-func_end1:
-	.size	foo, func_end1-foo
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
 
 	.globl	main
 	.type	main,@function
@@ -39,8 +39,8 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store8	$discard=, ok($0), $pop0
 	return  	$0
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	ok,@object              # @ok
 	.lcomm	ok,1

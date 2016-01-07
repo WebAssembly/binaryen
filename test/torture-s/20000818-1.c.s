@@ -8,8 +8,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.globl	yylex
 	.type	yylex,@function
@@ -18,8 +18,8 @@ yylex:                                  # @yylex
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
-func_end1:
-	.size	yylex, func_end1-yylex
+.Lfunc_end1:
+	.size	yylex, .Lfunc_end1-yylex
 
 	.type	temporary_obstack,@object # @temporary_obstack
 	.bss

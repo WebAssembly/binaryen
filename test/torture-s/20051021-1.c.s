@@ -12,8 +12,8 @@ foo1:                                   # @foo1
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, count($0), $pop2
 	return  	$0
-func_end0:
-	.size	foo1, func_end0-foo1
+.Lfunc_end0:
+	.size	foo1, .Lfunc_end0-foo1
 
 	.globl	foo2
 	.type	foo2,@function
@@ -27,8 +27,8 @@ foo2:                                   # @foo2
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, count($0), $pop2
 	return  	$0
-func_end1:
-	.size	foo2, func_end1-foo2
+.Lfunc_end1:
+	.size	foo2, .Lfunc_end1-foo2
 
 	.globl	main
 	.type	main,@function
@@ -38,18 +38,18 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load	$1=, count($0)
-	block   	BB2_2
+	block   	.LBB2_2
 	i32.const	$push0=, 2
 	i32.add 	$push1=, $1, $pop0
 	i32.store	$discard=, count($0), $pop1
-	br_if   	$1, BB2_2
+	br_if   	$1, .LBB2_2
 # BB#1:                                 # %if.end7
 	return  	$0
-BB2_2:                                  # %if.then6
+.LBB2_2:                                  # %if.then6
 	call    	abort
 	unreachable
-func_end2:
-	.size	main, func_end2-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 
 	.type	count,@object           # @count
 	.bss

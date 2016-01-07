@@ -198,46 +198,46 @@ main:                                   # @main
 	i64.load	$push3=, 0($pop33)
 	i64.store	$14=, Y1+8($0), $pop3
 	i64.store	$discard=, Y1($0), $2
-	block   	BB0_9
+	block   	.LBB0_9
 	i64.const	$push34=, 4612354521497075712
 	i32.call	$push35=, __netf2, $7, $6, $1, $pop34
-	br_if   	$pop35, BB0_9
+	br_if   	$pop35, .LBB0_9
 # BB#1:                                 # %entry
 	i64.const	$push36=, 4613097791357452288
 	i32.call	$push37=, __netf2, $16, $17, $1, $pop36
-	br_if   	$pop37, BB0_9
+	br_if   	$pop37, .LBB0_9
 # BB#2:                                 # %entry
 	i64.const	$push38=, 4613150567915585536
 	i32.call	$push39=, __netf2, $5, $4, $1, $pop38
-	br_if   	$pop39, BB0_9
+	br_if   	$pop39, .LBB0_9
 # BB#3:                                 # %entry
 	i64.const	$push40=, 4613517804799262720
 	i32.call	$push41=, __netf2, $13, $12, $1, $pop40
-	br_if   	$pop41, BB0_9
+	br_if   	$pop41, .LBB0_9
 # BB#4:                                 # %entry
 	i64.const	$push42=, 4613503511148101632
 	i32.call	$push43=, __netf2, $2, $14, $1, $pop42
-	br_if   	$pop43, BB0_9
+	br_if   	$pop43, .LBB0_9
 # BB#5:                                 # %entry
 	i64.const	$push44=, 4613110985496985600
 	i32.call	$push45=, __netf2, $11, $10, $1, $pop44
-	br_if   	$pop45, BB0_9
+	br_if   	$pop45, .LBB0_9
 # BB#6:                                 # %entry
 	i64.const	$push46=, 4612961451915608064
 	i32.call	$push47=, __netf2, $9, $8, $1, $pop46
-	br_if   	$pop47, BB0_9
+	br_if   	$pop47, .LBB0_9
 # BB#7:                                 # %entry
 	i64.const	$push48=, 4613040616752807936
 	i32.call	$push49=, __eqtf2, $19, $18, $1, $pop48
-	br_if   	$pop49, BB0_9
+	br_if   	$pop49, .LBB0_9
 # BB#8:                                 # %if.end
 	call    	exit, $0
 	unreachable
-BB0_9:                                  # %if.then
+.LBB0_9:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 	.type	C,@object               # @C
 	.data

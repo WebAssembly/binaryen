@@ -10,17 +10,17 @@ main:                                   # @main
 	copy_local	$0=, $1
 	#APP
 	#NO_APP
-	block   	BB0_2
+	block   	.LBB0_2
 	i32.const	$push0=, -1
 	i32.le_s	$push1=, $0, $pop0
-	br_if   	$pop1, BB0_2
+	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return  	$1
-BB0_2:                                  # %if.then
+.LBB0_2:                                  # %if.then
 	call    	abort
 	unreachable
-func_end0:
-	.size	main, func_end0-main
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
 
 
 	.ident	"clang version 3.8.0 "
