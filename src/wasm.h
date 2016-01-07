@@ -466,8 +466,12 @@ public:
     incIndent(o, indent);
     printFullLine(o, indent, value);
     doIndent(o, indent) << "(table";
+    std::set<Name> caseNames;
+    for (auto& c : cases) {
+      caseNames.insert(c.name);
+    }
     for (auto& t : targets) {
-      o << " (case " << (t.is() ? t : default_) << ")";
+      o << " (" << (caseNames.count(t) == 0 ? "br" : "case") << " " << (t.is() ? t : default_) << ")";
     }
     o << ")";
     if (default_.is()) o << " (case " << default_ << ")";
