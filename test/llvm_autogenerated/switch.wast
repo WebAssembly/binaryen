@@ -27,7 +27,7 @@
                     (block $BB0_2
                       (tableswitch 
                         (get_local $$0)
-                        (table (case $BB0_2) (case $BB0_2) (case $BB0_2) (case $BB0_2) (case $BB0_2) (case $BB0_2) (case $BB0_2) (case $BB0_3) (case $BB0_3) (case $BB0_3) (case $BB0_3) (case $BB0_3) (case $BB0_3) (case $BB0_3) (case $BB0_3) (case $BB0_4) (case $BB0_4) (case $BB0_4) (case $BB0_4) (case $BB0_4) (case $BB0_4) (case $BB0_5) (case $BB0_6) (case $BB0_7)) (case $BB0_2)
+                        (table (br $BB0_2) (br $BB0_2) (br $BB0_2) (br $BB0_2) (br $BB0_2) (br $BB0_2) (br $BB0_2) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_3) (br $BB0_4) (br $BB0_4) (br $BB0_4) (br $BB0_4) (br $BB0_4) (br $BB0_4) (br $BB0_5) (br $BB0_6) (br $BB0_7)) (case $BB0_2)
                       )
                     )
                     (call_import $foo0)
@@ -72,7 +72,7 @@
                         (i32.wrap/i64
                           (get_local $$0)
                         )
-                        (table (case $BB1_2) (case $BB1_2) (case $BB1_2) (case $BB1_2) (case $BB1_2) (case $BB1_2) (case $BB1_2) (case $BB1_3) (case $BB1_3) (case $BB1_3) (case $BB1_3) (case $BB1_3) (case $BB1_3) (case $BB1_3) (case $BB1_3) (case $BB1_4) (case $BB1_4) (case $BB1_4) (case $BB1_4) (case $BB1_4) (case $BB1_4) (case $BB1_5) (case $BB1_6) (case $BB1_7)) (case $BB1_2)
+                        (table (br $BB1_2) (br $BB1_2) (br $BB1_2) (br $BB1_2) (br $BB1_2) (br $BB1_2) (br $BB1_2) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_3) (br $BB1_4) (br $BB1_4) (br $BB1_4) (br $BB1_4) (br $BB1_4) (br $BB1_4) (br $BB1_5) (br $BB1_6) (br $BB1_7)) (case $BB1_2)
                       )
                     )
                     (call_import $foo0)
