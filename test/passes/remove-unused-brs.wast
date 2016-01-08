@@ -88,5 +88,54 @@
       )
     )
   )
+  (func $b12-yes (result i32)
+    (block $topmost
+      (if_else (i32.const 1)
+        (block
+          (i32.const 12)
+          (br $topmost
+            (i32.const 1)
+          )
+        )
+        (block
+          (i32.const 27)
+          (br $topmost
+            (i32.const 2)
+          )
+        )
+      )
+    )
+  )
+  (func $b13 (result i32)
+    (block $topmost
+      (if_else (i32.const 1)
+        (block
+          (i32.const 12)
+          (br_if (i32.const 1) $topmost
+            (i32.const 1)
+          )
+        )
+        (block
+          (i32.const 27)
+          (br $topmost
+            (i32.const 2)
+          )
+        )
+      )
+      (i32.const 3)
+    )
+  )
+  (func $b14 (result i32)
+    (block $topmost
+      (if_else (i32.const 1)
+        (block
+          (i32.const 12)
+        )
+        (block
+          (i32.const 27)
+        )
+      )
+    )
+  )
 )
 
