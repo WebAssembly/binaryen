@@ -5,16 +5,14 @@
 # 366:13: redefinition of label "$.LBB1_13"
 pr24716.c.s.wast
 
-# TODO The following 7 tests should not be passing, but are.
-#      Temporarily comment them out to make the waterfall green.
 # Unknown symbol (likely an external symbol).
-#pr54937.c.s # $exit
+pr54937.c.s # $exit
 
 # Unknown symbol ($abort, $stdout, $stderr).
-#921110-1.c.s
-#fprintf-1.c.s
-#gofast.c.s
+921110-1.c.s
+fprintf-1.c.s
+gofast.c.s
 
 # Block address taken.
-#20071220-1.c.s
-#20071220-2.c.s
+20071220-1.c.s
+20071220-2.c.s
