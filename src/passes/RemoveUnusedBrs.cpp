@@ -29,9 +29,13 @@ struct RemoveUnusedBrs : public Pass {
     if (curr->list.size() == 0) return;
     Break* last = curr->list.back()->dyn_cast<Break>();
     if (!last) return;
-    if (last->value) return;
+    if (last->condition) return;
     if (last->name == curr->name) {
-      curr->list.pop_back();
+      if (!last->value) {
+        curr->list.pop_back();
+      } else {
+        curr->list[curr->list.size()-1] = last->value; // can replace with the value
+      }
     }
   }
 };

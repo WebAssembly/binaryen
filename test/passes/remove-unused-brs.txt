@@ -44,6 +44,65 @@
       )
     )
   )
+  (func $b6 (param $i1 i32)
+    (block $topmost
+      (br_if
+        (i32.const 1)
+        $topmost
+      )
+    )
+  )
+  (func $b7 (param $i1 i32)
+    (block $topmost
+      (br_if
+        (i32.const 1)
+        $topmost
+        (i32.const 0)
+      )
+    )
+  )
+  (func $b8 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if
+          (i32.const 1)
+          $topmost
+        )
+      )
+    )
+  )
+  (func $b9 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if
+          (i32.const 1)
+          $inner
+        )
+      )
+    )
+  )
+  (func $b10 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if
+          (i32.const 1)
+          $topmost
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $b11 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if
+          (i32.const 1)
+          $inner
+          (i32.const 0)
+        )
+      )
+    )
+  )
 )
 (module
   (memory 16777216 16777216)
@@ -53,9 +112,7 @@
   )
   (func $b1 (param $i1 i32)
     (block $topmost
-      (br $topmost
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $b2 (param $i1 i32)
@@ -83,7 +140,64 @@
   (func $b5 (param $i1 i32)
     (block $topmost
       (block $inner
-        (br $inner
+        (i32.const 0)
+      )
+    )
+  )
+  (func $b6 (param $i1 i32)
+    (block $topmost
+      (br_if
+        (i32.const 1)
+        $topmost
+      )
+    )
+  )
+  (func $b7 (param $i1 i32)
+    (block $topmost
+      (br_if
+        (i32.const 1)
+        $topmost
+        (i32.const 0)
+      )
+    )
+  )
+  (func $b8 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if
+          (i32.const 1)
+          $topmost
+        )
+      )
+    )
+  )
+  (func $b9 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if
+          (i32.const 1)
+          $inner
+        )
+      )
+    )
+  )
+  (func $b10 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if
+          (i32.const 1)
+          $topmost
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $b11 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if
+          (i32.const 1)
+          $inner
           (i32.const 0)
         )
       )

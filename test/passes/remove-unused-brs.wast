@@ -44,5 +44,49 @@
       )
     )
   )
+  (func $b6 (param $i1 i32)
+    (block $topmost
+      (br_if (i32.const 1) $topmost)
+    )
+  )
+  (func $b7 (param $i1 i32)
+    (block $topmost
+      (br_if (i32.const 1) $topmost
+        (i32.const 0)
+      )
+    )
+  )
+  (func $b8 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if (i32.const 1) $topmost)
+      )
+    )
+  )
+  (func $b9 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if (i32.const 1) $inner)
+      )
+    )
+  )
+  (func $b10 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if (i32.const 1) $topmost
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $b11 (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (br_if (i32.const 1) $inner
+          (i32.const 0)
+        )
+      )
+    )
+  )
 )
 
