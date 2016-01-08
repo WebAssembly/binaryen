@@ -24,6 +24,45 @@
 namespace wasm {
 
 struct RemoveUnusedBrs : public Pass {
+  // preparation: try to unify branches, as the fewer there are, the higher a chance we can remove them
+  // specifically for if-else, turn an if-else with branches to the same target at the end of each
+  // child, and with a value, to a branch to that target containing the if-else
+  void visitIf(If* curr) override {
+    if (!curr->ifFalse) return;
+    if (curr->type != none) return; // already has a returned value
+    // an if_else that indirectly returns a value by breaking to the same target can potentially remove both breaks, and break outside once
+    auto getLast = [](Expression *side) -> Expression* {
+      Block* b = side->dyn_cast<Block>();
+      if (!b) return nullptr;
+      if (b->list.size() == 0) return nullptr;
+      return b->list.back();
+    };
+    auto process = [&](Expression *side, bool doIt) {
+      Expression* last = getLast(side);
+      if (!last) return Name();
+      Block* b = side->cast<Block>();
+      Break* br = last->dyn_cast<Break>();
+      if (!br) return Name();
+      if (br->condition) return Name();
+      if (!br->value) return Name();
+      if (doIt) {
+        b->list[b->list.size()-1] = br->value;
+      }
+      return br->name;
+    };
+    // do both, or none
+    if (process(curr->ifTrue, false).is() && process(curr->ifTrue, false) == process(curr->ifFalse, false)) {
+      auto br = getLast(curr->ifTrue)->cast<Break>(); // we are about to discard this, so why not reuse it!
+      process(curr->ifTrue, true);
+      process(curr->ifFalse, true);
+      curr->type = br->value->type; // if_else now returns a value
+      br->value = curr;
+      // no need to change anything else in the br - target is correct already
+      replaceCurrent(br);
+    }
+  }
+
+  // main portion
   void visitBlock(Block *curr) override {
     if (curr->name.isNull()) return;
     if (curr->list.size() == 0) return;
@@ -36,30 +75,6 @@ struct RemoveUnusedBrs : public Pass {
         } else {
           curr->list[curr->list.size()-1] = br->value; // can replace with the value
         }
-      }
-    } else if (If* ifelse = curr->list.back()->dyn_cast<If>()) {
-      if (!ifelse->ifFalse) return;
-      if (ifelse->type != none) return;
-      // an if_else that indirectly returns a value by breaking to this block can potentially remove both breaks
-      auto process = [&curr](Expression *side, bool doIt) {
-        Block* b = side->dyn_cast<Block>();
-        if (!b) return false;
-        Expression* last = b->list.back();
-        Break* br = last->dyn_cast<Break>();
-        if (!br) return false;
-        if (br->condition) return false;
-        if (!br->value) return false;
-        if (br->name != curr->name) return false;
-        if (doIt) {
-          b->list[b->list.size()-1] = br->value;
-        }
-        return true;
-      };
-      // do both, or none
-      if (process(ifelse->ifTrue, false) && process(ifelse->ifFalse, false)) {
-        process(ifelse->ifTrue, true);
-        process(ifelse->ifFalse, true);
-        ifelse->type = curr->type; // if_else now returns a value
       }
     }
   }
