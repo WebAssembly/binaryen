@@ -1,10 +1,6 @@
 # Expected failures from running s2wasm on the linked GCC torture test output
 # files.
 
-# 156:13: redefinition of label "$.LBB0_18"
-# 366:13: redefinition of label "$.LBB1_13"
-pr24716.c.s.wast
-
 # Unknown symbol (likely an external symbol).
 pr54937.c.s # $exit
 
