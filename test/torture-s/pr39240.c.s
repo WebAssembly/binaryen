@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39240.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39240.c"
+	.section	.text.bar1,"ax",@progbits
+	.hidden	bar1
 	.globl	bar1
 	.type	bar1,@function
 bar1:                                   # @bar1
@@ -13,6 +15,7 @@ bar1:                                   # @bar1
 .Lfunc_end0:
 	.size	bar1, .Lfunc_end0-bar1
 
+	.section	.text.foo1,"ax",@progbits
 	.type	foo1,@function
 foo1:                                   # @foo1
 	.param  	i32
@@ -22,6 +25,8 @@ foo1:                                   # @foo1
 .Lfunc_end1:
 	.size	foo1, .Lfunc_end1-foo1
 
+	.section	.text.bar2,"ax",@progbits
+	.hidden	bar2
 	.globl	bar2
 	.type	bar2,@function
 bar2:                                   # @bar2
@@ -37,6 +42,7 @@ bar2:                                   # @bar2
 .Lfunc_end2:
 	.size	bar2, .Lfunc_end2-bar2
 
+	.section	.text.foo2,"ax",@progbits
 	.type	foo2,@function
 foo2:                                   # @foo2
 	.param  	i32
@@ -50,6 +56,8 @@ foo2:                                   # @foo2
 .Lfunc_end3:
 	.size	foo2, .Lfunc_end3-foo2
 
+	.section	.text.bar3,"ax",@progbits
+	.hidden	bar3
 	.globl	bar3
 	.type	bar3,@function
 bar3:                                   # @bar3
@@ -65,6 +73,7 @@ bar3:                                   # @bar3
 .Lfunc_end4:
 	.size	bar3, .Lfunc_end4-bar3
 
+	.section	.text.foo3,"ax",@progbits
 	.type	foo3,@function
 foo3:                                   # @foo3
 	.param  	i32
@@ -78,6 +87,8 @@ foo3:                                   # @foo3
 .Lfunc_end5:
 	.size	foo3, .Lfunc_end5-foo3
 
+	.section	.text.bar4,"ax",@progbits
+	.hidden	bar4
 	.globl	bar4
 	.type	bar4,@function
 bar4:                                   # @bar4
@@ -91,6 +102,7 @@ bar4:                                   # @bar4
 .Lfunc_end6:
 	.size	bar4, .Lfunc_end6-bar4
 
+	.section	.text.foo4,"ax",@progbits
 	.type	foo4,@function
 foo4:                                   # @foo4
 	.param  	i32
@@ -100,6 +112,8 @@ foo4:                                   # @foo4
 .Lfunc_end7:
 	.size	foo4, .Lfunc_end7-foo4
 
+	.section	.text.bar5,"ax",@progbits
+	.hidden	bar5
 	.globl	bar5
 	.type	bar5,@function
 bar5:                                   # @bar5
@@ -117,6 +131,7 @@ bar5:                                   # @bar5
 .Lfunc_end8:
 	.size	bar5, .Lfunc_end8-bar5
 
+	.section	.text.foo5,"ax",@progbits
 	.type	foo5,@function
 foo5:                                   # @foo5
 	.param  	i32
@@ -128,6 +143,8 @@ foo5:                                   # @foo5
 .Lfunc_end9:
 	.size	foo5, .Lfunc_end9-foo5
 
+	.section	.text.bar6,"ax",@progbits
+	.hidden	bar6
 	.globl	bar6
 	.type	bar6,@function
 bar6:                                   # @bar6
@@ -145,6 +162,7 @@ bar6:                                   # @bar6
 .Lfunc_end10:
 	.size	bar6, .Lfunc_end10-bar6
 
+	.section	.text.foo6,"ax",@progbits
 	.type	foo6,@function
 foo6:                                   # @foo6
 	.param  	i32
@@ -156,6 +174,8 @@ foo6:                                   # @foo6
 .Lfunc_end11:
 	.size	foo6, .Lfunc_end11-foo6
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -201,64 +221,75 @@ main:                                   # @main
 	br_if   	$pop16, .LBB12_7
 # BB#6:                                 # %if.end28
 	return  	$2
-.LBB12_7:                                 # %if.then27
+.LBB12_7:                               # %if.then27
 	call    	abort
 	unreachable
-.LBB12_8:                                 # %if.then21
+.LBB12_8:                               # %if.then21
 	call    	abort
 	unreachable
-.LBB12_9:                                 # %if.then15
+.LBB12_9:                               # %if.then15
 	call    	abort
 	unreachable
-.LBB12_10:                                # %if.then10
+.LBB12_10:                              # %if.then10
 	call    	abort
 	unreachable
-.LBB12_11:                                # %if.then4
+.LBB12_11:                              # %if.then4
 	call    	abort
 	unreachable
-.LBB12_12:                                # %if.then
+.LBB12_12:                              # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end12:
 	.size	main, .Lfunc_end12-main
 
-	.type	l1,@object              # @l1
-	.data
+	.hidden	l1                      # @l1
+	.type	l1,@object
+	.section	.data.l1,"aw",@progbits
 	.globl	l1
 	.align	2
 l1:
 	.int32	4294967292              # 0xfffffffc
 	.size	l1, 4
 
-	.type	l2,@object              # @l2
+	.hidden	l2                      # @l2
+	.type	l2,@object
+	.section	.data.l2,"aw",@progbits
 	.globl	l2
 	.align	2
 l2:
 	.int32	65532                   # 0xfffc
 	.size	l2, 4
 
-	.type	l3,@object              # @l3
+	.hidden	l3                      # @l3
+	.type	l3,@object
+	.section	.data.l3,"aw",@progbits
 	.globl	l3
 	.align	2
 l3:
 	.int32	252                     # 0xfc
 	.size	l3, 4
 
-	.type	l4,@object              # @l4
+	.hidden	l4                      # @l4
+	.type	l4,@object
+	.section	.data.l4,"aw",@progbits
 	.globl	l4
 	.align	2
 l4:
 	.int32	4294967292              # 0xfffffffc
 	.size	l4, 4
 
-	.type	l5,@object              # @l5
+	.hidden	l5                      # @l5
+	.type	l5,@object
+	.section	.data.l5,"aw",@progbits
 	.globl	l5
 	.align	2
 l5:
 	.int32	4294967292              # 0xfffffffc
 	.size	l5, 4
 
-	.type	l6,@object              # @l6
+	.hidden	l6                      # @l6
+	.type	l6,@object
+	.section	.data.l6,"aw",@progbits
 	.globl	l6
 	.align	2
 l6:

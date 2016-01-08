@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42512.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42512.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -9,7 +11,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.load16_u	$4=, g_3($0)
 	i32.const	$3=, -1
-.LBB0_1:                                  # %for.body
+.LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.const	$1=, 65535
@@ -19,7 +21,7 @@ main:                                   # @main
 	i32.add 	$push1=, $3, $2
 	i32.and 	$3=, $pop1, $2
 	br_if   	$3, .LBB0_1
-.LBB0_2:                                  # %for.end
+.LBB0_2:                                # %for.end
 	i32.store16	$discard=, g_3($0), $4
 	block   	.LBB0_4
 	i32.and 	$push2=, $4, $1
@@ -27,14 +29,15 @@ main:                                   # @main
 	br_if   	$pop3, .LBB0_4
 # BB#3:                                 # %if.end
 	return  	$0
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	g_3,@object             # @g_3
-	.bss
+	.hidden	g_3                     # @g_3
+	.type	g_3,@object
+	.section	.bss.g_3,"aw",@nobits
 	.globl	g_3
 	.align	1
 g_3:

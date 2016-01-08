@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050215-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050215-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -20,7 +22,7 @@ main:                                   # @main
 	i32.and 	$push10=, $0, $pop9
 	br_if   	$pop10, .LBB0_3
 	br      	.LBB0_4
-.LBB0_2:                                  # %lor.lhs.false
+.LBB0_2:                                # %lor.lhs.false
 	i32.const	$1=, 0
 	i32.const	$push5=, 1
 	i32.and 	$push6=, $0, $pop5
@@ -32,20 +34,21 @@ main:                                   # @main
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $pop8, $pop14
 	br_if   	$pop15, .LBB0_4
-.LBB0_3:                                  # %if.end3
+.LBB0_3:                                # %if.end3
 	i32.const	$push11=, 0
 	return  	$pop11
-.LBB0_4:                                  # %if.then2
+.LBB0_4:                                # %if.then2
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	v,@object               # @v
-	.bss
+	.hidden	v                       # @v
+	.type	v,@object
+	.section	.bss.v,"aw",@nobits
 	.globl	v
 v:
-	.zero	8
+	.skip	8
 	.size	v, 8
 
 

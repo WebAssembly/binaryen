@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/extzvsi.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/extzvsi.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -19,6 +21,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -36,12 +40,13 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	x,@object               # @x
-	.bss
+	.hidden	x                       # @x
+	.type	x,@object
+	.section	.bss.x,"aw",@nobits
 	.globl	x
 	.align	3
 x:
-	.zero	8
+	.skip	8
 	.size	x, 8
 
 

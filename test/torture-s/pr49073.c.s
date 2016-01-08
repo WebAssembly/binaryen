@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49073.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49073.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -8,7 +10,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
 	i32.const	$2=, a+4
-.LBB0_1:                                  # %do.body
+.LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB0_6
 	loop    	.LBB0_5
@@ -20,7 +22,7 @@ main:                                   # @main
 	i32.eq  	$push13=, $pop1, $pop12
 	br_if   	$pop13, .LBB0_4
 # BB#2:                                 # %do.body
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push2=, 4
 	i32.ne  	$push3=, $0, $pop2
 	br_if   	$pop3, .LBB0_4
@@ -30,8 +32,8 @@ main:                                   # @main
 	i32.add 	$push0=, $pop9, $1
 	i32.store	$0=, c($0), $pop0
 	br      	.LBB0_6
-.LBB0_4:                                  # %if.end
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+.LBB0_4:                                # %if.end
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push4=, 3
 	i32.eq  	$3=, $0, $pop4
 	i32.const	$push7=, 4
@@ -39,24 +41,25 @@ main:                                   # @main
 	i32.const	$push5=, 7
 	i32.lt_s	$push6=, $0, $pop5
 	br_if   	$pop6, .LBB0_1
-.LBB0_5:                                  # %do.endthread-pre-split
+.LBB0_5:                                # %do.endthread-pre-split
 	i32.const	$push8=, 0
 	i32.load	$0=, c($pop8)
-.LBB0_6:                                  # %do.end
+.LBB0_6:                                # %do.end
 	block   	.LBB0_8
 	i32.ne  	$push10=, $0, $1
 	br_if   	$pop10, .LBB0_8
 # BB#7:                                 # %if.end6
 	i32.const	$push11=, 0
 	return  	$pop11
-.LBB0_8:                                  # %if.then5
+.LBB0_8:                                # %if.then5
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	4
 a:
@@ -69,8 +72,9 @@ a:
 	.int32	7                       # 0x7
 	.size	a, 28
 
-	.type	c,@object               # @c
-	.bss
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	2
 c:

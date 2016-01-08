@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36691.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36691.c"
+	.section	.text.func_1,"ax",@progbits
+	.hidden	func_1
 	.globl	func_1
 	.type	func_1,@function
 func_1:                                 # @func_1
@@ -11,6 +13,8 @@ func_1:                                 # @func_1
 .Lfunc_end0:
 	.size	func_1, .Lfunc_end0-func_1
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -23,8 +27,9 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	g_5,@object             # @g_5
-	.bss
+	.hidden	g_5                     # @g_5
+	.type	g_5,@object
+	.section	.bss.g_5,"aw",@nobits
 	.globl	g_5
 g_5:
 	.int8	0                       # 0x0

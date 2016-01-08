@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/struct-ini-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/struct-ini-3.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -11,14 +13,15 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	result,@object          # @result
-	.data
+	.hidden	result                  # @result
+	.type	result,@object
+	.section	.data.result,"aw",@progbits
 	.globl	result
 	.align	2
 result:
 	.int8	255                     # 0xff
 	.int8	15                      # 0xf
-	.zero	2
+	.skip	2
 	.size	result, 4
 
 

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990811-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990811-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -22,19 +24,21 @@ foo:                                    # @foo
 # BB#3:                                 # %sw.bb
 	i32.load	$0=, 0($1)
 	br      	.LBB0_7
-.LBB0_4:                                  # %sw.epilog
+.LBB0_4:                                # %sw.epilog
 	call    	abort
 	unreachable
-.LBB0_5:                                  # %sw.bb1
+.LBB0_5:                                # %sw.bb1
 	i32.load8_s	$0=, 0($1)
 	br      	.LBB0_7
-.LBB0_6:                                  # %sw.bb2
+.LBB0_6:                                # %sw.bb2
 	i32.load16_s	$0=, 0($1)
-.LBB0_7:                                  # %return
+.LBB0_7:                                # %return
 	return  	$0
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

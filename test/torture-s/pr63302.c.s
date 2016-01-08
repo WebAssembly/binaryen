@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr63302.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr63302.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -23,6 +25,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -40,6 +44,8 @@ bar:                                    # @bar
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -127,10 +133,10 @@ main:                                   # @main
 # BB#18:                                # %if.end51
 	i32.const	$push33=, 0
 	return  	$pop33
-.LBB2_19:                                 # %if.then50
+.LBB2_19:                               # %if.then50
 	call    	abort
 	unreachable
-.LBB2_20:                                 # %if.then
+.LBB2_20:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:

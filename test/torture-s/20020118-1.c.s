@@ -1,12 +1,14 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020118-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020118-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-.LBB0_1:                                  # %for.cond
+.LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.load	$1=, q($0)
@@ -41,6 +43,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -52,15 +56,18 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	q,@object               # @q
-	.bss
+	.hidden	q                       # @q
+	.type	q,@object
+	.section	.bss.q,"aw",@nobits
 	.globl	q
 	.align	2
 q:
 	.int32	0
 	.size	q, 4
 
-	.type	n,@object               # @n
+	.hidden	n                       # @n
+	.type	n,@object
+	.section	.bss.n,"aw",@nobits
 	.globl	n
 	.align	2
 n:

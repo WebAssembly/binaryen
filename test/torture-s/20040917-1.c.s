@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040917-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040917-1.c"
+	.section	.text.not_inlinable,"ax",@progbits
+	.hidden	not_inlinable
 	.globl	not_inlinable
 	.type	not_inlinable,@function
 not_inlinable:                          # @not_inlinable
@@ -11,6 +13,8 @@ not_inlinable:                          # @not_inlinable
 .Lfunc_end0:
 	.size	not_inlinable, .Lfunc_end0-not_inlinable
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -27,7 +31,7 @@ main:                                   # @main
 	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

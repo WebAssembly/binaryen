@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36034-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36034-1.c"
+	.section	.text.test,"ax",@progbits
+	.hidden	test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -70,6 +72,8 @@ test:                                   # @test
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -201,14 +205,15 @@ main:                                   # @main
 	br_if   	$pop59, .LBB1_31
 # BB#30:                                # %for.cond1.5.4
 	return  	$0
-.LBB1_31:                                 # %if.then
+.LBB1_31:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	x,@object               # @x
-	.data
+	.hidden	x                       # @x
+	.type	x,@object
+	.section	.data.x,"aw",@progbits
 	.globl	x
 	.align	4
 x:
@@ -264,12 +269,13 @@ x:
 	.int64	-4616189618054758400    # double -1
 	.size	x, 400
 
-	.type	tmp,@object             # @tmp
-	.bss
+	.hidden	tmp                     # @tmp
+	.type	tmp,@object
+	.section	.bss.tmp,"aw",@nobits
 	.globl	tmp
 	.align	4
 tmp:
-	.zero	240
+	.skip	240
 	.size	tmp, 240
 
 

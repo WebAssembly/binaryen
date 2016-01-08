@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/align-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/align-3.c"
+	.section	.text.func,"ax",@progbits
+	.hidden	func
 	.globl	func
 	.align	8
 	.type	func,@function
@@ -9,6 +11,8 @@ func:                                   # @func
 .Lfunc_end0:
 	.size	func, .Lfunc_end0-func
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

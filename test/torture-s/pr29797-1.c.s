@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr29797-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr29797-1.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -10,6 +12,8 @@ bar:                                    # @bar
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

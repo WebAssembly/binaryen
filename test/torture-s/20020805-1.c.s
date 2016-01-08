@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020805-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020805-1.c"
+	.section	.text.check,"ax",@progbits
+	.hidden	check
 	.globl	check
 	.type	check,@function
 check:                                  # @check
@@ -11,12 +13,14 @@ check:                                  # @check
 	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -38,14 +42,15 @@ main:                                   # @main
 # BB#1:                                 # %check.exit
 	call    	exit, $0
 	unreachable
-.LBB1_2:                                  # %if.then.i
+.LBB1_2:                                # %if.then.i
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	n,@object               # @n
-	.data
+	.hidden	n                       # @n
+	.type	n,@object
+	.section	.data.n,"aw",@progbits
 	.globl	n
 	.align	2
 n:

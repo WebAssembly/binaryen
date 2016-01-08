@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051104-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051104-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -8,25 +10,26 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.store	$discard=, s($0), $0
-	i32.const	$push0=, .str
+	i32.const	$push0=, .L.str
 	i32.store	$discard=, s+4($0), $pop0
 	return  	$0
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	s,@object               # @s
-	.bss
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.bss.s,"aw",@nobits
 	.globl	s
 	.align	2
 s:
-	.zero	8
+	.skip	8
 	.size	s, 8
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
-	.zero	1
-	.size	.str, 1
+.L.str:
+	.skip	1
+	.size	.L.str, 1
 
 
 	.ident	"clang version 3.8.0 "

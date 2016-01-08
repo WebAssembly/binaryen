@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41239.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41239.c"
+	.section	.text.test,"ax",@progbits
+	.hidden	test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -21,9 +23,9 @@ test:                                   # @test
 	br_if   	$0, .LBB0_3
 # BB#1:                                 # %if.then
 	i32.const	$push6=, 20
-	i32.const	$push3=, .str
+	i32.const	$push3=, .L.str
 	i32.const	$push5=, 924
-	i32.const	$push2=, __func__.test
+	i32.const	$push2=, .L__func__.test
 	i32.const	$push4=, 0
 	i32.call	$2=, fn1, $pop6, $pop3, $pop5, $pop2, $pop4
 	i32.const	$push7=, 255
@@ -34,7 +36,7 @@ test:                                   # @test
 # BB#2:                                 # %cond.true
 	i32.const	$push9=, 33816706
 	i32.call	$2=, fn3, $pop9
-	i32.const	$push10=, .str.1
+	i32.const	$push10=, .L.str.1
 	i32.call	$3=, fn4, $pop10
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
@@ -50,7 +52,7 @@ test:                                   # @test
 	i32.add 	$10=, $6, $7
 	i32.const	$7=, __stack_pointer
 	i32.store	$10=, 0($7), $10
-.LBB0_3:                                  # %if.end
+.LBB0_3:                                # %if.end
 	i32.div_s	$push11=, $1, $0
 	i32.const	$10=, 16
 	i32.add 	$10=, $10, $10
@@ -60,6 +62,8 @@ test:                                   # @test
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
+	.section	.text.fn1,"ax",@progbits
+	.hidden	fn1
 	.globl	fn1
 	.type	fn1,@function
 fn1:                                    # @fn1
@@ -77,6 +81,8 @@ fn1:                                    # @fn1
 .Lfunc_end1:
 	.size	fn1, .Lfunc_end1-fn1
 
+	.section	.text.fn2,"ax",@progbits
+	.hidden	fn2
 	.globl	fn2
 	.type	fn2,@function
 fn2:                                    # @fn2
@@ -88,13 +94,15 @@ fn2:                                    # @fn2
 	br_if   	$0, .LBB2_2
 # BB#1:                                 # %if.end
 	return
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	i32.const	$push0=, 0
 	call    	exit, $pop0
 	unreachable
 .Lfunc_end2:
 	.size	fn2, .Lfunc_end2-fn2
 
+	.section	.text.fn3,"ax",@progbits
+	.hidden	fn3
 	.globl	fn3
 	.type	fn3,@function
 fn3:                                    # @fn3
@@ -107,6 +115,8 @@ fn3:                                    # @fn3
 .Lfunc_end3:
 	.size	fn3, .Lfunc_end3-fn3
 
+	.section	.text.fn4,"ax",@progbits
+	.hidden	fn4
 	.globl	fn4
 	.type	fn4,@function
 fn4:                                    # @fn4
@@ -120,6 +130,8 @@ fn4:                                    # @fn4
 .Lfunc_end4:
 	.size	fn4, .Lfunc_end4-fn4
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -134,9 +146,9 @@ main:                                   # @main
 	i32.store	$8=, 0($7), $8
 	block   	.LBB5_2
 	i32.const	$push4=, 20
-	i32.const	$push1=, .str
+	i32.const	$push1=, .L.str
 	i32.const	$push3=, 924
-	i32.const	$push0=, __func__.test
+	i32.const	$push0=, .L__func__.test
 	i32.const	$push2=, 0
 	i32.call	$0=, fn1, $pop4, $pop1, $pop3, $pop0, $pop2
 	i32.const	$push5=, 255
@@ -147,7 +159,7 @@ main:                                   # @main
 # BB#1:                                 # %cond.true.i
 	i32.const	$push7=, 33816706
 	i32.call	$0=, fn3, $pop7
-	i32.const	$push8=, .str.1
+	i32.const	$push8=, .L.str.1
 	i32.call	$1=, fn4, $pop8
 	i32.const	$2=, __stack_pointer
 	i32.load	$2=, 0($2)
@@ -163,27 +175,27 @@ main:                                   # @main
 	i32.add 	$8=, $4, $5
 	i32.const	$5=, __stack_pointer
 	i32.store	$8=, 0($5), $8
-.LBB5_2:                                  # %test.exit
+.LBB5_2:                                # %test.exit
 	call    	abort
 	unreachable
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"foo"
-	.size	.str, 4
+	.size	.L.str, 4
 
-	.type	__func__.test,@object   # @__func__.test
-__func__.test:
+	.type	.L__func__.test,@object # @__func__.test
+.L__func__.test:
 	.asciz	"test"
-	.size	__func__.test, 5
+	.size	.L__func__.test, 5
 
-	.type	.str.1,@object          # @.str.1
-.str.1:
+	.type	.L.str.1,@object        # @.str.1
+.L.str.1:
 	.asciz	"division by zero"
-	.size	.str.1, 17
+	.size	.L.str.1, 17
 
 
 	.ident	"clang version 3.8.0 "

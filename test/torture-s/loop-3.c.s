@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-3.c"
+	.section	.text.g,"ax",@progbits
+	.hidden	g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -16,6 +18,8 @@ g:                                      # @g
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -39,6 +43,8 @@ f:                                      # @f
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -55,14 +61,15 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	n,@object               # @n
-	.bss
+	.hidden	n                       # @n
+	.type	n,@object
+	.section	.bss.n,"aw",@nobits
 	.globl	n
 	.align	2
 n:

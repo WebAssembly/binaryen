@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43269.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43269.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -15,12 +17,13 @@ main:                                   # @main
 	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.func_32,"ax",@progbits
 	.type	func_32,@function
 func_32:                                # @func_32
 	.local  	i32
@@ -34,7 +37,7 @@ func_32:                                # @func_32
 	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %for.end
 	return
-.LBB1_2:                                  # %if.else
+.LBB1_2:                                # %if.else
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	br      	.LBB1_2
@@ -42,22 +45,27 @@ func_32:                                # @func_32
 .Lfunc_end1:
 	.size	func_32, .Lfunc_end1-func_32
 
-	.type	g_261,@object           # @g_261
-	.bss
+	.hidden	g_261                   # @g_261
+	.type	g_261,@object
+	.section	.bss.g_261,"aw",@nobits
 	.globl	g_261
 	.align	2
 g_261:
 	.int32	0                       # 0x0
 	.size	g_261, 4
 
-	.type	g_21,@object            # @g_21
+	.hidden	g_21                    # @g_21
+	.type	g_21,@object
+	.section	.bss.g_21,"aw",@nobits
 	.globl	g_21
 	.align	2
 g_21:
 	.int32	0                       # 0x0
 	.size	g_21, 4
 
-	.type	g_211,@object           # @g_211
+	.hidden	g_211                   # @g_211
+	.type	g_211,@object
+	.section	.bss.g_211,"aw",@nobits
 	.globl	g_211
 	.align	2
 g_211:

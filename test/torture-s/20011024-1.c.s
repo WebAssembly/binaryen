@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011024-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011024-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -11,38 +13,39 @@ main:                                   # @main
 	block   	.LBB0_2
 	i32.const	$push0=, 6513249
 	i32.store	$discard=, buf($0), $pop0
-	i32.const	$push1=, .str
+	i32.const	$push1=, .L.str
 	i32.call	$push2=, strcmp, $1, $pop1
 	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %foo.exit
-	i32.const	$push3=, .str.1
+	i32.const	$push3=, .L.str.1
 	i32.const	$push4=, 9
 	call    	memcpy, $1, $pop3, $pop4
 	return  	$0
-.LBB0_2:                                  # %if.then1.i
+.LBB0_2:                                # %if.then1.i
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	buf,@object             # @buf
-	.bss
+	.hidden	buf                     # @buf
+	.type	buf,@object
+	.section	.bss.buf,"aw",@nobits
 	.globl	buf
 	.align	4
 buf:
-	.zero	50
+	.skip	50
 	.size	buf, 50
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"abc"
-	.size	.str, 4
+	.size	.L.str, 4
 
-	.type	.str.1,@object          # @.str.1
-.str.1:
+	.type	.L.str.1,@object        # @.str.1
+.L.str.1:
 	.asciz	"abcdefgh"
-	.size	.str.1, 9
+	.size	.L.str.1, 9
 
 
 	.ident	"clang version 3.8.0 "

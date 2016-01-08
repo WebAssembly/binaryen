@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/980526-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980526-3.c"
+	.section	.text.compare,"ax",@progbits
+	.hidden	compare
 	.globl	compare
 	.type	compare,@function
 compare:                                # @compare
@@ -11,6 +13,8 @@ compare:                                # @compare
 .Lfunc_end0:
 	.size	compare, .Lfunc_end0-compare
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

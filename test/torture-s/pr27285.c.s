@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr27285.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr27285.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -17,7 +19,7 @@ foo:                                    # @foo
 	i32.add 	$4=, $1, $4
 	i32.const	$2=, 8
 	i32.sub 	$0=, $2, $6
-.LBB0_2:                                  # %while.body
+.LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_4
 	i32.const	$1=, 255
@@ -32,7 +34,7 @@ foo:                                    # @foo
 	i32.eq  	$push10=, $0, $pop9
 	br_if   	$pop10, .LBB0_4
 # BB#3:                                 # %while.body
-                                        #   in Loop: Header=.LBB0_2 Depth=1
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$1=, 1
 	i32.add 	$5=, $5, $1
 	i32.add 	$4=, $4, $1
@@ -44,11 +46,13 @@ foo:                                    # @foo
 	i32.const	$push11=, 0
 	i32.eq  	$push12=, $3, $pop11
 	br_if   	$pop12, .LBB0_2
-.LBB0_4:                                  # %while.end
+.LBB0_4:                                # %while.end
 	return
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -67,22 +71,22 @@ main:                                   # @main
 	i32.const	$19=, 24
 	i32.add 	$19=, $31, $19
 	i32.add 	$push1=, $19, $1
-	i32.load8_u	$push0=, main.x+18($0)
+	i32.load8_u	$push0=, .Lmain.x+18($0)
 	i32.store8	$discard=, 0($pop1), $pop0
 	i32.const	$3=, 8
 	i32.const	$4=, 16
 	i32.const	$20=, 24
 	i32.add 	$20=, $31, $20
 	i32.add 	$push8=, $20, $4
-	i32.const	$push2=, main.x+16
+	i32.const	$push2=, .Lmain.x+16
 	i32.add 	$push3=, $pop2, $2
 	i32.load8_u	$push4=, 0($pop3)
 	i32.shl 	$push5=, $pop4, $3
-	i32.load8_u	$push6=, main.x+16($0)
+	i32.load8_u	$push6=, .Lmain.x+16($0)
 	i32.or  	$push7=, $pop5, $pop6
 	i32.store16	$discard=, 0($pop8), $pop7
 	i32.const	$5=, 5
-	i32.const	$6=, main.x+8
+	i32.const	$6=, .Lmain.x+8
 	i32.const	$8=, 4
 	i32.const	$9=, 7
 	i32.const	$10=, 6
@@ -119,12 +123,12 @@ main:                                   # @main
 	i32.add 	$push31=, $6, $2
 	i64.load8_u	$push32=, 0($pop31)
 	i64.shl 	$push33=, $pop32, $7
-	i64.load8_u	$push34=, main.x+8($0)
+	i64.load8_u	$push34=, .Lmain.x+8($0)
 	i64.or  	$push35=, $pop33, $pop34
 	i64.or  	$push36=, $pop30, $pop35
 	i64.or  	$push37=, $pop23, $pop36
 	i64.store	$discard=, 0($pop38), $pop37
-	i32.const	$6=, main.x
+	i32.const	$6=, .Lmain.x
 	i32.const	$22=, 0
 	i32.add 	$22=, $31, $22
 	i32.add 	$push68=, $22, $1
@@ -163,7 +167,7 @@ main:                                   # @main
 	i32.add 	$push61=, $6, $2
 	i64.load8_u	$push62=, 0($pop61)
 	i64.shl 	$push63=, $pop62, $7
-	i64.load8_u	$push64=, main.x($0)
+	i64.load8_u	$push64=, .Lmain.x($0)
 	i64.or  	$push65=, $pop63, $pop64
 	i64.or  	$push66=, $pop60, $pop65
 	i64.or  	$push67=, $pop53, $pop66
@@ -212,20 +216,20 @@ main:                                   # @main
 	i32.const	$18=, __stack_pointer
 	i32.store	$31=, 0($18), $31
 	return  	$1
-.LBB1_5:                                  # %if.then
+.LBB1_5:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	main.x,@object          # @main.x
-	.section	.rodata,"a",@progbits
-main.x:
+	.type	.Lmain.x,@object        # @main.x
+	.section	.rodata..Lmain.x,"a",@progbits
+.Lmain.x:
 	.int8	0                       # 0x0
 	.int8	25                      # 0x19
 	.int8	0                       # 0x0
 	.asciz	"\252\273\314\335\000\000\000\000\000\000\000\000\000\000\000"
-	.size	main.x, 19
+	.size	.Lmain.x, 19
 
 
 	.ident	"clang version 3.8.0 "

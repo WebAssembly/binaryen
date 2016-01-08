@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47337.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47337.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -8,10 +10,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	i32.load	$push0=, w($1)
-	i32.const	$push1=, .str.1
+	i32.const	$push1=, .L.str.1
 	i32.call	$0=, strcmp, $pop0, $pop1
 	i32.const	$4=, -1024
-.LBB0_1:                                  # %for.cond2.preheader
+.LBB0_1:                                # %for.cond2.preheader
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.const	$2=, a
@@ -23,7 +25,7 @@ main:                                   # @main
 	i32.const	$push6=, 4
 	i32.add 	$4=, $4, $pop6
 	br_if   	$4, .LBB0_1
-.LBB0_2:                                  # %for.cond7.preheader
+.LBB0_2:                                # %for.cond7.preheader
 	i32.store	$discard=, d($1), $1
 	block   	.LBB0_4
 	i32.const	$push40=, 0
@@ -65,30 +67,31 @@ main:                                   # @main
 	i32.add 	$push38=, $2, $pop37
 	i32.load	$push39=, 0($pop38)
 	i32.store	$discard=, b($1), $pop39
-.LBB0_4:                                  # %if.end25
+.LBB0_4:                                # %if.end25
 	return  	$1
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"2"
-	.size	.str, 2
+	.size	.L.str, 2
 
-	.type	w,@object               # @w
-	.data
+	.hidden	w                       # @w
+	.type	w,@object
+	.section	.data.w,"aw",@progbits
 	.globl	w
 	.align	2
 w:
-	.int32	.str
+	.int32	.L.str
 	.size	w, 4
 
-	.type	.str.1,@object          # @.str.1
+	.type	.L.str.1,@object        # @.str.1
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str.1:
+.L.str.1:
 	.asciz	"1"
-	.size	.str.1, 2
+	.size	.L.str.1, 2
 
 	.type	a,@object               # @a
 	.lcomm	a,1024,4

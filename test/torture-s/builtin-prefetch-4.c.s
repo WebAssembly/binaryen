@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-4.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-4.c"
+	.section	.text.assign_arg_ptr,"ax",@progbits
+	.hidden	assign_arg_ptr
 	.globl	assign_arg_ptr
 	.type	assign_arg_ptr,@function
 assign_arg_ptr:                         # @assign_arg_ptr
@@ -11,6 +13,8 @@ assign_arg_ptr:                         # @assign_arg_ptr
 .Lfunc_end0:
 	.size	assign_arg_ptr, .Lfunc_end0-assign_arg_ptr
 
+	.section	.text.assign_glob_ptr,"ax",@progbits
+	.hidden	assign_glob_ptr
 	.globl	assign_glob_ptr
 	.type	assign_glob_ptr,@function
 assign_glob_ptr:                        # @assign_glob_ptr
@@ -24,6 +28,8 @@ assign_glob_ptr:                        # @assign_glob_ptr
 .Lfunc_end1:
 	.size	assign_glob_ptr, .Lfunc_end1-assign_glob_ptr
 
+	.section	.text.assign_arg_idx,"ax",@progbits
+	.hidden	assign_arg_idx
 	.globl	assign_arg_idx
 	.type	assign_arg_idx,@function
 assign_arg_idx:                         # @assign_arg_idx
@@ -35,6 +41,8 @@ assign_arg_idx:                         # @assign_arg_idx
 .Lfunc_end2:
 	.size	assign_arg_idx, .Lfunc_end2-assign_arg_idx
 
+	.section	.text.assign_glob_idx,"ax",@progbits
+	.hidden	assign_glob_idx
 	.globl	assign_glob_idx
 	.type	assign_glob_idx,@function
 assign_glob_idx:                        # @assign_glob_idx
@@ -48,6 +56,8 @@ assign_glob_idx:                        # @assign_glob_idx
 .Lfunc_end3:
 	.size	assign_glob_idx, .Lfunc_end3-assign_glob_idx
 
+	.section	.text.preinc_arg_ptr,"ax",@progbits
+	.hidden	preinc_arg_ptr
 	.globl	preinc_arg_ptr
 	.type	preinc_arg_ptr,@function
 preinc_arg_ptr:                         # @preinc_arg_ptr
@@ -59,6 +69,8 @@ preinc_arg_ptr:                         # @preinc_arg_ptr
 .Lfunc_end4:
 	.size	preinc_arg_ptr, .Lfunc_end4-preinc_arg_ptr
 
+	.section	.text.preinc_glob_ptr,"ax",@progbits
+	.hidden	preinc_glob_ptr
 	.globl	preinc_glob_ptr
 	.type	preinc_glob_ptr,@function
 preinc_glob_ptr:                        # @preinc_glob_ptr
@@ -75,6 +87,8 @@ preinc_glob_ptr:                        # @preinc_glob_ptr
 .Lfunc_end5:
 	.size	preinc_glob_ptr, .Lfunc_end5-preinc_glob_ptr
 
+	.section	.text.postinc_arg_ptr,"ax",@progbits
+	.hidden	postinc_arg_ptr
 	.globl	postinc_arg_ptr
 	.type	postinc_arg_ptr,@function
 postinc_arg_ptr:                        # @postinc_arg_ptr
@@ -86,6 +100,8 @@ postinc_arg_ptr:                        # @postinc_arg_ptr
 .Lfunc_end6:
 	.size	postinc_arg_ptr, .Lfunc_end6-postinc_arg_ptr
 
+	.section	.text.postinc_glob_ptr,"ax",@progbits
+	.hidden	postinc_glob_ptr
 	.globl	postinc_glob_ptr
 	.type	postinc_glob_ptr,@function
 postinc_glob_ptr:                       # @postinc_glob_ptr
@@ -102,6 +118,8 @@ postinc_glob_ptr:                       # @postinc_glob_ptr
 .Lfunc_end7:
 	.size	postinc_glob_ptr, .Lfunc_end7-postinc_glob_ptr
 
+	.section	.text.predec_arg_ptr,"ax",@progbits
+	.hidden	predec_arg_ptr
 	.globl	predec_arg_ptr
 	.type	predec_arg_ptr,@function
 predec_arg_ptr:                         # @predec_arg_ptr
@@ -113,6 +131,8 @@ predec_arg_ptr:                         # @predec_arg_ptr
 .Lfunc_end8:
 	.size	predec_arg_ptr, .Lfunc_end8-predec_arg_ptr
 
+	.section	.text.predec_glob_ptr,"ax",@progbits
+	.hidden	predec_glob_ptr
 	.globl	predec_glob_ptr
 	.type	predec_glob_ptr,@function
 predec_glob_ptr:                        # @predec_glob_ptr
@@ -129,6 +149,8 @@ predec_glob_ptr:                        # @predec_glob_ptr
 .Lfunc_end9:
 	.size	predec_glob_ptr, .Lfunc_end9-predec_glob_ptr
 
+	.section	.text.postdec_arg_ptr,"ax",@progbits
+	.hidden	postdec_arg_ptr
 	.globl	postdec_arg_ptr
 	.type	postdec_arg_ptr,@function
 postdec_arg_ptr:                        # @postdec_arg_ptr
@@ -140,6 +162,8 @@ postdec_arg_ptr:                        # @postdec_arg_ptr
 .Lfunc_end10:
 	.size	postdec_arg_ptr, .Lfunc_end10-postdec_arg_ptr
 
+	.section	.text.postdec_glob_ptr,"ax",@progbits
+	.hidden	postdec_glob_ptr
 	.globl	postdec_glob_ptr
 	.type	postdec_glob_ptr,@function
 postdec_glob_ptr:                       # @postdec_glob_ptr
@@ -156,6 +180,8 @@ postdec_glob_ptr:                       # @postdec_glob_ptr
 .Lfunc_end11:
 	.size	postdec_glob_ptr, .Lfunc_end11-postdec_glob_ptr
 
+	.section	.text.preinc_arg_idx,"ax",@progbits
+	.hidden	preinc_arg_idx
 	.globl	preinc_arg_idx
 	.type	preinc_arg_idx,@function
 preinc_arg_idx:                         # @preinc_arg_idx
@@ -167,6 +193,8 @@ preinc_arg_idx:                         # @preinc_arg_idx
 .Lfunc_end12:
 	.size	preinc_arg_idx, .Lfunc_end12-preinc_arg_idx
 
+	.section	.text.preinc_glob_idx,"ax",@progbits
+	.hidden	preinc_glob_idx
 	.globl	preinc_glob_idx
 	.type	preinc_glob_idx,@function
 preinc_glob_idx:                        # @preinc_glob_idx
@@ -184,6 +212,8 @@ preinc_glob_idx:                        # @preinc_glob_idx
 .Lfunc_end13:
 	.size	preinc_glob_idx, .Lfunc_end13-preinc_glob_idx
 
+	.section	.text.postinc_arg_idx,"ax",@progbits
+	.hidden	postinc_arg_idx
 	.globl	postinc_arg_idx
 	.type	postinc_arg_idx,@function
 postinc_arg_idx:                        # @postinc_arg_idx
@@ -195,6 +225,8 @@ postinc_arg_idx:                        # @postinc_arg_idx
 .Lfunc_end14:
 	.size	postinc_arg_idx, .Lfunc_end14-postinc_arg_idx
 
+	.section	.text.postinc_glob_idx,"ax",@progbits
+	.hidden	postinc_glob_idx
 	.globl	postinc_glob_idx
 	.type	postinc_glob_idx,@function
 postinc_glob_idx:                       # @postinc_glob_idx
@@ -212,6 +244,8 @@ postinc_glob_idx:                       # @postinc_glob_idx
 .Lfunc_end15:
 	.size	postinc_glob_idx, .Lfunc_end15-postinc_glob_idx
 
+	.section	.text.predec_arg_idx,"ax",@progbits
+	.hidden	predec_arg_idx
 	.globl	predec_arg_idx
 	.type	predec_arg_idx,@function
 predec_arg_idx:                         # @predec_arg_idx
@@ -223,6 +257,8 @@ predec_arg_idx:                         # @predec_arg_idx
 .Lfunc_end16:
 	.size	predec_arg_idx, .Lfunc_end16-predec_arg_idx
 
+	.section	.text.predec_glob_idx,"ax",@progbits
+	.hidden	predec_glob_idx
 	.globl	predec_glob_idx
 	.type	predec_glob_idx,@function
 predec_glob_idx:                        # @predec_glob_idx
@@ -240,6 +276,8 @@ predec_glob_idx:                        # @predec_glob_idx
 .Lfunc_end17:
 	.size	predec_glob_idx, .Lfunc_end17-predec_glob_idx
 
+	.section	.text.postdec_arg_idx,"ax",@progbits
+	.hidden	postdec_arg_idx
 	.globl	postdec_arg_idx
 	.type	postdec_arg_idx,@function
 postdec_arg_idx:                        # @postdec_arg_idx
@@ -251,6 +289,8 @@ postdec_arg_idx:                        # @postdec_arg_idx
 .Lfunc_end18:
 	.size	postdec_arg_idx, .Lfunc_end18-postdec_arg_idx
 
+	.section	.text.postdec_glob_idx,"ax",@progbits
+	.hidden	postdec_glob_idx
 	.globl	postdec_glob_idx
 	.type	postdec_glob_idx,@function
 postdec_glob_idx:                       # @postdec_glob_idx
@@ -268,6 +308,8 @@ postdec_glob_idx:                       # @postdec_glob_idx
 .Lfunc_end19:
 	.size	postdec_glob_idx, .Lfunc_end19-postdec_glob_idx
 
+	.section	.text.getptr,"ax",@progbits
+	.hidden	getptr
 	.globl	getptr
 	.type	getptr,@function
 getptr:                                 # @getptr
@@ -286,6 +328,8 @@ getptr:                                 # @getptr
 .Lfunc_end20:
 	.size	getptr, .Lfunc_end20-getptr
 
+	.section	.text.funccall_arg_ptr,"ax",@progbits
+	.hidden	funccall_arg_ptr
 	.globl	funccall_arg_ptr
 	.type	funccall_arg_ptr,@function
 funccall_arg_ptr:                       # @funccall_arg_ptr
@@ -303,6 +347,8 @@ funccall_arg_ptr:                       # @funccall_arg_ptr
 .Lfunc_end21:
 	.size	funccall_arg_ptr, .Lfunc_end21-funccall_arg_ptr
 
+	.section	.text.getint,"ax",@progbits
+	.hidden	getint
 	.globl	getint
 	.type	getint,@function
 getint:                                 # @getint
@@ -320,6 +366,8 @@ getint:                                 # @getint
 .Lfunc_end22:
 	.size	getint, .Lfunc_end22-getint
 
+	.section	.text.funccall_arg_idx,"ax",@progbits
+	.hidden	funccall_arg_idx
 	.globl	funccall_arg_idx
 	.type	funccall_arg_idx,@function
 funccall_arg_idx:                       # @funccall_arg_idx
@@ -337,6 +385,8 @@ funccall_arg_idx:                       # @funccall_arg_idx
 .Lfunc_end23:
 	.size	funccall_arg_idx, .Lfunc_end23-funccall_arg_idx
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -438,77 +488,84 @@ main:                                   # @main
 # BB#12:                                # %if.end84
 	call    	exit, $1
 	unreachable
-.LBB24_13:                                # %if.then83
+.LBB24_13:                              # %if.then83
 	call    	abort
 	unreachable
-.LBB24_14:                                # %if.then79
+.LBB24_14:                              # %if.then79
 	call    	abort
 	unreachable
-.LBB24_15:                                # %if.then75
+.LBB24_15:                              # %if.then75
 	call    	abort
 	unreachable
-.LBB24_16:                                # %if.then67
+.LBB24_16:                              # %if.then67
 	call    	abort
 	unreachable
-.LBB24_17:                                # %if.then59
+.LBB24_17:                              # %if.then59
 	call    	abort
 	unreachable
-.LBB24_18:                                # %if.then51
+.LBB24_18:                              # %if.then51
 	call    	abort
 	unreachable
-.LBB24_19:                                # %if.then43
+.LBB24_19:                              # %if.then43
 	call    	abort
 	unreachable
-.LBB24_20:                                # %if.then35
+.LBB24_20:                              # %if.then35
 	call    	abort
 	unreachable
-.LBB24_21:                                # %if.then27
+.LBB24_21:                              # %if.then27
 	call    	abort
 	unreachable
-.LBB24_22:                                # %if.then19
+.LBB24_22:                              # %if.then19
 	call    	abort
 	unreachable
-.LBB24_23:                                # %if.then11
+.LBB24_23:                              # %if.then11
 	call    	abort
 	unreachable
-.LBB24_24:                                # %if.then3
+.LBB24_24:                              # %if.then3
 	call    	abort
 	unreachable
 .Lfunc_end24:
 	.size	main, .Lfunc_end24-main
 
-	.type	arr,@object             # @arr
-	.bss
+	.hidden	arr                     # @arr
+	.type	arr,@object
+	.section	.bss.arr,"aw",@nobits
 	.globl	arr
 	.align	4
 arr:
-	.zero	400
+	.skip	400
 	.size	arr, 400
 
-	.type	ptr,@object             # @ptr
-	.data
+	.hidden	ptr                     # @ptr
+	.type	ptr,@object
+	.section	.data.ptr,"aw",@progbits
 	.globl	ptr
 	.align	2
 ptr:
 	.int32	arr+80
 	.size	ptr, 4
 
-	.type	arrindex,@object        # @arrindex
+	.hidden	arrindex                # @arrindex
+	.type	arrindex,@object
+	.section	.data.arrindex,"aw",@progbits
 	.globl	arrindex
 	.align	2
 arrindex:
 	.int32	4                       # 0x4
 	.size	arrindex, 4
 
-	.type	getptrcnt,@object       # @getptrcnt
-	.bss
+	.hidden	getptrcnt               # @getptrcnt
+	.type	getptrcnt,@object
+	.section	.bss.getptrcnt,"aw",@nobits
 	.globl	getptrcnt
 	.align	2
 getptrcnt:
 	.int32	0                       # 0x0
 	.size	getptrcnt, 4
 
-	.type	getintcnt,@object       # @getintcnt
+	.hidden	getintcnt               # @getintcnt
+	.type	getintcnt,@object
+	.section	.bss.getintcnt,"aw",@nobits
 	.globl	getintcnt
 	.align	2
 getintcnt:

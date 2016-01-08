@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36343.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36343.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -11,6 +13,8 @@ bar:                                    # @bar
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -44,9 +48,9 @@ foo:                                    # @foo
 	i32.load	$push3=, 0($pop2)
 	f32.convert_s/i32	$2=, $pop3
 	br      	.LBB1_3
-.LBB1_2:                                  # %if.end3
+.LBB1_2:                                # %if.end3
 	f32.load	$2=, 8($7)
-.LBB1_3:                                  # %cleanup
+.LBB1_3:                                # %cleanup
 	i32.const	$5=, 16
 	i32.add 	$7=, $7, $5
 	i32.const	$5=, __stack_pointer
@@ -55,6 +59,8 @@ foo:                                    # @foo
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -69,7 +75,7 @@ main:                                   # @main
 	br_if   	$pop2, .LBB2_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/vrp-4.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/vrp-4.c"
+	.section	.text.test,"ax",@progbits
+	.hidden	test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -21,18 +23,20 @@ test:                                   # @test
 	br_if   	$pop3, .LBB0_4
 # BB#3:                                 # %if.end6
 	return
-.LBB0_4:                                  # %if.then5
+.LBB0_4:                                # %if.then5
 	call    	abort
 	unreachable
-.LBB0_5:                                  # %if.then2
+.LBB0_5:                                # %if.then2
 	call    	abort
 	unreachable
-.LBB0_6:                                  # %if.then
+.LBB0_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

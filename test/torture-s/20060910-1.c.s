@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060910-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060910-1.c"
+	.section	.text.input_getc_complicated,"ax",@progbits
+	.hidden	input_getc_complicated
 	.globl	input_getc_complicated
 	.type	input_getc_complicated,@function
 input_getc_complicated:                 # @input_getc_complicated
@@ -11,6 +13,8 @@ input_getc_complicated:                 # @input_getc_complicated
 .Lfunc_end0:
 	.size	input_getc_complicated, .Lfunc_end0-input_getc_complicated
 
+	.section	.text.check_header,"ax",@progbits
+	.hidden	check_header
 	.globl	check_header
 	.type	check_header,@function
 check_header:                           # @check_header
@@ -27,7 +31,7 @@ check_header:                           # @check_header
 	i32.const	$push6=, 1
 	i32.add 	$push0=, $2, $pop6
 	i32.store	$2=, 0($0), $pop0
-.LBB1_2:                                  # %for.inc
+.LBB1_2:                                # %for.inc
 	block   	.LBB1_4
 	i32.ge_u	$push7=, $2, $1
 	br_if   	$pop7, .LBB1_4
@@ -35,7 +39,7 @@ check_header:                           # @check_header
 	i32.const	$push8=, 1
 	i32.add 	$push1=, $2, $pop8
 	i32.store	$2=, 0($0), $pop1
-.LBB1_4:                                  # %for.inc.1
+.LBB1_4:                                # %for.inc.1
 	block   	.LBB1_6
 	i32.ge_u	$push9=, $2, $1
 	br_if   	$pop9, .LBB1_6
@@ -43,7 +47,7 @@ check_header:                           # @check_header
 	i32.const	$push10=, 1
 	i32.add 	$push2=, $2, $pop10
 	i32.store	$2=, 0($0), $pop2
-.LBB1_6:                                  # %for.inc.2
+.LBB1_6:                                # %for.inc.2
 	block   	.LBB1_8
 	i32.ge_u	$push11=, $2, $1
 	br_if   	$pop11, .LBB1_8
@@ -51,7 +55,7 @@ check_header:                           # @check_header
 	i32.const	$push12=, 1
 	i32.add 	$push3=, $2, $pop12
 	i32.store	$2=, 0($0), $pop3
-.LBB1_8:                                  # %for.inc.3
+.LBB1_8:                                # %for.inc.3
 	block   	.LBB1_10
 	i32.ge_u	$push13=, $2, $1
 	br_if   	$pop13, .LBB1_10
@@ -59,7 +63,7 @@ check_header:                           # @check_header
 	i32.const	$push14=, 1
 	i32.add 	$push4=, $2, $pop14
 	i32.store	$2=, 0($0), $pop4
-.LBB1_10:                                 # %for.inc.4
+.LBB1_10:                               # %for.inc.4
 	block   	.LBB1_12
 	i32.ge_u	$push15=, $2, $1
 	br_if   	$pop15, .LBB1_12
@@ -67,12 +71,14 @@ check_header:                           # @check_header
 	i32.const	$push16=, 1
 	i32.add 	$push17=, $2, $pop16
 	i32.store	$discard=, 0($0), $pop17
-.LBB1_12:                                 # %for.inc.5
+.LBB1_12:                               # %for.inc.5
 	i32.const	$push18=, 1
 	return  	$pop18
 .Lfunc_end1:
 	.size	check_header, .Lfunc_end1-check_header
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -87,18 +93,21 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	b,@object               # @b
-	.bss
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 b:
-	.zero	6
+	.skip	6
 	.size	b, 6
 
-	.type	s,@object               # @s
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.bss.s,"aw",@nobits
 	.globl	s
 	.align	2
 s:
-	.zero	8
+	.skip	8
 	.size	s, 8
 
 

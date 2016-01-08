@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071120-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071120-1.c"
+	.section	.text.vec_assert_fail,"ax",@progbits
+	.hidden	vec_assert_fail
 	.globl	vec_assert_fail
 	.type	vec_assert_fail,@function
 vec_assert_fail:                        # @vec_assert_fail
@@ -9,6 +11,8 @@ vec_assert_fail:                        # @vec_assert_fail
 .Lfunc_end0:
 	.size	vec_assert_fail, .Lfunc_end0-vec_assert_fail
 
+	.section	.text.perform_access_checks,"ax",@progbits
+	.hidden	perform_access_checks
 	.globl	perform_access_checks
 	.type	perform_access_checks,@function
 perform_access_checks:                  # @perform_access_checks
@@ -19,6 +23,8 @@ perform_access_checks:                  # @perform_access_checks
 .Lfunc_end1:
 	.size	perform_access_checks, .Lfunc_end1-perform_access_checks
 
+	.section	.text.pop_to_parent_deferring_access_checks,"ax",@progbits
+	.hidden	pop_to_parent_deferring_access_checks
 	.globl	pop_to_parent_deferring_access_checks
 	.type	pop_to_parent_deferring_access_checks,@function
 pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
@@ -39,7 +45,7 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.add 	$push1=, $0, $pop0
 	i32.store	$discard=, deferred_access_no_check($1), $pop1
 	br      	.LBB2_6
-.LBB2_2:                                  # %if.else
+.LBB2_2:                                # %if.else
 	i32.load	$1=, deferred_access_stack($1)
 	i32.const	$push13=, 0
 	i32.eq  	$push14=, $1, $pop13
@@ -66,20 +72,22 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.const	$push19=, 0
 	i32.eq  	$push20=, $pop10, $pop19
 	br_if   	$pop20, .LBB2_7
-.LBB2_6:                                  # %if.end16
+.LBB2_6:                                # %if.end16
 	return
-.LBB2_7:                                  # %if.then15
+.LBB2_7:                                # %if.then15
 	call    	perform_access_checks, $1
 	unreachable
-.LBB2_8:                                  # %cond.false.i26
+.LBB2_8:                                # %cond.false.i26
 	call    	vec_assert_fail
 	unreachable
-.LBB2_9:                                  # %cond.false.i
+.LBB2_9:                                # %cond.false.i
 	call    	vec_assert_fail
 	unreachable
 .Lfunc_end2:
 	.size	pop_to_parent_deferring_access_checks, .Lfunc_end2-pop_to_parent_deferring_access_checks
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -103,8 +111,9 @@ main:                                   # @main
 
 	.type	deferred_access_no_check,@object # @deferred_access_no_check
 	.lcomm	deferred_access_no_check,4,2
-	.type	gt_pch_rs_gt_cp_semantics_h,@object # @gt_pch_rs_gt_cp_semantics_h
-	.section	.data.rel.ro,"aw",@progbits
+	.hidden	gt_pch_rs_gt_cp_semantics_h # @gt_pch_rs_gt_cp_semantics_h
+	.type	gt_pch_rs_gt_cp_semantics_h,@object
+	.section	.data.rel.ro.gt_pch_rs_gt_cp_semantics_h,"aw",@progbits
 	.globl	gt_pch_rs_gt_cp_semantics_h
 	.align	2
 gt_pch_rs_gt_cp_semantics_h:

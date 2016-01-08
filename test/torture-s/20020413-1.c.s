@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020413-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020413-1.c"
+	.section	.text.test,"ax",@progbits
+	.hidden	test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -108,7 +110,7 @@ test:                                   # @test
 # BB#13:                                # %while.body12.10
 	call    	abort
 	unreachable
-.LBB0_14:                                 # %while.cond.preheader
+.LBB0_14:                               # %while.cond.preheader
 	i32.call	$7=, __gttf2, $0, $1, $3, $6
 	i32.const	$4=, 1
 	i32.lt_s	$push6=, $7, $4
@@ -178,7 +180,7 @@ test:                                   # @test
 # BB#25:                                # %while.body.10
 	call    	abort
 	unreachable
-.LBB0_26:                                 # %if.end19
+.LBB0_26:                               # %if.end19
 	i32.store	$discard=, 0($2), $8
 	i32.const	$11=, 16
 	i32.add 	$11=, $11, $11
@@ -188,6 +190,8 @@ test:                                   # @test
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

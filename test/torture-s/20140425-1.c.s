@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20140425-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20140425-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -30,12 +32,13 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$5=, 0($3), $5
 	return  	$pop4
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.set,"ax",@progbits
 	.type	set,@function
 set:                                    # @set
 	.param  	i32

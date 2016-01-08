@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010925-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010925-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -16,6 +18,8 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -31,24 +35,27 @@ foo:                                    # @foo
 # BB#1:                                 # %if.end
 	call    	memcpy, $0, $1, $2
 	i32.const	$3=, 0
-.LBB1_2:                                  # %return
+.LBB1_2:                                # %return
 	return  	$3
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
-	.type	dst,@object             # @dst
-	.bss
+	.hidden	dst                     # @dst
+	.type	dst,@object
+	.section	.bss.dst,"aw",@nobits
 	.globl	dst
 	.align	4
 dst:
-	.zero	40
+	.skip	40
 	.size	dst, 40
 
-	.type	src,@object             # @src
+	.hidden	src                     # @src
+	.type	src,@object
+	.section	.bss.src,"aw",@nobits
 	.globl	src
 	.align	4
 src:
-	.zero	40
+	.skip	40
 	.size	src, 40
 
 

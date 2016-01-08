@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57875.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57875.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -14,41 +16,41 @@ main:                                   # @main
 # BB#1:                                 # %for.body.lr.ph
 	i32.load	$0=, d($3)
 	i32.load	$1=, c($3)
-.LBB0_2:                                  # %for.body
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_8
 	block   	.LBB0_7
 	br_if   	$0, .LBB0_7
 # BB#3:                                 # %if.then
-                                        #   in Loop: Header=.LBB0_2 Depth=1
+                                        #   in Loop: Header=BB0_2 Depth=1
 	block   	.LBB0_6
 	block   	.LBB0_5
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $1, $pop14
 	br_if   	$pop15, .LBB0_5
 # BB#4:                                 # %if.then.if.end_crit_edge
-                                        #   in Loop: Header=.LBB0_2 Depth=1
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$2=, f($3)
 	br      	.LBB0_6
-.LBB0_5:                                  # %if.then2
-                                        #   in Loop: Header=.LBB0_2 Depth=1
+.LBB0_5:                                # %if.then2
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push1=, 2
 	i32.store	$2=, f($3), $pop1
-.LBB0_6:                                  # %if.end
-                                        #   in Loop: Header=.LBB0_2 Depth=1
+.LBB0_6:                                # %if.end
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.load8_u	$push2=, e($3)
 	i32.and 	$push3=, $pop2, $2
 	i32.store8	$discard=, e($3), $pop3
-.LBB0_7:                                  # %for.inc
-                                        #   in Loop: Header=.LBB0_2 Depth=1
+.LBB0_7:                                # %for.inc
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push4=, 1
 	i32.add 	$2=, $5, $pop4
 	i32.lt_s	$4=, $5, $3
 	copy_local	$5=, $2
 	br_if   	$4, .LBB0_2
-.LBB0_8:                                  # %for.cond.for.end_crit_edge
+.LBB0_8:                                # %for.cond.for.end_crit_edge
 	i32.store	$discard=, i($3), $2
-.LBB0_9:                                  # %for.end
+.LBB0_9:                                # %for.end
 	block   	.LBB0_11
 	i32.const	$push10=, a
 	i32.load8_u	$push5=, e($3)
@@ -62,55 +64,68 @@ main:                                   # @main
 	br_if   	$pop13, .LBB0_11
 # BB#10:                                # %if.end10
 	return  	$3
-.LBB0_11:                                 # %if.then9
+.LBB0_11:                               # %if.then9
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	i,@object               # @i
-	.bss
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4
 
-	.type	d,@object               # @d
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.bss.d,"aw",@nobits
 	.globl	d
 	.align	2
 d:
 	.int32	0                       # 0x0
 	.size	d, 4
 
-	.type	c,@object               # @c
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	2
 c:
 	.int32	0                       # 0x0
 	.size	c, 4
 
-	.type	f,@object               # @f
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.bss.f,"aw",@nobits
 	.globl	f
 	.align	2
 f:
 	.int32	0                       # 0x0
 	.size	f, 4
 
-	.type	e,@object               # @e
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.bss.e,"aw",@nobits
 	.globl	e
 e:
-	.zero	1
+	.skip	1
 	.size	e, 1
 
-	.type	a,@object               # @a
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	2
 a:
-	.zero	4
+	.skip	4
 	.size	a, 4
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	2
 b:

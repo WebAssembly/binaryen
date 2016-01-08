@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20131127-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20131127-1.c"
+	.section	.text.fn1,"ax",@progbits
+	.hidden	fn1
 	.globl	fn1
 	.type	fn1,@function
 fn1:                                    # @fn1
@@ -12,6 +14,8 @@ fn1:                                    # @fn1
 .Lfunc_end0:
 	.size	fn1, .Lfunc_end0-fn1
 
+	.section	.text.fn2,"ax",@progbits
+	.hidden	fn2
 	.globl	fn2
 	.type	fn2,@function
 fn2:                                    # @fn2
@@ -113,6 +117,8 @@ fn2:                                    # @fn2
 .Lfunc_end1:
 	.size	fn2, .Lfunc_end1-fn2
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -215,15 +221,18 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	1
 a:
 	.int16	1                       # 0x1
 	.size	a, 2
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.data.b,"aw",@progbits
 	.globl	b
 b:
 	.int32	1                       # 0x1
@@ -232,23 +241,28 @@ b:
 	.int16	0                       # 0x0
 	.size	b, 14
 
-	.type	c,@object               # @c
-	.bss
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 c:
-	.zero	14
+	.skip	14
 	.size	c, 14
 
-	.type	d,@object               # @d
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.bss.d,"aw",@nobits
 	.globl	d
 d:
-	.zero	14
+	.skip	14
 	.size	d, 14
 
-	.type	e,@object               # @e
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.bss.e,"aw",@nobits
 	.globl	e
 e:
-	.zero	14
+	.skip	14
 	.size	e, 14
 
 

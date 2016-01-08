@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr20100-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr20100-1.c"
+	.section	.text.frob,"ax",@progbits
+	.hidden	frob
 	.globl	frob
 	.type	frob,@function
 frob:                                   # @frob
@@ -24,6 +26,8 @@ frob:                                   # @frob
 .Lfunc_end0:
 	.size	frob, .Lfunc_end0-frob
 
+	.section	.text.get_n,"ax",@progbits
+	.hidden	get_n
 	.globl	get_n
 	.type	get_n,@function
 get_n:                                  # @get_n
@@ -42,7 +46,7 @@ get_n:                                  # @get_n
 	i32.const	$push2=, -1
 	i32.add 	$1=, $pop1, $pop2
 	copy_local	$6=, $2
-.LBB1_2:                                  # %while.body
+.LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_4
 	i32.const	$3=, 65535
@@ -57,20 +61,22 @@ get_n:                                  # @get_n
 	i32.gt_u	$push7=, $pop5, $pop6
 	br_if   	$pop7, .LBB1_4
 # BB#3:                                 # %while.body
-                                        #   in Loop: Header=.LBB1_2 Depth=1
+                                        #   in Loop: Header=BB1_2 Depth=1
 	i32.and 	$push8=, $5, $3
 	i32.ne  	$push9=, $0, $pop8
 	br_if   	$pop9, .LBB1_2
-.LBB1_4:                                  # %while.cond.while.end_crit_edge
+.LBB1_4:                                # %while.cond.while.end_crit_edge
 	i32.const	$push10=, 0
 	i32.store16	$discard=, g($pop10), $5
-.LBB1_5:                                  # %while.end
+.LBB1_5:                                # %while.end
 	i32.const	$push11=, 65535
 	i32.and 	$push12=, $6, $pop11
 	return  	$pop12
 .Lfunc_end1:
 	.size	get_n, .Lfunc_end1-get_n
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -92,8 +98,9 @@ main:                                   # @main
 	.lcomm	g,2,1
 	.type	p,@object               # @p
 	.lcomm	p,2,1
-	.type	e,@object               # @e
-	.bss
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.bss.e,"aw",@nobits
 	.globl	e
 e:
 	.int8	0                       # 0x0

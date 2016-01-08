@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40493.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40493.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -18,29 +20,36 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	x00,@object             # @x00
-	.bss
+	.hidden	x00                     # @x00
+	.type	x00,@object
+	.section	.bss.x00,"aw",@nobits
 	.globl	x00
 	.align	2
 x00:
 	.int32	0                       # 0x0
 	.size	x00, 4
 
-	.type	x01,@object             # @x01
+	.hidden	x01                     # @x01
+	.type	x01,@object
+	.section	.bss.x01,"aw",@nobits
 	.globl	x01
 	.align	2
 x01:
 	.int32	0                       # 0x0
 	.size	x01, 4
 
-	.type	y00,@object             # @y00
+	.hidden	y00                     # @y00
+	.type	y00,@object
+	.section	.bss.y00,"aw",@nobits
 	.globl	y00
 	.align	2
 y00:
 	.int32	0                       # 0x0
 	.size	y00, 4
 
-	.type	y01,@object             # @y01
+	.hidden	y01                     # @y01
+	.type	y01,@object
+	.section	.bss.y01,"aw",@nobits
 	.globl	y01
 	.align	2
 y01:

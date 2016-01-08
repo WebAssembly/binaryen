@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930513-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930513-1.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -22,7 +24,7 @@ f:                                      # @f
 	i64.const	$push0=, 4617315517961601024
 	i64.store	$discard=, 0($7), $pop0
 	i32.const	$push2=, buf
-	i32.const	$push1=, .str
+	i32.const	$push1=, .L.str
 	i32.call_indirect	$discard=, $0, $pop2, $pop1
 	i32.const	$3=, __stack_pointer
 	i32.load	$3=, 0($3)
@@ -38,6 +40,8 @@ f:                                      # @f
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -59,7 +63,7 @@ main:                                   # @main
 	i64.const	$push1=, 4617315517961601024
 	i64.store	$discard=, 0($7), $pop1
 	i32.const	$push3=, buf
-	i32.const	$push2=, .str
+	i32.const	$push2=, .L.str
 	i32.call	$discard=, sprintf, $pop3, $pop2
 	i32.const	$3=, __stack_pointer
 	i32.load	$3=, 0($3)
@@ -81,24 +85,25 @@ main:                                   # @main
 # BB#2:                                 # %if.end
 	call    	exit, $0
 	unreachable
-.LBB1_3:                                  # %if.then
+.LBB1_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	buf,@object             # @buf
-	.bss
+	.hidden	buf                     # @buf
+	.type	buf,@object
+	.section	.bss.buf,"aw",@nobits
 	.globl	buf
 buf:
-	.zero	2
+	.skip	2
 	.size	buf, 2
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"%.0f"
-	.size	.str, 5
+	.size	.L.str, 5
 
 
 	.ident	"clang version 3.8.0 "

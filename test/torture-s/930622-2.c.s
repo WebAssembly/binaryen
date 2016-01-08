@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930622-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930622-2.c"
+	.section	.text.ll_to_ld,"ax",@progbits
+	.hidden	ll_to_ld
 	.globl	ll_to_ld
 	.type	ll_to_ld,@function
 ll_to_ld:                               # @ll_to_ld
@@ -32,6 +34,8 @@ ll_to_ld:                               # @ll_to_ld
 .Lfunc_end0:
 	.size	ll_to_ld, .Lfunc_end0-ll_to_ld
 
+	.section	.text.ld_to_ll,"ax",@progbits
+	.hidden	ld_to_ll
 	.globl	ld_to_ll
 	.type	ld_to_ll,@function
 ld_to_ll:                               # @ld_to_ll
@@ -43,6 +47,8 @@ ld_to_ll:                               # @ld_to_ll
 .Lfunc_end1:
 	.size	ld_to_ll, .Lfunc_end1-ld_to_ll
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

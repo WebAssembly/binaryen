@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/991202-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991202-2.c"
+	.section	.text.f1,"ax",@progbits
+	.hidden	f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
@@ -10,6 +12,8 @@ f1:                                     # @f1
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

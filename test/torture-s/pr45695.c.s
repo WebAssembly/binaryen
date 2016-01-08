@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr45695.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr45695.c"
+	.section	.text.g,"ax",@progbits
+	.hidden	g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -11,6 +13,8 @@ g:                                      # @g
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -26,6 +30,8 @@ f:                                      # @f
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -52,10 +58,10 @@ main:                                   # @main
 	br_if   	$pop5, .LBB2_3
 # BB#2:                                 # %if.end9
 	return  	$3
-.LBB2_3:                                  # %if.then8
+.LBB2_3:                                # %if.then8
 	call    	abort
 	unreachable
-.LBB2_4:                                  # %if.then
+.LBB2_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:

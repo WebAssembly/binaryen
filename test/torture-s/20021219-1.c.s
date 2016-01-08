@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021219-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021219-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -9,6 +11,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -27,20 +31,20 @@ main:                                   # @main
 	i32.const	$10=, 0
 	i32.add 	$10=, $13, $10
 	i32.add 	$push2=, $10, $pop1
-	i32.load8_u	$push0=, main.str+10($1)
+	i32.load8_u	$push0=, .Lmain.str+10($1)
 	i32.store8	$discard=, 0($pop2), $pop0
 	i32.const	$6=, 8
 	i32.const	$11=, 0
 	i32.add 	$11=, $13, $11
 	i32.add 	$push9=, $11, $6
-	i32.const	$push3=, main.str+8
+	i32.const	$push3=, .Lmain.str+8
 	i32.add 	$push4=, $pop3, $2
 	i32.load8_u	$push5=, 0($pop4)
 	i32.shl 	$push6=, $pop5, $6
-	i32.load8_u	$push7=, main.str+8($1)
+	i32.load8_u	$push7=, .Lmain.str+8($1)
 	i32.or  	$push8=, $pop6, $pop7
 	i32.store16	$discard=, 0($pop9), $pop8
-	i32.const	$6=, main.str
+	i32.const	$6=, .Lmain.str
 	i32.const	$5=, 6
 	i64.const	$3=, 8
 	i64.const	$4=, 16
@@ -75,7 +79,7 @@ main:                                   # @main
 	i32.add 	$push38=, $6, $2
 	i64.load8_u	$push39=, 0($pop38)
 	i64.shl 	$push40=, $pop39, $3
-	i64.load8_u	$push41=, main.str($1)
+	i64.load8_u	$push41=, .Lmain.str($1)
 	i64.or  	$push42=, $pop40, $pop41
 	i64.or  	$push43=, $pop37, $pop42
 	i64.or  	$push44=, $pop28, $pop43
@@ -85,7 +89,7 @@ main:                                   # @main
 	i32.add 	$12=, $13, $12
 	i32.or  	$6=, $12, $5
 	copy_local	$5=, $0
-.LBB1_1:                                  # %while.cond
+.LBB1_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_5
 	block   	.LBB1_4
@@ -94,7 +98,7 @@ main:                                   # @main
 	i32.eq  	$push46=, $5, $0
 	br_if   	$pop46, .LBB1_4
 # BB#2:                                 # %while.cond
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push47=, 13
 	i32.eq  	$push48=, $5, $pop47
 	br_if   	$pop48, .LBB1_4
@@ -104,8 +108,8 @@ main:                                   # @main
 	i32.const	$9=, __stack_pointer
 	i32.store	$13=, 0($9), $13
 	return  	$1
-.LBB1_4:                                  # %while.body
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+.LBB1_4:                                # %while.body
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.load8_u	$5=, 0($6)
 	i32.add 	$6=, $6, $2
 	br      	.LBB1_1
@@ -113,11 +117,11 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	main.str,@object        # @main.str
+	.type	.Lmain.str,@object      # @main.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-main.str:
+.Lmain.str:
 	.asciz	"foo { xx }"
-	.size	main.str, 11
+	.size	.Lmain.str, 11
 
 
 	.ident	"clang version 3.8.0 "

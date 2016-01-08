@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/960521-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960521-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -16,7 +18,7 @@ foo:                                    # @foo
 	i32.const	$1=, 0
 	i32.load	$2=, a($1)
 	copy_local	$3=, $1
-.LBB0_2:                                  # %for.body
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.const	$push2=, -1
@@ -27,9 +29,9 @@ foo:                                    # @foo
 	i32.load	$push3=, n($1)
 	i32.lt_s	$push5=, $3, $pop3
 	br_if   	$pop5, .LBB0_2
-.LBB0_3:                                  # %for.cond1.preheader
+.LBB0_3:                                # %for.cond1.preheader
 	i32.load	$2=, b($4)
-.LBB0_4:                                  # %for.body3
+.LBB0_4:                                # %for.body3
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_5
 	i32.add 	$push6=, $2, $4
@@ -40,11 +42,13 @@ foo:                                    # @foo
 	i32.const	$push9=, 131068
 	i32.ne  	$push10=, $4, $pop9
 	br_if   	$pop10, .LBB0_4
-.LBB0_5:                                  # %for.end7
+.LBB0_5:                                # %for.end7
 	return  	$4
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -63,7 +67,7 @@ main:                                   # @main
 	i32.const	$3=, 4
 	i32.add 	$push2=, $2, $3
 	i32.store	$discard=, b($4), $pop2
-.LBB1_1:                                  # %for.body.i
+.LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	i32.const	$push4=, 1
@@ -73,10 +77,10 @@ main:                                   # @main
 	i32.add 	$1=, $1, $3
 	i32.lt_s	$push5=, $5, $0
 	br_if   	$pop5, .LBB1_1
-.LBB1_2:                                  # %for.cond1.preheader.i
+.LBB1_2:                                # %for.cond1.preheader.i
 	i32.const	$5=, 0
 	i32.load	$1=, b($5)
-.LBB1_3:                                  # %for.body3.i
+.LBB1_3:                                # %for.body3.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_4
 	i32.add 	$push6=, $1, $5
@@ -85,7 +89,7 @@ main:                                   # @main
 	i32.const	$push7=, 131068
 	i32.ne  	$push8=, $5, $pop7
 	br_if   	$pop8, .LBB1_3
-.LBB1_4:                                  # %foo.exit
+.LBB1_4:                                # %foo.exit
 	block   	.LBB1_6
 	i32.const	$push9=, -4
 	i32.add 	$push10=, $1, $pop9
@@ -95,28 +99,33 @@ main:                                   # @main
 	i32.const	$push12=, 0
 	call    	exit, $pop12
 	unreachable
-.LBB1_6:                                  # %if.then
+.LBB1_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	n,@object               # @n
-	.bss
+	.hidden	n                       # @n
+	.type	n,@object
+	.section	.bss.n,"aw",@nobits
 	.globl	n
 	.align	2
 n:
 	.int32	0                       # 0x0
 	.size	n, 4
 
-	.type	a,@object               # @a
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	2
 a:
 	.int32	0
 	.size	a, 4
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	2
 b:

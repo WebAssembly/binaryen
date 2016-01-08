@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr61306-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr61306-3.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -20,28 +22,32 @@ main:                                   # @main
 	br_if   	$pop6, .LBB0_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	1
 a:
 	.int16	65535                   # 0xffff
 	.size	a, 2
 
-	.type	c,@object               # @c
-	.bss
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 c:
 	.int8	0                       # 0x0
 	.size	c, 1
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	2
 b:

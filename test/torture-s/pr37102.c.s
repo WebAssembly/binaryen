@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr37102.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr37102.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -11,12 +13,14 @@ foo:                                    # @foo
 	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -32,7 +36,7 @@ main:                                   # @main
 	br_if   	$pop9, .LBB1_2
 # BB#1:                                 # %if.then.3
 	i32.store	$discard=, a($0), $1
-.LBB1_2:                                  # %for.inc.3
+.LBB1_2:                                # %for.inc.3
 	i32.store	$discard=, a($0), $1
 	i32.const	$push1=, 2147483647
 	i32.and 	$push2=, $1, $pop1
@@ -46,23 +50,27 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	b,@object               # @b
-	.data
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.data.b,"aw",@progbits
 	.globl	b
 	.align	2
 b:
 	.int32	1                       # 0x1
 	.size	b, 4
 
-	.type	c,@object               # @c
-	.bss
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	2
 c:
 	.int32	0                       # 0x0
 	.size	c, 4
 
-	.type	a,@object               # @a
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	2
 a:

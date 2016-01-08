@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020201-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020201-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -19,7 +21,7 @@ main:                                   # @main
 # BB#1:                                 # %if.then
 	call    	abort
 	unreachable
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	block   	.LBB0_20
 	i32.and 	$push4=, $0, $3
 	i32.rem_u	$push5=, $pop4, $4
@@ -38,7 +40,7 @@ main:                                   # @main
 # BB#4:                                 # %if.then17
 	call    	abort
 	unreachable
-.LBB0_5:                                  # %if.end18
+.LBB0_5:                                # %if.end18
 	block   	.LBB0_19
 	i32.and 	$push12=, $0, $3
 	i32.rem_u	$push13=, $pop12, $4
@@ -55,7 +57,7 @@ main:                                   # @main
 # BB#7:                                 # %if.then30
 	call    	abort
 	unreachable
-.LBB0_8:                                  # %if.end31
+.LBB0_8:                                # %if.end31
 	block   	.LBB0_18
 	i32.rem_u	$push19=, $0, $4
 	i32.const	$push20=, 3
@@ -71,7 +73,7 @@ main:                                   # @main
 # BB#10:                                # %if.then40
 	call    	abort
 	unreachable
-.LBB0_11:                                 # %if.end41
+.LBB0_11:                               # %if.end41
 	block   	.LBB0_17
 	i32.rem_u	$push25=, $0, $4
 	i32.const	$push26=, 4
@@ -88,7 +90,7 @@ main:                                   # @main
 # BB#13:                                # %if.then50
 	call    	abort
 	unreachable
-.LBB0_14:                                 # %if.end51
+.LBB0_14:                               # %if.end51
 	block   	.LBB0_16
 	i64.rem_u	$push31=, $1, $5
 	i64.const	$push32=, 5
@@ -97,53 +99,62 @@ main:                                   # @main
 # BB#15:                                # %if.end56
 	call    	exit, $2
 	unreachable
-.LBB0_16:                                 # %if.then55
+.LBB0_16:                               # %if.then55
 	call    	abort
 	unreachable
-.LBB0_17:                                 # %if.then45
+.LBB0_17:                               # %if.then45
 	call    	abort
 	unreachable
-.LBB0_18:                                 # %if.then35
+.LBB0_18:                               # %if.then35
 	call    	abort
 	unreachable
-.LBB0_19:                                 # %if.then25
+.LBB0_19:                               # %if.then25
 	call    	abort
 	unreachable
-.LBB0_20:                                 # %if.then9
+.LBB0_20:                               # %if.then9
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	cx,@object              # @cx
-	.data
+	.hidden	cx                      # @cx
+	.type	cx,@object
+	.section	.data.cx,"aw",@progbits
 	.globl	cx
 cx:
 	.int8	7                       # 0x7
 	.size	cx, 1
 
-	.type	sx,@object              # @sx
+	.hidden	sx                      # @sx
+	.type	sx,@object
+	.section	.data.sx,"aw",@progbits
 	.globl	sx
 	.align	1
 sx:
 	.int16	14                      # 0xe
 	.size	sx, 2
 
-	.type	ix,@object              # @ix
+	.hidden	ix                      # @ix
+	.type	ix,@object
+	.section	.data.ix,"aw",@progbits
 	.globl	ix
 	.align	2
 ix:
 	.int32	21                      # 0x15
 	.size	ix, 4
 
-	.type	lx,@object              # @lx
+	.hidden	lx                      # @lx
+	.type	lx,@object
+	.section	.data.lx,"aw",@progbits
 	.globl	lx
 	.align	2
 lx:
 	.int32	28                      # 0x1c
 	.size	lx, 4
 
-	.type	Lx,@object              # @Lx
+	.hidden	Lx                      # @Lx
+	.type	Lx,@object
+	.section	.data.Lx,"aw",@progbits
 	.globl	Lx
 	.align	3
 Lx:

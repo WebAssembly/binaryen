@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr60017.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr60017.c"
+	.section	.text.func,"ax",@progbits
+	.hidden	func
 	.globl	func
 	.type	func,@function
 func:                                   # @func
@@ -25,6 +27,8 @@ func:                                   # @func
 .Lfunc_end0:
 	.size	func, .Lfunc_end0-func
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -39,26 +43,27 @@ main:                                   # @main
 	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	x,@object               # @x
-	.data
+	.hidden	x                       # @x
+	.type	x,@object
+	.section	.data.x,"aw",@progbits
 	.globl	x
 	.align	2
 x:
 	.int8	1                       # 0x1
 	.ascii	"\002\003"
 	.ascii	"\004\005"
-	.zero	1
+	.skip	1
 	.int16	6                       # 0x6
 	.int16	7                       # 0x7
 	.int16	8                       # 0x8
 	.int16	9                       # 0x9
-	.zero	2
+	.skip	2
 	.size	x, 16
 
 

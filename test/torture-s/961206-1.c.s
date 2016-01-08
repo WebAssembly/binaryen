@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/961206-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/961206-1.c"
+	.section	.text.sub1,"ax",@progbits
+	.hidden	sub1
 	.globl	sub1
 	.type	sub1,@function
 sub1:                                   # @sub1
@@ -12,6 +14,8 @@ sub1:                                   # @sub1
 .Lfunc_end0:
 	.size	sub1, .Lfunc_end0-sub1
 
+	.section	.text.sub2,"ax",@progbits
+	.hidden	sub2
 	.globl	sub2
 	.type	sub2,@function
 sub2:                                   # @sub2
@@ -24,6 +28,8 @@ sub2:                                   # @sub2
 .Lfunc_end1:
 	.size	sub2, .Lfunc_end1-sub2
 
+	.section	.text.sub3,"ax",@progbits
+	.hidden	sub3
 	.globl	sub3
 	.type	sub3,@function
 sub3:                                   # @sub3
@@ -36,6 +42,8 @@ sub3:                                   # @sub3
 .Lfunc_end2:
 	.size	sub3, .Lfunc_end2-sub3
 
+	.section	.text.sub4,"ax",@progbits
+	.hidden	sub4
 	.globl	sub4
 	.type	sub4,@function
 sub4:                                   # @sub4
@@ -48,6 +56,8 @@ sub4:                                   # @sub4
 .Lfunc_end3:
 	.size	sub4, .Lfunc_end3-sub4
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

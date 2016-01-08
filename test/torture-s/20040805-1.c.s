@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040805-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040805-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -14,12 +16,13 @@ main:                                   # @main
 	i32.const	$push3=, 0
 	call    	exit, $pop3
 	unreachable
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.foo,"ax",@progbits
 	.type	foo,@function
 foo:                                    # @foo
 	.result 	i32
@@ -36,6 +39,7 @@ foo:                                    # @foo
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
+	.section	.text.bar,"ax",@progbits
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32
@@ -51,8 +55,9 @@ bar:                                    # @bar
 .Lfunc_end2:
 	.size	bar, .Lfunc_end2-bar
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	2
 a:

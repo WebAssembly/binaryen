@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930529-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930529-1.c"
+	.section	.text.dd,"ax",@progbits
+	.hidden	dd
 	.globl	dd
 	.type	dd,@function
 dd:                                     # @dd
@@ -11,6 +13,8 @@ dd:                                     # @dd
 .Lfunc_end0:
 	.size	dd, .Lfunc_end0-dd
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

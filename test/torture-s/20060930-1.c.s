@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060930-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060930-1.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -12,12 +14,14 @@ bar:                                    # @bar
 	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return  	$1
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -37,17 +41,19 @@ foo:                                    # @foo
 	i32.gt_s	$push4=, $2, $0
 	i32.sub 	$push5=, $3, $2
 	i32.select	$3=, $pop4, $3, $pop5
-.LBB1_2:                                  # %for.body
+.LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	i32.call	$discard=, bar, $1, $3
 	i32.add 	$1=, $1, $0
 	br_if   	$1, .LBB1_2
-.LBB1_3:                                  # %for.end
+.LBB1_3:                                # %for.end
 	return
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

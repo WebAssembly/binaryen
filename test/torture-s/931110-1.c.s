@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/931110-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931110-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -43,12 +45,13 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	x,@object               # @x
-	.bss
+	.hidden	x                       # @x
+	.type	x,@object
+	.section	.bss.x,"aw",@nobits
 	.globl	x
 	.align	2
 x:
-	.zero	24
+	.skip	24
 	.size	x, 24
 
 

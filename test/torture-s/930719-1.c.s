@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930719-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930719-1.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -18,16 +20,18 @@ f:                                      # @f
 # BB#3:                                 # %if.end2
 	unreachable
 	unreachable
-.LBB0_4:                                  # %while.body
+.LBB0_4:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_5
 	br      	.LBB0_4
-.LBB0_5:                                  # %cleanup
+.LBB0_5:                                # %cleanup
 	i32.const	$push2=, 0
 	return  	$pop2
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000731-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000731-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -10,6 +12,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.do_sibcall,"ax",@progbits
+	.hidden	do_sibcall
 	.globl	do_sibcall
 	.type	do_sibcall,@function
 do_sibcall:                             # @do_sibcall
@@ -18,6 +22,8 @@ do_sibcall:                             # @do_sibcall
 .Lfunc_end1:
 	.size	do_sibcall, .Lfunc_end1-do_sibcall
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050125-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050125-1.c"
+	.section	.text.seterr,"ax",@progbits
+	.hidden	seterr
 	.globl	seterr
 	.type	seterr,@function
 seterr:                                 # @seterr
@@ -12,6 +14,8 @@ seterr:                                 # @seterr
 .Lfunc_end0:
 	.size	seterr, .Lfunc_end0-seterr
 
+	.section	.text.bracket_empty,"ax",@progbits
+	.hidden	bracket_empty
 	.globl	bracket_empty
 	.type	bracket_empty,@function
 bracket_empty:                          # @bracket_empty
@@ -33,13 +37,15 @@ bracket_empty:                          # @bracket_empty
 	br_if   	$pop6, .LBB1_3
 # BB#2:                                 # %if.end
 	return
-.LBB1_3:                                  # %lor.lhs.false
+.LBB1_3:                                # %lor.lhs.false
 	i32.const	$push7=, 7
 	i32.store	$discard=, 8($0), $pop7
 	return
 .Lfunc_end1:
 	.size	bracket_empty, .Lfunc_end1-bracket_empty
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

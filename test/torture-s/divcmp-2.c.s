@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/divcmp-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/divcmp-2.c"
+	.section	.text.test1,"ax",@progbits
+	.hidden	test1
 	.globl	test1
 	.type	test1,@function
 test1:                                  # @test1
@@ -14,6 +16,8 @@ test1:                                  # @test1
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
+	.section	.text.test2,"ax",@progbits
+	.hidden	test2
 	.globl	test2
 	.type	test2,@function
 test2:                                  # @test2
@@ -28,6 +32,8 @@ test2:                                  # @test2
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
 
+	.section	.text.test3,"ax",@progbits
+	.hidden	test3
 	.globl	test3
 	.type	test3,@function
 test3:                                  # @test3
@@ -42,6 +48,8 @@ test3:                                  # @test3
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
 
+	.section	.text.test4,"ax",@progbits
+	.hidden	test4
 	.globl	test4
 	.type	test4,@function
 test4:                                  # @test4
@@ -56,6 +64,8 @@ test4:                                  # @test4
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
 
+	.section	.text.test5,"ax",@progbits
+	.hidden	test5
 	.globl	test5
 	.type	test5,@function
 test5:                                  # @test5
@@ -70,6 +80,8 @@ test5:                                  # @test5
 .Lfunc_end4:
 	.size	test5, .Lfunc_end4-test5
 
+	.section	.text.test6,"ax",@progbits
+	.hidden	test6
 	.globl	test6
 	.type	test6,@function
 test6:                                  # @test6
@@ -84,6 +96,8 @@ test6:                                  # @test6
 .Lfunc_end5:
 	.size	test6, .Lfunc_end5-test6
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

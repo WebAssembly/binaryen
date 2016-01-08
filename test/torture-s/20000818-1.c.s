@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000818-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000818-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -11,6 +13,8 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.yylex,"ax",@progbits
+	.hidden	yylex
 	.globl	yylex
 	.type	yylex,@function
 yylex:                                  # @yylex
@@ -21,8 +25,9 @@ yylex:                                  # @yylex
 .Lfunc_end1:
 	.size	yylex, .Lfunc_end1-yylex
 
-	.type	temporary_obstack,@object # @temporary_obstack
-	.bss
+	.hidden	temporary_obstack       # @temporary_obstack
+	.type	temporary_obstack,@object
+	.section	.bss.temporary_obstack,"aw",@nobits
 	.globl	temporary_obstack
 	.align	2
 temporary_obstack:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030222-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030222-1.c"
+	.section	.text.ll_to_int,"ax",@progbits
+	.hidden	ll_to_int
 	.globl	ll_to_int
 	.type	ll_to_int,@function
 ll_to_int:                              # @ll_to_int
@@ -12,6 +14,8 @@ ll_to_int:                              # @ll_to_int
 .Lfunc_end0:
 	.size	ll_to_int, .Lfunc_end0-ll_to_int
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -37,14 +41,15 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	call    	exit, $1
 	unreachable
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	val,@object             # @val
-	.data
+	.hidden	val                     # @val
+	.type	val,@object
+	.section	.data.val,"aw",@progbits
 	.globl	val
 	.align	2
 val:

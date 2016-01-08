@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930111-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930111-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -11,6 +13,8 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.wwrite,"ax",@progbits
+	.hidden	wwrite
 	.globl	wwrite
 	.type	wwrite,@function
 wwrite:                                 # @wwrite
@@ -32,13 +36,13 @@ wwrite:                                 # @wwrite
 	i64.const	$push6=, 0
 	i64.ne  	$push7=, $pop5, $pop6
 	br_if   	$pop7, .LBB1_4
-.LBB1_2:                                  # %entry
+.LBB1_2:                                # %entry
 	i64.const	$push8=, 47
 	i64.eq  	$push9=, $0, $pop8
 	br_if   	$pop9, .LBB1_4
 # BB#3:                                 # %sw.default
 	i32.const	$1=, 123
-.LBB1_4:                                  # %return
+.LBB1_4:                                # %return
 	return  	$1
 .Lfunc_end1:
 	.size	wwrite, .Lfunc_end1-wwrite

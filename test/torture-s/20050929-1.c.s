@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050929-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050929-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -45,20 +47,20 @@ main:                                   # @main
 	br_if   	$pop17, .LBB0_7
 # BB#6:                                 # %if.end17
 	return  	$2
-.LBB0_7:                                  # %if.then16
+.LBB0_7:                                # %if.then16
 	call    	abort
 	unreachable
-.LBB0_8:                                  # %if.then9
+.LBB0_8:                                # %if.then9
 	call    	abort
 	unreachable
-.LBB0_9:                                  # %if.then
+.LBB0_9:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
 	.type	.compoundliteral,@object # @.compoundliteral
-	.data
+	.section	.data..compoundliteral,"aw",@progbits
 	.align	2
 .compoundliteral:
 	.int32	1                       # 0x1
@@ -66,6 +68,7 @@ main:                                   # @main
 	.size	.compoundliteral, 8
 
 	.type	.compoundliteral.1,@object # @.compoundliteral.1
+	.section	.data..compoundliteral.1,"aw",@progbits
 	.align	2
 .compoundliteral.1:
 	.int32	3                       # 0x3
@@ -73,6 +76,7 @@ main:                                   # @main
 	.size	.compoundliteral.1, 8
 
 	.type	.compoundliteral.2,@object # @.compoundliteral.2
+	.section	.data..compoundliteral.2,"aw",@progbits
 	.align	2
 .compoundliteral.2:
 	.int32	.compoundliteral
@@ -80,13 +84,16 @@ main:                                   # @main
 	.size	.compoundliteral.2, 8
 
 	.type	.compoundliteral.3,@object # @.compoundliteral.3
+	.section	.data..compoundliteral.3,"aw",@progbits
 	.align	2
 .compoundliteral.3:
 	.int32	5                       # 0x5
 	.int32	6                       # 0x6
 	.size	.compoundliteral.3, 8
 
-	.type	e,@object               # @e
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.data.e,"aw",@progbits
 	.globl	e
 	.align	2
 e:

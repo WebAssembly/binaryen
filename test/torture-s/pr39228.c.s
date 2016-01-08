@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39228.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39228.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -27,13 +29,13 @@ main:                                   # @main
 	br_if   	$pop6, .LBB0_4
 # BB#3:                                 # %if.end8
 	return  	$1
-.LBB0_4:                                  # %if.then7
+.LBB0_4:                                # %if.then7
 	call    	abort
 	unreachable
-.LBB0_5:                                  # %if.then3
+.LBB0_5:                                # %if.then3
 	call    	abort
 	unreachable
-.LBB0_6:                                  # %if.then
+.LBB0_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:

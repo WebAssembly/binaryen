@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020307-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020307-1.c"
+	.section	.text.f3,"ax",@progbits
+	.hidden	f3
 	.globl	f3
 	.type	f3,@function
 f3:                                     # @f3
@@ -13,12 +15,14 @@ f3:                                     # @f3
 	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	f3, .Lfunc_end0-f3
 
+	.section	.text.f4,"ax",@progbits
+	.hidden	f4
 	.globl	f4
 	.type	f4,@function
 f4:                                     # @f4
@@ -32,12 +36,14 @@ f4:                                     # @f4
 	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %if.end
 	return
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	f4, .Lfunc_end1-f4
 
+	.section	.text.f5,"ax",@progbits
+	.hidden	f5
 	.globl	f5
 	.type	f5,@function
 f5:                                     # @f5
@@ -51,12 +57,14 @@ f5:                                     # @f5
 	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.end
 	return
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	f5, .Lfunc_end2-f5
 
+	.section	.text.f6,"ax",@progbits
+	.hidden	f6
 	.globl	f6
 	.type	f6,@function
 f6:                                     # @f6
@@ -70,12 +78,14 @@ f6:                                     # @f6
 	br_if   	$pop3, .LBB3_2
 # BB#1:                                 # %if.end
 	return
-.LBB3_2:                                  # %if.then
+.LBB3_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	f6, .Lfunc_end3-f6
 
+	.section	.text.f7,"ax",@progbits
+	.hidden	f7
 	.globl	f7
 	.type	f7,@function
 f7:                                     # @f7
@@ -89,12 +99,14 @@ f7:                                     # @f7
 	br_if   	$pop3, .LBB4_2
 # BB#1:                                 # %if.end
 	return
-.LBB4_2:                                  # %if.then
+.LBB4_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end4:
 	.size	f7, .Lfunc_end4-f7
 
+	.section	.text.f8,"ax",@progbits
+	.hidden	f8
 	.globl	f8
 	.type	f8,@function
 f8:                                     # @f8
@@ -108,12 +120,14 @@ f8:                                     # @f8
 	br_if   	$pop3, .LBB5_2
 # BB#1:                                 # %if.end
 	return
-.LBB5_2:                                  # %if.then
+.LBB5_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end5:
 	.size	f8, .Lfunc_end5-f8
 
+	.section	.text.f9,"ax",@progbits
+	.hidden	f9
 	.globl	f9
 	.type	f9,@function
 f9:                                     # @f9
@@ -127,12 +141,14 @@ f9:                                     # @f9
 	br_if   	$pop3, .LBB6_2
 # BB#1:                                 # %if.end
 	return
-.LBB6_2:                                  # %if.then
+.LBB6_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end6:
 	.size	f9, .Lfunc_end6-f9
 
+	.section	.text.f10,"ax",@progbits
+	.hidden	f10
 	.globl	f10
 	.type	f10,@function
 f10:                                    # @f10
@@ -146,12 +162,14 @@ f10:                                    # @f10
 	br_if   	$pop3, .LBB7_2
 # BB#1:                                 # %if.end
 	return
-.LBB7_2:                                  # %if.then
+.LBB7_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end7:
 	.size	f10, .Lfunc_end7-f10
 
+	.section	.text.f11,"ax",@progbits
+	.hidden	f11
 	.globl	f11
 	.type	f11,@function
 f11:                                    # @f11
@@ -165,12 +183,14 @@ f11:                                    # @f11
 	br_if   	$pop3, .LBB8_2
 # BB#1:                                 # %if.end
 	return
-.LBB8_2:                                  # %if.then
+.LBB8_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end8:
 	.size	f11, .Lfunc_end8-f11
 
+	.section	.text.f12,"ax",@progbits
+	.hidden	f12
 	.globl	f12
 	.type	f12,@function
 f12:                                    # @f12
@@ -184,12 +204,14 @@ f12:                                    # @f12
 	br_if   	$pop3, .LBB9_2
 # BB#1:                                 # %if.end
 	return
-.LBB9_2:                                  # %if.then
+.LBB9_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end9:
 	.size	f12, .Lfunc_end9-f12
 
+	.section	.text.f13,"ax",@progbits
+	.hidden	f13
 	.globl	f13
 	.type	f13,@function
 f13:                                    # @f13
@@ -203,12 +225,14 @@ f13:                                    # @f13
 	br_if   	$pop3, .LBB10_2
 # BB#1:                                 # %if.end
 	return
-.LBB10_2:                                 # %if.then
+.LBB10_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end10:
 	.size	f13, .Lfunc_end10-f13
 
+	.section	.text.f14,"ax",@progbits
+	.hidden	f14
 	.globl	f14
 	.type	f14,@function
 f14:                                    # @f14
@@ -222,12 +246,14 @@ f14:                                    # @f14
 	br_if   	$pop3, .LBB11_2
 # BB#1:                                 # %if.end
 	return
-.LBB11_2:                                 # %if.then
+.LBB11_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end11:
 	.size	f14, .Lfunc_end11-f14
 
+	.section	.text.f15,"ax",@progbits
+	.hidden	f15
 	.globl	f15
 	.type	f15,@function
 f15:                                    # @f15
@@ -241,12 +267,14 @@ f15:                                    # @f15
 	br_if   	$pop3, .LBB12_2
 # BB#1:                                 # %if.end
 	return
-.LBB12_2:                                 # %if.then
+.LBB12_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end12:
 	.size	f15, .Lfunc_end12-f15
 
+	.section	.text.f16,"ax",@progbits
+	.hidden	f16
 	.globl	f16
 	.type	f16,@function
 f16:                                    # @f16
@@ -260,12 +288,14 @@ f16:                                    # @f16
 	br_if   	$pop3, .LBB13_2
 # BB#1:                                 # %if.end
 	return
-.LBB13_2:                                 # %if.then
+.LBB13_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end13:
 	.size	f16, .Lfunc_end13-f16
 
+	.section	.text.f17,"ax",@progbits
+	.hidden	f17
 	.globl	f17
 	.type	f17,@function
 f17:                                    # @f17
@@ -279,12 +309,14 @@ f17:                                    # @f17
 	br_if   	$pop3, .LBB14_2
 # BB#1:                                 # %if.end
 	return
-.LBB14_2:                                 # %if.then
+.LBB14_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end14:
 	.size	f17, .Lfunc_end14-f17
 
+	.section	.text.f18,"ax",@progbits
+	.hidden	f18
 	.globl	f18
 	.type	f18,@function
 f18:                                    # @f18
@@ -298,12 +330,14 @@ f18:                                    # @f18
 	br_if   	$pop3, .LBB15_2
 # BB#1:                                 # %if.end
 	return
-.LBB15_2:                                 # %if.then
+.LBB15_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end15:
 	.size	f18, .Lfunc_end15-f18
 
+	.section	.text.f19,"ax",@progbits
+	.hidden	f19
 	.globl	f19
 	.type	f19,@function
 f19:                                    # @f19
@@ -317,12 +351,14 @@ f19:                                    # @f19
 	br_if   	$pop3, .LBB16_2
 # BB#1:                                 # %if.end
 	return
-.LBB16_2:                                 # %if.then
+.LBB16_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end16:
 	.size	f19, .Lfunc_end16-f19
 
+	.section	.text.f20,"ax",@progbits
+	.hidden	f20
 	.globl	f20
 	.type	f20,@function
 f20:                                    # @f20
@@ -336,12 +372,14 @@ f20:                                    # @f20
 	br_if   	$pop3, .LBB17_2
 # BB#1:                                 # %if.end
 	return
-.LBB17_2:                                 # %if.then
+.LBB17_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end17:
 	.size	f20, .Lfunc_end17-f20
 
+	.section	.text.f21,"ax",@progbits
+	.hidden	f21
 	.globl	f21
 	.type	f21,@function
 f21:                                    # @f21
@@ -355,12 +393,14 @@ f21:                                    # @f21
 	br_if   	$pop3, .LBB18_2
 # BB#1:                                 # %if.end
 	return
-.LBB18_2:                                 # %if.then
+.LBB18_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end18:
 	.size	f21, .Lfunc_end18-f21
 
+	.section	.text.f22,"ax",@progbits
+	.hidden	f22
 	.globl	f22
 	.type	f22,@function
 f22:                                    # @f22
@@ -374,12 +414,14 @@ f22:                                    # @f22
 	br_if   	$pop3, .LBB19_2
 # BB#1:                                 # %if.end
 	return
-.LBB19_2:                                 # %if.then
+.LBB19_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end19:
 	.size	f22, .Lfunc_end19-f22
 
+	.section	.text.f23,"ax",@progbits
+	.hidden	f23
 	.globl	f23
 	.type	f23,@function
 f23:                                    # @f23
@@ -393,12 +435,14 @@ f23:                                    # @f23
 	br_if   	$pop3, .LBB20_2
 # BB#1:                                 # %if.end
 	return
-.LBB20_2:                                 # %if.then
+.LBB20_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end20:
 	.size	f23, .Lfunc_end20-f23
 
+	.section	.text.f24,"ax",@progbits
+	.hidden	f24
 	.globl	f24
 	.type	f24,@function
 f24:                                    # @f24
@@ -412,12 +456,14 @@ f24:                                    # @f24
 	br_if   	$pop3, .LBB21_2
 # BB#1:                                 # %if.end
 	return
-.LBB21_2:                                 # %if.then
+.LBB21_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end21:
 	.size	f24, .Lfunc_end21-f24
 
+	.section	.text.f25,"ax",@progbits
+	.hidden	f25
 	.globl	f25
 	.type	f25,@function
 f25:                                    # @f25
@@ -431,12 +477,14 @@ f25:                                    # @f25
 	br_if   	$pop3, .LBB22_2
 # BB#1:                                 # %if.end
 	return
-.LBB22_2:                                 # %if.then
+.LBB22_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end22:
 	.size	f25, .Lfunc_end22-f25
 
+	.section	.text.f26,"ax",@progbits
+	.hidden	f26
 	.globl	f26
 	.type	f26,@function
 f26:                                    # @f26
@@ -450,12 +498,14 @@ f26:                                    # @f26
 	br_if   	$pop3, .LBB23_2
 # BB#1:                                 # %if.end
 	return
-.LBB23_2:                                 # %if.then
+.LBB23_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end23:
 	.size	f26, .Lfunc_end23-f26
 
+	.section	.text.f27,"ax",@progbits
+	.hidden	f27
 	.globl	f27
 	.type	f27,@function
 f27:                                    # @f27
@@ -469,12 +519,14 @@ f27:                                    # @f27
 	br_if   	$pop3, .LBB24_2
 # BB#1:                                 # %if.end
 	return
-.LBB24_2:                                 # %if.then
+.LBB24_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end24:
 	.size	f27, .Lfunc_end24-f27
 
+	.section	.text.f28,"ax",@progbits
+	.hidden	f28
 	.globl	f28
 	.type	f28,@function
 f28:                                    # @f28
@@ -488,12 +540,14 @@ f28:                                    # @f28
 	br_if   	$pop3, .LBB25_2
 # BB#1:                                 # %if.end
 	return
-.LBB25_2:                                 # %if.then
+.LBB25_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end25:
 	.size	f28, .Lfunc_end25-f28
 
+	.section	.text.f29,"ax",@progbits
+	.hidden	f29
 	.globl	f29
 	.type	f29,@function
 f29:                                    # @f29
@@ -507,12 +561,14 @@ f29:                                    # @f29
 	br_if   	$pop3, .LBB26_2
 # BB#1:                                 # %if.end
 	return
-.LBB26_2:                                 # %if.then
+.LBB26_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end26:
 	.size	f29, .Lfunc_end26-f29
 
+	.section	.text.f30,"ax",@progbits
+	.hidden	f30
 	.globl	f30
 	.type	f30,@function
 f30:                                    # @f30
@@ -526,12 +582,14 @@ f30:                                    # @f30
 	br_if   	$pop3, .LBB27_2
 # BB#1:                                 # %if.end
 	return
-.LBB27_2:                                 # %if.then
+.LBB27_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end27:
 	.size	f30, .Lfunc_end27-f30
 
+	.section	.text.f31,"ax",@progbits
+	.hidden	f31
 	.globl	f31
 	.type	f31,@function
 f31:                                    # @f31
@@ -545,12 +603,14 @@ f31:                                    # @f31
 	br_if   	$pop3, .LBB28_2
 # BB#1:                                 # %if.end
 	return
-.LBB28_2:                                 # %if.then
+.LBB28_2:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end28:
 	.size	f31, .Lfunc_end28-f31
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

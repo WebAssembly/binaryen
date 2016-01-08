@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr63659.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr63659.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -14,7 +16,7 @@ main:                                   # @main
 	br_if   	$pop11, .LBB0_2
 # BB#1:                                 # %for.cond.preheader
 	i32.store	$discard=, a($0), $0
-.LBB0_2:                                  # %while.end
+.LBB0_2:                                # %while.end
 	i32.const	$1=, 255
 	i32.load8_s	$push2=, c($0)
 	i32.load	$push3=, h($0)
@@ -28,7 +30,7 @@ main:                                   # @main
 # BB#3:                                 # %cond.false
 	i32.const	$push4=, -1
 	i32.rem_s	$3=, $pop4, $2
-.LBB0_4:                                  # %cond.end
+.LBB0_4:                                # %cond.end
 	i32.load	$2=, d($0)
 	block   	.LBB0_6
 	i32.store8	$push5=, f($0), $3
@@ -40,71 +42,86 @@ main:                                   # @main
 	br_if   	$pop9, .LBB0_6
 # BB#5:                                 # %if.end23
 	return  	$0
-.LBB0_6:                                  # %if.then22
+.LBB0_6:                                # %if.then22
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	b,@object               # @b
-	.bss
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	2
 b:
 	.int32	0                       # 0x0
 	.size	b, 4
 
-	.type	d,@object               # @d
-	.data
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.data.d,"aw",@progbits
 	.globl	d
 	.align	2
 d:
 	.int32	b
 	.size	d, 4
 
-	.type	a,@object               # @a
-	.bss
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	2
 a:
 	.int32	0                       # 0x0
 	.size	a, 4
 
-	.type	c,@object               # @c
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	2
 c:
 	.int32	0                       # 0x0
 	.size	c, 4
 
-	.type	i,@object               # @i
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4
 
-	.type	h,@object               # @h
+	.hidden	h                       # @h
+	.type	h,@object
+	.section	.bss.h,"aw",@nobits
 	.globl	h
 	.align	2
 h:
 	.int32	0                       # 0x0
 	.size	h, 4
 
-	.type	g,@object               # @g
+	.hidden	g                       # @g
+	.type	g,@object
+	.section	.bss.g,"aw",@nobits
 	.globl	g
 	.align	2
 g:
 	.int32	0                       # 0x0
 	.size	g, 4
 
-	.type	f,@object               # @f
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.bss.f,"aw",@nobits
 	.globl	f
 f:
 	.int8	0                       # 0x0
 	.size	f, 1
 
-	.type	e,@object               # @e
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.bss.e,"aw",@nobits
 	.globl	e
 e:
 	.int8	0                       # 0x0

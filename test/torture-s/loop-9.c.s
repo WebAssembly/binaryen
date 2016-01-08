@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-9.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-9.c"
+	.section	.text.false,"ax",@progbits
+	.hidden	false
 	.globl	false
 	.type	false,@function
 false:                                  # @false
@@ -10,6 +12,8 @@ false:                                  # @false
 .Lfunc_end0:
 	.size	false, .Lfunc_end0-false
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

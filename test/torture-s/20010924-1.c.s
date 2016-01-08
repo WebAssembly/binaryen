@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010924-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010924-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -85,79 +87,86 @@ main:                                   # @main
 	br_if   	$pop36, .LBB0_14
 # BB#13:                                # %if.end63
 	return  	$1
-.LBB0_14:                                 # %if.then62
+.LBB0_14:                               # %if.then62
 	call    	abort
 	unreachable
-.LBB0_15:                                 # %if.then57
+.LBB0_15:                               # %if.then57
 	call    	abort
 	unreachable
-.LBB0_16:                                 # %if.then52
+.LBB0_16:                               # %if.then52
 	call    	abort
 	unreachable
-.LBB0_17:                                 # %if.then47
+.LBB0_17:                               # %if.then47
 	call    	abort
 	unreachable
-.LBB0_18:                                 # %if.then42
+.LBB0_18:                               # %if.then42
 	call    	abort
 	unreachable
-.LBB0_19:                                 # %if.then37
+.LBB0_19:                               # %if.then37
 	call    	abort
 	unreachable
-.LBB0_20:                                 # %if.then32
+.LBB0_20:                               # %if.then32
 	call    	abort
 	unreachable
-.LBB0_21:                                 # %if.then27
+.LBB0_21:                               # %if.then27
 	call    	abort
 	unreachable
-.LBB0_22:                                 # %if.then22
+.LBB0_22:                               # %if.then22
 	call    	abort
 	unreachable
-.LBB0_23:                                 # %if.then17
+.LBB0_23:                               # %if.then17
 	call    	abort
 	unreachable
-.LBB0_24:                                 # %if.then11
+.LBB0_24:                               # %if.then11
 	call    	abort
 	unreachable
-.LBB0_25:                                 # %if.then5
+.LBB0_25:                               # %if.then5
 	call    	abort
 	unreachable
-.LBB0_26:                                 # %if.then
+.LBB0_26:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"62"
-	.size	.str, 3
+	.size	.L.str, 3
 
-	.type	a1,@object              # @a1
-	.data
+	.hidden	a1                      # @a1
+	.type	a1,@object
+	.section	.data.a1,"aw",@progbits
 	.globl	a1
 	.align	2
 a1:
 	.int8	52                      # 0x34
-	.zero	3
-	.int32	.str
+	.skip	3
+	.int32	.L.str
 	.size	a1, 8
 
-	.type	a2,@object              # @a2
+	.hidden	a2                      # @a2
+	.type	a2,@object
+	.section	.data.a2,"aw",@progbits
 	.globl	a2
 a2:
 	.int8	118                     # 0x76
 	.ascii	"cq"
 	.size	a2, 3
 
-	.type	a3,@object              # @a3
+	.hidden	a3                      # @a3
+	.type	a3,@object
+	.section	.data.a3,"aw",@progbits
 	.globl	a3
 a3:
 	.int8	111                     # 0x6f
 	.asciz	"wx"
 	.size	a3, 4
 
-	.type	a4,@object              # @a4
+	.hidden	a4                      # @a4
+	.type	a4,@object
+	.section	.data.a4,"aw",@progbits
 	.globl	a4
 a4:
 	.int8	57                      # 0x39

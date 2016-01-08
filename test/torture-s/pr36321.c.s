@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36321.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36321.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -9,6 +11,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -23,17 +27,17 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	argp,@object            # @argp
-	.data
+	.section	.data.argp,"aw",@progbits
 	.align	2
 argp:
-	.int32	.str
+	.int32	.L.str
 	.size	argp, 4
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"pr36321.x"
-	.size	.str, 10
+	.size	.L.str, 10
 
 
 	.ident	"clang version 3.8.0 "

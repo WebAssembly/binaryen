@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43385.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43385.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -19,11 +21,13 @@ foo:                                    # @foo
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, e($0), $pop2
-.LBB0_3:                                  # %if.end
+.LBB0_3:                                # %if.end
 	return
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -39,6 +43,8 @@ bar:                                    # @bar
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -116,47 +122,48 @@ main:                                   # @main
 	br_if   	$pop19, .LBB2_13
 # BB#12:                                # %if.end51
 	return  	$3
-.LBB2_13:                                 # %if.then50
+.LBB2_13:                               # %if.then50
 	call    	abort
 	unreachable
-.LBB2_14:                                 # %if.then46
+.LBB2_14:                               # %if.then46
 	call    	abort
 	unreachable
-.LBB2_15:                                 # %if.then41
+.LBB2_15:                               # %if.then41
 	call    	abort
 	unreachable
-.LBB2_16:                                 # %if.then36
+.LBB2_16:                               # %if.then36
 	call    	abort
 	unreachable
-.LBB2_17:                                 # %if.then30
+.LBB2_17:                               # %if.then30
 	call    	abort
 	unreachable
-.LBB2_18:                                 # %if.then25
+.LBB2_18:                               # %if.then25
 	call    	abort
 	unreachable
-.LBB2_19:                                 # %if.then20
+.LBB2_19:                               # %if.then20
 	call    	abort
 	unreachable
-.LBB2_20:                                 # %if.then17
+.LBB2_20:                               # %if.then17
 	call    	abort
 	unreachable
-.LBB2_21:                                 # %if.then13
+.LBB2_21:                               # %if.then13
 	call    	abort
 	unreachable
-.LBB2_22:                                 # %if.then9
+.LBB2_22:                               # %if.then9
 	call    	abort
 	unreachable
-.LBB2_23:                                 # %if.then4
+.LBB2_23:                               # %if.then4
 	call    	abort
 	unreachable
-.LBB2_24:                                 # %if.then
+.LBB2_24:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	e,@object               # @e
-	.bss
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.bss.e,"aw",@nobits
 	.globl	e
 	.align	2
 e:

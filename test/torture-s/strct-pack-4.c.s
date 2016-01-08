@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/strct-pack-4.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strct-pack-4.c"
+	.section	.text.my_set_a,"ax",@progbits
+	.hidden	my_set_a
 	.globl	my_set_a
 	.type	my_set_a,@function
 my_set_a:                               # @my_set_a
@@ -10,6 +12,8 @@ my_set_a:                               # @my_set_a
 .Lfunc_end0:
 	.size	my_set_a, .Lfunc_end0-my_set_a
 
+	.section	.text.my_set_b,"ax",@progbits
+	.hidden	my_set_b
 	.globl	my_set_b
 	.type	my_set_b,@function
 my_set_b:                               # @my_set_b
@@ -20,6 +24,8 @@ my_set_b:                               # @my_set_b
 .Lfunc_end1:
 	.size	my_set_b, .Lfunc_end1-my_set_b
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

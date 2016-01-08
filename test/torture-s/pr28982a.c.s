@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28982a.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28982a.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -134,7 +136,7 @@ foo:                                    # @foo
 	copy_local	$62=, $45
 	copy_local	$63=, $45
 	copy_local	$64=, $45
-.LBB0_2:                                  # %while.body
+.LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	f32.load	$push31=, 0($25)
@@ -200,7 +202,7 @@ foo:                                    # @foo
 	i32.add 	$26=, $26, $21
 	i32.add 	$25=, $25, $22
 	br_if   	$0, .LBB0_2
-.LBB0_3:                                  # %while.end
+.LBB0_3:                                # %while.end
 	f32.store	$discard=, results($23), $64
 	f32.store	$discard=, results+4($23), $63
 	f32.store	$discard=, results+8($23), $62
@@ -225,6 +227,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -311,7 +315,7 @@ main:                                   # @main
 	i32.store	$0=, incs+4($3), $pop2
 	i32.const	$push8=, 4
 	i32.store	$1=, incs+16($3), $pop8
-.LBB1_1:                                  # %for.body4
+.LBB1_1:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	f32.convert_s/i32	$push39=, $3
@@ -321,7 +325,7 @@ main:                                   # @main
 	i32.const	$push40=, 80
 	i32.ne  	$push41=, $3, $pop40
 	br_if   	$pop41, .LBB1_1
-.LBB1_2:                                  # %for.end8
+.LBB1_2:                                # %for.end8
 	call    	foo, $1
 	i32.const	$3=, 0
 	f32.load	$push42=, results($3)
@@ -408,33 +412,40 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	incs,@object            # @incs
-	.bss
+	.hidden	incs                    # @incs
+	.type	incs,@object
+	.section	.bss.incs,"aw",@nobits
 	.globl	incs
 	.align	4
 incs:
-	.zero	80
+	.skip	80
 	.size	incs, 80
 
-	.type	ptrs,@object            # @ptrs
+	.hidden	ptrs                    # @ptrs
+	.type	ptrs,@object
+	.section	.bss.ptrs,"aw",@nobits
 	.globl	ptrs
 	.align	4
 ptrs:
-	.zero	80
+	.skip	80
 	.size	ptrs, 80
 
-	.type	results,@object         # @results
+	.hidden	results                 # @results
+	.type	results,@object
+	.section	.bss.results,"aw",@nobits
 	.globl	results
 	.align	4
 results:
-	.zero	80
+	.skip	80
 	.size	results, 80
 
-	.type	input,@object           # @input
+	.hidden	input                   # @input
+	.type	input,@object
+	.section	.bss.input,"aw",@nobits
 	.globl	input
 	.align	4
 input:
-	.zero	320
+	.skip	320
 	.size	input, 320
 
 

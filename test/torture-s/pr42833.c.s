@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42833.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42833.c"
+	.section	.text.helper_neon_rshl_s8,"ax",@progbits
+	.hidden	helper_neon_rshl_s8
 	.globl	helper_neon_rshl_s8
 	.type	helper_neon_rshl_s8,@function
 helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
@@ -26,7 +28,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	i32.const	$push15=, 31
 	i32.shr_s	$8=, $pop14, $pop15
 	br      	.LBB0_7
-.LBB0_3:                                  # %if.else18
+.LBB0_3:                                # %if.else18
 	i32.shr_s	$4=, $7, $6
 	copy_local	$8=, $11
 	i32.const	$push4=, -8
@@ -42,7 +44,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 # BB#5:                                 # %if.else48
 	i32.shl 	$8=, $8, $4
 	br      	.LBB0_7
-.LBB0_6:                                  # %if.then38
+.LBB0_6:                                # %if.then38
 	i32.const	$push9=, 1
 	i32.xor 	$push8=, $4, $3
 	i32.shl 	$push10=, $pop9, $pop8
@@ -50,7 +52,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	i32.const	$push12=, 0
 	i32.sub 	$push13=, $pop12, $4
 	i32.shr_s	$8=, $pop11, $pop13
-.LBB0_7:                                  # %if.end57
+.LBB0_7:                                # %if.end57
 	i32.shl 	$push16=, $1, $5
 	i32.shr_s	$3=, $pop16, $6
 	i32.const	$4=, 8
@@ -70,7 +72,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	i32.const	$push31=, 31
 	i32.shr_s	$9=, $pop30, $pop31
 	br      	.LBB0_14
-.LBB0_10:                                 # %if.else78
+.LBB0_10:                               # %if.else78
 	copy_local	$9=, $11
 	i32.const	$push20=, -8
 	i32.eq  	$push21=, $3, $pop20
@@ -85,7 +87,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 # BB#12:                                # %if.else112
 	i32.shl 	$9=, $10, $3
 	br      	.LBB0_14
-.LBB0_13:                                 # %if.then100
+.LBB0_13:                               # %if.then100
 	i32.const	$push25=, 1
 	i32.xor 	$push24=, $3, $9
 	i32.shl 	$push26=, $pop25, $pop24
@@ -93,7 +95,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	i32.const	$push28=, 0
 	i32.sub 	$push29=, $pop28, $3
 	i32.shr_s	$9=, $pop27, $pop29
-.LBB0_14:                                 # %if.end122
+.LBB0_14:                               # %if.end122
 	i32.shl 	$push32=, $1, $4
 	i32.shr_s	$3=, $pop32, $6
 	copy_local	$10=, $11
@@ -111,7 +113,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	i32.const	$push47=, 31
 	i32.shr_s	$10=, $pop46, $pop47
 	br      	.LBB0_21
-.LBB0_17:                                 # %if.else143
+.LBB0_17:                               # %if.else143
 	copy_local	$10=, $11
 	i32.const	$push36=, -8
 	i32.eq  	$push37=, $3, $pop36
@@ -126,7 +128,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 # BB#19:                                # %if.else177
 	i32.shl 	$10=, $2, $3
 	br      	.LBB0_21
-.LBB0_20:                                 # %if.then165
+.LBB0_20:                               # %if.then165
 	i32.const	$push41=, 1
 	i32.xor 	$push40=, $3, $10
 	i32.shl 	$push42=, $pop41, $pop40
@@ -134,7 +136,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	i32.const	$push44=, 0
 	i32.sub 	$push45=, $pop44, $3
 	i32.shr_s	$10=, $pop43, $pop45
-.LBB0_21:                                 # %if.end187
+.LBB0_21:                               # %if.end187
 	i32.shr_s	$1=, $1, $6
 	block   	.LBB0_28
 	i32.gt_s	$push48=, $1, $7
@@ -148,7 +150,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	i32.const	$push60=, 31
 	i32.shr_s	$11=, $0, $pop60
 	br      	.LBB0_28
-.LBB0_24:                                 # %if.else209
+.LBB0_24:                               # %if.else209
 	i32.const	$push51=, -8
 	i32.eq  	$push52=, $1, $pop51
 	br_if   	$pop52, .LBB0_28
@@ -161,7 +163,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 # BB#26:                                # %if.else243
 	i32.shl 	$11=, $7, $1
 	br      	.LBB0_28
-.LBB0_27:                                 # %if.then231
+.LBB0_27:                               # %if.then231
 	i32.const	$push55=, 1
 	i32.xor 	$push54=, $1, $11
 	i32.shl 	$push56=, $pop55, $pop54
@@ -169,7 +171,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	i32.const	$push58=, 0
 	i32.sub 	$push59=, $pop58, $1
 	i32.shr_s	$11=, $pop57, $pop59
-.LBB0_28:                                 # %if.end253
+.LBB0_28:                               # %if.end253
 	i32.shl 	$push65=, $9, $4
 	i32.const	$push66=, 65280
 	i32.and 	$push67=, $pop65, $pop66
@@ -186,6 +188,8 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 .Lfunc_end0:
 	.size	helper_neon_rshl_s8, .Lfunc_end0-helper_neon_rshl_s8
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

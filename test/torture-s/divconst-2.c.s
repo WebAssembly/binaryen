@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/divconst-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/divconst-2.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -12,6 +14,8 @@ f:                                      # @f
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.r,"ax",@progbits
+	.hidden	r
 	.globl	r
 	.type	r,@function
 r:                                      # @r
@@ -33,6 +37,8 @@ r:                                      # @r
 .Lfunc_end1:
 	.size	r, .Lfunc_end1-r
 
+	.section	.text.std_eqn,"ax",@progbits
+	.hidden	std_eqn
 	.globl	std_eqn
 	.type	std_eqn,@function
 std_eqn:                                # @std_eqn
@@ -47,6 +53,8 @@ std_eqn:                                # @std_eqn
 .Lfunc_end2:
 	.size	std_eqn, .Lfunc_end2-std_eqn
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -102,14 +110,15 @@ main:                                   # @main
 # BB#3:                                 # %for.cond.2
 	call    	exit, $0
 	unreachable
-.LBB3_4:                                  # %if.then
+.LBB3_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
-	.type	nums,@object            # @nums
-	.data
+	.hidden	nums                    # @nums
+	.type	nums,@object
+	.section	.data.nums,"aw",@progbits
 	.globl	nums
 	.align	2
 nums:

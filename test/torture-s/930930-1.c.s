@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930930-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930930-1.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -11,7 +13,7 @@ f:                                      # @f
 	block   	.LBB0_7
 	i32.lt_u	$push0=, $3, $4
 	br_if   	$pop0, .LBB0_7
-.LBB0_1:                                  # %if.end
+.LBB0_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_5
 	i32.load	$5=, 0($3)
@@ -19,31 +21,33 @@ f:                                      # @f
 	i32.ge_u	$push1=, $5, $2
 	br_if   	$pop1, .LBB0_4
 # BB#2:                                 # %if.end
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.lt_u	$push2=, $5, $1
 	br_if   	$pop2, .LBB0_4
 # BB#3:                                 # %if.then3
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push3=, -4
 	i32.add 	$6=, $6, $pop3
 	i32.store	$discard=, 0($6), $5
-.LBB0_4:                                  # %if.end4
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+.LBB0_4:                                # %if.end4
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push4=, -4
 	i32.add 	$3=, $3, $pop4
 	i32.ge_u	$push5=, $3, $4
 	br_if   	$pop5, .LBB0_1
-.LBB0_5:                                  # %out
+.LBB0_5:                                # %out
 	i32.eq  	$push6=, $6, $0
 	br_if   	$pop6, .LBB0_7
 # BB#6:                                 # %if.then7
 	call    	abort
 	unreachable
-.LBB0_7:                                  # %if.end8
+.LBB0_7:                                # %if.end8
 	return  	$3
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -58,29 +62,36 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	mem,@object             # @mem
-	.bss
+	.hidden	mem                     # @mem
+	.type	mem,@object
+	.section	.bss.mem,"aw",@nobits
 	.globl	mem
 	.align	4
 mem:
-	.zero	400
+	.skip	400
 	.size	mem, 400
 
-	.type	wm_TR,@object           # @wm_TR
+	.hidden	wm_TR                   # @wm_TR
+	.type	wm_TR,@object
+	.section	.bss.wm_TR,"aw",@nobits
 	.globl	wm_TR
 	.align	2
 wm_TR:
 	.int32	0
 	.size	wm_TR, 4
 
-	.type	wm_HB,@object           # @wm_HB
+	.hidden	wm_HB                   # @wm_HB
+	.type	wm_HB,@object
+	.section	.bss.wm_HB,"aw",@nobits
 	.globl	wm_HB
 	.align	2
 wm_HB:
 	.int32	0
 	.size	wm_HB, 4
 
-	.type	wm_SPB,@object          # @wm_SPB
+	.hidden	wm_SPB                  # @wm_SPB
+	.type	wm_SPB,@object
+	.section	.bss.wm_SPB,"aw",@nobits
 	.globl	wm_SPB
 	.align	2
 wm_SPB:

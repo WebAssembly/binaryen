@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44468.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44468.c"
+	.section	.text.test1,"ax",@progbits
+	.hidden	test1
 	.globl	test1
 	.type	test1,@function
 test1:                                  # @test1
@@ -16,6 +18,8 @@ test1:                                  # @test1
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
+	.section	.text.test2,"ax",@progbits
+	.hidden	test2
 	.globl	test2
 	.type	test2,@function
 test2:                                  # @test2
@@ -32,6 +36,8 @@ test2:                                  # @test2
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
 
+	.section	.text.test3,"ax",@progbits
+	.hidden	test3
 	.globl	test3
 	.type	test3,@function
 test3:                                  # @test3
@@ -48,6 +54,8 @@ test3:                                  # @test3
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -81,24 +89,25 @@ main:                                   # @main
 	br_if   	$pop6, .LBB3_4
 # BB#3:                                 # %if.end8
 	return  	$0
-.LBB3_4:                                  # %if.then7
+.LBB3_4:                                # %if.then7
 	call    	abort
 	unreachable
-.LBB3_5:                                  # %if.then3
+.LBB3_5:                                # %if.then3
 	call    	abort
 	unreachable
-.LBB3_6:                                  # %if.then
+.LBB3_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
-	.type	s,@object               # @s
-	.bss
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.bss.s,"aw",@nobits
 	.globl	s
 	.align	2
 s:
-	.zero	12
+	.skip	12
 	.size	s, 12
 
 

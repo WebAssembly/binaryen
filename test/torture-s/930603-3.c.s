@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930603-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930603-3.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -21,18 +23,20 @@ f:                                      # @f
 	i32.const	$push7=, 1
 	i32.shr_u	$1=, $pop6, $pop7
 	br      	.LBB0_5
-.LBB0_3:                                  # %sw.default
+.LBB0_3:                                # %sw.default
 	call    	abort
 	unreachable
-.LBB0_4:                                  # %sw.bb3
+.LBB0_4:                                # %sw.bb3
 	i32.load8_u	$push4=, 3($0)
 	i32.const	$push5=, 4
 	i32.shr_u	$1=, $pop4, $pop5
-.LBB0_5:                                  # %sw.epilog
+.LBB0_5:                                # %sw.epilog
 	return  	$1
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

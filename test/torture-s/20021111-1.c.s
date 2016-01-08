@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021111-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021111-1.c"
+	.section	.text.aim_callhandler,"ax",@progbits
+	.hidden	aim_callhandler
 	.globl	aim_callhandler
 	.type	aim_callhandler,@function
 aim_callhandler:                        # @aim_callhandler
@@ -26,15 +28,17 @@ aim_callhandler:                        # @aim_callhandler
 	i32.add 	$push3=, $3, $4
 	i32.store	$discard=, aim_callhandler.i($1), $pop3
 	br      	.LBB0_5
-.LBB0_4:                                  # %if.then6
+.LBB0_4:                                # %if.then6
 	call    	abort
 	unreachable
-.LBB0_5:                                  # %return
+.LBB0_5:                                # %return
 	i32.const	$push4=, 0
 	return  	$pop4
 .Lfunc_end0:
 	.size	aim_callhandler, .Lfunc_end0-aim_callhandler
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -50,7 +54,7 @@ main:                                   # @main
 # BB#1:                                 # %if.then6.i
 	call    	abort
 	unreachable
-.LBB1_2:                                  # %aim_callhandler.exit
+.LBB1_2:                                # %aim_callhandler.exit
 	i32.add 	$push1=, $0, $2
 	i32.store	$discard=, aim_callhandler.i($1), $pop1
 	call    	exit, $1

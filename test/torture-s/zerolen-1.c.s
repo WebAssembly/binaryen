@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/zerolen-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zerolen-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -15,6 +17,8 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.set,"ax",@progbits
+	.hidden	set
 	.globl	set
 	.type	set,@function
 set:                                    # @set
@@ -28,11 +32,12 @@ set:                                    # @set
 .Lfunc_end1:
 	.size	set, .Lfunc_end1-set
 
-	.type	entry,@object           # @entry
-	.bss
+	.hidden	entry                   # @entry
+	.type	entry,@object
+	.section	.bss.entry,"aw",@nobits
 	.globl	entry
 entry:
-	.zero	4
+	.skip	4
 	.size	entry, 4
 
 

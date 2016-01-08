@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr54471.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr54471.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -18,7 +20,7 @@ foo:                                    # @foo
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $3, $pop7
 	br_if   	$pop8, .LBB0_4
-.LBB0_1:                                  # %for.body
+.LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.const	$10=, 0
@@ -41,7 +43,7 @@ foo:                                    # @foo
 	i32.const	$push2=, -1
 	i32.add 	$3=, $3, $pop2
 	br_if   	$3, .LBB0_1
-.LBB0_2:                                  # %for.end
+.LBB0_2:                                # %for.end
 	i64.const	$2=, 14348907
 	i64.const	$1=, 0
 	i64.xor 	$push3=, $5, $2
@@ -57,12 +59,14 @@ foo:                                    # @foo
 	i32.const	$9=, __stack_pointer
 	i32.store	$10=, 0($9), $10
 	return
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

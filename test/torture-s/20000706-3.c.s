@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000706-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000706-3.c"
+	.section	.text.baz,"ax",@progbits
+	.hidden	baz
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
@@ -12,6 +14,8 @@ baz:                                    # @baz
 .Lfunc_end0:
 	.size	baz, .Lfunc_end0-baz
 
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -29,12 +33,14 @@ bar:                                    # @bar
 	br_if   	$pop5, .LBB1_3
 # BB#2:                                 # %if.end
 	return
-.LBB1_3:                                  # %if.then
+.LBB1_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -52,12 +58,14 @@ foo:                                    # @foo
 	br_if   	$pop5, .LBB2_3
 # BB#2:                                 # %bar.exit
 	return
-.LBB2_3:                                  # %if.then.i
+.LBB2_3:                                # %if.then.i
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -72,8 +80,9 @@ main:                                   # @main
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
-	.type	c,@object               # @c
-	.bss
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	2
 c:

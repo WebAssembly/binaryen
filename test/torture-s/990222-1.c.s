@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990222-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990222-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -19,7 +21,7 @@ main:                                   # @main
 	i32.const	$push2=, 58
 	i32.lt_s	$push3=, $3, $pop2
 	br_if   	$pop3, .LBB0_3
-.LBB0_1:                                  # %while.body
+.LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.load8_u	$3=, 0($4)
@@ -35,9 +37,9 @@ main:                                   # @main
 	i32.const	$push8=, 57
 	i32.gt_s	$push9=, $pop7, $pop8
 	br_if   	$pop9, .LBB0_1
-.LBB0_2:                                  # %while.end.loopexit
+.LBB0_2:                                # %while.end.loopexit
 	i32.load8_u	$3=, line+2($0)
-.LBB0_3:                                  # %while.end
+.LBB0_3:                                # %while.end
 	block   	.LBB0_7
 	i32.load8_u	$push12=, line($0)
 	i32.const	$push13=, 50
@@ -56,14 +58,15 @@ main:                                   # @main
 	br_if   	$pop18, .LBB0_7
 # BB#6:                                 # %if.end
 	return  	$0
-.LBB0_7:                                  # %if.then
+.LBB0_7:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	line,@object            # @line
-	.data
+	.hidden	line                    # @line
+	.type	line,@object
+	.section	.data.line,"aw",@progbits
 	.globl	line
 line:
 	.asciz	"199"

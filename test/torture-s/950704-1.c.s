@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/950704-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/950704-1.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -25,21 +27,23 @@ f:                                      # @f
 	i64.le_s	$push6=, $4, $pop5
 	br_if   	$pop6, .LBB0_5
 	br      	.LBB0_6
-.LBB0_3:                                  # %if.else
+.LBB0_3:                                # %if.else
 	i64.gt_s	$push1=, $1, $3
 	br_if   	$pop1, .LBB0_6
 # BB#4:                                 # %if.else
 	i64.lt_s	$push2=, $4, $3
 	br_if   	$pop2, .LBB0_6
-.LBB0_5:                                  # %if.end9
+.LBB0_5:                                # %if.end9
 	i32.const	$push7=, 1
 	i32.store	$discard=, errflag($2), $pop7
 	copy_local	$4=, $3
-.LBB0_6:                                  # %cleanup
+.LBB0_6:                                # %cleanup
 	return  	$4
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -53,8 +57,9 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	errflag,@object         # @errflag
-	.bss
+	.hidden	errflag                 # @errflag
+	.type	errflag,@object
+	.section	.bss.errflag,"aw",@nobits
 	.globl	errflag
 	.align	2
 errflag:

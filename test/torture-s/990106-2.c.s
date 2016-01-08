@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990106-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990106-2.c"
+	.section	.text.calc_mp,"ax",@progbits
+	.hidden	calc_mp
 	.globl	calc_mp
 	.type	calc_mp,@function
 calc_mp:                                # @calc_mp
@@ -19,6 +21,8 @@ calc_mp:                                # @calc_mp
 .Lfunc_end0:
 	.size	calc_mp, .Lfunc_end0-calc_mp
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

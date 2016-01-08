@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/cmpsf-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/cmpsf-1.c"
+	.section	.text.feq,"ax",@progbits
+	.hidden	feq
 	.globl	feq
 	.type	feq,@function
 feq:                                    # @feq
@@ -14,6 +16,8 @@ feq:                                    # @feq
 .Lfunc_end0:
 	.size	feq, .Lfunc_end0-feq
 
+	.section	.text.fne,"ax",@progbits
+	.hidden	fne
 	.globl	fne
 	.type	fne,@function
 fne:                                    # @fne
@@ -28,6 +32,8 @@ fne:                                    # @fne
 .Lfunc_end1:
 	.size	fne, .Lfunc_end1-fne
 
+	.section	.text.flt,"ax",@progbits
+	.hidden	flt
 	.globl	flt
 	.type	flt,@function
 flt:                                    # @flt
@@ -42,6 +48,8 @@ flt:                                    # @flt
 .Lfunc_end2:
 	.size	flt, .Lfunc_end2-flt
 
+	.section	.text.fge,"ax",@progbits
+	.hidden	fge
 	.globl	fge
 	.type	fge,@function
 fge:                                    # @fge
@@ -60,6 +68,8 @@ fge:                                    # @fge
 .Lfunc_end3:
 	.size	fge, .Lfunc_end3-fge
 
+	.section	.text.fgt,"ax",@progbits
+	.hidden	fgt
 	.globl	fgt
 	.type	fgt,@function
 fgt:                                    # @fgt
@@ -74,6 +84,8 @@ fgt:                                    # @fgt
 .Lfunc_end4:
 	.size	fgt, .Lfunc_end4-fgt
 
+	.section	.text.fle,"ax",@progbits
+	.hidden	fle
 	.globl	fle
 	.type	fle,@function
 fle:                                    # @fle
@@ -92,6 +104,8 @@ fle:                                    # @fle
 .Lfunc_end5:
 	.size	fle, .Lfunc_end5-fle
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -101,9 +115,9 @@ main:                                   # @main
 	i32.const	$6=, 0
 	i32.const	$4=, correct_results
 	copy_local	$0=, $6
-.LBB6_1:                                  # %for.body
+.LBB6_1:                                # %for.body
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop .LBB6_2 Depth 2
+                                        #     Child Loop BB6_2 Depth 2
 	block   	.LBB6_16
 	block   	.LBB6_15
 	block   	.LBB6_14
@@ -117,8 +131,8 @@ main:                                   # @main
 	i32.add 	$push2=, $2, $pop1
 	f32.load	$1=, 0($pop2)
 	copy_local	$3=, $6
-.LBB6_2:                                  # %for.body3
-                                        #   Parent Loop .LBB6_1 Depth=1
+.LBB6_2:                                # %for.body3
+                                        #   Parent Loop BB6_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop    	.LBB6_9
 	f32.load	$5=, 0($2)
@@ -130,7 +144,7 @@ main:                                   # @main
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	$pop6, .LBB6_16
 # BB#3:                                 # %if.end
-                                        #   in Loop: Header=.LBB6_2 Depth=2
+                                        #   in Loop: Header=BB6_2 Depth=2
 	i32.const	$9=, 4
 	f32.ne  	$push7=, $1, $5
 	i32.select	$push8=, $pop7, $8, $7
@@ -139,7 +153,7 @@ main:                                   # @main
 	i32.ne  	$push11=, $pop8, $pop10
 	br_if   	$pop11, .LBB6_15
 # BB#4:                                 # %if.end10
-                                        #   in Loop: Header=.LBB6_2 Depth=2
+                                        #   in Loop: Header=BB6_2 Depth=2
 	i32.const	$11=, 8
 	f32.lt  	$10=, $1, $5
 	i32.select	$push12=, $10, $8, $7
@@ -148,7 +162,7 @@ main:                                   # @main
 	i32.ne  	$push15=, $pop12, $pop14
 	br_if   	$pop15, .LBB6_14
 # BB#5:                                 # %if.end15
-                                        #   in Loop: Header=.LBB6_2 Depth=2
+                                        #   in Loop: Header=BB6_2 Depth=2
 	f32.ne  	$push17=, $1, $1
 	f32.ne  	$push16=, $5, $5
 	i32.or  	$12=, $pop17, $pop16
@@ -160,7 +174,7 @@ main:                                   # @main
 	i32.ne  	$push23=, $pop19, $pop22
 	br_if   	$pop23, .LBB6_13
 # BB#6:                                 # %if.end20
-                                        #   in Loop: Header=.LBB6_2 Depth=2
+                                        #   in Loop: Header=BB6_2 Depth=2
 	f32.gt  	$10=, $1, $5
 	i32.select	$push24=, $10, $8, $7
 	i32.const	$push25=, 16
@@ -169,7 +183,7 @@ main:                                   # @main
 	i32.ne  	$push28=, $pop24, $pop27
 	br_if   	$pop28, .LBB6_12
 # BB#7:                                 # %if.end25
-                                        #   in Loop: Header=.LBB6_2 Depth=2
+                                        #   in Loop: Header=BB6_2 Depth=2
 	i32.or  	$push29=, $10, $12
 	i32.select	$push30=, $pop29, $7, $8
 	i32.const	$push31=, 20
@@ -178,7 +192,7 @@ main:                                   # @main
 	i32.ne  	$push34=, $pop30, $pop33
 	br_if   	$pop34, .LBB6_11
 # BB#8:                                 # %if.end30
-                                        #   in Loop: Header=.LBB6_2 Depth=2
+                                        #   in Loop: Header=BB6_2 Depth=2
 	i32.const	$push35=, 24
 	i32.add 	$4=, $4, $pop35
 	i32.add 	$2=, $2, $9
@@ -186,38 +200,39 @@ main:                                   # @main
 	i32.add 	$3=, $3, $7
 	i32.lt_s	$push36=, $3, $11
 	br_if   	$pop36, .LBB6_2
-.LBB6_9:                                  # %for.end
-                                        #   in Loop: Header=.LBB6_1 Depth=1
+.LBB6_9:                                # %for.end
+                                        #   in Loop: Header=BB6_1 Depth=1
 	i32.add 	$0=, $0, $7
 	i32.lt_s	$push37=, $0, $11
 	br_if   	$pop37, .LBB6_1
-.LBB6_10:                                 # %for.end33
+.LBB6_10:                               # %for.end33
 	i32.const	$push38=, 0
 	call    	exit, $pop38
 	unreachable
-.LBB6_11:                                 # %if.then29
+.LBB6_11:                               # %if.then29
 	call    	abort
 	unreachable
-.LBB6_12:                                 # %if.then24
+.LBB6_12:                               # %if.then24
 	call    	abort
 	unreachable
-.LBB6_13:                                 # %if.then19
+.LBB6_13:                               # %if.then19
 	call    	abort
 	unreachable
-.LBB6_14:                                 # %if.then14
+.LBB6_14:                               # %if.then14
 	call    	abort
 	unreachable
-.LBB6_15:                                 # %if.then9
+.LBB6_15:                               # %if.then9
 	call    	abort
 	unreachable
-.LBB6_16:                                 # %if.then
+.LBB6_16:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end6:
 	.size	main, .Lfunc_end6-main
 
-	.type	args,@object            # @args
-	.data
+	.hidden	args                    # @args
+	.type	args,@object
+	.section	.data.args,"aw",@progbits
 	.globl	args
 	.align	4
 args:
@@ -231,7 +246,9 @@ args:
 	.int32	3463149987              # float -987654336
 	.size	args, 32
 
-	.type	correct_results,@object # @correct_results
+	.hidden	correct_results         # @correct_results
+	.type	correct_results,@object
+	.section	.data.correct_results,"aw",@progbits
 	.globl	correct_results
 	.align	4
 correct_results:

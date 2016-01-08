@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070212-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070212-3.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -19,12 +21,14 @@ bar:                                    # @bar
 	br_if   	$pop5, .LBB0_2
 # BB#1:                                 # %if.then3
 	i32.load	$1=, 0($2)
-.LBB0_2:                                  # %if.end5
+.LBB0_2:                                # %if.end5
 	i32.add 	$push3=, $1, $4
 	return  	$pop3
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

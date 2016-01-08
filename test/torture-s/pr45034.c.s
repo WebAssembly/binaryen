@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr45034.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr45034.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -13,12 +15,14 @@ foo:                                    # @foo
 	br_if   	$pop3, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.test_neg,"ax",@progbits
+	.hidden	test_neg
 	.globl	test_neg
 	.type	test_neg,@function
 test_neg:                               # @test_neg
@@ -27,7 +31,7 @@ test_neg:                               # @test_neg
 # BB#0:                                 # %entry
 	i32.const	$1=, 128
 	copy_local	$7=, $1
-.LBB1_1:                                  # %for.cond
+.LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_5
 	i32.const	$push0=, 255
@@ -43,28 +47,30 @@ test_neg:                               # @test_neg
 	i32.gt_u	$push2=, $pop1, $6
 	br_if   	$pop2, .LBB1_3
 # BB#2:                                 # %cond.true.i
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.shr_s	$4=, $0, $5
 	br      	.LBB1_4
-.LBB1_3:                                  # %cond.false.i
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+.LBB1_3:                                # %cond.false.i
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push3=, -16777216
 	i32.xor 	$push4=, $0, $pop3
 	i32.shr_s	$push5=, $pop4, $5
 	i32.const	$push6=, -1
 	i32.xor 	$4=, $pop5, $pop6
-.LBB1_4:                                  # %fixnum_neg.exit
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+.LBB1_4:                                # %fixnum_neg.exit
+                                        #   in Loop: Header=BB1_1 Depth=1
 	call    	foo, $7, $4, $7
 	i32.const	$push7=, 1
 	i32.add 	$7=, $7, $pop7
 	i32.ne  	$push8=, $2, $6
 	br_if   	$pop8, .LBB1_1
-.LBB1_5:                                  # %for.end
+.LBB1_5:                                # %for.end
 	return  	$3
 .Lfunc_end1:
 	.size	test_neg, .Lfunc_end1-test_neg
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -73,7 +79,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$1=, 128
 	copy_local	$7=, $1
-.LBB2_1:                                  # %for.cond.i
+.LBB2_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_5
 	i32.const	$push0=, 255
@@ -89,24 +95,24 @@ main:                                   # @main
 	i32.gt_u	$push2=, $pop1, $6
 	br_if   	$pop2, .LBB2_3
 # BB#2:                                 # %cond.true.i.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+                                        #   in Loop: Header=BB2_1 Depth=1
 	i32.shr_s	$4=, $0, $5
 	br      	.LBB2_4
-.LBB2_3:                                  # %cond.false.i.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+.LBB2_3:                                # %cond.false.i.i
+                                        #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push3=, -16777216
 	i32.xor 	$push4=, $0, $pop3
 	i32.shr_s	$push5=, $pop4, $5
 	i32.const	$push6=, -1
 	i32.xor 	$4=, $pop5, $pop6
-.LBB2_4:                                  # %fixnum_neg.exit.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+.LBB2_4:                                # %fixnum_neg.exit.i
+                                        #   in Loop: Header=BB2_1 Depth=1
 	call    	foo, $7, $4, $7
 	i32.const	$push7=, 1
 	i32.add 	$7=, $7, $pop7
 	i32.ne  	$push8=, $2, $6
 	br_if   	$pop8, .LBB2_1
-.LBB2_5:                                  # %if.end
+.LBB2_5:                                # %if.end
 	return  	$3
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

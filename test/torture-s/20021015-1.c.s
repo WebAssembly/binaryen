@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021015-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021015-1.c"
+	.section	.text.g,"ax",@progbits
+	.hidden	g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -14,12 +16,14 @@ g:                                      # @g
 	i32.const	$4=, 0
 	i32.store8	$discard=, g_list($4), $4
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -34,13 +38,14 @@ main:                                   # @main
 	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %g.exit
 	i32.store8	$discard=, g_list($0), $0
-.LBB1_2:                                  # %for.end
+.LBB1_2:                                # %for.end
 	return  	$0
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	g_list,@object          # @g_list
-	.data
+	.hidden	g_list                  # @g_list
+	.type	g_list,@object
+	.section	.data.g_list,"aw",@progbits
 	.globl	g_list
 g_list:
 	.int8	49

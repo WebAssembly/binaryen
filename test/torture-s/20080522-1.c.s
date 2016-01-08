@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080522-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080522-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -7,15 +9,18 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, 1
-	i32.store	$1=, i($pop0), $pop1
-	i32.const	$push2=, 2
-	i32.store	$discard=, 0($0), $pop2
-	return  	$1
+	i32.const	$1=, 0
+	i32.const	$push0=, 1
+	i32.store	$discard=, i($1), $pop0
+	i32.const	$push1=, 2
+	i32.store	$discard=, 0($0), $pop1
+	i32.load	$push2=, i($1)
+	return  	$pop2
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -23,14 +28,17 @@ bar:                                    # @bar
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
-	i32.store	$0=, 0($0), $pop0
+	i32.store	$discard=, 0($0), $pop0
 	i32.const	$push1=, 0
 	i32.const	$push2=, 1
 	i32.store	$discard=, i($pop1), $pop2
-	return  	$0
+	i32.load	$push3=, 0($0)
+	return  	$pop3
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -87,22 +95,22 @@ main:                                   # @main
 	i32.const	$6=, __stack_pointer
 	i32.store	$9=, 0($6), $9
 	return  	$0
-.LBB2_7:                                  # %if.then17
+.LBB2_7:                                # %if.then17
 	call    	abort
 	unreachable
-.LBB2_8:                                  # %if.then14
+.LBB2_8:                                # %if.then14
 	call    	abort
 	unreachable
-.LBB2_9:                                  # %if.then10
+.LBB2_9:                                # %if.then10
 	call    	abort
 	unreachable
-.LBB2_10:                                 # %if.then7
+.LBB2_10:                               # %if.then7
 	call    	abort
 	unreachable
-.LBB2_11:                                 # %if.then3
+.LBB2_11:                               # %if.then3
 	call    	abort
 	unreachable
-.LBB2_12:                                 # %if.then
+.LBB2_12:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-2.c"
+	.section	.text.simple_global,"ax",@progbits
+	.hidden	simple_global
 	.globl	simple_global
 	.type	simple_global,@function
 simple_global:                          # @simple_global
@@ -8,6 +10,8 @@ simple_global:                          # @simple_global
 .Lfunc_end0:
 	.size	simple_global, .Lfunc_end0-simple_global
 
+	.section	.text.simple_file,"ax",@progbits
+	.hidden	simple_file
 	.globl	simple_file
 	.type	simple_file,@function
 simple_file:                            # @simple_file
@@ -16,6 +20,8 @@ simple_file:                            # @simple_file
 .Lfunc_end1:
 	.size	simple_file, .Lfunc_end1-simple_file
 
+	.section	.text.simple_static_local,"ax",@progbits
+	.hidden	simple_static_local
 	.globl	simple_static_local
 	.type	simple_static_local,@function
 simple_static_local:                    # @simple_static_local
@@ -24,6 +30,8 @@ simple_static_local:                    # @simple_static_local
 .Lfunc_end2:
 	.size	simple_static_local, .Lfunc_end2-simple_static_local
 
+	.section	.text.simple_local,"ax",@progbits
+	.hidden	simple_local
 	.globl	simple_local
 	.type	simple_local,@function
 simple_local:                           # @simple_local
@@ -43,6 +51,8 @@ simple_local:                           # @simple_local
 .Lfunc_end3:
 	.size	simple_local, .Lfunc_end3-simple_local
 
+	.section	.text.simple_arg,"ax",@progbits
+	.hidden	simple_arg
 	.globl	simple_arg
 	.type	simple_arg,@function
 simple_arg:                             # @simple_arg
@@ -64,6 +74,8 @@ simple_arg:                             # @simple_arg
 .Lfunc_end4:
 	.size	simple_arg, .Lfunc_end4-simple_arg
 
+	.section	.text.expr_global,"ax",@progbits
+	.hidden	expr_global
 	.globl	expr_global
 	.type	expr_global,@function
 expr_global:                            # @expr_global
@@ -72,6 +84,8 @@ expr_global:                            # @expr_global
 .Lfunc_end5:
 	.size	expr_global, .Lfunc_end5-expr_global
 
+	.section	.text.expr_local,"ax",@progbits
+	.hidden	expr_local
 	.globl	expr_local
 	.type	expr_local,@function
 expr_local:                             # @expr_local
@@ -91,6 +105,8 @@ expr_local:                             # @expr_local
 .Lfunc_end6:
 	.size	expr_local, .Lfunc_end6-expr_local
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -113,39 +129,45 @@ main:                                   # @main
 .Lfunc_end7:
 	.size	main, .Lfunc_end7-main
 
-	.type	glob_int_arr,@object    # @glob_int_arr
-	.bss
+	.hidden	glob_int_arr            # @glob_int_arr
+	.type	glob_int_arr,@object
+	.section	.bss.glob_int_arr,"aw",@nobits
 	.globl	glob_int_arr
 	.align	4
 glob_int_arr:
-	.zero	400
+	.skip	400
 	.size	glob_int_arr, 400
 
-	.type	glob_ptr_int,@object    # @glob_ptr_int
-	.data
+	.hidden	glob_ptr_int            # @glob_ptr_int
+	.type	glob_ptr_int,@object
+	.section	.data.glob_ptr_int,"aw",@progbits
 	.globl	glob_ptr_int
 	.align	2
 glob_ptr_int:
 	.int32	glob_int_arr
 	.size	glob_ptr_int, 4
 
-	.type	glob_int,@object        # @glob_int
+	.hidden	glob_int                # @glob_int
+	.type	glob_int,@object
+	.section	.data.glob_int,"aw",@progbits
 	.globl	glob_int
 	.align	2
 glob_int:
 	.int32	4                       # 0x4
 	.size	glob_int, 4
 
-	.type	str,@object             # @str
-	.bss
+	.hidden	str                     # @str
+	.type	str,@object
+	.section	.bss.str,"aw",@nobits
 	.globl	str
 	.align	2
 str:
-	.zero	20
+	.skip	20
 	.size	str, 20
 
-	.type	ptr_str,@object         # @ptr_str
-	.data
+	.hidden	ptr_str                 # @ptr_str
+	.type	ptr_str,@object
+	.section	.data.ptr_str,"aw",@progbits
 	.globl	ptr_str
 	.align	2
 ptr_str:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-5.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-5.c"
+	.section	.text.func0,"ax",@progbits
+	.hidden	func0
 	.globl	func0
 	.type	func0,@function
 func0:                                  # @func0
@@ -11,6 +13,8 @@ func0:                                  # @func0
 .Lfunc_end0:
 	.size	func0, .Lfunc_end0-func0
 
+	.section	.text.func1,"ax",@progbits
+	.hidden	func1
 	.globl	func1
 	.type	func1,@function
 func1:                                  # @func1
@@ -62,6 +66,8 @@ func1:                                  # @func1
 .Lfunc_end1:
 	.size	func1, .Lfunc_end1-func1
 
+	.section	.text.func2,"ax",@progbits
+	.hidden	func2
 	.globl	func2
 	.type	func2,@function
 func2:                                  # @func2
@@ -113,6 +119,8 @@ func2:                                  # @func2
 .Lfunc_end2:
 	.size	func2, .Lfunc_end2-func2
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -146,23 +154,24 @@ main:                                   # @main
 	br_if   	$pop11, .LBB3_5
 # BB#4:                                 # %if.end12
 	return  	$0
-.LBB3_5:                                  # %if.then11
+.LBB3_5:                                # %if.then11
 	call    	abort
 	unreachable
-.LBB3_6:                                  # %if.then7
+.LBB3_6:                                # %if.then7
 	call    	abort
 	unreachable
-.LBB3_7:                                  # %if.then3
+.LBB3_7:                                # %if.then3
 	call    	abort
 	unreachable
-.LBB3_8:                                  # %if.then
+.LBB3_8:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
-	.type	q1,@object              # @q1
-	.data
+	.hidden	q1                      # @q1
+	.type	q1,@object
+	.section	.data.q1,"aw",@progbits
 	.globl	q1
 	.align	3
 q1:
@@ -172,7 +181,9 @@ q1:
 	.int16	0                       # 0x0
 	.size	q1, 8
 
-	.type	q2,@object              # @q2
+	.hidden	q2                      # @q2
+	.type	q2,@object
+	.section	.data.q2,"aw",@progbits
 	.globl	q2
 	.align	3
 q2:
@@ -182,7 +193,9 @@ q2:
 	.int16	0                       # 0x0
 	.size	q2, 8
 
-	.type	q3,@object              # @q3
+	.hidden	q3                      # @q3
+	.type	q3,@object
+	.section	.data.q3,"aw",@progbits
 	.globl	q3
 	.align	3
 q3:
@@ -192,7 +205,9 @@ q3:
 	.int16	0                       # 0x0
 	.size	q3, 8
 
-	.type	q4,@object              # @q4
+	.hidden	q4                      # @q4
+	.type	q4,@object
+	.section	.data.q4,"aw",@progbits
 	.globl	q4
 	.align	3
 q4:
@@ -202,68 +217,85 @@ q4:
 	.int16	0                       # 0x0
 	.size	q4, 8
 
-	.type	dummy,@object           # @dummy
-	.bss
+	.hidden	dummy                   # @dummy
+	.type	dummy,@object
+	.section	.bss.dummy,"aw",@nobits
 	.globl	dummy
 	.align	2
 dummy:
 	.int32	0                       # 0x0
 	.size	dummy, 4
 
-	.type	w1,@object              # @w1
+	.hidden	w1                      # @w1
+	.type	w1,@object
+	.section	.bss.w1,"aw",@nobits
 	.globl	w1
 	.align	3
 w1:
-	.zero	8
+	.skip	8
 	.size	w1, 8
 
-	.type	w2,@object              # @w2
+	.hidden	w2                      # @w2
+	.type	w2,@object
+	.section	.bss.w2,"aw",@nobits
 	.globl	w2
 	.align	3
 w2:
-	.zero	8
+	.skip	8
 	.size	w2, 8
 
-	.type	w3,@object              # @w3
+	.hidden	w3                      # @w3
+	.type	w3,@object
+	.section	.bss.w3,"aw",@nobits
 	.globl	w3
 	.align	3
 w3:
-	.zero	8
+	.skip	8
 	.size	w3, 8
 
-	.type	w4,@object              # @w4
+	.hidden	w4                      # @w4
+	.type	w4,@object
+	.section	.bss.w4,"aw",@nobits
 	.globl	w4
 	.align	3
 w4:
-	.zero	8
+	.skip	8
 	.size	w4, 8
 
-	.type	z1,@object              # @z1
+	.hidden	z1                      # @z1
+	.type	z1,@object
+	.section	.bss.z1,"aw",@nobits
 	.globl	z1
 	.align	3
 z1:
-	.zero	8
+	.skip	8
 	.size	z1, 8
 
-	.type	z2,@object              # @z2
+	.hidden	z2                      # @z2
+	.type	z2,@object
+	.section	.bss.z2,"aw",@nobits
 	.globl	z2
 	.align	3
 z2:
-	.zero	8
+	.skip	8
 	.size	z2, 8
 
-	.type	z3,@object              # @z3
+	.hidden	z3                      # @z3
+	.type	z3,@object
+	.section	.bss.z3,"aw",@nobits
 	.globl	z3
 	.align	3
 z3:
-	.zero	8
+	.skip	8
 	.size	z3, 8
 
-	.type	z4,@object              # @z4
+	.hidden	z4                      # @z4
+	.type	z4,@object
+	.section	.bss.z4,"aw",@nobits
 	.globl	z4
 	.align	3
 z4:
-	.zero	8
+	.skip	8
 	.size	z4, 8
 
 

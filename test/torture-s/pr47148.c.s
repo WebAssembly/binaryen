@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47148.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47148.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -13,7 +15,7 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 	.type	b,@object               # @b
-	.data
+	.section	.data.b,"aw",@progbits
 	.align	2
 b:
 	.int32	1                       # 0x1

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49218.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49218.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -31,7 +33,7 @@ main:                                   # @main
 	i64.gt_s	$push3=, $6, $2
 	i32.select	$push7=, $pop6, $pop5, $pop3
 	br_if   	$pop7, .LBB0_2
-.LBB0_1:                                  # %do.body
+.LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i64.const	$3=, 1
@@ -49,7 +51,7 @@ main:                                   # @main
 	i64.or  	$push10=, $pop9, $6
 	i64.ne  	$push11=, $pop10, $2
 	br_if   	$pop11, .LBB0_1
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	i32.const	$9=, 16
 	i32.add 	$12=, $12, $9
 	i32.const	$9=, __stack_pointer
@@ -58,8 +60,9 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	f,@object               # @f
-	.bss
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.bss.f,"aw",@nobits
 	.globl	f
 	.align	2
 f:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021120-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021120-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -43,7 +45,7 @@ foo:                                    # @foo
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	$pop1, .LBB0_2
-.LBB0_1:                                  # %for.body
+.LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	f32.load	$2=, gf($1)
@@ -305,7 +307,7 @@ foo:                                    # @foo
 	i32.add 	$0=, $0, $pop66
 	f32.store	$discard=, gf+124($1), $33
 	br_if   	$0, .LBB0_1
-.LBB0_2:                                  # %for.end
+.LBB0_2:                                # %for.end
 	f64.store	$discard=, gd($1), $130
 	f64.store	$discard=, gd+8($1), $131
 	f64.store	$discard=, gd+16($1), $132
@@ -342,6 +344,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -352,7 +356,7 @@ main:                                   # @main
 	i32.const	$4=, 0
 	i32.const	$6=, gd
 	i32.const	$5=, gf
-.LBB1_1:                                  # %for.body
+.LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	f64.store	$push0=, 0($6), $3
@@ -369,12 +373,12 @@ main:                                   # @main
 	i32.const	$push3=, 32
 	i32.ne  	$push4=, $4, $pop3
 	br_if   	$pop4, .LBB1_1
-.LBB1_2:                                  # %for.end
+.LBB1_2:                                # %for.end
 	call    	foo, $0
 	i32.const	$4=, 0
 	i32.const	$5=, gd
 	copy_local	$6=, $4
-.LBB1_3:                                  # %for.body6
+.LBB1_3:                                # %for.body6
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_7
 	loop    	.LBB1_6
@@ -383,7 +387,7 @@ main:                                   # @main
 	f64.ne  	$push7=, $pop5, $pop6
 	br_if   	$pop7, .LBB1_7
 # BB#4:                                 # %lor.lhs.false
-                                        #   in Loop: Header=.LBB1_3 Depth=1
+                                        #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$push8=, gf
 	i32.add 	$push9=, $pop8, $4
 	f32.load	$push10=, 0($pop9)
@@ -391,36 +395,39 @@ main:                                   # @main
 	f32.ne  	$push12=, $pop10, $pop11
 	br_if   	$pop12, .LBB1_7
 # BB#5:                                 # %for.cond3
-                                        #   in Loop: Header=.LBB1_3 Depth=1
+                                        #   in Loop: Header=BB1_3 Depth=1
 	i32.add 	$6=, $6, $0
 	i32.add 	$5=, $5, $1
 	i32.add 	$4=, $4, $2
 	i32.const	$push13=, 31
 	i32.le_s	$push14=, $6, $pop13
 	br_if   	$pop14, .LBB1_3
-.LBB1_6:                                  # %for.end17
+.LBB1_6:                                # %for.end17
 	i32.const	$push15=, 0
 	call    	exit, $pop15
 	unreachable
-.LBB1_7:                                  # %if.then
+.LBB1_7:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	gd,@object              # @gd
-	.bss
+	.hidden	gd                      # @gd
+	.type	gd,@object
+	.section	.bss.gd,"aw",@nobits
 	.globl	gd
 	.align	4
 gd:
-	.zero	256
+	.skip	256
 	.size	gd, 256
 
-	.type	gf,@object              # @gf
+	.hidden	gf                      # @gf
+	.type	gf,@object
+	.section	.bss.gf,"aw",@nobits
 	.globl	gf
 	.align	4
 gf:
-	.zero	128
+	.skip	128
 	.size	gf, 128
 
 

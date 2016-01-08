@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/960909-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960909-1.c"
+	.section	.text.ffs,"ax",@progbits
+	.hidden	ffs
 	.globl	ffs
 	.type	ffs,@function
 ffs:                                    # @ffs
@@ -18,7 +20,7 @@ ffs:                                    # @ffs
 	copy_local	$3=, $1
 	i32.and 	$push0=, $0, $1
 	br_if   	$pop0, .LBB0_3
-.LBB0_2:                                  # %for.inc
+.LBB0_2:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.add 	$3=, $3, $1
@@ -27,11 +29,13 @@ ffs:                                    # @ffs
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $pop1, $pop4
 	br_if   	$pop5, .LBB0_2
-.LBB0_3:                                  # %cleanup
+.LBB0_3:                                # %cleanup
 	return  	$3
 .Lfunc_end0:
 	.size	ffs, .Lfunc_end0-ffs
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -44,12 +48,14 @@ f:                                      # @f
 	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050604-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050604-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -42,6 +44,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -112,28 +116,31 @@ main:                                   # @main
 	br_if   	$pop24, .LBB1_8
 # BB#7:                                 # %if.end26
 	return  	$0
-.LBB1_8:                                  # %if.then25
+.LBB1_8:                                # %if.then25
 	call    	abort
 	unreachable
-.LBB1_9:                                  # %if.then
+.LBB1_9:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	u,@object               # @u
-	.bss
+	.hidden	u                       # @u
+	.type	u,@object
+	.section	.bss.u,"aw",@nobits
 	.globl	u
 	.align	3
 u:
-	.zero	8
+	.skip	8
 	.size	u, 8
 
-	.type	v,@object               # @v
+	.hidden	v                       # @v
+	.type	v,@object
+	.section	.bss.v,"aw",@nobits
 	.globl	v
 	.align	4
 v:
-	.zero	16
+	.skip	16
 	.size	v, 16
 
 

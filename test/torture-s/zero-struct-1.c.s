@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/zero-struct-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zero-struct-1.c"
+	.section	.text.h,"ax",@progbits
+	.hidden	h
 	.globl	h
 	.type	h,@function
 h:                                      # @h
@@ -17,6 +19,8 @@ h:                                      # @h
 .Lfunc_end0:
 	.size	h, .Lfunc_end0-h
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -42,31 +46,35 @@ main:                                   # @main
 	br_if   	$pop5, .LBB1_3
 # BB#2:                                 # %if.end3
 	return  	$0
-.LBB1_3:                                  # %if.then2
+.LBB1_3:                                # %if.then2
 	call    	abort
 	unreachable
-.LBB1_4:                                  # %if.then
+.LBB1_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	y,@object               # @y
-	.bss
+	.hidden	y                       # @y
+	.type	y,@object
+	.section	.bss.y,"aw",@nobits
 	.globl	y
 y:
-	.zero	3
+	.skip	3
 	.size	y, 3
 
-	.type	f,@object               # @f
-	.data
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.data.f,"aw",@progbits
 	.globl	f
 	.align	2
 f:
 	.int32	y
 	.size	f, 4
 
-	.type	ff,@object              # @ff
+	.hidden	ff                      # @ff
+	.type	ff,@object
+	.section	.data.ff,"aw",@progbits
 	.globl	ff
 	.align	2
 ff:

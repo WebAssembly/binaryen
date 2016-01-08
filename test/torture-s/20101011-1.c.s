@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20101011-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20101011-1.c"
+	.section	.text.sigfpe,"ax",@progbits
+	.hidden	sigfpe
 	.globl	sigfpe
 	.type	sigfpe,@function
 sigfpe:                                 # @sigfpe
@@ -11,6 +13,8 @@ sigfpe:                                 # @sigfpe
 .Lfunc_end0:
 	.size	sigfpe, .Lfunc_end0-sigfpe
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -24,8 +28,9 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	k,@object               # @k
-	.bss
+	.hidden	k                       # @k
+	.type	k,@object
+	.section	.bss.k,"aw",@nobits
 	.globl	k
 	.align	2
 k:

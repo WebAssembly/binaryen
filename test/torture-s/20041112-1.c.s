@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041112-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041112-1.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -24,6 +26,8 @@ bar:                                    # @bar
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -37,8 +41,9 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	global,@object          # @global
-	.bss
+	.hidden	global                  # @global
+	.type	global,@object
+	.section	.bss.global,"aw",@nobits
 	.globl	global
 	.align	2
 global:

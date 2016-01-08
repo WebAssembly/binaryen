@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42231.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42231.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -15,7 +17,7 @@ main:                                   # @main
 # BB#1:                                 # %land.rhs.i
 	i32.const	$push2=, 0
 	call    	storemax, $pop2
-.LBB0_2:                                  # %CallFunction.exit
+.LBB0_2:                                # %CallFunction.exit
 	i32.const	$0=, 0
 	block   	.LBB0_4
 	i32.load	$push3=, max($0)
@@ -24,12 +26,13 @@ main:                                   # @main
 	br_if   	$pop5, .LBB0_4
 # BB#3:                                 # %if.end
 	return  	$0
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.CallFunctionRec,"ax",@progbits
 	.type	CallFunctionRec,@function
 CallFunctionRec:                        # @CallFunctionRec
 	.param  	i32
@@ -52,11 +55,12 @@ CallFunctionRec:                        # @CallFunctionRec
 	i32.add 	$push2=, $0, $1
 	i32.call	$discard=, CallFunctionRec, $pop2
 	return  	$1
-.LBB1_3:                                  # %return
+.LBB1_3:                                # %return
 	return  	$1
 .Lfunc_end1:
 	.size	CallFunctionRec, .Lfunc_end1-CallFunctionRec
 
+	.section	.text.storemax,"ax",@progbits
 	.type	storemax,@function
 storemax:                               # @storemax
 	.param  	i32
@@ -69,7 +73,7 @@ storemax:                               # @storemax
 	br_if   	$pop1, .LBB2_2
 # BB#1:                                 # %if.then
 	i32.store	$discard=, max($1), $0
-.LBB2_2:                                  # %if.end
+.LBB2_2:                                # %if.end
 	return
 .Lfunc_end2:
 	.size	storemax, .Lfunc_end2-storemax

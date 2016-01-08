@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030913-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030913-1.c"
+	.section	.text.fn2,"ax",@progbits
+	.hidden	fn2
 	.globl	fn2
 	.type	fn2,@function
 fn2:                                    # @fn2
@@ -11,6 +13,8 @@ fn2:                                    # @fn2
 .Lfunc_end0:
 	.size	fn2, .Lfunc_end0-fn2
 
+	.section	.text.test,"ax",@progbits
+	.hidden	test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -22,6 +26,8 @@ test:                                   # @test
 .Lfunc_end1:
 	.size	test, .Lfunc_end1-test
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -36,8 +42,9 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	glob,@object            # @glob
-	.bss
+	.hidden	glob                    # @glob
+	.type	glob,@object
+	.section	.bss.glob,"aw",@nobits
 	.globl	glob
 	.align	2
 glob:

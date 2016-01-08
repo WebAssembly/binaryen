@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/960117-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960117-1.c"
+	.section	.text.get_id,"ax",@progbits
+	.hidden	get_id
 	.globl	get_id
 	.type	get_id,@function
 get_id:                                 # @get_id
@@ -21,6 +23,8 @@ get_id:                                 # @get_id
 .Lfunc_end0:
 	.size	get_id, .Lfunc_end0-get_id
 
+	.section	.text.get_tok,"ax",@progbits
+	.hidden	get_tok
 	.globl	get_tok
 	.type	get_tok,@function
 get_tok:                                # @get_tok
@@ -43,6 +47,8 @@ get_tok:                                # @get_tok
 .Lfunc_end1:
 	.size	get_tok, .Lfunc_end1-get_tok
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -66,12 +72,13 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	curval,@object          # @curval
-	.bss
+	.hidden	curval                  # @curval
+	.type	curval,@object
+	.section	.bss.curval,"aw",@nobits
 	.globl	curval
 	.align	1
 curval:
-	.zero	6
+	.skip	6
 	.size	curval, 6
 
 	.type	id_space,@object        # @id_space

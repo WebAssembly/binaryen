@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041011-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041011-1.c"
+	.section	.text.t1,"ax",@progbits
+	.hidden	t1
 	.globl	t1
 	.type	t1,@function
 t1:                                     # @t1
@@ -17,7 +19,7 @@ t1:                                     # @t1
 	i64.extend_u/i32	$push1=, $pop0
 	i64.const	$push2=, 11
 	i64.shl 	$2=, $pop1, $pop2
-.LBB0_2:                                  # %while.body
+.LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.const	$4=, 0
@@ -83,15 +85,17 @@ t1:                                     # @t1
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
 	br_if   	$0, .LBB0_2
-.LBB0_3:                                  # %while.end.loopexit
+.LBB0_3:                                # %while.end.loopexit
 	i64.const	$push3=, -2048
 	i64.add 	$push4=, $1, $pop3
 	i64.sub 	$1=, $pop4, $2
-.LBB0_4:                                  # %while.end
+.LBB0_4:                                # %while.end
 	return  	$1
 .Lfunc_end0:
 	.size	t1, .Lfunc_end0-t1
 
+	.section	.text.t2,"ax",@progbits
+	.hidden	t2
 	.globl	t2
 	.type	t2,@function
 t2:                                     # @t2
@@ -107,7 +111,7 @@ t2:                                     # @t2
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$2=, $pop0
-.LBB1_2:                                  # %while.body
+.LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	i32.const	$4=, 0
@@ -173,16 +177,18 @@ t2:                                     # @t2
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
 	br_if   	$0, .LBB1_2
-.LBB1_3:                                  # %while.end.loopexit
+.LBB1_3:                                # %while.end.loopexit
 	i64.const	$35=, -513
 	i64.mul 	$push1=, $2, $35
 	i64.add 	$push2=, $1, $pop1
 	i64.add 	$1=, $pop2, $35
-.LBB1_4:                                  # %while.end
+.LBB1_4:                                # %while.end
 	return  	$1
 .Lfunc_end1:
 	.size	t2, .Lfunc_end1-t2
 
+	.section	.text.t3,"ax",@progbits
+	.hidden	t3
 	.globl	t3
 	.type	t3,@function
 t3:                                     # @t3
@@ -200,7 +206,7 @@ t3:                                     # @t3
 	i64.extend_u/i32	$push1=, $pop0
 	i64.const	$push2=, 9
 	i64.shl 	$2=, $pop1, $pop2
-.LBB2_2:                                  # %while.body
+.LBB2_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_3
 	i32.const	$4=, 0
@@ -266,15 +272,17 @@ t3:                                     # @t3
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
 	br_if   	$0, .LBB2_2
-.LBB2_3:                                  # %while.end.loopexit
+.LBB2_3:                                # %while.end.loopexit
 	i64.const	$push3=, -512
 	i64.add 	$push4=, $1, $pop3
 	i64.sub 	$1=, $pop4, $2
-.LBB2_4:                                  # %while.end
+.LBB2_4:                                # %while.end
 	return  	$1
 .Lfunc_end2:
 	.size	t3, .Lfunc_end2-t3
 
+	.section	.text.t4,"ax",@progbits
+	.hidden	t4
 	.globl	t4
 	.type	t4,@function
 t4:                                     # @t4
@@ -290,7 +298,7 @@ t4:                                     # @t4
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$2=, $pop0
-.LBB3_2:                                  # %while.body
+.LBB3_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB3_3
 	i32.const	$4=, 0
@@ -356,16 +364,18 @@ t4:                                     # @t4
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
 	br_if   	$0, .LBB3_2
-.LBB3_3:                                  # %while.end.loopexit
+.LBB3_3:                                # %while.end.loopexit
 	i64.const	$35=, -511
 	i64.mul 	$push1=, $2, $35
 	i64.add 	$push2=, $1, $pop1
 	i64.add 	$1=, $pop2, $35
-.LBB3_4:                                  # %while.end
+.LBB3_4:                                # %while.end
 	return  	$1
 .Lfunc_end3:
 	.size	t4, .Lfunc_end3-t4
 
+	.section	.text.t5,"ax",@progbits
+	.hidden	t5
 	.globl	t5
 	.type	t5,@function
 t5:                                     # @t5
@@ -381,7 +391,7 @@ t5:                                     # @t5
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$2=, $pop0
-.LBB4_2:                                  # %while.body
+.LBB4_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB4_3
 	i32.const	$4=, 0
@@ -447,15 +457,17 @@ t5:                                     # @t5
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
 	br_if   	$0, .LBB4_2
-.LBB4_3:                                  # %while.end.loopexit
+.LBB4_3:                                # %while.end.loopexit
 	i64.const	$push1=, -1
 	i64.add 	$push2=, $1, $pop1
 	i64.sub 	$1=, $pop2, $2
-.LBB4_4:                                  # %while.end
+.LBB4_4:                                # %while.end
 	return  	$1
 .Lfunc_end4:
 	.size	t5, .Lfunc_end4-t5
 
+	.section	.text.t6,"ax",@progbits
+	.hidden	t6
 	.globl	t6
 	.type	t6,@function
 t6:                                     # @t6
@@ -472,7 +484,7 @@ t6:                                     # @t6
 	i32.add 	$push0=, $0, $2
 	i64.extend_u/i32	$push1=, $pop0
 	i64.add 	$1=, $pop1, $1
-.LBB5_2:                                  # %while.body
+.LBB5_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB5_3
 	i32.const	$3=, 0
@@ -538,14 +550,16 @@ t6:                                     # @t6
 	i32.store	$discard=, gvol+120($3), $33
 	i32.add 	$0=, $0, $2
 	br_if   	$0, .LBB5_2
-.LBB5_3:                                  # %while.end.loopexit
+.LBB5_3:                                # %while.end.loopexit
 	i64.const	$push2=, 1
 	i64.add 	$1=, $1, $pop2
-.LBB5_4:                                  # %while.end
+.LBB5_4:                                # %while.end
 	return  	$1
 .Lfunc_end5:
 	.size	t6, .Lfunc_end5-t6
 
+	.section	.text.t7,"ax",@progbits
+	.hidden	t7
 	.globl	t7
 	.type	t7,@function
 t7:                                     # @t7
@@ -564,7 +578,7 @@ t7:                                     # @t7
 	i64.extend_u/i32	$push1=, $pop0
 	i64.mul 	$push2=, $pop1, $3
 	i64.add 	$1=, $pop2, $1
-.LBB6_2:                                  # %while.body
+.LBB6_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB6_3
 	i32.const	$4=, 0
@@ -630,13 +644,15 @@ t7:                                     # @t7
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $2
 	br_if   	$0, .LBB6_2
-.LBB6_3:                                  # %while.end.loopexit
+.LBB6_3:                                # %while.end.loopexit
 	i64.add 	$1=, $1, $3
-.LBB6_4:                                  # %while.end
+.LBB6_4:                                # %while.end
 	return  	$1
 .Lfunc_end6:
 	.size	t7, .Lfunc_end6-t7
 
+	.section	.text.t8,"ax",@progbits
+	.hidden	t8
 	.globl	t8
 	.type	t8,@function
 t8:                                     # @t8
@@ -655,7 +671,7 @@ t8:                                     # @t8
 	i64.const	$push2=, 9
 	i64.shl 	$push3=, $pop1, $pop2
 	i64.add 	$1=, $pop3, $1
-.LBB7_2:                                  # %while.body
+.LBB7_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB7_3
 	i32.const	$3=, 0
@@ -721,14 +737,16 @@ t8:                                     # @t8
 	i32.store	$discard=, gvol+120($3), $33
 	i32.add 	$0=, $0, $2
 	br_if   	$0, .LBB7_2
-.LBB7_3:                                  # %while.end.loopexit
+.LBB7_3:                                # %while.end.loopexit
 	i64.const	$push4=, 512
 	i64.add 	$1=, $1, $pop4
-.LBB7_4:                                  # %while.end
+.LBB7_4:                                # %while.end
 	return  	$1
 .Lfunc_end7:
 	.size	t8, .Lfunc_end7-t8
 
+	.section	.text.t9,"ax",@progbits
+	.hidden	t9
 	.globl	t9
 	.type	t9,@function
 t9:                                     # @t9
@@ -747,7 +765,7 @@ t9:                                     # @t9
 	i64.extend_u/i32	$push1=, $pop0
 	i64.mul 	$push2=, $pop1, $3
 	i64.add 	$1=, $pop2, $1
-.LBB8_2:                                  # %while.body
+.LBB8_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB8_3
 	i32.const	$4=, 0
@@ -813,13 +831,15 @@ t9:                                     # @t9
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $2
 	br_if   	$0, .LBB8_2
-.LBB8_3:                                  # %while.end.loopexit
+.LBB8_3:                                # %while.end.loopexit
 	i64.add 	$1=, $1, $3
-.LBB8_4:                                  # %while.end
+.LBB8_4:                                # %while.end
 	return  	$1
 .Lfunc_end8:
 	.size	t9, .Lfunc_end8-t9
 
+	.section	.text.t10,"ax",@progbits
+	.hidden	t10
 	.globl	t10
 	.type	t10,@function
 t10:                                    # @t10
@@ -840,7 +860,7 @@ t10:                                    # @t10
 	i64.const	$push3=, 1
 	i64.add 	$push4=, $pop2, $pop3
 	i64.mul 	$2=, $pop0, $pop4
-.LBB9_2:                                  # %while.body
+.LBB9_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB9_3
 	i32.load	$5=, gvol+4($3)
@@ -905,13 +925,15 @@ t10:                                    # @t10
 	i32.store	$discard=, gvol+120($3), $34
 	i32.add 	$0=, $0, $4
 	br_if   	$0, .LBB9_2
-.LBB9_3:                                  # %while.end.loopexit
+.LBB9_3:                                # %while.end.loopexit
 	i64.add 	$1=, $2, $1
-.LBB9_4:                                  # %while.end
+.LBB9_4:                                # %while.end
 	return  	$1
 .Lfunc_end9:
 	.size	t10, .Lfunc_end9-t10
 
+	.section	.text.t11,"ax",@progbits
+	.hidden	t11
 	.globl	t11
 	.type	t11,@function
 t11:                                    # @t11
@@ -932,7 +954,7 @@ t11:                                    # @t11
 	i64.const	$push3=, -1
 	i64.xor 	$push4=, $pop2, $pop3
 	i64.mul 	$2=, $pop0, $pop4
-.LBB10_2:                                 # %while.body
+.LBB10_2:                               # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB10_3
 	i32.load	$5=, gvol+4($3)
@@ -997,13 +1019,15 @@ t11:                                    # @t11
 	i32.store	$discard=, gvol+120($3), $34
 	i32.add 	$0=, $0, $4
 	br_if   	$0, .LBB10_2
-.LBB10_3:                                 # %while.end.loopexit
+.LBB10_3:                               # %while.end.loopexit
 	i64.add 	$1=, $2, $1
-.LBB10_4:                                 # %while.end
+.LBB10_4:                               # %while.end
 	return  	$1
 .Lfunc_end10:
 	.size	t11, .Lfunc_end10-t11
 
+	.section	.text.neg,"ax",@progbits
+	.hidden	neg
 	.globl	neg
 	.type	neg,@function
 neg:                                    # @neg
@@ -1016,6 +1040,8 @@ neg:                                    # @neg
 .Lfunc_end11:
 	.size	neg, .Lfunc_end11-neg
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -1176,87 +1202,90 @@ main:                                   # @main
 # BB#23:                                # %if.end95
 	call    	exit, $0
 	unreachable
-.LBB12_24:                                # %if.then94
+.LBB12_24:                              # %if.then94
 	call    	abort
 	unreachable
-.LBB12_25:                                # %if.then90
+.LBB12_25:                              # %if.then90
 	call    	abort
 	unreachable
-.LBB12_26:                                # %if.then83
+.LBB12_26:                              # %if.then83
 	call    	abort
 	unreachable
-.LBB12_27:                                # %if.then76
+.LBB12_27:                              # %if.then76
 	call    	abort
 	unreachable
-.LBB12_28:                                # %if.then71
+.LBB12_28:                              # %if.then71
 	call    	abort
 	unreachable
-.LBB12_29:                                # %if.then67
+.LBB12_29:                              # %if.then67
 	call    	abort
 	unreachable
-.LBB12_30:                                # %if.then63
+.LBB12_30:                              # %if.then63
 	call    	abort
 	unreachable
-.LBB12_31:                                # %if.then59
+.LBB12_31:                              # %if.then59
 	call    	abort
 	unreachable
-.LBB12_32:                                # %if.then55
+.LBB12_32:                              # %if.then55
 	call    	abort
 	unreachable
-.LBB12_33:                                # %if.then51
+.LBB12_33:                              # %if.then51
 	call    	abort
 	unreachable
-.LBB12_34:                                # %if.then47
+.LBB12_34:                              # %if.then47
 	call    	abort
 	unreachable
-.LBB12_35:                                # %if.then43
+.LBB12_35:                              # %if.then43
 	call    	abort
 	unreachable
-.LBB12_36:                                # %if.then39
+.LBB12_36:                              # %if.then39
 	call    	abort
 	unreachable
-.LBB12_37:                                # %if.then35
+.LBB12_37:                              # %if.then35
 	call    	abort
 	unreachable
-.LBB12_38:                                # %if.then31
+.LBB12_38:                              # %if.then31
 	call    	abort
 	unreachable
-.LBB12_39:                                # %if.then27
+.LBB12_39:                              # %if.then27
 	call    	abort
 	unreachable
-.LBB12_40:                                # %if.then23
+.LBB12_40:                              # %if.then23
 	call    	abort
 	unreachable
-.LBB12_41:                                # %if.then19
+.LBB12_41:                              # %if.then19
 	call    	abort
 	unreachable
-.LBB12_42:                                # %if.then15
+.LBB12_42:                              # %if.then15
 	call    	abort
 	unreachable
-.LBB12_43:                                # %if.then11
+.LBB12_43:                              # %if.then11
 	call    	abort
 	unreachable
-.LBB12_44:                                # %if.then7
+.LBB12_44:                              # %if.then7
 	call    	abort
 	unreachable
-.LBB12_45:                                # %if.then3
+.LBB12_45:                              # %if.then3
 	call    	abort
 	unreachable
-.LBB12_46:                                # %if.then
+.LBB12_46:                              # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end12:
 	.size	main, .Lfunc_end12-main
 
-	.type	gvol,@object            # @gvol
-	.bss
+	.hidden	gvol                    # @gvol
+	.type	gvol,@object
+	.section	.bss.gvol,"aw",@nobits
 	.globl	gvol
 	.align	4
 gvol:
-	.zero	128
+	.skip	128
 	.size	gvol, 128
 
-	.type	gull,@object            # @gull
+	.hidden	gull                    # @gull
+	.type	gull,@object
+	.section	.bss.gull,"aw",@nobits
 	.globl	gull
 	.align	3
 gull:

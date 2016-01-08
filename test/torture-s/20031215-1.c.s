@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031215-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031215-1.c"
+	.section	.text.test1,"ax",@progbits
+	.hidden	test1
 	.globl	test1
 	.type	test1,@function
 test1:                                  # @test1
@@ -8,6 +10,8 @@ test1:                                  # @test1
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
+	.section	.text.test2,"ax",@progbits
+	.hidden	test2
 	.globl	test2
 	.type	test2,@function
 test2:                                  # @test2
@@ -16,6 +20,8 @@ test2:                                  # @test2
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
 
+	.section	.text.test3,"ax",@progbits
+	.hidden	test3
 	.globl	test3
 	.type	test3,@function
 test3:                                  # @test3
@@ -24,6 +30,8 @@ test3:                                  # @test3
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -34,19 +42,21 @@ main:                                   # @main
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
-	.type	ao,@object              # @ao
-	.section	.rodata,"a",@progbits
+	.hidden	ao                      # @ao
+	.type	ao,@object
+	.section	.rodata.ao,"a",@progbits
 	.globl	ao
 	.align	2
 ao:
 	.int32	2                       # 0x2
 	.int32	2                       # 0x2
 	.asciz	"OK"
-	.zero	1
+	.skip	1
 	.size	ao, 12
 
-	.type	a,@object               # @a
-	.section	.data.rel.ro,"aw",@progbits
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.rel.ro.a,"aw",@progbits
 	.globl	a
 	.align	2
 a:

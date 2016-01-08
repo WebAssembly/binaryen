@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/usmul.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/usmul.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -11,6 +13,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -22,6 +26,8 @@ bar:                                    # @bar
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -81,28 +87,28 @@ main:                                   # @main
 	i32.const	$push12=, 0
 	call    	exit, $pop12
 	unreachable
-.LBB2_9:                                  # %if.then27
+.LBB2_9:                                # %if.then27
 	call    	abort
 	unreachable
-.LBB2_10:                                 # %if.then23
+.LBB2_10:                               # %if.then23
 	call    	abort
 	unreachable
-.LBB2_11:                                 # %if.then19
+.LBB2_11:                               # %if.then19
 	call    	abort
 	unreachable
-.LBB2_12:                                 # %if.then15
+.LBB2_12:                               # %if.then15
 	call    	abort
 	unreachable
-.LBB2_13:                                 # %if.then11
+.LBB2_13:                               # %if.then11
 	call    	abort
 	unreachable
-.LBB2_14:                                 # %if.then7
+.LBB2_14:                               # %if.then7
 	call    	abort
 	unreachable
-.LBB2_15:                                 # %if.then3
+.LBB2_15:                               # %if.then3
 	call    	abort
 	unreachable
-.LBB2_16:                                 # %if.then
+.LBB2_16:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:

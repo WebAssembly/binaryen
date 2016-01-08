@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930603-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930603-1.c"
+	.section	.text.fx,"ax",@progbits
+	.hidden	fx
 	.globl	fx
 	.type	fx,@function
 fx:                                     # @fx
@@ -19,6 +21,8 @@ fx:                                     # @fx
 .Lfunc_end0:
 	.size	fx, .Lfunc_end0-fx
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -30,6 +34,8 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
+	.section	.text.inita,"ax",@progbits
+	.hidden	inita
 	.globl	inita
 	.type	inita,@function
 inita:                                  # @inita
@@ -40,6 +46,8 @@ inita:                                  # @inita
 .Lfunc_end2:
 	.size	inita, .Lfunc_end2-inita
 
+	.section	.text.initc,"ax",@progbits
+	.hidden	initc
 	.globl	initc
 	.type	initc,@function
 initc:                                  # @initc
@@ -50,6 +58,8 @@ initc:                                  # @initc
 .Lfunc_end3:
 	.size	initc, .Lfunc_end3-initc
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f

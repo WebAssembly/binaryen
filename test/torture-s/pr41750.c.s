@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41750.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41750.c"
+	.section	.text.foo_create_got_section,"ax",@progbits
+	.hidden	foo_create_got_section
 	.globl	foo_create_got_section
 	.type	foo_create_got_section,@function
 foo_create_got_section:                 # @foo_create_got_section
@@ -13,6 +15,8 @@ foo_create_got_section:                 # @foo_create_got_section
 .Lfunc_end0:
 	.size	foo_create_got_section, .Lfunc_end0-foo_create_got_section
 
+	.section	.text.elf64_ia64_check_relocs,"ax",@progbits
+	.hidden	elf64_ia64_check_relocs
 	.globl	elf64_ia64_check_relocs
 	.type	elf64_ia64_check_relocs,@function
 elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
@@ -32,16 +36,18 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $2, $pop0
 	i32.store	$3=, 0($pop1), $0
-.LBB1_3:                                  # %if.end.i
+.LBB1_3:                                # %if.end.i
 	i32.call	$discard=, foo_create_got_section, $3, $1
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $2, $pop2
 	i32.load	$3=, 0($pop3)
-.LBB1_4:                                  # %get_got.exit
+.LBB1_4:                                # %get_got.exit
 	return  	$3
 .Lfunc_end1:
 	.size	elf64_ia64_check_relocs, .Lfunc_end1-elf64_ia64_check_relocs
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -59,28 +65,33 @@ main:                                   # @main
 	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	hash,@object            # @hash
-	.bss
+	.hidden	hash                    # @hash
+	.type	hash,@object
+	.section	.bss.hash,"aw",@nobits
 	.globl	hash
 	.align	2
 hash:
-	.zero	12
+	.skip	12
 	.size	hash, 12
 
-	.type	link_info,@object       # @link_info
+	.hidden	link_info               # @link_info
+	.type	link_info,@object
+	.section	.bss.link_info,"aw",@nobits
 	.globl	link_info
 	.align	2
 link_info:
-	.zero	4
+	.skip	4
 	.size	link_info, 4
 
-	.type	abfd,@object            # @abfd
+	.hidden	abfd                    # @abfd
+	.type	abfd,@object
+	.section	.bss.abfd,"aw",@nobits
 	.globl	abfd
 	.align	2
 abfd:

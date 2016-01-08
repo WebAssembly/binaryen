@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070201-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070201-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -20,7 +22,7 @@ foo:                                    # @foo
 	i32.const	$3=, __stack_pointer
 	i32.store	$7=, 0($3), $7
 	i32.store	$discard=, 0($7), $1
-	i32.const	$push2=, .str
+	i32.const	$push2=, .L.str
 	i32.call	$discard=, siprintf, $0, $pop2
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
@@ -38,6 +40,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -61,7 +65,7 @@ main:                                   # @main
 	i32.add 	$7=, $9, $7
 	i32.add 	$push1=, $7, $pop0
 	i32.store	$discard=, 0($9), $pop1
-	i32.const	$push2=, .str
+	i32.const	$push2=, .L.str
 	i32.const	$8=, 10
 	i32.add 	$8=, $9, $8
 	i32.call	$discard=, siprintf, $8, $pop2
@@ -80,11 +84,11 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"abcde"
-	.size	.str, 6
+	.size	.L.str, 6
 
 
 	.ident	"clang version 3.8.0 "

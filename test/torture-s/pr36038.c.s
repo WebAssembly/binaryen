@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36038.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36038.c"
+	.section	.text.doit,"ax",@progbits
+	.hidden	doit
 	.globl	doit
 	.type	doit,@function
 doit:                                   # @doit
@@ -27,7 +29,7 @@ doit:                                   # @doit
 	i32.shl 	$push9=, $pop7, $3
 	i32.shl 	$push10=, $1, $3
 	i32.sub 	$1=, $pop9, $pop10
-.LBB0_2:                                  # %while.body
+.LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.add 	$push12=, $5, $1
@@ -39,11 +41,13 @@ doit:                                   # @doit
 	i32.const	$push15=, 1
 	i32.add 	$4=, $4, $pop15
 	br_if   	$4, .LBB0_2
-.LBB0_3:                                  # %while.end
+.LBB0_3:                                # %while.end
 	return
 .Lfunc_end0:
 	.size	doit, .Lfunc_end0-doit
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -86,14 +90,15 @@ main:                                   # @main
 	br_if   	$pop17, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	expect,@object          # @expect
-	.data
+	.hidden	expect                  # @expect
+	.type	expect,@object
+	.section	.data.expect,"aw",@progbits
 	.globl	expect
 	.align	4
 expect:
@@ -109,33 +114,40 @@ expect:
 	.int64	9                       # 0x9
 	.size	expect, 80
 
-	.type	stack_base,@object      # @stack_base
-	.bss
+	.hidden	stack_base              # @stack_base
+	.type	stack_base,@object
+	.section	.bss.stack_base,"aw",@nobits
 	.globl	stack_base
 	.align	2
 stack_base:
 	.int32	0
 	.size	stack_base, 4
 
-	.type	markstack_ptr,@object   # @markstack_ptr
+	.hidden	markstack_ptr           # @markstack_ptr
+	.type	markstack_ptr,@object
+	.section	.bss.markstack_ptr,"aw",@nobits
 	.globl	markstack_ptr
 	.align	2
 markstack_ptr:
 	.int32	0
 	.size	markstack_ptr, 4
 
-	.type	list,@object            # @list
+	.hidden	list                    # @list
+	.type	list,@object
+	.section	.bss.list,"aw",@nobits
 	.globl	list
 	.align	4
 list:
-	.zero	80
+	.skip	80
 	.size	list, 80
 
-	.type	indices,@object         # @indices
+	.hidden	indices                 # @indices
+	.type	indices,@object
+	.section	.bss.indices,"aw",@nobits
 	.globl	indices
 	.align	4
 indices:
-	.zero	40
+	.skip	40
 	.size	indices, 40
 
 

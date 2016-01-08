@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030221-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030221-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -17,9 +19,9 @@ main:                                   # @main
 	i32.const	$4=, 0
 	i32.add 	$4=, $6, $4
 	i32.or  	$push2=, $4, $pop1
-	i64.load	$push0=, main.buf+8($0)
+	i64.load	$push0=, .Lmain.buf+8($0)
 	i64.store	$discard=, 0($pop2), $pop0
-	i64.load	$push3=, main.buf($0)
+	i64.load	$push3=, .Lmain.buf($0)
 	i64.store	$discard=, 0($6), $pop3
 	i32.const	$5=, 0
 	i32.add 	$5=, $6, $5
@@ -37,18 +39,18 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$6=, 0($3), $6
 	return  	$0
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	main.buf,@object        # @main.buf
+	.type	.Lmain.buf,@object      # @main.buf
 	.section	.rodata.cst16,"aM",@progbits,16
 	.align	4
-main.buf:
+.Lmain.buf:
 	.asciz	"1234567890\000\000\000\000\000"
-	.size	main.buf, 16
+	.size	.Lmain.buf, 16
 
 
 	.ident	"clang version 3.8.0 "

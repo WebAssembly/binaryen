@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42269-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42269-2.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -14,6 +16,7 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.foo,"ax",@progbits
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32
@@ -28,8 +31,9 @@ foo:                                    # @foo
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
-	.type	s,@object               # @s
-	.data
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.data.s,"aw",@progbits
 	.globl	s
 	.align	1
 s:

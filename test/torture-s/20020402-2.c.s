@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020402-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020402-2.c"
+	.section	.text.InitCache,"ax",@progbits
+	.hidden	InitCache
 	.globl	InitCache
 	.type	InitCache,@function
 InitCache:                              # @InitCache
@@ -87,6 +89,8 @@ InitCache:                              # @InitCache
 .Lfunc_end0:
 	.size	InitCache, .Lfunc_end0-InitCache
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -175,187 +179,238 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	Local1,@object          # @Local1
-	.bss
+	.hidden	Local1                  # @Local1
+	.type	Local1,@object
+	.section	.bss.Local1,"aw",@nobits
 	.globl	Local1
 	.align	2
 Local1:
 	.int32	0
 	.size	Local1, 4
 
-	.type	Local2,@object          # @Local2
+	.hidden	Local2                  # @Local2
+	.type	Local2,@object
+	.section	.bss.Local2,"aw",@nobits
 	.globl	Local2
 	.align	2
 Local2:
 	.int32	0
 	.size	Local2, 4
 
-	.type	Local3,@object          # @Local3
+	.hidden	Local3                  # @Local3
+	.type	Local3,@object
+	.section	.bss.Local3,"aw",@nobits
 	.globl	Local3
 	.align	2
 Local3:
 	.int32	0
 	.size	Local3, 4
 
-	.type	RDbf1,@object           # @RDbf1
+	.hidden	RDbf1                   # @RDbf1
+	.type	RDbf1,@object
+	.section	.bss.RDbf1,"aw",@nobits
 	.globl	RDbf1
 	.align	2
 RDbf1:
 	.int32	0
 	.size	RDbf1, 4
 
-	.type	RDbf2,@object           # @RDbf2
+	.hidden	RDbf2                   # @RDbf2
+	.type	RDbf2,@object
+	.section	.bss.RDbf2,"aw",@nobits
 	.globl	RDbf2
 	.align	2
 RDbf2:
 	.int32	0
 	.size	RDbf2, 4
 
-	.type	RDbf3,@object           # @RDbf3
+	.hidden	RDbf3                   # @RDbf3
+	.type	RDbf3,@object
+	.section	.bss.RDbf3,"aw",@nobits
 	.globl	RDbf3
 	.align	2
 RDbf3:
 	.int32	0
 	.size	RDbf3, 4
 
-	.type	IntVc1,@object          # @IntVc1
+	.hidden	IntVc1                  # @IntVc1
+	.type	IntVc1,@object
+	.section	.bss.IntVc1,"aw",@nobits
 	.globl	IntVc1
 	.align	2
 IntVc1:
 	.int32	0
 	.size	IntVc1, 4
 
-	.type	IntVc2,@object          # @IntVc2
+	.hidden	IntVc2                  # @IntVc2
+	.type	IntVc2,@object
+	.section	.bss.IntVc2,"aw",@nobits
 	.globl	IntVc2
 	.align	2
 IntVc2:
 	.int32	0
 	.size	IntVc2, 4
 
-	.type	IntCode3,@object        # @IntCode3
+	.hidden	IntCode3                # @IntCode3
+	.type	IntCode3,@object
+	.section	.bss.IntCode3,"aw",@nobits
 	.globl	IntCode3
 	.align	2
 IntCode3:
 	.int32	0
 	.size	IntCode3, 4
 
-	.type	IntCode4,@object        # @IntCode4
+	.hidden	IntCode4                # @IntCode4
+	.type	IntCode4,@object
+	.section	.bss.IntCode4,"aw",@nobits
 	.globl	IntCode4
 	.align	2
 IntCode4:
 	.int32	0
 	.size	IntCode4, 4
 
-	.type	IntCode5,@object        # @IntCode5
+	.hidden	IntCode5                # @IntCode5
+	.type	IntCode5,@object
+	.section	.bss.IntCode5,"aw",@nobits
 	.globl	IntCode5
 	.align	2
 IntCode5:
 	.int32	0
 	.size	IntCode5, 4
 
-	.type	IntCode6,@object        # @IntCode6
+	.hidden	IntCode6                # @IntCode6
+	.type	IntCode6,@object
+	.section	.bss.IntCode6,"aw",@nobits
 	.globl	IntCode6
 	.align	2
 IntCode6:
 	.int32	0
 	.size	IntCode6, 4
 
-	.type	Lom1,@object            # @Lom1
+	.hidden	Lom1                    # @Lom1
+	.type	Lom1,@object
+	.section	.bss.Lom1,"aw",@nobits
 	.globl	Lom1
 	.align	2
 Lom1:
 	.int32	0
 	.size	Lom1, 4
 
-	.type	Lom2,@object            # @Lom2
+	.hidden	Lom2                    # @Lom2
+	.type	Lom2,@object
+	.section	.bss.Lom2,"aw",@nobits
 	.globl	Lom2
 	.align	2
 Lom2:
 	.int32	0
 	.size	Lom2, 4
 
-	.type	Lom3,@object            # @Lom3
+	.hidden	Lom3                    # @Lom3
+	.type	Lom3,@object
+	.section	.bss.Lom3,"aw",@nobits
 	.globl	Lom3
 	.align	2
 Lom3:
 	.int32	0
 	.size	Lom3, 4
 
-	.type	Lom4,@object            # @Lom4
+	.hidden	Lom4                    # @Lom4
+	.type	Lom4,@object
+	.section	.bss.Lom4,"aw",@nobits
 	.globl	Lom4
 	.align	2
 Lom4:
 	.int32	0
 	.size	Lom4, 4
 
-	.type	Lom5,@object            # @Lom5
+	.hidden	Lom5                    # @Lom5
+	.type	Lom5,@object
+	.section	.bss.Lom5,"aw",@nobits
 	.globl	Lom5
 	.align	2
 Lom5:
 	.int32	0
 	.size	Lom5, 4
 
-	.type	Lom6,@object            # @Lom6
+	.hidden	Lom6                    # @Lom6
+	.type	Lom6,@object
+	.section	.bss.Lom6,"aw",@nobits
 	.globl	Lom6
 	.align	2
 Lom6:
 	.int32	0
 	.size	Lom6, 4
 
-	.type	Lom7,@object            # @Lom7
+	.hidden	Lom7                    # @Lom7
+	.type	Lom7,@object
+	.section	.bss.Lom7,"aw",@nobits
 	.globl	Lom7
 	.align	2
 Lom7:
 	.int32	0
 	.size	Lom7, 4
 
-	.type	Lom8,@object            # @Lom8
+	.hidden	Lom8                    # @Lom8
+	.type	Lom8,@object
+	.section	.bss.Lom8,"aw",@nobits
 	.globl	Lom8
 	.align	2
 Lom8:
 	.int32	0
 	.size	Lom8, 4
 
-	.type	Lom9,@object            # @Lom9
+	.hidden	Lom9                    # @Lom9
+	.type	Lom9,@object
+	.section	.bss.Lom9,"aw",@nobits
 	.globl	Lom9
 	.align	2
 Lom9:
 	.int32	0
 	.size	Lom9, 4
 
-	.type	Lom10,@object           # @Lom10
+	.hidden	Lom10                   # @Lom10
+	.type	Lom10,@object
+	.section	.bss.Lom10,"aw",@nobits
 	.globl	Lom10
 	.align	2
 Lom10:
 	.int32	0
 	.size	Lom10, 4
 
-	.type	RDbf11,@object          # @RDbf11
+	.hidden	RDbf11                  # @RDbf11
+	.type	RDbf11,@object
+	.section	.bss.RDbf11,"aw",@nobits
 	.globl	RDbf11
 	.align	2
 RDbf11:
 	.int32	0
 	.size	RDbf11, 4
 
-	.type	RDbf12,@object          # @RDbf12
+	.hidden	RDbf12                  # @RDbf12
+	.type	RDbf12,@object
+	.section	.bss.RDbf12,"aw",@nobits
 	.globl	RDbf12
 	.align	2
 RDbf12:
 	.int32	0
 	.size	RDbf12, 4
 
-	.type	Workspace,@object       # @Workspace
+	.hidden	Workspace               # @Workspace
+	.type	Workspace,@object
+	.section	.bss.Workspace,"aw",@nobits
 	.globl	Workspace
 	.align	2
 Workspace:
-	.zero	44
+	.skip	44
 	.size	Workspace, 44
 
-	.type	MyPte,@object           # @MyPte
+	.hidden	MyPte                   # @MyPte
+	.type	MyPte,@object
+	.section	.bss.MyPte,"aw",@nobits
 	.globl	MyPte
 	.align	2
 MyPte:
-	.zero	392
+	.skip	392
 	.size	MyPte, 392
 
 

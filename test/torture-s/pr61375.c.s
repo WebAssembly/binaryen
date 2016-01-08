@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr61375.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr61375.c"
+	.section	.text.uint128_central_bitsi_ior,"ax",@progbits
+	.hidden	uint128_central_bitsi_ior
 	.globl	uint128_central_bitsi_ior
 	.type	uint128_central_bitsi_ior,@function
 uint128_central_bitsi_ior:              # @uint128_central_bitsi_ior
@@ -18,6 +20,8 @@ uint128_central_bitsi_ior:              # @uint128_central_bitsi_ior
 .Lfunc_end0:
 	.size	uint128_central_bitsi_ior, .Lfunc_end0-uint128_central_bitsi_ior
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -35,7 +39,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i32.const	$push6=, 0
 	return  	$pop6
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

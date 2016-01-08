@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/float-floor.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/float-floor.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -21,14 +23,15 @@ main:                                   # @main
 	br_if   	$pop4, .LBB0_3
 # BB#2:                                 # %if.end
 	return  	$1
-.LBB0_3:                                  # %if.then
+.LBB0_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	d,@object               # @d
-	.data
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.data.d,"aw",@progbits
 	.globl	d
 	.align	3
 d:

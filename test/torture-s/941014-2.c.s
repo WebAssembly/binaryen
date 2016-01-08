@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/941014-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/941014-2.c"
+	.section	.text.a1,"ax",@progbits
+	.hidden	a1
 	.globl	a1
 	.type	a1,@function
 a1:                                     # @a1
@@ -9,6 +11,8 @@ a1:                                     # @a1
 .Lfunc_end0:
 	.size	a1, .Lfunc_end0-a1
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -37,7 +41,7 @@ f:                                      # @f
 	i32.const	$3=, __stack_pointer
 	i32.store	$9=, 0($3), $9
 	i32.store	$discard=, 0($9), $1
-	i32.const	$push4=, .str
+	i32.const	$push4=, .L.str
 	i32.call	$discard=, iprintf, $pop4
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
@@ -45,7 +49,7 @@ f:                                      # @f
 	i32.add 	$9=, $4, $5
 	i32.const	$5=, __stack_pointer
 	i32.store	$9=, 0($5), $9
-.LBB1_2:                                  # %if.end
+.LBB1_2:                                # %if.end
 	i32.const	$push5=, 256
 	i32.store16	$discard=, 2($0), $pop5
 	i32.const	$8=, 16
@@ -56,6 +60,8 @@ f:                                      # @f
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -84,7 +90,7 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$8=, 0($3), $8
 	i32.store	$discard=, 0($8), $1
-	i32.const	$push4=, .str
+	i32.const	$push4=, .L.str
 	i32.call	$discard=, iprintf, $pop4
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
@@ -92,7 +98,7 @@ main:                                   # @main
 	i32.add 	$8=, $4, $5
 	i32.const	$5=, __stack_pointer
 	i32.store	$8=, 0($5), $8
-.LBB2_2:                                  # %f.exit
+.LBB2_2:                                # %f.exit
 	block   	.LBB2_4
 	i32.load16_u	$push7=, 2($0)
 	i32.const	$push5=, 256
@@ -103,17 +109,17 @@ main:                                   # @main
 	i32.const	$push9=, 0
 	call    	exit, $pop9
 	unreachable
-.LBB2_4:                                  # %if.then
+.LBB2_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"%d\n"
-	.size	.str, 4
+	.size	.L.str, 4
 
 
 	.ident	"clang version 3.8.0 "

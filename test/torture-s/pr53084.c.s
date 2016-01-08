@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr53084.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr53084.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -20,29 +22,31 @@ bar:                                    # @bar
 	br_if   	$pop4, .LBB0_4
 # BB#3:                                 # %if.end
 	return
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, .str+1
+	i32.const	$push0=, .L.str+1
 	call    	bar, $pop0
 	i32.const	$push1=, 0
 	return  	$pop1
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"foo"
-	.size	.str, 4
+	.size	.L.str, 4
 
 
 	.ident	"clang version 3.8.0 "

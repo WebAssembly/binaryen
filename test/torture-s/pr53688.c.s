@@ -1,12 +1,14 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr53688.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr53688.c"
+	.section	.text.init,"ax",@progbits
+	.hidden	init
 	.globl	init
 	.type	init,@function
 init:                                   # @init
 	.local  	i32, i64, i64
 # BB#0:                                 # %entry
 	i32.const	$push1=, p
-	i32.const	$push0=, .str
+	i32.const	$push0=, .L.str
 	i32.const	$push2=, 9
 	call    	memcpy, $pop1, $pop0, $pop2
 	i32.const	$0=, p+9
@@ -43,6 +45,8 @@ init:                                   # @init
 .Lfunc_end0:
 	.size	init, .Lfunc_end0-init
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -110,31 +114,33 @@ main:                                   # @main
 	br_if   	$pop34, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$1
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	p,@object               # @p
-	.bss
+	.hidden	p                       # @p
+	.type	p,@object
+	.section	.bss.p,"aw",@nobits
 	.globl	p
 p:
-	.zero	17
+	.skip	17
 	.size	p, 17
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"FOOBARFOO"
-	.size	.str, 10
+	.size	.L.str, 10
 
-	.type	headline,@object        # @headline
-	.bss
+	.hidden	headline                # @headline
+	.type	headline,@object
+	.section	.bss.headline,"aw",@nobits
 	.globl	headline
 	.align	4
 headline:
-	.zero	256
+	.skip	256
 	.size	headline, 256
 
 

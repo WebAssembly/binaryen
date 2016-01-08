@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44202-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44202-1.c"
+	.section	.text.add512,"ax",@progbits
+	.hidden	add512
 	.globl	add512
 	.type	add512,@function
 add512:                                 # @add512
@@ -15,11 +17,13 @@ add512:                                 # @add512
 	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 0($1), $0
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	return  	$2
 .Lfunc_end0:
 	.size	add512, .Lfunc_end0-add512
 
+	.section	.text.add513,"ax",@progbits
+	.hidden	add513
 	.globl	add513
 	.type	add513,@function
 add513:                                 # @add513
@@ -33,11 +37,13 @@ add513:                                 # @add513
 	br_if   	$2, .LBB1_2
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 0($1), $0
-.LBB1_2:                                  # %if.end
+.LBB1_2:                                # %if.end
 	return  	$2
 .Lfunc_end1:
 	.size	add513, .Lfunc_end1-add513
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -77,7 +83,7 @@ main:                                   # @main
 	i32.const	$push9=, 0
 	call    	exit, $pop9
 	unreachable
-.LBB2_5:                                  # %if.then
+.LBB2_5:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:

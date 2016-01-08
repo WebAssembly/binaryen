@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/960321-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960321-1.c"
+	.section	.text.acc_a,"ax",@progbits
+	.hidden	acc_a
 	.globl	acc_a
 	.type	acc_a,@function
 acc_a:                                  # @acc_a
@@ -15,6 +17,8 @@ acc_a:                                  # @acc_a
 .Lfunc_end0:
 	.size	acc_a, .Lfunc_end0-acc_a
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -30,14 +34,15 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 a:
 	.asciz	"deadbeef\000"

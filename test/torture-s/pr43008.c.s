@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43008.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43008.c"
+	.section	.text.my_alloc,"ax",@progbits
+	.hidden	my_alloc
 	.globl	my_alloc
 	.type	my_alloc,@function
 my_alloc:                               # @my_alloc
@@ -14,6 +16,8 @@ my_alloc:                               # @my_alloc
 .Lfunc_end0:
 	.size	my_alloc, .Lfunc_end0-my_alloc
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -36,14 +40,15 @@ main:                                   # @main
 	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$1
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	i,@object               # @i
-	.bss
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:

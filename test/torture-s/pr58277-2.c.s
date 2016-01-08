@@ -1,85 +1,93 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58277-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58277-2.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.store8	$discard=, n($0), $0
-	block   	.LBB0_4
+	block   	.LBB0_3
+	block   	.LBB0_2
 	i32.load	$push0=, g($0)
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $pop0, $pop7
-	br_if   	$pop8, .LBB0_4
-# BB#1:                                 # %for.end.lr.ph.i.i
-	i32.load	$2=, t($0)
-.LBB0_2:                                  # %for.end.i.i
-                                        # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	i32.const	$push6=, 0
+	i32.eq  	$push7=, $pop0, $pop6
+	br_if   	$pop7, .LBB0_2
+# BB#1:                                 # %fn2.exit.thread.i
 	i32.load	$discard=, d($0)
+	br      	.LBB0_3
+.LBB0_2:                                # %if.end.loopexit.i
 	i32.load	$push1=, h($0)
-	i32.store	$1=, 0($pop1), $0
-	i32.const	$push2=, 1
-	i32.add 	$2=, $2, $pop2
-	i32.load	$push3=, g($1)
-	br_if   	$pop3, .LBB0_2
-.LBB0_3:                                  # %fn2.exit.i
-	i32.store	$discard=, t($1), $2
-.LBB0_4:                                  # %if.end
-	i32.load	$push4=, h($0)
+	i32.store	$push2=, 0($pop1), $0
+	i32.const	$push3=, 1
+	i32.store8	$discard=, n($pop2), $pop3
+.LBB0_3:                                # %if.end
+	i32.load	$push4=, s($0)
 	i32.store	$discard=, 0($pop4), $0
-	i32.load	$push5=, s($0)
-	i32.store	$discard=, 0($pop5), $0
-	i32.store8	$push6=, n($0), $0
-	return  	$pop6
+	i32.store8	$push5=, n($0), $0
+	return  	$pop5
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	n,@object               # @n
-	.bss
+	.hidden	n                       # @n
+	.type	n,@object
+	.section	.bss.n,"aw",@nobits
 	.globl	n
 n:
 	.int8	0                       # 0x0
 	.size	n, 1
 
-	.type	d,@object               # @d
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.bss.d,"aw",@nobits
 	.globl	d
 	.align	2
 d:
 	.int32	0                       # 0x0
 	.size	d, 4
 
-	.type	r,@object               # @r
+	.hidden	r                       # @r
+	.type	r,@object
+	.section	.bss.r,"aw",@nobits
 	.globl	r
 	.align	2
 r:
 	.int32	0
 	.size	r, 4
 
-	.type	f,@object               # @f
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.bss.f,"aw",@nobits
 	.globl	f
 	.align	2
 f:
 	.int32	0                       # 0x0
 	.size	f, 4
 
-	.type	g,@object               # @g
+	.hidden	g                       # @g
+	.type	g,@object
+	.section	.bss.g,"aw",@nobits
 	.globl	g
 	.align	2
 g:
 	.int32	0                       # 0x0
 	.size	g, 4
 
-	.type	o,@object               # @o
+	.hidden	o                       # @o
+	.type	o,@object
+	.section	.bss.o,"aw",@nobits
 	.globl	o
 	.align	2
 o:
 	.int32	0                       # 0x0
 	.size	o, 4
 
-	.type	x,@object               # @x
+	.hidden	x                       # @x
+	.type	x,@object
+	.section	.bss.x,"aw",@nobits
 	.globl	x
 	.align	2
 x:
@@ -87,20 +95,19 @@ x:
 	.size	x, 4
 
 	.type	h,@object               # @h
-	.data
+	.section	.data.h,"aw",@progbits
 	.align	2
 h:
 	.int32	f
 	.size	h, 4
 
 	.type	s,@object               # @s
+	.section	.data.s,"aw",@progbits
 	.align	2
 s:
 	.int32	r
 	.size	s, 4
 
-	.type	t,@object               # @t
-	.lcomm	t,4,2
 
 	.ident	"clang version 3.8.0 "
 	.section	".note.GNU-stack","",@progbits

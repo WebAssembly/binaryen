@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-1.c"
+	.section	.text.good_const,"ax",@progbits
+	.hidden	good_const
 	.globl	good_const
 	.type	good_const,@function
 good_const:                             # @good_const
@@ -9,6 +11,8 @@ good_const:                             # @good_const
 .Lfunc_end0:
 	.size	good_const, .Lfunc_end0-good_const
 
+	.section	.text.good_enum,"ax",@progbits
+	.hidden	good_enum
 	.globl	good_enum
 	.type	good_enum,@function
 good_enum:                              # @good_enum
@@ -18,6 +22,8 @@ good_enum:                              # @good_enum
 .Lfunc_end1:
 	.size	good_enum, .Lfunc_end1-good_enum
 
+	.section	.text.good_expr,"ax",@progbits
+	.hidden	good_expr
 	.globl	good_expr
 	.type	good_expr,@function
 good_expr:                              # @good_expr
@@ -27,6 +33,8 @@ good_expr:                              # @good_expr
 .Lfunc_end2:
 	.size	good_expr, .Lfunc_end2-good_expr
 
+	.section	.text.good_vararg,"ax",@progbits
+	.hidden	good_vararg
 	.globl	good_vararg
 	.type	good_vararg,@function
 good_vararg:                            # @good_vararg
@@ -36,6 +44,8 @@ good_vararg:                            # @good_vararg
 .Lfunc_end3:
 	.size	good_vararg, .Lfunc_end3-good_vararg
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -47,12 +57,13 @@ main:                                   # @main
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
-	.type	arr,@object             # @arr
-	.bss
+	.hidden	arr                     # @arr
+	.type	arr,@object
+	.section	.bss.arr,"aw",@nobits
 	.globl	arr
 	.align	4
 arr:
-	.zero	40
+	.skip	40
 	.size	arr, 40
 
 

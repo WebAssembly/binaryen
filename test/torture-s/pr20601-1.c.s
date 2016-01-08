@@ -1,10 +1,12 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr20601-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr20601-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
 # BB#0:                                 # %entry
-.LBB0_1:                                  # %while.body
+.LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	br      	.LBB0_1
@@ -12,6 +14,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -23,6 +27,8 @@ bar:                                    # @bar
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -39,7 +45,7 @@ main:                                   # @main
 	i32.const	$push6=, 3
 	i32.store	$6=, d($2), $pop6
 	i32.const	$1=, 1
-.LBB2_1:                                  # %land.rhs.i
+.LBB2_1:                                # %land.rhs.i
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB2_17
 	loop    	.LBB2_14
@@ -49,14 +55,14 @@ main:                                   # @main
 	i32.ne  	$push11=, $pop10, $4
 	br_if   	$pop11, .LBB2_14
 # BB#2:                                 # %while.body.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+                                        #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_s	$7=, 1($5)
 	block   	.LBB2_5
 	i32.const	$push48=, 0
 	i32.eq  	$push49=, $7, $pop48
 	br_if   	$pop49, .LBB2_5
 # BB#3:                                 # %land.lhs.true.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+                                        #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push12=, 2($5)
 	i32.const	$push50=, 0
 	i32.eq  	$push51=, $pop12, $pop50
@@ -64,21 +70,21 @@ main:                                   # @main
 # BB#4:                                 # %if.then.i
 	call    	abort
 	unreachable
-.LBB2_5:                                  # %if.end.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+.LBB2_5:                                # %if.end.i
+                                        #   in Loop: Header=BB2_1 Depth=1
 	block   	.LBB2_13
 	block   	.LBB2_12
 	i32.const	$push13=, 80
 	i32.eq  	$push14=, $7, $pop13
 	br_if   	$pop14, .LBB2_12
 # BB#6:                                 # %if.end.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+                                        #   in Loop: Header=BB2_1 Depth=1
 	block   	.LBB2_9
 	i32.const	$push15=, 117
 	i32.eq  	$push16=, $7, $pop15
 	br_if   	$pop16, .LBB2_9
 # BB#7:                                 # %if.end.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+                                        #   in Loop: Header=BB2_1 Depth=1
 	i32.ne  	$push17=, $7, $4
 	br_if   	$pop17, .LBB2_13
 # BB#8:                                 # %sw.bb22.i
@@ -94,15 +100,15 @@ main:                                   # @main
 	i32.add 	$push3=, $0, $pop19
 	i32.store	$0=, e($2), $pop3
 	br      	.LBB2_17
-.LBB2_9:                                  # %sw.bb.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+.LBB2_9:                                # %sw.bb.i
+                                        #   in Loop: Header=BB2_1 Depth=1
 	block   	.LBB2_11
 	i32.load	$push26=, 4($0)
 	i32.const	$push52=, 0
 	i32.eq  	$push53=, $pop26, $pop52
 	br_if   	$pop53, .LBB2_11
 # BB#10:                                # %if.end19.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+                                        #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push28=, -1
 	i32.add 	$push1=, $6, $pop28
 	i32.store	$6=, d($2), $pop1
@@ -111,15 +117,15 @@ main:                                   # @main
 	i32.store	$push27=, t+4100($2), $pop0
 	i32.store	$0=, e($2), $pop27
 	br      	.LBB2_13
-.LBB2_11:                                 # %if.then18.i
+.LBB2_11:                               # %if.then18.i
 	call    	abort
 	unreachable
-.LBB2_12:                                 # %sw.bb21.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+.LBB2_12:                               # %sw.bb21.i
+                                        #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push24=, 4096
 	i32.or  	$1=, $1, $pop24
-.LBB2_13:                                 # %sw.epilog.i
-                                        #   in Loop: Header=.LBB2_1 Depth=1
+.LBB2_13:                               # %sw.epilog.i
+                                        #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push31=, 1
 	i32.gt_s	$7=, $6, $pop31
 	i32.const	$push29=, -1
@@ -129,7 +135,7 @@ main:                                   # @main
 	i32.add 	$push5=, $0, $pop30
 	i32.store	$0=, e($2), $pop5
 	br_if   	$7, .LBB2_1
-.LBB2_14:                                 # %while.end.i
+.LBB2_14:                               # %while.end.i
 	i32.const	$7=, 1
 	i32.lt_s	$push33=, $6, $7
 	br_if   	$pop33, .LBB2_17
@@ -139,9 +145,9 @@ main:                                   # @main
 # BB#16:                                # %if.then36.i
 	call    	abort
 	unreachable
-.LBB2_17:                                 # %setup2.exit
+.LBB2_17:                               # %setup2.exit
 	block   	.LBB2_20
-	i32.const	$push34=, .str.4
+	i32.const	$push34=, .L.str.4
 	i32.store	$7=, t($2), $pop34
 	i32.const	$push35=, 512
 	i32.and 	$push36=, $1, $pop35
@@ -156,7 +162,7 @@ main:                                   # @main
 	i32.const	$push39=, f
 	i32.store	$5=, e($2), $pop39
 	copy_local	$7=, $3
-.LBB2_19:                                 # %for.cond.i
+.LBB2_19:                               # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_20
 	i32.add 	$push44=, $5, $7
@@ -167,7 +173,7 @@ main:                                   # @main
 	i32.store	$6=, 0($pop44), $pop43
 	i32.add 	$7=, $7, $3
 	br_if   	$6, .LBB2_19
-.LBB2_20:                                 # %setup1.exit
+.LBB2_20:                               # %setup1.exit
 	block   	.LBB2_23
 	i32.const	$push46=, 1024
 	i32.and 	$push47=, $1, $pop46
@@ -180,99 +186,112 @@ main:                                   # @main
 # BB#22:                                # %if.then
 	call    	abort
 	unreachable
-.LBB2_23:                                 # %if.end
+.LBB2_23:                               # %if.end
 	call    	exit, $2
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"a"
-	.size	.str, 2
+	.size	.L.str, 2
 
-	.type	.str.1,@object          # @.str.1
-.str.1:
+	.type	.L.str.1,@object        # @.str.1
+.L.str.1:
 	.asciz	"-u"
-	.size	.str.1, 3
+	.size	.L.str.1, 3
 
-	.type	.str.2,@object          # @.str.2
-.str.2:
+	.type	.L.str.2,@object        # @.str.2
+.L.str.2:
 	.asciz	"b"
-	.size	.str.2, 2
+	.size	.L.str.2, 2
 
-	.type	.str.3,@object          # @.str.3
-.str.3:
+	.type	.L.str.3,@object        # @.str.3
+.L.str.3:
 	.asciz	"c"
-	.size	.str.3, 2
+	.size	.L.str.3, 2
 
-	.type	g,@object               # @g
-	.data
+	.hidden	g                       # @g
+	.type	g,@object
+	.section	.data.g,"aw",@progbits
 	.globl	g
 	.align	4
 g:
-	.int32	.str
-	.int32	.str.1
-	.int32	.str.2
-	.int32	.str.3
+	.int32	.L.str
+	.int32	.L.str.1
+	.int32	.L.str.2
+	.int32	.L.str.3
 	.size	g, 16
 
-	.type	c,@object               # @c
-	.bss
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	2
 c:
 	.int32	0
 	.size	c, 4
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	2
 b:
 	.int32	0                       # 0x0
 	.size	b, 4
 
-	.type	.str.4,@object          # @.str.4
+	.type	.L.str.4,@object        # @.str.4
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str.4:
+.L.str.4:
 	.asciz	"/bin/sh"
-	.size	.str.4, 8
+	.size	.L.str.4, 8
 
-	.type	t,@object               # @t
-	.bss
+	.hidden	t                       # @t
+	.type	t,@object
+	.section	.bss.t,"aw",@nobits
 	.globl	t
 	.align	2
 t:
-	.zero	4104
+	.skip	4104
 	.size	t, 4104
 
-	.type	a,@object               # @a
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	4
 a:
-	.zero	20
+	.skip	20
 	.size	a, 20
 
-	.type	d,@object               # @d
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.bss.d,"aw",@nobits
 	.globl	d
 	.align	2
 d:
 	.int32	0                       # 0x0
 	.size	d, 4
 
-	.type	e,@object               # @e
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.bss.e,"aw",@nobits
 	.globl	e
 	.align	2
 e:
 	.int32	0
 	.size	e, 4
 
-	.type	f,@object               # @f
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.bss.f,"aw",@nobits
 	.globl	f
 	.align	4
 f:
-	.zero	64
+	.skip	64
 	.size	f, 64
 
 

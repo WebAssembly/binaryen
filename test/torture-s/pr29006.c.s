@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr29006.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr29006.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -33,6 +35,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -50,9 +54,9 @@ main:                                   # @main
 	i32.const	$12=, 0
 	i32.add 	$12=, $18, $12
 	i32.add 	$push2=, $12, $pop1
-	i32.load8_u	$push0=, main.s+8($0)
+	i32.load8_u	$push0=, .Lmain.s+8($0)
 	i32.store8	$discard=, 0($pop2), $pop0
-	i32.const	$1=, main.s
+	i32.const	$1=, .Lmain.s
 	i32.const	$2=, 5
 	i32.const	$4=, 7
 	i32.const	$7=, 3
@@ -88,7 +92,7 @@ main:                                   # @main
 	i32.add 	$push28=, $1, $8
 	i64.load8_u	$push29=, 0($pop28)
 	i64.shl 	$push30=, $pop29, $3
-	i64.load8_u	$push31=, main.s($0)
+	i64.load8_u	$push31=, .Lmain.s($0)
 	i64.or  	$push32=, $pop30, $pop31
 	i64.or  	$push33=, $pop27, $pop32
 	i64.or  	$push34=, $pop19, $pop33
@@ -144,12 +148,12 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	main.s,@object          # @main.s
-	.section	.rodata,"a",@progbits
-main.s:
+	.type	.Lmain.s,@object        # @main.s
+	.section	.rodata..Lmain.s,"a",@progbits
+.Lmain.s:
 	.int8	1                       # 0x1
 	.int64	-1                      # 0xffffffffffffffff
-	.size	main.s, 9
+	.size	.Lmain.s, 9
 
 
 	.ident	"clang version 3.8.0 "

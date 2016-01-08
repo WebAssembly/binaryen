@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56799.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56799.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -38,12 +40,14 @@ main:                                   # @main
 # BB#3:                                 # %if.then
 	call    	exit, $1
 	unreachable
-.LBB0_4:                                  # %if.end
+.LBB0_4:                                # %if.end
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -64,7 +68,7 @@ foo:                                    # @foo
 	i32.const	$push2=, 1
 	i32.store	$discard=, lo($pop1), $pop2
 	i32.load	$3=, 4($0)
-.LBB1_2:                                  # %if.end
+.LBB1_2:                                # %if.end
 	block   	.LBB1_5
 	block   	.LBB1_4
 	i32.le_u	$push3=, $1, $2
@@ -76,23 +80,26 @@ foo:                                    # @foo
 	i32.load	$0=, 4($0)
 	i32.add 	$3=, $0, $3
 	br      	.LBB1_5
-.LBB1_4:                                  # %if.end.if.end10_crit_edge
+.LBB1_4:                                # %if.end.if.end10_crit_edge
 	i32.load	$0=, 4($0)
-.LBB1_5:                                  # %if.end10
+.LBB1_5:                                # %if.end10
 	i32.add 	$push6=, $0, $3
 	return  	$pop6
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
-	.type	hi,@object              # @hi
-	.bss
+	.hidden	hi                      # @hi
+	.type	hi,@object
+	.section	.bss.hi,"aw",@nobits
 	.globl	hi
 	.align	2
 hi:
 	.int32	0                       # 0x0
 	.size	hi, 4
 
-	.type	lo,@object              # @lo
+	.hidden	lo                      # @lo
+	.type	lo,@object
+	.section	.bss.lo,"aw",@nobits
 	.globl	lo
 	.align	2
 lo:

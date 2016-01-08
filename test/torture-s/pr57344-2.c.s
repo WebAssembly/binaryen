@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57344-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57344-2.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -13,12 +15,14 @@ foo:                                    # @foo
 	#APP
 	#NO_APP
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -42,7 +46,7 @@ main:                                   # @main
 	i32.const	$push4=, -1
 	i32.gt_s	$push5=, $2, $pop4
 	br_if   	$pop5, .LBB1_3
-.LBB1_2:                                  # %for.body.for.body_crit_edge
+.LBB1_2:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	i32.const	$2=, s+8
@@ -70,20 +74,23 @@ main:                                   # @main
 	i32.store	$discard=, i($0), $pop24
 	i32.lt_s	$push25=, $2, $0
 	br_if   	$pop25, .LBB1_2
-.LBB1_3:                                  # %for.end
+.LBB1_3:                                # %for.end
 	return  	$0
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	s,@object               # @s
-	.bss
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.bss.s,"aw",@nobits
 	.globl	s
 	.align	4
 s:
-	.zero	16
+	.skip	16
 	.size	s, 16
 
-	.type	i,@object               # @i
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:

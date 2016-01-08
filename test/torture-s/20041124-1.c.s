@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041124-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041124-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -18,6 +20,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -55,14 +59,15 @@ main:                                   # @main
 # BB#2:                                 # %if.end
 	call    	exit, $0
 	unreachable
-.LBB1_3:                                  # %if.then
+.LBB1_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	gs,@object              # @gs
-	.data
+	.hidden	gs                      # @gs
+	.type	gs,@object
+	.section	.data.gs,"aw",@progbits
 	.globl	gs
 	.align	2
 gs:

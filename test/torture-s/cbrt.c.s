@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/cbrt.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/cbrt.c"
+	.section	.text.cbrtl,"ax",@progbits
+	.hidden	cbrtl
 	.globl	cbrtl
 	.type	cbrtl,@function
 cbrtl:                                  # @cbrtl
@@ -31,7 +33,7 @@ cbrtl:                                  # @cbrtl
 # BB#1:                                 # %if.then
 	f64.add 	$0=, $0, $0
 	br      	.LBB0_7
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	i32.wrap/i64	$push5=, $1
 	i32.or  	$push6=, $pop5, $4
 	i32.const	$push62=, 0
@@ -66,7 +68,7 @@ cbrtl:                                  # @cbrtl
 	i32.add 	$push24=, $pop22, $pop23
 	i32.store	$discard=, 0($4), $pop24
 	br      	.LBB0_6
-.LBB0_5:                                  # %if.else
+.LBB0_5:                                # %if.else
 	i32.const	$push10=, 3
 	i32.div_s	$4=, $4, $pop10
 	i32.const	$15=, 8
@@ -75,7 +77,7 @@ cbrtl:                                  # @cbrtl
 	i32.const	$push11=, 715094163
 	i32.add 	$push12=, $4, $pop11
 	i32.store	$discard=, 0($pop13), $pop12
-.LBB0_6:                                  # %if.end31
+.LBB0_6:                                # %if.end31
 	f64.load	$8=, 8($15)
 	f64.load	$6=, 0($15)
 	f64.mul 	$push25=, $8, $8
@@ -127,7 +129,7 @@ cbrtl:                                  # @cbrtl
 	f64.const	$push60=, -0x1.5555555555555p-2
 	f64.mul 	$push61=, $pop59, $pop60
 	f64.add 	$0=, $8, $pop61
-.LBB0_7:                                  # %cleanup
+.LBB0_7:                                # %cleanup
 	i32.const	$11=, 16
 	i32.add 	$15=, $15, $11
 	i32.const	$11=, __stack_pointer
@@ -136,6 +138,8 @@ cbrtl:                                  # @cbrtl
 .Lfunc_end0:
 	.size	cbrtl, .Lfunc_end0-cbrtl
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

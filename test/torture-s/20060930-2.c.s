@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060930-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060930-2.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -16,6 +18,8 @@ bar:                                    # @bar
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -32,25 +36,28 @@ main:                                   # @main
 	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	s,@object               # @s
-	.bss
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.bss.s,"aw",@nobits
 	.globl	s
 	.align	2
 s:
-	.zero	4
+	.skip	4
 	.size	s, 4
 
-	.type	t,@object               # @t
+	.hidden	t                       # @t
+	.type	t,@object
+	.section	.bss.t,"aw",@nobits
 	.globl	t
 	.align	2
 t:
-	.zero	4
+	.skip	4
 	.size	t, 4
 
 

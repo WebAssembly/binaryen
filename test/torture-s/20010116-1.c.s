@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010116-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010116-1.c"
+	.section	.text.find,"ax",@progbits
+	.hidden	find
 	.globl	find
 	.type	find,@function
 find:                                   # @find
@@ -19,12 +21,14 @@ find:                                   # @find
 # BB#1:                                 # %for.body
 	call    	ok, $2
 	unreachable
-.LBB0_2:                                  # %for.end
+.LBB0_2:                                # %for.end
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	find, .Lfunc_end0-find
 
+	.section	.text.ok,"ax",@progbits
+	.hidden	ok
 	.globl	ok
 	.type	ok,@function
 ok:                                     # @ok
@@ -38,12 +42,14 @@ ok:                                     # @ok
 	i32.const	$push2=, 0
 	call    	exit, $pop2
 	unreachable
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	ok, .Lfunc_end1-ok
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

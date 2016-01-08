@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr31605.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr31605.c"
+	.section	.text.put_field,"ax",@progbits
+	.hidden	put_field
 	.globl	put_field
 	.type	put_field,@function
 put_field:                              # @put_field
@@ -14,13 +16,15 @@ put_field:                              # @put_field
 	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	i32.const	$push3=, 0
 	call    	exit, $pop3
 	unreachable
 .Lfunc_end0:
 	.size	put_field, .Lfunc_end0-put_field
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

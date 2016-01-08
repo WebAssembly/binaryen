@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/991201-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991201-1.c"
+	.section	.text.reset_palette,"ax",@progbits
+	.hidden	reset_palette
 	.globl	reset_palette
 	.type	reset_palette,@function
 reset_palette:                          # @reset_palette
@@ -12,7 +14,7 @@ reset_palette:                          # @reset_palette
 	i32.add 	$1=, $pop2, $pop1
 	i32.const	$3=, 6
 	i32.const	$0=, -64
-.LBB0_1:                                  # %for.body
+.LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.const	$2=, 64
@@ -46,11 +48,13 @@ reset_palette:                          # @reset_palette
 	i32.const	$push26=, 4
 	i32.add 	$0=, $0, $pop26
 	br_if   	$0, .LBB0_1
-.LBB0_2:                                  # %bar.exit
+.LBB0_2:                                # %bar.exit
 	return
 .Lfunc_end0:
 	.size	reset_palette, .Lfunc_end0-reset_palette
 
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -62,12 +66,14 @@ bar:                                    # @bar
 	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end
 	return
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -77,7 +83,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.const	$2=, 6
 	copy_local	$1=, $0
-.LBB2_1:                                  # %for.body.i
+.LBB2_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_2
 	i32.load	$push3=, vc_cons($0)
@@ -109,111 +115,118 @@ main:                                   # @main
 	i32.const	$push21=, 54
 	i32.ne  	$push22=, $2, $pop21
 	br_if   	$pop22, .LBB2_1
-.LBB2_2:                                  # %reset_palette.exit
+.LBB2_2:                                # %reset_palette.exit
 	i32.const	$push23=, 0
 	call    	exit, $pop23
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	a_con,@object           # @a_con
-	.bss
+	.hidden	a_con                   # @a_con
+	.type	a_con,@object
+	.section	.bss.a_con,"aw",@nobits
 	.globl	a_con
 	.align	2
 a_con:
-	.zero	52
+	.skip	52
 	.size	a_con, 52
 
-	.type	vc_cons,@object         # @vc_cons
-	.data
+	.hidden	vc_cons                 # @vc_cons
+	.type	vc_cons,@object
+	.section	.data.vc_cons,"aw",@progbits
 	.globl	vc_cons
 	.align	4
 vc_cons:
 	.int32	a_con
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
-	.zero	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
+	.skip	4
 	.size	vc_cons, 252
 
-	.type	default_red,@object     # @default_red
-	.bss
+	.hidden	default_red             # @default_red
+	.type	default_red,@object
+	.section	.bss.default_red,"aw",@nobits
 	.globl	default_red
 	.align	4
 default_red:
-	.zero	64
+	.skip	64
 	.size	default_red, 64
 
-	.type	default_grn,@object     # @default_grn
+	.hidden	default_grn             # @default_grn
+	.type	default_grn,@object
+	.section	.bss.default_grn,"aw",@nobits
 	.globl	default_grn
 	.align	4
 default_grn:
-	.zero	64
+	.skip	64
 	.size	default_grn, 64
 
-	.type	default_blu,@object     # @default_blu
+	.hidden	default_blu             # @default_blu
+	.type	default_blu,@object
+	.section	.bss.default_blu,"aw",@nobits
 	.globl	default_blu
 	.align	4
 default_blu:
-	.zero	64
+	.skip	64
 	.size	default_blu, 64
 
 

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051110-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051110-2.c"
+	.section	.text.add_unwind_adjustsp,"ax",@progbits
+	.hidden	add_unwind_adjustsp
 	.globl	add_unwind_adjustsp
 	.type	add_unwind_adjustsp,@function
 add_unwind_adjustsp:                    # @add_unwind_adjustsp
@@ -24,7 +26,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	i32.load	$push4=, flag($0)
 	i32.eq  	$1=, $pop4, $0
 	i32.const	$0=, bytes
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.const	$push5=, 128
@@ -36,11 +38,13 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	copy_local	$5=, $2
 	i32.shr_u	$2=, $2, $4
 	br_if   	$2, .LBB0_2
-.LBB0_3:                                  # %do.end
+.LBB0_3:                                # %do.end
 	return
 .Lfunc_end0:
 	.size	add_unwind_adjustsp, .Lfunc_end0-add_unwind_adjustsp
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -68,20 +72,23 @@ main:                                   # @main
 	br_if   	$pop10, .LBB1_3
 # BB#2:                                 # %if.end
 	return  	$0
-.LBB1_3:                                  # %if.then
+.LBB1_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	bytes,@object           # @bytes
-	.bss
+	.hidden	bytes                   # @bytes
+	.type	bytes,@object
+	.section	.bss.bytes,"aw",@nobits
 	.globl	bytes
 bytes:
-	.zero	5
+	.skip	5
 	.size	bytes, 5
 
-	.type	flag,@object            # @flag
+	.hidden	flag                    # @flag
+	.type	flag,@object
+	.section	.bss.flag,"aw",@nobits
 	.globl	flag
 	.align	2
 flag:

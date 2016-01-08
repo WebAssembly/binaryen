@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57861.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57861.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -25,7 +27,7 @@ main:                                   # @main
 	i32.and 	$push0=, $pop6, $pop8
 	i32.store16	$4=, a($1), $pop0
 	i32.store16	$discard=, f($1), $1
-.LBB0_2:                                  # %for.inc.i.1
+.LBB0_2:                                # %for.inc.i.1
 	i32.store	$2=, j($1), $1
 	i32.load	$3=, g($2)
 	i32.const	$push9=, 255
@@ -41,80 +43,96 @@ main:                                   # @main
 	br_if   	$pop14, .LBB0_4
 # BB#3:                                 # %if.end
 	return  	$1
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	1
 a:
 	.int16	1                       # 0x1
 	.size	a, 2
 
-	.type	b,@object               # @b
-	.bss
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	2
 b:
 	.int32	0                       # 0x0
 	.size	b, 4
 
-	.type	g,@object               # @g
-	.data
+	.hidden	g                       # @g
+	.type	g,@object
+	.section	.data.g,"aw",@progbits
 	.globl	g
 	.align	2
 g:
 	.int32	b
 	.size	g, 4
 
-	.type	f,@object               # @f
-	.bss
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.bss.f,"aw",@nobits
 	.globl	f
 	.align	1
 f:
 	.int16	0                       # 0x0
 	.size	f, 2
 
-	.type	c,@object               # @c
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	2
 c:
 	.int32	0                       # 0x0
 	.size	c, 4
 
-	.type	d,@object               # @d
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.bss.d,"aw",@nobits
 	.globl	d
 	.align	2
 d:
 	.int32	0                       # 0x0
 	.size	d, 4
 
-	.type	h,@object               # @h
+	.hidden	h                       # @h
+	.type	h,@object
+	.section	.bss.h,"aw",@nobits
 	.globl	h
 	.align	2
 h:
 	.int32	0                       # 0x0
 	.size	h, 4
 
-	.type	i,@object               # @i
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4
 
-	.type	j,@object               # @j
+	.hidden	j                       # @j
+	.type	j,@object
+	.section	.bss.j,"aw",@nobits
 	.globl	j
 	.align	2
 j:
 	.int32	0                       # 0x0
 	.size	j, 4
 
-	.type	e,@object               # @e
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.bss.e,"aw",@nobits
 	.globl	e
 	.align	2
 e:

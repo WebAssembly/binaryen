@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34456.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34456.c"
+	.section	.text.debug,"ax",@progbits
+	.hidden	debug
 	.globl	debug
 	.type	debug,@function
 debug:                                  # @debug
@@ -10,6 +12,8 @@ debug:                                  # @debug
 .Lfunc_end0:
 	.size	debug, .Lfunc_end0-debug
 
+	.section	.text.bad_compare,"ax",@progbits
+	.hidden	bad_compare
 	.globl	bad_compare
 	.type	bad_compare,@function
 bad_compare:                            # @bad_compare
@@ -22,6 +26,8 @@ bad_compare:                            # @bad_compare
 .Lfunc_end1:
 	.size	bad_compare, .Lfunc_end1-bad_compare
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -40,6 +46,7 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
+	.section	.text.compare,"ax",@progbits
 	.type	compare,@function
 compare:                                # @compare
 	.param  	i32, i32
@@ -64,14 +71,15 @@ compare:                                # @compare
 	i32.const	$push3=, 1
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$discard=, errors($0), $pop4
-.LBB3_3:                                  # %if.end
+.LBB3_3:                                # %if.end
 	i32.call_indirect	$push5=, $2, $1
 	return  	$pop5
 .Lfunc_end3:
 	.size	compare, .Lfunc_end3-compare
 
-	.type	array,@object           # @array
-	.data
+	.hidden	array                   # @array
+	.type	array,@object
+	.section	.data.array,"aw",@progbits
 	.globl	array
 	.align	4
 array:
@@ -81,8 +89,9 @@ array:
 	.int32	bad_compare
 	.size	array, 16
 
-	.type	errors,@object          # @errors
-	.bss
+	.hidden	errors                  # @errors
+	.type	errors,@object
+	.section	.bss.errors,"aw",@nobits
 	.globl	errors
 	.align	2
 errors:

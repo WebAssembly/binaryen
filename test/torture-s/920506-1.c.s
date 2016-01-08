@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/920506-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920506-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -13,14 +15,15 @@ main:                                   # @main
 # BB#1:                                 # %sw.bb
 	call    	exit, $0
 	unreachable
-.LBB0_2:                                  # %sw.epilog
+.LBB0_2:                                # %sw.epilog
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	l,@object               # @l
-	.data
+	.hidden	l                       # @l
+	.type	l,@object
+	.section	.data.l,"aw",@progbits
 	.globl	l
 	.align	2
 l:

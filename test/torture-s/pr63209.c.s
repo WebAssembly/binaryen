@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr63209.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr63209.c"
+	.section	.text.Predictor,"ax",@progbits
+	.hidden	Predictor
 	.globl	Predictor
 	.type	Predictor,@function
 Predictor:                              # @Predictor
@@ -24,6 +26,8 @@ Predictor:                              # @Predictor
 .Lfunc_end0:
 	.size	Predictor, .Lfunc_end0-Predictor
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -39,7 +43,7 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	main.top,@object        # @main.top
-	.section	.rodata,"a",@progbits
+	.section	.rodata.main.top,"a",@progbits
 	.align	2
 main.top:
 	.int32	4286216826              # 0xff7a7a7a

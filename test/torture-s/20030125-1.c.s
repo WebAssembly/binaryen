@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030125-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030125-1.c"
+	.section	.text.t,"ax",@progbits
+	.hidden	t
 	.globl	t
 	.type	t,@function
 t:                                      # @t
@@ -13,6 +15,8 @@ t:                                      # @t
 .Lfunc_end0:
 	.size	t, .Lfunc_end0-t
 
+	.section	.text.sin,"ax",@progbits
+	.hidden	sin
 	.globl	sin
 	.type	sin,@function
 sin:                                    # @sin
@@ -23,6 +27,8 @@ sin:                                    # @sin
 .Lfunc_end1:
 	.size	sin, .Lfunc_end1-sin
 
+	.section	.text.q,"ax",@progbits
+	.hidden	q
 	.globl	q
 	.type	q,@function
 q:                                      # @q
@@ -34,6 +40,8 @@ q:                                      # @q
 .Lfunc_end2:
 	.size	q, .Lfunc_end2-q
 
+	.section	.text.floor,"ax",@progbits
+	.hidden	floor
 	.globl	floor
 	.type	floor,@function
 floor:                                  # @floor
@@ -45,6 +53,8 @@ floor:                                  # @floor
 .Lfunc_end3:
 	.size	floor, .Lfunc_end3-floor
 
+	.section	.text.q1,"ax",@progbits
+	.hidden	q1
 	.globl	q1
 	.type	q1,@function
 q1:                                     # @q1
@@ -56,6 +66,8 @@ q1:                                     # @q1
 .Lfunc_end4:
 	.size	q1, .Lfunc_end4-q1
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -66,6 +78,8 @@ main:                                   # @main
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
 
+	.section	.text.floorf,"ax",@progbits
+	.hidden	floorf
 	.globl	floorf
 	.type	floorf,@function
 floorf:                                 # @floorf
@@ -76,6 +90,8 @@ floorf:                                 # @floorf
 .Lfunc_end6:
 	.size	floorf, .Lfunc_end6-floorf
 
+	.section	.text.sinf,"ax",@progbits
+	.hidden	sinf
 	.globl	sinf
 	.type	sinf,@function
 sinf:                                   # @sinf

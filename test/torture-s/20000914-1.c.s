@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000914-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000914-1.c"
+	.section	.text.blah,"ax",@progbits
+	.hidden	blah
 	.globl	blah
 	.type	blah,@function
 blah:                                   # @blah
@@ -10,6 +12,8 @@ blah:                                   # @blah
 .Lfunc_end0:
 	.size	blah, .Lfunc_end0-blah
 
+	.section	.text.convert_like_real,"ax",@progbits
+	.hidden	convert_like_real
 	.globl	convert_like_real
 	.type	convert_like_real,@function
 convert_like_real:                      # @convert_like_real
@@ -23,12 +27,14 @@ convert_like_real:                      # @convert_like_real
 	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %sw.bb
 	return  	$0
-.LBB1_2:                                  # %sw.epilog
+.LBB1_2:                                # %sw.epilog
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	convert_like_real, .Lfunc_end1-convert_like_real
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

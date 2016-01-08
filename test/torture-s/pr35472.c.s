@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr35472.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr35472.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -13,6 +15,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.test,"ax",@progbits
+	.hidden	test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -115,12 +119,14 @@ test:                                   # @test
 	i32.const	$10=, __stack_pointer
 	i32.store	$29=, 0($10), $29
 	return
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	test, .Lfunc_end1-test
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -224,14 +230,15 @@ main:                                   # @main
 	i32.const	$10=, __stack_pointer
 	i32.store	$29=, 0($10), $29
 	return  	$3
-.LBB2_2:                                  # %if.then.i
+.LBB2_2:                                # %if.then.i
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	p,@object               # @p
-	.bss
+	.hidden	p                       # @p
+	.type	p,@object
+	.section	.bss.p,"aw",@nobits
 	.globl	p
 	.align	2
 p:

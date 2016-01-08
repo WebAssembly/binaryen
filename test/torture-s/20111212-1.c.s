@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20111212-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20111212-1.c"
+	.section	.text.frob_entry,"ax",@progbits
+	.hidden	frob_entry
 	.globl	frob_entry
 	.type	frob_entry,@function
 frob_entry:                             # @frob_entry
@@ -34,11 +36,13 @@ frob_entry:                             # @frob_entry
 	i32.store8	$push18=, 0($1), $pop17
 	i32.store8	$push19=, 0($3), $pop18
 	i32.store8	$discard=, 0($4), $pop19
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	return
 .Lfunc_end0:
 	.size	frob_entry, .Lfunc_end0-frob_entry
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

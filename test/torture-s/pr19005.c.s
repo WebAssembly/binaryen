@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr19005.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr19005.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -27,10 +29,10 @@ bar:                                    # @bar
 	i32.and 	$push0=, $pop2, $6
 	i32.eq  	$push4=, $pop0, $0
 	br_if   	$pop4, .LBB0_6
-.LBB0_3:                                  # %if.then19
+.LBB0_3:                                # %if.then19
 	call    	abort
 	unreachable
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	i32.ne  	$push5=, $4, $0
 	br_if   	$pop5, .LBB0_7
 # BB#5:                                 # %lor.lhs.false
@@ -39,17 +41,19 @@ bar:                                    # @bar
 	i32.and 	$push8=, $pop7, $6
 	i32.ne  	$push9=, $pop8, $1
 	br_if   	$pop9, .LBB0_7
-.LBB0_6:                                  # %if.end21
+.LBB0_6:                                # %if.end21
 	i32.const	$push10=, 1
 	i32.xor 	$push11=, $3, $pop10
 	i32.store	$discard=, s($5), $pop11
 	return
-.LBB0_7:                                  # %if.then8
+.LBB0_7:                                # %if.then8
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -89,10 +93,10 @@ foo:                                    # @foo
 	i32.eq  	$push5=, $4, $5
 	br_if   	$pop5, .LBB1_10
 	br      	.LBB1_8
-.LBB1_4:                                  # %if.then19.i
+.LBB1_4:                                # %if.then19.i
 	call    	abort
 	unreachable
-.LBB1_5:                                  # %if.then.i
+.LBB1_5:                                # %if.then.i
 	i32.ne  	$push6=, $0, $1
 	br_if   	$pop6, .LBB1_12
 # BB#6:                                 # %lor.lhs.false.i
@@ -102,24 +106,26 @@ foo:                                    # @foo
 	br_if   	$pop8, .LBB1_12
 # BB#7:                                 # %bar.exit.thread
 	i32.store	$discard=, s($7), $5
-.LBB1_8:                                  # %if.else.i40
+.LBB1_8:                                # %if.else.i40
 	i32.ne  	$push9=, $0, $1
 	br_if   	$pop9, .LBB1_11
 # BB#9:                                 # %if.else.i40
 	i32.ne  	$push10=, $6, $2
 	br_if   	$pop10, .LBB1_11
-.LBB1_10:                                 # %bar.exit43
+.LBB1_10:                               # %bar.exit43
 	i32.store	$discard=, s($7), $4
 	return  	$7
-.LBB1_11:                                 # %if.then19.i41
+.LBB1_11:                               # %if.then19.i41
 	call    	abort
 	unreachable
-.LBB1_12:                                 # %if.then8.i
+.LBB1_12:                               # %if.then8.i
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -129,7 +135,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.const	$push1=, -10
 	i32.store	$1=, v($0), $pop1
-.LBB2_1:                                  # %for.body
+.LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_2
 	i32.call	$discard=, foo, $1
@@ -140,20 +146,23 @@ main:                                   # @main
 	i32.const	$push4=, 266
 	i32.lt_s	$push5=, $1, $pop4
 	br_if   	$pop5, .LBB2_1
-.LBB2_2:                                  # %for.end
+.LBB2_2:                                # %for.end
 	return  	$0
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	v,@object               # @v
-	.bss
+	.hidden	v                       # @v
+	.type	v,@object
+	.section	.bss.v,"aw",@nobits
 	.globl	v
 	.align	2
 v:
 	.int32	0                       # 0x0
 	.size	v, 4
 
-	.type	s,@object               # @s
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.bss.s,"aw",@nobits
 	.globl	s
 	.align	2
 s:

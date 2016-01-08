@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/bf-sign-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/bf-sign-2.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -19,7 +21,7 @@ main:                                   # @main
 # BB#1:                                 # %if.then
 	call    	abort
 	unreachable
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	block   	.LBB0_4
 	i64.const	$push4=, 31
 	i64.shr_u	$push5=, $0, $pop4
@@ -32,7 +34,7 @@ main:                                   # @main
 # BB#3:                                 # %if.then4
 	call    	abort
 	unreachable
-.LBB0_4:                                  # %if.end5
+.LBB0_4:                                # %if.end5
 	i64.load	$0=, x+8($1)
 	block   	.LBB0_6
 	i32.wrap/i64	$push11=, $0
@@ -42,7 +44,7 @@ main:                                   # @main
 # BB#5:                                 # %if.then12
 	call    	abort
 	unreachable
-.LBB0_6:                                  # %if.end13
+.LBB0_6:                                # %if.end13
 	block   	.LBB0_8
 	i64.load	$push14=, x+24($1)
 	i64.const	$push15=, 35
@@ -56,7 +58,7 @@ main:                                   # @main
 # BB#7:                                 # %if.then19
 	call    	abort
 	unreachable
-.LBB0_8:                                  # %if.end20
+.LBB0_8:                                # %if.end20
 	block   	.LBB0_10
 	i64.const	$push22=, 32
 	i64.shr_u	$push23=, $0, $pop22
@@ -69,7 +71,7 @@ main:                                   # @main
 # BB#9:                                 # %if.then27
 	call    	abort
 	unreachable
-.LBB0_10:                                 # %if.end35
+.LBB0_10:                               # %if.end35
 	block   	.LBB0_12
 	i32.load	$push29=, x+20($1)
 	i32.and 	$push30=, $pop29, $2
@@ -79,18 +81,19 @@ main:                                   # @main
 # BB#11:                                # %if.then42
 	call    	abort
 	unreachable
-.LBB0_12:                                 # %if.end50
+.LBB0_12:                               # %if.end50
 	call    	exit, $1
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	x,@object               # @x
-	.bss
+	.hidden	x                       # @x
+	.type	x,@object
+	.section	.bss.x,"aw",@nobits
 	.globl	x
 	.align	3
 x:
-	.zero	32
+	.skip	32
 	.size	x, 32
 
 

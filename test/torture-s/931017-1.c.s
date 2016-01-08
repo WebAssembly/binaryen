@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/931017-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931017-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -11,6 +13,8 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.h1,"ax",@progbits
+	.hidden	h1
 	.globl	h1
 	.type	h1,@function
 h1:                                     # @h1
@@ -21,6 +25,8 @@ h1:                                     # @h1
 .Lfunc_end1:
 	.size	h1, .Lfunc_end1-h1
 
+	.section	.text.h2,"ax",@progbits
+	.hidden	h2
 	.globl	h2
 	.type	h2,@function
 h2:                                     # @h2
@@ -34,12 +40,14 @@ h2:                                     # @h2
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	return  	$pop2
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	h2, .Lfunc_end2-h2
 
+	.section	.text.g,"ax",@progbits
+	.hidden	g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -51,6 +59,8 @@ g:                                      # @g
 .Lfunc_end3:
 	.size	g, .Lfunc_end3-g
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -61,8 +71,9 @@ f:                                      # @f
 .Lfunc_end4:
 	.size	f, .Lfunc_end4-f
 
-	.type	v,@object               # @v
-	.bss
+	.hidden	v                       # @v
+	.type	v,@object
+	.section	.bss.v,"aw",@nobits
 	.globl	v
 	.align	2
 v:

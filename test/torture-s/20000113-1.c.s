@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000113-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000113-1.c"
+	.section	.text.foobar,"ax",@progbits
+	.hidden	foobar
 	.globl	foobar
 	.type	foobar,@function
 foobar:                                 # @foobar
@@ -27,12 +29,14 @@ foobar:                                 # @foobar
 	i32.const	$push9=, 0
 	call    	exit, $pop9
 	unreachable
-.LBB0_3:                                  # %if.then
+.LBB0_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	foobar, .Lfunc_end0-foobar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

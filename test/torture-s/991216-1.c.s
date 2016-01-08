@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/991216-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991216-1.c"
+	.section	.text.test1,"ax",@progbits
+	.hidden	test1
 	.globl	test1
 	.type	test1,@function
 test1:                                  # @test1
@@ -19,12 +21,14 @@ test1:                                  # @test1
 	br_if   	$pop5, .LBB0_4
 # BB#3:                                 # %if.end
 	return
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
+	.section	.text.test2,"ax",@progbits
+	.hidden	test2
 	.globl	test2
 	.type	test2,@function
 test2:                                  # @test2
@@ -48,12 +52,14 @@ test2:                                  # @test2
 	br_if   	$pop7, .LBB1_5
 # BB#4:                                 # %if.end
 	return
-.LBB1_5:                                  # %if.then
+.LBB1_5:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
 
+	.section	.text.test3,"ax",@progbits
+	.hidden	test3
 	.globl	test3
 	.type	test3,@function
 test3:                                  # @test3
@@ -81,12 +87,14 @@ test3:                                  # @test3
 	br_if   	$pop9, .LBB2_6
 # BB#5:                                 # %if.end
 	return
-.LBB2_6:                                  # %if.then
+.LBB2_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
 
+	.section	.text.test4,"ax",@progbits
+	.hidden	test4
 	.globl	test4
 	.type	test4,@function
 test4:                                  # @test4
@@ -118,12 +126,14 @@ test4:                                  # @test4
 	br_if   	$pop11, .LBB3_7
 # BB#6:                                 # %if.end
 	return
-.LBB3_7:                                  # %if.then
+.LBB3_7:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
 
+	.section	.text.test5,"ax",@progbits
+	.hidden	test5
 	.globl	test5
 	.type	test5,@function
 test5:                                  # @test5
@@ -159,12 +169,14 @@ test5:                                  # @test5
 	br_if   	$pop13, .LBB4_8
 # BB#7:                                 # %if.end
 	return
-.LBB4_8:                                  # %if.then
+.LBB4_8:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end4:
 	.size	test5, .Lfunc_end4-test5
 
+	.section	.text.test6,"ax",@progbits
+	.hidden	test6
 	.globl	test6
 	.type	test6,@function
 test6:                                  # @test6
@@ -204,12 +216,14 @@ test6:                                  # @test6
 	br_if   	$pop15, .LBB5_9
 # BB#8:                                 # %if.end
 	return
-.LBB5_9:                                  # %if.then
+.LBB5_9:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end5:
 	.size	test6, .Lfunc_end5-test6
 
+	.section	.text.test7,"ax",@progbits
+	.hidden	test7
 	.globl	test7
 	.type	test7,@function
 test7:                                  # @test7
@@ -253,12 +267,14 @@ test7:                                  # @test7
 	br_if   	$pop17, .LBB6_10
 # BB#9:                                 # %if.end
 	return
-.LBB6_10:                                 # %if.then
+.LBB6_10:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end6:
 	.size	test7, .Lfunc_end6-test7
 
+	.section	.text.test8,"ax",@progbits
+	.hidden	test8
 	.globl	test8
 	.type	test8,@function
 test8:                                  # @test8
@@ -306,12 +322,14 @@ test8:                                  # @test8
 	br_if   	$pop19, .LBB7_11
 # BB#10:                                # %if.end
 	return
-.LBB7_11:                                 # %if.then
+.LBB7_11:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end7:
 	.size	test8, .Lfunc_end7-test8
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49886.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49886.c"
+	.section	.text.never_ever,"ax",@progbits
+	.hidden	never_ever
 	.globl	never_ever
 	.type	never_ever,@function
 never_ever:                             # @never_ever
@@ -10,6 +12,8 @@ never_ever:                             # @never_ever
 .Lfunc_end0:
 	.size	never_ever, .Lfunc_end0-never_ever
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -23,6 +27,8 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
+	.section	.text.bar_1,"ax",@progbits
+	.hidden	bar_1
 	.globl	bar_1
 	.type	bar_1,@function
 bar_1:                                  # @bar_1
@@ -37,6 +43,7 @@ bar_1:                                  # @bar_1
 .Lfunc_end2:
 	.size	bar_1, .Lfunc_end2-bar_1
 
+	.section	.text.mark_cell,"ax",@progbits
 	.type	mark_cell,@function
 mark_cell:                              # @mark_cell
 	.param  	i32
@@ -134,35 +141,37 @@ mark_cell:                              # @mark_cell
 # BB#13:                                # %if.then134
 	call    	never_ever, $0, $0
 	unreachable
-.LBB3_14:                                 # %if.then118
+.LBB3_14:                               # %if.then118
 	call    	never_ever, $0, $0
 	unreachable
-.LBB3_15:                                 # %if.then102
+.LBB3_15:                               # %if.then102
 	call    	never_ever, $0, $0
 	unreachable
-.LBB3_16:                                 # %if.then86
+.LBB3_16:                               # %if.then86
 	call    	never_ever, $0, $0
 	unreachable
-.LBB3_17:                                 # %if.then70
+.LBB3_17:                               # %if.then70
 	call    	never_ever, $0, $0
 	unreachable
-.LBB3_18:                                 # %if.then54
+.LBB3_18:                               # %if.then54
 	call    	never_ever, $0, $0
 	unreachable
-.LBB3_19:                                 # %if.then38
+.LBB3_19:                               # %if.then38
 	call    	never_ever, $0, $0
 	unreachable
-.LBB3_20:                                 # %if.then22
+.LBB3_20:                               # %if.then22
 	call    	never_ever, $0, $0
 	unreachable
-.LBB3_21:                                 # %if.then7
+.LBB3_21:                               # %if.then7
 	call    	never_ever, $0, $0
 	unreachable
-.LBB3_22:                                 # %if.end137
+.LBB3_22:                               # %if.end137
 	return
 .Lfunc_end3:
 	.size	mark_cell, .Lfunc_end3-mark_cell
 
+	.section	.text.bar_2,"ax",@progbits
+	.hidden	bar_2
 	.globl	bar_2
 	.type	bar_2,@function
 bar_2:                                  # @bar_2
@@ -177,15 +186,18 @@ bar_2:                                  # @bar_2
 .Lfunc_end4:
 	.size	bar_2, .Lfunc_end4-bar_2
 
-	.type	cond,@object            # @cond
-	.bss
+	.hidden	cond                    # @cond
+	.type	cond,@object
+	.section	.bss.cond,"aw",@nobits
 	.globl	cond
 	.align	2
 cond:
 	.int32	0                       # 0x0
 	.size	cond, 4
 
-	.type	gi,@object              # @gi
+	.hidden	gi                      # @gi
+	.type	gi,@object
+	.section	.bss.gi,"aw",@nobits
 	.globl	gi
 	.align	2
 gi:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59387.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59387.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -10,7 +12,7 @@ main:                                   # @main
 	i32.load8_u	$2=, c($0)
 	i32.const	$push1=, -19
 	i32.store	$1=, a($0), $pop1
-.LBB0_1:                                  # %for.body2
+.LBB0_1:                                # %for.body2
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.load	$push3=, e($0)
@@ -23,12 +25,12 @@ main:                                   # @main
 	i32.eq  	$push9=, $pop5, $pop8
 	br_if   	$pop9, .LBB0_3
 # BB#2:                                 # %for.inc4
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push6=, 1
 	i32.add 	$push0=, $1, $pop6
 	i32.store	$1=, a($0), $pop0
 	br_if   	$1, .LBB0_1
-.LBB0_3:                                  # %return
+.LBB0_3:                                # %return
 	i32.store8	$discard=, c($0), $2
 	i32.const	$push7=, 24
 	i32.store	$discard=, b($0), $pop7
@@ -36,44 +38,53 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	d,@object               # @d
-	.bss
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.bss.d,"aw",@nobits
 	.globl	d
 	.align	2
 d:
 	.int32	0
 	.size	d, 4
 
-	.type	e,@object               # @e
-	.data
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.data.e,"aw",@progbits
 	.globl	e
 	.align	2
 e:
 	.int32	d
 	.size	e, 4
 
-	.type	a,@object               # @a
-	.bss
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	2
 a:
 	.int32	0                       # 0x0
 	.size	a, 4
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	2
 b:
-	.zero	4
+	.skip	4
 	.size	b, 4
 
-	.type	c,@object               # @c
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 c:
 	.int8	0                       # 0x0
 	.size	c, 1
 
-	.type	f,@object               # @f
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.bss.f,"aw",@nobits
 	.globl	f
 	.align	2
 f:

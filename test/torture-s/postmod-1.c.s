@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/postmod-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/postmod-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -20,9 +22,9 @@ foo:                                    # @foo
 	i32.add 	$20=, $pop5, $6
 	i32.const	$push6=, array5
 	i32.add 	$19=, $pop6, $6
-.LBB0_1:                                  # %do.body
+.LBB0_1:                                # %do.body
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop .LBB0_2 Depth 2
+                                        #     Child Loop BB0_2 Depth 2
 	loop    	.LBB0_4
 	i32.const	$0=, 0
 	f32.load	$8=, 0($23)
@@ -86,8 +88,8 @@ foo:                                    # @foo
 	i32.load	$4=, vol($0)
 	i32.load	$5=, vol($0)
 	i32.const	$25=, 10
-.LBB0_2:                                  # %for.body
-                                        #   Parent Loop .LBB0_1 Depth=1
+.LBB0_2:                                # %for.body
+                                        #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop    	.LBB0_3
 	i32.load	$push32=, vol($0)
@@ -108,17 +110,19 @@ foo:                                    # @foo
 	i32.const	$push42=, -1
 	i32.add 	$25=, $25, $pop42
 	br_if   	$25, .LBB0_2
-.LBB0_3:                                  # %for.end
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+.LBB0_3:                                # %for.end
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.load	$push43=, stop($0)
 	i32.const	$push44=, 0
 	i32.eq  	$push45=, $pop43, $pop44
 	br_if   	$pop45, .LBB0_1
-.LBB0_4:                                  # %do.end
+.LBB0_4:                                # %do.end
 	return
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -164,101 +168,126 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	counter0,@object        # @counter0
-	.bss
+	.hidden	counter0                # @counter0
+	.type	counter0,@object
+	.section	.bss.counter0,"aw",@nobits
 	.globl	counter0
 	.align	2
 counter0:
 	.int32	0                       # float 0
 	.size	counter0, 4
 
-	.type	counter1,@object        # @counter1
+	.hidden	counter1                # @counter1
+	.type	counter1,@object
+	.section	.bss.counter1,"aw",@nobits
 	.globl	counter1
 	.align	2
 counter1:
 	.int32	0                       # float 0
 	.size	counter1, 4
 
-	.type	counter2,@object        # @counter2
+	.hidden	counter2                # @counter2
+	.type	counter2,@object
+	.section	.bss.counter2,"aw",@nobits
 	.globl	counter2
 	.align	2
 counter2:
 	.int32	0                       # float 0
 	.size	counter2, 4
 
-	.type	counter3,@object        # @counter3
+	.hidden	counter3                # @counter3
+	.type	counter3,@object
+	.section	.bss.counter3,"aw",@nobits
 	.globl	counter3
 	.align	2
 counter3:
 	.int32	0                       # float 0
 	.size	counter3, 4
 
-	.type	counter4,@object        # @counter4
+	.hidden	counter4                # @counter4
+	.type	counter4,@object
+	.section	.bss.counter4,"aw",@nobits
 	.globl	counter4
 	.align	2
 counter4:
 	.int32	0                       # float 0
 	.size	counter4, 4
 
-	.type	counter5,@object        # @counter5
+	.hidden	counter5                # @counter5
+	.type	counter5,@object
+	.section	.bss.counter5,"aw",@nobits
 	.globl	counter5
 	.align	2
 counter5:
 	.int32	0                       # float 0
 	.size	counter5, 4
 
-	.type	stop,@object            # @stop
-	.data
+	.hidden	stop                    # @stop
+	.type	stop,@object
+	.section	.data.stop,"aw",@progbits
 	.globl	stop
 	.align	2
 stop:
 	.int32	1                       # 0x1
 	.size	stop, 4
 
-	.type	array0,@object          # @array0
-	.bss
+	.hidden	array0                  # @array0
+	.type	array0,@object
+	.section	.bss.array0,"aw",@nobits
 	.globl	array0
 	.align	4
 array0:
-	.zero	64
+	.skip	64
 	.size	array0, 64
 
-	.type	array1,@object          # @array1
+	.hidden	array1                  # @array1
+	.type	array1,@object
+	.section	.bss.array1,"aw",@nobits
 	.globl	array1
 	.align	4
 array1:
-	.zero	64
+	.skip	64
 	.size	array1, 64
 
-	.type	array2,@object          # @array2
+	.hidden	array2                  # @array2
+	.type	array2,@object
+	.section	.bss.array2,"aw",@nobits
 	.globl	array2
 	.align	4
 array2:
-	.zero	64
+	.skip	64
 	.size	array2, 64
 
-	.type	array3,@object          # @array3
+	.hidden	array3                  # @array3
+	.type	array3,@object
+	.section	.bss.array3,"aw",@nobits
 	.globl	array3
 	.align	4
 array3:
-	.zero	64
+	.skip	64
 	.size	array3, 64
 
-	.type	array4,@object          # @array4
+	.hidden	array4                  # @array4
+	.type	array4,@object
+	.section	.bss.array4,"aw",@nobits
 	.globl	array4
 	.align	4
 array4:
-	.zero	64
+	.skip	64
 	.size	array4, 64
 
-	.type	array5,@object          # @array5
+	.hidden	array5                  # @array5
+	.type	array5,@object
+	.section	.bss.array5,"aw",@nobits
 	.globl	array5
 	.align	4
 array5:
-	.zero	64
+	.skip	64
 	.size	array5, 64
 
-	.type	vol,@object             # @vol
+	.hidden	vol                     # @vol
+	.type	vol,@object
+	.section	.bss.vol,"aw",@nobits
 	.globl	vol
 	.align	2
 vol:

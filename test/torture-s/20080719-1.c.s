@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080719-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080719-1.c"
+	.section	.text.xxx,"ax",@progbits
+	.hidden	xxx
 	.globl	xxx
 	.type	xxx,@function
 xxx:                                    # @xxx
@@ -19,6 +21,8 @@ xxx:                                    # @xxx
 .Lfunc_end0:
 	.size	xxx, .Lfunc_end0-xxx
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -30,7 +34,7 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	cfb_tab8_be,@object     # @cfb_tab8_be
-	.section	.rodata,"a",@progbits
+	.section	.rodata.cfb_tab8_be,"a",@progbits
 	.align	4
 cfb_tab8_be:
 	.int32	0                       # 0x0
@@ -52,6 +56,7 @@ cfb_tab8_be:
 	.size	cfb_tab8_be, 64
 
 	.type	cfb_tab16_be,@object    # @cfb_tab16_be
+	.section	.rodata.cfb_tab16_be,"a",@progbits
 	.align	4
 cfb_tab16_be:
 	.int32	0                       # 0x0
@@ -61,6 +66,7 @@ cfb_tab16_be:
 	.size	cfb_tab16_be, 16
 
 	.type	cfb_tab32,@object       # @cfb_tab32
+	.section	.rodata.cfb_tab32,"a",@progbits
 	.align	2
 cfb_tab32:
 	.int32	0                       # 0x0

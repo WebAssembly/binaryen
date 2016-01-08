@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr54985.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr54985.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -17,7 +19,7 @@ foo:                                    # @foo
 	i32.load	$6=, 0($0)
 	i32.const	$4=, 4
 	i32.add 	$0=, $0, $4
-.LBB0_2:                                  # %while.cond
+.LBB0_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_4
 	i32.const	$push0=, -1
@@ -27,18 +29,20 @@ foo:                                    # @foo
 	i32.eq  	$push4=, $1, $pop3
 	br_if   	$pop4, .LBB0_4
 # BB#3:                                 # %while.cond.while.body_crit_edge
-                                        #   in Loop: Header=.LBB0_2 Depth=1
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$2=, 0($0)
 	i32.add 	$0=, $0, $4
 	i32.lt_s	$5=, $2, $6
 	copy_local	$6=, $2
 	i32.const	$2=, 1
 	br_if   	$5, .LBB0_2
-.LBB0_4:                                  # %cleanup
+.LBB0_4:                                # %cleanup
 	return  	$2
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -66,7 +70,7 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$4=, 0($2), $4
 	return  	$pop3
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930513-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930513-2.c"
+	.section	.text.sub3,"ax",@progbits
+	.hidden	sub3
 	.globl	sub3
 	.type	sub3,@function
 sub3:                                   # @sub3
@@ -11,6 +13,8 @@ sub3:                                   # @sub3
 .Lfunc_end0:
 	.size	sub3, .Lfunc_end0-sub3
 
+	.section	.text.eq,"ax",@progbits
+	.hidden	eq
 	.globl	eq
 	.type	eq,@function
 eq:                                     # @eq
@@ -28,12 +32,14 @@ eq:                                     # @eq
 	i32.add 	$push3=, $0, $pop2
 	i32.store	$discard=, eq.i($2), $pop3
 	return  	$0
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	eq, .Lfunc_end1-eq
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -49,7 +55,7 @@ main:                                   # @main
 	i32.store	$discard=, eq.i($0), $pop1
 	call    	exit, $0
 	unreachable
-.LBB2_2:                                  # %if.then.i
+.LBB2_2:                                # %if.then.i
 	call    	abort
 	unreachable
 .Lfunc_end2:

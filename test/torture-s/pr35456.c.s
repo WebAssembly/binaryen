@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr35456.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr35456.c"
+	.section	.text.not_fabs,"ax",@progbits
+	.hidden	not_fabs
 	.globl	not_fabs
 	.type	not_fabs,@function
 not_fabs:                               # @not_fabs
@@ -14,6 +16,8 @@ not_fabs:                               # @not_fabs
 .Lfunc_end0:
 	.size	not_fabs, .Lfunc_end0-not_fabs
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -29,7 +33,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 0
 	return  	$pop5
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

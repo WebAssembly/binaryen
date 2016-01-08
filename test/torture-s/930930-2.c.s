@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930930-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930930-2.c"
+	.section	.text.test_endianness,"ax",@progbits
+	.hidden	test_endianness
 	.globl	test_endianness
 	.type	test_endianness,@function
 test_endianness:                        # @test_endianness
@@ -10,6 +12,8 @@ test_endianness:                        # @test_endianness
 .Lfunc_end0:
 	.size	test_endianness, .Lfunc_end0-test_endianness
 
+	.section	.text.test_endianness_vol,"ax",@progbits
+	.hidden	test_endianness_vol
 	.globl	test_endianness_vol
 	.type	test_endianness_vol,@function
 test_endianness_vol:                    # @test_endianness_vol
@@ -35,6 +39,8 @@ test_endianness_vol:                    # @test_endianness_vol
 .Lfunc_end1:
 	.size	test_endianness_vol, .Lfunc_end1-test_endianness_vol
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -56,7 +62,7 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	call    	exit, $pop2
 	unreachable
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:

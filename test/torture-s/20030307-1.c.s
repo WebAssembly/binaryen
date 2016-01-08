@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030307-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030307-1.c"
+	.section	.text.vfswrap_lock,"ax",@progbits
+	.hidden	vfswrap_lock
 	.globl	vfswrap_lock
 	.type	vfswrap_lock,@function
 vfswrap_lock:                           # @vfswrap_lock
@@ -10,6 +12,8 @@ vfswrap_lock:                           # @vfswrap_lock
 .Lfunc_end0:
 	.size	vfswrap_lock, .Lfunc_end0-vfswrap_lock
 
+	.section	.text.fcntl_lock,"ax",@progbits
+	.hidden	fcntl_lock
 	.globl	fcntl_lock
 	.type	fcntl_lock,@function
 fcntl_lock:                             # @fcntl_lock
@@ -20,6 +24,8 @@ fcntl_lock:                             # @fcntl_lock
 .Lfunc_end1:
 	.size	fcntl_lock, .Lfunc_end1-fcntl_lock
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

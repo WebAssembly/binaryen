@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990804-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990804-1.c"
+	.section	.text.gfbyte,"ax",@progbits
+	.hidden	gfbyte
 	.globl	gfbyte
 	.type	gfbyte,@function
 gfbyte:                                 # @gfbyte
@@ -10,6 +12,8 @@ gfbyte:                                 # @gfbyte
 .Lfunc_end0:
 	.size	gfbyte, .Lfunc_end0-gfbyte
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

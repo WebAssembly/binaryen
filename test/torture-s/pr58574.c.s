@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58574.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58574.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -79,7 +81,7 @@ foo:                                    # @foo
 	block   	.LBB0_3
 	block   	.LBB0_2
 	tableswitch	$1, .LBB0_2, .LBB0_2, .LBB0_3, .LBB0_4, .LBB0_5, .LBB0_6, .LBB0_7, .LBB0_8, .LBB0_9, .LBB0_10, .LBB0_11, .LBB0_12, .LBB0_13, .LBB0_14, .LBB0_15, .LBB0_16, .LBB0_17, .LBB0_18, .LBB0_19, .LBB0_20, .LBB0_21, .LBB0_22, .LBB0_23, .LBB0_24, .LBB0_25, .LBB0_26, .LBB0_27, .LBB0_28, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_29, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_30, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_31, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_66, .LBB0_32, .LBB0_33, .LBB0_34, .LBB0_35, .LBB0_36, .LBB0_37, .LBB0_38, .LBB0_39, .LBB0_40, .LBB0_41, .LBB0_42, .LBB0_43, .LBB0_44, .LBB0_45, .LBB0_46, .LBB0_47, .LBB0_48, .LBB0_49, .LBB0_50, .LBB0_51, .LBB0_52, .LBB0_53, .LBB0_54, .LBB0_55, .LBB0_56, .LBB0_57, .LBB0_58, .LBB0_59, .LBB0_60, .LBB0_61, .LBB0_62, .LBB0_63, .LBB0_64, .LBB0_65
-.LBB0_2:                                  # %sw.bb
+.LBB0_2:                                # %sw.bb
 	f64.add 	$push1262=, $0, $0
 	f64.const	$push1263=, -0x1p0
 	f64.add 	$0=, $pop1262, $pop1263
@@ -103,7 +105,7 @@ foo:                                    # @foo
 	f64.const	$push1281=, 0x1.739ad75c47d48p-11
 	f64.add 	$2=, $pop1280, $pop1281
 	br      	.LBB0_66
-.LBB0_3:                                  # %sw.bb12
+.LBB0_3:                                # %sw.bb12
 	f64.add 	$push1242=, $0, $0
 	f64.const	$push1243=, -0x1.8p1
 	f64.add 	$0=, $pop1242, $pop1243
@@ -127,7 +129,7 @@ foo:                                    # @foo
 	f64.const	$push1261=, 0x1.1987908299a2dp-9
 	f64.add 	$2=, $pop1260, $pop1261
 	br      	.LBB0_66
-.LBB0_4:                                  # %sw.bb27
+.LBB0_4:                                # %sw.bb27
 	f64.add 	$push1222=, $0, $0
 	f64.const	$push1223=, -0x1.4p2
 	f64.add 	$0=, $pop1222, $pop1223
@@ -151,7 +153,7 @@ foo:                                    # @foo
 	f64.const	$push1241=, 0x1.da059a73b42ccp-9
 	f64.add 	$2=, $pop1240, $pop1241
 	br      	.LBB0_66
-.LBB0_5:                                  # %sw.bb42
+.LBB0_5:                                # %sw.bb42
 	f64.add 	$push1202=, $0, $0
 	f64.const	$push1203=, -0x1.cp2
 	f64.add 	$0=, $pop1202, $pop1203
@@ -175,7 +177,7 @@ foo:                                    # @foo
 	f64.const	$push1221=, 0x1.4f3e2bb4b9b09p-8
 	f64.add 	$2=, $pop1220, $pop1221
 	br      	.LBB0_66
-.LBB0_6:                                  # %sw.bb57
+.LBB0_6:                                # %sw.bb57
 	f64.add 	$push1182=, $0, $0
 	f64.const	$push1183=, -0x1.2p3
 	f64.add 	$0=, $pop1182, $pop1183
@@ -199,7 +201,7 @@ foo:                                    # @foo
 	f64.const	$push1201=, 0x1.b3885828b601bp-8
 	f64.add 	$2=, $pop1200, $pop1201
 	br      	.LBB0_66
-.LBB0_7:                                  # %sw.bb72
+.LBB0_7:                                # %sw.bb72
 	f64.add 	$push1162=, $0, $0
 	f64.const	$push1163=, -0x1.6p3
 	f64.add 	$0=, $pop1162, $pop1163
@@ -223,7 +225,7 @@ foo:                                    # @foo
 	f64.const	$push1181=, 0x1.0cf75f478e341p-7
 	f64.add 	$2=, $pop1180, $pop1181
 	br      	.LBB0_66
-.LBB0_8:                                  # %sw.bb87
+.LBB0_8:                                # %sw.bb87
 	f64.add 	$push1142=, $0, $0
 	f64.const	$push1143=, -0x1.ap3
 	f64.add 	$0=, $pop1142, $pop1143
@@ -247,7 +249,7 @@ foo:                                    # @foo
 	f64.const	$push1161=, 0x1.414112efc6ccep-7
 	f64.add 	$2=, $pop1160, $pop1161
 	br      	.LBB0_66
-.LBB0_9:                                  # %sw.bb102
+.LBB0_9:                                # %sw.bb102
 	f64.add 	$push1122=, $0, $0
 	f64.const	$push1123=, -0x1.ep3
 	f64.add 	$0=, $pop1122, $pop1123
@@ -271,7 +273,7 @@ foo:                                    # @foo
 	f64.const	$push1141=, 0x1.76a2f48c2e771p-7
 	f64.add 	$2=, $pop1140, $pop1141
 	br      	.LBB0_66
-.LBB0_10:                                 # %sw.bb117
+.LBB0_10:                               # %sw.bb117
 	f64.add 	$push1102=, $0, $0
 	f64.const	$push1103=, -0x1.1p4
 	f64.add 	$0=, $pop1102, $pop1103
@@ -295,7 +297,7 @@ foo:                                    # @foo
 	f64.const	$push1121=, 0x1.ad3a604e1e71p-7
 	f64.add 	$2=, $pop1120, $pop1121
 	br      	.LBB0_66
-.LBB0_11:                                 # %sw.bb132
+.LBB0_11:                               # %sw.bb132
 	f64.add 	$push1082=, $0, $0
 	f64.const	$push1083=, -0x1.3p4
 	f64.add 	$0=, $pop1082, $pop1083
@@ -319,7 +321,7 @@ foo:                                    # @foo
 	f64.const	$push1101=, 0x1.e4f765fd8adacp-7
 	f64.add 	$2=, $pop1100, $pop1101
 	br      	.LBB0_66
-.LBB0_12:                                 # %sw.bb147
+.LBB0_12:                               # %sw.bb147
 	f64.add 	$push1062=, $0, $0
 	f64.const	$push1063=, -0x1.5p4
 	f64.add 	$0=, $pop1062, $pop1063
@@ -343,7 +345,7 @@ foo:                                    # @foo
 	f64.const	$push1081=, 0x1.0efdc9c4da9p-6
 	f64.add 	$2=, $pop1080, $pop1081
 	br      	.LBB0_66
-.LBB0_13:                                 # %sw.bb162
+.LBB0_13:                               # %sw.bb162
 	f64.add 	$push1042=, $0, $0
 	f64.const	$push1043=, -0x1.7p4
 	f64.add 	$0=, $pop1042, $pop1043
@@ -367,7 +369,7 @@ foo:                                    # @foo
 	f64.const	$push1061=, 0x1.2c1f42bb6673p-6
 	f64.add 	$2=, $pop1060, $pop1061
 	br      	.LBB0_66
-.LBB0_14:                                 # %sw.bb177
+.LBB0_14:                               # %sw.bb177
 	f64.add 	$push1022=, $0, $0
 	f64.const	$push1023=, -0x1.9p4
 	f64.add 	$0=, $pop1022, $pop1023
@@ -391,7 +393,7 @@ foo:                                    # @foo
 	f64.const	$push1041=, 0x1.49e8815e39714p-6
 	f64.add 	$2=, $pop1040, $pop1041
 	br      	.LBB0_66
-.LBB0_15:                                 # %sw.bb192
+.LBB0_15:                               # %sw.bb192
 	f64.add 	$push1002=, $0, $0
 	f64.const	$push1003=, -0x1.bp4
 	f64.add 	$0=, $pop1002, $pop1003
@@ -415,7 +417,7 @@ foo:                                    # @foo
 	f64.const	$push1021=, 0x1.6861e92923e5cp-6
 	f64.add 	$2=, $pop1020, $pop1021
 	br      	.LBB0_66
-.LBB0_16:                                 # %sw.bb207
+.LBB0_16:                               # %sw.bb207
 	f64.add 	$push982=, $0, $0
 	f64.const	$push983=, -0x1.dp4
 	f64.add 	$0=, $pop982, $pop983
@@ -439,7 +441,7 @@ foo:                                    # @foo
 	f64.const	$push1001=, 0x1.878b7a1c25d07p-6
 	f64.add 	$2=, $pop1000, $pop1001
 	br      	.LBB0_66
-.LBB0_17:                                 # %sw.bb222
+.LBB0_17:                               # %sw.bb222
 	f64.add 	$push962=, $0, $0
 	f64.const	$push963=, -0x1.fp4
 	f64.add 	$0=, $pop962, $pop963
@@ -463,7 +465,7 @@ foo:                                    # @foo
 	f64.const	$push981=, 0x1.a771c970f7b9ep-6
 	f64.add 	$2=, $pop980, $pop981
 	br      	.LBB0_66
-.LBB0_18:                                 # %sw.bb237
+.LBB0_18:                               # %sw.bb237
 	f64.add 	$push942=, $0, $0
 	f64.const	$push943=, -0x1.08p5
 	f64.add 	$0=, $pop942, $pop943
@@ -487,7 +489,7 @@ foo:                                    # @foo
 	f64.const	$push961=, 0x1.c814d72799a2p-6
 	f64.add 	$2=, $pop960, $pop961
 	br      	.LBB0_66
-.LBB0_19:                                 # %sw.bb252
+.LBB0_19:                               # %sw.bb252
 	f64.add 	$push922=, $0, $0
 	f64.const	$push923=, -0x1.18p5
 	f64.add 	$0=, $pop922, $pop923
@@ -511,7 +513,7 @@ foo:                                    # @foo
 	f64.const	$push941=, 0x1.e9813879c4114p-6
 	f64.add 	$2=, $pop940, $pop941
 	br      	.LBB0_66
-.LBB0_20:                                 # %sw.bb267
+.LBB0_20:                               # %sw.bb267
 	f64.add 	$push902=, $0, $0
 	f64.const	$push903=, -0x1.28p5
 	f64.add 	$0=, $pop902, $pop903
@@ -535,7 +537,7 @@ foo:                                    # @foo
 	f64.const	$push921=, 0x1.05db76b3bb83dp-5
 	f64.add 	$2=, $pop920, $pop921
 	br      	.LBB0_66
-.LBB0_21:                                 # %sw.bb282
+.LBB0_21:                               # %sw.bb282
 	f64.add 	$push882=, $0, $0
 	f64.const	$push883=, -0x1.38p5
 	f64.add 	$0=, $pop882, $pop883
@@ -559,7 +561,7 @@ foo:                                    # @foo
 	f64.const	$push901=, 0x1.176145953586dp-5
 	f64.add 	$2=, $pop900, $pop901
 	br      	.LBB0_66
-.LBB0_22:                                 # %sw.bb297
+.LBB0_22:                               # %sw.bb297
 	f64.add 	$push862=, $0, $0
 	f64.const	$push863=, -0x1.48p5
 	f64.add 	$0=, $pop862, $pop863
@@ -583,7 +585,7 @@ foo:                                    # @foo
 	f64.const	$push881=, 0x1.295421c044285p-5
 	f64.add 	$2=, $pop880, $pop881
 	br      	.LBB0_66
-.LBB0_23:                                 # %sw.bb312
+.LBB0_23:                               # %sw.bb312
 	f64.add 	$push842=, $0, $0
 	f64.const	$push843=, -0x1.58p5
 	f64.add 	$0=, $pop842, $pop843
@@ -607,7 +609,7 @@ foo:                                    # @foo
 	f64.const	$push861=, 0x1.3bb83cf2cf95dp-5
 	f64.add 	$2=, $pop860, $pop861
 	br      	.LBB0_66
-.LBB0_24:                                 # %sw.bb327
+.LBB0_24:                               # %sw.bb327
 	f64.add 	$push822=, $0, $0
 	f64.const	$push823=, -0x1.68p5
 	f64.add 	$0=, $pop822, $pop823
@@ -631,7 +633,7 @@ foo:                                    # @foo
 	f64.const	$push841=, 0x1.4e93e1c9b413ap-5
 	f64.add 	$2=, $pop840, $pop841
 	br      	.LBB0_66
-.LBB0_25:                                 # %sw.bb342
+.LBB0_25:                               # %sw.bb342
 	f64.add 	$push802=, $0, $0
 	f64.const	$push803=, -0x1.78p5
 	f64.add 	$0=, $pop802, $pop803
@@ -655,7 +657,7 @@ foo:                                    # @foo
 	f64.const	$push821=, 0x1.61e71044f1a1ap-5
 	f64.add 	$2=, $pop820, $pop821
 	br      	.LBB0_66
-.LBB0_26:                                 # %sw.bb357
+.LBB0_26:                               # %sw.bb357
 	f64.add 	$push782=, $0, $0
 	f64.const	$push783=, -0x1.88p5
 	f64.add 	$0=, $pop782, $pop783
@@ -679,7 +681,7 @@ foo:                                    # @foo
 	f64.const	$push801=, 0x1.75ba2be0589adp-5
 	f64.add 	$2=, $pop800, $pop801
 	br      	.LBB0_66
-.LBB0_27:                                 # %sw.bb372
+.LBB0_27:                               # %sw.bb372
 	f64.add 	$push762=, $0, $0
 	f64.const	$push763=, -0x1.98p5
 	f64.add 	$0=, $pop762, $pop763
@@ -703,7 +705,7 @@ foo:                                    # @foo
 	f64.const	$push781=, 0x1.8a0f4d7add15fp-5
 	f64.add 	$2=, $pop780, $pop781
 	br      	.LBB0_66
-.LBB0_28:                                 # %sw.bb387
+.LBB0_28:                               # %sw.bb387
 	f64.add 	$push742=, $0, $0
 	f64.const	$push743=, -0x1.d8p5
 	f64.add 	$0=, $pop742, $pop743
@@ -727,7 +729,7 @@ foo:                                    # @foo
 	f64.const	$push761=, 0x1.e0e30446b69dbp-5
 	f64.add 	$2=, $pop760, $pop761
 	br      	.LBB0_66
-.LBB0_29:                                 # %sw.bb402
+.LBB0_29:                               # %sw.bb402
 	f64.add 	$push722=, $0, $0
 	f64.const	$push723=, -0x1.3cp6
 	f64.add 	$0=, $pop722, $pop723
@@ -751,7 +753,7 @@ foo:                                    # @foo
 	f64.const	$push741=, 0x1.745bf26f1dc51p-4
 	f64.add 	$2=, $pop740, $pop741
 	br      	.LBB0_66
-.LBB0_30:                                 # %sw.bb417
+.LBB0_30:                               # %sw.bb417
 	f64.add 	$push702=, $0, $0
 	f64.const	$push703=, -0x1.8cp6
 	f64.add 	$0=, $pop702, $pop703
@@ -775,7 +777,7 @@ foo:                                    # @foo
 	f64.const	$push721=, 0x1.1350092ccf6bep-3
 	f64.add 	$2=, $pop720, $pop721
 	br      	.LBB0_66
-.LBB0_31:                                 # %sw.bb432
+.LBB0_31:                               # %sw.bb432
 	f64.add 	$push682=, $0, $0
 	f64.const	$push683=, -0x1.dcp6
 	f64.add 	$0=, $pop682, $pop683
@@ -799,7 +801,7 @@ foo:                                    # @foo
 	f64.const	$push701=, 0x1.902de00d1b717p-3
 	f64.add 	$2=, $pop700, $pop701
 	br      	.LBB0_66
-.LBB0_32:                                 # %sw.bb447
+.LBB0_32:                               # %sw.bb447
 	f64.add 	$push662=, $0, $0
 	f64.const	$push663=, -0x1.e4p6
 	f64.add 	$0=, $pop662, $pop663
@@ -823,7 +825,7 @@ foo:                                    # @foo
 	f64.const	$push681=, 0x1.9f5ad96a6a012p-3
 	f64.add 	$2=, $pop680, $pop681
 	br      	.LBB0_66
-.LBB0_33:                                 # %sw.bb462
+.LBB0_33:                               # %sw.bb462
 	f64.add 	$push642=, $0, $0
 	f64.const	$push643=, -0x1.ecp6
 	f64.add 	$0=, $pop642, $pop643
@@ -847,7 +849,7 @@ foo:                                    # @foo
 	f64.const	$push661=, 0x1.af1a9fbe76c8bp-3
 	f64.add 	$2=, $pop660, $pop661
 	br      	.LBB0_66
-.LBB0_34:                                 # %sw.bb477
+.LBB0_34:                               # %sw.bb477
 	f64.add 	$push622=, $0, $0
 	f64.const	$push623=, -0x1.f4p6
 	f64.add 	$0=, $pop622, $pop623
@@ -871,7 +873,7 @@ foo:                                    # @foo
 	f64.const	$push641=, 0x1.bf77af640639dp-3
 	f64.add 	$2=, $pop640, $pop641
 	br      	.LBB0_66
-.LBB0_35:                                 # %sw.bb492
+.LBB0_35:                               # %sw.bb492
 	f64.add 	$push602=, $0, $0
 	f64.const	$push603=, -0x1.fcp6
 	f64.add 	$0=, $pop602, $pop603
@@ -895,7 +897,7 @@ foo:                                    # @foo
 	f64.const	$push621=, 0x1.d07c84b5dcc64p-3
 	f64.add 	$2=, $pop620, $pop621
 	br      	.LBB0_66
-.LBB0_36:                                 # %sw.bb507
+.LBB0_36:                               # %sw.bb507
 	f64.add 	$push582=, $0, $0
 	f64.const	$push583=, -0x1.02p7
 	f64.add 	$0=, $pop582, $pop583
@@ -919,7 +921,7 @@ foo:                                    # @foo
 	f64.const	$push601=, 0x1.e2339c0ebedfap-3
 	f64.add 	$2=, $pop600, $pop601
 	br      	.LBB0_66
-.LBB0_37:                                 # %sw.bb522
+.LBB0_37:                               # %sw.bb522
 	f64.add 	$push562=, $0, $0
 	f64.const	$push563=, -0x1.06p7
 	f64.add 	$0=, $pop562, $pop563
@@ -943,7 +945,7 @@ foo:                                    # @foo
 	f64.const	$push581=, 0x1.f49cf56eac86p-3
 	f64.add 	$2=, $pop580, $pop581
 	br      	.LBB0_66
-.LBB0_38:                                 # %sw.bb537
+.LBB0_38:                               # %sw.bb537
 	f64.add 	$push542=, $0, $0
 	f64.const	$push543=, -0x1.0ap7
 	f64.add 	$0=, $pop542, $pop543
@@ -967,7 +969,7 @@ foo:                                    # @foo
 	f64.const	$push561=, 0x1.03e1869835159p-2
 	f64.add 	$2=, $pop560, $pop561
 	br      	.LBB0_66
-.LBB0_39:                                 # %sw.bb552
+.LBB0_39:                               # %sw.bb552
 	f64.add 	$push522=, $0, $0
 	f64.const	$push523=, -0x1.0ep7
 	f64.add 	$0=, $pop522, $pop523
@@ -991,7 +993,7 @@ foo:                                    # @foo
 	f64.const	$push541=, 0x1.0ddd6e04c0592p-2
 	f64.add 	$2=, $pop540, $pop541
 	br      	.LBB0_66
-.LBB0_40:                                 # %sw.bb567
+.LBB0_40:                               # %sw.bb567
 	f64.add 	$push502=, $0, $0
 	f64.const	$push503=, -0x1.12p7
 	f64.add 	$0=, $pop502, $pop503
@@ -1015,7 +1017,7 @@ foo:                                    # @foo
 	f64.const	$push521=, 0x1.184230fcf80dcp-2
 	f64.add 	$2=, $pop520, $pop521
 	br      	.LBB0_66
-.LBB0_41:                                 # %sw.bb582
+.LBB0_41:                               # %sw.bb582
 	f64.add 	$push482=, $0, $0
 	f64.const	$push483=, -0x1.16p7
 	f64.add 	$0=, $pop482, $pop483
@@ -1039,7 +1041,7 @@ foo:                                    # @foo
 	f64.const	$push501=, 0x1.23150dae3e6c5p-2
 	f64.add 	$2=, $pop500, $pop501
 	br      	.LBB0_66
-.LBB0_42:                                 # %sw.bb597
+.LBB0_42:                               # %sw.bb597
 	f64.add 	$push462=, $0, $0
 	f64.const	$push463=, -0x1.1ap7
 	f64.add 	$0=, $pop462, $pop463
@@ -1063,7 +1065,7 @@ foo:                                    # @foo
 	f64.const	$push481=, 0x1.2e60807357e67p-2
 	f64.add 	$2=, $pop480, $pop481
 	br      	.LBB0_66
-.LBB0_43:                                 # %sw.bb612
+.LBB0_43:                               # %sw.bb612
 	f64.add 	$push442=, $0, $0
 	f64.const	$push443=, -0x1.1ep7
 	f64.add 	$0=, $pop442, $pop443
@@ -1087,7 +1089,7 @@ foo:                                    # @foo
 	f64.const	$push461=, 0x1.3a272862f598ap-2
 	f64.add 	$2=, $pop460, $pop461
 	br      	.LBB0_66
-.LBB0_44:                                 # %sw.bb627
+.LBB0_44:                               # %sw.bb627
 	f64.add 	$push422=, $0, $0
 	f64.const	$push423=, -0x1.22p7
 	f64.add 	$0=, $pop422, $pop423
@@ -1111,7 +1113,7 @@ foo:                                    # @foo
 	f64.const	$push441=, 0x1.466e43aa79bbbp-2
 	f64.add 	$2=, $pop440, $pop441
 	br      	.LBB0_66
-.LBB0_45:                                 # %sw.bb642
+.LBB0_45:                               # %sw.bb642
 	f64.add 	$push402=, $0, $0
 	f64.const	$push403=, -0x1.26p7
 	f64.add 	$0=, $pop402, $pop403
@@ -1135,7 +1137,7 @@ foo:                                    # @foo
 	f64.const	$push421=, 0x1.53404ea4a8c15p-2
 	f64.add 	$2=, $pop420, $pop421
 	br      	.LBB0_66
-.LBB0_46:                                 # %sw.bb657
+.LBB0_46:                               # %sw.bb657
 	f64.add 	$push382=, $0, $0
 	f64.const	$push383=, -0x1.2ap7
 	f64.add 	$0=, $pop382, $pop383
@@ -1159,7 +1161,7 @@ foo:                                    # @foo
 	f64.const	$push401=, 0x1.60a5269595feep-2
 	f64.add 	$2=, $pop400, $pop401
 	br      	.LBB0_66
-.LBB0_47:                                 # %sw.bb672
+.LBB0_47:                               # %sw.bb672
 	f64.add 	$push362=, $0, $0
 	f64.const	$push363=, -0x1.2ep7
 	f64.add 	$0=, $pop362, $pop363
@@ -1183,7 +1185,7 @@ foo:                                    # @foo
 	f64.const	$push381=, 0x1.6e9f6a93f290bp-2
 	f64.add 	$2=, $pop380, $pop381
 	br      	.LBB0_66
-.LBB0_48:                                 # %sw.bb687
+.LBB0_48:                               # %sw.bb687
 	f64.add 	$push342=, $0, $0
 	f64.const	$push343=, -0x1.32p7
 	f64.add 	$0=, $pop342, $pop343
@@ -1207,7 +1209,7 @@ foo:                                    # @foo
 	f64.const	$push361=, 0x1.7d3c36113404fp-2
 	f64.add 	$2=, $pop360, $pop361
 	br      	.LBB0_66
-.LBB0_49:                                 # %sw.bb702
+.LBB0_49:                               # %sw.bb702
 	f64.add 	$push322=, $0, $0
 	f64.const	$push323=, -0x1.36p7
 	f64.add 	$0=, $pop322, $pop323
@@ -1231,7 +1233,7 @@ foo:                                    # @foo
 	f64.const	$push341=, 0x1.8c8366516db0ep-2
 	f64.add 	$2=, $pop340, $pop341
 	br      	.LBB0_66
-.LBB0_50:                                 # %sw.bb717
+.LBB0_50:                               # %sw.bb717
 	f64.add 	$push302=, $0, $0
 	f64.const	$push303=, -0x1.3ap7
 	f64.add 	$0=, $pop302, $pop303
@@ -1255,7 +1257,7 @@ foo:                                    # @foo
 	f64.const	$push321=, 0x1.9c7cd898b2e9dp-2
 	f64.add 	$2=, $pop320, $pop321
 	br      	.LBB0_66
-.LBB0_51:                                 # %sw.bb732
+.LBB0_51:                               # %sw.bb732
 	f64.add 	$push282=, $0, $0
 	f64.const	$push283=, -0x1.3ep7
 	f64.add 	$0=, $pop282, $pop283
@@ -1279,7 +1281,7 @@ foo:                                    # @foo
 	f64.const	$push301=, 0x1.ad330941c8217p-2
 	f64.add 	$2=, $pop300, $pop301
 	br      	.LBB0_66
-.LBB0_52:                                 # %sw.bb747
+.LBB0_52:                               # %sw.bb747
 	f64.add 	$push262=, $0, $0
 	f64.const	$push263=, -0x1.42p7
 	f64.add 	$0=, $pop262, $pop263
@@ -1303,7 +1305,7 @@ foo:                                    # @foo
 	f64.const	$push281=, 0x1.beadd590c0adp-2
 	f64.add 	$2=, $pop280, $pop281
 	br      	.LBB0_66
-.LBB0_53:                                 # %sw.bb762
+.LBB0_53:                               # %sw.bb762
 	f64.add 	$push242=, $0, $0
 	f64.const	$push243=, -0x1.46p7
 	f64.add 	$0=, $pop242, $pop243
@@ -1327,7 +1329,7 @@ foo:                                    # @foo
 	f64.const	$push261=, 0x1.d0fcf80dc3372p-2
 	f64.add 	$2=, $pop260, $pop261
 	br      	.LBB0_66
-.LBB0_54:                                 # %sw.bb777
+.LBB0_54:                               # %sw.bb777
 	f64.add 	$push222=, $0, $0
 	f64.const	$push223=, -0x1.4ap7
 	f64.add 	$0=, $pop222, $pop223
@@ -1351,7 +1353,7 @@ foo:                                    # @foo
 	f64.const	$push241=, 0x1.e42aed1394318p-2
 	f64.add 	$2=, $pop240, $pop241
 	br      	.LBB0_66
-.LBB0_55:                                 # %sw.bb792
+.LBB0_55:                               # %sw.bb792
 	f64.add 	$push202=, $0, $0
 	f64.const	$push203=, -0x1.4ep7
 	f64.add 	$0=, $pop202, $pop203
@@ -1375,7 +1377,7 @@ foo:                                    # @foo
 	f64.const	$push221=, 0x1.f83f91e646f15p-2
 	f64.add 	$2=, $pop220, $pop221
 	br      	.LBB0_66
-.LBB0_56:                                 # %sw.bb807
+.LBB0_56:                               # %sw.bb807
 	f64.add 	$push182=, $0, $0
 	f64.const	$push183=, -0x1.52p7
 	f64.add 	$0=, $pop182, $pop183
@@ -1399,7 +1401,7 @@ foo:                                    # @foo
 	f64.const	$push201=, 0x1.06a550870110ap-1
 	f64.add 	$2=, $pop200, $pop201
 	br      	.LBB0_66
-.LBB0_57:                                 # %sw.bb822
+.LBB0_57:                               # %sw.bb822
 	f64.add 	$push162=, $0, $0
 	f64.const	$push163=, -0x1.56p7
 	f64.add 	$0=, $pop162, $pop163
@@ -1423,7 +1425,7 @@ foo:                                    # @foo
 	f64.const	$push181=, 0x1.11adea897635ep-1
 	f64.add 	$2=, $pop180, $pop181
 	br      	.LBB0_66
-.LBB0_58:                                 # %sw.bb837
+.LBB0_58:                               # %sw.bb837
 	f64.add 	$push142=, $0, $0
 	f64.const	$push143=, -0x1.5ap7
 	f64.add 	$0=, $pop142, $pop143
@@ -1447,7 +1449,7 @@ foo:                                    # @foo
 	f64.const	$push161=, 0x1.1d3ed527e5215p-1
 	f64.add 	$2=, $pop160, $pop161
 	br      	.LBB0_66
-.LBB0_59:                                 # %sw.bb852
+.LBB0_59:                               # %sw.bb852
 	f64.add 	$push122=, $0, $0
 	f64.const	$push123=, -0x1.5ep7
 	f64.add 	$0=, $pop122, $pop123
@@ -1471,7 +1473,7 @@ foo:                                    # @foo
 	f64.const	$push141=, 0x1.29613d31b9b67p-1
 	f64.add 	$2=, $pop140, $pop141
 	br      	.LBB0_66
-.LBB0_60:                                 # %sw.bb867
+.LBB0_60:                               # %sw.bb867
 	f64.add 	$push102=, $0, $0
 	f64.const	$push103=, -0x1.62p7
 	f64.add 	$0=, $pop102, $pop103
@@ -1495,7 +1497,7 @@ foo:                                    # @foo
 	f64.const	$push121=, 0x1.361cffeb074a7p-1
 	f64.add 	$2=, $pop120, $pop121
 	br      	.LBB0_66
-.LBB0_61:                                 # %sw.bb882
+.LBB0_61:                               # %sw.bb882
 	f64.add 	$push82=, $0, $0
 	f64.const	$push83=, -0x1.66p7
 	f64.add 	$0=, $pop82, $pop83
@@ -1519,7 +1521,7 @@ foo:                                    # @foo
 	f64.const	$push101=, 0x1.4378ab0c88a48p-1
 	f64.add 	$2=, $pop100, $pop101
 	br      	.LBB0_66
-.LBB0_62:                                 # %sw.bb897
+.LBB0_62:                               # %sw.bb897
 	f64.add 	$push62=, $0, $0
 	f64.const	$push63=, -0x1.6ap7
 	f64.add 	$0=, $pop62, $pop63
@@ -1543,7 +1545,7 @@ foo:                                    # @foo
 	f64.const	$push81=, 0x1.51800a7c5ac47p-1
 	f64.add 	$2=, $pop80, $pop81
 	br      	.LBB0_66
-.LBB0_63:                                 # %sw.bb912
+.LBB0_63:                               # %sw.bb912
 	f64.add 	$push42=, $0, $0
 	f64.const	$push43=, -0x1.6ep7
 	f64.add 	$0=, $pop42, $pop43
@@ -1567,7 +1569,7 @@ foo:                                    # @foo
 	f64.const	$push61=, 0x1.603afb7e90ff9p-1
 	f64.add 	$2=, $pop60, $pop61
 	br      	.LBB0_66
-.LBB0_64:                                 # %sw.bb927
+.LBB0_64:                               # %sw.bb927
 	f64.add 	$push22=, $0, $0
 	f64.const	$push23=, -0x1.72p7
 	f64.add 	$0=, $pop22, $pop23
@@ -1591,7 +1593,7 @@ foo:                                    # @foo
 	f64.const	$push41=, 0x1.6fb549f94855ep-1
 	f64.add 	$2=, $pop40, $pop41
 	br      	.LBB0_66
-.LBB0_65:                                 # %sw.bb942
+.LBB0_65:                               # %sw.bb942
 	f64.add 	$push2=, $0, $0
 	f64.const	$push3=, -0x1.76p7
 	f64.add 	$0=, $pop2, $pop3
@@ -1614,11 +1616,13 @@ foo:                                    # @foo
 	f64.mul 	$push20=, $0, $pop19
 	f64.const	$push21=, 0x1.7ff6d330941c8p-1
 	f64.add 	$2=, $pop20, $pop21
-.LBB0_66:                                 # %cleanup
+.LBB0_66:                               # %cleanup
 	return  	$2
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -1642,7 +1646,7 @@ main:                                   # @main
 # BB#2:                                 # %if.end
 	i32.const	$push7=, 0
 	return  	$pop7
-.LBB1_3:                                  # %if.then
+.LBB1_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

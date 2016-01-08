@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/931018-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931018-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -11,6 +13,8 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -23,26 +27,28 @@ f:                                      # @f
 	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
-	.type	v,@object               # @v
-	.section	.rodata,"a",@progbits
+	.hidden	v                       # @v
+	.type	v,@object
+	.section	.rodata.v,"a",@progbits
 	.globl	v
 	.align	2
 v:
 	.int32	3735928559              # 0xdeadbeef
 	.size	v, 4
 
-	.type	a,@object               # @a
-	.bss
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	4
 a:
-	.zero	16384
+	.skip	16384
 	.size	a, 16384
 
 

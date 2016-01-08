@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080604-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080604-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -12,12 +14,14 @@ foo:                                    # @foo
 	br_if   	$pop3, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.baz,"ax",@progbits
+	.hidden	baz
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
@@ -35,7 +39,7 @@ baz:                                    # @baz
 	i32.add 	$4=, $4, $4
 	i32.select	$0=, $0, $4, $pop0
 	call    	foo
-	i32.const	$push1=, .str
+	i32.const	$push1=, .L.str
 	i32.store	$push2=, 0($0), $pop1
 	i32.store	$discard=, 0($0), $pop2
 	i32.const	$3=, 16
@@ -46,6 +50,8 @@ baz:                                    # @baz
 .Lfunc_end1:
 	.size	baz, .Lfunc_end1-baz
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -54,26 +60,27 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$0=, 0
 	call    	foo
-	i32.const	$push0=, .str
+	i32.const	$push0=, .L.str
 	i32.store	$push1=, x($0), $pop0
 	i32.store	$discard=, x($0), $pop1
 	return  	$0
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	x,@object               # @x
-	.bss
+	.hidden	x                       # @x
+	.type	x,@object
+	.section	.bss.x,"aw",@nobits
 	.globl	x
 	.align	2
 x:
-	.zero	4
+	.skip	4
 	.size	x, 4
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"Everything OK"
-	.size	.str, 14
+	.size	.L.str, 14
 
 
 	.ident	"clang version 3.8.0 "

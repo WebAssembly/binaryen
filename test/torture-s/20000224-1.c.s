@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000224-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000224-1.c"
+	.section	.text.test,"ax",@progbits
+	.hidden	test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -16,7 +18,7 @@ test:                                   # @test
 	i32.load	$1=, loop_2($2)
 	i32.load	$5=, flag($2)
 	copy_local	$6=, $2
-.LBB0_2:                                  # %while.body
+.LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.const	$4=, 31
@@ -29,14 +31,16 @@ test:                                   # @test
 	i32.add 	$5=, $5, $3
 	i32.gt_s	$push6=, $0, $6
 	br_if   	$pop6, .LBB0_2
-.LBB0_3:                                  # %while.cond.while.end_crit_edge
+.LBB0_3:                                # %while.cond.while.end_crit_edge
 	i32.const	$push7=, 0
 	i32.store	$discard=, flag($pop7), $5
-.LBB0_4:                                  # %while.end
+.LBB0_4:                                # %while.end
 	return  	$3
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -53,7 +57,7 @@ main:                                   # @main
 	i32.load	$1=, loop_2($2)
 	i32.load	$5=, flag($2)
 	copy_local	$6=, $2
-.LBB1_2:                                  # %while.body.i
+.LBB1_2:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	i32.const	$4=, 31
@@ -66,32 +70,36 @@ main:                                   # @main
 	i32.add 	$5=, $5, $3
 	i32.gt_s	$push6=, $0, $6
 	br_if   	$pop6, .LBB1_2
-.LBB1_3:                                  # %while.cond.while.end_crit_edge.i
+.LBB1_3:                                # %while.cond.while.end_crit_edge.i
 	i32.const	$push7=, 0
 	i32.store	$discard=, flag($pop7), $5
-.LBB1_4:                                  # %test.exit
+.LBB1_4:                                # %test.exit
 	call    	exit, $2
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	loop_1,@object          # @loop_1
-	.data
+	.hidden	loop_1                  # @loop_1
+	.type	loop_1,@object
+	.section	.data.loop_1,"aw",@progbits
 	.globl	loop_1
 	.align	2
 loop_1:
 	.int32	100                     # 0x64
 	.size	loop_1, 4
 
-	.type	loop_2,@object          # @loop_2
+	.hidden	loop_2                  # @loop_2
+	.type	loop_2,@object
+	.section	.data.loop_2,"aw",@progbits
 	.globl	loop_2
 	.align	2
 loop_2:
 	.int32	7                       # 0x7
 	.size	loop_2, 4
 
-	.type	flag,@object            # @flag
-	.bss
+	.hidden	flag                    # @flag
+	.type	flag,@object
+	.section	.bss.flag,"aw",@nobits
 	.globl	flag
 	.align	2
 flag:

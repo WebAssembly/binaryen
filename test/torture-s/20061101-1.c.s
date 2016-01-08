@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20061101-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20061101-1.c"
+	.section	.text.tar,"ax",@progbits
+	.hidden	tar
 	.globl	tar
 	.type	tar,@function
 tar:                                    # @tar
@@ -13,12 +15,14 @@ tar:                                    # @tar
 # BB#1:                                 # %if.end
 	i32.const	$push2=, -1
 	return  	$pop2
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	tar, .Lfunc_end0-tar
 
+	.section	.text.bug,"ax",@progbits
+	.hidden	bug
 	.globl	bug
 	.type	bug,@function
 bug:                                    # @bug
@@ -30,7 +34,7 @@ bug:                                    # @bug
 	i32.const	$3=, 1
 	i32.const	$0=, 0
 	copy_local	$4=, $3
-.LBB1_1:                                  # %while.cond
+.LBB1_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_4
 	loop    	.LBB1_3
@@ -39,7 +43,7 @@ bug:                                    # @bug
 	i32.eq  	$push9=, $pop1, $pop8
 	br_if   	$pop9, .LBB1_4
 # BB#2:                                 # %while.body
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.lt_s	$push4=, $0, $2
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $0, $pop2
@@ -49,14 +53,16 @@ bug:                                    # @bug
 	i32.const	$push6=, 36863
 	i32.eq  	$push7=, $pop5, $pop6
 	br_if   	$pop7, .LBB1_1
-.LBB1_3:                                  # %if.then.i
+.LBB1_3:                                # %if.then.i
 	call    	abort
 	unreachable
-.LBB1_4:                                  # %while.end
+.LBB1_4:                                # %while.end
 	return
 .Lfunc_end1:
 	.size	bug, .Lfunc_end1-bug
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

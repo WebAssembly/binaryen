@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000313-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000313-1.c"
+	.section	.text.buggy,"ax",@progbits
+	.hidden	buggy
 	.globl	buggy
 	.type	buggy,@function
 buggy:                                  # @buggy
@@ -16,6 +18,8 @@ buggy:                                  # @buggy
 .Lfunc_end0:
 	.size	buggy, .Lfunc_end0-buggy
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

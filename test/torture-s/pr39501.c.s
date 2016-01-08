@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39501.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39501.c"
+	.section	.text.float_min1,"ax",@progbits
+	.hidden	float_min1
 	.globl	float_min1
 	.type	float_min1,@function
 float_min1:                             # @float_min1
@@ -12,6 +14,8 @@ float_min1:                             # @float_min1
 .Lfunc_end0:
 	.size	float_min1, .Lfunc_end0-float_min1
 
+	.section	.text.float_min2,"ax",@progbits
+	.hidden	float_min2
 	.globl	float_min2
 	.type	float_min2,@function
 float_min2:                             # @float_min2
@@ -24,6 +28,8 @@ float_min2:                             # @float_min2
 .Lfunc_end1:
 	.size	float_min2, .Lfunc_end1-float_min2
 
+	.section	.text.float_max1,"ax",@progbits
+	.hidden	float_max1
 	.globl	float_max1
 	.type	float_max1,@function
 float_max1:                             # @float_max1
@@ -36,6 +42,8 @@ float_max1:                             # @float_max1
 .Lfunc_end2:
 	.size	float_max1, .Lfunc_end2-float_max1
 
+	.section	.text.float_max2,"ax",@progbits
+	.hidden	float_max2
 	.globl	float_max2
 	.type	float_max2,@function
 float_max2:                             # @float_max2
@@ -48,6 +56,8 @@ float_max2:                             # @float_max2
 .Lfunc_end3:
 	.size	float_max2, .Lfunc_end3-float_max2
 
+	.section	.text.double_min1,"ax",@progbits
+	.hidden	double_min1
 	.globl	double_min1
 	.type	double_min1,@function
 double_min1:                            # @double_min1
@@ -60,6 +70,8 @@ double_min1:                            # @double_min1
 .Lfunc_end4:
 	.size	double_min1, .Lfunc_end4-double_min1
 
+	.section	.text.double_min2,"ax",@progbits
+	.hidden	double_min2
 	.globl	double_min2
 	.type	double_min2,@function
 double_min2:                            # @double_min2
@@ -72,6 +84,8 @@ double_min2:                            # @double_min2
 .Lfunc_end5:
 	.size	double_min2, .Lfunc_end5-double_min2
 
+	.section	.text.double_max1,"ax",@progbits
+	.hidden	double_max1
 	.globl	double_max1
 	.type	double_max1,@function
 double_max1:                            # @double_max1
@@ -84,6 +98,8 @@ double_max1:                            # @double_max1
 .Lfunc_end6:
 	.size	double_max1, .Lfunc_end6-double_max1
 
+	.section	.text.double_max2,"ax",@progbits
+	.hidden	double_max2
 	.globl	double_max2
 	.type	double_max2,@function
 double_max2:                            # @double_max2
@@ -96,6 +112,8 @@ double_max2:                            # @double_max2
 .Lfunc_end7:
 	.size	double_max2, .Lfunc_end7-double_max2
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -111,7 +129,7 @@ main:                                   # @main
 # BB#1:                                 # %if.then
 	call    	abort
 	unreachable
-.LBB8_2:                                  # %if.end
+.LBB8_2:                                # %if.end
 	block   	.LBB8_4
 	f32.call	$push2=, float_min1, $0, $1
 	f32.eq  	$push3=, $pop2, $0
@@ -119,7 +137,7 @@ main:                                   # @main
 # BB#3:                                 # %if.then3
 	call    	abort
 	unreachable
-.LBB8_4:                                  # %if.end4
+.LBB8_4:                                # %if.end4
 	f32.const	$2=, 0x1p0
 	block   	.LBB8_6
 	f32.call	$push4=, float_min1, $1, $2
@@ -128,7 +146,7 @@ main:                                   # @main
 # BB#5:                                 # %if.then7
 	call    	abort
 	unreachable
-.LBB8_6:                                  # %if.end8
+.LBB8_6:                                # %if.end8
 	block   	.LBB8_8
 	f32.call	$push6=, float_min1, $2, $1
 	f32.eq  	$push7=, $pop6, $1
@@ -136,7 +154,7 @@ main:                                   # @main
 # BB#7:                                 # %if.then11
 	call    	abort
 	unreachable
-.LBB8_8:                                  # %if.end12
+.LBB8_8:                                # %if.end12
 	block   	.LBB8_10
 	f32.call	$push8=, float_min1, $0, $2
 	f32.eq  	$push9=, $pop8, $0
@@ -144,7 +162,7 @@ main:                                   # @main
 # BB#9:                                 # %if.then15
 	call    	abort
 	unreachable
-.LBB8_10:                                 # %if.end16
+.LBB8_10:                               # %if.end16
 	block   	.LBB8_12
 	f32.call	$push10=, float_min1, $2, $0
 	f32.eq  	$push11=, $pop10, $0
@@ -152,7 +170,7 @@ main:                                   # @main
 # BB#11:                                # %if.then19
 	call    	abort
 	unreachable
-.LBB8_12:                                 # %if.end20
+.LBB8_12:                               # %if.end20
 	block   	.LBB8_14
 	f32.call	$push12=, float_max1, $1, $0
 	f32.eq  	$push13=, $pop12, $1
@@ -160,7 +178,7 @@ main:                                   # @main
 # BB#13:                                # %if.then23
 	call    	abort
 	unreachable
-.LBB8_14:                                 # %if.end24
+.LBB8_14:                               # %if.end24
 	block   	.LBB8_16
 	f32.call	$push14=, float_max1, $0, $1
 	f32.eq  	$push15=, $pop14, $1
@@ -168,7 +186,7 @@ main:                                   # @main
 # BB#15:                                # %if.then27
 	call    	abort
 	unreachable
-.LBB8_16:                                 # %if.end28
+.LBB8_16:                               # %if.end28
 	block   	.LBB8_18
 	f32.call	$push16=, float_max1, $1, $2
 	f32.eq  	$push17=, $pop16, $2
@@ -176,7 +194,7 @@ main:                                   # @main
 # BB#17:                                # %if.then31
 	call    	abort
 	unreachable
-.LBB8_18:                                 # %if.end32
+.LBB8_18:                               # %if.end32
 	block   	.LBB8_20
 	f32.call	$push18=, float_max1, $2, $1
 	f32.eq  	$push19=, $pop18, $2
@@ -184,7 +202,7 @@ main:                                   # @main
 # BB#19:                                # %if.then35
 	call    	abort
 	unreachable
-.LBB8_20:                                 # %if.end36
+.LBB8_20:                               # %if.end36
 	block   	.LBB8_22
 	f32.call	$push20=, float_max1, $0, $2
 	f32.eq  	$push21=, $pop20, $2
@@ -192,7 +210,7 @@ main:                                   # @main
 # BB#21:                                # %if.then39
 	call    	abort
 	unreachable
-.LBB8_22:                                 # %if.end40
+.LBB8_22:                               # %if.end40
 	block   	.LBB8_24
 	f32.call	$push22=, float_max1, $2, $0
 	f32.eq  	$push23=, $pop22, $2
@@ -200,7 +218,7 @@ main:                                   # @main
 # BB#23:                                # %if.then43
 	call    	abort
 	unreachable
-.LBB8_24:                                 # %if.end44
+.LBB8_24:                               # %if.end44
 	block   	.LBB8_26
 	f32.call	$push24=, float_min2, $1, $0
 	f32.eq  	$push25=, $pop24, $0
@@ -208,7 +226,7 @@ main:                                   # @main
 # BB#25:                                # %if.then47
 	call    	abort
 	unreachable
-.LBB8_26:                                 # %if.end48
+.LBB8_26:                               # %if.end48
 	block   	.LBB8_28
 	f32.call	$push26=, float_min2, $0, $1
 	f32.eq  	$push27=, $pop26, $0
@@ -216,7 +234,7 @@ main:                                   # @main
 # BB#27:                                # %if.then51
 	call    	abort
 	unreachable
-.LBB8_28:                                 # %if.end52
+.LBB8_28:                               # %if.end52
 	block   	.LBB8_30
 	f32.call	$push28=, float_min2, $1, $2
 	f32.eq  	$push29=, $pop28, $1
@@ -224,7 +242,7 @@ main:                                   # @main
 # BB#29:                                # %if.then55
 	call    	abort
 	unreachable
-.LBB8_30:                                 # %if.end56
+.LBB8_30:                               # %if.end56
 	block   	.LBB8_32
 	f32.call	$push30=, float_min2, $2, $1
 	f32.eq  	$push31=, $pop30, $1
@@ -232,7 +250,7 @@ main:                                   # @main
 # BB#31:                                # %if.then59
 	call    	abort
 	unreachable
-.LBB8_32:                                 # %if.end60
+.LBB8_32:                               # %if.end60
 	block   	.LBB8_34
 	f32.call	$push32=, float_min2, $0, $2
 	f32.eq  	$push33=, $pop32, $0
@@ -240,7 +258,7 @@ main:                                   # @main
 # BB#33:                                # %if.then63
 	call    	abort
 	unreachable
-.LBB8_34:                                 # %if.end64
+.LBB8_34:                               # %if.end64
 	block   	.LBB8_36
 	f32.call	$push34=, float_min2, $2, $0
 	f32.eq  	$push35=, $pop34, $0
@@ -248,7 +266,7 @@ main:                                   # @main
 # BB#35:                                # %if.then67
 	call    	abort
 	unreachable
-.LBB8_36:                                 # %if.end68
+.LBB8_36:                               # %if.end68
 	block   	.LBB8_38
 	f32.call	$push36=, float_max2, $1, $0
 	f32.eq  	$push37=, $pop36, $1
@@ -256,7 +274,7 @@ main:                                   # @main
 # BB#37:                                # %if.then71
 	call    	abort
 	unreachable
-.LBB8_38:                                 # %if.end72
+.LBB8_38:                               # %if.end72
 	block   	.LBB8_40
 	f32.call	$push38=, float_max2, $0, $1
 	f32.eq  	$push39=, $pop38, $1
@@ -264,7 +282,7 @@ main:                                   # @main
 # BB#39:                                # %if.then75
 	call    	abort
 	unreachable
-.LBB8_40:                                 # %if.end76
+.LBB8_40:                               # %if.end76
 	block   	.LBB8_42
 	f32.call	$push40=, float_max2, $1, $2
 	f32.eq  	$push41=, $pop40, $2
@@ -272,7 +290,7 @@ main:                                   # @main
 # BB#41:                                # %if.then79
 	call    	abort
 	unreachable
-.LBB8_42:                                 # %if.end80
+.LBB8_42:                               # %if.end80
 	block   	.LBB8_44
 	f32.call	$push42=, float_max2, $2, $1
 	f32.eq  	$push43=, $pop42, $2
@@ -280,7 +298,7 @@ main:                                   # @main
 # BB#43:                                # %if.then83
 	call    	abort
 	unreachable
-.LBB8_44:                                 # %if.end84
+.LBB8_44:                               # %if.end84
 	block   	.LBB8_46
 	f32.call	$push44=, float_max2, $0, $2
 	f32.eq  	$push45=, $pop44, $2
@@ -288,7 +306,7 @@ main:                                   # @main
 # BB#45:                                # %if.then87
 	call    	abort
 	unreachable
-.LBB8_46:                                 # %if.end88
+.LBB8_46:                               # %if.end88
 	block   	.LBB8_48
 	f32.call	$push46=, float_max2, $2, $0
 	f32.eq  	$push47=, $pop46, $2
@@ -296,7 +314,7 @@ main:                                   # @main
 # BB#47:                                # %if.then91
 	call    	abort
 	unreachable
-.LBB8_48:                                 # %if.end92
+.LBB8_48:                               # %if.end92
 	f64.const	$3=, -0x1p0
 	f64.const	$4=, 0x0p0
 	block   	.LBB8_50
@@ -306,7 +324,7 @@ main:                                   # @main
 # BB#49:                                # %if.then95
 	call    	abort
 	unreachable
-.LBB8_50:                                 # %if.end96
+.LBB8_50:                               # %if.end96
 	block   	.LBB8_52
 	f64.call	$push50=, double_min1, $3, $4
 	f64.eq  	$push51=, $pop50, $3
@@ -314,7 +332,7 @@ main:                                   # @main
 # BB#51:                                # %if.then99
 	call    	abort
 	unreachable
-.LBB8_52:                                 # %if.end100
+.LBB8_52:                               # %if.end100
 	f64.const	$5=, 0x1p0
 	block   	.LBB8_54
 	f64.call	$push52=, double_min1, $4, $5
@@ -323,7 +341,7 @@ main:                                   # @main
 # BB#53:                                # %if.then103
 	call    	abort
 	unreachable
-.LBB8_54:                                 # %if.end104
+.LBB8_54:                               # %if.end104
 	block   	.LBB8_56
 	f64.call	$push54=, double_min1, $5, $4
 	f64.eq  	$push55=, $pop54, $4
@@ -331,7 +349,7 @@ main:                                   # @main
 # BB#55:                                # %if.then107
 	call    	abort
 	unreachable
-.LBB8_56:                                 # %if.end108
+.LBB8_56:                               # %if.end108
 	block   	.LBB8_58
 	f64.call	$push56=, double_min1, $3, $5
 	f64.eq  	$push57=, $pop56, $3
@@ -339,7 +357,7 @@ main:                                   # @main
 # BB#57:                                # %if.then111
 	call    	abort
 	unreachable
-.LBB8_58:                                 # %if.end112
+.LBB8_58:                               # %if.end112
 	block   	.LBB8_60
 	f64.call	$push58=, double_min1, $5, $3
 	f64.eq  	$push59=, $pop58, $3
@@ -347,7 +365,7 @@ main:                                   # @main
 # BB#59:                                # %if.then115
 	call    	abort
 	unreachable
-.LBB8_60:                                 # %if.end116
+.LBB8_60:                               # %if.end116
 	block   	.LBB8_62
 	f64.call	$push60=, double_max1, $4, $3
 	f64.eq  	$push61=, $pop60, $4
@@ -355,7 +373,7 @@ main:                                   # @main
 # BB#61:                                # %if.then119
 	call    	abort
 	unreachable
-.LBB8_62:                                 # %if.end120
+.LBB8_62:                               # %if.end120
 	block   	.LBB8_64
 	f64.call	$push62=, double_max1, $3, $4
 	f64.eq  	$push63=, $pop62, $4
@@ -363,7 +381,7 @@ main:                                   # @main
 # BB#63:                                # %if.then123
 	call    	abort
 	unreachable
-.LBB8_64:                                 # %if.end124
+.LBB8_64:                               # %if.end124
 	block   	.LBB8_66
 	f64.call	$push64=, double_max1, $4, $5
 	f64.eq  	$push65=, $pop64, $5
@@ -371,7 +389,7 @@ main:                                   # @main
 # BB#65:                                # %if.then127
 	call    	abort
 	unreachable
-.LBB8_66:                                 # %if.end128
+.LBB8_66:                               # %if.end128
 	block   	.LBB8_68
 	f64.call	$push66=, double_max1, $5, $4
 	f64.eq  	$push67=, $pop66, $5
@@ -379,7 +397,7 @@ main:                                   # @main
 # BB#67:                                # %if.then131
 	call    	abort
 	unreachable
-.LBB8_68:                                 # %if.end132
+.LBB8_68:                               # %if.end132
 	block   	.LBB8_70
 	f64.call	$push68=, double_max1, $3, $5
 	f64.eq  	$push69=, $pop68, $5
@@ -387,7 +405,7 @@ main:                                   # @main
 # BB#69:                                # %if.then135
 	call    	abort
 	unreachable
-.LBB8_70:                                 # %if.end136
+.LBB8_70:                               # %if.end136
 	block   	.LBB8_72
 	f64.call	$push70=, double_max1, $5, $3
 	f64.eq  	$push71=, $pop70, $5
@@ -395,7 +413,7 @@ main:                                   # @main
 # BB#71:                                # %if.then139
 	call    	abort
 	unreachable
-.LBB8_72:                                 # %if.end140
+.LBB8_72:                               # %if.end140
 	block   	.LBB8_74
 	f64.call	$push72=, double_min2, $4, $3
 	f64.eq  	$push73=, $pop72, $3
@@ -403,7 +421,7 @@ main:                                   # @main
 # BB#73:                                # %if.then143
 	call    	abort
 	unreachable
-.LBB8_74:                                 # %if.end144
+.LBB8_74:                               # %if.end144
 	block   	.LBB8_76
 	f64.call	$push74=, double_min2, $3, $4
 	f64.eq  	$push75=, $pop74, $3
@@ -411,7 +429,7 @@ main:                                   # @main
 # BB#75:                                # %if.then147
 	call    	abort
 	unreachable
-.LBB8_76:                                 # %if.end148
+.LBB8_76:                               # %if.end148
 	block   	.LBB8_78
 	f64.call	$push76=, double_min2, $4, $5
 	f64.eq  	$push77=, $pop76, $4
@@ -419,7 +437,7 @@ main:                                   # @main
 # BB#77:                                # %if.then151
 	call    	abort
 	unreachable
-.LBB8_78:                                 # %if.end152
+.LBB8_78:                               # %if.end152
 	block   	.LBB8_80
 	f64.call	$push78=, double_min2, $5, $4
 	f64.eq  	$push79=, $pop78, $4
@@ -427,7 +445,7 @@ main:                                   # @main
 # BB#79:                                # %if.then155
 	call    	abort
 	unreachable
-.LBB8_80:                                 # %if.end156
+.LBB8_80:                               # %if.end156
 	block   	.LBB8_82
 	f64.call	$push80=, double_min2, $3, $5
 	f64.eq  	$push81=, $pop80, $3
@@ -435,7 +453,7 @@ main:                                   # @main
 # BB#81:                                # %if.then159
 	call    	abort
 	unreachable
-.LBB8_82:                                 # %if.end160
+.LBB8_82:                               # %if.end160
 	block   	.LBB8_84
 	f64.call	$push82=, double_min2, $5, $3
 	f64.eq  	$push83=, $pop82, $3
@@ -443,7 +461,7 @@ main:                                   # @main
 # BB#83:                                # %if.then163
 	call    	abort
 	unreachable
-.LBB8_84:                                 # %if.end164
+.LBB8_84:                               # %if.end164
 	block   	.LBB8_86
 	f64.call	$push84=, double_max2, $4, $3
 	f64.eq  	$push85=, $pop84, $4
@@ -451,7 +469,7 @@ main:                                   # @main
 # BB#85:                                # %if.then167
 	call    	abort
 	unreachable
-.LBB8_86:                                 # %if.end168
+.LBB8_86:                               # %if.end168
 	block   	.LBB8_88
 	f64.call	$push86=, double_max2, $3, $4
 	f64.eq  	$push87=, $pop86, $4
@@ -459,7 +477,7 @@ main:                                   # @main
 # BB#87:                                # %if.then171
 	call    	abort
 	unreachable
-.LBB8_88:                                 # %if.end172
+.LBB8_88:                               # %if.end172
 	block   	.LBB8_90
 	f64.call	$push88=, double_max2, $4, $5
 	f64.eq  	$push89=, $pop88, $5
@@ -467,7 +485,7 @@ main:                                   # @main
 # BB#89:                                # %if.then175
 	call    	abort
 	unreachable
-.LBB8_90:                                 # %if.end176
+.LBB8_90:                               # %if.end176
 	block   	.LBB8_92
 	f64.call	$push90=, double_max2, $5, $4
 	f64.eq  	$push91=, $pop90, $5
@@ -475,7 +493,7 @@ main:                                   # @main
 # BB#91:                                # %if.then179
 	call    	abort
 	unreachable
-.LBB8_92:                                 # %if.end180
+.LBB8_92:                               # %if.end180
 	block   	.LBB8_94
 	f64.call	$push92=, double_max2, $3, $5
 	f64.eq  	$push93=, $pop92, $5
@@ -483,7 +501,7 @@ main:                                   # @main
 # BB#93:                                # %if.then183
 	call    	abort
 	unreachable
-.LBB8_94:                                 # %if.end184
+.LBB8_94:                               # %if.end184
 	block   	.LBB8_96
 	f64.call	$push94=, double_max2, $5, $3
 	f64.eq  	$push95=, $pop94, $5
@@ -491,7 +509,7 @@ main:                                   # @main
 # BB#95:                                # %if.then187
 	call    	abort
 	unreachable
-.LBB8_96:                                 # %if.end188
+.LBB8_96:                               # %if.end188
 	i32.const	$push96=, 0
 	call    	exit, $pop96
 	unreachable

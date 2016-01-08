@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/981130-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/981130-1.c"
+	.section	.text.check,"ax",@progbits
+	.hidden	check
 	.globl	check
 	.type	check,@function
 check:                                  # @check
@@ -12,12 +14,14 @@ check:                                  # @check
 	i32.const	$push1=, 0
 	call    	exit, $pop1
 	unreachable
-.LBB0_2:                                  # %if.else
+.LBB0_2:                                # %if.else
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -35,14 +39,15 @@ main:                                   # @main
 # BB#1:                                 # %if.then.i
 	call    	exit, $0
 	unreachable
-.LBB1_2:                                  # %if.else.i
+.LBB1_2:                                # %if.else.i
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	s2,@object              # @s2
-	.data
+	.hidden	s2                      # @s2
+	.type	s2,@object
+	.section	.data.s2,"aw",@progbits
 	.globl	s2
 	.align	3
 s2:
@@ -50,12 +55,13 @@ s2:
 	.int32	2                       # 0x2
 	.size	s2, 8
 
-	.type	s1,@object              # @s1
-	.bss
+	.hidden	s1                      # @s1
+	.type	s1,@object
+	.section	.bss.s1,"aw",@nobits
 	.globl	s1
 	.align	3
 s1:
-	.zero	8
+	.skip	8
 	.size	s1, 8
 
 

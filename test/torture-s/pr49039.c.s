@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49039.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49039.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -27,7 +29,7 @@ foo:                                    # @foo
 	i32.load	$push6=, cnt($0)
 	i32.add 	$push7=, $pop6, $3
 	i32.store	$discard=, cnt($0), $pop7
-.LBB0_4:                                  # %if.end10
+.LBB0_4:                                # %if.end10
 	i32.ne  	$push8=, $2, $4
 	br_if   	$pop8, .LBB0_6
 # BB#5:                                 # %if.then12
@@ -35,11 +37,13 @@ foo:                                    # @foo
 	i32.load	$push9=, cnt($0)
 	i32.add 	$push10=, $pop9, $3
 	i32.store	$discard=, cnt($0), $pop10
-.LBB0_6:                                  # %cleanup
+.LBB0_6:                                # %cleanup
 	return
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -57,14 +61,15 @@ main:                                   # @main
 	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	cnt,@object             # @cnt
-	.bss
+	.hidden	cnt                     # @cnt
+	.type	cnt,@object
+	.section	.bss.cnt,"aw",@nobits
 	.globl	cnt
 	.align	2
 cnt:

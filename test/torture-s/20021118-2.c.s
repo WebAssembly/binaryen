@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021118-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021118-2.c"
+	.section	.text.t1,"ax",@progbits
+	.hidden	t1
 	.globl	t1
 	.type	t1,@function
 t1:                                     # @t1
@@ -22,6 +24,8 @@ t1:                                     # @t1
 .Lfunc_end0:
 	.size	t1, .Lfunc_end0-t1
 
+	.section	.text.t2,"ax",@progbits
+	.hidden	t2
 	.globl	t2
 	.type	t2,@function
 t2:                                     # @t2
@@ -46,6 +50,8 @@ t2:                                     # @t2
 .Lfunc_end1:
 	.size	t2, .Lfunc_end1-t2
 
+	.section	.text.f1,"ax",@progbits
+	.hidden	f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
@@ -57,12 +63,14 @@ f1:                                     # @f1
 	br_if   	$pop1, .LBB2_2
 # BB#1:                                 # %if.end
 	return
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	f1, .Lfunc_end2-f1
 
+	.section	.text.f2,"ax",@progbits
+	.hidden	f2
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
@@ -78,12 +86,14 @@ f2:                                     # @f2
 	br_if   	$pop3, .LBB3_3
 # BB#2:                                 # %if.end
 	return
-.LBB3_3:                                  # %if.then
+.LBB3_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	f2, .Lfunc_end3-f2
 
+	.section	.text.f3,"ax",@progbits
+	.hidden	f3
 	.globl	f3
 	.type	f3,@function
 f3:                                     # @f3
@@ -95,12 +105,14 @@ f3:                                     # @f3
 	br_if   	$pop1, .LBB4_2
 # BB#1:                                 # %if.end
 	return
-.LBB4_2:                                  # %if.then
+.LBB4_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end4:
 	.size	f3, .Lfunc_end4-f3
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

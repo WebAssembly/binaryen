@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000403-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000403-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -18,12 +20,14 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.seqgt,"ax",@progbits
+	.hidden	seqgt
 	.globl	seqgt
 	.type	seqgt,@function
 seqgt:                                  # @seqgt
@@ -38,6 +42,8 @@ seqgt:                                  # @seqgt
 .Lfunc_end1:
 	.size	seqgt, .Lfunc_end1-seqgt
 
+	.section	.text.seqgt2,"ax",@progbits
+	.hidden	seqgt2
 	.globl	seqgt2
 	.type	seqgt2,@function
 seqgt2:                                 # @seqgt2
@@ -52,15 +58,18 @@ seqgt2:                                 # @seqgt2
 .Lfunc_end2:
 	.size	seqgt2, .Lfunc_end2-seqgt2
 
-	.type	aa,@object              # @aa
-	.data
+	.hidden	aa                      # @aa
+	.type	aa,@object
+	.section	.data.aa,"aw",@progbits
 	.globl	aa
 	.align	2
 aa:
 	.int32	2147479553              # 0x7ffff001
 	.size	aa, 4
 
-	.type	bb,@object              # @bb
+	.hidden	bb                      # @bb
+	.type	bb,@object
+	.section	.data.bb,"aw",@progbits
 	.globl	bb
 	.align	2
 bb:

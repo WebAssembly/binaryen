@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr55875.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr55875.c"
+	.section	.text.t,"ax",@progbits
+	.hidden	t
 	.globl	t
 	.type	t,@function
 t:                                      # @t
@@ -17,16 +19,18 @@ t:                                      # @t
 	br_if   	$pop1, .LBB0_3
 # BB#2:                                 # %if.end3
 	return  	$0
-.LBB0_3:                                  # %if.then2
+.LBB0_3:                                # %if.then2
 	call    	abort
 	unreachable
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	i32.const	$push2=, 0
 	call    	exit, $pop2
 	unreachable
 .Lfunc_end0:
 	.size	t, .Lfunc_end0-t
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -34,7 +38,7 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 5
-.LBB1_1:                                  # %for.cond
+.LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	i32.const	$push0=, 255
@@ -47,12 +51,13 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	a,@object               # @a
-	.bss
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	4
 a:
-	.zero	1004
+	.skip	1004
 	.size	a, 1004
 
 

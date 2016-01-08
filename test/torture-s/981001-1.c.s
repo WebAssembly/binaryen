@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/981001-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/981001-1.c"
+	.section	.text.sub,"ax",@progbits
+	.hidden	sub
 	.globl	sub
 	.type	sub,@function
 sub:                                    # @sub
@@ -29,7 +31,7 @@ sub:                                    # @sub
 	i32.add 	$push14=, $pop13, $0
 	i32.mul 	$push15=, $pop14, $0
 	return  	$pop15
-.LBB0_3:                                  # %if.else
+.LBB0_3:                                # %if.else
 	i32.add 	$push6=, $1, $2
 	i32.call	$0=, sub, $pop6
 	i32.call	$2=, sub, $1
@@ -37,11 +39,13 @@ sub:                                    # @sub
 	i32.mul 	$push7=, $0, $0
 	i32.add 	$push9=, $pop8, $pop7
 	return  	$pop9
-.LBB0_4:                                  # %cleanup
+.LBB0_4:                                # %cleanup
 	return  	$0
 .Lfunc_end0:
 	.size	sub, .Lfunc_end0-sub
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -62,18 +66,19 @@ main:                                   # @main
 # BB#2:                                 # %if.end2
 	call    	exit, $2
 	unreachable
-.LBB1_3:                                  # %if.end.thread
+.LBB1_3:                                # %if.end.thread
 	i32.const	$push3=, 256
 	i32.or  	$push4=, $0, $pop3
 	i32.store	$discard=, flg($2), $pop4
-.LBB1_4:                                  # %if.then1
+.LBB1_4:                                # %if.then1
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	flg,@object             # @flg
-	.bss
+	.hidden	flg                     # @flg
+	.type	flg,@object
+	.section	.bss.flg,"aw",@nobits
 	.globl	flg
 	.align	2
 flg:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20100416-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20100416-1.c"
+	.section	.text.movegt,"ax",@progbits
+	.hidden	movegt
 	.globl	movegt
 	.type	movegt,@function
 movegt:                                 # @movegt
@@ -17,6 +19,8 @@ movegt:                                 # @movegt
 .Lfunc_end0:
 	.size	movegt, .Lfunc_end0-movegt
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -64,32 +68,33 @@ main:                                   # @main
 	br_if   	$pop24, .LBB1_6
 # BB#5:                                 # %for.cond.4
 	return  	$0
-.LBB1_6:                                  # %if.then
+.LBB1_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	tests,@object           # @tests
-	.data
+	.hidden	tests                   # @tests
+	.type	tests,@object
+	.section	.data.tests,"aw",@progbits
 	.globl	tests
 	.align	4
 tests:
 	.int64	-1152921504606846976    # 0xf000000000000000
 	.int32	4294967295              # 0xffffffff
-	.zero	4
+	.skip	4
 	.int64	-1152921504606846977    # 0xefffffffffffffff
 	.int32	1                       # 0x1
-	.zero	4
+	.skip	4
 	.int64	-1152921504606846975    # 0xf000000000000001
 	.int32	4294967295              # 0xffffffff
-	.zero	4
+	.skip	4
 	.int64	0                       # 0x0
 	.int32	4294967295              # 0xffffffff
-	.zero	4
+	.skip	4
 	.int64	-9223372036854775808    # 0x8000000000000000
 	.int32	1                       # 0x1
-	.zero	4
+	.skip	4
 	.size	tests, 80
 
 

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-1.c"
+	.section	.text.verify,"ax",@progbits
+	.hidden	verify
 	.globl	verify
 	.type	verify,@function
 verify:                                 # @verify
@@ -19,12 +21,14 @@ verify:                                 # @verify
 	br_if   	$pop3, .LBB0_5
 # BB#4:                                 # %if.end
 	return
-.LBB0_5:                                  # %if.then
+.LBB0_5:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	verify, .Lfunc_end0-verify
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -272,35 +276,36 @@ main:                                   # @main
 # BB#32:                                # %verify.exit63
 	call    	exit, $8
 	unreachable
-.LBB1_33:                                 # %if.then.i62
+.LBB1_33:                               # %if.then.i62
 	call    	abort
 	unreachable
-.LBB1_34:                                 # %if.then.i53
+.LBB1_34:                               # %if.then.i53
 	call    	abort
 	unreachable
-.LBB1_35:                                 # %if.then.i44
+.LBB1_35:                               # %if.then.i44
 	call    	abort
 	unreachable
-.LBB1_36:                                 # %if.then.i35
+.LBB1_36:                               # %if.then.i35
 	call    	abort
 	unreachable
-.LBB1_37:                                 # %if.then.i26
+.LBB1_37:                               # %if.then.i26
 	call    	abort
 	unreachable
-.LBB1_38:                                 # %if.then.i17
+.LBB1_38:                               # %if.then.i17
 	call    	abort
 	unreachable
-.LBB1_39:                                 # %if.then.i8
+.LBB1_39:                               # %if.then.i8
 	call    	abort
 	unreachable
-.LBB1_40:                                 # %if.then.i
+.LBB1_40:                               # %if.then.i
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	i,@object               # @i
-	.data
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.data.i,"aw",@progbits
 	.globl	i
 	.align	4
 i:
@@ -310,7 +315,9 @@ i:
 	.int32	200                     # 0xc8
 	.size	i, 16
 
-	.type	j,@object               # @j
+	.hidden	j                       # @j
+	.type	j,@object
+	.section	.data.j,"aw",@progbits
 	.globl	j
 	.align	4
 j:
@@ -320,19 +327,22 @@ j:
 	.int32	30                      # 0x1e
 	.size	j, 16
 
-	.type	k,@object               # @k
-	.bss
+	.hidden	k                       # @k
+	.type	k,@object
+	.section	.bss.k,"aw",@nobits
 	.globl	k
 	.align	4
 k:
-	.zero	16
+	.skip	16
 	.size	k, 16
 
-	.type	res,@object             # @res
+	.hidden	res                     # @res
+	.type	res,@object
+	.section	.bss.res,"aw",@nobits
 	.globl	res
 	.align	4
 res:
-	.zero	16
+	.skip	16
 	.size	res, 16
 
 

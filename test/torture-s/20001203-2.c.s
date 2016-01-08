@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001203-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001203-2.c"
+	.section	.text.create_array_type,"ax",@progbits
+	.hidden	create_array_type
 	.globl	create_array_type
 	.type	create_array_type,@function
 create_array_type:                      # @create_array_type
@@ -49,7 +51,7 @@ create_array_type:                      # @create_array_type
 	i32.const	$push12=, 28
 	i32.add 	$push13=, $1, $pop12
 	i32.store	$discard=, 0($pop13), $6
-.LBB0_5:                                  # %if.end17
+.LBB0_5:                                # %if.end17
 	i32.const	$push14=, 24
 	i32.add 	$push15=, $1, $pop14
 	i32.load	$6=, 0($pop15)
@@ -68,18 +70,20 @@ create_array_type:                      # @create_array_type
 	i32.store	$push26=, 0($4), $pop25
 	i32.store	$discard=, 0($5), $pop26
 	br      	.LBB0_7
-.LBB0_6:                                  # %if.then8
+.LBB0_6:                                # %if.then8
 	call    	_obstack_newchunk, $0, $0
 	unreachable
-.LBB0_7:                                  # %cond.end
+.LBB0_7:                                # %cond.end
 	i32.store	$discard=, 12($0), $7
 	return  	$0
-.LBB0_8:                                  # %if.then
+.LBB0_8:                                # %if.then
 	i32.call	$discard=, alloc_type
 	unreachable
 .Lfunc_end0:
 	.size	create_array_type, .Lfunc_end0-create_array_type
 
+	.section	.text.alloc_type,"ax",@progbits
+	.hidden	alloc_type
 	.globl	alloc_type
 	.type	alloc_type,@function
 alloc_type:                             # @alloc_type
@@ -90,6 +94,8 @@ alloc_type:                             # @alloc_type
 .Lfunc_end1:
 	.size	alloc_type, .Lfunc_end1-alloc_type
 
+	.section	.text.get_discrete_bounds,"ax",@progbits
+	.hidden	get_discrete_bounds
 	.globl	get_discrete_bounds
 	.type	get_discrete_bounds,@function
 get_discrete_bounds:                    # @get_discrete_bounds
@@ -103,6 +109,8 @@ get_discrete_bounds:                    # @get_discrete_bounds
 .Lfunc_end2:
 	.size	get_discrete_bounds, .Lfunc_end2-get_discrete_bounds
 
+	.section	.text._obstack_newchunk,"ax",@progbits
+	.hidden	_obstack_newchunk
 	.globl	_obstack_newchunk
 	.type	_obstack_newchunk,@function
 _obstack_newchunk:                      # @_obstack_newchunk
@@ -113,6 +121,8 @@ _obstack_newchunk:                      # @_obstack_newchunk
 .Lfunc_end3:
 	.size	_obstack_newchunk, .Lfunc_end3-_obstack_newchunk
 
+	.section	.text.xmalloc,"ax",@progbits
+	.hidden	xmalloc
 	.globl	xmalloc
 	.type	xmalloc,@function
 xmalloc:                                # @xmalloc
@@ -124,6 +134,8 @@ xmalloc:                                # @xmalloc
 .Lfunc_end4:
 	.size	xmalloc, .Lfunc_end4-xmalloc
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

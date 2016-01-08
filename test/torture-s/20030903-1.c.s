@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030903-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030903-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -16,27 +18,28 @@ main:                                   # @main
 	br_if   	$pop3, .LBB0_2
 # BB#1:                                 # %sw.epilog
 	return  	$1
-.LBB0_2:                                  # %entry
+.LBB0_2:                                # %entry
 	block   	.LBB0_6
 	block   	.LBB0_5
 	block   	.LBB0_4
 	block   	.LBB0_3
 	tableswitch	$0, .LBB0_3, .LBB0_3, .LBB0_4, .LBB0_5, .LBB0_6
-.LBB0_3:                                  # %sw.bb
+.LBB0_3:                                # %sw.bb
 	call    	y
 	unreachable
-.LBB0_4:                                  # %sw.bb1
+.LBB0_4:                                # %sw.bb1
 	call    	y
 	unreachable
-.LBB0_5:                                  # %sw.bb2
+.LBB0_5:                                # %sw.bb2
 	call    	y
 	unreachable
-.LBB0_6:                                  # %sw.bb3
+.LBB0_6:                                # %sw.bb3
 	call    	y
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.y,"ax",@progbits
 	.type	y,@function
 y:                                      # @y
 # BB#0:                                 # %entry

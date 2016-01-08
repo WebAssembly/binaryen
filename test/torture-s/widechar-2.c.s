@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/widechar-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/widechar-2.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -11,8 +13,9 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	ws,@object              # @ws
-	.section	.rodata,"a",@progbits
+	.hidden	ws                      # @ws
+	.type	ws,@object
+	.section	.rodata.ws,"a",@progbits
 	.globl	ws
 	.align	4
 ws:

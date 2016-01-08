@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/struct-cpy-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/struct-cpy-1.c"
+	.section	.text.ini,"ax",@progbits
+	.hidden	ini
 	.globl	ini
 	.type	ini,@function
 ini:                                    # @ini
@@ -20,6 +22,8 @@ ini:                                    # @ini
 .Lfunc_end0:
 	.size	ini, .Lfunc_end0-ini
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -44,10 +48,10 @@ main:                                   # @main
 	.type	pty,@object             # @pty
 	.lcomm	pty,88,3
 	.type	zero_t,@object          # @zero_t
-	.section	.rodata,"a",@progbits
+	.section	.rodata.zero_t,"a",@progbits
 	.align	2
 zero_t:
-	.zero	44
+	.skip	44
 	.size	zero_t, 44
 
 

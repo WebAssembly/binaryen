@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/ashldi-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/ashldi-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -7,8 +9,8 @@ main:                                   # @main
 	.local  	i32, i32, i64, i32, i32
 # BB#0:                                 # %entry
 	i64.const	$2=, 0
-	i32.const	$1=, switch.table
-.LBB0_1:                                  # %for.body
+	i32.const	$1=, .Lswitch.table
+.LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB0_7
 	loop    	.LBB0_3
@@ -18,17 +20,17 @@ main:                                   # @main
 	i64.ne  	$push3=, $pop1, $pop2
 	br_if   	$pop3, .LBB0_7
 # BB#2:                                 # %for.cond
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i64.const	$push4=, 1
 	i64.add 	$2=, $2, $pop4
 	i32.const	$0=, 8
 	i32.add 	$1=, $1, $0
 	i32.const	$4=, 0
-	i32.const	$3=, switch.table
+	i32.const	$3=, .Lswitch.table
 	i64.const	$push5=, 63
 	i64.le_s	$push6=, $2, $pop5
 	br_if   	$pop6, .LBB0_1
-.LBB0_3:                                  # %constant_shift.exit
+.LBB0_3:                                # %constant_shift.exit
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB0_6
 	loop    	.LBB0_5
@@ -37,29 +39,29 @@ main:                                   # @main
 	i32.eq  	$push11=, $1, $pop10
 	br_if   	$pop11, .LBB0_6
 # BB#4:                                 # %for.cond2
-                                        #   in Loop: Header=.LBB0_3 Depth=1
+                                        #   in Loop: Header=BB0_3 Depth=1
 	i32.add 	$4=, $4, $1
 	i32.add 	$3=, $3, $0
 	i32.const	$push7=, 63
 	i32.le_s	$push8=, $4, $pop7
 	br_if   	$pop8, .LBB0_3
-.LBB0_5:                                  # %for.end13
+.LBB0_5:                                # %for.end13
 	i32.const	$push9=, 0
 	call    	exit, $pop9
 	unreachable
-.LBB0_6:                                  # %if.then9
+.LBB0_6:                                # %if.then9
 	call    	abort
 	unreachable
-.LBB0_7:                                  # %if.then
+.LBB0_7:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	switch.table,@object    # @switch.table
-	.section	.rodata,"a",@progbits
+	.type	.Lswitch.table,@object  # @switch.table
+	.section	.rodata..Lswitch.table,"a",@progbits
 	.align	4
-switch.table:
+.Lswitch.table:
 	.int64	81985529216486895       # 0x123456789abcdef
 	.int64	163971058432973790      # 0x2468acf13579bde
 	.int64	327942116865947580      # 0x48d159e26af37bc
@@ -124,7 +126,7 @@ switch.table:
 	.int64	-2305843009213693952    # 0xe000000000000000
 	.int64	-4611686018427387904    # 0xc000000000000000
 	.int64	-9223372036854775808    # 0x8000000000000000
-	.size	switch.table, 512
+	.size	.Lswitch.table, 512
 
 
 	.ident	"clang version 3.8.0 "

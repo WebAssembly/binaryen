@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001013-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001013-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -18,12 +20,14 @@ foo:                                    # @foo
 	i32.sub 	$push6=, $pop5, $pop4
 	i32.le_s	$push8=, $pop7, $pop6
 	return  	$pop8
-.LBB0_2:                                  # %return
+.LBB0_2:                                # %return
 	i32.const	$push3=, 1
 	return  	$pop3
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -40,14 +44,15 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	z,@object               # @z
-	.data
+	.hidden	z                       # @z
+	.type	z,@object
+	.section	.data.z,"aw",@progbits
 	.globl	z
 	.align	2
 z:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001017-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001017-2.c"
+	.section	.text.fn_4parms,"ax",@progbits
+	.hidden	fn_4parms
 	.globl	fn_4parms
 	.type	fn_4parms,@function
 fn_4parms:                              # @fn_4parms
@@ -22,12 +24,14 @@ fn_4parms:                              # @fn_4parms
 	br_if   	$pop8, .LBB0_4
 # BB#3:                                 # %if.end
 	return
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	fn_4parms, .Lfunc_end0-fn_4parms
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

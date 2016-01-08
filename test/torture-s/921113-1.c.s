@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/921113-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921113-1.c"
+	.section	.text.w,"ax",@progbits
+	.hidden	w
 	.globl	w
 	.type	w,@function
 w:                                      # @w
@@ -11,6 +13,8 @@ w:                                      # @w
 .Lfunc_end0:
 	.size	w, .Lfunc_end0-w
 
+	.section	.text.f1,"ax",@progbits
+	.hidden	f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
@@ -27,12 +31,14 @@ f1:                                     # @f1
 	br_if   	$pop1, .LBB1_3
 # BB#2:                                 # %if.end
 	return  	$3
-.LBB1_3:                                  # %if.then
+.LBB1_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
 
+	.section	.text.f2,"ax",@progbits
+	.hidden	f2
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
@@ -49,12 +55,14 @@ f2:                                     # @f2
 	br_if   	$pop1, .LBB2_3
 # BB#2:                                 # %if.end
 	return  	$3
-.LBB2_3:                                  # %if.then
+.LBB2_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	f2, .Lfunc_end2-f2
 
+	.section	.text.gitter,"ax",@progbits
+	.hidden	gitter
 	.globl	gitter
 	.type	gitter,@function
 gitter:                                 # @gitter
@@ -106,17 +114,19 @@ gitter:                                 # @gitter
 # BB#6:                                 # %if.then15
 	i32.const	$push21=, 1065353216
 	i32.store	$discard=, 0($2), $pop21
-.LBB3_7:                                  # %if.end18
+.LBB3_7:                                # %if.end18
 	return  	$4
-.LBB3_8:                                  # %if.then.i32
+.LBB3_8:                                # %if.then.i32
 	call    	abort
 	unreachable
-.LBB3_9:                                  # %if.then.i
+.LBB3_9:                                # %if.then.i
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	gitter, .Lfunc_end3-gitter
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -146,29 +156,31 @@ main:                                   # @main
 # BB#4:                                 # %f2.exit.i
 	call    	exit, $0
 	unreachable
-.LBB4_5:                                  # %if.then.i32.i
+.LBB4_5:                                # %if.then.i32.i
 	call    	abort
 	unreachable
-.LBB4_6:                                  # %if.then.i.i
+.LBB4_6:                                # %if.then.i.i
 	call    	abort
 	unreachable
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
-	.type	pos,@object             # @pos
-	.bss
+	.hidden	pos                     # @pos
+	.type	pos,@object
+	.section	.bss.pos,"aw",@nobits
 	.globl	pos
 	.align	2
 pos:
-	.zero	8
+	.skip	8
 	.size	pos, 8
 
-	.type	limit,@object           # @limit
-	.data
+	.hidden	limit                   # @limit
+	.type	limit,@object
+	.section	.data.limit,"aw",@progbits
 	.globl	limit
 	.align	4
 limit:
-	.zero	8
+	.skip	8
 	.int32	1065353216              # float 1
 	.int32	1065353216              # float 1
 	.size	limit, 16

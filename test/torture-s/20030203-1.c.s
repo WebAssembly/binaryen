@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030203-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030203-1.c"
+	.section	.text.do_layer3,"ax",@progbits
+	.hidden	do_layer3
 	.globl	do_layer3
 	.type	do_layer3,@function
 do_layer3:                              # @do_layer3
@@ -14,6 +16,8 @@ do_layer3:                              # @do_layer3
 .Lfunc_end0:
 	.size	do_layer3, .Lfunc_end0-do_layer3
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -23,6 +27,8 @@ f:                                      # @f
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

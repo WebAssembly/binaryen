@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020406-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020406-1.c"
+	.section	.text.FFmul,"ax",@progbits
+	.hidden	FFmul
 	.globl	FFmul
 	.type	FFmul,@function
 FFmul:                                  # @FFmul
@@ -10,6 +12,8 @@ FFmul:                                  # @FFmul
 .Lfunc_end0:
 	.size	FFmul, .Lfunc_end0-FFmul
 
+	.section	.text.DUPFFdeg,"ax",@progbits
+	.hidden	DUPFFdeg
 	.globl	DUPFFdeg
 	.type	DUPFFdeg,@function
 DUPFFdeg:                               # @DUPFFdeg
@@ -21,6 +25,8 @@ DUPFFdeg:                               # @DUPFFdeg
 .Lfunc_end1:
 	.size	DUPFFdeg, .Lfunc_end1-DUPFFdeg
 
+	.section	.text.DUPFFnew,"ax",@progbits
+	.hidden	DUPFFnew
 	.globl	DUPFFnew
 	.type	DUPFFnew,@function
 DUPFFnew:                               # @DUPFFnew
@@ -43,7 +49,7 @@ DUPFFnew:                               # @DUPFFnew
 	i32.const	$push7=, 8
 	i32.add 	$push8=, $1, $pop7
 	i32.store	$discard=, 0($pop8), $2
-.LBB2_2:                                  # %if.end
+.LBB2_2:                                # %if.end
 	i32.store	$discard=, 0($1), $0
 	i32.const	$push9=, -1
 	i32.store	$discard=, 4($1), $pop9
@@ -51,6 +57,8 @@ DUPFFnew:                               # @DUPFFnew
 .Lfunc_end2:
 	.size	DUPFFnew, .Lfunc_end2-DUPFFnew
 
+	.section	.text.DUPFFfree,"ax",@progbits
+	.hidden	DUPFFfree
 	.globl	DUPFFfree
 	.type	DUPFFfree,@function
 DUPFFfree:                              # @DUPFFfree
@@ -60,6 +68,8 @@ DUPFFfree:                              # @DUPFFfree
 .Lfunc_end3:
 	.size	DUPFFfree, .Lfunc_end3-DUPFFfree
 
+	.section	.text.DUPFFswap,"ax",@progbits
+	.hidden	DUPFFswap
 	.globl	DUPFFswap
 	.type	DUPFFswap,@function
 DUPFFswap:                              # @DUPFFswap
@@ -69,6 +79,8 @@ DUPFFswap:                              # @DUPFFswap
 .Lfunc_end4:
 	.size	DUPFFswap, .Lfunc_end4-DUPFFswap
 
+	.section	.text.DUPFFcopy,"ax",@progbits
+	.hidden	DUPFFcopy
 	.globl	DUPFFcopy
 	.type	DUPFFcopy,@function
 DUPFFcopy:                              # @DUPFFcopy
@@ -79,6 +91,8 @@ DUPFFcopy:                              # @DUPFFcopy
 .Lfunc_end5:
 	.size	DUPFFcopy, .Lfunc_end5-DUPFFcopy
 
+	.section	.text.DUPFFshift_add,"ax",@progbits
+	.hidden	DUPFFshift_add
 	.globl	DUPFFshift_add
 	.type	DUPFFshift_add,@function
 DUPFFshift_add:                         # @DUPFFshift_add
@@ -88,6 +102,8 @@ DUPFFshift_add:                         # @DUPFFshift_add
 .Lfunc_end6:
 	.size	DUPFFshift_add, .Lfunc_end6-DUPFFshift_add
 
+	.section	.text.DUPFFexgcd,"ax",@progbits
+	.hidden	DUPFFexgcd
 	.globl	DUPFFexgcd
 	.type	DUPFFexgcd,@function
 DUPFFexgcd:                             # @DUPFFexgcd
@@ -103,7 +119,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.store	$13=, 0($15), $13
 	i32.load	$9=, 4($2)
 	i32.load	$8=, 4($3)
-.LBB7_1:                                  # %tailrecurse
+.LBB7_1:                                # %tailrecurse
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB7_2
 	copy_local	$5=, $3
@@ -120,7 +136,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.const	$6=, 4
 	i32.add 	$9=, $13, $6
 	i32.store	$discard=, 0($9), $8
-	i32.const	$push1=, .str
+	i32.const	$push1=, .L.str
 	i32.call	$discard=, iprintf, $pop1
 	i32.const	$12=, __stack_pointer
 	i32.load	$12=, 0($12)
@@ -134,7 +150,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	copy_local	$2=, $5
 	i32.lt_s	$push2=, $8, $9
 	br_if   	$pop2, .LBB7_1
-.LBB7_2:                                  # %if.end
+.LBB7_2:                                # %if.end
 	i32.const	$2=, 2
 	block   	.LBB7_11
 	i32.ne  	$push3=, $8, $2
@@ -175,29 +191,31 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.add 	$push14=, $3, $6
 	i32.load	$push0=, 0($pop14)
 	i32.lt_s	$3=, $pop0, $5
-.LBB7_7:                                  # %while.cond40.preheader
+.LBB7_7:                                # %while.cond40.preheader
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB7_8
 	br_if   	$3, .LBB7_7
-.LBB7_8:                                  # %while.cond40
+.LBB7_8:                                # %while.cond40
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB7_9
 	br      	.LBB7_8
-.LBB7_9:                                  # %if.end57
+.LBB7_9:                                # %if.end57
 	i32.store	$discard=, 0($1), $9
 	i32.store	$discard=, 0($4), $8
-.LBB7_10:                                 # %cleanup
+.LBB7_10:                               # %cleanup
 	i32.const	$16=, 16
 	i32.add 	$13=, $13, $16
 	i32.const	$16=, __stack_pointer
 	i32.store	$13=, 0($16), $13
 	return  	$3
-.LBB7_11:                                 # %if.then10
+.LBB7_11:                               # %if.then10
 	call    	abort
 	unreachable
 .Lfunc_end7:
 	.size	DUPFFexgcd, .Lfunc_end7-DUPFFexgcd
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -236,7 +254,7 @@ main:                                   # @main
 	i32.store	$discard=, 0($15), $3
 	i32.add 	$1=, $15, $1
 	i32.store	$discard=, 0($1), $2
-	i32.const	$push6=, .str.1
+	i32.const	$push6=, .L.str.1
 	i32.call	$discard=, iprintf, $pop6
 	i32.const	$8=, __stack_pointer
 	i32.load	$8=, 0($8)
@@ -258,16 +276,16 @@ main:                                   # @main
 .Lfunc_end8:
 	.size	main, .Lfunc_end8-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"DUPFFexgcd called on degrees %d and %d\n"
-	.size	.str, 40
+	.size	.L.str, 40
 
-	.type	.str.1,@object          # @.str.1
-.str.1:
+	.type	.L.str.1,@object        # @.str.1
+.L.str.1:
 	.asciz	"calling DUPFFexgcd on degrees %d and %d\n"
-	.size	.str.1, 41
+	.size	.L.str.1, 41
 
 
 	.ident	"clang version 3.8.0 "

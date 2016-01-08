@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/memcpy-bi.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memcpy-bi.c"
+	.section	.text.check,"ax",@progbits
+	.hidden	check
 	.globl	check
 	.type	check,@function
 check:                                  # @check
@@ -10,12 +12,14 @@ check:                                  # @check
 	br_if   	$pop0, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -23,7 +27,7 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32, i32, i32, i64, i64, i64
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
-.LBB1_1:                                  # %for.body
+.LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	i32.const	$0=, 26
@@ -38,7 +42,7 @@ main:                                   # @main
 	i32.const	$push3=, 80
 	i32.ne  	$push4=, $2, $pop3
 	br_if   	$pop4, .LBB1_1
-.LBB1_2:                                  # %check.exit
+.LBB1_2:                                # %check.exit
 	i32.const	$2=, 0
 	block   	.LBB1_154
 	i32.load16_u	$push5=, src($2)
@@ -651,250 +655,253 @@ main:                                   # @main
 	br_if   	$pop133, .LBB1_79
 # BB#78:                                # %check.exit321
 	return  	$2
-.LBB1_79:                                 # %if.then.i320
+.LBB1_79:                               # %if.then.i320
 	call    	abort
 	unreachable
-.LBB1_80:                                 # %if.then.i316
+.LBB1_80:                               # %if.then.i316
 	call    	abort
 	unreachable
-.LBB1_81:                                 # %if.then.i312
+.LBB1_81:                               # %if.then.i312
 	call    	abort
 	unreachable
-.LBB1_82:                                 # %if.then.i308
+.LBB1_82:                               # %if.then.i308
 	call    	abort
 	unreachable
-.LBB1_83:                                 # %if.then.i304
+.LBB1_83:                               # %if.then.i304
 	call    	abort
 	unreachable
-.LBB1_84:                                 # %if.then.i300
+.LBB1_84:                               # %if.then.i300
 	call    	abort
 	unreachable
-.LBB1_85:                                 # %if.then.i296
+.LBB1_85:                               # %if.then.i296
 	call    	abort
 	unreachable
-.LBB1_86:                                 # %if.then.i292
+.LBB1_86:                               # %if.then.i292
 	call    	abort
 	unreachable
-.LBB1_87:                                 # %if.then.i288
+.LBB1_87:                               # %if.then.i288
 	call    	abort
 	unreachable
-.LBB1_88:                                 # %if.then.i284
+.LBB1_88:                               # %if.then.i284
 	call    	abort
 	unreachable
-.LBB1_89:                                 # %if.then.i280
+.LBB1_89:                               # %if.then.i280
 	call    	abort
 	unreachable
-.LBB1_90:                                 # %if.then.i276
+.LBB1_90:                               # %if.then.i276
 	call    	abort
 	unreachable
-.LBB1_91:                                 # %if.then.i272
+.LBB1_91:                               # %if.then.i272
 	call    	abort
 	unreachable
-.LBB1_92:                                 # %if.then.i268
+.LBB1_92:                               # %if.then.i268
 	call    	abort
 	unreachable
-.LBB1_93:                                 # %if.then.i264
+.LBB1_93:                               # %if.then.i264
 	call    	abort
 	unreachable
-.LBB1_94:                                 # %if.then.i260
+.LBB1_94:                               # %if.then.i260
 	call    	abort
 	unreachable
-.LBB1_95:                                 # %if.then.i256
+.LBB1_95:                               # %if.then.i256
 	call    	abort
 	unreachable
-.LBB1_96:                                 # %if.then.i252
+.LBB1_96:                               # %if.then.i252
 	call    	abort
 	unreachable
-.LBB1_97:                                 # %if.then.i248
+.LBB1_97:                               # %if.then.i248
 	call    	abort
 	unreachable
-.LBB1_98:                                 # %if.then.i244
+.LBB1_98:                               # %if.then.i244
 	call    	abort
 	unreachable
-.LBB1_99:                                 # %if.then.i240
+.LBB1_99:                               # %if.then.i240
 	call    	abort
 	unreachable
-.LBB1_100:                                # %if.then.i236
+.LBB1_100:                              # %if.then.i236
 	call    	abort
 	unreachable
-.LBB1_101:                                # %if.then.i232
+.LBB1_101:                              # %if.then.i232
 	call    	abort
 	unreachable
-.LBB1_102:                                # %if.then.i228
+.LBB1_102:                              # %if.then.i228
 	call    	abort
 	unreachable
-.LBB1_103:                                # %if.then.i224
+.LBB1_103:                              # %if.then.i224
 	call    	abort
 	unreachable
-.LBB1_104:                                # %if.then.i220
+.LBB1_104:                              # %if.then.i220
 	call    	abort
 	unreachable
-.LBB1_105:                                # %if.then.i216
+.LBB1_105:                              # %if.then.i216
 	call    	abort
 	unreachable
-.LBB1_106:                                # %if.then.i212
+.LBB1_106:                              # %if.then.i212
 	call    	abort
 	unreachable
-.LBB1_107:                                # %if.then.i208
+.LBB1_107:                              # %if.then.i208
 	call    	abort
 	unreachable
-.LBB1_108:                                # %if.then.i204
+.LBB1_108:                              # %if.then.i204
 	call    	abort
 	unreachable
-.LBB1_109:                                # %if.then.i200
+.LBB1_109:                              # %if.then.i200
 	call    	abort
 	unreachable
-.LBB1_110:                                # %if.then.i196
+.LBB1_110:                              # %if.then.i196
 	call    	abort
 	unreachable
-.LBB1_111:                                # %if.then.i192
+.LBB1_111:                              # %if.then.i192
 	call    	abort
 	unreachable
-.LBB1_112:                                # %if.then.i188
+.LBB1_112:                              # %if.then.i188
 	call    	abort
 	unreachable
-.LBB1_113:                                # %if.then.i184
+.LBB1_113:                              # %if.then.i184
 	call    	abort
 	unreachable
-.LBB1_114:                                # %if.then.i180
+.LBB1_114:                              # %if.then.i180
 	call    	abort
 	unreachable
-.LBB1_115:                                # %if.then.i176
+.LBB1_115:                              # %if.then.i176
 	call    	abort
 	unreachable
-.LBB1_116:                                # %if.then.i172
+.LBB1_116:                              # %if.then.i172
 	call    	abort
 	unreachable
-.LBB1_117:                                # %if.then.i168
+.LBB1_117:                              # %if.then.i168
 	call    	abort
 	unreachable
-.LBB1_118:                                # %if.then.i164
+.LBB1_118:                              # %if.then.i164
 	call    	abort
 	unreachable
-.LBB1_119:                                # %if.then.i160
+.LBB1_119:                              # %if.then.i160
 	call    	abort
 	unreachable
-.LBB1_120:                                # %if.then.i156
+.LBB1_120:                              # %if.then.i156
 	call    	abort
 	unreachable
-.LBB1_121:                                # %if.then.i152
+.LBB1_121:                              # %if.then.i152
 	call    	abort
 	unreachable
-.LBB1_122:                                # %if.then.i148
+.LBB1_122:                              # %if.then.i148
 	call    	abort
 	unreachable
-.LBB1_123:                                # %if.then.i144
+.LBB1_123:                              # %if.then.i144
 	call    	abort
 	unreachable
-.LBB1_124:                                # %if.then.i140
+.LBB1_124:                              # %if.then.i140
 	call    	abort
 	unreachable
-.LBB1_125:                                # %if.then.i136
+.LBB1_125:                              # %if.then.i136
 	call    	abort
 	unreachable
-.LBB1_126:                                # %if.then.i132
+.LBB1_126:                              # %if.then.i132
 	call    	abort
 	unreachable
-.LBB1_127:                                # %if.then.i128
+.LBB1_127:                              # %if.then.i128
 	call    	abort
 	unreachable
-.LBB1_128:                                # %if.then.i124
+.LBB1_128:                              # %if.then.i124
 	call    	abort
 	unreachable
-.LBB1_129:                                # %if.then.i120
+.LBB1_129:                              # %if.then.i120
 	call    	abort
 	unreachable
-.LBB1_130:                                # %if.then.i116
+.LBB1_130:                              # %if.then.i116
 	call    	abort
 	unreachable
-.LBB1_131:                                # %if.then.i112
+.LBB1_131:                              # %if.then.i112
 	call    	abort
 	unreachable
-.LBB1_132:                                # %if.then.i108
+.LBB1_132:                              # %if.then.i108
 	call    	abort
 	unreachable
-.LBB1_133:                                # %if.then.i104
+.LBB1_133:                              # %if.then.i104
 	call    	abort
 	unreachable
-.LBB1_134:                                # %if.then.i100
+.LBB1_134:                              # %if.then.i100
 	call    	abort
 	unreachable
-.LBB1_135:                                # %if.then.i96
+.LBB1_135:                              # %if.then.i96
 	call    	abort
 	unreachable
-.LBB1_136:                                # %if.then.i92
+.LBB1_136:                              # %if.then.i92
 	call    	abort
 	unreachable
-.LBB1_137:                                # %if.then.i88
+.LBB1_137:                              # %if.then.i88
 	call    	abort
 	unreachable
-.LBB1_138:                                # %if.then.i84
+.LBB1_138:                              # %if.then.i84
 	call    	abort
 	unreachable
-.LBB1_139:                                # %if.then.i80
+.LBB1_139:                              # %if.then.i80
 	call    	abort
 	unreachable
-.LBB1_140:                                # %if.then.i76
+.LBB1_140:                              # %if.then.i76
 	call    	abort
 	unreachable
-.LBB1_141:                                # %if.then.i72
+.LBB1_141:                              # %if.then.i72
 	call    	abort
 	unreachable
-.LBB1_142:                                # %if.then.i68
+.LBB1_142:                              # %if.then.i68
 	call    	abort
 	unreachable
-.LBB1_143:                                # %if.then.i64
+.LBB1_143:                              # %if.then.i64
 	call    	abort
 	unreachable
-.LBB1_144:                                # %if.then.i60
+.LBB1_144:                              # %if.then.i60
 	call    	abort
 	unreachable
-.LBB1_145:                                # %if.then.i56
+.LBB1_145:                              # %if.then.i56
 	call    	abort
 	unreachable
-.LBB1_146:                                # %if.then.i52
+.LBB1_146:                              # %if.then.i52
 	call    	abort
 	unreachable
-.LBB1_147:                                # %if.then.i48
+.LBB1_147:                              # %if.then.i48
 	call    	abort
 	unreachable
-.LBB1_148:                                # %if.then.i44
+.LBB1_148:                              # %if.then.i44
 	call    	abort
 	unreachable
-.LBB1_149:                                # %if.then.i40
+.LBB1_149:                              # %if.then.i40
 	call    	abort
 	unreachable
-.LBB1_150:                                # %if.then.i32
+.LBB1_150:                              # %if.then.i32
 	call    	abort
 	unreachable
-.LBB1_151:                                # %if.then.i28
+.LBB1_151:                              # %if.then.i28
 	call    	abort
 	unreachable
-.LBB1_152:                                # %if.then.i24
+.LBB1_152:                              # %if.then.i24
 	call    	abort
 	unreachable
-.LBB1_153:                                # %if.then.i16
+.LBB1_153:                              # %if.then.i16
 	call    	abort
 	unreachable
-.LBB1_154:                                # %if.then.i12
+.LBB1_154:                              # %if.then.i12
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	src,@object             # @src
-	.bss
+	.hidden	src                     # @src
+	.type	src,@object
+	.section	.bss.src,"aw",@nobits
 	.globl	src
 	.align	4
 src:
-	.zero	80
+	.skip	80
 	.size	src, 80
 
-	.type	dst,@object             # @dst
+	.hidden	dst                     # @dst
+	.type	dst,@object
+	.section	.bss.dst,"aw",@nobits
 	.globl	dst
 	.align	4
 dst:
-	.zero	80
+	.skip	80
 	.size	dst, 80
 
 

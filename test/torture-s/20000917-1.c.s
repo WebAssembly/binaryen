@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000917-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000917-1.c"
+	.section	.text.one,"ax",@progbits
+	.hidden	one
 	.globl	one
 	.type	one,@function
 one:                                    # @one
@@ -13,6 +15,8 @@ one:                                    # @one
 .Lfunc_end0:
 	.size	one, .Lfunc_end0-one
 
+	.section	.text.zero,"ax",@progbits
+	.hidden	zero
 	.globl	zero
 	.type	zero,@function
 zero:                                   # @zero
@@ -26,6 +30,8 @@ zero:                                   # @zero
 .Lfunc_end1:
 	.size	zero, .Lfunc_end1-zero
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

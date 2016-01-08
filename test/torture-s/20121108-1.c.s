@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20121108-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20121108-1.c"
+	.section	.text.strtoul1,"ax",@progbits
+	.hidden	strtoul1
 	.globl	strtoul1
 	.type	strtoul1,@function
 strtoul1:                               # @strtoul1
@@ -32,11 +34,13 @@ strtoul1:                               # @strtoul1
 # BB#4:                                 # %if.end11
 	call    	abort
 	unreachable
-.LBB0_5:                                  # %return
+.LBB0_5:                                # %return
 	return  	$1
 .Lfunc_end0:
 	.size	strtoul1, .Lfunc_end0-strtoul1
 
+	.section	.text.string_to_ip,"ax",@progbits
+	.hidden	string_to_ip
 	.globl	string_to_ip
 	.type	string_to_ip,@function
 string_to_ip:                           # @string_to_ip
@@ -109,11 +113,11 @@ string_to_ip:                           # @string_to_ip
 	i32.shl 	$push12=, $5, $0
 	i32.or  	$5=, $pop13, $pop12
 	br      	.LBB1_7
-.LBB1_5:                                  # %if.end9.2.thread
+.LBB1_5:                                # %if.end9.2.thread
 	i32.shl 	$5=, $5, $0
-.LBB1_6:                                  # %cond.end.3
+.LBB1_6:                                # %cond.end.3
 	i32.shl 	$5=, $5, $0
-.LBB1_7:                                  # %cleanup
+.LBB1_7:                                # %cleanup
 	i32.const	$8=, 16
 	i32.add 	$12=, $12, $8
 	i32.const	$8=, __stack_pointer
@@ -122,6 +126,8 @@ string_to_ip:                           # @string_to_ip
 .Lfunc_end1:
 	.size	string_to_ip, .Lfunc_end1-string_to_ip
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -142,7 +148,7 @@ main:                                   # @main
 	i32.sub 	$14=, $3, $4
 	i32.const	$4=, __stack_pointer
 	i32.store	$14=, 0($4), $14
-	i32.const	$1=, .str
+	i32.const	$1=, .L.str
 	i32.store	$0=, 0($14), $2
 	i32.call	$discard=, iprintf, $1
 	i32.const	$5=, __stack_pointer
@@ -172,44 +178,47 @@ main:                                   # @main
 	i32.ne  	$push3=, $0, $pop2
 	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.end
-	i32.const	$push4=, str
+	i32.const	$push4=, .Lstr
 	i32.call	$discard=, puts, $pop4
 	i32.const	$13=, 16
 	i32.add 	$14=, $14, $13
 	i32.const	$13=, __stack_pointer
 	i32.store	$14=, 0($13), $14
 	return  	$2
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	temp,@object            # @temp
-	.data
+	.hidden	temp                    # @temp
+	.type	temp,@object
+	.section	.data.temp,"aw",@progbits
 	.globl	temp
 	.align	4
 temp:
 	.asciz	"192.168.190.160"
 	.size	temp, 16
 
-	.type	result,@object          # @result
+	.hidden	result                  # @result
+	.type	result,@object
+	.section	.data.result,"aw",@progbits
 	.globl	result
 	.align	2
 result:
 	.int32	3232284320              # 0xc0a8bea0
 	.size	result, 4
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"%x\n"
-	.size	.str, 4
+	.size	.L.str, 4
 
-	.type	str,@object             # @str
-str:
+	.type	.Lstr,@object           # @str
+.Lstr:
 	.asciz	"WORKS."
-	.size	str, 7
+	.size	.Lstr, 7
 
 
 	.ident	"clang version 3.8.0 "

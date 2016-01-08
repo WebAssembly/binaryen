@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20061031-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20061031-1.c"
+	.section	.text.ff,"ax",@progbits
+	.hidden	ff
 	.globl	ff
 	.type	ff,@function
 ff:                                     # @ff
@@ -11,6 +13,8 @@ ff:                                     # @ff
 .Lfunc_end0:
 	.size	ff, .Lfunc_end0-ff
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -27,7 +31,7 @@ f:                                      # @f
 # BB#1:                                 # %if.then
 	#APP
 	#NO_APP
-.LBB1_2:                                  # %for.inc
+.LBB1_2:                                # %for.inc
 	call    	ff, $0
 	block   	.LBB1_4
 	i32.add 	$push2=, $1, $0
@@ -36,11 +40,13 @@ f:                                      # @f
 # BB#3:                                 # %if.then.1
 	#APP
 	#NO_APP
-.LBB1_4:                                  # %for.inc.1
+.LBB1_4:                                # %for.inc.1
 	return
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -53,8 +59,9 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	nunmap,@object          # @nunmap
-	.section	.rodata,"a",@progbits
+	.hidden	nunmap                  # @nunmap
+	.type	nunmap,@object
+	.section	.rodata.nunmap,"a",@progbits
 	.globl	nunmap
 nunmap:
 	.ascii	"\021\377\001"

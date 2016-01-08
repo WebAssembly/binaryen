@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57344-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57344-3.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -13,12 +15,14 @@ foo:                                    # @foo
 	#APP
 	#NO_APP
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -26,7 +30,7 @@ main:                                   # @main
 	.local  	i32, i32, i64, i64, i64, i32
 # BB#0:                                 # %entry
 	i32.const	$push2=, s+16
-	i32.const	$push0=, main.t
+	i32.const	$push0=, .Lmain.t
 	i32.const	$push1=, 16
 	call    	memcpy, $pop2, $pop0, $pop1
 	i32.const	$0=, 0
@@ -44,7 +48,7 @@ main:                                   # @main
 	i32.const	$push7=, -1
 	i32.gt_s	$push8=, $5, $pop7
 	br_if   	$pop8, .LBB1_3
-.LBB1_2:                                  # %for.body.for.body_crit_edge
+.LBB1_2:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	i64.load	$2=, s+16($0)
@@ -69,14 +73,14 @@ main:                                   # @main
 	i32.store	$discard=, i($0), $pop22
 	i32.lt_s	$push23=, $5, $0
 	br_if   	$pop23, .LBB1_2
-.LBB1_3:                                  # %for.end
+.LBB1_3:                                # %for.end
 	return  	$0
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	main.t,@object          # @main.t
+	.type	.Lmain.t,@object        # @main.t
 	.section	.rodata.cst16,"aM",@progbits,16
-main.t:
+.Lmain.t:
 	.int8	0                       # 0x0
 	.int8	0                       # 0x0
 	.int8	0                       # 0x0
@@ -87,18 +91,21 @@ main.t:
 	.int8	255                     # 0xff
 	.int8	1                       # 0x1
 	.int8	0                       # 0x0
-	.zero	6
-	.size	main.t, 16
+	.skip	6
+	.size	.Lmain.t, 16
 
-	.type	s,@object               # @s
-	.bss
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.bss.s,"aw",@nobits
 	.globl	s
 	.align	4
 s:
-	.zero	32
+	.skip	32
 	.size	s, 32
 
-	.type	i,@object               # @i
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:

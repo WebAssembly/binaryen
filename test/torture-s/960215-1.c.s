@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/960215-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960215-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -207,14 +209,15 @@ main:                                   # @main
 # BB#1:                                 # %if.then
 	call    	abort
 	unreachable
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	call    	exit, $0
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	C,@object               # @C
-	.data
+	.hidden	C                       # @C
+	.type	C,@object
+	.section	.data.C,"aw",@progbits
 	.globl	C
 	.align	4
 C:
@@ -222,7 +225,9 @@ C:
 	.int64	4611686018427387904
 	.size	C, 16
 
-	.type	U,@object               # @U
+	.hidden	U                       # @U
+	.type	U,@object
+	.section	.data.U,"aw",@progbits
 	.globl	U
 	.align	4
 U:
@@ -230,7 +235,9 @@ U:
 	.int64	4611404543450677248
 	.size	U, 16
 
-	.type	Y2,@object              # @Y2
+	.hidden	Y2                      # @Y2
+	.type	Y2,@object
+	.section	.data.Y2,"aw",@progbits
 	.globl	Y2
 	.align	4
 Y2:
@@ -238,7 +245,9 @@ Y2:
 	.int64	4611826755915743232
 	.size	Y2, 16
 
-	.type	Y1,@object              # @Y1
+	.hidden	Y1                      # @Y1
+	.type	Y1,@object
+	.section	.data.Y1,"aw",@progbits
 	.globl	Y1
 	.align	4
 Y1:
@@ -246,8 +255,9 @@ Y1:
 	.int64	4611404543450677248
 	.size	Y1, 16
 
-	.type	X,@object               # @X
-	.bss
+	.hidden	X                       # @X
+	.type	X,@object
+	.section	.bss.X,"aw",@nobits
 	.globl	X
 	.align	4
 X:
@@ -255,7 +265,9 @@ X:
 	.int64	0
 	.size	X, 16
 
-	.type	Y,@object               # @Y
+	.hidden	Y                       # @Y
+	.type	Y,@object
+	.section	.bss.Y,"aw",@nobits
 	.globl	Y
 	.align	4
 Y:
@@ -263,7 +275,9 @@ Y:
 	.int64	0
 	.size	Y, 16
 
-	.type	Z,@object               # @Z
+	.hidden	Z                       # @Z
+	.type	Z,@object
+	.section	.bss.Z,"aw",@nobits
 	.globl	Z
 	.align	4
 Z:
@@ -271,7 +285,9 @@ Z:
 	.int64	0
 	.size	Z, 16
 
-	.type	T,@object               # @T
+	.hidden	T                       # @T
+	.type	T,@object
+	.section	.bss.T,"aw",@nobits
 	.globl	T
 	.align	4
 T:
@@ -279,7 +295,9 @@ T:
 	.int64	0
 	.size	T, 16
 
-	.type	R,@object               # @R
+	.hidden	R                       # @R
+	.type	R,@object
+	.section	.bss.R,"aw",@nobits
 	.globl	R
 	.align	4
 R:
@@ -287,7 +305,9 @@ R:
 	.int64	0
 	.size	R, 16
 
-	.type	S,@object               # @S
+	.hidden	S                       # @S
+	.type	S,@object
+	.section	.bss.S,"aw",@nobits
 	.globl	S
 	.align	4
 S:

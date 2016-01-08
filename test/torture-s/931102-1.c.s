@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/931102-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931102-1.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -12,7 +14,7 @@ f:                                      # @f
 	block   	.LBB0_2
 	i32.and 	$push0=, $0, $1
 	br_if   	$pop0, .LBB0_2
-.LBB0_1:                                  # %while.body
+.LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.const	$push1=, 24
@@ -24,11 +26,13 @@ f:                                      # @f
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop4, $pop5
 	br_if   	$pop6, .LBB0_1
-.LBB0_2:                                  # %while.end
+.LBB0_2:                                # %while.end
 	return  	$2
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

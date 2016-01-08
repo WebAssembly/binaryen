@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000121-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000121-1.c"
+	.section	.text.big,"ax",@progbits
+	.hidden	big
 	.globl	big
 	.type	big,@function
 big:                                    # @big
@@ -9,6 +11,8 @@ big:                                    # @big
 .Lfunc_end0:
 	.size	big, .Lfunc_end0-big
 
+	.section	.text.doit,"ax",@progbits
+	.hidden	doit
 	.globl	doit
 	.type	doit,@function
 doit:                                   # @doit
@@ -18,6 +22,8 @@ doit:                                   # @doit
 .Lfunc_end1:
 	.size	doit, .Lfunc_end1-doit
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

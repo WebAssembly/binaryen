@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930921-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930921-1.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -16,6 +18,8 @@ f:                                      # @f
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -24,7 +28,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i64.const	$0=, 2863311531
 	i32.const	$2=, 0
-.LBB1_1:                                  # %for.body
+.LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_4
 	loop    	.LBB1_3
@@ -38,17 +42,17 @@ main:                                   # @main
 	i32.ne  	$push6=, $pop4, $1
 	br_if   	$pop6, .LBB1_4
 # BB#2:                                 # %for.cond
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push7=, 1
 	i32.add 	$2=, $2, $pop7
 	i32.const	$push8=, 9999
 	i32.le_u	$push9=, $2, $pop8
 	br_if   	$pop9, .LBB1_1
-.LBB1_3:                                  # %for.end
+.LBB1_3:                                # %for.end
 	i32.const	$push10=, 0
 	call    	exit, $pop10
 	unreachable
-.LBB1_4:                                  # %if.then
+.LBB1_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

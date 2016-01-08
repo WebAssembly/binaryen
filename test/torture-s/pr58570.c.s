@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58570.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58570.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -30,7 +32,7 @@ main:                                   # @main
 	i64.const	$push10=, 61440
 	i64.and 	$push11=, $3, $pop10
 	i64.store16	$discard=, 0($2), $pop11
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	block   	.LBB0_4
 	i64.load32_u	$push18=, d($0)
 	i32.const	$push12=, d
@@ -52,22 +54,24 @@ main:                                   # @main
 	br_if   	$pop28, .LBB0_4
 # BB#3:                                 # %if.end7
 	return  	$0
-.LBB0_4:                                  # %if.then6
+.LBB0_4:                                # %if.then6
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	e,@object               # @e
-	.data
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.data.e,"aw",@progbits
 	.globl	e
 	.align	2
 e:
 	.int32	1                       # 0x1
 	.size	e, 4
 
-	.type	i,@object               # @i
-	.bss
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:

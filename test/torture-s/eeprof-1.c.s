@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/eeprof-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/eeprof-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -12,12 +14,14 @@ foo:                                    # @foo
 	br_if   	$pop3, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.nfoo,"ax",@progbits
+	.hidden	nfoo
 	.globl	nfoo
 	.type	nfoo,@function
 nfoo:                                   # @nfoo
@@ -68,27 +72,29 @@ nfoo:                                   # @nfoo
 	br_if   	$pop16, .LBB1_9
 # BB#8:                                 # %if.end18
 	return
-.LBB1_9:                                  # %if.then17
+.LBB1_9:                                # %if.then17
 	call    	abort
 	unreachable
-.LBB1_10:                                 # %if.then14
+.LBB1_10:                               # %if.then14
 	call    	abort
 	unreachable
-.LBB1_11:                                 # %if.then11
+.LBB1_11:                               # %if.then11
 	call    	abort
 	unreachable
-.LBB1_12:                                 # %if.then6
+.LBB1_12:                               # %if.then6
 	call    	abort
 	unreachable
-.LBB1_13:                                 # %if.then3
+.LBB1_13:                               # %if.then3
 	call    	abort
 	unreachable
-.LBB1_14:                                 # %if.then
+.LBB1_14:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	nfoo, .Lfunc_end1-nfoo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -142,27 +148,29 @@ main:                                   # @main
 	br_if   	$pop17, .LBB2_9
 # BB#8:                                 # %if.end20
 	return  	$0
-.LBB2_9:                                  # %if.then19
+.LBB2_9:                                # %if.then19
 	call    	abort
 	unreachable
-.LBB2_10:                                 # %if.then16
+.LBB2_10:                               # %if.then16
 	call    	abort
 	unreachable
-.LBB2_11:                                 # %if.then11
+.LBB2_11:                               # %if.then11
 	call    	abort
 	unreachable
-.LBB2_12:                                 # %if.then8
+.LBB2_12:                               # %if.then8
 	call    	abort
 	unreachable
-.LBB2_13:                                 # %if.then5
+.LBB2_13:                               # %if.then5
 	call    	abort
 	unreachable
-.LBB2_14:                                 # %if.then
+.LBB2_14:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
+	.section	.text.__cyg_profile_func_enter,"ax",@progbits
+	.hidden	__cyg_profile_func_enter
 	.globl	__cyg_profile_func_enter
 	.type	__cyg_profile_func_enter,@function
 __cyg_profile_func_enter:               # @__cyg_profile_func_enter
@@ -179,6 +187,8 @@ __cyg_profile_func_enter:               # @__cyg_profile_func_enter
 .Lfunc_end3:
 	.size	__cyg_profile_func_enter, .Lfunc_end3-__cyg_profile_func_enter
 
+	.section	.text.__cyg_profile_func_exit,"ax",@progbits
+	.hidden	__cyg_profile_func_exit
 	.globl	__cyg_profile_func_exit
 	.type	__cyg_profile_func_exit,@function
 __cyg_profile_func_exit:                # @__cyg_profile_func_exit
@@ -195,6 +205,7 @@ __cyg_profile_func_exit:                # @__cyg_profile_func_exit
 .Lfunc_end4:
 	.size	__cyg_profile_func_exit, .Lfunc_end4-__cyg_profile_func_exit
 
+	.section	.text.foo2,"ax",@progbits
 	.type	foo2,@function
 foo2:                                   # @foo2
 	.local  	i32, i32
@@ -238,47 +249,54 @@ foo2:                                   # @foo2
 	br_if   	$pop14, .LBB5_8
 # BB#7:                                 # %if.end15
 	return
-.LBB5_8:                                  # %if.then14
+.LBB5_8:                                # %if.then14
 	call    	abort
 	unreachable
-.LBB5_9:                                  # %if.then11
+.LBB5_9:                                # %if.then11
 	call    	abort
 	unreachable
-.LBB5_10:                                 # %if.then8
+.LBB5_10:                               # %if.then8
 	call    	abort
 	unreachable
-.LBB5_11:                                 # %if.then3
+.LBB5_11:                               # %if.then3
 	call    	abort
 	unreachable
-.LBB5_12:                                 # %if.then
+.LBB5_12:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end5:
 	.size	foo2, .Lfunc_end5-foo2
 
-	.type	last_fn_entered,@object # @last_fn_entered
-	.bss
+	.hidden	last_fn_entered         # @last_fn_entered
+	.type	last_fn_entered,@object
+	.section	.bss.last_fn_entered,"aw",@nobits
 	.globl	last_fn_entered
 	.align	2
 last_fn_entered:
 	.int32	0
 	.size	last_fn_entered, 4
 
-	.type	entry_calls,@object     # @entry_calls
+	.hidden	entry_calls             # @entry_calls
+	.type	entry_calls,@object
+	.section	.bss.entry_calls,"aw",@nobits
 	.globl	entry_calls
 	.align	2
 entry_calls:
 	.int32	0                       # 0x0
 	.size	entry_calls, 4
 
-	.type	exit_calls,@object      # @exit_calls
+	.hidden	exit_calls              # @exit_calls
+	.type	exit_calls,@object
+	.section	.bss.exit_calls,"aw",@nobits
 	.globl	exit_calls
 	.align	2
 exit_calls:
 	.int32	0                       # 0x0
 	.size	exit_calls, 4
 
-	.type	last_fn_exited,@object  # @last_fn_exited
+	.hidden	last_fn_exited          # @last_fn_exited
+	.type	last_fn_exited,@object
+	.section	.bss.last_fn_exited,"aw",@nobits
 	.globl	last_fn_exited
 	.align	2
 last_fn_exited:

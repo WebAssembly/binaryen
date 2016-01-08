@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/980526-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980526-2.c"
+	.section	.text.do_mknod,"ax",@progbits
+	.hidden	do_mknod
 	.globl	do_mknod
 	.type	do_mknod,@function
 do_mknod:                               # @do_mknod
@@ -13,12 +15,14 @@ do_mknod:                               # @do_mknod
 	i32.const	$push2=, 0
 	call    	exit, $pop2
 	unreachable
-.LBB0_2:                                  # %if.else
+.LBB0_2:                                # %if.else
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	do_mknod, .Lfunc_end0-do_mknod
 
+	.section	.text.getname,"ax",@progbits
+	.hidden	getname
 	.globl	getname
 	.type	getname,@function
 getname:                                # @getname
@@ -68,6 +72,8 @@ getname:                                # @getname
 .Lfunc_end1:
 	.size	getname, .Lfunc_end1-getname
 
+	.section	.text.sys_mknod,"ax",@progbits
+	.hidden	sys_mknod
 	.globl	sys_mknod
 	.type	sys_mknod,@function
 sys_mknod:                              # @sys_mknod
@@ -89,30 +95,32 @@ sys_mknod:                              # @sys_mknod
 	i32.const	$push9=, 0
 	call    	exit, $pop9
 	unreachable
-.LBB2_2:                                  # %if.else.i
+.LBB2_2:                                # %if.else.i
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	sys_mknod, .Lfunc_end2-sys_mknod
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, .str
+	i32.const	$push0=, .L.str
 	i32.const	$push1=, 305419896
 	i32.call	$discard=, sys_mknod, $pop0, $0, $pop1
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"test"
-	.size	.str, 5
+	.size	.L.str, 5
 
 
 	.ident	"clang version 3.8.0 "

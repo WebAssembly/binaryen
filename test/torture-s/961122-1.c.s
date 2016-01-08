@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/961122-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/961122-1.c"
+	.section	.text.addhi,"ax",@progbits
+	.hidden	addhi
 	.globl	addhi
 	.type	addhi,@function
 addhi:                                  # @addhi
@@ -18,6 +20,8 @@ addhi:                                  # @addhi
 .Lfunc_end0:
 	.size	addhi, .Lfunc_end0-addhi
 
+	.section	.text.subhi,"ax",@progbits
+	.hidden	subhi
 	.globl	subhi
 	.type	subhi,@function
 subhi:                                  # @subhi
@@ -36,6 +40,8 @@ subhi:                                  # @subhi
 .Lfunc_end1:
 	.size	subhi, .Lfunc_end1-subhi
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -50,8 +56,9 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	acc,@object             # @acc
-	.bss
+	.hidden	acc                     # @acc
+	.type	acc,@object
+	.section	.bss.acc,"aw",@nobits
 	.globl	acc
 	.align	3
 acc:

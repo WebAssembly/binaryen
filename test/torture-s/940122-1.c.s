@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/940122-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/940122-1.c"
+	.section	.text.g,"ax",@progbits
+	.hidden	g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -17,12 +19,14 @@ g:                                      # @g
 	br_if   	$pop4, .LBB0_2
 # BB#1:                                 # %if.end
 	return  	$1
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -40,12 +44,14 @@ f:                                      # @f
 	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %g.exit
 	return  	$1
-.LBB1_2:                                  # %if.then.i
+.LBB1_2:                                # %if.then.i
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -63,21 +69,24 @@ main:                                   # @main
 # BB#1:                                 # %if.then.i.i
 	call    	abort
 	unreachable
-.LBB2_2:                                  # %f.exit
+.LBB2_2:                                # %f.exit
 	call    	exit, $0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	a,@object               # @a
-	.bss
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	2
 a:
 	.int32	0
 	.size	a, 4
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	2
 b:

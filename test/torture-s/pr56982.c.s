@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56982.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56982.c"
+	.section	.text.baz,"ax",@progbits
+	.hidden	baz
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
@@ -10,6 +12,8 @@ baz:                                    # @baz
 .Lfunc_end0:
 	.size	baz, .Lfunc_end0-baz
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -25,7 +29,7 @@ f:                                      # @f
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 1
 	return  	$pop1
-.LBB1_2:                                  # %if.end
+.LBB1_2:                                # %if.end
 	i32.const	$1=, env
 	#APP
 	#NO_APP
@@ -36,13 +40,15 @@ f:                                      # @f
 	i32.const	$push4=, 42
 	call    	longjmp, $1, $pop4
 	unreachable
-.LBB1_4:                                  # %if.then2
+.LBB1_4:                                # %if.then2
 	i32.const	$push3=, 0
 	call    	exit, $pop3
 	unreachable
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

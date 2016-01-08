@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr22630.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr22630.c"
+	.section	.text.bla,"ax",@progbits
+	.hidden	bla
 	.globl	bla
 	.type	bla,@function
 bla:                                    # @bla
@@ -14,11 +16,13 @@ bla:                                    # @bla
 	i32.const	$push3=, 0
 	i32.const	$push4=, 1
 	i32.store	$discard=, j($pop3), $pop4
-.LBB0_2:                                  # %if.end2
+.LBB0_2:                                # %if.end2
 	return
 .Lfunc_end0:
 	.size	bla, .Lfunc_end0-bla
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -32,8 +36,9 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	j,@object               # @j
-	.bss
+	.hidden	j                       # @j
+	.type	j,@object
+	.section	.bss.j,"aw",@nobits
 	.globl	j
 	.align	2
 j:

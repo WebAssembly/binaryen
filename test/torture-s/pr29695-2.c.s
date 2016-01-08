@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr29695-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr29695-2.c"
+	.section	.text.f1,"ax",@progbits
+	.hidden	f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
@@ -13,6 +15,8 @@ f1:                                     # @f1
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
 
+	.section	.text.f2,"ax",@progbits
+	.hidden	f2
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
@@ -28,6 +32,8 @@ f2:                                     # @f2
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
 
+	.section	.text.f3,"ax",@progbits
+	.hidden	f3
 	.globl	f3
 	.type	f3,@function
 f3:                                     # @f3
@@ -43,6 +49,8 @@ f3:                                     # @f3
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
 
+	.section	.text.f4,"ax",@progbits
+	.hidden	f4
 	.globl	f4
 	.type	f4,@function
 f4:                                     # @f4
@@ -58,6 +66,8 @@ f4:                                     # @f4
 .Lfunc_end3:
 	.size	f4, .Lfunc_end3-f4
 
+	.section	.text.f5,"ax",@progbits
+	.hidden	f5
 	.globl	f5
 	.type	f5,@function
 f5:                                     # @f5
@@ -74,6 +84,8 @@ f5:                                     # @f5
 .Lfunc_end4:
 	.size	f5, .Lfunc_end4-f5
 
+	.section	.text.f6,"ax",@progbits
+	.hidden	f6
 	.globl	f6
 	.type	f6,@function
 f6:                                     # @f6
@@ -90,6 +102,8 @@ f6:                                     # @f6
 .Lfunc_end5:
 	.size	f6, .Lfunc_end5-f6
 
+	.section	.text.f7,"ax",@progbits
+	.hidden	f7
 	.globl	f7
 	.type	f7,@function
 f7:                                     # @f7
@@ -106,6 +120,8 @@ f7:                                     # @f7
 .Lfunc_end6:
 	.size	f7, .Lfunc_end6-f7
 
+	.section	.text.f8,"ax",@progbits
+	.hidden	f8
 	.globl	f8
 	.type	f8,@function
 f8:                                     # @f8
@@ -122,6 +138,8 @@ f8:                                     # @f8
 .Lfunc_end7:
 	.size	f8, .Lfunc_end7-f8
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -153,43 +171,50 @@ main:                                   # @main
 	br_if   	$pop8, .LBB8_5
 # BB#4:                                 # %if.end28
 	return  	$0
-.LBB8_5:                                  # %if.then19
+.LBB8_5:                                # %if.then19
 	call    	abort
 	unreachable
-.LBB8_6:                                  # %if.then15
+.LBB8_6:                                # %if.then15
 	call    	abort
 	unreachable
-.LBB8_7:                                  # %if.then3
+.LBB8_7:                                # %if.then3
 	call    	abort
 	unreachable
-.LBB8_8:                                  # %if.then
+.LBB8_8:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end8:
 	.size	main, .Lfunc_end8-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	2
 a:
 	.int32	128                     # 0x80
 	.size	a, 4
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.data.b,"aw",@progbits
 	.globl	b
 b:
 	.int8	128                     # 0x80
 	.size	b, 1
 
-	.type	c,@object               # @c
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.data.c,"aw",@progbits
 	.globl	c
 	.align	3
 c:
 	.int64	2147483648              # 0x80000000
 	.size	c, 8
 
-	.type	d,@object               # @d
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.data.d,"aw",@progbits
 	.globl	d
 	.align	2
 d:

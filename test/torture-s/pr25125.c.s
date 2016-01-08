@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr25125.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr25125.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -16,13 +18,15 @@ f:                                      # @f
 	i32.and 	$push2=, $0, $pop1
 	i32.const	$push3=, 32768
 	i32.add 	$1=, $pop2, $pop3
-.LBB0_2:                                  # %cleanup
+.LBB0_2:                                # %cleanup
 	i32.const	$push4=, 65535
 	i32.and 	$push5=, $1, $pop4
 	return  	$pop5
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -38,7 +42,7 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	call    	exit, $pop4
 	unreachable
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

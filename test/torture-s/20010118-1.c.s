@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010118-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010118-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -9,6 +11,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -26,7 +30,7 @@ bar:                                    # @bar
 	i32.load	$push4=, 0($pop3)
 	i32.eq  	$push5=, $pop4, $2
 	br_if   	$pop5, .LBB1_3
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	f64.const	$5=, 0x0p0
 	f64.const	$6=, 0x1p-1
 	i32.load	$push6=, 16($0)
@@ -47,11 +51,13 @@ bar:                                    # @bar
 	i32.store	$discard=, 0($pop17), $pop15
 	i32.store	$discard=, 8($0), $3
 	i32.store	$discard=, 12($0), $4
-.LBB1_3:                                  # %if.end
+.LBB1_3:                                # %if.end
 	return
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr52760.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr52760.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -10,7 +12,7 @@ foo:                                    # @foo
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	$pop1, .LBB0_2
-.LBB0_1:                                  # %for.body
+.LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.load16_u	$2=, 0($1)
@@ -44,11 +46,13 @@ foo:                                    # @foo
 	i32.add 	$0=, $0, $pop17
 	i32.add 	$1=, $1, $3
 	br_if   	$0, .LBB0_1
-.LBB0_2:                                  # %for.end
+.LBB0_2:                                # %for.end
 	return
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -79,7 +83,7 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$4=, 0($2), $4
 	return  	$pop5
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

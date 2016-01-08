@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/931004-7.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931004-7.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -32,21 +34,23 @@ f:                                      # @f
 	br_if   	$pop10, .LBB0_5
 # BB#4:                                 # %if.end19
 	return  	$5
-.LBB0_5:                                  # %if.then18
+.LBB0_5:                                # %if.then18
 	call    	abort
 	unreachable
-.LBB0_6:                                  # %if.then14
+.LBB0_6:                                # %if.then14
 	call    	abort
 	unreachable
-.LBB0_7:                                  # %if.then8
+.LBB0_7:                                # %if.then8
 	call    	abort
 	unreachable
-.LBB0_8:                                  # %if.then
+.LBB0_8:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

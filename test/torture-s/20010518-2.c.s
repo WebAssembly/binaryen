@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010518-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010518-2.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -63,7 +65,7 @@ main:                                   # @main
 # BB#5:                                 # %if.end
 	call    	exit, $4
 	unreachable
-.LBB0_6:                                  # %if.then
+.LBB0_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-3c.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-3c.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -12,7 +14,7 @@ f:                                      # @f
 	i32.shl 	$push1=, $0, $pop0
 	i32.add 	$2=, $1, $pop1
 	i32.const	$3=, 256
-.LBB0_1:                                  # %do.body
+.LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.const	$push2=, 1
@@ -28,11 +30,13 @@ f:                                      # @f
 	i32.const	$push8=, 1073741840
 	i32.lt_s	$push9=, $0, $pop8
 	br_if   	$pop9, .LBB0_1
-.LBB0_2:                                  # %do.end
+.LBB0_2:                                # %do.end
 	return  	$0
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -54,12 +58,13 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	a,@object               # @a
-	.bss
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	4
 a:
-	.zero	1020
+	.skip	1020
 	.size	a, 1020
 
 

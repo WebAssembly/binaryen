@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080117-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080117-1.c"
+	.section	.text.gstate_path_memory,"ax",@progbits
+	.hidden	gstate_path_memory
 	.globl	gstate_path_memory
 	.type	gstate_path_memory,@function
 gstate_path_memory:                     # @gstate_path_memory
@@ -21,6 +23,8 @@ gstate_path_memory:                     # @gstate_path_memory
 .Lfunc_end0:
 	.size	gstate_path_memory, .Lfunc_end0-gstate_path_memory
 
+	.section	.text.gs_state_update_overprint,"ax",@progbits
+	.hidden	gs_state_update_overprint
 	.globl	gs_state_update_overprint
 	.type	gs_state_update_overprint,@function
 gs_state_update_overprint:              # @gs_state_update_overprint
@@ -31,6 +35,8 @@ gs_state_update_overprint:              # @gs_state_update_overprint
 .Lfunc_end1:
 	.size	gs_state_update_overprint, .Lfunc_end1-gs_state_update_overprint
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -42,7 +48,7 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 	.type	gstate_initial,@object  # @gstate_initial
-	.section	.rodata,"a",@progbits
+	.section	.rodata.gstate_initial,"a",@progbits
 	.align	2
 gstate_initial:
 	.int32	1                       # 0x1

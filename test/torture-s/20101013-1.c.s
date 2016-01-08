@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20101013-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20101013-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -11,6 +13,7 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.build_ref_for_offset,"ax",@progbits
 	.type	build_ref_for_offset,@function
 build_ref_for_offset:                   # @build_ref_for_offset
 	.local  	i32, i32, i32, i32, i32
@@ -36,6 +39,7 @@ build_ref_for_offset:                   # @build_ref_for_offset
 .Lfunc_end1:
 	.size	build_ref_for_offset, .Lfunc_end1-build_ref_for_offset
 
+	.section	.text.get_addr_base_and_unit_offset,"ax",@progbits
 	.type	get_addr_base_and_unit_offset,@function
 get_addr_base_and_unit_offset:          # @get_addr_base_and_unit_offset
 	.param  	i32
@@ -46,6 +50,7 @@ get_addr_base_and_unit_offset:          # @get_addr_base_and_unit_offset
 .Lfunc_end2:
 	.size	get_addr_base_and_unit_offset, .Lfunc_end2-get_addr_base_and_unit_offset
 
+	.section	.text.build_int_cst,"ax",@progbits
 	.type	build_int_cst,@function
 build_int_cst:                          # @build_int_cst
 	.param  	i64
@@ -56,7 +61,7 @@ build_int_cst:                          # @build_int_cst
 	br_if   	$pop1, .LBB3_2
 # BB#1:                                 # %if.end
 	return
-.LBB3_2:                                  # %if.then
+.LBB3_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990531-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990531-1.c"
+	.section	.text.bad,"ax",@progbits
+	.hidden	bad
 	.globl	bad
 	.type	bad,@function
 bad:                                    # @bad
@@ -28,6 +30,8 @@ bad:                                    # @bad
 .Lfunc_end0:
 	.size	bad, .Lfunc_end0-bad
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

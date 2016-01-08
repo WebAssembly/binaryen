@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001101.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001101.c"
+	.section	.text.dummy,"ax",@progbits
+	.hidden	dummy
 	.globl	dummy
 	.type	dummy,@function
 dummy:                                  # @dummy
@@ -14,6 +16,8 @@ dummy:                                  # @dummy
 .Lfunc_end0:
 	.size	dummy, .Lfunc_end0-dummy
 
+	.section	.text.bogus,"ax",@progbits
+	.hidden	bogus
 	.globl	bogus
 	.type	bogus,@function
 bogus:                                  # @bogus
@@ -29,12 +33,14 @@ bogus:                                  # @bogus
 	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %if.end8
 	return
-.LBB1_2:                                  # %if.then7
+.LBB1_2:                                # %if.then7
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	bogus, .Lfunc_end1-bogus
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

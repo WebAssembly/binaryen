@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-13.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-13.c"
+	.section	.text.scale,"ax",@progbits
+	.hidden	scale
 	.globl	scale
 	.type	scale,@function
 scale:                                  # @scale
@@ -28,7 +30,7 @@ scale:                                  # @scale
 	i32.add 	$1=, $1, $pop6
 	i32.const	$3=, -1
 	i32.add 	$6=, $2, $3
-.LBB0_4:                                  # %for.body.for.body_crit_edge
+.LBB0_4:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_5
 	i32.const	$push7=, -4
@@ -44,11 +46,13 @@ scale:                                  # @scale
 	i32.add 	$1=, $1, $pop11
 	i32.add 	$6=, $6, $3
 	br_if   	$6, .LBB0_4
-.LBB0_5:                                  # %if.end
+.LBB0_5:                                # %if.end
 	return
 .Lfunc_end0:
 	.size	scale, .Lfunc_end0-scale
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr35800.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr35800.c"
+	.section	.text.stab_xcoff_builtin_type,"ax",@progbits
+	.hidden	stab_xcoff_builtin_type
 	.globl	stab_xcoff_builtin_type
 	.type	stab_xcoff_builtin_type,@function
 stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
@@ -15,24 +17,26 @@ stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
 # BB#1:                                 # %if.end
 	i32.const	$push2=, -2
 	i32.sub 	$0=, $pop2, $0
-	i32.const	$1=, .str
+	i32.const	$1=, .L.str
 	block   	.LBB0_3
 	i32.const	$push3=, 32
 	i32.gt_u	$push4=, $0, $pop3
 	br_if   	$pop4, .LBB0_3
 # BB#2:                                 # %switch.lookup
-	i32.const	$push7=, switch.table
+	i32.const	$push7=, .Lswitch.table
 	i32.const	$push5=, 2
 	i32.shl 	$push6=, $0, $pop5
 	i32.add 	$push8=, $pop7, $pop6
 	i32.load	$1=, 0($pop8)
-.LBB0_3:                                  # %sw.epilog
+.LBB0_3:                                # %sw.epilog
 	i32.load8_s	$1=, 0($1)
-.LBB0_4:                                  # %cleanup
+.LBB0_4:                                # %cleanup
 	return  	$1
 .Lfunc_end0:
 	.size	stab_xcoff_builtin_type, .Lfunc_end0-stab_xcoff_builtin_type
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -40,8 +44,8 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %if.end8
 	i32.const	$1=, -4
-	i32.const	$0=, switch.table+8
-.LBB1_1:                                  # %stab_xcoff_builtin_type.exit
+	i32.const	$0=, .Lswitch.table+8
+.LBB1_1:                                # %stab_xcoff_builtin_type.exit
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_4
 	loop    	.LBB1_3
@@ -51,7 +55,7 @@ main:                                   # @main
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	$pop3, .LBB1_4
 # BB#2:                                 # %for.cond
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push4=, -1
 	i32.add 	$1=, $1, $pop4
 	i32.const	$push5=, 4
@@ -59,69 +63,69 @@ main:                                   # @main
 	i32.const	$push6=, -34
 	i32.ge_s	$push7=, $1, $pop6
 	br_if   	$pop7, .LBB1_1
-.LBB1_3:                                  # %if.end21
+.LBB1_3:                                # %if.end21
 	i32.const	$push8=, 0
 	return  	$pop8
-.LBB1_4:                                  # %if.then16
+.LBB1_4:                                # %if.then16
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"int"
-	.size	.str, 4
+	.size	.L.str, 4
 
-	.type	.str.2,@object          # @.str.2
-.str.2:
+	.type	.L.str.2,@object        # @.str.2
+.L.str.2:
 	.asciz	"short"
-	.size	.str.2, 6
+	.size	.L.str.2, 6
 
-	.type	.str.33,@object         # @.str.33
-.str.33:
+	.type	.L.str.33,@object       # @.str.33
+.L.str.33:
 	.asciz	"integer*8"
-	.size	.str.33, 10
+	.size	.L.str.33, 10
 
-	.type	switch.table,@object    # @switch.table
-	.section	.data.rel.ro,"aw",@progbits
+	.type	.Lswitch.table,@object  # @switch.table
+	.section	.data.rel.ro..Lswitch.table,"aw",@progbits
 	.align	4
-switch.table:
-	.int32	.str.2
-	.int32	.str.2
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.int32	.str.33
-	.size	switch.table, 132
+.Lswitch.table:
+	.int32	.L.str.2
+	.int32	.L.str.2
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.int32	.L.str.33
+	.size	.Lswitch.table, 132
 
 
 	.ident	"clang version 3.8.0 "

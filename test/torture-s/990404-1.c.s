@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990404-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990404-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -8,7 +10,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$13=, -1
                                         # implicit-def: %vreg66
-.LBB0_1:                                  # %for.cond
+.LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB0_4
 	loop    	.LBB0_3
@@ -47,7 +49,7 @@ main:                                   # @main
 	i32.eq  	$push23=, $pop16, $pop22
 	br_if   	$pop23, .LBB0_4
 # BB#2:                                 # %if.end7
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$1=, 1
 	i32.const	$12=, 2
 	i32.const	$push15=, 9
@@ -75,17 +77,18 @@ main:                                   # @main
 	i32.const	$push20=, 10
 	i32.lt_s	$push21=, $13, $pop20
 	br_if   	$pop21, .LBB0_1
-.LBB0_3:                                  # %if.then11
+.LBB0_3:                                # %if.then11
 	call    	abort
 	unreachable
-.LBB0_4:                                  # %for.end15
+.LBB0_4:                                # %for.end15
 	call    	exit, $0
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	x,@object               # @x
-	.data
+	.hidden	x                       # @x
+	.type	x,@object
+	.section	.data.x,"aw",@progbits
 	.globl	x
 	.align	4
 x:

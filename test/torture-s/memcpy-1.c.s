@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/memcpy-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memcpy-1.c"
+	.section	.text.copy,"ax",@progbits
+	.hidden	copy
 	.globl	copy
 	.type	copy,@function
 copy:                                   # @copy
@@ -11,6 +13,8 @@ copy:                                   # @copy
 .Lfunc_end0:
 	.size	copy, .Lfunc_end0-copy
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -25,7 +29,7 @@ main:                                   # @main
 	i32.store	$28=, 0($9), $28
 	i32.const	$4=, 0
 	copy_local	$2=, $4
-.LBB1_1:                                  # %for.body
+.LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	i32.const	$10=, 131072
@@ -41,7 +45,7 @@ main:                                   # @main
 	i32.const	$0=, 131072
 	i32.ne  	$push2=, $2, $0
 	br_if   	$pop2, .LBB1_1
-.LBB1_2:                                  # %for.end
+.LBB1_2:                                # %for.end
 	i32.const	$1=, 1024
 	i32.const	$12=, 0
 	i32.add 	$12=, $28, $12
@@ -49,7 +53,7 @@ main:                                   # @main
 	i32.add 	$13=, $28, $13
 	call    	memcpy, $12, $13, $1
 	i32.const	$4=, 0
-.LBB1_3:                                  # %for.body6
+.LBB1_3:                                # %for.body6
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_26
 	loop    	.LBB1_5
@@ -62,23 +66,23 @@ main:                                   # @main
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	$pop6, .LBB1_26
 # BB#4:                                 # %for.cond3
-                                        #   in Loop: Header=.LBB1_3 Depth=1
+                                        #   in Loop: Header=BB1_3 Depth=1
 	i32.add 	$4=, $4, $7
 	i32.const	$3=, 1023
 	i32.le_u	$push7=, $4, $3
 	br_if   	$pop7, .LBB1_3
-.LBB1_5:                                  # %for.end15
+.LBB1_5:                                # %for.end15
 	i32.const	$15=, 0
 	i32.add 	$15=, $28, $15
 	call    	memset, $15, $7, $1
-.LBB1_6:                                  # %for.cond17
+.LBB1_6:                                # %for.cond17
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_9
 	loop    	.LBB1_8
 	i32.gt_u	$push8=, $7, $3
 	br_if   	$pop8, .LBB1_9
 # BB#7:                                 # %for.cond17.for.body20_crit_edge
-                                        #   in Loop: Header=.LBB1_6 Depth=1
+                                        #   in Loop: Header=BB1_6 Depth=1
 	i32.const	$16=, 0
 	i32.add 	$16=, $28, $16
 	i32.add 	$5=, $16, $7
@@ -87,17 +91,17 @@ main:                                   # @main
 	i32.load8_u	$push28=, 0($5)
 	i32.eq  	$push29=, $pop28, $4
 	br_if   	$pop29, .LBB1_6
-.LBB1_8:                                  # %if.then25
+.LBB1_8:                                # %if.then25
 	call    	abort
 	unreachable
-.LBB1_9:                                  # %for.end29
+.LBB1_9:                                # %for.end29
 	i32.const	$17=, 0
 	i32.add 	$17=, $28, $17
 	i32.const	$18=, 131072
 	i32.add 	$18=, $28, $18
 	call    	memcpy, $17, $18, $0
 	i32.const	$5=, 0
-.LBB1_10:                                 # %for.body35
+.LBB1_10:                               # %for.body35
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_25
 	loop    	.LBB1_12
@@ -109,25 +113,25 @@ main:                                   # @main
 	i32.ne  	$push12=, $pop10, $pop11
 	br_if   	$pop12, .LBB1_25
 # BB#11:                                # %for.cond32
-                                        #   in Loop: Header=.LBB1_10 Depth=1
+                                        #   in Loop: Header=BB1_10 Depth=1
 	i32.const	$7=, 1
 	i32.add 	$5=, $5, $7
 	i32.const	$4=, 131071
 	i32.le_u	$push13=, $5, $4
 	br_if   	$pop13, .LBB1_10
-.LBB1_12:                                 # %for.end46
+.LBB1_12:                               # %for.end46
 	i32.const	$6=, 0
 	i32.const	$20=, 0
 	i32.add 	$20=, $28, $20
 	call    	memset, $20, $6, $0
-.LBB1_13:                                 # %for.cond48
+.LBB1_13:                               # %for.cond48
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_16
 	loop    	.LBB1_15
 	i32.gt_u	$push14=, $7, $4
 	br_if   	$pop14, .LBB1_16
 # BB#14:                                # %for.cond48.for.body51_crit_edge
-                                        #   in Loop: Header=.LBB1_13 Depth=1
+                                        #   in Loop: Header=BB1_13 Depth=1
 	i32.const	$21=, 0
 	i32.add 	$21=, $28, $21
 	i32.add 	$5=, $21, $7
@@ -137,16 +141,16 @@ main:                                   # @main
 	i32.const	$push30=, 0
 	i32.eq  	$push31=, $pop26, $pop30
 	br_if   	$pop31, .LBB1_13
-.LBB1_15:                                 # %if.then56
+.LBB1_15:                               # %if.then56
 	call    	abort
 	unreachable
-.LBB1_16:                                 # %for.end60
+.LBB1_16:                               # %for.end60
 	i32.const	$22=, 0
 	i32.add 	$22=, $28, $22
 	i32.const	$23=, 131072
 	i32.add 	$23=, $28, $23
 	call    	memcpy, $22, $23, $1
-.LBB1_17:                                 # %for.body66
+.LBB1_17:                               # %for.body66
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_24
 	loop    	.LBB1_19
@@ -158,19 +162,19 @@ main:                                   # @main
 	i32.ne  	$push18=, $pop16, $pop17
 	br_if   	$pop18, .LBB1_24
 # BB#18:                                # %for.cond63
-                                        #   in Loop: Header=.LBB1_17 Depth=1
+                                        #   in Loop: Header=BB1_17 Depth=1
 	i32.const	$5=, 1
 	i32.add 	$6=, $6, $5
 	i32.le_u	$push19=, $6, $3
 	br_if   	$pop19, .LBB1_17
-.LBB1_19:                                 # %for.end77
+.LBB1_19:                               # %for.end77
 	i32.const	$25=, 0
 	i32.add 	$25=, $28, $25
 	i32.const	$26=, 131072
 	i32.add 	$26=, $28, $26
 	call    	memcpy, $25, $26, $0
 	i32.const	$7=, 0
-.LBB1_20:                                 # %for.body85
+.LBB1_20:                               # %for.body85
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_23
 	loop    	.LBB1_22
@@ -182,24 +186,24 @@ main:                                   # @main
 	i32.ne  	$push23=, $pop21, $pop22
 	br_if   	$pop23, .LBB1_23
 # BB#21:                                # %for.cond82
-                                        #   in Loop: Header=.LBB1_20 Depth=1
+                                        #   in Loop: Header=BB1_20 Depth=1
 	i32.add 	$7=, $7, $5
 	i32.le_u	$push24=, $7, $4
 	br_if   	$pop24, .LBB1_20
-.LBB1_22:                                 # %for.end96
+.LBB1_22:                               # %for.end96
 	i32.const	$push25=, 0
 	call    	exit, $pop25
 	unreachable
-.LBB1_23:                                 # %if.then92
+.LBB1_23:                               # %if.then92
 	call    	abort
 	unreachable
-.LBB1_24:                                 # %if.then73
+.LBB1_24:                               # %if.then73
 	call    	abort
 	unreachable
-.LBB1_25:                                 # %if.then42
+.LBB1_25:                               # %if.then42
 	call    	abort
 	unreachable
-.LBB1_26:                                 # %if.then
+.LBB1_26:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

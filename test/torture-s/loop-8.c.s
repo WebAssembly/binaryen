@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-8.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-8.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -14,12 +16,14 @@ bar:                                    # @bar
 	br_if   	$pop2, .LBB0_3
 # BB#2:                                 # %if.end
 	return
-.LBB0_3:                                  # %if.then
+.LBB0_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -47,7 +51,7 @@ main:                                   # @main
 # BB#3:                                 # %for.cond.2
 	call    	abort
 	unreachable
-.LBB1_4:                                  # %e
+.LBB1_4:                                # %e
 	block   	.LBB1_6
 	f64.const	$push5=, 0x1p0
 	f64.eq  	$push6=, $2, $pop5
@@ -55,14 +59,15 @@ main:                                   # @main
 # BB#5:                                 # %if.then.i
 	call    	abort
 	unreachable
-.LBB1_6:                                  # %bar.exit4
+.LBB1_6:                                # %bar.exit4
 	call    	exit, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	4
 a:

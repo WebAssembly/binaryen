@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr25737.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr25737.c"
+	.section	.text.time_enqueue,"ax",@progbits
+	.hidden	time_enqueue
 	.globl	time_enqueue
 	.type	time_enqueue,@function
 time_enqueue:                           # @time_enqueue
@@ -13,6 +15,8 @@ time_enqueue:                           # @time_enqueue
 .Lfunc_end0:
 	.size	time_enqueue, .Lfunc_end0-time_enqueue
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

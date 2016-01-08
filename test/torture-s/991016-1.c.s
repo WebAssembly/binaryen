@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/991016-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991016-1.c"
+	.section	.text.doit,"ax",@progbits
+	.hidden	doit
 	.globl	doit
 	.type	doit,@function
 doit:                                   # @doit
@@ -24,7 +26,7 @@ doit:                                   # @doit
 	br_if   	$pop2, .LBB0_6
 # BB#3:                                 # %do.body11.preheader
 	i64.load	$6=, 0($2)
-.LBB0_4:                                  # %do.body11
+.LBB0_4:                                # %do.body11
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_5
 	i32.const	$push4=, -1
@@ -33,17 +35,17 @@ doit:                                   # @doit
 	i64.const	$push3=, 1
 	i64.shl 	$6=, $4, $pop3
 	br_if   	$1, .LBB0_4
-.LBB0_5:                                  # %do.end16
+.LBB0_5:                                # %do.end16
 	i64.store	$discard=, 0($2), $6
 	i64.const	$push5=, 0
 	i64.eq  	$1=, $4, $pop5
 	br      	.LBB0_13
-.LBB0_6:                                  # %sw.default
+.LBB0_6:                                # %sw.default
 	call    	abort
 	unreachable
-.LBB0_7:                                  # %do.body2.preheader
+.LBB0_7:                                # %do.body2.preheader
 	i32.load	$0=, 0($2)
-.LBB0_8:                                  # %do.body2
+.LBB0_8:                                # %do.body2
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_9
 	i32.const	$push6=, -1
@@ -51,14 +53,14 @@ doit:                                   # @doit
 	copy_local	$3=, $0
 	i32.shl 	$0=, $3, $5
 	br_if   	$1, .LBB0_8
-.LBB0_9:                                  # %do.end7
+.LBB0_9:                                # %do.end7
 	i32.store	$discard=, 0($2), $0
 	i32.const	$push7=, 0
 	i32.eq  	$1=, $3, $pop7
 	br      	.LBB0_13
-.LBB0_10:                                 # %do.body.preheader
+.LBB0_10:                               # %do.body.preheader
 	i32.load	$0=, 0($2)
-.LBB0_11:                                 # %do.body
+.LBB0_11:                               # %do.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_12
 	i32.const	$push9=, -1
@@ -67,15 +69,17 @@ doit:                                   # @doit
 	i32.const	$push8=, 1
 	i32.shl 	$0=, $3, $pop8
 	br_if   	$1, .LBB0_11
-.LBB0_12:                                 # %do.end
+.LBB0_12:                               # %do.end
 	i32.store	$discard=, 0($2), $0
 	i32.const	$push10=, 0
 	i32.eq  	$1=, $3, $pop10
-.LBB0_13:                                 # %cleanup
+.LBB0_13:                               # %cleanup
 	return  	$1
 .Lfunc_end0:
 	.size	doit, .Lfunc_end0-doit
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

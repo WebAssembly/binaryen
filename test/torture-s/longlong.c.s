@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/longlong.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/longlong.c"
+	.section	.text.alpha_ep_extbl_i_eq_0,"ax",@progbits
+	.hidden	alpha_ep_extbl_i_eq_0
 	.globl	alpha_ep_extbl_i_eq_0
 	.type	alpha_ep_extbl_i_eq_0,@function
 alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
@@ -36,11 +38,13 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	i64.const	$push16=, 255
 	i64.and 	$push17=, $pop15, $pop16
 	i64.store	$discard=, 0($pop20), $pop17
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	return
 .Lfunc_end0:
 	.size	alpha_ep_extbl_i_eq_0, .Lfunc_end0-alpha_ep_extbl_i_eq_0
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -73,30 +77,33 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	b,@object               # @b
-	.bss
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	4
 b:
-	.zero	256
+	.skip	256
 	.size	b, 256
 
-	.type	r,@object               # @r
-	.data
+	.hidden	r                       # @r
+	.type	r,@object
+	.section	.data.r,"aw",@progbits
 	.globl	r
 	.align	2
 r:
 	.int32	b
 	.size	r, 4
 
-	.type	pars,@object            # @pars
-	.bss
+	.hidden	pars                    # @pars
+	.type	pars,@object
+	.section	.bss.pars,"aw",@nobits
 	.globl	pars
 	.align	2
 pars:

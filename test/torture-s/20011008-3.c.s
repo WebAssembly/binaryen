@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011008-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011008-3.c"
+	.section	.text.log_compare,"ax",@progbits
+	.hidden	log_compare
 	.globl	log_compare
 	.type	log_compare,@function
 log_compare:                            # @log_compare
@@ -11,6 +13,8 @@ log_compare:                            # @log_compare
 .Lfunc_end0:
 	.size	log_compare, .Lfunc_end0-log_compare
 
+	.section	.text.__db_txnlist_lsnadd,"ax",@progbits
+	.hidden	__db_txnlist_lsnadd
 	.globl	__db_txnlist_lsnadd
 	.type	__db_txnlist_lsnadd,@function
 __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
@@ -21,7 +25,7 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i32.const	$5=, 1
 	i32.and 	$4=, $3, $5
 	i32.const	$3=, 0
-.LBB1_1:                                  # %for.cond
+.LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_5
 	copy_local	$7=, $5
@@ -30,20 +34,20 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i32.eq  	$push11=, $4, $pop10
 	br_if   	$pop11, .LBB1_3
 # BB#2:                                 # %cond.false
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push1=, 12
 	i32.add 	$push2=, $1, $pop1
 	i32.load	$7=, 0($pop2)
-.LBB1_3:                                  # %cond.end
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+.LBB1_3:                                # %cond.end
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.ge_s	$push3=, $3, $7
 	br_if   	$pop3, .LBB1_5
 # BB#4:                                 # %for.body
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push9=, 1
 	i32.add 	$3=, $3, $pop9
 	br      	.LBB1_1
-.LBB1_5:                                  # %for.end35
+.LBB1_5:                                # %for.end35
 	i32.const	$push4=, 20
 	i32.add 	$push5=, $1, $pop4
 	i32.load	$7=, 0($pop5)
@@ -59,6 +63,8 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 .Lfunc_end1:
 	.size	__db_txnlist_lsnadd, .Lfunc_end1-__db_txnlist_lsnadd
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

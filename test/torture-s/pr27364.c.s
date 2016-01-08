@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr27364.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr27364.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -21,11 +23,13 @@ f:                                      # @f
 	i32.add 	$push7=, $pop5, $pop6
 	i32.const	$push8=, 4
 	i32.shr_u	$1=, $pop7, $pop8
-.LBB0_2:                                  # %return
+.LBB0_2:                                # %return
 	return  	$1
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

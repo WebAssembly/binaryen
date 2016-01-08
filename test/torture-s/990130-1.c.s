@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990130-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990130-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -20,21 +22,24 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	call    	exit, $1
 	unreachable
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	count,@object           # @count
-	.bss
+	.hidden	count                   # @count
+	.type	count,@object
+	.section	.bss.count,"aw",@nobits
 	.globl	count
 	.align	2
 count:
 	.int32	0                       # 0x0
 	.size	count, 4
 
-	.type	dummy,@object           # @dummy
+	.hidden	dummy                   # @dummy
+	.type	dummy,@object
+	.section	.bss.dummy,"aw",@nobits
 	.globl	dummy
 	.align	2
 dummy:

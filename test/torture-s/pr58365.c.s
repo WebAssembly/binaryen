@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58365.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58365.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -11,6 +13,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -58,7 +62,7 @@ main:                                   # @main
 	i64.or  	$push15=, $pop14, $3
 	i64.store	$discard=, 8($16), $pop15
 	br      	.LBB1_3
-.LBB1_2:                                  # %if.end.i
+.LBB1_2:                                # %if.end.i
 	i32.const	$push16=, 16
 	i32.const	$8=, 8
 	i32.add 	$8=, $16, $8
@@ -71,7 +75,7 @@ main:                                   # @main
 	i64.const	$push20=, 0
 	i64.store	$push21=, 0($pop19), $pop20
 	i64.store	$discard=, 8($16), $pop21
-.LBB1_3:                                  # %bar.exit
+.LBB1_3:                                # %bar.exit
 	i32.load	$push22=, 8($16)
 	i32.store	$discard=, h($0), $pop22
 	i32.const	$push23=, 16
@@ -109,14 +113,15 @@ main:                                   # @main
 	i32.const	$7=, __stack_pointer
 	i32.store	$16=, 0($7), $16
 	return  	$0
-.LBB1_5:                                  # %if.then
+.LBB1_5:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	i,@object               # @i
-	.data
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.data.i,"aw",@progbits
 	.globl	i
 	.align	2
 i:
@@ -125,19 +130,20 @@ i:
 
 	.type	h,@object               # @h
 	.lcomm	h,20,2
-	.type	f,@object               # @f
-	.bss
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.bss.f,"aw",@nobits
 	.globl	f
 	.align	2
 f:
-	.zero	20
+	.skip	20
 	.size	f, 20
 
 	.type	g,@object               # @g
-	.section	.rodata,"a",@progbits
+	.section	.rodata.g,"a",@progbits
 	.align	2
 g:
-	.zero	20
+	.skip	20
 	.size	g, 20
 
 

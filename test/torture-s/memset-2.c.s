@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/memset-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memset-2.c"
+	.section	.text.reset,"ax",@progbits
+	.hidden	reset
 	.globl	reset
 	.type	reset,@function
 reset:                                  # @reset
@@ -40,6 +42,8 @@ reset:                                  # @reset
 .Lfunc_end0:
 	.size	reset, .Lfunc_end0-reset
 
+	.section	.text.check,"ax",@progbits
+	.hidden	check
 	.globl	check
 	.type	check,@function
 check:                                  # @check
@@ -51,7 +55,7 @@ check:                                  # @check
 	block   	.LBB1_4
 	i32.le_s	$push0=, $0, $4
 	br_if   	$pop0, .LBB1_4
-.LBB1_1:                                  # %for.body
+.LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	i32.const	$3=, u
@@ -61,23 +65,23 @@ check:                                  # @check
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	$pop4, .LBB1_3
 # BB#2:                                 # %for.inc
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push5=, 1
 	i32.add 	$4=, $4, $pop5
 	i32.add 	$3=, $3, $4
 	i32.lt_s	$push6=, $4, $0
 	br_if   	$pop6, .LBB1_1
 	br      	.LBB1_4
-.LBB1_3:                                  # %if.then
+.LBB1_3:                                # %if.then
 	call    	abort
 	unreachable
-.LBB1_4:                                  # %for.cond3.preheader
+.LBB1_4:                                # %for.cond3.preheader
 	i32.const	$4=, 0
 	copy_local	$0=, $3
 	block   	.LBB1_8
 	i32.le_s	$push7=, $1, $4
 	br_if   	$pop7, .LBB1_8
-.LBB1_5:                                  # %for.body6
+.LBB1_5:                                # %for.body6
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_7
 	i32.add 	$push8=, $3, $4
@@ -85,17 +89,17 @@ check:                                  # @check
 	i32.ne  	$push10=, $pop9, $2
 	br_if   	$pop10, .LBB1_7
 # BB#6:                                 # %for.inc12
-                                        #   in Loop: Header=.LBB1_5 Depth=1
+                                        #   in Loop: Header=BB1_5 Depth=1
 	i32.const	$push11=, 1
 	i32.add 	$4=, $4, $pop11
 	i32.add 	$0=, $3, $4
 	i32.lt_s	$push12=, $4, $1
 	br_if   	$pop12, .LBB1_5
 	br      	.LBB1_8
-.LBB1_7:                                  # %if.then10
+.LBB1_7:                                # %if.then10
 	call    	abort
 	unreachable
-.LBB1_8:                                  # %for.body19.preheader
+.LBB1_8:                                # %for.body19.preheader
 	i32.const	$4=, 97
 	block   	.LBB1_17
 	i32.load8_u	$push13=, 0($0)
@@ -131,12 +135,14 @@ check:                                  # @check
 	br_if   	$pop28, .LBB1_17
 # BB#16:                                # %for.inc25.7
 	return
-.LBB1_17:                                 # %if.then23
+.LBB1_17:                               # %if.then23
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	check, .Lfunc_end1-check
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -145,7 +151,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$27=, 0
 	copy_local	$25=, $27
-.LBB2_1:                                  # %for.body
+.LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_2
 	i32.const	$push0=, 1633771873
@@ -195,7 +201,7 @@ main:                                   # @main
 	copy_local	$24=, $17
 	i32.ne  	$push29=, $25, $3
 	br_if   	$pop29, .LBB2_1
-.LBB2_2:                                  # %for.body18
+.LBB2_2:                                # %for.body18
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_3
 	i32.store8	$push30=, u+6($17), $13
@@ -242,7 +248,7 @@ main:                                   # @main
 	copy_local	$18=, $27
 	i32.ne  	$push58=, $24, $3
 	br_if   	$pop58, .LBB2_2
-.LBB2_3:                                  # %for.body44
+.LBB2_3:                                # %for.body44
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_4
 	i32.store8	$push59=, u+6($27), $8
@@ -293,7 +299,7 @@ main:                                   # @main
 	copy_local	$24=, $17
 	i32.ne  	$push89=, $18, $3
 	br_if   	$pop89, .LBB2_3
-.LBB2_4:                                  # %for.body70
+.LBB2_4:                                # %for.body70
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_5
 	i32.store8	$push90=, u+6($17), $15
@@ -348,7 +354,7 @@ main:                                   # @main
 	copy_local	$18=, $27
 	i32.ne  	$push122=, $24, $3
 	br_if   	$pop122, .LBB2_4
-.LBB2_5:                                  # %for.body96
+.LBB2_5:                                # %for.body96
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_6
 	i32.store8	$push123=, u+6($27), $12
@@ -407,7 +413,7 @@ main:                                   # @main
 	copy_local	$22=, $17
 	i32.ne  	$push157=, $18, $3
 	br_if   	$pop157, .LBB2_5
-.LBB2_6:                                  # %for.body122
+.LBB2_6:                                # %for.body122
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_7
 	i32.store8	$push158=, u+6($17), $16
@@ -470,7 +476,7 @@ main:                                   # @main
 	copy_local	$26=, $27
 	i32.ne  	$push194=, $22, $3
 	br_if   	$pop194, .LBB2_6
-.LBB2_7:                                  # %for.body148
+.LBB2_7:                                # %for.body148
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_8
 	i32.store8	$push195=, u+6($27), $4
@@ -537,7 +543,7 @@ main:                                   # @main
 	copy_local	$24=, $17
 	i32.ne  	$push233=, $26, $3
 	br_if   	$pop233, .LBB2_7
-.LBB2_8:                                  # %for.body174
+.LBB2_8:                                # %for.body174
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_9
 	i32.store8	$push234=, u+6($17), $6
@@ -609,7 +615,7 @@ main:                                   # @main
 	copy_local	$27=, $17
 	i32.ne  	$push276=, $24, $3
 	br_if   	$pop276, .LBB2_8
-.LBB2_9:                                  # %for.body200
+.LBB2_9:                                # %for.body200
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_10
 	i32.store8	$push277=, u+6($17), $4
@@ -652,7 +658,7 @@ main:                                   # @main
 	copy_local	$25=, $17
 	i32.ne  	$push302=, $27, $3
 	br_if   	$pop302, .LBB2_9
-.LBB2_10:                                 # %for.body226
+.LBB2_10:                               # %for.body226
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_11
 	i32.store8	$push303=, u+6($17), $23
@@ -695,7 +701,7 @@ main:                                   # @main
 	copy_local	$27=, $17
 	i32.ne  	$push328=, $25, $3
 	br_if   	$pop328, .LBB2_10
-.LBB2_11:                                 # %for.body252
+.LBB2_11:                               # %for.body252
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_12
 	i32.store8	$push329=, u+6($17), $26
@@ -738,7 +744,7 @@ main:                                   # @main
 	copy_local	$25=, $17
 	i32.ne  	$push354=, $27, $3
 	br_if   	$pop354, .LBB2_11
-.LBB2_12:                                 # %for.body278
+.LBB2_12:                               # %for.body278
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_13
 	i32.store8	$push355=, u+6($17), $23
@@ -781,7 +787,7 @@ main:                                   # @main
 	copy_local	$27=, $17
 	i32.ne  	$push380=, $25, $3
 	br_if   	$pop380, .LBB2_12
-.LBB2_13:                                 # %for.body304
+.LBB2_13:                               # %for.body304
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_14
 	i32.store8	$push381=, u+6($17), $26
@@ -824,7 +830,7 @@ main:                                   # @main
 	copy_local	$25=, $17
 	i32.ne  	$push406=, $27, $3
 	br_if   	$pop406, .LBB2_13
-.LBB2_14:                                 # %for.body330
+.LBB2_14:                               # %for.body330
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_15
 	i32.store8	$push407=, u+6($17), $8
@@ -867,7 +873,7 @@ main:                                   # @main
 	copy_local	$27=, $17
 	i32.ne  	$push432=, $25, $3
 	br_if   	$pop432, .LBB2_14
-.LBB2_15:                                 # %for.body356
+.LBB2_15:                               # %for.body356
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_16
 	i32.store8	$push433=, u+6($17), $23
@@ -909,15 +915,16 @@ main:                                   # @main
 	i32.add 	$27=, $27, $1
 	i32.ne  	$push458=, $27, $3
 	br_if   	$pop458, .LBB2_15
-.LBB2_16:                                 # %for.end378
+.LBB2_16:                               # %for.end378
 	i32.const	$push459=, 0
 	call    	exit, $pop459
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	A,@object               # @A
-	.data
+	.hidden	A                       # @A
+	.type	A,@object
+	.section	.data.A,"aw",@progbits
 	.globl	A
 A:
 	.int8	65                      # 0x41

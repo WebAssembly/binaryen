@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44683.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44683.c"
+	.section	.text.copysign_bug,"ax",@progbits
+	.hidden	copysign_bug
 	.globl	copysign_bug
 	.type	copysign_bug,@function
 copysign_bug:                           # @copysign_bug
@@ -18,18 +20,20 @@ copysign_bug:                           # @copysign_bug
 	f64.mul 	$push0=, $0, $pop1
 	f64.eq  	$push3=, $pop0, $0
 	br_if   	$pop3, .LBB0_3
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	f64.const	$push4=, 0x1p0
 	f64.copysign	$push5=, $pop4, $0
 	f64.lt  	$push6=, $pop5, $1
 	i32.const	$push8=, 2
 	i32.const	$push7=, 3
 	i32.select	$2=, $pop6, $pop8, $pop7
-.LBB0_3:                                  # %return
+.LBB0_3:                                # %return
 	return  	$2
 .Lfunc_end0:
 	.size	copysign_bug, .Lfunc_end0-copysign_bug
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -44,7 +48,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

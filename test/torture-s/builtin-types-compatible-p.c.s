@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-types-compatible-p.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-types-compatible-p.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -11,26 +13,31 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	i,@object               # @i
-	.bss
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4
 
-	.type	d,@object               # @d
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.bss.d,"aw",@nobits
 	.globl	d
 	.align	3
 d:
 	.int64	0                       # double 0
 	.size	d, 8
 
-	.type	rootbeer,@object        # @rootbeer
+	.hidden	rootbeer                # @rootbeer
+	.type	rootbeer,@object
+	.section	.bss.rootbeer,"aw",@nobits
 	.globl	rootbeer
 	.align	2
 rootbeer:
-	.zero	4
+	.skip	4
 	.size	rootbeer, 4
 
 

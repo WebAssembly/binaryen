@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr60454.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr60454.c"
+	.section	.text.fake_swap32,"ax",@progbits
+	.hidden	fake_swap32
 	.globl	fake_swap32
 	.type	fake_swap32,@function
 fake_swap32:                            # @fake_swap32
@@ -24,6 +26,8 @@ fake_swap32:                            # @fake_swap32
 .Lfunc_end0:
 	.size	fake_swap32, .Lfunc_end0-fake_swap32
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -38,7 +42,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

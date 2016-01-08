@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr19449.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr19449.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -11,6 +13,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -28,22 +32,24 @@ main:                                   # @main
 	br_if   	$pop3, .LBB1_3
 # BB#2:                                 # %lor.lhs.false1
 	return  	$0
-.LBB1_3:                                  # %if.then
+.LBB1_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	z,@object               # @z
-	.data
+	.hidden	z                       # @z
+	.type	z,@object
+	.section	.data.z,"aw",@progbits
 	.globl	z
 	.align	2
 z:
 	.int32	3                       # 0x3
 	.size	z, 4
 
-	.type	y,@object               # @y
-	.bss
+	.hidden	y                       # @y
+	.type	y,@object
+	.section	.bss.y,"aw",@nobits
 	.globl	y
 	.align	2
 y:

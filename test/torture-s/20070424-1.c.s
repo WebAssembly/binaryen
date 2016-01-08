@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070424-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070424-1.c"
+	.section	.text.do_exit,"ax",@progbits
+	.hidden	do_exit
 	.globl	do_exit
 	.type	do_exit,@function
 do_exit:                                # @do_exit
@@ -10,6 +12,8 @@ do_exit:                                # @do_exit
 .Lfunc_end0:
 	.size	do_exit, .Lfunc_end0-do_exit
 
+	.section	.text.do_abort,"ax",@progbits
+	.hidden	do_abort
 	.globl	do_abort
 	.type	do_abort,@function
 do_abort:                               # @do_abort
@@ -19,6 +23,8 @@ do_abort:                               # @do_abort
 .Lfunc_end1:
 	.size	do_abort, .Lfunc_end1-do_abort
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -30,12 +36,14 @@ foo:                                    # @foo
 # BB#1:                                 # %doit
 	call    	do_abort
 	unreachable
-.LBB2_2:                                  # %if.end
+.LBB2_2:                                # %if.end
 	call    	do_exit
 	unreachable
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

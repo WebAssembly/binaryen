@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43784.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43784.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -13,7 +15,7 @@ main:                                   # @main
 	i32.const	$5=, __stack_pointer
 	i32.store	$9=, 0($5), $9
 	i32.const	$3=, 0
-.LBB0_1:                                  # %for.body
+.LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.const	$0=, v
@@ -24,7 +26,7 @@ main:                                   # @main
 	i32.const	$2=, 256
 	i32.ne  	$push1=, $3, $2
 	br_if   	$pop1, .LBB0_1
-.LBB0_2:                                  # %for.end
+.LBB0_2:                                # %for.end
 	i32.const	$7=, 0
 	i32.add 	$7=, $9, $7
 	call    	rp, $7
@@ -33,7 +35,7 @@ main:                                   # @main
 	i32.add 	$8=, $9, $8
 	call    	memcpy, $pop2, $8, $2
 	i32.const	$3=, 0
-.LBB0_3:                                  # %for.body4
+.LBB0_3:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB0_6
 	loop    	.LBB0_5
@@ -44,24 +46,25 @@ main:                                   # @main
 	i32.ne  	$push7=, $3, $pop6
 	br_if   	$pop7, .LBB0_6
 # BB#4:                                 # %for.cond1
-                                        #   in Loop: Header=.LBB0_3 Depth=1
+                                        #   in Loop: Header=BB0_3 Depth=1
 	i32.add 	$3=, $3, $1
 	i32.const	$push8=, 255
 	i32.le_s	$push9=, $3, $pop8
 	br_if   	$pop9, .LBB0_3
-.LBB0_5:                                  # %for.end12
+.LBB0_5:                                # %for.end12
 	i32.const	$push10=, 0
 	i32.const	$6=, 256
 	i32.add 	$9=, $9, $6
 	i32.const	$6=, __stack_pointer
 	i32.store	$9=, 0($6), $9
 	return  	$pop10
-.LBB0_6:                                  # %if.then
+.LBB0_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.rp,"ax",@progbits
 	.type	rp,@function
 rp:                                     # @rp
 	.param  	i32

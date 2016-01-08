@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000412-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000412-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -17,6 +19,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -32,26 +36,28 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	i,@object               # @i
-	.data
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.data.i,"aw",@progbits
 	.globl	i
 	.align	1
 i:
 	.int16	65535                   # 0xffff
 	.size	i, 2
 
-	.type	wordlist,@object        # @wordlist
-	.section	.rodata,"a",@progbits
+	.hidden	wordlist                # @wordlist
+	.type	wordlist,@object
+	.section	.rodata.wordlist,"a",@progbits
 	.globl	wordlist
 	.align	4
 wordlist:
-	.zero	828
+	.skip	828
 	.size	wordlist, 828
 
 

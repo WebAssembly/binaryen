@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/921029-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921029-1.c"
+	.section	.text.build,"ax",@progbits
+	.hidden	build
 	.globl	build
 	.type	build,@function
 build:                                  # @build
@@ -20,6 +22,8 @@ build:                                  # @build
 .Lfunc_end0:
 	.size	build, .Lfunc_end0-build
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -38,22 +42,27 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	hpart,@object           # @hpart
-	.bss
+	.hidden	hpart                   # @hpart
+	.type	hpart,@object
+	.section	.bss.hpart,"aw",@nobits
 	.globl	hpart
 	.align	3
 hpart:
 	.int64	0                       # 0x0
 	.size	hpart, 8
 
-	.type	lpart,@object           # @lpart
+	.hidden	lpart                   # @lpart
+	.type	lpart,@object
+	.section	.bss.lpart,"aw",@nobits
 	.globl	lpart
 	.align	3
 lpart:
 	.int64	0                       # 0x0
 	.size	lpart, 8
 
-	.type	back,@object            # @back
+	.hidden	back                    # @back
+	.type	back,@object
+	.section	.bss.back,"aw",@nobits
 	.globl	back
 	.align	3
 back:

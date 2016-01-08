@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-5.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-5.c"
+	.section	.text.arg_ptr,"ax",@progbits
+	.hidden	arg_ptr
 	.globl	arg_ptr
 	.type	arg_ptr,@function
 arg_ptr:                                # @arg_ptr
@@ -9,6 +11,8 @@ arg_ptr:                                # @arg_ptr
 .Lfunc_end0:
 	.size	arg_ptr, .Lfunc_end0-arg_ptr
 
+	.section	.text.arg_idx,"ax",@progbits
+	.hidden	arg_idx
 	.globl	arg_idx
 	.type	arg_idx,@function
 arg_idx:                                # @arg_idx
@@ -18,6 +22,8 @@ arg_idx:                                # @arg_idx
 .Lfunc_end1:
 	.size	arg_idx, .Lfunc_end1-arg_idx
 
+	.section	.text.glob_ptr,"ax",@progbits
+	.hidden	glob_ptr
 	.globl	glob_ptr
 	.type	glob_ptr,@function
 glob_ptr:                               # @glob_ptr
@@ -26,6 +32,8 @@ glob_ptr:                               # @glob_ptr
 .Lfunc_end2:
 	.size	glob_ptr, .Lfunc_end2-glob_ptr
 
+	.section	.text.glob_idx,"ax",@progbits
+	.hidden	glob_idx
 	.globl	glob_idx
 	.type	glob_idx,@function
 glob_idx:                               # @glob_idx
@@ -34,6 +42,8 @@ glob_idx:                               # @glob_idx
 .Lfunc_end3:
 	.size	glob_idx, .Lfunc_end3-glob_idx
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -54,35 +64,40 @@ main:                                   # @main
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
-	.type	arr,@object             # @arr
-	.bss
+	.hidden	arr                     # @arr
+	.type	arr,@object
+	.section	.bss.arr,"aw",@nobits
 	.globl	arr
 	.align	4
 arr:
-	.zero	100
+	.skip	100
 	.size	arr, 100
 
-	.type	ptr,@object             # @ptr
-	.data
+	.hidden	ptr                     # @ptr
+	.type	ptr,@object
+	.section	.data.ptr,"aw",@progbits
 	.globl	ptr
 	.align	2
 ptr:
 	.int32	arr
 	.size	ptr, 4
 
-	.type	idx,@object             # @idx
+	.hidden	idx                     # @idx
+	.type	idx,@object
+	.section	.data.idx,"aw",@progbits
 	.globl	idx
 	.align	2
 idx:
 	.int32	3                       # 0x3
 	.size	idx, 4
 
-	.type	s,@object               # @s
-	.bss
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.bss.s,"aw",@nobits
 	.globl	s
 	.align	1
 s:
-	.zero	12
+	.skip	12
 	.size	s, 12
 
 

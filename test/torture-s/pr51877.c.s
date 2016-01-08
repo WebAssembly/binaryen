@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr51877.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr51877.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -60,6 +62,8 @@ bar:                                    # @bar
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.baz,"ax",@progbits
+	.hidden	baz
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
@@ -70,6 +74,8 @@ baz:                                    # @baz
 .Lfunc_end1:
 	.size	baz, .Lfunc_end1-baz
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -98,7 +104,7 @@ foo:                                    # @foo
 	i32.add 	$6=, $7, $6
 	call    	memcpy, $pop5, $6, $pop6
 	br      	.LBB2_3
-.LBB2_2:                                  # %if.else
+.LBB2_2:                                # %if.else
 	i32.const	$push2=, 7
 	i32.const	$7=, 0
 	i32.add 	$7=, $7, $7
@@ -107,7 +113,7 @@ foo:                                    # @foo
 	i32.const	$8=, 0
 	i32.add 	$8=, $7, $8
 	call    	memcpy, $0, $8, $pop3
-.LBB2_3:                                  # %if.end
+.LBB2_3:                                # %if.end
 	call    	baz
 	i32.const	$4=, 80
 	i32.add 	$7=, $7, $4
@@ -117,6 +123,8 @@ foo:                                    # @foo
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -213,13 +221,13 @@ main:                                   # @main
 	i32.const	$8=, __stack_pointer
 	i32.store	$13=, 0($8), $13
 	return  	$3
-.LBB3_13:                                 # %if.then39
+.LBB3_13:                               # %if.then39
 	call    	abort
 	unreachable
-.LBB3_14:                                 # %if.then24
+.LBB3_14:                               # %if.then24
 	call    	abort
 	unreachable
-.LBB3_15:                                 # %if.then
+.LBB3_15:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
@@ -227,19 +235,22 @@ main:                                   # @main
 
 	.type	bar.n,@object           # @bar.n
 	.lcomm	bar.n,4,2
-	.type	a,@object               # @a
-	.bss
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	2
 a:
-	.zero	36
+	.skip	36
 	.size	a, 36
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	2
 b:
-	.zero	36
+	.skip	36
 	.size	b, 36
 
 

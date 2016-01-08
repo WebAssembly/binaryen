@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59229.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59229.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -17,7 +19,7 @@ bar:                                    # @bar
 # BB#1:                                 # %if.end
 	i32.const	$3=, 1
 	block   	.LBB0_3
-	i32.const	$push5=, .str
+	i32.const	$push5=, .L.str
 	i32.add 	$push4=, $1, $3
 	i32.call	$push6=, memcmp, $0, $pop5, $pop4
 	br_if   	$pop6, .LBB0_3
@@ -41,15 +43,17 @@ bar:                                    # @bar
 	i32.add 	$push17=, $0, $3
 	i32.store8	$discard=, 0($pop17), $1
 	return
-.LBB0_3:                                  # %if.then3
+.LBB0_3:                                # %if.then3
 	call    	abort
 	unreachable
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -77,7 +81,7 @@ foo:                                    # @foo
 	i32.const	$6=, 9
 	i32.add 	$6=, $5, $6
 	call    	bar, $6
-.LBB1_2:                                  # %return
+.LBB1_2:                                # %return
 	i32.const	$4=, 16
 	i32.add 	$5=, $5, $4
 	i32.const	$4=, __stack_pointer
@@ -86,6 +90,8 @@ foo:                                    # @foo
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -95,10 +101,10 @@ main:                                   # @main
 	i32.const	$1=, 0
 	i32.store	$0=, i($1), $1
 	copy_local	$1=, $0
-.LBB2_1:                                  # %for.body
+.LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_2
-	i32.const	$push1=, .str.1
+	i32.const	$push1=, .L.str.1
 	call    	foo, $pop1, $1
 	i32.load	$push2=, i($0)
 	i32.const	$push3=, 1
@@ -107,30 +113,31 @@ main:                                   # @main
 	i32.const	$push4=, 16
 	i32.lt_s	$push5=, $1, $pop4
 	br_if   	$pop5, .LBB2_1
-.LBB2_2:                                  # %for.end
+.LBB2_2:                                # %for.end
 	i32.const	$push6=, 0
 	return  	$pop6
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	i,@object               # @i
-	.bss
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"abcdefg"
-	.size	.str, 8
+	.size	.L.str, 8
 
-	.type	.str.1,@object          # @.str.1
-.str.1:
+	.type	.L.str.1,@object        # @.str.1
+.L.str.1:
 	.asciz	"abcdefghijklmnop"
-	.size	.str.1, 17
+	.size	.L.str.1, 17
 
 
 	.ident	"clang version 3.8.0 "

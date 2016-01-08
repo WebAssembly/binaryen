@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/bcp-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/bcp-1.c"
+	.section	.text.bad0,"ax",@progbits
+	.hidden	bad0
 	.globl	bad0
 	.type	bad0,@function
 bad0:                                   # @bad0
@@ -10,6 +12,8 @@ bad0:                                   # @bad0
 .Lfunc_end0:
 	.size	bad0, .Lfunc_end0-bad0
 
+	.section	.text.bad1,"ax",@progbits
+	.hidden	bad1
 	.globl	bad1
 	.type	bad1,@function
 bad1:                                   # @bad1
@@ -20,6 +24,8 @@ bad1:                                   # @bad1
 .Lfunc_end1:
 	.size	bad1, .Lfunc_end1-bad1
 
+	.section	.text.bad2,"ax",@progbits
+	.hidden	bad2
 	.globl	bad2
 	.type	bad2,@function
 bad2:                                   # @bad2
@@ -31,6 +37,8 @@ bad2:                                   # @bad2
 .Lfunc_end2:
 	.size	bad2, .Lfunc_end2-bad2
 
+	.section	.text.bad3,"ax",@progbits
+	.hidden	bad3
 	.globl	bad3
 	.type	bad3,@function
 bad3:                                   # @bad3
@@ -42,6 +50,8 @@ bad3:                                   # @bad3
 .Lfunc_end3:
 	.size	bad3, .Lfunc_end3-bad3
 
+	.section	.text.bad4,"ax",@progbits
+	.hidden	bad4
 	.globl	bad4
 	.type	bad4,@function
 bad4:                                   # @bad4
@@ -53,6 +63,8 @@ bad4:                                   # @bad4
 .Lfunc_end4:
 	.size	bad4, .Lfunc_end4-bad4
 
+	.section	.text.bad5,"ax",@progbits
+	.hidden	bad5
 	.globl	bad5
 	.type	bad5,@function
 bad5:                                   # @bad5
@@ -63,6 +75,8 @@ bad5:                                   # @bad5
 .Lfunc_end5:
 	.size	bad5, .Lfunc_end5-bad5
 
+	.section	.text.bad6,"ax",@progbits
+	.hidden	bad6
 	.globl	bad6
 	.type	bad6,@function
 bad6:                                   # @bad6
@@ -74,6 +88,8 @@ bad6:                                   # @bad6
 .Lfunc_end6:
 	.size	bad6, .Lfunc_end6-bad6
 
+	.section	.text.bad7,"ax",@progbits
+	.hidden	bad7
 	.globl	bad7
 	.type	bad7,@function
 bad7:                                   # @bad7
@@ -84,6 +100,8 @@ bad7:                                   # @bad7
 .Lfunc_end7:
 	.size	bad7, .Lfunc_end7-bad7
 
+	.section	.text.bad8,"ax",@progbits
+	.hidden	bad8
 	.globl	bad8
 	.type	bad8,@function
 bad8:                                   # @bad8
@@ -94,6 +112,8 @@ bad8:                                   # @bad8
 .Lfunc_end8:
 	.size	bad8, .Lfunc_end8-bad8
 
+	.section	.text.bad9,"ax",@progbits
+	.hidden	bad9
 	.globl	bad9
 	.type	bad9,@function
 bad9:                                   # @bad9
@@ -105,6 +125,8 @@ bad9:                                   # @bad9
 .Lfunc_end9:
 	.size	bad9, .Lfunc_end9-bad9
 
+	.section	.text.bad10,"ax",@progbits
+	.hidden	bad10
 	.globl	bad10
 	.type	bad10,@function
 bad10:                                  # @bad10
@@ -115,6 +137,8 @@ bad10:                                  # @bad10
 .Lfunc_end10:
 	.size	bad10, .Lfunc_end10-bad10
 
+	.section	.text.good0,"ax",@progbits
+	.hidden	good0
 	.globl	good0
 	.type	good0,@function
 good0:                                  # @good0
@@ -125,6 +149,8 @@ good0:                                  # @good0
 .Lfunc_end11:
 	.size	good0, .Lfunc_end11-good0
 
+	.section	.text.good1,"ax",@progbits
+	.hidden	good1
 	.globl	good1
 	.type	good1,@function
 good1:                                  # @good1
@@ -135,6 +161,8 @@ good1:                                  # @good1
 .Lfunc_end12:
 	.size	good1, .Lfunc_end12-good1
 
+	.section	.text.good2,"ax",@progbits
+	.hidden	good2
 	.globl	good2
 	.type	good2,@function
 good2:                                  # @good2
@@ -145,6 +173,8 @@ good2:                                  # @good2
 .Lfunc_end13:
 	.size	good2, .Lfunc_end13-good2
 
+	.section	.text.opt0,"ax",@progbits
+	.hidden	opt0
 	.globl	opt0
 	.type	opt0,@function
 opt0:                                   # @opt0
@@ -155,6 +185,8 @@ opt0:                                   # @opt0
 .Lfunc_end14:
 	.size	opt0, .Lfunc_end14-opt0
 
+	.section	.text.opt1,"ax",@progbits
+	.hidden	opt1
 	.globl	opt1
 	.type	opt1,@function
 opt1:                                   # @opt1
@@ -165,6 +197,8 @@ opt1:                                   # @opt1
 .Lfunc_end15:
 	.size	opt1, .Lfunc_end15-opt1
 
+	.section	.text.opt2,"ax",@progbits
+	.hidden	opt2
 	.globl	opt2
 	.type	opt2,@function
 opt2:                                   # @opt2
@@ -175,6 +209,8 @@ opt2:                                   # @opt2
 .Lfunc_end16:
 	.size	opt2, .Lfunc_end16-opt2
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -222,7 +258,7 @@ main:                                   # @main
 	br_if   	$pop16, .LBB17_21
 # BB#9:                                 # %for.cond1.2
 	i32.load	$1=, bad_t2($0)
-	i32.const	$2=, .str
+	i32.const	$2=, .L.str
 	block   	.LBB17_20
 	i32.call_indirect	$push17=, $1, $2
 	br_if   	$pop17, .LBB17_20
@@ -271,26 +307,27 @@ main:                                   # @main
 # BB#17:                                # %for.cond34.2
 	call    	exit, $0
 	unreachable
-.LBB17_18:                                # %if.then40
+.LBB17_18:                              # %if.then40
 	call    	abort
 	unreachable
-.LBB17_19:                                # %if.then29
+.LBB17_19:                              # %if.then29
 	call    	abort
 	unreachable
-.LBB17_20:                                # %if.then18
+.LBB17_20:                              # %if.then18
 	call    	abort
 	unreachable
-.LBB17_21:                                # %if.then7
+.LBB17_21:                              # %if.then7
 	call    	abort
 	unreachable
-.LBB17_22:                                # %if.then
+.LBB17_22:                              # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end17:
 	.size	main, .Lfunc_end17-main
 
-	.type	bad_t0,@object          # @bad_t0
-	.data
+	.hidden	bad_t0                  # @bad_t0
+	.type	bad_t0,@object
+	.section	.data.bad_t0,"aw",@progbits
 	.globl	bad_t0
 	.align	4
 bad_t0:
@@ -302,7 +339,9 @@ bad_t0:
 	.int32	bad10
 	.size	bad_t0, 24
 
-	.type	bad_t1,@object          # @bad_t1
+	.hidden	bad_t1                  # @bad_t1
+	.type	bad_t1,@object
+	.section	.data.bad_t1,"aw",@progbits
 	.globl	bad_t1
 	.align	2
 bad_t1:
@@ -311,7 +350,9 @@ bad_t1:
 	.int32	bad6
 	.size	bad_t1, 12
 
-	.type	bad_t2,@object          # @bad_t2
+	.hidden	bad_t2                  # @bad_t2
+	.type	bad_t2,@object
+	.section	.data.bad_t2,"aw",@progbits
 	.globl	bad_t2
 	.align	2
 bad_t2:
@@ -319,7 +360,9 @@ bad_t2:
 	.int32	bad9
 	.size	bad_t2, 8
 
-	.type	good_t0,@object         # @good_t0
+	.hidden	good_t0                 # @good_t0
+	.type	good_t0,@object
+	.section	.data.good_t0,"aw",@progbits
 	.globl	good_t0
 	.align	2
 good_t0:
@@ -328,7 +371,9 @@ good_t0:
 	.int32	good2
 	.size	good_t0, 12
 
-	.type	opt_t0,@object          # @opt_t0
+	.hidden	opt_t0                  # @opt_t0
+	.type	opt_t0,@object
+	.section	.data.opt_t0,"aw",@progbits
 	.globl	opt_t0
 	.align	2
 opt_t0:
@@ -337,14 +382,15 @@ opt_t0:
 	.int32	opt2
 	.size	opt_t0, 12
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"hi"
-	.size	.str, 3
+	.size	.L.str, 3
 
-	.type	global,@object          # @global
-	.bss
+	.hidden	global                  # @global
+	.type	global,@object
+	.section	.bss.global,"aw",@nobits
 	.globl	global
 	.align	2
 global:

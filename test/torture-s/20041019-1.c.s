@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041019-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041019-1.c"
+	.section	.text.test_store_ccp,"ax",@progbits
+	.hidden	test_store_ccp
 	.globl	test_store_ccp
 	.type	test_store_ccp,@function
 test_store_ccp:                         # @test_store_ccp
@@ -40,6 +42,8 @@ test_store_ccp:                         # @test_store_ccp
 .Lfunc_end0:
 	.size	test_store_ccp, .Lfunc_end0-test_store_ccp
 
+	.section	.text.test_store_copy_prop,"ax",@progbits
+	.hidden	test_store_copy_prop
 	.globl	test_store_copy_prop
 	.type	test_store_copy_prop,@function
 test_store_copy_prop:                   # @test_store_copy_prop
@@ -78,6 +82,8 @@ test_store_copy_prop:                   # @test_store_copy_prop
 .Lfunc_end1:
 	.size	test_store_copy_prop, .Lfunc_end1-test_store_copy_prop
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

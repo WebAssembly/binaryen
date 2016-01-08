@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051113-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051113-1.c"
+	.section	.text.Sum,"ax",@progbits
+	.hidden	Sum
 	.globl	Sum
 	.type	Sum,@function
 Sum:                                    # @Sum
@@ -34,7 +36,7 @@ Sum:                                    # @Sum
 	i32.add 	$0=, $0, $pop14
 	i64.const	$16=, 0
 	i32.const	$15=, 0
-.LBB0_2:                                  # %for.body
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.const	$push15=, 5
@@ -79,11 +81,13 @@ Sum:                                    # @Sum
 	i32.add 	$15=, $15, $4
 	i32.lt_s	$push42=, $15, $1
 	br_if   	$pop42, .LBB0_2
-.LBB0_3:                                  # %for.end
+.LBB0_3:                                # %for.end
 	return  	$16
 .Lfunc_end0:
 	.size	Sum, .Lfunc_end0-Sum
 
+	.section	.text.Sum2,"ax",@progbits
+	.hidden	Sum2
 	.globl	Sum2
 	.type	Sum2,@function
 Sum2:                                   # @Sum2
@@ -118,7 +122,7 @@ Sum2:                                   # @Sum2
 	i32.add 	$0=, $0, $pop14
 	i64.const	$16=, 0
 	i32.const	$15=, 0
-.LBB1_2:                                  # %for.body
+.LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	i32.const	$push15=, 5
@@ -163,11 +167,13 @@ Sum2:                                   # @Sum2
 	i32.add 	$15=, $15, $4
 	i32.lt_s	$push42=, $15, $1
 	br_if   	$pop42, .LBB1_2
-.LBB1_3:                                  # %for.end
+.LBB1_3:                                # %for.end
 	return  	$16
 .Lfunc_end1:
 	.size	Sum2, .Lfunc_end1-Sum2
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -338,10 +344,10 @@ main:                                   # @main
 	br_if   	$pop99, .LBB2_3
 # BB#2:                                 # %if.end25
 	return  	$2
-.LBB2_3:                                  # %if.then24
+.LBB2_3:                                # %if.then24
 	call    	abort
 	unreachable
-.LBB2_4:                                  # %if.then
+.LBB2_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:

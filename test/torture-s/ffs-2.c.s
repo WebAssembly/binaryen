@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/ffs-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/ffs-2.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -92,14 +94,15 @@ main:                                   # @main
 # BB#8:                                 # %for.cond.7
 	call    	exit, $0
 	unreachable
-.LBB0_9:                                  # %if.then
+.LBB0_9:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	ffstesttab,@object      # @ffstesttab
-	.data
+	.hidden	ffstesttab              # @ffstesttab
+	.type	ffstesttab,@object
+	.section	.data.ffstesttab,"aw",@progbits
 	.globl	ffstesttab
 	.align	4
 ffstesttab:

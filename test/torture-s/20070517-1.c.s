@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070517-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070517-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -28,12 +30,13 @@ main:                                   # @main
 # BB#3:                                 # %if.else.i
 	call    	abort
 	unreachable
-.LBB0_4:                                  # %example.exit
+.LBB0_4:                                # %example.exit
 	i32.const	$push10=, 0
 	return  	$pop10
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.get_kind,"ax",@progbits
 	.type	get_kind,@function
 get_kind:                               # @get_kind
 	.result 	i32

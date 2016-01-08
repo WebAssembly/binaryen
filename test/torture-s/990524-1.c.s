@@ -1,12 +1,14 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990524-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990524-1.c"
+	.section	.text.loop,"ax",@progbits
+	.hidden	loop
 	.globl	loop
 	.type	loop,@function
 loop:                                   # @loop
 	.param  	i32, i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-.LBB0_1:                                  # %for.cond
+.LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_8
 	i32.load8_u	$push0=, 0($1)
@@ -21,12 +23,12 @@ loop:                                   # @loop
 	i32.eq  	$push3=, $4, $pop2
 	br_if   	$pop3, .LBB0_7
 # BB#2:                                 # %for.cond
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push4=, 92
 	i32.eq  	$push5=, $3, $pop4
 	br_if   	$pop5, .LBB0_7
 # BB#3:                                 # %for.cond
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.add 	$0=, $0, $5
 	copy_local	$1=, $2
 	br_if   	$3, .LBB0_1
@@ -40,11 +42,11 @@ loop:                                   # @loop
 	br_if   	$pop14, .LBB0_6
 # BB#5:                                 # %if.end
 	return
-.LBB0_6:                                  # %if.then
+.LBB0_6:                                # %if.then
 	call    	abort
 	unreachable
-.LBB0_7:                                  # %sw.bb2
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+.LBB0_7:                                # %sw.bb2
+                                        #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push6=, 92
 	i32.store8	$discard=, 0($0), $pop6
 	i32.const	$push8=, 2
@@ -59,6 +61,8 @@ loop:                                   # @loop
 .Lfunc_end0:
 	.size	loop, .Lfunc_end0-loop
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -67,7 +71,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, b
 	i32.const	$4=, a
-.LBB1_1:                                  # %for.cond.i
+.LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_8
 	i32.load8_u	$push0=, 0($0)
@@ -82,12 +86,12 @@ main:                                   # @main
 	i32.eq  	$push3=, $2, $pop2
 	br_if   	$pop3, .LBB1_7
 # BB#2:                                 # %for.cond.i
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push4=, 92
 	i32.eq  	$push5=, $1, $pop4
 	br_if   	$pop5, .LBB1_7
 # BB#3:                                 # %for.cond.i
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.add 	$4=, $4, $3
 	br_if   	$1, .LBB1_1
 # BB#4:                                 # %loopDone2.i
@@ -102,11 +106,11 @@ main:                                   # @main
 	i32.const	$push14=, 0
 	call    	exit, $pop14
 	unreachable
-.LBB1_6:                                  # %if.then.i
+.LBB1_6:                                # %if.then.i
 	call    	abort
 	unreachable
-.LBB1_7:                                  # %sw.bb2.i
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+.LBB1_7:                                # %sw.bb2.i
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push6=, 92
 	i32.store8	$discard=, 0($4), $pop6
 	i32.const	$push7=, 2
@@ -119,14 +123,17 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 a:
 	.asciz	"12345"
 	.size	a, 6
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.data.b,"aw",@progbits
 	.globl	b
 b:
 	.asciz	"12345"

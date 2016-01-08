@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090711-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090711-1.c"
+	.section	.text.div,"ax",@progbits
+	.hidden	div
 	.globl	div
 	.type	div,@function
 div:                                    # @div
@@ -17,6 +19,8 @@ div:                                    # @div
 .Lfunc_end0:
 	.size	div, .Lfunc_end0-div
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -31,7 +35,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-2c.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-2c.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -23,7 +25,7 @@ f:                                      # @f
 	i32.const	$push5=, a
 	i32.add 	$push6=, $pop4, $pop5
 	i32.add 	$1=, $pop6, $3
-.LBB0_2:                                  # %for.body
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.const	$push7=, -1
@@ -32,11 +34,13 @@ f:                                      # @f
 	i32.add 	$4=, $pop8, $2
 	i32.add 	$1=, $1, $3
 	br_if   	$0, .LBB0_2
-.LBB0_3:                                  # %for.end
+.LBB0_3:                                # %for.end
 	return  	$0
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.g,"ax",@progbits
+	.hidden	g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -60,7 +64,7 @@ g:                                      # @g
 	i32.shl 	$push3=, $0, $pop2
 	i32.add 	$push4=, $pop3, $3
 	i32.add 	$3=, $pop4, $2
-.LBB1_2:                                  # %for.body.i
+.LBB1_2:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	i32.const	$push6=, -1
@@ -69,11 +73,13 @@ g:                                      # @g
 	i32.add 	$4=, $pop7, $1
 	i32.add 	$3=, $3, $2
 	br_if   	$0, .LBB1_2
-.LBB1_3:                                  # %f.exit
+.LBB1_3:                                # %f.exit
 	return  	$0
 .Lfunc_end1:
 	.size	g, .Lfunc_end1-g
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -90,12 +96,13 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	a,@object               # @a
-	.bss
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	2
 a:
-	.zero	8
+	.skip	8
 	.size	a, 8
 
 

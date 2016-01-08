@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49161.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49161.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -16,12 +18,14 @@ bar:                                    # @bar
 	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -47,7 +51,7 @@ foo:                                    # @foo
 	i32.const	$push11=, 1
 	call    	bar, $pop11
 	br      	.LBB1_6
-.LBB1_3:                                  # %entry
+.LBB1_3:                                # %entry
 	i32.const	$push3=, 6
 	i32.ne  	$push4=, $0, $pop3
 	br_if   	$pop4, .LBB1_7
@@ -58,16 +62,18 @@ foo:                                    # @foo
 	call    	bar, $pop6
 	i32.const	$push7=, 1
 	call    	bar, $pop7
-.LBB1_5:                                  # %if.then4
+.LBB1_5:                                # %if.then4
 	i32.const	$push12=, -1
 	call    	bar, $pop12
-.LBB1_6:                                  # %if.end5
+.LBB1_6:                                # %if.end5
 	call    	bar, $1
-.LBB1_7:                                  # %return
+.LBB1_7:                                # %return
 	return
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -83,14 +89,15 @@ main:                                   # @main
 	br_if   	$pop1, .LBB2_2
 # BB#1:                                 # %if.end
 	return  	$1
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	c,@object               # @c
-	.bss
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	2
 c:

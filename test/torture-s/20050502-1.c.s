@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050502-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050502-1.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -16,6 +18,8 @@ bar:                                    # @bar
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.baz,"ax",@progbits
+	.hidden	baz
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
@@ -28,6 +32,8 @@ baz:                                    # @baz
 .Lfunc_end1:
 	.size	baz, .Lfunc_end1-baz
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -53,13 +59,13 @@ foo:                                    # @foo
 # BB#2:                                 # %if.end14.lr.ph
 	i32.or  	$4=, $2, $3
 	i32.const	$10=, 1
-.LBB2_3:                                  # %if.end14
+.LBB2_3:                                # %if.end14
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_7
 	block   	.LBB2_5
 	br_if   	$4, .LBB2_5
 # BB#4:                                 # %land.lhs.true18
-                                        #   in Loop: Header=.LBB2_3 Depth=1
+                                        #   in Loop: Header=BB2_3 Depth=1
 	i32.const	$8=, 24
 	i32.shl 	$push5=, $9, $8
 	i32.shr_s	$push6=, $pop5, $8
@@ -68,8 +74,8 @@ foo:                                    # @foo
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $8, $pop15
 	br_if   	$pop16, .LBB2_7
-.LBB2_5:                                  # %while.body.backedge
-                                        #   in Loop: Header=.LBB2_3 Depth=1
+.LBB2_5:                                # %while.body.backedge
+                                        #   in Loop: Header=BB2_3 Depth=1
 	i32.add 	$push9=, $1, $10
 	i32.store8	$discard=, 0($pop9), $9
 	i32.const	$push8=, 1
@@ -80,14 +86,14 @@ foo:                                    # @foo
 	i32.and 	$push11=, $pop10, $2
 	br_if   	$pop11, .LBB2_7
 # BB#6:                                 # %while.body.backedge
-                                        #   in Loop: Header=.LBB2_3 Depth=1
+                                        #   in Loop: Header=BB2_3 Depth=1
 	copy_local	$10=, $11
 	i32.eq  	$push12=, $8, $7
 	i32.and 	$push7=, $pop12, $3
 	i32.const	$push17=, 0
 	i32.eq  	$push18=, $pop7, $pop17
 	br_if   	$pop18, .LBB2_3
-.LBB2_7:                                  # %while.end
+.LBB2_7:                                # %while.end
 	i32.add 	$push13=, $1, $11
 	i32.const	$push14=, 0
 	i32.store8	$discard=, 0($pop13), $pop14
@@ -95,6 +101,8 @@ foo:                                    # @foo
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -109,7 +117,7 @@ main:                                   # @main
 	i32.store	$20=, 0($3), $20
 	i32.const	$0=, 0
 	i32.const	$1=, 1
-	i32.const	$push0=, .str
+	i32.const	$push0=, .L.str
 	i32.store	$discard=, 12($20), $pop0
 	i32.const	$5=, 12
 	i32.add 	$5=, $20, $5
@@ -118,17 +126,17 @@ main:                                   # @main
 	call    	foo, $5, $6, $1, $0
 	block   	.LBB3_15
 	i32.load	$push1=, 12($20)
-	i32.const	$push2=, .str.1
+	i32.const	$push2=, .L.str.1
 	i32.call	$push3=, strcmp, $pop1, $pop2
 	br_if   	$pop3, .LBB3_15
 # BB#1:                                 # %lor.lhs.false
-	i32.const	$push4=, .str.2
+	i32.const	$push4=, .L.str.2
 	i32.const	$7=, 16
 	i32.add 	$7=, $20, $7
 	i32.call	$push5=, strcmp, $7, $pop4
 	br_if   	$pop5, .LBB3_15
 # BB#2:                                 # %if.end
-	i32.const	$push6=, .str.3
+	i32.const	$push6=, .L.str.3
 	i32.store	$discard=, 12($20), $pop6
 	i32.const	$8=, 12
 	i32.add 	$8=, $20, $8
@@ -137,17 +145,17 @@ main:                                   # @main
 	call    	foo, $8, $9, $0, $1
 	block   	.LBB3_14
 	i32.load	$push7=, 12($20)
-	i32.const	$push8=, .str.4
+	i32.const	$push8=, .L.str.4
 	i32.call	$push9=, strcmp, $pop7, $pop8
 	br_if   	$pop9, .LBB3_14
 # BB#3:                                 # %lor.lhs.false7
-	i32.const	$push10=, .str.5
+	i32.const	$push10=, .L.str.5
 	i32.const	$10=, 16
 	i32.add 	$10=, $20, $10
 	i32.call	$push11=, strcmp, $10, $pop10
 	br_if   	$pop11, .LBB3_14
 # BB#4:                                 # %if.end12
-	i32.const	$push12=, .str.6
+	i32.const	$push12=, .L.str.6
 	i32.store	$discard=, 12($20), $pop12
 	i32.const	$11=, 12
 	i32.add 	$11=, $20, $11
@@ -156,17 +164,17 @@ main:                                   # @main
 	call    	foo, $11, $12, $1, $1
 	block   	.LBB3_13
 	i32.load	$push13=, 12($20)
-	i32.const	$push14=, .str.7
+	i32.const	$push14=, .L.str.7
 	i32.call	$push15=, strcmp, $pop13, $pop14
 	br_if   	$pop15, .LBB3_13
 # BB#5:                                 # %lor.lhs.false16
-	i32.const	$push16=, .str.8
+	i32.const	$push16=, .L.str.8
 	i32.const	$13=, 16
 	i32.add 	$13=, $20, $13
 	i32.call	$push17=, strcmp, $13, $pop16
 	br_if   	$pop17, .LBB3_13
 # BB#6:                                 # %if.end21
-	i32.const	$push18=, .str.9
+	i32.const	$push18=, .L.str.9
 	i32.store	$discard=, 12($20), $pop18
 	i32.const	$14=, 12
 	i32.add 	$14=, $20, $14
@@ -175,17 +183,17 @@ main:                                   # @main
 	call    	foo, $14, $15, $1, $1
 	block   	.LBB3_12
 	i32.load	$push19=, 12($20)
-	i32.const	$push20=, .str.10
+	i32.const	$push20=, .L.str.10
 	i32.call	$push21=, strcmp, $pop19, $pop20
 	br_if   	$pop21, .LBB3_12
 # BB#7:                                 # %lor.lhs.false25
-	i32.const	$push22=, .str.11
+	i32.const	$push22=, .L.str.11
 	i32.const	$16=, 16
 	i32.add 	$16=, $20, $16
 	i32.call	$push23=, strcmp, $16, $pop22
 	br_if   	$pop23, .LBB3_12
 # BB#8:                                 # %if.end30
-	i32.const	$push24=, .str.12
+	i32.const	$push24=, .L.str.12
 	i32.store	$discard=, 12($20), $pop24
 	i32.const	$17=, 12
 	i32.add 	$17=, $20, $17
@@ -194,11 +202,11 @@ main:                                   # @main
 	call    	foo, $17, $18, $0, $0
 	block   	.LBB3_11
 	i32.load	$push25=, 12($20)
-	i32.const	$push26=, .str.13
+	i32.const	$push26=, .L.str.13
 	i32.call	$push27=, strcmp, $pop25, $pop26
 	br_if   	$pop27, .LBB3_11
 # BB#9:                                 # %lor.lhs.false34
-	i32.const	$push28=, .str.14
+	i32.const	$push28=, .L.str.14
 	i32.const	$19=, 16
 	i32.add 	$19=, $20, $19
 	i32.call	$push29=, strcmp, $19, $pop28
@@ -209,99 +217,99 @@ main:                                   # @main
 	i32.const	$4=, __stack_pointer
 	i32.store	$20=, 0($4), $20
 	return  	$0
-.LBB3_11:                                 # %if.then38
+.LBB3_11:                               # %if.then38
 	call    	abort
 	unreachable
-.LBB3_12:                                 # %if.then29
+.LBB3_12:                               # %if.then29
 	call    	abort
 	unreachable
-.LBB3_13:                                 # %if.then20
+.LBB3_13:                               # %if.then20
 	call    	abort
 	unreachable
-.LBB3_14:                                 # %if.then11
+.LBB3_14:                               # %if.then11
 	call    	abort
 	unreachable
-.LBB3_15:                                 # %if.then
+.LBB3_15:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"abcde'fgh"
-	.size	.str, 10
+	.size	.L.str, 10
 
-	.type	.str.1,@object          # @.str.1
-.str.1:
+	.type	.L.str.1,@object        # @.str.1
+.L.str.1:
 	.asciz	"fgh"
-	.size	.str.1, 4
+	.size	.L.str.1, 4
 
-	.type	.str.2,@object          # @.str.2
-.str.2:
+	.type	.L.str.2,@object        # @.str.2
+.L.str.2:
 	.asciz	"abcde"
-	.size	.str.2, 6
+	.size	.L.str.2, 6
 
-	.type	.str.3,@object          # @.str.3
-.str.3:
+	.type	.L.str.3,@object        # @.str.3
+.L.str.3:
 	.asciz	"ABCDEFG\"HI"
-	.size	.str.3, 11
+	.size	.L.str.3, 11
 
-	.type	.str.4,@object          # @.str.4
-.str.4:
+	.type	.L.str.4,@object        # @.str.4
+.L.str.4:
 	.asciz	"HI"
-	.size	.str.4, 3
+	.size	.L.str.4, 3
 
-	.type	.str.5,@object          # @.str.5
-.str.5:
+	.type	.L.str.5,@object        # @.str.5
+.L.str.5:
 	.asciz	"ABCDEFG"
-	.size	.str.5, 8
+	.size	.L.str.5, 8
 
-	.type	.str.6,@object          # @.str.6
-.str.6:
+	.type	.L.str.6,@object        # @.str.6
+.L.str.6:
 	.asciz	"abcd\"e'fgh"
-	.size	.str.6, 11
+	.size	.L.str.6, 11
 
-	.type	.str.7,@object          # @.str.7
-.str.7:
+	.type	.L.str.7,@object        # @.str.7
+.L.str.7:
 	.asciz	"e'fgh"
-	.size	.str.7, 6
+	.size	.L.str.7, 6
 
-	.type	.str.8,@object          # @.str.8
-.str.8:
+	.type	.L.str.8,@object        # @.str.8
+.L.str.8:
 	.asciz	"abcd"
-	.size	.str.8, 5
+	.size	.L.str.8, 5
 
-	.type	.str.9,@object          # @.str.9
-.str.9:
+	.type	.L.str.9,@object        # @.str.9
+.L.str.9:
 	.asciz	"ABCDEF'G\"HI"
-	.size	.str.9, 12
+	.size	.L.str.9, 12
 
-	.type	.str.10,@object         # @.str.10
-.str.10:
+	.type	.L.str.10,@object       # @.str.10
+.L.str.10:
 	.asciz	"G\"HI"
-	.size	.str.10, 5
+	.size	.L.str.10, 5
 
-	.type	.str.11,@object         # @.str.11
-.str.11:
+	.type	.L.str.11,@object       # @.str.11
+.L.str.11:
 	.asciz	"ABCDEF"
-	.size	.str.11, 7
+	.size	.L.str.11, 7
 
-	.type	.str.12,@object         # @.str.12
-.str.12:
+	.type	.L.str.12,@object       # @.str.12
+.L.str.12:
 	.asciz	"abcdef@gh"
-	.size	.str.12, 10
+	.size	.L.str.12, 10
 
-	.type	.str.13,@object         # @.str.13
-.str.13:
+	.type	.L.str.13,@object       # @.str.13
+.L.str.13:
 	.asciz	"gh"
-	.size	.str.13, 3
+	.size	.L.str.13, 3
 
-	.type	.str.14,@object         # @.str.14
-.str.14:
+	.type	.L.str.14,@object       # @.str.14
+.L.str.14:
 	.asciz	"abcdef"
-	.size	.str.14, 7
+	.size	.L.str.14, 7
 
 
 	.ident	"clang version 3.8.0 "

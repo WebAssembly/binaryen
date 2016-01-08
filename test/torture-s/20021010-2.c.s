@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021010-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021010-2.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -23,28 +25,33 @@ main:                                   # @main
 # BB#1:                                 # %if.end26
 	call    	exit, $0
 	unreachable
-.LBB0_2:                                  # %if.then25
+.LBB0_2:                                # %if.then25
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	expectedwidth,@object   # @expectedwidth
-	.data
+	.hidden	expectedwidth           # @expectedwidth
+	.type	expectedwidth,@object
+	.section	.data.expectedwidth,"aw",@progbits
 	.globl	expectedwidth
 	.align	2
 expectedwidth:
 	.int32	50                      # 0x32
 	.size	expectedwidth, 4
 
-	.type	global_vramPtr,@object  # @global_vramPtr
+	.hidden	global_vramPtr          # @global_vramPtr
+	.type	global_vramPtr,@object
+	.section	.data.global_vramPtr,"aw",@progbits
 	.globl	global_vramPtr
 	.align	2
 global_vramPtr:
 	.int32	40960
 	.size	global_vramPtr, 4
 
-	.type	global_bounds,@object   # @global_bounds
+	.hidden	global_bounds           # @global_bounds
+	.type	global_bounds,@object
+	.section	.data.global_bounds,"aw",@progbits
 	.globl	global_bounds
 	.align	1
 global_bounds:
@@ -54,7 +61,9 @@ global_bounds:
 	.int16	150                     # 0x96
 	.size	global_bounds, 8
 
-	.type	global_saveRect,@object # @global_saveRect
+	.hidden	global_saveRect         # @global_saveRect
+	.type	global_saveRect,@object
+	.section	.data.global_saveRect,"aw",@progbits
 	.globl	global_saveRect
 	.align	1
 global_saveRect:

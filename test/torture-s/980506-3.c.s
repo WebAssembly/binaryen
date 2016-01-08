@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/980506-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980506-3.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -16,12 +18,13 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	lookup_table,@object    # @lookup_table
-	.bss
+	.hidden	lookup_table            # @lookup_table
+	.type	lookup_table,@object
+	.section	.bss.lookup_table,"aw",@nobits
 	.globl	lookup_table
 	.align	4
 lookup_table:
-	.zero	257
+	.skip	257
 	.size	lookup_table, 257
 
 

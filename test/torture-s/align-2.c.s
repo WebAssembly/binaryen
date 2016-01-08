@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/align-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/align-2.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -182,221 +184,248 @@ main:                                   # @main
 	br_if   	$pop88, .LBB0_29
 # BB#28:                                # %if.end122
 	return  	$0
-.LBB0_29:                                 # %if.then121
+.LBB0_29:                               # %if.then121
 	call    	abort
 	unreachable
-.LBB0_30:                                 # %if.then117
+.LBB0_30:                               # %if.then117
 	call    	abort
 	unreachable
-.LBB0_31:                                 # %if.then113
+.LBB0_31:                               # %if.then113
 	call    	abort
 	unreachable
-.LBB0_32:                                 # %if.then109
+.LBB0_32:                               # %if.then109
 	call    	abort
 	unreachable
-.LBB0_33:                                 # %if.then104
+.LBB0_33:                               # %if.then104
 	call    	abort
 	unreachable
-.LBB0_34:                                 # %if.then100
+.LBB0_34:                               # %if.then100
 	call    	abort
 	unreachable
-.LBB0_35:                                 # %if.then96
+.LBB0_35:                               # %if.then96
 	call    	abort
 	unreachable
-.LBB0_36:                                 # %if.then92
+.LBB0_36:                               # %if.then92
 	call    	abort
 	unreachable
-.LBB0_37:                                 # %if.then87
+.LBB0_37:                               # %if.then87
 	call    	abort
 	unreachable
-.LBB0_38:                                 # %if.then83
+.LBB0_38:                               # %if.then83
 	call    	abort
 	unreachable
-.LBB0_39:                                 # %if.then78
+.LBB0_39:                               # %if.then78
 	call    	abort
 	unreachable
-.LBB0_40:                                 # %if.then74
+.LBB0_40:                               # %if.then74
 	call    	abort
 	unreachable
-.LBB0_41:                                 # %if.then69
+.LBB0_41:                               # %if.then69
 	call    	abort
 	unreachable
-.LBB0_42:                                 # %if.then65
+.LBB0_42:                               # %if.then65
 	call    	abort
 	unreachable
-.LBB0_43:                                 # %if.then61
+.LBB0_43:                               # %if.then61
 	call    	abort
 	unreachable
-.LBB0_44:                                 # %if.then57
+.LBB0_44:                               # %if.then57
 	call    	abort
 	unreachable
-.LBB0_45:                                 # %if.then52
+.LBB0_45:                               # %if.then52
 	call    	abort
 	unreachable
-.LBB0_46:                                 # %if.then48
+.LBB0_46:                               # %if.then48
 	call    	abort
 	unreachable
-.LBB0_47:                                 # %if.then43
+.LBB0_47:                               # %if.then43
 	call    	abort
 	unreachable
-.LBB0_48:                                 # %if.then38
+.LBB0_48:                               # %if.then38
 	call    	abort
 	unreachable
-.LBB0_49:                                 # %if.then33
+.LBB0_49:                               # %if.then33
 	call    	abort
 	unreachable
-.LBB0_50:                                 # %if.then28
+.LBB0_50:                               # %if.then28
 	call    	abort
 	unreachable
-.LBB0_51:                                 # %if.then23
+.LBB0_51:                               # %if.then23
 	call    	abort
 	unreachable
-.LBB0_52:                                 # %if.then19
+.LBB0_52:                               # %if.then19
 	call    	abort
 	unreachable
-.LBB0_53:                                 # %if.then14
+.LBB0_53:                               # %if.then14
 	call    	abort
 	unreachable
-.LBB0_54:                                 # %if.then10
+.LBB0_54:                               # %if.then10
 	call    	abort
 	unreachable
-.LBB0_55:                                 # %if.then5
+.LBB0_55:                               # %if.then5
 	call    	abort
 	unreachable
-.LBB0_56:                                 # %if.then
+.LBB0_56:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	s_c_s,@object           # @s_c_s
-	.data
+	.hidden	s_c_s                   # @s_c_s
+	.type	s_c_s,@object
+	.section	.data.s_c_s,"aw",@progbits
 	.globl	s_c_s
 	.align	1
 s_c_s:
 	.int8	97                      # 0x61
-	.zero	1
+	.skip	1
 	.int16	13                      # 0xd
 	.size	s_c_s, 4
 
-	.type	s_c_i,@object           # @s_c_i
+	.hidden	s_c_i                   # @s_c_i
+	.type	s_c_i,@object
+	.section	.data.s_c_i,"aw",@progbits
 	.globl	s_c_i
 	.align	2
 s_c_i:
 	.int8	98                      # 0x62
-	.zero	3
+	.skip	3
 	.int32	14                      # 0xe
 	.size	s_c_i, 8
 
-	.type	s_s_i,@object           # @s_s_i
+	.hidden	s_s_i                   # @s_s_i
+	.type	s_s_i,@object
+	.section	.data.s_s_i,"aw",@progbits
 	.globl	s_s_i
 	.align	2
 s_s_i:
 	.int16	15                      # 0xf
-	.zero	2
+	.skip	2
 	.int32	16                      # 0x10
 	.size	s_s_i, 8
 
-	.type	s_c_f,@object           # @s_c_f
+	.hidden	s_c_f                   # @s_c_f
+	.type	s_c_f,@object
+	.section	.data.s_c_f,"aw",@progbits
 	.globl	s_c_f
 	.align	2
 s_c_f:
 	.int8	99                      # 0x63
-	.zero	3
+	.skip	3
 	.int32	1099431936              # float 17
 	.size	s_c_f, 8
 
-	.type	s_s_f,@object           # @s_s_f
+	.hidden	s_s_f                   # @s_s_f
+	.type	s_s_f,@object
+	.section	.data.s_s_f,"aw",@progbits
 	.globl	s_s_f
 	.align	2
 s_s_f:
 	.int16	18                      # 0x12
-	.zero	2
+	.skip	2
 	.int32	1100480512              # float 19
 	.size	s_s_f, 8
 
-	.type	s_c_d,@object           # @s_c_d
+	.hidden	s_c_d                   # @s_c_d
+	.type	s_c_d,@object
+	.section	.data.s_c_d,"aw",@progbits
 	.globl	s_c_d
 	.align	3
 s_c_d:
 	.int8	100                     # 0x64
-	.zero	7
+	.skip	7
 	.int64	4626322717216342016     # double 20
 	.size	s_c_d, 16
 
-	.type	s_s_d,@object           # @s_s_d
+	.hidden	s_s_d                   # @s_s_d
+	.type	s_s_d,@object
+	.section	.data.s_s_d,"aw",@progbits
 	.globl	s_s_d
 	.align	3
 s_s_d:
 	.int16	21                      # 0x15
-	.zero	6
+	.skip	6
 	.int64	4626885667169763328     # double 22
 	.size	s_s_d, 16
 
-	.type	s_i_d,@object           # @s_i_d
+	.hidden	s_i_d                   # @s_i_d
+	.type	s_i_d,@object
+	.section	.data.s_i_d,"aw",@progbits
 	.globl	s_i_d
 	.align	3
 s_i_d:
 	.int32	23                      # 0x17
-	.zero	4
+	.skip	4
 	.int64	4627448617123184640     # double 24
 	.size	s_i_d, 16
 
-	.type	s_f_d,@object           # @s_f_d
+	.hidden	s_f_d                   # @s_f_d
+	.type	s_f_d,@object
+	.section	.data.s_f_d,"aw",@progbits
 	.globl	s_f_d
 	.align	3
 s_f_d:
 	.int32	1103626240              # float 25
-	.zero	4
+	.skip	4
 	.int64	4628011567076605952     # double 26
 	.size	s_f_d, 16
 
-	.type	s_c_ld,@object          # @s_c_ld
+	.hidden	s_c_ld                  # @s_c_ld
+	.type	s_c_ld,@object
+	.section	.data.s_c_ld,"aw",@progbits
 	.globl	s_c_ld
 	.align	4
 s_c_ld:
 	.int8	101                     # 0x65
-	.zero	15
+	.skip	15
 	.int64	0                       # fp128 27
 	.int64	4612723957404008448
 	.size	s_c_ld, 32
 
-	.type	s_s_ld,@object          # @s_s_ld
+	.hidden	s_s_ld                  # @s_s_ld
+	.type	s_s_ld,@object
+	.section	.data.s_s_ld,"aw",@progbits
 	.globl	s_s_ld
 	.align	4
 s_s_ld:
 	.int16	28                      # 0x1c
-	.zero	14
+	.skip	14
 	.int64	0                       # fp128 29
 	.int64	4612759141776097280
 	.size	s_s_ld, 32
 
-	.type	s_i_ld,@object          # @s_i_ld
+	.hidden	s_i_ld                  # @s_i_ld
+	.type	s_i_ld,@object
+	.section	.data.s_i_ld,"aw",@progbits
 	.globl	s_i_ld
 	.align	4
 s_i_ld:
 	.int32	30                      # 0x1e
-	.zero	12
+	.skip	12
 	.int64	0                       # fp128 31
 	.int64	4612794326148186112
 	.size	s_i_ld, 32
 
-	.type	s_f_ld,@object          # @s_f_ld
+	.hidden	s_f_ld                  # @s_f_ld
+	.type	s_f_ld,@object
+	.section	.data.s_f_ld,"aw",@progbits
 	.globl	s_f_ld
 	.align	4
 s_f_ld:
 	.int32	1107296256              # float 32
-	.zero	12
+	.skip	12
 	.int64	0                       # fp128 33
 	.int64	4612820714427252736
 	.size	s_f_ld, 32
 
-	.type	s_d_ld,@object          # @s_d_ld
+	.hidden	s_d_ld                  # @s_d_ld
+	.type	s_d_ld,@object
+	.section	.data.s_d_ld,"aw",@progbits
 	.globl	s_d_ld
 	.align	4
 s_d_ld:
 	.int64	4629981891913580544     # double 34
-	.zero	8
+	.skip	8
 	.int64	0                       # fp128 35
 	.int64	4612838306613297152
 	.size	s_d_ld, 32

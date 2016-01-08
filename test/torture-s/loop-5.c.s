@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-5.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-5.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -72,19 +74,19 @@ main:                                   # @main
 # BB#8:                                 # %if.end9
 	call    	exit, $2
 	unreachable
-.LBB0_9:                                  # %if.then8
+.LBB0_9:                                # %if.then8
 	call    	abort
 	unreachable
-.LBB0_10:                                 # %if.then5
+.LBB0_10:                               # %if.then5
 	call    	abort
 	unreachable
-.LBB0_11:                                 # %if.then2
+.LBB0_11:                               # %if.then2
 	call    	abort
 	unreachable
-.LBB0_12:                                 # %if.then
+.LBB0_12:                               # %if.then
 	call    	abort
 	unreachable
-.LBB0_13:                                 # %if.then.i.i
+.LBB0_13:                               # %if.then.i.i
 	call    	abort
 	unreachable
 .Lfunc_end0:

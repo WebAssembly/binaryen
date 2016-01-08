@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/gofast.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/gofast.c"
+	.section	.text.fp_add,"ax",@progbits
+	.hidden	fp_add
 	.globl	fp_add
 	.type	fp_add,@function
 fp_add:                                 # @fp_add
@@ -11,6 +13,8 @@ fp_add:                                 # @fp_add
 .Lfunc_end0:
 	.size	fp_add, .Lfunc_end0-fp_add
 
+	.section	.text.fp_sub,"ax",@progbits
+	.hidden	fp_sub
 	.globl	fp_sub
 	.type	fp_sub,@function
 fp_sub:                                 # @fp_sub
@@ -22,6 +26,8 @@ fp_sub:                                 # @fp_sub
 .Lfunc_end1:
 	.size	fp_sub, .Lfunc_end1-fp_sub
 
+	.section	.text.fp_mul,"ax",@progbits
+	.hidden	fp_mul
 	.globl	fp_mul
 	.type	fp_mul,@function
 fp_mul:                                 # @fp_mul
@@ -33,6 +39,8 @@ fp_mul:                                 # @fp_mul
 .Lfunc_end2:
 	.size	fp_mul, .Lfunc_end2-fp_mul
 
+	.section	.text.fp_div,"ax",@progbits
+	.hidden	fp_div
 	.globl	fp_div
 	.type	fp_div,@function
 fp_div:                                 # @fp_div
@@ -44,6 +52,8 @@ fp_div:                                 # @fp_div
 .Lfunc_end3:
 	.size	fp_div, .Lfunc_end3-fp_div
 
+	.section	.text.fp_neg,"ax",@progbits
+	.hidden	fp_neg
 	.globl	fp_neg
 	.type	fp_neg,@function
 fp_neg:                                 # @fp_neg
@@ -55,6 +65,8 @@ fp_neg:                                 # @fp_neg
 .Lfunc_end4:
 	.size	fp_neg, .Lfunc_end4-fp_neg
 
+	.section	.text.dp_add,"ax",@progbits
+	.hidden	dp_add
 	.globl	dp_add
 	.type	dp_add,@function
 dp_add:                                 # @dp_add
@@ -66,6 +78,8 @@ dp_add:                                 # @dp_add
 .Lfunc_end5:
 	.size	dp_add, .Lfunc_end5-dp_add
 
+	.section	.text.dp_sub,"ax",@progbits
+	.hidden	dp_sub
 	.globl	dp_sub
 	.type	dp_sub,@function
 dp_sub:                                 # @dp_sub
@@ -77,6 +91,8 @@ dp_sub:                                 # @dp_sub
 .Lfunc_end6:
 	.size	dp_sub, .Lfunc_end6-dp_sub
 
+	.section	.text.dp_mul,"ax",@progbits
+	.hidden	dp_mul
 	.globl	dp_mul
 	.type	dp_mul,@function
 dp_mul:                                 # @dp_mul
@@ -88,6 +104,8 @@ dp_mul:                                 # @dp_mul
 .Lfunc_end7:
 	.size	dp_mul, .Lfunc_end7-dp_mul
 
+	.section	.text.dp_div,"ax",@progbits
+	.hidden	dp_div
 	.globl	dp_div
 	.type	dp_div,@function
 dp_div:                                 # @dp_div
@@ -99,6 +117,8 @@ dp_div:                                 # @dp_div
 .Lfunc_end8:
 	.size	dp_div, .Lfunc_end8-dp_div
 
+	.section	.text.dp_neg,"ax",@progbits
+	.hidden	dp_neg
 	.globl	dp_neg
 	.type	dp_neg,@function
 dp_neg:                                 # @dp_neg
@@ -110,6 +130,8 @@ dp_neg:                                 # @dp_neg
 .Lfunc_end9:
 	.size	dp_neg, .Lfunc_end9-dp_neg
 
+	.section	.text.fp_to_dp,"ax",@progbits
+	.hidden	fp_to_dp
 	.globl	fp_to_dp
 	.type	fp_to_dp,@function
 fp_to_dp:                               # @fp_to_dp
@@ -121,6 +143,8 @@ fp_to_dp:                               # @fp_to_dp
 .Lfunc_end10:
 	.size	fp_to_dp, .Lfunc_end10-fp_to_dp
 
+	.section	.text.dp_to_fp,"ax",@progbits
+	.hidden	dp_to_fp
 	.globl	dp_to_fp
 	.type	dp_to_fp,@function
 dp_to_fp:                               # @dp_to_fp
@@ -132,6 +156,8 @@ dp_to_fp:                               # @dp_to_fp
 .Lfunc_end11:
 	.size	dp_to_fp, .Lfunc_end11-dp_to_fp
 
+	.section	.text.eqsf2,"ax",@progbits
+	.hidden	eqsf2
 	.globl	eqsf2
 	.type	eqsf2,@function
 eqsf2:                                  # @eqsf2
@@ -143,6 +169,8 @@ eqsf2:                                  # @eqsf2
 .Lfunc_end12:
 	.size	eqsf2, .Lfunc_end12-eqsf2
 
+	.section	.text.nesf2,"ax",@progbits
+	.hidden	nesf2
 	.globl	nesf2
 	.type	nesf2,@function
 nesf2:                                  # @nesf2
@@ -154,6 +182,8 @@ nesf2:                                  # @nesf2
 .Lfunc_end13:
 	.size	nesf2, .Lfunc_end13-nesf2
 
+	.section	.text.gtsf2,"ax",@progbits
+	.hidden	gtsf2
 	.globl	gtsf2
 	.type	gtsf2,@function
 gtsf2:                                  # @gtsf2
@@ -165,6 +195,8 @@ gtsf2:                                  # @gtsf2
 .Lfunc_end14:
 	.size	gtsf2, .Lfunc_end14-gtsf2
 
+	.section	.text.gesf2,"ax",@progbits
+	.hidden	gesf2
 	.globl	gesf2
 	.type	gesf2,@function
 gesf2:                                  # @gesf2
@@ -176,6 +208,8 @@ gesf2:                                  # @gesf2
 .Lfunc_end15:
 	.size	gesf2, .Lfunc_end15-gesf2
 
+	.section	.text.ltsf2,"ax",@progbits
+	.hidden	ltsf2
 	.globl	ltsf2
 	.type	ltsf2,@function
 ltsf2:                                  # @ltsf2
@@ -187,6 +221,8 @@ ltsf2:                                  # @ltsf2
 .Lfunc_end16:
 	.size	ltsf2, .Lfunc_end16-ltsf2
 
+	.section	.text.lesf2,"ax",@progbits
+	.hidden	lesf2
 	.globl	lesf2
 	.type	lesf2,@function
 lesf2:                                  # @lesf2
@@ -198,6 +234,8 @@ lesf2:                                  # @lesf2
 .Lfunc_end17:
 	.size	lesf2, .Lfunc_end17-lesf2
 
+	.section	.text.eqdf2,"ax",@progbits
+	.hidden	eqdf2
 	.globl	eqdf2
 	.type	eqdf2,@function
 eqdf2:                                  # @eqdf2
@@ -209,6 +247,8 @@ eqdf2:                                  # @eqdf2
 .Lfunc_end18:
 	.size	eqdf2, .Lfunc_end18-eqdf2
 
+	.section	.text.nedf2,"ax",@progbits
+	.hidden	nedf2
 	.globl	nedf2
 	.type	nedf2,@function
 nedf2:                                  # @nedf2
@@ -220,6 +260,8 @@ nedf2:                                  # @nedf2
 .Lfunc_end19:
 	.size	nedf2, .Lfunc_end19-nedf2
 
+	.section	.text.gtdf2,"ax",@progbits
+	.hidden	gtdf2
 	.globl	gtdf2
 	.type	gtdf2,@function
 gtdf2:                                  # @gtdf2
@@ -231,6 +273,8 @@ gtdf2:                                  # @gtdf2
 .Lfunc_end20:
 	.size	gtdf2, .Lfunc_end20-gtdf2
 
+	.section	.text.gedf2,"ax",@progbits
+	.hidden	gedf2
 	.globl	gedf2
 	.type	gedf2,@function
 gedf2:                                  # @gedf2
@@ -242,6 +286,8 @@ gedf2:                                  # @gedf2
 .Lfunc_end21:
 	.size	gedf2, .Lfunc_end21-gedf2
 
+	.section	.text.ltdf2,"ax",@progbits
+	.hidden	ltdf2
 	.globl	ltdf2
 	.type	ltdf2,@function
 ltdf2:                                  # @ltdf2
@@ -253,6 +299,8 @@ ltdf2:                                  # @ltdf2
 .Lfunc_end22:
 	.size	ltdf2, .Lfunc_end22-ltdf2
 
+	.section	.text.ledf2,"ax",@progbits
+	.hidden	ledf2
 	.globl	ledf2
 	.type	ledf2,@function
 ledf2:                                  # @ledf2
@@ -264,6 +312,8 @@ ledf2:                                  # @ledf2
 .Lfunc_end23:
 	.size	ledf2, .Lfunc_end23-ledf2
 
+	.section	.text.floatsisf,"ax",@progbits
+	.hidden	floatsisf
 	.globl	floatsisf
 	.type	floatsisf,@function
 floatsisf:                              # @floatsisf
@@ -275,6 +325,8 @@ floatsisf:                              # @floatsisf
 .Lfunc_end24:
 	.size	floatsisf, .Lfunc_end24-floatsisf
 
+	.section	.text.floatsidf,"ax",@progbits
+	.hidden	floatsidf
 	.globl	floatsidf
 	.type	floatsidf,@function
 floatsidf:                              # @floatsidf
@@ -286,6 +338,8 @@ floatsidf:                              # @floatsidf
 .Lfunc_end25:
 	.size	floatsidf, .Lfunc_end25-floatsidf
 
+	.section	.text.fixsfsi,"ax",@progbits
+	.hidden	fixsfsi
 	.globl	fixsfsi
 	.type	fixsfsi,@function
 fixsfsi:                                # @fixsfsi
@@ -297,6 +351,8 @@ fixsfsi:                                # @fixsfsi
 .Lfunc_end26:
 	.size	fixsfsi, .Lfunc_end26-fixsfsi
 
+	.section	.text.fixdfsi,"ax",@progbits
+	.hidden	fixdfsi
 	.globl	fixdfsi
 	.type	fixdfsi,@function
 fixdfsi:                                # @fixdfsi
@@ -308,6 +364,8 @@ fixdfsi:                                # @fixdfsi
 .Lfunc_end27:
 	.size	fixdfsi, .Lfunc_end27-fixdfsi
 
+	.section	.text.fixunssfsi,"ax",@progbits
+	.hidden	fixunssfsi
 	.globl	fixunssfsi
 	.type	fixunssfsi,@function
 fixunssfsi:                             # @fixunssfsi
@@ -319,6 +377,8 @@ fixunssfsi:                             # @fixunssfsi
 .Lfunc_end28:
 	.size	fixunssfsi, .Lfunc_end28-fixunssfsi
 
+	.section	.text.fixunsdfsi,"ax",@progbits
+	.hidden	fixunsdfsi
 	.globl	fixunsdfsi
 	.type	fixunsdfsi,@function
 fixunsdfsi:                             # @fixunsdfsi
@@ -330,6 +390,8 @@ fixunsdfsi:                             # @fixunsdfsi
 .Lfunc_end29:
 	.size	fixunsdfsi, .Lfunc_end29-fixunsdfsi
 
+	.section	.text.fail,"ax",@progbits
+	.hidden	fail
 	.globl	fail
 	.type	fail,@function
 fail:                                   # @fail
@@ -356,7 +418,7 @@ fail:                                   # @fail
 	i32.const	$4=, __stack_pointer
 	i32.store	$9=, 0($4), $9
 	i32.store	$discard=, 0($9), $0
-	i32.const	$push3=, .str
+	i32.const	$push3=, .L.str
 	i32.call	$discard=, fiprintf, $2, $pop3
 	i32.const	$5=, __stack_pointer
 	i32.load	$5=, 0($5)
@@ -372,6 +434,8 @@ fail:                                   # @fail
 .Lfunc_end30:
 	.size	fail, .Lfunc_end30-fail
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -385,25 +449,26 @@ main:                                   # @main
 # BB#1:                                 # %if.end202
 	call    	exit, $0
 	unreachable
-.LBB31_2:                                 # %if.then201
+.LBB31_2:                               # %if.then201
 	call    	abort
 	unreachable
 .Lfunc_end31:
 	.size	main, .Lfunc_end31-main
 
-	.type	fail_count,@object      # @fail_count
-	.bss
+	.hidden	fail_count              # @fail_count
+	.type	fail_count,@object
+	.section	.bss.fail_count,"aw",@nobits
 	.globl	fail_count
 	.align	2
 fail_count:
 	.int32	0                       # 0x0
 	.size	fail_count, 4
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"Test failed: %s\n"
-	.size	.str, 17
+	.size	.L.str, 17
 
 
 	.ident	"clang version 3.8.0 "

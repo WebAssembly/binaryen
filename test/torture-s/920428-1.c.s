@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/920428-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920428-1.c"
+	.section	.text.x,"ax",@progbits
+	.hidden	x
 	.globl	x
 	.type	x,@function
 x:                                      # @x
@@ -11,6 +13,8 @@ x:                                      # @x
 .Lfunc_end0:
 	.size	x, .Lfunc_end0-x
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -25,17 +29,17 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	call    	exit, $pop1
 	unreachable
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
-	.zero	1
-	.size	.str, 1
+.L.str:
+	.skip	1
+	.size	.L.str, 1
 
 
 	.ident	"clang version 3.8.0 "

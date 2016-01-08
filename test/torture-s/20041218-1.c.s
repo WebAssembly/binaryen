@@ -1,16 +1,20 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041218-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041218-1.c"
+	.section	.text.dummy1,"ax",@progbits
+	.hidden	dummy1
 	.globl	dummy1
 	.type	dummy1,@function
 dummy1:                                 # @dummy1
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, .str
+	i32.const	$push0=, .L.str
 	return  	$pop0
 .Lfunc_end0:
 	.size	dummy1, .Lfunc_end0-dummy1
 
+	.section	.text.dummy2,"ax",@progbits
+	.hidden	dummy2
 	.globl	dummy2
 	.type	dummy2,@function
 dummy2:                                 # @dummy2
@@ -23,6 +27,8 @@ dummy2:                                 # @dummy2
 .Lfunc_end1:
 	.size	dummy2, .Lfunc_end1-dummy2
 
+	.section	.text.baz,"ax",@progbits
+	.hidden	baz
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
@@ -38,6 +44,8 @@ baz:                                    # @baz
 .Lfunc_end2:
 	.size	baz, .Lfunc_end2-baz
 
+	.section	.text.check,"ax",@progbits
+	.hidden	check
 	.globl	check
 	.type	check,@function
 check:                                  # @check
@@ -68,12 +76,14 @@ check:                                  # @check
 # BB#5:                                 # %if.end
 	i32.const	$push11=, 1
 	return  	$pop11
-.LBB3_6:                                  # %if.then
+.LBB3_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	check, .Lfunc_end3-check
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -112,13 +122,15 @@ foo:                                    # @foo
 	i32.store	$discard=, baz.v+28($2), $2
 	i32.call	$discard=, dummy2, $2, $2
 	unreachable
-.LBB4_3:                                  # %for.end
+.LBB4_3:                                # %for.end
 	i32.store	$2=, 0($2), $3
-.LBB4_4:                                  # %cleanup2
+.LBB4_4:                                # %cleanup2
 	return  	$2
 .Lfunc_end4:
 	.size	foo, .Lfunc_end4-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -144,11 +156,11 @@ main:                                   # @main
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
-	.zero	1
-	.size	.str, 1
+.L.str:
+	.skip	1
+	.size	.L.str, 1
 
 	.type	baz.v,@object           # @baz.v
 	.lcomm	baz.v,44,3
@@ -156,7 +168,7 @@ main:                                   # @main
 	.section	.rodata.cst16,"aM",@progbits,16
 	.align	2
 bar.t:
-	.zero	16
+	.skip	16
 	.size	bar.t, 16
 
 

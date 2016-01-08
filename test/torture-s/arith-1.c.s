@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/arith-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/arith-1.c"
+	.section	.text.sat_add,"ax",@progbits
+	.hidden	sat_add
 	.globl	sat_add
 	.type	sat_add,@function
 sat_add:                                # @sat_add
@@ -16,6 +18,8 @@ sat_add:                                # @sat_add
 .Lfunc_end0:
 	.size	sat_add, .Lfunc_end0-sat_add
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

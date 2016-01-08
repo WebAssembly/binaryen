@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr15296.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr15296.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -8,11 +10,11 @@ f:                                      # @f
 	block   	.LBB0_2
 	i32.ge_s	$push1=, $3, $4
 	br_if   	$pop1, .LBB0_2
-.LBB0_1:                                  # %l0
+.LBB0_1:                                # %l0
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	br      	.LBB0_1
-.LBB0_2:                                  # %if.end.split
+.LBB0_2:                                # %if.end.split
 	i32.const	$4=, 0
 	block   	.LBB0_12
 	block   	.LBB0_11
@@ -37,10 +39,10 @@ f:                                      # @f
 	i32.const	$push7=, -1
 	i32.store	$discard=, 12($pop6), $pop7
 	br      	.LBB0_10
-.LBB0_6:                                  # %if.then11
+.LBB0_6:                                # %if.then11
 	call    	g, $3, $3
 	unreachable
-.LBB0_7:                                  # %l3
+.LBB0_7:                                # %l3
 	i32.const	$push8=, 4
 	i32.add 	$push9=, $1, $pop8
 	i32.store	$discard=, 0($pop9), $4
@@ -54,17 +56,19 @@ f:                                      # @f
 	br_if   	$pop15, .LBB0_11
 # BB#9:                                 # %if.end24
 	i32.store	$discard=, 8($4), $3
-.LBB0_10:                                 # %l4
+.LBB0_10:                               # %l4
 	return
-.LBB0_11:                                 # %if.then23
+.LBB0_11:                               # %if.then23
 	call    	g, $3, $3
 	unreachable
-.LBB0_12:                                 # %if.then18
+.LBB0_12:                               # %if.then18
 	call    	g, $3, $3
 	unreachable
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.g,"ax",@progbits
+	.hidden	g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -75,6 +79,8 @@ g:                                      # @g
 .Lfunc_end1:
 	.size	g, .Lfunc_end1-g
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -92,33 +98,33 @@ main:                                   # @main
 	i32.const	$8=, 8
 	i32.add 	$8=, $16, $8
 	i32.add 	$3=, $8, $pop2
-	i32.load	$push3=, main.s+16($0)
+	i32.load	$push3=, .Lmain.s+16($0)
 	i32.store	$discard=, 0($3), $pop3
 	i32.const	$4=, 4
 	i32.const	$1=, 8
 	i32.const	$9=, 32
 	i32.add 	$9=, $16, $9
 	i32.or  	$2=, $9, $1
-	i64.load	$push0=, main.uv+8($0)
+	i64.load	$push0=, .Lmain.uv+8($0)
 	i64.store	$discard=, 0($2), $pop0
-	i64.load	$push1=, main.uv($0)
+	i64.load	$push1=, .Lmain.uv($0)
 	i64.store	$discard=, 32($16), $pop1
 	i64.const	$5=, 32
 	i32.const	$10=, 8
 	i32.add 	$10=, $16, $10
 	i32.add 	$1=, $10, $1
-	i32.const	$push4=, main.s+8
+	i32.const	$push4=, .Lmain.s+8
 	i32.add 	$push5=, $pop4, $4
 	i64.load32_u	$push6=, 0($pop5)
 	i64.shl 	$push7=, $pop6, $5
-	i64.load32_u	$push8=, main.s+8($0)
+	i64.load32_u	$push8=, .Lmain.s+8($0)
 	i64.or  	$push9=, $pop7, $pop8
 	i64.store	$discard=, 0($1), $pop9
-	i32.const	$push10=, main.s
+	i32.const	$push10=, .Lmain.s
 	i32.add 	$push11=, $pop10, $4
 	i64.load32_u	$push12=, 0($pop11)
 	i64.shl 	$push13=, $pop12, $5
-	i64.load32_u	$push14=, main.s($0)
+	i64.load32_u	$push14=, .Lmain.s($0)
 	i64.or  	$push15=, $pop13, $pop14
 	i64.store	$discard=, 8($16), $pop15
 	i32.const	$push17=, 20000
@@ -167,32 +173,32 @@ main:                                   # @main
 # BB#6:                                 # %if.end
 	call    	exit, $0
 	unreachable
-.LBB2_7:                                  # %if.then
+.LBB2_7:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	main.uv,@object         # @main.uv
+	.type	.Lmain.uv,@object       # @main.uv
 	.section	.rodata.cst16,"aM",@progbits,16
 	.align	4
-main.uv:
+.Lmain.uv:
 	.int32	111                     # 0x6f
 	.int32	222                     # 0xde
 	.int32	333                     # 0x14d
 	.int32	444                     # 0x1bc
-	.size	main.uv, 16
+	.size	.Lmain.uv, 16
 
-	.type	main.s,@object          # @main.s
-	.section	.rodata,"a",@progbits
+	.type	.Lmain.s,@object        # @main.s
+	.section	.rodata..Lmain.s,"a",@progbits
 	.align	2
-main.s:
+.Lmain.s:
 	.int32	0
 	.int32	555                     # 0x22b
-	.zero	4
+	.skip	4
 	.int32	999                     # 0x3e7
 	.int32	777                     # 0x309
-	.size	main.s, 20
+	.size	.Lmain.s, 20
 
 
 	.ident	"clang version 3.8.0 "

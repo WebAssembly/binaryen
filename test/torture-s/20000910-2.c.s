@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000910-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000910-2.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -23,33 +25,34 @@ main:                                   # @main
 	br_if   	$pop7, .LBB0_3
 # BB#2:                                 # %foo.exit
 	return  	$0
-.LBB0_3:                                  # %if.else.i
+.LBB0_3:                                # %if.else.i
 	call    	exit, $0
 	unreachable
-.LBB0_4:                                  # %if.then2.i
+.LBB0_4:                                # %if.then2.i
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"*"
-	.size	.str, 2
+	.size	.L.str, 2
 
-	.type	.str.1,@object          # @.str.1
-.str.1:
+	.type	.L.str.1,@object        # @.str.1
+.L.str.1:
 	.asciz	"e"
-	.size	.str.1, 2
+	.size	.L.str.1, 2
 
-	.type	list,@object            # @list
-	.data
+	.hidden	list                    # @list
+	.type	list,@object
+	.section	.data.list,"aw",@progbits
 	.globl	list
 	.align	2
 list:
-	.int32	.str
-	.int32	.str.1
+	.int32	.L.str
+	.int32	.L.str.1
 	.size	list, 8
 
 

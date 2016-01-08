@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr52979-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr52979-2.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -8,6 +10,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -73,7 +77,7 @@ bar:                                    # @bar
 	i64.shl 	$push16=, $0, $2
 	i64.shr_s	$push17=, $pop16, $2
 	i64.store32	$discard=, c($6), $pop17
-.LBB1_2:                                  # %if.end
+.LBB1_2:                                # %if.end
 	i32.const	$10=, 16
 	i32.add 	$15=, $15, $10
 	i32.const	$10=, __stack_pointer
@@ -82,6 +86,8 @@ bar:                                    # @bar
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
+	.section	.text.baz,"ax",@progbits
+	.hidden	baz
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
@@ -147,7 +153,7 @@ baz:                                    # @baz
 	i64.shl 	$push16=, $0, $2
 	i64.shr_s	$push17=, $pop16, $2
 	i64.store32	$discard=, c($7), $pop17
-.LBB2_2:                                  # %bar.exit
+.LBB2_2:                                # %bar.exit
 	i32.load8_u	$push18=, b+4($7)
 	i32.store8	$discard=, a+4($7), $pop18
 	i32.load8_u	$3=, b+2($7)
@@ -166,6 +172,8 @@ baz:                                    # @baz
 .Lfunc_end2:
 	.size	baz, .Lfunc_end2-baz
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -232,7 +240,7 @@ main:                                   # @main
 	i64.shl 	$push16=, $0, $2
 	i64.shr_s	$push17=, $pop16, $2
 	i64.store32	$discard=, c($7), $pop17
-.LBB3_2:                                  # %baz.exit
+.LBB3_2:                                # %baz.exit
 	i32.load8_u	$push18=, b+4($7)
 	i32.store8	$discard=, a+4($7), $pop18
 	i32.load8_u	$3=, b+2($7)
@@ -256,14 +264,15 @@ main:                                   # @main
 	i32.const	$10=, __stack_pointer
 	i32.store	$15=, 0($10), $15
 	return  	$7
-.LBB3_4:                                  # %if.then
+.LBB3_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	3
 a:
@@ -274,22 +283,27 @@ a:
 	.int8	0                       # 0x0
 	.size	a, 5
 
-	.type	e,@object               # @e
-	.bss
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.bss.e,"aw",@nobits
 	.globl	e
 	.align	2
 e:
 	.int32	0                       # 0x0
 	.size	e, 4
 
-	.type	d,@object               # @d
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.bss.d,"aw",@nobits
 	.globl	d
 	.align	2
 d:
 	.int32	0                       # 0x0
 	.size	d, 4
 
-	.type	c,@object               # @c
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	2
 c:
@@ -297,7 +311,7 @@ c:
 	.size	c, 4
 
 	.type	b,@object               # @b
-	.data
+	.section	.data.b,"aw",@progbits
 b:
 	.int8	1                       # 0x1
 	.int8	0                       # 0x0

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/tstdi-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/tstdi-1.c"
+	.section	.text.feq,"ax",@progbits
+	.hidden	feq
 	.globl	feq
 	.type	feq,@function
 feq:                                    # @feq
@@ -15,6 +17,8 @@ feq:                                    # @feq
 .Lfunc_end0:
 	.size	feq, .Lfunc_end0-feq
 
+	.section	.text.fne,"ax",@progbits
+	.hidden	fne
 	.globl	fne
 	.type	fne,@function
 fne:                                    # @fne
@@ -30,6 +34,8 @@ fne:                                    # @fne
 .Lfunc_end1:
 	.size	fne, .Lfunc_end1-fne
 
+	.section	.text.flt,"ax",@progbits
+	.hidden	flt
 	.globl	flt
 	.type	flt,@function
 flt:                                    # @flt
@@ -45,6 +51,8 @@ flt:                                    # @flt
 .Lfunc_end2:
 	.size	flt, .Lfunc_end2-flt
 
+	.section	.text.fge,"ax",@progbits
+	.hidden	fge
 	.globl	fge
 	.type	fge,@function
 fge:                                    # @fge
@@ -60,6 +68,8 @@ fge:                                    # @fge
 .Lfunc_end3:
 	.size	fge, .Lfunc_end3-fge
 
+	.section	.text.fgt,"ax",@progbits
+	.hidden	fgt
 	.globl	fgt
 	.type	fgt,@function
 fgt:                                    # @fgt
@@ -75,6 +85,8 @@ fgt:                                    # @fgt
 .Lfunc_end4:
 	.size	fgt, .Lfunc_end4-fgt
 
+	.section	.text.fle,"ax",@progbits
+	.hidden	fle
 	.globl	fle
 	.type	fle,@function
 fle:                                    # @fle
@@ -90,6 +102,8 @@ fle:                                    # @fle
 .Lfunc_end5:
 	.size	fle, .Lfunc_end5-fle
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

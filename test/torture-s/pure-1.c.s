@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pure-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pure-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -10,6 +12,8 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.func0,"ax",@progbits
+	.hidden	func0
 	.globl	func0
 	.type	func0,@function
 func0:                                  # @func0
@@ -23,6 +27,8 @@ func0:                                  # @func0
 .Lfunc_end1:
 	.size	func0, .Lfunc_end1-func0
 
+	.section	.text.func1,"ax",@progbits
+	.hidden	func1
 	.globl	func1
 	.type	func1,@function
 func1:                                  # @func1
@@ -34,8 +40,9 @@ func1:                                  # @func1
 .Lfunc_end2:
 	.size	func1, .Lfunc_end2-func1
 
-	.type	i,@object               # @i
-	.data
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.data.i,"aw",@progbits
 	.globl	i
 	.align	2
 i:

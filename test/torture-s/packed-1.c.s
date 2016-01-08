@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/packed-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/packed-1.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -15,12 +17,14 @@ f:                                      # @f
 	br_if   	$pop3, .LBB0_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -37,26 +41,28 @@ main:                                   # @main
 # BB#1:                                 # %f.exit
 	call    	exit, $0
 	unreachable
-.LBB1_2:                                  # %if.then.i
+.LBB1_2:                                # %if.then.i
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	x1,@object              # @x1
-	.data
+	.hidden	x1                      # @x1
+	.type	x1,@object
+	.section	.data.x1,"aw",@progbits
 	.globl	x1
 	.align	1
 x1:
 	.int16	17                      # 0x11
 	.size	x1, 2
 
-	.type	t,@object               # @t
-	.bss
+	.hidden	t                       # @t
+	.type	t,@object
+	.section	.bss.t,"aw",@nobits
 	.globl	t
 	.align	1
 t:
-	.zero	2
+	.skip	2
 	.size	t, 2
 
 

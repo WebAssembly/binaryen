@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/multdi-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/multdi-1.c"
+	.section	.text.mpy,"ax",@progbits
+	.hidden	mpy
 	.globl	mpy
 	.type	mpy,@function
 mpy:                                    # @mpy
@@ -13,6 +15,8 @@ mpy:                                    # @mpy
 .Lfunc_end0:
 	.size	mpy, .Lfunc_end0-mpy
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -26,8 +30,9 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	mpy_res,@object         # @mpy_res
-	.bss
+	.hidden	mpy_res                 # @mpy_res
+	.type	mpy_res,@object
+	.section	.bss.mpy_res,"aw",@nobits
 	.globl	mpy_res
 	.align	3
 mpy_res:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43783.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43783.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -45,12 +47,13 @@ main:                                   # @main
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	bid_Kx192,@object       # @bid_Kx192
-	.bss
+	.hidden	bid_Kx192               # @bid_Kx192
+	.type	bid_Kx192,@object
+	.section	.bss.bid_Kx192,"aw",@nobits
 	.globl	bid_Kx192
 	.align	4
 bid_Kx192:
-	.zero	768
+	.skip	768
 	.size	bid_Kx192, 768
 
 

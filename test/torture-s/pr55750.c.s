@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr55750.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr55750.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -17,6 +19,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -43,18 +47,19 @@ main:                                   # @main
 	br_if   	$pop8, .LBB1_3
 # BB#2:                                 # %if.end
 	return  	$0
-.LBB1_3:                                  # %if.then
+.LBB1_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	arr,@object             # @arr
-	.bss
+	.hidden	arr                     # @arr
+	.type	arr,@object
+	.section	.bss.arr,"aw",@nobits
 	.globl	arr
 	.align	2
 arr:
-	.zero	8
+	.skip	8
 	.size	arr, 8
 
 

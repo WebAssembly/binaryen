@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000412-6.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000412-6.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -23,12 +25,14 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	call    	exit, $0
 	unreachable
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
+	.section	.text.bug,"ax",@progbits
+	.hidden	bug
 	.globl	bug
 	.type	bug,@function
 bug:                                    # @bug
@@ -38,7 +42,7 @@ bug:                                    # @bug
 	block   	.LBB1_2
 	i32.ge_u	$push0=, $1, $2
 	br_if   	$pop0, .LBB1_2
-.LBB1_1:                                  # %for.body
+.LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	i32.const	$push2=, 65535
@@ -49,15 +53,16 @@ bug:                                    # @bug
 	i32.add 	$1=, $1, $pop4
 	i32.lt_u	$push5=, $1, $2
 	br_if   	$pop5, .LBB1_1
-.LBB1_2:                                  # %for.end
+.LBB1_2:                                # %for.end
 	i32.const	$push6=, 65535
 	i32.and 	$push7=, $0, $pop6
 	return  	$pop7
 .Lfunc_end1:
 	.size	bug, .Lfunc_end1-bug
 
-	.type	buf,@object             # @buf
-	.data
+	.hidden	buf                     # @buf
+	.type	buf,@object
+	.section	.data.buf,"aw",@progbits
 	.globl	buf
 	.align	1
 buf:

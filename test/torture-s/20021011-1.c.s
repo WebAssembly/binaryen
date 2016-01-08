@@ -1,12 +1,14 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021011-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021011-1.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, .str
+	i32.const	$0=, .L.str
 	i32.const	$1=, buf
 	i32.const	$2=, 9
 	call    	memcpy, $1, $0, $2
@@ -96,28 +98,29 @@ main:                                   # @main
 # BB#17:                                # %for.cond.15
 	i32.const	$push17=, 0
 	return  	$pop17
-.LBB0_18:                                 # %if.then7
+.LBB0_18:                               # %if.then7
 	call    	abort
 	unreachable
-.LBB0_19:                                 # %if.then
+.LBB0_19:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	buf,@object             # @buf
-	.bss
+	.hidden	buf                     # @buf
+	.type	buf,@object
+	.section	.bss.buf,"aw",@nobits
 	.globl	buf
 	.align	4
 buf:
-	.zero	64
+	.skip	64
 	.size	buf, 64
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"mystring"
-	.size	.str, 9
+	.size	.L.str, 9
 
 
 	.ident	"clang version 3.8.0 "

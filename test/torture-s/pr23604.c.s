@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr23604.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr23604.c"
+	.section	.text.g,"ax",@progbits
+	.hidden	g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -18,13 +20,15 @@ g:                                      # @g
 # BB#2:                                 # %if.then2
 	i32.const	$0=, 0
 	br_if   	$1, .LBB0_4
-.LBB0_3:                                  # %if.end9
+.LBB0_3:                                # %if.end9
 	copy_local	$0=, $2
-.LBB0_4:                                  # %return
+.LBB0_4:                                # %return
 	return  	$0
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

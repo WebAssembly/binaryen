@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010224-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010224-1.c"
+	.section	.text.ba_compute_psd,"ax",@progbits
+	.hidden	ba_compute_psd
 	.globl	ba_compute_psd
 	.type	ba_compute_psd,@function
 ba_compute_psd:                         # @ba_compute_psd
@@ -27,7 +29,7 @@ ba_compute_psd:                         # @ba_compute_psd
 	i32.sub 	$4=, $3, $0
 	i32.const	$3=, 2
 	i32.add 	$0=, $2, $3
-.LBB0_2:                                  # %for.body
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.load16_u	$push11=, 0($0)
@@ -38,13 +40,15 @@ ba_compute_psd:                         # @ba_compute_psd
 	i32.add 	$4=, $4, $pop12
 	i32.add 	$0=, $0, $3
 	br_if   	$4, .LBB0_2
-.LBB0_3:                                  # %for.cond.for.end_crit_edge
+.LBB0_3:                                # %for.cond.for.end_crit_edge
 	i32.store16	$discard=, 0($1), $5
-.LBB0_4:                                  # %for.end
+.LBB0_4:                                # %for.end
 	return
 .Lfunc_end0:
 	.size	ba_compute_psd, .Lfunc_end0-ba_compute_psd
 
+	.section	.text.logadd,"ax",@progbits
+	.hidden	logadd
 	.globl	logadd
 	.type	logadd,@function
 logadd:                                 # @logadd
@@ -62,6 +66,8 @@ logadd:                                 # @logadd
 .Lfunc_end1:
 	.size	logadd, .Lfunc_end1-logadd
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -89,14 +95,15 @@ main:                                   # @main
 	br_if   	$pop14, .LBB2_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB2_2:                                  # %if.then
+.LBB2_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	masktab,@object         # @masktab
-	.data
+	.hidden	masktab                 # @masktab
+	.type	masktab,@object
+	.section	.data.masktab,"aw",@progbits
 	.globl	masktab
 	.align	1
 masktab:
@@ -108,7 +115,9 @@ masktab:
 	.int16	0                       # 0x0
 	.size	masktab, 12
 
-	.type	psd,@object             # @psd
+	.hidden	psd                     # @psd
+	.type	psd,@object
+	.section	.data.psd,"aw",@progbits
 	.globl	psd
 	.align	1
 psd:
@@ -120,7 +129,9 @@ psd:
 	.int16	0                       # 0x0
 	.size	psd, 12
 
-	.type	bndpsd,@object          # @bndpsd
+	.hidden	bndpsd                  # @bndpsd
+	.type	bndpsd,@object
+	.section	.data.bndpsd,"aw",@progbits
 	.globl	bndpsd
 	.align	1
 bndpsd:

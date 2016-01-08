@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-3.c"
+	.section	.text.simple_vol_global,"ax",@progbits
+	.hidden	simple_vol_global
 	.globl	simple_vol_global
 	.type	simple_vol_global,@function
 simple_vol_global:                      # @simple_vol_global
@@ -12,6 +14,8 @@ simple_vol_global:                      # @simple_vol_global
 .Lfunc_end0:
 	.size	simple_vol_global, .Lfunc_end0-simple_vol_global
 
+	.section	.text.simple_vol_file,"ax",@progbits
+	.hidden	simple_vol_file
 	.globl	simple_vol_file
 	.type	simple_vol_file,@function
 simple_vol_file:                        # @simple_vol_file
@@ -24,6 +28,8 @@ simple_vol_file:                        # @simple_vol_file
 .Lfunc_end1:
 	.size	simple_vol_file, .Lfunc_end1-simple_vol_file
 
+	.section	.text.expr_vol_global,"ax",@progbits
+	.hidden	expr_vol_global
 	.globl	expr_vol_global
 	.type	expr_vol_global,@function
 expr_vol_global:                        # @expr_vol_global
@@ -64,6 +70,8 @@ expr_vol_global:                        # @expr_vol_global
 .Lfunc_end2:
 	.size	expr_vol_global, .Lfunc_end2-expr_vol_global
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -84,94 +92,108 @@ main:                                   # @main
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
-	.type	glob_int,@object        # @glob_int
-	.data
+	.hidden	glob_int                # @glob_int
+	.type	glob_int,@object
+	.section	.data.glob_int,"aw",@progbits
 	.globl	glob_int
 	.align	2
 glob_int:
 	.int32	4                       # 0x4
 	.size	glob_int, 4
 
-	.type	glob_int_arr,@object    # @glob_int_arr
-	.bss
+	.hidden	glob_int_arr            # @glob_int_arr
+	.type	glob_int_arr,@object
+	.section	.bss.glob_int_arr,"aw",@nobits
 	.globl	glob_int_arr
 	.align	4
 glob_int_arr:
-	.zero	400
+	.skip	400
 	.size	glob_int_arr, 400
 
-	.type	glob_vol_ptr_int,@object # @glob_vol_ptr_int
-	.data
+	.hidden	glob_vol_ptr_int        # @glob_vol_ptr_int
+	.type	glob_vol_ptr_int,@object
+	.section	.data.glob_vol_ptr_int,"aw",@progbits
 	.globl	glob_vol_ptr_int
 	.align	2
 glob_vol_ptr_int:
 	.int32	glob_int_arr
 	.size	glob_vol_ptr_int, 4
 
-	.type	glob_vol_int_arr,@object # @glob_vol_int_arr
-	.bss
+	.hidden	glob_vol_int_arr        # @glob_vol_int_arr
+	.type	glob_vol_int_arr,@object
+	.section	.bss.glob_vol_int_arr,"aw",@nobits
 	.globl	glob_vol_int_arr
 	.align	4
 glob_vol_int_arr:
-	.zero	400
+	.skip	400
 	.size	glob_vol_int_arr, 400
 
-	.type	glob_ptr_vol_int,@object # @glob_ptr_vol_int
-	.data
+	.hidden	glob_ptr_vol_int        # @glob_ptr_vol_int
+	.type	glob_ptr_vol_int,@object
+	.section	.data.glob_ptr_vol_int,"aw",@progbits
 	.globl	glob_ptr_vol_int
 	.align	2
 glob_ptr_vol_int:
 	.int32	glob_vol_int_arr
 	.size	glob_ptr_vol_int, 4
 
-	.type	glob_vol_ptr_vol_int,@object # @glob_vol_ptr_vol_int
+	.hidden	glob_vol_ptr_vol_int    # @glob_vol_ptr_vol_int
+	.type	glob_vol_ptr_vol_int,@object
+	.section	.data.glob_vol_ptr_vol_int,"aw",@progbits
 	.globl	glob_vol_ptr_vol_int
 	.align	2
 glob_vol_ptr_vol_int:
 	.int32	glob_vol_int_arr
 	.size	glob_vol_ptr_vol_int, 4
 
-	.type	str,@object             # @str
-	.bss
+	.hidden	str                     # @str
+	.type	str,@object
+	.section	.bss.str,"aw",@nobits
 	.globl	str
 	.align	2
 str:
-	.zero	20
+	.skip	20
 	.size	str, 20
 
-	.type	vol_ptr_str,@object     # @vol_ptr_str
-	.data
+	.hidden	vol_ptr_str             # @vol_ptr_str
+	.type	vol_ptr_str,@object
+	.section	.data.vol_ptr_str,"aw",@progbits
 	.globl	vol_ptr_str
 	.align	2
 vol_ptr_str:
 	.int32	str
 	.size	vol_ptr_str, 4
 
-	.type	vol_str,@object         # @vol_str
-	.bss
+	.hidden	vol_str                 # @vol_str
+	.type	vol_str,@object
+	.section	.bss.vol_str,"aw",@nobits
 	.globl	vol_str
 	.align	2
 vol_str:
-	.zero	20
+	.skip	20
 	.size	vol_str, 20
 
-	.type	ptr_vol_str,@object     # @ptr_vol_str
-	.data
+	.hidden	ptr_vol_str             # @ptr_vol_str
+	.type	ptr_vol_str,@object
+	.section	.data.ptr_vol_str,"aw",@progbits
 	.globl	ptr_vol_str
 	.align	2
 ptr_vol_str:
 	.int32	vol_str
 	.size	ptr_vol_str, 4
 
-	.type	vol_ptr_vol_str,@object # @vol_ptr_vol_str
+	.hidden	vol_ptr_vol_str         # @vol_ptr_vol_str
+	.type	vol_ptr_vol_str,@object
+	.section	.data.vol_ptr_vol_str,"aw",@progbits
 	.globl	vol_ptr_vol_str
 	.align	2
 vol_ptr_vol_str:
 	.int32	vol_str
 	.size	vol_ptr_vol_str, 4
 
-	.type	glob_vol_int,@object    # @glob_vol_int
-	.bss
+	.hidden	glob_vol_int            # @glob_vol_int
+	.type	glob_vol_int,@object
+	.section	.bss.glob_vol_int,"aw",@nobits
 	.globl	glob_vol_int
 	.align	2
 glob_vol_int:
@@ -181,13 +203,14 @@ glob_vol_int:
 	.type	stat_vol_int_arr,@object # @stat_vol_int_arr
 	.lcomm	stat_vol_int_arr,400,4
 	.type	stat_vol_ptr_int,@object # @stat_vol_ptr_int
-	.data
+	.section	.data.stat_vol_ptr_int,"aw",@progbits
 	.align	2
 stat_vol_ptr_int:
 	.int32	stat_int_arr
 	.size	stat_vol_ptr_int, 4
 
 	.type	stat_vol_ptr_vol_int,@object # @stat_vol_ptr_vol_int
+	.section	.data.stat_vol_ptr_vol_int,"aw",@progbits
 	.align	2
 stat_vol_ptr_vol_int:
 	.int32	stat_vol_int_arr

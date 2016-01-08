@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010106-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010106-1.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -14,17 +16,19 @@ f:                                      # @f
 	i32.ge_u	$push1=, $0, $pop0
 	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %switch.lookup
-	i32.const	$push3=, switch.table
+	i32.const	$push3=, .Lswitch.table
 	i32.shl 	$push2=, $0, $1
 	i32.add 	$push4=, $pop3, $pop2
 	i32.load	$push5=, 0($pop4)
 	return  	$pop5
-.LBB0_2:                                  # %sw.default
+.LBB0_2:                                # %sw.default
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -36,10 +40,10 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	switch.table,@object    # @switch.table
-	.section	.rodata,"a",@progbits
+	.type	.Lswitch.table,@object  # @switch.table
+	.section	.rodata..Lswitch.table,"a",@progbits
 	.align	4
-switch.table:
+.Lswitch.table:
 	.int32	33                      # 0x21
 	.int32	0                       # 0x0
 	.int32	7                       # 0x7
@@ -47,7 +51,7 @@ switch.table:
 	.int32	3                       # 0x3
 	.int32	15                      # 0xf
 	.int32	9                       # 0x9
-	.size	switch.table, 28
+	.size	.Lswitch.table, 28
 
 
 	.ident	"clang version 3.8.0 "

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20111227-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20111227-3.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -20,7 +22,7 @@ bar:                                    # @bar
 # BB#2:                                 # %if.then
 	call    	abort
 	unreachable
-.LBB0_3:                                  # %if.end
+.LBB0_3:                                # %if.end
 	block   	.LBB0_6
 	i32.const	$push6=, 1
 	i32.ne  	$push7=, $0, $pop6
@@ -33,7 +35,7 @@ bar:                                    # @bar
 # BB#5:                                 # %if.then8
 	call    	abort
 	unreachable
-.LBB0_6:                                  # %if.end9
+.LBB0_6:                                # %if.end9
 	block   	.LBB0_9
 	br_if   	$0, .LBB0_9
 # BB#7:                                 # %if.end9
@@ -44,11 +46,13 @@ bar:                                    # @bar
 # BB#8:                                 # %if.then15
 	call    	abort
 	unreachable
-.LBB0_9:                                  # %if.end16
+.LBB0_9:                                # %if.end16
 	return
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -74,17 +78,19 @@ foo:                                    # @foo
 # BB#3:                                 # %if.then
 	i32.store16	$discard=, s($3), $2
 	br      	.LBB1_6
-.LBB1_4:                                  # %if.then3
+.LBB1_4:                                # %if.then3
 	i32.store	$discard=, i($3), $2
 	br      	.LBB1_6
-.LBB1_5:                                  # %if.then8
+.LBB1_5:                                # %if.then8
 	i32.store	$discard=, l($3), $2
-.LBB1_6:                                  # %if.end11
+.LBB1_6:                                # %if.end11
 	call    	bar, $1
 	return
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -101,29 +107,35 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	v,@object               # @v
-	.data
+	.hidden	v                       # @v
+	.type	v,@object
+	.section	.data.v,"aw",@progbits
 	.globl	v
 v:
 	.int8	255                     # 0xff
 	.size	v, 1
 
-	.type	s,@object               # @s
-	.bss
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.bss.s,"aw",@nobits
 	.globl	s
 	.align	1
 s:
 	.int16	0                       # 0x0
 	.size	s, 2
 
-	.type	i,@object               # @i
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4
 
-	.type	l,@object               # @l
+	.hidden	l                       # @l
+	.type	l,@object
+	.section	.bss.l,"aw",@nobits
 	.globl	l
 	.align	2
 l:

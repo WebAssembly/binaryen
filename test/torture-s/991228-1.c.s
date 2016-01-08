@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/991228-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991228-1.c"
+	.section	.text.signbit,"ax",@progbits
+	.hidden	signbit
 	.globl	signbit
 	.type	signbit,@function
 signbit:                                # @signbit
@@ -32,6 +34,8 @@ signbit:                                # @signbit
 .Lfunc_end0:
 	.size	signbit, .Lfunc_end0-signbit
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -57,7 +61,7 @@ main:                                   # @main
 # BB#1:                                 # %if.then
 	call    	exit, $0
 	unreachable
-.LBB1_2:                                  # %if.end
+.LBB1_2:                                # %if.end
 	i64.const	$push6=, -4625196817309499392
 	i64.store	$discard=, 8($5), $pop6
 	i32.const	$4=, 8
@@ -70,21 +74,24 @@ main:                                   # @main
 # BB#3:                                 # %if.then1
 	call    	abort
 	unreachable
-.LBB1_4:                                  # %if.end2
+.LBB1_4:                                # %if.end2
 	call    	exit, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	u,@object               # @u
-	.data
+	.hidden	u                       # @u
+	.type	u,@object
+	.section	.data.u,"aw",@progbits
 	.globl	u
 	.align	3
 u:
 	.int64	-4625196817309499392    # double -0.25
 	.size	u, 8
 
-	.type	endianness_test,@object # @endianness_test
+	.hidden	endianness_test         # @endianness_test
+	.type	endianness_test,@object
+	.section	.data.endianness_test,"aw",@progbits
 	.globl	endianness_test
 	.align	3
 endianness_test:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr33992.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr33992.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -11,12 +13,14 @@ bar:                                    # @bar
 	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.do_test,"ax",@progbits
+	.hidden	do_test
 	.globl	do_test
 	.type	do_test,@function
 do_test:                                # @do_test
@@ -27,7 +31,7 @@ do_test:                                # @do_test
 	i64.const	$2=, -1
 	i64.const	$8=, 63
 	copy_local	$9=, $2
-.LBB1_1:                                  # %for.cond.i
+.LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	i64.const	$3=, 4294967295
@@ -40,7 +44,7 @@ do_test:                                # @do_test
 	i64.and 	$push1=, $pop0, $1
 	i64.eq  	$push2=, $pop1, $6
 	br_if   	$pop2, .LBB1_1
-.LBB1_2:                                  # %foo.exit
+.LBB1_2:                                # %foo.exit
 	i64.const	$7=, 32
 	i64.shl 	$push3=, $9, $7
 	i64.shr_s	$push4=, $pop3, $7
@@ -49,7 +53,7 @@ do_test:                                # @do_test
 	i64.const	$2=, -1
 	i64.const	$8=, 63
 	copy_local	$9=, $2
-.LBB1_3:                                  # %for.cond.i.1
+.LBB1_3:                                # %for.cond.i.1
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_4
 	i64.and 	$4=, $8, $3
@@ -59,7 +63,7 @@ do_test:                                # @do_test
 	i64.and 	$push6=, $pop5, $1
 	i64.eq  	$push7=, $pop6, $6
 	br_if   	$pop7, .LBB1_3
-.LBB1_4:                                  # %foo.exit.1
+.LBB1_4:                                # %foo.exit.1
 	i64.shl 	$push8=, $9, $7
 	i64.shr_s	$push9=, $pop8, $7
 	call    	bar, $pop9
@@ -67,6 +71,8 @@ do_test:                                # @do_test
 .Lfunc_end1:
 	.size	do_test, .Lfunc_end1-do_test
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

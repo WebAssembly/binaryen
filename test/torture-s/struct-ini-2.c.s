@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/struct-ini-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/struct-ini-2.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -31,26 +33,27 @@ main:                                   # @main
 # BB#3:                                 # %if.end13
 	call    	exit, $1
 	unreachable
-.LBB0_4:                                  # %if.then12
+.LBB0_4:                                # %if.then12
 	call    	abort
 	unreachable
-.LBB0_5:                                  # %if.then6
+.LBB0_5:                                # %if.then6
 	call    	abort
 	unreachable
-.LBB0_6:                                  # %if.then
+.LBB0_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	x,@object               # @x
-	.data
+	.hidden	x                       # @x
+	.type	x,@object
+	.section	.data.x,"aw",@progbits
 	.globl	x
 	.align	2
 x:
 	.int8	2                       # 0x2
 	.int8	67                      # 0x43
-	.zero	2
+	.skip	2
 	.size	x, 4
 
 

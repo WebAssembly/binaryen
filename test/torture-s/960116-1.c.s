@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/960116-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960116-1.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -15,13 +17,15 @@ f:                                      # @f
 # BB#1:                                 # %land.lhs.true
 	i32.load	$push1=, 0($0)
 	br_if   	$pop1, .LBB0_3
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	i32.const	$1=, 0
-.LBB0_3:                                  # %return
+.LBB0_3:                                # %return
 	return  	$1
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

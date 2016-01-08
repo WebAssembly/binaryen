@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20111227-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20111227-1.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -11,12 +13,14 @@ bar:                                    # @bar
 	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -31,16 +35,18 @@ foo:                                    # @foo
 # BB#1:                                 # %if.then
 	call    	bar, $0
 	br      	.LBB1_3
-.LBB1_2:                                  # %if.else
+.LBB1_2:                                # %if.else
 	i32.const	$1=, 16
 	i32.shl 	$push1=, $0, $1
 	i32.shr_s	$push0=, $pop1, $1
 	call    	bar, $pop0
-.LBB1_3:                                  # %if.end
+.LBB1_3:                                # %if.end
 	return
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -54,8 +60,9 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	v,@object               # @v
-	.data
+	.hidden	v                       # @v
+	.type	v,@object
+	.section	.data.v,"aw",@progbits
 	.globl	v
 	.align	1
 v:

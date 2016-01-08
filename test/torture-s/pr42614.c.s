@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42614.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42614.c"
+	.section	.text.init,"ax",@progbits
+	.hidden	init
 	.globl	init
 	.type	init,@function
 init:                                   # @init
@@ -11,6 +13,8 @@ init:                                   # @init
 .Lfunc_end0:
 	.size	init, .Lfunc_end0-init
 
+	.section	.text.expect_func,"ax",@progbits
+	.hidden	expect_func
 	.globl	expect_func
 	.type	expect_func,@function
 expect_func:                            # @expect_func
@@ -27,15 +31,17 @@ expect_func:                            # @expect_func
 	br_if   	$pop3, .LBB1_3
 # BB#2:                                 # %if.end6
 	return
-.LBB1_3:                                  # %if.then5
+.LBB1_3:                                # %if.then5
 	call    	abort
 	unreachable
-.LBB1_4:                                  # %if.then
+.LBB1_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	expect_func, .Lfunc_end1-expect_func
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

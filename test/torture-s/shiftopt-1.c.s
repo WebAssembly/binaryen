@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/shiftopt-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/shiftopt-1.c"
+	.section	.text.utest,"ax",@progbits
+	.hidden	utest
 	.globl	utest
 	.type	utest,@function
 utest:                                  # @utest
@@ -9,6 +11,8 @@ utest:                                  # @utest
 .Lfunc_end0:
 	.size	utest, .Lfunc_end0-utest
 
+	.section	.text.stest,"ax",@progbits
+	.hidden	stest
 	.globl	stest
 	.type	stest,@function
 stest:                                  # @stest
@@ -18,6 +22,8 @@ stest:                                  # @stest
 .Lfunc_end1:
 	.size	stest, .Lfunc_end1-stest
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

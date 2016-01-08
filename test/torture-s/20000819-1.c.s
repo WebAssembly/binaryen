@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000819-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000819-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -15,7 +17,7 @@ foo:                                    # @foo
 	i32.const	$push1=, 2
 	i32.shl 	$push2=, $1, $pop1
 	i32.add 	$1=, $0, $pop2
-.LBB0_2:                                  # %for.body
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_4
 	i32.load	$push3=, 0($1)
@@ -23,20 +25,22 @@ foo:                                    # @foo
 	i32.le_s	$push6=, $pop3, $pop5
 	br_if   	$pop6, .LBB0_4
 # BB#3:                                 # %for.cond
-                                        #   in Loop: Header=.LBB0_2 Depth=1
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push4=, 4
 	i32.add 	$1=, $1, $pop4
 	i32.le_u	$push7=, $1, $0
 	br_if   	$pop7, .LBB0_2
 	br      	.LBB0_5
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	exit, $2
 	unreachable
-.LBB0_5:                                  # %for.end
+.LBB0_5:                                # %for.end
 	return
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -57,14 +61,15 @@ main:                                   # @main
 # BB#2:                                 # %for.cond.i.1
 	call    	abort
 	unreachable
-.LBB1_3:                                  # %if.then.i
+.LBB1_3:                                # %if.then.i
 	call    	exit, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	2
 a:

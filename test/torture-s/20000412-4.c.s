@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000412-4.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000412-4.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -23,28 +25,30 @@ f:                                      # @f
 	i32.mul 	$push6=, $3, $pop5
 	i32.add 	$push7=, $2, $pop6
 	i32.sub 	$8=, $pop7, $1
-.LBB0_2:                                  # %for.body
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_4
 	i32.add 	$8=, $8, $3
 	i32.le_s	$push9=, $8, $7
 	br_if   	$pop9, .LBB0_4
 # BB#3:                                 # %for.cond
-                                        #   in Loop: Header=.LBB0_2 Depth=1
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push8=, 1
 	i32.add 	$9=, $9, $pop8
 	i32.const	$push10=, 2
 	i32.le_s	$push11=, $9, $pop10
 	br_if   	$pop11, .LBB0_2
 	br      	.LBB0_5
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	abort
 	unreachable
-.LBB0_5:                                  # %for.cond6.preheader
+.LBB0_5:                                # %for.cond6.preheader
 	return
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

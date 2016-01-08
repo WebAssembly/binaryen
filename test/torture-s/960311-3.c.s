@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/960311-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960311-3.c"
+	.section	.text.a1,"ax",@progbits
+	.hidden	a1
 	.globl	a1
 	.type	a1,@function
 a1:                                     # @a1
@@ -14,6 +16,8 @@ a1:                                     # @a1
 .Lfunc_end0:
 	.size	a1, .Lfunc_end0-a1
 
+	.section	.text.b,"ax",@progbits
+	.hidden	b
 	.globl	b
 	.type	b,@function
 b:                                      # @b
@@ -30,7 +34,7 @@ b:                                      # @b
 	i32.const	$push3=, 1
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$discard=, count($1), $pop4
-.LBB1_2:                                  # %if.end
+.LBB1_2:                                # %if.end
 	block   	.LBB1_4
 	i32.const	$push5=, 1073741824
 	i32.and 	$push6=, $0, $pop5
@@ -43,7 +47,7 @@ b:                                      # @b
 	i32.const	$push8=, 1
 	i32.add 	$push9=, $pop7, $pop8
 	i32.store	$discard=, count($1), $pop9
-.LBB1_4:                                  # %if.end4
+.LBB1_4:                                # %if.end4
 	block   	.LBB1_6
 	i32.const	$push10=, 536870912
 	i32.and 	$push11=, $0, $pop10
@@ -56,11 +60,13 @@ b:                                      # @b
 	i32.const	$push13=, 1
 	i32.add 	$push14=, $pop12, $pop13
 	i32.store	$discard=, count($0), $pop14
-.LBB1_6:                                  # %if.end9
+.LBB1_6:                                # %if.end9
 	return
 .Lfunc_end1:
 	.size	b, .Lfunc_end1-b
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -75,8 +81,9 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	count,@object           # @count
-	.bss
+	.hidden	count                   # @count
+	.type	count,@object
+	.section	.bss.count,"aw",@nobits
 	.globl	count
 	.align	2
 count:

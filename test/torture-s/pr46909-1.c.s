@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr46909-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr46909-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -22,6 +24,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -29,7 +33,7 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, -14
-.LBB1_1:                                  # %for.body
+.LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_4
 	loop    	.LBB1_3
@@ -44,16 +48,16 @@ main:                                   # @main
 	i32.ne  	$push5=, $0, $pop4
 	br_if   	$pop5, .LBB1_4
 # BB#2:                                 # %for.cond
-                                        #   in Loop: Header=.LBB1_1 Depth=1
+                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push6=, 5
 	i32.add 	$0=, $3, $pop6
 	i32.add 	$3=, $3, $2
 	i32.const	$push7=, 9
 	i32.le_s	$push8=, $0, $pop7
 	br_if   	$pop8, .LBB1_1
-.LBB1_3:                                  # %for.end
+.LBB1_3:                                # %for.end
 	return  	$1
-.LBB1_4:                                  # %if.then
+.LBB1_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

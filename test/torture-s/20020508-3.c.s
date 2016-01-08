@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020508-3.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020508-3.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -189,115 +191,128 @@ main:                                   # @main
 # BB#21:                                # %if.end195
 	call    	exit, $11
 	unreachable
-.LBB0_22:                                 # %if.then187
+.LBB0_22:                               # %if.then187
 	call    	abort
 	unreachable
-.LBB0_23:                                 # %if.then170
+.LBB0_23:                               # %if.then170
 	call    	abort
 	unreachable
-.LBB0_24:                                 # %if.then160
+.LBB0_24:                               # %if.then160
 	call    	abort
 	unreachable
-.LBB0_25:                                 # %if.then153
+.LBB0_25:                               # %if.then153
 	call    	abort
 	unreachable
-.LBB0_26:                                 # %if.then145
+.LBB0_26:                               # %if.then145
 	call    	abort
 	unreachable
-.LBB0_27:                                 # %if.then138
+.LBB0_27:                               # %if.then138
 	call    	abort
 	unreachable
-.LBB0_28:                                 # %if.then130
+.LBB0_28:                               # %if.then130
 	call    	abort
 	unreachable
-.LBB0_29:                                 # %if.then121
+.LBB0_29:                               # %if.then121
 	call    	abort
 	unreachable
-.LBB0_30:                                 # %if.then102
+.LBB0_30:                               # %if.then102
 	call    	abort
 	unreachable
-.LBB0_31:                                 # %if.then92
+.LBB0_31:                               # %if.then92
 	call    	abort
 	unreachable
-.LBB0_32:                                 # %if.then85
+.LBB0_32:                               # %if.then85
 	call    	abort
 	unreachable
-.LBB0_33:                                 # %if.then75
+.LBB0_33:                               # %if.then75
 	call    	abort
 	unreachable
-.LBB0_34:                                 # %if.then68
+.LBB0_34:                               # %if.then68
 	call    	abort
 	unreachable
-.LBB0_35:                                 # %if.then59
+.LBB0_35:                               # %if.then59
 	call    	abort
 	unreachable
-.LBB0_36:                                 # %if.then52
+.LBB0_36:                               # %if.then52
 	call    	abort
 	unreachable
-.LBB0_37:                                 # %if.then44
+.LBB0_37:                               # %if.then44
 	call    	abort
 	unreachable
-.LBB0_38:                                 # %if.then37
+.LBB0_38:                               # %if.then37
 	call    	abort
 	unreachable
-.LBB0_39:                                 # %if.then29
+.LBB0_39:                               # %if.then29
 	call    	abort
 	unreachable
-.LBB0_40:                                 # %if.then20
+.LBB0_40:                               # %if.then20
 	call    	abort
 	unreachable
-.LBB0_41:                                 # %if.then10
+.LBB0_41:                               # %if.then10
 	call    	abort
 	unreachable
-.LBB0_42:                                 # %if.then
+.LBB0_42:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	c,@object               # @c
-	.data
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.data.c,"aw",@progbits
 	.globl	c
 c:
 	.int8	52                      # 0x34
 	.size	c, 1
 
-	.type	s,@object               # @s
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.data.s,"aw",@progbits
 	.globl	s
 	.align	1
 s:
 	.int16	62004                   # 0xf234
 	.size	s, 2
 
-	.type	i,@object               # @i
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.data.i,"aw",@progbits
 	.globl	i
 	.align	2
 i:
 	.int32	62004                   # 0xf234
 	.size	i, 4
 
-	.type	l,@object               # @l
+	.hidden	l                       # @l
+	.type	l,@object
+	.section	.data.l,"aw",@progbits
 	.globl	l
 	.align	2
 l:
 	.int32	4063516280              # 0xf2345678
 	.size	l, 4
 
-	.type	ll,@object              # @ll
+	.hidden	ll                      # @ll
+	.type	ll,@object
+	.section	.data.ll,"aw",@progbits
 	.globl	ll
 	.align	3
 ll:
 	.int64	1090791845765373680     # 0xf2345678abcdef0
 	.size	ll, 8
 
-	.type	shift1,@object          # @shift1
+	.hidden	shift1                  # @shift1
+	.type	shift1,@object
+	.section	.data.shift1,"aw",@progbits
 	.globl	shift1
 	.align	2
 shift1:
 	.int32	4                       # 0x4
 	.size	shift1, 4
 
-	.type	shift2,@object          # @shift2
+	.hidden	shift2                  # @shift2
+	.type	shift2,@object
+	.section	.data.shift2,"aw",@progbits
 	.globl	shift2
 	.align	2
 shift2:

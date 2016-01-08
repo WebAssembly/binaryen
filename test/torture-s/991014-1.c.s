@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/991014-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991014-1.c"
+	.section	.text.union_size,"ax",@progbits
+	.hidden	union_size
 	.globl	union_size
 	.type	union_size,@function
 union_size:                             # @union_size
@@ -10,6 +12,8 @@ union_size:                             # @union_size
 .Lfunc_end0:
 	.size	union_size, .Lfunc_end0-union_size
 
+	.section	.text.struct_size,"ax",@progbits
+	.hidden	struct_size
 	.globl	struct_size
 	.type	struct_size,@function
 struct_size:                            # @struct_size
@@ -20,6 +24,8 @@ struct_size:                            # @struct_size
 .Lfunc_end1:
 	.size	struct_size, .Lfunc_end1-struct_size
 
+	.section	.text.struct_a_offset,"ax",@progbits
+	.hidden	struct_a_offset
 	.globl	struct_a_offset
 	.type	struct_a_offset,@function
 struct_a_offset:                        # @struct_a_offset
@@ -30,6 +36,8 @@ struct_a_offset:                        # @struct_a_offset
 .Lfunc_end2:
 	.size	struct_a_offset, .Lfunc_end2-struct_a_offset
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

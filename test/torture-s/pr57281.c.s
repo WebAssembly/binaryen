@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57281.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57281.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -17,6 +19,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -33,7 +37,7 @@ main:                                   # @main
 	i32.load	$0=, a($3)
 	i32.load	$1=, e($3)
 	i32.load	$2=, g($3)
-.LBB1_2:                                  # %for.body
+.LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	i64.load	$discard=, f($3)
@@ -49,60 +53,68 @@ main:                                   # @main
 	i32.store	$push7=, b($5), $pop6
 	i32.ne  	$push8=, $pop7, $4
 	br_if   	$pop8, .LBB1_2
-.LBB1_3:                                  # %for.end
+.LBB1_3:                                # %for.end
 	return  	$3
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	2
 a:
 	.int32	1                       # 0x1
 	.size	a, 4
 
-	.type	d,@object               # @d
-	.bss
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.bss.d,"aw",@nobits
 	.globl	d
 	.align	2
 d:
 	.int32	0                       # 0x0
 	.size	d, 4
 
-	.type	e,@object               # @e
-	.data
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.data.e,"aw",@progbits
 	.globl	e
 	.align	2
 e:
 	.int32	d
 	.size	e, 4
 
-	.type	c,@object               # @c
-	.bss
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	3
 c:
 	.int64	0                       # 0x0
 	.size	c, 8
 
-	.type	g,@object               # @g
-	.data
+	.hidden	g                       # @g
+	.type	g,@object
+	.section	.data.g,"aw",@progbits
 	.globl	g
 	.align	2
 g:
 	.int32	c
 	.size	g, 4
 
-	.type	b,@object               # @b
-	.bss
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 	.align	2
 b:
 	.int32	0                       # 0x0
 	.size	b, 4
 
-	.type	f,@object               # @f
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.bss.f,"aw",@nobits
 	.globl	f
 	.align	3
 f:

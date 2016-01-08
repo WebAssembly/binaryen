@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071030-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071030-1.c"
+	.section	.text.CalcPing,"ax",@progbits
+	.hidden	CalcPing
 	.globl	CalcPing
 	.type	CalcPing,@function
 CalcPing:                               # @CalcPing
@@ -23,7 +25,7 @@ CalcPing:                               # @CalcPing
 	i64.shr_u	$push13=, $1, $pop12
 	i32.wrap/i64	$5=, $pop13
 	br      	.LBB0_5
-.LBB0_2:                                  # %for.body
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i32.add 	$push3=, $0, $5
@@ -37,7 +39,7 @@ CalcPing:                               # @CalcPing
 	i32.const	$push6=, 1552
 	i32.ne  	$push7=, $5, $pop6
 	br_if   	$pop7, .LBB0_2
-.LBB0_3:                                  # %for.end
+.LBB0_3:                                # %for.end
 	i32.const	$5=, 9999
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $6, $pop14
@@ -48,11 +50,13 @@ CalcPing:                               # @CalcPing
 	f32.const	$push10=, 0x1.f4p9
 	f32.mul 	$push11=, $pop9, $pop10
 	i32.trunc_s/f32	$5=, $pop11
-.LBB0_5:                                  # %cleanup
+.LBB0_5:                                # %cleanup
 	return  	$5
 .Lfunc_end0:
 	.size	CalcPing, .Lfunc_end0-CalcPing
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -78,7 +82,7 @@ main:                                   # @main
 	i32.const	$push2=, 1065353216
 	i32.store	$discard=, 0($pop1), $pop2
 	copy_local	$5=, $0
-.LBB1_1:                                  # %for.body.i
+.LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	i32.const	$11=, 8
@@ -94,7 +98,7 @@ main:                                   # @main
 	i32.const	$push6=, 1552
 	i32.ne  	$push7=, $3, $pop6
 	br_if   	$pop7, .LBB1_1
-.LBB1_2:                                  # %for.end.i
+.LBB1_2:                                # %for.end.i
 	block   	.LBB1_5
 	i32.const	$push16=, 0
 	i32.eq  	$push17=, $4, $pop16
@@ -115,7 +119,7 @@ main:                                   # @main
 	i32.const	$8=, __stack_pointer
 	i32.store	$12=, 0($8), $12
 	return  	$pop15
-.LBB1_5:                                  # %if.then
+.LBB1_5:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

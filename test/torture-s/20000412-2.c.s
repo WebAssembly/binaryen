@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000412-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000412-2.c"
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -26,9 +28,9 @@ f:                                      # @f
 	i32.add 	$5=, $4, $5
 	i32.call	$0=, f, $pop1, $5
 	br      	.LBB0_3
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	i32.load	$0=, 0($1)
-.LBB0_3:                                  # %cleanup
+.LBB0_3:                                # %cleanup
 	i32.const	$4=, 16
 	i32.add 	$4=, $4, $4
 	i32.const	$4=, __stack_pointer
@@ -37,6 +39,8 @@ f:                                      # @f
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -54,7 +58,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	call    	exit, $2
 	unreachable
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

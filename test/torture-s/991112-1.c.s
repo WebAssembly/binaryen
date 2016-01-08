@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/991112-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991112-1.c"
+	.section	.text.rl_show_char,"ax",@progbits
+	.hidden	rl_show_char
 	.globl	rl_show_char
 	.type	rl_show_char,@function
 rl_show_char:                           # @rl_show_char
@@ -11,6 +13,8 @@ rl_show_char:                           # @rl_show_char
 .Lfunc_end0:
 	.size	rl_show_char, .Lfunc_end0-rl_show_char
 
+	.section	.text.rl_character_len,"ax",@progbits
+	.hidden	rl_character_len
 	.globl	rl_character_len
 	.type	rl_character_len,@function
 rl_character_len:                       # @rl_character_len
@@ -25,6 +29,8 @@ rl_character_len:                       # @rl_character_len
 .Lfunc_end1:
 	.size	rl_character_len, .Lfunc_end1-rl_character_len
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -44,10 +50,10 @@ main:                                   # @main
 # BB#2:                                 # %if.end4
 	i32.const	$push4=, 0
 	return  	$pop4
-.LBB2_3:                                  # %if.then3
+.LBB2_3:                                # %if.then3
 	call    	abort
 	unreachable
-.LBB2_4:                                  # %if.then
+.LBB2_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end2:

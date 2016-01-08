@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/930408-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930408-1.c"
+	.section	.text.p,"ax",@progbits
+	.hidden	p
 	.globl	p
 	.type	p,@function
 p:                                      # @p
@@ -10,6 +12,8 @@ p:                                      # @p
 .Lfunc_end0:
 	.size	p, .Lfunc_end0-p
 
+	.section	.text.f,"ax",@progbits
+	.hidden	f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -24,12 +28,14 @@ f:                                      # @f
 	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %sw.epilog
 	return  	$0
-.LBB1_2:                                  # %sw.bb
+.LBB1_2:                                # %sw.bb
 	i32.call	$discard=, p
 	unreachable
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -44,12 +50,13 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	s,@object               # @s
-	.bss
+	.hidden	s                       # @s
+	.type	s,@object
+	.section	.bss.s,"aw",@nobits
 	.globl	s
 	.align	2
 s:
-	.zero	4
+	.skip	4
 	.size	s, 4
 
 

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030714-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030714-1.c"
+	.section	.text.RenderBox_setStyle,"ax",@progbits
+	.hidden	RenderBox_setStyle
 	.globl	RenderBox_setStyle
 	.type	RenderBox_setStyle,@function
 RenderBox_setStyle:                     # @RenderBox_setStyle
@@ -27,7 +29,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.add 	$push12=, $0, $pop11
 	i32.or  	$push0=, $3, $2
 	i32.store16	$3=, 0($pop12), $pop0
-.LBB0_3:                                  # %if.end
+.LBB0_3:                                # %if.end
 	i32.const	$push16=, 26
 	i32.add 	$2=, $0, $pop16
 	i32.const	$push14=, 65519
@@ -50,7 +52,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.or  	$push22=, $pop20, $pop21
 	i32.store16	$discard=, 0($2), $pop22
 	br      	.LBB0_9
-.LBB0_6:                                  # %if.else
+.LBB0_6:                                # %if.else
 	i32.load	$push23=, 0($1)
 	i32.const	$push24=, 393216
 	i32.and 	$push25=, $pop23, $pop24
@@ -63,17 +65,19 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.or  	$push30=, $pop28, $pop29
 	i32.store16	$discard=, 0($2), $pop30
 	br      	.LBB0_9
-.LBB0_8:                                  # %sw.bb
+.LBB0_8:                                # %sw.bb
 	i32.const	$push8=, 26
 	i32.add 	$push9=, $0, $pop8
 	i32.const	$push6=, 16
 	i32.or  	$push7=, $3, $pop6
 	i32.store16	$discard=, 0($pop9), $pop7
-.LBB0_9:                                  # %sw.epilog
+.LBB0_9:                                # %sw.epilog
 	return
 .Lfunc_end0:
 	.size	RenderBox_setStyle, .Lfunc_end0-RenderBox_setStyle
 
+	.section	.text.RenderObject_setStyle,"ax",@progbits
+	.hidden	RenderObject_setStyle
 	.globl	RenderObject_setStyle
 	.type	RenderObject_setStyle,@function
 RenderObject_setStyle:                  # @RenderObject_setStyle
@@ -83,6 +87,8 @@ RenderObject_setStyle:                  # @RenderObject_setStyle
 .Lfunc_end1:
 	.size	RenderObject_setStyle, .Lfunc_end1-RenderObject_setStyle
 
+	.section	.text.removeFromSpecialObjects,"ax",@progbits
+	.hidden	removeFromSpecialObjects
 	.globl	removeFromSpecialObjects
 	.type	removeFromSpecialObjects,@function
 removeFromSpecialObjects:               # @removeFromSpecialObjects
@@ -92,6 +98,8 @@ removeFromSpecialObjects:               # @removeFromSpecialObjects
 .Lfunc_end2:
 	.size	removeFromSpecialObjects, .Lfunc_end2-removeFromSpecialObjects
 
+	.section	.text.RenderBox_isTableCell,"ax",@progbits
+	.hidden	RenderBox_isTableCell
 	.globl	RenderBox_isTableCell
 	.type	RenderBox_isTableCell,@function
 RenderBox_isTableCell:                  # @RenderBox_isTableCell
@@ -103,6 +111,8 @@ RenderBox_isTableCell:                  # @RenderBox_isTableCell
 .Lfunc_end3:
 	.size	RenderBox_isTableCell, .Lfunc_end3-RenderBox_isTableCell
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -129,32 +139,38 @@ main:                                   # @main
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
-	.type	false,@object           # @false
-	.section	.rodata,"a",@progbits
+	.hidden	false                   # @false
+	.type	false,@object
+	.section	.rodata.false,"a",@progbits
 	.globl	false
 false:
 	.int8	0                       # 0x0
 	.size	false, 1
 
-	.type	true,@object            # @true
+	.hidden	true                    # @true
+	.type	true,@object
+	.section	.rodata.true,"a",@progbits
 	.globl	true
 true:
 	.int8	1                       # 0x1
 	.size	true, 1
 
-	.type	g_this,@object          # @g_this
-	.bss
+	.hidden	g_this                  # @g_this
+	.type	g_this,@object
+	.section	.bss.g_this,"aw",@nobits
 	.globl	g_this
 	.align	2
 g_this:
-	.zero	32
+	.skip	32
 	.size	g_this, 32
 
-	.type	g__style,@object        # @g__style
+	.hidden	g__style                # @g__style
+	.type	g__style,@object
+	.section	.bss.g__style,"aw",@nobits
 	.globl	g__style
 	.align	2
 g__style:
-	.zero	4
+	.skip	4
 	.size	g__style, 4
 
 

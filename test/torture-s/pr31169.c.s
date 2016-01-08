@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr31169.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr31169.c"
+	.section	.text.sign_bit_p,"ax",@progbits
+	.hidden	sign_bit_p
 	.globl	sign_bit_p
 	.type	sign_bit_p,@function
 sign_bit_p:                             # @sign_bit_p
@@ -26,7 +28,7 @@ sign_bit_p:                             # @sign_bit_p
 	i32.shr_u	$5=, $3, $pop12
 	i32.const	$4=, 0
 	br      	.LBB0_3
-.LBB0_2:                                  # %if.else
+.LBB0_2:                                # %if.else
 	i32.const	$3=, -1
 	i32.const	$push5=, 1
 	i32.add 	$push4=, $0, $3
@@ -36,7 +38,7 @@ sign_bit_p:                             # @sign_bit_p
 	i32.sub 	$push7=, $pop6, $0
 	i32.shr_u	$3=, $3, $pop7
 	copy_local	$6=, $5
-.LBB0_3:                                  # %if.end
+.LBB0_3:                                # %if.end
 	i32.and 	$push15=, $3, $2
 	i32.eq  	$push16=, $pop15, $4
 	i32.and 	$push13=, $5, $1
@@ -46,6 +48,8 @@ sign_bit_p:                             # @sign_bit_p
 .Lfunc_end0:
 	.size	sign_bit_p, .Lfunc_end0-sign_bit_p
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

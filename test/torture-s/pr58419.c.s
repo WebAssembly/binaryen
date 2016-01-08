@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58419.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58419.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -15,6 +17,8 @@ foo:                                    # @foo
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -30,6 +34,8 @@ bar:                                    # @bar
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -61,7 +67,7 @@ main:                                   # @main
 	i32.const	$push10=, 1
 	i32.store16	$5=, c($4), $pop10
 	i32.store	$discard=, 0($0), $4
-.LBB2_2:                                  # %lor.end
+.LBB2_2:                                # %lor.end
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
 	block   	.LBB2_4
@@ -80,7 +86,7 @@ main:                                   # @main
 	i32.const	$push20=, 1
 	i32.store16	$5=, c($4), $pop20
 	i32.store	$discard=, 0($0), $4
-.LBB2_4:                                  # %lor.end.1
+.LBB2_4:                                # %lor.end.1
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
 	block   	.LBB2_6
@@ -99,7 +105,7 @@ main:                                   # @main
 	i32.const	$push30=, 1
 	i32.store16	$5=, c($4), $pop30
 	i32.store	$discard=, 0($0), $4
-.LBB2_6:                                  # %lor.end.2
+.LBB2_6:                                # %lor.end.2
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
 	block   	.LBB2_8
@@ -118,7 +124,7 @@ main:                                   # @main
 	i32.const	$push40=, 1
 	i32.store16	$5=, c($4), $pop40
 	i32.store	$discard=, 0($0), $4
-.LBB2_8:                                  # %lor.end.3
+.LBB2_8:                                # %lor.end.3
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
 	block   	.LBB2_10
@@ -137,7 +143,7 @@ main:                                   # @main
 	i32.const	$push50=, 1
 	i32.store16	$5=, c($4), $pop50
 	i32.store	$discard=, 0($0), $4
-.LBB2_10:                                 # %lor.end.4
+.LBB2_10:                               # %lor.end.4
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
 	block   	.LBB2_12
@@ -156,7 +162,7 @@ main:                                   # @main
 	i32.const	$push60=, 1
 	i32.store16	$5=, c($4), $pop60
 	i32.store	$discard=, 0($0), $4
-.LBB2_12:                                 # %lor.end.5
+.LBB2_12:                               # %lor.end.5
 	i32.store	$discard=, g($1), $4
 	copy_local	$4=, $6
 	block   	.LBB2_14
@@ -175,7 +181,7 @@ main:                                   # @main
 	i32.const	$push70=, 1
 	i32.store16	$5=, c($4), $pop70
 	i32.store	$discard=, 0($0), $4
-.LBB2_14:                                 # %lor.end.6
+.LBB2_14:                               # %lor.end.6
 	i32.store	$discard=, g($1), $4
 	i32.load	$push71=, k($1)
 	i32.ne  	$push74=, $pop71, $1
@@ -193,7 +199,7 @@ main:                                   # @main
 	i32.const	$push79=, 1
 	i32.store16	$discard=, c($1), $pop79
 	i32.store	$6=, 0($0), $1
-.LBB2_16:                                 # %lor.end.7
+.LBB2_16:                               # %lor.end.7
 	i32.store	$discard=, g($1), $6
 	i32.store16	$discard=, h($1), $2
 	i32.store8	$discard=, e($1), $5
@@ -204,62 +210,79 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.type	c,@object               # @c
-	.bss
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.bss.c,"aw",@nobits
 	.globl	c
 	.align	1
 c:
 	.int16	0                       # 0x0
 	.size	c, 2
 
-	.type	p,@object               # @p
+	.hidden	p                       # @p
+	.type	p,@object
+	.section	.bss.p,"aw",@nobits
 	.globl	p
 	.align	2
 p:
 	.int32	0
 	.size	p, 4
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.bss.b,"aw",@nobits
 	.globl	b
 b:
 	.int8	0                       # 0x0
 	.size	b, 1
 
-	.type	h,@object               # @h
+	.hidden	h                       # @h
+	.type	h,@object
+	.section	.bss.h,"aw",@nobits
 	.globl	h
 	.align	1
 h:
 	.int16	0                       # 0x0
 	.size	h, 2
 
-	.type	e,@object               # @e
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.bss.e,"aw",@nobits
 	.globl	e
 e:
 	.int8	0                       # 0x0
 	.size	e, 1
 
-	.type	a,@object               # @a
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.bss.a,"aw",@nobits
 	.globl	a
 	.align	2
 a:
 	.int32	0                       # 0x0
 	.size	a, 4
 
-	.type	k,@object               # @k
+	.hidden	k                       # @k
+	.type	k,@object
+	.section	.bss.k,"aw",@nobits
 	.globl	k
 	.align	2
 k:
 	.int32	0                       # 0x0
 	.size	k, 4
 
-	.type	i,@object               # @i
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
 	.globl	i
 	.align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4
 
-	.type	g,@object               # @g
+	.hidden	g                       # @g
+	.type	g,@object
+	.section	.bss.g,"aw",@nobits
 	.globl	g
 	.align	2
 g:

@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990513-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990513-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -7,7 +9,7 @@ foo:                                    # @foo
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$5=, 1024
-.LBB0_1:                                  # %while.body
+.LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.add 	$2=, $0, $5
@@ -25,11 +27,13 @@ foo:                                    # @foo
 	i32.store	$discard=, 0($pop6), $3
 	i32.add 	$5=, $5, $4
 	br_if   	$5, .LBB0_1
-.LBB0_2:                                  # %while.end
+.LBB0_2:                                # %while.end
 	return
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -47,7 +51,7 @@ main:                                   # @main
 	i32.const	$8=, 0
 	i32.add 	$8=, $10, $8
 	call    	memset, $8, $0, $4
-.LBB1_1:                                  # %while.body.i
+.LBB1_1:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	i32.const	$9=, 0
@@ -68,7 +72,7 @@ main:                                   # @main
 	i32.store	$1=, 0($pop7), $2
 	i32.add 	$4=, $4, $3
 	br_if   	$4, .LBB1_1
-.LBB1_2:                                  # %foo.exit
+.LBB1_2:                                # %foo.exit
 	block   	.LBB1_4
 	i32.load	$push8=, 0($10)
 	i32.ne  	$push9=, $pop8, $1
@@ -79,7 +83,7 @@ main:                                   # @main
 	i32.const	$7=, __stack_pointer
 	i32.store	$10=, 0($7), $10
 	return  	$0
-.LBB1_4:                                  # %if.then
+.LBB1_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

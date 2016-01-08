@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990127-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990127-2.c"
+	.section	.text.fpEq,"ax",@progbits
+	.hidden	fpEq
 	.globl	fpEq
 	.type	fpEq,@function
 fpEq:                                   # @fpEq
@@ -10,12 +12,14 @@ fpEq:                                   # @fpEq
 	br_if   	$pop0, .LBB0_2
 # BB#1:                                 # %if.end
 	return
-.LBB0_2:                                  # %if.then
+.LBB0_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	fpEq, .Lfunc_end0-fpEq
 
+	.section	.text.fpTest,"ax",@progbits
+	.hidden	fpTest
 	.globl	fpTest
 	.type	fpTest,@function
 fpTest:                                 # @fpTest
@@ -30,12 +34,14 @@ fpTest:                                 # @fpTest
 	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %fpEq.exit
 	return
-.LBB1_2:                                  # %if.then.i
+.LBB1_2:                                # %if.then.i
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	fpTest, .Lfunc_end1-fpTest
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

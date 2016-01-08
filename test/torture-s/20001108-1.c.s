@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001108-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001108-1.c"
+	.section	.text.signed_poly,"ax",@progbits
+	.hidden	signed_poly
 	.globl	signed_poly
 	.type	signed_poly,@function
 signed_poly:                            # @signed_poly
@@ -17,6 +19,8 @@ signed_poly:                            # @signed_poly
 .Lfunc_end0:
 	.size	signed_poly, .Lfunc_end0-signed_poly
 
+	.section	.text.unsigned_poly,"ax",@progbits
+	.hidden	unsigned_poly
 	.globl	unsigned_poly
 	.type	unsigned_poly,@function
 unsigned_poly:                          # @unsigned_poly
@@ -32,6 +36,8 @@ unsigned_poly:                          # @unsigned_poly
 .Lfunc_end1:
 	.size	unsigned_poly, .Lfunc_end1-unsigned_poly
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

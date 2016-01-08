@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr48809.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr48809.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -45,100 +47,100 @@ foo:                                    # @foo
 	block   	.LBB0_3
 	block   	.LBB0_2
 	tableswitch	$0, .LBB0_2, .LBB0_2, .LBB0_3, .LBB0_37, .LBB0_4, .LBB0_5, .LBB0_6, .LBB0_7, .LBB0_8, .LBB0_9, .LBB0_10, .LBB0_11, .LBB0_12, .LBB0_13, .LBB0_14, .LBB0_15, .LBB0_16, .LBB0_17, .LBB0_18, .LBB0_19, .LBB0_37, .LBB0_20, .LBB0_21, .LBB0_22, .LBB0_23, .LBB0_24, .LBB0_25, .LBB0_26, .LBB0_27, .LBB0_28, .LBB0_29, .LBB0_30, .LBB0_31, .LBB0_32
-.LBB0_2:                                  # %sw.bb
+.LBB0_2:                                # %sw.bb
 	i32.const	$0=, 1
 	br      	.LBB0_37
-.LBB0_3:                                  # %sw.bb1
+.LBB0_3:                                # %sw.bb1
 	i32.const	$0=, 7
 	br      	.LBB0_37
-.LBB0_4:                                  # %sw.bb3
+.LBB0_4:                                # %sw.bb3
 	i32.const	$0=, 19
 	br      	.LBB0_37
-.LBB0_5:                                  # %sw.bb4
+.LBB0_5:                                # %sw.bb4
 	i32.const	$0=, 5
 	br      	.LBB0_37
-.LBB0_6:                                  # %sw.bb5
+.LBB0_6:                                # %sw.bb5
 	i32.const	$0=, 17
 	br      	.LBB0_37
-.LBB0_7:                                  # %sw.bb6
+.LBB0_7:                                # %sw.bb6
 	i32.const	$0=, 31
 	br      	.LBB0_37
-.LBB0_8:                                  # %sw.bb7
+.LBB0_8:                                # %sw.bb7
 	i32.const	$0=, 8
 	br      	.LBB0_37
-.LBB0_9:                                  # %sw.bb8
+.LBB0_9:                                # %sw.bb8
 	i32.const	$0=, 28
 	br      	.LBB0_37
-.LBB0_10:                                 # %sw.bb9
+.LBB0_10:                               # %sw.bb9
 	i32.const	$0=, 16
 	br      	.LBB0_37
-.LBB0_11:                                 # %sw.bb10
+.LBB0_11:                               # %sw.bb10
 	i32.const	$0=, 31
 	br      	.LBB0_37
-.LBB0_12:                                 # %sw.bb11
+.LBB0_12:                               # %sw.bb11
 	i32.const	$0=, 12
 	br      	.LBB0_37
-.LBB0_13:                                 # %sw.bb12
+.LBB0_13:                               # %sw.bb12
 	i32.const	$0=, 15
 	br      	.LBB0_37
-.LBB0_14:                                 # %sw.bb13
+.LBB0_14:                               # %sw.bb13
 	i32.const	$0=, 111
 	br      	.LBB0_37
-.LBB0_15:                                 # %sw.bb14
+.LBB0_15:                               # %sw.bb14
 	i32.const	$0=, 17
 	br      	.LBB0_37
-.LBB0_16:                                 # %sw.bb15
+.LBB0_16:                               # %sw.bb15
 	i32.const	$0=, 10
 	br      	.LBB0_37
-.LBB0_17:                                 # %sw.bb16
+.LBB0_17:                               # %sw.bb16
 	i32.const	$0=, 31
 	br      	.LBB0_37
-.LBB0_18:                                 # %sw.bb17
+.LBB0_18:                               # %sw.bb17
 	i32.const	$0=, 7
 	br      	.LBB0_37
-.LBB0_19:                                 # %sw.bb18
+.LBB0_19:                               # %sw.bb18
 	i32.const	$0=, 2
 	br      	.LBB0_37
-.LBB0_20:                                 # %sw.bb20
+.LBB0_20:                               # %sw.bb20
 	i32.const	$0=, 5
 	br      	.LBB0_37
-.LBB0_21:                                 # %sw.bb21
+.LBB0_21:                               # %sw.bb21
 	i32.const	$0=, 107
 	br      	.LBB0_37
-.LBB0_22:                                 # %sw.bb22
+.LBB0_22:                               # %sw.bb22
 	i32.const	$0=, 31
 	br      	.LBB0_37
-.LBB0_23:                                 # %sw.bb23
+.LBB0_23:                               # %sw.bb23
 	i32.const	$0=, 8
 	br      	.LBB0_37
-.LBB0_24:                                 # %sw.bb24
+.LBB0_24:                               # %sw.bb24
 	i32.const	$0=, 28
 	br      	.LBB0_37
-.LBB0_25:                                 # %sw.bb25
+.LBB0_25:                               # %sw.bb25
 	i32.const	$0=, 106
 	br      	.LBB0_37
-.LBB0_26:                                 # %sw.bb26
+.LBB0_26:                               # %sw.bb26
 	i32.const	$0=, 31
 	br      	.LBB0_37
-.LBB0_27:                                 # %sw.bb27
+.LBB0_27:                               # %sw.bb27
 	i32.const	$0=, 102
 	br      	.LBB0_37
-.LBB0_28:                                 # %sw.bb28
+.LBB0_28:                               # %sw.bb28
 	i32.const	$0=, 105
 	br      	.LBB0_37
-.LBB0_29:                                 # %sw.bb29
+.LBB0_29:                               # %sw.bb29
 	i32.const	$0=, 111
 	br      	.LBB0_37
-.LBB0_30:                                 # %sw.bb30
+.LBB0_30:                               # %sw.bb30
 	i32.const	$0=, 17
 	br      	.LBB0_37
-.LBB0_31:                                 # %sw.bb31
+.LBB0_31:                               # %sw.bb31
 	i32.const	$0=, 10
 	br      	.LBB0_37
-.LBB0_32:                                 # %sw.bb32
+.LBB0_32:                               # %sw.bb32
 	i32.const	$0=, 31
 	br      	.LBB0_37
-.LBB0_33:                                 # %entry
+.LBB0_33:                               # %entry
 	block   	.LBB0_36
 	i32.const	$push2=, -62
 	i32.eq  	$push3=, $0, $pop2
@@ -154,13 +156,15 @@ foo:                                    # @foo
 # BB#35:                                # %sw.bb33
 	i32.const	$0=, 18
 	br      	.LBB0_37
-.LBB0_36:                                 # %sw.bb34
+.LBB0_36:                               # %sw.bb34
 	i32.const	$0=, 19
-.LBB0_37:                                 # %sw.epilog
+.LBB0_37:                               # %sw.epilog
 	return  	$0
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

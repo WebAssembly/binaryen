@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020615-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020615-1.c"
+	.section	.text.line_hints,"ax",@progbits
+	.hidden	line_hints
 	.globl	line_hints
 	.type	line_hints,@function
 line_hints:                             # @line_hints
@@ -50,7 +52,7 @@ line_hints:                             # @line_hints
 	i32.xor 	$push16=, $0, $pop15
 	i32.select	$0=, $pop11, $pop16, $0
 	br      	.LBB0_6
-.LBB0_3:                                  # %if.else
+.LBB0_3:                                # %if.else
 	i32.const	$push27=, 0
 	i32.eq  	$push28=, $2, $pop27
 	br_if   	$pop28, .LBB0_6
@@ -68,11 +70,13 @@ line_hints:                             # @line_hints
 	i32.xor 	$push23=, $0, $pop22
 	i32.select	$push24=, $pop0, $pop23, $0
 	return  	$pop24
-.LBB0_6:                                  # %if.end40
+.LBB0_6:                                # %if.end40
 	return  	$0
 .Lfunc_end0:
 	.size	line_hints, .Lfunc_end0-line_hints
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -163,7 +167,7 @@ main:                                   # @main
 	i32.shr_s	$push23=, $13, $14
 	i32.le_s	$push33=, $1, $pop23
 	br_if   	$pop33, .LBB1_14
-.LBB1_5:                                  # %if.else.i82
+.LBB1_5:                                # %if.else.i82
 	i32.const	$push57=, 0
 	i32.eq  	$push58=, $2, $pop57
 	br_if   	$pop58, .LBB1_14
@@ -205,7 +209,7 @@ main:                                   # @main
 	i32.shr_s	$push42=, $0, $14
 	i32.le_s	$push45=, $10, $pop42
 	br_if   	$pop45, .LBB1_14
-.LBB1_10:                                 # %if.else.i40
+.LBB1_10:                               # %if.else.i40
 	i32.const	$push61=, 0
 	i32.eq  	$push62=, $11, $pop61
 	br_if   	$pop62, .LBB1_14
@@ -225,14 +229,14 @@ main:                                   # @main
 # BB#13:                                # %if.end
 	call    	exit, $6
 	unreachable
-.LBB1_14:                                 # %if.then
+.LBB1_14:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 	.type	main.fh,@object         # @main.fh
-	.data
+	.section	.data.main.fh,"aw",@progbits
 	.align	4
 main.fh:
 	.int32	0                       # 0x0
@@ -241,10 +245,11 @@ main.fh:
 	.int32	0                       # 0x0
 	.int32	0                       # 0x0
 	.int32	1                       # 0x1
-	.zero	12
+	.skip	12
 	.size	main.fh, 36
 
 	.type	main.gsf,@object        # @main.gsf
+	.section	.data.main.gsf,"aw",@progbits
 	.align	4
 main.gsf:
 	.int32	196608                  # 0x30000

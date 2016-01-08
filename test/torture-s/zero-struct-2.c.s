@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/zero-struct-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zero-struct-2.c"
+	.section	.text.one_raw_spinlock,"ax",@progbits
+	.hidden	one_raw_spinlock
 	.globl	one_raw_spinlock
 	.type	one_raw_spinlock,@function
 one_raw_spinlock:                       # @one_raw_spinlock
@@ -14,6 +16,8 @@ one_raw_spinlock:                       # @one_raw_spinlock
 .Lfunc_end0:
 	.size	one_raw_spinlock, .Lfunc_end0-one_raw_spinlock
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -29,14 +33,15 @@ main:                                   # @main
 	br_if   	$1, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	ii,@object              # @ii
-	.bss
+	.hidden	ii                      # @ii
+	.type	ii,@object
+	.section	.bss.ii,"aw",@nobits
 	.globl	ii
 	.align	2
 ii:

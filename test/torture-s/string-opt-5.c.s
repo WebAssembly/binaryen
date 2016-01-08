@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/string-opt-5.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/string-opt-5.c"
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -41,7 +43,7 @@ main:                                   # @main
 	i32.const	$8=, 3
 	i32.add 	$push10=, $1, $8
 	i32.store	$13=, x($16), $pop10
-	i32.const	$9=, .str.1
+	i32.const	$9=, .L.str.1
 	i32.and 	$push11=, $13, $4
 	i32.add 	$push12=, $9, $pop11
 	i32.call	$13=, strlen, $pop12
@@ -55,7 +57,7 @@ main:                                   # @main
 	i32.add 	$push1=, $1, $pop14
 	i32.store	$13=, x($16), $pop1
 	i32.add 	$push15=, $9, $13
-	i32.const	$push16=, .str.2
+	i32.const	$push16=, .L.str.2
 	i32.call	$push17=, strcmp, $pop15, $pop16
 	br_if   	$pop17, .LBB0_44
 # BB#5:                                 # %if.end33
@@ -82,7 +84,7 @@ main:                                   # @main
 	i32.and 	$push25=, $2, $7
 	i32.add 	$push26=, $9, $pop25
 	i32.call	$push27=, strchr, $pop26, $12
-	i32.const	$push28=, .str.1+9
+	i32.const	$push28=, .L.str.1+9
 	i32.ne  	$push29=, $pop27, $pop28
 	br_if   	$pop29, .LBB0_41
 # BB#8:                                 # %if.end58
@@ -116,7 +118,7 @@ main:                                   # @main
 	block   	.LBB0_36
 	i32.and 	$push38=, $19, $4
 	i32.add 	$push39=, $9, $pop38
-	i32.const	$push42=, .str.3
+	i32.const	$push42=, .L.str.3
 	i32.and 	$push41=, $0, $4
 	i32.add 	$push43=, $pop42, $pop41
 	i32.call	$push44=, strcmp, $pop39, $pop43
@@ -154,7 +156,7 @@ main:                                   # @main
 	i32.store8	$15=, 0($pop46), $pop47
 	i32.store	$17=, x($16), $6
 	block   	.LBB0_34
-	i32.const	$push53=, .str.4
+	i32.const	$push53=, .L.str.4
 	i32.call	$push54=, strcmp, $0, $pop53
 	br_if   	$pop54, .LBB0_34
 # BB#16:                                # %if.end108
@@ -196,7 +198,7 @@ main:                                   # @main
 	i32.store	$6=, x($16), $7
 	i32.store	$7=, y($16), $5
 	block   	.LBB0_33
-	i32.const	$push64=, .str.5+1
+	i32.const	$push64=, .L.str.5+1
 	i32.call	$push65=, strncpy, $0, $pop64, $10
 	i32.ne  	$push66=, $pop65, $0
 	br_if   	$pop66, .LBB0_33
@@ -209,7 +211,7 @@ main:                                   # @main
 	i32.ne  	$push68=, $pop56, $7
 	br_if   	$pop68, .LBB0_33
 # BB#19:                                # %lor.lhs.false125
-	i32.const	$push69=, .str.6
+	i32.const	$push69=, .L.str.6
 	i32.const	$push70=, 12
 	i32.const	$35=, 0
 	i32.add 	$35=, $39, $35
@@ -224,7 +226,7 @@ main:                                   # @main
 	i64.store	$push77=, 0($19), $pop76
 	i64.store	$push78=, 0($20), $pop77
 	i64.store	$discard=, 0($39), $pop78
-	i32.const	$push79=, .str.7
+	i32.const	$push79=, .L.str.7
 	i32.const	$36=, 0
 	i32.add 	$36=, $39, $36
 	i32.call	$push80=, strncpy, $36, $pop79, $3
@@ -234,7 +236,7 @@ main:                                   # @main
 	i32.ne  	$push81=, $pop80, $37
 	br_if   	$pop81, .LBB0_32
 # BB#21:                                # %lor.lhs.false136
-	i32.const	$push82=, .str.8
+	i32.const	$push82=, .L.str.8
 	i32.const	$push83=, 9
 	i32.const	$38=, 0
 	i32.add 	$38=, $39, $38
@@ -255,7 +257,7 @@ main:                                   # @main
 	i32.ne  	$push90=, $0, $8
 	br_if   	$pop90, .LBB0_31
 # BB#23:                                # %lor.lhs.false148
-	i32.const	$push91=, .str.9
+	i32.const	$push91=, .L.str.9
 	i32.call	$push92=, memcmp, $9, $pop91, $8
 	br_if   	$pop92, .LBB0_31
 # BB#24:                                # %lor.lhs.false158
@@ -279,7 +281,7 @@ main:                                   # @main
 	block   	.LBB0_30
 	i32.add 	$push101=, $0, $1
 	i64.store8	$discard=, 0($pop101), $18
-	i32.const	$push102=, .str.10
+	i32.const	$push102=, .L.str.10
 	i32.call	$push103=, memcmp, $9, $pop102, $3
 	br_if   	$pop103, .LBB0_30
 # BB#25:                                # %lor.lhs.false171
@@ -295,7 +297,7 @@ main:                                   # @main
 	i32.store8	$discard=, buf+11($16), $16
 	block   	.LBB0_29
 	i32.const	$push108=, buf+8
-	i32.const	$push107=, .str.11
+	i32.const	$push107=, .L.str.11
 	i32.call	$push109=, memcmp, $pop108, $pop107, $6
 	br_if   	$pop109, .LBB0_29
 # BB#26:                                # %lor.lhs.false180
@@ -309,7 +311,7 @@ main:                                   # @main
 	i32.store8	$discard=, buf+15($16), $16
 	block   	.LBB0_28
 	i32.const	$push112=, buf+10
-	i32.const	$push111=, .str.12
+	i32.const	$push111=, .L.str.12
 	i32.call	$push113=, memcmp, $pop112, $pop111, $9
 	br_if   	$pop113, .LBB0_28
 # BB#27:                                # %if.end184
@@ -318,174 +320,180 @@ main:                                   # @main
 	i32.const	$23=, __stack_pointer
 	i32.store	$39=, 0($23), $39
 	return  	$16
-.LBB0_28:                                 # %if.then183
+.LBB0_28:                               # %if.then183
 	call    	abort
 	unreachable
-.LBB0_29:                                 # %if.then174
+.LBB0_29:                               # %if.then174
 	call    	abort
 	unreachable
-.LBB0_30:                                 # %if.then161
+.LBB0_30:                               # %if.then161
 	call    	abort
 	unreachable
-.LBB0_31:                                 # %if.then151
+.LBB0_31:                               # %if.then151
 	call    	abort
 	unreachable
-.LBB0_32:                                 # %if.then140
+.LBB0_32:                               # %if.then140
 	call    	abort
 	unreachable
-.LBB0_33:                                 # %if.then129
+.LBB0_33:                               # %if.then129
 	call    	abort
 	unreachable
-.LBB0_34:                                 # %if.then107
+.LBB0_34:                               # %if.then107
 	call    	abort
 	unreachable
-.LBB0_35:                                 # %if.then89
+.LBB0_35:                               # %if.then89
 	call    	abort
 	unreachable
-.LBB0_36:                                 # %if.then85
+.LBB0_36:                               # %if.then85
 	call    	abort
 	unreachable
-.LBB0_37:                                 # %if.then76
+.LBB0_37:                               # %if.then76
 	call    	abort
 	unreachable
-.LBB0_38:                                 # %if.then71
+.LBB0_38:                               # %if.then71
 	call    	abort
 	unreachable
-.LBB0_39:                                 # %if.then67
+.LBB0_39:                               # %if.then67
 	call    	abort
 	unreachable
-.LBB0_40:                                 # %if.then62
+.LBB0_40:                               # %if.then62
 	call    	abort
 	unreachable
-.LBB0_41:                                 # %if.then54
+.LBB0_41:                               # %if.then54
 	call    	abort
 	unreachable
-.LBB0_42:                                 # %if.then43
+.LBB0_42:                               # %if.then43
 	call    	abort
 	unreachable
-.LBB0_43:                                 # %if.then36
+.LBB0_43:                               # %if.then36
 	call    	abort
 	unreachable
-.LBB0_44:                                 # %if.then29
+.LBB0_44:                               # %if.then29
 	call    	abort
 	unreachable
-.LBB0_45:                                 # %if.then22
+.LBB0_45:                               # %if.then22
 	call    	abort
 	unreachable
-.LBB0_46:                                 # %if.then6
+.LBB0_46:                               # %if.then6
 	call    	abort
 	unreachable
-.LBB0_47:                                 # %if.then3
+.LBB0_47:                               # %if.then3
 	call    	abort
 	unreachable
-.LBB0_48:                                 # %if.then
+.LBB0_48:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
-	.type	x,@object               # @x
-	.data
+	.hidden	x                       # @x
+	.type	x,@object
+	.section	.data.x,"aw",@progbits
 	.globl	x
 	.align	2
 x:
 	.int32	6                       # 0x6
 	.size	x, 4
 
-	.type	y,@object               # @y
+	.hidden	y                       # @y
+	.type	y,@object
+	.section	.data.y,"aw",@progbits
 	.globl	y
 	.align	2
 y:
 	.int32	1                       # 0x1
 	.size	y, 4
 
-	.type	.str,@object            # @.str
+	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str:
+.L.str:
 	.asciz	"hi world"
-	.size	.str, 9
+	.size	.L.str, 9
 
-	.type	bar,@object             # @bar
-	.data
+	.hidden	bar                     # @bar
+	.type	bar,@object
+	.section	.data.bar,"aw",@progbits
 	.globl	bar
 	.align	2
 bar:
-	.int32	.str
+	.int32	.L.str
 	.size	bar, 4
 
-	.type	.str.1,@object          # @.str.1
+	.type	.L.str.1,@object        # @.str.1
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str.1:
+.L.str.1:
 	.asciz	"hello world"
-	.size	.str.1, 12
+	.size	.L.str.1, 12
 
-	.type	.str.2,@object          # @.str.2
-.str.2:
+	.type	.L.str.2,@object        # @.str.2
+.L.str.2:
 	.asciz	"lo world"
-	.size	.str.2, 9
+	.size	.L.str.2, 9
 
-	.type	.str.3,@object          # @.str.3
-.str.3:
+	.type	.L.str.3,@object        # @.str.3
+.L.str.3:
 	.asciz	"ello world"
-	.size	.str.3, 11
+	.size	.L.str.3, 11
 
-	.type	.str.4,@object          # @.str.4
-.str.4:
+	.type	.L.str.4,@object        # @.str.4
+.L.str.4:
 	.asciz	"ello "
-	.size	.str.4, 6
+	.size	.L.str.4, 6
 
-	.type	.str.5,@object          # @.str.5
-.str.5:
+	.type	.L.str.5,@object        # @.str.5
+.L.str.5:
 	.asciz	"foo"
-	.size	.str.5, 4
+	.size	.L.str.5, 4
 
-	.type	.str.6,@object          # @.str.6
-	.section	.rodata,"a",@progbits
-.str.6:
+	.type	.L.str.6,@object        # @.str.6
+	.section	.rodata..L.str.6,"a",@progbits
+.L.str.6:
 	.asciz	" oo\000\000\000\000\000\000\000\000 "
-	.size	.str.6, 13
+	.size	.L.str.6, 13
 
-	.type	.str.7,@object          # @.str.7
+	.type	.L.str.7,@object        # @.str.7
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str.7:
+.L.str.7:
 	.asciz	"hello"
-	.size	.str.7, 6
+	.size	.L.str.7, 6
 
-	.type	.str.8,@object          # @.str.8
-	.section	.rodata,"a",@progbits
-.str.8:
+	.type	.L.str.8,@object        # @.str.8
+	.section	.rodata..L.str.8,"a",@progbits
+.L.str.8:
 	.asciz	"hello\000\000\000 "
-	.size	.str.8, 10
+	.size	.L.str.8, 10
 
-	.type	buf,@object             # @buf
-	.bss
+	.hidden	buf                     # @buf
+	.type	buf,@object
+	.section	.bss.buf,"aw",@nobits
 	.globl	buf
 	.align	4
 buf:
-	.zero	64
+	.skip	64
 	.size	buf, 64
 
-	.type	.str.9,@object          # @.str.9
+	.type	.L.str.9,@object        # @.str.9
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.str.9:
+.L.str.9:
 	.asciz	"!!!"
-	.size	.str.9, 4
+	.size	.L.str.9, 4
 
-	.type	.str.10,@object         # @.str.10
-.str.10:
+	.type	.L.str.10,@object       # @.str.10
+.L.str.10:
 	.asciz	"!!!--------"
-	.size	.str.10, 12
+	.size	.L.str.10, 12
 
-	.type	.str.11,@object         # @.str.11
-	.section	.rodata,"a",@progbits
-.str.11:
+	.type	.L.str.11,@object       # @.str.11
+	.section	.rodata..L.str.11,"a",@progbits
+.L.str.11:
 	.asciz	"---\000\000\000"
-	.size	.str.11, 7
+	.size	.L.str.11, 7
 
-	.type	.str.12,@object         # @.str.12
-.str.12:
+	.type	.L.str.12,@object       # @.str.12
+	.section	.rodata..L.str.12,"a",@progbits
+.L.str.12:
 	.asciz	"-\000\000\000\000\000\000\000\000\000"
-	.size	.str.12, 11
+	.size	.L.str.12, 11
 
 
 	.ident	"clang version 3.8.0 "

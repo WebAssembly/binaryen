@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr33142.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr33142.c"
+	.section	.text.lisp_atan2,"ax",@progbits
+	.hidden	lisp_atan2
 	.globl	lisp_atan2
 	.type	lisp_atan2,@function
 lisp_atan2:                             # @lisp_atan2
@@ -25,11 +27,13 @@ lisp_atan2:                             # @lisp_atan2
 	i32.add 	$push6=, $0, $3
 	i32.xor 	$push7=, $pop6, $3
 	i32.le_s	$3=, $pop5, $pop7
-.LBB0_3:                                  # %return
+.LBB0_3:                                # %return
 	return  	$3
 .Lfunc_end0:
 	.size	lisp_atan2, .Lfunc_end0-lisp_atan2
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -58,7 +62,7 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return  	$pop5
-.LBB1_2:                                  # %if.then
+.LBB1_2:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:

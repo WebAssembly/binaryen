@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44852.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44852.c"
+	.section	.text.sf,"ax",@progbits
+	.hidden	sf
 	.globl	sf
 	.type	sf,@function
 sf:                                     # @sf
@@ -9,7 +11,7 @@ sf:                                     # @sf
 # BB#0:                                 # %entry
 	#APP
 	#NO_APP
-.LBB0_1:                                  # %while.cond
+.LBB0_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB0_5
 	block   	.LBB0_4
@@ -21,27 +23,29 @@ sf:                                     # @sf
 	i32.ne  	$push2=, $2, $pop1
 	br_if   	$pop2, .LBB0_4
 # BB#2:                                 # %while.body
-                                        #   in Loop: Header=.LBB0_1 Depth=1
+                                        #   in Loop: Header=BB0_1 Depth=1
 	copy_local	$0=, $3
 	i32.ne  	$push5=, $1, $3
 	br_if   	$pop5, .LBB0_1
-.LBB0_3:                                  # %if.then
+.LBB0_3:                                # %if.then
 	i32.const	$push4=, 1
 	i32.add 	$0=, $3, $pop4
 	i32.const	$push6=, 48
 	i32.store8	$discard=, 0($1), $pop6
 	i32.const	$2=, 49
 	br      	.LBB0_5
-.LBB0_4:                                  # %while.end.loopexit
+.LBB0_4:                                # %while.end.loopexit
 	i32.const	$push3=, 1
 	i32.add 	$2=, $2, $pop3
 	copy_local	$1=, $3
-.LBB0_5:                                  # %while.end
+.LBB0_5:                                # %while.end
 	i32.store8	$discard=, 0($1), $2
 	return  	$0
 .Lfunc_end0:
 	.size	sf, .Lfunc_end0-sf
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -60,20 +64,20 @@ main:                                   # @main
 	i32.const	$8=, 8
 	i32.add 	$8=, $14, $8
 	i32.add 	$push2=, $8, $pop1
-	i32.load8_u	$push0=, main.s+6($0)
+	i32.load8_u	$push0=, .Lmain.s+6($0)
 	i32.store8	$discard=, 0($pop2), $pop0
 	i32.const	$2=, 8
-	i32.const	$3=, main.s
+	i32.const	$3=, .Lmain.s
 	i32.const	$4=, 2
 	i32.const	$push9=, 4
 	i32.const	$9=, 8
 	i32.add 	$9=, $14, $9
 	i32.add 	$push10=, $9, $pop9
-	i32.const	$push3=, main.s+4
+	i32.const	$push3=, .Lmain.s+4
 	i32.add 	$push4=, $pop3, $1
 	i32.load8_u	$push5=, 0($pop4)
 	i32.shl 	$push6=, $pop5, $2
-	i32.load8_u	$push7=, main.s+4($0)
+	i32.load8_u	$push7=, .Lmain.s+4($0)
 	i32.or  	$push8=, $pop6, $pop7
 	i32.store16	$discard=, 0($pop10), $pop8
 	i32.const	$push11=, 3
@@ -88,7 +92,7 @@ main:                                   # @main
 	i32.add 	$push20=, $3, $1
 	i32.load8_u	$push21=, 0($pop20)
 	i32.shl 	$push22=, $pop21, $2
-	i32.load8_u	$push23=, main.s($0)
+	i32.load8_u	$push23=, .Lmain.s($0)
 	i32.or  	$push24=, $pop22, $pop23
 	i32.or  	$push25=, $pop19, $pop24
 	i32.store	$discard=, 8($14), $pop25
@@ -105,7 +109,7 @@ main:                                   # @main
 	i32.ne  	$push29=, $pop27, $pop28
 	br_if   	$pop29, .LBB1_3
 # BB#1:                                 # %lor.lhs.false
-	i32.const	$push30=, .str
+	i32.const	$push30=, .L.str
 	i32.const	$13=, 8
 	i32.add 	$13=, $14, $13
 	i32.call	$push31=, strcmp, $13, $pop30
@@ -116,22 +120,22 @@ main:                                   # @main
 	i32.const	$7=, __stack_pointer
 	i32.store	$14=, 0($7), $14
 	return  	$0
-.LBB1_3:                                  # %if.then
+.LBB1_3:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	main.s,@object          # @main.s
+	.type	.Lmain.s,@object        # @main.s
 	.section	.rodata.str1.1,"aMS",@progbits,1
-main.s:
+.Lmain.s:
 	.asciz	"999999"
-	.size	main.s, 7
+	.size	.Lmain.s, 7
 
-	.type	.str,@object            # @.str
-.str:
+	.type	.L.str,@object          # @.str
+.L.str:
 	.asciz	"199999"
-	.size	.str, 7
+	.size	.L.str, 7
 
 
 	.ident	"clang version 3.8.0 "

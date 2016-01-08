@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070623-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070623-1.c"
+	.section	.text.nge,"ax",@progbits
+	.hidden	nge
 	.globl	nge
 	.type	nge,@function
 nge:                                    # @nge
@@ -14,6 +16,8 @@ nge:                                    # @nge
 .Lfunc_end0:
 	.size	nge, .Lfunc_end0-nge
 
+	.section	.text.ngt,"ax",@progbits
+	.hidden	ngt
 	.globl	ngt
 	.type	ngt,@function
 ngt:                                    # @ngt
@@ -28,6 +32,8 @@ ngt:                                    # @ngt
 .Lfunc_end1:
 	.size	ngt, .Lfunc_end1-ngt
 
+	.section	.text.nle,"ax",@progbits
+	.hidden	nle
 	.globl	nle
 	.type	nle,@function
 nle:                                    # @nle
@@ -42,6 +48,8 @@ nle:                                    # @nle
 .Lfunc_end2:
 	.size	nle, .Lfunc_end2-nle
 
+	.section	.text.nlt,"ax",@progbits
+	.hidden	nlt
 	.globl	nlt
 	.type	nlt,@function
 nlt:                                    # @nlt
@@ -56,6 +64,8 @@ nlt:                                    # @nlt
 .Lfunc_end3:
 	.size	nlt, .Lfunc_end3-nlt
 
+	.section	.text.neq,"ax",@progbits
+	.hidden	neq
 	.globl	neq
 	.type	neq,@function
 neq:                                    # @neq
@@ -70,6 +80,8 @@ neq:                                    # @neq
 .Lfunc_end4:
 	.size	neq, .Lfunc_end4-neq
 
+	.section	.text.nne,"ax",@progbits
+	.hidden	nne
 	.globl	nne
 	.type	nne,@function
 nne:                                    # @nne
@@ -84,6 +96,8 @@ nne:                                    # @nne
 .Lfunc_end5:
 	.size	nne, .Lfunc_end5-nne
 
+	.section	.text.ngeu,"ax",@progbits
+	.hidden	ngeu
 	.globl	ngeu
 	.type	ngeu,@function
 ngeu:                                   # @ngeu
@@ -98,6 +112,8 @@ ngeu:                                   # @ngeu
 .Lfunc_end6:
 	.size	ngeu, .Lfunc_end6-ngeu
 
+	.section	.text.ngtu,"ax",@progbits
+	.hidden	ngtu
 	.globl	ngtu
 	.type	ngtu,@function
 ngtu:                                   # @ngtu
@@ -112,6 +128,8 @@ ngtu:                                   # @ngtu
 .Lfunc_end7:
 	.size	ngtu, .Lfunc_end7-ngtu
 
+	.section	.text.nleu,"ax",@progbits
+	.hidden	nleu
 	.globl	nleu
 	.type	nleu,@function
 nleu:                                   # @nleu
@@ -126,6 +144,8 @@ nleu:                                   # @nleu
 .Lfunc_end8:
 	.size	nleu, .Lfunc_end8-nleu
 
+	.section	.text.nltu,"ax",@progbits
+	.hidden	nltu
 	.globl	nltu
 	.type	nltu,@function
 nltu:                                   # @nltu
@@ -140,6 +160,8 @@ nltu:                                   # @nltu
 .Lfunc_end9:
 	.size	nltu, .Lfunc_end9-nltu
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -242,64 +264,64 @@ main:                                   # @main
 # BB#20:                                # %if.end76
 	call    	exit, $0
 	unreachable
-.LBB10_21:                                # %if.then75
+.LBB10_21:                              # %if.then75
 	call    	abort
 	unreachable
-.LBB10_22:                                # %if.then71
+.LBB10_22:                              # %if.then71
 	call    	abort
 	unreachable
-.LBB10_23:                                # %if.then67
+.LBB10_23:                              # %if.then67
 	call    	abort
 	unreachable
-.LBB10_24:                                # %if.then63
+.LBB10_24:                              # %if.then63
 	call    	abort
 	unreachable
-.LBB10_25:                                # %if.then59
+.LBB10_25:                              # %if.then59
 	call    	abort
 	unreachable
-.LBB10_26:                                # %if.then55
+.LBB10_26:                              # %if.then55
 	call    	abort
 	unreachable
-.LBB10_27:                                # %if.then51
+.LBB10_27:                              # %if.then51
 	call    	abort
 	unreachable
-.LBB10_28:                                # %if.then47
+.LBB10_28:                              # %if.then47
 	call    	abort
 	unreachable
-.LBB10_29:                                # %if.then43
+.LBB10_29:                              # %if.then43
 	call    	abort
 	unreachable
-.LBB10_30:                                # %if.then39
+.LBB10_30:                              # %if.then39
 	call    	abort
 	unreachable
-.LBB10_31:                                # %if.then35
+.LBB10_31:                              # %if.then35
 	call    	abort
 	unreachable
-.LBB10_32:                                # %if.then31
+.LBB10_32:                              # %if.then31
 	call    	abort
 	unreachable
-.LBB10_33:                                # %if.then27
+.LBB10_33:                              # %if.then27
 	call    	abort
 	unreachable
-.LBB10_34:                                # %if.then23
+.LBB10_34:                              # %if.then23
 	call    	abort
 	unreachable
-.LBB10_35:                                # %if.then19
+.LBB10_35:                              # %if.then19
 	call    	abort
 	unreachable
-.LBB10_36:                                # %if.then15
+.LBB10_36:                              # %if.then15
 	call    	abort
 	unreachable
-.LBB10_37:                                # %if.then11
+.LBB10_37:                              # %if.then11
 	call    	abort
 	unreachable
-.LBB10_38:                                # %if.then7
+.LBB10_38:                              # %if.then7
 	call    	abort
 	unreachable
-.LBB10_39:                                # %if.then3
+.LBB10_39:                              # %if.then3
 	call    	abort
 	unreachable
-.LBB10_40:                                # %if.then
+.LBB10_40:                              # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end10:

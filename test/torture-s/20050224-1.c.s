@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050224-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050224-1.c"
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -19,12 +21,14 @@ foo:                                    # @foo
 	br_if   	$pop5, .LBB0_4
 # BB#3:                                 # %if.end
 	return
-.LBB0_4:                                  # %if.then
+.LBB0_4:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -44,7 +48,7 @@ main:                                   # @main
 	i32.load	$4=, f($8)
 	copy_local	$7=, $8
 	copy_local	$6=, $8
-.LBB1_2:                                  # %for.body
+.LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_9
 	block   	.LBB1_8
@@ -52,35 +56,35 @@ main:                                   # @main
 	i32.ge_u	$push1=, $5, $1
 	br_if   	$pop1, .LBB1_4
 # BB#3:                                 # %if.then
-                                        #   in Loop: Header=.LBB1_2 Depth=1
+                                        #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push6=, 1
 	i32.add 	$6=, $6, $pop6
 	br      	.LBB1_8
-.LBB1_4:                                  # %if.else
-                                        #   in Loop: Header=.LBB1_2 Depth=1
+.LBB1_4:                                # %if.else
+                                        #   in Loop: Header=BB1_2 Depth=1
 	block   	.LBB1_7
 	i32.lt_u	$push2=, $5, $2
 	br_if   	$pop2, .LBB1_7
 # BB#5:                                 # %if.else
-                                        #   in Loop: Header=.LBB1_2 Depth=1
+                                        #   in Loop: Header=BB1_2 Depth=1
 	i32.ge_u	$push3=, $5, $3
 	br_if   	$pop3, .LBB1_7
 # BB#6:                                 # %if.then4
-                                        #   in Loop: Header=.LBB1_2 Depth=1
+                                        #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push5=, 1
 	i32.add 	$8=, $8, $pop5
 	br      	.LBB1_8
-.LBB1_7:                                  # %if.else6
-                                        #   in Loop: Header=.LBB1_2 Depth=1
+.LBB1_7:                                # %if.else6
+                                        #   in Loop: Header=BB1_2 Depth=1
 	i32.lt_u	$push4=, $5, $4
 	i32.add 	$7=, $pop4, $7
-.LBB1_8:                                  # %for.inc
-                                        #   in Loop: Header=.LBB1_2 Depth=1
+.LBB1_8:                                # %for.inc
+                                        #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push7=, 4096
 	i32.add 	$5=, $5, $pop7
 	i32.lt_u	$push8=, $5, $0
 	br_if   	$pop8, .LBB1_2
-.LBB1_9:                                  # %for.end
+.LBB1_9:                                # %for.end
 	i32.const	$push9=, 444
 	i32.ne  	$push10=, $6, $pop9
 	br_if   	$pop10, .LBB1_13
@@ -95,49 +99,60 @@ main:                                   # @main
 # BB#12:                                # %foo.exit
 	i32.const	$push15=, 0
 	return  	$pop15
-.LBB1_13:                                 # %if.then.i
+.LBB1_13:                               # %if.then.i
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	a,@object               # @a
-	.data
+	.hidden	a                       # @a
+	.type	a,@object
+	.section	.data.a,"aw",@progbits
 	.globl	a
 	.align	2
 a:
 	.int32	3221225472              # 0xc0000000
 	.size	a, 4
 
-	.type	b,@object               # @b
+	.hidden	b                       # @b
+	.type	b,@object
+	.section	.data.b,"aw",@progbits
 	.globl	b
 	.align	2
 b:
 	.int32	3489660928              # 0xd0000000
 	.size	b, 4
 
-	.type	c,@object               # @c
+	.hidden	c                       # @c
+	.type	c,@object
+	.section	.data.c,"aw",@progbits
 	.globl	c
 	.align	2
 c:
 	.int32	3223042392              # 0xc01bb958
 	.size	c, 4
 
-	.type	d,@object               # @d
+	.hidden	d                       # @d
+	.type	d,@object
+	.section	.data.d,"aw",@progbits
 	.globl	d
 	.align	2
 d:
 	.int32	3223732224              # 0xc0264000
 	.size	d, 4
 
-	.type	e,@object               # @e
+	.hidden	e                       # @e
+	.type	e,@object
+	.section	.data.e,"aw",@progbits
 	.globl	e
 	.align	2
 e:
 	.int32	3223879680              # 0xc0288000
 	.size	e, 4
 
-	.type	f,@object               # @f
+	.hidden	f                       # @f
+	.type	f,@object
+	.section	.data.f,"aw",@progbits
 	.globl	f
 	.align	2
 f:

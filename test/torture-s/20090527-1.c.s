@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090527-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090527-1.c"
+	.section	.text.new_unit,"ax",@progbits
+	.hidden	new_unit
 	.globl	new_unit
 	.type	new_unit,@function
 new_unit:                               # @new_unit
@@ -16,7 +18,7 @@ new_unit:                               # @new_unit
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push1=, 0
 	i32.store	$2=, 0($pop3), $pop1
-.LBB0_2:                                  # %if.end
+.LBB0_2:                                # %if.end
 	block   	.LBB0_4
 	i32.load	$push4=, 0($0)
 	i32.ne  	$push5=, $pop4, $1
@@ -24,17 +26,19 @@ new_unit:                               # @new_unit
 # BB#3:                                 # %if.then3
 	i32.const	$push6=, 0
 	i32.store	$discard=, 0($0), $pop6
-.LBB0_4:                                  # %if.end5
+.LBB0_4:                                # %if.end5
 	block   	.LBB0_6
 	br_if   	$2, .LBB0_6
 # BB#5:                                 # %sw.epilog
 	return
-.LBB0_6:                                  # %sw.default
+.LBB0_6:                                # %sw.default
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	new_unit, .Lfunc_end0-new_unit
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

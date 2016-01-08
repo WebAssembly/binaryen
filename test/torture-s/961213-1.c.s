@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/961213-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/961213-1.c"
+	.section	.text.g,"ax",@progbits
+	.hidden	g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -16,7 +18,7 @@ g:                                      # @g
 # BB#1:                                 # %for.body.lr.ph
 	i64.extend_s/i32	$4=, $3
 	copy_local	$3=, $1
-.LBB0_2:                                  # %for.body
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_3
 	i64.load32_u	$5=, 0($2)
@@ -27,13 +29,15 @@ g:                                      # @g
 	i64.mul 	$push3=, $6, $4
 	i64.add 	$6=, $5, $pop3
 	br_if   	$3, .LBB0_2
-.LBB0_3:                                  # %for.cond.for.end_crit_edge
+.LBB0_3:                                # %for.cond.for.end_crit_edge
 	i64.store	$discard=, 0($0), $6
-.LBB0_4:                                  # %for.end
+.LBB0_4:                                # %for.end
 	return  	$1
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

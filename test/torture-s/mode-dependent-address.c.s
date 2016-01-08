@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/mode-dependent-address.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/mode-dependent-address.c"
+	.section	.text.f883b,"ax",@progbits
+	.hidden	f883b
 	.globl	f883b
 	.type	f883b,@function
 f883b:                                  # @f883b
@@ -7,7 +9,7 @@ f883b:                                  # @f883b
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$7=, 0
-.LBB0_1:                                  # %for.body
+.LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_2
 	i32.load16_s	$5=, 0($1)
@@ -40,11 +42,13 @@ f883b:                                  # @f883b
 	i32.const	$push20=, 96
 	i32.ne  	$push21=, $7, $pop20
 	br_if   	$pop21, .LBB0_1
-.LBB0_2:                                  # %for.end
+.LBB0_2:                                # %for.end
 	return
 .Lfunc_end0:
 	.size	f883b, .Lfunc_end0-f883b
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -58,7 +62,7 @@ main:                                   # @main
 	i32.const	$12=, arg1
 	copy_local	$5=, $10
 	copy_local	$6=, $9
-.LBB1_1:                                  # %for.body
+.LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	i32.const	$push1=, arg4
@@ -84,7 +88,7 @@ main:                                   # @main
 	i32.const	$push7=, 96
 	i32.ne  	$push8=, $7, $pop7
 	br_if   	$pop8, .LBB1_1
-.LBB1_2:                                  # %for.body.i
+.LBB1_2:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
 	i32.const	$push9=, arg1
@@ -114,9 +118,9 @@ main:                                   # @main
 	i32.add 	$9=, $9, $3
 	i32.add 	$8=, $8, $2
 	i32.const	$7=, 0
-	i32.const	$12=, main.correct
+	i32.const	$12=, .Lmain.correct
 	br_if   	$8, .LBB1_2
-.LBB1_3:                                  # %for.body10
+.LBB1_3:                                # %for.body10
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_6
 	loop    	.LBB1_5
@@ -127,25 +131,25 @@ main:                                   # @main
 	i32.ne  	$push33=, $pop31, $pop32
 	br_if   	$pop33, .LBB1_6
 # BB#4:                                 # %for.cond7
-                                        #   in Loop: Header=.LBB1_3 Depth=1
+                                        #   in Loop: Header=BB1_3 Depth=1
 	i32.add 	$7=, $7, $1
 	i32.add 	$12=, $12, $3
 	i32.const	$push34=, 95
 	i32.le_s	$push35=, $7, $pop34
 	br_if   	$pop35, .LBB1_3
-.LBB1_5:                                  # %for.end18
+.LBB1_5:                                # %for.end18
 	i32.const	$push36=, 0
 	return  	$pop36
-.LBB1_6:                                  # %if.then
+.LBB1_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	main.correct,@object    # @main.correct
-	.section	.rodata,"a",@progbits
+	.type	.Lmain.correct,@object  # @main.correct
+	.section	.rodata..Lmain.correct,"a",@progbits
 	.align	4
-main.correct:
+.Lmain.correct:
 	.int32	0                       # 0x0
 	.int32	1                       # 0x1
 	.int32	2                       # 0x2
@@ -242,42 +246,51 @@ main.correct:
 	.int32	89                      # 0x59
 	.int32	90                      # 0x5a
 	.int32	91                      # 0x5b
-	.size	main.correct, 384
+	.size	.Lmain.correct, 384
 
-	.type	arg4,@object            # @arg4
-	.bss
+	.hidden	arg4                    # @arg4
+	.type	arg4,@object
+	.section	.bss.arg4,"aw",@nobits
 	.globl	arg4
 	.align	4
 arg4:
-	.zero	96
+	.skip	96
 	.size	arg4, 96
 
-	.type	arg1,@object            # @arg1
+	.hidden	arg1                    # @arg1
+	.type	arg1,@object
+	.section	.bss.arg1,"aw",@nobits
 	.globl	arg1
 	.align	4
 arg1:
-	.zero	192
+	.skip	192
 	.size	arg1, 192
 
-	.type	arg2,@object            # @arg2
+	.hidden	arg2                    # @arg2
+	.type	arg2,@object
+	.section	.bss.arg2,"aw",@nobits
 	.globl	arg2
 	.align	4
 arg2:
-	.zero	384
+	.skip	384
 	.size	arg2, 384
 
-	.type	arg3,@object            # @arg3
+	.hidden	arg3                    # @arg3
+	.type	arg3,@object
+	.section	.bss.arg3,"aw",@nobits
 	.globl	arg3
 	.align	4
 arg3:
-	.zero	768
+	.skip	768
 	.size	arg3, 768
 
-	.type	result,@object          # @result
+	.hidden	result                  # @result
+	.type	result,@object
+	.section	.bss.result,"aw",@nobits
 	.globl	result
 	.align	4
 result:
-	.zero	96
+	.skip	96
 	.size	result, 96
 
 

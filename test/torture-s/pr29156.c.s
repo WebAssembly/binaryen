@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr29156.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr29156.c"
+	.section	.text.bla,"ax",@progbits
+	.hidden	bla
 	.globl	bla
 	.type	bla,@function
 bla:                                    # @bla
@@ -17,6 +19,8 @@ bla:                                    # @bla
 .Lfunc_end0:
 	.size	bla, .Lfunc_end0-bla
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -30,8 +34,9 @@ main:                                   # @main
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
-	.type	global,@object          # @global
-	.bss
+	.hidden	global                  # @global
+	.type	global,@object
+	.section	.bss.global,"aw",@nobits
 	.globl	global
 	.align	2
 global:

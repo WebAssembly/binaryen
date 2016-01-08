@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071029-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071029-1.c"
+	.section	.text.test,"ax",@progbits
+	.hidden	test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -53,18 +55,20 @@ test:                                   # @test
 	br_if   	$pop14, .LBB0_13
 # BB#12:                                # %if.end37
 	return
-.LBB0_13:                                 # %if.then36
+.LBB0_13:                               # %if.then36
 	call    	exit, $2
 	unreachable
-.LBB0_14:                                 # %if.then33
+.LBB0_14:                               # %if.then33
 	call    	abort
 	unreachable
-.LBB0_15:                                 # %if.then
+.LBB0_15:                               # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -88,7 +92,7 @@ foo:                                    # @foo
 	i32.const	$19=, 56
 	i32.add 	$19=, $31, $19
 	i32.or  	$0=, $19, $2
-.LBB1_1:                                  # %again
+.LBB1_1:                                # %again
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
 	i32.const	$14=, 24
@@ -181,6 +185,8 @@ foo:                                    # @foo
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -193,7 +199,7 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 	.type	test.i,@object          # @test.i
-	.data
+	.section	.data.test.i,"aw",@progbits
 	.align	2
 test.i:
 	.int32	11                      # 0xb

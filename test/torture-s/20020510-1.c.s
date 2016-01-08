@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020510-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020510-1.c"
+	.section	.text.testc,"ax",@progbits
+	.hidden	testc
 	.globl	testc
 	.type	testc,@function
 testc:                                  # @testc
@@ -20,16 +22,18 @@ testc:                                  # @testc
 # BB#2:                                 # %if.then5
 	call    	abort
 	unreachable
-.LBB0_3:                                  # %if.else
+.LBB0_3:                                # %if.else
 	br_if   	$1, .LBB0_5
-.LBB0_4:                                  # %if.end9
+.LBB0_4:                                # %if.end9
 	return
-.LBB0_5:                                  # %if.then7
+.LBB0_5:                                # %if.then7
 	call    	abort
 	unreachable
 .Lfunc_end0:
 	.size	testc, .Lfunc_end0-testc
 
+	.section	.text.tests,"ax",@progbits
+	.hidden	tests
 	.globl	tests
 	.type	tests,@function
 tests:                                  # @tests
@@ -50,16 +54,18 @@ tests:                                  # @tests
 # BB#2:                                 # %if.then5
 	call    	abort
 	unreachable
-.LBB1_3:                                  # %if.else
+.LBB1_3:                                # %if.else
 	br_if   	$1, .LBB1_5
-.LBB1_4:                                  # %if.end9
+.LBB1_4:                                # %if.end9
 	return
-.LBB1_5:                                  # %if.then7
+.LBB1_5:                                # %if.then7
 	call    	abort
 	unreachable
 .Lfunc_end1:
 	.size	tests, .Lfunc_end1-tests
 
+	.section	.text.testi,"ax",@progbits
+	.hidden	testi
 	.globl	testi
 	.type	testi,@function
 testi:                                  # @testi
@@ -76,16 +82,18 @@ testi:                                  # @testi
 # BB#2:                                 # %if.then2
 	call    	abort
 	unreachable
-.LBB2_3:                                  # %if.else
+.LBB2_3:                                # %if.else
 	br_if   	$1, .LBB2_5
-.LBB2_4:                                  # %if.end6
+.LBB2_4:                                # %if.end6
 	return
-.LBB2_5:                                  # %if.then4
+.LBB2_5:                                # %if.then4
 	call    	abort
 	unreachable
 .Lfunc_end2:
 	.size	testi, .Lfunc_end2-testi
 
+	.section	.text.testl,"ax",@progbits
+	.hidden	testl
 	.globl	testl
 	.type	testl,@function
 testl:                                  # @testl
@@ -102,16 +110,18 @@ testl:                                  # @testl
 # BB#2:                                 # %if.then2
 	call    	abort
 	unreachable
-.LBB3_3:                                  # %if.else
+.LBB3_3:                                # %if.else
 	br_if   	$1, .LBB3_5
-.LBB3_4:                                  # %if.end6
+.LBB3_4:                                # %if.end6
 	return
-.LBB3_5:                                  # %if.then4
+.LBB3_5:                                # %if.then4
 	call    	abort
 	unreachable
 .Lfunc_end3:
 	.size	testl, .Lfunc_end3-testl
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main

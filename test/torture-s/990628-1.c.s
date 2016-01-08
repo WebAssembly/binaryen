@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/990628-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990628-1.c"
+	.section	.text.num_records,"ax",@progbits
+	.hidden	num_records
 	.globl	num_records
 	.type	num_records,@function
 num_records:                            # @num_records
@@ -10,6 +12,8 @@ num_records:                            # @num_records
 .Lfunc_end0:
 	.size	num_records, .Lfunc_end0-num_records
 
+	.section	.text.fetch,"ax",@progbits
+	.hidden	fetch
 	.globl	fetch
 	.type	fetch,@function
 fetch:                                  # @fetch
@@ -32,6 +36,8 @@ fetch:                                  # @fetch
 .Lfunc_end1:
 	.size	fetch, .Lfunc_end1-fetch
 
+	.section	.text.load_data,"ax",@progbits
+	.hidden	load_data
 	.globl	load_data
 	.type	load_data,@function
 load_data:                              # @load_data
@@ -56,7 +62,7 @@ load_data:                              # @load_data
 	i32.select	$push3=, $0, $6, $2
 	i32.store	$discard=, sqlca($2), $pop3
 	br_if   	$0, .LBB2_3
-.LBB2_1:                                  # %while.body
+.LBB2_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_2
 	copy_local	$0=, $7
@@ -67,16 +73,18 @@ load_data:                              # @load_data
 	i32.add 	$7=, $0, $5
 	i32.lt_s	$push5=, $7, $5
 	br_if   	$pop5, .LBB2_1
-.LBB2_2:                                  # %while.cond.while.end_crit_edge
+.LBB2_2:                                # %while.cond.while.end_crit_edge
 	i32.const	$push4=, 2
 	i32.add 	$push0=, $0, $pop4
 	i32.store	$discard=, fetch.fetch_count($2), $pop0
 	i32.store	$discard=, sqlca($2), $6
-.LBB2_3:                                  # %while.end
+.LBB2_3:                                # %while.end
 	return
 .Lfunc_end2:
 	.size	load_data, .Lfunc_end2-load_data
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -104,7 +112,7 @@ main:                                   # @main
 	br_if   	$9, .LBB3_4
 # BB#1:                                 # %while.body.lr.ph.i
 	copy_local	$9=, $0
-.LBB3_2:                                  # %while.body.i
+.LBB3_2:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB3_3
 	i32.add 	$1=, $9, $2
@@ -114,11 +122,11 @@ main:                                   # @main
 	copy_local	$9=, $1
 	i32.lt_s	$push3=, $8, $6
 	br_if   	$pop3, .LBB3_2
-.LBB3_3:                                  # %while.cond.while.end_crit_edge.i
+.LBB3_3:                                # %while.cond.while.end_crit_edge.i
 	i32.const	$push4=, 2
 	i32.store	$discard=, fetch.fetch_count($3), $pop4
 	i32.store	$discard=, sqlca($3), $7
-.LBB3_4:                                  # %load_data.exit
+.LBB3_4:                                # %load_data.exit
 	block   	.LBB3_6
 	i32.load	$push5=, 0($0)
 	i32.const	$push6=, 1431655765
@@ -127,7 +135,7 @@ main:                                   # @main
 # BB#5:                                 # %if.end
 	call    	exit, $3
 	unreachable
-.LBB3_6:                                  # %if.then
+.LBB3_6:                                # %if.then
 	call    	abort
 	unreachable
 .Lfunc_end3:
@@ -135,22 +143,27 @@ main:                                   # @main
 
 	.type	fetch.fetch_count,@object # @fetch.fetch_count
 	.lcomm	fetch.fetch_count,4,2
-	.type	data_tmp,@object        # @data_tmp
-	.bss
+	.hidden	data_tmp                # @data_tmp
+	.type	data_tmp,@object
+	.section	.bss.data_tmp,"aw",@nobits
 	.globl	data_tmp
 	.align	2
 data_tmp:
-	.zero	404
+	.skip	404
 	.size	data_tmp, 404
 
-	.type	sqlca,@object           # @sqlca
+	.hidden	sqlca                   # @sqlca
+	.type	sqlca,@object
+	.section	.bss.sqlca,"aw",@nobits
 	.globl	sqlca
 	.align	2
 sqlca:
-	.zero	4
+	.skip	4
 	.size	sqlca, 4
 
-	.type	data_ptr,@object        # @data_ptr
+	.hidden	data_ptr                # @data_ptr
+	.type	data_ptr,@object
+	.section	.bss.data_ptr,"aw",@nobits
 	.globl	data_ptr
 	.align	2
 data_ptr:

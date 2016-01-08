@@ -1,5 +1,7 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/buildbot/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011219-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011219-1.c"
+	.section	.text.bar,"ax",@progbits
+	.hidden	bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -9,6 +11,8 @@ bar:                                    # @bar
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.section	.text.foo,"ax",@progbits
+	.hidden	foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -30,25 +34,27 @@ foo:                                    # @foo
 	block   	.LBB1_3
 	block   	.LBB1_2
 	tableswitch	$0, .LBB1_2, .LBB1_2, .LBB1_3, .LBB1_4, .LBB1_5, .LBB1_6
-.LBB1_2:                                  # %sw.bb
+.LBB1_2:                                # %sw.bb
 	i32.load	$2=, 0($1)
 	br      	.LBB1_7
-.LBB1_3:                                  # %sw.bb1
+.LBB1_3:                                # %sw.bb1
 	i32.load	$2=, 0($1)
 	br      	.LBB1_7
-.LBB1_4:                                  # %sw.bb2
+.LBB1_4:                                # %sw.bb2
 	i32.load	$2=, 0($1)
 	br      	.LBB1_7
-.LBB1_5:                                  # %sw.bb3
+.LBB1_5:                                # %sw.bb3
 	i32.load	$2=, 0($1)
 	br      	.LBB1_7
-.LBB1_6:                                  # %sw.bb4
+.LBB1_6:                                # %sw.bb4
 	i32.load	$2=, 0($1)
-.LBB1_7:                                  # %sw.epilog
+.LBB1_7:                                # %sw.epilog
 	return  	$2
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
+	.section	.text.main,"ax",@progbits
+	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
