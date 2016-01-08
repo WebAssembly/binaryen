@@ -46,7 +46,6 @@ int main(int argc, const char *argv[]) {
   options.parse(argc, argv);
 
   std::string input(read_file(options.extra["infile"], options.debug));
-  Output output(options.extra["output"], options.debug);
 
   if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
   AllocatingModule wasm;
@@ -61,6 +60,7 @@ int main(int argc, const char *argv[]) {
   s2wasm.emscriptenGlue(meta);
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
+  Output output(options.extra["output"], options.debug);
   output << wasm << meta.str() << std::endl;
 
   if (options.debug) std::cerr << "Done." << std::endl;
