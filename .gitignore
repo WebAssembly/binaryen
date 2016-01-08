@@ -17,4 +17,3 @@ cmake_install.cmake
 .ninja_deps
 .ninja_log
 test/wasm-torture-s-*.tbz2
-test/s2wasm-torture-out

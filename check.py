@@ -268,6 +268,8 @@ unexpected_result_count = link_assembly_files.run(
     files=os.path.abspath(os.path.join('test', 'torture-s', '*.s')),
     fails=os.path.abspath(os.path.join('test', 's2wasm_known_gcc_test_failures.txt')),
     out=s2wasm_torture_out)
+assert os.path.isdir(s2wasm_torture_out), 'Expected output directory %s' % s2wasm_torture_out
+shutil.rmtree(s2wasm_torture_out)
 if unexpected_result_count:
   fail(unexpected_result_count, 0)
 
