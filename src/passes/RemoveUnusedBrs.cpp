@@ -66,6 +66,13 @@ struct RemoveUnusedBrs : public Pass {
   void visitBlock(Block *curr) override {
     if (curr->name.isNull()) return;
     if (curr->list.size() == 0) return;
+    // preparation - remove all code after a break, since it can't execute, and it might confuse us (we look at the last)
+    for (size_t i = 0; i < curr->list.size()-1; i++) {
+      if (curr->list[i]->is<Break>()) {
+        curr->list.resize(i+1);
+        break;
+      }
+    }
     Expression* last = curr->list.back();
     if (Break* br = last->dyn_cast<Break>()) {
       if (br->condition) return;
