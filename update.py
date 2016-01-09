@@ -26,31 +26,32 @@ import urllib2
 
 STORAGE_BASE = 'https://storage.googleapis.com/wasm-llvm/builds/git/'
 BASE_DIR = os.path.abspath('test')
-LKGR_PATH = os.path.join(BASE_DIR, 'lkgr')
+REVISION_PATH = os.path.join(BASE_DIR, 'revision')
 TORTURE_TAR = 'wasm-torture-s-%s.tbz2'
 TORTURE_DIR = os.path.join(BASE_DIR, 'torture-s')
 
 
-def download_last_known_good_revision():
-  return urllib2.urlopen(STORAGE_BASE + 'lkgr').read().strip()
+def download_revision(force_latest):
+  name = 'latest' if force_latest else 'lkgr'
+  return urllib2.urlopen(STORAGE_BASE + name).read().strip()
 
 
-def write_lkgr(lkgr):
-  with open(LKGR_PATH, 'w') as f:
-    f.write(lkgr)
+def write_revision(revision):
+  with open(REVISION_PATH, 'w') as f:
+    f.write(revision)
 
 
-def download_tar_at_lkgr(tar_pattern, lkgr):
+def download_tar(tar_pattern, revision):
   tar_path = os.path.join(BASE_DIR, tar_pattern)
-  lkgr_tar_path = tar_path % lkgr
-  if not os.path.isfile(lkgr_tar_path):
-    with open(lkgr_tar_path, 'w+') as f:
-      f.write(urllib2.urlopen(STORAGE_BASE + tar_pattern % lkgr).read())
+  revision_tar_path = tar_path % revision
+  if not os.path.isfile(revision_tar_path):
+    with open(revision_tar_path, 'w+') as f:
+      f.write(urllib2.urlopen(STORAGE_BASE + tar_pattern % revision).read())
   # Remove any previous tarfiles.
   for older_tar in glob.glob(tar_path):
-    if older_tar != lkgr_tar_path:
+    if older_tar != revision_tar_path:
       os.path.remove(older_tar)
-  return lkgr_tar_path
+  return revision_tar_path
 
 
 def untar(tarfile, outdir):
@@ -81,20 +82,34 @@ def untar(tarfile, outdir):
       shutil.rmtree(tmp_dir)
 
 
-def main():
+def run(force_latest, override_hash):
   subprocess.check_call(['git', 'submodule', 'sync', '--quiet'])
   subprocess.check_call(['git', 'submodule', 'init', '--quiet'])
   subprocess.check_call(['git', 'submodule', 'update', '--quiet'])
   subprocess.check_call(['git', 'submodule', 'foreach',
                          'git', 'pull', 'origin', 'master', '--quiet'])
   updates = 0
-  lkgr = download_last_known_good_revision()
-  updates += untar(download_tar_at_lkgr(TORTURE_TAR, lkgr), TORTURE_DIR)
+  revision = (override_hash if override_hash else
+              download_revision(force_latest=force_latest))
+  updates += untar(download_tar(TORTURE_TAR, revision), TORTURE_DIR)
   if updates:
-    # Only update lkgr if the files it downloaded are different.
-    print 'Updating lkgr to', lkgr
-    write_lkgr(lkgr)
+    # Only update revision if the files it downloaded are different.
+    print 'Updating revision to', revision
+    write_revision(revision)
+
+
+def getargs():
+  import argparse
+  parser = argparse.ArgumentParser(
+      description='Update the repository dependencies.')
+  parser.add_argument('--force-latest', type=bool, default=False,
+                      help='Sync to latest waterfall build, not lkgr')
+  parser.add_argument('--override-hash', type=str, default=None,
+                      help='Sync to specific hash from  waterfall build')
+  return parser.parse_args()
 
 
 if __name__ == '__main__':
-  sys.exit(main())
+  args = getargs()
+  sys.exit(run(force_latest=args.force_latest,
+               override_hash=args.override_hash))
