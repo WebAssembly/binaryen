@@ -9,6 +9,10 @@ Binaryen is a compiler and toolchain infrastructure library for WebAssembly, wri
 
 To provide those capabilities, Binaryen has a simple and flexible API for **representing and processing** WebAssembly modules. The interpreter, validator, pretty-printer, etc. are built on that foundation. The core of this is in [wasm.h](https://github.com/WebAssembly/binaryen/blob/master/src/wasm.h), which contains classes that define a WebAssembly module, and tools to process those. For a simple example of how to use Binaryen, see [test/example/find_div0s.cpp](https://github.com/WebAssembly/binaryen/blob/master/test/example/find_div0s.cpp), which creates a module and then searches it for a specific pattern.
 
+Consult the [contributing instructions](Contributing.md) if you're interested in participating.
+
+Current build status: [![Build Status](https://travis-ci.org/WebAssembly/binaryen.svg?branch=master)](https://travis-ci.org/WebAssembly/binaryen)
+
 ## Tools
 
 This repository contains code that builds the following tools in `bin/`:
@@ -30,9 +34,9 @@ $ ./build.sh
 ```
 or
 ```
-cmake && make
+cmake . && make
 ```
-Note that you can also use `ninja` as your generator: `cmake -G ninja && ninja`.
+Note that you can also use `ninja` as your generator: `cmake -G ninja . && ninja`.
 
 * `binaryen-shell` and `asm2wasm` require a C++11 compiler.
 * If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten. You'll need the `incoming` branch there (which you can get via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).

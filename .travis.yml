@@ -1,0 +1,23 @@
+sudo: false
+language: cpp
+matrix:
+  include:
+    - addons: &gcc5
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['cmake', 'g++-5']
+      compiler: gcc
+      env: COMPILER_VERSION=5
+    - addons: &clang37
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
+          packages: ['cmake', 'clang-3.7']
+      compiler: clang
+      env: COMPILER_VERSION=3.7
+# TODO: add before_script: update.py
+script:
+  - export CC="${CC}-${COMPILER_VERSION}"
+  - export CXX="${CXX}-${COMPILER_VERSION}"
+  - cmake .
+  - make -j2
+  # TODO: add testing.
