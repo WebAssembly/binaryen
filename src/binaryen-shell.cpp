@@ -210,6 +210,7 @@ int main(int argc, char **argv) {
         passes.push_back("remove-unused-brs");
         passes.push_back("remove-unused-names");
         passes.push_back("merge-blocks");
+        passes.push_back("simplify-locals");
       } else {
         // otherwise, assumed to be a pass
         const char* name = curr + 1;

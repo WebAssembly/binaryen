@@ -26,6 +26,7 @@ namespace wasm {
 struct SimplifyLocals : public Pass {
   void visitBlock(Block *curr) override {
     // look for pairs of setlocal-getlocal, which can be just a setlocal (since it returns a value)
+    if (curr->list.size() == 0) return;
     for (size_t i = 0; i < curr->list.size() - 1; i++) {
       auto set = curr->list[i]->dyn_cast<SetLocal>();
       if (!set) continue;

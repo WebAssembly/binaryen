@@ -1574,6 +1574,7 @@ void Asm2WasmBuilder::optimize() {
   passRunner.add("remove-unused-brs");
   passRunner.add("remove-unused-names");
   passRunner.add("merge-blocks");
+  passRunner.add("simplify-locals");
   passRunner.run(&wasm);
 }
 

@@ -11,7 +11,6 @@ make -j
 #echo "building s2wasm"
 #g++ -O2 -std=c++11 src/s2wasm-main.cpp src/support/command-line.cpp src/support/file.cpp src/support/colors.cpp -Isrc/ -o bin/s2wasm
 echo "building interpreter/js"
-em++ -std=c++11 src/wasm-js.cpp src/pass.cpp src/passes/MergeBlocks.cpp src/passes/RemoveUnusedBrs.cpp src/passes/RemoveUnusedNames.cpp   src/passes/SimplifyLocals.cpp
- src/emscripten-optimizer/parser.cpp src/emscripten-optimizer/simple_ast.cpp src/emscripten-optimizer/optimizer-shared.cpp src/support/colors.cpp -Isrc/ -o bin/wasm.js -s MODULARIZE=1 -s 'EXPORT_NAME="WasmJS"' --memory-init-file 0 -Oz -s ALLOW_MEMORY_GROWTH=1 -profiling -s DEMANGLE_SUPPORT=1 #-DWASM_JS_DEBUG -DWASM_INTERPRETER_DEBUG=2
+em++ -std=c++11 src/wasm-js.cpp src/pass.cpp src/passes/MergeBlocks.cpp src/passes/RemoveUnusedBrs.cpp src/passes/RemoveUnusedNames.cpp   src/passes/SimplifyLocals.cpp src/emscripten-optimizer/parser.cpp src/emscripten-optimizer/simple_ast.cpp src/emscripten-optimizer/optimizer-shared.cpp src/support/colors.cpp -Isrc/ -o bin/wasm.js -s MODULARIZE=1 -s 'EXPORT_NAME="WasmJS"' --memory-init-file 0 -Oz -s ALLOW_MEMORY_GROWTH=1 -profiling -s DEMANGLE_SUPPORT=1 #-DWASM_JS_DEBUG -DWASM_INTERPRETER_DEBUG=2
 cat src/js/wasm.js-post.js >> bin/wasm.js
 

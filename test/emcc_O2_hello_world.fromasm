@@ -7047,7 +7047,6 @@
       (set_local $i13
         (i32.const 0)
       )
-      (get_local $i13)
     )
   )
   (func $_free (param $i1 i32)

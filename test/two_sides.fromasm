@@ -39,7 +39,6 @@
             (get_local $d6)
           )
         )
-        (get_local $i5)
       )
       (block
         (set_local $d6
@@ -71,7 +70,6 @@
             (get_local $d6)
           )
         )
-        (get_local $i5)
       )
     )
   )

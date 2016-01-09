@@ -6792,7 +6792,6 @@
       (set_local $i37
         (i32.const 0)
       )
-      (get_local $i37)
     )
   )
   (func $_printf_core (param $i50 i32) (param $i3 i32) (param $i51 i32) (param $i52 i32) (param $i53 i32) (result i32)

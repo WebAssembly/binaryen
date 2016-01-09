@@ -263,7 +263,6 @@
         (i32.const -1)
       )
     )
-    (get_local $x)
   )
   (func $fr (param $x f32)
     (local $y f32)
