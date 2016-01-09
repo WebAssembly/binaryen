@@ -194,17 +194,22 @@ int main(int argc, char **argv) {
         std::cout << "\n";
         std::cout << "binaryen shell\n";
         std::cout << "--------------\n\n";
-        std::cout << "options:\n";
+        std::cout << "printing options:\n";
         std::cout << "  -print-before : print modules before processing them\n";
         std::cout << "  -print-after  : print modules after processing them\n";
         std::cout << "\n";
         std::cout << "passes:\n";
+        std::cout << "  -O : execute default optimization passes\n";
         auto allPasses = PassRegistry::get()->getRegisteredNames();
         for (auto& name : allPasses) {
           std::cout << "  -" << name << " : " << PassRegistry::get()->getPassDescription(name) << "\n";
         }
         std::cout << "\n";
         exit(0);
+      } else if (arg == "-O") {
+        passes.push_back("remove-unused-brs");
+        passes.push_back("remove-unused-names");
+        passes.push_back("merge-blocks");
       } else {
         // otherwise, assumed to be a pass
         const char* name = curr + 1;
