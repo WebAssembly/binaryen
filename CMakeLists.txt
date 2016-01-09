@@ -39,6 +39,7 @@ SET(binaryen-shell_SOURCES
   src/passes/RemoveImports.cpp
   src/passes/RemoveUnusedBrs.cpp
   src/passes/RemoveUnusedNames.cpp
+  src/passes/SimplifyLocals.cpp
 )
 ADD_EXECUTABLE(binaryen-shell
                ${binaryen-shell_SOURCES})
@@ -53,6 +54,7 @@ SET(asm2wasm_SOURCES
   src/passes/MergeBlocks.cpp
   src/passes/RemoveUnusedBrs.cpp
   src/passes/RemoveUnusedNames.cpp
+  src/passes/SimplifyLocals.cpp
   src/emscripten-optimizer/parser.cpp
   src/emscripten-optimizer/simple_ast.cpp
   src/emscripten-optimizer/optimizer-shared.cpp

@@ -1,0 +1,35 @@
+(module
+  (memory 16777216 16777216)
+  (func $b0-yes (param $i1 i32)
+    (local $x i32)
+    (local $y i32)
+    (set_local $x
+      (i32.const 5)
+    )
+    (block $block0
+      (set_local $x
+        (i32.const 7)
+      )
+    )
+    (set_local $x
+      (i32.const 11)
+    )
+    (set_local $x
+      (i32.const 5)
+    )
+    (get_local $y)
+    (block $block1
+      (set_local $x
+        (i32.const 7)
+      )
+      (get_local $y)
+    )
+    (set_local $x
+      (i32.const 11)
+    )
+    (get_local $y)
+    (set_local $x
+      (i32.const 17)
+    )
+  )
+)
