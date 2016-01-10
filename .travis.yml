@@ -14,10 +14,11 @@ matrix:
           packages: ['cmake', 'clang-3.7']
       compiler: clang
       env: COMPILER_VERSION=3.7
-# TODO: add before_script: update.py
+#before_script:
+#  - python update.py
 script:
   - export CC="${CC}-${COMPILER_VERSION}"
   - export CXX="${CXX}-${COMPILER_VERSION}"
   - cmake .
   - make -j2
-  # TODO: add testing.
+  - python check.py

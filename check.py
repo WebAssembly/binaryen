@@ -275,7 +275,7 @@ if unexpected_result_count:
 
 print '\n[ checking example testcases... ]\n'
 
-subprocess.check_call(['g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.'])
+subprocess.check_call([os.environ.get('CXX') or 'g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.'])
 actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
 expected = open(os.path.join('test', 'example', 'find_div0s.txt')).read()
 if actual != expected:
