@@ -137,7 +137,7 @@ function asmFunc(global, env, buffer) {
      block0 : {
       $tobool1 = $x != 0.0;
       if ($tobool1) block1 : {
-       $mul = $x - 18446744073709551616.0;
+       $mul = $x - 18446744073709551615.0;
        $call = +_frexp(+$mul, $e | 0);
        $4 = HEAPU32[$e >> 2] | 0;
        $sub = $4 + 4294967232 | 0;

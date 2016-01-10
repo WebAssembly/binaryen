@@ -45,13 +45,14 @@
 #define wasm_wasm_h
 
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "compiler-support.h"
 #include "emscripten-optimizer/simple_ast.h"
@@ -200,7 +201,7 @@ struct Literal {
   }
 
   static void printDouble(std::ostream &o, double d) {
-    if (d == 0 && 1/d < 0) {
+    if (d == 0 && std::signbit(d)) {
       o << "-0";
       return;
     }

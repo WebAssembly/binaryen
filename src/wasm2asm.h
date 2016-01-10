@@ -22,6 +22,8 @@
 #ifndef wasm_wasm2asm_h
 #define wasm_wasm2asm_h
 
+#include <cmath>
+
 #include "wasm.h"
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
@@ -914,7 +916,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         }
         case f64: {
           double d = curr->value.f64;
-          if (d == 0 && 1/d < 0) { // negative zero
+          if (d == 0 && std::signbit(d)) { // negative zero
             return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeUnary(MINUS, ValueBuilder::makeDouble(0)));
           }
           return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeDouble(curr->value.f64));

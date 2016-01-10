@@ -159,16 +159,23 @@ private:
     return cashew::IString(str.c_str(), false);
   }
 
-  int32_t getInt() {
-    int32_t ret = 0;
+  uint32_t getInt() {
+    uint32_t ret = 0;
     bool neg = false;
     if (*s == '-') {
       neg = true;
       s++;
     }
     while (isdigit(*s)) {
+      uint32_t digit = *s - '0';
+      if (ret > std::numeric_limits<uint32_t>::max() / 10) {
+        abort_on("overflow");
+      }
       ret *= 10;
-      ret += (*s - '0');
+      if (ret > std::numeric_limits<uint32_t>::max() - digit) {
+        abort_on("overflow");
+      }
+      ret += digit;
       s++;
     }
     if (neg) ret = -ret;
@@ -197,16 +204,23 @@ private:
     }
   }
 
-  int64_t getInt64() {
-    int64_t ret = 0;
+  uint64_t getInt64() {
+    uint64_t ret = 0;
     bool neg = false;
     if (*s == '-') {
       neg = true;
       s++;
     }
     while (isdigit(*s)) {
+      uint64_t digit = *s - '0';
+      if (ret > std::numeric_limits<uint64_t>::max() / 10) {
+        abort_on("overflow");
+      }
       ret *= 10;
-      ret += (*s - '0');
+      if (ret > std::numeric_limits<uint64_t>::max() - digit) {
+        abort_on("overflow");
+      }
+      ret += digit;
       s++;
     }
     if (neg) ret = -ret;
@@ -933,7 +947,7 @@ private:
       } else if (match(".int64")) {
         size_t size = raw->size();
         raw->resize(size + 8);
-        (*(int64_t*)(&(*raw)[size])) = getInt();
+        (*(int64_t*)(&(*raw)[size])) = getInt64();
         zero = false;
       } else {
         break;

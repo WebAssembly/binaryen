@@ -17,26 +17,25 @@
 #ifndef wasm_simple_ast_h
 #define wasm_simple_ast_h
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-
-#include <vector>
-#include <ostream>
-#include <iostream>
-#include <iomanip>
-#include <limits>
-#include <functional>
 #include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <ostream>
 #include <set>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "parser.h"
-
 #include "snprintf.h"
+#include "support/safe_integer.h"
 
 #define err(str) fprintf(stderr, str "\n");
 #define errv(str, ...) fprintf(stderr, str "\n", __VA_ARGS__);
@@ -870,8 +869,8 @@ struct JSPrinter {
       } else {
         // integer
         assert(d >= 0);
-        unsigned long long uu = (unsigned long long)d;
-        if (uu == d) {
+        if (wasm::isUInteger64(d)) {
+          unsigned long long uu = wasm::toUInteger64(d);
           bool asHex = e && !finalize;
           snprintf(buffer, BUFFERSIZE-1, asHex ? "0x%llx" : "%llu", uu);
           if (asHex) {

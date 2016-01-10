@@ -22,13 +22,14 @@
 #ifndef wasm_parser_h
 #define wasm_parser_h
 
-#include <vector>
-#include <iostream>
 #include <algorithm>
-
-#include <stdio.h>
+#include <cstdio>
+#include <iostream>
+#include <limits>
+#include <vector>
 
 #include "istring.h"
+#include "support/safe_integer.h"
 
 namespace cashew {
 
@@ -179,10 +180,6 @@ class Parser {
 
   static bool hasChar(const char* list, char x) { while (*list) if (*list++ == x) return true; return false; }
 
-  static bool is32Bit(double x) {
-    return x == (int)x || x == (unsigned int)x;
-  }
-
   // An atomic fragment of something. Stops at a natural boundary.
   enum FragType {
     KEYWORD = 0,
@@ -249,7 +246,10 @@ class Parser {
         // for valid asm.js input, the '.' should be enough, and for uglify
         // in the emscripten optimizer pipeline, we use simple_ast where INT/DOUBLE
         // is quite the same at this point anyhow
-        type = (std::find(start, src, '.') == src && is32Bit(num)) ? INT : DOUBLE;
+        type = (std::find(start, src, '.') == src &&
+                (wasm::isSInteger32(num) || wasm::isUInteger32(num)))
+                   ? INT
+                   : DOUBLE;
         assert(src > start);
       } else if (hasChar(OPERATOR_INITS, *src)) {
         switch (*src) {

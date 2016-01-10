@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+#include <limits>
+
 #include "optimizer.h"
+#include "support/safe_integer.h"
 
 using namespace cashew;
 
@@ -25,20 +28,6 @@ IString SIMD_INT8X16_CHECK("SIMD_Int8x16_check"),
         SIMD_INT32X4_CHECK("SIMD_Int32x4_check"),
         SIMD_FLOAT32X4_CHECK("SIMD_Float32x4_check"),
         SIMD_FLOAT64X2_CHECK("SIMD_Float64x2_check");
-
-bool isInteger(double x) {
-  return fmod(x, 1) == 0;
-}
-
-bool isInteger32(double x) {
-  return isInteger(x) && (x == (int32_t)x || x == (uint32_t)x);
-}
-
-int32_t toInteger32(double x) {
-  if (x == (int32_t)x) return (int32_t)x;
-  assert(x == (uint32_t)x);
-  return (uint32_t)x;
-}
 
 int parseInt(const char *str) {
   int ret = *str - '0';
@@ -67,7 +56,7 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
   switch (node[0]->getCString()[0]) {
     case 'n': {
       if (node[0] == NUM) {
-        if (!isInteger(node[1]->getNumber())) return ASM_DOUBLE;
+        if (!wasm::isInteger(node[1]->getNumber())) return ASM_DOUBLE;
         return ASM_INT;
       } else if (node[0] == NAME) {
         if (asmData) {
@@ -176,7 +165,7 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
     double value = node[1]->getNumber();
     if (value < 0) return ASM_SIGNED;
     if (value > uint32_t(-1) || fmod(value, 1) != 0) return ASM_NONSIGNED;
-    if (value == int32_t(value)) return ASM_FLEXIBLE;
+    if (wasm::isSInteger32(value)) return ASM_FLEXIBLE;
     return ASM_UNSIGNED;
   } else if (type == NAME) {
     return ASM_FLEXIBLE;
