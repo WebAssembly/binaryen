@@ -72,16 +72,12 @@ else:
 
 if not interpreter:
   print 'warning: no interpreter provided (not testing spec interpreter validation)'
-  time.sleep(0.5)
 if not has_node:
   print 'warning: no node found (not checking proper js form)'
-  time.sleep(0.5)
 if not has_mozjs:
   print 'warning: no mozjs found (not checking asm.js validation)'
-  time.sleep(0.5)
 if not has_emcc:
   print 'warning: no emcc found (not checking emscripten/binaryen integration)'
-  time.sleep(0.5)
 
 print '[ checking asm2wasm testcases... ]\n'
 
