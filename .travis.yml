@@ -14,11 +14,12 @@ matrix:
           packages: ['cmake', 'clang-3.7']
       compiler: clang
       env: COMPILER_VERSION=3.7
-#before_script:
-#  - python update.py
-script:
+before_script:
+  - git submodule update --init # Initialize the submodules recorded in the index.
   - export CC="${CC}-${COMPILER_VERSION}"
   - export CXX="${CXX}-${COMPILER_VERSION}"
+  - $CC --version
+script:
   - cmake .
   - make -j2
-  - python check.py
+  - ./check.py
