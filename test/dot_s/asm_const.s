@@ -6,7 +6,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:
 	i32.const	$push0=, .str
-	call    	emscripten_asm_const, $pop0
+	call    	emscripten_asm_const@FUNCTION, $pop0
 	i32.const	$push1=, 0
 	return  	$pop1
 .Lfunc_end0:

@@ -7,7 +7,7 @@ _Z6reporti:                             # @_Z6reporti
 	i32.const	$push0=, 8
 	i32.store	$discard=, 0($pop0), $0
 	i32.const	$push1=, .str
-	call    	emscripten_asm_const, $pop1
+	call    	emscripten_asm_const@FUNCTION, $pop1
 	return
 .Lfunc_end0:
 	.size	_Z6reporti, .Lfunc_end0-_Z6reporti
@@ -75,7 +75,7 @@ main:                                   # @main
 	i32.ne  	$push16=, $0, $pop15
 	br_if   	$pop16, .LBB1_1
 .LBB1_5:
-	call    	_Z6reporti, $6
+	call    	_Z6reporti@FUNCTION, $6
 	i32.const	$push17=, 0
 	i32.const	$9=, 1048576
 	i32.add 	$12=, $12, $9

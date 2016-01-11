@@ -7,7 +7,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:
 	i32.const	$push0=, .str
-	call    	$discard=, puts, $pop0
+	call    	$discard=, puts@FUNCTION, $pop0
 	i32.const	$push1=, 31
 	i32.shr_s	$push2=, $0, $pop1
 	i32.const	$push3=, 30
