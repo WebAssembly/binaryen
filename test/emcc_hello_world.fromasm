@@ -430,7 +430,7 @@
               (set_local $$mul
                 (f64.mul
                   (get_local $$x)
-                  (f64.const 18446744073709551616)
+                  (f64.const 18446744073709551615)
                 )
               )
               (set_local $$call

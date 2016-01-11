@@ -385,8 +385,9 @@ private:
       }
       if (ast[1] == MINUS && ast[2][0] == NUM) {
         double num = -ast[2][1]->getNumber();
-        assert(isInteger32(num));
-        return Literal((int32_t)num);
+        if (isSInteger32(num)) return Literal((int32_t)num);
+        if (isUInteger32(num)) return Literal((uint32_t)num);
+        assert(false && "expected signed or unsigned int32");
       }
       if (ast[1] == PLUS && ast[2][0] == UNARY_PREFIX && ast[2][1] == MINUS && ast[2][2][0] == NUM) {
         return Literal((double)-ast[2][2][1]->getNumber());
@@ -912,9 +913,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     } else if (what == NUM) {
       auto ret = allocator.alloc<Const>();
       double num = ast[1]->getNumber();
-      if (isInteger32(num)) {
+      if (isSInteger32(num)) {
         ret->value.type = WasmType::i32;
-        ret->value.i32 = toInteger32(num);
+        ret->value.i32 = toSInteger32(num);
+      } else if (isUInteger32(num)) {
+        ret->value.type = WasmType::i32;
+        ret->value.i32 = toUInteger32(num);
       } else {
         ret->value.type = WasmType::f64;
         ret->value.f64 = num;

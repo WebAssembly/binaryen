@@ -144,7 +144,9 @@ for t in tests:
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join('test', t)
-    actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), t, '-print-before'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    cmd = [os.path.join('bin', 'binaryen-shell'), t, '-print-before']
+    print '    ', ' '.join(cmd)
+    actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err.replace('printing before:', '').strip() == '', 'bad err:' + err
     actual = actual.replace('printing before:\n', '')
 
@@ -271,7 +273,12 @@ if unexpected_result_count:
 
 print '\n[ checking example testcases... ]\n'
 
-subprocess.check_call([os.environ.get('CXX') or 'g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.'])
+cmd = [os.environ.get('CXX') or 'g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.']
+if os.environ.get('COMPILER_FLAGS'):
+  for f in os.environ.get('COMPILER_FLAGS').split(' '):
+    cmd.append(f)
+print ' '.join(cmd)
+subprocess.check_call(cmd)
 actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
 expected = open(os.path.join('test', 'example', 'find_div0s.txt')).read()
 if actual != expected:

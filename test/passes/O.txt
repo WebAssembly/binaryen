@@ -20203,7 +20203,7 @@
                 (call $_frexp
                   (f64.mul
                     (get_local $d1)
-                    (f64.const 18446744073709551616)
+                    (f64.const 18446744073709551615)
                   )
                   (get_local $i5)
                 )
