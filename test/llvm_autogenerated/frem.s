@@ -5,7 +5,7 @@
 frem32:
 	.param  	f32, f32
 	.result 	f32
-	f32.call	$push0=, fmodf, $0, $1
+	f32.call	$push0=, fmodf@FUNCTION, $0, $1
 	return  	$pop0
 .Lfunc_end0:
 	.size	frem32, .Lfunc_end0-frem32
@@ -15,7 +15,7 @@ frem32:
 frem64:
 	.param  	f64, f64
 	.result 	f64
-	f64.call	$push0=, fmod, $0, $1
+	f64.call	$push0=, fmod@FUNCTION, $0, $1
 	return  	$pop0
 .Lfunc_end1:
 	.size	frem64, .Lfunc_end1-frem64

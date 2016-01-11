@@ -15,7 +15,7 @@ foo:
 call_memcpy:
 	.param  	i32, i32, i32
 	.result 	i32
-	call    	memcpy, $0, $1, $2
+	call    	memcpy@FUNCTION, $0, $1, $2
 	return  	$0
 .Lfunc_end1:
 	.size	call_memcpy, .Lfunc_end1-call_memcpy
@@ -30,7 +30,7 @@ call_memcpy:
 	.type	ud,@object
 	.align	2
 ud:
-	.zero	4
+	.skip	4
 	.size	ud, 4
 
 	.type	nil,@object
@@ -58,7 +58,7 @@ u32max:
 	.type	ud64,@object
 	.align	3
 ud64:
-	.zero	8
+	.skip	8
 	.size	ud64, 8
 
 	.type	nil64,@object
@@ -80,7 +80,7 @@ u64max:
 	.type	f32ud,@object
 	.align	2
 f32ud:
-	.zero	4
+	.skip	4
 	.size	f32ud, 4
 
 	.type	f32nil,@object
@@ -102,7 +102,7 @@ f32two:
 	.type	f64ud,@object
 	.align	3
 f64ud:
-	.zero	8
+	.skip	8
 	.size	f64ud, 8
 
 	.type	f64nil,@object
@@ -126,7 +126,7 @@ f64two:
 	.globl	arr
 	.align	4
 arr:
-	.zero	512
+	.skip	512
 	.size	arr, 512
 
 	.type	ptr,@object
@@ -142,7 +142,7 @@ ptr:
 	.globl	rom
 	.align	4
 rom:
-	.zero	512
+	.skip	512
 	.size	rom, 512
 
 

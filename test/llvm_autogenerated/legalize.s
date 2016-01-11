@@ -74,228 +74,228 @@ bigshift:
 	i64.sub 	$push1=, $pop0, $17
 	i32.const	$184=, 480
 	i32.add 	$184=, $279, $184
-	call    	__lshrti3, $184, $1, $2, $pop1
+	call    	__lshrti3@FUNCTION, $184, $1, $2, $pop1
 	i64.const	$push2=, -768
 	i64.add 	$33=, $17, $pop2
 	i32.const	$185=, 464
 	i32.add 	$185=, $279, $185
-	call    	__ashlti3, $185, $3, $4, $33
+	call    	__ashlti3@FUNCTION, $185, $3, $4, $33
 	i64.const	$push3=, -896
 	i64.add 	$push4=, $17, $pop3
 	i32.const	$186=, 496
 	i32.add 	$186=, $279, $186
-	call    	__ashlti3, $186, $1, $2, $pop4
+	call    	__ashlti3@FUNCTION, $186, $1, $2, $pop4
 	i64.const	$push5=, 640
 	i64.sub 	$34=, $pop5, $17
 	i32.const	$187=, 352
 	i32.add 	$187=, $279, $187
-	call    	__lshrti3, $187, $5, $6, $34
+	call    	__lshrti3@FUNCTION, $187, $5, $6, $34
 	i64.const	$push6=, -512
 	i64.add 	$35=, $17, $pop6
 	i32.const	$188=, 336
 	i32.add 	$188=, $279, $188
-	call    	__ashlti3, $188, $7, $8, $35
+	call    	__ashlti3@FUNCTION, $188, $7, $8, $35
 	i64.const	$push7=, -640
 	i64.add 	$36=, $17, $pop7
 	i32.const	$189=, 368
 	i32.add 	$189=, $279, $189
-	call    	__ashlti3, $189, $5, $6, $36
+	call    	__ashlti3@FUNCTION, $189, $5, $6, $36
 	i64.const	$push8=, 768
 	i64.sub 	$37=, $pop8, $17
 	i32.const	$190=, 432
 	i32.add 	$190=, $279, $190
-	call    	__lshrti3, $190, $3, $4, $37
+	call    	__lshrti3@FUNCTION, $190, $3, $4, $37
 	i64.const	$38=, 384
 	i64.sub 	$39=, $38, $17
 	i32.const	$191=, 864
 	i32.add 	$191=, $279, $191
-	call    	__lshrti3, $191, $9, $10, $39
+	call    	__lshrti3@FUNCTION, $191, $9, $10, $39
 	i64.const	$push9=, -256
 	i64.add 	$40=, $17, $pop9
 	i32.const	$192=, 848
 	i32.add 	$192=, $279, $192
-	call    	__ashlti3, $192, $11, $12, $40
+	call    	__ashlti3@FUNCTION, $192, $11, $12, $40
 	i64.const	$push10=, -384
 	i64.add 	$41=, $17, $pop10
 	i32.const	$193=, 880
 	i32.add 	$193=, $279, $193
-	call    	__ashlti3, $193, $9, $10, $41
+	call    	__ashlti3@FUNCTION, $193, $9, $10, $41
 	i32.const	$194=, 1008
 	i32.add 	$194=, $279, $194
-	call    	__ashlti3, $194, $15, $16, $17
+	call    	__ashlti3@FUNCTION, $194, $15, $16, $17
 	i64.const	$42=, 128
 	i64.sub 	$51=, $42, $17
 	i32.const	$195=, 960
 	i32.add 	$195=, $279, $195
-	call    	__lshrti3, $195, $13, $14, $51
+	call    	__lshrti3@FUNCTION, $195, $13, $14, $51
 	i64.const	$push11=, -128
 	i64.add 	$43=, $17, $pop11
 	i32.const	$196=, 976
 	i32.add 	$196=, $279, $196
-	call    	__ashlti3, $196, $13, $14, $43
+	call    	__ashlti3@FUNCTION, $196, $13, $14, $43
 	i64.const	$44=, 256
 	i64.sub 	$45=, $44, $17
 	i32.const	$197=, 816
 	i32.add 	$197=, $279, $197
-	call    	__lshrti3, $197, $11, $12, $45
+	call    	__lshrti3@FUNCTION, $197, $11, $12, $45
 	i64.const	$46=, 512
 	i64.sub 	$47=, $46, $17
 	i32.const	$198=, 240
 	i32.add 	$198=, $279, $198
-	call    	__lshrti3, $198, $7, $8, $47
+	call    	__lshrti3@FUNCTION, $198, $7, $8, $47
 	i32.const	$199=, 912
 	i32.add 	$199=, $279, $199
-	call    	__ashlti3, $199, $11, $12, $17
+	call    	__ashlti3@FUNCTION, $199, $11, $12, $17
 	i32.const	$200=, 928
 	i32.add 	$200=, $279, $200
-	call    	__lshrti3, $200, $9, $10, $51
+	call    	__lshrti3@FUNCTION, $200, $9, $10, $51
 	i32.const	$201=, 944
 	i32.add 	$201=, $279, $201
-	call    	__ashlti3, $201, $9, $10, $43
+	call    	__ashlti3@FUNCTION, $201, $9, $10, $43
 	i64.sub 	$48=, $44, $47
 	i32.const	$202=, 80
 	i32.add 	$202=, $279, $202
-	call    	__ashlti3, $202, $7, $8, $48
+	call    	__ashlti3@FUNCTION, $202, $7, $8, $48
 	i64.sub 	$push12=, $42, $48
 	i32.const	$203=, 96
 	i32.add 	$203=, $279, $203
-	call    	__lshrti3, $203, $5, $6, $pop12
+	call    	__lshrti3@FUNCTION, $203, $5, $6, $pop12
 	i64.sub 	$49=, $42, $47
 	i32.const	$204=, 112
 	i32.add 	$204=, $279, $204
-	call    	__ashlti3, $204, $5, $6, $49
+	call    	__ashlti3@FUNCTION, $204, $5, $6, $49
 	i32.const	$205=, 48
 	i32.add 	$205=, $279, $205
-	call    	__lshrti3, $205, $3, $4, $47
+	call    	__lshrti3@FUNCTION, $205, $3, $4, $47
 	i32.const	$206=, 176
 	i32.add 	$206=, $279, $206
-	call    	__lshrti3, $206, $7, $8, $45
+	call    	__lshrti3@FUNCTION, $206, $7, $8, $45
 	i32.const	$207=, 288
 	i32.add 	$207=, $279, $207
-	call    	__lshrti3, $207, $1, $2, $34
+	call    	__lshrti3@FUNCTION, $207, $1, $2, $34
 	i32.const	$208=, 272
 	i32.add 	$208=, $279, $208
-	call    	__ashlti3, $208, $3, $4, $35
+	call    	__ashlti3@FUNCTION, $208, $3, $4, $35
 	i32.const	$209=, 304
 	i32.add 	$209=, $279, $209
-	call    	__ashlti3, $209, $1, $2, $36
+	call    	__ashlti3@FUNCTION, $209, $1, $2, $36
 	i32.const	$210=, 128
 	i32.add 	$210=, $279, $210
-	call    	__lshrti3, $210, $5, $6, $45
+	call    	__lshrti3@FUNCTION, $210, $5, $6, $45
 	i64.sub 	$push13=, $38, $47
 	i32.const	$211=, 144
 	i32.add 	$211=, $279, $211
-	call    	__ashlti3, $211, $7, $8, $pop13
+	call    	__ashlti3@FUNCTION, $211, $7, $8, $pop13
 	i32.const	$212=, 160
 	i32.add 	$212=, $279, $212
-	call    	__lshrti3, $212, $7, $8, $51
+	call    	__lshrti3@FUNCTION, $212, $7, $8, $51
 	i32.const	$213=, 0
 	i32.add 	$213=, $279, $213
-	call    	__lshrti3, $213, $1, $2, $47
+	call    	__lshrti3@FUNCTION, $213, $1, $2, $47
 	i32.const	$214=, 16
 	i32.add 	$214=, $279, $214
-	call    	__ashlti3, $214, $3, $4, $49
+	call    	__ashlti3@FUNCTION, $214, $3, $4, $49
 	i32.const	$215=, 32
 	i32.add 	$215=, $279, $215
-	call    	__lshrti3, $215, $3, $4, $39
+	call    	__lshrti3@FUNCTION, $215, $3, $4, $39
 	i32.const	$216=, 64
 	i32.add 	$216=, $279, $216
-	call    	__ashlti3, $216, $5, $6, $48
+	call    	__ashlti3@FUNCTION, $216, $5, $6, $48
 	i32.const	$217=, 896
 	i32.add 	$217=, $279, $217
-	call    	__ashlti3, $217, $9, $10, $17
+	call    	__ashlti3@FUNCTION, $217, $9, $10, $17
 	i32.const	$218=, 256
 	i32.add 	$218=, $279, $218
-	call    	__ashlti3, $218, $1, $2, $35
+	call    	__ashlti3@FUNCTION, $218, $1, $2, $35
 	i32.const	$219=, 192
 	i32.add 	$219=, $279, $219
-	call    	__lshrti3, $219, $5, $6, $47
+	call    	__lshrti3@FUNCTION, $219, $5, $6, $47
 	i32.const	$220=, 208
 	i32.add 	$220=, $279, $220
-	call    	__ashlti3, $220, $7, $8, $49
+	call    	__ashlti3@FUNCTION, $220, $7, $8, $49
 	i32.const	$221=, 224
 	i32.add 	$221=, $279, $221
-	call    	__lshrti3, $221, $7, $8, $39
+	call    	__lshrti3@FUNCTION, $221, $7, $8, $39
 	i32.const	$222=, 768
 	i32.add 	$222=, $279, $222
-	call    	__lshrti3, $222, $9, $10, $45
+	call    	__lshrti3@FUNCTION, $222, $9, $10, $45
 	i64.sub 	$49=, $42, $45
 	i32.const	$223=, 784
 	i32.add 	$223=, $279, $223
-	call    	__ashlti3, $223, $11, $12, $49
+	call    	__ashlti3@FUNCTION, $223, $11, $12, $49
 	i32.const	$224=, 800
 	i32.add 	$224=, $279, $224
-	call    	__lshrti3, $224, $11, $12, $51
+	call    	__lshrti3@FUNCTION, $224, $11, $12, $51
 	i32.const	$225=, 992
 	i32.add 	$225=, $279, $225
-	call    	__ashlti3, $225, $13, $14, $17
+	call    	__ashlti3@FUNCTION, $225, $13, $14, $17
 	i32.const	$226=, 832
 	i32.add 	$226=, $279, $226
-	call    	__ashlti3, $226, $9, $10, $40
+	call    	__ashlti3@FUNCTION, $226, $9, $10, $40
 	i32.const	$227=, 384
 	i32.add 	$227=, $279, $227
-	call    	__lshrti3, $227, $1, $2, $37
+	call    	__lshrti3@FUNCTION, $227, $1, $2, $37
 	i64.sub 	$push14=, $42, $37
 	i32.const	$228=, 400
 	i32.add 	$228=, $279, $228
-	call    	__ashlti3, $228, $3, $4, $pop14
+	call    	__ashlti3@FUNCTION, $228, $3, $4, $pop14
 	i32.const	$229=, 416
 	i32.add 	$229=, $279, $229
-	call    	__lshrti3, $229, $3, $4, $34
+	call    	__lshrti3@FUNCTION, $229, $3, $4, $34
 	i32.const	$230=, 320
 	i32.add 	$230=, $279, $230
-	call    	__ashlti3, $230, $5, $6, $35
+	call    	__ashlti3@FUNCTION, $230, $5, $6, $35
 	i32.const	$231=, 448
 	i32.add 	$231=, $279, $231
-	call    	__ashlti3, $231, $1, $2, $33
+	call    	__ashlti3@FUNCTION, $231, $1, $2, $33
 	i32.const	$232=, 736
 	i32.add 	$232=, $279, $232
-	call    	__lshrti3, $232, $1, $2, $39
+	call    	__lshrti3@FUNCTION, $232, $1, $2, $39
 	i32.const	$233=, 720
 	i32.add 	$233=, $279, $233
-	call    	__ashlti3, $233, $3, $4, $40
+	call    	__ashlti3@FUNCTION, $233, $3, $4, $40
 	i32.const	$234=, 752
 	i32.add 	$234=, $279, $234
-	call    	__ashlti3, $234, $1, $2, $41
+	call    	__ashlti3@FUNCTION, $234, $1, $2, $41
 	i32.const	$235=, 592
 	i32.add 	$235=, $279, $235
-	call    	__ashlti3, $235, $7, $8, $17
+	call    	__ashlti3@FUNCTION, $235, $7, $8, $17
 	i32.const	$236=, 608
 	i32.add 	$236=, $279, $236
-	call    	__lshrti3, $236, $5, $6, $51
+	call    	__lshrti3@FUNCTION, $236, $5, $6, $51
 	i32.const	$237=, 624
 	i32.add 	$237=, $279, $237
-	call    	__ashlti3, $237, $5, $6, $43
+	call    	__ashlti3@FUNCTION, $237, $5, $6, $43
 	i32.const	$238=, 688
 	i32.add 	$238=, $279, $238
-	call    	__lshrti3, $238, $3, $4, $45
+	call    	__lshrti3@FUNCTION, $238, $3, $4, $45
 	i32.const	$239=, 640
 	i32.add 	$239=, $279, $239
-	call    	__lshrti3, $239, $1, $2, $45
+	call    	__lshrti3@FUNCTION, $239, $1, $2, $45
 	i32.const	$240=, 656
 	i32.add 	$240=, $279, $240
-	call    	__ashlti3, $240, $3, $4, $49
+	call    	__ashlti3@FUNCTION, $240, $3, $4, $49
 	i32.const	$241=, 672
 	i32.add 	$241=, $279, $241
-	call    	__lshrti3, $241, $3, $4, $51
+	call    	__lshrti3@FUNCTION, $241, $3, $4, $51
 	i32.const	$242=, 576
 	i32.add 	$242=, $279, $242
-	call    	__ashlti3, $242, $5, $6, $17
+	call    	__ashlti3@FUNCTION, $242, $5, $6, $17
 	i32.const	$243=, 704
 	i32.add 	$243=, $279, $243
-	call    	__ashlti3, $243, $1, $2, $40
+	call    	__ashlti3@FUNCTION, $243, $1, $2, $40
 	i32.const	$244=, 528
 	i32.add 	$244=, $279, $244
-	call    	__ashlti3, $244, $3, $4, $17
+	call    	__ashlti3@FUNCTION, $244, $3, $4, $17
 	i32.const	$245=, 544
 	i32.add 	$245=, $279, $245
-	call    	__lshrti3, $245, $1, $2, $51
+	call    	__lshrti3@FUNCTION, $245, $1, $2, $51
 	i32.const	$246=, 560
 	i32.add 	$246=, $279, $246
-	call    	__ashlti3, $246, $1, $2, $43
+	call    	__ashlti3@FUNCTION, $246, $1, $2, $43
 	i32.const	$247=, 512
 	i32.add 	$247=, $279, $247
-	call    	__ashlti3, $247, $1, $2, $17
+	call    	__ashlti3@FUNCTION, $247, $1, $2, $17
 	i32.const	$78=, 8
 	i32.const	$248=, 480
 	i32.add 	$248=, $279, $248

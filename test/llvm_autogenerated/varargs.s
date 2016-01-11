@@ -80,7 +80,7 @@ arg_i128:
 	.globl	caller_none
 	.type	caller_none,@function
 caller_none:
-	call    	callee
+	call    	callee@FUNCTION
 	return
 .Lfunc_end5:
 	.size	caller_none, .Lfunc_end5-caller_none

@@ -47,7 +47,7 @@ x:
 	.globl	y
 	.align	4
 y:
-	.zero	200
+	.skip	200
 	.size	y, 200
 
 

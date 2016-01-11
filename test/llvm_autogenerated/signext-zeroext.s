@@ -31,7 +31,7 @@ z2s_call:
 	.result 	i32
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $0, $pop0
-	i32.call	$push2=, z2s_func, $pop1
+	i32.call	$push2=, z2s_func@FUNCTION, $pop1
 	return  	$pop2
 .Lfunc_end2:
 	.size	z2s_call, .Lfunc_end2-z2s_call
@@ -45,7 +45,7 @@ s2z_call:
 	i32.const	$1=, 24
 	i32.shl 	$push0=, $0, $1
 	i32.shr_s	$push1=, $pop0, $1
-	i32.call	$push2=, s2z_func, $pop1
+	i32.call	$push2=, s2z_func@FUNCTION, $pop1
 	i32.shl 	$push3=, $pop2, $1
 	i32.shr_s	$push4=, $pop3, $1
 	return  	$pop4

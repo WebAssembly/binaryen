@@ -67,13 +67,34 @@ allocarray:
 .Lfunc_end2:
 	.size	allocarray, .Lfunc_end2-allocarray
 
+	.globl	allocarray_inbounds
+	.type	allocarray_inbounds,@function
+allocarray_inbounds:
+	.local  	i32, i32, i32, i32
+	i32.const	$0=, __stack_pointer
+	i32.load	$0=, 0($0)
+	i32.const	$1=, 32
+	i32.sub 	$3=, $0, $1
+	i32.const	$1=, __stack_pointer
+	i32.store	$3=, 0($1), $3
+	i32.const	$push0=, 1
+	i32.store	$push1=, 12($3), $pop0
+	i32.store	$discard=, 16($3), $pop1
+	i32.const	$2=, 32
+	i32.add 	$3=, $3, $2
+	i32.const	$2=, __stack_pointer
+	i32.store	$3=, 0($2), $3
+	return
+.Lfunc_end3:
+	.size	allocarray_inbounds, .Lfunc_end3-allocarray_inbounds
+
 	.globl	dynamic_alloca
 	.type	dynamic_alloca,@function
 dynamic_alloca:
 	.param  	i32
 	return
-.Lfunc_end3:
-	.size	dynamic_alloca, .Lfunc_end3-dynamic_alloca
+.Lfunc_end4:
+	.size	dynamic_alloca, .Lfunc_end4-dynamic_alloca
 
 
 	.section	".note.GNU-stack","",@progbits

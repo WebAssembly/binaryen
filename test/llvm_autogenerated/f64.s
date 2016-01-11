@@ -157,7 +157,7 @@ fmax64:
 fma64:
 	.param  	f64, f64, f64
 	.result 	f64
-	f64.call	$push0=, fma, $0, $1, $2
+	f64.call	$push0=, fma@FUNCTION, $0, $1, $2
 	return  	$pop0
 .Lfunc_end15:
 	.size	fma64, .Lfunc_end15-fma64

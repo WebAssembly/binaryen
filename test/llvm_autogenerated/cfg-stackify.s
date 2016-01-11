@@ -12,7 +12,7 @@ test0:
 	i32.add 	$1=, $1, $pop0
 	i32.ge_s	$push1=, $1, $0
 	br_if   	$pop1, .LBB0_3
-	call    	something
+	call    	something@FUNCTION
 	br      	.LBB0_1
 .LBB0_3:
 	return
@@ -31,7 +31,7 @@ test1:
 	i32.add 	$1=, $1, $pop0
 	i32.ge_s	$push1=, $1, $0
 	br_if   	$pop1, .LBB1_3
-	call    	something
+	call    	something@FUNCTION
 	br      	.LBB1_1
 .LBB1_3:
 	return
@@ -288,7 +288,7 @@ test3:
 	i32.ne  	$push1=, $0, $0
 	br_if   	$pop1, .LBB12_2
 .LBB12_3:
-	call    	bar
+	call    	bar@FUNCTION
 	br      	.LBB12_1
 .LBB12_4:
 	unreachable
@@ -463,7 +463,7 @@ test9:
 	loop    	.LBB18_5
 	i32.const	$push0=, 1
 	i32.store	$1=, 0($0), $pop0
-	i32.call	$push1=, a
+	i32.call	$push1=, a@FUNCTION
 	i32.and 	$push2=, $pop1, $1
 	i32.const	$push13=, 0
 	i32.eq  	$push14=, $pop2, $pop13
@@ -473,21 +473,21 @@ test9:
 	block   	.LBB18_4
 	i32.const	$push4=, 2
 	i32.store	$discard=, 0($0), $pop4
-	i32.call	$push5=, a
+	i32.call	$push5=, a@FUNCTION
 	i32.and 	$push6=, $pop5, $1
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $pop6, $pop15
 	br_if   	$pop16, .LBB18_4
 	i32.const	$push10=, 3
 	i32.store	$discard=, 0($0), $pop10
-	i32.call	$push11=, a
+	i32.call	$push11=, a@FUNCTION
 	i32.and 	$push12=, $pop11, $1
 	br_if   	$pop12, .LBB18_2
 	br      	.LBB18_1
 .LBB18_4:
 	i32.const	$push7=, 4
 	i32.store	$discard=, 0($0), $pop7
-	i32.call	$push8=, a
+	i32.call	$push8=, a@FUNCTION
 	i32.and 	$push9=, $pop8, $1
 	br_if   	$pop9, .LBB18_2
 	br      	.LBB18_1
