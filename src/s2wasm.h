@@ -159,27 +159,37 @@ private:
     return cashew::IString(str.c_str(), false);
   }
 
-  uint32_t getInt() {
-    uint32_t ret = 0;
+  int32_t getInt() {
+    const char* loc = s;
+    uint32_t value = 0;
     bool neg = false;
-    if (*s == '-') {
+    if (*loc == '-') {
       neg = true;
-      s++;
+      loc++;
     }
-    while (isdigit(*s)) {
-      uint32_t digit = *s - '0';
-      if (ret > std::numeric_limits<uint32_t>::max() / 10) {
-        abort_on("overflow");
+    while (isdigit(*loc)) {
+      uint32_t digit = *loc - '0';
+      if (value > std::numeric_limits<uint32_t>::max() / 10) {
+        abort_on("uint32_t overflow");
       }
-      ret *= 10;
-      if (ret > std::numeric_limits<uint32_t>::max() - digit) {
-        abort_on("overflow");
+      value *= 10;
+      if (value > std::numeric_limits<uint32_t>::max() - digit) {
+        abort_on("uint32_t overflow");
       }
-      ret += digit;
-      s++;
+      value += digit;
+      loc++;
     }
-    if (neg) ret = -ret;
-    return ret;
+    if (neg) {
+      uint32_t positive_int_min =
+          (uint32_t) - (1 + std::numeric_limits<int32_t>::min()) + (uint32_t)1;
+      if (value > positive_int_min) {
+        abort_on("negative int32_t overflow");
+      }
+      s = loc;
+      return -value;
+    }
+    s = loc;
+    return value;
   }
 
   // gets a constant, which may be a relocation for later.
@@ -204,27 +214,37 @@ private:
     }
   }
 
-  uint64_t getInt64() {
-    uint64_t ret = 0;
+  int64_t getInt64() {
+    const char* loc = s;
+    uint64_t value = 0;
     bool neg = false;
-    if (*s == '-') {
+    if (*loc == '-') {
       neg = true;
-      s++;
+      loc++;
     }
-    while (isdigit(*s)) {
-      uint64_t digit = *s - '0';
-      if (ret > std::numeric_limits<uint64_t>::max() / 10) {
-        abort_on("overflow");
+    while (isdigit(*loc)) {
+      uint64_t digit = *loc - '0';
+      if (value > std::numeric_limits<uint64_t>::max() / 10) {
+        abort_on("uint64_t overflow");
       }
-      ret *= 10;
-      if (ret > std::numeric_limits<uint64_t>::max() - digit) {
-        abort_on("overflow");
+      value *= 10;
+      if (value > std::numeric_limits<uint64_t>::max() - digit) {
+        abort_on("uint64_t overflow");
       }
-      ret += digit;
-      s++;
+      value += digit;
+      loc++;
     }
-    if (neg) ret = -ret;
-    return ret;
+    if (neg) {
+      uint64_t positive_int_min =
+          (uint64_t) - (1 + std::numeric_limits<int64_t>::min()) + (uint64_t)1;
+      if (value > positive_int_min) {
+        abort_on("negative int64_t overflow");
+      }
+      s = loc;
+      return -value;
+    }
+    s = loc;
+    return value;
   }
 
   Name getCommaSeparated() {
