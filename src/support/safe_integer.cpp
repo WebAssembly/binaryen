@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <cassert>
 #include <cmath>
 #include <limits>
 
@@ -33,12 +34,14 @@ bool wasm::isSInteger32(double x) {
 }
 
 uint32_t wasm::toUInteger32(double x) {
+  assert(isUInteger32(x));
   return x < std::numeric_limits<uint32_t>::max()
              ? x
              : std::numeric_limits<uint32_t>::max();
 }
 
 int32_t wasm::toSInteger32(double x) {
+  assert(isSInteger32(x));
   return x > std::numeric_limits<int32_t>::min() &&
                  x < std::numeric_limits<int32_t>::max()
              ? x
@@ -56,12 +59,14 @@ bool wasm::isSInteger64(double x) {
 }
 
 uint64_t wasm::toUInteger64(double x) {
+  assert(isUInteger64(x));
   return x < (double)std::numeric_limits<uint64_t>::max()
              ? (uint64_t)x
              : std::numeric_limits<uint64_t>::max();
 }
 
 int64_t wasm::toSInteger64(double x) {
+  assert(isSInteger64(x));
   return x > (double)std::numeric_limits<int64_t>::min() &&
                  x < (double)std::numeric_limits<int64_t>::max()
              ? (int64_t)x
