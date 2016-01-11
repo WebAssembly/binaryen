@@ -385,8 +385,9 @@ private:
       }
       if (ast[1] == MINUS && ast[2][0] == NUM) {
         double num = -ast[2][1]->getNumber();
-        assert(isSInteger32(num));
-        return Literal((int32_t)num);
+        if (isSInteger32(num)) return Literal((int32_t)num);
+        if (isUInteger32(num)) return Literal((uint32_t)num);
+        assert(false && "expected signed or unsigned int32");
       }
       if (ast[1] == PLUS && ast[2][0] == UNARY_PREFIX && ast[2][1] == MINUS && ast[2][2][0] == NUM) {
         return Literal((double)-ast[2][2][1]->getNumber());
