@@ -157,7 +157,7 @@ fmax32:
 fma32:
 	.param  	f32, f32, f32
 	.result 	f32
-	f32.call	$push0=, fmaf, $0, $1, $2
+	f32.call	$push0=, fmaf@FUNCTION, $0, $1, $2
 	return  	$pop0
 .Lfunc_end15:
 	.size	fma32, .Lfunc_end15-fma32

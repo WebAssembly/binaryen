@@ -16,22 +16,22 @@ bar32:
 	block   	.LBB0_2
 	tableswitch	$0, .LBB0_2, .LBB0_2, .LBB0_2, .LBB0_2, .LBB0_2, .LBB0_2, .LBB0_2, .LBB0_2, .LBB0_3, .LBB0_3, .LBB0_3, .LBB0_3, .LBB0_3, .LBB0_3, .LBB0_3, .LBB0_3, .LBB0_4, .LBB0_4, .LBB0_4, .LBB0_4, .LBB0_4, .LBB0_4, .LBB0_5, .LBB0_6, .LBB0_7
 .LBB0_2:
-	call    	foo0
+	call    	foo0@FUNCTION
 	br      	.LBB0_8
 .LBB0_3:
-	call    	foo1
+	call    	foo1@FUNCTION
 	br      	.LBB0_8
 .LBB0_4:
-	call    	foo2
+	call    	foo2@FUNCTION
 	br      	.LBB0_8
 .LBB0_5:
-	call    	foo3
+	call    	foo3@FUNCTION
 	br      	.LBB0_8
 .LBB0_6:
-	call    	foo4
+	call    	foo4@FUNCTION
 	br      	.LBB0_8
 .LBB0_7:
-	call    	foo5
+	call    	foo5@FUNCTION
 .LBB0_8:
 	return
 .Lfunc_end0:
@@ -54,22 +54,22 @@ bar64:
 	i32.wrap/i64	$push0=, $0
 	tableswitch	$pop0, .LBB1_2, .LBB1_2, .LBB1_2, .LBB1_2, .LBB1_2, .LBB1_2, .LBB1_2, .LBB1_2, .LBB1_3, .LBB1_3, .LBB1_3, .LBB1_3, .LBB1_3, .LBB1_3, .LBB1_3, .LBB1_3, .LBB1_4, .LBB1_4, .LBB1_4, .LBB1_4, .LBB1_4, .LBB1_4, .LBB1_5, .LBB1_6, .LBB1_7
 .LBB1_2:
-	call    	foo0
+	call    	foo0@FUNCTION
 	br      	.LBB1_8
 .LBB1_3:
-	call    	foo1
+	call    	foo1@FUNCTION
 	br      	.LBB1_8
 .LBB1_4:
-	call    	foo2
+	call    	foo2@FUNCTION
 	br      	.LBB1_8
 .LBB1_5:
-	call    	foo3
+	call    	foo3@FUNCTION
 	br      	.LBB1_8
 .LBB1_6:
-	call    	foo4
+	call    	foo4@FUNCTION
 	br      	.LBB1_8
 .LBB1_7:
-	call    	foo5
+	call    	foo5@FUNCTION
 .LBB1_8:
 	return
 .Lfunc_end1:

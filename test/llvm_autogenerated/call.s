@@ -4,7 +4,7 @@
 	.type	call_i32_nullary,@function
 call_i32_nullary:
 	.result 	i32
-	i32.call	$push0=, i32_nullary
+	i32.call	$push0=, i32_nullary@FUNCTION
 	return  	$pop0
 .Lfunc_end0:
 	.size	call_i32_nullary, .Lfunc_end0-call_i32_nullary
@@ -13,7 +13,7 @@ call_i32_nullary:
 	.type	call_i64_nullary,@function
 call_i64_nullary:
 	.result 	i64
-	i64.call	$push0=, i64_nullary
+	i64.call	$push0=, i64_nullary@FUNCTION
 	return  	$pop0
 .Lfunc_end1:
 	.size	call_i64_nullary, .Lfunc_end1-call_i64_nullary
@@ -22,7 +22,7 @@ call_i64_nullary:
 	.type	call_float_nullary,@function
 call_float_nullary:
 	.result 	f32
-	f32.call	$push0=, float_nullary
+	f32.call	$push0=, float_nullary@FUNCTION
 	return  	$pop0
 .Lfunc_end2:
 	.size	call_float_nullary, .Lfunc_end2-call_float_nullary
@@ -31,7 +31,7 @@ call_float_nullary:
 	.type	call_double_nullary,@function
 call_double_nullary:
 	.result 	f64
-	f64.call	$push0=, double_nullary
+	f64.call	$push0=, double_nullary@FUNCTION
 	return  	$pop0
 .Lfunc_end3:
 	.size	call_double_nullary, .Lfunc_end3-call_double_nullary
@@ -39,7 +39,7 @@ call_double_nullary:
 	.globl	call_void_nullary
 	.type	call_void_nullary,@function
 call_void_nullary:
-	call    	void_nullary
+	call    	void_nullary@FUNCTION
 	return
 .Lfunc_end4:
 	.size	call_void_nullary, .Lfunc_end4-call_void_nullary
@@ -49,7 +49,7 @@ call_void_nullary:
 call_i32_unary:
 	.param  	i32
 	.result 	i32
-	i32.call	$push0=, i32_unary, $0
+	i32.call	$push0=, i32_unary@FUNCTION, $0
 	return  	$pop0
 .Lfunc_end5:
 	.size	call_i32_unary, .Lfunc_end5-call_i32_unary
@@ -59,7 +59,7 @@ call_i32_unary:
 call_i32_binary:
 	.param  	i32, i32
 	.result 	i32
-	i32.call	$push0=, i32_binary, $0, $1
+	i32.call	$push0=, i32_binary@FUNCTION, $0, $1
 	return  	$pop0
 .Lfunc_end6:
 	.size	call_i32_binary, .Lfunc_end6-call_i32_binary
@@ -86,7 +86,7 @@ call_indirect_i32:
 	.globl	tail_call_void_nullary
 	.type	tail_call_void_nullary,@function
 tail_call_void_nullary:
-	call    	void_nullary
+	call    	void_nullary@FUNCTION
 	return
 .Lfunc_end9:
 	.size	tail_call_void_nullary, .Lfunc_end9-tail_call_void_nullary
@@ -94,7 +94,7 @@ tail_call_void_nullary:
 	.globl	fastcc_tail_call_void_nullary
 	.type	fastcc_tail_call_void_nullary,@function
 fastcc_tail_call_void_nullary:
-	call    	void_nullary
+	call    	void_nullary@FUNCTION
 	return
 .Lfunc_end10:
 	.size	fastcc_tail_call_void_nullary, .Lfunc_end10-fastcc_tail_call_void_nullary
@@ -102,7 +102,7 @@ fastcc_tail_call_void_nullary:
 	.globl	coldcc_tail_call_void_nullary
 	.type	coldcc_tail_call_void_nullary,@function
 coldcc_tail_call_void_nullary:
-	call    	void_nullary
+	call    	void_nullary@FUNCTION
 	return
 .Lfunc_end11:
 	.size	coldcc_tail_call_void_nullary, .Lfunc_end11-coldcc_tail_call_void_nullary

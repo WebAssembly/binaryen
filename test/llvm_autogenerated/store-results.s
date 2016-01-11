@@ -54,7 +54,7 @@ bar:
 	.globl	pos
 	.align	2
 pos:
-	.zero	12
+	.skip	12
 	.size	pos, 12
 
 

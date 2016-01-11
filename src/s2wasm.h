@@ -200,7 +200,7 @@ private:
       return false;
     } else {
       // a global constant, we need to fix it up later
-      Name name = getStrToSep();
+      Name name = cleanFunction(getStrToSep());
       int offset = 0;
       if (*s == '+') {
         s++;
@@ -314,6 +314,16 @@ private:
     if (match("f32")) return f32;
     if (match("f64")) return f64;
     abort_on("getType");
+  }
+
+  // The LLVM backend emits function names as name@FUNCTION. We can drop the @ and after it.
+  Name cleanFunction(Name name) {
+    if (!strchr(name.str, '@')) return name;
+    char *temp = strdup(name.str);
+    *strchr(temp, '@') = 0;
+    Name ret = cashew::IString(temp, false);
+    free(temp);
+    return ret;
   }
 
   // processors
@@ -577,7 +587,7 @@ private:
         curr = specific;
       } else {
         assign = getAssign();
-        Name target = getCommaSeparated();
+        Name target = cleanFunction(getCommaSeparated());
         if (implementedFunctions.count(target) > 0) {
           auto specific = allocator.alloc<Call>();
           specific->target = target;

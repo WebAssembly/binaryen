@@ -4,7 +4,7 @@
 	.type	f1,@function
 f1:
 	.result 	i32
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
