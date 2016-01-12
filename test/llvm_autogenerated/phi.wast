@@ -5,13 +5,13 @@
   (func $test0 (param $$0 i32) (result i32)
     (block $fake_return_waka123
       (block
-        (block $.LBB0_2
+        (block $label$0
           (br_if
             (i32.gt_s
               (get_local $$0)
               (i32.const -1)
             )
-            $.LBB0_2
+            $label$0
           )
           (set_local $$0
             (i32.div_s
@@ -46,7 +46,7 @@
         (set_local $$5
           (get_local $$3)
         )
-        (loop $.LBB1_2 $.LBB1_1
+        (loop $label$1 $label$0
           (block
             (set_local $$1
               (get_local $$4)
@@ -68,7 +68,7 @@
                 (get_local $$5)
                 (get_local $$0)
               )
-              $.LBB1_1
+              $label$0
             )
           )
         )

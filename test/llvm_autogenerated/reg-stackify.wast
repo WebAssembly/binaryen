@@ -79,7 +79,7 @@
         (set_local $$4
           (i32.const 1)
         )
-        (block $.LBB4_2
+        (block $label$0
           (br_if
             (i32.ne
               (i32.xor
@@ -106,7 +106,7 @@
               )
               (get_local $$4)
             )
-            $.LBB4_2
+            $label$0
           )
           (br $fake_return_waka123
             (i32.const 0)
@@ -127,20 +127,20 @@
             (get_local $$2)
           )
         )
-        (block $.LBB5_3
+        (block $label$0
           (br_if
             (i32.ge_u
               (get_local $$3)
               (get_local $$1)
             )
-            $.LBB5_3
+            $label$0
           )
           (br_if
             (i32.lt_u
               (get_local $$3)
               (get_local $$0)
             )
-            $.LBB5_3
+            $label$0
           )
           (i32.store align=4
             (get_local $$2)
