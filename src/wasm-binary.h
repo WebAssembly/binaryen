@@ -712,6 +712,7 @@ public:
         case f64: o << int8_t(BinaryConsts::F64##code); break; \
         default: abort(); \
       } \
+      break; \
     }
     #define INT_TYPED_CODE(code) { \
       switch (curr->left->type) { \
@@ -719,6 +720,7 @@ public:
         case i64: o << int8_t(BinaryConsts::I64##code); break; \
         default: abort(); \
       } \
+      break; \
     }
     #define FLOAT_TYPED_CODE(code) { \
       switch (curr->left->type) { \
@@ -726,6 +728,7 @@ public:
         case f64: o << int8_t(BinaryConsts::F64##code); break; \
         default: abort(); \
       } \
+      break; \
     }
 
     switch (curr->op) {
