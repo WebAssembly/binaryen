@@ -30,13 +30,40 @@
 namespace wasm {
 
 struct LEB128 {
-  int32_t value;
-  LEB128(int32_t value) : value(value) {}
+  uint32_t value;
+
+  LEB128(uint32_t value) : value(value) {}
+
+  void write(std::vector<uint8_t>* out) {
+    uint32_t temp = value;
+    do {
+      uint8_t byte = value & 127;
+      temp >>= 7;
+      if (temp) {
+        byte = byte | 128;
+      }
+      out.push_back(byte);
+    } while (temp);
+  }
+
+  void read(std::function<uint8_t ()> get) {
+    value = 0;
+    uint32_t shift = 0;
+    while (1) {
+      uint8_t byte = get();
+      value |= ((byte & 127) << shift);
+      if (byte & 128) break;
+      shift += 7;
+    }
+  }
 };
 
+//
 // We mostly stream into a buffer as we create the binary format, however,
-// sometimes we need to backtrack and write to a location behind us.
-class BufferWithRandomAccess : public std::vector<unsigned char> {
+// sometimes we need to backtrack and write to a location behind us - wasm
+// is optimized for reading, not writing.
+//
+class BufferWithRandomAccess : public std::vector<uint8_t> {
 public:
   BufferWithRandomAccess& operator<<(int8_t x) {
     push_back(x);
@@ -66,8 +93,7 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(LEB128 x) {
-    // XXX TODO
-    magic
+    x.write(this);
     return *this;
   }
 
@@ -285,6 +311,7 @@ public:
     writeDataSegments();
     writeFunctionTable();
     writeEnd();
+    finishUp();
   }
 
   writeMemory() {
@@ -367,10 +394,10 @@ public:
       }
       o << getFunctionTypeIndex(type);
       o << int8_t(FunctionEntry::Named |
-                (FunctionEntry::Import * !!import) |
-                (FunctionEntry::Locals * (function && function->locals.size() > 0) |
-                (FunctionEntry::Export) * (wasm.exportsMap[name].count(name) > 0)));
-      // TODO: name. how can we do an offset? into what section? and how do we know it now?
+                  (FunctionEntry::Import * !!import) |
+                  (FunctionEntry::Locals * (function && function->locals.size() > 0) |
+                  (FunctionEntry::Export) * (wasm.exportsMap[name].count(name) > 0)));
+      emitString(Name.str);
       if (function && function->locals.size() > 0) {
         mapLocals(function);
         o << uint16_t(numLocalsByType[i32])
@@ -416,6 +443,29 @@ public:
 
   writeEnd() {
     o << Section::End;
+  }
+
+  // helpers
+
+  std::vector<std::pair<const char* str, size_t>> stringsToWrite;
+
+  void emitString(const char* str) {
+    stringsToWrite.emplace_back(str, o.size());
+    o << uint32_t(0); // placeholder
+  }
+
+  void finishUp() {
+    // finish strings
+    for (auto& stringToWrite : stringsToWrite) {
+      const char* str = stringToWrite.first;
+      size_t pos = stringToWrite.second;
+      o.writeAt(pos, (uint32_t)o.size());
+      while (*str) {
+        o << *str;
+        str++;
+      }
+      o << '\0';
+    }
   }
 
   // AST writing via visitors
