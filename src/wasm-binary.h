@@ -21,8 +21,8 @@
 #ifndef wasm_wasm_binary_h
 #define wasm_wasm_binary_h
 
+#include <istream>
 #include <ostream>
-#include <sstream>
 
 #include "wasm.h"
 #include "shared-constants.h"
@@ -33,6 +33,7 @@ namespace wasm {
 struct LEB128 {
   uint32_t value;
 
+  LEB128() {}
   LEB128(uint32_t value) : value(value) {}
 
   void write(std::vector<uint8_t>* out) {
@@ -310,6 +311,11 @@ enum ASTNodes {
   Unreachable = 0x15
 };
 
+enum MemoryAccess {
+  Offset = 8,
+  Alignment = 128
+};
+
 } // namespace BinaryConsts
 
 char binaryWasmType(WasmType type) {
@@ -354,13 +360,13 @@ public:
   }
 
   void writeMemory() {
-    o << BinaryConsts::Memory << int8_t(log2(wasm->memory.initial)) <<
-                            int8_t(log2(wasm->memory.max)) <<
-                            int8_t(1); // export memory
+    o << int8_t(BinaryConsts::Memory) << int8_t(log2(wasm->memory.initial))
+                                      << int8_t(log2(wasm->memory.max))
+                                      << int8_t(1); // export memory
   }
 
   void writeSignatures() {
-    o << BinaryConsts::Signatures << LEB128(wasm->functionTypes.size());
+    o << int8_t(BinaryConsts::Signatures) << LEB128(wasm->functionTypes.size());
     for (auto type : wasm->functionTypes) {
       o << int8_t(type->params.size());
       o << binaryWasmType(type->result);
@@ -419,7 +425,7 @@ public:
 
   void writeFunctions() {
     size_t total = wasm->imports.size() + wasm->functions.size();
-    o << BinaryConsts::Functions << LEB128(total);
+    o << int8_t(BinaryConsts::Functions) << LEB128(total);
     for (size_t i = 0; i < total; i++) {
       Import* import = i < wasm->imports.size() ? wasm->imports[i] : nullptr;
       Function* function = i >= wasm->imports.size() ? wasm->functions[i - wasm->imports.size()] : nullptr;
@@ -453,7 +459,7 @@ public:
   }
 
   void writeDataSegments() {
-    o << BinaryConsts::DataSegments << LEB128(wasm->memory.segments.size());
+    o << int8_t(BinaryConsts::DataSegments) << LEB128(wasm->memory.segments.size());
     for (auto& segment : wasm->memory.segments) {
       o << int32_t(segment.offset);
       emitBuffer(segment.data, segment.size);
@@ -474,14 +480,14 @@ public:
   }
 
   void writeFunctionTable() {
-    o << BinaryConsts::FunctionTable << LEB128(wasm->table.names.size());
+    o << int8_t(BinaryConsts::FunctionTable) << LEB128(wasm->table.names.size());
     for (auto name : wasm->table.names) {
       o << getFunctionIndex(name);
     }
   }
 
   void writeEnd() {
-    o << BinaryConsts::End;
+    o << int8_t(BinaryConsts::End);
   }
 
   // helpers
@@ -581,6 +587,7 @@ public:
   }
   void visitCallIndirect(CallIndirect *curr) {
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionTypeIndex(curr->fullType->name));
+    visit(curr->target);
     for (auto operand : curr->operands) {
       visit(operand);
     }
@@ -594,8 +601,8 @@ public:
   }
 
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
-    o << int8_t( ((alignment == bytes || alignment == 0) ? 0 : 128) |
-                 (offset ? 8 : 0) );
+    o << int8_t( ((alignment == bytes || alignment == 0) ? 0 : BinaryConsts::Alignment) |
+                 (offset ? BinaryConsts::Offset : 0) );
     if (offset) o << LEB128(offset);
   }
 
@@ -777,6 +784,9 @@ public:
     }
     visit(curr->left);
     visit(curr->right);
+    #undef TYPED_CODE
+    #undef INT_TYPED_CODE
+    #undef FLOAT_TYPED_CODE
   }
   void visitSelect(Select *curr) {
     o << int8_t(BinaryConsts::Select);
@@ -806,19 +816,529 @@ public:
   }
 };
 
-/*
 class WasmBinaryBuilder {
   AllocatingModule& wasm;
   MixedArena& allocator;
-  istream& i;
+  std::vector<char>& input;
+
+  size_t pos;
+
 public:
-  WasmBinaryBuilder(AllocatingModule& wasm, istream& i) : wasm(wasm), allocator(wasm->allocator), i(i) {}
+  WasmBinaryBuilder(AllocatingModule& wasm, std::vector<char>& input) : wasm(wasm), allocator(wasm.allocator), input(input), pos(0) {}
 
   void read() {
-    abort(); // TODO
+    readMemory();
+    readSignatures();
+    readFunctions();
+    readDataSegments();
+    readFunctionTable();
+    readEnd();
+  }
+
+  int8_t getInt8() {
+    assert(pos < input.size());
+    return input[pos++];
+  }
+  int16_t getInt16() {
+    return int16_t(getInt8()) | (int16_t(getInt8()) << 8);
+  }
+  int32_t getInt32() {
+    return int32_t(getInt16()) | (int32_t(getInt16()) << 16);
+  }
+  int64_t getInt64() {
+    return int64_t(getInt32()) | (int64_t(getInt32()) << 32);
+  }
+  float getFloat32() {
+    return Literal(getInt32()).reinterpretf32();
+  }
+  double getFloat64() {
+    return Literal(getInt64()).reinterpretf64();
+  }
+
+  int32_t getLEB128() {
+    LEB128 ret;
+    ret.read([&]() {
+      return getInt8();
+    });
+    return ret.value;
+  }
+  WasmType getWasmType() {
+    int8_t type = getInt8();
+    switch (type) {
+      case 0: return none;
+      case 1: return i32;
+      case 2: return i64;
+      case 3: return f32;
+      case 4: return f64;
+      default: abort();
+    }
+  }
+
+  Name getString() {
+    size_t offset = getInt32();
+    return cashew::IString((&input[0]) + offset, false);
+  }
+
+  void verifyInt8(int8_t x) {
+    int8_t y = getInt8();
+    assert(x == y);
+  }
+  void verifyInt16(int16_t x) {
+    int16_t y = getInt16();
+    assert(x == y);
+  }
+  void verifyInt32(int32_t x) {
+    int32_t y = getInt32();
+    assert(x == y);
+  }
+  void verifyInt64(int64_t x) {
+    int64_t y = getInt64();
+    assert(x == y);
+  }
+  void verifyFloat32(float x) {
+    float y = getFloat32();
+    assert(x == y);
+  }
+  void verifyFloat64(double x) {
+    double y = getFloat64();
+    assert(x == y);
+  }
+
+  void readMemory() {
+    verifyInt8(BinaryConsts::Memory);
+    wasm.memory.initial = pow(2, getInt8());
+    wasm.memory.max = pow(2, getInt8());
+    verifyInt8(1); // export memory
+  }
+
+  void readSignatures() {
+    verifyInt8(BinaryConsts::Signatures);
+    size_t numTypes = getLEB128();
+    for (size_t i = 0; i < numTypes; i++) {
+      auto curr = allocator.alloc<FunctionType>();
+      size_t numParams = getInt8();
+      curr->result = getWasmType();
+      for (size_t j = 0; j < numParams; j++) {
+        curr->params.push_back(getWasmType());
+      }
+      wasm.addFunctionType(curr);
+    }
+  }
+
+  std::vector<Name> mappedFunctions; // index => name of the Import or Function
+  std::vector<Name> mappedLocals; // index => local name in compact form of [all int32s][all int64s]etc
+
+  std::vector<Name> breakStack;
+
+  size_t nextLabel;
+
+  Name getNextLabel() {
+    return cashew::IString(("label$" + std::to_string(nextLabel++)).c_str(), false);
+  }
+
+  void readFunctions() {
+    verifyInt8(BinaryConsts::Functions);
+    size_t total = getLEB128(); // imports and functions
+    for (size_t i = 0; i < total; i++) {
+      auto type = wasm.functionTypes[getInt16()];
+      auto data = getInt8();
+      bool named = data & BinaryConsts::Named;
+      assert(named);
+      bool import = data & BinaryConsts::Import;
+      bool locals = data & BinaryConsts::Locals;
+      bool export_ = data & BinaryConsts::Export;
+      Name name = getString();
+      mappedFunctions.push_back(name);
+      if (import) {
+        auto imp = allocator.alloc<Import>();
+        imp->name = name;
+        imp->type = type;
+        wasm.addImport(imp);
+      } else {
+        auto func = allocator.alloc<Function>();
+        func->name = name;
+        func->type = type->name;
+        auto addVar = [&]() {
+          Name name = cashew::IString(("var$" + std::to_string(mappedLocals.size())).c_str(), false);
+          mappedLocals.push_back(name);
+          return name;
+        };
+        for (size_t j = 0; j < type->params.size(); j++) {
+          func->params.emplace_back(addVar(), type->params[j]);
+        }
+        std::map<WasmType, size_t> numLocalsByType; // type => number of locals of that type in the compact form
+        if (locals) {
+          auto addLocals = [&](WasmType type) {
+            int16_t num = getInt16();
+            while (num > 0) {
+              func->locals.emplace_back(addVar(), type);
+              num--;
+            }
+          };
+          addLocals(i32);
+          addLocals(i64);
+          addLocals(f32);
+          addLocals(f64);
+        }
+        size_t pre = pos;
+        size_t size = getInt16();
+        {
+          nextLabel = 0;
+          assert(breakStack.empty());
+          readExpression(func->body);
+          assert(breakStack.empty());
+        }
+        assert(pos = pre + size);
+        wasm.addFunction(func);
+      }
+      if (export_) {
+        auto e = allocator.alloc<Export>();
+        e->name = name;
+        e->value = name;
+        wasm.addExport(e);
+      }
+    }
+  }
+
+  void readDataSegments() {
+    verifyInt8(BinaryConsts::DataSegments);
+    auto num = getLEB128();
+    for (auto i = 0; i < num; i++) {
+      auto curr = allocator.alloc<Memory::Segment>();
+      curr->offset = getInt32();
+      auto start = getInt32();
+      auto size = getInt32();
+      auto buffer = malloc(size);
+      memcpy(buffer, &input[start], size);
+      curr->data = (const char*)buffer;
+      curr->size = size;
+      verifyInt8(1); // load at program start
+    }
+  }
+
+  void readFunctionTable() {
+    verifyInt8(BinaryConsts::FunctionTable);
+    auto num = getLEB128();
+    for (auto i = 0; i < num; i++) {
+      wasm.table.names.push_back(mappedFunctions[getInt16()]);
+    }
+  }
+
+  void readEnd() {
+    verifyInt8(BinaryConsts::End);
+  }
+
+  // AST reading
+
+  void readExpression(Expression*& curr) {
+    uint8_t code = getInt8();
+    switch (code) {
+      case BinaryConsts::Block:        return visitBlock((curr = allocator.alloc<Block>())->cast<Block>());
+      case BinaryConsts::If:
+      case BinaryConsts::IfElse:       return visitIf((curr = allocator.alloc<If>())->cast<If>(), code); // code distinguishes if from if_else
+      case BinaryConsts::Loop:         return visitLoop((curr = allocator.alloc<Loop>())->cast<Loop>());
+      case BinaryConsts::Br:
+      case BinaryConsts::BrIf:         return visitBreak((curr = allocator.alloc<Break>())->cast<Break>(), code); // code distinguishes br from br_if
+      case BinaryConsts::TableSwitch:  return visitSwitch((curr = allocator.alloc<Switch>())->cast<Switch>());
+      case BinaryConsts::CallFunction: {
+        // might be an import or not. we have to check here.
+        Name target = mappedFunctions[getLEB128()];
+        if (wasm.importsMap.find(target) == wasm.importsMap.end()) {
+          return visitCall((curr = allocator.alloc<Call>())->cast<Call>(), target);
+        } else {
+          return visitCallImport((curr = allocator.alloc<CallImport>())->cast<CallImport>(), target);
+        }
+      }
+      case BinaryConsts::CallIndirect: return visitCallIndirect((curr = allocator.alloc<CallIndirect>())->cast<CallIndirect>());
+      case BinaryConsts::GetLocal:     return visitGetLocal((curr = allocator.alloc<GetLocal>())->cast<GetLocal>());
+      case BinaryConsts::SetLocal:     return visitSetLocal((curr = allocator.alloc<SetLocal>())->cast<SetLocal>());
+      case BinaryConsts::Select:       return visitSelect((curr = allocator.alloc<Select>())->cast<Select>());
+      case BinaryConsts::Nop:          return visitNop((curr = allocator.alloc<Nop>())->cast<Nop>());
+      case BinaryConsts::Unreachable:  return visitUnreachable((curr = allocator.alloc<Unreachable>())->cast<Unreachable>());
+    }
+    // otherwise, the code is a subcode TODO: optimize
+    maybeVisit<Binary>(curr, code);
+    maybeVisit<Unary>(curr, code);
+    maybeVisit<Load>(curr, code);
+    maybeVisit<Store>(curr, code);
+    maybeVisit<Host>(curr, code);
+    abort();
+  }
+
+  template<typename T>
+  bool maybeVisit(Expression*& curr, uint8_t code) {
+    T temp;
+    if (maybeVisitImpl(&temp, code)) {
+      auto actual = allocator.alloc<T>();
+      *actual = temp;
+      curr = actual;
+      return true;
+    }
+    return false;
+  }
+
+  void visitBlock(Block *curr) {
+    auto num = getInt8();
+    curr->name = getNextLabel();
+    breakStack.push_back(curr->name);
+    for (auto i = 0; i < num; i++) {
+      Expression* child;
+      readExpression(child);
+      curr->list.push_back(child);
+    }
+    breakStack.pop_back();
+  }
+  void visitIf(If *curr, uint8_t code) {
+    readExpression(curr->condition);
+    readExpression(curr->ifTrue);
+    if (code == BinaryConsts::IfElse) readExpression(curr->ifFalse);
+  }
+  void visitLoop(Loop *curr) {
+    verifyInt8(1); // size TODO: generalize
+    curr->out = getNextLabel();
+    curr->in = getNextLabel();
+    breakStack.push_back(curr->out);
+    breakStack.push_back(curr->in);
+    readExpression(curr->body);
+    breakStack.pop_back();
+    breakStack.pop_back();
+  }
+  void visitBreak(Break *curr, uint8_t code) {
+    auto offset = getInt8();
+    curr->name = breakStack[breakStack.size() - 1 - offset];
+    if (code == BinaryConsts::BrIf) readExpression(curr->condition);
+  }
+  void visitSwitch(Switch *curr) {
+    auto numCases = getInt16();
+    auto numTargets = getInt16();
+    std::map<size_t, Name> caseLabels;
+    auto getCaseLabel = [&](size_t index) {
+      if (caseLabels.find(index) == caseLabels.end()) {
+        caseLabels[index] = getNextLabel();
+      }
+      return caseLabels[index];
+    };
+    for (auto i = 0; i < numTargets; i++) {
+      curr->targets.push_back(getCaseLabel(getInt16()));
+    }
+    readExpression(curr->value);
+    for (auto i = 0; i < numCases; i++) {
+      Switch::Case c;
+      c.name = getCaseLabel(i);
+      readExpression(c.body);
+      curr->cases.push_back(c);
+    }
+  }
+  void visitCall(Call *curr, Name target) {
+    curr->target = target;
+    Name type = wasm.functionsMap[curr->target]->type;
+    auto num = wasm.functionTypesMap[type]->params.size();
+    for (size_t i = 0; i < num; i++) {
+      Expression* operand;
+      readExpression(operand);
+      curr->operands.push_back(operand);
+    }
+  }
+  void visitCallImport(CallImport *curr, Name target) {
+    curr->target = target;
+    Name type = wasm.functionsMap[curr->target]->type;
+    auto num = wasm.functionTypesMap[type]->params.size();
+    for (size_t i = 0; i < num; i++) {
+      Expression* operand;
+      readExpression(operand);
+      curr->operands.push_back(operand);
+    }
+  }
+  void visitCallIndirect(CallIndirect *curr) {
+    curr->fullType = wasm.functionTypes[getLEB128()];
+    readExpression(curr->target);
+    auto num = curr->fullType->params.size();
+    for (size_t i = 0; i < num; i++) {
+      Expression* operand;
+      readExpression(operand);
+      curr->operands.push_back(operand);
+    }
+  }
+  void visitGetLocal(GetLocal *curr) {
+    curr->name = mappedLocals[getLEB128()];
+  }
+  void visitSetLocal(SetLocal *curr) {
+    curr->name = mappedLocals[getLEB128()];
+    readExpression(curr->value);
+  }
+
+  void readMemoryAccess(uint32_t& alignment, size_t bytes, uint32_t& offset) {
+    auto value = getInt8();
+    alignment = value & BinaryConsts::Alignment ? 1 : bytes;
+    if (value & BinaryConsts::Offset) {
+      offset = getLEB128();
+    } else {
+      offset = 0;
+    }
+  }
+
+  bool maybeVisitImpl(Load *curr, uint8_t code) {
+    switch (code) {
+      case BinaryConsts::I32LoadMem8S:  curr->bytes = 1; curr->type = i32; curr->signed_ = true; break;
+      case BinaryConsts::I32LoadMem8U:  curr->bytes = 1; curr->type = i32; curr->signed_ = false; break;
+      case BinaryConsts::I32LoadMem16S: curr->bytes = 2; curr->type = i32; curr->signed_ = true; break;
+      case BinaryConsts::I32LoadMem16U: curr->bytes = 2; curr->type = i32; curr->signed_ = false; break;
+      case BinaryConsts::I32LoadMem:    curr->bytes = 4; curr->type = i32; break;
+      case BinaryConsts::I64LoadMem8S:  curr->bytes = 1; curr->type = i64; curr->signed_ = true; break;
+      case BinaryConsts::I64LoadMem8U:  curr->bytes = 1; curr->type = i64; curr->signed_ = false; break;
+      case BinaryConsts::I64LoadMem16S: curr->bytes = 2; curr->type = i64; curr->signed_ = true; break;
+      case BinaryConsts::I64LoadMem16U: curr->bytes = 2; curr->type = i64; curr->signed_ = false; break;
+      case BinaryConsts::I64LoadMem32S: curr->bytes = 4; curr->type = i64; curr->signed_ = true; break;
+      case BinaryConsts::I64LoadMem32U: curr->bytes = 4; curr->type = i64; curr->signed_ = false; break;
+      case BinaryConsts::I64LoadMem:    curr->bytes = 8; curr->type = i64; break;
+      case BinaryConsts::F32LoadMem:    curr->bytes = 4; curr->type = f32; break;
+      case BinaryConsts::F64LoadMem:    curr->bytes = 8; curr->type = f64; break;
+      default: return false;
+    }
+    readMemoryAccess(curr->align, curr->bytes, curr->offset);
+    readExpression(curr->ptr);
+    return true;
+  }
+  bool maybeVisitImpl(Store *curr, uint8_t code) {
+    switch (code) {
+      case BinaryConsts::I32StoreMem8:  curr->bytes = 1; curr->type = i32; break;
+      case BinaryConsts::I32StoreMem16: curr->bytes = 2; curr->type = i32; break;
+      case BinaryConsts::I32StoreMem:   curr->bytes = 4; curr->type = i32; break;
+      case BinaryConsts::I64StoreMem8:  curr->bytes = 1; curr->type = i64; break;
+      case BinaryConsts::I64StoreMem16: curr->bytes = 2; curr->type = i64; break;
+      case BinaryConsts::I64StoreMem32: curr->bytes = 4; curr->type = i64; break;
+      case BinaryConsts::I64StoreMem:   curr->bytes = 8; curr->type = i64; break;
+      case BinaryConsts::F32StoreMem:   curr->bytes = 4; curr->type = f32; break;
+      case BinaryConsts::F64StoreMem:   curr->bytes = 8; curr->type = f64; break;
+      default: return false;
+    }
+    readMemoryAccess(curr->align, curr->bytes, curr->offset);
+    readExpression(curr->ptr);
+    readExpression(curr->value);
+    return true;
+  }
+  bool maybeVisitImpl(Const *curr, uint8_t code) {
+    switch (code) {
+      case BinaryConsts::I8Const:  curr->value.i32 = getInt8();    curr->type = i32; break;
+      case BinaryConsts::I32Const: curr->value.i32 = getInt32();   curr->type = i32; break;
+      case BinaryConsts::I64Const: curr->value.i64 = getInt64();   curr->type = i64; break;
+      case BinaryConsts::F32Const: curr->value.f32 = getFloat32(); curr->type = f32; break;
+      case BinaryConsts::F64Const: curr->value.f64 = getFloat64(); curr->type = f64; break;
+      default: return false;
+    }
+    return true;
+  }
+  bool maybeVisitImpl(Unary *curr, uint8_t code) {
+    switch (code) {
+      case BinaryConsts::I32Clz:         curr->op = Clz;           curr->type = i32; break;
+      case BinaryConsts::I64Clz:         curr->op = Clz;           curr->type = i64; break;
+      case BinaryConsts::I32Ctz:         curr->op = Ctz;           curr->type = i32; break;
+      case BinaryConsts::I64Ctz:         curr->op = Ctz;           curr->type = i64; break;
+      case BinaryConsts::I32Popcnt:      curr->op = Popcnt;        curr->type = i32; break;
+      case BinaryConsts::I64Popcnt:      curr->op = Popcnt;        curr->type = i64; break;
+      case BinaryConsts::F32Neg:         curr->op = Neg;           curr->type = f32; break;
+      case BinaryConsts::F64Neg:         curr->op = Neg;           curr->type = f64; break;
+      case BinaryConsts::F32Abs:         curr->op = Abs;           curr->type = f32; break;
+      case BinaryConsts::F64Abs:         curr->op = Abs;           curr->type = f64; break;
+      case BinaryConsts::F32Ceil:        curr->op = Ceil;          curr->type = f32; break;
+      case BinaryConsts::F64Ceil:        curr->op = Ceil;          curr->type = f64; break;
+      case BinaryConsts::F32Floor:       curr->op = Floor;         curr->type = f32; break;
+      case BinaryConsts::F64Floor:       curr->op = Floor;         curr->type = f64; break;
+      case BinaryConsts::F32NearestInt:  curr->op = Nearest;       curr->type = f32; break;
+      case BinaryConsts::F64NearestInt:  curr->op = Nearest;       curr->type = f64; break;
+      case BinaryConsts::F32Sqrt:        curr->op = Sqrt;          curr->type = f32; break;
+      case BinaryConsts::F64Sqrt:        curr->op = Sqrt;          curr->type = f64; break;
+      case BinaryConsts::I32UConvertF32: curr->op = ConvertUInt32; curr->type = f32; break;
+      case BinaryConsts::I32UConvertF64: curr->op = ConvertUInt32; curr->type = f64; break;
+      case BinaryConsts::I32SConvertF32: curr->op = ConvertSInt32; curr->type = f32; break;
+      case BinaryConsts::I32SConvertF64: curr->op = ConvertSInt32; curr->type = f64; break;
+      case BinaryConsts::I64UConvertF32: curr->op = ConvertUInt64; curr->type = f32; break;
+      case BinaryConsts::I64UConvertF64: curr->op = ConvertUInt64; curr->type = f64; break;
+      case BinaryConsts::I64SConvertF32: curr->op = ConvertSInt64; curr->type = f32; break;
+      case BinaryConsts::I64SConvertF64: curr->op = ConvertSInt64; curr->type = f64; break;
+      default: return false;
+    }
+    readExpression(curr->value);
+    return true;
+  }
+  bool maybeVisitImpl(Binary *curr, uint8_t code) {
+    #define TYPED_CODE(code) { \
+      case BinaryConsts::I32##code: curr->op = code; curr->type = i32; break; \
+      case BinaryConsts::I64##code: curr->op = code; curr->type = i64; break; \
+      case BinaryConsts::F32##code: curr->op = code; curr->type = f32; break; \
+      case BinaryConsts::F64##code: curr->op = code; curr->type = f64; break; \
+    }
+    #define INT_TYPED_CODE(code) { \
+      case BinaryConsts::I32##code: curr->op = code; curr->type = i32; break; \
+      case BinaryConsts::I64##code: curr->op = code; curr->type = i64; break; \
+    }
+    #define FLOAT_TYPED_CODE(code) { \
+      case BinaryConsts::F32##code: curr->op = code; curr->type = f32; break; \
+      case BinaryConsts::F64##code: curr->op = code; curr->type = f64; break; \
+    }
+    switch (code) {
+      TYPED_CODE(Add);
+      TYPED_CODE(Sub);
+      TYPED_CODE(Mul);
+      INT_TYPED_CODE(DivS);
+      INT_TYPED_CODE(DivU);
+      INT_TYPED_CODE(RemS);
+      INT_TYPED_CODE(RemU);
+      INT_TYPED_CODE(And);
+      INT_TYPED_CODE(Or);
+      INT_TYPED_CODE(Xor);
+      INT_TYPED_CODE(Shl);
+      INT_TYPED_CODE(ShrU);
+      INT_TYPED_CODE(ShrS);
+      FLOAT_TYPED_CODE(Div);
+      FLOAT_TYPED_CODE(CopySign);
+      FLOAT_TYPED_CODE(Min);
+      FLOAT_TYPED_CODE(Max);
+      TYPED_CODE(Eq);
+      TYPED_CODE(Ne);
+      INT_TYPED_CODE(LtS);
+      INT_TYPED_CODE(LtU);
+      INT_TYPED_CODE(LeS);
+      INT_TYPED_CODE(LeU);
+      INT_TYPED_CODE(GtS);
+      INT_TYPED_CODE(GtU);
+      INT_TYPED_CODE(GeS);
+      INT_TYPED_CODE(GeU);
+      FLOAT_TYPED_CODE(Lt);
+      FLOAT_TYPED_CODE(Le);
+      FLOAT_TYPED_CODE(Gt);
+      FLOAT_TYPED_CODE(Ge);
+      default: return false;
+    }
+    readExpression(curr->left);
+    readExpression(curr->right);
+    return true;
+    #undef TYPED_CODE
+    #undef INT_TYPED_CODE
+    #undef FLOAT_TYPED_CODE
+  }
+  void visitSelect(Select *curr) {
+    readExpression(curr->ifTrue);
+    readExpression(curr->ifFalse);
+    readExpression(curr->condition);
+  }
+  bool maybeVisitImpl(Host *curr, uint8_t code) {
+    switch (code) {
+      case BinaryConsts::MemorySize: curr->op = MemorySize; break;
+      case BinaryConsts::GrowMemory: {
+        curr->op = GrowMemory;
+        readExpression(curr->operands[0]);
+        break;
+      }
+      default: return false;
+    }
+    return true;
+  }
+  void visitNop(Nop *curr) {
+  }
+  void visitUnreachable(Unreachable *curr) {
   }
 };
-*/
 
 } // namespace wasm
 
