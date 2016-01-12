@@ -543,14 +543,14 @@ public:
     breakStack.pop_back();
   }
   void visitBreak(Break *curr) {
-    o << int8_t(BinaryConsts::Br);
+    o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br);
     for (int i = breakStack.size() - 1; i >= 0; i--) {
       if (breakStack[i] == curr->name) {
         o << int8_t(breakStack.size() - 1 - i);
         return;
       }
     }
-    abort();
+    if (curr->condition) visit(curr->condition);
   }
   void visitSwitch(Switch *curr) {
     o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->cases.size())
