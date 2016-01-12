@@ -85,7 +85,9 @@ for asm in tests:
   if asm.endswith('.asm.js'):
     wasm = asm.replace('.asm.js', '.fromasm')
     print '..', asm, wasm
-    actual, err = subprocess.Popen([os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    cmd = [os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)]
+    print '    ', ' '.join(cmd)
+    actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err == '', 'bad err:' + err
 
     # verify output

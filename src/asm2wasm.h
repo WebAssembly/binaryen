@@ -33,8 +33,6 @@ namespace wasm {
 
 using namespace cashew;
 
-extern int debug; // wasm::debug is set in main(), typically from an env var
-
 // Utilities
 
 static void abort_on(std::string why, Ref element) {
@@ -151,6 +149,7 @@ class Asm2WasmBuilder {
   std::map<CallIndirect*, IString> callIndirects; // track these, as we need to fix them after we know the functionTableStarts. this maps call => its function table
 
   bool memoryGrowth;
+  int debug;
 
 public:
   std::map<IString, MappedGlobal> mappedGlobals;
@@ -267,10 +266,16 @@ private:
   }
 
 public:
-  Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth) : wasm(wasm), allocator(wasm.allocator), nextGlobal(8), maxGlobal(1000), memoryGrowth(memoryGrowth) {}
+ Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth, int debug)
+     : wasm(wasm),
+       allocator(wasm.allocator),
+       nextGlobal(8),
+       maxGlobal(1000),
+       memoryGrowth(memoryGrowth),
+       debug(debug) {}
 
-  void processAsm(Ref ast);
-  void optimize();
+ void processAsm(Ref ast);
+ void optimize();
 
 private:
   AsmType detectAsmType(Ref ast, AsmData *data) {

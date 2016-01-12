@@ -19,7 +19,7 @@
 using namespace wasm;
 
 Options::Options(const std::string &command, const std::string &description)
-    : debug(false), positional(Arguments::Zero) {
+    : debug(0), positional(Arguments::Zero) {
   add("--help", "-h", "Show this help message and exit", Arguments::Zero,
       [this, command, description](Options *o, const std::string &) {
         std::cerr << command;
@@ -39,8 +39,10 @@ Options::Options(const std::string &command, const std::string &description)
         std::cerr << '\n';
         exit(EXIT_SUCCESS);
       });
-  add("--debug", "-d", "Print debug information to stderr", Arguments::Zero,
-      [](Options *o, const std::string &) { o->debug = true; });
+  add("--debug", "-d", "Print debug information to stderr", Arguments::Optional,
+      [](Options *o, const std::string &arguments) {
+        o->debug = arguments.size() ? std::stoi(arguments) : 1;
+      });
 }
 
 Options::~Options() {}
@@ -79,6 +81,7 @@ void Options::parse(int argc, const char *argv[]) {
                     << "'\n";
           exit(EXIT_FAILURE);
         case Arguments::One:
+        case Arguments::Optional:
           if (positionalsSeen) {
             std::cerr << "Unexpected second positional argument '"
                       << currentOption << "' for " << positionalName << '\n';
@@ -88,6 +91,7 @@ void Options::parse(int argc, const char *argv[]) {
         case Arguments::N:
           positionalAction(this, currentOption);
           ++positionalsSeen;
+          break;
       }
       continue;
     }
@@ -110,8 +114,8 @@ void Options::parse(int argc, const char *argv[]) {
     switch (option->arguments) {
       case Arguments::Zero:
         if (argument.size()) {
-          std::cerr << "Unexpected argument '" << argument
-                    << "' for option '" << currentOption << "'\n";
+          std::cerr << "Unexpected argument '" << argument << "' for option '"
+                    << currentOption << "'\n";
           exit(EXIT_FAILURE);
         }
         break;
@@ -121,15 +125,22 @@ void Options::parse(int argc, const char *argv[]) {
                     << currentOption << "'\n";
           exit(EXIT_FAILURE);
         }
-        // Fallthrough.
+      // Fallthrough.
       case Arguments::N:
         if (!argument.size()) {
           if (i + 1 == e) {
-            std::cerr << "Couldn't find expected argument for '" << currentOption << "'\n";
+            std::cerr << "Couldn't find expected argument for '"
+                      << currentOption << "'\n";
             exit(EXIT_FAILURE);
           }
           argument = argv[++i];
         }
+        break;
+      case Arguments::Optional:
+        if (!argument.size()) {
+          if (i + 1 != e) argument = argv[++i];
+        }
+        break;
     }
     option->action(this, argument);
     ++option->seen;
