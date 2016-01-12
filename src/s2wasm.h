@@ -627,7 +627,7 @@ private:
           auto import = allocator.alloc<Import>();
           import->name = import->base = target;
           import->module = ENV;
-          import->type = sigToFunctionType(getSig(curr));
+          import->type = ensureFunctionType(getSig(curr), &wasm, allocator);
           wasm.addImport(import);
         }
       }
@@ -1120,7 +1120,7 @@ public:
             auto import = parent->allocator.alloc<Import>();
             import->name = import->base = curr->target;
             import->module = ENV;
-            import->type = sigToFunctionType(getSig(curr));
+            import->type = ensureFunctionType(getSig(curr), &parent->wasm, parent->allocator);
             parent->wasm.addImport(import);
           }
         }

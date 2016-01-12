@@ -28,6 +28,7 @@
 #include "mixed_arena.h"
 #include "shared-constants.h"
 #include "parsing.h"
+#include "asm_v_wasm.h"
 
 namespace wasm {
 
@@ -848,7 +849,7 @@ private:
     auto ret = allocator.alloc<CallImport>();
     ret->target = s[1]->str();
     Import* import = wasm.importsMap[ret->target];
-    ret->type = import->type.result;
+    ret->type = import->type->result;
     parseCallOperands(s, 2, ret);
     return ret;
   }
@@ -996,28 +997,30 @@ private:
     im->module = s[2]->str();
     if (!s[3]->isStr()) onError();
     im->base = s[3]->str();
+    FunctionType type;
     if (s.size() > 4) {
       Element& params = *s[4];
       IString id = params[0]->str();
       if (id == PARAM) {
         for (size_t i = 1; i < params.size(); i++) {
-          im->type.params.push_back(stringToWasmType(params[i]->str()));
+          type.params.push_back(stringToWasmType(params[i]->str()));
         }
       } else if (id == RESULT) {
-        im->type.result = stringToWasmType(params[1]->str());
+        type.result = stringToWasmType(params[1]->str());
       } else if (id == TYPE) {
         IString name = params[1]->str();
         assert(wasm.functionTypesMap.find(name) != wasm.functionTypesMap.end());
-        im->type = *wasm.functionTypesMap[name];
+        type = *wasm.functionTypesMap[name];
       } else {
         onError();
       }
       if (s.size() > 5) {
         Element& result = *s[5];
         assert(result[0]->str() == RESULT);
-        im->type.result = stringToWasmType(result[1]->str());
+        type.result = stringToWasmType(result[1]->str());
       }
     }
+    im->type = ensureFunctionType(getSig(&type), &wasm, allocator);
     wasm.addImport(im);
   }
 

@@ -190,7 +190,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
       if (wasmJSDebug) std::cout << "calling import returning " << ret << '\n';
 
-      switch (import->type.result) {
+      switch (import->type->result) {
         case none: return Literal(0);
         case i32: return Literal((int32_t)ret);
         case f32: return Literal((float)ret);

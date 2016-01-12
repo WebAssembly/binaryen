@@ -1,5 +1,6 @@
 (module
   (memory 0 4294967295)
+  (type $FUNCSIG$dddd (func (param f64 f64 f64) (result f64)))
   (import $fma "env" "fma" (param f64 f64 f64) (result f64))
   (export "fadd64" $fadd64)
   (export "fsub64" $fsub64)

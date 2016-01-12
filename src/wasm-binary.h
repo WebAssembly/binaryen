@@ -412,7 +412,7 @@ public:
       Name name, type;
       if (import) {
         name = import->name;
-        type = import->type.name;
+        type = import->type->name;
       } else {
         name = function->name;
         type = function->type;

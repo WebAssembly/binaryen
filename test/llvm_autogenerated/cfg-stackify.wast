@@ -1,5 +1,7 @@
 (module
   (memory 0 4294967295)
+  (type $FUNCSIG$v (func))
+  (type $FUNCSIG$i (func (result i32)))
   (import $something "env" "something")
   (import $bar "env" "bar")
   (import $a "env" "a" (result i32))

@@ -1,5 +1,8 @@
 (module
   (memory 1024 1024)
+  (type $FUNCSIG$v (func))
+  (type $FUNCSIG$i (func (result i32)))
+  (type $FUNCSIG$d (func (result f64)))
   (func $nada
     (nop)
     (i32.const 0)
