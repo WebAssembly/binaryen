@@ -69,7 +69,7 @@ main:                                   # @main
 # BB#5:                                 # %for.cond.4
 	return  	$0
 .LBB1_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

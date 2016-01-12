@@ -27,10 +27,10 @@ g2:                                     # @g2
 	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
-	call    	exit, $pop2
+	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	g2, .Lfunc_end1-g2
@@ -56,7 +56,7 @@ f:                                      # @f
 # BB#2:                                 # %if.end
 	return  	$1
 .LBB2_3:                                # %alabel
-	i32.call	$discard=, g2, $0
+	i32.call	$discard=, g2@FUNCTION, $0
 	unreachable
 .Lfunc_end2:
 	.size	f, .Lfunc_end2-f
@@ -74,7 +74,7 @@ main:                                   # @main
 	i32.load	$push1=, parsefile($pop0)
 	i32.const	$push2=, -559038737
 	i32.store	$push3=, 0($pop1), $pop2
-	i32.call	$discard=, g2, $pop3
+	i32.call	$discard=, g2@FUNCTION, $pop3
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

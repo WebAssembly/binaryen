@@ -99,7 +99,7 @@ main:                                   # @main
 	i64.store	$discard=, 0($18), $pop34
 	i32.const	$13=, 0
 	i32.add 	$13=, $18, $13
-	call    	foo, $13
+	call    	foo@FUNCTION, $13
 	i32.const	$14=, 0
 	i32.add 	$14=, $18, $14
 	i32.or  	$1=, $14, $8

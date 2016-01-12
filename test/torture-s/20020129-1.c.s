@@ -20,7 +20,7 @@ foo:                                    # @foo
 	i32.eq  	$push14=, $4, $pop13
 	br_if   	$pop14, .LBB0_5
 # BB#2:                                 # %if.then6
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.then
 	i32.const	$2=, 28
@@ -50,7 +50,7 @@ foo:                                    # @foo
 	i32.eq  	$push6=, $2, $4
 	br_if   	$pop6, .LBB0_9
 # BB#7:                                 # %if.then26
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_8:                                # %if.end22.thread
 	i32.const	$3=, 12
@@ -108,14 +108,14 @@ main:                                   # @main
 	i32.eq  	$push9=, $0, $pop8
 	br_if   	$pop9, .LBB1_5
 # BB#4:                                 # %if.then6.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_5:                                # %foo.exit
 	i32.store	$discard=, x+12($1), $2
 	i32.store	$discard=, x+16($1), $3
 	i32.store	$discard=, y+12($1), $4
 	i32.store	$push5=, y+16($1), $1
-	call    	exit, $pop5
+	call    	exit@FUNCTION, $pop5
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

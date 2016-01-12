@@ -16,7 +16,7 @@ foo:                                    # @foo
 	#NO_APP
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -32,7 +32,7 @@ main:                                   # @main
 	i32.const	$push2=, s+16
 	i32.const	$push0=, .Lmain.t
 	i32.const	$push1=, 16
-	call    	memcpy, $pop2, $pop0, $pop1
+	call    	memcpy@FUNCTION, $pop2, $pop0, $pop1
 	i32.const	$0=, 0
 	block   	.LBB1_3
 	i32.load	$push3=, i($0)
@@ -40,7 +40,7 @@ main:                                   # @main
 	br_if   	$pop4, .LBB1_3
 # BB#1:                                 # %for.body.preheader
 	i64.const	$push5=, -3161
-	call    	foo, $pop5
+	call    	foo@FUNCTION, $pop5
 	i32.load	$5=, i($0)
 	i32.const	$1=, 1
 	i32.add 	$push6=, $5, $1
@@ -67,7 +67,7 @@ main:                                   # @main
 	i64.const	$push17=, 14
 	i64.shl 	$push18=, $pop15, $pop17
 	i64.or  	$push21=, $pop20, $pop18
-	call    	foo, $pop21
+	call    	foo@FUNCTION, $pop21
 	i32.load	$5=, i($0)
 	i32.add 	$push22=, $5, $1
 	i32.store	$discard=, i($0), $pop22

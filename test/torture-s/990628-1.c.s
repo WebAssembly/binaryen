@@ -22,7 +22,7 @@ fetch:                                  # @fetch
 	i32.const	$push0=, data_tmp
 	i32.const	$push2=, 85
 	i32.const	$push1=, 404
-	call    	memset, $pop0, $pop2, $pop1
+	call    	memset@FUNCTION, $pop0, $pop2, $pop1
 	i32.const	$0=, 0
 	i32.load	$1=, fetch.fetch_count($0)
 	i32.const	$push3=, 1
@@ -44,14 +44,14 @@ load_data:                              # @load_data
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 404
-	i32.call	$7=, malloc, $1
+	i32.call	$7=, malloc@FUNCTION, $1
 	i32.const	$2=, 0
 	i32.store	$8=, data_ptr($2), $7
 	i32.const	$push1=, 170
-	call    	memset, $8, $pop1, $1
+	call    	memset@FUNCTION, $8, $pop1, $1
 	i32.const	$3=, data_tmp
 	i32.const	$4=, 85
-	call    	memset, $3, $4, $1
+	call    	memset@FUNCTION, $3, $4, $1
 	i32.load	$7=, fetch.fetch_count($2)
 	i32.const	$5=, 1
 	i32.add 	$push2=, $7, $5
@@ -67,8 +67,8 @@ load_data:                              # @load_data
 	loop    	.LBB2_2
 	copy_local	$0=, $7
 	i32.add 	$7=, $8, $1
-	call    	memcpy, $8, $3, $1
-	call    	memset, $3, $4, $1
+	call    	memcpy@FUNCTION, $8, $3, $1
+	call    	memset@FUNCTION, $3, $4, $1
 	copy_local	$8=, $7
 	i32.add 	$7=, $0, $5
 	i32.lt_s	$push5=, $7, $5
@@ -92,14 +92,14 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 404
-	i32.call	$8=, malloc, $2
+	i32.call	$8=, malloc@FUNCTION, $2
 	i32.const	$3=, 0
 	i32.store	$0=, data_ptr($3), $8
 	i32.const	$push0=, 170
-	call    	memset, $0, $pop0, $2
+	call    	memset@FUNCTION, $0, $pop0, $2
 	i32.const	$4=, data_tmp
 	i32.const	$5=, 85
-	call    	memset, $4, $5, $2
+	call    	memset@FUNCTION, $4, $5, $2
 	i32.load	$8=, fetch.fetch_count($3)
 	i32.const	$6=, 1
 	i32.add 	$push1=, $8, $6
@@ -116,8 +116,8 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB3_3
 	i32.add 	$1=, $9, $2
-	call    	memcpy, $9, $4, $2
-	call    	memset, $4, $5, $2
+	call    	memcpy@FUNCTION, $9, $4, $2
+	call    	memset@FUNCTION, $4, $5, $2
 	i32.add 	$8=, $8, $6
 	copy_local	$9=, $1
 	i32.lt_s	$push3=, $8, $6
@@ -133,10 +133,10 @@ main:                                   # @main
 	i32.ne  	$push7=, $pop5, $pop6
 	br_if   	$pop7, .LBB3_6
 # BB#5:                                 # %if.end
-	call    	exit, $3
+	call    	exit@FUNCTION, $3
 	unreachable
 .LBB3_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

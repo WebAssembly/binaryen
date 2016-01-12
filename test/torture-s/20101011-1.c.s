@@ -8,7 +8,7 @@ sigfpe:                                 # @sigfpe
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end0:
 	.size	sigfpe, .Lfunc_end0-sigfpe
@@ -21,9 +21,9 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push1=, 8
-	i32.const	$push0=, sigfpe
-	i32.call	$discard=, signal, $pop1, $pop0
-	call    	abort
+	i32.const	$push0=, sigfpe@FUNCTION
+	i32.call	$discard=, signal@FUNCTION, $pop1, $pop0
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -27,7 +27,7 @@ f:                                      # @f
 	i32.store	$9=, 0($7), $9
 	block   	.LBB1_2
 	i32.const	$push0=, 4
-	i32.call	$0=, malloc, $pop0
+	i32.call	$0=, malloc@FUNCTION, $pop0
 	i32.load16_u	$push1=, 0($0)
 	i32.const	$push2=, 4096
 	i32.lt_u	$push3=, $pop1, $pop2
@@ -42,7 +42,7 @@ f:                                      # @f
 	i32.store	$9=, 0($3), $9
 	i32.store	$discard=, 0($9), $1
 	i32.const	$push4=, .L.str
-	i32.call	$discard=, iprintf, $pop4
+	i32.call	$discard=, iprintf@FUNCTION, $pop4
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
 	i32.const	$5=, 4
@@ -76,7 +76,7 @@ main:                                   # @main
 	i32.store	$8=, 0($7), $8
 	block   	.LBB2_2
 	i32.const	$push0=, 4
-	i32.call	$0=, malloc, $pop0
+	i32.call	$0=, malloc@FUNCTION, $pop0
 	i32.load16_u	$push1=, 0($0)
 	i32.const	$push2=, 4096
 	i32.lt_u	$push3=, $pop1, $pop2
@@ -91,7 +91,7 @@ main:                                   # @main
 	i32.store	$8=, 0($3), $8
 	i32.store	$discard=, 0($8), $1
 	i32.const	$push4=, .L.str
-	i32.call	$discard=, iprintf, $pop4
+	i32.call	$discard=, iprintf@FUNCTION, $pop4
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
 	i32.const	$5=, 4
@@ -107,10 +107,10 @@ main:                                   # @main
 	br_if   	$pop8, .LBB2_4
 # BB#3:                                 # %if.end
 	i32.const	$push9=, 0
-	call    	exit, $pop9
+	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB2_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

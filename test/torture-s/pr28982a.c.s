@@ -326,7 +326,7 @@ main:                                   # @main
 	i32.ne  	$push41=, $3, $pop40
 	br_if   	$pop41, .LBB1_1
 .LBB1_2:                                # %for.end8
-	call    	foo, $1
+	call    	foo@FUNCTION, $1
 	i32.const	$3=, 0
 	f32.load	$push42=, results($3)
 	f32.const	$push43=, 0x0p0

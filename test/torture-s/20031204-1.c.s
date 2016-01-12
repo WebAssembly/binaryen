@@ -91,7 +91,7 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 	i32.store8	$discard=, 0($9), $pop19
 	copy_local	$9=, $2
 .LBB1_10:                               # %if.end41
-	i32.call	$discard=, strcpy, $0, $9
+	i32.call	$discard=, strcpy@FUNCTION, $0, $9
 	i32.const	$2=, 168496141
 .LBB1_11:                               # %if.end43
 	return  	$2
@@ -175,11 +175,11 @@ main:                                   # @main
 	copy_local	$8=, $1
 .LBB2_10:                               # %if.end
 	i32.const	$push20=, main.addr
-	i32.call	$discard=, strcpy, $pop20, $8
+	i32.call	$discard=, strcpy@FUNCTION, $pop20, $8
 	i32.const	$push21=, 0
 	return  	$pop21
 .LBB2_11:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

@@ -9,7 +9,7 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, .L.str
-	i32.call	$push1=, strcmp, $0, $pop0
+	i32.call	$push1=, strcmp@FUNCTION, $0, $pop0
 	return  	$pop1
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

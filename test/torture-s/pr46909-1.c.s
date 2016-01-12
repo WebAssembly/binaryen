@@ -39,7 +39,7 @@ main:                                   # @main
 	loop    	.LBB1_3
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $3, $pop0
-	i32.call	$0=, foo, $pop1
+	i32.call	$0=, foo@FUNCTION, $pop1
 	i32.const	$1=, 0
 	i32.const	$2=, 1
 	i32.eq  	$push2=, $3, $1
@@ -58,7 +58,7 @@ main:                                   # @main
 .LBB1_3:                                # %for.end
 	return  	$1
 .LBB1_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

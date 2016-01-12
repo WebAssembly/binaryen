@@ -72,7 +72,7 @@ main:                                   # @main
 	br_if   	$14, .LBB0_4
 .LBB0_5:                                # %for.end
                                         #   in Loop: Header=BB0_3 Depth=3
-	call    	memcpy, $1, $3, $5
+	call    	memcpy@FUNCTION, $1, $3, $5
 	i32.const	$14=, 0
 	copy_local	$16=, $7
 	block   	.LBB0_9
@@ -97,7 +97,7 @@ main:                                   # @main
 	br_if   	$pop13, .LBB0_6
 	br      	.LBB0_9
 .LBB0_8:                                # %if.then27
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_9:                                # %for.body36.preheader
                                         #   in Loop: Header=BB0_3 Depth=3
@@ -199,13 +199,13 @@ main:                                   # @main
 	br_if   	$pop56, .LBB0_1
 .LBB0_23:                               # %for.end74
 	i32.const	$push57=, 0
-	call    	exit, $pop57
+	call    	exit@FUNCTION, $pop57
 	unreachable
 .LBB0_24:                               # %if.then60
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_25:                               # %if.then46
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

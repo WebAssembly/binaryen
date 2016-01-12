@@ -14,7 +14,7 @@ bar:                                    # @bar
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -52,7 +52,7 @@ foo:                                    # @foo
 	i32.add 	$push14=, $7, $1
 	i32.shl 	$push15=, $pop14, $4
 	i32.add 	$push16=, $0, $pop15
-	call    	bar, $pop16
+	call    	bar@FUNCTION, $pop16
 	i32.mul 	$push18=, $1, $6
 	i32.add 	$push19=, $7, $pop18
 	i32.shl 	$push20=, $pop19, $4
@@ -73,7 +73,7 @@ main:                                   # @main
 	i32.const	$push0=, v
 	i32.const	$push2=, 24
 	i32.const	$push1=, 1
-	call    	foo, $pop0, $pop2, $pop1
+	call    	foo@FUNCTION, $pop0, $pop2, $pop1
 	i32.const	$push3=, 0
 	return  	$pop3
 .Lfunc_end2:

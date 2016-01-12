@@ -342,7 +342,7 @@ main:                                   # @main
 	i32.const	$push4=, -1
 	i32.const	$push3=, 3
 	i32.const	$push2=, 27
-	call    	facts, $pop5, $pop4, $pop3, $pop2
+	call    	facts@FUNCTION, $pop5, $pop4, $pop3, $pop2
 	i32.const	$0=, 0
 	i64.load	$1=, factab($0)
 	block   	.LBB3_4
@@ -362,10 +362,10 @@ main:                                   # @main
 	i32.ne  	$push13=, $pop1, $pop12
 	br_if   	$pop13, .LBB3_4
 # BB#3:                                 # %if.end
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB3_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

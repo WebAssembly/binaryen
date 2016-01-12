@@ -34,7 +34,7 @@ f1:                                     # @f1
 	br_if   	$pop8, .LBB0_1
 	br      	.LBB0_4
 .LBB0_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %for.end
 	return
@@ -49,7 +49,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %for.inc.i
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$discard=, level($0), $pop3
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -58,7 +58,7 @@ bar:                                    # @bar
 	i32.gt_s	$push2=, $0, $pop1
 	br_if   	$pop2, .LBB2_2
 # BB#1:                                 # %cond.false
-	i32.call	$1=, foo
+	i32.call	$1=, foo@FUNCTION
 .LBB2_2:                                # %cond.end
 	i32.sub 	$push3=, $1, $0
 	return  	$pop3

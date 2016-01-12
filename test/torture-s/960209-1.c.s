@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.const	$push1=, an_array+1
 	i32.store	$discard=, a_ptr($0), $pop1
 .LBB1_2:                                # %if.end
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

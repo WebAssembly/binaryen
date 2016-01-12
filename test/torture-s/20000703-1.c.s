@@ -35,10 +35,10 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
 	i32.const	$push0=, 28
-	call    	memset, $0, $3, $pop0
+	call    	memset@FUNCTION, $0, $3, $pop0
 	i32.const	$push1=, .L.str.1
 	i32.const	$push2=, 17
-	call    	memcpy, $0, $pop1, $pop2
+	call    	memcpy@FUNCTION, $0, $pop1, $pop2
 	i32.const	$push3=, 19
 	i32.add 	$push4=, $0, $pop3
 	i32.load8_u	$push5=, .L.str+2($3)
@@ -63,7 +63,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end8
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

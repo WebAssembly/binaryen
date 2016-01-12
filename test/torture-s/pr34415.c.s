@@ -81,7 +81,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, .L.str
-	i32.call	$push1=, foo, $pop0
+	i32.call	$push1=, foo@FUNCTION, $pop0
 	i32.const	$push2=, .L.str+2
 	i32.ne  	$push3=, $pop1, $pop2
 	return  	$pop3

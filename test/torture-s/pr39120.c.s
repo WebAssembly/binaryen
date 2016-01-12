@@ -44,9 +44,9 @@ main:                                   # @main
 	i32.store	$0=, 12($5), $pop0
 	i32.const	$4=, 12
 	i32.add 	$4=, $5, $4
-	i32.call	$push1=, foo, $4
+	i32.call	$push1=, foo@FUNCTION, $4
 	i32.store	$discard=, x($0), $pop1
-	call    	bar
+	call    	bar@FUNCTION
 	block   	.LBB2_2
 	i32.load	$push2=, 12($5)
 	i32.const	$push3=, 1
@@ -59,7 +59,7 @@ main:                                   # @main
 	i32.store	$5=, 0($3), $5
 	return  	$0
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

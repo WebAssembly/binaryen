@@ -18,10 +18,10 @@ main:                                   # @main
 	i32.le_s	$push5=, $pop4, $0
 	br_if   	$pop5, .LBB0_2
 # BB#1:                                 # %if.end
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

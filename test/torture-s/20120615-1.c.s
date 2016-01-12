@@ -22,7 +22,7 @@ test1:                                  # @test1
 # BB#2:                                 # %if.end6
 	return
 .LBB0_3:                                # %if.end5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -35,7 +35,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 15
-	call    	test1, $pop0
+	call    	test1@FUNCTION, $pop0
 	i32.const	$push1=, 0
 	return  	$pop1
 .Lfunc_end1:

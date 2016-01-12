@@ -22,7 +22,7 @@ dummy2:                                 # @dummy2
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	dummy2, .Lfunc_end1-dummy2
@@ -39,7 +39,7 @@ baz:                                    # @baz
 	i32.const	$1=, baz.v
 	i32.const	$push1=, 85
 	i32.const	$push0=, 44
-	call    	memset, $1, $pop1, $pop0
+	call    	memset@FUNCTION, $1, $pop1, $pop0
 	return  	$1
 .Lfunc_end2:
 	.size	baz, .Lfunc_end2-baz
@@ -77,7 +77,7 @@ check:                                  # @check
 	i32.const	$push11=, 1
 	return  	$pop11
 .LBB3_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	check, .Lfunc_end3-check
@@ -120,7 +120,7 @@ foo:                                    # @foo
 	i32.store	$discard=, baz.v+36($2), $2
 	i32.store	$discard=, baz.v+32($2), $2
 	i32.store	$discard=, baz.v+28($2), $2
-	i32.call	$discard=, dummy2, $2, $2
+	i32.call	$discard=, dummy2@FUNCTION, $2, $2
 	unreachable
 .LBB4_3:                                # %for.end
 	i32.store	$2=, 0($2), $3
@@ -151,7 +151,7 @@ main:                                   # @main
 	i32.store	$discard=, baz.v+36($0), $0
 	i32.store	$discard=, baz.v+32($0), $0
 	i32.store	$discard=, baz.v+28($0), $0
-	i32.call	$discard=, dummy2, $0, $0
+	i32.call	$discard=, dummy2@FUNCTION, $0, $0
 	unreachable
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main

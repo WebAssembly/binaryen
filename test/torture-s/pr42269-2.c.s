@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.load16_u	$push1=, s($pop0)
-	i64.call	$push2=, foo, $pop1
+	i64.call	$push2=, foo@FUNCTION, $pop1
 	i64.const	$push3=, -1
 	i64.ne  	$push4=, $pop2, $pop3
 	return  	$pop4

@@ -43,7 +43,7 @@ foo:                                    # @foo
 	i32.store	$4=, 0($1), $4
 	i32.const	$3=, 12
 	i32.add 	$3=, $4, $3
-	call    	bar, $3
+	call    	bar@FUNCTION, $3
 	i32.const	$push0=, 0
 	i64.load	$push1=, v($pop0)
 	i32.const	$2=, 16
@@ -62,17 +62,17 @@ main:                                   # @main
 	.result 	i32
 	.local  	i64, i32
 # BB#0:                                 # %entry
-	i64.call	$0=, foo
+	i64.call	$0=, foo@FUNCTION
 	i32.const	$1=, 0
 	block   	.LBB2_2
 	i64.load	$push0=, v($1)
 	i64.ne  	$push1=, $0, $pop0
 	br_if   	$pop1, .LBB2_2
 # BB#1:                                 # %if.end
-	call    	exit, $1
+	call    	exit@FUNCTION, $1
 	unreachable
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

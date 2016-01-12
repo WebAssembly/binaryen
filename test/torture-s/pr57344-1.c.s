@@ -16,7 +16,7 @@ foo:                                    # @foo
 	#NO_APP
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -38,7 +38,7 @@ main:                                   # @main
 	br_if   	$pop1, .LBB1_3
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push2=, -3161
-	call    	foo, $pop2
+	call    	foo@FUNCTION, $pop2
 	i32.load	$2=, i($0)
 	i32.const	$1=, 1
 	i32.add 	$push3=, $2, $1
@@ -64,7 +64,7 @@ main:                                   # @main
 	i64.const	$push18=, 18
 	i64.shr_u	$push19=, $pop17, $pop18
 	i32.wrap/i64	$push20=, $pop19
-	call    	foo, $pop20
+	call    	foo@FUNCTION, $pop20
 	i32.load	$2=, i($0)
 	i32.add 	$push21=, $2, $1
 	i32.store	$discard=, i($0), $pop21

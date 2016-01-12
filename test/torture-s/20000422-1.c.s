@@ -84,10 +84,10 @@ main:                                   # @main
 	br_if   	$pop19, .LBB0_8
 	br      	.LBB0_11
 .LBB0_10:                               # %if.then21
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_11:                               # %for.end25
-	call    	exit, $5
+	call    	exit@FUNCTION, $5
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

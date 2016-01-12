@@ -13,10 +13,10 @@ do_mknod:                               # @do_mknod
 	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
-	call    	exit, $pop2
+	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB0_2:                                # %if.else
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	do_mknod, .Lfunc_end0-do_mknod
@@ -93,10 +93,10 @@ sys_mknod:                              # @sys_mknod
 	br_if   	$pop8, .LBB2_2
 # BB#1:                                 # %if.then.i
 	i32.const	$push9=, 0
-	call    	exit, $pop9
+	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB2_2:                                # %if.else.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	sys_mknod, .Lfunc_end2-sys_mknod
@@ -111,7 +111,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, .L.str
 	i32.const	$push1=, 305419896
-	i32.call	$discard=, sys_mknod, $pop0, $0, $pop1
+	i32.call	$discard=, sys_mknod@FUNCTION, $pop0, $0, $pop1
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

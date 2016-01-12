@@ -141,7 +141,7 @@ main:                                   # @main
 	i32.const	$push36=, 0
 	return  	$pop36
 .LBB1_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

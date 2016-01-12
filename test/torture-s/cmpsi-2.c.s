@@ -295,37 +295,37 @@ main:                                   # @main
 	br_if   	$pop51, .LBB10_1
 .LBB10_14:                              # %for.end53
 	i32.const	$push52=, 0
-	call    	exit, $pop52
+	call    	exit@FUNCTION, $pop52
 	unreachable
 .LBB10_15:                              # %if.then49
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB10_16:                              # %if.then44
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB10_17:                              # %if.then39
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB10_18:                              # %if.then34
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB10_19:                              # %if.then29
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB10_20:                              # %if.then24
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB10_21:                              # %if.then19
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB10_22:                              # %if.then14
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB10_23:                              # %if.then9
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB10_24:                              # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end10:
 	.size	main, .Lfunc_end10-main

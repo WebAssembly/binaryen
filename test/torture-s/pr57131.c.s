@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.store	$10=, 0($9), $10
 	return  	$1
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

@@ -49,7 +49,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$0=, 0
 	i32.store	$push0=, a($0), $0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

@@ -9,13 +9,13 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	call    	foo, $0
+	call    	foo@FUNCTION, $0
 	i32.const	$push0=, 1
-	call    	foo, $pop0
+	call    	foo@FUNCTION, $pop0
 	i32.const	$push1=, 2
-	call    	foo, $pop1
+	call    	foo@FUNCTION, $pop1
 	i32.const	$push2=, 3
-	call    	foo, $pop2
+	call    	foo@FUNCTION, $pop2
 	return  	$0
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -32,7 +32,7 @@ foo:                                    # @foo
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

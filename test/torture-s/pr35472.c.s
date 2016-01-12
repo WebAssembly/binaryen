@@ -98,16 +98,16 @@ test:                                   # @test
 	i32.add 	$25=, $29, $25
 	i32.const	$26=, 0
 	i32.add 	$26=, $29, $26
-	call    	foo, $25, $26
+	call    	foo@FUNCTION, $25, $26
 	i32.const	$push17=, 0
 	i32.load	$0=, p($pop17)
 	i32.const	$2=, 64
 	i32.const	$27=, 64
 	i32.add 	$27=, $29, $27
-	call    	memcpy, $0, $27, $2
+	call    	memcpy@FUNCTION, $0, $27, $2
 	i32.const	$28=, 0
 	i32.add 	$28=, $29, $28
-	call    	memcpy, $0, $28, $2
+	call    	memcpy@FUNCTION, $0, $28, $2
 	block   	.LBB1_2
 	i32.load	$push18=, 0($29)
 	i32.const	$push19=, -1
@@ -120,7 +120,7 @@ test:                                   # @test
 	i32.store	$29=, 0($10), $29
 	return
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	test, .Lfunc_end1-test
@@ -209,16 +209,16 @@ main:                                   # @main
 	i32.add 	$25=, $29, $25
 	i32.const	$26=, 0
 	i32.add 	$26=, $29, $26
-	call    	foo, $25, $26
+	call    	foo@FUNCTION, $25, $26
 	i32.const	$3=, 0
 	i32.load	$0=, p($3)
 	i32.const	$2=, 64
 	i32.const	$27=, 64
 	i32.add 	$27=, $29, $27
-	call    	memcpy, $0, $27, $2
+	call    	memcpy@FUNCTION, $0, $27, $2
 	i32.const	$28=, 0
 	i32.add 	$28=, $29, $28
-	call    	memcpy, $0, $28, $2
+	call    	memcpy@FUNCTION, $0, $28, $2
 	block   	.LBB2_2
 	i32.load	$push17=, 0($29)
 	i32.const	$push18=, -1
@@ -231,7 +231,7 @@ main:                                   # @main
 	i32.store	$29=, 0($10), $29
 	return  	$3
 .LBB2_2:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

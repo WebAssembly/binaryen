@@ -67,7 +67,7 @@ bar:                                    # @bar
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
@@ -117,7 +117,7 @@ main:                                   # @main
 	br_if   	$pop22, .LBB2_1
 .LBB2_2:                                # %reset_palette.exit
 	i32.const	$push23=, 0
-	call    	exit, $pop23
+	call    	exit@FUNCTION, $pop23
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

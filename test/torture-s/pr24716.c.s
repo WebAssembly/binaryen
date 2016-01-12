@@ -232,7 +232,7 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_15:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

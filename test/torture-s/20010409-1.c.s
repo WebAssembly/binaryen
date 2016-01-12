@@ -29,10 +29,10 @@ bar:                                    # @bar
 	br_if   	$1, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
@@ -52,10 +52,10 @@ test:                                   # @test
 	i32.store	$discard=, c($2), $pop0
 	br_if   	$3, .LBB2_2
 # BB#1:                                 # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_2:                                # %if.end.i
-	call    	exit, $2
+	call    	exit@FUNCTION, $2
 	unreachable
 .Lfunc_end2:
 	.size	test, .Lfunc_end2-test
@@ -78,10 +78,10 @@ main:                                   # @main
 	i32.store	$discard=, c($0), $pop1
 	br_if   	$1, .LBB3_2
 # BB#1:                                 # %if.then.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_2:                                # %if.end.i.i
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

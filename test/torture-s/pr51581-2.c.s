@@ -457,8 +457,8 @@ main:                                   # @main
 	i32.store	$discard=, a+16380($10), $pop8
 	i32.const	$push9=, -1
 	i32.store	$discard=, b+16380($10), $pop9
-	call    	f1
-	call    	f2
+	call    	f1@FUNCTION
+	call    	f2@FUNCTION
 	copy_local	$8=, $10
 .LBB12_3:                               # %for.body4
                                         # =>This Inner Loop Header: Depth=1
@@ -491,8 +491,8 @@ main:                                   # @main
 	i32.le_s	$push22=, $8, $7
 	br_if   	$pop22, .LBB12_3
 .LBB12_6:                               # %for.end14
-	call    	f3
-	call    	f4
+	call    	f3@FUNCTION
+	call    	f4@FUNCTION
 	i32.const	$10=, 0
 	copy_local	$9=, $10
 .LBB12_7:                               # %for.body17
@@ -523,8 +523,8 @@ main:                                   # @main
 	i32.le_s	$push35=, $9, $7
 	br_if   	$pop35, .LBB12_7
 .LBB12_10:                              # %for.end31
-	call    	f5
-	call    	f6
+	call    	f5@FUNCTION
+	call    	f6@FUNCTION
 	i32.const	$10=, 0
 	copy_local	$11=, $10
 .LBB12_11:                              # %for.body34
@@ -555,8 +555,8 @@ main:                                   # @main
 	i32.le_s	$push48=, $11, $7
 	br_if   	$pop48, .LBB12_11
 .LBB12_14:                              # %for.end48
-	call    	f7
-	call    	f8
+	call    	f7@FUNCTION
+	call    	f8@FUNCTION
 	i32.const	$10=, 0
 	copy_local	$11=, $10
 .LBB12_15:                              # %for.body51
@@ -586,8 +586,8 @@ main:                                   # @main
 	i32.le_s	$push61=, $11, $7
 	br_if   	$pop61, .LBB12_15
 .LBB12_18:                              # %for.end65
-	call    	f9
-	call    	f10
+	call    	f9@FUNCTION
+	call    	f10@FUNCTION
 	i32.const	$10=, 0
 	copy_local	$5=, $10
 .LBB12_19:                              # %for.body68
@@ -617,8 +617,8 @@ main:                                   # @main
 	i32.le_s	$push74=, $5, $7
 	br_if   	$pop74, .LBB12_19
 .LBB12_22:                              # %for.end82
-	call    	f11
-	call    	f12
+	call    	f11@FUNCTION
+	call    	f12@FUNCTION
 	i32.const	$10=, 0
 	copy_local	$5=, $10
 .LBB12_23:                              # %for.body85
@@ -651,22 +651,22 @@ main:                                   # @main
 	i32.const	$push88=, 0
 	return  	$pop88
 .LBB12_27:                              # %if.then95
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_28:                              # %if.then78
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_29:                              # %if.then61
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_30:                              # %if.then44
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_31:                              # %if.then27
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_32:                              # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end12:
 	.size	main, .Lfunc_end12-main

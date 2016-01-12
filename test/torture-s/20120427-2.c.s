@@ -154,7 +154,7 @@ main:                                   # @main
 	i32.gt_u	$push19=, $pop18, $5
 	br_if   	$pop19, .LBB1_31
 .LBB1_18:                               # %if.then21
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_19:                               # %land.lhs.true8
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -166,7 +166,7 @@ main:                                   # @main
 	i32.eq  	$push28=, $pop27, $1
 	br_if   	$pop28, .LBB1_25
 .LBB1_21:                               # %if.then13
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_22:                               # %land.lhs.true
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -220,7 +220,7 @@ main:                                   # @main
 	i32.const	$push43=, 0
 	return  	$pop43
 .LBB1_33:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -108,7 +108,7 @@ foo_ldouble_t:                          # @foo_ldouble_t
 	i32.add 	$push1=, $1, $pop0
 	i32.const	$10=, 16
 	i32.add 	$10=, $12, $10
-	call    	__floatsitf, $10, $pop1
+	call    	__floatsitf@FUNCTION, $10, $pop1
 	i32.const	$2=, 8
 	i32.const	$11=, 16
 	i32.add 	$11=, $12, $11
@@ -119,7 +119,7 @@ foo_ldouble_t:                          # @foo_ldouble_t
 	i32.add 	$push4=, $1, $pop3
 	i32.const	$12=, 0
 	i32.add 	$12=, $12, $12
-	call    	__floatsitf, $12, $pop4
+	call    	__floatsitf@FUNCTION, $12, $pop4
 	i32.const	$13=, 0
 	i32.add 	$13=, $12, $13
 	i32.add 	$push5=, $13, $2

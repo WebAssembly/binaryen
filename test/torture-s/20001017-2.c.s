@@ -25,7 +25,7 @@ fn_4parms:                              # @fn_4parms
 # BB#3:                                 # %if.end
 	return
 .LBB0_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	fn_4parms, .Lfunc_end0-fn_4parms

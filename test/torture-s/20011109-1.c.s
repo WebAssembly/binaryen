@@ -6,7 +6,7 @@
 	.type	fail1,@function
 fail1:                                  # @fail1
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	fail1, .Lfunc_end0-fail1
@@ -17,7 +17,7 @@ fail1:                                  # @fail1
 	.type	fail2,@function
 fail2:                                  # @fail2
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	fail2, .Lfunc_end1-fail2
@@ -28,7 +28,7 @@ fail2:                                  # @fail2
 	.type	fail3,@function
 fail3:                                  # @fail3
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	fail3, .Lfunc_end2-fail3
@@ -39,7 +39,7 @@ fail3:                                  # @fail3
 	.type	fail4,@function
 fail4:                                  # @fail4
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	fail4, .Lfunc_end3-fail4
@@ -67,19 +67,19 @@ foo:                                    # @foo
 .LBB4_2:                                # %sw.epilog9
 	return
 .LBB4_3:                                # %sw.bb
-	call    	fail1
+	call    	fail1@FUNCTION
 	unreachable
 .LBB4_4:                                # %sw.bb1
-	call    	fail2
+	call    	fail2@FUNCTION
 	unreachable
 .LBB4_5:                                # %sw.bb7
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB4_6:                                # %sw.bb3
-	call    	fail3
+	call    	fail3@FUNCTION
 	unreachable
 .LBB4_7:                                # %sw.default
-	call    	fail4
+	call    	fail4@FUNCTION
 	unreachable
 .Lfunc_end4:
 	.size	foo, .Lfunc_end4-foo
@@ -92,7 +92,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main

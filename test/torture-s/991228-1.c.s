@@ -59,7 +59,7 @@ main:                                   # @main
 	i32.lt_s	$push5=, $pop4, $0
 	br_if   	$pop5, .LBB1_2
 # BB#1:                                 # %if.then
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_2:                                # %if.end
 	i64.const	$push6=, -4625196817309499392
@@ -72,10 +72,10 @@ main:                                   # @main
 	i32.lt_s	$push9=, $pop8, $0
 	br_if   	$pop9, .LBB1_4
 # BB#3:                                 # %if.then1
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %if.end2
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

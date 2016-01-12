@@ -7,7 +7,7 @@
 test:                                   # @test
 	.param  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.call	$2=, strncmp, $0, $1, $2
+	i32.call	$2=, strncmp@FUNCTION, $0, $1, $2
 	block   	.LBB0_3
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $3, $pop0
@@ -17,7 +17,7 @@ test:                                   # @test
 	i32.lt_s	$push3=, $2, $pop2
 	br_if   	$pop3, .LBB0_3
 # BB#2:                                 # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.else
 	block   	.LBB0_6
@@ -27,7 +27,7 @@ test:                                   # @test
 	i32.eq  	$push9=, $2, $pop8
 	br_if   	$pop9, .LBB0_6
 # BB#5:                                 # %if.then5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_6:                                # %if.else6
 	block   	.LBB0_9
@@ -39,7 +39,7 @@ test:                                   # @test
 	i32.gt_s	$push7=, $2, $pop6
 	br_if   	$pop7, .LBB0_9
 # BB#8:                                 # %if.then10
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_9:                                # %if.end12
 	return
@@ -218,11 +218,11 @@ main:                                   # @main
 	i32.store8	$11=, 0($6), $pop30
 	i32.const	$16=, 80
 	i32.store8	$12=, 0($9), $11
-	i32.call	$push31=, strncmp, $5, $7, $16
+	i32.call	$push31=, strncmp@FUNCTION, $5, $7, $16
 	br_if   	$pop31, .LBB1_52
 # BB#14:                                # %test.exit
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.call	$push32=, strncmp, $5, $7, $4
+	i32.call	$push32=, strncmp@FUNCTION, $5, $7, $4
 	br_if   	$pop32, .LBB1_51
 # BB#15:                                # %test.exit185
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -232,12 +232,12 @@ main:                                   # @main
 	i32.add 	$11=, $6, $10
 	i32.store8	$push34=, 0($11), $12
 	i32.store8	$12=, 0($9), $pop34
-	i32.call	$push35=, strncmp, $5, $7, $16
+	i32.call	$push35=, strncmp@FUNCTION, $5, $7, $16
 	i32.le_s	$push36=, $pop35, $12
 	br_if   	$pop36, .LBB1_50
 # BB#16:                                # %test.exit190
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.call	$push37=, strncmp, $5, $7, $4
+	i32.call	$push37=, strncmp@FUNCTION, $5, $7, $4
 	br_if   	$pop37, .LBB1_49
 # BB#17:                                # %test.exit196
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -245,12 +245,12 @@ main:                                   # @main
 	i32.store8	$13=, 0($6), $12
 	i32.add 	$12=, $9, $10
 	i32.store8	$discard=, 0($12), $13
-	i32.call	$push38=, strncmp, $5, $7, $16
+	i32.call	$push38=, strncmp@FUNCTION, $5, $7, $16
 	i32.ge_s	$push39=, $pop38, $13
 	br_if   	$pop39, .LBB1_48
 # BB#18:                                # %test.exit201
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.call	$push40=, strncmp, $5, $7, $4
+	i32.call	$push40=, strncmp@FUNCTION, $5, $7, $4
 	br_if   	$pop40, .LBB1_47
 # BB#19:                                # %test.exit207
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -260,12 +260,12 @@ main:                                   # @main
 	i32.const	$push42=, 99
 	i32.store8	$15=, 0($9), $pop42
 	i32.store8	$discard=, 0($12), $13
-	i32.call	$push43=, strncmp, $5, $7, $16
+	i32.call	$push43=, strncmp@FUNCTION, $5, $7, $16
 	i32.ge_s	$push44=, $pop43, $13
 	br_if   	$pop44, .LBB1_46
 # BB#20:                                # %test.exit213
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.call	$push45=, strncmp, $5, $7, $4
+	i32.call	$push45=, strncmp@FUNCTION, $5, $7, $4
 	br_if   	$pop45, .LBB1_45
 # BB#21:                                # %test.exit219
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -273,12 +273,12 @@ main:                                   # @main
 	i32.store8	$discard=, 0($9), $14
 	i32.store8	$push46=, 0($11), $13
 	i32.store8	$13=, 0($12), $pop46
-	i32.call	$push47=, strncmp, $5, $7, $16
+	i32.call	$push47=, strncmp@FUNCTION, $5, $7, $16
 	i32.le_s	$push48=, $pop47, $13
 	br_if   	$pop48, .LBB1_44
 # BB#22:                                # %test.exit225
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.call	$push49=, strncmp, $5, $7, $4
+	i32.call	$push49=, strncmp@FUNCTION, $5, $7, $4
 	br_if   	$pop49, .LBB1_43
 # BB#23:                                # %test.exit231
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -287,12 +287,12 @@ main:                                   # @main
 	i32.const	$push50=, 169
 	i32.store8	$15=, 0($9), $pop50
 	i32.store8	$discard=, 0($12), $13
-	i32.call	$push51=, strncmp, $5, $7, $16
+	i32.call	$push51=, strncmp@FUNCTION, $5, $7, $16
 	i32.ge_s	$push52=, $pop51, $13
 	br_if   	$pop52, .LBB1_42
 # BB#24:                                # %test.exit237
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.call	$push53=, strncmp, $5, $7, $4
+	i32.call	$push53=, strncmp@FUNCTION, $5, $7, $4
 	br_if   	$pop53, .LBB1_41
 # BB#25:                                # %test.exit243
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -300,12 +300,12 @@ main:                                   # @main
 	i32.store8	$14=, 0($6), $15
 	i32.store8	$push54=, 0($11), $13
 	i32.store8	$13=, 0($12), $pop54
-	i32.call	$push55=, strncmp, $5, $7, $16
+	i32.call	$push55=, strncmp@FUNCTION, $5, $7, $16
 	i32.le_s	$push56=, $pop55, $13
 	br_if   	$pop56, .LBB1_40
 # BB#26:                                # %test.exit249
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.call	$push57=, strncmp, $5, $7, $4
+	i32.call	$push57=, strncmp@FUNCTION, $5, $7, $4
 	br_if   	$pop57, .LBB1_39
 # BB#27:                                # %test.exit255
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -314,12 +314,12 @@ main:                                   # @main
 	i32.const	$push58=, 170
 	i32.store8	$15=, 0($9), $pop58
 	i32.store8	$discard=, 0($12), $13
-	i32.call	$push59=, strncmp, $5, $7, $16
+	i32.call	$push59=, strncmp@FUNCTION, $5, $7, $16
 	i32.ge_s	$push60=, $pop59, $13
 	br_if   	$pop60, .LBB1_38
 # BB#28:                                # %test.exit261
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.call	$push61=, strncmp, $5, $7, $4
+	i32.call	$push61=, strncmp@FUNCTION, $5, $7, $4
 	br_if   	$pop61, .LBB1_37
 # BB#29:                                # %test.exit267
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -327,12 +327,12 @@ main:                                   # @main
 	i32.store8	$discard=, 0($9), $14
 	i32.store8	$push62=, 0($11), $13
 	i32.store8	$9=, 0($12), $pop62
-	i32.call	$push63=, strncmp, $5, $7, $16
+	i32.call	$push63=, strncmp@FUNCTION, $5, $7, $16
 	i32.le_s	$push64=, $pop63, $9
 	br_if   	$pop64, .LBB1_36
 # BB#30:                                # %test.exit273
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.call	$push65=, strncmp, $5, $7, $4
+	i32.call	$push65=, strncmp@FUNCTION, $5, $7, $4
 	br_if   	$pop65, .LBB1_35
 # BB#31:                                # %for.cond4
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -354,61 +354,61 @@ main:                                   # @main
 	i32.lt_u	$push69=, $0, $16
 	br_if   	$pop69, .LBB1_1
 .LBB1_34:                               # %for.end84
-	call    	exit, $9
+	call    	exit@FUNCTION, $9
 	unreachable
 .LBB1_35:                               # %if.then5.i277
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_36:                               # %if.then10.i272
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_37:                               # %if.then5.i265
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_38:                               # %if.then.i258
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_39:                               # %if.then5.i253
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_40:                               # %if.then10.i248
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_41:                               # %if.then5.i241
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_42:                               # %if.then.i234
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_43:                               # %if.then5.i229
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_44:                               # %if.then10.i224
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_45:                               # %if.then5.i217
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_46:                               # %if.then.i210
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_47:                               # %if.then5.i205
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_48:                               # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_49:                               # %if.then5.i194
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_50:                               # %if.then10.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_51:                               # %if.then5.i183
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_52:                               # %if.then5.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -25,7 +25,7 @@ foo:                                    # @foo
 	i32.load	$0=, 0($1)
 	br      	.LBB0_7
 .LBB0_4:                                # %sw.epilog
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %sw.bb1
 	i32.load8_s	$0=, 0($1)
@@ -45,7 +45,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end16
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

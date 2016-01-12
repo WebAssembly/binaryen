@@ -7,8 +7,8 @@
 ix86_split_ashr:                        # @ix86_split_ashr
 	.param  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, ok
-	i32.const	$push0=, gen_x86_64_shrd
+	i32.const	$push1=, ok@FUNCTION
+	i32.const	$push0=, gen_x86_64_shrd@FUNCTION
 	i32.select	$push2=, $0, $pop1, $pop0
 	i32.const	$push3=, 0
 	i32.call_indirect	$discard=, $pop2, $pop3
@@ -24,7 +24,7 @@ ok:                                     # @ok
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end1:
 	.size	ok, .Lfunc_end1-ok
@@ -50,8 +50,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load	$push0=, one($0)
-	i32.const	$push2=, ok
-	i32.const	$push1=, gen_x86_64_shrd
+	i32.const	$push2=, ok@FUNCTION
+	i32.const	$push1=, gen_x86_64_shrd@FUNCTION
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	i32.call_indirect	$discard=, $pop3, $0
 	i32.const	$push4=, 1

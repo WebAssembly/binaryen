@@ -18,7 +18,7 @@ main:                                   # @main
 	i64.store	$discard=, bfd_make_section_anyway.foo_section+8($0), $pop1
 	i64.const	$push5=, 0
 	i64.store	$discard=, bfd_make_section_anyway.foo_section+24($0), $pop5
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

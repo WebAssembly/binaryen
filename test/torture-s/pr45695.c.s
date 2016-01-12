@@ -22,7 +22,7 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.add 	$push0=, $2, $1
-	call    	g, $pop0
+	call    	g@FUNCTION, $pop0
 	i32.eq  	$push1=, $2, $0
 	i32.const	$push2=, -1
 	i32.select	$push3=, $pop1, $1, $pop2
@@ -47,22 +47,22 @@ main:                                   # @main
 	i32.const	$4=, 1
 	i32.add 	$0=, $2, $4
 	block   	.LBB2_4
-	i32.call	$push1=, f, $2, $0, $1
+	i32.call	$push1=, f@FUNCTION, $2, $0, $1
 	i32.const	$push2=, -1
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	$pop3, .LBB2_4
 # BB#1:                                 # %if.end
 	block   	.LBB2_3
-	i32.call	$push4=, f, $1, $0, $1
+	i32.call	$push4=, f@FUNCTION, $1, $0, $1
 	i32.ne  	$push5=, $pop4, $4
 	br_if   	$pop5, .LBB2_3
 # BB#2:                                 # %if.end9
 	return  	$3
 .LBB2_3:                                # %if.then8
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

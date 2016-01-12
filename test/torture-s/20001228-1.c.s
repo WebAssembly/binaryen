@@ -59,10 +59,10 @@ main:                                   # @main
 	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
-	call    	exit, $pop4
+	call    	exit@FUNCTION, $pop4
 	unreachable
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

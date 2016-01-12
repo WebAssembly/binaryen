@@ -59,9 +59,9 @@ main:                                   # @main
 	i32.const	$5=, 131072
 	i32.const	$push1=, 32768
 	i32.store	$discard=, n($4), $pop1
-	i32.call	$push0=, malloc, $5
+	i32.call	$push0=, malloc@FUNCTION, $5
 	i32.store	$1=, a($4), $pop0
-	i32.call	$2=, malloc, $5
+	i32.call	$2=, malloc@FUNCTION, $5
 	i32.store	$5=, 0($2), $4
 	i32.load	$0=, n($5)
 	i32.const	$3=, 4
@@ -97,10 +97,10 @@ main:                                   # @main
 	br_if   	$pop11, .LBB1_6
 # BB#5:                                 # %if.end
 	i32.const	$push12=, 0
-	call    	exit, $pop12
+	call    	exit@FUNCTION, $pop12
 	unreachable
 .LBB1_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

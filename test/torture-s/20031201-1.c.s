@@ -14,12 +14,12 @@ f1:                                     # @f1
 	i32.const	$push0=, 32
 	i32.store	$push1=, 0($0), $pop0
 	i32.store	$discard=, 4($0), $pop1
-	call    	f0
+	call    	f0@FUNCTION
 	i32.load	$1=, i($1)
 	i32.const	$push2=, 8
 	i32.store	$push3=, 0($1), $pop2
 	i32.store	$discard=, 4($1), $pop3
-	call    	test
+	call    	test@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
@@ -51,7 +51,7 @@ f0:                                     # @f0
 # BB#3:                                 # %if.end
 	return
 .LBB1_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	f0, .Lfunc_end1-f0
@@ -75,10 +75,10 @@ test:                                   # @test
 	i32.ne  	$push3=, $pop2, $2
 	br_if   	$pop3, .LBB2_3
 # BB#2:                                 # %if.end
-	call    	exit, $1
+	call    	exit@FUNCTION, $1
 	unreachable
 .LBB2_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	test, .Lfunc_end2-test
@@ -99,7 +99,7 @@ main:                                   # @main
 	i32.store	$3=, 0($1), $3
 	i32.const	$2=, 8
 	i32.add 	$2=, $3, $2
-	i32.call	$discard=, f1, $2
+	i32.call	$discard=, f1@FUNCTION, $2
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

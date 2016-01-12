@@ -9,9 +9,9 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.call	$2=, malloc, $1
+	i32.call	$2=, malloc@FUNCTION, $1
 	i32.load	$push0=, 8($0)
-	call    	memcpy, $2, $0, $pop0
+	call    	memcpy@FUNCTION, $2, $0, $pop0
 	i32.store	$discard=, 0($2), $0
 	i32.const	$push1=, 0
 	i32.store	$discard=, 4($2), $pop1
@@ -28,7 +28,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

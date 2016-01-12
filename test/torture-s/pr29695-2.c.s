@@ -172,16 +172,16 @@ main:                                   # @main
 # BB#4:                                 # %if.end28
 	return  	$0
 .LBB8_5:                                # %if.then19
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB8_6:                                # %if.then15
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB8_7:                                # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB8_8:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end8:
 	.size	main, .Lfunc_end8-main

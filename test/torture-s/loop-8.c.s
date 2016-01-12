@@ -17,7 +17,7 @@ bar:                                    # @bar
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -49,7 +49,7 @@ main:                                   # @main
 	f64.gt  	$push4=, $2, $1
 	br_if   	$pop4, .LBB1_4
 # BB#3:                                 # %for.cond.2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %e
 	block   	.LBB1_6
@@ -57,10 +57,10 @@ main:                                   # @main
 	f64.eq  	$push6=, $2, $pop5
 	br_if   	$pop6, .LBB1_6
 # BB#5:                                 # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_6:                                # %bar.exit4
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

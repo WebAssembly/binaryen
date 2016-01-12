@@ -8,7 +8,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -41,7 +41,7 @@ h2:                                     # @h2
 	i32.const	$push2=, 0
 	return  	$pop2
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	h2, .Lfunc_end2-h2

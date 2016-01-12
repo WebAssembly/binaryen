@@ -25,13 +25,13 @@ test01:                                 # @test01
 # BB#3:                                 # %if.end6
 	return
 .LBB0_4:                                # %if.then5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %if.then2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	test01, .Lfunc_end0-test01
@@ -57,7 +57,7 @@ test02:                                 # @test02
 	i32.gt_u	$push6=, $pop0, $pop5
 	br_if   	$pop6, .LBB1_4
 # BB#3:                                 # %if.then4
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %if.end6
 	return
@@ -73,7 +73,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

@@ -33,7 +33,7 @@ main:                                   # @main
 # BB#2:                                 # %lor.lhs.false1
 	return  	$0
 .LBB1_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

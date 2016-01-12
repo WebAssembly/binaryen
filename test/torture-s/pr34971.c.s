@@ -23,7 +23,7 @@ test1:                                  # @test1
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -43,7 +43,7 @@ main:                                   # @main
 	i64.const	$push3=, 4294967297
 	i64.or  	$push4=, $pop2, $pop3
 	i64.store	$discard=, x($0), $pop4
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

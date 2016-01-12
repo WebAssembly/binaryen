@@ -24,7 +24,7 @@ f:                                      # @f
 	i32.shr_u	$1=, $pop6, $pop7
 	br      	.LBB0_5
 .LBB0_3:                                # %sw.default
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %sw.bb3
 	i32.load8_u	$push4=, 3($0)
@@ -43,7 +43,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

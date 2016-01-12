@@ -50,10 +50,10 @@ main:                                   # @main
 	br_if   	$pop9, .LBB1_1
 .LBB1_3:                                # %for.end
 	i32.const	$push10=, 0
-	call    	exit, $pop10
+	call    	exit@FUNCTION, $pop10
 	unreachable
 .LBB1_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

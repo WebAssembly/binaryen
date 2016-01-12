@@ -32,7 +32,7 @@ new_unit:                               # @new_unit
 # BB#5:                                 # %sw.epilog
 	return
 .LBB0_6:                                # %sw.default
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	new_unit, .Lfunc_end0-new_unit

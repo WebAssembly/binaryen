@@ -63,7 +63,7 @@ main:                                   # @main
 	i32.const	$3=, 4
 	i32.add 	$3=, $4, $3
 	block   	.LBB1_4
-	call    	f, $3, $pop0, $0, $pop1
+	call    	f@FUNCTION, $3, $pop0, $0, $pop1
 	i32.load	$push2=, 4($4)
 	i32.const	$push3=, 3
 	i32.ne  	$push4=, $pop2, $pop3
@@ -79,10 +79,10 @@ main:                                   # @main
 	i32.ne  	$push10=, $pop8, $pop9
 	br_if   	$pop10, .LBB1_4
 # BB#3:                                 # %if.end
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

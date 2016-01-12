@@ -16,7 +16,7 @@ f3:                                     # @f3
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	f3, .Lfunc_end0-f3
@@ -37,7 +37,7 @@ f4:                                     # @f4
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	f4, .Lfunc_end1-f4
@@ -58,7 +58,7 @@ f5:                                     # @f5
 # BB#1:                                 # %if.end
 	return
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	f5, .Lfunc_end2-f5
@@ -79,7 +79,7 @@ f6:                                     # @f6
 # BB#1:                                 # %if.end
 	return
 .LBB3_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	f6, .Lfunc_end3-f6
@@ -100,7 +100,7 @@ f7:                                     # @f7
 # BB#1:                                 # %if.end
 	return
 .LBB4_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end4:
 	.size	f7, .Lfunc_end4-f7
@@ -121,7 +121,7 @@ f8:                                     # @f8
 # BB#1:                                 # %if.end
 	return
 .LBB5_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end5:
 	.size	f8, .Lfunc_end5-f8
@@ -142,7 +142,7 @@ f9:                                     # @f9
 # BB#1:                                 # %if.end
 	return
 .LBB6_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end6:
 	.size	f9, .Lfunc_end6-f9
@@ -163,7 +163,7 @@ f10:                                    # @f10
 # BB#1:                                 # %if.end
 	return
 .LBB7_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end7:
 	.size	f10, .Lfunc_end7-f10
@@ -184,7 +184,7 @@ f11:                                    # @f11
 # BB#1:                                 # %if.end
 	return
 .LBB8_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end8:
 	.size	f11, .Lfunc_end8-f11
@@ -205,7 +205,7 @@ f12:                                    # @f12
 # BB#1:                                 # %if.end
 	return
 .LBB9_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end9:
 	.size	f12, .Lfunc_end9-f12
@@ -226,7 +226,7 @@ f13:                                    # @f13
 # BB#1:                                 # %if.end
 	return
 .LBB10_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end10:
 	.size	f13, .Lfunc_end10-f13
@@ -247,7 +247,7 @@ f14:                                    # @f14
 # BB#1:                                 # %if.end
 	return
 .LBB11_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end11:
 	.size	f14, .Lfunc_end11-f14
@@ -268,7 +268,7 @@ f15:                                    # @f15
 # BB#1:                                 # %if.end
 	return
 .LBB12_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end12:
 	.size	f15, .Lfunc_end12-f15
@@ -289,7 +289,7 @@ f16:                                    # @f16
 # BB#1:                                 # %if.end
 	return
 .LBB13_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end13:
 	.size	f16, .Lfunc_end13-f16
@@ -310,7 +310,7 @@ f17:                                    # @f17
 # BB#1:                                 # %if.end
 	return
 .LBB14_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end14:
 	.size	f17, .Lfunc_end14-f17
@@ -331,7 +331,7 @@ f18:                                    # @f18
 # BB#1:                                 # %if.end
 	return
 .LBB15_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end15:
 	.size	f18, .Lfunc_end15-f18
@@ -352,7 +352,7 @@ f19:                                    # @f19
 # BB#1:                                 # %if.end
 	return
 .LBB16_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end16:
 	.size	f19, .Lfunc_end16-f19
@@ -373,7 +373,7 @@ f20:                                    # @f20
 # BB#1:                                 # %if.end
 	return
 .LBB17_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end17:
 	.size	f20, .Lfunc_end17-f20
@@ -394,7 +394,7 @@ f21:                                    # @f21
 # BB#1:                                 # %if.end
 	return
 .LBB18_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end18:
 	.size	f21, .Lfunc_end18-f21
@@ -415,7 +415,7 @@ f22:                                    # @f22
 # BB#1:                                 # %if.end
 	return
 .LBB19_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end19:
 	.size	f22, .Lfunc_end19-f22
@@ -436,7 +436,7 @@ f23:                                    # @f23
 # BB#1:                                 # %if.end
 	return
 .LBB20_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end20:
 	.size	f23, .Lfunc_end20-f23
@@ -457,7 +457,7 @@ f24:                                    # @f24
 # BB#1:                                 # %if.end
 	return
 .LBB21_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end21:
 	.size	f24, .Lfunc_end21-f24
@@ -478,7 +478,7 @@ f25:                                    # @f25
 # BB#1:                                 # %if.end
 	return
 .LBB22_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end22:
 	.size	f25, .Lfunc_end22-f25
@@ -499,7 +499,7 @@ f26:                                    # @f26
 # BB#1:                                 # %if.end
 	return
 .LBB23_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end23:
 	.size	f26, .Lfunc_end23-f26
@@ -520,7 +520,7 @@ f27:                                    # @f27
 # BB#1:                                 # %if.end
 	return
 .LBB24_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end24:
 	.size	f27, .Lfunc_end24-f27
@@ -541,7 +541,7 @@ f28:                                    # @f28
 # BB#1:                                 # %if.end
 	return
 .LBB25_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end25:
 	.size	f28, .Lfunc_end25-f28
@@ -562,7 +562,7 @@ f29:                                    # @f29
 # BB#1:                                 # %if.end
 	return
 .LBB26_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end26:
 	.size	f29, .Lfunc_end26-f29
@@ -583,7 +583,7 @@ f30:                                    # @f30
 # BB#1:                                 # %if.end
 	return
 .LBB27_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end27:
 	.size	f30, .Lfunc_end27-f30
@@ -604,7 +604,7 @@ f31:                                    # @f31
 # BB#1:                                 # %if.end
 	return
 .LBB28_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end28:
 	.size	f31, .Lfunc_end28-f31
@@ -617,7 +617,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end29:
 	.size	main, .Lfunc_end29-main

@@ -41,7 +41,7 @@ doit:                                   # @doit
 	i64.eq  	$1=, $4, $pop5
 	br      	.LBB0_13
 .LBB0_6:                                # %sw.default
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_7:                                # %do.body2.preheader
 	i32.load	$0=, 0($2)
@@ -86,7 +86,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end8
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -145,7 +145,7 @@ main:                                   # @main
 	i32.store	$push11=, array4+20($0), $pop9
 	i32.store	$discard=, array5+20($0), $pop11
 	i32.const	$push12=, 1
-	call    	foo, $pop12
+	call    	foo@FUNCTION, $pop12
 	f32.const	$1=, 0x1.8p1
 	f32.load	$push13=, counter0($0)
 	f32.ne  	$push14=, $pop13, $1

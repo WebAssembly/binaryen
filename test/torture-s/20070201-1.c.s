@@ -23,7 +23,7 @@ foo:                                    # @foo
 	i32.store	$7=, 0($3), $7
 	i32.store	$discard=, 0($7), $1
 	i32.const	$push2=, .L.str
-	i32.call	$discard=, siprintf, $0, $pop2
+	i32.call	$discard=, siprintf@FUNCTION, $0, $pop2
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
 	i32.const	$5=, 4
@@ -68,7 +68,7 @@ main:                                   # @main
 	i32.const	$push2=, .L.str
 	i32.const	$8=, 10
 	i32.add 	$8=, $9, $8
-	i32.call	$discard=, siprintf, $8, $pop2
+	i32.call	$discard=, siprintf@FUNCTION, $8, $pop2
 	i32.const	$2=, __stack_pointer
 	i32.load	$2=, 0($2)
 	i32.const	$3=, 4

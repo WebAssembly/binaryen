@@ -86,8 +86,8 @@ main:                                   # @main
 	i32.const	$push0=, str
 	i32.store	$push1=, str+16($0), $pop0
 	i32.store	$discard=, vol_str+16($0), $pop1
-	call    	expr_vol_global
-	call    	exit, $0
+	call    	expr_vol_global@FUNCTION
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

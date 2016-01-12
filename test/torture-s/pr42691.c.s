@@ -31,7 +31,7 @@ add:                                    # @add
 	br_if   	$pop3, .LBB0_2
 	br      	.LBB0_5
 .LBB0_4:                                # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %if.end10
 	i32.const	$push4=, 0
@@ -84,7 +84,7 @@ main:                                   # @main
 	i32.store	$8=, 0($6), $8
 	return  	$pop5
 .LBB1_4:                                # %if.then3.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

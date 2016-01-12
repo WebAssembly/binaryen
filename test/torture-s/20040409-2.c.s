@@ -351,7 +351,7 @@ test:                                   # @test
 # BB#1:                                 # %if.end44
 	return
 .LBB24_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end24:
 	.size	test, .Lfunc_end24-test
@@ -371,7 +371,7 @@ testu:                                  # @testu
 # BB#1:                                 # %if.end44
 	return
 .LBB25_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end25:
 	.size	testu, .Lfunc_end25-testu

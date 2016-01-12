@@ -105,28 +105,28 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 3
-	i32.call	$discard=, foo, $pop0
+	i32.call	$discard=, foo@FUNCTION, $pop0
 	i32.const	$push1=, 2
-	i32.call	$1=, bar, $pop1
+	i32.call	$1=, bar@FUNCTION, $pop1
 	i32.const	$0=, 8
 	block   	.LBB3_4
 	i32.ne  	$push2=, $1, $0
 	br_if   	$pop2, .LBB3_4
 # BB#1:                                 # %lor.lhs.false3
 	i32.const	$1=, 0
-	i32.call	$push3=, baz, $1
+	i32.call	$push3=, baz@FUNCTION, $1
 	i32.ne  	$push4=, $pop3, $0
 	br_if   	$pop4, .LBB3_4
 # BB#2:                                 # %lor.lhs.false6
 	i32.const	$push5=, 1
-	i32.call	$push6=, baz, $pop5
+	i32.call	$push6=, baz@FUNCTION, $pop5
 	i32.const	$push7=, 6
 	i32.ne  	$push8=, $pop6, $pop7
 	br_if   	$pop8, .LBB3_4
 # BB#3:                                 # %if.end
 	return  	$1
 .LBB3_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

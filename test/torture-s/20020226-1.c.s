@@ -190,70 +190,70 @@ main:                                   # @main
 	i64.ne  	$push88=, $pop87, $19
 	br_if   	$pop88, .LBB0_22
 # BB#21:                                # %if.end195
-	call    	exit, $11
+	call    	exit@FUNCTION, $11
 	unreachable
 .LBB0_22:                               # %if.then187
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_23:                               # %if.then170
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_24:                               # %if.then160
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_25:                               # %if.then153
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_26:                               # %if.then145
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_27:                               # %if.then138
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_28:                               # %if.then130
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_29:                               # %if.then121
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_30:                               # %if.then102
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_31:                               # %if.then92
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_32:                               # %if.then85
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_33:                               # %if.then75
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_34:                               # %if.then68
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_35:                               # %if.then59
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_36:                               # %if.then52
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_37:                               # %if.then44
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_38:                               # %if.then37
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_39:                               # %if.then29
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_40:                               # %if.then20
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_41:                               # %if.then10
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_42:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

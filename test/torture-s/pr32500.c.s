@@ -20,7 +20,7 @@ foo:                                    # @foo
 bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
@@ -34,14 +34,14 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.then4
 	i32.const	$push0=, 57005
-	call    	foo, $pop0
+	call    	foo@FUNCTION, $pop0
 	i32.const	$push1=, 48879
-	call    	foo, $pop1
+	call    	foo@FUNCTION, $pop1
 	i32.const	$push2=, 4919
-	call    	foo, $pop2
+	call    	foo@FUNCTION, $pop2
 	i32.const	$push3=, 16962
-	call    	foo, $pop3
-	call    	bar
+	call    	foo@FUNCTION, $pop3
+	call    	bar@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

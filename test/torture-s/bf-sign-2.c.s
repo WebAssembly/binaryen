@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.lt_s	$push3=, $pop2, $1
 	br_if   	$pop3, .LBB0_2
 # BB#1:                                 # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_2:                                # %if.end
 	block   	.LBB0_4
@@ -32,7 +32,7 @@ main:                                   # @main
 	i32.lt_s	$push10=, $pop9, $1
 	br_if   	$pop10, .LBB0_4
 # BB#3:                                 # %if.then4
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %if.end5
 	i64.load	$0=, x+8($1)
@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.lt_s	$push13=, $pop12, $1
 	br_if   	$pop13, .LBB0_6
 # BB#5:                                 # %if.then12
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_6:                                # %if.end13
 	block   	.LBB0_8
@@ -56,7 +56,7 @@ main:                                   # @main
 	i32.lt_s	$push21=, $pop20, $1
 	br_if   	$pop21, .LBB0_8
 # BB#7:                                 # %if.then19
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_8:                                # %if.end20
 	block   	.LBB0_10
@@ -69,7 +69,7 @@ main:                                   # @main
 	i32.lt_s	$push28=, $pop27, $1
 	br_if   	$pop28, .LBB0_10
 # BB#9:                                 # %if.then27
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_10:                               # %if.end35
 	block   	.LBB0_12
@@ -79,10 +79,10 @@ main:                                   # @main
 	i32.lt_s	$push32=, $pop31, $1
 	br_if   	$pop32, .LBB0_12
 # BB#11:                                # %if.then42
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_12:                               # %if.end50
-	call    	exit, $1
+	call    	exit@FUNCTION, $1
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

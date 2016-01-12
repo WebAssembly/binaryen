@@ -39,11 +39,11 @@ main:                                   # @main
 	i32.gt_u	$push4=, $pop2, $pop3
 	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_2:                                # %f.exit
 	i32.const	$push5=, 0
-	call    	exit, $pop5
+	call    	exit@FUNCTION, $pop5
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

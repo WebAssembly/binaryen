@@ -23,7 +23,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
 	i32.add 	$1=, $0, $pop0
-	call    	ff, $0
+	call    	ff@FUNCTION, $0
 	i32.const	$2=, 65535
 	block   	.LBB1_2
 	i32.and 	$push1=, $1, $2
@@ -32,7 +32,7 @@ f:                                      # @f
 	#APP
 	#NO_APP
 .LBB1_2:                                # %for.inc
-	call    	ff, $0
+	call    	ff@FUNCTION, $0
 	block   	.LBB1_4
 	i32.add 	$push2=, $1, $0
 	i32.and 	$push3=, $pop2, $2
@@ -53,7 +53,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, -1
-	call    	f, $pop0
+	call    	f@FUNCTION, $pop0
 	i32.const	$push1=, 0
 	return  	$pop1
 .Lfunc_end2:
