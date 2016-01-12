@@ -278,6 +278,16 @@ if torture:
   if unexpected_result_count:
     fail(unexpected_result_count, 0)
 
+print '\n[ checking wasm-as testcases... ]\n'
+
+for wast in tests:
+  if wast.endswith('.wast'):
+    cmd = [os.path.join('bin', 'wasm-as'), os.path.join('test', wast), '-o', 'a.wasm']
+    print cmd
+    if os.path.exists('a.wasm'): os.unlink('a.wasm')
+    subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert os.path.exists('a.wasm')
+
 print '\n[ checking example testcases... ]\n'
 
 cmd = [os.environ.get('CXX') or 'g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.']
