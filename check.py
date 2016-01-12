@@ -18,7 +18,7 @@ import os, shutil, sys, subprocess, difflib, json, time
 
 interpreter = None
 requested = []
-torture = False # XXX fix this when they pass again
+torture = True
 
 for arg in sys.argv[1:]:
   if arg.startswith('--interpreter='):
