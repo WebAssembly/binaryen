@@ -53,7 +53,7 @@ bar:                                    # @bar
 	i32.const	$push16=, 31
 	i32.const	$14=, 0
 	i32.add 	$14=, $13, $14
-	call    	memcpy, $pop15, $14, $pop16
+	call    	memcpy@FUNCTION, $pop15, $14, $pop16
 	i32.const	$8=, 32
 	i32.add 	$13=, $13, $8
 	i32.const	$8=, __stack_pointer
@@ -97,24 +97,24 @@ foo:                                    # @foo
 	i32.const	$push4=, 7
 	i32.const	$5=, 40
 	i32.add 	$5=, $7, $5
-	call    	bar, $5, $pop4
+	call    	bar@FUNCTION, $5, $pop4
 	i32.const	$push5=, a
 	i32.const	$push6=, 36
 	i32.const	$6=, 40
 	i32.add 	$6=, $7, $6
-	call    	memcpy, $pop5, $6, $pop6
+	call    	memcpy@FUNCTION, $pop5, $6, $pop6
 	br      	.LBB2_3
 .LBB2_2:                                # %if.else
 	i32.const	$push2=, 7
 	i32.const	$7=, 0
 	i32.add 	$7=, $7, $7
-	call    	bar, $7, $pop2
+	call    	bar@FUNCTION, $7, $pop2
 	i32.const	$push3=, 36
 	i32.const	$8=, 0
 	i32.add 	$8=, $7, $8
-	call    	memcpy, $0, $8, $pop3
+	call    	memcpy@FUNCTION, $0, $8, $pop3
 .LBB2_3:                                # %if.end
-	call    	baz
+	call    	baz@FUNCTION
 	i32.const	$4=, 80
 	i32.add 	$7=, $7, $4
 	i32.const	$4=, __stack_pointer
@@ -140,20 +140,20 @@ main:                                   # @main
 	i32.const	$0=, 3
 	i32.const	$9=, 40
 	i32.add 	$9=, $13, $9
-	call    	bar, $9, $0
+	call    	bar@FUNCTION, $9, $0
 	i32.const	$3=, 36
 	i32.const	$push0=, a
 	i32.const	$10=, 40
 	i32.add 	$10=, $13, $10
-	call    	memcpy, $pop0, $10, $3
+	call    	memcpy@FUNCTION, $pop0, $10, $3
 	i32.const	$1=, 4
 	i32.const	$11=, 0
 	i32.add 	$11=, $13, $11
-	call    	bar, $11, $1
+	call    	bar@FUNCTION, $11, $1
 	i32.const	$2=, b
 	i32.const	$12=, 0
 	i32.add 	$12=, $13, $12
-	call    	memcpy, $2, $12, $3
+	call    	memcpy@FUNCTION, $2, $12, $3
 	i32.const	$3=, 0
 	i32.const	$5=, 1
 	block   	.LBB3_15
@@ -176,7 +176,7 @@ main:                                   # @main
 	i32.ne  	$push10=, $pop9, $1
 	br_if   	$pop10, .LBB3_15
 # BB#4:                                 # %if.end
-	call    	foo, $2, $3
+	call    	foo@FUNCTION, $2, $3
 	block   	.LBB3_14
 	i32.load	$push11=, a($3)
 	i32.ne  	$push12=, $pop11, $5
@@ -198,7 +198,7 @@ main:                                   # @main
 # BB#8:                                 # %if.end25
 	block   	.LBB3_13
 	i32.const	$push20=, 6
-	call    	foo, $2, $pop20
+	call    	foo@FUNCTION, $2, $pop20
 	i32.load	$push21=, a($3)
 	i32.ne  	$push22=, $pop21, $1
 	br_if   	$pop22, .LBB3_13
@@ -222,13 +222,13 @@ main:                                   # @main
 	i32.store	$13=, 0($8), $13
 	return  	$3
 .LBB3_13:                               # %if.then39
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_14:                               # %if.then24
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_15:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

@@ -51,7 +51,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB0_11
 	loop    	.LBB0_7
-	i64.call	$push8=, constant_shift, $0, $9
+	i64.call	$push8=, constant_shift@FUNCTION, $0, $9
 	i64.load	$push9=, 0($8)
 	i64.ne  	$push10=, $pop8, $pop9
 	br_if   	$pop10, .LBB0_11
@@ -69,7 +69,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB0_10
 	loop    	.LBB0_9
-	i64.call	$push12=, constant_shift, $4, $11
+	i64.call	$push12=, constant_shift@FUNCTION, $4, $11
 	i64.load	$push13=, 0($10)
 	i64.ne  	$push14=, $pop12, $pop13
 	br_if   	$pop14, .LBB0_10
@@ -81,19 +81,19 @@ main:                                   # @main
 	br_if   	$pop15, .LBB0_7
 .LBB0_9:                                # %for.end37
 	i32.const	$push16=, 0
-	call    	exit, $pop16
+	call    	exit@FUNCTION, $pop16
 	unreachable
 .LBB0_10:                               # %if.then33
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_11:                               # %if.then21
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_12:                               # %if.then9
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_13:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -428,7 +428,7 @@ constant_shift:                         # @constant_shift
 .LBB1_65:                               # %sw.epilog
 	return  	$0
 .LBB1_66:                               # %sw.default
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	constant_shift, .Lfunc_end1-constant_shift

@@ -21,7 +21,7 @@ bar:                                    # @bar
 	i32.eq  	$push6=, $pop4, $pop5
 	br_if   	$pop6, .LBB0_3
 # BB#2:                                 # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.end
 	block   	.LBB0_6
@@ -34,7 +34,7 @@ bar:                                    # @bar
 	i32.eq  	$push11=, $pop7, $pop10
 	br_if   	$pop11, .LBB0_6
 # BB#5:                                 # %if.then8
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_6:                                # %if.end9
 	block   	.LBB0_9
@@ -45,7 +45,7 @@ bar:                                    # @bar
 	i32.eq  	$push14=, $pop12, $pop13
 	br_if   	$pop14, .LBB0_9
 # BB#8:                                 # %if.then15
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_9:                                # %if.end16
 	return
@@ -85,7 +85,7 @@ foo:                                    # @foo
 .LBB1_5:                                # %if.then8
 	i32.store	$discard=, l($3), $2
 .LBB1_6:                                # %if.end11
-	call    	bar, $1
+	call    	bar@FUNCTION, $1
 	return
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -99,11 +99,11 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	call    	foo, $0, $0
+	call    	foo@FUNCTION, $0, $0
 	i32.const	$push0=, 1
-	call    	foo, $0, $pop0
+	call    	foo@FUNCTION, $0, $pop0
 	i32.const	$push1=, 2
-	call    	foo, $0, $pop1
+	call    	foo@FUNCTION, $0, $pop1
 	return  	$0
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

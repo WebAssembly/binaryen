@@ -15,7 +15,7 @@ foo:                                    # @foo
 # BB#1:                                 # %if.end
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $0, $pop0
-	i32.call	$push2=, foo, $pop1
+	i32.call	$push2=, foo@FUNCTION, $pop1
 	i32.const	$push3=, 4
 	i32.add 	$push4=, $pop2, $pop3
 	return  	$pop4
@@ -42,7 +42,7 @@ bar:                                    # @bar
 # BB#1:                                 # %if.end
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $0, $pop0
-	i32.call	$push2=, foo, $pop1
+	i32.call	$push2=, foo@FUNCTION, $pop1
 	i32.const	$push3=, 4
 	i32.add 	$1=, $pop2, $pop3
 .LBB1_2:                                # %return
@@ -64,7 +64,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB2_7
 	loop    	.LBB2_6
-	i32.call	$0=, foo, $3
+	i32.call	$0=, foo@FUNCTION, $3
 	i32.const	$1=, 4
 	i32.add 	$2=, $2, $1
 	i32.ne  	$push1=, $2, $0
@@ -80,7 +80,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $3, $pop2
-	i32.call	$push4=, foo, $pop3
+	i32.call	$push4=, foo@FUNCTION, $pop3
 	i32.add 	$4=, $pop4, $1
 .LBB2_4:                                # %bar.exit
                                         #   in Loop: Header=BB2_1 Depth=1
@@ -97,7 +97,7 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	return  	$pop8
 .LBB2_7:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

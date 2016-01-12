@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.store	$39=, 0($22), $39
 	i32.const	$16=, 0
 	i32.load	$0=, bar($16)
-	i32.call	$8=, strlen, $0
+	i32.call	$8=, strlen@FUNCTION, $0
 	i32.const	$3=, 8
 	block   	.LBB0_48
 	i32.ne  	$push5=, $8, $3
@@ -29,7 +29,7 @@ main:                                   # @main
 	i32.const	$5=, 2
 	i32.and 	$push6=, $8, $5
 	i32.add 	$push7=, $0, $pop6
-	i32.call	$9=, strlen, $pop7
+	i32.call	$9=, strlen@FUNCTION, $pop7
 	i32.const	$6=, 6
 	block   	.LBB0_47
 	i32.ne  	$push8=, $9, $6
@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.const	$9=, .L.str.1
 	i32.and 	$push11=, $13, $4
 	i32.add 	$push12=, $9, $pop11
-	i32.call	$13=, strlen, $pop12
+	i32.call	$13=, strlen@FUNCTION, $pop12
 	i32.const	$10=, 10
 	block   	.LBB0_45
 	i32.ne  	$push13=, $13, $10
@@ -58,11 +58,11 @@ main:                                   # @main
 	i32.store	$13=, x($16), $pop1
 	i32.add 	$push15=, $9, $13
 	i32.const	$push16=, .L.str.2
-	i32.call	$push17=, strcmp, $pop15, $pop16
+	i32.call	$push17=, strcmp@FUNCTION, $pop15, $pop16
 	br_if   	$pop17, .LBB0_44
 # BB#5:                                 # %if.end33
 	block   	.LBB0_43
-	i32.call	$push18=, strcmp, $9, $0
+	i32.call	$push18=, strcmp@FUNCTION, $9, $0
 	i32.ge_s	$push19=, $pop18, $16
 	br_if   	$pop19, .LBB0_43
 # BB#6:                                 # %if.end37
@@ -72,7 +72,7 @@ main:                                   # @main
 	i32.store	$2=, x($16), $pop2
 	i32.and 	$push21=, $13, $4
 	i32.add 	$push22=, $0, $pop21
-	i32.call	$push23=, strcmp, $9, $pop22
+	i32.call	$push23=, strcmp@FUNCTION, $9, $pop22
 	i32.ge_s	$push24=, $pop23, $16
 	br_if   	$pop24, .LBB0_42
 # BB#7:                                 # %if.end47
@@ -83,13 +83,13 @@ main:                                   # @main
 	i32.store	$19=, x($16), $pop3
 	i32.and 	$push25=, $2, $7
 	i32.add 	$push26=, $9, $pop25
-	i32.call	$push27=, strchr, $pop26, $12
+	i32.call	$push27=, strchr@FUNCTION, $pop26, $12
 	i32.const	$push28=, .L.str.1+9
 	i32.ne  	$push29=, $pop27, $pop28
 	br_if   	$pop29, .LBB0_41
 # BB#8:                                 # %if.end58
 	i32.const	$13=, 111
-	i32.call	$2=, strchr, $0, $13
+	i32.call	$2=, strchr@FUNCTION, $0, $13
 	i32.const	$14=, 4
 	block   	.LBB0_40
 	i32.add 	$push30=, $0, $14
@@ -97,17 +97,17 @@ main:                                   # @main
 	br_if   	$pop31, .LBB0_40
 # BB#9:                                 # %if.end63
 	block   	.LBB0_39
-	i32.call	$push32=, strlen, $0
+	i32.call	$push32=, strlen@FUNCTION, $0
 	i32.ne  	$push33=, $pop32, $3
 	br_if   	$pop33, .LBB0_39
 # BB#10:                                # %if.end68
 	block   	.LBB0_38
 	i32.const	$push34=, 120
-	i32.call	$push35=, strrchr, $0, $pop34
+	i32.call	$push35=, strrchr@FUNCTION, $0, $pop34
 	br_if   	$pop35, .LBB0_38
 # BB#11:                                # %if.end72
 	block   	.LBB0_37
-	i32.call	$push36=, strrchr, $0, $13
+	i32.call	$push36=, strrchr@FUNCTION, $0, $13
 	i32.ne  	$push37=, $pop36, $2
 	br_if   	$pop37, .LBB0_37
 # BB#12:                                # %if.end77
@@ -121,7 +121,7 @@ main:                                   # @main
 	i32.const	$push42=, .L.str.3
 	i32.and 	$push41=, $0, $4
 	i32.add 	$push43=, $pop42, $pop41
-	i32.call	$push44=, strcmp, $pop39, $pop43
+	i32.call	$push44=, strcmp@FUNCTION, $pop39, $pop43
 	br_if   	$pop44, .LBB0_36
 # BB#13:                                # %if.end86
 	block   	.LBB0_35
@@ -157,7 +157,7 @@ main:                                   # @main
 	i32.store	$17=, x($16), $6
 	block   	.LBB0_34
 	i32.const	$push53=, .L.str.4
-	i32.call	$push54=, strcmp, $0, $pop53
+	i32.call	$push54=, strcmp@FUNCTION, $0, $pop53
 	br_if   	$pop54, .LBB0_34
 # BB#16:                                # %if.end108
 	i32.const	$push57=, 56
@@ -199,7 +199,7 @@ main:                                   # @main
 	i32.store	$7=, y($16), $5
 	block   	.LBB0_33
 	i32.const	$push64=, .L.str.5+1
-	i32.call	$push65=, strncpy, $0, $pop64, $10
+	i32.call	$push65=, strncpy@FUNCTION, $0, $pop64, $10
 	i32.ne  	$push66=, $pop65, $0
 	br_if   	$pop66, .LBB0_33
 # BB#17:                                # %if.end108
@@ -215,7 +215,7 @@ main:                                   # @main
 	i32.const	$push70=, 12
 	i32.const	$35=, 0
 	i32.add 	$35=, $39, $35
-	i32.call	$push71=, memcmp, $35, $pop69, $pop70
+	i32.call	$push71=, memcmp@FUNCTION, $35, $pop69, $pop70
 	br_if   	$pop71, .LBB0_33
 # BB#20:                                # %if.end130
 	i64.store	$push72=, 0($9), $18
@@ -229,7 +229,7 @@ main:                                   # @main
 	i32.const	$push79=, .L.str.7
 	i32.const	$36=, 0
 	i32.add 	$36=, $39, $36
-	i32.call	$push80=, strncpy, $36, $pop79, $3
+	i32.call	$push80=, strncpy@FUNCTION, $36, $pop79, $3
 	i32.const	$37=, 0
 	i32.add 	$37=, $39, $37
 	block   	.LBB0_32
@@ -240,25 +240,25 @@ main:                                   # @main
 	i32.const	$push83=, 9
 	i32.const	$38=, 0
 	i32.add 	$38=, $39, $38
-	i32.call	$push84=, memcmp, $38, $pop82, $pop83
+	i32.call	$push84=, memcmp@FUNCTION, $38, $pop82, $pop83
 	br_if   	$pop84, .LBB0_32
 # BB#22:                                # %if.end141
 	i32.const	$9=, buf
 	block   	.LBB0_31
 	i32.const	$push85=, 64
-	call    	memset, $9, $15, $pop85
+	call    	memset@FUNCTION, $9, $15, $pop85
 	i32.load	$push87=, y($16)
 	i32.add 	$push88=, $pop87, $1
 	i32.store	$0=, y($16), $pop88
 	i32.const	$push86=, 34
 	i32.store	$discard=, x($16), $pop86
 	i32.const	$push89=, 33
-	call    	memset, $9, $pop89, $0
+	call    	memset@FUNCTION, $9, $pop89, $0
 	i32.ne  	$push90=, $0, $8
 	br_if   	$pop90, .LBB0_31
 # BB#23:                                # %lor.lhs.false148
 	i32.const	$push91=, .L.str.9
-	i32.call	$push92=, memcmp, $9, $pop91, $8
+	i32.call	$push92=, memcmp@FUNCTION, $9, $pop91, $8
 	br_if   	$pop92, .LBB0_31
 # BB#24:                                # %lor.lhs.false158
 	i64.const	$push94=, 45
@@ -282,7 +282,7 @@ main:                                   # @main
 	i32.add 	$push101=, $0, $1
 	i64.store8	$discard=, 0($pop101), $18
 	i32.const	$push102=, .L.str.10
-	i32.call	$push103=, memcmp, $9, $pop102, $3
+	i32.call	$push103=, memcmp@FUNCTION, $9, $pop102, $3
 	br_if   	$pop103, .LBB0_30
 # BB#25:                                # %lor.lhs.false171
 	i32.store	$discard=, y($16), $4
@@ -298,7 +298,7 @@ main:                                   # @main
 	block   	.LBB0_29
 	i32.const	$push108=, buf+8
 	i32.const	$push107=, .L.str.11
-	i32.call	$push109=, memcmp, $pop108, $pop107, $6
+	i32.call	$push109=, memcmp@FUNCTION, $pop108, $pop107, $6
 	br_if   	$pop109, .LBB0_29
 # BB#26:                                # %lor.lhs.false180
 	i32.const	$push110=, 15
@@ -312,7 +312,7 @@ main:                                   # @main
 	block   	.LBB0_28
 	i32.const	$push112=, buf+10
 	i32.const	$push111=, .L.str.12
-	i32.call	$push113=, memcmp, $pop112, $pop111, $9
+	i32.call	$push113=, memcmp@FUNCTION, $pop112, $pop111, $9
 	br_if   	$pop113, .LBB0_28
 # BB#27:                                # %if.end184
 	i32.const	$23=, 64
@@ -321,67 +321,67 @@ main:                                   # @main
 	i32.store	$39=, 0($23), $39
 	return  	$16
 .LBB0_28:                               # %if.then183
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_29:                               # %if.then174
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_30:                               # %if.then161
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_31:                               # %if.then151
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_32:                               # %if.then140
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_33:                               # %if.then129
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_34:                               # %if.then107
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_35:                               # %if.then89
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_36:                               # %if.then85
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_37:                               # %if.then76
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_38:                               # %if.then71
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_39:                               # %if.then67
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_40:                               # %if.then62
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_41:                               # %if.then54
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_42:                               # %if.then43
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_43:                               # %if.then36
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_44:                               # %if.then29
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_45:                               # %if.then22
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_46:                               # %if.then6
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_47:                               # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_48:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

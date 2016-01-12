@@ -24,7 +24,7 @@ foo:                                    # @foo
 	i32.store	$8=, 0($5), $8
 	i32.store	$discard=, 0($8), $3
 	i32.const	$push0=, .L.str
-	i32.call	$discard=, siprintf, $0, $pop0
+	i32.call	$discard=, siprintf@FUNCTION, $0, $pop0
 	i32.const	$6=, __stack_pointer
 	i32.load	$6=, 0($6)
 	i32.const	$7=, 4
@@ -68,7 +68,7 @@ main:                                   # @main
 	i32.const	$push1=, .L.str
 	i32.const	$6=, 16
 	i32.add 	$6=, $7, $6
-	i32.call	$discard=, siprintf, $6, $pop1
+	i32.call	$discard=, siprintf@FUNCTION, $6, $pop1
 	i32.const	$2=, __stack_pointer
 	i32.load	$2=, 0($2)
 	i32.const	$3=, 4
@@ -76,7 +76,7 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$7=, 0($3), $7
 	i32.const	$push2=, 0
-	call    	exit, $pop2
+	call    	exit@FUNCTION, $pop2
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

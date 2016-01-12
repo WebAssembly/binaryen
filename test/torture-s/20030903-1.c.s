@@ -25,16 +25,16 @@ main:                                   # @main
 	block   	.LBB0_3
 	tableswitch	$0, .LBB0_3, .LBB0_3, .LBB0_4, .LBB0_5, .LBB0_6
 .LBB0_3:                                # %sw.bb
-	call    	y
+	call    	y@FUNCTION
 	unreachable
 .LBB0_4:                                # %sw.bb1
-	call    	y
+	call    	y@FUNCTION
 	unreachable
 .LBB0_5:                                # %sw.bb2
-	call    	y
+	call    	y@FUNCTION
 	unreachable
 .LBB0_6:                                # %sw.bb3
-	call    	y
+	call    	y@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -43,7 +43,7 @@ main:                                   # @main
 	.type	y,@function
 y:                                      # @y
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	y, .Lfunc_end1-y

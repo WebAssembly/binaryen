@@ -43,12 +43,12 @@ main:                                   # @main
 	i32.eq  	$push3=, $pop0, $pop2
 	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_2:                                # %if.end4
 	i32.const	$push1=, 1
 	i32.store8	$discard=, next_buffer($0), $pop1
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

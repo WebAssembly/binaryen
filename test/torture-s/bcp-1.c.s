@@ -305,22 +305,22 @@ main:                                   # @main
 	i32.eq  	$push43=, $pop31, $pop42
 	br_if   	$pop43, .LBB17_18
 # BB#17:                                # %for.cond34.2
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB17_18:                              # %if.then40
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB17_19:                              # %if.then29
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB17_20:                              # %if.then18
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB17_21:                              # %if.then7
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB17_22:                              # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end17:
 	.size	main, .Lfunc_end17-main
@@ -331,12 +331,12 @@ main:                                   # @main
 	.globl	bad_t0
 	.align	4
 bad_t0:
-	.int32	bad0
-	.int32	bad1
-	.int32	bad5
-	.int32	bad7
-	.int32	bad8
-	.int32	bad10
+	.int32	bad0@FUNCTION
+	.int32	bad1@FUNCTION
+	.int32	bad5@FUNCTION
+	.int32	bad7@FUNCTION
+	.int32	bad8@FUNCTION
+	.int32	bad10@FUNCTION
 	.size	bad_t0, 24
 
 	.hidden	bad_t1                  # @bad_t1
@@ -345,9 +345,9 @@ bad_t0:
 	.globl	bad_t1
 	.align	2
 bad_t1:
-	.int32	bad2
-	.int32	bad3
-	.int32	bad6
+	.int32	bad2@FUNCTION
+	.int32	bad3@FUNCTION
+	.int32	bad6@FUNCTION
 	.size	bad_t1, 12
 
 	.hidden	bad_t2                  # @bad_t2
@@ -356,8 +356,8 @@ bad_t1:
 	.globl	bad_t2
 	.align	2
 bad_t2:
-	.int32	bad4
-	.int32	bad9
+	.int32	bad4@FUNCTION
+	.int32	bad9@FUNCTION
 	.size	bad_t2, 8
 
 	.hidden	good_t0                 # @good_t0
@@ -366,9 +366,9 @@ bad_t2:
 	.globl	good_t0
 	.align	2
 good_t0:
-	.int32	good0
-	.int32	good1
-	.int32	good2
+	.int32	good0@FUNCTION
+	.int32	good1@FUNCTION
+	.int32	good2@FUNCTION
 	.size	good_t0, 12
 
 	.hidden	opt_t0                  # @opt_t0
@@ -377,9 +377,9 @@ good_t0:
 	.globl	opt_t0
 	.align	2
 opt_t0:
-	.int32	opt0
-	.int32	opt1
-	.int32	opt2
+	.int32	opt0@FUNCTION
+	.int32	opt1@FUNCTION
+	.int32	opt2@FUNCTION
 	.size	opt_t0, 12
 
 	.type	.L.str,@object          # @.str

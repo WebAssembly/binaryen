@@ -20,7 +20,7 @@ g:                                      # @g
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -45,7 +45,7 @@ f:                                      # @f
 # BB#1:                                 # %g.exit
 	return  	$1
 .LBB1_2:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
@@ -67,10 +67,10 @@ main:                                   # @main
 	i32.eq  	$push4=, $pop1, $pop3
 	br_if   	$pop4, .LBB2_2
 # BB#1:                                 # %if.then.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_2:                                # %f.exit
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

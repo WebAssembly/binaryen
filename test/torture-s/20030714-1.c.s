@@ -122,7 +122,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.load16_u	$1=, g_this+26($0)
 	i32.load	$2=, g__style($0)
-	i32.const	$push2=, RenderBox_isTableCell
+	i32.const	$push2=, RenderBox_isTableCell@FUNCTION
 	i32.store	$discard=, g_this+28($0), $pop2
 	i32.const	$push3=, -1966081
 	i32.and 	$push4=, $2, $pop3
@@ -134,7 +134,7 @@ main:                                   # @main
 	i32.const	$push7=, 16
 	i32.or  	$push8=, $pop1, $pop7
 	i32.store16	$discard=, g_this+26($0), $pop8
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main

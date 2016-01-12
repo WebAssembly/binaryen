@@ -6,7 +6,7 @@
 	.type	f2,@function
 f2:                                     # @f2
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	f2, .Lfunc_end0-f2
@@ -19,7 +19,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %lor.lhs.false
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

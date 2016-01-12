@@ -71,7 +71,7 @@ main:                                   # @main
 	i32.const	$3=, 8
 	i32.add 	$3=, $4, $3
 	block   	.LBB1_2
-	call    	foo, $pop1, $3
+	call    	foo@FUNCTION, $pop1, $3
 	i64.load	$push2=, 8($4)
 	i64.const	$push3=, 506097522914230528
 	i64.ne  	$push4=, $pop2, $pop3
@@ -84,7 +84,7 @@ main:                                   # @main
 	i32.store	$4=, 0($2), $4
 	return  	$pop5
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

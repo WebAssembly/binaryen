@@ -9,7 +9,7 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, s
-	i32.call	$push1=, strcmp, $pop0, $0
+	i32.call	$push1=, strcmp@FUNCTION, $pop0, $0
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop1, $pop2
 	return  	$pop3

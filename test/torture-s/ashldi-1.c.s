@@ -47,13 +47,13 @@ main:                                   # @main
 	br_if   	$pop8, .LBB0_3
 .LBB0_5:                                # %for.end13
 	i32.const	$push9=, 0
-	call    	exit, $pop9
+	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB0_6:                                # %if.then9
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_7:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

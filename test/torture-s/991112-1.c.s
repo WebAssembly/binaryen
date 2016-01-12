@@ -21,7 +21,7 @@ rl_character_len:                       # @rl_character_len
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$push0=, isprint, $0
+	i32.call	$push0=, isprint@FUNCTION, $0
 	i32.const	$push2=, 1
 	i32.const	$push1=, 2
 	i32.select	$push3=, $pop0, $pop2, $pop1
@@ -38,23 +38,23 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block   	.LBB2_4
 	i32.const	$push0=, 97
-	i32.call	$push1=, isprint, $pop0
+	i32.call	$push1=, isprint@FUNCTION, $pop0
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop1, $pop5
 	br_if   	$pop6, .LBB2_4
 # BB#1:                                 # %if.end
 	block   	.LBB2_3
 	i32.const	$push2=, 2
-	i32.call	$push3=, isprint, $pop2
+	i32.call	$push3=, isprint@FUNCTION, $pop2
 	br_if   	$pop3, .LBB2_3
 # BB#2:                                 # %if.end4
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB2_3:                                # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

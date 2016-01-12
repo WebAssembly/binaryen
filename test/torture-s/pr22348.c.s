@@ -14,7 +14,7 @@ f:                                      # @f
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

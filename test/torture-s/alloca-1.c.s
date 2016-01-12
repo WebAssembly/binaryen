@@ -56,7 +56,7 @@ main:                                   # @main
 	i32.store	$4=, 0($2), $4
 	return  	$pop2
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

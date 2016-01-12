@@ -57,7 +57,7 @@ main:                                   # @main
 .LBB0_4:                                # %for.end
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$14=, 0
-	call    	memset, $1, $14, $2
+	call    	memset@FUNCTION, $1, $14, $2
 	copy_local	$6=, $3
 	block   	.LBB0_8
 	i32.lt_s	$push4=, $0, $5
@@ -80,7 +80,7 @@ main:                                   # @main
 	br_if   	$pop8, .LBB0_5
 	br      	.LBB0_8
 .LBB0_7:                                # %if.then14
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_8:                                # %for.body22.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
@@ -156,7 +156,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$14=, 0
 	i32.load8_u	$push36=, A($14)
-	call    	memset, $1, $pop36, $2
+	call    	memset@FUNCTION, $1, $pop36, $2
 	i32.const	$6=, u
 	block   	.LBB0_23
 	i32.le_s	$push35=, $0, $14
@@ -179,7 +179,7 @@ main:                                   # @main
 	br_if   	$pop40, .LBB0_20
 	br      	.LBB0_23
 .LBB0_22:                               # %if.then59
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_23:                               # %for.body68.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
@@ -251,7 +251,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$14=, 0
 	i32.const	$13=, 66
-	call    	memset, $1, $13, $2
+	call    	memset@FUNCTION, $1, $13, $2
 	i32.const	$6=, u
 	block   	.LBB0_38
 	i32.le_s	$push69=, $0, $14
@@ -274,7 +274,7 @@ main:                                   # @main
 	br_if   	$pop73, .LBB0_35
 	br      	.LBB0_38
 .LBB0_37:                               # %if.then104
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_38:                               # %for.body113.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
@@ -355,25 +355,25 @@ main:                                   # @main
 	br_if   	$pop104, .LBB0_1
 .LBB0_51:                               # %for.end141
 	i32.const	$push105=, 0
-	call    	exit, $pop105
+	call    	exit@FUNCTION, $pop105
 	unreachable
 .LBB0_52:                               # %if.then130
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_53:                               # %if.then117
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_54:                               # %if.then85
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_55:                               # %if.then72
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_56:                               # %if.then39
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_57:                               # %if.then26
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

@@ -698,14 +698,14 @@ main:                                   # @main
 	i32.eq  	$push18=, $18, $7
 	br_if   	$pop18, .LBB18_17
 # BB#15:                                # %if.then18
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_16:                              # %if.then9
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_17:                              # %if.end19
                                         #   in Loop: Header=BB18_1 Depth=1
-	i32.call	$20=, __builtin_clrsb, $10
+	i32.call	$20=, __builtin_clrsb@FUNCTION, $10
 	i32.load	$19=, 0($1)
 	i32.const	$5=, 31
 	i32.shr_u	$1=, $19, $5
@@ -876,14 +876,14 @@ main:                                   # @main
 	i32.eq  	$push55=, $20, $10
 	br_if   	$pop55, .LBB18_42
 # BB#40:                                # %if.then66
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_41:                              # %if.then57
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_42:                              # %if.end67
                                         #   in Loop: Header=BB18_26 Depth=1
-	i32.call	$11=, __builtin_clrsbl, $19
+	i32.call	$11=, __builtin_clrsbl@FUNCTION, $19
 	i32.load	$1=, 0($18)
 	i32.const	$3=, 31
 	i32.shr_u	$18=, $1, $3
@@ -1070,14 +1070,14 @@ main:                                   # @main
 	i32.eq  	$push103=, $19, $14
 	br_if   	$pop103, .LBB18_67
 # BB#65:                                # %if.then119
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_66:                              # %if.then109
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_67:                              # %if.end120
                                         #   in Loop: Header=BB18_51 Depth=1
-	i32.call	$19=, __builtin_clrsbll, $17
+	i32.call	$19=, __builtin_clrsbll@FUNCTION, $17
 	i64.load	$17=, 0($20)
 	i64.const	$16=, 63
 	i64.shr_u	$13=, $17, $16
@@ -1160,11 +1160,11 @@ main:                                   # @main
 .LBB18_77:                              # %if.end148
 	i32.const	$19=, 0
 	block   	.LBB18_154
-	i32.call	$push127=, __builtin_clrsb, $19
+	i32.call	$push127=, __builtin_clrsb@FUNCTION, $19
 	i32.ne  	$push128=, $pop127, $3
 	br_if   	$pop128, .LBB18_154
 # BB#78:                                # %my_clrsb.exit2770
-	i32.call	$10=, __builtin_clrsb, $20
+	i32.call	$10=, __builtin_clrsb@FUNCTION, $20
 	i32.const	$14=, 30
 	block   	.LBB18_153
 	i32.ne  	$push129=, $10, $14
@@ -1172,23 +1172,23 @@ main:                                   # @main
 # BB#79:                                # %if.end198
 	block   	.LBB18_152
 	i32.const	$push130=, -2147483648
-	i32.call	$push131=, __builtin_clrsb, $pop130
+	i32.call	$push131=, __builtin_clrsb@FUNCTION, $pop130
 	br_if   	$pop131, .LBB18_152
 # BB#80:                                # %my_clrsb.exit2597
 	block   	.LBB18_151
 	i32.const	$push132=, 1073741824
-	i32.call	$push133=, __builtin_clrsb, $pop132
+	i32.call	$push133=, __builtin_clrsb@FUNCTION, $pop132
 	br_if   	$pop133, .LBB18_151
 # BB#81:                                # %my_clrsb.exit2514
 	block   	.LBB18_150
 	i32.const	$push134=, 65536
-	i32.call	$push135=, __builtin_clrsb, $pop134
+	i32.call	$push135=, __builtin_clrsb@FUNCTION, $pop134
 	i32.const	$push136=, 14
 	i32.ne  	$push137=, $pop135, $pop136
 	br_if   	$pop137, .LBB18_150
 # BB#82:                                # %my_clrsb.exit2432
 	i32.const	$push138=, 32768
-	i32.call	$10=, __builtin_clrsb, $pop138
+	i32.call	$10=, __builtin_clrsb@FUNCTION, $pop138
 	i32.const	$1=, 15
 	block   	.LBB18_149
 	i32.ne  	$push139=, $10, $1
@@ -1196,34 +1196,34 @@ main:                                   # @main
 # BB#83:                                # %my_clrsb.exit2348
 	block   	.LBB18_148
 	i32.const	$push140=, -1515870811
-	i32.call	$push141=, __builtin_clrsb, $pop140
+	i32.call	$push141=, __builtin_clrsb@FUNCTION, $pop140
 	br_if   	$pop141, .LBB18_148
 # BB#84:                                # %my_clrsb.exit2273
 	block   	.LBB18_147
 	i32.const	$push142=, 1515870810
-	i32.call	$push143=, __builtin_clrsb, $pop142
+	i32.call	$push143=, __builtin_clrsb@FUNCTION, $pop142
 	br_if   	$pop143, .LBB18_147
 # BB#85:                                # %for.body.i2179
 	block   	.LBB18_146
 	i32.const	$push144=, -889323520
-	i32.call	$push145=, __builtin_clrsb, $pop144
+	i32.call	$push145=, __builtin_clrsb@FUNCTION, $pop144
 	i32.ne  	$push146=, $pop145, $20
 	br_if   	$pop146, .LBB18_146
 # BB#86:                                # %for.body.i2093
 	block   	.LBB18_145
 	i32.const	$push147=, 13303296
-	i32.call	$push148=, __builtin_clrsb, $pop147
+	i32.call	$push148=, __builtin_clrsb@FUNCTION, $pop147
 	i32.const	$push149=, 7
 	i32.ne  	$push150=, $pop148, $pop149
 	br_if   	$pop150, .LBB18_145
 # BB#87:                                # %for.body.i2004
 	block   	.LBB18_144
 	i32.const	$push151=, 51966
-	i32.call	$push152=, __builtin_clrsb, $pop151
+	i32.call	$push152=, __builtin_clrsb@FUNCTION, $pop151
 	i32.ne  	$push153=, $pop152, $1
 	br_if   	$pop153, .LBB18_144
 # BB#88:                                # %if.end423
-	i32.call	$18=, __builtin_clrsb, $6
+	i32.call	$18=, __builtin_clrsb@FUNCTION, $6
 	copy_local	$10=, $20
 .LBB18_89:                              # %for.body.i1935
                                         # =>This Inner Loop Header: Depth=1
@@ -1247,7 +1247,7 @@ main:                                   # @main
 	br_if   	$pop159, .LBB18_143
 # BB#92:                                # %if.end440
 	i64.const	$22=, 0
-	i32.call	$14=, __builtin_clrsbll, $22
+	i32.call	$14=, __builtin_clrsbll@FUNCTION, $22
 	i32.const	$10=, 63
 	block   	.LBB18_142
 	i32.ne  	$push160=, $14, $10
@@ -1273,7 +1273,7 @@ main:                                   # @main
 	i32.ne  	$push165=, $19, $10
 	br_if   	$pop165, .LBB18_141
 # BB#96:                                # %if.end465
-	i32.call	$19=, __builtin_clrsbll, $21
+	i32.call	$19=, __builtin_clrsbll@FUNCTION, $21
 .LBB18_97:                              # %for.body.i1799
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB18_99
@@ -1307,7 +1307,7 @@ main:                                   # @main
 	i64.lt_u	$push172=, $17, $12
 	br_if   	$pop172, .LBB18_100
 .LBB18_102:                             # %if.then481
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_103:                             # %for.body.i1731
                                         # =>This Inner Loop Header: Depth=1
@@ -1322,12 +1322,12 @@ main:                                   # @main
 	i64.lt_u	$push175=, $21, $12
 	br_if   	$pop175, .LBB18_103
 .LBB18_105:                             # %if.then489
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_106:                             # %if.end490
 	block   	.LBB18_139
 	i64.const	$push176=, -9223372036854775808
-	i32.call	$push177=, __builtin_clrsbll, $pop176
+	i32.call	$push177=, __builtin_clrsbll@FUNCTION, $pop176
 	br_if   	$pop177, .LBB18_139
 # BB#107:                               # %for.body.i1665
 	i64.const	$16=, -1
@@ -1352,48 +1352,48 @@ main:                                   # @main
 # BB#110:                               # %for.body.i1612
 	block   	.LBB18_137
 	i64.const	$push182=, 2
-	i32.call	$push183=, __builtin_clrsbll, $pop182
+	i32.call	$push183=, __builtin_clrsbll@FUNCTION, $pop182
 	i32.const	$push184=, 61
 	i32.ne  	$push185=, $pop183, $pop184
 	br_if   	$pop185, .LBB18_137
 # BB#111:                               # %my_clrsbll.exit1525
 	block   	.LBB18_136
 	i64.const	$push186=, 4611686018427387904
-	i32.call	$push187=, __builtin_clrsbll, $pop186
+	i32.call	$push187=, __builtin_clrsbll@FUNCTION, $pop186
 	br_if   	$pop187, .LBB18_136
 # BB#112:                               # %for.body.i1425
 	block   	.LBB18_135
 	i64.const	$push188=, 4294967296
-	i32.call	$push189=, __builtin_clrsbll, $pop188
+	i32.call	$push189=, __builtin_clrsbll@FUNCTION, $pop188
 	i32.const	$push190=, 30
 	i32.ne  	$push191=, $pop189, $pop190
 	br_if   	$pop191, .LBB18_135
 # BB#113:                               # %for.body.i1332
 	block   	.LBB18_134
 	i64.const	$push192=, 2147483648
-	i32.call	$push193=, __builtin_clrsbll, $pop192
+	i32.call	$push193=, __builtin_clrsbll@FUNCTION, $pop192
 	i32.ne  	$push194=, $pop193, $3
 	br_if   	$pop194, .LBB18_134
 # BB#114:                               # %my_clrsbll.exit1245
 	block   	.LBB18_133
 	i64.const	$push195=, -6510615555426900571
-	i32.call	$push196=, __builtin_clrsbll, $pop195
+	i32.call	$push196=, __builtin_clrsbll@FUNCTION, $pop195
 	br_if   	$pop196, .LBB18_133
 # BB#115:                               # %my_clrsbll.exit1152
 	block   	.LBB18_132
 	i64.const	$push197=, 6510615555426900570
-	i32.call	$push198=, __builtin_clrsbll, $pop197
+	i32.call	$push198=, __builtin_clrsbll@FUNCTION, $pop197
 	br_if   	$pop198, .LBB18_132
 # BB#116:                               # %for.body.i1053
 	block   	.LBB18_131
 	i64.const	$push199=, -3819392241693097984
-	i32.call	$push200=, __builtin_clrsbll, $pop199
+	i32.call	$push200=, __builtin_clrsbll@FUNCTION, $pop199
 	i32.ne  	$push201=, $pop200, $14
 	br_if   	$pop201, .LBB18_131
 # BB#117:                               # %for.body.i964
 	block   	.LBB18_130
 	i64.const	$push202=, 223195676147712
-	i32.call	$push203=, __builtin_clrsbll, $pop202
+	i32.call	$push203=, __builtin_clrsbll@FUNCTION, $pop202
 	i32.ne  	$push204=, $pop203, $1
 	br_if   	$pop204, .LBB18_130
 # BB#118:                               # %for.body.i925
@@ -1420,12 +1420,12 @@ main:                                   # @main
 	br_if   	$pop210, .LBB18_129
 # BB#121:                               # %for.body.i877
 	block   	.LBB18_128
-	i32.call	$push211=, __builtin_clrsbll, $17
+	i32.call	$push211=, __builtin_clrsbll@FUNCTION, $17
 	i32.ne  	$push212=, $pop211, $3
 	br_if   	$pop212, .LBB18_128
 # BB#122:                               # %if.end740
 	i64.const	$17=, -1
-	i32.call	$7=, __builtin_clrsbll, $17
+	i32.call	$7=, __builtin_clrsbll@FUNCTION, $17
 	i64.const	$21=, 62
 	copy_local	$22=, $13
 .LBB18_123:                             # %for.body.i812
@@ -1451,127 +1451,127 @@ main:                                   # @main
 	br_if   	$pop220, .LBB18_127
 # BB#126:                               # %if.end753
 	i32.const	$push221=, 0
-	call    	exit, $pop221
+	call    	exit@FUNCTION, $pop221
 	unreachable
 .LBB18_127:                             # %if.then744
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_128:                             # %if.then719
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_129:                             # %if.then710
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_130:                             # %if.then694
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_131:                             # %if.then669
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_132:                             # %if.then644
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_133:                             # %if.then619
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_134:                             # %if.then594
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_135:                             # %if.then569
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_136:                             # %if.then544
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_137:                             # %if.then519
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_138:                             # %if.then510
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_139:                             # %if.then494
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_140:                             # %if.then469
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_141:                             # %if.then460
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_142:                             # %if.then444
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_143:                             # %if.then427
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_144:                             # %if.then402
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_145:                             # %if.then377
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_146:                             # %if.then352
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_147:                             # %if.then327
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_148:                             # %if.then302
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_149:                             # %if.then277
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_150:                             # %if.then252
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_151:                             # %if.then227
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_152:                             # %if.then202
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_153:                             # %if.then177
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_154:                             # %if.then152
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_155:                             # %if.then140
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_156:                             # %if.then133
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_157:                             # %if.then126
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_158:                             # %if.then99
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_159:                             # %if.then85
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_160:                             # %if.then79
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_161:                             # %if.then73
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_162:                             # %if.then48
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_163:                             # %if.then37
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_164:                             # %if.then31
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_165:                             # %if.then25
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB18_166:                             # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end18:
 	.size	main, .Lfunc_end18-main

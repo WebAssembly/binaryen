@@ -37,7 +37,7 @@ foo:                                    # @foo
 	i32.select	$1=, $0, $6, $7
 	i32.const	$push1=, 1065353216
 	i32.store	$discard=, 8($7), $pop1
-	call    	bar, $1
+	call    	bar@FUNCTION, $1
 	block   	.LBB1_3
 	block   	.LBB1_2
 	i32.const	$push4=, 0
@@ -69,14 +69,14 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	block   	.LBB2_2
-	f32.call	$push0=, foo, $0
+	f32.call	$push0=, foo@FUNCTION, $0
 	f32.const	$push1=, 0x0p0
 	f32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, .LBB2_2
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

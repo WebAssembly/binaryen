@@ -1231,13 +1231,13 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	block   	.LBB1_2
-	i32.call	$push0=, foo
+	i32.call	$push0=, foo@FUNCTION
 	br_if   	$pop0, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push1=, 0
 	return  	$pop1
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

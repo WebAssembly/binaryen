@@ -33,7 +33,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	call    	foo
+	call    	foo@FUNCTION
 	i32.const	$1=, 0
 	i32.const	$0=, a
 .LBB1_1:                                # %for.body
@@ -63,7 +63,7 @@ main:                                   # @main
 	i32.const	$push10=, 0
 	return  	$pop10
 .LBB1_5:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

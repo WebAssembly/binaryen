@@ -32,10 +32,10 @@ main:                                   # @main
 	i32.store8	$discard=, arr($0), $pop1
 	i32.const	$push2=, 254
 	i32.store8	$discard=, arr+4($0), $pop2
-	call    	foo, $0
+	call    	foo@FUNCTION, $0
 	block   	.LBB1_3
 	i32.const	$push3=, 1
-	call    	foo, $pop3
+	call    	foo@FUNCTION, $pop3
 	i32.load8_u	$push4=, arr($0)
 	i32.const	$push5=, 129
 	i32.ne  	$push6=, $pop4, $pop5
@@ -48,7 +48,7 @@ main:                                   # @main
 # BB#2:                                 # %if.end
 	return  	$0
 .LBB1_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

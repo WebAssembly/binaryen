@@ -32,7 +32,7 @@ f1:                                     # @f1
 # BB#2:                                 # %if.end
 	return  	$3
 .LBB1_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
@@ -56,7 +56,7 @@ f2:                                     # @f2
 # BB#2:                                 # %if.end
 	return  	$3
 .LBB2_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	f2, .Lfunc_end2-f2
@@ -117,10 +117,10 @@ gitter:                                 # @gitter
 .LBB3_7:                                # %if.end18
 	return  	$4
 .LBB3_8:                                # %if.then.i32
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_9:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	gitter, .Lfunc_end3-gitter
@@ -154,13 +154,13 @@ main:                                   # @main
 	f32.ne  	$push7=, $pop4, $1
 	br_if   	$pop7, .LBB4_5
 # BB#4:                                 # %f2.exit.i
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB4_5:                                # %if.then.i32.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB4_6:                                # %if.then.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main

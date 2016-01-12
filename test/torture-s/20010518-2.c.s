@@ -63,10 +63,10 @@ main:                                   # @main
 	i32.ne  	$push24=, $pop23, $5
 	br_if   	$pop24, .LBB0_6
 # BB#5:                                 # %if.end
-	call    	exit, $4
+	call    	exit@FUNCTION, $4
 	unreachable
 .LBB0_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

@@ -8,7 +8,7 @@ init:                                   # @init
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
-	i32.call	$push1=, malloc, $pop0
+	i32.call	$push1=, malloc@FUNCTION, $pop0
 	return  	$pop1
 .Lfunc_end0:
 	.size	init, .Lfunc_end0-init
@@ -32,10 +32,10 @@ expect_func:                            # @expect_func
 # BB#2:                                 # %if.end6
 	return
 .LBB1_3:                                # %if.then5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	expect_func, .Lfunc_end1-expect_func
@@ -57,7 +57,7 @@ main:                                   # @main
 	i32.const	$push2=, 1
 	i32.const	$3=, 15
 	i32.add 	$3=, $4, $3
-	call    	expect_func, $pop2, $3
+	call    	expect_func@FUNCTION, $pop2, $3
 	i32.const	$push0=, 0
 	i32.store8	$push1=, 15($4), $pop0
 	i32.const	$2=, 16

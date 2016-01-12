@@ -37,7 +37,7 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 	i32.add 	$push1=, $2, $pop0
 	i32.store	$3=, 0($pop1), $0
 .LBB1_3:                                # %if.end.i
-	i32.call	$discard=, foo_create_got_section, $3, $1
+	i32.call	$discard=, foo_create_got_section@FUNCTION, $3, $1
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $2, $pop2
 	i32.load	$3=, 0($pop3)
@@ -60,13 +60,13 @@ main:                                   # @main
 	i32.const	$push0=, hash
 	i32.store	$discard=, link_info($0), $pop0
 	i32.const	$push1=, link_info
-	i32.call	$push2=, elf64_ia64_check_relocs, $1, $pop1
+	i32.call	$push2=, elf64_ia64_check_relocs@FUNCTION, $1, $pop1
 	i32.ne  	$push3=, $pop2, $1
 	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

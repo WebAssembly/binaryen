@@ -73,7 +73,7 @@ check:                                  # @check
 	br_if   	$pop6, .LBB1_1
 	br      	.LBB1_4
 .LBB1_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %for.cond3.preheader
 	i32.const	$4=, 0
@@ -97,7 +97,7 @@ check:                                  # @check
 	br_if   	$pop12, .LBB1_5
 	br      	.LBB1_8
 .LBB1_7:                                # %if.then10
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_8:                                # %for.body19.preheader
 	i32.const	$4=, 97
@@ -136,7 +136,7 @@ check:                                  # @check
 # BB#16:                                # %for.inc25.7
 	return
 .LBB1_17:                               # %if.then23
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	check, .Lfunc_end1-check
@@ -191,7 +191,7 @@ main:                                   # @main
 	i32.store8	$2=, u+29($12), $pop25
 	i32.const	$11=, u
 	i32.store8	$10=, u+30($12), $2
-	call    	memset, $11, $12, $13
+	call    	memset@FUNCTION, $11, $12, $13
 	i32.const	$0=, 1
 	i32.lt_s	$6=, $13, $0
 	copy_local	$2=, $12
@@ -213,7 +213,7 @@ main:                                   # @main
 	br_if   	$pop28, .LBB2_2
 	br      	.LBB2_5
 .LBB2_4:                                # %if.then10.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_5:                                # %for.body19.preheader.i
                                         #   in Loop: Header=BB2_1 Depth=1
@@ -261,7 +261,7 @@ main:                                   # @main
 	i32.const	$11=, u
 	block   	.LBB2_17
 	i32.load8_u	$push45=, A($2)
-	call    	memset, $11, $pop45, $13
+	call    	memset@FUNCTION, $11, $pop45, $13
 	br_if   	$6, .LBB2_17
 .LBB2_14:                               # %for.body6.i241
                                         #   Parent Loop BB2_1 Depth=1
@@ -281,7 +281,7 @@ main:                                   # @main
 	br_if   	$pop50, .LBB2_14
 	br      	.LBB2_17
 .LBB2_16:                               # %if.then10.i242
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_17:                               # %for.body19.preheader.i249
                                         #   in Loop: Header=BB2_1 Depth=1
@@ -327,7 +327,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$11=, u
 	i32.const	$1=, 66
-	call    	memset, $11, $1, $13
+	call    	memset@FUNCTION, $11, $1, $13
 	i32.const	$2=, 0
 	block   	.LBB2_29
 	br_if   	$6, .LBB2_29
@@ -348,7 +348,7 @@ main:                                   # @main
 	br_if   	$pop70, .LBB2_26
 	br      	.LBB2_29
 .LBB2_28:                               # %if.then10.i279
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_29:                               # %for.body19.preheader.i286
                                         #   in Loop: Header=BB2_1 Depth=1
@@ -429,14 +429,14 @@ main:                                   # @main
 	i32.store	$3=, u($2), $8
 	i32.const	$13=, u+1
 	i32.store16	$4=, u+4($2), $9
-	call    	memset, $13, $2, $11
-	call    	check, $0, $11, $2
+	call    	memset@FUNCTION, $13, $2, $11
+	call    	check@FUNCTION, $0, $11, $2
 	i32.load8_u	$push113=, A($2)
-	call    	memset, $13, $pop113, $11
+	call    	memset@FUNCTION, $13, $pop113, $11
 	i32.const	$6=, 65
-	call    	check, $0, $11, $6
-	call    	memset, $13, $1, $11
-	call    	check, $0, $11, $1
+	call    	check@FUNCTION, $0, $11, $6
+	call    	memset@FUNCTION, $13, $1, $11
+	call    	check@FUNCTION, $0, $11, $1
 	i32.add 	$11=, $11, $0
 	i32.const	$7=, 15
 	copy_local	$13=, $2
@@ -473,14 +473,14 @@ main:                                   # @main
 	i32.store	$8=, u($2), $3
 	i32.const	$11=, u+2
 	i32.store16	$9=, u+4($2), $4
-	call    	memset, $11, $2, $13
+	call    	memset@FUNCTION, $11, $2, $13
 	i32.const	$12=, 2
-	call    	check, $12, $13, $2
+	call    	check@FUNCTION, $12, $13, $2
 	i32.load8_u	$push139=, A($2)
-	call    	memset, $11, $pop139, $13
-	call    	check, $12, $13, $6
-	call    	memset, $11, $1, $13
-	call    	check, $12, $13, $1
+	call    	memset@FUNCTION, $11, $pop139, $13
+	call    	check@FUNCTION, $12, $13, $6
+	call    	memset@FUNCTION, $11, $1, $13
+	call    	check@FUNCTION, $12, $13, $1
 	i32.add 	$13=, $13, $0
 	copy_local	$11=, $2
 	i32.ne  	$push140=, $13, $7
@@ -516,14 +516,14 @@ main:                                   # @main
 	i32.store	$3=, u($2), $8
 	i32.const	$13=, u+3
 	i32.store16	$4=, u+4($2), $9
-	call    	memset, $13, $2, $11
+	call    	memset@FUNCTION, $13, $2, $11
 	i32.const	$12=, 3
-	call    	check, $12, $11, $2
+	call    	check@FUNCTION, $12, $11, $2
 	i32.load8_u	$push165=, A($2)
-	call    	memset, $13, $pop165, $11
-	call    	check, $12, $11, $6
-	call    	memset, $13, $1, $11
-	call    	check, $12, $11, $1
+	call    	memset@FUNCTION, $13, $pop165, $11
+	call    	check@FUNCTION, $12, $11, $6
+	call    	memset@FUNCTION, $13, $1, $11
+	call    	check@FUNCTION, $12, $11, $1
 	i32.add 	$11=, $11, $0
 	copy_local	$13=, $2
 	i32.ne  	$push166=, $11, $7
@@ -559,14 +559,14 @@ main:                                   # @main
 	i32.store	$8=, u($2), $3
 	i32.const	$11=, u+4
 	i32.store16	$9=, u+4($2), $4
-	call    	memset, $11, $2, $13
+	call    	memset@FUNCTION, $11, $2, $13
 	i32.const	$12=, 4
-	call    	check, $12, $13, $2
+	call    	check@FUNCTION, $12, $13, $2
 	i32.load8_u	$push191=, A($2)
-	call    	memset, $11, $pop191, $13
-	call    	check, $12, $13, $6
-	call    	memset, $11, $1, $13
-	call    	check, $12, $13, $1
+	call    	memset@FUNCTION, $11, $pop191, $13
+	call    	check@FUNCTION, $12, $13, $6
+	call    	memset@FUNCTION, $11, $1, $13
+	call    	check@FUNCTION, $12, $13, $1
 	i32.add 	$13=, $13, $0
 	copy_local	$11=, $2
 	i32.ne  	$push192=, $13, $7
@@ -602,14 +602,14 @@ main:                                   # @main
 	i32.store	$3=, u($2), $8
 	i32.const	$13=, u+5
 	i32.store16	$4=, u+4($2), $9
-	call    	memset, $13, $2, $11
+	call    	memset@FUNCTION, $13, $2, $11
 	i32.const	$12=, 5
-	call    	check, $12, $11, $2
+	call    	check@FUNCTION, $12, $11, $2
 	i32.load8_u	$push217=, A($2)
-	call    	memset, $13, $pop217, $11
-	call    	check, $12, $11, $6
-	call    	memset, $13, $1, $11
-	call    	check, $12, $11, $1
+	call    	memset@FUNCTION, $13, $pop217, $11
+	call    	check@FUNCTION, $12, $11, $6
+	call    	memset@FUNCTION, $13, $1, $11
+	call    	check@FUNCTION, $12, $11, $1
 	i32.add 	$11=, $11, $0
 	copy_local	$12=, $2
 	i32.ne  	$push218=, $11, $7
@@ -645,14 +645,14 @@ main:                                   # @main
 	i32.store	$8=, u($2), $3
 	i32.const	$13=, u+6
 	i32.store16	$9=, u+4($2), $4
-	call    	memset, $13, $2, $12
+	call    	memset@FUNCTION, $13, $2, $12
 	i32.const	$11=, 6
-	call    	check, $11, $12, $2
+	call    	check@FUNCTION, $11, $12, $2
 	i32.load8_u	$push243=, A($2)
-	call    	memset, $13, $pop243, $12
-	call    	check, $11, $12, $6
-	call    	memset, $13, $1, $12
-	call    	check, $11, $12, $1
+	call    	memset@FUNCTION, $13, $pop243, $12
+	call    	check@FUNCTION, $11, $12, $6
+	call    	memset@FUNCTION, $13, $1, $12
+	call    	check@FUNCTION, $11, $12, $1
 	i32.add 	$12=, $12, $0
 	copy_local	$13=, $2
 	i32.ne  	$push244=, $12, $7
@@ -688,29 +688,29 @@ main:                                   # @main
 	i32.store	$discard=, u($2), $8
 	i32.const	$11=, u+7
 	i32.store16	$discard=, u+4($2), $9
-	call    	memset, $11, $2, $13
+	call    	memset@FUNCTION, $11, $2, $13
 	i32.const	$12=, 7
-	call    	check, $12, $13, $2
+	call    	check@FUNCTION, $12, $13, $2
 	i32.load8_u	$push269=, A($2)
-	call    	memset, $11, $pop269, $13
-	call    	check, $12, $13, $6
-	call    	memset, $11, $1, $13
-	call    	check, $12, $13, $1
+	call    	memset@FUNCTION, $11, $pop269, $13
+	call    	check@FUNCTION, $12, $13, $6
+	call    	memset@FUNCTION, $11, $1, $13
+	call    	check@FUNCTION, $12, $13, $1
 	i32.add 	$13=, $13, $0
 	i32.ne  	$push270=, $13, $7
 	br_if   	$pop270, .LBB2_44
 .LBB2_45:                               # %for.end149
 	i32.const	$push271=, 0
-	call    	exit, $pop271
+	call    	exit@FUNCTION, $pop271
 	unreachable
 .LBB2_46:                               # %if.then23.i287
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_47:                               # %if.then23.i250
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_48:                               # %if.then23.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

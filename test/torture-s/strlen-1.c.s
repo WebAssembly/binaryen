@@ -86,7 +86,7 @@ main:                                   # @main
 	i32.store8	$push14=, 5($10), $pop13
 	i32.store8	$push15=, 6($10), $pop14
 	i32.store8	$discard=, 7($10), $pop15
-	i32.call	$push16=, strlen, $0
+	i32.call	$push16=, strlen@FUNCTION, $0
 	i32.ne  	$push17=, $6, $pop16
 	br_if   	$pop17, .LBB0_12
 # BB#9:                                 # %for.cond1
@@ -104,10 +104,10 @@ main:                                   # @main
 	i32.lt_u	$push21=, $4, $pop20
 	br_if   	$pop21, .LBB0_1
 .LBB0_11:                               # %for.end28
-	call    	exit, $9
+	call    	exit@FUNCTION, $9
 	unreachable
 .LBB0_12:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

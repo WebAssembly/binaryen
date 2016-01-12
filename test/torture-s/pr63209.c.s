@@ -36,7 +36,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, -8684677
 	i32.const	$push0=, main.top
-	i32.call	$push1=, Predictor, $0, $pop0
+	i32.call	$push1=, Predictor@FUNCTION, $0, $pop0
 	i32.ne  	$push2=, $pop1, $0
 	return  	$pop2
 .Lfunc_end1:

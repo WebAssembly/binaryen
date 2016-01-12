@@ -486,43 +486,43 @@ main:                                   # @main
 	i32.ne  	$push33=, $pop32, $0
 	br_if   	$pop33, .LBB24_13
 # BB#12:                                # %if.end84
-	call    	exit, $1
+	call    	exit@FUNCTION, $1
 	unreachable
 .LBB24_13:                              # %if.then83
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_14:                              # %if.then79
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_15:                              # %if.then75
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_16:                              # %if.then67
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_17:                              # %if.then59
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_18:                              # %if.then51
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_19:                              # %if.then43
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_20:                              # %if.then35
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_21:                              # %if.then27
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_22:                              # %if.then19
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_23:                              # %if.then11
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB24_24:                              # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end24:
 	.size	main, .Lfunc_end24-main

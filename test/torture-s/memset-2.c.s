@@ -73,7 +73,7 @@ check:                                  # @check
 	br_if   	$pop6, .LBB1_1
 	br      	.LBB1_4
 .LBB1_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %for.cond3.preheader
 	i32.const	$4=, 0
@@ -97,7 +97,7 @@ check:                                  # @check
 	br_if   	$pop12, .LBB1_5
 	br      	.LBB1_8
 .LBB1_7:                                # %if.then10
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_8:                                # %for.body19.preheader
 	i32.const	$4=, 97
@@ -136,7 +136,7 @@ check:                                  # @check
 # BB#16:                                # %for.inc25.7
 	return
 .LBB1_17:                               # %if.then23
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	check, .Lfunc_end1-check
@@ -188,14 +188,14 @@ main:                                   # @main
 	i32.add 	$24=, $0, $25
 	i32.store8	$17=, 0($24), $27
 	i32.const	$1=, 1
-	call    	check, $25, $1, $17
+	call    	check@FUNCTION, $25, $1, $17
 	i32.const	$2=, 65
 	i32.load8_u	$push27=, A($17)
 	i32.store8	$discard=, 0($24), $pop27
-	call    	check, $25, $1, $2
+	call    	check@FUNCTION, $25, $1, $2
 	i32.const	$push28=, 66
 	i32.store8	$21=, 0($24), $pop28
-	call    	check, $25, $1, $21
+	call    	check@FUNCTION, $25, $1, $21
 	i32.add 	$25=, $25, $1
 	i32.const	$3=, 8
 	copy_local	$24=, $17
@@ -236,14 +236,14 @@ main:                                   # @main
 	i32.store8	$push54=, 0($23), $17
 	i32.store8	$27=, 0($18), $pop54
 	i32.const	$25=, 2
-	call    	check, $24, $25, $27
+	call    	check@FUNCTION, $24, $25, $27
 	i32.load8_u	$push55=, A($27)
 	i32.store8	$push56=, 0($23), $pop55
 	i32.store8	$discard=, 0($18), $pop56
-	call    	check, $24, $25, $2
+	call    	check@FUNCTION, $24, $25, $2
 	i32.store8	$push57=, 0($23), $21
 	i32.store8	$26=, 0($18), $pop57
-	call    	check, $24, $25, $26
+	call    	check@FUNCTION, $24, $25, $26
 	i32.add 	$24=, $24, $1
 	copy_local	$18=, $27
 	i32.ne  	$push58=, $24, $3
@@ -285,16 +285,16 @@ main:                                   # @main
 	i32.store8	$push83=, 0($22), $17
 	i32.store8	$17=, 0($24), $pop83
 	i32.const	$23=, 3
-	call    	check, $18, $23, $17
+	call    	check@FUNCTION, $18, $23, $17
 	i32.load8_u	$push84=, A($17)
 	i32.store8	$push85=, 0($21), $pop84
 	i32.store8	$push86=, 0($22), $pop85
 	i32.store8	$discard=, 0($24), $pop86
-	call    	check, $18, $23, $2
+	call    	check@FUNCTION, $18, $23, $2
 	i32.store8	$push87=, 0($21), $26
 	i32.store8	$push88=, 0($22), $pop87
 	i32.store8	$13=, 0($24), $pop88
-	call    	check, $18, $23, $13
+	call    	check@FUNCTION, $18, $23, $13
 	i32.add 	$18=, $18, $1
 	copy_local	$24=, $17
 	i32.ne  	$push89=, $18, $3
@@ -338,18 +338,18 @@ main:                                   # @main
 	i32.store8	$push114=, 0($9), $27
 	i32.store8	$27=, 0($18), $pop114
 	i32.const	$21=, 4
-	call    	check, $24, $21, $27
+	call    	check@FUNCTION, $24, $21, $27
 	i32.load8_u	$push115=, A($27)
 	i32.store8	$push116=, 0($22), $pop115
 	i32.store8	$push117=, 0($26), $pop116
 	i32.store8	$push118=, 0($9), $pop117
 	i32.store8	$discard=, 0($18), $pop118
-	call    	check, $24, $21, $2
+	call    	check@FUNCTION, $24, $21, $2
 	i32.store8	$push119=, 0($22), $13
 	i32.store8	$push120=, 0($26), $pop119
 	i32.store8	$push121=, 0($9), $pop120
 	i32.store8	$11=, 0($18), $pop121
-	call    	check, $24, $21, $11
+	call    	check@FUNCTION, $24, $21, $11
 	i32.add 	$24=, $24, $1
 	copy_local	$18=, $27
 	i32.ne  	$push122=, $24, $3
@@ -395,20 +395,20 @@ main:                                   # @main
 	i32.store8	$push147=, 0($8), $17
 	i32.store8	$17=, 0($24), $pop147
 	i32.const	$9=, 5
-	call    	check, $18, $9, $17
+	call    	check@FUNCTION, $18, $9, $17
 	i32.load8_u	$push148=, A($17)
 	i32.store8	$push149=, 0($22), $pop148
 	i32.store8	$push150=, 0($26), $pop149
 	i32.store8	$push151=, 0($13), $pop150
 	i32.store8	$push152=, 0($8), $pop151
 	i32.store8	$discard=, 0($24), $pop152
-	call    	check, $18, $9, $2
+	call    	check@FUNCTION, $18, $9, $2
 	i32.store8	$push153=, 0($22), $11
 	i32.store8	$push154=, 0($26), $pop153
 	i32.store8	$push155=, 0($13), $pop154
 	i32.store8	$push156=, 0($8), $pop155
 	i32.store8	$15=, 0($24), $pop156
-	call    	check, $18, $9, $15
+	call    	check@FUNCTION, $18, $9, $15
 	i32.add 	$18=, $18, $1
 	copy_local	$22=, $17
 	i32.ne  	$push157=, $18, $3
@@ -456,7 +456,7 @@ main:                                   # @main
 	i32.store8	$push182=, 0($12), $27
 	i32.store8	$27=, 0($24), $pop182
 	i32.const	$13=, 6
-	call    	check, $22, $13, $27
+	call    	check@FUNCTION, $22, $13, $27
 	i32.load8_u	$push183=, A($27)
 	i32.store8	$push184=, 0($18), $pop183
 	i32.store8	$push185=, 0($26), $pop184
@@ -464,14 +464,14 @@ main:                                   # @main
 	i32.store8	$push187=, 0($11), $pop186
 	i32.store8	$push188=, 0($12), $pop187
 	i32.store8	$discard=, 0($24), $pop188
-	call    	check, $22, $13, $2
+	call    	check@FUNCTION, $22, $13, $2
 	i32.store8	$push189=, 0($18), $15
 	i32.store8	$push190=, 0($26), $pop189
 	i32.store8	$push191=, 0($8), $pop190
 	i32.store8	$push192=, 0($11), $pop191
 	i32.store8	$push193=, 0($12), $pop192
 	i32.store8	$20=, 0($24), $pop193
-	call    	check, $22, $13, $20
+	call    	check@FUNCTION, $22, $13, $20
 	i32.add 	$22=, $22, $1
 	copy_local	$26=, $27
 	i32.ne  	$push194=, $22, $3
@@ -521,7 +521,7 @@ main:                                   # @main
 	i32.store8	$push219=, 0($16), $17
 	i32.store8	$17=, 0($24), $pop219
 	i32.const	$22=, 7
-	call    	check, $26, $22, $17
+	call    	check@FUNCTION, $26, $22, $17
 	i32.load8_u	$push220=, A($17)
 	i32.store8	$push221=, 0($18), $pop220
 	i32.store8	$push222=, 0($8), $pop221
@@ -530,7 +530,7 @@ main:                                   # @main
 	i32.store8	$push225=, 0($15), $pop224
 	i32.store8	$push226=, 0($16), $pop225
 	i32.store8	$discard=, 0($24), $pop226
-	call    	check, $26, $22, $2
+	call    	check@FUNCTION, $26, $22, $2
 	i32.store8	$push227=, 0($18), $20
 	i32.store8	$push228=, 0($8), $pop227
 	i32.store8	$push229=, 0($11), $pop228
@@ -538,7 +538,7 @@ main:                                   # @main
 	i32.store8	$push231=, 0($15), $pop230
 	i32.store8	$push232=, 0($16), $pop231
 	i32.store8	$18=, 0($24), $pop232
-	call    	check, $26, $22, $18
+	call    	check@FUNCTION, $26, $22, $18
 	i32.add 	$26=, $26, $1
 	copy_local	$24=, $17
 	i32.ne  	$push233=, $26, $3
@@ -590,7 +590,7 @@ main:                                   # @main
 	i32.add 	$20=, $27, $1
 	i64.store8	$push259=, 0($20), $19
 	i64.store8	$discard=, 0($27), $pop259
-	call    	check, $24, $3, $17
+	call    	check@FUNCTION, $24, $3, $17
 	i32.load8_u	$push260=, A($17)
 	i32.store8	$push261=, 0($26), $pop260
 	i32.store8	$push262=, 0($8), $pop261
@@ -600,7 +600,7 @@ main:                                   # @main
 	i32.store8	$push266=, 0($16), $pop265
 	i32.store8	$push267=, 0($20), $pop266
 	i32.store8	$discard=, 0($27), $pop267
-	call    	check, $24, $3, $2
+	call    	check@FUNCTION, $24, $3, $2
 	i64.const	$push268=, 66
 	i64.store8	$push269=, 0($26), $pop268
 	i64.store8	$push270=, 0($8), $pop269
@@ -610,7 +610,7 @@ main:                                   # @main
 	i64.store8	$push274=, 0($16), $pop273
 	i64.store8	$push275=, 0($20), $pop274
 	i64.store8	$discard=, 0($27), $pop275
-	call    	check, $24, $3, $18
+	call    	check@FUNCTION, $24, $3, $18
 	i32.add 	$24=, $24, $1
 	copy_local	$27=, $17
 	i32.ne  	$push276=, $24, $3
@@ -647,13 +647,13 @@ main:                                   # @main
 	i32.add 	$24=, $0, $27
 	i32.const	$25=, 9
 	i32.store16	$22=, u+4($17), $10
-	call    	memset, $24, $17, $25
-	call    	check, $27, $25, $17
+	call    	memset@FUNCTION, $24, $17, $25
+	call    	check@FUNCTION, $27, $25, $17
 	i32.load8_u	$push301=, A($17)
-	call    	memset, $24, $pop301, $25
-	call    	check, $27, $25, $2
-	call    	memset, $24, $18, $25
-	call    	check, $27, $25, $18
+	call    	memset@FUNCTION, $24, $pop301, $25
+	call    	check@FUNCTION, $27, $25, $2
+	call    	memset@FUNCTION, $24, $18, $25
+	call    	check@FUNCTION, $27, $25, $18
 	i32.add 	$27=, $27, $1
 	copy_local	$25=, $17
 	i32.ne  	$push302=, $27, $3
@@ -690,13 +690,13 @@ main:                                   # @main
 	i32.add 	$24=, $0, $25
 	i32.const	$27=, 10
 	i32.store16	$13=, u+4($17), $22
-	call    	memset, $24, $17, $27
-	call    	check, $25, $27, $17
+	call    	memset@FUNCTION, $24, $17, $27
+	call    	check@FUNCTION, $25, $27, $17
 	i32.load8_u	$push327=, A($17)
-	call    	memset, $24, $pop327, $27
-	call    	check, $25, $27, $2
-	call    	memset, $24, $18, $27
-	call    	check, $25, $27, $18
+	call    	memset@FUNCTION, $24, $pop327, $27
+	call    	check@FUNCTION, $25, $27, $2
+	call    	memset@FUNCTION, $24, $18, $27
+	call    	check@FUNCTION, $25, $27, $18
 	i32.add 	$25=, $25, $1
 	copy_local	$27=, $17
 	i32.ne  	$push328=, $25, $3
@@ -733,13 +733,13 @@ main:                                   # @main
 	i32.add 	$24=, $0, $27
 	i32.const	$25=, 11
 	i32.store16	$22=, u+4($17), $13
-	call    	memset, $24, $17, $25
-	call    	check, $27, $25, $17
+	call    	memset@FUNCTION, $24, $17, $25
+	call    	check@FUNCTION, $27, $25, $17
 	i32.load8_u	$push353=, A($17)
-	call    	memset, $24, $pop353, $25
-	call    	check, $27, $25, $2
-	call    	memset, $24, $18, $25
-	call    	check, $27, $25, $18
+	call    	memset@FUNCTION, $24, $pop353, $25
+	call    	check@FUNCTION, $27, $25, $2
+	call    	memset@FUNCTION, $24, $18, $25
+	call    	check@FUNCTION, $27, $25, $18
 	i32.add 	$27=, $27, $1
 	copy_local	$25=, $17
 	i32.ne  	$push354=, $27, $3
@@ -776,13 +776,13 @@ main:                                   # @main
 	i32.add 	$24=, $0, $25
 	i32.const	$27=, 12
 	i32.store16	$13=, u+4($17), $22
-	call    	memset, $24, $17, $27
-	call    	check, $25, $27, $17
+	call    	memset@FUNCTION, $24, $17, $27
+	call    	check@FUNCTION, $25, $27, $17
 	i32.load8_u	$push379=, A($17)
-	call    	memset, $24, $pop379, $27
-	call    	check, $25, $27, $2
-	call    	memset, $24, $18, $27
-	call    	check, $25, $27, $18
+	call    	memset@FUNCTION, $24, $pop379, $27
+	call    	check@FUNCTION, $25, $27, $2
+	call    	memset@FUNCTION, $24, $18, $27
+	call    	check@FUNCTION, $25, $27, $18
 	i32.add 	$25=, $25, $1
 	copy_local	$27=, $17
 	i32.ne  	$push380=, $25, $3
@@ -819,13 +819,13 @@ main:                                   # @main
 	i32.add 	$24=, $0, $27
 	i32.const	$25=, 13
 	i32.store16	$12=, u+4($17), $13
-	call    	memset, $24, $17, $25
-	call    	check, $27, $25, $17
+	call    	memset@FUNCTION, $24, $17, $25
+	call    	check@FUNCTION, $27, $25, $17
 	i32.load8_u	$push405=, A($17)
-	call    	memset, $24, $pop405, $25
-	call    	check, $27, $25, $2
-	call    	memset, $24, $18, $25
-	call    	check, $27, $25, $18
+	call    	memset@FUNCTION, $24, $pop405, $25
+	call    	check@FUNCTION, $27, $25, $2
+	call    	memset@FUNCTION, $24, $18, $25
+	call    	check@FUNCTION, $27, $25, $18
 	i32.add 	$27=, $27, $1
 	copy_local	$25=, $17
 	i32.ne  	$push406=, $27, $3
@@ -862,13 +862,13 @@ main:                                   # @main
 	i32.add 	$24=, $0, $25
 	i32.const	$27=, 14
 	i32.store16	$22=, u+4($17), $12
-	call    	memset, $24, $17, $27
-	call    	check, $25, $27, $17
+	call    	memset@FUNCTION, $24, $17, $27
+	call    	check@FUNCTION, $25, $27, $17
 	i32.load8_u	$push431=, A($17)
-	call    	memset, $24, $pop431, $27
-	call    	check, $25, $27, $2
-	call    	memset, $24, $18, $27
-	call    	check, $25, $27, $18
+	call    	memset@FUNCTION, $24, $pop431, $27
+	call    	check@FUNCTION, $25, $27, $2
+	call    	memset@FUNCTION, $24, $18, $27
+	call    	check@FUNCTION, $25, $27, $18
 	i32.add 	$25=, $25, $1
 	copy_local	$27=, $17
 	i32.ne  	$push432=, $25, $3
@@ -905,19 +905,19 @@ main:                                   # @main
 	i32.add 	$24=, $0, $27
 	i32.const	$25=, 15
 	i32.store16	$discard=, u+4($17), $22
-	call    	memset, $24, $17, $25
-	call    	check, $27, $25, $17
+	call    	memset@FUNCTION, $24, $17, $25
+	call    	check@FUNCTION, $27, $25, $17
 	i32.load8_u	$push457=, A($17)
-	call    	memset, $24, $pop457, $25
-	call    	check, $27, $25, $2
-	call    	memset, $24, $18, $25
-	call    	check, $27, $25, $18
+	call    	memset@FUNCTION, $24, $pop457, $25
+	call    	check@FUNCTION, $27, $25, $2
+	call    	memset@FUNCTION, $24, $18, $25
+	call    	check@FUNCTION, $27, $25, $18
 	i32.add 	$27=, $27, $1
 	i32.ne  	$push458=, $27, $3
 	br_if   	$pop458, .LBB2_15
 .LBB2_16:                               # %for.end378
 	i32.const	$push459=, 0
-	call    	exit, $pop459
+	call    	exit@FUNCTION, $pop459
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

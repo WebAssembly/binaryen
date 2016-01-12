@@ -16,19 +16,19 @@ main:                                   # @main
 	i32.store	$4=, 0($2), $4
 	i32.const	$3=, 15
 	i32.add 	$3=, $4, $3
-	call    	foo, $3
+	call    	foo@FUNCTION, $3
 	i32.load8_s	$0=, 15($4)
-	call    	bar
+	call    	bar@FUNCTION
 	block   	.LBB0_2
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
 	br_if   	$pop1, .LBB0_2
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
-	call    	exit, $pop2
+	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB0_2:                                # %if.else
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

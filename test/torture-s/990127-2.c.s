@@ -13,7 +13,7 @@ fpEq:                                   # @fpEq
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	fpEq, .Lfunc_end0-fpEq
@@ -35,7 +35,7 @@ fpTest:                                 # @fpTest
 # BB#1:                                 # %fpEq.exit
 	return
 .LBB1_2:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	fpTest, .Lfunc_end1-fpTest
@@ -48,7 +48,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

@@ -64,7 +64,7 @@ main:                                   # @main
 	i64.store	$discard=, 0($7), $pop1
 	i32.const	$push3=, buf
 	i32.const	$push2=, .L.str
-	i32.call	$discard=, sprintf, $pop3, $pop2
+	i32.call	$discard=, sprintf@FUNCTION, $pop3, $pop2
 	i32.const	$3=, __stack_pointer
 	i32.load	$3=, 0($3)
 	i32.const	$4=, 8
@@ -83,10 +83,10 @@ main:                                   # @main
 	i32.and 	$push8=, $pop0, $pop7
 	br_if   	$pop8, .LBB1_3
 # BB#2:                                 # %if.end
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

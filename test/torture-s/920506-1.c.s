@@ -13,10 +13,10 @@ main:                                   # @main
 	i32.load	$push0=, l($0)
 	br_if   	$pop0, .LBB0_2
 # BB#1:                                 # %sw.bb
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB0_2:                                # %sw.epilog
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

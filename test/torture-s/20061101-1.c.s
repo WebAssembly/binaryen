@@ -16,7 +16,7 @@ tar:                                    # @tar
 	i32.const	$push2=, -1
 	return  	$pop2
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	tar, .Lfunc_end0-tar
@@ -54,7 +54,7 @@ bug:                                    # @bug
 	i32.eq  	$push7=, $pop5, $pop6
 	br_if   	$pop7, .LBB1_1
 .LBB1_3:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %while.end
 	return

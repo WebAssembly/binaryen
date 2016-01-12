@@ -101,7 +101,7 @@ main:                                   # @main
 	i32.or  	$push26=, $10, $4
 	i32.const	$11=, 8
 	i32.add 	$11=, $14, $11
-	i32.call	$push27=, sf, $pop26, $11
+	i32.call	$push27=, sf@FUNCTION, $pop26, $11
 	i32.const	$12=, 8
 	i32.add 	$12=, $14, $12
 	block   	.LBB1_3
@@ -112,7 +112,7 @@ main:                                   # @main
 	i32.const	$push30=, .L.str
 	i32.const	$13=, 8
 	i32.add 	$13=, $14, $13
-	i32.call	$push31=, strcmp, $13, $pop30
+	i32.call	$push31=, strcmp@FUNCTION, $13, $pop30
 	br_if   	$pop31, .LBB1_3
 # BB#2:                                 # %if.end
 	i32.const	$7=, 16
@@ -121,7 +121,7 @@ main:                                   # @main
 	i32.store	$14=, 0($7), $14
 	return  	$0
 .LBB1_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

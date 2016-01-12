@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.store	$discard=, b($1), $2
 	br      	.LBB1_4
 .LBB1_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %if.end
 	return  	$1

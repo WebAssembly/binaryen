@@ -37,8 +37,8 @@ main:                                   # @main
 	i32.const	$push1=, array
 	i32.const	$push3=, 2
 	i32.const	$push2=, 8
-	i32.const	$push0=, compare
-	call    	qsort, $pop1, $pop3, $pop2, $pop0
+	i32.const	$push0=, compare@FUNCTION
+	call    	qsort@FUNCTION, $pop1, $pop3, $pop2, $pop0
 	i32.const	$0=, 0
 	i32.load	$push4=, errors($0)
 	i32.eq  	$push5=, $pop4, $0
@@ -84,9 +84,9 @@ compare:                                # @compare
 	.align	4
 array:
 	.int32	1                       # 0x1
-	.int32	bad_compare
+	.int32	bad_compare@FUNCTION
 	.int32	4294967295              # 0xffffffff
-	.int32	bad_compare
+	.int32	bad_compare@FUNCTION
 	.size	array, 16
 
 	.hidden	errors                  # @errors

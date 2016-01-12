@@ -181,9 +181,9 @@ main:                                   # @main
 	.local  	i32, i32, i32, i64, i64
 # BB#0:                                 # %entry
 	i32.const	$1=, 94
-	i32.call	$0=, malloc, $1
+	i32.call	$0=, malloc@FUNCTION, $1
 	i32.const	$2=, 0
-	call    	memset, $0, $2, $1
+	call    	memset@FUNCTION, $0, $2, $1
 	i32.const	$1=, 3
 	i32.add 	$push0=, $0, $1
 	i32.store8	$discard=, 0($pop0), $2
@@ -332,23 +332,23 @@ main:                                   # @main
 	i64.store8	$push39=, 40($0), $pop38
 	i64.store8	$discard=, 48($0), $pop39
 	i64.store8	$discard=, 78($0), $4
-	i64.call	$3=, Sum, $0
+	i64.call	$3=, Sum@FUNCTION, $0
 	i64.const	$4=, 4311811859
 	block   	.LBB2_4
 	i64.ne  	$push97=, $3, $4
 	br_if   	$pop97, .LBB2_4
 # BB#1:                                 # %if.end
 	block   	.LBB2_3
-	i64.call	$push98=, Sum2, $0
+	i64.call	$push98=, Sum2@FUNCTION, $0
 	i64.ne  	$push99=, $pop98, $4
 	br_if   	$pop99, .LBB2_3
 # BB#2:                                 # %if.end25
 	return  	$2
 .LBB2_3:                                # %if.then24
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

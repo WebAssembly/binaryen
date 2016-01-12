@@ -14,7 +14,7 @@ check:                                  # @check
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check
@@ -40,10 +40,10 @@ main:                                   # @main
 	i32.ne  	$push7=, $pop5, $pop6
 	br_if   	$pop7, .LBB1_2
 # BB#1:                                 # %check.exit
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_2:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

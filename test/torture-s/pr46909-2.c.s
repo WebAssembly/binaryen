@@ -37,7 +37,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_4
 	loop    	.LBB1_3
-	i32.call	$0=, foo, $3
+	i32.call	$0=, foo@FUNCTION, $3
 	i32.const	$1=, 0
 	i32.const	$2=, 1
 	i32.eq  	$push0=, $3, $1
@@ -58,7 +58,7 @@ main:                                   # @main
 .LBB1_3:                                # %for.end
 	return  	$1
 .LBB1_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

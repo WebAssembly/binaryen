@@ -38,7 +38,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, bar
+	i32.call	$discard=, bar@FUNCTION
 	i32.const	$0=, 0
 	block   	.LBB2_2
 	i32.load	$push0=, b($0)
@@ -48,7 +48,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

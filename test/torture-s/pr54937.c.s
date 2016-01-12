@@ -50,11 +50,11 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
-	i32.const	$push0=, exit
+	i32.const	$push0=, exit@FUNCTION
 	i32.store	$discard=, terminate_me($pop1), $pop0
 	i32.const	$push2=, 100
-	i32.call	$discard=, t, $pop2
-	call    	abort
+	i32.call	$discard=, t@FUNCTION, $pop2
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -8,7 +8,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %for.cond2.2
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

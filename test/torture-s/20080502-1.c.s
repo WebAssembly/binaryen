@@ -39,7 +39,7 @@ main:                                   # @main
 	i64.const	$push0=, -4611967493404098560
 	i32.const	$3=, 0
 	i32.add 	$3=, $5, $3
-	call    	foo, $3, $pop1, $pop0
+	call    	foo@FUNCTION, $3, $pop1, $pop0
 	i64.load	$push5=, 0($5)
 	i32.const	$push2=, 8
 	i32.const	$4=, 0
@@ -49,7 +49,7 @@ main:                                   # @main
 	i64.load	$push4=, 0($pop3)
 	i64.const	$push7=, -8905435550453399112
 	i64.const	$push6=, 4611846683310179025
-	i32.call	$push8=, __eqtf2, $pop5, $pop4, $pop7, $pop6
+	i32.call	$push8=, __eqtf2@FUNCTION, $pop5, $pop4, $pop7, $pop6
 	br_if   	$pop8, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 0
@@ -59,7 +59,7 @@ main:                                   # @main
 	i32.store	$5=, 0($2), $5
 	return  	$pop9
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

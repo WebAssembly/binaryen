@@ -22,7 +22,7 @@ try_a:                                  # @try_a
 	i32.const	$4=, 8
 	i32.add 	$4=, $4, $4
 	i32.or  	$push2=, $4, $pop1
-	i32.call	$push3=, check_a, $pop2
+	i32.call	$push3=, check_a@FUNCTION, $pop2
 	i32.const	$3=, 16
 	i32.add 	$4=, $4, $3
 	i32.const	$3=, __stack_pointer
@@ -70,7 +70,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block   	.LBB2_2
 	i32.const	$push0=, 42
-	i32.call	$push1=, try_a, $pop0
+	i32.call	$push1=, try_a@FUNCTION, $pop0
 	i32.const	$push2=, -1
 	i32.le_s	$push3=, $pop1, $pop2
 	br_if   	$pop3, .LBB2_2
@@ -78,7 +78,7 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

@@ -10,7 +10,7 @@ ini:                                    # @ini
 	i32.const	$push2=, pty+40
 	i32.const	$push0=, zero_t
 	i32.const	$push1=, 44
-	call    	memcpy, $pop2, $pop0, $pop1
+	call    	memcpy@FUNCTION, $pop2, $pop0, $pop1
 	i32.const	$0=, 0
 	i32.const	$push4=, 3
 	i32.store	$discard=, pty+48($0), $pop4
@@ -33,7 +33,7 @@ main:                                   # @main
 	i32.const	$push2=, pty+40
 	i32.const	$push0=, zero_t
 	i32.const	$push1=, 44
-	call    	memcpy, $pop2, $pop0, $pop1
+	call    	memcpy@FUNCTION, $pop2, $pop0, $pop1
 	i32.const	$0=, 0
 	i32.const	$push4=, 3
 	i32.store	$discard=, pty+48($0), $pop4

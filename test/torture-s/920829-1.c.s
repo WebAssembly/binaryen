@@ -17,10 +17,10 @@ main:                                   # @main
 	i64.ne  	$push4=, $pop2, $pop3
 	br_if   	$pop4, .LBB0_2
 # BB#1:                                 # %if.end
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

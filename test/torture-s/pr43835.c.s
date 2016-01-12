@@ -7,7 +7,7 @@
 Parrot_gc_mark_PMC_alive_fun:           # @Parrot_gc_mark_PMC_alive_fun
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	Parrot_gc_mark_PMC_alive_fun, .Lfunc_end0-Parrot_gc_mark_PMC_alive_fun
@@ -19,7 +19,7 @@ Parrot_gc_mark_PMC_alive_fun:           # @Parrot_gc_mark_PMC_alive_fun
 foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	call    	mark_cell, $0, $1
+	call    	mark_cell@FUNCTION, $0, $1
 	return
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -47,7 +47,7 @@ mark_cell:                              # @mark_cell
 	i32.and 	$push5=, $pop4, $2
 	br_if   	$pop5, .LBB2_4
 # BB#3:                                 # %if.then
-	call    	Parrot_gc_mark_PMC_alive_fun, $1, $1
+	call    	Parrot_gc_mark_PMC_alive_fun@FUNCTION, $1, $1
 	unreachable
 .LBB2_4:                                # %if.end
 	return
@@ -79,7 +79,7 @@ main:                                   # @main
 	i32.add 	$5=, $7, $5
 	i32.const	$6=, 0
 	i32.add 	$6=, $7, $6
-	call    	mark_cell, $5, $6
+	call    	mark_cell@FUNCTION, $5, $6
 	i32.const	$push0=, 0
 	i32.store	$push1=, 0($7), $pop0
 	i32.const	$3=, 16

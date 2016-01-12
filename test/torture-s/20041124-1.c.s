@@ -36,7 +36,7 @@ main:                                   # @main
 	i32.store	$7=, 0($4), $7
 	i32.const	$5=, 8
 	i32.add 	$5=, $7, $5
-	call    	foo, $5
+	call    	foo@FUNCTION, $5
 	i32.const	$0=, 0
 	i32.load	$1=, gs($0)
 	i32.const	$2=, 65535
@@ -57,10 +57,10 @@ main:                                   # @main
 	i32.ne  	$push9=, $pop8, $pop1
 	br_if   	$pop9, .LBB1_3
 # BB#2:                                 # %if.end
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

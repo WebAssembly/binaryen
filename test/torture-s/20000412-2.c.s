@@ -26,7 +26,7 @@ f:                                      # @f
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$5=, 12
 	i32.add 	$5=, $4, $5
-	i32.call	$0=, f, $pop1, $5
+	i32.call	$0=, f@FUNCTION, $pop1, $5
 	br      	.LBB0_3
 .LBB0_2:                                # %if.then
 	i32.load	$0=, 0($1)
@@ -51,15 +51,15 @@ main:                                   # @main
 	i32.const	$2=, 0
 	block   	.LBB1_2
 	i32.const	$push0=, 100
-	i32.call	$push1=, f, $pop0, $2
+	i32.call	$push1=, f@FUNCTION, $pop0, $2
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %if.end
-	call    	exit, $2
+	call    	exit@FUNCTION, $2
 	unreachable
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -43,12 +43,12 @@ check:                                  # @check
 	i32.eq  	$push11=, $1, $2
 	br_if   	$pop11, .LBB0_5
 .LBB0_7:                                # %if.then6
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_8:                                # %for.end10
 	return
 .LBB0_9:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check
@@ -129,7 +129,7 @@ main:                                   # @main
 	i32.eq  	$push24=, $0, $2
 	br_if   	$pop24, .LBB1_1
 .LBB1_3:                                # %if.then6.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %check.exit
 	i32.const	$6=, 48

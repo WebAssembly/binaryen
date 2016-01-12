@@ -8,7 +8,7 @@ copy:                                   # @copy
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	memcpy, $0, $1, $2
+	call    	memcpy@FUNCTION, $0, $1, $2
 	return  	$0
 .Lfunc_end0:
 	.size	copy, .Lfunc_end0-copy
@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.add 	$12=, $28, $12
 	i32.const	$13=, 131072
 	i32.add 	$13=, $28, $13
-	call    	memcpy, $12, $13, $1
+	call    	memcpy@FUNCTION, $12, $13, $1
 	i32.const	$4=, 0
 .LBB1_3:                                # %for.body6
                                         # =>This Inner Loop Header: Depth=1
@@ -74,7 +74,7 @@ main:                                   # @main
 .LBB1_5:                                # %for.end15
 	i32.const	$15=, 0
 	i32.add 	$15=, $28, $15
-	call    	memset, $15, $7, $1
+	call    	memset@FUNCTION, $15, $7, $1
 .LBB1_6:                                # %for.cond17
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_9
@@ -92,14 +92,14 @@ main:                                   # @main
 	i32.eq  	$push29=, $pop28, $4
 	br_if   	$pop29, .LBB1_6
 .LBB1_8:                                # %if.then25
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_9:                                # %for.end29
 	i32.const	$17=, 0
 	i32.add 	$17=, $28, $17
 	i32.const	$18=, 131072
 	i32.add 	$18=, $28, $18
-	call    	memcpy, $17, $18, $0
+	call    	memcpy@FUNCTION, $17, $18, $0
 	i32.const	$5=, 0
 .LBB1_10:                               # %for.body35
                                         # =>This Inner Loop Header: Depth=1
@@ -123,7 +123,7 @@ main:                                   # @main
 	i32.const	$6=, 0
 	i32.const	$20=, 0
 	i32.add 	$20=, $28, $20
-	call    	memset, $20, $6, $0
+	call    	memset@FUNCTION, $20, $6, $0
 .LBB1_13:                               # %for.cond48
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_16
@@ -142,14 +142,14 @@ main:                                   # @main
 	i32.eq  	$push31=, $pop26, $pop30
 	br_if   	$pop31, .LBB1_13
 .LBB1_15:                               # %if.then56
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_16:                               # %for.end60
 	i32.const	$22=, 0
 	i32.add 	$22=, $28, $22
 	i32.const	$23=, 131072
 	i32.add 	$23=, $28, $23
-	call    	memcpy, $22, $23, $1
+	call    	memcpy@FUNCTION, $22, $23, $1
 .LBB1_17:                               # %for.body66
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_24
@@ -172,7 +172,7 @@ main:                                   # @main
 	i32.add 	$25=, $28, $25
 	i32.const	$26=, 131072
 	i32.add 	$26=, $28, $26
-	call    	memcpy, $25, $26, $0
+	call    	memcpy@FUNCTION, $25, $26, $0
 	i32.const	$7=, 0
 .LBB1_20:                               # %for.body85
                                         # =>This Inner Loop Header: Depth=1
@@ -192,19 +192,19 @@ main:                                   # @main
 	br_if   	$pop24, .LBB1_20
 .LBB1_22:                               # %for.end96
 	i32.const	$push25=, 0
-	call    	exit, $pop25
+	call    	exit@FUNCTION, $pop25
 	unreachable
 .LBB1_23:                               # %if.then92
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_24:                               # %if.then73
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_25:                               # %if.then42
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_26:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

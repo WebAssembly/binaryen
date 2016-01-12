@@ -10,7 +10,7 @@ bar1:                                   # @bar1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
-	i32.call	$push2=, foo1, $pop1
+	i32.call	$push2=, foo1@FUNCTION, $pop1
 	return  	$pop2
 .Lfunc_end0:
 	.size	bar1, .Lfunc_end0-bar1
@@ -35,7 +35,7 @@ bar2:                                   # @bar2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
-	i32.call	$push2=, foo2, $pop1
+	i32.call	$push2=, foo2@FUNCTION, $pop1
 	i32.const	$push3=, 65535
 	i32.and 	$push4=, $pop2, $pop3
 	return  	$pop4
@@ -66,7 +66,7 @@ bar3:                                   # @bar3
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
-	i32.call	$push2=, foo3, $pop1
+	i32.call	$push2=, foo3@FUNCTION, $pop1
 	i32.const	$push3=, 255
 	i32.and 	$push4=, $pop2, $pop3
 	return  	$pop4
@@ -97,7 +97,7 @@ bar4:                                   # @bar4
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
-	i32.call	$push2=, foo4, $pop1
+	i32.call	$push2=, foo4@FUNCTION, $pop1
 	return  	$pop2
 .Lfunc_end6:
 	.size	bar4, .Lfunc_end6-bar4
@@ -123,7 +123,7 @@ bar5:                                   # @bar5
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
-	i32.call	$1=, foo5, $pop1
+	i32.call	$1=, foo5@FUNCTION, $pop1
 	i32.const	$0=, 16
 	i32.shl 	$push2=, $1, $0
 	i32.shr_s	$push3=, $pop2, $0
@@ -154,7 +154,7 @@ bar6:                                   # @bar6
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
-	i32.call	$1=, foo6, $pop1
+	i32.call	$1=, foo6@FUNCTION, $pop1
 	i32.const	$0=, 24
 	i32.shl 	$push2=, $1, $0
 	i32.shr_s	$push3=, $pop2, $0
@@ -183,7 +183,7 @@ main:                                   # @main
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, -10
-	i32.call	$1=, bar1, $0
+	i32.call	$1=, bar1@FUNCTION, $0
 	i32.const	$2=, 0
 	block   	.LBB12_12
 	i32.load	$push0=, l1($2)
@@ -191,53 +191,53 @@ main:                                   # @main
 	br_if   	$pop1, .LBB12_12
 # BB#1:                                 # %if.end
 	block   	.LBB12_11
-	i32.call	$push2=, bar2, $0
+	i32.call	$push2=, bar2@FUNCTION, $0
 	i32.load	$push3=, l2($2)
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	$pop4, .LBB12_11
 # BB#2:                                 # %if.end5
 	block   	.LBB12_10
-	i32.call	$push5=, bar3, $0
+	i32.call	$push5=, bar3@FUNCTION, $0
 	i32.load	$push6=, l3($2)
 	i32.ne  	$push7=, $pop5, $pop6
 	br_if   	$pop7, .LBB12_10
 # BB#3:                                 # %if.end11
 	block   	.LBB12_9
-	i32.call	$push8=, bar4, $0
+	i32.call	$push8=, bar4@FUNCTION, $0
 	i32.load	$push9=, l4($2)
 	i32.ne  	$push10=, $pop8, $pop9
 	br_if   	$pop10, .LBB12_9
 # BB#4:                                 # %if.end16
 	block   	.LBB12_8
-	i32.call	$push11=, bar5, $0
+	i32.call	$push11=, bar5@FUNCTION, $0
 	i32.load	$push12=, l5($2)
 	i32.ne  	$push13=, $pop11, $pop12
 	br_if   	$pop13, .LBB12_8
 # BB#5:                                 # %if.end22
 	block   	.LBB12_7
-	i32.call	$push14=, bar6, $0
+	i32.call	$push14=, bar6@FUNCTION, $0
 	i32.load	$push15=, l6($2)
 	i32.ne  	$push16=, $pop14, $pop15
 	br_if   	$pop16, .LBB12_7
 # BB#6:                                 # %if.end28
 	return  	$2
 .LBB12_7:                               # %if.then27
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_8:                               # %if.then21
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_9:                               # %if.then15
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_10:                              # %if.then10
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_11:                              # %if.then4
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_12:                              # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end12:
 	.size	main, .Lfunc_end12-main

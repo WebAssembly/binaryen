@@ -7,7 +7,7 @@
 never_ever:                             # @never_ever
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	never_ever, .Lfunc_end0-never_ever
@@ -38,7 +38,7 @@ bar_1:                                  # @bar_1
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, 4($1), $pop2
-	call    	mark_cell, $1
+	call    	mark_cell@FUNCTION, $1
 	return
 .Lfunc_end2:
 	.size	bar_1, .Lfunc_end2-bar_1
@@ -139,31 +139,31 @@ mark_cell:                              # @mark_cell
 	i32.and 	$push26=, $pop25, $1
 	br_if   	$pop26, .LBB3_22
 # BB#13:                                # %if.then134
-	call    	never_ever, $0, $0
+	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_14:                               # %if.then118
-	call    	never_ever, $0, $0
+	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_15:                               # %if.then102
-	call    	never_ever, $0, $0
+	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_16:                               # %if.then86
-	call    	never_ever, $0, $0
+	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_17:                               # %if.then70
-	call    	never_ever, $0, $0
+	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_18:                               # %if.then54
-	call    	never_ever, $0, $0
+	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_19:                               # %if.then38
-	call    	never_ever, $0, $0
+	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_20:                               # %if.then22
-	call    	never_ever, $0, $0
+	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_21:                               # %if.then7
-	call    	never_ever, $0, $0
+	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_22:                               # %if.end137
 	return
@@ -181,7 +181,7 @@ bar_2:                                  # @bar_2
 	i32.const	$push1=, 2
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, 4($1), $pop2
-	call    	mark_cell, $1
+	call    	mark_cell@FUNCTION, $1
 	return
 .Lfunc_end4:
 	.size	bar_2, .Lfunc_end4-bar_2

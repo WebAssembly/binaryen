@@ -27,7 +27,7 @@ main:                                   # @main
 	loop    	.LBB0_7
 	i32.const	$7=, 0
 	i32.add 	$7=, $8, $7
-	i32.call	$0=, next, $7
+	i32.call	$0=, next@FUNCTION, $7
 	block   	.LBB0_6
 	block   	.LBB0_5
 	block   	.LBB0_3
@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.eq  	$push13=, $pop8, $pop12
 	br_if   	$pop13, .LBB0_6
 .LBB0_5:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_6:                                # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
@@ -95,7 +95,7 @@ next:                                   # @next
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push5=, 0
 	i32.store	$1=, 0($1), $pop5
-	call    	fetch, $0
+	call    	fetch@FUNCTION, $0
 	i32.load	$push6=, 0($0)
 	i32.const	$push7=, 4
 	i32.add 	$push8=, $0, $pop7

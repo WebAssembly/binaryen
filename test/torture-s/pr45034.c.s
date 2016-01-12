@@ -16,7 +16,7 @@ foo:                                    # @foo
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -59,7 +59,7 @@ test_neg:                               # @test_neg
 	i32.xor 	$4=, $pop5, $pop6
 .LBB1_4:                                # %fixnum_neg.exit
                                         #   in Loop: Header=BB1_1 Depth=1
-	call    	foo, $7, $4, $7
+	call    	foo@FUNCTION, $7, $4, $7
 	i32.const	$push7=, 1
 	i32.add 	$7=, $7, $pop7
 	i32.ne  	$push8=, $2, $6
@@ -107,7 +107,7 @@ main:                                   # @main
 	i32.xor 	$4=, $pop5, $pop6
 .LBB2_4:                                # %fixnum_neg.exit.i
                                         #   in Loop: Header=BB2_1 Depth=1
-	call    	foo, $7, $4, $7
+	call    	foo@FUNCTION, $7, $4, $7
 	i32.const	$push7=, 1
 	i32.add 	$7=, $7, $pop7
 	i32.ne  	$push8=, $2, $6

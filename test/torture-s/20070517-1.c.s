@@ -8,7 +8,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.call	$0=, get_kind
+	i32.call	$0=, get_kind@FUNCTION
 	block   	.LBB0_4
 	i32.const	$push2=, 10
 	i32.gt_u	$push3=, $0, $pop2
@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.lt_u	$push9=, $pop0, $pop8
 	br_if   	$pop9, .LBB0_4
 # BB#3:                                 # %if.else.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %example.exit
 	i32.const	$push10=, 0

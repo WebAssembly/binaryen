@@ -1054,115 +1054,115 @@ main:                                   # @main
 	block   	.LBB12_46
 	i64.const	$push0=, 100
 	i64.store	$1=, gull($0), $pop0
-	i64.call	$push1=, t1, $3, $2
+	i64.call	$push1=, t1@FUNCTION, $3, $2
 	i64.const	$push2=, -6145
 	i64.ne  	$push3=, $pop1, $pop2
 	br_if   	$pop3, .LBB12_46
 # BB#1:                                 # %if.end
 	i64.const	$4=, 4294967295
 	block   	.LBB12_45
-	i64.call	$push4=, t1, $3, $4
+	i64.call	$push4=, t1@FUNCTION, $3, $4
 	i64.const	$push5=, 4294961151
 	i64.ne  	$push6=, $pop4, $pop5
 	br_if   	$pop6, .LBB12_45
 # BB#2:                                 # %if.end4
 	block   	.LBB12_44
-	i64.call	$push7=, t2, $3, $2
+	i64.call	$push7=, t2@FUNCTION, $3, $2
 	i64.const	$push8=, -1540
 	i64.ne  	$push9=, $pop7, $pop8
 	br_if   	$pop9, .LBB12_44
 # BB#3:                                 # %if.end8
 	block   	.LBB12_43
-	i64.call	$push10=, t2, $3, $4
+	i64.call	$push10=, t2@FUNCTION, $3, $4
 	i64.const	$push11=, 4294965756
 	i64.ne  	$push12=, $pop10, $pop11
 	br_if   	$pop12, .LBB12_43
 # BB#4:                                 # %if.end12
 	block   	.LBB12_42
-	i64.call	$push13=, t3, $3, $2
+	i64.call	$push13=, t3@FUNCTION, $3, $2
 	i64.const	$push14=, -1537
 	i64.ne  	$push15=, $pop13, $pop14
 	br_if   	$pop15, .LBB12_42
 # BB#5:                                 # %if.end16
 	block   	.LBB12_41
-	i64.call	$push16=, t3, $3, $4
+	i64.call	$push16=, t3@FUNCTION, $3, $4
 	i64.const	$push17=, 4294965759
 	i64.ne  	$push18=, $pop16, $pop17
 	br_if   	$pop18, .LBB12_41
 # BB#6:                                 # %if.end20
 	block   	.LBB12_40
-	i64.call	$push19=, t4, $3, $2
+	i64.call	$push19=, t4@FUNCTION, $3, $2
 	i64.const	$push20=, -1534
 	i64.ne  	$push21=, $pop19, $pop20
 	br_if   	$pop21, .LBB12_40
 # BB#7:                                 # %if.end24
 	block   	.LBB12_39
-	i64.call	$push22=, t4, $3, $4
+	i64.call	$push22=, t4@FUNCTION, $3, $4
 	i64.const	$push23=, 4294965762
 	i64.ne  	$push24=, $pop22, $pop23
 	br_if   	$pop24, .LBB12_39
 # BB#8:                                 # %if.end28
 	block   	.LBB12_38
-	i64.call	$push25=, t5, $3, $2
+	i64.call	$push25=, t5@FUNCTION, $3, $2
 	i64.const	$push26=, -4
 	i64.ne  	$push27=, $pop25, $pop26
 	br_if   	$pop27, .LBB12_38
 # BB#9:                                 # %if.end32
 	block   	.LBB12_37
-	i64.call	$push28=, t5, $3, $4
+	i64.call	$push28=, t5@FUNCTION, $3, $4
 	i64.const	$push29=, 4294967292
 	i64.ne  	$push30=, $pop28, $pop29
 	br_if   	$pop30, .LBB12_37
 # BB#10:                                # %if.end36
 	block   	.LBB12_36
-	i64.call	$push31=, t6, $3, $2
+	i64.call	$push31=, t6@FUNCTION, $3, $2
 	i64.const	$push32=, 2
 	i64.ne  	$push33=, $pop31, $pop32
 	br_if   	$pop33, .LBB12_36
 # BB#11:                                # %if.end40
 	block   	.LBB12_35
-	i64.call	$push34=, t6, $3, $4
+	i64.call	$push34=, t6@FUNCTION, $3, $4
 	i64.const	$push35=, 4294967298
 	i64.ne  	$push36=, $pop34, $pop35
 	br_if   	$pop36, .LBB12_35
 # BB#12:                                # %if.end44
 	block   	.LBB12_34
-	i64.call	$push37=, t7, $3, $2
+	i64.call	$push37=, t7@FUNCTION, $3, $2
 	i64.const	$push38=, 1532
 	i64.ne  	$push39=, $pop37, $pop38
 	br_if   	$pop39, .LBB12_34
 # BB#13:                                # %if.end48
 	block   	.LBB12_33
-	i64.call	$push40=, t7, $3, $4
+	i64.call	$push40=, t7@FUNCTION, $3, $4
 	i64.const	$push41=, 4294968828
 	i64.ne  	$push42=, $pop40, $pop41
 	br_if   	$pop42, .LBB12_33
 # BB#14:                                # %if.end52
 	block   	.LBB12_32
-	i64.call	$push43=, t8, $3, $2
+	i64.call	$push43=, t8@FUNCTION, $3, $2
 	i64.const	$push44=, 1535
 	i64.ne  	$push45=, $pop43, $pop44
 	br_if   	$pop45, .LBB12_32
 # BB#15:                                # %if.end56
 	block   	.LBB12_31
-	i64.call	$push46=, t8, $3, $4
+	i64.call	$push46=, t8@FUNCTION, $3, $4
 	i64.const	$push47=, 4294968831
 	i64.ne  	$push48=, $pop46, $pop47
 	br_if   	$pop48, .LBB12_31
 # BB#16:                                # %if.end60
 	block   	.LBB12_30
-	i64.call	$push49=, t9, $3, $2
+	i64.call	$push49=, t9@FUNCTION, $3, $2
 	i64.const	$push50=, 1538
 	i64.ne  	$push51=, $pop49, $pop50
 	br_if   	$pop51, .LBB12_30
 # BB#17:                                # %if.end64
 	block   	.LBB12_29
-	i64.call	$push52=, t9, $3, $4
+	i64.call	$push52=, t9@FUNCTION, $3, $4
 	i64.const	$push53=, 4294968834
 	i64.ne  	$push54=, $pop52, $pop53
 	br_if   	$pop54, .LBB12_29
 # BB#18:                                # %if.end68
-	i64.call	$5=, t10, $3, $2
+	i64.call	$5=, t10@FUNCTION, $3, $2
 	i64.const	$6=, 3
 	block   	.LBB12_28
 	i64.load	$push55=, gull($0)
@@ -1171,7 +1171,7 @@ main:                                   # @main
 	i64.ne  	$push58=, $5, $pop57
 	br_if   	$pop58, .LBB12_28
 # BB#19:                                # %if.end72
-	i64.call	$5=, t10, $3, $4
+	i64.call	$5=, t10@FUNCTION, $3, $4
 	block   	.LBB12_27
 	i64.load	$push59=, gull($0)
 	i64.mul 	$push60=, $pop59, $6
@@ -1179,7 +1179,7 @@ main:                                   # @main
 	i64.ne  	$push62=, $5, $pop61
 	br_if   	$pop62, .LBB12_27
 # BB#20:                                # %if.end77
-	i64.call	$5=, t11, $3, $2
+	i64.call	$5=, t11@FUNCTION, $3, $2
 	i64.const	$6=, -3
 	block   	.LBB12_26
 	i64.load	$push63=, gull($0)
@@ -1188,7 +1188,7 @@ main:                                   # @main
 	i64.ne  	$push66=, $5, $pop65
 	br_if   	$pop66, .LBB12_26
 # BB#21:                                # %if.end84
-	i64.call	$5=, t11, $3, $4
+	i64.call	$5=, t11@FUNCTION, $3, $4
 	i64.load	$2=, gull($0)
 	block   	.LBB12_25
 	i64.mul 	$push67=, $2, $6
@@ -1200,76 +1200,76 @@ main:                                   # @main
 	i64.ne  	$push70=, $2, $1
 	br_if   	$pop70, .LBB12_24
 # BB#23:                                # %if.end95
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB12_24:                              # %if.then94
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_25:                              # %if.then90
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_26:                              # %if.then83
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_27:                              # %if.then76
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_28:                              # %if.then71
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_29:                              # %if.then67
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_30:                              # %if.then63
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_31:                              # %if.then59
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_32:                              # %if.then55
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_33:                              # %if.then51
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_34:                              # %if.then47
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_35:                              # %if.then43
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_36:                              # %if.then39
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_37:                              # %if.then35
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_38:                              # %if.then31
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_39:                              # %if.then27
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_40:                              # %if.then23
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_41:                              # %if.then19
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_42:                              # %if.then15
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_43:                              # %if.then11
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_44:                              # %if.then7
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_45:                              # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB12_46:                              # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end12:
 	.size	main, .Lfunc_end12-main

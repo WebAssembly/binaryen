@@ -70,7 +70,7 @@ f:                                      # @f
 	i32.store	$0=, 0($10), $pop3
 	i32.const	$push5=, buf
 	i32.const	$push4=, .L.str
-	i32.call	$discard=, siprintf, $pop5, $pop4
+	i32.call	$discard=, siprintf@FUNCTION, $pop5, $pop4
 	i32.const	$5=, __stack_pointer
 	i32.load	$5=, 0($5)
 	i32.const	$6=, 4
@@ -88,7 +88,7 @@ f:                                      # @f
 	i32.store	$10=, 0($9), $10
 	return
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	f, .Lfunc_end2-f
@@ -124,7 +124,7 @@ main:                                   # @main
 	i32.store	$1=, 0($9), $pop3
 	i32.const	$push5=, buf
 	i32.const	$push4=, .L.str
-	i32.call	$discard=, siprintf, $pop5, $pop4
+	i32.call	$discard=, siprintf@FUNCTION, $pop5, $pop4
 	i32.const	$5=, __stack_pointer
 	i32.load	$5=, 0($5)
 	i32.const	$6=, 4
@@ -136,10 +136,10 @@ main:                                   # @main
 	i32.ne  	$push7=, $1, $pop6
 	br_if   	$pop7, .LBB3_2
 # BB#1:                                 # %f.exit
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB3_2:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

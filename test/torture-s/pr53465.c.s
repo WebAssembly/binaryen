@@ -33,7 +33,7 @@ foo:                                    # @foo
 	i32.gt_s	$push1=, $4, $2
 	br_if   	$pop1, .LBB0_5
 # BB#4:                                 # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1

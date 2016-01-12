@@ -16,7 +16,7 @@ ll_to_ld:                               # @ll_to_ld
 	i32.store	$6=, 0($4), $6
 	i32.const	$6=, 0
 	i32.add 	$6=, $6, $6
-	call    	__floatditf, $6, $1
+	call    	__floatditf@FUNCTION, $6, $1
 	i32.const	$2=, 8
 	i64.load	$1=, 0($6)
 	i32.add 	$push2=, $0, $2
@@ -42,7 +42,7 @@ ld_to_ll:                               # @ld_to_ll
 	.param  	i64, i64
 	.result 	i64
 # BB#0:                                 # %entry
-	i64.call	$push0=, __fixtfdi, $0, $1
+	i64.call	$push0=, __fixtfdi@FUNCTION, $0, $1
 	return  	$pop0
 .Lfunc_end1:
 	.size	ld_to_ll, .Lfunc_end1-ld_to_ll
@@ -55,7 +55,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end4
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

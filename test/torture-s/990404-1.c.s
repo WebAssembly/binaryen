@@ -78,10 +78,10 @@ main:                                   # @main
 	i32.lt_s	$push21=, $13, $pop20
 	br_if   	$pop21, .LBB0_1
 .LBB0_3:                                # %if.then11
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %for.end15
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

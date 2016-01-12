@@ -21,7 +21,7 @@ bar:                                    # @bar
 	block   	.LBB0_3
 	i32.const	$push5=, .L.str
 	i32.add 	$push4=, $1, $3
-	i32.call	$push6=, memcmp, $0, $pop5, $pop4
+	i32.call	$push6=, memcmp@FUNCTION, $0, $pop5, $pop4
 	br_if   	$pop6, .LBB0_3
 # BB#2:                                 # %if.end4
 	i32.const	$push7=, 32
@@ -44,10 +44,10 @@ bar:                                    # @bar
 	i32.store8	$discard=, 0($pop17), $1
 	return
 .LBB0_3:                                # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -77,10 +77,10 @@ foo:                                    # @foo
 	i32.add 	$push5=, $1, $pop4
 	i32.const	$5=, 9
 	i32.add 	$5=, $5, $5
-	call    	memcpy, $5, $0, $pop5
+	call    	memcpy@FUNCTION, $5, $0, $pop5
 	i32.const	$6=, 9
 	i32.add 	$6=, $5, $6
-	call    	bar, $6
+	call    	bar@FUNCTION, $6
 .LBB1_2:                                # %return
 	i32.const	$4=, 16
 	i32.add 	$5=, $5, $4
@@ -105,7 +105,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_2
 	i32.const	$push1=, .L.str.1
-	call    	foo, $pop1, $1
+	call    	foo@FUNCTION, $pop1, $1
 	i32.load	$push2=, i($0)
 	i32.const	$push3=, 1
 	i32.add 	$push0=, $pop2, $pop3

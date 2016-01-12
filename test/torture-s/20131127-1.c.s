@@ -9,7 +9,7 @@ fn1:                                    # @fn1
 # BB#0:                                 # %entry
 	i32.const	$push0=, c
 	i32.const	$push1=, 14
-	call    	memcpy, $0, $pop0, $pop1
+	call    	memcpy@FUNCTION, $0, $pop0, $pop1
 	return
 .Lfunc_end0:
 	.size	fn1, .Lfunc_end0-fn1
@@ -104,11 +104,11 @@ fn2:                                    # @fn2
 	i32.const	$push55=, b
 	i32.const	$15=, 0
 	i32.add 	$15=, $16, $15
-	call    	memcpy, $pop55, $15, $3
+	call    	memcpy@FUNCTION, $pop55, $15, $3
 	i32.store16	$discard=, a($1), $1
 	i32.const	$push57=, d
 	i32.const	$push56=, e
-	call    	memcpy, $pop57, $pop56, $3
+	call    	memcpy@FUNCTION, $pop57, $pop56, $3
 	i32.const	$12=, 16
 	i32.add 	$16=, $16, $12
 	i32.const	$12=, __stack_pointer
@@ -208,10 +208,10 @@ main:                                   # @main
 	i32.const	$push55=, b
 	i32.const	$15=, 0
 	i32.add 	$15=, $16, $15
-	call    	memcpy, $pop55, $15, $3
+	call    	memcpy@FUNCTION, $pop55, $15, $3
 	i32.const	$push58=, d
 	i32.const	$push57=, e
-	call    	memcpy, $pop58, $pop57, $3
+	call    	memcpy@FUNCTION, $pop58, $pop57, $3
 	i32.store16	$push56=, a($1), $1
 	i32.const	$12=, 16
 	i32.add 	$16=, $16, $12

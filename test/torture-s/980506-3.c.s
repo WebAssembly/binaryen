@@ -11,9 +11,9 @@ main:                                   # @main
 	i32.const	$push0=, lookup_table
 	i32.const	$push2=, 4
 	i32.const	$push1=, 257
-	call    	memset, $pop0, $pop2, $pop1
+	call    	memset@FUNCTION, $pop0, $pop2, $pop1
 	i32.const	$push3=, 0
-	call    	exit, $pop3
+	call    	exit@FUNCTION, $pop3
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

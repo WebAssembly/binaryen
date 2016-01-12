@@ -17,7 +17,7 @@ ff:                                     # @ff
 	i32.eq  	$push3=, $2, $pop2
 	br_if   	$pop3, .LBB0_3
 # BB#2:                                 # %if.then2
-	call    	f1
+	call    	f1@FUNCTION
 	unreachable
 .LBB0_3:                                # %while.cond.preheader
 	i32.const	$3=, 0
@@ -36,7 +36,7 @@ ff:                                     # @ff
 	br_if   	$pop5, .LBB0_4
 .LBB0_6:                                # %land.lhs.true
 	i32.store	$discard=, f3.x($3), $4
-	i32.call	$discard=, f2
+	i32.call	$discard=, f2@FUNCTION
 	unreachable
 .LBB0_7:                                # %while.end
 	i32.store	$discard=, f3.x($3), $4
@@ -45,7 +45,7 @@ ff:                                     # @ff
 # BB#8:                                 # %if.end16
 	return
 .LBB0_9:                                # %if.then15
-	call    	f1
+	call    	f1@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	ff, .Lfunc_end0-ff
@@ -56,7 +56,7 @@ ff:                                     # @ff
 	.type	f1,@function
 f1:                                     # @f1
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
@@ -84,7 +84,7 @@ f3:                                     # @f3
 f2:                                     # @f2
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	f2, .Lfunc_end3-f2

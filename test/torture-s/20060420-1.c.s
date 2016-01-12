@@ -317,7 +317,7 @@ main:                                   # @main
 	i32.const	$push13=, 2
 	i32.const	$14=, 8
 	i32.add 	$14=, $15, $14
-	call    	foo, $9, $14, $pop13, $8
+	call    	foo@FUNCTION, $9, $14, $pop13, $8
 .LBB1_3:                                # %for.body16
                                         # =>This Inner Loop Header: Depth=1
 	block   	.LBB1_6
@@ -346,7 +346,7 @@ main:                                   # @main
 	i32.store	$15=, 0($13), $15
 	return  	$pop23
 .LBB1_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

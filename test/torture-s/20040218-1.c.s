@@ -69,7 +69,7 @@ main:                                   # @main
 	i64.store	$discard=, 8($7), $pop0
 	i32.const	$4=, 8
 	i32.add 	$4=, $7, $4
-	i32.call	$0=, xb, $4
+	i32.call	$0=, xb@FUNCTION, $4
 	i32.const	$1=, 16255
 	block   	.LBB3_4
 	i32.ne  	$push2=, $0, $1
@@ -77,24 +77,24 @@ main:                                   # @main
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$5=, 8
 	i32.add 	$5=, $7, $5
-	i32.call	$push3=, xw, $5
+	i32.call	$push3=, xw@FUNCTION, $5
 	i32.const	$push4=, 81535
 	i32.ne  	$push5=, $pop3, $pop4
 	br_if   	$pop5, .LBB3_4
 # BB#2:                                 # %lor.lhs.false4
 	i32.const	$6=, 4
 	i32.add 	$6=, $7, $6
-	i32.call	$push6=, yb, $6
+	i32.call	$push6=, yb@FUNCTION, $6
 	i32.const	$push7=, 65535
 	i32.and 	$push8=, $pop6, $pop7
 	i32.ne  	$push9=, $pop8, $1
 	br_if   	$pop9, .LBB3_4
 # BB#3:                                 # %if.end
 	i32.const	$push10=, 0
-	call    	exit, $pop10
+	call    	exit@FUNCTION, $pop10
 	unreachable
 .LBB3_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

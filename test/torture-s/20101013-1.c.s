@@ -7,7 +7,7 @@
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	build_ref_for_offset
+	call    	build_ref_for_offset@FUNCTION
 	i32.const	$push0=, 0
 	return  	$pop0
 .Lfunc_end0:
@@ -26,11 +26,11 @@ build_ref_for_offset:                   # @build_ref_for_offset
 	i32.store	$4=, 0($1), $4
 	i32.const	$3=, 8
 	i32.add 	$3=, $4, $3
-	call    	get_addr_base_and_unit_offset, $3
+	call    	get_addr_base_and_unit_offset@FUNCTION, $3
 	i64.load	$push0=, 8($4)
 	i64.const	$push1=, 4
 	i64.add 	$push2=, $pop0, $pop1
-	call    	build_int_cst, $pop2
+	call    	build_int_cst@FUNCTION, $pop2
 	i32.const	$2=, 16
 	i32.add 	$4=, $4, $2
 	i32.const	$2=, __stack_pointer
@@ -62,7 +62,7 @@ build_int_cst:                          # @build_int_cst
 # BB#1:                                 # %if.end
 	return
 .LBB3_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	build_int_cst, .Lfunc_end3-build_int_cst

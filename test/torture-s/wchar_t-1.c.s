@@ -23,13 +23,13 @@ main:                                   # @main
 	i32.ne  	$push4=, $pop3, $1
 	br_if   	$pop4, .LBB0_4
 # BB#3:                                 # %if.end4
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB0_4:                                # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

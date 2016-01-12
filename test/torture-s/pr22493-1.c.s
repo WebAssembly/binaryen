@@ -7,7 +7,7 @@
 f:                                      # @f
 	.param  	i32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -20,7 +20,7 @@ main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

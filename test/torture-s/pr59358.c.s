@@ -60,7 +60,7 @@ main:                                   # @main
 	i32.add 	$3=, $1, $pop1
 	i32.const	$11=, 12
 	i32.add 	$11=, $13, $11
-	i32.call	$4=, foo, $11, $5
+	i32.call	$4=, foo@FUNCTION, $11, $5
 	i32.const	$6=, 8
 	copy_local	$7=, $0
 	block   	.LBB1_5
@@ -95,7 +95,7 @@ main:                                   # @main
 	i32.const	$push12=, 7
 	i32.const	$12=, 12
 	i32.add 	$12=, $13, $12
-	i32.call	$5=, foo, $12, $pop12
+	i32.call	$5=, foo@FUNCTION, $12, $pop12
 	copy_local	$7=, $2
 	block   	.LBB1_9
 	i32.const	$push13=, 6
@@ -136,10 +136,10 @@ main:                                   # @main
 	i32.store	$13=, 0($10), $13
 	return  	$pop24
 .LBB1_12:                               # %if.then36
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_13:                               # %if.then17
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

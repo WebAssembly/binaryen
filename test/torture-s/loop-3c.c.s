@@ -53,7 +53,7 @@ main:                                   # @main
 	i32.store	$discard=, a+128($0), $pop2
 	i32.const	$push3=, a+96
 	i32.store	$discard=, a+64($0), $pop3
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

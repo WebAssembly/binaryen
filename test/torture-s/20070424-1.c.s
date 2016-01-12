@@ -7,7 +7,7 @@
 do_exit:                                # @do_exit
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end0:
 	.size	do_exit, .Lfunc_end0-do_exit
@@ -18,7 +18,7 @@ do_exit:                                # @do_exit
 	.type	do_abort,@function
 do_abort:                               # @do_abort
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	do_abort, .Lfunc_end1-do_abort
@@ -34,10 +34,10 @@ foo:                                    # @foo
 	i32.ge_s	$push0=, $0, $1
 	br_if   	$pop0, .LBB2_2
 # BB#1:                                 # %doit
-	call    	do_abort
+	call    	do_abort@FUNCTION
 	unreachable
 .LBB2_2:                                # %if.end
-	call    	do_exit
+	call    	do_exit@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo
@@ -49,7 +49,7 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	do_exit
+	call    	do_exit@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

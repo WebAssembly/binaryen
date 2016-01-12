@@ -419,7 +419,7 @@ fail:                                   # @fail
 	i32.store	$9=, 0($4), $9
 	i32.store	$discard=, 0($9), $0
 	i32.const	$push3=, .L.str
-	i32.call	$discard=, fiprintf, $2, $pop3
+	i32.call	$discard=, fiprintf@FUNCTION, $2, $pop3
 	i32.const	$5=, __stack_pointer
 	i32.load	$5=, 0($5)
 	i32.const	$6=, 4
@@ -447,10 +447,10 @@ main:                                   # @main
 	i32.load	$push0=, fail_count($0)
 	br_if   	$pop0, .LBB31_2
 # BB#1:                                 # %if.end202
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB31_2:                               # %if.then201
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end31:
 	.size	main, .Lfunc_end31-main

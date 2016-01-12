@@ -27,7 +27,7 @@ test:                                   # @test
 	i32.const	$push5=, 924
 	i32.const	$push2=, .L__func__.test
 	i32.const	$push4=, 0
-	i32.call	$2=, fn1, $pop6, $pop3, $pop5, $pop2, $pop4
+	i32.call	$2=, fn1@FUNCTION, $pop6, $pop3, $pop5, $pop2, $pop4
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $2, $pop7
 	i32.const	$push12=, 0
@@ -35,9 +35,9 @@ test:                                   # @test
 	br_if   	$pop13, .LBB0_3
 # BB#2:                                 # %cond.true
 	i32.const	$push9=, 33816706
-	i32.call	$2=, fn3, $pop9
+	i32.call	$2=, fn3@FUNCTION, $pop9
 	i32.const	$push10=, .L.str.1
-	i32.call	$3=, fn4, $pop10
+	i32.call	$3=, fn4@FUNCTION, $pop10
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
 	i32.const	$5=, 4
@@ -45,7 +45,7 @@ test:                                   # @test
 	i32.const	$5=, __stack_pointer
 	i32.store	$10=, 0($5), $10
 	i32.store	$discard=, 0($10), $3
-	call    	fn2, $2
+	call    	fn2@FUNCTION, $2
 	i32.const	$6=, __stack_pointer
 	i32.load	$6=, 0($6)
 	i32.const	$7=, 4
@@ -96,7 +96,7 @@ fn2:                                    # @fn2
 	return
 .LBB2_2:                                # %if.then
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end2:
 	.size	fn2, .Lfunc_end2-fn2
@@ -150,7 +150,7 @@ main:                                   # @main
 	i32.const	$push3=, 924
 	i32.const	$push0=, .L__func__.test
 	i32.const	$push2=, 0
-	i32.call	$0=, fn1, $pop4, $pop1, $pop3, $pop0, $pop2
+	i32.call	$0=, fn1@FUNCTION, $pop4, $pop1, $pop3, $pop0, $pop2
 	i32.const	$push5=, 255
 	i32.and 	$push6=, $0, $pop5
 	i32.const	$push9=, 0
@@ -158,9 +158,9 @@ main:                                   # @main
 	br_if   	$pop10, .LBB5_2
 # BB#1:                                 # %cond.true.i
 	i32.const	$push7=, 33816706
-	i32.call	$0=, fn3, $pop7
+	i32.call	$0=, fn3@FUNCTION, $pop7
 	i32.const	$push8=, .L.str.1
-	i32.call	$1=, fn4, $pop8
+	i32.call	$1=, fn4@FUNCTION, $pop8
 	i32.const	$2=, __stack_pointer
 	i32.load	$2=, 0($2)
 	i32.const	$3=, 4
@@ -168,7 +168,7 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$8=, 0($3), $8
 	i32.store	$discard=, 0($8), $1
-	call    	fn2, $0
+	call    	fn2@FUNCTION, $0
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
 	i32.const	$5=, 4
@@ -176,7 +176,7 @@ main:                                   # @main
 	i32.const	$5=, __stack_pointer
 	i32.store	$8=, 0($5), $8
 .LBB5_2:                                # %test.exit
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main

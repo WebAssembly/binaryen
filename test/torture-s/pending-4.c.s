@@ -51,10 +51,10 @@ main:                                   # @main
 	br_if   	$pop3, .LBB1_7
 # BB#6:                                 # %if.end7
 	i32.const	$push4=, 0
-	call    	exit, $pop4
+	call    	exit@FUNCTION, $pop4
 	unreachable
 .LBB1_7:                                # %if.then6
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_8:                                # %if.then
                                         #   in Loop: Header=BB1_1 Depth=1

@@ -10,7 +10,7 @@ main:                                   # @main
 	i32.const	$push1=, buf
 	i32.const	$push0=, .L.str.2
 	i32.const	$push2=, 13
-	call    	memcpy, $pop1, $pop0, $pop2
+	call    	memcpy@FUNCTION, $pop1, $pop0, $pop2
 	i32.const	$push3=, 0
 	return  	$pop3
 .Lfunc_end0:

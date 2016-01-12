@@ -7,7 +7,7 @@
 p:                                      # @p
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	p, .Lfunc_end0-p
@@ -29,7 +29,7 @@ f:                                      # @f
 # BB#1:                                 # %sw.epilog
 	return  	$0
 .LBB1_2:                                # %sw.bb
-	i32.call	$discard=, p
+	i32.call	$discard=, p@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.const	$push0=, 1
 	i32.store	$discard=, s($0), $pop0
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

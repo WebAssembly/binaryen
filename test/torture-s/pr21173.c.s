@@ -38,7 +38,7 @@ main:                                   # @main
 # BB#1:                                 # %for.cond.1
 	return  	$0
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

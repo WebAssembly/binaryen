@@ -20,11 +20,11 @@ t:                                      # @t
 # BB#2:                                 # %if.end3
 	return  	$0
 .LBB0_3:                                # %if.then2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %if.then
 	i32.const	$push2=, 0
-	call    	exit, $pop2
+	call    	exit@FUNCTION, $pop2
 	unreachable
 .Lfunc_end0:
 	.size	t, .Lfunc_end0-t
@@ -43,7 +43,7 @@ main:                                   # @main
 	loop    	.LBB1_2
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $0, $pop0
-	i32.call	$discard=, t, $pop1
+	i32.call	$discard=, t@FUNCTION, $pop1
 	i32.const	$push2=, 1
 	i32.add 	$0=, $0, $pop2
 	br      	.LBB1_1

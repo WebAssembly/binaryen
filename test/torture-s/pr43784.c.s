@@ -29,11 +29,11 @@ main:                                   # @main
 .LBB0_2:                                # %for.end
 	i32.const	$7=, 0
 	i32.add 	$7=, $9, $7
-	call    	rp, $7
+	call    	rp@FUNCTION, $7
 	i32.const	$push2=, v+4
 	i32.const	$8=, 0
 	i32.add 	$8=, $9, $8
-	call    	memcpy, $pop2, $8, $2
+	call    	memcpy@FUNCTION, $pop2, $8, $2
 	i32.const	$3=, 0
 .LBB0_3:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
@@ -59,7 +59,7 @@ main:                                   # @main
 	i32.store	$9=, 0($6), $9
 	return  	$pop10
 .LBB0_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -71,7 +71,7 @@ rp:                                     # @rp
 # BB#0:                                 # %entry
 	i32.const	$push0=, v
 	i32.const	$push1=, 256
-	call    	memcpy, $0, $pop0, $pop1
+	call    	memcpy@FUNCTION, $0, $pop0, $pop1
 	return
 .Lfunc_end1:
 	.size	rp, .Lfunc_end1-rp

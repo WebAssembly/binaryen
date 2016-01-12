@@ -205,7 +205,7 @@ main:                                   # @main
 	i32.store8	$discard=, e($1), $5
 	i32.const	$push80=, 226
 	i32.store8	$discard=, b($1), $pop80
-	i32.call	$discard=, getpid
+	i32.call	$discard=, getpid@FUNCTION
 	return  	$1
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

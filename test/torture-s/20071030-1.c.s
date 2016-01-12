@@ -73,7 +73,7 @@ main:                                   # @main
 	i32.const	$push0=, 1544
 	i32.const	$9=, 8
 	i32.add 	$9=, $12, $9
-	call    	memset, $9, $4, $pop0
+	call    	memset@FUNCTION, $9, $4, $pop0
 	f32.const	$0=, 0x0p0
 	i32.const	$3=, 16
 	i32.const	$10=, 8
@@ -120,7 +120,7 @@ main:                                   # @main
 	i32.store	$12=, 0($8), $12
 	return  	$pop15
 .LBB1_5:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

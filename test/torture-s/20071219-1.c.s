@@ -37,7 +37,7 @@ foo:                                    # @foo
 	i32.store	$discard=, p($pop4), $0
 	return
 .LBB0_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -75,7 +75,7 @@ test1:                                  # @test1
 	i64.store	$discard=, 32($22), $pop2
 	i32.const	$16=, 32
 	i32.add 	$16=, $22, $16
-	call    	foo, $16, $2
+	call    	foo@FUNCTION, $16, $2
 	i32.const	$17=, 0
 	i32.add 	$17=, $22, $17
 	i32.add 	$0=, $17, $0
@@ -96,7 +96,7 @@ test1:                                  # @test1
 	i32.const	$push4=, 1
 	i32.const	$20=, 0
 	i32.add 	$20=, $22, $20
-	call    	foo, $20, $pop4
+	call    	foo@FUNCTION, $20, $pop4
 	i64.load	$5=, 0($4)
 	i64.load	$8=, 0($7)
 	i64.load	$9=, 32($22)
@@ -107,7 +107,7 @@ test1:                                  # @test1
 	i64.store	$discard=, 0($22), $9
 	i32.const	$21=, 0
 	i32.add 	$21=, $22, $21
-	call    	foo, $21, $2
+	call    	foo@FUNCTION, $21, $2
 	i32.const	$12=, 64
 	i32.add 	$22=, $22, $12
 	i32.const	$12=, __stack_pointer
@@ -149,7 +149,7 @@ test2:                                  # @test2
 	i64.store	$discard=, 32($26), $pop2
 	i32.const	$20=, 32
 	i32.add 	$20=, $26, $20
-	call    	foo, $20, $1
+	call    	foo@FUNCTION, $20, $1
 	i64.load	$11=, 0($3)
 	i32.const	$21=, 0
 	i32.add 	$21=, $26, $21
@@ -170,7 +170,7 @@ test2:                                  # @test2
 	i64.store	$discard=, 0($26), $11
 	i32.const	$24=, 0
 	i32.add 	$24=, $26, $24
-	call    	foo, $24, $9
+	call    	foo@FUNCTION, $24, $9
 	i32.load8_u	$push4=, 0($10)
 	i32.store8	$discard=, 0($6), $pop4
 	i64.load	$11=, 0($5)
@@ -300,7 +300,7 @@ test2:                                  # @test2
 	i64.store	$discard=, 0($26), $pop116
 	i32.const	$25=, 0
 	i32.add 	$25=, $26, $25
-	call    	foo, $25, $1
+	call    	foo@FUNCTION, $25, $1
 	i32.const	$16=, 64
 	i32.add 	$26=, $26, $16
 	i32.const	$16=, __stack_pointer
@@ -342,7 +342,7 @@ test3:                                  # @test3
 	i64.store	$discard=, 32($23), $pop2
 	i32.const	$15=, 32
 	i32.add 	$15=, $23, $15
-	call    	foo, $15, $2
+	call    	foo@FUNCTION, $15, $2
 	i64.load	$5=, 0($4)
 	i32.const	$16=, 0
 	i32.add 	$16=, $23, $16
@@ -363,18 +363,18 @@ test3:                                  # @test3
 	i32.const	$push7=, 1
 	i32.const	$19=, 0
 	i32.add 	$19=, $23, $19
-	call    	foo, $19, $pop7
+	call    	foo@FUNCTION, $19, $pop7
 	i32.load	$0=, p($2)
 	i32.const	$1=, 25
 	i32.const	$20=, 32
 	i32.add 	$20=, $23, $20
-	call    	memcpy, $0, $20, $1
+	call    	memcpy@FUNCTION, $0, $20, $1
 	i32.const	$21=, 0
 	i32.add 	$21=, $23, $21
-	call    	memcpy, $0, $21, $1
+	call    	memcpy@FUNCTION, $0, $21, $1
 	i32.const	$22=, 0
 	i32.add 	$22=, $23, $22
-	call    	foo, $22, $2
+	call    	foo@FUNCTION, $22, $2
 	i32.const	$11=, 64
 	i32.add 	$23=, $23, $11
 	i32.const	$11=, __stack_pointer
@@ -390,9 +390,9 @@ test3:                                  # @test3
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	test1
-	call    	test2
-	call    	test3
+	call    	test1@FUNCTION
+	call    	test2@FUNCTION
+	call    	test3@FUNCTION
 	i32.const	$push0=, 0
 	return  	$pop0
 .Lfunc_end4:

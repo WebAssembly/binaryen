@@ -86,12 +86,12 @@ main:                                   # @main
 	i32.const	$push15=, expect
 	i32.const	$push1=, list
 	i32.const	$push16=, 80
-	i32.call	$push17=, memcmp, $pop15, $pop1, $pop16
+	i32.call	$push17=, memcmp@FUNCTION, $pop15, $pop1, $pop16
 	br_if   	$pop17, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

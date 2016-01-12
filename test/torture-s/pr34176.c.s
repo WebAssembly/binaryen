@@ -35,7 +35,7 @@ foo:                                    # @foo
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -56,13 +56,13 @@ main:                                   # @main
 	i32.store	$7=, 0($3), $7
 	i32.const	$5=, 12
 	i32.add 	$5=, $7, $5
-	i32.call	$discard=, hash_find_entry, $5
+	i32.call	$discard=, hash_find_entry@FUNCTION, $5
 .LBB2_1:                                # %if.end
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_2 Depth 2
 	loop    	.LBB2_4
 	i32.load	$1=, 12($7)
-	i32.call	$discard=, foo, $1
+	i32.call	$discard=, foo@FUNCTION, $1
 	i32.const	$0=, 0
 	block   	.LBB2_3
 	i32.const	$push3=, 0
@@ -81,7 +81,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$6=, 12
 	i32.add 	$6=, $7, $6
-	i32.call	$discard=, hash_find_entry, $6
+	i32.call	$discard=, hash_find_entry@FUNCTION, $6
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
 	br_if   	$pop6, .LBB2_1

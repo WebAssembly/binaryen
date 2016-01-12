@@ -18,7 +18,7 @@ put_field:                              # @put_field
 	return
 .LBB0_2:                                # %if.then
 	i32.const	$push3=, 0
-	call    	exit, $pop3
+	call    	exit@FUNCTION, $pop3
 	unreachable
 .Lfunc_end0:
 	.size	put_field, .Lfunc_end0-put_field
@@ -31,7 +31,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

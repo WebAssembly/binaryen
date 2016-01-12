@@ -29,7 +29,7 @@ aim_callhandler:                        # @aim_callhandler
 	i32.store	$discard=, aim_callhandler.i($1), $pop3
 	br      	.LBB0_5
 .LBB0_4:                                # %if.then6
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %return
 	i32.const	$push4=, 0
@@ -52,12 +52,12 @@ main:                                   # @main
 	i32.lt_s	$push0=, $0, $2
 	br_if   	$pop0, .LBB1_2
 # BB#1:                                 # %if.then6.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_2:                                # %aim_callhandler.exit
 	i32.add 	$push1=, $0, $2
 	i32.store	$discard=, aim_callhandler.i($1), $pop1
-	call    	exit, $1
+	call    	exit@FUNCTION, $1
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -21,7 +21,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -32,7 +32,7 @@ main:                                   # @main
 	.globl	a
 	.align	2
 a:
-	.int32	f
+	.int32	f@FUNCTION
 	.size	a, 4
 
 

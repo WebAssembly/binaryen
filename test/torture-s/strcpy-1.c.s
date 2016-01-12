@@ -77,7 +77,7 @@ main:                                   # @main
 	i32.add 	$push9=, $8, $pop8
 	i32.const	$push10=, 0
 	i32.store8	$14=, 0($pop9), $pop10
-	i32.call	$push11=, strcpy, $1, $3
+	i32.call	$push11=, strcpy@FUNCTION, $1, $3
 	i32.ne  	$push12=, $pop11, $1
 	br_if   	$pop12, .LBB0_29
 # BB#6:                                 # %for.cond21.preheader
@@ -105,7 +105,7 @@ main:                                   # @main
 	br_if   	$pop17, .LBB0_7
 	br      	.LBB0_10
 .LBB0_9:                                # %if.then28
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_10:                               # %for.body38.preheader
                                         #   in Loop: Header=BB0_3 Depth=3
@@ -212,19 +212,19 @@ main:                                   # @main
 	br_if   	$pop62, .LBB0_1
 .LBB0_25:                               # %for.end82
 	i32.const	$push63=, 0
-	call    	exit, $pop63
+	call    	exit@FUNCTION, $pop63
 	unreachable
 .LBB0_26:                               # %if.then68
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_27:                               # %if.then59
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_28:                               # %if.then48
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_29:                               # %if.then19
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

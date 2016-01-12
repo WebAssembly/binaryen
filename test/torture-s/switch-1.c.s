@@ -74,7 +74,7 @@ main:                                   # @main
 	i32.eq  	$push13=, $3, $pop12
 	br_if   	$pop13, .LBB1_12
 # BB#6:                                 # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_7:                                # %if.then5
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -82,7 +82,7 @@ main:                                   # @main
 	i32.eq  	$push11=, $3, $pop10
 	br_if   	$pop11, .LBB1_12
 # BB#8:                                 # %if.then7
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_9:                                # %if.then11
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -90,7 +90,7 @@ main:                                   # @main
 	i32.eq  	$push9=, $3, $pop8
 	br_if   	$pop9, .LBB1_12
 # BB#10:                                # %if.then13
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_11:                               # %if.then17
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -103,7 +103,7 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop14
 	br      	.LBB1_1
 .LBB1_13:                               # %if.then19
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_14:                               # %if.else21
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -121,7 +121,7 @@ main:                                   # @main
 	i32.const	$push20=, 0
 	return  	$pop20
 .LBB1_17:                               # %if.then23
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
