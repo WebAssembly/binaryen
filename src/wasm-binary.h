@@ -26,6 +26,7 @@
 
 #include "wasm.h"
 #include "shared-constants.h"
+#include "asm_v_wasm.h"
 
 namespace wasm {
 
@@ -326,8 +327,21 @@ class WasmBinaryWriter : public WasmVisitor<void> {
   Module* wasm;
   BufferWithRandomAccess& o;
 
+  MixedArena allocator;
+
+  void prepare() {
+    // we need function types for all our functions
+    for (auto func : wasm->functions) {
+      func->type = ensureFunctionType(getSig(func), wasm, allocator)->name;
+    }
+  }
+
 public:
-  WasmBinaryWriter(Module* wasm, BufferWithRandomAccess& o) : wasm(wasm), o(o) {}
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o) : o(o) {
+    wasm = allocator.alloc<Module>();
+    *wasm = *input; // simple shallow copy; we won't be modifying any internals, just adding some function types, so this is fine
+    prepare();
+  }
 
   void write() {
     writeMemory();
