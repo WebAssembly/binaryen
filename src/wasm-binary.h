@@ -416,10 +416,10 @@ public:
   writeDataSegments() {
     o << Section::DataSegments << LEB128(wasm.memory.segments.size());
     for (auto& segment : wasm.memory.segments) {
-      o << int32_t(segment.offset)
-        << int32_t(XXX) // TODO: where/when do we emit this?
-        << int32_t(segment.size)
-        << int8_t(1); // load at program start
+      o << int32_t(segment.offset);
+      emitBuffer(segment.data, segment.size);
+      o << int32_t(segment.size);
+      o << int8_t(1); // load at program start
     }
   }
 
@@ -447,24 +447,32 @@ public:
 
   // helpers
 
-  std::vector<std::pair<const char* str, size_t>> stringsToWrite;
+  struct Buffer {
+    const char* data;
+    size_t size;
+    size_t pointerLocation;
+    Buffer(const char* data, size_t size, size_t pointerLocation) : data(data), size(size), pointerLocation(pointerLocation) {}
+  };
 
-  void emitString(const char* str) {
-    stringsToWrite.emplace_back(str, o.size());
+  std::vector<Buffer> buffersToWrite;
+
+  void emitBuffer(const char* data, size_t size) {
+    assert(size > 0);
+    buffersToWrite.emplace_back(data, size, o.size());
     o << uint32_t(0); // placeholder
   }
 
+  void emitString(const char *str) {
+    emitBuffer(str, strlen(str) + 1);
+  }
+
   void finishUp() {
-    // finish strings
-    for (auto& stringToWrite : stringsToWrite) {
-      const char* str = stringToWrite.first;
-      size_t pos = stringToWrite.second;
-      o.writeAt(pos, (uint32_t)o.size());
-      while (*str) {
-        o << *str;
-        str++;
+    // finish buffers
+    for (auto& buffer : buffersToWrite) {
+      o.writeAt(buffer.pointerLocation, (uint32_t)o.size());
+      for (size_t i = 0; i < buffer.size; i++) {
+        o << buffer.data[i];
       }
-      o << '\0';
     }
   }
 
