@@ -37,3 +37,6 @@ script:
   - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
   - make -j2
   - ./check.py
+
+notifications:
+  email: false
