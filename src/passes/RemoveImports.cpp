@@ -27,7 +27,7 @@
 
 namespace wasm {
 
-struct RemoveImports : public Pass {
+struct RemoveImports : public WalkerPass<WasmWalker> {
   MixedArena* allocator;
   std::map<Name, Import*> importsMap;
 
