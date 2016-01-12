@@ -543,19 +543,29 @@ public:
     breakStack.pop_back();
   }
   void visitBreak(Break *curr) {
-    o << int8_t(BinaryConsts::Br);
+    o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br);
     for (int i = breakStack.size() - 1; i >= 0; i--) {
       if (breakStack[i] == curr->name) {
         o << int8_t(breakStack.size() - 1 - i);
         return;
       }
     }
-    abort();
+    if (curr->condition) visit(curr->condition);
   }
   void visitSwitch(Switch *curr) {
     o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->cases.size())
-                                     << int16_t(curr->targets.size());
-    abort(); // WTF
+                                           << int16_t(curr->targets.size());
+    std::map<Name, int16_t> mapping; // target name => index in cases
+    for (size_t i = 0; i < curr->cases.size(); i++) {
+      mapping[curr->cases[i].name] = i;
+    }
+    for (auto target : curr->targets) {
+      o << mapping[target];
+    }
+    visit(curr->value);
+    for (auto c : curr->cases) {
+      visit(c.body);
+    }
   }
   void visitCall(Call *curr) {
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
@@ -712,6 +722,7 @@ public:
         case f64: o << int8_t(BinaryConsts::F64##code); break; \
         default: abort(); \
       } \
+      break; \
     }
     #define INT_TYPED_CODE(code) { \
       switch (curr->left->type) { \
@@ -719,6 +730,7 @@ public:
         case i64: o << int8_t(BinaryConsts::I64##code); break; \
         default: abort(); \
       } \
+      break; \
     }
     #define FLOAT_TYPED_CODE(code) { \
       switch (curr->left->type) { \
@@ -726,6 +738,7 @@ public:
         case f64: o << int8_t(BinaryConsts::F64##code); break; \
         default: abort(); \
       } \
+      break; \
     }
 
     switch (curr->op) {

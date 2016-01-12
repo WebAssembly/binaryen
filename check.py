@@ -25,6 +25,8 @@ for arg in sys.argv[1:]:
     interpreter = arg.split('=')[1]
     print '[ using wasm interpreter at "%s" ]' % interpreter
     assert os.path.exists(interpreter), 'interpreter not found'
+  elif arg == '--torture':
+    torture = True
   elif arg == '--no-torture':
     torture = False
   else:
@@ -277,6 +279,16 @@ if torture:
   shutil.rmtree(s2wasm_torture_out)
   if unexpected_result_count:
     fail(unexpected_result_count, 0)
+
+print '\n[ checking wasm-as testcases... ]\n'
+
+for wast in tests:
+  if wast.endswith('.wast') and not wast in ['unit.wast']: # blacklist some known failures
+    cmd = [os.path.join('bin', 'wasm-as'), os.path.join('test', wast), '-o', 'a.wasm']
+    print cmd
+    if os.path.exists('a.wasm'): os.unlink('a.wasm')
+    subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert os.path.exists('a.wasm')
 
 print '\n[ checking example testcases... ]\n'
 
