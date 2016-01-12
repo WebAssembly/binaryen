@@ -554,8 +554,18 @@ public:
   }
   void visitSwitch(Switch *curr) {
     o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->cases.size())
-                                     << int16_t(curr->targets.size());
-    abort(); // WTF
+                                           << int16_t(curr->targets.size());
+    std::map<Name, int16_t> mapping; // target name => index in cases
+    for (size_t i = 0; i < curr->cases.size(); i++) {
+      mapping[curr->cases[i].name] = i;
+    }
+    for (auto target : curr->targets) {
+      o << mapping[target];
+    }
+    visit(curr->value);
+    for (auto c : curr->cases) {
+      visit(c.body);
+    }
   }
   void visitCall(Call *curr) {
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
