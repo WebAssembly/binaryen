@@ -26,7 +26,7 @@
         (set_local $$1
           (get_local $$0)
         )
-        (loop $.LBB1_2 $.LBB1_1
+        (loop $label$1 $label$0
           (block
             (set_local $$1
               (i32.add
@@ -43,7 +43,7 @@
                 (get_local $$1)
                 (i32.const 256)
               )
-              $.LBB1_1
+              $label$0
             )
           )
         )
@@ -62,7 +62,7 @@
         (set_local $$0
           (i32.const 0)
         )
-        (loop $.LBB2_2 $.LBB2_1
+        (loop $label$1 $label$0
           (block
             (i32.store offset=4 align=4
               (get_local $$0)
@@ -79,7 +79,7 @@
                 (get_local $$1)
                 (f32.const 256)
               )
-              $.LBB2_1
+              $label$0
             )
           )
         )

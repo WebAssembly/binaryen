@@ -5,13 +5,14 @@
 test0:
 	.param  	i32
 	.result 	i32
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0
 	i32.const	$push2=, 3
 	i32.div_s	$0=, $0, $pop2
 .LBB0_2:
+	end_block
 	return  	$0
 .Lfunc_end0:
 	.size	test0, .Lfunc_end0-test0
@@ -27,14 +28,14 @@ test1:
 	copy_local	$4=, $2
 	copy_local	$5=, $3
 .LBB1_1:
-	loop    	.LBB1_2
+	loop
 	copy_local	$1=, $4
 	copy_local	$4=, $3
 	i32.add 	$5=, $5, $2
 	copy_local	$3=, $1
 	i32.lt_s	$push0=, $5, $0
-	br_if   	$pop0, .LBB1_1
-.LBB1_2:
+	br_if   	$pop0, 0
+	end_loop
 	return  	$4
 .Lfunc_end1:
 	.size	test1, .Lfunc_end1-test1
