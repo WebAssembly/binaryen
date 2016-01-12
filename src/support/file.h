@@ -25,9 +25,14 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace wasm {
-std::string read_file(const std::string &filename, bool debug);
+template <typename T>
+T read_file(const std::string &filename, bool debug);
+// Declare the valid explicit specializations.
+extern template std::string read_file<>(const std::string &, bool);
+extern template std::vector<char> read_file<>(const std::string &, bool);
 
 class Output {
  public:
@@ -48,4 +53,4 @@ class Output {
 };
 }
 
-#endif // wasm_support_file_h
+#endif  // wasm_support_file_h

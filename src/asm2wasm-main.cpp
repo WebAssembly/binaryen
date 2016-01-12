@@ -18,64 +18,71 @@
 // asm2wasm console tool
 //
 
+#include "support/colors.h"
+#include "support/command-line.h"
+#include "support/file.h"
+
 #include "asm2wasm.h"
 
 using namespace cashew;
 using namespace wasm;
 
-namespace wasm {
-int debug = 0;
-}
+int main(int argc, const char *argv[]) {
+  Options options("asm2wasm", "Translate asm.js files to .wast files");
+  options
+      .add("--output", "-o", "Output file (stdout if not specified)",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["output"] = argument;
+             Colors::disable();
+           })
+      .add("--mapped-globals", "-m", "Mapped globals", Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["mapped globals"] = argument;
+           })
+      .add_positional("INFILE", Options::Arguments::One,
+                      [](Options *o, const std::string &argument) {
+                        o->extra["infile"] = argument;
+                      });
+  options.parse(argc, argv);
 
-int main(int argc, char **argv) {
-  debug = getenv("ASM2WASM_DEBUG") ? getenv("ASM2WASM_DEBUG")[0] - '0' : 0;
-
-  char *infile = argv[1];
-  char *mappedGlobals = argc < 3 ? nullptr : argv[2];
-
-  if (debug) std::cerr << "loading '" << infile << "'...\n";
-  FILE *f = fopen(argv[1], "r");
-  assert(f);
-  fseek(f, 0, SEEK_END);
-  int size = ftell(f);
-  char *input = new char[size+1];
-  rewind(f);
-  int num = fread(input, 1, size, f);
-  // On Windows, ftell() gives the byte position (\r\n counts as two bytes), but when
-  // reading, fread() returns the number of characters read (\r\n is read as one char \n, and counted as one),
-  // so return value of fread can be less than size reported by ftell, and that is normal.
-  assert((num > 0 || size == 0) && num <= size);
-  fclose(f);
-  input[num] = 0;
+  const auto &mg_it = options.extra.find("mapped globals");
+  const char *mappedGlobals =
+      mg_it == options.extra.end() ? nullptr : mg_it->second.c_str();
 
   Asm2WasmPreProcessor pre;
-  input = pre.process(input);
+  auto input(
+      read_file<std::vector<char>>(options.extra["infile"], options.debug));
+  char *start = pre.process(input.data());
 
-  if (debug) std::cerr << "parsing...\n";
+  if (options.debug) std::cerr << "parsing..." << std::endl;
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
-  Ref asmjs = builder.parseToplevel(input);
-  if (debug) {
-    std::cerr << "parsed:\n";
+  Ref asmjs = builder.parseToplevel(start);
+  if (options.debug) {
+    std::cerr << "parsed:" << std::endl;
     asmjs->stringify(std::cerr, true);
-    std::cerr << '\n';
+    std::cerr << std::endl;
   }
 
-  if (debug) std::cerr << "wasming...\n";
+  if (options.debug) std::cerr << "wasming..." << std::endl;
   AllocatingModule wasm;
-  wasm.memory.initial = wasm.memory.max = 16*1024*1024; // we would normally receive this from the compiler
-  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth);
+  wasm.memory.initial = wasm.memory.max =
+      16 * 1024 * 1024;  // we would normally receive this from the compiler
+  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug);
   asm2wasm.processAsm(asmjs);
 
-  if (debug) std::cerr << "optimizing...\n";
+  if (options.debug) std::cerr << "optimizing..." << std::endl;
   asm2wasm.optimize();
 
-  if (debug) std::cerr << "printing...\n";
-  std::cout << wasm;
+  if (options.debug) std::cerr << "printing..." << std::endl;
+  Output output(options.extra["output"], options.debug);
+  output << wasm;
 
   if (mappedGlobals) {
-    if (debug) std::cerr << "serializing mapped globals...\n";
+    if (options.debug)
+      std::cerr << "serializing mapped globals..." << std::endl;
     asm2wasm.serializeMappedGlobals(mappedGlobals);
   }
 
-  if (debug) std::cerr << "done.\n";
+  if (options.debug) std::cerr << "done." << std::endl;
 }
