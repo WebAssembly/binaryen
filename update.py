@@ -16,6 +16,7 @@
 
 import filecmp
 import glob
+import json
 import os
 import shutil
 import subprocess
@@ -33,7 +34,15 @@ TORTURE_DIR = os.path.join(BASE_DIR, 'torture-s')
 
 def download_revision(force_latest):
   name = 'latest' if force_latest else 'lkgr'
-  return urllib2.urlopen(STORAGE_BASE + name).read().strip()
+  downloaded = urllib2.urlopen(STORAGE_BASE + name).read().strip()
+  # TODO: for now try opening as JSON, if that doesn't work then the content is
+  #       just a hash. The waterfall is in the process of migrating to JSON.
+  info = None
+  try:
+    info = json.loads(downloaded)
+  except:
+    pass
+  return info['build'] if type(info) == dict else downloaded
 
 
 def write_revision(revision):
