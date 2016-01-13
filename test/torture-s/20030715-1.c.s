@@ -23,7 +23,7 @@ server_type:                            # @server_type
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, .L.str
-	i32.call	$4=, strcmp, $2, $pop0
+	i32.call	$4=, strcmp@FUNCTION, $2, $pop0
 	i32.const	$3=, 0
 	copy_local	$5=, $3
 	block   	.LBB1_3
@@ -33,7 +33,7 @@ server_type:                            # @server_type
 	br_if   	$pop3, .LBB1_2
 # BB#1:                                 # %if.else
 	i32.const	$push1=, .L.str.1
-	i32.call	$4=, strcmp, $2, $pop1
+	i32.call	$4=, strcmp@FUNCTION, $2, $pop1
 	i32.const	$2=, .L.str.2
 	i32.const	$5=, 1
 	br_if   	$4, .LBB1_3

@@ -14,15 +14,15 @@ main:                                   # @main
 	i32.const	$push0=, 6513249
 	i32.store	$discard=, buf($0), $pop0
 	i32.const	$push1=, .L.str
-	i32.call	$push2=, strcmp, $1, $pop1
+	i32.call	$push2=, strcmp@FUNCTION, $1, $pop1
 	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %foo.exit
 	i32.const	$push3=, .L.str.1
 	i32.const	$push4=, 9
-	call    	memcpy, $1, $pop3, $pop4
+	call    	memcpy@FUNCTION, $1, $pop3, $pop4
 	return  	$0
 .LBB0_2:                                # %if.then1.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

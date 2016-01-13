@@ -42,7 +42,7 @@ u2ld:                                   # @u2ld
 	i32.store	$6=, 0($4), $6
 	i32.const	$6=, 0
 	i32.add 	$6=, $6, $6
-	call    	__floatunsitf, $6, $1
+	call    	__floatunsitf@FUNCTION, $6, $1
 	i32.const	$1=, 8
 	i64.load	$2=, 0($6)
 	i32.add 	$push2=, $0, $1
@@ -102,7 +102,7 @@ s2ld:                                   # @s2ld
 	i32.store	$6=, 0($4), $6
 	i32.const	$6=, 0
 	i32.add 	$6=, $6, $6
-	call    	__floatsitf, $6, $1
+	call    	__floatsitf@FUNCTION, $6, $1
 	i32.const	$1=, 8
 	i64.load	$2=, 0($6)
 	i32.add 	$push2=, $0, $1
@@ -185,7 +185,7 @@ ldnear:                                 # @ldnear
 	i32.store	$11=, 0($9), $11
 	i32.const	$11=, 16
 	i32.add 	$11=, $11, $11
-	call    	__subtf3, $11, $0, $1, $2, $3
+	call    	__subtf3@FUNCTION, $11, $0, $1, $2, $3
 	i32.const	$5=, 8
 	i32.const	$12=, 16
 	i32.add 	$12=, $11, $12
@@ -193,7 +193,7 @@ ldnear:                                 # @ldnear
 	i64.load	$2=, 0($pop0)
 	i64.load	$4=, 16($11)
 	i64.const	$3=, 0
-	i32.call	$6=, __eqtf2, $4, $2, $3, $3
+	i32.call	$6=, __eqtf2@FUNCTION, $4, $2, $3, $3
 	i32.const	$7=, 1
 	block   	.LBB8_2
 	i32.const	$push8=, 0
@@ -202,7 +202,7 @@ ldnear:                                 # @ldnear
 # BB#1:                                 # %lor.rhs
 	i32.const	$13=, 0
 	i32.add 	$13=, $11, $13
-	call    	__divtf3, $13, $0, $1, $4, $2
+	call    	__divtf3@FUNCTION, $13, $0, $1, $4, $2
 	i64.load	$push3=, 0($11)
 	i32.const	$14=, 0
 	i32.add 	$14=, $11, $14
@@ -210,7 +210,7 @@ ldnear:                                 # @ldnear
 	i64.load	$push2=, 0($pop1)
 	i64.const	$push5=, 8070450532247928832
 	i64.const	$push4=, 4641306360700491489
-	i32.call	$push6=, __gttf2, $pop3, $pop2, $pop5, $pop4
+	i32.call	$push6=, __gttf2@FUNCTION, $pop3, $pop2, $pop5, $pop4
 	i32.const	$push7=, 0
 	i32.gt_s	$7=, $pop6, $pop7
 .LBB8_2:                                # %lor.end
@@ -276,7 +276,7 @@ ull2ld:                                 # @ull2ld
 	i32.store	$6=, 0($4), $6
 	i32.const	$6=, 0
 	i32.add 	$6=, $6, $6
-	call    	__floatunditf, $6, $1
+	call    	__floatunditf@FUNCTION, $6, $1
 	i32.const	$2=, 8
 	i64.load	$1=, 0($6)
 	i32.add 	$push2=, $0, $2
@@ -336,7 +336,7 @@ sll2ld:                                 # @sll2ld
 	i32.store	$6=, 0($4), $6
 	i32.const	$6=, 0
 	i32.add 	$6=, $6, $6
-	call    	__floatditf, $6, $1
+	call    	__floatditf@FUNCTION, $6, $1
 	i32.const	$2=, 8
 	i64.load	$1=, 0($6)
 	i32.add 	$push2=, $0, $2
@@ -400,7 +400,7 @@ ld2u:                                   # @ld2u
 	.param  	i64, i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$push0=, __fixunstfsi, $0, $1
+	i32.call	$push0=, __fixunstfsi@FUNCTION, $0, $1
 	return  	$pop0
 .Lfunc_end19:
 	.size	ld2u, .Lfunc_end19-ld2u
@@ -439,7 +439,7 @@ ld2s:                                   # @ld2s
 	.param  	i64, i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$push0=, __fixtfsi, $0, $1
+	i32.call	$push0=, __fixtfsi@FUNCTION, $0, $1
 	return  	$pop0
 .Lfunc_end22:
 	.size	ld2s, .Lfunc_end22-ld2s
@@ -490,7 +490,7 @@ ld2ull:                                 # @ld2ull
 	.param  	i64, i64
 	.result 	i64
 # BB#0:                                 # %entry
-	i64.call	$push0=, __fixunstfdi, $0, $1
+	i64.call	$push0=, __fixunstfdi@FUNCTION, $0, $1
 	return  	$pop0
 .Lfunc_end26:
 	.size	ld2ull, .Lfunc_end26-ld2ull
@@ -529,7 +529,7 @@ ld2sll:                                 # @ld2sll
 	.param  	i64, i64
 	.result 	i64
 # BB#0:                                 # %entry
-	i64.call	$push0=, __fixtfdi, $0, $1
+	i64.call	$push0=, __fixtfdi@FUNCTION, $0, $1
 	return  	$pop0
 .Lfunc_end29:
 	.size	ld2sll, .Lfunc_end29-ld2sll
@@ -554,7 +554,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end31:
 	.size	main, .Lfunc_end31-main

@@ -33,8 +33,6 @@ namespace wasm {
 
 using namespace cashew;
 
-extern int debug; // wasm::debug is set in main(), typically from an env var
-
 // Utilities
 
 static void abort_on(std::string why, Ref element) {
@@ -151,6 +149,7 @@ class Asm2WasmBuilder {
   std::map<CallIndirect*, IString> callIndirects; // track these, as we need to fix them after we know the functionTableStarts. this maps call => its function table
 
   bool memoryGrowth;
+  int debug;
 
 public:
   std::map<IString, MappedGlobal> mappedGlobals;
@@ -244,33 +243,23 @@ private:
     }
   }
 
-  FunctionType *getFunctionType(Ref parent, ExpressionList& operands) {
+  FunctionType* getFunctionType(Ref parent, ExpressionList& operands) {
     // generate signature
     WasmType result = !!parent ? detectWasmType(parent, nullptr) : none;
-    std::string str = "FUNCSIG$";
-    str += getSig(result);
-    for (auto operand : operands) {
-      str += getSig(operand->type);
-    }
-    IString sig(str.c_str(), false);
-    if (wasm.functionTypesMap.find(sig) == wasm.functionTypesMap.end()) {
-      // add new type
-      auto type = allocator.alloc<FunctionType>();
-      type->name = sig;
-      type->result = result;
-      for (auto operand : operands) {
-        type->params.push_back(operand->type);
-      }
-      wasm.addFunctionType(type);
-    }
-    return wasm.functionTypesMap[sig];
+    return ensureFunctionType(getSig(result, operands), &wasm, allocator);
   }
 
 public:
-  Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth) : wasm(wasm), allocator(wasm.allocator), nextGlobal(8), maxGlobal(1000), memoryGrowth(memoryGrowth) {}
+ Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth, int debug)
+     : wasm(wasm),
+       allocator(wasm.allocator),
+       nextGlobal(8),
+       maxGlobal(1000),
+       memoryGrowth(memoryGrowth),
+       debug(debug) {}
 
-  void processAsm(Ref ast);
-  void optimize();
+ void processAsm(Ref ast);
+ void optimize();
 
 private:
   AsmType detectAsmType(Ref ast, AsmData *data) {
@@ -416,34 +405,9 @@ private:
       if (base == ABS) {
         assert(operands && operands->size() == 1);
         WasmType type = (*operands)[0]->type;
-        if (type == i32) {
-          static FunctionType* builtin = nullptr;
-          if (!builtin) {
-            builtin = new FunctionType();
-            builtin->params.push_back(i32);
-            builtin->result = i32;
-          }
-          return builtin;
-        }
-        if (type == f32) {
-          static FunctionType* builtin = nullptr;
-          if (!builtin) {
-            builtin = new FunctionType();
-            builtin->params.push_back(f32);
-            builtin->result = f32;
-          }
-          return builtin;
-        }
-        if (type == f64) {
-          static FunctionType* builtin = nullptr;
-          if (!builtin) {
-            builtin = new FunctionType();
-            builtin->params.push_back(f64);
-            builtin->result = f64;
-          }
-          return builtin;
-        }
-
+        if (type == i32) return ensureFunctionType("ii", &wasm, allocator);
+        if (type == f32) return ensureFunctionType("ff", &wasm, allocator);
+        if (type == f64) return ensureFunctionType("dd", &wasm, allocator);
       }
     }
     return nullptr;
@@ -687,10 +651,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       // special math builtins
       FunctionType* builtin = getBuiltinFunctionType(import.module, import.base);
       if (builtin) {
-        import.type = *builtin;
+        import.type = builtin;
         continue;
       }
-      import.type = importedFunctionTypes[name];
+      import.type = ensureFunctionType(getSig(&importedFunctionTypes[name]), &wasm, allocator);
     } else if (import.module != ASM2WASM) { // special-case the special module
       // never actually used
       toErase.push_back(name);
@@ -901,10 +865,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->name = F64_REM;
           import->module = ASM2WASM;
           import->base = F64_REM;
-          import->type.name = F64_REM;
-          import->type.result = f64;
-          import->type.params.push_back(f64);
-          import->type.params.push_back(f64);
+          import->type = ensureFunctionType("ddd", &wasm, allocator);
           wasm.addImport(import);
         }
         return call;
@@ -945,8 +906,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->name = DEBUGGER;
           import->module = ASM2WASM;
           import->base = DEBUGGER;
-          import->type.name = DEBUGGER;
-          import->type.result = none;
+          import->type = ensureFunctionType("v", &wasm, allocator);
           wasm.addImport(import);
         }
         return call;
@@ -1052,9 +1012,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             import->name = F64_TO_INT;
             import->module = ASM2WASM;
             import->base = F64_TO_INT;
-            import->type.name = F64_TO_INT;
-            import->type.result = i32;
-            import->type.params.push_back(f64);
+            import->type = ensureFunctionType("id", &wasm, allocator);
             wasm.addImport(import);
           }
           return ret;

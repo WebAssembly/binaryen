@@ -34,7 +34,7 @@ bogus:                                  # @bogus
 # BB#1:                                 # %if.end8
 	return
 .LBB1_2:                                # %if.then7
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	bogus, .Lfunc_end1-bogus
@@ -47,7 +47,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

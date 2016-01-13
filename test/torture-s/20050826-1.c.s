@@ -11,7 +11,7 @@ bar:                                    # @bar
 	block   	.LBB0_6
 	i32.const	$push0=, .L.str
 	i32.const	$push1=, 8
-	i32.call	$push2=, memcmp, $0, $pop0, $pop1
+	i32.call	$push2=, memcmp@FUNCTION, $0, $pop0, $pop1
 	br_if   	$pop2, .LBB0_6
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push3=, 7
@@ -34,10 +34,10 @@ bar:                                    # @bar
 .LBB0_4:                                # %for.end
 	return
 .LBB0_5:                                # %if.then2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -53,7 +53,7 @@ foo:                                    # @foo
 	i32.const	$0=, a
 	i32.const	$1=, 0
 	i32.const	$push0=, 2048
-	call    	memset, $0, $1, $pop0
+	call    	memset@FUNCTION, $0, $1, $pop0
 	i32.load8_u	$push2=, .L.str.1+4($1)
 	i32.store8	$discard=, a+5($1), $pop2
 	i32.load8_u	$push3=, .L.str.1+3($1)
@@ -70,7 +70,7 @@ foo:                                    # @foo
 	i32.store8	$2=, a+6($1), $3
 	block   	.LBB1_5
 	i32.const	$push7=, .L.str
-	i32.call	$push8=, memcmp, $0, $pop7, $4
+	i32.call	$push8=, memcmp@FUNCTION, $0, $pop7, $4
 	br_if   	$pop8, .LBB1_5
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
@@ -90,12 +90,12 @@ foo:                                    # @foo
 	i32.eq  	$push15=, $pop13, $pop14
 	br_if   	$pop15, .LBB1_1
 .LBB1_3:                                # %if.then2.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %bar.exit
 	return  	$1
 .LBB1_5:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -111,7 +111,7 @@ main:                                   # @main
 	i32.const	$0=, a
 	i32.const	$1=, 0
 	i32.const	$push0=, 2048
-	call    	memset, $0, $1, $pop0
+	call    	memset@FUNCTION, $0, $1, $pop0
 	i32.load8_u	$push2=, .L.str.1+4($1)
 	i32.store8	$discard=, a+5($1), $pop2
 	i32.load8_u	$push3=, .L.str.1+3($1)
@@ -128,7 +128,7 @@ main:                                   # @main
 	i32.store8	$2=, a+6($1), $3
 	block   	.LBB2_5
 	i32.const	$push7=, .L.str
-	i32.call	$push8=, memcmp, $0, $pop7, $4
+	i32.call	$push8=, memcmp@FUNCTION, $0, $pop7, $4
 	br_if   	$pop8, .LBB2_5
 .LBB2_1:                                # %for.cond.i.i
                                         # =>This Inner Loop Header: Depth=1
@@ -148,12 +148,12 @@ main:                                   # @main
 	i32.eq  	$push15=, $pop13, $pop14
 	br_if   	$pop15, .LBB2_1
 .LBB2_3:                                # %if.then2.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_4:                                # %foo.exit
 	return  	$1
 .LBB2_5:                                # %if.then.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

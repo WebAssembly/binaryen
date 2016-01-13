@@ -331,21 +331,21 @@ main:                                   # @main
 	br_if   	$pop87, .LBB2_31
 .LBB2_27:                               # %if.then299
 	i64.store	$discard=, simple_rand.seed($13), $2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_28:                               # %if.then208
 	i64.store	$discard=, simple_rand.seed($13), $2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_29:                               # %if.then111
 	i32.const	$push88=, 0
 	i64.store	$discard=, simple_rand.seed($pop88), $2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_30:                               # %if.then32
 	i32.const	$push41=, 0
 	i64.store	$discard=, simple_rand.seed($pop41), $2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_31:                               # %cleanup301
                                         #   in Loop: Header=BB2_1 Depth=1
@@ -357,7 +357,7 @@ main:                                   # @main
 .LBB2_32:                               # %for.end
 	i32.const	$1=, 0
 	i64.store	$discard=, simple_rand.seed($1), $2
-	call    	exit, $1
+	call    	exit@FUNCTION, $1
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

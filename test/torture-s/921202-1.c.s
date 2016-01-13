@@ -7,7 +7,7 @@
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %for.cond
-	i32.call	$discard=, exxit
+	i32.call	$discard=, exxit@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -80,7 +80,7 @@ exxit:                                  # @exxit
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end6:
 	.size	exxit, .Lfunc_end6-exxit

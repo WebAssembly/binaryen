@@ -26,7 +26,7 @@ bar:                                    # @bar
 	i32.load8_u	$push0=, v1($3)
 	br_if   	$pop0, .LBB1_2
 # BB#1:                                 # %if.then
-	call    	foo
+	call    	foo@FUNCTION
 .LBB1_2:                                # %for.cond.preheader
 	i32.const	$4=, 1
 	copy_local	$6=, $0
@@ -138,14 +138,14 @@ main:                                   # @main
 	i64.store	$discard=, 0($12), $pop8
 	i32.const	$push26=, 0
 	i32.store16	$0=, 34($12), $pop26
-	call    	foo
+	call    	foo@FUNCTION
 	i32.const	$1=, 17
 	i32.const	$9=, 0
 	i32.add 	$9=, $12, $9
 	i32.const	$10=, 48
 	i32.add 	$10=, $12, $10
 	block   	.LBB2_5
-	i32.call	$push31=, bar, $1, $9, $10
+	i32.call	$push31=, bar@FUNCTION, $1, $9, $10
 	i32.ne  	$push32=, $pop31, $1
 	br_if   	$pop32, .LBB2_5
 # BB#3:                                 # %lor.lhs.false
@@ -153,7 +153,7 @@ main:                                   # @main
 	i32.const	$push34=, 18
 	i32.const	$11=, 48
 	i32.add 	$11=, $12, $11
-	i32.call	$push35=, memcmp, $11, $pop33, $pop34
+	i32.call	$push35=, memcmp@FUNCTION, $11, $pop33, $pop34
 	br_if   	$pop35, .LBB2_5
 # BB#4:                                 # %if.end
 	i32.const	$4=, 80
@@ -162,7 +162,7 @@ main:                                   # @main
 	i32.store	$12=, 0($4), $12
 	return  	$0
 .LBB2_5:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

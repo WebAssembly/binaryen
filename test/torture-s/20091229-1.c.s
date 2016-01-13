@@ -28,7 +28,7 @@ foo:                                    # @foo
 main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

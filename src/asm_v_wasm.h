@@ -17,6 +17,7 @@
 #ifndef wasm_asm_v_wasm_h
 #define wasm_asm_v_wasm_h
 
+#include "mixed_arena.h"
 #include "emscripten-optimizer/optimizer.h"
 
 namespace wasm {
@@ -81,6 +82,15 @@ std::string getSig(CallBase *call) {
   return ret;
 }
 
+std::string getSig(WasmType result, ExpressionList& operands) {
+  std::string ret;
+  ret += getSig(result);
+  for (auto operand : operands) {
+    ret += getSig(operand->type);
+  }
+  return ret;
+}
+
 WasmType sigToWasmType(char sig) {
   switch (sig) {
     case 'i': return i32;
@@ -99,6 +109,22 @@ FunctionType sigToFunctionType(std::string sig) {
     ret.params.push_back(sigToWasmType(sig[i]));
   }
   return ret;
+}
+
+FunctionType* ensureFunctionType(std::string sig, Module* wasm, MixedArena& allocator) {
+  cashew::IString name(("FUNCSIG$" + sig).c_str(), false);
+  if (wasm->functionTypesMap.find(name) != wasm->functionTypesMap.end()) {
+    return wasm->functionTypesMap[name];
+  }
+  // add new type
+  auto type = allocator.alloc<FunctionType>();
+  type->name = name;
+  type->result = sigToWasmType(sig[0]);
+  for (size_t i = 1; i < sig.size(); i++) {
+    type->params.push_back(sigToWasmType(sig[i]));
+  }
+  wasm->addFunctionType(type);
+  return type;
 }
 
 } // namespace wasm

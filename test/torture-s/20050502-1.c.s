@@ -40,9 +40,9 @@ foo:                                    # @foo
 	.param  	i32, i32, i32, i32
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.call	$push1=, bar, $0
+	i32.call	$push1=, bar@FUNCTION, $0
 	i32.store8	$discard=, 0($1), $pop1
-	i32.call	$9=, bar, $0
+	i32.call	$9=, bar@FUNCTION, $0
 	i32.const	$5=, 255
 	i32.and 	$10=, $9, $5
 	i32.const	$6=, 39
@@ -69,7 +69,7 @@ foo:                                    # @foo
 	i32.const	$8=, 24
 	i32.shl 	$push5=, $9, $8
 	i32.shr_s	$push6=, $pop5, $8
-	i32.call	$8=, baz, $pop6
+	i32.call	$8=, baz@FUNCTION, $pop6
 	copy_local	$11=, $10
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $8, $pop15
@@ -80,7 +80,7 @@ foo:                                    # @foo
 	i32.store8	$discard=, 0($pop9), $9
 	i32.const	$push8=, 1
 	i32.add 	$11=, $10, $pop8
-	i32.call	$9=, bar, $0
+	i32.call	$9=, bar@FUNCTION, $0
 	i32.and 	$8=, $9, $5
 	i32.eq  	$push10=, $8, $6
 	i32.and 	$push11=, $pop10, $2
@@ -123,17 +123,17 @@ main:                                   # @main
 	i32.add 	$5=, $20, $5
 	i32.const	$6=, 16
 	i32.add 	$6=, $20, $6
-	call    	foo, $5, $6, $1, $0
+	call    	foo@FUNCTION, $5, $6, $1, $0
 	block   	.LBB3_15
 	i32.load	$push1=, 12($20)
 	i32.const	$push2=, .L.str.1
-	i32.call	$push3=, strcmp, $pop1, $pop2
+	i32.call	$push3=, strcmp@FUNCTION, $pop1, $pop2
 	br_if   	$pop3, .LBB3_15
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push4=, .L.str.2
 	i32.const	$7=, 16
 	i32.add 	$7=, $20, $7
-	i32.call	$push5=, strcmp, $7, $pop4
+	i32.call	$push5=, strcmp@FUNCTION, $7, $pop4
 	br_if   	$pop5, .LBB3_15
 # BB#2:                                 # %if.end
 	i32.const	$push6=, .L.str.3
@@ -142,17 +142,17 @@ main:                                   # @main
 	i32.add 	$8=, $20, $8
 	i32.const	$9=, 16
 	i32.add 	$9=, $20, $9
-	call    	foo, $8, $9, $0, $1
+	call    	foo@FUNCTION, $8, $9, $0, $1
 	block   	.LBB3_14
 	i32.load	$push7=, 12($20)
 	i32.const	$push8=, .L.str.4
-	i32.call	$push9=, strcmp, $pop7, $pop8
+	i32.call	$push9=, strcmp@FUNCTION, $pop7, $pop8
 	br_if   	$pop9, .LBB3_14
 # BB#3:                                 # %lor.lhs.false7
 	i32.const	$push10=, .L.str.5
 	i32.const	$10=, 16
 	i32.add 	$10=, $20, $10
-	i32.call	$push11=, strcmp, $10, $pop10
+	i32.call	$push11=, strcmp@FUNCTION, $10, $pop10
 	br_if   	$pop11, .LBB3_14
 # BB#4:                                 # %if.end12
 	i32.const	$push12=, .L.str.6
@@ -161,17 +161,17 @@ main:                                   # @main
 	i32.add 	$11=, $20, $11
 	i32.const	$12=, 16
 	i32.add 	$12=, $20, $12
-	call    	foo, $11, $12, $1, $1
+	call    	foo@FUNCTION, $11, $12, $1, $1
 	block   	.LBB3_13
 	i32.load	$push13=, 12($20)
 	i32.const	$push14=, .L.str.7
-	i32.call	$push15=, strcmp, $pop13, $pop14
+	i32.call	$push15=, strcmp@FUNCTION, $pop13, $pop14
 	br_if   	$pop15, .LBB3_13
 # BB#5:                                 # %lor.lhs.false16
 	i32.const	$push16=, .L.str.8
 	i32.const	$13=, 16
 	i32.add 	$13=, $20, $13
-	i32.call	$push17=, strcmp, $13, $pop16
+	i32.call	$push17=, strcmp@FUNCTION, $13, $pop16
 	br_if   	$pop17, .LBB3_13
 # BB#6:                                 # %if.end21
 	i32.const	$push18=, .L.str.9
@@ -180,17 +180,17 @@ main:                                   # @main
 	i32.add 	$14=, $20, $14
 	i32.const	$15=, 16
 	i32.add 	$15=, $20, $15
-	call    	foo, $14, $15, $1, $1
+	call    	foo@FUNCTION, $14, $15, $1, $1
 	block   	.LBB3_12
 	i32.load	$push19=, 12($20)
 	i32.const	$push20=, .L.str.10
-	i32.call	$push21=, strcmp, $pop19, $pop20
+	i32.call	$push21=, strcmp@FUNCTION, $pop19, $pop20
 	br_if   	$pop21, .LBB3_12
 # BB#7:                                 # %lor.lhs.false25
 	i32.const	$push22=, .L.str.11
 	i32.const	$16=, 16
 	i32.add 	$16=, $20, $16
-	i32.call	$push23=, strcmp, $16, $pop22
+	i32.call	$push23=, strcmp@FUNCTION, $16, $pop22
 	br_if   	$pop23, .LBB3_12
 # BB#8:                                 # %if.end30
 	i32.const	$push24=, .L.str.12
@@ -199,17 +199,17 @@ main:                                   # @main
 	i32.add 	$17=, $20, $17
 	i32.const	$18=, 16
 	i32.add 	$18=, $20, $18
-	call    	foo, $17, $18, $0, $0
+	call    	foo@FUNCTION, $17, $18, $0, $0
 	block   	.LBB3_11
 	i32.load	$push25=, 12($20)
 	i32.const	$push26=, .L.str.13
-	i32.call	$push27=, strcmp, $pop25, $pop26
+	i32.call	$push27=, strcmp@FUNCTION, $pop25, $pop26
 	br_if   	$pop27, .LBB3_11
 # BB#9:                                 # %lor.lhs.false34
 	i32.const	$push28=, .L.str.14
 	i32.const	$19=, 16
 	i32.add 	$19=, $20, $19
-	i32.call	$push29=, strcmp, $19, $pop28
+	i32.call	$push29=, strcmp@FUNCTION, $19, $pop28
 	br_if   	$pop29, .LBB3_11
 # BB#10:                                # %if.end39
 	i32.const	$4=, 80
@@ -218,19 +218,19 @@ main:                                   # @main
 	i32.store	$20=, 0($4), $20
 	return  	$0
 .LBB3_11:                               # %if.then38
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_12:                               # %if.then29
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_13:                               # %if.then20
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_14:                               # %if.then11
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_15:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

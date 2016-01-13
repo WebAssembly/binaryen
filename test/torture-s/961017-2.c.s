@@ -17,7 +17,7 @@ main:                                   # @main
 	br_if   	$0, .LBB0_1
 .LBB0_2:                                # %do.end
 	i32.const	$push1=, 0
-	call    	exit, $pop1
+	call    	exit@FUNCTION, $pop1
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

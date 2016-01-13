@@ -38,7 +38,7 @@ foo:                                    # @foo
 	i32.store	$0=, 8($6), $pop0
 	i32.const	$7=, 8
 	i32.add 	$7=, $6, $7
-	i32.call	$push2=, bar, $7
+	i32.call	$push2=, bar@FUNCTION, $7
 	i32.store	$discard=, 4($pop2), $1
 	i32.load	$2=, 0($2)
 	i32.const	$push3=, 0
@@ -72,7 +72,7 @@ main:                                   # @main
 	i32.const	$4=, 8
 	i32.add 	$4=, $5, $4
 	block   	.LBB2_2
-	i32.call	$push0=, foo, $3, $4
+	i32.call	$push0=, foo@FUNCTION, $3, $4
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, .LBB2_2
@@ -84,7 +84,7 @@ main:                                   # @main
 	i32.store	$5=, 0($2), $5
 	return  	$pop3
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

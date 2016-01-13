@@ -188,7 +188,7 @@ main:                                   # @main
 	i32.add 	$3=, $3, $pop30
 	br_if   	$3, .LBB3_2
 .LBB3_3:                                # %prefetch_for_write.exit
-	call    	exit, $1
+	call    	exit@FUNCTION, $1
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

@@ -14,11 +14,11 @@ foo:                                    # @foo
 	i32.gt_u	$push2=, $pop0, $pop1
 	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_2:                                # %if.end
 	i32.const	$push3=, 0
-	call    	exit, $pop3
+	call    	exit@FUNCTION, $pop3
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.add 	$2=, $4, $2
 	i32.const	$3=, 12
 	i32.add 	$3=, $4, $3
-	i32.call	$discard=, foo, $2, $3
+	i32.call	$discard=, foo@FUNCTION, $2, $3
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

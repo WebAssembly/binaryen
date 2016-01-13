@@ -72,7 +72,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   module->memory.max = pre.memoryGrowth ? -1 : module->memory.initial;
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
-  asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth);
+  asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth, debug);
   asm2wasm->processAsm(asmjs);
 
   if (wasmJSDebug) std::cerr << "optimizing...\n";
@@ -190,7 +190,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
       if (wasmJSDebug) std::cout << "calling import returning " << ret << '\n';
 
-      switch (import->type.result) {
+      switch (import->type->result) {
         case none: return Literal(0);
         case i32: return Literal((int32_t)ret);
         case f32: return Literal((float)ret);

@@ -54,7 +54,7 @@ stack_uses:
 	.local  	i32, i32
 	i32.const	$5=, 2
 	i32.const	$4=, 1
-	block   	.LBB4_2
+	block
 	i32.lt_s	$push0=, $0, $4
 	i32.lt_s	$push1=, $1, $5
 	i32.xor 	$push4=, $pop0, $pop1
@@ -63,10 +63,11 @@ stack_uses:
 	i32.xor 	$push5=, $pop2, $pop3
 	i32.xor 	$push6=, $pop4, $pop5
 	i32.ne  	$push7=, $pop6, $4
-	br_if   	$pop7, .LBB4_2
+	br_if   	$pop7, 0
 	i32.const	$push8=, 0
 	return  	$pop8
 .LBB4_2:
+	end_block
 	return  	$4
 .Lfunc_end4:
 	.size	stack_uses, .Lfunc_end4-stack_uses
@@ -77,13 +78,14 @@ multiple_uses:
 	.param  	i32, i32, i32
 	.local  	i32
 	i32.load	$3=, 0($2)
-	block   	.LBB5_3
+	block
 	i32.ge_u	$push0=, $3, $1
-	br_if   	$pop0, .LBB5_3
+	br_if   	$pop0, 0
 	i32.lt_u	$push1=, $3, $0
-	br_if   	$pop1, .LBB5_3
+	br_if   	$pop1, 0
 	i32.store	$discard=, 0($2), $3
 .LBB5_3:
+	end_block
 	return
 .Lfunc_end5:
 	.size	multiple_uses, .Lfunc_end5-multiple_uses

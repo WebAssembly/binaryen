@@ -10,13 +10,13 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block   	.LBB0_2
 	i32.const	$push0=, 1
-	i32.call	$push1=, CallFunctionRec, $pop0
+	i32.call	$push1=, CallFunctionRec@FUNCTION, $pop0
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $pop1, $pop6
 	br_if   	$pop7, .LBB0_2
 # BB#1:                                 # %land.rhs.i
 	i32.const	$push2=, 0
-	call    	storemax, $pop2
+	call    	storemax@FUNCTION, $pop2
 .LBB0_2:                                # %CallFunction.exit
 	i32.const	$0=, 0
 	block   	.LBB0_4
@@ -27,7 +27,7 @@ main:                                   # @main
 # BB#3:                                 # %if.end
 	return  	$0
 .LBB0_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -39,7 +39,7 @@ CallFunctionRec:                        # @CallFunctionRec
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	call    	storemax, $0
+	call    	storemax@FUNCTION, $0
 	i32.const	$1=, 0
 	block   	.LBB1_3
 	i32.const	$push3=, 0
@@ -53,7 +53,7 @@ CallFunctionRec:                        # @CallFunctionRec
 # BB#2:                                 # %if.then1
 	i32.const	$1=, 1
 	i32.add 	$push2=, $0, $1
-	i32.call	$discard=, CallFunctionRec, $pop2
+	i32.call	$discard=, CallFunctionRec@FUNCTION, $pop2
 	return  	$1
 .LBB1_3:                                # %return
 	return  	$1

@@ -24,7 +24,7 @@ main:                                   # @main
 	i32.eq  	$push6=, $2, $pop5
 	br_if   	$pop6, .LBB0_3
 # BB#2:                                 # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.end
 	return  	$0

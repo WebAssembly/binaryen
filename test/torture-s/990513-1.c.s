@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.const	$8=, 0
 	i32.add 	$8=, $10, $8
-	call    	memset, $8, $0, $4
+	call    	memset@FUNCTION, $8, $0, $4
 .LBB1_1:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_2
@@ -84,7 +84,7 @@ main:                                   # @main
 	i32.store	$10=, 0($7), $10
 	return  	$0
 .LBB1_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

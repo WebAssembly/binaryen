@@ -25,7 +25,7 @@ foo:                                    # @foo
 	loop    	.LBB0_2
 	i32.const	$10=, 0
 	i32.add 	$10=, $10, $10
-	call    	__multi3, $10, $1, $2, $5, $6
+	call    	__multi3@FUNCTION, $10, $1, $2, $5, $6
 	i32.const	$4=, 8
 	i32.const	$11=, 0
 	i32.add 	$11=, $10, $11
@@ -34,7 +34,7 @@ foo:                                    # @foo
 	i64.load	$5=, 0($10)
 	i32.const	$12=, 16
 	i32.add 	$12=, $10, $12
-	call    	__multi3, $12, $1, $2, $1, $2
+	call    	__multi3@FUNCTION, $12, $1, $2, $1, $2
 	i32.const	$13=, 16
 	i32.add 	$13=, $10, $13
 	i32.add 	$push1=, $13, $4
@@ -60,7 +60,7 @@ foo:                                    # @foo
 	i32.store	$10=, 0($9), $10
 	return
 .LBB0_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -84,7 +84,7 @@ main:                                   # @main
 	i32.const	$push0=, 4
 	i32.const	$3=, 0
 	i32.add 	$3=, $4, $3
-	call    	foo, $3, $pop2, $pop1, $pop0
+	call    	foo@FUNCTION, $3, $pop2, $pop1, $pop0
 	i32.const	$push3=, 0
 	i32.const	$2=, 16
 	i32.add 	$4=, $4, $2

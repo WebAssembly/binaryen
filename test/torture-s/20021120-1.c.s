@@ -374,7 +374,7 @@ main:                                   # @main
 	i32.ne  	$push4=, $4, $pop3
 	br_if   	$pop4, .LBB1_1
 .LBB1_2:                                # %for.end
-	call    	foo, $0
+	call    	foo@FUNCTION, $0
 	i32.const	$4=, 0
 	i32.const	$5=, gd
 	copy_local	$6=, $4
@@ -404,10 +404,10 @@ main:                                   # @main
 	br_if   	$pop14, .LBB1_3
 .LBB1_6:                                # %for.end17
 	i32.const	$push15=, 0
-	call    	exit, $pop15
+	call    	exit@FUNCTION, $pop15
 	unreachable
 .LBB1_7:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

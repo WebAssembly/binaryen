@@ -1,5 +1,7 @@
 (module
   (memory 0 4294967295)
+  (type $FUNCSIG$fff (func (param f32 f32) (result f32)))
+  (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
   (import $fmodf "env" "fmodf" (param f32 f32) (result f32))
   (import $fmod "env" "fmod" (param f64 f64) (result f64))
   (export "frem32" $frem32)

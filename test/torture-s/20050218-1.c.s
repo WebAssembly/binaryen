@@ -22,9 +22,9 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB0_6
 	i32.load	$4=, 0($6)
-	i32.call	$3=, strlen, $4
+	i32.call	$3=, strlen@FUNCTION, $4
 	i32.add 	$push0=, $0, $7
-	i32.call	$5=, strncmp, $pop0, $4, $3
+	i32.call	$5=, strncmp@FUNCTION, $pop0, $4, $3
 	i32.const	$4=, 2
 	br_if   	$5, .LBB0_6
 # BB#3:                                 # %if.end
@@ -36,7 +36,7 @@ foo:                                    # @foo
 	br_if   	$pop8, .LBB0_5
 # BB#4:                                 # %if.then6
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.call	$push1=, strlen, $1
+	i32.call	$push1=, strlen@FUNCTION, $1
 	i32.add 	$7=, $pop1, $7
 .LBB0_5:                                # %for.inc
                                         #   in Loop: Header=BB0_2 Depth=1
@@ -62,28 +62,28 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	i32.load	$3=, a($2)
-	i32.call	$0=, strlen, $3
+	i32.call	$0=, strlen@FUNCTION, $3
 	i32.const	$4=, .L.str.4
 	block   	.LBB1_4
-	i32.call	$push0=, strncmp, $4, $3, $0
+	i32.call	$push0=, strncmp@FUNCTION, $4, $3, $0
 	br_if   	$pop0, .LBB1_4
 # BB#1:                                 # %if.end.i
 	i32.load	$3=, a+4($2)
-	i32.call	$1=, strlen, $3
+	i32.call	$1=, strlen@FUNCTION, $3
 	i32.add 	$push1=, $4, $0
-	i32.call	$push2=, strncmp, $pop1, $3, $1
+	i32.call	$push2=, strncmp@FUNCTION, $pop1, $3, $1
 	br_if   	$pop2, .LBB1_4
 # BB#2:                                 # %if.end.i.1
 	i32.load	$3=, a+8($2)
 	i32.add 	$push3=, $1, $0
 	i32.add 	$push4=, $4, $pop3
-	i32.call	$push5=, strlen, $3
-	i32.call	$push6=, strncmp, $pop4, $3, $pop5
+	i32.call	$push5=, strlen@FUNCTION, $3
+	i32.call	$push6=, strncmp@FUNCTION, $pop4, $3, $pop5
 	br_if   	$pop6, .LBB1_4
 # BB#3:                                 # %if.end.i.2
 	return  	$2
 .LBB1_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

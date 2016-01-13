@@ -23,18 +23,18 @@ sub:                                    # @sub
 	i32.and 	$push2=, $0, $2
 	br_if   	$pop2, .LBB0_3
 # BB#2:                                 # %if.then2
-	i32.call	$0=, sub, $1
+	i32.call	$0=, sub@FUNCTION, $1
 	i32.const	$push10=, -1
 	i32.add 	$push11=, $1, $pop10
-	i32.call	$push12=, sub, $pop11
+	i32.call	$push12=, sub@FUNCTION, $pop11
 	i32.shl 	$push13=, $pop12, $2
 	i32.add 	$push14=, $pop13, $0
 	i32.mul 	$push15=, $pop14, $0
 	return  	$pop15
 .LBB0_3:                                # %if.else
 	i32.add 	$push6=, $1, $2
-	i32.call	$0=, sub, $pop6
-	i32.call	$2=, sub, $1
+	i32.call	$0=, sub@FUNCTION, $pop6
+	i32.call	$2=, sub@FUNCTION, $1
 	i32.mul 	$push8=, $2, $2
 	i32.mul 	$push7=, $0, $0
 	i32.add 	$push9=, $pop8, $pop7
@@ -53,7 +53,7 @@ main:                                   # @main
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 30
-	i32.call	$1=, sub, $pop0
+	i32.call	$1=, sub@FUNCTION, $pop0
 	i32.const	$2=, 0
 	i32.load	$0=, flg($2)
 	block   	.LBB1_4
@@ -64,14 +64,14 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	br_if   	$0, .LBB1_4
 # BB#2:                                 # %if.end2
-	call    	exit, $2
+	call    	exit@FUNCTION, $2
 	unreachable
 .LBB1_3:                                # %if.end.thread
 	i32.const	$push3=, 256
 	i32.or  	$push4=, $0, $pop3
 	i32.store	$discard=, flg($2), $pop4
 .LBB1_4:                                # %if.then1
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -15,7 +15,7 @@ bar:                                    # @bar
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -44,7 +44,7 @@ foo:                                    # @foo
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB1_3
-	i32.call	$discard=, bar, $1, $3
+	i32.call	$discard=, bar@FUNCTION, $1, $3
 	i32.add 	$1=, $1, $0
 	br_if   	$1, .LBB1_2
 .LBB1_3:                                # %for.end
@@ -61,7 +61,7 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 1
-	call    	foo, $0, $0
+	call    	foo@FUNCTION, $0, $0
 	i32.const	$push0=, 0
 	return  	$pop0
 .Lfunc_end2:

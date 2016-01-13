@@ -88,43 +88,43 @@ main:                                   # @main
 # BB#13:                                # %if.end63
 	return  	$1
 .LBB0_14:                               # %if.then62
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_15:                               # %if.then57
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_16:                               # %if.then52
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_17:                               # %if.then47
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_18:                               # %if.then42
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_19:                               # %if.then37
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_20:                               # %if.then32
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_21:                               # %if.then27
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_22:                               # %if.then22
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_23:                               # %if.then17
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_24:                               # %if.then11
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_25:                               # %if.then5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_26:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

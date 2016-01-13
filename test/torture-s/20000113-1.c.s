@@ -27,10 +27,10 @@ foobar:                                 # @foobar
 	br_if   	$pop8, .LBB0_3
 # BB#2:                                 # %if.end
 	i32.const	$push9=, 0
-	call    	exit, $pop9
+	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB0_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	foobar, .Lfunc_end0-foobar
@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.const	$push2=, 1
 	i32.const	$push1=, 2
 	i32.const	$push0=, 3
-	i32.call	$discard=, foobar, $pop2, $pop1, $pop0
+	i32.call	$discard=, foobar@FUNCTION, $pop2, $pop1, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -15,10 +15,10 @@ f:                                      # @f
 	i32.gt_s	$push2=, $pop1, $1
 	br_if   	$pop2, .LBB0_2
 # BB#1:                                 # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_2:                                # %if.else
-	call    	exit, $1
+	call    	exit@FUNCTION, $1
 	unreachable
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -31,7 +31,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, -255
-	call    	f, $pop0
+	call    	f@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

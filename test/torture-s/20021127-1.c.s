@@ -20,7 +20,7 @@ llabs:                                  # @llabs
 	.param  	i64
 	.result 	i64
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	llabs, .Lfunc_end1-llabs

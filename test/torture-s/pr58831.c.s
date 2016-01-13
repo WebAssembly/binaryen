@@ -8,12 +8,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	call    	fn2
+	call    	fn2@FUNCTION
 	i32.const	$0=, 0
 	i32.load	$1=, b($0)
 	i32.const	$push0=, r
 	i32.store	$discard=, i($0), $pop0
-	call    	fn1, $1
+	call    	fn1@FUNCTION, $1
 	return  	$0
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

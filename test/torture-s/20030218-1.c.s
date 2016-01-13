@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.add 	$3=, $4, $3
 	i32.add 	$push2=, $3, $pop1
 	i32.store	$discard=, q($0), $pop2
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

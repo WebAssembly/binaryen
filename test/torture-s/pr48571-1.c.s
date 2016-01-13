@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.add 	$2=, $2, $0
 	br_if   	$2, .LBB1_1
 .LBB1_2:                                # %for.end
-	call    	bar
+	call    	bar@FUNCTION
 	i32.const	$2=, 0
 .LBB1_3:                                # %for.body3
                                         # =>This Inner Loop Header: Depth=1
@@ -73,7 +73,7 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	return  	$pop8
 .LBB1_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

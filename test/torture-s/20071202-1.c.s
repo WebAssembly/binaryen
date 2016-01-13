@@ -116,7 +116,7 @@ foo:                                    # @foo
 	i32.add 	$push2=, $0, $6
 	i32.const	$22=, 0
 	i32.add 	$22=, $22, $22
-	call    	memcpy, $pop2, $22, $4
+	call    	memcpy@FUNCTION, $pop2, $22, $4
 	i32.const	$12=, 64
 	i32.add 	$22=, $22, $12
 	i32.const	$12=, __stack_pointer
@@ -143,10 +143,10 @@ main:                                   # @main
 	i32.const	$push1=, 68
 	i32.const	$4=, 8
 	i32.add 	$4=, $20, $4
-	call    	memcpy, $4, $pop0, $pop1
+	call    	memcpy@FUNCTION, $4, $pop0, $pop1
 	i32.const	$5=, 8
 	i32.add 	$5=, $20, $5
-	call    	foo, $5
+	call    	foo@FUNCTION, $5
 	i32.const	$0=, 12
 	block   	.LBB1_19
 	i32.load	$push2=, 8($20)
@@ -283,10 +283,10 @@ main:                                   # @main
 	i32.store	$20=, 0($3), $20
 	return  	$pop66
 .LBB1_18:                               # %if.then63
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_19:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

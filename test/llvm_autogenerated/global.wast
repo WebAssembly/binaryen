@@ -1,5 +1,6 @@
 (module
   (memory 1184 4294967295 (segment 4 "9\05\00\00") (segment 20 "\01\00\00\00") (segment 24 "*\00\00\00") (segment 28 "\ff\ff\ff\ff") (segment 56 "\00\00\00\00\01\00\00\00") (segment 64 "\ff\ff\ff\ff\ff\ff\ff\ff") (segment 84 "\00\00\00\80") (segment 88 "\00\00\00@") (segment 120 "\00\00\00\00\00\00\00\80") (segment 128 "\00\00\00\00\00\00\00@") (segment 656 "\e0\00\00\00"))
+  (type $FUNCSIG$viii (func (param i32 i32 i32)))
   (import $memcpy "env" "memcpy" (param i32 i32 i32))
   (export "foo" $foo)
   (export "call_memcpy" $call_memcpy)

@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.const	$push1=, 1
 	i32.store	$discard=, k($0), $pop1
 .LBB0_2:                                # %for.inc.1
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

@@ -140,7 +140,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end36
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end10:
 	.size	main, .Lfunc_end10-main

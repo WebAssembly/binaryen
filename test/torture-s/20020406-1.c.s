@@ -36,7 +36,7 @@ DUPFFnew:                               # @DUPFFnew
 # BB#0:                                 # %entry
 	block   	.LBB2_2
 	i32.const	$push0=, 12
-	i32.call	$1=, malloc, $pop0
+	i32.call	$1=, malloc@FUNCTION, $pop0
 	i32.const	$push1=, 0
 	i32.store	$push2=, 8($1), $pop1
 	i32.lt_s	$push3=, $0, $pop2
@@ -45,7 +45,7 @@ DUPFFnew:                               # @DUPFFnew
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $0, $pop4
 	i32.const	$push6=, 4
-	i32.call	$2=, calloc, $pop5, $pop6
+	i32.call	$2=, calloc@FUNCTION, $pop5, $pop6
 	i32.const	$push7=, 8
 	i32.add 	$push8=, $1, $pop7
 	i32.store	$discard=, 0($pop8), $2
@@ -137,7 +137,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.add 	$9=, $13, $6
 	i32.store	$discard=, 0($9), $8
 	i32.const	$push1=, .L.str
-	i32.call	$discard=, iprintf, $pop1
+	i32.call	$discard=, iprintf@FUNCTION, $pop1
 	i32.const	$12=, __stack_pointer
 	i32.load	$12=, 0($12)
 	i32.const	$13=, 8
@@ -168,16 +168,16 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	br_if   	$pop16, .LBB7_10
 # BB#5:                                 # %DUPFFnew.exit
 	i32.const	$0=, 12
-	i32.call	$9=, malloc, $0
-	i32.call	$7=, calloc, $2, $6
+	i32.call	$9=, malloc@FUNCTION, $0
+	i32.call	$7=, calloc@FUNCTION, $2, $6
 	i32.store	$push7=, 8($9), $7
 	i32.store	$push8=, 0($9), $8
 	i32.store	$7=, 0($pop7), $pop8
 	i32.const	$push9=, 0
 	i32.store	$discard=, 4($9), $pop9
-	i32.call	$8=, malloc, $0
+	i32.call	$8=, malloc@FUNCTION, $0
 	i32.const	$push10=, 3
-	i32.call	$0=, calloc, $pop10, $6
+	i32.call	$0=, calloc@FUNCTION, $pop10, $6
 	i32.store	$discard=, 8($8), $0
 	i32.store	$discard=, 0($8), $2
 	block   	.LBB7_9
@@ -209,7 +209,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.store	$13=, 0($16), $13
 	return  	$3
 .LBB7_11:                               # %if.then10
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end7:
 	.size	DUPFFexgcd, .Lfunc_end7-DUPFFexgcd
@@ -229,18 +229,18 @@ main:                                   # @main
 	i32.const	$11=, __stack_pointer
 	i32.store	$15=, 0($11), $15
 	i32.const	$4=, 12
-	i32.call	$0=, malloc, $4
+	i32.call	$0=, malloc@FUNCTION, $4
 	i32.const	$1=, 4
 	i32.const	$2=, 2
-	i32.call	$3=, calloc, $2, $1
+	i32.call	$3=, calloc@FUNCTION, $2, $1
 	i32.store	$discard=, 8($0), $3
 	i32.const	$push0=, 1
 	i32.store	$push1=, 0($0), $pop0
 	i32.store	$push2=, 4($3), $pop1
 	i32.store	$3=, 4($0), $pop2
-	i32.call	$4=, malloc, $4
+	i32.call	$4=, malloc@FUNCTION, $4
 	i32.const	$push3=, 3
-	i32.call	$5=, calloc, $pop3, $1
+	i32.call	$5=, calloc@FUNCTION, $pop3, $1
 	i32.store	$push4=, 8($4), $5
 	i32.store	$discard=, 8($pop4), $3
 	i32.store	$push5=, 0($4), $2
@@ -255,7 +255,7 @@ main:                                   # @main
 	i32.add 	$1=, $15, $1
 	i32.store	$discard=, 0($1), $2
 	i32.const	$push6=, .L.str.1
-	i32.call	$discard=, iprintf, $pop6
+	i32.call	$discard=, iprintf@FUNCTION, $pop6
 	i32.const	$8=, __stack_pointer
 	i32.load	$8=, 0($8)
 	i32.const	$9=, 8
@@ -266,7 +266,7 @@ main:                                   # @main
 	i32.add 	$13=, $15, $13
 	i32.const	$14=, 8
 	i32.add 	$14=, $15, $14
-	i32.call	$discard=, DUPFFexgcd, $13, $14, $0, $4
+	i32.call	$discard=, DUPFFexgcd@FUNCTION, $13, $14, $0, $4
 	i32.const	$push7=, 0
 	i32.const	$12=, 16
 	i32.add 	$15=, $15, $12

@@ -66,7 +66,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end4
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main

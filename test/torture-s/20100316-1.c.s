@@ -34,12 +34,12 @@ main:                                   # @main
 	i32.or  	$push5=, $pop3, $pop4
 	i32.store16	$discard=, f+4($0), $pop5
 	i32.const	$push1=, f
-	i32.call	$push6=, foo, $pop1
+	i32.call	$push6=, foo@FUNCTION, $pop1
 	br_if   	$pop6, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

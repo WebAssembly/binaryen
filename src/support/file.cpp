@@ -18,7 +18,8 @@
 
 #include <cstdlib>
 
-std::string wasm::read_file(const std::string &filename, bool debug) {
+template <typename T>
+T wasm::read_file(const std::string &filename, bool debug) {
   if (debug) std::cerr << "Loading '" << filename << "'..." << std::endl;
   std::ifstream infile(filename);
   if (!infile.is_open()) {
@@ -27,11 +28,15 @@ std::string wasm::read_file(const std::string &filename, bool debug) {
   }
   infile.seekg(0, std::ios::end);
   size_t insize = infile.tellg();
-  std::string input(insize + 1, '\0');
+  T input(insize + 1, '\0');
   infile.seekg(0);
   infile.read(&input[0], insize);
   return input;
 }
+
+// Explicit instantiations for the explicit specializations.
+template std::string wasm::read_file<>(const std::string &, bool);
+template std::vector<char> wasm::read_file<>(const std::string &, bool);
 
 wasm::Output::Output(const std::string &filename, bool debug)
     : outfile(), out([this, filename, debug]() {

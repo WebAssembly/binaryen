@@ -1,5 +1,12 @@
 (module
   (memory 0 4294967295)
+  (type $FUNCSIG$i (func (result i32)))
+  (type $FUNCSIG$j (func (result i64)))
+  (type $FUNCSIG$f (func (result f32)))
+  (type $FUNCSIG$d (func (result f64)))
+  (type $FUNCSIG$v (func))
+  (type $FUNCSIG$ii (func (param i32) (result i32)))
+  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $FUNCSIG_v (func))
   (type $FUNCSIG_i (func (result i32)))
   (import $i32_nullary "env" "i32_nullary" (result i32))

@@ -61,7 +61,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	f64, i32, i32
 # BB#0:                                 # %entry
-	call    	test
+	call    	test@FUNCTION
 	i32.const	$2=, 0
 	i32.const	$1=, tmp
 .LBB1_1:                                # %for.cond1.preheader
@@ -120,7 +120,7 @@ main:                                   # @main
 	i32.const	$push26=, 0
 	return  	$pop26
 .LBB1_9:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -25,7 +25,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block   	.LBB1_2
 	f64.const	$push0=, -0x0p0
-	f64.call	$push1=, not_fabs, $pop0
+	f64.call	$push1=, not_fabs@FUNCTION, $pop0
 	i64.reinterpret/f64	$push2=, $pop1
 	i64.const	$push3=, 0
 	i64.ge_s	$push4=, $pop2, $pop3
@@ -34,7 +34,7 @@ main:                                   # @main
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

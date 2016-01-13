@@ -19,13 +19,13 @@ main:                                   # @main
 	i32.const	$push0=, 205
 	i32.const	$7=, 0
 	i32.add 	$7=, $7, $7
-	call    	memset, $7, $pop0, $2
+	call    	memset@FUNCTION, $7, $pop0, $2
 	i32.const	$push1=, 0
 	i32.store8	$3=, 13371($7), $pop1
 	i32.const	$8=, 0
 	i32.add 	$8=, $7, $8
 	block   	.LBB0_2
-	i32.call	$push2=, strlen, $8
+	i32.call	$push2=, strlen@FUNCTION, $8
 	i32.ne  	$push3=, $pop2, $2
 	br_if   	$pop3, .LBB0_2
 # BB#1:                                 # %foo.exit
@@ -35,7 +35,7 @@ main:                                   # @main
 	i32.store	$7=, 0($6), $7
 	return  	$3
 .LBB0_2:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

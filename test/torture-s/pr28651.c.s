@@ -24,7 +24,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block   	.LBB1_2
 	i32.const	$push0=, 2147483647
-	i32.call	$push1=, foo, $pop0
+	i32.call	$push1=, foo@FUNCTION, $pop0
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $pop1, $pop3
 	br_if   	$pop4, .LBB1_2
@@ -32,7 +32,7 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	return  	$pop2
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

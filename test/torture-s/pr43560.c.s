@@ -52,7 +52,7 @@ main:                                   # @main
 	i32.const	$0=, s
 	#APP
 	#NO_APP
-	call    	test, $0
+	call    	test@FUNCTION, $0
 	i32.const	$push0=, 0
 	return  	$pop0
 .Lfunc_end1:

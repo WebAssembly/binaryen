@@ -37,7 +37,7 @@ func1:                                  # @func1
 	i32.load16_u	$15=, q4+2($0)
 	i32.load16_u	$14=, q4+4($0)
 	i32.load16_u	$13=, q4+6($0)
-	call    	func0
+	call    	func0@FUNCTION
 	i32.mul 	$push3=, $5, $1
 	i32.store16	$push8=, w1+6($0), $pop3
 	i32.store16	$discard=, w3+6($0), $pop8
@@ -90,7 +90,7 @@ func2:                                  # @func2
 	i32.load16_u	$15=, q4+2($0)
 	i32.load16_u	$14=, q4+4($0)
 	i32.load16_u	$13=, q4+6($0)
-	call    	func1
+	call    	func1@FUNCTION
 	i32.add 	$push3=, $5, $1
 	i32.store16	$push8=, z1+6($0), $pop3
 	i32.store16	$discard=, z3+6($0), $pop8
@@ -127,7 +127,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	call    	func2
+	call    	func2@FUNCTION
 	i32.const	$0=, 0
 	block   	.LBB3_8
 	i64.load	$push0=, w1($0)
@@ -155,16 +155,16 @@ main:                                   # @main
 # BB#4:                                 # %if.end12
 	return  	$0
 .LBB3_5:                                # %if.then11
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_6:                                # %if.then7
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_7:                                # %if.then3
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_8:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

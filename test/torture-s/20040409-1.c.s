@@ -183,7 +183,7 @@ test:                                   # @test
 # BB#1:                                 # %if.end20
 	return
 .LBB12_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end12:
 	.size	test, .Lfunc_end12-test
@@ -203,7 +203,7 @@ testu:                                  # @testu
 # BB#1:                                 # %if.end20
 	return
 .LBB13_2:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end13:
 	.size	testu, .Lfunc_end13-testu

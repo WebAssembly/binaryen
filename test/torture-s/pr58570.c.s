@@ -55,7 +55,7 @@ main:                                   # @main
 # BB#3:                                 # %if.end7
 	return  	$0
 .LBB0_4:                                # %if.then6
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

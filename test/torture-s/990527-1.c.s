@@ -50,10 +50,10 @@ main:                                   # @main
 	i32.store	$discard=, sum($0), $pop1
 	br_if   	$1, .LBB2_2
 # BB#1:                                 # %if.end
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

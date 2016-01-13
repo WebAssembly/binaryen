@@ -40,10 +40,10 @@ main:                                   # @main
 # BB#4:                                 # %if.end11
 	return  	$0
 .LBB0_5:                                # %if.then10
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

@@ -10,7 +10,7 @@ init:                                   # @init
 	i32.const	$push1=, p
 	i32.const	$push0=, .L.str
 	i32.const	$push2=, 9
-	call    	memcpy, $pop1, $pop0, $pop2
+	call    	memcpy@FUNCTION, $pop1, $pop0, $pop2
 	i32.const	$0=, p+9
 	i32.const	$push3=, 7
 	i32.add 	$push4=, $0, $pop3
@@ -53,14 +53,14 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i64, i64, i32, i64, i64, i32, i64, i32, i64, i32
 # BB#0:                                 # %entry
-	call    	init
+	call    	init@FUNCTION
 	i32.const	$1=, 9
 	i32.const	$push1=, headline
 	i32.const	$push0=, p
-	call    	memcpy, $pop1, $pop0, $1
+	call    	memcpy@FUNCTION, $pop1, $pop0, $1
 	i32.const	$0=, 32
 	i32.const	$push2=, headline+9
-	call    	memset, $pop2, $0, $1
+	call    	memset@FUNCTION, $pop2, $0, $1
 	i32.const	$1=, p+9
 	i32.const	$push3=, 3
 	i32.add 	$push4=, $1, $pop3
@@ -102,7 +102,7 @@ main:                                   # @main
 	i64.store16	$discard=, 0($pop26), $pop7
 	i32.const	$push29=, headline+18
 	i32.const	$push28=, 238
-	call    	memset, $pop29, $0, $pop28
+	call    	memset@FUNCTION, $pop29, $0, $pop28
 	i64.shl 	$push22=, $10, $3
 	i64.or  	$push23=, $pop22, $6
 	i64.store16	$push27=, headline+10($1), $pop23
@@ -115,7 +115,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

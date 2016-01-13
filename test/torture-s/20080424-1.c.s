@@ -28,7 +28,7 @@ bar:                                    # @bar
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -42,28 +42,28 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, g+288
 	i32.const	$push0=, g
-	call    	bar, $pop1, $pop0
+	call    	bar@FUNCTION, $pop1, $pop0
 	i32.const	$push3=, g+324
 	i32.const	$push2=, g+36
-	call    	bar, $pop3, $pop2
+	call    	bar@FUNCTION, $pop3, $pop2
 	i32.const	$push5=, g+360
 	i32.const	$push4=, g+72
-	call    	bar, $pop5, $pop4
+	call    	bar@FUNCTION, $pop5, $pop4
 	i32.const	$push7=, g+396
 	i32.const	$push6=, g+108
-	call    	bar, $pop7, $pop6
+	call    	bar@FUNCTION, $pop7, $pop6
 	i32.const	$push9=, g+432
 	i32.const	$push8=, g+144
-	call    	bar, $pop9, $pop8
+	call    	bar@FUNCTION, $pop9, $pop8
 	i32.const	$push11=, g+468
 	i32.const	$push10=, g+180
-	call    	bar, $pop11, $pop10
+	call    	bar@FUNCTION, $pop11, $pop10
 	i32.const	$push13=, g+504
 	i32.const	$push12=, g+216
-	call    	bar, $pop13, $pop12
+	call    	bar@FUNCTION, $pop13, $pop12
 	i32.const	$push15=, g+540
 	i32.const	$push14=, g+252
-	call    	bar, $pop15, $pop14
+	call    	bar@FUNCTION, $pop15, $pop14
 	i32.const	$push16=, 0
 	return  	$pop16
 .Lfunc_end1:

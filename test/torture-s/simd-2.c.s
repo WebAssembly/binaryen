@@ -22,7 +22,7 @@ verify:                                 # @verify
 # BB#4:                                 # %if.end
 	return
 .LBB0_5:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	verify, .Lfunc_end0-verify
@@ -444,31 +444,31 @@ main:                                   # @main
 	i32.ne  	$push241=, $pop239, $pop240
 	br_if   	$pop241, .LBB1_33
 # BB#32:                                # %verify.exit94
-	call    	exit, $16
+	call    	exit@FUNCTION, $16
 	unreachable
 .LBB1_33:                               # %if.then.i93
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_34:                               # %if.then.i84
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_35:                               # %if.then.i75
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_36:                               # %if.then.i66
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_37:                               # %if.then.i57
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_38:                               # %if.then.i48
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_39:                               # %if.then.i39
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_40:                               # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

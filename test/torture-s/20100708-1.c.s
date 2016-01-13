@@ -171,7 +171,7 @@ main:                                   # @main
 	i32.store	$4=, 0($1), $4
 	i32.const	$3=, 8
 	i32.add 	$3=, $4, $3
-	call    	f, $3
+	call    	f@FUNCTION, $3
 	i32.const	$push0=, 0
 	i32.const	$2=, 208
 	i32.add 	$4=, $4, $2

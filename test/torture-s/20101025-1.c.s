@@ -26,7 +26,7 @@ f3:                                     # @f3
 	i32.const	$push1=, 1
 	i32.store	$discard=, 0($pop0), $pop1
 	i32.load	$push2=, g_7($0)
-	call    	f2, $pop2
+	call    	f2@FUNCTION, $pop2
 	return  	$0
 .Lfunc_end1:
 	.size	f3, .Lfunc_end1-f3
@@ -39,7 +39,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, f3
+	i32.call	$discard=, f3@FUNCTION
 	i32.const	$0=, 0
 	block   	.LBB2_2
 	i32.load	$push0=, g_3($0)
@@ -47,10 +47,10 @@ main:                                   # @main
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, .LBB2_2
 # BB#1:                                 # %if.end
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

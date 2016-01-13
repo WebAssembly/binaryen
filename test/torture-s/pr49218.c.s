@@ -18,7 +18,7 @@ main:                                   # @main
 	f32.load	$push0=, f($1)
 	i32.const	$10=, 0
 	i32.add 	$10=, $12, $10
-	call    	__fixsfti, $10, $pop0
+	call    	__fixsfti@FUNCTION, $10, $pop0
 	i64.load	$5=, 0($12)
 	i32.const	$push1=, 8
 	i32.const	$11=, 0

@@ -37,7 +37,7 @@ struct RemoveImports : public Pass {
   }
 
   void visitCallImport(CallImport *curr) override {
-    WasmType type = importsMap[curr->target]->type.result;
+    WasmType type = importsMap[curr->target]->type->result;
     if (type == none) {
       replaceCurrent(allocator->alloc<Nop>());
     } else {

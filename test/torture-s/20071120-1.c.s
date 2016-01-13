@@ -6,7 +6,7 @@
 	.type	vec_assert_fail,@function
 vec_assert_fail:                        # @vec_assert_fail
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	vec_assert_fail, .Lfunc_end0-vec_assert_fail
@@ -18,7 +18,7 @@ vec_assert_fail:                        # @vec_assert_fail
 perform_access_checks:                  # @perform_access_checks
 	.param  	i32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	perform_access_checks, .Lfunc_end1-perform_access_checks
@@ -75,13 +75,13 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 .LBB2_6:                                # %if.end16
 	return
 .LBB2_7:                                # %if.then15
-	call    	perform_access_checks, $1
+	call    	perform_access_checks@FUNCTION, $1
 	unreachable
 .LBB2_8:                                # %cond.false.i26
-	call    	vec_assert_fail
+	call    	vec_assert_fail@FUNCTION
 	unreachable
 .LBB2_9:                                # %cond.false.i
-	call    	vec_assert_fail
+	call    	vec_assert_fail@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	pop_to_parent_deferring_access_checks, .Lfunc_end2-pop_to_parent_deferring_access_checks
@@ -95,7 +95,7 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 76
-	i32.call	$1=, __builtin_malloc, $pop0
+	i32.call	$1=, __builtin_malloc@FUNCTION, $pop0
 	i32.const	$0=, 0
 	i32.store	$discard=, deferred_access_stack($0), $1
 	i32.const	$push1=, 2
@@ -104,7 +104,7 @@ main:                                   # @main
 	i32.add 	$push3=, $1, $pop2
 	i32.const	$push4=, 1
 	i32.store	$discard=, 0($pop3), $pop4
-	call    	pop_to_parent_deferring_access_checks
+	call    	pop_to_parent_deferring_access_checks@FUNCTION
 	return  	$0
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

@@ -14,15 +14,15 @@ main:                                   # @main
 	i64.load	$push0=, x+8($0)
 	i64.load	$push3=, y($0)
 	i64.load	$push2=, y+8($0)
-	i32.call	$push4=, __eqtf2, $pop1, $pop0, $pop3, $pop2
+	i32.call	$push4=, __eqtf2@FUNCTION, $pop1, $pop0, $pop3, $pop2
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop4, $pop5
 	br_if   	$pop6, .LBB0_2
 # BB#1:                                 # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_2:                                # %if.end
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

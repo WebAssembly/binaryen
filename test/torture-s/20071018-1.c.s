@@ -8,7 +8,7 @@ bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 8
-	i32.call	$push1=, __builtin_malloc, $pop0
+	i32.call	$push1=, __builtin_malloc@FUNCTION, $pop0
 	i32.store	$discard=, 0($0), $pop1
 	return
 .Lfunc_end0:
@@ -24,7 +24,7 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 16
-	i32.call	$1=, __builtin_malloc, $pop0
+	i32.call	$1=, __builtin_malloc@FUNCTION, $pop0
 	i32.const	$push1=, 5
 	i32.shl 	$push2=, $0, $pop1
 	i32.add 	$push3=, $pop2, $1
@@ -32,7 +32,7 @@ foo:                                    # @foo
 	i32.add 	$0=, $pop3, $pop4
 	i32.const	$push5=, 0
 	i32.store	$discard=, 0($0), $pop5
-	call    	bar, $0
+	call    	bar@FUNCTION, $0
 	i32.load	$push6=, 0($0)
 	return  	$pop6
 .Lfunc_end1:
@@ -47,7 +47,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block   	.LBB2_2
 	i32.const	$push0=, 1
-	i32.call	$push1=, foo, $pop0
+	i32.call	$push1=, foo@FUNCTION, $pop0
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $pop1, $pop3
 	br_if   	$pop4, .LBB2_2
@@ -55,7 +55,7 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	return  	$pop2
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

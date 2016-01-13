@@ -39,12 +39,12 @@ main:                                   # @main
 	i32.const	$1=, 0
 	block   	.LBB1_2
 	i32.const	$push0=, .L.str
-	i32.call	$0=, open, $pop0, $1
+	i32.call	$0=, open@FUNCTION, $pop0, $1
 	i32.const	$push4=, 2147450880
 	i32.const	$push3=, 65536
 	i32.const	$push2=, 3
 	i32.const	$push1=, 50
-	i32.call	$0=, mmap, $pop4, $pop3, $pop2, $pop1, $0, $1
+	i32.call	$0=, mmap@FUNCTION, $pop4, $pop3, $pop2, $pop1, $0, $1
 	i32.const	$push5=, -1
 	i32.eq  	$push6=, $0, $pop5
 	br_if   	$pop6, .LBB1_2
@@ -91,7 +91,7 @@ main:                                   # @main
 	i32.store8	$discard=, 32804($0), $pop45
 	i32.store8	$discard=, 32805($0), $1
 .LBB1_2:                                # %if.end15
-	call    	exit, $1
+	call    	exit@FUNCTION, $1
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

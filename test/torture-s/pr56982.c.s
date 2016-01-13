@@ -34,15 +34,15 @@ f:                                      # @f
 	#APP
 	#NO_APP
 	block   	.LBB1_4
-	i32.call	$push2=, _setjmp, $1
+	i32.call	$push2=, _setjmp@FUNCTION, $1
 	br_if   	$pop2, .LBB1_4
 # BB#3:                                 # %if.end6
 	i32.const	$push4=, 42
-	call    	longjmp, $1, $pop4
+	call    	longjmp@FUNCTION, $1, $pop4
 	unreachable
 .LBB1_4:                                # %if.then2
 	i32.const	$push3=, 0
-	call    	exit, $pop3
+	call    	exit@FUNCTION, $pop3
 	unreachable
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
@@ -66,7 +66,7 @@ main:                                   # @main
 	i32.store	$discard=, 12($4), $pop0
 	i32.const	$5=, 12
 	i32.add 	$5=, $4, $5
-	i32.call	$discard=, f, $5
+	i32.call	$discard=, f@FUNCTION, $5
 	i32.const	$push1=, 1
 	i32.const	$4=, 16
 	i32.add 	$4=, $4, $4

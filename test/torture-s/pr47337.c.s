@@ -11,7 +11,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 	i32.load	$push0=, w($1)
 	i32.const	$push1=, .L.str.1
-	i32.call	$0=, strcmp, $pop0, $pop1
+	i32.call	$0=, strcmp@FUNCTION, $pop0, $pop1
 	i32.const	$4=, -1024
 .LBB0_1:                                # %for.cond2.preheader
                                         # =>This Inner Loop Header: Depth=1

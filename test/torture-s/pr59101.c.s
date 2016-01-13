@@ -28,14 +28,14 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	block   	.LBB1_2
-	i32.call	$push0=, foo, $0
+	i32.call	$push0=, foo@FUNCTION, $0
 	i32.const	$push1=, 7
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

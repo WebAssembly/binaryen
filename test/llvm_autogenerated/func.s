@@ -41,14 +41,15 @@ f4:
 	.result 	i32
 	.local  	i32
 	i32.const	$1=, 1
-	block   	.LBB4_2
+	block
 	i32.and 	$push0=, $0, $1
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop0, $pop2
-	br_if   	$pop3, .LBB4_2
+	br_if   	$pop3, 0
 	i32.const	$push1=, 0
 	return  	$pop1
 .LBB4_2:
+	end_block
 	return  	$1
 .Lfunc_end4:
 	.size	f4, .Lfunc_end4-f4

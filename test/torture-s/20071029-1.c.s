@@ -56,13 +56,13 @@ test:                                   # @test
 # BB#12:                                # %if.end37
 	return
 .LBB0_13:                               # %if.then36
-	call    	exit, $2
+	call    	exit@FUNCTION, $2
 	unreachable
 .LBB0_14:                               # %if.then33
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_15:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
@@ -177,7 +177,7 @@ foo:                                    # @foo
 	i32.store	$discard=, 0($1), $14
 	i32.const	$31=, 56
 	i32.add 	$31=, $31, $31
-	call    	test, $31
+	call    	test@FUNCTION, $31
 	i32.store	$push4=, 56($31), $15
 	i32.add 	$15=, $pop4, $3
 	br      	.LBB1_1
@@ -193,7 +193,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end6
 	i32.const	$push0=, 10
-	call    	foo, $pop0
+	call    	foo@FUNCTION, $pop0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

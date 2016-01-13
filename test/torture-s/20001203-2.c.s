@@ -71,13 +71,13 @@ create_array_type:                      # @create_array_type
 	i32.store	$discard=, 0($5), $pop26
 	br      	.LBB0_7
 .LBB0_6:                                # %if.then8
-	call    	_obstack_newchunk, $0, $0
+	call    	_obstack_newchunk@FUNCTION, $0, $0
 	unreachable
 .LBB0_7:                                # %cond.end
 	i32.store	$discard=, 12($0), $7
 	return  	$0
 .LBB0_8:                                # %if.then
-	i32.call	$discard=, alloc_type
+	i32.call	$discard=, alloc_type@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	create_array_type, .Lfunc_end0-create_array_type
@@ -89,7 +89,7 @@ create_array_type:                      # @create_array_type
 alloc_type:                             # @alloc_type
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	alloc_type, .Lfunc_end1-alloc_type
@@ -116,7 +116,7 @@ get_discrete_bounds:                    # @get_discrete_bounds
 _obstack_newchunk:                      # @_obstack_newchunk
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	_obstack_newchunk, .Lfunc_end3-_obstack_newchunk
@@ -142,7 +142,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main

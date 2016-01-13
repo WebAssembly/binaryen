@@ -25,7 +25,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.call	$0=, incr
+	i32.call	$0=, incr@FUNCTION
 	i32.const	$1=, 0
 	i32.load	$2=, count($1)
 	i32.const	$3=, 2
@@ -47,7 +47,7 @@ main:                                   # @main
 # BB#2:                                 # %if.end
 	return  	$1
 .LBB1_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

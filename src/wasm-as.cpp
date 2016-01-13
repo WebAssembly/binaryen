@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 WebAssembly Community Group participants
+ * Copyright 2016 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,24 +21,20 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
-#include "s2wasm.h"
+#include "wasm-binary.h"
+#include "wasm-s-parser.h"
 
 using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  Options options("s2wasm", "Link .s file into .wast");
+  Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
   options.add("--output", "-o", "Output file (stdout if not specified)",
               Options::Arguments::One,
               [](Options *o, const std::string &argument) {
                 o->extra["output"] = argument;
                 Colors::disable();
               })
-      .add("--global-base", "-g", "Where to start to place globals",
-           Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
-             o->extra["global-base"] = argument;
-           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -47,21 +43,22 @@ int main(int argc, const char *argv[]) {
 
   auto input(read_file<std::string>(options.extra["infile"], options.debug));
 
-  if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
+  if (options.debug) std::cerr << "s-parsing..." << std::endl;
+  SExpressionParser parser(const_cast<char*>(input.c_str()));
+  Element& root = *parser.root;
+
+  if (options.debug) std::cerr << "w-parsing..." << std::endl;
   AllocatingModule wasm;
-  size_t globalBase = options.extra.find("global-base") != options.extra.end()
-                          ? std::stoull(options.extra["global-base"])
-                          : 1;
-  if (options.debug) std::cerr << "Global base " << globalBase << '\n';
-  S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, globalBase);
+  SExpressionWasmBuilder builder(wasm, *root[0], [&]() { abort(); });
 
-  if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
-  std::stringstream meta;
-  s2wasm.emscriptenGlue(meta);
+  if (options.debug) std::cerr << "binarification..." << std::endl;
+  BufferWithRandomAccess buffer;
+  WasmBinaryWriter writer(&wasm, buffer);
+  writer.write();
 
-  if (options.debug) std::cerr << "Printing..." << std::endl;
+  if (options.debug) std::cerr << "writing to output..." << std::endl;
   Output output(options.extra["output"], options.debug);
-  output << wasm << meta.str() << std::endl;
+  buffer.writeTo(output);
 
   if (options.debug) std::cerr << "Done." << std::endl;
 }

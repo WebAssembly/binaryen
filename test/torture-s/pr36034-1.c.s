@@ -80,7 +80,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, f64
 # BB#0:                                 # %entry
-	call    	test
+	call    	test@FUNCTION
 	i32.const	$0=, 0
 	f64.const	$1=, -0x1p0
 	block   	.LBB1_31
@@ -206,7 +206,7 @@ main:                                   # @main
 # BB#30:                                # %for.cond1.5.4
 	return  	$0
 .LBB1_31:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.const	$3=, 8
 	i32.add 	$3=, $4, $3
 	i32.or  	$push2=, $3, $pop1
-	call    	frob_entry, $pop2
+	call    	frob_entry@FUNCTION, $pop2
 	i32.const	$push3=, 0
 	i32.const	$2=, 16
 	i32.add 	$4=, $4, $2

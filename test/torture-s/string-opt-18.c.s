@@ -21,14 +21,14 @@ test2:                                  # @test2
 # BB#0:                                 # %entry
 	i32.const	$1=, 8
 	block   	.LBB1_2
-	i32.call	$push0=, mempcpy, $0, $0, $1
+	i32.call	$push0=, mempcpy@FUNCTION, $0, $0, $1
 	i32.add 	$push1=, $0, $1
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, .LBB1_2
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
@@ -107,7 +107,7 @@ main:                                   # @main
 	i32.add 	$4=, $7, $4
 	i32.const	$5=, 6
 	i32.add 	$5=, $7, $5
-	i32.call	$push0=, mempcpy, $4, $5, $0
+	i32.call	$push0=, mempcpy@FUNCTION, $4, $5, $0
 	i32.const	$6=, 6
 	i32.add 	$6=, $7, $6
 	block   	.LBB7_2
@@ -122,7 +122,7 @@ main:                                   # @main
 	i32.store	$7=, 0($3), $7
 	return  	$pop3
 .LBB7_2:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end7:
 	.size	main, .Lfunc_end7-main

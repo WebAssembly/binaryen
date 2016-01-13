@@ -22,7 +22,7 @@ test1:                                  # @test1
 # BB#3:                                 # %if.end
 	return
 .LBB0_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -53,7 +53,7 @@ test2:                                  # @test2
 # BB#4:                                 # %if.end
 	return
 .LBB1_5:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
@@ -88,7 +88,7 @@ test3:                                  # @test3
 # BB#5:                                 # %if.end
 	return
 .LBB2_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
@@ -127,7 +127,7 @@ test4:                                  # @test4
 # BB#6:                                 # %if.end
 	return
 .LBB3_7:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
@@ -170,7 +170,7 @@ test5:                                  # @test5
 # BB#7:                                 # %if.end
 	return
 .LBB4_8:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end4:
 	.size	test5, .Lfunc_end4-test5
@@ -217,7 +217,7 @@ test6:                                  # @test6
 # BB#8:                                 # %if.end
 	return
 .LBB5_9:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end5:
 	.size	test6, .Lfunc_end5-test6
@@ -268,7 +268,7 @@ test7:                                  # @test7
 # BB#9:                                 # %if.end
 	return
 .LBB6_10:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end6:
 	.size	test7, .Lfunc_end6-test7
@@ -323,7 +323,7 @@ test8:                                  # @test8
 # BB#10:                                # %if.end
 	return
 .LBB7_11:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end7:
 	.size	test8, .Lfunc_end7-test8
@@ -336,7 +336,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end8:
 	.size	main, .Lfunc_end8-main

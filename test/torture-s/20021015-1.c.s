@@ -17,7 +17,7 @@ g:                                      # @g
 	i32.store8	$discard=, g_list($4), $4
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g

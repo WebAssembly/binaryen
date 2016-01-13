@@ -40,7 +40,7 @@ f:                                      # @f
 	br_if   	$pop11, .LBB0_2
 	br      	.LBB0_5
 .LBB0_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %for.cond6.preheader
 	return
@@ -56,7 +56,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %for.cond.i.2.1
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -103,10 +103,10 @@ main:                                   # @main
 	i32.eq  	$push22=, $2, $pop21
 	br_if   	$pop22, .LBB1_3
 .LBB1_5:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_6:                                # %for.end10
-	call    	exit, $1
+	call    	exit@FUNCTION, $1
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

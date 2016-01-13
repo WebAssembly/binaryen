@@ -30,7 +30,7 @@ bar:                                    # @bar
 	i32.eq  	$push4=, $pop0, $0
 	br_if   	$pop4, .LBB0_6
 .LBB0_3:                                # %if.then19
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %if.then
 	i32.ne  	$push5=, $4, $0
@@ -47,7 +47,7 @@ bar:                                    # @bar
 	i32.store	$discard=, s($5), $pop11
 	return
 .LBB0_7:                                # %if.then8
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -94,7 +94,7 @@ foo:                                    # @foo
 	br_if   	$pop5, .LBB1_10
 	br      	.LBB1_8
 .LBB1_4:                                # %if.then19.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_5:                                # %if.then.i
 	i32.ne  	$push6=, $0, $1
@@ -116,10 +116,10 @@ foo:                                    # @foo
 	i32.store	$discard=, s($7), $4
 	return  	$7
 .LBB1_11:                               # %if.then19.i41
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_12:                               # %if.then8.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -138,7 +138,7 @@ main:                                   # @main
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	.LBB2_2
-	i32.call	$discard=, foo, $1
+	i32.call	$discard=, foo@FUNCTION, $1
 	i32.load	$push2=, v($0)
 	i32.const	$push3=, 1
 	i32.add 	$push0=, $pop2, $pop3

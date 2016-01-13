@@ -35,7 +35,7 @@ bar:                                    # @bar
 	i32.const	$push2=, 3
 	i32.const	$push1=, 4
 	i32.const	$push0=, 5
-	i32.call	$discard=, foo, $1, $pop3, $1, $pop2, $1, $pop1, $1, $pop0
+	i32.call	$discard=, foo@FUNCTION, $1, $pop3, $1, $pop2, $1, $pop1, $1, $pop0
 	i32.const	$push4=, 0
 	i64.load32_u	$push5=, global($pop4)
 	i64.shr_u	$push6=, $0, $pop5
@@ -52,16 +52,16 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block   	.LBB2_2
 	i64.const	$push0=, 81985529216486895
-	i64.call	$push1=, bar, $pop0
+	i64.call	$push1=, bar@FUNCTION, $pop0
 	i64.const	$push2=, 312749974122
 	i64.ne  	$push3=, $pop1, $pop2
 	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
-	call    	exit, $pop4
+	call    	exit@FUNCTION, $pop4
 	unreachable
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

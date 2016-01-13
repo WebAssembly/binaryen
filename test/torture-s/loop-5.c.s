@@ -72,22 +72,22 @@ main:                                   # @main
 	i64.ne  	$push25=, $pop23, $pop24
 	br_if   	$pop25, .LBB0_9
 # BB#8:                                 # %if.end9
-	call    	exit, $2
+	call    	exit@FUNCTION, $2
 	unreachable
 .LBB0_9:                                # %if.then8
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_10:                               # %if.then5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_11:                               # %if.then2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_12:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_13:                               # %if.then.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

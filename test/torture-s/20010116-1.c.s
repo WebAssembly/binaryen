@@ -19,10 +19,10 @@ find:                                   # @find
 	i32.lt_s	$push5=, $2, $pop4
 	br_if   	$pop5, .LBB0_2
 # BB#1:                                 # %for.body
-	call    	ok, $2
+	call    	ok@FUNCTION, $2
 	unreachable
 .LBB0_2:                                # %for.end
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	find, .Lfunc_end0-find
@@ -40,10 +40,10 @@ ok:                                     # @ok
 	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
-	call    	exit, $pop2
+	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	ok, .Lfunc_end1-ok
@@ -68,7 +68,7 @@ main:                                   # @main
 	i32.add 	$push1=, $2, $pop0
 	i32.const	$3=, 0
 	i32.add 	$3=, $4, $3
-	call    	find, $3, $pop1
+	call    	find@FUNCTION, $3, $pop1
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

@@ -18,12 +18,12 @@ main:                                   # @main
 	i32.sub 	$push8=, $0, $pop7
 	i32.const	$push9=, 1
 	i32.ne  	$push10=, $pop8, $pop9
-	block   	.LBB0_5
-	block   	.LBB0_4
-	br_if   	$pop10, .LBB0_4
+	block
+	block
+	br_if   	$pop10, 0
 .LBB0_1:                                  # %.preheader
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_4
+	loop
 	i32.const	$push12=, 10
 	i32.gt_s	$push13=, $0, $pop12
 	i32.add 	$0=, $pop13, $0
@@ -31,24 +31,25 @@ main:                                   # @main
 	i32.rem_s	$push15=, $0, $pop14
 	i32.const	$push16=, 3
 	i32.ne  	$push17=, $pop15, $pop16
-	block   	.LBB0_3
-	br_if   	$pop17, .LBB0_3
+	block
+	br_if   	$pop17, 0
 # BB#2:                                 #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push18=, 111
 	i32.rem_s	$push19=, $0, $pop18
 	i32.add 	$0=, $pop19, $0
-.LBB0_3:                                  #   in Loop: Header=.LBB0_1 Depth=1
+	end_block
 	i32.const	$push20=, 7
 	i32.rem_s	$push21=, $0, $pop20
 	i32.const	$push22=, 0
 	i32.eq  	$push23=, $pop21, $pop22
-	br_if   	$pop23, .LBB0_5
-	br      	.LBB0_1
-.LBB0_4:
+	br_if   	$pop23, 2
+	br      	0
+	end_loop
+	end_block
 	i32.const	$push11=, -12
 	i32.add 	$0=, $0, $pop11
 	i32.const	$discard=, main # just take address for testing
-.LBB0_5:                                  # %.loopexit
+	end_block
 	return  	$0
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

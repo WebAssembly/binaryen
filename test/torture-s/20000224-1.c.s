@@ -74,7 +74,7 @@ main:                                   # @main
 	i32.const	$push7=, 0
 	i32.store	$discard=, flag($pop7), $5
 .LBB1_4:                                # %test.exit
-	call    	exit, $2
+	call    	exit@FUNCTION, $2
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

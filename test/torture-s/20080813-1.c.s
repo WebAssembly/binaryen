@@ -25,7 +25,7 @@ bar:                                    # @bar
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

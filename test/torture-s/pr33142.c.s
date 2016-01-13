@@ -53,7 +53,7 @@ main:                                   # @main
 	i32.store	$discard=, 8($3), $pop1
 	i32.load	$push2=, 12($3)
 	i32.load	$push3=, 8($3)
-	i32.call	$push4=, lisp_atan2, $pop2, $pop3
+	i32.call	$push4=, lisp_atan2@FUNCTION, $pop2, $pop3
 	br_if   	$pop4, .LBB1_2
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 0
@@ -63,7 +63,7 @@ main:                                   # @main
 	i32.store	$3=, 0($2), $3
 	return  	$pop5
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

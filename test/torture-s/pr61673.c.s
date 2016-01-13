@@ -16,7 +16,7 @@ bar:                                    # @bar
 	i32.eq  	$push3=, $0, $pop2
 	br_if   	$pop3, .LBB0_3
 # BB#2:                                 # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.end
 	return
@@ -39,7 +39,7 @@ foo:                                    # @foo
 	i32.const	$push2=, 0
 	i32.store8	$discard=, e($pop2), $0
 .LBB1_2:                                # %if.end
-	call    	bar, $0
+	call    	bar@FUNCTION, $0
 	return
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -76,14 +76,14 @@ main:                                   # @main
 	i32.const	$2=, main.c
 	i32.const	$push0=, 33
 	i32.store8	$1=, e($0), $pop0
-	call    	foo, $2
+	call    	foo@FUNCTION, $2
 	block   	.LBB3_8
 	i32.load8_u	$push1=, e($0)
 	i32.ne  	$push2=, $pop1, $1
 	br_if   	$pop2, .LBB3_8
 # BB#1:                                 # %if.end
 	i32.const	$3=, main.c+1
-	call    	foo, $3
+	call    	foo@FUNCTION, $3
 	i32.const	$4=, 135
 	block   	.LBB3_7
 	i32.load8_u	$push3=, e($0)
@@ -91,13 +91,13 @@ main:                                   # @main
 	br_if   	$pop4, .LBB3_7
 # BB#2:                                 # %if.end6
 	i32.store8	$discard=, e($0), $1
-	call    	baz, $2
+	call    	baz@FUNCTION, $2
 	block   	.LBB3_6
 	i32.load8_u	$push5=, e($0)
 	i32.ne  	$push6=, $pop5, $1
 	br_if   	$pop6, .LBB3_6
 # BB#3:                                 # %if.end11
-	call    	baz, $3
+	call    	baz@FUNCTION, $3
 	block   	.LBB3_5
 	i32.load8_u	$push7=, e($0)
 	i32.ne  	$push8=, $pop7, $4
@@ -105,16 +105,16 @@ main:                                   # @main
 # BB#4:                                 # %if.end16
 	return  	$0
 .LBB3_5:                                # %if.then15
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_6:                                # %if.then10
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_7:                                # %if.then5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_8:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

@@ -39,7 +39,7 @@ f:                                      # @f
 	i32.eq  	$push6=, $6, $0
 	br_if   	$pop6, .LBB0_7
 # BB#6:                                 # %if.then7
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_7:                                # %if.end8
 	return  	$3
@@ -57,7 +57,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.const	$push0=, mem
 	i32.store	$discard=, mem+396($0), $pop0
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

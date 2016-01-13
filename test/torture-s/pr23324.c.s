@@ -36,19 +36,19 @@ main:                                   # @main
 # BB#5:                                 # %caller_bf7.exit
 	return  	$0
 .LBB0_6:                                # %if.then37.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_7:                                # %if.then33.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_8:                                # %if.then29.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_9:                                # %if.then5.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_10:                               # %if.then109.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

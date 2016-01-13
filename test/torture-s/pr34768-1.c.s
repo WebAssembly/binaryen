@@ -36,8 +36,8 @@ test:                                   # @test
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	i32.load	$2=, x($1)
-	i32.const	$push1=, foo
-	i32.const	$push0=, bar
+	i32.const	$push1=, foo@FUNCTION
+	i32.const	$push0=, bar@FUNCTION
 	i32.select	$push2=, $0, $pop1, $pop0
 	call_indirect	$pop2
 	i32.load	$push3=, x($1)
@@ -58,12 +58,12 @@ main:                                   # @main
 	block   	.LBB3_2
 	i32.const	$push0=, 1
 	i32.store	$push1=, x($0), $pop0
-	i32.call	$push2=, test, $pop1
+	i32.call	$push2=, test@FUNCTION, $pop1
 	br_if   	$pop2, .LBB3_2
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB3_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

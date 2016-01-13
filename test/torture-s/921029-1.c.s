@@ -37,7 +37,7 @@ main:                                   # @main
 	i64.store	$discard=, lpart($0), $pop1
 	i64.const	$push2=, -2
 	i64.store	$discard=, back($0), $pop2
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

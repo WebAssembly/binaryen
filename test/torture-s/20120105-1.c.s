@@ -31,7 +31,7 @@ main:                                   # @main
 	i32.const	$6=, 0
 	i32.add 	$6=, $7, $6
 	i32.or  	$push7=, $6, $pop6
-	i32.call	$push8=, extract, $pop7
+	i32.call	$push8=, extract@FUNCTION, $pop7
 	i32.store	$discard=, i($0), $pop8
 	i32.const	$3=, 16
 	i32.add 	$7=, $7, $3

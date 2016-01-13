@@ -540,6 +540,8 @@ public:
   WasmType result;
   std::vector<WasmType> params;
 
+  FunctionType() : result(none) {}
+
   std::ostream& print(std::ostream &o, unsigned indent, bool full=false) {
     if (full) {
       printOpening(o, "type") << ' ' << name << " (func";
@@ -938,13 +940,15 @@ public:
 class Import {
 public:
   Name name, module, base; // name = module.base
-  FunctionType type;
+  FunctionType* type;
+
+  Import() : type(nullptr) {}
 
   std::ostream& print(std::ostream &o, unsigned indent) {
     printOpening(o, "import ") << name << ' ';
     printText(o, module.str) << ' ';
     printText(o, base.str);
-    type.print(o, indent);
+    if (type) type->print(o, indent);
     return o << ')';
   }
 };

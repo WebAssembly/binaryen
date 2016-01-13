@@ -265,7 +265,7 @@ main:                                   # @main
 	i32.store	$15=, 0($10), $15
 	return  	$7
 .LBB3_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

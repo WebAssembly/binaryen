@@ -19,7 +19,7 @@ bar:                                    # @bar
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -43,13 +43,13 @@ foo:                                    # @foo
 	br_if   	$pop2, .LBB1_3
 # BB#1:                                 # %l4
 	i32.const	$push8=, 0
-	call    	bar, $pop8
+	call    	bar@FUNCTION, $pop8
 	i32.const	$push9=, 4
 	i32.eq  	$push10=, $0, $pop9
 	br_if   	$pop10, .LBB1_5
 # BB#2:                                 # %if.then.thread
 	i32.const	$push11=, 1
-	call    	bar, $pop11
+	call    	bar@FUNCTION, $pop11
 	br      	.LBB1_6
 .LBB1_3:                                # %entry
 	i32.const	$push3=, 6
@@ -57,16 +57,16 @@ foo:                                    # @foo
 	br_if   	$pop4, .LBB1_7
 # BB#4:                                 # %if.then
 	i32.const	$push5=, -1
-	call    	bar, $pop5
+	call    	bar@FUNCTION, $pop5
 	i32.const	$push6=, 0
-	call    	bar, $pop6
+	call    	bar@FUNCTION, $pop6
 	i32.const	$push7=, 1
-	call    	bar, $pop7
+	call    	bar@FUNCTION, $pop7
 .LBB1_5:                                # %if.then4
 	i32.const	$push12=, -1
-	call    	bar, $pop12
+	call    	bar@FUNCTION, $pop12
 .LBB1_6:                                # %if.end5
-	call    	bar, $1
+	call    	bar@FUNCTION, $1
 .LBB1_7:                                # %return
 	return
 .Lfunc_end1:
@@ -81,7 +81,7 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 3
-	call    	foo, $0
+	call    	foo@FUNCTION, $0
 	i32.const	$1=, 0
 	block   	.LBB2_2
 	i32.load	$push0=, c($1)
@@ -90,7 +90,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

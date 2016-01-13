@@ -437,8 +437,15 @@ private:
     }
     // parse body
     func->body = allocator.alloc<Block>();
-    std::vector<Block*> bstack;
-    bstack.push_back(func->body->dyn_cast<Block>());
+    std::vector<Expression*> bstack;
+    auto addToBlock = [&bstack](Expression* curr) {
+      Expression* last = bstack.back();
+      if (last->is<Loop>()) {
+        last = last->cast<Loop>()->body;
+      }
+      last->cast<Block>()->list.push_back(curr);
+    };
+    bstack.push_back(func->body);
     std::vector<Expression*> estack;
     auto push = [&](Expression* curr) {
       //std::cerr << "push " << curr << '\n';
@@ -491,7 +498,7 @@ private:
     };
     auto setOutput = [&](Expression* curr, Name assign) {
       if (assign.isNull() || assign.str[1] == 'd') { // discard
-        bstack.back()->list.push_back(curr);
+        addToBlock(curr);
       } else if (assign.str[1] == 'p') { // push
         push(curr);
       } else { // set to a local
@@ -499,7 +506,7 @@ private:
         set->name = assign;
         set->value = curr;
         set->type = curr->type;
-        bstack.back()->list.push_back(set);
+        addToBlock(set);
       }
     };
     auto makeBinary = [&](BinaryOp op, WasmType type) {
@@ -627,7 +634,7 @@ private:
           auto import = allocator.alloc<Import>();
           import->name = import->base = target;
           import->module = ENV;
-          import->type = sigToFunctionType(getSig(curr));
+          import->type = ensureFunctionType(getSig(curr), &wasm, allocator);
           wasm.addImport(import);
         }
       }
@@ -774,10 +781,22 @@ private:
         default: abort_on("type.?");
       }
     };
+    // labels
+    size_t nextLabel = 0;
+    auto getNextLabel = [&nextLabel]() {
+      return cashew::IString(("label$" + std::to_string(nextLabel++)).c_str(), false);
+    };
+    auto getBranchLabel = [&](uint32_t offset) {
+      assert(offset < bstack.size());
+      Expression* target = bstack[bstack.size() - 1 - offset];
+      if (target->is<Block>()) {
+        return target->cast<Block>()->name;
+      } else {
+        return target->cast<Loop>()->in;
+      }
+    };
     // fixups
     std::vector<Block*> loopBlocks; // we need to clear their names
-    std::set<Name> seenLabels; // if we already used a label, we don't need it in a loop (there is a block above it, with that label)
-    Name lastLabel; // A loop has an 'in' label which appears before it. There might also be a block in between it and the loop, so we have to remember the last label
     // main loop
     while (1) {
       skipWhitespace();
@@ -792,38 +811,27 @@ private:
         handleTyped(f64);
       } else if (match("block")) {
         auto curr = allocator.alloc<Block>();
-        curr->name = getStr();
-        bstack.back()->list.push_back(curr);
+        curr->name = getNextLabel();
+        addToBlock(curr);
         bstack.push_back(curr);
-        seenLabels.insert(curr->name);
+      } else if (match("end_block")) {
+        bstack.pop_back();
       } else if (match(".LBB")) {
-        s -= 4;
-        lastLabel = getStrToColon();
-        s++;
-        skipWhitespace();
-        // pop all blocks/loops that reach this target
-        // pop all targets with this label
-        while (!bstack.empty()) {
-          auto curr = bstack.back();
-          if (curr->name == lastLabel) {
-            bstack.pop_back();
-            continue;
-          }
-          break;
-        }
+        s = strchr(s, '\n');
       } else if (match("loop")) {
         auto curr = allocator.alloc<Loop>();
-        bstack.back()->list.push_back(curr);
-        curr->in = lastLabel;
-        Name out = getStr();
-        if (seenLabels.count(out) == 0) {
-          curr->out = out;
-        }
+        addToBlock(curr);
+        curr->in = getNextLabel();
+        curr->out = getNextLabel();
         auto block = allocator.alloc<Block>();
-        block->name = out; // temporary, fake
+        block->name = curr->out; // temporary, fake - this way, on bstack we have the right label at the right offset for a br
         curr->body = block;
         loopBlocks.push_back(block);
         bstack.push_back(block);
+        bstack.push_back(curr);
+      } else if (match("end_loop")) {
+        bstack.pop_back();
+        bstack.pop_back();
       } else if (match("br")) {
         auto curr = allocator.alloc<Break>();
         if (*s == '_') {
@@ -831,8 +839,8 @@ private:
           curr->condition = getInput();
           skipComma();
         }
-        curr->name = getStr();
-        bstack.back()->list.push_back(curr);
+        curr->name = getBranchLabel(getInt());
+        addToBlock(curr);
       } else if (match("call")) {
         makeCall(none);
       } else if (match("copy_local")) {
@@ -853,18 +861,18 @@ private:
         if (*s == '$') {
           curr->value = getInput();
         }
-        bstack.back()->list.push_back(curr);
+        addToBlock(curr);
       } else if (match("tableswitch")) {
         auto curr = allocator.alloc<Switch>();
         curr->value = getInput();
         skipComma();
-        curr->default_ = getCommaSeparated();
+        curr->default_ = getBranchLabel(getInt());
         while (skipComma()) {
-          curr->targets.push_back(getCommaSeparated());
+          curr->targets.push_back(getBranchLabel(getInt()));
         }
-        bstack.back()->list.push_back(curr);
+        addToBlock(curr);
       } else if (match("unreachable")) {
-        bstack.back()->list.push_back(allocator.alloc<Unreachable>());
+        addToBlock(allocator.alloc<Unreachable>());
       } else if (match("memory_size")) {
         makeHost(MemorySize);
       } else if (match("grow_memory")) {
@@ -1120,7 +1128,7 @@ public:
             auto import = parent->allocator.alloc<Import>();
             import->name = import->base = curr->target;
             import->module = ENV;
-            import->type = sigToFunctionType(getSig(curr));
+            import->type = ensureFunctionType(getSig(curr), &parent->wasm, parent->allocator);
             parent->wasm.addImport(import);
           }
         }

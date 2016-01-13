@@ -50,13 +50,13 @@ main:                                   # @main
 	i64.const	$push8=, 63
 	i64.shr_u	$push9=, $pop7, $pop8
 	i32.wrap/i64	$push10=, $pop9
-	i32.call	$push11=, fn1, $pop10
+	i32.call	$push11=, fn1@FUNCTION, $pop10
 	br_if   	$pop11, .LBB1_4
 # BB#3:                                 # %if.end5
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_4:                                # %if.then4
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

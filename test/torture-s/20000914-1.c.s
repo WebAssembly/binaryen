@@ -28,7 +28,7 @@ convert_like_real:                      # @convert_like_real
 # BB#1:                                 # %sw.bb
 	return  	$0
 .LBB1_2:                                # %sw.epilog
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	convert_like_real, .Lfunc_end1-convert_like_real
@@ -41,7 +41,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	call    	exit, $pop0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

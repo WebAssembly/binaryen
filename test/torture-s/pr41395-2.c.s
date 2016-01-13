@@ -33,9 +33,9 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block   	.LBB1_2
 	i32.const	$push0=, 276
-	i32.call	$push1=, malloc, $pop0
+	i32.call	$push1=, malloc@FUNCTION, $pop0
 	i32.const	$push2=, 16
-	i32.call	$push3=, foo, $pop1, $pop2
+	i32.call	$push3=, foo@FUNCTION, $pop1, $pop2
 	i32.const	$push4=, 65535
 	i32.and 	$push5=, $pop3, $pop4
 	i32.const	$push6=, 1
@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	return  	$pop8
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

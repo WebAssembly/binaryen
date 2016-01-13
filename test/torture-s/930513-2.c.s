@@ -33,7 +33,7 @@ eq:                                     # @eq
 	i32.store	$discard=, eq.i($2), $pop3
 	return  	$0
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	eq, .Lfunc_end1-eq
@@ -53,10 +53,10 @@ main:                                   # @main
 # BB#1:                                 # %eq.exit.3
 	i32.const	$push1=, 4
 	i32.store	$discard=, eq.i($0), $pop1
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB2_2:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

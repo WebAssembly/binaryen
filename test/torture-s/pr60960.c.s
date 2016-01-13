@@ -116,7 +116,7 @@ main:                                   # @main
 	i32.const	$0=, 5
 	i32.const	$11=, 12
 	i32.add 	$11=, $23, $11
-	call    	f1, $11, $0, $0, $0, $0
+	call    	f1@FUNCTION, $11, $0, $0, $0, $0
 	i32.const	$1=, 3
 	i32.const	$3=, 2
 	i32.const	$5=, 1
@@ -150,7 +150,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i32.const	$15=, 8
 	i32.add 	$15=, $23, $15
-	call    	f2, $15, $0, $0, $0, $0
+	call    	f2@FUNCTION, $15, $0, $0, $0, $0
 	i32.load8_u	$push25=, 8($23)
 	i32.const	$16=, 8
 	i32.add 	$16=, $23, $16
@@ -177,7 +177,7 @@ main:                                   # @main
 # BB#2:                                 # %if.end6
 	i32.const	$19=, 4
 	i32.add 	$19=, $23, $19
-	call    	f3, $19, $0, $0, $0, $0, $3, $3, $3, $3
+	call    	f3@FUNCTION, $19, $0, $0, $0, $0, $3, $3, $3, $3
 	i32.load8_u	$push40=, 4($23)
 	i32.const	$20=, 4
 	i32.add 	$20=, $23, $20
@@ -209,13 +209,13 @@ main:                                   # @main
 	i32.store	$23=, 0($10), $23
 	return  	$pop45
 .LBB3_4:                                # %if.then10
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_5:                                # %if.then5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

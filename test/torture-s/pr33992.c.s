@@ -14,7 +14,7 @@ bar:                                    # @bar
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -48,7 +48,7 @@ do_test:                                # @do_test
 	i64.const	$7=, 32
 	i64.shl 	$push3=, $9, $7
 	i64.shr_s	$push4=, $pop3, $7
-	call    	bar, $pop4
+	call    	bar@FUNCTION, $pop4
 	i64.load	$1=, 0($0)
 	i64.const	$2=, -1
 	i64.const	$8=, 63
@@ -66,7 +66,7 @@ do_test:                                # @do_test
 .LBB1_4:                                # %foo.exit.1
 	i64.shl 	$push8=, $9, $7
 	i64.shr_s	$push9=, $pop8, $7
-	call    	bar, $pop9
+	call    	bar@FUNCTION, $pop9
 	return
 .Lfunc_end1:
 	.size	do_test, .Lfunc_end1-do_test
@@ -89,7 +89,7 @@ main:                                   # @main
 	i64.store	$discard=, 8($4), $pop0
 	i32.const	$3=, 8
 	i32.add 	$3=, $4, $3
-	call    	do_test, $3
+	call    	do_test@FUNCTION, $3
 	i32.const	$push1=, 0
 	i32.const	$2=, 16
 	i32.add 	$4=, $4, $2

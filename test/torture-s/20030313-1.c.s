@@ -80,25 +80,25 @@ foo:                                    # @foo
 # BB#13:                                # %if.end40
 	return
 .LBB0_14:                               # %if.then39
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_15:                               # %if.then32
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_16:                               # %if.then25
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_17:                               # %if.then18
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_18:                               # %if.then11
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_19:                               # %if.then4
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_20:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -145,8 +145,8 @@ main:                                   # @main
 	i32.const	$push8=, 12
 	i32.const	$6=, 0
 	i32.add 	$6=, $7, $6
-	call    	foo, $6, $pop8
-	call    	exit, $0
+	call    	foo@FUNCTION, $6, $pop8
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

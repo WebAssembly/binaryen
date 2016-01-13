@@ -20,14 +20,14 @@ testc:                                  # @testc
 # BB#1:                                 # %if.then
 	br_if   	$1, .LBB0_4
 # BB#2:                                 # %if.then5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.else
 	br_if   	$1, .LBB0_5
 .LBB0_4:                                # %if.end9
 	return
 .LBB0_5:                                # %if.then7
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	testc, .Lfunc_end0-testc
@@ -52,14 +52,14 @@ tests:                                  # @tests
 # BB#1:                                 # %if.then
 	br_if   	$1, .LBB1_4
 # BB#2:                                 # %if.then5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_3:                                # %if.else
 	br_if   	$1, .LBB1_5
 .LBB1_4:                                # %if.end9
 	return
 .LBB1_5:                                # %if.then7
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	tests, .Lfunc_end1-tests
@@ -80,14 +80,14 @@ testi:                                  # @testi
 # BB#1:                                 # %if.then
 	br_if   	$1, .LBB2_4
 # BB#2:                                 # %if.then2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_3:                                # %if.else
 	br_if   	$1, .LBB2_5
 .LBB2_4:                                # %if.end6
 	return
 .LBB2_5:                                # %if.then4
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	testi, .Lfunc_end2-testi
@@ -108,14 +108,14 @@ testl:                                  # @testl
 # BB#1:                                 # %if.then
 	br_if   	$1, .LBB3_4
 # BB#2:                                 # %if.then2
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_3:                                # %if.else
 	br_if   	$1, .LBB3_5
 .LBB3_4:                                # %if.end6
 	return
 .LBB3_5:                                # %if.then4
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	testl, .Lfunc_end3-testl

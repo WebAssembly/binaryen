@@ -10,7 +10,7 @@ foo:                                    # @foo
 	i32.const	$push0=, a
 	i32.const	$push2=, 38
 	i32.const	$push1=, 520
-	call    	memset, $pop0, $pop2, $pop1
+	call    	memset@FUNCTION, $pop0, $pop2, $pop1
 	i32.const	$push3=, 640034342
 	return  	$pop3
 .Lfunc_end0:
@@ -26,7 +26,7 @@ bar:                                    # @bar
 	i32.const	$push0=, a
 	i32.const	$push2=, 54
 	i32.const	$push1=, 520
-	call    	memset, $pop0, $pop2, $pop1
+	call    	memset@FUNCTION, $pop0, $pop2, $pop1
 	i32.const	$0=, 0
 	i32.const	$push3=, 909522486
 	i32.store	$discard=, a($0), $pop3
@@ -44,7 +44,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.call	$0=, foo
+	i32.call	$0=, foo@FUNCTION
 	i32.const	$3=, 0
 	block   	.LBB2_11
 	i32.const	$push0=, 640034342
@@ -68,7 +68,7 @@ main:                                   # @main
 	i32.le_u	$push6=, $3, $2
 	br_if   	$pop6, .LBB2_1
 .LBB2_3:                                # %for.end
-	call    	bar
+	call    	bar@FUNCTION
 	i32.const	$3=, 0
 	block   	.LBB2_9
 	i32.load	$push7=, a+4($3)
@@ -96,16 +96,16 @@ main:                                   # @main
 	i32.const	$push16=, 0
 	return  	$pop16
 .LBB2_8:                                # %if.then18
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_9:                                # %if.then8
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_10:                               # %if.then4
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB2_11:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

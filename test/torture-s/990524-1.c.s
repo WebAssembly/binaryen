@@ -43,7 +43,7 @@ loop:                                   # @loop
 # BB#5:                                 # %if.end
 	return
 .LBB0_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_7:                                # %sw.bb2
                                         #   in Loop: Header=BB0_1 Depth=1
@@ -104,10 +104,10 @@ main:                                   # @main
 	br_if   	$pop13, .LBB1_6
 # BB#5:                                 # %loop.exit
 	i32.const	$push14=, 0
-	call    	exit, $pop14
+	call    	exit@FUNCTION, $pop14
 	unreachable
 .LBB1_6:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_7:                                # %sw.bb2.i
                                         #   in Loop: Header=BB1_1 Depth=1

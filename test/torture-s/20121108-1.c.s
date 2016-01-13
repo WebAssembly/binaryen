@@ -32,7 +32,7 @@ strtoul1:                               # @strtoul1
 	i32.eq  	$push9=, $0, $pop8
 	br_if   	$pop9, .LBB0_5
 # BB#4:                                 # %if.end11
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %return
 	return  	$1
@@ -62,7 +62,7 @@ string_to_ip:                           # @string_to_ip
 # BB#1:                                 # %if.end9
 	i32.const	$9=, 12
 	i32.add 	$9=, $12, $9
-	i32.call	$5=, strtoul1, $0, $9, $0
+	i32.call	$5=, strtoul1@FUNCTION, $0, $9, $0
 	i32.load	$0=, 12($12)
 	i32.const	$3=, 1
 	i32.load8_u	$push0=, 0($0)
@@ -80,7 +80,7 @@ string_to_ip:                           # @string_to_ip
 # BB#2:                                 # %if.end9.1
 	i32.const	$10=, 12
 	i32.add 	$10=, $12, $10
-	i32.call	$4=, strtoul1, $1, $10, $0
+	i32.call	$4=, strtoul1@FUNCTION, $1, $10, $0
 	i32.load	$1=, 12($12)
 	i32.load8_u	$push5=, 0($1)
 	i32.add 	$push6=, $1, $3
@@ -94,7 +94,7 @@ string_to_ip:                           # @string_to_ip
 # BB#3:                                 # %if.end9.2
 	i32.const	$11=, 12
 	i32.add 	$11=, $12, $11
-	i32.call	$4=, strtoul1, $2, $11, $0
+	i32.call	$4=, strtoul1@FUNCTION, $2, $11, $0
 	i32.load	$2=, 12($12)
 	i32.load8_u	$push9=, 0($2)
 	i32.add 	$push10=, $2, $3
@@ -108,7 +108,7 @@ string_to_ip:                           # @string_to_ip
 # BB#4:                                 # %if.then3.3
 	i32.const	$12=, 12
 	i32.add 	$12=, $12, $12
-	i32.call	$push11=, strtoul1, $3, $12, $0
+	i32.call	$push11=, strtoul1@FUNCTION, $3, $12, $0
 	i32.and 	$push13=, $pop11, $1
 	i32.shl 	$push12=, $5, $0
 	i32.or  	$5=, $pop13, $pop12
@@ -141,7 +141,7 @@ main:                                   # @main
 	i32.const	$12=, __stack_pointer
 	i32.store	$14=, 0($12), $14
 	i32.const	$push0=, temp
-	i32.call	$2=, string_to_ip, $pop0
+	i32.call	$2=, string_to_ip@FUNCTION, $pop0
 	i32.const	$3=, __stack_pointer
 	i32.load	$3=, 0($3)
 	i32.const	$4=, 4
@@ -150,7 +150,7 @@ main:                                   # @main
 	i32.store	$14=, 0($4), $14
 	i32.const	$1=, .L.str
 	i32.store	$0=, 0($14), $2
-	i32.call	$discard=, iprintf, $1
+	i32.call	$discard=, iprintf@FUNCTION, $1
 	i32.const	$5=, __stack_pointer
 	i32.load	$5=, 0($5)
 	i32.const	$6=, 4
@@ -166,7 +166,7 @@ main:                                   # @main
 	i32.store	$14=, 0($8), $14
 	i32.load	$push1=, result($2)
 	i32.store	$discard=, 0($14), $pop1
-	i32.call	$discard=, iprintf, $1
+	i32.call	$discard=, iprintf@FUNCTION, $1
 	i32.const	$9=, __stack_pointer
 	i32.load	$9=, 0($9)
 	i32.const	$10=, 4
@@ -179,14 +179,14 @@ main:                                   # @main
 	br_if   	$pop3, .LBB2_2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, .Lstr
-	i32.call	$discard=, puts, $pop4
+	i32.call	$discard=, puts@FUNCTION, $pop4
 	i32.const	$13=, 16
 	i32.add 	$14=, $14, $13
 	i32.const	$13=, __stack_pointer
 	i32.store	$14=, 0($13), $14
 	return  	$2
 .LBB2_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

@@ -10,7 +10,7 @@ test1:                                  # @test1
 # BB#0:                                 # %entry
 	i32.const	$push2=, .L.str
 	i32.add 	$push3=, $pop2, $1
-	i32.call	$discard=, strcpy, $0, $pop3
+	i32.call	$discard=, strcpy@FUNCTION, $0, $pop3
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
 	return  	$pop1
@@ -36,7 +36,7 @@ check2:                                 # @check2
 	i32.store	$push4=, check2.r($0), $pop3
 	return  	$pop4
 .LBB1_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	check2, .Lfunc_end1-check2
@@ -73,7 +73,7 @@ test2:                                  # @test2
 	i32.store8	$discard=, 0($0), $pop12
 	return
 .LBB2_2:                                # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	test2, .Lfunc_end2-test2
@@ -113,7 +113,7 @@ main:                                   # @main
 	i32.const	$5=, 4
 	i32.add 	$5=, $6, $5
 	block   	.LBB3_6
-	i32.call	$push12=, memcmp, $5, $pop10, $pop11
+	i32.call	$push12=, memcmp@FUNCTION, $5, $pop10, $pop11
 	br_if   	$pop12, .LBB3_6
 # BB#1:                                 # %if.end
 	block   	.LBB3_5
@@ -131,16 +131,16 @@ main:                                   # @main
 	i32.eq  	$push19=, $1, $pop18
 	br_if   	$pop19, .LBB3_4
 # BB#3:                                 # %if.end8
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .LBB3_4:                                # %if.then7
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_5:                                # %if.then.i.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB3_6:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

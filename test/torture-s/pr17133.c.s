@@ -56,7 +56,7 @@ main:                                   # @main
 # BB#1:                                 # %pure_alloc.exit
 	br_if   	$3, .LBB1_5
 # BB#2:                                 # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_3:                                # %if.end.lr.ph.i
 	i32.const	$push3=, 3

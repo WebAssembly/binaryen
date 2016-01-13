@@ -128,7 +128,7 @@ main:                                   # @main
 	i64.load	$push58=, s_c_ld+16($0)
 	i64.load	$push57=, s_c_ld+24($0)
 	i64.const	$push59=, 4612723957404008448
-	i32.call	$push60=, __eqtf2, $pop58, $pop57, $1, $pop59
+	i32.call	$push60=, __eqtf2@FUNCTION, $pop58, $pop57, $1, $pop59
 	br_if   	$pop60, .LBB0_37
 # BB#20:                                # %if.end88
 	block   	.LBB0_36
@@ -141,7 +141,7 @@ main:                                   # @main
 	i64.load	$push65=, s_s_ld+16($0)
 	i64.load	$push64=, s_s_ld+24($0)
 	i64.const	$push66=, 4612759141776097280
-	i32.call	$push67=, __eqtf2, $pop65, $pop64, $1, $pop66
+	i32.call	$push67=, __eqtf2@FUNCTION, $pop65, $pop64, $1, $pop66
 	br_if   	$pop67, .LBB0_35
 # BB#22:                                # %if.end97
 	block   	.LBB0_34
@@ -154,7 +154,7 @@ main:                                   # @main
 	i64.load	$push72=, s_i_ld+16($0)
 	i64.load	$push71=, s_i_ld+24($0)
 	i64.const	$push73=, 4612794326148186112
-	i32.call	$push74=, __eqtf2, $pop72, $pop71, $1, $pop73
+	i32.call	$push74=, __eqtf2@FUNCTION, $pop72, $pop71, $1, $pop73
 	br_if   	$pop74, .LBB0_33
 # BB#24:                                # %if.end105
 	block   	.LBB0_32
@@ -167,7 +167,7 @@ main:                                   # @main
 	i64.load	$push79=, s_f_ld+16($0)
 	i64.load	$push78=, s_f_ld+24($0)
 	i64.const	$push80=, 4612820714427252736
-	i32.call	$push81=, __eqtf2, $pop79, $pop78, $1, $pop80
+	i32.call	$push81=, __eqtf2@FUNCTION, $pop79, $pop78, $1, $pop80
 	br_if   	$pop81, .LBB0_31
 # BB#26:                                # %if.end114
 	block   	.LBB0_30
@@ -180,93 +180,93 @@ main:                                   # @main
 	i64.load	$push86=, s_d_ld+16($0)
 	i64.load	$push85=, s_d_ld+24($0)
 	i64.const	$push87=, 4612838306613297152
-	i32.call	$push88=, __eqtf2, $pop86, $pop85, $1, $pop87
+	i32.call	$push88=, __eqtf2@FUNCTION, $pop86, $pop85, $1, $pop87
 	br_if   	$pop88, .LBB0_29
 # BB#28:                                # %if.end122
 	return  	$0
 .LBB0_29:                               # %if.then121
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_30:                               # %if.then117
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_31:                               # %if.then113
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_32:                               # %if.then109
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_33:                               # %if.then104
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_34:                               # %if.then100
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_35:                               # %if.then96
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_36:                               # %if.then92
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_37:                               # %if.then87
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_38:                               # %if.then83
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_39:                               # %if.then78
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_40:                               # %if.then74
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_41:                               # %if.then69
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_42:                               # %if.then65
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_43:                               # %if.then61
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_44:                               # %if.then57
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_45:                               # %if.then52
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_46:                               # %if.then48
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_47:                               # %if.then43
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_48:                               # %if.then38
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_49:                               # %if.then33
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_50:                               # %if.then28
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_51:                               # %if.then23
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_52:                               # %if.then19
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_53:                               # %if.then14
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_54:                               # %if.then10
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_55:                               # %if.then5
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB0_56:                               # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

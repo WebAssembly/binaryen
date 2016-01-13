@@ -33,7 +33,7 @@ main:                                   # @main
 	i64.store	$discard=, 0($7), $pop7
 	i32.const	$8=, 0
 	i32.add 	$8=, $7, $8
-	i32.call	$discard=, x, $3, $8
+	i32.call	$discard=, x@FUNCTION, $3, $8
 	block   	.LBB0_3
 	i32.load	$push8=, check($2)
 	i32.const	$push9=, 2
@@ -44,10 +44,10 @@ main:                                   # @main
 	i32.ne  	$push11=, $pop0, $3
 	br_if   	$pop11, .LBB0_3
 # BB#2:                                 # %if.end
-	call    	exit, $2
+	call    	exit@FUNCTION, $2
 	unreachable
 .LBB0_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -81,7 +81,7 @@ x:                                      # @x
 # BB#3:                                 # %if.then
 	i32.const	$5=, .L.str
 	block   	.LBB1_18
-	i32.call	$push7=, strcmp, $8, $5
+	i32.call	$push7=, strcmp@FUNCTION, $8, $5
 	br_if   	$pop7, .LBB1_18
 # BB#4:                                 # %lor.lhs.false.i
 	i32.load	$7=, check($4)
@@ -92,7 +92,7 @@ x:                                      # @x
 	br_if   	$pop9, .LBB1_18
 # BB#5:                                 # %s.exit
 	block   	.LBB1_17
-	i32.call	$push10=, strcmp, $8, $5
+	i32.call	$push10=, strcmp@FUNCTION, $8, $5
 	br_if   	$pop10, .LBB1_17
 # BB#6:                                 # %lor.lhs.false.i45
 	i32.add 	$push11=, $7, $3
@@ -147,21 +147,21 @@ x:                                      # @x
 	br_if   	$pop24, .LBB1_10
 	br      	.LBB1_15
 .LBB1_14:                               # %if.then.i51
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_15:                               # %cleanup
 	return  	$4
 .LBB1_16:                               # %if.then15
-	i32.call	$discard=, m, $4
+	i32.call	$discard=, m@FUNCTION, $4
 	unreachable
 .LBB1_17:                               # %if.then.i46
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_18:                               # %if.then.i
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .LBB1_19:                               # %if.else
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	x, .Lfunc_end1-x
@@ -177,7 +177,7 @@ s:                                      # @s
 # BB#0:                                 # %entry
 	block   	.LBB2_3
 	i32.const	$push0=, .L.str
-	i32.call	$push1=, strcmp, $0, $pop0
+	i32.call	$push1=, strcmp@FUNCTION, $0, $pop0
 	br_if   	$pop1, .LBB2_3
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$2=, 0
@@ -193,7 +193,7 @@ s:                                      # @s
 	i32.store	$discard=, 0($1), $pop5
 	return  	$2
 .LBB2_3:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
 	.size	s, .Lfunc_end2-s
@@ -206,7 +206,7 @@ m:                                      # @m
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	m, .Lfunc_end3-m
@@ -242,7 +242,7 @@ r:                                      # @r
 	i32.store	$discard=, r.cnt($3), $pop6
 	return  	$0
 .LBB4_4:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end4:
 	.size	r, .Lfunc_end4-r

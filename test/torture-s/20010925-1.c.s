@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.load16_u	$push0=, src+8($0)
 	i32.store16	$discard=, dst+8($0), $pop0
 	i64.store	$discard=, dst($0), $1
-	call    	exit, $0
+	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -33,7 +33,7 @@ foo:                                    # @foo
 	i32.eq  	$push1=, $2, $pop0
 	br_if   	$pop1, .LBB1_2
 # BB#1:                                 # %if.end
-	call    	memcpy, $0, $1, $2
+	call    	memcpy@FUNCTION, $0, $1, $2
 	i32.const	$3=, 0
 .LBB1_2:                                # %return
 	return  	$3

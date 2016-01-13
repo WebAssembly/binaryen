@@ -8,7 +8,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	call    	func_32
+	call    	func_32@FUNCTION
 	i32.const	$0=, 0
 	block   	.LBB0_2
 	i32.load	$push0=, g_261($0)
@@ -18,7 +18,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB0_2:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

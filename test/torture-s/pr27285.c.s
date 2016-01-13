@@ -177,7 +177,7 @@ main:                                   # @main
 	i32.add 	$25=, $31, $25
 	i32.const	$26=, 0
 	i32.add 	$26=, $31, $26
-	call    	foo, $25, $26
+	call    	foo@FUNCTION, $25, $26
 	i32.const	$27=, 0
 	i32.add 	$27=, $31, $27
 	block   	.LBB1_5
@@ -217,7 +217,7 @@ main:                                   # @main
 	i32.store	$31=, 0($18), $31
 	return  	$1
 .LBB1_5:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

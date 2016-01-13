@@ -59,7 +59,7 @@ main:                                   # @main
 	i32.add 	$4=, $8, $4
 	i32.const	$5=, 8
 	i32.add 	$5=, $8, $5
-	i32.call	$0=, test, $4, $5
+	i32.call	$0=, test@FUNCTION, $4, $5
 	i32.load	$push0=, 0($0)
 	i32.const	$6=, 12
 	i32.add 	$6=, $8, $6
@@ -89,7 +89,7 @@ main:                                   # @main
 	i32.store	$8=, 0($3), $8
 	return  	$pop8
 .LBB3_5:                                # %if.then
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

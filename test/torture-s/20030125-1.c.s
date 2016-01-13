@@ -9,7 +9,7 @@ t:                                      # @t
 	.result 	f32
 # BB#0:                                 # %entry
 	f64.promote/f32	$push0=, $0
-	f64.call	$push1=, sin, $pop0
+	f64.call	$push1=, sin@FUNCTION, $pop0
 	f32.demote/f64	$push2=, $pop1
 	return  	$pop2
 .Lfunc_end0:
@@ -48,7 +48,7 @@ floor:                                  # @floor
 	.param  	f64
 	.result 	f64
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
 	.size	floor, .Lfunc_end3-floor
@@ -73,7 +73,7 @@ q1:                                     # @q1
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
@@ -98,7 +98,7 @@ sinf:                                   # @sinf
 	.param  	f32
 	.result 	f32
 # BB#0:                                 # %entry
-	call    	abort
+	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end7:
 	.size	sinf, .Lfunc_end7-sinf

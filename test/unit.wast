@@ -1,6 +1,9 @@
 (module
   (memory 4096 4096 (segment 1026 "\14\00"))
   (type $FUNCSIG$vf (func (param f32)))
+  (type $FUNCSIG$v (func))
+  (type $FUNCSIG$id (func (param f64) (result i32)))
+  (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
   (import $_emscripten_asm_const_vi "env" "_emscripten_asm_const_vi")
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
