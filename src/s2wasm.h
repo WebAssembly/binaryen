@@ -360,7 +360,11 @@ private:
       else if (match("data")) {}
       else if (match("ident")) {}
       else if (match("section") || match("align")) s = strchr(s, '\n');
-      else if (match("globl")) parseGlobl();
+      else if (match("Lfunc_end")) {
+        // skip the next line, which has a .size we can ignore
+        s = strstr(s, ".size");
+        s = strchr(s, '\n');
+      } else if (match("globl")) parseGlobl();
       else abort_on("process");
     }
   }
@@ -881,6 +885,8 @@ private:
         s = strchr(s, '\n');
         s++;
         s = strchr(s, '\n');
+        break; // the function is done
+      } else if (match(".endfunc")) {
         break; // the function is done
       } else {
         abort_on("function element");
