@@ -280,7 +280,7 @@ if torture:
   if unexpected_result_count:
     fail(unexpected_result_count, 0)
 
-print '\n[ checking wasm-as testcases... ]\n'
+print '\n[ checking binary format testcases... ]\n'
 
 for wast in tests:
   if wast.endswith('.wast') and not wast in ['unit.wast']: # blacklist some known failures
