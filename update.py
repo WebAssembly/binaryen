@@ -111,7 +111,7 @@ def getargs():
   import argparse
   parser = argparse.ArgumentParser(
       description='Update the repository dependencies.')
-  parser.add_argument('--force-latest', type=bool, default=False,
+  parser.add_argument('--force-latest', action='store_true',
                       help='Sync to latest waterfall build, not lkgr')
   parser.add_argument('--override-hash', type=str, default=None,
                       help='Sync to specific hash from  waterfall build')
