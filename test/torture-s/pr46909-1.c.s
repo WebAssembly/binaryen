@@ -35,8 +35,8 @@ main:                                   # @main
 	i32.const	$3=, -14
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block   	.LBB1_4
-	loop    	.LBB1_3
+	block
+	loop                            # label1:
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $3, $pop0
 	i32.call	$0=, foo@FUNCTION, $pop1
@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.shl 	$push3=, $pop2, $2
 	i32.sub 	$push4=, $2, $pop3
 	i32.ne  	$push5=, $0, $pop4
-	br_if   	$pop5, .LBB1_4
+	br_if   	$pop5, 2        # 2: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push6=, 5
@@ -54,10 +54,12 @@ main:                                   # @main
 	i32.add 	$3=, $3, $2
 	i32.const	$push7=, 9
 	i32.le_s	$push8=, $0, $pop7
-	br_if   	$pop8, .LBB1_1
-.LBB1_3:                                # %for.end
+	br_if   	$pop8, 0        # 0: up to label1
+# BB#3:                                 # %for.end
+	end_loop                        # label2:
 	return  	$1
 .LBB1_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

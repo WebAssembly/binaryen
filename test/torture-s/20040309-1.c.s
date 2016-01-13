@@ -11,18 +11,19 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$1=, 16
 	i32.const	$2=, 0
-	block   	.LBB0_2
+	block
 	i32.shl 	$push0=, $0, $1
 	i32.shr_s	$push1=, $pop0, $1
 	i32.const	$push2=, -1
 	i32.gt_s	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB0_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %cond.true
 	i32.const	$push4=, 32768
 	i32.add 	$push5=, $0, $pop4
 	i32.const	$push6=, 65535
 	i32.and 	$2=, $pop5, $pop6
 .LBB0_2:                                # %cond.end
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

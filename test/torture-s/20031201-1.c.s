@@ -34,23 +34,24 @@ f0:                                     # @f0
 	i32.const	$1=, 0
 	i32.load	$2=, f0.washere($1)
 	i32.load	$0=, i($1)
-	block   	.LBB1_4
+	block
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $2, $pop0
 	i32.store	$discard=, f0.washere($1), $pop1
-	br_if   	$2, .LBB1_4
+	br_if   	$2, 0           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$1=, 32
 	i32.load16_u	$push2=, 0($0)
 	i32.ne  	$push3=, $pop2, $1
-	br_if   	$pop3, .LBB1_4
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false1
 	i32.load16_u	$push4=, 4($0)
 	i32.ne  	$push5=, $pop4, $1
-	br_if   	$pop5, .LBB1_4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#3:                                 # %if.end
 	return
 .LBB1_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -66,18 +67,19 @@ test:                                   # @test
 	i32.const	$1=, 0
 	i32.load	$0=, i($1)
 	i32.const	$2=, 8
-	block   	.LBB2_3
+	block
 	i32.load16_u	$push0=, 0($0)
 	i32.ne  	$push1=, $pop0, $2
-	br_if   	$pop1, .LBB2_3
+	br_if   	$pop1, 0        # 0: down to label1
 # BB#1:                                 # %lor.lhs.false
 	i32.load16_u	$push2=, 4($0)
 	i32.ne  	$push3=, $pop2, $2
-	br_if   	$pop3, .LBB2_3
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#2:                                 # %if.end
 	call    	exit@FUNCTION, $1
 	unreachable
 .LBB2_3:                                # %if.then
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

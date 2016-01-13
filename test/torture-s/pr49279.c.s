@@ -71,11 +71,11 @@ main:                                   # @main
 	i32.add 	$3=, $5, $3
 	i32.const	$4=, 8
 	i32.add 	$4=, $5, $4
-	block   	.LBB2_2
+	block
 	i32.call	$push0=, foo@FUNCTION, $3, $4
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, .LBB2_2
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
 	i32.const	$2=, 16
@@ -84,6 +84,7 @@ main:                                   # @main
 	i32.store	$5=, 0($2), $5
 	return  	$pop3
 .LBB2_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

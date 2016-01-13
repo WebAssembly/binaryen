@@ -10,12 +10,12 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.add 	$2=, $0, $1
 	i32.const	$3=, 1
-	block   	.LBB0_2
+	block
 	i32.lt_s	$push0=, $1, $3
-	br_if   	$pop0, .LBB0_2
+	br_if   	$pop0, 0        # 0: down to label0
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label1:
 	i32.const	$push1=, 3
 	i32.add 	$1=, $0, $pop1
 	i32.load8_u	$5=, 0($1)
@@ -32,8 +32,10 @@ foo:                                    # @foo
 	i32.const	$push5=, 4
 	i32.add 	$0=, $0, $pop5
 	i32.lt_u	$push6=, $0, $2
-	br_if   	$pop6, .LBB0_1
+	br_if   	$pop6, 0        # 0: up to label1
 .LBB0_2:                                # %while.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	return
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -52,17 +54,18 @@ main:                                   # @main
 	i32.sub 	$2=, $0, $1
 	i32.const	$1=, __stack_pointer
 	i32.store	$2=, 0($1), $2
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 1
 	i32.store	$push1=, 12($2), $pop0
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $pop1, $pop3
-	br_if   	$pop4, .LBB1_2
+	br_if   	$pop4, 0        # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB1_2:                                # %if.then
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

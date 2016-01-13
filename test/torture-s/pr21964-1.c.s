@@ -7,18 +7,19 @@
 foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB0_3
+	block
 	i32.const	$push1=, 0
 	i32.eq  	$push2=, $1, $pop1
-	br_if   	$pop2, .LBB0_3
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, .LBB0_3
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#2:                                 # %if.then2.split
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.then
+	end_block                       # label0:
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable

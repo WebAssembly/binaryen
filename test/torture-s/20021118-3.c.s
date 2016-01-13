@@ -9,19 +9,20 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_3
+	block
 	i32.const	$push1=, -2
 	i32.eq  	$push2=, $0, $pop1
-	br_if   	$pop2, .LBB0_3
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$1=, 0
 	i32.const	$push3=, -100
 	i32.sub 	$push0=, $pop3, $0
 	i32.ge_s	$push4=, $pop0, $1
-	br_if   	$pop4, .LBB0_3
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	return  	$1
 .LBB0_3:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

@@ -108,11 +108,11 @@ test:                                   # @test
 	i32.const	$28=, 0
 	i32.add 	$28=, $29, $28
 	call    	memcpy@FUNCTION, $0, $28, $2
-	block   	.LBB1_2
+	block
 	i32.load	$push18=, 0($29)
 	i32.const	$push19=, -1
 	i32.ne  	$push20=, $pop18, $pop19
-	br_if   	$pop20, .LBB1_2
+	br_if   	$pop20, 0       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$10=, 128
 	i32.add 	$29=, $29, $10
@@ -120,6 +120,7 @@ test:                                   # @test
 	i32.store	$29=, 0($10), $29
 	return
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -219,11 +220,11 @@ main:                                   # @main
 	i32.const	$28=, 0
 	i32.add 	$28=, $29, $28
 	call    	memcpy@FUNCTION, $0, $28, $2
-	block   	.LBB2_2
+	block
 	i32.load	$push17=, 0($29)
 	i32.const	$push18=, -1
 	i32.ne  	$push19=, $pop17, $pop18
-	br_if   	$pop19, .LBB2_2
+	br_if   	$pop19, 0       # 0: down to label1
 # BB#1:                                 # %test.exit
 	i32.const	$10=, 128
 	i32.add 	$29=, $29, $10
@@ -231,6 +232,7 @@ main:                                   # @main
 	i32.store	$29=, 0($10), $29
 	return  	$3
 .LBB2_2:                                # %if.then.i
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

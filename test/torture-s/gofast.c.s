@@ -443,13 +443,14 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %if.end11
 	i32.const	$0=, 0
-	block   	.LBB31_2
+	block
 	i32.load	$push0=, fail_count($0)
-	br_if   	$pop0, .LBB31_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end202
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB31_2:                               # %if.then201
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end31:

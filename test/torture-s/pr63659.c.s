@@ -9,40 +9,43 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB0_2
+	block
 	i32.load	$push1=, a($0)
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $pop1, $pop10
-	br_if   	$pop11, .LBB0_2
+	br_if   	$pop11, 0       # 0: down to label0
 # BB#1:                                 # %for.cond.preheader
 	i32.store	$discard=, a($0), $0
 .LBB0_2:                                # %while.end
+	end_block                       # label0:
 	i32.const	$1=, 255
 	i32.load8_s	$push2=, c($0)
 	i32.load	$push3=, h($0)
 	i32.shr_s	$push0=, $pop2, $pop3
 	i32.store	$2=, g($0), $pop0
 	copy_local	$3=, $1
-	block   	.LBB0_4
+	block
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $2, $pop12
-	br_if   	$pop13, .LBB0_4
+	br_if   	$pop13, 0       # 0: down to label1
 # BB#3:                                 # %cond.false
 	i32.const	$push4=, -1
 	i32.rem_s	$3=, $pop4, $2
 .LBB0_4:                                # %cond.end
+	end_block                       # label1:
 	i32.load	$2=, d($0)
-	block   	.LBB0_6
+	block
 	i32.store8	$push5=, f($0), $3
 	i32.store8	$push6=, e($0), $pop5
 	i32.and 	$push7=, $pop6, $1
 	i32.store	$discard=, 0($2), $pop7
 	i32.load	$push8=, b($0)
 	i32.ne  	$push9=, $pop8, $1
-	br_if   	$pop9, .LBB0_6
+	br_if   	$pop9, 0        # 0: down to label2
 # BB#5:                                 # %if.end23
 	return  	$0
 .LBB0_6:                                # %if.then22
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

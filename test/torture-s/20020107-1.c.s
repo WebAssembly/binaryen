@@ -29,16 +29,17 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	i32.const	$2=, 1
-	block   	.LBB1_2
+	block
 	i32.add 	$push0=, $0, $2
 	i32.sub 	$push1=, $pop0, $1
 	i32.ne  	$push2=, $pop1, $2
-	br_if   	$pop2, .LBB1_2
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %bar.exit
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable
 .LBB1_2:                                # %if.then.i
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

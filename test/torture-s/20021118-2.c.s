@@ -57,13 +57,14 @@ t2:                                     # @t2
 f1:                                     # @f1
 	.param  	f64
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	f64.const	$push0=, 0x1.8p1
 	f64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB2_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB2_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
@@ -76,17 +77,18 @@ f1:                                     # @f1
 f2:                                     # @f2
 	.param  	f32, f32
 # BB#0:                                 # %entry
-	block   	.LBB3_3
+	block
 	f32.const	$push0=, 0x1.4p1
 	f32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB3_3
+	br_if   	$pop1, 0        # 0: down to label1
 # BB#1:                                 # %entry
 	f32.const	$push2=, 0x1.cp1
 	f32.ne  	$push3=, $1, $pop2
-	br_if   	$pop3, .LBB3_3
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#2:                                 # %if.end
 	return
 .LBB3_3:                                # %if.then
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
@@ -99,13 +101,14 @@ f2:                                     # @f2
 f3:                                     # @f3
 	.param  	f32
 # BB#0:                                 # %entry
-	block   	.LBB4_2
+	block
 	f32.const	$push0=, 0x1.8p2
 	f32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB4_2
+	br_if   	$pop1, 0        # 0: down to label2
 # BB#1:                                 # %if.end
 	return
 .LBB4_2:                                # %if.then
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end4:

@@ -26,22 +26,24 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 # BB#0:                                 # %entry
 	i32.load	$2=, 0($1)
 	i32.load	$3=, 8($2)
-	block   	.LBB1_4
-	br_if   	$3, .LBB1_4
+	block
+	br_if   	$3, 0           # 0: down to label0
 # BB#1:                                 # %if.then.i
 	i32.load	$3=, 4($2)
-	block   	.LBB1_3
-	br_if   	$3, .LBB1_3
+	block
+	br_if   	$3, 0           # 0: down to label1
 # BB#2:                                 # %if.then3.i
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $2, $pop0
 	i32.store	$3=, 0($pop1), $0
 .LBB1_3:                                # %if.end.i
+	end_block                       # label1:
 	i32.call	$discard=, foo_create_got_section@FUNCTION, $3, $1
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $2, $pop2
 	i32.load	$3=, 0($pop3)
 .LBB1_4:                                # %get_got.exit
+	end_block                       # label0:
 	return  	$3
 .Lfunc_end1:
 	.size	elf64_ia64_check_relocs, .Lfunc_end1-elf64_ia64_check_relocs
@@ -56,16 +58,17 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.const	$1=, abfd
-	block   	.LBB2_2
+	block
 	i32.const	$push0=, hash
 	i32.store	$discard=, link_info($0), $pop0
 	i32.const	$push1=, link_info
 	i32.call	$push2=, elf64_ia64_check_relocs@FUNCTION, $1, $pop1
 	i32.ne  	$push3=, $pop2, $1
-	br_if   	$pop3, .LBB2_2
+	br_if   	$pop3, 0        # 0: down to label2
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB2_2:                                # %if.then
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

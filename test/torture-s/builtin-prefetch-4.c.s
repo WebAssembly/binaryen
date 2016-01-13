@@ -395,133 +395,145 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	i32.load	$0=, ptr($1)
-	block   	.LBB24_24
+	block
 	i32.ne  	$push4=, $0, $0
-	br_if   	$pop4, .LBB24_24
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.end4
 	i32.load	$0=, arrindex($1)
-	block   	.LBB24_23
+	block
 	i32.ne  	$push5=, $0, $0
-	br_if   	$pop5, .LBB24_23
+	br_if   	$pop5, 0        # 0: down to label1
 # BB#2:                                 # %if.end12
 	i32.const	$2=, 4
 	i32.load	$push6=, ptr($1)
 	i32.add 	$push0=, $pop6, $2
 	i32.store	$discard=, ptr($1), $pop0
 	i32.const	$0=, 1
-	block   	.LBB24_22
+	block
 	i32.const	$push34=, 0
 	i32.eq  	$push35=, $0, $pop34
-	br_if   	$pop35, .LBB24_22
+	br_if   	$pop35, 0       # 0: down to label2
 # BB#3:                                 # %if.end20
-	block   	.LBB24_21
+	block
 	i32.load	$push1=, ptr($1)
 	i32.add 	$push7=, $pop1, $2
 	i32.store	$discard=, ptr($1), $pop7
 	i32.const	$push36=, 0
 	i32.eq  	$push37=, $0, $pop36
-	br_if   	$pop37, .LBB24_21
+	br_if   	$pop37, 0       # 0: down to label3
 # BB#4:                                 # %if.end28
 	i32.const	$2=, -4
-	block   	.LBB24_20
+	block
 	i32.load	$push8=, ptr($1)
 	i32.add 	$push2=, $pop8, $2
 	i32.store	$discard=, ptr($1), $pop2
 	i32.const	$push38=, 0
 	i32.eq  	$push39=, $0, $pop38
-	br_if   	$pop39, .LBB24_20
+	br_if   	$pop39, 0       # 0: down to label4
 # BB#5:                                 # %if.end36
-	block   	.LBB24_19
+	block
 	i32.load	$push3=, ptr($1)
 	i32.add 	$push9=, $pop3, $2
 	i32.store	$discard=, ptr($1), $pop9
 	i32.const	$push40=, 0
 	i32.eq  	$push41=, $0, $pop40
-	br_if   	$pop41, .LBB24_19
+	br_if   	$pop41, 0       # 0: down to label5
 # BB#6:                                 # %if.end44
-	block   	.LBB24_18
+	block
 	i32.load	$push10=, arrindex($1)
 	i32.add 	$push11=, $pop10, $0
 	i32.store	$2=, arrindex($1), $pop11
 	i32.load	$push12=, arrindex($1)
 	i32.ne  	$push13=, $pop12, $2
-	br_if   	$pop13, .LBB24_18
+	br_if   	$pop13, 0       # 0: down to label6
 # BB#7:                                 # %if.end52
-	block   	.LBB24_17
+	block
 	i32.load	$push14=, arrindex($1)
 	i32.add 	$push15=, $pop14, $0
 	i32.store	$2=, arrindex($1), $pop15
 	i32.load	$push16=, arrindex($1)
 	i32.ne  	$push17=, $pop16, $2
-	br_if   	$pop17, .LBB24_17
+	br_if   	$pop17, 0       # 0: down to label7
 # BB#8:                                 # %if.end64
 	i32.const	$2=, -1
-	block   	.LBB24_16
+	block
 	i32.load	$push18=, arrindex($1)
 	i32.add 	$push19=, $pop18, $2
 	i32.store	$3=, arrindex($1), $pop19
 	i32.load	$push20=, arrindex($1)
 	i32.ne  	$push21=, $pop20, $3
-	br_if   	$pop21, .LBB24_16
+	br_if   	$pop21, 0       # 0: down to label8
 # BB#9:                                 # %if.end72
-	block   	.LBB24_15
+	block
 	i32.load	$push22=, arrindex($1)
 	i32.add 	$push23=, $pop22, $2
 	i32.store	$2=, arrindex($1), $pop23
 	i32.load	$push24=, arrindex($1)
 	i32.ne  	$push25=, $pop24, $2
-	br_if   	$pop25, .LBB24_15
+	br_if   	$pop25, 0       # 0: down to label9
 # BB#10:                                # %if.end76
-	block   	.LBB24_14
+	block
 	i32.load	$push26=, getptrcnt($1)
 	i32.add 	$push27=, $pop26, $0
 	i32.store	$push28=, getptrcnt($1), $pop27
 	i32.ne  	$push29=, $pop28, $0
-	br_if   	$pop29, .LBB24_14
+	br_if   	$pop29, 0       # 0: down to label10
 # BB#11:                                # %if.end80
-	block   	.LBB24_13
+	block
 	i32.load	$push30=, getintcnt($1)
 	i32.add 	$push31=, $pop30, $0
 	i32.store	$push32=, getintcnt($1), $pop31
 	i32.ne  	$push33=, $pop32, $0
-	br_if   	$pop33, .LBB24_13
+	br_if   	$pop33, 0       # 0: down to label11
 # BB#12:                                # %if.end84
 	call    	exit@FUNCTION, $1
 	unreachable
 .LBB24_13:                              # %if.then83
+	end_block                       # label11:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_14:                              # %if.then79
+	end_block                       # label10:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_15:                              # %if.then75
+	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_16:                              # %if.then67
+	end_block                       # label8:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_17:                              # %if.then59
+	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_18:                              # %if.then51
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_19:                              # %if.then43
+	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_20:                              # %if.then35
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_21:                              # %if.then27
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_22:                              # %if.then19
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_23:                              # %if.then11
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB24_24:                              # %if.then3
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end24:

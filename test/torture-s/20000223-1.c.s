@@ -7,15 +7,16 @@
 check:                                  # @check
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $1
 	i32.and 	$push2=, $1, $pop1
 	i32.ne  	$push3=, $pop2, $1
-	br_if   	$pop3, .LBB0_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

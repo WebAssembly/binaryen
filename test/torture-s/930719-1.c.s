@@ -8,23 +8,26 @@ f:                                      # @f
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_5
-	br_if   	$0, .LBB0_5
+	block
+	br_if   	$0, 0           # 0: down to label0
 # BB#1:                                 # %while.body.preheader
-	block   	.LBB0_4
+	block
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $1, $pop0
-	br_if   	$pop1, .LBB0_4
+	br_if   	$pop1, 0        # 0: down to label1
 # BB#2:                                 # %sw.bb.split
-	br_if   	$2, .LBB0_5
+	br_if   	$2, 1           # 1: down to label0
 # BB#3:                                 # %if.end2
 	unreachable
 	unreachable
 .LBB0_4:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_5
-	br      	.LBB0_4
+	end_block                       # label1:
+	loop                            # label2:
+	br      	0               # 0: up to label2
 .LBB0_5:                                # %cleanup
+	end_loop                        # label3:
+	end_block                       # label0:
 	i32.const	$push2=, 0
 	return  	$pop2
 .Lfunc_end0:

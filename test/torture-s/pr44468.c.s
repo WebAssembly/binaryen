@@ -70,32 +70,35 @@ main:                                   # @main
 	i32.store	$3=, s+8($0), $pop1
 	i32.call	$4=, test1@FUNCTION, $2
 	i32.const	$5=, 3
-	block   	.LBB3_6
+	block
 	i32.ne  	$push2=, $4, $5
-	br_if   	$pop2, .LBB3_6
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.store	$4=, s+4($0), $1
 	i32.store	$1=, s+8($0), $3
-	block   	.LBB3_5
+	block
 	i32.call	$push3=, test2@FUNCTION, $2
 	i32.ne  	$push4=, $pop3, $5
-	br_if   	$pop4, .LBB3_5
+	br_if   	$pop4, 0        # 0: down to label1
 # BB#2:                                 # %if.end4
 	i32.store	$discard=, s+4($0), $4
 	i32.store	$discard=, s+8($0), $1
-	block   	.LBB3_4
+	block
 	i32.call	$push5=, test3@FUNCTION, $2
 	i32.ne  	$push6=, $pop5, $5
-	br_if   	$pop6, .LBB3_4
+	br_if   	$pop6, 0        # 0: down to label2
 # BB#3:                                 # %if.end8
 	return  	$0
 .LBB3_4:                                # %if.then7
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_5:                                # %if.then3
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_6:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:

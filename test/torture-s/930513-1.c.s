@@ -72,20 +72,21 @@ main:                                   # @main
 	i32.const	$4=, __stack_pointer
 	i32.store	$7=, 0($4), $7
 	i32.const	$0=, 0
-	block   	.LBB1_3
+	block
 	i32.load8_u	$push4=, buf($0)
 	i32.const	$push5=, 53
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, .LBB1_3
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.load8_u	$push0=, buf+1($0)
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop0, $pop7
-	br_if   	$pop8, .LBB1_3
+	br_if   	$pop8, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_3:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

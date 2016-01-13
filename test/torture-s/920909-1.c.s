@@ -8,12 +8,12 @@ f:                                      # @f
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, -1026
 	i32.add 	$0=, $0, $pop0
 	i32.const	$push1=, 5
 	i32.gt_u	$push2=, $0, $pop1
-	br_if   	$pop2, .LBB0_2
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %switch.lookup
 	i32.const	$push6=, .Lswitch.table
 	i32.const	$push4=, 2
@@ -22,6 +22,7 @@ f:                                      # @f
 	i32.load	$push8=, 0($pop7)
 	return  	$pop8
 .LBB0_2:                                # %return
+	end_block                       # label0:
 	i32.const	$push3=, 0
 	return  	$pop3
 .Lfunc_end0:

@@ -24,23 +24,24 @@ main:                                   # @main
 	i32.store	$0=, 0($pop4), $pop5
 	i32.const	$5=, 8
 	i32.add 	$5=, $6, $5
-	block   	.LBB0_4
+	block
 	i32.call	$push6=, foo@FUNCTION, $5
 	i32.const	$push7=, 2
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, .LBB0_4
+	br_if   	$pop8, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$1=, 0
 	i32.load	$push0=, lo($1)
-	br_if   	$pop0, .LBB0_4
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#2:                                 # %entry
 	i32.load	$push1=, hi($1)
 	i32.ne  	$push9=, $pop1, $0
-	br_if   	$pop9, .LBB0_4
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#3:                                 # %if.then
 	call    	exit@FUNCTION, $1
 	unreachable
 .LBB0_4:                                # %if.end
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -58,31 +59,34 @@ foo:                                    # @foo
 	i32.load	$1=, 0($0)
 	i32.const	$2=, 65535
 	i32.const	$3=, 0
-	block   	.LBB1_2
+	block
 	i32.and 	$push0=, $1, $2
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $pop0, $pop7
-	br_if   	$pop8, .LBB1_2
+	br_if   	$pop8, 0        # 0: down to label1
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 0
 	i32.const	$push2=, 1
 	i32.store	$discard=, lo($pop1), $pop2
 	i32.load	$3=, 4($0)
 .LBB1_2:                                # %if.end
-	block   	.LBB1_5
-	block   	.LBB1_4
+	end_block                       # label1:
+	block
+	block
 	i32.le_u	$push3=, $1, $2
-	br_if   	$pop3, .LBB1_4
+	br_if   	$pop3, 0        # 0: down to label3
 # BB#3:                                 # %if.then7
 	i32.const	$push4=, 0
 	i32.const	$push5=, 1
 	i32.store	$discard=, hi($pop4), $pop5
 	i32.load	$0=, 4($0)
 	i32.add 	$3=, $0, $3
-	br      	.LBB1_5
+	br      	1               # 1: down to label2
 .LBB1_4:                                # %if.end.if.end10_crit_edge
+	end_block                       # label3:
 	i32.load	$0=, 4($0)
 .LBB1_5:                                # %if.end10
+	end_block                       # label2:
 	i32.add 	$push6=, $0, $3
 	return  	$pop6
 .Lfunc_end1:

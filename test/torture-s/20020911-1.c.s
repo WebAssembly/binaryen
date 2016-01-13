@@ -10,10 +10,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load16_s	$1=, c($0)
-	block   	.LBB0_3
+	block
 	i32.const	$push2=, -1
 	i32.gt_s	$push3=, $1, $pop2
-	br_if   	$pop3, .LBB0_3
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push1=, 65535
 	i32.and 	$push0=, $1, $pop1
@@ -21,10 +21,11 @@ main:                                   # @main
 	i32.add 	$push5=, $pop0, $pop4
 	i32.const	$push6=, 32768
 	i32.ge_s	$push7=, $pop5, $pop6
-	br_if   	$pop7, .LBB0_3
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	return  	$0
 .LBB0_3:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

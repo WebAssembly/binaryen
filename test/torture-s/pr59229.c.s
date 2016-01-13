@@ -11,18 +11,18 @@ bar:                                    # @bar
 	i32.const	$push0=, 0
 	i32.load	$1=, i($pop0)
 	i32.const	$2=, 6
-	block   	.LBB0_4
+	block
 	i32.const	$push1=, -1
 	i32.add 	$push2=, $1, $pop1
 	i32.ge_u	$push3=, $pop2, $2
-	br_if   	$pop3, .LBB0_4
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$3=, 1
-	block   	.LBB0_3
+	block
 	i32.const	$push5=, .L.str
 	i32.add 	$push4=, $1, $3
 	i32.call	$push6=, memcmp@FUNCTION, $0, $pop5, $pop4
-	br_if   	$pop6, .LBB0_3
+	br_if   	$pop6, 0        # 0: down to label1
 # BB#2:                                 # %if.end4
 	i32.const	$push7=, 32
 	i32.store8	$1=, 0($0), $pop7
@@ -44,9 +44,11 @@ bar:                                    # @bar
 	i32.store8	$discard=, 0($pop17), $1
 	return
 .LBB0_3:                                # %if.then3
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -66,12 +68,12 @@ foo:                                    # @foo
 	i32.sub 	$5=, $2, $3
 	i32.const	$3=, __stack_pointer
 	i32.store	$5=, 0($3), $5
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
 	i32.const	$push2=, 5
 	i32.gt_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB1_2
+	br_if   	$pop3, 0        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $1, $pop4
@@ -82,6 +84,7 @@ foo:                                    # @foo
 	i32.add 	$6=, $5, $6
 	call    	bar@FUNCTION, $6
 .LBB1_2:                                # %return
+	end_block                       # label2:
 	i32.const	$4=, 16
 	i32.add 	$5=, $5, $4
 	i32.const	$4=, __stack_pointer
@@ -103,7 +106,7 @@ main:                                   # @main
 	copy_local	$1=, $0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_2
+	loop                            # label3:
 	i32.const	$push1=, .L.str.1
 	call    	foo@FUNCTION, $pop1, $1
 	i32.load	$push2=, i($0)
@@ -112,8 +115,9 @@ main:                                   # @main
 	i32.store	$1=, i($0), $pop0
 	i32.const	$push4=, 16
 	i32.lt_s	$push5=, $1, $pop4
-	br_if   	$pop5, .LBB2_1
-.LBB2_2:                                # %for.end
+	br_if   	$pop5, 0        # 0: up to label3
+# BB#2:                                 # %for.end
+	end_loop                        # label4:
 	i32.const	$push6=, 0
 	return  	$pop6
 .Lfunc_end2:

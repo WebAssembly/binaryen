@@ -9,24 +9,27 @@ testc:                                  # @testc
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 24
-	block   	.LBB0_5
-	block   	.LBB0_4
-	block   	.LBB0_3
+	block
+	block
+	block
 	i32.shl 	$push0=, $0, $2
 	i32.shr_s	$push1=, $pop0, $2
 	i32.const	$push2=, 1
 	i32.lt_s	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB0_3
+	br_if   	$pop3, 0        # 0: down to label2
 # BB#1:                                 # %if.then
-	br_if   	$1, .LBB0_4
+	br_if   	$1, 1           # 1: down to label1
 # BB#2:                                 # %if.then5
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.else
-	br_if   	$1, .LBB0_5
+	end_block                       # label2:
+	br_if   	$1, 1           # 1: down to label0
 .LBB0_4:                                # %if.end9
+	end_block                       # label1:
 	return
 .LBB0_5:                                # %if.then7
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -41,24 +44,27 @@ tests:                                  # @tests
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 16
-	block   	.LBB1_5
-	block   	.LBB1_4
-	block   	.LBB1_3
+	block
+	block
+	block
 	i32.shl 	$push0=, $0, $2
 	i32.shr_s	$push1=, $pop0, $2
 	i32.const	$push2=, 1
 	i32.lt_s	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB1_3
+	br_if   	$pop3, 0        # 0: down to label5
 # BB#1:                                 # %if.then
-	br_if   	$1, .LBB1_4
+	br_if   	$1, 1           # 1: down to label4
 # BB#2:                                 # %if.then5
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_3:                                # %if.else
-	br_if   	$1, .LBB1_5
+	end_block                       # label5:
+	br_if   	$1, 1           # 1: down to label3
 .LBB1_4:                                # %if.end9
+	end_block                       # label4:
 	return
 .LBB1_5:                                # %if.then7
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -71,22 +77,25 @@ tests:                                  # @tests
 testi:                                  # @testi
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB2_5
-	block   	.LBB2_4
-	block   	.LBB2_3
+	block
+	block
+	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB2_3
+	br_if   	$pop1, 0        # 0: down to label8
 # BB#1:                                 # %if.then
-	br_if   	$1, .LBB2_4
+	br_if   	$1, 1           # 1: down to label7
 # BB#2:                                 # %if.then2
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_3:                                # %if.else
-	br_if   	$1, .LBB2_5
+	end_block                       # label8:
+	br_if   	$1, 1           # 1: down to label6
 .LBB2_4:                                # %if.end6
+	end_block                       # label7:
 	return
 .LBB2_5:                                # %if.then4
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
@@ -99,22 +108,25 @@ testi:                                  # @testi
 testl:                                  # @testl
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB3_5
-	block   	.LBB3_4
-	block   	.LBB3_3
+	block
+	block
+	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB3_3
+	br_if   	$pop1, 0        # 0: down to label11
 # BB#1:                                 # %if.then
-	br_if   	$1, .LBB3_4
+	br_if   	$1, 1           # 1: down to label10
 # BB#2:                                 # %if.then2
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_3:                                # %if.else
-	br_if   	$1, .LBB3_5
+	end_block                       # label11:
+	br_if   	$1, 1           # 1: down to label9
 .LBB3_4:                                # %if.end6
+	end_block                       # label10:
 	return
 .LBB3_5:                                # %if.then4
+	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:

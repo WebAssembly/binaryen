@@ -25,22 +25,24 @@ f:                                      # @f
 	i32.add 	$1=, $0, $pop0
 	call    	ff@FUNCTION, $0
 	i32.const	$2=, 65535
-	block   	.LBB1_2
+	block
 	i32.and 	$push1=, $1, $2
-	br_if   	$pop1, .LBB1_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	#APP
 	#NO_APP
 .LBB1_2:                                # %for.inc
+	end_block                       # label0:
 	call    	ff@FUNCTION, $0
-	block   	.LBB1_4
+	block
 	i32.add 	$push2=, $1, $0
 	i32.and 	$push3=, $pop2, $2
-	br_if   	$pop3, .LBB1_4
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#3:                                 # %if.then.1
 	#APP
 	#NO_APP
 .LBB1_4:                                # %for.inc.1
+	end_block                       # label1:
 	return
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

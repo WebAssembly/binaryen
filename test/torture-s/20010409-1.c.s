@@ -25,13 +25,14 @@ bar:                                    # @bar
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
-	br_if   	$1, .LBB1_2
+	block
+	br_if   	$1, 0           # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -47,14 +48,15 @@ test:                                   # @test
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	i32.load	$3=, b($2)
-	block   	.LBB2_2
+	block
 	i32.const	$push0=, 5000
 	i32.store	$discard=, c($2), $pop0
-	br_if   	$3, .LBB2_2
+	br_if   	$3, 0           # 0: down to label1
 # BB#1:                                 # %if.then.i
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_2:                                # %if.end.i
+	end_block                       # label1:
 	call    	exit@FUNCTION, $2
 	unreachable
 .Lfunc_end2:
@@ -71,16 +73,17 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.store	$discard=, d+4($0), $0
 	i32.load	$1=, b($0)
-	block   	.LBB3_2
+	block
 	i32.const	$push0=, a
 	i32.store	$discard=, d($0), $pop0
 	i32.const	$push1=, 5000
 	i32.store	$discard=, c($0), $pop1
-	br_if   	$1, .LBB3_2
+	br_if   	$1, 0           # 0: down to label2
 # BB#1:                                 # %if.then.i.i
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_2:                                # %if.end.i.i
+	end_block                       # label2:
 	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end3:

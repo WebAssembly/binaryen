@@ -20,15 +20,15 @@ pack_unpack:                            # @pack_unpack
 .LBB0_1:                                # %while.cond.outer
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_2 Depth 2
-	loop    	.LBB0_7
+	loop                            # label0:
 	copy_local	$4=, $1
 .LBB0_2:                                # %while.cond
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block   	.LBB0_6
-	loop    	.LBB0_5
+	block
+	loop                            # label3:
 	i32.ge_u	$push1=, $4, $2
-	br_if   	$pop1, .LBB0_7
+	br_if   	$pop1, 4        # 4: down to label1
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.load8_s	$3=, 0($4)
@@ -36,15 +36,16 @@ pack_unpack:                            # @pack_unpack
 	i32.add 	$1=, $4, $pop3
 	i32.const	$push4=, 108
 	i32.eq  	$push5=, $3, $pop4
-	br_if   	$pop5, .LBB0_6
+	br_if   	$pop5, 2        # 2: down to label2
 # BB#4:                                 # %while.body
                                         #   in Loop: Header=BB0_2 Depth=2
 	copy_local	$4=, $1
 	i32.const	$push6=, 115
 	i32.ne  	$push7=, $3, $pop6
-	br_if   	$pop7, .LBB0_2
-.LBB0_5:                                # %sw.bb4
+	br_if   	$pop7, 0        # 0: up to label3
+# BB#5:                                 # %sw.bb4
                                         #   in Loop: Header=BB0_1 Depth=1
+	end_loop                        # label4:
 	i32.const	$4=, 2
 	i32.const	$9=, 8
 	i32.add 	$9=, $8, $9
@@ -52,9 +53,10 @@ pack_unpack:                            # @pack_unpack
 	i32.add 	$0=, $0, $4
 	i32.load16_s	$push9=, 8($8)
 	call    	do_something@FUNCTION, $pop9
-	br      	.LBB0_1
+	br      	1               # 1: up to label0
 .LBB0_6:                                # %sw.bb8
                                         #   in Loop: Header=BB0_1 Depth=1
+	end_block                       # label2:
 	i32.const	$4=, 4
 	i32.const	$8=, 0
 	i32.add 	$8=, $8, $8
@@ -62,8 +64,9 @@ pack_unpack:                            # @pack_unpack
 	i32.add 	$0=, $0, $4
 	i32.load	$push8=, 0($8)
 	call    	do_something@FUNCTION, $pop8
-	br      	.LBB0_1
+	br      	0               # 0: up to label0
 .LBB0_7:                                # %while.end
+	end_loop                        # label1:
 	i32.load8_s	$push2=, 0($0)
 	i32.const	$7=, 16
 	i32.add 	$8=, $8, $7
@@ -91,15 +94,16 @@ do_something:                           # @do_something
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i32.const	$push1=, .L.str
 	i32.const	$push0=, .L.str.1
 	i32.call	$push2=, pack_unpack@FUNCTION, $pop1, $pop0
-	br_if   	$pop2, .LBB2_2
+	br_if   	$pop2, 0        # 0: down to label5
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
 	return  	$pop3
 .LBB2_2:                                # %if.then
+	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

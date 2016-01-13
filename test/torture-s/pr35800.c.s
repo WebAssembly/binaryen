@@ -10,18 +10,18 @@ stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	.LBB0_4
+	block
 	i32.const	$push0=, -34
 	i32.lt_u	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_4
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, -2
 	i32.sub 	$0=, $pop2, $0
 	i32.const	$1=, .L.str
-	block   	.LBB0_3
+	block
 	i32.const	$push3=, 32
 	i32.gt_u	$push4=, $0, $pop3
-	br_if   	$pop4, .LBB0_3
+	br_if   	$pop4, 0        # 0: down to label1
 # BB#2:                                 # %switch.lookup
 	i32.const	$push7=, .Lswitch.table
 	i32.const	$push5=, 2
@@ -29,8 +29,10 @@ stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
 	i32.add 	$push8=, $pop7, $pop6
 	i32.load	$1=, 0($pop8)
 .LBB0_3:                                # %sw.epilog
+	end_block                       # label1:
 	i32.load8_s	$1=, 0($1)
 .LBB0_4:                                # %cleanup
+	end_block                       # label0:
 	return  	$1
 .Lfunc_end0:
 	.size	stab_xcoff_builtin_type, .Lfunc_end0-stab_xcoff_builtin_type
@@ -47,13 +49,13 @@ main:                                   # @main
 	i32.const	$0=, .Lswitch.table+8
 .LBB1_1:                                # %stab_xcoff_builtin_type.exit
                                         # =>This Inner Loop Header: Depth=1
-	block   	.LBB1_4
-	loop    	.LBB1_3
+	block
+	loop                            # label3:
 	i32.load	$push0=, 0($0)
 	i32.load8_u	$push1=, 0($pop0)
 	i32.const	$push2=, 105
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB1_4
+	br_if   	$pop3, 2        # 2: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push4=, -1
@@ -62,11 +64,13 @@ main:                                   # @main
 	i32.add 	$0=, $0, $pop5
 	i32.const	$push6=, -34
 	i32.ge_s	$push7=, $1, $pop6
-	br_if   	$pop7, .LBB1_1
-.LBB1_3:                                # %if.end21
+	br_if   	$pop7, 0        # 0: up to label3
+# BB#3:                                 # %if.end21
+	end_loop                        # label4:
 	i32.const	$push8=, 0
 	return  	$pop8
 .LBB1_4:                                # %if.then16
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

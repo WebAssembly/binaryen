@@ -11,15 +11,16 @@ main:                                   # @main
 	i32.const	$0=, t+328
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label0:
 	i32.const	$push0=, -1
 	i32.store	$discard=, 0($0), $pop0
 	i32.const	$push1=, -4
 	i32.add 	$0=, $0, $pop1
 	i32.const	$push2=, t+4
 	i32.gt_u	$push3=, $0, $pop2
-	br_if   	$pop3, .LBB0_1
-.LBB0_2:                                # %if.end5
+	br_if   	$pop3, 0        # 0: up to label0
+# BB#2:                                 # %if.end5
+	end_loop                        # label1:
 	i32.const	$0=, 0
 	i32.store	$push4=, t+4($0), $0
 	return  	$pop4

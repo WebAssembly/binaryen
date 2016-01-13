@@ -10,12 +10,12 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 1
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 14
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 25
 	i32.gt_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB0_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.then2
 	i32.const	$push4=, 31
 	i32.shr_s	$1=, $0, $pop4
@@ -24,6 +24,7 @@ f:                                      # @f
 	i32.const	$push7=, 2
 	i32.ne  	$1=, $pop6, $pop7
 .LBB0_2:                                # %return
+	end_block                       # label0:
 	return  	$1
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

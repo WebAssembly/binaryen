@@ -17,7 +17,7 @@ main:                                   # @main
 	#NO_APP
 	i64.load	$1=, sv($0)
 	i64.const	$2=, 40
-	block   	.LBB0_2
+	block
 	i64.shr_u	$push0=, $1, $2
 	i64.const	$push1=, 1
 	i64.add 	$3=, $pop0, $pop1
@@ -30,10 +30,11 @@ main:                                   # @main
 	i64.and 	$push7=, $3, $pop6
 	i64.const	$push8=, 0
 	i64.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, .LBB0_2
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

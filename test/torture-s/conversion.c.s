@@ -131,15 +131,16 @@ fnear:                                  # @fnear
 # BB#0:                                 # %entry
 	f32.sub 	$1=, $0, $1
 	i32.const	$2=, 1
-	block   	.LBB6_2
+	block
 	f32.const	$push0=, 0x0p0
 	f32.eq  	$push1=, $1, $pop0
-	br_if   	$pop1, .LBB6_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %lor.rhs
 	f32.div 	$push2=, $0, $1
 	f32.const	$push3=, 0x1.e848p19
 	f32.gt  	$2=, $pop2, $pop3
 .LBB6_2:                                # %lor.end
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end6:
 	.size	fnear, .Lfunc_end6-fnear
@@ -155,15 +156,16 @@ dnear:                                  # @dnear
 # BB#0:                                 # %entry
 	f64.sub 	$1=, $0, $1
 	i32.const	$2=, 1
-	block   	.LBB7_2
+	block
 	f64.const	$push0=, 0x0p0
 	f64.eq  	$push1=, $1, $pop0
-	br_if   	$pop1, .LBB7_2
+	br_if   	$pop1, 0        # 0: down to label1
 # BB#1:                                 # %lor.rhs
 	f64.div 	$push2=, $0, $1
 	f64.const	$push3=, 0x1.6bcc41e9p46
 	f64.gt  	$2=, $pop2, $pop3
 .LBB7_2:                                # %lor.end
+	end_block                       # label1:
 	return  	$2
 .Lfunc_end7:
 	.size	dnear, .Lfunc_end7-dnear
@@ -195,10 +197,10 @@ ldnear:                                 # @ldnear
 	i64.const	$3=, 0
 	i32.call	$6=, __eqtf2@FUNCTION, $4, $2, $3, $3
 	i32.const	$7=, 1
-	block   	.LBB8_2
+	block
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $6, $pop8
-	br_if   	$pop9, .LBB8_2
+	br_if   	$pop9, 0        # 0: down to label2
 # BB#1:                                 # %lor.rhs
 	i32.const	$13=, 0
 	i32.add 	$13=, $11, $13
@@ -214,6 +216,7 @@ ldnear:                                 # @ldnear
 	i32.const	$push7=, 0
 	i32.gt_s	$7=, $pop6, $pop7
 .LBB8_2:                                # %lor.end
+	end_block                       # label2:
 	i32.const	$10=, 32
 	i32.add 	$11=, $11, $10
 	i32.const	$10=, __stack_pointer

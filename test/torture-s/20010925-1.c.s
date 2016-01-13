@@ -28,14 +28,15 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 1
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $2, $pop0
-	br_if   	$pop1, .LBB1_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	call    	memcpy@FUNCTION, $0, $1, $2
 	i32.const	$3=, 0
 .LBB1_2:                                # %return
+	end_block                       # label0:
 	return  	$3
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

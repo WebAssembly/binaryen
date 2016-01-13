@@ -7,13 +7,14 @@
 foo:                                    # @foo
 	.param  	i64
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i64.const	$push0=, 10
 	i64.gt_s	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	return
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

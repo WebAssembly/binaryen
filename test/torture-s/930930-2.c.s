@@ -53,16 +53,17 @@ main:                                   # @main
 	i32.sub 	$2=, $0, $1
 	i32.const	$1=, __stack_pointer
 	i32.store	$2=, 0($1), $2
-	block   	.LBB2_2
+	block
 	i64.const	$push0=, 4621819117588971520
 	i64.store	$discard=, 8($2), $pop0
 	i32.load	$push1=, 8($2)
-	br_if   	$pop1, .LBB2_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB2_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

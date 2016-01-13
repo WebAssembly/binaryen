@@ -29,10 +29,10 @@ foo:                                    # @foo
 	copy_local	$62=, $45
 	copy_local	$63=, $45
 	copy_local	$64=, $45
-	block   	.LBB0_3
+	block
 	i32.const	$push51=, 0
 	i32.eq  	$push52=, $0, $pop51
-	br_if   	$pop52, .LBB0_3
+	br_if   	$pop52, 0       # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i64.load	$2=, incs+72($23)
 	i64.load	$1=, incs+64($23)
@@ -138,7 +138,7 @@ foo:                                    # @foo
 	copy_local	$64=, $45
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label1:
 	f32.load	$push31=, 0($25)
 	f32.add 	$64=, $64, $pop31
 	f32.load	$push32=, 0($26)
@@ -201,8 +201,10 @@ foo:                                    # @foo
 	i32.add 	$27=, $27, $20
 	i32.add 	$26=, $26, $21
 	i32.add 	$25=, $25, $22
-	br_if   	$0, .LBB0_2
+	br_if   	$0, 0           # 0: up to label1
 .LBB0_3:                                # %while.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	f32.store	$discard=, results($23), $64
 	f32.store	$discard=, results+4($23), $63
 	f32.store	$discard=, results+8($23), $62
@@ -317,15 +319,16 @@ main:                                   # @main
 	i32.store	$1=, incs+16($3), $pop8
 .LBB1_1:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_2
+	loop                            # label3:
 	f32.convert_s/i32	$push39=, $3
 	f32.store	$discard=, 0($2), $pop39
 	i32.add 	$3=, $3, $0
 	i32.add 	$2=, $2, $1
 	i32.const	$push40=, 80
 	i32.ne  	$push41=, $3, $pop40
-	br_if   	$pop41, .LBB1_1
-.LBB1_2:                                # %for.end8
+	br_if   	$pop41, 0       # 0: up to label3
+# BB#2:                                 # %for.end8
+	end_loop                        # label4:
 	call    	foo@FUNCTION, $1
 	i32.const	$3=, 0
 	f32.load	$push42=, results($3)

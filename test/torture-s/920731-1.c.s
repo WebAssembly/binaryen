@@ -11,24 +11,26 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$1=, 1
 	i32.const	$2=, 0
-	block   	.LBB0_3
+	block
 	i32.and 	$push0=, $0, $1
-	br_if   	$pop0, .LBB0_3
+	br_if   	$pop0, 0        # 0: down to label0
 .LBB0_1:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label1:
 	i32.add 	$2=, $2, $1
 	i32.const	$push2=, 7
 	i32.gt_s	$push3=, $2, $pop2
-	br_if   	$pop3, .LBB0_3
+	br_if   	$pop3, 1        # 1: down to label2
 # BB#2:                                 # %for.inc
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.shr_s	$0=, $0, $1
 	i32.and 	$push1=, $0, $1
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $pop1, $pop4
-	br_if   	$pop5, .LBB0_1
+	br_if   	$pop5, 0        # 0: up to label1
 .LBB0_3:                                # %for.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

@@ -8,13 +8,13 @@ f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 39
 	i32.gt_u	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label1:
 	i32.add 	$push2=, $1, $0
 	i32.const	$push3=, 254
 	i32.store8	$discard=, 0($pop2), $pop3
@@ -22,8 +22,10 @@ f:                                      # @f
 	i32.add 	$0=, $0, $pop4
 	i32.const	$push5=, 40
 	i32.ne  	$push6=, $0, $pop5
-	br_if   	$pop6, .LBB0_1
+	br_if   	$pop6, 0        # 0: up to label1
 .LBB0_2:                                # %for.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	return  	$0
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -37,7 +39,7 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, .L.str
 	i32.call	$0=, open@FUNCTION, $pop0, $1
 	i32.const	$push4=, 2147450880
@@ -47,7 +49,7 @@ main:                                   # @main
 	i32.call	$0=, mmap@FUNCTION, $pop4, $pop3, $pop2, $pop1, $0, $1
 	i32.const	$push5=, -1
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, .LBB1_2
+	br_if   	$pop6, 0        # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$push7=, 254
 	i32.store8	$push8=, 32766($0), $pop7
@@ -91,6 +93,7 @@ main:                                   # @main
 	i32.store8	$discard=, 32804($0), $pop45
 	i32.store8	$discard=, 32805($0), $1
 .LBB1_2:                                # %if.end15
+	end_block                       # label3:
 	call    	exit@FUNCTION, $1
 	unreachable
 .Lfunc_end1:

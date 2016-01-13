@@ -25,7 +25,7 @@ bar:                                    # @bar
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.load	$push0=, 0($0)
 	i32.const	$push1=, 1
 	i32.shl 	$1=, $pop0, $pop1
@@ -37,10 +37,11 @@ bar:                                    # @bar
 	i64.store32	$discard=, 0($0), $pop2
 	i32.const	$push6=, 2
 	i32.ne  	$push7=, $1, $pop6
-	br_if   	$pop7, .LBB1_2
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

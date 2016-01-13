@@ -30,18 +30,19 @@ main:                                   # @main
 	i32.const	$5=, 16
 	i32.add 	$5=, $6, $5
 	i32.sub 	$0=, $4, $5
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 31
 	i32.shr_s	$1=, $0, $pop0
 	i32.add 	$push1=, $0, $1
 	i32.xor 	$push2=, $pop1, $1
 	i32.const	$push3=, 11
 	i32.gt_u	$push4=, $pop2, $pop3
-	br_if   	$pop4, .LBB1_2
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.then.i
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_2:                                # %f.exit
+	end_block                       # label0:
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
 	unreachable

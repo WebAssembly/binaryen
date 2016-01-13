@@ -9,20 +9,21 @@ bar:                                    # @bar
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 111
-	block   	.LBB0_4
+	block
 	i32.load8_u	$push0=, 0($0)
 	i32.ne  	$push1=, $pop0, $1
-	br_if   	$pop1, .LBB0_4
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load8_u	$push2=, 1($0)
 	i32.ne  	$push3=, $pop2, $1
-	br_if   	$pop3, .LBB0_4
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false6
 	i32.load8_u	$push4=, 2($0)
-	br_if   	$pop4, .LBB0_4
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#3:                                 # %if.end
 	return
 .LBB0_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

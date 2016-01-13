@@ -33,16 +33,17 @@ main:                                   # @main
 	i32.const	$push0=, 16
 	call    	foo@FUNCTION, $pop0
 	i32.const	$0=, 0
-	block   	.LBB1_2
+	block
 	i32.load8_u	$push1=, t($0)
 	i32.const	$push2=, 1
 	i32.and 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $pop3, $pop4
-	br_if   	$pop5, .LBB1_2
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

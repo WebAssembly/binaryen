@@ -11,9 +11,9 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	i32.load	$0=, pars($2)
 	i32.const	$3=, 31
 	i32.and 	$1=, $0, $3
-	block   	.LBB0_2
+	block
 	i32.eq  	$push0=, $1, $3
-	br_if   	$pop0, .LBB0_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.load	$3=, r($2)
 	i32.const	$2=, 248
@@ -39,6 +39,7 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	i64.and 	$push17=, $pop15, $pop16
 	i64.store	$discard=, 0($pop20), $pop17
 .LBB0_2:                                # %if.end
+	end_block                       # label0:
 	return
 .Lfunc_end0:
 	.size	alpha_ep_extbl_i_eq_0, .Lfunc_end0-alpha_ep_extbl_i_eq_0
@@ -55,7 +56,7 @@ main:                                   # @main
 	i32.const	$push2=, -2013265854
 	i32.store	$discard=, pars($0), $pop2
 	i32.load	$1=, r($0)
-	block   	.LBB1_2
+	block
 	i64.const	$push0=, 3160194
 	i64.store	$discard=, b+136($0), $pop0
 	i64.const	$push1=, 6003104017374052362
@@ -73,11 +74,12 @@ main:                                   # @main
 	i64.load	$push12=, b+16($0)
 	i64.const	$push13=, 77
 	i64.ne  	$push14=, $pop12, $pop13
-	br_if   	$pop14, .LBB1_2
+	br_if   	$pop14, 0       # 0: down to label1
 # BB#1:                                 # %if.end
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_2:                                # %if.then
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

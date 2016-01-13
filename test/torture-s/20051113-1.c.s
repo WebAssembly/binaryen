@@ -28,9 +28,9 @@ Sum:                                    # @Sum
 	i32.or  	$push12=, $pop10, $pop11
 	i32.or  	$1=, $pop7, $pop12
 	i64.const	$16=, 0
-	block   	.LBB0_3
+	block
 	i32.lt_s	$push13=, $1, $4
-	br_if   	$pop13, .LBB0_3
+	br_if   	$pop13, 0       # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push14=, 10
 	i32.add 	$0=, $0, $pop14
@@ -38,7 +38,7 @@ Sum:                                    # @Sum
 	i32.const	$15=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label1:
 	i32.const	$push15=, 5
 	i32.add 	$5=, $0, $pop15
 	i32.const	$push18=, 4
@@ -80,8 +80,10 @@ Sum:                                    # @Sum
 	i64.add 	$16=, $pop40, $16
 	i32.add 	$15=, $15, $4
 	i32.lt_s	$push42=, $15, $1
-	br_if   	$pop42, .LBB0_2
+	br_if   	$pop42, 0       # 0: up to label1
 .LBB0_3:                                # %for.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	return  	$16
 .Lfunc_end0:
 	.size	Sum, .Lfunc_end0-Sum
@@ -114,9 +116,9 @@ Sum2:                                   # @Sum2
 	i32.or  	$push12=, $pop10, $pop11
 	i32.or  	$1=, $pop7, $pop12
 	i64.const	$16=, 0
-	block   	.LBB1_3
+	block
 	i32.lt_s	$push13=, $1, $4
-	br_if   	$pop13, .LBB1_3
+	br_if   	$pop13, 0       # 0: down to label3
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push14=, 18
 	i32.add 	$0=, $0, $pop14
@@ -124,7 +126,7 @@ Sum2:                                   # @Sum2
 	i32.const	$15=, 0
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_3
+	loop                            # label4:
 	i32.const	$push15=, 5
 	i32.add 	$5=, $0, $pop15
 	i32.const	$push18=, 4
@@ -166,8 +168,10 @@ Sum2:                                   # @Sum2
 	i64.add 	$16=, $pop40, $16
 	i32.add 	$15=, $15, $4
 	i32.lt_s	$push42=, $15, $1
-	br_if   	$pop42, .LBB1_2
+	br_if   	$pop42, 0       # 0: up to label4
 .LBB1_3:                                # %for.end
+	end_loop                        # label5:
+	end_block                       # label3:
 	return  	$16
 .Lfunc_end1:
 	.size	Sum2, .Lfunc_end1-Sum2
@@ -334,20 +338,22 @@ main:                                   # @main
 	i64.store8	$discard=, 78($0), $4
 	i64.call	$3=, Sum@FUNCTION, $0
 	i64.const	$4=, 4311811859
-	block   	.LBB2_4
+	block
 	i64.ne  	$push97=, $3, $4
-	br_if   	$pop97, .LBB2_4
+	br_if   	$pop97, 0       # 0: down to label6
 # BB#1:                                 # %if.end
-	block   	.LBB2_3
+	block
 	i64.call	$push98=, Sum2@FUNCTION, $0
 	i64.ne  	$push99=, $pop98, $4
-	br_if   	$pop99, .LBB2_3
+	br_if   	$pop99, 0       # 0: down to label7
 # BB#2:                                 # %if.end25
 	return  	$2
 .LBB2_3:                                # %if.then24
+	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_4:                                # %if.then
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

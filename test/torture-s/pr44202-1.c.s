@@ -9,15 +9,16 @@ add512:                                 # @add512
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 512
 	i32.add 	$2=, $0, $pop0
 	i32.const	$push1=, 0
 	i32.eq  	$push2=, $2, $pop1
-	br_if   	$pop2, .LBB0_2
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 0($1), $0
 .LBB0_2:                                # %if.end
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end0:
 	.size	add512, .Lfunc_end0-add512
@@ -31,13 +32,14 @@ add513:                                 # @add513
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 513
 	i32.add 	$2=, $0, $pop0
-	br_if   	$2, .LBB1_2
+	br_if   	$2, 0           # 0: down to label1
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 0($1), $0
 .LBB1_2:                                # %if.end
+	end_block                       # label1:
 	return  	$2
 .Lfunc_end1:
 	.size	add513, .Lfunc_end1-add513
@@ -62,28 +64,29 @@ main:                                   # @main
 	i32.const	$push3=, -512
 	i32.const	$3=, 12
 	i32.add 	$3=, $5, $3
-	block   	.LBB2_5
+	block
 	i32.call	$push4=, add512@FUNCTION, $pop3, $3
-	br_if   	$pop4, .LBB2_5
+	br_if   	$pop4, 0        # 0: down to label2
 # BB#1:                                 # %entry
 	i32.load	$push0=, 12($5)
 	i32.ne  	$push5=, $pop0, $0
-	br_if   	$pop5, .LBB2_5
+	br_if   	$pop5, 0        # 0: down to label2
 # BB#2:                                 # %lor.lhs.false2
 	i32.const	$0=, -513
 	i32.const	$4=, 8
 	i32.add 	$4=, $5, $4
 	i32.call	$push7=, add513@FUNCTION, $0, $4
-	br_if   	$pop7, .LBB2_5
+	br_if   	$pop7, 0        # 0: down to label2
 # BB#3:                                 # %lor.lhs.false2
 	i32.load	$push6=, 8($5)
 	i32.ne  	$push8=, $pop6, $0
-	br_if   	$pop8, .LBB2_5
+	br_if   	$pop8, 0        # 0: down to label2
 # BB#4:                                 # %if.end
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB2_5:                                # %if.then
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

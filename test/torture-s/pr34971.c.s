@@ -8,7 +8,7 @@ test1:                                  # @test1
 	.param  	i64
 	.local  	i64
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 0
 	i64.load	$push1=, x($pop0)
 	i64.const	$push2=, 1099511627775
@@ -19,10 +19,11 @@ test1:                                  # @test1
 	i64.shr_u	$push6=, $1, $pop5
 	i64.or  	$push7=, $pop4, $pop6
 	i64.ne  	$push8=, $pop7, $0
-	br_if   	$pop8, .LBB0_2
+	br_if   	$pop8, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

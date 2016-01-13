@@ -17,13 +17,13 @@ main:                                   # @main
 	i32.shl 	$push1=, $4, $2
 	i32.shr_s	$3=, $pop1, $2
 	i32.const	$4=, line+1
-	block   	.LBB0_3
+	block
 	i32.const	$push2=, 58
 	i32.lt_s	$push3=, $3, $pop2
-	br_if   	$pop3, .LBB0_3
+	br_if   	$pop3, 0        # 0: down to label0
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label1:
 	i32.load8_u	$3=, 0($4)
 	i32.add 	$push4=, $4, $1
 	i32.const	$push5=, 48
@@ -36,29 +36,32 @@ main:                                   # @main
 	i32.shr_s	$push7=, $pop6, $2
 	i32.const	$push8=, 57
 	i32.gt_s	$push9=, $pop7, $pop8
-	br_if   	$pop9, .LBB0_1
-.LBB0_2:                                # %while.end.loopexit
+	br_if   	$pop9, 0        # 0: up to label1
+# BB#2:                                 # %while.end.loopexit
+	end_loop                        # label2:
 	i32.load8_u	$3=, line+2($0)
 .LBB0_3:                                # %while.end
-	block   	.LBB0_7
+	end_block                       # label0:
+	block
 	i32.load8_u	$push12=, line($0)
 	i32.const	$push13=, 50
 	i32.ne  	$push14=, $pop12, $pop13
-	br_if   	$pop14, .LBB0_7
+	br_if   	$pop14, 0       # 0: down to label3
 # BB#4:                                 # %while.end
 	i32.const	$4=, 255
 	i32.const	$2=, 48
 	i32.load8_u	$push11=, line+1($0)
 	i32.and 	$push15=, $pop11, $4
 	i32.ne  	$push16=, $pop15, $2
-	br_if   	$pop16, .LBB0_7
+	br_if   	$pop16, 0       # 0: down to label3
 # BB#5:                                 # %while.end
 	i32.and 	$push17=, $3, $4
 	i32.ne  	$push18=, $pop17, $2
-	br_if   	$pop18, .LBB0_7
+	br_if   	$pop18, 0       # 0: down to label3
 # BB#6:                                 # %if.end
 	return  	$0
 .LBB0_7:                                # %if.then
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

@@ -24,54 +24,60 @@ check_header:                           # @check_header
 # BB#0:                                 # %entry
 	i32.load	$1=, 4($0)
 	i32.load	$2=, 0($0)
-	block   	.LBB1_2
+	block
 	i32.ge_u	$push5=, $2, $1
-	br_if   	$pop5, .LBB1_2
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %cond.true
 	i32.const	$push6=, 1
 	i32.add 	$push0=, $2, $pop6
 	i32.store	$2=, 0($0), $pop0
 .LBB1_2:                                # %for.inc
-	block   	.LBB1_4
+	end_block                       # label0:
+	block
 	i32.ge_u	$push7=, $2, $1
-	br_if   	$pop7, .LBB1_4
+	br_if   	$pop7, 0        # 0: down to label1
 # BB#3:                                 # %cond.true.1
 	i32.const	$push8=, 1
 	i32.add 	$push1=, $2, $pop8
 	i32.store	$2=, 0($0), $pop1
 .LBB1_4:                                # %for.inc.1
-	block   	.LBB1_6
+	end_block                       # label1:
+	block
 	i32.ge_u	$push9=, $2, $1
-	br_if   	$pop9, .LBB1_6
+	br_if   	$pop9, 0        # 0: down to label2
 # BB#5:                                 # %cond.true.2
 	i32.const	$push10=, 1
 	i32.add 	$push2=, $2, $pop10
 	i32.store	$2=, 0($0), $pop2
 .LBB1_6:                                # %for.inc.2
-	block   	.LBB1_8
+	end_block                       # label2:
+	block
 	i32.ge_u	$push11=, $2, $1
-	br_if   	$pop11, .LBB1_8
+	br_if   	$pop11, 0       # 0: down to label3
 # BB#7:                                 # %cond.true.3
 	i32.const	$push12=, 1
 	i32.add 	$push3=, $2, $pop12
 	i32.store	$2=, 0($0), $pop3
 .LBB1_8:                                # %for.inc.3
-	block   	.LBB1_10
+	end_block                       # label3:
+	block
 	i32.ge_u	$push13=, $2, $1
-	br_if   	$pop13, .LBB1_10
+	br_if   	$pop13, 0       # 0: down to label4
 # BB#9:                                 # %cond.true.4
 	i32.const	$push14=, 1
 	i32.add 	$push4=, $2, $pop14
 	i32.store	$2=, 0($0), $pop4
 .LBB1_10:                               # %for.inc.4
-	block   	.LBB1_12
+	end_block                       # label4:
+	block
 	i32.ge_u	$push15=, $2, $1
-	br_if   	$pop15, .LBB1_12
+	br_if   	$pop15, 0       # 0: down to label5
 # BB#11:                                # %cond.true.5
 	i32.const	$push16=, 1
 	i32.add 	$push17=, $2, $pop16
 	i32.store	$discard=, 0($0), $pop17
 .LBB1_12:                               # %for.inc.5
+	end_block                       # label5:
 	i32.const	$push18=, 1
 	return  	$pop18
 .Lfunc_end1:

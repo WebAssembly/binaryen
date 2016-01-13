@@ -31,25 +31,27 @@ main:                                   # @main
 	i32.load	$1=, f($0)
 	i32.load	$2=, ff($0)
 	i32.const	$3=, 2
-	block   	.LBB1_4
+	block
 	i32.add 	$push1=, $1, $3
 	i32.store	$discard=, f($0), $pop1
 	i32.add 	$push0=, $2, $3
 	i32.store	$3=, ff($0), $pop0
 	i32.const	$push2=, y
 	i32.ne  	$push3=, $1, $pop2
-	br_if   	$pop3, .LBB1_4
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	block   	.LBB1_3
+	block
 	i32.const	$push4=, y+2
 	i32.ne  	$push5=, $3, $pop4
-	br_if   	$pop5, .LBB1_3
+	br_if   	$pop5, 0        # 0: down to label1
 # BB#2:                                 # %if.end3
 	return  	$0
 .LBB1_3:                                # %if.then2
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

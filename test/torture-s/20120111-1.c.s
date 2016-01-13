@@ -23,16 +23,17 @@ f0a:                                    # @f0a
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i64.const	$push0=, -6352373499721454287
 	i32.call	$push1=, f0a@FUNCTION, $pop0
 	i32.const	$push2=, -1
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB1_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

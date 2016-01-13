@@ -38,21 +38,23 @@ fn1:                                    # @fn1
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	.LBB2_2
+	block
 	i32.load	$push0=, p($1)
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $pop0, $pop7
-	br_if   	$pop8, .LBB2_2
+	br_if   	$pop8, 0        # 0: down to label0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_2
+	loop                            # label1:
 	i32.const	$push1=, 1
 	i32.store	$2=, 0($0), $pop1
 	i32.load	$push2=, p($1)
 	i32.add 	$push3=, $pop2, $2
 	i32.store	$push4=, p($1), $pop3
-	br_if   	$pop4, .LBB2_1
+	br_if   	$pop4, 0        # 0: up to label1
 .LBB2_2:                                # %for.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	i32.const	$push5=, d
 	i32.store	$push6=, r($1), $pop5
 	i32.store	$discard=, b($1), $pop6

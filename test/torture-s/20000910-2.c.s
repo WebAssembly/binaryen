@@ -10,25 +10,27 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.const	$1=, 42
-	block   	.LBB0_4
+	block
 	i32.load	$push0=, list($0)
 	i32.call	$push1=, strchr@FUNCTION, $pop0, $1
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $pop1, $pop4
-	br_if   	$pop5, .LBB0_4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.then.i
-	block   	.LBB0_3
+	block
 	i32.load	$push2=, list+4($0)
 	i32.call	$push3=, strchr@FUNCTION, $pop2, $1
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $pop3, $pop6
-	br_if   	$pop7, .LBB0_3
+	br_if   	$pop7, 0        # 0: down to label1
 # BB#2:                                 # %foo.exit
 	return  	$0
 .LBB0_3:                                # %if.else.i
+	end_block                       # label1:
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB0_4:                                # %if.then2.i
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

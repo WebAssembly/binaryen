@@ -7,23 +7,24 @@
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_5
+	block
 	i32.load	$push0=, 0($0)
-	br_if   	$pop0, .LBB0_5
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push1=, 4($0)
 	i32.const	$push2=, 5
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB0_5
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false2
 	i32.load	$push4=, 8($0)
-	br_if   	$pop4, .LBB0_5
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false4
 	i32.load	$push5=, 12($0)
-	br_if   	$pop5, .LBB0_5
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#4:                                 # %if.end
 	return
 .LBB0_5:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

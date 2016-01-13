@@ -10,7 +10,7 @@ foo:                                    # @foo
 	i32.const	$0=, 0
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label0:
 	i32.load	$1=, q($0)
 	i32.load8_s	$push0=, 2($1)
 	i32.store	$discard=, n($0), $pop0
@@ -38,8 +38,9 @@ foo:                                    # @foo
 	i32.load	$push10=, q($0)
 	i32.load8_s	$push11=, 2($pop10)
 	i32.store	$discard=, n($0), $pop11
-	br      	.LBB0_1
+	br      	0               # 0: up to label0
 .LBB0_2:
+	end_loop                        # label1:
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 

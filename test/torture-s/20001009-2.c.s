@@ -9,14 +9,14 @@ foo:                                    # @foo
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB0_2
+	block
 	i32.load	$push0=, b($0)
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $pop0, $pop6
-	br_if   	$pop7, .LBB0_2
+	br_if   	$pop7, 0        # 0: down to label0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label1:
 	i32.const	$1=, 1
 	#APP
 	#NO_APP
@@ -24,8 +24,10 @@ foo:                                    # @foo
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$push4=, b($0), $pop3
-	br_if   	$pop4, .LBB0_1
+	br_if   	$pop4, 0        # 0: up to label1
 .LBB0_2:                                # %if.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	i32.const	$push5=, -1
 	return  	$pop5
 .Lfunc_end0:
@@ -40,14 +42,14 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB1_2
+	block
 	i32.load	$push0=, b($0)
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop0, $pop5
-	br_if   	$pop6, .LBB1_2
+	br_if   	$pop6, 0        # 0: down to label3
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_2
+	loop                            # label4:
 	i32.const	$1=, 1
 	#APP
 	#NO_APP
@@ -55,8 +57,10 @@ main:                                   # @main
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$push4=, b($0), $pop3
-	br_if   	$pop4, .LBB1_1
+	br_if   	$pop4, 0        # 0: up to label4
 .LBB1_2:                                # %foo.exit
+	end_loop                        # label5:
+	end_block                       # label3:
 	return  	$0
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

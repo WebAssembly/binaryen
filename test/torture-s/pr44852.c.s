@@ -13,32 +13,35 @@ sf:                                     # @sf
 	#NO_APP
 .LBB0_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	block   	.LBB0_5
-	block   	.LBB0_4
-	loop    	.LBB0_3
+	block
+	block
+	loop                            # label2:
 	i32.const	$push0=, -1
 	i32.add 	$3=, $0, $pop0
 	i32.load8_u	$2=, 0($3)
 	i32.const	$push1=, 57
 	i32.ne  	$push2=, $2, $pop1
-	br_if   	$pop2, .LBB0_4
+	br_if   	$pop2, 2        # 2: down to label1
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	copy_local	$0=, $3
 	i32.ne  	$push5=, $1, $3
-	br_if   	$pop5, .LBB0_1
-.LBB0_3:                                # %if.then
+	br_if   	$pop5, 0        # 0: up to label2
+# BB#3:                                 # %if.then
+	end_loop                        # label3:
 	i32.const	$push4=, 1
 	i32.add 	$0=, $3, $pop4
 	i32.const	$push6=, 48
 	i32.store8	$discard=, 0($1), $pop6
 	i32.const	$2=, 49
-	br      	.LBB0_5
+	br      	1               # 1: down to label0
 .LBB0_4:                                # %while.end.loopexit
+	end_block                       # label1:
 	i32.const	$push3=, 1
 	i32.add 	$2=, $2, $pop3
 	copy_local	$1=, $3
 .LBB0_5:                                # %while.end
+	end_block                       # label0:
 	i32.store8	$discard=, 0($1), $2
 	return  	$0
 .Lfunc_end0:
@@ -104,16 +107,16 @@ main:                                   # @main
 	i32.call	$push27=, sf@FUNCTION, $pop26, $11
 	i32.const	$12=, 8
 	i32.add 	$12=, $14, $12
-	block   	.LBB1_3
+	block
 	i32.or  	$push28=, $12, $1
 	i32.ne  	$push29=, $pop27, $pop28
-	br_if   	$pop29, .LBB1_3
+	br_if   	$pop29, 0       # 0: down to label4
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push30=, .L.str
 	i32.const	$13=, 8
 	i32.add 	$13=, $14, $13
 	i32.call	$push31=, strcmp@FUNCTION, $13, $pop30
-	br_if   	$pop31, .LBB1_3
+	br_if   	$pop31, 0       # 0: down to label4
 # BB#2:                                 # %if.end
 	i32.const	$7=, 16
 	i32.add 	$14=, $14, $7
@@ -121,6 +124,7 @@ main:                                   # @main
 	i32.store	$14=, 0($7), $14
 	return  	$0
 .LBB1_3:                                # %if.then
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

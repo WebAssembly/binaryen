@@ -29,17 +29,18 @@ main:                                   # @main
 	i32.load	$4=, one($0)
 	i32.const	$2=, 31
 	i32.const	$3=, 1
-	block   	.LBB1_2
+	block
 	i32.shr_s	$push0=, $1, $2
 	i32.or  	$push1=, $pop0, $3
 	i32.sub 	$push2=, $0, $4
 	i32.shr_s	$push3=, $pop2, $2
 	i32.or  	$push4=, $pop3, $3
 	i32.eq  	$push5=, $pop1, $pop4
-	br_if   	$pop5, .LBB1_2
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

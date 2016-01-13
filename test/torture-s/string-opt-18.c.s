@@ -20,14 +20,15 @@ test2:                                  # @test2
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 8
-	block   	.LBB1_2
+	block
 	i32.call	$push0=, mempcpy@FUNCTION, $0, $0, $1
 	i32.add 	$push1=, $0, $1
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, .LBB1_2
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -110,10 +111,10 @@ main:                                   # @main
 	i32.call	$push0=, mempcpy@FUNCTION, $4, $5, $0
 	i32.const	$6=, 6
 	i32.add 	$6=, $7, $6
-	block   	.LBB7_2
+	block
 	i32.add 	$push1=, $6, $0
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, .LBB7_2
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#1:                                 # %test2.exit
 	i32.const	$push3=, 0
 	i32.const	$3=, 16
@@ -122,6 +123,7 @@ main:                                   # @main
 	i32.store	$7=, 0($3), $7
 	return  	$pop3
 .LBB7_2:                                # %if.then.i
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end7:

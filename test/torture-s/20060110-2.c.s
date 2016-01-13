@@ -27,7 +27,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i64.const	$1=, 32
-	block   	.LBB1_2
+	block
 	i64.load	$push1=, b($0)
 	i64.load	$push0=, a($0)
 	i64.add 	$push2=, $pop1, $pop0
@@ -35,10 +35,11 @@ main:                                   # @main
 	i64.shr_s	$push4=, $pop3, $1
 	i64.load	$push5=, c($0)
 	i64.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, .LBB1_2
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

@@ -14,13 +14,13 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	i32.const	$4=, 1
 	i32.const	$8=, 0
 	copy_local	$7=, $1
-	block   	.LBB0_6
-	block   	.LBB0_3
+	block
+	block
 	i32.le_s	$push0=, $1, $4
-	br_if   	$pop0, .LBB0_3
+	br_if   	$pop0, 0        # 0: down to label1
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label2:
 	i32.add 	$push1=, $1, $4
 	i32.shr_s	$5=, $pop1, $4
 	i32.add 	$1=, $5, $8
@@ -38,13 +38,15 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	i32.select	$1=, $6, $5, $pop9
 	copy_local	$7=, $3
 	i32.gt_s	$push10=, $1, $4
-	br_if   	$pop10, .LBB0_1
-.LBB0_2:                                # %while.cond8.preheader
+	br_if   	$pop10, 0       # 0: up to label2
+# BB#2:                                 # %while.cond8.preheader
+	end_loop                        # label3:
 	i32.const	$7=, 0
 	i32.const	$push11=, -1
 	i32.le_s	$push12=, $8, $pop11
-	br_if   	$pop12, .LBB0_6
+	br_if   	$pop12, 1       # 1: down to label0
 .LBB0_3:                                # %while.body10.preheader
+	end_block                       # label1:
 	i32.const	$push13=, 2
 	i32.shl 	$push14=, $8, $pop13
 	i32.add 	$push15=, $pop14, $2
@@ -53,12 +55,12 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	i32.add 	$6=, $8, $4
 .LBB0_4:                                # %while.body10
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_6
+	loop                            # label4:
 	copy_local	$7=, $2
 	i32.load	$push17=, 0($1)
 	i64.load	$push18=, 8($pop17)
 	i64.gt_u	$push19=, $pop18, $0
-	br_if   	$pop19, .LBB0_6
+	br_if   	$pop19, 1       # 1: down to label5
 # BB#5:                                 # %while.cond8
                                         #   in Loop: Header=BB0_4 Depth=1
 	i32.const	$push20=, -1
@@ -67,8 +69,10 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	i32.add 	$1=, $1, $pop21
 	i32.const	$7=, 0
 	i32.ge_s	$push22=, $6, $4
-	br_if   	$pop22, .LBB0_4
+	br_if   	$pop22, 0       # 0: up to label4
 .LBB0_6:                                # %cleanup
+	end_loop                        # label5:
+	end_block                       # label0:
 	return  	$7
 .Lfunc_end0:
 	.size	blockvector_for_pc_sect, .Lfunc_end0-blockvector_for_pc_sect

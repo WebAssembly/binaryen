@@ -26,21 +26,23 @@ server_type:                            # @server_type
 	i32.call	$4=, strcmp@FUNCTION, $2, $pop0
 	i32.const	$3=, 0
 	copy_local	$5=, $3
-	block   	.LBB1_3
-	block   	.LBB1_2
+	block
+	block
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $4, $pop2
-	br_if   	$pop3, .LBB1_2
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#1:                                 # %if.else
 	i32.const	$push1=, .L.str.1
 	i32.call	$4=, strcmp@FUNCTION, $2, $pop1
 	i32.const	$2=, .L.str.2
 	i32.const	$5=, 1
-	br_if   	$4, .LBB1_3
+	br_if   	$4, 1           # 1: down to label0
 .LBB1_2:                                # %if.end9
+	end_block                       # label1:
 	i32.store	$discard=, ap_standalone($3), $5
 	copy_local	$2=, $3
 .LBB1_3:                                # %cleanup
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end1:
 	.size	server_type, .Lfunc_end1-server_type

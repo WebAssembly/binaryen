@@ -11,23 +11,23 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
 	copy_local	$2=, $3
-	block   	.LBB0_4
+	block
 	i32.const	$push1=, 0
 	i32.eq  	$push2=, $1, $pop1
-	br_if   	$pop2, .LBB0_4
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.load	$6=, 0($0)
 	i32.const	$4=, 4
 	i32.add 	$0=, $0, $4
 .LBB0_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_4
+	loop                            # label1:
 	i32.const	$push0=, -1
 	i32.add 	$1=, $1, $pop0
 	copy_local	$2=, $3
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $1, $pop3
-	br_if   	$pop4, .LBB0_4
+	br_if   	$pop4, 1        # 1: down to label2
 # BB#3:                                 # %while.cond.while.body_crit_edge
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$2=, 0($0)
@@ -35,8 +35,10 @@ foo:                                    # @foo
 	i32.lt_s	$5=, $2, $6
 	copy_local	$6=, $2
 	i32.const	$2=, 1
-	br_if   	$5, .LBB0_2
+	br_if   	$5, 0           # 0: up to label1
 .LBB0_4:                                # %cleanup
+	end_loop                        # label2:
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -60,9 +62,9 @@ main:                                   # @main
 	i32.const	$push1=, 2
 	i32.const	$3=, 8
 	i32.add 	$3=, $4, $3
-	block   	.LBB1_2
+	block
 	i32.call	$push2=, foo@FUNCTION, $3, $pop1
-	br_if   	$pop2, .LBB1_2
+	br_if   	$pop2, 0        # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
 	i32.const	$2=, 16
@@ -71,6 +73,7 @@ main:                                   # @main
 	i32.store	$4=, 0($2), $4
 	return  	$pop3
 .LBB1_2:                                # %if.then
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

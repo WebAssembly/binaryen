@@ -27,12 +27,12 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i32.const	$3=, 0
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_5
+	loop                            # label0:
 	copy_local	$7=, $5
-	block   	.LBB1_3
+	block
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $4, $pop10
-	br_if   	$pop11, .LBB1_3
+	br_if   	$pop11, 0       # 0: down to label2
 # BB#2:                                 # %cond.false
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push1=, 12
@@ -40,14 +40,16 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i32.load	$7=, 0($pop2)
 .LBB1_3:                                # %cond.end
                                         #   in Loop: Header=BB1_1 Depth=1
+	end_block                       # label2:
 	i32.ge_s	$push3=, $3, $7
-	br_if   	$pop3, .LBB1_5
+	br_if   	$pop3, 1        # 1: down to label1
 # BB#4:                                 # %for.body
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push9=, 1
 	i32.add 	$3=, $3, $pop9
-	br      	.LBB1_1
+	br      	0               # 0: up to label0
 .LBB1_5:                                # %for.end35
+	end_loop                        # label1:
 	i32.const	$push4=, 20
 	i32.add 	$push5=, $1, $pop4
 	i32.load	$7=, 0($pop5)

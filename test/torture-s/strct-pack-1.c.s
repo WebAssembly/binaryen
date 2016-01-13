@@ -10,10 +10,10 @@ check:                                  # @check
 	.local  	i64, i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 1
-	block   	.LBB0_3
+	block
 	i32.load16_u	$push0=, 0($0)
 	i32.ne  	$push1=, $pop0, $2
-	br_if   	$pop1, .LBB0_3
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i64.const	$1=, 16
 	i32.const	$push2=, 8
@@ -36,10 +36,11 @@ check:                                  # @check
 	f64.reinterpret/i64	$push19=, $pop18
 	f64.const	$push20=, 0x1p4
 	f64.ne  	$push21=, $pop19, $pop20
-	br_if   	$pop21, .LBB0_3
+	br_if   	$pop21, 0       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$2=, 0
 .LBB0_3:                                # %return
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check

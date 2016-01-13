@@ -38,19 +38,21 @@ foo:                                    # @foo
 	i32.const	$push1=, 1065353216
 	i32.store	$discard=, 8($7), $pop1
 	call    	bar@FUNCTION, $1
-	block   	.LBB1_3
-	block   	.LBB1_2
+	block
+	block
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $0, $pop4
-	br_if   	$pop5, .LBB1_2
+	br_if   	$pop5, 0        # 0: down to label1
 # BB#1:                                 # %if.then2
 	i32.load	$push2=, 0($1)
 	i32.load	$push3=, 0($pop2)
 	f32.convert_s/i32	$2=, $pop3
-	br      	.LBB1_3
+	br      	1               # 1: down to label0
 .LBB1_2:                                # %if.end3
+	end_block                       # label1:
 	f32.load	$2=, 8($7)
 .LBB1_3:                                # %cleanup
+	end_block                       # label0:
 	i32.const	$5=, 16
 	i32.add 	$7=, $7, $5
 	i32.const	$5=, __stack_pointer
@@ -68,14 +70,15 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB2_2
+	block
 	f32.call	$push0=, foo@FUNCTION, $0
 	f32.const	$push1=, 0x0p0
 	f32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, .LBB2_2
+	br_if   	$pop2, 0        # 0: down to label2
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB2_2:                                # %if.then
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

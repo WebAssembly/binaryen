@@ -8,13 +8,13 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label1:
 	i32.load16_u	$2=, 0($1)
 	i32.const	$3=, 8
 	i32.shr_u	$push2=, $2, $3
@@ -45,8 +45,10 @@ foo:                                    # @foo
 	i32.const	$push17=, -1
 	i32.add 	$0=, $0, $pop17
 	i32.add 	$1=, $1, $3
-	br_if   	$0, .LBB0_1
+	br_if   	$0, 0           # 0: up to label1
 .LBB0_2:                                # %for.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	return
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -70,12 +72,12 @@ main:                                   # @main
 	i32.const	$push1=, 1
 	i32.const	$3=, 8
 	i32.add 	$3=, $4, $3
-	block   	.LBB1_2
+	block
 	call    	foo@FUNCTION, $pop1, $3
 	i64.load	$push2=, 8($4)
 	i64.const	$push3=, 506097522914230528
 	i64.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, .LBB1_2
+	br_if   	$pop4, 0        # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 0
 	i32.const	$2=, 16
@@ -84,6 +86,7 @@ main:                                   # @main
 	i32.store	$4=, 0($2), $4
 	return  	$pop5
 .LBB1_2:                                # %if.then
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

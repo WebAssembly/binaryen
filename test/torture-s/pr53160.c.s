@@ -22,28 +22,30 @@ main:                                   # @main
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB1_2
+	block
 	i32.load	$push0=, g($0)
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $pop0, $pop6
-	br_if   	$pop7, .LBB1_2
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.load	$discard=, b($0)
 .LBB1_2:                                # %if.end
+	end_block                       # label0:
 	i32.store	$discard=, e($0), $0
 	i32.load8_s	$1=, f($0)
 	i32.load	$2=, c($0)
-	block   	.LBB1_4
+	block
 	i32.const	$push2=, -1
 	i32.store	$discard=, d($0), $pop2
 	i32.store16	$push1=, i($0), $1
 	i32.select	$push3=, $2, $pop1, $0
 	i32.store	$push4=, h($0), $pop3
 	i32.store	$push5=, a($0), $pop4
-	br_if   	$pop5, .LBB1_4
+	br_if   	$pop5, 0        # 0: down to label1
 # BB#3:                                 # %if.end16
 	return  	$0
 .LBB1_4:                                # %if.then15
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

@@ -41,13 +41,13 @@ foo:                                    # @foo
 	f64.load	$159=, gd+232($1)
 	f64.load	$160=, gd+240($1)
 	f64.load	$161=, gd+248($1)
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label1:
 	f32.load	$2=, gf($1)
 	f32.load	$3=, gf+4($1)
 	f32.load	$4=, gf+8($1)
@@ -306,8 +306,10 @@ foo:                                    # @foo
 	i32.const	$push66=, -1
 	i32.add 	$0=, $0, $pop66
 	f32.store	$discard=, gf+124($1), $33
-	br_if   	$0, .LBB0_1
+	br_if   	$0, 0           # 0: up to label1
 .LBB0_2:                                # %for.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	f64.store	$discard=, gd($1), $130
 	f64.store	$discard=, gd+8($1), $131
 	f64.store	$discard=, gd+16($1), $132
@@ -358,7 +360,7 @@ main:                                   # @main
 	i32.const	$5=, gf
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_2
+	loop                            # label3:
 	f64.store	$push0=, 0($6), $3
 	f64.const	$push2=, 0x1p0
 	f64.add 	$3=, $pop0, $pop2
@@ -372,20 +374,21 @@ main:                                   # @main
 	i32.add 	$5=, $5, $2
 	i32.const	$push3=, 32
 	i32.ne  	$push4=, $4, $pop3
-	br_if   	$pop4, .LBB1_1
-.LBB1_2:                                # %for.end
+	br_if   	$pop4, 0        # 0: up to label3
+# BB#2:                                 # %for.end
+	end_loop                        # label4:
 	call    	foo@FUNCTION, $0
 	i32.const	$4=, 0
 	i32.const	$5=, gd
 	copy_local	$6=, $4
 .LBB1_3:                                # %for.body6
                                         # =>This Inner Loop Header: Depth=1
-	block   	.LBB1_7
-	loop    	.LBB1_6
+	block
+	loop                            # label6:
 	f64.load	$push5=, 0($5)
 	f64.convert_s/i32	$push6=, $4
 	f64.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, .LBB1_7
+	br_if   	$pop7, 2        # 2: down to label5
 # BB#4:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$push8=, gf
@@ -393,7 +396,7 @@ main:                                   # @main
 	f32.load	$push10=, 0($pop9)
 	f32.convert_s/i32	$push11=, $6
 	f32.ne  	$push12=, $pop10, $pop11
-	br_if   	$pop12, .LBB1_7
+	br_if   	$pop12, 2       # 2: down to label5
 # BB#5:                                 # %for.cond3
                                         #   in Loop: Header=BB1_3 Depth=1
 	i32.add 	$6=, $6, $0
@@ -401,12 +404,14 @@ main:                                   # @main
 	i32.add 	$4=, $4, $2
 	i32.const	$push13=, 31
 	i32.le_s	$push14=, $6, $pop13
-	br_if   	$pop14, .LBB1_3
-.LBB1_6:                                # %for.end17
+	br_if   	$pop14, 0       # 0: up to label6
+# BB#6:                                 # %for.end17
+	end_loop                        # label7:
 	i32.const	$push15=, 0
 	call    	exit@FUNCTION, $pop15
 	unreachable
 .LBB1_7:                                # %if.then
+	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

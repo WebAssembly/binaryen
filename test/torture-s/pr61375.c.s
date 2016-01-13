@@ -28,18 +28,19 @@ main:                                   # @main
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i64.const	$push2=, 0
 	i64.const	$push1=, 1
 	i64.const	$push0=, 2
 	i64.call	$push3=, uint128_central_bitsi_ior@FUNCTION, $pop2, $pop1, $pop0
 	i64.const	$push4=, 258
 	i64.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, .LBB1_2
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push6=, 0
 	return  	$pop6
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

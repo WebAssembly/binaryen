@@ -9,11 +9,11 @@ main:                                   # @main
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB0_3
+	block
 	i32.load	$push0=, b($0)
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $pop0, $pop3
-	br_if   	$pop4, .LBB0_3
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %land.lhs.true
 	i32.load	$1=, c($0)
 	i32.load	$2=, 0($1)
@@ -22,11 +22,12 @@ main:                                   # @main
 	i32.store	$discard=, 0($1), $pop2
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $2, $pop5
-	br_if   	$pop6, .LBB0_3
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#2:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.end
+	end_block                       # label0:
 	return  	$0
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

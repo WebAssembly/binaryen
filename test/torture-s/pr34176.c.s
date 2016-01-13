@@ -27,14 +27,15 @@ foo:                                    # @foo
 	i32.const	$1=, 0
 	i32.load	$2=, foo.count($1)
 	i32.const	$3=, 1
-	block   	.LBB1_2
+	block
 	i32.add 	$push0=, $2, $3
 	i32.store	$discard=, foo.count($1), $pop0
 	i32.ge_s	$push1=, $2, $3
-	br_if   	$pop1, .LBB1_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -60,32 +61,35 @@ main:                                   # @main
 .LBB2_1:                                # %if.end
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_2 Depth 2
-	loop    	.LBB2_4
+	loop                            # label1:
 	i32.load	$1=, 12($7)
 	i32.call	$discard=, foo@FUNCTION, $1
 	i32.const	$0=, 0
-	block   	.LBB2_3
+	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $1, $pop3
-	br_if   	$pop4, .LBB2_3
+	br_if   	$pop4, 0        # 0: down to label3
 .LBB2_2:                                # %while.body
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	.LBB2_3
+	loop                            # label4:
 	i32.const	$push0=, -1
 	i32.add 	$1=, $1, $pop0
 	i32.const	$push1=, 8
 	i32.add 	$0=, $0, $pop1
-	br_if   	$1, .LBB2_2
+	br_if   	$1, 0           # 0: up to label4
 .LBB2_3:                                # %cleanup.thread
                                         #   in Loop: Header=BB2_1 Depth=1
+	end_loop                        # label5:
+	end_block                       # label3:
 	i32.const	$6=, 12
 	i32.add 	$6=, $7, $6
 	i32.call	$discard=, hash_find_entry@FUNCTION, $6
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, .LBB2_1
-.LBB2_4:                                # %for.end
+	br_if   	$pop6, 0        # 0: up to label1
+# BB#4:                                 # %for.end
+	end_loop                        # label2:
 	i32.const	$push2=, 0
 	i32.const	$4=, 16
 	i32.add 	$7=, $7, $4

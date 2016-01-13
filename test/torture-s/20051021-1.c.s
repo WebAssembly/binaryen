@@ -44,14 +44,15 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load	$1=, count($0)
-	block   	.LBB2_2
+	block
 	i32.const	$push0=, 2
 	i32.add 	$push1=, $1, $pop0
 	i32.store	$discard=, count($0), $pop1
-	br_if   	$1, .LBB2_2
+	br_if   	$1, 0           # 0: down to label0
 # BB#1:                                 # %if.end7
 	return  	$0
 .LBB2_2:                                # %if.then6
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

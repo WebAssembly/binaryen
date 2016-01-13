@@ -25,17 +25,18 @@ bar:                                    # @bar
 	copy_local	$10=, $2
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_4
-	block   	.LBB0_3
+	loop                            # label0:
+	block
 	i32.const	$push4=, 0
 	i32.gt_s	$push5=, $1, $pop4
-	br_if   	$pop5, .LBB0_3
+	br_if   	$pop5, 0        # 0: down to label2
 # BB#2:                                 # %if.then
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.add 	$push6=, $0, $6
 	i32.load	$1=, 0($pop6)
 .LBB0_3:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
+	end_block                       # label2:
 	i32.const	$push7=, -1
 	i32.add 	$1=, $1, $pop7
 	i32.mul 	$push8=, $1, $6
@@ -48,8 +49,9 @@ bar:                                    # @bar
 	i32.lt_u	$push13=, $pop12, $5
 	i32.select	$10=, $pop13, $1, $10
 	i32.ne  	$push14=, $1, $2
-	br_if   	$pop14, .LBB0_1
-.LBB0_4:                                # %do.end
+	br_if   	$pop14, 0       # 0: up to label0
+# BB#4:                                 # %do.end
+	end_loop                        # label1:
 	i32.mul 	$push18=, $10, $6
 	i32.add 	$push19=, $0, $pop18
 	i32.const	$push15=, 9

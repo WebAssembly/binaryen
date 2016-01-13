@@ -9,10 +9,10 @@ t1:                                     # @t1
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB0_4
+	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, .LBB0_4
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
@@ -21,7 +21,7 @@ t1:                                     # @t1
 	i64.shl 	$2=, $pop1, $pop2
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label1:
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -84,12 +84,14 @@ t1:                                     # @t1
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
-	br_if   	$0, .LBB0_2
-.LBB0_3:                                # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label1
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label2:
 	i64.const	$push3=, -2048
 	i64.add 	$push4=, $1, $pop3
 	i64.sub 	$1=, $pop4, $2
 .LBB0_4:                                # %while.end
+	end_block                       # label0:
 	return  	$1
 .Lfunc_end0:
 	.size	t1, .Lfunc_end0-t1
@@ -103,17 +105,17 @@ t2:                                     # @t2
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i64
 # BB#0:                                 # %entry
-	block   	.LBB1_4
+	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, .LBB1_4
+	br_if   	$pop4, 0        # 0: down to label3
 # BB#1:                                 # %while.body.preheader
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$2=, $pop0
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_3
+	loop                            # label4:
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -176,13 +178,15 @@ t2:                                     # @t2
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
-	br_if   	$0, .LBB1_2
-.LBB1_3:                                # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label4
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label5:
 	i64.const	$35=, -513
 	i64.mul 	$push1=, $2, $35
 	i64.add 	$push2=, $1, $pop1
 	i64.add 	$1=, $pop2, $35
 .LBB1_4:                                # %while.end
+	end_block                       # label3:
 	return  	$1
 .Lfunc_end1:
 	.size	t2, .Lfunc_end1-t2
@@ -196,10 +200,10 @@ t3:                                     # @t3
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB2_4
+	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, .LBB2_4
+	br_if   	$pop6, 0        # 0: down to label6
 # BB#1:                                 # %while.body.preheader
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
@@ -208,7 +212,7 @@ t3:                                     # @t3
 	i64.shl 	$2=, $pop1, $pop2
 .LBB2_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_3
+	loop                            # label7:
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -271,12 +275,14 @@ t3:                                     # @t3
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
-	br_if   	$0, .LBB2_2
-.LBB2_3:                                # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label7
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label8:
 	i64.const	$push3=, -512
 	i64.add 	$push4=, $1, $pop3
 	i64.sub 	$1=, $pop4, $2
 .LBB2_4:                                # %while.end
+	end_block                       # label6:
 	return  	$1
 .Lfunc_end2:
 	.size	t3, .Lfunc_end2-t3
@@ -290,17 +296,17 @@ t4:                                     # @t4
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i64
 # BB#0:                                 # %entry
-	block   	.LBB3_4
+	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, .LBB3_4
+	br_if   	$pop4, 0        # 0: down to label9
 # BB#1:                                 # %while.body.preheader
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$2=, $pop0
 .LBB3_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB3_3
+	loop                            # label10:
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -363,13 +369,15 @@ t4:                                     # @t4
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
-	br_if   	$0, .LBB3_2
-.LBB3_3:                                # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label10
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label11:
 	i64.const	$35=, -511
 	i64.mul 	$push1=, $2, $35
 	i64.add 	$push2=, $1, $pop1
 	i64.add 	$1=, $pop2, $35
 .LBB3_4:                                # %while.end
+	end_block                       # label9:
 	return  	$1
 .Lfunc_end3:
 	.size	t4, .Lfunc_end3-t4
@@ -383,17 +391,17 @@ t5:                                     # @t5
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB4_4
+	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, .LBB4_4
+	br_if   	$pop4, 0        # 0: down to label12
 # BB#1:                                 # %while.body.preheader
 	i32.const	$3=, -1
 	i32.add 	$push0=, $0, $3
 	i64.extend_u/i32	$2=, $pop0
 .LBB4_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB4_3
+	loop                            # label13:
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -456,12 +464,14 @@ t5:                                     # @t5
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $3
-	br_if   	$0, .LBB4_2
-.LBB4_3:                                # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label13
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label14:
 	i64.const	$push1=, -1
 	i64.add 	$push2=, $1, $pop1
 	i64.sub 	$1=, $pop2, $2
 .LBB4_4:                                # %while.end
+	end_block                       # label12:
 	return  	$1
 .Lfunc_end4:
 	.size	t5, .Lfunc_end4-t5
@@ -475,10 +485,10 @@ t6:                                     # @t6
 	.result 	i64
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB5_4
+	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, .LBB5_4
+	br_if   	$pop4, 0        # 0: down to label15
 # BB#1:                                 # %while.body.preheader
 	i32.const	$2=, -1
 	i32.add 	$push0=, $0, $2
@@ -486,7 +496,7 @@ t6:                                     # @t6
 	i64.add 	$1=, $pop1, $1
 .LBB5_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB5_3
+	loop                            # label16:
 	i32.const	$3=, 0
 	i32.load	$4=, gvol+4($3)
 	i32.load	$5=, gvol+8($3)
@@ -549,11 +559,13 @@ t6:                                     # @t6
 	i32.store	$discard=, gvol+116($3), $32
 	i32.store	$discard=, gvol+120($3), $33
 	i32.add 	$0=, $0, $2
-	br_if   	$0, .LBB5_2
-.LBB5_3:                                # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label16
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label17:
 	i64.const	$push2=, 1
 	i64.add 	$1=, $1, $pop2
 .LBB5_4:                                # %while.end
+	end_block                       # label15:
 	return  	$1
 .Lfunc_end5:
 	.size	t6, .Lfunc_end5-t6
@@ -567,10 +579,10 @@ t7:                                     # @t7
 	.result 	i64
 	.local  	i32, i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB6_4
+	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, .LBB6_4
+	br_if   	$pop4, 0        # 0: down to label18
 # BB#1:                                 # %while.body.preheader
 	i32.const	$2=, -1
 	i64.const	$3=, 511
@@ -580,7 +592,7 @@ t7:                                     # @t7
 	i64.add 	$1=, $pop2, $1
 .LBB6_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB6_3
+	loop                            # label19:
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -643,10 +655,12 @@ t7:                                     # @t7
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $2
-	br_if   	$0, .LBB6_2
-.LBB6_3:                                # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label19
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label20:
 	i64.add 	$1=, $1, $3
 .LBB6_4:                                # %while.end
+	end_block                       # label18:
 	return  	$1
 .Lfunc_end6:
 	.size	t7, .Lfunc_end6-t7
@@ -660,10 +674,10 @@ t8:                                     # @t8
 	.result 	i64
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB7_4
+	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, .LBB7_4
+	br_if   	$pop6, 0        # 0: down to label21
 # BB#1:                                 # %while.body.preheader
 	i32.const	$2=, -1
 	i32.add 	$push0=, $0, $2
@@ -673,7 +687,7 @@ t8:                                     # @t8
 	i64.add 	$1=, $pop3, $1
 .LBB7_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB7_3
+	loop                            # label22:
 	i32.const	$3=, 0
 	i32.load	$4=, gvol+4($3)
 	i32.load	$5=, gvol+8($3)
@@ -736,11 +750,13 @@ t8:                                     # @t8
 	i32.store	$discard=, gvol+116($3), $32
 	i32.store	$discard=, gvol+120($3), $33
 	i32.add 	$0=, $0, $2
-	br_if   	$0, .LBB7_2
-.LBB7_3:                                # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label22
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label23:
 	i64.const	$push4=, 512
 	i64.add 	$1=, $1, $pop4
 .LBB7_4:                                # %while.end
+	end_block                       # label21:
 	return  	$1
 .Lfunc_end7:
 	.size	t8, .Lfunc_end7-t8
@@ -754,10 +770,10 @@ t9:                                     # @t9
 	.result 	i64
 	.local  	i32, i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB8_4
+	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, .LBB8_4
+	br_if   	$pop4, 0        # 0: down to label24
 # BB#1:                                 # %while.body.preheader
 	i32.const	$2=, -1
 	i64.const	$3=, 513
@@ -767,7 +783,7 @@ t9:                                     # @t9
 	i64.add 	$1=, $pop2, $1
 .LBB8_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB8_3
+	loop                            # label25:
 	i32.const	$4=, 0
 	i32.load	$5=, gvol+4($4)
 	i32.load	$6=, gvol+8($4)
@@ -830,10 +846,12 @@ t9:                                     # @t9
 	i32.store	$discard=, gvol+116($4), $33
 	i32.store	$discard=, gvol+120($4), $34
 	i32.add 	$0=, $0, $2
-	br_if   	$0, .LBB8_2
-.LBB8_3:                                # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label25
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label26:
 	i64.add 	$1=, $1, $3
 .LBB8_4:                                # %while.end
+	end_block                       # label24:
 	return  	$1
 .Lfunc_end8:
 	.size	t9, .Lfunc_end8-t9
@@ -847,10 +865,10 @@ t10:                                    # @t10
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB9_4
+	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, .LBB9_4
+	br_if   	$pop6, 0        # 0: down to label27
 # BB#1:                                 # %while.body.lr.ph
 	i32.const	$3=, 0
 	i32.const	$4=, -1
@@ -862,7 +880,7 @@ t10:                                    # @t10
 	i64.mul 	$2=, $pop0, $pop4
 .LBB9_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB9_3
+	loop                            # label28:
 	i32.load	$5=, gvol+4($3)
 	i32.load	$6=, gvol+8($3)
 	i32.load	$7=, gvol+12($3)
@@ -924,10 +942,12 @@ t10:                                    # @t10
 	i32.store	$discard=, gvol+116($3), $33
 	i32.store	$discard=, gvol+120($3), $34
 	i32.add 	$0=, $0, $4
-	br_if   	$0, .LBB9_2
-.LBB9_3:                                # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label28
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label29:
 	i64.add 	$1=, $2, $1
 .LBB9_4:                                # %while.end
+	end_block                       # label27:
 	return  	$1
 .Lfunc_end9:
 	.size	t10, .Lfunc_end9-t10
@@ -941,10 +961,10 @@ t11:                                    # @t11
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB10_4
+	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, .LBB10_4
+	br_if   	$pop6, 0        # 0: down to label30
 # BB#1:                                 # %while.body.lr.ph
 	i32.const	$3=, 0
 	i32.const	$4=, -1
@@ -956,7 +976,7 @@ t11:                                    # @t11
 	i64.mul 	$2=, $pop0, $pop4
 .LBB10_2:                               # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB10_3
+	loop                            # label31:
 	i32.load	$5=, gvol+4($3)
 	i32.load	$6=, gvol+8($3)
 	i32.load	$7=, gvol+12($3)
@@ -1018,10 +1038,12 @@ t11:                                    # @t11
 	i32.store	$discard=, gvol+116($3), $33
 	i32.store	$discard=, gvol+120($3), $34
 	i32.add 	$0=, $0, $4
-	br_if   	$0, .LBB10_2
-.LBB10_3:                               # %while.end.loopexit
+	br_if   	$0, 0           # 0: up to label31
+# BB#3:                                 # %while.end.loopexit
+	end_loop                        # label32:
 	i64.add 	$1=, $2, $1
 .LBB10_4:                               # %while.end
+	end_block                       # label30:
 	return  	$1
 .Lfunc_end10:
 	.size	t11, .Lfunc_end10-t11
@@ -1051,224 +1073,247 @@ main:                                   # @main
 	i64.const	$2=, -1
 	i32.const	$0=, 0
 	i32.const	$3=, 3
-	block   	.LBB12_46
+	block
 	i64.const	$push0=, 100
 	i64.store	$1=, gull($0), $pop0
 	i64.call	$push1=, t1@FUNCTION, $3, $2
 	i64.const	$push2=, -6145
 	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB12_46
+	br_if   	$pop3, 0        # 0: down to label33
 # BB#1:                                 # %if.end
 	i64.const	$4=, 4294967295
-	block   	.LBB12_45
+	block
 	i64.call	$push4=, t1@FUNCTION, $3, $4
 	i64.const	$push5=, 4294961151
 	i64.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, .LBB12_45
+	br_if   	$pop6, 0        # 0: down to label34
 # BB#2:                                 # %if.end4
-	block   	.LBB12_44
+	block
 	i64.call	$push7=, t2@FUNCTION, $3, $2
 	i64.const	$push8=, -1540
 	i64.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, .LBB12_44
+	br_if   	$pop9, 0        # 0: down to label35
 # BB#3:                                 # %if.end8
-	block   	.LBB12_43
+	block
 	i64.call	$push10=, t2@FUNCTION, $3, $4
 	i64.const	$push11=, 4294965756
 	i64.ne  	$push12=, $pop10, $pop11
-	br_if   	$pop12, .LBB12_43
+	br_if   	$pop12, 0       # 0: down to label36
 # BB#4:                                 # %if.end12
-	block   	.LBB12_42
+	block
 	i64.call	$push13=, t3@FUNCTION, $3, $2
 	i64.const	$push14=, -1537
 	i64.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, .LBB12_42
+	br_if   	$pop15, 0       # 0: down to label37
 # BB#5:                                 # %if.end16
-	block   	.LBB12_41
+	block
 	i64.call	$push16=, t3@FUNCTION, $3, $4
 	i64.const	$push17=, 4294965759
 	i64.ne  	$push18=, $pop16, $pop17
-	br_if   	$pop18, .LBB12_41
+	br_if   	$pop18, 0       # 0: down to label38
 # BB#6:                                 # %if.end20
-	block   	.LBB12_40
+	block
 	i64.call	$push19=, t4@FUNCTION, $3, $2
 	i64.const	$push20=, -1534
 	i64.ne  	$push21=, $pop19, $pop20
-	br_if   	$pop21, .LBB12_40
+	br_if   	$pop21, 0       # 0: down to label39
 # BB#7:                                 # %if.end24
-	block   	.LBB12_39
+	block
 	i64.call	$push22=, t4@FUNCTION, $3, $4
 	i64.const	$push23=, 4294965762
 	i64.ne  	$push24=, $pop22, $pop23
-	br_if   	$pop24, .LBB12_39
+	br_if   	$pop24, 0       # 0: down to label40
 # BB#8:                                 # %if.end28
-	block   	.LBB12_38
+	block
 	i64.call	$push25=, t5@FUNCTION, $3, $2
 	i64.const	$push26=, -4
 	i64.ne  	$push27=, $pop25, $pop26
-	br_if   	$pop27, .LBB12_38
+	br_if   	$pop27, 0       # 0: down to label41
 # BB#9:                                 # %if.end32
-	block   	.LBB12_37
+	block
 	i64.call	$push28=, t5@FUNCTION, $3, $4
 	i64.const	$push29=, 4294967292
 	i64.ne  	$push30=, $pop28, $pop29
-	br_if   	$pop30, .LBB12_37
+	br_if   	$pop30, 0       # 0: down to label42
 # BB#10:                                # %if.end36
-	block   	.LBB12_36
+	block
 	i64.call	$push31=, t6@FUNCTION, $3, $2
 	i64.const	$push32=, 2
 	i64.ne  	$push33=, $pop31, $pop32
-	br_if   	$pop33, .LBB12_36
+	br_if   	$pop33, 0       # 0: down to label43
 # BB#11:                                # %if.end40
-	block   	.LBB12_35
+	block
 	i64.call	$push34=, t6@FUNCTION, $3, $4
 	i64.const	$push35=, 4294967298
 	i64.ne  	$push36=, $pop34, $pop35
-	br_if   	$pop36, .LBB12_35
+	br_if   	$pop36, 0       # 0: down to label44
 # BB#12:                                # %if.end44
-	block   	.LBB12_34
+	block
 	i64.call	$push37=, t7@FUNCTION, $3, $2
 	i64.const	$push38=, 1532
 	i64.ne  	$push39=, $pop37, $pop38
-	br_if   	$pop39, .LBB12_34
+	br_if   	$pop39, 0       # 0: down to label45
 # BB#13:                                # %if.end48
-	block   	.LBB12_33
+	block
 	i64.call	$push40=, t7@FUNCTION, $3, $4
 	i64.const	$push41=, 4294968828
 	i64.ne  	$push42=, $pop40, $pop41
-	br_if   	$pop42, .LBB12_33
+	br_if   	$pop42, 0       # 0: down to label46
 # BB#14:                                # %if.end52
-	block   	.LBB12_32
+	block
 	i64.call	$push43=, t8@FUNCTION, $3, $2
 	i64.const	$push44=, 1535
 	i64.ne  	$push45=, $pop43, $pop44
-	br_if   	$pop45, .LBB12_32
+	br_if   	$pop45, 0       # 0: down to label47
 # BB#15:                                # %if.end56
-	block   	.LBB12_31
+	block
 	i64.call	$push46=, t8@FUNCTION, $3, $4
 	i64.const	$push47=, 4294968831
 	i64.ne  	$push48=, $pop46, $pop47
-	br_if   	$pop48, .LBB12_31
+	br_if   	$pop48, 0       # 0: down to label48
 # BB#16:                                # %if.end60
-	block   	.LBB12_30
+	block
 	i64.call	$push49=, t9@FUNCTION, $3, $2
 	i64.const	$push50=, 1538
 	i64.ne  	$push51=, $pop49, $pop50
-	br_if   	$pop51, .LBB12_30
+	br_if   	$pop51, 0       # 0: down to label49
 # BB#17:                                # %if.end64
-	block   	.LBB12_29
+	block
 	i64.call	$push52=, t9@FUNCTION, $3, $4
 	i64.const	$push53=, 4294968834
 	i64.ne  	$push54=, $pop52, $pop53
-	br_if   	$pop54, .LBB12_29
+	br_if   	$pop54, 0       # 0: down to label50
 # BB#18:                                # %if.end68
 	i64.call	$5=, t10@FUNCTION, $3, $2
 	i64.const	$6=, 3
-	block   	.LBB12_28
+	block
 	i64.load	$push55=, gull($0)
 	i64.mul 	$push56=, $pop55, $6
 	i64.add 	$push57=, $pop56, $2
 	i64.ne  	$push58=, $5, $pop57
-	br_if   	$pop58, .LBB12_28
+	br_if   	$pop58, 0       # 0: down to label51
 # BB#19:                                # %if.end72
 	i64.call	$5=, t10@FUNCTION, $3, $4
-	block   	.LBB12_27
+	block
 	i64.load	$push59=, gull($0)
 	i64.mul 	$push60=, $pop59, $6
 	i64.add 	$push61=, $pop60, $4
 	i64.ne  	$push62=, $5, $pop61
-	br_if   	$pop62, .LBB12_27
+	br_if   	$pop62, 0       # 0: down to label52
 # BB#20:                                # %if.end77
 	i64.call	$5=, t11@FUNCTION, $3, $2
 	i64.const	$6=, -3
-	block   	.LBB12_26
+	block
 	i64.load	$push63=, gull($0)
 	i64.mul 	$push64=, $pop63, $6
 	i64.add 	$push65=, $pop64, $2
 	i64.ne  	$push66=, $5, $pop65
-	br_if   	$pop66, .LBB12_26
+	br_if   	$pop66, 0       # 0: down to label53
 # BB#21:                                # %if.end84
 	i64.call	$5=, t11@FUNCTION, $3, $4
 	i64.load	$2=, gull($0)
-	block   	.LBB12_25
+	block
 	i64.mul 	$push67=, $2, $6
 	i64.add 	$push68=, $pop67, $4
 	i64.ne  	$push69=, $5, $pop68
-	br_if   	$pop69, .LBB12_25
+	br_if   	$pop69, 0       # 0: down to label54
 # BB#22:                                # %if.end91
-	block   	.LBB12_24
+	block
 	i64.ne  	$push70=, $2, $1
-	br_if   	$pop70, .LBB12_24
+	br_if   	$pop70, 0       # 0: down to label55
 # BB#23:                                # %if.end95
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB12_24:                              # %if.then94
+	end_block                       # label55:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_25:                              # %if.then90
+	end_block                       # label54:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_26:                              # %if.then83
+	end_block                       # label53:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_27:                              # %if.then76
+	end_block                       # label52:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_28:                              # %if.then71
+	end_block                       # label51:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_29:                              # %if.then67
+	end_block                       # label50:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_30:                              # %if.then63
+	end_block                       # label49:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_31:                              # %if.then59
+	end_block                       # label48:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_32:                              # %if.then55
+	end_block                       # label47:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_33:                              # %if.then51
+	end_block                       # label46:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_34:                              # %if.then47
+	end_block                       # label45:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_35:                              # %if.then43
+	end_block                       # label44:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_36:                              # %if.then39
+	end_block                       # label43:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_37:                              # %if.then35
+	end_block                       # label42:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_38:                              # %if.then31
+	end_block                       # label41:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_39:                              # %if.then27
+	end_block                       # label40:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_40:                              # %if.then23
+	end_block                       # label39:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_41:                              # %if.then19
+	end_block                       # label38:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_42:                              # %if.then15
+	end_block                       # label37:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_43:                              # %if.then11
+	end_block                       # label36:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_44:                              # %if.then7
+	end_block                       # label35:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_45:                              # %if.then3
+	end_block                       # label34:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_46:                              # %if.then
+	end_block                       # label33:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end12:

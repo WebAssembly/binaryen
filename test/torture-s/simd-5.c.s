@@ -129,41 +129,45 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	call    	func2@FUNCTION
 	i32.const	$0=, 0
-	block   	.LBB3_8
+	block
 	i64.load	$push0=, w1($0)
 	i64.load	$push1=, w3($0)
 	i64.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, .LBB3_8
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	block   	.LBB3_7
+	block
 	i64.load	$push3=, w2($0)
 	i64.load	$push4=, w4($0)
 	i64.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, .LBB3_7
+	br_if   	$pop5, 0        # 0: down to label1
 # BB#2:                                 # %if.end4
-	block   	.LBB3_6
+	block
 	i64.load	$push6=, z1($0)
 	i64.load	$push7=, z3($0)
 	i64.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, .LBB3_6
+	br_if   	$pop8, 0        # 0: down to label2
 # BB#3:                                 # %if.end8
-	block   	.LBB3_5
+	block
 	i64.load	$push9=, z2($0)
 	i64.load	$push10=, z4($0)
 	i64.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, .LBB3_5
+	br_if   	$pop11, 0       # 0: down to label3
 # BB#4:                                 # %if.end12
 	return  	$0
 .LBB3_5:                                # %if.then11
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_6:                                # %if.then7
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_7:                                # %if.then3
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_8:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:

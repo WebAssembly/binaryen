@@ -35,7 +35,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.load	$1=, a($0)
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 31
 	i32.shr_u	$push1=, $1, $pop0
 	i32.add 	$push2=, $1, $pop1
@@ -44,11 +44,12 @@ main:                                   # @main
 	i32.sub 	$push5=, $1, $pop4
 	i32.const	$push6=, 1
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, .LBB1_2
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

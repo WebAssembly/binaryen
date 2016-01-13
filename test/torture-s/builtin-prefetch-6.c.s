@@ -78,11 +78,12 @@ prefetch_for_read:                      # @prefetch_for_read
 	i32.const	$0=, -260
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_2
+	loop                            # label0:
 	i32.const	$push0=, 4
 	i32.add 	$0=, $0, $pop0
-	br_if   	$0, .LBB1_1
-.LBB1_2:                                # %for.end
+	br_if   	$0, 0           # 0: up to label0
+# BB#2:                                 # %for.end
+	end_loop                        # label1:
 	return
 .Lfunc_end1:
 	.size	prefetch_for_read, .Lfunc_end1-prefetch_for_read
@@ -97,11 +98,12 @@ prefetch_for_write:                     # @prefetch_for_write
 	i32.const	$0=, -260
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_2
+	loop                            # label2:
 	i32.const	$push0=, 4
 	i32.add 	$0=, $0, $pop0
-	br_if   	$0, .LBB2_1
-.LBB2_2:                                # %for.end
+	br_if   	$0, 0           # 0: up to label2
+# BB#2:                                 # %for.end
+	end_loop                        # label3:
 	return
 .Lfunc_end2:
 	.size	prefetch_for_write, .Lfunc_end2-prefetch_for_write
@@ -175,19 +177,21 @@ main:                                   # @main
 	copy_local	$2=, $0
 .LBB3_1:                                # %for.body.i5.for.body.i5_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB3_2
+	loop                            # label4:
 	i32.add 	$2=, $2, $0
 	i32.const	$3=, -260
 	i32.const	$push28=, 260
 	i32.ne  	$push29=, $2, $pop28
-	br_if   	$pop29, .LBB3_1
+	br_if   	$pop29, 0       # 0: up to label4
 .LBB3_2:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB3_3
+	end_loop                        # label5:
+	loop                            # label6:
 	i32.const	$push30=, 4
 	i32.add 	$3=, $3, $pop30
-	br_if   	$3, .LBB3_2
-.LBB3_3:                                # %prefetch_for_write.exit
+	br_if   	$3, 0           # 0: up to label6
+# BB#3:                                 # %prefetch_for_write.exit
+	end_loop                        # label7:
 	call    	exit@FUNCTION, $1
 	unreachable
 .Lfunc_end3:

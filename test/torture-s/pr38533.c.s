@@ -1230,13 +1230,14 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.call	$push0=, foo@FUNCTION
-	br_if   	$pop0, .LBB1_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push1=, 0
 	return  	$pop1
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

@@ -52,90 +52,95 @@ check:                                  # @check
 # BB#0:                                 # %entry
 	i32.const	$4=, 0
 	i32.const	$3=, u
-	block   	.LBB1_4
+	block
 	i32.le_s	$push0=, $0, $4
-	br_if   	$pop0, .LBB1_4
+	br_if   	$pop0, 0        # 0: down to label0
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_3
+	loop                            # label1:
 	i32.const	$3=, u
 	i32.add 	$push1=, $3, $4
 	i32.load8_u	$push2=, 0($pop1)
 	i32.const	$push3=, 97
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, .LBB1_3
+	br_if   	$pop4, 1        # 1: down to label2
 # BB#2:                                 # %for.inc
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push5=, 1
 	i32.add 	$4=, $4, $pop5
 	i32.add 	$3=, $3, $4
 	i32.lt_s	$push6=, $4, $0
-	br_if   	$pop6, .LBB1_1
-	br      	.LBB1_4
+	br_if   	$pop6, 0        # 0: up to label1
+	br      	2               # 2: down to label0
 .LBB1_3:                                # %if.then
+	end_loop                        # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %for.cond3.preheader
+	end_block                       # label0:
 	i32.const	$4=, 0
 	copy_local	$0=, $3
-	block   	.LBB1_8
+	block
 	i32.le_s	$push7=, $1, $4
-	br_if   	$pop7, .LBB1_8
+	br_if   	$pop7, 0        # 0: down to label3
 .LBB1_5:                                # %for.body6
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_7
+	loop                            # label4:
 	i32.add 	$push8=, $3, $4
 	i32.load8_s	$push9=, 0($pop8)
 	i32.ne  	$push10=, $pop9, $2
-	br_if   	$pop10, .LBB1_7
+	br_if   	$pop10, 1       # 1: down to label5
 # BB#6:                                 # %for.inc12
                                         #   in Loop: Header=BB1_5 Depth=1
 	i32.const	$push11=, 1
 	i32.add 	$4=, $4, $pop11
 	i32.add 	$0=, $3, $4
 	i32.lt_s	$push12=, $4, $1
-	br_if   	$pop12, .LBB1_5
-	br      	.LBB1_8
+	br_if   	$pop12, 0       # 0: up to label4
+	br      	2               # 2: down to label3
 .LBB1_7:                                # %if.then10
+	end_loop                        # label5:
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_8:                                # %for.body19.preheader
+	end_block                       # label3:
 	i32.const	$4=, 97
-	block   	.LBB1_17
+	block
 	i32.load8_u	$push13=, 0($0)
 	i32.ne  	$push14=, $pop13, $4
-	br_if   	$pop14, .LBB1_17
+	br_if   	$pop14, 0       # 0: down to label6
 # BB#9:                                 # %for.inc25
 	i32.load8_u	$push15=, 1($0)
 	i32.ne  	$push16=, $pop15, $4
-	br_if   	$pop16, .LBB1_17
+	br_if   	$pop16, 0       # 0: down to label6
 # BB#10:                                # %for.inc25.1
 	i32.load8_u	$push17=, 2($0)
 	i32.ne  	$push18=, $pop17, $4
-	br_if   	$pop18, .LBB1_17
+	br_if   	$pop18, 0       # 0: down to label6
 # BB#11:                                # %for.inc25.2
 	i32.load8_u	$push19=, 3($0)
 	i32.ne  	$push20=, $pop19, $4
-	br_if   	$pop20, .LBB1_17
+	br_if   	$pop20, 0       # 0: down to label6
 # BB#12:                                # %for.inc25.3
 	i32.load8_u	$push21=, 4($0)
 	i32.ne  	$push22=, $pop21, $4
-	br_if   	$pop22, .LBB1_17
+	br_if   	$pop22, 0       # 0: down to label6
 # BB#13:                                # %for.inc25.4
 	i32.load8_u	$push23=, 5($0)
 	i32.ne  	$push24=, $pop23, $4
-	br_if   	$pop24, .LBB1_17
+	br_if   	$pop24, 0       # 0: down to label6
 # BB#14:                                # %for.inc25.5
 	i32.load8_u	$push25=, 6($0)
 	i32.ne  	$push26=, $pop25, $4
-	br_if   	$pop26, .LBB1_17
+	br_if   	$pop26, 0       # 0: down to label6
 # BB#15:                                # %for.inc25.6
 	i32.load8_u	$push27=, 7($0)
 	i32.ne  	$push28=, $pop27, $4
-	br_if   	$pop28, .LBB1_17
+	br_if   	$pop28, 0       # 0: down to label6
 # BB#16:                                # %for.inc25.7
 	return
 .LBB1_17:                               # %if.then23
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -156,10 +161,10 @@ main:                                   # @main
                                         #     Child Loop BB2_2 Depth 2
                                         #     Child Loop BB2_14 Depth 2
                                         #     Child Loop BB2_26 Depth 2
-	block   	.LBB2_48
-	block   	.LBB2_47
-	block   	.LBB2_46
-	loop    	.LBB2_38
+	block
+	block
+	block
+	loop                            # label10:
 	i32.const	$push0=, 1633771873
 	i32.store	$8=, u($12), $pop0
 	i32.const	$push1=, 24929
@@ -195,201 +200,207 @@ main:                                   # @main
 	i32.const	$0=, 1
 	i32.lt_s	$6=, $13, $0
 	copy_local	$2=, $12
-	block   	.LBB2_5
-	br_if   	$6, .LBB2_5
+	block
+	br_if   	$6, 0           # 0: down to label12
 .LBB2_2:                                # %for.body6.i
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	.LBB2_4
+	loop                            # label13:
 	i32.const	$11=, u
 	i32.add 	$push26=, $11, $2
 	i32.load8_u	$push27=, 0($pop26)
-	br_if   	$pop27, .LBB2_4
+	br_if   	$pop27, 1       # 1: down to label14
 # BB#3:                                 # %for.inc12.i
                                         #   in Loop: Header=BB2_2 Depth=2
 	i32.add 	$2=, $2, $0
 	i32.add 	$11=, $11, $2
 	i32.lt_s	$push28=, $2, $13
-	br_if   	$pop28, .LBB2_2
-	br      	.LBB2_5
+	br_if   	$pop28, 0       # 0: up to label13
+	br      	2               # 2: down to label12
 .LBB2_4:                                # %if.then10.i
+	end_loop                        # label14:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_5:                                # %for.body19.preheader.i
                                         #   in Loop: Header=BB2_1 Depth=1
+	end_block                       # label12:
 	i32.load8_u	$push29=, 0($11)
 	i32.ne  	$push30=, $pop29, $10
-	br_if   	$pop30, .LBB2_48
+	br_if   	$pop30, 4       # 4: down to label7
 # BB#6:                                 # %for.inc25.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push31=, 1($11)
 	i32.ne  	$push32=, $pop31, $10
-	br_if   	$pop32, .LBB2_48
+	br_if   	$pop32, 4       # 4: down to label7
 # BB#7:                                 # %for.inc25.1.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push33=, 2($11)
 	i32.ne  	$push34=, $pop33, $10
-	br_if   	$pop34, .LBB2_48
+	br_if   	$pop34, 4       # 4: down to label7
 # BB#8:                                 # %for.inc25.2.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push35=, 3($11)
 	i32.ne  	$push36=, $pop35, $10
-	br_if   	$pop36, .LBB2_48
+	br_if   	$pop36, 4       # 4: down to label7
 # BB#9:                                 # %for.inc25.3.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push37=, 4($11)
 	i32.ne  	$push38=, $pop37, $10
-	br_if   	$pop38, .LBB2_48
+	br_if   	$pop38, 4       # 4: down to label7
 # BB#10:                                # %for.inc25.4.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push39=, 5($11)
 	i32.ne  	$push40=, $pop39, $10
-	br_if   	$pop40, .LBB2_48
+	br_if   	$pop40, 4       # 4: down to label7
 # BB#11:                                # %for.inc25.5.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push41=, 6($11)
 	i32.ne  	$push42=, $pop41, $10
-	br_if   	$pop42, .LBB2_48
+	br_if   	$pop42, 4       # 4: down to label7
 # BB#12:                                # %for.inc25.6.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push43=, 7($11)
 	i32.ne  	$push44=, $pop43, $10
-	br_if   	$pop44, .LBB2_48
+	br_if   	$pop44, 4       # 4: down to label7
 # BB#13:                                # %check.exit
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$2=, 0
 	i32.const	$11=, u
-	block   	.LBB2_17
+	block
 	i32.load8_u	$push45=, A($2)
 	call    	memset@FUNCTION, $11, $pop45, $13
-	br_if   	$6, .LBB2_17
+	br_if   	$6, 0           # 0: down to label15
 .LBB2_14:                               # %for.body6.i241
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	.LBB2_16
+	loop                            # label16:
 	i32.const	$11=, u
 	i32.add 	$push46=, $11, $2
 	i32.load8_u	$push47=, 0($pop46)
 	i32.const	$push48=, 65
 	i32.ne  	$push49=, $pop47, $pop48
-	br_if   	$pop49, .LBB2_16
+	br_if   	$pop49, 1       # 1: down to label17
 # BB#15:                                # %for.inc12.i246
                                         #   in Loop: Header=BB2_14 Depth=2
 	i32.add 	$2=, $2, $0
 	i32.add 	$11=, $11, $2
 	i32.lt_s	$push50=, $2, $13
-	br_if   	$pop50, .LBB2_14
-	br      	.LBB2_17
+	br_if   	$pop50, 0       # 0: up to label16
+	br      	2               # 2: down to label15
 .LBB2_16:                               # %if.then10.i242
+	end_loop                        # label17:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_17:                               # %for.body19.preheader.i249
                                         #   in Loop: Header=BB2_1 Depth=1
+	end_block                       # label15:
 	i32.load8_u	$push51=, 0($11)
 	i32.ne  	$push52=, $pop51, $10
-	br_if   	$pop52, .LBB2_47
+	br_if   	$pop52, 3       # 3: down to label8
 # BB#18:                                # %for.inc25.i253
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push53=, 1($11)
 	i32.ne  	$push54=, $pop53, $10
-	br_if   	$pop54, .LBB2_47
+	br_if   	$pop54, 3       # 3: down to label8
 # BB#19:                                # %for.inc25.1.i256
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push55=, 2($11)
 	i32.ne  	$push56=, $pop55, $10
-	br_if   	$pop56, .LBB2_47
+	br_if   	$pop56, 3       # 3: down to label8
 # BB#20:                                # %for.inc25.2.i259
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push57=, 3($11)
 	i32.ne  	$push58=, $pop57, $10
-	br_if   	$pop58, .LBB2_47
+	br_if   	$pop58, 3       # 3: down to label8
 # BB#21:                                # %for.inc25.3.i262
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push59=, 4($11)
 	i32.ne  	$push60=, $pop59, $10
-	br_if   	$pop60, .LBB2_47
+	br_if   	$pop60, 3       # 3: down to label8
 # BB#22:                                # %for.inc25.4.i265
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push61=, 5($11)
 	i32.ne  	$push62=, $pop61, $10
-	br_if   	$pop62, .LBB2_47
+	br_if   	$pop62, 3       # 3: down to label8
 # BB#23:                                # %for.inc25.5.i268
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push63=, 6($11)
 	i32.ne  	$push64=, $pop63, $10
-	br_if   	$pop64, .LBB2_47
+	br_if   	$pop64, 3       # 3: down to label8
 # BB#24:                                # %for.inc25.6.i271
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push65=, 7($11)
 	i32.ne  	$push66=, $pop65, $10
-	br_if   	$pop66, .LBB2_47
+	br_if   	$pop66, 3       # 3: down to label8
 # BB#25:                                # %check.exit272
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$11=, u
 	i32.const	$1=, 66
 	call    	memset@FUNCTION, $11, $1, $13
 	i32.const	$2=, 0
-	block   	.LBB2_29
-	br_if   	$6, .LBB2_29
+	block
+	br_if   	$6, 0           # 0: down to label18
 .LBB2_26:                               # %for.body6.i278
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	.LBB2_28
+	loop                            # label19:
 	i32.const	$11=, u
 	i32.add 	$push67=, $11, $2
 	i32.load8_u	$push68=, 0($pop67)
 	i32.ne  	$push69=, $pop68, $1
-	br_if   	$pop69, .LBB2_28
+	br_if   	$pop69, 1       # 1: down to label20
 # BB#27:                                # %for.inc12.i283
                                         #   in Loop: Header=BB2_26 Depth=2
 	i32.add 	$2=, $2, $0
 	i32.add 	$11=, $11, $2
 	i32.lt_s	$push70=, $2, $13
-	br_if   	$pop70, .LBB2_26
-	br      	.LBB2_29
+	br_if   	$pop70, 0       # 0: up to label19
+	br      	2               # 2: down to label18
 .LBB2_28:                               # %if.then10.i279
+	end_loop                        # label20:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_29:                               # %for.body19.preheader.i286
                                         #   in Loop: Header=BB2_1 Depth=1
+	end_block                       # label18:
 	i32.load8_u	$push71=, 0($11)
 	i32.ne  	$push72=, $pop71, $10
-	br_if   	$pop72, .LBB2_46
+	br_if   	$pop72, 2       # 2: down to label9
 # BB#30:                                # %for.inc25.i290
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push73=, 1($11)
 	i32.ne  	$push74=, $pop73, $10
-	br_if   	$pop74, .LBB2_46
+	br_if   	$pop74, 2       # 2: down to label9
 # BB#31:                                # %for.inc25.1.i293
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push75=, 2($11)
 	i32.ne  	$push76=, $pop75, $10
-	br_if   	$pop76, .LBB2_46
+	br_if   	$pop76, 2       # 2: down to label9
 # BB#32:                                # %for.inc25.2.i296
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push77=, 3($11)
 	i32.ne  	$push78=, $pop77, $10
-	br_if   	$pop78, .LBB2_46
+	br_if   	$pop78, 2       # 2: down to label9
 # BB#33:                                # %for.inc25.3.i299
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push79=, 4($11)
 	i32.ne  	$push80=, $pop79, $10
-	br_if   	$pop80, .LBB2_46
+	br_if   	$pop80, 2       # 2: down to label9
 # BB#34:                                # %for.inc25.4.i302
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push81=, 5($11)
 	i32.ne  	$push82=, $pop81, $10
-	br_if   	$pop82, .LBB2_46
+	br_if   	$pop82, 2       # 2: down to label9
 # BB#35:                                # %for.inc25.5.i305
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push83=, 6($11)
 	i32.ne  	$push84=, $pop83, $10
-	br_if   	$pop84, .LBB2_46
+	br_if   	$pop84, 2       # 2: down to label9
 # BB#36:                                # %for.inc25.6.i308
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push85=, 7($11)
 	i32.ne  	$push86=, $pop85, $10
-	br_if   	$pop86, .LBB2_46
+	br_if   	$pop86, 2       # 2: down to label9
 # BB#37:                                # %for.cond
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.add 	$13=, $13, $0
@@ -397,10 +408,11 @@ main:                                   # @main
 	copy_local	$11=, $2
 	i32.const	$push87=, 14
 	i32.le_s	$push88=, $13, $pop87
-	br_if   	$pop88, .LBB2_1
+	br_if   	$pop88, 0       # 0: up to label10
 .LBB2_38:                               # %for.body13
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_39
+	end_loop                        # label11:
+	loop                            # label21:
 	i32.store8	$push89=, u+6($2), $10
 	i32.store8	$push90=, u+7($2), $pop89
 	i32.store8	$push91=, u+8($2), $pop90
@@ -441,10 +453,11 @@ main:                                   # @main
 	i32.const	$7=, 15
 	copy_local	$13=, $2
 	i32.ne  	$push114=, $11, $7
-	br_if   	$pop114, .LBB2_38
+	br_if   	$pop114, 0      # 0: up to label21
 .LBB2_39:                               # %for.body33
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_40
+	end_loop                        # label22:
+	loop                            # label23:
 	i32.store8	$push115=, u+6($2), $5
 	i32.store8	$push116=, u+7($2), $pop115
 	i32.store8	$push117=, u+8($2), $pop116
@@ -484,10 +497,11 @@ main:                                   # @main
 	i32.add 	$13=, $13, $0
 	copy_local	$11=, $2
 	i32.ne  	$push140=, $13, $7
-	br_if   	$pop140, .LBB2_39
+	br_if   	$pop140, 0      # 0: up to label23
 .LBB2_40:                               # %for.body53
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_41
+	end_loop                        # label24:
+	loop                            # label25:
 	i32.store8	$push141=, u+6($2), $10
 	i32.store8	$push142=, u+7($2), $pop141
 	i32.store8	$push143=, u+8($2), $pop142
@@ -527,10 +541,11 @@ main:                                   # @main
 	i32.add 	$11=, $11, $0
 	copy_local	$13=, $2
 	i32.ne  	$push166=, $11, $7
-	br_if   	$pop166, .LBB2_40
+	br_if   	$pop166, 0      # 0: up to label25
 .LBB2_41:                               # %for.body73
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_42
+	end_loop                        # label26:
+	loop                            # label27:
 	i32.store8	$push167=, u+6($2), $5
 	i32.store8	$push168=, u+7($2), $pop167
 	i32.store8	$push169=, u+8($2), $pop168
@@ -570,10 +585,11 @@ main:                                   # @main
 	i32.add 	$13=, $13, $0
 	copy_local	$11=, $2
 	i32.ne  	$push192=, $13, $7
-	br_if   	$pop192, .LBB2_41
+	br_if   	$pop192, 0      # 0: up to label27
 .LBB2_42:                               # %for.body93
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_43
+	end_loop                        # label28:
+	loop                            # label29:
 	i32.store8	$push193=, u+6($2), $10
 	i32.store8	$push194=, u+7($2), $pop193
 	i32.store8	$push195=, u+8($2), $pop194
@@ -613,10 +629,11 @@ main:                                   # @main
 	i32.add 	$11=, $11, $0
 	copy_local	$12=, $2
 	i32.ne  	$push218=, $11, $7
-	br_if   	$pop218, .LBB2_42
+	br_if   	$pop218, 0      # 0: up to label29
 .LBB2_43:                               # %for.body113
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_44
+	end_loop                        # label30:
+	loop                            # label31:
 	i32.store8	$push219=, u+6($2), $5
 	i32.store8	$push220=, u+7($2), $pop219
 	i32.store8	$push221=, u+8($2), $pop220
@@ -656,10 +673,11 @@ main:                                   # @main
 	i32.add 	$12=, $12, $0
 	copy_local	$13=, $2
 	i32.ne  	$push244=, $12, $7
-	br_if   	$pop244, .LBB2_43
+	br_if   	$pop244, 0      # 0: up to label31
 .LBB2_44:                               # %for.body133
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_45
+	end_loop                        # label32:
+	loop                            # label33:
 	i32.store8	$push245=, u+6($2), $10
 	i32.store8	$push246=, u+7($2), $pop245
 	i32.store8	$push247=, u+8($2), $pop246
@@ -698,18 +716,22 @@ main:                                   # @main
 	call    	check@FUNCTION, $12, $13, $1
 	i32.add 	$13=, $13, $0
 	i32.ne  	$push270=, $13, $7
-	br_if   	$pop270, .LBB2_44
-.LBB2_45:                               # %for.end149
+	br_if   	$pop270, 0      # 0: up to label33
+# BB#45:                                # %for.end149
+	end_loop                        # label34:
 	i32.const	$push271=, 0
 	call    	exit@FUNCTION, $pop271
 	unreachable
 .LBB2_46:                               # %if.then23.i287
+	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_47:                               # %if.then23.i250
+	end_block                       # label8:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_48:                               # %if.then23.i
+	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

@@ -9,10 +9,10 @@ create_array_type:                      # @create_array_type
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB0_8
+	block
 	i32.const	$push27=, 0
 	i32.eq  	$push28=, $0, $pop27
-	br_if   	$pop28, .LBB0_8
+	br_if   	$pop28, 0       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.load	$push1=, 0($1)
 	i32.const	$push2=, 3
@@ -22,10 +22,10 @@ create_array_type:                      # @create_array_type
 	i32.store16	$6=, 8($0), $pop4
 	i32.load	$1=, 4($0)
 	i32.const	$7=, 0
-	block   	.LBB0_7
+	block
 	i32.const	$push29=, 0
 	i32.eq  	$push30=, $1, $pop29
-	br_if   	$pop30, .LBB0_7
+	br_if   	$pop30, 0       # 0: down to label1
 # BB#2:                                 # %cond.true
 	i32.const	$push5=, 20
 	i32.add 	$push6=, $1, $pop5
@@ -33,25 +33,26 @@ create_array_type:                      # @create_array_type
 	i32.const	$7=, 16
 	i32.add 	$4=, $1, $7
 	i32.load	$3=, 0($4)
-	block   	.LBB0_6
+	block
 	i32.sub 	$push7=, $2, $3
 	i32.const	$push8=, 15
 	i32.le_s	$push9=, $pop7, $pop8
-	br_if   	$pop9, .LBB0_6
+	br_if   	$pop9, 0        # 0: down to label2
 # BB#3:                                 # %if.end9
 	i32.add 	$push0=, $3, $7
 	i32.store	$3=, 0($4), $pop0
 	i32.const	$push10=, 12
 	i32.add 	$5=, $1, $pop10
 	i32.load	$7=, 0($5)
-	block   	.LBB0_5
+	block
 	i32.ne  	$push11=, $3, $7
-	br_if   	$pop11, .LBB0_5
+	br_if   	$pop11, 0       # 0: down to label3
 # BB#4:                                 # %if.then16
 	i32.const	$push12=, 28
 	i32.add 	$push13=, $1, $pop12
 	i32.store	$discard=, 0($pop13), $6
 .LBB0_5:                                # %if.end17
+	end_block                       # label3:
 	i32.const	$push14=, 24
 	i32.add 	$push15=, $1, $pop14
 	i32.load	$6=, 0($pop15)
@@ -69,14 +70,17 @@ create_array_type:                      # @create_array_type
 	i32.select	$push25=, $pop24, $2, $3
 	i32.store	$push26=, 0($4), $pop25
 	i32.store	$discard=, 0($5), $pop26
-	br      	.LBB0_7
+	br      	1               # 1: down to label1
 .LBB0_6:                                # %if.then8
+	end_block                       # label2:
 	call    	_obstack_newchunk@FUNCTION, $0, $0
 	unreachable
 .LBB0_7:                                # %cond.end
+	end_block                       # label1:
 	i32.store	$discard=, 12($0), $7
 	return  	$0
 .LBB0_8:                                # %if.then
+	end_block                       # label0:
 	i32.call	$discard=, alloc_type@FUNCTION
 	unreachable
 .Lfunc_end0:

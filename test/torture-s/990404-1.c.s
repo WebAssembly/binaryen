@@ -12,8 +12,8 @@ main:                                   # @main
                                         # implicit-def: %vreg66
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	block   	.LBB0_4
-	loop    	.LBB0_3
+	block
+	loop                            # label1:
 	i32.const	$0=, 0
 	i32.load	$1=, x($0)
 	i32.load	$3=, x+4($0)
@@ -47,7 +47,7 @@ main:                                   # @main
 	i32.select	$push16=, $5, $12, $1
 	i32.const	$push22=, 0
 	i32.eq  	$push23=, $pop16, $pop22
-	br_if   	$pop23, .LBB0_4
+	br_if   	$pop23, 2       # 2: down to label0
 # BB#2:                                 # %if.end7
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$1=, 1
@@ -76,11 +76,13 @@ main:                                   # @main
 	i32.add 	$13=, $13, $1
 	i32.const	$push20=, 10
 	i32.lt_s	$push21=, $13, $pop20
-	br_if   	$pop21, .LBB0_1
-.LBB0_3:                                # %if.then11
+	br_if   	$pop21, 0       # 0: up to label1
+# BB#3:                                 # %if.then11
+	end_loop                        # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %for.end15
+	end_block                       # label0:
 	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end0:

@@ -8,37 +8,41 @@ f:                                      # @f
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_8
+	block
 	i32.const	$push0=, 10
 	i32.ne  	$push1=, $1, $pop0
-	br_if   	$pop1, .LBB0_8
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	block   	.LBB0_7
+	block
 	i32.const	$push2=, 11
 	i32.ne  	$push3=, $2, $pop2
-	br_if   	$pop3, .LBB0_7
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#2:                                 # %if.end6
-	block   	.LBB0_6
+	block
 	i32.const	$push4=, 12
 	i32.ne  	$push5=, $3, $pop4
-	br_if   	$pop5, .LBB0_6
+	br_if   	$pop5, 0        # 0: down to label2
 # BB#3:                                 # %if.end10
-	block   	.LBB0_5
+	block
 	i32.const	$push6=, 123
 	i32.ne  	$push7=, $4, $pop6
-	br_if   	$pop7, .LBB0_5
+	br_if   	$pop7, 0        # 0: down to label3
 # BB#4:                                 # %if.end13
 	return  	$1
 .LBB0_5:                                # %if.then12
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_6:                                # %if.then9
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_7:                                # %if.then5
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_8:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

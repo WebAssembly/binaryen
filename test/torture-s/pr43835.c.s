@@ -31,25 +31,26 @@ mark_cell:                              # @mark_cell
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 4
-	block   	.LBB2_4
+	block
 	i32.load	$push0=, 8($1)
 	i32.ne  	$push1=, $pop0, $2
-	br_if   	$pop1, .LBB2_4
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %land.lhs.true
 	i32.load	$1=, 0($1)
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $1, $pop6
-	br_if   	$pop7, .LBB2_4
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#2:                                 # %land.lhs.true1
 	i32.const	$push2=, 2
 	i32.add 	$push3=, $1, $pop2
 	i32.load8_u	$push4=, 0($pop3)
 	i32.and 	$push5=, $pop4, $2
-	br_if   	$pop5, .LBB2_4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#3:                                 # %if.then
 	call    	Parrot_gc_mark_PMC_alive_fun@FUNCTION, $1, $1
 	unreachable
 .LBB2_4:                                # %if.end
+	end_block                       # label0:
 	return
 .Lfunc_end2:
 	.size	mark_cell, .Lfunc_end2-mark_cell

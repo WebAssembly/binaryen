@@ -10,21 +10,23 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.store8	$discard=, n($0), $0
-	block   	.LBB0_3
-	block   	.LBB0_2
+	block
+	block
 	i32.load	$push0=, g($0)
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $pop0, $pop6
-	br_if   	$pop7, .LBB0_2
+	br_if   	$pop7, 0        # 0: down to label1
 # BB#1:                                 # %fn2.exit.thread.i
 	i32.load	$discard=, d($0)
-	br      	.LBB0_3
+	br      	1               # 1: down to label0
 .LBB0_2:                                # %if.end.loopexit.i
+	end_block                       # label1:
 	i32.load	$push1=, h($0)
 	i32.store	$push2=, 0($pop1), $0
 	i32.const	$push3=, 1
 	i32.store8	$discard=, n($pop2), $pop3
 .LBB0_3:                                # %if.end
+	end_block                       # label0:
 	i32.load	$push4=, s($0)
 	i32.store	$discard=, 0($pop4), $0
 	i32.store8	$push5=, n($0), $0

@@ -7,15 +7,16 @@
 do_mknod:                               # @do_mknod
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 360710264
 	i32.ne  	$push1=, $2, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB0_2:                                # %if.else
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -80,7 +81,7 @@ sys_mknod:                              # @sys_mknod
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i32.const	$push0=, 14
 	i32.shl 	$push1=, $2, $pop0
 	i32.const	$push2=, -4194304
@@ -90,12 +91,13 @@ sys_mknod:                              # @sys_mknod
 	i32.or  	$push6=, $pop3, $pop5
 	i32.const	$push7=, 360710264
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, .LBB2_2
+	br_if   	$pop8, 0        # 0: down to label1
 # BB#1:                                 # %if.then.i
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB2_2:                                # %if.else.i
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

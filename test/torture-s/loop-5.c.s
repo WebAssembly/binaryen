@@ -11,9 +11,9 @@ main:                                   # @main
 	i32.const	$2=, 0
 	i32.load	$0=, t($2)
 	i32.const	$3=, 4
-	block   	.LBB0_13
+	block
 	i32.ge_s	$push3=, $0, $3
-	br_if   	$pop3, .LBB0_13
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %ap.exit.i
 	i32.const	$4=, 1
 	i32.add 	$push0=, $0, $4
@@ -24,7 +24,7 @@ main:                                   # @main
 	i32.add 	$push5=, $7, $pop4
 	i32.store	$discard=, 0($pop5), $2
 	i32.gt_s	$push6=, $0, $6
-	br_if   	$pop6, .LBB0_13
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#2:                                 # %ap.exit.1.i
 	i32.shl 	$push7=, $5, $6
 	i32.add 	$push8=, $7, $pop7
@@ -33,7 +33,7 @@ main:                                   # @main
 	i32.add 	$push1=, $0, $6
 	i32.store	$8=, t($2), $pop1
 	i32.gt_s	$push10=, $8, $5
-	br_if   	$pop10, .LBB0_13
+	br_if   	$pop10, 0       # 0: down to label0
 # BB#3:                                 # %ap.exit.2.i
 	i32.shl 	$push11=, $8, $6
 	i32.add 	$push12=, $7, $pop11
@@ -41,52 +41,57 @@ main:                                   # @main
 	i32.add 	$push2=, $0, $5
 	i32.store	$5=, t($2), $pop2
 	i32.gt_s	$push13=, $0, $2
-	br_if   	$pop13, .LBB0_13
+	br_if   	$pop13, 0       # 0: down to label0
 # BB#4:                                 # %testit.exit
 	i32.shl 	$push15=, $5, $6
 	i32.add 	$push16=, $7, $pop15
 	i32.store	$discard=, 0($pop16), $4
 	i64.load	$1=, a($2)
-	block   	.LBB0_12
+	block
 	i32.add 	$push14=, $0, $3
 	i32.store	$discard=, t($2), $pop14
 	i32.wrap/i64	$push17=, $1
-	br_if   	$pop17, .LBB0_12
+	br_if   	$pop17, 0       # 0: down to label1
 # BB#5:                                 # %if.end
 	i64.const	$9=, -4294967296
-	block   	.LBB0_11
+	block
 	i64.and 	$push18=, $1, $9
 	i64.const	$push19=, 12884901888
 	i64.ne  	$push20=, $pop18, $pop19
-	br_if   	$pop20, .LBB0_11
+	br_if   	$pop20, 0       # 0: down to label2
 # BB#6:                                 # %if.end3
 	i64.load	$1=, a+8($2)
-	block   	.LBB0_10
+	block
 	i32.wrap/i64	$push21=, $1
 	i32.ne  	$push22=, $pop21, $6
-	br_if   	$pop22, .LBB0_10
+	br_if   	$pop22, 0       # 0: down to label3
 # BB#7:                                 # %if.end6
-	block   	.LBB0_9
+	block
 	i64.and 	$push23=, $1, $9
 	i64.const	$push24=, 4294967296
 	i64.ne  	$push25=, $pop23, $pop24
-	br_if   	$pop25, .LBB0_9
+	br_if   	$pop25, 0       # 0: down to label4
 # BB#8:                                 # %if.end9
 	call    	exit@FUNCTION, $2
 	unreachable
 .LBB0_9:                                # %if.then8
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_10:                               # %if.then5
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_11:                               # %if.then2
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_12:                               # %if.then
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_13:                               # %if.then.i.i
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

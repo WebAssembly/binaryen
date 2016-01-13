@@ -9,27 +9,29 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_4
+	block
 	i32.const	$push0=, 1
 	i32.add 	$2=, $0, $pop0
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $1, $pop7
-	br_if   	$pop8, .LBB0_4
+	br_if   	$pop8, 0        # 0: down to label0
 # BB#1:                                 # %if.then
-	block   	.LBB0_3
+	block
 	i32.const	$push1=, 0
 	i32.lt_s	$push2=, $0, $pop1
-	br_if   	$pop2, .LBB0_3
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#2:                                 # %if.then1
 	i32.const	$push6=, 2
 	i32.add 	$2=, $0, $pop6
-	br      	.LBB0_4
+	br      	1               # 1: down to label0
 .LBB0_3:                                # %if.else
+	end_block                       # label1:
 	i32.const	$push3=, -1
 	i32.lt_s	$push4=, $0, $pop3
 	i32.select	$push5=, $pop4, $0, $2
 	return  	$pop5
 .LBB0_4:                                # %if.end5
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

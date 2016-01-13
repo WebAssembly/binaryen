@@ -21,26 +21,28 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.load	$push0=, 0($0)
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop0, $pop5
-	br_if   	$pop6, .LBB1_2
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 1
 	return  	$pop1
 .LBB1_2:                                # %if.end
+	end_block                       # label0:
 	i32.const	$1=, env
 	#APP
 	#NO_APP
-	block   	.LBB1_4
+	block
 	i32.call	$push2=, _setjmp@FUNCTION, $1
-	br_if   	$pop2, .LBB1_4
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#3:                                 # %if.end6
 	i32.const	$push4=, 42
 	call    	longjmp@FUNCTION, $1, $pop4
 	unreachable
 .LBB1_4:                                # %if.then2
+	end_block                       # label1:
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

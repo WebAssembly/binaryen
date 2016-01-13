@@ -13,15 +13,16 @@ foo:                                    # @foo
 	i32.add 	$1=, $pop0, $pop1
 	i32.const	$2=, 2241
 	i32.gt_s	$3=, $1, $2
-	block   	.LBB0_2
+	block
 	i32.select	$push2=, $3, $2, $1
 	i32.store	$discard=, a+4($0), $pop2
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $3, $pop3
-	br_if   	$pop4, .LBB0_2
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

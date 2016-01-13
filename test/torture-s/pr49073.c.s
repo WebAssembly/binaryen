@@ -12,46 +12,50 @@ main:                                   # @main
 	i32.const	$2=, a+4
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	block   	.LBB0_6
-	loop    	.LBB0_5
+	block
+	loop                            # label1:
 	i32.load	$0=, 0($2)
 	i32.const	$1=, 1
-	block   	.LBB0_4
+	block
 	i32.and 	$push1=, $3, $1
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $pop1, $pop12
-	br_if   	$pop13, .LBB0_4
+	br_if   	$pop13, 0       # 0: down to label3
 # BB#2:                                 # %do.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push2=, 4
 	i32.ne  	$push3=, $0, $pop2
-	br_if   	$pop3, .LBB0_4
+	br_if   	$pop3, 0        # 0: down to label3
 # BB#3:                                 # %if.then
 	i32.const	$0=, 0
 	i32.load	$push9=, c($0)
 	i32.add 	$push0=, $pop9, $1
 	i32.store	$0=, c($0), $pop0
-	br      	.LBB0_6
+	br      	3               # 3: down to label0
 .LBB0_4:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
+	end_block                       # label3:
 	i32.const	$push4=, 3
 	i32.eq  	$3=, $0, $pop4
 	i32.const	$push7=, 4
 	i32.add 	$2=, $2, $pop7
 	i32.const	$push5=, 7
 	i32.lt_s	$push6=, $0, $pop5
-	br_if   	$pop6, .LBB0_1
-.LBB0_5:                                # %do.endthread-pre-split
+	br_if   	$pop6, 0        # 0: up to label1
+# BB#5:                                 # %do.endthread-pre-split
+	end_loop                        # label2:
 	i32.const	$push8=, 0
 	i32.load	$0=, c($pop8)
 .LBB0_6:                                # %do.end
-	block   	.LBB0_8
+	end_block                       # label0:
+	block
 	i32.ne  	$push10=, $0, $1
-	br_if   	$pop10, .LBB0_8
+	br_if   	$pop10, 0       # 0: down to label4
 # BB#7:                                 # %if.end6
 	i32.const	$push11=, 0
 	return  	$pop11
 .LBB0_8:                                # %if.then5
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

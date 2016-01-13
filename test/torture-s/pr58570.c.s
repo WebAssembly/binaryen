@@ -9,11 +9,11 @@ main:                                   # @main
 	.local  	i32, i32, i32, i64
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB0_2
+	block
 	i32.load	$push0=, e($0)
 	i32.const	$push29=, 0
 	i32.eq  	$push30=, $pop0, $pop29
-	br_if   	$pop30, .LBB0_2
+	br_if   	$pop30, 0       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push4=, d
 	i32.load	$push1=, i($0)
@@ -33,7 +33,8 @@ main:                                   # @main
 	i64.and 	$push11=, $3, $pop10
 	i64.store16	$discard=, 0($2), $pop11
 .LBB0_2:                                # %if.end
-	block   	.LBB0_4
+	end_block                       # label0:
+	block
 	i64.load32_u	$push18=, d($0)
 	i32.const	$push12=, d
 	i32.const	$push13=, 4
@@ -51,10 +52,11 @@ main:                                   # @main
 	i32.wrap/i64	$push26=, $pop25
 	i32.const	$push27=, 1
 	i32.ne  	$push28=, $pop26, $pop27
-	br_if   	$pop28, .LBB0_4
+	br_if   	$pop28, 0       # 0: down to label1
 # BB#3:                                 # %if.end7
 	return  	$0
 .LBB0_4:                                # %if.then6
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

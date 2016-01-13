@@ -33,12 +33,13 @@ b:                                      # @b
 c:                                      # @c
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i32.eq  	$push0=, $0, $1
-	br_if   	$pop0, .LBB2_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB2_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

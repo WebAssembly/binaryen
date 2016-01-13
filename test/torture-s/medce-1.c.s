@@ -22,13 +22,14 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 1
-	block   	.LBB1_2
+	block
 	i32.ne  	$push0=, $0, $1
-	br_if   	$pop0, .LBB1_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %sw.bb1
 	i32.const	$push1=, 0
 	i32.store8	$discard=, ok($pop1), $1
 .LBB1_2:                                # %sw.epilog
+	end_block                       # label0:
 	return
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

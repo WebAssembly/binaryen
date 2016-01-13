@@ -185,58 +185,64 @@ main:                                   # @main
 	i32.const	$0=, -10
 	i32.call	$1=, bar1@FUNCTION, $0
 	i32.const	$2=, 0
-	block   	.LBB12_12
+	block
 	i32.load	$push0=, l1($2)
 	i32.ne  	$push1=, $1, $pop0
-	br_if   	$pop1, .LBB12_12
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	block   	.LBB12_11
+	block
 	i32.call	$push2=, bar2@FUNCTION, $0
 	i32.load	$push3=, l2($2)
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, .LBB12_11
+	br_if   	$pop4, 0        # 0: down to label1
 # BB#2:                                 # %if.end5
-	block   	.LBB12_10
+	block
 	i32.call	$push5=, bar3@FUNCTION, $0
 	i32.load	$push6=, l3($2)
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, .LBB12_10
+	br_if   	$pop7, 0        # 0: down to label2
 # BB#3:                                 # %if.end11
-	block   	.LBB12_9
+	block
 	i32.call	$push8=, bar4@FUNCTION, $0
 	i32.load	$push9=, l4($2)
 	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, .LBB12_9
+	br_if   	$pop10, 0       # 0: down to label3
 # BB#4:                                 # %if.end16
-	block   	.LBB12_8
+	block
 	i32.call	$push11=, bar5@FUNCTION, $0
 	i32.load	$push12=, l5($2)
 	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	$pop13, .LBB12_8
+	br_if   	$pop13, 0       # 0: down to label4
 # BB#5:                                 # %if.end22
-	block   	.LBB12_7
+	block
 	i32.call	$push14=, bar6@FUNCTION, $0
 	i32.load	$push15=, l6($2)
 	i32.ne  	$push16=, $pop14, $pop15
-	br_if   	$pop16, .LBB12_7
+	br_if   	$pop16, 0       # 0: down to label5
 # BB#6:                                 # %if.end28
 	return  	$2
 .LBB12_7:                               # %if.then27
+	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_8:                               # %if.then21
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_9:                               # %if.then15
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_10:                              # %if.then10
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_11:                              # %if.then4
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_12:                              # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end12:

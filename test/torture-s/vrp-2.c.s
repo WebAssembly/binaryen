@@ -11,9 +11,9 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$1=, 2
 	i32.const	$2=, 1
-	block   	.LBB0_2
+	block
 	i32.eq  	$push0=, $0, $1
-	br_if   	$pop0, .LBB0_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 31
 	i32.shr_s	$2=, $0, $pop1
@@ -21,6 +21,7 @@ f:                                      # @f
 	i32.xor 	$push3=, $pop2, $2
 	i32.ne  	$2=, $pop3, $1
 .LBB0_2:                                # %return
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

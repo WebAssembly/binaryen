@@ -95,7 +95,7 @@ main:                                   # @main
 	i64.store16	$discard=, 0($pop25), $pop12
 	i32.const	$1=, 0
 	i64.load8_u	$6=, p+9($1)
-	block   	.LBB1_2
+	block
 	i32.add 	$push26=, $11, $4
 	i64.shl 	$push5=, $2, $3
 	i64.or  	$push7=, $pop5, $5
@@ -111,10 +111,11 @@ main:                                   # @main
 	i32.and 	$push32=, $pop30, $pop31
 	i32.const	$push33=, 83
 	i32.ne  	$push34=, $pop32, $pop33
-	br_if   	$pop34, .LBB1_2
+	br_if   	$pop34, 0       # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

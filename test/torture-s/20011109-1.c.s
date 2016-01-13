@@ -51,34 +51,45 @@ fail4:                                  # @fail4
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB4_7
+	block
 	i32.const	$push0=, 6
 	i32.add 	$0=, $0, $pop0
 	i32.const	$push1=, 11
 	i32.gt_u	$push2=, $0, $pop1
-	br_if   	$pop2, .LBB4_7
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %entry
-	block   	.LBB4_6
-	block   	.LBB4_5
-	block   	.LBB4_4
-	block   	.LBB4_3
-	block   	.LBB4_2
-	tableswitch	$0, .LBB4_3, .LBB4_3, .LBB4_7, .LBB4_7, .LBB4_7, .LBB4_7, .LBB4_7, .LBB4_4, .LBB4_2, .LBB4_5, .LBB4_6, .LBB4_6, .LBB4_6
+	block
+	block
+	block
+	block
+	block
+	tableswitch	$0, 1, 1, 5, 5, 5, 5, 5, 2, 0, 3, 4, 4, 4 # 1: down to label4
+                                        # 5: down to label0
+                                        # 2: down to label3
+                                        # 0: down to label5
+                                        # 3: down to label2
+                                        # 4: down to label1
 .LBB4_2:                                # %sw.epilog9
+	end_block                       # label5:
 	return
 .LBB4_3:                                # %sw.bb
+	end_block                       # label4:
 	call    	fail1@FUNCTION
 	unreachable
 .LBB4_4:                                # %sw.bb1
+	end_block                       # label3:
 	call    	fail2@FUNCTION
 	unreachable
 .LBB4_5:                                # %sw.bb7
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB4_6:                                # %sw.bb3
+	end_block                       # label1:
 	call    	fail3@FUNCTION
 	unreachable
 .LBB4_7:                                # %sw.default
+	end_block                       # label0:
 	call    	fail4@FUNCTION
 	unreachable
 .Lfunc_end4:

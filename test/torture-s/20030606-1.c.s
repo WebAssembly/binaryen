@@ -13,16 +13,17 @@ foo:                                    # @foo
 	i32.store	$discard=, 0($0), $pop0
 	i32.const	$2=, 4
 	i32.add 	$3=, $0, $2
-	block   	.LBB0_2
+	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $1, $pop3
-	br_if   	$pop4, .LBB0_2
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.add 	$push2=, $0, $2
 	i32.store	$discard=, 0($pop2), $1
 	i32.const	$push1=, 8
 	i32.add 	$3=, $0, $pop1
 .LBB0_2:                                # %if.end
+	end_block                       # label0:
 	return  	$3
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
