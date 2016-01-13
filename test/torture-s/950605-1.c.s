@@ -10,13 +10,14 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 255
-	block   	.LBB0_2
+	block
 	i32.and 	$push0=, $0, $1
 	i32.ne  	$push1=, $pop0, $1
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

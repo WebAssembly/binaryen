@@ -8,12 +8,12 @@ foobar:                                 # @foobar
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_3
+	block
 	i32.const	$push0=, 1
 	i32.and 	$0=, $0, $pop0
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $0, $pop10
-	br_if   	$pop11, .LBB0_3
+	br_if   	$pop11, 0       # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push1=, 3
 	i32.and 	$1=, $1, $pop1
@@ -24,12 +24,13 @@ foobar:                                 # @foobar
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push7=, 5
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, .LBB0_3
+	br_if   	$pop8, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB0_3:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

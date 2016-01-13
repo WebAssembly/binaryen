@@ -11,21 +11,23 @@ main:                                   # @main
 	i32.const	$1=, 0
 .LBB0_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label0:
 	i32.const	$push0=, 1
 	i32.add 	$1=, $1, $pop0
 	i32.const	$0=, 256
 	i32.ne  	$push1=, $1, $0
-	br_if   	$pop1, .LBB0_1
-.LBB0_2:                                # %render_image_rgb_a.exit
-	block   	.LBB0_4
+	br_if   	$pop1, 0        # 0: up to label0
+# BB#2:                                 # %render_image_rgb_a.exit
+	end_loop                        # label1:
+	block
 	i32.ne  	$push2=, $1, $0
-	br_if   	$pop2, .LBB0_4
+	br_if   	$pop2, 0        # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable
 .LBB0_4:                                # %if.then
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

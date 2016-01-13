@@ -11,16 +11,16 @@ test:                                   # @test
 	i32.const	$2=, 0
 	i32.load	$0=, loop_1($2)
 	i32.const	$3=, 1
-	block   	.LBB0_4
+	block
 	i32.lt_s	$push0=, $0, $3
-	br_if   	$pop0, .LBB0_4
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %while.body.lr.ph
 	i32.load	$1=, loop_2($2)
 	i32.load	$5=, flag($2)
 	copy_local	$6=, $2
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label1:
 	i32.const	$4=, 31
 	i32.shl 	$push2=, $5, $4
 	i32.shr_s	$push3=, $pop2, $4
@@ -30,11 +30,13 @@ test:                                   # @test
 	i32.add 	$6=, $6, $pop5
 	i32.add 	$5=, $5, $3
 	i32.gt_s	$push6=, $0, $6
-	br_if   	$pop6, .LBB0_2
-.LBB0_3:                                # %while.cond.while.end_crit_edge
+	br_if   	$pop6, 0        # 0: up to label1
+# BB#3:                                 # %while.cond.while.end_crit_edge
+	end_loop                        # label2:
 	i32.const	$push7=, 0
 	i32.store	$discard=, flag($pop7), $5
 .LBB0_4:                                # %while.end
+	end_block                       # label0:
 	return  	$3
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
@@ -50,16 +52,16 @@ main:                                   # @main
 	i32.const	$2=, 0
 	i32.load	$0=, loop_1($2)
 	i32.const	$3=, 1
-	block   	.LBB1_4
+	block
 	i32.lt_s	$push0=, $0, $3
-	br_if   	$pop0, .LBB1_4
+	br_if   	$pop0, 0        # 0: down to label3
 # BB#1:                                 # %while.body.lr.ph.i
 	i32.load	$1=, loop_2($2)
 	i32.load	$5=, flag($2)
 	copy_local	$6=, $2
 .LBB1_2:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_3
+	loop                            # label4:
 	i32.const	$4=, 31
 	i32.lt_s	$push1=, $1, $3
 	i32.shl 	$push2=, $5, $4
@@ -69,11 +71,13 @@ main:                                   # @main
 	i32.add 	$6=, $pop5, $6
 	i32.add 	$5=, $5, $3
 	i32.gt_s	$push6=, $0, $6
-	br_if   	$pop6, .LBB1_2
-.LBB1_3:                                # %while.cond.while.end_crit_edge.i
+	br_if   	$pop6, 0        # 0: up to label4
+# BB#3:                                 # %while.cond.while.end_crit_edge.i
+	end_loop                        # label5:
 	i32.const	$push7=, 0
 	i32.store	$discard=, flag($pop7), $5
 .LBB1_4:                                # %test.exit
+	end_block                       # label3:
 	call    	exit@FUNCTION, $2
 	unreachable
 .Lfunc_end1:

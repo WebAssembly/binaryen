@@ -9,17 +9,18 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB0_2
+	block
 	i64.load	$push0=, c($0)
 	i64.const	$push1=, 3
 	i64.mul 	$push2=, $pop0, $pop1
 	i64.load	$push3=, c3($0)
 	i64.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, .LBB0_2
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

@@ -16,13 +16,13 @@ foo:                                    # @foo
 	i32.store	$10=, 0($8), $10
 	i64.const	$6=, 0
 	i64.const	$5=, 1
-	block   	.LBB0_4
+	block
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $3, $pop7
-	br_if   	$pop8, .LBB0_4
+	br_if   	$pop8, 0        # 0: down to label0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label1:
 	i32.const	$10=, 0
 	i32.add 	$10=, $10, $10
 	call    	__multi3@FUNCTION, $10, $1, $2, $5, $6
@@ -42,14 +42,15 @@ foo:                                    # @foo
 	i64.load	$1=, 16($10)
 	i32.const	$push2=, -1
 	i32.add 	$3=, $3, $pop2
-	br_if   	$3, .LBB0_1
-.LBB0_2:                                # %for.end
+	br_if   	$3, 0           # 0: up to label1
+# BB#2:                                 # %for.end
+	end_loop                        # label2:
 	i64.const	$2=, 14348907
 	i64.const	$1=, 0
 	i64.xor 	$push3=, $5, $2
 	i64.or  	$push4=, $pop3, $6
 	i64.ne  	$push5=, $pop4, $1
-	br_if   	$pop5, .LBB0_4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#3:                                 # %if.end
 	i64.store	$discard=, 0($0), $2
 	i32.add 	$push6=, $0, $4
@@ -60,6 +61,7 @@ foo:                                    # @foo
 	i32.store	$10=, 0($9), $10
 	return
 .LBB0_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

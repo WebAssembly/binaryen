@@ -10,25 +10,26 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$7=, 1
-	block   	.LBB0_5
+	block
 	i32.const	$push3=, 255
 	i32.and 	$push4=, $6, $pop3
 	i32.ne  	$push5=, $pop4, $7
-	br_if   	$pop5, .LBB0_5
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.xor 	$push0=, $3, $7
-	br_if   	$pop0, .LBB0_5
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#2:                                 # %entry
 	i32.xor 	$push1=, $4, $7
-	br_if   	$pop1, .LBB0_5
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#3:                                 # %entry
 	i32.xor 	$push2=, $5, $7
-	br_if   	$pop2, .LBB0_5
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#4:                                 # %if.end
 	i32.add 	$push6=, $1, $0
 	i32.add 	$push7=, $pop6, $2
 	return  	$pop7
 .LBB0_5:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

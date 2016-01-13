@@ -18,13 +18,14 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 255
 	i32.eq  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB1_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

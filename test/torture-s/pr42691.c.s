@@ -11,29 +11,31 @@ add:                                    # @add
 # BB#0:                                 # %entry
 	f64.load	$3=, 0($1)
 	f64.load	$2=, 0($0)
-	block   	.LBB0_5
+	block
 	f64.eq  	$push0=, $3, $2
-	br_if   	$pop0, .LBB0_5
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end.preheader
 	i32.const	$0=, 8
 	i32.add 	$1=, $1, $0
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_4
+	loop                            # label1:
 	f64.const	$push1=, infinity
 	f64.ne  	$push2=, $3, $pop1
-	br_if   	$pop2, .LBB0_4
+	br_if   	$pop2, 1        # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB0_2 Depth=1
 	f64.load	$3=, 0($1)
 	i32.add 	$1=, $1, $0
 	f64.ne  	$push3=, $3, $2
-	br_if   	$pop3, .LBB0_2
-	br      	.LBB0_5
+	br_if   	$pop3, 0        # 0: up to label1
+	br      	2               # 2: down to label0
 .LBB0_4:                                # %if.then3
+	end_loop                        # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %if.end10
+	end_block                       # label0:
 	i32.const	$push4=, 0
 	return  	$pop4
 .Lfunc_end0:
@@ -65,18 +67,19 @@ main:                                   # @main
 	copy_local	$3=, $0
 .LBB1_1:                                # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
-	block   	.LBB1_4
-	loop    	.LBB1_3
+	block
+	loop                            # label4:
 	f64.ne  	$push2=, $3, $0
-	br_if   	$pop2, .LBB1_4
+	br_if   	$pop2, 2        # 2: down to label3
 # BB#2:                                 # %while.body.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	f64.load	$3=, 0($2)
 	i32.add 	$2=, $2, $1
 	f64.const	$push3=, 0x1.7p4
 	f64.ne  	$push4=, $3, $pop3
-	br_if   	$pop4, .LBB1_1
-.LBB1_3:                                # %add.exit
+	br_if   	$pop4, 0        # 0: up to label4
+# BB#3:                                 # %add.exit
+	end_loop                        # label5:
 	i32.const	$push5=, 0
 	i32.const	$6=, 16
 	i32.add 	$8=, $8, $6
@@ -84,6 +87,7 @@ main:                                   # @main
 	i32.store	$8=, 0($6), $8
 	return  	$pop5
 .LBB1_4:                                # %if.then3.i
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

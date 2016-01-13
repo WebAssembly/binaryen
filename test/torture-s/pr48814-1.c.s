@@ -29,7 +29,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 	i32.load	$2=, count($1)
 	i32.const	$3=, 2
-	block   	.LBB1_3
+	block
 	i32.const	$push5=, arr
 	i32.shl 	$push4=, $2, $3
 	i32.add 	$push6=, $pop5, $pop4
@@ -38,15 +38,16 @@ main:                                   # @main
 	i32.add 	$push2=, $2, $pop1
 	i32.store	$push3=, count($1), $pop2
 	i32.ne  	$push7=, $pop3, $3
-	br_if   	$pop7, .LBB1_3
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.load	$push0=, arr+8($1)
 	i32.const	$push8=, 3
 	i32.ne  	$push9=, $pop0, $pop8
-	br_if   	$pop9, .LBB1_3
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	return  	$1
 .LBB1_3:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

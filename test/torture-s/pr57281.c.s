@@ -29,17 +29,17 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
 	i32.const	$4=, -20
-	block   	.LBB1_3
+	block
 	i32.load	$push0=, b($3)
 	i32.eq  	$push1=, $pop0, $4
-	br_if   	$pop1, .LBB1_3
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i32.load	$0=, a($3)
 	i32.load	$1=, e($3)
 	i32.load	$2=, g($3)
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_3
+	loop                            # label1:
 	i64.load	$discard=, f($3)
 	i32.store	$5=, 0($1), $3
 	i32.load	$6=, b($5)
@@ -52,8 +52,10 @@ main:                                   # @main
 	i32.add 	$push6=, $pop4, $pop5
 	i32.store	$push7=, b($5), $pop6
 	i32.ne  	$push8=, $pop7, $4
-	br_if   	$pop8, .LBB1_2
+	br_if   	$pop8, 0        # 0: up to label1
 .LBB1_3:                                # %for.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	return  	$3
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

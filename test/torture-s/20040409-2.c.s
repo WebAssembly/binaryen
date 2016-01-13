@@ -343,14 +343,15 @@ test12u:                                # @test12u
 test:                                   # @test
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB24_2
+	block
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
 	i32.ne  	$push2=, $pop1, $1
-	br_if   	$pop2, .LBB24_2
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end44
 	return
 .LBB24_2:                               # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end24:
@@ -363,14 +364,15 @@ test:                                   # @test
 testu:                                  # @testu
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB25_2
+	block
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
 	i32.ne  	$push2=, $pop1, $1
-	br_if   	$pop2, .LBB25_2
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#1:                                 # %if.end44
 	return
 .LBB25_2:                               # %if.then
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end25:

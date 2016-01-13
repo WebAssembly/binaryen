@@ -10,26 +10,28 @@ ffs:                                    # @ffs
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
-	block   	.LBB0_3
+	block
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $0, $pop2
-	br_if   	$pop3, .LBB0_3
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$1=, 1
 	copy_local	$2=, $1
 	copy_local	$3=, $1
 	i32.and 	$push0=, $0, $1
-	br_if   	$pop0, .LBB0_3
+	br_if   	$pop0, 0        # 0: down to label0
 .LBB0_2:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label1:
 	i32.add 	$3=, $3, $1
 	i32.shl 	$2=, $2, $1
 	i32.and 	$push1=, $2, $0
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $pop1, $pop4
-	br_if   	$pop5, .LBB0_2
+	br_if   	$pop5, 0        # 0: up to label1
 .LBB0_3:                                # %cleanup
+	end_loop                        # label2:
+	end_block                       # label0:
 	return  	$3
 .Lfunc_end0:
 	.size	ffs, .Lfunc_end0-ffs
@@ -42,13 +44,14 @@ f:                                      # @f
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB1_2
+	br_if   	$pop1, 0        # 0: down to label3
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

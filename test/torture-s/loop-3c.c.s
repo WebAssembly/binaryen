@@ -16,7 +16,7 @@ f:                                      # @f
 	i32.const	$3=, 256
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label0:
 	i32.const	$push2=, 1
 	i32.shr_s	$3=, $3, $pop2
 	i32.const	$push3=, 2
@@ -29,8 +29,9 @@ f:                                      # @f
 	i32.add 	$2=, $2, $pop7
 	i32.const	$push8=, 1073741840
 	i32.lt_s	$push9=, $0, $pop8
-	br_if   	$pop9, .LBB0_1
-.LBB0_2:                                # %do.end
+	br_if   	$pop9, 0        # 0: up to label0
+# BB#2:                                 # %do.end
+	end_loop                        # label1:
 	return  	$0
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

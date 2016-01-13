@@ -77,10 +77,10 @@ f:                                      # @f
 	i32.add 	$10=, $5, $6
 	i32.const	$6=, __stack_pointer
 	i32.store	$10=, 0($6), $10
-	block   	.LBB2_2
+	block
 	i32.const	$push6=, 227
 	i32.ne  	$push7=, $0, $pop6
-	br_if   	$pop7, .LBB2_2
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$9=, 16
 	i32.add 	$10=, $10, $9
@@ -88,6 +88,7 @@ f:                                      # @f
 	i32.store	$10=, 0($9), $10
 	return
 .LBB2_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
@@ -131,14 +132,15 @@ main:                                   # @main
 	i32.add 	$9=, $5, $6
 	i32.const	$6=, __stack_pointer
 	i32.store	$9=, 0($6), $9
-	block   	.LBB3_2
+	block
 	i32.const	$push6=, 227
 	i32.ne  	$push7=, $1, $pop6
-	br_if   	$pop7, .LBB3_2
+	br_if   	$pop7, 0        # 0: down to label1
 # BB#1:                                 # %f.exit
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB3_2:                                # %if.then.i
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:

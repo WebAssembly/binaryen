@@ -10,12 +10,12 @@ scale:                                  # @scale
 # BB#0:                                 # %entry
 	i32.load	$4=, 0($0)
 	i32.const	$6=, 1
-	block   	.LBB0_5
+	block
 	i32.eq  	$push0=, $4, $6
-	br_if   	$pop0, .LBB0_5
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.lt_s	$push1=, $2, $6
-	br_if   	$pop1, .LBB0_5
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#2:                                 # %for.body.preheader
 	i32.load	$5=, 4($1)
 	i32.load	$push2=, 0($1)
@@ -24,7 +24,7 @@ scale:                                  # @scale
 	i32.mul 	$push4=, $5, $4
 	i32.store	$discard=, 4($1), $pop4
 	i32.eq  	$push5=, $2, $6
-	br_if   	$pop5, .LBB0_5
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#3:                                 # %for.body.for.body_crit_edge.preheader
 	i32.const	$push6=, 12
 	i32.add 	$1=, $1, $pop6
@@ -32,7 +32,7 @@ scale:                                  # @scale
 	i32.add 	$6=, $2, $3
 .LBB0_4:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_5
+	loop                            # label1:
 	i32.const	$push7=, -4
 	i32.add 	$4=, $1, $pop7
 	i32.load	$2=, 0($0)
@@ -45,8 +45,10 @@ scale:                                  # @scale
 	i32.const	$push11=, 8
 	i32.add 	$1=, $1, $pop11
 	i32.add 	$6=, $6, $3
-	br_if   	$6, .LBB0_4
+	br_if   	$6, 0           # 0: up to label1
 .LBB0_5:                                # %if.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	return
 .Lfunc_end0:
 	.size	scale, .Lfunc_end0-scale

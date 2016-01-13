@@ -13,31 +13,34 @@ f:                                      # @f
 	i32.store	$discard=, errflag($2), $2
 	i64.add 	$4=, $1, $0
 	i64.const	$3=, 0
-	block   	.LBB0_6
-	block   	.LBB0_5
-	block   	.LBB0_3
+	block
+	block
+	block
 	i64.lt_s	$push0=, $0, $3
-	br_if   	$pop0, .LBB0_3
+	br_if   	$pop0, 0        # 0: down to label2
 # BB#1:                                 # %if.then
 	i64.const	$push3=, 0
 	i64.lt_s	$push4=, $1, $pop3
-	br_if   	$pop4, .LBB0_6
+	br_if   	$pop4, 2        # 2: down to label0
 # BB#2:                                 # %if.then
 	i64.const	$push5=, -1
 	i64.le_s	$push6=, $4, $pop5
-	br_if   	$pop6, .LBB0_5
-	br      	.LBB0_6
+	br_if   	$pop6, 1        # 1: down to label1
+	br      	2               # 2: down to label0
 .LBB0_3:                                # %if.else
+	end_block                       # label2:
 	i64.gt_s	$push1=, $1, $3
-	br_if   	$pop1, .LBB0_6
+	br_if   	$pop1, 1        # 1: down to label0
 # BB#4:                                 # %if.else
 	i64.lt_s	$push2=, $4, $3
-	br_if   	$pop2, .LBB0_6
+	br_if   	$pop2, 1        # 1: down to label0
 .LBB0_5:                                # %if.end9
+	end_block                       # label1:
 	i32.const	$push7=, 1
 	i32.store	$discard=, errflag($2), $pop7
 	copy_local	$4=, $3
 .LBB0_6:                                # %cleanup
+	end_block                       # label0:
 	return  	$4
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

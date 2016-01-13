@@ -8,15 +8,16 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 0
 	i32.load	$push1=, v($pop0)
 	i32.const	$push2=, 3
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB0_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -31,15 +32,16 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB1_2
+	block
 	i32.load	$push0=, v($0)
 	i32.const	$push1=, 3
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, .LBB1_2
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#1:                                 # %f.exit
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_2:                                # %if.then.i
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

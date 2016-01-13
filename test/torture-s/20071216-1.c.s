@@ -50,43 +50,46 @@ main:                                   # @main
 	i32.const	$5=, -1
 	i32.const	$6=, -37
 	i32.const	$3=, -4095
-	block   	.LBB2_6
+	block
 	i32.lt_u	$push1=, $2, $3
 	i32.eq  	$push2=, $2, $4
 	i32.select	$push3=, $pop2, $6, $5
 	i32.select	$push4=, $pop1, $2, $pop3
 	i32.ne  	$push5=, $pop4, $1
-	br_if   	$pop5, .LBB2_6
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push6=, -39
 	i32.store	$discard=, x($0), $pop6
 	i32.call	$2=, bar@FUNCTION
-	block   	.LBB2_5
+	block
 	i32.lt_u	$push7=, $2, $3
 	i32.eq  	$push8=, $2, $4
 	i32.select	$push9=, $pop8, $6, $5
 	i32.select	$push10=, $pop7, $2, $pop9
 	i32.ne  	$push11=, $pop10, $5
-	br_if   	$pop11, .LBB2_5
+	br_if   	$pop11, 0       # 0: down to label1
 # BB#2:                                 # %if.end4
 	i32.store	$discard=, x($0), $4
 	i32.call	$2=, bar@FUNCTION
-	block   	.LBB2_4
+	block
 	i32.lt_u	$push12=, $2, $3
 	i32.eq  	$push13=, $2, $4
 	i32.select	$push14=, $pop13, $6, $5
 	i32.select	$push15=, $pop12, $2, $pop14
 	i32.ne  	$push16=, $pop15, $6
-	br_if   	$pop16, .LBB2_4
+	br_if   	$pop16, 0       # 0: down to label2
 # BB#3:                                 # %if.end8
 	return  	$0
 .LBB2_4:                                # %if.then7
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_5:                                # %if.then3
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_6:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

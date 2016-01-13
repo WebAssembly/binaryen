@@ -64,14 +64,15 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i64.call	$0=, foo@FUNCTION
 	i32.const	$1=, 0
-	block   	.LBB2_2
+	block
 	i64.load	$push0=, v($1)
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB2_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	call    	exit@FUNCTION, $1
 	unreachable
 .LBB2_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

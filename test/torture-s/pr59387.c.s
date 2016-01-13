@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.store	$1=, a($0), $pop1
 .LBB0_1:                                # %for.body2
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label0:
 	i32.load	$push3=, e($0)
 	i32.const	$push4=, f
 	i32.store	$discard=, 0($pop3), $pop4
@@ -23,14 +23,15 @@ main:                                   # @main
 	i32.load	$push5=, d($0)
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $pop5, $pop8
-	br_if   	$pop9, .LBB0_3
+	br_if   	$pop9, 1        # 1: down to label1
 # BB#2:                                 # %for.inc4
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push6=, 1
 	i32.add 	$push0=, $1, $pop6
 	i32.store	$1=, a($0), $pop0
-	br_if   	$1, .LBB0_1
+	br_if   	$1, 0           # 0: up to label0
 .LBB0_3:                                # %return
+	end_loop                        # label1:
 	i32.store8	$discard=, c($0), $2
 	i32.const	$push7=, 24
 	i32.store	$discard=, b($0), $pop7

@@ -9,13 +9,13 @@ test:                                   # @test
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.load	$3=, 4($0)
-	block   	.LBB0_3
+	block
 	i32.const	$push0=, 2
 	i32.lt_s	$push1=, $3, $pop0
-	br_if   	$pop1, .LBB0_3
+	br_if   	$pop1, 0        # 0: down to label0
 .LBB0_1:                                # %land.rhs
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label1:
 	i32.const	$push2=, -1
 	i32.add 	$3=, $3, $pop2
 	i32.add 	$push3=, $0, $3
@@ -24,7 +24,7 @@ test:                                   # @test
 	i32.load8_u	$push5=, 0($1)
 	i32.const	$push6=, 47
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, .LBB0_3
+	br_if   	$pop7, 1        # 1: down to label2
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push8=, 4
@@ -35,8 +35,10 @@ test:                                   # @test
 	i32.load	$3=, 0($2)
 	i32.const	$push10=, 1
 	i32.gt_s	$push11=, $3, $pop10
-	br_if   	$pop11, .LBB0_1
+	br_if   	$pop11, 0       # 0: up to label1
 .LBB0_3:                                # %while.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	return
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test

@@ -10,16 +10,18 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 1
-	block   	.LBB0_3
-	block   	.LBB0_2
+	block
+	block
 	i32.and 	$push0=, $0, $1
-	br_if   	$pop0, .LBB0_2
+	br_if   	$pop0, 0        # 0: down to label1
 # BB#1:                                 # %land.lhs.true
 	i32.load	$push1=, 0($0)
-	br_if   	$pop1, .LBB0_3
+	br_if   	$pop1, 1        # 1: down to label0
 .LBB0_2:                                # %if.end
+	end_block                       # label1:
 	i32.const	$1=, 0
 .LBB0_3:                                # %return
+	end_block                       # label0:
 	return  	$1
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

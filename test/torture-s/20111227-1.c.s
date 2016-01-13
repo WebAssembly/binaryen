@@ -7,13 +7,14 @@
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, -1
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -27,20 +28,22 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.load16_u	$0=, 0($0)
-	block   	.LBB1_3
-	block   	.LBB1_2
+	block
+	block
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $1, $pop2
-	br_if   	$pop3, .LBB1_2
+	br_if   	$pop3, 0        # 0: down to label2
 # BB#1:                                 # %if.then
 	call    	bar@FUNCTION, $0
-	br      	.LBB1_3
+	br      	1               # 1: down to label1
 .LBB1_2:                                # %if.else
+	end_block                       # label2:
 	i32.const	$1=, 16
 	i32.shl 	$push1=, $0, $1
 	i32.shr_s	$push0=, $pop1, $1
 	call    	bar@FUNCTION, $pop0
 .LBB1_3:                                # %if.end
+	end_block                       # label1:
 	return
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

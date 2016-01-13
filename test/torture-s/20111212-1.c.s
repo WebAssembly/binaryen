@@ -13,7 +13,7 @@ frob_entry:                             # @frob_entry
 	i32.const	$push3=, 2
 	i32.add 	$3=, $0, $pop3
 	i32.const	$2=, 8
-	block   	.LBB0_2
+	block
 	i32.const	$push8=, 1
 	i32.add 	$4=, $0, $pop8
 	i32.load8_u	$push1=, 0($1)
@@ -29,7 +29,7 @@ frob_entry:                             # @frob_entry
 	i32.or  	$push13=, $pop7, $pop12
 	i32.const	$push14=, 63
 	i32.gt_u	$push15=, $pop13, $pop14
-	br_if   	$pop15, .LBB0_2
+	br_if   	$pop15, 0       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push16=, 255
 	i32.store8	$push17=, 0($0), $pop16
@@ -37,6 +37,7 @@ frob_entry:                             # @frob_entry
 	i32.store8	$push19=, 0($3), $pop18
 	i32.store8	$discard=, 0($4), $pop19
 .LBB0_2:                                # %if.end
+	end_block                       # label0:
 	return
 .Lfunc_end0:
 	.size	frob_entry, .Lfunc_end0-frob_entry

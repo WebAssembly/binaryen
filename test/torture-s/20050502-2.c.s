@@ -107,9 +107,9 @@ main:                                   # @main
 	i32.const	$push45=, .L.str
 	i32.const	$12=, 0
 	i32.add 	$12=, $14, $12
-	block   	.LBB2_4
+	block
 	i32.call	$push46=, memcmp@FUNCTION, $12, $pop45, $1
-	br_if   	$pop46, .LBB2_4
+	br_if   	$pop46, 0       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push47=, 77
 	i32.store8	$discard=, 0($2), $pop47
@@ -117,9 +117,9 @@ main:                                   # @main
 	i32.const	$push48=, .L.str.1
 	i32.const	$13=, 0
 	i32.add 	$13=, $14, $13
-	block   	.LBB2_3
+	block
 	i32.call	$push49=, memcmp@FUNCTION, $13, $pop48, $1
-	br_if   	$pop49, .LBB2_3
+	br_if   	$pop49, 0       # 0: down to label1
 # BB#2:                                 # %if.end7
 	i32.const	$8=, 16
 	i32.add 	$14=, $14, $8
@@ -127,9 +127,11 @@ main:                                   # @main
 	i32.store	$14=, 0($8), $14
 	return  	$2
 .LBB2_3:                                # %if.then6
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

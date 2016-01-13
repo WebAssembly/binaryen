@@ -16,17 +16,18 @@ foo:                                    # @foo
 	i64.extend_s/i32	$1=, $0
 .LBB0_1:                                # %for.cond1thread-pre-split
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_5
-	block   	.LBB0_3
+	loop                            # label0:
+	block
 	i32.load	$push0=, c($5)
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $pop0, $pop15
-	br_if   	$pop16, .LBB0_3
+	br_if   	$pop16, 0       # 0: down to label2
 # BB#2:                                 # %for.inc.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.store	$discard=, c($5), $5
 .LBB0_3:                                # %for.end
                                         #   in Loop: Header=BB0_1 Depth=1
+	end_block                       # label2:
 	i64.load32_s	$push4=, 0($2)
 	i64.load32_s	$push1=, a($5)
 	i64.const	$push2=, 8589934591
@@ -41,14 +42,15 @@ foo:                                    # @foo
 	i32.shl 	$push9=, $0, $pop8
 	i32.add 	$push11=, $pop10, $pop9
 	i32.load	$push12=, 0($pop11)
-	br_if   	$pop12, .LBB0_5
+	br_if   	$pop12, 1       # 1: down to label1
 # BB#4:                                 # %for.inc6
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push13=, 1
 	i32.add 	$push14=, $0, $pop13
 	i32.store	$discard=, g($5), $pop14
-	br      	.LBB0_1
+	br      	0               # 0: up to label0
 .LBB0_5:                                # %if.then
+	end_loop                        # label1:
 	return  	$5
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -68,17 +70,18 @@ main:                                   # @main
 	i64.const	$5=, 8589934591
 .LBB1_1:                                # %for.cond1thread-pre-split.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_5
-	block   	.LBB1_3
+	loop                            # label3:
+	block
 	i32.load	$push0=, c($4)
 	i32.const	$push18=, 0
 	i32.eq  	$push19=, $pop0, $pop18
-	br_if   	$pop19, .LBB1_3
+	br_if   	$pop19, 0       # 0: down to label5
 # BB#2:                                 # %for.inc.preheader.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.store	$discard=, c($4), $4
 .LBB1_3:                                # %for.end.i
                                         #   in Loop: Header=BB1_1 Depth=1
+	end_block                       # label5:
 	i64.load32_s	$push3=, 0($0)
 	i64.load32_s	$push1=, a($4)
 	i64.xor 	$push2=, $pop1, $5
@@ -93,22 +96,24 @@ main:                                   # @main
 	i32.shl 	$push9=, $3, $pop8
 	i32.add 	$push11=, $pop10, $pop9
 	i32.load	$push12=, 0($pop11)
-	br_if   	$pop12, .LBB1_5
+	br_if   	$pop12, 1       # 1: down to label4
 # BB#4:                                 # %for.inc6.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push16=, 1
 	i32.add 	$push17=, $3, $pop16
 	i32.store	$discard=, g($4), $pop17
-	br      	.LBB1_1
+	br      	0               # 0: up to label3
 .LBB1_5:                                # %foo.exit
-	block   	.LBB1_7
+	end_loop                        # label4:
+	block
 	i32.load	$push13=, d($4)
 	i32.const	$push14=, 1
 	i32.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, .LBB1_7
+	br_if   	$pop15, 0       # 0: down to label6
 # BB#6:                                 # %if.end
 	return  	$4
 .LBB1_7:                                # %if.then
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

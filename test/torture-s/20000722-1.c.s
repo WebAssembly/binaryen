@@ -30,11 +30,11 @@ bar:                                    # @bar
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i32.load	$push0=, 4($0)
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, .LBB2_2
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 4
 	i32.add 	$push4=, $0, $pop3
@@ -42,6 +42,7 @@ foo:                                    # @foo
 	i32.store	$discard=, 0($pop4), $pop5
 	return
 .LBB2_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

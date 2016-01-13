@@ -55,13 +55,14 @@ get_addr_base_and_unit_offset:          # @get_addr_base_and_unit_offset
 build_int_cst:                          # @build_int_cst
 	.param  	i64
 # BB#0:                                 # %entry
-	block   	.LBB3_2
+	block
 	i64.const	$push0=, 4
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB3_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB3_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:

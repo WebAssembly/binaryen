@@ -34,14 +34,15 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	i64.store32	$discard=, 12($5), $0
-	block   	.LBB1_2
+	block
 	i32.load	$push0=, 12($5)
 	i32.ne  	$push1=, $pop0, $2
-	br_if   	$pop1, .LBB1_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	call    	exit@FUNCTION, $1
 	unreachable
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

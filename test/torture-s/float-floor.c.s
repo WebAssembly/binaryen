@@ -13,17 +13,18 @@ main:                                   # @main
 	f64.floor	$0=, $pop0
 	i32.trunc_s/f64	$2=, $0
 	i32.const	$3=, 1023
-	block   	.LBB0_3
+	block
 	i32.ne  	$push1=, $2, $3
-	br_if   	$pop1, .LBB0_3
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	f32.demote/f64	$push2=, $0
 	i32.trunc_s/f32	$push3=, $pop2
 	i32.ne  	$push4=, $pop3, $3
-	br_if   	$pop4, .LBB0_3
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	return  	$1
 .LBB0_3:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

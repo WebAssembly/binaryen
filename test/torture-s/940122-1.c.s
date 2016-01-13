@@ -10,16 +10,17 @@ g:                                      # @g
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	.LBB0_2
+	block
 	i32.load	$push0=, a($1)
 	i32.ne  	$push1=, $pop0, $1
 	i32.load	$push2=, b($1)
 	i32.ne  	$push3=, $pop2, $1
 	i32.ne  	$push4=, $pop1, $pop3
-	br_if   	$pop4, .LBB0_2
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -35,16 +36,17 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	.LBB1_2
+	block
 	i32.load	$push0=, a($1)
 	i32.ne  	$push1=, $pop0, $1
 	i32.load	$push2=, b($1)
 	i32.ne  	$push3=, $pop2, $1
 	i32.ne  	$push4=, $pop1, $pop3
-	br_if   	$pop4, .LBB1_2
+	br_if   	$pop4, 0        # 0: down to label1
 # BB#1:                                 # %g.exit
 	return  	$1
 .LBB1_2:                                # %if.then.i
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -59,17 +61,18 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB2_2
+	block
 	i32.load	$push0=, a($0)
 	i32.ne  	$push1=, $pop0, $0
 	i32.load	$push2=, b($0)
 	i32.ne  	$push3=, $pop2, $0
 	i32.eq  	$push4=, $pop1, $pop3
-	br_if   	$pop4, .LBB2_2
+	br_if   	$pop4, 0        # 0: down to label2
 # BB#1:                                 # %if.then.i.i
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_2:                                # %f.exit
+	end_block                       # label2:
 	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end2:

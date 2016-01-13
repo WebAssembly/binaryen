@@ -9,7 +9,7 @@ find:                                   # @find
 	.local  	i32
 # BB#0:                                 # %for.cond
 	i32.const	$2=, 2
-	block   	.LBB0_2
+	block
 	i32.sub 	$push0=, $1, $0
 	i32.shr_s	$push1=, $pop0, $2
 	i32.const	$push2=, -1431655765
@@ -17,11 +17,12 @@ find:                                   # @find
 	i32.shr_s	$2=, $pop3, $2
 	i32.const	$push4=, 1
 	i32.lt_s	$push5=, $2, $pop4
-	br_if   	$pop5, .LBB0_2
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %for.body
 	call    	ok@FUNCTION, $2
 	unreachable
 .LBB0_2:                                # %for.end
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -34,15 +35,16 @@ find:                                   # @find
 ok:                                     # @ok
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB1_2
+	br_if   	$pop1, 0        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB1_2:                                # %if.then
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

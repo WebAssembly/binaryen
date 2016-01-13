@@ -158,16 +158,16 @@ main:                                   # @main
 	i32.add 	$38=, $42, $38
 	i32.const	$39=, 0
 	i32.add 	$39=, $42, $39
-	block   	.LBB0_3
+	block
 	i32.call	$push41=, memcmp@FUNCTION, $38, $39, $0
-	br_if   	$pop41, .LBB0_3
+	br_if   	$pop41, 0       # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$40=, 32
 	i32.add 	$40=, $42, $40
 	i32.const	$41=, 0
 	i32.add 	$41=, $42, $41
 	i32.call	$push42=, memcmp@FUNCTION, $40, $41, $0
-	br_if   	$pop42, .LBB0_3
+	br_if   	$pop42, 0       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$9=, 96
 	i32.add 	$42=, $42, $9
@@ -175,6 +175,7 @@ main:                                   # @main
 	i32.store	$42=, 0($9), $42
 	return  	$2
 .LBB0_3:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

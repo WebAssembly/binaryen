@@ -37,9 +37,9 @@ get_n:                                  # @get_n
 	i32.const	$6=, 0
 	i32.load16_u	$0=, p($6)
 	i32.load16_u	$5=, g($6)
-	block   	.LBB1_5
+	block
 	i32.eq  	$push0=, $0, $5
-	br_if   	$pop0, .LBB1_5
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %while.body.lr.ph
 	i32.const	$2=, 0
 	i32.load8_u	$push1=, e($2)
@@ -48,7 +48,7 @@ get_n:                                  # @get_n
 	copy_local	$6=, $2
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_4
+	loop                            # label1:
 	i32.const	$3=, 65535
 	i32.and 	$5=, $5, $3
 	i32.const	$4=, 1
@@ -59,16 +59,18 @@ get_n:                                  # @get_n
 	i32.and 	$push5=, $6, $3
 	i32.const	$push6=, 4
 	i32.gt_u	$push7=, $pop5, $pop6
-	br_if   	$pop7, .LBB1_4
+	br_if   	$pop7, 1        # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.and 	$push8=, $5, $3
 	i32.ne  	$push9=, $0, $pop8
-	br_if   	$pop9, .LBB1_2
+	br_if   	$pop9, 0        # 0: up to label1
 .LBB1_4:                                # %while.cond.while.end_crit_edge
+	end_loop                        # label2:
 	i32.const	$push10=, 0
 	i32.store16	$discard=, g($pop10), $5
 .LBB1_5:                                # %while.end
+	end_block                       # label0:
 	i32.const	$push11=, 65535
 	i32.and 	$push12=, $6, $pop11
 	return  	$pop12

@@ -9,14 +9,14 @@ sign_bit_p:                             # @sign_bit_p
 	.result 	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB0_3
-	block   	.LBB0_2
+	block
+	block
 	i32.load16_u	$push0=, 0($0)
 	i32.const	$push1=, 511
 	i32.and 	$0=, $pop0, $pop1
 	i32.const	$push2=, 33
 	i32.lt_u	$push3=, $0, $pop2
-	br_if   	$pop3, .LBB0_2
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#1:                                 # %if.then
 	i32.const	$push10=, 1
 	i32.const	$push8=, -33
@@ -27,8 +27,9 @@ sign_bit_p:                             # @sign_bit_p
 	i32.sub 	$push12=, $pop11, $0
 	i32.shr_u	$5=, $3, $pop12
 	i32.const	$4=, 0
-	br      	.LBB0_3
+	br      	1               # 1: down to label0
 .LBB0_2:                                # %if.else
+	end_block                       # label1:
 	i32.const	$3=, -1
 	i32.const	$push5=, 1
 	i32.add 	$push4=, $0, $3
@@ -39,6 +40,7 @@ sign_bit_p:                             # @sign_bit_p
 	i32.shr_u	$3=, $3, $pop7
 	copy_local	$6=, $5
 .LBB0_3:                                # %if.end
+	end_block                       # label0:
 	i32.and 	$push15=, $3, $2
 	i32.eq  	$push16=, $pop15, $4
 	i32.and 	$push13=, $5, $1

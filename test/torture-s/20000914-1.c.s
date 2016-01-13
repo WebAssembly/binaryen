@@ -20,14 +20,15 @@ convert_like_real:                      # @convert_like_real
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.load8_u	$push0=, 8($0)
 	i32.const	$push1=, 222
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, .LBB1_2
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %sw.bb
 	return  	$0
 .LBB1_2:                                # %sw.epilog
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

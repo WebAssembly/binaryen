@@ -7,12 +7,13 @@
 fpEq:                                   # @fpEq
 	.param  	f64, f64
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	f64.ne  	$push0=, $0, $1
-	br_if   	$pop0, .LBB0_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -25,16 +26,17 @@ fpEq:                                   # @fpEq
 fpTest:                                 # @fpTest
 	.param  	f64, f64
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	f64.const	$push0=, 0x1.9p6
 	f64.mul 	$push1=, $0, $pop0
 	f64.div 	$push2=, $pop1, $1
 	f64.const	$push3=, 0x1.3d55555555556p6
 	f64.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, .LBB1_2
+	br_if   	$pop4, 0        # 0: down to label1
 # BB#1:                                 # %fpEq.exit
 	return
 .LBB1_2:                                # %if.then.i
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

@@ -24,10 +24,10 @@ main:                                   # @main
 	i32.store8	$3=, 13371($7), $pop1
 	i32.const	$8=, 0
 	i32.add 	$8=, $7, $8
-	block   	.LBB0_2
+	block
 	i32.call	$push2=, strlen@FUNCTION, $8
 	i32.ne  	$push3=, $pop2, $2
-	br_if   	$pop3, .LBB0_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %foo.exit
 	i32.const	$6=, 15008
 	i32.add 	$7=, $7, $6
@@ -35,6 +35,7 @@ main:                                   # @main
 	i32.store	$7=, 0($6), $7
 	return  	$3
 .LBB0_2:                                # %if.then.i
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

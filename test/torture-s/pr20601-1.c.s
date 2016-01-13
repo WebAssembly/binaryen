@@ -8,9 +8,10 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
-	br      	.LBB0_1
+	loop                            # label0:
+	br      	0               # 0: up to label0
 .LBB0_2:
+	end_loop                        # label1:
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -47,46 +48,47 @@ main:                                   # @main
 	i32.const	$1=, 1
 .LBB2_1:                                # %land.rhs.i
                                         # =>This Inner Loop Header: Depth=1
-	block   	.LBB2_17
-	loop    	.LBB2_14
+	block
+	loop                            # label3:
 	i32.load	$5=, 0($0)
 	i32.const	$4=, 45
 	i32.load8_u	$push10=, 0($5)
 	i32.ne  	$push11=, $pop10, $4
-	br_if   	$pop11, .LBB2_14
+	br_if   	$pop11, 1       # 1: down to label4
 # BB#2:                                 # %while.body.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_s	$7=, 1($5)
-	block   	.LBB2_5
+	block
 	i32.const	$push48=, 0
 	i32.eq  	$push49=, $7, $pop48
-	br_if   	$pop49, .LBB2_5
+	br_if   	$pop49, 0       # 0: down to label5
 # BB#3:                                 # %land.lhs.true.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push12=, 2($5)
 	i32.const	$push50=, 0
 	i32.eq  	$push51=, $pop12, $pop50
-	br_if   	$pop51, .LBB2_5
+	br_if   	$pop51, 0       # 0: down to label5
 # BB#4:                                 # %if.then.i
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_5:                                # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
-	block   	.LBB2_13
-	block   	.LBB2_12
+	end_block                       # label5:
+	block
+	block
 	i32.const	$push13=, 80
 	i32.eq  	$push14=, $7, $pop13
-	br_if   	$pop14, .LBB2_12
+	br_if   	$pop14, 0       # 0: down to label7
 # BB#6:                                 # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
-	block   	.LBB2_9
+	block
 	i32.const	$push15=, 117
 	i32.eq  	$push16=, $7, $pop15
-	br_if   	$pop16, .LBB2_9
+	br_if   	$pop16, 0       # 0: down to label8
 # BB#7:                                 # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.ne  	$push17=, $7, $4
-	br_if   	$pop17, .LBB2_13
+	br_if   	$pop17, 2       # 2: down to label6
 # BB#8:                                 # %sw.bb22.i
 	i32.const	$push20=, 1
 	i32.eq  	$push21=, $1, $pop20
@@ -99,14 +101,15 @@ main:                                   # @main
 	i32.const	$push19=, 4
 	i32.add 	$push3=, $0, $pop19
 	i32.store	$0=, e($2), $pop3
-	br      	.LBB2_17
+	br      	5               # 5: down to label2
 .LBB2_9:                                # %sw.bb.i
                                         #   in Loop: Header=BB2_1 Depth=1
-	block   	.LBB2_11
+	end_block                       # label8:
+	block
 	i32.load	$push26=, 4($0)
 	i32.const	$push52=, 0
 	i32.eq  	$push53=, $pop26, $pop52
-	br_if   	$pop53, .LBB2_11
+	br_if   	$pop53, 0       # 0: down to label9
 # BB#10:                                # %if.end19.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push28=, -1
@@ -116,16 +119,19 @@ main:                                   # @main
 	i32.add 	$push0=, $0, $pop25
 	i32.store	$push27=, t+4100($2), $pop0
 	i32.store	$0=, e($2), $pop27
-	br      	.LBB2_13
+	br      	2               # 2: down to label6
 .LBB2_11:                               # %if.then18.i
+	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_12:                               # %sw.bb21.i
                                         #   in Loop: Header=BB2_1 Depth=1
+	end_block                       # label7:
 	i32.const	$push24=, 4096
 	i32.or  	$1=, $1, $pop24
 .LBB2_13:                               # %sw.epilog.i
                                         #   in Loop: Header=BB2_1 Depth=1
+	end_block                       # label6:
 	i32.const	$push31=, 1
 	i32.gt_s	$7=, $6, $pop31
 	i32.const	$push29=, -1
@@ -134,26 +140,28 @@ main:                                   # @main
 	i32.const	$push30=, 4
 	i32.add 	$push5=, $0, $pop30
 	i32.store	$0=, e($2), $pop5
-	br_if   	$7, .LBB2_1
+	br_if   	$7, 0           # 0: up to label3
 .LBB2_14:                               # %while.end.i
+	end_loop                        # label4:
 	i32.const	$7=, 1
 	i32.lt_s	$push33=, $6, $7
-	br_if   	$pop33, .LBB2_17
+	br_if   	$pop33, 0       # 0: down to label2
 # BB#15:                                # %while.end.i
 	i32.and 	$push32=, $1, $7
-	br_if   	$pop32, .LBB2_17
+	br_if   	$pop32, 0       # 0: down to label2
 # BB#16:                                # %if.then36.i
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_17:                               # %setup2.exit
-	block   	.LBB2_20
+	end_block                       # label2:
+	block
 	i32.const	$push34=, .L.str.4
 	i32.store	$7=, t($2), $pop34
 	i32.const	$push35=, 512
 	i32.and 	$push36=, $1, $pop35
 	i32.const	$push54=, 0
 	i32.eq  	$push55=, $pop36, $pop54
-	br_if   	$pop55, .LBB2_20
+	br_if   	$pop55, 0       # 0: down to label10
 # BB#18:                                # %if.then6.i
 	i32.const	$push37=, 1
 	i32.add 	$push38=, $6, $pop37
@@ -164,7 +172,7 @@ main:                                   # @main
 	copy_local	$7=, $3
 .LBB2_19:                               # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB2_20
+	loop                            # label11:
 	i32.add 	$push44=, $5, $7
 	i32.add 	$push40=, $0, $7
 	i32.const	$push41=, -4
@@ -172,21 +180,24 @@ main:                                   # @main
 	i32.load	$push43=, 0($pop42)
 	i32.store	$6=, 0($pop44), $pop43
 	i32.add 	$7=, $7, $3
-	br_if   	$6, .LBB2_19
+	br_if   	$6, 0           # 0: up to label11
 .LBB2_20:                               # %setup1.exit
-	block   	.LBB2_23
+	end_loop                        # label12:
+	end_block                       # label10:
+	block
 	i32.const	$push46=, 1024
 	i32.and 	$push47=, $1, $pop46
 	i32.const	$push56=, 0
 	i32.eq  	$push57=, $pop47, $pop56
-	br_if   	$pop57, .LBB2_23
+	br_if   	$pop57, 0       # 0: down to label13
 # BB#21:                                # %setup1.exit
 	i32.load	$push45=, a+16($2)
-	br_if   	$pop45, .LBB2_23
+	br_if   	$pop45, 0       # 0: down to label13
 # BB#22:                                # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_23:                               # %if.end
+	end_block                       # label13:
 	call    	exit@FUNCTION, $2
 	unreachable
 .Lfunc_end2:

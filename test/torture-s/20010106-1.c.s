@@ -11,10 +11,10 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$1=, 2
 	i32.add 	$0=, $0, $1
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 7
 	i32.ge_u	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %switch.lookup
 	i32.const	$push3=, .Lswitch.table
 	i32.shl 	$push2=, $0, $1
@@ -22,6 +22,7 @@ f:                                      # @f
 	i32.load	$push5=, 0($pop4)
 	return  	$pop5
 .LBB0_2:                                # %sw.default
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

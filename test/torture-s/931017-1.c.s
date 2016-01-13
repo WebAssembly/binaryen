@@ -33,14 +33,15 @@ h2:                                     # @h2
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i32.const	$push0=, v
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB2_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	return  	$pop2
 .LBB2_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

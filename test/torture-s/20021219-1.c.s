@@ -91,17 +91,17 @@ main:                                   # @main
 	copy_local	$5=, $0
 .LBB1_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_5
-	block   	.LBB1_4
+	loop                            # label0:
+	block
 	i32.const	$push45=, 255
 	i32.and 	$5=, $5, $pop45
 	i32.eq  	$push46=, $5, $0
-	br_if   	$pop46, .LBB1_4
+	br_if   	$pop46, 0       # 0: down to label2
 # BB#2:                                 # %while.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push47=, 13
 	i32.eq  	$push48=, $5, $pop47
-	br_if   	$pop48, .LBB1_4
+	br_if   	$pop48, 0       # 0: down to label2
 # BB#3:                                 # %while.end
 	i32.const	$9=, 16
 	i32.add 	$13=, $13, $9
@@ -110,10 +110,12 @@ main:                                   # @main
 	return  	$1
 .LBB1_4:                                # %while.body
                                         #   in Loop: Header=BB1_1 Depth=1
+	end_block                       # label2:
 	i32.load8_u	$5=, 0($6)
 	i32.add 	$6=, $6, $2
-	br      	.LBB1_1
+	br      	0               # 0: up to label0
 .LBB1_5:
+	end_loop                        # label1:
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 

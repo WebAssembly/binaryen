@@ -8,22 +8,23 @@ foo:                                    # @foo
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_4
+	block
 	i32.const	$push0=, 12
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_4
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $1, $pop2
-	br_if   	$pop3, .LBB0_4
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#2:                                 # %entry
 	i32.const	$push4=, 11
 	i32.ne  	$push5=, $2, $pop4
-	br_if   	$pop5, .LBB0_4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#3:                                 # %if.end
 	i32.const	$push6=, 0
 	return  	$pop6
 .LBB0_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -48,17 +49,18 @@ bar:                                    # @bar
 baz:                                    # @baz
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB2_3
+	block
 	i32.const	$push0=, 11
 	i32.ne  	$push1=, $1, $pop0
-	br_if   	$pop1, .LBB2_3
+	br_if   	$pop1, 0        # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$push2=, 12
 	i32.ne  	$push3=, $2, $pop2
-	br_if   	$pop3, .LBB2_3
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#2:                                 # %foo.exit
 	return
 .LBB2_3:                                # %if.then.i
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

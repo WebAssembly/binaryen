@@ -16,11 +16,11 @@ test:                                   # @test
 	i32.const	$9=, __stack_pointer
 	i32.store	$10=, 0($9), $10
 	i32.load	$1=, 4($0)
-	block   	.LBB0_3
+	block
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $0, $pop0
 	i32.load	$0=, 0($pop1)
-	br_if   	$0, .LBB0_3
+	br_if   	$0, 0           # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push6=, 20
 	i32.const	$push3=, .L.str
@@ -32,7 +32,7 @@ test:                                   # @test
 	i32.and 	$push8=, $2, $pop7
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $pop8, $pop12
-	br_if   	$pop13, .LBB0_3
+	br_if   	$pop13, 0       # 0: down to label0
 # BB#2:                                 # %cond.true
 	i32.const	$push9=, 33816706
 	i32.call	$2=, fn3@FUNCTION, $pop9
@@ -53,6 +53,7 @@ test:                                   # @test
 	i32.const	$7=, __stack_pointer
 	i32.store	$10=, 0($7), $10
 .LBB0_3:                                # %if.end
+	end_block                       # label0:
 	i32.div_s	$push11=, $1, $0
 	i32.const	$10=, 16
 	i32.add 	$10=, $10, $10
@@ -90,11 +91,12 @@ fn2:                                    # @fn2
 # BB#0:                                 # %entry
 	#APP
 	#NO_APP
-	block   	.LBB2_2
-	br_if   	$0, .LBB2_2
+	block
+	br_if   	$0, 0           # 0: down to label1
 # BB#1:                                 # %if.end
 	return
 .LBB2_2:                                # %if.then
+	end_block                       # label1:
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -144,7 +146,7 @@ main:                                   # @main
 	i32.sub 	$8=, $6, $7
 	i32.const	$7=, __stack_pointer
 	i32.store	$8=, 0($7), $8
-	block   	.LBB5_2
+	block
 	i32.const	$push4=, 20
 	i32.const	$push1=, .L.str
 	i32.const	$push3=, 924
@@ -155,7 +157,7 @@ main:                                   # @main
 	i32.and 	$push6=, $0, $pop5
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $pop6, $pop9
-	br_if   	$pop10, .LBB5_2
+	br_if   	$pop10, 0       # 0: down to label2
 # BB#1:                                 # %cond.true.i
 	i32.const	$push7=, 33816706
 	i32.call	$0=, fn3@FUNCTION, $pop7
@@ -176,6 +178,7 @@ main:                                   # @main
 	i32.const	$5=, __stack_pointer
 	i32.store	$8=, 0($5), $8
 .LBB5_2:                                # %test.exit
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end5:

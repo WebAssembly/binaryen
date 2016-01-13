@@ -28,19 +28,20 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.load	$1=, c($0)
 	i32.load16_u	$2=, e($0)
-	block   	.LBB1_2
+	block
 	i32.const	$push1=, 1
 	i32.store	$discard=, a($0), $pop1
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $1, $pop12
-	br_if   	$pop13, .LBB1_2
+	br_if   	$pop13, 0       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push2=, -1
 	i32.add 	$push0=, $2, $pop2
 	i32.store16	$2=, e($0), $pop0
 .LBB1_2:                                # %if.end
+	end_block                       # label0:
 	i32.const	$1=, 16
-	block   	.LBB1_4
+	block
 	i32.shl 	$push3=, $2, $1
 	i32.shr_s	$push4=, $pop3, $1
 	i32.store	$discard=, d($0), $pop4
@@ -51,11 +52,12 @@ main:                                   # @main
 	i64.shr_u	$push9=, $pop7, $pop8
 	i32.wrap/i64	$push10=, $pop9
 	i32.call	$push11=, fn1@FUNCTION, $pop10
-	br_if   	$pop11, .LBB1_4
+	br_if   	$pop11, 0       # 0: down to label1
 # BB#3:                                 # %if.end5
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_4:                                # %if.then4
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

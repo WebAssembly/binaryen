@@ -7,16 +7,17 @@
 bla:                                    # @bla
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, j
 	i32.select	$push1=, $0, $0, $pop0
 	i32.eq  	$push2=, $pop1, $0
-	br_if   	$pop2, .LBB0_2
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.then1
 	i32.const	$push3=, 0
 	i32.const	$push4=, 1
 	i32.store	$discard=, j($pop3), $pop4
 .LBB0_2:                                # %if.end2
+	end_block                       # label0:
 	return
 .Lfunc_end0:
 	.size	bla, .Lfunc_end0-bla

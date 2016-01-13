@@ -9,9 +9,9 @@ x:                                      # @x
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB0_2
+	block
 	i32.load	$push0=, s($0)
-	br_if   	$pop0, .LBB0_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.load	$0=, s+4($0)
 	i32.const	$push2=, 2
@@ -22,6 +22,7 @@ x:                                      # @x
 	i32.add 	$push6=, $pop4, $pop5
 	i32.store	$discard=, 0($pop6), $0
 .LBB0_2:                                # %if.end
+	end_block                       # label0:
 	i32.const	$push7=, 1
 	return  	$pop7
 .Lfunc_end0:

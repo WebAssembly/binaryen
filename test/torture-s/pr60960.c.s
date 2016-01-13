@@ -138,7 +138,7 @@ main:                                   # @main
 	i32.load8_u	$push4=, 0($pop3)
 	i32.const	$14=, 12
 	i32.add 	$14=, $23, $14
-	block   	.LBB3_6
+	block
 	i32.or  	$push0=, $14, $1
 	i32.load8_u	$push1=, 0($pop0)
 	i32.shl 	$push2=, $pop1, $2
@@ -146,7 +146,7 @@ main:                                   # @main
 	i32.shl 	$push6=, $pop5, $4
 	i32.or  	$push13=, $pop12, $pop6
 	i32.ne  	$push14=, $pop13, $7
-	br_if   	$pop14, .LBB3_6
+	br_if   	$pop14, 0       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$15=, 8
 	i32.add 	$15=, $23, $15
@@ -165,7 +165,7 @@ main:                                   # @main
 	i32.load8_u	$push19=, 0($pop18)
 	i32.const	$18=, 8
 	i32.add 	$18=, $23, $18
-	block   	.LBB3_5
+	block
 	i32.or  	$push15=, $18, $1
 	i32.load8_u	$push16=, 0($pop15)
 	i32.shl 	$push17=, $pop16, $2
@@ -173,7 +173,7 @@ main:                                   # @main
 	i32.shl 	$push21=, $pop20, $4
 	i32.or  	$push28=, $pop27, $pop21
 	i32.ne  	$push29=, $pop28, $7
-	br_if   	$pop29, .LBB3_5
+	br_if   	$pop29, 0       # 0: down to label1
 # BB#2:                                 # %if.end6
 	i32.const	$19=, 4
 	i32.add 	$19=, $23, $19
@@ -192,7 +192,7 @@ main:                                   # @main
 	i32.load8_u	$push34=, 0($pop33)
 	i32.const	$22=, 4
 	i32.add 	$22=, $23, $22
-	block   	.LBB3_4
+	block
 	i32.or  	$push30=, $22, $1
 	i32.load8_u	$push31=, 0($pop30)
 	i32.shl 	$push32=, $pop31, $2
@@ -200,7 +200,7 @@ main:                                   # @main
 	i32.shl 	$push36=, $pop35, $4
 	i32.or  	$push43=, $pop42, $pop36
 	i32.ne  	$push44=, $pop43, $7
-	br_if   	$pop44, .LBB3_4
+	br_if   	$pop44, 0       # 0: down to label2
 # BB#3:                                 # %if.end11
 	i32.const	$push45=, 0
 	i32.const	$10=, 16
@@ -209,12 +209,15 @@ main:                                   # @main
 	i32.store	$23=, 0($10), $23
 	return  	$pop45
 .LBB3_4:                                # %if.then10
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_5:                                # %if.then5
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_6:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:

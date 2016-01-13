@@ -10,7 +10,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	i32.load	$0=, a($1)
-	block   	.LBB0_2
+	block
 	i32.load	$push0=, b($1)
 	i32.gt_s	$push1=, $pop0, $1
 	i32.const	$push2=, 1
@@ -18,12 +18,14 @@ foo:                                    # @foo
 	i32.or  	$push4=, $pop1, $pop3
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop4, $pop5
-	br_if   	$pop6, .LBB0_2
+	br_if   	$pop6, 0        # 0: down to label0
 .LBB0_1:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
-	br      	.LBB0_1
+	loop                            # label1:
+	br      	0               # 0: up to label1
 .LBB0_2:                                # %if.else
+	end_loop                        # label2:
+	end_block                       # label0:
 	i32.store	$discard=, d($1), $0
 	return  	$1
 .Lfunc_end0:
@@ -39,7 +41,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	i32.load	$0=, a($1)
-	block   	.LBB1_2
+	block
 	i32.load	$push0=, b($1)
 	i32.gt_s	$push1=, $pop0, $1
 	i32.const	$push2=, 1
@@ -47,20 +49,23 @@ main:                                   # @main
 	i32.or  	$push4=, $pop1, $pop3
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $pop4, $pop8
-	br_if   	$pop9, .LBB1_2
+	br_if   	$pop9, 0        # 0: down to label3
 .LBB1_1:                                # %for.inc.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_2
-	br      	.LBB1_1
+	loop                            # label4:
+	br      	0               # 0: up to label4
 .LBB1_2:                                # %foo.exit
-	block   	.LBB1_4
+	end_loop                        # label5:
+	end_block                       # label3:
+	block
 	i32.store	$push5=, d($1), $0
 	i32.const	$push6=, 2
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, .LBB1_4
+	br_if   	$pop7, 0        # 0: down to label6
 # BB#3:                                 # %if.end
 	return  	$1
 .LBB1_4:                                # %if.then
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

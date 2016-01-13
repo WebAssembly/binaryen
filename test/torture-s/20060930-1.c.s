@@ -8,13 +8,14 @@ bar:                                    # @bar
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $1, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -28,10 +29,10 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB1_3
+	block
 	i32.const	$push2=, 1
 	i32.lt_s	$push3=, $1, $pop2
-	br_if   	$pop3, .LBB1_3
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$3=, 0
 	i32.gt_s	$push0=, $0, $3
@@ -43,11 +44,13 @@ foo:                                    # @foo
 	i32.select	$3=, $pop4, $3, $pop5
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_3
+	loop                            # label2:
 	i32.call	$discard=, bar@FUNCTION, $1, $3
 	i32.add 	$1=, $1, $0
-	br_if   	$1, .LBB1_2
+	br_if   	$1, 0           # 0: up to label2
 .LBB1_3:                                # %for.end
+	end_loop                        # label3:
+	end_block                       # label1:
 	return
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

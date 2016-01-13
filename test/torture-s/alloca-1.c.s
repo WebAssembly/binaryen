@@ -45,9 +45,9 @@ main:                                   # @main
 	i32.const	$push0=, 15
 	i32.const	$3=, 0
 	i32.add 	$3=, $4, $3
-	block   	.LBB1_2
+	block
 	i32.and 	$push1=, $3, $pop0
-	br_if   	$pop1, .LBB1_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	i32.const	$2=, 32
@@ -56,6 +56,7 @@ main:                                   # @main
 	i32.store	$4=, 0($2), $4
 	return  	$pop2
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

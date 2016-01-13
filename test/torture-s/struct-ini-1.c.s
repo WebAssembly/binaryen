@@ -9,25 +9,26 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB0_4
+	block
 	i32.load8_u	$push2=, object($0)
 	i32.const	$push3=, 88
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, .LBB0_4
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.load	$push0=, object+4($0)
 	i32.const	$push5=, 8
 	i32.ne  	$push6=, $pop0, $pop5
-	br_if   	$pop6, .LBB0_4
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#2:                                 # %entry
 	i32.load	$push1=, object+8($0)
 	i32.const	$push7=, 9
 	i32.ne  	$push8=, $pop1, $pop7
-	br_if   	$pop8, .LBB0_4
+	br_if   	$pop8, 0        # 0: down to label0
 # BB#3:                                 # %if.end
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB0_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

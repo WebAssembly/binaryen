@@ -12,24 +12,26 @@ main:                                   # @main
 	i32.load	$0=, n($3)
 	i32.const	$2=, 45
 	i32.const	$1=, 1
-	block   	.LBB0_4
+	block
 	i32.lt_s	$push0=, $0, $1
-	br_if   	$pop0, .LBB0_4
+	br_if   	$pop0, 0        # 0: down to label0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label1:
 	i32.select	$2=, $3, $3, $2
 	i32.add 	$3=, $3, $1
 	i32.lt_s	$push1=, $3, $0
-	br_if   	$pop1, .LBB0_1
-.LBB0_2:                                # %for.end
+	br_if   	$pop1, 0        # 0: up to label1
+# BB#2:                                 # %for.end
+	end_loop                        # label2:
 	i32.ne  	$push2=, $2, $1
-	br_if   	$pop2, .LBB0_4
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#3:                                 # %if.end5
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable
 .LBB0_4:                                # %if.then4
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

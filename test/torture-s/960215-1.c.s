@@ -200,16 +200,17 @@ main:                                   # @main
 	i64.load	$push33=, 0($pop32)
 	i64.store	$discard=, Y1+8($0), $pop33
 	i64.store	$discard=, Y1($0), $2
-	block   	.LBB0_2
+	block
 	i64.const	$push34=, 4612108230892453888
 	i32.call	$push35=, __eqtf2@FUNCTION, $12, $13, $1, $pop34
 	i32.const	$push36=, 0
 	i32.eq  	$push37=, $pop35, $pop36
-	br_if   	$pop37, .LBB0_2
+	br_if   	$pop37, 0       # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_2:                                # %if.end
+	end_block                       # label0:
 	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end0:

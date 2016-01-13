@@ -17,12 +17,13 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	i32.store	$discard=, dummy($1), $0
-	block   	.LBB0_2
-	br_if   	$2, .LBB0_2
+	block
+	br_if   	$2, 0           # 0: down to label0
 # BB#1:                                 # %if.end
 	call    	exit@FUNCTION, $1
 	unreachable
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

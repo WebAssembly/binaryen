@@ -7,13 +7,14 @@
 bar:                                    # @bar
 	.param  	i64
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i64.const	$push0=, 0
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -33,7 +34,7 @@ do_test:                                # @do_test
 	copy_local	$9=, $2
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_2
+	loop                            # label1:
 	i64.const	$3=, 4294967295
 	i64.and 	$4=, $8, $3
 	i64.const	$5=, 1
@@ -43,8 +44,9 @@ do_test:                                # @do_test
 	i64.shl 	$push0=, $5, $4
 	i64.and 	$push1=, $pop0, $1
 	i64.eq  	$push2=, $pop1, $6
-	br_if   	$pop2, .LBB1_1
-.LBB1_2:                                # %foo.exit
+	br_if   	$pop2, 0        # 0: up to label1
+# BB#2:                                 # %foo.exit
+	end_loop                        # label2:
 	i64.const	$7=, 32
 	i64.shl 	$push3=, $9, $7
 	i64.shr_s	$push4=, $pop3, $7
@@ -55,15 +57,16 @@ do_test:                                # @do_test
 	copy_local	$9=, $2
 .LBB1_3:                                # %for.cond.i.1
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_4
+	loop                            # label3:
 	i64.and 	$4=, $8, $3
 	i64.add 	$9=, $9, $5
 	i64.add 	$8=, $8, $2
 	i64.shl 	$push5=, $5, $4
 	i64.and 	$push6=, $pop5, $1
 	i64.eq  	$push7=, $pop6, $6
-	br_if   	$pop7, .LBB1_3
-.LBB1_4:                                # %foo.exit.1
+	br_if   	$pop7, 0        # 0: up to label3
+# BB#4:                                 # %foo.exit.1
+	end_loop                        # label4:
 	i64.shl 	$push8=, $9, $7
 	i64.shr_s	$push9=, $pop8, $7
 	call    	bar@FUNCTION, $pop9

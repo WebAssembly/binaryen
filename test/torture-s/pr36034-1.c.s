@@ -83,129 +83,130 @@ main:                                   # @main
 	call    	test@FUNCTION
 	i32.const	$0=, 0
 	f64.const	$1=, -0x1p0
-	block   	.LBB1_31
+	block
 	f64.load	$push29=, tmp($0)
 	f64.eq  	$push30=, $pop29, $1
-	br_if   	$pop30, .LBB1_31
+	br_if   	$pop30, 0       # 0: down to label0
 # BB#1:                                 # %entry
 	f64.load	$push0=, tmp+8($0)
 	f64.eq  	$push31=, $pop0, $1
-	br_if   	$pop31, .LBB1_31
+	br_if   	$pop31, 0       # 0: down to label0
 # BB#2:                                 # %entry
 	f64.load	$push1=, tmp+16($0)
 	f64.eq  	$push32=, $pop1, $1
-	br_if   	$pop32, .LBB1_31
+	br_if   	$pop32, 0       # 0: down to label0
 # BB#3:                                 # %entry
 	f64.load	$push2=, tmp+24($0)
 	f64.eq  	$push33=, $pop2, $1
-	br_if   	$pop33, .LBB1_31
+	br_if   	$pop33, 0       # 0: down to label0
 # BB#4:                                 # %entry
 	f64.load	$push3=, tmp+32($0)
 	f64.eq  	$push34=, $pop3, $1
-	br_if   	$pop34, .LBB1_31
+	br_if   	$pop34, 0       # 0: down to label0
 # BB#5:                                 # %entry
 	f64.load	$push4=, tmp+40($0)
 	f64.eq  	$push35=, $pop4, $1
-	br_if   	$pop35, .LBB1_31
+	br_if   	$pop35, 0       # 0: down to label0
 # BB#6:                                 # %entry
 	f64.load	$push5=, tmp+48($0)
 	f64.eq  	$push36=, $pop5, $1
-	br_if   	$pop36, .LBB1_31
+	br_if   	$pop36, 0       # 0: down to label0
 # BB#7:                                 # %entry
 	f64.load	$push6=, tmp+56($0)
 	f64.eq  	$push37=, $pop6, $1
-	br_if   	$pop37, .LBB1_31
+	br_if   	$pop37, 0       # 0: down to label0
 # BB#8:                                 # %entry
 	f64.load	$push7=, tmp+64($0)
 	f64.eq  	$push38=, $pop7, $1
-	br_if   	$pop38, .LBB1_31
+	br_if   	$pop38, 0       # 0: down to label0
 # BB#9:                                 # %entry
 	f64.load	$push8=, tmp+72($0)
 	f64.eq  	$push39=, $pop8, $1
-	br_if   	$pop39, .LBB1_31
+	br_if   	$pop39, 0       # 0: down to label0
 # BB#10:                                # %entry
 	f64.load	$push9=, tmp+80($0)
 	f64.eq  	$push40=, $pop9, $1
-	br_if   	$pop40, .LBB1_31
+	br_if   	$pop40, 0       # 0: down to label0
 # BB#11:                                # %entry
 	f64.load	$push10=, tmp+88($0)
 	f64.eq  	$push41=, $pop10, $1
-	br_if   	$pop41, .LBB1_31
+	br_if   	$pop41, 0       # 0: down to label0
 # BB#12:                                # %entry
 	f64.load	$push11=, tmp+96($0)
 	f64.eq  	$push42=, $pop11, $1
-	br_if   	$pop42, .LBB1_31
+	br_if   	$pop42, 0       # 0: down to label0
 # BB#13:                                # %entry
 	f64.load	$push12=, tmp+104($0)
 	f64.eq  	$push43=, $pop12, $1
-	br_if   	$pop43, .LBB1_31
+	br_if   	$pop43, 0       # 0: down to label0
 # BB#14:                                # %entry
 	f64.load	$push13=, tmp+112($0)
 	f64.eq  	$push44=, $pop13, $1
-	br_if   	$pop44, .LBB1_31
+	br_if   	$pop44, 0       # 0: down to label0
 # BB#15:                                # %entry
 	f64.load	$push14=, tmp+120($0)
 	f64.eq  	$push45=, $pop14, $1
-	br_if   	$pop45, .LBB1_31
+	br_if   	$pop45, 0       # 0: down to label0
 # BB#16:                                # %entry
 	f64.load	$push15=, tmp+128($0)
 	f64.eq  	$push46=, $pop15, $1
-	br_if   	$pop46, .LBB1_31
+	br_if   	$pop46, 0       # 0: down to label0
 # BB#17:                                # %entry
 	f64.load	$push16=, tmp+136($0)
 	f64.eq  	$push47=, $pop16, $1
-	br_if   	$pop47, .LBB1_31
+	br_if   	$pop47, 0       # 0: down to label0
 # BB#18:                                # %entry
 	f64.load	$push17=, tmp+144($0)
 	f64.eq  	$push48=, $pop17, $1
-	br_if   	$pop48, .LBB1_31
+	br_if   	$pop48, 0       # 0: down to label0
 # BB#19:                                # %entry
 	f64.load	$push18=, tmp+152($0)
 	f64.eq  	$push49=, $pop18, $1
-	br_if   	$pop49, .LBB1_31
+	br_if   	$pop49, 0       # 0: down to label0
 # BB#20:                                # %entry
 	f64.load	$push19=, tmp+160($0)
 	f64.eq  	$push50=, $pop19, $1
-	br_if   	$pop50, .LBB1_31
+	br_if   	$pop50, 0       # 0: down to label0
 # BB#21:                                # %entry
 	f64.load	$push20=, tmp+168($0)
 	f64.eq  	$push51=, $pop20, $1
-	br_if   	$pop51, .LBB1_31
+	br_if   	$pop51, 0       # 0: down to label0
 # BB#22:                                # %entry
 	f64.load	$push21=, tmp+176($0)
 	f64.eq  	$push52=, $pop21, $1
-	br_if   	$pop52, .LBB1_31
+	br_if   	$pop52, 0       # 0: down to label0
 # BB#23:                                # %entry
 	f64.load	$push22=, tmp+184($0)
 	f64.eq  	$push53=, $pop22, $1
-	br_if   	$pop53, .LBB1_31
+	br_if   	$pop53, 0       # 0: down to label0
 # BB#24:                                # %entry
 	f64.load	$push23=, tmp+192($0)
 	f64.eq  	$push54=, $pop23, $1
-	br_if   	$pop54, .LBB1_31
+	br_if   	$pop54, 0       # 0: down to label0
 # BB#25:                                # %entry
 	f64.load	$push24=, tmp+200($0)
 	f64.eq  	$push55=, $pop24, $1
-	br_if   	$pop55, .LBB1_31
+	br_if   	$pop55, 0       # 0: down to label0
 # BB#26:                                # %entry
 	f64.load	$push25=, tmp+208($0)
 	f64.eq  	$push56=, $pop25, $1
-	br_if   	$pop56, .LBB1_31
+	br_if   	$pop56, 0       # 0: down to label0
 # BB#27:                                # %entry
 	f64.load	$push26=, tmp+216($0)
 	f64.eq  	$push57=, $pop26, $1
-	br_if   	$pop57, .LBB1_31
+	br_if   	$pop57, 0       # 0: down to label0
 # BB#28:                                # %entry
 	f64.load	$push27=, tmp+224($0)
 	f64.eq  	$push58=, $pop27, $1
-	br_if   	$pop58, .LBB1_31
+	br_if   	$pop58, 0       # 0: down to label0
 # BB#29:                                # %entry
 	f64.load	$push28=, tmp+232($0)
 	f64.eq  	$push59=, $pop28, $1
-	br_if   	$pop59, .LBB1_31
+	br_if   	$pop59, 0       # 0: down to label0
 # BB#30:                                # %for.cond1.5.4
 	return  	$0
 .LBB1_31:                               # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

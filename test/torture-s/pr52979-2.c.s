@@ -65,19 +65,20 @@ bar:                                    # @bar
 	i32.store8	$discard=, b($6), $7
 	i32.store	$discard=, e($6), $6
 	i32.load	$1=, d($6)
-	block   	.LBB1_2
+	block
 	i64.const	$push5=, 2147483648
 	i64.or  	$push6=, $4, $pop5
 	i64.store32	$discard=, a($3), $pop6
 	i32.const	$push18=, 0
 	i32.eq  	$push19=, $1, $pop18
-	br_if   	$pop19, .LBB1_2
+	br_if   	$pop19, 0       # 0: down to label0
 # BB#1:                                 # %if.then
 	i64.const	$2=, 33
 	i64.shl 	$push16=, $0, $2
 	i64.shr_s	$push17=, $pop16, $2
 	i64.store32	$discard=, c($6), $pop17
 .LBB1_2:                                # %if.end
+	end_block                       # label0:
 	i32.const	$10=, 16
 	i32.add 	$15=, $15, $10
 	i32.const	$10=, __stack_pointer
@@ -141,19 +142,20 @@ baz:                                    # @baz
 	i32.store8	$discard=, b($7), $6
 	i32.store	$discard=, e($7), $7
 	i32.load	$1=, d($7)
-	block   	.LBB2_2
+	block
 	i64.const	$push5=, 2147483648
 	i64.or  	$push6=, $4, $pop5
 	i64.store32	$discard=, a($3), $pop6
 	i32.const	$push20=, 0
 	i32.eq  	$push21=, $1, $pop20
-	br_if   	$pop21, .LBB2_2
+	br_if   	$pop21, 0       # 0: down to label1
 # BB#1:                                 # %if.then.i
 	i64.const	$2=, 33
 	i64.shl 	$push16=, $0, $2
 	i64.shr_s	$push17=, $pop16, $2
 	i64.store32	$discard=, c($7), $pop17
 .LBB2_2:                                # %bar.exit
+	end_block                       # label1:
 	i32.load8_u	$push18=, b+4($7)
 	i32.store8	$discard=, a+4($7), $pop18
 	i32.load8_u	$3=, b+2($7)
@@ -228,19 +230,20 @@ main:                                   # @main
 	i32.store8	$discard=, b($7), $6
 	i32.store	$discard=, e($7), $7
 	i32.load	$1=, d($7)
-	block   	.LBB3_2
+	block
 	i64.const	$push5=, 2147483648
 	i64.or  	$push6=, $4, $pop5
 	i64.store32	$discard=, a($3), $pop6
 	i32.const	$push24=, 0
 	i32.eq  	$push25=, $1, $pop24
-	br_if   	$pop25, .LBB3_2
+	br_if   	$pop25, 0       # 0: down to label2
 # BB#1:                                 # %if.then.i.i
 	i64.const	$2=, 33
 	i64.shl 	$push16=, $0, $2
 	i64.shr_s	$push17=, $pop16, $2
 	i64.store32	$discard=, c($7), $pop17
 .LBB3_2:                                # %baz.exit
+	end_block                       # label2:
 	i32.load8_u	$push18=, b+4($7)
 	i32.store8	$discard=, a+4($7), $pop18
 	i32.load8_u	$3=, b+2($7)
@@ -252,12 +255,12 @@ main:                                   # @main
 	i32.store8	$discard=, a+1($7), $1
 	i32.store8	$discard=, a($7), $5
 	i64.const	$2=, 33
-	block   	.LBB3_4
+	block
 	i64.load32_u	$push20=, a($7)
 	i64.shl 	$push21=, $pop20, $2
 	i64.shr_s	$push22=, $pop21, $2
 	i32.wrap/i64	$push23=, $pop22
-	br_if   	$pop23, .LBB3_4
+	br_if   	$pop23, 0       # 0: down to label3
 # BB#3:                                 # %if.end
 	i32.const	$10=, 16
 	i32.add 	$15=, $15, $10
@@ -265,6 +268,7 @@ main:                                   # @main
 	i32.store	$15=, 0($10), $15
 	return  	$7
 .LBB3_4:                                # %if.then
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:

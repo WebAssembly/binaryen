@@ -8,17 +8,18 @@ f:                                      # @f
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 31
 	i32.shr_s	$1=, $0, $pop0
 	i32.add 	$push1=, $0, $1
 	i32.xor 	$push2=, $pop1, $1
 	i32.const	$push3=, -1
 	i32.gt_s	$push4=, $pop2, $pop3
-	br_if   	$pop4, .LBB0_2
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	return
 .LBB0_2:                                # %if.end
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

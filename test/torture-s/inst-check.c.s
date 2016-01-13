@@ -10,10 +10,10 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$1=, -1
 	i32.add 	$push2=, $0, $1
@@ -28,6 +28,7 @@ f:                                      # @f
 	i32.add 	$push11=, $pop10, $0
 	i32.add 	$1=, $pop11, $1
 .LBB0_2:                                # %for.end
+	end_block                       # label0:
 	return  	$1
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

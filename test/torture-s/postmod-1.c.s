@@ -25,7 +25,7 @@ foo:                                    # @foo
 .LBB0_1:                                # %do.body
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_2 Depth 2
-	loop    	.LBB0_4
+	loop                            # label0:
 	i32.const	$0=, 0
 	f32.load	$8=, 0($23)
 	f32.load	$9=, counter1($0)
@@ -91,7 +91,7 @@ foo:                                    # @foo
 .LBB0_2:                                # %for.body
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	.LBB0_3
+	loop                            # label2:
 	i32.load	$push32=, vol($0)
 	i32.add 	$push33=, $pop32, $1
 	i32.store	$discard=, vol($0), $pop33
@@ -109,14 +109,16 @@ foo:                                    # @foo
 	i32.store	$discard=, vol($0), $pop41
 	i32.const	$push42=, -1
 	i32.add 	$25=, $25, $pop42
-	br_if   	$25, .LBB0_2
-.LBB0_3:                                # %for.end
+	br_if   	$25, 0          # 0: up to label2
+# BB#3:                                 # %for.end
                                         #   in Loop: Header=BB0_1 Depth=1
+	end_loop                        # label3:
 	i32.load	$push43=, stop($0)
 	i32.const	$push44=, 0
 	i32.eq  	$push45=, $pop43, $pop44
-	br_if   	$pop45, .LBB0_1
-.LBB0_4:                                # %do.end
+	br_if   	$pop45, 0       # 0: up to label0
+# BB#4:                                 # %do.end
+	end_loop                        # label1:
 	return
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

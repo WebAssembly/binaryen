@@ -23,32 +23,42 @@ foo:                                    # @foo
 	i32.const	$push0=, -10
 	i32.add 	$0=, $0, $pop0
                                         # implicit-def: %vreg13
-	block   	.LBB1_7
+	block
 	i32.const	$push1=, 4
 	i32.gt_u	$push2=, $0, $pop1
-	br_if   	$pop2, .LBB1_7
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %entry
-	block   	.LBB1_6
-	block   	.LBB1_5
-	block   	.LBB1_4
-	block   	.LBB1_3
-	block   	.LBB1_2
-	tableswitch	$0, .LBB1_2, .LBB1_2, .LBB1_3, .LBB1_4, .LBB1_5, .LBB1_6
+	block
+	block
+	block
+	block
+	block
+	tableswitch	$0, 0, 0, 1, 2, 3, 4 # 0: down to label5
+                                        # 1: down to label4
+                                        # 2: down to label3
+                                        # 3: down to label2
+                                        # 4: down to label1
 .LBB1_2:                                # %sw.bb
+	end_block                       # label5:
 	i32.load	$2=, 0($1)
-	br      	.LBB1_7
+	br      	4               # 4: down to label0
 .LBB1_3:                                # %sw.bb1
+	end_block                       # label4:
 	i32.load	$2=, 0($1)
-	br      	.LBB1_7
+	br      	3               # 3: down to label0
 .LBB1_4:                                # %sw.bb2
+	end_block                       # label3:
 	i32.load	$2=, 0($1)
-	br      	.LBB1_7
+	br      	2               # 2: down to label0
 .LBB1_5:                                # %sw.bb3
+	end_block                       # label2:
 	i32.load	$2=, 0($1)
-	br      	.LBB1_7
+	br      	1               # 1: down to label0
 .LBB1_6:                                # %sw.bb4
+	end_block                       # label1:
 	i32.load	$2=, 0($1)
 .LBB1_7:                                # %sw.epilog
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

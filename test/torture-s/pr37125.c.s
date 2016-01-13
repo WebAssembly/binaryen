@@ -9,15 +9,16 @@ func_44:                                # @func_44
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, -9
-	block   	.LBB0_2
+	block
 	i32.mul 	$push0=, $0, $1
 	i32.rem_u	$push1=, $pop0, $1
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB0_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

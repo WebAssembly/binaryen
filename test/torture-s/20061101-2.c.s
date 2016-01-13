@@ -8,14 +8,15 @@ tar:                                    # @tar
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 36863
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, -1
 	return  	$pop2
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -36,12 +37,12 @@ bug:                                    # @bug
 	copy_local	$4=, $3
 .LBB1_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	block   	.LBB1_4
-	loop    	.LBB1_3
+	block
+	loop                            # label2:
 	i32.and 	$push1=, $4, $3
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $pop1, $pop8
-	br_if   	$pop9, .LBB1_4
+	br_if   	$pop9, 2        # 2: down to label1
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.lt_s	$push4=, $0, $2
@@ -52,11 +53,13 @@ bug:                                    # @bug
 	i32.mul 	$push5=, $0, $1
 	i32.const	$push6=, 36863
 	i32.eq  	$push7=, $pop5, $pop6
-	br_if   	$pop7, .LBB1_1
-.LBB1_3:                                # %if.then.i
+	br_if   	$pop7, 0        # 0: up to label2
+# BB#3:                                 # %if.then.i
+	end_loop                        # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %while.end
+	end_block                       # label1:
 	return
 .Lfunc_end1:
 	.size	bug, .Lfunc_end1-bug

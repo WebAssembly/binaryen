@@ -23,15 +23,16 @@ f1:                                     # @f1
 	.local  	f32, i32
 # BB#0:                                 # %entry
 	f32.const	$2=, 0x0p0
-	block   	.LBB1_3
+	block
 	f32.ne  	$push0=, $0, $2
-	br_if   	$pop0, .LBB1_3
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	f32.ne  	$push1=, $1, $2
-	br_if   	$pop1, .LBB1_3
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	return  	$3
 .LBB1_3:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -47,15 +48,16 @@ f2:                                     # @f2
 	.local  	f32, i32
 # BB#0:                                 # %entry
 	f32.const	$2=, 0x1p0
-	block   	.LBB2_3
+	block
 	f32.ne  	$push0=, $0, $2
-	br_if   	$pop0, .LBB2_3
+	br_if   	$pop0, 0        # 0: down to label1
 # BB#1:                                 # %entry
 	f32.ne  	$push1=, $1, $2
-	br_if   	$pop1, .LBB2_3
+	br_if   	$pop1, 0        # 0: down to label1
 # BB#2:                                 # %if.end
 	return  	$3
 .LBB2_3:                                # %if.then
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
@@ -71,35 +73,35 @@ gitter:                                 # @gitter
 	.local  	f32, f32, f64, f64
 # BB#0:                                 # %entry
 	f32.const	$7=, 0x0p0
-	block   	.LBB3_9
+	block
 	f32.load	$push1=, 0($4)
 	f32.ne  	$push2=, $pop1, $7
-	br_if   	$pop2, .LBB3_9
+	br_if   	$pop2, 0        # 0: down to label2
 # BB#1:                                 # %entry
 	f32.load	$push0=, 4($4)
 	f32.ne  	$push3=, $pop0, $7
-	br_if   	$pop3, .LBB3_9
+	br_if   	$pop3, 0        # 0: down to label2
 # BB#2:                                 # %f1.exit
 	f32.const	$6=, 0x1p0
-	block   	.LBB3_8
+	block
 	f32.load	$push5=, 8($4)
 	f32.ne  	$push8=, $pop5, $6
-	br_if   	$pop8, .LBB3_8
+	br_if   	$pop8, 0        # 0: down to label3
 # BB#3:                                 # %f1.exit
 	i32.const	$push6=, 12
 	i32.add 	$push7=, $4, $pop6
 	f32.load	$push4=, 0($pop7)
 	f32.ne  	$push9=, $pop4, $6
-	br_if   	$pop9, .LBB3_8
+	br_if   	$pop9, 0        # 0: down to label3
 # BB#4:                                 # %f2.exit
 	i32.const	$push10=, 0
 	i32.store	$discard=, 0($3), $pop10
 	f32.load	$6=, 0($1)
-	block   	.LBB3_7
+	block
 	f32.gt  	$push11=, $6, $7
 	f32.ne  	$push12=, $6, $6
 	i32.or  	$push13=, $pop11, $pop12
-	br_if   	$pop13, .LBB3_7
+	br_if   	$pop13, 0       # 0: down to label4
 # BB#5:                                 # %if.then
 	f64.promote/f32	$push14=, $5
 	f64.const	$push15=, 0x1p-1
@@ -110,16 +112,19 @@ gitter:                                 # @gitter
 	f64.ne  	$push17=, $9, $9
 	i32.or  	$push19=, $pop18, $pop17
 	i32.or  	$push20=, $pop16, $pop19
-	br_if   	$pop20, .LBB3_7
+	br_if   	$pop20, 0       # 0: down to label4
 # BB#6:                                 # %if.then15
 	i32.const	$push21=, 1065353216
 	i32.store	$discard=, 0($2), $pop21
 .LBB3_7:                                # %if.end18
+	end_block                       # label4:
 	return  	$4
 .LBB3_8:                                # %if.then.i32
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_9:                                # %if.then.i
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
@@ -135,31 +140,33 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	f32.const	$1=, 0x0p0
-	block   	.LBB4_6
+	block
 	f32.load	$push1=, limit($0)
 	f32.ne  	$push2=, $pop1, $1
-	br_if   	$pop2, .LBB4_6
+	br_if   	$pop2, 0        # 0: down to label5
 # BB#1:                                 # %entry
 	f32.load	$push0=, limit+4($0)
 	f32.ne  	$push3=, $pop0, $1
-	br_if   	$pop3, .LBB4_6
+	br_if   	$pop3, 0        # 0: down to label5
 # BB#2:                                 # %f1.exit.i
 	f32.const	$1=, 0x1p0
-	block   	.LBB4_5
+	block
 	f32.load	$push5=, limit+8($0)
 	f32.ne  	$push6=, $pop5, $1
-	br_if   	$pop6, .LBB4_5
+	br_if   	$pop6, 0        # 0: down to label6
 # BB#3:                                 # %f1.exit.i
 	f32.load	$push4=, limit+12($0)
 	f32.ne  	$push7=, $pop4, $1
-	br_if   	$pop7, .LBB4_5
+	br_if   	$pop7, 0        # 0: down to label6
 # BB#4:                                 # %f2.exit.i
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB4_5:                                # %if.then.i32.i
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .LBB4_6:                                # %if.then.i.i
+	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end4:

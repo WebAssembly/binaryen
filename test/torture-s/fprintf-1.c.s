@@ -18,39 +18,39 @@ main:                                   # @main
 	i32.const	$1=, .L.str
 	i32.const	$2=, 1
 	i32.const	$3=, 5
-	block   	.LBB0_22
+	block
 	i32.load	$push0=, stdout($0)
 	i32.call	$discard=, fwrite@FUNCTION, $1, $3, $2, $pop0
 	i32.load	$push1=, stdout($0)
 	i32.call	$4=, fiprintf@FUNCTION, $pop1, $1
 	i32.ne  	$push2=, $4, $3
-	br_if   	$pop2, .LBB0_22
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$4=, .L.str.1
 	i32.const	$5=, 6
-	block   	.LBB0_21
+	block
 	i32.load	$push3=, stdout($0)
 	i32.call	$discard=, fwrite@FUNCTION, $4, $5, $2, $pop3
 	i32.load	$push4=, stdout($0)
 	i32.call	$10=, fiprintf@FUNCTION, $pop4, $4
 	i32.ne  	$push5=, $10, $5
-	br_if   	$pop5, .LBB0_21
+	br_if   	$pop5, 0        # 0: down to label1
 # BB#2:                                 # %if.end6
 	i32.const	$6=, 97
 	i32.load	$push6=, stdout($0)
 	i32.call	$discard=, fputc@FUNCTION, $6, $pop6
 	i32.const	$7=, .L.str.2
-	block   	.LBB0_20
+	block
 	i32.load	$push7=, stdout($0)
 	i32.call	$10=, fiprintf@FUNCTION, $pop7, $7
 	i32.ne  	$push8=, $10, $2
-	br_if   	$pop8, .LBB0_20
+	br_if   	$pop8, 0        # 0: down to label2
 # BB#3:                                 # %if.end11
 	i32.const	$8=, .L.str.3
-	block   	.LBB0_19
+	block
 	i32.load	$push9=, stdout($0)
 	i32.call	$10=, fiprintf@FUNCTION, $pop9, $8
-	br_if   	$10, .LBB0_19
+	br_if   	$10, 0          # 0: down to label3
 # BB#4:                                 # %if.end16
 	i32.load	$push10=, stdout($0)
 	i32.call	$discard=, fwrite@FUNCTION, $1, $3, $2, $pop10
@@ -70,9 +70,9 @@ main:                                   # @main
 	i32.add 	$50=, $13, $14
 	i32.const	$14=, __stack_pointer
 	i32.store	$50=, 0($14), $50
-	block   	.LBB0_18
+	block
 	i32.ne  	$push11=, $1, $3
-	br_if   	$pop11, .LBB0_18
+	br_if   	$pop11, 0       # 0: down to label4
 # BB#5:                                 # %if.end21
 	i32.load	$push12=, stdout($0)
 	i32.call	$discard=, fwrite@FUNCTION, $4, $5, $2, $pop12
@@ -91,9 +91,9 @@ main:                                   # @main
 	i32.add 	$50=, $17, $18
 	i32.const	$18=, __stack_pointer
 	i32.store	$50=, 0($18), $50
-	block   	.LBB0_17
+	block
 	i32.ne  	$push13=, $1, $5
-	br_if   	$pop13, .LBB0_17
+	br_if   	$pop13, 0       # 0: down to label5
 # BB#6:                                 # %if.end26
 	i32.load	$push14=, stdout($0)
 	i32.call	$discard=, fputc@FUNCTION, $6, $pop14
@@ -112,9 +112,9 @@ main:                                   # @main
 	i32.add 	$50=, $21, $22
 	i32.const	$22=, __stack_pointer
 	i32.store	$50=, 0($22), $50
-	block   	.LBB0_16
+	block
 	i32.ne  	$push15=, $1, $2
-	br_if   	$pop15, .LBB0_16
+	br_if   	$pop15, 0       # 0: down to label6
 # BB#7:                                 # %if.end31
 	i32.load	$1=, stdout($0)
 	i32.const	$23=, __stack_pointer
@@ -131,8 +131,8 @@ main:                                   # @main
 	i32.add 	$50=, $25, $26
 	i32.const	$26=, __stack_pointer
 	i32.store	$50=, 0($26), $50
-	block   	.LBB0_15
-	br_if   	$1, .LBB0_15
+	block
+	br_if   	$1, 0           # 0: down to label7
 # BB#8:                                 # %if.end36
 	i32.const	$1=, 120
 	i32.load	$push16=, stdout($0)
@@ -153,9 +153,9 @@ main:                                   # @main
 	i32.add 	$50=, $29, $30
 	i32.const	$30=, __stack_pointer
 	i32.store	$50=, 0($30), $50
-	block   	.LBB0_14
+	block
 	i32.ne  	$push18=, $1, $2
-	br_if   	$pop18, .LBB0_14
+	br_if   	$pop18, 0       # 0: down to label8
 # BB#9:                                 # %if.end41
 	i32.load	$1=, stdout($0)
 	i32.const	$31=, __stack_pointer
@@ -188,10 +188,10 @@ main:                                   # @main
 	i32.add 	$50=, $37, $38
 	i32.const	$38=, __stack_pointer
 	i32.store	$50=, 0($38), $50
-	block   	.LBB0_13
+	block
 	i32.const	$push19=, 7
 	i32.ne  	$push20=, $2, $pop19
-	br_if   	$pop20, .LBB0_13
+	br_if   	$pop20, 0       # 0: down to label9
 # BB#10:                                # %if.end46
 	i32.load	$1=, stdout($0)
 	i32.const	$39=, __stack_pointer
@@ -224,10 +224,10 @@ main:                                   # @main
 	i32.add 	$50=, $45, $46
 	i32.const	$46=, __stack_pointer
 	i32.store	$50=, 0($46), $50
-	block   	.LBB0_12
+	block
 	i32.const	$push21=, 2
 	i32.ne  	$push22=, $0, $pop21
-	br_if   	$pop22, .LBB0_12
+	br_if   	$pop22, 0       # 0: down to label10
 # BB#11:                                # %if.end51
 	i32.const	$49=, 16
 	i32.add 	$50=, $50, $49
@@ -235,36 +235,47 @@ main:                                   # @main
 	i32.store	$50=, 0($49), $50
 	return  	$3
 .LBB0_12:                               # %if.then50
+	end_block                       # label10:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_13:                               # %if.then45
+	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_14:                               # %if.then40
+	end_block                       # label8:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_15:                               # %if.then35
+	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_16:                               # %if.then30
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_17:                               # %if.then25
+	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_18:                               # %if.then20
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_19:                               # %if.then15
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_20:                               # %if.then10
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_21:                               # %if.then5
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_22:                               # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

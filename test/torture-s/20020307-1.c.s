@@ -9,13 +9,14 @@ f3:                                     # @f3
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 6
-	block   	.LBB0_2
+	block
 	i32.and 	$push0=, $0, $1
 	i32.ge_u	$push1=, $pop0, $1
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -28,15 +29,16 @@ f3:                                     # @f3
 f4:                                     # @f4
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 14
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 10
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB1_2
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -49,15 +51,16 @@ f4:                                     # @f4
 f5:                                     # @f5
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i32.const	$push0=, 30
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 18
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB2_2
+	br_if   	$pop3, 0        # 0: down to label2
 # BB#1:                                 # %if.end
 	return
 .LBB2_2:                                # %if.then
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:
@@ -70,15 +73,16 @@ f5:                                     # @f5
 f6:                                     # @f6
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB3_2
+	block
 	i32.const	$push0=, 62
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 34
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB3_2
+	br_if   	$pop3, 0        # 0: down to label3
 # BB#1:                                 # %if.end
 	return
 .LBB3_2:                                # %if.then
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
@@ -91,15 +95,16 @@ f6:                                     # @f6
 f7:                                     # @f7
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB4_2
+	block
 	i32.const	$push0=, 126
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 66
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB4_2
+	br_if   	$pop3, 0        # 0: down to label4
 # BB#1:                                 # %if.end
 	return
 .LBB4_2:                                # %if.then
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end4:
@@ -112,15 +117,16 @@ f7:                                     # @f7
 f8:                                     # @f8
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB5_2
+	block
 	i32.const	$push0=, 254
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 130
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB5_2
+	br_if   	$pop3, 0        # 0: down to label5
 # BB#1:                                 # %if.end
 	return
 .LBB5_2:                                # %if.then
+	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end5:
@@ -133,15 +139,16 @@ f8:                                     # @f8
 f9:                                     # @f9
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB6_2
+	block
 	i32.const	$push0=, 510
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 258
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB6_2
+	br_if   	$pop3, 0        # 0: down to label6
 # BB#1:                                 # %if.end
 	return
 .LBB6_2:                                # %if.then
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end6:
@@ -154,15 +161,16 @@ f9:                                     # @f9
 f10:                                    # @f10
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB7_2
+	block
 	i32.const	$push0=, 1022
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 514
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB7_2
+	br_if   	$pop3, 0        # 0: down to label7
 # BB#1:                                 # %if.end
 	return
 .LBB7_2:                                # %if.then
+	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end7:
@@ -175,15 +183,16 @@ f10:                                    # @f10
 f11:                                    # @f11
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB8_2
+	block
 	i32.const	$push0=, 2046
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1026
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB8_2
+	br_if   	$pop3, 0        # 0: down to label8
 # BB#1:                                 # %if.end
 	return
 .LBB8_2:                                # %if.then
+	end_block                       # label8:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end8:
@@ -196,15 +205,16 @@ f11:                                    # @f11
 f12:                                    # @f12
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB9_2
+	block
 	i32.const	$push0=, 4094
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 2050
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB9_2
+	br_if   	$pop3, 0        # 0: down to label9
 # BB#1:                                 # %if.end
 	return
 .LBB9_2:                                # %if.then
+	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end9:
@@ -217,15 +227,16 @@ f12:                                    # @f12
 f13:                                    # @f13
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB10_2
+	block
 	i32.const	$push0=, 8190
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 4098
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB10_2
+	br_if   	$pop3, 0        # 0: down to label10
 # BB#1:                                 # %if.end
 	return
 .LBB10_2:                               # %if.then
+	end_block                       # label10:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end10:
@@ -238,15 +249,16 @@ f13:                                    # @f13
 f14:                                    # @f14
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB11_2
+	block
 	i32.const	$push0=, 16382
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 8194
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB11_2
+	br_if   	$pop3, 0        # 0: down to label11
 # BB#1:                                 # %if.end
 	return
 .LBB11_2:                               # %if.then
+	end_block                       # label11:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end11:
@@ -259,15 +271,16 @@ f14:                                    # @f14
 f15:                                    # @f15
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB12_2
+	block
 	i32.const	$push0=, 32766
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 16386
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB12_2
+	br_if   	$pop3, 0        # 0: down to label12
 # BB#1:                                 # %if.end
 	return
 .LBB12_2:                               # %if.then
+	end_block                       # label12:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end12:
@@ -280,15 +293,16 @@ f15:                                    # @f15
 f16:                                    # @f16
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB13_2
+	block
 	i32.const	$push0=, 65534
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 32770
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB13_2
+	br_if   	$pop3, 0        # 0: down to label13
 # BB#1:                                 # %if.end
 	return
 .LBB13_2:                               # %if.then
+	end_block                       # label13:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end13:
@@ -301,15 +315,16 @@ f16:                                    # @f16
 f17:                                    # @f17
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB14_2
+	block
 	i32.const	$push0=, 131070
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 65538
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB14_2
+	br_if   	$pop3, 0        # 0: down to label14
 # BB#1:                                 # %if.end
 	return
 .LBB14_2:                               # %if.then
+	end_block                       # label14:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end14:
@@ -322,15 +337,16 @@ f17:                                    # @f17
 f18:                                    # @f18
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB15_2
+	block
 	i32.const	$push0=, 262142
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 131074
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB15_2
+	br_if   	$pop3, 0        # 0: down to label15
 # BB#1:                                 # %if.end
 	return
 .LBB15_2:                               # %if.then
+	end_block                       # label15:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end15:
@@ -343,15 +359,16 @@ f18:                                    # @f18
 f19:                                    # @f19
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB16_2
+	block
 	i32.const	$push0=, 524286
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 262146
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB16_2
+	br_if   	$pop3, 0        # 0: down to label16
 # BB#1:                                 # %if.end
 	return
 .LBB16_2:                               # %if.then
+	end_block                       # label16:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end16:
@@ -364,15 +381,16 @@ f19:                                    # @f19
 f20:                                    # @f20
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB17_2
+	block
 	i32.const	$push0=, 1048574
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 524290
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB17_2
+	br_if   	$pop3, 0        # 0: down to label17
 # BB#1:                                 # %if.end
 	return
 .LBB17_2:                               # %if.then
+	end_block                       # label17:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end17:
@@ -385,15 +403,16 @@ f20:                                    # @f20
 f21:                                    # @f21
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB18_2
+	block
 	i32.const	$push0=, 2097150
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1048578
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB18_2
+	br_if   	$pop3, 0        # 0: down to label18
 # BB#1:                                 # %if.end
 	return
 .LBB18_2:                               # %if.then
+	end_block                       # label18:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end18:
@@ -406,15 +425,16 @@ f21:                                    # @f21
 f22:                                    # @f22
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB19_2
+	block
 	i32.const	$push0=, 4194302
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 2097154
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB19_2
+	br_if   	$pop3, 0        # 0: down to label19
 # BB#1:                                 # %if.end
 	return
 .LBB19_2:                               # %if.then
+	end_block                       # label19:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end19:
@@ -427,15 +447,16 @@ f22:                                    # @f22
 f23:                                    # @f23
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB20_2
+	block
 	i32.const	$push0=, 8388606
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 4194306
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB20_2
+	br_if   	$pop3, 0        # 0: down to label20
 # BB#1:                                 # %if.end
 	return
 .LBB20_2:                               # %if.then
+	end_block                       # label20:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end20:
@@ -448,15 +469,16 @@ f23:                                    # @f23
 f24:                                    # @f24
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB21_2
+	block
 	i32.const	$push0=, 16777214
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 8388610
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB21_2
+	br_if   	$pop3, 0        # 0: down to label21
 # BB#1:                                 # %if.end
 	return
 .LBB21_2:                               # %if.then
+	end_block                       # label21:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end21:
@@ -469,15 +491,16 @@ f24:                                    # @f24
 f25:                                    # @f25
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB22_2
+	block
 	i32.const	$push0=, 33554430
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 16777218
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB22_2
+	br_if   	$pop3, 0        # 0: down to label22
 # BB#1:                                 # %if.end
 	return
 .LBB22_2:                               # %if.then
+	end_block                       # label22:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end22:
@@ -490,15 +513,16 @@ f25:                                    # @f25
 f26:                                    # @f26
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB23_2
+	block
 	i32.const	$push0=, 67108862
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 33554434
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB23_2
+	br_if   	$pop3, 0        # 0: down to label23
 # BB#1:                                 # %if.end
 	return
 .LBB23_2:                               # %if.then
+	end_block                       # label23:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end23:
@@ -511,15 +535,16 @@ f26:                                    # @f26
 f27:                                    # @f27
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB24_2
+	block
 	i32.const	$push0=, 134217726
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 67108866
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB24_2
+	br_if   	$pop3, 0        # 0: down to label24
 # BB#1:                                 # %if.end
 	return
 .LBB24_2:                               # %if.then
+	end_block                       # label24:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end24:
@@ -532,15 +557,16 @@ f27:                                    # @f27
 f28:                                    # @f28
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB25_2
+	block
 	i32.const	$push0=, 268435454
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 134217730
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB25_2
+	br_if   	$pop3, 0        # 0: down to label25
 # BB#1:                                 # %if.end
 	return
 .LBB25_2:                               # %if.then
+	end_block                       # label25:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end25:
@@ -553,15 +579,16 @@ f28:                                    # @f28
 f29:                                    # @f29
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB26_2
+	block
 	i32.const	$push0=, 536870910
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 268435458
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB26_2
+	br_if   	$pop3, 0        # 0: down to label26
 # BB#1:                                 # %if.end
 	return
 .LBB26_2:                               # %if.then
+	end_block                       # label26:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end26:
@@ -574,15 +601,16 @@ f29:                                    # @f29
 f30:                                    # @f30
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB27_2
+	block
 	i32.const	$push0=, 1073741822
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 536870914
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB27_2
+	br_if   	$pop3, 0        # 0: down to label27
 # BB#1:                                 # %if.end
 	return
 .LBB27_2:                               # %if.then
+	end_block                       # label27:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end27:
@@ -595,15 +623,16 @@ f30:                                    # @f30
 f31:                                    # @f31
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB28_2
+	block
 	i32.const	$push0=, 2147483646
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1073741826
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB28_2
+	br_if   	$pop3, 0        # 0: down to label28
 # BB#1:                                 # %if.end
 	return
 .LBB28_2:                               # %if.then
+	end_block                       # label28:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end28:

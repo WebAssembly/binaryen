@@ -52,31 +52,32 @@ check:                                  # @check
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB3_6
+	block
 	i32.load	$push0=, 0($1)
-	br_if   	$pop0, .LBB3_6
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push1=, 4($1)
-	br_if   	$pop1, .LBB3_6
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false2
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $1, $pop2
 	i32.load	$push4=, 0($pop3)
-	br_if   	$pop4, .LBB3_6
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false5
 	i32.const	$push5=, 12
 	i32.add 	$push6=, $1, $pop5
 	i32.load	$push7=, 0($pop6)
-	br_if   	$pop7, .LBB3_6
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#4:                                 # %lor.lhs.false8
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $1, $pop8
 	i32.load8_u	$push10=, 0($pop9)
-	br_if   	$pop10, .LBB3_6
+	br_if   	$pop10, 0       # 0: down to label0
 # BB#5:                                 # %if.end
 	i32.const	$push11=, 1
 	return  	$pop11
 .LBB3_6:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:
@@ -91,18 +92,18 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %for.cond
-	block   	.LBB4_4
-	block   	.LBB4_3
+	block
+	block
 	i32.const	$push0=, 0
 	i32.store	$3=, 0($2), $pop0
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $1, $pop8
-	br_if   	$pop9, .LBB4_3
+	br_if   	$pop9, 0        # 0: down to label2
 # BB#1:                                 # %for.body
 	i32.const	$2=, 1
 	i32.load	$push1=, 0($0)
 	i32.ne  	$push2=, $pop1, $2
-	br_if   	$pop2, .LBB4_4
+	br_if   	$pop2, 1        # 1: down to label1
 # BB#2:                                 # %sw.bb
 	i64.const	$push3=, 6148914691236517205
 	i64.store	$push4=, baz.v+16($3), $pop3
@@ -123,8 +124,10 @@ foo:                                    # @foo
 	i32.call	$discard=, dummy2@FUNCTION, $2, $2
 	unreachable
 .LBB4_3:                                # %for.end
+	end_block                       # label2:
 	i32.store	$2=, 0($2), $3
 .LBB4_4:                                # %cleanup2
+	end_block                       # label1:
 	return  	$2
 .Lfunc_end4:
 	.size	foo, .Lfunc_end4-foo

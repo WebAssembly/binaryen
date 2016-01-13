@@ -20,15 +20,16 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 0
 	i32.load	$push1=, s($pop0)
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB1_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %sw.epilog
 	return  	$0
 .LBB1_2:                                # %sw.bb
+	end_block                       # label0:
 	i32.call	$discard=, p@FUNCTION
 	unreachable
 .Lfunc_end1:

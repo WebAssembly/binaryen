@@ -13,15 +13,16 @@ bar:                                    # @bar
 	i32.add 	$push1=, $0, $pop0
 	i32.select	$2=, $2, $0, $pop1
 	i32.load	$4=, 0($2)
-	block   	.LBB0_2
+	block
 	i32.const	$push2=, 1
 	i32.store	$discard=, 0($0), $pop2
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $3, $pop4
-	br_if   	$pop5, .LBB0_2
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.then3
 	i32.load	$1=, 0($2)
 .LBB0_2:                                # %if.end5
+	end_block                       # label0:
 	i32.add 	$push3=, $1, $4
 	return  	$pop3
 .Lfunc_end0:

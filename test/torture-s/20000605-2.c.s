@@ -10,16 +10,16 @@ f1:                                     # @f1
 # BB#0:                                 # %entry
 	i32.load	$2=, 0($0)
 	i32.const	$4=, 0
-	block   	.LBB0_4
+	block
 	i32.load	$push0=, 0($1)
 	i32.ge_s	$push1=, $2, $pop0
-	br_if   	$pop1, .LBB0_4
+	br_if   	$pop1, 0        # 0: down to label0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label1:
 	i32.const	$push2=, 5
 	i32.ge_s	$push3=, $4, $pop2
-	br_if   	$pop3, .LBB0_3
+	br_if   	$pop3, 1        # 1: down to label2
 # BB#2:                                 # %for.inc
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$3=, 1
@@ -31,12 +31,14 @@ f1:                                     # @f1
 	i32.add 	$push7=, $2, $3
 	i32.load	$push6=, 0($1)
 	i32.lt_s	$push8=, $pop7, $pop6
-	br_if   	$pop8, .LBB0_1
-	br      	.LBB0_4
+	br_if   	$pop8, 0        # 0: up to label1
+	br      	2               # 2: down to label0
 .LBB0_3:                                # %if.then
+	end_loop                        # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %for.end
+	end_block                       # label0:
 	return
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1

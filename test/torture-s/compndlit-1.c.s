@@ -9,7 +9,7 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB0_2
+	block
 	i32.load	$push0=, x($0)
 	i32.const	$push1=, 7
 	i32.and 	$push2=, $pop0, $pop1
@@ -21,11 +21,12 @@ main:                                   # @main
 	i32.store	$discard=, x($0), $pop6
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $1, $pop7
-	br_if   	$pop8, .LBB0_2
+	br_if   	$pop8, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

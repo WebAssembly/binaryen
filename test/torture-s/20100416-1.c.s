@@ -31,44 +31,45 @@ main:                                   # @main
 	i64.const	$1=, -1152921504606846977
 	i32.const	$2=, 1
 	i32.const	$3=, -1
-	block   	.LBB1_6
+	block
 	i64.load	$push0=, tests($0)
 	i64.gt_s	$push1=, $pop0, $1
 	i32.select	$push2=, $pop1, $3, $2
 	i32.load	$push3=, tests+8($0)
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, .LBB1_6
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %for.cond
 	i64.load	$push5=, tests+16($0)
 	i64.gt_s	$push6=, $pop5, $1
 	i32.select	$push7=, $pop6, $3, $2
 	i32.load	$push8=, tests+24($0)
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, .LBB1_6
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#2:                                 # %for.cond.1
 	i64.load	$push10=, tests+32($0)
 	i64.gt_s	$push11=, $pop10, $1
 	i32.select	$push12=, $pop11, $3, $2
 	i32.load	$push13=, tests+40($0)
 	i32.ne  	$push14=, $pop12, $pop13
-	br_if   	$pop14, .LBB1_6
+	br_if   	$pop14, 0       # 0: down to label0
 # BB#3:                                 # %for.cond.2
 	i64.load	$push15=, tests+48($0)
 	i64.gt_s	$push16=, $pop15, $1
 	i32.select	$push17=, $pop16, $3, $2
 	i32.load	$push18=, tests+56($0)
 	i32.ne  	$push19=, $pop17, $pop18
-	br_if   	$pop19, .LBB1_6
+	br_if   	$pop19, 0       # 0: down to label0
 # BB#4:                                 # %for.cond.3
 	i64.load	$push20=, tests+64($0)
 	i64.gt_s	$push21=, $pop20, $1
 	i32.select	$push22=, $pop21, $3, $2
 	i32.load	$push23=, tests+72($0)
 	i32.ne  	$push24=, $pop22, $pop23
-	br_if   	$pop24, .LBB1_6
+	br_if   	$pop24, 0       # 0: down to label0
 # BB#5:                                 # %for.cond.4
 	return  	$0
 .LBB1_6:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

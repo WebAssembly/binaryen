@@ -28,12 +28,13 @@ main:                                   # @main
 	i32.load	$1=, a($0)
 	i32.load	$2=, c($0)
 	i32.store	$discard=, b($0), $0
-	block   	.LBB1_2
+	block
 	i32.le_s	$push0=, $1, $2
-	br_if   	$pop0, .LBB1_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

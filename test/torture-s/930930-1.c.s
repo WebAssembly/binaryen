@@ -10,20 +10,20 @@ f:                                      # @f
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	copy_local	$6=, $0
-	block   	.LBB0_7
+	block
 	i32.lt_u	$push0=, $3, $4
-	br_if   	$pop0, .LBB0_7
+	br_if   	$pop0, 0        # 0: down to label0
 .LBB0_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_5
+	loop                            # label1:
 	i32.load	$5=, 0($3)
-	block   	.LBB0_4
+	block
 	i32.ge_u	$push1=, $5, $2
-	br_if   	$pop1, .LBB0_4
+	br_if   	$pop1, 0        # 0: down to label3
 # BB#2:                                 # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.lt_u	$push2=, $5, $1
-	br_if   	$pop2, .LBB0_4
+	br_if   	$pop2, 0        # 0: down to label3
 # BB#3:                                 # %if.then3
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push3=, -4
@@ -31,17 +31,20 @@ f:                                      # @f
 	i32.store	$discard=, 0($6), $5
 .LBB0_4:                                # %if.end4
                                         #   in Loop: Header=BB0_1 Depth=1
+	end_block                       # label3:
 	i32.const	$push4=, -4
 	i32.add 	$3=, $3, $pop4
 	i32.ge_u	$push5=, $3, $4
-	br_if   	$pop5, .LBB0_1
-.LBB0_5:                                # %out
+	br_if   	$pop5, 0        # 0: up to label1
+# BB#5:                                 # %out
+	end_loop                        # label2:
 	i32.eq  	$push6=, $6, $0
-	br_if   	$pop6, .LBB0_7
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#6:                                 # %if.then7
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_7:                                # %if.end8
+	end_block                       # label0:
 	return  	$3
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

@@ -21,15 +21,16 @@ g2:                                     # @g2
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, -559038737
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB1_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:
@@ -44,18 +45,19 @@ f:                                      # @f
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	.LBB2_3
+	block
 	i32.load	$push1=, parsefile($1)
 	i32.load	$0=, 0($pop1)
-	br_if   	$0, .LBB2_3
+	br_if   	$0, 0           # 0: down to label1
 # BB#1:                                 # %entry
 	i32.load	$push0=, el($1)
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop0, $pop2
-	br_if   	$pop3, .LBB2_3
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#2:                                 # %if.end
 	return  	$1
 .LBB2_3:                                # %alabel
+	end_block                       # label1:
 	i32.call	$discard=, g2@FUNCTION, $0
 	unreachable
 .Lfunc_end2:

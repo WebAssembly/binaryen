@@ -25,31 +25,32 @@ cbrtl:                                  # @cbrtl
 	i32.const	$push2=, -2147483648
 	i32.and 	$2=, $4, $pop2
 	i32.xor 	$4=, $2, $4
-	block   	.LBB0_7
-	block   	.LBB0_2
+	block
+	block
 	i32.const	$push3=, 2146435072
 	i32.lt_s	$push4=, $4, $pop3
-	br_if   	$pop4, .LBB0_2
+	br_if   	$pop4, 0        # 0: down to label1
 # BB#1:                                 # %if.then
 	f64.add 	$0=, $0, $0
-	br      	.LBB0_7
+	br      	1               # 1: down to label0
 .LBB0_2:                                # %if.end
+	end_block                       # label1:
 	i32.wrap/i64	$push5=, $1
 	i32.or  	$push6=, $pop5, $4
 	i32.const	$push62=, 0
 	i32.eq  	$push63=, $pop6, $pop62
-	br_if   	$pop63, .LBB0_7
+	br_if   	$pop63, 0       # 0: down to label0
 # BB#3:                                 # %if.end13
 	i32.const	$5=, 4
 	i32.const	$12=, 0
 	i32.add 	$12=, $15, $12
-	block   	.LBB0_6
-	block   	.LBB0_5
+	block
+	block
 	i32.or  	$push7=, $12, $5
 	i32.store	$discard=, 0($pop7), $4
 	i32.const	$push8=, 1048575
 	i32.gt_s	$push9=, $4, $pop8
-	br_if   	$pop9, .LBB0_5
+	br_if   	$pop9, 0        # 0: down to label3
 # BB#4:                                 # %if.then18
 	i32.const	$13=, 8
 	i32.add 	$13=, $15, $13
@@ -67,8 +68,9 @@ cbrtl:                                  # @cbrtl
 	i32.const	$push23=, 696219795
 	i32.add 	$push24=, $pop22, $pop23
 	i32.store	$discard=, 0($4), $pop24
-	br      	.LBB0_6
+	br      	1               # 1: down to label2
 .LBB0_5:                                # %if.else
+	end_block                       # label3:
 	i32.const	$push10=, 3
 	i32.div_s	$4=, $4, $pop10
 	i32.const	$15=, 8
@@ -78,6 +80,7 @@ cbrtl:                                  # @cbrtl
 	i32.add 	$push12=, $4, $pop11
 	i32.store	$discard=, 0($pop13), $pop12
 .LBB0_6:                                # %if.end31
+	end_block                       # label2:
 	f64.load	$8=, 8($15)
 	f64.load	$6=, 0($15)
 	f64.mul 	$push25=, $8, $8
@@ -130,6 +133,7 @@ cbrtl:                                  # @cbrtl
 	f64.mul 	$push61=, $pop59, $pop60
 	f64.add 	$0=, $8, $pop61
 .LBB0_7:                                # %cleanup
+	end_block                       # label0:
 	i32.const	$11=, 16
 	i32.add 	$15=, $15, $11
 	i32.const	$11=, __stack_pointer

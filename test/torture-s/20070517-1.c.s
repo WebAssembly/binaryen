@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.call	$0=, get_kind@FUNCTION
-	block   	.LBB0_4
+	block
 	i32.const	$push2=, 10
 	i32.gt_u	$push3=, $0, $pop2
-	br_if   	$pop3, .LBB0_4
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push4=, 1
 	i32.shl 	$push5=, $pop4, $0
@@ -20,17 +20,18 @@ main:                                   # @main
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push11=, 0
 	i32.eq  	$push12=, $pop7, $pop11
-	br_if   	$pop12, .LBB0_4
+	br_if   	$pop12, 0       # 0: down to label0
 # BB#2:                                 # %if.then.i
 	i32.const	$push1=, -9
 	i32.add 	$push0=, $0, $pop1
 	i32.const	$push8=, 2
 	i32.lt_u	$push9=, $pop0, $pop8
-	br_if   	$pop9, .LBB0_4
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#3:                                 # %if.else.i
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %example.exit
+	end_block                       # label0:
 	i32.const	$push10=, 0
 	return  	$pop10
 .Lfunc_end0:

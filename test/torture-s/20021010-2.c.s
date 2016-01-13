@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.load16_s	$3=, global_bounds($0)
 	i32.load16_s	$2=, global_saveRect+2($0)
 	i32.load16_s	$4=, global_bounds+2($0)
-	block   	.LBB0_2
+	block
 	i32.gt_s	$push2=, $2, $4
 	i32.select	$push3=, $pop2, $4, $2
 	i32.lt_s	$push0=, $1, $3
@@ -21,11 +21,12 @@ main:                                   # @main
 	i32.sub 	$push4=, $pop3, $pop1
 	i32.load	$push5=, expectedwidth($0)
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, .LBB0_2
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#1:                                 # %if.end26
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB0_2:                                # %if.then25
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

@@ -31,16 +31,17 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i64.const	$push0=, 0
 	i64.call	$push1=, foo@FUNCTION, $pop0
 	i64.const	$push2=, -4
 	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB1_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

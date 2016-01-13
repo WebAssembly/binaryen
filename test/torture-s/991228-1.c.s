@@ -49,7 +49,7 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$5=, 0($3), $5
 	i32.const	$0=, 0
-	block   	.LBB1_2
+	block
 	i32.load	$push0=, endianness_test($0)
 	i32.const	$push1=, 2
 	i32.shl 	$1=, $pop0, $pop1
@@ -57,24 +57,26 @@ main:                                   # @main
 	i32.add 	$push3=, $pop2, $1
 	i32.load	$push4=, 0($pop3)
 	i32.lt_s	$push5=, $pop4, $0
-	br_if   	$pop5, .LBB1_2
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	exit@FUNCTION, $0
 	unreachable
 .LBB1_2:                                # %if.end
+	end_block                       # label0:
 	i64.const	$push6=, -4625196817309499392
 	i64.store	$discard=, 8($5), $pop6
 	i32.const	$4=, 8
 	i32.add 	$4=, $5, $4
-	block   	.LBB1_4
+	block
 	i32.add 	$push7=, $4, $1
 	i32.load	$push8=, 0($pop7)
 	i32.lt_s	$push9=, $pop8, $0
-	br_if   	$pop9, .LBB1_4
+	br_if   	$pop9, 0        # 0: down to label1
 # BB#3:                                 # %if.then1
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %if.end2
+	end_block                       # label1:
 	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end1:

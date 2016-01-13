@@ -9,19 +9,19 @@ sub:                                    # @sub
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB0_4
+	block
 	i32.const	$push0=, 2
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_4
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$2=, 1
-	block   	.LBB0_3
+	block
 	i32.const	$push3=, 31
 	i32.shr_u	$push4=, $0, $pop3
 	i32.add 	$push5=, $0, $pop4
 	i32.shr_s	$1=, $pop5, $2
 	i32.and 	$push2=, $0, $2
-	br_if   	$pop2, .LBB0_3
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#2:                                 # %if.then2
 	i32.call	$0=, sub@FUNCTION, $1
 	i32.const	$push10=, -1
@@ -32,6 +32,7 @@ sub:                                    # @sub
 	i32.mul 	$push15=, $pop14, $0
 	return  	$pop15
 .LBB0_3:                                # %if.else
+	end_block                       # label1:
 	i32.add 	$push6=, $1, $2
 	i32.call	$0=, sub@FUNCTION, $pop6
 	i32.call	$2=, sub@FUNCTION, $1
@@ -40,6 +41,7 @@ sub:                                    # @sub
 	i32.add 	$push9=, $pop8, $pop7
 	return  	$pop9
 .LBB0_4:                                # %cleanup
+	end_block                       # label0:
 	return  	$0
 .Lfunc_end0:
 	.size	sub, .Lfunc_end0-sub
@@ -56,21 +58,23 @@ main:                                   # @main
 	i32.call	$1=, sub@FUNCTION, $pop0
 	i32.const	$2=, 0
 	i32.load	$0=, flg($2)
-	block   	.LBB1_4
-	block   	.LBB1_3
+	block
+	block
 	i32.const	$push1=, 832040
 	i32.ne  	$push2=, $1, $pop1
-	br_if   	$pop2, .LBB1_3
+	br_if   	$pop2, 0        # 0: down to label3
 # BB#1:                                 # %if.end
-	br_if   	$0, .LBB1_4
+	br_if   	$0, 1           # 1: down to label2
 # BB#2:                                 # %if.end2
 	call    	exit@FUNCTION, $2
 	unreachable
 .LBB1_3:                                # %if.end.thread
+	end_block                       # label3:
 	i32.const	$push3=, 256
 	i32.or  	$push4=, $0, $pop3
 	i32.store	$discard=, flg($2), $pop4
 .LBB1_4:                                # %if.then1
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

@@ -10,17 +10,18 @@ copysign_bug:                           # @copysign_bug
 	.local  	f64, i32
 # BB#0:                                 # %entry
 	f64.const	$1=, 0x0p0
-	block   	.LBB0_3
-	block   	.LBB0_2
+	block
+	block
 	f64.eq  	$push2=, $0, $1
-	br_if   	$pop2, .LBB0_2
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$2=, 1
 	f64.const	$push1=, 0x1p-1
 	f64.mul 	$push0=, $0, $pop1
 	f64.eq  	$push3=, $pop0, $0
-	br_if   	$pop3, .LBB0_3
+	br_if   	$pop3, 1        # 1: down to label0
 .LBB0_2:                                # %if.end
+	end_block                       # label1:
 	f64.const	$push4=, 0x1p0
 	f64.copysign	$push5=, $pop4, $0
 	f64.lt  	$push6=, $pop5, $1
@@ -28,6 +29,7 @@ copysign_bug:                           # @copysign_bug
 	i32.const	$push7=, 3
 	i32.select	$2=, $pop6, $pop8, $pop7
 .LBB0_3:                                # %return
+	end_block                       # label0:
 	return  	$2
 .Lfunc_end0:
 	.size	copysign_bug, .Lfunc_end0-copysign_bug
@@ -39,16 +41,17 @@ copysign_bug:                           # @copysign_bug
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	f64.const	$push0=, -0x0p0
 	i32.call	$push1=, copysign_bug@FUNCTION, $pop0
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB1_2
+	br_if   	$pop3, 0        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_2:                                # %if.then
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

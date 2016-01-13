@@ -44,13 +44,13 @@ main:                                   # @main
 	i32.const	$push2=, 8
 	i32.const	$4=, 0
 	i32.add 	$4=, $5, $4
-	block   	.LBB1_2
+	block
 	i32.or  	$push3=, $4, $pop2
 	i64.load	$push4=, 0($pop3)
 	i64.const	$push7=, -8905435550453399112
 	i64.const	$push6=, 4611846683310179025
 	i32.call	$push8=, __eqtf2@FUNCTION, $pop5, $pop4, $pop7, $pop6
-	br_if   	$pop8, .LBB1_2
+	br_if   	$pop8, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 0
 	i32.const	$2=, 16
@@ -59,6 +59,7 @@ main:                                   # @main
 	i32.store	$5=, 0($2), $5
 	return  	$pop9
 .LBB1_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

@@ -18,13 +18,13 @@ main:                                   # @main
 	i32.add 	$4=, $5, $4
 	call    	set@FUNCTION, $4
 	i32.load	$0=, 12($5)
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $pop0, $0
 	i32.store	$discard=, 12($5), $pop1
 	i32.const	$push2=, 30
 	i32.le_u	$push3=, $0, $pop2
-	br_if   	$pop3, .LBB0_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	i32.const	$3=, 16
@@ -33,6 +33,7 @@ main:                                   # @main
 	i32.store	$5=, 0($3), $5
 	return  	$pop4
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

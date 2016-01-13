@@ -95,86 +95,94 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB2_16
+	block
 	i64.const	$push0=, 18
 	i64.call	$push1=, g@FUNCTION, $pop0
 	i64.const	$push2=, 1297036692682702848
 	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB2_16
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	block   	.LBB2_15
+	block
 	i64.const	$push4=, 4660
 	i64.call	$push5=, g@FUNCTION, $pop4
 	i64.const	$push6=, 3752061439553044480
 	i64.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, .LBB2_15
+	br_if   	$pop7, 0        # 0: down to label1
 # BB#2:                                 # %if.end6
-	block   	.LBB2_14
+	block
 	i64.const	$push8=, 1193046
 	i64.call	$push9=, g@FUNCTION, $pop8
 	i64.const	$push10=, 6211609577260056576
 	i64.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, .LBB2_14
+	br_if   	$pop11, 0       # 0: down to label2
 # BB#3:                                 # %if.end11
-	block   	.LBB2_13
+	block
 	i64.const	$push12=, 305419896
 	i64.call	$push13=, g@FUNCTION, $pop12
 	i64.const	$push14=, 8671175384462524416
 	i64.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, .LBB2_13
+	br_if   	$pop15, 0       # 0: down to label3
 # BB#4:                                 # %if.end16
-	block   	.LBB2_12
+	block
 	i64.const	$push16=, 78187493520
 	i64.call	$push17=, g@FUNCTION, $pop16
 	i64.const	$push18=, -8036578753402372096
 	i64.ne  	$push19=, $pop17, $pop18
-	br_if   	$pop19, .LBB2_12
+	br_if   	$pop19, 0       # 0: down to label4
 # BB#5:                                 # %if.end21
-	block   	.LBB2_11
+	block
 	i64.const	$push20=, 20015998341138
 	i64.call	$push21=, g@FUNCTION, $pop20
 	i64.const	$push22=, 1337701400965152768
 	i64.ne  	$push23=, $pop21, $pop22
-	br_if   	$pop23, .LBB2_11
+	br_if   	$pop23, 0       # 0: down to label5
 # BB#6:                                 # %if.end26
-	block   	.LBB2_10
+	block
 	i64.const	$push24=, 5124095575331380
 	i64.call	$push25=, g@FUNCTION, $pop24
 	i64.const	$push26=, 3752220286069772800
 	i64.ne  	$push27=, $pop25, $pop26
-	br_if   	$pop27, .LBB2_10
+	br_if   	$pop27, 0       # 0: down to label6
 # BB#7:                                 # %if.end31
-	block   	.LBB2_9
+	block
 	i64.const	$push28=, 1311768467284833366
 	i64.call	$push29=, g@FUNCTION, $pop28
 	i64.const	$push30=, 6211610197754262546
 	i64.ne  	$push31=, $pop29, $pop30
-	br_if   	$pop31, .LBB2_9
+	br_if   	$pop31, 0       # 0: down to label7
 # BB#8:                                 # %if.end36
 	i32.const	$push32=, 0
 	return  	$pop32
 .LBB2_9:                                # %if.then35
+	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_10:                               # %if.then30
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_11:                               # %if.then25
+	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_12:                               # %if.then20
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_13:                               # %if.then15
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_14:                               # %if.then10
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_15:                               # %if.then5
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_16:                               # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

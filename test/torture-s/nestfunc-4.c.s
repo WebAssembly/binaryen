@@ -53,13 +53,14 @@ bar:                                    # @bar
 	i32.const	$push0=, 0
 	i32.load	$0=, level($pop0)
 	i32.const	$1=, -42
-	block   	.LBB2_2
+	block
 	i32.const	$push1=, 499
 	i32.gt_s	$push2=, $0, $pop1
-	br_if   	$pop2, .LBB2_2
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %cond.false
 	i32.call	$1=, foo@FUNCTION
 .LBB2_2:                                # %cond.end
+	end_block                       # label0:
 	i32.sub 	$push3=, $1, $0
 	return  	$pop3
 .Lfunc_end2:

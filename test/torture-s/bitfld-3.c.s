@@ -13,10 +13,10 @@ main:                                   # @main
 	i64.const	$push1=, 8589934591
 	i64.and 	$0=, $pop0, $pop1
 	i64.const	$2=, 0
-	block   	.LBB0_3
+	block
 	i64.mul 	$push2=, $0, $0
 	i64.ne  	$push3=, $pop2, $2
-	br_if   	$pop3, .LBB0_3
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i64.load	$push4=, a+8($1)
 	i64.const	$push5=, 1099511627775
@@ -25,11 +25,12 @@ main:                                   # @main
 	i64.mul 	$push7=, $3, $3
 	i64.or  	$push8=, $pop6, $pop7
 	i64.ne  	$push9=, $pop8, $2
-	br_if   	$pop9, .LBB0_3
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

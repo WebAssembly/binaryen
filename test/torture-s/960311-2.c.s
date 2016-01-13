@@ -24,12 +24,12 @@ b:                                      # @b
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block   	.LBB1_2
+	block
 	i32.const	$push0=, 32768
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $pop1, $pop15
-	br_if   	$pop16, .LBB1_2
+	br_if   	$pop16, 0       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$1=, 0
 	i32.load	$push2=, count($1)
@@ -37,12 +37,13 @@ b:                                      # @b
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$discard=, count($1), $pop4
 .LBB1_2:                                # %if.end
-	block   	.LBB1_4
+	end_block                       # label0:
+	block
 	i32.const	$push5=, 16384
 	i32.and 	$push6=, $0, $pop5
 	i32.const	$push17=, 0
 	i32.eq  	$push18=, $pop6, $pop17
-	br_if   	$pop18, .LBB1_4
+	br_if   	$pop18, 0       # 0: down to label1
 # BB#3:                                 # %if.then6
 	i32.const	$1=, 0
 	i32.load	$push7=, count($1)
@@ -50,12 +51,13 @@ b:                                      # @b
 	i32.add 	$push9=, $pop7, $pop8
 	i32.store	$discard=, count($1), $pop9
 .LBB1_4:                                # %if.end7
-	block   	.LBB1_6
+	end_block                       # label1:
+	block
 	i32.const	$push10=, 8192
 	i32.and 	$push11=, $0, $pop10
 	i32.const	$push19=, 0
 	i32.eq  	$push20=, $pop11, $pop19
-	br_if   	$pop20, .LBB1_6
+	br_if   	$pop20, 0       # 0: down to label2
 # BB#5:                                 # %if.then14
 	i32.const	$0=, 0
 	i32.load	$push12=, count($0)
@@ -63,6 +65,7 @@ b:                                      # @b
 	i32.add 	$push14=, $pop12, $pop13
 	i32.store	$discard=, count($0), $pop14
 .LBB1_6:                                # %if.end15
+	end_block                       # label2:
 	return
 .Lfunc_end1:
 	.size	b, .Lfunc_end1-b

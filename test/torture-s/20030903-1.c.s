@@ -9,31 +9,39 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block   	.LBB0_2
+	block
 	i32.load	$push0=, test($1)
 	i32.const	$push1=, -1
 	i32.add 	$0=, $pop0, $pop1
 	i32.const	$push2=, 3
 	i32.le_u	$push3=, $0, $pop2
-	br_if   	$pop3, .LBB0_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %sw.epilog
 	return  	$1
 .LBB0_2:                                # %entry
-	block   	.LBB0_6
-	block   	.LBB0_5
-	block   	.LBB0_4
-	block   	.LBB0_3
-	tableswitch	$0, .LBB0_3, .LBB0_3, .LBB0_4, .LBB0_5, .LBB0_6
+	end_block                       # label0:
+	block
+	block
+	block
+	block
+	tableswitch	$0, 0, 0, 1, 2, 3 # 0: down to label4
+                                        # 1: down to label3
+                                        # 2: down to label2
+                                        # 3: down to label1
 .LBB0_3:                                # %sw.bb
+	end_block                       # label4:
 	call    	y@FUNCTION
 	unreachable
 .LBB0_4:                                # %sw.bb1
+	end_block                       # label3:
 	call    	y@FUNCTION
 	unreachable
 .LBB0_5:                                # %sw.bb2
+	end_block                       # label2:
 	call    	y@FUNCTION
 	unreachable
 .LBB0_6:                                # %sw.bb3
+	end_block                       # label1:
 	call    	y@FUNCTION
 	unreachable
 .Lfunc_end0:

@@ -39,39 +39,43 @@ main:                                   # @main
 	.local  	i64, i64
 # BB#0:                                 # %entry
 	i64.const	$0=, 6042589866
-	block   	.LBB2_8
+	block
 	i32.call	$push0=, foo@FUNCTION, $0
-	br_if   	$pop0, .LBB2_8
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i64.const	$1=, 6579460778
-	block   	.LBB2_7
+	block
 	i32.call	$push1=, foo@FUNCTION, $1
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop1, $pop5
-	br_if   	$pop6, .LBB2_7
+	br_if   	$pop6, 0        # 0: down to label1
 # BB#2:                                 # %if.end4
-	block   	.LBB2_6
+	block
 	i32.call	$push2=, bar@FUNCTION, $0
-	br_if   	$pop2, .LBB2_6
+	br_if   	$pop2, 0        # 0: down to label2
 # BB#3:                                 # %if.end8
-	block   	.LBB2_5
+	block
 	i32.call	$push3=, bar@FUNCTION, $1
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $pop3, $pop7
-	br_if   	$pop8, .LBB2_5
+	br_if   	$pop8, 0        # 0: down to label3
 # BB#4:                                 # %if.end12
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB2_5:                                # %if.then11
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_6:                                # %if.then7
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_7:                                # %if.then3
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_8:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

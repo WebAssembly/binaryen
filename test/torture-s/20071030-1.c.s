@@ -14,20 +14,21 @@ CalcPing:                               # @CalcPing
 	i32.const	$6=, 0
 	i32.const	$5=, 16
 	copy_local	$7=, $2
-	block   	.LBB0_5
-	block   	.LBB0_2
+	block
+	block
 	i32.wrap/i64	$push0=, $1
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, .LBB0_2
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#1:                                 # %if.then
 	i64.const	$push12=, 32
 	i64.shr_u	$push13=, $1, $pop12
 	i32.wrap/i64	$5=, $pop13
-	br      	.LBB0_5
+	br      	1               # 1: down to label0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	end_block                       # label1:
+	loop                            # label2:
 	i32.add 	$push3=, $0, $5
 	f32.load	$3=, 0($pop3)
 	f32.gt  	$4=, $3, $2
@@ -38,12 +39,13 @@ CalcPing:                               # @CalcPing
 	i32.add 	$5=, $5, $pop5
 	i32.const	$push6=, 1552
 	i32.ne  	$push7=, $5, $pop6
-	br_if   	$pop7, .LBB0_2
-.LBB0_3:                                # %for.end
+	br_if   	$pop7, 0        # 0: up to label2
+# BB#3:                                 # %for.end
+	end_loop                        # label3:
 	i32.const	$5=, 9999
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $6, $pop14
-	br_if   	$pop15, .LBB0_5
+	br_if   	$pop15, 0       # 0: down to label0
 # BB#4:                                 # %if.end9
 	f32.convert_s/i32	$push8=, $6
 	f32.div 	$push9=, $7, $pop8
@@ -51,6 +53,7 @@ CalcPing:                               # @CalcPing
 	f32.mul 	$push11=, $pop9, $pop10
 	i32.trunc_s/f32	$5=, $pop11
 .LBB0_5:                                # %cleanup
+	end_block                       # label0:
 	return  	$5
 .Lfunc_end0:
 	.size	CalcPing, .Lfunc_end0-CalcPing
@@ -84,7 +87,7 @@ main:                                   # @main
 	copy_local	$5=, $0
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_2
+	loop                            # label4:
 	i32.const	$11=, 8
 	i32.add 	$11=, $12, $11
 	i32.add 	$push3=, $11, $3
@@ -97,12 +100,13 @@ main:                                   # @main
 	i32.add 	$3=, $3, $pop5
 	i32.const	$push6=, 1552
 	i32.ne  	$push7=, $3, $pop6
-	br_if   	$pop7, .LBB1_1
-.LBB1_2:                                # %for.end.i
-	block   	.LBB1_5
+	br_if   	$pop7, 0        # 0: up to label4
+# BB#2:                                 # %for.end.i
+	end_loop                        # label5:
+	block
 	i32.const	$push16=, 0
 	i32.eq  	$push17=, $4, $pop16
-	br_if   	$pop17, .LBB1_5
+	br_if   	$pop17, 0       # 0: down to label6
 # BB#3:                                 # %CalcPing.exit
 	f32.convert_s/i32	$push8=, $4
 	f32.div 	$push9=, $5, $pop8
@@ -111,7 +115,7 @@ main:                                   # @main
 	i32.trunc_s/f32	$push12=, $pop11
 	i32.const	$push13=, 1000
 	i32.ne  	$push14=, $pop12, $pop13
-	br_if   	$pop14, .LBB1_5
+	br_if   	$pop14, 0       # 0: down to label6
 # BB#4:                                 # %if.end
 	i32.const	$push15=, 0
 	i32.const	$8=, 1552
@@ -120,6 +124,7 @@ main:                                   # @main
 	i32.store	$12=, 0($8), $12
 	return  	$pop15
 .LBB1_5:                                # %if.then
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

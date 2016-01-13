@@ -8,21 +8,23 @@ t:                                      # @t
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_4
+	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, .LBB0_4
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	block   	.LBB0_3
+	block
 	i32.const	$push0=, 256
 	i32.ge_s	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_3
+	br_if   	$pop1, 0        # 0: down to label1
 # BB#2:                                 # %if.end3
 	return  	$0
 .LBB0_3:                                # %if.then2
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %if.then
+	end_block                       # label0:
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -40,14 +42,15 @@ main:                                   # @main
 	i32.const	$0=, 5
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_2
+	loop                            # label2:
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $0, $pop0
 	i32.call	$discard=, t@FUNCTION, $pop1
 	i32.const	$push2=, 1
 	i32.add 	$0=, $0, $pop2
-	br      	.LBB1_1
+	br      	0               # 0: up to label2
 .LBB1_2:
+	end_loop                        # label3:
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 

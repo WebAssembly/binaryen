@@ -30,13 +30,14 @@ do_abort:                               # @do_abort
 foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i32.ge_s	$push0=, $0, $1
-	br_if   	$pop0, .LBB2_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %doit
 	call    	do_abort@FUNCTION
 	unreachable
 .LBB2_2:                                # %if.end
+	end_block                       # label0:
 	call    	do_exit@FUNCTION
 	unreachable
 .Lfunc_end2:

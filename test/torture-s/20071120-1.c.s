@@ -32,36 +32,37 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	i32.load	$0=, deferred_access_no_check($1)
-	block   	.LBB2_9
-	block   	.LBB2_8
-	block   	.LBB2_7
-	block   	.LBB2_6
-	block   	.LBB2_2
+	block
+	block
+	block
+	block
+	block
 	i32.const	$push11=, 0
 	i32.eq  	$push12=, $0, $pop11
-	br_if   	$pop12, .LBB2_2
+	br_if   	$pop12, 0       # 0: down to label4
 # BB#1:                                 # %if.then
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $0, $pop0
 	i32.store	$discard=, deferred_access_no_check($1), $pop1
-	br      	.LBB2_6
+	br      	1               # 1: down to label3
 .LBB2_2:                                # %if.else
+	end_block                       # label4:
 	i32.load	$1=, deferred_access_stack($1)
 	i32.const	$push13=, 0
 	i32.eq  	$push14=, $1, $pop13
-	br_if   	$pop14, .LBB2_9
+	br_if   	$pop14, 3       # 3: down to label0
 # BB#3:                                 # %land.lhs.true.i
 	i32.load	$0=, 0($1)
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $0, $pop15
-	br_if   	$pop16, .LBB2_9
+	br_if   	$pop16, 3       # 3: down to label0
 # BB#4:                                 # %land.lhs.true.i25
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $0, $pop2
 	i32.store	$push4=, 0($1), $pop3
 	i32.const	$push17=, 0
 	i32.eq  	$push18=, $pop4, $pop17
-	br_if   	$pop18, .LBB2_8
+	br_if   	$pop18, 2       # 2: down to label1
 # BB#5:                                 # %VEC_deferred_access_base_last.exit29
 	i32.const	$push5=, 3
 	i32.shl 	$push6=, $0, $pop5
@@ -71,16 +72,20 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.load	$push10=, 0($pop9)
 	i32.const	$push19=, 0
 	i32.eq  	$push20=, $pop10, $pop19
-	br_if   	$pop20, .LBB2_7
+	br_if   	$pop20, 1       # 1: down to label2
 .LBB2_6:                                # %if.end16
+	end_block                       # label3:
 	return
 .LBB2_7:                                # %if.then15
+	end_block                       # label2:
 	call    	perform_access_checks@FUNCTION, $1
 	unreachable
 .LBB2_8:                                # %cond.false.i26
+	end_block                       # label1:
 	call    	vec_assert_fail@FUNCTION
 	unreachable
 .LBB2_9:                                # %cond.false.i
+	end_block                       # label0:
 	call    	vec_assert_fail@FUNCTION
 	unreachable
 .Lfunc_end2:

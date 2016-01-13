@@ -26,16 +26,16 @@ main:                                   # @main
 	i32.add 	$push2=, $11, $pop1
 	i64.load	$6=, 0($pop2)
 	i64.const	$2=, 0
-	block   	.LBB0_2
+	block
 	i64.eq  	$push6=, $6, $2
 	i64.const	$push4=, 10
 	i64.gt_u	$push5=, $5, $pop4
 	i64.gt_s	$push3=, $6, $2
 	i32.select	$push7=, $pop6, $pop5, $pop3
-	br_if   	$pop7, .LBB0_2
+	br_if   	$pop7, 0        # 0: down to label0
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_2
+	loop                            # label1:
 	i64.const	$3=, 1
 	i64.add 	$0=, $5, $3
 	i64.lt_u	$4=, $0, $5
@@ -50,8 +50,10 @@ main:                                   # @main
 	i64.xor 	$push9=, $0, $pop8
 	i64.or  	$push10=, $pop9, $6
 	i64.ne  	$push11=, $pop10, $2
-	br_if   	$pop11, .LBB0_1
+	br_if   	$pop11, 0       # 0: up to label1
 .LBB0_2:                                # %if.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	i32.const	$9=, 16
 	i32.add 	$12=, $12, $9
 	i32.const	$9=, __stack_pointer

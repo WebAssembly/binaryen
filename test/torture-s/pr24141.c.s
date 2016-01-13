@@ -20,17 +20,18 @@ g:                                      # @g
 f:                                      # @f
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB1_3
+	block
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $0, $pop2
-	br_if   	$pop3, .LBB1_3
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %entry
-	br_if   	$1, .LBB1_3
+	br_if   	$1, 0           # 0: down to label0
 # BB#2:                                 # %if.then10
 	i32.const	$push0=, 0
 	i32.const	$push1=, 1
 	i32.store	$discard=, i($pop0), $pop1
 .LBB1_3:                                # %cleanup
+	end_block                       # label0:
 	return
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

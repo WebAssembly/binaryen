@@ -35,13 +35,14 @@ dn_skipname:                            # @dn_skipname
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i32.const	$push0=, a
-	br_if   	$pop0, .LBB2_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_2:                                # %if.end
+	end_block                       # label0:
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
 	unreachable

@@ -50,17 +50,18 @@ bar:                                    # @bar
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i64.const	$push0=, 81985529216486895
 	i64.call	$push1=, bar@FUNCTION, $pop0
 	i64.const	$push2=, 312749974122
 	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, .LBB2_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4
 	unreachable
 .LBB2_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

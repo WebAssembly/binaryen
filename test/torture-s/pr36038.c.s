@@ -9,13 +9,13 @@ doit:                                   # @doit
 # BB#0:                                 # %entry
 	i32.const	$5=, 0
 	i32.load	$0=, markstack_ptr($5)
-	block   	.LBB0_3
+	block
 	i32.const	$push2=, -4
 	i32.add 	$push3=, $0, $pop2
 	i32.load	$1=, 0($pop3)
 	i32.const	$push4=, 6
 	i32.eq  	$push5=, $1, $pop4
-	br_if   	$pop5, .LBB0_3
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.load	$push0=, stack_base($5)
 	i32.const	$push1=, 40
@@ -31,7 +31,7 @@ doit:                                   # @doit
 	i32.sub 	$1=, $pop9, $pop10
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label1:
 	i32.add 	$push12=, $5, $1
 	i32.const	$push13=, 16
 	i32.add 	$push14=, $pop12, $pop13
@@ -40,8 +40,10 @@ doit:                                   # @doit
 	i32.add 	$5=, $5, $2
 	i32.const	$push15=, 1
 	i32.add 	$4=, $4, $pop15
-	br_if   	$4, .LBB0_2
+	br_if   	$4, 0           # 0: up to label1
 .LBB0_3:                                # %while.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	return
 .Lfunc_end0:
 	.size	doit, .Lfunc_end0-doit
@@ -55,7 +57,7 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB1_2
+	block
 	i32.const	$push8=, indices+36
 	i32.store	$discard=, markstack_ptr($0), $pop8
 	i32.const	$push9=, 2
@@ -87,10 +89,11 @@ main:                                   # @main
 	i32.const	$push1=, list
 	i32.const	$push16=, 80
 	i32.call	$push17=, memcmp@FUNCTION, $pop15, $pop1, $pop16
-	br_if   	$pop17, .LBB1_2
+	br_if   	$pop17, 0       # 0: down to label3
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end1:

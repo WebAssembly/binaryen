@@ -55,16 +55,16 @@ compare:                                # @compare
 # BB#0:                                 # %entry
 	i32.load	$1=, 0($1)
 	i32.load	$2=, 4($0)
-	block   	.LBB3_3
+	block
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $1, $pop6
-	br_if   	$pop7, .LBB3_3
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#1:                                 # %land.lhs.true
 	i32.load	$push0=, 0($0)
 	i32.call_indirect	$push1=, $2, $pop0
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $pop1, $pop8
-	br_if   	$pop9, .LBB3_3
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#2:                                 # %if.then
 	i32.const	$0=, 0
 	i32.load	$push2=, errors($0)
@@ -72,6 +72,7 @@ compare:                                # @compare
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$discard=, errors($0), $pop4
 .LBB3_3:                                # %if.end
+	end_block                       # label0:
 	i32.call_indirect	$push5=, $2, $1
 	return  	$pop5
 .Lfunc_end3:

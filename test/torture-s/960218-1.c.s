@@ -25,14 +25,15 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, -1
-	block   	.LBB1_2
+	block
 	i32.eq  	$push0=, $0, $1
-	br_if   	$pop0, .LBB1_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %while.cond.while.end_crit_edge
 	i32.const	$push2=, 0
 	i32.xor 	$push1=, $0, $1
 	i32.store	$discard=, glob($pop2), $pop1
 .LBB1_2:                                # %while.end
+	end_block                       # label0:
 	return  	$0
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

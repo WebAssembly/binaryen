@@ -7,13 +7,14 @@
 t1:                                     # @t1
 	.param  	i32
 # BB#0:                                 # %entry
-	block   	.LBB0_2
+	block
 	i32.const	$push0=, 4100
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB0_2
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:
@@ -38,13 +39,14 @@ t2:                                     # @t2
 t3:                                     # @t3
 	.param  	i64
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i64.const	$push0=, 2147487743
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, .LBB2_2
+	br_if   	$pop1, 0        # 0: down to label1
 # BB#1:                                 # %if.end
 	return
 .LBB2_2:                                # %if.then
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

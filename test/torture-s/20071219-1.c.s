@@ -11,32 +11,35 @@ foo:                                    # @foo
 	i32.const	$3=, 0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block   	.LBB0_6
-	loop    	.LBB0_5
+	block
+	loop                            # label1:
 	i32.add 	$2=, $0, $3
 	i32.load8_u	$push0=, 0($2)
-	br_if   	$pop0, .LBB0_6
+	br_if   	$pop0, 2        # 2: down to label0
 # BB#2:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
-	block   	.LBB0_4
+	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $1, $pop5
-	br_if   	$pop6, .LBB0_4
+	br_if   	$pop6, 0        # 0: down to label3
 # BB#3:                                 # %if.then3
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.store8	$discard=, 0($2), $1
 .LBB0_4:                                # %for.inc
                                         #   in Loop: Header=BB0_1 Depth=1
+	end_block                       # label3:
 	i32.const	$push1=, 1
 	i32.add 	$3=, $3, $pop1
 	i32.const	$push2=, 25
 	i32.lt_u	$push3=, $3, $pop2
-	br_if   	$pop3, .LBB0_1
-.LBB0_5:                                # %for.end
+	br_if   	$pop3, 0        # 0: up to label1
+# BB#5:                                 # %for.end
+	end_loop                        # label2:
 	i32.const	$push4=, 0
 	i32.store	$discard=, p($pop4), $0
 	return
 .LBB0_6:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

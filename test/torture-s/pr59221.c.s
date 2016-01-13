@@ -9,18 +9,19 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB0_2
+	block
 	i32.load	$push0=, b($0)
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $pop0, $pop9
-	br_if   	$pop10, .LBB0_2
+	br_if   	$pop10, 0       # 0: down to label0
 # BB#1:                                 # %for.inc.preheader
 	i32.store	$discard=, b($0), $0
 .LBB0_2:                                # %for.end
+	end_block                       # label0:
 	i32.load	$1=, a($0)
 	i32.const	$2=, 16
 	i32.const	$3=, 65535
-	block   	.LBB0_4
+	block
 	i32.and 	$push3=, $1, $3
 	i32.shl 	$push1=, $1, $2
 	i32.shr_s	$push2=, $pop1, $2
@@ -31,10 +32,11 @@ main:                                   # @main
 	i32.and 	$push5=, $1, $3
 	i32.const	$push7=, 1
 	i32.ne  	$push8=, $pop5, $pop7
-	br_if   	$pop8, .LBB0_4
+	br_if   	$pop8, 0        # 0: down to label1
 # BB#3:                                 # %if.end
 	return  	$0
 .LBB0_4:                                # %if.then
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

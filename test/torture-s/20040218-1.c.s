@@ -71,16 +71,16 @@ main:                                   # @main
 	i32.add 	$4=, $7, $4
 	i32.call	$0=, xb@FUNCTION, $4
 	i32.const	$1=, 16255
-	block   	.LBB3_4
+	block
 	i32.ne  	$push2=, $0, $1
-	br_if   	$pop2, .LBB3_4
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$5=, 8
 	i32.add 	$5=, $7, $5
 	i32.call	$push3=, xw@FUNCTION, $5
 	i32.const	$push4=, 81535
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, .LBB3_4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false4
 	i32.const	$6=, 4
 	i32.add 	$6=, $7, $6
@@ -88,12 +88,13 @@ main:                                   # @main
 	i32.const	$push7=, 65535
 	i32.and 	$push8=, $pop6, $pop7
 	i32.ne  	$push9=, $pop8, $1
-	br_if   	$pop9, .LBB3_4
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#3:                                 # %if.end
 	i32.const	$push10=, 0
 	call    	exit@FUNCTION, $pop10
 	unreachable
 .LBB3_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end3:

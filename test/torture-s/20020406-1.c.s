@@ -34,13 +34,13 @@ DUPFFnew:                               # @DUPFFnew
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB2_2
+	block
 	i32.const	$push0=, 12
 	i32.call	$1=, malloc@FUNCTION, $pop0
 	i32.const	$push1=, 0
 	i32.store	$push2=, 8($1), $pop1
 	i32.lt_s	$push3=, $0, $pop2
-	br_if   	$pop3, .LBB2_2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $0, $pop4
@@ -50,6 +50,7 @@ DUPFFnew:                               # @DUPFFnew
 	i32.add 	$push8=, $1, $pop7
 	i32.store	$discard=, 0($pop8), $2
 .LBB2_2:                                # %if.end
+	end_block                       # label0:
 	i32.store	$discard=, 0($1), $0
 	i32.const	$push9=, -1
 	i32.store	$discard=, 4($1), $pop9
@@ -121,7 +122,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.load	$8=, 4($3)
 .LBB7_1:                                # %tailrecurse
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB7_2
+	loop                            # label1:
 	copy_local	$5=, $3
 	copy_local	$3=, $2
 	copy_local	$4=, $1
@@ -149,23 +150,24 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	copy_local	$0=, $4
 	copy_local	$2=, $5
 	i32.lt_s	$push2=, $8, $9
-	br_if   	$pop2, .LBB7_1
-.LBB7_2:                                # %if.end
+	br_if   	$pop2, 0        # 0: up to label1
+# BB#2:                                 # %if.end
+	end_loop                        # label2:
 	i32.const	$2=, 2
-	block   	.LBB7_11
+	block
 	i32.ne  	$push3=, $8, $2
-	br_if   	$pop3, .LBB7_11
+	br_if   	$pop3, 0        # 0: down to label3
 # BB#3:                                 # %if.end
 	i32.const	$8=, 1
 	i32.ne  	$push4=, $9, $8
-	br_if   	$pop4, .LBB7_11
+	br_if   	$pop4, 0        # 0: down to label3
 # BB#4:                                 # %if.end11
-	block   	.LBB7_10
+	block
 	i32.load	$push5=, 8($3)
 	i32.load	$push6=, 0($pop5)
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $pop6, $pop15
-	br_if   	$pop16, .LBB7_10
+	br_if   	$pop16, 0       # 0: down to label4
 # BB#5:                                 # %DUPFFnew.exit
 	i32.const	$0=, 12
 	i32.call	$9=, malloc@FUNCTION, $0
@@ -180,35 +182,40 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.call	$0=, calloc@FUNCTION, $pop10, $6
 	i32.store	$discard=, 8($8), $0
 	i32.store	$discard=, 0($8), $2
-	block   	.LBB7_9
+	block
 	i32.const	$push11=, -1
 	i32.store	$discard=, 4($8), $pop11
 	i32.add 	$push12=, $5, $6
 	i32.load	$5=, 0($pop12)
 	i32.lt_s	$push13=, $5, $7
-	br_if   	$pop13, .LBB7_9
+	br_if   	$pop13, 0       # 0: down to label5
 # BB#6:                                 # %while.cond40.preheader.lr.ph
 	i32.add 	$push14=, $3, $6
 	i32.load	$push0=, 0($pop14)
 	i32.lt_s	$3=, $pop0, $5
 .LBB7_7:                                # %while.cond40.preheader
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB7_8
-	br_if   	$3, .LBB7_7
+	loop                            # label6:
+	br_if   	$3, 0           # 0: up to label6
 .LBB7_8:                                # %while.cond40
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB7_9
-	br      	.LBB7_8
+	end_loop                        # label7:
+	loop                            # label8:
+	br      	0               # 0: up to label8
 .LBB7_9:                                # %if.end57
+	end_loop                        # label9:
+	end_block                       # label5:
 	i32.store	$discard=, 0($1), $9
 	i32.store	$discard=, 0($4), $8
 .LBB7_10:                               # %cleanup
+	end_block                       # label4:
 	i32.const	$16=, 16
 	i32.add 	$13=, $13, $16
 	i32.const	$16=, __stack_pointer
 	i32.store	$13=, 0($16), $13
 	return  	$3
 .LBB7_11:                               # %if.then10
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end7:

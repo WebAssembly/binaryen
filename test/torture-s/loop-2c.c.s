@@ -9,10 +9,10 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB0_3
+	block
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $0, $pop9
-	br_if   	$pop10, .LBB0_3
+	br_if   	$pop10, 0       # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$2=, -3
 	i32.const	$push0=, 3
@@ -27,14 +27,16 @@ f:                                      # @f
 	i32.add 	$1=, $pop6, $3
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB0_3
+	loop                            # label1:
 	i32.const	$push7=, -1
 	i32.add 	$0=, $0, $pop7
 	i32.store	$push8=, 0($1), $4
 	i32.add 	$4=, $pop8, $2
 	i32.add 	$1=, $1, $3
-	br_if   	$0, .LBB0_2
+	br_if   	$0, 0           # 0: up to label1
 .LBB0_3:                                # %for.end
+	end_loop                        # label2:
+	end_block                       # label0:
 	return  	$0
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -48,10 +50,10 @@ g:                                      # @g
 	.result 	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block   	.LBB1_3
+	block
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $0, $pop8
-	br_if   	$pop9, .LBB1_3
+	br_if   	$pop9, 0        # 0: down to label3
 # BB#1:                                 # %for.body.preheader.i
 	i32.const	$3=, a
 	i32.const	$1=, -3
@@ -66,14 +68,16 @@ g:                                      # @g
 	i32.add 	$3=, $pop4, $2
 .LBB1_2:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	.LBB1_3
+	loop                            # label4:
 	i32.const	$push6=, -1
 	i32.add 	$0=, $0, $pop6
 	i32.store	$push7=, 0($3), $4
 	i32.add 	$4=, $pop7, $1
 	i32.add 	$3=, $3, $2
-	br_if   	$0, .LBB1_2
+	br_if   	$0, 0           # 0: up to label4
 .LBB1_3:                                # %f.exit
+	end_loop                        # label5:
+	end_block                       # label3:
 	return  	$0
 .Lfunc_end1:
 	.size	g, .Lfunc_end1-g

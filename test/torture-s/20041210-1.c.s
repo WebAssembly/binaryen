@@ -11,12 +11,12 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i64.load	$1=, x($0)
 	i64.const	$2=, 32
-	block   	.LBB0_3
+	block
 	i32.wrap/i64	$push0=, $1
 	i64.shr_u	$push1=, $1, $2
 	i32.wrap/i64	$push2=, $pop1
 	i32.ge_s	$push3=, $pop0, $pop2
-	br_if   	$pop3, .LBB0_3
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i64.load	$1=, x+8($0)
 	i64.shr_u	$push4=, $1, $2
@@ -24,11 +24,12 @@ main:                                   # @main
 	i32.wrap/i64	$push6=, $pop5
 	i32.const	$push7=, -1
 	i32.gt_s	$push8=, $pop6, $pop7
-	br_if   	$pop8, .LBB0_3
+	br_if   	$pop8, 0        # 0: down to label0
 # BB#2:                                 # %if.then2
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.end3
+	end_block                       # label0:
 	call    	exit@FUNCTION, $0
 	unreachable
 .Lfunc_end0:

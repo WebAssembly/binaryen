@@ -9,28 +9,31 @@ test:                                   # @test
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 4
-	block   	.LBB0_6
+	block
 	i32.le_u	$push0=, $0, $2
-	br_if   	$pop0, .LBB0_6
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	block   	.LBB0_5
+	block
 	i32.le_u	$push1=, $1, $2
-	br_if   	$pop1, .LBB0_5
+	br_if   	$pop1, 0        # 0: down to label1
 # BB#2:                                 # %if.end3
-	block   	.LBB0_4
+	block
 	i32.const	$push2=, 0
 	i32.sub 	$push3=, $pop2, $1
 	i32.ne  	$push4=, $0, $pop3
-	br_if   	$pop4, .LBB0_4
+	br_if   	$pop4, 0        # 0: down to label2
 # BB#3:                                 # %if.end6
 	return
 .LBB0_4:                                # %if.then5
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %if.then2
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_6:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end0:

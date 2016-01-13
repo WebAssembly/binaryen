@@ -33,7 +33,7 @@ f2:                                     # @f2
 # BB#0:                                 # %entry
 	i32.const	$1=, 8
 	i32.const	$2=, 16
-	block   	.LBB2_4
+	block
 	i32.const	$push1=, 4
 	i32.add 	$push2=, $0, $pop1
 	i32.load8_u	$push3=, 0($pop2)
@@ -53,7 +53,7 @@ f2:                                     # @f2
 	f32.reinterpret/i32	$push17=, $pop16
 	f32.const	$push35=, 0x1p0
 	f32.ne  	$push36=, $pop17, $pop35
-	br_if   	$pop36, .LBB2_4
+	br_if   	$pop36, 0       # 0: down to label0
 # BB#1:                                 # %entry
 	i32.add 	$push26=, $0, $1
 	i32.load8_u	$push27=, 0($pop26)
@@ -75,15 +75,16 @@ f2:                                     # @f2
 	f32.reinterpret/i32	$push0=, $pop34
 	f32.const	$push37=, 0x0p0
 	f32.ne  	$push38=, $pop0, $pop37
-	br_if   	$pop38, .LBB2_4
+	br_if   	$pop38, 0       # 0: down to label0
 # BB#2:                                 # %lor.lhs.false
 	i32.load8_u	$push39=, 0($0)
 	i32.const	$push40=, 42
 	i32.ne  	$push41=, $pop39, $pop40
-	br_if   	$pop41, .LBB2_4
+	br_if   	$pop41, 0       # 0: down to label0
 # BB#3:                                 # %if.end
 	return
 .LBB2_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 .Lfunc_end2:

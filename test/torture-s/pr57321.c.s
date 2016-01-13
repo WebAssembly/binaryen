@@ -9,14 +9,15 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
-	block   	.LBB0_2
+	block
 	i32.load	$push0=, a($0)
-	br_if   	$pop0, .LBB0_2
+	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.then.i
 	i32.load	$push1=, b($0)
 	i32.const	$push2=, 1
 	i32.store	$discard=, 0($pop1), $pop2
 .LBB0_2:                                # %foo.exit
+	end_block                       # label0:
 	return  	$0
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
