@@ -285,10 +285,16 @@ print '\n[ checking binary format testcases... ]\n'
 for wast in tests:
   if wast.endswith('.wast') and not wast in ['unit.wast']: # blacklist some known failures
     cmd = [os.path.join('bin', 'wasm-as'), os.path.join('test', wast), '-o', 'a.wasm']
-    print cmd
+    print ' '.join(cmd)
     if os.path.exists('a.wasm'): os.unlink('a.wasm')
     subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert os.path.exists('a.wasm')
+
+    #cmd = [os.path.join('bin', 'wasm-dis'), 'a.wasm', '-o', 'a.wast']
+    #print ' '.join(cmd)
+    #if os.path.exists('a.wast'): os.unlink('a.wast')
+    #subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #assert os.path.exists('a.wast')
 
 print '\n[ checking example testcases... ]\n'
 
