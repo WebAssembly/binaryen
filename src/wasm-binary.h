@@ -532,11 +532,13 @@ public:
   }
 
   void finishUp() {
+    if (debug) std::cerr << "finishUp" << std::endl;
     // finish buffers
     for (auto& buffer : buffersToWrite) {
+      if (debug) std::cerr << "writing buffer" << (int)buffer.data[0] << "," << (int)buffer.data[1] << " at " << o.size() << " and pointer is at " << buffer.pointerLocation << std::endl;
       o.writeAt(buffer.pointerLocation, (uint32_t)o.size());
       for (size_t i = 0; i < buffer.size; i++) {
-        o << buffer.data[i];
+        o << (uint8_t)buffer.data[i];
       }
     }
   }
