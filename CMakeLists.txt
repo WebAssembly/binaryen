@@ -13,7 +13,8 @@ IF(MSVC)
 ELSE()
   SET(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
   SET(CMAKE_CXX_FLAGS "-msse2 -mfpmath=sse ${CMAKE_CXX_FLAGS}")
-  SET(CMAKE_CXX_FLAGS "-O2 -Wall -Werror ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra -Wno-unused-parameter ${CMAKE_CXX_FLAGS}")
 ENDIF()
 
 # clang doesn't print colored diagnostics when invoked from Ninja

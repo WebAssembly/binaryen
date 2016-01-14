@@ -169,6 +169,79 @@ struct Invocation {
   }
 };
 
+static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
+                        Element* root,
+                        std::unique_ptr<SExpressionWasmBuilder>* builder,
+                        bool print_before, bool print_after) {
+  auto interface = new ShellExternalInterface();
+  auto instance = new ModuleInstance(*wasm, interface);
+  while (*i < root->size()) {
+    Element& curr = *(*root)[*i];
+    IString id = curr[0]->str();
+    if (id == MODULE) break;
+    *checked = true;
+    Colors::red(std::cerr);
+    std::cerr << *i << '/' << (root->size()-1);
+    Colors::green(std::cerr);
+    std::cerr << " CHECKING: ";
+    Colors::normal(std::cerr);
+    std::cerr << curr << '\n';
+    if (id == ASSERT_INVALID) {
+      // a module invalidity test
+      AllocatingModule wasm;
+      bool invalid = false;
+      jmp_buf trapState;
+      if (setjmp(trapState) == 0) {
+        *builder = std::unique_ptr<SExpressionWasmBuilder>(new SExpressionWasmBuilder(wasm, *curr[1], [&]() {
+          invalid = true;
+          longjmp(trapState, 1);
+        }));
+      }
+      if (print_before || print_after) {
+        Colors::bold(std::cout);
+        std::cerr << "printing in module invalidity test:\n";
+        Colors::normal(std::cout);
+        std::cout << wasm;
+      }
+      if (!invalid) {
+        // maybe parsed ok, but otherwise incorrect
+        invalid = !WasmValidator().validate(wasm);
+      }
+      assert(invalid);
+    } else if (id == INVOKE) {
+      Invocation invocation(curr, instance, *builder->get());
+      invocation.invoke();
+    } else {
+      // an invoke test
+      Invocation invocation(*curr[1], instance, *builder->get());
+      bool trapped = false;
+      Literal result;
+      if (setjmp(interface->trapState) == 0) {
+        result = invocation.invoke();
+      } else {
+        trapped = true;
+      }
+      if (id == ASSERT_RETURN) {
+        assert(!trapped);
+        if (curr.size() >= 3) {
+          Literal expected = builder->get()
+                                 ->parseExpression(*curr[2])
+                                 ->dyn_cast<Const>()
+                                 ->value;
+          std::cerr << "seen " << result << ", expected " << expected << '\n';
+          assert(expected == result);
+        } else {
+          Literal expected;
+          std::cerr << "seen " << result << ", expected " << expected << '\n';
+          assert(expected == result);
+        }
+      }
+      if (id == ASSERT_TRAP) assert(trapped);
+    }
+    *i += 1;
+  }
+}
+
 //
 // main
 //
@@ -265,11 +338,9 @@ int main(int argc, char **argv) {
   while (i < root.size()) {
     if (debug) std::cerr << "parsing s-expressions to wasm...\n";
     AllocatingModule wasm;
-    SExpressionWasmBuilder builder(wasm, *root[i], [&]() { abort(); }, debug);
+    std::unique_ptr<SExpressionWasmBuilder> builder(
+        new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }, debug));
     i++;
-
-    auto interface = new ShellExternalInterface();
-    auto instance = new ModuleInstance(wasm, interface);
 
     if (print_before) {
       Colors::bold(std::cout);
@@ -296,67 +367,8 @@ int main(int argc, char **argv) {
       std::cout << wasm;
     }
 
-    // run asserts
-    while (i < root.size()) {
-      Element& curr = *root[i];
-      IString id = curr[0]->str();
-      if (id == MODULE) break;
-      checked = true;
-      Colors::red(std::cerr);
-      std::cerr << i << '/' << (root.size()-1);
-      Colors::green(std::cerr);
-      std::cerr << " CHECKING: ";
-      Colors::normal(std::cerr);
-      std::cerr << curr << '\n';
-      if (id == ASSERT_INVALID) {
-        // a module invalidity test
-        AllocatingModule wasm;
-        bool invalid = false;
-        jmp_buf trapState;
-        std::unique_ptr<SExpressionWasmBuilder> builder;
-        if (setjmp(trapState) == 0) {
-          builder = std::unique_ptr<SExpressionWasmBuilder>(new SExpressionWasmBuilder(wasm, *curr[1], [&]() {
-            invalid = true;
-            longjmp(trapState, 1);
-          }));
-        }
-        if (print_before || print_after) {
-          Colors::bold(std::cout);
-          std::cerr << "printing in module invalidity test:\n";
-          Colors::normal(std::cout);
-          std::cout << wasm;
-        }
-        if (!invalid) {
-          // maybe parsed ok, but otherwise incorrect
-          invalid = !WasmValidator().validate(wasm);
-        }
-        assert(invalid);
-      } else if (id == INVOKE) {
-        Invocation invocation(curr, instance, builder);
-        invocation.invoke();
-      } else {
-        // an invoke test
-        Invocation invocation(*curr[1], instance, builder);
-        bool trapped = false;
-        Literal result;
-        if (setjmp(interface->trapState) == 0) {
-          result = invocation.invoke();
-        } else {
-          trapped = true;
-        }
-        if (id == ASSERT_RETURN) {
-          assert(!trapped);
-          Literal expected;
-          if (curr.size() >= 3) {
-            expected = builder.parseExpression(*curr[2])->dyn_cast<Const>()->value;
-          }
-          std::cerr << "seen " << result << ", expected " << expected << '\n';
-          assert(expected == result);
-        }
-        if (id == ASSERT_TRAP) assert(trapped);
-      }
-      i++;
-    }
+    run_asserts(&i, &checked, &wasm, &root, &builder, print_before,
+                print_after);
   }
 
   if (checked) {
