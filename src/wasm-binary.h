@@ -555,9 +555,9 @@ public:
   int depth;
 
   void recurse(Expression*& curr) {
-    if (debug) std::cerr << "zz recurse into " << ++depth << std::endl;
+    if (debug) std::cerr << "zz recurse into " << ++depth << " at " << o.size() << std::endl;
     visit(curr);
-    if (debug) std::cerr << "zz recurse from " << depth-- << std::endl;
+    if (debug) std::cerr << "zz recurse from " << depth-- << " at " << o.size() << std::endl;
   }
 
   std::vector<Name> breakStack;
@@ -1156,7 +1156,7 @@ public:
   int depth;
 
   void readExpression(Expression*& curr) {
-    if (debug) std::cerr << "zz recurse into " << ++depth << std::endl;
+    if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
     uint8_t code = getInt8();
     if (debug) std::cerr << "readExpression seeing " << (int)code << std::endl;
     switch (code) {
@@ -1197,7 +1197,7 @@ public:
         abort();
       }
     }
-    if (debug) std::cerr << "zz recurse from " << depth-- << std::endl;
+    if (debug) std::cerr << "zz recurse from " << depth-- << " at " << pos << std::endl;
   }
 
   template<typename T>
