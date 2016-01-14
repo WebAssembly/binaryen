@@ -54,7 +54,7 @@ struct LEB128 {
     while (1) {
       uint8_t byte = get();
       value |= ((byte & 127) << shift);
-      if (byte & 128) break;
+      if (!(byte & 128)) break;
       shift += 7;
     }
   }
