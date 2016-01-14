@@ -469,13 +469,14 @@ public:
           << uint16_t(numLocalsByType[f64]);
       }
       if (function) {
-        size_t curr = o.size();
+        size_t sizePos = o.size();
         o << (uint16_t)0; // placeholder
+        size_t start = o.size();
         visit(function->body);
-        size_t size = o.size() - curr;
+        size_t size = o.size() - start;
         assert(size <= std::numeric_limits<uint16_t>::max());
-        if (debug) std::cerr << "body size: " << size << ", writing at " << curr << ", next starts at " << o.size() << std::endl;
-        o.writeAt(curr, uint16_t(size));
+        if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
+        o.writeAt(sizePos, uint16_t(size));
       }
     }
   }
