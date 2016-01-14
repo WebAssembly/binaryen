@@ -470,8 +470,12 @@ public:
       }
       if (function) {
         size_t curr = o.size();
+        o << (uint32_t)0; // placeholder
         visit(function->body);
-        o.writeAt(curr, uint16_t(o.size() - curr));
+        size_t size = o.size() - curr;
+        assert(size <= std::numeric_limits<uint16_t>::max());
+        if (debug) std::cerr << "body size: " << size << ", writing at " << curr << ", next starts at " << o.size() << std::endl;
+        o.writeAt(curr, uint16_t(size));
       }
     }
   }
