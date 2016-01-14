@@ -1113,9 +1113,12 @@ public:
       case BinaryConsts::CallFunction: {
         // might be an import or not. we have to check here.
         Name target = mappedFunctions[getLEB128()];
+        assert(target.is());
+        if (debug) std::cerr << "call(import?) target: " << target << std::endl;
         if (wasm.importsMap.find(target) == wasm.importsMap.end()) {
           return visitCall((curr = allocator.alloc<Call>())->cast<Call>(), target);
         } else {
+          assert(wasm.functionsMap.find(target) != wasm.functionsMap.end());
           return visitCallImport((curr = allocator.alloc<CallImport>())->cast<CallImport>(), target);
         }
       }
