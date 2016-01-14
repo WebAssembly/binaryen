@@ -276,6 +276,10 @@ if torture:
       fails=os.path.abspath(os.path.join('test', 's2wasm_known_gcc_test_failures.txt')),
       out=s2wasm_torture_out)
   assert os.path.isdir(s2wasm_torture_out), 'Expected output directory %s' % s2wasm_torture_out
+  for wast in sorted(os.listdir(s2wasm_torture_out)):
+    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join(s2wasm_torture_out, wast)]
+    print cmd
+    subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   shutil.rmtree(s2wasm_torture_out)
   if unexpected_result_count:
     fail(unexpected_result_count, 0)
