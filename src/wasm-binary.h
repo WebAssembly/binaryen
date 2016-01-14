@@ -871,6 +871,8 @@ public:
     readDataSegments();
     readFunctionTable();
     readEnd();
+
+    processFunctions();
   }
 
   uint8_t getInt8() {
@@ -1046,15 +1048,12 @@ public:
           addLocals(f32);
           addLocals(f64);
         }
-        size_t pre = pos;
         size_t size = getInt16();
-        {
-          nextLabel = 0;
-          assert(breakStack.empty());
-          readExpression(func->body);
-          assert(breakStack.empty());
-        }
-        assert(pos = pre + size);
+        // we can't read the function yet - it might call other functions that are defined later,
+        // and we do depend on the function type, as well as the mappedFunctions table.
+        functions.emplace_back(func, pos, size);
+        pos += size;
+        func->body = nullptr; // will be filled later. but we do have the name and the type already.
         wasm.addFunction(func);
       }
       if (export_) {
@@ -1063,6 +1062,26 @@ public:
         e->value = name;
         wasm.addExport(e);
       }
+    }
+  }
+
+  struct FunctionData {
+    Function* func;
+    size_t pos, size;
+    FunctionData(Function* func, size_t pos, size_t size) : func(func), pos(pos), size(size) {}
+  };
+
+  std::vector<FunctionData> functions;
+
+  void processFunctions() {
+    for (auto& func : functions) {
+      Function* curr = func.func;
+      pos = func.pos;
+      nextLabel = 0;
+      assert(breakStack.empty());
+      readExpression(curr->body);
+      assert(breakStack.empty());
+      assert(pos == func.pos + func.size);
     }
   }
 
