@@ -593,12 +593,15 @@ public:
   void visitBreak(Break *curr) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br);
+    bool found = false;
     for (int i = breakStack.size() - 1; i >= 0; i--) {
       if (breakStack[i] == curr->name) {
         o << int8_t(breakStack.size() - 1 - i);
+        found = true;
         break;
       }
     }
+    assert(found);
     if (curr->condition) recurse(curr->condition);
   }
   void visitSwitch(Switch *curr) {
