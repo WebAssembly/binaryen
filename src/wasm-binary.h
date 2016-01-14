@@ -39,7 +39,7 @@ struct LEB128 {
   void write(std::vector<uint8_t>* out) {
     uint32_t temp = value;
     do {
-      uint8_t byte = value & 127;
+      uint8_t byte = temp & 127;
       temp >>= 7;
       if (temp) {
         byte = byte | 128;
