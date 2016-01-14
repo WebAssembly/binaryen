@@ -52,8 +52,8 @@ int main(int argc, const char *argv[]) {
   SExpressionWasmBuilder builder(wasm, *root[0], [&]() { abort(); });
 
   if (options.debug) std::cerr << "binarification..." << std::endl;
-  BufferWithRandomAccess buffer;
-  WasmBinaryWriter writer(&wasm, buffer);
+  BufferWithRandomAccess buffer(options.debug);
+  WasmBinaryWriter writer(&wasm, buffer, options.debug);
   writer.write();
 
   if (options.debug) std::cerr << "writing to output..." << std::endl;

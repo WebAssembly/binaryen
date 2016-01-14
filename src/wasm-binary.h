@@ -66,17 +66,24 @@ struct LEB128 {
 // is optimized for reading, not writing.
 //
 class BufferWithRandomAccess : public std::vector<uint8_t> {
+  bool debug;
+
 public:
+  BufferWithRandomAccess(bool debug) : debug(debug) {}
+
   BufferWithRandomAccess& operator<<(int8_t x) {
+    if (debug) std::cerr << "writeInt8: " << (int)(uint8_t)x << std::endl;
     push_back(x);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int16_t x) {
+    if (debug) std::cerr << "writeInt16: " << x << std::endl;
     push_back(x & 0xff);
     push_back(x >> 8);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int32_t x) {
+    if (debug) std::cerr << "writeInt32: " << x << std::endl;
     push_back(x & 0xff); x >>= 8;
     push_back(x & 0xff); x >>= 8;
     push_back(x & 0xff); x >>= 8;
@@ -84,6 +91,7 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(int64_t x) {
+    if (debug) std::cerr << "writeInt64: " << x << std::endl;
     push_back(x & 0xff); x >>= 8;
     push_back(x & 0xff); x >>= 8;
     push_back(x & 0xff); x >>= 8;
@@ -95,6 +103,7 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(LEB128 x) {
+    if (debug) std::cerr << "writeLEB128: " << x.value << std::endl;
     x.write(this);
     return *this;
   }
@@ -113,9 +122,11 @@ public:
   }
 
   BufferWithRandomAccess& operator<<(float x) {
+    if (debug) std::cerr << "writeFloat32: " << x << std::endl;
     return *this << Literal(x).reinterpreti32();
   }
   BufferWithRandomAccess& operator<<(double x) {
+    if (debug) std::cerr << "writeFloat64: " << x << std::endl;
     return *this << Literal(x).reinterpreti64();
   }
 
@@ -332,6 +343,7 @@ char binaryWasmType(WasmType type) {
 class WasmBinaryWriter : public WasmVisitor<void> {
   Module* wasm;
   BufferWithRandomAccess& o;
+  bool debug;
 
   MixedArena allocator;
 
@@ -343,7 +355,7 @@ class WasmBinaryWriter : public WasmVisitor<void> {
   }
 
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o) : o(o) {
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug) : o(o), debug(debug) {
     wasm = allocator.alloc<Module>();
     *wasm = *input; // simple shallow copy; we won't be modifying any internals, just adding some function types, so this is fine
     prepare();
@@ -360,14 +372,17 @@ public:
   }
 
   void writeMemory() {
+    if (debug) std::cerr << "== writeMemory" << std::endl;
     o << int8_t(BinaryConsts::Memory) << int8_t(log2(wasm->memory.initial))
                                       << int8_t(log2(wasm->memory.max))
                                       << int8_t(1); // export memory
   }
 
   void writeSignatures() {
+    if (debug) std::cerr << "== writeSignatures" << std::endl;
     o << int8_t(BinaryConsts::Signatures) << LEB128(wasm->functionTypes.size());
     for (auto type : wasm->functionTypes) {
+      if (debug) std::cerr << "write one" << std::endl;
       o << int8_t(type->params.size());
       o << binaryWasmType(type->result);
       for (auto param : type->params) {
@@ -820,11 +835,12 @@ class WasmBinaryBuilder {
   AllocatingModule& wasm;
   MixedArena& allocator;
   std::vector<char>& input;
+  bool debug;
 
   size_t pos;
 
 public:
-  WasmBinaryBuilder(AllocatingModule& wasm, std::vector<char>& input) : wasm(wasm), allocator(wasm.allocator), input(input), pos(0) {}
+  WasmBinaryBuilder(AllocatingModule& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), pos(0) {}
 
   void read() {
     readMemory();
@@ -837,22 +853,33 @@ public:
 
   int8_t getInt8() {
     assert(pos < input.size());
+    if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << std::endl;
     return input[pos++];
   }
   int16_t getInt16() {
-    return int16_t(getInt8()) | (int16_t(getInt8()) << 8);
+    auto ret = int16_t(getInt8()) | (int16_t(getInt8()) << 8);
+    if (debug) std::cerr << "getInt16: " << ret << std::endl;
+    return ret;
   }
   int32_t getInt32() {
-    return int32_t(getInt16()) | (int32_t(getInt16()) << 16);
+    auto ret = int32_t(getInt16()) | (int32_t(getInt16()) << 16);
+    if (debug) std::cerr << "getInt32: " << ret << std::endl;
+    return ret;
   }
   int64_t getInt64() {
-    return int64_t(getInt32()) | (int64_t(getInt32()) << 32);
+    auto ret = int64_t(getInt32()) | (int64_t(getInt32()) << 32);
+    if (debug) std::cerr << "getInt64: " << ret << std::endl;
+    return ret;
   }
   float getFloat32() {
-    return Literal(getInt32()).reinterpretf32();
+    auto ret = Literal(getInt32()).reinterpretf32();
+    if (debug) std::cerr << "getFloat32: " << ret << std::endl;
+    return ret;
   }
   double getFloat64() {
-    return Literal(getInt64()).reinterpretf64();
+    auto ret = Literal(getInt64()).reinterpretf64();
+    if (debug) std::cerr << "getFloat64: " << ret << std::endl;
+    return ret;
   }
 
   int32_t getLEB128() {
@@ -860,6 +887,7 @@ public:
     ret.read([&]() {
       return getInt8();
     });
+    if (debug) std::cerr << "getLEB128: " << ret.value << std::endl;
     return ret.value;
   }
   WasmType getWasmType() {
@@ -876,7 +904,9 @@ public:
 
   Name getString() {
     size_t offset = getInt32();
-    return cashew::IString((&input[0]) + offset, false);
+    Name ret = cashew::IString((&input[0]) + offset, false);
+    if (debug) std::cerr << "getString: " << ret << std::endl;
+    return ret;
   }
 
   void verifyInt8(int8_t x) {
@@ -905,6 +935,7 @@ public:
   }
 
   void readMemory() {
+    if (debug) std::cerr << "== readMemory" << std::endl;
     verifyInt8(BinaryConsts::Memory);
     wasm.memory.initial = pow(2, getInt8());
     wasm.memory.max = pow(2, getInt8());
@@ -912,11 +943,15 @@ public:
   }
 
   void readSignatures() {
+    if (debug) std::cerr << "== readSignatures" << std::endl;
     verifyInt8(BinaryConsts::Signatures);
     size_t numTypes = getLEB128();
+    if (debug) std::cerr << "num: " << numTypes << std::endl;
     for (size_t i = 0; i < numTypes; i++) {
+      if (debug) std::cerr << "read one" << std::endl;
       auto curr = allocator.alloc<FunctionType>();
       size_t numParams = getInt8();
+      if (debug) std::cerr << "num params: " << numParams << std::endl;
       curr->result = getWasmType();
       for (size_t j = 0; j < numParams; j++) {
         curr->params.push_back(getWasmType());
@@ -937,6 +972,7 @@ public:
   }
 
   void readFunctions() {
+    if (debug) std::cerr << "== readFunctions" << std::endl;
     verifyInt8(BinaryConsts::Functions);
     size_t total = getLEB128(); // imports and functions
     for (size_t i = 0; i < total; i++) {
@@ -1001,6 +1037,7 @@ public:
   }
 
   void readDataSegments() {
+    if (debug) std::cerr << "== readDataSegments" << std::endl;
     verifyInt8(BinaryConsts::DataSegments);
     auto num = getLEB128();
     for (auto i = 0; i < num; i++) {
@@ -1017,6 +1054,7 @@ public:
   }
 
   void readFunctionTable() {
+    if (debug) std::cerr << "== readFunctionTable" << std::endl;
     verifyInt8(BinaryConsts::FunctionTable);
     auto num = getLEB128();
     for (auto i = 0; i < num; i++) {
@@ -1025,6 +1063,7 @@ public:
   }
 
   void readEnd() {
+    if (debug) std::cerr << "== readEnd" << std::endl;
     verifyInt8(BinaryConsts::End);
   }
 

@@ -44,7 +44,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "parsing binary..." << std::endl;
   AllocatingModule wasm;
-  WasmBinaryBuilder parser(wasm, input);
+  WasmBinaryBuilder parser(wasm, input, options.debug);
   parser.read();
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
