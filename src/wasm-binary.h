@@ -439,9 +439,11 @@ public:
   }
 
   void writeFunctions() {
+    if (debug) std::cerr << "== writeFunctions" << std::endl;
     size_t total = wasm->imports.size() + wasm->functions.size();
     o << int8_t(BinaryConsts::Functions) << LEB128(total);
     for (size_t i = 0; i < total; i++) {
+      if (debug) std::cerr << "write one" << std::endl;
       Import* import = i < wasm->imports.size() ? wasm->imports[i] : nullptr;
       Function* function = i >= wasm->imports.size() ? wasm->functions[i - wasm->imports.size()] : nullptr;
       Name name, type;
@@ -495,6 +497,7 @@ public:
   }
 
   void writeFunctionTable() {
+    if (debug) std::cerr << "== writeFunctionTable" << std::endl;
     o << int8_t(BinaryConsts::FunctionTable) << LEB128(wasm->table.names.size());
     for (auto name : wasm->table.names) {
       o << getFunctionIndex(name);
@@ -541,6 +544,7 @@ public:
   std::vector<Name> breakStack;
 
   void visitBlock(Block *curr) {
+    if (debug) std::cerr << "Block" << std::endl;
     o << int8_t(BinaryConsts::Block) << int8_t(curr->list.size());
     breakStack.push_back(curr->name);
     for (auto child : curr->list) {
@@ -549,12 +553,14 @@ public:
     breakStack.pop_back();
   }
   void visitIf(If *curr) {
+    if (debug) std::cerr << "If" << std::endl;
     o << int8_t(curr->ifFalse ? BinaryConsts::IfElse : BinaryConsts::If);
     visit(curr->condition);
     visit(curr->ifTrue);
     if (curr->ifFalse) visit(curr->ifFalse);
   }
   void visitLoop(Loop *curr) {
+    if (debug) std::cerr << "Loop" << std::endl;
     // TODO: optimize, as we usually have a block as our singleton child
     o << int8_t(BinaryConsts::Loop) << int8_t(1);
     breakStack.push_back(curr->out);
@@ -564,6 +570,7 @@ public:
     breakStack.pop_back();
   }
   void visitBreak(Break *curr) {
+    if (debug) std::cerr << "Break" << std::endl;
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br);
     for (int i = breakStack.size() - 1; i >= 0; i--) {
       if (breakStack[i] == curr->name) {
@@ -574,6 +581,7 @@ public:
     if (curr->condition) visit(curr->condition);
   }
   void visitSwitch(Switch *curr) {
+    if (debug) std::cerr << "Switch" << std::endl;
     o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->cases.size())
                                            << int16_t(curr->targets.size());
     std::map<Name, int16_t> mapping; // target name => index in cases
@@ -589,18 +597,21 @@ public:
     }
   }
   void visitCall(Call *curr) {
+    if (debug) std::cerr << "Call" << std::endl;
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
     for (auto operand : curr->operands) {
       visit(operand);
     }
   }
   void visitCallImport(CallImport *curr) {
+    if (debug) std::cerr << "CallImport" << std::endl;
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
     for (auto operand : curr->operands) {
       visit(operand);
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
+    if (debug) std::cerr << "CallIndirect" << std::endl;
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionTypeIndex(curr->fullType->name));
     visit(curr->target);
     for (auto operand : curr->operands) {
@@ -608,9 +619,11 @@ public:
     }
   }
   void visitGetLocal(GetLocal *curr) {
+    if (debug) std::cerr << "GetLocal" << std::endl;
     o << int8_t(BinaryConsts::GetLocal) << LEB128(mappedLocals[curr->name]);
   }
   void visitSetLocal(SetLocal *curr) {
+    if (debug) std::cerr << "SetLocal" << std::endl;
     o << int8_t(BinaryConsts::SetLocal) << LEB128(mappedLocals[curr->name]);
     visit(curr->value);
   }
@@ -622,6 +635,7 @@ public:
   }
 
   void visitLoad(Load *curr) {
+    if (debug) std::cerr << "Load" << std::endl;
     switch (curr->type) {
       case i32: {
         switch (curr->bytes) {
@@ -650,6 +664,7 @@ public:
     visit(curr->ptr);
   }
   void visitStore(Store *curr) {
+    if (debug) std::cerr << "Store" << std::endl;
     switch (curr->type) {
       case i32: {
         switch (curr->bytes) {
@@ -679,6 +694,7 @@ public:
     visit(curr->value);
   }
   void visitConst(Const *curr) {
+    if (debug) std::cerr << "Const" << std::endl;
     switch (curr->type) {
       case i32: {
         int32_t value = curr->value.i32;
@@ -705,6 +721,7 @@ public:
     }
   }
   void visitUnary(Unary *curr) {
+    if (debug) std::cerr << "Unary" << std::endl;
     switch (curr->op) {
       case Clz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Clz        : BinaryConsts::I64Clz); break;
       case Ctz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Ctz        : BinaryConsts::I64Ctz); break;
@@ -736,6 +753,7 @@ public:
     visit(curr->value);
   }
   void visitBinary(Binary *curr) {
+    if (debug) std::cerr << "Binary" << std::endl;
     #define TYPED_CODE(code) { \
       switch (curr->left->type) { \
         case i32: o << int8_t(BinaryConsts::I32##code); break; \
@@ -804,12 +822,14 @@ public:
     #undef FLOAT_TYPED_CODE
   }
   void visitSelect(Select *curr) {
+    if (debug) std::cerr << "Select" << std::endl;
     o << int8_t(BinaryConsts::Select);
     visit(curr->ifTrue);
     visit(curr->ifFalse);
     visit(curr->condition);
   }
   void visitHost(Host *curr) {
+    if (debug) std::cerr << "Host" << std::endl;
     switch (curr->op) {
       case MemorySize: {
         o << int8_t(BinaryConsts::MemorySize);
@@ -824,9 +844,11 @@ public:
     }
   }
   void visitNop(Nop *curr) {
+    if (debug) std::cerr << "Nop" << std::endl;
     o << int8_t(BinaryConsts::Nop);
   }
   void visitUnreachable(Unreachable *curr) {
+    if (debug) std::cerr << "Unreachable" << std::endl;
     o << int8_t(BinaryConsts::Unreachable);
   }
 };
@@ -976,6 +998,7 @@ public:
     verifyInt8(BinaryConsts::Functions);
     size_t total = getLEB128(); // imports and functions
     for (size_t i = 0; i < total; i++) {
+      if (debug) std::cerr << "read one" << std::endl;
       auto type = wasm.functionTypes[getInt16()];
       auto data = getInt8();
       bool named = data & BinaryConsts::Named;
@@ -1071,6 +1094,7 @@ public:
 
   void readExpression(Expression*& curr) {
     uint8_t code = getInt8();
+    if (debug) std::cerr << "readExpression seeing " << (int)code << std::endl;
     switch (code) {
       case BinaryConsts::Block:        return visitBlock((curr = allocator.alloc<Block>())->cast<Block>());
       case BinaryConsts::If:
@@ -1117,6 +1141,7 @@ public:
   }
 
   void visitBlock(Block *curr) {
+    if (debug) std::cerr << "Block" << std::endl;
     auto num = getInt8();
     curr->name = getNextLabel();
     breakStack.push_back(curr->name);
@@ -1128,11 +1153,13 @@ public:
     breakStack.pop_back();
   }
   void visitIf(If *curr, uint8_t code) {
+    if (debug) std::cerr << "If" << std::endl;
     readExpression(curr->condition);
     readExpression(curr->ifTrue);
     if (code == BinaryConsts::IfElse) readExpression(curr->ifFalse);
   }
   void visitLoop(Loop *curr) {
+    if (debug) std::cerr << "Loop" << std::endl;
     verifyInt8(1); // size TODO: generalize
     curr->out = getNextLabel();
     curr->in = getNextLabel();
@@ -1143,11 +1170,13 @@ public:
     breakStack.pop_back();
   }
   void visitBreak(Break *curr, uint8_t code) {
+    if (debug) std::cerr << "Break" << std::endl;
     auto offset = getInt8();
     curr->name = breakStack[breakStack.size() - 1 - offset];
     if (code == BinaryConsts::BrIf) readExpression(curr->condition);
   }
   void visitSwitch(Switch *curr) {
+    if (debug) std::cerr << "Switch" << std::endl;
     auto numCases = getInt16();
     auto numTargets = getInt16();
     std::map<size_t, Name> caseLabels;
@@ -1169,6 +1198,7 @@ public:
     }
   }
   void visitCall(Call *curr, Name target) {
+    if (debug) std::cerr << "Call" << std::endl;
     curr->target = target;
     Name type = wasm.functionsMap[curr->target]->type;
     auto num = wasm.functionTypesMap[type]->params.size();
@@ -1179,6 +1209,7 @@ public:
     }
   }
   void visitCallImport(CallImport *curr, Name target) {
+    if (debug) std::cerr << "CallImport" << std::endl;
     curr->target = target;
     Name type = wasm.functionsMap[curr->target]->type;
     auto num = wasm.functionTypesMap[type]->params.size();
@@ -1189,6 +1220,7 @@ public:
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
+    if (debug) std::cerr << "CallIndirect" << std::endl;
     curr->fullType = wasm.functionTypes[getLEB128()];
     readExpression(curr->target);
     auto num = curr->fullType->params.size();
@@ -1199,9 +1231,11 @@ public:
     }
   }
   void visitGetLocal(GetLocal *curr) {
+    if (debug) std::cerr << "GetLocal" << std::endl;
     curr->name = mappedLocals[getLEB128()];
   }
   void visitSetLocal(SetLocal *curr) {
+    if (debug) std::cerr << "SetLocal" << std::endl;
     curr->name = mappedLocals[getLEB128()];
     readExpression(curr->value);
   }
@@ -1217,6 +1251,7 @@ public:
   }
 
   bool maybeVisitImpl(Load *curr, uint8_t code) {
+    if (debug) std::cerr << "maybe Load" << std::endl;
     switch (code) {
       case BinaryConsts::I32LoadMem8S:  curr->bytes = 1; curr->type = i32; curr->signed_ = true; break;
       case BinaryConsts::I32LoadMem8U:  curr->bytes = 1; curr->type = i32; curr->signed_ = false; break;
@@ -1239,6 +1274,7 @@ public:
     return true;
   }
   bool maybeVisitImpl(Store *curr, uint8_t code) {
+    if (debug) std::cerr << "maybe Store" << std::endl;
     switch (code) {
       case BinaryConsts::I32StoreMem8:  curr->bytes = 1; curr->type = i32; break;
       case BinaryConsts::I32StoreMem16: curr->bytes = 2; curr->type = i32; break;
@@ -1257,6 +1293,7 @@ public:
     return true;
   }
   bool maybeVisitImpl(Const *curr, uint8_t code) {
+    if (debug) std::cerr << "maybe Const" << std::endl;
     switch (code) {
       case BinaryConsts::I8Const:  curr->value.i32 = getInt8();    curr->type = i32; break;
       case BinaryConsts::I32Const: curr->value.i32 = getInt32();   curr->type = i32; break;
@@ -1268,6 +1305,7 @@ public:
     return true;
   }
   bool maybeVisitImpl(Unary *curr, uint8_t code) {
+    if (debug) std::cerr << "maybe Unary" << std::endl;
     switch (code) {
       case BinaryConsts::I32Clz:         curr->op = Clz;           curr->type = i32; break;
       case BinaryConsts::I64Clz:         curr->op = Clz;           curr->type = i64; break;
@@ -1301,6 +1339,7 @@ public:
     return true;
   }
   bool maybeVisitImpl(Binary *curr, uint8_t code) {
+    if (debug) std::cerr << "maybe Binary" << std::endl;
     #define TYPED_CODE(code) { \
       case BinaryConsts::I32##code: curr->op = code; curr->type = i32; break; \
       case BinaryConsts::I64##code: curr->op = code; curr->type = i64; break; \
@@ -1357,11 +1396,13 @@ public:
     #undef FLOAT_TYPED_CODE
   }
   void visitSelect(Select *curr) {
+    if (debug) std::cerr << "Select" << std::endl;
     readExpression(curr->ifTrue);
     readExpression(curr->ifFalse);
     readExpression(curr->condition);
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
+    if (debug) std::cerr << "maybe Host" << std::endl;
     switch (code) {
       case BinaryConsts::MemorySize: curr->op = MemorySize; break;
       case BinaryConsts::GrowMemory: {
@@ -1374,8 +1415,10 @@ public:
     return true;
   }
   void visitNop(Nop *curr) {
+    if (debug) std::cerr << "Nop" << std::endl;
   }
   void visitUnreachable(Unreachable *curr) {
+    if (debug) std::cerr << "Unreachable" << std::endl;
   }
 };
 
