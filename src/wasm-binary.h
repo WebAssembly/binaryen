@@ -72,18 +72,18 @@ public:
   BufferWithRandomAccess(bool debug) : debug(debug) {}
 
   BufferWithRandomAccess& operator<<(int8_t x) {
-    if (debug) std::cerr << "writeInt8: " << (int)(uint8_t)x << std::endl;
+    if (debug) std::cerr << "writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")" << std::endl;
     push_back(x);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int16_t x) {
-    if (debug) std::cerr << "writeInt16: " << x << std::endl;
+    if (debug) std::cerr << "writeInt16: " << x << " (at " << size() << ")" << std::endl;
     push_back(x & 0xff);
     push_back(x >> 8);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int32_t x) {
-    if (debug) std::cerr << "writeInt32: " << x << std::endl;
+    if (debug) std::cerr << "writeInt32: " << x << " (at " << size() << ")" << std::endl;
     push_back(x & 0xff); x >>= 8;
     push_back(x & 0xff); x >>= 8;
     push_back(x & 0xff); x >>= 8;
@@ -91,7 +91,7 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(int64_t x) {
-    if (debug) std::cerr << "writeInt64: " << x << std::endl;
+    if (debug) std::cerr << "writeInt64: " << x << " (at " << size() << ")" << std::endl;
     push_back(x & 0xff); x >>= 8;
     push_back(x & 0xff); x >>= 8;
     push_back(x & 0xff); x >>= 8;
@@ -103,7 +103,7 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(LEB128 x) {
-    if (debug) std::cerr << "writeLEB128: " << x.value << std::endl;
+    if (debug) std::cerr << "writeLEB128: " << x.value << " (at " << size() << ")" << std::endl;
     x.write(this);
     return *this;
   }
@@ -122,11 +122,11 @@ public:
   }
 
   BufferWithRandomAccess& operator<<(float x) {
-    if (debug) std::cerr << "writeFloat32: " << x << std::endl;
+    if (debug) std::cerr << "writeFloat32: " << x << " (at " << size() << ")" << std::endl;
     return *this << Literal(x).reinterpreti32();
   }
   BufferWithRandomAccess& operator<<(double x) {
-    if (debug) std::cerr << "writeFloat64: " << x << std::endl;
+    if (debug) std::cerr << "writeFloat64: " << x << " (at " << size() << ")" << std::endl;
     return *this << Literal(x).reinterpreti64();
   }
 
@@ -553,23 +553,25 @@ public:
   std::vector<Name> breakStack;
 
   void visitBlock(Block *curr) {
-    if (debug) std::cerr << "Block" << std::endl;
+    if (debug) std::cerr << "node: Block" << std::endl;
     o << int8_t(BinaryConsts::Block) << int8_t(curr->list.size());
     breakStack.push_back(curr->name);
+    size_t i = 0;
     for (auto child : curr->list) {
+      if (debug) std::cerr << "  " << size_t(curr) << " Block element " << i++ << std::endl;
       visit(child);
     }
     breakStack.pop_back();
   }
   void visitIf(If *curr) {
-    if (debug) std::cerr << "If" << std::endl;
+    if (debug) std::cerr << "node: If" << std::endl;
     o << int8_t(curr->ifFalse ? BinaryConsts::IfElse : BinaryConsts::If);
     visit(curr->condition);
     visit(curr->ifTrue);
     if (curr->ifFalse) visit(curr->ifFalse);
   }
   void visitLoop(Loop *curr) {
-    if (debug) std::cerr << "Loop" << std::endl;
+    if (debug) std::cerr << "node: Loop" << std::endl;
     // TODO: optimize, as we usually have a block as our singleton child
     o << int8_t(BinaryConsts::Loop) << int8_t(1);
     breakStack.push_back(curr->out);
@@ -579,7 +581,7 @@ public:
     breakStack.pop_back();
   }
   void visitBreak(Break *curr) {
-    if (debug) std::cerr << "Break" << std::endl;
+    if (debug) std::cerr << "node: Break" << std::endl;
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br);
     for (int i = breakStack.size() - 1; i >= 0; i--) {
       if (breakStack[i] == curr->name) {
@@ -590,7 +592,7 @@ public:
     if (curr->condition) visit(curr->condition);
   }
   void visitSwitch(Switch *curr) {
-    if (debug) std::cerr << "Switch" << std::endl;
+    if (debug) std::cerr << "node: Switch" << std::endl;
     o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->cases.size())
                                            << int16_t(curr->targets.size());
     std::map<Name, int16_t> mapping; // target name => index in cases
@@ -606,21 +608,21 @@ public:
     }
   }
   void visitCall(Call *curr) {
-    if (debug) std::cerr << "Call" << std::endl;
+    if (debug) std::cerr << "node: Call" << std::endl;
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
     for (auto operand : curr->operands) {
       visit(operand);
     }
   }
   void visitCallImport(CallImport *curr) {
-    if (debug) std::cerr << "CallImport" << std::endl;
+    if (debug) std::cerr << "node: CallImport" << std::endl;
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
     for (auto operand : curr->operands) {
       visit(operand);
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
-    if (debug) std::cerr << "CallIndirect" << std::endl;
+    if (debug) std::cerr << "node: CallIndirect" << std::endl;
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionTypeIndex(curr->fullType->name));
     visit(curr->target);
     for (auto operand : curr->operands) {
@@ -628,11 +630,11 @@ public:
     }
   }
   void visitGetLocal(GetLocal *curr) {
-    if (debug) std::cerr << "GetLocal" << std::endl;
+    if (debug) std::cerr << "node: GetLocal " << (o.size() + 1) << std::endl;
     o << int8_t(BinaryConsts::GetLocal) << LEB128(mappedLocals[curr->name]);
   }
   void visitSetLocal(SetLocal *curr) {
-    if (debug) std::cerr << "SetLocal" << std::endl;
+    if (debug) std::cerr << "node: SetLocal" << std::endl;
     o << int8_t(BinaryConsts::SetLocal) << LEB128(mappedLocals[curr->name]);
     visit(curr->value);
   }
@@ -644,7 +646,7 @@ public:
   }
 
   void visitLoad(Load *curr) {
-    if (debug) std::cerr << "Load" << std::endl;
+    if (debug) std::cerr << "node: Load" << std::endl;
     switch (curr->type) {
       case i32: {
         switch (curr->bytes) {
@@ -673,7 +675,7 @@ public:
     visit(curr->ptr);
   }
   void visitStore(Store *curr) {
-    if (debug) std::cerr << "Store" << std::endl;
+    if (debug) std::cerr << "node: Store" << std::endl;
     switch (curr->type) {
       case i32: {
         switch (curr->bytes) {
@@ -703,7 +705,7 @@ public:
     visit(curr->value);
   }
   void visitConst(Const *curr) {
-    if (debug) std::cerr << "Const" << std::endl;
+    if (debug) std::cerr << "node: Const" << std::endl;
     switch (curr->type) {
       case i32: {
         int32_t value = curr->value.i32;
@@ -730,7 +732,7 @@ public:
     }
   }
   void visitUnary(Unary *curr) {
-    if (debug) std::cerr << "Unary" << std::endl;
+    if (debug) std::cerr << "node: Unary" << std::endl;
     switch (curr->op) {
       case Clz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Clz        : BinaryConsts::I64Clz); break;
       case Ctz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Ctz        : BinaryConsts::I64Ctz); break;
@@ -762,7 +764,7 @@ public:
     visit(curr->value);
   }
   void visitBinary(Binary *curr) {
-    if (debug) std::cerr << "Binary" << std::endl;
+    if (debug) std::cerr << "node: Binary" << std::endl;
     #define TYPED_CODE(code) { \
       switch (curr->left->type) { \
         case i32: o << int8_t(BinaryConsts::I32##code); break; \
@@ -831,14 +833,14 @@ public:
     #undef FLOAT_TYPED_CODE
   }
   void visitSelect(Select *curr) {
-    if (debug) std::cerr << "Select" << std::endl;
+    if (debug) std::cerr << "node: Select" << std::endl;
     o << int8_t(BinaryConsts::Select);
     visit(curr->ifTrue);
     visit(curr->ifFalse);
     visit(curr->condition);
   }
   void visitHost(Host *curr) {
-    if (debug) std::cerr << "Host" << std::endl;
+    if (debug) std::cerr << "node: Host" << std::endl;
     switch (curr->op) {
       case MemorySize: {
         o << int8_t(BinaryConsts::MemorySize);
@@ -853,11 +855,11 @@ public:
     }
   }
   void visitNop(Nop *curr) {
-    if (debug) std::cerr << "Nop" << std::endl;
+    if (debug) std::cerr << "node: Nop" << std::endl;
     o << int8_t(BinaryConsts::Nop);
   }
   void visitUnreachable(Unreachable *curr) {
-    if (debug) std::cerr << "Unreachable" << std::endl;
+    if (debug) std::cerr << "node: Unreachable" << std::endl;
     o << int8_t(BinaryConsts::Unreachable);
   }
 };
@@ -886,7 +888,7 @@ public:
 
   uint8_t getInt8() {
     assert(pos < input.size());
-    if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << std::endl;
+    if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << " (at " << pos << ")" << std::endl;
     return input[pos++];
   }
   uint16_t getInt16() {
@@ -1088,6 +1090,7 @@ public:
   void processFunctions() {
     for (auto& func : functions) {
       Function* curr = func.func;
+      if (debug) std::cerr << "processing function: " << curr->name << std::endl;
       pos = func.pos;
       nextLabel = 0;
       // prepare locals
@@ -1191,25 +1194,31 @@ public:
   }
 
   void visitBlock(Block *curr) {
-    if (debug) std::cerr << "Block" << std::endl;
+    if (debug) std::cerr << "node: Block" << std::endl;
     auto num = getInt8();
     curr->name = getNextLabel();
     breakStack.push_back(curr->name);
     for (auto i = 0; i < num; i++) {
+      if (debug) std::cerr << "  " << size_t(curr) << " Block element " << i << std::endl;
       Expression* child;
       readExpression(child);
       curr->list.push_back(child);
     }
+    if (num == 0) {
+      curr->type = none;
+    } else {
+      curr->type = curr->list.back()->type;
+    }
     breakStack.pop_back();
   }
   void visitIf(If *curr, uint8_t code) {
-    if (debug) std::cerr << "If" << std::endl;
+    if (debug) std::cerr << "node: If" << std::endl;
     readExpression(curr->condition);
     readExpression(curr->ifTrue);
     if (code == BinaryConsts::IfElse) readExpression(curr->ifFalse);
   }
   void visitLoop(Loop *curr) {
-    if (debug) std::cerr << "Loop" << std::endl;
+    if (debug) std::cerr << "node: Loop" << std::endl;
     verifyInt8(1); // size TODO: generalize
     curr->out = getNextLabel();
     curr->in = getNextLabel();
@@ -1220,13 +1229,13 @@ public:
     breakStack.pop_back();
   }
   void visitBreak(Break *curr, uint8_t code) {
-    if (debug) std::cerr << "Break" << std::endl;
+    if (debug) std::cerr << "node: Break" << std::endl;
     auto offset = getInt8();
     curr->name = breakStack[breakStack.size() - 1 - offset];
     if (code == BinaryConsts::BrIf) readExpression(curr->condition);
   }
   void visitSwitch(Switch *curr) {
-    if (debug) std::cerr << "Switch" << std::endl;
+    if (debug) std::cerr << "node: Switch" << std::endl;
     auto numCases = getInt16();
     auto numTargets = getInt16();
     std::map<size_t, Name> caseLabels;
@@ -1248,7 +1257,7 @@ public:
     }
   }
   void visitCall(Call *curr, Name target) {
-    if (debug) std::cerr << "Call" << std::endl;
+    if (debug) std::cerr << "node: Call" << std::endl;
     curr->target = target;
     Name type = wasm.functionsMap[curr->target]->type;
     auto num = wasm.functionTypesMap[type]->params.size();
@@ -1259,7 +1268,7 @@ public:
     }
   }
   void visitCallImport(CallImport *curr, Name target) {
-    if (debug) std::cerr << "CallImport" << std::endl;
+    if (debug) std::cerr << "node: CallImport" << std::endl;
     curr->target = target;
     auto num = wasm.importsMap[curr->target]->type->params.size();
     for (size_t i = 0; i < num; i++) {
@@ -1269,7 +1278,7 @@ public:
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
-    if (debug) std::cerr << "CallIndirect" << std::endl;
+    if (debug) std::cerr << "node: CallIndirect" << std::endl;
     curr->fullType = wasm.functionTypes[getLEB128()];
     readExpression(curr->target);
     auto num = curr->fullType->params.size();
@@ -1280,11 +1289,11 @@ public:
     }
   }
   void visitGetLocal(GetLocal *curr) {
-    if (debug) std::cerr << "GetLocal" << std::endl;
+    if (debug) std::cerr << "node: GetLocal " << pos << std::endl;
     curr->name = mappedLocals[getLEB128()];
   }
   void visitSetLocal(SetLocal *curr) {
-    if (debug) std::cerr << "SetLocal" << std::endl;
+    if (debug) std::cerr << "node: SetLocal" << std::endl;
     curr->name = mappedLocals[getLEB128()];
     readExpression(curr->value);
   }
@@ -1300,7 +1309,6 @@ public:
   }
 
   bool maybeVisitImpl(Load *curr, uint8_t code) {
-    if (debug) std::cerr << "maybe Load" << std::endl;
     switch (code) {
       case BinaryConsts::I32LoadMem8S:  curr->bytes = 1; curr->type = i32; curr->signed_ = true; break;
       case BinaryConsts::I32LoadMem8U:  curr->bytes = 1; curr->type = i32; curr->signed_ = false; break;
@@ -1318,12 +1326,12 @@ public:
       case BinaryConsts::F64LoadMem:    curr->bytes = 8; curr->type = f64; break;
       default: return false;
     }
+    if (debug) std::cerr << "node: Load" << std::endl;
     readMemoryAccess(curr->align, curr->bytes, curr->offset);
     readExpression(curr->ptr);
     return true;
   }
   bool maybeVisitImpl(Store *curr, uint8_t code) {
-    if (debug) std::cerr << "maybe Store" << std::endl;
     switch (code) {
       case BinaryConsts::I32StoreMem8:  curr->bytes = 1; curr->type = i32; break;
       case BinaryConsts::I32StoreMem16: curr->bytes = 2; curr->type = i32; break;
@@ -1336,13 +1344,13 @@ public:
       case BinaryConsts::F64StoreMem:   curr->bytes = 8; curr->type = f64; break;
       default: return false;
     }
+    if (debug) std::cerr << "node: Store" << std::endl;
     readMemoryAccess(curr->align, curr->bytes, curr->offset);
     readExpression(curr->ptr);
     readExpression(curr->value);
     return true;
   }
   bool maybeVisitImpl(Const *curr, uint8_t code) {
-    if (debug) std::cerr << "maybe Const" << std::endl;
     switch (code) {
       case BinaryConsts::I8Const:  curr->value.i32 = getInt8();    curr->type = i32; break;
       case BinaryConsts::I32Const: curr->value.i32 = getInt32();   curr->type = i32; break;
@@ -1351,10 +1359,10 @@ public:
       case BinaryConsts::F64Const: curr->value.f64 = getFloat64(); curr->type = f64; break;
       default: return false;
     }
+    if (debug) std::cerr << "node: Const" << std::endl;
     return true;
   }
   bool maybeVisitImpl(Unary *curr, uint8_t code) {
-    if (debug) std::cerr << "maybe Unary" << std::endl;
     switch (code) {
       case BinaryConsts::I32Clz:         curr->op = Clz;           curr->type = i32; break;
       case BinaryConsts::I64Clz:         curr->op = Clz;           curr->type = i64; break;
@@ -1384,11 +1392,11 @@ public:
       case BinaryConsts::I64SConvertF64: curr->op = ConvertSInt64; curr->type = f64; break;
       default: return false;
     }
+    if (debug) std::cerr << "node: Unary" << std::endl;
     readExpression(curr->value);
     return true;
   }
   bool maybeVisitImpl(Binary *curr, uint8_t code) {
-    if (debug) std::cerr << "maybe Binary" << std::endl;
     #define TYPED_CODE(code) { \
       case BinaryConsts::I32##code: curr->op = code; curr->type = i32; break; \
       case BinaryConsts::I64##code: curr->op = code; curr->type = i64; break; \
@@ -1437,6 +1445,7 @@ public:
       FLOAT_TYPED_CODE(Ge);
       default: return false;
     }
+    if (debug) std::cerr << "node: Binary" << std::endl;
     readExpression(curr->left);
     readExpression(curr->right);
     return true;
@@ -1445,13 +1454,12 @@ public:
     #undef FLOAT_TYPED_CODE
   }
   void visitSelect(Select *curr) {
-    if (debug) std::cerr << "Select" << std::endl;
+    if (debug) std::cerr << "node: Select" << std::endl;
     readExpression(curr->ifTrue);
     readExpression(curr->ifFalse);
     readExpression(curr->condition);
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
-    if (debug) std::cerr << "maybe Host" << std::endl;
     switch (code) {
       case BinaryConsts::MemorySize: curr->op = MemorySize; break;
       case BinaryConsts::GrowMemory: {
@@ -1461,13 +1469,14 @@ public:
       }
       default: return false;
     }
+    if (debug) std::cerr << "node: Host" << std::endl;
     return true;
   }
   void visitNop(Nop *curr) {
-    if (debug) std::cerr << "Nop" << std::endl;
+    if (debug) std::cerr << "node: Nop" << std::endl;
   }
   void visitUnreachable(Unreachable *curr) {
-    if (debug) std::cerr << "Unreachable" << std::endl;
+    if (debug) std::cerr << "node: Unreachable" << std::endl;
   }
 };
 
