@@ -601,7 +601,10 @@ public:
         break;
       }
     }
-    assert(found);
+    if (!found) {
+      std::cerr << "bad break: " << curr->name << std::endl;
+      abort();
+    }
     if (curr->condition) recurse(curr->condition);
   }
   void visitSwitch(Switch *curr) {
@@ -615,10 +618,12 @@ public:
     for (auto target : curr->targets) {
       o << mapping[target];
     }
+    breakStack.push_back(curr->name);
     recurse(curr->value);
     for (auto c : curr->cases) {
       recurse(c.body);
     }
+    breakStack.pop_back();
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
@@ -1270,6 +1275,8 @@ public:
     for (auto i = 0; i < numTargets; i++) {
       curr->targets.push_back(getCaseLabel(getInt16()));
     }
+    curr->name = getNextLabel();
+    breakStack.push_back(curr->name);
     readExpression(curr->value);
     for (auto i = 0; i < numCases; i++) {
       Switch::Case c;
@@ -1277,6 +1284,7 @@ public:
       readExpression(c.body);
       curr->cases.push_back(c);
     }
+    breakStack.pop_back();
   }
   void visitCall(Call *curr, Name target) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
