@@ -290,11 +290,11 @@ for wast in tests:
     subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert os.path.exists('a.wasm')
 
-    #cmd = [os.path.join('bin', 'wasm-dis'), 'a.wasm', '-o', 'a.wast']
-    #print ' '.join(cmd)
-    #if os.path.exists('a.wast'): os.unlink('a.wast')
-    #subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #assert os.path.exists('a.wast')
+    cmd = [os.path.join('bin', 'wasm-dis'), 'a.wasm', '-o', 'a.wast']
+    print ' '.join(cmd)
+    if os.path.exists('a.wast'): os.unlink('a.wast')
+    subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert os.path.exists('a.wast')
 
 print '\n[ checking example testcases... ]\n'
 
