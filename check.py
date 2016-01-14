@@ -276,7 +276,7 @@ if torture:
       fails=os.path.abspath(os.path.join('test', 's2wasm_known_gcc_test_failures.txt')),
       out=s2wasm_torture_out)
   assert os.path.isdir(s2wasm_torture_out), 'Expected output directory %s' % s2wasm_torture_out
-  # execute it TODO: parallelize
+  # execute it TODO: parallelize, use waterfall
   known_failures = set(open(os.path.join('test', 's2wasm_known_binaryen_shell_test_failures.txt')).read().split('\n'))
   total = 0
   bad_failures = []
