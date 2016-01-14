@@ -1233,13 +1233,101 @@ std::ostream& Expression::print(std::ostream &o, unsigned indent) {
   return o;
 }
 
+struct WasmWalkerBase : public WasmVisitor<void> {
+  virtual void walk(Expression*& curr) { abort(); }
+  virtual void startWalk(Function *func) { abort(); }
+  virtual void startWalk(Module *module) { abort(); }
+};
+
+struct ChildWalker : public WasmWalkerBase {
+  WasmWalkerBase& parent;
+
+  ChildWalker(WasmWalkerBase& parent) : parent(parent) {}
+
+  void visitBlock(Block *curr) override {
+    ExpressionList& list = curr->list;
+    for (size_t z = 0; z < list.size(); z++) {
+      parent.walk(list[z]);
+    }
+  }
+  void visitIf(If *curr) override {
+    parent.walk(curr->condition);
+    parent.walk(curr->ifTrue);
+    parent.walk(curr->ifFalse);
+  }
+  void visitLoop(Loop *curr) override {
+    parent.walk(curr->body);
+  }
+  void visitBreak(Break *curr) override {
+    parent.walk(curr->condition);
+    parent.walk(curr->value);
+  }
+  void visitSwitch(Switch *curr) override {
+    parent.walk(curr->value);
+    for (auto& case_ : curr->cases) {
+      parent.walk(case_.body);
+    }
+  }
+  void visitCall(Call *curr) override {
+    ExpressionList& list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      parent.walk(list[z]);
+    }
+  }
+  void visitCallImport(CallImport *curr) override {
+    ExpressionList& list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      parent.walk(list[z]);
+    }
+  }
+  void visitCallIndirect(CallIndirect *curr) override {
+    parent.walk(curr->target);
+    ExpressionList& list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      parent.walk(list[z]);
+    }
+  }
+  void visitGetLocal(GetLocal *curr) override {}
+  void visitSetLocal(SetLocal *curr) override {
+    parent.walk(curr->value);
+  }
+  void visitLoad(Load *curr) override {
+    parent.walk(curr->ptr);
+  }
+  void visitStore(Store *curr) override {
+    parent.walk(curr->ptr);
+    parent.walk(curr->value);
+  }
+  void visitConst(Const *curr) override {}
+  void visitUnary(Unary *curr) override {
+    parent.walk(curr->value);
+  }
+  void visitBinary(Binary *curr) override {
+    parent.walk(curr->left);
+    parent.walk(curr->right);
+  }
+  void visitSelect(Select *curr) override {
+    parent.walk(curr->condition);
+    parent.walk(curr->ifTrue);
+    parent.walk(curr->ifFalse);
+  }
+  void visitHost(Host *curr) override {
+    ExpressionList& list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      parent.walk(list[z]);
+    }
+  }
+  void visitNop(Nop *curr) override {}
+  void visitUnreachable(Unreachable *curr) override {}
+};
+
 //
 // Simple WebAssembly children-first walking (i.e., post-order, if you look
 // at the children as subtrees of the current node), with the ability to replace
 // the current expression node. Useful for writing optimization passes.
 //
 
-struct WasmWalker : public WasmVisitor<void> {
+struct WasmWalker : public WasmWalkerBase {
   Expression* replace;
 
   WasmWalker() : replace(nullptr) {}
@@ -1279,90 +1367,8 @@ struct WasmWalker : public WasmVisitor<void> {
   void visitModule(Module *curr) override {}
 
   // children-first
-  void walk(Expression*& curr) {
+  void walk(Expression*& curr) override {
     if (!curr) return;
-
-    struct ChildWalker : public WasmVisitor {
-      WasmWalker& parent;
-
-      ChildWalker(WasmWalker& parent) : parent(parent) {}
-
-      void visitBlock(Block *curr) override {
-        ExpressionList& list = curr->list;
-        for (size_t z = 0; z < list.size(); z++) {
-          parent.walk(list[z]);
-        }
-      }
-      void visitIf(If *curr) override {
-        parent.walk(curr->condition);
-        parent.walk(curr->ifTrue);
-        parent.walk(curr->ifFalse);
-      }
-      void visitLoop(Loop *curr) override {
-        parent.walk(curr->body);
-      }
-      void visitBreak(Break *curr) override {
-        parent.walk(curr->condition);
-        parent.walk(curr->value);
-      }
-      void visitSwitch(Switch *curr) override {
-        parent.walk(curr->value);
-        for (auto& case_ : curr->cases) {
-          parent.walk(case_.body);
-        }
-      }
-      void visitCall(Call *curr) override {
-        ExpressionList& list = curr->operands;
-        for (size_t z = 0; z < list.size(); z++) {
-          parent.walk(list[z]);
-        }
-      }
-      void visitCallImport(CallImport *curr) override {
-        ExpressionList& list = curr->operands;
-        for (size_t z = 0; z < list.size(); z++) {
-          parent.walk(list[z]);
-        }
-      }
-      void visitCallIndirect(CallIndirect *curr) override {
-        parent.walk(curr->target);
-        ExpressionList& list = curr->operands;
-        for (size_t z = 0; z < list.size(); z++) {
-          parent.walk(list[z]);
-        }
-      }
-      void visitGetLocal(GetLocal *curr) override {}
-      void visitSetLocal(SetLocal *curr) override {
-        parent.walk(curr->value);
-      }
-      void visitLoad(Load *curr) override {
-        parent.walk(curr->ptr);
-      }
-      void visitStore(Store *curr) override {
-        parent.walk(curr->ptr);
-        parent.walk(curr->value);
-      }
-      void visitConst(Const *curr) override {}
-      void visitUnary(Unary *curr) override {
-        parent.walk(curr->value);
-      }
-      void visitBinary(Binary *curr) override {
-        parent.walk(curr->left);
-        parent.walk(curr->right);
-      }
-      void visitSelect(Select *curr) override {
-        parent.walk(curr->condition);
-        parent.walk(curr->ifTrue);
-        parent.walk(curr->ifFalse);
-      }
-      void visitHost(Host *curr) override {
-        ExpressionList& list = curr->operands;
-        for (size_t z = 0; z < list.size(); z++) {
-          parent.walk(list[z]);
-        }
-      }
-      void visitNop(Nop *curr) override {}
-      void visitUnreachable(Unreachable *curr) override {}
-    };
 
     ChildWalker(*this).visit(curr);
 
@@ -1374,11 +1380,11 @@ struct WasmWalker : public WasmVisitor<void> {
     }
   }
 
-  void startWalk(Function *func) {
+  void startWalk(Function *func) override {
     walk(func->body);
   }
 
-  void startWalk(Module *module) {
+  void startWalk(Module *module) override {
     for (auto curr : module->functionTypes) {
       visitFunctionType(curr);
       assert(!replace);

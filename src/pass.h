@@ -88,14 +88,24 @@ struct PassRunner {
 //
 // Core pass class
 //
-class Pass : public WasmWalker {
+class Pass {
  public:
   // Override this to perform preparation work before the pass runs
   virtual void prepare(PassRunner* runner, Module* module) {}
+  virtual void run(PassRunner* runner, Module* module) { abort(); }
+  virtual ~Pass() {}
+};
 
-  void run(PassRunner* runner, Module* module) {
+//
+// Core pass class that uses AST walking. This class can be parameterized by
+// different types of AST walkers.
+//
+template <class WalkerType>
+class WalkerPass : public Pass, public WalkerType {
+ public:
+  void run(PassRunner* runner, Module* module) override {
     prepare(runner, module);
-    startWalk(module);
+    WalkerType::startWalk(module);
   }
 };
 
@@ -104,7 +114,7 @@ class Pass : public WasmWalker {
 // e.g. through PassRunner::getLast
 
 // Handles names in a module, in particular adding names without duplicates
-class NameManager : public Pass {
+class NameManager : public WalkerPass<WasmWalker> {
  public:
   Name getUnique(std::string prefix);
   // TODO: getUniqueInFunction
