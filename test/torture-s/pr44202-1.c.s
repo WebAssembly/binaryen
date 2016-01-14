@@ -20,6 +20,7 @@ add512:                                 # @add512
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	return  	$2
+	.endfunc
 .Lfunc_end0:
 	.size	add512, .Lfunc_end0-add512
 
@@ -41,6 +42,7 @@ add513:                                 # @add513
 .LBB1_2:                                # %if.end
 	end_block                       # label1:
 	return  	$2
+	.endfunc
 .Lfunc_end1:
 	.size	add513, .Lfunc_end1-add513
 
@@ -89,9 +91,10 @@ main:                                   # @main
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

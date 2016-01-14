@@ -15,6 +15,7 @@ main:                                   # @main
 	i32.store	$discard=, y($0), $pop1
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -37,5 +38,5 @@ y:
 	.size	y, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

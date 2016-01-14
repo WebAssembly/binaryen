@@ -18,6 +18,7 @@ foo:                                    # @foo
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -97,6 +98,7 @@ nfoo:                                   # @nfoo
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	nfoo, .Lfunc_end1-nfoo
 
@@ -179,6 +181,7 @@ main:                                   # @main
 	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -197,6 +200,7 @@ __cyg_profile_func_enter:               # @__cyg_profile_func_enter
 	i32.store	$discard=, entry_calls($2), $pop2
 	i32.store	$discard=, last_fn_entered($2), $0
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	__cyg_profile_func_enter, .Lfunc_end3-__cyg_profile_func_enter
 
@@ -215,6 +219,7 @@ __cyg_profile_func_exit:                # @__cyg_profile_func_exit
 	i32.store	$discard=, exit_calls($2), $pop2
 	i32.store	$discard=, last_fn_exited($2), $0
 	return
+	.endfunc
 .Lfunc_end4:
 	.size	__cyg_profile_func_exit, .Lfunc_end4-__cyg_profile_func_exit
 
@@ -282,6 +287,7 @@ foo2:                                   # @foo2
 	end_block                       # label13:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end5:
 	.size	foo2, .Lfunc_end5-foo2
 
@@ -322,5 +328,5 @@ last_fn_exited:
 	.size	last_fn_exited, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

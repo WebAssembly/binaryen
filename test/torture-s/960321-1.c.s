@@ -14,6 +14,7 @@ acc_a:                                  # @acc_a
 	i32.add 	$push3=, $pop1, $pop2
 	i32.load8_s	$push4=, 0($pop3)
 	return  	$pop4
+	.endfunc
 .Lfunc_end0:
 	.size	acc_a, .Lfunc_end0-acc_a
 
@@ -38,6 +39,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -50,5 +52,5 @@ a:
 	.size	a, 10
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

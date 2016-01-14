@@ -41,6 +41,7 @@ g:                                      # @g
 	i64.or  	$push12=, $pop11, $pop4
 	i64.or  	$push26=, $pop25, $pop12
 	return  	$pop26
+	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
 
@@ -85,6 +86,7 @@ f:                                      # @f
 	i64.or  	$push12=, $pop11, $pop4
 	i64.or  	$push26=, $pop25, $pop12
 	return  	$pop26
+	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
@@ -185,9 +187,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

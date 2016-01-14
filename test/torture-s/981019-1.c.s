@@ -51,6 +51,7 @@ ff:                                     # @ff
 	end_block                       # label4:
 	call    	f1@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	ff, .Lfunc_end0-ff
 
@@ -62,6 +63,7 @@ f1:                                     # @f1
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
 
@@ -78,6 +80,7 @@ f3:                                     # @f3
 	i32.eq  	$push1=, $pop0, $0
 	i32.store	$push2=, f3.x($0), $pop1
 	return  	$pop2
+	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
 
@@ -90,6 +93,7 @@ f2:                                     # @f2
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	f2, .Lfunc_end3-f2
 
@@ -115,11 +119,12 @@ main:                                   # @main
 	end_loop                        # label6:
 	i32.store	$discard=, f3.x($1), $2
 	return  	$1
+	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
 	.type	f3.x,@object            # @f3.x
 	.lcomm	f3.x,4,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

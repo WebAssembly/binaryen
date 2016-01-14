@@ -10,6 +10,7 @@ fn2:                                    # @fn2
 	i32.const	$push0=, glob
 	i32.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	fn2, .Lfunc_end0-fn2
 
@@ -23,6 +24,7 @@ test:                                   # @test
 	i32.const	$push1=, 42
 	i32.store	$discard=, glob($pop0), $pop1
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	test, .Lfunc_end1-test
 
@@ -39,6 +41,7 @@ main:                                   # @main
 	i32.store	$discard=, glob($0), $pop0
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -52,5 +55,5 @@ glob:
 	.size	glob, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

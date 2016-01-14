@@ -18,6 +18,7 @@ main:                                   # @main
 	i32.store	$discard=, level($0), $pop3
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -39,6 +40,7 @@ foo:                                    # @foo
 	i32.store	$discard=, level($0), $pop3
 	i32.const	$push4=, -42
 	return  	$pop4
+	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
@@ -63,6 +65,7 @@ bar:                                    # @bar
 	end_block                       # label0:
 	i32.sub 	$push3=, $1, $0
 	return  	$pop3
+	.endfunc
 .Lfunc_end2:
 	.size	bar, .Lfunc_end2-bar
 
@@ -76,5 +79,5 @@ level:
 	.size	level, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

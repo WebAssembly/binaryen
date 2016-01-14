@@ -19,6 +19,7 @@ foo:                                    # @foo
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -70,6 +71,7 @@ test_neg:                               # @test_neg
 # BB#5:                                 # %for.end
 	end_loop                        # label2:
 	return  	$3
+	.endfunc
 .Lfunc_end1:
 	.size	test_neg, .Lfunc_end1-test_neg
 
@@ -121,9 +123,10 @@ main:                                   # @main
 # BB#5:                                 # %if.end
 	end_loop                        # label6:
 	return  	$3
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -13,6 +13,7 @@ test1:                                  # @test1
 	i32.const	$push2=, 10
 	i32.lt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
@@ -29,6 +30,7 @@ test1u:                                 # @test1u
 	i32.const	$push2=, 10
 	i32.lt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end1:
 	.size	test1u, .Lfunc_end1-test1u
 
@@ -45,6 +47,7 @@ test2:                                  # @test2
 	i32.const	$push2=, 19
 	i32.lt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end2:
 	.size	test2, .Lfunc_end2-test2
 
@@ -59,6 +62,7 @@ test2u:                                 # @test2u
 	i32.const	$push0=, 10
 	i32.lt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end3:
 	.size	test2u, .Lfunc_end3-test2u
 
@@ -75,6 +79,7 @@ test3:                                  # @test3
 	i32.const	$push2=, 9
 	i32.gt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end4:
 	.size	test3, .Lfunc_end4-test3
 
@@ -91,6 +96,7 @@ test3u:                                 # @test3u
 	i32.const	$push2=, 9
 	i32.gt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end5:
 	.size	test3u, .Lfunc_end5-test3u
 
@@ -107,6 +113,7 @@ test4:                                  # @test4
 	i32.const	$push2=, 18
 	i32.gt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end6:
 	.size	test4, .Lfunc_end6-test4
 
@@ -121,6 +128,7 @@ test4u:                                 # @test4u
 	i32.const	$push0=, 9
 	i32.gt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end7:
 	.size	test4u, .Lfunc_end7-test4u
 
@@ -135,6 +143,7 @@ test5:                                  # @test5
 	i32.const	$push0=, 20
 	i32.lt_s	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end8:
 	.size	test5, .Lfunc_end8-test5
 
@@ -149,6 +158,7 @@ test5u:                                 # @test5u
 	i32.const	$push0=, 20
 	i32.lt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end9:
 	.size	test5u, .Lfunc_end9-test5u
 
@@ -163,6 +173,7 @@ test6:                                  # @test6
 	i32.const	$push0=, -9
 	i32.lt_s	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end10:
 	.size	test6, .Lfunc_end10-test6
 
@@ -177,6 +188,7 @@ test7:                                  # @test7
 	i32.const	$push0=, 30
 	i32.lt_s	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end11:
 	.size	test7, .Lfunc_end11-test7
 
@@ -191,6 +203,7 @@ test7u:                                 # @test7u
 	i32.const	$push0=, 30
 	i32.lt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end12:
 	.size	test7u, .Lfunc_end12-test7u
 
@@ -205,6 +218,7 @@ test8:                                  # @test8
 	i32.const	$push0=, 10
 	i32.lt_s	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end13:
 	.size	test8, .Lfunc_end13-test8
 
@@ -219,6 +233,7 @@ test8u:                                 # @test8u
 	i32.const	$push0=, 10
 	i32.lt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end14:
 	.size	test8u, .Lfunc_end14-test8u
 
@@ -233,6 +248,7 @@ test9:                                  # @test9
 	i32.const	$push0=, 29
 	i32.gt_s	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end15:
 	.size	test9, .Lfunc_end15-test9
 
@@ -247,6 +263,7 @@ test9u:                                 # @test9u
 	i32.const	$push0=, 29
 	i32.gt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end16:
 	.size	test9u, .Lfunc_end16-test9u
 
@@ -261,6 +278,7 @@ test10:                                 # @test10
 	i32.const	$push0=, 9
 	i32.gt_s	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end17:
 	.size	test10, .Lfunc_end17-test10
 
@@ -275,6 +293,7 @@ test10u:                                # @test10u
 	i32.const	$push0=, 9
 	i32.gt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end18:
 	.size	test10u, .Lfunc_end18-test10u
 
@@ -289,6 +308,7 @@ test11:                                 # @test11
 	i32.const	$push0=, 19
 	i32.gt_s	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end19:
 	.size	test11, .Lfunc_end19-test11
 
@@ -303,6 +323,7 @@ test11u:                                # @test11u
 	i32.const	$push0=, 19
 	i32.gt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end20:
 	.size	test11u, .Lfunc_end20-test11u
 
@@ -317,6 +338,7 @@ test12:                                 # @test12
 	i32.const	$push0=, -10
 	i32.gt_s	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end21:
 	.size	test12, .Lfunc_end21-test12
 
@@ -329,9 +351,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end428
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end22:
 	.size	main, .Lfunc_end22-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

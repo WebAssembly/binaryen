@@ -13,6 +13,7 @@ nge:                                    # @nge
 	i32.const	$push1=, 0
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	nge, .Lfunc_end0-nge
 
@@ -29,6 +30,7 @@ ngt:                                    # @ngt
 	i32.const	$push1=, 0
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end1:
 	.size	ngt, .Lfunc_end1-ngt
 
@@ -45,6 +47,7 @@ nle:                                    # @nle
 	i32.const	$push1=, 0
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end2:
 	.size	nle, .Lfunc_end2-nle
 
@@ -61,6 +64,7 @@ nlt:                                    # @nlt
 	i32.const	$push1=, 0
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end3:
 	.size	nlt, .Lfunc_end3-nlt
 
@@ -77,6 +81,7 @@ neq:                                    # @neq
 	i32.const	$push1=, 0
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end4:
 	.size	neq, .Lfunc_end4-neq
 
@@ -93,6 +98,7 @@ nne:                                    # @nne
 	i32.const	$push1=, 0
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end5:
 	.size	nne, .Lfunc_end5-nne
 
@@ -109,6 +115,7 @@ ngeu:                                   # @ngeu
 	i32.const	$push1=, 0
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end6:
 	.size	ngeu, .Lfunc_end6-ngeu
 
@@ -125,6 +132,7 @@ ngtu:                                   # @ngtu
 	i32.const	$push1=, 0
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end7:
 	.size	ngtu, .Lfunc_end7-ngtu
 
@@ -141,6 +149,7 @@ nleu:                                   # @nleu
 	i32.const	$push1=, 0
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end8:
 	.size	nleu, .Lfunc_end8-nleu
 
@@ -157,6 +166,7 @@ nltu:                                   # @nltu
 	i32.const	$push1=, 0
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end9:
 	.size	nltu, .Lfunc_end9-nltu
 
@@ -344,9 +354,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end10:
 	.size	main, .Lfunc_end10-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

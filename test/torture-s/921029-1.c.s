@@ -19,6 +19,7 @@ build:                                  # @build
 	i64.or  	$push6=, $pop3, $pop5
 	i64.store	$push7=, back($2), $pop6
 	return  	$pop7
+	.endfunc
 .Lfunc_end0:
 	.size	build, .Lfunc_end0-build
 
@@ -39,6 +40,7 @@ main:                                   # @main
 	i64.store	$discard=, back($0), $pop2
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -70,5 +72,5 @@ back:
 	.size	back, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

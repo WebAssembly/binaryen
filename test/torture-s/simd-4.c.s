@@ -12,6 +12,7 @@ main:                                   # @main
 	i64.const	$push0=, -4294967295
 	i64.store	$discard=, s64($0), $pop0
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -25,5 +26,5 @@ s64:
 	.size	s64, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

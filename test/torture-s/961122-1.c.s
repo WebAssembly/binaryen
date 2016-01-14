@@ -17,6 +17,7 @@ addhi:                                  # @addhi
 	i64.add 	$push4=, $pop3, $pop2
 	i64.store	$discard=, acc($1), $pop4
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	addhi, .Lfunc_end0-addhi
 
@@ -37,6 +38,7 @@ subhi:                                  # @subhi
 	i64.sub 	$push4=, $pop3, $pop2
 	i64.store	$discard=, acc($1), $pop4
 	return  	$1
+	.endfunc
 .Lfunc_end1:
 	.size	subhi, .Lfunc_end1-subhi
 
@@ -53,6 +55,7 @@ main:                                   # @main
 	i64.store	$discard=, acc($0), $pop0
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -66,5 +69,5 @@ acc:
 	.size	acc, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

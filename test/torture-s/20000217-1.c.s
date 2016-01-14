@@ -19,6 +19,7 @@ showbug:                                # @showbug
 	i32.const	$push6=, 7
 	i32.gt_u	$push7=, $pop5, $pop6
 	return  	$pop7
+	.endfunc
 .Lfunc_end0:
 	.size	showbug, .Lfunc_end0-showbug
 
@@ -32,9 +33,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

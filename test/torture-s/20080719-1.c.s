@@ -18,6 +18,7 @@ xxx:                                    # @xxx
 	i32.select	$push4=, $pop1, $pop3, $pop2
 	i32.select	$push8=, $pop6, $pop7, $pop4
 	return  	$pop8
+	.endfunc
 .Lfunc_end0:
 	.size	xxx, .Lfunc_end0-xxx
 
@@ -30,6 +31,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -74,5 +76,5 @@ cfb_tab32:
 	.size	cfb_tab32, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

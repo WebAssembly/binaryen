@@ -44,6 +44,7 @@ sf:                                     # @sf
 	end_block                       # label0:
 	i32.store8	$discard=, 0($1), $2
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	sf, .Lfunc_end0-sf
 
@@ -127,6 +128,7 @@ main:                                   # @main
 	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -142,5 +144,5 @@ main:                                   # @main
 	.size	.L.str, 7
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

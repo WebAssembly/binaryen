@@ -13,6 +13,7 @@ main:                                   # @main
 	i64.const	$push3=, -1
 	i64.ne  	$push4=, $pop2, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -28,6 +29,7 @@ foo:                                    # @foo
 	i64.shl 	$push1=, $pop0, $1
 	i64.shr_s	$push2=, $pop1, $1
 	return  	$pop2
+	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
@@ -41,5 +43,5 @@ s:
 	.size	s, 2
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

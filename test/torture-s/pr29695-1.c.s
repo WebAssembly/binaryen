@@ -9,6 +9,7 @@ f1:                                     # @f1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 128
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
 
@@ -21,6 +22,7 @@ f2:                                     # @f2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 128
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
 
@@ -33,6 +35,7 @@ f3:                                     # @f3
 # BB#0:                                 # %entry
 	i32.const	$push0=, 896
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
 
@@ -45,6 +48,7 @@ f4:                                     # @f4
 # BB#0:                                 # %entry
 	i32.const	$push0=, -128
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	f4, .Lfunc_end3-f4
 
@@ -57,6 +61,7 @@ f5:                                     # @f5
 # BB#0:                                 # %entry
 	i64.const	$push0=, 2147483648
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	f5, .Lfunc_end4-f5
 
@@ -69,6 +74,7 @@ f6:                                     # @f6
 # BB#0:                                 # %entry
 	i64.const	$push0=, 2147483648
 	return  	$pop0
+	.endfunc
 .Lfunc_end5:
 	.size	f6, .Lfunc_end5-f6
 
@@ -81,6 +87,7 @@ f7:                                     # @f7
 # BB#0:                                 # %entry
 	i64.const	$push0=, 15032385536
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	f7, .Lfunc_end6-f7
 
@@ -93,6 +100,7 @@ f8:                                     # @f8
 # BB#0:                                 # %entry
 	i64.const	$push0=, -2147483648
 	return  	$pop0
+	.endfunc
 .Lfunc_end7:
 	.size	f8, .Lfunc_end7-f8
 
@@ -105,9 +113,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end8:
 	.size	main, .Lfunc_end8-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

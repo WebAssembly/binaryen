@@ -60,6 +60,7 @@ test:                                   # @test
 	i32.const	$10=, __stack_pointer
 	i32.store	$10=, 0($10), $10
 	return  	$pop11
+	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
@@ -79,6 +80,7 @@ fn1:                                    # @fn1
 	i32.shl 	$push0=, $0, $1
 	i32.shr_s	$push1=, $pop0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	fn1, .Lfunc_end1-fn1
 
@@ -100,6 +102,7 @@ fn2:                                    # @fn2
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	fn2, .Lfunc_end2-fn2
 
@@ -114,6 +117,7 @@ fn3:                                    # @fn3
 	#APP
 	#NO_APP
 	return  	$0
+	.endfunc
 .Lfunc_end3:
 	.size	fn3, .Lfunc_end3-fn3
 
@@ -129,6 +133,7 @@ fn4:                                    # @fn4
 	#NO_APP
 	i32.load8_s	$push0=, 0($0)
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	fn4, .Lfunc_end4-fn4
 
@@ -181,6 +186,7 @@ main:                                   # @main
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
 
@@ -201,5 +207,5 @@ main:                                   # @main
 	.size	.L.str.1, 17
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

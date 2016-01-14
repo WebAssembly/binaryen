@@ -14,6 +14,7 @@ foo1:                                   # @foo1
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, count($0), $pop2
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	foo1, .Lfunc_end0-foo1
 
@@ -31,6 +32,7 @@ foo2:                                   # @foo2
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, count($0), $pop2
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	foo2, .Lfunc_end1-foo2
 
@@ -55,6 +57,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -68,5 +71,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

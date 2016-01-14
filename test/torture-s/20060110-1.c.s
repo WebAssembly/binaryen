@@ -13,6 +13,7 @@ f:                                      # @f
 	i64.shl 	$push0=, $0, $1
 	i64.shr_s	$push1=, $pop0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
@@ -36,6 +37,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -58,5 +60,5 @@ b:
 	.size	b, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

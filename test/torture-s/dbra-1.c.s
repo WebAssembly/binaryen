@@ -55,6 +55,7 @@ f1:                                     # @f1
 .LBB0_10:                               # %cleanup
 	end_block                       # label0:
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
 
@@ -69,6 +70,7 @@ f2:                                     # @f2
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
 
@@ -135,6 +137,7 @@ f3:                                     # @f3
 .LBB2_10:                               # %cleanup
 	end_block                       # label1:
 	return  	$2
+	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
 
@@ -149,6 +152,7 @@ f4:                                     # @f4
 	i32.const	$push0=, 1
 	i32.eq  	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end3:
 	.size	f4, .Lfunc_end3-f4
 
@@ -215,6 +219,7 @@ f5:                                     # @f5
 .LBB4_10:                               # %cleanup
 	end_block                       # label2:
 	return  	$2
+	.endfunc
 .Lfunc_end4:
 	.size	f5, .Lfunc_end4-f5
 
@@ -229,6 +234,7 @@ f6:                                     # @f6
 	i32.const	$push0=, -1
 	i32.eq  	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end5:
 	.size	f6, .Lfunc_end5-f6
 
@@ -242,9 +248,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end6:
 	.size	main, .Lfunc_end6-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

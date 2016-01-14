@@ -26,6 +26,7 @@ test1:                                  # @test1
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
@@ -46,6 +47,7 @@ main:                                   # @main
 	i64.store	$discard=, x($0), $pop4
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -59,5 +61,5 @@ x:
 	.size	x, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -13,6 +13,7 @@ main:                                   # @main
 	i32.const	$push0=, .L.str
 	i32.store	$discard=, s+4($0), $pop0
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -32,5 +33,5 @@ s:
 	.size	.L.str, 1
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

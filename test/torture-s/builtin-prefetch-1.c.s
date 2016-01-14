@@ -8,6 +8,7 @@ good_const:                             # @good_const
 	.param  	i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	good_const, .Lfunc_end0-good_const
 
@@ -19,6 +20,7 @@ good_enum:                              # @good_enum
 	.param  	i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	good_enum, .Lfunc_end1-good_enum
 
@@ -30,6 +32,7 @@ good_expr:                              # @good_expr
 	.param  	i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	good_expr, .Lfunc_end2-good_expr
 
@@ -41,6 +44,7 @@ good_vararg:                            # @good_vararg
 	.param  	i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	good_vararg, .Lfunc_end3-good_vararg
 
@@ -54,6 +58,7 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
@@ -67,5 +72,5 @@ arr:
 	.size	arr, 40
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

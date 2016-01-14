@@ -12,6 +12,7 @@ f:                                      # @f
 	i32.select	$push1=, $0, $0, $pop0
 	f64.store	$discard=, 0($pop1), $1
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
@@ -28,6 +29,7 @@ main:                                   # @main
 	i64.store	$discard=, glob_dbl($0), $pop0
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -41,5 +43,5 @@ glob_dbl:
 	.size	glob_dbl, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

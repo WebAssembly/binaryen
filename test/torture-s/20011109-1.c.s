@@ -8,6 +8,7 @@ fail1:                                  # @fail1
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	fail1, .Lfunc_end0-fail1
 
@@ -19,6 +20,7 @@ fail2:                                  # @fail2
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	fail2, .Lfunc_end1-fail2
 
@@ -30,6 +32,7 @@ fail3:                                  # @fail3
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	fail3, .Lfunc_end2-fail3
 
@@ -41,6 +44,7 @@ fail4:                                  # @fail4
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	fail4, .Lfunc_end3-fail4
 
@@ -92,6 +96,7 @@ foo:                                    # @foo
 	end_block                       # label0:
 	call    	fail4@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end4:
 	.size	foo, .Lfunc_end4-foo
 
@@ -105,9 +110,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

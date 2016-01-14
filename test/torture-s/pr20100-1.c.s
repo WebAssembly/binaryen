@@ -23,6 +23,7 @@ frob:                                   # @frob
 	i32.and 	$push7=, $0, $pop6
 	i32.eq  	$push8=, $pop7, $1
 	return  	$pop8
+	.endfunc
 .Lfunc_end0:
 	.size	frob, .Lfunc_end0-frob
 
@@ -74,6 +75,7 @@ get_n:                                  # @get_n
 	i32.const	$push11=, 65535
 	i32.and 	$push12=, $6, $pop11
 	return  	$pop12
+	.endfunc
 .Lfunc_end1:
 	.size	get_n, .Lfunc_end1-get_n
 
@@ -93,6 +95,7 @@ main:                                   # @main
 	i32.store16	$discard=, g($0), $pop2
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -109,5 +112,5 @@ e:
 	.size	e, 1
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

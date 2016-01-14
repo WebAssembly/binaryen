@@ -8,6 +8,7 @@ f:                                      # @f
 	.param  	i32, f64
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
@@ -25,6 +26,7 @@ g:                                      # @g
 	f64.mul 	$push3=, $pop2, $0
 	f64.add 	$push4=, $pop3, $1
 	return  	$pop4
+	.endfunc
 .Lfunc_end1:
 	.size	g, .Lfunc_end1-g
 
@@ -38,9 +40,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

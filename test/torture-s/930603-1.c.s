@@ -18,6 +18,7 @@ fx:                                     # @fx
 	f64.add 	$push7=, $pop5, $pop6
 	f32.demote/f64	$push8=, $pop7
 	return  	$pop8
+	.endfunc
 .Lfunc_end0:
 	.size	fx, .Lfunc_end0-fx
 
@@ -31,6 +32,7 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -43,6 +45,7 @@ inita:                                  # @inita
 # BB#0:                                 # %entry
 	f32.const	$push0=, 0x1.8p1
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	inita, .Lfunc_end2-inita
 
@@ -55,6 +58,7 @@ initc:                                  # @initc
 # BB#0:                                 # %entry
 	f32.const	$push0=, 0x1p2
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	initc, .Lfunc_end3-initc
 
@@ -67,9 +71,10 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end4:
 	.size	f, .Lfunc_end4-f
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

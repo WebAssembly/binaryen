@@ -19,6 +19,7 @@ bla:                                    # @bla
 .LBB0_2:                                # %if.end2
 	end_block                       # label0:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	bla, .Lfunc_end0-bla
 
@@ -34,6 +35,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$discard=, j($0), $pop0
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -47,5 +49,5 @@ j:
 	.size	j, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

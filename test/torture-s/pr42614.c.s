@@ -10,6 +10,7 @@ init:                                   # @init
 	i32.const	$push0=, 2
 	i32.call	$push1=, malloc@FUNCTION, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	init, .Lfunc_end0-init
 
@@ -39,6 +40,7 @@ expect_func:                            # @expect_func
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	expect_func, .Lfunc_end1-expect_func
 
@@ -67,9 +69,10 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$4=, 0($2), $4
 	return  	$pop1
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -13,6 +13,7 @@ feq:                                    # @feq
 	i32.const	$push1=, 140
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	feq, .Lfunc_end0-feq
 
@@ -29,6 +30,7 @@ fne:                                    # @fne
 	i32.const	$push1=, 140
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end1:
 	.size	fne, .Lfunc_end1-fne
 
@@ -45,6 +47,7 @@ flt:                                    # @flt
 	i32.const	$push1=, 140
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end2:
 	.size	flt, .Lfunc_end2-flt
 
@@ -65,6 +68,7 @@ fge:                                    # @fge
 	i32.const	$push5=, 13
 	i32.select	$push7=, $pop4, $pop6, $pop5
 	return  	$pop7
+	.endfunc
 .Lfunc_end3:
 	.size	fge, .Lfunc_end3-fge
 
@@ -81,6 +85,7 @@ fgt:                                    # @fgt
 	i32.const	$push1=, 140
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end4:
 	.size	fgt, .Lfunc_end4-fgt
 
@@ -101,6 +106,7 @@ fle:                                    # @fle
 	i32.const	$push5=, 13
 	i32.select	$push7=, $pop4, $pop6, $pop5
 	return  	$pop7
+	.endfunc
 .Lfunc_end5:
 	.size	fle, .Lfunc_end5-fle
 
@@ -235,6 +241,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end6:
 	.size	main, .Lfunc_end6-main
 
@@ -647,5 +654,5 @@ correct_results:
 	.size	correct_results, 1536
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

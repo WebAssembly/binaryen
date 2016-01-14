@@ -13,6 +13,7 @@ not_fabs:                               # @not_fabs
 	f64.neg 	$push2=, $0
 	f64.select	$push3=, $pop1, $0, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	not_fabs, .Lfunc_end0-not_fabs
 
@@ -37,9 +38,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

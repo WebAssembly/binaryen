@@ -70,6 +70,7 @@ main:                                   # @main
 	i32.const	$5=, __stack_pointer
 	i32.store	$8=, 0($5), $8
 	return  	$pop11
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -115,6 +116,7 @@ next:                                   # @next
 .LBB1_4:                                # %cleanup
 	end_block                       # label5:
 	return  	$1
+	.endfunc
 .Lfunc_end1:
 	.size	next, .Lfunc_end1-next
 
@@ -126,9 +128,10 @@ fetch:                                  # @fetch
 	i32.const	$push0=, 128
 	i32.store	$discard=, 4($0), $pop0
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	fetch, .Lfunc_end2-fetch
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

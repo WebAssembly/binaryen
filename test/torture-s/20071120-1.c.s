@@ -8,6 +8,7 @@ vec_assert_fail:                        # @vec_assert_fail
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	vec_assert_fail, .Lfunc_end0-vec_assert_fail
 
@@ -20,6 +21,7 @@ perform_access_checks:                  # @perform_access_checks
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	perform_access_checks, .Lfunc_end1-perform_access_checks
 
@@ -88,6 +90,7 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	end_block                       # label0:
 	call    	vec_assert_fail@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	pop_to_parent_deferring_access_checks, .Lfunc_end2-pop_to_parent_deferring_access_checks
 
@@ -111,6 +114,7 @@ main:                                   # @main
 	i32.store	$discard=, 0($pop3), $pop4
 	call    	pop_to_parent_deferring_access_checks@FUNCTION
 	return  	$0
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
@@ -128,5 +132,5 @@ gt_pch_rs_gt_cp_semantics_h:
 	.type	deferred_access_stack,@object # @deferred_access_stack
 	.lcomm	deferred_access_stack,4,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -24,6 +24,7 @@ f:                                      # @f
 .LBB0_2:                                # %cleanup
 	end_block                       # label0:
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
@@ -46,6 +47,7 @@ main:                                   # @main
 	end_block                       # label1:
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -76,5 +78,5 @@ a_ptr:
 	.size	a_ptr, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

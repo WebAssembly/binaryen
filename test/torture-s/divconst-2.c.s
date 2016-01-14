@@ -11,6 +11,7 @@ f:                                      # @f
 	i32.const	$push0=, -2147483648
 	i32.eq  	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
@@ -34,6 +35,7 @@ r:                                      # @r
 	i32.shl 	$push7=, $pop6, $1
 	i32.sub 	$push8=, $0, $pop7
 	return  	$pop8
+	.endfunc
 .Lfunc_end1:
 	.size	r, .Lfunc_end1-r
 
@@ -50,6 +52,7 @@ std_eqn:                                # @std_eqn
 	i32.add 	$push2=, $pop1, $3
 	i32.eq  	$push3=, $pop2, $0
 	return  	$pop3
+	.endfunc
 .Lfunc_end2:
 	.size	std_eqn, .Lfunc_end2-std_eqn
 
@@ -114,6 +117,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
@@ -129,5 +133,5 @@ nums:
 	.size	nums, 12
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

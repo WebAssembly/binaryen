@@ -50,6 +50,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -170,6 +171,7 @@ x:                                      # @x
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	x, .Lfunc_end1-x
 
@@ -203,6 +205,7 @@ s:                                      # @s
 	end_block                       # label8:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	s, .Lfunc_end2-s
 
@@ -216,6 +219,7 @@ m:                                      # @m
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	m, .Lfunc_end3-m
 
@@ -253,6 +257,7 @@ r:                                      # @r
 	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end4:
 	.size	r, .Lfunc_end4-r
 
@@ -338,5 +343,5 @@ r.c.0:
 	.size	r.c.0, 1
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

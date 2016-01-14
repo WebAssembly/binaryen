@@ -16,6 +16,7 @@ div:                                    # @div
 	i64.const	$push5=, 15
 	i64.shr_s	$push6=, $pop4, $pop5
 	return  	$pop6
+	.endfunc
 .Lfunc_end0:
 	.size	div, .Lfunc_end0-div
 
@@ -39,9 +40,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

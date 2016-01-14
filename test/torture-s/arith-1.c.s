@@ -15,6 +15,7 @@ sat_add:                                # @sat_add
 	i32.add 	$push1=, $0, $pop0
 	i32.select	$push3=, $pop2, $1, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	sat_add, .Lfunc_end0-sat_add
 
@@ -28,9 +29,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -12,6 +12,7 @@ foo_create_got_section:                 # @foo_create_got_section
 	i32.store	$discard=, 8($pop0), $0
 	i32.const	$push1=, 1
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	foo_create_got_section, .Lfunc_end0-foo_create_got_section
 
@@ -45,6 +46,7 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 .LBB1_4:                                # %get_got.exit
 	end_block                       # label0:
 	return  	$3
+	.endfunc
 .Lfunc_end1:
 	.size	elf64_ia64_check_relocs, .Lfunc_end1-elf64_ia64_check_relocs
 
@@ -71,6 +73,7 @@ main:                                   # @main
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -102,5 +105,5 @@ abfd:
 	.size	abfd, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

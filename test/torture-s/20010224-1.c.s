@@ -46,6 +46,7 @@ ba_compute_psd:                         # @ba_compute_psd
 .LBB0_4:                                # %for.end
 	end_block                       # label0:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	ba_compute_psd, .Lfunc_end0-ba_compute_psd
 
@@ -65,6 +66,7 @@ logadd:                                 # @logadd
 	i32.shl 	$push3=, $pop2, $2
 	i32.shr_s	$push4=, $pop3, $2
 	return  	$pop4
+	.endfunc
 .Lfunc_end1:
 	.size	logadd, .Lfunc_end1-logadd
 
@@ -101,6 +103,7 @@ main:                                   # @main
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -147,5 +150,5 @@ bndpsd:
 	.size	bndpsd, 12
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

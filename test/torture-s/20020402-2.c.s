@@ -86,6 +86,7 @@ InitCache:                              # @InitCache
 	i32.const	$push36=, MyPte+152
 	i32.store	$discard=, RDbf12($1), $pop36
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	InitCache, .Lfunc_end0-InitCache
 
@@ -176,6 +177,7 @@ main:                                   # @main
 	i32.const	$push37=, MyPte+152
 	i32.store	$discard=, RDbf12($3), $pop37
 	return  	$3
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -414,5 +416,5 @@ MyPte:
 	.size	MyPte, 392
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

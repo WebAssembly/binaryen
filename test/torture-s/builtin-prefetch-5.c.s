@@ -8,6 +8,7 @@ arg_ptr:                                # @arg_ptr
 	.param  	i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	arg_ptr, .Lfunc_end0-arg_ptr
 
@@ -19,6 +20,7 @@ arg_idx:                                # @arg_idx
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	arg_idx, .Lfunc_end1-arg_idx
 
@@ -29,6 +31,7 @@ arg_idx:                                # @arg_idx
 glob_ptr:                               # @glob_ptr
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	glob_ptr, .Lfunc_end2-glob_ptr
 
@@ -39,6 +42,7 @@ glob_ptr:                               # @glob_ptr
 glob_idx:                               # @glob_idx
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	glob_idx, .Lfunc_end3-glob_idx
 
@@ -61,6 +65,7 @@ main:                                   # @main
 	i32.store	$discard=, idx($0), $pop3
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
@@ -101,5 +106,5 @@ s:
 	.size	s, 12
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

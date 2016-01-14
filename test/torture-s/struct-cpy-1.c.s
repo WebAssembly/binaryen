@@ -19,6 +19,7 @@ ini:                                    # @ini
 	i64.const	$push3=, 8589934593
 	i64.store	$discard=, pty+40($0), $pop3
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	ini, .Lfunc_end0-ini
 
@@ -42,6 +43,7 @@ main:                                   # @main
 	i64.const	$push3=, 8589934593
 	i64.store	$discard=, pty+40($0), $pop3
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -55,5 +57,5 @@ zero_t:
 	.size	zero_t, 44
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

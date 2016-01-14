@@ -66,6 +66,7 @@ get_addrs:                              # @get_addrs
 	i32.add 	$push47=, $pop45, $pop46
 	i32.store	$discard=, 28($0), $pop47
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	get_addrs, .Lfunc_end0-get_addrs
 
@@ -79,6 +80,7 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -124,5 +126,5 @@ main:                                   # @main
 	.size	.L.str.7, 6
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

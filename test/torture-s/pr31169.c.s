@@ -47,6 +47,7 @@ sign_bit_p:                             # @sign_bit_p
 	i32.eq  	$push14=, $pop13, $6
 	i32.and 	$push17=, $pop16, $pop14
 	return  	$pop17
+	.endfunc
 .Lfunc_end0:
 	.size	sign_bit_p, .Lfunc_end0-sign_bit_p
 
@@ -59,9 +60,10 @@ main:                                   # @main
 # BB#0:                                 # %sign_bit_p.exit
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

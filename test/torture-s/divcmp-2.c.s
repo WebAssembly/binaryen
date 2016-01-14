@@ -13,6 +13,7 @@ test1:                                  # @test1
 	i32.const	$push2=, 10
 	i32.lt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
@@ -29,6 +30,7 @@ test2:                                  # @test2
 	i32.const	$push2=, 19
 	i32.lt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
 
@@ -45,6 +47,7 @@ test3:                                  # @test3
 	i32.const	$push2=, 10
 	i32.lt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
 
@@ -61,6 +64,7 @@ test4:                                  # @test4
 	i32.const	$push2=, 10
 	i32.lt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
 
@@ -77,6 +81,7 @@ test5:                                  # @test5
 	i32.const	$push2=, 19
 	i32.lt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end4:
 	.size	test5, .Lfunc_end4-test5
 
@@ -93,6 +98,7 @@ test6:                                  # @test6
 	i32.const	$push2=, 10
 	i32.lt_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end5:
 	.size	test6, .Lfunc_end5-test6
 
@@ -105,9 +111,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end92
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	main, .Lfunc_end6-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

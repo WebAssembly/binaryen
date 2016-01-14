@@ -9,6 +9,7 @@ vfswrap_lock:                           # @vfswrap_lock
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$5
+	.endfunc
 .Lfunc_end0:
 	.size	vfswrap_lock, .Lfunc_end0-vfswrap_lock
 
@@ -21,6 +22,7 @@ fcntl_lock:                             # @fcntl_lock
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$4
+	.endfunc
 .Lfunc_end1:
 	.size	fcntl_lock, .Lfunc_end1-fcntl_lock
 
@@ -33,9 +35,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

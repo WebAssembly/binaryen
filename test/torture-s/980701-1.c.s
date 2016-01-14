@@ -11,6 +11,7 @@ ns_name_skip:                           # @ns_name_skip
 	i32.const	$push0=, 0
 	i32.store	$push1=, 0($0), $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	ns_name_skip, .Lfunc_end0-ns_name_skip
 
@@ -25,6 +26,7 @@ dn_skipname:                            # @dn_skipname
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $0
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	dn_skipname, .Lfunc_end1-dn_skipname
 
@@ -46,6 +48,7 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -58,5 +61,5 @@ a:
 	.size	a, 2
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

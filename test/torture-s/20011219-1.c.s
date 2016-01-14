@@ -8,6 +8,7 @@ bar:                                    # @bar
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
@@ -60,6 +61,7 @@ foo:                                    # @foo
 .LBB1_7:                                # %sw.epilog
 	end_block                       # label0:
 	return  	$2
+	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
@@ -73,9 +75,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

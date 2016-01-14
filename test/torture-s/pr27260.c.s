@@ -13,6 +13,7 @@ foo:                                    # @foo
 	i32.const	$push3=, 64
 	call    	memset@FUNCTION, $pop2, $pop1, $pop3
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -95,6 +96,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -108,5 +110,5 @@ buf:
 	.size	buf, 65
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

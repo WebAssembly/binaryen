@@ -8,6 +8,7 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -116,6 +117,7 @@ main:                                   # @main
 	br      	0               # 0: up to label0
 .LBB1_5:
 	end_loop                        # label1:
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -126,5 +128,5 @@ main:                                   # @main
 	.size	.Lmain.str, 11
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

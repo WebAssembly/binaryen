@@ -10,6 +10,7 @@ ap_check_cmd_context:                   # @ap_check_cmd_context
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	ap_check_cmd_context, .Lfunc_end0-ap_check_cmd_context
 
@@ -44,6 +45,7 @@ server_type:                            # @server_type
 .LBB1_3:                                # %cleanup
 	end_block                       # label0:
 	return  	$2
+	.endfunc
 .Lfunc_end1:
 	.size	server_type, .Lfunc_end1-server_type
 
@@ -59,6 +61,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$discard=, ap_standalone($0), $pop0
 	return  	$0
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -89,5 +92,5 @@ ap_standalone:
 	.size	.L.str.2, 50
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

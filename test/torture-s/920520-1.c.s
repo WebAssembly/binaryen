@@ -11,6 +11,7 @@ foo:                                    # @foo
 	i32.const	$push0=, 8
 	i32.store	$discard=, 0($0), $pop0
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -23,6 +24,7 @@ bugger:                                 # @bugger
 # BB#0:                                 # %sw.epilog
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	bugger, .Lfunc_end1-bugger
 
@@ -36,9 +38,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

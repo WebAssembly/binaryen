@@ -19,6 +19,7 @@ tar:                                    # @tar
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	tar, .Lfunc_end0-tar
 
@@ -61,6 +62,7 @@ bug:                                    # @bug
 .LBB1_4:                                # %while.end
 	end_block                       # label1:
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	bug, .Lfunc_end1-bug
 
@@ -73,9 +75,10 @@ main:                                   # @main
 # BB#0:                                 # %bug.exit
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

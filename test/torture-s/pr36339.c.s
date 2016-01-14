@@ -28,6 +28,7 @@ try_a:                                  # @try_a
 	i32.const	$3=, __stack_pointer
 	i32.store	$4=, 0($3), $4
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	try_a, .Lfunc_end0-try_a
 
@@ -60,6 +61,7 @@ check_a:                                # @check_a
 .LBB1_3:                                # %cleanup
 	end_block                       # label0:
 	return  	$2
+	.endfunc
 .Lfunc_end1:
 	.size	check_a, .Lfunc_end1-check_a
 
@@ -83,9 +85,10 @@ main:                                   # @main
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

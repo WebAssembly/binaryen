@@ -10,6 +10,7 @@ in_aton:                                # @in_aton
 # BB#0:                                 # %entry
 	i32.const	$push0=, 168496141
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	in_aton, .Lfunc_end0-in_aton
 
@@ -99,6 +100,7 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 .LBB1_11:                               # %if.end43
 	end_block                       # label4:
 	return  	$2
+	.endfunc
 .Lfunc_end1:
 	.size	root_nfs_parse_addr, .Lfunc_end1-root_nfs_parse_addr
 
@@ -189,6 +191,7 @@ main:                                   # @main
 	end_block                       # label10:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -200,5 +203,5 @@ main.addr:
 	.size	main.addr, 19
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

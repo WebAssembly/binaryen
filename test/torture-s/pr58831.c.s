@@ -15,6 +15,7 @@ main:                                   # @main
 	i32.store	$discard=, i($0), $pop0
 	call    	fn1@FUNCTION, $1
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -28,6 +29,7 @@ fn2:                                    # @fn2
 	i32.const	$push1=, 42
 	i32.store	$discard=, f($pop0), $pop1
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	fn2, .Lfunc_end1-fn2
 
@@ -59,6 +61,7 @@ fn1:                                    # @fn1
 	i32.store	$push6=, r($1), $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	fn1, .Lfunc_end2-fn1
 
@@ -162,5 +165,5 @@ j:
 	.size	j, 2
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

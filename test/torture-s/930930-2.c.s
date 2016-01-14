@@ -9,6 +9,7 @@ test_endianness:                        # @test_endianness
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	test_endianness, .Lfunc_end0-test_endianness
 
@@ -36,6 +37,7 @@ test_endianness_vol:                    # @test_endianness_vol
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return  	$pop3
+	.endfunc
 .Lfunc_end1:
 	.size	test_endianness_vol, .Lfunc_end1-test_endianness_vol
 
@@ -66,9 +68,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

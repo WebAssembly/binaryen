@@ -14,6 +14,7 @@ x:                                      # @x
 	i32.store	$push3=, p($0), $pop2
 	i32.store	$discard=, k($0), $pop3
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	x, .Lfunc_end0-x
 
@@ -42,6 +43,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -73,5 +75,5 @@ k:
 	.size	k, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

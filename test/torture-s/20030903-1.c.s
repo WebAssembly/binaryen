@@ -44,6 +44,7 @@ main:                                   # @main
 	end_block                       # label1:
 	call    	y@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -53,11 +54,12 @@ y:                                      # @y
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	y, .Lfunc_end1-y
 
 	.type	test,@object            # @test
 	.lcomm	test,4,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

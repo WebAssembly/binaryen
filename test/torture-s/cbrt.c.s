@@ -139,6 +139,7 @@ cbrtl:                                  # @cbrtl
 	i32.const	$11=, __stack_pointer
 	i32.store	$15=, 0($11), $15
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	cbrtl, .Lfunc_end0-cbrtl
 
@@ -152,9 +153,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

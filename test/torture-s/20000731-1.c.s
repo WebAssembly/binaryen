@@ -9,6 +9,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	f64.const	$push0=, 0x0p0
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -19,6 +20,7 @@ foo:                                    # @foo
 do_sibcall:                             # @do_sibcall
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	do_sibcall, .Lfunc_end1-do_sibcall
 
@@ -32,9 +34,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -12,6 +12,7 @@ foo:                                    # @foo
 	i32.const	$push2=, 511
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -31,6 +32,7 @@ main:                                   # @main
 	i32.or  	$push4=, $pop2, $pop3
 	i32.store	$discard=, t+4($0), $pop4
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -44,5 +46,5 @@ t:
 	.size	t, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

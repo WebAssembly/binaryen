@@ -33,6 +33,7 @@ pure_alloc:                             # @pure_alloc
 	i32.const	$push5=, -2
 	i32.and 	$push6=, $pop4, $pop5
 	return  	$pop6
+	.endfunc
 .Lfunc_end0:
 	.size	pure_alloc, .Lfunc_end0-pure_alloc
 
@@ -77,6 +78,7 @@ main:                                   # @main
 	br      	0               # 0: up to label6
 .LBB1_7:
 	end_loop                        # label7:
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -108,5 +110,5 @@ baz:
 	.size	baz, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

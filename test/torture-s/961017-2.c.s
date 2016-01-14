@@ -20,9 +20,10 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

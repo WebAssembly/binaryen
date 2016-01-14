@@ -23,6 +23,7 @@ bar:                                    # @bar
 	i32.store	$discard=, global($0), $pop7
 	i32.xor 	$push8=, $2, $3
 	return  	$pop8
+	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
@@ -38,6 +39,7 @@ main:                                   # @main
 	i32.const	$push0=, 2
 	i32.store	$discard=, global($0), $pop0
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -51,5 +53,5 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

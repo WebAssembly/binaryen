@@ -73,6 +73,7 @@ pack_unpack:                            # @pack_unpack
 	i32.const	$7=, __stack_pointer
 	i32.store	$8=, 0($7), $8
 	return  	$pop2
+	.endfunc
 .Lfunc_end0:
 	.size	pack_unpack, .Lfunc_end0-pack_unpack
 
@@ -84,6 +85,7 @@ do_something:                           # @do_something
 	i32.const	$push0=, 0
 	i32.store	$discard=, a($pop0), $0
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	do_something, .Lfunc_end1-do_something
 
@@ -106,6 +108,7 @@ main:                                   # @main
 	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -130,5 +133,5 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

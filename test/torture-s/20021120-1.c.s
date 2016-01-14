@@ -343,6 +343,7 @@ foo:                                    # @foo
 	f64.store	$discard=, gd+240($1), $160
 	f64.store	$discard=, gd+248($1), $161
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -414,6 +415,7 @@ main:                                   # @main
 	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -436,5 +438,5 @@ gf:
 	.size	gf, 128
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

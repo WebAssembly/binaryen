@@ -30,6 +30,7 @@ f1:                                     # @f1
 	i32.shr_u	$push5=, $pop4, $5
 	i32.store8	$discard=, 0($0), $pop5
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
 
@@ -61,6 +62,7 @@ f2:                                     # @f2
 	i32.shr_u	$push4=, $pop3, $6
 	i32.store8	$discard=, 0($0), $pop4
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
 
@@ -96,6 +98,7 @@ f3:                                     # @f3
 	i32.store8	$discard=, 0($pop13), $6
 	i32.store8	$discard=, 0($0), $5
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
 
@@ -220,9 +223,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

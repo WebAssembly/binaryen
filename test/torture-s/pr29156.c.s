@@ -16,6 +16,7 @@ bla:                                    # @bla
 	i32.store	$discard=, 0($0), $pop3
 	i32.load	$push4=, 4($1)
 	return  	$pop4
+	.endfunc
 .Lfunc_end0:
 	.size	bla, .Lfunc_end0-bla
 
@@ -31,6 +32,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$discard=, global($0), $pop0
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -44,5 +46,5 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -42,6 +42,7 @@ init:                                   # @init
 	i64.const	$push23=, 83
 	i64.store8	$discard=, p+9($pop22), $pop23
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	init, .Lfunc_end0-init
 
@@ -118,6 +119,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -145,5 +147,5 @@ headline:
 	.size	headline, 256
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

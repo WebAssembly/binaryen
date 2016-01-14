@@ -32,6 +32,7 @@ gcd_ll:                                 # @gcd_ll
 	end_block                       # label0:
 	i32.wrap/i64	$push3=, $3
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	gcd_ll, .Lfunc_end0-gcd_ll
 
@@ -94,6 +95,7 @@ powmod_ll:                              # @powmod_ll
 	end_loop                        # label7:
 	end_block                       # label3:
 	return  	$6
+	.endfunc
 .Lfunc_end1:
 	.size	powmod_ll, .Lfunc_end1-powmod_ll
 
@@ -349,6 +351,7 @@ facts:                                  # @facts
 .LBB2_29:                               # %cleanup
 	end_loop                        # label10:
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	facts, .Lfunc_end2-facts
 
@@ -390,6 +393,7 @@ main:                                   # @main
 	end_block                       # label33:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
@@ -403,5 +407,5 @@ factab:
 	.size	factab, 40
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

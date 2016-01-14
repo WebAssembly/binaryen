@@ -10,6 +10,7 @@ u2f:                                    # @u2f
 # BB#0:                                 # %entry
 	f32.convert_u/i32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	u2f, .Lfunc_end0-u2f
 
@@ -23,6 +24,7 @@ u2d:                                    # @u2d
 # BB#0:                                 # %entry
 	f64.convert_u/i32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	u2d, .Lfunc_end1-u2d
 
@@ -57,6 +59,7 @@ u2ld:                                   # @u2ld
 	i32.const	$5=, __stack_pointer
 	i32.store	$6=, 0($5), $6
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	u2ld, .Lfunc_end2-u2ld
 
@@ -70,6 +73,7 @@ s2f:                                    # @s2f
 # BB#0:                                 # %entry
 	f32.convert_s/i32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	s2f, .Lfunc_end3-s2f
 
@@ -83,6 +87,7 @@ s2d:                                    # @s2d
 # BB#0:                                 # %entry
 	f64.convert_s/i32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	s2d, .Lfunc_end4-s2d
 
@@ -117,6 +122,7 @@ s2ld:                                   # @s2ld
 	i32.const	$5=, __stack_pointer
 	i32.store	$6=, 0($5), $6
 	return
+	.endfunc
 .Lfunc_end5:
 	.size	s2ld, .Lfunc_end5-s2ld
 
@@ -142,6 +148,7 @@ fnear:                                  # @fnear
 .LBB6_2:                                # %lor.end
 	end_block                       # label0:
 	return  	$2
+	.endfunc
 .Lfunc_end6:
 	.size	fnear, .Lfunc_end6-fnear
 
@@ -167,6 +174,7 @@ dnear:                                  # @dnear
 .LBB7_2:                                # %lor.end
 	end_block                       # label1:
 	return  	$2
+	.endfunc
 .Lfunc_end7:
 	.size	dnear, .Lfunc_end7-dnear
 
@@ -222,6 +230,7 @@ ldnear:                                 # @ldnear
 	i32.const	$10=, __stack_pointer
 	i32.store	$11=, 0($10), $11
 	return  	$7
+	.endfunc
 .Lfunc_end8:
 	.size	ldnear, .Lfunc_end8-ldnear
 
@@ -234,6 +243,7 @@ test_integer_to_float:                  # @test_integer_to_float
 	.local  	i32
 # BB#0:                                 # %fnear.exit178
 	return  	$0
+	.endfunc
 .Lfunc_end9:
 	.size	test_integer_to_float, .Lfunc_end9-test_integer_to_float
 
@@ -247,6 +257,7 @@ ull2f:                                  # @ull2f
 # BB#0:                                 # %entry
 	f32.convert_u/i64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end10:
 	.size	ull2f, .Lfunc_end10-ull2f
 
@@ -260,6 +271,7 @@ ull2d:                                  # @ull2d
 # BB#0:                                 # %entry
 	f64.convert_u/i64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end11:
 	.size	ull2d, .Lfunc_end11-ull2d
 
@@ -294,6 +306,7 @@ ull2ld:                                 # @ull2ld
 	i32.const	$5=, __stack_pointer
 	i32.store	$6=, 0($5), $6
 	return
+	.endfunc
 .Lfunc_end12:
 	.size	ull2ld, .Lfunc_end12-ull2ld
 
@@ -307,6 +320,7 @@ sll2f:                                  # @sll2f
 # BB#0:                                 # %entry
 	f32.convert_s/i64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end13:
 	.size	sll2f, .Lfunc_end13-sll2f
 
@@ -320,6 +334,7 @@ sll2d:                                  # @sll2d
 # BB#0:                                 # %entry
 	f64.convert_s/i64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end14:
 	.size	sll2d, .Lfunc_end14-sll2d
 
@@ -354,6 +369,7 @@ sll2ld:                                 # @sll2ld
 	i32.const	$5=, __stack_pointer
 	i32.store	$6=, 0($5), $6
 	return
+	.endfunc
 .Lfunc_end15:
 	.size	sll2ld, .Lfunc_end15-sll2ld
 
@@ -366,6 +382,7 @@ test_longlong_integer_to_float:         # @test_longlong_integer_to_float
 	.local  	i32
 # BB#0:                                 # %fnear.exit
 	return  	$0
+	.endfunc
 .Lfunc_end16:
 	.size	test_longlong_integer_to_float, .Lfunc_end16-test_longlong_integer_to_float
 
@@ -379,6 +396,7 @@ f2u:                                    # @f2u
 # BB#0:                                 # %entry
 	i32.trunc_u/f32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end17:
 	.size	f2u, .Lfunc_end17-f2u
 
@@ -392,6 +410,7 @@ d2u:                                    # @d2u
 # BB#0:                                 # %entry
 	i32.trunc_u/f64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end18:
 	.size	d2u, .Lfunc_end18-d2u
 
@@ -405,6 +424,7 @@ ld2u:                                   # @ld2u
 # BB#0:                                 # %entry
 	i32.call	$push0=, __fixunstfsi@FUNCTION, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end19:
 	.size	ld2u, .Lfunc_end19-ld2u
 
@@ -418,6 +438,7 @@ f2s:                                    # @f2s
 # BB#0:                                 # %entry
 	i32.trunc_s/f32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end20:
 	.size	f2s, .Lfunc_end20-f2s
 
@@ -431,6 +452,7 @@ d2s:                                    # @d2s
 # BB#0:                                 # %entry
 	i32.trunc_s/f64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end21:
 	.size	d2s, .Lfunc_end21-d2s
 
@@ -444,6 +466,7 @@ ld2s:                                   # @ld2s
 # BB#0:                                 # %entry
 	i32.call	$push0=, __fixtfsi@FUNCTION, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end22:
 	.size	ld2s, .Lfunc_end22-ld2s
 
@@ -456,6 +479,7 @@ test_float_to_integer:                  # @test_float_to_integer
 	.local  	i32
 # BB#0:                                 # %if.end182
 	return  	$0
+	.endfunc
 .Lfunc_end23:
 	.size	test_float_to_integer, .Lfunc_end23-test_float_to_integer
 
@@ -469,6 +493,7 @@ f2ull:                                  # @f2ull
 # BB#0:                                 # %entry
 	i64.trunc_u/f32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end24:
 	.size	f2ull, .Lfunc_end24-f2ull
 
@@ -482,6 +507,7 @@ d2ull:                                  # @d2ull
 # BB#0:                                 # %entry
 	i64.trunc_u/f64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end25:
 	.size	d2ull, .Lfunc_end25-d2ull
 
@@ -495,6 +521,7 @@ ld2ull:                                 # @ld2ull
 # BB#0:                                 # %entry
 	i64.call	$push0=, __fixunstfdi@FUNCTION, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end26:
 	.size	ld2ull, .Lfunc_end26-ld2ull
 
@@ -508,6 +535,7 @@ f2sll:                                  # @f2sll
 # BB#0:                                 # %entry
 	i64.trunc_s/f32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end27:
 	.size	f2sll, .Lfunc_end27-f2sll
 
@@ -521,6 +549,7 @@ d2sll:                                  # @d2sll
 # BB#0:                                 # %entry
 	i64.trunc_s/f64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end28:
 	.size	d2sll, .Lfunc_end28-d2sll
 
@@ -534,6 +563,7 @@ ld2sll:                                 # @ld2sll
 # BB#0:                                 # %entry
 	i64.call	$push0=, __fixtfdi@FUNCTION, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end29:
 	.size	ld2sll, .Lfunc_end29-ld2sll
 
@@ -546,6 +576,7 @@ test_float_to_longlong_integer:         # @test_float_to_longlong_integer
 	.local  	i32
 # BB#0:                                 # %if.end172
 	return  	$0
+	.endfunc
 .Lfunc_end30:
 	.size	test_float_to_longlong_integer, .Lfunc_end30-test_float_to_longlong_integer
 
@@ -559,9 +590,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end31:
 	.size	main, .Lfunc_end31-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

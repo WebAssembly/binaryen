@@ -189,6 +189,7 @@ test:                                   # @test
 	i32.const	$11=, __stack_pointer
 	i32.store	$11=, 0($11), $11
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
@@ -226,9 +227,10 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

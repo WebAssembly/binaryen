@@ -9,6 +9,7 @@ FFmul:                                  # @FFmul
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	FFmul, .Lfunc_end0-FFmul
 
@@ -22,6 +23,7 @@ DUPFFdeg:                               # @DUPFFdeg
 # BB#0:                                 # %entry
 	i32.load	$push0=, 4($0)
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	DUPFFdeg, .Lfunc_end1-DUPFFdeg
 
@@ -55,6 +57,7 @@ DUPFFnew:                               # @DUPFFnew
 	i32.const	$push9=, -1
 	i32.store	$discard=, 4($1), $pop9
 	return  	$1
+	.endfunc
 .Lfunc_end2:
 	.size	DUPFFnew, .Lfunc_end2-DUPFFnew
 
@@ -66,6 +69,7 @@ DUPFFfree:                              # @DUPFFfree
 	.param  	i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	DUPFFfree, .Lfunc_end3-DUPFFfree
 
@@ -77,6 +81,7 @@ DUPFFswap:                              # @DUPFFswap
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end4:
 	.size	DUPFFswap, .Lfunc_end4-DUPFFswap
 
@@ -89,6 +94,7 @@ DUPFFcopy:                              # @DUPFFcopy
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end5:
 	.size	DUPFFcopy, .Lfunc_end5-DUPFFcopy
 
@@ -100,6 +106,7 @@ DUPFFshift_add:                         # @DUPFFshift_add
 	.param  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end6:
 	.size	DUPFFshift_add, .Lfunc_end6-DUPFFshift_add
 
@@ -218,6 +225,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end7:
 	.size	DUPFFexgcd, .Lfunc_end7-DUPFFexgcd
 
@@ -280,6 +288,7 @@ main:                                   # @main
 	i32.const	$12=, __stack_pointer
 	i32.store	$15=, 0($12), $15
 	return  	$pop7
+	.endfunc
 .Lfunc_end8:
 	.size	main, .Lfunc_end8-main
 
@@ -295,5 +304,5 @@ main:                                   # @main
 	.size	.L.str.1, 41
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

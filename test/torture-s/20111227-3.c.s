@@ -51,6 +51,7 @@ bar:                                    # @bar
 .LBB0_9:                                # %if.end16
 	end_block                       # label2:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
@@ -92,6 +93,7 @@ foo:                                    # @foo
 	end_block                       # label3:
 	call    	bar@FUNCTION, $1
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
@@ -110,6 +112,7 @@ main:                                   # @main
 	i32.const	$push1=, 2
 	call    	foo@FUNCTION, $0, $pop1
 	return  	$0
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -149,5 +152,5 @@ l:
 	.size	l, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

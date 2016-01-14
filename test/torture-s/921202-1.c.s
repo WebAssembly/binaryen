@@ -9,6 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %for.cond
 	i32.call	$discard=, exxit@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -21,6 +22,7 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
@@ -33,6 +35,7 @@ mpn_mul_1:                              # @mpn_mul_1
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end2:
 	.size	mpn_mul_1, .Lfunc_end2-mpn_mul_1
 
@@ -45,6 +48,7 @@ mpn_print:                              # @mpn_print
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end3:
 	.size	mpn_print, .Lfunc_end3-mpn_print
 
@@ -57,6 +61,7 @@ mpn_random2:                            # @mpn_random2
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end4:
 	.size	mpn_random2, .Lfunc_end4-mpn_random2
 
@@ -69,6 +74,7 @@ mpn_cmp:                                # @mpn_cmp
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end5:
 	.size	mpn_cmp, .Lfunc_end5-mpn_cmp
 
@@ -82,9 +88,10 @@ exxit:                                  # @exxit
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end6:
 	.size	exxit, .Lfunc_end6-exxit
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

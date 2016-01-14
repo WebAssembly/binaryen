@@ -11,6 +11,7 @@ test1:                                  # @test1
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
@@ -25,6 +26,7 @@ test1u:                                 # @test1u
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	test1u, .Lfunc_end1-test1u
 
@@ -39,6 +41,7 @@ test2:                                  # @test2
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end2:
 	.size	test2, .Lfunc_end2-test2
 
@@ -53,6 +56,7 @@ test2u:                                 # @test2u
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end3:
 	.size	test2u, .Lfunc_end3-test2u
 
@@ -67,6 +71,7 @@ test3:                                  # @test3
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end4:
 	.size	test3, .Lfunc_end4-test3
 
@@ -81,6 +86,7 @@ test3u:                                 # @test3u
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end5:
 	.size	test3u, .Lfunc_end5-test3u
 
@@ -95,6 +101,7 @@ test4:                                  # @test4
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end6:
 	.size	test4, .Lfunc_end6-test4
 
@@ -109,6 +116,7 @@ test4u:                                 # @test4u
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end7:
 	.size	test4u, .Lfunc_end7-test4u
 
@@ -123,6 +131,7 @@ test5:                                  # @test5
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end8:
 	.size	test5, .Lfunc_end8-test5
 
@@ -137,6 +146,7 @@ test5u:                                 # @test5u
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end9:
 	.size	test5u, .Lfunc_end9-test5u
 
@@ -151,6 +161,7 @@ test6:                                  # @test6
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end10:
 	.size	test6, .Lfunc_end10-test6
 
@@ -165,6 +176,7 @@ test6u:                                 # @test6u
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end11:
 	.size	test6u, .Lfunc_end11-test6u
 
@@ -186,6 +198,7 @@ test:                                   # @test
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end12:
 	.size	test, .Lfunc_end12-test
 
@@ -207,6 +220,7 @@ testu:                                  # @testu
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end13:
 	.size	testu, .Lfunc_end13-testu
 
@@ -219,9 +233,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end14:
 	.size	main, .Lfunc_end14-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

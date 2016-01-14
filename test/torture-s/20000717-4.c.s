@@ -10,6 +10,7 @@ x:                                      # @x
 	i32.const	$push0=, 0
 	i32.load	$push1=, s+8($pop0)
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	x, .Lfunc_end0-x
 
@@ -22,6 +23,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -35,5 +37,5 @@ s:
 	.size	s, 100
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -9,6 +9,7 @@ proc1:                                  # @proc1
 # BB#0:                                 # %entry
 	i64.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	proc1, .Lfunc_end0-proc1
 
@@ -21,6 +22,7 @@ proc2:                                  # @proc2
 # BB#0:                                 # %entry
 	i64.const	$push0=, 305419896
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	proc2, .Lfunc_end1-proc2
 
@@ -33,6 +35,7 @@ proc3:                                  # @proc3
 # BB#0:                                 # %entry
 	i64.const	$push0=, -6144092016751651208
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	proc3, .Lfunc_end2-proc3
 
@@ -45,6 +48,7 @@ proc4:                                  # @proc4
 # BB#0:                                 # %entry
 	i64.const	$push0=, -1
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	proc4, .Lfunc_end3-proc4
 
@@ -57,6 +61,7 @@ proc5:                                  # @proc5
 # BB#0:                                 # %entry
 	i64.const	$push0=, 2864434397
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	proc5, .Lfunc_end4-proc5
 
@@ -128,6 +133,7 @@ print_longlong:                         # @print_longlong
 	i32.const	$14=, __stack_pointer
 	i32.store	$13=, 0($14), $13
 	return  	$2
+	.endfunc
 .Lfunc_end5:
 	.size	print_longlong, .Lfunc_end5-print_longlong
 
@@ -294,6 +300,7 @@ main:                                   # @main
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end6:
 	.size	main, .Lfunc_end6-main
 
@@ -334,5 +341,5 @@ main:                                   # @main
 	.size	.L.str.6, 9
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

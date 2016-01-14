@@ -42,6 +42,7 @@ f:                                      # @f
 .LBB0_6:                                # %cleanup
 	end_block                       # label0:
 	return  	$4
+	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
@@ -57,6 +58,7 @@ main:                                   # @main
 	i32.store	$push0=, errflag($0), $0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -70,5 +72,5 @@ errflag:
 	.size	errflag, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

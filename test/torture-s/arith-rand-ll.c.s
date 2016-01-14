@@ -18,6 +18,7 @@ simple_rand:                            # @simple_rand
 	i64.const	$push6=, 8
 	i64.shr_u	$push7=, $pop5, $pop6
 	return  	$pop7
+	.endfunc
 .Lfunc_end0:
 	.size	simple_rand, .Lfunc_end0-simple_rand
 
@@ -78,6 +79,7 @@ random_bitstring:                       # @random_bitstring
 	i32.const	$push19=, 0
 	i64.store	$discard=, simple_rand.seed($pop19), $2
 	return  	$4
+	.endfunc
 .Lfunc_end1:
 	.size	random_bitstring, .Lfunc_end1-random_bitstring
 
@@ -374,6 +376,7 @@ main:                                   # @main
 	i64.store	$discard=, simple_rand.seed($1), $2
 	call    	exit@FUNCTION, $1
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -385,5 +388,5 @@ simple_rand.seed:
 	.size	simple_rand.seed, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

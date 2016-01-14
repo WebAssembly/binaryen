@@ -34,6 +34,7 @@ main:                                   # @main
 	end_block                       # label0:
 	i32.const	$push10=, 0
 	return  	$pop10
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -57,9 +58,10 @@ get_kind:                               # @get_kind
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	get_kind, .Lfunc_end1-get_kind
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -15,6 +15,7 @@ foo:                                    # @foo
 	i32.div_s	$push2=, $pop1, $0
 	i32.store	$discard=, g2($1), $pop2
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -32,6 +33,7 @@ main:                                   # @main
 	i32.store	$discard=, g2($0), $pop1
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -54,5 +56,5 @@ g2:
 	.size	g2, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -42,6 +42,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	end_loop                        # label2:
 	end_block                       # label0:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	add_unwind_adjustsp, .Lfunc_end0-add_unwind_adjustsp
 
@@ -78,6 +79,7 @@ main:                                   # @main
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -99,5 +101,5 @@ flag:
 	.size	flag, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

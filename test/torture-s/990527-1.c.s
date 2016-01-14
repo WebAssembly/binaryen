@@ -13,6 +13,7 @@ g:                                      # @g
 	i32.add 	$push1=, $pop0, $0
 	i32.store	$discard=, sum($1), $pop1
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
 
@@ -31,6 +32,7 @@ f:                                      # @f
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$discard=, sum($1), $pop3
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
@@ -56,6 +58,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -69,5 +72,5 @@ sum:
 	.size	sum, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

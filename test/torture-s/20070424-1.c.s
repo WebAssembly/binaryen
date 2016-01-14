@@ -9,6 +9,7 @@ do_exit:                                # @do_exit
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	do_exit, .Lfunc_end0-do_exit
 
@@ -20,6 +21,7 @@ do_abort:                               # @do_abort
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	do_abort, .Lfunc_end1-do_abort
 
@@ -40,6 +42,7 @@ foo:                                    # @foo
 	end_block                       # label0:
 	call    	do_exit@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo
 
@@ -52,9 +55,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	call    	do_exit@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

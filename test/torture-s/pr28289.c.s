@@ -13,6 +13,7 @@ ix86_split_ashr:                        # @ix86_split_ashr
 	i32.const	$push3=, 0
 	i32.call_indirect	$discard=, $pop2, $pop3
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	ix86_split_ashr, .Lfunc_end0-ix86_split_ashr
 
@@ -26,6 +27,7 @@ ok:                                     # @ok
 # BB#0:                                 # %entry
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	ok, .Lfunc_end1-ok
 
@@ -37,6 +39,7 @@ gen_x86_64_shrd:                        # @gen_x86_64_shrd
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	gen_x86_64_shrd, .Lfunc_end2-gen_x86_64_shrd
 
@@ -56,6 +59,7 @@ main:                                   # @main
 	i32.call_indirect	$discard=, $pop3, $0
 	i32.const	$push4=, 1
 	return  	$pop4
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
@@ -69,5 +73,5 @@ one:
 	.size	one, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

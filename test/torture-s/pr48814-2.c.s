@@ -14,6 +14,7 @@ incr:                                   # @incr
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$push3=, count($0), $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	incr, .Lfunc_end0-incr
 
@@ -51,6 +52,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -76,5 +78,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

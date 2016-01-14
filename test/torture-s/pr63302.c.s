@@ -22,6 +22,7 @@ foo:                                    # @foo
 	i64.eq  	$push8=, $pop7, $2
 	i32.or  	$push9=, $pop2, $pop8
 	return  	$pop9
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -41,6 +42,7 @@ bar:                                    # @bar
 	i64.eq  	$push4=, $0, $pop3
 	i32.or  	$push5=, $pop2, $pop4
 	return  	$pop5
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -141,9 +143,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

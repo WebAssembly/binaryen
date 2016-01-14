@@ -136,6 +136,7 @@ f:                                      # @f
 	end_loop                        # label13:
 	end_loop                        # label1:
 	return  	$5
+	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
@@ -253,6 +254,7 @@ main:                                   # @main
 	end_block                       # label28:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -275,5 +277,5 @@ W:
 	.size	W, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

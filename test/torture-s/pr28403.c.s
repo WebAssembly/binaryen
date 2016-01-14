@@ -18,6 +18,7 @@ foo:                                    # @foo
 	i32.add 	$push6=, $pop5, $7
 	i32.store	$discard=, global($pop7), $pop6
 	return  	$7
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -40,6 +41,7 @@ bar:                                    # @bar
 	i64.load32_u	$push5=, global($pop4)
 	i64.shr_u	$push6=, $0, $pop5
 	return  	$pop6
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -64,6 +66,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -77,5 +80,5 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

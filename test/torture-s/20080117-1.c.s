@@ -20,6 +20,7 @@ gstate_path_memory:                     # @gstate_path_memory
 	i32.load	$push6=, gstate_initial($1)
 	i32.store	$discard=, 0($0), $pop6
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	gstate_path_memory, .Lfunc_end0-gstate_path_memory
 
@@ -32,6 +33,7 @@ gs_state_update_overprint:              # @gs_state_update_overprint
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	gs_state_update_overprint, .Lfunc_end1-gs_state_update_overprint
 
@@ -44,6 +46,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -57,5 +60,5 @@ gstate_initial:
 	.size	gstate_initial, 12
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -120,6 +120,7 @@ foo:                                    # @foo
 # BB#4:                                 # %do.end
 	end_loop                        # label1:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -167,6 +168,7 @@ main:                                   # @main
 	f32.ne  	$push28=, $pop27, $1
 	i32.or  	$push29=, $pop26, $pop28
 	return  	$pop29
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -297,5 +299,5 @@ vol:
 	.size	vol, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

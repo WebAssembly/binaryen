@@ -33,6 +33,7 @@ f:                                      # @f
 # BB#2:                                 # %do.end
 	end_loop                        # label1:
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
@@ -56,6 +57,7 @@ main:                                   # @main
 	i32.store	$discard=, a+64($0), $pop3
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -69,5 +71,5 @@ a:
 	.size	a, 1020
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

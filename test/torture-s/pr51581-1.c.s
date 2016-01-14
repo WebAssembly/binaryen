@@ -28,6 +28,7 @@ f1:                                     # @f1
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
 
@@ -59,6 +60,7 @@ f2:                                     # @f2
 # BB#2:                                 # %for.end
 	end_loop                        # label3:
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
 
@@ -90,6 +92,7 @@ f3:                                     # @f3
 # BB#2:                                 # %for.end
 	end_loop                        # label5:
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
 
@@ -121,6 +124,7 @@ f4:                                     # @f4
 # BB#2:                                 # %for.end
 	end_loop                        # label7:
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	f4, .Lfunc_end3-f4
 
@@ -152,6 +156,7 @@ f5:                                     # @f5
 # BB#2:                                 # %for.end
 	end_loop                        # label9:
 	return
+	.endfunc
 .Lfunc_end4:
 	.size	f5, .Lfunc_end4-f5
 
@@ -183,6 +188,7 @@ f6:                                     # @f6
 # BB#2:                                 # %for.end
 	end_loop                        # label11:
 	return
+	.endfunc
 .Lfunc_end5:
 	.size	f6, .Lfunc_end5-f6
 
@@ -221,6 +227,7 @@ f7:                                     # @f7
 # BB#2:                                 # %for.end
 	end_loop                        # label13:
 	return
+	.endfunc
 .Lfunc_end6:
 	.size	f7, .Lfunc_end6-f7
 
@@ -254,6 +261,7 @@ f8:                                     # @f8
 # BB#2:                                 # %for.end
 	end_loop                        # label15:
 	return
+	.endfunc
 .Lfunc_end7:
 	.size	f8, .Lfunc_end7-f8
 
@@ -292,6 +300,7 @@ f9:                                     # @f9
 # BB#2:                                 # %for.end
 	end_loop                        # label17:
 	return
+	.endfunc
 .Lfunc_end8:
 	.size	f9, .Lfunc_end8-f9
 
@@ -325,6 +334,7 @@ f10:                                    # @f10
 # BB#2:                                 # %for.end
 	end_loop                        # label19:
 	return
+	.endfunc
 .Lfunc_end9:
 	.size	f10, .Lfunc_end9-f10
 
@@ -363,6 +373,7 @@ f11:                                    # @f11
 # BB#2:                                 # %for.end
 	end_loop                        # label21:
 	return
+	.endfunc
 .Lfunc_end10:
 	.size	f11, .Lfunc_end10-f11
 
@@ -403,6 +414,7 @@ f12:                                    # @f12
 # BB#2:                                 # %for.end
 	end_loop                        # label23:
 	return
+	.endfunc
 .Lfunc_end11:
 	.size	f12, .Lfunc_end11-f12
 
@@ -671,6 +683,7 @@ main:                                   # @main
 	end_block                       # label26:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end12:
 	.size	main, .Lfunc_end12-main
 
@@ -711,5 +724,5 @@ d:
 	.size	d, 16384
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -22,6 +22,7 @@ bar:                                    # @bar
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
@@ -74,6 +75,7 @@ foo:                                    # @foo
 .LBB1_7:                                # %return
 	end_block                       # label1:
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
@@ -98,6 +100,7 @@ main:                                   # @main
 	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -111,5 +114,5 @@ c:
 	.size	c, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

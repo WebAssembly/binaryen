@@ -15,6 +15,7 @@ test1:                                  # @test1
 	i32.store	$discard=, 4($0), $pop0
 	i32.load	$push1=, s+4($1)
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
@@ -33,6 +34,7 @@ test2:                                  # @test2
 	i32.store	$discard=, 4($0), $pop0
 	i32.load	$push1=, s+4($1)
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
 
@@ -51,6 +53,7 @@ test3:                                  # @test3
 	i32.store	$discard=, 4($0), $pop0
 	i32.load	$push1=, s+4($1)
 	return  	$pop1
+	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
 
@@ -101,6 +104,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
@@ -114,5 +118,5 @@ s:
 	.size	s, 12
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

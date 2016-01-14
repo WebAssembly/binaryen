@@ -44,6 +44,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -89,6 +90,7 @@ foo:                                    # @foo
 	end_block                       # label2:
 	i32.add 	$push6=, $0, $3
 	return  	$pop6
+	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
@@ -111,5 +113,5 @@ lo:
 	.size	lo, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

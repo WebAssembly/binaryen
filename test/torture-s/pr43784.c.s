@@ -64,6 +64,7 @@ main:                                   # @main
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -76,11 +77,12 @@ rp:                                     # @rp
 	i32.const	$push1=, 256
 	call    	memcpy@FUNCTION, $0, $pop0, $pop1
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	rp, .Lfunc_end1-rp
 
 	.type	v,@object               # @v
 	.lcomm	v,260,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

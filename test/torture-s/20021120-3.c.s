@@ -40,6 +40,7 @@ foo:                                    # @foo
 	i32.const	$10=, __stack_pointer
 	i32.store	$8=, 0($10), $8
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -78,6 +79,7 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -88,5 +90,5 @@ main:                                   # @main
 	.size	.L.str, 3
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

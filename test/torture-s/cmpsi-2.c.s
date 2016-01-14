@@ -13,6 +13,7 @@ feq:                                    # @feq
 	i32.const	$push1=, 140
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	feq, .Lfunc_end0-feq
 
@@ -29,6 +30,7 @@ fne:                                    # @fne
 	i32.const	$push1=, 13
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end1:
 	.size	fne, .Lfunc_end1-fne
 
@@ -45,6 +47,7 @@ flt:                                    # @flt
 	i32.const	$push1=, 140
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end2:
 	.size	flt, .Lfunc_end2-flt
 
@@ -61,6 +64,7 @@ fge:                                    # @fge
 	i32.const	$push1=, 13
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end3:
 	.size	fge, .Lfunc_end3-fge
 
@@ -77,6 +81,7 @@ fgt:                                    # @fgt
 	i32.const	$push1=, 140
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end4:
 	.size	fgt, .Lfunc_end4-fgt
 
@@ -93,6 +98,7 @@ fle:                                    # @fle
 	i32.const	$push1=, 13
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end5:
 	.size	fle, .Lfunc_end5-fle
 
@@ -109,6 +115,7 @@ fltu:                                   # @fltu
 	i32.const	$push1=, 140
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end6:
 	.size	fltu, .Lfunc_end6-fltu
 
@@ -125,6 +132,7 @@ fgeu:                                   # @fgeu
 	i32.const	$push1=, 13
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end7:
 	.size	fgeu, .Lfunc_end7-fgeu
 
@@ -141,6 +149,7 @@ fgtu:                                   # @fgtu
 	i32.const	$push1=, 140
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end8:
 	.size	fgtu, .Lfunc_end8-fgtu
 
@@ -157,6 +166,7 @@ fleu:                                   # @fleu
 	i32.const	$push1=, 13
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end9:
 	.size	fleu, .Lfunc_end9-fleu
 
@@ -339,6 +349,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end10:
 	.size	main, .Lfunc_end10-main
 
@@ -1007,5 +1018,5 @@ correct_results:
 	.size	correct_results, 2560
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

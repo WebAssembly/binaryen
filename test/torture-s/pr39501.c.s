@@ -11,6 +11,7 @@ float_min1:                             # @float_min1
 	f32.lt  	$push0=, $0, $1
 	f32.select	$push1=, $pop0, $0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	float_min1, .Lfunc_end0-float_min1
 
@@ -25,6 +26,7 @@ float_min2:                             # @float_min2
 	f32.le  	$push0=, $0, $1
 	f32.select	$push1=, $pop0, $0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	float_min2, .Lfunc_end1-float_min2
 
@@ -39,6 +41,7 @@ float_max1:                             # @float_max1
 	f32.gt  	$push0=, $0, $1
 	f32.select	$push1=, $pop0, $0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end2:
 	.size	float_max1, .Lfunc_end2-float_max1
 
@@ -53,6 +56,7 @@ float_max2:                             # @float_max2
 	f32.ge  	$push0=, $0, $1
 	f32.select	$push1=, $pop0, $0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end3:
 	.size	float_max2, .Lfunc_end3-float_max2
 
@@ -67,6 +71,7 @@ double_min1:                            # @double_min1
 	f64.lt  	$push0=, $0, $1
 	f64.select	$push1=, $pop0, $0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end4:
 	.size	double_min1, .Lfunc_end4-double_min1
 
@@ -81,6 +86,7 @@ double_min2:                            # @double_min2
 	f64.le  	$push0=, $0, $1
 	f64.select	$push1=, $pop0, $0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end5:
 	.size	double_min2, .Lfunc_end5-double_min2
 
@@ -95,6 +101,7 @@ double_max1:                            # @double_max1
 	f64.gt  	$push0=, $0, $1
 	f64.select	$push1=, $pop0, $0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end6:
 	.size	double_max1, .Lfunc_end6-double_max1
 
@@ -109,6 +116,7 @@ double_max2:                            # @double_max2
 	f64.ge  	$push0=, $0, $1
 	f64.select	$push1=, $pop0, $0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end7:
 	.size	double_max2, .Lfunc_end7-double_max2
 
@@ -561,9 +569,10 @@ main:                                   # @main
 	i32.const	$push96=, 0
 	call    	exit@FUNCTION, $pop96
 	unreachable
+	.endfunc
 .Lfunc_end8:
 	.size	main, .Lfunc_end8-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

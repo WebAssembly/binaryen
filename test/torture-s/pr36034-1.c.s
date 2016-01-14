@@ -69,6 +69,7 @@ test:                                   # @test
 	i64.store	$discard=, tmp+224($0), $2
 	i64.store	$discard=, tmp+232($0), $3
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
@@ -209,6 +210,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -280,5 +282,5 @@ tmp:
 	.size	tmp, 240
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -21,6 +21,7 @@ foo:                                    # @foo
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -48,9 +49,10 @@ main:                                   # @main
 	i32.add 	$3=, $4, $3
 	i32.call	$discard=, foo@FUNCTION, $2, $3
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

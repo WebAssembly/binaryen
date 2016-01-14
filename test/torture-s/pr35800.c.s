@@ -34,6 +34,7 @@ stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
 .LBB0_4:                                # %cleanup
 	end_block                       # label0:
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	stab_xcoff_builtin_type, .Lfunc_end0-stab_xcoff_builtin_type
 
@@ -73,6 +74,7 @@ main:                                   # @main
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -132,5 +134,5 @@ main:                                   # @main
 	.size	.Lswitch.table, 132
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

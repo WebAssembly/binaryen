@@ -74,6 +74,7 @@ line_hints:                             # @line_hints
 .LBB0_6:                                # %if.end40
 	end_block                       # label0:
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	line_hints, .Lfunc_end0-line_hints
 
@@ -237,6 +238,7 @@ main:                                   # @main
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -268,5 +270,5 @@ main.gsf:
 	.size	main.gsf, 32
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

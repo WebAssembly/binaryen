@@ -31,6 +31,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -80,5 +81,5 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

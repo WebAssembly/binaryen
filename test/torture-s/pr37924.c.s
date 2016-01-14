@@ -14,6 +14,7 @@ test1:                                  # @test1
 	i32.const	$push4=, 8388607
 	i32.xor 	$push5=, $pop3, $pop4
 	return  	$pop5
+	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
@@ -26,6 +27,7 @@ test2:                                  # @test2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 8388607
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
 
@@ -42,6 +44,7 @@ main:                                   # @main
 	i32.store8	$push1=, a($0), $pop0
 	i32.store8	$discard=, b($0), $pop1
 	return  	$0
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -62,5 +65,5 @@ b:
 	.size	b, 1
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -10,6 +10,7 @@ func_1:                                 # @func_1
 	i32.const	$0=, 0
 	i32.store8	$discard=, g_5($0), $0
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	func_1, .Lfunc_end0-func_1
 
@@ -24,6 +25,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 	i32.store8	$push0=, g_5($0), $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -36,5 +38,5 @@ g_5:
 	.size	g_5, 1
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

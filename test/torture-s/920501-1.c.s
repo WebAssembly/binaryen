@@ -25,6 +25,7 @@ x:                                      # @x
 	end_block                       # label0:
 	i32.const	$push7=, 1
 	return  	$pop7
+	.endfunc
 .Lfunc_end0:
 	.size	x, .Lfunc_end0-x
 
@@ -41,6 +42,7 @@ main:                                   # @main
 	i32.store	$push0=, s+4($0), $0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -54,5 +56,5 @@ s:
 	.size	s, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

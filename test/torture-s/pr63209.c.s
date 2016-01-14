@@ -23,6 +23,7 @@ Predictor:                              # @Predictor
 	i32.le_s	$push8=, $pop7, $pop1
 	i32.select	$push9=, $pop8, $2, $0
 	return  	$pop9
+	.endfunc
 .Lfunc_end0:
 	.size	Predictor, .Lfunc_end0-Predictor
 
@@ -39,6 +40,7 @@ main:                                   # @main
 	i32.call	$push1=, Predictor@FUNCTION, $0, $pop0
 	i32.ne  	$push2=, $pop1, $0
 	return  	$pop2
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -51,5 +53,5 @@ main.top:
 	.size	main.top, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -12,6 +12,7 @@ baz:                                    # @baz
 	#NO_APP
 	i32.load	$push0=, 0($0)
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	baz, .Lfunc_end0-baz
 
@@ -25,6 +26,7 @@ f1:                                     # @f1
 	i32.call	$discard=, bar@FUNCTION
 	i32.const	$push0=, 17
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
 
@@ -39,6 +41,7 @@ bar:                                    # @bar
 .Ltmp0:                                 # Block address taken
 # BB#1:                                 # %addr
 	return  	$0
+	.endfunc
 .Lfunc_end2:
 	.size	bar, .Lfunc_end2-bar
 
@@ -52,6 +55,7 @@ f2:                                     # @f2
 	i32.call	$discard=, bar@FUNCTION
 	i32.const	$push0=, 17
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	f2, .Lfunc_end3-f2
 
@@ -68,6 +72,7 @@ main:                                   # @main
 	i32.call	$discard=, f2@FUNCTION
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
@@ -79,5 +84,5 @@ bar.b:
 	.size	bar.b, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

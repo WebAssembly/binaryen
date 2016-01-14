@@ -13,6 +13,7 @@ dummy:                                  # @dummy
 	i32.const	$push1=, 7
 	i32.store	$discard=, 0($1), $pop1
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	dummy, .Lfunc_end0-dummy
 
@@ -37,6 +38,7 @@ bogus:                                  # @bogus
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	bogus, .Lfunc_end1-bogus
 
@@ -50,9 +52,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

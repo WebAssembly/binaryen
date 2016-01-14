@@ -12,6 +12,7 @@ g:                                      # @g
 	i32.const	$1=, 0
 	i32.store	$discard=, glob($1), $0
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
 
@@ -35,6 +36,7 @@ f:                                      # @f
 .LBB1_2:                                # %while.end
 	end_block                       # label0:
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
@@ -51,6 +53,7 @@ main:                                   # @main
 	i32.store	$discard=, glob($0), $pop0
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -64,5 +67,5 @@ glob:
 	.size	glob, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

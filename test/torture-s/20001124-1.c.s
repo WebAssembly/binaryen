@@ -22,6 +22,7 @@ main:                                   # @main
 	i64.store	$discard=, f($2), $pop4
 	call    	exit@FUNCTION, $2
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -53,5 +54,5 @@ f:
 	.size	f, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -13,6 +13,7 @@ main:                                   # @main
 	call    	memcpy@FUNCTION, $pop1, $pop0, $pop2
 	i32.const	$push3=, 0
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -32,5 +33,5 @@ buf:
 	.size	.L.str.2, 13
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -45,6 +45,7 @@ doit:                                   # @doit
 	end_loop                        # label2:
 	end_block                       # label0:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	doit, .Lfunc_end0-doit
 
@@ -96,6 +97,7 @@ main:                                   # @main
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -154,5 +156,5 @@ indices:
 	.size	indices, 40
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

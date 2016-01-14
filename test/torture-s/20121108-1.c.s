@@ -37,6 +37,7 @@ strtoul1:                               # @strtoul1
 .LBB0_5:                                # %return
 	end_block                       # label0:
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	strtoul1, .Lfunc_end0-strtoul1
 
@@ -127,6 +128,7 @@ string_to_ip:                           # @string_to_ip
 	i32.const	$8=, __stack_pointer
 	i32.store	$12=, 0($8), $12
 	return  	$5
+	.endfunc
 .Lfunc_end1:
 	.size	string_to_ip, .Lfunc_end1-string_to_ip
 
@@ -193,6 +195,7 @@ main:                                   # @main
 	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -226,5 +229,5 @@ result:
 	.size	.Lstr, 7
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

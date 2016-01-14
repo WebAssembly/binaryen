@@ -10,6 +10,7 @@ w:                                      # @w
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$2
+	.endfunc
 .Lfunc_end0:
 	.size	w, .Lfunc_end0-w
 
@@ -35,6 +36,7 @@ f1:                                     # @f1
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
 
@@ -60,6 +62,7 @@ f2:                                     # @f2
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	f2, .Lfunc_end2-f2
 
@@ -127,6 +130,7 @@ gitter:                                 # @gitter
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	gitter, .Lfunc_end3-gitter
 
@@ -169,6 +173,7 @@ main:                                   # @main
 	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
@@ -193,5 +198,5 @@ limit:
 	.size	limit, 16
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

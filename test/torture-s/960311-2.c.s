@@ -13,6 +13,7 @@ a1:                                     # @a1
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, count($0), $pop2
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	a1, .Lfunc_end0-a1
 
@@ -67,6 +68,7 @@ b:                                      # @b
 .LBB1_6:                                # %if.end15
 	end_block                       # label2:
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	b, .Lfunc_end1-b
 
@@ -83,6 +85,7 @@ main:                                   # @main
 	i32.store	$discard=, count($0), $pop0
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -96,5 +99,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -20,6 +20,7 @@ g:                                      # @g
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
 
@@ -42,6 +43,7 @@ main:                                   # @main
 .LBB1_2:                                # %for.end
 	end_block                       # label1:
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -54,5 +56,5 @@ g_list:
 	.size	g_list, 1
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

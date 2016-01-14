@@ -39,6 +39,7 @@ reset:                                  # @reset
 	i32.store8	$push26=, u+29($0), $pop25
 	i32.store8	$discard=, u+30($0), $pop26
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	reset, .Lfunc_end0-reset
 
@@ -143,6 +144,7 @@ check:                                  # @check
 	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	check, .Lfunc_end1-check
 
@@ -734,6 +736,7 @@ main:                                   # @main
 	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -748,5 +751,5 @@ A:
 	.type	u,@object               # @u
 	.lcomm	u,32,4
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

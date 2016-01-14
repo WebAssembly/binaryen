@@ -17,6 +17,7 @@ uint128_central_bitsi_ior:              # @uint128_central_bitsi_ior
 	i64.and 	$push6=, $pop4, $pop5
 	i64.or  	$push7=, $pop6, $2
 	return  	$pop7
+	.endfunc
 .Lfunc_end0:
 	.size	uint128_central_bitsi_ior, .Lfunc_end0-uint128_central_bitsi_ior
 
@@ -43,9 +44,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

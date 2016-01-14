@@ -28,6 +28,7 @@ foo:                                    # @foo
 	end_block                       # label0:
 	i32.store	$discard=, d($1), $0
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -68,6 +69,7 @@ main:                                   # @main
 	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -108,5 +110,5 @@ c:
 	.size	c, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

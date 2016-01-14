@@ -11,6 +11,7 @@ ll_to_int:                              # @ll_to_int
 	#NO_APP
 	i64.store32	$discard=, 0($1), $0
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	ll_to_int, .Lfunc_end0-ll_to_int
 
@@ -45,6 +46,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -58,5 +60,5 @@ val:
 	.size	val, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

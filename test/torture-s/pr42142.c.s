@@ -18,6 +18,7 @@ sort:                                   # @sort
 	i32.const	$push5=, 0
 	i32.select	$push6=, $pop1, $pop4, $pop5
 	return  	$pop6
+	.endfunc
 .Lfunc_end0:
 	.size	sort, .Lfunc_end0-sort
 
@@ -41,9 +42,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

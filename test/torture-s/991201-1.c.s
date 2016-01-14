@@ -51,6 +51,7 @@ reset_palette:                          # @reset_palette
 # BB#2:                                 # %bar.exit
 	end_loop                        # label1:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	reset_palette, .Lfunc_end0-reset_palette
 
@@ -71,6 +72,7 @@ bar:                                    # @bar
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -122,6 +124,7 @@ main:                                   # @main
 	i32.const	$push23=, 0
 	call    	exit@FUNCTION, $pop23
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -233,5 +236,5 @@ default_blu:
 	.size	default_blu, 64
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

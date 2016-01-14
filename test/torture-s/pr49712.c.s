@@ -8,6 +8,7 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -31,6 +32,7 @@ bar:                                    # @bar
 .LBB1_2:                                # %for.end9
 	end_block                       # label0:
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -73,6 +75,7 @@ main:                                   # @main
 	i32.const	$push3=, 2
 	i32.store	$discard=, b($2), $pop3
 	return  	$2
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -122,5 +125,5 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

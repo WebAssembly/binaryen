@@ -44,6 +44,7 @@ main:                                   # @main
 	i64.store	$push31=, bid_Kx192+728($0), $pop30
 	i64.store	$discard=, bid_Kx192+752($0), $pop31
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -57,5 +58,5 @@ bid_Kx192:
 	.size	bid_Kx192, 768
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

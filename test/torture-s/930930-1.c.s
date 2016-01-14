@@ -46,6 +46,7 @@ f:                                      # @f
 .LBB0_7:                                # %if.end8
 	end_block                       # label0:
 	return  	$3
+	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
@@ -62,6 +63,7 @@ main:                                   # @main
 	i32.store	$discard=, mem+396($0), $pop0
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -102,5 +104,5 @@ wm_SPB:
 	.size	wm_SPB, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

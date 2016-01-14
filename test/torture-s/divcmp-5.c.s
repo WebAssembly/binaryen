@@ -10,6 +10,7 @@ always_one_1:                           # @always_one_1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	always_one_1, .Lfunc_end0-always_one_1
 
@@ -23,6 +24,7 @@ always_one_2:                           # @always_one_2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	always_one_2, .Lfunc_end1-always_one_2
 
@@ -35,9 +37,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

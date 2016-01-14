@@ -11,6 +11,7 @@ sub1:                                   # @sub1
 	i64.const	$push0=, 2147483648
 	i64.lt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	sub1, .Lfunc_end0-sub1
 
@@ -25,6 +26,7 @@ sub2:                                   # @sub2
 	i64.const	$push0=, 2147483648
 	i64.lt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	sub2, .Lfunc_end1-sub2
 
@@ -39,6 +41,7 @@ sub3:                                   # @sub3
 	i64.const	$push0=, 2147483648
 	i64.lt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end2:
 	.size	sub3, .Lfunc_end2-sub3
 
@@ -53,6 +56,7 @@ sub4:                                   # @sub4
 	i64.const	$push0=, 2147483648
 	i64.lt_u	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end3:
 	.size	sub4, .Lfunc_end3-sub4
 
@@ -66,9 +70,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

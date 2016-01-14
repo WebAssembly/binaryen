@@ -10,6 +10,7 @@ rl_show_char:                           # @rl_show_char
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	rl_show_char, .Lfunc_end0-rl_show_char
 
@@ -26,6 +27,7 @@ rl_character_len:                       # @rl_character_len
 	i32.const	$push1=, 2
 	i32.select	$push3=, $pop0, $pop2, $pop1
 	return  	$pop3
+	.endfunc
 .Lfunc_end1:
 	.size	rl_character_len, .Lfunc_end1-rl_character_len
 
@@ -58,9 +60,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

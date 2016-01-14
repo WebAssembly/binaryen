@@ -31,6 +31,7 @@ signbit:                                # @signbit
 	i32.const	$4=, __stack_pointer
 	i32.store	$5=, 0($4), $5
 	return  	$pop6
+	.endfunc
 .Lfunc_end0:
 	.size	signbit, .Lfunc_end0-signbit
 
@@ -79,6 +80,7 @@ main:                                   # @main
 	end_block                       # label1:
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -101,5 +103,5 @@ endianness_test:
 	.size	endianness_test, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

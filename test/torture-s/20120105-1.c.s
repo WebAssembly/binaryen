@@ -38,6 +38,7 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$7=, 0($3), $7
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -67,6 +68,7 @@ extract:                                # @extract
 	i32.or  	$push15=, $pop13, $pop14
 	i32.or  	$push16=, $pop9, $pop15
 	return  	$pop16
+	.endfunc
 .Lfunc_end1:
 	.size	extract, .Lfunc_end1-extract
 
@@ -80,5 +82,5 @@ i:
 	.size	i, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

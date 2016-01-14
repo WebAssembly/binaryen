@@ -16,6 +16,7 @@ foo_float:                              # @foo_float
 	f32.convert_s/i32	$push5=, $pop4
 	f32.store	$discard=, 4($0), $pop5
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo_float, .Lfunc_end0-foo_float
 
@@ -29,6 +30,7 @@ bar_float:                              # @bar_float
 	i32.const	$push0=, 1086324736
 	i32.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	bar_float, .Lfunc_end1-bar_float
 
@@ -42,6 +44,7 @@ baz_float:                              # @baz_float
 	i32.const	$push0=, 1082130432
 	i32.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	baz_float, .Lfunc_end2-baz_float
 
@@ -61,6 +64,7 @@ foo_double:                             # @foo_double
 	f64.convert_s/i32	$push5=, $pop4
 	f64.store	$discard=, 8($0), $pop5
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	foo_double, .Lfunc_end3-foo_double
 
@@ -74,6 +78,7 @@ bar_double:                             # @bar_double
 	i64.const	$push0=, 4618441417868443648
 	i64.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end4:
 	.size	bar_double, .Lfunc_end4-bar_double
 
@@ -87,6 +92,7 @@ baz_double:                             # @baz_double
 	i64.const	$push0=, 4616189618054758400
 	i64.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end5:
 	.size	baz_double, .Lfunc_end5-baz_double
 
@@ -137,6 +143,7 @@ foo_ldouble_t:                          # @foo_ldouble_t
 	i32.const	$9=, __stack_pointer
 	i32.store	$12=, 0($9), $12
 	return
+	.endfunc
 .Lfunc_end6:
 	.size	foo_ldouble_t, .Lfunc_end6-foo_ldouble_t
 
@@ -154,6 +161,7 @@ bar_ldouble_t:                          # @bar_ldouble_t
 	i64.const	$push3=, 4612108230892453888
 	i64.store	$discard=, 0($pop2), $pop3
 	return
+	.endfunc
 .Lfunc_end7:
 	.size	bar_ldouble_t, .Lfunc_end7-bar_ldouble_t
 
@@ -171,6 +179,7 @@ baz_ldouble_t:                          # @baz_ldouble_t
 	i64.const	$push3=, 4611967493404098560
 	i64.store	$discard=, 0($pop2), $pop3
 	return
+	.endfunc
 .Lfunc_end8:
 	.size	baz_ldouble_t, .Lfunc_end8-baz_ldouble_t
 
@@ -188,6 +197,7 @@ foo_char:                               # @foo_char
 	i32.add 	$push3=, $1, $pop2
 	i32.store8	$discard=, 1($0), $pop3
 	return
+	.endfunc
 .Lfunc_end9:
 	.size	foo_char, .Lfunc_end9-foo_char
 
@@ -201,6 +211,7 @@ bar_char:                               # @bar_char
 	i32.const	$push0=, 6
 	i32.store8	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end10:
 	.size	bar_char, .Lfunc_end10-bar_char
 
@@ -214,6 +225,7 @@ baz_char:                               # @baz_char
 	i32.const	$push0=, 4
 	i32.store8	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end11:
 	.size	baz_char, .Lfunc_end11-baz_char
 
@@ -231,6 +243,7 @@ foo_short:                              # @foo_short
 	i32.add 	$push3=, $1, $pop2
 	i32.store16	$discard=, 2($0), $pop3
 	return
+	.endfunc
 .Lfunc_end12:
 	.size	foo_short, .Lfunc_end12-foo_short
 
@@ -244,6 +257,7 @@ bar_short:                              # @bar_short
 	i32.const	$push0=, 6
 	i32.store16	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end13:
 	.size	bar_short, .Lfunc_end13-bar_short
 
@@ -257,6 +271,7 @@ baz_short:                              # @baz_short
 	i32.const	$push0=, 4
 	i32.store16	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end14:
 	.size	baz_short, .Lfunc_end14-baz_short
 
@@ -274,6 +289,7 @@ foo_int:                                # @foo_int
 	i32.add 	$push3=, $1, $pop2
 	i32.store	$discard=, 4($0), $pop3
 	return
+	.endfunc
 .Lfunc_end15:
 	.size	foo_int, .Lfunc_end15-foo_int
 
@@ -287,6 +303,7 @@ bar_int:                                # @bar_int
 	i32.const	$push0=, 6
 	i32.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end16:
 	.size	bar_int, .Lfunc_end16-bar_int
 
@@ -300,6 +317,7 @@ baz_int:                                # @baz_int
 	i32.const	$push0=, 4
 	i32.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end17:
 	.size	baz_int, .Lfunc_end17-baz_int
 
@@ -317,6 +335,7 @@ foo_long:                               # @foo_long
 	i32.add 	$push3=, $1, $pop2
 	i32.store	$discard=, 4($0), $pop3
 	return
+	.endfunc
 .Lfunc_end18:
 	.size	foo_long, .Lfunc_end18-foo_long
 
@@ -330,6 +349,7 @@ bar_long:                               # @bar_long
 	i32.const	$push0=, 6
 	i32.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end19:
 	.size	bar_long, .Lfunc_end19-bar_long
 
@@ -343,6 +363,7 @@ baz_long:                               # @baz_long
 	i32.const	$push0=, 4
 	i32.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end20:
 	.size	baz_long, .Lfunc_end20-baz_long
 
@@ -362,6 +383,7 @@ foo_llong:                              # @foo_llong
 	i64.extend_s/i32	$push5=, $pop4
 	i64.store	$discard=, 8($0), $pop5
 	return
+	.endfunc
 .Lfunc_end21:
 	.size	foo_llong, .Lfunc_end21-foo_llong
 
@@ -375,6 +397,7 @@ bar_llong:                              # @bar_llong
 	i64.const	$push0=, 6
 	i64.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end22:
 	.size	bar_llong, .Lfunc_end22-bar_llong
 
@@ -388,6 +411,7 @@ baz_llong:                              # @baz_llong
 	i64.const	$push0=, 4
 	i64.store	$discard=, 0($0), $pop0
 	return
+	.endfunc
 .Lfunc_end23:
 	.size	baz_llong, .Lfunc_end23-baz_llong
 
@@ -400,9 +424,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end65
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end24:
 	.size	main, .Lfunc_end24-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

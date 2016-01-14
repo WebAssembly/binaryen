@@ -15,6 +15,7 @@ main:                                   # @main
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -28,5 +29,5 @@ lookup_table:
 	.size	lookup_table, 257
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

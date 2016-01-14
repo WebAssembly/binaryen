@@ -10,6 +10,7 @@ dummy1:                                 # @dummy1
 # BB#0:                                 # %entry
 	i32.const	$push0=, .L.str
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	dummy1, .Lfunc_end0-dummy1
 
@@ -24,6 +25,7 @@ dummy2:                                 # @dummy2
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	dummy2, .Lfunc_end1-dummy2
 
@@ -41,6 +43,7 @@ baz:                                    # @baz
 	i32.const	$push0=, 44
 	call    	memset@FUNCTION, $1, $pop1, $pop0
 	return  	$1
+	.endfunc
 .Lfunc_end2:
 	.size	baz, .Lfunc_end2-baz
 
@@ -80,6 +83,7 @@ check:                                  # @check
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	check, .Lfunc_end3-check
 
@@ -129,6 +133,7 @@ foo:                                    # @foo
 .LBB4_4:                                # %cleanup2
 	end_block                       # label1:
 	return  	$2
+	.endfunc
 .Lfunc_end4:
 	.size	foo, .Lfunc_end4-foo
 
@@ -156,6 +161,7 @@ main:                                   # @main
 	i32.store	$discard=, baz.v+28($0), $0
 	i32.call	$discard=, dummy2@FUNCTION, $0, $0
 	unreachable
+	.endfunc
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
 
@@ -175,5 +181,5 @@ bar.t:
 	.size	bar.t, 16
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

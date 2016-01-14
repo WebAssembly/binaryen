@@ -9,6 +9,7 @@ never_ever:                             # @never_ever
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	never_ever, .Lfunc_end0-never_ever
 
@@ -24,6 +25,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$discard=, cond($0), $pop0
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -40,6 +42,7 @@ bar_1:                                  # @bar_1
 	i32.store	$discard=, 4($1), $pop2
 	call    	mark_cell@FUNCTION, $1
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	bar_1, .Lfunc_end2-bar_1
 
@@ -176,6 +179,7 @@ mark_cell:                              # @mark_cell
 .LBB3_22:                               # %if.end137
 	end_block                       # label0:
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	mark_cell, .Lfunc_end3-mark_cell
 
@@ -192,6 +196,7 @@ bar_2:                                  # @bar_2
 	i32.store	$discard=, 4($1), $pop2
 	call    	mark_cell@FUNCTION, $1
 	return
+	.endfunc
 .Lfunc_end4:
 	.size	bar_2, .Lfunc_end4-bar_2
 
@@ -214,5 +219,5 @@ gi:
 	.size	gi, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

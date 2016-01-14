@@ -8,6 +8,7 @@ test1:                                  # @test1
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
@@ -19,6 +20,7 @@ test2:                                  # @test2
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
 
@@ -30,6 +32,7 @@ test3:                                  # @test3
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
 
@@ -41,6 +44,7 @@ test4:                                  # @test4
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
 
@@ -52,6 +56,7 @@ test5:                                  # @test5
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end4:
 	.size	test5, .Lfunc_end4-test5
 
@@ -63,6 +68,7 @@ test6:                                  # @test6
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end5:
 	.size	test6, .Lfunc_end5-test6
 
@@ -74,6 +80,7 @@ all_tests:                              # @all_tests
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end6:
 	.size	all_tests, .Lfunc_end6-all_tests
 
@@ -86,9 +93,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end7:
 	.size	main, .Lfunc_end7-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

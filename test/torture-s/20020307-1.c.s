@@ -19,6 +19,7 @@ f3:                                     # @f3
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	f3, .Lfunc_end0-f3
 
@@ -41,6 +42,7 @@ f4:                                     # @f4
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	f4, .Lfunc_end1-f4
 
@@ -63,6 +65,7 @@ f5:                                     # @f5
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	f5, .Lfunc_end2-f5
 
@@ -85,6 +88,7 @@ f6:                                     # @f6
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	f6, .Lfunc_end3-f6
 
@@ -107,6 +111,7 @@ f7:                                     # @f7
 	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end4:
 	.size	f7, .Lfunc_end4-f7
 
@@ -129,6 +134,7 @@ f8:                                     # @f8
 	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end5:
 	.size	f8, .Lfunc_end5-f8
 
@@ -151,6 +157,7 @@ f9:                                     # @f9
 	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end6:
 	.size	f9, .Lfunc_end6-f9
 
@@ -173,6 +180,7 @@ f10:                                    # @f10
 	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end7:
 	.size	f10, .Lfunc_end7-f10
 
@@ -195,6 +203,7 @@ f11:                                    # @f11
 	end_block                       # label8:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end8:
 	.size	f11, .Lfunc_end8-f11
 
@@ -217,6 +226,7 @@ f12:                                    # @f12
 	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end9:
 	.size	f12, .Lfunc_end9-f12
 
@@ -239,6 +249,7 @@ f13:                                    # @f13
 	end_block                       # label10:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end10:
 	.size	f13, .Lfunc_end10-f13
 
@@ -261,6 +272,7 @@ f14:                                    # @f14
 	end_block                       # label11:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end11:
 	.size	f14, .Lfunc_end11-f14
 
@@ -283,6 +295,7 @@ f15:                                    # @f15
 	end_block                       # label12:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end12:
 	.size	f15, .Lfunc_end12-f15
 
@@ -305,6 +318,7 @@ f16:                                    # @f16
 	end_block                       # label13:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end13:
 	.size	f16, .Lfunc_end13-f16
 
@@ -327,6 +341,7 @@ f17:                                    # @f17
 	end_block                       # label14:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end14:
 	.size	f17, .Lfunc_end14-f17
 
@@ -349,6 +364,7 @@ f18:                                    # @f18
 	end_block                       # label15:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end15:
 	.size	f18, .Lfunc_end15-f18
 
@@ -371,6 +387,7 @@ f19:                                    # @f19
 	end_block                       # label16:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end16:
 	.size	f19, .Lfunc_end16-f19
 
@@ -393,6 +410,7 @@ f20:                                    # @f20
 	end_block                       # label17:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end17:
 	.size	f20, .Lfunc_end17-f20
 
@@ -415,6 +433,7 @@ f21:                                    # @f21
 	end_block                       # label18:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end18:
 	.size	f21, .Lfunc_end18-f21
 
@@ -437,6 +456,7 @@ f22:                                    # @f22
 	end_block                       # label19:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end19:
 	.size	f22, .Lfunc_end19-f22
 
@@ -459,6 +479,7 @@ f23:                                    # @f23
 	end_block                       # label20:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end20:
 	.size	f23, .Lfunc_end20-f23
 
@@ -481,6 +502,7 @@ f24:                                    # @f24
 	end_block                       # label21:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end21:
 	.size	f24, .Lfunc_end21-f24
 
@@ -503,6 +525,7 @@ f25:                                    # @f25
 	end_block                       # label22:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end22:
 	.size	f25, .Lfunc_end22-f25
 
@@ -525,6 +548,7 @@ f26:                                    # @f26
 	end_block                       # label23:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end23:
 	.size	f26, .Lfunc_end23-f26
 
@@ -547,6 +571,7 @@ f27:                                    # @f27
 	end_block                       # label24:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end24:
 	.size	f27, .Lfunc_end24-f27
 
@@ -569,6 +594,7 @@ f28:                                    # @f28
 	end_block                       # label25:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end25:
 	.size	f28, .Lfunc_end25-f28
 
@@ -591,6 +617,7 @@ f29:                                    # @f29
 	end_block                       # label26:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end26:
 	.size	f29, .Lfunc_end26-f29
 
@@ -613,6 +640,7 @@ f30:                                    # @f30
 	end_block                       # label27:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end27:
 	.size	f30, .Lfunc_end27-f30
 
@@ -635,6 +663,7 @@ f31:                                    # @f31
 	end_block                       # label28:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end28:
 	.size	f31, .Lfunc_end28-f31
 
@@ -648,9 +677,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end29:
 	.size	main, .Lfunc_end29-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

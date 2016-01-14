@@ -7,6 +7,7 @@
 simple_global:                          # @simple_global
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	simple_global, .Lfunc_end0-simple_global
 
@@ -17,6 +18,7 @@ simple_global:                          # @simple_global
 simple_file:                            # @simple_file
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	simple_file, .Lfunc_end1-simple_file
 
@@ -27,6 +29,7 @@ simple_file:                            # @simple_file
 simple_static_local:                    # @simple_static_local
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	simple_static_local, .Lfunc_end2-simple_static_local
 
@@ -48,6 +51,7 @@ simple_local:                           # @simple_local
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	simple_local, .Lfunc_end3-simple_local
 
@@ -71,6 +75,7 @@ simple_arg:                             # @simple_arg
 	i32.const	$5=, __stack_pointer
 	i32.store	$3=, 0($5), $3
 	return
+	.endfunc
 .Lfunc_end4:
 	.size	simple_arg, .Lfunc_end4-simple_arg
 
@@ -81,6 +86,7 @@ simple_arg:                             # @simple_arg
 expr_global:                            # @expr_global
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end5:
 	.size	expr_global, .Lfunc_end5-expr_global
 
@@ -102,6 +108,7 @@ expr_local:                             # @expr_local
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return
+	.endfunc
 .Lfunc_end6:
 	.size	expr_local, .Lfunc_end6-expr_local
 
@@ -126,6 +133,7 @@ main:                                   # @main
 	i32.store	$discard=, str+16($0), $pop1
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end7:
 	.size	main, .Lfunc_end7-main
 
@@ -183,5 +191,5 @@ ptr_str:
 	.type	simple_static_local.ix,@object # @simple_static_local.ix
 	.lcomm	simple_static_local.ix,4,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

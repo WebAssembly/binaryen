@@ -31,6 +31,7 @@ main:                                   # @main
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -60,6 +61,7 @@ CallFunctionRec:                        # @CallFunctionRec
 .LBB1_3:                                # %return
 	end_block                       # label2:
 	return  	$1
+	.endfunc
 .Lfunc_end1:
 	.size	CallFunctionRec, .Lfunc_end1-CallFunctionRec
 
@@ -79,11 +81,12 @@ storemax:                               # @storemax
 .LBB2_2:                                # %if.end
 	end_block                       # label3:
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	storemax, .Lfunc_end2-storemax
 
 	.type	max,@object             # @max
 	.lcomm	max,4,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -25,6 +25,7 @@ find:                                   # @find
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	find, .Lfunc_end0-find
 
@@ -47,6 +48,7 @@ ok:                                     # @ok
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	ok, .Lfunc_end1-ok
 
@@ -72,9 +74,10 @@ main:                                   # @main
 	i32.add 	$3=, $4, $3
 	call    	find@FUNCTION, $3, $pop1
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

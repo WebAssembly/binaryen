@@ -9,6 +9,7 @@ sub1:                                   # @sub1
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	sub1, .Lfunc_end0-sub1
 
@@ -24,6 +25,7 @@ testcond:                               # @testcond
 	i32.const	$push0=, 5046272
 	i32.select	$push2=, $0, $pop1, $pop0
 	return  	$pop2
+	.endfunc
 .Lfunc_end1:
 	.size	testcond, .Lfunc_end1-testcond
 
@@ -37,9 +39,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

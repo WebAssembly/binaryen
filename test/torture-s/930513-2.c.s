@@ -10,6 +10,7 @@ sub3:                                   # @sub3
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	sub3, .Lfunc_end0-sub3
 
@@ -36,6 +37,7 @@ eq:                                     # @eq
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	eq, .Lfunc_end1-eq
 
@@ -60,11 +62,12 @@ main:                                   # @main
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 	.type	eq.i,@object            # @eq.i
 	.lcomm	eq.i,4,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -226,6 +226,7 @@ foo:                                    # @foo
 	f32.store	$discard=, results+72($23), $46
 	f32.store	$discard=, results+76($23), $45
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -412,6 +413,7 @@ main:                                   # @main
 	i32.or  	$push120=, $pop116, $pop119
 	i32.and 	$push121=, $pop120, $0
 	return  	$pop121
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -452,5 +454,5 @@ input:
 	.size	input, 320
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

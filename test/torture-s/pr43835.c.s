@@ -9,6 +9,7 @@ Parrot_gc_mark_PMC_alive_fun:           # @Parrot_gc_mark_PMC_alive_fun
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	Parrot_gc_mark_PMC_alive_fun, .Lfunc_end0-Parrot_gc_mark_PMC_alive_fun
 
@@ -21,6 +22,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	call    	mark_cell@FUNCTION, $0, $1
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
@@ -52,6 +54,7 @@ mark_cell:                              # @mark_cell
 .LBB2_4:                                # %if.end
 	end_block                       # label0:
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	mark_cell, .Lfunc_end2-mark_cell
 
@@ -88,9 +91,10 @@ main:                                   # @main
 	i32.const	$3=, __stack_pointer
 	i32.store	$7=, 0($3), $7
 	return  	$pop1
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

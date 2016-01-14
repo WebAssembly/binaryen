@@ -9,6 +9,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, foo.s
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -21,6 +22,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -38,6 +40,7 @@ test:                                   # @test
 	i32.store	$discard=, foo.s+4($2), $1
 	i32.const	$push0=, foo.s
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	test, .Lfunc_end2-test
 
@@ -92,11 +95,12 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
 	.type	foo.s,@object           # @foo.s
 	.lcomm	foo.s,12,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

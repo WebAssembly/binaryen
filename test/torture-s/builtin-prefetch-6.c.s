@@ -65,6 +65,7 @@ init_addrs:                             # @init_addrs
 	i64.const	$push4=, 2199023255808
 	i64.store	$discard=, bad_addr+32($0), $pop4
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	init_addrs, .Lfunc_end0-init_addrs
 
@@ -85,6 +86,7 @@ prefetch_for_read:                      # @prefetch_for_read
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	prefetch_for_read, .Lfunc_end1-prefetch_for_read
 
@@ -105,6 +107,7 @@ prefetch_for_write:                     # @prefetch_for_write
 # BB#2:                                 # %for.end
 	end_loop                        # label3:
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	prefetch_for_write, .Lfunc_end2-prefetch_for_write
 
@@ -194,6 +197,7 @@ main:                                   # @main
 	end_loop                        # label7:
 	call    	exit@FUNCTION, $1
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
@@ -216,5 +220,5 @@ arr_used:
 	.size	arr_used, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

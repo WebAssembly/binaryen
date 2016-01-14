@@ -42,6 +42,7 @@ foo:                                    # @foo
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -116,6 +117,7 @@ test1:                                  # @test1
 	i32.const	$12=, __stack_pointer
 	i32.store	$22=, 0($12), $22
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	test1, .Lfunc_end1-test1
 
@@ -309,6 +311,7 @@ test2:                                  # @test2
 	i32.const	$16=, __stack_pointer
 	i32.store	$26=, 0($16), $26
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	test2, .Lfunc_end2-test2
 
@@ -383,6 +386,7 @@ test3:                                  # @test3
 	i32.const	$11=, __stack_pointer
 	i32.store	$23=, 0($11), $23
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	test3, .Lfunc_end3-test3
 
@@ -398,6 +402,7 @@ main:                                   # @main
 	call    	test3@FUNCTION
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
@@ -411,5 +416,5 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

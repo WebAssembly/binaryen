@@ -9,6 +9,7 @@ debug:                                  # @debug
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	debug, .Lfunc_end0-debug
 
@@ -23,6 +24,7 @@ bad_compare:                            # @bad_compare
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $0
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	bad_compare, .Lfunc_end1-bad_compare
 
@@ -43,6 +45,7 @@ main:                                   # @main
 	i32.load	$push4=, errors($0)
 	i32.eq  	$push5=, $pop4, $0
 	return  	$pop5
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -75,6 +78,7 @@ compare:                                # @compare
 	end_block                       # label0:
 	i32.call_indirect	$push5=, $2, $1
 	return  	$pop5
+	.endfunc
 .Lfunc_end3:
 	.size	compare, .Lfunc_end3-compare
 
@@ -100,5 +104,5 @@ errors:
 	.size	errors, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

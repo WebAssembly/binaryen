@@ -10,6 +10,7 @@ input_getc_complicated:                 # @input_getc_complicated
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	input_getc_complicated, .Lfunc_end0-input_getc_complicated
 
@@ -80,6 +81,7 @@ check_header:                           # @check_header
 	end_block                       # label5:
 	i32.const	$push18=, 1
 	return  	$pop18
+	.endfunc
 .Lfunc_end1:
 	.size	check_header, .Lfunc_end1-check_header
 
@@ -96,6 +98,7 @@ main:                                   # @main
 	i32.store	$push1=, s+4($0), $pop0
 	i32.store	$discard=, s($0), $pop1
 	return  	$0
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -117,5 +120,5 @@ s:
 	.size	s, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

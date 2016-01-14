@@ -11,6 +11,7 @@ div1:                                   # @div1
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $0
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	div1, .Lfunc_end0-div1
 
@@ -25,6 +26,7 @@ div2:                                   # @div2
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $0
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	div2, .Lfunc_end1-div2
 
@@ -38,6 +40,7 @@ div3:                                   # @div3
 # BB#0:                                 # %entry
 	i32.div_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	div3, .Lfunc_end2-div3
 
@@ -51,6 +54,7 @@ div4:                                   # @div4
 # BB#0:                                 # %entry
 	i32.div_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	div4, .Lfunc_end3-div4
 
@@ -64,6 +68,7 @@ mod1:                                   # @mod1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	mod1, .Lfunc_end4-mod1
 
@@ -77,6 +82,7 @@ mod2:                                   # @mod2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end5:
 	.size	mod2, .Lfunc_end5-mod2
 
@@ -90,6 +96,7 @@ mod3:                                   # @mod3
 # BB#0:                                 # %entry
 	i32.rem_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	mod3, .Lfunc_end6-mod3
 
@@ -103,6 +110,7 @@ mod4:                                   # @mod4
 # BB#0:                                 # %entry
 	i32.rem_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end7:
 	.size	mod4, .Lfunc_end7-mod4
 
@@ -116,6 +124,7 @@ mod5:                                   # @mod5
 # BB#0:                                 # %entry
 	i32.rem_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end8:
 	.size	mod5, .Lfunc_end8-mod5
 
@@ -129,6 +138,7 @@ mod6:                                   # @mod6
 # BB#0:                                 # %entry
 	i32.rem_u	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end9:
 	.size	mod6, .Lfunc_end9-mod6
 
@@ -142,9 +152,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end10:
 	.size	main, .Lfunc_end10-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

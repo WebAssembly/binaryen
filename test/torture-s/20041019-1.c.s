@@ -39,6 +39,7 @@ test_store_ccp:                         # @test_store_ccp
 	i32.const	$3=, __stack_pointer
 	i32.store	$6=, 0($3), $6
 	return  	$pop9
+	.endfunc
 .Lfunc_end0:
 	.size	test_store_ccp, .Lfunc_end0-test_store_ccp
 
@@ -79,6 +80,7 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	i32.const	$4=, __stack_pointer
 	i32.store	$7=, 0($4), $7
 	return  	$pop8
+	.endfunc
 .Lfunc_end1:
 	.size	test_store_copy_prop, .Lfunc_end1-test_store_copy_prop
 
@@ -91,9 +93,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end4
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

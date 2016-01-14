@@ -85,6 +85,7 @@ Sum:                                    # @Sum
 	end_loop                        # label2:
 	end_block                       # label0:
 	return  	$16
+	.endfunc
 .Lfunc_end0:
 	.size	Sum, .Lfunc_end0-Sum
 
@@ -173,6 +174,7 @@ Sum2:                                   # @Sum2
 	end_loop                        # label5:
 	end_block                       # label3:
 	return  	$16
+	.endfunc
 .Lfunc_end1:
 	.size	Sum2, .Lfunc_end1-Sum2
 
@@ -356,9 +358,10 @@ main:                                   # @main
 	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

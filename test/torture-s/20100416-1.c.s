@@ -16,6 +16,7 @@ movegt:                                 # @movegt
 	i32.select	$push3=, $pop2, $0, $1
 	i32.select	$push4=, $pop0, $pop3, $3
 	return  	$pop4
+	.endfunc
 .Lfunc_end0:
 	.size	movegt, .Lfunc_end0-movegt
 
@@ -72,6 +73,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -99,5 +101,5 @@ tests:
 	.size	tests, 80
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

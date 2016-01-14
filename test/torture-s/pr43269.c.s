@@ -21,6 +21,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -45,6 +46,7 @@ func_32:                                # @func_32
 	br      	0               # 0: up to label2
 .LBB1_3:
 	end_loop                        # label3:
+	.endfunc
 .Lfunc_end1:
 	.size	func_32, .Lfunc_end1-func_32
 
@@ -76,5 +78,5 @@ g_211:
 	.size	g_211, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -16,6 +16,7 @@ signed_poly:                            # @signed_poly
 	i64.mul 	$push3=, $pop1, $pop2
 	i64.add 	$push4=, $pop3, $0
 	return  	$pop4
+	.endfunc
 .Lfunc_end0:
 	.size	signed_poly, .Lfunc_end0-signed_poly
 
@@ -33,6 +34,7 @@ unsigned_poly:                          # @unsigned_poly
 	i64.mul 	$push3=, $pop2, $pop1
 	i64.add 	$push4=, $pop3, $0
 	return  	$pop4
+	.endfunc
 .Lfunc_end1:
 	.size	unsigned_poly, .Lfunc_end1-unsigned_poly
 
@@ -46,9 +48,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

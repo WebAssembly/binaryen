@@ -10,6 +10,7 @@ assign_arg_ptr:                         # @assign_arg_ptr
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	assign_arg_ptr, .Lfunc_end0-assign_arg_ptr
 
@@ -25,6 +26,7 @@ assign_glob_ptr:                        # @assign_glob_ptr
 	i32.load	$0=, ptr($pop0)
 	i32.eq  	$push1=, $0, $0
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	assign_glob_ptr, .Lfunc_end1-assign_glob_ptr
 
@@ -38,6 +40,7 @@ assign_arg_idx:                         # @assign_arg_idx
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	assign_arg_idx, .Lfunc_end2-assign_arg_idx
 
@@ -53,6 +56,7 @@ assign_glob_idx:                        # @assign_glob_idx
 	i32.load	$0=, arrindex($pop0)
 	i32.eq  	$push1=, $0, $0
 	return  	$pop1
+	.endfunc
 .Lfunc_end3:
 	.size	assign_glob_idx, .Lfunc_end3-assign_glob_idx
 
@@ -66,6 +70,7 @@ preinc_arg_ptr:                         # @preinc_arg_ptr
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	preinc_arg_ptr, .Lfunc_end4-preinc_arg_ptr
 
@@ -84,6 +89,7 @@ preinc_glob_ptr:                        # @preinc_glob_ptr
 	i32.store	$discard=, ptr($0), $pop2
 	i32.const	$push3=, 1
 	return  	$pop3
+	.endfunc
 .Lfunc_end5:
 	.size	preinc_glob_ptr, .Lfunc_end5-preinc_glob_ptr
 
@@ -97,6 +103,7 @@ postinc_arg_ptr:                        # @postinc_arg_ptr
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	postinc_arg_ptr, .Lfunc_end6-postinc_arg_ptr
 
@@ -115,6 +122,7 @@ postinc_glob_ptr:                       # @postinc_glob_ptr
 	i32.store	$discard=, ptr($0), $pop2
 	i32.const	$push3=, 1
 	return  	$pop3
+	.endfunc
 .Lfunc_end7:
 	.size	postinc_glob_ptr, .Lfunc_end7-postinc_glob_ptr
 
@@ -128,6 +136,7 @@ predec_arg_ptr:                         # @predec_arg_ptr
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end8:
 	.size	predec_arg_ptr, .Lfunc_end8-predec_arg_ptr
 
@@ -146,6 +155,7 @@ predec_glob_ptr:                        # @predec_glob_ptr
 	i32.store	$discard=, ptr($0), $pop2
 	i32.const	$push3=, 1
 	return  	$pop3
+	.endfunc
 .Lfunc_end9:
 	.size	predec_glob_ptr, .Lfunc_end9-predec_glob_ptr
 
@@ -159,6 +169,7 @@ postdec_arg_ptr:                        # @postdec_arg_ptr
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end10:
 	.size	postdec_arg_ptr, .Lfunc_end10-postdec_arg_ptr
 
@@ -177,6 +188,7 @@ postdec_glob_ptr:                       # @postdec_glob_ptr
 	i32.store	$discard=, ptr($0), $pop2
 	i32.const	$push3=, 1
 	return  	$pop3
+	.endfunc
 .Lfunc_end11:
 	.size	postdec_glob_ptr, .Lfunc_end11-postdec_glob_ptr
 
@@ -190,6 +202,7 @@ preinc_arg_idx:                         # @preinc_arg_idx
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end12:
 	.size	preinc_arg_idx, .Lfunc_end12-preinc_arg_idx
 
@@ -209,6 +222,7 @@ preinc_glob_idx:                        # @preinc_glob_idx
 	i32.load	$push3=, arrindex($0)
 	i32.eq  	$push4=, $pop3, $1
 	return  	$pop4
+	.endfunc
 .Lfunc_end13:
 	.size	preinc_glob_idx, .Lfunc_end13-preinc_glob_idx
 
@@ -222,6 +236,7 @@ postinc_arg_idx:                        # @postinc_arg_idx
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end14:
 	.size	postinc_arg_idx, .Lfunc_end14-postinc_arg_idx
 
@@ -241,6 +256,7 @@ postinc_glob_idx:                       # @postinc_glob_idx
 	i32.load	$push3=, arrindex($0)
 	i32.eq  	$push4=, $pop3, $1
 	return  	$pop4
+	.endfunc
 .Lfunc_end15:
 	.size	postinc_glob_idx, .Lfunc_end15-postinc_glob_idx
 
@@ -254,6 +270,7 @@ predec_arg_idx:                         # @predec_arg_idx
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end16:
 	.size	predec_arg_idx, .Lfunc_end16-predec_arg_idx
 
@@ -273,6 +290,7 @@ predec_glob_idx:                        # @predec_glob_idx
 	i32.load	$push3=, arrindex($0)
 	i32.eq  	$push4=, $pop3, $1
 	return  	$pop4
+	.endfunc
 .Lfunc_end17:
 	.size	predec_glob_idx, .Lfunc_end17-predec_glob_idx
 
@@ -286,6 +304,7 @@ postdec_arg_idx:                        # @postdec_arg_idx
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end18:
 	.size	postdec_arg_idx, .Lfunc_end18-postdec_arg_idx
 
@@ -305,6 +324,7 @@ postdec_glob_idx:                       # @postdec_glob_idx
 	i32.load	$push3=, arrindex($0)
 	i32.eq  	$push4=, $pop3, $1
 	return  	$pop4
+	.endfunc
 .Lfunc_end19:
 	.size	postdec_glob_idx, .Lfunc_end19-postdec_glob_idx
 
@@ -325,6 +345,7 @@ getptr:                                 # @getptr
 	i32.const	$push3=, 4
 	i32.add 	$push4=, $0, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end20:
 	.size	getptr, .Lfunc_end20-getptr
 
@@ -344,6 +365,7 @@ funccall_arg_ptr:                       # @funccall_arg_ptr
 	i32.store	$push2=, getptrcnt($1), $pop1
 	i32.eq  	$push3=, $pop2, $2
 	return  	$pop3
+	.endfunc
 .Lfunc_end21:
 	.size	funccall_arg_ptr, .Lfunc_end21-funccall_arg_ptr
 
@@ -363,6 +385,7 @@ getint:                                 # @getint
 	i32.store	$discard=, getintcnt($1), $pop1
 	i32.add 	$push2=, $0, $2
 	return  	$pop2
+	.endfunc
 .Lfunc_end22:
 	.size	getint, .Lfunc_end22-getint
 
@@ -382,6 +405,7 @@ funccall_arg_idx:                       # @funccall_arg_idx
 	i32.store	$push2=, getintcnt($2), $pop1
 	i32.eq  	$push3=, $pop2, $3
 	return  	$pop3
+	.endfunc
 .Lfunc_end23:
 	.size	funccall_arg_idx, .Lfunc_end23-funccall_arg_idx
 
@@ -536,6 +560,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end24:
 	.size	main, .Lfunc_end24-main
 
@@ -585,5 +610,5 @@ getintcnt:
 	.size	getintcnt, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

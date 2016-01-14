@@ -10,6 +10,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.load8_u	$push0=, 4($0)
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -33,6 +34,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -45,5 +47,5 @@ space:
 	.size	space, 6
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -15,6 +15,7 @@ buggy:                                  # @buggy
 	i32.const	$push0=, -1
 	i32.select	$push1=, $1, $pop0, $2
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	buggy, .Lfunc_end0-buggy
 
@@ -27,9 +28,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end3
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

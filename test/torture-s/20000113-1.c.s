@@ -33,6 +33,7 @@ foobar:                                 # @foobar
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	foobar, .Lfunc_end0-foobar
 
@@ -48,9 +49,10 @@ main:                                   # @main
 	i32.const	$push0=, 3
 	i32.call	$discard=, foobar@FUNCTION, $pop2, $pop1, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

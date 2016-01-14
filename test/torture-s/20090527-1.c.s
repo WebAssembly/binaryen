@@ -37,6 +37,7 @@ new_unit:                               # @new_unit
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	new_unit, .Lfunc_end0-new_unit
 
@@ -49,9 +50,10 @@ main:                                   # @main
 # BB#0:                                 # %new_unit.exit
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

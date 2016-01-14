@@ -9,6 +9,7 @@ blah:                                   # @blah
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	blah, .Lfunc_end0-blah
 
@@ -31,6 +32,7 @@ convert_like_real:                      # @convert_like_real
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	convert_like_real, .Lfunc_end1-convert_like_real
 
@@ -44,9 +46,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

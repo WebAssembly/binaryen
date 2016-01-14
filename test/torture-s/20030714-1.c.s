@@ -77,6 +77,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 .LBB0_9:                                # %sw.epilog
 	end_block                       # label0:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	RenderBox_setStyle, .Lfunc_end0-RenderBox_setStyle
 
@@ -88,6 +89,7 @@ RenderObject_setStyle:                  # @RenderObject_setStyle
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	RenderObject_setStyle, .Lfunc_end1-RenderObject_setStyle
 
@@ -99,6 +101,7 @@ removeFromSpecialObjects:               # @removeFromSpecialObjects
 	.param  	i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	removeFromSpecialObjects, .Lfunc_end2-removeFromSpecialObjects
 
@@ -112,6 +115,7 @@ RenderBox_isTableCell:                  # @RenderBox_isTableCell
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	RenderBox_isTableCell, .Lfunc_end3-RenderBox_isTableCell
 
@@ -140,6 +144,7 @@ main:                                   # @main
 	i32.store16	$discard=, g_this+26($0), $pop8
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
@@ -178,5 +183,5 @@ g__style:
 	.size	g__style, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

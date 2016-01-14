@@ -10,6 +10,7 @@ sigfpe:                                 # @sigfpe
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	sigfpe, .Lfunc_end0-sigfpe
 
@@ -25,6 +26,7 @@ main:                                   # @main
 	i32.call	$discard=, signal@FUNCTION, $pop1, $pop0
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -38,5 +40,5 @@ k:
 	.size	k, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

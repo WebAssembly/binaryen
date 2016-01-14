@@ -83,6 +83,7 @@ create_array_type:                      # @create_array_type
 	end_block                       # label0:
 	i32.call	$discard=, alloc_type@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	create_array_type, .Lfunc_end0-create_array_type
 
@@ -95,6 +96,7 @@ alloc_type:                             # @alloc_type
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	alloc_type, .Lfunc_end1-alloc_type
 
@@ -110,6 +112,7 @@ get_discrete_bounds:                    # @get_discrete_bounds
 	i64.const	$push1=, 2
 	i64.store	$discard=, 0($1), $pop1
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	get_discrete_bounds, .Lfunc_end2-get_discrete_bounds
 
@@ -122,6 +125,7 @@ _obstack_newchunk:                      # @_obstack_newchunk
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	_obstack_newchunk, .Lfunc_end3-_obstack_newchunk
 
@@ -135,6 +139,7 @@ xmalloc:                                # @xmalloc
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	xmalloc, .Lfunc_end4-xmalloc
 
@@ -148,9 +153,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

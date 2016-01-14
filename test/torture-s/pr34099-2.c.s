@@ -11,6 +11,7 @@ test1:                                  # @test1
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
 
@@ -25,6 +26,7 @@ test2:                                  # @test2
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
 
@@ -39,6 +41,7 @@ test3:                                  # @test3
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
 
@@ -55,6 +58,7 @@ test4:                                  # @test4
 	i32.const	$push2=, 1
 	i32.select	$push3=, $0, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
 
@@ -67,9 +71,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end12
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

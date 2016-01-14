@@ -9,6 +9,7 @@ func:                                   # @func
 	.local  	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	func, .Lfunc_end0-func
 
@@ -29,6 +30,7 @@ testit:                                 # @testit
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	testit, .Lfunc_end1-testit
 
@@ -42,6 +44,7 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -55,5 +58,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

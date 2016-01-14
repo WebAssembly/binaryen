@@ -94,6 +94,7 @@ ieq:                                    # @ieq
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	ieq, .Lfunc_end0-ieq
 
@@ -129,6 +130,7 @@ ine:                                    # @ine
 	end_block                       # label12:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	ine, .Lfunc_end1-ine
 
@@ -160,6 +162,7 @@ ilt:                                    # @ilt
 	end_block                       # label15:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	ilt, .Lfunc_end2-ilt
 
@@ -195,6 +198,7 @@ ile:                                    # @ile
 	end_block                       # label18:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	ile, .Lfunc_end3-ile
 
@@ -226,6 +230,7 @@ igt:                                    # @igt
 	end_block                       # label21:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end4:
 	.size	igt, .Lfunc_end4-igt
 
@@ -261,6 +266,7 @@ ige:                                    # @ige
 	end_block                       # label24:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end5:
 	.size	ige, .Lfunc_end5-ige
 
@@ -273,9 +279,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	main, .Lfunc_end6-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

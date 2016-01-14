@@ -19,6 +19,7 @@ do_mknod:                               # @do_mknod
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	do_mknod, .Lfunc_end0-do_mknod
 
@@ -70,6 +71,7 @@ getname:                                # @getname
 	i32.add 	$push34=, $pop33, $pop30
 	i32.add 	$push35=, $pop34, $1
 	return  	$pop35
+	.endfunc
 .Lfunc_end1:
 	.size	getname, .Lfunc_end1-getname
 
@@ -100,6 +102,7 @@ sys_mknod:                              # @sys_mknod
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	sys_mknod, .Lfunc_end2-sys_mknod
 
@@ -115,6 +118,7 @@ main:                                   # @main
 	i32.const	$push1=, 305419896
 	i32.call	$discard=, sys_mknod@FUNCTION, $pop0, $0, $pop1
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
@@ -125,5 +129,5 @@ main:                                   # @main
 	.size	.L.str, 5
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -11,6 +11,7 @@ simple_vol_global:                      # @simple_vol_global
 	i32.load	$discard=, glob_vol_ptr_int($0)
 	i32.load	$discard=, glob_vol_ptr_vol_int($0)
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	simple_vol_global, .Lfunc_end0-simple_vol_global
 
@@ -25,6 +26,7 @@ simple_vol_file:                        # @simple_vol_file
 	i32.load	$discard=, stat_vol_ptr_int($0)
 	i32.load	$discard=, stat_vol_ptr_vol_int($0)
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	simple_vol_file, .Lfunc_end1-simple_vol_file
 
@@ -67,6 +69,7 @@ expr_vol_global:                        # @expr_vol_global
 	i32.load	$discard=, glob_vol_ptr_vol_int($0)
 	i32.load	$discard=, glob_vol_int($0)
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	expr_vol_global, .Lfunc_end2-expr_vol_global
 
@@ -89,6 +92,7 @@ main:                                   # @main
 	call    	expr_vol_global@FUNCTION
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
@@ -221,5 +225,5 @@ stat_vol_ptr_vol_int:
 	.type	stat_int_arr,@object    # @stat_int_arr
 	.lcomm	stat_int_arr,400,4
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

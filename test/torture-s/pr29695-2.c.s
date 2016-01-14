@@ -12,6 +12,7 @@ f1:                                     # @f1
 	i32.const	$push2=, 128
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
 
@@ -29,6 +30,7 @@ f2:                                     # @f2
 	i32.const	$push2=, 7
 	i32.shl 	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
 
@@ -46,6 +48,7 @@ f3:                                     # @f3
 	i32.const	$push4=, 896
 	i32.and 	$push5=, $pop3, $pop4
 	return  	$pop5
+	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
 
@@ -63,6 +66,7 @@ f4:                                     # @f4
 	i32.const	$push4=, -128
 	i32.and 	$push5=, $pop3, $pop4
 	return  	$pop5
+	.endfunc
 .Lfunc_end3:
 	.size	f4, .Lfunc_end3-f4
 
@@ -81,6 +85,7 @@ f5:                                     # @f5
 	i64.const	$push3=, 31
 	i64.shl 	$push4=, $pop2, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end4:
 	.size	f5, .Lfunc_end4-f5
 
@@ -99,6 +104,7 @@ f6:                                     # @f6
 	i64.const	$push3=, 31
 	i64.shl 	$push4=, $pop2, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end5:
 	.size	f6, .Lfunc_end5-f6
 
@@ -117,6 +123,7 @@ f7:                                     # @f7
 	i64.const	$push2=, 0
 	i64.select	$push4=, $pop1, $pop3, $pop2
 	return  	$pop4
+	.endfunc
 .Lfunc_end6:
 	.size	f7, .Lfunc_end6-f7
 
@@ -135,6 +142,7 @@ f8:                                     # @f8
 	i64.const	$push2=, 0
 	i64.select	$push4=, $pop1, $pop3, $pop2
 	return  	$pop4
+	.endfunc
 .Lfunc_end7:
 	.size	f8, .Lfunc_end7-f8
 
@@ -187,6 +195,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end8:
 	.size	main, .Lfunc_end8-main
 
@@ -226,5 +235,5 @@ d:
 	.size	d, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

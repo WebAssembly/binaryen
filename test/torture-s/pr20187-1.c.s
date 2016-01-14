@@ -19,6 +19,7 @@ test:                                   # @test
 	i32.and 	$push6=, $pop4, $pop5
 	i32.eq  	$push7=, $pop6, $0
 	return  	$pop7
+	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
@@ -41,6 +42,7 @@ main:                                   # @main
 	i32.and 	$push6=, $pop4, $pop5
 	i32.ne  	$push7=, $pop6, $0
 	return  	$pop7
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -63,5 +65,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

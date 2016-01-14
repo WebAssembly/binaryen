@@ -18,6 +18,7 @@ calc_mp:                                # @calc_mp
 	i32.select	$push5=, $pop3, $0, $pop4
 	i32.sub 	$push6=, $1, $pop5
 	return  	$pop6
+	.endfunc
 .Lfunc_end0:
 	.size	calc_mp, .Lfunc_end0-calc_mp
 
@@ -32,9 +33,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

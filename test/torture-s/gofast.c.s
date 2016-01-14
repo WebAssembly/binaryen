@@ -10,6 +10,7 @@ fp_add:                                 # @fp_add
 # BB#0:                                 # %entry
 	f32.add 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	fp_add, .Lfunc_end0-fp_add
 
@@ -23,6 +24,7 @@ fp_sub:                                 # @fp_sub
 # BB#0:                                 # %entry
 	f32.sub 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	fp_sub, .Lfunc_end1-fp_sub
 
@@ -36,6 +38,7 @@ fp_mul:                                 # @fp_mul
 # BB#0:                                 # %entry
 	f32.mul 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	fp_mul, .Lfunc_end2-fp_mul
 
@@ -49,6 +52,7 @@ fp_div:                                 # @fp_div
 # BB#0:                                 # %entry
 	f32.div 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	fp_div, .Lfunc_end3-fp_div
 
@@ -62,6 +66,7 @@ fp_neg:                                 # @fp_neg
 # BB#0:                                 # %entry
 	f32.neg 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	fp_neg, .Lfunc_end4-fp_neg
 
@@ -75,6 +80,7 @@ dp_add:                                 # @dp_add
 # BB#0:                                 # %entry
 	f64.add 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end5:
 	.size	dp_add, .Lfunc_end5-dp_add
 
@@ -88,6 +94,7 @@ dp_sub:                                 # @dp_sub
 # BB#0:                                 # %entry
 	f64.sub 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	dp_sub, .Lfunc_end6-dp_sub
 
@@ -101,6 +108,7 @@ dp_mul:                                 # @dp_mul
 # BB#0:                                 # %entry
 	f64.mul 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end7:
 	.size	dp_mul, .Lfunc_end7-dp_mul
 
@@ -114,6 +122,7 @@ dp_div:                                 # @dp_div
 # BB#0:                                 # %entry
 	f64.div 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end8:
 	.size	dp_div, .Lfunc_end8-dp_div
 
@@ -127,6 +136,7 @@ dp_neg:                                 # @dp_neg
 # BB#0:                                 # %entry
 	f64.neg 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end9:
 	.size	dp_neg, .Lfunc_end9-dp_neg
 
@@ -140,6 +150,7 @@ fp_to_dp:                               # @fp_to_dp
 # BB#0:                                 # %entry
 	f64.promote/f32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end10:
 	.size	fp_to_dp, .Lfunc_end10-fp_to_dp
 
@@ -153,6 +164,7 @@ dp_to_fp:                               # @dp_to_fp
 # BB#0:                                 # %entry
 	f32.demote/f64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end11:
 	.size	dp_to_fp, .Lfunc_end11-dp_to_fp
 
@@ -166,6 +178,7 @@ eqsf2:                                  # @eqsf2
 # BB#0:                                 # %entry
 	f32.eq  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end12:
 	.size	eqsf2, .Lfunc_end12-eqsf2
 
@@ -179,6 +192,7 @@ nesf2:                                  # @nesf2
 # BB#0:                                 # %entry
 	f32.ne  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end13:
 	.size	nesf2, .Lfunc_end13-nesf2
 
@@ -192,6 +206,7 @@ gtsf2:                                  # @gtsf2
 # BB#0:                                 # %entry
 	f32.gt  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end14:
 	.size	gtsf2, .Lfunc_end14-gtsf2
 
@@ -205,6 +220,7 @@ gesf2:                                  # @gesf2
 # BB#0:                                 # %entry
 	f32.ge  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end15:
 	.size	gesf2, .Lfunc_end15-gesf2
 
@@ -218,6 +234,7 @@ ltsf2:                                  # @ltsf2
 # BB#0:                                 # %entry
 	f32.lt  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end16:
 	.size	ltsf2, .Lfunc_end16-ltsf2
 
@@ -231,6 +248,7 @@ lesf2:                                  # @lesf2
 # BB#0:                                 # %entry
 	f32.le  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end17:
 	.size	lesf2, .Lfunc_end17-lesf2
 
@@ -244,6 +262,7 @@ eqdf2:                                  # @eqdf2
 # BB#0:                                 # %entry
 	f64.eq  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end18:
 	.size	eqdf2, .Lfunc_end18-eqdf2
 
@@ -257,6 +276,7 @@ nedf2:                                  # @nedf2
 # BB#0:                                 # %entry
 	f64.ne  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end19:
 	.size	nedf2, .Lfunc_end19-nedf2
 
@@ -270,6 +290,7 @@ gtdf2:                                  # @gtdf2
 # BB#0:                                 # %entry
 	f64.gt  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end20:
 	.size	gtdf2, .Lfunc_end20-gtdf2
 
@@ -283,6 +304,7 @@ gedf2:                                  # @gedf2
 # BB#0:                                 # %entry
 	f64.ge  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end21:
 	.size	gedf2, .Lfunc_end21-gedf2
 
@@ -296,6 +318,7 @@ ltdf2:                                  # @ltdf2
 # BB#0:                                 # %entry
 	f64.lt  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end22:
 	.size	ltdf2, .Lfunc_end22-ltdf2
 
@@ -309,6 +332,7 @@ ledf2:                                  # @ledf2
 # BB#0:                                 # %entry
 	f64.le  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end23:
 	.size	ledf2, .Lfunc_end23-ledf2
 
@@ -322,6 +346,7 @@ floatsisf:                              # @floatsisf
 # BB#0:                                 # %entry
 	f32.convert_s/i32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end24:
 	.size	floatsisf, .Lfunc_end24-floatsisf
 
@@ -335,6 +360,7 @@ floatsidf:                              # @floatsidf
 # BB#0:                                 # %entry
 	f64.convert_s/i32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end25:
 	.size	floatsidf, .Lfunc_end25-floatsidf
 
@@ -348,6 +374,7 @@ fixsfsi:                                # @fixsfsi
 # BB#0:                                 # %entry
 	i32.trunc_s/f32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end26:
 	.size	fixsfsi, .Lfunc_end26-fixsfsi
 
@@ -361,6 +388,7 @@ fixdfsi:                                # @fixdfsi
 # BB#0:                                 # %entry
 	i32.trunc_s/f64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end27:
 	.size	fixdfsi, .Lfunc_end27-fixdfsi
 
@@ -374,6 +402,7 @@ fixunssfsi:                             # @fixunssfsi
 # BB#0:                                 # %entry
 	i32.trunc_u/f32	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end28:
 	.size	fixunssfsi, .Lfunc_end28-fixunssfsi
 
@@ -387,6 +416,7 @@ fixunsdfsi:                             # @fixunsdfsi
 # BB#0:                                 # %entry
 	i32.trunc_u/f64	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end29:
 	.size	fixunsdfsi, .Lfunc_end29-fixunsdfsi
 
@@ -431,6 +461,7 @@ fail:                                   # @fail
 	i32.const	$9=, __stack_pointer
 	i32.store	$9=, 0($9), $9
 	return  	$1
+	.endfunc
 .Lfunc_end30:
 	.size	fail, .Lfunc_end30-fail
 
@@ -453,6 +484,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end31:
 	.size	main, .Lfunc_end31-main
 
@@ -472,5 +504,5 @@ fail_count:
 	.size	.L.str, 17
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

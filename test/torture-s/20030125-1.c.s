@@ -12,6 +12,7 @@ t:                                      # @t
 	f64.call	$push1=, sin@FUNCTION, $pop0
 	f32.demote/f64	$push2=, $pop1
 	return  	$pop2
+	.endfunc
 .Lfunc_end0:
 	.size	t, .Lfunc_end0-t
 
@@ -24,6 +25,7 @@ sin:                                    # @sin
 	.result 	f64
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	sin, .Lfunc_end1-sin
 
@@ -37,6 +39,7 @@ q:                                      # @q
 	.local  	f32
 # BB#0:                                 # %entry
 	return  	$1
+	.endfunc
 .Lfunc_end2:
 	.size	q, .Lfunc_end2-q
 
@@ -50,6 +53,7 @@ floor:                                  # @floor
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	floor, .Lfunc_end3-floor
 
@@ -63,6 +67,7 @@ q1:                                     # @q1
 	.local  	f64
 # BB#0:                                 # %entry
 	return  	$1
+	.endfunc
 .Lfunc_end4:
 	.size	q1, .Lfunc_end4-q1
 
@@ -75,6 +80,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
 
@@ -87,6 +93,7 @@ floorf:                                 # @floorf
 	.result 	f32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end6:
 	.size	floorf, .Lfunc_end6-floorf
 
@@ -100,9 +107,10 @@ sinf:                                   # @sinf
 # BB#0:                                 # %entry
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end7:
 	.size	sinf, .Lfunc_end7-sinf
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

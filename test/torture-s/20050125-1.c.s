@@ -11,6 +11,7 @@ seterr:                                 # @seterr
 	i32.store	$discard=, 8($0), $1
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	seterr, .Lfunc_end0-seterr
 
@@ -42,6 +43,7 @@ bracket_empty:                          # @bracket_empty
 	i32.const	$push7=, 7
 	i32.store	$discard=, 8($0), $pop7
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	bracket_empty, .Lfunc_end1-bracket_empty
 
@@ -55,9 +57,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

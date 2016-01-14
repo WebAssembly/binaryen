@@ -36,6 +36,7 @@ aim_callhandler:                        # @aim_callhandler
 	end_block                       # label0:
 	i32.const	$push4=, 0
 	return  	$pop4
+	.endfunc
 .Lfunc_end0:
 	.size	aim_callhandler, .Lfunc_end0-aim_callhandler
 
@@ -62,11 +63,12 @@ main:                                   # @main
 	i32.store	$discard=, aim_callhandler.i($1), $pop1
 	call    	exit@FUNCTION, $1
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 	.type	aim_callhandler.i,@object # @aim_callhandler.i
 	.lcomm	aim_callhandler.i,4,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -16,6 +16,7 @@ foo:                                    # @foo
 	i64.store	$discard=, 0($pop1), $pop0
 	i32.select	$push2=, $0, $1, $2
 	return  	$pop2
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -57,6 +58,7 @@ main:                                   # @main
 	end_loop                        # label2:
 	end_block                       # label0:
 	return  	$3
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -124,5 +126,5 @@ f:
 	.size	f, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

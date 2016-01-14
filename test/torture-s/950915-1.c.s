@@ -16,6 +16,7 @@ f:                                      # @f
 	i64.shr_u	$push4=, $pop2, $pop3
 	i32.wrap/i64	$push5=, $pop4
 	return  	$pop5
+	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
 
@@ -45,6 +46,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -67,5 +69,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

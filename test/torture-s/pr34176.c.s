@@ -12,6 +12,7 @@ hash_find_entry:                        # @hash_find_entry
 	i32.store	$discard=, 0($0), $pop0
 	i32.const	$push1=, 0
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	hash_find_entry, .Lfunc_end0-hash_find_entry
 
@@ -38,6 +39,7 @@ foo:                                    # @foo
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
@@ -96,11 +98,12 @@ main:                                   # @main
 	i32.const	$4=, __stack_pointer
 	i32.store	$7=, 0($4), $7
 	return  	$pop2
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 	.type	foo.count,@object       # @foo.count
 	.lcomm	foo.count,4,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

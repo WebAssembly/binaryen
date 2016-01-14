@@ -12,6 +12,7 @@ xb:                                     # @xb
 	i32.load	$push1=, 4($0)
 	i32.add 	$push2=, $pop0, $pop1
 	return  	$pop2
+	.endfunc
 .Lfunc_end0:
 	.size	xb, .Lfunc_end0-xb
 
@@ -27,6 +28,7 @@ xw:                                     # @xw
 	i32.load	$push1=, 4($0)
 	i32.add 	$push2=, $pop0, $pop1
 	return  	$pop2
+	.endfunc
 .Lfunc_end1:
 	.size	xw, .Lfunc_end1-xw
 
@@ -46,6 +48,7 @@ yb:                                     # @yb
 	i32.shl 	$push3=, $pop2, $1
 	i32.shr_s	$push4=, $pop3, $1
 	return  	$pop4
+	.endfunc
 .Lfunc_end2:
 	.size	yb, .Lfunc_end2-yb
 
@@ -97,9 +100,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -31,6 +31,7 @@ ll_to_ld:                               # @ll_to_ld
 	i32.const	$5=, __stack_pointer
 	i32.store	$6=, 0($5), $6
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	ll_to_ld, .Lfunc_end0-ll_to_ld
 
@@ -44,6 +45,7 @@ ld_to_ll:                               # @ld_to_ll
 # BB#0:                                 # %entry
 	i64.call	$push0=, __fixtfdi@FUNCTION, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	ld_to_ll, .Lfunc_end1-ld_to_ll
 
@@ -57,9 +59,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

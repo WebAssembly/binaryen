@@ -14,6 +14,7 @@ foo:                                    # @foo
 	i32.shl 	$push1=, $pop0, $2
 	i32.shr_s	$push2=, $pop1, $2
 	return  	$pop2
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -31,6 +32,7 @@ bar:                                    # @bar
 	i32.store16	$discard=, c($0), $pop0
 	i32.store	$push1=, 0($1), $0
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -215,6 +217,7 @@ main:                                   # @main
 	i32.store8	$discard=, b($1), $pop80
 	i32.call	$discard=, getpid@FUNCTION
 	return  	$1
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -298,5 +301,5 @@ g:
 	.size	g, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

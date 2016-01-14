@@ -20,6 +20,7 @@ get_id:                                 # @get_id
 	i32.or  	$push7=, $pop5, $pop6
 	i32.store8	$discard=, 0($pop7), $0
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	get_id, .Lfunc_end0-get_id
 
@@ -44,6 +45,7 @@ get_tok:                                # @get_tok
 	i32.const	$push6=, 99
 	i32.store8	$discard=, id_space($0), $pop6
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	get_tok, .Lfunc_end1-get_tok
 
@@ -69,6 +71,7 @@ main:                                   # @main
 	i32.store8	$discard=, id_space($0), $pop6
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -84,5 +87,5 @@ curval:
 	.type	id_space,@object        # @id_space
 	.lcomm	id_space,66,4
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -16,6 +16,7 @@ main:                                   # @main
 	i32.or  	$push4=, $pop2, $pop3
 	i32.store8	$discard=, s($0), $pop4
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -28,5 +29,5 @@ s:
 	.size	s, 1
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

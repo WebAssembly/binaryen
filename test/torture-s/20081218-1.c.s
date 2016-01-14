@@ -13,6 +13,7 @@ foo:                                    # @foo
 	call    	memset@FUNCTION, $pop0, $pop2, $pop1
 	i32.const	$push3=, 640034342
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -33,6 +34,7 @@ bar:                                    # @bar
 	i32.const	$push4=, 909588022
 	i32.store	$discard=, a+4($0), $pop4
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -113,6 +115,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -126,5 +129,5 @@ a:
 	.size	a, 520
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

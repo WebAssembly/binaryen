@@ -36,6 +36,7 @@ test01:                                 # @test01
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	test01, .Lfunc_end0-test01
 
@@ -65,6 +66,7 @@ test02:                                 # @test02
 .LBB1_4:                                # %if.end6
 	end_block                       # label3:
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	test02, .Lfunc_end1-test02
 
@@ -79,9 +81,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

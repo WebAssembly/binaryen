@@ -69,6 +69,7 @@ foo:                                    # @foo
 .LBB0_9:                                # %if.end27
 	end_block                       # label4:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -125,6 +126,7 @@ main:                                   # @main
 	i32.store	$push5=, y+16($1), $1
 	call    	exit@FUNCTION, $pop5
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -147,5 +149,5 @@ x:
 	.size	x, 32
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

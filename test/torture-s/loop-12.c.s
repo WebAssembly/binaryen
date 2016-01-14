@@ -43,6 +43,7 @@ foo:                                    # @foo
 	br      	0               # 0: up to label0
 .LBB0_5:
 	end_loop                        # label1:
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -90,6 +91,7 @@ main:                                   # @main
 	br      	0               # 0: up to label3
 .LBB1_5:
 	end_loop                        # label4:
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -109,5 +111,5 @@ p:
 	.size	.L.str, 5
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

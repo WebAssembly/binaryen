@@ -12,6 +12,7 @@ bar1:                                   # @bar1
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo1@FUNCTION, $pop1
 	return  	$pop2
+	.endfunc
 .Lfunc_end0:
 	.size	bar1, .Lfunc_end0-bar1
 
@@ -22,6 +23,7 @@ foo1:                                   # @foo1
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	foo1, .Lfunc_end1-foo1
 
@@ -39,6 +41,7 @@ bar2:                                   # @bar2
 	i32.const	$push3=, 65535
 	i32.and 	$push4=, $pop2, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end2:
 	.size	bar2, .Lfunc_end2-bar2
 
@@ -53,6 +56,7 @@ foo2:                                   # @foo2
 	i32.shl 	$push0=, $0, $1
 	i32.shr_s	$push1=, $pop0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end3:
 	.size	foo2, .Lfunc_end3-foo2
 
@@ -70,6 +74,7 @@ bar3:                                   # @bar3
 	i32.const	$push3=, 255
 	i32.and 	$push4=, $pop2, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end4:
 	.size	bar3, .Lfunc_end4-bar3
 
@@ -84,6 +89,7 @@ foo3:                                   # @foo3
 	i32.shl 	$push0=, $0, $1
 	i32.shr_s	$push1=, $pop0, $1
 	return  	$pop1
+	.endfunc
 .Lfunc_end5:
 	.size	foo3, .Lfunc_end5-foo3
 
@@ -99,6 +105,7 @@ bar4:                                   # @bar4
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo4@FUNCTION, $pop1
 	return  	$pop2
+	.endfunc
 .Lfunc_end6:
 	.size	bar4, .Lfunc_end6-bar4
 
@@ -109,6 +116,7 @@ foo4:                                   # @foo4
 	.result 	i32
 # BB#0:                                 # %entry
 	return  	$0
+	.endfunc
 .Lfunc_end7:
 	.size	foo4, .Lfunc_end7-foo4
 
@@ -128,6 +136,7 @@ bar5:                                   # @bar5
 	i32.shl 	$push2=, $1, $0
 	i32.shr_s	$push3=, $pop2, $0
 	return  	$pop3
+	.endfunc
 .Lfunc_end8:
 	.size	bar5, .Lfunc_end8-bar5
 
@@ -140,6 +149,7 @@ foo5:                                   # @foo5
 	i32.const	$push0=, 65535
 	i32.and 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end9:
 	.size	foo5, .Lfunc_end9-foo5
 
@@ -159,6 +169,7 @@ bar6:                                   # @bar6
 	i32.shl 	$push2=, $1, $0
 	i32.shr_s	$push3=, $pop2, $0
 	return  	$pop3
+	.endfunc
 .Lfunc_end10:
 	.size	bar6, .Lfunc_end10-bar6
 
@@ -171,6 +182,7 @@ foo6:                                   # @foo6
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end11:
 	.size	foo6, .Lfunc_end11-foo6
 
@@ -245,6 +257,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end12:
 	.size	main, .Lfunc_end12-main
 
@@ -303,5 +316,5 @@ l6:
 	.size	l6, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

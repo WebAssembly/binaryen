@@ -71,6 +71,7 @@ main:                                   # @main
 .LBB0_4:                                # %if.end25
 	end_block                       # label2:
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -102,5 +103,5 @@ w:
 	.type	b,@object               # @b
 	.lcomm	b,4,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

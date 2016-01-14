@@ -21,6 +21,7 @@ f1:                                     # @f1
 	i32.store	$discard=, 4($1), $pop3
 	call    	test@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
 
@@ -54,6 +55,7 @@ f0:                                     # @f0
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	f0, .Lfunc_end1-f0
 
@@ -82,6 +84,7 @@ test:                                   # @test
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	test, .Lfunc_end2-test
 
@@ -103,6 +106,7 @@ main:                                   # @main
 	i32.add 	$2=, $3, $2
 	i32.call	$discard=, f1@FUNCTION, $2
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
@@ -111,5 +115,5 @@ main:                                   # @main
 	.type	f0.washere,@object      # @f0.washere
 	.lcomm	f0.washere,4,2
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -10,6 +10,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.mul 	$push0=, $1, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -23,6 +24,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.mul 	$push0=, $1, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -119,9 +121,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

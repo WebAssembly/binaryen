@@ -15,6 +15,7 @@ foo:                                    # @foo
 	i32.select	$push2=, $pop0, $pop1, $1
 	i32.add 	$push3=, $pop2, $0
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -25,6 +26,7 @@ foo:                                    # @foo
 bar:                                    # @bar
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -51,11 +53,12 @@ main:                                   # @main
 	i32.store8	$discard=, next_buffer($0), $pop1
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 	.type	next_buffer,@object     # @next_buffer
 	.lcomm	next_buffer,1
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -24,6 +24,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 
@@ -40,6 +41,7 @@ seqgt:                                  # @seqgt
 	i32.const	$push2=, 0
 	i32.gt_s	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end1:
 	.size	seqgt, .Lfunc_end1-seqgt
 
@@ -56,6 +58,7 @@ seqgt2:                                 # @seqgt2
 	i32.const	$push2=, 0
 	i32.gt_s	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end2:
 	.size	seqgt2, .Lfunc_end2-seqgt2
 
@@ -78,5 +81,5 @@ bb:
 	.size	bb, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

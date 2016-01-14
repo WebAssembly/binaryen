@@ -10,6 +10,7 @@ log_compare:                            # @log_compare
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	log_compare, .Lfunc_end0-log_compare
 
@@ -62,6 +63,7 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i64.store32	$discard=, 0($2), $6
 	i32.add 	$push0=, $0, $3
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	__db_txnlist_lsnadd, .Lfunc_end1-__db_txnlist_lsnadd
 
@@ -75,9 +77,10 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -46,6 +46,7 @@ test:                                   # @test
 .LBB0_9:                                # %if.end12
 	end_block                       # label2:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
 
@@ -442,6 +443,7 @@ main:                                   # @main
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -450,5 +452,5 @@ main:                                   # @main
 	.type	u2,@object              # @u2
 	.lcomm	u2,80,4
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

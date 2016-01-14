@@ -47,6 +47,7 @@ foo:                                    # @foo
 # BB#5:                                 # %for.end7
 	end_loop                        # label4:
 	return  	$4
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -108,6 +109,7 @@ main:                                   # @main
 	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -139,5 +141,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

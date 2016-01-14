@@ -50,6 +50,7 @@ foo:                                    # @foo
 	end_loop                        # label2:
 	end_block                       # label0:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -222,6 +223,7 @@ main:                                   # @main
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -235,5 +237,5 @@ main:                                   # @main
 	.size	.Lmain.x, 19
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

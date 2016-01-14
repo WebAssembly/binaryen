@@ -12,6 +12,7 @@ ret1:                                   # @ret1
 	i32.const	$push2=, 63
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end0:
 	.size	ret1, .Lfunc_end0-ret1
 
@@ -29,6 +30,7 @@ ret2:                                   # @ret2
 	i32.const	$push4=, 2047
 	i32.and 	$push5=, $pop3, $pop4
 	return  	$pop5
+	.endfunc
 .Lfunc_end1:
 	.size	ret2, .Lfunc_end1-ret2
 
@@ -44,6 +46,7 @@ ret3:                                   # @ret3
 	i32.const	$push2=, 17
 	i32.shr_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end2:
 	.size	ret3, .Lfunc_end2-ret3
 
@@ -59,6 +62,7 @@ ret4:                                   # @ret4
 	i32.const	$push2=, 31
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end3:
 	.size	ret4, .Lfunc_end3-ret4
 
@@ -76,6 +80,7 @@ ret5:                                   # @ret5
 	i32.const	$push4=, 1
 	i32.and 	$push5=, $pop3, $pop4
 	return  	$pop5
+	.endfunc
 .Lfunc_end4:
 	.size	ret5, .Lfunc_end4-ret5
 
@@ -91,6 +96,7 @@ ret6:                                   # @ret6
 	i32.const	$push2=, 6
 	i32.shr_u	$push3=, $pop1, $pop2
 	return  	$pop3
+	.endfunc
 .Lfunc_end5:
 	.size	ret6, .Lfunc_end5-ret6
 
@@ -104,6 +110,7 @@ ret7:                                   # @ret7
 	i32.const	$push0=, 0
 	i32.load16_u	$push1=, d($pop0)
 	return  	$pop1
+	.endfunc
 .Lfunc_end6:
 	.size	ret7, .Lfunc_end6-ret7
 
@@ -117,6 +124,7 @@ ret8:                                   # @ret8
 	i32.const	$push0=, 0
 	i32.load8_u	$push1=, d+2($pop0)
 	return  	$pop1
+	.endfunc
 .Lfunc_end7:
 	.size	ret8, .Lfunc_end7-ret8
 
@@ -130,6 +138,7 @@ ret9:                                   # @ret9
 	i32.const	$push0=, 0
 	i32.load8_u	$push1=, d+3($pop0)
 	return  	$pop1
+	.endfunc
 .Lfunc_end8:
 	.size	ret9, .Lfunc_end8-ret9
 
@@ -151,6 +160,7 @@ fn1_1:                                  # @fn1_1
 	i32.or  	$push5=, $pop2, $pop4
 	i32.store	$discard=, b($1), $pop5
 	return
+	.endfunc
 .Lfunc_end9:
 	.size	fn1_1, .Lfunc_end9-fn1_1
 
@@ -174,6 +184,7 @@ fn2_1:                                  # @fn2_1
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, b($1), $pop7
 	return
+	.endfunc
 .Lfunc_end10:
 	.size	fn2_1, .Lfunc_end10-fn2_1
 
@@ -192,6 +203,7 @@ fn3_1:                                  # @fn3_1
 	i32.add 	$push3=, $pop0, $pop2
 	i32.store	$discard=, b($1), $pop3
 	return
+	.endfunc
 .Lfunc_end11:
 	.size	fn3_1, .Lfunc_end11-fn3_1
 
@@ -213,6 +225,7 @@ fn4_1:                                  # @fn4_1
 	i32.or  	$push5=, $pop2, $pop4
 	i32.store	$discard=, c($1), $pop5
 	return
+	.endfunc
 .Lfunc_end12:
 	.size	fn4_1, .Lfunc_end12-fn4_1
 
@@ -236,6 +249,7 @@ fn5_1:                                  # @fn5_1
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, c($1), $pop7
 	return
+	.endfunc
 .Lfunc_end13:
 	.size	fn5_1, .Lfunc_end13-fn5_1
 
@@ -254,6 +268,7 @@ fn6_1:                                  # @fn6_1
 	i32.add 	$push3=, $pop0, $pop2
 	i32.store	$discard=, c($1), $pop3
 	return
+	.endfunc
 .Lfunc_end14:
 	.size	fn6_1, .Lfunc_end14-fn6_1
 
@@ -270,6 +285,7 @@ fn7_1:                                  # @fn7_1
 	i32.add 	$push1=, $pop0, $0
 	i32.store16	$discard=, d($1), $pop1
 	return
+	.endfunc
 .Lfunc_end15:
 	.size	fn7_1, .Lfunc_end15-fn7_1
 
@@ -289,6 +305,7 @@ fn8_1:                                  # @fn8_1
 	i32.shr_u	$push3=, $pop2, $2
 	i32.store8	$discard=, d+2($1), $pop3
 	return
+	.endfunc
 .Lfunc_end16:
 	.size	fn8_1, .Lfunc_end16-fn8_1
 
@@ -307,6 +324,7 @@ fn9_1:                                  # @fn9_1
 	i32.add 	$push3=, $pop0, $pop2
 	i32.store	$discard=, d($1), $pop3
 	return
+	.endfunc
 .Lfunc_end17:
 	.size	fn9_1, .Lfunc_end17-fn9_1
 
@@ -329,6 +347,7 @@ fn1_2:                                  # @fn1_2
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end18:
 	.size	fn1_2, .Lfunc_end18-fn1_2
 
@@ -351,6 +370,7 @@ fn2_2:                                  # @fn2_2
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end19:
 	.size	fn2_2, .Lfunc_end19-fn2_2
 
@@ -368,6 +388,7 @@ fn3_2:                                  # @fn3_2
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end20:
 	.size	fn3_2, .Lfunc_end20-fn3_2
 
@@ -390,6 +411,7 @@ fn4_2:                                  # @fn4_2
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, c($1), $pop6
 	return
+	.endfunc
 .Lfunc_end21:
 	.size	fn4_2, .Lfunc_end21-fn4_2
 
@@ -407,6 +429,7 @@ fn5_2:                                  # @fn5_2
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end22:
 	.size	fn5_2, .Lfunc_end22-fn5_2
 
@@ -424,6 +447,7 @@ fn6_2:                                  # @fn6_2
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end23:
 	.size	fn6_2, .Lfunc_end23-fn6_2
 
@@ -441,6 +465,7 @@ fn7_2:                                  # @fn7_2
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store16	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end24:
 	.size	fn7_2, .Lfunc_end24-fn7_2
 
@@ -460,6 +485,7 @@ fn8_2:                                  # @fn8_2
 	i32.shr_u	$push4=, $pop2, $pop3
 	i32.store8	$discard=, d+2($1), $pop4
 	return
+	.endfunc
 .Lfunc_end25:
 	.size	fn8_2, .Lfunc_end25-fn8_2
 
@@ -477,6 +503,7 @@ fn9_2:                                  # @fn9_2
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end26:
 	.size	fn9_2, .Lfunc_end26-fn9_2
 
@@ -499,6 +526,7 @@ fn1_3:                                  # @fn1_3
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end27:
 	.size	fn1_3, .Lfunc_end27-fn1_3
 
@@ -521,6 +549,7 @@ fn2_3:                                  # @fn2_3
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end28:
 	.size	fn2_3, .Lfunc_end28-fn2_3
 
@@ -538,6 +567,7 @@ fn3_3:                                  # @fn3_3
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end29:
 	.size	fn3_3, .Lfunc_end29-fn3_3
 
@@ -560,6 +590,7 @@ fn4_3:                                  # @fn4_3
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, c($1), $pop6
 	return
+	.endfunc
 .Lfunc_end30:
 	.size	fn4_3, .Lfunc_end30-fn4_3
 
@@ -577,6 +608,7 @@ fn5_3:                                  # @fn5_3
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end31:
 	.size	fn5_3, .Lfunc_end31-fn5_3
 
@@ -594,6 +626,7 @@ fn6_3:                                  # @fn6_3
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end32:
 	.size	fn6_3, .Lfunc_end32-fn6_3
 
@@ -611,6 +644,7 @@ fn7_3:                                  # @fn7_3
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store16	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end33:
 	.size	fn7_3, .Lfunc_end33-fn7_3
 
@@ -630,6 +664,7 @@ fn8_3:                                  # @fn8_3
 	i32.shr_u	$push4=, $pop2, $pop3
 	i32.store8	$discard=, d+2($1), $pop4
 	return
+	.endfunc
 .Lfunc_end34:
 	.size	fn8_3, .Lfunc_end34-fn8_3
 
@@ -647,6 +682,7 @@ fn9_3:                                  # @fn9_3
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end35:
 	.size	fn9_3, .Lfunc_end35-fn9_3
 
@@ -668,6 +704,7 @@ fn1_4:                                  # @fn1_4
 	i32.or  	$push5=, $pop2, $pop4
 	i32.store	$discard=, b($1), $pop5
 	return
+	.endfunc
 .Lfunc_end36:
 	.size	fn1_4, .Lfunc_end36-fn1_4
 
@@ -691,6 +728,7 @@ fn2_4:                                  # @fn2_4
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, b($1), $pop7
 	return
+	.endfunc
 .Lfunc_end37:
 	.size	fn2_4, .Lfunc_end37-fn2_4
 
@@ -714,6 +752,7 @@ fn3_4:                                  # @fn3_4
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, b($1), $pop7
 	return
+	.endfunc
 .Lfunc_end38:
 	.size	fn3_4, .Lfunc_end38-fn3_4
 
@@ -735,6 +774,7 @@ fn4_4:                                  # @fn4_4
 	i32.or  	$push5=, $pop2, $pop4
 	i32.store	$discard=, c($1), $pop5
 	return
+	.endfunc
 .Lfunc_end39:
 	.size	fn4_4, .Lfunc_end39-fn4_4
 
@@ -758,6 +798,7 @@ fn5_4:                                  # @fn5_4
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, c($1), $pop7
 	return
+	.endfunc
 .Lfunc_end40:
 	.size	fn5_4, .Lfunc_end40-fn5_4
 
@@ -781,6 +822,7 @@ fn6_4:                                  # @fn6_4
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, c($1), $pop7
 	return
+	.endfunc
 .Lfunc_end41:
 	.size	fn6_4, .Lfunc_end41-fn6_4
 
@@ -797,6 +839,7 @@ fn7_4:                                  # @fn7_4
 	i32.sub 	$push1=, $pop0, $0
 	i32.store16	$discard=, d($1), $pop1
 	return
+	.endfunc
 .Lfunc_end42:
 	.size	fn7_4, .Lfunc_end42-fn7_4
 
@@ -816,6 +859,7 @@ fn8_4:                                  # @fn8_4
 	i32.shr_u	$push3=, $pop2, $2
 	i32.store8	$discard=, d+2($1), $pop3
 	return
+	.endfunc
 .Lfunc_end43:
 	.size	fn8_4, .Lfunc_end43-fn8_4
 
@@ -835,6 +879,7 @@ fn9_4:                                  # @fn9_4
 	i32.shr_u	$push3=, $pop2, $2
 	i32.store8	$discard=, d+3($1), $pop3
 	return
+	.endfunc
 .Lfunc_end44:
 	.size	fn9_4, .Lfunc_end44-fn9_4
 
@@ -856,6 +901,7 @@ fn1_5:                                  # @fn1_5
 	i32.or  	$push4=, $pop1, $pop3
 	i32.store	$discard=, b($1), $pop4
 	return
+	.endfunc
 .Lfunc_end45:
 	.size	fn1_5, .Lfunc_end45-fn1_5
 
@@ -877,6 +923,7 @@ fn2_5:                                  # @fn2_5
 	i32.or  	$push4=, $pop1, $pop3
 	i32.store	$discard=, b($1), $pop4
 	return
+	.endfunc
 .Lfunc_end46:
 	.size	fn2_5, .Lfunc_end46-fn2_5
 
@@ -894,6 +941,7 @@ fn3_5:                                  # @fn3_5
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end47:
 	.size	fn3_5, .Lfunc_end47-fn3_5
 
@@ -915,6 +963,7 @@ fn4_5:                                  # @fn4_5
 	i32.or  	$push4=, $pop1, $pop3
 	i32.store	$discard=, c($1), $pop4
 	return
+	.endfunc
 .Lfunc_end48:
 	.size	fn4_5, .Lfunc_end48-fn4_5
 
@@ -932,6 +981,7 @@ fn5_5:                                  # @fn5_5
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end49:
 	.size	fn5_5, .Lfunc_end49-fn5_5
 
@@ -949,6 +999,7 @@ fn6_5:                                  # @fn6_5
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end50:
 	.size	fn6_5, .Lfunc_end50-fn6_5
 
@@ -966,6 +1017,7 @@ fn7_5:                                  # @fn7_5
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store16	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end51:
 	.size	fn7_5, .Lfunc_end51-fn7_5
 
@@ -985,6 +1037,7 @@ fn8_5:                                  # @fn8_5
 	i32.shr_u	$push4=, $pop2, $pop3
 	i32.store8	$discard=, d+2($1), $pop4
 	return
+	.endfunc
 .Lfunc_end52:
 	.size	fn8_5, .Lfunc_end52-fn8_5
 
@@ -1002,6 +1055,7 @@ fn9_5:                                  # @fn9_5
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end53:
 	.size	fn9_5, .Lfunc_end53-fn9_5
 
@@ -1023,6 +1077,7 @@ fn1_6:                                  # @fn1_6
 	i32.or  	$push4=, $pop1, $pop3
 	i32.store	$discard=, b($1), $pop4
 	return
+	.endfunc
 .Lfunc_end54:
 	.size	fn1_6, .Lfunc_end54-fn1_6
 
@@ -1044,6 +1099,7 @@ fn2_6:                                  # @fn2_6
 	i32.or  	$push4=, $pop1, $pop3
 	i32.store	$discard=, b($1), $pop4
 	return
+	.endfunc
 .Lfunc_end55:
 	.size	fn2_6, .Lfunc_end55-fn2_6
 
@@ -1061,6 +1117,7 @@ fn3_6:                                  # @fn3_6
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end56:
 	.size	fn3_6, .Lfunc_end56-fn3_6
 
@@ -1082,6 +1139,7 @@ fn4_6:                                  # @fn4_6
 	i32.or  	$push4=, $pop1, $pop3
 	i32.store	$discard=, c($1), $pop4
 	return
+	.endfunc
 .Lfunc_end57:
 	.size	fn4_6, .Lfunc_end57-fn4_6
 
@@ -1099,6 +1157,7 @@ fn5_6:                                  # @fn5_6
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end58:
 	.size	fn5_6, .Lfunc_end58-fn5_6
 
@@ -1116,6 +1175,7 @@ fn6_6:                                  # @fn6_6
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end59:
 	.size	fn6_6, .Lfunc_end59-fn6_6
 
@@ -1133,6 +1193,7 @@ fn7_6:                                  # @fn7_6
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store16	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end60:
 	.size	fn7_6, .Lfunc_end60-fn7_6
 
@@ -1152,6 +1213,7 @@ fn8_6:                                  # @fn8_6
 	i32.shr_u	$push4=, $pop2, $pop3
 	i32.store8	$discard=, d+2($1), $pop4
 	return
+	.endfunc
 .Lfunc_end61:
 	.size	fn8_6, .Lfunc_end61-fn8_6
 
@@ -1169,6 +1231,7 @@ fn9_6:                                  # @fn9_6
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end62:
 	.size	fn9_6, .Lfunc_end62-fn9_6
 
@@ -1187,6 +1250,7 @@ fn1_7:                                  # @fn1_7
 	i32.and 	$push3=, $pop2, $pop0
 	i32.store	$discard=, b($1), $pop3
 	return
+	.endfunc
 .Lfunc_end63:
 	.size	fn1_7, .Lfunc_end63-fn1_7
 
@@ -1207,6 +1271,7 @@ fn2_7:                                  # @fn2_7
 	i32.and 	$push5=, $pop4, $pop0
 	i32.store	$discard=, b($1), $pop5
 	return
+	.endfunc
 .Lfunc_end64:
 	.size	fn2_7, .Lfunc_end64-fn2_7
 
@@ -1227,6 +1292,7 @@ fn3_7:                                  # @fn3_7
 	i32.and 	$push5=, $pop0, $pop4
 	i32.store	$discard=, b($1), $pop5
 	return
+	.endfunc
 .Lfunc_end65:
 	.size	fn3_7, .Lfunc_end65-fn3_7
 
@@ -1245,6 +1311,7 @@ fn4_7:                                  # @fn4_7
 	i32.and 	$push3=, $pop2, $pop0
 	i32.store	$discard=, c($1), $pop3
 	return
+	.endfunc
 .Lfunc_end66:
 	.size	fn4_7, .Lfunc_end66-fn4_7
 
@@ -1265,6 +1332,7 @@ fn5_7:                                  # @fn5_7
 	i32.and 	$push5=, $pop4, $pop0
 	i32.store	$discard=, c($1), $pop5
 	return
+	.endfunc
 .Lfunc_end67:
 	.size	fn5_7, .Lfunc_end67-fn5_7
 
@@ -1285,6 +1353,7 @@ fn6_7:                                  # @fn6_7
 	i32.and 	$push5=, $pop0, $pop4
 	i32.store	$discard=, c($1), $pop5
 	return
+	.endfunc
 .Lfunc_end68:
 	.size	fn6_7, .Lfunc_end68-fn6_7
 
@@ -1303,6 +1372,7 @@ fn7_7:                                  # @fn7_7
 	i32.and 	$push3=, $pop2, $pop0
 	i32.store	$discard=, d($1), $pop3
 	return
+	.endfunc
 .Lfunc_end69:
 	.size	fn7_7, .Lfunc_end69-fn7_7
 
@@ -1323,6 +1393,7 @@ fn8_7:                                  # @fn8_7
 	i32.and 	$push5=, $pop4, $pop0
 	i32.store	$discard=, d($1), $pop5
 	return
+	.endfunc
 .Lfunc_end70:
 	.size	fn8_7, .Lfunc_end70-fn8_7
 
@@ -1343,6 +1414,7 @@ fn9_7:                                  # @fn9_7
 	i32.and 	$push5=, $pop0, $pop4
 	i32.store	$discard=, d($1), $pop5
 	return
+	.endfunc
 .Lfunc_end71:
 	.size	fn9_7, .Lfunc_end71-fn9_7
 
@@ -1361,6 +1433,7 @@ fn1_8:                                  # @fn1_8
 	i32.or  	$push3=, $pop0, $pop2
 	i32.store	$discard=, b($1), $pop3
 	return
+	.endfunc
 .Lfunc_end72:
 	.size	fn1_8, .Lfunc_end72-fn1_8
 
@@ -1381,6 +1454,7 @@ fn2_8:                                  # @fn2_8
 	i32.or  	$push5=, $pop0, $pop4
 	i32.store	$discard=, b($1), $pop5
 	return
+	.endfunc
 .Lfunc_end73:
 	.size	fn2_8, .Lfunc_end73-fn2_8
 
@@ -1404,6 +1478,7 @@ fn3_8:                                  # @fn3_8
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, b($1), $pop7
 	return
+	.endfunc
 .Lfunc_end74:
 	.size	fn3_8, .Lfunc_end74-fn3_8
 
@@ -1422,6 +1497,7 @@ fn4_8:                                  # @fn4_8
 	i32.or  	$push3=, $pop0, $pop2
 	i32.store	$discard=, c($1), $pop3
 	return
+	.endfunc
 .Lfunc_end75:
 	.size	fn4_8, .Lfunc_end75-fn4_8
 
@@ -1442,6 +1518,7 @@ fn5_8:                                  # @fn5_8
 	i32.or  	$push5=, $pop0, $pop4
 	i32.store	$discard=, c($1), $pop5
 	return
+	.endfunc
 .Lfunc_end76:
 	.size	fn5_8, .Lfunc_end76-fn5_8
 
@@ -1465,6 +1542,7 @@ fn6_8:                                  # @fn6_8
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, c($1), $pop7
 	return
+	.endfunc
 .Lfunc_end77:
 	.size	fn6_8, .Lfunc_end77-fn6_8
 
@@ -1483,6 +1561,7 @@ fn7_8:                                  # @fn7_8
 	i32.or  	$push3=, $pop0, $pop2
 	i32.store	$discard=, d($1), $pop3
 	return
+	.endfunc
 .Lfunc_end78:
 	.size	fn7_8, .Lfunc_end78-fn7_8
 
@@ -1503,6 +1582,7 @@ fn8_8:                                  # @fn8_8
 	i32.or  	$push5=, $pop0, $pop4
 	i32.store	$discard=, d($1), $pop5
 	return
+	.endfunc
 .Lfunc_end79:
 	.size	fn8_8, .Lfunc_end79-fn8_8
 
@@ -1522,6 +1602,7 @@ fn9_8:                                  # @fn9_8
 	i32.shr_u	$push3=, $pop2, $2
 	i32.store8	$discard=, d+3($1), $pop3
 	return
+	.endfunc
 .Lfunc_end80:
 	.size	fn9_8, .Lfunc_end80-fn9_8
 
@@ -1540,6 +1621,7 @@ fn1_9:                                  # @fn1_9
 	i32.xor 	$push3=, $pop0, $pop2
 	i32.store	$discard=, b($1), $pop3
 	return
+	.endfunc
 .Lfunc_end81:
 	.size	fn1_9, .Lfunc_end81-fn1_9
 
@@ -1560,6 +1642,7 @@ fn2_9:                                  # @fn2_9
 	i32.xor 	$push5=, $pop0, $pop4
 	i32.store	$discard=, b($1), $pop5
 	return
+	.endfunc
 .Lfunc_end82:
 	.size	fn2_9, .Lfunc_end82-fn2_9
 
@@ -1583,6 +1666,7 @@ fn3_9:                                  # @fn3_9
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, b($1), $pop7
 	return
+	.endfunc
 .Lfunc_end83:
 	.size	fn3_9, .Lfunc_end83-fn3_9
 
@@ -1601,6 +1685,7 @@ fn4_9:                                  # @fn4_9
 	i32.xor 	$push3=, $pop0, $pop2
 	i32.store	$discard=, c($1), $pop3
 	return
+	.endfunc
 .Lfunc_end84:
 	.size	fn4_9, .Lfunc_end84-fn4_9
 
@@ -1621,6 +1706,7 @@ fn5_9:                                  # @fn5_9
 	i32.xor 	$push5=, $pop0, $pop4
 	i32.store	$discard=, c($1), $pop5
 	return
+	.endfunc
 .Lfunc_end85:
 	.size	fn5_9, .Lfunc_end85-fn5_9
 
@@ -1644,6 +1730,7 @@ fn6_9:                                  # @fn6_9
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, c($1), $pop7
 	return
+	.endfunc
 .Lfunc_end86:
 	.size	fn6_9, .Lfunc_end86-fn6_9
 
@@ -1662,6 +1749,7 @@ fn7_9:                                  # @fn7_9
 	i32.xor 	$push3=, $pop0, $pop2
 	i32.store	$discard=, d($1), $pop3
 	return
+	.endfunc
 .Lfunc_end87:
 	.size	fn7_9, .Lfunc_end87-fn7_9
 
@@ -1682,6 +1770,7 @@ fn8_9:                                  # @fn8_9
 	i32.xor 	$push5=, $pop0, $pop4
 	i32.store	$discard=, d($1), $pop5
 	return
+	.endfunc
 .Lfunc_end88:
 	.size	fn8_9, .Lfunc_end88-fn8_9
 
@@ -1701,6 +1790,7 @@ fn9_9:                                  # @fn9_9
 	i32.shr_u	$push3=, $pop2, $2
 	i32.store8	$discard=, d+3($1), $pop3
 	return
+	.endfunc
 .Lfunc_end89:
 	.size	fn9_9, .Lfunc_end89-fn9_9
 
@@ -1722,6 +1812,7 @@ fn1_a:                                  # @fn1_a
 	i32.or  	$push4=, $pop3, $0
 	i32.store	$discard=, b($1), $pop4
 	return
+	.endfunc
 .Lfunc_end90:
 	.size	fn1_a, .Lfunc_end90-fn1_a
 
@@ -1746,6 +1837,7 @@ fn2_a:                                  # @fn2_a
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, b($1), $pop7
 	return
+	.endfunc
 .Lfunc_end91:
 	.size	fn2_a, .Lfunc_end91-fn2_a
 
@@ -1768,6 +1860,7 @@ fn3_a:                                  # @fn3_a
 	i32.or  	$push5=, $pop2, $pop4
 	i32.store	$discard=, b($1), $pop5
 	return
+	.endfunc
 .Lfunc_end92:
 	.size	fn3_a, .Lfunc_end92-fn3_a
 
@@ -1789,6 +1882,7 @@ fn4_a:                                  # @fn4_a
 	i32.or  	$push4=, $pop3, $0
 	i32.store	$discard=, c($1), $pop4
 	return
+	.endfunc
 .Lfunc_end93:
 	.size	fn4_a, .Lfunc_end93-fn4_a
 
@@ -1813,6 +1907,7 @@ fn5_a:                                  # @fn5_a
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, c($1), $pop7
 	return
+	.endfunc
 .Lfunc_end94:
 	.size	fn5_a, .Lfunc_end94-fn5_a
 
@@ -1835,6 +1930,7 @@ fn6_a:                                  # @fn6_a
 	i32.or  	$push5=, $pop2, $pop4
 	i32.store	$discard=, c($1), $pop5
 	return
+	.endfunc
 .Lfunc_end95:
 	.size	fn6_a, .Lfunc_end95-fn6_a
 
@@ -1851,6 +1947,7 @@ fn7_a:                                  # @fn7_a
 	i32.div_u	$push1=, $pop0, $0
 	i32.store16	$discard=, d($1), $pop1
 	return
+	.endfunc
 .Lfunc_end96:
 	.size	fn7_a, .Lfunc_end96-fn7_a
 
@@ -1867,6 +1964,7 @@ fn8_a:                                  # @fn8_a
 	i32.div_u	$push1=, $pop0, $0
 	i32.store8	$discard=, d+2($1), $pop1
 	return
+	.endfunc
 .Lfunc_end97:
 	.size	fn8_a, .Lfunc_end97-fn8_a
 
@@ -1883,6 +1981,7 @@ fn9_a:                                  # @fn9_a
 	i32.div_u	$push1=, $pop0, $0
 	i32.store8	$discard=, d+3($1), $pop1
 	return
+	.endfunc
 .Lfunc_end98:
 	.size	fn9_a, .Lfunc_end98-fn9_a
 
@@ -1904,6 +2003,7 @@ fn1_b:                                  # @fn1_b
 	i32.or  	$push4=, $0, $pop3
 	i32.store	$discard=, b($1), $pop4
 	return
+	.endfunc
 .Lfunc_end99:
 	.size	fn1_b, .Lfunc_end99-fn1_b
 
@@ -1928,6 +2028,7 @@ fn2_b:                                  # @fn2_b
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, b($1), $pop7
 	return
+	.endfunc
 .Lfunc_end100:
 	.size	fn2_b, .Lfunc_end100-fn2_b
 
@@ -1950,6 +2051,7 @@ fn3_b:                                  # @fn3_b
 	i32.or  	$push5=, $pop2, $pop4
 	i32.store	$discard=, b($1), $pop5
 	return
+	.endfunc
 .Lfunc_end101:
 	.size	fn3_b, .Lfunc_end101-fn3_b
 
@@ -1971,6 +2073,7 @@ fn4_b:                                  # @fn4_b
 	i32.or  	$push4=, $0, $pop3
 	i32.store	$discard=, c($1), $pop4
 	return
+	.endfunc
 .Lfunc_end102:
 	.size	fn4_b, .Lfunc_end102-fn4_b
 
@@ -1995,6 +2098,7 @@ fn5_b:                                  # @fn5_b
 	i32.or  	$push7=, $pop4, $pop6
 	i32.store	$discard=, c($1), $pop7
 	return
+	.endfunc
 .Lfunc_end103:
 	.size	fn5_b, .Lfunc_end103-fn5_b
 
@@ -2017,6 +2121,7 @@ fn6_b:                                  # @fn6_b
 	i32.or  	$push5=, $pop2, $pop4
 	i32.store	$discard=, c($1), $pop5
 	return
+	.endfunc
 .Lfunc_end104:
 	.size	fn6_b, .Lfunc_end104-fn6_b
 
@@ -2033,6 +2138,7 @@ fn7_b:                                  # @fn7_b
 	i32.rem_u	$push1=, $pop0, $0
 	i32.store16	$discard=, d($1), $pop1
 	return
+	.endfunc
 .Lfunc_end105:
 	.size	fn7_b, .Lfunc_end105-fn7_b
 
@@ -2049,6 +2155,7 @@ fn8_b:                                  # @fn8_b
 	i32.rem_u	$push1=, $pop0, $0
 	i32.store8	$discard=, d+2($1), $pop1
 	return
+	.endfunc
 .Lfunc_end106:
 	.size	fn8_b, .Lfunc_end106-fn8_b
 
@@ -2065,6 +2172,7 @@ fn9_b:                                  # @fn9_b
 	i32.rem_u	$push1=, $pop0, $0
 	i32.store8	$discard=, d+3($1), $pop1
 	return
+	.endfunc
 .Lfunc_end107:
 	.size	fn9_b, .Lfunc_end107-fn9_b
 
@@ -2087,6 +2195,7 @@ fn1_c:                                  # @fn1_c
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end108:
 	.size	fn1_c, .Lfunc_end108-fn1_c
 
@@ -2109,6 +2218,7 @@ fn2_c:                                  # @fn2_c
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end109:
 	.size	fn2_c, .Lfunc_end109-fn2_c
 
@@ -2126,6 +2236,7 @@ fn3_c:                                  # @fn3_c
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end110:
 	.size	fn3_c, .Lfunc_end110-fn3_c
 
@@ -2148,6 +2259,7 @@ fn4_c:                                  # @fn4_c
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, c($1), $pop6
 	return
+	.endfunc
 .Lfunc_end111:
 	.size	fn4_c, .Lfunc_end111-fn4_c
 
@@ -2165,6 +2277,7 @@ fn5_c:                                  # @fn5_c
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end112:
 	.size	fn5_c, .Lfunc_end112-fn5_c
 
@@ -2182,6 +2295,7 @@ fn6_c:                                  # @fn6_c
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end113:
 	.size	fn6_c, .Lfunc_end113-fn6_c
 
@@ -2199,6 +2313,7 @@ fn7_c:                                  # @fn7_c
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store16	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end114:
 	.size	fn7_c, .Lfunc_end114-fn7_c
 
@@ -2218,6 +2333,7 @@ fn8_c:                                  # @fn8_c
 	i32.shr_u	$push4=, $pop2, $pop3
 	i32.store8	$discard=, d+2($1), $pop4
 	return
+	.endfunc
 .Lfunc_end115:
 	.size	fn8_c, .Lfunc_end115-fn8_c
 
@@ -2235,6 +2351,7 @@ fn9_c:                                  # @fn9_c
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end116:
 	.size	fn9_c, .Lfunc_end116-fn9_c
 
@@ -2257,6 +2374,7 @@ fn1_d:                                  # @fn1_d
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end117:
 	.size	fn1_d, .Lfunc_end117-fn1_d
 
@@ -2279,6 +2397,7 @@ fn2_d:                                  # @fn2_d
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end118:
 	.size	fn2_d, .Lfunc_end118-fn2_d
 
@@ -2296,6 +2415,7 @@ fn3_d:                                  # @fn3_d
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end119:
 	.size	fn3_d, .Lfunc_end119-fn3_d
 
@@ -2318,6 +2438,7 @@ fn4_d:                                  # @fn4_d
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, c($1), $pop6
 	return
+	.endfunc
 .Lfunc_end120:
 	.size	fn4_d, .Lfunc_end120-fn4_d
 
@@ -2335,6 +2456,7 @@ fn5_d:                                  # @fn5_d
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end121:
 	.size	fn5_d, .Lfunc_end121-fn5_d
 
@@ -2352,6 +2474,7 @@ fn6_d:                                  # @fn6_d
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end122:
 	.size	fn6_d, .Lfunc_end122-fn6_d
 
@@ -2369,6 +2492,7 @@ fn7_d:                                  # @fn7_d
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store16	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end123:
 	.size	fn7_d, .Lfunc_end123-fn7_d
 
@@ -2388,6 +2512,7 @@ fn8_d:                                  # @fn8_d
 	i32.shr_u	$push4=, $pop2, $pop3
 	i32.store8	$discard=, d+2($1), $pop4
 	return
+	.endfunc
 .Lfunc_end124:
 	.size	fn8_d, .Lfunc_end124-fn8_d
 
@@ -2405,6 +2530,7 @@ fn9_d:                                  # @fn9_d
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end125:
 	.size	fn9_d, .Lfunc_end125-fn9_d
 
@@ -2422,6 +2548,7 @@ fn1_e:                                  # @fn1_e
 	i32.and 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end126:
 	.size	fn1_e, .Lfunc_end126-fn1_e
 
@@ -2439,6 +2566,7 @@ fn2_e:                                  # @fn2_e
 	i32.and 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end127:
 	.size	fn2_e, .Lfunc_end127-fn2_e
 
@@ -2456,6 +2584,7 @@ fn3_e:                                  # @fn3_e
 	i32.and 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end128:
 	.size	fn3_e, .Lfunc_end128-fn3_e
 
@@ -2473,6 +2602,7 @@ fn4_e:                                  # @fn4_e
 	i32.and 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end129:
 	.size	fn4_e, .Lfunc_end129-fn4_e
 
@@ -2484,6 +2614,7 @@ fn5_e:                                  # @fn5_e
 	.param  	i32
 # BB#0:                                 # %entry
 	return
+	.endfunc
 .Lfunc_end130:
 	.size	fn5_e, .Lfunc_end130-fn5_e
 
@@ -2501,6 +2632,7 @@ fn6_e:                                  # @fn6_e
 	i32.and 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end131:
 	.size	fn6_e, .Lfunc_end131-fn6_e
 
@@ -2518,6 +2650,7 @@ fn7_e:                                  # @fn7_e
 	i32.and 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end132:
 	.size	fn7_e, .Lfunc_end132-fn7_e
 
@@ -2535,6 +2668,7 @@ fn8_e:                                  # @fn8_e
 	i32.and 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end133:
 	.size	fn8_e, .Lfunc_end133-fn8_e
 
@@ -2552,6 +2686,7 @@ fn9_e:                                  # @fn9_e
 	i32.and 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end134:
 	.size	fn9_e, .Lfunc_end134-fn9_e
 
@@ -2569,6 +2704,7 @@ fn1_f:                                  # @fn1_f
 	i32.or  	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end135:
 	.size	fn1_f, .Lfunc_end135-fn1_f
 
@@ -2586,6 +2722,7 @@ fn2_f:                                  # @fn2_f
 	i32.or  	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end136:
 	.size	fn2_f, .Lfunc_end136-fn2_f
 
@@ -2603,6 +2740,7 @@ fn3_f:                                  # @fn3_f
 	i32.or  	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end137:
 	.size	fn3_f, .Lfunc_end137-fn3_f
 
@@ -2620,6 +2758,7 @@ fn4_f:                                  # @fn4_f
 	i32.or  	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end138:
 	.size	fn4_f, .Lfunc_end138-fn4_f
 
@@ -2637,6 +2776,7 @@ fn5_f:                                  # @fn5_f
 	i32.or  	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end139:
 	.size	fn5_f, .Lfunc_end139-fn5_f
 
@@ -2654,6 +2794,7 @@ fn6_f:                                  # @fn6_f
 	i32.or  	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end140:
 	.size	fn6_f, .Lfunc_end140-fn6_f
 
@@ -2671,6 +2812,7 @@ fn7_f:                                  # @fn7_f
 	i32.or  	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end141:
 	.size	fn7_f, .Lfunc_end141-fn7_f
 
@@ -2688,6 +2830,7 @@ fn8_f:                                  # @fn8_f
 	i32.or  	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end142:
 	.size	fn8_f, .Lfunc_end142-fn8_f
 
@@ -2705,6 +2848,7 @@ fn9_f:                                  # @fn9_f
 	i32.or  	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end143:
 	.size	fn9_f, .Lfunc_end143-fn9_f
 
@@ -2722,6 +2866,7 @@ fn1_g:                                  # @fn1_g
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end144:
 	.size	fn1_g, .Lfunc_end144-fn1_g
 
@@ -2739,6 +2884,7 @@ fn2_g:                                  # @fn2_g
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end145:
 	.size	fn2_g, .Lfunc_end145-fn2_g
 
@@ -2756,6 +2902,7 @@ fn3_g:                                  # @fn3_g
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, b($1), $pop2
 	return
+	.endfunc
 .Lfunc_end146:
 	.size	fn3_g, .Lfunc_end146-fn3_g
 
@@ -2773,6 +2920,7 @@ fn4_g:                                  # @fn4_g
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end147:
 	.size	fn4_g, .Lfunc_end147-fn4_g
 
@@ -2790,6 +2938,7 @@ fn5_g:                                  # @fn5_g
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end148:
 	.size	fn5_g, .Lfunc_end148-fn5_g
 
@@ -2807,6 +2956,7 @@ fn6_g:                                  # @fn6_g
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end149:
 	.size	fn6_g, .Lfunc_end149-fn6_g
 
@@ -2824,6 +2974,7 @@ fn7_g:                                  # @fn7_g
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end150:
 	.size	fn7_g, .Lfunc_end150-fn7_g
 
@@ -2841,6 +2992,7 @@ fn8_g:                                  # @fn8_g
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end151:
 	.size	fn8_g, .Lfunc_end151-fn8_g
 
@@ -2858,6 +3010,7 @@ fn9_g:                                  # @fn9_g
 	i32.xor 	$push2=, $pop0, $pop1
 	i32.store	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end152:
 	.size	fn9_g, .Lfunc_end152-fn9_g
 
@@ -2880,6 +3033,7 @@ fn1_h:                                  # @fn1_h
 	i32.or  	$push5=, $3, $pop4
 	i32.store	$discard=, b($1), $pop5
 	return
+	.endfunc
 .Lfunc_end153:
 	.size	fn1_h, .Lfunc_end153-fn1_h
 
@@ -2905,6 +3059,7 @@ fn2_h:                                  # @fn2_h
 	i32.or  	$push8=, $pop5, $pop7
 	i32.store	$discard=, b($1), $pop8
 	return
+	.endfunc
 .Lfunc_end154:
 	.size	fn2_h, .Lfunc_end154-fn2_h
 
@@ -2927,6 +3082,7 @@ fn3_h:                                  # @fn3_h
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end155:
 	.size	fn3_h, .Lfunc_end155-fn3_h
 
@@ -2949,6 +3105,7 @@ fn4_h:                                  # @fn4_h
 	i32.or  	$push5=, $3, $pop4
 	i32.store	$discard=, c($1), $pop5
 	return
+	.endfunc
 .Lfunc_end156:
 	.size	fn4_h, .Lfunc_end156-fn4_h
 
@@ -2966,6 +3123,7 @@ fn5_h:                                  # @fn5_h
 	i32.and 	$push2=, $pop0, $pop1
 	i32.store	$discard=, c($1), $pop2
 	return
+	.endfunc
 .Lfunc_end157:
 	.size	fn5_h, .Lfunc_end157-fn5_h
 
@@ -2988,6 +3146,7 @@ fn6_h:                                  # @fn6_h
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, c($1), $pop6
 	return
+	.endfunc
 .Lfunc_end158:
 	.size	fn6_h, .Lfunc_end158-fn6_h
 
@@ -3005,6 +3164,7 @@ fn7_h:                                  # @fn7_h
 	i32.div_u	$push2=, $pop0, $pop1
 	i32.store16	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end159:
 	.size	fn7_h, .Lfunc_end159-fn7_h
 
@@ -3022,6 +3182,7 @@ fn8_h:                                  # @fn8_h
 	i32.div_u	$push2=, $pop0, $pop1
 	i32.store8	$discard=, d+2($1), $pop2
 	return
+	.endfunc
 .Lfunc_end160:
 	.size	fn8_h, .Lfunc_end160-fn8_h
 
@@ -3039,6 +3200,7 @@ fn9_h:                                  # @fn9_h
 	i32.div_u	$push2=, $pop0, $pop1
 	i32.store8	$discard=, d+3($1), $pop2
 	return
+	.endfunc
 .Lfunc_end161:
 	.size	fn9_h, .Lfunc_end161-fn9_h
 
@@ -3061,6 +3223,7 @@ fn1_i:                                  # @fn1_i
 	i32.or  	$push5=, $3, $pop4
 	i32.store	$discard=, b($1), $pop5
 	return
+	.endfunc
 .Lfunc_end162:
 	.size	fn1_i, .Lfunc_end162-fn1_i
 
@@ -3086,6 +3249,7 @@ fn2_i:                                  # @fn2_i
 	i32.or  	$push8=, $pop5, $pop7
 	i32.store	$discard=, b($1), $pop8
 	return
+	.endfunc
 .Lfunc_end163:
 	.size	fn2_i, .Lfunc_end163-fn2_i
 
@@ -3109,6 +3273,7 @@ fn3_i:                                  # @fn3_i
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, b($1), $pop6
 	return
+	.endfunc
 .Lfunc_end164:
 	.size	fn3_i, .Lfunc_end164-fn3_i
 
@@ -3131,6 +3296,7 @@ fn4_i:                                  # @fn4_i
 	i32.or  	$push5=, $3, $pop4
 	i32.store	$discard=, c($1), $pop5
 	return
+	.endfunc
 .Lfunc_end165:
 	.size	fn4_i, .Lfunc_end165-fn4_i
 
@@ -3156,6 +3322,7 @@ fn5_i:                                  # @fn5_i
 	i32.or  	$push8=, $pop5, $pop7
 	i32.store	$discard=, c($1), $pop8
 	return
+	.endfunc
 .Lfunc_end166:
 	.size	fn5_i, .Lfunc_end166-fn5_i
 
@@ -3179,6 +3346,7 @@ fn6_i:                                  # @fn6_i
 	i32.or  	$push6=, $pop3, $pop5
 	i32.store	$discard=, c($1), $pop6
 	return
+	.endfunc
 .Lfunc_end167:
 	.size	fn6_i, .Lfunc_end167-fn6_i
 
@@ -3196,6 +3364,7 @@ fn7_i:                                  # @fn7_i
 	i32.rem_u	$push2=, $pop0, $pop1
 	i32.store16	$discard=, d($1), $pop2
 	return
+	.endfunc
 .Lfunc_end168:
 	.size	fn7_i, .Lfunc_end168-fn7_i
 
@@ -3213,6 +3382,7 @@ fn8_i:                                  # @fn8_i
 	i32.rem_u	$push2=, $pop0, $pop1
 	i32.store8	$discard=, d+2($1), $pop2
 	return
+	.endfunc
 .Lfunc_end169:
 	.size	fn8_i, .Lfunc_end169-fn8_i
 
@@ -3230,6 +3400,7 @@ fn9_i:                                  # @fn9_i
 	i32.rem_u	$push2=, $pop0, $pop1
 	i32.store8	$discard=, d+3($1), $pop2
 	return
+	.endfunc
 .Lfunc_end170:
 	.size	fn9_i, .Lfunc_end170-fn9_i
 
@@ -3249,6 +3420,7 @@ main:                                   # @main
 	i32.const	$push2=, -1147377476
 	i32.store	$discard=, d($0), $pop2
 	return  	$0
+	.endfunc
 .Lfunc_end171:
 	.size	main, .Lfunc_end171-main
 
@@ -3280,5 +3452,5 @@ d:
 	.size	d, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

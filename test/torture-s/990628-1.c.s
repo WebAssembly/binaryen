@@ -9,6 +9,7 @@ num_records:                            # @num_records
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	num_records, .Lfunc_end0-num_records
 
@@ -33,6 +34,7 @@ fetch:                                  # @fetch
 	i32.select	$push7=, $pop5, $pop6, $0
 	i32.store	$discard=, sqlca($0), $pop7
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	fetch, .Lfunc_end1-fetch
 
@@ -82,6 +84,7 @@ load_data:                              # @load_data
 .LBB2_3:                                # %while.end
 	end_block                       # label0:
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	load_data, .Lfunc_end2-load_data
 
@@ -143,6 +146,7 @@ main:                                   # @main
 	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
@@ -176,5 +180,5 @@ data_ptr:
 	.size	data_ptr, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

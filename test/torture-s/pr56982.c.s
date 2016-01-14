@@ -9,6 +9,7 @@ baz:                                    # @baz
 	#APP
 	#NO_APP
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	baz, .Lfunc_end0-baz
 
@@ -46,6 +47,7 @@ f:                                      # @f
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
 
@@ -75,11 +77,12 @@ main:                                   # @main
 	i32.const	$4=, __stack_pointer
 	i32.store	$4=, 0($4), $4
 	return  	$pop1
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 	.type	env,@object             # @env
 	.lcomm	env,156,4
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -12,6 +12,7 @@ foo:                                    # @foo
 	i32.const	$push1=, 65535
 	i32.and 	$push2=, $pop0, $pop1
 	return  	$pop2
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -31,6 +32,7 @@ bar:                                    # @bar
 	i32.and 	$push4=, $pop2, $pop3
 	i32.store	$discard=, v($0), $pop4
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -59,6 +61,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
@@ -81,5 +84,5 @@ w:
 	.size	w, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

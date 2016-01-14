@@ -28,6 +28,7 @@ t:                                      # @t
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	t, .Lfunc_end0-t
 
@@ -51,6 +52,7 @@ main:                                   # @main
 	br      	0               # 0: up to label2
 .LBB1_2:
 	end_loop                        # label3:
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -64,5 +66,5 @@ a:
 	.size	a, 1004
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

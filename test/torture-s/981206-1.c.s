@@ -12,6 +12,7 @@ foo:                                    # @foo
 	i32.store8	$push1=, x($0), $pop0
 	i32.store8	$discard=, y($0), $pop1
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -29,6 +30,7 @@ main:                                   # @main
 	i32.store8	$discard=, y($0), $pop1
 	call    	exit@FUNCTION, $0
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -37,5 +39,5 @@ main:                                   # @main
 	.type	y,@object               # @y
 	.lcomm	y,1
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

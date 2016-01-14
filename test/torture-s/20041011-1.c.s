@@ -93,6 +93,7 @@ t1:                                     # @t1
 .LBB0_4:                                # %while.end
 	end_block                       # label0:
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	t1, .Lfunc_end0-t1
 
@@ -188,6 +189,7 @@ t2:                                     # @t2
 .LBB1_4:                                # %while.end
 	end_block                       # label3:
 	return  	$1
+	.endfunc
 .Lfunc_end1:
 	.size	t2, .Lfunc_end1-t2
 
@@ -284,6 +286,7 @@ t3:                                     # @t3
 .LBB2_4:                                # %while.end
 	end_block                       # label6:
 	return  	$1
+	.endfunc
 .Lfunc_end2:
 	.size	t3, .Lfunc_end2-t3
 
@@ -379,6 +382,7 @@ t4:                                     # @t4
 .LBB3_4:                                # %while.end
 	end_block                       # label9:
 	return  	$1
+	.endfunc
 .Lfunc_end3:
 	.size	t4, .Lfunc_end3-t4
 
@@ -473,6 +477,7 @@ t5:                                     # @t5
 .LBB4_4:                                # %while.end
 	end_block                       # label12:
 	return  	$1
+	.endfunc
 .Lfunc_end4:
 	.size	t5, .Lfunc_end4-t5
 
@@ -567,6 +572,7 @@ t6:                                     # @t6
 .LBB5_4:                                # %while.end
 	end_block                       # label15:
 	return  	$1
+	.endfunc
 .Lfunc_end5:
 	.size	t6, .Lfunc_end5-t6
 
@@ -662,6 +668,7 @@ t7:                                     # @t7
 .LBB6_4:                                # %while.end
 	end_block                       # label18:
 	return  	$1
+	.endfunc
 .Lfunc_end6:
 	.size	t7, .Lfunc_end6-t7
 
@@ -758,6 +765,7 @@ t8:                                     # @t8
 .LBB7_4:                                # %while.end
 	end_block                       # label21:
 	return  	$1
+	.endfunc
 .Lfunc_end7:
 	.size	t8, .Lfunc_end7-t8
 
@@ -853,6 +861,7 @@ t9:                                     # @t9
 .LBB8_4:                                # %while.end
 	end_block                       # label24:
 	return  	$1
+	.endfunc
 .Lfunc_end8:
 	.size	t9, .Lfunc_end8-t9
 
@@ -949,6 +958,7 @@ t10:                                    # @t10
 .LBB9_4:                                # %while.end
 	end_block                       # label27:
 	return  	$1
+	.endfunc
 .Lfunc_end9:
 	.size	t10, .Lfunc_end9-t10
 
@@ -1045,6 +1055,7 @@ t11:                                    # @t11
 .LBB10_4:                               # %while.end
 	end_block                       # label30:
 	return  	$1
+	.endfunc
 .Lfunc_end10:
 	.size	t11, .Lfunc_end10-t11
 
@@ -1059,6 +1070,7 @@ neg:                                    # @neg
 	i64.const	$push0=, 0
 	i64.sub 	$push1=, $pop0, $0
 	return  	$pop1
+	.endfunc
 .Lfunc_end11:
 	.size	neg, .Lfunc_end11-neg
 
@@ -1316,6 +1328,7 @@ main:                                   # @main
 	end_block                       # label33:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end12:
 	.size	main, .Lfunc_end12-main
 
@@ -1338,5 +1351,5 @@ gull:
 	.size	gull, 8
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

@@ -13,6 +13,7 @@ my_alloc:                               # @my_alloc
 	i32.const	$push1=, i
 	i32.store	$discard=, 0($0), $pop1
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	my_alloc, .Lfunc_end0-my_alloc
 
@@ -44,6 +45,7 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
@@ -57,5 +59,5 @@ i:
 	.size	i, 4
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits

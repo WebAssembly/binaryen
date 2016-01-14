@@ -23,6 +23,7 @@ fake_swap32:                            # @fake_swap32
 	i32.and 	$push3=, $pop2, $2
 	i32.or  	$push8=, $pop7, $pop3
 	return  	$pop8
+	.endfunc
 .Lfunc_end0:
 	.size	fake_swap32, .Lfunc_end0-fake_swap32
 
@@ -46,9 +47,10 @@ main:                                   # @main
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.8.0 "
+	.ident	"clang version 3.9.0 "
 	.section	".note.GNU-stack","",@progbits
