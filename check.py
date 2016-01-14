@@ -276,10 +276,23 @@ if torture:
       fails=os.path.abspath(os.path.join('test', 's2wasm_known_gcc_test_failures.txt')),
       out=s2wasm_torture_out)
   assert os.path.isdir(s2wasm_torture_out), 'Expected output directory %s' % s2wasm_torture_out
+  # execute it TODO: parallelize
+  known_failures = set(open(os.path.join('test', 's2wasm_known_binaryen_shell_test_failures.txt')).read().split('\n'))
+  total = 0
+  bad_failures = []
   for wast in sorted(os.listdir(s2wasm_torture_out)):
-    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join(s2wasm_torture_out, wast)] #, '--entry=main']
+    total += 1
+    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join(s2wasm_torture_out, wast), '--entry=main']
     print ' '.join(cmd)
-    subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+      subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except:
+      if wast not in known_failures:
+        bad_failures.append(wast)
+  if len(bad_failures) > 0:
+    print '\nbad failures:\n'
+    print '\n'.join(bad_failures)
+    raise Exception('bad failures :( %d out of %d' % (len(bad_failures), total))
   shutil.rmtree(s2wasm_torture_out)
   if unexpected_result_count:
     fail(unexpected_result_count, 0)
