@@ -1127,11 +1127,12 @@ public:
       case BinaryConsts::Unreachable:  return visitUnreachable((curr = allocator.alloc<Unreachable>())->cast<Unreachable>());
     }
     // otherwise, the code is a subcode TODO: optimize
-    maybeVisit<Binary>(curr, code);
-    maybeVisit<Unary>(curr, code);
-    maybeVisit<Load>(curr, code);
-    maybeVisit<Store>(curr, code);
-    maybeVisit<Host>(curr, code);
+    if (maybeVisit<Binary>(curr, code)) return;
+    if (maybeVisit<Unary>(curr, code)) return;
+    if (maybeVisit<Const>(curr, code)) return;
+    if (maybeVisit<Load>(curr, code)) return;
+    if (maybeVisit<Store>(curr, code)) return;
+    if (maybeVisit<Host>(curr, code)) return;
     abort();
   }
 
