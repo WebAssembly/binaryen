@@ -596,7 +596,7 @@ public:
     for (int i = breakStack.size() - 1; i >= 0; i--) {
       if (breakStack[i] == curr->name) {
         o << int8_t(breakStack.size() - 1 - i);
-        return;
+        break;
       }
     }
     if (curr->condition) recurse(curr->condition);
