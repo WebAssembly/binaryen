@@ -1027,6 +1027,8 @@ public:
       if (import) {
         auto imp = allocator.alloc<Import>();
         imp->name = name;
+        imp->module = ENV;
+        imp->base = name;
         imp->type = type;
         wasm.addImport(imp);
       } else {
@@ -1153,9 +1155,9 @@ public:
         assert(target.is());
         if (debug) std::cerr << "call(import?) target: " << target << std::endl;
         if (wasm.importsMap.find(target) == wasm.importsMap.end()) {
+          assert(wasm.functionsMap.find(target) != wasm.functionsMap.end());
           return visitCall((curr = allocator.alloc<Call>())->cast<Call>(), target);
         } else {
-          assert(wasm.functionsMap.find(target) != wasm.functionsMap.end());
           return visitCallImport((curr = allocator.alloc<CallImport>())->cast<CallImport>(), target);
         }
       }
@@ -1259,8 +1261,7 @@ public:
   void visitCallImport(CallImport *curr, Name target) {
     if (debug) std::cerr << "CallImport" << std::endl;
     curr->target = target;
-    Name type = wasm.functionsMap[curr->target]->type;
-    auto num = wasm.functionTypesMap[type]->params.size();
+    auto num = wasm.importsMap[curr->target]->type->params.size();
     for (size_t i = 0; i < num; i++) {
       Expression* operand;
       readExpression(operand);
