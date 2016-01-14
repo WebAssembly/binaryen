@@ -443,7 +443,7 @@ public:
     size_t total = wasm->imports.size() + wasm->functions.size();
     o << int8_t(BinaryConsts::Functions) << LEB128(total);
     for (size_t i = 0; i < total; i++) {
-      if (debug) std::cerr << "write one" << std::endl;
+      if (debug) std::cerr << "write one at" << pos << std::endl;
       Import* import = i < wasm->imports.size() ? wasm->imports[i] : nullptr;
       Function* function = i >= wasm->imports.size() ? wasm->functions[i - wasm->imports.size()] : nullptr;
       Name name, type;
@@ -1000,9 +1000,6 @@ public:
   }
 
   std::vector<Name> mappedFunctions; // index => name of the Import or Function
-  std::vector<Name> mappedLocals; // index => local name in compact form of [all int32s][all int64s]etc
-
-  std::vector<Name> breakStack;
 
   size_t nextLabel;
 
@@ -1015,7 +1012,7 @@ public:
     verifyInt8(BinaryConsts::Functions);
     size_t total = getLEB128(); // imports and functions
     for (size_t i = 0; i < total; i++) {
-      if (debug) std::cerr << "read one" << std::endl;
+      if (debug) std::cerr << "read one at " << pos << std::endl;
       auto type = wasm.functionTypes[getInt16()];
       auto data = getInt8();
       bool named = data & BinaryConsts::Named;
@@ -1035,15 +1032,14 @@ public:
         auto func = allocator.alloc<Function>();
         func->name = name;
         func->type = type->name;
+        size_t nextVar = 0;
         auto addVar = [&]() {
-          Name name = cashew::IString(("var$" + std::to_string(mappedLocals.size())).c_str(), false);
-          mappedLocals.push_back(name);
+          Name name = cashew::IString(("var$" + std::to_string(nextVar++)).c_str(), false);
           return name;
         };
         for (size_t j = 0; j < type->params.size(); j++) {
           func->params.emplace_back(addVar(), type->params[j]);
         }
-        std::map<WasmType, size_t> numLocalsByType; // type => number of locals of that type in the compact form
         if (locals) {
           auto addLocals = [&](WasmType type) {
             int16_t num = getInt16();
@@ -1082,11 +1078,23 @@ public:
 
   std::vector<FunctionData> functions;
 
+  std::vector<Name> mappedLocals; // index => local name
+
+  std::vector<Name> breakStack;
+
   void processFunctions() {
     for (auto& func : functions) {
       Function* curr = func.func;
       pos = func.pos;
       nextLabel = 0;
+      // prepare locals
+      for (size_t i = 0; i < curr->params.size(); i++) {
+        mappedLocals.push_back(curr[i]);
+      }
+      for (size_t i = 0; i < curr->locals.size(); i++) {
+        mappedLocals.push_back(curr[i]);
+      }
+      // process body
       assert(breakStack.empty());
       readExpression(curr->body);
       assert(breakStack.empty());
