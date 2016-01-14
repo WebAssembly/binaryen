@@ -329,7 +329,7 @@ enum MemoryAccess {
 
 } // namespace BinaryConsts
 
-char binaryWasmType(WasmType type) {
+int8_t binaryWasmType(WasmType type) {
   switch (type) {
     case none: return 0;
     case i32: return 1;
