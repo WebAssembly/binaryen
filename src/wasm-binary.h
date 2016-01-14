@@ -1321,10 +1321,12 @@ public:
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
     curr->name = mappedLocals[getLEB128()];
+    assert(curr->name.is());
   }
   void visitSetLocal(SetLocal *curr) {
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
     curr->name = mappedLocals[getLEB128()];
+    assert(curr->name.is());
     readExpression(curr->value);
   }
 
