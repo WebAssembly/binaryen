@@ -873,43 +873,49 @@ public:
     readEnd();
   }
 
-  int8_t getInt8() {
+  uint8_t getInt8() {
     assert(pos < input.size());
     if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << std::endl;
     return input[pos++];
   }
-  int16_t getInt16() {
-    auto ret = int16_t(getInt8()) | (int16_t(getInt8()) << 8);
-    if (debug) std::cerr << "getInt16: " << ret << std::endl;
+  uint16_t getInt16() {
+    if (debug) std::cerr << "<==" << std::endl;
+    auto ret = uint16_t(getInt8()) | (uint16_t(getInt8()) << 8);
+    if (debug) std::cerr << "getInt16: " << ret << " ==>" << std::endl;
     return ret;
   }
-  int32_t getInt32() {
-    auto ret = int32_t(getInt16()) | (int32_t(getInt16()) << 16);
-    if (debug) std::cerr << "getInt32: " << ret << std::endl;
+  uint32_t getInt32() {
+    if (debug) std::cerr << "<==" << std::endl;
+    auto ret = uint32_t(getInt16()) | (uint32_t(getInt16()) << 16);
+    if (debug) std::cerr << "getInt32: " << ret << " ==>" << std::endl;
     return ret;
   }
-  int64_t getInt64() {
-    auto ret = int64_t(getInt32()) | (int64_t(getInt32()) << 32);
-    if (debug) std::cerr << "getInt64: " << ret << std::endl;
+  uint64_t getInt64() {
+    if (debug) std::cerr << "<==" << std::endl;
+    auto ret = uint64_t(getInt32()) | (uint64_t(getInt32()) << 32);
+    if (debug) std::cerr << "getInt64: " << ret << " ==>" << std::endl;
     return ret;
   }
   float getFloat32() {
+    if (debug) std::cerr << "<==" << std::endl;
     auto ret = Literal(getInt32()).reinterpretf32();
-    if (debug) std::cerr << "getFloat32: " << ret << std::endl;
+    if (debug) std::cerr << "getFloat32: " << ret << " ==>" << std::endl;
     return ret;
   }
   double getFloat64() {
+    if (debug) std::cerr << "<==" << std::endl;
     auto ret = Literal(getInt64()).reinterpretf64();
-    if (debug) std::cerr << "getFloat64: " << ret << std::endl;
+    if (debug) std::cerr << "getFloat64: " << ret << " ==>" << std::endl;
     return ret;
   }
 
-  int32_t getLEB128() {
+  uint32_t getLEB128() {
+    if (debug) std::cerr << "<==" << std::endl;
     LEB128 ret;
     ret.read([&]() {
       return getInt8();
     });
-    if (debug) std::cerr << "getLEB128: " << ret.value << std::endl;
+    if (debug) std::cerr << "getLEB128: " << ret.value << " ==>" << std::endl;
     return ret.value;
   }
   WasmType getWasmType() {
@@ -925,9 +931,10 @@ public:
   }
 
   Name getString() {
+    if (debug) std::cerr << "<==" << std::endl;
     size_t offset = getInt32();
     Name ret = cashew::IString((&input[0]) + offset, false);
-    if (debug) std::cerr << "getString: " << ret << std::endl;
+    if (debug) std::cerr << "getString: " << ret << " ==>" << std::endl;
     return ret;
   }
 
@@ -1063,7 +1070,7 @@ public:
     if (debug) std::cerr << "== readDataSegments" << std::endl;
     verifyInt8(BinaryConsts::DataSegments);
     auto num = getLEB128();
-    for (auto i = 0; i < num; i++) {
+    for (size_t i = 0; i < num; i++) {
       auto curr = allocator.alloc<Memory::Segment>();
       curr->offset = getInt32();
       auto start = getInt32();
@@ -1080,7 +1087,7 @@ public:
     if (debug) std::cerr << "== readFunctionTable" << std::endl;
     verifyInt8(BinaryConsts::FunctionTable);
     auto num = getLEB128();
-    for (auto i = 0; i < num; i++) {
+    for (size_t i = 0; i < num; i++) {
       wasm.table.names.push_back(mappedFunctions[getInt16()]);
     }
   }
