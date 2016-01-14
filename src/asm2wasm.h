@@ -1489,8 +1489,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 void Asm2WasmBuilder::optimize() {
   // Optimization passes. Note: no effort is made to free nodes that are no longer held on to.
 
-  struct BlockBreakOptimizer : public WasmWalker {
-    void visitBlock(Block *curr) override {
+  struct BlockBreakOptimizer : public WasmWalker<BlockBreakOptimizer, void> {
+    void visitBlock(Block *curr) {
       // if the block ends in a break on this very block, then just put the value there
       Break *last = curr->list[curr->list.size()-1]->dyn_cast<Break>();
       if (last && last->value && last->name == curr->name) {
@@ -1504,13 +1504,13 @@ void Asm2WasmBuilder::optimize() {
       }
       // we might be broken to, but maybe there isn't a break (and we may have removed it, leading to this)
 
-      struct BreakSeeker : public WasmWalker {
+      struct BreakSeeker : public WasmWalker<BreakSeeker, void> {
         IString target; // look for this one
         size_t found;
 
         BreakSeeker(IString target) : target(target), found(false) {}
 
-        void visitBreak(Break *curr) override {
+        void visitBreak(Break *curr) {
           if (curr->name == target) found++;
         }
       };

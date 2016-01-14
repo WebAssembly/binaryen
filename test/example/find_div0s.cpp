@@ -38,7 +38,7 @@ int main() {
 
   // Search it for divisions by zero: Walk the module, looking for
   // that operation.
-  struct DivZeroSeeker : public WasmWalker {
+  struct DivZeroSeeker : public WasmWalker<DivZeroSeeker, void> {
     void visitBinary(Binary* curr) {
       // In every Binary, look for integer divisions
       if (curr->op == BinaryOp::DivS || curr->op == BinaryOp::DivU) {

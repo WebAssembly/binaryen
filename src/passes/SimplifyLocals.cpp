@@ -23,8 +23,8 @@
 
 namespace wasm {
 
-struct SimplifyLocals : public WalkerPass<WasmWalker> {
-  void visitBlock(Block *curr) override {
+struct SimplifyLocals : public WalkerPass<WasmWalker<SimplifyLocals, void> > {
+  void visitBlock(Block *curr) {
     // look for pairs of setlocal-getlocal, which can be just a setlocal (since it returns a value)
     if (curr->list.size() == 0) return;
     for (size_t i = 0; i < curr->list.size() - 1; i++) {

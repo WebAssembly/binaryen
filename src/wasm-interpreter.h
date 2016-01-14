@@ -173,14 +173,14 @@ private:
 #endif
 
     // Execute a statement
-    class ExpressionRunner : public WasmVisitor<Flow> {
+    class ExpressionRunner : public WasmVisitor<ExpressionRunner, Flow> {
       ModuleInstance& instance;
       FunctionScope& scope;
 
     public:
       ExpressionRunner(ModuleInstance& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
 
-      Flow visitBlock(Block *curr) override {
+      Flow visitBlock(Block *curr) {
         NOTE_ENTER("Block");
         Flow flow;
         for (auto expression : curr->list) {
@@ -192,7 +192,7 @@ private:
         }
         return flow;
       }
-      Flow visitIf(If *curr) override {
+      Flow visitIf(If *curr) {
         NOTE_ENTER("If");
         Flow flow = visit(curr->condition);
         if (flow.breaking()) return flow;
@@ -205,7 +205,7 @@ private:
         if (curr->ifFalse) return visit(curr->ifFalse);
         return Flow();
       }
-      Flow visitLoop(Loop *curr) override {
+      Flow visitLoop(Loop *curr) {
         NOTE_ENTER("Loop");
         while (1) {
           Flow flow = visit(curr->body);
@@ -216,7 +216,7 @@ private:
           return flow; // loop does not loop automatically, only continue achieves that
         }
       }
-      Flow visitBreak(Break *curr) override {
+      Flow visitBreak(Break *curr) {
         NOTE_ENTER("Break");
         bool condition = true;
         if (curr->condition) {
@@ -232,7 +232,7 @@ private:
         }
         return condition ? flow : Flow();
       }
-      Flow visitSwitch(Switch *curr) override {
+      Flow visitSwitch(Switch *curr) {
         NOTE_ENTER("Switch");
         Flow flow = visit(curr->value);
         if (flow.breaking()) {
@@ -281,7 +281,7 @@ private:
         return Flow();
       }
 
-      Flow visitCall(Call *curr) override {
+      Flow visitCall(Call *curr) {
         NOTE_ENTER("Call");
         NOTE_NAME(curr->target);
         LiteralList arguments;
@@ -293,14 +293,14 @@ private:
 #endif
         return ret;
       }
-      Flow visitCallImport(CallImport *curr) override {
+      Flow visitCallImport(CallImport *curr) {
         NOTE_ENTER("CallImport");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
         return instance.externalInterface->callImport(instance.wasm.importsMap[curr->target], arguments);
       }
-      Flow visitCallIndirect(CallIndirect *curr) override {
+      Flow visitCallIndirect(CallIndirect *curr) {
         NOTE_ENTER("CallIndirect");
         Flow target = visit(curr->target);
         if (target.breaking()) return target;
@@ -315,14 +315,14 @@ private:
         return instance.callFunction(name, arguments);
       }
 
-      Flow visitGetLocal(GetLocal *curr) override {
+      Flow visitGetLocal(GetLocal *curr) {
         NOTE_ENTER("GetLocal");
         IString name = curr->name;
         NOTE_NAME(name);
         NOTE_EVAL1(scope.locals[name]);
         return scope.locals[name];
       }
-      Flow visitSetLocal(SetLocal *curr) override {
+      Flow visitSetLocal(SetLocal *curr) {
         NOTE_ENTER("SetLocal");
         IString name = curr->name;
         Flow flow = visit(curr->value);
@@ -333,13 +333,13 @@ private:
         scope.locals[name] = flow.value;
         return flow;
       }
-      Flow visitLoad(Load *curr) override {
+      Flow visitLoad(Load *curr) {
         NOTE_ENTER("Load");
         Flow flow = visit(curr->ptr);
         if (flow.breaking()) return flow;
         return instance.externalInterface->load(curr, instance.getFinalAddress(curr, flow.value));
       }
-      Flow visitStore(Store *curr) override {
+      Flow visitStore(Store *curr) {
         NOTE_ENTER("Store");
         Flow ptr = visit(curr->ptr);
         if (ptr.breaking()) return ptr;
@@ -348,12 +348,12 @@ private:
         instance.externalInterface->store(curr, instance.getFinalAddress(curr, ptr.value), value.value);
         return value;
       }
-      Flow visitConst(Const *curr) override {
+      Flow visitConst(Const *curr) {
         NOTE_ENTER("Const");
         NOTE_EVAL1(curr->value);
         return Flow(curr->value); // heh
       }
-      Flow visitUnary(Unary *curr) override {
+      Flow visitUnary(Unary *curr) {
         NOTE_ENTER("Unary");
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
@@ -434,7 +434,7 @@ private:
         }
         abort();
       }
-      Flow visitBinary(Binary *curr) override {
+      Flow visitBinary(Binary *curr) {
         NOTE_ENTER("Binary");
         Flow flow = visit(curr->left);
         if (flow.breaking()) return flow;
@@ -612,7 +612,7 @@ private:
         }
         abort();
       }
-      Flow visitSelect(Select *curr) override {
+      Flow visitSelect(Select *curr) {
         NOTE_ENTER("Select");
         Flow condition = visit(curr->condition);
         if (condition.breaking()) return condition;
@@ -623,7 +623,7 @@ private:
         if (ifFalse.breaking()) return ifFalse;
         return condition.value.geti32() ? ifTrue : ifFalse; // ;-)
       }
-      Flow visitHost(Host *curr) override {
+      Flow visitHost(Host *curr) {
         NOTE_ENTER("Host");
         switch (curr->op) {
           case PageSize:   return Literal((int32_t)pageSize);
@@ -649,11 +649,11 @@ private:
           default: abort();
         }
       }
-      Flow visitNop(Nop *curr) override {
+      Flow visitNop(Nop *curr) {
         NOTE_ENTER("Nop");
         return Flow();
       }
-      Flow visitUnreachable(Unreachable *curr) override {
+      Flow visitUnreachable(Unreachable *curr) {
         NOTE_ENTER("Unreachable");
         trap("unreachable");
         return Flow();

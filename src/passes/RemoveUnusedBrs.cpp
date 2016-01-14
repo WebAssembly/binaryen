@@ -23,11 +23,11 @@
 
 namespace wasm {
 
-struct RemoveUnusedBrs : public WalkerPass<WasmWalker> {
+struct RemoveUnusedBrs : public WalkerPass<WasmWalker<RemoveUnusedBrs, void> > {
   // preparation: try to unify branches, as the fewer there are, the higher a chance we can remove them
   // specifically for if-else, turn an if-else with branches to the same target at the end of each
   // child, and with a value, to a branch to that target containing the if-else
-  void visitIf(If* curr) override {
+  void visitIf(If* curr) {
     if (!curr->ifFalse) return;
     if (curr->type != none) return; // already has a returned value
     // an if_else that indirectly returns a value by breaking to the same target can potentially remove both breaks, and break outside once
@@ -63,7 +63,7 @@ struct RemoveUnusedBrs : public WalkerPass<WasmWalker> {
   }
 
   // main portion
-  void visitBlock(Block *curr) override {
+  void visitBlock(Block *curr) {
     if (curr->name.isNull()) return;
     if (curr->list.size() == 0) return;
     // preparation - remove all code after a break, since it can't execute, and it might confuse us (we look at the last)

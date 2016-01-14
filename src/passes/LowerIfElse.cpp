@@ -32,7 +32,7 @@
 
 namespace wasm {
 
-struct LowerIfElse : public WalkerPass<WasmWalker> {
+struct LowerIfElse : public WalkerPass<WasmWalker<LowerIfElse, void>> {
   MixedArena* allocator;
   std::unique_ptr<NameManager> namer;
 
@@ -42,7 +42,7 @@ struct LowerIfElse : public WalkerPass<WasmWalker> {
     namer->run(runner, module);
   }
 
-  void visitIf(If *curr) override {
+  void visitIf(If *curr) {
     if (curr->ifFalse) {
       auto block = allocator->alloc<Block>();
       auto name = namer->getUnique("L"); // TODO: getUniqueInFunction

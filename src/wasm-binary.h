@@ -323,7 +323,7 @@ char binaryWasmType(WasmType type) {
   }
 }
 
-class WasmBinaryWriter : public WasmVisitor<void> {
+class WasmBinaryWriter : public WasmVisitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
 

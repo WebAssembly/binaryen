@@ -89,20 +89,24 @@ struct PassRunner {
 // Core pass class
 //
 class Pass {
- public:
-  // Override this to perform preparation work before the pass runs
+public:
+  virtual ~Pass() {};
+  // Override this to perform preparation work before the pass runs.
   virtual void prepare(PassRunner* runner, Module* module) {}
-  virtual void run(PassRunner* runner, Module* module) { abort(); }
-  virtual ~Pass() {}
+  virtual void run(PassRunner* runner, Module* module) = 0;
+protected:
+  Pass() {}
+  Pass(Pass &) {}
+  Pass &operator=(const Pass&) = delete;
 };
 
 //
 // Core pass class that uses AST walking. This class can be parameterized by
 // different types of AST walkers.
 //
-template <class WalkerType>
+template <typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
- public:
+public:
   void run(PassRunner* runner, Module* module) override {
     prepare(runner, module);
     WalkerType::startWalk(module);
@@ -114,22 +118,22 @@ class WalkerPass : public Pass, public WalkerType {
 // e.g. through PassRunner::getLast
 
 // Handles names in a module, in particular adding names without duplicates
-class NameManager : public WalkerPass<WasmWalker> {
+class NameManager : public WalkerPass<WasmWalker<NameManager, void> > {
  public:
   Name getUnique(std::string prefix);
   // TODO: getUniqueInFunction
 
   // visitors
-  void visitBlock(Block* curr) override;
-  void visitLoop(Loop* curr) override;
-  void visitBreak(Break* curr) override;
-  void visitSwitch(Switch* curr) override;
-  void visitCall(Call* curr) override;
-  void visitCallImport(CallImport* curr) override;
-  void visitFunctionType(FunctionType* curr) override;
-  void visitFunction(Function* curr) override;
-  void visitImport(Import* curr) override;
-  void visitExport(Export* curr) override;
+  void visitBlock(Block* curr);
+  void visitLoop(Loop* curr);
+  void visitBreak(Break* curr);
+  void visitSwitch(Switch* curr);
+  void visitCall(Call* curr);
+  void visitCallImport(CallImport* curr);
+  void visitFunctionType(FunctionType* curr);
+  void visitFunction(Function* curr);
+  void visitImport(Import* curr);
+  void visitExport(Export* curr);
 
 private:
   std::set<Name> names;
