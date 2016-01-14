@@ -443,7 +443,7 @@ public:
     size_t total = wasm->imports.size() + wasm->functions.size();
     o << int8_t(BinaryConsts::Functions) << LEB128(total);
     for (size_t i = 0; i < total; i++) {
-      if (debug) std::cerr << "write one at" << pos << std::endl;
+      if (debug) std::cerr << "write one at" << o.size() << std::endl;
       Import* import = i < wasm->imports.size() ? wasm->imports[i] : nullptr;
       Function* function = i >= wasm->imports.size() ? wasm->functions[i - wasm->imports.size()] : nullptr;
       Name name, type;
@@ -470,7 +470,7 @@ public:
       }
       if (function) {
         size_t curr = o.size();
-        o << (uint32_t)0; // placeholder
+        o << (uint16_t)0; // placeholder
         visit(function->body);
         size_t size = o.size() - curr;
         assert(size <= std::numeric_limits<uint16_t>::max());
@@ -1089,10 +1089,10 @@ public:
       nextLabel = 0;
       // prepare locals
       for (size_t i = 0; i < curr->params.size(); i++) {
-        mappedLocals.push_back(curr[i]);
+        mappedLocals.push_back(curr->params[i].name);
       }
       for (size_t i = 0; i < curr->locals.size(); i++) {
-        mappedLocals.push_back(curr[i]);
+        mappedLocals.push_back(curr->locals[i].name);
       }
       // process body
       assert(breakStack.empty());
