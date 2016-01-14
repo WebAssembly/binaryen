@@ -454,6 +454,7 @@ public:
         name = function->name;
         type = function->type;
       }
+      if (debug) std::cerr << "writing" << name << std::endl;
       o << getFunctionTypeIndex(type);
       o << int8_t(BinaryConsts::Named |
                   (BinaryConsts::Import * !!import) |
@@ -526,6 +527,7 @@ public:
   }
 
   void emitString(const char *str) {
+    if (debug) std::cerr << "emitString " << str << std::endl;
     emitBuffer(str, strlen(str) + 1);
   }
 
@@ -1016,6 +1018,7 @@ public:
       bool locals = data & BinaryConsts::Locals;
       bool export_ = data & BinaryConsts::Export;
       Name name = getString();
+      if (debug) std::cerr << "reading" << name << std::endl;
       mappedFunctions.push_back(name);
       if (import) {
         auto imp = allocator.alloc<Import>();
