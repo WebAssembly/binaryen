@@ -63,6 +63,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory = (char*)calloc(wasm.memory.initial, 1);
     // apply memory segments
     for (auto segment : wasm.memory.segments) {
+      assert(segment.offset + segment.size <= wasm.memory.initial);
       memcpy(memory + segment.offset, segment.data, segment.size);
     }
   }
