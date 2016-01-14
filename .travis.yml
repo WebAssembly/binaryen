@@ -1,5 +1,8 @@
 sudo: false
 language: cpp
+python:
+  - "2.7"
+
 matrix:
   include:
 
@@ -32,6 +35,13 @@ matrix:
 before_install:
   - export CC="${CC}-${COMPILER_VERSION}"
   - export CXX="${CXX}-${COMPILER_VERSION}"
+
+install:
+  - pip install --user flake8
+
+before_script:
+  # Check the style of a subset of Python code until the other code is updated.
+  - flake8 update.py
 
 script:
   - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
