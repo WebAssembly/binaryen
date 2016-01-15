@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, shutil, sys, subprocess, difflib, json, time
+import os, shutil, sys, subprocess, difflib, json, time, urllib2
 
 interpreter = None
 requested = []
@@ -85,6 +85,35 @@ if not has_mozjs:
   warnings.append( 'warning: no mozjs found (not checking asm.js validation)')
 if not has_emcc:
   warnings.append('warning: no emcc found (not checking emscripten/binaryen integration)')
+
+# setup
+
+WATERFALL_BUILD = os.path.join('test', 'waterfall_build')
+
+def fetch_waterfall():
+  rev = open(os.path.join('test', 'revision')).read()
+  try:
+    local_rev = open(os.path.join('test', 'local-revision')).read()
+  except:
+    local_rev = None
+  if local_rev == rev: return
+  # fetch it
+  print '(downloading waterfall ' + rev + ')'
+  basename = 'wasm-binaries-' + rev + '.tbz2'
+  downloaded = urllib2.urlopen('https://storage.googleapis.com/wasm-llvm/builds/git/' + basename).read().strip()
+  fullname = os.path.join('test', basename)
+  open(fullname, 'wb').write(downloaded)
+  print '(unpacking)'
+  if os.path.exists(WATERFALL_BUILD):
+    shutil.rmtree(WATERFALL_BUILD)
+  os.mkdir(WATERFALL_BUILD)
+  subprocess.check_call(['tar', '-xvf', os.path.abspath(fullname)], cwd=WATERFALL_BUILD)
+  print '(noting local revision)'
+  open(os.path.join('test', 'local-revision'), 'w').write(rev)
+
+fetch_waterfall()
+
+# tests
 
 print '[ checking asm2wasm testcases... ]\n'
 
