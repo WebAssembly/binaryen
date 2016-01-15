@@ -235,7 +235,7 @@
                 )
                 (block $label$4
                   (if_else
-                    (none.ne
+                    (i32.ne
                       (get_local $var$0)
                       (get_local $var$0)
                     )
@@ -516,7 +516,7 @@
                     )
                     (block $label$9
                       (if_else
-                        (none.ne
+                        (i32.ne
                           (get_local $var$0)
                           (get_local $var$0)
                         )
@@ -917,7 +917,7 @@
                           )
                         )
                         (if_else
-                          (none.eq
+                          (i32.eq
                             (get_local $var$0)
                             (none.const ?)
                           )
@@ -931,7 +931,7 @@
                               )
                             )
                             (if_else
-                              (none.eq
+                              (i32.eq
                                 (get_local $var$0)
                                 (none.const ?)
                               )
@@ -1054,7 +1054,7 @@
                     )
                     (block $label$23
                       (if_else
-                        (none.eq
+                        (i32.eq
                           (get_local $var$0)
                           (get_local $var$0)
                         )
@@ -1071,7 +1071,7 @@
                             )
                           )
                           (if_else
-                            (none.eq
+                            (i32.eq
                               (get_local $var$0)
                               (none.const ?)
                             )
@@ -1088,7 +1088,7 @@
                                 )
                               )
                               (if_else
-                                (none.eq
+                                (i32.eq
                                   (get_local $var$0)
                                   (none.const ?)
                                 )
@@ -1154,7 +1154,7 @@
                                 )
                               )
                               (if_else
-                                (none.eq
+                                (i32.eq
                                   (get_local $var$0)
                                   (none.const ?)
                                 )
@@ -1294,7 +1294,7 @@
                             )
                           )
                           (if_else
-                            (none.eq
+                            (i32.eq
                               (get_local $var$0)
                               (i32.load align=4
                                 (get_local $var$0)
@@ -1306,7 +1306,7 @@
                                 (get_local $var$0)
                               )
                               (if
-                                (none.eq
+                                (i32.eq
                                   (get_local $var$0)
                                   (none.const ?)
                                 )
@@ -1372,7 +1372,7 @@
                                 )
                               )
                               (if
-                                (none.eq
+                                (i32.eq
                                   (get_local $var$0)
                                   (none.const ?)
                                 )
@@ -1884,7 +1884,7 @@
                   )
                   (block $label$55
                     (if_else
-                      (none.eq
+                      (i32.eq
                         (get_local $var$0)
                         (none.const ?)
                       )
@@ -1913,7 +1913,7 @@
                           (i32.shl
                             (get_local $var$0)
                             (if_else
-                              (none.eq
+                              (i32.eq
                                 (get_local $var$0)
                                 (none.const ?)
                               )
@@ -1965,7 +1965,7 @@
                                 )
                               )
                               (if_else
-                                (none.eq
+                                (i32.eq
                                   (get_local $var$0)
                                   (get_local $var$0)
                                 )
@@ -2030,11 +2030,11 @@
                             (set_local $var$0
                               (if_else
                                 (i32.or
-                                  (none.eq
+                                  (i32.eq
                                     (get_local $var$0)
                                     (none.const ?)
                                   )
-                                  (none.eq
+                                  (i32.eq
                                     (get_local $var$0)
                                     (get_local $var$0)
                                   )
@@ -2044,7 +2044,7 @@
                               )
                             )
                             (set_local $var$0
-                              (none.eq
+                              (i32.eq
                                 (get_local $var$0)
                                 (none.const ?)
                               )
@@ -2097,18 +2097,18 @@
                     )
                   )
                   (if
-                    (none.eq
+                    (i32.eq
                       (get_local $var$0)
                       (none.const ?)
                     )
                     (block $label$66
                       (if_else
                         (i32.and
-                          (none.eq
+                          (i32.eq
                             (get_local $var$0)
                             (none.const ?)
                           )
-                          (none.eq
+                          (i32.eq
                             (get_local $var$0)
                             (none.const ?)
                           )
@@ -2133,7 +2133,7 @@
                             )
                           )
                           (if
-                            (none.eq
+                            (i32.eq
                               (get_local $var$0)
                               (none.const ?)
                             )
@@ -2260,7 +2260,7 @@
                         )
                       )
                       (if_else
-                        (none.eq
+                        (i32.eq
                           (get_local $var$0)
                           (none.const ?)
                         )
@@ -2290,7 +2290,7 @@
                     )
                   )
                   (if
-                    (none.eq
+                    (i32.eq
                       (get_local $var$0)
                       (none.const ?)
                     )
@@ -2374,7 +2374,7 @@
                           )
                         )
                         (if_else
-                          (none.eq
+                          (i32.eq
                             (get_local $var$0)
                             (none.const ?)
                           )
@@ -2405,7 +2405,7 @@
                   )
                   (if_else
                     (if_else
-                      (none.ne
+                      (i32.ne
                         (get_local $var$0)
                         (none.const ?)
                       )
@@ -2482,7 +2482,7 @@
                       )
                       (block $label$78
                         (if_else
-                          (none.eq
+                          (i32.eq
                             (get_local $var$0)
                             (get_local $var$0)
                           )
@@ -2499,7 +2499,7 @@
                               )
                             )
                             (if_else
-                              (none.eq
+                              (i32.eq
                                 (get_local $var$0)
                                 (none.const ?)
                               )
@@ -2516,7 +2516,7 @@
                                   )
                                 )
                                 (if_else
-                                  (none.eq
+                                  (i32.eq
                                     (get_local $var$0)
                                     (none.const ?)
                                   )
@@ -2582,7 +2582,7 @@
                                   )
                                 )
                                 (if_else
-                                  (none.eq
+                                  (i32.eq
                                     (get_local $var$0)
                                     (none.const ?)
                                   )
@@ -2722,7 +2722,7 @@
                               )
                             )
                             (if_else
-                              (none.eq
+                              (i32.eq
                                 (get_local $var$0)
                                 (i32.load align=4
                                   (get_local $var$0)
@@ -2734,7 +2734,7 @@
                                   (get_local $var$0)
                                 )
                                 (if
-                                  (none.eq
+                                  (i32.eq
                                     (get_local $var$0)
                                     (none.const ?)
                                   )
@@ -2800,7 +2800,7 @@
                                   )
                                 )
                                 (if
-                                  (none.eq
+                                  (i32.eq
                                     (get_local $var$0)
                                     (none.const ?)
                                   )
@@ -3290,7 +3290,7 @@
                               (i32.shl
                                 (get_local $var$0)
                                 (if_else
-                                  (none.eq
+                                  (i32.eq
                                     (get_local $var$0)
                                     (none.const ?)
                                   )
@@ -3356,7 +3356,7 @@
                                   )
                                 )
                                 (if_else
-                                  (none.eq
+                                  (i32.eq
                                     (get_local $var$1)
                                     (none.const ?)
                                   )
@@ -3388,7 +3388,7 @@
                               )
                             )
                             (if_else
-                              (none.eq
+                              (i32.eq
                                 (get_local $var$0)
                                 (none.const ?)
                               )
@@ -3436,7 +3436,7 @@
                                 )
                               )
                               (if
-                                (none.eq
+                                (i32.eq
                                   (get_local $var$0)
                                   (none.const ?)
                                 )
@@ -3910,7 +3910,7 @@
       )
       (if
         (if_else
-          (none.ne
+          (i32.ne
             (get_local $var$0)
             (none.const ?)
           )
@@ -4047,7 +4047,7 @@
                         )
                       )
                       (if
-                        (none.eq
+                        (i32.eq
                           (get_local $var$0)
                           (none.const ?)
                         )
@@ -4087,7 +4087,7 @@
                         )
                       )
                       (if_else
-                        (none.eq
+                        (i32.eq
                           (get_local $var$0)
                           (i32.add
                             (i32.load align=4
@@ -4099,7 +4099,7 @@
                           )
                         )
                         (if
-                          (none.ne
+                          (i32.ne
                             (get_local $var$0)
                             (none.const ?)
                           )
@@ -4139,7 +4139,7 @@
             (block $label$143
               (if
                 (if_else
-                  (none.eq
+                  (i32.eq
                     (get_local $var$0)
                     (none.const ?)
                   )
@@ -4149,7 +4149,7 @@
                         (none.const ?)
                       )
                     )
-                    (none.ne
+                    (i32.ne
                       (get_local $var$0)
                       (none.const ?)
                     )
@@ -4240,7 +4240,7 @@
                       )
                       (if
                         (if_else
-                          (none.ne
+                          (i32.ne
                             (get_local $var$0)
                             (none.const ?)
                           )
@@ -4276,7 +4276,7 @@
                         )
                       )
                       (if_else
-                        (none.eq
+                        (i32.eq
                           (get_local $var$0)
                           (get_local $var$0)
                         )
@@ -4311,7 +4311,7 @@
             )
             (block $label$149
               (if
-                (none.eq
+                (i32.eq
                   (get_local $var$0)
                   (none.const ?)
                 )
@@ -4344,7 +4344,7 @@
                               )
                               (none.const ?)
                             )
-                            (none.ne
+                            (i32.ne
                               (get_local $var$0)
                               (none.const ?)
                             )
@@ -4384,7 +4384,7 @@
                         (none.const ?)
                       )
                       (if_else
-                        (none.eq
+                        (i32.eq
                           (call_import $_sbrk
                             (get_local $var$0)
                           )
@@ -4412,7 +4412,7 @@
                     )
                   )
                   (if
-                    (none.ne
+                    (i32.ne
                       (get_local $var$0)
                       (none.const ?)
                     )
@@ -4454,7 +4454,7 @@
         (if_else
           (if_else
             (if_else
-              (none.eq
+              (i32.eq
                 (get_local $var$0)
                 (none.const ?)
               )
@@ -4491,11 +4491,11 @@
                     )
                   )
                   (i32.and
-                    (none.ne
+                    (i32.ne
                       (get_local $var$0)
                       (none.const ?)
                     )
-                    (none.ne
+                    (i32.ne
                       (get_local $var$0)
                       (none.const ?)
                     )
@@ -4541,7 +4541,7 @@
         )
       )
       (if
-        (none.eq
+        (i32.eq
           (get_local $var$0)
           (none.const ?)
         )
@@ -4607,7 +4607,7 @@
                       )
                     )
                     (if
-                      (none.eq
+                      (i32.eq
                         (get_local $var$0)
                         (i32.add
                           (get_local $var$0)
@@ -4642,7 +4642,7 @@
                       )
                     )
                     (br_if
-                      (none.ne
+                      (i32.ne
                         (get_local $var$0)
                         (none.const ?)
                       )
@@ -4653,7 +4653,7 @@
                 (if
                   (if_else
                     (if_else
-                      (none.eq
+                      (i32.eq
                         (get_local $var$0)
                         (none.const ?)
                       )
@@ -4851,7 +4851,7 @@
                       )
                     )
                     (if
-                      (none.eq
+                      (i32.eq
                         (get_local $var$0)
                         (none.const ?)
                       )
@@ -4866,7 +4866,7 @@
                   )
                 )
                 (if
-                  (none.eq
+                  (i32.eq
                     (get_local $var$0)
                     (none.const ?)
                   )
@@ -4986,13 +4986,13 @@
                       )
                       (block $label$176
                         (if_else
-                          (none.ne
+                          (i32.ne
                             (get_local $var$0)
                             (get_local $var$0)
                           )
                           (block $label$177
                             (if
-                              (none.eq
+                              (i32.eq
                                 (get_local $var$0)
                                 (i32.load align=4
                                   (none.const ?)
@@ -5092,7 +5092,7 @@
                                       )
                                       (block $label$182
                                         (if_else
-                                          (none.eq
+                                          (i32.eq
                                             (get_local $var$0)
                                             (get_local $var$0)
                                           )
@@ -5115,7 +5115,7 @@
                                               )
                                             )
                                             (if_else
-                                              (none.eq
+                                              (i32.eq
                                                 (get_local $var$0)
                                                 (none.const ?)
                                               )
@@ -5126,7 +5126,7 @@
                                                   )
                                                 )
                                                 (if_else
-                                                  (none.eq
+                                                  (i32.eq
                                                     (get_local $var$0)
                                                     (none.const ?)
                                                   )
@@ -5192,7 +5192,7 @@
                                                   )
                                                 )
                                                 (if_else
-                                                  (none.eq
+                                                  (i32.eq
                                                     (get_local $var$0)
                                                     (none.const ?)
                                                   )
@@ -5311,7 +5311,7 @@
                                         )
                                       )
                                       (if
-                                        (none.eq
+                                        (i32.eq
                                           (get_local $var$0)
                                           (none.const ?)
                                         )
@@ -5336,7 +5336,7 @@
                                       )
                                       (block $label$197
                                         (if_else
-                                          (none.ne
+                                          (i32.ne
                                             (get_local $var$0)
                                             (i32.load align=4
                                               (get_local $var$0)
@@ -5384,7 +5384,7 @@
                                               )
                                             )
                                             (if
-                                              (none.eq
+                                              (i32.eq
                                                 (get_local $var$0)
                                                 (none.const ?)
                                               )
@@ -5499,7 +5499,7 @@
                                         )
                                       )
                                       (if
-                                        (none.eq
+                                        (i32.eq
                                           (get_local $var$0)
                                           (none.const ?)
                                         )
@@ -5569,7 +5569,7 @@
                                       )
                                       (block $label$204
                                         (if
-                                          (none.ne
+                                          (i32.ne
                                             (get_local $var$0)
                                             (get_local $var$0)
                                           )
@@ -5604,7 +5604,7 @@
                                         )
                                       )
                                       (if
-                                        (none.eq
+                                        (i32.eq
                                           (get_local $var$0)
                                           (get_local $var$0)
                                         )
@@ -5629,7 +5629,7 @@
                                       )
                                       (block $label$207
                                         (if_else
-                                          (none.eq
+                                          (i32.eq
                                             (get_local $var$0)
                                             (get_local $var$0)
                                           )
@@ -5885,7 +5885,7 @@
                             )
                             (block $label$216
                               (if_else
-                                (none.eq
+                                (i32.eq
                                   (get_local $var$0)
                                   (none.const ?)
                                 )
@@ -6090,7 +6090,7 @@
                               (i32.shl
                                 (get_local $var$0)
                                 (if_else
-                                  (none.eq
+                                  (i32.eq
                                     (get_local $var$0)
                                     (none.const ?)
                                   )
@@ -6156,7 +6156,7 @@
                                   )
                                 )
                                 (if_else
-                                  (none.eq
+                                  (i32.eq
                                     (get_local $var$0)
                                     (none.const ?)
                                   )
@@ -6188,7 +6188,7 @@
                               )
                             )
                             (if_else
-                              (none.eq
+                              (i32.eq
                                 (get_local $var$0)
                                 (none.const ?)
                               )
@@ -6236,7 +6236,7 @@
                                 )
                               )
                               (if
-                                (none.eq
+                                (i32.eq
                                   (get_local $var$0)
                                   (none.const ?)
                                 )
@@ -6658,7 +6658,7 @@
                   )
                 )
                 (if
-                  (none.ne
+                  (i32.ne
                     (get_local $var$0)
                     (get_local $var$0)
                   )
@@ -7017,7 +7017,7 @@
                       (i32.shl
                         (get_local $var$0)
                         (if_else
-                          (none.eq
+                          (i32.eq
                             (get_local $var$0)
                             (none.const ?)
                           )
@@ -7083,7 +7083,7 @@
                           )
                         )
                         (if_else
-                          (none.eq
+                          (i32.eq
                             (get_local $var$0)
                             (none.const ?)
                           )
@@ -7115,7 +7115,7 @@
                       )
                     )
                     (if_else
-                      (none.eq
+                      (i32.eq
                         (get_local $var$0)
                         (none.const ?)
                       )
@@ -7163,7 +7163,7 @@
                         )
                       )
                       (if
-                        (none.eq
+                        (i32.eq
                           (get_local $var$0)
                           (none.const ?)
                         )
@@ -7258,7 +7258,7 @@
                 )
                 (if
                   (i32.or
-                    (none.eq
+                    (i32.eq
                       (get_local $var$0)
                       (none.const ?)
                     )
@@ -7338,7 +7338,7 @@
                       )
                     )
                     (br_if
-                      (none.ne
+                      (i32.ne
                         (get_local $var$0)
                         (none.const ?)
                       )
@@ -7636,7 +7636,7 @@
     (local $var$127 i32)
     (block $label$0
       (if
-        (none.eq
+        (i32.eq
           (get_local $var$0)
           (none.const ?)
         )
@@ -7681,7 +7681,7 @@
         )
       )
       (if
-        (none.eq
+        (i32.eq
           (get_local $var$0)
           (none.const ?)
         )
@@ -7715,7 +7715,7 @@
               )
             )
             (if
-              (none.eq
+              (i32.eq
                 (get_local $var$0)
                 (none.const ?)
               )
@@ -7750,7 +7750,7 @@
               (call_import $_abort)
             )
             (if
-              (none.eq
+              (i32.eq
                 (get_local $var$0)
                 (i32.load align=4
                   (none.const ?)
@@ -7861,7 +7861,7 @@
                   )
                 )
                 (if
-                  (none.ne
+                  (i32.ne
                     (get_local $var$0)
                     (get_local $var$0)
                   )
@@ -7894,7 +7894,7 @@
                   )
                 )
                 (if
-                  (none.eq
+                  (i32.eq
                     (get_local $var$0)
                     (get_local $var$0)
                   )
@@ -7924,7 +7924,7 @@
                   )
                 )
                 (if_else
-                  (none.ne
+                  (i32.ne
                     (get_local $var$0)
                     (get_local $var$0)
                   )
@@ -8006,7 +8006,7 @@
             )
             (block $label$9
               (if_else
-                (none.eq
+                (i32.eq
                   (get_local $var$0)
                   (get_local $var$0)
                 )
@@ -8029,7 +8029,7 @@
                     )
                   )
                   (if_else
-                    (none.eq
+                    (i32.eq
                       (get_local $var$0)
                       (none.const ?)
                     )
@@ -8040,7 +8040,7 @@
                         )
                       )
                       (if_else
-                        (none.eq
+                        (i32.eq
                           (get_local $var$0)
                           (none.const ?)
                         )
@@ -8106,7 +8106,7 @@
                         )
                       )
                       (if_else
-                        (none.eq
+                        (i32.eq
                           (get_local $var$0)
                           (none.const ?)
                         )
@@ -8245,7 +8245,7 @@
                   )
                 )
                 (if_else
-                  (none.eq
+                  (i32.eq
                     (get_local $var$0)
                     (i32.load align=4
                       (get_local $var$0)
@@ -8257,7 +8257,7 @@
                       (get_local $var$0)
                     )
                     (if
-                      (none.eq
+                      (i32.eq
                         (get_local $var$0)
                         (none.const ?)
                       )
@@ -8329,7 +8329,7 @@
                       )
                     )
                     (if
-                      (none.eq
+                      (i32.eq
                         (get_local $var$0)
                         (none.const ?)
                       )
@@ -8538,7 +8538,7 @@
         )
         (block $label$35
           (if
-            (none.eq
+            (i32.eq
               (get_local $var$0)
               (i32.load align=4
                 (none.const ?)
@@ -8572,7 +8572,7 @@
                 )
               )
               (if
-                (none.ne
+                (i32.ne
                   (get_local $var$0)
                   (i32.load align=4
                     (none.const ?)
@@ -8592,7 +8592,7 @@
             )
           )
           (if
-            (none.eq
+            (i32.eq
               (get_local $var$0)
               (i32.load align=4
                 (none.const ?)
@@ -8678,7 +8678,7 @@
                 )
                 (block $label$40
                   (if_else
-                    (none.eq
+                    (i32.eq
                       (get_local $var$0)
                       (get_local $var$0)
                     )
@@ -8701,7 +8701,7 @@
                         )
                       )
                       (if_else
-                        (none.eq
+                        (i32.eq
                           (get_local $var$0)
                           (none.const ?)
                         )
@@ -8712,7 +8712,7 @@
                             )
                           )
                           (if_else
-                            (none.eq
+                            (i32.eq
                               (get_local $var$0)
                               (none.const ?)
                             )
@@ -8778,7 +8778,7 @@
                             )
                           )
                           (if_else
-                            (none.eq
+                            (i32.eq
                               (get_local $var$0)
                               (none.const ?)
                             )
@@ -8921,7 +8921,7 @@
                       )
                     )
                     (if_else
-                      (none.eq
+                      (i32.eq
                         (get_local $var$0)
                         (i32.load align=4
                           (get_local $var$0)
@@ -8933,7 +8933,7 @@
                           (get_local $var$0)
                         )
                         (if
-                          (none.eq
+                          (i32.eq
                             (get_local $var$0)
                             (none.const ?)
                           )
@@ -8999,7 +8999,7 @@
                           )
                         )
                         (if
-                          (none.eq
+                          (i32.eq
                             (get_local $var$0)
                             (none.const ?)
                           )
@@ -9154,7 +9154,7 @@
                   )
                 )
                 (if
-                  (none.ne
+                  (i32.ne
                     (get_local $var$0)
                     (get_local $var$0)
                   )
@@ -9189,7 +9189,7 @@
                   )
                 )
                 (if
-                  (none.eq
+                  (i32.eq
                     (get_local $var$0)
                     (get_local $var$0)
                   )
@@ -9213,7 +9213,7 @@
                   )
                 )
                 (if_else
-                  (none.ne
+                  (i32.ne
                     (get_local $var$0)
                     (get_local $var$0)
                   )
@@ -9291,7 +9291,7 @@
             (get_local $var$0)
           )
           (if_else
-            (none.eq
+            (i32.eq
               (get_local $var$0)
               (i32.load align=4
                 (none.const ?)
@@ -9630,7 +9630,7 @@
               (i32.shl
                 (get_local $var$0)
                 (if_else
-                  (none.eq
+                  (i32.eq
                     (get_local $var$0)
                     (none.const ?)
                   )
@@ -9696,7 +9696,7 @@
                   )
                 )
                 (if_else
-                  (none.eq
+                  (i32.eq
                     (get_local $var$0)
                     (none.const ?)
                   )
@@ -9728,7 +9728,7 @@
               )
             )
             (if_else
-              (none.eq
+              (i32.eq
                 (get_local $var$0)
                 (none.const ?)
               )
@@ -9776,7 +9776,7 @@
                 )
               )
               (if
-                (none.eq
+                (i32.eq
                   (get_local $var$0)
                   (none.const ?)
                 )
@@ -9910,7 +9910,7 @@
         (get_local $var$0)
       )
       (if_else
-        (none.eq
+        (i32.eq
           (get_local $var$0)
           (none.const ?)
         )
@@ -9927,7 +9927,7 @@
             )
           )
           (if_else
-            (none.eq
+            (i32.eq
               (get_local $var$0)
               (none.const ?)
             )
@@ -10283,7 +10283,7 @@
             )
           )
           (if
-            (none.eq
+            (i32.eq
               (get_local $var$0)
               (get_local $var$0)
             )
@@ -10295,7 +10295,7 @@
             )
           )
           (if
-            (none.lt_s
+            (i32.lt_s
               (get_local $var$0)
               (none.const ?)
             )
@@ -10338,7 +10338,7 @@
               )
             )
             (if_else
-              (none.eq
+              (i32.eq
                 (get_local $var$0)
                 (none.const ?)
               )
@@ -10454,7 +10454,7 @@
         )
       )
       (if_else
-        (none.eq
+        (i32.eq
           (get_local $var$0)
           (none.const ?)
         )
@@ -10495,7 +10495,7 @@
           )
         )
         (if
-          (none.eq
+          (i32.eq
             (get_local $var$0)
             (none.const ?)
           )
@@ -10525,7 +10525,7 @@
               )
             )
             (if_else
-              (none.eq
+              (i32.eq
                 (get_local $var$0)
                 (none.const ?)
               )
@@ -10728,12 +10728,12 @@
         )
       )
       (if_else
-        (none.eq
+        (i32.eq
           (get_local $var$0)
           (none.const ?)
         )
         (if_else
-          (none.eq
+          (i32.eq
             (call $___towrite
               (get_local $var$0)
             )
@@ -10764,7 +10764,7 @@
       )
       (block $label$3
         (if
-          (none.eq
+          (i32.eq
             (get_local $var$0)
             (none.const ?)
           )
@@ -10838,7 +10838,7 @@
                   (loop $label$8 $label$9
                     (block $label$10
                       (if
-                        (none.eq
+                        (i32.eq
                           (get_local $var$3)
                           (none.const ?)
                         )
@@ -11177,7 +11177,7 @@
               )
             )
             (set_local $var$0
-              (none.eq
+              (i32.eq
                 (call $___lockfile
                   (get_local $var$0)
                 )
@@ -11232,7 +11232,7 @@
               )
             )
             (if_else
-              (none.eq
+              (i32.eq
                 (get_local $var$3)
                 (none.const ?)
               )
@@ -11315,7 +11315,7 @@
                       )
                     )
                     (if_else
-                      (none.eq
+                      (i32.eq
                         (get_local $var$0)
                         (none.const ?)
                       )
@@ -11605,7 +11605,7 @@
         )
       )
       (if
-        (none.eq
+        (i32.eq
           (get_local $var$3)
           (none.const ?)
         )
@@ -11945,12 +11945,12 @@
         )
       )
       (if_else
-        (none.eq
+        (i32.eq
           (get_local $var$0)
           (none.const ?)
         )
         (if_else
-          (none.eq
+          (i32.eq
             (call $___towrite
               (get_local $var$0)
             )
@@ -11981,7 +11981,7 @@
       )
       (block $label$3
         (if
-          (none.eq
+          (i32.eq
             (get_local $var$0)
             (none.const ?)
           )
@@ -12016,7 +12016,7 @@
                       (none.const ?)
                     )
                   )
-                  (none.ne
+                  (i32.ne
                     (get_local $var$0)
                     (i32.load8_s align=1
                       (i32.add
@@ -12047,7 +12047,7 @@
               )
             )
             (if_else
-              (none.eq
+              (i32.eq
                 (call_indirect $0
                   (i32.add
                     (i32.and
@@ -12622,7 +12622,7 @@
     (local $var$196 i32)
     (block $label$0
       (if
-        (none.ge_s
+        (i32.ge_s
           (get_local $var$0)
           (none.const ?)
         )
@@ -12655,7 +12655,7 @@
               )
               (block $label$5
                 (if
-                  (none.eq
+                  (i32.eq
                     (get_local $var$0)
                     (none.const ?)
                   )
@@ -12692,7 +12692,7 @@
           (loop $label$6 $label$7
             (block $label$8
               (if_else
-                (none.ge_s
+                (i32.ge_s
                   (get_local $var$0)
                   (none.const ?)
                 )
@@ -12733,7 +12733,7 @@
       (loop $label$10 $label$11
         (block $label$12
           (if_else
-            (none.gt_s
+            (i32.gt_s
               (get_local $var$0)
               (none.const ?)
             )
@@ -12982,7 +12982,7 @@
         )
       )
       (if
-        (none.ge_s
+        (i32.ge_s
           (get_local $var$0)
           (none.const ?)
         )
@@ -13044,7 +13044,7 @@
               (loop $label$3 $label$4
                 (block $label$5
                   (if_else
-                    (none.lt_s
+                    (i32.lt_s
                       (get_local $var$0)
                       (get_local $var$0)
                     )
@@ -13071,7 +13071,7 @@
           (loop $label$7 $label$8
             (block $label$9
               (if_else
-                (none.lt_s
+                (i32.lt_s
                   (get_local $var$0)
                   (get_local $var$0)
                 )
@@ -13098,7 +13098,7 @@
       (loop $label$11 $label$12
         (block $label$13
           (if_else
-            (none.lt_s
+            (i32.lt_s
               (get_local $var$0)
               (get_local $var$3)
             )
@@ -13357,7 +13357,7 @@
       )
       (block $label$1
         (if_else
-          (none.lt_s
+          (i32.lt_s
             (call $_fputs
               (get_local $var$0)
               (get_local $var$1)
@@ -13430,7 +13430,7 @@
               )
             )
             (set_local $var$3
-              (none.lt_s
+              (i32.lt_s
                 (call $___overflow
                   (get_local $var$1)
                   (none.const ?)
@@ -13726,7 +13726,7 @@
         (get_local $var$0)
       )
       (if_else
-        (none.lt_s
+        (i32.lt_s
           (call $___syscall_ret
             (call_import $___syscall140
               (none.const ?)
@@ -14310,7 +14310,7 @@
         )
         (block $label$1
           (set_local $var$0
-            (none.eq
+            (i32.eq
               (call $___lockfile
                 (get_local $var$0)
               )
@@ -14348,7 +14348,7 @@
         )
       )
       (if_else
-        (none.eq
+        (i32.eq
           (get_local $var$0)
           (get_local $var$4)
         )
@@ -14654,7 +14654,7 @@
                     (none.const ?)
                   )
                 )
-                (none.ne
+                (i32.ne
                   (call_import $___syscall54
                     (none.const ?)
                     (get_local $var$4)

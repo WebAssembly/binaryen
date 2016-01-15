@@ -1103,6 +1103,7 @@ public:
   std::vector<FunctionData> functions;
 
   std::vector<Name> mappedLocals; // index => local name
+  std::map<Name, WasmType> localTypes; // TODO: optimize
 
   std::vector<Name> breakStack;
 
@@ -1115,9 +1116,11 @@ public:
       // prepare locals
       for (size_t i = 0; i < curr->params.size(); i++) {
         mappedLocals.push_back(curr->params[i].name);
+        localTypes[curr->params[i].name] = curr->params[i].type;
       }
       for (size_t i = 0; i < curr->locals.size(); i++) {
         mappedLocals.push_back(curr->locals[i].name);
+        localTypes[curr->locals[i].name] = curr->locals[i].type;
       }
       // process body
       assert(breakStack.empty());
@@ -1243,7 +1246,10 @@ public:
     if (debug) std::cerr << "zz node: If" << std::endl;
     readExpression(curr->condition);
     readExpression(curr->ifTrue);
-    if (code == BinaryConsts::IfElse) readExpression(curr->ifFalse);
+    if (code == BinaryConsts::IfElse) {
+      readExpression(curr->ifFalse);
+      curr->type = curr->ifTrue->type;
+    }
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
@@ -1290,23 +1296,26 @@ public:
   void visitCall(Call *curr, Name target) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
     curr->target = target;
-    Name type = wasm.functionsMap[curr->target]->type;
-    auto num = wasm.functionTypesMap[type]->params.size();
+    auto type = wasm.functionTypesMap[wasm.functionsMap[curr->target]->type];
+    auto num = type->params.size();
     for (size_t i = 0; i < num; i++) {
       Expression* operand;
       readExpression(operand);
       curr->operands.push_back(operand);
     }
+    curr->type = type->result;
   }
   void visitCallImport(CallImport *curr, Name target) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
     curr->target = target;
-    auto num = wasm.importsMap[curr->target]->type->params.size();
+    auto type = wasm.importsMap[curr->target]->type;
+    auto num = type->params.size();
     for (size_t i = 0; i < num; i++) {
       Expression* operand;
       readExpression(operand);
       curr->operands.push_back(operand);
     }
+    curr->type = type->result;
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
@@ -1318,17 +1327,20 @@ public:
       readExpression(operand);
       curr->operands.push_back(operand);
     }
+    curr->type = curr->fullType->result;
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
     curr->name = mappedLocals[getLEB128()];
     assert(curr->name.is());
+    curr->type = localTypes[curr->name];
   }
   void visitSetLocal(SetLocal *curr) {
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
     curr->name = mappedLocals[getLEB128()];
     assert(curr->name.is());
     readExpression(curr->value);
+    curr->type = curr->value->type;
   }
 
   void readMemoryAccess(uint32_t& alignment, size_t bytes, uint32_t& offset) {
@@ -1491,6 +1503,7 @@ public:
     readExpression(curr->ifTrue);
     readExpression(curr->ifFalse);
     readExpression(curr->condition);
+    curr->type = curr->ifTrue->type;
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
     switch (code) {
