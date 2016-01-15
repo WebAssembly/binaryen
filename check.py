@@ -75,14 +75,16 @@ if len(requested) == 0:
 else:
   tests = requested[:]
 
+warnings = []
+
 if not interpreter:
-  print 'warning: no interpreter provided (not testing spec interpreter validation)'
+  warnings.append('warning: no interpreter provided (not testing spec interpreter validation)')
 if not has_node:
-  print 'warning: no node found (not checking proper js form)'
+  warnings.append( 'warning: no node found (not checking proper js form)')
 if not has_mozjs:
-  print 'warning: no mozjs found (not checking asm.js validation)'
+  warnings.append( 'warning: no mozjs found (not checking asm.js validation)')
 if not has_emcc:
-  print 'warning: no emcc found (not checking emscripten/binaryen integration)'
+  warnings.append('warning: no emcc found (not checking emscripten/binaryen integration)')
 
 print '[ checking asm2wasm testcases... ]\n'
 
@@ -432,3 +434,6 @@ if has_emcc:
                 fail(out, expected)
 
 print '\n[ success! ]'
+
+if warnings:
+  print warnings
