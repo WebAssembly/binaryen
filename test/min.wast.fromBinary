@@ -1,0 +1,31 @@
+(module
+  (memory 16777216 16777216)
+  (type $0 (func (param f32) (result f32)))
+  (type $1 (func (param i32 i32)))
+  (export "floats" $floats)
+  (func $floats (param $var$0 f32)
+    (local $var$1 f32)
+    (f32.add
+      (get_local $var$1)
+      (get_local $var$0)
+    )
+  )
+  (func $neg (param $var$0 i32) (param $var$1 i32)
+    (local $var$2 f32)
+    (local $var$3 f32)
+    (set_local $var$0
+      (f32.neg
+        (block $label$0
+          (i32.store align=4
+            (get_local $var$0)
+            (get_local $var$1)
+          )
+          (f32.load align=4
+            (get_local $var$0)
+          )
+        )
+      )
+    )
+  )
+)
+

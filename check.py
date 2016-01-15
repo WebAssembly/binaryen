@@ -295,6 +295,10 @@ for wast in tests:
     if os.path.exists('a.wast'): os.unlink('a.wast')
     subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert os.path.exists('a.wast')
+    expected = open(os.path.join('test', wast + '.fromBinary')).read()
+    actual = open('a.wast').read()
+    if actual != expected:
+      fail(actual, expected)
 
 print '\n[ checking example testcases... ]\n'
 
