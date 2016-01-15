@@ -17,13 +17,13 @@ matrix:
       compiler: clang
       addons: *clang36
 
-#    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=address"
-#      compiler: clang
-#      addons: *clang36
-#
-#    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=thread"
-#      compiler: clang
-#      addons: *clang36
+    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=address"
+      compiler: clang
+      addons: *clang36
+
+    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=thread"
+      compiler: clang
+      addons: *clang36
 
     - env: COMPILER_VERSION=5
       compiler: gcc
@@ -31,6 +31,11 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['cmake', 'g++-5']
+
+  allow_failures:
+    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=address"
+      compiler: clang
+      addons: *clang36
 
 before_install:
   - export CC="${CC}-${COMPILER_VERSION}"
