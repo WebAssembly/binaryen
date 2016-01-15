@@ -541,7 +541,7 @@ public:
   void finishUp() {
     if (debug) std::cerr << "finishUp" << std::endl;
     // finish buffers
-    for (auto& buffer : buffersToWrite) {
+    for (const auto& buffer : buffersToWrite) {
       if (debug) std::cerr << "writing buffer" << (int)buffer.data[0] << "," << (int)buffer.data[1] << " at " << o.size() << " and pointer is at " << buffer.pointerLocation << std::endl;
       o.writeAt(buffer.pointerLocation, (uint32_t)o.size());
       for (size_t i = 0; i < buffer.size; i++) {
@@ -552,7 +552,7 @@ public:
 
   // AST writing via visitors
 
-  int depth;
+  int depth; // only for debugging
 
   void recurse(Expression*& curr) {
     if (debug) std::cerr << "zz recurse into " << ++depth << " at " << o.size() << std::endl;
@@ -1161,7 +1161,7 @@ public:
 
   // AST reading
 
-  int depth;
+  int depth; // only for debugging
 
   void readExpression(Expression*& curr) {
     if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
