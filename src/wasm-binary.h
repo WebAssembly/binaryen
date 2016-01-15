@@ -1404,6 +1404,7 @@ public:
       case BinaryConsts::F64Const: curr->value.f64 = getFloat64(); curr->type = f64; break;
       default: return false;
     }
+    curr->value.type = curr->type;
     if (debug) std::cerr << "zz node: Const" << std::endl;
     return true;
   }
