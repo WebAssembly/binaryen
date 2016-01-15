@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-struct RemoveUnusedBrs : public WalkerPass<WasmWalker<RemoveUnusedBrs, void> > {
+struct RemoveUnusedBrs : public WalkerPass<WasmWalker<RemoveUnusedBrs>> {
   // preparation: try to unify branches, as the fewer there are, the higher a chance we can remove them
   // specifically for if-else, turn an if-else with branches to the same target at the end of each
   // child, and with a value, to a branch to that target containing the if-else

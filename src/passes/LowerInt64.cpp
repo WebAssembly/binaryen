@@ -178,27 +178,6 @@ struct LowerInt64 : public Pass {
       replaceCurrent(ret);
     }
   }
-  void visitConst(Const *curr) {
-  }
-  void visitUnary(Unary *curr) {
-  }
-  void visitBinary(Binary *curr) {
-  }
-  void visitSelect(Select *curr) {
-  }
-  void visitHost(Host *curr) {
-  }
-  void visitNop(Nop *curr) {
-  }
-  void visitUnreachable(Unreachable *curr) {
-  }
-
-  void visitFunctionType(FunctionType *curr) {
-  }
-  void visitImport(Import *curr) {
-  }
-  void visitExport(Export *curr) {
-  }
   void visitFunction(Function *curr) {
     // TODO: new params
     for (auto localPair : locals) { // TODO: ignore params
@@ -206,12 +185,6 @@ struct LowerInt64 : public Pass {
     }
     fixes.clear();
     locals.clear();
-  }
-  void visitTable(Table *curr) {
-  }
-  void visitMemory(Memory *curr) {
-  }
-  void visitModule(Module *curr) {
   }
 };
 

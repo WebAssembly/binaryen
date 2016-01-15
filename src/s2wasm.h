@@ -1102,7 +1102,7 @@ public:
 
     o << ";; METADATA: { ";
     // find asmConst calls, and emit their metadata
-    struct AsmConstWalker : public WasmWalker<AsmConstWalker, void> {
+    struct AsmConstWalker : public WasmWalker<AsmConstWalker> {
       S2WasmBuilder* parent;
 
       std::map<std::string, std::set<std::string>> sigsForCode;
