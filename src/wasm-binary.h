@@ -350,7 +350,7 @@ class WasmBinaryWriter : public WasmVisitor<void> {
 
   void prepare() {
     // we need function types for all our functions
-    for (auto func : wasm->functions) {
+    for (auto* func : wasm->functions) {
       func->type = ensureFunctionType(getSig(func), wasm, allocator)->name;
     }
   }
@@ -382,7 +382,7 @@ public:
   void writeSignatures() {
     if (debug) std::cerr << "== writeSignatures" << std::endl;
     o << int8_t(BinaryConsts::Signatures) << LEB128(wasm->functionTypes.size());
-    for (auto type : wasm->functionTypes) {
+    for (auto* type : wasm->functionTypes) {
       if (debug) std::cerr << "write one" << std::endl;
       o << int8_t(type->params.size());
       o << binaryWasmType(type->result);
@@ -568,7 +568,7 @@ public:
     o << int8_t(BinaryConsts::Block) << int8_t(curr->list.size());
     breakStack.push_back(curr->name);
     size_t i = 0;
-    for (auto& child : curr->list) {
+    for (auto* child : curr->list) {
       if (debug) std::cerr << "  " << size_t(curr) << "\n zz Block element " << i++ << std::endl;
       recurse(child);
     }
@@ -621,7 +621,7 @@ public:
     }
     breakStack.push_back(curr->name);
     recurse(curr->value);
-    for (auto c : curr->cases) {
+    for (auto& c : curr->cases) {
       recurse(c.body);
     }
     breakStack.pop_back();
@@ -629,14 +629,14 @@ public:
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
-    for (auto operand : curr->operands) {
+    for (auto* operand : curr->operands) {
       recurse(operand);
     }
   }
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
     o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
-    for (auto operand : curr->operands) {
+    for (auto* operand : curr->operands) {
       recurse(operand);
     }
   }
@@ -644,7 +644,7 @@ public:
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
     o << int8_t(BinaryConsts::CallIndirect) << LEB128(getFunctionTypeIndex(curr->fullType->name));
     recurse(curr->target);
-    for (auto operand : curr->operands) {
+    for (auto* operand : curr->operands) {
       recurse(operand);
     }
   }
