@@ -470,7 +470,7 @@ public:
       }
       if (function) {
         size_t sizePos = o.size();
-        o << (uint16_t)0; // placeholder
+        o << (uint16_t)0; // placeholder, we fill in the size later when we have it
         size_t start = o.size();
         depth = 0;
         recurse(function->body);
@@ -530,7 +530,7 @@ public:
   void emitBuffer(const char* data, size_t size) {
     assert(size > 0);
     buffersToWrite.emplace_back(data, size, o.size());
-    o << uint32_t(0); // placeholder
+    o << uint32_t(0); // placeholder, we'll fill in the pointer to the buffer later when we have it
   }
 
   void emitString(const char *str) {
