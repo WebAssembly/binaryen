@@ -44,7 +44,11 @@ IString ASSERT_RETURN("assert_return"),
         ASSERT_INVALID("assert_invalid"),
         SPECTEST("spectest"),
         PRINT("print"),
-        INVOKE("invoke");
+        INVOKE("invoke"),
+        EXIT("exit");
+
+struct ExitException {
+};
 
 //
 // Implementation of the shell interpreter execution environment
@@ -59,6 +63,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory = (char*)calloc(wasm.memory.initial, 1);
     // apply memory segments
     for (auto segment : wasm.memory.segments) {
+      assert(segment.offset + segment.size <= wasm.memory.initial);
       memcpy(memory + segment.offset, segment.data, segment.size);
     }
   }
@@ -69,6 +74,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
         std::cout << argument << '\n';
       }
       return Literal();
+    } else if (import->module == ENV && import->base == EXIT) {
+      std::cout << "exit()\n";
+      throw ExitException();
     }
     std::cout << "callImport " << import->name.str << "\n";
     abort();
@@ -172,9 +180,17 @@ struct Invocation {
 static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
                         Element* root,
                         std::unique_ptr<SExpressionWasmBuilder>* builder,
-                        bool print_before, bool print_after) {
+                        bool print_before, bool print_after,
+                        Name entry) {
   auto interface = new ShellExternalInterface();
   auto instance = new ModuleInstance(*wasm, interface);
+  if (entry.is() > 0) {
+    ModuleInstance::LiteralList arguments;
+    try {
+      instance->callExport(entry, arguments);
+    } catch (ExitException& x) {
+    }
+  }
   while (*i < root->size()) {
     Element& curr = *(*root)[*i];
     IString id = curr[0]->str();
@@ -253,6 +269,7 @@ int main(int argc, char **argv) {
   bool print_before = false;
   bool print_after = false;
   std::vector<std::string> passes;
+  Name entry;
 
   assert(argc > 0 && "expect at least program name as an argument");
   for (size_t i = 1, e = argc; i != e; i++) {
@@ -271,6 +288,9 @@ int main(int argc, char **argv) {
         std::cout << "  -print-before : print modules before processing them\n";
         std::cout << "  -print-after  : print modules after processing them\n";
         std::cout << "\n";
+        std::cout << "execution options:\n";
+        std::cout << "  --entry=[ENTRY] : call ENTRY() after parsing the module\n";
+        std::cout << "\n";
         std::cout << "passes:\n";
         std::cout << "  -O : execute default optimization passes\n";
         auto allPasses = PassRegistry::get()->getRegisteredNames();
@@ -284,6 +304,8 @@ int main(int argc, char **argv) {
         passes.push_back("remove-unused-names");
         passes.push_back("merge-blocks");
         passes.push_back("simplify-locals");
+      } else if (arg.substr(0, 7) == "--entry") {
+        entry = Name(strchr(curr, '=') + 1);
       } else {
         // otherwise, assumed to be a pass
         const char* name = curr + 1;
@@ -368,7 +390,7 @@ int main(int argc, char **argv) {
     }
 
     run_asserts(&i, &checked, &wasm, &root, &builder, print_before,
-                print_after);
+                print_after, entry);
   }
 
   if (checked) {
