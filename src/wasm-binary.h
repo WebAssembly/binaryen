@@ -567,7 +567,7 @@ public:
     o << int8_t(BinaryConsts::Block) << int8_t(curr->list.size());
     breakStack.push_back(curr->name);
     size_t i = 0;
-    for (auto child : curr->list) {
+    for (auto& child : curr->list) {
       if (debug) std::cerr << "  " << size_t(curr) << "\n zz Block element " << i++ << std::endl;
       recurse(child);
     }
