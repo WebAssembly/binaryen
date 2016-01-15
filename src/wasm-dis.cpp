@@ -22,13 +22,12 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-binary.h"
-#include "wasm-s-parser.h"
 
 using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
+  Options options("wasm-dis", "Un-assemble a .wasm (WebAssembly binary format) into a .wast (WebAssembly text format)");
   options.add("--output", "-o", "Output file (stdout if not specified)",
               Options::Arguments::One,
               [](Options *o, const std::string &argument) {
@@ -41,24 +40,16 @@ int main(int argc, const char *argv[]) {
                       });
   options.parse(argc, argv);
 
-  auto input(read_file<std::string>(options.extra["infile"], options.debug));
+  auto input(read_file<std::vector<char>>(options.extra["infile"], options.debug));
 
-  if (options.debug) std::cerr << "s-parsing..." << std::endl;
-  SExpressionParser parser(const_cast<char*>(input.c_str()));
-  Element& root = *parser.root;
-
-  if (options.debug) std::cerr << "w-parsing..." << std::endl;
+  if (options.debug) std::cerr << "parsing binary..." << std::endl;
   AllocatingModule wasm;
-  SExpressionWasmBuilder builder(wasm, *root[0], [&]() { abort(); });
+  WasmBinaryBuilder parser(wasm, input, options.debug);
+  parser.read();
 
-  if (options.debug) std::cerr << "binarification..." << std::endl;
-  BufferWithRandomAccess buffer(options.debug);
-  WasmBinaryWriter writer(&wasm, buffer, options.debug);
-  writer.write();
-
-  if (options.debug) std::cerr << "writing to output..." << std::endl;
+  if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], options.debug);
-  buffer.writeTo(output);
+  output << wasm << std::endl;
 
   if (options.debug) std::cerr << "Done." << std::endl;
 }

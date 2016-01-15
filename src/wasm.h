@@ -626,10 +626,10 @@ class Load : public Expression {
 public:
   Load() : Expression(LoadId) {}
 
-  unsigned bytes;
+  uint32_t bytes;
   bool signed_;
   uint32_t offset;
-  unsigned align;
+  uint32_t align;
   Expression *ptr;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
@@ -983,6 +983,7 @@ public:
     size_t offset;
     const char* data;
     size_t size;
+    Segment() {}
     Segment(size_t offset, const char *data, size_t size) : offset(offset), data(data), size(size) {}
   };
 
