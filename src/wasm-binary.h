@@ -324,7 +324,8 @@ enum ASTNodes {
 
 enum MemoryAccess {
   Offset = 8,
-  Alignment = 128
+  Alignment = 128,
+  NaturalAlignment = 0
 };
 
 } // namespace BinaryConsts
@@ -658,7 +659,7 @@ public:
   }
 
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
-    o << int8_t( ((alignment == bytes || alignment == 0) ? 0 : BinaryConsts::Alignment) |
+    o << int8_t( ((alignment == bytes || alignment == 0) ? BinaryConsts::NaturalAlignment : BinaryConsts::Alignment) |
                  (offset ? BinaryConsts::Offset : 0) );
     if (offset) o << LEB128(offset);
   }
