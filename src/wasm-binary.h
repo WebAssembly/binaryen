@@ -998,8 +998,8 @@ public:
   void readMemory() {
     if (debug) std::cerr << "== readMemory" << std::endl;
     verifyInt8(BinaryConsts::Memory);
-    wasm.memory.initial = pow(2, getInt8());
-    wasm.memory.max = pow(2, getInt8());
+    wasm.memory.initial = std::pow<size_t>(2, getInt8());
+    wasm.memory.max = std::pow<size_t>(2, getInt8());
     verifyInt8(1); // export memory
   }
 
