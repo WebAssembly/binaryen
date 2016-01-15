@@ -964,12 +964,15 @@ private:
           } else if (input[1] == '\\') {
             *write++ = '\\';
             input += 2;
+            continue;
           } else if (input[1] == 'n') {
             *write++ = '\n';
             input += 2;
+            continue;
           } else if (input[1] == 't') {
             *write++ = '\t';
             input += 2;
+            continue;
           } else {
             *write++ = (char)(unhex(input[1])*16 + unhex(input[2]));
             input += 3;
