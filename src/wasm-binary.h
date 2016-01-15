@@ -496,11 +496,8 @@ public:
 
   uint16_t getFunctionIndex(Name name) {
     // TODO: optimize
-    for (size_t i = 0; i < wasm->imports.size(); i++) {
-      if (wasm->imports[i]->name == name) return i;
-    }
     for (size_t i = 0; i < wasm->functions.size(); i++) {
-      if (wasm->functions[i]->name == name) return wasm->imports.size() + i;
+      if (wasm->functions[i]->name == name) return i;
     }
     abort();
   }
@@ -631,16 +628,28 @@ public:
     }
     breakStack.pop_back();
   }
+
+  uint16_t getFunctionAndImportIndex(Name name) {
+    // TODO: optimize
+    for (size_t i = 0; i < wasm->imports.size(); i++) {
+      if (wasm->imports[i]->name == name) return i;
+    }
+    for (size_t i = 0; i < wasm->functions.size(); i++) {
+      if (wasm->functions[i]->name == name) return wasm->imports.size() + i;
+    }
+    abort();
+  }
+
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
-    o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
+    o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionAndImportIndex(curr->target));
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
   }
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
-    o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
+    o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionAndImportIndex(curr->target));
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
@@ -1026,7 +1035,8 @@ public:
     }
   }
 
-  std::vector<Name> mappedFunctions; // index => name of the Import or Function
+  std::vector<Name> mappedImportsOrFunctions; // index => name of the Import or Function
+  std::vector<Name> mappedFunctions; // index => name of the Function only
 
   size_t nextLabel;
 
@@ -1049,8 +1059,8 @@ public:
       bool export_ = data & BinaryConsts::Export;
       Name name = getString();
       if (debug) std::cerr << "reading" << name << std::endl;
-      mappedFunctions.push_back(name);
       if (import) {
+	mappedImportsOrFunctions.push_back(name);
         auto imp = allocator.alloc<Import>();
         imp->name = name;
         imp->module = ENV;
@@ -1058,6 +1068,8 @@ public:
         imp->type = type;
         wasm.addImport(imp);
       } else {
+	mappedFunctions.push_back(name);
+	mappedImportsOrFunctions.push_back(name);
         auto func = allocator.alloc<Function>();
         func->name = name;
         func->type = type->name;
@@ -1186,7 +1198,7 @@ public:
       case BinaryConsts::TableSwitch:  visitSwitch((curr = allocator.alloc<Switch>())->cast<Switch>()); break;
       case BinaryConsts::CallFunction: {
         // might be an import or not. we have to check here.
-        Name target = mappedFunctions[getLEB128()];
+        Name target = mappedImportsOrFunctions[getLEB128()];
         assert(target.is());
         if (debug) std::cerr << "call(import?) target: " << target << std::endl;
         if (wasm.importsMap.find(target) == wasm.importsMap.end()) {
