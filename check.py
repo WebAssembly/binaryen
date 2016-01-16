@@ -469,4 +469,4 @@ if has_emcc:
 print '\n[ success! ]'
 
 if warnings:
-  print warnings
+  print '\n' + '\n'.join(warnings)
