@@ -358,7 +358,7 @@ for wast in tests:
     if actual != expected:
       fail(actual, expected)
 
-print '\n[ checking emcc WASM_BACKEND testcases... ]\n'
+print '\n[ checking emcc WASM_BACKEND testcases... (llvm: %s)]\n' % (os.environ.get('LLVM') or 'NULL')
 
 os.environ['WASM_BACKEND'] = '1'
 try:
