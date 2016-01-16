@@ -78,13 +78,13 @@ else:
 warnings = []
 
 if not interpreter:
-  warnings.append('warning: no interpreter provided (not testing spec interpreter validation)')
+  warnings.append('warning: no interpreter provided (did not test spec interpreter validation)')
 if not has_node:
-  warnings.append( 'warning: no node found (not checking proper js form)')
+  warnings.append( 'warning: no node found (did not check proper js form)')
 if not has_mozjs:
-  warnings.append( 'warning: no mozjs found (not checking asm.js validation)')
+  warnings.append( 'warning: no mozjs found (did not check asm.js validation)')
 if not has_emcc:
-  warnings.append('warning: no emcc found (not checking non-vanilla emscripten/binaryen integration)')
+  warnings.append('warning: no emcc found (did not check non-vanilla emscripten/binaryen integration)')
 
 # setup
 
