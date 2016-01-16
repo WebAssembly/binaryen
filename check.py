@@ -371,6 +371,7 @@ try:
     print '....' + ' '.join(command)
     subprocess.check_call(command)
     if has_node:
+      print '  (check in node)'
       proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE)
       out, err = proc.communicate()
       assert proc.returncode == 0
