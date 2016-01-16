@@ -112,7 +112,13 @@ def fetch_waterfall():
   open(os.path.join('test', 'local-revision'), 'w').write(rev)
 
 def setup_waterfall():
-  os.environ['LLVM'] = os.path.abspath(os.path.join(WATERFALL_BUILD, 'llvm-install', 'bin'))
+  # if we can use the waterfall llvm, do so
+  LLVM_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD, 'llvm-install', 'bin'))
+  try:
+    subprocess.check_call([os.path.join(LLVM_DIR, 'clang'), '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    os.environ['LLVM'] = LLVM_DIR
+  except:
+    warnings.append('could not run LLVM from waterfall, using emcc default')
 
 fetch_waterfall()
 setup_waterfall()
