@@ -360,20 +360,24 @@ for wast in tests:
 
 print '\n[ checking emcc WASM_BACKEND testcases... ]\n'
 
-for c in sorted(os.listdir(os.path.join('test', 'wasm_backend'))):
-  if not c.endswith('cpp'): continue
-  print '..', c
-  base = c.replace('.cpp', '').replace('.c', '')
-  expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
-  command = [os.path.join('test', 'emscripten', 'emcc'), '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'WASM_BACKEND=1', '-s', 'ONLY_MY_CODE=1']
-  print '....' + ' '.join(command)
-  subprocess.check_call(command)
-  if has_node:
-    proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE)
-    out, err = proc.communicate()
-    assert proc.returncode == 0
-    if out.strip() != expected.strip():
-      fail(out, expected)
+os.environ['WASM_BACKEND'] = '1'
+try:
+  for c in sorted(os.listdir(os.path.join('test', 'wasm_backend'))):
+    if not c.endswith('cpp'): continue
+    print '..', c
+    base = c.replace('.cpp', '').replace('.c', '')
+    expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
+    command = [os.path.join('test', 'emscripten', 'emcc'), '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
+    print '....' + ' '.join(command)
+    subprocess.check_call(command)
+    if has_node:
+      proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE)
+      out, err = proc.communicate()
+      assert proc.returncode == 0
+      if out.strip() != expected.strip():
+        fail(out, expected)
+finally:
+  del os.environ['WASM_BACKEND']
 
 print '\n[ checking example testcases... ]\n'
 
