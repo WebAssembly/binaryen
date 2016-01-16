@@ -348,6 +348,23 @@ for wast in tests:
     if actual != expected:
       fail(actual, expected)
 
+print '\n[ checking emcc WASM_BACKEND testcases... ]\n'
+
+for c in sorted(os.listdir(os.path.join('test', 'wasm_backend'))):
+  if not c.endswith('cpp'): continue
+  print '..', c
+  base = c.replace('.cpp', '').replace('.c', '')
+  expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
+  command = [os.path.join('test', 'emscripten', 'emcc'), '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'WASM_BACKEND=1', '-s', 'ONLY_MY_CODE=1']
+  print '....' + ' '.join(command)
+  subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  if has_node:
+    proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert proc.returncode == 0
+    if out.strip() != expected.strip():
+      fail(out, expected)
+
 print '\n[ checking example testcases... ]\n'
 
 cmd = [os.environ.get('CXX') or 'g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.']
@@ -403,23 +420,6 @@ if has_emcc:
         else:
           assert proc.returncode != 0
           assert 'hello, world!' not in out
-
-  print '\n[ checking emcc WASM_BACKEND testcases... ]\n'
-
-  for c in sorted(os.listdir(os.path.join('test', 'wasm_backend'))):
-    if not c.endswith('cpp'): continue
-    print '..', c
-    base = c.replace('.cpp', '').replace('.c', '')
-    expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
-    command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'WASM_BACKEND=1', '-s', 'ONLY_MY_CODE=1']
-    print '....' + ' '.join(command)
-    subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if has_node:
-      proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE)
-      out, err = proc.communicate()
-      assert proc.returncode == 0
-      if out.strip() != expected.strip():
-        fail(out, expected)
 
   print '\n[ checking wasm.js testcases... ]\n'
 
