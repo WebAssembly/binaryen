@@ -14,81 +14,23 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import filecmp
-import glob
-import json
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
-import urllib2
+
+import scripts.storage
+import scripts.support
 
 
-STORAGE_BASE = 'https://storage.googleapis.com/wasm-llvm/builds/git/'
 BASE_DIR = os.path.abspath('test')
 REVISION_PATH = os.path.join(BASE_DIR, 'revision')
 TORTURE_TAR = 'wasm-torture-s-%s.tbz2'
 TORTURE_DIR = os.path.join(BASE_DIR, 'torture-s')
 
 
-def download_revision(force_latest):
-  name = 'latest' if force_latest else 'lkgr'
-  downloaded = urllib2.urlopen(STORAGE_BASE + name).read().strip()
-  # TODO: for now try opening as JSON, if that doesn't work then the content is
-  #       just a hash. The waterfall is in the process of migrating to JSON.
-  info = None
-  try:
-    info = json.loads(downloaded)
-  except:
-    pass
-  return info['build'] if type(info) == dict else downloaded
-
-
 def write_revision(revision):
   with open(REVISION_PATH, 'w') as f:
     f.write(revision)
-
-
-def download_tar(tar_pattern, revision):
-  tar_path = os.path.join(BASE_DIR, tar_pattern)
-  revision_tar_path = tar_path % revision
-  if not os.path.isfile(revision_tar_path):
-    with open(revision_tar_path, 'w+') as f:
-      f.write(urllib2.urlopen(STORAGE_BASE + tar_pattern % revision).read())
-  # Remove any previous tarfiles.
-  for older_tar in glob.glob(tar_path):
-    if older_tar != revision_tar_path:
-      os.path.remove(older_tar)
-  return revision_tar_path
-
-
-def untar(tarfile, outdir):
-  """Returns True if the untar dir differs from a pre-existing dir."""
-  tmp_dir = tempfile.mkdtemp()
-  try:
-    with tempfile.TemporaryFile(mode='w+') as f:
-      try:
-        subprocess.check_call(['tar', '-xvf', tarfile], cwd=tmp_dir, stdout=f)
-      except:
-        f.seek(0)
-        sys.stderr.write(f.read())
-        raise
-    untar_outdir = os.path.join(tmp_dir, os.path.basename(outdir))
-    if os.path.exists(outdir):
-      diff = filecmp.dircmp(untar_outdir, outdir)
-      if not (diff.left_only + diff.right_only + diff.diff_files +
-              diff.common_funny + diff.funny_files):
-        # outdir already existed with exactly the same content.
-        return False
-      shutil.rmtree(outdir)
-    # The untar files are different, or there was no previous outdir.
-    print 'Updating', outdir
-    shutil.move(untar_outdir, outdir)
-    return True
-  finally:
-    if os.path.isdir(tmp_dir):
-      shutil.rmtree(tmp_dir)
 
 
 def run(force_latest, override_hash):
@@ -99,8 +41,9 @@ def run(force_latest, override_hash):
                          'git', 'pull', 'origin', 'master', '--quiet'])
   updates = 0
   revision = (override_hash if override_hash else
-              download_revision(force_latest=force_latest))
-  updates += untar(download_tar(TORTURE_TAR, revision), TORTURE_DIR)
+              scripts.storage.download_revision(force_latest=force_latest))
+  downloaded = scripts.storage.download_tar(TORTURE_TAR, BASE_DIR, revision)
+  updates += scripts.support.untar(downloaded, TORTURE_DIR)
   if updates:
     # Only update revision if the files it downloaded are different.
     print 'Updating revision to', revision
