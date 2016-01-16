@@ -607,6 +607,11 @@ public:
       abort();
     }
     if (curr->condition) recurse(curr->condition);
+    if (curr->value) {
+      recurse(curr->value);
+    } else {
+      o << int8_t(BinaryConsts::Nop);
+    }
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
@@ -1267,6 +1272,7 @@ public:
     auto offset = getInt8();
     curr->name = breakStack[breakStack.size() - 1 - offset];
     if (code == BinaryConsts::BrIf) readExpression(curr->condition);
+    readExpression(curr->value);
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;

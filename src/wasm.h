@@ -432,14 +432,14 @@ public:
       doIndent(o, indent) << name << '\n';
     } else {
       printOpening(o, "br ") << name;
-      if (!value) {
+      if (!value || value->is<Nop>()) {
         // avoid a new line just for the parens
         o << ")";
         return o;
       }
       incIndent(o, indent);
     }
-    if (value) printFullLine(o, indent, value);
+    if (value && !value->is<Nop>()) printFullLine(o, indent, value);
     return decIndent(o, indent);
   }
 };
