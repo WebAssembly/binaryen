@@ -362,12 +362,18 @@ print '\n[ checking emcc WASM_BACKEND testcases... ]\n'
 
 os.environ['WASM_BACKEND'] = '1'
 try:
+  VANILLA_EMCC = os.path.join('test', 'emscripten', 'emcc')
+  # run emcc to make sure it sets itself up properly, if it was never run before
+  command = [VANILLA_EMCC, '-v']
+  print '____' + ' '.join(command)
+  subprocess.check_call(command)
+
   for c in sorted(os.listdir(os.path.join('test', 'wasm_backend'))):
     if not c.endswith('cpp'): continue
     print '..', c
     base = c.replace('.cpp', '').replace('.c', '')
     expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
-    command = [os.path.join('test', 'emscripten', 'emcc'), '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
+    command = [VANILLA_EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
     print '....' + ' '.join(command)
     if os.path.exists('a.wasm.js'): os.unlink('a.wasm.js')
     subprocess.check_call(command)
