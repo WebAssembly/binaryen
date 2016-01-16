@@ -364,7 +364,11 @@ for wast in tests:
 
 print '\n[ checking emcc WASM_BACKEND testcases... (llvm: %s)]\n' % (os.environ.get('LLVM') or 'NULL')
 
-os.environ['WASM_BACKEND'] = '1'
+# if we did not set vanilla llvm, then we must set this env var to make emcc use the wasm backend.
+# or, if we are using vanilla llvm, things should just work.
+if not os.environ.get('LLVM'):
+  print '(not using vanilla llvm, so settng env var to tell emcc to use wasm backend)'
+  os.environ['EMCC_WASM_BACKEND'] = '1'
 try:
   VANILLA_EMCC = os.path.join('test', 'emscripten', 'emcc')
   # run emcc to make sure it sets itself up properly, if it was never run before
@@ -389,7 +393,8 @@ try:
       if out.strip() != expected.strip():
         fail(out, expected)
 finally:
-  del os.environ['WASM_BACKEND']
+  if not os.environ.get('LLVM'):
+    del os.environ['EMCC_WASM_BACKEND']
 
 print '\n[ checking example testcases... ]\n'
 
