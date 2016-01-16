@@ -2,7 +2,6 @@ bin/binaryen-shell
 bin/asm2wasm
 bin/wasm2asm
 bin/s2wasm
-bin/wasm.js
 bin/wasm-as
 bin/wasm-dis
 *.a
