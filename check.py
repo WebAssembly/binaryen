@@ -37,9 +37,13 @@ for arg in sys.argv[1:]:
 has_node = False
 try:
   subprocess.check_call(['nodejs', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  has_node = True
+  has_node = 'nodejs'
 except:
-  pass
+  try:
+    subprocess.check_call(['node', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    has_node = 'node'
+  except:
+    pass
 
 has_mozjs = False
 try:
@@ -259,7 +263,7 @@ for wasm in tests + [os.path.join('spec', name) for name in ['address.wast']]:#s
 
     if has_node:
       # verify asm.js is valid js
-      proc = subprocess.Popen(['nodejs', 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      proc = subprocess.Popen([has_node, 'a.2asm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
       out, err = proc.communicate()
       assert proc.returncode == 0
       assert not out and not err, [out, err]
@@ -379,7 +383,7 @@ try:
     subprocess.check_call(command)
     if has_node:
       print '  (check in node)'
-      proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE)
+      proc = subprocess.Popen([has_node, 'a.wasm.js'], stdout=subprocess.PIPE)
       out, err = proc.communicate()
       assert proc.returncode == 0
       if out.strip() != expected.strip():
@@ -434,7 +438,7 @@ if has_emcc:
       else:
         1/0
       if has_node:
-        proc = subprocess.Popen(['nodejs', 'a.wasm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen([has_node, 'a.wasm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = proc.communicate()
         if success:
           assert proc.returncode == 0
@@ -478,7 +482,7 @@ if has_emcc:
               args = []
               print '     (no args)'
             if has_node:
-              proc = subprocess.Popen(['nodejs', 'a.' + which + '.js'] + args, stdout=subprocess.PIPE)
+              proc = subprocess.Popen([has_node, 'a.' + which + '.js'] + args, stdout=subprocess.PIPE)
               out, err = proc.communicate()
               assert proc.returncode == 0
               if out.strip() != expected.strip():
