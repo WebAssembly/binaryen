@@ -2,8 +2,6 @@ sudo: false
 language: cpp
 python:
   - "2.7"
-node_js:
-  - "stable"
 
 matrix:
   include:
@@ -13,7 +11,7 @@ matrix:
       addons: &clang36
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
-          packages: ['cmake', 'clang-3.6']
+          packages: ['cmake', 'nodejs', 'clang-3.6']
 
     - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=undefined -fsanitize-blacklist=`pwd`/ubsan.blacklist"
       compiler: clang
@@ -32,7 +30,7 @@ matrix:
       addons: &gcc5
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['cmake', 'g++-5']
+          packages: ['cmake', 'nodejs', 'g++-5']
 
   allow_failures:
     - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=address"
