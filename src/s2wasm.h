@@ -1070,7 +1070,7 @@ private:
         // must be a function address
         if (wasm.functionsMap.count(name) == 0) {
           std::cerr << "Unknown symbol: " << name << '\n';
-          abort_on("Unknown symbol");
+          abort();
         }
         ensureFunctionIndex(name);
         *(relocation.data) = functionIndexes[name] + relocation.offset;
