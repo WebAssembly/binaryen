@@ -56,6 +56,7 @@ def main(args):
         BLACKLIST = ['inline-asm', # inline asm containing invalid syntax
                      'returned',   # external global symbol
                      'vtable',     # external global symbol
+                     'offset-folding', # external global symbol
                      ]
         if name_noext in BLACKLIST:
           continue
