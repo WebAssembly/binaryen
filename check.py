@@ -84,7 +84,7 @@ if not has_node:
 if not has_mozjs:
   warnings.append( 'warning: no mozjs found (not checking asm.js validation)')
 if not has_emcc:
-  warnings.append('warning: no emcc found (not checking emscripten/binaryen integration)')
+  warnings.append('warning: no emcc found (not checking non-vanilla emscripten/binaryen integration)')
 
 # setup
 
