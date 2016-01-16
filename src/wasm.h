@@ -1201,10 +1201,7 @@ struct WasmVisitor {
       case Expression::Id::HostId: DELEGATE(Host);
       case Expression::Id::NopId: DELEGATE(Nop);
       case Expression::Id::UnreachableId: DELEGATE(Unreachable);
-      default: {
-        std::cerr << "visiting unknown expression " << curr->_id << '\n';
-        abort();
-      }
+      default: WASM_UNREACHABLE();
     }
   }
 };
