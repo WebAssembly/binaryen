@@ -369,6 +369,7 @@ try:
     expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
     command = [os.path.join('test', 'emscripten', 'emcc'), '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
     print '....' + ' '.join(command)
+    if os.path.exists('a.wasm.js'): os.unlink('a.wasm.js')
     subprocess.check_call(command)
     if has_node:
       print '  (check in node)'
