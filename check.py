@@ -84,14 +84,19 @@ else:
 
 warnings = []
 
+def warn(text):
+  global warnings
+  warnings.append(text)
+  print 'warning:', text
+
 if not interpreter:
-  warnings.append('warning: no interpreter provided (did not test spec interpreter validation)')
+  warn('no interpreter provided (did not test spec interpreter validation)')
 if not has_node:
-  warnings.append( 'warning: no node found (did not check proper js form)')
+  warn('no node found (did not check proper js form)')
 if not has_mozjs:
-  warnings.append( 'warning: no mozjs found (did not check asm.js validation)')
+  warn('no mozjs found (did not check asm.js validation)')
 if not has_emcc:
-  warnings.append('warning: no emcc found (did not check non-vanilla emscripten/binaryen integration)')
+  warn('no emcc found (did not check non-vanilla emscripten/binaryen integration)')
 
 # setup
 
@@ -114,7 +119,7 @@ def setup_waterfall():
     subprocess.check_call([os.path.join(BIN_DIR, 'clang'), '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     os.environ['LLVM'] = BIN_DIR
   except:
-    warnings.append('could not run LLVM from waterfall, using emcc default')
+    warn('could not run vanilla LLVM from waterfall')
 
 fetch_waterfall()
 setup_waterfall()
