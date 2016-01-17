@@ -17,4 +17,6 @@ cmake_install.cmake
 *.ninja
 .ninja_deps
 .ninja_log
+test/wasm-binaries-*.tbz2
 test/wasm-torture-s-*.tbz2
+test/wasm-install/

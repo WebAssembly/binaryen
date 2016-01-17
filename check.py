@@ -103,15 +103,15 @@ if not has_emcc:
 BASE_DIR = os.path.abspath('test')
 WATERFALL_BUILD_DIR = os.path.join(BASE_DIR, 'wasm-install')
 BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'bin'))
+WASM_BINARIES = 'wasm-binaries-%s.tbz2'
 
 def fetch_waterfall():
+  """Returns True if new binaries were installed."""
   rev = open(os.path.join('test', 'revision')).read()
-  if os.path.exists(os.path.join(BASE_DIR, 'wasm-binaries-%s.tbz2' % rev)): return
-  # fetch it
-  print '(downloading waterfall ' + rev + ')'
-  basename = 'wasm-binaries-%s.tbz2'
-  downloaded = scripts.storage.download_tar(basename, BASE_DIR, rev)
-  scripts.support.untar(downloaded, BASE_DIR)
+  downloaded = scripts.storage.download_tar(WASM_BINARIES, BASE_DIR, rev)
+  if not os.path.isdir(WATERFALL_BUILD_DIR):
+    os.mkdir(WATERFALL_BUILD_DIR)
+  return scripts.support.untar(downloaded, BASE_DIR)
 
 def setup_waterfall():
   # if we can use the waterfall llvm, do so
