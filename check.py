@@ -16,6 +16,9 @@
 
 import os, shutil, sys, subprocess, difflib, json, time, urllib2
 
+import scripts.storage
+import scripts.support
+
 interpreter = None
 requested = []
 torture = True
@@ -92,35 +95,24 @@ if not has_emcc:
 
 # setup
 
-WATERFALL_BUILD = os.path.join('test', 'waterfall_build')
+BASE_DIR = os.path.abspath('test')
+WATERFALL_BUILD_DIR = os.path.join(BASE_DIR, 'wasm-install')
+BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'bin'))
 
 def fetch_waterfall():
   rev = open(os.path.join('test', 'revision')).read()
-  try:
-    local_rev = open(os.path.join('test', 'local-revision')).read()
-  except:
-    local_rev = None
-  if local_rev == rev: return
+  if os.path.exists(os.path.join(BASE_DIR, 'wasm-binaries-%s.tbz2' % rev)): return
   # fetch it
   print '(downloading waterfall ' + rev + ')'
-  basename = 'wasm-binaries-' + rev + '.tbz2'
-  downloaded = urllib2.urlopen('https://storage.googleapis.com/wasm-llvm/builds/git/' + basename).read().strip()
-  fullname = os.path.join('test', basename)
-  open(fullname, 'wb').write(downloaded)
-  print '(unpacking)'
-  if os.path.exists(WATERFALL_BUILD):
-    shutil.rmtree(WATERFALL_BUILD)
-  os.mkdir(WATERFALL_BUILD)
-  subprocess.check_call(['tar', '-xvf', os.path.abspath(fullname)], cwd=WATERFALL_BUILD)
-  print '(noting local revision)'
-  open(os.path.join('test', 'local-revision'), 'w').write(rev)
+  basename = 'wasm-binaries-%s.tbz2'
+  downloaded = scripts.storage.download_tar(basename, BASE_DIR, rev)
+  scripts.support.untar(downloaded, WATERFALL_BUILD_DIR)
 
 def setup_waterfall():
   # if we can use the waterfall llvm, do so
-  LLVM_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD, 'llvm-install', 'bin'))
   try:
-    subprocess.check_call([os.path.join(LLVM_DIR, 'clang'), '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    os.environ['LLVM'] = LLVM_DIR
+    subprocess.check_call([os.path.join(BIN_DIR, 'clang'), '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    os.environ['LLVM'] = BIN_DIR
   except:
     warnings.append('could not run LLVM from waterfall, using emcc default')
 
