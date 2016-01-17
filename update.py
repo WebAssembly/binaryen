@@ -25,7 +25,6 @@ import scripts.support
 BASE_DIR = os.path.abspath('test')
 REVISION_PATH = os.path.join(BASE_DIR, 'revision')
 TORTURE_TAR = 'wasm-torture-s-%s.tbz2'
-TORTURE_DIR = os.path.join(BASE_DIR, 'torture-s')
 
 
 def write_revision(revision):
@@ -43,7 +42,7 @@ def run(force_latest, override_hash):
   revision = (override_hash if override_hash else
               scripts.storage.download_revision(force_latest=force_latest))
   downloaded = scripts.storage.download_tar(TORTURE_TAR, BASE_DIR, revision)
-  updates += scripts.support.untar(downloaded, TORTURE_DIR)
+  updates += scripts.support.untar(downloaded, BASE_DIR)
   if updates:
     # Only update revision if the files it downloaded are different.
     print 'Updating revision to', revision
