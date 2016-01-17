@@ -102,7 +102,7 @@ if not has_emcc:
 
 BASE_DIR = os.path.abspath('test')
 WATERFALL_BUILD_DIR = os.path.join(BASE_DIR, 'wasm-install')
-BIN_DIR = os.path.abspath(os.path.join(BASE_DIR, 'waterfall_build', 'llvm-install', 'bin'))
+BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'bin'))
 
 def fetch_waterfall():
   rev = open(os.path.join('test', 'revision')).read()
@@ -115,11 +115,12 @@ def fetch_waterfall():
 
 def setup_waterfall():
   # if we can use the waterfall llvm, do so
+  CLANG = os.path.join(BIN_DIR, 'clang')
   try:
-    subprocess.check_call([os.path.join(BIN_DIR, 'clang'), '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.check_call([CLANG, '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     os.environ['LLVM'] = BIN_DIR
   except Exception, e:
-    warn('could not run vanilla LLVM from waterfall: ' + str(e))
+    warn('could not run vanilla LLVM from waterfall: ' + str(e) + ', looked for clang at ' + CLANG)
 
 fetch_waterfall()
 setup_waterfall()
