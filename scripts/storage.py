@@ -43,7 +43,7 @@ def download_tar(tar_pattern, directory, revision):
     with open(revision_tar_path, 'w+') as f:
       f.write(urllib2.urlopen(STORAGE_BASE + tar_pattern % revision).read())
   # Remove any previous tarfiles.
-  for older_tar in glob.glob(tar_path):
+  for older_tar in glob.glob(tar_path % '*'):
     if older_tar != revision_tar_path:
       os.path.remove(older_tar)
   return revision_tar_path
