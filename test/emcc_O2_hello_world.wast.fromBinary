@@ -334,7 +334,9 @@
                 (set_local $var$0
                   (get_local $var$0)
                 )
-                (br $label$0)
+                (br $label$0
+                  (get_local $var$0)
+                )
               )
             )
             (set_local $var$0
@@ -765,7 +767,9 @@
                     (set_local $var$0
                       (get_local $var$0)
                     )
-                    (br $label$0)
+                    (br $label$0
+                      (get_local $var$0)
+                    )
                   )
                 )
                 (set_local $var$0
@@ -1711,7 +1715,9 @@
                         (i32.const 8)
                       )
                     )
-                    (br $label$0)
+                    (br $label$0
+                      (get_local $var$0)
+                    )
                   )
                   (set_local $var$0
                     (get_local $var$1)
@@ -3565,7 +3571,9 @@
                           (i32.const 8)
                         )
                       )
-                      (br $label$0)
+                      (br $label$0
+                        (get_local $var$0)
+                      )
                     )
                     (set_local $var$0
                       (get_local $var$0)
@@ -3707,7 +3715,9 @@
               (i32.const 8)
             )
           )
-          (br $label$0)
+          (br $label$0
+            (get_local $var$0)
+          )
         )
       )
       (set_local $var$0
@@ -3778,7 +3788,9 @@
               (i32.const 8)
             )
           )
-          (br $label$0)
+          (br $label$0
+            (get_local $var$0)
+          )
         )
       )
       (block $label$123
@@ -3900,7 +3912,9 @@
           (set_local $var$0
             (i32.const 0)
           )
-          (br $label$0)
+          (br $label$0
+            (get_local $var$0)
+          )
         )
       )
       (set_local $var$0
@@ -3957,7 +3971,9 @@
           (set_local $var$0
             (i32.const 0)
           )
-          (br $label$0)
+          (br $label$0
+            (get_local $var$0)
+          )
         )
       )
       (block $label$130
@@ -6357,7 +6373,9 @@
                           (i32.const 8)
                         )
                       )
-                      (br $label$0)
+                      (br $label$0
+                        (get_local $var$0)
+                      )
                     )
                     (set_local $var$0
                       (i32.const 624)
@@ -7491,7 +7509,9 @@
                   (i32.const 8)
                 )
               )
-              (br $label$0)
+              (br $label$0
+                (get_local $var$0)
+              )
             )
           )
         )
@@ -12626,7 +12646,13 @@
           (get_local $var$0)
           (i32.const 4096)
         )
-        (br $label$0)
+        (br $label$0
+          (call_import $_emscripten_memcpy_big
+            (get_local $var$0)
+            (get_local $var$0)
+            (get_local $var$0)
+          )
+        )
       )
       (set_local $var$3
         (get_local $var$0)
@@ -12659,7 +12685,9 @@
                     (get_local $var$0)
                     (i32.const 0)
                   )
-                  (br $label$0)
+                  (br $label$0
+                    (get_local $var$3)
+                  )
                 )
                 (i32.store8 align=1
                   (get_local $var$0)
