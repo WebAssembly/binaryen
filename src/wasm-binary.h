@@ -610,7 +610,7 @@ public:
     if (curr->value) {
       recurse(curr->value);
     } else {
-      o << int8_t(BinaryConsts::Nop);
+      visitNop(nullptr);
     }
   }
   void visitSwitch(Switch *curr) {
