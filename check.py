@@ -111,7 +111,7 @@ def fetch_waterfall():
   print '(downloading waterfall ' + rev + ')'
   basename = 'wasm-binaries-%s.tbz2'
   downloaded = scripts.storage.download_tar(basename, BASE_DIR, rev)
-  scripts.support.untar(downloaded, WATERFALL_BUILD_DIR)
+  scripts.support.untar(downloaded, BASE_DIR)
 
 def setup_waterfall():
   # if we can use the waterfall llvm, do so
