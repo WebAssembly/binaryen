@@ -45,5 +45,5 @@ def download_tar(tar_pattern, directory, revision):
   # Remove any previous tarfiles.
   for older_tar in glob.glob(tar_path % '*'):
     if older_tar != revision_tar_path:
-      os.path.remove(older_tar)
+      os.remove(older_tar)
   return revision_tar_path
