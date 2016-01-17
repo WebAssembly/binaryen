@@ -40,7 +40,11 @@ def _files_same(dir1, dir2, basenames):
 
 def _dirs_same(dir1, dir2, basenames):
   for d in basenames:
-    diff = filecmp.dircmp(os.path.join(dir1, d), os.path.join(dir2, d))
+    left = os.path.join(dir1, d)
+    right = os.path.join(dir2, d)
+    if not (os.path.isdir(left) and os.path.isdir(right)):
+      return False
+    diff = filecmp.dircmp(right, right)
     if 0 != len(diff.left_only + diff.right_only + diff.diff_files +
                 diff.common_funny + diff.funny_files):
       return False
