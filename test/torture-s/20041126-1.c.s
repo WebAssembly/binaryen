@@ -87,51 +87,51 @@ main:                                   # @main
 	i32.const	$push7=, 16
 	i32.const	$9=, 0
 	i32.add 	$9=, $14, $9
-	i32.add 	$push8=, $9, $pop7
+	i32.add 	$0=, $9, $pop7
 	i64.load	$push6=, .Lmain.a+16($3)
-	i64.store	$discard=, 0($pop8), $pop6
-	i32.const	$push10=, 8
+	i64.store	$discard=, 0($0), $pop6
+	i32.store	$2=, 0($0), $3
+	i32.const	$push9=, 8
 	i32.const	$10=, 0
 	i32.add 	$10=, $14, $10
-	i32.or  	$0=, $10, $pop10
-	i64.load	$push9=, .Lmain.a+8($3)
-	i64.store	$discard=, 0($0), $pop9
-	i32.store	$2=, 16($14), $3
-	i32.const	$push12=, 12
+	i32.or  	$0=, $10, $pop9
+	i64.load	$push8=, .Lmain.a+8($3)
+	i64.store	$discard=, 0($0), $pop8
+	i32.const	$push11=, 12
 	i32.const	$11=, 0
 	i32.add 	$11=, $14, $11
-	i32.or  	$push13=, $11, $pop12
-	i32.store	$push14=, 0($pop13), $2
-	i32.store	$0=, 0($0), $pop14
-	i64.load	$push11=, .Lmain.a($3)
-	i64.store	$discard=, 0($14), $pop11
-	i32.const	$push15=, 4
+	i32.or  	$push12=, $11, $pop11
+	i32.store	$push13=, 0($pop12), $2
+	i32.store	$0=, 0($0), $pop13
+	i64.load	$push10=, .Lmain.a($3)
+	i64.store	$discard=, 0($14), $pop10
+	i32.const	$push14=, 4
 	i32.const	$12=, 0
 	i32.add 	$12=, $14, $12
-	i32.or  	$push16=, $12, $pop15
-	i32.store	$push17=, 0($pop16), $0
-	i32.store	$1=, 0($14), $pop17
+	i32.or  	$push15=, $12, $pop14
+	i32.store	$push16=, 0($pop15), $0
+	i32.store	$1=, 0($14), $pop16
 	i32.const	$3=, 5
 .LBB1_1:                                # %for.cond1.i
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label5:
-	i32.const	$push18=, 9
-	i32.gt_s	$push19=, $3, $pop18
-	br_if   	$pop19, 2       # 2: down to label4
+	i32.const	$push17=, 9
+	i32.gt_s	$push18=, $3, $pop17
+	br_if   	$pop18, 2       # 2: down to label4
 # BB#2:                                 # %for.body3.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push20=, 2
-	i32.shl 	$push21=, $3, $pop20
+	i32.const	$push19=, 2
+	i32.shl 	$push20=, $3, $pop19
 	i32.const	$13=, 0
 	i32.add 	$13=, $14, $13
-	i32.add 	$push22=, $13, $pop21
-	i32.load	$0=, 0($pop22)
-	i32.const	$push23=, 1
-	i32.add 	$2=, $3, $pop23
+	i32.add 	$push21=, $13, $pop20
+	i32.load	$0=, 0($pop21)
+	i32.const	$push22=, 1
+	i32.add 	$2=, $3, $pop22
 	copy_local	$3=, $0
-	i32.eq  	$push24=, $0, $2
-	br_if   	$pop24, 0       # 0: up to label5
+	i32.eq  	$push23=, $0, $2
+	br_if   	$pop23, 0       # 0: up to label5
 # BB#3:                                 # %if.then6.i
 	end_loop                        # label6:
 	call    	abort@FUNCTION
@@ -165,4 +165,3 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
-	.section	".note.GNU-stack","",@progbits

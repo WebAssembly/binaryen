@@ -105,4 +105,3 @@ x:
 
 
 	.ident	"clang version 3.9.0 "
-	.section	".note.GNU-stack","",@progbits
