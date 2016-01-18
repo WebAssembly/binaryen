@@ -42,9 +42,9 @@ WATERFALL_BUILD_DIR = os.path.join(BASE_DIR, 'wasm-install')
 BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'wasm-install', 'bin'))
 
 def fetch_waterfall():
-  rev = open(os.path.join('test', 'revision')).read()
+  rev = open(os.path.join('test', 'revision')).read().strip()
   try:
-    local_rev = open(os.path.join('test', 'local-revision')).read()
+    local_rev = open(os.path.join('test', 'local-revision')).read().strip()
   except:
     local_rev = None
   if local_rev == rev: return
