@@ -35,6 +35,46 @@ for arg in sys.argv[1:]:
   else:
     requested.append(arg)
 
+# setup
+
+BASE_DIR = os.path.abspath('test')
+WATERFALL_BUILD_DIR = os.path.join(BASE_DIR, 'wasm-install')
+BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'wasm-install', 'bin'))
+
+def fetch_waterfall():
+  rev = open(os.path.join('test', 'revision')).read().strip()
+  try:
+    local_rev = open(os.path.join('test', 'local-revision')).read().strip()
+  except:
+    local_rev = None
+  if local_rev == rev: return
+  # fetch it
+  print '(downloading waterfall ' + rev + ')'
+  basename = 'wasm-binaries-' + rev + '.tbz2'
+  downloaded = urllib2.urlopen('https://storage.googleapis.com/wasm-llvm/builds/git/' + basename).read().strip()
+  fullname = os.path.join('test', basename)
+  open(fullname, 'wb').write(downloaded)
+  print '(unpacking)'
+  if os.path.exists(WATERFALL_BUILD_DIR):
+    shutil.rmtree(WATERFALL_BUILD_DIR)
+  os.mkdir(WATERFALL_BUILD_DIR)
+  subprocess.check_call(['tar', '-xvf', os.path.abspath(fullname)], cwd=WATERFALL_BUILD_DIR)
+  print '(noting local revision)'
+  open(os.path.join('test', 'local-revision'), 'w').write(rev)
+
+def setup_waterfall():
+  # if we can use the waterfall llvm, do so
+  CLANG = os.path.join(BIN_DIR, 'clang')
+  try:
+    subprocess.check_call([CLANG, '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    os.environ['LLVM'] = BIN_DIR
+  except Exception, e:
+    warn('could not run vanilla LLVM from waterfall: ' + str(e) + ', looked for clang at ' + CLANG)
+
+fetch_waterfall()
+setup_waterfall()
+
+
 # external tools
 
 has_node = False
@@ -59,6 +99,13 @@ has_emcc = False
 try:
   subprocess.check_call(['emcc', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   has_emcc = True
+except:
+  pass
+
+has_vanilla_emcc = False
+try:
+  subprocess.check_call([os.path.join('test', 'emscripten', 'emcc'), '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  has_vanilla_emcc = True
 except:
   pass
 
@@ -97,45 +144,9 @@ if not has_mozjs:
   warn('no mozjs found (did not check asm.js validation)')
 if not has_emcc:
   warn('no emcc found (did not check non-vanilla emscripten/binaryen integration)')
+if not has_vanilla_emcc:
+  warn('no functional emcc submodule found')
 
-# setup
-
-BASE_DIR = os.path.abspath('test')
-WATERFALL_BUILD_DIR = os.path.join(BASE_DIR, 'wasm-install')
-BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'wasm-install', 'bin'))
-
-def fetch_waterfall():
-  rev = open(os.path.join('test', 'revision')).read()
-  try:
-    local_rev = open(os.path.join('test', 'local-revision')).read()
-  except:
-    local_rev = None
-  if local_rev == rev: return
-  # fetch it
-  print '(downloading waterfall ' + rev + ')'
-  basename = 'wasm-binaries-' + rev + '.tbz2'
-  downloaded = urllib2.urlopen('https://storage.googleapis.com/wasm-llvm/builds/git/' + basename).read().strip()
-  fullname = os.path.join('test', basename)
-  open(fullname, 'wb').write(downloaded)
-  print '(unpacking)'
-  if os.path.exists(WATERFALL_BUILD_DIR):
-    shutil.rmtree(WATERFALL_BUILD_DIR)
-  os.mkdir(WATERFALL_BUILD_DIR)
-  subprocess.check_call(['tar', '-xvf', os.path.abspath(fullname)], cwd=WATERFALL_BUILD_DIR)
-  print '(noting local revision)'
-  open(os.path.join('test', 'local-revision'), 'w').write(rev)
-
-def setup_waterfall():
-  # if we can use the waterfall llvm, do so
-  CLANG = os.path.join(BIN_DIR, 'clang')
-  try:
-    subprocess.check_call([CLANG, '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    os.environ['LLVM'] = BIN_DIR
-  except Exception, e:
-    warn('could not run vanilla LLVM from waterfall: ' + str(e) + ', looked for clang at ' + CLANG)
-
-fetch_waterfall()
-setup_waterfall()
 
 # tests
 
@@ -372,39 +383,41 @@ for wast in tests:
     if actual != expected:
       fail(actual, expected)
 
-print '\n[ checking emcc WASM_BACKEND testcases... (llvm: %s)]\n' % (os.environ.get('LLVM') or 'NULL')
+if has_vanilla_emcc:
 
-# if we did not set vanilla llvm, then we must set this env var to make emcc use the wasm backend.
-# or, if we are using vanilla llvm, things should just work.
-if not os.environ.get('LLVM'):
-  print '(not using vanilla llvm, so settng env var to tell emcc to use wasm backend)'
-  os.environ['EMCC_WASM_BACKEND'] = '1'
-try:
-  VANILLA_EMCC = os.path.join('test', 'emscripten', 'emcc')
-  # run emcc to make sure it sets itself up properly, if it was never run before
-  command = [VANILLA_EMCC, '-v']
-  print '____' + ' '.join(command)
-  subprocess.check_call(command)
+  print '\n[ checking emcc WASM_BACKEND testcases... (llvm: %s)]\n' % (os.environ.get('LLVM') or 'NULL')
 
-  for c in sorted(os.listdir(os.path.join('test', 'wasm_backend'))):
-    if not c.endswith('cpp'): continue
-    print '..', c
-    base = c.replace('.cpp', '').replace('.c', '')
-    expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
-    command = [VANILLA_EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
-    print '....' + ' '.join(command)
-    if os.path.exists('a.wasm.js'): os.unlink('a.wasm.js')
-    subprocess.check_call(command)
-    if has_node:
-      print '  (check in node)'
-      proc = subprocess.Popen([has_node, 'a.wasm.js'], stdout=subprocess.PIPE)
-      out, err = proc.communicate()
-      assert proc.returncode == 0
-      if out.strip() != expected.strip():
-        fail(out, expected)
-finally:
+  # if we did not set vanilla llvm, then we must set this env var to make emcc use the wasm backend.
+  # or, if we are using vanilla llvm, things should just work.
   if not os.environ.get('LLVM'):
-    del os.environ['EMCC_WASM_BACKEND']
+    print '(not using vanilla llvm, so settng env var to tell emcc to use wasm backend)'
+    os.environ['EMCC_WASM_BACKEND'] = '1'
+  try:
+    VANILLA_EMCC = os.path.join('test', 'emscripten', 'emcc')
+    # run emcc to make sure it sets itself up properly, if it was never run before
+    command = [VANILLA_EMCC, '-v']
+    print '____' + ' '.join(command)
+    subprocess.check_call(command)
+
+    for c in sorted(os.listdir(os.path.join('test', 'wasm_backend'))):
+      if not c.endswith('cpp'): continue
+      print '..', c
+      base = c.replace('.cpp', '').replace('.c', '')
+      expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
+      command = [VANILLA_EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
+      print '....' + ' '.join(command)
+      if os.path.exists('a.wasm.js'): os.unlink('a.wasm.js')
+      subprocess.check_call(command)
+      if has_node:
+        print '  (check in node)'
+        proc = subprocess.Popen([has_node, 'a.wasm.js'], stdout=subprocess.PIPE)
+        out, err = proc.communicate()
+        assert proc.returncode == 0
+        if out.strip() != expected.strip():
+          fail(out, expected)
+  finally:
+    if not os.environ.get('LLVM'):
+      del os.environ['EMCC_WASM_BACKEND']
 
 print '\n[ checking example testcases... ]\n'
 
