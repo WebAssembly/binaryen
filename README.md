@@ -18,6 +18,8 @@ Current build status: [![Build Status](https://travis-ci.org/WebAssembly/binarye
 This repository contains code that builds the following tools in `bin/`:
 
  * **binaryen-shell**: A shell that can load and interpret WebAssembly code in S-Expression format, as well as run transformation passes on it. It can also run the spec test suite.
+ * **wasm-as**: Assembles WebAssembly in text format (currently S-Expression format) into binary format (currently v8 format).
+ * **wasm-dis**: Un-assembles WebAssembly in binary format (currently v8 format) into text format (currently S-Expression format).
  * **asm2wasm**: An asm.js-to-WebAssembly compiler, built on Emscripten's asm optimizer infrastructure. This is used by Emscripten in Binaryen mode when it uses Emscripten's fastcomp asm.js backend.
  * **wasm2asm**: A WebAssembly-to-asm.js compiler, the reverse of `asm2wasm`. This is a work in progress.
  * **s2wasm**: A compiler from the `.s` format emitted by the new WebAssembly backend being developed in LLVM. This is used by Emscripten in Binaryen mode when it integrates with the new LLVM backend.
@@ -29,10 +31,8 @@ Usage instructions for each are below.
 
 First run `update.py` to initialize the git submodules and fetch the test files. You may need to re-run `update.py` from time to time.
 
-```
-$ ./build.sh
-```
-or
+Then do
+
 ```
 cmake . && make
 ```
@@ -40,8 +40,7 @@ Note that you can also use `ninja` as your generator: `cmake -G ninja . && ninja
 
 * `binaryen-shell` and `asm2wasm` require a C++11 compiler.
 * If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten. You'll need the `incoming` branch there (which you can get via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).
-* `wasm.js` also requires Emscripten.
-* There is work-in-progress CMake support, but it isn't stable or finished yet.
+* `wasm.js` also requires Emscripten. You can compile it with `build.sh`. A pre-compiled build is provided in this repo already, so you don't need to.
 
 ## Running
 
@@ -72,7 +71,7 @@ It's easy to add your own transformation passes to the shell, just add `.cpp` fi
 Some more notes:
 
  * See `bin/binaryen-shell --help` for the full list of options and passes.
- * Setting `BINARYEN_DEBUG=1` in the env will emit some debugging info.
+ * Passing `--debug` will emit some debugging info.
 
 ### asm2wasm
 
@@ -142,14 +141,21 @@ llc code.ll -march=wasm32 -filetype=asm -o code.s
 s2wasm code.s > code.wast
 ````
 
-You can also use Emscripten, which will do those steps for you (as well as link to system libraries, etc.):
+You can also use Emscripten, which will do those steps for you (as well as link to system libraries, etc.). You can use either normal Emscripten, including it's "fastcomp" fork of LLVM, or you can use "vanilla" LLVM, that is, pure upstream LLVM without Emscripten's additions. With Vanilla LLVM, you can build with
 
 ````
-./emcc input.cpp -s WASM_BACKEND=1 -s 'BINARYEN="path-to-binaryen"'
+./emcc input.cpp -s 'BINARYEN="path-to-binaryen"'
 ````
 
-The `WASM_BACKEND` option tells it to use the WebAssembly backend instead of the asm.js backend.
+With normal Emscripten, you will need to tell it to use the WebAssembly backend, since its default is asm.js, by setting an env var,
 
+````
+EMCC_WASM_BACKEND=1 ./emcc input.cpp -s 'BINARYEN="path-to-binaryen"'
+````
+
+(without the env var, the `BINARYEN` option will make it use the asm.js backend, then `asm2wasm`).
+
+ * You can see vanilla LLVM tested with Emscripten in `check.py` in this repo (look for `VANILLA_EMCC` in that file), using an Emscripten submodule.
  * Due to current limitations of the WebAssembly backend, you might want to build with `-s ONLY_MY_CODE=1 -O1`, which will avoid linking in libc (which contains varargs, which are not yet supported), and optimizes so that the stack is not used (which is also not yet supported).
  * The output when building in this mode is similar to what you get in general when building with Binaryen in Emscripten: a main `.js` file, and the compiled code in a `.wast` file alongside it.
  * Build with `EMCC_DEBUG=1` in the env to see Emscripten's debug output as it runs the various tools, and also to save the intermediate files in `/tmp/emscripten_temp`. It will save both the `.s` and `.wast` files there (in addition to other files it normally saves).
@@ -160,7 +166,7 @@ The `WASM_BACKEND` option tells it to use the WebAssembly backend instead of the
 ./check.py
 ```
 
-(or `python check.py`) will run `binaryen-shell`, `asm2wasm`, and `wasm.js` on the testcases in `test/`, and verify their outputs.
+(or `python check.py`) will run `binaryen-shell`, `asm2wasm`, `wasm.js`, etc. on the testcases in `test/`, and verify their outputs.
 
 It will also run `s2wasm` through the last known good LLVM output from the [build waterfall][], as fetched by `update.py`.
 
