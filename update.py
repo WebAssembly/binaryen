@@ -27,17 +27,24 @@ REVISION_PATH = os.path.join(BASE_DIR, 'revision')
 TORTURE_TAR = 'wasm-torture-s-%s.tbz2'
 
 
+def current_revision():
+  with open(REVISION_PATH, 'r') as f:
+    return f.read()
+
+
 def write_revision(revision):
   with open(REVISION_PATH, 'w') as f:
     f.write(revision)
 
 
 def run(force_latest, override_build):
+  print 'Updating git submodules'
   subprocess.check_call(['git', 'submodule', 'sync', '--quiet'])
   subprocess.check_call(['git', 'submodule', 'init', '--quiet'])
   subprocess.check_call(['git', 'submodule', 'update', '--quiet'])
   subprocess.check_call(['git', 'submodule', 'foreach',
                          'git', 'pull', 'origin', 'master', '--quiet'])
+  print 'Updating from the waterfall, current revision', current_revision()
   updates = 0
   revision = (override_build if override_build else
               scripts.storage.download_revision(force_latest=force_latest))
