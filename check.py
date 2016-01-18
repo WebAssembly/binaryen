@@ -35,69 +35,6 @@ for arg in sys.argv[1:]:
   else:
     requested.append(arg)
 
-# external tools
-
-has_node = False
-try:
-  subprocess.check_call(['nodejs', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  has_node = 'nodejs'
-except:
-  try:
-    subprocess.check_call(['node', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    has_node = 'node'
-  except:
-    pass
-
-has_mozjs = False
-try:
-  subprocess.check_call(['mozjs', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  has_mozjs = True
-except:
-  pass
-
-has_emcc = False
-try:
-  subprocess.check_call(['emcc', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  has_emcc = True
-except:
-  pass
-
-# utilities
-
-def fail(actual, expected):
-  raise Exception("incorrect output, diff:\n\n%s" % (
-    ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])[-1000:]
-  ))
-
-def fail_if_not_identical(actual, expected):
-  if expected != actual:
-    fail(actual, expected)
-
-def fail_if_not_contained(actual, expected):
-  if expected not in actual:
-    fail(actual, expected)
-
-if len(requested) == 0:
-  tests = sorted(os.listdir('test'))
-else:
-  tests = requested[:]
-
-warnings = []
-
-def warn(text):
-  global warnings
-  warnings.append(text)
-  print 'warning:', text
-
-if not interpreter:
-  warn('no interpreter provided (did not test spec interpreter validation)')
-if not has_node:
-  warn('no node found (did not check proper js form)')
-if not has_mozjs:
-  warn('no mozjs found (did not check asm.js validation)')
-if not has_emcc:
-  warn('no emcc found (did not check non-vanilla emscripten/binaryen integration)')
-
 # setup
 
 BASE_DIR = os.path.abspath('test')
@@ -136,6 +73,80 @@ def setup_waterfall():
 
 fetch_waterfall()
 setup_waterfall()
+
+
+# external tools
+
+has_node = False
+try:
+  subprocess.check_call(['nodejs', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  has_node = 'nodejs'
+except:
+  try:
+    subprocess.check_call(['node', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    has_node = 'node'
+  except:
+    pass
+
+has_mozjs = False
+try:
+  subprocess.check_call(['mozjs', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  has_mozjs = True
+except:
+  pass
+
+has_emcc = False
+try:
+  subprocess.check_call(['emcc', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  has_emcc = True
+except:
+  pass
+
+has_vanilla_emcc = False
+try:
+  subprocess.check_call([os.path.join('test', 'emscripten', 'emcc'), '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  has_vanilla_emcc = True
+except:
+  pass
+
+# utilities
+
+def fail(actual, expected):
+  raise Exception("incorrect output, diff:\n\n%s" % (
+    ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])[-1000:]
+  ))
+
+def fail_if_not_identical(actual, expected):
+  if expected != actual:
+    fail(actual, expected)
+
+def fail_if_not_contained(actual, expected):
+  if expected not in actual:
+    fail(actual, expected)
+
+if len(requested) == 0:
+  tests = sorted(os.listdir('test'))
+else:
+  tests = requested[:]
+
+warnings = []
+
+def warn(text):
+  global warnings
+  warnings.append(text)
+  print 'warning:', text
+
+if not interpreter:
+  warn('no interpreter provided (did not test spec interpreter validation)')
+if not has_node:
+  warn('no node found (did not check proper js form)')
+if not has_mozjs:
+  warn('no mozjs found (did not check asm.js validation)')
+if not has_emcc:
+  warn('no emcc found (did not check non-vanilla emscripten/binaryen integration)')
+if not has_vanilla_emcc:
+  warn('no functional emcc submodule found')
+
 
 # tests
 
@@ -372,39 +383,41 @@ for wast in tests:
     if actual != expected:
       fail(actual, expected)
 
-print '\n[ checking emcc WASM_BACKEND testcases... (llvm: %s)]\n' % (os.environ.get('LLVM') or 'NULL')
+if has_vanilla_emcc:
 
-# if we did not set vanilla llvm, then we must set this env var to make emcc use the wasm backend.
-# or, if we are using vanilla llvm, things should just work.
-if not os.environ.get('LLVM'):
-  print '(not using vanilla llvm, so settng env var to tell emcc to use wasm backend)'
-  os.environ['EMCC_WASM_BACKEND'] = '1'
-try:
-  VANILLA_EMCC = os.path.join('test', 'emscripten', 'emcc')
-  # run emcc to make sure it sets itself up properly, if it was never run before
-  command = [VANILLA_EMCC, '-v']
-  print '____' + ' '.join(command)
-  subprocess.check_call(command)
+  print '\n[ checking emcc WASM_BACKEND testcases... (llvm: %s)]\n' % (os.environ.get('LLVM') or 'NULL')
 
-  for c in sorted(os.listdir(os.path.join('test', 'wasm_backend'))):
-    if not c.endswith('cpp'): continue
-    print '..', c
-    base = c.replace('.cpp', '').replace('.c', '')
-    expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
-    command = [VANILLA_EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
-    print '....' + ' '.join(command)
-    if os.path.exists('a.wasm.js'): os.unlink('a.wasm.js')
-    subprocess.check_call(command)
-    if has_node:
-      print '  (check in node)'
-      proc = subprocess.Popen([has_node, 'a.wasm.js'], stdout=subprocess.PIPE)
-      out, err = proc.communicate()
-      assert proc.returncode == 0
-      if out.strip() != expected.strip():
-        fail(out, expected)
-finally:
+  # if we did not set vanilla llvm, then we must set this env var to make emcc use the wasm backend.
+  # or, if we are using vanilla llvm, things should just work.
   if not os.environ.get('LLVM'):
-    del os.environ['EMCC_WASM_BACKEND']
+    print '(not using vanilla llvm, so settng env var to tell emcc to use wasm backend)'
+    os.environ['EMCC_WASM_BACKEND'] = '1'
+  try:
+    VANILLA_EMCC = os.path.join('test', 'emscripten', 'emcc')
+    # run emcc to make sure it sets itself up properly, if it was never run before
+    command = [VANILLA_EMCC, '-v']
+    print '____' + ' '.join(command)
+    subprocess.check_call(command)
+
+    for c in sorted(os.listdir(os.path.join('test', 'wasm_backend'))):
+      if not c.endswith('cpp'): continue
+      print '..', c
+      base = c.replace('.cpp', '').replace('.c', '')
+      expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
+      command = [VANILLA_EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
+      print '....' + ' '.join(command)
+      if os.path.exists('a.wasm.js'): os.unlink('a.wasm.js')
+      subprocess.check_call(command)
+      if has_node:
+        print '  (check in node)'
+        proc = subprocess.Popen([has_node, 'a.wasm.js'], stdout=subprocess.PIPE)
+        out, err = proc.communicate()
+        assert proc.returncode == 0
+        if out.strip() != expected.strip():
+          fail(out, expected)
+  finally:
+    if not os.environ.get('LLVM'):
+      del os.environ['EMCC_WASM_BACKEND']
 
 print '\n[ checking example testcases... ]\n'
 
