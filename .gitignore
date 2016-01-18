@@ -2,7 +2,6 @@ bin/binaryen-shell
 bin/asm2wasm
 bin/wasm2asm
 bin/s2wasm
-bin/wasm.js
 bin/wasm-as
 bin/wasm-dis
 *.a
@@ -18,4 +17,6 @@ cmake_install.cmake
 *.ninja
 .ninja_deps
 .ninja_log
+test/wasm-binaries-*.tbz2
 test/wasm-torture-s-*.tbz2
+test/wasm-install/
