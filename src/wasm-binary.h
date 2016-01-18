@@ -456,11 +456,11 @@ public:
         type = function->type;
       }
       if (debug) std::cerr << "writing" << name << std::endl;
-      o << getFunctionTypeIndex(type);
       o << int8_t(BinaryConsts::Named |
                   (BinaryConsts::Import * !!import) |
                   (BinaryConsts::Locals * (function && function->locals.size() > 0)) |
                   (BinaryConsts::Export * (wasm->exportsMap.count(name) > 0)));
+      o << getFunctionTypeIndex(type);
       emitString(name.str);
       if (function && function->locals.size() > 0) {
         mapLocals(function);
@@ -1040,8 +1040,8 @@ public:
     size_t total = getLEB128(); // imports and functions
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "read one at " << pos << std::endl;
-      auto type = wasm.functionTypes[getInt16()];
       auto data = getInt8();
+      auto type = wasm.functionTypes[getInt16()];
       bool named = data & BinaryConsts::Named;
       assert(named);
       bool import = data & BinaryConsts::Import;
