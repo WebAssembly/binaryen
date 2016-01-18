@@ -102,16 +102,28 @@ if not has_emcc:
 
 BASE_DIR = os.path.abspath('test')
 WATERFALL_BUILD_DIR = os.path.join(BASE_DIR, 'wasm-install')
-BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'bin'))
-WASM_BINARIES = 'wasm-binaries-%s.tbz2'
+BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'wasm-install', 'bin'))
 
 def fetch_waterfall():
-  """Returns True if new binaries were installed."""
   rev = open(os.path.join('test', 'revision')).read()
-  downloaded = scripts.storage.download_tar(WASM_BINARIES, BASE_DIR, rev)
-  if not os.path.isdir(WATERFALL_BUILD_DIR):
-    os.mkdir(WATERFALL_BUILD_DIR)
-  return scripts.support.untar(downloaded, BASE_DIR)
+  try:
+    local_rev = open(os.path.join('test', 'local-revision')).read()
+  except:
+    local_rev = None
+  if local_rev == rev: return
+  # fetch it
+  print '(downloading waterfall ' + rev + ')'
+  basename = 'wasm-binaries-' + rev + '.tbz2'
+  downloaded = urllib2.urlopen('https://storage.googleapis.com/wasm-llvm/builds/git/' + basename).read().strip()
+  fullname = os.path.join('test', basename)
+  open(fullname, 'wb').write(downloaded)
+  print '(unpacking)'
+  if os.path.exists(WATERFALL_BUILD_DIR):
+    shutil.rmtree(WATERFALL_BUILD_DIR)
+  os.mkdir(WATERFALL_BUILD_DIR)
+  subprocess.check_call(['tar', '-xvf', os.path.abspath(fullname)], cwd=WATERFALL_BUILD_DIR)
+  print '(noting local revision)'
+  open(os.path.join('test', 'local-revision'), 'w').write(rev)
 
 def setup_waterfall():
   # if we can use the waterfall llvm, do so
