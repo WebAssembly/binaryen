@@ -35,6 +35,13 @@ for arg in sys.argv[1:]:
   else:
     requested.append(arg)
 
+warnings = []
+
+def warn(text):
+  global warnings
+  warnings.append(text)
+  print 'warning:', text
+
 # setup
 
 BASE_DIR = os.path.abspath('test')
@@ -128,13 +135,6 @@ if len(requested) == 0:
   tests = sorted(os.listdir('test'))
 else:
   tests = requested[:]
-
-warnings = []
-
-def warn(text):
-  global warnings
-  warnings.append(text)
-  print 'warning:', text
 
 if not interpreter:
   warn('no interpreter provided (did not test spec interpreter validation)')
