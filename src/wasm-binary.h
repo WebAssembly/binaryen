@@ -323,8 +323,8 @@ enum ASTNodes {
 };
 
 enum MemoryAccess {
-  Offset = 8,
-  Alignment = 128,
+  Offset = 0x10,     // bit 4
+  Alignment = 0x80,  // bit 7
   NaturalAlignment = 0
 };
 
