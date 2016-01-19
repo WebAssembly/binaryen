@@ -1102,7 +1102,7 @@ public:
 
     o << ";; METADATA: { ";
     // find asmConst calls, and emit their metadata
-    struct AsmConstWalker : public WasmWalker {
+    struct AsmConstWalker : public WasmWalker<AsmConstWalker> {
       S2WasmBuilder* parent;
 
       std::map<std::string, std::set<std::string>> sigsForCode;
@@ -1111,7 +1111,7 @@ public:
 
       AsmConstWalker(S2WasmBuilder* parent) : parent(parent) {}
 
-      void visitCallImport(CallImport* curr) override {
+      void visitCallImport(CallImport* curr) {
         if (curr->target == EMSCRIPTEN_ASM_CONST) {
           auto arg = curr->operands[0]->cast<Const>();
           size_t segmentIndex = parent->addressSegments[arg->value.geti32()];

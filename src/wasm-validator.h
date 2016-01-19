@@ -25,7 +25,7 @@
 
 namespace wasm {
 
-struct WasmValidator : public WasmWalker {
+struct WasmValidator : public WasmWalker<WasmValidator> {
   bool valid;
 
 public:
@@ -37,23 +37,23 @@ public:
 
   // visitors
 
-  void visitLoop(Loop *curr) override {
+  void visitLoop(Loop *curr) {
     if (curr->in.is()) {
       LoopChildChecker childChecker(curr->in);
       childChecker.walk(curr->body);
       shouldBeTrue(childChecker.valid);
     }
   }
-  void visitSetLocal(SetLocal *curr) override {
+  void visitSetLocal(SetLocal *curr) {
     shouldBeTrue(curr->type == curr->value->type);
   }
-  void visitLoad(Load *curr) override {
+  void visitLoad(Load *curr) {
     validateAlignment(curr->align);
   }
-  void visitStore(Store *curr) override {
+  void visitStore(Store *curr) {
     validateAlignment(curr->align);
   }
-  void visitSwitch(Switch *curr) override {
+  void visitSwitch(Switch *curr) {
     std::set<Name> inTable;
     for (auto target : curr->targets) {
       if (target.is()) {
@@ -65,14 +65,14 @@ public:
     }
     shouldBeFalse(curr->default_.is() && inTable.find(curr->default_) == inTable.end());
   }
-  void visitUnary(Unary *curr) override {
+  void visitUnary(Unary *curr) {
     shouldBeTrue(curr->value->type == curr->type);
   }
 
-  void visitFunction(Function *curr) override {
+  void visitFunction(Function *curr) {
     shouldBeTrue(curr->result == curr->body->type);
   }
-  void visitMemory(Memory *curr) override {
+  void visitMemory(Memory *curr) {
     shouldBeFalse(curr->initial > curr->max);
     size_t top = 0;
     for (auto segment : curr->segments) {
@@ -81,7 +81,7 @@ public:
     }
     shouldBeFalse(top > curr->initial);
   }
-  void visitModule(Module *curr) override {
+  void visitModule(Module *curr) {
     for (auto& exp : curr->exports) {
       Name name = exp->name;
       bool found = false;
@@ -98,13 +98,13 @@ public:
 private:
 
   // the "in" label has a none type, since no one can receive its value. make sure no one breaks to it with a value.
-  struct LoopChildChecker : public WasmWalker {
+  struct LoopChildChecker : public WasmWalker<LoopChildChecker> {
     Name in;
     bool valid = true;
 
     LoopChildChecker(Name in) : in(in) {}
 
-    void visitBreak(Break *curr) override {
+    void visitBreak(Break *curr) {
       if (curr->name == in && curr->value) {
         valid = false;
       }

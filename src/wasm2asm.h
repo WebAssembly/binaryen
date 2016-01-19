@@ -387,29 +387,29 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
 }
 
 void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
-  struct ExpressionScanner : public WasmWalker {
+  struct ExpressionScanner : public WasmWalker<ExpressionScanner> {
     Wasm2AsmBuilder* parent;
 
     ExpressionScanner(Wasm2AsmBuilder* parent) : parent(parent) {}
 
     // Visitors
 
-    void visitBlock(Block *curr) override {
+    void visitBlock(Block *curr) {
       parent->setStatement(curr);
     }
-    void visitIf(If *curr) override {
+    void visitIf(If *curr) {
       parent->setStatement(curr);
     }
-    void visitLoop(Loop *curr) override {
+    void visitLoop(Loop *curr) {
       parent->setStatement(curr);
     }
-    void visitBreak(Break *curr) override {
+    void visitBreak(Break *curr) {
       parent->setStatement(curr);
     }
-    void visitSwitch(Switch *curr) override {
+    void visitSwitch(Switch *curr) {
       parent->setStatement(curr);
     }
-    void visitCall(Call *curr) override {
+    void visitCall(Call *curr) {
       for (auto item : curr->operands) {
         if (parent->isStatement(item)) {
           parent->setStatement(curr);
@@ -417,10 +417,10 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
         }
       }
     }
-    void visitCallImport(CallImport *curr) override {
+    void visitCallImport(CallImport *curr) {
       visitCall(curr);
     }
-    void visitCallIndirect(CallIndirect *curr) override {
+    void visitCallIndirect(CallIndirect *curr) {
       if (parent->isStatement(curr->target)) {
         parent->setStatement(curr);
         return;
@@ -432,37 +432,37 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
         }
       }
     }
-    void visitSetLocal(SetLocal *curr) override {
+    void visitSetLocal(SetLocal *curr) {
       if (parent->isStatement(curr->value)) {
         parent->setStatement(curr);
       }
     }
-    void visitLoad(Load *curr) override {
+    void visitLoad(Load *curr) {
       if (parent->isStatement(curr->ptr)) {
         parent->setStatement(curr);
       }
     }
-    void visitStore(Store *curr) override {
+    void visitStore(Store *curr) {
       if (parent->isStatement(curr->ptr) || parent->isStatement(curr->value)) {
         parent->setStatement(curr);
       }
     }
-    void visitUnary(Unary *curr) override {
+    void visitUnary(Unary *curr) {
       if (parent->isStatement(curr->value)) {
         parent->setStatement(curr);
       }
     }
-    void visitBinary(Binary *curr) override {
+    void visitBinary(Binary *curr) {
       if (parent->isStatement(curr->left) || parent->isStatement(curr->right)) {
         parent->setStatement(curr);
       }
     }
-    void visitSelect(Select *curr) override {
+    void visitSelect(Select *curr) {
       if (parent->isStatement(curr->condition) || parent->isStatement(curr->ifTrue) || parent->isStatement(curr->ifFalse)) {
         parent->setStatement(curr);
       }
     }
-    void visitHost(Host *curr) override {
+    void visitHost(Host *curr) {
       for (auto item : curr->operands) {
         if (parent->isStatement(item)) {
           parent->setStatement(curr);
@@ -475,7 +475,7 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
 }
 
 Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
-  struct ExpressionProcessor : public WasmVisitor<Ref> {
+  struct ExpressionProcessor : public WasmVisitor<ExpressionProcessor, Ref> {
     Wasm2AsmBuilder* parent;
     IString result;
     ExpressionProcessor(Wasm2AsmBuilder* parent) : parent(parent) {}
@@ -579,7 +579,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
 
     // Visitors
 
-    Ref visitBlock(Block *curr) override {
+    Ref visitBlock(Block *curr) {
       breakResults[curr->name] = result;
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
@@ -595,7 +595,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       return ret;
     }
-    Ref visitIf(If *curr) override {
+    Ref visitIf(If *curr) {
       IString temp;
       Ref condition = visitForExpression(curr->condition, i32, temp);
       Ref ifTrue = ValueBuilder::makeStatement(visitAndAssign(curr->ifTrue, result));
@@ -611,7 +611,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       condition[1]->push_back(ValueBuilder::makeIf(ValueBuilder::makeName(temp), ifTrue, ifFalse));
       return condition;
     }
-    Ref visitLoop(Loop *curr) override {
+    Ref visitLoop(Loop *curr) {
       Name asmLabel = curr->out.is() ? curr->out : curr->in; // label using the outside, normal for breaks. if no outside, then inside
       if (curr->in.is()) continueLabels[curr->in] = asmLabel;
       Ref body = visit(curr->body, result);
@@ -621,7 +621,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       return ret;
     }
-    Ref visitBreak(Break *curr) override {
+    Ref visitBreak(Break *curr) {
       if (curr->condition) {
         // we need an equivalent to an if here, so use that code
         Break fakeBreak = *curr;
@@ -645,7 +645,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       ret[1]->push_back(theBreak);
       return ret;
     }
-    Ref visitSwitch(Switch *curr) override {
+    Ref visitSwitch(Switch *curr) {
       Ref ret = ValueBuilder::makeLabel(fromName(curr->name), ValueBuilder::makeBlock());
       Ref value;
       if (isStatement(curr->value)) {
@@ -694,7 +694,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       return ret;
     }
 
-    Ref visitCall(Call *curr) override {
+    Ref visitCall(Call *curr) {
       Ref theCall = ValueBuilder::makeCall(fromName(curr->target));
       if (!isStatement(curr)) {
         // none of our operands is a statement; go right ahead and create a simple expression
@@ -706,10 +706,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       // we must statementize them all
       return makeStatementizedCall(curr->operands, ValueBuilder::makeBlock(), theCall, result, curr->type);
     }
-    Ref visitCallImport(CallImport *curr) override {
+    Ref visitCallImport(CallImport *curr) {
       return visitCall(curr);
     }
-    Ref visitCallIndirect(CallIndirect *curr) override {
+    Ref visitCallIndirect(CallIndirect *curr)  {
       std::string stable = std::string("FUNCTION_TABLE_") + getSig(curr->fullType);
       IString table = IString(stable.c_str(), false);
       auto makeTableCall = [&](Ref target) {
@@ -733,10 +733,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       Ref theCall = makeTableCall(temp.getAstName());
       return makeStatementizedCall(curr->operands, ret, theCall, result, curr->type);
     }
-    Ref visitGetLocal(GetLocal *curr) override {
+    Ref visitGetLocal(GetLocal *curr) {
       return ValueBuilder::makeName(fromName(curr->name));
     }
-    Ref visitSetLocal(SetLocal *curr) override {
+    Ref visitSetLocal(SetLocal *curr) {
       if (!isStatement(curr)) {
         return ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), visit(curr->value, EXPRESSION_RESULT));
       }
@@ -746,7 +746,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       ret[1]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(curr->name)), temp.getAstName())));
       return ret;
     }
-    Ref visitLoad(Load *curr) override {
+    Ref visitLoad(Load *curr) {
       if (isStatement(curr)) {
         ScopedTemp temp(i32, parent);
         GetLocal fakeLocal;
@@ -808,7 +808,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
-    Ref visitStore(Store *curr) override {
+    Ref visitStore(Store *curr) {
       if (isStatement(curr)) {
         ScopedTemp tempPtr(i32, parent);
         ScopedTemp tempValue(curr->type, parent);
@@ -903,7 +903,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       return ValueBuilder::makeAssign(ret, value);
     }
-    Ref visitConst(Const *curr) override {
+    Ref visitConst(Const *curr) {
       switch (curr->type) {
         case i32: return ValueBuilder::makeInt(curr->value.i32);
         case f32: {
@@ -924,7 +924,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         default: abort();
       }
     }
-    Ref visitUnary(Unary *curr) override {
+    Ref visitUnary(Unary *curr) {
       if (isStatement(curr)) {
         ScopedTemp temp(curr->value->type, parent);
         GetLocal fakeLocal;
@@ -972,7 +972,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         default: abort();
       }
     }
-    Ref visitBinary(Binary *curr) override {
+    Ref visitBinary(Binary *curr) {
       if (isStatement(curr)) {
         ScopedTemp tempLeft(curr->left->type, parent);
         GetLocal fakeLocalLeft;
@@ -1045,7 +1045,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
-    Ref visitSelect(Select *curr) override {
+    Ref visitSelect(Select *curr) {
       if (isStatement(curr)) {
         ScopedTemp tempCondition(i32, parent);
         GetLocal fakeCondition;
@@ -1085,13 +1085,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
           )
         );
     }
-    Ref visitHost(Host *curr) override {
+    Ref visitHost(Host *curr) {
       abort();
     }
-    Ref visitNop(Nop *curr) override {
+    Ref visitNop(Nop *curr) {
       return ValueBuilder::makeToplevel();
     }
-    Ref visitUnreachable(Unreachable *curr) override {
+    Ref visitUnreachable(Unreachable *curr) {
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
   };

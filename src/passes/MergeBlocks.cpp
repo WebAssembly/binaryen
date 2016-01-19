@@ -23,8 +23,8 @@
 
 namespace wasm {
 
-struct MergeBlocks : public Pass {
-  void visitBlock(Block *curr) override {
+struct MergeBlocks : public WalkerPass<WasmWalker<MergeBlocks>> {
+  void visitBlock(Block *curr) {
     bool more = true;
     while (more) {
       more = false;

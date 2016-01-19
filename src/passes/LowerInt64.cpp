@@ -63,16 +63,16 @@ struct LowerInt64 : public Pass {
     }
   }
 
-  void visitCall(Call *curr) override {
+  void visitCall(Call *curr) {
     fixCall(curr);
   }
-  void visitCallImport(CallImport *curr) override {
+  void visitCallImport(CallImport *curr) {
     fixCall(curr);
   }
-  void visitCallIndirect(CallIndirect *curr) override {
+  void visitCallIndirect(CallIndirect *curr) {
     fixCall(curr);
   }
-  void visitGetLocal(GetLocal *curr) override {
+  void visitGetLocal(GetLocal *curr) {
     if (curr->type == i64) {
       if (locals.count(curr->name) == 0) {
         Name highName = namer->getUnique("high");
@@ -85,7 +85,7 @@ struct LowerInt64 : public Pass {
       fixes[curr] = high;
     }
   }
-  void visitSetLocal(SetLocal *curr) override {
+  void visitSetLocal(SetLocal *curr) {
     if (curr->type == i64) {
       Name highName;
       if (locals.count(curr->name) == 0) {
@@ -142,7 +142,7 @@ struct LowerInt64 : public Pass {
     return ret;
   }
 
-  void visitLoad(Load *curr) override {
+  void visitLoad(Load *curr) {
     if (curr->type == i64) {
       Name local;
       auto ret = setToLocalForBlock(curr->ptr, local);
@@ -158,7 +158,7 @@ struct LowerInt64 : public Pass {
       replaceCurrent(ret);
     }
   }
-  void visitStore(Store *curr) override {
+  void visitStore(Store *curr) {
     if (curr->type == i64) {
       Name localPtr, localValue;
       auto ret = setToLocalForBlock(curr->ptr, localPtr);
@@ -178,40 +178,13 @@ struct LowerInt64 : public Pass {
       replaceCurrent(ret);
     }
   }
-  void visitConst(Const *curr) override {
-  }
-  void visitUnary(Unary *curr) override {
-  }
-  void visitBinary(Binary *curr) override {
-  }
-  void visitSelect(Select *curr) override {
-  }
-  void visitHost(Host *curr) override {
-  }
-  void visitNop(Nop *curr) override {
-  }
-  void visitUnreachable(Unreachable *curr) override {
-  }
-
-  void visitFunctionType(FunctionType *curr) override {
-  }
-  void visitImport(Import *curr) override {
-  }
-  void visitExport(Export *curr) override {
-  }
-  void visitFunction(Function *curr) override {
+  void visitFunction(Function *curr) {
     // TODO: new params
     for (auto localPair : locals) { // TODO: ignore params
       curr->locals.emplace_back(localPair.second, i32);
     }
     fixes.clear();
     locals.clear();
-  }
-  void visitTable(Table *curr) override {
-  }
-  void visitMemory(Memory *curr) override {
-  }
-  void visitModule(Module *curr) override {
   }
 };
 

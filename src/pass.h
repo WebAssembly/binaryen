@@ -88,14 +88,28 @@ struct PassRunner {
 //
 // Core pass class
 //
-class Pass : public WasmWalker {
- public:
-  // Override this to perform preparation work before the pass runs
+class Pass {
+public:
+  virtual ~Pass() {};
+  // Override this to perform preparation work before the pass runs.
   virtual void prepare(PassRunner* runner, Module* module) {}
+  virtual void run(PassRunner* runner, Module* module) = 0;
+protected:
+  Pass() {}
+  Pass(Pass &) {}
+  Pass &operator=(const Pass&) = delete;
+};
 
-  void run(PassRunner* runner, Module* module) {
+//
+// Core pass class that uses AST walking. This class can be parameterized by
+// different types of AST walkers.
+//
+template <typename WalkerType>
+class WalkerPass : public Pass, public WalkerType {
+public:
+  void run(PassRunner* runner, Module* module) override {
     prepare(runner, module);
-    startWalk(module);
+    WalkerType::startWalk(module);
   }
 };
 
@@ -104,22 +118,22 @@ class Pass : public WasmWalker {
 // e.g. through PassRunner::getLast
 
 // Handles names in a module, in particular adding names without duplicates
-class NameManager : public Pass {
+class NameManager : public WalkerPass<WasmWalker<NameManager>> {
  public:
   Name getUnique(std::string prefix);
   // TODO: getUniqueInFunction
 
   // visitors
-  void visitBlock(Block* curr) override;
-  void visitLoop(Loop* curr) override;
-  void visitBreak(Break* curr) override;
-  void visitSwitch(Switch* curr) override;
-  void visitCall(Call* curr) override;
-  void visitCallImport(CallImport* curr) override;
-  void visitFunctionType(FunctionType* curr) override;
-  void visitFunction(Function* curr) override;
-  void visitImport(Import* curr) override;
-  void visitExport(Export* curr) override;
+  void visitBlock(Block* curr);
+  void visitLoop(Loop* curr);
+  void visitBreak(Break* curr);
+  void visitSwitch(Switch* curr);
+  void visitCall(Call* curr);
+  void visitCallImport(CallImport* curr);
+  void visitFunctionType(FunctionType* curr);
+  void visitFunction(Function* curr);
+  void visitImport(Import* curr);
+  void visitExport(Export* curr);
 
 private:
   std::set<Name> names;
