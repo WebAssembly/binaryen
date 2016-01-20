@@ -28,12 +28,13 @@ using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   Options options("s2wasm", "Link .s file into .wast");
-  options.add("--output", "-o", "Output file (stdout if not specified)",
-              Options::Arguments::One,
-              [](Options *o, const std::string &argument) {
-                o->extra["output"] = argument;
-                Colors::disable();
-              })
+  options
+      .add("--output", "-o", "Output file (stdout if not specified)",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["output"] = argument;
+             Colors::disable();
+           })
       .add("--global-base", "-g", "Where to start to place globals",
            Options::Arguments::One,
            [](Options *o, const std::string &argument) {
