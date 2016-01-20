@@ -390,13 +390,14 @@ if has_vanilla_emcc:
 
   print '\n[ checking emcc WASM_BACKEND testcases...]\n'
 
-  # if we did not set vanilla llvm, then we must set this env var to make emcc use the wasm backend.
-  # or, if we are using vanilla llvm, things should just work.
-  if not has_vanilla_llvm:
-    print '(not using vanilla llvm, so setting env var to tell emcc to use wasm backend)'
-    os.environ['EMCC_WASM_BACKEND'] = '1'
   try:
-    os.environ['LLVM'] = BIN_DIR # use the vanilla LLVM
+    if has_vanilla_llvm:
+      os.environ['LLVM'] = BIN_DIR # use the vanilla LLVM
+    else:
+      # if we did not set vanilla llvm, then we must set this env var to make emcc use the wasm backend.
+      # (if we are using vanilla llvm, things should just work)
+      print '(not using vanilla llvm, so setting env var to tell emcc to use wasm backend)'
+      os.environ['EMCC_WASM_BACKEND'] = '1'
     VANILLA_EMCC = os.path.join('test', 'emscripten', 'emcc')
     # run emcc to make sure it sets itself up properly, if it was never run before
     command = [VANILLA_EMCC, '-v']
