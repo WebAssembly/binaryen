@@ -35,7 +35,7 @@
           (get_local $var$0)
           (i32.const 1)
         )
-        (table (case $label$1) (case $label$2))
+        (table (case $label$1) (case $label$2)) (case $label$1)
         (case $label$1
           (br $label$0
             (i32.const 1)

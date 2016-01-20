@@ -616,14 +616,18 @@ public:
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
     o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->cases.size())
-                                           << int16_t(curr->targets.size());
+                                           << int16_t(curr->targets.size() + 1);
     std::map<Name, int16_t> mapping; // target name => index in cases
     for (size_t i = 0; i < curr->cases.size(); i++) {
       mapping[curr->cases[i].name] = i;
     }
+    if (mapping.find(curr->default_) == mapping.end()) {
+      mapping[curr->default_] = curr->cases.size();
+    }
     for (auto target : curr->targets) {
       o << mapping[target];
     }
+    o << mapping[curr->default_];
     breakStack.push_back(curr->name);
     recurse(curr->value);
     for (auto& c : curr->cases) {
@@ -1285,9 +1289,10 @@ public:
       }
       return caseLabels[index];
     };
-    for (auto i = 0; i < numTargets; i++) {
+    for (auto i = 0; i < numTargets - 1; i++) {
       curr->targets.push_back(getCaseLabel(getInt16()));
     }
+    curr->default_ = getCaseLabel(getInt16());
     curr->name = getNextLabel();
     breakStack.push_back(curr->name);
     readExpression(curr->value);
