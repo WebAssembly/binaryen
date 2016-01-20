@@ -69,12 +69,15 @@ def fetch_waterfall():
   print '(noting local revision)'
   open(os.path.join('test', 'local-revision'), 'w').write(rev)
 
+has_vanilla_llvm = False
+
 def setup_waterfall():
   # if we can use the waterfall llvm, do so
+  global has_vanilla_llvm
   CLANG = os.path.join(BIN_DIR, 'clang')
   try:
     subprocess.check_call([CLANG, '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    os.environ['LLVM'] = BIN_DIR
+    has_vanilla_llvm = True
   except Exception, e:
     warn('could not run vanilla LLVM from waterfall: ' + str(e) + ', looked for clang at ' + CLANG)
 
@@ -385,14 +388,15 @@ for wast in tests:
 
 if has_vanilla_emcc:
 
-  print '\n[ checking emcc WASM_BACKEND testcases... (llvm: %s)]\n' % (os.environ.get('LLVM') or 'NULL')
+  print '\n[ checking emcc WASM_BACKEND testcases...]\n'
 
   # if we did not set vanilla llvm, then we must set this env var to make emcc use the wasm backend.
   # or, if we are using vanilla llvm, things should just work.
-  if not os.environ.get('LLVM'):
-    print '(not using vanilla llvm, so settng env var to tell emcc to use wasm backend)'
+  if not has_vanilla_llvm:
+    print '(not using vanilla llvm, so setting env var to tell emcc to use wasm backend)'
     os.environ['EMCC_WASM_BACKEND'] = '1'
   try:
+    os.environ['LLVM'] = BIN_DIR # use the vanilla LLVM
     VANILLA_EMCC = os.path.join('test', 'emscripten', 'emcc')
     # run emcc to make sure it sets itself up properly, if it was never run before
     command = [VANILLA_EMCC, '-v']
@@ -416,7 +420,8 @@ if has_vanilla_emcc:
         if out.strip() != expected.strip():
           fail(out, expected)
   finally:
-    if not os.environ.get('LLVM'):
+    del os.environ['LLVM']
+    if not has_vanilla_llvm:
       del os.environ['EMCC_WASM_BACKEND']
 
 print '\n[ checking example testcases... ]\n'
