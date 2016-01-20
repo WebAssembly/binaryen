@@ -1,0 +1,44 @@
+(module
+  (memory 16777216 16777216)
+  (export "add" $add)
+  (func $add (param $x i32) (param $y i32) (result i32)
+    (set_local $x
+      (i32.const 1)
+    )
+    (set_local $y
+      (i32.const 2)
+    )
+    (if_else
+      (i32.const 0)
+      (set_local $y
+        (i32.const 3)
+      )
+      (i32.const 2)
+    )
+    (i32.add
+      (i32.const 1)
+      (get_local $y)
+    )
+    (set_local $x
+      (i32.const 3)
+    )
+    (if
+      (i32.const 3)
+      (block $b0
+        (i32.const 3)
+        (set_local $x
+          (i32.const 4)
+        )
+        (i32.const 4)
+      )
+    )
+    (get_local $x)
+    (if
+      (set_local $x
+        (i32.const 5)
+      )
+      (i32.const 5)
+    )
+    (i32.const 5)
+  )
+)
