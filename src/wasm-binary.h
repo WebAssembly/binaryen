@@ -454,6 +454,8 @@ public:
       } else {
         name = function->name;
         type = function->type;
+        mappedLocals.clear();
+        numLocalsByType.clear();
       }
       if (debug) std::cerr << "writing" << name << std::endl;
       o << int8_t(BinaryConsts::Named |
@@ -1123,6 +1125,8 @@ public:
       pos = func.pos;
       nextLabel = 0;
       // prepare locals
+      mappedLocals.clear();
+      localTypes.clear();
       for (size_t i = 0; i < curr->params.size(); i++) {
         mappedLocals.push_back(curr->params[i].name);
         localTypes[curr->params[i].name] = curr->params[i].type;

@@ -13,8 +13,7 @@
   )
   (func $neg (param $var$0 i32) (param $var$1 i32)
     (local $var$2 f32)
-    (local $var$3 f32)
-    (set_local $var$0
+    (set_local $var$2
       (f32.neg
         (block $label$0
           (i32.store align=4
