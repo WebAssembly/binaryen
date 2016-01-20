@@ -23,17 +23,15 @@
 #include <setjmp.h>
 #include <memory>
 
-#include "wasm-s-parser.h"
-#include "wasm-interpreter.h"
-#include "wasm-validator.h"
 #include "pass.h"
+#include "support/command-line.h"
+#include "support/file.h"
+#include "wasm-interpreter.h"
+#include "wasm-s-parser.h"
+#include "wasm-validator.h"
 
 using namespace cashew;
 using namespace wasm;
-
-namespace wasm {
-int debug = 0;
-}
 
 // Globals
 
@@ -262,106 +260,68 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
 // main
 //
 
-int main(int argc, char **argv) {
-  debug = getenv("BINARYEN_DEBUG") ? getenv("BINARYEN_DEBUG")[0] - '0' : 0;
-
-  char *infile = nullptr;
+int main(int argc, const char* argv[]) {
   bool print_before = false;
   bool print_after = false;
-  std::vector<std::string> passes;
   Name entry;
+  std::vector<std::string> passes;
 
-  assert(argc > 0 && "expect at least program name as an argument");
-  for (size_t i = 1, e = argc; i != e; i++) {
-    char* curr = argv[i];
-    if (curr[0] == '-') {
-      std::string arg = curr;
-      if (arg == "-print-before") {
-        print_before = true;
-      } else if (arg == "-print-after") {
-        print_after = true;
-      } else if (arg == "--help") {
-        std::cout << "\n";
-        std::cout << "binaryen shell\n";
-        std::cout << "--------------\n\n";
-        std::cout << "printing options:\n";
-        std::cout << "  -print-before : print modules before processing them\n";
-        std::cout << "  -print-after  : print modules after processing them\n";
-        std::cout << "\n";
-        std::cout << "execution options:\n";
-        std::cout << "  --entry=[ENTRY] : call ENTRY() after parsing the module\n";
-        std::cout << "\n";
-        std::cout << "passes:\n";
-        std::cout << "  -O : execute default optimization passes\n";
-        auto allPasses = PassRegistry::get()->getRegisteredNames();
-        for (auto& name : allPasses) {
-          std::cout << "  -" << name << " : " << PassRegistry::get()->getPassDescription(name) << "\n";
-        }
-        std::cout << "\n";
-        exit(0);
-      } else if (arg == "-O") {
-        passes.push_back("remove-unused-brs");
-        passes.push_back("remove-unused-names");
-        passes.push_back("merge-blocks");
-        passes.push_back("simplify-locals");
-      } else if (arg.substr(0, 7) == "--entry") {
-        entry = Name(strchr(curr, '=') + 1);
-      } else {
-        // otherwise, assumed to be a pass
-        const char* name = curr + 1;
-        auto check = PassRegistry::get()->createPass(name);
-        if (!check) {
-          printf("error: invalid option %s\n", curr);
-          exit(1);
-        }
-        delete check;
-        passes.push_back(name);
-      }
-    } else {
-      if (infile) {
-        printf("error: too many input files provided.\n");
-        exit(1);
-      }
-      infile = curr;
-    }
+  static const char* default_passes[] = {"remove-unused-brs",
+                                         "remove-unused-names", "merge-blocks",
+                                         "simplify-locals"};
+
+  Options options("binaryen-shell", "Execute .wast files");
+  options
+      .add("--output", "-o", "Output file (stdout if not specified)",
+           Options::Arguments::One,
+           [](Options* o, const std::string& argument) {
+             o->extra["output"] = argument;
+             Colors::disable();
+           })
+      .add(
+          "--entry", "-e", "call the entry point after parsing the module",
+          Options::Arguments::One,
+          [&entry](Options*, const std::string& argument) { entry = argument; })
+      .add("", "-O", "execute default optimization passes",
+           Options::Arguments::Zero,
+           [&passes](Options*, const std::string&) {
+             for (const auto* p : default_passes) passes.push_back(p);
+           })
+      .add("--print-before", "", "Print modules before processing them",
+           Options::Arguments::Zero,
+           [&print_before](Options*, const std::string&) {
+             print_before = true;
+           })
+      .add("--print-after", "", "Print modules after processing them",
+           Options::Arguments::Zero,
+           [&print_after](Options*, const std::string&) { print_after = true; })
+      .add_positional("INFILE", Options::Arguments::One,
+                      [](Options* o, const std::string& argument) {
+                        o->extra["infile"] = argument;
+                      });
+  for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
+    options.add(
+        std::string("--") + p, "", PassRegistry::get()->getPassDescription(p),
+        Options::Arguments::Zero,
+        [&passes, p](Options*, const std::string&) { passes.push_back(p); });
   }
+  options.parse(argc, argv);
 
-  if (!infile) {
-    printf("error: no input file provided.\n");
-    exit(1);
-  }
+  auto input(read_file<std::vector<char>>(options.extra["infile"], options.debug));
 
-  if (debug) std::cerr << "loading '" << infile << "'...\n";
-  FILE *f = fopen(infile, "r");
-  if (!f) {
-    printf("error: could not open input file: %s\n", infile);
-    exit(1);
-  }
-  fseek(f, 0, SEEK_END);
-  int size = ftell(f);
-  char *input = new char[size+1];
-  rewind(f);
-  int num = fread(input, 1, size, f);
-  // On Windows, ftell() gives the byte position (\r\n counts as two bytes), but when
-  // reading, fread() returns the number of characters read (\r\n is read as one char \n, and counted as one),
-  // so return value of fread can be less than size reported by ftell, and that is normal.
-  assert((num > 0 || size == 0) && num <= size);
-  fclose(f);
-  input[num] = 0;
-
-  if (debug) std::cerr << "parsing text to s-expressions...\n";
-  SExpressionParser parser(input);
+  if (options.debug) std::cerr << "parsing text to s-expressions...\n";
+  SExpressionParser parser(input.data());
   Element& root = *parser.root;
-  if (debug) std::cout << root << '\n';
+  if (options.debug) std::cout << root << '\n';
 
   // A .wast may have multiple modules, with some asserts after them
   bool checked = false;
   size_t i = 0;
   while (i < root.size()) {
-    if (debug) std::cerr << "parsing s-expressions to wasm...\n";
+    if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
     AllocatingModule wasm;
     std::unique_ptr<SExpressionWasmBuilder> builder(
-        new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }, debug));
+        new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }, options.debug));
     i++;
 
     if (print_before) {
@@ -374,7 +334,7 @@ int main(int argc, char **argv) {
     MixedArena moreModuleAllocations;
 
     if (passes.size() > 0) {
-      if (debug) std::cerr << "running passes...\n";
+      if (options.debug) std::cerr << "running passes...\n";
       PassRunner passRunner(&moreModuleAllocations);
       for (auto& passName : passes) {
         passRunner.add(passName);
