@@ -32,9 +32,11 @@ Options::Options(const std::string &command, const std::string &description)
         }
         // TODO: line-wrap description.
         for (const auto &o : options) {
+          bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
           size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
-          std::cerr << "  " << o.longName << ',' << o.shortName
-                    << std::string(pad, ' ') << o.description << '\n';
+          std::cerr << "  " << o.longName << (long_n_short ? ',' : ' ')
+                    << o.shortName << std::string(pad, ' ') << o.description
+                    << '\n';
         }
         std::cerr << '\n';
         exit(EXIT_SUCCESS);
