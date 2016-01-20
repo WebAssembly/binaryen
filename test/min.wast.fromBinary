@@ -2,6 +2,7 @@
   (memory 16777216 16777216)
   (type $0 (func (param f32) (result f32)))
   (type $1 (func (param i32 i32)))
+  (type $2 (func (param i32) (result i32)))
   (export "floats" $floats)
   (func $floats (param $var$0 f32)
     (local $var$1 f32)
@@ -25,6 +26,28 @@
           )
         )
       )
+    )
+  )
+  (func $littleswitch (param $var$0 i32)
+    (block $label$0
+      (tableswitch $label$3
+        (i32.sub
+          (get_local $var$0)
+          (i32.const 1)
+        )
+        (table (case $label$1) (case $label$2))
+        (case $label$1
+          (br $label$0
+            (i32.const 1)
+          )
+        )
+        (case $label$2
+          (br $label$0
+            (i32.const 2)
+          )
+        )
+      )
+      (i32.const 0)
     )
   )
 )

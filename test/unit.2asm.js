@@ -120,12 +120,6 @@ function asmFunc(global, env, buffer) {
     case 0:
      wasm2asm_i32$0 = 51;
      break topmost;
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
     default:
     }
    }
@@ -151,13 +145,6 @@ function asmFunc(global, env, buffer) {
       } while (0);
       break label$break$Lout;
      }
-    case 1:
-    case 2:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-    case 9:
     default:
     }
    }

@@ -30,6 +30,25 @@ function asmFunc(global, env, buffer) {
   n = wasm2asm_f32$0;
  }
  
+ function littleswitch(x) {
+  x = x | 0;
+  var wasm2asm_i32$0 = 0;
+  topmost : {
+   switch$0 : {
+    switch (x - 1 | 0) {
+    case 1:
+     wasm2asm_i32$0 = 2;
+     break topmost;
+    default:
+     wasm2asm_i32$0 = 1;
+     break topmost;
+    }
+   }
+   wasm2asm_i32$0 = 0;
+  }
+  return wasm2asm_i32$0 | 0;
+ }
+ 
  return {
   floats: floats
  };

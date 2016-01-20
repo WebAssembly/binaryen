@@ -645,6 +645,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       ret[1]->push_back(theBreak);
       return ret;
     }
+    Expression *defaultBody = nullptr; // default must be last in asm.js
     Ref visitSwitch(Switch *curr) {
       Ref ret = ValueBuilder::makeLabel(fromName(curr->name), ValueBuilder::makeBlock());
       Ref value;
@@ -658,6 +659,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
       Ref theSwitch = ValueBuilder::makeSwitch(value);
       ret[2][1]->push_back(theSwitch);
       for (auto& c : curr->cases) {
+        if (c.name == curr->default_) {
+          defaultBody = c.body;
+          continue;
+        }
         bool added = false;
         for (size_t i = 0; i < curr->targets.size(); i++) {
           if (curr->targets[i] == c.name) {
@@ -665,12 +670,12 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
             added = true;
           }
         }
-        if (c.name == curr->default_) {
-          ValueBuilder::appendDefaultToSwitch(theSwitch);
-          added = true;
-        }
         assert(added);
         ValueBuilder::appendCodeToSwitch(theSwitch, blockify(visit(c.body, NO_RESULT)), false);
+      }
+      if (defaultBody) {
+        ValueBuilder::appendDefaultToSwitch(theSwitch);
+        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(visit(defaultBody, NO_RESULT)), false);
       }
       return ret;
     }
