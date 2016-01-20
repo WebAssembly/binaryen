@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-struct SimplifyLocals : public WalkerPass<WasmWalker<SimplifyLocals>> {
+struct SimplifyLocals : public WalkerPass<PreOrPostWalker<SimplifyLocals>> {
   void visitBlock(Block *curr) {
     // look for pairs of setlocal-getlocal, which can be just a setlocal (since it returns a value)
     if (curr->list.size() == 0) return;
