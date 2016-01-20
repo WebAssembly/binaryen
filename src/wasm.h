@@ -71,7 +71,7 @@ struct Name : public cashew::IString {
   Name() : cashew::IString() {}
   Name(const char *str) : cashew::IString(str) {}
   Name(cashew::IString str) : cashew::IString(str) {}
-  Name(const std::string &str) : cashew::IString(str.c_str()) {}
+  Name(const std::string &str) : cashew::IString(str.c_str(), false) {}
 
   friend std::ostream& operator<<(std::ostream &o, Name name) {
     assert(name.str);
