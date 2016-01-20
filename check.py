@@ -421,8 +421,9 @@ if has_vanilla_emcc:
         if out.strip() != expected.strip():
           fail(out, expected)
   finally:
-    del os.environ['LLVM']
-    if not has_vanilla_llvm:
+    if has_vanilla_llvm:
+      del os.environ['LLVM']
+    else:
       del os.environ['EMCC_WASM_BACKEND']
 
 print '\n[ checking example testcases... ]\n'
