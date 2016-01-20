@@ -69,7 +69,7 @@ namespace wasm {
 
 struct Name : public cashew::IString {
   Name() : cashew::IString() {}
-  Name(const char *str) : cashew::IString(str) {}
+  Name(const char *str) : cashew::IString(str, false) {}
   Name(cashew::IString str) : cashew::IString(str) {}
   Name(const std::string &str) : cashew::IString(str.c_str(), false) {}
 
