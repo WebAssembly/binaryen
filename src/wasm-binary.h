@@ -419,22 +419,22 @@ public:
       currLocalsByType[type]++; // increment now for simplicity, must decrement it in returns
       if (type == i32) {
         mappedLocals[name] = index + currLocalsByType[i32] - 1;
-        break;
+        continue;
       }
       index += numLocalsByType[i32];
       if (type == i64) {
         mappedLocals[name] = index + currLocalsByType[i64] - 1;
-        break;
+        continue;
       }
       index += numLocalsByType[i64];
       if (type == f32) {
         mappedLocals[name] = index + currLocalsByType[f32] - 1;
-        break;
+        continue;
       }
       index += numLocalsByType[f32];
       if (type == f64) {
         mappedLocals[name] = index + currLocalsByType[f64] - 1;
-        break;
+        continue;
       }
     }
   }
