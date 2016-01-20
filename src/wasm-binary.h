@@ -436,6 +436,7 @@ public:
         mappedLocals[name] = index + currLocalsByType[f64] - 1;
         continue;
       }
+      abort();
     }
   }
 
@@ -464,12 +465,14 @@ public:
                   (BinaryConsts::Export * (wasm->exportsMap.count(name) > 0)));
       o << getFunctionTypeIndex(type);
       emitString(name.str);
-      if (function && function->locals.size() > 0) {
+      if (function) {
         mapLocals(function);
-        o << uint16_t(numLocalsByType[i32])
-          << uint16_t(numLocalsByType[i64])
-          << uint16_t(numLocalsByType[f32])
-          << uint16_t(numLocalsByType[f64]);
+        if (function->locals.size() > 0) {
+          o << uint16_t(numLocalsByType[i32])
+            << uint16_t(numLocalsByType[i64])
+            << uint16_t(numLocalsByType[f32])
+            << uint16_t(numLocalsByType[f64]);
+        }
       }
       if (function) {
         size_t sizePos = o.size();

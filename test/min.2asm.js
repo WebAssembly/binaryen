@@ -49,6 +49,17 @@ function asmFunc(global, env, buffer) {
   return wasm2asm_i32$0 | 0;
  }
  
+ function f1(i1, i2, i3) {
+  i1 = i1 | 0;
+  i2 = i2 | 0;
+  i3 = i3 | 0;
+  var wasm2asm_i32$0 = 0;
+  topmost : {
+   wasm2asm_i32$0 = i3;
+  }
+  return wasm2asm_i32$0 | 0;
+ }
+ 
  return {
   floats: floats
  };

@@ -46,4 +46,9 @@
       (i32.const 0)
     )
   )
+  (func $f1 (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
+    (block $topmost
+      (get_local $i3)
+    )
+  )
 )
