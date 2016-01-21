@@ -175,7 +175,7 @@ for asm in tests:
     # verify in wasm
     if interpreter:
       # remove imports, spec interpreter doesn't know what to do with them
-      subprocess.check_call([os.path.join('bin', 'binaryen-shell'), '-remove-imports', '-print-after', os.path.join('test', wasm)], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
+      subprocess.check_call([os.path.join('bin', 'binaryen-shell'), '--remove-imports', '--print-after', os.path.join('test', wasm)], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
       proc = subprocess.Popen([interpreter, 'ztemp.wast'], stderr=subprocess.PIPE)
       out, err = proc.communicate()
       if proc.returncode != 0:
@@ -195,21 +195,14 @@ for asm in tests:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
 
-print '\n[ checking binaryen-shell... ]\n'
-
-actual, err = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), '--help'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-fail_if_not_contained(actual, 'binaryen shell')
-fail_if_not_contained(actual, 'options:')
-fail_if_not_contained(actual, 'passes:')
-fail_if_not_contained(actual, '  -lower-if-else')
-
 print '\n[ checking binaryen-shell passes... ]\n'
 
 for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
-    cmd = [os.path.join('bin', 'binaryen-shell'), '-print-after', '-' + passname, os.path.join('test', 'passes', t)]
+    opt = '-O' if passname == 'O' else '--' + passname
+    cmd = [os.path.join('bin', 'binaryen-shell'), '--print-after', opt, os.path.join('test', 'passes', t)]
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
@@ -220,7 +213,7 @@ for t in tests:
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join('test', t)
-    cmd = [os.path.join('bin', 'binaryen-shell'), t, '-print-before']
+    cmd = [os.path.join('bin', 'binaryen-shell'), t, '--print-before']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err.replace('printing before:', '').strip() == '', 'bad err:' + err
@@ -334,37 +327,30 @@ if torture:
 
   print '\n[ checking torture testcases... ]\n'
 
+  unexpected_result_count = 0
+
   import test.waterfall.src.link_assembly_files as link_assembly_files
   s2wasm_torture_out = os.path.abspath(os.path.join('test', 's2wasm-torture-out'))
   if os.path.isdir(s2wasm_torture_out):
     shutil.rmtree(s2wasm_torture_out)
   os.mkdir(s2wasm_torture_out)
-  unexpected_result_count = link_assembly_files.run(
+  unexpected_result_count += link_assembly_files.run(
       linker=os.path.abspath(os.path.join('bin', 's2wasm')),
       files=os.path.abspath(os.path.join('test', 'torture-s', '*.s')),
       fails=os.path.abspath(os.path.join('test', 's2wasm_known_gcc_test_failures.txt')),
       out=s2wasm_torture_out)
   assert os.path.isdir(s2wasm_torture_out), 'Expected output directory %s' % s2wasm_torture_out
-  # execute it TODO: parallelize, use waterfall
-  known_failures = set(open(os.path.join('test', 's2wasm_known_binaryen_shell_test_failures.txt')).read().split('\n'))
-  total = 0
-  bad_failures = []
-  for wast in sorted(os.listdir(s2wasm_torture_out)):
-    total += 1
-    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join(s2wasm_torture_out, wast), '--entry=main']
-    print ' '.join(cmd)
-    try:
-      subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    except:
-      if wast not in known_failures:
-        bad_failures.append(wast)
-  if len(bad_failures) > 0:
-    print '\nbad failures:\n'
-    print '\n'.join(bad_failures)
-    raise Exception('bad failures :( %d out of %d' % (len(bad_failures), total))
+
+  import test.waterfall.src.execute_files as execute_files
+  unexpected_result_count += execute_files.run(
+      runner=os.path.abspath(os.path.join('bin', 'binaryen-shell')),
+      files=os.path.abspath(os.path.join(s2wasm_torture_out, '*.wast')),
+      fails=os.path.abspath(os.path.join('test', 's2wasm_known_binaryen_shell_test_failures.txt')),
+      out='')
+
   shutil.rmtree(s2wasm_torture_out)
   if unexpected_result_count:
-    fail(unexpected_result_count, 0)
+    fail('%s failures' % unexpected_result_count, '0 failures')
 
 print '\n[ checking binary format testcases... ]\n'
 
