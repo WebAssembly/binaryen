@@ -155,7 +155,8 @@ enum Section {
   Functions = 2,
   DataSegments = 4,
   FunctionTable = 5,
-  End = 6
+  End = 6,
+  WLLSegment = 0x11
 };
 
 enum FunctionEntry {
@@ -388,6 +389,7 @@ public:
   }
 
   void writeMemory() {
+    if (!wasm->memory.read) return;
     if (debug) std::cerr << "== writeMemory" << std::endl;
     o << int8_t(BinaryConsts::Memory) << int8_t(log2(wasm->memory.initial))
                                       << int8_t(log2(wasm->memory.max))
@@ -395,6 +397,7 @@ public:
   }
 
   void writeSignatures() {
+    if (!wasm->functionTypes.size()) return;
     if (debug) std::cerr << "== writeSignatures" << std::endl;
     o << int8_t(BinaryConsts::Signatures) << LEB128(wasm->functionTypes.size());
     for (auto* type : wasm->functionTypes) {
@@ -456,6 +459,7 @@ public:
   }
 
   void writeFunctions() {
+    if (!wasm->functions.size()) return;
     if (debug) std::cerr << "== writeFunctions" << std::endl;
     size_t total = wasm->imports.size() + wasm->functions.size();
     o << int8_t(BinaryConsts::Functions) << LEB128(total);
@@ -505,6 +509,7 @@ public:
   }
 
   void writeDataSegments() {
+    if (!wasm->memory.segments.size()) return;
     o << int8_t(BinaryConsts::DataSegments) << LEB128(wasm->memory.segments.size());
     for (auto& segment : wasm->memory.segments) {
       o << int32_t(segment.offset);
@@ -527,6 +532,7 @@ public:
 
   void writeFunctionTable() {
     if (debug) std::cerr << "== writeFunctionTable" << std::endl;
+    if (!wasm->table.names.size()) return;
     o << int8_t(BinaryConsts::FunctionTable) << LEB128(wasm->table.names.size());
     for (auto name : wasm->table.names) {
       o << getFunctionIndex(name);
@@ -924,12 +930,37 @@ public:
   WasmBinaryBuilder(AllocatingModule& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), pos(0) {}
 
   void read() {
-    readMemory();
-    readSignatures();
-    readFunctions();
-    readDataSegments();
-    readFunctionTable();
-    readEnd();
+
+    for (;;) {
+      int section = getInt8();
+
+      if (section == BinaryConsts::End) {
+        if (debug) std::cerr << "== readEnd" << std::endl;
+        break;
+      }
+
+      switch (section) {
+        case BinaryConsts::Memory:
+          readMemory();
+          break;
+        case BinaryConsts::Signatures:
+          readSignatures();
+          break;
+        case BinaryConsts::Functions:
+          readFunctions();
+          break;
+        case BinaryConsts::DataSegments:
+          readDataSegments();
+          break;
+        case BinaryConsts::FunctionTable:
+          readFunctionTable();
+          break;
+        case BinaryConsts::WLLSegment:
+          readWLLSection();
+          break;
+        default: abort();
+      }
+    }
 
     processFunctions();
   }
@@ -1026,7 +1057,8 @@ public:
 
   void readMemory() {
     if (debug) std::cerr << "== readMemory" << std::endl;
-    verifyInt8(BinaryConsts::Memory);
+    if (wasm.memory.read) abort();
+    wasm.memory.read = 1;
     wasm.memory.initial = std::pow<size_t>(2, getInt8());
     wasm.memory.max = std::pow<size_t>(2, getInt8());
     verifyInt8(1); // export memory
@@ -1034,7 +1066,8 @@ public:
 
   void readSignatures() {
     if (debug) std::cerr << "== readSignatures" << std::endl;
-    verifyInt8(BinaryConsts::Signatures);
+    if (wasm.functionTypes.size()) abort();
+    if (wasm.functions.size()) abort();
     size_t numTypes = getLEB128();
     if (debug) std::cerr << "num: " << numTypes << std::endl;
     for (size_t i = 0; i < numTypes; i++) {
@@ -1060,7 +1093,7 @@ public:
 
   void readFunctions() {
     if (debug) std::cerr << "== readFunctions" << std::endl;
-    verifyInt8(BinaryConsts::Functions);
+    if (wasm.functions.size()) abort();
     size_t total = getLEB128(); // imports and functions
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "read one at " << pos << std::endl;
@@ -1165,7 +1198,6 @@ public:
 
   void readDataSegments() {
     if (debug) std::cerr << "== readDataSegments" << std::endl;
-    verifyInt8(BinaryConsts::DataSegments);
     auto num = getLEB128();
     for (size_t i = 0; i < num; i++) {
       auto curr = allocator.alloc<Memory::Segment>();
@@ -1182,16 +1214,18 @@ public:
 
   void readFunctionTable() {
     if (debug) std::cerr << "== readFunctionTable" << std::endl;
-    verifyInt8(BinaryConsts::FunctionTable);
+    if (wasm.table.names.size()) abort();
     auto num = getLEB128();
     for (size_t i = 0; i < num; i++) {
       wasm.table.names.push_back(mappedFunctions[getInt16()]);
     }
   }
 
-  void readEnd() {
-    if (debug) std::cerr << "== readEnd" << std::endl;
-    verifyInt8(BinaryConsts::End);
+  void readWLLSection() {
+    if (debug) std::cerr << "== readWLLSection" << std::endl;
+    size_t total = getLEB128();
+    for (size_t i = 0; i < total; i++)
+      getInt8();
   }
 
   // AST reading

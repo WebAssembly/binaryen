@@ -937,6 +937,8 @@ private:
   }
 
   void parseMemory(Element& s) {
+    if (wasm.memory.read) abort();
+    wasm.memory.read = 1;
     wasm.memory.initial = atoi(s[1]->c_str());
     if (s.size() == 2) return;
     size_t i = 2;
