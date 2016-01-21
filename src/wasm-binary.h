@@ -261,17 +261,32 @@ enum ASTNodes {
   F64Le = 0x9a,
   F64Gt = 0x9b,
   F64Ge = 0x9c,
-  I32SConvertF32 = 0x9d,
-  I32SConvertF64 = 0x9e,
-  I32UConvertF32 = 0x9f,
-  I32UConvertF64 = 0xa0,
-  I32ConvertI64 = 0xa1,
-  I64SConvertF32 = 0xa2,
-  I64SConvertF64 = 0xa3,
-  I64UConvertF32 = 0xa4,
-  I64UConvertF64 = 0xa5,
-  I64SConvertI32 = 0xa6,
-  I64UConvertI32 = 0xa7,
+
+  I32ConvertSF32 = 0x9d,
+  I32ConvertSF64 = 0x9e,
+  I32ConvertUF32 = 0x9f,
+  I32ConvertUF64 = 0xa0,
+
+  I64ConvertSF32 = 0xa2,
+  I64ConvertSF64 = 0xa3,
+  I64ConvertUF32 = 0xa4,
+  I64ConvertUF64 = 0xa5,
+  I64ConvertSI32 = 0xa6,
+  I64ConvertUI32 = 0xa7,
+  F32ConvertSI32 = 0xa8,
+  F32ConvertUI32 = 0xa9,
+  F32ConvertSI64 = 0xaa,
+  F32ConvertUI64 = 0xab,
+  F32DemoteF64 = 0xac,
+  F32ReinterpretI32 = 0xac,
+  F64ConvertSI32 = 0xae,
+  F64ConvertUI32 = 0xaf,
+  F64ConvertSI64 = 0xb0,
+  F64ConvertUI64 = 0xb1,
+  F64PromoteF32 = 0xb2,
+  F64ReinterpretI64 = 0xb3,
+  I32ReinterpretF32 = 0xb4,
+  F64ReinterpretF64 = 0xb5,
 
   I32LoadMem8S = 0x20,
   I32LoadMem8U = 0x21,
@@ -785,12 +800,16 @@ public:
       case TruncSFloat64:    abort(); // XXX
       case TruncUFloat64:    abort(); // XXX
       case ReinterpretFloat: abort(); // XXX missing
-      case ConvertUInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::I32UConvertF32 : BinaryConsts::I32UConvertF64); break;
-      case ConvertSInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::I32SConvertF32 : BinaryConsts::I32SConvertF64); break;
-      case ConvertUInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64UConvertF32 : BinaryConsts::I64UConvertF64); break;
-      case ConvertSInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64UConvertF32 : BinaryConsts::I64UConvertF64); break;
-      case PromoteFloat32:   abort(); // XXX
-      case DemoteFloat64:    abort(); // XXX
+      case ConvertUInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::F32ConvertUI32 : BinaryConsts::F64ConvertUI32); break;
+      case ConvertSInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::F32ConvertSI32 : BinaryConsts::F64ConvertSI32); break;
+      case ConvertUInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::F32ConvertUI64 : BinaryConsts::F64ConvertUI64); break;
+      case ConvertSInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::F32ConvertSI64 : BinaryConsts::F64ConvertSI64); break;
+      case ConvertUFloat32:  o << int8_t(curr->type == i32 ? BinaryConsts::I32ConvertUF32 : BinaryConsts::I64ConvertUF32); break;
+      case ConvertSFloat32:  o << int8_t(curr->type == i32 ? BinaryConsts::I32ConvertSF32 : BinaryConsts::I64ConvertSF32); break;
+      case ConvertUFloat64:  o << int8_t(curr->type == i32 ? BinaryConsts::I32ConvertUF64 : BinaryConsts::I64ConvertUF64); break;
+      case ConvertSFloat64:  o << int8_t(curr->type == i32 ? BinaryConsts::I32ConvertSF64 : BinaryConsts::I64ConvertSF64); break;
+      case PromoteFloat32:   o << int8_t(BinaryConsts::F64PromoteF32); break;
+      case DemoteFloat64:    o << int8_t(BinaryConsts::F32DemoteF64); break;
       case ReinterpretInt:   abort(); // XXX
       default: abort();
     }
@@ -1446,14 +1465,24 @@ public:
       case BinaryConsts::F64NearestInt:  curr->op = Nearest;       curr->type = f64; break;
       case BinaryConsts::F32Sqrt:        curr->op = Sqrt;          curr->type = f32; break;
       case BinaryConsts::F64Sqrt:        curr->op = Sqrt;          curr->type = f64; break;
-      case BinaryConsts::I32UConvertF32: curr->op = ConvertUInt32; curr->type = f32; break;
-      case BinaryConsts::I32UConvertF64: curr->op = ConvertUInt32; curr->type = f64; break;
-      case BinaryConsts::I32SConvertF32: curr->op = ConvertSInt32; curr->type = f32; break;
-      case BinaryConsts::I32SConvertF64: curr->op = ConvertSInt32; curr->type = f64; break;
-      case BinaryConsts::I64UConvertF32: curr->op = ConvertUInt64; curr->type = f32; break;
-      case BinaryConsts::I64UConvertF64: curr->op = ConvertUInt64; curr->type = f64; break;
-      case BinaryConsts::I64SConvertF32: curr->op = ConvertSInt64; curr->type = f32; break;
-      case BinaryConsts::I64SConvertF64: curr->op = ConvertSInt64; curr->type = f64; break;
+      case BinaryConsts::F32ConvertUI32: curr->op = ConvertUInt32; curr->type = f32; break;
+      case BinaryConsts::F64ConvertUI32: curr->op = ConvertUInt32; curr->type = f64; break;
+      case BinaryConsts::F32ConvertSI32: curr->op = ConvertSInt32; curr->type = f32; break;
+      case BinaryConsts::F64ConvertSI32: curr->op = ConvertSInt32; curr->type = f64; break;
+      case BinaryConsts::F32ConvertUI64: curr->op = ConvertUInt64; curr->type = f32; break;
+      case BinaryConsts::F64ConvertUI64: curr->op = ConvertUInt64; curr->type = f64; break;
+      case BinaryConsts::F32ConvertSI64: curr->op = ConvertSInt64; curr->type = f32; break;
+      case BinaryConsts::F64ConvertSI64: curr->op = ConvertSInt64; curr->type = f64; break;
+      case BinaryConsts::I32ConvertUF32: curr->op = ConvertUFloat32; curr->type = i32; break;
+      case BinaryConsts::I64ConvertUF32: curr->op = ConvertUFloat32; curr->type = i64; break;
+      case BinaryConsts::I32ConvertSF32: curr->op = ConvertSFloat32; curr->type = i32; break;
+      case BinaryConsts::I64ConvertSF32: curr->op = ConvertSFloat32; curr->type = i64; break;
+      case BinaryConsts::I32ConvertUF64: curr->op = ConvertUFloat64; curr->type = i32; break;
+      case BinaryConsts::I64ConvertUF64: curr->op = ConvertUFloat64; curr->type = i64; break;
+      case BinaryConsts::I32ConvertSF64: curr->op = ConvertSFloat64; curr->type = i32; break;
+      case BinaryConsts::I64ConvertSF64: curr->op = ConvertSFloat64; curr->type = i64; break;
+      case BinaryConsts::F32DemoteF64:   curr->op = DemoteFloat64; curr->type = f32; break;
+      case BinaryConsts::F64PromoteF32:  curr->op = PromoteFloat32; curr->type = f64; break;
       default: return false;
     }
     if (debug) std::cerr << "zz node: Unary" << std::endl;
