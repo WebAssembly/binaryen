@@ -32,8 +32,6 @@
 
 namespace wasm {
 
-extern int debug;
-
 using namespace cashew;
 
 IString ASM_FUNC("asmFunc"),
@@ -106,6 +104,8 @@ void flattenAppend(Ref ast, Ref extra) {
 
 class Wasm2AsmBuilder {
 public:
+  Wasm2AsmBuilder(bool debug) : debug(debug), tableSize(-1) {}
+
   Ref processWasm(Module* wasm);
   Ref processFunction(Function* func);
 
@@ -171,6 +171,7 @@ public:
   }
 
 private:
+  bool debug;
   // How many temp vars we need
   std::vector<size_t> temps; // type => num temps
   // Which are currently free to use
@@ -186,6 +187,10 @@ private:
   void addImport(Ref ast, Import *import);
   void addTables(Ref ast, Module *wasm);
   void addExports(Ref ast, Module *wasm);
+
+  Wasm2AsmBuilder() = delete;
+  Wasm2AsmBuilder(const Wasm2AsmBuilder &) = delete;
+  Wasm2AsmBuilder &operator=(const Wasm2AsmBuilder &) = delete;
 };
 
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
