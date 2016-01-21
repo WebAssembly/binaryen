@@ -29,6 +29,7 @@
 #include "wasm-interpreter.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
+#include "support/debug.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -264,6 +265,7 @@ int main(int argc, const char* argv[]) {
   bool print_before = false;
   bool print_after = false;
   Name entry;
+  setDebugSignalHandler(argv[0]);
   std::vector<std::string> passes;
 
   static const char* default_passes[] = {"remove-unused-brs",
