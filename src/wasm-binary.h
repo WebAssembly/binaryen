@@ -868,9 +868,9 @@ public:
   void visitSelect(Select *curr) {
     if (debug) std::cerr << "zz node: Select" << std::endl;
     o << int8_t(BinaryConsts::Select);
+    recurse(curr->condition);
     recurse(curr->ifTrue);
     recurse(curr->ifFalse);
-    recurse(curr->condition);
   }
   void visitHost(Host *curr) {
     if (debug) std::cerr << "zz node: Host" << std::endl;
@@ -1519,9 +1519,9 @@ public:
   }
   void visitSelect(Select *curr) {
     if (debug) std::cerr << "zz node: Select" << std::endl;
+    readExpression(curr->condition);
     readExpression(curr->ifTrue);
     readExpression(curr->ifFalse);
-    readExpression(curr->condition);
     curr->type = curr->ifTrue->type;
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
