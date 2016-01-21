@@ -450,8 +450,18 @@ public:
             if (op[2] == 'p') return makeBinary(s, BinaryOp::CopySign, type);
             if (op[2] == 'n') {
               if (op[3] == 'v') {
-                if (op[8] == 's') return makeUnary(s, op[11] == '3' ? UnaryOp::ConvertSInt32 : UnaryOp::ConvertSInt64, type);
-                if (op[8] == 'u') return makeUnary(s, op[11] == '3' ? UnaryOp::ConvertUInt32 : UnaryOp::ConvertUInt64, type);
+                if (op[8] == 's') {
+                  if (op[10] == 'i')
+                    return makeUnary(s, op[11] == '3' ? UnaryOp::ConvertSInt32 : UnaryOp::ConvertSInt64, type);
+                  if (op[10] == 'f')
+                    return makeUnary(s, op[11] == '3' ? UnaryOp::ConvertSFloat32 : UnaryOp::ConvertSFloat64, type);
+                }
+                if (op[8] == 'u') {
+                  if (op[10] == 'i')
+                    return makeUnary(s, op[11] == '3' ? UnaryOp::ConvertUInt32 : UnaryOp::ConvertUInt64, type);
+                  if (op[10] == 'f')
+                    return makeUnary(s, op[11] == '3' ? UnaryOp::ConvertUFloat32 : UnaryOp::ConvertUFloat64, type);
+                }
               }
               if (op[3] == 's') return makeConst(s, type);
             }

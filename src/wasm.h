@@ -252,7 +252,8 @@ enum UnaryOp {
   Neg, Abs, Ceil, Floor, Trunc, Nearest, Sqrt, // float
   // conversions
   ExtendSInt32, ExtendUInt32, WrapInt64, TruncSFloat32, TruncUFloat32, TruncSFloat64, TruncUFloat64, ReinterpretFloat, // int
-  ConvertSInt32, ConvertUInt32, ConvertSInt64, ConvertUInt64, PromoteFloat32, DemoteFloat64, ReinterpretInt // float
+  ConvertSInt32, ConvertUInt32, ConvertSInt64, ConvertUInt64, PromoteFloat32, DemoteFloat64, ReinterpretInt, // float
+  ConvertSFloat32, ConvertUFloat32, ConvertSFloat64, ConvertUFloat64 // float
 };
 
 enum BinaryOp {
