@@ -153,6 +153,22 @@ if not has_vanilla_emcc:
 
 # tests
 
+print '[ checking --help is useful... ]\n'
+
+not_executable_suffix = ['.txt', '.js']
+executables = sorted(filter(lambda x: not any(x.endswith(s) for s in
+                                              not_executable_suffix),
+                            os.listdir('bin')))
+for e in executables:
+  print '.. %s --help' % e
+  out, err = subprocess.Popen([os.path.join('bin', e), '--help'],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE).communicate()
+  assert len(out) == 0, 'Expected no stdout, got:\n%s' % out
+  assert e in err, 'Expected help to contain program name, got:\n%s' % err
+  assert len(err.split('\n')) > 8, 'Expected some help, got:\n%s' % err
+os.sys.exit(0)
+
 print '[ checking asm2wasm testcases... ]\n'
 
 for asm in tests:
