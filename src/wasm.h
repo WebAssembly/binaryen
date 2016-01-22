@@ -1543,14 +1543,20 @@ public:
     }
   }
   void visitGetLocal(GetLocal *curr) {}
-  void visitSetLocal(SetLocal *curr) { tryVisit(&curr->value); }
-  void visitLoad(Load *curr) { tryVisit(&curr->ptr); }
+  void visitSetLocal(SetLocal *curr) {
+    tryVisit(&curr->value);
+  }
+  void visitLoad(Load *curr) {
+    tryVisit(&curr->ptr);
+  }
   void visitStore(Store *curr) {
     tryVisit(&curr->ptr);
     tryVisit(&curr->value);
   }
   void visitConst(Const *curr) {}
-  void visitUnary(Unary *curr) { tryVisit(&curr->value); }
+  void visitUnary(Unary *curr) {
+    tryVisit(&curr->value);
+  }
   void visitBinary(Binary *curr) {
     tryVisit(&curr->left);
     tryVisit(&curr->right);
@@ -1575,7 +1581,9 @@ public:
   void visitTable(Table *curr) {}
   void visitMemory(Memory *curr) {}
   void visitModule(Module *curr) {}
-  void startWalk(Function *func) override { this->visit(func->body); }
+  void startWalk(Function *func) override {
+    this->visit(func->body);
+  }
   void startWalk(Module *module) override {
     SubType *self = static_cast<SubType *>(this);
     for (auto &curr : module->functionTypes) {
