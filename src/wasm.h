@@ -175,6 +175,10 @@ struct Literal {
     }
   }
 
+  bool operator!=(Literal& other) {
+    return !(*this == other);
+  }
+
   bool operator==(Literal& other) {
     if (type != other.type) return false;
     switch (type) {
@@ -1488,6 +1492,9 @@ public:
   }
 
   void tryVisit(Expression **curr) {
+    if (!*curr) {
+      return;
+    }
     this->visit(*curr);
     if (replace) {
       *curr = replace;

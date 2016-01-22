@@ -19,22 +19,78 @@
 
 namespace wasm {
 
+typedef std::map<Name, Const *> State;
+
 // Simple data-flow optimization that propagates constants through locals.
 struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
-  std::vector<std::map<Name, Const *>> stack;
+  State state;
 
-  ConstantPropagation() { stack.push_back(std::map<Name, Const *>()); }
+  // State at the end of block expressions.
+  std::map<Expression *, State> tails;
 
-  void printStack() {
-    std::cout << "Stack:\n";
-    int depth = 0;
-    for (auto &state : stack) {
-      std::cout << depth++ << ": ";
-      printState(state);
+  // State at the beginning of loop expressions.
+  std::map<Expression *, State> heads;
+
+  // Scope stack of all scope expressions.
+  std::vector<Expression *> scope;
+
+  ConstantPropagation() {}
+
+  // Erases locals that have been written to.
+  struct EraseLocals : public WalkerPass<PreWalker<EraseLocals>> {
+    ConstantPropagation &parent;
+    EraseLocals(ConstantPropagation &parent) : parent(parent) {}
+    void visitSetLocal(SetLocal *set) {
+      tryVisit(&set->value);
+      // std::cout << "Erasing " << set->name << "\n";
+      parent.state.erase(set->name);
     }
-  }
+  };
 
-  void printState(std::map<Name, Const *> &state) {
+  // Checks if an expression can falls through, in other words are there any
+  // unconditional branches to an outer scope.
+  struct CheckFallthrough : public WalkerPass<PreWalker<CheckFallthrough>> {
+    ConstantPropagation &parent;
+    Expression *outer;
+    bool fallthrough = true;
+    CheckFallthrough(ConstantPropagation &parent, Expression *outer)
+        : parent(parent), outer(outer) {
+      // Outer scope should be on the scope stack at this point.
+      assert(std::find(parent.scope.begin(), parent.scope.end(), outer) !=
+             parent.scope.end());
+    }
+    void visitBreak(Break *curr) {
+      tryVisit(&curr->condition);
+      tryVisit(&curr->value);
+      // Conditional breaks always fallthrough.
+      if (curr->condition) {
+        return;
+      }
+      Expression *expr = nullptr;
+      for (auto i = parent.scope.rbegin(); i != parent.scope.rend(); i++) {
+        expr = *i;
+        if (expr == outer) {
+          fallthrough = false;
+          return;
+        }
+        if (expr->is<Loop>()) {
+          if (expr->cast<Loop>()->out == curr->name ||
+              expr->cast<Loop>()->in == curr->name) {
+            break;
+          }
+        } else if (expr->is<Block>() &&
+                   expr->cast<Block>()->name == curr->name) {
+          break;
+        } else if (expr->is<Switch>() &&
+                   expr->cast<Switch>()->name == curr->name) {
+          break;
+        }
+      }
+    }
+  };
+
+  void printState(std::string name, State &state) {
+    std::cout << name << ": ";
     for (auto i = state.begin(); i != state.end();) {
       auto x = i++;
       std::cout << x->first << " <= " << x->second;
@@ -45,60 +101,136 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
     std::cout << "\n";
   }
 
-  // TODO: Handle all other control flow.
+  void visitLoop(Loop *curr) {
+    // We're being conservative here, clear the state before and after the
+    // in case anything in the loop body writes to a local.
+    scope.push_back(curr);
+
+    // Erase from the state any locals that are written in the loop body.
+    EraseLocals(*this).tryVisit(&curr->body);
+    tryVisit(&curr->body);
+    // If the loop has an tail state then it must be the target of a break. We
+    // need to merge the tail state into the fallthrough state.
+    if (tails.count(curr)) {
+      mergeState(state, tails[curr]);
+    }
+    scope.pop_back();
+  }
 
   void visitIf(If *curr) {
     tryVisit(&curr->condition);
-
-    // Take a state snapshot after the condition.
-    auto state = stack.back();
-
-    // Visit ifTrue.
-    stack.push_back(state);
+    auto copy = state;
     tryVisit(&curr->ifTrue);
-    auto a = stack.back();
-    stack.pop_back();
-
-    // Visit ifFalse.
-    stack.push_back(state);
     if (curr->ifFalse) {
+      auto left = state;
+      state = copy;
       tryVisit(&curr->ifFalse);
+      mergeState(state, left);
+    } else {
+      mergeState(state, copy);
     }
-    auto b = stack.back();
-    stack.pop_back();
+  }
 
-    // Merge exit states by computing the intersection. Can't use range-for
-    // here because we need to remove elements from the map while iterating.
-    for (auto i = b.cbegin(); i != b.cend();) {
-      // TODO: Make sure that (xxx.const ...) expressions overload the ==
-      // operator.
-      if (a.count(i->first) == 0 || a[i->first] != b[i->first]) {
-        b.erase(i++);
+  void visitSwitch(Switch *curr) {
+    tryVisit(&curr->value);
+    auto copy = state;
+    scope.push_back(curr);
+    for (auto &case_ : curr->cases) {
+      tryVisit(&case_.body);
+      CheckFallthrough check(*this, curr);
+      check.tryVisit(&case_.body);
+      if (check.fallthrough) {
+        // Merge fallthrough state with the copy we made earlier.
+        mergeState(state, copy);
+      } else {
+        // The previous case block has no fallthrough, thus we can continue
+        // with the copy we made earlier.
+        state = copy;
+      }
+    }
+    // If the switch has an tail state then it must be the target of a break. We
+    // need to merge the tail state into the fallthrough state.
+    if (tails.count(curr)) {
+      mergeState(state, tails[curr]);
+    }
+    scope.pop_back();
+  }
+
+  void visitBlock(Block *curr) {
+    scope.push_back(curr);
+    ExpressionList &list = curr->list;
+    for (size_t z = 0; z < list.size(); z++) {
+      tryVisit(&list[z]);
+    }
+    // If the block has an tail state then it must be the target of a break. We
+    // need to merge the tail state into the fallthrough state.
+    if (tails.count(curr)) {
+      mergeState(state, tails[curr]);
+    }
+    scope.pop_back();
+  }
+
+  void visitBreak(Break *curr) {
+    tryVisit(&curr->condition);
+    tryVisit(&curr->value);
+    propagateState(curr->name, state);
+  }
+
+  // Propagates the state to the enclosing block's or loop's label.
+  void propagateState(Name name, State &state) {
+    std::map<Expression *, State> *map = nullptr;
+    Expression *expr = nullptr;
+    for (auto i = scope.rbegin(); i != scope.rend(); i++) {
+      expr = *i;
+      if (expr->is<Loop>()) {
+        if (expr->cast<Loop>()->out == name) {
+          map = &heads;
+        } else if (expr->cast<Loop>()->in == name) {
+          map = &tails;
+        }
+      } else if (expr->is<Block>() && expr->cast<Block>()->name == name) {
+        map = &tails;
+      } else if (expr->is<Switch>() && expr->cast<Switch>()->name == name) {
+        map = &tails;
+      }
+      if (map) {
+        break;
+      }
+    }
+    assert(map);
+    if (map->count(expr) == 0) {
+      (*map)[expr] = state;
+    } else {
+      mergeState((*map)[expr], state);
+    }
+  }
+
+  void mergeState(State &a, State &b) {
+    // Merge states by computing the intersection. Can't use range-for here
+    // because we need to remove elements from the map while iterating.
+    for (auto i = a.cbegin(); i != a.cend();) {
+      if (b.count(i->first) == 0 || b[i->first]->value != a[i->first]->value) {
+        a.erase(i++);
       } else {
         ++i;
       }
     }
-
-    stack.pop_back();
-    stack.push_back(b);
   }
 
   void visitSetLocal(SetLocal *set) {
     tryVisit(&set->value);
     auto value = set->value->dyn_cast<Const>();
     if (value) {
-      stack.back()[set->name] = value;
+      state[set->name] = value;
       // std::cout << "set " << set->name << " <= " << value << "\n";
     } else {
-      stack.back().erase(set->name);
+      state.erase(set->name);
     }
-    // printStack();
   }
 
   void visitGetLocal(GetLocal *get) {
-    auto state = stack.back();
-    // std::cout << "get " << get->name << " " << state[get->name] << "\n";
     if (state.count(get->name) == 1) {
+      // std::cout << "get " << get->name << " " << state[get->name] << "\n";
       replaceCurrent(state[get->name]);
     }
   }

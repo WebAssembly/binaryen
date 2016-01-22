@@ -40,5 +40,122 @@
       (i32.const 5)
     )
     (i32.const 5)
+    (set_local $x
+      (i32.const 1)
+    )
+    (block $a
+      (br_if
+        (nop)
+        $a
+      )
+      (set_local $x
+        (i32.const 2)
+      )
+      (br_if
+        (nop)
+        $a
+      )
+    )
+    (get_local $x)
+    (set_local $x
+      (i32.const 1)
+    )
+    (block $a
+      (br_if
+        (nop)
+        $a
+      )
+      (set_local $x
+        (i32.const 1)
+      )
+      (br_if
+        (nop)
+        $a
+      )
+    )
+    (i32.const 1)
+    (loop $foo $bar
+      (block
+        (get_local $x)
+        (br_if
+          (i32.const 0)
+          $bar
+        )
+        (set_local $x
+          (i32.const 6)
+        )
+        (i32.const 6)
+        (br $foo)
+      )
+    )
+    (set_local $x
+      (i32.const 1)
+    )
+    (loop $foo $bar
+      (block
+        (get_local $x)
+        (set_local $x
+          (i32.const 2)
+        )
+        (br $foo)
+        (set_local $x
+          (i32.const 1)
+        )
+        (br_if
+          (nop)
+          $bar
+        )
+        (set_local $x
+          (i32.const 1)
+        )
+        (br_if
+          (nop)
+          $bar
+        )
+      )
+    )
+    (i32.const 1)
+    (set_local $x
+      (i32.const 1)
+    )
+    (tableswitch $foo
+      (i64.const 0)
+      (table (case $0) (case $1) (case $2) (case $3) (case $4) (br $5) (br $6) (br $7)) (case $default)
+      (case $0
+        (block
+          (set_local $x
+            (i32.const 2)
+          )
+          (i32.const 2)
+          (br $foo)
+        )
+      )
+      (case $1
+        (i32.const 1)
+      )
+      (case $2
+        (block
+          (i32.const 1)
+          (set_local $x
+            (i32.const 3)
+          )
+        )
+      )
+      (case $3
+        (get_local $x)
+      )
+      (case $4
+        (block
+          (get_local $x)
+          (br $foo)
+        )
+      )
+      (case $default
+        (block
+          (i32.const 1)
+          (br $foo)
+        )
+      )
+    )
   )
 )
