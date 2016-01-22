@@ -167,7 +167,6 @@ for e in executables:
   assert len(out) == 0, 'Expected no stdout, got:\n%s' % out
   assert e in err, 'Expected help to contain program name, got:\n%s' % err
   assert len(err.split('\n')) > 8, 'Expected some help, got:\n%s' % err
-os.sys.exit(0)
 
 print '[ checking asm2wasm testcases... ]\n'
 
