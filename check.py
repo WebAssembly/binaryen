@@ -370,7 +370,7 @@ if torture:
 print '\n[ checking binary format testcases... ]\n'
 
 for wast in tests:
-  if wast.endswith('.wast') and not wast in ['unit.wast']: # blacklist some known failures
+  if wast.endswith('.wast') and not wast in []: # blacklist some known failures
     cmd = [os.path.join('bin', 'wasm-as'), os.path.join('test', wast), '-o', 'a.wasm']
     print ' '.join(cmd)
     if os.path.exists('a.wasm'): os.unlink('a.wasm')
