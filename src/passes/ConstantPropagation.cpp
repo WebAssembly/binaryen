@@ -49,8 +49,8 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
     }
   };
 
-  // Checks if an expression can falls through, in other words are there any
-  // unconditional branches to an outer scope.
+  // Checks if an expression can fall through, in other words, does it contain
+  // any unconditional branches to an outer scope.
   struct CheckFallthrough : public WalkerPass<PreWalker<CheckFallthrough>> {
     ConstantPropagation &parent;
     Expression *outer;
@@ -64,7 +64,7 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
     void visitBreak(Break *curr) {
       tryVisit(&curr->condition);
       tryVisit(&curr->value);
-      // Conditional breaks always fallthrough.
+      // Conditional breaks always fall through.
       if (curr->condition) {
         return;
       }
@@ -109,7 +109,7 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
     // Erase from the state any locals that are written in the loop body.
     EraseLocals(*this).tryVisit(&curr->body);
     tryVisit(&curr->body);
-    // If the loop has an tail state then it must be the target of a break. We
+    // If the loop has a tail state then it must be the target of a break. We
     // need to merge the tail state into the fallthrough state.
     if (tails.count(curr)) {
       mergeState(state, tails[curr]);
@@ -162,7 +162,7 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
     for (size_t z = 0; z < list.size(); z++) {
       tryVisit(&list[z]);
     }
-    // If the block has an tail state then it must be the target of a break. We
+    // If the block has a tail state then it must be the target of a break. We
     // need to merge the tail state into the fallthrough state.
     if (tails.count(curr)) {
       mergeState(state, tails[curr]);
