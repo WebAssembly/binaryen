@@ -12,7 +12,7 @@ for asm in sorted(os.listdir('test')):
     open(os.path.join('test', wasm), 'w').write(actual)
 
 for wasm in sorted(os.listdir('test')):
-  if wasm.endswith('.wast'):
+  if wasm.endswith('.wast') and os.path.basename(wasm) not in ['kitchen_sink.wast']: # i64s in kitchen_sink
     print '..', wasm
     asm = wasm.replace('.wast', '.2asm.js')
     actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()

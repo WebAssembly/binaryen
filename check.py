@@ -276,7 +276,7 @@ for t in spec_tests:
 print '\n[ checking wasm2asm testcases... ]\n'
 
 for wasm in tests + [os.path.join('spec', name) for name in ['address.wast']]:#spec_tests:
-  if wasm.endswith('.wast'):
+  if wasm.endswith('.wast') and os.path.basename(wasm) not in ['kitchen_sink.wast']: # i64s in kitchen_sink
     print '..', wasm
     asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
     actual, err = subprocess.Popen([os.path.join('bin', 'wasm2asm'), os.path.join('test', wasm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()

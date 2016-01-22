@@ -286,6 +286,7 @@ enum ASTNodes {
   F64ConvertF32       = 0xb2,
   F64ReinterpretI64   = 0xb3,
   I64ReinterpretF64   = 0xb5,
+  I32ReinterpretF32   = 0xfe, // XXX not in v8 spec doc
 
   I32LoadMem8S = 0x20,
   I32LoadMem8U = 0x21,
@@ -805,7 +806,7 @@ public:
       case DemoteFloat64:    o << int8_t(BinaryConsts::F32ConvertF64); break;
       case PromoteFloat32:   o << int8_t(BinaryConsts::F64ConvertF32); break;
       case ReinterpretFloat: o << int8_t(curr->type == f32 ? BinaryConsts::F32ReinterpretI32 : BinaryConsts::F64ReinterpretI64); break;
-      case ReinterpretInt:   assert(curr->type == f64); o << int8_t(BinaryConsts::I64ReinterpretF64); break; // XX what about f32?
+      case ReinterpretInt:   o << int8_t(curr->type == i32 ? BinaryConsts::I32ReinterpretF32 : BinaryConsts::I64ReinterpretF64); break;
       default: abort();
     }
     recurse(curr->value);
@@ -1487,7 +1488,7 @@ public:
       case BinaryConsts::F32ReinterpretI32: curr->op = ReinterpretFloat;  curr->type = i32; break;
       case BinaryConsts::F64ReinterpretI64: curr->op = ReinterpretFloat;  curr->type = i64; break;
       case BinaryConsts::I64ReinterpretF64: curr->op = ReinterpretInt;    curr->type = f64; break;
-      // XXX what about f32 reinterpret?
+      case BinaryConsts::I32ReinterpretF32: curr->op = ReinterpretInt;    curr->type = f32; break;
 
       default: return false;
     }
