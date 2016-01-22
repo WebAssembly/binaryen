@@ -21,14 +21,17 @@ namespace wasm {
 
 typedef std::map<Name, Const *> State;
 
-// Simple data-flow optimization that propagates constants through locals.
+// Simple data-flow pass that propagates constants through locals.
+// TODO: Create a generic data-flow optimization pass, and make this class
+// derive from it.
 struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
   State state;
 
   // State at the end of block expressions.
   std::map<Expression *, State> tails;
 
-  // State at the beginning of loop expressions.
+  // State at the beginning of loop expressions. Although we collect and merge
+  // states at loop headers, we don't actually use them yet.
   std::map<Expression *, State> heads;
 
   // Scope stack of all scope expressions.
@@ -36,13 +39,12 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
 
   ConstantPropagation() {}
 
-  // Erases locals that have been written to.
+  // Find out which locals are assigned and erase them from the parent state.
   struct EraseLocals : public WalkerPass<PreWalker<EraseLocals>> {
     ConstantPropagation &parent;
     EraseLocals(ConstantPropagation &parent) : parent(parent) {}
     void visitSetLocal(SetLocal *set) {
       tryVisit(&set->value);
-      // std::cout << "Erasing " << set->name << "\n";
       parent.state.erase(set->name);
     }
   };
@@ -89,6 +91,7 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
     }
   };
 
+  // Pretty print states.
   void printState(std::string name, State &state) {
     std::cout << name << ": ";
     for (auto i = state.begin(); i != state.end();) {
@@ -102,10 +105,7 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
   }
 
   void visitLoop(Loop *curr) {
-    // We're being conservative here, clear the state before and after the
-    // in case anything in the loop body writes to a local.
     scope.push_back(curr);
-
     // Erase from the state any locals that are written in the loop body.
     EraseLocals(*this).tryVisit(&curr->body);
     tryVisit(&curr->body);
@@ -176,7 +176,7 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
     propagateState(curr->name, state);
   }
 
-  // Propagates the state to the enclosing block's or loop's label.
+  // Propagates the state to the enclosing block, loop or tableswitch label.
   void propagateState(Name name, State &state) {
     std::map<Expression *, State> *map = nullptr;
     Expression *expr = nullptr;
@@ -197,7 +197,9 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
         break;
       }
     }
+    // We must find at least one label.
     assert(map);
+    // Set or merge state.
     if (map->count(expr) == 0) {
       (*map)[expr] = state;
     } else {
@@ -222,7 +224,6 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
     auto value = set->value->dyn_cast<Const>();
     if (value) {
       state[set->name] = value;
-      // std::cout << "set " << set->name << " <= " << value << "\n";
     } else {
       state.erase(set->name);
     }
@@ -230,7 +231,6 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
 
   void visitGetLocal(GetLocal *get) {
     if (state.count(get->name) == 1) {
-      // std::cout << "get " << get->name << " " << state[get->name] << "\n";
       replaceCurrent(state[get->name]);
     }
   }
