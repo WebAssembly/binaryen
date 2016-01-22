@@ -988,10 +988,11 @@ public:
     Segment(size_t offset, const char *data, size_t size) : offset(offset), data(data), size(size) {}
   };
 
+  bool read;
   size_t initial, max;
   std::vector<Segment> segments;
 
-  Memory() : initial(0), max((uint32_t)-1) {}
+  Memory() : read(0), initial(0), max((uint32_t)-1) {}
 };
 
 class Module {
