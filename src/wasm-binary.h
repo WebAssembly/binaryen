@@ -252,7 +252,7 @@ enum ASTNodes {
   F64CopySign = 0x91,
   F64Ceil = 0x92,
   F64Floor = 0x93,
-  F64Trunc = 0x94,
+  F64Trunc = 0x94, // XXX what is this? trunc f64 to f64?
   F64NearestInt = 0x95,
   F64Sqrt = 0x96,
   F64Eq = 0x97,
@@ -789,7 +789,7 @@ public:
       case Abs:              o << int8_t(curr->type == f32 ? BinaryConsts::F32Abs        : BinaryConsts::F64Abs); break;
       case Ceil:             o << int8_t(curr->type == f32 ? BinaryConsts::F32Ceil       : BinaryConsts::F64Ceil); break;
       case Floor:            o << int8_t(curr->type == f32 ? BinaryConsts::F32Floor      : BinaryConsts::F64Floor); break;
-      case Trunc:            o << int8_t(curr->type == f32 ? BinaryConsts::F32Trunc      : BinaryConsts::F64Trunc); break;;
+      case Trunc:            o << int8_t(curr->type == f32 ? BinaryConsts::F32Trunc      : BinaryConsts::F64Trunc); break;
       case Nearest:          o << int8_t(curr->type == f32 ? BinaryConsts::F32NearestInt : BinaryConsts::F64NearestInt); break;
       case Sqrt:             o << int8_t(curr->type == f32 ? BinaryConsts::F32Sqrt       : BinaryConsts::F64Sqrt); break;
       case ExtendSInt32:     o << int8_t(BinaryConsts::I64SConvertI32); break;
@@ -1237,6 +1237,7 @@ public:
         if (maybeVisit<Load>(curr, code)) break;
         if (maybeVisit<Store>(curr, code)) break;
         if (maybeVisit<Host>(curr, code)) break;
+        std::cerr << "bad code 0x" << std::hex << (int)code << std::endl;
         abort();
       }
     }
@@ -1482,6 +1483,9 @@ public:
       case BinaryConsts::F64UConvertI64: curr->op = TruncUFloat64; curr->type = i64; break;
       case BinaryConsts::F32SConvertI64: curr->op = TruncSFloat64; curr->type = i32; break;
       case BinaryConsts::F64SConvertI64: curr->op = TruncSFloat64; curr->type = i64; break;
+
+      case BinaryConsts::F32Trunc:       curr->op = Trunc;         curr->type = f32; break;
+      case BinaryConsts::F64Trunc:       curr->op = Trunc;         curr->type = f64; break;
 
       case BinaryConsts::F32ConvertF64:     curr->op = DemoteFloat64;     curr->type = f32; break;
       case BinaryConsts::F64ConvertF32:     curr->op = PromoteFloat32;    curr->type = f64; break;
