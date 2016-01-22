@@ -1222,7 +1222,8 @@ public:
   }
 
   void readWLLSection() {
-    if (debug) std::cerr << "== readWLLSection" << std::endl;
+    // Reserved for the Web Low-level Language source code meta data.
+    if (debug) std::cerr << "== Warning: skipping WLLSection" << std::endl;
     size_t total = getLEB128();
     for (size_t i = 0; i < total; i++)
       getInt8();
