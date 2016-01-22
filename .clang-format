@@ -3,4 +3,4 @@ BasedOnStyle: LLVM
 IndentWidth: 2
 ---
 Language: Cpp
-AllowShortFunctionsOnASingleLine: None
+AllowShortFunctionsOnASingleLine: Empty
