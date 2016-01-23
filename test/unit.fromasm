@@ -220,10 +220,8 @@
         (case $switch-case$12
           (block
             (loop $while-out$10 $while-in$11
-              (block
-                (br $while-out$10)
-                (br $while-in$11)
-              )
+              (br $while-out$10)
+              (br $while-in$11)
             )
             (br $label$break$Lout)
           )
@@ -231,10 +229,8 @@
         (case $switch-case$15
           (block
             (loop $while-out$13 $while-in$14
-              (block
-                (br $label$break$Lout)
-                (br $while-in$14)
-              )
+              (br $label$break$Lout)
+              (br $while-in$14)
             )
             (br $label$break$Lout)
           )
@@ -399,26 +395,24 @@
       (i32.const 1)
     )
     (loop $for-out$0 $for-in$1
-      (block
-        (if_else
-          (i32.lt_s
-            (get_local $i)
-            (i32.const 200)
-          )
-          (nop)
-          (br $for-out$0)
-        )
-        (call $h
+      (if_else
+        (i32.lt_s
           (get_local $i)
+          (i32.const 200)
         )
-        (set_local $i
-          (i32.add
-            (get_local $i)
-            (i32.const 1)
-          )
-        )
-        (br $for-in$1)
+        (nop)
+        (br $for-out$0)
       )
+      (call $h
+        (get_local $i)
+      )
+      (set_local $i
+        (i32.add
+          (get_local $i)
+          (i32.const 1)
+        )
+      )
+      (br $for-in$1)
     )
   )
   (func $z

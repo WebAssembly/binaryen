@@ -412,7 +412,16 @@ public:
       o << ' ' << in;
     }
     incIndent(o, indent);
-    printFullLine(o, indent, body);
+    auto block = body->dyn_cast<Block>();
+    if (block && block->name.isNull()) {
+      // wasm spec has loops containing children directly, while our ast
+      // has a single child for simplicity. print out the optimal form.
+      for (auto expression : block->list) {
+        printFullLine(o, indent, expression);
+      }
+    } else {
+      printFullLine(o, indent, body);
+    }
     return decIndent(o, indent);
   }
 };
