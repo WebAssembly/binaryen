@@ -252,7 +252,7 @@ enum ASTNodes {
   F64CopySign = 0x91,
   F64Ceil = 0x92,
   F64Floor = 0x93,
-  F64Trunc = 0x94, // XXX what is this? trunc f64 to f64?
+  F64Trunc = 0x94,
   F64NearestInt = 0x95,
   F64Sqrt = 0x96,
   F64Eq = 0x97,
