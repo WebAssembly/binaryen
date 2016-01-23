@@ -1,5 +1,5 @@
 (module
-  (memory 16 4294967295 (segment 4 "\00\00\00\00") (segment 8 "\01\00\00\00") (segment 12 "33\13@"))
+  (memory 20 4294967295 (segment 8 "\00\00\00\00") (segment 12 "\01\00\00\00") (segment 16 "33\13@"))
   (export "foo" $foo)
   (export "bar" $bar)
   (export "qux" $qux)
@@ -32,4 +32,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 15 }
+;; METADATA: { "asmConsts": {},"staticBump": 19 }

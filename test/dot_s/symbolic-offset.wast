@@ -1,10 +1,10 @@
 (module
-  (memory 16 4294967295 (segment 4 "\01\00\00\00\00\00\00\00\00\00\00\00"))
+  (memory 20 4294967295 (segment 8 "\01\00\00\00\00\00\00\00\00\00\00\00"))
   (export "f" $f)
   (func $f (param $$0 i32) (param $$1 i32)
     (block $fake_return_waka123
       (block
-        (i32.store offset=8 align=4
+        (i32.store offset=12 align=4
           (get_local $$0)
           (get_local $$1)
         )
@@ -13,4 +13,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 15 }
+;; METADATA: { "asmConsts": {},"staticBump": 19 }

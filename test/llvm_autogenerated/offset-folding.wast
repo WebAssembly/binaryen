@@ -8,7 +8,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.const 192)
+          (i32.const 196)
         )
       )
     )
@@ -26,7 +26,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.const 4)
+          (i32.const 8)
         )
       )
     )

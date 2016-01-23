@@ -368,7 +368,7 @@
     (block $fake_return_waka123
       (block
         (set_local $$181
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$181
           (i32.load align=4
@@ -385,7 +385,7 @@
           )
         )
         (set_local $$182
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$279
           (i32.store align=4
@@ -3960,7 +3960,7 @@
           )
         )
         (set_local $$183
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$279
           (i32.store align=4
@@ -3973,4 +3973,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 0 }
+;; METADATA: { "asmConsts": {},"staticBump": 4 }

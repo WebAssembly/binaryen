@@ -1,5 +1,5 @@
 (module
-  (memory 16 4294967295)
+  (memory 20 4294967295)
   (export "single_block" $single_block)
   (export "foo" $foo)
   (export "bar" $bar)
@@ -34,7 +34,7 @@
                 (i32.const 1)
               )
             )
-            (i32.store offset=4 align=4
+            (i32.store offset=8 align=4
               (get_local $$0)
               (get_local $$0)
             )
@@ -64,7 +64,7 @@
         )
         (loop $label$1 $label$0
           (block
-            (i32.store offset=4 align=4
+            (i32.store offset=8 align=4
               (get_local $$0)
               (get_local $$0)
             )
@@ -88,4 +88,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 15 }
+;; METADATA: { "asmConsts": {},"staticBump": 19 }

@@ -1,5 +1,5 @@
 (module
-  (memory 8 4294967295 (segment 4 "\00\00\00\00"))
+  (memory 12 4294967295 (segment 8 "\00\00\00\00"))
   (export "load_i32_with_folded_offset" $load_i32_with_folded_offset)
   (export "load_i32_with_folded_gep_offset" $load_i32_with_folded_gep_offset)
   (export "load_i32_with_unfolded_gep_negative_offset" $load_i32_with_unfolded_gep_negative_offset)
@@ -303,7 +303,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (i32.load offset=4 align=4
+          (i32.load offset=8 align=4
             (i32.const 0)
           )
         )
@@ -332,7 +332,7 @@
         (set_local $$0
           (i32.const 0)
         )
-        (i32.store offset=4 align=4
+        (i32.store offset=8 align=4
           (get_local $$0)
           (get_local $$0)
         )
@@ -470,4 +470,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 7 }
+;; METADATA: { "asmConsts": {},"staticBump": 11 }

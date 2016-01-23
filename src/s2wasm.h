@@ -343,7 +343,9 @@ private:
   }
 
   void prepare() {
-    staticAddresses["__stack_pointer"] = 0; // XXX HACK for now
+    assert(nextStatic == globalBase); // we are the first allocation
+    staticAddresses["__stack_pointer"] = nextStatic;
+    nextStatic += 4;
   }
 
   void process() {

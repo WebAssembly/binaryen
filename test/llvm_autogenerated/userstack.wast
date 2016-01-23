@@ -13,7 +13,7 @@
     (block $fake_return_waka123
       (block
         (set_local $$0
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$0
           (i32.load align=4
@@ -30,7 +30,7 @@
           )
         )
         (set_local $$1
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$3
           (i32.store align=4
@@ -52,7 +52,7 @@
           )
         )
         (set_local $$2
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$3
           (i32.store align=4
@@ -72,7 +72,7 @@
     (block $fake_return_waka123
       (block
         (set_local $$0
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$0
           (i32.load align=4
@@ -89,7 +89,7 @@
           )
         )
         (set_local $$1
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$3
           (i32.store align=4
@@ -115,7 +115,7 @@
           )
         )
         (set_local $$2
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$3
           (i32.store align=4
@@ -137,7 +137,7 @@
     (block $fake_return_waka123
       (block
         (set_local $$1
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$1
           (i32.load align=4
@@ -154,7 +154,7 @@
           )
         )
         (set_local $$2
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$5
           (i32.store align=4
@@ -194,7 +194,7 @@
           )
         )
         (set_local $$3
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$5
           (i32.store align=4
@@ -214,7 +214,7 @@
     (block $fake_return_waka123
       (block
         (set_local $$0
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$0
           (i32.load align=4
@@ -231,7 +231,7 @@
           )
         )
         (set_local $$1
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$3
           (i32.store align=4
@@ -256,7 +256,7 @@
           )
         )
         (set_local $$2
-          (i32.const 0)
+          (i32.const 1)
         )
         (set_local $$3
           (i32.store align=4
@@ -276,4 +276,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 0 }
+;; METADATA: { "asmConsts": {},"staticBump": 4 }
