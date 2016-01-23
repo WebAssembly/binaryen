@@ -147,4 +147,21 @@
       )
     )
   )
+  (func $b15
+    (block $topmost
+      (br_if
+        (i32.const 17)
+        $topmost
+      )
+    )
+  )
+  (func $b15 (result i32)
+    (block $topmost
+      (br_if
+        (i32.const 18)
+        $topmost
+        (i32.const 0)
+      )
+    )
+  )
 )

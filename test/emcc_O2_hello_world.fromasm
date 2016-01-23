@@ -1304,12 +1304,12 @@
                                   (get_local $i24)
                                 )
                               )
-                              (if
+                              (br_if
                                 (i32.eq
                                   (get_local $i24)
                                   (i32.const 0)
                                 )
-                                (br $do-once$8)
+                                $do-once$8
                               )
                             )
                           )
@@ -2647,12 +2647,12 @@
                                     (get_local $i45)
                                   )
                                 )
-                                (if
+                                (br_if
                                   (i32.eq
                                     (get_local $i45)
                                     (i32.const 0)
                                   )
-                                  (br $do-once$17)
+                                  $do-once$17
                                 )
                               )
                             )
@@ -3982,7 +3982,7 @@
                           (i32.const 616)
                         )
                       )
-                      (if
+                      (br_if
                         (if_else
                           (i32.ne
                             (get_local $i45)
@@ -4000,7 +4000,7 @@
                           )
                           (i32.const 0)
                         )
-                        (br $do-once$25)
+                        $do-once$25
                       )
                       (set_local $i45
                         (call_import $_sbrk
@@ -4966,12 +4966,12 @@
                                           )
                                         )
                                       )
-                                      (if
+                                      (br_if
                                         (i32.eq
                                           (get_local $i54)
                                           (i32.const 0)
                                         )
-                                        (br $label$break$L331)
+                                        $label$break$L331
                                       )
                                       (set_local $i55
                                         (i32.load align=4
@@ -5033,12 +5033,12 @@
                                                 (get_local $i72)
                                               )
                                             )
-                                            (if
+                                            (br_if
                                               (i32.eq
                                                 (get_local $i72)
                                                 (i32.const 0)
                                               )
-                                              (br $label$break$L331)
+                                              $label$break$L331
                                             )
                                           )
                                           (block
@@ -5046,9 +5046,9 @@
                                               (get_local $i5)
                                               (get_local $i72)
                                             )
-                                            (if
+                                            (br_if
                                               (get_local $i72)
-                                              (br $do-once$36)
+                                              $do-once$36
                                             )
                                             (i32.store align=4
                                               (i32.const 180)
@@ -5136,12 +5136,12 @@
                                           )
                                         )
                                       )
-                                      (if
+                                      (br_if
                                         (i32.eq
                                           (get_local $i45)
                                           (i32.const 0)
                                         )
-                                        (br $label$break$L331)
+                                        $label$break$L331
                                       )
                                       (if_else
                                         (i32.lt_u
@@ -5213,7 +5213,7 @@
                                               )
                                               (call_import $_abort)
                                             )
-                                            (if
+                                            (br_if
                                               (i32.eq
                                                 (i32.load align=4
                                                   (i32.add
@@ -5223,7 +5223,7 @@
                                                 )
                                                 (get_local $i43)
                                               )
-                                              (br $do-once$38)
+                                              $do-once$38
                                             )
                                             (call_import $_abort)
                                           )
@@ -7061,12 +7061,12 @@
     (local $i36 i32)
     (local $i37 i32)
     (block $topmost
-      (if
+      (br_if
         (i32.eq
           (get_local $i1)
           (i32.const 0)
         )
-        (br $topmost)
+        $topmost
       )
       (set_local $i2
         (i32.add
@@ -7134,12 +7134,12 @@
                 (get_local $i2)
               )
             )
-            (if
+            (br_if
               (i32.eq
                 (get_local $i1)
                 (i32.const 0)
               )
-              (br $topmost)
+              $topmost
             )
             (set_local $i8
               (i32.add
@@ -7926,14 +7926,14 @@
                   (i32.const 1)
                 )
               )
-              (if
+              (br_if
                 (i32.ne
                   (get_local $i12)
                   (i32.load align=4
                     (i32.const 196)
                   )
                 )
-                (br $topmost)
+                $topmost
               )
               (i32.store align=4
                 (i32.const 196)
@@ -8330,12 +8330,12 @@
                             (get_local $i23)
                           )
                         )
-                        (if
+                        (br_if
                           (i32.eq
                             (get_local $i23)
                             (i32.const 0)
                           )
-                          (br $do-once$5)
+                          $do-once$5
                         )
                       )
                     )
@@ -10664,17 +10664,16 @@
   (func $_memcpy (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
     (local $i4 i32)
     (block $topmost
-      (if
+      (br_if
         (i32.ge_s
           (get_local $i3)
           (i32.const 4096)
         )
-        (br $topmost
-          (call_import $_emscripten_memcpy_big
-            (get_local $i1)
-            (get_local $i2)
-            (get_local $i3)
-          )
+        $topmost
+        (call_import $_emscripten_memcpy_big
+          (get_local $i1)
+          (get_local $i2)
+          (get_local $i3)
         )
       )
       (set_local $i4
@@ -10701,14 +10700,13 @@
               (nop)
               (br $while-out$0)
             )
-            (if
+            (br_if
               (i32.eq
                 (get_local $i3)
                 (i32.const 0)
               )
-              (br $topmost
-                (get_local $i4)
-              )
+              $topmost
+              (get_local $i4)
             )
             (i32.store8 align=1
               (get_local $i1)

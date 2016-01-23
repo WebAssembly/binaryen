@@ -28,7 +28,15 @@ struct RemoveUnusedBrs : public WalkerPass<WasmWalker<RemoveUnusedBrs>> {
   // specifically for if-else, turn an if-else with branches to the same target at the end of each
   // child, and with a value, to a branch to that target containing the if-else
   void visitIf(If* curr) {
-    if (!curr->ifFalse) return;
+    if (!curr->ifFalse) {
+      // try to reduce an   if (condition) br  =>  br_if (condition) , which might open up other optimization opportunities
+      Break* br = curr->ifTrue->dyn_cast<Break>();
+      if (br && !br->condition) { // TODO: if there is a condition, join them
+        br->condition = curr->condition;
+        replaceCurrent(br);
+      }
+      return;
+    }
     if (curr->type != none) return; // already has a returned value
     // an if_else that indirectly returns a value by breaking to the same target can potentially remove both breaks, and break outside once
     auto getLast = [](Expression *side) -> Expression* {
@@ -66,9 +74,10 @@ struct RemoveUnusedBrs : public WalkerPass<WasmWalker<RemoveUnusedBrs>> {
   void visitBlock(Block *curr) {
     if (curr->name.isNull()) return;
     if (curr->list.size() == 0) return;
-    // preparation - remove all code after a break, since it can't execute, and it might confuse us (we look at the last)
+    // preparation - remove all code after an unconditional break, since it can't execute, and it might confuse us (we look at the last)
     for (size_t i = 0; i < curr->list.size()-1; i++) {
-      if (curr->list[i]->is<Break>()) {
+      Break* br = curr->list[i]->dyn_cast<Break>();
+      if (br && !br->condition) {
         curr->list.resize(i+1);
         break;
       }

@@ -53,27 +53,25 @@
           )
         )
       )
-      (if
+      (br_if
         (i32.gt_s
           (i32.load align=4
             (i32.const 24)
           )
           (i32.const 0)
         )
-        (br $topmost
-          (f64.const -3.4)
-        )
+        $topmost
+        (f64.const -3.4)
       )
-      (if
+      (br_if
         (f64.gt
           (f64.load align=8
             (i32.const 32)
           )
           (f64.const 0)
         )
-        (br $topmost
-          (f64.const 5.6)
-        )
+        $topmost
+        (f64.const 5.6)
       )
       (f64.const 1.2)
     )
@@ -83,41 +81,37 @@
     (local $Int f64)
     (local $Double i32)
     (block $topmost
-      (if
+      (br_if
         (f64.gt
           (get_local $x)
           (f64.const 0)
         )
-        (br $topmost
-          (f64.const 1.2)
-        )
+        $topmost
+        (f64.const 1.2)
       )
-      (if
+      (br_if
         (f64.gt
           (get_local $Int)
           (f64.const 0)
         )
-        (br $topmost
-          (f64.const -3.4)
-        )
+        $topmost
+        (f64.const -3.4)
       )
-      (if
+      (br_if
         (i32.gt_s
           (get_local $Double)
           (i32.const 0)
         )
-        (br $topmost
-          (f64.const 5.6)
-        )
+        $topmost
+        (f64.const 5.6)
       )
-      (if
+      (br_if
         (f64.lt
           (get_local $x)
           (get_local $y)
         )
-        (br $topmost
-          (get_local $x)
-        )
+        $topmost
+        (get_local $x)
       )
       (get_local $y)
     )
