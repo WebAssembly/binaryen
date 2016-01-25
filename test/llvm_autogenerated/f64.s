@@ -7,6 +7,7 @@ fadd64:
 	.result 	f64
 	f64.add 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	fadd64, .Lfunc_end0-fadd64
 
@@ -17,6 +18,7 @@ fsub64:
 	.result 	f64
 	f64.sub 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	fsub64, .Lfunc_end1-fsub64
 
@@ -27,6 +29,7 @@ fmul64:
 	.result 	f64
 	f64.mul 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	fmul64, .Lfunc_end2-fmul64
 
@@ -37,6 +40,7 @@ fdiv64:
 	.result 	f64
 	f64.div 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	fdiv64, .Lfunc_end3-fdiv64
 
@@ -47,6 +51,7 @@ fabs64:
 	.result 	f64
 	f64.abs 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	fabs64, .Lfunc_end4-fabs64
 
@@ -57,6 +62,7 @@ fneg64:
 	.result 	f64
 	f64.neg 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end5:
 	.size	fneg64, .Lfunc_end5-fneg64
 
@@ -67,6 +73,7 @@ copysign64:
 	.result 	f64
 	f64.copysign	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	copysign64, .Lfunc_end6-copysign64
 
@@ -77,6 +84,7 @@ sqrt64:
 	.result 	f64
 	f64.sqrt	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end7:
 	.size	sqrt64, .Lfunc_end7-sqrt64
 
@@ -87,6 +95,7 @@ ceil64:
 	.result 	f64
 	f64.ceil	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end8:
 	.size	ceil64, .Lfunc_end8-ceil64
 
@@ -97,6 +106,7 @@ floor64:
 	.result 	f64
 	f64.floor	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end9:
 	.size	floor64, .Lfunc_end9-floor64
 
@@ -107,6 +117,7 @@ trunc64:
 	.result 	f64
 	f64.trunc	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end10:
 	.size	trunc64, .Lfunc_end10-trunc64
 
@@ -117,6 +128,7 @@ nearest64:
 	.result 	f64
 	f64.nearest	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end11:
 	.size	nearest64, .Lfunc_end11-nearest64
 
@@ -127,6 +139,7 @@ nearest64_via_rint:
 	.result 	f64
 	f64.nearest	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end12:
 	.size	nearest64_via_rint, .Lfunc_end12-nearest64_via_rint
 
@@ -138,6 +151,7 @@ fmin64:
 	f64.const	$push0=, 0x0p0
 	f64.min 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end13:
 	.size	fmin64, .Lfunc_end13-fmin64
 
@@ -149,6 +163,7 @@ fmax64:
 	f64.const	$push0=, 0x0p0
 	f64.max 	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end14:
 	.size	fmax64, .Lfunc_end14-fmax64
 
@@ -159,8 +174,8 @@ fma64:
 	.result 	f64
 	f64.call	$push0=, fma@FUNCTION, $0, $1, $2
 	return  	$pop0
+	.endfunc
 .Lfunc_end15:
 	.size	fma64, .Lfunc_end15-fma64
 
 
-	.section	".note.GNU-stack","",@progbits

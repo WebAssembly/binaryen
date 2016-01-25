@@ -6,6 +6,7 @@ f1:
 	.result 	i32
 	call    	abort@FUNCTION
 	unreachable
+	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
 
@@ -14,6 +15,7 @@ f1:
 f2:
 	unreachable
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
 
@@ -22,8 +24,8 @@ f2:
 f3:
 	unreachable
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
 
 
-	.section	".note.GNU-stack","",@progbits

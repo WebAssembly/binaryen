@@ -14,6 +14,7 @@ test0:
 .LBB0_2:
 	end_block
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	test0, .Lfunc_end0-test0
 
@@ -22,23 +23,23 @@ test0:
 test1:
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
-	i32.const	$2=, 1
-	i32.const	$3=, 0
-	copy_local	$4=, $2
-	copy_local	$5=, $3
+	.local  	i32, i32, i32, i32
+	i32.const	$2=, 0
+	i32.const	$3=, 1
+	i32.const	$4=, 0
 .LBB1_1:
 	loop
-	copy_local	$1=, $4
-	copy_local	$4=, $3
-	i32.add 	$5=, $5, $2
-	copy_local	$3=, $1
-	i32.lt_s	$push0=, $5, $0
+	copy_local	$1=, $3
+	copy_local	$3=, $2
+	i32.const	$push1=, 1
+	i32.add 	$4=, $4, $pop1
+	copy_local	$2=, $1
+	i32.lt_s	$push0=, $4, $0
 	br_if   	$pop0, 0
 	end_loop
-	return  	$4
+	return  	$3
+	.endfunc
 .Lfunc_end1:
 	.size	test1, .Lfunc_end1-test1
 
 
-	.section	".note.GNU-stack","",@progbits

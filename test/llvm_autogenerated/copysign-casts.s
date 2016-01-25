@@ -8,6 +8,7 @@ fold_promote:
 	f64.promote/f32	$push0=, $1
 	f64.copysign	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	fold_promote, .Lfunc_end0-fold_promote
 
@@ -19,8 +20,8 @@ fold_demote:
 	f32.demote/f64	$push0=, $1
 	f32.copysign	$push1=, $0, $pop0
 	return  	$pop1
+	.endfunc
 .Lfunc_end1:
 	.size	fold_demote, .Lfunc_end1-fold_demote
 
 
-	.section	".note.GNU-stack","",@progbits

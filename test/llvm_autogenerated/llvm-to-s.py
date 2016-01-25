@@ -57,6 +57,7 @@ def main(args):
                      'returned',   # external global symbol
                      'vtable',     # external global symbol
                      'offset-folding', # external global symbol
+                     'address-offsets', # external global symbol
                      ]
         if name_noext in BLACKLIST:
           continue

@@ -41,6 +41,7 @@ bar32:
 .LBB0_8:
 	end_block
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	bar32, .Lfunc_end0-bar32
 
@@ -86,8 +87,8 @@ bar64:
 .LBB1_8:
 	end_block
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	bar64, .Lfunc_end1-bar64
 
 
-	.section	".note.GNU-stack","",@progbits

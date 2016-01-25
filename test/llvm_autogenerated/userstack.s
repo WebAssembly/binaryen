@@ -17,6 +17,7 @@ alloca32:
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	alloca32, .Lfunc_end0-alloca32
 
@@ -39,31 +40,33 @@ alloca3264:
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	alloca3264, .Lfunc_end1-alloca3264
 
 	.globl	allocarray
 	.type	allocarray,@function
 allocarray:
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
+	i32.const	$0=, __stack_pointer
+	i32.load	$0=, 0($0)
+	i32.const	$1=, 32
+	i32.sub 	$4=, $0, $1
 	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 32
-	i32.sub 	$5=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$5=, 0($2), $5
+	i32.store	$4=, 0($1), $4
+	i32.const	$push2=, 12
+	i32.const	$3=, 12
+	i32.add 	$3=, $4, $3
+	i32.add 	$push3=, $3, $pop2
 	i32.const	$push0=, 1
-	i32.store	$0=, 12($5), $pop0
-	i32.const	$push1=, 4
-	i32.const	$4=, 12
-	i32.add 	$4=, $5, $4
-	i32.add 	$push2=, $4, $pop1
-	i32.store	$discard=, 0($pop2), $0
-	i32.const	$3=, 32
-	i32.add 	$5=, $5, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$5=, 0($3), $5
+	i32.store	$push1=, 12($4), $pop0
+	i32.store	$discard=, 0($pop3), $pop1
+	i32.const	$2=, 32
+	i32.add 	$4=, $4, $2
+	i32.const	$2=, __stack_pointer
+	i32.store	$4=, 0($2), $4
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	allocarray, .Lfunc_end2-allocarray
 
@@ -79,12 +82,13 @@ allocarray_inbounds:
 	i32.store	$3=, 0($1), $3
 	i32.const	$push0=, 1
 	i32.store	$push1=, 12($3), $pop0
-	i32.store	$discard=, 16($3), $pop1
+	i32.store	$discard=, 24($3), $pop1
 	i32.const	$2=, 32
 	i32.add 	$3=, $3, $2
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $3
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	allocarray_inbounds, .Lfunc_end3-allocarray_inbounds
 
@@ -93,8 +97,8 @@ allocarray_inbounds:
 dynamic_alloca:
 	.param  	i32
 	return
+	.endfunc
 .Lfunc_end4:
 	.size	dynamic_alloca, .Lfunc_end4-dynamic_alloca
 
 
-	.section	".note.GNU-stack","",@progbits

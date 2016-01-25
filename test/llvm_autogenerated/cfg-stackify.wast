@@ -129,16 +129,13 @@
     )
   )
   (func $doublediamond (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
-    (local $$3 i32)
     (block $fake_return_waka123
       (block
         (block $label$0
           (block $label$1
-            (set_local $$3
-              (i32.store align=4
-                (get_local $$2)
-                (i32.const 0)
-              )
+            (i32.store align=4
+              (get_local $$2)
+              (i32.const 0)
             )
             (br_if
               (get_local $$0)
@@ -175,7 +172,7 @@
           (i32.const 5)
         )
         (br $fake_return_waka123
-          (get_local $$3)
+          (i32.const 0)
         )
       )
     )
@@ -211,16 +208,13 @@
     )
   )
   (func $diamond (param $$0 i32) (param $$1 i32) (result i32)
-    (local $$2 i32)
     (block $fake_return_waka123
       (block
         (block $label$0
           (block $label$1
-            (set_local $$2
-              (i32.store align=4
-                (get_local $$0)
-                (i32.const 0)
-              )
+            (i32.store align=4
+              (get_local $$0)
+              (i32.const 0)
             )
             (br_if
               (get_local $$1)
@@ -242,7 +236,7 @@
           (i32.const 3)
         )
         (br $fake_return_waka123
-          (get_local $$2)
+          (i32.const 0)
         )
       )
     )
@@ -273,14 +267,11 @@
     )
   )
   (func $simple_loop (param $$0 i32) (param $$1 i32) (result i32)
-    (local $$2 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$2
-          (i32.store align=4
-            (get_local $$0)
-            (i32.const 0)
-          )
+        (i32.store align=4
+          (get_local $$0)
+          (i32.const 0)
         )
         (loop $label$1 $label$0
           (i32.store align=4
@@ -300,7 +291,7 @@
           (i32.const 2)
         )
         (br $fake_return_waka123
-          (get_local $$2)
+          (i32.const 0)
         )
       )
     )
@@ -350,16 +341,13 @@
     )
   )
   (func $ifelse_earlyexits (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
-    (local $$3 i32)
     (block $fake_return_waka123
       (block
         (block $label$0
           (block $label$1
-            (set_local $$3
-              (i32.store align=4
-                (get_local $$2)
-                (i32.const 0)
-              )
+            (i32.store align=4
+              (get_local $$2)
+              (i32.const 0)
             )
             (br_if
               (get_local $$0)
@@ -389,7 +377,7 @@
           (i32.const 4)
         )
         (br $fake_return_waka123
-          (get_local $$3)
+          (i32.const 0)
         )
       )
     )
@@ -525,52 +513,52 @@
   )
   (func $test5 (param $$0 i32) (param $$1 i32)
     (local $$2 i32)
-    (local $$3 i32)
     (block $fake_return_waka123
       (block
+        (set_local $$0
+          (i32.and
+            (get_local $$0)
+            (i32.const 1)
+          )
+        )
+        (set_local $$2
+          (i32.and
+            (get_local $$1)
+            (i32.const 1)
+          )
+        )
         (block $label$0
           (loop $label$2 $label$1
-            (set_local $$2
-              (i32.const 0)
-            )
-            (set_local $$3
+            (set_local $$1
               (i32.store align=4
-                (get_local $$2)
-                (get_local $$2)
+                (i32.const 0)
+                (i32.const 0)
               )
-            )
-            (set_local $$2
-              (i32.const 1)
             )
             (br_if
               (i32.eq
-                (i32.and
-                  (get_local $$0)
-                  (get_local $$2)
-                )
+                (get_local $$0)
                 (i32.const 0)
               )
               $label$0
             )
+            (i32.store align=4
+              (get_local $$1)
+              (i32.const 1)
+            )
             (br_if
-              (i32.and
-                (get_local $$1)
-                (i32.store align=4
-                  (get_local $$3)
-                  (get_local $$2)
-                )
-              )
+              (get_local $$2)
               $label$1
             )
           )
           (i32.store align=4
-            (get_local $$3)
+            (i32.const 0)
             (i32.const 3)
           )
           (br $fake_return_waka123)
         )
         (i32.store align=4
-          (get_local $$3)
+          (i32.const 0)
           (i32.const 2)
         )
         (br $fake_return_waka123)
@@ -583,32 +571,33 @@
     (local $$4 i32)
     (block $fake_return_waka123
       (block
+        (set_local $$2
+          (i32.and
+            (get_local $$0)
+            (i32.const 1)
+          )
+        )
         (block $label$0
           (block $label$1
             (loop $label$3 $label$2
-              (set_local $$2
-                (i32.const 0)
-              )
-              (i32.store align=4
-                (get_local $$2)
-                (get_local $$2)
-              )
-              (set_local $$3
-                (i32.const 1)
+              (set_local $$0
+                (i32.store align=4
+                  (i32.const 0)
+                  (i32.const 0)
+                )
               )
               (br_if
                 (i32.eq
-                  (i32.and
-                    (get_local $$0)
-                    (get_local $$3)
-                  )
+                  (get_local $$2)
                   (i32.const 0)
                 )
                 $label$0
               )
-              (i32.store align=4
-                (get_local $$2)
-                (get_local $$3)
+              (set_local $$3
+                (i32.store align=4
+                  (get_local $$0)
+                  (i32.const 1)
+                )
               )
               (set_local $$4
                 (i32.and
@@ -624,7 +613,7 @@
                 $label$1
               )
               (i32.store align=4
-                (get_local $$2)
+                (get_local $$0)
                 (get_local $$3)
               )
               (br_if
@@ -633,18 +622,18 @@
               )
             )
             (i32.store align=4
-              (get_local $$2)
+              (i32.const 0)
               (i32.const 2)
             )
             (br $fake_return_waka123)
           )
           (i32.store align=4
-            (get_local $$2)
+            (i32.const 0)
             (i32.const 3)
           )
         )
         (i32.store align=4
-          (get_local $$2)
+          (i32.const 0)
           (i32.const 4)
         )
         (br $fake_return_waka123)
@@ -654,28 +643,28 @@
   (func $test7 (param $$0 i32) (param $$1 i32)
     (local $$2 i32)
     (local $$3 i32)
-    (set_local $$3
-      (i32.const 0)
-    )
     (set_local $$2
       (i32.store align=4
-        (get_local $$3)
-        (get_local $$3)
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+    (set_local $$3
+      (i32.and
+        (get_local $$0)
+        (i32.const 1)
       )
     )
     (loop $label$1 $label$0
       (block $label$2
-        (set_local $$3
+        (set_local $$0
           (i32.store align=4
             (get_local $$2)
             (i32.const 1)
           )
         )
         (br_if
-          (i32.and
-            (get_local $$0)
-            (get_local $$3)
-          )
+          (get_local $$3)
           $label$2
         )
         (i32.store align=4
@@ -685,12 +674,12 @@
         (br_if
           (i32.and
             (get_local $$1)
-            (get_local $$3)
+            (get_local $$0)
           )
           $label$0
         )
         (i32.store align=4
-          (get_local $$2)
+          (i32.const 0)
           (i32.const 4)
         )
         (unreachable)
@@ -702,34 +691,30 @@
       (br_if
         (i32.and
           (get_local $$1)
-          (get_local $$3)
+          (get_local $$0)
         )
         $label$0
       )
     )
     (i32.store align=4
-      (get_local $$2)
+      (i32.const 0)
       (i32.const 5)
     )
     (unreachable)
   )
   (func $test8 (result i32)
-    (local $$0 i32)
-    (set_local $$0
-      (i32.const 0)
-    )
     (loop $label$1 $label$0
       (block $label$2
         (br_if
           (i32.eq
-            (get_local $$0)
+            (i32.const 0)
             (i32.const 0)
           )
           $label$2
         )
         (br_if
           (i32.eq
-            (get_local $$0)
+            (i32.const 0)
             (i32.const 0)
           )
           $label$0
@@ -737,7 +722,7 @@
       )
       (loop $label$4 $label$3
         (br_if
-          (get_local $$0)
+          (i32.const 0)
           $label$3
         )
         (br $label$0)
@@ -749,13 +734,10 @@
     (local $$1 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$1
-          (i32.const 0)
-        )
         (set_local $$0
           (i32.store align=4
-            (get_local $$1)
-            (get_local $$1)
+            (i32.const 0)
+            (i32.const 0)
           )
         )
         (loop $label$1 $label$0
@@ -819,7 +801,7 @@
           )
         )
         (i32.store align=4
-          (get_local $$0)
+          (i32.const 0)
           (i32.const 5)
         )
         (br $fake_return_waka123)
@@ -899,17 +881,16 @@
     (local $$0 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$0
-          (i32.const 0)
-        )
-        (i32.store align=4
-          (get_local $$0)
-          (get_local $$0)
-        )
         (block $label$0
           (block $label$1
             (block $label$2
               (block $label$3
+                (set_local $$0
+                  (i32.store align=4
+                    (i32.const 0)
+                    (i32.const 0)
+                  )
+                )
                 (br_if
                   (get_local $$0)
                   $label$3
@@ -924,16 +905,16 @@
                     $label$4
                   )
                   (i32.store align=4
-                    (get_local $$0)
+                    (i32.const 0)
                     (i32.const 2)
                   )
                   (br_if
-                    (get_local $$0)
+                    (i32.const 0)
                     $label$2
                   )
                 )
                 (i32.store align=4
-                  (get_local $$0)
+                  (i32.const 0)
                   (i32.const 3)
                 )
                 (br $fake_return_waka123)
@@ -947,31 +928,31 @@
                 $label$0
               )
               (i32.store align=4
-                (get_local $$0)
+                (i32.const 0)
                 (i32.const 5)
               )
               (br_if
                 (i32.eq
-                  (get_local $$0)
+                  (i32.const 0)
                   (i32.const 0)
                 )
                 $label$1
               )
             )
             (i32.store align=4
-              (get_local $$0)
+              (i32.const 0)
               (i32.const 7)
             )
             (br $fake_return_waka123)
           )
           (i32.store align=4
-            (get_local $$0)
+            (i32.const 0)
             (i32.const 6)
           )
           (br $fake_return_waka123)
         )
         (i32.store align=4
-          (get_local $$0)
+          (i32.const 0)
           (i32.const 8)
         )
         (br $fake_return_waka123)
@@ -1085,21 +1066,18 @@
     )
   )
   (func $test14
-    (local $$0 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$0
-          (i32.const 0)
-        )
         (loop $label$1 $label$0
           (br_if
-            (get_local $$0)
+            (i32.const 0)
             $label$0
           )
         )
         (loop $label$3 $label$2
+          (i32.const 0)
           (br_if
-            (get_local $$0)
+            (i32.const 0)
             $label$2
           )
         )

@@ -1,7 +1,7 @@
 (module
-  (memory 1184 4294967295 (segment 8 "9\05\00\00") (segment 24 "\01\00\00\00") (segment 28 "*\00\00\00") (segment 32 "\ff\ff\ff\ff") (segment 64 "\00\00\00\00\01\00\00\00") (segment 72 "\ff\ff\ff\ff\ff\ff\ff\ff") (segment 92 "\00\00\00\80") (segment 96 "\00\00\00@") (segment 128 "\00\00\00\00\00\00\00\80") (segment 136 "\00\00\00\00\00\00\00@") (segment 656 "\e0\00\00\00"))
-  (type $FUNCSIG$viii (func (param i32 i32 i32)))
-  (import $memcpy "env" "memcpy" (param i32 i32 i32))
+  (memory 1196 4294967295 (segment 8 "9\05\00\00") (segment 24 "\01\00\00\00") (segment 28 "*\00\00\00") (segment 32 "\ff\ff\ff\ff") (segment 64 "\00\00\00\00\01\00\00\00") (segment 72 "\ff\ff\ff\ff\ff\ff\ff\ff") (segment 92 "\00\00\00\80") (segment 96 "\00\00\00@") (segment 128 "\00\00\00\00\00\00\00\80") (segment 136 "\00\00\00\00\00\00\00@") (segment 656 "\e0\00\00\00") (segment 1192 "\a4\04\00\00"))
+  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
+  (import $memcpy "env" "memcpy" (param i32 i32 i32) (result i32))
   (export "foo" $foo)
   (export "call_memcpy" $call_memcpy)
   (func $foo (result i32)
@@ -30,4 +30,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1183 }
+;; METADATA: { "asmConsts": {},"staticBump": 1195 }

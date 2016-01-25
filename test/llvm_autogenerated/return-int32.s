@@ -6,8 +6,8 @@ return_i32:
 	.param  	i32
 	.result 	i32
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	return_i32, .Lfunc_end0-return_i32
 
 
-	.section	".note.GNU-stack","",@progbits

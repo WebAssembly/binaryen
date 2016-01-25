@@ -7,6 +7,7 @@ foo:
 	i32.const	$push0=, 0
 	i32.load	$push1=, answer($pop0)
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -15,8 +16,9 @@ foo:
 call_memcpy:
 	.param  	i32, i32, i32
 	.result 	i32
-	call    	memcpy@FUNCTION, $0, $1, $2
+	i32.call	$discard=, memcpy@FUNCTION, $0, $1, $2
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	call_memcpy, .Lfunc_end1-call_memcpy
 
@@ -145,5 +147,17 @@ rom:
 	.skip	512
 	.size	rom, 512
 
+	.type	array,@object
+array:
+	.skip	8
+	.size	array, 8
 
-	.section	".note.GNU-stack","",@progbits
+	.type	pointer_to_array,@object
+	.section	.data.rel.ro,"aw",@progbits
+	.globl	pointer_to_array
+	.align	2
+pointer_to_array:
+	.int32	array+4
+	.size	pointer_to_array, 4
+
+

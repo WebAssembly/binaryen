@@ -18,21 +18,17 @@
     )
   )
   (func $load_s_i1_i32 (param $$0 i32) (result i32)
-    (local $$1 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$1
-          (i32.const 31)
-        )
         (br $fake_return_waka123
           (i32.shr_s
             (i32.shl
               (i32.load8_u align=1
                 (get_local $$0)
               )
-              (get_local $$1)
+              (i32.const 31)
             )
-            (get_local $$1)
+            (i32.const 31)
           )
         )
       )
@@ -50,21 +46,17 @@
     )
   )
   (func $load_s_i1_i64 (param $$0 i32) (result i64)
-    (local $$1 i64)
     (block $fake_return_waka123
       (block
-        (set_local $$1
-          (i64.const 63)
-        )
         (br $fake_return_waka123
           (i64.shr_s
             (i64.shl
               (i64.load8_u align=1
                 (get_local $$0)
               )
-              (get_local $$1)
+              (i64.const 63)
             )
-            (get_local $$1)
+            (i64.const 63)
           )
         )
       )

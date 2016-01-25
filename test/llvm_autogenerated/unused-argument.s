@@ -6,6 +6,7 @@ unused_first:
 	.param  	i32, i32
 	.result 	i32
 	return  	$1
+	.endfunc
 .Lfunc_end0:
 	.size	unused_first, .Lfunc_end0-unused_first
 
@@ -15,6 +16,7 @@ unused_second:
 	.param  	i32, i32
 	.result 	i32
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	unused_second, .Lfunc_end1-unused_second
 
@@ -23,8 +25,8 @@ unused_second:
 call_something:
 	i32.call	$discard=, return_something@FUNCTION
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	call_something, .Lfunc_end2-call_something
 
 
-	.section	".note.GNU-stack","",@progbits

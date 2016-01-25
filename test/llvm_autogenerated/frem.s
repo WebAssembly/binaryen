@@ -7,6 +7,7 @@ frem32:
 	.result 	f32
 	f32.call	$push0=, fmodf@FUNCTION, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	frem32, .Lfunc_end0-frem32
 
@@ -17,8 +18,8 @@ frem64:
 	.result 	f64
 	f64.call	$push0=, fmod@FUNCTION, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	frem64, .Lfunc_end1-frem64
 
 
-	.section	".note.GNU-stack","",@progbits
