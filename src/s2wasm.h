@@ -387,7 +387,8 @@ private:
       if (!*s) break;
       if (*s != '.') break;
       s++;
-      if (match("file")) parseFile();
+      if (parseVersionMin());
+      else if (match("file")) parseFile();
       else if (match("globl")) parseGlobl();
       else if (match("type")) parseType();
       else {
@@ -412,6 +413,15 @@ private:
   void parseGlobl() {
     (void)getStr();
     skipWhitespace();
+  }
+
+  bool parseVersionMin() {
+    if (match("watchos_version_min") || match("tvos_version_min") || match("ios_version_min") || match("macosx_version_min")) {
+      s = strchr(s, '\n');
+      skipWhitespace();
+      return true;
+    } else
+      return false;
   }
 
   void parseFunction() {
