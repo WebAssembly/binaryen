@@ -974,7 +974,7 @@ private:
       mustMatch(name.str);
       skipWhitespace();
     }
-    if (match(".align")) {
+    if (match(".align") || match(".p2align")) {
       align = getInt();
       skipWhitespace();
     }
