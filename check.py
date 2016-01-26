@@ -361,7 +361,8 @@ if torture:
       runner=os.path.abspath(os.path.join('bin', 'binaryen-shell')),
       files=os.path.abspath(os.path.join(s2wasm_torture_out, '*.wast')),
       fails=os.path.abspath(os.path.join('test', 's2wasm_known_binaryen_shell_test_failures.txt')),
-      out='')
+      out='',
+      wasmjs='')
 
   shutil.rmtree(s2wasm_torture_out)
   if unexpected_result_count:
