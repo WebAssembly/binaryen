@@ -402,7 +402,7 @@ aggregate_return_without_merge:
 	.type	gv,@object
 	.bss
 	.globl	gv
-	.align	2
+	.p2align	2
 gv:
 	.int32	0
 	.size	gv, 4
