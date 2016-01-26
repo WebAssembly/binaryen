@@ -371,7 +371,7 @@ private:
       else if (match("imports")) skipImports();
       else if (match("data")) {}
       else if (match("ident")) {}
-      else if (match("section") || match("align")) s = strchr(s, '\n');
+      else if (match("section") || match("align") || match("p2align")) s = strchr(s, '\n');
       else if (match("Lfunc_end")) {
         // skip the next line, which has a .size we can ignore
         s = strstr(s, ".size");
