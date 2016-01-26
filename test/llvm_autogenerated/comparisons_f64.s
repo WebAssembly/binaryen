@@ -9,6 +9,7 @@ ord_f64:
 	f64.eq  	$push0=, $1, $1
 	i32.and 	$push2=, $pop1, $pop0
 	return  	$pop2
+	.endfunc
 .Lfunc_end0:
 	.size	ord_f64, .Lfunc_end0-ord_f64
 
@@ -21,6 +22,7 @@ uno_f64:
 	f64.ne  	$push0=, $1, $1
 	i32.or  	$push2=, $pop1, $pop0
 	return  	$pop2
+	.endfunc
 .Lfunc_end1:
 	.size	uno_f64, .Lfunc_end1-uno_f64
 
@@ -31,6 +33,7 @@ oeq_f64:
 	.result 	i32
 	f64.eq  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	oeq_f64, .Lfunc_end2-oeq_f64
 
@@ -41,6 +44,7 @@ une_f64:
 	.result 	i32
 	f64.ne  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	une_f64, .Lfunc_end3-une_f64
 
@@ -51,6 +55,7 @@ olt_f64:
 	.result 	i32
 	f64.lt  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	olt_f64, .Lfunc_end4-olt_f64
 
@@ -61,6 +66,7 @@ ole_f64:
 	.result 	i32
 	f64.le  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end5:
 	.size	ole_f64, .Lfunc_end5-ole_f64
 
@@ -71,6 +77,7 @@ ogt_f64:
 	.result 	i32
 	f64.gt  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	ogt_f64, .Lfunc_end6-ogt_f64
 
@@ -81,6 +88,7 @@ oge_f64:
 	.result 	i32
 	f64.ge  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end7:
 	.size	oge_f64, .Lfunc_end7-oge_f64
 
@@ -95,6 +103,7 @@ ueq_f64:
 	i32.or  	$push3=, $pop2, $pop1
 	i32.or  	$push4=, $pop0, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end8:
 	.size	ueq_f64, .Lfunc_end8-ueq_f64
 
@@ -109,6 +118,7 @@ one_f64:
 	i32.and 	$push3=, $pop2, $pop1
 	i32.and 	$push4=, $pop0, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end9:
 	.size	one_f64, .Lfunc_end9-one_f64
 
@@ -123,6 +133,7 @@ ult_f64:
 	i32.or  	$push3=, $pop2, $pop1
 	i32.or  	$push4=, $pop0, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end10:
 	.size	ult_f64, .Lfunc_end10-ult_f64
 
@@ -137,6 +148,7 @@ ule_f64:
 	i32.or  	$push3=, $pop2, $pop1
 	i32.or  	$push4=, $pop0, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end11:
 	.size	ule_f64, .Lfunc_end11-ule_f64
 
@@ -151,6 +163,7 @@ ugt_f64:
 	i32.or  	$push3=, $pop2, $pop1
 	i32.or  	$push4=, $pop0, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end12:
 	.size	ugt_f64, .Lfunc_end12-ugt_f64
 
@@ -165,8 +178,8 @@ uge_f64:
 	i32.or  	$push3=, $pop2, $pop1
 	i32.or  	$push4=, $pop0, $pop3
 	return  	$pop4
+	.endfunc
 .Lfunc_end13:
 	.size	uge_f64, .Lfunc_end13-uge_f64
 
 
-	.section	".note.GNU-stack","",@progbits

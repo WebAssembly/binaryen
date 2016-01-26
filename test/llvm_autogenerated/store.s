@@ -6,6 +6,7 @@ sti32:
 	.param  	i32, i32
 	i32.store	$discard=, 0($0), $1
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	sti32, .Lfunc_end0-sti32
 
@@ -15,6 +16,7 @@ sti64:
 	.param  	i32, i64
 	i64.store	$discard=, 0($0), $1
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	sti64, .Lfunc_end1-sti64
 
@@ -24,6 +26,7 @@ stf32:
 	.param  	i32, f32
 	f32.store	$discard=, 0($0), $1
 	return
+	.endfunc
 .Lfunc_end2:
 	.size	stf32, .Lfunc_end2-stf32
 
@@ -33,8 +36,8 @@ stf64:
 	.param  	i32, f64
 	f64.store	$discard=, 0($0), $1
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	stf64, .Lfunc_end3-stf64
 
 
-	.section	".note.GNU-stack","",@progbits

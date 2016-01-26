@@ -32,6 +32,7 @@
   (export "store_i8_with_folded_gep_offset" $store_i8_with_folded_gep_offset)
   (export "aggregate_load_store" $aggregate_load_store)
   (export "aggregate_return" $aggregate_return)
+  (export "aggregate_return_without_merge" $aggregate_return_without_merge)
   (func $load_i32_with_folded_offset (param $$0 i32) (result i32)
     (block $fake_return_waka123
       (block
@@ -311,30 +312,22 @@
     )
   )
   (func $store_i32_to_numeric_address
-    (local $$0 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$0
-          (i32.const 0)
-        )
         (i32.store offset=42 align=4
-          (get_local $$0)
-          (get_local $$0)
+          (i32.const 0)
+          (i32.const 0)
         )
         (br $fake_return_waka123)
       )
     )
   )
   (func $store_i32_to_global_address
-    (local $$0 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$0
-          (i32.const 0)
-        )
         (i32.store offset=8 align=4
-          (get_local $$0)
-          (get_local $$0)
+          (i32.const 0)
+          (i32.const 0)
         )
         (br $fake_return_waka123)
       )
@@ -452,18 +445,33 @@
   (func $aggregate_return (param $$0 i32)
     (block $fake_return_waka123
       (block
-        (i32.store align=4
+        (i64.store align=4
           (get_local $$0)
-          (i32.store offset=4 align=4
+          (i64.store offset=8 align=4
             (get_local $$0)
-            (i32.store offset=8 align=4
+            (i64.const 0)
+          )
+        )
+        (br $fake_return_waka123)
+      )
+    )
+  )
+  (func $aggregate_return_without_merge (param $$0 i32)
+    (block $fake_return_waka123
+      (block
+        (i32.store offset=8 align=4
+          (get_local $$0)
+          (i32.store offset=12 align=16
+            (get_local $$0)
+            (i32.store offset=14 align=8
               (get_local $$0)
-              (i32.store offset=12 align=4
-                (get_local $$0)
-                (i32.const 0)
-              )
+              (i32.const 0)
             )
           )
+        )
+        (i64.store align=8
+          (get_local $$0)
+          (i64.const 0)
         )
         (br $fake_return_waka123)
       )

@@ -7,6 +7,7 @@ add64:
 	.result 	i64
 	i64.add 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	add64, .Lfunc_end0-add64
 
@@ -17,6 +18,7 @@ sub64:
 	.result 	i64
 	i64.sub 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	sub64, .Lfunc_end1-sub64
 
@@ -27,6 +29,7 @@ mul64:
 	.result 	i64
 	i64.mul 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	mul64, .Lfunc_end2-mul64
 
@@ -37,6 +40,7 @@ sdiv64:
 	.result 	i64
 	i64.div_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	sdiv64, .Lfunc_end3-sdiv64
 
@@ -47,6 +51,7 @@ udiv64:
 	.result 	i64
 	i64.div_u	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	udiv64, .Lfunc_end4-udiv64
 
@@ -57,6 +62,7 @@ srem64:
 	.result 	i64
 	i64.rem_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end5:
 	.size	srem64, .Lfunc_end5-srem64
 
@@ -67,6 +73,7 @@ urem64:
 	.result 	i64
 	i64.rem_u	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	urem64, .Lfunc_end6-urem64
 
@@ -77,6 +84,7 @@ and64:
 	.result 	i64
 	i64.and 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end7:
 	.size	and64, .Lfunc_end7-and64
 
@@ -87,6 +95,7 @@ or64:
 	.result 	i64
 	i64.or  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end8:
 	.size	or64, .Lfunc_end8-or64
 
@@ -97,6 +106,7 @@ xor64:
 	.result 	i64
 	i64.xor 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end9:
 	.size	xor64, .Lfunc_end9-xor64
 
@@ -107,6 +117,7 @@ shl64:
 	.result 	i64
 	i64.shl 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end10:
 	.size	shl64, .Lfunc_end10-shl64
 
@@ -117,6 +128,7 @@ shr64:
 	.result 	i64
 	i64.shr_u	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end11:
 	.size	shr64, .Lfunc_end11-shr64
 
@@ -127,6 +139,7 @@ sar64:
 	.result 	i64
 	i64.shr_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end12:
 	.size	sar64, .Lfunc_end12-sar64
 
@@ -137,6 +150,7 @@ clz64:
 	.result 	i64
 	i64.clz 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end13:
 	.size	clz64, .Lfunc_end13-clz64
 
@@ -147,6 +161,7 @@ clz64_zero_undef:
 	.result 	i64
 	i64.clz 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end14:
 	.size	clz64_zero_undef, .Lfunc_end14-clz64_zero_undef
 
@@ -157,6 +172,7 @@ ctz64:
 	.result 	i64
 	i64.ctz 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end15:
 	.size	ctz64, .Lfunc_end15-ctz64
 
@@ -167,6 +183,7 @@ ctz64_zero_undef:
 	.result 	i64
 	i64.ctz 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end16:
 	.size	ctz64_zero_undef, .Lfunc_end16-ctz64_zero_undef
 
@@ -177,8 +194,8 @@ popcnt64:
 	.result 	i64
 	i64.popcnt	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end17:
 	.size	popcnt64, .Lfunc_end17-popcnt64
 
 
-	.section	".note.GNU-stack","",@progbits

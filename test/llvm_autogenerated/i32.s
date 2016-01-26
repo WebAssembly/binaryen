@@ -7,6 +7,7 @@ add32:
 	.result 	i32
 	i32.add 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	add32, .Lfunc_end0-add32
 
@@ -17,6 +18,7 @@ sub32:
 	.result 	i32
 	i32.sub 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	sub32, .Lfunc_end1-sub32
 
@@ -27,6 +29,7 @@ mul32:
 	.result 	i32
 	i32.mul 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	mul32, .Lfunc_end2-mul32
 
@@ -37,6 +40,7 @@ sdiv32:
 	.result 	i32
 	i32.div_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	sdiv32, .Lfunc_end3-sdiv32
 
@@ -47,6 +51,7 @@ udiv32:
 	.result 	i32
 	i32.div_u	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	udiv32, .Lfunc_end4-udiv32
 
@@ -57,6 +62,7 @@ srem32:
 	.result 	i32
 	i32.rem_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end5:
 	.size	srem32, .Lfunc_end5-srem32
 
@@ -67,6 +73,7 @@ urem32:
 	.result 	i32
 	i32.rem_u	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	urem32, .Lfunc_end6-urem32
 
@@ -77,6 +84,7 @@ and32:
 	.result 	i32
 	i32.and 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end7:
 	.size	and32, .Lfunc_end7-and32
 
@@ -87,6 +95,7 @@ or32:
 	.result 	i32
 	i32.or  	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end8:
 	.size	or32, .Lfunc_end8-or32
 
@@ -97,6 +106,7 @@ xor32:
 	.result 	i32
 	i32.xor 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end9:
 	.size	xor32, .Lfunc_end9-xor32
 
@@ -107,6 +117,7 @@ shl32:
 	.result 	i32
 	i32.shl 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end10:
 	.size	shl32, .Lfunc_end10-shl32
 
@@ -117,6 +128,7 @@ shr32:
 	.result 	i32
 	i32.shr_u	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end11:
 	.size	shr32, .Lfunc_end11-shr32
 
@@ -127,6 +139,7 @@ sar32:
 	.result 	i32
 	i32.shr_s	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end12:
 	.size	sar32, .Lfunc_end12-sar32
 
@@ -137,6 +150,7 @@ clz32:
 	.result 	i32
 	i32.clz 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end13:
 	.size	clz32, .Lfunc_end13-clz32
 
@@ -147,6 +161,7 @@ clz32_zero_undef:
 	.result 	i32
 	i32.clz 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end14:
 	.size	clz32_zero_undef, .Lfunc_end14-clz32_zero_undef
 
@@ -157,6 +172,7 @@ ctz32:
 	.result 	i32
 	i32.ctz 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end15:
 	.size	ctz32, .Lfunc_end15-ctz32
 
@@ -167,6 +183,7 @@ ctz32_zero_undef:
 	.result 	i32
 	i32.ctz 	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end16:
 	.size	ctz32_zero_undef, .Lfunc_end16-ctz32_zero_undef
 
@@ -177,8 +194,8 @@ popcnt32:
 	.result 	i32
 	i32.popcnt	$push0=, $0
 	return  	$pop0
+	.endfunc
 .Lfunc_end17:
 	.size	popcnt32, .Lfunc_end17-popcnt32
 
 
-	.section	".note.GNU-stack","",@progbits

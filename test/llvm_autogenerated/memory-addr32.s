@@ -6,6 +6,7 @@ memory_size:
 	.result 	i32
 	memory_size	$push0=
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	memory_size, .Lfunc_end0-memory_size
 
@@ -15,8 +16,8 @@ grow_memory:
 	.param  	i32
 	grow_memory	$0
 	return
+	.endfunc
 .Lfunc_end1:
 	.size	grow_memory, .Lfunc_end1-grow_memory
 
 
-	.section	".note.GNU-stack","",@progbits

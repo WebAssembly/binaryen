@@ -4,6 +4,7 @@
 	.type	f0,@function
 f0:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	f0, .Lfunc_end0-f0
 
@@ -13,6 +14,7 @@ f1:
 	.result 	i32
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
 
@@ -23,6 +25,7 @@ f2:
 	.result 	i32
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	f2, .Lfunc_end2-f2
 
@@ -31,6 +34,7 @@ f2:
 f3:
 	.param  	i32, f32
 	return
+	.endfunc
 .Lfunc_end3:
 	.size	f3, .Lfunc_end3-f3
 
@@ -39,18 +43,19 @@ f3:
 f4:
 	.param  	i32
 	.result 	i32
-	.local  	i32
-	i32.const	$1=, 1
 	block
-	i32.and 	$push0=, $0, $1
-	i32.const	$push2=, 0
-	i32.eq  	$push3=, $pop0, $pop2
-	br_if   	$pop3, 0
+	i32.const	$push2=, 1
+	i32.and 	$push0=, $0, $pop2
+	i32.const	$push4=, 0
+	i32.eq  	$push5=, $pop0, $pop4
+	br_if   	$pop5, 0
 	i32.const	$push1=, 0
 	return  	$pop1
 .LBB4_2:
 	end_block
-	return  	$1
+	i32.const	$push3=, 1
+	return  	$pop3
+	.endfunc
 .Lfunc_end4:
 	.size	f4, .Lfunc_end4-f4
 
@@ -59,8 +64,8 @@ f4:
 f5:
 	.result 	f32
 	unreachable
+	.endfunc
 .Lfunc_end5:
 	.size	f5, .Lfunc_end5-f5
 
 
-	.section	".note.GNU-stack","",@progbits

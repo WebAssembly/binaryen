@@ -7,6 +7,7 @@ ldi32:
 	.result 	i32
 	i32.load	$push0=, 0($0)
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	ldi32, .Lfunc_end0-ldi32
 
@@ -17,6 +18,7 @@ ldi64:
 	.result 	i64
 	i64.load	$push0=, 0($0)
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	ldi64, .Lfunc_end1-ldi64
 
@@ -27,6 +29,7 @@ ldf32:
 	.result 	f32
 	f32.load	$push0=, 0($0)
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	ldf32, .Lfunc_end2-ldf32
 
@@ -37,8 +40,8 @@ ldf64:
 	.result 	f64
 	f64.load	$push0=, 0($0)
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	ldf64, .Lfunc_end3-ldf64
 
 
-	.section	".note.GNU-stack","",@progbits

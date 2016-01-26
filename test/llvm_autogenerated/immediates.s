@@ -6,6 +6,7 @@ zero_i32:
 	.result 	i32
 	i32.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	zero_i32, .Lfunc_end0-zero_i32
 
@@ -15,6 +16,7 @@ one_i32:
 	.result 	i32
 	i32.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end1:
 	.size	one_i32, .Lfunc_end1-one_i32
 
@@ -24,6 +26,7 @@ max_i32:
 	.result 	i32
 	i32.const	$push0=, 2147483647
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	max_i32, .Lfunc_end2-max_i32
 
@@ -33,6 +36,7 @@ min_i32:
 	.result 	i32
 	i32.const	$push0=, -2147483648
 	return  	$pop0
+	.endfunc
 .Lfunc_end3:
 	.size	min_i32, .Lfunc_end3-min_i32
 
@@ -42,6 +46,7 @@ zero_i64:
 	.result 	i64
 	i64.const	$push0=, 0
 	return  	$pop0
+	.endfunc
 .Lfunc_end4:
 	.size	zero_i64, .Lfunc_end4-zero_i64
 
@@ -51,6 +56,7 @@ one_i64:
 	.result 	i64
 	i64.const	$push0=, 1
 	return  	$pop0
+	.endfunc
 .Lfunc_end5:
 	.size	one_i64, .Lfunc_end5-one_i64
 
@@ -60,6 +66,7 @@ max_i64:
 	.result 	i64
 	i64.const	$push0=, 9223372036854775807
 	return  	$pop0
+	.endfunc
 .Lfunc_end6:
 	.size	max_i64, .Lfunc_end6-max_i64
 
@@ -69,6 +76,7 @@ min_i64:
 	.result 	i64
 	i64.const	$push0=, -9223372036854775808
 	return  	$pop0
+	.endfunc
 .Lfunc_end7:
 	.size	min_i64, .Lfunc_end7-min_i64
 
@@ -78,6 +86,7 @@ negzero_f32:
 	.result 	f32
 	f32.const	$push0=, -0x0p0
 	return  	$pop0
+	.endfunc
 .Lfunc_end8:
 	.size	negzero_f32, .Lfunc_end8-negzero_f32
 
@@ -87,6 +96,7 @@ zero_f32:
 	.result 	f32
 	f32.const	$push0=, 0x0p0
 	return  	$pop0
+	.endfunc
 .Lfunc_end9:
 	.size	zero_f32, .Lfunc_end9-zero_f32
 
@@ -96,6 +106,7 @@ one_f32:
 	.result 	f32
 	f32.const	$push0=, 0x1p0
 	return  	$pop0
+	.endfunc
 .Lfunc_end10:
 	.size	one_f32, .Lfunc_end10-one_f32
 
@@ -105,6 +116,7 @@ two_f32:
 	.result 	f32
 	f32.const	$push0=, 0x1p1
 	return  	$pop0
+	.endfunc
 .Lfunc_end11:
 	.size	two_f32, .Lfunc_end11-two_f32
 
@@ -114,6 +126,7 @@ nan_f32:
 	.result 	f32
 	f32.const	$push0=, nan
 	return  	$pop0
+	.endfunc
 .Lfunc_end12:
 	.size	nan_f32, .Lfunc_end12-nan_f32
 
@@ -123,6 +136,7 @@ negnan_f32:
 	.result 	f32
 	f32.const	$push0=, -nan
 	return  	$pop0
+	.endfunc
 .Lfunc_end13:
 	.size	negnan_f32, .Lfunc_end13-negnan_f32
 
@@ -132,6 +146,7 @@ inf_f32:
 	.result 	f32
 	f32.const	$push0=, infinity
 	return  	$pop0
+	.endfunc
 .Lfunc_end14:
 	.size	inf_f32, .Lfunc_end14-inf_f32
 
@@ -141,6 +156,7 @@ neginf_f32:
 	.result 	f32
 	f32.const	$push0=, -infinity
 	return  	$pop0
+	.endfunc
 .Lfunc_end15:
 	.size	neginf_f32, .Lfunc_end15-neginf_f32
 
@@ -150,6 +166,7 @@ negzero_f64:
 	.result 	f64
 	f64.const	$push0=, -0x0p0
 	return  	$pop0
+	.endfunc
 .Lfunc_end16:
 	.size	negzero_f64, .Lfunc_end16-negzero_f64
 
@@ -159,6 +176,7 @@ zero_f64:
 	.result 	f64
 	f64.const	$push0=, 0x0p0
 	return  	$pop0
+	.endfunc
 .Lfunc_end17:
 	.size	zero_f64, .Lfunc_end17-zero_f64
 
@@ -168,6 +186,7 @@ one_f64:
 	.result 	f64
 	f64.const	$push0=, 0x1p0
 	return  	$pop0
+	.endfunc
 .Lfunc_end18:
 	.size	one_f64, .Lfunc_end18-one_f64
 
@@ -177,6 +196,7 @@ two_f64:
 	.result 	f64
 	f64.const	$push0=, 0x1p1
 	return  	$pop0
+	.endfunc
 .Lfunc_end19:
 	.size	two_f64, .Lfunc_end19-two_f64
 
@@ -186,6 +206,7 @@ nan_f64:
 	.result 	f64
 	f64.const	$push0=, nan
 	return  	$pop0
+	.endfunc
 .Lfunc_end20:
 	.size	nan_f64, .Lfunc_end20-nan_f64
 
@@ -195,6 +216,7 @@ negnan_f64:
 	.result 	f64
 	f64.const	$push0=, -nan
 	return  	$pop0
+	.endfunc
 .Lfunc_end21:
 	.size	negnan_f64, .Lfunc_end21-negnan_f64
 
@@ -204,6 +226,7 @@ inf_f64:
 	.result 	f64
 	f64.const	$push0=, infinity
 	return  	$pop0
+	.endfunc
 .Lfunc_end22:
 	.size	inf_f64, .Lfunc_end22-inf_f64
 
@@ -213,8 +236,8 @@ neginf_f64:
 	.result 	f64
 	f64.const	$push0=, -infinity
 	return  	$pop0
+	.endfunc
 .Lfunc_end23:
 	.size	neginf_f64, .Lfunc_end23-neginf_f64
 
 
-	.section	".note.GNU-stack","",@progbits

@@ -159,6 +159,7 @@ private:
     return cashew::IString(str.c_str(), false);
   }
 
+  // get an int
   int32_t getInt() {
     const char* loc = s;
     uint32_t value = 0;
@@ -190,6 +191,15 @@ private:
     }
     s = loc;
     return value;
+  }
+
+  // get an int from an arbitrary string, with our full error handling
+  int32_t getInt(const char *from) {
+    const char *before = s;
+    s = from;
+    auto ret = getInt();
+    s = before;
+    return ret;
   }
 
   // gets a constant, which may be a relocation for later.
@@ -492,6 +502,10 @@ private:
           inputs[i] = curr;
         }
         if (*s == ')') s++; // tolerate 0(argument) syntax, where we started at the 'a'
+        if (*s == ':') { // tolerate :attribute=value syntax (see getAttributes)
+          s++;
+          skipToSep();
+        }
         if (i < num - 1) skipComma();
       }
       for (int i = num-1; i >= 0; i--) {
@@ -515,6 +529,24 @@ private:
         addToBlock(set);
       }
     };
+    auto getAttributes = [&](int num) {
+      const char *before = s;
+      std::vector<const char*> attributes; // TODO: optimize (if .s format doesn't change)
+      attributes.resize(num);
+      for (int i = 0; i < num; i++) {
+        skipToSep();
+        if (*s == ')') s++; // tolerate 0(argument) syntax, where we started at the 'a'
+        if (*s == ':') {
+          attributes[i] = s + 1;
+        } else {
+          attributes[i] = nullptr;
+        }
+        if (i < num - 1) skipComma();
+      }
+      s = before;
+      return attributes;
+    };
+    //
     auto makeBinary = [&](BinaryOp op, WasmType type) {
       Name assign = getAssign();
       skipComma();
@@ -559,9 +591,14 @@ private:
       match("_u");
       Name assign = getAssign();
       getConst(&curr->offset);
-      curr->align = curr->bytes; // XXX
       mustMatch("(");
+      auto attributes = getAttributes(1);
       curr->ptr = getInput();
+      curr->align = curr->bytes;
+      if (attributes[0]) {
+        assert(strncmp(attributes[0], "p2align=", 8) == 0);
+        curr->align = pow(2, getInt(attributes[0] + 8));
+      }
       setOutput(curr, assign);
     };
     auto makeStore = [&](WasmType type) {
@@ -570,12 +607,17 @@ private:
       curr->type = type;
       int32_t bytes = getInt();
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
-      curr->align = curr->bytes; // XXX
       Name assign = getAssign();
       getConst(&curr->offset);
       mustMatch("(");
+      auto attributes = getAttributes(2);
       auto inputs = getInputs(2);
       curr->ptr = inputs[0];
+      curr->align = curr->bytes;
+      if (attributes[0]) {
+        assert(strncmp(attributes[0], "p2align=", 8) == 0);
+        curr->align = pow(2, getInt(attributes[0] + 8));
+      }
       curr->value = inputs[1];
       setOutput(curr, assign);
     };

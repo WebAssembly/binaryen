@@ -5,19 +5,15 @@
   (export "z2s_call" $z2s_call)
   (export "s2z_call" $s2z_call)
   (func $z2s_func (param $$0 i32) (result i32)
-    (local $$1 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$1
-          (i32.const 24)
-        )
         (br $fake_return_waka123
           (i32.shr_s
             (i32.shl
               (get_local $$0)
-              (get_local $$1)
+              (i32.const 24)
             )
-            (get_local $$1)
+            (i32.const 24)
           )
         )
       )
@@ -50,12 +46,8 @@
     )
   )
   (func $s2z_call (param $$0 i32) (result i32)
-    (local $$1 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$1
-          (i32.const 24)
-        )
         (br $fake_return_waka123
           (i32.shr_s
             (i32.shl
@@ -63,14 +55,14 @@
                 (i32.shr_s
                   (i32.shl
                     (get_local $$0)
-                    (get_local $$1)
+                    (i32.const 24)
                   )
-                  (get_local $$1)
+                  (i32.const 24)
                 )
               )
-              (get_local $$1)
+              (i32.const 24)
             )
-            (get_local $$1)
+            (i32.const 24)
           )
         )
       )
