@@ -57,7 +57,7 @@ bar:
 	.type	pos,@object
 	.bss
 	.globl	pos
-	.align	2
+	.p2align	2
 pos:
 	.skip	12
 	.size	pos, 12
