@@ -168,6 +168,11 @@ def binary_format_check(wast, verify_final_result=True):
   subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   assert os.path.exists('ab.wast')
 
+  # make sure it is a valid wast
+  cmd = [os.path.join('bin', 'binaryen-shell'), 'ab.wast']
+  print '      ', ' '.join(cmd)
+  subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
   if verify_final_result:
     expected = open(wast + '.fromBinary').read()
     actual = open('ab.wast').read()
