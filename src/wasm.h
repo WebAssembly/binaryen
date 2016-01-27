@@ -851,6 +851,11 @@ public:
     printFullLine(o, indent, ifFalse);
     return decIndent(o, indent);
   }
+
+  void finalize() {
+    type = ifTrue->type;
+    if (type == none) type = ifFalse->type; // ifTrue might be unreachable
+  }
 };
 
 class Host : public Expression {

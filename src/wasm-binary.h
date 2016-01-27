@@ -1570,7 +1570,7 @@ public:
     readExpression(curr->ifTrue);
     readExpression(curr->ifFalse);
     readExpression(curr->condition);
-    curr->type = curr->ifTrue->type;
+    curr->finalize();
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
     switch (code) {
