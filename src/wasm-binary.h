@@ -494,7 +494,7 @@ public:
       }
       if (function) {
         size_t sizePos = o.size();
-        o << (uint16_t)0; // placeholder, we fill in the size later when we have it
+        o << (uint32_t)0; // placeholder, we fill in the size later when we have it // XXX int32, diverge from v8 format, to get more code to compile
         size_t start = o.size();
         depth = 0;
         recurse(function->body);
@@ -502,7 +502,7 @@ public:
         size_t size = o.size() - start;
         assert(size <= std::numeric_limits<uint16_t>::max());
         if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
-        o.writeAt(sizePos, uint16_t(size));
+        o.writeAt(sizePos, uint32_t(size)); // XXX int32, diverge from v8 format, to get more code to compile
       }
     }
   }
@@ -590,7 +590,7 @@ public:
 
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
-    o << int8_t(BinaryConsts::Block) << int8_t(curr->list.size());
+    o << int8_t(BinaryConsts::Block) << LEB128(curr->list.size()); // XXX larger block size, divergence from v8 to get more code to build
     breakStack.push_back(curr->name);
     size_t i = 0;
     for (auto* child : curr->list) {
@@ -1120,7 +1120,7 @@ public:
           addLocals(f32);
           addLocals(f64);
         }
-        size_t size = getInt16();
+        size_t size = getInt32(); // XXX int32, diverge from v8 format, to get more code to compile
         // we can't read the function yet - it might call other functions that are defined later,
         // and we do depend on the function type, as well as the mappedFunctions table.
         functions.emplace_back(func, pos, size);
@@ -1265,10 +1265,10 @@ public:
 
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
-    auto num = getInt8();
+    auto num = getLEB128(); // XXX larger block size, divergence from v8 to get more code to build
     curr->name = getNextLabel();
     breakStack.push_back(curr->name);
-    for (auto i = 0; i < num; i++) {
+    for (uint32_t i = 0; i < num; i++) {
       if (debug) std::cerr << "  " << size_t(curr) << "\n zz Block element " << i << std::endl;
       Expression* child;
       readExpression(child);
