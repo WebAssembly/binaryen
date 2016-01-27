@@ -705,7 +705,7 @@ private:
       ret->list.push_back(parseExpression(s[i]));
     }
     labelStack.pop_back();
-    ret->type = ret->list.back()->type;
+    if (ret->list.size() > 0) ret->type = ret->list.back()->type;
     return ret;
   }
 

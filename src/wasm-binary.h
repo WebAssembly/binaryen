@@ -1275,9 +1275,7 @@ public:
       readExpression(child);
       curr->list.push_back(child);
     }
-    if (num == 0) {
-      curr->type = none;
-    } else {
+    if (num > 0) {
       curr->type = curr->list.back()->type;
     }
     breakStack.pop_back();
