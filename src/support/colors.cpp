@@ -19,7 +19,7 @@
 #include <cstdlib>
 #include <ostream>
 
-#if defined(__linux__) || defined(__apple__)
+#if defined(__linux__) || defined(__APPLE__)
 # define CAN_HAZ_COLOR 1
 # include <unistd.h>
 #endif
