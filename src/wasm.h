@@ -1391,10 +1391,10 @@ struct ChildWalker : public WasmWalkerBase<ChildWalker<ParentType>> {
 //
 
 template<typename SubType, typename ReturnType = void>
-struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
+struct PreOrPostWalker : public WasmWalkerBase<SubType, ReturnType> {
   Expression* replace;
-
-  WasmWalker() : replace(nullptr) {}
+  bool postOrder;
+  PreOrPostWalker(bool postOrder = true) : replace(nullptr), postOrder(postOrder) {}
 
   // the visit* methods can call this to replace the current node
   void replaceCurrent(Expression *expression) {
@@ -1430,17 +1430,22 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
   ReturnType visitMemory(Memory *curr) {}
   ReturnType visitModule(Module *curr) {}
 
-  // children-first
   void walk(Expression*& curr) override {
     if (!curr) return;
-
-    ChildWalker<WasmWalker<SubType, ReturnType>>(*this).visit(curr);
-
-    this->visit(curr);
-
-    if (replace) {
-      curr = replace;
-      replace = nullptr;
+    if (postOrder) {
+      ChildWalker<PreOrPostWalker<SubType, ReturnType>>(*this).visit(curr);
+      this->visit(curr);
+      if (replace) {
+        curr = replace;
+        replace = nullptr;
+      }
+    } else {
+      this->visit(curr);
+      if (replace) {
+        curr = replace;
+        replace = nullptr;
+      }
+      ChildWalker<PreOrPostWalker<SubType, ReturnType>>(*this).visit(curr);
     }
   }
 
@@ -1478,12 +1483,12 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
 };
 
 template <typename SubType>
-struct PreWalker : public WasmWalkerBase<SubType, void> {
+struct RecursiveWalker : public WasmWalkerBase<SubType, void> {
 protected:
   Expression *replace;
 
 public:
-  PreWalker() : replace(nullptr) {}
+  RecursiveWalker() : replace(nullptr) {}
 
   // The visitXXX methods can call this to replace the current node.
   void replaceCurrent(Expression *expression) {

@@ -24,7 +24,8 @@ typedef std::map<Name, Const *> State;
 // Simple data-flow pass that propagates constants through locals.
 // TODO: Create a generic data-flow optimization pass, and make this class
 // derive from it.
-struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
+struct ConstantPropagation
+    : public WalkerPass<RecursiveWalker<ConstantPropagation>> {
   State state;
 
   // State at the end of block expressions.
@@ -40,7 +41,7 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
   ConstantPropagation() {}
 
   // Find out which locals are assigned and erase them from the parent state.
-  struct EraseLocals : public WalkerPass<PreWalker<EraseLocals>> {
+  struct EraseLocals : public WalkerPass<RecursiveWalker<EraseLocals>> {
     ConstantPropagation &parent;
     EraseLocals(ConstantPropagation &parent) : parent(parent) {}
     void visitSetLocal(SetLocal *set) {
@@ -51,7 +52,8 @@ struct ConstantPropagation : public WalkerPass<PreWalker<ConstantPropagation>> {
 
   // Checks if an expression can fall through, in other words, does it contain
   // any unconditional branches to an outer scope.
-  struct CheckFallthrough : public WalkerPass<PreWalker<CheckFallthrough>> {
+  struct CheckFallthrough
+      : public WalkerPass<RecursiveWalker<CheckFallthrough>> {
     ConstantPropagation &parent;
     Expression *outer;
     bool fallthrough = true;

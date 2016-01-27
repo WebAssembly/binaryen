@@ -121,7 +121,7 @@ public:
 // e.g. through PassRunner::getLast
 
 // Handles names in a module, in particular adding names without duplicates
-class NameManager : public WalkerPass<WasmWalker<NameManager>> {
+class NameManager : public WalkerPass<PreOrPostWalker<NameManager>> {
  public:
   Name getUnique(std::string prefix);
   // TODO: getUniqueInFunction
