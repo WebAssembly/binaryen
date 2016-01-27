@@ -1574,7 +1574,11 @@ public:
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
     switch (code) {
-      case BinaryConsts::MemorySize: curr->op = MemorySize; break;
+      case BinaryConsts::MemorySize: {
+        curr->op = MemorySize;
+        curr->type = i32;
+        break;
+      }
       case BinaryConsts::GrowMemory: {
         curr->op = GrowMemory;
         curr->operands.resize(1);
