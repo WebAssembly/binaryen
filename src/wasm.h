@@ -269,6 +269,12 @@ enum HostOp {
   PageSize, MemorySize, GrowMemory, HasFeature
 };
 
+#define assert_node(condition, node) \
+  if (!condition) { \
+    std::cerr << "node: " << node << std::endl; \
+    assert(0 && #condition); \
+  }
+
 //
 // Expressions
 //
@@ -824,7 +830,7 @@ public:
     if (isRelational()) {
       type = i32;
     } else {
-      assert(left->type == right->type);
+      assert_node(left->type == right->type, this);
       type = left->type;
     }
   }
