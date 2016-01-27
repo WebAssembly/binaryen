@@ -85,12 +85,13 @@ stack_uses:
 multiple_uses:
 	.param  	i32, i32, i32
 	.local  	i32
-	i32.load	$3=, 0($2)
 	block
-	i32.ge_u	$push0=, $3, $1
-	br_if   	$pop0, 0
-	i32.lt_u	$push1=, $3, $0
+	i32.load	$push0=, 0($2)
+	tee_local	$push3=, $3=, $pop0
+	i32.ge_u	$push1=, $pop3, $1
 	br_if   	$pop1, 0
+	i32.lt_u	$push2=, $3, $0
+	br_if   	$pop2, 0
 	i32.store	$discard=, 0($2), $3
 .LBB5_3:
 	end_block
@@ -114,5 +115,69 @@ stackify_store_across_side_effects:
 	.endfunc
 .Lfunc_end6:
 	.size	stackify_store_across_side_effects, .Lfunc_end6-stackify_store_across_side_effects
+
+	.globl	div_tree
+	.type	div_tree,@function
+div_tree:
+	.param  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.result 	i32
+	i32.div_s	$push0=, $0, $1
+	i32.div_s	$push1=, $2, $3
+	i32.div_s	$push2=, $pop0, $pop1
+	i32.div_s	$push3=, $4, $5
+	i32.div_s	$push4=, $6, $7
+	i32.div_s	$push5=, $pop3, $pop4
+	i32.div_s	$push6=, $pop2, $pop5
+	i32.div_s	$push7=, $8, $9
+	i32.div_s	$push8=, $10, $11
+	i32.div_s	$push9=, $pop7, $pop8
+	i32.div_s	$push10=, $12, $13
+	i32.div_s	$push11=, $14, $15
+	i32.div_s	$push12=, $pop10, $pop11
+	i32.div_s	$push13=, $pop9, $pop12
+	i32.div_s	$push14=, $pop6, $pop13
+	return  	$pop14
+	.endfunc
+.Lfunc_end7:
+	.size	div_tree, .Lfunc_end7-div_tree
+
+	.globl	simple_multiple_use
+	.type	simple_multiple_use,@function
+simple_multiple_use:
+	.param  	i32, i32
+	i32.mul 	$push0=, $1, $0
+	tee_local	$push1=, $0=, $pop0
+	call    	use_a@FUNCTION, $pop1
+	call    	use_b@FUNCTION, $0
+	return
+	.endfunc
+.Lfunc_end8:
+	.size	simple_multiple_use, .Lfunc_end8-simple_multiple_use
+
+	.globl	multiple_uses_in_same_insn
+	.type	multiple_uses_in_same_insn,@function
+multiple_uses_in_same_insn:
+	.param  	i32, i32
+	i32.mul 	$push0=, $1, $0
+	tee_local	$push1=, $0=, $pop0
+	call    	use_2@FUNCTION, $pop1, $0
+	return
+	.endfunc
+.Lfunc_end9:
+	.size	multiple_uses_in_same_insn, .Lfunc_end9-multiple_uses_in_same_insn
+
+	.globl	commute
+	.type	commute,@function
+commute:
+	.result 	i32
+	i32.call	$push0=, red@FUNCTION
+	i32.call	$push1=, green@FUNCTION
+	i32.add 	$push2=, $pop0, $pop1
+	i32.call	$push3=, blue@FUNCTION
+	i32.add 	$push4=, $pop2, $pop3
+	return  	$pop4
+	.endfunc
+.Lfunc_end10:
+	.size	commute, .Lfunc_end10-commute
 
 

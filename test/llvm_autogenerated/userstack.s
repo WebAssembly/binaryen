@@ -70,6 +70,29 @@ allocarray:
 .Lfunc_end2:
 	.size	allocarray, .Lfunc_end2-allocarray
 
+	.globl	non_mem_use
+	.type	non_mem_use,@function
+non_mem_use:
+	.local  	i32, i32, i32, i32, i32
+	i32.const	$0=, __stack_pointer
+	i32.load	$0=, 0($0)
+	i32.const	$1=, 16
+	i32.sub 	$4=, $0, $1
+	i32.const	$1=, __stack_pointer
+	i32.store	$4=, 0($1), $4
+	i32.const	$3=, 8
+	i32.add 	$3=, $4, $3
+	call    	ext_func@FUNCTION, $3
+	call    	ext_func@FUNCTION, $4
+	i32.const	$2=, 16
+	i32.add 	$4=, $4, $2
+	i32.const	$2=, __stack_pointer
+	i32.store	$4=, 0($2), $4
+	return
+	.endfunc
+.Lfunc_end3:
+	.size	non_mem_use, .Lfunc_end3-non_mem_use
+
 	.globl	allocarray_inbounds
 	.type	allocarray_inbounds,@function
 allocarray_inbounds:
@@ -89,8 +112,8 @@ allocarray_inbounds:
 	i32.store	$3=, 0($2), $3
 	return
 	.endfunc
-.Lfunc_end3:
-	.size	allocarray_inbounds, .Lfunc_end3-allocarray_inbounds
+.Lfunc_end4:
+	.size	allocarray_inbounds, .Lfunc_end4-allocarray_inbounds
 
 	.globl	dynamic_alloca
 	.type	dynamic_alloca,@function
@@ -98,7 +121,7 @@ dynamic_alloca:
 	.param  	i32
 	return
 	.endfunc
-.Lfunc_end4:
-	.size	dynamic_alloca, .Lfunc_end4-dynamic_alloca
+.Lfunc_end5:
+	.size	dynamic_alloca, .Lfunc_end5-dynamic_alloca
 
 
