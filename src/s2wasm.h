@@ -905,6 +905,15 @@ private:
         Name assign = getAssign();
         skipComma();
         setOutput(getInput(), assign);
+      } else if (match("tee_local")) {
+        Name assign = getAssign();
+        skipComma();
+        auto curr = allocator.alloc<SetLocal>();
+        curr->name = getAssign();
+        skipComma();
+        curr->value = getInput();
+        curr->type = curr->value->type;
+        setOutput(curr, assign);
       } else if (match("return")) {
         Block *temp;
         if (!(func->body && (temp = func->body->dyn_cast<Block>()) && temp->name == FAKE_RETURN)) {

@@ -593,31 +593,29 @@
                 )
                 $label$0
               )
-              (set_local $$3
-                (i32.store align=4
-                  (get_local $$0)
-                  (i32.const 1)
-                )
-              )
-              (set_local $$4
-                (i32.and
-                  (get_local $$1)
-                  (get_local $$3)
-                )
-              )
               (br_if
                 (i32.eq
-                  (get_local $$4)
+                  (set_local $$3
+                    (i32.and
+                      (get_local $$1)
+                      (set_local $$4
+                        (i32.store align=4
+                          (get_local $$0)
+                          (i32.const 1)
+                        )
+                      )
+                    )
+                  )
                   (i32.const 0)
                 )
                 $label$1
               )
               (i32.store align=4
                 (get_local $$0)
-                (get_local $$3)
+                (get_local $$4)
               )
               (br_if
-                (get_local $$4)
+                (get_local $$3)
                 $label$2
               )
             )
@@ -741,17 +739,16 @@
           )
         )
         (loop $label$1 $label$0
-          (set_local $$1
-            (i32.store align=4
-              (get_local $$0)
-              (i32.const 1)
-            )
-          )
           (br_if
             (i32.eq
               (i32.and
+                (set_local $$1
+                  (i32.store align=4
+                    (get_local $$0)
+                    (i32.const 1)
+                  )
+                )
                 (call_import $a)
-                (get_local $$1)
               )
               (i32.const 0)
             )
@@ -885,14 +882,13 @@
           (block $label$1
             (block $label$2
               (block $label$3
-                (set_local $$0
-                  (i32.store align=4
-                    (i32.const 0)
-                    (i32.const 0)
-                  )
-                )
                 (br_if
-                  (get_local $$0)
+                  (set_local $$0
+                    (i32.store align=4
+                      (i32.const 0)
+                      (i32.const 0)
+                    )
+                  )
                   $label$3
                 )
                 (block $label$4
@@ -964,17 +960,16 @@
     (block $fake_return_waka123
       (block
         (loop $label$1 $label$0
-          (set_local $$1
-            (i32.load8_u align=1
-              (get_local $$0)
-            )
-          )
           (block $label$2
             (block $label$3
               (block $label$4
                 (br_if
                   (i32.gt_s
-                    (get_local $$1)
+                    (set_local $$1
+                      (i32.load8_u align=1
+                        (get_local $$0)
+                      )
+                    )
                     (i32.const 103)
                   )
                   $label$4

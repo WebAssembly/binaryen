@@ -33,15 +33,14 @@
     (local $$1 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$1
-          (i32.load align=4
-            (get_local $$0)
-          )
-        )
         (i32.store align=4
           (get_local $$0)
           (i32.add
-            (get_local $$1)
+            (set_local $$1
+              (i32.load align=4
+                (get_local $$0)
+              )
+            )
             (i32.const 4)
           )
         )
@@ -57,21 +56,20 @@
     (local $$1 i32)
     (block $fake_return_waka123
       (block
-        (set_local $$1
-          (i32.and
-            (i32.add
-              (i32.load align=4
-                (get_local $$0)
-              )
-              (i32.const 3)
-            )
-            (i32.const -4)
-          )
-        )
         (i32.store align=4
           (get_local $$0)
           (i32.add
-            (get_local $$1)
+            (set_local $$1
+              (i32.and
+                (i32.add
+                  (i32.load align=4
+                    (get_local $$0)
+                  )
+                  (i32.const 3)
+                )
+                (i32.const -4)
+              )
+            )
             (i32.const 4)
           )
         )
@@ -85,39 +83,38 @@
   )
   (func $arg_i128 (param $$0 i32) (param $$1 i32)
     (local $$2 i32)
-    (local $$3 i32)
-    (local $$4 i64)
+    (local $$3 i64)
+    (local $$4 i32)
     (block $fake_return_waka123
       (block
         (set_local $$2
-          (i32.and
-            (i32.add
-              (i32.load align=4
-                (get_local $$1)
-              )
-              (i32.const 7)
-            )
-            (i32.const -8)
-          )
-        )
-        (set_local $$3
           (i32.store align=4
             (get_local $$1)
             (i32.add
-              (get_local $$2)
+              (set_local $$4
+                (i32.and
+                  (i32.add
+                    (i32.load align=4
+                      (get_local $$1)
+                    )
+                    (i32.const 7)
+                  )
+                  (i32.const -8)
+                )
+              )
               (i32.const 8)
             )
           )
         )
-        (set_local $$4
+        (set_local $$3
           (i64.load align=8
-            (get_local $$2)
+            (get_local $$4)
           )
         )
         (i32.store align=4
           (get_local $$1)
           (i32.add
-            (get_local $$2)
+            (get_local $$4)
             (i32.const 16)
           )
         )
@@ -127,12 +124,12 @@
             (i32.const 8)
           )
           (i64.load align=8
-            (get_local $$3)
+            (get_local $$2)
           )
         )
         (i64.store align=8
           (get_local $$0)
-          (get_local $$4)
+          (get_local $$3)
         )
         (br $fake_return_waka123)
       )
