@@ -1576,6 +1576,7 @@ public:
       case BinaryConsts::MemorySize: curr->op = MemorySize; break;
       case BinaryConsts::GrowMemory: {
         curr->op = GrowMemory;
+        curr->operands.resize(1);
         readExpression(curr->operands[0]);
         break;
       }
