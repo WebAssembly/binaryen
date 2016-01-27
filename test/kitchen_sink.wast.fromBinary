@@ -1,7 +1,7 @@
 (module
   (memory 4096 4096)
   (type $0 (func (result i32)))
-  (func $kitchensink
+  (func $kitchensink (result i32)
     (block $label$0
       (i32.add
         (i32.const 10)

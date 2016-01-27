@@ -1099,6 +1099,7 @@ public:
         auto func = allocator.alloc<Function>();
         func->name = name;
         func->type = type->name;
+        func->result = type->result;
         size_t nextVar = 0;
         auto addVar = [&]() {
           Name name = cashew::IString(("var$" + std::to_string(nextVar++)).c_str(), false);
