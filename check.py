@@ -291,12 +291,14 @@ for t in spec_tests:
         return '(' + t + '.const ' + v + ')'
       expected = '\n'.join(map(fix, expected.split('\n')))
       print '       (using expected output)'
-    else:
-      continue
-    actual = actual.strip()
-    expected = expected.strip()
-    if actual != expected:
-      fail(actual, expected)
+      actual = actual.strip()
+      expected = expected.strip()
+      if actual != expected:
+        fail(actual, expected)
+
+    # check binary format. here we can verify execution of the final result, no need for an output verification
+    if os.path.basename(wast) not in ['has_feature.wast']: # avoid some tests with things still in spec tests, but likely to be taken out soon
+      binary_format_check(wast, verify_final_result=False)
 
 print '\n[ checking wasm2asm testcases... ]\n'
 
