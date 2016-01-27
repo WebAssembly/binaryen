@@ -150,6 +150,29 @@ if not has_emcc:
 if not has_vanilla_emcc:
   warn('no functional emcc submodule found')
 
+# check utilities
+
+def binary_format_check(wast, verify_final_result=True):
+  # checks we can convert the wast to binary and back
+
+  print '     (binary format check)'
+  cmd = [os.path.join('bin', 'wasm-as'), wast, '-o', 'a.wasm']
+  print '      ', ' '.join(cmd)
+  if os.path.exists('a.wasm'): os.unlink('a.wasm')
+  subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  assert os.path.exists('a.wasm')
+
+  cmd = [os.path.join('bin', 'wasm-dis'), 'a.wasm', '-o', 'ab.wast']
+  print '      ', ' '.join(cmd)
+  if os.path.exists('ab.wast'): os.unlink('ab.wast')
+  subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  assert os.path.exists('ab.wast')
+
+  if verify_final_result:
+    expected = open(wast + '.fromBinary').read()
+    actual = open('ab.wast').read()
+    if actual != expected:
+      fail(actual, expected)
 
 # tests
 
@@ -237,6 +260,8 @@ for t in tests:
     expected = open(t).read()
     if actual != expected:
       fail(actual, expected)
+
+    binary_format_check(t)
 
 print '\n[ checking binaryen-shell spec testcases... ]\n'
 
@@ -367,26 +392,6 @@ if torture:
   shutil.rmtree(s2wasm_torture_out)
   if unexpected_result_count:
     fail('%s failures' % unexpected_result_count, '0 failures')
-
-print '\n[ checking binary format testcases... ]\n'
-
-for wast in tests:
-  if wast.endswith('.wast') and not wast in []: # blacklist some known failures
-    cmd = [os.path.join('bin', 'wasm-as'), os.path.join('test', wast), '-o', 'a.wasm']
-    print ' '.join(cmd)
-    if os.path.exists('a.wasm'): os.unlink('a.wasm')
-    subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert os.path.exists('a.wasm')
-
-    cmd = [os.path.join('bin', 'wasm-dis'), 'a.wasm', '-o', 'a.wast']
-    print ' '.join(cmd)
-    if os.path.exists('a.wast'): os.unlink('a.wast')
-    subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert os.path.exists('a.wast')
-    expected = open(os.path.join('test', wast + '.fromBinary')).read()
-    actual = open('a.wast').read()
-    if actual != expected:
-      fail(actual, expected)
 
 if has_vanilla_emcc:
 
