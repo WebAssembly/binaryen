@@ -13,7 +13,7 @@ IF(MSVC)
 ELSE()
   SET(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
   SET(CMAKE_CXX_FLAGS "-msse2 -mfpmath=sse ${CMAKE_CXX_FLAGS}")
-  SET(CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-O2 -g -fno-pie ${CMAKE_CXX_FLAGS}")
   SET(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra -Wno-unused-parameter ${CMAKE_CXX_FLAGS}")
 ENDIF()
 
@@ -29,6 +29,7 @@ SET(support_SOURCES
   src/support/command-line.cpp
   src/support/file.cpp
   src/support/safe_integer.cpp
+  src/support/debug.cpp
 )
 ADD_LIBRARY(support STATIC ${support_SOURCES})
 
