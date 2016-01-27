@@ -22333,7 +22333,7 @@
             (i32.const 0)
           )
           (br $topmost
-            (i32.const 0)
+            (get_local $$retval$0)
           )
         )
       )
@@ -22390,7 +22390,7 @@
                 (i32.const 0)
               )
               (br $topmost
-                (i32.const 0)
+                (get_local $$retval$0)
               )
             )
           )
@@ -31617,7 +31617,7 @@
                 )
                 (i32.store align=4
                   (i32.const 168)
-                  (i32.const 0)
+                  (get_local $$_0$1)
                 )
                 (get_local $$_0$0)
               )
@@ -31638,9 +31638,9 @@
                       (block
                         (i32.store align=4
                           (i32.const 168)
-                          (i32.const 0)
+                          (get_local $$_0$1)
                         )
-                        (i32.const 0)
+                        (get_local $$_0$0)
                       )
                     )
                   )
@@ -31670,9 +31670,9 @@
                 )
                 (i32.store align=4
                   (i32.const 168)
-                  (i32.const 0)
+                  (get_local $$_0$1)
                 )
-                (i32.const 0)
+                (get_local $$_0$0)
               )
             )
           )
@@ -31730,7 +31730,7 @@
                     (block
                       (i32.store align=4
                         (i32.const 168)
-                        (i32.const 0)
+                        (get_local $$_0$1)
                       )
                       (get_local $$_0$0)
                     )
@@ -31778,7 +31778,7 @@
                     (block
                       (i32.store align=4
                         (i32.const 168)
-                        (i32.const 0)
+                        (get_local $$_0$1)
                       )
                       (get_local $$_0$0)
                     )
@@ -31849,7 +31849,7 @@
                     (block
                       (i32.store align=4
                         (i32.const 168)
-                        (i32.const 0)
+                        (get_local $$_0$1)
                       )
                       (get_local $$_0$0)
                     )
@@ -31936,9 +31936,9 @@
                     (block
                       (i32.store align=4
                         (i32.const 168)
-                        (i32.const 0)
+                        (get_local $$_0$1)
                       )
-                      (i32.const 0)
+                      (get_local $$_0$0)
                     )
                   )
                 )
@@ -31974,9 +31974,9 @@
               )
               (i32.store align=4
                 (i32.const 168)
-                (i32.const 0)
+                (get_local $$_0$1)
               )
-              (i32.const 0)
+              (get_local $$_0$0)
             )
             (block
               (if
@@ -32080,9 +32080,9 @@
                         (block
                           (i32.store align=4
                             (i32.const 168)
-                            (i32.const 0)
+                            (get_local $$_0$1)
                           )
-                          (i32.const 0)
+                          (get_local $$_0$0)
                         )
                       )
                     )
@@ -32120,9 +32120,9 @@
                     (block
                       (i32.store align=4
                         (i32.const 168)
-                        (i32.const 0)
+                        (get_local $$_0$1)
                       )
-                      (i32.const 0)
+                      (get_local $$_0$0)
                     )
                   )
                 )
@@ -32634,7 +32634,7 @@
       (set_local $$q_sroa_0_0_insert_insert77$1
         (i32.or
           (get_local $$q_sroa_1_1_lcssa)
-          (i32.const 0)
+          (get_local $$q_sroa_0_0_insert_ext75$1)
         )
       )
       (if
@@ -32678,7 +32678,7 @@
             (i32.and
               (i32.or
                 (i32.shl
-                  (i32.const 0)
+                  (get_local $$q_sroa_0_0_insert_ext75$1)
                   (i32.const 1)
                 )
                 (i32.shr_u
@@ -32689,7 +32689,7 @@
               (i32.const 0)
             )
           )
-          (i32.const 0)
+          (get_local $$carry_0_lcssa$1)
         )
       )
       (set_local $$_0$0

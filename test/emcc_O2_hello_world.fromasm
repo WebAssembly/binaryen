@@ -3681,7 +3681,7 @@
             (i32.const 0)
           )
           (br $topmost
-            (i32.const 0)
+            (get_local $i13)
           )
         )
       )
@@ -3726,7 +3726,7 @@
             (i32.const 0)
           )
           (br $topmost
-            (i32.const 0)
+            (get_local $i13)
           )
         )
       )
