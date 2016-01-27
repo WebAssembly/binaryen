@@ -270,8 +270,8 @@ enum HostOp {
 };
 
 #define assert_node(condition, node) \
-  if (!condition) { \
-    std::cerr << "node: " << node << std::endl; \
+  if (!(condition)) { \
+    std::cerr << "node: " << (node) << std::endl; \
     assert(0 && #condition); \
   }
 
