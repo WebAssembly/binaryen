@@ -19,9 +19,10 @@
 
 #include <sstream>
 
-#include "wasm.h"
-#include "shared-constants.h"
 #include "mixed_arena.h"
+#include "shared-constants.h"
+#include "support/utilities.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -65,39 +66,33 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
       assert(modifier ? positive[4] == '0' && positive[5] == 'x' : 1);
       switch (type) {
         case f32: {
-          union {
-            uint32_t pattern;
-            float f;
-          } u;
+          uint32_t pattern;
           if (modifier) {
             std::istringstream istr(modifier);
-            istr >> std::hex >> u.pattern;
-            u.pattern |= 0x7f800000;
+            istr >> std::hex >> pattern;
+            pattern |= 0x7f800000U;
           } else {
-            u.pattern = 0x7fc00000;
+            pattern = 0x7fc00000U;
           }
-          if (negative) u.pattern |= 0x80000000;
-          if (!isnan(u.f)) u.pattern |= 1;
-          assert(isnan(u.f));
-          ret->value.f32 = u.f;
+          if (negative) pattern |= 0x80000000U;
+          if (!isnan(bit_cast<float>(pattern))) pattern |= 1U;
+          ret->value.f32 = bit_cast<float>(pattern);
+          assert(isnan(ret->value.f32));
           break;
         }
         case f64: {
-          union {
-            uint64_t pattern;
-            double d;
-          } u;
+          uint64_t pattern;
           if (modifier) {
             std::istringstream istr(modifier);
-            istr >> std::hex >> u.pattern;
-            u.pattern |= 0x7ff0000000000000LL;
+            istr >> std::hex >> pattern;
+            pattern |= 0x7ff0000000000000ULL;
           } else {
-            u.pattern = 0x7ff8000000000000L;
+            pattern = 0x7ff8000000000000UL;
           }
-          if (negative) u.pattern |= 0x8000000000000000LL;
-          if (!isnan(u.d)) u.pattern |= 1;
-          assert(isnan(u.d));
-          ret->value.f64 = u.d;
+          if (negative) pattern |= 0x8000000000000000ULL;
+          if (!isnan(bit_cast<double>(pattern))) pattern |= 1ULL;
+          ret->value.f64 = bit_cast<double>(pattern);
+          assert(isnan(ret->value.f64));
           break;
         }
         default: return nullptr;
