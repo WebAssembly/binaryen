@@ -36,12 +36,19 @@ cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 class S2WasmBuilder {
   AllocatingModule& wasm;
   MixedArena& allocator;
-  const char *s;
+  const char* s;
   bool debug;
+  bool ignoreUnknownSymbols;
 
-public:
- S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug, size_t globalBase)
-     : wasm(wasm), allocator(wasm.allocator), debug(debug), globalBase(globalBase), nextStatic(globalBase) {
+ public:
+  S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug,
+                size_t globalBase, bool ignoreUnknownSymbols)
+      : wasm(wasm),
+        allocator(wasm.allocator),
+        debug(debug),
+        ignoreUnknownSymbols(ignoreUnknownSymbols),
+        globalBase(globalBase),
+        nextStatic(globalBase) {
     s = input;
     scan();
     s = input;
@@ -50,7 +57,7 @@ public:
     fix();
   }
 
-private:
+ private:
   // state
 
   size_t globalBase, // where globals can start to be statically allocated, i.e., the data segment
@@ -1156,7 +1163,7 @@ private:
         // must be a function address
         if (wasm.functionsMap.count(name) == 0) {
           std::cerr << "Unknown symbol: " << name << '\n';
-          abort();
+          if (!ignoreUnknownSymbols) abort();
         }
         ensureFunctionIndex(name);
         *(relocation.data) = functionIndexes[name] + relocation.offset;
