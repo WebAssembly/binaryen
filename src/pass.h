@@ -94,6 +94,8 @@ public:
   // Override this to perform preparation work before the pass runs.
   virtual void prepare(PassRunner* runner, Module* module) {}
   virtual void run(PassRunner* runner, Module* module) = 0;
+  // Override this to perform finalization work after the pass runs.
+  virtual void finalize(PassRunner* runner, Module* module) {}
 protected:
   Pass() {}
   Pass(Pass &) {}
@@ -110,6 +112,7 @@ public:
   void run(PassRunner* runner, Module* module) override {
     prepare(runner, module);
     WalkerType::startWalk(module);
+    finalize(runner, module);
   }
 };
 

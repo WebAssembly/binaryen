@@ -152,6 +152,38 @@ if not has_vanilla_emcc:
 
 # check utilities
 
+def split_wast(wast):
+  # .wast files can contain multiple modules, and assertions for each one.
+  # this splits out a wast into [(module, assertions), ..]
+  # we ignore module invalidity tests here.
+  wast = open(wast).read()
+  ret = []
+  def to_end(j):
+    depth = 1
+    while depth > 0:
+      if wast[j] == '"':
+        j = wast.find('"', j + 1)
+      elif wast[j] == '(':
+        depth += 1
+      elif wast[j] == ')':
+        depth -= 1
+      j += 1
+    return j
+  i = 0
+  while i >= 0:
+    start = wast.find('(', i)
+    if start < 0: break
+    i = to_end(start + 1)
+    if wast[start:].startswith('(module'):
+      ret += [(wast[start:i], [])]
+    elif wast[start:].startswith('(assert_invalid'):
+      continue
+    else:
+      if len(ret) > 0: # otherwise, comments or such before the first module
+        ret[-1][1].append(wast[start:i])
+  assert len(ret) > 0
+  return ret
+
 def binary_format_check(wast, verify_final_result=True):
   # checks we can convert the wast to binary and back
 
@@ -178,6 +210,8 @@ def binary_format_check(wast, verify_final_result=True):
     actual = open('ab.wast').read()
     if actual != expected:
       fail(actual, expected)
+
+  return 'ab.wast'
 
 # tests
 
@@ -303,7 +337,10 @@ for t in spec_tests:
 
     # check binary format. here we can verify execution of the final result, no need for an output verification
     if os.path.basename(wast) not in ['has_feature.wast']: # avoid some tests with things still in spec tests, but likely to be taken out soon
-      binary_format_check(wast, verify_final_result=False)
+      for module, asserts in split_wast(wast):
+        print '    testing split module'
+        open('split.wast', 'w').write(module + '\n' + '\n'.join(asserts))
+        result = binary_format_check('split.wast', verify_final_result=False)
 
 print '\n[ checking wasm2asm testcases... ]\n'
 
