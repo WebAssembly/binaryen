@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <iomanip>
 #include <pass.h>
 #include <wasm.h>
@@ -38,13 +39,21 @@ struct Metrics : public WalkerPass<WasmWalker<Metrics>> {
     ostream &o = cout;
     o << "Counts"
       << "\n";
-    for (auto i = counts.cbegin(); i != counts.cend(); i++) {
-      o << " " << left << setw(15) << i->first << ": " << setw(8)
-        << i->second;
+    vector<const char*> keys;
+    for (auto i : counts) {
+      keys.push_back(i.first);
+    }
+    sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
+      return strcmp(b, a) > 0;
+    });
+    for (auto* key : keys) {
+      auto value = counts[key];
+      o << " " << left << setw(15) << key << ": " << setw(8)
+        << value;
       if (lastMetricsPass) {
-        if (lastMetricsPass->counts.count(i->first)) {
-          int before = lastMetricsPass->counts[i->first];
-          int after = i->second;
+        if (lastMetricsPass->counts.count(key)) {
+          int before = lastMetricsPass->counts[key];
+          int after = value;
           if (after - before) {
             if (after > before) {
               Colors::red(o);
