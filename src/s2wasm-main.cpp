@@ -27,6 +27,7 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
+  bool ignore_unknown_symbols = false;
   Options options("s2wasm", "Link .s file into .wast");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
@@ -34,6 +35,11 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["output"] = argument;
              Colors::disable();
+           })
+      .add("--ignore-unknown", "", "Ignore unknown symbols",
+           Options::Arguments::Zero,
+           [&ignore_unknown_symbols](Options *, const std::string &) {
+             ignore_unknown_symbols = true;
            })
       .add("--global-base", "-g", "Where to start to place globals",
            Options::Arguments::One,
@@ -54,7 +60,8 @@ int main(int argc, const char *argv[]) {
                           ? std::stoull(options.extra["global-base"])
                           : 1;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
-  S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, globalBase);
+  S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, globalBase,
+                       ignore_unknown_symbols);
 
   if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
   std::stringstream meta;
