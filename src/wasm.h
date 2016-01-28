@@ -58,6 +58,7 @@
 #include "emscripten-optimizer/simple_ast.h"
 #include "mixed_arena.h"
 #include "pretty_printing.h"
+#include "support/utilities.h"
 
 namespace wasm {
 
@@ -190,15 +191,9 @@ struct Literal {
 
   static void printFloat(std::ostream &o, float f) {
     if (isnan(f)) {
-      union {
-        float ff;
-        uint32_t ll;
-      } fu, iu;
-      fu.ff = f;
-      memcpy(&iu, &fu, sizeof(fu));
       const char *sign = std::signbit(f) ? "-" : "";
       o << sign << "nan";
-      if (uint32_t payload = ~0xffc00000u & iu.ll) {
+      if (uint32_t payload = ~0xffc00000u & bit_cast<uint32_t>(f)) {
         o << ":0x" << std::hex << payload << std::dec;
       }
       return;
@@ -212,15 +207,9 @@ struct Literal {
       return;
     }
     if (isnan(d)) {
-      union {
-        double dd;
-        uint64_t ll;
-      } du, iu;
-      du.dd = d;
-      memcpy(&iu, &du, sizeof(du));
       const char *sign = std::signbit(d) ? "-" : "";
       o << sign << "nan";
-      if (uint64_t payload = ~0xfff8000000000000ull & iu.ll) {
+      if (uint64_t payload = ~0xfff8000000000000ull & bit_cast<uint64_t>(d)) {
         o << ":0x" << std::hex << payload << std::dec;
       }
       return;
