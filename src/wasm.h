@@ -193,9 +193,12 @@ struct Literal {
       union {
         float ff;
         uint32_t ll;
-      } u;
-      u.ff = f;
-      o << "nan:0x" << std::hex << u.ll << std::dec;
+      } fu, iu;
+      fu.ff = f;
+      memcpy(&iu, &fu, sizeof(fu));
+      bool sign = std::signbit(f);
+      uint32_t payload = ~0xffc00000u & iu.ll;
+      o << (sign ? "-" : "") << "nan:0x" << std::hex << payload << std::dec;
       return;
     }
     printDouble(o, f);
@@ -210,9 +213,12 @@ struct Literal {
       union {
         double dd;
         uint64_t ll;
-      } u;
-      u.dd = d;
-      o << "nan:0x" << std::hex << u.ll << std::dec;
+      } du, iu;
+      du.dd = d;
+      memcpy(&iu, &du, sizeof(du));
+      bool sign = std::signbit(d);
+      uint32_t payload = ~0xfff8000000000000ull & iu.ll;
+      o << (sign ? "" : "-") << "nan:0x" << std::hex << payload << std::dec;
       return;
     }
     if (!std::isfinite(d)) {
