@@ -42,6 +42,7 @@ SET(binaryen-shell_SOURCES
   src/passes/RemoveUnusedBrs.cpp
   src/passes/RemoveUnusedNames.cpp
   src/passes/SimplifyLocals.cpp
+  src/passes/Metrics.cpp
 )
 ADD_EXECUTABLE(binaryen-shell
                ${binaryen-shell_SOURCES})
