@@ -509,8 +509,13 @@ public:
 
   void writeDataSegments() {
     if (wasm->memory.segments.size() == 0) return;
-    o << int8_t(BinaryConsts::DataSegments) << LEB128(wasm->memory.segments.size());
+    uint32_t num = 0;
     for (auto& segment : wasm->memory.segments) {
+      if (segment.size > 0) num++;
+    }
+    o << int8_t(BinaryConsts::DataSegments) << LEB128(num);
+    for (auto& segment : wasm->memory.segments) {
+      if (segment.size == 0) continue;
       o << int32_t(segment.offset);
       emitBuffer(segment.data, segment.size);
       o << int32_t(segment.size);
