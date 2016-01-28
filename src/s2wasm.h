@@ -66,6 +66,7 @@ private:
   std::vector<Relocation> relocations;
 
   std::set<Name> implementedFunctions;
+  std::map<Name, Name> aliasedFunctions;
 
   std::map<size_t, size_t> addressSegments; // address => segment index
 
@@ -143,7 +144,7 @@ private:
 
   Name getStrToSep() {
     std::string str;
-    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+' && *s != '-') {
+    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+' && *s != '-' && *s != '=') {
       str += *s;
       s++;
     }
@@ -257,16 +258,18 @@ private:
     return value;
   }
 
-  Name getCommaSeparated() {
+  Name getSeparated(char separator) {
     skipWhitespace();
     std::string str;
-    while (*s && *s != ',' && *s != '\n') {
+    while (*s && *s != separator && *s != '\n') {
       str += *s;
       s++;
     }
     skipWhitespace();
     return cashew::IString(str.c_str(), false);
   }
+  Name getCommaSeparated() { return getSeparated(','); }
+  Name getAtSeparated() { return getSeparated('@'); }
 
   Name getAssign() {
     skipWhitespace();
@@ -346,9 +349,17 @@ private:
       Name name = getCommaSeparated();
       skipComma();
       if (!match("@function")) continue;
+      if (match(".hidden")) mustMatch(name.str);
       mustMatch(name.str);
-      mustMatch(":");
-      implementedFunctions.insert(name);
+      if (match(":")) {
+        implementedFunctions.insert(name);
+      } else if (match("=")) {
+        Name alias = getAtSeparated();
+        mustMatch("@FUNCTION");
+        aliasedFunctions.insert({name, alias});
+      } else {
+        abort_on("unknown directive");
+      }
     }
   }
 
@@ -427,6 +438,12 @@ private:
   void parseFunction() {
     if (debug) dump("func");
     Name name = getStrToSep();
+    if (match(" =")) {
+      /* alias = */ getAtSeparated();
+      mustMatch("@FUNCTION");
+      return;
+    }
+
     mustMatch(":");
 
     unsigned nextId = 0;
@@ -653,6 +670,8 @@ private:
       } else {
         assign = getAssign();
         Name target = cleanFunction(getCommaSeparated());
+        auto aliased = aliasedFunctions.find(target);
+        if (aliased != aliasedFunctions.end()) target = aliased->second;
         if (implementedFunctions.count(target) > 0) {
           auto specific = allocator.alloc<Call>();
           specific->target = target;
@@ -973,8 +992,12 @@ private:
     if (debug) dump("type");
     Name name = getStrToSep();
     skipComma();
-    if (match("@function")) return parseFunction();
-    else if (match("@object")) return parseObject(name);
+    if (match("@function")) {
+      if (match(".hidden")) mustMatch(name.str);
+      return parseFunction();
+    } else if (match("@object")) {
+      return parseObject(name);
+    }
     abort_on("parseType");
   }
 
