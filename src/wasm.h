@@ -196,9 +196,11 @@ struct Literal {
       } fu, iu;
       fu.ff = f;
       memcpy(&iu, &fu, sizeof(fu));
-      bool sign = std::signbit(f);
-      uint32_t payload = ~0xffc00000u & iu.ll;
-      o << (sign ? "-" : "") << "nan:0x" << std::hex << payload << std::dec;
+      const char *sign = std::signbit(f) ? "-" : "";
+      o << sign << "nan";
+      if (uint32_t payload = ~0xffc00000u & iu.ll) {
+        o << ":0x" << std::hex << payload << std::dec;
+      }
       return;
     }
     printDouble(o, f);
@@ -216,13 +218,15 @@ struct Literal {
       } du, iu;
       du.dd = d;
       memcpy(&iu, &du, sizeof(du));
-      bool sign = std::signbit(d);
-      uint32_t payload = ~0xfff8000000000000ull & iu.ll;
-      o << (sign ? "" : "-") << "nan:0x" << std::hex << payload << std::dec;
+      const char *sign = std::signbit(d) ? "-" : "";
+      o << sign << "nan";
+      if (uint64_t payload = ~0xfff8000000000000ull & iu.ll) {
+        o << ":0x" << std::hex << payload << std::dec;
+      }
       return;
     }
     if (!std::isfinite(d)) {
-      o << (d < 0 ? "-infinity" : "infinity");
+      o << (std::signbit(d) ? "-infinity" : "infinity");
       return;
     }
     const char *text = cashew::JSPrinter::numToString(d);
