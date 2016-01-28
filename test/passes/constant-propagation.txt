@@ -75,43 +75,39 @@
     )
     (i32.const 1)
     (loop $foo $bar
-      (block
-        (get_local $x)
-        (br_if
-          (i32.const 0)
-          $bar
-        )
-        (set_local $x
-          (i32.const 6)
-        )
-        (i32.const 6)
-        (br $foo)
+      (get_local $x)
+      (br_if
+        (i32.const 0)
+        $bar
       )
+      (set_local $x
+        (i32.const 6)
+      )
+      (i32.const 6)
+      (br $foo)
     )
     (set_local $x
       (i32.const 1)
     )
     (loop $foo $bar
-      (block
-        (get_local $x)
-        (set_local $x
-          (i32.const 2)
-        )
-        (br $foo)
-        (set_local $x
-          (i32.const 1)
-        )
-        (br_if
-          (nop)
-          $bar
-        )
-        (set_local $x
-          (i32.const 1)
-        )
-        (br_if
-          (nop)
-          $bar
-        )
+      (get_local $x)
+      (set_local $x
+        (i32.const 2)
+      )
+      (br $foo)
+      (set_local $x
+        (i32.const 1)
+      )
+      (br_if
+        (nop)
+        $bar
+      )
+      (set_local $x
+        (i32.const 1)
+      )
+      (br_if
+        (nop)
+        $bar
       )
     )
     (i32.const 1)
