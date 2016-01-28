@@ -1117,7 +1117,7 @@ public:
     printOpening(o, "memory") << " " << module.memory.initial;
     if (module.memory.max) o << " " << module.memory.max;
     for (auto segment : module.memory.segments) {
-      o << " (segment " << segment.offset << " \"";
+      o << "\n    (segment " << segment.offset << " \"";
       for (size_t i = 0; i < segment.size; i++) {
         unsigned char c = segment.data[i];
         switch (c) {
@@ -1140,7 +1140,7 @@ public:
       }
       o << "\")";
     }
-    o << ")\n";
+    o << (module.memory.segments.size() > 0 ? "\n  " : "") << ")\n";
     for (auto& curr : module.functionTypes) {
       doIndent(o, indent);
       curr->print(o, indent, true);

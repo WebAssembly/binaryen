@@ -1,5 +1,7 @@
 (module
-  (memory 4096 4096 (segment 1026 "\14\00"))
+  (memory 4096 4096
+    (segment 1026 "\14\00")
+  )
   (func $kitchensink (result i32)
     (block $block0
       (i32.add
