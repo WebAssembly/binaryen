@@ -1003,8 +1003,8 @@ public:
 
 class Export {
 public:
-  Name name;
-  Name value;
+  Name name;  // exported name
+  Name value; // internal name
 
   std::ostream& print(std::ostream &o, unsigned indent) {
     printOpening(o, "export ");
