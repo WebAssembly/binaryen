@@ -1,6 +1,27 @@
 PROJECT(binaryen CXX)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
 
+IF(NOT CMAKE_BUILD_TYPE)
+  MESSAGE(STATUS "No build type selected, default to Release")
+  SET(CMAKE_BUILD_TYPE "Release")
+ENDIF()
+STRING(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+IF(CMAKE_BUILD_TYPE AND
+    NOT uppercase_CMAKE_BUILD_TYPE MATCHES "^(DEBUG|RELEASE)$")
+  MESSAGE(FATAL_ERROR "Invalid value for CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+ENDIF()
+
+# Support functionality.
+
+FUNCTION(ADD_COMPILE_FLAG value)
+  MESSAGE(STATUS "Building with ${value}")
+  FOREACH(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    SET(${variable} "${${variable}} ${value}" PARENT_SCOPE)
+  ENDFOREACH(variable)
+ENDFUNCTION()
+
+# Compiler setup.
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
@@ -8,21 +29,40 @@ SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 
 IF(MSVC)
-  SET(CMAKE_CXX_FLAGS "/arch:sse2 ${CMAKE_CXX_FLAGS}")
-  SET(CMAKE_CXX_FLAGS "/O2 /Wall /WX- ${CMAKE_CXX_FLAGS}")
+  ADD_COMPILE_FLAG("/arch:sse2")
+  ADD_COMPILE_FLAG("/Wall")
+  ADD_COMPILE_FLAG("/WX-")
+  IF(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+    ADD_COMPILE_FLAG("/O0")
+  ELSE()
+    ADD_COMPILE_FLAG("/O2")
+  ENDIF()
 ELSE()
-  SET(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
-  SET(CMAKE_CXX_FLAGS "-msse2 -mfpmath=sse ${CMAKE_CXX_FLAGS}")
-  SET(CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}")
-  SET(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra -Wno-unused-parameter ${CMAKE_CXX_FLAGS}")
+  ADD_COMPILE_FLAG("-std=c++11")
+  ADD_COMPILE_FLAG("-msse2")
+  ADD_COMPILE_FLAG("-mfpmath=sse")
+  ADD_COMPILE_FLAG("-Wall")
+  ADD_COMPILE_FLAG("-Werror")
+  ADD_COMPILE_FLAG("-Wextra")
+  ADD_COMPILE_FLAG("-Wno-unused-parameter")
+  ADD_COMPILE_FLAG("-fno-omit-frame-pointer")
+  IF(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+    ADD_COMPILE_FLAG("-O0")
+    ADD_COMPILE_FLAG("-g3")
+  ELSE()
+    ADD_COMPILE_FLAG("-O2")
+    ADD_DEFINITIONS("-UNDEBUG")  # Keep asserts.
+  ENDIF()
 ENDIF()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
 IF (UNIX AND
     CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
     CMAKE_GENERATOR STREQUAL "Ninja")
-  SET(CMAKE_CXX_FLAGS "-fcolor-diagnostics ${CMAKE_CXX_FLAGS}")
+  ADD_COMPILE_FLAG("-fcolor-diagnostics")
 ENDIF()
+
+# Sources.
 
 SET(support_SOURCES
   src/support/colors.cpp
