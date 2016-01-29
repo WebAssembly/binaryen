@@ -183,8 +183,6 @@ The `check.py` script supports some options:
  * Some tests require `emcc` or `nodejs` in the path. They will not run if the tool cannot be found, and you'll see a warning.
  * We have tests from upstream in `tests/spec` and `tests/waterfall`, in git submodules. Running `./update.py` should update those.
 
-(`src/emscripten-optimizer` is synced with `tools/optimizer/` in the main emscripten repo, for convenience)
-
 ## Design Principles
 
  * **Interned strings for names**: It's very convenient to have names on nodes, instead of just numeric indices etc. To avoid most of the performance difference between strings and numeric indices, all strings are interned, which means there is a single copy of each string in memory, string comparisons are just a pointer comparison, etc.
