@@ -814,7 +814,7 @@ public:
       case ConvertUInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::I32UConvertF32 : BinaryConsts::I32UConvertF64); break;
       case ConvertSInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::I32SConvertF32 : BinaryConsts::I32SConvertF64); break;
       case ConvertUInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64UConvertF32 : BinaryConsts::I64UConvertF64); break;
-      case ConvertSInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64UConvertF32 : BinaryConsts::I64UConvertF64); break;
+      case ConvertSInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64SConvertF32 : BinaryConsts::I64SConvertF64); break;
       case DemoteFloat64:    o << int8_t(BinaryConsts::F32ConvertF64); break;
       case PromoteFloat32:   o << int8_t(BinaryConsts::F64ConvertF32); break;
       case ReinterpretFloat: o << int8_t(curr->type == f32 ? BinaryConsts::F32ReinterpretI32 : BinaryConsts::F64ReinterpretI64); break;
