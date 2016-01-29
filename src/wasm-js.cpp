@@ -200,7 +200,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     }
 
     Literal load(Load* load, size_t addr) override {
-      assert(load->align == load->bytes);
+      assert(load->align >= load->bytes);
       if (!isWasmTypeFloat(load->type)) {
         if (load->bytes == 1) {
           if (load->signed_) {
@@ -233,7 +233,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     }
 
     void store(Store* store, size_t addr, Literal value) override {
-      assert(store->align == store->bytes);
+      assert(store->align >= store->bytes);
       if (!isWasmTypeFloat(store->type)) {
         if (store->bytes == 1) {
           EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, value.geti32());
