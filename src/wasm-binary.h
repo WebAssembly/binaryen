@@ -390,8 +390,8 @@ public:
   void writeMemory() {
     if (wasm->memory.max == 0) return;
     if (debug) std::cerr << "== writeMemory" << std::endl;
-    o << int8_t(BinaryConsts::Memory) << int8_t(log2(wasm->memory.initial))
-                                      << int8_t(log2(wasm->memory.max))
+    o << int8_t(BinaryConsts::Memory) << int8_t(ceil(log2(wasm->memory.initial)))
+                                      << int8_t(ceil(log2(wasm->memory.max)))
                                       << int8_t(1); // export memory
   }
 
