@@ -1187,14 +1187,15 @@ public:
     if (debug) std::cerr << "== readDataSegments" << std::endl;
     auto num = getLEB128();
     for (size_t i = 0; i < num; i++) {
-      auto curr = allocator.alloc<Memory::Segment>();
-      curr->offset = getInt32();
+      Memory::Segment curr;
+      curr.offset = getInt32();
       auto start = getInt32();
       auto size = getInt32();
       auto buffer = malloc(size);
       memcpy(buffer, &input[start], size);
-      curr->data = (const char*)buffer;
-      curr->size = size;
+      curr.data = (const char*)buffer;
+      curr.size = size;
+      wasm.memory.segments.push_back(curr);
       verifyInt8(1); // load at program start
     }
   }
