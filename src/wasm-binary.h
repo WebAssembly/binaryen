@@ -1490,12 +1490,12 @@ public:
       case BinaryConsts::I32ConvertI64:  curr->op = WrapInt64;     curr->type = i32; break;
 
       case BinaryConsts::F32UConvertI32: curr->op = TruncUFloat32; curr->type = i32; break;
-      case BinaryConsts::F64UConvertI32: curr->op = TruncUFloat32; curr->type = i64; break;
+      case BinaryConsts::F64UConvertI32: curr->op = TruncUFloat64; curr->type = i32; break;
       case BinaryConsts::F32SConvertI32: curr->op = TruncSFloat32; curr->type = i32; break;
-      case BinaryConsts::F64SConvertI32: curr->op = TruncSFloat32; curr->type = i64; break;
-      case BinaryConsts::F32UConvertI64: curr->op = TruncUFloat64; curr->type = i32; break;
+      case BinaryConsts::F64SConvertI32: curr->op = TruncSFloat64; curr->type = i32; break;
+      case BinaryConsts::F32UConvertI64: curr->op = TruncUFloat32; curr->type = i64; break;
       case BinaryConsts::F64UConvertI64: curr->op = TruncUFloat64; curr->type = i64; break;
-      case BinaryConsts::F32SConvertI64: curr->op = TruncSFloat64; curr->type = i32; break;
+      case BinaryConsts::F32SConvertI64: curr->op = TruncSFloat32; curr->type = i64; break;
       case BinaryConsts::F64SConvertI64: curr->op = TruncSFloat64; curr->type = i64; break;
 
       case BinaryConsts::F32Trunc:       curr->op = Trunc;         curr->type = f32; break;
