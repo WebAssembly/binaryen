@@ -55,13 +55,13 @@ bin/binaryen-shell [.wast file] [options] [passes, see --help] [--help]
 The binaryen shell receives a .wast file as input, and can run transformation passes on it, as well as print it (before and/or after the transformations). For example, try
 
 ````
-bin/binaryen-shell test/if_else.wast --print-before
+bin/binaryen-shell test/passes/lower-if_else.wast --print-before
 ````
 
-That will pretty-print out one of the testcases in the test suite. To run a transformation pass on it, try
+That will pretty-print out one of the test cases in the test suite. To run a transformation pass on it, try
 
 ````
-bin/binaryen-shell test/if_else.wast --print-before --print-after --lower-if-else
+bin/binaryen-shell test/passes/lower-if-else.wast --print-before --print-after --lower-if-else
 ````
 
 The `lower-if-else` pass lowers if-else into a block and a break. You can see the change the transformation causes by comparing the print before versus after.
@@ -215,4 +215,3 @@ Almost. Some decisions made in WebAssembly preclude that, for example, there are
 "Binaryen" is a combination of **binary** - since WebAssembly is a binary format for the web - and **Emscripten** - with which it can integrate in order to compile C and C++ all the way to WebAssembly, via asm.js. Binaryen began as Emscripten's WebAssembly processing library (`wasm-emscripten`).
 
 "Binaryen" is pronounced [in the same manner](http://www.makinggameofthrones.com/production-diary/2011/2/11/official-pronunciation-guide-for-game-of-thrones.html) as "[Targaryen](https://en.wikipedia.org/wiki/List_of_A_Song_of_Ice_and_Fire_characters#House_Targaryen)": *bi-NAIR-ee-in*. Or something like that? Anyhow, however Targaryen is correctly pronounced, they should rhyme. Aside from pronunciation, the Targaryen house words, "Fire and Blood", have also inspired Binaryen's: "Code and Bugs."
-
