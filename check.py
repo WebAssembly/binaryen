@@ -181,7 +181,7 @@ def split_wast(wast):
       ret += [(chunk, [])]
     elif chunk.startswith('(assert_invalid'):
       continue
-    elif chunk.startswith('(assert'):
+    elif chunk.startswith(('(assert', '(invoke')):
       ret[-1][1].append(chunk)
   assert len(ret) > 0
   return ret
@@ -352,7 +352,7 @@ for t in spec_tests:
         print '    testing split module', split_num
         split_num += 1
         open('split.wast', 'w').write(module + '\n' + '\n'.join(asserts))
-        # TODO run_spec_test('split.wast') # before binary stuff - just check it's still ok split out
+        run_spec_test('split.wast') # before binary stuff - just check it's still ok split out
         result_wast = binary_format_check('split.wast', verify_final_result=False)
         # add the asserts, and verify that the test still passes
         open(result_wast, 'a').write('\n' + '\n'.join(asserts))
