@@ -353,31 +353,31 @@
         (f64.const 10)
         (f64.const 10)
       )
-      (f32.convert_s/i32
+      (i32.trunc_s/f32
         (f32.const 10)
       )
-      (f64.convert_s/i32
+      (i64.trunc_s/f32
         (f64.const 10)
       )
-      (f32.convert_u/i32
+      (i32.trunc_u/f32
         (f32.const 10)
       )
-      (f64.convert_u/i32
+      (i64.trunc_u/f32
         (f64.const 10)
       )
       (i32.wrap/i64
         (i64.const 100)
       )
-      (f32.convert_s/i64
+      (i32.trunc_s/f64
         (f32.const 10)
       )
-      (f64.convert_s/i64
+      (i64.trunc_s/f64
         (f64.const 10)
       )
-      (f32.convert_u/i64
+      (i32.trunc_u/f64
         (f32.const 10)
       )
-      (f64.convert_u/i64
+      (i64.trunc_u/f64
         (f64.const 10)
       )
       (i64.extend_s/i32

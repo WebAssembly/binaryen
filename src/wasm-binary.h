@@ -807,10 +807,10 @@ public:
       case ExtendSInt32:     o << int8_t(BinaryConsts::I64SConvertI32); break;
       case ExtendUInt32:     o << int8_t(BinaryConsts::I64UConvertI32); break;
       case WrapInt64:        o << int8_t(BinaryConsts::I32ConvertI64); break;
-      case TruncUFloat32:    o << int8_t(curr->type == i32 ? BinaryConsts::I32UConvertF32 : BinaryConsts::I64UConvertF32); break;
-      case TruncSFloat32:    o << int8_t(curr->type == i32 ? BinaryConsts::I32SConvertF32 : BinaryConsts::I64SConvertF32); break;
-      case TruncUFloat64:    o << int8_t(curr->type == i32 ? BinaryConsts::I32UConvertF64 : BinaryConsts::I64UConvertF64); break;
-      case TruncSFloat64:    o << int8_t(curr->type == i32 ? BinaryConsts::I32SConvertF64 : BinaryConsts::I64SConvertF64); break;
+      case TruncUFloat32:    o << int8_t(curr->type == i32 ? BinaryConsts::F32UConvertI32 : BinaryConsts::F32UConvertI64); break;
+      case TruncSFloat32:    o << int8_t(curr->type == i32 ? BinaryConsts::F32SConvertI32 : BinaryConsts::F32SConvertI64); break;
+      case TruncUFloat64:    o << int8_t(curr->type == i32 ? BinaryConsts::F64UConvertI32 : BinaryConsts::F64UConvertI64); break;
+      case TruncSFloat64:    o << int8_t(curr->type == i32 ? BinaryConsts::F64SConvertI32 : BinaryConsts::F64SConvertI64); break;
       case ConvertUInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::I32UConvertF32 : BinaryConsts::I32UConvertF64); break;
       case ConvertSInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::I32SConvertF32 : BinaryConsts::I32SConvertF64); break;
       case ConvertUInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64UConvertF32 : BinaryConsts::I64UConvertF64); break;
