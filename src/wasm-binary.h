@@ -501,6 +501,10 @@ public:
         assert(size <= std::numeric_limits<uint16_t>::max());
         if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
         o.writeAt(sizePos, uint32_t(size)); // XXX int32, diverge from v8 format, to get more code to compile
+      } else {
+        // import
+        emitString(import->module.str); // XXX diverge
+        emitString(import->base.str);   //     from v8
       }
     }
   }
@@ -1094,8 +1098,8 @@ public:
       if (import) {
         auto imp = allocator.alloc<Import>();
         imp->name = name;
-        imp->module = ENV;
-        imp->base = name;
+        imp->module = getString(); // XXX diverge
+        imp->base = getString();   //     from v8
         imp->type = type;
         wasm.addImport(imp);
       } else {

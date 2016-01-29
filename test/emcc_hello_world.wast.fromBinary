@@ -31,7 +31,7 @@
   (import $_pthread_cleanup_push "env" "_pthread_cleanup_push" (param i32 i32))
   (import $_sysconf "env" "_sysconf" (param i32) (result i32))
   (import $___syscall146 "env" "___syscall146" (param i32 i32) (result i32))
-  (import $f64-to-int "env" "f64-to-int" (param f64) (result i32))
+  (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (export "stackAlloc" $stackAlloc)
   (export "stackSave" $stackSave)
   (export "stackRestore" $stackRestore)
