@@ -462,6 +462,10 @@ public:
     if (debug) std::cerr << "== writeFunctions" << std::endl;
     size_t total = wasm->imports.size() + wasm->functions.size();
     o << int8_t(BinaryConsts::Functions) << LEB128(total);
+    std::map<Name, Name> exportedFunctions;
+    for (auto* e : wasm->exports) {
+      exportedFunctions[e->value] = e->name;
+    }
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
       Import* import = i < wasm->imports.size() ? wasm->imports[i] : nullptr;
@@ -477,12 +481,14 @@ public:
         numLocalsByType.clear();
       }
       if (debug) std::cerr << "writing" << name << std::endl;
+      bool export_ = exportedFunctions.count(name) > 0;
       o << int8_t(BinaryConsts::Named |
                   (BinaryConsts::Import * !!import) |
                   (BinaryConsts::Locals * (function && function->locals.size() > 0)) |
-                  (BinaryConsts::Export * (wasm->exportsMap.count(name) > 0)));
+                  (BinaryConsts::Export * export_));
       o << getFunctionTypeIndex(type);
       emitString(name.str);
+      if (export_) emitString(exportedFunctions[name].str); // XXX addition to v8 binary format
       if (function) {
         mapLocals(function);
         if (function->locals.size() > 0) {
@@ -1093,6 +1099,13 @@ public:
       bool locals = data & BinaryConsts::Locals;
       bool export_ = data & BinaryConsts::Export;
       Name name = getString();
+      if (export_) { // XXX addition to v8 binary format
+        Name exportName = getString();
+        auto e = allocator.alloc<Export>();
+        e->name = exportName;
+        e->value = name;
+        wasm.addExport(e);
+      }
       if (debug) std::cerr << "reading" << name << std::endl;
       mappedFunctions.push_back(name);
       if (import) {
@@ -1135,12 +1148,6 @@ public:
         pos += size;
         func->body = nullptr; // will be filled later. but we do have the name and the type already.
         wasm.addFunction(func);
-      }
-      if (export_) {
-        auto e = allocator.alloc<Export>();
-        e->name = name;
-        e->value = name;
-        wasm.addExport(e);
       }
     }
   }
