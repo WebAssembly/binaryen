@@ -491,8 +491,6 @@ public:
             << uint16_t(numLocalsByType[f32])
             << uint16_t(numLocalsByType[f64]);
         }
-      }
-      if (function) {
         size_t sizePos = o.size();
         o << (uint32_t)0; // placeholder, we fill in the size later when we have it // XXX int32, diverge from v8 format, to get more code to compile
         size_t start = o.size();
