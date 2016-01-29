@@ -213,3 +213,14 @@ vrp-3.c.s.wast
 vrp-5.c.s.wast
 vrp-6.c.s.wast
 zerolen-1.c.s.wast
+20030626-2.c.s.wast
+20060930-2.c.s.wast
+20080604-1.c.s.wast
+20090814-1.c.s.wast
+20111208-1.c.s.wast
+20131127-1.c.s.wast
+packed-2.c.s.wast
+pr44164.c.s.wast
+pr57344-3.c.s.wast
+pr57344-4.c.s.wast
+zerolen-1.c.s.wast
