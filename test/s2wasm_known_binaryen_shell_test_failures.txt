@@ -40,7 +40,6 @@
 20050502-2.c.s.wast
 20050826-1.c.s.wast
 20051113-1.c.s.wast
-20060110-1.c.s.wast
 20060420-1.c.s.wast
 20060905-1.c.s.wast
 20060930-2.c.s.wast
@@ -77,7 +76,6 @@
 931110-1.c.s.wast
 941014-2.c.s.wast
 950710-1.c.s.wast
-950915-1.c.s.wast
 960215-1.c.s.wast
 960327-1.c.s.wast
 960405-1.c.s.wast
@@ -125,7 +123,6 @@ pr23047.c.s.wast
 pr27073.c.s.wast
 pr27260.c.s.wast
 pr27285.c.s.wast
-pr28403.c.s.wast
 pr28651.c.s.wast
 pr29006.c.s.wast
 pr32244-1.c.s.wast
@@ -188,7 +185,6 @@ pr57124.c.s.wast
 pr57131.c.s.wast
 pr57344-3.c.s.wast
 pr57344-4.c.s.wast
-pr57860.c.s.wast
 pr57877.c.s.wast
 pr58365.c.s.wast
 pr58419.c.s.wast
