@@ -1164,9 +1164,11 @@ class S2WasmBuilder {
         if (wasm.functionsMap.count(name) == 0) {
           std::cerr << "Unknown symbol: " << name << '\n';
           if (!ignoreUnknownSymbols) abort();
+          *(relocation.data) = 0;
+        } else {
+          ensureFunctionIndex(name);
+          *(relocation.data) = functionIndexes[name] + relocation.offset;
         }
-        ensureFunctionIndex(name);
-        *(relocation.data) = functionIndexes[name] + relocation.offset;
       }
     }
   }
