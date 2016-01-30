@@ -356,7 +356,7 @@ for t in spec_tests:
         result_wast = binary_format_check('split.wast', verify_final_result=False)
         # add the asserts, and verify that the test still passes
         open(result_wast, 'a').write('\n' + '\n'.join(asserts))
-        # TODO actual += run_spec_test(result_wast)
+        actual += run_spec_test(result_wast)
       # compare all the outputs to the expected output
       # TODO check_expected(actual, os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log'))
 
