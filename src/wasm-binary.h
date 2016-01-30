@@ -366,7 +366,9 @@ class WasmBinaryWriter : public WasmVisitor<WasmBinaryWriter, void> {
   void prepare() {
     // we need function types for all our functions
     for (auto* func : wasm->functions) {
-      func->type = ensureFunctionType(getSig(func), wasm, allocator)->name;
+      if (func->type.isNull()) {
+        func->type = ensureFunctionType(getSig(func), wasm, allocator)->name;
+      }
     }
   }
 
@@ -390,9 +392,18 @@ public:
   void writeMemory() {
     if (wasm->memory.max == 0) return;
     if (debug) std::cerr << "== writeMemory" << std::endl;
-    o << int8_t(BinaryConsts::Memory) << int8_t(log2(wasm->memory.initial))
-                                      << int8_t(log2(wasm->memory.max))
-                                      << int8_t(1); // export memory
+    o << int8_t(BinaryConsts::Memory);
+    if (wasm->memory.initial == 0) { // XXX diverge from v8, 0 means 0, 1 and above are powers of 2 starting at 0
+      o << int8_t(0);
+    } else {
+      o << int8_t(std::min(ceil(log2(wasm->memory.initial)), 31.0) + 1); // up to 31 bits, don't let ceil get us to UINT_MAX which can overflow
+    }
+    if (wasm->memory.max == 0) {
+      o << int8_t(0);
+    } else {
+      o << int8_t(std::min(ceil(log2(wasm->memory.max)), 31.0) + 1);
+    }
+    o << int8_t(1); // export memory
   }
 
   void writeSignatures() {
@@ -462,6 +473,10 @@ public:
     if (debug) std::cerr << "== writeFunctions" << std::endl;
     size_t total = wasm->imports.size() + wasm->functions.size();
     o << int8_t(BinaryConsts::Functions) << LEB128(total);
+    std::map<Name, Name> exportedFunctions;
+    for (auto* e : wasm->exports) {
+      exportedFunctions[e->value] = e->name;
+    }
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
       Import* import = i < wasm->imports.size() ? wasm->imports[i] : nullptr;
@@ -477,12 +492,14 @@ public:
         numLocalsByType.clear();
       }
       if (debug) std::cerr << "writing" << name << std::endl;
+      bool export_ = exportedFunctions.count(name) > 0;
       o << int8_t(BinaryConsts::Named |
                   (BinaryConsts::Import * !!import) |
                   (BinaryConsts::Locals * (function && function->locals.size() > 0)) |
-                  (BinaryConsts::Export * (wasm->exportsMap.count(name) > 0)));
+                  (BinaryConsts::Export * export_));
       o << getFunctionTypeIndex(type);
       emitString(name.str);
+      if (export_) emitString(exportedFunctions[name].str); // XXX addition to v8 binary format
       if (function) {
         mapLocals(function);
         if (function->locals.size() > 0) {
@@ -491,8 +508,6 @@ public:
             << uint16_t(numLocalsByType[f32])
             << uint16_t(numLocalsByType[f64]);
         }
-      }
-      if (function) {
         size_t sizePos = o.size();
         o << (uint32_t)0; // placeholder, we fill in the size later when we have it // XXX int32, diverge from v8 format, to get more code to compile
         size_t start = o.size();
@@ -503,6 +518,10 @@ public:
         assert(size <= std::numeric_limits<uint16_t>::max());
         if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
         o.writeAt(sizePos, uint32_t(size)); // XXX int32, diverge from v8 format, to get more code to compile
+      } else {
+        // import
+        emitString(import->module.str); // XXX diverge
+        emitString(import->base.str);   //     from v8
       }
     }
   }
@@ -621,21 +640,22 @@ public:
     breakStack.pop_back();
     breakStack.pop_back();
   }
+
+  int getBreakIndex(Name name) { // -1 if not found
+    for (int i = breakStack.size() - 1; i >= 0; i--) {
+      if (breakStack[i] == name) {
+        return breakStack.size() - 1 - i;
+      }
+    }
+    std::cerr << "bad break: " << name << std::endl;
+    abort();
+  }
+
   void visitBreak(Break *curr) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br);
-    bool found = false;
-    for (int i = breakStack.size() - 1; i >= 0; i--) {
-      if (breakStack[i] == curr->name) {
-        o << int8_t(breakStack.size() - 1 - i);
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      std::cerr << "bad break: " << curr->name << std::endl;
-      abort();
-    }
+    int offset = getBreakIndex(curr->name);
+    o << int8_t(offset);
     if (curr->condition) recurse(curr->condition);
     if (curr->value) {
       recurse(curr->value);
@@ -647,23 +667,22 @@ public:
     if (debug) std::cerr << "zz node: Switch" << std::endl;
     o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->cases.size())
                                            << int16_t(curr->targets.size() + 1);
-    std::map<Name, int16_t> mapping; // target name => index in cases
     for (size_t i = 0; i < curr->cases.size(); i++) {
-      mapping[curr->cases[i].name] = i;
+      breakStack.push_back(curr->cases[i].name);
     }
-    if (mapping.find(curr->default_) == mapping.end()) {
-      mapping[curr->default_] = curr->cases.size();
-    }
-    for (auto target : curr->targets) {
-      o << mapping[target];
-    }
-    o << mapping[curr->default_];
     breakStack.push_back(curr->name);
+    for (auto target : curr->targets) {
+      o << (int16_t)getBreakIndex(target);
+    }
+    o << (int16_t)getBreakIndex(curr->default_);
     recurse(curr->value);
     for (auto& c : curr->cases) {
       recurse(c.body);
     }
-    breakStack.pop_back();
+    breakStack.pop_back(); // name
+    for (size_t i = 0; i < curr->cases.size(); i++) {
+      breakStack.pop_back(); // case
+    }
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
@@ -766,9 +785,9 @@ public:
     if (debug) std::cerr << "zz node: Const" << std::endl;
     switch (curr->type) {
       case i32: {
-        int32_t value = curr->value.i32;
-        if (value >= -128 && value <= 127) {
-          o << int8_t(BinaryConsts::I8Const) << int8_t(value);
+        uint32_t value = curr->value.i32;
+        if (value <= 255) {
+          o << int8_t(BinaryConsts::I8Const) << uint8_t(value);
           break;
         }
         o << int8_t(BinaryConsts::I32Const) << value;
@@ -805,14 +824,14 @@ public:
       case ExtendSInt32:     o << int8_t(BinaryConsts::I64SConvertI32); break;
       case ExtendUInt32:     o << int8_t(BinaryConsts::I64UConvertI32); break;
       case WrapInt64:        o << int8_t(BinaryConsts::I32ConvertI64); break;
-      case TruncUFloat32:    o << int8_t(curr->type == i32 ? BinaryConsts::I32UConvertF32 : BinaryConsts::I64UConvertF32); break;
-      case TruncSFloat32:    o << int8_t(curr->type == i32 ? BinaryConsts::I32SConvertF32 : BinaryConsts::I64SConvertF32); break;
-      case TruncUFloat64:    o << int8_t(curr->type == i32 ? BinaryConsts::I32UConvertF64 : BinaryConsts::I64UConvertF64); break;
-      case TruncSFloat64:    o << int8_t(curr->type == i32 ? BinaryConsts::I32SConvertF64 : BinaryConsts::I64SConvertF64); break;
+      case TruncUFloat32:    o << int8_t(curr->type == i32 ? BinaryConsts::F32UConvertI32 : BinaryConsts::F32UConvertI64); break;
+      case TruncSFloat32:    o << int8_t(curr->type == i32 ? BinaryConsts::F32SConvertI32 : BinaryConsts::F32SConvertI64); break;
+      case TruncUFloat64:    o << int8_t(curr->type == i32 ? BinaryConsts::F64UConvertI32 : BinaryConsts::F64UConvertI64); break;
+      case TruncSFloat64:    o << int8_t(curr->type == i32 ? BinaryConsts::F64SConvertI32 : BinaryConsts::F64SConvertI64); break;
       case ConvertUInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::I32UConvertF32 : BinaryConsts::I32UConvertF64); break;
       case ConvertSInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::I32SConvertF32 : BinaryConsts::I32SConvertF64); break;
       case ConvertUInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64UConvertF32 : BinaryConsts::I64UConvertF64); break;
-      case ConvertSInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64UConvertF32 : BinaryConsts::I64UConvertF64); break;
+      case ConvertSInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64SConvertF32 : BinaryConsts::I64SConvertF64); break;
       case DemoteFloat64:    o << int8_t(BinaryConsts::F32ConvertF64); break;
       case PromoteFloat32:   o << int8_t(BinaryConsts::F64ConvertF32); break;
       case ReinterpretFloat: o << int8_t(curr->type == f32 ? BinaryConsts::F32ReinterpretI32 : BinaryConsts::F64ReinterpretI64); break;
@@ -1048,8 +1067,10 @@ public:
 
   void readMemory() {
     if (debug) std::cerr << "== readMemory" << std::endl;
-    wasm.memory.initial = std::pow<size_t>(2, getInt8());
-    wasm.memory.max = std::pow<size_t>(2, getInt8());
+    size_t initial = getInt8();
+    wasm.memory.initial = initial == 0 ? 0 : std::pow<size_t>(2, initial - 1);
+    size_t max = getInt8();
+    wasm.memory.max = max == 0 ? 0 : std::pow<size_t>(2, max - 1);
     verifyInt8(1); // export memory
   }
 
@@ -1091,13 +1112,20 @@ public:
       bool locals = data & BinaryConsts::Locals;
       bool export_ = data & BinaryConsts::Export;
       Name name = getString();
+      if (export_) { // XXX addition to v8 binary format
+        Name exportName = getString();
+        auto e = allocator.alloc<Export>();
+        e->name = exportName;
+        e->value = name;
+        wasm.addExport(e);
+      }
       if (debug) std::cerr << "reading" << name << std::endl;
       mappedFunctions.push_back(name);
       if (import) {
         auto imp = allocator.alloc<Import>();
         imp->name = name;
-        imp->module = ENV;
-        imp->base = name;
+        imp->module = getString(); // XXX diverge
+        imp->base = getString();   //     from v8
         imp->type = type;
         wasm.addImport(imp);
       } else {
@@ -1133,12 +1161,6 @@ public:
         pos += size;
         func->body = nullptr; // will be filled later. but we do have the name and the type already.
         wasm.addFunction(func);
-      }
-      if (export_) {
-        auto e = allocator.alloc<Export>();
-        e->name = name;
-        e->value = name;
-        wasm.addExport(e);
       }
     }
   }
@@ -1187,14 +1209,15 @@ public:
     if (debug) std::cerr << "== readDataSegments" << std::endl;
     auto num = getLEB128();
     for (size_t i = 0; i < num; i++) {
-      auto curr = allocator.alloc<Memory::Segment>();
-      curr->offset = getInt32();
+      Memory::Segment curr;
+      curr.offset = getInt32();
       auto start = getInt32();
       auto size = getInt32();
       auto buffer = malloc(size);
       memcpy(buffer, &input[start], size);
-      curr->data = (const char*)buffer;
-      curr->size = size;
+      curr.data = (const char*)buffer;
+      curr.size = size;
+      wasm.memory.segments.push_back(curr);
       verifyInt8(1); // load at program start
     }
   }
@@ -1305,10 +1328,15 @@ public:
     breakStack.pop_back();
     breakStack.pop_back();
   }
+
+  Name getBreakName(int offset) {
+    return breakStack[breakStack.size() - 1 - offset];
+  }
+
   void visitBreak(Break *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
     auto offset = getInt8();
-    curr->name = breakStack[breakStack.size() - 1 - offset];
+    curr->name = getBreakName(offset);
     if (code == BinaryConsts::BrIf) readExpression(curr->condition);
     readExpression(curr->value);
   }
@@ -1316,27 +1344,26 @@ public:
     if (debug) std::cerr << "zz node: Switch" << std::endl;
     auto numCases = getInt16();
     auto numTargets = getInt16();
-    std::map<size_t, Name> caseLabels;
-    auto getCaseLabel = [&](size_t index) {
-      if (caseLabels.find(index) == caseLabels.end()) {
-        caseLabels[index] = getNextLabel();
-      }
-      return caseLabels[index];
-    };
-    for (auto i = 0; i < numTargets - 1; i++) {
-      curr->targets.push_back(getCaseLabel(getInt16()));
-    }
-    curr->default_ = getCaseLabel(getInt16());
-    curr->name = getNextLabel();
-    breakStack.push_back(curr->name);
-    readExpression(curr->value);
     for (auto i = 0; i < numCases; i++) {
       Switch::Case c;
-      c.name = getCaseLabel(i);
-      readExpression(c.body);
+      c.name = getNextLabel();
       curr->cases.push_back(c);
+      breakStack.push_back(c.name);
     }
-    breakStack.pop_back();
+    curr->name = getNextLabel();
+    breakStack.push_back(curr->name);
+    for (auto i = 0; i < numTargets - 1; i++) {
+      curr->targets.push_back(getBreakName(getInt16()));
+    }
+    curr->default_ = getBreakName(getInt16());
+    readExpression(curr->value);
+    for (auto i = 0; i < numCases; i++) {
+      readExpression(curr->cases[i].body);
+    }
+    breakStack.pop_back(); // name
+    for (size_t i = 0; i < curr->cases.size(); i++) {
+      breakStack.pop_back(); // case
+    }
   }
   void visitCall(Call *curr, Name target) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
@@ -1487,12 +1514,12 @@ public:
       case BinaryConsts::I32ConvertI64:  curr->op = WrapInt64;     curr->type = i32; break;
 
       case BinaryConsts::F32UConvertI32: curr->op = TruncUFloat32; curr->type = i32; break;
-      case BinaryConsts::F64UConvertI32: curr->op = TruncUFloat32; curr->type = i64; break;
+      case BinaryConsts::F64UConvertI32: curr->op = TruncUFloat64; curr->type = i32; break;
       case BinaryConsts::F32SConvertI32: curr->op = TruncSFloat32; curr->type = i32; break;
-      case BinaryConsts::F64SConvertI32: curr->op = TruncSFloat32; curr->type = i64; break;
-      case BinaryConsts::F32UConvertI64: curr->op = TruncUFloat64; curr->type = i32; break;
+      case BinaryConsts::F64SConvertI32: curr->op = TruncSFloat64; curr->type = i32; break;
+      case BinaryConsts::F32UConvertI64: curr->op = TruncUFloat32; curr->type = i64; break;
       case BinaryConsts::F64UConvertI64: curr->op = TruncUFloat64; curr->type = i64; break;
-      case BinaryConsts::F32SConvertI64: curr->op = TruncSFloat64; curr->type = i32; break;
+      case BinaryConsts::F32SConvertI64: curr->op = TruncSFloat32; curr->type = i64; break;
       case BinaryConsts::F64SConvertI64: curr->op = TruncSFloat64; curr->type = i64; break;
 
       case BinaryConsts::F32Trunc:       curr->op = Trunc;         curr->type = f32; break;

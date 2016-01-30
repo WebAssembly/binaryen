@@ -193,7 +193,7 @@ struct Literal {
     if (isnan(f)) {
       const char *sign = std::signbit(f) ? "-" : "";
       o << sign << "nan";
-      if (uint32_t payload = ~0xffc00000u & bit_cast<uint32_t>(f)) {
+      if (uint32_t payload = ~0xff800000u & bit_cast<uint32_t>(f)) {
         o << ":0x" << std::hex << payload << std::dec;
       }
       return;
@@ -209,7 +209,7 @@ struct Literal {
     if (isnan(d)) {
       const char *sign = std::signbit(d) ? "-" : "";
       o << sign << "nan";
-      if (uint64_t payload = ~0xfff8000000000000ull & bit_cast<uint64_t>(d)) {
+      if (uint64_t payload = ~0xfff0000000000000ull & bit_cast<uint64_t>(d)) {
         o << ":0x" << std::hex << payload << std::dec;
       }
       return;
@@ -676,11 +676,13 @@ public:
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     o << '(';
     prepareColor(o) << printWasmType(type) << ".load";
-    if (bytes < 4) {
+    if (bytes < 4 || (type == i64 && bytes < 8)) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {
         o << "16";
+      } else if (bytes == 4) {
+        o << "32";
       } else {
         abort();
       }
@@ -954,6 +956,9 @@ public:
 
   std::ostream& print(std::ostream &o, unsigned indent) {
     printOpening(o, "func ", true) << name;
+    if (type.is()) {
+      o << " (type " << type << ')';
+    }
     if (params.size() > 0) {
       for (auto& param : params) {
         o << ' ';
@@ -1001,8 +1006,8 @@ public:
 
 class Export {
 public:
-  Name name;
-  Name value;
+  Name name;  // exported name
+  Name value; // internal name
 
   std::ostream& print(std::ostream &o, unsigned indent) {
     printOpening(o, "export ");

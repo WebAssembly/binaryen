@@ -167,6 +167,8 @@ def split_wast(wast):
         depth += 1
       elif wast[j] == ')':
         depth -= 1
+      elif wast[j] == ';' and wast[j+1] == ';':
+        j = wast.find('\n', j)
       j += 1
     return j
   i = 0
@@ -174,13 +176,13 @@ def split_wast(wast):
     start = wast.find('(', i)
     if start < 0: break
     i = to_end(start + 1)
-    if wast[start:].startswith('(module'):
-      ret += [(wast[start:i], [])]
-    elif wast[start:].startswith('(assert_invalid'):
+    chunk = wast[start:i]
+    if chunk.startswith('(module'):
+      ret += [(chunk, [])]
+    elif chunk.startswith('(assert_invalid'):
       continue
-    else:
-      if len(ret) > 0: # otherwise, comments or such before the first module
-        ret[-1][1].append(wast[start:i])
+    elif chunk.startswith(('(assert', '(invoke')):
+      ret[-1][1].append(chunk)
   assert len(ret) > 0
   return ret
 
@@ -314,33 +316,49 @@ for t in spec_tests:
   if t.startswith('spec') and t.endswith('.wast'):
     print '..', t
     wast = os.path.join('test', t)
-    proc = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), wast], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    actual, err = proc.communicate()
-    assert proc.returncode == 0, err
 
-    expected = os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log')
-    if os.path.exists(expected):
-      expected = open(expected).read()
-      # fix it up, our pretty (i32.const 83) must become compared to a homely 83 : i32
-      def fix(x):
-        x = x.strip()
-        if not x: return x
-        v, t = x.split(' : ')
-        if v.endswith('.'): v = v[:-1] # remove trailing '.'
-        return '(' + t + '.const ' + v + ')'
-      expected = '\n'.join(map(fix, expected.split('\n')))
-      print '       (using expected output)'
-      actual = actual.strip()
-      expected = expected.strip()
-      if actual != expected:
-        fail(actual, expected)
+    def run_spec_test(wast):
+      print '       run binaryen-shell on', wast
+      proc = subprocess.Popen([os.path.join('bin', 'binaryen-shell'), wast], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      actual, err = proc.communicate()
+      assert proc.returncode == 0, err
+      return actual
+
+    def check_expected(actual, expected):
+      if expected and os.path.exists(expected):
+        expected = open(expected).read()
+        # fix it up, our pretty (i32.const 83) must become compared to a homely 83 : i32
+        def fix(x):
+          x = x.strip()
+          if not x: return x
+          v, t = x.split(' : ')
+          if v.endswith('.'): v = v[:-1] # remove trailing '.'
+          return '(' + t + '.const ' + v + ')'
+        expected = '\n'.join(map(fix, expected.split('\n')))
+        print '       (using expected output)'
+        actual = actual.strip()
+        expected = expected.strip()
+        if actual != expected:
+          fail(actual, expected)
+
+    actual = run_spec_test(wast)
+    check_expected(actual, os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log'))
 
     # check binary format. here we can verify execution of the final result, no need for an output verification
+    split_num = 0
     if os.path.basename(wast) not in ['has_feature.wast']: # avoid some tests with things still in spec tests, but likely to be taken out soon
+      actual = ''
       for module, asserts in split_wast(wast):
-        print '    testing split module'
+        print '    testing split module', split_num
+        split_num += 1
         open('split.wast', 'w').write(module + '\n' + '\n'.join(asserts))
-        result = binary_format_check('split.wast', verify_final_result=False)
+        run_spec_test('split.wast') # before binary stuff - just check it's still ok split out
+        result_wast = binary_format_check('split.wast', verify_final_result=False)
+        # add the asserts, and verify that the test still passes
+        open(result_wast, 'a').write('\n' + '\n'.join(asserts))
+        actual += run_spec_test(result_wast)
+      # compare all the outputs to the expected output
+      check_expected(actual, os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log'))
 
 print '\n[ checking wasm2asm testcases... ]\n'
 
