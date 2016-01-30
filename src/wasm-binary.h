@@ -392,9 +392,18 @@ public:
   void writeMemory() {
     if (wasm->memory.max == 0) return;
     if (debug) std::cerr << "== writeMemory" << std::endl;
-    o << int8_t(BinaryConsts::Memory) << int8_t(ceil(log2(wasm->memory.initial)))
-                                      << int8_t(ceil(log2(wasm->memory.max)))
-                                      << int8_t(1); // export memory
+    o << int8_t(BinaryConsts::Memory);
+    if (wasm->memory.initial == 0) { // XXX diverge from v8, 0 means 0, 1 and above are powers of 2 starting at 0
+      o << int8_t(0);
+    } else {
+      o << int8_t(ceil(log2(wasm->memory.initial)) + 1);
+    }
+    if (wasm->memory.max == 0) {
+      o << int8_t(0);
+    } else {
+      o << int8_t(ceil(log2(wasm->memory.max)) + 1);
+    }
+    o << int8_t(1); // export memory
   }
 
   void writeSignatures() {
@@ -1058,8 +1067,10 @@ public:
 
   void readMemory() {
     if (debug) std::cerr << "== readMemory" << std::endl;
-    wasm.memory.initial = std::pow<size_t>(2, getInt8());
-    wasm.memory.max = std::pow<size_t>(2, getInt8());
+    size_t initial = getInt8();
+    wasm.memory.initial = initial == 0 ? 0 : std::pow<size_t>(2, initial - 1);
+    size_t max = getInt8();
+    wasm.memory.max = max == 0 ? 0 : std::pow<size_t>(2, max - 1);
     verifyInt8(1); // export memory
   }
 
