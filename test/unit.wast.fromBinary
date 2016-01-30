@@ -276,10 +276,10 @@
       (set_local $var$0
         (i32.and
           (i32.div_u
-            (i32.const 255)
+            (i32.const -1)
             (i32.const 2)
           )
-          (i32.const 255)
+          (i32.const -1)
         )
       )
       (get_local $var$0)

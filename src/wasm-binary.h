@@ -776,9 +776,9 @@ public:
     if (debug) std::cerr << "zz node: Const" << std::endl;
     switch (curr->type) {
       case i32: {
-        int32_t value = curr->value.i32;
-        if (value >= -128 && value <= 127) {
-          o << int8_t(BinaryConsts::I8Const) << int8_t(value);
+        uint32_t value = curr->value.i32;
+        if (value <= 255) {
+          o << int8_t(BinaryConsts::I8Const) << uint8_t(value);
           break;
         }
         o << int8_t(BinaryConsts::I32Const) << value;
