@@ -358,7 +358,7 @@ for t in spec_tests:
         open(result_wast, 'a').write('\n' + '\n'.join(asserts))
         actual += run_spec_test(result_wast)
       # compare all the outputs to the expected output
-      # TODO check_expected(actual, os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log'))
+      check_expected(actual, os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log'))
 
 print '\n[ checking wasm2asm testcases... ]\n'
 
