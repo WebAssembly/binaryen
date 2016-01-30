@@ -396,12 +396,12 @@ public:
     if (wasm->memory.initial == 0) { // XXX diverge from v8, 0 means 0, 1 and above are powers of 2 starting at 0
       o << int8_t(0);
     } else {
-      o << int8_t(ceil(log2(wasm->memory.initial)) + 1);
+      o << int8_t(std::min(ceil(log2(wasm->memory.initial)), 31.0) + 1); // up to 31 bits, don't let ceil get us to UINT_MAX which can overflow
     }
     if (wasm->memory.max == 0) {
       o << int8_t(0);
     } else {
-      o << int8_t(ceil(log2(wasm->memory.max)) + 1);
+      o << int8_t(std::min(ceil(log2(wasm->memory.max)), 31.0) + 1);
     }
     o << int8_t(1); // export memory
   }
