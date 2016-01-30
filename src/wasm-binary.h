@@ -366,7 +366,9 @@ class WasmBinaryWriter : public WasmVisitor<WasmBinaryWriter, void> {
   void prepare() {
     // we need function types for all our functions
     for (auto* func : wasm->functions) {
-      func->type = ensureFunctionType(getSig(func), wasm, allocator)->name;
+      if (func->type.isNull()) {
+        func->type = ensureFunctionType(getSig(func), wasm, allocator)->name;
+      }
     }
   }
 
