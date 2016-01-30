@@ -640,21 +640,25 @@ public:
     breakStack.pop_back();
     breakStack.pop_back();
   }
+
+  int getBreakIndex(Name name) { // -1 if not found
+    for (int i = breakStack.size() - 1; i >= 0; i--) {
+      if (breakStack[i] == name) {
+        return breakStack.size() - 1 - i;
+      }
+    }
+    return -1;
+  }
+
   void visitBreak(Break *curr) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br);
-    bool found = false;
-    for (int i = breakStack.size() - 1; i >= 0; i--) {
-      if (breakStack[i] == curr->name) {
-        o << int8_t(breakStack.size() - 1 - i);
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
+    int offset = getBreakIndex(curr->name);
+    if (offset < 0) {
       std::cerr << "bad break: " << curr->name << std::endl;
       abort();
     }
+    o << int8_t(offset);
     if (curr->condition) recurse(curr->condition);
     if (curr->value) {
       recurse(curr->value);
@@ -1328,10 +1332,15 @@ public:
     breakStack.pop_back();
     breakStack.pop_back();
   }
+
+  Name getBreakName(int offset) {
+    return breakStack[breakStack.size() - 1 - offset];
+  }
+
   void visitBreak(Break *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
     auto offset = getInt8();
-    curr->name = breakStack[breakStack.size() - 1 - offset];
+    curr->name = getBreakName(offset);
     if (code == BinaryConsts::BrIf) readExpression(curr->condition);
     readExpression(curr->value);
   }
