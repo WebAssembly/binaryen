@@ -193,7 +193,7 @@ struct Literal {
     if (isnan(f)) {
       const char *sign = std::signbit(f) ? "-" : "";
       o << sign << "nan";
-      if (uint32_t payload = ~0xffc00000u & bit_cast<uint32_t>(f)) {
+      if (uint32_t payload = ~0xff800000u & bit_cast<uint32_t>(f)) {
         o << ":0x" << std::hex << payload << std::dec;
       }
       return;
@@ -209,7 +209,7 @@ struct Literal {
     if (isnan(d)) {
       const char *sign = std::signbit(d) ? "-" : "";
       o << sign << "nan";
-      if (uint64_t payload = ~0xfff8000000000000ull & bit_cast<uint64_t>(d)) {
+      if (uint64_t payload = ~0xfff0000000000000ull & bit_cast<uint64_t>(d)) {
         o << ":0x" << std::hex << payload << std::dec;
       }
       return;
