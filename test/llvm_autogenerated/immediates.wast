@@ -136,7 +136,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (f32.const nan)
+          (f32.const nan:0x400000)
         )
       )
     )
@@ -145,7 +145,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (f32.const -nan)
+          (f32.const -nan:0x400000)
         )
       )
     )
@@ -208,7 +208,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (f64.const nan)
+          (f64.const nan:0x8000000000000)
         )
       )
     )
@@ -217,7 +217,7 @@
     (block $fake_return_waka123
       (block
         (br $fake_return_waka123
-          (f64.const -nan)
+          (f64.const -nan:0x8000000000000)
         )
       )
     )
