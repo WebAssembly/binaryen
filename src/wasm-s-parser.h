@@ -265,9 +265,9 @@ private:
         functionTypes[name] = stringToWasmType(curr[1]->str());
         return;
       } else if (id == TYPE) {
-        Name name = curr[1]->str();
-        if (wasm.functionTypesMap.find(name) == wasm.functionTypesMap.end()) onError();
-        FunctionType* type = wasm.functionTypesMap[name];
+        Name typeName = curr[1]->str();
+        if (wasm.functionTypesMap.find(typeName) == wasm.functionTypesMap.end()) onError();
+        FunctionType* type = wasm.functionTypesMap[typeName];
         functionTypes[name] = type->result;
         return;
       }
