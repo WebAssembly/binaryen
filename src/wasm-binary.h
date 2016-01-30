@@ -647,17 +647,14 @@ public:
         return breakStack.size() - 1 - i;
       }
     }
-    return -1;
+    std::cerr << "bad break: " << name << std::endl;
+    abort();
   }
 
   void visitBreak(Break *curr) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br);
     int offset = getBreakIndex(curr->name);
-    if (offset < 0) {
-      std::cerr << "bad break: " << curr->name << std::endl;
-      abort();
-    }
     o << int8_t(offset);
     if (curr->condition) recurse(curr->condition);
     if (curr->value) {
@@ -670,23 +667,22 @@ public:
     if (debug) std::cerr << "zz node: Switch" << std::endl;
     o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->cases.size())
                                            << int16_t(curr->targets.size() + 1);
-    std::map<Name, int16_t> mapping; // target name => index in cases
     for (size_t i = 0; i < curr->cases.size(); i++) {
-      mapping[curr->cases[i].name] = i;
+      breakStack.push_back(curr->cases[i].name);
     }
-    if (mapping.find(curr->default_) == mapping.end()) {
-      mapping[curr->default_] = curr->cases.size();
-    }
-    for (auto target : curr->targets) {
-      o << mapping[target];
-    }
-    o << mapping[curr->default_];
     breakStack.push_back(curr->name);
+    for (auto target : curr->targets) {
+      o << (int16_t)getBreakIndex(target);
+    }
+    o << (int16_t)getBreakIndex(curr->default_);
     recurse(curr->value);
     for (auto& c : curr->cases) {
       recurse(c.body);
     }
-    breakStack.pop_back();
+    breakStack.pop_back(); // name
+    for (size_t i = 0; i < curr->cases.size(); i++) {
+      breakStack.pop_back(); // case
+    }
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
@@ -1348,27 +1344,26 @@ public:
     if (debug) std::cerr << "zz node: Switch" << std::endl;
     auto numCases = getInt16();
     auto numTargets = getInt16();
-    std::map<size_t, Name> caseLabels;
-    auto getCaseLabel = [&](size_t index) {
-      if (caseLabels.find(index) == caseLabels.end()) {
-        caseLabels[index] = getNextLabel();
-      }
-      return caseLabels[index];
-    };
-    for (auto i = 0; i < numTargets - 1; i++) {
-      curr->targets.push_back(getCaseLabel(getInt16()));
-    }
-    curr->default_ = getCaseLabel(getInt16());
-    curr->name = getNextLabel();
-    breakStack.push_back(curr->name);
-    readExpression(curr->value);
     for (auto i = 0; i < numCases; i++) {
       Switch::Case c;
-      c.name = getCaseLabel(i);
-      readExpression(c.body);
+      c.name = getNextLabel();
       curr->cases.push_back(c);
+      breakStack.push_back(c.name);
     }
-    breakStack.pop_back();
+    curr->name = getNextLabel();
+    breakStack.push_back(curr->name);
+    for (auto i = 0; i < numTargets - 1; i++) {
+      curr->targets.push_back(getBreakName(getInt16()));
+    }
+    curr->default_ = getBreakName(getInt16());
+    readExpression(curr->value);
+    for (auto i = 0; i < numCases; i++) {
+      readExpression(curr->cases[i].body);
+    }
+    breakStack.pop_back(); // name
+    for (size_t i = 0; i < curr->cases.size(); i++) {
+      breakStack.pop_back(); // case
+    }
   }
   void visitCall(Call *curr, Name target) {
     if (debug) std::cerr << "zz node: Call" << std::endl;

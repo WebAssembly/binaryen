@@ -203,18 +203,18 @@
           (get_local $var$0)
           (i32.const 5)
         )
-        (table (case $label$5) (case $label$6) (case $label$6) (case $label$6) (case $label$6) (case $label$6) (case $label$6) (case $label$7)) (case $label$6)
-        (case $label$7
+        (table (case $label$6) (case $label$7) (case $label$7) (case $label$7) (case $label$7) (case $label$7) (case $label$7) (case $label$5)) (case $label$7)
+        (case $label$5
           (br $label$0
             (i32.const 121)
           )
         )
-        (case $label$5
+        (case $label$6
           (br $label$0
             (i32.const 51)
           )
         )
-        (case $label$6
+        (case $label$7
           (nop)
         )
       )
@@ -223,11 +223,11 @@
           (get_local $var$0)
           (i32.const 2)
         )
-        (table (case $label$9) (case $label$10) (case $label$10) (case $label$11) (case $label$10) (case $label$10) (case $label$10) (case $label$10) (case $label$12) (case $label$10) (case $label$13)) (case $label$10)
-        (case $label$13
+        (table (case $label$12) (case $label$13) (case $label$13) (case $label$11) (case $label$13) (case $label$13) (case $label$13) (case $label$13) (case $label$10) (case $label$13) (case $label$9)) (case $label$13)
+        (case $label$9
           (br $label$14)
         )
-        (case $label$12
+        (case $label$10
           (br $label$14)
         )
         (case $label$11
@@ -241,7 +241,7 @@
             (br $label$14)
           )
         )
-        (case $label$9
+        (case $label$12
           (block $label$19
             (loop $label$20 $label$21
               (block $label$22
@@ -252,7 +252,7 @@
             (br $label$14)
           )
         )
-        (case $label$10
+        (case $label$13
           (nop)
         )
       )
