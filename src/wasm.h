@@ -956,6 +956,9 @@ public:
 
   std::ostream& print(std::ostream &o, unsigned indent) {
     printOpening(o, "func ", true) << name;
+    if (type.is()) {
+      o << " (type " << type << ')';
+    }
     if (params.size() > 0) {
       for (auto& param : params) {
         o << ' ';
