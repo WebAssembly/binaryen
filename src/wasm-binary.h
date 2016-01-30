@@ -1107,11 +1107,13 @@ public:
       auto data = getInt8();
       auto type = wasm.functionTypes[getInt16()];
       bool named = data & BinaryConsts::Named;
-      assert(named);
       bool import = data & BinaryConsts::Import;
       bool locals = data & BinaryConsts::Locals;
       bool export_ = data & BinaryConsts::Export;
-      Name name = getString();
+      Name name;
+      if (named) {
+        name = getString();
+      }
       if (export_) { // XXX addition to v8 binary format
         Name exportName = getString();
         auto e = allocator.alloc<Export>();
@@ -1119,8 +1121,8 @@ public:
         e->value = name;
         wasm.addExport(e);
       }
-      if (debug) std::cerr << "reading" << name << std::endl;
-      mappedFunctions.push_back(name);
+      if (debug) std::cerr << "reading " << (named ? name : "") << std::endl;
+      // Unnamed functions will be assigned a numeric name in wasm.addFunction
       if (import) {
         auto imp = allocator.alloc<Import>();
         imp->name = name;
@@ -1128,6 +1130,7 @@ public:
         imp->base = getString();   //     from v8
         imp->type = type;
         wasm.addImport(imp);
+        mappedFunctions.push_back(imp->name);
       } else {
         auto func = allocator.alloc<Function>();
         func->name = name;
@@ -1161,6 +1164,7 @@ public:
         pos += size;
         func->body = nullptr; // will be filled later. but we do have the name and the type already.
         wasm.addFunction(func);
+        mappedFunctions.push_back(func->name);
       }
     }
   }
