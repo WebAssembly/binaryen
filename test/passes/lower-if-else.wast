@@ -16,6 +16,14 @@
         (i32.const 5)
         (i32.const 6)
       )
+      (i32.eq
+        (if_else
+          (i32.const 4)
+          (i32.const 5)
+          (i32.const 6)
+        )
+        (i32.const 177)
+      )
     )
   )
 )
