@@ -174,6 +174,11 @@ def split_wast(wast):
   i = 0
   while i >= 0:
     start = wast.find('(', i)
+    skip = wast.find(';', i)
+    if skip >= 0 and skip < start and skip + 1 < len(wast):
+      if wast[skip+1] == ';':
+        i = wast.find('\n', i) + 1
+        continue
     if start < 0: break
     i = to_end(start + 1)
     chunk = wast[start:i]
