@@ -916,6 +916,15 @@ public:
     recurse(curr->ifFalse);
     recurse(curr->condition);
   }
+  void visitReturn(Return *curr) {
+    if (debug) std::cerr << "zz node: Return" << std::endl;
+    o << int8_t(BinaryConsts::Return);
+    if (curr->value) {
+      recurse(curr->value);
+    } else {
+      visitNop(nullptr);
+    }
+  }
   void visitHost(Host *curr) {
     if (debug) std::cerr << "zz node: Host" << std::endl;
     switch (curr->op) {
@@ -1263,6 +1272,7 @@ public:
       case BinaryConsts::GetLocal:     visitGetLocal((curr = allocator.alloc<GetLocal>())->cast<GetLocal>()); break;
       case BinaryConsts::SetLocal:     visitSetLocal((curr = allocator.alloc<SetLocal>())->cast<SetLocal>()); break;
       case BinaryConsts::Select:       visitSelect((curr = allocator.alloc<Select>())->cast<Select>()); break;
+      case BinaryConsts::Return:       visitReturn((curr = allocator.alloc<Return>())->cast<Return>()); break;
       case BinaryConsts::Nop:          visitNop((curr = allocator.alloc<Nop>())->cast<Nop>()); break;
       case BinaryConsts::Unreachable:  visitUnreachable((curr = allocator.alloc<Unreachable>())->cast<Unreachable>()); break;
       default: {
@@ -1602,6 +1612,10 @@ public:
     readExpression(curr->ifFalse);
     readExpression(curr->condition);
     curr->finalize();
+  }
+  void visitReturn(Return *curr) {
+    if (debug) std::cerr << "zz node: Return" << std::endl;
+    readExpression(curr->value);
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
     switch (code) {

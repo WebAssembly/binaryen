@@ -34,7 +34,8 @@ using namespace cashew;
 
 // Utilities
 
-IString WASM("wasm");
+IString WASM("wasm"),
+        RETURN_FLOW("*return:)*");
 
 enum {
   pageSize = 64*1024,
@@ -623,6 +624,17 @@ private:
         if (ifFalse.breaking()) return ifFalse;
         return condition.value.geti32() ? ifTrue : ifFalse; // ;-)
       }
+      Flow visitReturn(Return *curr) {
+        NOTE_ENTER("Return");
+        Flow flow;
+        if (curr->value) {
+          flow = visit(curr->value);
+          if (flow.breaking()) return flow;
+          NOTE_EVAL1(flow.value);
+        }
+        flow.breakTo = RETURN_FLOW;
+        return flow;
+      }
       Flow visitHost(Host *curr) {
         NOTE_ENTER("Host");
         switch (curr->op) {
@@ -738,7 +750,7 @@ private:
 #endif
 
     Flow flow = ExpressionRunner(*this, scope).visit(function->body);
-    assert(!flow.breaking()); // cannot still be breaking, it means we missed our stop
+    assert(!flow.breaking() || flow.breakTo == RETURN_FLOW); // cannot still be breaking, it means we missed our stop
     Literal ret = flow.value;
     if (function->result == none) ret = Literal();
     assert(function->result == ret.type);

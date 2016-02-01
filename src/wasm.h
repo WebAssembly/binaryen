@@ -317,6 +317,7 @@ public:
     UnaryId,
     BinaryId,
     SelectId,
+    ReturnId,
     HostId,
     NopId,
     UnreachableId
@@ -902,6 +903,25 @@ public:
   }
 };
 
+class Return : public Expression {
+public:
+  Expression *value;
+
+  Return() : Expression(ReturnId), value(nullptr) {}
+
+  std::ostream& doPrint(std::ostream &o, unsigned indent) {
+    printOpening(o, "return");
+    if (!value || value->is<Nop>()) {
+      // avoid a new line just for the parens
+      o << ")";
+      return o;
+    }
+    incIndent(o, indent);
+    printFullLine(o, indent, value);
+    return decIndent(o, indent);
+  }
+};
+
 class Host : public Expression {
 public:
   Host() : Expression(HostId) {}
@@ -1233,6 +1253,7 @@ struct WasmVisitor {
   ReturnType visitUnary(Unary *curr) { abort(); }
   ReturnType visitBinary(Binary *curr) { abort(); }
   ReturnType visitSelect(Select *curr) { abort(); }
+  ReturnType visitReturn(Return *curr) { abort(); }
   ReturnType visitHost(Host *curr) { abort(); }
   ReturnType visitNop(Nop *curr) { abort(); }
   ReturnType visitUnreachable(Unreachable *curr) { abort(); }
@@ -1269,6 +1290,7 @@ struct WasmVisitor {
       case Expression::Id::UnaryId: DELEGATE(Unary);
       case Expression::Id::BinaryId: DELEGATE(Binary);
       case Expression::Id::SelectId: DELEGATE(Select);
+      case Expression::Id::ReturnId: DELEGATE(Return);
       case Expression::Id::HostId: DELEGATE(Host);
       case Expression::Id::NopId: DELEGATE(Nop);
       case Expression::Id::UnreachableId: DELEGATE(Unreachable);
@@ -1300,6 +1322,7 @@ std::ostream& Expression::print(std::ostream &o, unsigned indent) {
     void visitUnary(Unary *curr) { curr->doPrint(o, indent); }
     void visitBinary(Binary *curr) { curr->doPrint(o, indent); }
     void visitSelect(Select *curr) { curr->doPrint(o, indent); }
+    void visitReturn(Return *curr) { curr->doPrint(o, indent); }
     void visitHost(Host *curr) { curr->doPrint(o, indent); }
     void visitNop(Nop *curr) { curr->doPrint(o, indent); }
     void visitUnreachable(Unreachable *curr) { curr->doPrint(o, indent); }
@@ -1393,6 +1416,9 @@ struct ChildWalker : public WasmWalkerBase<ChildWalker<ParentType>> {
     parent.walk(curr->ifTrue);
     parent.walk(curr->ifFalse);
   }
+  void visitReturn(Return *curr) {
+    parent.walk(curr->value);
+  }
   void visitHost(Host *curr) {
     ExpressionList& list = curr->operands;
     for (size_t z = 0; z < list.size(); z++) {
@@ -1437,6 +1463,7 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
   ReturnType visitUnary(Unary *curr) {}
   ReturnType visitBinary(Binary *curr) {}
   ReturnType visitSelect(Select *curr) {}
+  ReturnType visitReturn(Return *curr) {}
   ReturnType visitHost(Host *curr) {}
   ReturnType visitNop(Nop *curr) {}
   ReturnType visitUnreachable(Unreachable *curr) {}
