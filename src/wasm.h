@@ -91,7 +91,10 @@ enum WasmType {
   i32,
   i64,
   f32,
-  f64
+  f64,
+  unreachable // none means no type, e.g. a block can have no return type. but
+              // unreachable is different, as it can be "ignored" when doing
+              // type checking across branches
 };
 
 inline const char* printWasmType(WasmType type) {
@@ -129,6 +132,10 @@ inline WasmType getWasmType(unsigned size, bool float_) {
   if (size == 4) return float_ ? WasmType::f32 : WasmType::i32;
   if (size == 8) return float_ ? WasmType::f64 : WasmType::i64;
   abort();
+}
+
+inline WasmType getReachableWasmType(WasmType a, WasmType b) {
+  return a != unreachable ? a : b;
 }
 
 // Literals
@@ -238,6 +245,7 @@ struct Literal {
       case WasmType::i64: o << literal.i64; break;
       case WasmType::f32: literal.printFloat(o, literal.f32); break;
       case WasmType::f64: literal.printDouble(o, literal.f64); break;
+      default: WASM_UNREACHABLE();
     }
     restoreNormalColor(o);
     return o << ')';
@@ -861,8 +869,8 @@ public:
     if (isRelational()) {
       type = i32;
     } else {
-      assert_node(left->type == right->type, this);
-      type = left->type;
+      assert_node(left->type != unreachable && right->type != unreachable ? left->type == right->type : true, this);
+      type = getReachableWasmType(left->type, right->type);
     }
   }
 };
@@ -931,7 +939,9 @@ public:
 
 class Unreachable : public Expression {
 public:
-  Unreachable() : Expression(UnreachableId) {}
+  Unreachable() : Expression(UnreachableId) {
+    type = unreachable;
+  }
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     return printMinorOpening(o, "unreachable") << ')';
