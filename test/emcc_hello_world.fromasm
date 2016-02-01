@@ -148,11 +148,8 @@
         )
         (i32.const 1)
       )
-      (i32.load8_s align=1
-        (i32.add
-          (get_local $ptr)
-          (i32.const 1)
-        )
+      (i32.load8_s offset=1 align=1
+        (get_local $ptr)
       )
     )
     (i32.store8 align=1
@@ -162,11 +159,8 @@
         )
         (i32.const 2)
       )
-      (i32.load8_s align=1
-        (i32.add
-          (get_local $ptr)
-          (i32.const 2)
-        )
+      (i32.load8_s offset=2 align=1
+        (get_local $ptr)
       )
     )
     (i32.store8 align=1
@@ -176,11 +170,8 @@
         )
         (i32.const 3)
       )
-      (i32.load8_s align=1
-        (i32.add
-          (get_local $ptr)
-          (i32.const 3)
-        )
+      (i32.load8_s offset=3 align=1
+        (get_local $ptr)
       )
     )
   )
@@ -200,11 +191,8 @@
         )
         (i32.const 1)
       )
-      (i32.load8_s align=1
-        (i32.add
-          (get_local $ptr)
-          (i32.const 1)
-        )
+      (i32.load8_s offset=1 align=1
+        (get_local $ptr)
       )
     )
     (i32.store8 align=1
@@ -214,11 +202,8 @@
         )
         (i32.const 2)
       )
-      (i32.load8_s align=1
-        (i32.add
-          (get_local $ptr)
-          (i32.const 2)
-        )
+      (i32.load8_s offset=2 align=1
+        (get_local $ptr)
       )
     )
     (i32.store8 align=1
@@ -228,11 +213,8 @@
         )
         (i32.const 3)
       )
-      (i32.load8_s align=1
-        (i32.add
-          (get_local $ptr)
-          (i32.const 3)
-        )
+      (i32.load8_s offset=3 align=1
+        (get_local $ptr)
       )
     )
     (i32.store8 align=1
@@ -242,11 +224,8 @@
         )
         (i32.const 4)
       )
-      (i32.load8_s align=1
-        (i32.add
-          (get_local $ptr)
-          (i32.const 4)
-        )
+      (i32.load8_s offset=4 align=1
+        (get_local $ptr)
       )
     )
     (i32.store8 align=1
@@ -256,11 +235,8 @@
         )
         (i32.const 5)
       )
-      (i32.load8_s align=1
-        (i32.add
-          (get_local $ptr)
-          (i32.const 5)
-        )
+      (i32.load8_s offset=5 align=1
+        (get_local $ptr)
       )
     )
     (i32.store8 align=1
@@ -270,11 +246,8 @@
         )
         (i32.const 6)
       )
-      (i32.load8_s align=1
-        (i32.add
-          (get_local $ptr)
-          (i32.const 6)
-        )
+      (i32.load8_s offset=6 align=1
+        (get_local $ptr)
       )
     )
     (i32.store8 align=1
@@ -284,11 +257,8 @@
         )
         (i32.const 7)
       )
-      (i32.load8_s align=1
-        (i32.add
-          (get_local $ptr)
-          (i32.const 7)
-        )
+      (i32.load8_s offset=7 align=1
+        (get_local $ptr)
       )
     )
   )
@@ -388,12 +358,9 @@
       )
     )
     (set_local $$1
-      (i32.load align=4
-        (i32.add
-          (i32.load align=4
-            (i32.const 24)
-          )
-          (i32.const 4)
+      (i32.load offset=4 align=4
+        (i32.load align=4
+          (i32.const 24)
         )
       )
     )
@@ -8899,12 +8866,9 @@
                 )
               )
               (set_local $$183
-                (i32.load align=4
-                  (i32.add
-                    (i32.load align=4
-                      (i32.const 24)
-                    )
-                    (i32.const 4)
+                (i32.load offset=4 align=4
+                  (i32.load align=4
+                    (i32.const 24)
                   )
                 )
               )
@@ -9005,12 +8969,9 @@
                 )
               )
               (set_local $$186
-                (i32.load align=4
-                  (i32.add
-                    (i32.load align=4
-                      (i32.const 24)
-                    )
-                    (i32.const 4)
+                (i32.load offset=4 align=4
+                  (i32.load align=4
+                    (i32.const 24)
                   )
                 )
               )
@@ -25976,11 +25937,8 @@
                     (get_local $$add$ptr14$i$i)
                     (i32.const 4)
                   )
-                  (i32.load align=4
-                    (i32.add
-                      (i32.const 624)
-                      (i32.const 4)
-                    )
+                  (i32.load offset=4 align=4
+                    (i32.const 624)
                   )
                 )
                 (i32.store align=4
@@ -25988,11 +25946,8 @@
                     (get_local $$add$ptr14$i$i)
                     (i32.const 8)
                   )
-                  (i32.load align=4
-                    (i32.add
-                      (i32.const 624)
-                      (i32.const 8)
-                    )
+                  (i32.load offset=8 align=4
+                    (i32.const 624)
                   )
                 )
                 (i32.store align=4
@@ -26000,11 +25955,8 @@
                     (get_local $$add$ptr14$i$i)
                     (i32.const 12)
                   )
-                  (i32.load align=4
-                    (i32.add
-                      (i32.const 624)
-                      (i32.const 12)
-                    )
+                  (i32.load offset=12 align=4
+                    (i32.const 624)
                   )
                 )
                 (i32.store align=4
@@ -31345,11 +31297,8 @@
           (get_local $$1$0)
         )
         (i32.xor
-          (i32.load align=4
-            (i32.add
-              (get_local $$rem)
-              (i32.const 4)
-            )
+          (i32.load offset=4 align=4
+            (get_local $$rem)
           )
           (get_local $$1$1)
         )
@@ -31473,11 +31422,8 @@
     )
     (i32.store align=4
       (i32.const 168)
-      (i32.load align=4
-        (i32.add
-          (get_local $$rem)
-          (i32.const 4)
-        )
+      (i32.load offset=4 align=4
+        (get_local $$rem)
       )
     )
     (i32.load align=4
