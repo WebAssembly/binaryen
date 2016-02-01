@@ -3,9 +3,11 @@
   (export "floats" $floats)
   (func $floats (param $f f32) (result f32)
     (local $t f32)
-    (f32.add
-      (get_local $t)
-      (get_local $f)
+    (return
+      (f32.add
+        (get_local $t)
+        (get_local $f)
+      )
     )
   )
   (func $neg (param $k i32) (param $p i32)

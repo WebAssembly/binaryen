@@ -772,7 +772,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   };
 
   bool seenReturn = false; // function->result is updated if we see a return
-  bool needTopmost = false; // we label the topmost b lock if we need one for a return
   // processors
   std::function<Expression* (Ref, unsigned)> processStatements;
   std::function<Expression* (Ref, unsigned)> processUnshifted;
@@ -1182,9 +1181,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         function->result = type;
       }
       // wasm has no return, so we just break on the topmost block
-      needTopmost = true;
-      auto ret = allocator.alloc<Break>();
-      ret->name = TOPMOST;
+      auto ret = allocator.alloc<Return>();
       ret->value = !!ast[1] ? process(ast[1]) : nullptr;
       return ret;
     } else if (what == BLOCK) {
@@ -1469,16 +1466,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   };
   // body
   function->body = processStatements(body, start);
-  if (needTopmost) {
-    Block* topmost = function->body->dyn_cast<Block>();
-    // if there's no block there, or there is a block but it already has a name, we need a new block.
-    if (!topmost || topmost->name.is()) {
-      topmost = allocator.alloc<Block>();
-      topmost->list.push_back(function->body);
-      function->body = topmost;
-    }
-    topmost->name = TOPMOST;
-  }
   // cleanups/checks
   assert(breakStack.size() == 0 && continueStack.size() == 0);
   assert(parentLabel.isNull());

@@ -40,6 +40,9 @@
             (get_local $d6)
           )
         )
+        (return
+          (get_local $i5)
+        )
       )
       (block
         (set_local $d6
@@ -71,7 +74,13 @@
             (get_local $d6)
           )
         )
+        (return
+          (get_local $i5)
+        )
       )
+    )
+    (return
+      (i32.const 0)
     )
   )
 )
