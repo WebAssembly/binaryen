@@ -667,39 +667,36 @@ class S2WasmBuilder {
       setOutput(curr, assign);
     };
     auto makeCall = [&](WasmType type) {
-      CallBase* curr;
-      Name assign;
       if (match("_indirect")) {
         // indirect call
-        auto specific = allocator.alloc<CallIndirect>();
-        assign = getAssign();
-        specific->target = getInput();
-        curr = specific;
-        curr->type = type;
+        auto indirect = allocator.alloc<CallIndirect>();
+        Name assign = getAssign();
+        indirect->target = getInput();
+        indirect->type = type;
         skipWhitespace();
         if (*s == ',') {
           skipComma();
           int num = getNumInputs();
           auto inputs = getInputs(num);
           for (int i = 0; i < num; i++) {
-            curr->operands.push_back(inputs[i]);
+            indirect->operands.push_back(inputs[i]);
           }
         }
-        setOutput(curr, assign);
-        auto call = curr->dyn_cast<CallIndirect>();
-        auto typeName = cashew::IString((std::string("FUNCSIG_") + getSig(call)).c_str(), false);
+        setOutput(indirect, assign);
+        auto typeName = cashew::IString((std::string("FUNCSIG_") + getSig(indirect)).c_str(), false);
         if (wasm.functionTypesMap.count(typeName) == 0) {
           auto type = allocator.alloc<FunctionType>();
-          *type = sigToFunctionType(getSig(curr));
+          *type = sigToFunctionType(getSig(indirect));
           type->name = typeName;
           wasm.addFunctionType(type);
-          call->fullType = type;
+          indirect->fullType = type;
         } else {
-          call->fullType = wasm.functionTypesMap[typeName];
+          indirect->fullType = wasm.functionTypesMap[typeName];
         }
       } else {
         // non-indirect call
-        assign = getAssign();
+        CallBase* curr;
+        Name assign = getAssign();
         Name target = cleanFunction(getCommaSeparated());
         auto aliased = aliasedFunctions.find(target);
         if (aliased != aliasedFunctions.end()) target = aliased->second;
