@@ -455,6 +455,10 @@ public:
     }
     return decIndent(o, indent);
   }
+
+  void finalize() {
+    type = body->type; // loop might have a type, if the body ends in something that does not break
+  }
 };
 
 class Break : public Expression {

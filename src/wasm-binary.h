@@ -1327,6 +1327,7 @@ public:
     readExpression(curr->body);
     breakStack.pop_back();
     breakStack.pop_back();
+    curr->finalize();
   }
 
   Name getBreakName(int offset) {

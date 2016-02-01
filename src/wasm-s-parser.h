@@ -834,6 +834,7 @@ private:
     ret->body = makeMaybeBlock(s, i);
     labelStack.pop_back();
     labelStack.pop_back();
+    ret->finalize();
     return ret;
   }
 
