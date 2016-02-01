@@ -4,25 +4,13 @@
   (export "bar" $bar)
   (export "qux" $qux)
   (func $foo
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123)
-      )
-    )
+    (return)
   )
   (func $bar
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123)
-      )
-    )
+    (return)
   )
   (func $qux
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123)
-      )
-    )
+    (return)
   )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 4 }

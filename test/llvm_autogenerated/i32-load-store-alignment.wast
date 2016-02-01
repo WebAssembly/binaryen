@@ -21,224 +21,144 @@
   (export "sti16_a2" $sti16_a2)
   (export "sti16_a4" $sti16_a4)
   (func $ldi32_a1 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load align=1
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load align=1
+        (get_local $$0)
       )
     )
   )
   (func $ldi32_a2 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load align=2
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load align=2
+        (get_local $$0)
       )
     )
   )
   (func $ldi32_a4 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load align=4
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load align=4
+        (get_local $$0)
       )
     )
   )
   (func $ldi32 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load align=4
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load align=4
+        (get_local $$0)
       )
     )
   )
   (func $ldi32_a8 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load align=8
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load align=8
+        (get_local $$0)
       )
     )
   )
   (func $ldi8_a1 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load8_u align=1
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load8_u align=1
+        (get_local $$0)
       )
     )
   )
   (func $ldi8_a2 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load8_u align=2
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load8_u align=2
+        (get_local $$0)
       )
     )
   )
   (func $ldi16_a1 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load16_u align=1
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load16_u align=1
+        (get_local $$0)
       )
     )
   )
   (func $ldi16_a2 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load16_u align=2
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load16_u align=2
+        (get_local $$0)
       )
     )
   )
   (func $ldi16_a4 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load16_u align=4
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load16_u align=4
+        (get_local $$0)
       )
     )
   )
   (func $sti32_a1 (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=1
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
+    (i32.store align=1
+      (get_local $$0)
+      (get_local $$1)
     )
+    (return)
   )
   (func $sti32_a2 (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=2
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
+    (i32.store align=2
+      (get_local $$0)
+      (get_local $$1)
     )
+    (return)
   )
   (func $sti32_a4 (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=4
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
+    (i32.store align=4
+      (get_local $$0)
+      (get_local $$1)
     )
+    (return)
   )
   (func $sti32 (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=4
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
+    (i32.store align=4
+      (get_local $$0)
+      (get_local $$1)
     )
+    (return)
   )
   (func $sti32_a8 (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=8
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
+    (i32.store align=8
+      (get_local $$0)
+      (get_local $$1)
     )
+    (return)
   )
   (func $sti8_a1 (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=8
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
+    (i32.store align=8
+      (get_local $$0)
+      (get_local $$1)
     )
+    (return)
   )
   (func $sti8_a2 (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=2
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
+    (i32.store align=2
+      (get_local $$0)
+      (get_local $$1)
     )
+    (return)
   )
   (func $sti16_a1 (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=1
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
+    (i32.store align=1
+      (get_local $$0)
+      (get_local $$1)
     )
+    (return)
   )
   (func $sti16_a2 (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=16
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
+    (i32.store align=16
+      (get_local $$0)
+      (get_local $$1)
     )
+    (return)
   )
   (func $sti16_a4 (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=4
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (br $fake_return_waka123)
-      )
+    (i32.store align=4
+      (get_local $$0)
+      (get_local $$1)
     )
+    (return)
   )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 4 }

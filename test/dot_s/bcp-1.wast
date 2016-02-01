@@ -34,156 +34,88 @@
   (export "main" $main)
   (table $bad0 $bad1 $bad5 $bad7 $bad8 $bad10 $bad2 $bad3 $bad6 $bad4 $bad9 $good0 $good1 $good2 $opt0 $opt1 $opt2)
   (func $bad0 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $bad1 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $bad2 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $bad3 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $bad4 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $bad5 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $bad6 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $bad7 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $bad8 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $bad9 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $bad10 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $good0 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 1)
-        )
-      )
+    (return
+      (i32.const 1)
     )
   )
   (func $good1 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 1)
-        )
-      )
+    (return
+      (i32.const 1)
     )
   )
   (func $good2 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 1)
-        )
-      )
+    (return
+      (i32.const 1)
     )
   )
   (func $opt0 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $opt1 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $opt2 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 1)
-        )
-      )
+    (return
+      (i32.const 1)
     )
   )
   (func $main (result i32)

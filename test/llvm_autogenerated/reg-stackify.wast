@@ -23,209 +23,177 @@
   (export "multiple_uses_in_same_insn" $multiple_uses_in_same_insn)
   (export "commute" $commute)
   (func $no0 (param $$0 i32) (param $$1 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (set_local $$1
-          (i32.load align=4
-            (get_local $$1)
-          )
-        )
-        (i32.store align=4
-          (get_local $$0)
-          (i32.const 0)
-        )
-        (br $fake_return_waka123
-          (get_local $$1)
-        )
+    (set_local $$1
+      (i32.load align=4
+        (get_local $$1)
       )
+    )
+    (i32.store align=4
+      (get_local $$0)
+      (i32.const 0)
+    )
+    (return
+      (get_local $$1)
     )
   )
   (func $no1 (param $$0 i32) (param $$1 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (set_local $$1
-          (i32.load align=4
-            (get_local $$1)
-          )
-        )
-        (i32.store align=4
-          (get_local $$0)
-          (i32.const 0)
-        )
-        (br $fake_return_waka123
-          (get_local $$1)
-        )
+    (set_local $$1
+      (i32.load align=4
+        (get_local $$1)
       )
+    )
+    (i32.store align=4
+      (get_local $$0)
+      (i32.const 0)
+    )
+    (return
+      (get_local $$1)
     )
   )
   (func $yes0 (param $$0 i32) (param $$1 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (i32.store align=4
-          (get_local $$0)
-          (i32.const 0)
-        )
-        (br $fake_return_waka123
-          (i32.load align=4
-            (get_local $$1)
-          )
-        )
+    (i32.store align=4
+      (get_local $$0)
+      (i32.const 0)
+    )
+    (return
+      (i32.load align=4
+        (get_local $$1)
       )
     )
   )
   (func $yes1 (param $$0 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.load align=4
-            (get_local $$0)
-          )
-        )
+    (return
+      (i32.load align=4
+        (get_local $$0)
       )
     )
   )
   (func $stack_uses (param $$0 i32) (param $$1 i32) (param $$2 i32) (param $$3 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (block $label$0
-          (br_if
-            (i32.ne
-              (i32.xor
-                (i32.xor
-                  (i32.lt_s
-                    (get_local $$0)
-                    (i32.const 1)
-                  )
-                  (i32.lt_s
-                    (get_local $$1)
-                    (i32.const 2)
-                  )
-                )
-                (i32.xor
-                  (i32.lt_s
-                    (get_local $$2)
-                    (i32.const 1)
-                  )
-                  (i32.lt_s
-                    (get_local $$3)
-                    (i32.const 2)
-                  )
-                )
+    (block $label$0
+      (br_if
+        (i32.ne
+          (i32.xor
+            (i32.xor
+              (i32.lt_s
+                (get_local $$0)
+                (i32.const 1)
               )
-              (i32.const 1)
+              (i32.lt_s
+                (get_local $$1)
+                (i32.const 2)
+              )
             )
-            $label$0
+            (i32.xor
+              (i32.lt_s
+                (get_local $$2)
+                (i32.const 1)
+              )
+              (i32.lt_s
+                (get_local $$3)
+                (i32.const 2)
+              )
+            )
           )
-          (br $fake_return_waka123
-            (i32.const 0)
-          )
-        )
-        (br $fake_return_waka123
           (i32.const 1)
         )
+        $label$0
       )
+      (return
+        (i32.const 0)
+      )
+    )
+    (return
+      (i32.const 1)
     )
   )
   (func $multiple_uses (param $$0 i32) (param $$1 i32) (param $$2 i32)
     (local $$3 i32)
-    (block $fake_return_waka123
-      (block
-        (block $label$0
-          (br_if
-            (i32.ge_u
-              (set_local $$3
-                (i32.load align=4
-                  (get_local $$2)
-                )
-              )
-              (get_local $$1)
+    (block $label$0
+      (br_if
+        (i32.ge_u
+          (set_local $$3
+            (i32.load align=4
+              (get_local $$2)
             )
-            $label$0
           )
-          (br_if
-            (i32.lt_u
-              (get_local $$3)
-              (get_local $$0)
-            )
-            $label$0
-          )
-          (i32.store align=4
-            (get_local $$2)
-            (get_local $$3)
-          )
+          (get_local $$1)
         )
-        (br $fake_return_waka123)
+        $label$0
+      )
+      (br_if
+        (i32.lt_u
+          (get_local $$3)
+          (get_local $$0)
+        )
+        $label$0
+      )
+      (i32.store align=4
+        (get_local $$2)
+        (get_local $$3)
       )
     )
+    (return)
   )
   (func $stackify_store_across_side_effects (param $$0 i32)
     (local $$1 i64)
-    (block $fake_return_waka123
-      (block
-        (set_local $$1
-          (i64.store align=8
-            (get_local $$0)
-            (i64.const 4611686018427387904)
-          )
-        )
-        (call_import $evoke_side_effects)
-        (i64.store align=8
-          (get_local $$0)
-          (get_local $$1)
-        )
-        (call_import $evoke_side_effects)
-        (br $fake_return_waka123)
+    (set_local $$1
+      (i64.store align=8
+        (get_local $$0)
+        (i64.const 4611686018427387904)
       )
     )
+    (call_import $evoke_side_effects)
+    (i64.store align=8
+      (get_local $$0)
+      (get_local $$1)
+    )
+    (call_import $evoke_side_effects)
+    (return)
   )
   (func $div_tree (param $$0 i32) (param $$1 i32) (param $$2 i32) (param $$3 i32) (param $$4 i32) (param $$5 i32) (param $$6 i32) (param $$7 i32) (param $$8 i32) (param $$9 i32) (param $$10 i32) (param $$11 i32) (param $$12 i32) (param $$13 i32) (param $$14 i32) (param $$15 i32) (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
+    (return
+      (i32.div_s
+        (i32.div_s
           (i32.div_s
             (i32.div_s
-              (i32.div_s
-                (i32.div_s
-                  (get_local $$0)
-                  (get_local $$1)
-                )
-                (i32.div_s
-                  (get_local $$2)
-                  (get_local $$3)
-                )
-              )
-              (i32.div_s
-                (i32.div_s
-                  (get_local $$4)
-                  (get_local $$5)
-                )
-                (i32.div_s
-                  (get_local $$6)
-                  (get_local $$7)
-                )
-              )
+              (get_local $$0)
+              (get_local $$1)
             )
             (i32.div_s
-              (i32.div_s
-                (i32.div_s
-                  (get_local $$8)
-                  (get_local $$9)
-                )
-                (i32.div_s
-                  (get_local $$10)
-                  (get_local $$11)
-                )
-              )
-              (i32.div_s
-                (i32.div_s
-                  (get_local $$12)
-                  (get_local $$13)
-                )
-                (i32.div_s
-                  (get_local $$14)
-                  (get_local $$15)
-                )
-              )
+              (get_local $$2)
+              (get_local $$3)
+            )
+          )
+          (i32.div_s
+            (i32.div_s
+              (get_local $$4)
+              (get_local $$5)
+            )
+            (i32.div_s
+              (get_local $$6)
+              (get_local $$7)
+            )
+          )
+        )
+        (i32.div_s
+          (i32.div_s
+            (i32.div_s
+              (get_local $$8)
+              (get_local $$9)
+            )
+            (i32.div_s
+              (get_local $$10)
+              (get_local $$11)
+            )
+          )
+          (i32.div_s
+            (i32.div_s
+              (get_local $$12)
+              (get_local $$13)
+            )
+            (i32.div_s
+              (get_local $$14)
+              (get_local $$15)
             )
           )
         )
@@ -233,51 +201,39 @@
     )
   )
   (func $simple_multiple_use (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (call_import $use_a
-          (set_local $$0
-            (i32.mul
-              (get_local $$1)
-              (get_local $$0)
-            )
-          )
-        )
-        (call_import $use_b
+    (call_import $use_a
+      (set_local $$0
+        (i32.mul
+          (get_local $$1)
           (get_local $$0)
         )
-        (br $fake_return_waka123)
       )
     )
+    (call_import $use_b
+      (get_local $$0)
+    )
+    (return)
   )
   (func $multiple_uses_in_same_insn (param $$0 i32) (param $$1 i32)
-    (block $fake_return_waka123
-      (block
-        (call_import $use_2
-          (set_local $$0
-            (i32.mul
-              (get_local $$1)
-              (get_local $$0)
-            )
-          )
+    (call_import $use_2
+      (set_local $$0
+        (i32.mul
+          (get_local $$1)
           (get_local $$0)
         )
-        (br $fake_return_waka123)
       )
+      (get_local $$0)
     )
+    (return)
   )
   (func $commute (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.add
-            (i32.add
-              (call_import $red)
-              (call_import $green)
-            )
-            (call_import $blue)
-          )
+    (return
+      (i32.add
+        (i32.add
+          (call_import $red)
+          (call_import $green)
         )
+        (call_import $blue)
       )
     )
   )

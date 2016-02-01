@@ -946,16 +946,7 @@ class S2WasmBuilder {
         curr->type = curr->value->type;
         setOutput(curr, assign);
       } else if (match("return")) {
-        Block *temp;
-        if (!(func->body && (temp = func->body->dyn_cast<Block>()) && temp->name == FAKE_RETURN)) {
-          Expression* old = func->body;
-          temp = allocator.alloc<Block>();
-          temp->name = FAKE_RETURN;
-          if (old) temp->list.push_back(old);
-          func->body = temp;
-        }
-        auto curr = allocator.alloc<Break>();
-        curr->name = FAKE_RETURN;
+        auto curr = allocator.alloc<Return>();
         if (*s == '$') {
           curr->value = getInput();
         }

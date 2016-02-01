@@ -25,219 +25,123 @@
   (export "inf_f64" $inf_f64)
   (export "neginf_f64" $neginf_f64)
   (func $zero_i32 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 0)
-        )
-      )
+    (return
+      (i32.const 0)
     )
   )
   (func $one_i32 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 1)
-        )
-      )
+    (return
+      (i32.const 1)
     )
   )
   (func $max_i32 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 2147483647)
-        )
-      )
+    (return
+      (i32.const 2147483647)
     )
   )
   (func $min_i32 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const -2147483648)
-        )
-      )
+    (return
+      (i32.const -2147483648)
     )
   )
   (func $zero_i64 (result i64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i64.const 0)
-        )
-      )
+    (return
+      (i64.const 0)
     )
   )
   (func $one_i64 (result i64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i64.const 1)
-        )
-      )
+    (return
+      (i64.const 1)
     )
   )
   (func $max_i64 (result i64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i64.const 9223372036854775807)
-        )
-      )
+    (return
+      (i64.const 9223372036854775807)
     )
   )
   (func $min_i64 (result i64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i64.const -9223372036854775808)
-        )
-      )
+    (return
+      (i64.const -9223372036854775808)
     )
   )
   (func $negzero_f32 (result f32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f32.const -0)
-        )
-      )
+    (return
+      (f32.const -0)
     )
   )
   (func $zero_f32 (result f32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f32.const 0)
-        )
-      )
+    (return
+      (f32.const 0)
     )
   )
   (func $one_f32 (result f32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f32.const 1)
-        )
-      )
+    (return
+      (f32.const 1)
     )
   )
   (func $two_f32 (result f32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f32.const 2)
-        )
-      )
+    (return
+      (f32.const 2)
     )
   )
   (func $nan_f32 (result f32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f32.const nan:0x400000)
-        )
-      )
+    (return
+      (f32.const nan:0x400000)
     )
   )
   (func $negnan_f32 (result f32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f32.const -nan:0x400000)
-        )
-      )
+    (return
+      (f32.const -nan:0x400000)
     )
   )
   (func $inf_f32 (result f32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f32.const infinity)
-        )
-      )
+    (return
+      (f32.const infinity)
     )
   )
   (func $neginf_f32 (result f32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f32.const -infinity)
-        )
-      )
+    (return
+      (f32.const -infinity)
     )
   )
   (func $negzero_f64 (result f64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f64.const -0)
-        )
-      )
+    (return
+      (f64.const -0)
     )
   )
   (func $zero_f64 (result f64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f64.const 0)
-        )
-      )
+    (return
+      (f64.const 0)
     )
   )
   (func $one_f64 (result f64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f64.const 1)
-        )
-      )
+    (return
+      (f64.const 1)
     )
   )
   (func $two_f64 (result f64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f64.const 2)
-        )
-      )
+    (return
+      (f64.const 2)
     )
   )
   (func $nan_f64 (result f64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f64.const nan:0x8000000000000)
-        )
-      )
+    (return
+      (f64.const nan:0x8000000000000)
     )
   )
   (func $negnan_f64 (result f64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f64.const -nan:0x8000000000000)
-        )
-      )
+    (return
+      (f64.const -nan:0x8000000000000)
     )
   )
   (func $inf_f64 (result f64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f64.const infinity)
-        )
-      )
+    (return
+      (f64.const infinity)
     )
   )
   (func $neginf_f64 (result f64)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (f64.const -infinity)
-        )
-      )
+    (return
+      (f64.const -infinity)
     )
   )
 )

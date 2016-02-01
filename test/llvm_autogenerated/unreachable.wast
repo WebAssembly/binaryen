@@ -10,20 +10,12 @@
     (unreachable)
   )
   (func $f2
-    (block $fake_return_waka123
-      (block
-        (unreachable)
-        (br $fake_return_waka123)
-      )
-    )
+    (unreachable)
+    (return)
   )
   (func $f3
-    (block $fake_return_waka123
-      (block
-        (unreachable)
-        (br $fake_return_waka123)
-      )
-    )
+    (unreachable)
+    (return)
   )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 4 }

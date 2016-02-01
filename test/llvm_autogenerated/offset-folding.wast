@@ -5,39 +5,23 @@
   (export "test2" $test2)
   (export "test3" $test3)
   (func $test0 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 196)
-        )
-      )
+    (return
+      (i32.const 196)
     )
   )
   (func $test1 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 204)
-        )
-      )
+    (return
+      (i32.const 204)
     )
   )
   (func $test2 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 8)
-        )
-      )
+    (return
+      (i32.const 8)
     )
   )
   (func $test3 (result i32)
-    (block $fake_return_waka123
-      (block
-        (br $fake_return_waka123
-          (i32.const 16)
-        )
-      )
+    (return
+      (i32.const 16)
     )
   )
 )
