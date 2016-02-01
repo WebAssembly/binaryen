@@ -39,9 +39,12 @@ struct PostEmscripten : public WalkerPass<WasmWalker<PostEmscripten>> {
   // a mapped global, but it can't be because they are accessed directly (at worst,
   // it's 0 or an unused section of memory that was reserved for mapped globlas).
   // Thus it is ok to optimize such small constants into Load offsets.
-  void visitLoad(Load *curr) {
+
+  template<typename T>
+  void visitMemoryOp(T *curr) {
     if (curr->offset) return;
-    auto add = curr->ptr->dyn_cast<Binary>();
+    Expression* ptr = curr->ptr;
+    auto add = ptr->dyn_cast<Binary>();
     if (!add || add->op != Add) return;
     assert(add->type == i32);
     auto c = add->right->dyn_cast<Const>();
@@ -60,6 +63,13 @@ struct PostEmscripten : public WalkerPass<WasmWalker<PostEmscripten>> {
       curr->ptr = add->left;
       curr->offset = value;
     }
+  }
+
+  void visitLoad(Load* curr) {
+    visitMemoryOp(curr);
+  }
+  void visitStore(Store* curr) {
+    visitMemoryOp(curr);
   }
 };
 
