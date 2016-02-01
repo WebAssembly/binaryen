@@ -140,33 +140,39 @@ inline WasmType getReachableWasmType(WasmType a, WasmType b) {
 
 // Literals
 
-struct Literal {
+class Literal {
+public:
   WasmType type;
+
+private:
+  // store only integers, whose bits are deterministic. floats
+  // can have their signalling bit set, for example.
   union {
     int32_t i32;
     int64_t i64;
-    float f32;
-    double f64;
   };
 
-  Literal() : Literal(WasmType::none) {}
-  explicit Literal(WasmType type) : type(type) { memset(&f64, 0, sizeof(f64)); }
+public:
+  Literal() : type(WasmType::none), i64(0) {}
+  explicit Literal(WasmType type) : type(type), i64(0) {}
   explicit Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
   explicit Literal(uint32_t init) : type(WasmType::i32), i32(init) {}
   explicit Literal(int64_t  init) : type(WasmType::i64), i64(init) {}
   explicit Literal(uint64_t init) : type(WasmType::i64), i64(init) {}
-  explicit Literal(float    init) : type(WasmType::f32), f32(init) {}
-  explicit Literal(double   init) : type(WasmType::f64), f64(init) {}
+  explicit Literal(float    init) : type(WasmType::f32), i32(bit_cast<int32_t>(init)) {}
+  explicit Literal(double   init) : type(WasmType::f64), i64(bit_cast<int64_t>(init)) {}
 
   int32_t geti32() { assert(type == WasmType::i32); return i32; }
   int64_t geti64() { assert(type == WasmType::i64); return i64; }
-  float   getf32() { assert(type == WasmType::f32); return f32; }
-  double  getf64() { assert(type == WasmType::f64); return f64; }
+  float   getf32() { assert(type == WasmType::f32); return bit_cast<float>(i32); }
+  double  getf64() { assert(type == WasmType::f64); return bit_cast<double>(i64); }
+
+  int32_t* geti32Ptr() { assert(type == WasmType::i32); return &i32; } // careful!
 
   int32_t reinterpreti32() { assert(type == WasmType::f32); return i32; }
   int64_t reinterpreti64() { assert(type == WasmType::f64); return i64; }
-  float   reinterpretf32() { assert(type == WasmType::i32); return f32; }
-  double  reinterpretf64() { assert(type == WasmType::i64); return f64; }
+  float   reinterpretf32() { assert(type == WasmType::i32); return bit_cast<float>(i32); }
+  double  reinterpretf64() { assert(type == WasmType::i64); return bit_cast<double>(i64); }
 
   int64_t getInteger() {
     switch (type) {
@@ -178,8 +184,8 @@ struct Literal {
 
   double getFloat() {
     switch (type) {
-      case WasmType::f32: return f32;
-      case WasmType::f64: return f64;
+      case WasmType::f32: return getf32();
+      case WasmType::f64: return getf64();
       default: abort();
     }
   }
@@ -188,11 +194,10 @@ struct Literal {
     if (type != other.type) return false;
     switch (type) {
       case WasmType::none: return true;
-      case WasmType::i32: return i32 == other.i32;
-      case WasmType::i64: return i64 == other.i64;
-      // reinterpret floating-point, to avoid nan != nan
-      case WasmType::f32: return reinterpreti32() == other.reinterpreti32();
-      case WasmType::f64: return reinterpreti64() == other.reinterpreti64();
+      case WasmType::i32:
+      case WasmType::f32: return i32 == other.i32;
+      case WasmType::i64:
+      case WasmType::f64: return i64 == other.i64;
       default: abort();
     }
   }
@@ -244,8 +249,8 @@ struct Literal {
       case none: o << "?"; break;
       case WasmType::i32: o << literal.i32; break;
       case WasmType::i64: o << literal.i64; break;
-      case WasmType::f32: literal.printFloat(o, literal.f32); break;
-      case WasmType::f64: literal.printDouble(o, literal.f64); break;
+      case WasmType::f32: literal.printFloat(o, literal.getf32()); break;
+      case WasmType::f64: literal.printDouble(o, literal.getf64()); break;
       default: WASM_UNREACHABLE();
     }
     restoreNormalColor(o);
