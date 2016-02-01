@@ -671,16 +671,12 @@ class S2WasmBuilder {
         // indirect call
         auto indirect = allocator.alloc<CallIndirect>();
         Name assign = getAssign();
-        indirect->target = getInput();
+        int num = getNumInputs();
+        auto inputs = getInputs(num);
+        indirect->target = inputs[0];
         indirect->type = type;
-        skipWhitespace();
-        if (*s == ',') {
-          skipComma();
-          int num = getNumInputs();
-          auto inputs = getInputs(num);
-          for (int i = 0; i < num; i++) {
-            indirect->operands.push_back(inputs[i]);
-          }
+        for (int i = 1; i < num; i++) {
+          indirect->operands.push_back(inputs[i]);
         }
         setOutput(indirect, assign);
         auto typeName = cashew::IString((std::string("FUNCSIG_") + getSig(indirect)).c_str(), false);
