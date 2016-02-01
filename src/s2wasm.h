@@ -670,11 +670,35 @@ class S2WasmBuilder {
       CallBase* curr;
       Name assign;
       if (match("_indirect")) {
+        // indirect call
         auto specific = allocator.alloc<CallIndirect>();
         assign = getAssign();
         specific->target = getInput();
         curr = specific;
+        curr->type = type;
+        skipWhitespace();
+        if (*s == ',') {
+          skipComma();
+          int num = getNumInputs();
+          auto inputs = getInputs(num);
+          for (int i = 0; i < num; i++) {
+            curr->operands.push_back(inputs[i]);
+          }
+        }
+        setOutput(curr, assign);
+        auto call = curr->dyn_cast<CallIndirect>();
+        auto typeName = cashew::IString((std::string("FUNCSIG_") + getSig(call)).c_str(), false);
+        if (wasm.functionTypesMap.count(typeName) == 0) {
+          auto type = allocator.alloc<FunctionType>();
+          *type = sigToFunctionType(getSig(curr));
+          type->name = typeName;
+          wasm.addFunctionType(type);
+          call->fullType = type;
+        } else {
+          call->fullType = wasm.functionTypesMap[typeName];
+        }
       } else {
+        // non-indirect call
         assign = getAssign();
         Name target = cleanFunction(getCommaSeparated());
         auto aliased = aliasedFunctions.find(target);
@@ -688,38 +712,26 @@ class S2WasmBuilder {
           specific->target = target;
           curr = specific;
         }
-      }
-      curr->type = type;
-      skipWhitespace();
-      if (*s == ',') {
-        skipComma();
-        int num = getNumInputs();
-        auto inputs = getInputs(num);
-        for (int i = 0; i < num; i++) {
-          curr->operands.push_back(inputs[i]);
+        curr->type = type;
+        skipWhitespace();
+        if (*s == ',') {
+          skipComma();
+          int num = getNumInputs();
+          auto inputs = getInputs(num);
+          for (int i = 0; i < num; i++) {
+            curr->operands.push_back(inputs[i]);
+          }
         }
-      }
-      setOutput(curr, assign);
-      if (curr->is<CallIndirect>()) {
-        auto call = curr->dyn_cast<CallIndirect>();
-        auto typeName = cashew::IString((std::string("FUNCSIG_") + getSig(call)).c_str(), false);
-        if (wasm.functionTypesMap.count(typeName) == 0) {
-          auto type = allocator.alloc<FunctionType>();
-          *type = sigToFunctionType(getSig(curr));
-          type->name = typeName;
-          wasm.addFunctionType(type);
-          call->fullType = type;
-        } else {
-          call->fullType = wasm.functionTypesMap[typeName];
-        }
-      } else if (curr->is<CallImport>()) {
-        auto target = curr->cast<CallImport>()->target;
-        if (wasm.importsMap.count(target) == 0) {
-          auto import = allocator.alloc<Import>();
-          import->name = import->base = target;
-          import->module = ENV;
-          import->type = ensureFunctionType(getSig(curr), &wasm, allocator);
-          wasm.addImport(import);
+        setOutput(curr, assign);
+        if (curr->is<CallImport>()) {
+          auto target = curr->cast<CallImport>()->target;
+          if (wasm.importsMap.count(target) == 0) {
+            auto import = allocator.alloc<Import>();
+            import->name = import->base = target;
+            import->module = ENV;
+            import->type = ensureFunctionType(getSig(curr), &wasm, allocator);
+            wasm.addImport(import);
+          }
         }
       }
     };
