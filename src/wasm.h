@@ -432,6 +432,12 @@ public:
     if (ifFalse) printFullLine(o, indent, ifFalse);
     return decIndent(o, indent);
   }
+
+  void finalize() {
+    if (condition) {
+      type = getReachableWasmType(ifTrue->type, ifFalse->type);
+    }
+  }
 };
 
 class Loop : public Expression {
@@ -892,8 +898,7 @@ public:
   }
 
   void finalize() {
-    type = ifTrue->type;
-    if (type == none) type = ifFalse->type; // ifTrue might be unreachable
+    type = getReachableWasmType(ifTrue->type, ifFalse->type);
   }
 };
 

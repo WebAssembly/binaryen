@@ -797,7 +797,7 @@ private:
     ret->ifTrue = parseExpression(s[2]);
     if (s.size() == 4) {
       ret->ifFalse = parseExpression(s[3]);
-      ret->type = ret->ifTrue->type == ret->ifFalse->type ? ret->ifTrue->type : none; // if not the same type, this does not return a value
+      ret->finalize();
     }
     return ret;
   }

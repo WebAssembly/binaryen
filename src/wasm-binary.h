@@ -1314,7 +1314,7 @@ public:
     readExpression(curr->ifTrue);
     if (code == BinaryConsts::IfElse) {
       readExpression(curr->ifFalse);
-      curr->type = curr->ifTrue->type;
+      curr->finalize();
     }
   }
   void visitLoop(Loop *curr) {
