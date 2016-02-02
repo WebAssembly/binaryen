@@ -98,16 +98,17 @@ f4:                                     # @f4
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 10
-	call    	f1@FUNCTION, $0
-	i32.const	$1=, -10
-	call    	f2@FUNCTION, $1
-	call    	f3@FUNCTION, $0
-	call    	f4@FUNCTION, $1
-	i32.const	$push0=, 0
-	return  	$pop0
+	i32.const	$push0=, 10
+	call    	f1@FUNCTION, $pop0
+	i32.const	$push1=, -10
+	call    	f2@FUNCTION, $pop1
+	i32.const	$push4=, 10
+	call    	f3@FUNCTION, $pop4
+	i32.const	$push3=, -10
+	call    	f4@FUNCTION, $pop3
+	i32.const	$push2=, 0
+	return  	$pop2
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main

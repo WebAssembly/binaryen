@@ -7,12 +7,10 @@
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 176
-	i32.store	$discard=, 0($0), $pop0
-	i32.const	$push1=, 52
-	i32.store	$discard=, 4($0), $pop1
-	i32.const	$push2=, 31
-	i32.store	$discard=, 8($0), $pop2
+	i32.const	$push1=, 31
+	i32.store	$discard=, 8($0), $pop1
+	i64.const	$push0=, 223338299568
+	i64.store	$discard=, 0($0):p2align=2, $pop0
 	return
 	.endfunc
 .Lfunc_end0:
@@ -56,9 +54,21 @@ baz:                                    # @baz
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %baz.exit
-	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	.local  	i32, i32, i32
+# BB#0:                                 # %entry
+	i32.const	$0=, __stack_pointer
+	i32.load	$0=, 0($0)
+	i32.const	$1=, 16
+	i32.sub 	$2=, $0, $1
+	i32.const	$1=, __stack_pointer
+	i32.store	$2=, 0($1), $2
+	i32.const	$push1=, 31
+	i32.store	$discard=, 8($2):p2align=3, $pop1
+	i64.const	$push0=, 223338299568
+	i64.store	$discard=, 0($2), $pop0
+	call    	baz@FUNCTION, $2
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end2:

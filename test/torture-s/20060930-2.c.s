@@ -25,18 +25,19 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.const	$1=, s
 	block
-	i32.call	$push2=, bar@FUNCTION, $1, $1
+	i32.const	$push6=, 0
 	i32.const	$push0=, t
-	i32.store	$push1=, t($0), $pop0
-	i32.ne  	$push3=, $pop2, $pop1
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.store	$push1=, t($pop6), $pop0
+	i32.const	$push2=, s
+	i32.const	$push5=, s
+	i32.call	$push3=, bar@FUNCTION, $pop2, $pop5
+	i32.ne  	$push4=, $pop1, $pop3
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -49,7 +50,7 @@ main:                                   # @main
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.align	2
+	.p2align	2
 s:
 	.skip	4
 	.size	s, 4
@@ -58,7 +59,7 @@ s:
 	.type	t,@object
 	.section	.bss.t,"aw",@nobits
 	.globl	t
-	.align	2
+	.p2align	2
 t:
 	.skip	4
 	.size	t, 4

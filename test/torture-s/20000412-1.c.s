@@ -11,11 +11,9 @@ foo:                                    # @foo
 	i32.load16_s	$push1=, i($pop0)
 	i32.const	$push2=, 2
 	i32.shl 	$push3=, $pop1, $pop2
-	i32.const	$push4=, wordlist
+	i32.const	$push4=, wordlist+828
 	i32.add 	$push5=, $pop3, $pop4
-	i32.const	$push6=, 828
-	i32.add 	$push7=, $pop5, $pop6
-	return  	$pop7
+	return  	$pop5
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -26,16 +24,16 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load16_u	$push0=, i($0)
+	i32.const	$push3=, 0
+	i32.load16_u	$push0=, i($pop3)
 	i32.const	$push1=, 65535
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -49,7 +47,7 @@ main:                                   # @main
 	.type	i,@object
 	.section	.data.i,"aw",@progbits
 	.globl	i
-	.align	1
+	.p2align	1
 i:
 	.int16	65535                   # 0xffff
 	.size	i, 2
@@ -58,7 +56,7 @@ i:
 	.type	wordlist,@object
 	.section	.rodata.wordlist,"a",@progbits
 	.globl	wordlist
-	.align	4
+	.p2align	4
 wordlist:
 	.skip	828
 	.size	wordlist, 828

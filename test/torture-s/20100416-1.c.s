@@ -7,15 +7,15 @@
 movegt:                                 # @movegt
 	.param  	i32, i32, i64
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 0
-	i32.gt_s	$push0=, $1, $3
-	i64.const	$push1=, -1152921504606846977
-	i64.gt_s	$push2=, $2, $pop1
-	i32.select	$push3=, $pop2, $0, $1
-	i32.select	$push4=, $pop0, $pop3, $3
-	return  	$pop4
+	i32.const	$push0=, 0
+	i32.gt_s	$push1=, $1, $pop0
+	i64.const	$push2=, -1152921504606846977
+	i64.gt_s	$push3=, $2, $pop2
+	i32.select	$push4=, $pop3, $0, $1
+	i32.const	$push6=, 0
+	i32.select	$push5=, $pop1, $pop4, $pop6
+	return  	$pop5
 	.endfunc
 .Lfunc_end0:
 	.size	movegt, .Lfunc_end0-movegt
@@ -26,49 +26,70 @@ movegt:                                 # @movegt
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i64, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i64.const	$1=, -1152921504606846977
-	i32.const	$2=, 1
-	i32.const	$3=, -1
 	block
-	i64.load	$push0=, tests($0)
-	i64.gt_s	$push1=, $pop0, $1
-	i32.select	$push2=, $pop1, $3, $2
-	i32.load	$push3=, tests+8($0)
+	i32.const	$push32=, 0
+	i64.load	$push0=, tests($pop32):p2align=4
+	i64.const	$push31=, -1152921504606846977
+	i64.gt_s	$push1=, $pop0, $pop31
+	i32.const	$push30=, -1
+	i32.const	$push29=, 1
+	i32.select	$push2=, $pop1, $pop30, $pop29
+	i32.const	$push28=, 0
+	i32.load	$push3=, tests+8($pop28):p2align=3
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %for.cond
-	i64.load	$push5=, tests+16($0)
-	i64.gt_s	$push6=, $pop5, $1
-	i32.select	$push7=, $pop6, $3, $2
-	i32.load	$push8=, tests+24($0)
+	i32.const	$push37=, 0
+	i64.load	$push5=, tests+16($pop37):p2align=4
+	i64.const	$push36=, -1152921504606846977
+	i64.gt_s	$push6=, $pop5, $pop36
+	i32.const	$push35=, -1
+	i32.const	$push34=, 1
+	i32.select	$push7=, $pop6, $pop35, $pop34
+	i32.const	$push33=, 0
+	i32.load	$push8=, tests+24($pop33):p2align=3
 	i32.ne  	$push9=, $pop7, $pop8
 	br_if   	$pop9, 0        # 0: down to label0
 # BB#2:                                 # %for.cond.1
-	i64.load	$push10=, tests+32($0)
-	i64.gt_s	$push11=, $pop10, $1
-	i32.select	$push12=, $pop11, $3, $2
-	i32.load	$push13=, tests+40($0)
+	i32.const	$push42=, 0
+	i64.load	$push10=, tests+32($pop42):p2align=4
+	i64.const	$push41=, -1152921504606846977
+	i64.gt_s	$push11=, $pop10, $pop41
+	i32.const	$push40=, -1
+	i32.const	$push39=, 1
+	i32.select	$push12=, $pop11, $pop40, $pop39
+	i32.const	$push38=, 0
+	i32.load	$push13=, tests+40($pop38):p2align=3
 	i32.ne  	$push14=, $pop12, $pop13
 	br_if   	$pop14, 0       # 0: down to label0
 # BB#3:                                 # %for.cond.2
-	i64.load	$push15=, tests+48($0)
-	i64.gt_s	$push16=, $pop15, $1
-	i32.select	$push17=, $pop16, $3, $2
-	i32.load	$push18=, tests+56($0)
+	i32.const	$push47=, 0
+	i64.load	$push15=, tests+48($pop47):p2align=4
+	i64.const	$push46=, -1152921504606846977
+	i64.gt_s	$push16=, $pop15, $pop46
+	i32.const	$push45=, -1
+	i32.const	$push44=, 1
+	i32.select	$push17=, $pop16, $pop45, $pop44
+	i32.const	$push43=, 0
+	i32.load	$push18=, tests+56($pop43):p2align=3
 	i32.ne  	$push19=, $pop17, $pop18
 	br_if   	$pop19, 0       # 0: down to label0
 # BB#4:                                 # %for.cond.3
-	i64.load	$push20=, tests+64($0)
-	i64.gt_s	$push21=, $pop20, $1
-	i32.select	$push22=, $pop21, $3, $2
-	i32.load	$push23=, tests+72($0)
-	i32.ne  	$push24=, $pop22, $pop23
-	br_if   	$pop24, 0       # 0: down to label0
+	i32.const	$push49=, 0
+	i64.load	$push20=, tests+64($pop49):p2align=4
+	i64.const	$push21=, -1152921504606846977
+	i64.gt_s	$push22=, $pop20, $pop21
+	i32.const	$push24=, -1
+	i32.const	$push23=, 1
+	i32.select	$push25=, $pop22, $pop24, $pop23
+	i32.const	$push48=, 0
+	i32.load	$push26=, tests+72($pop48):p2align=3
+	i32.ne  	$push27=, $pop25, $pop26
+	br_if   	$pop27, 0       # 0: down to label0
 # BB#5:                                 # %for.cond.4
-	return  	$0
+	i32.const	$push50=, 0
+	return  	$pop50
 .LBB1_6:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -81,7 +102,7 @@ main:                                   # @main
 	.type	tests,@object
 	.section	.data.tests,"aw",@progbits
 	.globl	tests
-	.align	4
+	.p2align	4
 tests:
 	.int64	-1152921504606846976    # 0xf000000000000000
 	.int32	4294967295              # 0xffffffff

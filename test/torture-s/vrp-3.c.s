@@ -18,11 +18,12 @@ f:                                      # @f
 	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.then2
 	i32.const	$push4=, 31
-	i32.shr_s	$1=, $0, $pop4
-	i32.add 	$push5=, $0, $1
-	i32.xor 	$push6=, $pop5, $1
-	i32.const	$push7=, 2
-	i32.ne  	$1=, $pop6, $pop7
+	i32.shr_s	$push5=, $0, $pop4
+	tee_local	$push9=, $1=, $pop5
+	i32.add 	$push6=, $0, $pop9
+	i32.xor 	$push7=, $pop6, $1
+	i32.const	$push8=, 2
+	i32.ne  	$1=, $pop7, $pop8
 .LBB0_2:                                # %return
 	end_block                       # label0:
 	return  	$1

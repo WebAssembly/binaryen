@@ -60,48 +60,50 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 0
-	i32.const	$2=, buf-4
+	i32.const	$1=, 0
+	i32.const	$0=, buf-4
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label3:
-	i32.call	$0=, foo@FUNCTION, $3
-	i32.const	$1=, 4
-	i32.add 	$2=, $2, $1
-	i32.ne  	$push1=, $2, $0
+	i32.const	$push10=, 4
+	i32.add 	$0=, $0, $pop10
+	i32.call	$push0=, foo@FUNCTION, $1
+	tee_local	$push9=, $3=, $pop0
+	i32.ne  	$push1=, $0, $pop9
 	br_if   	$pop1, 2        # 2: down to label2
 # BB#2:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB2_1 Depth=1
-	i32.const	$4=, buf
+	i32.const	$2=, buf
 	block
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $3, $pop9
-	br_if   	$pop10, 0       # 0: down to label5
+	i32.const	$push13=, 0
+	i32.eq  	$push14=, $1, $pop13
+	br_if   	$pop14, 0       # 0: down to label5
 # BB#3:                                 # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
-	i32.const	$push2=, -1
-	i32.add 	$push3=, $3, $pop2
-	i32.call	$push4=, foo@FUNCTION, $pop3
-	i32.add 	$4=, $pop4, $1
+	i32.const	$push12=, -1
+	i32.add 	$push2=, $1, $pop12
+	i32.call	$push3=, foo@FUNCTION, $pop2
+	i32.const	$push11=, 4
+	i32.add 	$2=, $pop3, $pop11
 .LBB2_4:                                # %bar.exit
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label5:
-	i32.ne  	$push5=, $4, $0
-	br_if   	$pop5, 2        # 2: down to label2
+	i32.ne  	$push4=, $2, $3
+	br_if   	$pop4, 2        # 2: down to label2
 # BB#5:                                 # %for.cond
                                         #   in Loop: Header=BB2_1 Depth=1
-	i32.const	$push0=, 1
-	i32.add 	$3=, $3, $pop0
-	i32.const	$push6=, 26
-	i32.le_s	$push7=, $3, $pop6
-	br_if   	$pop7, 0        # 0: up to label3
+	i32.const	$push8=, 1
+	i32.add 	$1=, $1, $pop8
+	i32.const	$push7=, 26
+	i32.le_s	$push5=, $1, $pop7
+	br_if   	$pop5, 0        # 0: up to label3
 # BB#6:                                 # %for.end
 	end_loop                        # label4:
-	i32.const	$push8=, 0
-	return  	$pop8
+	i32.const	$push6=, 0
+	return  	$pop6
 .LBB2_7:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
@@ -114,7 +116,7 @@ main:                                   # @main
 	.type	buf,@object
 	.section	.bss.buf,"aw",@nobits
 	.globl	buf
-	.align	4
+	.p2align	4
 buf:
 	.skip	4096
 	.size	buf, 4096

@@ -6,24 +6,27 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.const	$1=, 196
 	block
-	i32.load	$push1=, x($0)
-	i32.ne  	$push2=, $pop1, $1
-	br_if   	$pop2, 0        # 0: down to label0
+	i32.const	$push7=, 0
+	i32.load	$push1=, x($pop7)
+	i32.const	$push2=, 196
+	i32.ne  	$push3=, $pop1, $pop2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.load	$push0=, x+4($0)
+	i32.const	$push8=, 0
+	i32.load	$push0=, x+4($pop8)
 	br_if   	$pop0, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	block
-	i32.load	$push3=, y($0)
-	i32.ne  	$push4=, $pop3, $1
-	br_if   	$pop4, 0        # 0: down to label1
+	i32.const	$push9=, 0
+	i32.load	$push4=, y($pop9)
+	i32.const	$push5=, 196
+	i32.ne  	$push6=, $pop4, $pop5
+	br_if   	$pop6, 0        # 0: down to label1
 # BB#3:                                 # %if.end4
-	call    	exit@FUNCTION, $0
+	i32.const	$push10=, 0
+	call    	exit@FUNCTION, $pop10
 	unreachable
 .LBB0_4:                                # %if.then3
 	end_block                       # label1:
@@ -41,7 +44,7 @@ main:                                   # @main
 	.type	x,@object
 	.section	.data.x,"aw",@progbits
 	.globl	x
-	.align	2
+	.p2align	2
 x:
 	.int32	196                     # 0xc4
 	.int32	0                       # 0x0
@@ -51,7 +54,7 @@ x:
 	.type	y,@object
 	.section	.data.y,"aw",@progbits
 	.globl	y
-	.align	2
+	.p2align	2
 y:
 	.int32	196                     # 0xc4
 	.size	y, 4

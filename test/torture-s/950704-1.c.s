@@ -7,41 +7,45 @@
 f:                                      # @f
 	.param  	i64, i64
 	.result 	i64
-	.local  	i32, i64, i64
+	.local  	i64
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
-	i32.store	$discard=, errflag($2), $2
-	i64.add 	$4=, $1, $0
-	i64.const	$3=, 0
+	i32.const	$push0=, 0
+	i32.const	$push11=, 0
+	i32.store	$discard=, errflag($pop0), $pop11
+	i64.add 	$2=, $1, $0
 	block
 	block
 	block
-	i64.lt_s	$push0=, $0, $3
-	br_if   	$pop0, 0        # 0: down to label2
+	i64.const	$push10=, 0
+	i64.lt_s	$push1=, $0, $pop10
+	br_if   	$pop1, 0        # 0: down to label2
 # BB#1:                                 # %if.then
-	i64.const	$push3=, 0
-	i64.lt_s	$push4=, $1, $pop3
-	br_if   	$pop4, 2        # 2: down to label0
+	i64.const	$push12=, 0
+	i64.lt_s	$push5=, $1, $pop12
+	br_if   	$pop5, 2        # 2: down to label0
 # BB#2:                                 # %if.then
-	i64.const	$push5=, -1
-	i64.le_s	$push6=, $4, $pop5
-	br_if   	$pop6, 1        # 1: down to label1
+	i64.const	$push6=, -1
+	i64.le_s	$push7=, $2, $pop6
+	br_if   	$pop7, 1        # 1: down to label1
 	br      	2               # 2: down to label0
 .LBB0_3:                                # %if.else
 	end_block                       # label2:
-	i64.gt_s	$push1=, $1, $3
-	br_if   	$pop1, 1        # 1: down to label0
-# BB#4:                                 # %if.else
-	i64.lt_s	$push2=, $4, $3
+	i64.const	$push13=, 0
+	i64.gt_s	$push2=, $1, $pop13
 	br_if   	$pop2, 1        # 1: down to label0
+# BB#4:                                 # %if.else
+	i64.const	$push3=, 0
+	i64.lt_s	$push4=, $2, $pop3
+	br_if   	$pop4, 1        # 1: down to label0
 .LBB0_5:                                # %if.end9
 	end_block                       # label1:
-	i32.const	$push7=, 1
-	i32.store	$discard=, errflag($2), $pop7
-	copy_local	$4=, $3
+	i32.const	$push8=, 0
+	i32.const	$push9=, 1
+	i32.store	$discard=, errflag($pop8), $pop9
+	i64.const	$2=, 0
 .LBB0_6:                                # %cleanup
 	end_block                       # label0:
-	return  	$4
+	return  	$2
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -52,11 +56,11 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end28
-	i32.const	$0=, 0
-	i32.store	$push0=, errflag($0), $0
-	call    	exit@FUNCTION, $pop0
+	i32.const	$push0=, 0
+	i32.const	$push2=, 0
+	i32.store	$push1=, errflag($pop0), $pop2
+	call    	exit@FUNCTION, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -66,7 +70,7 @@ main:                                   # @main
 	.type	errflag,@object
 	.section	.bss.errflag,"aw",@nobits
 	.globl	errflag
-	.align	2
+	.p2align	2
 errflag:
 	.int32	0                       # 0x0
 	.size	errflag, 4

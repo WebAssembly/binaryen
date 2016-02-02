@@ -7,16 +7,16 @@
 addhi:                                  # @addhi
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i64.load	$push3=, acc($1)
+	i32.const	$push3=, 0
+	i32.const	$push6=, 0
+	i64.load	$push4=, acc($pop6)
 	i64.extend_u/i32	$push0=, $0
 	i64.const	$push1=, 32
 	i64.shl 	$push2=, $pop0, $pop1
-	i64.add 	$push4=, $pop3, $pop2
-	i64.store	$discard=, acc($1), $pop4
-	return  	$1
+	i64.add 	$push5=, $pop4, $pop2
+	i64.store	$discard=, acc($pop3), $pop5
+	return  	$0
 	.endfunc
 .Lfunc_end0:
 	.size	addhi, .Lfunc_end0-addhi
@@ -28,16 +28,16 @@ addhi:                                  # @addhi
 subhi:                                  # @subhi
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i64.load	$push3=, acc($1)
+	i32.const	$push3=, 0
+	i32.const	$push6=, 0
+	i64.load	$push4=, acc($pop6)
 	i64.extend_u/i32	$push0=, $0
 	i64.const	$push1=, 32
 	i64.shl 	$push2=, $pop0, $pop1
-	i64.sub 	$push4=, $pop3, $pop2
-	i64.store	$discard=, acc($1), $pop4
-	return  	$1
+	i64.sub 	$push5=, $pop4, $pop2
+	i64.store	$discard=, acc($pop3), $pop5
+	return  	$0
 	.endfunc
 .Lfunc_end1:
 	.size	subhi, .Lfunc_end1-subhi
@@ -48,12 +48,12 @@ subhi:                                  # @subhi
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end4
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i64.const	$push0=, 281470681743360
-	i64.store	$discard=, acc($0), $pop0
-	call    	exit@FUNCTION, $0
+	i64.store	$discard=, acc($pop1), $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -63,7 +63,7 @@ main:                                   # @main
 	.type	acc,@object
 	.section	.bss.acc,"aw",@nobits
 	.globl	acc
-	.align	3
+	.p2align	3
 acc:
 	.int64	0                       # 0x0
 	.size	acc, 8

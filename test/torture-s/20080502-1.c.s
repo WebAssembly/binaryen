@@ -7,16 +7,17 @@
 foo:                                    # @foo
 	.param  	i32, i64, i64
 # BB#0:                                 # %entry
+	i32.const	$push6=, 8
+	i32.add 	$push7=, $0, $pop6
 	i64.const	$push0=, 63
-	i64.shr_s	$2=, $2, $pop0
-	i32.const	$push5=, 8
-	i32.add 	$push6=, $0, $pop5
-	i64.const	$push3=, 4611846683310179025
-	i64.and 	$push4=, $2, $pop3
-	i64.store	$discard=, 0($pop6), $pop4
-	i64.const	$push1=, -8905435550453399112
-	i64.and 	$push2=, $2, $pop1
-	i64.store	$discard=, 0($0), $pop2
+	i64.shr_s	$push1=, $2, $pop0
+	tee_local	$push8=, $2=, $pop1
+	i64.const	$push4=, 4611846683310179025
+	i64.and 	$push5=, $pop8, $pop4
+	i64.store	$discard=, 0($pop7), $pop5
+	i64.const	$push2=, -8905435550453399112
+	i64.and 	$push3=, $2, $pop2
+	i64.store	$discard=, 0($0):p2align=4, $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -28,25 +29,21 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, __stack_pointer
 	i32.load	$0=, 0($0)
 	i32.const	$1=, 16
-	i32.sub 	$5=, $0, $1
+	i32.sub 	$3=, $0, $1
 	i32.const	$1=, __stack_pointer
-	i32.store	$5=, 0($1), $5
+	i32.store	$3=, 0($1), $3
 	i64.const	$push1=, 0
 	i64.const	$push0=, -4611967493404098560
-	i32.const	$3=, 0
-	i32.add 	$3=, $5, $3
 	call    	foo@FUNCTION, $3, $pop1, $pop0
-	i64.load	$push5=, 0($5)
-	i32.const	$push2=, 8
-	i32.const	$4=, 0
-	i32.add 	$4=, $5, $4
 	block
-	i32.or  	$push3=, $4, $pop2
+	i64.load	$push5=, 0($3):p2align=4
+	i32.const	$push2=, 8
+	i32.or  	$push3=, $3, $pop2
 	i64.load	$push4=, 0($pop3)
 	i64.const	$push7=, -8905435550453399112
 	i64.const	$push6=, 4611846683310179025
@@ -55,9 +52,9 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 0
 	i32.const	$2=, 16
-	i32.add 	$5=, $5, $2
+	i32.add 	$3=, $3, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$5=, 0($2), $5
+	i32.store	$3=, 0($2), $3
 	return  	$pop9
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

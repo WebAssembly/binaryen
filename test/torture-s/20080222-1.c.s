@@ -20,16 +20,16 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load8_u	$push0=, space+4($0)
+	i32.const	$push3=, 0
+	i32.load8_u	$push0=, space+4($pop3)
 	i32.const	$push1=, 5
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push4=, 0
+	return  	$pop4
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

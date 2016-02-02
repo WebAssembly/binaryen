@@ -28,20 +28,17 @@ foo:                                    # @foo
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
-	block
-	i32.load	$push0=, z($2)
-	i32.const	$push1=, 1
-	i32.ge_s	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label1
-# BB#1:                                 # %foo.exit
-	call    	exit@FUNCTION, $2
-	unreachable
-.LBB1_2:                                # %if.then.i
-	end_block                       # label1:
-	call    	abort@FUNCTION
+	i32.const	$push0=, 0
+	i32.load	$push1=, z($pop0)
+	i32.const	$push7=, 0
+	i32.gt_s	$push2=, $pop1, $pop7
+	i32.const	$push4=, 2
+	i32.const	$push3=, 1
+	i32.select	$push5=, $pop2, $pop4, $pop3
+	call    	foo@FUNCTION, $pop5
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -51,7 +48,7 @@ main:                                   # @main
 	.type	z,@object
 	.section	.bss.z,"aw",@nobits
 	.globl	z
-	.align	2
+	.p2align	2
 z:
 	.int32	0                       # 0x0
 	.size	z, 4

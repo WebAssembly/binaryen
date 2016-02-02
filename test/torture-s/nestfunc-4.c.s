@@ -6,17 +6,21 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %if.then
-	i32.const	$0=, 0
-	i32.load	$1=, level($0)
-	i32.const	$2=, 499
-	i32.gt_s	$push0=, $1, $2
-	i32.select	$push1=, $pop0, $1, $2
-	i32.const	$push2=, 1
-	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, level($0), $pop3
-	call    	exit@FUNCTION, $0
+	i32.const	$push0=, 0
+	i32.const	$push10=, 0
+	i32.load	$push1=, level($pop10)
+	tee_local	$push9=, $0=, $pop1
+	i32.const	$push2=, 499
+	i32.gt_s	$push3=, $pop9, $pop2
+	i32.const	$push8=, 499
+	i32.select	$push4=, $pop3, $0, $pop8
+	i32.const	$push5=, 1
+	i32.add 	$push6=, $pop4, $pop5
+	i32.store	$discard=, level($pop0), $pop6
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -28,18 +32,21 @@ main:                                   # @main
 	.type	foo,@function
 foo:                                    # @foo
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, level($0)
-	i32.const	$2=, 499
-	i32.gt_s	$push0=, $1, $2
-	i32.select	$push1=, $pop0, $1, $2
-	i32.const	$push2=, 1
-	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, level($0), $pop3
-	i32.const	$push4=, -42
-	return  	$pop4
+	i32.const	$push0=, 0
+	i32.const	$push10=, 0
+	i32.load	$push1=, level($pop10)
+	tee_local	$push9=, $0=, $pop1
+	i32.const	$push2=, 499
+	i32.gt_s	$push3=, $pop9, $pop2
+	i32.const	$push8=, 499
+	i32.select	$push4=, $pop3, $0, $pop8
+	i32.const	$push5=, 1
+	i32.add 	$push6=, $pop4, $pop5
+	i32.store	$discard=, level($pop0), $pop6
+	i32.const	$push7=, -42
+	return  	$pop7
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -52,19 +59,20 @@ bar:                                    # @bar
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$0=, level($pop0)
-	i32.const	$1=, -42
+	i32.const	$0=, -42
 	block
-	i32.const	$push1=, 499
-	i32.gt_s	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	i32.const	$push1=, 0
+	i32.load	$push0=, level($pop1)
+	tee_local	$push5=, $1=, $pop0
+	i32.const	$push2=, 499
+	i32.gt_s	$push3=, $pop5, $pop2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %cond.false
-	i32.call	$1=, foo@FUNCTION
+	i32.call	$0=, foo@FUNCTION
 .LBB2_2:                                # %cond.end
 	end_block                       # label0:
-	i32.sub 	$push3=, $1, $0
-	return  	$pop3
+	i32.sub 	$push4=, $0, $1
+	return  	$pop4
 	.endfunc
 .Lfunc_end2:
 	.size	bar, .Lfunc_end2-bar
@@ -73,7 +81,7 @@ bar:                                    # @bar
 	.type	level,@object
 	.section	.bss.level,"aw",@nobits
 	.globl	level
-	.align	2
+	.p2align	2
 level:
 	.int32	0                       # 0x0
 	.size	level, 4

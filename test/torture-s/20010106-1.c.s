@@ -7,20 +7,19 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 2
-	i32.add 	$0=, $0, $1
 	block
-	i32.const	$push0=, 7
-	i32.ge_u	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	i32.const	$push6=, 2
+	i32.add 	$push0=, $0, $pop6
+	tee_local	$push5=, $0=, $pop0
+	i32.const	$push1=, 7
+	i32.ge_u	$push2=, $pop5, $pop1
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %switch.lookup
-	i32.const	$push3=, .Lswitch.table
-	i32.shl 	$push2=, $0, $1
-	i32.add 	$push4=, $pop3, $pop2
-	i32.load	$push5=, 0($pop4)
-	return  	$pop5
+	i32.const	$push7=, 2
+	i32.shl 	$push3=, $0, $pop7
+	i32.load	$push4=, .Lswitch.table($pop3)
+	return  	$pop4
 .LBB0_2:                                # %sw.default
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -45,7 +44,7 @@ main:                                   # @main
 
 	.type	.Lswitch.table,@object  # @switch.table
 	.section	.rodata..Lswitch.table,"a",@progbits
-	.align	4
+	.p2align	4
 .Lswitch.table:
 	.int32	33                      # 0x21
 	.int32	0                       # 0x0

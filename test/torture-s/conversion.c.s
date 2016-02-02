@@ -34,7 +34,7 @@ u2d:                                    # @u2d
 	.type	u2ld,@function
 u2ld:                                   # @u2ld
 	.param  	i32, i32
-	.local  	i64, i32, i32, i32, i32, i32, i32
+	.local  	i64, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, __stack_pointer
 	i32.load	$3=, 0($3)
@@ -42,18 +42,15 @@ u2ld:                                   # @u2ld
 	i32.sub 	$6=, $3, $4
 	i32.const	$4=, __stack_pointer
 	i32.store	$6=, 0($4), $6
-	i32.const	$6=, 0
-	i32.add 	$6=, $6, $6
 	call    	__floatunsitf@FUNCTION, $6, $1
-	i32.const	$1=, 8
 	i64.load	$2=, 0($6)
-	i32.add 	$push2=, $0, $1
-	i32.const	$7=, 0
-	i32.add 	$7=, $6, $7
-	i32.add 	$push0=, $7, $1
-	i64.load	$push1=, 0($pop0)
-	i64.store	$discard=, 0($pop2), $pop1
-	i64.store	$discard=, 0($0), $2
+	i32.const	$push0=, 8
+	i32.add 	$push3=, $0, $pop0
+	i32.const	$push4=, 8
+	i32.add 	$push1=, $6, $pop4
+	i64.load	$push2=, 0($pop1)
+	i64.store	$discard=, 0($pop3), $pop2
+	i64.store	$discard=, 0($0):p2align=4, $2
 	i32.const	$5=, 16
 	i32.add 	$6=, $6, $5
 	i32.const	$5=, __stack_pointer
@@ -97,7 +94,7 @@ s2d:                                    # @s2d
 	.type	s2ld,@function
 s2ld:                                   # @s2ld
 	.param  	i32, i32
-	.local  	i64, i32, i32, i32, i32, i32, i32
+	.local  	i64, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, __stack_pointer
 	i32.load	$3=, 0($3)
@@ -105,18 +102,15 @@ s2ld:                                   # @s2ld
 	i32.sub 	$6=, $3, $4
 	i32.const	$4=, __stack_pointer
 	i32.store	$6=, 0($4), $6
-	i32.const	$6=, 0
-	i32.add 	$6=, $6, $6
 	call    	__floatsitf@FUNCTION, $6, $1
-	i32.const	$1=, 8
 	i64.load	$2=, 0($6)
-	i32.add 	$push2=, $0, $1
-	i32.const	$7=, 0
-	i32.add 	$7=, $6, $7
-	i32.add 	$push0=, $7, $1
-	i64.load	$push1=, 0($pop0)
-	i64.store	$discard=, 0($pop2), $pop1
-	i64.store	$discard=, 0($0), $2
+	i32.const	$push0=, 8
+	i32.add 	$push3=, $0, $pop0
+	i32.const	$push4=, 8
+	i32.add 	$push1=, $6, $pop4
+	i64.load	$push2=, 0($pop1)
+	i64.store	$discard=, 0($pop3), $pop2
+	i64.store	$discard=, 0($0):p2align=4, $2
 	i32.const	$5=, 16
 	i32.add 	$6=, $6, $5
 	i32.const	$5=, __stack_pointer
@@ -135,16 +129,17 @@ fnear:                                  # @fnear
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	f32.sub 	$1=, $0, $1
 	i32.const	$2=, 1
 	block
-	f32.const	$push0=, 0x0p0
-	f32.eq  	$push1=, $1, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	f32.sub 	$push0=, $0, $1
+	tee_local	$push5=, $1=, $pop0
+	f32.const	$push1=, 0x0p0
+	f32.eq  	$push2=, $pop5, $pop1
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %lor.rhs
-	f32.div 	$push2=, $0, $1
-	f32.const	$push3=, 0x1.e848p19
-	f32.gt  	$2=, $pop2, $pop3
+	f32.div 	$push3=, $0, $1
+	f32.const	$push4=, 0x1.e848p19
+	f32.gt  	$2=, $pop3, $pop4
 .LBB6_2:                                # %lor.end
 	end_block                       # label0:
 	return  	$2
@@ -161,16 +156,17 @@ dnear:                                  # @dnear
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	f64.sub 	$1=, $0, $1
 	i32.const	$2=, 1
 	block
-	f64.const	$push0=, 0x0p0
-	f64.eq  	$push1=, $1, $pop0
-	br_if   	$pop1, 0        # 0: down to label1
+	f64.sub 	$push0=, $0, $1
+	tee_local	$push5=, $1=, $pop0
+	f64.const	$push1=, 0x0p0
+	f64.eq  	$push2=, $pop5, $pop1
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#1:                                 # %lor.rhs
-	f64.div 	$push2=, $0, $1
-	f64.const	$push3=, 0x1.6bcc41e9p46
-	f64.gt  	$2=, $pop2, $pop3
+	f64.div 	$push3=, $0, $1
+	f64.const	$push4=, 0x1.6bcc41e9p46
+	f64.gt  	$2=, $pop3, $pop4
 .LBB7_2:                                # %lor.end
 	end_block                       # label1:
 	return  	$2
@@ -185,51 +181,51 @@ dnear:                                  # @dnear
 ldnear:                                 # @ldnear
 	.param  	i64, i64, i64, i64
 	.result 	i32
-	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$8=, __stack_pointer
-	i32.load	$8=, 0($8)
-	i32.const	$9=, 32
-	i32.sub 	$11=, $8, $9
-	i32.const	$9=, __stack_pointer
-	i32.store	$11=, 0($9), $11
-	i32.const	$11=, 16
-	i32.add 	$11=, $11, $11
-	call    	__subtf3@FUNCTION, $11, $0, $1, $2, $3
-	i32.const	$5=, 8
-	i32.const	$12=, 16
-	i32.add 	$12=, $11, $12
-	i32.add 	$push0=, $12, $5
-	i64.load	$2=, 0($pop0)
-	i64.load	$4=, 16($11)
-	i64.const	$3=, 0
-	i32.call	$6=, __eqtf2@FUNCTION, $4, $2, $3, $3
-	i32.const	$7=, 1
+	i32.const	$5=, __stack_pointer
+	i32.load	$5=, 0($5)
+	i32.const	$6=, 32
+	i32.sub 	$10=, $5, $6
+	i32.const	$6=, __stack_pointer
+	i32.store	$10=, 0($6), $10
+	i32.const	$8=, 16
+	i32.add 	$8=, $10, $8
+	call    	__subtf3@FUNCTION, $8, $0, $1, $2, $3
+	i32.const	$4=, 1
+	i64.load	$push0=, 16($10)
+	tee_local	$push15=, $3=, $pop0
+	i32.const	$push14=, 8
+	i32.const	$9=, 16
+	i32.add 	$9=, $10, $9
 	block
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $6, $pop8
-	br_if   	$pop9, 0        # 0: down to label2
+	i32.add 	$push2=, $9, $pop14
+	i64.load	$push1=, 0($pop2)
+	tee_local	$push13=, $2=, $pop1
+	i64.const	$push3=, 0
+	i64.const	$push12=, 0
+	i32.call	$push4=, __eqtf2@FUNCTION, $pop15, $pop13, $pop3, $pop12
+	i32.const	$push17=, 0
+	i32.eq  	$push18=, $pop4, $pop17
+	br_if   	$pop18, 0       # 0: down to label2
 # BB#1:                                 # %lor.rhs
-	i32.const	$13=, 0
-	i32.add 	$13=, $11, $13
-	call    	__divtf3@FUNCTION, $13, $0, $1, $4, $2
-	i64.load	$push3=, 0($11)
-	i32.const	$14=, 0
-	i32.add 	$14=, $11, $14
-	i32.add 	$push1=, $14, $5
-	i64.load	$push2=, 0($pop1)
-	i64.const	$push5=, 8070450532247928832
-	i64.const	$push4=, 4641306360700491489
-	i32.call	$push6=, __gttf2@FUNCTION, $pop3, $pop2, $pop5, $pop4
-	i32.const	$push7=, 0
-	i32.gt_s	$7=, $pop6, $pop7
+	call    	__divtf3@FUNCTION, $10, $0, $1, $3, $2
+	i64.load	$push7=, 0($10)
+	i32.const	$push16=, 8
+	i32.add 	$push5=, $10, $pop16
+	i64.load	$push6=, 0($pop5)
+	i64.const	$push9=, 8070450532247928832
+	i64.const	$push8=, 4641306360700491489
+	i32.call	$push10=, __gttf2@FUNCTION, $pop7, $pop6, $pop9, $pop8
+	i32.const	$push11=, 0
+	i32.gt_s	$4=, $pop10, $pop11
 .LBB8_2:                                # %lor.end
 	end_block                       # label2:
-	i32.const	$10=, 32
-	i32.add 	$11=, $11, $10
-	i32.const	$10=, __stack_pointer
-	i32.store	$11=, 0($10), $11
-	return  	$7
+	i32.const	$7=, 32
+	i32.add 	$10=, $10, $7
+	i32.const	$7=, __stack_pointer
+	i32.store	$10=, 0($7), $10
+	return  	$4
 	.endfunc
 .Lfunc_end8:
 	.size	ldnear, .Lfunc_end8-ldnear
@@ -281,30 +277,27 @@ ull2d:                                  # @ull2d
 	.type	ull2ld,@function
 ull2ld:                                 # @ull2ld
 	.param  	i32, i64
-	.local  	i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$2=, __stack_pointer
+	i32.load	$2=, 0($2)
+	i32.const	$3=, 16
+	i32.sub 	$5=, $2, $3
 	i32.const	$3=, __stack_pointer
-	i32.load	$3=, 0($3)
+	i32.store	$5=, 0($3), $5
+	call    	__floatunditf@FUNCTION, $5, $1
+	i64.load	$1=, 0($5)
+	i32.const	$push0=, 8
+	i32.add 	$push3=, $0, $pop0
+	i32.const	$push4=, 8
+	i32.add 	$push1=, $5, $pop4
+	i64.load	$push2=, 0($pop1)
+	i64.store	$discard=, 0($pop3), $pop2
+	i64.store	$discard=, 0($0):p2align=4, $1
 	i32.const	$4=, 16
-	i32.sub 	$6=, $3, $4
+	i32.add 	$5=, $5, $4
 	i32.const	$4=, __stack_pointer
-	i32.store	$6=, 0($4), $6
-	i32.const	$6=, 0
-	i32.add 	$6=, $6, $6
-	call    	__floatunditf@FUNCTION, $6, $1
-	i32.const	$2=, 8
-	i64.load	$1=, 0($6)
-	i32.add 	$push2=, $0, $2
-	i32.const	$7=, 0
-	i32.add 	$7=, $6, $7
-	i32.add 	$push0=, $7, $2
-	i64.load	$push1=, 0($pop0)
-	i64.store	$discard=, 0($pop2), $pop1
-	i64.store	$discard=, 0($0), $1
-	i32.const	$5=, 16
-	i32.add 	$6=, $6, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$6=, 0($5), $6
+	i32.store	$5=, 0($4), $5
 	return
 	.endfunc
 .Lfunc_end12:
@@ -344,30 +337,27 @@ sll2d:                                  # @sll2d
 	.type	sll2ld,@function
 sll2ld:                                 # @sll2ld
 	.param  	i32, i64
-	.local  	i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$2=, __stack_pointer
+	i32.load	$2=, 0($2)
+	i32.const	$3=, 16
+	i32.sub 	$5=, $2, $3
 	i32.const	$3=, __stack_pointer
-	i32.load	$3=, 0($3)
+	i32.store	$5=, 0($3), $5
+	call    	__floatditf@FUNCTION, $5, $1
+	i64.load	$1=, 0($5)
+	i32.const	$push0=, 8
+	i32.add 	$push3=, $0, $pop0
+	i32.const	$push4=, 8
+	i32.add 	$push1=, $5, $pop4
+	i64.load	$push2=, 0($pop1)
+	i64.store	$discard=, 0($pop3), $pop2
+	i64.store	$discard=, 0($0):p2align=4, $1
 	i32.const	$4=, 16
-	i32.sub 	$6=, $3, $4
+	i32.add 	$5=, $5, $4
 	i32.const	$4=, __stack_pointer
-	i32.store	$6=, 0($4), $6
-	i32.const	$6=, 0
-	i32.add 	$6=, $6, $6
-	call    	__floatditf@FUNCTION, $6, $1
-	i32.const	$2=, 8
-	i64.load	$1=, 0($6)
-	i32.add 	$push2=, $0, $2
-	i32.const	$7=, 0
-	i32.add 	$7=, $6, $7
-	i32.add 	$push0=, $7, $2
-	i64.load	$push1=, 0($pop0)
-	i64.store	$discard=, 0($pop2), $pop1
-	i64.store	$discard=, 0($0), $1
-	i32.const	$5=, 16
-	i32.add 	$6=, $6, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$6=, 0($5), $6
+	i32.store	$5=, 0($4), $5
 	return
 	.endfunc
 .Lfunc_end15:

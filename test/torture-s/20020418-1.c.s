@@ -40,9 +40,21 @@ gcc_crash:                              # @gcc_crash
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %gcc_crash.exit
-	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	.local  	i32, i32, i32, i32
+# BB#0:                                 # %entry
+	i32.const	$0=, __stack_pointer
+	i32.load	$0=, 0($0)
+	i32.const	$1=, 16
+	i32.sub 	$3=, $0, $1
+	i32.const	$1=, __stack_pointer
+	i32.store	$3=, 0($1), $3
+	i32.const	$push0=, 53
+	i32.store	$discard=, 8($3):p2align=3, $pop0
+	i32.const	$2=, 8
+	i32.add 	$2=, $3, $2
+	call    	gcc_crash@FUNCTION, $2
+	i32.const	$push1=, 0
+	call    	exit@FUNCTION, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end1:

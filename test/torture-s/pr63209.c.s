@@ -7,22 +7,26 @@
 Predictor:                              # @Predictor
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.load	$2=, 4($1)
-	i32.const	$3=, 8
-	i32.const	$1=, 255
-	i32.shr_u	$push2=, $0, $3
-	i32.and 	$push3=, $pop2, $1
-	i32.and 	$push5=, $0, $1
-	i32.add 	$push6=, $pop3, $pop5
-	i32.and 	$push4=, $2, $1
-	i32.sub 	$push7=, $pop6, $pop4
-	i32.shr_u	$push0=, $2, $3
-	i32.and 	$push1=, $pop0, $1
-	i32.le_s	$push8=, $pop7, $pop1
-	i32.select	$push9=, $pop8, $2, $0
-	return  	$pop9
+	i32.const	$push1=, 8
+	i32.shr_u	$push5=, $0, $pop1
+	i32.const	$push3=, 255
+	i32.and 	$push6=, $pop5, $pop3
+	i32.const	$push17=, 255
+	i32.and 	$push8=, $0, $pop17
+	i32.add 	$push9=, $pop6, $pop8
+	i32.load	$push0=, 4($1)
+	tee_local	$push16=, $1=, $pop0
+	i32.const	$push15=, 255
+	i32.and 	$push7=, $pop16, $pop15
+	i32.sub 	$push10=, $pop9, $pop7
+	i32.const	$push14=, 8
+	i32.shr_u	$push2=, $1, $pop14
+	i32.const	$push13=, 255
+	i32.and 	$push4=, $pop2, $pop13
+	i32.le_s	$push11=, $pop10, $pop4
+	i32.select	$push12=, $pop11, $1, $0
+	return  	$pop12
 	.endfunc
 .Lfunc_end0:
 	.size	Predictor, .Lfunc_end0-Predictor
@@ -33,20 +37,20 @@ Predictor:                              # @Predictor
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, -8684677
+	i32.const	$push1=, -8684677
 	i32.const	$push0=, main.top
-	i32.call	$push1=, Predictor@FUNCTION, $0, $pop0
-	i32.ne  	$push2=, $pop1, $0
-	return  	$pop2
+	i32.call	$push2=, Predictor@FUNCTION, $pop1, $pop0
+	i32.const	$push4=, -8684677
+	i32.ne  	$push3=, $pop2, $pop4
+	return  	$pop3
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 	.type	main.top,@object        # @main.top
 	.section	.rodata.main.top,"a",@progbits
-	.align	2
+	.p2align	2
 main.top:
 	.int32	4286216826              # 0xff7a7a7a
 	.int32	4286216826              # 0xff7a7a7a

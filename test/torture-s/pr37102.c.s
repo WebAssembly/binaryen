@@ -27,29 +27,35 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, b($0)
+	i32.const	$push10=, 0
+	i32.load	$0=, b($pop10)
 	block
-	i32.load	$push0=, c($0)
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $pop0, $pop8
-	br_if   	$pop9, 0        # 0: down to label1
+	i32.const	$push9=, 0
+	i32.load	$push0=, c($pop9)
+	i32.const	$push16=, 0
+	i32.eq  	$push17=, $pop0, $pop16
+	br_if   	$pop17, 0       # 0: down to label1
 # BB#1:                                 # %if.then.3
-	i32.store	$discard=, a($0), $1
+	i32.const	$push11=, 0
+	i32.store	$discard=, a($pop11), $0
 .LBB1_2:                                # %for.inc.3
 	end_block                       # label1:
-	i32.store	$discard=, a($0), $1
-	i32.const	$push1=, 2147483647
-	i32.and 	$push2=, $1, $pop1
-	i32.const	$push3=, 2
-	i32.shl 	$push4=, $1, $pop3
-	i32.const	$push5=, 1
-	i32.or  	$push6=, $pop4, $pop5
-	i32.select	$push7=, $pop2, $pop6, $0
-	call    	foo@FUNCTION, $pop7
-	return  	$0
+	i32.const	$push15=, 0
+	i32.store	$push1=, a($pop15), $0
+	tee_local	$push14=, $0=, $pop1
+	i32.const	$push2=, 2147483647
+	i32.and 	$push3=, $pop14, $pop2
+	i32.const	$push4=, 2
+	i32.shl 	$push5=, $0, $pop4
+	i32.const	$push6=, 1
+	i32.or  	$push7=, $pop5, $pop6
+	i32.const	$push13=, 0
+	i32.select	$push8=, $pop3, $pop7, $pop13
+	call    	foo@FUNCTION, $pop8
+	i32.const	$push12=, 0
+	return  	$pop12
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -58,7 +64,7 @@ main:                                   # @main
 	.type	b,@object
 	.section	.data.b,"aw",@progbits
 	.globl	b
-	.align	2
+	.p2align	2
 b:
 	.int32	1                       # 0x1
 	.size	b, 4
@@ -67,7 +73,7 @@ b:
 	.type	c,@object
 	.section	.bss.c,"aw",@nobits
 	.globl	c
-	.align	2
+	.p2align	2
 c:
 	.int32	0                       # 0x0
 	.size	c, 4
@@ -76,7 +82,7 @@ c:
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	0                       # 0x0
 	.size	a, 4

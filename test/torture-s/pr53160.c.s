@@ -5,10 +5,10 @@
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.store	$discard=, e($0), $0
+	i32.const	$push0=, 0
+	i32.const	$push1=, 0
+	i32.store	$discard=, e($pop0), $pop1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -22,29 +22,34 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load	$push0=, g($0)
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $pop0, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	i32.const	$push8=, 0
+	i32.load	$push0=, g($pop8)
+	i32.const	$push13=, 0
+	i32.eq  	$push14=, $pop0, $pop13
+	br_if   	$pop14, 0       # 0: down to label0
 # BB#1:                                 # %if.then
-	i32.load	$discard=, b($0)
+	i32.const	$push9=, 0
+	i32.load	$discard=, b($pop9)
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
-	i32.store	$discard=, e($0), $0
-	i32.load8_s	$1=, f($0)
-	i32.load	$2=, c($0)
+	i32.const	$push12=, 0
+	i32.const	$push11=, 0
+	i32.store	$push1=, e($pop12), $pop11
+	tee_local	$push10=, $2=, $pop1
+	i32.load8_s	$0=, f($pop10)
+	i32.load	$1=, c($2)
+	i32.const	$push3=, -1
+	i32.store	$discard=, d($2), $pop3
 	block
-	i32.const	$push2=, -1
-	i32.store	$discard=, d($0), $pop2
-	i32.store16	$push1=, i($0), $1
-	i32.select	$push3=, $2, $pop1, $0
-	i32.store	$push4=, h($0), $pop3
-	i32.store	$push5=, a($0), $pop4
-	br_if   	$pop5, 0        # 0: down to label1
+	i32.store16	$push2=, i($2), $0
+	i32.select	$push4=, $1, $pop2, $2
+	i32.store	$push5=, h($2), $pop4
+	i32.store	$push6=, a($2), $pop5
+	br_if   	$pop6, 0        # 0: down to label1
 # BB#3:                                 # %if.end16
-	return  	$0
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB1_4:                                # %if.then15
 	end_block                       # label1:
 	call    	abort@FUNCTION
@@ -57,7 +62,7 @@ main:                                   # @main
 	.type	c,@object
 	.section	.data.c,"aw",@progbits
 	.globl	c
-	.align	2
+	.p2align	2
 c:
 	.int32	1                       # 0x1
 	.size	c, 4
@@ -66,7 +71,7 @@ c:
 	.type	e,@object
 	.section	.bss.e,"aw",@nobits
 	.globl	e
-	.align	2
+	.p2align	2
 e:
 	.int32	0                       # 0x0
 	.size	e, 4
@@ -75,7 +80,7 @@ e:
 	.type	g,@object
 	.section	.bss.g,"aw",@nobits
 	.globl	g
-	.align	2
+	.p2align	2
 g:
 	.int32	0                       # 0x0
 	.size	g, 4
@@ -84,7 +89,7 @@ g:
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
 	.globl	b
-	.align	2
+	.p2align	2
 b:
 	.int32	0                       # 0x0
 	.size	b, 4
@@ -93,7 +98,7 @@ b:
 	.type	d,@object
 	.section	.bss.d,"aw",@nobits
 	.globl	d
-	.align	2
+	.p2align	2
 d:
 	.int32	0                       # 0x0
 	.size	d, 4
@@ -110,7 +115,7 @@ f:
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
 	.globl	i
-	.align	1
+	.p2align	1
 i:
 	.int16	0                       # 0x0
 	.size	i, 2
@@ -119,7 +124,7 @@ i:
 	.type	h,@object
 	.section	.bss.h,"aw",@nobits
 	.globl	h
-	.align	2
+	.p2align	2
 h:
 	.int32	0                       # 0x0
 	.size	h, 4
@@ -128,7 +133,7 @@ h:
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	0                       # 0x0
 	.size	a, 4

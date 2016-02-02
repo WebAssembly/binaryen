@@ -36,12 +36,12 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, v($0), $pop0
-	call    	exit@FUNCTION, $0
+	i32.store	$discard=, v($pop1), $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -57,7 +57,7 @@ main:                                   # @main
 	.type	v,@object
 	.section	.bss.v,"aw",@nobits
 	.globl	v
-	.align	2
+	.p2align	2
 v:
 	.int32	0                       # 0x0
 	.size	v, 4

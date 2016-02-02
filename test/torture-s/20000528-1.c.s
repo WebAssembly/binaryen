@@ -6,17 +6,18 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load16_u	$push0=, l($0)
-	i32.store16	$push1=, s($0), $pop0
+	i32.const	$push5=, 0
+	i32.const	$push4=, 0
+	i32.load16_u	$push0=, l($pop4):p2align=2
+	i32.store16	$push1=, s($pop5), $pop0
 	i32.const	$push2=, 65534
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -30,7 +31,7 @@ main:                                   # @main
 	.type	l,@object
 	.section	.data.l,"aw",@progbits
 	.globl	l
-	.align	2
+	.p2align	2
 l:
 	.int32	4294967294              # 0xfffffffe
 	.size	l, 4
@@ -39,7 +40,7 @@ l:
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.align	1
+	.p2align	1
 s:
 	.int16	0                       # 0x0
 	.size	s, 2

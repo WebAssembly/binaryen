@@ -28,26 +28,30 @@ bar:                                    # @bar
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push2=, 1
-	i32.lt_s	$push3=, $1, $pop2
-	br_if   	$pop3, 0        # 0: down to label1
+	i32.const	$push4=, 1
+	i32.lt_s	$push5=, $1, $pop4
+	br_if   	$pop5, 0        # 0: down to label1
 # BB#1:                                 # %for.body.lr.ph
-	i32.const	$3=, 0
-	i32.gt_s	$push0=, $0, $3
-	i32.sub 	$push1=, $3, $0
-	i32.select	$2=, $pop0, $pop1, $0
-	i32.const	$0=, -1
-	i32.gt_s	$push4=, $2, $0
-	i32.sub 	$push5=, $3, $2
-	i32.select	$3=, $pop4, $3, $pop5
+	i32.const	$push1=, 0
+	i32.gt_s	$push2=, $0, $pop1
+	i32.const	$push12=, 0
+	i32.sub 	$push3=, $pop12, $0
+	i32.select	$push0=, $pop2, $pop3, $0
+	tee_local	$push11=, $0=, $pop0
+	i32.const	$push10=, -1
+	i32.gt_s	$push6=, $pop11, $pop10
+	i32.const	$push9=, 0
+	i32.const	$push8=, 0
+	i32.sub 	$push7=, $pop8, $0
+	i32.select	$0=, $pop6, $pop9, $pop7
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.call	$discard=, bar@FUNCTION, $1, $3
-	i32.add 	$1=, $1, $0
+	i32.call	$discard=, bar@FUNCTION, $1, $0
+	i32.const	$push13=, -1
+	i32.add 	$1=, $1, $pop13
 	br_if   	$1, 0           # 0: up to label2
 .LBB1_3:                                # %for.end
 	end_loop                        # label3:
@@ -63,12 +67,12 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 1
-	call    	foo@FUNCTION, $0, $0
-	i32.const	$push0=, 0
-	return  	$pop0
+	i32.const	$push0=, 1
+	i32.const	$push2=, 1
+	call    	foo@FUNCTION, $pop0, $pop2
+	i32.const	$push1=, 0
+	return  	$pop1
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

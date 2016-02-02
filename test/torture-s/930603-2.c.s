@@ -8,10 +8,11 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %for.inc.1.1
-	i32.const	$0=, 0
-	i32.const	$push0=, 1
-	i32.store	$push1=, w($0), $pop0
-	i32.store	$discard=, w+12($0), $pop1
+	i32.const	$push0=, 0
+	i32.const	$push3=, 0
+	i32.const	$push1=, 1
+	i32.store	$push2=, w($pop3):p2align=4, $pop1
+	i32.store	$discard=, w+12($pop0), $pop2
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -23,19 +24,23 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, w+8($0)
-	i32.load	$2=, w+4($0)
-	block
+	i32.const	$push6=, 0
+	i32.load	$0=, w+8($pop6):p2align=3
+	i32.const	$push5=, 0
+	i32.load	$1=, w+4($pop5)
+	i32.const	$push4=, 0
+	i32.const	$push3=, 0
 	i32.const	$push0=, 1
-	i32.store	$push1=, w($0), $pop0
-	i32.store	$discard=, w+12($0), $pop1
-	i32.or  	$push2=, $2, $1
+	i32.store	$push1=, w($pop3):p2align=4, $pop0
+	i32.store	$discard=, w+12($pop4), $pop1
+	block
+	i32.or  	$push2=, $1, $0
 	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -49,7 +54,7 @@ main:                                   # @main
 	.type	w,@object
 	.section	.bss.w,"aw",@nobits
 	.globl	w
-	.align	4
+	.p2align	4
 w:
 	.skip	16
 	.size	w, 16

@@ -22,12 +22,12 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i64.const	$push0=, 4632951452917877965
-	i64.store	$discard=, glob_dbl($0), $pop0
-	call    	exit@FUNCTION, $0
+	i64.store	$discard=, glob_dbl($pop1), $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -37,7 +37,7 @@ main:                                   # @main
 	.type	glob_dbl,@object
 	.section	.bss.glob_dbl,"aw",@nobits
 	.globl	glob_dbl
-	.align	3
+	.p2align	3
 glob_dbl:
 	.int64	0                       # double 0
 	.size	glob_dbl, 8

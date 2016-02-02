@@ -5,65 +5,91 @@
 	.globl	init_addrs
 	.type	init_addrs,@function
 init_addrs:                             # @init_addrs
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.const	$push5=, 1024
-	i32.store	$discard=, bad_addr+40($0), $pop5
-	i32.const	$push6=, 2048
-	i32.store	$discard=, bad_addr+44($0), $pop6
-	i32.const	$push7=, 4096
-	i32.store	$discard=, bad_addr+48($0), $pop7
-	i32.const	$push8=, 8192
-	i32.store	$discard=, bad_addr+52($0), $pop8
-	i32.const	$push9=, 16384
-	i32.store	$discard=, bad_addr+56($0), $pop9
-	i32.const	$push10=, 32768
-	i32.store	$discard=, bad_addr+60($0), $pop10
-	i32.const	$push11=, 65536
-	i32.store	$discard=, bad_addr+64($0), $pop11
-	i32.const	$push12=, 131072
-	i32.store	$discard=, bad_addr+68($0), $pop12
-	i32.const	$push13=, 262144
-	i32.store	$discard=, bad_addr+72($0), $pop13
-	i32.const	$push14=, 524288
-	i32.store	$discard=, bad_addr+76($0), $pop14
-	i32.const	$push15=, 1048576
-	i32.store	$discard=, bad_addr+80($0), $pop15
-	i32.const	$push16=, 2097152
-	i32.store	$discard=, bad_addr+84($0), $pop16
-	i32.const	$push17=, 4194304
-	i32.store	$discard=, bad_addr+88($0), $pop17
-	i32.const	$push18=, 8388608
-	i32.store	$discard=, bad_addr+92($0), $pop18
-	i32.const	$push19=, 16777216
-	i32.store	$discard=, bad_addr+96($0), $pop19
-	i32.const	$push20=, 33554432
-	i32.store	$discard=, bad_addr+100($0), $pop20
-	i32.const	$push21=, 67108864
-	i32.store	$discard=, bad_addr+104($0), $pop21
-	i32.const	$push22=, 134217728
-	i32.store	$discard=, bad_addr+108($0), $pop22
-	i32.const	$push23=, 268435456
-	i32.store	$discard=, bad_addr+112($0), $pop23
-	i32.const	$push24=, 536870912
-	i32.store	$discard=, bad_addr+116($0), $pop24
-	i32.const	$push25=, 1073741824
-	i32.store	$discard=, bad_addr+120($0), $pop25
-	i32.const	$push26=, -2147483648
-	i32.store	$discard=, bad_addr+124($0), $pop26
-	i32.const	$push27=, 33
-	i32.store	$discard=, arr_used($0), $pop27
-	i64.const	$push0=, 8589934593
-	i64.store	$discard=, bad_addr($0), $pop0
-	i64.const	$push1=, 34359738372
-	i64.store	$discard=, bad_addr+8($0), $pop1
-	i64.const	$push2=, 137438953488
-	i64.store	$discard=, bad_addr+16($0), $pop2
-	i64.const	$push3=, 549755813952
-	i64.store	$discard=, bad_addr+24($0), $pop3
-	i64.const	$push4=, 2199023255808
-	i64.store	$discard=, bad_addr+32($0), $pop4
+	i32.const	$push0=, 0
+	i32.const	$push6=, 1024
+	i32.store	$discard=, bad_addr+40($pop0):p2align=3, $pop6
+	i32.const	$push55=, 0
+	i32.const	$push7=, 2048
+	i32.store	$discard=, bad_addr+44($pop55), $pop7
+	i32.const	$push54=, 0
+	i32.const	$push8=, 4096
+	i32.store	$discard=, bad_addr+48($pop54):p2align=4, $pop8
+	i32.const	$push53=, 0
+	i32.const	$push9=, 8192
+	i32.store	$discard=, bad_addr+52($pop53), $pop9
+	i32.const	$push52=, 0
+	i32.const	$push10=, 16384
+	i32.store	$discard=, bad_addr+56($pop52):p2align=3, $pop10
+	i32.const	$push51=, 0
+	i32.const	$push11=, 32768
+	i32.store	$discard=, bad_addr+60($pop51), $pop11
+	i32.const	$push50=, 0
+	i32.const	$push12=, 65536
+	i32.store	$discard=, bad_addr+64($pop50):p2align=4, $pop12
+	i32.const	$push49=, 0
+	i32.const	$push13=, 131072
+	i32.store	$discard=, bad_addr+68($pop49), $pop13
+	i32.const	$push48=, 0
+	i32.const	$push14=, 262144
+	i32.store	$discard=, bad_addr+72($pop48):p2align=3, $pop14
+	i32.const	$push47=, 0
+	i32.const	$push15=, 524288
+	i32.store	$discard=, bad_addr+76($pop47), $pop15
+	i32.const	$push46=, 0
+	i32.const	$push16=, 1048576
+	i32.store	$discard=, bad_addr+80($pop46):p2align=4, $pop16
+	i32.const	$push45=, 0
+	i32.const	$push17=, 2097152
+	i32.store	$discard=, bad_addr+84($pop45), $pop17
+	i32.const	$push44=, 0
+	i32.const	$push18=, 4194304
+	i32.store	$discard=, bad_addr+88($pop44):p2align=3, $pop18
+	i32.const	$push43=, 0
+	i32.const	$push19=, 8388608
+	i32.store	$discard=, bad_addr+92($pop43), $pop19
+	i32.const	$push42=, 0
+	i32.const	$push20=, 16777216
+	i32.store	$discard=, bad_addr+96($pop42):p2align=4, $pop20
+	i32.const	$push41=, 0
+	i32.const	$push21=, 33554432
+	i32.store	$discard=, bad_addr+100($pop41), $pop21
+	i32.const	$push40=, 0
+	i32.const	$push22=, 67108864
+	i32.store	$discard=, bad_addr+104($pop40):p2align=3, $pop22
+	i32.const	$push39=, 0
+	i32.const	$push23=, 134217728
+	i32.store	$discard=, bad_addr+108($pop39), $pop23
+	i32.const	$push38=, 0
+	i32.const	$push24=, 268435456
+	i32.store	$discard=, bad_addr+112($pop38):p2align=4, $pop24
+	i32.const	$push37=, 0
+	i32.const	$push25=, 536870912
+	i32.store	$discard=, bad_addr+116($pop37), $pop25
+	i32.const	$push36=, 0
+	i32.const	$push26=, 1073741824
+	i32.store	$discard=, bad_addr+120($pop36):p2align=3, $pop26
+	i32.const	$push35=, 0
+	i32.const	$push27=, -2147483648
+	i32.store	$discard=, bad_addr+124($pop35), $pop27
+	i32.const	$push34=, 0
+	i32.const	$push28=, 33
+	i32.store	$discard=, arr_used($pop34), $pop28
+	i32.const	$push33=, 0
+	i64.const	$push1=, 8589934593
+	i64.store	$discard=, bad_addr($pop33):p2align=4, $pop1
+	i32.const	$push32=, 0
+	i64.const	$push2=, 34359738372
+	i64.store	$discard=, bad_addr+8($pop32), $pop2
+	i32.const	$push31=, 0
+	i64.const	$push3=, 137438953488
+	i64.store	$discard=, bad_addr+16($pop31):p2align=4, $pop3
+	i32.const	$push30=, 0
+	i64.const	$push4=, 549755813952
+	i64.store	$discard=, bad_addr+24($pop30), $pop4
+	i32.const	$push29=, 0
+	i64.const	$push5=, 2199023255808
+	i64.store	$discard=, bad_addr+32($pop29):p2align=4, $pop5
 	return
 	.endfunc
 .Lfunc_end0:
@@ -117,85 +143,12 @@ prefetch_for_write:                     # @prefetch_for_write
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.const	$push5=, 1024
-	i32.store	$discard=, bad_addr+40($1), $pop5
-	i32.const	$push6=, 2048
-	i32.store	$discard=, bad_addr+44($1), $pop6
-	i32.const	$push7=, 4096
-	i32.store	$discard=, bad_addr+48($1), $pop7
-	i32.const	$push8=, 8192
-	i32.store	$discard=, bad_addr+52($1), $pop8
-	i32.const	$push9=, 16384
-	i32.store	$discard=, bad_addr+56($1), $pop9
-	i32.const	$push10=, 32768
-	i32.store	$discard=, bad_addr+60($1), $pop10
-	i32.const	$push11=, 65536
-	i32.store	$discard=, bad_addr+64($1), $pop11
-	i32.const	$push12=, 131072
-	i32.store	$discard=, bad_addr+68($1), $pop12
-	i32.const	$push13=, 262144
-	i32.store	$discard=, bad_addr+72($1), $pop13
-	i32.const	$push14=, 524288
-	i32.store	$discard=, bad_addr+76($1), $pop14
-	i32.const	$push15=, 1048576
-	i32.store	$discard=, bad_addr+80($1), $pop15
-	i32.const	$push16=, 2097152
-	i32.store	$discard=, bad_addr+84($1), $pop16
-	i32.const	$push17=, 4194304
-	i32.store	$discard=, bad_addr+88($1), $pop17
-	i32.const	$push18=, 8388608
-	i32.store	$discard=, bad_addr+92($1), $pop18
-	i32.const	$push19=, 16777216
-	i32.store	$discard=, bad_addr+96($1), $pop19
-	i32.const	$push20=, 33554432
-	i32.store	$discard=, bad_addr+100($1), $pop20
-	i32.const	$push21=, 67108864
-	i32.store	$discard=, bad_addr+104($1), $pop21
-	i32.const	$push22=, 134217728
-	i32.store	$discard=, bad_addr+108($1), $pop22
-	i32.const	$push23=, 268435456
-	i32.store	$discard=, bad_addr+112($1), $pop23
-	i32.const	$push24=, 536870912
-	i32.store	$discard=, bad_addr+116($1), $pop24
-	i32.const	$push25=, 1073741824
-	i32.store	$discard=, bad_addr+120($1), $pop25
-	i32.const	$push26=, -2147483648
-	i32.store	$discard=, bad_addr+124($1), $pop26
-	i32.const	$push27=, 33
-	i32.store	$discard=, arr_used($1), $pop27
-	i64.const	$push0=, 8589934593
-	i64.store	$discard=, bad_addr($1), $pop0
-	i64.const	$push1=, 34359738372
-	i64.store	$discard=, bad_addr+8($1), $pop1
-	i64.const	$push2=, 137438953488
-	i64.store	$discard=, bad_addr+16($1), $pop2
-	i64.const	$push3=, 549755813952
-	i64.store	$discard=, bad_addr+24($1), $pop3
-	i32.const	$0=, 4
-	i64.const	$push4=, 2199023255808
-	i64.store	$discard=, bad_addr+32($1), $pop4
-	copy_local	$2=, $0
-.LBB3_1:                                # %for.body.i5.for.body.i5_crit_edge
-                                        # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
-	i32.add 	$2=, $2, $0
-	i32.const	$3=, -260
-	i32.const	$push28=, 260
-	i32.ne  	$push29=, $2, $pop28
-	br_if   	$pop29, 0       # 0: up to label4
-.LBB3_2:                                # %for.body.i
-                                        # =>This Inner Loop Header: Depth=1
-	end_loop                        # label5:
-	loop                            # label6:
-	i32.const	$push30=, 4
-	i32.add 	$3=, $3, $pop30
-	br_if   	$3, 0           # 0: up to label6
-# BB#3:                                 # %prefetch_for_write.exit
-	end_loop                        # label7:
-	call    	exit@FUNCTION, $1
+	call    	init_addrs@FUNCTION
+	call    	prefetch_for_read@FUNCTION
+	call    	prefetch_for_write@FUNCTION
+	i32.const	$push0=, 0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end3:
@@ -205,7 +158,7 @@ main:                                   # @main
 	.type	bad_addr,@object
 	.section	.bss.bad_addr,"aw",@nobits
 	.globl	bad_addr
-	.align	4
+	.p2align	4
 bad_addr:
 	.skip	260
 	.size	bad_addr, 260
@@ -214,7 +167,7 @@ bad_addr:
 	.type	arr_used,@object
 	.section	.bss.arr_used,"aw",@nobits
 	.globl	arr_used
-	.align	2
+	.p2align	2
 arr_used:
 	.int32	0                       # 0x0
 	.size	arr_used, 4

@@ -7,20 +7,20 @@
 foo:                                    # @foo
 	.param  	i64
 	.result 	i64
-	.local  	i64
 # BB#0:                                 # %entry
-	i64.const	$1=, -4
-	i64.lt_s	$push0=, $0, $1
-	i64.select	$push1=, $pop0, $0, $1
-	i64.const	$push2=, -1
-	i64.xor 	$push3=, $pop1, $pop2
-	i64.add 	$push4=, $0, $pop3
-	i64.const	$push5=, 2
-	i64.add 	$push6=, $pop4, $pop5
-	i64.const	$push7=, -2
-	i64.and 	$push8=, $pop6, $pop7
-	i64.sub 	$push9=, $0, $pop8
-	return  	$pop9
+	i64.const	$push0=, -4
+	i64.lt_s	$push1=, $0, $pop0
+	i64.const	$push11=, -4
+	i64.select	$push2=, $pop1, $0, $pop11
+	i64.const	$push3=, -1
+	i64.xor 	$push4=, $pop2, $pop3
+	i64.add 	$push5=, $0, $pop4
+	i64.const	$push6=, 2
+	i64.add 	$push7=, $pop5, $pop6
+	i64.const	$push8=, -2
+	i64.and 	$push9=, $pop7, $pop8
+	i64.sub 	$push10=, $0, $pop9
+	return  	$pop10
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

@@ -8,11 +8,12 @@ bar:                                    # @bar
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push0=, -1
-	i32.add 	$0=, $0, $pop0
-	i32.const	$push1=, 8
-	i32.gt_u	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	i32.const	$push1=, -1
+	i32.add 	$push0=, $0, $pop1
+	tee_local	$push8=, $0=, $pop0
+	i32.const	$push2=, 8
+	i32.gt_u	$push3=, $pop8, $pop2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %entry
 	block
 	block
@@ -25,62 +26,23 @@ bar:                                    # @bar
                                         # 3: down to label1
 .LBB0_2:                                # %sw.bb
 	end_block                       # label4:
-	i32.const	$push24=, 120
-	i32.store8	$discard=, 0($1), $pop24
-	i32.const	$push25=, 3
-	i32.add 	$push26=, $1, $pop25
-	i32.const	$push27=, 18
-	i32.store8	$discard=, 0($pop26), $pop27
-	i32.const	$push28=, 2
-	i32.add 	$push29=, $1, $pop28
-	i32.const	$push30=, 52
-	i32.store8	$discard=, 0($pop29), $pop30
-	i32.const	$push31=, 1
-	i32.add 	$push32=, $1, $pop31
-	i32.const	$push33=, 86
-	i32.store8	$discard=, 0($pop32), $pop33
+	i32.const	$push7=, 305419896
+	i32.store	$discard=, 0($1):p2align=0, $pop7
 	br      	3               # 3: down to label0
 .LBB0_3:                                # %sw.bb1
 	end_block                       # label3:
-	i32.const	$push17=, 0
-	i32.store8	$0=, 0($1), $pop17
-	i32.const	$push18=, 3
-	i32.add 	$push19=, $1, $pop18
-	i32.store8	$discard=, 0($pop19), $0
-	i32.const	$push20=, 2
-	i32.add 	$push21=, $1, $pop20
-	i32.store8	$discard=, 0($pop21), $0
-	i32.const	$push22=, 1
-	i32.add 	$push23=, $1, $pop22
-	i32.store8	$discard=, 0($pop23), $0
+	i32.const	$push6=, 0
+	i32.store	$discard=, 0($1):p2align=0, $pop6
 	br      	2               # 2: down to label0
 .LBB0_4:                                # %sw.bb2
 	end_block                       # label2:
-	i32.const	$push10=, 0
-	i32.store8	$0=, 0($1), $pop10
-	i32.const	$push11=, 3
-	i32.add 	$push12=, $1, $pop11
-	i32.store8	$discard=, 0($pop12), $0
-	i32.const	$push13=, 2
-	i32.add 	$push14=, $1, $pop13
-	i32.store8	$discard=, 0($pop14), $0
-	i32.const	$push15=, 1
-	i32.add 	$push16=, $1, $pop15
-	i32.store8	$discard=, 0($pop16), $0
+	i32.const	$push5=, 0
+	i32.store	$discard=, 0($1):p2align=0, $pop5
 	br      	1               # 1: down to label0
 .LBB0_5:                                # %sw.bb3
 	end_block                       # label1:
-	i32.const	$push3=, 0
-	i32.store8	$0=, 0($1), $pop3
-	i32.const	$push4=, 3
-	i32.add 	$push5=, $1, $pop4
-	i32.store8	$discard=, 0($pop5), $0
-	i32.const	$push6=, 2
-	i32.add 	$push7=, $1, $pop6
-	i32.store8	$discard=, 0($pop7), $0
-	i32.const	$push8=, 1
-	i32.add 	$push9=, $1, $pop8
-	i32.store8	$discard=, 0($pop9), $0
+	i32.const	$push4=, 0
+	i32.store	$discard=, 0($1):p2align=0, $pop4
 .LBB0_6:                                # %sw.epilog
 	end_block                       # label0:
 	return

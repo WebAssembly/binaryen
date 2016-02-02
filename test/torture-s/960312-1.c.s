@@ -36,23 +36,26 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	i32.load	$0=, main.sc+4($2)
 	i32.load	$1=, main.sc+8($2)
-	i32.load	$3=, main.sc($2)
+	i32.load	$2=, main.sc($2)
 	#APP
 	#NO_APP
-	block
+	i32.const	$push5=, 0
 	i32.const	$push1=, 11
-	i32.store	$discard=, main.sc($2), $pop1
-	i32.store	$push0=, main.sc+8($2), $3
+	i32.store	$discard=, main.sc($pop5), $pop1
+	block
+	i32.const	$push4=, 0
+	i32.store	$push0=, main.sc+8($pop4), $2
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $pop0, $pop2
 	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $2
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -64,7 +67,7 @@ main:                                   # @main
 
 	.type	main.sc,@object         # @main.sc
 	.section	.data.main.sc,"aw",@progbits
-	.align	2
+	.p2align	2
 main.sc:
 	.int32	2                       # 0x2
 	.int32	3                       # 0x3

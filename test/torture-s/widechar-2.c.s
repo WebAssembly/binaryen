@@ -18,7 +18,7 @@ main:                                   # @main
 	.type	ws,@object
 	.section	.rodata.ws,"a",@progbits
 	.globl	ws
-	.align	4
+	.p2align	4
 ws:
 	.int32	102                     # 0x66
 	.int32	111                     # 0x6f

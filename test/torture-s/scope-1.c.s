@@ -30,20 +30,10 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	block
-	i32.load	$push0=, v($0)
-	i32.const	$push1=, 3
-	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label1
-# BB#1:                                 # %f.exit
-	call    	exit@FUNCTION, $0
-	unreachable
-.LBB1_2:                                # %if.then.i
-	end_block                       # label1:
-	call    	abort@FUNCTION
+	i32.call	$discard=, f@FUNCTION
+	i32.const	$push0=, 0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -53,7 +43,7 @@ main:                                   # @main
 	.type	v,@object
 	.section	.data.v,"aw",@progbits
 	.globl	v
-	.align	2
+	.p2align	2
 v:
 	.int32	3                       # 0x3
 	.size	v, 4

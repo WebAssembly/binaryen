@@ -7,18 +7,19 @@
 build:                                  # @build
 	.param  	i32, i32
 	.result 	i64
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
+	i32.const	$push3=, 0
+	i32.const	$push10=, 0
 	i64.extend_u/i32	$push0=, $0
 	i64.const	$push1=, 32
 	i64.shl 	$push2=, $pop0, $pop1
-	i64.store	$push3=, hpart($2), $pop2
-	i64.extend_u/i32	$push4=, $1
-	i64.store	$push5=, lpart($2), $pop4
-	i64.or  	$push6=, $pop3, $pop5
-	i64.store	$push7=, back($2), $pop6
-	return  	$pop7
+	i64.store	$push4=, hpart($pop10), $pop2
+	i32.const	$push9=, 0
+	i64.extend_u/i32	$push5=, $1
+	i64.store	$push6=, lpart($pop9), $pop5
+	i64.or  	$push7=, $pop4, $pop6
+	i64.store	$push8=, back($pop3), $pop7
+	return  	$pop8
 	.endfunc
 .Lfunc_end0:
 	.size	build, .Lfunc_end0-build
@@ -29,16 +30,18 @@ build:                                  # @build
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end44
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i64.const	$push0=, -4294967296
-	i64.store	$discard=, hpart($0), $pop0
-	i64.const	$push1=, 4294967294
-	i64.store	$discard=, lpart($0), $pop1
-	i64.const	$push2=, -2
-	i64.store	$discard=, back($0), $pop2
-	call    	exit@FUNCTION, $0
+	i64.store	$discard=, hpart($pop1), $pop0
+	i32.const	$push6=, 0
+	i64.const	$push2=, 4294967294
+	i64.store	$discard=, lpart($pop6), $pop2
+	i32.const	$push5=, 0
+	i64.const	$push3=, -2
+	i64.store	$discard=, back($pop5), $pop3
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -48,7 +51,7 @@ main:                                   # @main
 	.type	hpart,@object
 	.section	.bss.hpart,"aw",@nobits
 	.globl	hpart
-	.align	3
+	.p2align	3
 hpart:
 	.int64	0                       # 0x0
 	.size	hpart, 8
@@ -57,7 +60,7 @@ hpart:
 	.type	lpart,@object
 	.section	.bss.lpart,"aw",@nobits
 	.globl	lpart
-	.align	3
+	.p2align	3
 lpart:
 	.int64	0                       # 0x0
 	.size	lpart, 8
@@ -66,7 +69,7 @@ lpart:
 	.type	back,@object
 	.section	.bss.back,"aw",@nobits
 	.globl	back
-	.align	3
+	.p2align	3
 back:
 	.int64	0                       # 0x0
 	.size	back, 8

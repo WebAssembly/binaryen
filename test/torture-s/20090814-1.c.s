@@ -39,22 +39,22 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
+	i32.const	$push7=, 0
+	i32.const	$push2=, 1
+	i32.store	$discard=, i($pop7), $pop2
+	i32.const	$push6=, 0
+	i64.const	$push0=, 184683593727
+	i64.store	$discard=, a($pop6):p2align=2, $pop0
 	block
-	i32.const	$push0=, -1
-	i32.store	$discard=, a($0), $pop0
-	i32.const	$push4=, 1
-	i32.store	$discard=, i($0), $pop4
 	i32.const	$push1=, a
-	i32.call	$push5=, foo@FUNCTION, $pop1
-	i32.const	$push2=, 42
-	i32.store	$push3=, a+4($0), $pop2
-	i32.ne  	$push6=, $pop5, $pop3
-	br_if   	$pop6, 0        # 0: down to label0
+	i32.call	$push3=, foo@FUNCTION, $pop1
+	i32.const	$push4=, 42
+	i32.ne  	$push5=, $pop3, $pop4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push8=, 0
+	return  	$pop8
 .LBB2_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -67,7 +67,7 @@ main:                                   # @main
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
 	.globl	i
-	.align	2
+	.p2align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4
@@ -76,7 +76,7 @@ i:
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.skip	8
 	.size	a, 8

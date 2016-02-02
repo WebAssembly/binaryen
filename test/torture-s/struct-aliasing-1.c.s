@@ -13,7 +13,7 @@ foo:                                    # @foo
 	i32.const	$push0=, 0
 	i32.store	$discard=, 0($0), $pop0
 	i32.load	$push1=, 0($1)
-	i32.add 	$push2=, $pop1, $2
+	i32.add 	$push2=, $2, $pop1
 	return  	$pop2
 	.endfunc
 .Lfunc_end0:
@@ -33,15 +33,15 @@ main:                                   # @main
 	i32.sub 	$5=, $0, $1
 	i32.const	$1=, __stack_pointer
 	i32.store	$5=, 0($1), $5
+	i32.const	$push0=, 1
+	i32.store	$push1=, 12($5), $pop0
 	i32.const	$3=, 12
 	i32.add 	$3=, $5, $3
 	i32.const	$4=, 12
 	i32.add 	$4=, $5, $4
 	block
 	i32.call	$push2=, foo@FUNCTION, $3, $4
-	i32.const	$push0=, 1
-	i32.store	$push1=, 12($5), $pop0
-	i32.ne  	$push3=, $pop2, $pop1
+	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0

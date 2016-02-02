@@ -18,7 +18,7 @@ main:                                   # @main
 	.type	y,@object
 	.section	.bss.y,"aw",@nobits
 	.globl	y
-	.align	5
+	.p2align	5
 y:
 	.skip	2112
 	.size	y, 2112

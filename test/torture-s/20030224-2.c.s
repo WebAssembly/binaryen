@@ -17,7 +17,7 @@ main:                                   # @main
 	.type	node,@object
 	.section	.bss.node,"aw",@nobits
 	.globl	node
-	.align	2
+	.p2align	2
 node:
 	.skip	8
 	.size	node, 8
@@ -26,7 +26,7 @@ node:
 	.type	node_p,@object
 	.section	.data.node_p,"aw",@progbits
 	.globl	node_p
-	.align	2
+	.p2align	2
 node_p:
 	.int32	node
 	.size	node_p, 4

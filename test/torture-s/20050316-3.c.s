@@ -9,8 +9,8 @@ test1:                                  # @test1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $0, $pop0
-	i32.store	$discard=, 0($pop1), $2
-	i32.store	$discard=, 0($0), $1
+	i32.store	$discard=, 0($pop1):p2align=3, $2
+	i32.store	$discard=, 0($0):p2align=3, $1
 	return
 	.endfunc
 .Lfunc_end0:

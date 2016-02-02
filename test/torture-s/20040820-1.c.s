@@ -27,17 +27,18 @@ check:                                  # @check
 	.type	test,@function
 test:                                   # @test
 	.param  	i32, i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
-	i32.const	$3=, 1
 	block
-	i32.ne  	$push1=, $1, $2
-	i32.shl 	$push2=, $pop1, $3
-	i32.ne  	$push0=, $0, $2
-	i32.or  	$push3=, $pop2, $pop0
-	i32.ne  	$push4=, $pop3, $3
-	br_if   	$pop4, 0        # 0: down to label1
+	i32.const	$push0=, 0
+	i32.ne  	$push2=, $1, $pop0
+	i32.const	$push3=, 1
+	i32.shl 	$push4=, $pop2, $pop3
+	i32.const	$push8=, 0
+	i32.ne  	$push1=, $0, $pop8
+	i32.or  	$push5=, $pop4, $pop1
+	i32.const	$push7=, 1
+	i32.ne  	$push6=, $pop5, $pop7
+	br_if   	$pop6, 0        # 0: down to label1
 # BB#1:                                 # %check.exit
 	return
 .LBB1_2:                                # %if.then.i
@@ -55,8 +56,11 @@ test:                                   # @test
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
+	i32.const	$push1=, 1
 	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	call    	test@FUNCTION, $pop1, $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end2:

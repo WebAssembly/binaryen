@@ -20,9 +20,10 @@ bar:                                    # @bar
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$1=, N($pop0)
-	i32.add 	$push1=, $0, $1
-	i32.store8	$discard=, 0($pop1), $1
+	i32.load	$push1=, N($pop0)
+	tee_local	$push3=, $1=, $pop1
+	i32.add 	$push2=, $0, $pop3
+	i32.store8	$discard=, 0($pop2), $1
 	return
 	.endfunc
 .Lfunc_end1:
@@ -34,12 +35,12 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 4
-	i32.store	$discard=, N($0), $pop0
-	call    	exit@FUNCTION, $0
+	i32.store	$discard=, N($pop1), $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -49,7 +50,7 @@ main:                                   # @main
 	.type	N,@object
 	.section	.data.N,"aw",@progbits
 	.globl	N
-	.align	2
+	.p2align	2
 N:
 	.int32	1                       # 0x1
 	.size	N, 4

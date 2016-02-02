@@ -1,226 +1,310 @@
+# wasm-interpreter.h:131: wasm::ModuleInstance::callFunction(cashew::IString, LiteralList &)::FunctionScope::FunctionScope(wasm::Function *, LiteralList &): Assertion `function->params.size() == arguments.size()' failed.
 20000412-2.c.s.wast
 20000412-4.c.s.wast
-20000528-1.c.s.wast
-20000801-1.c.s.wast
-20000910-2.c.s.wast
-20001111-1.c.s.wast
 20001124-1.c.s.wast
-20001228-1.c.s.wast
-20010116-1.c.s.wast
-20010518-2.c.s.wast
 20010915-1.c.s.wast
-20011024-1.c.s.wast
 20020206-2.c.s.wast
 20020402-2.c.s.wast
-20020406-1.c.s.wast
-20020413-1.c.s.wast
-20021011-1.c.s.wast
-20021015-1.c.s.wast
-20021120-3.c.s.wast
 20021204-1.c.s.wast
-20021219-1.c.s.wast
-20030125-1.c.s.wast
-20030218-1.c.s.wast
-20030221-1.c.s.wast
-20030222-1.c.s.wast
-20030313-1.c.s.wast
-20030626-2.c.s.wast
-20030916-1.c.s.wast
 20031012-1.c.s.wast
-20031201-1.c.s.wast
-20031204-1.c.s.wast
-20040218-1.c.s.wast
+20041113-1.c.s.wast
 20041114-1.c.s.wast
-20041124-1.c.s.wast
-20041126-1.c.s.wast
 20050125-1.c.s.wast
-20050203-1.c.s.wast
-20050218-1.c.s.wast
-20050502-1.c.s.wast
-20050502-2.c.s.wast
-20050826-1.c.s.wast
-20051113-1.c.s.wast
-20060420-1.c.s.wast
-20060905-1.c.s.wast
-20060930-2.c.s.wast
-20070201-1.c.s.wast
-20070517-1.c.s.wast
-20071018-1.c.s.wast
-20071029-1.c.s.wast
-20071030-1.c.s.wast
-20071120-1.c.s.wast
-20071202-1.c.s.wast
-20071219-1.c.s.wast
 20080122-1.c.s.wast
-20080502-1.c.s.wast
-20080522-1.c.s.wast
-20080604-1.c.s.wast
-20081218-1.c.s.wast
-20090814-1.c.s.wast
-20100708-1.c.s.wast
-20101011-1.c.s.wast
-20101013-1.c.s.wast
-20111208-1.c.s.wast
-20111212-1.c.s.wast
-20120105-1.c.s.wast
-20120808-1.c.s.wast
-20120919-1.c.s.wast
-20121108-1.c.s.wast
-20131127-1.c.s.wast
-20140425-1.c.s.wast
-920501-9.c.s.wast
-920612-1.c.s.wast
-920711-1.c.s.wast
-930513-1.c.s.wast
-930930-2.c.s.wast
-931110-1.c.s.wast
-941014-2.c.s.wast
-950710-1.c.s.wast
-960215-1.c.s.wast
-960327-1.c.s.wast
-960405-1.c.s.wast
-960521-1.c.s.wast
 980506-3.c.s.wast
-980605-1.c.s.wast
-980612-1.c.s.wast
-981206-1.c.s.wast
 990106-2.c.s.wast
-990222-1.c.s.wast
-990513-1.c.s.wast
-990628-1.c.s.wast
-991112-1.c.s.wast
-991228-1.c.s.wast
-align-2.c.s.wast
-alloca-1.c.s.wast
 anon-1.c.s.wast
-bcp-1.c.s.wast
 bitfld-1.c.s.wast
-bitfld-3.c.s.wast
-builtin-constant.c.s.wast
-builtin-prefetch-2.c.s.wast
 const-addr-expr-1.c.s.wast
-eeprof-1.c.s.wast
 ipa-sra-1.c.s.wast
 ipa-sra-2.c.s.wast
-loop-2f.c.s.wast
-loop-2g.c.s.wast
 loop-9.c.s.wast
-medce-1.c.s.wast
-memcpy-1.c.s.wast
-memcpy-2.c.s.wast
-memcpy-bi.c.s.wast
-memset-1.c.s.wast
-memset-2.c.s.wast
-memset-3.c.s.wast
-packed-1.c.s.wast
-packed-2.c.s.wast
 pending-4.c.s.wast
-pr15296.c.s.wast
-pr20100-1.c.s.wast
-pr20527-1.c.s.wast
 pr22493-1.c.s.wast
 pr23047.c.s.wast
-pr27073.c.s.wast
-pr27260.c.s.wast
-pr27285.c.s.wast
 pr28651.c.s.wast
-pr29006.c.s.wast
-pr32244-1.c.s.wast
 pr32500.c.s.wast
-pr33142.c.s.wast
-pr33992.c.s.wast
-pr34176.c.s.wast
-pr34456.c.s.wast
-pr34971.c.s.wast
-pr35472.c.s.wast
-pr36038.c.s.wast
 pr36321.c.s.wast
-pr36339.c.s.wast
-pr36343.c.s.wast
-pr36691.c.s.wast
-pr36765.c.s.wast
-pr37573.c.s.wast
-pr37882.c.s.wast
-pr37924.c.s.wast
-pr38212.c.s.wast
-pr38236.c.s.wast
-pr39120.c.s.wast
-pr39228.c.s.wast
-pr40022.c.s.wast
 pr40493.c.s.wast
-pr40657.c.s.wast
-pr41239.c.s.wast
-pr41395-1.c.s.wast
-pr41395-2.c.s.wast
-pr41463.c.s.wast
-pr42512.c.s.wast
-pr42614.c.s.wast
-pr42691.c.s.wast
-pr43008.c.s.wast
-pr43236.c.s.wast
-pr43784.c.s.wast
-pr43835.c.s.wast
-pr44164.c.s.wast
-pr44202-1.c.s.wast
-pr44852.c.s.wast
-pr45070.c.s.wast
-pr47237.c.s.wast
-pr47337.c.s.wast
-pr49123.c.s.wast
-pr49218.c.s.wast
-pr49279.c.s.wast
-pr51466.c.s.wast
-pr51581-1.c.s.wast
-pr51877.c.s.wast
-pr51933.c.s.wast
-pr52760.c.s.wast
-pr52979-1.c.s.wast
-pr52979-2.c.s.wast
-pr53688.c.s.wast
-pr54471.c.s.wast
-pr54985.c.s.wast
-pr56799.c.s.wast
 pr56982.c.s.wast
-pr57124.c.s.wast
-pr57131.c.s.wast
-pr57344-3.c.s.wast
-pr57344-4.c.s.wast
-pr57877.c.s.wast
-pr58365.c.s.wast
-pr58419.c.s.wast
-pr59229.c.s.wast
-pr59358.c.s.wast
-pr60960.c.s.wast
 pr61375.c.s.wast
-pr63659.c.s.wast
-printf-1.c.s.wast
-regstack-1.c.s.wast
-simd-2.c.s.wast
-simd-5.c.s.wast
-strcmp-1.c.s.wast
-strcpy-1.c.s.wast
-string-opt-17.c.s.wast
-string-opt-18.c.s.wast
-string-opt-5.c.s.wast
-strlen-1.c.s.wast
-strncmp-1.c.s.wast
-struct-aliasing-1.c.s.wast
-struct-cpy-1.c.s.wast
 switch-1.c.s.wast
 vrp-1.c.s.wast
 vrp-2.c.s.wast
 vrp-3.c.s.wast
 vrp-5.c.s.wast
 vrp-6.c.s.wast
-zerolen-1.c.s.wast
-20030626-2.c.s.wast
-20060930-2.c.s.wast
-20080604-1.c.s.wast
-20090814-1.c.s.wast
-20111208-1.c.s.wast
-20131127-1.c.s.wast
-packed-2.c.s.wast
-pr44164.c.s.wast
-pr57344-3.c.s.wast
-pr57344-4.c.s.wast
-zerolen-1.c.s.wast
+
+# [trap highest > memory]
+20000528-1.c.s.wast
+20001111-1.c.s.wast
+20021015-1.c.s.wast
+20040709-2.c.s.wast
+20060905-1.c.s.wast
+930126-1.c.s.wast
+931110-1.c.s.wast
+980612-1.c.s.wast
+981206-1.c.s.wast
+990222-1.c.s.wast
+medce-1.c.s.wast
+packed-1.c.s.wast
+pr20100-1.c.s.wast
+pr27260.c.s.wast
+pr36691.c.s.wast
+pr37882.c.s.wast
+pr37924.c.s.wast
+pr42512.c.s.wast
+pr49123.c.s.wast
+pr52979-1.c.s.wast
+pr52979-2.c.s.wast
+pr57877.c.s.wast
+pr63659.c.s.wast
+simd-2.c.s.wast
+simd-5.c.s.wast
+
+# [trap final > memory]
+20000519-1.c.s.wast
+20000706-4.c.s.wast
+20000801-1.c.s.wast
+20001228-1.c.s.wast
+20010116-1.c.s.wast
+20010129-1.c.s.wast
+20010518-2.c.s.wast
+20020206-1.c.s.wast
+20020413-1.c.s.wast
+20020418-1.c.s.wast
+20020529-1.c.s.wast
+20021024-1.c.s.wast
+20021120-3.c.s.wast
+20021219-1.c.s.wast
+20030221-1.c.s.wast
+20030222-1.c.s.wast
+20030828-1.c.s.wast
+20030914-2.c.s.wast
+20030916-1.c.s.wast
+20031201-1.c.s.wast
+20040218-1.c.s.wast
+20040625-1.c.s.wast
+20040703-1.c.s.wast
+20040709-1.c.s.wast
+20040811-1.c.s.wast
+20040823-1.c.s.wast
+20041124-1.c.s.wast
+20041214-1.c.s.wast
+20050203-1.c.s.wast
+20050502-1.c.s.wast
+20050502-2.c.s.wast
+20060420-1.c.s.wast
+20070201-1.c.s.wast
+20070517-1.c.s.wast
+20071029-1.c.s.wast
+20071030-1.c.s.wast
+20071213-1.c.s.wast
+20071219-1.c.s.wast
+20080502-1.c.s.wast
+20080506-2.c.s.wast
+20080519-1.c.s.wast
+20081103-1.c.s.wast
+20081117-1.c.s.wast
+20100708-1.c.s.wast
+20101013-1.c.s.wast
+20111212-1.c.s.wast
+20120105-1.c.s.wast
+20120808-1.c.s.wast
+20120919-1.c.s.wast
+20121108-1.c.s.wast
+20140425-1.c.s.wast
+920501-8.c.s.wast
+920501-9.c.s.wast
+920726-1.c.s.wast
+930513-1.c.s.wast
+930930-2.c.s.wast
+950710-1.c.s.wast
+960327-1.c.s.wast
+980205.c.s.wast
+980223.c.s.wast
+980605-1.c.s.wast
+980608-1.c.s.wast
+980617-1.c.s.wast
+980716-1.c.s.wast
+990513-1.c.s.wast
+991201-1.c.s.wast
+991228-1.c.s.wast
+alloca-1.c.s.wast
+bf-pack-1.c.s.wast
+bitfld-5.c.s.wast
+builtin-prefetch-2.c.s.wast
+enum-3.c.s.wast
+loop-8.c.s.wast
+mayalias-3.c.s.wast
+memcpy-1.c.s.wast
+multi-ix.c.s.wast
+pr15296.c.s.wast
+pr20527-1.c.s.wast
+pr27073.c.s.wast
+pr27285.c.s.wast
+pr29006.c.s.wast
+pr33142.c.s.wast
+pr33992.c.s.wast
+pr34176.c.s.wast
+pr36339.c.s.wast
+pr36343.c.s.wast
+pr37573.c.s.wast
+pr38212.c.s.wast
+pr38236.c.s.wast
+pr38969.c.s.wast
+pr39120.c.s.wast
+pr39339.c.s.wast
+pr40022.c.s.wast
+pr40657.c.s.wast
+pr41239.c.s.wast
+pr42614.c.s.wast
+pr42691.c.s.wast
+pr43220.c.s.wast
+pr43236.c.s.wast
+pr43835.c.s.wast
+pr44202-1.c.s.wast
+pr44852.c.s.wast
+pr44942.c.s.wast
+pr45070.c.s.wast
+pr46309.c.s.wast
+pr47538.c.s.wast
+pr47925.c.s.wast
+pr48571-1.c.s.wast
+pr49279.c.s.wast
+pr51466.c.s.wast
+pr51581-1.c.s.wast
+pr51581-2.c.s.wast
+pr51877.c.s.wast
+pr51933.c.s.wast
+pr52129.c.s.wast
+pr52760.c.s.wast
+pr54471.c.s.wast
+pr54985.c.s.wast
+pr56205.c.s.wast
+pr56799.c.s.wast
+pr56837.c.s.wast
+pr56866.c.s.wast
+pr57124.c.s.wast
+pr57130.c.s.wast
+pr57131.c.s.wast
+pr58365.c.s.wast
+pr59358.c.s.wast
+pr60960.c.s.wast
+pta-field-1.c.s.wast
+pta-field-2.c.s.wast
+stdarg-1.c.s.wast
+stdarg-2.c.s.wast
+stdarg-4.c.s.wast
+string-opt-17.c.s.wast
+string-opt-18.c.s.wast
+struct-aliasing-1.c.s.wast
+struct-ret-1.c.s.wast
+va-arg-1.c.s.wast
+va-arg-11.c.s.wast
+va-arg-12.c.s.wast
+va-arg-13.c.s.wast
+va-arg-14.c.s.wast
+va-arg-15.c.s.wast
+va-arg-16.c.s.wast
+va-arg-17.c.s.wast
+va-arg-18.c.s.wast
+va-arg-19.c.s.wast
+va-arg-2.c.s.wast
+va-arg-20.c.s.wast
+va-arg-23.c.s.wast
+va-arg-24.c.s.wast
+va-arg-26.c.s.wast
+va-arg-4.c.s.wast
+va-arg-5.c.s.wast
+va-arg-6.c.s.wast
+va-arg-7.c.s.wast
+va-arg-8.c.s.wast
+va-arg-9.c.s.wast
+va-arg-trap-1.c.s.wast
+vla-dealloc-1.c.s.wast
+
+# [trap offset > memory]
+20030218-1.c.s.wast
+20080522-1.c.s.wast
+complex-7.c.s.wast
+pr30778.c.s.wast
+pr51323.c.s.wast
+
+# abort called: the tests are self-validating and call abort when they detect a
+# failure.  This may not be binaryen's fault (the toolchain may be emitting bad
+# code) but it could be binaryen's fault.
+20001027-1.c.s.wast
+20030125-1.c.s.wast
+920612-1.c.s.wast
+920711-1.c.s.wast
+bcp-1.c.s.wast
+bitfld-3.c.s.wast
+builtin-constant.c.s.wast
+builtin-prefetch-4.c.s.wast
+eeprof-1.c.s.wast
+pr32244-1.c.s.wast
+pr34971.c.s.wast
+pr48814-1.c.s.wast
+
+# callImport: the toolchain needs to properly use libc and a runtime. These
+# aren't binaryen's fault.
+20000910-2.c.s.wast # strchr
+20000914-1.c.s.wast # malloc
+20011024-1.c.s.wast # strcmp
+20020406-1.c.s.wast # malloc
+20021011-1.c.s.wast # strcmp
+20031204-1.c.s.wast # strcmp
+20041126-1.c.s.wast # memcpy
+20041218-1.c.s.wast # memset
+20050218-1.c.s.wast # strlen
+20050826-1.c.s.wast # memset
+20051113-1.c.s.wast # malloc
+20060412-1.c.s.wast # memset
+20071018-1.c.s.wast # __builtin_malloc
+20071120-1.c.s.wast # __builtin_malloc
+20071202-1.c.s.wast # memcpy
+20081218-1.c.s.wast # memset
+20101011-1.c.s.wast # signal
+921117-1.c.s.wast # strcmp
+941014-2.c.s.wast # malloc
+960215-1.c.s.wast # __addtf3
+960405-1.c.s.wast # __eqtf2
+960521-1.c.s.wast # malloc
+990628-1.c.s.wast # malloc
+991112-1.c.s.wast # isprint
+align-2.c.s.wast # __eqtf2
+complex-5.c.s.wast # __divsc3
+loop-2f.c.s.wast # open
+loop-2g.c.s.wast # open
+memcpy-2.c.s.wast # memset
+memcpy-bi.c.s.wast # memcpy
+memset-1.c.s.wast # memset
+memset-2.c.s.wast # memset
+memset-3.c.s.wast # memset
+pr34456.c.s.wast # qsort
+pr35472.c.s.wast # memset
+pr36038.c.s.wast # memcpy
+pr36093.c.s.wast # memset
+pr36765.c.s.wast # __builtin_malloc
+pr39228.c.s.wast # __builtin_isinff
+pr41395-1.c.s.wast # malloc
+pr41395-2.c.s.wast # malloc
+pr41463.c.s.wast # malloc
+pr43008.c.s.wast # __builtin_malloc
+pr43784.c.s.wast # memcpy
+pr47237.c.s.wast # __builtin_apply_args
+pr47337.c.s.wast # strcmp
+pr49218.c.s.wast # __fixsfti
+pr49419.c.s.wast # memset
+pr53688.c.s.wast # memset
+pr58419.c.s.wast # getpid
+pr59229.c.s.wast # memcpy
+printf-1.c.s.wast # isprint
+regstack-1.c.s.wast # __addtf3
+strcmp-1.c.s.wast # strcmp
+strcpy-1.c.s.wast # memset
+string-opt-5.c.s.wast # strlen
+strlen-1.c.s.wast # strlen
+strncmp-1.c.s.wast # strcmp
+struct-cpy-1.c.s.wast # memset

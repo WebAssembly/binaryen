@@ -12,7 +12,8 @@ f:                                      # @f
 	i32.const	$1=, 1
 	block
 	block
-	i32.and 	$push0=, $0, $1
+	i32.const	$push2=, 1
+	i32.and 	$push0=, $0, $pop2
 	br_if   	$pop0, 0        # 0: down to label1
 # BB#1:                                 # %land.lhs.true
 	i32.load	$push1=, 0($0)

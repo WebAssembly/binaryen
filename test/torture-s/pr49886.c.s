@@ -19,12 +19,12 @@ never_ever:                             # @never_ever
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, cond($0), $pop0
-	return  	$0
+	i32.store	$discard=, cond($pop1), $pop0
+	i32.const	$push2=, 0
+	return  	$pop2
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -50,97 +50,113 @@ bar_1:                                  # @bar_1
 	.type	mark_cell,@function
 mark_cell:                              # @mark_cell
 	.param  	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push27=, 0
-	i32.eq  	$push28=, $0, $pop27
-	br_if   	$pop28, 0       # 0: down to label0
+	i32.const	$push49=, 0
+	i32.eq  	$push50=, $0, $pop49
+	br_if   	$pop50, 0       # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$push1=, 0
-	i32.load	$push0=, cond($pop1)
-	i32.const	$push29=, 0
-	i32.eq  	$push30=, $pop0, $pop29
-	br_if   	$pop30, 0       # 0: down to label0
+	i32.const	$push2=, 0
+	i32.load	$push1=, cond($pop2)
+	i32.const	$push51=, 0
+	i32.eq  	$push52=, $pop1, $pop51
+	br_if   	$pop52, 0       # 0: down to label0
 # BB#2:                                 # %land.lhs.true
-	i32.const	$1=, 4
-	i32.load	$push2=, 8($0)
-	i32.ne  	$push3=, $pop2, $1
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.load	$push3=, 8($0)
+	i32.const	$push4=, 4
+	i32.ne  	$push5=, $pop3, $pop4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#3:                                 # %land.lhs.true2
-	i32.load	$0=, 0($0)
-	i32.const	$push31=, 0
-	i32.eq  	$push32=, $0, $pop31
-	br_if   	$pop32, 0       # 0: down to label0
+	i32.load	$push0=, 0($0)
+	tee_local	$push41=, $0=, $pop0
+	i32.const	$push53=, 0
+	i32.eq  	$push54=, $pop41, $pop53
+	br_if   	$pop54, 0       # 0: down to label0
 # BB#4:                                 # %land.lhs.true4
-	i32.const	$2=, 2
-	i32.add 	$3=, $0, $2
 	block
-	i32.load8_u	$push4=, 0($3)
-	i32.and 	$push5=, $pop4, $1
-	i32.const	$push33=, 0
-	i32.eq  	$push34=, $pop5, $pop33
-	br_if   	$pop34, 0       # 0: down to label1
+	i32.const	$push43=, 2
+	i32.add 	$push6=, $0, $pop43
+	tee_local	$push42=, $1=, $pop6
+	i32.load8_u	$push7=, 0($pop42):p2align=1
+	i32.const	$push8=, 4
+	i32.and 	$push9=, $pop7, $pop8
+	i32.const	$push55=, 0
+	i32.eq  	$push56=, $pop9, $pop55
+	br_if   	$pop56, 0       # 0: down to label1
 # BB#5:                                 # %land.lhs.true17
 	block
-	i32.load8_u	$push6=, 0($3)
-	i32.and 	$push7=, $pop6, $2
-	i32.const	$push35=, 0
-	i32.eq  	$push36=, $pop7, $pop35
-	br_if   	$pop36, 0       # 0: down to label2
+	i32.load8_u	$push10=, 0($1):p2align=1
+	i32.const	$push44=, 2
+	i32.and 	$push11=, $pop10, $pop44
+	i32.const	$push57=, 0
+	i32.eq  	$push58=, $pop11, $pop57
+	br_if   	$pop58, 0       # 0: down to label2
 # BB#6:                                 # %land.lhs.true33
-	i32.const	$2=, 1
 	block
-	i32.load8_u	$push8=, 0($3)
-	i32.and 	$push9=, $pop8, $2
-	i32.const	$push37=, 0
-	i32.eq  	$push38=, $pop9, $pop37
-	br_if   	$pop38, 0       # 0: down to label3
+	i32.const	$push12=, 2
+	i32.add 	$push13=, $0, $pop12
+	i32.load8_u	$push14=, 0($pop13):p2align=1
+	i32.const	$push45=, 1
+	i32.and 	$push15=, $pop14, $pop45
+	i32.const	$push59=, 0
+	i32.eq  	$push60=, $pop15, $pop59
+	br_if   	$pop60, 0       # 0: down to label3
 # BB#7:                                 # %land.lhs.true49
-	i32.add 	$0=, $0, $2
 	block
-	i32.load8_u	$push10=, 0($0)
-	i32.const	$push11=, 7
-	i32.shr_u	$push12=, $pop10, $pop11
-	i32.const	$push39=, 0
-	i32.eq  	$push40=, $pop12, $pop39
-	br_if   	$pop40, 0       # 0: down to label4
+	i32.const	$push46=, 1
+	i32.add 	$push16=, $0, $pop46
+	i32.load8_u	$push17=, 0($pop16)
+	i32.const	$push18=, 7
+	i32.shr_u	$push19=, $pop17, $pop18
+	i32.const	$push61=, 0
+	i32.eq  	$push62=, $pop19, $pop61
+	br_if   	$pop62, 0       # 0: down to label4
 # BB#8:                                 # %land.lhs.true65
 	block
-	i32.load8_u	$push13=, 0($0)
-	i32.const	$push14=, 64
-	i32.and 	$push15=, $pop13, $pop14
-	i32.const	$push41=, 0
-	i32.eq  	$push42=, $pop15, $pop41
-	br_if   	$pop42, 0       # 0: down to label5
+	i32.const	$push20=, 1
+	i32.add 	$push21=, $0, $pop20
+	tee_local	$push47=, $1=, $pop21
+	i32.load8_u	$push22=, 0($pop47)
+	i32.const	$push23=, 64
+	i32.and 	$push24=, $pop22, $pop23
+	i32.const	$push63=, 0
+	i32.eq  	$push64=, $pop24, $pop63
+	br_if   	$pop64, 0       # 0: down to label5
 # BB#9:                                 # %land.lhs.true81
 	block
-	i32.load8_u	$push16=, 0($0)
-	i32.const	$push17=, 32
-	i32.and 	$push18=, $pop16, $pop17
-	i32.const	$push43=, 0
-	i32.eq  	$push44=, $pop18, $pop43
-	br_if   	$pop44, 0       # 0: down to label6
+	i32.load8_u	$push25=, 0($1)
+	i32.const	$push26=, 32
+	i32.and 	$push27=, $pop25, $pop26
+	i32.const	$push65=, 0
+	i32.eq  	$push66=, $pop27, $pop65
+	br_if   	$pop66, 0       # 0: down to label6
 # BB#10:                                # %land.lhs.true97
 	block
-	i32.load8_u	$push19=, 0($0)
-	i32.const	$push20=, 16
-	i32.and 	$push21=, $pop19, $pop20
-	i32.const	$push45=, 0
-	i32.eq  	$push46=, $pop21, $pop45
-	br_if   	$pop46, 0       # 0: down to label7
+	i32.const	$push28=, 1
+	i32.add 	$push29=, $0, $pop28
+	tee_local	$push48=, $1=, $pop29
+	i32.load8_u	$push30=, 0($pop48)
+	i32.const	$push31=, 16
+	i32.and 	$push32=, $pop30, $pop31
+	i32.const	$push67=, 0
+	i32.eq  	$push68=, $pop32, $pop67
+	br_if   	$pop68, 0       # 0: down to label7
 # BB#11:                                # %land.lhs.true113
 	block
-	i32.load8_u	$push22=, 0($0)
-	i32.const	$push23=, 8
-	i32.and 	$push24=, $pop22, $pop23
-	i32.const	$push47=, 0
-	i32.eq  	$push48=, $pop24, $pop47
-	br_if   	$pop48, 0       # 0: down to label8
+	i32.load8_u	$push33=, 0($1)
+	i32.const	$push34=, 8
+	i32.and 	$push35=, $pop33, $pop34
+	i32.const	$push69=, 0
+	i32.eq  	$push70=, $pop35, $pop69
+	br_if   	$pop70, 0       # 0: down to label8
 # BB#12:                                # %land.lhs.true129
-	i32.load8_u	$push25=, 0($0)
-	i32.and 	$push26=, $pop25, $1
-	br_if   	$pop26, 8       # 8: down to label0
+	i32.const	$push36=, 1
+	i32.add 	$push37=, $0, $pop36
+	i32.load8_u	$push38=, 0($pop37)
+	i32.const	$push39=, 4
+	i32.and 	$push40=, $pop38, $pop39
+	br_if   	$pop40, 8       # 8: down to label0
 # BB#13:                                # %if.then134
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable
@@ -204,7 +220,7 @@ bar_2:                                  # @bar_2
 	.type	cond,@object
 	.section	.bss.cond,"aw",@nobits
 	.globl	cond
-	.align	2
+	.p2align	2
 cond:
 	.int32	0                       # 0x0
 	.size	cond, 4
@@ -213,7 +229,7 @@ cond:
 	.type	gi,@object
 	.section	.bss.gi,"aw",@nobits
 	.globl	gi
-	.align	2
+	.p2align	2
 gi:
 	.int32	0                       # 0x0
 	.size	gi, 4

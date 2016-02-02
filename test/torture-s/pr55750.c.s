@@ -6,15 +6,13 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 2
-	i32.const	$push1=, arr
-	i32.shl 	$push0=, $0, $1
-	i32.add 	$0=, $pop1, $pop0
-	i32.load8_u	$push2=, 0($0)
-	i32.add 	$push3=, $pop2, $1
-	i32.store8	$discard=, 0($0), $pop3
+	i32.const	$push0=, 2
+	i32.shl 	$0=, $0, $pop0
+	i32.load8_u	$push1=, arr($0):p2align=2
+	i32.const	$push3=, 2
+	i32.add 	$push2=, $pop1, $pop3
+	i32.store8	$discard=, arr($0):p2align=2, $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -26,28 +24,32 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
+	i32.const	$push13=, 0
 	i32.const	$push1=, 127
-	i32.store8	$discard=, arr($0), $pop1
+	i32.store8	$discard=, arr($pop13):p2align=2, $pop1
+	i32.const	$push12=, 0
 	i32.const	$push2=, 254
-	i32.store8	$discard=, arr+4($0), $pop2
-	call    	foo@FUNCTION, $0
-	block
+	i32.store8	$discard=, arr+4($pop12):p2align=2, $pop2
+	i32.const	$push11=, 0
+	call    	foo@FUNCTION, $pop11
 	i32.const	$push3=, 1
 	call    	foo@FUNCTION, $pop3
-	i32.load8_u	$push4=, arr($0)
+	block
+	i32.const	$push10=, 0
+	i32.load8_u	$push4=, arr($pop10):p2align=2
 	i32.const	$push5=, 129
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	$pop6, 0        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.load8_u	$push0=, arr+4($0)
+	i32.const	$push14=, 0
+	i32.load8_u	$push0=, arr+4($pop14):p2align=2
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop0, $pop7
 	br_if   	$pop8, 0        # 0: down to label0
 # BB#2:                                 # %if.end
-	return  	$0
+	i32.const	$push9=, 0
+	return  	$pop9
 .LBB1_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -60,7 +62,7 @@ main:                                   # @main
 	.type	arr,@object
 	.section	.bss.arr,"aw",@nobits
 	.globl	arr
-	.align	2
+	.p2align	2
 arr:
 	.skip	8
 	.size	arr, 8

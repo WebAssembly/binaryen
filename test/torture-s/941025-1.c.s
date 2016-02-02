@@ -7,13 +7,13 @@
 f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 1
-	i32.gt_s	$push0=, $0, $2
-	i32.and 	$push1=, $1, $2
-	i32.select	$push2=, $pop0, $1, $pop1
-	return  	$pop2
+	i32.const	$push0=, 1
+	i32.gt_s	$push1=, $0, $pop0
+	i32.const	$push4=, 1
+	i32.and 	$push2=, $1, $pop4
+	i32.select	$push3=, $pop1, $1, $pop2
+	return  	$pop3
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

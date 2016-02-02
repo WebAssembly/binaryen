@@ -28,18 +28,19 @@ check:                                  # @check
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i64.load	$push0=, s2($0)
-	i64.store	$push1=, s1($0), $pop0
+	i32.const	$push6=, 0
+	i32.const	$push5=, 0
+	i64.load	$push0=, s2($pop5)
+	i64.store	$push1=, s1($pop6), $pop0
 	i32.wrap/i64	$push2=, $pop1
 	i32.const	$push3=, 1
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	$pop4, 0        # 0: down to label1
 # BB#1:                                 # %if.then.i
-	call    	exit@FUNCTION, $0
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 .LBB1_2:                                # %if.else.i
 	end_block                       # label1:
@@ -53,7 +54,7 @@ main:                                   # @main
 	.type	s2,@object
 	.section	.data.s2,"aw",@progbits
 	.globl	s2
-	.align	3
+	.p2align	3
 s2:
 	.int32	1                       # 0x1
 	.int32	2                       # 0x2
@@ -63,7 +64,7 @@ s2:
 	.type	s1,@object
 	.section	.bss.s1,"aw",@nobits
 	.globl	s1
-	.align	3
+	.p2align	3
 s1:
 	.skip	8
 	.size	s1, 8

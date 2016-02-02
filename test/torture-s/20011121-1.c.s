@@ -18,7 +18,7 @@ main:                                   # @main
 	.type	s1,@object
 	.section	.bss.s1,"aw",@nobits
 	.globl	s1
-	.align	2
+	.p2align	2
 s1:
 	.skip	76
 	.size	s1, 76

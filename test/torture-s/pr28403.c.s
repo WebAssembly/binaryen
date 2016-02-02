@@ -29,18 +29,20 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.param  	i64
 	.result 	i64
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 1
+	i32.const	$push4=, 1
 	i32.const	$push3=, 2
+	i32.const	$push10=, 1
 	i32.const	$push2=, 3
+	i32.const	$push9=, 1
 	i32.const	$push1=, 4
+	i32.const	$push8=, 1
 	i32.const	$push0=, 5
-	i32.call	$discard=, foo@FUNCTION, $1, $pop3, $1, $pop2, $1, $pop1, $1, $pop0
-	i32.const	$push4=, 0
-	i64.load32_u	$push5=, global($pop4)
-	i64.shr_u	$push6=, $0, $pop5
-	return  	$pop6
+	i32.call	$discard=, foo@FUNCTION, $pop4, $pop3, $pop10, $pop2, $pop9, $pop1, $pop8, $pop0
+	i32.const	$push5=, 0
+	i64.load32_u	$push6=, global($pop5)
+	i64.shr_u	$push7=, $0, $pop6
+	return  	$pop7
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
@@ -74,7 +76,7 @@ main:                                   # @main
 	.type	global,@object
 	.section	.bss.global,"aw",@nobits
 	.globl	global
-	.align	2
+	.p2align	2
 global:
 	.int32	0                       # 0x0
 	.size	global, 4

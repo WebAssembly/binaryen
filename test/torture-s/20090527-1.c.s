@@ -6,23 +6,25 @@
 	.type	new_unit,@function
 new_unit:                               # @new_unit
 	.param  	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.load	$2=, 4($0)
-	i32.const	$1=, 1
 	block
-	i32.ne  	$push0=, $2, $1
+	i32.load	$push7=, 4($0)
+	tee_local	$push9=, $1=, $pop7
+	i32.const	$push8=, 1
+	i32.ne  	$push0=, $pop9, $pop8
 	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push1=, 0
-	i32.store	$2=, 0($pop3), $pop1
+	i32.store	$1=, 0($pop3), $pop1
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	block
 	i32.load	$push4=, 0($0)
-	i32.ne  	$push5=, $pop4, $1
+	i32.const	$push10=, 1
+	i32.ne  	$push5=, $pop4, $pop10
 	br_if   	$pop5, 0        # 0: down to label1
 # BB#3:                                 # %if.then3
 	i32.const	$push6=, 0
@@ -30,7 +32,7 @@ new_unit:                               # @new_unit
 .LBB0_4:                                # %if.end5
 	end_block                       # label1:
 	block
-	br_if   	$2, 0           # 0: down to label2
+	br_if   	$1, 0           # 0: down to label2
 # BB#5:                                 # %sw.epilog
 	return
 .LBB0_6:                                # %sw.default

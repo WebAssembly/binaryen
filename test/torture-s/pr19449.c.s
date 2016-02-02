@@ -20,19 +20,20 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load	$push1=, y($0)
+	i32.const	$push5=, 0
+	i32.load	$push1=, y($pop5)
 	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.load	$push0=, z($0)
+	i32.const	$push6=, 0
+	i32.load	$push0=, z($pop6)
 	i32.const	$push2=, 3
 	i32.ne  	$push3=, $pop0, $pop2
 	br_if   	$pop3, 0        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false1
-	return  	$0
+	i32.const	$push4=, 0
+	return  	$pop4
 .LBB1_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -45,7 +46,7 @@ main:                                   # @main
 	.type	z,@object
 	.section	.data.z,"aw",@progbits
 	.globl	z
-	.align	2
+	.p2align	2
 z:
 	.int32	3                       # 0x3
 	.size	z, 4
@@ -54,7 +55,7 @@ z:
 	.type	y,@object
 	.section	.bss.y,"aw",@nobits
 	.globl	y
-	.align	2
+	.p2align	2
 y:
 	.int32	0                       # 0x0
 	.size	y, 4

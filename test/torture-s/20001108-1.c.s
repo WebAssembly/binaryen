@@ -7,15 +7,15 @@
 signed_poly:                            # @signed_poly
 	.param  	i64, i32
 	.result 	i64
-	.local  	i64
 # BB#0:                                 # %entry
-	i64.const	$2=, 32
-	i64.shl 	$push0=, $0, $2
-	i64.shr_s	$push1=, $pop0, $2
-	i64.extend_s/i32	$push2=, $1
-	i64.mul 	$push3=, $pop1, $pop2
-	i64.add 	$push4=, $pop3, $0
-	return  	$pop4
+	i64.const	$push0=, 32
+	i64.shl 	$push1=, $0, $pop0
+	i64.const	$push6=, 32
+	i64.shr_s	$push2=, $pop1, $pop6
+	i64.extend_s/i32	$push3=, $1
+	i64.mul 	$push4=, $pop2, $pop3
+	i64.add 	$push5=, $pop4, $0
+	return  	$pop5
 	.endfunc
 .Lfunc_end0:
 	.size	signed_poly, .Lfunc_end0-signed_poly

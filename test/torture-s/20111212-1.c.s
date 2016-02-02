@@ -6,36 +6,15 @@
 	.type	frob_entry,@function
 frob_entry:                             # @frob_entry
 	.param  	i32
-	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 3
-	i32.add 	$1=, $0, $pop0
-	i32.const	$push3=, 2
-	i32.add 	$3=, $0, $pop3
-	i32.const	$2=, 8
 	block
-	i32.const	$push8=, 1
-	i32.add 	$4=, $0, $pop8
-	i32.load8_u	$push1=, 0($1)
-	i32.shl 	$push2=, $pop1, $2
-	i32.load8_u	$push4=, 0($3)
-	i32.or  	$push5=, $pop2, $pop4
-	i32.const	$push6=, 16
-	i32.shl 	$push7=, $pop5, $pop6
-	i32.load8_u	$push9=, 0($4)
-	i32.shl 	$push10=, $pop9, $2
-	i32.load8_u	$push11=, 0($0)
-	i32.or  	$push12=, $pop10, $pop11
-	i32.or  	$push13=, $pop7, $pop12
-	i32.const	$push14=, 63
-	i32.gt_u	$push15=, $pop13, $pop14
-	br_if   	$pop15, 0       # 0: down to label0
+	i32.load	$push0=, 0($0):p2align=0
+	i32.const	$push1=, 63
+	i32.gt_u	$push2=, $pop0, $pop1
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.then
-	i32.const	$push16=, 255
-	i32.store8	$push17=, 0($0), $pop16
-	i32.store8	$push18=, 0($1), $pop17
-	i32.store8	$push19=, 0($3), $pop18
-	i32.store8	$discard=, 0($4), $pop19
+	i32.const	$push3=, -1
+	i32.store	$discard=, 0($0):p2align=0, $pop3
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	return

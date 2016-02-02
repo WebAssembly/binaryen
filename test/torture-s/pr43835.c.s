@@ -30,24 +30,25 @@ foo:                                    # @foo
 	.type	mark_cell,@function
 mark_cell:                              # @mark_cell
 	.param  	i32, i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 4
 	block
-	i32.load	$push0=, 8($1)
-	i32.ne  	$push1=, $pop0, $2
-	br_if   	$pop1, 0        # 0: down to label0
+	i32.load	$push1=, 8($1)
+	i32.const	$push2=, 4
+	i32.ne  	$push3=, $pop1, $pop2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %land.lhs.true
-	i32.load	$1=, 0($1)
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $1, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	i32.load	$push0=, 0($1)
+	tee_local	$push9=, $1=, $pop0
+	i32.const	$push10=, 0
+	i32.eq  	$push11=, $pop9, $pop10
+	br_if   	$pop11, 0       # 0: down to label0
 # BB#2:                                 # %land.lhs.true1
-	i32.const	$push2=, 2
-	i32.add 	$push3=, $1, $pop2
-	i32.load8_u	$push4=, 0($pop3)
-	i32.and 	$push5=, $pop4, $2
-	br_if   	$pop5, 0        # 0: down to label0
+	i32.const	$push4=, 2
+	i32.add 	$push5=, $1, $pop4
+	i32.load8_u	$push6=, 0($pop5):p2align=1
+	i32.const	$push7=, 4
+	i32.and 	$push8=, $pop6, $pop7
+	br_if   	$pop8, 0        # 0: down to label0
 # BB#3:                                 # %if.then
 	call    	Parrot_gc_mark_PMC_alive_fun@FUNCTION, $1, $1
 	unreachable
@@ -64,33 +65,27 @@ mark_cell:                              # @mark_cell
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$0=, __stack_pointer
+	i32.load	$0=, 0($0)
+	i32.const	$1=, 16
+	i32.sub 	$4=, $0, $1
 	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
+	i32.store	$4=, 0($1), $4
+	i32.const	$push1=, 4
+	i32.store	$discard=, 8($4):p2align=3, $pop1
+	i64.const	$push0=, 180388626432
+	i64.store	$discard=, 0($4), $pop0
+	i32.const	$3=, 12
+	i32.add 	$3=, $4, $3
+	call    	mark_cell@FUNCTION, $3, $4
+	i32.const	$push2=, 0
 	i32.const	$2=, 16
-	i32.sub 	$7=, $1, $2
+	i32.add 	$4=, $4, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$7=, 0($2), $7
-	i32.const	$0=, 4
-	i32.const	$4=, 0
-	i32.add 	$4=, $7, $4
-	i32.or  	$push2=, $4, $0
-	i32.const	$push3=, 42
-	i32.store	$discard=, 0($pop2), $pop3
-	i32.store	$discard=, 8($7), $0
-	i32.const	$5=, 12
-	i32.add 	$5=, $7, $5
-	i32.const	$6=, 0
-	i32.add 	$6=, $7, $6
-	call    	mark_cell@FUNCTION, $5, $6
-	i32.const	$push0=, 0
-	i32.store	$push1=, 0($7), $pop0
-	i32.const	$3=, 16
-	i32.add 	$7=, $7, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$7=, 0($3), $7
-	return  	$pop1
+	i32.store	$4=, 0($2), $4
+	return  	$pop2
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

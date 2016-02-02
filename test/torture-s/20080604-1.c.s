@@ -28,26 +28,27 @@ foo:                                    # @foo
 	.type	baz,@function
 baz:                                    # @baz
 	.param  	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$4=, $1, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
-	i32.const	$push0=, x
-	i32.const	$4=, 12
-	i32.add 	$4=, $4, $4
-	i32.select	$0=, $0, $4, $pop0
-	call    	foo@FUNCTION
-	i32.const	$push1=, .L.str
-	i32.store	$push2=, 0($0), $pop1
-	i32.store	$discard=, 0($0), $pop2
+	i32.load	$2=, 0($2)
 	i32.const	$3=, 16
-	i32.add 	$4=, $4, $3
+	i32.sub 	$6=, $2, $3
 	i32.const	$3=, __stack_pointer
-	i32.store	$4=, 0($3), $4
+	i32.store	$6=, 0($3), $6
+	i32.const	$push0=, x
+	i32.const	$5=, 12
+	i32.add 	$5=, $6, $5
+	i32.select	$push1=, $0, $5, $pop0
+	tee_local	$push3=, $0=, $pop1
+	i32.const	$push2=, .L.str
+	i32.store	$1=, 0($pop3), $pop2
+	call    	foo@FUNCTION
+	i32.store	$discard=, 0($0), $1
+	i32.const	$4=, 16
+	i32.add 	$6=, $6, $4
+	i32.const	$4=, __stack_pointer
+	i32.store	$6=, 0($4), $6
 	return
 	.endfunc
 .Lfunc_end1:
@@ -61,12 +62,14 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
-	call    	foo@FUNCTION
+	i32.const	$push1=, 0
 	i32.const	$push0=, .L.str
-	i32.store	$push1=, x($0), $pop0
-	i32.store	$discard=, x($0), $pop1
-	return  	$0
+	i32.store	$0=, x($pop1), $pop0
+	call    	foo@FUNCTION
+	i32.const	$push3=, 0
+	i32.store	$discard=, x($pop3), $0
+	i32.const	$push2=, 0
+	return  	$pop2
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
@@ -75,7 +78,7 @@ main:                                   # @main
 	.type	x,@object
 	.section	.bss.x,"aw",@nobits
 	.globl	x
-	.align	2
+	.p2align	2
 x:
 	.skip	4
 	.size	x, 4

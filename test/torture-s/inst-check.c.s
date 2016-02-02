@@ -15,18 +15,19 @@ f:                                      # @f
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
-	i32.const	$1=, -1
-	i32.add 	$push2=, $0, $1
-	i64.extend_u/i32	$push3=, $pop2
-	i32.const	$push4=, -2
-	i32.add 	$push5=, $0, $pop4
-	i64.extend_u/i32	$push6=, $pop5
-	i64.mul 	$push7=, $pop3, $pop6
-	i64.const	$push8=, 1
-	i64.shr_u	$push9=, $pop7, $pop8
-	i32.wrap/i64	$push10=, $pop9
-	i32.add 	$push11=, $pop10, $0
-	i32.add 	$1=, $pop11, $1
+	i32.const	$push2=, -1
+	i32.add 	$push3=, $0, $pop2
+	i64.extend_u/i32	$push4=, $pop3
+	i32.const	$push5=, -2
+	i32.add 	$push6=, $0, $pop5
+	i64.extend_u/i32	$push7=, $pop6
+	i64.mul 	$push8=, $pop4, $pop7
+	i64.const	$push9=, 1
+	i64.shr_u	$push10=, $pop8, $pop9
+	i32.wrap/i64	$push11=, $pop10
+	i32.add 	$push12=, $pop11, $0
+	i32.const	$push13=, -1
+	i32.add 	$1=, $pop12, $pop13
 .LBB0_2:                                # %for.end
 	end_block                       # label0:
 	return  	$1

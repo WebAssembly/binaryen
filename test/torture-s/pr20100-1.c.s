@@ -9,20 +9,24 @@ frob:                                   # @frob
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
-	i32.load8_u	$push0=, e($2)
+	i32.const	$push0=, 0
+	i32.load8_u	$2=, e($pop0)
+	i32.const	$push13=, 0
+	i32.store16	$discard=, p($pop13), $1
+	i32.const	$push12=, 0
 	i32.const	$push1=, -1
-	i32.add 	$push2=, $pop0, $pop1
+	i32.add 	$push2=, $2, $pop1
 	i32.eq  	$push3=, $0, $pop2
+	i32.const	$push11=, 0
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $0, $pop4
-	i32.select	$0=, $pop3, $2, $pop5
-	i32.store16	$discard=, p($2), $1
-	i32.store16	$discard=, g($2), $0
-	i32.const	$push6=, 65535
-	i32.and 	$push7=, $0, $pop6
-	i32.eq  	$push8=, $pop7, $1
-	return  	$pop8
+	i32.select	$push6=, $pop3, $pop11, $pop5
+	tee_local	$push10=, $0=, $pop6
+	i32.store16	$discard=, g($pop12), $pop10
+	i32.const	$push7=, 65535
+	i32.and 	$push8=, $0, $pop7
+	i32.eq  	$push9=, $1, $pop8
+	return  	$pop9
 	.endfunc
 .Lfunc_end0:
 	.size	frob, .Lfunc_end0-frob
@@ -33,48 +37,57 @@ frob:                                   # @frob
 	.type	get_n,@function
 get_n:                                  # @get_n
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$6=, 0
-	i32.load16_u	$0=, p($6)
-	i32.load16_u	$5=, g($6)
+	i32.const	$1=, 0
 	block
-	i32.eq  	$push0=, $0, $5
-	br_if   	$pop0, 0        # 0: down to label0
+	i32.const	$push18=, 0
+	i32.load16_u	$push0=, p($pop18)
+	tee_local	$push17=, $3=, $pop0
+	i32.const	$push16=, 0
+	i32.load16_u	$push14=, g($pop16)
+	tee_local	$push15=, $2=, $pop14
+	i32.eq  	$push1=, $pop17, $pop15
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %while.body.lr.ph
-	i32.const	$2=, 0
-	i32.load8_u	$push1=, e($2)
-	i32.const	$push2=, -1
-	i32.add 	$1=, $pop1, $pop2
-	copy_local	$6=, $2
+	i32.const	$push19=, 0
+	i32.load8_u	$push2=, e($pop19)
+	i32.const	$push3=, -1
+	i32.add 	$0=, $pop2, $pop3
+	i32.const	$1=, 0
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$3=, 65535
-	i32.and 	$5=, $5, $3
-	i32.const	$4=, 1
-	i32.eq  	$push3=, $5, $1
-	i32.add 	$push4=, $5, $4
-	i32.select	$5=, $pop3, $2, $pop4
-	i32.add 	$6=, $6, $4
-	i32.and 	$push5=, $6, $3
-	i32.const	$push6=, 4
-	i32.gt_u	$push7=, $pop5, $pop6
-	br_if   	$pop7, 1        # 1: down to label2
+	i32.const	$push26=, 65535
+	i32.and 	$push4=, $2, $pop26
+	tee_local	$push25=, $2=, $pop4
+	i32.eq  	$push5=, $pop25, $0
+	i32.const	$push24=, 0
+	i32.const	$push23=, 1
+	i32.add 	$push6=, $2, $pop23
+	i32.select	$2=, $pop5, $pop24, $pop6
+	i32.const	$push22=, 1
+	i32.add 	$1=, $1, $pop22
+	i32.const	$push21=, 65535
+	i32.and 	$push7=, $1, $pop21
+	i32.const	$push20=, 4
+	i32.gt_u	$push8=, $pop7, $pop20
+	br_if   	$pop8, 1        # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB1_2 Depth=1
-	i32.and 	$push8=, $5, $3
-	i32.ne  	$push9=, $0, $pop8
-	br_if   	$pop9, 0        # 0: up to label1
+	i32.const	$push27=, 65535
+	i32.and 	$push9=, $2, $pop27
+	i32.ne  	$push10=, $3, $pop9
+	br_if   	$pop10, 0       # 0: up to label1
 .LBB1_4:                                # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
-	i32.const	$push10=, 0
-	i32.store16	$discard=, g($pop10), $5
+	i32.const	$push11=, 0
+	i32.store16	$discard=, g($pop11), $2
 .LBB1_5:                                # %while.end
 	end_block                       # label0:
-	i32.const	$push11=, 65535
-	i32.and 	$push12=, $6, $pop11
-	return  	$pop12
+	i32.const	$push12=, 65535
+	i32.and 	$push13=, $1, $pop12
+	return  	$pop13
 	.endfunc
 .Lfunc_end1:
 	.size	get_n, .Lfunc_end1-get_n
@@ -85,15 +98,17 @@ get_n:                                  # @get_n
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store8	$discard=, e($0), $pop0
-	i32.const	$push1=, 2
-	i32.store16	$push2=, p($0), $pop1
-	i32.store16	$discard=, g($0), $pop2
-	call    	exit@FUNCTION, $0
+	i32.store8	$discard=, e($pop1), $pop0
+	i32.const	$push6=, 0
+	i32.const	$push5=, 0
+	i32.const	$push2=, 2
+	i32.store16	$push3=, p($pop5), $pop2
+	i32.store16	$discard=, g($pop6), $pop3
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
 	.endfunc
 .Lfunc_end2:

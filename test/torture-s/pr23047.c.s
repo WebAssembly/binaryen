@@ -10,12 +10,13 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, 31
-	i32.shr_s	$1=, $0, $pop0
-	i32.add 	$push1=, $0, $1
-	i32.xor 	$push2=, $pop1, $1
-	i32.const	$push3=, -1
-	i32.gt_s	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	i32.shr_s	$push1=, $0, $pop0
+	tee_local	$push6=, $1=, $pop1
+	i32.add 	$push2=, $0, $pop6
+	i32.xor 	$push3=, $pop2, $1
+	i32.const	$push4=, -1
+	i32.gt_s	$push5=, $pop3, $pop4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	return
 .LBB0_2:                                # %if.end
@@ -34,8 +35,10 @@ main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	i32.const	$push0=, -2147483648
+	call    	f@FUNCTION, $pop0
+	i32.const	$push1=, 0
+	call    	exit@FUNCTION, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end1:

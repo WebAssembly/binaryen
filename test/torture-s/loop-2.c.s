@@ -41,14 +41,12 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
-	i32.const	$push0=, -2
-	i32.store	$discard=, a($0), $pop0
-	i32.const	$push1=, -1
-	i32.store	$discard=, a+4($0), $pop1
-	call    	exit@FUNCTION, $0
+	i32.const	$push1=, 0
+	i64.const	$push0=, -2
+	i64.store	$discard=, a($pop1):p2align=2, $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -58,7 +56,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.skip	8
 	.size	a, 8

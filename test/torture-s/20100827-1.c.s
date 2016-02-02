@@ -7,28 +7,30 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 0
+	i32.const	$1=, 0
 	block
 	i32.load8_u	$push0=, 0($0)
-	i32.const	$push3=, 0
-	i32.eq  	$push4=, $pop0, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	i32.const	$push7=, 0
+	i32.eq  	$push8=, $pop0, $pop7
+	br_if   	$pop8, 0        # 0: down to label0
 .LBB0_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.add 	$1=, $0, $3
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $1, $pop5
-	br_if   	$pop6, 1        # 1: down to label2
+	i32.add 	$push1=, $0, $1
+	tee_local	$push5=, $2=, $pop1
+	i32.const	$push9=, 0
+	i32.eq  	$push10=, $pop5, $pop9
+	br_if   	$pop10, 1       # 1: down to label2
 # BB#2:                                 # %if.end5
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$2=, 1
-	i32.add 	$3=, $3, $2
-	i32.add 	$push1=, $1, $2
-	i32.load8_u	$push2=, 0($pop1)
-	br_if   	$pop2, 0        # 0: up to label1
+	i32.const	$push2=, 1
+	i32.add 	$1=, $1, $pop2
+	i32.const	$push6=, 1
+	i32.add 	$push3=, $2, $pop6
+	i32.load8_u	$push4=, 0($pop3)
+	br_if   	$pop4, 0        # 0: up to label1
 	br      	2               # 2: down to label0
 .LBB0_3:                                # %if.then4
 	end_loop                        # label2:
@@ -36,7 +38,7 @@ foo:                                    # @foo
 	unreachable
 .LBB0_4:                                # %do.end
 	end_block                       # label0:
-	return  	$3
+	return  	$1
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

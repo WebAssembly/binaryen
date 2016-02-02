@@ -16,11 +16,13 @@ main:                                   # @main
 	i32.store	$discard=, count($1), $3
 	#APP
 	#NO_APP
-	i32.store	$discard=, dummy($1), $0
+	i32.const	$push0=, 0
+	i32.store	$discard=, dummy($pop0), $0
 	block
 	br_if   	$2, 0           # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $1
+	i32.const	$push1=, 0
+	call    	exit@FUNCTION, $pop1
 	unreachable
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -34,7 +36,7 @@ main:                                   # @main
 	.type	count,@object
 	.section	.bss.count,"aw",@nobits
 	.globl	count
-	.align	2
+	.p2align	2
 count:
 	.int32	0                       # 0x0
 	.size	count, 4
@@ -43,7 +45,7 @@ count:
 	.type	dummy,@object
 	.section	.bss.dummy,"aw",@nobits
 	.globl	dummy
-	.align	2
+	.p2align	2
 dummy:
 	.int32	0                       # 0x0
 	.size	dummy, 4

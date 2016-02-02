@@ -6,10 +6,9 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	copy_local	$0=, $1
+	i32.const	$0=, 0
 	#APP
 	#NO_APP
 	block
@@ -17,7 +16,8 @@ main:                                   # @main
 	i32.le_s	$push1=, $0, $pop0
 	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$1
+	i32.const	$push2=, 0
+	return  	$pop2
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

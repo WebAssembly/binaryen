@@ -37,13 +37,14 @@ test2:                                  # @test2
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end21
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
+	i32.const	$push4=, 0
 	i32.const	$push0=, 255
-	i32.store8	$push1=, a($0), $pop0
-	i32.store8	$discard=, b($0), $pop1
-	return  	$0
+	i32.store8	$push2=, a($pop4), $pop0
+	i32.store8	$discard=, b($pop1), $pop2
+	i32.const	$push3=, 0
+	return  	$pop3
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

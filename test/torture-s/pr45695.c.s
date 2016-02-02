@@ -38,28 +38,31 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 0
-	copy_local	$2=, $3
+	i32.const	$0=, 0
 	#APP
 	#NO_APP
-	i32.const	$push0=, 4
-	i32.add 	$1=, $2, $pop0
-	i32.const	$4=, 1
-	i32.add 	$0=, $2, $4
 	block
-	i32.call	$push1=, f@FUNCTION, $2, $0, $1
-	i32.const	$push2=, -1
-	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push11=, 1
+	i32.add 	$push0=, $0, $pop11
+	tee_local	$push10=, $2=, $pop0
+	i32.const	$push2=, 4
+	i32.add 	$push1=, $0, $pop2
+	tee_local	$push9=, $1=, $pop1
+	i32.call	$push3=, f@FUNCTION, $0, $pop10, $pop9
+	i32.const	$push4=, -1
+	i32.ne  	$push5=, $pop3, $pop4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
-	i32.call	$push4=, f@FUNCTION, $1, $0, $1
-	i32.ne  	$push5=, $pop4, $4
-	br_if   	$pop5, 0        # 0: down to label1
+	i32.call	$push6=, f@FUNCTION, $1, $2, $1
+	i32.const	$push12=, 1
+	i32.ne  	$push7=, $pop6, $pop12
+	br_if   	$pop7, 0        # 0: down to label1
 # BB#2:                                 # %if.end9
-	return  	$3
+	i32.const	$push8=, 0
+	return  	$pop8
 .LBB2_3:                                # %if.then8
 	end_block                       # label1:
 	call    	abort@FUNCTION

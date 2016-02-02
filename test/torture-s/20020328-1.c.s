@@ -52,7 +52,7 @@ main:                                   # @main
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
 	.globl	b
-	.align	2
+	.p2align	2
 b:
 	.int32	0                       # 0x0
 	.size	b, 4

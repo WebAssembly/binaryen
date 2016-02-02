@@ -6,28 +6,31 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.const	$1=, 42
 	block
-	i32.load	$push0=, list($0)
-	i32.call	$push1=, strchr@FUNCTION, $pop0, $1
-	i32.const	$push4=, 0
-	i32.eq  	$push5=, $pop1, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	i32.const	$push7=, 0
+	i32.load	$push0=, list($pop7)
+	i32.const	$push6=, 42
+	i32.call	$push1=, strchr@FUNCTION, $pop0, $pop6
+	i32.const	$push10=, 0
+	i32.eq  	$push11=, $pop1, $pop10
+	br_if   	$pop11, 0       # 0: down to label0
 # BB#1:                                 # %if.then.i
 	block
-	i32.load	$push2=, list+4($0)
-	i32.call	$push3=, strchr@FUNCTION, $pop2, $1
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $pop3, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
+	i32.const	$push9=, 0
+	i32.load	$push2=, list+4($pop9)
+	i32.const	$push8=, 42
+	i32.call	$push3=, strchr@FUNCTION, $pop2, $pop8
+	i32.const	$push12=, 0
+	i32.eq  	$push13=, $pop3, $pop12
+	br_if   	$pop13, 0       # 0: down to label1
 # BB#2:                                 # %foo.exit
-	return  	$0
+	i32.const	$push4=, 0
+	return  	$pop4
 .LBB0_3:                                # %if.else.i
 	end_block                       # label1:
-	call    	exit@FUNCTION, $0
+	i32.const	$push5=, 0
+	call    	exit@FUNCTION, $pop5
 	unreachable
 .LBB0_4:                                # %if.then2.i
 	end_block                       # label0:
@@ -52,7 +55,7 @@ main:                                   # @main
 	.type	list,@object
 	.section	.data.list,"aw",@progbits
 	.globl	list
-	.align	2
+	.p2align	2
 list:
 	.int32	.L.str
 	.int32	.L.str.1

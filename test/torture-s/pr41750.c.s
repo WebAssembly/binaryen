@@ -25,27 +25,30 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.load	$2=, 0($1)
-	i32.load	$3=, 8($2)
 	block
-	br_if   	$3, 0           # 0: down to label0
+	i32.load	$push0=, 0($1)
+	tee_local	$push8=, $3=, $pop0
+	i32.load	$push6=, 8($pop8)
+	tee_local	$push7=, $2=, $pop6
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#1:                                 # %if.then.i
-	i32.load	$3=, 4($2)
 	block
-	br_if   	$3, 0           # 0: down to label1
+	i32.load	$push5=, 4($3)
+	tee_local	$push9=, $2=, $pop5
+	br_if   	$pop9, 0        # 0: down to label1
 # BB#2:                                 # %if.then3.i
-	i32.const	$push0=, 4
-	i32.add 	$push1=, $2, $pop0
-	i32.store	$3=, 0($pop1), $0
+	i32.const	$push1=, 4
+	i32.add 	$push2=, $3, $pop1
+	i32.store	$2=, 0($pop2), $0
 .LBB1_3:                                # %if.end.i
 	end_block                       # label1:
-	i32.call	$discard=, foo_create_got_section@FUNCTION, $3, $1
-	i32.const	$push2=, 8
-	i32.add 	$push3=, $2, $pop2
-	i32.load	$3=, 0($pop3)
+	i32.call	$discard=, foo_create_got_section@FUNCTION, $2, $1
+	i32.const	$push3=, 8
+	i32.add 	$push4=, $3, $pop3
+	i32.load	$2=, 0($pop4)
 .LBB1_4:                                # %get_got.exit
 	end_block                       # label0:
-	return  	$3
+	return  	$2
 	.endfunc
 .Lfunc_end1:
 	.size	elf64_ia64_check_relocs, .Lfunc_end1-elf64_ia64_check_relocs
@@ -56,19 +59,20 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.const	$1=, abfd
-	block
+	i32.const	$push6=, 0
 	i32.const	$push0=, hash
-	i32.store	$discard=, link_info($0), $pop0
+	i32.store	$discard=, link_info($pop6), $pop0
+	block
+	i32.const	$push2=, abfd
 	i32.const	$push1=, link_info
-	i32.call	$push2=, elf64_ia64_check_relocs@FUNCTION, $1, $pop1
-	i32.ne  	$push3=, $pop2, $1
-	br_if   	$pop3, 0        # 0: down to label2
+	i32.call	$push3=, elf64_ia64_check_relocs@FUNCTION, $pop2, $pop1
+	i32.const	$push5=, abfd
+	i32.ne  	$push4=, $pop3, $pop5
+	br_if   	$pop4, 0        # 0: down to label2
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB2_2:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
@@ -81,7 +85,7 @@ main:                                   # @main
 	.type	hash,@object
 	.section	.bss.hash,"aw",@nobits
 	.globl	hash
-	.align	2
+	.p2align	2
 hash:
 	.skip	12
 	.size	hash, 12
@@ -90,7 +94,7 @@ hash:
 	.type	link_info,@object
 	.section	.bss.link_info,"aw",@nobits
 	.globl	link_info
-	.align	2
+	.p2align	2
 link_info:
 	.skip	4
 	.size	link_info, 4
@@ -99,7 +103,7 @@ link_info:
 	.type	abfd,@object
 	.section	.bss.abfd,"aw",@nobits
 	.globl	abfd
-	.align	2
+	.p2align	2
 abfd:
 	.int32	0                       # 0x0
 	.size	abfd, 4

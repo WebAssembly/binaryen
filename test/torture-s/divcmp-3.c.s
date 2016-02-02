@@ -188,26 +188,26 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label1:
-	i32.const	$push0=, 24
-	i32.shr_s	$push1=, $0, $pop0
-	i32.const	$push2=, -300
-	i32.add 	$push3=, $pop1, $pop2
-	i32.const	$push5=, 99
-	i32.le_u	$push6=, $pop3, $pop5
-	br_if   	$pop6, 2        # 2: down to label0
+	i32.const	$push10=, 24
+	i32.shr_s	$push0=, $0, $pop10
+	i32.const	$push9=, -300
+	i32.add 	$push1=, $pop0, $pop9
+	i32.const	$push8=, 99
+	i32.le_u	$push2=, $pop1, $pop8
+	br_if   	$pop2, 2        # 2: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB12_1 Depth=1
-	i32.const	$push4=, 1
-	i32.add 	$1=, $1, $pop4
-	i32.const	$push7=, 16777216
-	i32.add 	$0=, $0, $pop7
-	i32.const	$push8=, 255
-	i32.le_s	$push9=, $1, $pop8
-	br_if   	$pop9, 0        # 0: up to label1
+	i32.const	$push7=, 1
+	i32.add 	$1=, $1, $pop7
+	i32.const	$push6=, 16777216
+	i32.add 	$0=, $0, $pop6
+	i32.const	$push5=, 255
+	i32.le_s	$push3=, $1, $pop5
+	br_if   	$pop3, 0        # 0: up to label1
 # BB#3:                                 # %for.end
 	end_loop                        # label2:
-	i32.const	$push10=, 0
-	return  	$pop10
+	i32.const	$push4=, 0
+	return  	$pop4
 .LBB12_4:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

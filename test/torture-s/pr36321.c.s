@@ -19,18 +19,18 @@ foo:                                    # @foo
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
-	i32.load	$discard=, argp($2)
-	return  	$2
+	i32.const	$push0=, 0
+	i32.load	$discard=, argp($pop0)
+	i32.const	$push1=, 0
+	return  	$pop1
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 	.type	argp,@object            # @argp
 	.section	.data.argp,"aw",@progbits
-	.align	2
+	.p2align	2
 argp:
 	.int32	.L.str
 	.size	argp, 4

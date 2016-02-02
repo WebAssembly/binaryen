@@ -7,17 +7,17 @@
 sort:                                   # @sort
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 1
 	i32.const	$push0=, 10
 	i32.lt_s	$push1=, $0, $pop0
-	i32.lt_s	$push2=, $0, $1
-	i32.const	$push3=, 2
-	i32.select	$push4=, $pop2, $pop3, $1
-	i32.const	$push5=, 0
-	i32.select	$push6=, $pop1, $pop4, $pop5
-	return  	$pop6
+	i32.const	$push2=, 1
+	i32.lt_s	$push3=, $0, $pop2
+	i32.const	$push4=, 2
+	i32.const	$push8=, 1
+	i32.select	$push5=, $pop3, $pop4, $pop8
+	i32.const	$push6=, 0
+	i32.select	$push7=, $pop1, $pop5, $pop6
+	return  	$pop7
 	.endfunc
 .Lfunc_end0:
 	.size	sort, .Lfunc_end0-sort

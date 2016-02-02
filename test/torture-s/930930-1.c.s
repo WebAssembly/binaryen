@@ -9,37 +9,38 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	copy_local	$6=, $0
+	copy_local	$5=, $0
 	block
-	i32.lt_u	$push0=, $3, $4
-	br_if   	$pop0, 0        # 0: down to label0
+	i32.lt_u	$push1=, $3, $4
+	br_if   	$pop1, 0        # 0: down to label0
 .LBB0_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.load	$5=, 0($3)
 	block
-	i32.ge_u	$push1=, $5, $2
-	br_if   	$pop1, 0        # 0: down to label3
+	i32.load	$push0=, 0($3)
+	tee_local	$push8=, $6=, $pop0
+	i32.ge_u	$push2=, $pop8, $2
+	br_if   	$pop2, 0        # 0: down to label3
 # BB#2:                                 # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.lt_u	$push2=, $5, $1
-	br_if   	$pop2, 0        # 0: down to label3
+	i32.lt_u	$push3=, $6, $1
+	br_if   	$pop3, 0        # 0: down to label3
 # BB#3:                                 # %if.then3
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push3=, -4
-	i32.add 	$6=, $6, $pop3
-	i32.store	$discard=, 0($6), $5
+	i32.const	$push4=, -4
+	i32.add 	$5=, $5, $pop4
+	i32.store	$discard=, 0($5), $6
 .LBB0_4:                                # %if.end4
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label3:
-	i32.const	$push4=, -4
-	i32.add 	$3=, $3, $pop4
-	i32.ge_u	$push5=, $3, $4
-	br_if   	$pop5, 0        # 0: up to label1
+	i32.const	$push5=, -4
+	i32.add 	$3=, $3, $pop5
+	i32.ge_u	$push6=, $3, $4
+	br_if   	$pop6, 0        # 0: up to label1
 # BB#5:                                 # %out
 	end_loop                        # label2:
-	i32.eq  	$push6=, $6, $0
-	br_if   	$pop6, 0        # 0: down to label0
+	i32.eq  	$push7=, $5, $0
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#6:                                 # %if.then7
 	call    	abort@FUNCTION
 	unreachable
@@ -56,12 +57,12 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %f.exit
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, mem
-	i32.store	$discard=, mem+396($0), $pop0
-	call    	exit@FUNCTION, $0
+	i32.store	$discard=, mem+396($pop1), $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -71,7 +72,7 @@ main:                                   # @main
 	.type	mem,@object
 	.section	.bss.mem,"aw",@nobits
 	.globl	mem
-	.align	4
+	.p2align	4
 mem:
 	.skip	400
 	.size	mem, 400
@@ -80,7 +81,7 @@ mem:
 	.type	wm_TR,@object
 	.section	.bss.wm_TR,"aw",@nobits
 	.globl	wm_TR
-	.align	2
+	.p2align	2
 wm_TR:
 	.int32	0
 	.size	wm_TR, 4
@@ -89,7 +90,7 @@ wm_TR:
 	.type	wm_HB,@object
 	.section	.bss.wm_HB,"aw",@nobits
 	.globl	wm_HB
-	.align	2
+	.p2align	2
 wm_HB:
 	.int32	0
 	.size	wm_HB, 4
@@ -98,7 +99,7 @@ wm_HB:
 	.type	wm_SPB,@object
 	.section	.bss.wm_SPB,"aw",@nobits
 	.globl	wm_SPB
-	.align	2
+	.p2align	2
 wm_SPB:
 	.int32	0
 	.size	wm_SPB, 4

@@ -20,7 +20,7 @@ baz:                                    # @baz
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
 	block
 	i32.load	$push0=, 0($0)
@@ -33,19 +33,20 @@ f:                                      # @f
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	i32.const	$1=, env
+	i32.call	$2=, _setjmp@FUNCTION, $1
 	#APP
 	#NO_APP
 	block
-	i32.call	$push2=, _setjmp@FUNCTION, $1
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	$2, 0           # 0: down to label1
 # BB#3:                                 # %if.end6
-	i32.const	$push4=, 42
-	call    	longjmp@FUNCTION, $1, $pop4
+	i32.const	$push4=, env
+	i32.const	$push3=, 42
+	call    	longjmp@FUNCTION, $pop4, $pop3
 	unreachable
 .LBB1_4:                                # %if.then2
 	end_block                       # label1:
-	i32.const	$push3=, 0
-	call    	exit@FUNCTION, $pop3
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -63,19 +64,19 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.load	$2=, 0($2)
 	i32.const	$3=, 16
-	i32.sub 	$4=, $2, $3
+	i32.sub 	$6=, $2, $3
 	i32.const	$3=, __stack_pointer
-	i32.store	$4=, 0($3), $4
+	i32.store	$6=, 0($3), $6
 	i32.const	$push0=, 0
-	i32.store	$discard=, 12($4), $pop0
+	i32.store	$discard=, 12($6), $pop0
 	i32.const	$5=, 12
-	i32.add 	$5=, $4, $5
+	i32.add 	$5=, $6, $5
 	i32.call	$discard=, f@FUNCTION, $5
 	i32.const	$push1=, 1
 	i32.const	$4=, 16
-	i32.add 	$4=, $4, $4
+	i32.add 	$6=, $6, $4
 	i32.const	$4=, __stack_pointer
-	i32.store	$4=, 0($4), $4
+	i32.store	$6=, 0($4), $6
 	return  	$pop1
 	.endfunc
 .Lfunc_end2:

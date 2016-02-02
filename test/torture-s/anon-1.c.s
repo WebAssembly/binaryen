@@ -7,14 +7,12 @@
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
-	i32.const	$push0=, 6
-	i32.store	$discard=, foo+8($2), $pop0
-	i32.const	$push1=, 5
-	i32.store	$discard=, foo+4($2), $pop1
-	return  	$2
+	i32.const	$push1=, 0
+	i64.const	$push0=, 25769803781
+	i64.store	$discard=, foo+4($pop1):p2align=2, $pop0
+	i32.const	$push2=, 0
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -23,7 +21,7 @@ main:                                   # @main
 	.type	foo,@object
 	.section	.bss.foo,"aw",@nobits
 	.globl	foo
-	.align	2
+	.p2align	2
 foo:
 	.skip	12
 	.size	foo, 12

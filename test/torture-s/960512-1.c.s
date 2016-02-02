@@ -7,9 +7,11 @@
 f:                                      # @f
 	.param  	i32
 # BB#0:                                 # %entry
+	i32.const	$push2=, 8
+	i32.add 	$push3=, $0, $pop2
 	i64.const	$push0=, 0
 	i64.store	$push1=, 0($0), $pop0
-	i64.store	$discard=, 8($0), $pop1
+	i64.store	$discard=, 0($pop3), $pop1
 	return
 	.endfunc
 .Lfunc_end0:

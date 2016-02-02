@@ -52,18 +52,25 @@ glob_idx:                               # @glob_idx
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, ptr($0)
+	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store	$discard=, idx($0), $pop0
-	i32.const	$push1=, 1
-	i32.add 	$push2=, $1, $pop1
-	i32.store	$discard=, ptr($0), $pop2
-	i32.const	$push3=, 2
-	i32.store	$discard=, idx($0), $pop3
-	call    	exit@FUNCTION, $0
+	i32.store	$discard=, idx($pop1), $pop0
+	call    	glob_ptr@FUNCTION
+	call    	glob_idx@FUNCTION
+	i32.const	$push9=, 0
+	i32.const	$push8=, 0
+	i32.load	$push2=, ptr($pop8)
+	i32.const	$push3=, 1
+	i32.add 	$push4=, $pop2, $pop3
+	i32.store	$discard=, ptr($pop9), $pop4
+	i32.const	$push7=, 0
+	i32.const	$push5=, 2
+	i32.store	$discard=, idx($pop7), $pop5
+	call    	glob_ptr@FUNCTION
+	call    	glob_idx@FUNCTION
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end4:
@@ -73,7 +80,7 @@ main:                                   # @main
 	.type	arr,@object
 	.section	.bss.arr,"aw",@nobits
 	.globl	arr
-	.align	4
+	.p2align	4
 arr:
 	.skip	100
 	.size	arr, 100
@@ -82,7 +89,7 @@ arr:
 	.type	ptr,@object
 	.section	.data.ptr,"aw",@progbits
 	.globl	ptr
-	.align	2
+	.p2align	2
 ptr:
 	.int32	arr
 	.size	ptr, 4
@@ -91,7 +98,7 @@ ptr:
 	.type	idx,@object
 	.section	.data.idx,"aw",@progbits
 	.globl	idx
-	.align	2
+	.p2align	2
 idx:
 	.int32	3                       # 0x3
 	.size	idx, 4
@@ -100,7 +107,7 @@ idx:
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.align	1
+	.p2align	1
 s:
 	.skip	12
 	.size	s, 12

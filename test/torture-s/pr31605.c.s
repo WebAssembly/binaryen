@@ -6,20 +6,20 @@
 	.type	put_field,@function
 put_field:                              # @put_field
 	.param  	i32, i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, -8
 	block
 	i32.add 	$push0=, $1, $0
-	i32.or  	$push1=, $pop0, $2
-	i32.ne  	$push2=, $pop1, $2
-	br_if   	$pop2, 0        # 0: down to label0
+	i32.const	$push1=, -8
+	i32.or  	$push2=, $pop0, $pop1
+	i32.const	$push5=, -8
+	i32.ne  	$push3=, $pop2, $pop5
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
-	i32.const	$push3=, 0
-	call    	exit@FUNCTION, $pop3
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -32,8 +32,10 @@ put_field:                              # @put_field
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	i32.const	$push1=, 0
+	i32.const	$push0=, 1
+	call    	put_field@FUNCTION, $pop1, $pop0
+	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:

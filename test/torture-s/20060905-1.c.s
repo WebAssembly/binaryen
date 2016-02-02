@@ -6,43 +6,44 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$4=, 0
-	i32.const	$2=, s-384
-	copy_local	$3=, $4
+	i32.const	$0=, s-384
+	i32.const	$2=, 0
+	i32.const	$1=, 0
 .LBB0_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	i32.const	$0=, 128
 	block
-	i32.lt_s	$push0=, $3, $0
+	i32.const	$push6=, 128
+	i32.lt_s	$push0=, $1, $pop6
 	br_if   	$pop0, 0        # 0: down to label2
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.load8_u	$1=, 0($2)
-	i32.const	$push1=, 0
-	i32.store8	$discard=, g($pop1), $1
-	i32.const	$push2=, 1
-	i32.add 	$4=, $4, $pop2
+	i32.const	$push8=, 0
+	i32.load8_u	$push1=, 0($0)
+	i32.store8	$discard=, g($pop8), $pop1
+	i32.const	$push7=, 1
+	i32.add 	$2=, $2, $pop7
 .LBB0_3:                                # %for.inc.i
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
-	i32.const	$push3=, 1
-	i32.add 	$3=, $3, $pop3
-	i32.const	$push4=, 3
-	i32.add 	$2=, $2, $pop4
-	i32.const	$push5=, 256
-	i32.ne  	$push6=, $3, $pop5
-	br_if   	$pop6, 0        # 0: up to label0
+	i32.const	$push11=, 1
+	i32.add 	$1=, $1, $pop11
+	i32.const	$push10=, 3
+	i32.add 	$0=, $0, $pop10
+	i32.const	$push9=, 256
+	i32.ne  	$push2=, $1, $pop9
+	br_if   	$pop2, 0        # 0: up to label0
 # BB#4:                                 # %foo.exit
 	end_loop                        # label1:
 	block
-	i32.ne  	$push7=, $4, $0
-	br_if   	$pop7, 0        # 0: down to label3
+	i32.const	$push3=, 128
+	i32.ne  	$push4=, $2, $pop3
+	br_if   	$pop4, 0        # 0: down to label3
 # BB#5:                                 # %if.end
-	i32.const	$push8=, 0
-	return  	$pop8
+	i32.const	$push5=, 0
+	return  	$pop5
 .LBB0_6:                                # %if.then
 	end_block                       # label3:
 	call    	abort@FUNCTION
@@ -55,7 +56,7 @@ main:                                   # @main
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.align	4
+	.p2align	4
 s:
 	.skip	768
 	.size	s, 768

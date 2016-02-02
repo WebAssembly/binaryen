@@ -6,18 +6,19 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load	$push0=, k($0)
+	i32.const	$push2=, 0
+	i32.load	$push0=, k($pop2)
 	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.else
+	i32.const	$push3=, 0
 	i32.const	$push1=, 1
-	i32.store	$discard=, k($0), $pop1
+	i32.store	$discard=, k($pop3), $pop1
 .LBB0_2:                                # %for.inc.1
 	end_block                       # label0:
-	call    	exit@FUNCTION, $0
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -27,7 +28,7 @@ main:                                   # @main
 	.type	k,@object
 	.section	.bss.k,"aw",@nobits
 	.globl	k
-	.align	2
+	.p2align	2
 k:
 	.int32	0                       # 0x0
 	.size	k, 4

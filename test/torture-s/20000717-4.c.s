@@ -31,7 +31,7 @@ main:                                   # @main
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.align	2
+	.p2align	2
 s:
 	.skip	100
 	.size	s, 100

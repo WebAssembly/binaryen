@@ -36,8 +36,8 @@ test3:                                  # @test3
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 0
-	i32.store	$push3=, 0($pop1), $pop2
-	i32.store	$discard=, 0($0), $pop3
+	i32.store	$push3=, 0($pop1):p2align=3, $pop2
+	i32.store	$discard=, 0($0):p2align=3, $pop3
 	return
 	.endfunc
 .Lfunc_end2:
@@ -71,8 +71,8 @@ test5:                                  # @test5
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $0, $pop0
-	i32.store	$discard=, 0($pop1), $2
-	i32.store	$discard=, 0($0), $1
+	i32.store	$discard=, 0($pop1):p2align=3, $2
+	i32.store	$discard=, 0($0):p2align=3, $1
 	return
 	.endfunc
 .Lfunc_end4:

@@ -3,7 +3,7 @@
 	.section	.text.func,"ax",@progbits
 	.hidden	func
 	.globl	func
-	.align	8
+	.p2align	8
 	.type	func,@function
 func:                                   # @func
 # BB#0:                                 # %entry

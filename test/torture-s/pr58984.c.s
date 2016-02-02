@@ -6,40 +6,50 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.const	$1=, 1
 	block
-	i32.load	$push0=, e($0)
-	i32.gt_s	$push1=, $pop0, $1
+	i32.const	$push15=, 0
+	i32.load	$push0=, e($pop15)
+	i32.const	$push14=, 1
+	i32.gt_s	$push1=, $pop0, $pop14
 	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %for.body.i
-	i32.load	$2=, c($0)
-	i32.load	$push2=, 0($2)
-	i32.xor 	$push3=, $pop2, $1
-	i32.store	$discard=, 0($2), $pop3
+	i32.const	$push17=, 0
+	i32.load	$1=, c($pop17)
+	i32.load	$push2=, 0($1)
+	i32.const	$push16=, 1
+	i32.xor 	$push3=, $pop2, $pop16
+	i32.store	$discard=, 0($1), $pop3
 .LBB0_2:                                # %foo.exit
 	end_block                       # label0:
-	i32.load	$2=, a($0)
-	i32.store	$discard=, m($0), $1
 	block
-	i32.ne  	$push4=, $2, $1
-	br_if   	$pop4, 0        # 0: down to label1
+	i32.const	$push20=, 0
+	i32.load	$push5=, a($pop20)
+	i32.const	$push19=, 0
+	i32.const	$push18=, 1
+	i32.store	$push4=, m($pop19), $pop18
+	i32.ne  	$push6=, $pop5, $pop4
+	br_if   	$pop6, 0        # 0: down to label1
 # BB#3:                                 # %bar.exit
-	i32.store	$discard=, e($0), $0
-	i32.load	$2=, c($0)
-	i32.load	$push5=, 0($2)
-	i32.xor 	$push6=, $pop5, $1
-	i32.store	$discard=, 0($2), $pop6
-	i32.load	$2=, a($0)
+	i32.const	$push7=, 0
+	i32.const	$push23=, 0
+	i32.store	$push8=, e($pop7), $pop23
+	tee_local	$push22=, $1=, $pop8
+	i32.load	$0=, c($pop22)
+	i32.load	$push9=, 0($0)
+	i32.const	$push10=, 1
+	i32.xor 	$push11=, $pop9, $pop10
+	i32.store	$discard=, 0($0), $pop11
+	i32.load	$0=, a($1)
+	i32.load	$push12=, m($1)
+	i32.const	$push21=, 1
+	i32.or  	$push13=, $pop12, $pop21
+	i32.store	$discard=, m($1), $pop13
 	block
-	i32.load	$push7=, m($0)
-	i32.or  	$push8=, $pop7, $1
-	i32.store	$discard=, m($0), $pop8
-	br_if   	$2, 0           # 0: down to label2
+	br_if   	$0, 0           # 0: down to label2
 # BB#4:                                 # %if.end11
-	return  	$0
+	return  	$1
 .LBB0_5:                                # %if.then10
 	end_block                       # label2:
 	call    	abort@FUNCTION
@@ -56,7 +66,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	0                       # 0x0
 	.size	a, 4
@@ -65,7 +75,7 @@ a:
 	.type	c,@object
 	.section	.data.c,"aw",@progbits
 	.globl	c
-	.align	2
+	.p2align	2
 c:
 	.int32	a
 	.size	c, 4
@@ -74,7 +84,7 @@ c:
 	.type	n,@object
 	.section	.bss.n,"aw",@nobits
 	.globl	n
-	.align	2
+	.p2align	2
 n:
 	.int32	0                       # 0x0
 	.size	n, 4
@@ -83,7 +93,7 @@ n:
 	.type	m,@object
 	.section	.bss.m,"aw",@nobits
 	.globl	m
-	.align	2
+	.p2align	2
 m:
 	.int32	0                       # 0x0
 	.size	m, 4
@@ -92,7 +102,7 @@ m:
 	.type	e,@object
 	.section	.bss.e,"aw",@nobits
 	.globl	e
-	.align	2
+	.p2align	2
 e:
 	.int32	0                       # 0x0
 	.size	e, 4
@@ -101,7 +111,7 @@ e:
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
 	.globl	b
-	.align	2
+	.p2align	2
 b:
 	.int32	0                       # 0x0
 	.size	b, 4

@@ -6,26 +6,30 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64, i32, i64, i64
+	.local  	i64, i64
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i64.load	$push0=, a($1)
-	i64.const	$push1=, 8589934591
-	i64.and 	$0=, $pop0, $pop1
-	i64.const	$2=, 0
 	block
-	i64.mul 	$push2=, $0, $0
-	i64.ne  	$push3=, $pop2, $2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push14=, 0
+	i64.load	$push1=, a($pop14)
+	i64.const	$push2=, 8589934591
+	i64.and 	$push0=, $pop1, $pop2
+	tee_local	$push13=, $0=, $pop0
+	i64.mul 	$push3=, $pop13, $0
+	i64.const	$push12=, 0
+	i64.ne  	$push4=, $pop3, $pop12
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i64.load	$push4=, a+8($1)
-	i64.const	$push5=, 1099511627775
-	i64.and 	$3=, $pop4, $pop5
-	i64.mul 	$push6=, $3, $0
-	i64.mul 	$push7=, $3, $3
-	i64.or  	$push8=, $pop6, $pop7
-	i64.ne  	$push9=, $pop8, $2
-	br_if   	$pop9, 0        # 0: down to label0
+	i32.const	$push17=, 0
+	i64.load	$push5=, a+8($pop17)
+	i64.const	$push6=, 1099511627775
+	i64.and 	$push7=, $pop5, $pop6
+	tee_local	$push16=, $1=, $pop7
+	i64.mul 	$push8=, $pop16, $0
+	i64.mul 	$push9=, $1, $1
+	i64.or  	$push10=, $pop8, $pop9
+	i64.const	$push15=, 0
+	i64.ne  	$push11=, $pop10, $pop15
+	br_if   	$pop11, 0       # 0: down to label0
 # BB#2:                                 # %if.end
 	call    	abort@FUNCTION
 	unreachable
@@ -41,7 +45,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	3
+	.p2align	3
 a:
 	.int8	0                       # 0x0
 	.int8	0                       # 0x0
@@ -68,7 +72,7 @@ a:
 	.type	b,@object
 	.section	.data.b,"aw",@progbits
 	.globl	b
-	.align	3
+	.p2align	3
 b:
 	.int8	0                       # 0x0
 	.int8	0                       # 0x0
@@ -95,7 +99,7 @@ b:
 	.type	c,@object
 	.section	.data.c,"aw",@progbits
 	.globl	c
-	.align	3
+	.p2align	3
 c:
 	.int8	255                     # 0xff
 	.int8	255                     # 0xff

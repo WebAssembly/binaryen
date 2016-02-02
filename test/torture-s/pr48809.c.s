@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	block
 	block
@@ -209,12 +209,11 @@ foo:                                    # @foo
 	i32.eq  	$push3=, $0, $pop2
 	br_if   	$pop3, 0        # 0: down to label33
 # BB#34:                                # %entry
-	i32.const	$1=, 0
 	i32.const	$push4=, 98
-	i32.eq  	$2=, $0, $pop4
-	copy_local	$0=, $1
+	i32.eq  	$1=, $0, $pop4
+	i32.const	$0=, 0
 	i32.const	$push5=, 0
-	i32.eq  	$push6=, $2, $pop5
+	i32.eq  	$push6=, $1, $pop5
 	br_if   	$pop6, 1        # 1: down to label0
 # BB#35:                                # %sw.bb33
 	i32.const	$0=, 18

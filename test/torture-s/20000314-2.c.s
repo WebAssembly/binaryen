@@ -6,18 +6,18 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load	$push0=, a($0)
+	i32.const	$push1=, 0
+	i32.load	$push0=, a($pop1)
 	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
-	call    	exit@FUNCTION, $0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -27,7 +27,7 @@ main:                                   # @main
 	.type	bigconst,@object
 	.section	.rodata.bigconst,"a",@progbits
 	.globl	bigconst
-	.align	3
+	.p2align	3
 bigconst:
 	.int64	17179869184             # 0x400000000
 	.size	bigconst, 8
@@ -36,7 +36,7 @@ bigconst:
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	1                       # 0x1
 	.size	a, 4

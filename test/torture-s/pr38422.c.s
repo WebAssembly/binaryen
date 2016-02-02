@@ -5,18 +5,20 @@
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, s($0)
-	i32.const	$push0=, 1
-	i32.shl 	$push1=, $1, $pop0
-	i32.const	$push2=, 1073741822
-	i32.and 	$push3=, $pop1, $pop2
-	i32.const	$push4=, -1073741824
-	i32.and 	$push5=, $1, $pop4
-	i32.or  	$push6=, $pop3, $pop5
-	i32.store	$discard=, s($0), $pop6
+	i32.const	$push0=, 0
+	i32.const	$push10=, 0
+	i32.load	$push1=, s($pop10)
+	tee_local	$push9=, $0=, $pop1
+	i32.const	$push2=, 1
+	i32.shl 	$push3=, $pop9, $pop2
+	i32.const	$push4=, 1073741822
+	i32.and 	$push5=, $pop3, $pop4
+	i32.const	$push6=, -1073741824
+	i32.and 	$push7=, $0, $pop6
+	i32.or  	$push8=, $pop5, $pop7
+	i32.store	$discard=, s($pop0), $pop8
 	return
 	.endfunc
 .Lfunc_end0:
@@ -28,16 +30,17 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
-	i32.load	$push0=, s($0)
-	i32.const	$push1=, -1073741824
-	i32.and 	$push2=, $pop0, $pop1
-	i32.const	$push3=, 48
-	i32.or  	$push4=, $pop2, $pop3
-	i32.store	$discard=, s($0), $pop4
-	return  	$0
+	i32.const	$push0=, 0
+	i32.const	$push7=, 0
+	i32.load	$push1=, s($pop7)
+	i32.const	$push2=, -1073741824
+	i32.and 	$push3=, $pop1, $pop2
+	i32.const	$push4=, 48
+	i32.or  	$push5=, $pop3, $pop4
+	i32.store	$discard=, s($pop0), $pop5
+	i32.const	$push6=, 0
+	return  	$pop6
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -46,7 +49,7 @@ main:                                   # @main
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.align	2
+	.p2align	2
 s:
 	.skip	4
 	.size	s, 4

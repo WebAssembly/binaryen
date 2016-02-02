@@ -6,17 +6,20 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	block
-	i32.load	$push0=, u($0)
+	i32.const	$push10=, 0
+	i32.const	$push9=, 0
+	i32.load	$push0=, u($pop9)
 	f32.convert_u/i32	$push1=, $pop0
-	f32.store	$discard=, f1($0), $pop1
+	f32.store	$discard=, f1($pop10), $pop1
+	i32.const	$push8=, 0
 	i32.const	$push2=, 1325400065
-	i32.store	$discard=, f2($0), $pop2
-	f32.load	$push3=, f1($0)
-	f32.load	$push4=, f2($0)
+	i32.store	$discard=, f2($pop8), $pop2
+	block
+	i32.const	$push7=, 0
+	f32.load	$push3=, f1($pop7)
+	i32.const	$push6=, 0
+	f32.load	$push4=, f2($pop6)
 	f32.eq  	$push5=, $pop3, $pop4
 	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.then
@@ -24,7 +27,8 @@ main:                                   # @main
 	unreachable
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
-	call    	exit@FUNCTION, $0
+	i32.const	$push11=, 0
+	call    	exit@FUNCTION, $pop11
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -34,7 +38,7 @@ main:                                   # @main
 	.type	u,@object
 	.section	.data.u,"aw",@progbits
 	.globl	u
-	.align	2
+	.p2align	2
 u:
 	.int32	2147483777              # 0x80000081
 	.size	u, 4
@@ -43,7 +47,7 @@ u:
 	.type	f1,@object
 	.section	.bss.f1,"aw",@nobits
 	.globl	f1
-	.align	2
+	.p2align	2
 f1:
 	.int32	0                       # float 0
 	.size	f1, 4
@@ -52,7 +56,7 @@ f1:
 	.type	f2,@object
 	.section	.bss.f2,"aw",@nobits
 	.globl	f2
-	.align	2
+	.p2align	2
 f2:
 	.int32	0                       # float 0
 	.size	f2, 4

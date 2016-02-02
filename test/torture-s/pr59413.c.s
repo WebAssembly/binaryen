@@ -6,12 +6,12 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 7
-	i32.store	$discard=, a($0), $pop0
-	return  	$0
+	i32.store	$discard=, a($pop1), $pop0
+	i32.const	$push2=, 0
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -20,7 +20,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	0                       # 0x0
 	.size	a, 4
@@ -29,7 +29,7 @@ a:
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
 	.globl	b
-	.align	2
+	.p2align	2
 b:
 	.int32	0                       # 0x0
 	.size	b, 4

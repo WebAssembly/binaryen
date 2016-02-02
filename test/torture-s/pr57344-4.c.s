@@ -29,64 +29,77 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, s+16
-	i32.const	$push0=, .Lmain.t
-	i32.const	$push1=, 16
-	call    	memcpy@FUNCTION, $pop2, $pop0, $pop1
-	i32.const	$0=, 0
+	i32.const	$push36=, 0
+	i32.load	$0=, i($pop36)
+	i32.const	$push35=, 0
+	i32.const	$push34=, 0
+	i64.load	$push0=, .Lmain.t+8($pop34):p2align=0
+	i64.store	$discard=, s+24($pop35), $pop0
+	i32.const	$push33=, 0
+	i32.const	$push32=, 0
+	i64.load	$push1=, .Lmain.t($pop32):p2align=0
+	i64.store	$discard=, s+16($pop33):p2align=4, $pop1
 	block
-	i32.load	$push3=, i($0)
-	i32.gt_s	$push4=, $pop3, $0
-	br_if   	$pop4, 0        # 0: down to label1
+	i32.const	$push31=, 0
+	i32.gt_s	$push2=, $0, $pop31
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#1:                                 # %for.body.preheader
-	i64.const	$push5=, -1220975898975746
-	call    	foo@FUNCTION, $pop5
-	i32.load	$2=, i($0)
-	i32.const	$1=, 1
-	i32.add 	$push6=, $2, $1
-	i32.store	$discard=, i($0), $pop6
-	i32.const	$push7=, -1
-	i32.gt_s	$push8=, $2, $pop7
-	br_if   	$pop8, 0        # 0: down to label1
+	i64.const	$push3=, -1220975898975746
+	call    	foo@FUNCTION, $pop3
+	i32.const	$push40=, 0
+	i32.const	$push39=, 0
+	i32.load	$push4=, i($pop39)
+	tee_local	$push38=, $0=, $pop4
+	i32.const	$push37=, 1
+	i32.add 	$push5=, $pop38, $pop37
+	i32.store	$discard=, i($pop40), $pop5
+	i32.const	$push6=, -1
+	i32.gt_s	$push7=, $0, $pop6
+	br_if   	$pop7, 0        # 0: down to label1
 .LBB1_2:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.const	$2=, s+24
-	i64.load32_u	$push20=, s+24($0)
-	i32.const	$push14=, 4
-	i32.add 	$push15=, $2, $pop14
-	i64.load16_u	$push16=, 0($pop15)
-	i32.const	$push9=, 6
-	i32.add 	$push10=, $2, $pop9
-	i64.load8_u	$push11=, 0($pop10)
-	i64.const	$push12=, 16
-	i64.shl 	$push13=, $pop11, $pop12
-	i64.or  	$push17=, $pop16, $pop13
-	i64.const	$push18=, 32
-	i64.shl 	$push19=, $pop17, $pop18
-	i64.or  	$push21=, $pop20, $pop19
-	i64.const	$push23=, 7
-	i64.shl 	$push24=, $pop21, $pop23
-	i64.load	$push22=, s+16($0)
-	i64.const	$push25=, 57
-	i64.shr_u	$push26=, $pop22, $pop25
-	i64.or  	$push27=, $pop24, $pop26
-	i64.const	$push28=, 8
-	i64.shl 	$push29=, $pop27, $pop28
-	i64.const	$push30=, 10
-	i64.shr_s	$push31=, $pop29, $pop30
-	call    	foo@FUNCTION, $pop31
-	i32.load	$2=, i($0)
-	i32.add 	$push32=, $2, $1
-	i32.store	$discard=, i($0), $pop32
-	i32.lt_s	$push33=, $2, $0
-	br_if   	$pop33, 0       # 0: up to label2
+	i32.const	$push8=, 0
+	i64.load32_u	$push16=, s+24($pop8):p2align=3
+	i32.const	$push48=, 0
+	i64.load16_u	$push12=, s+28($pop48):p2align=2
+	i32.const	$push47=, 0
+	i64.load8_u	$push9=, s+30($pop47):p2align=1
+	i64.const	$push10=, 16
+	i64.shl 	$push11=, $pop9, $pop10
+	i64.or  	$push13=, $pop12, $pop11
+	i64.const	$push14=, 32
+	i64.shl 	$push15=, $pop13, $pop14
+	i64.or  	$push17=, $pop16, $pop15
+	i64.const	$push21=, 7
+	i64.shl 	$push22=, $pop17, $pop21
+	i32.const	$push46=, 0
+	i64.load	$push18=, s+16($pop46):p2align=4
+	i64.const	$push19=, 57
+	i64.shr_u	$push20=, $pop18, $pop19
+	i64.or  	$push23=, $pop22, $pop20
+	i64.const	$push24=, 8
+	i64.shl 	$push25=, $pop23, $pop24
+	i64.const	$push26=, 10
+	i64.shr_s	$push27=, $pop25, $pop26
+	call    	foo@FUNCTION, $pop27
+	i32.const	$push45=, 0
+	i32.const	$push44=, 0
+	i32.load	$push28=, i($pop44)
+	tee_local	$push43=, $0=, $pop28
+	i32.const	$push42=, 1
+	i32.add 	$push29=, $pop43, $pop42
+	i32.store	$discard=, i($pop45), $pop29
+	i32.const	$push41=, 0
+	i32.lt_s	$push30=, $0, $pop41
+	br_if   	$pop30, 0       # 0: up to label2
 .LBB1_3:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:
-	return  	$0
+	i32.const	$push49=, 0
+	return  	$pop49
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -116,7 +129,7 @@ main:                                   # @main
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.align	4
+	.p2align	4
 s:
 	.skip	32
 	.size	s, 32
@@ -125,7 +138,7 @@ s:
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
 	.globl	i
-	.align	2
+	.p2align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4

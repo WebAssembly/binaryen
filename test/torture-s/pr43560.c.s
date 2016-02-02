@@ -8,34 +8,38 @@ test:                                   # @test
 	.param  	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.load	$3=, 4($0)
 	block
-	i32.const	$push0=, 2
-	i32.lt_s	$push1=, $3, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	i32.load	$push15=, 4($0)
+	tee_local	$push16=, $1=, $pop15
+	i32.const	$push2=, 2
+	i32.lt_s	$push3=, $pop16, $pop2
+	br_if   	$pop3, 0        # 0: down to label0
 .LBB0_1:                                # %land.rhs
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push2=, -1
-	i32.add 	$3=, $3, $pop2
-	i32.add 	$push3=, $0, $3
-	i32.const	$push4=, 8
-	i32.add 	$1=, $pop3, $pop4
-	i32.load8_u	$push5=, 0($1)
-	i32.const	$push6=, 47
-	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 1        # 1: down to label2
+	i32.const	$push4=, -1
+	i32.add 	$push0=, $1, $pop4
+	tee_local	$push18=, $1=, $pop0
+	i32.add 	$push5=, $0, $pop18
+	i32.const	$push6=, 8
+	i32.add 	$push1=, $pop5, $pop6
+	tee_local	$push17=, $2=, $pop1
+	i32.load8_u	$push7=, 0($pop17)
+	i32.const	$push8=, 47
+	i32.ne  	$push9=, $pop7, $pop8
+	br_if   	$pop9, 1        # 1: down to label2
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push8=, 4
-	i32.add 	$2=, $0, $pop8
-	i32.store	$discard=, 0($2), $3
-	i32.const	$push9=, 0
-	i32.store8	$discard=, 0($1), $pop9
-	i32.load	$3=, 0($2)
-	i32.const	$push10=, 1
-	i32.gt_s	$push11=, $3, $pop10
-	br_if   	$pop11, 0       # 0: up to label1
+	i32.const	$push10=, 4
+	i32.add 	$push11=, $0, $pop10
+	tee_local	$push19=, $3=, $pop11
+	i32.store	$discard=, 0($pop19), $1
+	i32.const	$push12=, 0
+	i32.store8	$discard=, 0($2), $pop12
+	i32.load	$1=, 0($3)
+	i32.const	$push13=, 1
+	i32.gt_s	$push14=, $1, $pop13
+	br_if   	$pop14, 0       # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -66,7 +70,7 @@ main:                                   # @main
 	.type	s,@object
 	.section	.rodata.s,"a",@progbits
 	.globl	s
-	.align	2
+	.p2align	2
 s:
 	.skip	20
 	.size	s, 20

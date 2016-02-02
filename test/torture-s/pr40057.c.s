@@ -38,32 +38,33 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64, i64
 # BB#0:                                 # %entry
-	i64.const	$0=, 6042589866
 	block
-	i32.call	$push0=, foo@FUNCTION, $0
-	br_if   	$pop0, 0        # 0: down to label0
+	i64.const	$push0=, 6042589866
+	i32.call	$push1=, foo@FUNCTION, $pop0
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	i64.const	$1=, 6579460778
 	block
-	i32.call	$push1=, foo@FUNCTION, $1
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $pop1, $pop5
-	br_if   	$pop6, 0        # 0: down to label1
+	i64.const	$push2=, 6579460778
+	i32.call	$push3=, foo@FUNCTION, $pop2
+	i32.const	$push9=, 0
+	i32.eq  	$push10=, $pop3, $pop9
+	br_if   	$pop10, 0       # 0: down to label1
 # BB#2:                                 # %if.end4
 	block
-	i32.call	$push2=, bar@FUNCTION, $0
-	br_if   	$pop2, 0        # 0: down to label2
+	i64.const	$push4=, 6042589866
+	i32.call	$push5=, bar@FUNCTION, $pop4
+	br_if   	$pop5, 0        # 0: down to label2
 # BB#3:                                 # %if.end8
 	block
-	i32.call	$push3=, bar@FUNCTION, $1
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $pop3, $pop7
-	br_if   	$pop8, 0        # 0: down to label3
+	i64.const	$push6=, 6579460778
+	i32.call	$push7=, bar@FUNCTION, $pop6
+	i32.const	$push11=, 0
+	i32.eq  	$push12=, $pop7, $pop11
+	br_if   	$pop12, 0       # 0: down to label3
 # BB#4:                                 # %if.end12
-	i32.const	$push4=, 0
-	return  	$pop4
+	i32.const	$push8=, 0
+	return  	$pop8
 .LBB2_5:                                # %if.then11
 	end_block                       # label3:
 	call    	abort@FUNCTION

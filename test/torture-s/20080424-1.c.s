@@ -6,25 +6,28 @@
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32, i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 0
-	i32.load	$2=, bar.i($3)
 	block
-	i32.const	$push0=, 36
-	i32.mul 	$push1=, $2, $pop0
-	i32.const	$push2=, g
-	i32.add 	$4=, $pop1, $pop2
-	i32.const	$push3=, 288
-	i32.add 	$push4=, $4, $pop3
+	i32.const	$push13=, 0
+	i32.load	$push0=, bar.i($pop13)
+	tee_local	$push12=, $3=, $pop0
+	i32.const	$push1=, 36
+	i32.mul 	$push2=, $pop12, $pop1
+	tee_local	$push11=, $2=, $pop2
+	i32.const	$push3=, g+288
+	i32.add 	$push4=, $pop11, $pop3
 	i32.ne  	$push5=, $pop4, $0
 	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
+	i32.const	$push14=, 0
 	i32.const	$push6=, 1
-	i32.add 	$push7=, $2, $pop6
-	i32.store	$discard=, bar.i($3), $pop7
-	i32.ne  	$push8=, $4, $1
-	br_if   	$pop8, 0        # 0: down to label0
+	i32.add 	$push7=, $3, $pop6
+	i32.store	$discard=, bar.i($pop14), $pop7
+	i32.const	$push8=, g
+	i32.add 	$push9=, $2, $pop8
+	i32.ne  	$push10=, $pop9, $1
+	br_if   	$pop10, 0       # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then
@@ -78,7 +81,7 @@ main:                                   # @main
 	.type	g,@object
 	.section	.bss.g,"aw",@nobits
 	.globl	g
-	.align	4
+	.p2align	4
 g:
 	.skip	1728
 	.size	g, 1728

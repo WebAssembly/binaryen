@@ -31,7 +31,7 @@ llabs:                                  # @llabs
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	3
+	.p2align	3
 a:
 	.int64	-1                      # 0xffffffffffffffff
 	.size	a, 8

@@ -9,22 +9,21 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push0=, -1026
-	i32.add 	$0=, $0, $pop0
-	i32.const	$push1=, 5
-	i32.gt_u	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	i32.const	$push1=, -1026
+	i32.add 	$push0=, $0, $pop1
+	tee_local	$push8=, $0=, $pop0
+	i32.const	$push2=, 5
+	i32.gt_u	$push3=, $pop8, $pop2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %switch.lookup
-	i32.const	$push6=, .Lswitch.table
-	i32.const	$push4=, 2
-	i32.shl 	$push5=, $0, $pop4
-	i32.add 	$push7=, $pop6, $pop5
-	i32.load	$push8=, 0($pop7)
-	return  	$pop8
+	i32.const	$push5=, 2
+	i32.shl 	$push6=, $0, $pop5
+	i32.load	$push7=, .Lswitch.table($pop6)
+	return  	$pop7
 .LBB0_2:                                # %return
 	end_block                       # label0:
-	i32.const	$push3=, 0
-	return  	$pop3
+	i32.const	$push4=, 0
+	return  	$pop4
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -45,7 +44,7 @@ main:                                   # @main
 
 	.type	.Lswitch.table,@object  # @switch.table
 	.section	.rodata..Lswitch.table,"a",@progbits
-	.align	4
+	.p2align	4
 .Lswitch.table:
 	.int32	1027                    # 0x403
 	.int32	1029                    # 0x405

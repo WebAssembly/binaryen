@@ -6,68 +6,73 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.load	$push0=, w($1)
-	i32.const	$push1=, .L.str.1
-	i32.call	$0=, strcmp@FUNCTION, $pop0, $pop1
-	i32.const	$4=, -1024
+	i32.const	$push0=, 0
+	i32.load	$push1=, w($pop0)
+	i32.const	$push2=, .L.str.1
+	i32.call	$0=, strcmp@FUNCTION, $pop1, $pop2
+	i32.const	$1=, -1024
 .LBB0_1:                                # %for.cond2.preheader
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	i32.const	$2=, a
-	i32.add 	$push2=, $2, $4
-	i32.const	$push3=, 1024
-	i32.add 	$push4=, $pop2, $pop3
-	i32.const	$push5=, 1
-	i32.store	$3=, 0($pop4), $pop5
-	i32.const	$push6=, 4
-	i32.add 	$4=, $4, $pop6
-	br_if   	$4, 0           # 0: up to label0
+	i32.const	$push32=, 1
+	i32.store	$discard=, a+1024($1), $pop32
+	i32.const	$push31=, 4
+	i32.add 	$1=, $1, $pop31
+	br_if   	$1, 0           # 0: up to label0
 # BB#2:                                 # %for.cond7.preheader
 	end_loop                        # label1:
-	i32.store	$discard=, d($1), $1
+	i32.const	$push3=, 0
+	i32.const	$push33=, 0
+	i32.store	$1=, d($pop3), $pop33
 	block
-	i32.const	$push40=, 0
-	i32.eq  	$push41=, $0, $pop40
-	br_if   	$pop41, 0       # 0: down to label2
+	i32.const	$push48=, 0
+	i32.eq  	$push49=, $0, $pop48
+	br_if   	$pop49, 0       # 0: down to label2
 # BB#3:                                 # %fnx.exit
-	i32.const	$4=, 2
-	i32.load	$push7=, b($1)
-	i32.and 	$push8=, $pop7, $3
-	i32.shl 	$push9=, $pop8, $4
-	i32.add 	$push10=, $2, $pop9
-	i32.load	$push11=, 0($pop10)
-	i32.and 	$push12=, $pop11, $3
-	i32.shl 	$push13=, $pop12, $4
-	i32.add 	$push14=, $2, $pop13
-	i32.load	$push15=, 0($pop14)
-	i32.and 	$push16=, $pop15, $3
-	i32.shl 	$push17=, $pop16, $4
-	i32.add 	$push18=, $2, $pop17
-	i32.load	$push19=, 0($pop18)
-	i32.and 	$push20=, $pop19, $3
-	i32.shl 	$push21=, $pop20, $4
-	i32.add 	$push22=, $2, $pop21
-	i32.load	$push23=, 0($pop22)
-	i32.and 	$push24=, $pop23, $3
-	i32.shl 	$push25=, $pop24, $4
-	i32.add 	$push26=, $2, $pop25
-	i32.load	$push27=, 0($pop26)
-	i32.and 	$push28=, $pop27, $3
-	i32.shl 	$push29=, $pop28, $4
-	i32.add 	$push30=, $2, $pop29
-	i32.load	$push31=, 0($pop30)
-	i32.and 	$push32=, $pop31, $3
-	i32.shl 	$push33=, $pop32, $4
-	i32.add 	$push34=, $2, $pop33
-	i32.load	$push35=, 0($pop34)
-	i32.and 	$push36=, $pop35, $3
-	i32.shl 	$push37=, $pop36, $4
-	i32.add 	$push38=, $2, $pop37
-	i32.load	$push39=, 0($pop38)
-	i32.store	$discard=, b($1), $pop39
+	i32.load	$push4=, b($1)
+	i32.const	$push5=, 1
+	i32.and 	$push6=, $pop4, $pop5
+	i32.const	$push7=, 2
+	i32.shl 	$push8=, $pop6, $pop7
+	i32.load	$push9=, a($pop8)
+	i32.const	$push47=, 1
+	i32.and 	$push10=, $pop9, $pop47
+	i32.const	$push46=, 2
+	i32.shl 	$push11=, $pop10, $pop46
+	i32.load	$push12=, a($pop11)
+	i32.const	$push45=, 1
+	i32.and 	$push13=, $pop12, $pop45
+	i32.const	$push44=, 2
+	i32.shl 	$push14=, $pop13, $pop44
+	i32.load	$push15=, a($pop14)
+	i32.const	$push43=, 1
+	i32.and 	$push16=, $pop15, $pop43
+	i32.const	$push42=, 2
+	i32.shl 	$push17=, $pop16, $pop42
+	i32.load	$push18=, a($pop17)
+	i32.const	$push41=, 1
+	i32.and 	$push19=, $pop18, $pop41
+	i32.const	$push40=, 2
+	i32.shl 	$push20=, $pop19, $pop40
+	i32.load	$push21=, a($pop20)
+	i32.const	$push39=, 1
+	i32.and 	$push22=, $pop21, $pop39
+	i32.const	$push38=, 2
+	i32.shl 	$push23=, $pop22, $pop38
+	i32.load	$push24=, a($pop23)
+	i32.const	$push37=, 1
+	i32.and 	$push25=, $pop24, $pop37
+	i32.const	$push36=, 2
+	i32.shl 	$push26=, $pop25, $pop36
+	i32.load	$push27=, a($pop26)
+	i32.const	$push35=, 1
+	i32.and 	$push28=, $pop27, $pop35
+	i32.const	$push34=, 2
+	i32.shl 	$push29=, $pop28, $pop34
+	i32.load	$push30=, a($pop29)
+	i32.store	$discard=, b($1), $pop30
 .LBB0_4:                                # %if.end25
 	end_block                       # label2:
 	return  	$1
@@ -85,7 +90,7 @@ main:                                   # @main
 	.type	w,@object
 	.section	.data.w,"aw",@progbits
 	.globl	w
-	.align	2
+	.p2align	2
 w:
 	.int32	.L.str
 	.size	w, 4

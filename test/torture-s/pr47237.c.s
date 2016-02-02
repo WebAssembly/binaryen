@@ -6,14 +6,13 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.call	$0=, __builtin_apply_args@FUNCTION
-	i32.const	$push0=, foo@FUNCTION
-	i32.const	$push1=, 16
-	i32.call	$discard=, __builtin_apply@FUNCTION, $pop0, $0, $pop1
-	i32.const	$push2=, 0
-	return  	$pop2
+	i32.const	$push1=, foo@FUNCTION
+	i32.call	$push0=, __builtin_apply_args@FUNCTION
+	i32.const	$push2=, 16
+	i32.call	$discard=, __builtin_apply@FUNCTION, $pop1, $pop0, $pop2
+	i32.const	$push3=, 0
+	return  	$pop3
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

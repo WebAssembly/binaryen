@@ -66,14 +66,14 @@ simple_arg:                             # @simple_arg
 	i32.const	$3=, __stack_pointer
 	i32.load	$3=, 0($3)
 	i32.const	$4=, 16
-	i32.sub 	$3=, $3, $4
+	i32.sub 	$6=, $3, $4
 	i32.const	$4=, __stack_pointer
-	i32.store	$3=, 0($4), $3
-	i32.store	$discard=, 12($3), $2
+	i32.store	$6=, 0($4), $6
+	i32.store	$discard=, 12($6), $2
 	i32.const	$5=, 16
-	i32.add 	$3=, $3, $5
+	i32.add 	$6=, $6, $5
 	i32.const	$5=, __stack_pointer
-	i32.store	$3=, 0($5), $3
+	i32.store	$6=, 0($5), $6
 	return
 	.endfunc
 .Lfunc_end4:
@@ -118,20 +118,23 @@ expr_local:                             # @expr_local
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 80
-	i32.sub 	$3=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$3=, 0($2), $3
-	i32.const	$0=, 0
-	i32.load	$push0=, glob_int($0)
-	i32.store	$discard=, 32($3), $pop0
-	i32.const	$push1=, str
-	i32.store	$discard=, str+16($0), $pop1
-	call    	exit@FUNCTION, $0
+	call    	simple_global@FUNCTION
+	call    	simple_file@FUNCTION
+	call    	simple_static_local@FUNCTION
+	i32.const	$push3=, glob_int_arr
+	i32.const	$push0=, 0
+	i32.load	$push1=, glob_ptr_int($pop0)
+	i32.const	$push7=, 0
+	i32.load	$push2=, glob_int($pop7)
+	call    	simple_arg@FUNCTION, $pop3, $pop1, $pop2
+	i32.const	$push6=, 0
+	i32.const	$push4=, str
+	i32.store	$discard=, str+16($pop6), $pop4
+	call    	expr_global@FUNCTION
+	call    	expr_local@FUNCTION
+	i32.const	$push5=, 0
+	call    	exit@FUNCTION, $pop5
 	unreachable
 	.endfunc
 .Lfunc_end7:
@@ -141,7 +144,7 @@ main:                                   # @main
 	.type	glob_int_arr,@object
 	.section	.bss.glob_int_arr,"aw",@nobits
 	.globl	glob_int_arr
-	.align	4
+	.p2align	4
 glob_int_arr:
 	.skip	400
 	.size	glob_int_arr, 400
@@ -150,7 +153,7 @@ glob_int_arr:
 	.type	glob_ptr_int,@object
 	.section	.data.glob_ptr_int,"aw",@progbits
 	.globl	glob_ptr_int
-	.align	2
+	.p2align	2
 glob_ptr_int:
 	.int32	glob_int_arr
 	.size	glob_ptr_int, 4
@@ -159,7 +162,7 @@ glob_ptr_int:
 	.type	glob_int,@object
 	.section	.data.glob_int,"aw",@progbits
 	.globl	glob_int
-	.align	2
+	.p2align	2
 glob_int:
 	.int32	4                       # 0x4
 	.size	glob_int, 4
@@ -168,7 +171,7 @@ glob_int:
 	.type	str,@object
 	.section	.bss.str,"aw",@nobits
 	.globl	str
-	.align	2
+	.p2align	2
 str:
 	.skip	20
 	.size	str, 20
@@ -177,7 +180,7 @@ str:
 	.type	ptr_str,@object
 	.section	.data.ptr_str,"aw",@progbits
 	.globl	ptr_str
-	.align	2
+	.p2align	2
 ptr_str:
 	.int32	str
 	.size	ptr_str, 4

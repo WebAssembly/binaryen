@@ -6,12 +6,12 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i64.const	$push0=, 4631107791820423168
-	i64.store	$discard=, x+79200($0), $pop0
-	call    	exit@FUNCTION, $0
+	i64.store	$discard=, x+79200($pop1):p2align=4, $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -21,7 +21,7 @@ main:                                   # @main
 	.type	x,@object
 	.section	.bss.x,"aw",@nobits
 	.globl	x
-	.align	4
+	.p2align	4
 x:
 	.skip	80000
 	.size	x, 80000

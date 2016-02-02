@@ -13,8 +13,9 @@ g:                                      # @g
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$4=, 0
-	i32.store8	$discard=, g_list($4), $4
+	i32.const	$push3=, 0
+	i32.const	$push4=, 0
+	i32.store8	$discard=, g_list($pop3), $pop4
 	return
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -30,19 +31,21 @@ g:                                      # @g
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load8_u	$push0=, g_list($0)
 	i32.const	$push1=, 0
-	i32.eq  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label1
+	i32.load8_u	$push0=, g_list($pop1)
+	i32.const	$push5=, 0
+	i32.eq  	$push6=, $pop0, $pop5
+	br_if   	$pop6, 0        # 0: down to label1
 # BB#1:                                 # %g.exit
-	i32.store8	$discard=, g_list($0), $0
+	i32.const	$push3=, 0
+	i32.const	$push2=, 0
+	i32.store8	$discard=, g_list($pop3), $pop2
 .LBB1_2:                                # %for.end
 	end_block                       # label1:
-	return  	$0
+	i32.const	$push4=, 0
+	return  	$pop4
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

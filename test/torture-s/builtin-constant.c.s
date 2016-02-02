@@ -29,11 +29,22 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	abort@FUNCTION
+	i32.const	$push0=, .L.str
+	call    	foo@FUNCTION, $pop0
+	i32.const	$push2=, .L.str
+	call    	foo@FUNCTION, $pop2
+	i32.const	$push1=, 0
+	call    	exit@FUNCTION, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+
+	.type	.L.str,@object          # @.str
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L.str:
+	.asciz	"0"
+	.size	.L.str, 2
 
 
 	.ident	"clang version 3.9.0 "

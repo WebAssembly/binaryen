@@ -12,21 +12,21 @@ try_a:                                  # @try_a
 	i32.const	$1=, __stack_pointer
 	i32.load	$1=, 0($1)
 	i32.const	$2=, 16
-	i32.sub 	$4=, $1, $2
+	i32.sub 	$5=, $1, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
-	i32.store	$discard=, 8($4), $0
+	i32.store	$5=, 0($2), $5
+	i32.store	$discard=, 8($5), $0
 	i32.const	$push0=, 0
-	i32.store	$discard=, 12($4), $pop0
+	i32.store	$discard=, 12($5), $pop0
 	i32.const	$push1=, 1
 	i32.const	$4=, 8
-	i32.add 	$4=, $4, $4
+	i32.add 	$4=, $5, $4
 	i32.or  	$push2=, $4, $pop1
 	i32.call	$push3=, check_a@FUNCTION, $pop2
 	i32.const	$3=, 16
-	i32.add 	$4=, $4, $3
+	i32.add 	$5=, $5, $3
 	i32.const	$3=, __stack_pointer
-	i32.store	$4=, 0($3), $4
+	i32.store	$5=, 0($3), $5
 	return  	$pop3
 	.endfunc
 .Lfunc_end0:
@@ -39,28 +39,28 @@ try_a:                                  # @try_a
 check_a:                                # @check_a
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, -1
 	block
 	block
-	i32.add 	$push0=, $0, $1
-	i32.load	$push1=, 0($pop0)
-	i32.const	$push2=, 42
-	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label1
+	i32.const	$push0=, -1
+	i32.add 	$push1=, $0, $pop0
+	i32.load	$push2=, 0($pop1)
+	i32.const	$push3=, 42
+	i32.ne  	$push4=, $pop2, $pop3
+	br_if   	$pop4, 0        # 0: down to label1
 # BB#1:                                 # %land.lhs.true
-	i32.const	$2=, 0
-	i32.load	$push4=, 3($0)
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 1        # 1: down to label0
+	i32.const	$1=, 0
+	i32.load	$push5=, 3($0)
+	i32.const	$push6=, 0
+	i32.eq  	$push7=, $pop5, $pop6
+	br_if   	$pop7, 1        # 1: down to label0
 .LBB1_2:                                # %if.end
 	end_block                       # label1:
-	copy_local	$2=, $1
+	i32.const	$1=, -1
 .LBB1_3:                                # %cleanup
 	end_block                       # label0:
-	return  	$2
+	return  	$1
 	.endfunc
 .Lfunc_end1:
 	.size	check_a, .Lfunc_end1-check_a

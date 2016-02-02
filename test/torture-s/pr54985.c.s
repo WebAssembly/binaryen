@@ -7,39 +7,41 @@
 foo:                                    # @foo
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 0
-	copy_local	$2=, $3
+	i32.const	$4=, 0
 	block
-	i32.const	$push1=, 0
-	i32.eq  	$push2=, $1, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	i32.const	$push5=, 0
+	i32.eq  	$push6=, $1, $pop5
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
-	i32.load	$6=, 0($0)
-	i32.const	$4=, 4
-	i32.add 	$0=, $0, $4
+	i32.load	$3=, 0($0)
+	i32.const	$push1=, 4
+	i32.add 	$0=, $0, $pop1
 .LBB0_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push0=, -1
-	i32.add 	$1=, $1, $pop0
-	copy_local	$2=, $3
-	i32.const	$push3=, 0
-	i32.eq  	$push4=, $1, $pop3
-	br_if   	$pop4, 1        # 1: down to label2
+	i32.const	$push2=, -1
+	i32.add 	$1=, $1, $pop2
+	i32.const	$4=, 0
+	i32.const	$push7=, 0
+	i32.eq  	$push8=, $1, $pop7
+	br_if   	$pop8, 1        # 1: down to label2
 # BB#3:                                 # %while.cond.while.body_crit_edge
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.load	$2=, 0($0)
-	i32.add 	$0=, $0, $4
-	i32.lt_s	$5=, $2, $6
-	copy_local	$6=, $2
-	i32.const	$2=, 1
-	br_if   	$5, 0           # 0: up to label1
+	i32.const	$push4=, 4
+	i32.add 	$4=, $0, $pop4
+	i32.load	$push0=, 0($0)
+	tee_local	$push3=, $5=, $pop0
+	i32.lt_s	$2=, $pop3, $3
+	copy_local	$0=, $4
+	copy_local	$3=, $5
+	i32.const	$4=, 1
+	br_if   	$2, 0           # 0: up to label1
 .LBB0_4:                                # %cleanup
 	end_loop                        # label2:
 	end_block                       # label0:
-	return  	$2
+	return  	$4
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

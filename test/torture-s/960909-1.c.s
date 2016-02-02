@@ -7,32 +7,34 @@
 ffs:                                    # @ffs
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 0
+	i32.const	$2=, 0
 	block
-	i32.const	$push2=, 0
-	i32.eq  	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push5=, 0
+	i32.eq  	$push6=, $0, $pop5
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$1=, 1
-	copy_local	$2=, $1
-	copy_local	$3=, $1
-	i32.and 	$push0=, $0, $1
+	i32.const	$2=, 1
+	i32.const	$push2=, 1
+	i32.and 	$push0=, $0, $pop2
 	br_if   	$pop0, 0        # 0: down to label0
 .LBB0_2:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.add 	$3=, $3, $1
-	i32.shl 	$2=, $2, $1
-	i32.and 	$push1=, $2, $0
-	i32.const	$push4=, 0
-	i32.eq  	$push5=, $pop1, $pop4
-	br_if   	$pop5, 0        # 0: up to label1
+	i32.const	$push4=, 1
+	i32.add 	$2=, $2, $pop4
+	i32.const	$push3=, 1
+	i32.shl 	$1=, $1, $pop3
+	i32.and 	$push1=, $1, $0
+	i32.const	$push7=, 0
+	i32.eq  	$push8=, $pop1, $pop7
+	br_if   	$pop8, 0        # 0: up to label1
 .LBB0_3:                                # %cleanup
 	end_loop                        # label2:
 	end_block                       # label0:
-	return  	$3
+	return  	$2
 	.endfunc
 .Lfunc_end0:
 	.size	ffs, .Lfunc_end0-ffs

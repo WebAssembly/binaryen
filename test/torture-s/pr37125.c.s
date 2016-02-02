@@ -6,15 +6,15 @@
 	.type	func_44,@function
 func_44:                                # @func_44
 	.param  	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, -9
 	block
-	i32.mul 	$push0=, $0, $1
-	i32.rem_u	$push1=, $pop0, $1
-	i32.const	$push2=, 0
-	i32.eq  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push0=, -9
+	i32.mul 	$push1=, $0, $pop0
+	i32.const	$push3=, -9
+	i32.rem_u	$push2=, $pop1, $pop3
+	i32.const	$push4=, 0
+	i32.eq  	$push5=, $pop2, $pop4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

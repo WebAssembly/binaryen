@@ -6,17 +6,20 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, b($0)
+	i32.const	$push5=, 0
+	i32.const	$push4=, 0
+	i32.load	$push0=, b($pop4)
+	tee_local	$push3=, $0=, $pop0
+	i32.const	$push1=, 1
+	i32.xor 	$push2=, $pop3, $pop1
+	i32.store	$discard=, b($pop5), $pop2
 	block
-	i32.const	$push0=, 1
-	i32.xor 	$push1=, $1, $pop0
-	i32.store	$discard=, b($0), $pop1
-	br_if   	$1, 0           # 0: down to label0
+	br_if   	$0, 0           # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push6=, 0
+	return  	$pop6
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

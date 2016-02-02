@@ -25,23 +25,24 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %if.end
+	i32.const	$0=, __stack_pointer
+	i32.load	$0=, 0($0)
+	i32.const	$1=, 16
+	i32.sub 	$3=, $0, $1
 	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$4=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
+	i32.store	$3=, 0($1), $3
 	i32.const	$push0=, 65280
-	i32.store16	$discard=, 14($4), $pop0
-	i32.const	$0=, 0
+	i32.store16	$discard=, 14($3), $pop0
+	i32.const	$push3=, 0
 	i32.const	$push1=, 2
-	i32.const	$3=, 14
-	i32.add 	$3=, $4, $3
-	i32.add 	$push2=, $3, $pop1
-	i32.store	$discard=, q($0), $pop2
-	call    	exit@FUNCTION, $0
+	i32.const	$2=, 14
+	i32.add 	$2=, $3, $2
+	i32.add 	$push2=, $2, $pop1
+	i32.store	$discard=, q($pop3), $pop2
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -51,7 +52,7 @@ main:                                   # @main
 	.type	q,@object
 	.section	.bss.q,"aw",@nobits
 	.globl	q
-	.align	2
+	.p2align	2
 q:
 	.int32	0
 	.size	q, 4

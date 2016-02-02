@@ -22,16 +22,17 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.call	$0=, bar@FUNCTION
-	i32.const	$push0=, -4095
-	i32.lt_u	$push1=, $0, $pop0
-	i32.const	$push2=, -38
-	i32.eq  	$push3=, $0, $pop2
-	i32.const	$push5=, -37
-	i32.const	$push4=, -1
-	i32.select	$push6=, $pop3, $pop5, $pop4
-	i32.select	$push7=, $pop1, $0, $pop6
-	return  	$pop7
+	i32.call	$push0=, bar@FUNCTION
+	tee_local	$push9=, $0=, $pop0
+	i32.const	$push1=, -4095
+	i32.lt_u	$push2=, $pop9, $pop1
+	i32.const	$push3=, -38
+	i32.eq  	$push4=, $0, $pop3
+	i32.const	$push6=, -37
+	i32.const	$push5=, -1
+	i32.select	$push7=, $pop4, $pop6, $pop5
+	i32.select	$push8=, $pop2, $0, $pop7
+	return  	$pop8
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -42,46 +43,62 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
+	block
+	i32.const	$push30=, 0
 	i32.const	$push0=, 26
-	i32.store	$1=, x($0), $pop0
-	i32.call	$2=, bar@FUNCTION
-	i32.const	$4=, -38
-	i32.const	$5=, -1
-	i32.const	$6=, -37
-	i32.const	$3=, -4095
-	block
-	i32.lt_u	$push1=, $2, $3
-	i32.eq  	$push2=, $2, $4
-	i32.select	$push3=, $pop2, $6, $5
-	i32.select	$push4=, $pop1, $2, $pop3
-	i32.ne  	$push5=, $pop4, $1
-	br_if   	$pop5, 0        # 0: down to label0
+	i32.store	$push1=, x($pop30), $pop0
+	i32.call	$push2=, bar@FUNCTION
+	tee_local	$push29=, $1=, $pop2
+	i32.const	$push28=, -4095
+	i32.lt_u	$push3=, $pop29, $pop28
+	i32.const	$push27=, -38
+	i32.eq  	$push4=, $1, $pop27
+	i32.const	$push26=, -37
+	i32.const	$push25=, -1
+	i32.select	$push5=, $pop4, $pop26, $pop25
+	i32.select	$push6=, $pop3, $1, $pop5
+	i32.ne  	$push7=, $pop1, $pop6
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push6=, -39
-	i32.store	$discard=, x($0), $pop6
-	i32.call	$2=, bar@FUNCTION
+	i32.const	$push37=, 0
+	i32.const	$push8=, -39
+	i32.store	$discard=, x($pop37), $pop8
 	block
-	i32.lt_u	$push7=, $2, $3
-	i32.eq  	$push8=, $2, $4
-	i32.select	$push9=, $pop8, $6, $5
-	i32.select	$push10=, $pop7, $2, $pop9
-	i32.ne  	$push11=, $pop10, $5
-	br_if   	$pop11, 0       # 0: down to label1
+	i32.call	$push9=, bar@FUNCTION
+	tee_local	$push36=, $1=, $pop9
+	i32.const	$push35=, -4095
+	i32.lt_u	$push10=, $pop36, $pop35
+	i32.const	$push34=, -38
+	i32.eq  	$push11=, $1, $pop34
+	i32.const	$push33=, -37
+	i32.const	$push32=, -1
+	i32.select	$push12=, $pop11, $pop33, $pop32
+	i32.select	$push13=, $pop10, $1, $pop12
+	i32.const	$push31=, -1
+	i32.ne  	$push14=, $pop13, $pop31
+	br_if   	$pop14, 0       # 0: down to label1
 # BB#2:                                 # %if.end4
-	i32.store	$discard=, x($0), $4
-	i32.call	$2=, bar@FUNCTION
+	i32.const	$push40=, 0
+	i32.const	$push15=, -38
+	i32.store	$0=, x($pop40), $pop15
 	block
-	i32.lt_u	$push12=, $2, $3
-	i32.eq  	$push13=, $2, $4
-	i32.select	$push14=, $pop13, $6, $5
-	i32.select	$push15=, $pop12, $2, $pop14
-	i32.ne  	$push16=, $pop15, $6
-	br_if   	$pop16, 0       # 0: down to label2
+	i32.call	$push16=, bar@FUNCTION
+	tee_local	$push39=, $1=, $pop16
+	i32.const	$push17=, -4095
+	i32.lt_u	$push18=, $pop39, $pop17
+	i32.eq  	$push19=, $1, $0
+	i32.const	$push21=, -37
+	i32.const	$push20=, -1
+	i32.select	$push22=, $pop19, $pop21, $pop20
+	i32.select	$push23=, $pop18, $1, $pop22
+	i32.const	$push38=, -37
+	i32.ne  	$push24=, $pop23, $pop38
+	br_if   	$pop24, 0       # 0: down to label2
 # BB#3:                                 # %if.end8
-	return  	$0
+	i32.const	$push41=, 0
+	return  	$pop41
 .LBB2_4:                                # %if.then7
 	end_block                       # label2:
 	call    	abort@FUNCTION

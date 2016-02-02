@@ -22,13 +22,13 @@ main:                                   # @main
 foo:                                    # @foo
 	.param  	i32
 	.result 	i64
-	.local  	i64
 # BB#0:                                 # %entry
-	i64.const	$1=, 48
 	i64.extend_u/i32	$push0=, $0
-	i64.shl 	$push1=, $pop0, $1
-	i64.shr_s	$push2=, $pop1, $1
-	return  	$pop2
+	i64.const	$push1=, 48
+	i64.shl 	$push2=, $pop0, $pop1
+	i64.const	$push4=, 48
+	i64.shr_s	$push3=, $pop2, $pop4
+	return  	$pop3
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -37,7 +37,7 @@ foo:                                    # @foo
 	.type	s,@object
 	.section	.data.s,"aw",@progbits
 	.globl	s
-	.align	1
+	.p2align	1
 s:
 	.int16	65535                   # 0xffff
 	.size	s, 2

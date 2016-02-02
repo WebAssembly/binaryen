@@ -7,16 +7,18 @@
 sub1:                                   # @sub1
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 2
-	i32.add 	$0=, $0, $2
-	i32.eq  	$push0=, $1, $2
-	i32.shl 	$push1=, $0, $2
-	i32.const	$push2=, 12
-	i32.mul 	$push3=, $0, $pop2
-	i32.select	$push4=, $pop0, $pop1, $pop3
-	return  	$pop4
+	i32.const	$push0=, 2
+	i32.eq  	$push2=, $1, $pop0
+	i32.const	$push9=, 2
+	i32.add 	$push1=, $0, $pop9
+	tee_local	$push8=, $1=, $pop1
+	i32.const	$push7=, 2
+	i32.shl 	$push3=, $pop8, $pop7
+	i32.const	$push4=, 12
+	i32.mul 	$push5=, $1, $pop4
+	i32.select	$push6=, $pop2, $pop3, $pop5
+	return  	$pop6
 	.endfunc
 .Lfunc_end0:
 	.size	sub1, .Lfunc_end0-sub1

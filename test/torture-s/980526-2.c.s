@@ -30,47 +30,52 @@ do_mknod:                               # @do_mknod
 getname:                                # @getname
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 5
-	i32.const	$2=, 3
-	i32.const	$push25=, 13
-	i32.mul 	$push26=, $0, $pop25
-	i32.const	$push7=, 7
-	i32.mul 	$push8=, $0, $pop7
-	i32.add 	$push9=, $pop8, $2
-	i32.shl 	$push10=, $0, $2
-	i32.const	$push11=, 4
-	i32.or  	$push12=, $pop10, $pop11
-	i32.mul 	$push28=, $pop9, $pop12
-	i32.add 	$push31=, $pop26, $pop28
-	i32.mul 	$push0=, $0, $1
-	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop0, $pop1
-	i32.const	$push3=, 6
-	i32.mul 	$push4=, $0, $pop3
-	i32.const	$push5=, 2
-	i32.add 	$push6=, $pop4, $pop5
-	i32.mul 	$push27=, $pop2, $pop6
-	i32.add 	$push32=, $pop31, $pop27
-	i32.const	$push13=, 9
-	i32.mul 	$push14=, $0, $pop13
-	i32.add 	$push15=, $pop14, $1
-	i32.const	$push16=, 10
-	i32.mul 	$push17=, $0, $pop16
-	i32.add 	$push18=, $pop17, $1
-	i32.mul 	$push29=, $pop15, $pop18
-	i32.add 	$push33=, $pop32, $pop29
-	i32.const	$push19=, 11
-	i32.mul 	$push20=, $0, $pop19
-	i32.add 	$push21=, $pop20, $1
-	i32.const	$push22=, 12
-	i32.mul 	$push23=, $0, $pop22
-	i32.add 	$push24=, $pop23, $1
-	i32.mul 	$push30=, $pop21, $pop24
-	i32.add 	$push34=, $pop33, $pop30
-	i32.add 	$push35=, $pop34, $1
-	return  	$pop35
+	i32.const	$push27=, 13
+	i32.mul 	$push28=, $0, $pop27
+	i32.const	$push8=, 7
+	i32.mul 	$push9=, $0, $pop8
+	i32.const	$push10=, 3
+	i32.add 	$push11=, $pop9, $pop10
+	i32.const	$push43=, 3
+	i32.shl 	$push12=, $0, $pop43
+	i32.const	$push13=, 4
+	i32.or  	$push14=, $pop12, $pop13
+	i32.mul 	$push30=, $pop11, $pop14
+	i32.add 	$push33=, $pop28, $pop30
+	i32.const	$push0=, 5
+	i32.mul 	$push1=, $0, $pop0
+	i32.const	$push2=, 1
+	i32.add 	$push3=, $pop1, $pop2
+	i32.const	$push4=, 6
+	i32.mul 	$push5=, $0, $pop4
+	i32.const	$push6=, 2
+	i32.add 	$push7=, $pop5, $pop6
+	i32.mul 	$push29=, $pop3, $pop7
+	i32.add 	$push34=, $pop33, $pop29
+	i32.const	$push15=, 9
+	i32.mul 	$push16=, $0, $pop15
+	i32.const	$push42=, 5
+	i32.add 	$push17=, $pop16, $pop42
+	i32.const	$push18=, 10
+	i32.mul 	$push19=, $0, $pop18
+	i32.const	$push41=, 5
+	i32.add 	$push20=, $pop19, $pop41
+	i32.mul 	$push31=, $pop17, $pop20
+	i32.add 	$push35=, $pop34, $pop31
+	i32.const	$push21=, 11
+	i32.mul 	$push22=, $0, $pop21
+	i32.const	$push40=, 5
+	i32.add 	$push23=, $pop22, $pop40
+	i32.const	$push24=, 12
+	i32.mul 	$push25=, $0, $pop24
+	i32.const	$push39=, 5
+	i32.add 	$push26=, $pop25, $pop39
+	i32.mul 	$push32=, $pop23, $pop26
+	i32.add 	$push36=, $pop35, $pop32
+	i32.const	$push38=, 5
+	i32.add 	$push37=, $pop36, $pop38
+	return  	$pop37
 	.endfunc
 .Lfunc_end1:
 	.size	getname, .Lfunc_end1-getname

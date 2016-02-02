@@ -7,16 +7,19 @@
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
+	i32.const	$push1=, 0
+	i32.const	$push8=, 0
 	i32.const	$push0=, 2
-	i32.store	$push1=, x00($2), $pop0
-	i32.store	$discard=, y00($2), $pop1
-	i32.const	$push2=, 22
-	i32.store	$push3=, x01($2), $pop2
-	i32.store	$discard=, y01($2), $pop3
-	return  	$2
+	i32.store	$push2=, x00($pop8), $pop0
+	i32.store	$discard=, y00($pop1), $pop2
+	i32.const	$push7=, 0
+	i32.const	$push6=, 0
+	i32.const	$push3=, 22
+	i32.store	$push4=, x01($pop6), $pop3
+	i32.store	$discard=, y01($pop7), $pop4
+	i32.const	$push5=, 0
+	return  	$pop5
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -25,7 +28,7 @@ main:                                   # @main
 	.type	x00,@object
 	.section	.bss.x00,"aw",@nobits
 	.globl	x00
-	.align	2
+	.p2align	2
 x00:
 	.int32	0                       # 0x0
 	.size	x00, 4
@@ -34,7 +37,7 @@ x00:
 	.type	x01,@object
 	.section	.bss.x01,"aw",@nobits
 	.globl	x01
-	.align	2
+	.p2align	2
 x01:
 	.int32	0                       # 0x0
 	.size	x01, 4
@@ -43,7 +46,7 @@ x01:
 	.type	y00,@object
 	.section	.bss.y00,"aw",@nobits
 	.globl	y00
-	.align	2
+	.p2align	2
 y00:
 	.int32	0                       # 0x0
 	.size	y00, 4
@@ -52,7 +55,7 @@ y00:
 	.type	y01,@object
 	.section	.bss.y01,"aw",@nobits
 	.globl	y01
-	.align	2
+	.p2align	2
 y01:
 	.int32	0                       # 0x0
 	.size	y01, 4

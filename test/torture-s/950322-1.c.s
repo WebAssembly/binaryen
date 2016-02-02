@@ -7,18 +7,20 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.load8_u	$push1=, 0($0)
 	i32.load8_u	$push0=, 1($0)
 	i32.sub 	$0=, $pop1, $pop0
-	i32.const	$1=, 31
-	i32.shr_s	$2=, $0, $1
-	i32.add 	$push2=, $0, $2
-	i32.xor 	$push3=, $pop2, $2
-	i32.shr_u	$push4=, $0, $1
-	i32.add 	$push5=, $pop3, $pop4
-	return  	$pop5
+	i32.const	$push2=, 31
+	i32.shr_s	$push3=, $0, $pop2
+	tee_local	$push9=, $1=, $pop3
+	i32.add 	$push4=, $0, $pop9
+	i32.xor 	$push5=, $pop4, $1
+	i32.const	$push8=, 31
+	i32.shr_u	$push6=, $0, $pop8
+	i32.add 	$push7=, $pop5, $pop6
+	return  	$pop7
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

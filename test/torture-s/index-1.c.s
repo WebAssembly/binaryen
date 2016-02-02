@@ -10,12 +10,10 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $0, $pop0
-	i32.const	$push2=, a
+	i32.const	$push2=, a-400000
 	i32.add 	$push3=, $pop1, $pop2
-	i32.const	$push4=, -400000
-	i32.add 	$push5=, $pop3, $pop4
-	i32.load	$push6=, 0($pop5)
-	return  	$pop6
+	i32.load	$push4=, 0($pop3)
+	return  	$pop4
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -26,16 +24,16 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load	$push0=, a+120($0)
+	i32.const	$push3=, 0
+	i32.load	$push0=, a+120($pop3):p2align=3
 	i32.const	$push1=, 30
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -49,7 +47,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	4
+	.p2align	4
 a:
 	.int32	0                       # 0x0
 	.int32	1                       # 0x1

@@ -6,35 +6,45 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, f64, f32
+	.local  	f64, f32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	f64.load	$1=, wv6+32($0)
 	block
-	f64.ne  	$push0=, $1, $1
-	br_if   	$pop0, 0        # 0: down to label0
+	i32.const	$push13=, 0
+	f64.load	$push2=, wv6+32($pop13)
+	tee_local	$push12=, $0=, $pop2
+	f64.ne  	$push3=, $pop12, $0
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %caller_bf6.exit
-	f32.load	$2=, yv7($0)
 	block
-	f32.ne  	$push1=, $2, $2
-	br_if   	$pop1, 0        # 0: down to label1
+	i32.const	$push15=, 0
+	f32.load	$push4=, yv7($pop15):p2align=3
+	tee_local	$push14=, $1=, $pop4
+	f32.ne  	$push5=, $pop14, $1
+	br_if   	$pop5, 0        # 0: down to label1
 # BB#2:                                 # %if.end26.i.i
-	f64.load	$1=, yv7+16($0)
 	block
-	f64.ne  	$push2=, $1, $1
-	br_if   	$pop2, 0        # 0: down to label2
+	i32.const	$push6=, 0
+	f64.load	$push7=, yv7+16($pop6)
+	tee_local	$push16=, $0=, $pop7
+	f64.ne  	$push8=, $pop16, $0
+	br_if   	$pop8, 0        # 0: down to label2
 # BB#3:                                 # %if.end30.i.i
-	f32.load	$2=, yv7+24($0)
 	block
-	f32.ne  	$push3=, $2, $2
-	br_if   	$pop3, 0        # 0: down to label3
+	i32.const	$push18=, 0
+	f32.load	$push1=, yv7+24($pop18):p2align=3
+	tee_local	$push17=, $1=, $pop1
+	f32.ne  	$push9=, $pop17, $1
+	br_if   	$pop9, 0        # 0: down to label3
 # BB#4:                                 # %if.end34.i.i
-	f32.load	$2=, zv7($0)
 	block
-	f32.ne  	$push4=, $2, $2
-	br_if   	$pop4, 0        # 0: down to label4
+	i32.const	$push20=, 0
+	f32.load	$push0=, zv7($pop20)
+	tee_local	$push19=, $1=, $pop0
+	f32.ne  	$push10=, $pop19, $1
+	br_if   	$pop10, 0       # 0: down to label4
 # BB#5:                                 # %caller_bf7.exit
-	return  	$0
+	i32.const	$push11=, 0
+	return  	$pop11
 .LBB0_6:                                # %if.then37.i.i
 	end_block                       # label4:
 	call    	abort@FUNCTION
@@ -61,7 +71,7 @@ main:                                   # @main
 
 	.type	wv6,@object             # @wv6
 	.section	.data.wv6,"aw",@progbits
-	.align	3
+	.p2align	3
 wv6:
 	.int8	72                      # 0x48
 	.int8	66                      # 0x42
@@ -82,14 +92,14 @@ wv6:
 
 	.type	zv7,@object             # @zv7
 	.section	.data.zv7,"aw",@progbits
-	.align	2
+	.p2align	2
 zv7:
 	.int32	1167954387              # float 5042.22803
 	.size	zv7, 4
 
 	.type	yv7,@object             # @yv7
 	.section	.data.yv7,"aw",@progbits
-	.align	3
+	.p2align	3
 yv7:
 	.int32	1189834750              # float 30135.9961
 	.int16	42435                   # 0xa5c3

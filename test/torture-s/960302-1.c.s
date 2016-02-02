@@ -6,22 +6,24 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, a($0)
-	i32.const	$push0=, 31
-	i32.shr_u	$push1=, $1, $pop0
-	i32.add 	$push2=, $1, $pop1
-	i32.const	$push3=, -2
-	i32.and 	$push4=, $pop2, $pop3
-	i32.sub 	$1=, $1, $pop4
-	i32.const	$2=, 1
-	i32.eq  	$push5=, $1, $2
-	i32.const	$push6=, -1
-	i32.select	$push7=, $pop5, $2, $pop6
-	i32.select	$push8=, $1, $pop7, $0
-	return  	$pop8
+	i32.const	$push0=, 0
+	i32.load	$0=, a($pop0)
+	i32.const	$push1=, 31
+	i32.shr_u	$push2=, $0, $pop1
+	i32.add 	$push3=, $0, $pop2
+	i32.const	$push4=, -2
+	i32.and 	$push5=, $pop3, $pop4
+	i32.sub 	$0=, $0, $pop5
+	i32.const	$push6=, 1
+	i32.eq  	$push7=, $0, $pop6
+	i32.const	$push12=, 1
+	i32.const	$push8=, -1
+	i32.select	$push9=, $pop7, $pop12, $pop8
+	i32.const	$push11=, 0
+	i32.select	$push10=, $0, $pop9, $pop11
+	return  	$pop10
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -32,22 +34,23 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, a($0)
+	i32.const	$push8=, 0
+	i32.load	$0=, a($pop8)
 	block
 	i32.const	$push0=, 31
-	i32.shr_u	$push1=, $1, $pop0
-	i32.add 	$push2=, $1, $pop1
+	i32.shr_u	$push1=, $0, $pop0
+	i32.add 	$push2=, $0, $pop1
 	i32.const	$push3=, -2
 	i32.and 	$push4=, $pop2, $pop3
-	i32.sub 	$push5=, $1, $pop4
+	i32.sub 	$push5=, $0, $pop4
 	i32.const	$push6=, 1
 	i32.ne  	$push7=, $pop5, $pop6
 	br_if   	$pop7, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -61,7 +64,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	1                       # 0x1
 	.size	a, 4

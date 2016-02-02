@@ -7,9 +7,9 @@
 t:                                      # @t
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
+	i32.const	$1=, 0
 	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
@@ -19,29 +19,28 @@ t:                                      # @t
 	loop                            # label1:
 	block
 	i32.const	$push8=, 0
-	i32.eq  	$push9=, $2, $pop8
+	i32.eq  	$push9=, $1, $pop8
 	br_if   	$pop9, 0        # 0: down to label3
 # BB#2:                                 # %if.then
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$1=, 0
-	i32.load	$push2=, terminate_me($1)
-	call_indirect	$pop2, $1
+	i32.const	$push2=, 0
+	i32.load	$push3=, terminate_me($pop2)
+	i32.const	$push7=, 0
+	call_indirect	$pop3, $pop7
 .LBB0_3:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label3:
-	i32.const	$push3=, a
-	i32.add 	$push4=, $pop3, $2
-	i32.const	$push5=, 0
-	i32.store	$discard=, 0($pop4), $pop5
-	i32.const	$push6=, 4
-	i32.add 	$2=, $2, $pop6
-	i32.const	$push7=, -1
-	i32.add 	$0=, $0, $pop7
+	i32.const	$push4=, 0
+	i32.store	$discard=, a($1), $pop4
+	i32.const	$push5=, 4
+	i32.add 	$1=, $1, $pop5
+	i32.const	$push6=, -1
+	i32.add 	$0=, $0, $pop6
 	br_if   	$0, 0           # 0: up to label1
 .LBB0_4:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
-	return  	$2
+	return  	$1
 	.endfunc
 .Lfunc_end0:
 	.size	t, .Lfunc_end0-t
@@ -68,7 +67,7 @@ main:                                   # @main
 	.type	terminate_me,@object
 	.section	.bss.terminate_me,"aw",@nobits
 	.globl	terminate_me
-	.align	2
+	.p2align	2
 terminate_me:
 	.int32	0
 	.size	terminate_me, 4
@@ -77,7 +76,7 @@ terminate_me:
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.skip	4
 	.size	a, 4

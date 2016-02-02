@@ -6,17 +6,17 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	call    	foo@FUNCTION, $0
-	i32.const	$push0=, 1
+	i32.const	$push0=, 0
 	call    	foo@FUNCTION, $pop0
-	i32.const	$push1=, 2
+	i32.const	$push1=, 1
 	call    	foo@FUNCTION, $pop1
-	i32.const	$push2=, 3
+	i32.const	$push2=, 2
 	call    	foo@FUNCTION, $pop2
-	return  	$0
+	i32.const	$push3=, 3
+	call    	foo@FUNCTION, $pop3
+	i32.const	$push4=, 0
+	return  	$pop4
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

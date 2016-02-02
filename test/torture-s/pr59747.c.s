@@ -8,12 +8,10 @@ fn1:                                    # @fn1
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, a
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $0, $pop0
-	i32.add 	$push3=, $pop2, $pop1
-	i32.load	$push4=, 0($pop3)
-	return  	$pop4
+	i32.load	$push2=, a($pop1)
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	fn1, .Lfunc_end0-fn1
@@ -24,38 +22,44 @@ fn1:                                    # @fn1
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, c($0)
-	i32.load16_u	$2=, e($0)
-	block
+	i32.const	$push16=, 0
+	i32.load	$0=, c($pop16)
+	i32.const	$push15=, 0
+	i32.load16_u	$1=, e($pop15)
+	i32.const	$push14=, 0
 	i32.const	$push1=, 1
-	i32.store	$discard=, a($0), $pop1
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $1, $pop12
-	br_if   	$pop13, 0       # 0: down to label0
+	i32.store	$discard=, a($pop14):p2align=4, $pop1
+	block
+	i32.const	$push20=, 0
+	i32.eq  	$push21=, $0, $pop20
+	br_if   	$pop21, 0       # 0: down to label0
 # BB#1:                                 # %if.then
+	i32.const	$push17=, 0
 	i32.const	$push2=, -1
-	i32.add 	$push0=, $2, $pop2
-	i32.store16	$2=, e($0), $pop0
+	i32.add 	$push0=, $1, $pop2
+	i32.store16	$1=, e($pop17), $pop0
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
-	i32.const	$1=, 16
+	i32.const	$push19=, 0
+	i32.const	$push3=, 16
+	i32.shl 	$push4=, $1, $pop3
+	i32.const	$push18=, 16
+	i32.shr_s	$push5=, $pop4, $pop18
+	i32.store	$discard=, d($pop19), $pop5
 	block
-	i32.shl 	$push3=, $2, $1
-	i32.shr_s	$push4=, $pop3, $1
-	i32.store	$discard=, d($0), $pop4
-	i64.extend_u/i32	$push5=, $2
-	i64.const	$push6=, 48
-	i64.shl 	$push7=, $pop5, $pop6
-	i64.const	$push8=, 63
-	i64.shr_u	$push9=, $pop7, $pop8
-	i32.wrap/i64	$push10=, $pop9
-	i32.call	$push11=, fn1@FUNCTION, $pop10
-	br_if   	$pop11, 0       # 0: down to label1
+	i64.extend_u/i32	$push6=, $1
+	i64.const	$push7=, 48
+	i64.shl 	$push8=, $pop6, $pop7
+	i64.const	$push9=, 63
+	i64.shr_u	$push10=, $pop8, $pop9
+	i32.wrap/i64	$push11=, $pop10
+	i32.call	$push12=, fn1@FUNCTION, $pop11
+	br_if   	$pop12, 0       # 0: down to label1
 # BB#3:                                 # %if.end5
-	call    	exit@FUNCTION, $0
+	i32.const	$push13=, 0
+	call    	exit@FUNCTION, $pop13
 	unreachable
 .LBB1_4:                                # %if.then4
 	end_block                       # label1:
@@ -69,7 +73,7 @@ main:                                   # @main
 	.type	c,@object
 	.section	.data.c,"aw",@progbits
 	.globl	c
-	.align	2
+	.p2align	2
 c:
 	.int32	1                       # 0x1
 	.size	c, 4
@@ -78,7 +82,7 @@ c:
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	4
+	.p2align	4
 a:
 	.skip	24
 	.size	a, 24
@@ -87,7 +91,7 @@ a:
 	.type	e,@object
 	.section	.bss.e,"aw",@nobits
 	.globl	e
-	.align	1
+	.p2align	1
 e:
 	.int16	0                       # 0x0
 	.size	e, 2
@@ -96,7 +100,7 @@ e:
 	.type	d,@object
 	.section	.bss.d,"aw",@nobits
 	.globl	d
-	.align	2
+	.p2align	2
 d:
 	.int32	0                       # 0x0
 	.size	d, 4

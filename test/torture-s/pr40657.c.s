@@ -11,18 +11,18 @@ bar:                                    # @bar
 	i32.const	$1=, __stack_pointer
 	i32.load	$1=, 0($1)
 	i32.const	$2=, 16
-	i32.sub 	$4=, $1, $2
+	i32.sub 	$5=, $1, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
-	i32.store	$discard=, 12($4), $0
+	i32.store	$5=, 0($2), $5
+	i32.store	$discard=, 12($5), $0
 	i32.const	$4=, 12
-	i32.add 	$4=, $4, $4
+	i32.add 	$4=, $5, $4
 	#APP
 	#NO_APP
 	i32.const	$3=, 16
-	i32.add 	$4=, $4, $3
+	i32.add 	$5=, $5, $3
 	i32.const	$3=, __stack_pointer
-	i32.store	$4=, 0($3), $4
+	i32.store	$5=, 0($3), $5
 	return
 	.endfunc
 .Lfunc_end0:
@@ -62,16 +62,16 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64, i32
 # BB#0:                                 # %entry
-	i64.call	$0=, foo@FUNCTION
-	i32.const	$1=, 0
 	block
-	i64.load	$push0=, v($1)
-	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	i64.call	$push0=, foo@FUNCTION
+	i32.const	$push3=, 0
+	i64.load	$push1=, v($pop3)
+	i64.ne  	$push2=, $pop0, $pop1
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $1
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
 .LBB2_2:                                # %if.then
 	end_block                       # label0:
@@ -85,7 +85,7 @@ main:                                   # @main
 	.type	v,@object
 	.section	.data.v,"aw",@progbits
 	.globl	v
-	.align	3
+	.p2align	3
 v:
 	.int64	20015998343868          # 0x123456789abc
 	.size	v, 8

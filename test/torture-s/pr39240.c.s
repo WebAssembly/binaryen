@@ -50,12 +50,12 @@ bar2:                                   # @bar2
 foo2:                                   # @foo2
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 16
-	i32.shl 	$push0=, $0, $1
-	i32.shr_s	$push1=, $pop0, $1
-	return  	$pop1
+	i32.const	$push0=, 16
+	i32.shl 	$push1=, $0, $pop0
+	i32.const	$push3=, 16
+	i32.shr_s	$push2=, $pop1, $pop3
+	return  	$pop2
 	.endfunc
 .Lfunc_end3:
 	.size	foo2, .Lfunc_end3-foo2
@@ -83,12 +83,12 @@ bar3:                                   # @bar3
 foo3:                                   # @foo3
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 24
-	i32.shl 	$push0=, $0, $1
-	i32.shr_s	$push1=, $pop0, $1
-	return  	$pop1
+	i32.const	$push0=, 24
+	i32.shl 	$push1=, $0, $pop0
+	i32.const	$push3=, 24
+	i32.shr_s	$push2=, $pop1, $pop3
+	return  	$pop2
 	.endfunc
 .Lfunc_end5:
 	.size	foo3, .Lfunc_end5-foo3
@@ -127,15 +127,15 @@ foo4:                                   # @foo4
 bar5:                                   # @bar5
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
-	i32.call	$1=, foo5@FUNCTION, $pop1
-	i32.const	$0=, 16
-	i32.shl 	$push2=, $1, $0
-	i32.shr_s	$push3=, $pop2, $0
-	return  	$pop3
+	i32.call	$push2=, foo5@FUNCTION, $pop1
+	i32.const	$push3=, 16
+	i32.shl 	$push4=, $pop2, $pop3
+	i32.const	$push6=, 16
+	i32.shr_s	$push5=, $pop4, $pop6
+	return  	$pop5
 	.endfunc
 .Lfunc_end8:
 	.size	bar5, .Lfunc_end8-bar5
@@ -160,15 +160,15 @@ foo5:                                   # @foo5
 bar6:                                   # @bar6
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
-	i32.call	$1=, foo6@FUNCTION, $pop1
-	i32.const	$0=, 24
-	i32.shl 	$push2=, $1, $0
-	i32.shr_s	$push3=, $pop2, $0
-	return  	$pop3
+	i32.call	$push2=, foo6@FUNCTION, $pop1
+	i32.const	$push3=, 24
+	i32.shl 	$push4=, $pop2, $pop3
+	i32.const	$push6=, 24
+	i32.shr_s	$push5=, $pop4, $pop6
+	return  	$pop5
 	.endfunc
 .Lfunc_end10:
 	.size	bar6, .Lfunc_end10-bar6
@@ -192,47 +192,57 @@ foo6:                                   # @foo6
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, -10
-	i32.call	$1=, bar1@FUNCTION, $0
-	i32.const	$2=, 0
 	block
-	i32.load	$push0=, l1($2)
-	i32.ne  	$push1=, $1, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	i32.const	$push20=, -10
+	i32.call	$push0=, bar1@FUNCTION, $pop20
+	i32.const	$push19=, 0
+	i32.load	$push1=, l1($pop19)
+	i32.ne  	$push2=, $pop0, $pop1
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
-	i32.call	$push2=, bar2@FUNCTION, $0
-	i32.load	$push3=, l2($2)
-	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label1
+	i32.const	$push22=, -10
+	i32.call	$push3=, bar2@FUNCTION, $pop22
+	i32.const	$push21=, 0
+	i32.load	$push4=, l2($pop21)
+	i32.ne  	$push5=, $pop3, $pop4
+	br_if   	$pop5, 0        # 0: down to label1
 # BB#2:                                 # %if.end5
 	block
-	i32.call	$push5=, bar3@FUNCTION, $0
-	i32.load	$push6=, l3($2)
-	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label2
+	i32.const	$push24=, -10
+	i32.call	$push6=, bar3@FUNCTION, $pop24
+	i32.const	$push23=, 0
+	i32.load	$push7=, l3($pop23)
+	i32.ne  	$push8=, $pop6, $pop7
+	br_if   	$pop8, 0        # 0: down to label2
 # BB#3:                                 # %if.end11
 	block
-	i32.call	$push8=, bar4@FUNCTION, $0
-	i32.load	$push9=, l4($2)
-	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, 0       # 0: down to label3
+	i32.const	$push26=, -10
+	i32.call	$push9=, bar4@FUNCTION, $pop26
+	i32.const	$push25=, 0
+	i32.load	$push10=, l4($pop25)
+	i32.ne  	$push11=, $pop9, $pop10
+	br_if   	$pop11, 0       # 0: down to label3
 # BB#4:                                 # %if.end16
 	block
-	i32.call	$push11=, bar5@FUNCTION, $0
-	i32.load	$push12=, l5($2)
-	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	$pop13, 0       # 0: down to label4
+	i32.const	$push28=, -10
+	i32.call	$push12=, bar5@FUNCTION, $pop28
+	i32.const	$push27=, 0
+	i32.load	$push13=, l5($pop27)
+	i32.ne  	$push14=, $pop12, $pop13
+	br_if   	$pop14, 0       # 0: down to label4
 # BB#5:                                 # %if.end22
 	block
-	i32.call	$push14=, bar6@FUNCTION, $0
-	i32.load	$push15=, l6($2)
-	i32.ne  	$push16=, $pop14, $pop15
-	br_if   	$pop16, 0       # 0: down to label5
+	i32.const	$push30=, -10
+	i32.call	$push15=, bar6@FUNCTION, $pop30
+	i32.const	$push29=, 0
+	i32.load	$push16=, l6($pop29)
+	i32.ne  	$push17=, $pop15, $pop16
+	br_if   	$pop17, 0       # 0: down to label5
 # BB#6:                                 # %if.end28
-	return  	$2
+	i32.const	$push18=, 0
+	return  	$pop18
 .LBB12_7:                               # %if.then27
 	end_block                       # label5:
 	call    	abort@FUNCTION
@@ -265,7 +275,7 @@ main:                                   # @main
 	.type	l1,@object
 	.section	.data.l1,"aw",@progbits
 	.globl	l1
-	.align	2
+	.p2align	2
 l1:
 	.int32	4294967292              # 0xfffffffc
 	.size	l1, 4
@@ -274,7 +284,7 @@ l1:
 	.type	l2,@object
 	.section	.data.l2,"aw",@progbits
 	.globl	l2
-	.align	2
+	.p2align	2
 l2:
 	.int32	65532                   # 0xfffc
 	.size	l2, 4
@@ -283,7 +293,7 @@ l2:
 	.type	l3,@object
 	.section	.data.l3,"aw",@progbits
 	.globl	l3
-	.align	2
+	.p2align	2
 l3:
 	.int32	252                     # 0xfc
 	.size	l3, 4
@@ -292,7 +302,7 @@ l3:
 	.type	l4,@object
 	.section	.data.l4,"aw",@progbits
 	.globl	l4
-	.align	2
+	.p2align	2
 l4:
 	.int32	4294967292              # 0xfffffffc
 	.size	l4, 4
@@ -301,7 +311,7 @@ l4:
 	.type	l5,@object
 	.section	.data.l5,"aw",@progbits
 	.globl	l5
-	.align	2
+	.p2align	2
 l5:
 	.int32	4294967292              # 0xfffffffc
 	.size	l5, 4
@@ -310,7 +320,7 @@ l5:
 	.type	l6,@object
 	.section	.data.l6,"aw",@progbits
 	.globl	l6
-	.align	2
+	.p2align	2
 l6:
 	.int32	4294967292              # 0xfffffffc
 	.size	l6, 4

@@ -7,26 +7,28 @@
 aim_callhandler:                        # @aim_callhandler
 	.param  	i32, i32, i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $1, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	i32.const	$push11=, 0
+	i32.eq  	$push12=, $1, $pop11
+	br_if   	$pop12, 0       # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$push0=, 65535
-	i32.eq  	$push1=, $3, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	i32.const	$push1=, 65535
+	i32.eq  	$push2=, $3, $pop1
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#2:                                 # %if.end3
-	i32.const	$1=, 0
-	i32.load	$3=, aim_callhandler.i($1)
-	i32.const	$4=, 1
 	block
-	i32.ge_s	$push2=, $3, $4
-	br_if   	$pop2, 0        # 0: down to label1
+	i32.const	$push8=, 0
+	i32.load	$push0=, aim_callhandler.i($pop8)
+	tee_local	$push7=, $1=, $pop0
+	i32.const	$push6=, 1
+	i32.ge_s	$push3=, $pop7, $pop6
+	br_if   	$pop3, 0        # 0: down to label1
 # BB#3:                                 # %if.end7
-	i32.add 	$push3=, $3, $4
-	i32.store	$discard=, aim_callhandler.i($1), $pop3
+	i32.const	$push10=, 0
+	i32.const	$push9=, 1
+	i32.add 	$push4=, $1, $pop9
+	i32.store	$discard=, aim_callhandler.i($pop10), $pop4
 	br      	1               # 1: down to label0
 .LBB0_4:                                # %if.then6
 	end_block                       # label1:
@@ -34,8 +36,8 @@ aim_callhandler:                        # @aim_callhandler
 	unreachable
 .LBB0_5:                                # %return
 	end_block                       # label0:
-	i32.const	$push4=, 0
-	return  	$pop4
+	i32.const	$push5=, 0
+	return  	$pop5
 	.endfunc
 .Lfunc_end0:
 	.size	aim_callhandler, .Lfunc_end0-aim_callhandler
@@ -46,22 +48,26 @@ aim_callhandler:                        # @aim_callhandler
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.load	$0=, aim_callhandler.i($1)
-	i32.const	$2=, 1
 	block
-	i32.lt_s	$push0=, $0, $2
-	br_if   	$pop0, 0        # 0: down to label2
+	i32.const	$push5=, 0
+	i32.load	$push0=, aim_callhandler.i($pop5)
+	tee_local	$push4=, $0=, $pop0
+	i32.const	$push3=, 1
+	i32.lt_s	$push1=, $pop4, $pop3
+	br_if   	$pop1, 0        # 0: down to label2
 # BB#1:                                 # %if.then6.i
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_2:                                # %aim_callhandler.exit
 	end_block                       # label2:
-	i32.add 	$push1=, $0, $2
-	i32.store	$discard=, aim_callhandler.i($1), $pop1
-	call    	exit@FUNCTION, $1
+	i32.const	$push8=, 0
+	i32.const	$push7=, 1
+	i32.add 	$push2=, $0, $pop7
+	i32.store	$discard=, aim_callhandler.i($pop8), $pop2
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end1:

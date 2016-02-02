@@ -7,15 +7,15 @@
 f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 1
-	i32.or  	$push0=, $0, $2
-	i32.eq  	$push1=, $pop0, $2
-	i32.const	$push2=, 0
-	i32.ne  	$push3=, $1, $pop2
-	i32.and 	$push4=, $pop1, $pop3
-	return  	$pop4
+	i32.const	$push0=, 1
+	i32.or  	$push1=, $0, $pop0
+	i32.const	$push6=, 1
+	i32.eq  	$push2=, $pop1, $pop6
+	i32.const	$push3=, 0
+	i32.ne  	$push4=, $1, $pop3
+	i32.and 	$push5=, $pop2, $pop4
+	return  	$pop5
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

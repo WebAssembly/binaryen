@@ -23,25 +23,26 @@ bracket_empty:                          # @bracket_empty
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.load	$1=, 0($0)
 	block
-	i32.load	$push0=, 4($0)
-	i32.ge_u	$push1=, $1, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	i32.load	$push0=, 0($0)
+	tee_local	$push9=, $1=, $pop0
+	i32.load	$push1=, 4($0)
+	i32.ge_u	$push2=, $pop9, $pop1
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %land.lhs.true
-	i32.const	$push2=, 1
-	i32.add 	$push3=, $1, $pop2
-	i32.store	$discard=, 0($0), $pop3
-	i32.load8_u	$push4=, 0($1)
-	i32.const	$push5=, 93
-	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	i32.const	$push3=, 1
+	i32.add 	$push4=, $1, $pop3
+	i32.store	$discard=, 0($0), $pop4
+	i32.load8_u	$push5=, 0($1)
+	i32.const	$push6=, 93
+	i32.ne  	$push7=, $pop5, $pop6
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB1_3:                                # %lor.lhs.false
 	end_block                       # label0:
-	i32.const	$push7=, 7
-	i32.store	$discard=, 8($0), $pop7
+	i32.const	$push8=, 7
+	i32.store	$discard=, 8($0), $pop8
 	return
 	.endfunc
 .Lfunc_end1:

@@ -7,33 +7,30 @@
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$3=, __stack_pointer
+	i32.load	$3=, 0($3)
+	i32.const	$4=, 15008
+	i32.sub 	$6=, $3, $4
 	i32.const	$4=, __stack_pointer
-	i32.load	$4=, 0($4)
-	i32.const	$5=, 15008
-	i32.sub 	$7=, $4, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$7=, 0($5), $7
-	i32.const	$2=, 13371
-	i32.const	$push0=, 205
-	i32.const	$7=, 0
-	i32.add 	$7=, $7, $7
-	call    	memset@FUNCTION, $7, $pop0, $2
-	i32.const	$push1=, 0
-	i32.store8	$3=, 13371($7), $pop1
-	i32.const	$8=, 0
-	i32.add 	$8=, $7, $8
+	i32.store	$6=, 0($4), $6
+	i32.const	$push1=, 205
+	i32.const	$push0=, 13371
+	i32.call	$discard=, memset@FUNCTION, $6, $pop1, $pop0
+	i32.const	$push2=, 0
+	i32.store8	$2=, 13371($6), $pop2
 	block
-	i32.call	$push2=, strlen@FUNCTION, $8
-	i32.ne  	$push3=, $pop2, $2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.call	$push3=, strlen@FUNCTION, $6
+	i32.const	$push5=, 13371
+	i32.ne  	$push4=, $pop3, $pop5
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %foo.exit
-	i32.const	$6=, 15008
-	i32.add 	$7=, $7, $6
-	i32.const	$6=, __stack_pointer
-	i32.store	$7=, 0($6), $7
-	return  	$3
+	i32.const	$5=, 15008
+	i32.add 	$6=, $6, $5
+	i32.const	$5=, __stack_pointer
+	i32.store	$6=, 0($5), $6
+	return  	$2
 .LBB0_2:                                # %if.then.i
 	end_block                       # label0:
 	call    	abort@FUNCTION

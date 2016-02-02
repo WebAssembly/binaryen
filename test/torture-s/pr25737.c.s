@@ -22,11 +22,11 @@ time_enqueue:                           # @time_enqueue
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
-	i32.store	$push0=, Timer_Queue($0), $0
-	return  	$pop0
+	i32.const	$push0=, 0
+	i32.const	$push2=, 0
+	i32.store	$push1=, Timer_Queue($pop0), $pop2
+	return  	$pop1
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

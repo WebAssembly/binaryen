@@ -6,18 +6,19 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i64.load	$push0=, c($0)
+	i32.const	$push6=, 0
+	i64.load	$push0=, c($pop6)
 	i64.const	$push1=, 3
 	i64.mul 	$push2=, $pop0, $pop1
-	i64.load	$push3=, c3($0)
+	i32.const	$push5=, 0
+	i64.load	$push3=, c3($pop5)
 	i64.ne  	$push4=, $pop2, $pop3
 	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -31,7 +32,7 @@ main:                                   # @main
 	.type	c,@object
 	.section	.data.c,"aw",@progbits
 	.globl	c
-	.align	3
+	.p2align	3
 c:
 	.int64	2863311530              # 0xaaaaaaaa
 	.size	c, 8
@@ -40,7 +41,7 @@ c:
 	.type	c3,@object
 	.section	.data.c3,"aw",@progbits
 	.globl	c3
-	.align	3
+	.p2align	3
 c3:
 	.int64	8589934590              # 0x1fffffffe
 	.size	c3, 8

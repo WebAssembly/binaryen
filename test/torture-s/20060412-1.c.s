@@ -6,23 +6,14 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
-# BB#0:                                 # %while.body.preheader
-	i32.const	$0=, t+328
-.LBB0_1:                                # %while.body
-                                        # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
-	i32.const	$push0=, -1
-	i32.store	$discard=, 0($0), $pop0
-	i32.const	$push1=, -4
-	i32.add 	$0=, $0, $pop1
-	i32.const	$push2=, t+4
-	i32.gt_u	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: up to label0
-# BB#2:                                 # %if.end5
-	end_loop                        # label1:
-	i32.const	$0=, 0
-	i32.store	$push4=, t+4($0), $0
+# BB#0:                                 # %if.end5
+	i32.const	$push2=, t+8
+	i32.const	$push1=, 255
+	i32.const	$push0=, 324
+	i32.call	$discard=, memset@FUNCTION, $pop2, $pop1, $pop0
+	i32.const	$push3=, 0
+	i32.const	$push5=, 0
+	i32.store	$push4=, t+4($pop3), $pop5
 	return  	$pop4
 	.endfunc
 .Lfunc_end0:
@@ -32,7 +23,7 @@ main:                                   # @main
 	.type	t,@object
 	.section	.bss.t,"aw",@nobits
 	.globl	t
-	.align	2
+	.p2align	2
 t:
 	.skip	332
 	.size	t, 332

@@ -44,20 +44,22 @@ g2:                                     # @g2
 	.type	f,@function
 f:                                      # @f
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
 	block
-	i32.load	$push1=, parsefile($1)
-	i32.load	$0=, 0($pop1)
-	br_if   	$0, 0           # 0: down to label1
-# BB#1:                                 # %entry
-	i32.load	$push0=, el($1)
-	i32.const	$push2=, 0
-	i32.eq  	$push3=, $pop0, $pop2
+	i32.const	$push4=, 0
+	i32.load	$push2=, parsefile($pop4)
+	i32.load	$push0=, 0($pop2)
+	tee_local	$push3=, $0=, $pop0
 	br_if   	$pop3, 0        # 0: down to label1
+# BB#1:                                 # %entry
+	i32.const	$push5=, 0
+	i32.load	$push1=, el($pop5)
+	i32.const	$push6=, 0
+	i32.eq  	$push7=, $pop1, $pop6
+	br_if   	$pop7, 0        # 0: down to label1
 # BB#2:                                 # %if.end
-	return  	$1
+	return  	$0
 .LBB2_3:                                # %alabel
 	end_block                       # label1:
 	i32.call	$discard=, g2@FUNCTION, $0
@@ -72,14 +74,14 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %alabel.i
-	i32.const	$0=, 0
-	i32.store	$push0=, el($0), $0
-	i32.load	$push1=, parsefile($pop0)
-	i32.const	$push2=, -559038737
-	i32.store	$push3=, 0($pop1), $pop2
-	i32.call	$discard=, g2@FUNCTION, $pop3
+	i32.const	$push0=, 0
+	i32.const	$push5=, 0
+	i32.store	$push1=, el($pop0), $pop5
+	i32.load	$push2=, parsefile($pop1)
+	i32.const	$push3=, -559038737
+	i32.store	$push4=, 0($pop2), $pop3
+	i32.call	$discard=, g2@FUNCTION, $pop4
 	unreachable
 	.endfunc
 .Lfunc_end3:
@@ -89,7 +91,7 @@ main:                                   # @main
 	.type	basepf,@object
 	.section	.bss.basepf,"aw",@nobits
 	.globl	basepf
-	.align	2
+	.p2align	2
 basepf:
 	.skip	8
 	.size	basepf, 8
@@ -98,7 +100,7 @@ basepf:
 	.type	parsefile,@object
 	.section	.data.parsefile,"aw",@progbits
 	.globl	parsefile
-	.align	2
+	.p2align	2
 parsefile:
 	.int32	basepf
 	.size	parsefile, 4
@@ -107,7 +109,7 @@ parsefile:
 	.type	el,@object
 	.section	.bss.el,"aw",@nobits
 	.globl	el
-	.align	2
+	.p2align	2
 el:
 	.int32	0                       # 0x0
 	.size	el, 4
@@ -116,7 +118,7 @@ el:
 	.type	filler,@object
 	.section	.bss.filler,"aw",@nobits
 	.globl	filler
-	.align	4
+	.p2align	4
 filler:
 	.skip	49152
 	.size	filler, 49152

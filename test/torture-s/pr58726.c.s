@@ -7,16 +7,17 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.const	$2=, 16
-	i32.lt_s	$push0=, $0, $1
-	i32.load	$push1=, a($1)
-	i32.select	$push2=, $pop0, $0, $pop1
-	i32.shl 	$push3=, $pop2, $2
-	i32.shr_s	$push4=, $pop3, $2
-	return  	$pop4
+	i32.const	$push0=, 0
+	i32.lt_s	$push1=, $0, $pop0
+	i32.const	$push8=, 0
+	i32.load	$push2=, a($pop8)
+	i32.select	$push3=, $pop1, $0, $pop2
+	i32.const	$push4=, 16
+	i32.shl 	$push5=, $pop3, $pop4
+	i32.const	$push7=, 16
+	i32.shr_s	$push6=, $pop5, $pop7
+	return  	$pop6
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -27,14 +28,15 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 56374
-	i32.store	$discard=, b($0), $pop0
-	i32.const	$push1=, -9162
-	i32.store	$discard=, c($0), $pop1
-	return  	$0
+	i32.store	$discard=, b($pop1), $pop0
+	i32.const	$push4=, 0
+	i32.const	$push2=, -9162
+	i32.store	$discard=, c($pop4), $pop2
+	i32.const	$push3=, 0
+	return  	$pop3
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -43,7 +45,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	0                       # 0x0
 	.size	a, 4
@@ -52,7 +54,7 @@ a:
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
 	.globl	b
-	.align	2
+	.p2align	2
 b:
 	.skip	4
 	.size	b, 4
@@ -61,7 +63,7 @@ b:
 	.type	c,@object
 	.section	.bss.c,"aw",@nobits
 	.globl	c
-	.align	2
+	.p2align	2
 c:
 	.int32	0                       # 0x0
 	.size	c, 4

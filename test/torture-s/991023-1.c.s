@@ -21,12 +21,12 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 4044
-	i32.store	$discard=, blah($0), $pop0
-	call    	exit@FUNCTION, $0
+	i32.store	$discard=, blah($pop1), $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -36,7 +36,7 @@ main:                                   # @main
 	.type	blah,@object
 	.section	.bss.blah,"aw",@nobits
 	.globl	blah
-	.align	2
+	.p2align	2
 blah:
 	.int32	0                       # 0x0
 	.size	blah, 4
