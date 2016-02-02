@@ -53,16 +53,68 @@ struct ExitException {
 //
 
 struct ShellExternalInterface : ModuleInstance::ExternalInterface {
-  char *memory;
+  // The underlying memory can be accessed through unaligned pointers which
+  // isn't well-behaved in C++. WebAssembly nonetheless expects it to behave
+  // properly. Avoid emitting unaligned load/store by checking for alignment
+  // explicitly, and performing memcpy if unaligned.
+  //
+  // The allocated memory tries to have the same alignment as the memory being
+  // simulated.
+  class Memory {
+    // Use char because it doesn't run afoul of aliasing rules.
+    std::vector<char> memory;
+    template <typename T>
+    static bool aligned(const char* address) {
+      static_assert(!(alignof(T) & (alignof(T) - 1)), "must be a power of 2");
+      return 0 == (reinterpret_cast<uintptr_t>(address) & (alignof(T) - 1));
+    }
+    Memory(Memory&) = delete;
+    Memory& operator=(const Memory&) = delete;
 
-  ShellExternalInterface() : memory(nullptr) {}
+   public:
+    Memory() {}
+    void resize(size_t newSize) {
+      // Allocate at least this size to get proper alignment: the allocator will
+      // usually start allocating page-sized chunks which are properly aligned.
+      //
+      // The code is optimistic this will work until WG21's p0035r0 happens.
+      const size_t minSize = 1 << 12;
+      size_t oldSize = memory.size();
+      memory.resize(std::max(minSize, newSize));
+      if (newSize < oldSize && newSize < minSize) {
+        std::memset(&memory[newSize], 0, minSize - newSize);
+      }
+    }
+    template <typename T>
+    void set(size_t address, T value) {
+      if (aligned<T>(&memory[address])) {
+        *reinterpret_cast<T*>(&memory[address]) = value;
+      } else {
+        std::memcpy(&memory[address], &value, sizeof(T));
+      }
+    }
+    template <typename T>
+    T get(size_t address) {
+      if (aligned<T>(&memory[address])) {
+        return *reinterpret_cast<T*>(&memory[address]);
+      } else {
+        T loaded;
+        std::memcpy(&loaded, &memory[address], sizeof(T));
+        return loaded;
+      }
+    }
+  } memory;
+
+  ShellExternalInterface() : memory() {}
 
   void init(Module& wasm) override {
-    memory = (char*)calloc(wasm.memory.initial, 1);
+    memory.resize(wasm.memory.initial);
     // apply memory segments
     for (auto segment : wasm.memory.segments) {
       assert(segment.offset + segment.size <= wasm.memory.initial);
-      memcpy(memory + segment.offset, segment.data, segment.size);
+      for (size_t i = 0; i != segment.size; ++i) {
+        memory.set(segment.offset + i, segment.data[i]);
+      }
     }
   }
 
@@ -85,25 +137,25 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     switch (load->type) {
       case i32: {
         switch (load->bytes) {
-          case 1: return Literal(load->signed_ ? (int32_t)*((int8_t*)(memory+addr))  : (int32_t)*((uint8_t*)(memory+addr)));
-          case 2: return Literal(load->signed_ ? (int32_t)*((int16_t*)(memory+addr)) : (int32_t)*((uint16_t*)(memory+addr)));
-          case 4: return Literal(load->signed_ ? (int32_t)*((int32_t*)(memory+addr)) : (int32_t)*((uint32_t*)(memory+addr)));
+          case 1: return load->signed_ ? Literal((int32_t)memory.get<int8_t>(addr)) : Literal((int32_t)memory.get<uint8_t>(addr));
+          case 2: return load->signed_ ? Literal((int32_t)memory.get<int16_t>(addr)) : Literal((int32_t)memory.get<uint16_t>(addr));
+          case 4: return load->signed_ ? Literal((int32_t)memory.get<int32_t>(addr)) : Literal((int32_t)memory.get<uint32_t>(addr));
           default: abort();
         }
         break;
       }
       case i64: {
         switch (load->bytes) {
-          case 1: return Literal(load->signed_ ? (int64_t)*((int8_t*)(memory+addr))  : (int64_t)*((uint8_t*)(memory+addr)));
-          case 2: return Literal(load->signed_ ? (int64_t)*((int16_t*)(memory+addr)) : (int64_t)*((uint16_t*)(memory+addr)));
-          case 4: return Literal(load->signed_ ? (int64_t)*((int32_t*)(memory+addr)) : (int64_t)*((uint32_t*)(memory+addr)));
-          case 8: return Literal(load->signed_ ? (int64_t)*((int64_t*)(memory+addr)) : (int64_t)*((uint64_t*)(memory+addr)));
+          case 1: return load->signed_ ? Literal((int64_t)memory.get<int8_t>(addr)) : Literal((int64_t)memory.get<uint8_t>(addr));
+          case 2: return load->signed_ ? Literal((int64_t)memory.get<int16_t>(addr)) : Literal((int64_t)memory.get<uint16_t>(addr));
+          case 4: return load->signed_ ? Literal((int64_t)memory.get<int32_t>(addr)) : Literal((int64_t)memory.get<uint32_t>(addr));
+          case 8: return load->signed_ ? Literal((int64_t)memory.get<int64_t>(addr)) : Literal((int64_t)memory.get<uint64_t>(addr));
           default: abort();
         }
         break;
       }
-      case f32: return Literal(*((float*)(memory+addr)));
-      case f64: return Literal(*((double*)(memory+addr)));
+      case f32: return Literal(memory.get<float>(addr));
+      case f64: return Literal(memory.get<double>(addr));
       default: abort();
     }
   }
@@ -113,35 +165,32 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     switch (store->type) {
       case i32: {
         switch (store->bytes) {
-          case 1: *((int8_t*)(memory+addr)) = value.geti32(); break;
-          case 2: *((int16_t*)(memory+addr)) = value.geti32(); break;
-          case 4: *((int32_t*)(memory+addr)) = value.geti32(); break;
+          case 1: memory.set<int8_t>(addr, value.geti32()); break;
+          case 2: memory.set<int16_t>(addr, value.geti32()); break;
+          case 4: memory.set<int32_t>(addr, value.geti32()); break;
           default: abort();
         }
         break;
       }
       case i64: {
         switch (store->bytes) {
-          case 1: *((int8_t*)(memory+addr)) = value.geti64(); break;
-          case 2: *((int16_t*)(memory+addr)) = value.geti64(); break;
-          case 4: *((int32_t*)(memory+addr)) = value.geti64(); break;
-          case 8: *((int64_t*)(memory+addr)) = value.geti64(); break;
+          case 1: memory.set<int8_t>(addr, value.geti64()); break;
+          case 2: memory.set<int16_t>(addr, value.geti64()); break;
+          case 4: memory.set<int32_t>(addr, value.geti64()); break;
+          case 8: memory.set<int64_t>(addr, value.geti64()); break;
           default: abort();
         }
         break;
       }
       // write floats carefully, ensuring all bits reach memory
-      case f32: *((int32_t*)(memory+addr)) = value.reinterpreti32(); break;
-      case f64: *((int64_t*)(memory+addr)) = value.reinterpreti64(); break;
+      case f32: memory.set<int32_t>(addr, value.reinterpreti32()); break;
+      case f64: memory.set<int64_t>(addr, value.reinterpreti64()); break;
       default: abort();
     }
   }
 
-  void growMemory(size_t oldSize, size_t newSize) override {
-    memory = (char*)realloc(memory, newSize);
-    if (newSize > oldSize) {
-      memset(memory + oldSize, 0, newSize - oldSize);
-    }
+  void growMemory(size_t /*oldSize*/, size_t newSize) override {
+    memory.resize(newSize);
   }
 
   jmp_buf trapState;
