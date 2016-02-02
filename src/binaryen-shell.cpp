@@ -102,8 +102,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
         }
         break;
       }
-      case f32: return Literal(*((float*)(memory+addr)));
-      case f64: return Literal(*((double*)(memory+addr)));
+      case f32: return Literal::makeFloatFromBits(*(int32_t*)(memory+addr));
+      case f64: return Literal::makeDoubleFromBits(*(int64_t*)(memory+addr));
       default: abort();
     }
   }

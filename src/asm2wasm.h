@@ -880,8 +880,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         ret->value.type = WasmType::i32;
         ret->value.i32 = toUInteger32(num);
       } else {
-        ret->value.type = WasmType::f64;
-        ret->value.f64 = num;
+        ret->value = Literal(num);
       }
       ret->type = ret->value.type;
       return ret;

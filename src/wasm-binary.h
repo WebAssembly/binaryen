@@ -798,11 +798,11 @@ public:
         break;
       }
       case f32: {
-        o << int8_t(BinaryConsts::F32Const) << curr->value.f32;
+        o << int8_t(BinaryConsts::F32Const) << curr->value.getf32();
         break;
       }
       case f64: {
-        o << int8_t(BinaryConsts::F64Const) << curr->value.f64;
+        o << int8_t(BinaryConsts::F64Const) << curr->value.getf64();
         break;
       }
       default: abort();
@@ -1483,8 +1483,8 @@ public:
       case BinaryConsts::I8Const:  curr->value.i32 = getInt8();    curr->type = i32; break;
       case BinaryConsts::I32Const: curr->value.i32 = getInt32();   curr->type = i32; break;
       case BinaryConsts::I64Const: curr->value.i64 = getInt64();   curr->type = i64; break;
-      case BinaryConsts::F32Const: curr->value.f32 = getFloat32(); curr->type = f32; break;
-      case BinaryConsts::F64Const: curr->value.f64 = getFloat64(); curr->type = f64; break;
+      case BinaryConsts::F32Const: curr->value = Literal(getFloat32()); break;
+      case BinaryConsts::F64Const: curr->value = Literal(getFloat64()); break;
       default: return false;
     }
     curr->value.type = curr->type;

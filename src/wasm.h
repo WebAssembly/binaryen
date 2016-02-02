@@ -145,41 +145,47 @@ struct Literal {
   union {
     int32_t i32;
     int64_t i64;
-    float f32;
-    double f64;
+    int32_t f32bits;
+    int64_t f64bits;
   };
 
   Literal() : Literal(WasmType::none) {}
-  explicit Literal(WasmType type) : type(type) { memset(&f64, 0, sizeof(f64)); }
+  explicit Literal(WasmType type) : type(type) { memset(&f64bits, 0, sizeof(f64bits)); }
   explicit Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
   explicit Literal(uint32_t init) : type(WasmType::i32), i32(init) {}
   explicit Literal(int64_t  init) : type(WasmType::i64), i64(init) {}
   explicit Literal(uint64_t init) : type(WasmType::i64), i64(init) {}
-  explicit Literal(float    init) : type(WasmType::f32), f32(init) {}
-  explicit Literal(double   init) : type(WasmType::f64), f64(init) {}
+  explicit Literal(float    init) : type(WasmType::f32), f32bits(bit_cast<int32_t>(init)) {}
+  explicit Literal(double   init) : type(WasmType::f64), f64bits(bit_cast<int64_t>(init)) {}
+
+  static Literal makeFloatFromBits(int32_t bits) {
+    Literal result;
+    result.type = WasmType::f32;
+    result.f32bits = bits;
+    return result;
+  }
+
+  static Literal makeDoubleFromBits(int64_t bits) {
+    Literal result;
+    result.type = WasmType::f64;
+    result.f64bits = bits;
+    return result;
+  }
 
   int32_t geti32() { assert(type == WasmType::i32); return i32; }
   int64_t geti64() { assert(type == WasmType::i64); return i64; }
-  float   getf32() { assert(type == WasmType::f32); return f32; }
-  double  getf64() { assert(type == WasmType::f64); return f64; }
+  int32_t getf32() { assert(type == WasmType::f32); return bit_cast<float>(f32bits); }
+  int64_t getf64() { assert(type == WasmType::f64); return bit_cast<double>(f64bits); }
 
-  int32_t reinterpreti32() { assert(type == WasmType::f32); return i32; }
-  int64_t reinterpreti64() { assert(type == WasmType::f64); return i64; }
-  float   reinterpretf32() { assert(type == WasmType::i32); return f32; }
-  double  reinterpretf64() { assert(type == WasmType::i64); return f64; }
+  int32_t reinterpreti32() { assert(type == WasmType::f32); return f32bits; }
+  int64_t reinterpreti64() { assert(type == WasmType::f64); return f64bits; }
+  int32_t reinterpretf32() { assert(type == WasmType::i32); return i32; }
+  int64_t reinterpretf64() { assert(type == WasmType::i64); return i64; }
 
   int64_t getInteger() {
     switch (type) {
       case WasmType::i32: return i32;
       case WasmType::i64: return i64;
-      default: abort();
-    }
-  }
-
-  double getFloat() {
-    switch (type) {
-      case WasmType::f32: return f32;
-      case WasmType::f64: return f64;
       default: abort();
     }
   }
@@ -191,17 +197,18 @@ struct Literal {
       case WasmType::i32: return i32 == other.i32;
       case WasmType::i64: return i64 == other.i64;
       // reinterpret floating-point, to avoid nan != nan
-      case WasmType::f32: return reinterpreti32() == other.reinterpreti32();
-      case WasmType::f64: return reinterpreti64() == other.reinterpreti64();
+      case WasmType::f32: return f32bits == other.f32bits;
+      case WasmType::f64: return f64bits == other.f64bits;
       default: abort();
     }
   }
 
-  static void printFloat(std::ostream &o, float f) {
+  static void printFloat(std::ostream &o, int32_t bits) {
+    float f = bit_cast<float>(bits);
     if (isnan(f)) {
       const char *sign = std::signbit(f) ? "-" : "";
       o << sign << "nan";
-      if (uint32_t payload = ~0xff800000u & bit_cast<uint32_t>(f)) {
+      if (uint32_t payload = ~0xff800000u & bits) {
         o << ":0x" << std::hex << payload << std::dec;
       }
       return;
@@ -209,7 +216,8 @@ struct Literal {
     printDouble(o, f);
   }
 
-  static void printDouble(std::ostream &o, double d) {
+  static void printDouble(std::ostream &o, int64_t bits) {
+    double d = bit_cast<double>(bits);
     if (d == 0 && std::signbit(d)) {
       o << "-0";
       return;
@@ -217,7 +225,7 @@ struct Literal {
     if (isnan(d)) {
       const char *sign = std::signbit(d) ? "-" : "";
       o << sign << "nan";
-      if (uint64_t payload = ~0xfff0000000000000ull & bit_cast<uint64_t>(d)) {
+      if (uint64_t payload = ~0xfff0000000000000ull & bits) {
         o << ":0x" << std::hex << payload << std::dec;
       }
       return;
@@ -244,8 +252,8 @@ struct Literal {
       case none: o << "?"; break;
       case WasmType::i32: o << literal.i32; break;
       case WasmType::i64: o << literal.i64; break;
-      case WasmType::f32: literal.printFloat(o, literal.f32); break;
-      case WasmType::f64: literal.printDouble(o, literal.f64); break;
+      case WasmType::f32: literal.printFloat(o, literal.f32bits); break;
+      case WasmType::f64: literal.printDouble(o, literal.f64bits); break;
       default: WASM_UNREACHABLE();
     }
     restoreNormalColor(o);
