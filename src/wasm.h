@@ -151,12 +151,12 @@ struct Literal {
 
   Literal() : Literal(WasmType::none) {}
   explicit Literal(WasmType type) : type(type) { memset(&f64, 0, sizeof(f64)); }
-  Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
-  Literal(uint32_t init) : type(WasmType::i32), i32(init) {}
-  Literal(int64_t  init) : type(WasmType::i64), i64(init) {}
-  Literal(uint64_t init) : type(WasmType::i64), i64(init) {}
-  Literal(float    init) : type(WasmType::f32), f32(init) {}
-  Literal(double   init) : type(WasmType::f64), f64(init) {}
+  explicit Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
+  explicit Literal(uint32_t init) : type(WasmType::i32), i32(init) {}
+  explicit Literal(int64_t  init) : type(WasmType::i64), i64(init) {}
+  explicit Literal(uint64_t init) : type(WasmType::i64), i64(init) {}
+  explicit Literal(float    init) : type(WasmType::f32), f32(init) {}
+  explicit Literal(double   init) : type(WasmType::f64), f64(init) {}
 
   int32_t geti32() { assert(type == WasmType::i32); return i32; }
   int64_t geti64() { assert(type == WasmType::i64); return i64; }
