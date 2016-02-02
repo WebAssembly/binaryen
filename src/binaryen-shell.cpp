@@ -183,10 +183,18 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
   auto interface = new ShellExternalInterface();
   auto instance = new ModuleInstance(*wasm, interface);
   if (entry.is() > 0) {
-    ModuleInstance::LiteralList arguments;
-    try {
-      instance->callExport(entry, arguments);
-    } catch (ExitException& x) {
+    Function* function = wasm->functionsMap[entry];
+    if (!function) {
+      std::cerr << "Unknown entry " << entry << std::endl;
+    } else {
+      ModuleInstance::LiteralList arguments;
+      for (NameType param : function->params) {
+        arguments.push_back(Literal(param.type));
+      }
+      try {
+        instance->callExport(entry, arguments);
+      } catch (ExitException& x) {
+      }
     }
   }
   while (*i < root->size()) {

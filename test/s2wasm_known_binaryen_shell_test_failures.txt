@@ -1,40 +1,3 @@
-# wasm-interpreter.h:131: wasm::ModuleInstance::callFunction(cashew::IString, LiteralList &)::FunctionScope::FunctionScope(wasm::Function *, LiteralList &): Assertion `function->params.size() == arguments.size()' failed.
-20000412-2.c.s.wast
-20000412-4.c.s.wast
-20001124-1.c.s.wast
-20010915-1.c.s.wast
-20020206-2.c.s.wast
-20020402-2.c.s.wast
-20021204-1.c.s.wast
-20031012-1.c.s.wast
-20041113-1.c.s.wast
-20041114-1.c.s.wast
-20050125-1.c.s.wast
-20080122-1.c.s.wast
-980506-3.c.s.wast
-990106-2.c.s.wast
-anon-1.c.s.wast
-bitfld-1.c.s.wast
-const-addr-expr-1.c.s.wast
-ipa-sra-1.c.s.wast
-ipa-sra-2.c.s.wast
-loop-9.c.s.wast
-pending-4.c.s.wast
-pr22493-1.c.s.wast
-pr23047.c.s.wast
-pr28651.c.s.wast
-pr32500.c.s.wast
-pr36321.c.s.wast
-pr40493.c.s.wast
-pr56982.c.s.wast
-pr61375.c.s.wast
-switch-1.c.s.wast
-vrp-1.c.s.wast
-vrp-2.c.s.wast
-vrp-3.c.s.wast
-vrp-5.c.s.wast
-vrp-6.c.s.wast
-
 # [trap highest > memory]
 20000528-1.c.s.wast
 20001111-1.c.s.wast
@@ -63,6 +26,7 @@ simd-2.c.s.wast
 simd-5.c.s.wast
 
 # [trap final > memory]
+20000412-2.c.s.wast
 20000519-1.c.s.wast
 20000706-4.c.s.wast
 20000801-1.c.s.wast
@@ -70,6 +34,7 @@ simd-5.c.s.wast
 20010116-1.c.s.wast
 20010129-1.c.s.wast
 20010518-2.c.s.wast
+20010915-1.c.s.wast
 20020206-1.c.s.wast
 20020413-1.c.s.wast
 20020418-1.c.s.wast
@@ -82,6 +47,7 @@ simd-5.c.s.wast
 20030828-1.c.s.wast
 20030914-2.c.s.wast
 20030916-1.c.s.wast
+20031012-1.c.s.wast
 20031201-1.c.s.wast
 20040218-1.c.s.wast
 20040625-1.c.s.wast
@@ -89,6 +55,7 @@ simd-5.c.s.wast
 20040709-1.c.s.wast
 20040811-1.c.s.wast
 20040823-1.c.s.wast
+20041113-1.c.s.wast
 20041124-1.c.s.wast
 20041214-1.c.s.wast
 20050203-1.c.s.wast
@@ -185,6 +152,7 @@ pr56205.c.s.wast
 pr56799.c.s.wast
 pr56837.c.s.wast
 pr56866.c.s.wast
+pr56982.c.s.wast
 pr57124.c.s.wast
 pr57130.c.s.wast
 pr57131.c.s.wast
@@ -243,6 +211,7 @@ bitfld-3.c.s.wast
 builtin-constant.c.s.wast
 builtin-prefetch-4.c.s.wast
 eeprof-1.c.s.wast
+pr22493-1.c.s.wast
 pr32244-1.c.s.wast
 pr34971.c.s.wast
 pr48814-1.c.s.wast
@@ -271,10 +240,12 @@ pr48814-1.c.s.wast
 960215-1.c.s.wast # __addtf3
 960405-1.c.s.wast # __eqtf2
 960521-1.c.s.wast # malloc
+980506-3.c.s.wast # memset
 990628-1.c.s.wast # malloc
 991112-1.c.s.wast # isprint
 align-2.c.s.wast # __eqtf2
 complex-5.c.s.wast # __divsc3
+ipa-sra-2.c.s.wast # calloc
 loop-2f.c.s.wast # open
 loop-2g.c.s.wast # open
 memcpy-2.c.s.wast # memset
