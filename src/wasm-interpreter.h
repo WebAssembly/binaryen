@@ -25,7 +25,7 @@
 
 #include <limits.h>
 
-#include "bits.h"
+#include "support/bits.h"
 #include "wasm.h"
 
 namespace wasm {
