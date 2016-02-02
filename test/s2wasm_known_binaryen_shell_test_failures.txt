@@ -58,6 +58,7 @@ simd-5.c.s.wast
 20041113-1.c.s.wast
 20041124-1.c.s.wast
 20041214-1.c.s.wast
+20050119-1.c.s.wast
 20050203-1.c.s.wast
 20050502-1.c.s.wast
 20050502-2.c.s.wast
