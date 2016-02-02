@@ -3490,7 +3490,7 @@
             (i32.const 0)
           )
           (br $topmost
-            (get_local $i37)
+            (i32.const 0)
           )
         )
       )
@@ -3535,7 +3535,7 @@
             (i32.const 0)
           )
           (br $topmost
-            (get_local $i37)
+            (i32.const 0)
           )
         )
       )
@@ -14583,7 +14583,7 @@
                 )
                 (i32.store align=4
                   (i32.const 168)
-                  (get_local $i12)
+                  (i32.const 0)
                 )
                 (get_local $i13)
               )
@@ -14604,9 +14604,9 @@
                       (block
                         (i32.store align=4
                           (i32.const 168)
-                          (get_local $i12)
+                          (i32.const 0)
                         )
-                        (get_local $i13)
+                        (i32.const 0)
                       )
                     )
                   )
@@ -14633,9 +14633,9 @@
                 )
                 (i32.store align=4
                   (i32.const 168)
-                  (get_local $i12)
+                  (i32.const 0)
                 )
-                (get_local $i13)
+                (i32.const 0)
               )
             )
           )
@@ -14750,9 +14750,9 @@
                         (block
                           (i32.store align=4
                             (i32.const 168)
-                            (get_local $i12)
+                            (i32.const 0)
                           )
-                          (get_local $i13)
+                          (i32.const 0)
                         )
                       )
                     )
@@ -14784,9 +14784,9 @@
                     (block
                       (i32.store align=4
                         (i32.const 168)
-                        (get_local $i12)
+                        (i32.const 0)
                       )
-                      (get_local $i13)
+                      (i32.const 0)
                     )
                   )
                 )
@@ -15044,7 +15044,7 @@
                     (block
                       (i32.store align=4
                         (i32.const 168)
-                        (get_local $i14)
+                        (i32.const 0)
                       )
                       (get_local $i15)
                     )
@@ -15089,7 +15089,7 @@
                     (block
                       (i32.store align=4
                         (i32.const 168)
-                        (get_local $i14)
+                        (i32.const 0)
                       )
                       (get_local $i15)
                     )
@@ -15151,7 +15151,7 @@
                     (block
                       (i32.store align=4
                         (i32.const 168)
-                        (get_local $i14)
+                        (i32.const 0)
                       )
                       (get_local $i15)
                     )
@@ -15235,9 +15235,9 @@
                     (block
                       (i32.store align=4
                         (i32.const 168)
-                        (get_local $i14)
+                        (i32.const 0)
                       )
-                      (get_local $i15)
+                      (i32.const 0)
                     )
                   )
                 )
@@ -15267,9 +15267,9 @@
               )
               (i32.store align=4
                 (i32.const 168)
-                (get_local $i14)
+                (i32.const 0)
               )
-              (get_local $i15)
+              (i32.const 0)
             )
           )
         )
@@ -15501,7 +15501,7 @@
               (i32.shl
                 (i32.or
                   (get_local $i7)
-                  (get_local $i2)
+                  (i32.const 0)
                 )
                 (i32.const 1)
               )
@@ -15509,7 +15509,7 @@
             (i32.and
               (i32.or
                 (i32.shl
-                  (get_local $i2)
+                  (i32.const 0)
                   (i32.const 1)
                 )
                 (i32.shr_u
@@ -15520,7 +15520,7 @@
               (i32.const 0)
             )
           )
-          (get_local $i4)
+          (i32.const 0)
         )
       )
       (set_local $i15
@@ -17089,7 +17089,7 @@
             (get_local $i11)
           )
           (br $topmost
-            (get_local $i12)
+            (i32.const 0)
           )
         )
       )
@@ -17103,7 +17103,7 @@
         (i32.const 8)
         (get_local $i11)
       )
-      (get_local $i12)
+      (i32.const 1)
     )
   )
   (func $_pop_arg_529 (param $i2 i32) (param $i3 i32) (param $i1 i32)
