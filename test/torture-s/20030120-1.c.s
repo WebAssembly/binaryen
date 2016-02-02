@@ -37,14 +37,14 @@ test2:                                  # @test2
 test3:                                  # @test3
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 1
-	i32.and 	$push0=, $0, $1
-	i32.const	$push1=, 0
-	i32.ne  	$push2=, $0, $pop1
-	i32.select	$push3=, $pop0, $1, $pop2
-	return  	$pop3
+	i32.const	$push0=, 1
+	i32.and 	$push1=, $0, $pop0
+	i32.const	$push5=, 1
+	i32.const	$push2=, 0
+	i32.ne  	$push3=, $0, $pop2
+	i32.select	$push4=, $pop1, $pop5, $pop3
+	return  	$pop4
 	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3

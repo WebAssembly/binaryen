@@ -32,7 +32,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.data.rel.ro.a,"aw",@progbits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	f@FUNCTION
 	.size	a, 4

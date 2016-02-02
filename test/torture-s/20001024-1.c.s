@@ -7,25 +7,25 @@
 bar:                                    # @bar
 	.param  	i32, i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	block
 	i32.load	$push0=, 0($1)
 	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.const	$3=, 250000
 	i32.load	$push1=, 4($1)
-	i32.ne  	$push2=, $pop1, $3
-	br_if   	$pop2, 0        # 0: down to label0
-# BB#2:                                 # %lor.lhs.false2
-	i32.load	$push3=, 8($1)
+	i32.const	$push2=, 250000
+	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	$pop3, 0        # 0: down to label0
+# BB#2:                                 # %lor.lhs.false2
+	i32.load	$push4=, 8($1)
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false5
-	i32.const	$push4=, 12
-	i32.add 	$push5=, $1, $pop4
-	i32.load	$push6=, 0($pop5)
-	i32.ne  	$push7=, $pop6, $3
-	br_if   	$pop7, 0        # 0: down to label0
+	i32.const	$push5=, 12
+	i32.add 	$push6=, $1, $pop5
+	i32.load	$push7=, 0($pop6)
+	i32.const	$push8=, 250000
+	i32.ne  	$push9=, $pop7, $pop8
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#4:                                 # %if.end
 	return  	$1
 .LBB0_5:                                # %if.then

@@ -6,18 +6,20 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
 	block
-	i32.load	$push0=, test($1)
-	i32.const	$push1=, -1
-	i32.add 	$0=, $pop0, $pop1
-	i32.const	$push2=, 3
-	i32.le_u	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push6=, 0
+	i32.load	$push1=, test($pop6)
+	i32.const	$push2=, -1
+	i32.add 	$push0=, $pop1, $pop2
+	tee_local	$push5=, $0=, $pop0
+	i32.const	$push3=, 3
+	i32.le_u	$push4=, $pop5, $pop3
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %sw.epilog
-	return  	$1
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB0_2:                                # %entry
 	end_block                       # label0:
 	block

@@ -22,7 +22,7 @@ convert_like_real:                      # @convert_like_real
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.load8_u	$push0=, 8($0)
+	i32.load8_u	$push0=, 8($0):p2align=2
 	i32.const	$push1=, 222
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
@@ -42,9 +42,16 @@ convert_like_real:                      # @convert_like_real
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	i32.const	$push0=, 12
+	i32.call	$push1=, malloc@FUNCTION, $pop0
+	tee_local	$push4=, $0=, $pop1
+	i32.const	$push2=, 222
+	i32.store	$discard=, 8($pop4), $pop2
+	i32.call	$discard=, convert_like_real@FUNCTION, $0
+	i32.const	$push3=, 0
+	call    	exit@FUNCTION, $pop3
 	unreachable
 	.endfunc
 .Lfunc_end2:

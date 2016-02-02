@@ -24,12 +24,12 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, x+4
-	i32.store	$discard=, y($0), $pop0
-	call    	exit@FUNCTION, $0
+	i32.store	$discard=, y($pop1), $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -39,7 +39,7 @@ main:                                   # @main
 	.type	y,@object
 	.section	.bss.y,"aw",@nobits
 	.globl	y
-	.align	2
+	.p2align	2
 y:
 	.int32	0
 	.size	y, 4
@@ -48,7 +48,7 @@ y:
 	.type	x,@object
 	.section	.bss.x,"aw",@nobits
 	.globl	x
-	.align	2
+	.p2align	2
 x:
 	.skip	24
 	.size	x, 24

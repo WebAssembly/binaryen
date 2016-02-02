@@ -6,14 +6,15 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load8_u	$push0=, s.0($0)
-	i32.const	$push1=, 1
-	i32.or  	$push2=, $pop0, $pop1
-	i32.store8	$discard=, s.0($0), $pop2
-	return  	$0
+	i32.const	$push0=, 0
+	i32.const	$push5=, 0
+	i32.load8_u	$push1=, s.0($pop5):p2align=2
+	i32.const	$push2=, 1
+	i32.or  	$push3=, $pop1, $pop2
+	i32.store8	$discard=, s.0($pop0):p2align=2, $pop3
+	i32.const	$push4=, 0
+	return  	$pop4
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

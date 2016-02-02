@@ -51,8 +51,11 @@ fpTest:                                 # @fpTest
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	f64.const	$push1=, 0x1.1d9999999999ap5
+	f64.const	$push0=, 0x1.68p5
+	call    	fpTest@FUNCTION, $pop1, $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end2:

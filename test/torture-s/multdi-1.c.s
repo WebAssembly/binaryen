@@ -22,12 +22,12 @@ mpy:                                    # @mpy
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i64.const	$push0=, -1
-	i64.store	$discard=, mpy_res($0), $pop0
-	return  	$0
+	i64.store	$discard=, mpy_res($pop1), $pop0
+	i32.const	$push2=, 0
+	return  	$pop2
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -36,7 +36,7 @@ main:                                   # @main
 	.type	mpy_res,@object
 	.section	.bss.mpy_res,"aw",@nobits
 	.globl	mpy_res
-	.align	3
+	.p2align	3
 mpy_res:
 	.int64	0                       # 0x0
 	.size	mpy_res, 8

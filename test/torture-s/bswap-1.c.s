@@ -7,40 +7,43 @@
 g:                                      # @g
 	.param  	i64
 	.result 	i64
-	.local  	i64, i64, i64, i64
 # BB#0:                                 # %entry
-	i64.const	$2=, 40
-	i64.const	$1=, 56
-	i64.const	$3=, 24
-	i64.const	$4=, 8
-	i64.shl 	$push20=, $0, $1
-	i64.shl 	$push21=, $0, $2
-	i64.const	$push22=, 71776119061217280
-	i64.and 	$push23=, $pop21, $pop22
-	i64.or  	$push24=, $pop20, $pop23
-	i64.shl 	$push16=, $0, $3
-	i64.const	$push17=, 280375465082880
-	i64.and 	$push18=, $pop16, $pop17
-	i64.shl 	$push13=, $0, $4
-	i64.const	$push14=, 1095216660480
-	i64.and 	$push15=, $pop13, $pop14
-	i64.or  	$push19=, $pop18, $pop15
-	i64.or  	$push25=, $pop24, $pop19
-	i64.shr_u	$push8=, $0, $4
-	i64.const	$push9=, 4278190080
+	i64.const	$push0=, 56
+	i64.shl 	$push24=, $0, $pop0
+	i64.const	$push2=, 40
+	i64.shl 	$push25=, $0, $pop2
+	i64.const	$push26=, 71776119061217280
+	i64.and 	$push27=, $pop25, $pop26
+	i64.or  	$push28=, $pop24, $pop27
+	i64.const	$push7=, 24
+	i64.shl 	$push20=, $0, $pop7
+	i64.const	$push21=, 280375465082880
+	i64.and 	$push22=, $pop20, $pop21
+	i64.const	$push11=, 8
+	i64.shl 	$push17=, $0, $pop11
+	i64.const	$push18=, 1095216660480
+	i64.and 	$push19=, $pop17, $pop18
+	i64.or  	$push23=, $pop22, $pop19
+	i64.or  	$push29=, $pop28, $pop23
+	i64.const	$push34=, 8
+	i64.shr_u	$push12=, $0, $pop34
+	i64.const	$push13=, 4278190080
+	i64.and 	$push14=, $pop12, $pop13
+	i64.const	$push33=, 24
+	i64.shr_u	$push8=, $0, $pop33
+	i64.const	$push9=, 16711680
 	i64.and 	$push10=, $pop8, $pop9
-	i64.shr_u	$push5=, $0, $3
-	i64.const	$push6=, 16711680
-	i64.and 	$push7=, $pop5, $pop6
-	i64.or  	$push11=, $pop10, $pop7
-	i64.shr_u	$push1=, $0, $2
-	i64.const	$push2=, 65280
-	i64.and 	$push3=, $pop1, $pop2
-	i64.shr_u	$push0=, $0, $1
-	i64.or  	$push4=, $pop3, $pop0
-	i64.or  	$push12=, $pop11, $pop4
-	i64.or  	$push26=, $pop25, $pop12
-	return  	$pop26
+	i64.or  	$push15=, $pop14, $pop10
+	i64.const	$push32=, 40
+	i64.shr_u	$push3=, $0, $pop32
+	i64.const	$push4=, 65280
+	i64.and 	$push5=, $pop3, $pop4
+	i64.const	$push31=, 56
+	i64.shr_u	$push1=, $0, $pop31
+	i64.or  	$push6=, $pop5, $pop1
+	i64.or  	$push16=, $pop15, $pop6
+	i64.or  	$push30=, $pop29, $pop16
+	return  	$pop30
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -52,40 +55,43 @@ g:                                      # @g
 f:                                      # @f
 	.param  	i64
 	.result 	i64
-	.local  	i64, i64, i64, i64
 # BB#0:                                 # %entry
-	i64.const	$2=, 40
-	i64.const	$1=, 56
-	i64.const	$3=, 24
-	i64.const	$4=, 8
-	i64.shl 	$push20=, $0, $1
-	i64.shl 	$push21=, $0, $2
-	i64.const	$push22=, 71776119061217280
-	i64.and 	$push23=, $pop21, $pop22
-	i64.or  	$push24=, $pop20, $pop23
-	i64.shl 	$push16=, $0, $3
-	i64.const	$push17=, 280375465082880
-	i64.and 	$push18=, $pop16, $pop17
-	i64.shl 	$push13=, $0, $4
-	i64.const	$push14=, 1095216660480
-	i64.and 	$push15=, $pop13, $pop14
-	i64.or  	$push19=, $pop18, $pop15
-	i64.or  	$push25=, $pop24, $pop19
-	i64.shr_u	$push8=, $0, $4
-	i64.const	$push9=, 4278190080
+	i64.const	$push0=, 56
+	i64.shl 	$push24=, $0, $pop0
+	i64.const	$push2=, 40
+	i64.shl 	$push25=, $0, $pop2
+	i64.const	$push26=, 71776119061217280
+	i64.and 	$push27=, $pop25, $pop26
+	i64.or  	$push28=, $pop24, $pop27
+	i64.const	$push7=, 24
+	i64.shl 	$push20=, $0, $pop7
+	i64.const	$push21=, 280375465082880
+	i64.and 	$push22=, $pop20, $pop21
+	i64.const	$push11=, 8
+	i64.shl 	$push17=, $0, $pop11
+	i64.const	$push18=, 1095216660480
+	i64.and 	$push19=, $pop17, $pop18
+	i64.or  	$push23=, $pop22, $pop19
+	i64.or  	$push29=, $pop28, $pop23
+	i64.const	$push34=, 8
+	i64.shr_u	$push12=, $0, $pop34
+	i64.const	$push13=, 4278190080
+	i64.and 	$push14=, $pop12, $pop13
+	i64.const	$push33=, 24
+	i64.shr_u	$push8=, $0, $pop33
+	i64.const	$push9=, 16711680
 	i64.and 	$push10=, $pop8, $pop9
-	i64.shr_u	$push5=, $0, $3
-	i64.const	$push6=, 16711680
-	i64.and 	$push7=, $pop5, $pop6
-	i64.or  	$push11=, $pop10, $pop7
-	i64.shr_u	$push1=, $0, $2
-	i64.const	$push2=, 65280
-	i64.and 	$push3=, $pop1, $pop2
-	i64.shr_u	$push0=, $0, $1
-	i64.or  	$push4=, $pop3, $pop0
-	i64.or  	$push12=, $pop11, $pop4
-	i64.or  	$push26=, $pop25, $pop12
-	return  	$pop26
+	i64.or  	$push15=, $pop14, $pop10
+	i64.const	$push32=, 40
+	i64.shr_u	$push3=, $0, $pop32
+	i64.const	$push4=, 65280
+	i64.and 	$push5=, $pop3, $pop4
+	i64.const	$push31=, 56
+	i64.shr_u	$push1=, $0, $pop31
+	i64.or  	$push6=, $pop5, $pop1
+	i64.or  	$push16=, $pop15, $pop6
+	i64.or  	$push30=, $pop29, $pop16
+	return  	$pop30
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

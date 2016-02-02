@@ -6,11 +6,10 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	f64.load	$push0=, x($0)
+	i32.const	$push3=, 0
+	f64.load	$push0=, x($pop3)
 	f64.const	$push1=, 0x1.fp1
 	f64.eq  	$push2=, $pop0, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
@@ -19,7 +18,8 @@ main:                                   # @main
 	unreachable
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
-	call    	exit@FUNCTION, $0
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -29,7 +29,7 @@ main:                                   # @main
 	.type	x,@object
 	.section	.data.x,"aw",@progbits
 	.globl	x
-	.align	3
+	.p2align	3
 x:
 	.int64	4615908143078047744     # double 3.875
 	.size	x, 8

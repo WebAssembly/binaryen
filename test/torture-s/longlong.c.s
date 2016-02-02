@@ -5,39 +5,45 @@
 	.globl	alpha_ep_extbl_i_eq_0
 	.type	alpha_ep_extbl_i_eq_0,@function
 alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
-	i32.load	$0=, pars($2)
-	i32.const	$3=, 31
-	i32.and 	$1=, $0, $3
 	block
-	i32.eq  	$push0=, $1, $3
-	br_if   	$pop0, 0        # 0: down to label0
+	i32.const	$push29=, 0
+	i32.load	$push0=, pars($pop29)
+	tee_local	$push28=, $1=, $pop0
+	i32.const	$push3=, 31
+	i32.and 	$push1=, $pop28, $pop3
+	tee_local	$push27=, $0=, $pop1
+	i32.const	$push26=, 31
+	i32.eq  	$push4=, $pop27, $pop26
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.then
-	i32.load	$3=, r($2)
-	i32.const	$2=, 248
-	i32.const	$push18=, 3
-	i32.shl 	$push19=, $1, $pop18
-	i32.add 	$push20=, $3, $pop19
-	i32.const	$push1=, 2
-	i32.shr_u	$push2=, $0, $pop1
-	i32.and 	$push3=, $pop2, $2
-	i32.add 	$push4=, $3, $pop3
-	i64.load	$push5=, 0($pop4)
-	i32.const	$push6=, 24
-	i32.shr_u	$push7=, $0, $pop6
-	i32.and 	$push8=, $pop7, $2
-	i32.add 	$push9=, $3, $pop8
+	i32.const	$push32=, 0
+	i32.load	$push2=, r($pop32)
+	tee_local	$push31=, $2=, $pop2
+	i32.const	$push23=, 3
+	i32.shl 	$push24=, $0, $pop23
+	i32.add 	$push25=, $pop31, $pop24
+	i32.const	$push5=, 2
+	i32.shr_u	$push6=, $1, $pop5
+	i32.const	$push7=, 248
+	i32.and 	$push8=, $pop6, $pop7
+	i32.add 	$push9=, $2, $pop8
 	i64.load	$push10=, 0($pop9)
-	i64.const	$push11=, 3
-	i64.shl 	$push12=, $pop10, $pop11
-	i64.const	$push13=, 56
-	i64.and 	$push14=, $pop12, $pop13
-	i64.shr_u	$push15=, $pop5, $pop14
-	i64.const	$push16=, 255
-	i64.and 	$push17=, $pop15, $pop16
-	i64.store	$discard=, 0($pop20), $pop17
+	i32.const	$push11=, 24
+	i32.shr_u	$push12=, $1, $pop11
+	i32.const	$push30=, 248
+	i32.and 	$push13=, $pop12, $pop30
+	i32.add 	$push14=, $2, $pop13
+	i64.load	$push15=, 0($pop14)
+	i64.const	$push16=, 3
+	i64.shl 	$push17=, $pop15, $pop16
+	i64.const	$push18=, 56
+	i64.and 	$push19=, $pop17, $pop18
+	i64.shr_u	$push20=, $pop10, $pop19
+	i64.const	$push21=, 255
+	i64.and 	$push22=, $pop20, $pop21
+	i64.store	$discard=, 0($pop25), $pop22
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	return
@@ -51,19 +57,21 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %alpha_ep_extbl_i_eq_0.exit
-	i32.const	$0=, 0
+	i32.const	$push19=, 0
 	i32.const	$push2=, -2013265854
-	i32.store	$discard=, pars($0), $pop2
-	i32.load	$1=, r($0)
-	block
+	i32.store	$discard=, pars($pop19), $pop2
+	i32.const	$push18=, 0
+	i32.load	$0=, r($pop18)
+	i32.const	$push17=, 0
 	i64.const	$push0=, 3160194
-	i64.store	$discard=, b+136($0), $pop0
+	i64.store	$discard=, b+136($pop17), $pop0
+	i32.const	$push16=, 0
 	i64.const	$push1=, 6003104017374052362
-	i64.store	$discard=, b+16($0), $pop1
-	i64.load	$push3=, 16($1)
-	i64.load	$push4=, 136($1)
+	i64.store	$discard=, b+16($pop16):p2align=4, $pop1
+	i64.load	$push3=, 16($0)
+	i64.load	$push4=, 136($0)
 	i64.const	$push5=, 3
 	i64.shl 	$push6=, $pop4, $pop5
 	i64.const	$push7=, 56
@@ -71,13 +79,16 @@ main:                                   # @main
 	i64.shr_u	$push9=, $pop3, $pop8
 	i64.const	$push10=, 255
 	i64.and 	$push11=, $pop9, $pop10
-	i64.store	$discard=, 16($1), $pop11
-	i64.load	$push12=, b+16($0)
+	i64.store	$discard=, 16($0), $pop11
+	block
+	i32.const	$push15=, 0
+	i64.load	$push12=, b+16($pop15):p2align=4
 	i64.const	$push13=, 77
 	i64.ne  	$push14=, $pop12, $pop13
 	br_if   	$pop14, 0       # 0: down to label1
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push20=, 0
+	call    	exit@FUNCTION, $pop20
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label1:
@@ -91,7 +102,7 @@ main:                                   # @main
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
 	.globl	b
-	.align	4
+	.p2align	4
 b:
 	.skip	256
 	.size	b, 256
@@ -100,7 +111,7 @@ b:
 	.type	r,@object
 	.section	.data.r,"aw",@progbits
 	.globl	r
-	.align	2
+	.p2align	2
 r:
 	.int32	b
 	.size	r, 4
@@ -109,7 +120,7 @@ r:
 	.type	pars,@object
 	.section	.bss.pars,"aw",@nobits
 	.globl	pars
-	.align	2
+	.p2align	2
 pars:
 	.int32	0                       # 0x0
 	.size	pars, 4

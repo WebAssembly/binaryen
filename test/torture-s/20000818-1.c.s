@@ -31,7 +31,7 @@ yylex:                                  # @yylex
 	.type	temporary_obstack,@object
 	.section	.bss.temporary_obstack,"aw",@nobits
 	.globl	temporary_obstack
-	.align	2
+	.p2align	2
 temporary_obstack:
 	.int32	0
 	.size	temporary_obstack, 4

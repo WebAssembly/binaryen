@@ -7,71 +7,76 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$6=, 1
                                         # implicit-def: %vreg38
+	i32.const	$2=, 1
 .LBB0_1:                                # %for.cond
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_3 Depth 2
 	loop                            # label0:
-	copy_local	$1=, $0
-	i32.load8_s	$2=, 0($1)
-	i32.const	$4=, 255
-	i32.const	$push0=, -97
-	i32.add 	$push1=, $2, $pop0
-	i32.and 	$push2=, $pop1, $4
-	i32.const	$push3=, 26
-	i32.lt_u	$push4=, $pop2, $pop3
-	i32.const	$push5=, -32
-	i32.add 	$push6=, $2, $pop5
-	i32.select	$3=, $pop4, $pop6, $2
-	copy_local	$0=, $1
+	copy_local	$push0=, $0
+	tee_local	$push25=, $5=, $pop0
+	copy_local	$0=, $pop25
 	block
-	i32.const	$push7=, 66
-	i32.eq  	$push8=, $3, $pop7
-	br_if   	$pop8, 0        # 0: down to label2
+	i32.load8_s	$push1=, 0($5)
+	tee_local	$push24=, $4=, $pop1
+	i32.const	$push23=, -97
+	i32.add 	$push3=, $pop24, $pop23
+	i32.const	$push22=, 255
+	i32.and 	$push4=, $pop3, $pop22
+	i32.const	$push21=, 26
+	i32.lt_u	$push5=, $pop4, $pop21
+	i32.const	$push20=, -32
+	i32.add 	$push6=, $4, $pop20
+	i32.select	$push2=, $pop5, $pop6, $4
+	tee_local	$push19=, $3=, $pop2
+	i32.const	$push18=, 66
+	i32.eq  	$push7=, $pop19, $pop18
+	br_if   	$pop7, 0        # 0: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	copy_local	$0=, $1
+	copy_local	$0=, $5
 	block
-	i32.const	$push9=, 65
-	i32.ne  	$push10=, $3, $pop9
-	br_if   	$pop10, 0       # 0: down to label3
+	i32.const	$push26=, 65
+	i32.ne  	$push8=, $3, $pop26
+	br_if   	$pop8, 0        # 0: down to label3
 .LBB0_3:                                # %do.body
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label4:
-	i32.const	$push11=, 1
-	i32.add 	$0=, $0, $pop11
-	i32.load8_u	$push12=, 0($0)
-	i32.const	$push13=, 43
-	i32.eq  	$push14=, $pop12, $pop13
-	br_if   	$pop14, 0       # 0: up to label4
+	i32.const	$push28=, 1
+	i32.add 	$0=, $0, $pop28
+	i32.load8_u	$push9=, 0($0)
+	i32.const	$push27=, 43
+	i32.eq  	$push10=, $pop9, $pop27
+	br_if   	$pop10, 0       # 0: up to label4
 	br      	3               # 3: down to label2
 .LBB0_4:                                # %for.end
 	end_loop                        # label5:
 	end_block                       # label3:
 	block
-	i32.const	$push15=, 3
-	i32.lt_s	$push16=, $6, $pop15
-	br_if   	$pop16, 0       # 0: down to label6
+	i32.const	$push11=, 3
+	i32.lt_s	$push12=, $2, $pop11
+	br_if   	$pop12, 0       # 0: down to label6
 # BB#5:                                 # %land.lhs.true17
-	i32.and 	$push17=, $2, $4
-	i32.const	$push18=, 58
-	i32.eq  	$push19=, $pop17, $pop18
-	i32.select	$push20=, $pop19, $5, $1
-	return  	$pop20
+	i32.const	$push13=, 255
+	i32.and 	$push14=, $4, $pop13
+	i32.const	$push15=, 58
+	i32.eq  	$push16=, $pop14, $pop15
+	i32.select	$push17=, $pop16, $1, $5
+	return  	$pop17
 .LBB0_6:                                # %if.end22
 	end_block                       # label6:
-	return  	$1
+	return  	$5
 .LBB0_7:                                # %cleanup.thread
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
-	i32.const	$2=, 1
-	i32.add 	$0=, $0, $2
-	i32.add 	$6=, $6, $2
-	copy_local	$5=, $1
+	i32.const	$push30=, 1
+	i32.add 	$0=, $0, $pop30
+	i32.const	$push29=, 1
+	i32.add 	$2=, $2, $pop29
+	copy_local	$1=, $5
 	br      	0               # 0: up to label0
 .LBB0_8:
 	end_loop                        # label1:

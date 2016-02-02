@@ -78,7 +78,7 @@ main:                                   # @main
 	.type	e,@object
 	.section	.bss.e,"aw",@nobits
 	.globl	e
-	.align	2
+	.p2align	2
 e:
 	.int32	0                       # 0x0
 	.size	e, 4

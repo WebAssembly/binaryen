@@ -5,25 +5,19 @@
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, -2492
+	i32.const	$0=, -2492
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	i32.const	$push0=, c
-	i32.add 	$0=, $pop0, $1
-	i32.const	$push6=, 2496
-	i32.add 	$push7=, $0, $pop6
-	i32.const	$push1=, 2492
-	i32.add 	$push2=, $0, $pop1
-	i32.load	$push3=, 0($pop2)
-	i32.const	$push4=, 1
-	i32.shl 	$push5=, $pop3, $pop4
-	i32.store	$discard=, 0($pop7), $pop5
-	i32.const	$push8=, 4
-	i32.add 	$1=, $1, $pop8
-	br_if   	$1, 0           # 0: up to label0
+	i32.load	$push0=, c+2492($0)
+	i32.const	$push3=, 1
+	i32.shl 	$push1=, $pop0, $pop3
+	i32.store	$discard=, c+2496($0), $pop1
+	i32.const	$push2=, 4
+	i32.add 	$0=, $0, $pop2
+	br_if   	$0, 0           # 0: up to label0
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
 	return
@@ -37,45 +31,45 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, -2496
+	i32.const	$0=, -2496
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.const	$3=, c
-	i32.add 	$push0=, $3, $2
-	i32.const	$push1=, 2496
-	i32.add 	$push2=, $pop0, $pop1
-	i32.const	$push3=, 1
-	i32.store	$4=, 0($pop2), $pop3
-	i32.const	$0=, 4
-	i32.add 	$2=, $2, $0
-	br_if   	$2, 0           # 0: up to label2
+	i32.const	$push5=, 1
+	i32.store	$discard=, c+2496($0), $pop5
+	i32.const	$push4=, 4
+	i32.add 	$0=, $0, $pop4
+	br_if   	$0, 0           # 0: up to label2
 # BB#2:                                 # %for.end
 	end_loop                        # label3:
 	call    	bar@FUNCTION
 	i32.const	$2=, 0
+	i32.const	$0=, c
+	i32.const	$1=, 1
 .LBB1_3:                                # %for.body3
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label5:
-	i32.load	$push4=, 0($3)
-	i32.ne  	$push5=, $pop4, $4
-	br_if   	$pop5, 2        # 2: down to label4
+	i32.load	$push0=, 0($0)
+	i32.ne  	$push1=, $pop0, $1
+	br_if   	$pop1, 2        # 2: down to label4
 # BB#4:                                 # %if.end
                                         #   in Loop: Header=BB1_3 Depth=1
-	i32.const	$1=, 1
-	i32.shl 	$4=, $4, $1
-	i32.add 	$2=, $2, $1
-	i32.add 	$3=, $3, $0
+	i32.const	$push9=, 1
+	i32.shl 	$1=, $1, $pop9
+	i32.const	$push8=, 1
+	i32.add 	$2=, $2, $pop8
+	i32.const	$push7=, 4
+	i32.add 	$0=, $0, $pop7
 	i32.const	$push6=, 624
-	i32.lt_u	$push7=, $2, $pop6
-	br_if   	$pop7, 0        # 0: up to label5
+	i32.lt_u	$push2=, $2, $pop6
+	br_if   	$pop2, 0        # 0: up to label5
 # BB#5:                                 # %for.end8
 	end_loop                        # label6:
-	i32.const	$push8=, 0
-	return  	$pop8
+	i32.const	$push3=, 0
+	return  	$pop3
 .LBB1_6:                                # %if.then
 	end_block                       # label4:
 	call    	abort@FUNCTION
@@ -88,7 +82,7 @@ main:                                   # @main
 	.type	c,@object
 	.section	.bss.c,"aw",@nobits
 	.globl	c
-	.align	4
+	.p2align	4
 c:
 	.skip	2496
 	.size	c, 2496

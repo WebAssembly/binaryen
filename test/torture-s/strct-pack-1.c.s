@@ -7,41 +7,24 @@
 check:                                  # @check
 	.param  	i32
 	.result 	i32
-	.local  	i64, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 1
+	i32.const	$1=, 1
 	block
 	i32.load16_u	$push0=, 0($0)
-	i32.ne  	$push1=, $pop0, $2
+	i32.const	$push5=, 1
+	i32.ne  	$push1=, $pop0, $pop5
 	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i64.const	$1=, 16
-	i32.const	$push2=, 8
-	i32.add 	$push3=, $0, $pop2
-	i64.load16_u	$push4=, 0($pop3)
-	i64.shl 	$push5=, $pop4, $1
-	i32.const	$push6=, 6
-	i32.add 	$push7=, $0, $pop6
-	i64.load16_u	$push8=, 0($pop7)
-	i64.or  	$push9=, $pop5, $pop8
-	i64.const	$push10=, 32
-	i64.shl 	$push11=, $pop9, $pop10
-	i32.const	$push12=, 4
-	i32.add 	$push13=, $0, $pop12
-	i64.load16_u	$push14=, 0($pop13)
-	i64.shl 	$push15=, $pop14, $1
-	i64.load16_u	$push16=, 2($0)
-	i64.or  	$push17=, $pop15, $pop16
-	i64.or  	$push18=, $pop11, $pop17
-	f64.reinterpret/i64	$push19=, $pop18
-	f64.const	$push20=, 0x1p4
-	f64.ne  	$push21=, $pop19, $pop20
-	br_if   	$pop21, 0       # 0: down to label0
+	f64.load	$push2=, 2($0):p2align=1
+	f64.const	$push3=, 0x1p4
+	f64.ne  	$push4=, $pop2, $pop3
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#2:                                 # %if.end
-	i32.const	$2=, 0
+	i32.const	$1=, 0
 .LBB0_3:                                # %return
 	end_block                       # label0:
-	return  	$2
+	return  	$1
 	.endfunc
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check

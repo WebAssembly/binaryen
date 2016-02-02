@@ -7,14 +7,15 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.load	$1=, 0($0)
-	i32.const	$2=, 0
-	i32.store	$discard=, a($2), $2
-	i32.load	$push0=, 0($0)
-	i32.add 	$push1=, $pop0, $1
-	return  	$pop1
+	i32.const	$push0=, 0
+	i32.const	$push3=, 0
+	i32.store	$discard=, a($pop0), $pop3
+	i32.load	$push1=, 0($0)
+	i32.add 	$push2=, $1, $pop1
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -25,18 +26,18 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
+	i32.const	$push5=, 0
+	i32.const	$push0=, 1
+	i32.store	$push1=, a($pop5), $pop0
 	i32.const	$push2=, a
 	i32.call	$push3=, foo@FUNCTION, $pop2
-	i32.const	$push0=, 1
-	i32.store	$push1=, a($0), $pop0
-	i32.ne  	$push4=, $pop3, $pop1
+	i32.ne  	$push4=, $pop1, $pop3
 	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push6=, 0
+	return  	$pop6
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -49,7 +50,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.skip	4
 	.size	a, 4

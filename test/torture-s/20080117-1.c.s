@@ -6,19 +6,15 @@
 	.type	gstate_path_memory,@function
 gstate_path_memory:                     # @gstate_path_memory
 	.param  	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $0, $pop0
-	i32.load	$push2=, gstate_initial+8($1)
-	i32.store	$discard=, 0($pop1), $pop2
-	i32.const	$push3=, 4
-	i32.add 	$push4=, $0, $pop3
-	i32.load	$push5=, gstate_initial+4($1)
-	i32.store	$discard=, 0($pop4), $pop5
-	i32.load	$push6=, gstate_initial($1)
-	i32.store	$discard=, 0($0), $pop6
+	i32.const	$push2=, 0
+	i32.load	$push3=, gstate_initial+8($pop2)
+	i32.store	$discard=, 0($pop1), $pop3
+	i32.const	$push5=, 0
+	i64.load	$push4=, gstate_initial($pop5):p2align=2
+	i64.store	$discard=, 0($0):p2align=2, $pop4
 	return
 	.endfunc
 .Lfunc_end0:
@@ -52,7 +48,7 @@ main:                                   # @main
 
 	.type	gstate_initial,@object  # @gstate_initial
 	.section	.rodata.gstate_initial,"a",@progbits
-	.align	2
+	.p2align	2
 gstate_initial:
 	.int32	1                       # 0x1
 	.int32	0                       # 0x0

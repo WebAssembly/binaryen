@@ -8,30 +8,32 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	.param  	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, -516
-	i32.add 	$push1=, $0, $pop0
-	i32.const	$push2=, 2
-	i32.shr_s	$0=, $pop1, $pop2
-	i32.const	$2=, bytes
+	i32.const	$1=, bytes
 	block
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $0, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	i32.const	$push1=, -516
+	i32.add 	$push2=, $0, $pop1
+	i32.const	$push3=, 2
+	i32.shr_s	$push11=, $pop2, $pop3
+	tee_local	$push12=, $0=, $pop11
+	i32.const	$push14=, 0
+	i32.eq  	$push15=, $pop12, $pop14
+	br_if   	$pop15, 0       # 0: down to label0
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push5=, 7
-	i32.shr_u	$1=, $0, $pop5
-	i32.const	$push6=, 128
-	i32.or  	$push7=, $0, $pop6
-	i32.const	$push3=, 127
-	i32.and 	$push4=, $0, $pop3
-	i32.select	$push8=, $1, $pop7, $pop4
-	i32.store8	$discard=, 0($2), $pop8
-	i32.const	$push9=, 1
-	i32.add 	$2=, $2, $pop9
-	copy_local	$0=, $1
-	br_if   	$1, 0           # 0: up to label1
+	i32.const	$push6=, 7
+	i32.shr_u	$push0=, $0, $pop6
+	tee_local	$push13=, $2=, $pop0
+	i32.const	$push7=, 128
+	i32.or  	$push8=, $0, $pop7
+	i32.const	$push4=, 127
+	i32.and 	$push5=, $0, $pop4
+	i32.select	$push9=, $pop13, $pop8, $pop5
+	i32.store8	$discard=, 0($1), $pop9
+	i32.const	$push10=, 1
+	i32.add 	$1=, $1, $pop10
+	copy_local	$0=, $2
+	br_if   	$2, 0           # 0: up to label1
 .LBB0_2:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -46,41 +48,45 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 904
-	i32.const	$2=, bytes
+	i32.const	$1=, 904
+	i32.const	$0=, bytes
 .LBB1_1:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i32.const	$1=, 7
-	i32.shr_u	$0=, $3, $1
-	i32.const	$push2=, 128
-	i32.or  	$push3=, $3, $pop2
-	i32.const	$push0=, 127
-	i32.and 	$push1=, $3, $pop0
-	i32.select	$push4=, $0, $pop3, $pop1
-	i32.store8	$discard=, 0($2), $pop4
-	i32.const	$push5=, 1
-	i32.add 	$2=, $2, $pop5
-	copy_local	$3=, $0
-	br_if   	$0, 0           # 0: up to label3
+	i32.const	$push17=, 7
+	i32.shr_u	$push0=, $1, $pop17
+	tee_local	$push16=, $2=, $pop0
+	i32.const	$push15=, 128
+	i32.or  	$push2=, $1, $pop15
+	i32.const	$push14=, 127
+	i32.and 	$push1=, $1, $pop14
+	i32.select	$push3=, $pop16, $pop2, $pop1
+	i32.store8	$discard=, 0($0), $pop3
+	i32.const	$push13=, 1
+	i32.add 	$0=, $0, $pop13
+	copy_local	$1=, $2
+	br_if   	$2, 0           # 0: up to label3
 # BB#2:                                 # %add_unwind_adjustsp.exit
 	end_loop                        # label4:
-	i32.const	$3=, 0
 	block
-	i32.load8_u	$push7=, bytes($3)
-	i32.const	$push8=, 136
-	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label5
+	i32.const	$push18=, 0
+	i32.load8_u	$push5=, bytes($pop18)
+	i32.const	$push6=, 136
+	i32.ne  	$push7=, $pop5, $pop6
+	br_if   	$pop7, 0        # 0: down to label5
 # BB#3:                                 # %add_unwind_adjustsp.exit
-	i32.load8_u	$push6=, bytes+1($3)
-	i32.const	$push10=, 255
-	i32.and 	$push11=, $pop6, $pop10
-	i32.ne  	$push12=, $pop11, $1
-	br_if   	$pop12, 0       # 0: down to label5
+	i32.const	$push19=, 0
+	i32.load8_u	$push4=, bytes+1($pop19)
+	i32.const	$push8=, 255
+	i32.and 	$push9=, $pop4, $pop8
+	i32.const	$push10=, 7
+	i32.ne  	$push11=, $pop9, $pop10
+	br_if   	$pop11, 0       # 0: down to label5
 # BB#4:                                 # %if.end
-	return  	$3
+	i32.const	$push12=, 0
+	return  	$pop12
 .LBB1_5:                                # %if.then
 	end_block                       # label5:
 	call    	abort@FUNCTION

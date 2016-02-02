@@ -55,8 +55,16 @@ good_vararg:                            # @good_vararg
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	i32.const	$push0=, arr
+	call    	good_const@FUNCTION, $pop0
+	i32.const	$push4=, arr
+	call    	good_enum@FUNCTION, $pop4
+	i32.const	$push3=, arr
+	call    	good_expr@FUNCTION, $pop3
+	i32.const	$push2=, arr
+	call    	good_vararg@FUNCTION, $pop2
+	i32.const	$push1=, 0
+	call    	exit@FUNCTION, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end4:
@@ -66,7 +74,7 @@ main:                                   # @main
 	.type	arr,@object
 	.section	.bss.arr,"aw",@nobits
 	.globl	arr
-	.align	4
+	.p2align	4
 arr:
 	.skip	40
 	.size	arr, 40

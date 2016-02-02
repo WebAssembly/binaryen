@@ -9,9 +9,9 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
 	i32.const	$push0=, 1
 	i32.add 	$2=, $0, $pop0
+	block
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $1, $pop7
 	br_if   	$pop8, 0        # 0: down to label0

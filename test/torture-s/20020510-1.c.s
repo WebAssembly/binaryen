@@ -6,17 +6,17 @@
 	.type	testc,@function
 testc:                                  # @testc
 	.param  	i32, i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 24
 	block
 	block
 	block
-	i32.shl 	$push0=, $0, $2
-	i32.shr_s	$push1=, $pop0, $2
-	i32.const	$push2=, 1
-	i32.lt_s	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label2
+	i32.const	$push0=, 24
+	i32.shl 	$push1=, $0, $pop0
+	i32.const	$push5=, 24
+	i32.shr_s	$push2=, $pop1, $pop5
+	i32.const	$push3=, 1
+	i32.lt_s	$push4=, $pop2, $pop3
+	br_if   	$pop4, 0        # 0: down to label2
 # BB#1:                                 # %if.then
 	br_if   	$1, 1           # 1: down to label1
 # BB#2:                                 # %if.then5
@@ -42,17 +42,17 @@ testc:                                  # @testc
 	.type	tests,@function
 tests:                                  # @tests
 	.param  	i32, i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 16
 	block
 	block
 	block
-	i32.shl 	$push0=, $0, $2
-	i32.shr_s	$push1=, $pop0, $2
-	i32.const	$push2=, 1
-	i32.lt_s	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label5
+	i32.const	$push0=, 16
+	i32.shl 	$push1=, $0, $pop0
+	i32.const	$push5=, 16
+	i32.shr_s	$push2=, $pop1, $pop5
+	i32.const	$push3=, 1
+	i32.lt_s	$push4=, $pop2, $pop3
+	br_if   	$pop4, 0        # 0: down to label5
 # BB#1:                                 # %if.then
 	br_if   	$1, 1           # 1: down to label4
 # BB#2:                                 # %if.then5

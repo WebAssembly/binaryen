@@ -5,13 +5,13 @@
 	.globl	one_raw_spinlock
 	.type	one_raw_spinlock,@function
 one_raw_spinlock:                       # @one_raw_spinlock
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$push0=, ii($0)
-	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop0, $pop1
-	i32.store	$discard=, ii($0), $pop2
+	i32.const	$push0=, 0
+	i32.const	$push4=, 0
+	i32.load	$push1=, ii($pop4)
+	i32.const	$push2=, 1
+	i32.add 	$push3=, $pop1, $pop2
+	i32.store	$discard=, ii($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -23,17 +23,20 @@ one_raw_spinlock:                       # @one_raw_spinlock
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, ii($0)
+	i32.const	$push5=, 0
+	i32.const	$push4=, 0
+	i32.load	$push0=, ii($pop4)
+	tee_local	$push3=, $0=, $pop0
+	i32.const	$push1=, 1
+	i32.add 	$push2=, $pop3, $pop1
+	i32.store	$discard=, ii($pop5), $pop2
 	block
-	i32.const	$push0=, 1
-	i32.add 	$push1=, $1, $pop0
-	i32.store	$discard=, ii($0), $pop1
-	br_if   	$1, 0           # 0: down to label0
+	br_if   	$0, 0           # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push6=, 0
+	return  	$pop6
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -46,7 +49,7 @@ main:                                   # @main
 	.type	ii,@object
 	.section	.bss.ii,"aw",@nobits
 	.globl	ii
-	.align	2
+	.p2align	2
 ii:
 	.int32	0                       # 0x0
 	.size	ii, 4

@@ -7,32 +7,32 @@
 f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $0, $pop9
-	br_if   	$pop10, 0       # 0: down to label0
+	i32.const	$push11=, 0
+	i32.eq  	$push12=, $0, $pop11
+	br_if   	$pop12, 0       # 0: down to label0
 # BB#1:                                 # %for.body.preheader
-	i32.const	$2=, -3
+	i32.const	$push3=, 2
+	i32.shl 	$push4=, $0, $pop3
+	i32.const	$push5=, a-4
+	i32.add 	$2=, $pop4, $pop5
 	i32.const	$push0=, 3
 	i32.mul 	$push1=, $0, $pop0
 	i32.add 	$push2=, $1, $pop1
-	i32.add 	$4=, $pop2, $2
-	i32.const	$3=, -4
-	i32.const	$push3=, 2
-	i32.shl 	$push4=, $0, $pop3
-	i32.const	$push5=, a
-	i32.add 	$push6=, $pop4, $pop5
-	i32.add 	$1=, $pop6, $3
+	i32.const	$push7=, -3
+	i32.add 	$1=, $pop2, $pop7
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push7=, -1
-	i32.add 	$0=, $0, $pop7
-	i32.store	$push8=, 0($1), $4
-	i32.add 	$4=, $pop8, $2
-	i32.add 	$1=, $1, $3
+	i32.const	$push10=, -1
+	i32.add 	$0=, $0, $pop10
+	i32.store	$push6=, 0($2), $1
+	i32.const	$push9=, -3
+	i32.add 	$1=, $pop6, $pop9
+	i32.const	$push8=, -4
+	i32.add 	$2=, $2, $pop8
 	br_if   	$0, 0           # 0: up to label1
 .LBB0_3:                                # %for.end
 	end_loop                        # label2:
@@ -49,32 +49,31 @@ f:                                      # @f
 g:                                      # @g
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $0, $pop8
-	br_if   	$pop9, 0        # 0: down to label3
+	i32.const	$push10=, 0
+	i32.eq  	$push11=, $0, $pop10
+	br_if   	$pop11, 0       # 0: down to label3
 # BB#1:                                 # %for.body.preheader.i
-	i32.const	$3=, a
-	i32.const	$1=, -3
 	i32.const	$push0=, 3
 	i32.mul 	$push1=, $0, $pop0
-	i32.add 	$push5=, $pop1, $3
-	i32.add 	$4=, $pop5, $1
-	i32.const	$2=, -4
-	i32.const	$push2=, 2
-	i32.shl 	$push3=, $0, $pop2
-	i32.add 	$push4=, $pop3, $3
-	i32.add 	$3=, $pop4, $2
+	i32.const	$push2=, a-3
+	i32.add 	$2=, $pop1, $pop2
+	i32.const	$push3=, 2
+	i32.shl 	$push4=, $0, $pop3
+	i32.const	$push5=, a-4
+	i32.add 	$1=, $pop4, $pop5
 .LBB1_2:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
-	i32.const	$push6=, -1
-	i32.add 	$0=, $0, $pop6
-	i32.store	$push7=, 0($3), $4
-	i32.add 	$4=, $pop7, $1
-	i32.add 	$3=, $3, $2
+	i32.const	$push9=, -1
+	i32.add 	$0=, $0, $pop9
+	i32.store	$push6=, 0($1), $2
+	i32.const	$push8=, -3
+	i32.add 	$2=, $pop6, $pop8
+	i32.const	$push7=, -4
+	i32.add 	$1=, $1, $pop7
 	br_if   	$0, 0           # 0: up to label4
 .LBB1_3:                                # %f.exit
 	end_loop                        # label5:
@@ -90,14 +89,15 @@ g:                                      # @g
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, a+3
-	i32.store	$discard=, a+4($0), $pop0
-	i32.const	$push1=, a
-	i32.store	$discard=, a($0), $pop1
-	call    	exit@FUNCTION, $0
+	i32.store	$discard=, a+4($pop1), $pop0
+	i32.const	$push4=, 0
+	i32.const	$push2=, a
+	i32.store	$discard=, a($pop4), $pop2
+	i32.const	$push3=, 0
+	call    	exit@FUNCTION, $pop3
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -107,7 +107,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.skip	8
 	.size	a, 8

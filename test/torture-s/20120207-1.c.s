@@ -8,12 +8,10 @@ test:                                   # @test
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, .L.str
-	i32.add 	$push1=, $pop0, $0
-	i32.const	$push2=, -1
-	i32.add 	$push3=, $pop1, $pop2
-	i32.load8_s	$push4=, 0($pop3)
-	return  	$pop4
+	i32.const	$push0=, .L.str-1
+	i32.add 	$push1=, $0, $pop0
+	i32.load8_s	$push2=, 0($pop1)
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
@@ -46,7 +44,7 @@ main:                                   # @main
 
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.16,"aMS",@progbits,1
-	.align	4
+	.p2align	4
 .L.str:
 	.asciz	"0123456789"
 	.size	.L.str, 11

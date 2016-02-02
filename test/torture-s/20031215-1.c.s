@@ -50,7 +50,7 @@ main:                                   # @main
 	.type	ao,@object
 	.section	.rodata.ao,"a",@progbits
 	.globl	ao
-	.align	2
+	.p2align	2
 ao:
 	.int32	2                       # 0x2
 	.int32	2                       # 0x2
@@ -62,7 +62,7 @@ ao:
 	.type	a,@object
 	.section	.data.rel.ro.a,"aw",@progbits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	ao
 	.size	a, 4

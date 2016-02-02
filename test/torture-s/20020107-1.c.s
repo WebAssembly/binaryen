@@ -23,21 +23,22 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, buf
-	copy_local	$0=, $1
+	i32.const	$0=, buf
 	#APP
 	#NO_APP
-	i32.const	$2=, 1
 	block
-	i32.add 	$push0=, $0, $2
-	i32.sub 	$push1=, $pop0, $1
-	i32.ne  	$push2=, $pop1, $2
-	br_if   	$pop2, 0        # 0: down to label0
+	i32.const	$push1=, 1
+	i32.add 	$push2=, $0, $pop1
+	i32.const	$push0=, buf
+	i32.sub 	$push3=, $pop2, $pop0
+	i32.const	$push6=, 1
+	i32.ne  	$push4=, $pop3, $pop6
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %bar.exit
-	i32.const	$push3=, 0
-	call    	exit@FUNCTION, $pop3
+	i32.const	$push5=, 0
+	call    	exit@FUNCTION, $pop5
 	unreachable
 .LBB1_2:                                # %if.then.i
 	end_block                       # label0:

@@ -21,7 +21,10 @@ main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	abort@FUNCTION
+	i32.const	$push0=, -2147483648
+	call    	f@FUNCTION, $pop0
+	i32.const	$push1=, 0
+	call    	exit@FUNCTION, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end1:

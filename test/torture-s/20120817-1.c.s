@@ -49,7 +49,7 @@ main:                                   # @main
 	.type	foo,@object
 	.section	.bss.foo,"aw",@nobits
 	.globl	foo
-	.align	2
+	.p2align	2
 foo:
 	.int32	0                       # 0x0
 	.size	foo, 4

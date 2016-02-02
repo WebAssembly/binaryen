@@ -7,24 +7,25 @@
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
 	block
-	i32.load	$push0=, Upgd_minor_ID($2)
+	i32.const	$push9=, 0
+	i32.load	$push0=, Upgd_minor_ID($pop9)
 	i32.load	$push1=, 0($pop0)
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
-	i32.load	$push4=, Upgd_minor_ID1($2)
+	i32.const	$push10=, 0
+	i32.load	$push4=, Upgd_minor_ID1($pop10)
 	i32.load	$push5=, 0($pop4)
 	i32.const	$push6=, 1
 	i32.ne  	$push7=, $pop5, $pop6
 	br_if   	$pop7, 0        # 0: down to label1
 # BB#2:                                 # %if.end3
-	return  	$2
+	i32.const	$push8=, 0
+	return  	$pop8
 .LBB0_3:                                # %if.then2
 	end_block                       # label1:
 	call    	abort@FUNCTION
@@ -52,7 +53,7 @@ main:                                   # @main
 	.type	Upgrade_items,@object
 	.section	.data.Upgrade_items,"aw",@progbits
 	.globl	Upgrade_items
-	.align	4
+	.p2align	4
 Upgrade_items:
 	.int32	1                       # 0x1
 	.int32	.L.str
@@ -65,7 +66,7 @@ Upgrade_items:
 	.type	Upgd_minor_ID,@object
 	.section	.data.Upgd_minor_ID,"aw",@progbits
 	.globl	Upgd_minor_ID
-	.align	2
+	.p2align	2
 Upgd_minor_ID:
 	.int32	Upgrade_items+8
 	.size	Upgd_minor_ID, 4
@@ -74,7 +75,7 @@ Upgd_minor_ID:
 	.type	Upgd_minor_ID1,@object
 	.section	.data.Upgd_minor_ID1,"aw",@progbits
 	.globl	Upgd_minor_ID1
-	.align	2
+	.p2align	2
 Upgd_minor_ID1:
 	.int32	Upgrade_items
 	.size	Upgd_minor_ID1, 4

@@ -7,33 +7,34 @@
 f:                                      # @f
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$5=, 255
 	block
-	i32.and 	$push0=, $1, $5
+	i32.const	$push12=, 255
+	i32.and 	$push0=, $1, $pop12
 	i32.const	$push1=, 10
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
-	i32.and 	$push3=, $2, $5
+	i32.const	$push13=, 255
+	i32.and 	$push3=, $2, $pop13
 	i32.const	$push4=, 11
 	i32.ne  	$push5=, $pop3, $pop4
 	br_if   	$pop5, 0        # 0: down to label1
 # BB#2:                                 # %if.end9
 	block
-	i32.and 	$push6=, $3, $5
-	i32.const	$push7=, 12
-	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label2
+	i32.const	$push6=, 255
+	i32.and 	$push7=, $3, $pop6
+	i32.const	$push8=, 12
+	i32.ne  	$push9=, $pop7, $pop8
+	br_if   	$pop9, 0        # 0: down to label2
 # BB#3:                                 # %if.end15
 	block
-	i32.const	$push9=, 123
-	i32.ne  	$push10=, $4, $pop9
-	br_if   	$pop10, 0       # 0: down to label3
+	i32.const	$push10=, 123
+	i32.ne  	$push11=, $4, $pop10
+	br_if   	$pop11, 0       # 0: down to label3
 # BB#4:                                 # %if.end19
-	return  	$5
+	return  	$1
 .LBB0_5:                                # %if.then18
 	end_block                       # label3:
 	call    	abort@FUNCTION

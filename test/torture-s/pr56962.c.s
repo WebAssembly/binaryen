@@ -27,40 +27,50 @@ bar:                                    # @bar
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32, i32
-	.local  	i32, i32, i32, i32, i32, i64, i64
+	.local  	i64, i64, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 2
-	i32.const	$4=, 3
-	i32.mul 	$5=, $1, $4
-	i32.const	$6=, 5
-	i32.mul 	$7=, $2, $6
-	i32.add 	$push5=, $7, $5
-	i32.shl 	$push6=, $pop5, $4
-	i32.add 	$push7=, $0, $pop6
-	i64.load	$8=, 0($pop7)
-	i32.shl 	$push8=, $1, $3
-	i32.add 	$push9=, $7, $pop8
-	i32.shl 	$push10=, $pop9, $4
-	i32.add 	$push11=, $0, $pop10
-	i64.load	$9=, 0($pop11)
-	i32.shl 	$push12=, $1, $6
-	i32.add 	$push13=, $0, $pop12
-	i32.shl 	$push0=, $2, $3
-	i32.add 	$push1=, $pop0, $5
-	i32.shl 	$push2=, $pop1, $4
-	i32.add 	$push3=, $0, $pop2
-	i64.load	$push4=, 0($pop3)
-	i64.store	$discard=, 0($pop13), $pop4
-	i32.add 	$push14=, $7, $1
-	i32.shl 	$push15=, $pop14, $4
+	i32.const	$push8=, 5
+	i32.mul 	$push9=, $2, $pop8
+	tee_local	$push36=, $6=, $pop9
+	i32.const	$push2=, 3
+	i32.mul 	$push3=, $1, $pop2
+	tee_local	$push35=, $5=, $pop3
+	i32.add 	$push10=, $pop36, $pop35
+	i32.const	$push34=, 3
+	i32.shl 	$push11=, $pop10, $pop34
+	i32.add 	$push12=, $0, $pop11
+	i64.load	$3=, 0($pop12)
+	i32.const	$push0=, 2
+	i32.shl 	$push13=, $1, $pop0
+	i32.add 	$push14=, $6, $pop13
+	i32.const	$push33=, 3
+	i32.shl 	$push15=, $pop14, $pop33
 	i32.add 	$push16=, $0, $pop15
-	call    	bar@FUNCTION, $pop16
-	i32.mul 	$push18=, $1, $6
-	i32.add 	$push19=, $7, $pop18
-	i32.shl 	$push20=, $pop19, $4
+	i64.load	$4=, 0($pop16)
+	i32.const	$push32=, 5
+	i32.shl 	$push17=, $1, $pop32
+	i32.add 	$push18=, $0, $pop17
+	i32.const	$push31=, 2
+	i32.shl 	$push1=, $2, $pop31
+	i32.add 	$push4=, $pop1, $5
+	i32.const	$push30=, 3
+	i32.shl 	$push5=, $pop4, $pop30
+	i32.add 	$push6=, $0, $pop5
+	i64.load	$push7=, 0($pop6)
+	i64.store	$discard=, 0($pop18), $pop7
+	i32.add 	$push19=, $6, $1
+	i32.const	$push29=, 3
+	i32.shl 	$push20=, $pop19, $pop29
 	i32.add 	$push21=, $0, $pop20
-	i64.add 	$push17=, $9, $8
-	i64.store	$discard=, 0($pop21), $pop17
+	call    	bar@FUNCTION, $pop21
+	i32.const	$push28=, 5
+	i32.mul 	$push23=, $1, $pop28
+	i32.add 	$push24=, $6, $pop23
+	i32.const	$push27=, 3
+	i32.shl 	$push25=, $pop24, $pop27
+	i32.add 	$push26=, $0, $pop25
+	i64.add 	$push22=, $4, $3
+	i64.store	$discard=, 0($pop26), $pop22
 	return
 	.endfunc
 .Lfunc_end1:
@@ -87,7 +97,7 @@ main:                                   # @main
 	.type	v,@object
 	.section	.bss.v,"aw",@nobits
 	.globl	v
-	.align	4
+	.p2align	4
 v:
 	.skip	1152
 	.size	v, 1152

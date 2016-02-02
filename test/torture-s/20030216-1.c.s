@@ -17,7 +17,7 @@ main:                                   # @main
 	.type	one,@object
 	.section	.rodata.one,"a",@progbits
 	.globl	one
-	.align	3
+	.p2align	3
 one:
 	.int64	4607182418800017408     # double 1
 	.size	one, 8

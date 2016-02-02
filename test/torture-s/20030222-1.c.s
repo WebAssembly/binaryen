@@ -21,26 +21,27 @@ ll_to_int:                              # @ll_to_int
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64, i32, i32, i32, i32, i32
+	.local  	i64, i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$2=, __stack_pointer
+	i32.load	$2=, 0($2)
+	i32.const	$3=, 16
+	i32.sub 	$4=, $2, $3
 	i32.const	$3=, __stack_pointer
-	i32.load	$3=, 0($3)
-	i32.const	$4=, 16
-	i32.sub 	$5=, $3, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$5=, 0($4), $5
+	i32.store	$4=, 0($3), $4
 	i32.const	$1=, 0
-	i32.load	$2=, val($1)
-	i64.extend_s/i32	$0=, $2
+	i32.load	$1=, val($1)
+	i64.extend_s/i32	$0=, $1
 	#APP
 	#NO_APP
-	i64.store32	$discard=, 12($5), $0
+	i64.store32	$discard=, 12($4), $0
 	block
-	i32.load	$push0=, 12($5)
-	i32.ne  	$push1=, $pop0, $2
+	i32.load	$push0=, 12($4)
+	i32.ne  	$push1=, $1, $pop0
 	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $1
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -54,7 +55,7 @@ main:                                   # @main
 	.type	val,@object
 	.section	.data.val,"aw",@progbits
 	.globl	val
-	.align	2
+	.p2align	2
 val:
 	.int32	2147483649              # 0x80000001
 	.size	val, 4

@@ -5,13 +5,13 @@
 	.globl	a1
 	.type	a1,@function
 a1:                                     # @a1
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$push0=, count($0)
-	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop0, $pop1
-	i32.store	$discard=, count($0), $pop2
+	i32.const	$push0=, 0
+	i32.const	$push4=, 0
+	i32.load	$push1=, count($pop4)
+	i32.const	$push2=, 1
+	i32.add 	$push3=, $pop1, $pop2
+	i32.store	$discard=, count($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -23,46 +23,48 @@ a1:                                     # @a1
 	.type	b,@function
 b:                                      # @b
 	.param  	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
 	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.then
-	i32.const	$1=, 0
-	i32.load	$push2=, count($1)
-	i32.const	$push3=, 1
-	i32.add 	$push4=, $pop2, $pop3
-	i32.store	$discard=, count($1), $pop4
+	i32.const	$push2=, 0
+	i32.const	$push18=, 0
+	i32.load	$push3=, count($pop18)
+	i32.const	$push4=, 1
+	i32.add 	$push5=, $pop3, $pop4
+	i32.store	$discard=, count($pop2), $pop5
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	block
-	i32.const	$push5=, 1073741824
-	i32.and 	$push6=, $0, $pop5
-	i32.const	$push15=, 0
-	i32.eq  	$push16=, $pop6, $pop15
-	br_if   	$pop16, 0       # 0: down to label1
+	i32.const	$push6=, 1073741824
+	i32.and 	$push7=, $0, $pop6
+	i32.const	$push21=, 0
+	i32.eq  	$push22=, $pop7, $pop21
+	br_if   	$pop22, 0       # 0: down to label1
 # BB#3:                                 # %if.then3
-	i32.const	$1=, 0
-	i32.load	$push7=, count($1)
-	i32.const	$push8=, 1
-	i32.add 	$push9=, $pop7, $pop8
-	i32.store	$discard=, count($1), $pop9
+	i32.const	$push8=, 0
+	i32.const	$push19=, 0
+	i32.load	$push9=, count($pop19)
+	i32.const	$push10=, 1
+	i32.add 	$push11=, $pop9, $pop10
+	i32.store	$discard=, count($pop8), $pop11
 .LBB1_4:                                # %if.end4
 	end_block                       # label1:
 	block
-	i32.const	$push10=, 536870912
-	i32.and 	$push11=, $0, $pop10
-	i32.const	$push17=, 0
-	i32.eq  	$push18=, $pop11, $pop17
-	br_if   	$pop18, 0       # 0: down to label2
+	i32.const	$push12=, 536870912
+	i32.and 	$push13=, $0, $pop12
+	i32.const	$push23=, 0
+	i32.eq  	$push24=, $pop13, $pop23
+	br_if   	$pop24, 0       # 0: down to label2
 # BB#5:                                 # %if.then8
-	i32.const	$0=, 0
-	i32.load	$push12=, count($0)
-	i32.const	$push13=, 1
-	i32.add 	$push14=, $pop12, $pop13
-	i32.store	$discard=, count($0), $pop14
+	i32.const	$push14=, 0
+	i32.const	$push20=, 0
+	i32.load	$push15=, count($pop20)
+	i32.const	$push16=, 1
+	i32.add 	$push17=, $pop15, $pop16
+	i32.store	$discard=, count($pop14), $pop17
 .LBB1_6:                                # %if.end9
 	end_block                       # label2:
 	return
@@ -76,12 +78,12 @@ b:                                      # @b
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end21
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store	$discard=, count($0), $pop0
-	call    	exit@FUNCTION, $0
+	i32.store	$discard=, count($pop1), $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -91,7 +93,7 @@ main:                                   # @main
 	.type	count,@object
 	.section	.bss.count,"aw",@nobits
 	.globl	count
-	.align	2
+	.p2align	2
 count:
 	.int32	0                       # 0x0
 	.size	count, 4

@@ -8,12 +8,10 @@ acc_a:                                  # @acc_a
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, a
+	i32.const	$push0=, a-2000000000
 	i32.add 	$push1=, $0, $pop0
-	i32.const	$push2=, -2000000000
-	i32.add 	$push3=, $pop1, $pop2
-	i32.load8_s	$push4=, 0($pop3)
-	return  	$pop4
+	i32.load8_s	$push2=, 0($pop1)
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	acc_a, .Lfunc_end0-acc_a
@@ -24,16 +22,16 @@ acc_a:                                  # @acc_a
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load8_u	$push0=, a($0)
+	i32.const	$push3=, 0
+	i32.load8_u	$push0=, a($pop3)
 	i32.const	$push1=, 100
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

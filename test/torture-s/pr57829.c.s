@@ -65,32 +65,34 @@ f3:                                     # @f3
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 1
-	i32.call	$1=, f1@FUNCTION, $0
-	i32.const	$2=, 2
 	block
-	i32.ne  	$push0=, $1, $2
-	br_if   	$pop0, 0        # 0: down to label0
+	i32.const	$push14=, 1
+	i32.call	$push0=, f1@FUNCTION, $pop14
+	i32.const	$push13=, 2
+	i32.ne  	$push1=, $pop0, $pop13
+	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.call	$push1=, f2@FUNCTION, $0
-	i32.ne  	$push2=, $pop1, $2
-	br_if   	$pop2, 0        # 0: down to label0
+	i32.const	$push16=, 1
+	i32.call	$push2=, f2@FUNCTION, $pop16
+	i32.const	$push15=, 2
+	i32.ne  	$push3=, $pop2, $pop15
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false3
-	i32.const	$push3=, 63
-	i32.call	$push4=, f3@FUNCTION, $pop3
-	i32.const	$push5=, 6
-	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	i32.const	$push4=, 63
+	i32.call	$push5=, f3@FUNCTION, $pop4
+	i32.const	$push6=, 6
+	i32.ne  	$push7=, $pop5, $pop6
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false6
-	i32.call	$push7=, f3@FUNCTION, $0
-	i32.const	$push8=, 4
-	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	i32.const	$push8=, 1
+	i32.call	$push9=, f3@FUNCTION, $pop8
+	i32.const	$push10=, 4
+	i32.ne  	$push11=, $pop9, $pop10
+	br_if   	$pop11, 0       # 0: down to label0
 # BB#4:                                 # %if.end
-	i32.const	$push10=, 0
-	return  	$pop10
+	i32.const	$push12=, 0
+	return  	$pop12
 .LBB3_5:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

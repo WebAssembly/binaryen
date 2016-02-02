@@ -34,7 +34,7 @@ main:                                   # @main
 	.type	k,@object
 	.section	.bss.k,"aw",@nobits
 	.globl	k
-	.align	2
+	.p2align	2
 k:
 	.int32	0                       # 0x0
 	.size	k, 4

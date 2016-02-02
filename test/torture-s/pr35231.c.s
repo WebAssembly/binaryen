@@ -29,16 +29,17 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.const	$1=, 2
 	block
-	i32.call	$push0=, foo@FUNCTION, $1, $0
-	i32.ne  	$push1=, $pop0, $1
-	br_if   	$pop1, 0        # 0: down to label1
+	i32.const	$push0=, 2
+	i32.const	$push4=, 0
+	i32.call	$push1=, foo@FUNCTION, $pop0, $pop4
+	i32.const	$push3=, 2
+	i32.ne  	$push2=, $pop1, $pop3
+	br_if   	$pop2, 0        # 0: down to label1
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push5=, 0
+	return  	$pop5
 .LBB1_2:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION

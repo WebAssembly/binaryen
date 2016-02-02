@@ -45,7 +45,7 @@ main:                                   # @main
 	.type	d,@object
 	.section	.bss.d,"aw",@nobits
 	.globl	d
-	.align	3
+	.p2align	3
 d:
 	.int64	0                       # double 0
 	.size	d, 8

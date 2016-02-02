@@ -11,7 +11,8 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	block
-	i32.gt_s	$push0=, $0, $1
+	i32.const	$push6=, 0
+	i32.gt_s	$push0=, $0, $pop6
 	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push1=, 65535

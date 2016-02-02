@@ -6,29 +6,30 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	f64.const	$push0=, infinity
-	i32.call	$0=, __builtin_isinff@FUNCTION, $pop0
-	i32.const	$1=, 0
 	block
-	i32.le_s	$push1=, $0, $1
-	br_if   	$pop1, 0        # 0: down to label0
+	f64.const	$push0=, infinity
+	i32.call	$push1=, __builtin_isinff@FUNCTION, $pop0
+	i32.const	$push2=, 0
+	i32.le_s	$push3=, $pop1, $pop2
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
-	i32.const	$push2=, 1
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $pop2, $pop7
-	br_if   	$pop8, 0        # 0: down to label1
+	i32.const	$push4=, 1
+	i32.const	$push11=, 0
+	i32.eq  	$push12=, $pop4, $pop11
+	br_if   	$pop12, 0       # 0: down to label1
 # BB#2:                                 # %if.end4
 	block
-	i64.const	$push4=, 0
-	i64.const	$push3=, 9223090561878065152
-	i32.call	$push5=, __builtin_isinfl@FUNCTION, $pop4, $pop3
-	i32.le_s	$push6=, $pop5, $1
-	br_if   	$pop6, 0        # 0: down to label2
+	i64.const	$push6=, 0
+	i64.const	$push5=, 9223090561878065152
+	i32.call	$push7=, __builtin_isinfl@FUNCTION, $pop6, $pop5
+	i32.const	$push9=, 0
+	i32.le_s	$push8=, $pop7, $pop9
+	br_if   	$pop8, 0        # 0: down to label2
 # BB#3:                                 # %if.end8
-	return  	$1
+	i32.const	$push10=, 0
+	return  	$pop10
 .LBB0_4:                                # %if.then7
 	end_block                       # label2:
 	call    	abort@FUNCTION

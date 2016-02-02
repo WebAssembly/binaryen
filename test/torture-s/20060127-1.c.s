@@ -26,14 +26,14 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load	$push0=, a($0)
+	i32.const	$push1=, 0
+	i32.load	$push0=, a($pop1):p2align=3
 	br_if   	$pop0, 0        # 0: down to label1
 # BB#1:                                 # %f.exit
-	return  	$0
+	i32.const	$push2=, 0
+	return  	$pop2
 .LBB1_2:                                # %if.then.i
 	end_block                       # label1:
 	call    	abort@FUNCTION
@@ -46,7 +46,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	3
+	.p2align	3
 a:
 	.int64	1311768464867721216     # 0x1234567800000000
 	.size	a, 8

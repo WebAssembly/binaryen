@@ -11,7 +11,7 @@ main:                                   # @main
 	i32.const	$push0=, lookup_table
 	i32.const	$push2=, 4
 	i32.const	$push1=, 257
-	call    	memset@FUNCTION, $pop0, $pop2, $pop1
+	i32.call	$discard=, memset@FUNCTION, $pop0, $pop2, $pop1
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable
@@ -23,7 +23,7 @@ main:                                   # @main
 	.type	lookup_table,@object
 	.section	.bss.lookup_table,"aw",@nobits
 	.globl	lookup_table
-	.align	4
+	.p2align	4
 lookup_table:
 	.skip	257
 	.size	lookup_table, 257

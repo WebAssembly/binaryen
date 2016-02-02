@@ -81,7 +81,7 @@ f:                                      # @f
 	.type	v,@object
 	.section	.bss.v,"aw",@nobits
 	.globl	v
-	.align	2
+	.p2align	2
 v:
 	.int32	0                       # 0x0
 	.size	v, 4

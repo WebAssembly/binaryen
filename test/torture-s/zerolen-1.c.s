@@ -6,13 +6,12 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store8	$discard=, entry($0), $pop0
-	i32.store8	$push1=, entry+1($0), $0
-	call    	exit@FUNCTION, $pop1
+	i32.store16	$discard=, entry($pop1):p2align=0, $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -26,9 +25,7 @@ set:                                    # @set
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	i32.store8	$discard=, 0($0), $pop0
-	i32.const	$push1=, 0
-	i32.store8	$discard=, 1($0), $pop1
+	i32.store16	$discard=, 0($0):p2align=0, $pop0
 	return
 	.endfunc
 .Lfunc_end1:

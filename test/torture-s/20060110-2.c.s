@@ -7,13 +7,13 @@
 f:                                      # @f
 	.param  	i64, i64
 	.result 	i64
-	.local  	i64
 # BB#0:                                 # %entry
-	i64.const	$2=, 32
 	i64.add 	$push0=, $1, $0
-	i64.shl 	$push1=, $pop0, $2
-	i64.shr_s	$push2=, $pop1, $2
-	return  	$pop2
+	i64.const	$push1=, 32
+	i64.shl 	$push2=, $pop0, $pop1
+	i64.const	$push4=, 32
+	i64.shr_s	$push3=, $pop2, $pop4
+	return  	$pop3
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -24,21 +24,24 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i64
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i64.const	$1=, 32
 	block
-	i64.load	$push1=, b($0)
-	i64.load	$push0=, a($0)
+	i32.const	$push11=, 0
+	i64.load	$push1=, b($pop11)
+	i32.const	$push10=, 0
+	i64.load	$push0=, a($pop10)
 	i64.add 	$push2=, $pop1, $pop0
-	i64.shl 	$push3=, $pop2, $1
-	i64.shr_s	$push4=, $pop3, $1
-	i64.load	$push5=, c($0)
-	i64.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	i64.const	$push3=, 32
+	i64.shl 	$push4=, $pop2, $pop3
+	i64.const	$push9=, 32
+	i64.shr_s	$push5=, $pop4, $pop9
+	i32.const	$push8=, 0
+	i64.load	$push6=, c($pop8)
+	i64.ne  	$push7=, $pop5, $pop6
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push12=, 0
+	return  	$pop12
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -51,7 +54,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	3
+	.p2align	3
 a:
 	.int64	1311768466852950544     # 0x1234567876543210
 	.size	a, 8
@@ -60,7 +63,7 @@ a:
 	.type	b,@object
 	.section	.data.b,"aw",@progbits
 	.globl	b
-	.align	3
+	.p2align	3
 b:
 	.int64	2541551395937657089     # 0x2345678765432101
 	.size	b, 8
@@ -69,7 +72,7 @@ b:
 	.type	c,@object
 	.section	.data.c,"aw",@progbits
 	.globl	c
-	.align	3
+	.p2align	3
 c:
 	.int64	-610839791              # 0xffffffffdb975311
 	.size	c, 8

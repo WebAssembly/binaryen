@@ -37,7 +37,7 @@ main:                                   # @main
 
 	.type	cfb_tab8_be,@object     # @cfb_tab8_be
 	.section	.rodata.cfb_tab8_be,"a",@progbits
-	.align	4
+	.p2align	4
 cfb_tab8_be:
 	.int32	0                       # 0x0
 	.int32	255                     # 0xff
@@ -59,7 +59,7 @@ cfb_tab8_be:
 
 	.type	cfb_tab16_be,@object    # @cfb_tab16_be
 	.section	.rodata.cfb_tab16_be,"a",@progbits
-	.align	4
+	.p2align	4
 cfb_tab16_be:
 	.int32	0                       # 0x0
 	.int32	65535                   # 0xffff
@@ -69,7 +69,7 @@ cfb_tab16_be:
 
 	.type	cfb_tab32,@object       # @cfb_tab32
 	.section	.rodata.cfb_tab32,"a",@progbits
-	.align	2
+	.p2align	2
 cfb_tab32:
 	.int32	0                       # 0x0
 	.int32	4294967295              # 0xffffffff

@@ -60,12 +60,12 @@ f4:                                     # @f4
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 1577058610
-	i32.store	$discard=, val($0), $pop0
-	call    	exit@FUNCTION, $0
+	i32.store	$discard=, val($pop1), $pop0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end4:
@@ -75,7 +75,7 @@ main:                                   # @main
 	.type	val,@object
 	.section	.data.val,"aw",@progbits
 	.globl	val
-	.align	2
+	.p2align	2
 val:
 	.int32	1577058304              # 0x5e000000
 	.size	val, 4

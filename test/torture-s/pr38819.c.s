@@ -19,11 +19,11 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %for.body
-	i32.const	$0=, 0
-	i32.load	$discard=, a($0)
-	i32.load	$discard=, b($0)
+	i32.const	$push0=, 0
+	i32.load	$discard=, a($pop0)
+	i32.const	$push1=, 0
+	i32.load	$discard=, b($pop1)
 	call    	foo@FUNCTION
 	unreachable
 	.endfunc
@@ -34,7 +34,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	1                       # 0x1
 	.size	a, 4
@@ -43,7 +43,7 @@ a:
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
 	.globl	b
-	.align	2
+	.p2align	2
 b:
 	.int32	0                       # 0x0
 	.size	b, 4
@@ -52,7 +52,7 @@ b:
 	.type	x,@object
 	.section	.data.x,"aw",@progbits
 	.globl	x
-	.align	2
+	.p2align	2
 x:
 	.int32	2                       # 0x2
 	.size	x, 4
@@ -61,7 +61,7 @@ x:
 	.type	r,@object
 	.section	.data.r,"aw",@progbits
 	.globl	r
-	.align	2
+	.p2align	2
 r:
 	.int32	8                       # 0x8
 	.size	r, 4

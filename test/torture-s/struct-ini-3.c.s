@@ -18,7 +18,7 @@ main:                                   # @main
 	.type	result,@object
 	.section	.data.result,"aw",@progbits
 	.globl	result
-	.align	2
+	.p2align	2
 result:
 	.int8	255                     # 0xff
 	.int8	15                      # 0xf

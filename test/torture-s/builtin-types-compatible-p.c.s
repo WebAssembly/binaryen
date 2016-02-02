@@ -18,7 +18,7 @@ main:                                   # @main
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
 	.globl	i
-	.align	2
+	.p2align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4
@@ -27,7 +27,7 @@ i:
 	.type	d,@object
 	.section	.bss.d,"aw",@nobits
 	.globl	d
-	.align	3
+	.p2align	3
 d:
 	.int64	0                       # double 0
 	.size	d, 8
@@ -36,7 +36,7 @@ d:
 	.type	rootbeer,@object
 	.section	.bss.rootbeer,"aw",@nobits
 	.globl	rootbeer
-	.align	2
+	.p2align	2
 rootbeer:
 	.skip	4
 	.size	rootbeer, 4

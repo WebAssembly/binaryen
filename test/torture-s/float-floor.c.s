@@ -6,23 +6,26 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	f64, i32, i32, i32
+	.local  	f64
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	f64.load	$push0=, d($1)
-	f64.floor	$0=, $pop0
-	i32.trunc_s/f64	$2=, $0
-	i32.const	$3=, 1023
 	block
-	i32.ne  	$push1=, $2, $3
-	br_if   	$pop1, 0        # 0: down to label0
-# BB#1:                                 # %lor.lhs.false
-	f32.demote/f64	$push2=, $0
-	i32.trunc_s/f32	$push3=, $pop2
-	i32.ne  	$push4=, $pop3, $3
+	i32.const	$push1=, 0
+	f64.load	$push2=, d($pop1)
+	f64.floor	$push0=, $pop2
+	tee_local	$push10=, $0=, $pop0
+	i32.trunc_s/f64	$push3=, $pop10
+	i32.const	$push9=, 1023
+	i32.ne  	$push4=, $pop3, $pop9
 	br_if   	$pop4, 0        # 0: down to label0
+# BB#1:                                 # %lor.lhs.false
+	f32.demote/f64	$push5=, $0
+	i32.trunc_s/f32	$push6=, $pop5
+	i32.const	$push11=, 1023
+	i32.ne  	$push7=, $pop6, $pop11
+	br_if   	$pop7, 0        # 0: down to label0
 # BB#2:                                 # %if.end
-	return  	$1
+	i32.const	$push8=, 0
+	return  	$pop8
 .LBB0_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -35,7 +38,7 @@ main:                                   # @main
 	.type	d,@object
 	.section	.data.d,"aw",@progbits
 	.globl	d
-	.align	3
+	.p2align	3
 d:
 	.int64	4652218414805286912     # double 1023.9999694824219
 	.size	d, 8

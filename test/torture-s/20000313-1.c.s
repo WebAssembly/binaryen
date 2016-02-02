@@ -7,14 +7,15 @@
 buggy:                                  # @buggy
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.load	$1=, 0($0)
-	i32.const	$2=, 0
-	i32.store	$discard=, 0($0), $2
-	i32.const	$push0=, -1
-	i32.select	$push1=, $1, $pop0, $2
-	return  	$pop1
+	i32.const	$push0=, 0
+	i32.store	$discard=, 0($0), $pop0
+	i32.const	$push1=, -1
+	i32.const	$push3=, 0
+	i32.select	$push2=, $1, $pop1, $pop3
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	buggy, .Lfunc_end0-buggy

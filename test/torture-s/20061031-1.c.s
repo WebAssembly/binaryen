@@ -20,15 +20,16 @@ ff:                                     # @ff
 	.type	f,@function
 f:                                      # @f
 	.param  	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 2
-	i32.add 	$1=, $0, $pop0
 	call    	ff@FUNCTION, $0
-	i32.const	$2=, 65535
 	block
-	i32.and 	$push1=, $1, $2
-	br_if   	$pop1, 0        # 0: down to label0
+	i32.const	$push1=, 2
+	i32.add 	$push0=, $0, $pop1
+	tee_local	$push6=, $1=, $pop0
+	i32.const	$push5=, 65535
+	i32.and 	$push2=, $pop6, $pop5
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	#APP
 	#NO_APP
@@ -36,9 +37,10 @@ f:                                      # @f
 	end_block                       # label0:
 	call    	ff@FUNCTION, $0
 	block
-	i32.add 	$push2=, $1, $0
-	i32.and 	$push3=, $pop2, $2
-	br_if   	$pop3, 0        # 0: down to label1
+	i32.add 	$push3=, $1, $0
+	i32.const	$push7=, 65535
+	i32.and 	$push4=, $pop3, $pop7
+	br_if   	$pop4, 0        # 0: down to label1
 # BB#3:                                 # %if.then.1
 	#APP
 	#NO_APP

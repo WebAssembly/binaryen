@@ -9,7 +9,7 @@ test1:                                  # @test1
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push2=, .L.str
-	i32.add 	$push3=, $pop2, $1
+	i32.add 	$push3=, $1, $pop2
 	i32.call	$discard=, strcpy@FUNCTION, $0, $pop3
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
@@ -24,17 +24,17 @@ test1:                                  # @test1
 	.type	check2,@function
 check2:                                 # @check2
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load	$push0=, check2.r($0)
+	i32.const	$push5=, 0
+	i32.load	$push0=, check2.r($pop5)
 	i32.const	$push1=, 5
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
+	i32.const	$push6=, 0
 	i32.const	$push3=, 6
-	i32.store	$push4=, check2.r($0), $pop3
+	i32.store	$push4=, check2.r($pop6), $pop3
 	return  	$pop4
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -50,30 +50,19 @@ check2:                                 # @check2
 	.type	test2,@function
 test2:                                  # @test2
 	.param  	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
 	block
-	i32.load	$push0=, check2.r($1)
+	i32.const	$push5=, 0
+	i32.load	$push0=, check2.r($pop5)
 	i32.const	$push1=, 5
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	$pop2, 0        # 0: down to label1
 # BB#1:                                 # %check2.exit
+	i32.const	$push6=, 0
 	i32.const	$push3=, 6
-	i32.store	$discard=, check2.r($1), $pop3
-	i32.const	$push4=, 3
-	i32.add 	$push5=, $0, $pop4
-	i32.store8	$discard=, 0($pop5), $1
-	i32.const	$push6=, 2
-	i32.add 	$push7=, $0, $pop6
-	i32.const	$push8=, 122
-	i32.store8	$discard=, 0($pop7), $pop8
-	i32.const	$push9=, 1
-	i32.add 	$push10=, $0, $pop9
-	i32.const	$push11=, 97
-	i32.store8	$discard=, 0($pop10), $pop11
-	i32.const	$push12=, 98
-	i32.store8	$discard=, 0($0), $pop12
+	i32.store	$discard=, check2.r($pop6), $pop3
+	i32.const	$push4=, 8020322
+	i32.store	$discard=, 0($0):p2align=0, $pop4
 	return
 .LBB2_2:                                # %if.then.i
 	end_block                       # label1:
@@ -89,54 +78,52 @@ test2:                                  # @test2
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %lor.lhs.false
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 16
-	i32.sub 	$6=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$6=, 0($3), $6
-	i32.const	$0=, 0
-	i32.const	$1=, 1
+	i32.const	$0=, __stack_pointer
+	i32.load	$0=, 0($0)
+	i32.const	$1=, 16
+	i32.sub 	$4=, $0, $1
+	i32.const	$1=, __stack_pointer
+	i32.store	$4=, 0($1), $4
 	i32.const	$push1=, 2
-	i32.const	$4=, 4
-	i32.add 	$4=, $6, $4
-	i32.or  	$push2=, $4, $pop1
-	i32.load8_u	$push0=, .L.str+9($0)
-	i32.store8	$discard=, 0($pop2), $pop0
-	i32.const	$push3=, .L.str+7
-	i32.add 	$push4=, $pop3, $1
-	i32.load8_u	$push5=, 0($pop4)
-	i32.const	$push6=, 8
-	i32.shl 	$push7=, $pop5, $pop6
-	i32.load8_u	$push8=, .L.str+7($0)
-	i32.or  	$push9=, $pop7, $pop8
-	i32.store16	$discard=, 4($6), $pop9
-	i32.const	$push10=, .L.str.1
-	i32.const	$push11=, 3
-	i32.const	$5=, 4
-	i32.add 	$5=, $6, $5
+	i32.const	$2=, 4
+	i32.add 	$2=, $4, $2
+	i32.or  	$push2=, $2, $pop1
+	i32.const	$push14=, 0
+	i32.load8_u	$push0=, .L.str+9($pop14)
+	i32.store8	$discard=, 0($pop2):p2align=1, $pop0
+	i32.const	$push13=, 0
+	i32.load16_u	$push3=, .L.str+7($pop13):p2align=0
+	i32.store16	$discard=, 4($4):p2align=2, $pop3
+	i32.const	$push4=, .L.str.1
+	i32.const	$push5=, 3
+	i32.const	$3=, 4
+	i32.add 	$3=, $4, $3
 	block
-	i32.call	$push12=, memcmp@FUNCTION, $5, $pop10, $pop11
-	br_if   	$pop12, 0       # 0: down to label2
+	i32.call	$push6=, memcmp@FUNCTION, $3, $pop4, $pop5
+	br_if   	$pop6, 0        # 0: down to label2
 # BB#1:                                 # %if.end
 	block
-	i32.load	$push13=, check2.r($0)
-	i32.const	$push14=, 5
-	i32.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, 0       # 0: down to label3
+	i32.const	$push15=, 0
+	i32.load	$push7=, check2.r($pop15)
+	i32.const	$push8=, 5
+	i32.ne  	$push9=, $pop7, $pop8
+	br_if   	$pop9, 0        # 0: down to label3
 # BB#2:                                 # %test2.exit
+	i32.const	$push16=, 0
+	i32.const	$push10=, 6
+	i32.store	$discard=, check2.r($pop16), $pop10
+	i32.const	$push11=, 8020322
+	i32.store	$discard=, 4($4), $pop11
 	block
-	i32.const	$push16=, 6
-	i32.store	$discard=, check2.r($0), $pop16
-	i32.const	$push17=, 8020322
-	i32.store	$discard=, 4($6), $pop17
+	i32.const	$push12=, 1
 	i32.const	$push18=, 0
-	i32.eq  	$push19=, $1, $pop18
+	i32.eq  	$push19=, $pop12, $pop18
 	br_if   	$pop19, 0       # 0: down to label4
 # BB#3:                                 # %if.end8
-	call    	exit@FUNCTION, $0
+	i32.const	$push17=, 0
+	call    	exit@FUNCTION, $pop17
 	unreachable
 .LBB3_4:                                # %if.then7
 	end_block                       # label4:
@@ -162,7 +149,7 @@ main:                                   # @main
 
 	.type	check2.r,@object        # @check2.r
 	.section	.data.check2.r,"aw",@progbits
-	.align	2
+	.p2align	2
 check2.r:
 	.int32	5                       # 0x5
 	.size	check2.r, 4

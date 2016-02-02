@@ -6,13 +6,14 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, x+8($0)
-	i32.const	$push0=, 1
-	i32.store	$discard=, x+4($0), $pop0
-	return  	$1
+	i32.const	$push0=, 0
+	i32.load	$0=, x+8($pop0)
+	i32.const	$push2=, 0
+	i32.const	$push1=, 1
+	i32.store	$discard=, x+4($pop2), $pop1
+	return  	$0
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -23,16 +24,18 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, x+8($0)
-	block
+	i32.const	$push2=, 0
+	i32.load	$0=, x+8($pop2)
+	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, x+4($0), $pop0
-	br_if   	$1, 0           # 0: down to label0
+	i32.store	$discard=, x+4($pop1), $pop0
+	block
+	br_if   	$0, 0           # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push3=, 0
+	return  	$pop3
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -45,7 +48,7 @@ main:                                   # @main
 	.type	x,@object
 	.section	.data.x,"aw",@progbits
 	.globl	x
-	.align	2
+	.p2align	2
 x:
 	.int32	1                       # 0x1
 	.int32	2                       # 0x2

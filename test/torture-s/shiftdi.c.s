@@ -6,22 +6,22 @@
 	.type	g,@function
 g:                                      # @g
 	.param  	i64, i32, i32, i32
-	.local  	i64
 # BB#0:                                 # %entry
-	i64.const	$4=, 4294967295
-	i64.load	$push10=, 0($3)
+	i64.load	$push11=, 0($3)
 	i64.extend_u/i32	$push0=, $1
 	i64.shr_u	$push1=, $0, $pop0
-	i64.and 	$push2=, $pop1, $4
-	i32.const	$push3=, 31
-	i32.and 	$push4=, $2, $pop3
-	i64.extend_u/i32	$push5=, $pop4
-	i64.shl 	$push6=, $pop2, $pop5
-	i64.and 	$push7=, $pop6, $4
-	i64.extend_u/i32	$push8=, $2
-	i64.shl 	$push9=, $pop7, $pop8
-	i64.or  	$push11=, $pop10, $pop9
-	i64.store	$discard=, 0($3), $pop11
+	i64.const	$push2=, 4294967295
+	i64.and 	$push3=, $pop1, $pop2
+	i32.const	$push4=, 31
+	i32.and 	$push5=, $2, $pop4
+	i64.extend_u/i32	$push6=, $pop5
+	i64.shl 	$push7=, $pop3, $pop6
+	i64.const	$push13=, 4294967295
+	i64.and 	$push8=, $pop7, $pop13
+	i64.extend_u/i32	$push9=, $2
+	i64.shl 	$push10=, $pop8, $pop9
+	i64.or  	$push12=, $pop11, $pop10
+	i64.store	$discard=, 0($3), $pop12
 	return
 	.endfunc
 .Lfunc_end0:

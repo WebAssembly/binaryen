@@ -8,10 +8,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.store	$discard=, s($0), $0
-	i32.const	$push0=, .L.str
-	i32.store	$discard=, s+4($0), $pop0
+	i32.const	$push0=, 0
+	i32.const	$push4=, 0
+	i32.store	$push1=, s($pop0), $pop4
+	tee_local	$push3=, $0=, $pop1
+	i32.const	$push2=, .L.str
+	i32.store	$discard=, s+4($pop3), $pop2
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -21,7 +23,7 @@ main:                                   # @main
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.align	2
+	.p2align	2
 s:
 	.skip	8
 	.size	s, 8

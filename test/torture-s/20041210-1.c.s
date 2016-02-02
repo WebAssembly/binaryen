@@ -6,31 +6,36 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i64, i64
+	.local  	i64
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i64.load	$1=, x($0)
-	i64.const	$2=, 32
 	block
-	i32.wrap/i64	$push0=, $1
-	i64.shr_u	$push1=, $1, $2
-	i32.wrap/i64	$push2=, $pop1
-	i32.ge_s	$push3=, $pop0, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push13=, 0
+	i64.load	$push0=, x($pop13):p2align=4
+	tee_local	$push12=, $0=, $pop0
+	i32.wrap/i64	$push1=, $pop12
+	i64.const	$push11=, 32
+	i64.shr_u	$push2=, $0, $pop11
+	i32.wrap/i64	$push3=, $pop2
+	i32.ge_s	$push4=, $pop1, $pop3
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.then
-	i64.load	$1=, x+8($0)
-	i64.shr_u	$push4=, $1, $2
-	i64.and 	$push5=, $pop4, $1
-	i32.wrap/i64	$push6=, $pop5
-	i32.const	$push7=, -1
-	i32.gt_s	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	i32.const	$push16=, 0
+	i64.load	$push5=, x+8($pop16)
+	tee_local	$push15=, $0=, $pop5
+	i64.const	$push14=, 32
+	i64.shr_u	$push6=, $pop15, $pop14
+	i64.and 	$push7=, $pop6, $0
+	i32.wrap/i64	$push8=, $pop7
+	i32.const	$push9=, -1
+	i32.gt_s	$push10=, $pop8, $pop9
+	br_if   	$pop10, 0       # 0: down to label0
 # BB#2:                                 # %if.then2
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.end3
 	end_block                       # label0:
-	call    	exit@FUNCTION, $0
+	i32.const	$push17=, 0
+	call    	exit@FUNCTION, $pop17
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -40,7 +45,7 @@ main:                                   # @main
 	.type	x,@object
 	.section	.data.x,"aw",@progbits
 	.globl	x
-	.align	4
+	.p2align	4
 x:
 	.int32	3221225472              # 0xc0000000
 	.int32	2147483647              # 0x7fffffff

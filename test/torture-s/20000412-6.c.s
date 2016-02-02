@@ -6,16 +6,17 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
 	i32.const	$push1=, 512
-	i32.load16_u	$push0=, buf($0)
+	i32.const	$push13=, 0
+	i32.load16_u	$push0=, buf($pop13)
 	i32.sub 	$push2=, $pop1, $pop0
-	i32.load16_u	$push3=, buf+2($0)
+	i32.const	$push12=, 0
+	i32.load16_u	$push3=, buf+2($pop12)
 	i32.sub 	$push4=, $pop2, $pop3
-	i32.load16_u	$push5=, buf+4($0)
+	i32.const	$push11=, 0
+	i32.load16_u	$push5=, buf+4($pop11)
 	i32.sub 	$push6=, $pop4, $pop5
 	i32.const	$push7=, 65535
 	i32.and 	$push8=, $pop6, $pop7
@@ -23,7 +24,8 @@ main:                                   # @main
 	i32.ne  	$push10=, $pop8, $pop9
 	br_if   	$pop10, 0       # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push14=, 0
+	call    	exit@FUNCTION, $pop14
 	unreachable
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -69,7 +71,7 @@ bug:                                    # @bug
 	.type	buf,@object
 	.section	.data.buf,"aw",@progbits
 	.globl	buf
-	.align	1
+	.p2align	1
 buf:
 	.int16	1                       # 0x1
 	.int16	4                       # 0x4

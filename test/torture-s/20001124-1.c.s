@@ -7,20 +7,24 @@
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 512
-	i32.store	$discard=, s($2), $pop0
-	i32.const	$push2=, 9
-	i32.store8	$discard=, s+4($2), $pop2
-	i32.const	$push1=, s
-	i32.store	$discard=, i+8($2), $pop1
-	i64.const	$push3=, 2048
-	i64.store	$discard=, i($2), $pop3
-	i64.const	$push4=, 0
-	i64.store	$discard=, f($2), $pop4
-	call    	exit@FUNCTION, $2
+	i32.store	$discard=, s($pop1), $pop0
+	i32.const	$push10=, 0
+	i32.const	$push3=, 9
+	i32.store8	$discard=, s+4($pop10):p2align=2, $pop3
+	i32.const	$push9=, 0
+	i32.const	$push2=, s
+	i32.store	$discard=, i+8($pop9):p2align=3, $pop2
+	i32.const	$push8=, 0
+	i64.const	$push4=, 2048
+	i64.store	$discard=, i($pop8), $pop4
+	i32.const	$push7=, 0
+	i64.const	$push5=, 0
+	i64.store	$discard=, f($pop7), $pop5
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -30,7 +34,7 @@ main:                                   # @main
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.align	2
+	.p2align	2
 s:
 	.skip	12
 	.size	s, 12
@@ -39,7 +43,7 @@ s:
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
 	.globl	i
-	.align	3
+	.p2align	3
 i:
 	.skip	16
 	.size	i, 16
@@ -48,7 +52,7 @@ i:
 	.type	f,@object
 	.section	.bss.f,"aw",@nobits
 	.globl	f
-	.align	3
+	.p2align	3
 f:
 	.skip	8
 	.size	f, 8

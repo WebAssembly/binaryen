@@ -6,26 +6,28 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load8_u	$push2=, object($0)
+	i32.const	$push10=, 0
+	i32.load8_u	$push2=, object($pop10):p2align=2
 	i32.const	$push3=, 88
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.load	$push0=, object+4($0)
+	i32.const	$push11=, 0
+	i32.load	$push0=, object+4($pop11)
 	i32.const	$push5=, 8
 	i32.ne  	$push6=, $pop0, $pop5
 	br_if   	$pop6, 0        # 0: down to label0
 # BB#2:                                 # %entry
-	i32.load	$push1=, object+8($0)
+	i32.const	$push12=, 0
+	i32.load	$push1=, object+8($pop12)
 	i32.const	$push7=, 9
 	i32.ne  	$push8=, $pop1, $pop7
 	br_if   	$pop8, 0        # 0: down to label0
 # BB#3:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB0_4:                                # %if.then
 	end_block                       # label0:
@@ -39,7 +41,7 @@ main:                                   # @main
 	.type	object,@object
 	.section	.data.object,"aw",@progbits
 	.globl	object
-	.align	2
+	.p2align	2
 object:
 	.int8	88                      # 0x58
 	.skip	3

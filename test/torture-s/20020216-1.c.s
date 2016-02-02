@@ -24,17 +24,18 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.const	$1=, 65535
 	block
-	i32.load8_s	$push0=, c($0)
-	i32.and 	$push1=, $pop0, $1
-	i32.ne  	$push2=, $pop1, $1
-	br_if   	$pop2, 0        # 0: down to label0
+	i32.const	$push5=, 0
+	i32.load8_s	$push0=, c($pop5)
+	i32.const	$push1=, 65535
+	i32.and 	$push2=, $pop0, $pop1
+	i32.const	$push4=, 65535
+	i32.ne  	$push3=, $pop2, $pop4
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

@@ -6,15 +6,17 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	call    	fn2@FUNCTION
-	i32.const	$0=, 0
-	i32.load	$1=, b($0)
+	i32.const	$push1=, 0
+	i32.load	$0=, b($pop1)
+	i32.const	$push3=, 0
 	i32.const	$push0=, r
-	i32.store	$discard=, i($0), $pop0
-	call    	fn1@FUNCTION, $1
-	return  	$0
+	i32.store	$discard=, i($pop3), $pop0
+	call    	fn1@FUNCTION, $0
+	i32.const	$push2=, 0
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -22,12 +24,12 @@ main:                                   # @main
 	.section	.text.fn2,"ax",@progbits
 	.type	fn2,@function
 fn2:                                    # @fn2
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.store16	$push0=, o($0), $0
-	i32.const	$push1=, 42
-	i32.store	$discard=, f($pop0), $pop1
+	i32.const	$push0=, 0
+	i32.const	$push3=, 0
+	i32.store16	$push1=, o($pop0), $pop3
+	i32.const	$push2=, 42
+	i32.store	$discard=, f($pop1), $pop2
 	return
 	.endfunc
 .Lfunc_end1:
@@ -37,29 +39,32 @@ fn2:                                    # @fn2
 	.type	fn1,@function
 fn1:                                    # @fn1
 	.param  	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
 	block
-	i32.load	$push0=, p($1)
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $pop0, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	i32.const	$push8=, 0
+	i32.load	$push0=, p($pop8)
+	i32.const	$push13=, 0
+	i32.eq  	$push14=, $pop0, $pop13
+	br_if   	$pop14, 0       # 0: down to label0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
+	i32.const	$push10=, 0
+	i32.const	$push9=, 0
+	i32.load	$push3=, p($pop9)
 	i32.const	$push1=, 1
-	i32.store	$2=, 0($0), $pop1
-	i32.load	$push2=, p($1)
-	i32.add 	$push3=, $pop2, $2
-	i32.store	$push4=, p($1), $pop3
-	br_if   	$pop4, 0        # 0: up to label1
+	i32.store	$push2=, 0($0), $pop1
+	i32.add 	$push4=, $pop3, $pop2
+	i32.store	$push5=, p($pop10), $pop4
+	br_if   	$pop5, 0        # 0: up to label1
 .LBB2_2:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
-	i32.const	$push5=, d
-	i32.store	$push6=, r($1), $pop5
-	i32.store	$discard=, b($1), $pop6
+	i32.const	$push12=, 0
+	i32.const	$push11=, 0
+	i32.const	$push6=, d
+	i32.store	$push7=, r($pop11), $pop6
+	i32.store	$discard=, b($pop12), $pop7
 	return
 	.endfunc
 .Lfunc_end2:
@@ -69,7 +74,7 @@ fn1:                                    # @fn1
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
 	.globl	i
-	.align	2
+	.p2align	2
 i:
 	.int32	0
 	.size	i, 4
@@ -78,7 +83,7 @@ i:
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
 	.globl	b
-	.align	2
+	.p2align	2
 b:
 	.int32	0
 	.size	b, 4
@@ -87,7 +92,7 @@ b:
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	0                       # 0x0
 	.size	a, 4
@@ -96,7 +101,7 @@ a:
 	.type	c,@object
 	.section	.bss.c,"aw",@nobits
 	.globl	c
-	.align	2
+	.p2align	2
 c:
 	.int32	0                       # 0x0
 	.size	c, 4
@@ -105,7 +110,7 @@ c:
 	.type	d,@object
 	.section	.bss.d,"aw",@nobits
 	.globl	d
-	.align	2
+	.p2align	2
 d:
 	.int32	0                       # 0x0
 	.size	d, 4
@@ -114,7 +119,7 @@ d:
 	.type	f,@object
 	.section	.bss.f,"aw",@nobits
 	.globl	f
-	.align	2
+	.p2align	2
 f:
 	.int32	0                       # 0x0
 	.size	f, 4
@@ -123,7 +128,7 @@ f:
 	.type	p,@object
 	.section	.bss.p,"aw",@nobits
 	.globl	p
-	.align	2
+	.p2align	2
 p:
 	.int32	0                       # 0x0
 	.size	p, 4
@@ -132,7 +137,7 @@ p:
 	.type	q,@object
 	.section	.bss.q,"aw",@nobits
 	.globl	q
-	.align	2
+	.p2align	2
 q:
 	.int32	0                       # 0x0
 	.size	q, 4
@@ -141,7 +146,7 @@ q:
 	.type	r,@object
 	.section	.bss.r,"aw",@nobits
 	.globl	r
-	.align	2
+	.p2align	2
 r:
 	.int32	0
 	.size	r, 4
@@ -150,7 +155,7 @@ r:
 	.type	o,@object
 	.section	.bss.o,"aw",@nobits
 	.globl	o
-	.align	1
+	.p2align	1
 o:
 	.int16	0                       # 0x0
 	.size	o, 2
@@ -159,7 +164,7 @@ o:
 	.type	j,@object
 	.section	.bss.j,"aw",@nobits
 	.globl	j
-	.align	1
+	.p2align	1
 j:
 	.int16	0                       # 0x0
 	.size	j, 2

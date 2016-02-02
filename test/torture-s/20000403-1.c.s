@@ -6,19 +6,21 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load	$push0=, aa($0)
+	i32.const	$push8=, 0
+	i32.load	$push0=, aa($pop8)
 	i32.const	$push2=, 4096
 	i32.add 	$push3=, $pop0, $pop2
-	i32.load	$push1=, bb($0)
+	i32.const	$push7=, 0
+	i32.load	$push1=, bb($pop7)
 	i32.sub 	$push4=, $pop3, $pop1
-	i32.le_s	$push5=, $pop4, $0
+	i32.const	$push6=, 0
+	i32.le_s	$push5=, $pop4, $pop6
 	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -66,7 +68,7 @@ seqgt2:                                 # @seqgt2
 	.type	aa,@object
 	.section	.data.aa,"aw",@progbits
 	.globl	aa
-	.align	2
+	.p2align	2
 aa:
 	.int32	2147479553              # 0x7ffff001
 	.size	aa, 4
@@ -75,7 +77,7 @@ aa:
 	.type	bb,@object
 	.section	.data.bb,"aw",@progbits
 	.globl	bb
-	.align	2
+	.p2align	2
 bb:
 	.int32	2147479553              # 0x7ffff001
 	.size	bb, 4

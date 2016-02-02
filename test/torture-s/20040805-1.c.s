@@ -30,13 +30,14 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$push0=, a($0)
-	i32.store	$push1=, a+4($0), $pop0
-	i32.call	$push4=, bar@FUNCTION, $pop1
+	i32.const	$push0=, 0
+	i32.const	$push6=, 0
+	i32.load	$push1=, a($pop6)
+	i32.store	$0=, a+4($pop0), $pop1
 	i32.const	$push2=, 100
 	i32.call	$push3=, bar@FUNCTION, $pop2
-	i32.add 	$push5=, $pop4, $pop3
+	i32.call	$push4=, bar@FUNCTION, $0
+	i32.add 	$push5=, $pop3, $pop4
 	return  	$pop5
 	.endfunc
 .Lfunc_end1:
@@ -47,13 +48,13 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.load	$push0=, a($1)
-	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop0, $pop1
-	i32.store	$discard=, a($1), $pop2
+	i32.const	$push0=, 0
+	i32.const	$push4=, 0
+	i32.load	$push1=, a($pop4)
+	i32.const	$push2=, 1
+	i32.add 	$push3=, $pop1, $pop2
+	i32.store	$discard=, a($pop0), $pop3
 	return  	$0
 	.endfunc
 .Lfunc_end2:
@@ -63,7 +64,7 @@ bar:                                    # @bar
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	2                       # 0x2
 	.int32	3                       # 0x3

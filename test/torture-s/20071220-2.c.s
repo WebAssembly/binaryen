@@ -78,7 +78,7 @@ main:                                   # @main
 
 	.type	bar.b,@object           # @bar.b
 	.section	.data.bar.b,"aw",@progbits
-	.align	2
+	.p2align	2
 bar.b:
 	.int32	.Ltmp0
 	.size	bar.b, 4

@@ -17,7 +17,7 @@ main:                                   # @main
 	.type	g_23,@object
 	.section	.bss.g_23,"aw",@nobits
 	.globl	g_23
-	.align	2
+	.p2align	2
 g_23:
 	.int32	0                       # 0x0
 	.size	g_23, 4

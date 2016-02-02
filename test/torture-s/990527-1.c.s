@@ -6,12 +6,12 @@
 	.type	g,@function
 g:                                      # @g
 	.param  	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.load	$push0=, sum($1)
-	i32.add 	$push1=, $pop0, $0
-	i32.store	$discard=, sum($1), $pop1
+	i32.const	$push0=, 0
+	i32.const	$push3=, 0
+	i32.load	$push1=, sum($pop3)
+	i32.add 	$push2=, $pop1, $0
+	i32.store	$discard=, sum($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -23,14 +23,14 @@ g:                                      # @g
 	.type	f,@function
 f:                                      # @f
 	.param  	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.load	$push0=, sum($1)
-	i32.add 	$push1=, $0, $pop0
-	i32.const	$push2=, 81
-	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, sum($1), $pop3
+	i32.const	$push0=, 0
+	i32.const	$push5=, 0
+	i32.load	$push1=, sum($pop5)
+	i32.add 	$push2=, $0, $pop1
+	i32.const	$push3=, 81
+	i32.add 	$push4=, $pop2, $pop3
+	i32.store	$discard=, sum($pop0), $pop4
 	return
 	.endfunc
 .Lfunc_end1:
@@ -42,17 +42,20 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, sum($0)
+	i32.const	$push5=, 0
+	i32.const	$push4=, 0
+	i32.load	$push0=, sum($pop4)
+	tee_local	$push3=, $0=, $pop0
+	i32.const	$push1=, 81
+	i32.add 	$push2=, $pop3, $pop1
+	i32.store	$discard=, sum($pop5), $pop2
 	block
-	i32.const	$push0=, 81
-	i32.add 	$push1=, $1, $pop0
-	i32.store	$discard=, sum($0), $pop1
-	br_if   	$1, 0           # 0: down to label0
+	br_if   	$0, 0           # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 .LBB2_2:                                # %if.then
 	end_block                       # label0:
@@ -66,7 +69,7 @@ main:                                   # @main
 	.type	sum,@object
 	.section	.bss.sum,"aw",@nobits
 	.globl	sum
-	.align	2
+	.p2align	2
 sum:
 	.int32	0                       # 0x0
 	.size	sum, 4

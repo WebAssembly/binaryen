@@ -427,40 +427,42 @@ fixunsdfsi:                             # @fixunsdfsi
 fail:                                   # @fail
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$6=, __stack_pointer
+	i32.load	$6=, 0($6)
+	i32.const	$7=, 16
+	i32.sub 	$9=, $6, $7
 	i32.const	$7=, __stack_pointer
-	i32.load	$7=, 0($7)
+	i32.store	$9=, 0($7), $9
+	i32.const	$push0=, 0
+	i32.load	$1=, stderr($pop0)
+	i32.const	$push6=, 0
+	i32.const	$push5=, 0
+	i32.load	$push1=, fail_count($pop5)
+	i32.const	$push2=, 1
+	i32.add 	$push3=, $pop1, $pop2
+	i32.store	$discard=, fail_count($pop6), $pop3
+	i32.const	$2=, __stack_pointer
+	i32.load	$2=, 0($2)
+	i32.const	$3=, 4
+	i32.sub 	$9=, $2, $3
+	i32.const	$3=, __stack_pointer
+	i32.store	$9=, 0($3), $9
+	i32.store	$discard=, 0($9), $0
+	i32.const	$push4=, .L.str
+	i32.call	$discard=, fprintf@FUNCTION, $1, $pop4
+	i32.const	$4=, __stack_pointer
+	i32.load	$4=, 0($4)
+	i32.const	$5=, 4
+	i32.add 	$9=, $4, $5
+	i32.const	$5=, __stack_pointer
+	i32.store	$9=, 0($5), $9
 	i32.const	$8=, 16
-	i32.sub 	$9=, $7, $8
+	i32.add 	$9=, $9, $8
 	i32.const	$8=, __stack_pointer
 	i32.store	$9=, 0($8), $9
-	i32.const	$1=, 0
-	i32.load	$2=, stderr($1)
-	i32.load	$push0=, fail_count($1)
-	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop0, $pop1
-	i32.store	$discard=, fail_count($1), $pop2
-	i32.const	$3=, __stack_pointer
-	i32.load	$3=, 0($3)
-	i32.const	$4=, 4
-	i32.sub 	$9=, $3, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$9=, 0($4), $9
-	i32.store	$discard=, 0($9), $0
-	i32.const	$push3=, .L.str
-	i32.call	$discard=, fiprintf@FUNCTION, $2, $pop3
-	i32.const	$5=, __stack_pointer
-	i32.load	$5=, 0($5)
-	i32.const	$6=, 4
-	i32.add 	$9=, $5, $6
-	i32.const	$6=, __stack_pointer
-	i32.store	$9=, 0($6), $9
-	i32.const	$9=, 16
-	i32.add 	$9=, $9, $9
-	i32.const	$9=, __stack_pointer
-	i32.store	$9=, 0($9), $9
-	return  	$1
+	return  	$0
 	.endfunc
 .Lfunc_end30:
 	.size	fail, .Lfunc_end30-fail
@@ -471,14 +473,14 @@ fail:                                   # @fail
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end11
-	i32.const	$0=, 0
 	block
-	i32.load	$push0=, fail_count($0)
+	i32.const	$push1=, 0
+	i32.load	$push0=, fail_count($pop1)
 	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end202
-	call    	exit@FUNCTION, $0
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB31_2:                               # %if.then201
 	end_block                       # label0:
@@ -492,7 +494,7 @@ main:                                   # @main
 	.type	fail_count,@object
 	.section	.bss.fail_count,"aw",@nobits
 	.globl	fail_count
-	.align	2
+	.p2align	2
 fail_count:
 	.int32	0                       # 0x0
 	.size	fail_count, 4

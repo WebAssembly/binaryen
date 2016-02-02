@@ -34,17 +34,19 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load	$push2=, z($0)
-	i32.load	$push0=, z+4($0)
-	i32.sub 	$push1=, $0, $pop0
+	i32.const	$push6=, 0
+	i32.load	$push2=, z($pop6)
+	i32.const	$push5=, 0
+	i32.const	$push4=, 0
+	i32.load	$push0=, z+4($pop4)
+	i32.sub 	$push1=, $pop5, $pop0
 	i32.le_s	$push3=, $pop2, $pop1
 	br_if   	$pop3, 0        # 0: down to label1
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label1:
@@ -58,7 +60,7 @@ main:                                   # @main
 	.type	z,@object
 	.section	.data.z,"aw",@progbits
 	.globl	z
-	.align	2
+	.p2align	2
 z:
 	.int32	4294963268              # 0xfffff044
 	.int32	4096                    # 0x1000

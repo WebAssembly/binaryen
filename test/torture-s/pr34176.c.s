@@ -23,18 +23,22 @@ hash_find_entry:                        # @hash_find_entry
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.load	$2=, foo.count($1)
-	i32.const	$3=, 1
+	i32.const	$push7=, 0
+	i32.const	$push6=, 0
+	i32.load	$push0=, foo.count($pop6)
+	tee_local	$push5=, $1=, $pop0
+	i32.const	$push1=, 1
+	i32.add 	$push2=, $pop5, $pop1
+	i32.store	$discard=, foo.count($pop7), $pop2
 	block
-	i32.add 	$push0=, $2, $3
-	i32.store	$discard=, foo.count($1), $pop0
-	i32.ge_s	$push1=, $2, $3
-	br_if   	$pop1, 0        # 0: down to label0
+	i32.const	$push4=, 1
+	i32.ge_s	$push3=, $1, $pop4
+	br_if   	$pop3, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$1
+	i32.const	$push8=, 0
+	return  	$pop8
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -75,8 +79,8 @@ main:                                   # @main
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label4:
-	i32.const	$push0=, -1
-	i32.add 	$1=, $1, $pop0
+	i32.const	$push2=, -1
+	i32.add 	$1=, $1, $pop2
 	i32.const	$push1=, 8
 	i32.add 	$0=, $0, $pop1
 	br_if   	$1, 0           # 0: up to label4
@@ -92,12 +96,12 @@ main:                                   # @main
 	br_if   	$pop6, 0        # 0: up to label1
 # BB#4:                                 # %for.end
 	end_loop                        # label2:
-	i32.const	$push2=, 0
+	i32.const	$push0=, 0
 	i32.const	$4=, 16
 	i32.add 	$7=, $7, $4
 	i32.const	$4=, __stack_pointer
 	i32.store	$7=, 0($4), $7
-	return  	$pop2
+	return  	$pop0
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

@@ -6,24 +6,22 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, __stack_pointer
 	i32.load	$0=, 0($0)
 	i32.const	$1=, 32
-	i32.sub 	$4=, $0, $1
+	i32.sub 	$3=, $0, $1
 	i32.const	$1=, __stack_pointer
-	i32.store	$4=, 0($1), $4
+	i32.store	$3=, 0($1), $3
 	i32.const	$push0=, 15
-	i32.const	$3=, 0
-	i32.add 	$3=, $4, $3
 	i32.and 	$push1=, $3, $pop0
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop1, $pop2
 	i32.const	$2=, 32
-	i32.add 	$4=, $4, $2
+	i32.add 	$3=, $3, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
+	i32.store	$3=, 0($2), $3
 	return  	$pop3
 	.endfunc
 .Lfunc_end0:
@@ -35,26 +33,24 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, __stack_pointer
 	i32.load	$0=, 0($0)
 	i32.const	$1=, 32
-	i32.sub 	$4=, $0, $1
+	i32.sub 	$3=, $0, $1
 	i32.const	$1=, __stack_pointer
-	i32.store	$4=, 0($1), $4
-	i32.const	$push0=, 15
-	i32.const	$3=, 0
-	i32.add 	$3=, $4, $3
+	i32.store	$3=, 0($1), $3
 	block
+	i32.const	$push0=, 15
 	i32.and 	$push1=, $3, $pop0
 	br_if   	$pop1, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	i32.const	$2=, 32
-	i32.add 	$4=, $4, $2
+	i32.add 	$3=, $3, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
+	i32.store	$3=, 0($2), $3
 	return  	$pop2
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

@@ -5,10 +5,10 @@
 	.globl	func_1
 	.type	func_1,@function
 func_1:                                 # @func_1
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.store8	$discard=, g_5($0), $0
+	i32.const	$push0=, 0
+	i32.const	$push1=, 0
+	i32.store8	$discard=, g_5($pop0), $pop1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -20,11 +20,11 @@ func_1:                                 # @func_1
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
-	i32.store8	$push0=, g_5($0), $0
-	return  	$pop0
+	i32.const	$push0=, 0
+	i32.const	$push2=, 0
+	i32.store8	$push1=, g_5($pop0), $pop2
+	return  	$pop1
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

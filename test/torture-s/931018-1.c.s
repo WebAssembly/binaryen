@@ -40,7 +40,7 @@ f:                                      # @f
 	.type	v,@object
 	.section	.rodata.v,"a",@progbits
 	.globl	v
-	.align	2
+	.p2align	2
 v:
 	.int32	3735928559              # 0xdeadbeef
 	.size	v, 4
@@ -49,7 +49,7 @@ v:
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	4
+	.p2align	4
 a:
 	.skip	16384
 	.size	a, 16384

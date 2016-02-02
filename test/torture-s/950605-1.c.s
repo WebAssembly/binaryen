@@ -7,15 +7,15 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 255
 	block
-	i32.and 	$push0=, $0, $1
-	i32.ne  	$push1=, $pop0, $1
-	br_if   	$pop1, 0        # 0: down to label0
+	i32.const	$push0=, 255
+	i32.and 	$push1=, $0, $pop0
+	i32.const	$push3=, 255
+	i32.ne  	$push2=, $pop1, $pop3
+	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$1
+	return  	$0
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

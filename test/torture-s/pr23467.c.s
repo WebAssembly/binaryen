@@ -18,7 +18,7 @@ main:                                   # @main
 	.type	v,@object
 	.section	.bss.v,"aw",@nobits
 	.globl	v
-	.align	3
+	.p2align	3
 v:
 	.skip	16
 	.size	v, 16

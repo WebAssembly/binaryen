@@ -49,16 +49,16 @@ gen_x86_64_shrd:                        # @gen_x86_64_shrd
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$push0=, one($0)
-	i32.const	$push2=, ok@FUNCTION
-	i32.const	$push1=, gen_x86_64_shrd@FUNCTION
-	i32.select	$push3=, $pop0, $pop2, $pop1
-	i32.call_indirect	$discard=, $pop3, $0
-	i32.const	$push4=, 1
-	return  	$pop4
+	i32.const	$push0=, 0
+	i32.load	$push1=, one($pop0)
+	i32.const	$push3=, ok@FUNCTION
+	i32.const	$push2=, gen_x86_64_shrd@FUNCTION
+	i32.select	$push4=, $pop1, $pop3, $pop2
+	i32.const	$push6=, 0
+	i32.call_indirect	$discard=, $pop4, $pop6
+	i32.const	$push5=, 1
+	return  	$pop5
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
@@ -67,7 +67,7 @@ main:                                   # @main
 	.type	one,@object
 	.section	.data.one,"aw",@progbits
 	.globl	one
-	.align	2
+	.p2align	2
 one:
 	.int32	1                       # 0x1
 	.size	one, 4

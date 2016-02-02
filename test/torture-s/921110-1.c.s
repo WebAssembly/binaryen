@@ -18,7 +18,7 @@ main:                                   # @main
 	.type	f,@object
 	.section	.data.f,"aw",@progbits
 	.globl	f
-	.align	2
+	.p2align	2
 f:
 	.int32	abort@FUNCTION
 	.size	f, 4

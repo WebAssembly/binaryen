@@ -6,11 +6,10 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load8_u	$push0=, a($0)
+	i32.const	$push7=, 0
+	i32.load8_u	$push0=, a($pop7):p2align=2
 	i32.const	$push1=, -939524096
 	i32.mul 	$push2=, $pop0, $pop1
 	i32.const	$push3=, 24
@@ -19,7 +18,8 @@ main:                                   # @main
 	i32.ge_s	$push6=, $pop4, $pop5
 	br_if   	$pop6, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push8=, 0
+	return  	$pop8
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -32,7 +32,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	274686410               # 0x105f61ca
 	.size	a, 4

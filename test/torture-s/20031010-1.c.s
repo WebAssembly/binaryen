@@ -39,19 +39,20 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 1
 	block
-	i32.const	$push1=, 2
-	i32.const	$push0=, 3
-	i32.call	$push2=, foo@FUNCTION, $pop1, $pop0, $0, $0, $0
-	i32.const	$push4=, 0
-	i32.eq  	$push5=, $pop2, $pop4
-	br_if   	$pop5, 0        # 0: down to label2
+	i32.const	$push2=, 2
+	i32.const	$push1=, 3
+	i32.const	$push0=, 1
+	i32.const	$push6=, 1
+	i32.const	$push5=, 1
+	i32.call	$push3=, foo@FUNCTION, $pop2, $pop1, $pop0, $pop6, $pop5
+	i32.const	$push7=, 0
+	i32.eq  	$push8=, $pop3, $pop7
+	br_if   	$pop8, 0        # 0: down to label2
 # BB#1:                                 # %if.end
-	i32.const	$push3=, 0
-	return  	$pop3
+	i32.const	$push4=, 0
+	return  	$pop4
 .LBB1_2:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION

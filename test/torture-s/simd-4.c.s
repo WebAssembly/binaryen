@@ -6,12 +6,12 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i64.const	$push0=, -4294967295
-	i64.store	$discard=, s64($0), $pop0
-	return  	$0
+	i64.store	$discard=, s64($pop1), $pop0
+	i32.const	$push2=, 0
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -20,7 +20,7 @@ main:                                   # @main
 	.type	s64,@object
 	.section	.bss.s64,"aw",@nobits
 	.globl	s64
-	.align	3
+	.p2align	3
 s64:
 	.int64	0                       # 0x0
 	.size	s64, 8

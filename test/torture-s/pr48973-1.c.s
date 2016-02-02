@@ -27,23 +27,27 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	block
-	i32.load	$push0=, v($0)
-	i32.const	$push4=, 1
-	i32.and 	$1=, $pop0, $pop4
-	i32.load8_u	$push1=, s($0)
+	i32.const	$push10=, 0
+	i32.const	$push9=, 0
+	i32.load8_u	$push1=, s($pop9):p2align=2
 	i32.const	$push2=, 254
 	i32.and 	$push3=, $pop1, $pop2
-	i32.or  	$push5=, $pop3, $1
-	i32.store8	$discard=, s($0), $pop5
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $1, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
+	i32.const	$push8=, 0
+	i32.load	$push0=, v($pop8)
+	i32.const	$push4=, 1
+	i32.and 	$push5=, $pop0, $pop4
+	tee_local	$push7=, $0=, $pop5
+	i32.or  	$push6=, $pop3, $pop7
+	i32.store8	$discard=, s($pop10):p2align=2, $pop6
+	block
+	i32.const	$push12=, 0
+	i32.eq  	$push13=, $0, $pop12
+	br_if   	$pop13, 0       # 0: down to label1
 # BB#1:                                 # %foo.exit
-	return  	$0
+	i32.const	$push11=, 0
+	return  	$pop11
 .LBB1_2:                                # %if.then.i
 	end_block                       # label1:
 	call    	abort@FUNCTION
@@ -56,7 +60,7 @@ main:                                   # @main
 	.type	v,@object
 	.section	.data.v,"aw",@progbits
 	.globl	v
-	.align	2
+	.p2align	2
 v:
 	.int32	4294967295              # 0xffffffff
 	.size	v, 4
@@ -65,7 +69,7 @@ v:
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.align	2
+	.p2align	2
 s:
 	.skip	4
 	.size	s, 4

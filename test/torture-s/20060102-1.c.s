@@ -23,23 +23,27 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, one($0)
-	i32.load	$4=, one($0)
-	i32.const	$2=, 31
-	i32.const	$3=, 1
 	block
-	i32.shr_s	$push0=, $1, $2
-	i32.or  	$push1=, $pop0, $3
-	i32.sub 	$push2=, $0, $4
-	i32.shr_s	$push3=, $pop2, $2
-	i32.or  	$push4=, $pop3, $3
-	i32.eq  	$push5=, $pop1, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	i32.const	$push14=, 0
+	i32.load	$push0=, one($pop14)
+	i32.const	$push1=, 31
+	i32.shr_s	$push2=, $pop0, $pop1
+	i32.const	$push3=, 1
+	i32.or  	$push4=, $pop2, $pop3
+	i32.const	$push13=, 0
+	i32.const	$push12=, 0
+	i32.load	$push5=, one($pop12)
+	i32.sub 	$push6=, $pop13, $pop5
+	i32.const	$push11=, 31
+	i32.shr_s	$push7=, $pop6, $pop11
+	i32.const	$push10=, 1
+	i32.or  	$push8=, $pop7, $pop10
+	i32.eq  	$push9=, $pop4, $pop8
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push15=, 0
+	return  	$pop15
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -52,7 +56,7 @@ main:                                   # @main
 	.type	one,@object
 	.section	.data.one,"aw",@progbits
 	.globl	one
-	.align	2
+	.p2align	2
 one:
 	.int32	1                       # 0x1
 	.size	one, 4

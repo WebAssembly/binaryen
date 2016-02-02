@@ -7,31 +7,31 @@
 f:                                      # @f
 	.param  	i32, i32, i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push4=, 0
-	i32.eq  	$push5=, $3, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	i32.const	$push7=, 0
+	i32.eq  	$push8=, $3, $pop7
+	br_if   	$pop8, 0        # 0: down to label0
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	f32.load	$push1=, 0($1)
-	f32.load	$push2=, 0($2)
-	f32.eq  	$push3=, $pop1, $pop2
-	i32.store	$discard=, 0($0), $pop3
-	i32.const	$4=, 4
-	i32.add 	$1=, $1, $4
-	i32.add 	$2=, $2, $4
-	i32.add 	$4=, $0, $4
+	f32.load	$push2=, 0($1)
+	f32.load	$push3=, 0($2)
+	f32.eq  	$push4=, $pop2, $pop3
+	i32.store	$discard=, 0($0), $pop4
+	i32.const	$push1=, 4
+	i32.add 	$1=, $1, $pop1
+	i32.const	$push6=, 4
+	i32.add 	$2=, $2, $pop6
+	i32.const	$push5=, 4
+	i32.add 	$0=, $0, $pop5
 	i32.const	$push0=, -1
 	i32.add 	$3=, $3, $pop0
-	copy_local	$0=, $4
 	br_if   	$3, 0           # 0: up to label1
 .LBB0_2:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
-	return  	$4
+	return  	$3
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

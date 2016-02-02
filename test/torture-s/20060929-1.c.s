@@ -8,11 +8,12 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.load	$2=, 0($0)
 	i32.load	$1=, 0($1)
-	i32.const	$push0=, 4
-	i32.add 	$push1=, $2, $pop0
-	i32.store	$discard=, 0($0), $pop1
+	i32.load	$push0=, 0($0)
+	tee_local	$push3=, $2=, $pop0
+	i32.const	$push1=, 4
+	i32.add 	$push2=, $pop3, $pop1
+	i32.store	$discard=, 0($0), $pop2
 	i32.store	$discard=, 0($2), $1
 	return
 	.endfunc
@@ -27,12 +28,13 @@ bar:                                    # @bar
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.load	$2=, 0($0)
+	i32.load	$push1=, 0($0)
+	tee_local	$push4=, $2=, $pop1
 	i32.load	$push0=, 0($1)
-	i32.store	$discard=, 0($2), $pop0
-	i32.const	$push1=, 4
-	i32.add 	$push2=, $2, $pop1
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$discard=, 0($pop4), $pop0
+	i32.const	$push2=, 4
+	i32.add 	$push3=, $2, $pop2
+	i32.store	$discard=, 0($0), $pop3
 	return
 	.endfunc
 .Lfunc_end1:
@@ -46,12 +48,13 @@ baz:                                    # @baz
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.load	$2=, 0($0)
+	i32.load	$push1=, 0($0)
+	tee_local	$push4=, $2=, $pop1
 	i32.load	$push0=, 0($1)
-	i32.store	$discard=, 0($2), $pop0
-	i32.const	$push1=, 4
-	i32.add 	$push2=, $2, $pop1
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$discard=, 0($pop4), $pop0
+	i32.const	$push2=, 4
+	i32.add 	$push3=, $2, $pop2
+	i32.store	$discard=, 0($0), $pop3
 	return
 	.endfunc
 .Lfunc_end2:

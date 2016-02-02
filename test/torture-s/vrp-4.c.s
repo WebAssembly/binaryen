@@ -6,21 +6,22 @@
 	.type	test,@function
 test:                                   # @test
 	.param  	i32, i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 1
 	block
-	i32.eq  	$push0=, $0, $2
+	i32.const	$push5=, 1
+	i32.eq  	$push0=, $0, $pop5
 	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
-	i32.eq  	$push1=, $1, $2
+	i32.const	$push6=, 1
+	i32.eq  	$push1=, $1, $pop6
 	br_if   	$pop1, 0        # 0: down to label1
 # BB#2:                                 # %if.end3
 	block
 	i32.div_s	$push2=, $0, $1
-	i32.ne  	$push3=, $pop2, $2
-	br_if   	$pop3, 0        # 0: down to label2
+	i32.const	$push3=, 1
+	i32.ne  	$push4=, $pop2, $pop3
+	br_if   	$pop4, 0        # 0: down to label2
 # BB#3:                                 # %if.end6
 	return
 .LBB0_4:                                # %if.then5

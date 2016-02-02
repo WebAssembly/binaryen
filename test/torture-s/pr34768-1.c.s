@@ -5,12 +5,13 @@
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$push0=, x($0)
-	i32.sub 	$push1=, $0, $pop0
-	i32.store	$discard=, x($0), $pop1
+	i32.const	$push0=, 0
+	i32.const	$push4=, 0
+	i32.const	$push3=, 0
+	i32.load	$push1=, x($pop3)
+	i32.sub 	$push2=, $pop4, $pop1
+	i32.store	$discard=, x($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -34,17 +35,18 @@ bar:                                    # @bar
 test:                                   # @test
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.load	$2=, x($1)
-	i32.const	$push1=, foo@FUNCTION
-	i32.const	$push0=, bar@FUNCTION
-	i32.select	$push2=, $0, $pop1, $pop0
-	call_indirect	$pop2
-	i32.load	$push3=, x($1)
-	i32.add 	$push4=, $pop3, $2
-	return  	$pop4
+	i32.const	$push0=, 0
+	i32.load	$1=, x($pop0)
+	i32.const	$push2=, foo@FUNCTION
+	i32.const	$push1=, bar@FUNCTION
+	i32.select	$push3=, $0, $pop2, $pop1
+	call_indirect	$pop3
+	i32.const	$push6=, 0
+	i32.load	$push4=, x($pop6)
+	i32.add 	$push5=, $1, $pop4
+	return  	$pop5
 	.endfunc
 .Lfunc_end2:
 	.size	test, .Lfunc_end2-test
@@ -55,16 +57,16 @@ test:                                   # @test
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
+	i32.const	$push3=, 0
 	i32.const	$push0=, 1
-	i32.store	$push1=, x($0), $pop0
+	i32.store	$push1=, x($pop3), $pop0
 	i32.call	$push2=, test@FUNCTION, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push4=, 0
+	return  	$pop4
 .LBB3_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -77,7 +79,7 @@ main:                                   # @main
 	.type	x,@object
 	.section	.bss.x,"aw",@nobits
 	.globl	x
-	.align	2
+	.p2align	2
 x:
 	.int32	0                       # 0x0
 	.size	x, 4

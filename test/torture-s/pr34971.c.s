@@ -12,14 +12,15 @@ test1:                                  # @test1
 	i32.const	$push0=, 0
 	i64.load	$push1=, x($pop0)
 	i64.const	$push2=, 1099511627775
-	i64.and 	$1=, $pop1, $pop2
-	i64.const	$push3=, 8
-	i64.shl 	$push4=, $1, $pop3
-	i64.const	$push5=, 32
-	i64.shr_u	$push6=, $1, $pop5
-	i64.or  	$push7=, $pop4, $pop6
-	i64.ne  	$push8=, $pop7, $0
-	br_if   	$pop8, 0        # 0: down to label0
+	i64.and 	$push3=, $pop1, $pop2
+	tee_local	$push10=, $1=, $pop3
+	i64.const	$push4=, 8
+	i64.shl 	$push5=, $pop10, $pop4
+	i64.const	$push6=, 32
+	i64.shr_u	$push7=, $1, $pop6
+	i64.or  	$push8=, $pop5, $pop7
+	i64.ne  	$push9=, $pop8, $0
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
@@ -36,15 +37,15 @@ test1:                                  # @test1
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.then.i
-	i32.const	$0=, 0
-	i64.load	$push0=, x($0)
-	i64.const	$push1=, -1099511627776
-	i64.and 	$push2=, $pop0, $pop1
-	i64.const	$push3=, 4294967297
-	i64.or  	$push4=, $pop2, $pop3
-	i64.store	$discard=, x($0), $pop4
+	i32.const	$push0=, 0
+	i32.const	$push6=, 0
+	i64.load	$push1=, x($pop6)
+	i64.const	$push2=, -1099511627776
+	i64.and 	$push3=, $pop1, $pop2
+	i64.const	$push4=, 4294967297
+	i64.or  	$push5=, $pop3, $pop4
+	i64.store	$discard=, x($pop0), $pop5
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -55,7 +56,7 @@ main:                                   # @main
 	.type	x,@object
 	.section	.bss.x,"aw",@nobits
 	.globl	x
-	.align	3
+	.p2align	3
 x:
 	.skip	8
 	.size	x, 8

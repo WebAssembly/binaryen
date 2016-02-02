@@ -9,14 +9,17 @@ g:                                      # @g
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
 	block
-	i32.load	$push0=, a($1)
-	i32.ne  	$push1=, $pop0, $1
-	i32.load	$push2=, b($1)
-	i32.ne  	$push3=, $pop2, $1
-	i32.ne  	$push4=, $pop1, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	i32.const	$push0=, 0
+	i32.load	$push1=, a($pop0)
+	i32.const	$push8=, 0
+	i32.ne  	$push2=, $pop1, $pop8
+	i32.const	$push7=, 0
+	i32.load	$push3=, b($pop7)
+	i32.const	$push6=, 0
+	i32.ne  	$push4=, $pop3, $pop6
+	i32.ne  	$push5=, $pop2, $pop4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB0_2:                                # %if.then
@@ -36,14 +39,17 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
 	block
-	i32.load	$push0=, a($1)
-	i32.ne  	$push1=, $pop0, $1
-	i32.load	$push2=, b($1)
-	i32.ne  	$push3=, $pop2, $1
-	i32.ne  	$push4=, $pop1, $pop3
-	br_if   	$pop4, 0        # 0: down to label1
+	i32.const	$push0=, 0
+	i32.load	$push1=, a($pop0)
+	i32.const	$push8=, 0
+	i32.ne  	$push2=, $pop1, $pop8
+	i32.const	$push7=, 0
+	i32.load	$push3=, b($pop7)
+	i32.const	$push6=, 0
+	i32.ne  	$push4=, $pop3, $pop6
+	i32.ne  	$push5=, $pop2, $pop4
+	br_if   	$pop5, 0        # 0: down to label1
 # BB#1:                                 # %g.exit
 	return  	$1
 .LBB1_2:                                # %if.then.i
@@ -60,22 +66,11 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	block
-	i32.load	$push0=, a($0)
-	i32.ne  	$push1=, $pop0, $0
-	i32.load	$push2=, b($0)
-	i32.ne  	$push3=, $pop2, $0
-	i32.eq  	$push4=, $pop1, $pop3
-	br_if   	$pop4, 0        # 0: down to label2
-# BB#1:                                 # %if.then.i.i
-	call    	abort@FUNCTION
-	unreachable
-.LBB2_2:                                # %f.exit
-	end_block                       # label2:
-	call    	exit@FUNCTION, $0
+	i32.const	$push0=, 100
+	i32.call	$discard=, f@FUNCTION, $pop0
+	i32.const	$push1=, 0
+	call    	exit@FUNCTION, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -85,7 +80,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	0
 	.size	a, 4
@@ -94,7 +89,7 @@ a:
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
 	.globl	b
-	.align	2
+	.p2align	2
 b:
 	.int32	0
 	.size	b, 4

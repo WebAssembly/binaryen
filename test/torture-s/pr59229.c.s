@@ -6,42 +6,35 @@
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$1=, i($pop0)
-	i32.const	$2=, 6
 	block
-	i32.const	$push1=, -1
-	i32.add 	$push2=, $1, $pop1
-	i32.ge_u	$push3=, $pop2, $2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push1=, 0
+	i32.load	$push0=, i($pop1)
+	tee_local	$push17=, $1=, $pop0
+	i32.const	$push2=, -1
+	i32.add 	$push3=, $pop17, $pop2
+	i32.const	$push4=, 6
+	i32.ge_u	$push5=, $pop3, $pop4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$3=, 1
 	block
-	i32.const	$push5=, .L.str
-	i32.add 	$push4=, $1, $3
-	i32.call	$push6=, memcmp@FUNCTION, $0, $pop5, $pop4
-	br_if   	$pop6, 0        # 0: down to label1
+	i32.const	$push8=, .L.str
+	i32.const	$push6=, 1
+	i32.add 	$push7=, $1, $pop6
+	i32.call	$push9=, memcmp@FUNCTION, $0, $pop8, $pop7
+	br_if   	$pop9, 0        # 0: down to label1
 # BB#2:                                 # %if.end4
-	i32.const	$push7=, 32
-	i32.store8	$1=, 0($0), $pop7
-	i32.add 	$push8=, $0, $2
-	i32.store8	$discard=, 0($pop8), $1
-	i32.const	$push9=, 5
-	i32.add 	$push10=, $0, $pop9
-	i32.store8	$discard=, 0($pop10), $1
-	i32.const	$push11=, 4
+	i32.const	$push10=, 538976288
+	i32.store	$discard=, 0($0):p2align=0, $pop10
+	i32.const	$push11=, 6
 	i32.add 	$push12=, $0, $pop11
-	i32.store8	$discard=, 0($pop12), $1
-	i32.const	$push13=, 3
-	i32.add 	$push14=, $0, $pop13
-	i32.store8	$discard=, 0($pop14), $1
-	i32.const	$push15=, 2
-	i32.add 	$push16=, $0, $pop15
-	i32.store8	$discard=, 0($pop16), $1
-	i32.add 	$push17=, $0, $3
-	i32.store8	$discard=, 0($pop17), $1
+	i32.const	$push13=, 32
+	i32.store8	$discard=, 0($pop12), $pop13
+	i32.const	$push14=, 4
+	i32.add 	$push15=, $0, $pop14
+	i32.const	$push16=, 8224
+	i32.store16	$discard=, 0($pop15):p2align=0, $pop16
 	return
 .LBB0_3:                                # %if.then3
 	end_block                       # label1:
@@ -66,9 +59,9 @@ foo:                                    # @foo
 	i32.const	$2=, __stack_pointer
 	i32.load	$2=, 0($2)
 	i32.const	$3=, 16
-	i32.sub 	$5=, $2, $3
+	i32.sub 	$7=, $2, $3
 	i32.const	$3=, __stack_pointer
-	i32.store	$5=, 0($3), $5
+	i32.store	$7=, 0($3), $7
 	block
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
@@ -79,17 +72,17 @@ foo:                                    # @foo
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $1, $pop4
 	i32.const	$5=, 9
-	i32.add 	$5=, $5, $5
-	call    	memcpy@FUNCTION, $5, $0, $pop5
+	i32.add 	$5=, $7, $5
+	i32.call	$discard=, memcpy@FUNCTION, $5, $0, $pop5
 	i32.const	$6=, 9
-	i32.add 	$6=, $5, $6
+	i32.add 	$6=, $7, $6
 	call    	bar@FUNCTION, $6
 .LBB1_2:                                # %return
 	end_block                       # label2:
 	i32.const	$4=, 16
-	i32.add 	$5=, $5, $4
+	i32.add 	$7=, $7, $4
 	i32.const	$4=, __stack_pointer
-	i32.store	$5=, 0($4), $5
+	i32.store	$7=, 0($4), $7
 	return
 	.endfunc
 .Lfunc_end1:
@@ -103,25 +96,26 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.store	$0=, i($1), $1
+	i32.const	$push1=, 0
+	i32.const	$push5=, 0
+	i32.store	$0=, i($pop1), $pop5
 	copy_local	$1=, $0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i32.const	$push1=, .L.str.1
-	call    	foo@FUNCTION, $pop1, $1
+	i32.const	$push8=, .L.str.1
+	call    	foo@FUNCTION, $pop8, $1
 	i32.load	$push2=, i($0)
-	i32.const	$push3=, 1
-	i32.add 	$push0=, $pop2, $pop3
+	i32.const	$push7=, 1
+	i32.add 	$push0=, $pop2, $pop7
 	i32.store	$1=, i($0), $pop0
-	i32.const	$push4=, 16
-	i32.lt_s	$push5=, $1, $pop4
-	br_if   	$pop5, 0        # 0: up to label3
+	i32.const	$push6=, 16
+	i32.lt_s	$push3=, $1, $pop6
+	br_if   	$pop3, 0        # 0: up to label3
 # BB#2:                                 # %for.end
 	end_loop                        # label4:
-	i32.const	$push6=, 0
-	return  	$pop6
+	i32.const	$push4=, 0
+	return  	$pop4
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
@@ -130,7 +124,7 @@ main:                                   # @main
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
 	.globl	i
-	.align	2
+	.p2align	2
 i:
 	.int32	0                       # 0x0
 	.size	i, 4

@@ -8,913 +8,913 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$0=, 0
+	#APP
+	#NO_APP
+	i32.const	$1=, 0
+	#APP
+	#NO_APP
+	i32.const	$2=, 0
+	#APP
+	#NO_APP
+	i32.const	$3=, 0
+	#APP
+	#NO_APP
+	i32.const	$4=, 0
+	#APP
+	#NO_APP
+	i32.const	$5=, 0
+	#APP
+	#NO_APP
+	i32.const	$6=, 0
+	#APP
+	#NO_APP
+	i32.const	$7=, 0
+	#APP
+	#NO_APP
+	i32.const	$8=, 0
+	#APP
+	#NO_APP
+	i32.const	$9=, 0
+	#APP
+	#NO_APP
+	i32.const	$10=, 0
+	#APP
+	#NO_APP
+	i32.const	$11=, 0
+	#APP
+	#NO_APP
+	i32.const	$12=, 0
+	#APP
+	#NO_APP
+	i32.const	$13=, 0
+	#APP
+	#NO_APP
+	i32.const	$14=, 0
+	#APP
+	#NO_APP
+	i32.const	$15=, 0
+	#APP
+	#NO_APP
+	i32.const	$16=, 0
+	#APP
+	#NO_APP
+	i32.const	$17=, 0
+	#APP
+	#NO_APP
+	i32.const	$18=, 0
+	#APP
+	#NO_APP
+	i32.const	$19=, 0
+	#APP
+	#NO_APP
+	i32.const	$20=, 0
+	#APP
+	#NO_APP
+	i32.const	$21=, 0
+	#APP
+	#NO_APP
+	i32.const	$22=, 0
+	#APP
+	#NO_APP
+	i32.const	$23=, 0
+	#APP
+	#NO_APP
+	i32.const	$24=, 0
+	#APP
+	#NO_APP
+	i32.const	$25=, 0
+	#APP
+	#NO_APP
+	i32.const	$26=, 0
+	#APP
+	#NO_APP
+	i32.const	$27=, 0
+	#APP
+	#NO_APP
+	i32.const	$28=, 0
+	#APP
+	#NO_APP
+	i32.const	$29=, 0
+	#APP
+	#NO_APP
+	i32.const	$30=, 0
+	#APP
+	#NO_APP
+	i32.const	$31=, 0
+	#APP
+	#NO_APP
+	i32.const	$32=, 0
+	#APP
+	#NO_APP
+	i32.const	$33=, 0
+	#APP
+	#NO_APP
+	i32.const	$34=, 0
+	#APP
+	#NO_APP
+	i32.const	$35=, 0
+	#APP
+	#NO_APP
+	i32.const	$36=, 0
+	#APP
+	#NO_APP
+	i32.const	$37=, 0
+	#APP
+	#NO_APP
+	i32.const	$38=, 0
+	#APP
+	#NO_APP
+	i32.const	$39=, 0
+	#APP
+	#NO_APP
+	i32.const	$40=, 0
+	#APP
+	#NO_APP
+	i32.const	$41=, 0
+	#APP
+	#NO_APP
+	i32.const	$42=, 0
+	#APP
+	#NO_APP
+	i32.const	$43=, 0
+	#APP
+	#NO_APP
+	i32.const	$44=, 0
+	#APP
+	#NO_APP
+	i32.const	$45=, 0
+	#APP
+	#NO_APP
+	i32.const	$46=, 0
+	#APP
+	#NO_APP
+	i32.const	$47=, 0
+	#APP
+	#NO_APP
+	i32.const	$48=, 0
+	#APP
+	#NO_APP
+	i32.const	$49=, 0
+	#APP
+	#NO_APP
+	i32.const	$50=, 0
+	#APP
+	#NO_APP
+	i32.const	$51=, 0
+	#APP
+	#NO_APP
+	i32.const	$52=, 0
+	#APP
+	#NO_APP
+	i32.const	$53=, 0
+	#APP
+	#NO_APP
+	i32.const	$54=, 0
+	#APP
+	#NO_APP
+	i32.const	$55=, 0
+	#APP
+	#NO_APP
+	i32.const	$56=, 0
+	#APP
+	#NO_APP
+	i32.const	$57=, 0
+	#APP
+	#NO_APP
+	i32.const	$58=, 0
+	#APP
+	#NO_APP
+	i32.const	$59=, 0
+	#APP
+	#NO_APP
+	i32.const	$60=, 0
+	#APP
+	#NO_APP
+	i32.const	$61=, 0
+	#APP
+	#NO_APP
+	i32.const	$62=, 0
+	#APP
+	#NO_APP
+	i32.const	$63=, 0
+	#APP
+	#NO_APP
+	i32.const	$64=, 0
+	#APP
+	#NO_APP
+	i32.const	$65=, 0
+	#APP
+	#NO_APP
+	i32.const	$66=, 0
+	#APP
+	#NO_APP
+	i32.const	$67=, 0
+	#APP
+	#NO_APP
+	i32.const	$68=, 0
+	#APP
+	#NO_APP
+	i32.const	$69=, 0
+	#APP
+	#NO_APP
+	i32.const	$70=, 0
+	#APP
+	#NO_APP
+	i32.const	$71=, 0
+	#APP
+	#NO_APP
+	i32.const	$72=, 0
+	#APP
+	#NO_APP
+	i32.const	$73=, 0
+	#APP
+	#NO_APP
+	i32.const	$74=, 0
+	#APP
+	#NO_APP
+	i32.const	$75=, 0
+	#APP
+	#NO_APP
+	i32.const	$76=, 0
+	#APP
+	#NO_APP
+	i32.const	$77=, 0
+	#APP
+	#NO_APP
+	i32.const	$78=, 0
+	#APP
+	#NO_APP
+	i32.const	$79=, 0
+	#APP
+	#NO_APP
+	i32.const	$80=, 0
+	#APP
+	#NO_APP
+	i32.const	$81=, 0
+	#APP
+	#NO_APP
+	i32.const	$82=, 0
+	#APP
+	#NO_APP
+	i32.const	$83=, 0
+	#APP
+	#NO_APP
+	i32.const	$84=, 0
+	#APP
+	#NO_APP
+	i32.const	$85=, 0
+	#APP
+	#NO_APP
+	i32.const	$86=, 0
+	#APP
+	#NO_APP
+	i32.const	$87=, 0
+	#APP
+	#NO_APP
+	i32.const	$88=, 0
+	#APP
+	#NO_APP
+	i32.const	$89=, 0
+	#APP
+	#NO_APP
+	i32.const	$90=, 0
+	#APP
+	#NO_APP
+	i32.const	$91=, 0
+	#APP
+	#NO_APP
+	i32.const	$92=, 0
+	#APP
+	#NO_APP
+	i32.const	$93=, 0
+	#APP
+	#NO_APP
+	i32.const	$94=, 0
+	#APP
+	#NO_APP
+	i32.const	$95=, 0
+	#APP
+	#NO_APP
+	i32.const	$96=, 0
+	#APP
+	#NO_APP
+	i32.const	$97=, 0
+	#APP
+	#NO_APP
+	i32.const	$98=, 0
+	#APP
+	#NO_APP
+	i32.const	$99=, 0
+	#APP
+	#NO_APP
+	i32.const	$100=, 0
+	#APP
+	#NO_APP
+	i32.const	$101=, 0
+	#APP
+	#NO_APP
+	i32.const	$102=, 0
+	#APP
+	#NO_APP
+	i32.const	$103=, 0
+	#APP
+	#NO_APP
+	i32.const	$104=, 0
+	#APP
+	#NO_APP
+	i32.const	$105=, 0
+	#APP
+	#NO_APP
+	i32.const	$106=, 0
+	#APP
+	#NO_APP
+	i32.const	$107=, 0
+	#APP
+	#NO_APP
+	i32.const	$108=, 0
+	#APP
+	#NO_APP
+	i32.const	$109=, 0
+	#APP
+	#NO_APP
+	i32.const	$110=, 0
+	#APP
+	#NO_APP
+	i32.const	$111=, 0
+	#APP
+	#NO_APP
+	i32.const	$112=, 0
+	#APP
+	#NO_APP
+	i32.const	$113=, 0
+	#APP
+	#NO_APP
+	i32.const	$114=, 0
+	#APP
+	#NO_APP
+	i32.const	$115=, 0
+	#APP
+	#NO_APP
+	i32.const	$116=, 0
+	#APP
+	#NO_APP
+	i32.const	$117=, 0
+	#APP
+	#NO_APP
+	i32.const	$118=, 0
+	#APP
+	#NO_APP
+	i32.const	$119=, 0
+	#APP
+	#NO_APP
+	i32.const	$120=, 0
+	#APP
+	#NO_APP
+	i32.const	$121=, 0
+	#APP
+	#NO_APP
+	i32.const	$122=, 0
+	#APP
+	#NO_APP
+	i32.const	$123=, 0
+	#APP
+	#NO_APP
+	i32.const	$124=, 0
+	#APP
+	#NO_APP
+	i32.const	$125=, 0
+	#APP
+	#NO_APP
+	i32.const	$126=, 0
+	#APP
+	#NO_APP
+	i32.const	$127=, 0
+	#APP
+	#NO_APP
+	i32.const	$128=, 0
+	#APP
+	#NO_APP
+	i32.const	$129=, 0
+	#APP
+	#NO_APP
+	i32.const	$130=, 0
+	#APP
+	#NO_APP
+	i32.const	$131=, 0
+	#APP
+	#NO_APP
+	i32.const	$132=, 0
+	#APP
+	#NO_APP
+	i32.const	$133=, 0
+	#APP
+	#NO_APP
+	i32.const	$134=, 0
+	#APP
+	#NO_APP
+	i32.const	$135=, 0
+	#APP
+	#NO_APP
+	i32.const	$136=, 0
+	#APP
+	#NO_APP
+	i32.const	$137=, 0
+	#APP
+	#NO_APP
+	i32.const	$138=, 0
+	#APP
+	#NO_APP
+	i32.const	$139=, 0
+	#APP
+	#NO_APP
+	i32.const	$140=, 0
+	#APP
+	#NO_APP
+	i32.const	$141=, 0
+	#APP
+	#NO_APP
+	i32.const	$142=, 0
+	#APP
+	#NO_APP
+	i32.const	$143=, 0
+	#APP
+	#NO_APP
+	i32.const	$144=, 0
+	#APP
+	#NO_APP
+	i32.const	$145=, 0
+	#APP
+	#NO_APP
+	i32.const	$146=, 0
+	#APP
+	#NO_APP
+	i32.const	$147=, 0
+	#APP
+	#NO_APP
+	i32.const	$148=, 0
+	#APP
+	#NO_APP
+	i32.const	$149=, 0
+	#APP
+	#NO_APP
+	i32.const	$150=, 0
+	#APP
+	#NO_APP
+	i32.const	$151=, 0
+	#APP
+	#NO_APP
+	i32.const	$152=, 0
+	#APP
+	#NO_APP
+	i32.const	$153=, 0
+	#APP
+	#NO_APP
+	i32.const	$154=, 0
+	#APP
+	#NO_APP
+	i32.const	$155=, 0
+	#APP
+	#NO_APP
+	i32.const	$156=, 0
+	#APP
+	#NO_APP
+	i32.const	$157=, 0
+	#APP
+	#NO_APP
+	i32.const	$158=, 0
+	#APP
+	#NO_APP
+	i32.const	$159=, 0
+	#APP
+	#NO_APP
+	i32.const	$160=, 0
+	#APP
+	#NO_APP
+	i32.const	$161=, 0
+	#APP
+	#NO_APP
+	i32.const	$162=, 0
+	#APP
+	#NO_APP
+	i32.const	$163=, 0
+	#APP
+	#NO_APP
+	i32.const	$164=, 0
+	#APP
+	#NO_APP
+	i32.const	$165=, 0
+	#APP
+	#NO_APP
+	i32.const	$166=, 0
+	#APP
+	#NO_APP
+	i32.const	$167=, 0
+	#APP
+	#NO_APP
+	i32.const	$168=, 0
+	#APP
+	#NO_APP
+	i32.const	$169=, 0
+	#APP
+	#NO_APP
+	i32.const	$170=, 0
+	#APP
+	#NO_APP
+	i32.const	$171=, 0
+	#APP
+	#NO_APP
+	i32.const	$172=, 0
+	#APP
+	#NO_APP
+	i32.const	$173=, 0
+	#APP
+	#NO_APP
+	i32.const	$174=, 0
+	#APP
+	#NO_APP
+	i32.const	$175=, 0
+	#APP
+	#NO_APP
+	i32.const	$176=, 0
+	#APP
+	#NO_APP
+	i32.const	$177=, 0
+	#APP
+	#NO_APP
+	i32.const	$178=, 0
+	#APP
+	#NO_APP
+	i32.const	$179=, 0
+	#APP
+	#NO_APP
+	i32.const	$180=, 0
+	#APP
+	#NO_APP
+	i32.const	$181=, 0
+	#APP
+	#NO_APP
+	i32.const	$182=, 0
+	#APP
+	#NO_APP
+	i32.const	$183=, 0
+	#APP
+	#NO_APP
+	i32.const	$184=, 0
+	#APP
+	#NO_APP
+	i32.const	$185=, 0
+	#APP
+	#NO_APP
+	i32.const	$186=, 0
+	#APP
+	#NO_APP
+	i32.const	$187=, 0
+	#APP
+	#NO_APP
+	i32.const	$188=, 0
+	#APP
+	#NO_APP
+	i32.const	$189=, 0
+	#APP
+	#NO_APP
+	i32.const	$190=, 0
+	#APP
+	#NO_APP
+	i32.const	$191=, 0
+	#APP
+	#NO_APP
+	i32.const	$192=, 0
+	#APP
+	#NO_APP
+	i32.const	$193=, 0
+	#APP
+	#NO_APP
+	i32.const	$194=, 0
+	#APP
+	#NO_APP
+	i32.const	$195=, 0
+	#APP
+	#NO_APP
+	i32.const	$196=, 0
+	#APP
+	#NO_APP
+	i32.const	$197=, 0
+	#APP
+	#NO_APP
+	i32.const	$198=, 0
+	#APP
+	#NO_APP
+	i32.const	$199=, 0
+	#APP
+	#NO_APP
+	i32.const	$200=, 0
+	#APP
+	#NO_APP
+	i32.const	$201=, 0
+	#APP
+	#NO_APP
+	i32.const	$202=, 0
+	#APP
+	#NO_APP
+	i32.const	$203=, 0
+	#APP
+	#NO_APP
+	i32.const	$204=, 0
+	#APP
+	#NO_APP
+	i32.const	$205=, 0
+	#APP
+	#NO_APP
+	i32.const	$206=, 0
+	#APP
+	#NO_APP
+	i32.const	$207=, 0
+	#APP
+	#NO_APP
+	i32.const	$208=, 0
+	#APP
+	#NO_APP
+	i32.const	$209=, 0
+	#APP
+	#NO_APP
+	i32.const	$210=, 0
+	#APP
+	#NO_APP
+	i32.const	$211=, 0
+	#APP
+	#NO_APP
+	i32.const	$212=, 0
+	#APP
+	#NO_APP
+	i32.const	$213=, 0
+	#APP
+	#NO_APP
+	i32.const	$214=, 0
+	#APP
+	#NO_APP
+	i32.const	$215=, 0
+	#APP
+	#NO_APP
+	i32.const	$216=, 0
+	#APP
+	#NO_APP
+	i32.const	$217=, 0
+	#APP
+	#NO_APP
+	i32.const	$218=, 0
+	#APP
+	#NO_APP
+	i32.const	$219=, 0
+	#APP
+	#NO_APP
+	i32.const	$220=, 0
+	#APP
+	#NO_APP
+	i32.const	$221=, 0
+	#APP
+	#NO_APP
+	i32.const	$222=, 0
+	#APP
+	#NO_APP
+	i32.const	$223=, 0
+	#APP
+	#NO_APP
+	i32.const	$224=, 0
+	#APP
+	#NO_APP
+	i32.const	$225=, 0
+	#APP
+	#NO_APP
+	i32.const	$226=, 0
+	#APP
+	#NO_APP
+	i32.const	$227=, 0
+	#APP
+	#NO_APP
+	i32.const	$228=, 0
+	#APP
+	#NO_APP
+	i32.const	$229=, 0
+	#APP
+	#NO_APP
+	i32.const	$230=, 0
+	#APP
+	#NO_APP
+	i32.const	$231=, 0
+	#APP
+	#NO_APP
+	i32.const	$232=, 0
+	#APP
+	#NO_APP
+	i32.const	$233=, 0
+	#APP
+	#NO_APP
+	i32.const	$234=, 0
+	#APP
+	#NO_APP
+	i32.const	$235=, 0
+	#APP
+	#NO_APP
+	i32.const	$236=, 0
+	#APP
+	#NO_APP
+	i32.const	$237=, 0
+	#APP
+	#NO_APP
+	i32.const	$238=, 0
+	#APP
+	#NO_APP
+	i32.const	$239=, 0
+	#APP
+	#NO_APP
+	i32.const	$240=, 0
+	#APP
+	#NO_APP
+	i32.const	$241=, 0
+	#APP
+	#NO_APP
+	i32.const	$242=, 0
+	#APP
+	#NO_APP
+	i32.const	$243=, 0
+	#APP
+	#NO_APP
+	i32.const	$244=, 0
+	#APP
+	#NO_APP
+	i32.const	$245=, 0
+	#APP
+	#NO_APP
+	i32.const	$246=, 0
+	#APP
+	#NO_APP
+	i32.const	$247=, 0
+	#APP
+	#NO_APP
+	i32.const	$248=, 0
+	#APP
+	#NO_APP
+	i32.const	$249=, 0
+	#APP
+	#NO_APP
+	i32.const	$250=, 0
+	#APP
+	#NO_APP
+	i32.const	$251=, 0
+	#APP
+	#NO_APP
+	i32.const	$252=, 0
+	#APP
+	#NO_APP
+	i32.const	$253=, 0
+	#APP
+	#NO_APP
+	i32.const	$254=, 0
+	#APP
+	#NO_APP
+	i32.const	$255=, 0
+	#APP
+	#NO_APP
+	i32.const	$256=, 0
+	#APP
+	#NO_APP
+	i32.const	$257=, 0
+	#APP
+	#NO_APP
+	i32.const	$258=, 0
+	#APP
+	#NO_APP
+	i32.const	$259=, 0
+	#APP
+	#NO_APP
+	i32.const	$260=, 0
+	#APP
+	#NO_APP
+	i32.const	$261=, 0
+	#APP
+	#NO_APP
+	i32.const	$262=, 0
+	#APP
+	#NO_APP
+	i32.const	$263=, 0
+	#APP
+	#NO_APP
+	i32.const	$264=, 0
+	#APP
+	#NO_APP
+	i32.const	$265=, 0
+	#APP
+	#NO_APP
+	i32.const	$266=, 0
+	#APP
+	#NO_APP
+	i32.const	$267=, 0
+	#APP
+	#NO_APP
+	i32.const	$268=, 0
+	#APP
+	#NO_APP
+	i32.const	$269=, 0
+	#APP
+	#NO_APP
+	i32.const	$270=, 0
+	#APP
+	#NO_APP
+	i32.const	$271=, 0
+	#APP
+	#NO_APP
+	i32.const	$272=, 0
+	#APP
+	#NO_APP
+	i32.const	$273=, 0
+	#APP
+	#NO_APP
+	i32.const	$274=, 0
+	#APP
+	#NO_APP
+	i32.const	$275=, 0
+	#APP
+	#NO_APP
+	i32.const	$276=, 0
+	#APP
+	#NO_APP
+	i32.const	$277=, 0
+	#APP
+	#NO_APP
+	i32.const	$278=, 0
+	#APP
+	#NO_APP
+	i32.const	$279=, 0
+	#APP
+	#NO_APP
+	i32.const	$280=, 0
+	#APP
+	#NO_APP
+	i32.const	$281=, 0
+	#APP
+	#NO_APP
+	i32.const	$282=, 0
+	#APP
+	#NO_APP
+	i32.const	$283=, 0
+	#APP
+	#NO_APP
+	i32.const	$284=, 0
+	#APP
+	#NO_APP
+	i32.const	$285=, 0
+	#APP
+	#NO_APP
+	i32.const	$286=, 0
+	#APP
+	#NO_APP
+	i32.const	$287=, 0
+	#APP
+	#NO_APP
+	i32.const	$288=, 0
+	#APP
+	#NO_APP
+	i32.const	$289=, 0
+	#APP
+	#NO_APP
+	i32.const	$290=, 0
+	#APP
+	#NO_APP
+	i32.const	$291=, 0
+	#APP
+	#NO_APP
+	i32.const	$292=, 0
+	#APP
+	#NO_APP
+	i32.const	$293=, 0
+	#APP
+	#NO_APP
+	i32.const	$294=, 0
+	#APP
+	#NO_APP
+	i32.const	$295=, 0
+	#APP
+	#NO_APP
+	i32.const	$296=, 0
+	#APP
+	#NO_APP
+	i32.const	$297=, 0
+	#APP
+	#NO_APP
+	i32.const	$298=, 0
+	#APP
+	#NO_APP
+	i32.const	$299=, 0
+	#APP
+	#NO_APP
+	i32.const	$300=, 0
+	#APP
+	#NO_APP
+	i32.const	$301=, 0
+	#APP
+	#NO_APP
 	i32.const	$302=, 0
-	copy_local	$0=, $302
-	#APP
-	#NO_APP
-	copy_local	$1=, $302
-	#APP
-	#NO_APP
-	copy_local	$2=, $302
-	#APP
-	#NO_APP
-	copy_local	$3=, $302
-	#APP
-	#NO_APP
-	copy_local	$4=, $302
-	#APP
-	#NO_APP
-	copy_local	$5=, $302
-	#APP
-	#NO_APP
-	copy_local	$6=, $302
-	#APP
-	#NO_APP
-	copy_local	$7=, $302
-	#APP
-	#NO_APP
-	copy_local	$8=, $302
-	#APP
-	#NO_APP
-	copy_local	$9=, $302
-	#APP
-	#NO_APP
-	copy_local	$10=, $302
-	#APP
-	#NO_APP
-	copy_local	$11=, $302
-	#APP
-	#NO_APP
-	copy_local	$12=, $302
-	#APP
-	#NO_APP
-	copy_local	$13=, $302
-	#APP
-	#NO_APP
-	copy_local	$14=, $302
-	#APP
-	#NO_APP
-	copy_local	$15=, $302
-	#APP
-	#NO_APP
-	copy_local	$16=, $302
-	#APP
-	#NO_APP
-	copy_local	$17=, $302
-	#APP
-	#NO_APP
-	copy_local	$18=, $302
-	#APP
-	#NO_APP
-	copy_local	$19=, $302
-	#APP
-	#NO_APP
-	copy_local	$20=, $302
-	#APP
-	#NO_APP
-	copy_local	$21=, $302
-	#APP
-	#NO_APP
-	copy_local	$22=, $302
-	#APP
-	#NO_APP
-	copy_local	$23=, $302
-	#APP
-	#NO_APP
-	copy_local	$24=, $302
-	#APP
-	#NO_APP
-	copy_local	$25=, $302
-	#APP
-	#NO_APP
-	copy_local	$26=, $302
-	#APP
-	#NO_APP
-	copy_local	$27=, $302
-	#APP
-	#NO_APP
-	copy_local	$28=, $302
-	#APP
-	#NO_APP
-	copy_local	$29=, $302
-	#APP
-	#NO_APP
-	copy_local	$30=, $302
-	#APP
-	#NO_APP
-	copy_local	$31=, $302
-	#APP
-	#NO_APP
-	copy_local	$32=, $302
-	#APP
-	#NO_APP
-	copy_local	$33=, $302
-	#APP
-	#NO_APP
-	copy_local	$34=, $302
-	#APP
-	#NO_APP
-	copy_local	$35=, $302
-	#APP
-	#NO_APP
-	copy_local	$36=, $302
-	#APP
-	#NO_APP
-	copy_local	$37=, $302
-	#APP
-	#NO_APP
-	copy_local	$38=, $302
-	#APP
-	#NO_APP
-	copy_local	$39=, $302
-	#APP
-	#NO_APP
-	copy_local	$40=, $302
-	#APP
-	#NO_APP
-	copy_local	$41=, $302
-	#APP
-	#NO_APP
-	copy_local	$42=, $302
-	#APP
-	#NO_APP
-	copy_local	$43=, $302
-	#APP
-	#NO_APP
-	copy_local	$44=, $302
-	#APP
-	#NO_APP
-	copy_local	$45=, $302
-	#APP
-	#NO_APP
-	copy_local	$46=, $302
-	#APP
-	#NO_APP
-	copy_local	$47=, $302
-	#APP
-	#NO_APP
-	copy_local	$48=, $302
-	#APP
-	#NO_APP
-	copy_local	$49=, $302
-	#APP
-	#NO_APP
-	copy_local	$50=, $302
-	#APP
-	#NO_APP
-	copy_local	$51=, $302
-	#APP
-	#NO_APP
-	copy_local	$52=, $302
-	#APP
-	#NO_APP
-	copy_local	$53=, $302
-	#APP
-	#NO_APP
-	copy_local	$54=, $302
-	#APP
-	#NO_APP
-	copy_local	$55=, $302
-	#APP
-	#NO_APP
-	copy_local	$56=, $302
-	#APP
-	#NO_APP
-	copy_local	$57=, $302
-	#APP
-	#NO_APP
-	copy_local	$58=, $302
-	#APP
-	#NO_APP
-	copy_local	$59=, $302
-	#APP
-	#NO_APP
-	copy_local	$60=, $302
-	#APP
-	#NO_APP
-	copy_local	$61=, $302
-	#APP
-	#NO_APP
-	copy_local	$62=, $302
-	#APP
-	#NO_APP
-	copy_local	$63=, $302
-	#APP
-	#NO_APP
-	copy_local	$64=, $302
-	#APP
-	#NO_APP
-	copy_local	$65=, $302
-	#APP
-	#NO_APP
-	copy_local	$66=, $302
-	#APP
-	#NO_APP
-	copy_local	$67=, $302
-	#APP
-	#NO_APP
-	copy_local	$68=, $302
-	#APP
-	#NO_APP
-	copy_local	$69=, $302
-	#APP
-	#NO_APP
-	copy_local	$70=, $302
-	#APP
-	#NO_APP
-	copy_local	$71=, $302
-	#APP
-	#NO_APP
-	copy_local	$72=, $302
-	#APP
-	#NO_APP
-	copy_local	$73=, $302
-	#APP
-	#NO_APP
-	copy_local	$74=, $302
-	#APP
-	#NO_APP
-	copy_local	$75=, $302
-	#APP
-	#NO_APP
-	copy_local	$76=, $302
-	#APP
-	#NO_APP
-	copy_local	$77=, $302
-	#APP
-	#NO_APP
-	copy_local	$78=, $302
-	#APP
-	#NO_APP
-	copy_local	$79=, $302
-	#APP
-	#NO_APP
-	copy_local	$80=, $302
-	#APP
-	#NO_APP
-	copy_local	$81=, $302
-	#APP
-	#NO_APP
-	copy_local	$82=, $302
-	#APP
-	#NO_APP
-	copy_local	$83=, $302
-	#APP
-	#NO_APP
-	copy_local	$84=, $302
-	#APP
-	#NO_APP
-	copy_local	$85=, $302
-	#APP
-	#NO_APP
-	copy_local	$86=, $302
-	#APP
-	#NO_APP
-	copy_local	$87=, $302
-	#APP
-	#NO_APP
-	copy_local	$88=, $302
-	#APP
-	#NO_APP
-	copy_local	$89=, $302
-	#APP
-	#NO_APP
-	copy_local	$90=, $302
-	#APP
-	#NO_APP
-	copy_local	$91=, $302
-	#APP
-	#NO_APP
-	copy_local	$92=, $302
-	#APP
-	#NO_APP
-	copy_local	$93=, $302
-	#APP
-	#NO_APP
-	copy_local	$94=, $302
-	#APP
-	#NO_APP
-	copy_local	$95=, $302
-	#APP
-	#NO_APP
-	copy_local	$96=, $302
-	#APP
-	#NO_APP
-	copy_local	$97=, $302
-	#APP
-	#NO_APP
-	copy_local	$98=, $302
-	#APP
-	#NO_APP
-	copy_local	$99=, $302
-	#APP
-	#NO_APP
-	copy_local	$100=, $302
-	#APP
-	#NO_APP
-	copy_local	$101=, $302
-	#APP
-	#NO_APP
-	copy_local	$102=, $302
-	#APP
-	#NO_APP
-	copy_local	$103=, $302
-	#APP
-	#NO_APP
-	copy_local	$104=, $302
-	#APP
-	#NO_APP
-	copy_local	$105=, $302
-	#APP
-	#NO_APP
-	copy_local	$106=, $302
-	#APP
-	#NO_APP
-	copy_local	$107=, $302
-	#APP
-	#NO_APP
-	copy_local	$108=, $302
-	#APP
-	#NO_APP
-	copy_local	$109=, $302
-	#APP
-	#NO_APP
-	copy_local	$110=, $302
-	#APP
-	#NO_APP
-	copy_local	$111=, $302
-	#APP
-	#NO_APP
-	copy_local	$112=, $302
-	#APP
-	#NO_APP
-	copy_local	$113=, $302
-	#APP
-	#NO_APP
-	copy_local	$114=, $302
-	#APP
-	#NO_APP
-	copy_local	$115=, $302
-	#APP
-	#NO_APP
-	copy_local	$116=, $302
-	#APP
-	#NO_APP
-	copy_local	$117=, $302
-	#APP
-	#NO_APP
-	copy_local	$118=, $302
-	#APP
-	#NO_APP
-	copy_local	$119=, $302
-	#APP
-	#NO_APP
-	copy_local	$120=, $302
-	#APP
-	#NO_APP
-	copy_local	$121=, $302
-	#APP
-	#NO_APP
-	copy_local	$122=, $302
-	#APP
-	#NO_APP
-	copy_local	$123=, $302
-	#APP
-	#NO_APP
-	copy_local	$124=, $302
-	#APP
-	#NO_APP
-	copy_local	$125=, $302
-	#APP
-	#NO_APP
-	copy_local	$126=, $302
-	#APP
-	#NO_APP
-	copy_local	$127=, $302
-	#APP
-	#NO_APP
-	copy_local	$128=, $302
-	#APP
-	#NO_APP
-	copy_local	$129=, $302
-	#APP
-	#NO_APP
-	copy_local	$130=, $302
-	#APP
-	#NO_APP
-	copy_local	$131=, $302
-	#APP
-	#NO_APP
-	copy_local	$132=, $302
-	#APP
-	#NO_APP
-	copy_local	$133=, $302
-	#APP
-	#NO_APP
-	copy_local	$134=, $302
-	#APP
-	#NO_APP
-	copy_local	$135=, $302
-	#APP
-	#NO_APP
-	copy_local	$136=, $302
-	#APP
-	#NO_APP
-	copy_local	$137=, $302
-	#APP
-	#NO_APP
-	copy_local	$138=, $302
-	#APP
-	#NO_APP
-	copy_local	$139=, $302
-	#APP
-	#NO_APP
-	copy_local	$140=, $302
-	#APP
-	#NO_APP
-	copy_local	$141=, $302
-	#APP
-	#NO_APP
-	copy_local	$142=, $302
-	#APP
-	#NO_APP
-	copy_local	$143=, $302
-	#APP
-	#NO_APP
-	copy_local	$144=, $302
-	#APP
-	#NO_APP
-	copy_local	$145=, $302
-	#APP
-	#NO_APP
-	copy_local	$146=, $302
-	#APP
-	#NO_APP
-	copy_local	$147=, $302
-	#APP
-	#NO_APP
-	copy_local	$148=, $302
-	#APP
-	#NO_APP
-	copy_local	$149=, $302
-	#APP
-	#NO_APP
-	copy_local	$150=, $302
-	#APP
-	#NO_APP
-	copy_local	$151=, $302
-	#APP
-	#NO_APP
-	copy_local	$152=, $302
-	#APP
-	#NO_APP
-	copy_local	$153=, $302
-	#APP
-	#NO_APP
-	copy_local	$154=, $302
-	#APP
-	#NO_APP
-	copy_local	$155=, $302
-	#APP
-	#NO_APP
-	copy_local	$156=, $302
-	#APP
-	#NO_APP
-	copy_local	$157=, $302
-	#APP
-	#NO_APP
-	copy_local	$158=, $302
-	#APP
-	#NO_APP
-	copy_local	$159=, $302
-	#APP
-	#NO_APP
-	copy_local	$160=, $302
-	#APP
-	#NO_APP
-	copy_local	$161=, $302
-	#APP
-	#NO_APP
-	copy_local	$162=, $302
-	#APP
-	#NO_APP
-	copy_local	$163=, $302
-	#APP
-	#NO_APP
-	copy_local	$164=, $302
-	#APP
-	#NO_APP
-	copy_local	$165=, $302
-	#APP
-	#NO_APP
-	copy_local	$166=, $302
-	#APP
-	#NO_APP
-	copy_local	$167=, $302
-	#APP
-	#NO_APP
-	copy_local	$168=, $302
-	#APP
-	#NO_APP
-	copy_local	$169=, $302
-	#APP
-	#NO_APP
-	copy_local	$170=, $302
-	#APP
-	#NO_APP
-	copy_local	$171=, $302
-	#APP
-	#NO_APP
-	copy_local	$172=, $302
-	#APP
-	#NO_APP
-	copy_local	$173=, $302
-	#APP
-	#NO_APP
-	copy_local	$174=, $302
-	#APP
-	#NO_APP
-	copy_local	$175=, $302
-	#APP
-	#NO_APP
-	copy_local	$176=, $302
-	#APP
-	#NO_APP
-	copy_local	$177=, $302
-	#APP
-	#NO_APP
-	copy_local	$178=, $302
-	#APP
-	#NO_APP
-	copy_local	$179=, $302
-	#APP
-	#NO_APP
-	copy_local	$180=, $302
-	#APP
-	#NO_APP
-	copy_local	$181=, $302
-	#APP
-	#NO_APP
-	copy_local	$182=, $302
-	#APP
-	#NO_APP
-	copy_local	$183=, $302
-	#APP
-	#NO_APP
-	copy_local	$184=, $302
-	#APP
-	#NO_APP
-	copy_local	$185=, $302
-	#APP
-	#NO_APP
-	copy_local	$186=, $302
-	#APP
-	#NO_APP
-	copy_local	$187=, $302
-	#APP
-	#NO_APP
-	copy_local	$188=, $302
-	#APP
-	#NO_APP
-	copy_local	$189=, $302
-	#APP
-	#NO_APP
-	copy_local	$190=, $302
-	#APP
-	#NO_APP
-	copy_local	$191=, $302
-	#APP
-	#NO_APP
-	copy_local	$192=, $302
-	#APP
-	#NO_APP
-	copy_local	$193=, $302
-	#APP
-	#NO_APP
-	copy_local	$194=, $302
-	#APP
-	#NO_APP
-	copy_local	$195=, $302
-	#APP
-	#NO_APP
-	copy_local	$196=, $302
-	#APP
-	#NO_APP
-	copy_local	$197=, $302
-	#APP
-	#NO_APP
-	copy_local	$198=, $302
-	#APP
-	#NO_APP
-	copy_local	$199=, $302
-	#APP
-	#NO_APP
-	copy_local	$200=, $302
-	#APP
-	#NO_APP
-	copy_local	$201=, $302
-	#APP
-	#NO_APP
-	copy_local	$202=, $302
-	#APP
-	#NO_APP
-	copy_local	$203=, $302
-	#APP
-	#NO_APP
-	copy_local	$204=, $302
-	#APP
-	#NO_APP
-	copy_local	$205=, $302
-	#APP
-	#NO_APP
-	copy_local	$206=, $302
-	#APP
-	#NO_APP
-	copy_local	$207=, $302
-	#APP
-	#NO_APP
-	copy_local	$208=, $302
-	#APP
-	#NO_APP
-	copy_local	$209=, $302
-	#APP
-	#NO_APP
-	copy_local	$210=, $302
-	#APP
-	#NO_APP
-	copy_local	$211=, $302
-	#APP
-	#NO_APP
-	copy_local	$212=, $302
-	#APP
-	#NO_APP
-	copy_local	$213=, $302
-	#APP
-	#NO_APP
-	copy_local	$214=, $302
-	#APP
-	#NO_APP
-	copy_local	$215=, $302
-	#APP
-	#NO_APP
-	copy_local	$216=, $302
-	#APP
-	#NO_APP
-	copy_local	$217=, $302
-	#APP
-	#NO_APP
-	copy_local	$218=, $302
-	#APP
-	#NO_APP
-	copy_local	$219=, $302
-	#APP
-	#NO_APP
-	copy_local	$220=, $302
-	#APP
-	#NO_APP
-	copy_local	$221=, $302
-	#APP
-	#NO_APP
-	copy_local	$222=, $302
-	#APP
-	#NO_APP
-	copy_local	$223=, $302
-	#APP
-	#NO_APP
-	copy_local	$224=, $302
-	#APP
-	#NO_APP
-	copy_local	$225=, $302
-	#APP
-	#NO_APP
-	copy_local	$226=, $302
-	#APP
-	#NO_APP
-	copy_local	$227=, $302
-	#APP
-	#NO_APP
-	copy_local	$228=, $302
-	#APP
-	#NO_APP
-	copy_local	$229=, $302
-	#APP
-	#NO_APP
-	copy_local	$230=, $302
-	#APP
-	#NO_APP
-	copy_local	$231=, $302
-	#APP
-	#NO_APP
-	copy_local	$232=, $302
-	#APP
-	#NO_APP
-	copy_local	$233=, $302
-	#APP
-	#NO_APP
-	copy_local	$234=, $302
-	#APP
-	#NO_APP
-	copy_local	$235=, $302
-	#APP
-	#NO_APP
-	copy_local	$236=, $302
-	#APP
-	#NO_APP
-	copy_local	$237=, $302
-	#APP
-	#NO_APP
-	copy_local	$238=, $302
-	#APP
-	#NO_APP
-	copy_local	$239=, $302
-	#APP
-	#NO_APP
-	copy_local	$240=, $302
-	#APP
-	#NO_APP
-	copy_local	$241=, $302
-	#APP
-	#NO_APP
-	copy_local	$242=, $302
-	#APP
-	#NO_APP
-	copy_local	$243=, $302
-	#APP
-	#NO_APP
-	copy_local	$244=, $302
-	#APP
-	#NO_APP
-	copy_local	$245=, $302
-	#APP
-	#NO_APP
-	copy_local	$246=, $302
-	#APP
-	#NO_APP
-	copy_local	$247=, $302
-	#APP
-	#NO_APP
-	copy_local	$248=, $302
-	#APP
-	#NO_APP
-	copy_local	$249=, $302
-	#APP
-	#NO_APP
-	copy_local	$250=, $302
-	#APP
-	#NO_APP
-	copy_local	$251=, $302
-	#APP
-	#NO_APP
-	copy_local	$252=, $302
-	#APP
-	#NO_APP
-	copy_local	$253=, $302
-	#APP
-	#NO_APP
-	copy_local	$254=, $302
-	#APP
-	#NO_APP
-	copy_local	$255=, $302
-	#APP
-	#NO_APP
-	copy_local	$256=, $302
-	#APP
-	#NO_APP
-	copy_local	$257=, $302
-	#APP
-	#NO_APP
-	copy_local	$258=, $302
-	#APP
-	#NO_APP
-	copy_local	$259=, $302
-	#APP
-	#NO_APP
-	copy_local	$260=, $302
-	#APP
-	#NO_APP
-	copy_local	$261=, $302
-	#APP
-	#NO_APP
-	copy_local	$262=, $302
-	#APP
-	#NO_APP
-	copy_local	$263=, $302
-	#APP
-	#NO_APP
-	copy_local	$264=, $302
-	#APP
-	#NO_APP
-	copy_local	$265=, $302
-	#APP
-	#NO_APP
-	copy_local	$266=, $302
-	#APP
-	#NO_APP
-	copy_local	$267=, $302
-	#APP
-	#NO_APP
-	copy_local	$268=, $302
-	#APP
-	#NO_APP
-	copy_local	$269=, $302
-	#APP
-	#NO_APP
-	copy_local	$270=, $302
-	#APP
-	#NO_APP
-	copy_local	$271=, $302
-	#APP
-	#NO_APP
-	copy_local	$272=, $302
-	#APP
-	#NO_APP
-	copy_local	$273=, $302
-	#APP
-	#NO_APP
-	copy_local	$274=, $302
-	#APP
-	#NO_APP
-	copy_local	$275=, $302
-	#APP
-	#NO_APP
-	copy_local	$276=, $302
-	#APP
-	#NO_APP
-	copy_local	$277=, $302
-	#APP
-	#NO_APP
-	copy_local	$278=, $302
-	#APP
-	#NO_APP
-	copy_local	$279=, $302
-	#APP
-	#NO_APP
-	copy_local	$280=, $302
-	#APP
-	#NO_APP
-	copy_local	$281=, $302
-	#APP
-	#NO_APP
-	copy_local	$282=, $302
-	#APP
-	#NO_APP
-	copy_local	$283=, $302
-	#APP
-	#NO_APP
-	copy_local	$284=, $302
-	#APP
-	#NO_APP
-	copy_local	$285=, $302
-	#APP
-	#NO_APP
-	copy_local	$286=, $302
-	#APP
-	#NO_APP
-	copy_local	$287=, $302
-	#APP
-	#NO_APP
-	copy_local	$288=, $302
-	#APP
-	#NO_APP
-	copy_local	$289=, $302
-	#APP
-	#NO_APP
-	copy_local	$290=, $302
-	#APP
-	#NO_APP
-	copy_local	$291=, $302
-	#APP
-	#NO_APP
-	copy_local	$292=, $302
-	#APP
-	#NO_APP
-	copy_local	$293=, $302
-	#APP
-	#NO_APP
-	copy_local	$294=, $302
-	#APP
-	#NO_APP
-	copy_local	$295=, $302
-	#APP
-	#NO_APP
-	copy_local	$296=, $302
-	#APP
-	#NO_APP
-	copy_local	$297=, $302
-	#APP
-	#NO_APP
-	copy_local	$298=, $302
-	#APP
-	#NO_APP
-	copy_local	$299=, $302
-	#APP
-	#NO_APP
-	copy_local	$300=, $302
-	#APP
-	#NO_APP
-	copy_local	$301=, $302
-	#APP
-	#NO_APP
 	#APP
 	#NO_APP
 	i32.or  	$push0=, $1, $0

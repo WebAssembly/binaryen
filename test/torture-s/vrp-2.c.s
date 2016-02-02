@@ -7,22 +7,24 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 2
-	i32.const	$2=, 1
+	i32.const	$1=, 1
 	block
-	i32.eq  	$push0=, $0, $1
+	i32.const	$push5=, 2
+	i32.eq  	$push0=, $0, $pop5
 	br_if   	$pop0, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 31
-	i32.shr_s	$2=, $0, $pop1
-	i32.add 	$push2=, $0, $2
-	i32.xor 	$push3=, $pop2, $2
-	i32.ne  	$2=, $pop3, $1
+	i32.shr_s	$push2=, $0, $pop1
+	tee_local	$push7=, $1=, $pop2
+	i32.add 	$push3=, $0, $pop7
+	i32.xor 	$push4=, $pop3, $1
+	i32.const	$push6=, 2
+	i32.ne  	$1=, $pop4, $pop6
 .LBB0_2:                                # %return
 	end_block                       # label0:
-	return  	$2
+	return  	$1
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

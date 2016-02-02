@@ -6,103 +6,123 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i64, i32, i32, i32, i64
+	.local  	i32, i64
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
-	i32.load8_u	$0=, cx($2)
-	i32.const	$3=, 255
-	i32.const	$4=, 6
 	block
-	i32.const	$push0=, -6
-	i32.add 	$push1=, $0, $pop0
-	i32.and 	$push2=, $pop1, $3
-	i32.lt_u	$push3=, $pop2, $4
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push5=, 0
+	i32.load8_u	$push0=, cx($pop5)
+	tee_local	$push47=, $0=, $pop0
+	i32.const	$push6=, -6
+	i32.add 	$push7=, $pop47, $pop6
+	i32.const	$push46=, 255
+	i32.and 	$push8=, $pop7, $pop46
+	i32.const	$push45=, 6
+	i32.lt_u	$push9=, $pop8, $pop45
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	block
-	i32.and 	$push4=, $0, $3
-	i32.rem_u	$push5=, $pop4, $4
-	i32.const	$push6=, 1
-	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
+	i32.const	$push49=, 255
+	i32.and 	$push10=, $0, $pop49
+	i32.const	$push48=, 6
+	i32.rem_u	$push11=, $pop10, $pop48
+	i32.const	$push12=, 1
+	i32.ne  	$push13=, $pop11, $pop12
+	br_if   	$pop13, 0       # 0: down to label1
 # BB#3:                                 # %if.end10
-	i32.load16_u	$0=, sx($2)
-	i32.const	$3=, 65535
 	block
-	i32.const	$push8=, -12
-	i32.add 	$push9=, $0, $pop8
-	i32.and 	$push10=, $pop9, $3
-	i32.lt_u	$push11=, $pop10, $4
-	br_if   	$pop11, 0       # 0: down to label2
+	i32.const	$push14=, 0
+	i32.load16_u	$push1=, sx($pop14)
+	tee_local	$push52=, $0=, $pop1
+	i32.const	$push15=, -12
+	i32.add 	$push16=, $pop52, $pop15
+	i32.const	$push51=, 65535
+	i32.and 	$push17=, $pop16, $pop51
+	i32.const	$push50=, 6
+	i32.lt_u	$push18=, $pop17, $pop50
+	br_if   	$pop18, 0       # 0: down to label2
 # BB#4:                                 # %if.then17
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_5:                                # %if.end18
 	end_block                       # label2:
 	block
-	i32.and 	$push12=, $0, $3
-	i32.rem_u	$push13=, $pop12, $4
-	i32.const	$push14=, 2
-	i32.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, 0       # 0: down to label3
+	i32.const	$push54=, 65535
+	i32.and 	$push19=, $0, $pop54
+	i32.const	$push53=, 6
+	i32.rem_u	$push20=, $pop19, $pop53
+	i32.const	$push21=, 2
+	i32.ne  	$push22=, $pop20, $pop21
+	br_if   	$pop22, 0       # 0: down to label3
 # BB#6:                                 # %if.end26
-	i32.load	$0=, ix($2)
 	block
-	i32.const	$push16=, -18
-	i32.add 	$push17=, $0, $pop16
-	i32.lt_u	$push18=, $pop17, $4
-	br_if   	$pop18, 0       # 0: down to label4
+	i32.const	$push23=, 0
+	i32.load	$push2=, ix($pop23)
+	tee_local	$push56=, $0=, $pop2
+	i32.const	$push24=, -18
+	i32.add 	$push25=, $pop56, $pop24
+	i32.const	$push55=, 6
+	i32.lt_u	$push26=, $pop25, $pop55
+	br_if   	$pop26, 0       # 0: down to label4
 # BB#7:                                 # %if.then30
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_8:                                # %if.end31
 	end_block                       # label4:
 	block
-	i32.rem_u	$push19=, $0, $4
-	i32.const	$push20=, 3
-	i32.ne  	$push21=, $pop19, $pop20
-	br_if   	$pop21, 0       # 0: down to label5
+	i32.const	$push57=, 6
+	i32.rem_u	$push27=, $0, $pop57
+	i32.const	$push28=, 3
+	i32.ne  	$push29=, $pop27, $pop28
+	br_if   	$pop29, 0       # 0: down to label5
 # BB#9:                                 # %if.end36
-	i32.load	$0=, lx($2)
 	block
-	i32.const	$push22=, -24
-	i32.add 	$push23=, $0, $pop22
-	i32.lt_u	$push24=, $pop23, $4
-	br_if   	$pop24, 0       # 0: down to label6
+	i32.const	$push30=, 0
+	i32.load	$push3=, lx($pop30)
+	tee_local	$push59=, $0=, $pop3
+	i32.const	$push31=, -24
+	i32.add 	$push32=, $pop59, $pop31
+	i32.const	$push58=, 6
+	i32.lt_u	$push33=, $pop32, $pop58
+	br_if   	$pop33, 0       # 0: down to label6
 # BB#10:                                # %if.then40
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_11:                               # %if.end41
 	end_block                       # label6:
 	block
-	i32.rem_u	$push25=, $0, $4
-	i32.const	$push26=, 4
-	i32.ne  	$push27=, $pop25, $pop26
-	br_if   	$pop27, 0       # 0: down to label7
+	i32.const	$push60=, 6
+	i32.rem_u	$push34=, $0, $pop60
+	i32.const	$push35=, 4
+	i32.ne  	$push36=, $pop34, $pop35
+	br_if   	$pop36, 0       # 0: down to label7
 # BB#12:                                # %if.end46
-	i64.load	$1=, Lx($2)
-	i64.const	$5=, 6
 	block
-	i64.const	$push28=, -30
-	i64.add 	$push29=, $1, $pop28
-	i64.lt_u	$push30=, $pop29, $5
-	br_if   	$pop30, 0       # 0: down to label8
+	i32.const	$push37=, 0
+	i64.load	$push4=, Lx($pop37)
+	tee_local	$push62=, $1=, $pop4
+	i64.const	$push38=, -30
+	i64.add 	$push39=, $pop62, $pop38
+	i64.const	$push61=, 6
+	i64.lt_u	$push40=, $pop39, $pop61
+	br_if   	$pop40, 0       # 0: down to label8
 # BB#13:                                # %if.then50
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_14:                               # %if.end51
 	end_block                       # label8:
 	block
-	i64.rem_u	$push31=, $1, $5
-	i64.const	$push32=, 5
-	i64.ne  	$push33=, $pop31, $pop32
-	br_if   	$pop33, 0       # 0: down to label9
+	i64.const	$push63=, 6
+	i64.rem_u	$push41=, $1, $pop63
+	i64.const	$push42=, 5
+	i64.ne  	$push43=, $pop41, $pop42
+	br_if   	$pop43, 0       # 0: down to label9
 # BB#15:                                # %if.end56
-	call    	exit@FUNCTION, $2
+	i32.const	$push44=, 0
+	call    	exit@FUNCTION, $pop44
 	unreachable
 .LBB0_16:                               # %if.then55
 	end_block                       # label9:
@@ -140,7 +160,7 @@ cx:
 	.type	sx,@object
 	.section	.data.sx,"aw",@progbits
 	.globl	sx
-	.align	1
+	.p2align	1
 sx:
 	.int16	14                      # 0xe
 	.size	sx, 2
@@ -149,7 +169,7 @@ sx:
 	.type	ix,@object
 	.section	.data.ix,"aw",@progbits
 	.globl	ix
-	.align	2
+	.p2align	2
 ix:
 	.int32	21                      # 0x15
 	.size	ix, 4
@@ -158,7 +178,7 @@ ix:
 	.type	lx,@object
 	.section	.data.lx,"aw",@progbits
 	.globl	lx
-	.align	2
+	.p2align	2
 lx:
 	.int32	28                      # 0x1c
 	.size	lx, 4
@@ -167,7 +187,7 @@ lx:
 	.type	Lx,@object
 	.section	.data.Lx,"aw",@progbits
 	.globl	Lx
-	.align	3
+	.p2align	3
 Lx:
 	.int64	35                      # 0x23
 	.size	Lx, 8

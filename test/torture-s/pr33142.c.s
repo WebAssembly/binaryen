@@ -7,9 +7,9 @@
 lisp_atan2:                             # @lisp_atan2
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 0
+	i32.const	$2=, 0
 	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
@@ -19,17 +19,20 @@ lisp_atan2:                             # @lisp_atan2
 	i32.gt_s	$push3=, $1, $pop2
 	br_if   	$pop3, 0        # 0: down to label0
 # BB#2:                                 # %if.then2
-	i32.const	$3=, 31
-	i32.shr_s	$2=, $1, $3
-	i32.shr_s	$3=, $0, $3
-	i32.add 	$push4=, $1, $2
-	i32.xor 	$push5=, $pop4, $2
-	i32.add 	$push6=, $0, $3
-	i32.xor 	$push7=, $pop6, $3
-	i32.le_s	$3=, $pop5, $pop7
+	i32.const	$push4=, 31
+	i32.shr_s	$push5=, $1, $pop4
+	tee_local	$push13=, $2=, $pop5
+	i32.add 	$push6=, $1, $pop13
+	i32.xor 	$push7=, $pop6, $2
+	i32.const	$push12=, 31
+	i32.shr_s	$push8=, $0, $pop12
+	tee_local	$push11=, $1=, $pop8
+	i32.add 	$push9=, $0, $pop11
+	i32.xor 	$push10=, $pop9, $1
+	i32.le_s	$2=, $pop7, $pop10
 .LBB0_3:                                # %return
 	end_block                       # label0:
-	return  	$3
+	return  	$2
 	.endfunc
 .Lfunc_end0:
 	.size	lisp_atan2, .Lfunc_end0-lisp_atan2
@@ -48,11 +51,11 @@ main:                                   # @main
 	i32.sub 	$3=, $0, $1
 	i32.const	$1=, __stack_pointer
 	i32.store	$3=, 0($1), $3
-	block
 	i32.const	$push0=, 63
 	i32.store	$discard=, 12($3), $pop0
 	i32.const	$push1=, -77
 	i32.store	$discard=, 8($3), $pop1
+	block
 	i32.load	$push2=, 12($3)
 	i32.load	$push3=, 8($3)
 	i32.call	$push4=, lisp_atan2@FUNCTION, $pop2, $pop3

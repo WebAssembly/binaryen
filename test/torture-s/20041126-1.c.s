@@ -63,93 +63,64 @@ check:                                  # @check
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %for.cond1.i.preheader
+	i32.const	$3=, __stack_pointer
+	i32.load	$3=, 0($3)
+	i32.const	$4=, 48
+	i32.sub 	$6=, $3, $4
 	i32.const	$4=, __stack_pointer
-	i32.load	$4=, 0($4)
-	i32.const	$5=, 48
-	i32.sub 	$14=, $4, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$14=, 0($5), $14
-	i32.const	$3=, 0
-	i32.const	$push1=, 32
-	i32.const	$7=, 0
-	i32.add 	$7=, $14, $7
-	i32.add 	$push2=, $7, $pop1
-	i64.load	$push0=, .Lmain.a+32($3)
-	i64.store	$discard=, 0($pop2), $pop0
-	i32.const	$push4=, 24
-	i32.const	$8=, 0
-	i32.add 	$8=, $14, $8
-	i32.add 	$push5=, $8, $pop4
-	i64.load	$push3=, .Lmain.a+24($3)
-	i64.store	$discard=, 0($pop5), $pop3
-	i32.const	$push7=, 16
-	i32.const	$9=, 0
-	i32.add 	$9=, $14, $9
-	i32.add 	$0=, $9, $pop7
-	i64.load	$push6=, .Lmain.a+16($3)
-	i64.store	$discard=, 0($0), $pop6
-	i32.store	$2=, 0($0), $3
-	i32.const	$push9=, 8
-	i32.const	$10=, 0
-	i32.add 	$10=, $14, $10
-	i32.or  	$0=, $10, $pop9
-	i64.load	$push8=, .Lmain.a+8($3)
-	i64.store	$discard=, 0($0), $pop8
-	i32.const	$push11=, 12
-	i32.const	$11=, 0
-	i32.add 	$11=, $14, $11
-	i32.or  	$push12=, $11, $pop11
-	i32.store	$push13=, 0($pop12), $2
-	i32.store	$0=, 0($0), $pop13
-	i64.load	$push10=, .Lmain.a($3)
-	i64.store	$discard=, 0($14), $pop10
-	i32.const	$push14=, 4
-	i32.const	$12=, 0
-	i32.add 	$12=, $14, $12
-	i32.or  	$push15=, $12, $pop14
-	i32.store	$push16=, 0($pop15), $0
-	i32.store	$1=, 0($14), $pop16
-	i32.const	$3=, 5
+	i32.store	$6=, 0($4), $6
+	i32.const	$push0=, .Lmain.a
+	i32.const	$push1=, 40
+	i32.call	$discard=, memcpy@FUNCTION, $6, $pop0, $pop1
+	i32.const	$push2=, 16
+	i32.add 	$push3=, $6, $pop2
+	i32.const	$push4=, 0
+	i32.store	$discard=, 0($pop3):p2align=4, $pop4
+	i32.const	$push5=, 8
+	i32.or  	$push6=, $6, $pop5
+	i64.const	$push7=, 0
+	i64.store	$push8=, 0($pop6), $pop7
+	i64.store	$discard=, 0($6):p2align=4, $pop8
+	i32.const	$2=, 5
 .LBB1_1:                                # %for.cond1.i
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label5:
-	i32.const	$push17=, 9
-	i32.gt_s	$push18=, $3, $pop17
-	br_if   	$pop18, 2       # 2: down to label4
+	i32.const	$push14=, 9
+	i32.gt_s	$push9=, $2, $pop14
+	br_if   	$pop9, 2        # 2: down to label4
 # BB#2:                                 # %for.body3.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push19=, 2
-	i32.shl 	$push20=, $3, $pop19
-	i32.const	$13=, 0
-	i32.add 	$13=, $14, $13
-	i32.add 	$push21=, $13, $pop20
-	i32.load	$0=, 0($pop21)
-	i32.const	$push22=, 1
-	i32.add 	$2=, $3, $pop22
-	copy_local	$3=, $0
-	i32.eq  	$push23=, $0, $2
-	br_if   	$pop23, 0       # 0: up to label5
+	i32.const	$push16=, 2
+	i32.shl 	$push11=, $2, $pop16
+	i32.add 	$push12=, $6, $pop11
+	i32.load	$0=, 0($pop12)
+	i32.const	$push15=, 1
+	i32.add 	$1=, $2, $pop15
+	copy_local	$2=, $0
+	i32.eq  	$push13=, $0, $1
+	br_if   	$pop13, 0       # 0: up to label5
 # BB#3:                                 # %if.then6.i
 	end_loop                        # label6:
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %check.exit
 	end_block                       # label4:
-	i32.const	$6=, 48
-	i32.add 	$14=, $14, $6
-	i32.const	$6=, __stack_pointer
-	i32.store	$14=, 0($6), $14
-	return  	$1
+	i32.const	$push10=, 0
+	i32.const	$5=, 48
+	i32.add 	$6=, $6, $5
+	i32.const	$5=, __stack_pointer
+	i32.store	$6=, 0($5), $6
+	return  	$pop10
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 	.type	.Lmain.a,@object        # @main.a
 	.section	.rodata..Lmain.a,"a",@progbits
-	.align	4
+	.p2align	4
 .Lmain.a:
 	.int32	1                       # 0x1
 	.int32	2                       # 0x2

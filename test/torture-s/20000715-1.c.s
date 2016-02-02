@@ -38,12 +38,12 @@ test3:                                  # @test3
 	.globl	test4
 	.type	test4,@function
 test4:                                  # @test4
-	.local  	i32
 # BB#0:                                 # %if.end8
-	i32.const	$0=, 0
-	i32.const	$push0=, 3
-	i32.store	$push1=, x($0), $pop0
-	i32.store	$discard=, y($0), $pop1
+	i32.const	$push0=, 0
+	i32.const	$push3=, 0
+	i32.const	$push1=, 3
+	i32.store	$push2=, x($pop3), $pop1
+	i32.store	$discard=, y($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end3:
@@ -54,12 +54,12 @@ test4:                                  # @test4
 	.globl	test5
 	.type	test5,@function
 test5:                                  # @test5
-	.local  	i32
 # BB#0:                                 # %if.end8
-	i32.const	$0=, 0
-	i32.const	$push0=, 3
-	i32.store	$push1=, x($0), $pop0
-	i32.store	$discard=, y($0), $pop1
+	i32.const	$push0=, 0
+	i32.const	$push3=, 0
+	i32.const	$push1=, 3
+	i32.store	$push2=, x($pop3), $pop1
+	i32.store	$discard=, y($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end4:
@@ -70,12 +70,12 @@ test5:                                  # @test5
 	.globl	test6
 	.type	test6,@function
 test6:                                  # @test6
-	.local  	i32
 # BB#0:                                 # %if.end8
-	i32.const	$0=, 0
-	i32.const	$push0=, 3
-	i32.store	$push1=, x($0), $pop0
-	i32.store	$discard=, y($0), $pop1
+	i32.const	$push0=, 0
+	i32.const	$push3=, 0
+	i32.const	$push1=, 3
+	i32.store	$push2=, x($pop3), $pop1
+	i32.store	$discard=, y($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end5:
@@ -87,13 +87,12 @@ test6:                                  # @test6
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.const	$push0=, 3
-	i32.store	$push1=, x($0), $pop0
-	i32.store	$discard=, y($0), $pop1
-	call    	exit@FUNCTION, $0
+	call    	test4@FUNCTION
+	call    	test5@FUNCTION
+	call    	test6@FUNCTION
+	i32.const	$push0=, 0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end6:
@@ -103,7 +102,7 @@ main:                                   # @main
 	.type	x,@object
 	.section	.bss.x,"aw",@nobits
 	.globl	x
-	.align	2
+	.p2align	2
 x:
 	.int32	0                       # 0x0
 	.size	x, 4
@@ -112,7 +111,7 @@ x:
 	.type	y,@object
 	.section	.bss.y,"aw",@nobits
 	.globl	y
-	.align	2
+	.p2align	2
 y:
 	.int32	0                       # 0x0
 	.size	y, 4

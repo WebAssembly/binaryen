@@ -31,7 +31,6 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
 	call    	foo@FUNCTION, $pop0
@@ -45,9 +44,10 @@ main:                                   # @main
 	call    	foo@FUNCTION, $pop4
 	i32.const	$push5=, 1
 	call    	foo@FUNCTION, $pop5
-	i32.const	$0=, 0
-	call    	foo@FUNCTION, $0
-	return  	$0
+	i32.const	$push6=, 0
+	call    	foo@FUNCTION, $pop6
+	i32.const	$push7=, 0
+	return  	$pop7
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -44,11 +44,11 @@ main:                                   # @main
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.const	$push0=, 255
-	i32.and 	$push1=, $0, $pop0
-	i32.call	$discard=, t@FUNCTION, $pop1
-	i32.const	$push2=, 1
-	i32.add 	$0=, $0, $pop2
+	i32.const	$push2=, 255
+	i32.and 	$push0=, $0, $pop2
+	i32.call	$discard=, t@FUNCTION, $pop0
+	i32.const	$push1=, 1
+	i32.add 	$0=, $0, $pop1
 	br      	0               # 0: up to label2
 .LBB1_2:
 	end_loop                        # label3:
@@ -60,7 +60,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
 	.globl	a
-	.align	4
+	.p2align	4
 a:
 	.skip	1004
 	.size	a, 1004

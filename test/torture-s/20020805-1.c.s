@@ -27,26 +27,21 @@ check:                                  # @check
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, n($0)
-	block
-	i32.const	$push0=, 2
-	i32.sub 	$push1=, $pop0, $1
-	i32.sub 	$push2=, $0, $1
-	i32.or  	$push3=, $pop1, $pop2
-	i32.const	$push4=, 1
+	i32.const	$push2=, 2
+	i32.const	$push0=, 0
+	i32.load	$push1=, n($pop0)
+	tee_local	$push10=, $0=, $pop1
+	i32.sub 	$push3=, $pop2, $pop10
+	i32.const	$push9=, 0
+	i32.sub 	$push4=, $pop9, $0
 	i32.or  	$push5=, $pop3, $pop4
-	i32.const	$push6=, -1
-	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
-# BB#1:                                 # %check.exit
-	call    	exit@FUNCTION, $0
-	unreachable
-.LBB1_2:                                # %if.then.i
-	end_block                       # label1:
-	call    	abort@FUNCTION
+	i32.const	$push6=, 1
+	i32.or  	$push7=, $pop5, $pop6
+	call    	check@FUNCTION, $pop7
+	i32.const	$push8=, 0
+	call    	exit@FUNCTION, $pop8
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -56,7 +51,7 @@ main:                                   # @main
 	.type	n,@object
 	.section	.data.n,"aw",@progbits
 	.globl	n
-	.align	2
+	.p2align	2
 n:
 	.int32	1                       # 0x1
 	.size	n, 4

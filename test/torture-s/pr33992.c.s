@@ -27,50 +27,58 @@ bar:                                    # @bar
 	.type	do_test,@function
 do_test:                                # @do_test
 	.param  	i32
-	.local  	i64, i64, i64, i64, i64, i64, i64, i64, i64
+	.local  	i64, i64, i64, i64
 # BB#0:                                 # %entry
 	i64.load	$1=, 0($0)
-	i64.const	$2=, -1
-	i64.const	$8=, 63
-	copy_local	$9=, $2
+	i64.const	$3=, 63
+	i64.const	$4=, -1
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i64.const	$3=, 4294967295
-	i64.and 	$4=, $8, $3
-	i64.const	$5=, 1
-	i64.add 	$9=, $9, $5
-	i64.add 	$8=, $8, $2
-	i64.const	$6=, 0
-	i64.shl 	$push0=, $5, $4
+	i64.const	$push16=, 4294967295
+	i64.and 	$2=, $3, $pop16
+	i64.const	$push15=, 1
+	i64.add 	$4=, $4, $pop15
+	i64.const	$push14=, -1
+	i64.add 	$3=, $3, $pop14
+	i64.const	$push13=, 1
+	i64.shl 	$push0=, $pop13, $2
 	i64.and 	$push1=, $pop0, $1
-	i64.eq  	$push2=, $pop1, $6
+	i64.const	$push12=, 0
+	i64.eq  	$push2=, $pop1, $pop12
 	br_if   	$pop2, 0        # 0: up to label1
 # BB#2:                                 # %foo.exit
 	end_loop                        # label2:
-	i64.const	$7=, 32
-	i64.shl 	$push3=, $9, $7
-	i64.shr_s	$push4=, $pop3, $7
-	call    	bar@FUNCTION, $pop4
+	i64.const	$push3=, 32
+	i64.shl 	$push4=, $4, $pop3
+	i64.const	$push17=, 32
+	i64.shr_s	$push5=, $pop4, $pop17
+	call    	bar@FUNCTION, $pop5
 	i64.load	$1=, 0($0)
-	i64.const	$2=, -1
-	i64.const	$8=, 63
-	copy_local	$9=, $2
+	i64.const	$3=, 63
+	i64.const	$4=, -1
 .LBB1_3:                                # %for.cond.i.1
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i64.and 	$4=, $8, $3
-	i64.add 	$9=, $9, $5
-	i64.add 	$8=, $8, $2
-	i64.shl 	$push5=, $5, $4
-	i64.and 	$push6=, $pop5, $1
-	i64.eq  	$push7=, $pop6, $6
-	br_if   	$pop7, 0        # 0: up to label3
+	i64.const	$push22=, 4294967295
+	i64.and 	$2=, $3, $pop22
+	i64.const	$push21=, 1
+	i64.add 	$4=, $4, $pop21
+	i64.const	$push20=, -1
+	i64.add 	$3=, $3, $pop20
+	i64.const	$push19=, 1
+	i64.shl 	$push6=, $pop19, $2
+	i64.and 	$push7=, $pop6, $1
+	i64.const	$push18=, 0
+	i64.eq  	$push8=, $pop7, $pop18
+	br_if   	$pop8, 0        # 0: up to label3
 # BB#4:                                 # %foo.exit.1
 	end_loop                        # label4:
-	i64.shl 	$push8=, $9, $7
-	i64.shr_s	$push9=, $pop8, $7
-	call    	bar@FUNCTION, $pop9
+	i64.const	$push9=, 32
+	i64.shl 	$push10=, $4, $pop9
+	i64.const	$push23=, 32
+	i64.shr_s	$push11=, $pop10, $pop23
+	call    	bar@FUNCTION, $pop11
 	return
 	.endfunc
 .Lfunc_end1:

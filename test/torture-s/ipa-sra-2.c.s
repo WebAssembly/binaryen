@@ -9,14 +9,15 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push3=, 2000
+	i32.gt_s	$push4=, $0, $pop3
 	i32.const	$push1=, 1
 	i32.const	$push0=, 40
-	i32.call	$2=, calloc@FUNCTION, $pop1, $pop0
-	call    	free@FUNCTION, $2
-	i32.const	$push2=, 2000
-	i32.gt_s	$push3=, $0, $pop2
-	i32.call	$push4=, foo@FUNCTION, $pop3, $2
-	return  	$pop4
+	i32.call	$push2=, calloc@FUNCTION, $pop1, $pop0
+	tee_local	$push5=, $0=, $pop2
+	i32.call	$2=, foo@FUNCTION, $pop4, $pop5
+	call    	free@FUNCTION, $0
+	return  	$2
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

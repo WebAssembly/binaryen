@@ -9,18 +9,19 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push9=, 0
 	i32.const	$push0=, -2
-	i32.add 	$1=, $0, $pop0
-	i32.const	$push8=, 0
-	i32.const	$push3=, -1
-	i32.gt_s	$push4=, $1, $pop3
-	i32.const	$push1=, 2
-	i32.sub 	$push2=, $pop1, $0
-	i32.select	$push5=, $pop4, $1, $pop2
-	i32.const	$push6=, 1
-	i32.shl 	$push7=, $pop5, $pop6
-	i32.sub 	$push9=, $pop8, $pop7
-	return  	$pop9
+	i32.add 	$push1=, $0, $pop0
+	tee_local	$push11=, $1=, $pop1
+	i32.const	$push4=, -1
+	i32.gt_s	$push5=, $pop11, $pop4
+	i32.const	$push2=, 2
+	i32.sub 	$push3=, $pop2, $0
+	i32.select	$push6=, $pop5, $1, $pop3
+	i32.const	$push7=, 1
+	i32.shl 	$push8=, $pop6, $pop7
+	i32.sub 	$push10=, $pop9, $pop8
+	return  	$pop10
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

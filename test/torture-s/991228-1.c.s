@@ -12,24 +12,24 @@ signbit:                                # @signbit
 	i32.const	$2=, __stack_pointer
 	i32.load	$2=, 0($2)
 	i32.const	$3=, 16
-	i32.sub 	$5=, $2, $3
+	i32.sub 	$6=, $2, $3
 	i32.const	$3=, __stack_pointer
-	i32.store	$5=, 0($3), $5
+	i32.store	$6=, 0($3), $6
 	i32.const	$push0=, 0
-	i32.load	$1=, endianness_test($pop0)
-	f64.store	$discard=, 8($5), $0
+	i32.load	$1=, endianness_test($pop0):p2align=3
+	f64.store	$discard=, 8($6), $0
 	i32.const	$push1=, 2
 	i32.shl 	$push2=, $1, $pop1
 	i32.const	$5=, 8
-	i32.add 	$5=, $5, $5
+	i32.add 	$5=, $6, $5
 	i32.add 	$push3=, $5, $pop2
 	i32.load	$push4=, 0($pop3)
 	i32.const	$push5=, 31
 	i32.shr_u	$push6=, $pop4, $pop5
 	i32.const	$4=, 16
-	i32.add 	$5=, $5, $4
+	i32.add 	$6=, $6, $4
 	i32.const	$4=, __stack_pointer
-	i32.store	$5=, 0($4), $5
+	i32.store	$6=, 0($4), $6
 	return  	$pop6
 	.endfunc
 .Lfunc_end0:
@@ -41,44 +41,47 @@ signbit:                                # @signbit
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$1=, __stack_pointer
+	i32.load	$1=, 0($1)
+	i32.const	$2=, 16
+	i32.sub 	$4=, $1, $2
 	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 16
-	i32.sub 	$5=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$5=, 0($3), $5
-	i32.const	$0=, 0
+	i32.store	$4=, 0($2), $4
 	block
-	i32.load	$push0=, endianness_test($0)
+	i32.const	$push12=, 0
+	i32.load	$push0=, endianness_test($pop12):p2align=3
 	i32.const	$push1=, 2
-	i32.shl 	$1=, $pop0, $pop1
-	i32.const	$push2=, u
-	i32.add 	$push3=, $pop2, $1
-	i32.load	$push4=, 0($pop3)
-	i32.lt_s	$push5=, $pop4, $0
-	br_if   	$pop5, 0        # 0: down to label0
+	i32.shl 	$push2=, $pop0, $pop1
+	tee_local	$push11=, $0=, $pop2
+	i32.load	$push3=, u($pop11)
+	i32.const	$push10=, 0
+	i32.lt_s	$push4=, $pop3, $pop10
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.then
-	call    	exit@FUNCTION, $0
+	i32.const	$push13=, 0
+	call    	exit@FUNCTION, $pop13
 	unreachable
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
-	i64.const	$push6=, -4625196817309499392
-	i64.store	$discard=, 8($5), $pop6
-	i32.const	$4=, 8
-	i32.add 	$4=, $5, $4
+	i64.const	$push5=, -4625196817309499392
+	i64.store	$discard=, 8($4), $pop5
+	i32.const	$3=, 8
+	i32.add 	$3=, $4, $3
 	block
-	i32.add 	$push7=, $4, $1
-	i32.load	$push8=, 0($pop7)
-	i32.lt_s	$push9=, $pop8, $0
-	br_if   	$pop9, 0        # 0: down to label1
+	i32.add 	$push6=, $3, $0
+	i32.load	$push7=, 0($pop6)
+	i32.const	$push14=, 0
+	i32.lt_s	$push8=, $pop7, $pop14
+	br_if   	$pop8, 0        # 0: down to label1
 # BB#3:                                 # %if.then1
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %if.end2
 	end_block                       # label1:
-	call    	exit@FUNCTION, $0
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -88,7 +91,7 @@ main:                                   # @main
 	.type	u,@object
 	.section	.data.u,"aw",@progbits
 	.globl	u
-	.align	3
+	.p2align	3
 u:
 	.int64	-4625196817309499392    # double -0.25
 	.size	u, 8
@@ -97,7 +100,7 @@ u:
 	.type	endianness_test,@object
 	.section	.data.endianness_test,"aw",@progbits
 	.globl	endianness_test
-	.align	3
+	.p2align	3
 endianness_test:
 	.int64	1                       # 0x1
 	.size	endianness_test, 8

@@ -47,7 +47,7 @@ func1:                                  # @func1
 	.type	i,@object
 	.section	.data.i,"aw",@progbits
 	.globl	i
-	.align	2
+	.p2align	2
 i:
 	.int32	2                       # 0x2
 	.size	i, 4

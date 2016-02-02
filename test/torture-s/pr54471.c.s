@@ -6,59 +6,59 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i64, i64, i32
-	.local  	i32, i64, i64, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i64, i64, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$6=, __stack_pointer
+	i32.load	$6=, 0($6)
+	i32.const	$7=, 32
+	i32.sub 	$11=, $6, $7
 	i32.const	$7=, __stack_pointer
-	i32.load	$7=, 0($7)
-	i32.const	$8=, 32
-	i32.sub 	$10=, $7, $8
-	i32.const	$8=, __stack_pointer
-	i32.store	$10=, 0($8), $10
-	i64.const	$6=, 0
-	i64.const	$5=, 1
+	i32.store	$11=, 0($7), $11
+	i64.const	$5=, 0
+	i64.const	$4=, 1
 	block
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $3, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	i32.const	$push14=, 0
+	i32.eq  	$push15=, $3, $pop14
+	br_if   	$pop15, 0       # 0: down to label0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$10=, 0
-	i32.add 	$10=, $10, $10
-	call    	__multi3@FUNCTION, $10, $1, $2, $5, $6
-	i32.const	$4=, 8
-	i32.const	$11=, 0
-	i32.add 	$11=, $10, $11
-	i32.add 	$push0=, $11, $4
-	i64.load	$6=, 0($pop0)
-	i64.load	$5=, 0($10)
-	i32.const	$12=, 16
-	i32.add 	$12=, $10, $12
-	call    	__multi3@FUNCTION, $12, $1, $2, $1, $2
-	i32.const	$13=, 16
-	i32.add 	$13=, $10, $13
-	i32.add 	$push1=, $13, $4
-	i64.load	$2=, 0($pop1)
-	i64.load	$1=, 16($10)
-	i32.const	$push2=, -1
-	i32.add 	$3=, $3, $pop2
+	call    	__multi3@FUNCTION, $11, $1, $2, $4, $5
+	i32.const	$push0=, 8
+	i32.add 	$push1=, $11, $pop0
+	i64.load	$5=, 0($pop1)
+	i64.load	$4=, 0($11)
+	i32.const	$9=, 16
+	i32.add 	$9=, $11, $9
+	call    	__multi3@FUNCTION, $9, $1, $2, $1, $2
+	i32.const	$push9=, 8
+	i32.const	$10=, 16
+	i32.add 	$10=, $11, $10
+	i32.add 	$push2=, $10, $pop9
+	i64.load	$2=, 0($pop2)
+	i64.load	$1=, 16($11)
+	i32.const	$push3=, -1
+	i32.add 	$3=, $3, $pop3
 	br_if   	$3, 0           # 0: up to label1
 # BB#2:                                 # %for.end
 	end_loop                        # label2:
-	i64.const	$2=, 14348907
-	i64.const	$1=, 0
-	i64.xor 	$push3=, $5, $2
-	i64.or  	$push4=, $pop3, $6
-	i64.ne  	$push5=, $pop4, $1
-	br_if   	$pop5, 0        # 0: down to label0
+	i64.const	$push11=, 14348907
+	i64.xor 	$push4=, $4, $pop11
+	i64.or  	$push5=, $pop4, $5
+	i64.const	$push10=, 0
+	i64.ne  	$push6=, $pop5, $pop10
+	br_if   	$pop6, 0        # 0: down to label0
 # BB#3:                                 # %if.end
-	i64.store	$discard=, 0($0), $2
-	i32.add 	$push6=, $0, $4
-	i64.store	$discard=, 0($pop6), $1
-	i32.const	$9=, 32
-	i32.add 	$10=, $10, $9
-	i32.const	$9=, __stack_pointer
-	i32.store	$10=, 0($9), $10
+	i64.const	$push13=, 14348907
+	i64.store	$discard=, 0($0), $pop13
+	i32.const	$push7=, 8
+	i32.add 	$push8=, $0, $pop7
+	i64.const	$push12=, 0
+	i64.store	$discard=, 0($pop8), $pop12
+	i32.const	$8=, 32
+	i32.add 	$11=, $11, $8
+	i32.const	$8=, __stack_pointer
+	i32.store	$11=, 0($8), $11
 	return
 .LBB0_4:                                # %if.then
 	end_block                       # label0:
@@ -74,25 +74,23 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, __stack_pointer
 	i32.load	$0=, 0($0)
 	i32.const	$1=, 16
-	i32.sub 	$4=, $0, $1
+	i32.sub 	$3=, $0, $1
 	i32.const	$1=, __stack_pointer
-	i32.store	$4=, 0($1), $4
+	i32.store	$3=, 0($1), $3
 	i64.const	$push2=, 3
 	i64.const	$push1=, 0
 	i32.const	$push0=, 4
-	i32.const	$3=, 0
-	i32.add 	$3=, $4, $3
 	call    	foo@FUNCTION, $3, $pop2, $pop1, $pop0
 	i32.const	$push3=, 0
 	i32.const	$2=, 16
-	i32.add 	$4=, $4, $2
+	i32.add 	$3=, $3, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
+	i32.store	$3=, 0($2), $3
 	return  	$pop3
 	.endfunc
 .Lfunc_end1:

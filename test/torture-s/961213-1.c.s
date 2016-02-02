@@ -7,11 +7,11 @@
 g:                                      # @g
 	.param  	i32, i32, i32, i32
 	.result 	i32
-	.local  	i64, i64, i64
+	.local  	i64, i64
 # BB#0:                                 # %entry
-	block
 	i64.const	$push0=, 0
-	i64.store	$6=, 0($0), $pop0
+	i64.store	$5=, 0($0), $pop0
+	block
 	i32.const	$push1=, 1
 	i32.lt_s	$push2=, $1, $pop1
 	br_if   	$pop2, 0        # 0: down to label0
@@ -21,17 +21,17 @@ g:                                      # @g
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i64.load32_u	$5=, 0($2)
-	i32.const	$push4=, 4
-	i32.add 	$2=, $2, $pop4
+	i64.load32_u	$push4=, 0($2)
+	i64.mul 	$push3=, $5, $4
+	i64.add 	$5=, $pop4, $pop3
+	i32.const	$push6=, 4
+	i32.add 	$2=, $2, $pop6
 	i32.const	$push5=, -1
 	i32.add 	$3=, $3, $pop5
-	i64.mul 	$push3=, $6, $4
-	i64.add 	$6=, $5, $pop3
 	br_if   	$3, 0           # 0: up to label1
 # BB#3:                                 # %for.cond.for.end_crit_edge
 	end_loop                        # label2:
-	i64.store	$discard=, 0($0), $6
+	i64.store	$discard=, 0($0), $5
 .LBB0_4:                                # %for.end
 	end_block                       # label0:
 	return  	$1

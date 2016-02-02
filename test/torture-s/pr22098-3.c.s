@@ -6,14 +6,14 @@
 	.type	f,@function
 f:                                      # @f
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$push0=, n($0)
-	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop0, $pop1
-	i32.store	$push3=, n($0), $pop2
-	return  	$pop3
+	i32.const	$push0=, 0
+	i32.const	$push5=, 0
+	i32.load	$push1=, n($pop5)
+	i32.const	$push2=, 1
+	i32.add 	$push3=, $pop1, $pop2
+	i32.store	$push4=, n($pop0), $pop3
+	return  	$pop4
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -24,17 +24,20 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, n($0)
+	i32.const	$push5=, 0
+	i32.const	$push4=, 0
+	i32.load	$push0=, n($pop4)
+	tee_local	$push3=, $0=, $pop0
+	i32.const	$push1=, 1
+	i32.add 	$push2=, $pop3, $pop1
+	i32.store	$discard=, n($pop5), $pop2
 	block
-	i32.const	$push0=, 1
-	i32.add 	$push1=, $1, $pop0
-	i32.store	$discard=, n($0), $pop1
-	br_if   	$1, 0           # 0: down to label0
+	br_if   	$0, 0           # 0: down to label0
 # BB#1:                                 # %if.end
-	call    	exit@FUNCTION, $0
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -48,7 +51,7 @@ main:                                   # @main
 	.type	n,@object
 	.section	.bss.n,"aw",@nobits
 	.globl	n
-	.align	2
+	.p2align	2
 n:
 	.int32	0                       # 0x0
 	.size	n, 4

@@ -8,13 +8,14 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
-	i32.load16_u	$push0=, x1($0)
-	i32.store16	$push1=, t($0), $pop0
-	i32.const	$push2=, 17
-	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push0=, 0
+	i32.const	$push5=, 0
+	i32.load16_u	$push1=, x1($pop5)
+	i32.store16	$push2=, t($pop0), $pop1
+	i32.const	$push3=, 17
+	i32.ne  	$push4=, $pop2, $pop3
+	br_if   	$pop4, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB0_2:                                # %if.then
@@ -31,21 +32,10 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	block
-	i32.load16_u	$push0=, x1($0)
-	i32.store16	$push1=, t($0), $pop0
-	i32.const	$push2=, 17
-	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label1
-# BB#1:                                 # %f.exit
-	call    	exit@FUNCTION, $0
-	unreachable
-.LBB1_2:                                # %if.then.i
-	end_block                       # label1:
-	call    	abort@FUNCTION
+	i32.call	$discard=, f@FUNCTION
+	i32.const	$push0=, 0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -55,7 +45,7 @@ main:                                   # @main
 	.type	x1,@object
 	.section	.data.x1,"aw",@progbits
 	.globl	x1
-	.align	1
+	.p2align	1
 x1:
 	.int16	17                      # 0x11
 	.size	x1, 2
@@ -64,7 +54,7 @@ x1:
 	.type	t,@object
 	.section	.bss.t,"aw",@nobits
 	.globl	t
-	.align	1
+	.p2align	1
 t:
 	.skip	2
 	.size	t, 2

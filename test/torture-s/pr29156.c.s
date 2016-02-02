@@ -26,12 +26,12 @@ bla:                                    # @bla
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, global($0), $pop0
-	return  	$0
+	i32.store	$discard=, global($pop1), $pop0
+	i32.const	$push2=, 0
+	return  	$pop2
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -40,7 +40,7 @@ main:                                   # @main
 	.type	global,@object
 	.section	.bss.global,"aw",@nobits
 	.globl	global
-	.align	2
+	.p2align	2
 global:
 	.int32	0                       # 0x0
 	.size	global, 4

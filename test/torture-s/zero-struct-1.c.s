@@ -5,16 +5,20 @@
 	.globl	h
 	.type	h,@function
 h:                                      # @h
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, ff($0)
-	i32.const	$2=, 2
-	i32.load	$push0=, f($0)
-	i32.add 	$push1=, $pop0, $2
-	i32.store	$discard=, f($0), $pop1
-	i32.add 	$push2=, $1, $2
-	i32.store	$discard=, ff($0), $pop2
+	i32.const	$push0=, 0
+	i32.load	$0=, ff($pop0)
+	i32.const	$push8=, 0
+	i32.const	$push7=, 0
+	i32.load	$push1=, f($pop7)
+	i32.const	$push2=, 2
+	i32.add 	$push3=, $pop1, $pop2
+	i32.store	$discard=, f($pop8), $pop3
+	i32.const	$push6=, 0
+	i32.const	$push5=, 2
+	i32.add 	$push4=, $0, $pop5
+	i32.store	$discard=, ff($pop6), $pop4
 	return
 	.endfunc
 .Lfunc_end0:
@@ -26,27 +30,32 @@ h:                                      # @h
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load	$1=, f($0)
-	i32.load	$2=, ff($0)
-	i32.const	$3=, 2
+	i32.const	$push1=, 0
+	i32.load	$0=, ff($pop1)
+	i32.const	$push12=, 0
+	i32.const	$push11=, 0
+	i32.load	$push2=, f($pop11)
+	i32.const	$push3=, 2
+	i32.add 	$push4=, $pop2, $pop3
+	i32.store	$1=, f($pop12), $pop4
+	i32.const	$push10=, 0
+	i32.const	$push9=, 2
+	i32.add 	$push0=, $0, $pop9
+	i32.store	$0=, ff($pop10), $pop0
 	block
-	i32.add 	$push1=, $1, $3
-	i32.store	$discard=, f($0), $pop1
-	i32.add 	$push0=, $2, $3
-	i32.store	$3=, ff($0), $pop0
-	i32.const	$push2=, y
-	i32.ne  	$push3=, $1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push8=, y+2
+	i32.ne  	$push5=, $1, $pop8
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
-	i32.const	$push4=, y+2
-	i32.ne  	$push5=, $3, $pop4
-	br_if   	$pop5, 0        # 0: down to label1
+	i32.const	$push13=, y+2
+	i32.ne  	$push6=, $0, $pop13
+	br_if   	$pop6, 0        # 0: down to label1
 # BB#2:                                 # %if.end3
-	return  	$0
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB1_3:                                # %if.then2
 	end_block                       # label1:
 	call    	abort@FUNCTION
@@ -71,7 +80,7 @@ y:
 	.type	f,@object
 	.section	.data.f,"aw",@progbits
 	.globl	f
-	.align	2
+	.p2align	2
 f:
 	.int32	y
 	.size	f, 4
@@ -80,7 +89,7 @@ f:
 	.type	ff,@object
 	.section	.data.ff,"aw",@progbits
 	.globl	ff
-	.align	2
+	.p2align	2
 ff:
 	.int32	y
 	.size	ff, 4

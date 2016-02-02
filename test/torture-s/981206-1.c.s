@@ -5,12 +5,12 @@
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.const	$push0=, 1
-	i32.store8	$push1=, x($0), $pop0
-	i32.store8	$discard=, y($0), $pop1
+	i32.const	$push0=, 0
+	i32.const	$push3=, 0
+	i32.const	$push1=, 1
+	i32.store8	$push2=, x($pop3):p2align=1, $pop1
+	i32.store8	$discard=, y($pop0):p2align=1, $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -22,21 +22,22 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
+	i32.const	$push1=, 0
+	i32.const	$push4=, 0
 	i32.const	$push0=, 1
-	i32.store8	$push1=, x($0), $pop0
-	i32.store8	$discard=, y($0), $pop1
-	call    	exit@FUNCTION, $0
+	i32.store8	$push2=, x($pop4):p2align=1, $pop0
+	i32.store8	$discard=, y($pop1):p2align=1, $pop2
+	i32.const	$push3=, 0
+	call    	exit@FUNCTION, $pop3
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 	.type	x,@object               # @x
-	.lcomm	x,1
+	.lcomm	x,1,1
 	.type	y,@object               # @y
-	.lcomm	y,1
+	.lcomm	y,1,1
 
 	.ident	"clang version 3.9.0 "

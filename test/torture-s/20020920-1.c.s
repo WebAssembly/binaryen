@@ -9,12 +9,8 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
 	i32.store	$discard=, 0($0), $pop0
-	i64.const	$push1=, 0
-	i64.store32	$discard=, 4($0), $pop1
-	i32.const	$push2=, 8
-	i32.add 	$push3=, $0, $pop2
-	i64.const	$push4=, 1
-	i64.store32	$discard=, 0($pop3), $pop4
+	i64.const	$push1=, 4294967296
+	i64.store	$discard=, 4($0):p2align=2, $pop1
 	return
 	.endfunc
 .Lfunc_end0:

@@ -6,18 +6,18 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 24
 	i32.const	$push0=, 0
 	i32.load	$push1=, s($pop0)
-	i32.shl 	$push2=, $pop1, $0
-	i32.const	$push3=, -1677721600
-	i32.add 	$push4=, $pop2, $pop3
-	i32.shr_s	$push5=, $pop4, $0
-	i32.const	$push6=, -5
-	i32.add 	$push7=, $pop5, $pop6
-	return  	$pop7
+	i32.const	$push2=, 24
+	i32.shl 	$push3=, $pop1, $pop2
+	i32.const	$push4=, -1677721600
+	i32.add 	$push5=, $pop3, $pop4
+	i32.const	$push9=, 24
+	i32.shr_s	$push6=, $pop5, $pop9
+	i32.const	$push7=, -5
+	i32.add 	$push8=, $pop6, $pop7
+	return  	$pop8
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -50,7 +50,7 @@ main:                                   # @main
 	.type	s,@object
 	.section	.data.s,"aw",@progbits
 	.globl	s
-	.align	2
+	.p2align	2
 s:
 	.int32	200                     # 0xc8
 	.size	s, 4

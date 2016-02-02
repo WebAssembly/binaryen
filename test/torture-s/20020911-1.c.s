@@ -6,24 +6,26 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.load16_s	$1=, c($0)
 	block
-	i32.const	$push2=, -1
-	i32.gt_s	$push3=, $1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push1=, 0
+	i32.load16_s	$push2=, c($pop1)
+	tee_local	$push11=, $0=, $pop2
+	i32.const	$push4=, -1
+	i32.gt_s	$push5=, $pop11, $pop4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.const	$push1=, 65535
-	i32.and 	$push0=, $1, $pop1
-	i32.const	$push4=, -32768
-	i32.add 	$push5=, $pop0, $pop4
-	i32.const	$push6=, 32768
-	i32.ge_s	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	i32.const	$push3=, 65535
+	i32.and 	$push0=, $0, $pop3
+	i32.const	$push6=, -32768
+	i32.add 	$push7=, $pop0, $pop6
+	i32.const	$push8=, 32768
+	i32.ge_s	$push9=, $pop7, $pop8
+	br_if   	$pop9, 0        # 0: down to label0
 # BB#2:                                 # %if.end
-	return  	$0
+	i32.const	$push10=, 0
+	return  	$pop10
 .LBB0_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -36,7 +38,7 @@ main:                                   # @main
 	.type	c,@object
 	.section	.data.c,"aw",@progbits
 	.globl	c
-	.align	1
+	.p2align	1
 c:
 	.int16	32768                   # 0x8000
 	.size	c, 2

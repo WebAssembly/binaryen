@@ -38,25 +38,27 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.load8_s	$0=, a($1)
 	block
-	i32.const	$push0=, 1
-	i32.shr_u	$push1=, $0, $pop0
-	i32.const	$push2=, 2147483646
-	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	i32.const	$push1=, 0
+	i32.load8_s	$push0=, a($pop1)
+	tee_local	$push11=, $0=, $pop0
+	i32.const	$push2=, 1
+	i32.shr_u	$push3=, $pop11, $pop2
+	i32.const	$push4=, 2147483646
+	i32.ne  	$push5=, $pop3, $pop4
+	br_if   	$pop5, 0        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
-	i32.const	$push4=, 5
-	i32.rem_u	$push5=, $0, $pop4
-	i32.const	$push6=, 2
-	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
+	i32.const	$push6=, 5
+	i32.rem_u	$push7=, $0, $pop6
+	i32.const	$push8=, 2
+	i32.ne  	$push9=, $pop7, $pop8
+	br_if   	$pop9, 0        # 0: down to label1
 # BB#2:                                 # %if.end7
-	call    	exit@FUNCTION, $1
+	i32.const	$push10=, 0
+	call    	exit@FUNCTION, $pop10
 	unreachable
 .LBB2_3:                                # %if.then6
 	end_block                       # label1:

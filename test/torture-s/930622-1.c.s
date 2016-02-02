@@ -33,11 +33,11 @@ h:                                      # @h
 	.type	f,@function
 f:                                      # @f
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i32.store	$push0=, a($0), $0
-	return  	$pop0
+	i32.const	$push0=, 0
+	i32.const	$push2=, 0
+	i32.store	$push1=, a($pop0), $pop2
+	return  	$pop1
 	.endfunc
 .Lfunc_end2:
 	.size	f, .Lfunc_end2-f
@@ -48,11 +48,11 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, 0
-	i32.store	$push0=, a($0), $0
-	call    	exit@FUNCTION, $pop0
+	i32.const	$push0=, 0
+	i32.const	$push2=, 0
+	i32.store	$push1=, a($pop0), $pop2
+	call    	exit@FUNCTION, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end3:
@@ -62,7 +62,7 @@ main:                                   # @main
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
 	.globl	a
-	.align	2
+	.p2align	2
 a:
 	.int32	1                       # 0x1
 	.size	a, 4
@@ -71,7 +71,7 @@ a:
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
 	.globl	b
-	.align	2
+	.p2align	2
 b:
 	.int32	0                       # 0x0
 	.size	b, 4
