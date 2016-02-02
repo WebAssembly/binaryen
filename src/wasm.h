@@ -149,7 +149,8 @@ struct Literal {
     double f64;
   };
 
-  Literal() : type(WasmType::none), f64(0) {}
+  Literal() : Literal(WasmType::none) {}
+  explicit Literal(WasmType type) : type(type) { memset(&f64, 0, sizeof(f64)); }
   Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
   Literal(uint32_t init) : type(WasmType::i32), i32(init) {}
   Literal(int64_t  init) : type(WasmType::i64), i64(init) {}

@@ -123,14 +123,26 @@ private:
   Literal callFunction(IString name, LiteralList& arguments) {
 
     class FunctionScope {
-    public:
+     public:
       std::map<IString, Literal> locals;
       Function* function;
 
-      FunctionScope(Function* function, LiteralList& arguments) : function(function) {
-        assert(function->params.size() == arguments.size());
+      FunctionScope(Function* function, LiteralList& arguments)
+          : function(function) {
+        if (function->params.size() != arguments.size()) {
+          std::cerr << "Function `" << function->name << "` expects "
+                    << function->params.size() << " parameters, got "
+                    << arguments.size() << " arguments." << std::endl;
+          abort();
+        }
         for (size_t i = 0; i < arguments.size(); i++) {
-          assert(function->params[i].type == arguments[i].type);
+          if (function->params[i].type != arguments[i].type) {
+            std::cerr << "Function `" << function->name << "` expects type "
+                      << printWasmType(function->params[i].type)
+                      << " for parameter " << i << ", got "
+                      << printWasmType(arguments[i].type) << "." << std::endl;
+            abort();
+          }
           locals[function->params[i].name] = arguments[i];
         }
         for (auto& local : function->locals) {
