@@ -163,10 +163,10 @@ struct Literal {
   float   getf32() { assert(type == WasmType::f32); return f32; }
   double  getf64() { assert(type == WasmType::f64); return f64; }
 
-  int32_t reinterpreti32() { assert(type == WasmType::f32); return i32; }
-  int64_t reinterpreti64() { assert(type == WasmType::f64); return i64; }
-  float   reinterpretf32() { assert(type == WasmType::i32); return f32; }
-  double  reinterpretf64() { assert(type == WasmType::i64); return f64; }
+  int32_t reinterpreti32() { assert(type == WasmType::f32); return bit_cast<int32_t>(f32); }
+  int64_t reinterpreti64() { assert(type == WasmType::f64); return bit_cast<int64_t>(f64); }
+  float   reinterpretf32() { assert(type == WasmType::i32); return bit_cast<float>(i32); }
+  double  reinterpretf64() { assert(type == WasmType::i64); return bit_cast<double>(i64); }
 
   int64_t getInteger() {
     switch (type) {
