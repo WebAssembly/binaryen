@@ -919,17 +919,16 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         case f32: {
           Ref ret = ValueBuilder::makeCall(MATH_FROUND);
           Const fake;
-          fake.value = Literal(double(curr->value.f32));
-          fake.type = f64;
+          fake.value = Literal(double(curr->value.getf32()));
           ret[2]->push_back(visitConst(&fake));
           return ret;
         }
         case f64: {
-          double d = curr->value.f64;
+          double d = curr->value.getf64();
           if (d == 0 && std::signbit(d)) { // negative zero
             return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeUnary(MINUS, ValueBuilder::makeDouble(0)));
           }
-          return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeDouble(curr->value.f64));
+          return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeDouble(d));
         }
         default: abort();
       }

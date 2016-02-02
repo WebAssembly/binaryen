@@ -33,8 +33,8 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
   if (isWasmTypeFloat(type)) {
     if (s == INFINITY_) {
       switch (type) {
-        case f32: ret->value.f32 = std::numeric_limits<float>::infinity(); break;
-        case f64: ret->value.f64 = std::numeric_limits<double>::infinity(); break;
+        case f32: ret->value = Literal(std::numeric_limits<float>::infinity()); break;
+        case f64: ret->value = Literal(std::numeric_limits<double>::infinity()); break;
         default: return nullptr;
       }
       //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
@@ -42,8 +42,8 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
     }
     if (s == NEG_INFINITY) {
       switch (type) {
-        case f32: ret->value.f32 = -std::numeric_limits<float>::infinity(); break;
-        case f64: ret->value.f64 = -std::numeric_limits<double>::infinity(); break;
+        case f32: ret->value = Literal(-std::numeric_limits<float>::infinity()); break;
+        case f64: ret->value = Literal(-std::numeric_limits<double>::infinity()); break;
         default: return nullptr;
       }
       //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
@@ -51,8 +51,8 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
     }
     if (s == NAN_) {
       switch (type) {
-        case f32: ret->value.f32 = std::nan(""); break;
-        case f64: ret->value.f64 = std::nan(""); break;
+        case f32: ret->value = Literal(std::nanf("")); break;
+        case f64: ret->value = Literal(std::nan("")); break;
         default: return nullptr;
       }
       //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
@@ -76,8 +76,8 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
           }
           if (negative) pattern |= 0x80000000U;
           if (!isnan(bit_cast<float>(pattern))) pattern |= 1U;
-          ret->value.f32 = bit_cast<float>(pattern);
-          assert(isnan(ret->value.f32));
+          ret->value.f32bits = pattern;
+          assert(isnan(ret->value.getf32()));
           break;
         }
         case f64: {
@@ -91,8 +91,8 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
           }
           if (negative) pattern |= 0x8000000000000000ULL;
           if (!isnan(bit_cast<double>(pattern))) pattern |= 1ULL;
-          ret->value.f64 = bit_cast<double>(pattern);
-          assert(isnan(ret->value.f64));
+          ret->value.f64bits = pattern;
+          assert(isnan(ret->value.getf64()));
           break;
         }
         default: return nullptr;
@@ -102,8 +102,8 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
     }
     if (s == NEG_NAN) {
       switch (type) {
-        case f32: ret->value.f32 = -std::nan(""); break;
-        case f64: ret->value.f64 = -std::nan(""); break;
+        case f32: ret->value = Literal(-std::nanf("")); break;
+        case f64: ret->value = Literal(-std::nan("")); break;
         default: return nullptr;
       }
       //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
@@ -145,14 +145,14 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
     }
     case f32: {
       char *end;
-      ret->value.f32 = strtof(str, &end);
-      assert(!isnan(ret->value.f32));
+      ret->value = Literal(strtof(str, &end));
+      assert(!isnan(ret->value.getf32()));
       break;
     }
     case f64: {
       char *end;
-      ret->value.f64 = strtod(str, &end);
-      assert(!isnan(ret->value.f64));
+      ret->value = Literal(strtod(str, &end));
+      assert(!isnan(ret->value.getf64()));
       break;
     }
     default: return nullptr;
