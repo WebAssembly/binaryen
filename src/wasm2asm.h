@@ -919,7 +919,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
         case f32: {
           Ref ret = ValueBuilder::makeCall(MATH_FROUND);
           Const fake;
-          fake.value = double(curr->value.f32);
+          fake.value = Literal(double(curr->value.f32));
           fake.type = f64;
           ret[2]->push_back(visitConst(&fake));
           return ret;

@@ -1104,13 +1104,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             auto isNegative = allocator.alloc<Binary>();
             isNegative->op = LtS;
             isNegative->left = get();
-            isNegative->right = allocator.alloc<Const>()->set(0);
+            isNegative->right = allocator.alloc<Const>()->set(Literal(0));
             isNegative->finalize();
             auto block = allocator.alloc<Block>();
             block->list.push_back(set);
             auto flip = allocator.alloc<Binary>();
             flip->op = Sub;
-            flip->left = allocator.alloc<Const>()->set(0);
+            flip->left = allocator.alloc<Const>()->set(Literal(0));
             flip->right = get();
             flip->type = i32;
             auto select = allocator.alloc<Select>();

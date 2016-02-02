@@ -85,25 +85,25 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     switch (load->type) {
       case i32: {
         switch (load->bytes) {
-          case 1: return load->signed_ ? (int32_t)*((int8_t*)(memory+addr))  : (int32_t)*((uint8_t*)(memory+addr));
-          case 2: return load->signed_ ? (int32_t)*((int16_t*)(memory+addr)) : (int32_t)*((uint16_t*)(memory+addr));
-          case 4: return load->signed_ ? (int32_t)*((int32_t*)(memory+addr)) : (int32_t)*((uint32_t*)(memory+addr));
+          case 1: return Literal(load->signed_ ? (int32_t)*((int8_t*)(memory+addr))  : (int32_t)*((uint8_t*)(memory+addr)));
+          case 2: return Literal(load->signed_ ? (int32_t)*((int16_t*)(memory+addr)) : (int32_t)*((uint16_t*)(memory+addr)));
+          case 4: return Literal(load->signed_ ? (int32_t)*((int32_t*)(memory+addr)) : (int32_t)*((uint32_t*)(memory+addr)));
           default: abort();
         }
         break;
       }
       case i64: {
         switch (load->bytes) {
-          case 1: return load->signed_ ? (int64_t)*((int8_t*)(memory+addr))  : (int64_t)*((uint8_t*)(memory+addr));
-          case 2: return load->signed_ ? (int64_t)*((int16_t*)(memory+addr)) : (int64_t)*((uint16_t*)(memory+addr));
-          case 4: return load->signed_ ? (int64_t)*((int32_t*)(memory+addr)) : (int64_t)*((uint32_t*)(memory+addr));
-          case 8: return load->signed_ ? (int64_t)*((int64_t*)(memory+addr)) : (int64_t)*((uint64_t*)(memory+addr));
+          case 1: return Literal(load->signed_ ? (int64_t)*((int8_t*)(memory+addr))  : (int64_t)*((uint8_t*)(memory+addr)));
+          case 2: return Literal(load->signed_ ? (int64_t)*((int16_t*)(memory+addr)) : (int64_t)*((uint16_t*)(memory+addr)));
+          case 4: return Literal(load->signed_ ? (int64_t)*((int32_t*)(memory+addr)) : (int64_t)*((uint32_t*)(memory+addr)));
+          case 8: return Literal(load->signed_ ? (int64_t)*((int64_t*)(memory+addr)) : (int64_t)*((uint64_t*)(memory+addr)));
           default: abort();
         }
         break;
       }
-      case f32: return *((float*)(memory+addr));
-      case f64: return *((double*)(memory+addr));
+      case f32: return Literal(*((float*)(memory+addr)));
+      case f64: return Literal(*((double*)(memory+addr)));
       default: abort();
     }
   }
