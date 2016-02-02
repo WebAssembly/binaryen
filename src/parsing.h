@@ -60,7 +60,11 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
     }
     bool negative = str[0] == '-';
     const char *positive = negative ? str + 1 : str;
-    if (positive[0] == '+') positive++;
+    if (!negative) {
+      if (positive[0] == '+') {
+        positive++;
+      }
+    }
     if (positive[0] == 'n' && positive[1] == 'a' && positive[2] == 'n') {
       const char * modifier = positive[3] == ':' ? positive + 4 : nullptr;
       assert(modifier ? positive[4] == '0' && positive[5] == 'x' : 1);
