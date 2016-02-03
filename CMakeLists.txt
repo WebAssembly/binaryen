@@ -65,6 +65,7 @@ ENDIF()
 # Sources.
 
 SET(support_SOURCES
+  src/support/bits.cpp
   src/support/colors.cpp
   src/support/command-line.cpp
   src/support/file.cpp
