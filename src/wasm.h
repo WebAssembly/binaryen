@@ -207,10 +207,10 @@ public:
     if (type != other.type) return false;
     switch (type) {
       case WasmType::none: return true;
-      case WasmType::i32:
-      case WasmType::f32: return i32 == other.i32;
-      case WasmType::i64:
-      case WasmType::f64: return i64 == other.i64;
+      case WasmType::i32: return i32 == other.i32;
+      case WasmType::f32: return getf32() == other.getf32();
+      case WasmType::i64: return i64 == other.i64;
+      case WasmType::f64: return getf64() == other.getf64();
       default: abort();
     }
   }
