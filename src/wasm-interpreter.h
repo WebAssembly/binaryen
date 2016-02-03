@@ -378,13 +378,7 @@ private:
             case Clz: return Literal((int32_t)CountLeadingZeroes(v));
             case Ctz: return Literal((int32_t)CountTrailingZeroes(v));
             case Popcnt: return Literal((int32_t)PopCount(v));
-            case ReinterpretInt: {
-              float v = value.reinterpretf32();
-              if (isnan(v)) {
-                return Literal(Literal(value.geti32() | 0x7f800000).reinterpretf32());
-              }
-              return Literal(value.reinterpretf32());
-            }
+            case ReinterpretInt: return value.castToF32();
             case ExtendSInt32: return Literal(int64_t(value.geti32()));
             case ExtendUInt32: return Literal(uint64_t((uint32_t)value.geti32()));
             case ConvertUInt32: return curr->type == f32 ? Literal(float(uint32_t(value.geti32()))) : Literal(double(uint32_t(value.geti32())));
@@ -399,9 +393,7 @@ private:
             case Ctz: return Literal((int64_t)CountTrailingZeroes(v));
             case Popcnt: return Literal((int64_t)PopCount(v));
             case WrapInt64: return Literal(int32_t(value.geti64()));
-            case ReinterpretInt: {
-              return Literal(value.reinterpretf64());
-            }
+            case ReinterpretInt: return value.castToF64();
             case ConvertUInt64: return curr->type == f32 ? Literal(float((uint64_t)value.geti64())) : Literal(double((uint64_t)value.geti64()));
             case ConvertSInt64: return curr->type == f32 ? Literal(float(value.geti64())) : Literal(double(value.geti64()));
             default: abort();
