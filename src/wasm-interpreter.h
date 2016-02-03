@@ -570,10 +570,8 @@ private:
             case Sub:      ret = l - r; break;
             case Mul:      ret = l * r; break;
             case Div:      ret = l / r; break;
-            case CopySign: {
-              ret = std::copysign(l, r);
-              return Literal(ret);
-            }
+            // operate on bits directly, to avoid signalling bit being set on a float
+            case CopySign: return Literal((left.reinterpreti32() & 0x7fffffff) | (right.reinterpreti32() & 0x80000000)).castToF32(); break;
             case Min: {
               if (l == r && l == 0) ret = 1/l < 0 ? l : r;
               else ret = std::min(l, r);
@@ -601,10 +599,8 @@ private:
             case Sub:      ret = l - r; break;
             case Mul:      ret = l * r; break;
             case Div:      ret = l / r; break;
-            case CopySign: {
-              ret = std::copysign(l, r);
-              return Literal(ret);
-            }
+            // operate on bits directly, to avoid signalling bit being set on a float
+            case CopySign: return Literal((left.reinterpreti64() & 0x7fffffffffffffffUL) | (right.reinterpreti64() & 0x8000000000000000UL)).castToF64(); break;
             case Min: {
               if (l == r && l == 0) ret = 1/l < 0 ? l : r;
               else ret = std::min(l, r);
