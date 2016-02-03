@@ -915,21 +915,21 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     }
     Ref visitConst(Const *curr) {
       switch (curr->type) {
-        case i32: return ValueBuilder::makeInt(curr->value.i32);
+        case i32: return ValueBuilder::makeInt(curr->value.geti32());
         case f32: {
           Ref ret = ValueBuilder::makeCall(MATH_FROUND);
           Const fake;
-          fake.value = Literal(double(curr->value.f32));
+          fake.value = Literal(double(curr->value.getf32()));
           fake.type = f64;
           ret[2]->push_back(visitConst(&fake));
           return ret;
         }
         case f64: {
-          double d = curr->value.f64;
+          double d = curr->value.getf64();
           if (d == 0 && std::signbit(d)) { // negative zero
             return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeUnary(MINUS, ValueBuilder::makeDouble(0)));
           }
-          return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeDouble(curr->value.f64));
+          return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeDouble(curr->value.getf64()));
         }
         default: abort();
       }

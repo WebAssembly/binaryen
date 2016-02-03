@@ -647,7 +647,14 @@ public:
         return breakStack.size() - 1 - i;
       }
     }
+printf("bad!\n");
     std::cerr << "bad break: " << name << std::endl;
+
+
+
+assert(0);
+
+
     abort();
   }
 
@@ -782,10 +789,10 @@ public:
     recurse(curr->value);
   }
   void visitConst(Const *curr) {
-    if (debug) std::cerr << "zz node: Const" << std::endl;
+    if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
     switch (curr->type) {
       case i32: {
-        uint32_t value = curr->value.i32;
+        uint32_t value = curr->value.geti32();
         if (value <= 255) {
           o << int8_t(BinaryConsts::I8Const) << uint8_t(value);
           break;
@@ -794,19 +801,20 @@ public:
         break;
       }
       case i64: {
-        o << int8_t(BinaryConsts::I64Const) << curr->value.i64;
+        o << int8_t(BinaryConsts::I64Const) << curr->value.geti64();
         break;
       }
       case f32: {
-        o << int8_t(BinaryConsts::F32Const) << curr->value.f32;
+        o << int8_t(BinaryConsts::F32Const) << curr->value.getf32();
         break;
       }
       case f64: {
-        o << int8_t(BinaryConsts::F64Const) << curr->value.f64;
+        o << int8_t(BinaryConsts::F64Const) << curr->value.getf64();
         break;
       }
       default: abort();
     }
+    if (debug) std::cerr << "zz const node done.\n";
   }
   void visitUnary(Unary *curr) {
     if (debug) std::cerr << "zz node: Unary" << std::endl;
@@ -1480,14 +1488,14 @@ public:
   }
   bool maybeVisitImpl(Const *curr, uint8_t code) {
     switch (code) {
-      case BinaryConsts::I8Const:  curr->value.i32 = getInt8();    curr->type = i32; break;
-      case BinaryConsts::I32Const: curr->value.i32 = getInt32();   curr->type = i32; break;
-      case BinaryConsts::I64Const: curr->value.i64 = getInt64();   curr->type = i64; break;
-      case BinaryConsts::F32Const: curr->value.f32 = getFloat32(); curr->type = f32; break;
-      case BinaryConsts::F64Const: curr->value.f64 = getFloat64(); curr->type = f64; break;
+      case BinaryConsts::I8Const:  curr->value = Literal(int32_t(getInt8())); break;
+      case BinaryConsts::I32Const: curr->value = Literal(getInt32()); break;
+      case BinaryConsts::I64Const: curr->value = Literal(getInt64()); break;
+      case BinaryConsts::F32Const: curr->value = Literal(getFloat32()); break;
+      case BinaryConsts::F64Const: curr->value = Literal(getFloat64()); break;
       default: return false;
     }
-    curr->value.type = curr->type;
+    curr->type = curr->value.type;
     if (debug) std::cerr << "zz node: Const" << std::endl;
     return true;
   }

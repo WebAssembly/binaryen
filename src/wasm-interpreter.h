@@ -378,13 +378,7 @@ private:
             case Clz: return Literal((int32_t)CountLeadingZeroes(v));
             case Ctz: return Literal((int32_t)CountTrailingZeroes(v));
             case Popcnt: return Literal((int32_t)PopCount(v));
-            case ReinterpretInt: {
-              float v = value.reinterpretf32();
-              if (isnan(v)) {
-                return Literal(Literal(value.geti32() | 0x7f800000).reinterpretf32());
-              }
-              return Literal(value.reinterpretf32());
-            }
+            case ReinterpretInt: return value.castToF32();
             case ExtendSInt32: return Literal(int64_t(value.geti32()));
             case ExtendUInt32: return Literal(uint64_t((uint32_t)value.geti32()));
             case ConvertUInt32: return curr->type == f32 ? Literal(float(uint32_t(value.geti32()))) : Literal(double(uint32_t(value.geti32())));
@@ -399,9 +393,7 @@ private:
             case Ctz: return Literal((int64_t)CountTrailingZeroes(v));
             case Popcnt: return Literal((int64_t)PopCount(v));
             case WrapInt64: return Literal(int32_t(value.geti64()));
-            case ReinterpretInt: {
-              return Literal(value.reinterpretf64());
-            }
+            case ReinterpretInt: return value.castToF64();
             case ConvertUInt64: return curr->type == f32 ? Literal(float((uint64_t)value.geti64())) : Literal(double((uint64_t)value.geti64()));
             case ConvertSInt64: return curr->type == f32 ? Literal(float(value.geti64())) : Literal(double(value.geti64()));
             default: abort();
@@ -411,8 +403,9 @@ private:
           float v = value.getf32();
           float ret;
           switch (curr->op) {
-            case Neg:     ret = -v; break;
-            case Abs:     ret = std::abs(v); break;
+            // operate on bits directly, to avoid signalling bit being set on a float
+            case Neg:     return Literal(value.reinterpreti32() ^ 0x80000000).castToF32(); break;
+            case Abs:     return Literal(value.reinterpreti32() & 0x7fffffff).castToF32(); break;
             case Ceil:    ret = std::ceil(v); break;
             case Floor:   ret = std::floor(v); break;
             case Trunc:   ret = std::trunc(v); break;
@@ -430,8 +423,9 @@ private:
           double v = value.getf64();
           double ret;
           switch (curr->op) {
-            case Neg:     ret = -v; break;
-            case Abs:     ret = std::abs(v); break;
+            // operate on bits directly, to avoid signalling bit being set on a float
+            case Neg:     return Literal(value.reinterpreti64() ^ 0x8000000000000000ULL).castToF64(); break;
+            case Abs:     return Literal(value.reinterpreti64() & 0x7fffffffffffffffULL).castToF64(); break;
             case Ceil:    ret = std::ceil(v); break;
             case Floor:   ret = std::floor(v); break;
             case Trunc:   ret = std::trunc(v); break;
@@ -568,10 +562,8 @@ private:
             case Sub:      ret = l - r; break;
             case Mul:      ret = l * r; break;
             case Div:      ret = l / r; break;
-            case CopySign: {
-              ret = std::copysign(l, r);
-              return Literal(ret);
-            }
+            // operate on bits directly, to avoid signalling bit being set on a float
+            case CopySign: return Literal((left.reinterpreti32() & 0x7fffffff) | (right.reinterpreti32() & 0x80000000)).castToF32(); break;
             case Min: {
               if (l == r && l == 0) ret = 1/l < 0 ? l : r;
               else ret = std::min(l, r);
@@ -599,10 +591,8 @@ private:
             case Sub:      ret = l - r; break;
             case Mul:      ret = l * r; break;
             case Div:      ret = l / r; break;
-            case CopySign: {
-              ret = std::copysign(l, r);
-              return Literal(ret);
-            }
+            // operate on bits directly, to avoid signalling bit being set on a float
+            case CopySign: return Literal((left.reinterpreti64() & 0x7fffffffffffffffUL) | (right.reinterpreti64() & 0x8000000000000000UL)).castToF64(); break;
             case Min: {
               if (l == r && l == 0) ret = 1/l < 0 ? l : r;
               else ret = std::min(l, r);

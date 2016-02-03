@@ -744,7 +744,7 @@ class S2WasmBuilder {
               // may be a relocation
               auto curr = allocator.alloc<Const>();
               curr->type = curr->value.type = i32;
-              getConst((uint32_t*)&curr->value.i32);
+              getConst((uint32_t*)curr->value.geti32Ptr());
               setOutput(curr, assign);
             } else {
               cashew::IString str = getStr();
