@@ -42,7 +42,8 @@ class S2WasmBuilder {
 
  public:
   S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug,
-                size_t globalBase, bool ignoreUnknownSymbols)
+                size_t globalBase, size_t stackAllocation,
+                bool ignoreUnknownSymbols)
       : wasm(wasm),
         allocator(wasm.allocator),
         debug(debug),
@@ -52,8 +53,13 @@ class S2WasmBuilder {
     s = input;
     scan();
     s = input;
-    prepare();
+    // Place the stack pointer at the bottom of the linear memory, to keep its
+    // address small (and thus with a small encoding).
+    placeStackPointer(stackAllocation);
     process();
+    // Place the stack after the user's static data, to keep those addresses
+    // small.
+    if (stackAllocation) placeStack(stackAllocation);
     fix();
   }
 
@@ -370,10 +376,30 @@ class S2WasmBuilder {
     }
   }
 
-  void prepare() {
+  void placeStackPointer(size_t stackAllocation) {
     assert(nextStatic == globalBase); // we are the first allocation
+    // Allocate space for the stack pointer
     staticAddresses["__stack_pointer"] = nextStatic;
-    nextStatic += 4;
+    const size_t pointerSize = 4;
+    if (stackAllocation) {
+      // If we are also allocating the stack, initialize the stack pointer to
+      // point to one past-the-end of the stack allocation.
+      auto* raw = new uint32_t;
+      relocations.emplace_back(raw, ".stack", stackAllocation);
+      assert(wasm.memory.segments.size() == 0);
+      addressSegments[nextStatic] = wasm.memory.segments.size();
+      wasm.memory.segments.emplace_back(
+          nextStatic, reinterpret_cast<char*>(raw), pointerSize);
+      wasm.memory.initial = nextStatic + pointerSize;
+    }
+    nextStatic += pointerSize;
+  }
+
+  void placeStack(size_t stackAllocation) {
+    // Allocate space for a user stack. It starts zeroed-out so needs no segment
+    staticAddresses[".stack"] = nextStatic;
+    nextStatic += stackAllocation;
+    wasm.memory.initial = nextStatic;
   }
 
   void process() {

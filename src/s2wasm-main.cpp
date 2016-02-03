@@ -46,6 +46,11 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["global-base"] = argument;
            })
+      .add("--allocate-stack", "-s", "Size of the user stack in linear memory",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["stack-allocation"] = argument;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -59,9 +64,13 @@ int main(int argc, const char *argv[]) {
   size_t globalBase = options.extra.find("global-base") != options.extra.end()
                           ? std::stoull(options.extra["global-base"])
                           : 1;
+  size_t stackAllocation =
+      options.extra.find("stack-allocation") != options.extra.end()
+          ? std::stoull(options.extra["stack-allocation"])
+          : 0;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
   S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, globalBase,
-                       ignoreUnknownSymbols);
+                       stackAllocation, ignoreUnknownSymbols);
 
   if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
   std::stringstream meta;
