@@ -851,7 +851,7 @@ assert(0);
   void visitBinary(Binary *curr) {
     if (debug) std::cerr << "zz node: Binary" << std::endl;
     #define TYPED_CODE(code) { \
-      switch (curr->left->type) { \
+      switch (getReachableWasmType(curr->left->type, curr->right->type)) { \
         case i32: o << int8_t(BinaryConsts::I32##code); break; \
         case i64: o << int8_t(BinaryConsts::I64##code); break; \
         case f32: o << int8_t(BinaryConsts::F32##code); break; \
@@ -861,7 +861,7 @@ assert(0);
       break; \
     }
     #define INT_TYPED_CODE(code) { \
-      switch (curr->left->type) { \
+      switch (getReachableWasmType(curr->left->type, curr->right->type)) { \
         case i32: o << int8_t(BinaryConsts::I32##code); break; \
         case i64: o << int8_t(BinaryConsts::I64##code); break; \
         default: abort(); \
@@ -869,7 +869,7 @@ assert(0);
       break; \
     }
     #define FLOAT_TYPED_CODE(code) { \
-      switch (curr->left->type) { \
+      switch (getReachableWasmType(curr->left->type, curr->right->type)) { \
         case f32: o << int8_t(BinaryConsts::F32##code); break; \
         case f64: o << int8_t(BinaryConsts::F64##code); break; \
         default: abort(); \

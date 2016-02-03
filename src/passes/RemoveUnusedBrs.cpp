@@ -37,7 +37,7 @@ struct RemoveUnusedBrs : public WalkerPass<WasmWalker<RemoveUnusedBrs>> {
       }
       return;
     }
-    if (curr->type != none) return; // already has a returned value
+    if (isConcreteWasmType(curr->type)) return; // already has a returned value
     // an if_else that indirectly returns a value by breaking to the same target can potentially remove both breaks, and break outside once
     auto getLast = [](Expression *side) -> Expression* {
       Block* b = side->dyn_cast<Block>();

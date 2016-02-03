@@ -138,6 +138,10 @@ inline WasmType getReachableWasmType(WasmType a, WasmType b) {
   return a != unreachable ? a : b;
 }
 
+inline bool isConcreteWasmType(WasmType type) {
+  return type != none && type != unreachable;
+}
+
 // Literals
 
 class Literal {
@@ -497,7 +501,9 @@ public:
 
 class Break : public Expression {
 public:
-  Break() : Expression(BreakId), condition(nullptr), value(nullptr) {}
+  Break() : Expression(BreakId), condition(nullptr), value(nullptr) {
+    type = unreachable;
+  }
 
   Expression *condition;
   Name name;
@@ -926,7 +932,9 @@ class Return : public Expression {
 public:
   Expression *value;
 
-  Return() : Expression(ReturnId), value(nullptr) {}
+  Return() : Expression(ReturnId), value(nullptr) {
+    type = unreachable;
+  }
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     printOpening(o, "return");
