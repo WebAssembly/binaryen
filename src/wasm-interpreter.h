@@ -411,8 +411,9 @@ private:
           float v = value.getf32();
           float ret;
           switch (curr->op) {
-            case Neg:     ret = -v; break;
-            case Abs:     return Literal(value.reinterpreti32() & 0x7fffffff).castToF32(); break; // operate on bits directly, to avoid signalling bit being set on a float
+            // operate on bits directly, to avoid signalling bit being set on a float
+            case Neg:     return Literal(value.reinterpreti32() ^ 0x80000000).castToF32(); break;
+            case Abs:     return Literal(value.reinterpreti32() & 0x7fffffff).castToF32(); break;
             case Ceil:    ret = std::ceil(v); break;
             case Floor:   ret = std::floor(v); break;
             case Trunc:   ret = std::trunc(v); break;
@@ -430,8 +431,9 @@ private:
           double v = value.getf64();
           double ret;
           switch (curr->op) {
-            case Neg:     ret = -v; break;
-            case Abs:     return Literal(value.reinterpreti64() & 0x7fffffffffffffffUL).castToF64(); break; // operate on bits directly, to avoid signalling bit being set on a float
+            // operate on bits directly, to avoid signalling bit being set on a float
+            case Neg:     return Literal(value.reinterpreti64() ^ 0x8000000000000000UL).castToF64(); break;
+            case Abs:     return Literal(value.reinterpreti64() & 0x7fffffffffffffffUL).castToF64(); break;
             case Ceil:    ret = std::ceil(v); break;
             case Floor:   ret = std::floor(v); break;
             case Trunc:   ret = std::trunc(v); break;
