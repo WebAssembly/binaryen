@@ -162,6 +162,19 @@ public:
   explicit Literal(float    init) : type(WasmType::f32), i32(bit_cast<int32_t>(init)) {}
   explicit Literal(double   init) : type(WasmType::f64), i64(bit_cast<int64_t>(init)) {}
 
+  Literal castToF32() {
+    assert(type == WasmType::i32);
+    Literal ret(i32);
+    ret.type = f32;
+    return ret;
+  }
+  Literal castToF64() {
+    assert(type == WasmType::i64);
+    Literal ret(i64);
+    ret.type = f64;
+    return ret;
+  }
+
   int32_t geti32() { assert(type == WasmType::i32); return i32; }
   int64_t geti64() { assert(type == WasmType::i64); return i64; }
   float   getf32() { assert(type == WasmType::f32); return bit_cast<float>(i32); }
