@@ -24,6 +24,7 @@
 #define wasm_wasm_interpreter_h
 
 #include <limits.h>
+#include <sstream>
 
 #include "support/bits.h"
 #include "wasm.h"
@@ -775,14 +776,21 @@ private:
 
   size_t memorySize;
 
-  template<class LS>
-  size_t getFinalAddress(LS *curr, Literal ptr) {
+  template <class LS>
+  size_t getFinalAddress(LS* curr, Literal ptr) {
+    auto trapIfGt = [this](size_t lhs, size_t rhs, const char* msg) {
+      if (lhs > rhs) {
+        std::stringstream ss;
+        ss << msg << ": " << lhs << " > " << rhs;
+        externalInterface->trap(ss.str().c_str());
+      }
+    };
     uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
-    if (memorySize < curr->offset) externalInterface->trap("offset > memory");
-    if (addr > memorySize - curr->offset) externalInterface->trap("final > memory");
+    trapIfGt(curr->offset, memorySize, "offset > memory");
+    trapIfGt(addr, memorySize - curr->offset, "final > memory");
     addr += curr->offset;
-    if (curr->bytes > memorySize) externalInterface->trap("bytes > memory");
-    if (addr > memorySize - curr->bytes) externalInterface->trap("highest > memory");
+    trapIfGt(curr->bytes, memorySize, "bytes > memory");
+    trapIfGt(addr, memorySize - curr->bytes, "highest > memory");
     return addr;
   }
 
