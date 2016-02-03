@@ -80,7 +80,7 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
           }
           if (negative) pattern |= 0x80000000U;
           if (!isnan(bit_cast<float>(pattern))) pattern |= 1U;
-          ret->value = Literal(bit_cast<float>(pattern)); // XXX
+          ret->value = Literal(pattern).castToF32();
           break;
         }
         case f64: {
@@ -94,7 +94,7 @@ Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) 
           }
           if (negative) pattern |= 0x8000000000000000ULL;
           if (!isnan(bit_cast<double>(pattern))) pattern |= 1ULL;
-          ret->value = Literal(bit_cast<double>(pattern)); // XXX
+          ret->value = Literal(pattern).castToF64();
           break;
         }
         default: return nullptr;
