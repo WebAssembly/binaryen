@@ -17,8 +17,10 @@
 #define wasm_support_bits_definitions
 #include "support/bits.h"
 
+namespace wasm {
+
 template<>
-int wasm::PopCount<uint8_t>(uint8_t v) {
+int PopCount<uint8_t>(uint8_t v) {
   // Small table lookup.
   static const uint8_t tbl[32] = {
     0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
@@ -28,12 +30,12 @@ int wasm::PopCount<uint8_t>(uint8_t v) {
 }
 
 template<>
-int wasm::PopCount<uint16_t>(uint16_t v) {
+int PopCount<uint16_t>(uint16_t v) {
   return PopCount((uint8_t)(v & 0xff)) + PopCount((uint8_t)(v >> 8));
 }
 
 template<>
-int wasm::PopCount<uint32_t>(uint32_t v) {
+int PopCount<uint32_t>(uint32_t v) {
   // See Stanford bithacks, counting bits set in parallel, "best method":
   // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
   v = v - ((v >> 1) & 0x55555555);
@@ -42,12 +44,12 @@ int wasm::PopCount<uint32_t>(uint32_t v) {
 }
 
 template<>
-int wasm::PopCount<uint64_t>(uint64_t v) {
+int PopCount<uint64_t>(uint64_t v) {
   return PopCount((uint32_t)v) + PopCount((uint32_t)(v >> 32));
 }
 
 template<>
-uint32_t wasm::BitReverse<uint32_t>(uint32_t v) {
+uint32_t BitReverse<uint32_t>(uint32_t v) {
   // See Hacker's Delight, first edition, figure 7-1.
   v = ((v & 0x55555555) << 1) | ((v >> 1) & 0x55555555);
   v = ((v & 0x33333333) << 2) | ((v >> 2) & 0x33333333);
@@ -57,7 +59,7 @@ uint32_t wasm::BitReverse<uint32_t>(uint32_t v) {
 }
 
 template<>
-int wasm::CountTrailingZeroes<uint32_t>(uint32_t v) {
+int CountTrailingZeroes<uint32_t>(uint32_t v) {
   // See Stanford bithacks, count the consecutive zero bits (trailing) on the
   // right with multiply and lookup:
   // http://graphics.stanford.edu/~seander/bithacks.html#ZerosOnRightMultLookup
@@ -69,13 +71,13 @@ int wasm::CountTrailingZeroes<uint32_t>(uint32_t v) {
 }
 
 template<>
-int wasm::CountTrailingZeroes<uint64_t>(uint64_t v) {
+int CountTrailingZeroes<uint64_t>(uint64_t v) {
   return (uint32_t)v ? CountTrailingZeroes((uint32_t)v)
                      : 32 + CountTrailingZeroes((uint32_t)(v >> 32));
 }
 
 template<>
-int wasm::CountLeadingZeroes<uint32_t>(uint32_t v) {
+int CountLeadingZeroes<uint32_t>(uint32_t v) {
   // See Stanford bithacks, find the log base 2 of an N-bit integer in
   // O(lg(N)) operations with multiply and lookup:
   // http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogDeBruijn
@@ -92,7 +94,9 @@ int wasm::CountLeadingZeroes<uint32_t>(uint32_t v) {
 }
 
 template<>
-int wasm::CountLeadingZeroes<uint64_t>(uint64_t v) {
+int CountLeadingZeroes<uint64_t>(uint64_t v) {
   return v >> 32 ? CountLeadingZeroes((uint32_t)(v >> 32))
                  : 32 + CountLeadingZeroes((uint32_t)v);
 }
+
+} // namespace wasm
