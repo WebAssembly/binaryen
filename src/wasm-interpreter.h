@@ -425,8 +425,8 @@ private:
           double ret;
           switch (curr->op) {
             // operate on bits directly, to avoid signalling bit being set on a float
-            case Neg:     return Literal(value.reinterpreti64() ^ 0x8000000000000000ULL).castToF64(); break;
-            case Abs:     return Literal(value.reinterpreti64() & 0x7fffffffffffffffULL).castToF64(); break;
+            case Neg:     return Literal(uint64_t((value.reinterpreti64() ^ 0x8000000000000000ULL))).castToF64(); break;
+            case Abs:     return Literal(uint64_t(value.reinterpreti64() & 0x7fffffffffffffffULL)).castToF64(); break;
             case Ceil:    ret = std::ceil(v); break;
             case Floor:   ret = std::floor(v); break;
             case Trunc:   ret = std::trunc(v); break;
