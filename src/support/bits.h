@@ -53,15 +53,15 @@ extern template int CountLeadingZeroes(uint64_t);
 // Convenience signed -> unsigned. It usually doesn't make much sense to use bit
 // functions on signed types.
 template <typename T>
-inline int PopCount(T v) {
+int PopCount(T v) {
   return PopCount(typename std::make_unsigned<T>::type(v));
 }
 template <typename T>
-inline int CountTrailingZeroes(T v) {
+int CountTrailingZeroes(T v) {
   return CountTrailingZeroes(typename std::make_unsigned<T>::type(v));
 }
 template <typename T>
-inline int CountLeadingZeroes(T v) {
+int CountLeadingZeroes(T v) {
   return CountLeadingZeroes(typename std::make_unsigned<T>::type(v));
 }
 
