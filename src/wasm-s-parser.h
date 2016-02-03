@@ -223,6 +223,7 @@ class SExpressionWasmBuilder {
   MixedArena& allocator;
   std::function<void ()> onError;
   int functionCounter;
+  int importCounter;
   std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
   bool debug;
 
@@ -978,13 +979,19 @@ private:
 
   void parseImport(Element& s) {
     auto im = allocator.alloc<Import>();
-    im->name = s[1]->str();
-    im->module = s[2]->str();
-    if (!s[3]->isStr()) onError();
-    im->base = s[3]->str();
+    size_t i = 1;
+    if (s.size() > 3 && s[3]->isStr()) {
+      im->name = s[i++]->str();
+    } else {
+      im->name = Name::fromInt(importCounter);
+    }
+    importCounter++;
+    im->module = s[i++]->str();
+    if (!s[i]->isStr()) onError();
+    im->base = s[i++]->str();
     FunctionType type;
-    if (s.size() > 4) {
-      Element& params = *s[4];
+    if (s.size() > i) {
+      Element& params = *s[i];
       IString id = params[0]->str();
       if (id == PARAM) {
         for (size_t i = 1; i < params.size(); i++) {
@@ -999,8 +1006,8 @@ private:
       } else {
         onError();
       }
-      if (s.size() > 5) {
-        Element& result = *s[5];
+      if (s.size() > i+1) {
+        Element& result = *s[i+1];
         assert(result[0]->str() == RESULT);
         type.result = stringToWasmType(result[1]->str());
       }
