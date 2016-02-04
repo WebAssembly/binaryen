@@ -454,28 +454,29 @@ private:
         assert(left.type == curr->left->type);
         assert(right.type == curr->right->type);
         if (left.type == i32) {
-          int32_t l = left.geti32(), r = right.geti32();
+          uint32_t l = left.geti32(), r = right.geti32();
+          int32_t l_signed = l, r_signed = r;
           switch (curr->op) {
             case Add:      return Literal(l + r);
             case Sub:      return Literal(l - r);
             case Mul:      return Literal(l * r);
             case DivS: {
-              if (r == 0) trap("i32.div_s by 0");
-              if (l == INT32_MIN && r == -1) trap("i32.div_s overflow"); // signed division overflow
-              return Literal(l / r);
+              if (r_signed == 0) trap("i32.div_s by 0");
+              if (l_signed == INT32_MIN && r_signed == -1) trap("i32.div_s overflow"); // signed division overflow
+              return Literal(l_signed / r_signed);
             }
             case DivU: {
               if (r == 0) trap("i32.div_u by 0");
-              return Literal(int32_t(uint32_t(l) / uint32_t(r)));
+              return Literal(l / r);
             }
             case RemS: {
-              if (r == 0) trap("i32.rem_s by 0");
-              if (l == INT32_MIN && r == -1) return Literal(int32_t(0));
-              return Literal(l % r);
+              if (r_signed == 0) trap("i32.rem_s by 0");
+              if (l_signed == INT32_MIN && r_signed == -1) return Literal(int32_t(0));
+              return Literal(l_signed % r_signed);
             }
             case RemU: {
               if (r == 0) trap("i32.rem_u by 0");
-              return Literal(int32_t(uint32_t(l) % uint32_t(r)));
+              return Literal(l % r);
             }
             case And:      return Literal(l & r);
             case Or:       return Literal(l | r);
@@ -486,47 +487,48 @@ private:
             }
             case ShrU: {
               r = r & 31;
-              return Literal(int32_t(uint32_t(l) >> uint32_t(r)));
+              return Literal(l >> r);
             }
             case ShrS: {
-              r = r & 31;
-              return Literal(l >> r);
+              r_signed = r_signed & 31;
+              return Literal(l_signed >> r_signed);
             }
             case Eq:  return Literal(l == r);
             case Ne:  return Literal(l != r);
-            case LtS: return Literal(l < r);
-            case LtU: return Literal(uint32_t(l) < uint32_t(r));
-            case LeS: return Literal(l <= r);
-            case LeU: return Literal(uint32_t(l) <= uint32_t(r));
-            case GtS: return Literal(l > r);
-            case GtU: return Literal(uint32_t(l) > uint32_t(r));
-            case GeS: return Literal(l >= r);
-            case GeU: return Literal(uint32_t(l) >= uint32_t(r));
+            case LtS: return Literal(l_signed < r_signed);
+            case LtU: return Literal(l < r);
+            case LeS: return Literal(l_signed <= r_signed);
+            case LeU: return Literal(l <= r);
+            case GtS: return Literal(l_signed > r_signed);
+            case GtU: return Literal(l > r);
+            case GeS: return Literal(l_signed >= r_signed);
+            case GeU: return Literal(l >= r);
             default: abort();
           }
         } else if (left.type == i64) {
-          int64_t l = left.geti64(), r = right.geti64();
+          uint64_t l = left.geti64(), r = right.geti64();
+          int64_t l_signed = l, r_signed = r;
           switch (curr->op) {
             case Add:      return Literal(l + r);
             case Sub:      return Literal(l - r);
             case Mul:      return Literal(l * r);
             case DivS: {
-              if (r == 0) trap("i64.div_s by 0");
-              if (l == LLONG_MIN && r == -1) trap("i64.div_s overflow"); // signed division overflow
-              return Literal(l / r);
+              if (r_signed == 0) trap("i64.div_s by 0");
+              if (l_signed == LLONG_MIN && r_signed == -1LL) trap("i64.div_s overflow"); // signed division overflow
+              return Literal(l_signed / r_signed);
             }
             case DivU: {
               if (r == 0) trap("i64.div_u by 0");
-              return Literal(int64_t(uint64_t(l) / uint64_t(r)));
+              return Literal(l / r);
             }
             case RemS: {
-              if (r == 0) trap("i64.rem_s by 0");
-              if (l == LLONG_MIN && r == -1) return Literal(int64_t(0));
-              return Literal(l % r);
+              if (r_signed == 0) trap("i64.rem_s by 0");
+              if (l_signed == LLONG_MIN && r_signed == -1LL) return Literal(int64_t(0));
+              return Literal(l_signed % r_signed);
             }
             case RemU: {
               if (r == 0) trap("i64.rem_u by 0");
-              return Literal(int64_t(uint64_t(l) % uint64_t(r)));
+              return Literal(l % r);
             }
             case And:      return Literal(l & r);
             case Or:       return Literal(l | r);
@@ -537,22 +539,22 @@ private:
             }
             case ShrU: {
               r = r & 63;
-              return Literal(int64_t(uint64_t(l) >> uint64_t(r)));
+              return Literal(l >> r);
             }
             case ShrS: {
-              r = r & 63;
-              return Literal(l >> r);
+              r_signed = r_signed & 63;
+              return Literal(l_signed >> r_signed);
             }
             case Eq:  return Literal(l == r);
             case Ne:  return Literal(l != r);
-            case LtS: return Literal(l < r);
-            case LtU: return Literal(uint64_t(l) < uint64_t(r));
-            case LeS: return Literal(l <= r);
-            case LeU: return Literal(uint64_t(l) <= uint64_t(r));
-            case GtS: return Literal(l > r);
-            case GtU: return Literal(uint64_t(l) > uint64_t(r));
-            case GeS: return Literal(l >= r);
-            case GeU: return Literal(uint64_t(l) >= uint64_t(r));
+            case LtS: return Literal(l_signed < r_signed);
+            case LtU: return Literal(l < r);
+            case LeS: return Literal(l_signed <= r_signed);
+            case LeU: return Literal(l <= r);
+            case GtS: return Literal(l_signed > r_signed);
+            case GtU: return Literal(l > r);
+            case GeS: return Literal(l_signed >= r_signed);
+            case GeU: return Literal(l >= r);
             default: abort();
           }
         } else if (left.type == f32) {
