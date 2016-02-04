@@ -74,8 +74,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
    public:
     Memory() {}
     void resize(size_t newSize) {
-      // Allocate at least this size to get proper alignment: the allocator will
-      // usually start allocating page-sized chunks which are properly aligned.
+      // Ensure the smallest allocation is large enough that most allocators
+      // will provide page-aligned storage. This hopefully allows the
+      // interpreter's memory to be as aligned as the memory being simulated,
+      // ensuring that the performance doesn't needlessly degrade.
       //
       // The code is optimistic this will work until WG21's p0035r0 happens.
       const size_t minSize = 1 << 12;
