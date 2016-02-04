@@ -33,7 +33,7 @@ matrix:
           packages: ['cmake', 'nodejs', 'g++-5']
 
   allow_failures:
-    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=address"
+    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=address" ASAN_OPTIONS="detect_leaks=0"
       compiler: clang
       addons: *clang36
 
