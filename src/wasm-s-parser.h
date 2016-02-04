@@ -795,6 +795,9 @@ private:
     if (ret->list.size() > 0) {
       ret->type = ret->list.back()->type;
     }
+    // Note that we do not name these implicit/synthetic blocks. They
+    // are the effects of syntactic sugar, and nothing can branch to
+    // them anyhow.
     return ret;
   }
 
