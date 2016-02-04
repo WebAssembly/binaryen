@@ -1001,9 +1001,7 @@ private:
         type.result = stringToWasmType(params[1]->str());
       } else if (id == TYPE) {
         IString name = params[1]->str();
-        if (wasm.functionTypesMap.find(name) == wasm.functionTypesMap.end()) {
-          onError();
-        }
+        if (wasm.functionTypesMap.find(name) == wasm.functionTypesMap.end()) onError();
         type = *wasm.functionTypesMap[name];
       } else {
         onError();
