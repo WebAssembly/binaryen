@@ -39,15 +39,17 @@ class S2WasmBuilder {
   const char* s;
   bool debug;
   bool ignoreUnknownSymbols;
+  const std::string &startFunction;
 
  public:
   S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug,
                 size_t globalBase, size_t stackAllocation,
-                bool ignoreUnknownSymbols)
+                bool ignoreUnknownSymbols, const std::string& startFunction)
       : wasm(wasm),
         allocator(wasm.allocator),
         debug(debug),
         ignoreUnknownSymbols(ignoreUnknownSymbols),
+        startFunction(startFunction),
         globalBase(globalBase),
         nextStatic(globalBase) {
     s = input;
@@ -78,7 +80,7 @@ class S2WasmBuilder {
   };
   std::vector<Relocation> relocations;
 
-  std::set<Name> implementedFunctions;
+  std::map<Name, Function*> implementedFunctions;
   std::map<Name, Name> aliasedFunctions;
 
   std::map<size_t, size_t> addressSegments; // address => segment index
@@ -365,7 +367,7 @@ class S2WasmBuilder {
       if (match(".hidden")) mustMatch(name.str);
       mustMatch(name.str);
       if (match(":")) {
-        implementedFunctions.insert(name);
+        implementedFunctions.insert({name, nullptr});
       } else if (match("=")) {
         Name alias = getAtSeparated();
         mustMatch("@FUNCTION");
@@ -485,6 +487,7 @@ class S2WasmBuilder {
     };
 
     auto func = allocator.alloc<Function>();
+    implementedFunctions[name] = func;
     func->name = name;
     std::map<Name, WasmType> localTypes;
     // params and result
@@ -722,7 +725,7 @@ class S2WasmBuilder {
         Name target = cleanFunction(getCommaSeparated());
         auto aliased = aliasedFunctions.find(target);
         if (aliased != aliasedFunctions.end()) target = aliased->second;
-        if (implementedFunctions.count(target) > 0) {
+        if (implementedFunctions.count(target) != 0) {
           auto specific = allocator.alloc<Call>();
           specific->target = target;
           curr = specific;
@@ -1171,13 +1174,15 @@ class S2WasmBuilder {
       if (functionIndexes.count(name) == 0) {
         functionIndexes[name] = wasm.table.names.size();
         wasm.table.names.push_back(name);
-        if (debug) std::cerr << "function index: " << name << ": " << functionIndexes[name] << '\n';
+        if (debug)
+          std::cerr << "function index: " << name << ": "
+                    << functionIndexes[name] << '\n';
       }
     };
     for (auto& relocation : relocations) {
       Name name = relocation.value;
       if (debug) std::cerr << "fix relocation " << name << '\n';
-      const auto &symbolAddress = staticAddresses.find(name);
+      const auto& symbolAddress = staticAddresses.find(name);
       if (symbolAddress != staticAddresses.end()) {
         *(relocation.data) = symbolAddress->second + relocation.offset;
         if (debug) std::cerr << "  ==> " << *(relocation.data) << '\n';
@@ -1191,6 +1196,42 @@ class S2WasmBuilder {
           ensureFunctionIndex(name);
           *(relocation.data) = functionIndexes[name] + relocation.offset;
         }
+      }
+    }
+    if (startFunction.size()) {
+      if (implementedFunctions.count(startFunction) == 0) {
+        std::cerr << "Unknown start function: `" << startFunction << "`\n";
+        abort();
+      }
+      const auto *target = implementedFunctions[startFunction];
+      Name start("_start");
+      if (implementedFunctions.count(start) != 0) {
+        std::cerr << "Start function already present: `" << start << "`\n";
+        abort();
+      }
+      auto* func = allocator.alloc<Function>();
+      func->name = start;
+      wasm.addFunction(func);
+      auto* exp = allocator.alloc<Export>();
+      exp->name = exp->value = start;
+      wasm.addExport(exp);
+      wasm.addStart(start);
+      auto* block = allocator.alloc<Block>();
+      func->body = block;
+      {  // Create the call, matching its parameters.
+        // TODO allow calling with non-default values.
+        auto* call = allocator.alloc<Call>();
+        call->target = startFunction;
+        size_t paramNum = 0;
+        for (const NameType& nt : target->params) {
+          Name name = Name::fromInt(paramNum++);
+          func->locals.emplace_back(name, nt.type);
+          auto* param = allocator.alloc<GetLocal>();
+          param->name = name;
+          param->type = nt.type;
+          call->operands.push_back(param);
+        }
+        block->list.push_back(call);
       }
     }
   }

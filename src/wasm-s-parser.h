@@ -283,6 +283,7 @@ private:
 
   void parseModuleElement(Element& curr) {
     IString id = curr[0]->str();
+    if (id == START) return parseStart(curr);
     if (id == FUNC) return parseFunction(curr);
     if (id == MEMORY) return parseMemory(curr);
     if (id == EXPORT) return parseExport(curr);
@@ -303,6 +304,8 @@ private:
   Name getPrefixedName(std::string prefix) {
     return IString((prefix + std::to_string(otherIndex++)).c_str(), false);
   }
+
+  void parseStart(Element& s) { wasm.addStart(s[1]->str()); }
 
   void parseFunction(Element& s) {
     auto func = currFunction = allocator.alloc<Function>();
