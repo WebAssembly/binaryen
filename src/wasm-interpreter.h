@@ -620,13 +620,13 @@ private:
       }
       Flow visitSelect(Select *curr) {
         NOTE_ENTER("Select");
-        Flow condition = visit(curr->condition);
-        if (condition.breaking()) return condition;
-        NOTE_EVAL1(condition.value);
         Flow ifTrue = visit(curr->ifTrue);
         if (ifTrue.breaking()) return ifTrue;
         Flow ifFalse = visit(curr->ifFalse);
         if (ifFalse.breaking()) return ifFalse;
+        Flow condition = visit(curr->condition);
+        if (condition.breaking()) return condition;
+        NOTE_EVAL1(condition.value);
         return condition.value.geti32() ? ifTrue : ifFalse; // ;-)
       }
       Flow visitReturn(Return *curr) {

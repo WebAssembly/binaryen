@@ -194,7 +194,7 @@ function asmFunc(global, env, buffer) {
   block0 : {
    block1 : {
     asm2wasm_i32_temp = 0;
-    wasm2asm_i32$0 = (wasm2asm_i32$1 = (asm2wasm_i32_temp | 0) < (0 | 0), wasm2asm_i32$2 = 0 - asm2wasm_i32_temp | 0, wasm2asm_i32$3 = asm2wasm_i32_temp, wasm2asm_i32$1 ? wasm2asm_i32$2 : wasm2asm_i32$3);
+    wasm2asm_i32$0 = (wasm2asm_i32$1 = asm2wasm_i32_temp, wasm2asm_i32$2 = (asm2wasm_i32_temp | 0) < (0 | 0), wasm2asm_i32$3 = 0 - asm2wasm_i32_temp | 0, wasm2asm_i32$1 ? wasm2asm_i32$2 : wasm2asm_i32$3);
    }
    x = wasm2asm_i32$0;
    y = Math_abs(0.0);
