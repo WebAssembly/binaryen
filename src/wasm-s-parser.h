@@ -630,9 +630,9 @@ private:
 
   Expression* makeSelect(Element& s, WasmType type) {
     auto ret = allocator.alloc<Select>();
-    ret->condition = parseExpression(s[1]);
-    ret->ifTrue = parseExpression(s[2]);
-    ret->ifFalse = parseExpression(s[3]);
+    ret->ifTrue = parseExpression(s[1]);
+    ret->ifFalse = parseExpression(s[2]);
+    ret->condition = parseExpression(s[3]);
     ret->type = type;
     return ret;
   }

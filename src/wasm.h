@@ -917,9 +917,9 @@ public:
     o << '(';
     prepareColor(o) << printWasmType(type) << ".select";
     incIndent(o, indent);
-    printFullLine(o, indent, condition);
     printFullLine(o, indent, ifTrue);
     printFullLine(o, indent, ifFalse);
+    printFullLine(o, indent, condition);
     return decIndent(o, indent);
   }
 
