@@ -39,12 +39,12 @@ class S2WasmBuilder {
   const char* s;
   bool debug;
   bool ignoreUnknownSymbols;
-  const std::string &startFunction;
+  Name startFunction;
 
  public:
   S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug,
                 size_t globalBase, size_t stackAllocation,
-                bool ignoreUnknownSymbols, const std::string& startFunction)
+                bool ignoreUnknownSymbols, Name startFunction)
       : wasm(wasm),
         allocator(wasm.allocator),
         debug(debug),
@@ -80,7 +80,7 @@ class S2WasmBuilder {
   };
   std::vector<Relocation> relocations;
 
-  std::map<Name, Function*> implementedFunctions;
+  std::set<Name> implementedFunctions;
   std::map<Name, Name> aliasedFunctions;
 
   std::map<size_t, size_t> addressSegments; // address => segment index
@@ -367,7 +367,7 @@ class S2WasmBuilder {
       if (match(".hidden")) mustMatch(name.str);
       mustMatch(name.str);
       if (match(":")) {
-        implementedFunctions.insert({name, nullptr});
+        implementedFunctions.insert(name);
       } else if (match("=")) {
         Name alias = getAtSeparated();
         mustMatch("@FUNCTION");
@@ -487,7 +487,6 @@ class S2WasmBuilder {
     };
 
     auto func = allocator.alloc<Function>();
-    implementedFunctions[name] = func;
     func->name = name;
     std::map<Name, WasmType> localTypes;
     // params and result
@@ -1174,9 +1173,10 @@ class S2WasmBuilder {
       if (functionIndexes.count(name) == 0) {
         functionIndexes[name] = wasm.table.names.size();
         wasm.table.names.push_back(name);
-        if (debug)
+        if (debug) {
           std::cerr << "function index: " << name << ": "
                     << functionIndexes[name] << '\n';
+        }
       }
     };
     for (auto& relocation : relocations) {
@@ -1198,12 +1198,12 @@ class S2WasmBuilder {
         }
       }
     }
-    if (startFunction.size()) {
+    if (!!startFunction) {
       if (implementedFunctions.count(startFunction) == 0) {
         std::cerr << "Unknown start function: `" << startFunction << "`\n";
         abort();
       }
-      const auto *target = implementedFunctions[startFunction];
+      const auto *target = wasm.functionsMap[startFunction];
       Name start("_start");
       if (implementedFunctions.count(start) != 0) {
         std::cerr << "Start function already present: `" << start << "`\n";
