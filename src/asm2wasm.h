@@ -1109,9 +1109,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             flip->right = get();
             flip->type = i32;
             auto select = allocator.alloc<Select>();
-            select->condition = isNegative;
             select->ifTrue = flip;
             select->ifFalse = get();
+            select->condition = isNegative;
             select->type = i32;
             block->list.push_back(select);
             block->type = i32;
