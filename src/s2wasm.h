@@ -688,9 +688,10 @@ class S2WasmBuilder {
       skipComma();
       auto curr = allocator.alloc<Select>();
       auto inputs = getInputs(3);
-      curr->condition = inputs[0];
       curr->ifTrue = inputs[1];
       curr->ifFalse = inputs[2];
+      curr->condition = inputs[0];
+      assert(curr->condition->type == i32);
       curr->type = type;
       setOutput(curr, assign);
     };

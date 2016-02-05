@@ -311,15 +311,15 @@
             (i32.const 0)
           )
           (i32.select
-            (i32.lt_s
-              (get_local $asm2wasm_i32_temp)
-              (i32.const 0)
-            )
             (i32.sub
               (i32.const 0)
               (get_local $asm2wasm_i32_temp)
             )
             (get_local $asm2wasm_i32_temp)
+            (i32.lt_s
+              (get_local $asm2wasm_i32_temp)
+              (i32.const 0)
+            )
           )
         )
       )

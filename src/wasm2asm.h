@@ -463,7 +463,7 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
       }
     }
     void visitSelect(Select *curr) {
-      if (parent->isStatement(curr->condition) || parent->isStatement(curr->ifTrue) || parent->isStatement(curr->ifFalse)) {
+      if (parent->isStatement(curr->ifTrue) || parent->isStatement(curr->ifFalse) || parent->isStatement(curr->condition)) {
         parent->setStatement(curr);
       }
     }
@@ -1057,32 +1057,32 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     }
     Ref visitSelect(Select *curr) {
       if (isStatement(curr)) {
-        ScopedTemp tempCondition(i32, parent);
-        GetLocal fakeCondition;
-        fakeCondition.name = tempCondition.getName();
         ScopedTemp tempIfTrue(curr->ifTrue->type, parent);
         GetLocal fakeLocalIfTrue;
         fakeLocalIfTrue.name = tempIfTrue.getName();
         ScopedTemp tempIfFalse(curr->ifFalse->type, parent);
         GetLocal fakeLocalIfFalse;
         fakeLocalIfFalse.name = tempIfFalse.getName();
+        ScopedTemp tempCondition(i32, parent);
+        GetLocal fakeCondition;
+        fakeCondition.name = tempCondition.getName();
         Select fakeSelect = *curr;
-        fakeSelect.condition = &fakeCondition;
         fakeSelect.ifTrue = &fakeLocalIfTrue;
         fakeSelect.ifFalse = &fakeLocalIfFalse;
-        Ref ret = blockify(visitAndAssign(curr->condition, tempCondition));
-        flattenAppend(ret, visitAndAssign(curr->ifTrue, tempIfTrue));
+        fakeSelect.condition = &fakeCondition;
+        Ref ret = blockify(visitAndAssign(curr->ifTrue, tempIfTrue));
         flattenAppend(ret, visitAndAssign(curr->ifFalse, tempIfFalse));
+        flattenAppend(ret, visitAndAssign(curr->condition, tempCondition));
         flattenAppend(ret, visitAndAssign(&fakeSelect, result));
         return ret;
       }
       // normal select
-      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
       Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
       Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
-      ScopedTemp tempCondition(i32, parent),
-                 tempIfTrue(curr->type, parent),
-                 tempIfFalse(curr->type, parent);
+      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
+      ScopedTemp tempIfTrue(curr->type, parent),
+          tempIfFalse(curr->type, parent),
+          tempCondition(i32, parent);
       return
         ValueBuilder::makeSeq(
           ValueBuilder::makeAssign(tempCondition.getAstName(), condition),

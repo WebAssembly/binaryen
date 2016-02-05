@@ -911,15 +911,15 @@ class Select : public Expression {
 public:
   Select() : Expression(SelectId) {}
 
-  Expression *condition, *ifTrue, *ifFalse;
+  Expression *ifTrue, *ifFalse, *condition;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     o << '(';
     prepareColor(o) << printWasmType(type) << ".select";
     incIndent(o, indent);
-    printFullLine(o, indent, condition);
     printFullLine(o, indent, ifTrue);
     printFullLine(o, indent, ifFalse);
+    printFullLine(o, indent, condition);
     return decIndent(o, indent);
   }
 
@@ -1447,9 +1447,9 @@ struct ChildWalker : public WasmWalkerBase<ChildWalker<ParentType>> {
     parent.walk(curr->right);
   }
   void visitSelect(Select *curr) {
-    parent.walk(curr->condition);
     parent.walk(curr->ifTrue);
     parent.walk(curr->ifFalse);
+    parent.walk(curr->condition);
   }
   void visitReturn(Return *curr) {
     parent.walk(curr->value);
