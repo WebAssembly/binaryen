@@ -33,13 +33,14 @@ matrix:
           packages: ['cmake', 'nodejs', 'g++-5']
 
   allow_failures:
-    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=address" ASAN_OPTIONS="detect_leaks=0"
+    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=address"
       compiler: clang
       addons: *clang36
 
 before_install:
   - export CC="${CC}-${COMPILER_VERSION}"
   - export CXX="${CXX}-${COMPILER_VERSION}"
+  - export ASAN_OPTIONS="detect_leaks=0 symbolize=1"
 
 install:
   - pip install --user flake8
