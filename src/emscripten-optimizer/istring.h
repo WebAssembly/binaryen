@@ -114,8 +114,8 @@ struct IString {
   const char *c_str() const { return str; }
   bool equals(const char *other) const { return !strcmp(str, other); }
 
-  bool is()     { return str != nullptr; }
-  bool isNull() { return str == nullptr; }
+  bool is() const     { return str != nullptr; }
+  bool isNull() const { return str == nullptr; }
 };
 
 } // namespace cashew

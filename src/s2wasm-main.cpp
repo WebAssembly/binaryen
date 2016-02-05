@@ -28,6 +28,7 @@ using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   bool ignoreUnknownSymbols = false;
+  std::string startFunction;
   Options options("s2wasm", "Link .s file into .wast");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
@@ -40,6 +41,11 @@ int main(int argc, const char *argv[]) {
            Options::Arguments::Zero,
            [&ignoreUnknownSymbols](Options *, const std::string &) {
              ignoreUnknownSymbols = true;
+           })
+      .add("--start", "", "Generate the start method (default: main)",
+           Options::Arguments::Optional,
+           [&startFunction](Options *, const std::string &argument) {
+             startFunction = argument.size() ? argument : "main";
            })
       .add("--global-base", "-g", "Where to start to place globals",
            Options::Arguments::One,
@@ -70,7 +76,7 @@ int main(int argc, const char *argv[]) {
           : 0;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
   S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, globalBase,
-                       stackAllocation, ignoreUnknownSymbols);
+                       stackAllocation, ignoreUnknownSymbols, startFunction);
 
   if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
   std::stringstream meta;

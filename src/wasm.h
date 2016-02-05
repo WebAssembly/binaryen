@@ -1125,6 +1125,7 @@ public:
   std::map<Name, Function*> functionsMap;
   Table table;
   Memory memory;
+  Name start;
 
   Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0) {}
 
@@ -1167,6 +1168,9 @@ public:
     functionsMap[curr->name] = curr;
     functionsMap[numericName] = curr;
     functionIndex++;
+  }
+  void addStart(const Name &s) {
+    start = s;
   }
 
   void removeImport(Name name) {
@@ -1211,6 +1215,10 @@ public:
       o << "\")";
     }
     o << (module.memory.segments.size() > 0 ? "\n  " : "") << ")\n";
+    if (module.start.is()) {
+      doIndent(o, indent);
+      printOpening(o, "start") << " " << module.start << ")\n";
+    }
     for (auto& curr : module.functionTypes) {
       doIndent(o, indent);
       curr->print(o, indent, true);
