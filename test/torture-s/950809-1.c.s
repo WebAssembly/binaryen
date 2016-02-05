@@ -11,15 +11,15 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.load	$push0=, 8($0)
 	tee_local	$push5=, $6=, $pop0
-	i32.load	$1=, 4($pop5)
+	i32.load	$2=, 8($pop5)
 	i32.const	$push2=, 16
 	i32.add 	$push3=, $0, $pop2
 	tee_local	$push4=, $5=, $pop3
 	i32.load	$4=, 0($pop4)
 	i32.load	$3=, 12($0)
-	i32.load	$2=, 8($6)
 	i32.load	$push1=, 0($6)
 	i32.store	$discard=, 8($6), $pop1
+	i32.load	$1=, 4($6)
 	i32.store	$discard=, 0($6), $4
 	i32.store	$discard=, 0($5), $3
 	i32.store	$discard=, 12($0), $2

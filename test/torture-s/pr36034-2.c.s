@@ -5,42 +5,42 @@
 	.globl	test
 	.type	test,@function
 test:                                   # @test
-	.local  	i64, i64, i64, i32, i32
+	.local  	i64, i64, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$4=, 0
-	i32.const	$3=, tmp
+	i32.const	$3=, 0
+	i32.const	$2=, tmp
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	i64.load	$0=, x($4):p2align=4
-	i64.load	$1=, x+16($4):p2align=4
-	i32.const	$push14=, 8
-	i32.add 	$push1=, $3, $pop14
-	i64.load	$push0=, x+8($4)
+	i64.load	$0=, x+16($3):p2align=4
+	i32.const	$push15=, 8
+	i32.add 	$push1=, $2, $pop15
+	i64.load	$push0=, x+8($3)
 	i64.store	$discard=, 0($pop1), $pop0
-	i64.load	$2=, x+24($4)
-	i32.const	$push13=, 16
-	i32.add 	$push2=, $3, $pop13
-	i64.store	$discard=, 0($pop2):p2align=4, $1
-	i64.load	$1=, x+32($4):p2align=4
-	i32.const	$push12=, 24
-	i32.add 	$push3=, $3, $pop12
-	i64.store	$discard=, 0($pop3), $2
-	i64.load	$2=, x+40($4)
-	i32.const	$push11=, 32
-	i32.add 	$push4=, $3, $pop11
-	i64.store	$discard=, 0($pop4):p2align=4, $1
-	i32.const	$push10=, 40
-	i32.add 	$push5=, $3, $pop10
-	i64.store	$discard=, 0($pop5), $2
-	i64.store	$discard=, 0($3):p2align=4, $0
-	i32.const	$push9=, 80
-	i32.add 	$4=, $4, $pop9
-	i32.const	$push8=, 48
-	i32.add 	$3=, $3, $pop8
-	i32.const	$push7=, 400
-	i32.ne  	$push6=, $4, $pop7
-	br_if   	$pop6, 0        # 0: up to label0
+	i64.load	$1=, x+24($3)
+	i32.const	$push14=, 16
+	i32.add 	$push2=, $2, $pop14
+	i64.store	$discard=, 0($pop2):p2align=4, $0
+	i32.const	$push13=, 24
+	i32.add 	$push3=, $2, $pop13
+	i64.store	$discard=, 0($pop3), $1
+	i64.load	$0=, x($3):p2align=4
+	i64.load	$1=, x+40($3)
+	i32.const	$push12=, 32
+	i32.add 	$push5=, $2, $pop12
+	i64.load	$push4=, x+32($3):p2align=4
+	i64.store	$discard=, 0($pop5):p2align=4, $pop4
+	i32.const	$push11=, 40
+	i32.add 	$push6=, $2, $pop11
+	i64.store	$discard=, 0($pop6), $1
+	i64.store	$discard=, 0($2):p2align=4, $0
+	i32.const	$push10=, 80
+	i32.add 	$3=, $3, $pop10
+	i32.const	$push9=, 48
+	i32.add 	$2=, $2, $pop9
+	i32.const	$push8=, 400
+	i32.ne  	$push7=, $3, $pop8
+	br_if   	$pop7, 0        # 0: up to label0
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
 	return

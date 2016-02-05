@@ -57,11 +57,8 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
+	.local  	i32, i64
 # BB#0:                                 # %alpha_ep_extbl_i_eq_0.exit
-	i32.const	$push19=, 0
-	i32.const	$push2=, -2013265854
-	i32.store	$discard=, pars($pop19), $pop2
 	i32.const	$push18=, 0
 	i32.load	$0=, r($pop18)
 	i32.const	$push17=, 0
@@ -80,15 +77,18 @@ main:                                   # @main
 	i64.const	$push10=, 255
 	i64.and 	$push11=, $pop9, $pop10
 	i64.store	$discard=, 16($0), $pop11
-	block
 	i32.const	$push15=, 0
-	i64.load	$push12=, b+16($pop15):p2align=4
-	i64.const	$push13=, 77
-	i64.ne  	$push14=, $pop12, $pop13
-	br_if   	$pop14, 0       # 0: down to label1
+	i64.load	$1=, b+16($pop15):p2align=4
+	i32.const	$push14=, 0
+	i32.const	$push2=, -2013265854
+	i32.store	$discard=, pars($pop14), $pop2
+	block
+	i64.const	$push12=, 77
+	i64.ne  	$push13=, $1, $pop12
+	br_if   	$pop13, 0       # 0: down to label1
 # BB#1:                                 # %if.end
-	i32.const	$push20=, 0
-	call    	exit@FUNCTION, $pop20
+	i32.const	$push19=, 0
+	call    	exit@FUNCTION, $pop19
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label1:

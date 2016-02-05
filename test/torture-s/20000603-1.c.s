@@ -7,13 +7,14 @@
 f:                                      # @f
 	.param  	i32, i32
 	.result 	f64
+	.local  	f64
 # BB#0:                                 # %entry
+	f64.load	$2=, 0($1)
 	i64.const	$push0=, 4607182418800017408
 	i64.store	$discard=, 0($0), $pop0
-	f64.load	$push1=, 0($1)
-	f64.const	$push2=, 0x1p0
-	f64.add 	$push3=, $pop1, $pop2
-	return  	$pop3
+	f64.const	$push1=, 0x1p0
+	f64.add 	$push2=, $2, $pop1
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

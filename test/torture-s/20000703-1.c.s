@@ -30,36 +30,37 @@ bar:                                    # @bar
 	.param  	i32, i32, i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
+	i32.const	$push10=, 16
+	i32.add 	$push11=, $0, $pop10
 	i32.const	$push6=, 25
 	i32.add 	$push7=, $0, $pop6
 	i32.const	$push2=, 27
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push4=, 0
 	i32.store8	$push5=, 0($pop3), $pop4
-	i32.store16	$3=, 0($pop7):p2align=0, $pop5
+	i32.store16	$push8=, 0($pop7):p2align=0, $pop5
+	tee_local	$push22=, $4=, $pop8
+	i32.load8_u	$push12=, .L.str.1+16($pop22)
+	i32.store8	$discard=, 0($pop11), $pop12
 	i32.const	$push0=, 17
 	i32.add 	$push1=, $0, $pop0
-	tee_local	$push20=, $4=, $pop1
-	i64.const	$push8=, 0
-	i64.store	$discard=, 0($pop20):p2align=0, $pop8
-	i32.const	$push9=, 16
-	i32.add 	$push10=, $0, $pop9
-	i32.load8_u	$push11=, .L.str.1+16($3)
-	i32.store8	$discard=, 0($pop10), $pop11
-	i32.const	$push12=, 8
-	i32.add 	$push13=, $0, $pop12
-	i64.load	$push14=, .L.str.1+8($3):p2align=0
-	i64.store	$discard=, 0($pop13):p2align=0, $pop14
-	i64.load	$push15=, .L.str.1($3):p2align=0
-	i64.store	$discard=, 0($0):p2align=0, $pop15
-	i32.const	$push16=, 19
-	i32.add 	$push17=, $0, $pop16
-	i32.load8_u	$push18=, .L.str+2($3)
-	i32.store8	$discard=, 0($pop17), $pop18
-	i32.load16_u	$push19=, .L.str($3):p2align=0
-	i32.store16	$discard=, 0($4):p2align=0, $pop19
+	tee_local	$push21=, $3=, $pop1
+	i64.const	$push9=, 0
+	i64.store	$discard=, 0($pop21):p2align=0, $pop9
+	i32.const	$push17=, 19
+	i32.add 	$push18=, $0, $pop17
+	i32.load8_u	$push19=, .L.str+2($4)
+	i32.store8	$discard=, 0($pop18), $pop19
+	i32.load16_u	$push20=, .L.str($4):p2align=0
+	i32.store16	$discard=, 0($3):p2align=0, $pop20
+	i32.const	$push13=, 8
+	i32.add 	$push14=, $0, $pop13
+	i64.load	$push15=, .L.str.1+8($4):p2align=0
+	i64.store	$discard=, 0($pop14):p2align=0, $pop15
 	i32.store	$discard=, 20($0), $1
 	i32.store	$discard=, 24($0), $2
+	i64.load	$push16=, .L.str.1($4):p2align=0
+	i64.store	$discard=, 0($0):p2align=0, $pop16
 	return
 	.endfunc
 .Lfunc_end1:

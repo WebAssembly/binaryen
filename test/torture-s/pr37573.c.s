@@ -279,8 +279,8 @@ foo:                                    # @foo
 	i32.store	$push4=, 4($0), $pop3
 	br_if   	$pop4, 0        # 0: down to label3
 # BB#1:                                 # %if.then
-	i32.const	$push45=, 8
-	i32.add 	$push5=, $0, $pop45
+	i32.const	$push44=, 8
+	i32.add 	$push5=, $0, $pop44
 	i32.store	$discard=, 0($0), $pop5
 	i32.load	$2=, 8($0)
 	i32.const	$1=, 0
@@ -288,70 +288,69 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
 	i32.add 	$push6=, $0, $1
-	tee_local	$push57=, $4=, $pop6
-	i32.const	$push56=, 8
-	i32.add 	$push19=, $pop57, $pop56
-	i32.const	$push55=, 0
-	i32.const	$push54=, 12
-	i32.add 	$push7=, $4, $pop54
+	tee_local	$push56=, $4=, $pop6
+	i32.const	$push55=, 8
+	i32.add 	$push19=, $pop56, $pop55
+	i32.const	$push54=, 0
+	i32.const	$push53=, 12
+	i32.add 	$push7=, $4, $pop53
 	i32.load	$push0=, 0($pop7)
-	tee_local	$push53=, $3=, $pop0
-	i32.const	$push52=, 1
-	i32.and 	$push12=, $pop53, $pop52
-	i32.sub 	$push13=, $pop55, $pop12
-	i32.const	$push51=, -1727483681
-	i32.and 	$push14=, $pop13, $pop51
-	i32.const	$push50=, 1596
-	i32.add 	$push15=, $4, $pop50
+	tee_local	$push52=, $3=, $pop0
+	i32.const	$push51=, 1
+	i32.and 	$push12=, $pop52, $pop51
+	i32.sub 	$push13=, $pop54, $pop12
+	i32.const	$push50=, -1727483681
+	i32.and 	$push14=, $pop13, $pop50
+	i32.const	$push49=, 1596
+	i32.add 	$push15=, $4, $pop49
 	i32.load	$push16=, 0($pop15)
 	i32.xor 	$push17=, $pop14, $pop16
 	i32.xor 	$push8=, $3, $2
-	i32.const	$push49=, 2147483646
-	i32.and 	$push9=, $pop8, $pop49
+	i32.const	$push48=, 2147483646
+	i32.and 	$push9=, $pop8, $pop48
 	i32.xor 	$push10=, $pop9, $2
-	i32.const	$push48=, 1
-	i32.shr_u	$push11=, $pop10, $pop48
+	i32.const	$push47=, 1
+	i32.shr_u	$push11=, $pop10, $pop47
 	i32.xor 	$push18=, $pop17, $pop11
 	i32.store	$discard=, 0($pop19), $pop18
-	i32.const	$push47=, 4
-	i32.add 	$1=, $1, $pop47
+	i32.const	$push46=, 4
+	i32.add 	$1=, $1, $pop46
 	copy_local	$2=, $3
-	i32.const	$push46=, 908
-	i32.ne  	$push20=, $1, $pop46
+	i32.const	$push45=, 908
+	i32.ne  	$push20=, $1, $pop45
 	br_if   	$pop20, 0       # 0: up to label4
 .LBB2_3:                                # %if.end
 	end_loop                        # label5:
 	end_block                       # label3:
 	i32.load	$push21=, 0($0)
-	tee_local	$push61=, $1=, $pop21
+	tee_local	$push59=, $2=, $pop21
+	i32.load	$1=, 0($pop59)
 	i32.const	$push22=, 4
-	i32.add 	$push23=, $pop61, $pop22
+	i32.add 	$push23=, $2, $pop22
 	i32.store	$discard=, 0($0), $pop23
-	i32.load	$push24=, 0($1)
-	tee_local	$push60=, $1=, $pop24
-	i32.const	$push25=, 11
-	i32.shr_u	$push26=, $pop60, $pop25
-	i32.xor 	$push27=, $pop26, $1
-	tee_local	$push59=, $1=, $pop27
-	i32.const	$push28=, 7
-	i32.shl 	$push29=, $pop59, $pop28
-	i32.const	$push30=, -1658038656
-	i32.and 	$push31=, $pop29, $pop30
-	i32.xor 	$push32=, $pop31, $1
-	tee_local	$push58=, $1=, $pop32
-	i32.const	$push33=, 15
-	i32.shl 	$push34=, $pop58, $pop33
-	i32.const	$push35=, 130023424
-	i32.and 	$push36=, $pop34, $pop35
-	i32.xor 	$push37=, $pop36, $1
-	i32.const	$push38=, 18
-	i32.shr_u	$push39=, $pop37, $pop38
-	i32.xor 	$push40=, $pop39, $1
-	i32.const	$push41=, 1
-	i32.shr_u	$push42=, $pop40, $pop41
-	i32.const	$push43=, 255
-	i32.and 	$push44=, $pop42, $pop43
-	return  	$pop44
+	i32.const	$push24=, 11
+	i32.shr_u	$push25=, $1, $pop24
+	i32.xor 	$push26=, $1, $pop25
+	tee_local	$push58=, $1=, $pop26
+	i32.const	$push27=, 7
+	i32.shl 	$push28=, $pop58, $pop27
+	i32.const	$push29=, -1658038656
+	i32.and 	$push30=, $pop28, $pop29
+	i32.xor 	$push31=, $pop30, $1
+	tee_local	$push57=, $1=, $pop31
+	i32.const	$push32=, 15
+	i32.shl 	$push33=, $pop57, $pop32
+	i32.const	$push34=, 130023424
+	i32.and 	$push35=, $pop33, $pop34
+	i32.xor 	$push36=, $pop35, $1
+	i32.const	$push37=, 18
+	i32.shr_u	$push38=, $pop36, $pop37
+	i32.xor 	$push39=, $pop38, $1
+	i32.const	$push40=, 1
+	i32.shr_u	$push41=, $pop39, $pop40
+	i32.const	$push42=, 255
+	i32.and 	$push43=, $pop41, $pop42
+	return  	$pop43
 	.endfunc
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo

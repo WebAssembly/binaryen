@@ -18,7 +18,7 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32, i32, i32, i32, i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	block
 	block
@@ -40,19 +40,19 @@ bar:                                    # @bar
 	f64.const	$push11=, 0x1p-1
 	f64.mul 	$push12=, $pop10, $pop11
 	i32.trunc_s/f64	$5=, $pop12
+	i32.const	$push19=, 4
+	i32.add 	$push20=, $0, $pop19
 	i32.load	$push7=, 20($0)
 	f64.convert_s/i32	$push13=, $pop7
-	f64.const	$push21=, 0x0p0
-	f64.mul 	$push14=, $pop13, $pop21
-	f64.const	$push20=, 0x1p-1
-	f64.mul 	$push15=, $pop14, $pop20
-	i32.trunc_s/f64	$6=, $pop15
-	i32.add 	$push16=, $5, $1
-	i32.store	$discard=, 0($0), $pop16
-	i32.const	$push18=, 4
-	i32.add 	$push19=, $0, $pop18
-	i32.add 	$push17=, $6, $2
-	i32.store	$discard=, 0($pop19), $pop17
+	f64.const	$push22=, 0x0p0
+	f64.mul 	$push14=, $pop13, $pop22
+	f64.const	$push21=, 0x1p-1
+	f64.mul 	$push15=, $pop14, $pop21
+	i32.trunc_s/f64	$push16=, $pop15
+	i32.add 	$push18=, $pop16, $2
+	i32.store	$discard=, 0($pop20), $pop18
+	i32.add 	$push17=, $5, $1
+	i32.store	$discard=, 0($0), $pop17
 	i32.store	$discard=, 8($0), $3
 	i32.store	$discard=, 12($0), $4
 .LBB1_3:                                # %if.end

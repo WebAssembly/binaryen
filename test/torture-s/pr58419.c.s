@@ -27,13 +27,13 @@ bar:                                    # @bar
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
-	i32.load	$0=, p($pop1)
+	i32.load	$push2=, p($pop1)
 	i32.const	$push4=, 0
-	i32.const	$push0=, 1
-	i32.store16	$discard=, c($pop4), $pop0
+	i32.store	$0=, 0($pop2), $pop4
 	i32.const	$push3=, 0
-	i32.store	$push2=, 0($0), $pop3
-	return  	$pop2
+	i32.const	$push0=, 1
+	i32.store16	$discard=, c($pop3), $pop0
+	return  	$0
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

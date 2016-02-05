@@ -19,7 +19,6 @@ foo:                                    # @foo
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.store	$discard=, 0($0), $5
 	i32.const	$push12=, 4
 	i32.add 	$push3=, $0, $pop12
 	i32.store	$discard=, 0($pop3), $6
@@ -32,6 +31,7 @@ foo:                                    # @foo
 	i32.const	$push9=, 16
 	i32.add 	$push6=, $0, $pop9
 	i32.store	$discard=, 0($pop6), $9
+	i32.store	$discard=, 0($0), $5
 	i32.const	$push8=, 1
 	i32.add 	$4=, $4, $pop8
 	i32.const	$push7=, 20

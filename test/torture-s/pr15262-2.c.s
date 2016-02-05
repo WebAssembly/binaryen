@@ -8,19 +8,20 @@ foo:                                    # @foo
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.load	$0=, 0($0)
+	i32.load	$push4=, 0($0)
+	tee_local	$push8=, $0=, $pop4
+	i32.const	$push5=, 3
+	i32.store	$discard=, 0($pop8), $pop5
+	i32.const	$push6=, 2
+	i32.store	$discard=, 0($1), $pop6
+	i32.load	$1=, 0($0)
 	i32.const	$push1=, 0
 	f32.load	$push0=, 0($2)
 	i32.const	$push7=, 0
 	f32.load	$push2=, X($pop7)
 	f32.add 	$push3=, $pop0, $pop2
 	f32.store	$discard=, X($pop1), $pop3
-	i32.const	$push4=, 3
-	i32.store	$discard=, 0($0), $pop4
-	i32.const	$push5=, 2
-	i32.store	$discard=, 0($1), $pop5
-	i32.load	$push6=, 0($0)
-	return  	$pop6
+	return  	$1
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

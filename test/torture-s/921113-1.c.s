@@ -78,55 +78,54 @@ gitter:                                 # @gitter
 	.local  	f32, f64, f64
 # BB#0:                                 # %entry
 	block
-	f32.load	$push2=, 0($4)
-	f32.const	$push26=, 0x0p0
-	f32.ne  	$push3=, $pop2, $pop26
-	br_if   	$pop3, 0        # 0: down to label2
+	f32.load	$push1=, 0($4)
+	f32.const	$push25=, 0x0p0
+	f32.ne  	$push2=, $pop1, $pop25
+	br_if   	$pop2, 0        # 0: down to label2
 # BB#1:                                 # %entry
-	f32.load	$push1=, 4($4)
-	f32.const	$push27=, 0x0p0
-	f32.ne  	$push4=, $pop1, $pop27
-	br_if   	$pop4, 0        # 0: down to label2
+	f32.load	$push0=, 4($4)
+	f32.const	$push26=, 0x0p0
+	f32.ne  	$push3=, $pop0, $pop26
+	br_if   	$pop3, 0        # 0: down to label2
 # BB#2:                                 # %f1.exit
 	block
-	f32.load	$push6=, 8($4)
-	f32.const	$push28=, 0x1p0
-	f32.ne  	$push9=, $pop6, $pop28
-	br_if   	$pop9, 0        # 0: down to label3
+	f32.load	$push5=, 8($4)
+	f32.const	$push27=, 0x1p0
+	f32.ne  	$push8=, $pop5, $pop27
+	br_if   	$pop8, 0        # 0: down to label3
 # BB#3:                                 # %f1.exit
-	i32.const	$push7=, 12
-	i32.add 	$push8=, $4, $pop7
-	f32.load	$push5=, 0($pop8)
-	f32.const	$push29=, 0x1p0
-	f32.ne  	$push10=, $pop5, $pop29
-	br_if   	$pop10, 0       # 0: down to label3
+	i32.const	$push6=, 12
+	i32.add 	$push7=, $4, $pop6
+	f32.load	$push4=, 0($pop7)
+	f32.const	$push28=, 0x1p0
+	f32.ne  	$push9=, $pop4, $pop28
+	br_if   	$pop9, 0        # 0: down to label3
 # BB#4:                                 # %f2.exit
-	i32.const	$push11=, 0
-	i32.store	$discard=, 0($3), $pop11
+	f32.load	$6=, 0($1)
+	i32.const	$push10=, 0
+	i32.store	$discard=, 0($3), $pop10
 	block
-	f32.load	$push0=, 0($1)
-	tee_local	$push30=, $6=, $pop0
-	f32.const	$push12=, 0x0p0
-	f32.gt  	$push13=, $pop30, $pop12
-	f32.ne  	$push14=, $6, $6
-	i32.or  	$push15=, $pop13, $pop14
-	br_if   	$pop15, 0       # 0: down to label4
+	f32.const	$push11=, 0x0p0
+	f32.gt  	$push12=, $6, $pop11
+	f32.ne  	$push13=, $6, $6
+	i32.or  	$push14=, $pop12, $pop13
+	br_if   	$pop14, 0       # 0: down to label4
 # BB#5:                                 # %if.then
-	f64.promote/f32	$push16=, $6
-	tee_local	$push32=, $8=, $pop16
-	f64.promote/f32	$push17=, $5
-	f64.const	$push18=, 0x1p-1
-	f64.mul 	$push19=, $pop17, $pop18
-	tee_local	$push31=, $7=, $pop19
-	f64.gt  	$push20=, $pop32, $pop31
-	f64.ne  	$push22=, $8, $8
-	f64.ne  	$push21=, $7, $7
-	i32.or  	$push23=, $pop22, $pop21
-	i32.or  	$push24=, $pop20, $pop23
-	br_if   	$pop24, 0       # 0: down to label4
+	f64.promote/f32	$push15=, $6
+	tee_local	$push30=, $8=, $pop15
+	f64.promote/f32	$push16=, $5
+	f64.const	$push17=, 0x1p-1
+	f64.mul 	$push18=, $pop16, $pop17
+	tee_local	$push29=, $7=, $pop18
+	f64.gt  	$push19=, $pop30, $pop29
+	f64.ne  	$push21=, $8, $8
+	f64.ne  	$push20=, $7, $7
+	i32.or  	$push22=, $pop21, $pop20
+	i32.or  	$push23=, $pop19, $pop22
+	br_if   	$pop23, 0       # 0: down to label4
 # BB#6:                                 # %if.then15
-	i32.const	$push25=, 1065353216
-	i32.store	$discard=, 0($2), $pop25
+	i32.const	$push24=, 1065353216
+	i32.store	$discard=, 0($2), $pop24
 .LBB3_7:                                # %if.end18
 	end_block                       # label4:
 	return  	$4

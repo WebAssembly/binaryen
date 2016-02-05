@@ -29,6 +29,8 @@ foo:                                    # @foo
 	i32.sub 	$8=, $3, $4
 	i32.const	$4=, __stack_pointer
 	i32.store	$8=, 0($4), $8
+	i32.const	$push2=, 1
+	i32.store	$0=, 4($0), $pop2
 	i32.const	$6=, 8
 	i32.add 	$6=, $8, $6
 	i32.const	$7=, 12
@@ -36,13 +38,11 @@ foo:                                    # @foo
 	i32.select	$push0=, $1, $6, $7
 	i32.const	$push1=, 1084647014
 	i32.store	$discard=, 0($pop0), $pop1
-	i32.const	$push2=, 1
-	i32.store	$push3=, 4($0), $pop2
 	i32.const	$5=, 16
 	i32.add 	$8=, $8, $5
 	i32.const	$5=, __stack_pointer
 	i32.store	$8=, 0($5), $8
-	return  	$pop3
+	return  	$0
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

@@ -15,9 +15,9 @@ g:                                      # @g
 	i32.sub 	$8=, $4, $5
 	i32.const	$5=, __stack_pointer
 	i32.store	$8=, 0($5), $8
-	i32.store	$discard=, 12($8), $0
 	i32.const	$push1=, 0
 	i32.store	$discard=, 0($3), $pop1
+	i32.store	$discard=, 12($8), $0
 	i32.const	$7=, 12
 	i32.add 	$7=, $8, $7
 	i32.select	$push0=, $1, $7, $2
