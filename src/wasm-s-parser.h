@@ -229,7 +229,7 @@ class SExpressionWasmBuilder {
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, std::function<void ()> onError, bool debug=false) : wasm(wasm), allocator(wasm.allocator), onError(onError), debug(debug) {
+  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, std::function<void ()> onError, bool debug=false) : wasm(wasm), allocator(wasm.allocator), onError(onError), importCounter(0), debug(debug) {
     assert(module[0]->str() == MODULE);
     functionCounter = 0;
     for (unsigned i = 1; i < module.size(); i++) {
