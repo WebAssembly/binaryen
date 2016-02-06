@@ -115,13 +115,13 @@ f6:                                     # @f6
 f7:                                     # @f7
 	.result 	i64
 # BB#0:                                 # %entry
+	i64.const	$push4=, 15032385536
+	i64.const	$push3=, 0
 	i32.const	$push0=, 0
 	i32.load	$push1=, d($pop0)
 	i32.const	$push6=, 0
 	i32.lt_s	$push2=, $pop1, $pop6
-	i64.const	$push4=, 15032385536
-	i64.const	$push3=, 0
-	i64.select	$push5=, $pop2, $pop4, $pop3
+	i64.select	$push5=, $pop4, $pop3, $pop2
 	return  	$pop5
 	.endfunc
 .Lfunc_end6:
@@ -134,13 +134,13 @@ f7:                                     # @f7
 f8:                                     # @f8
 	.result 	i64
 # BB#0:                                 # %entry
+	i64.const	$push4=, -2147483648
+	i64.const	$push3=, 0
 	i32.const	$push0=, 0
 	i32.load	$push1=, d($pop0)
 	i32.const	$push6=, 0
 	i32.lt_s	$push2=, $pop1, $pop6
-	i64.const	$push4=, -2147483648
-	i64.const	$push3=, 0
-	i64.select	$push5=, $pop2, $pop4, $pop3
+	i64.select	$push5=, $pop4, $pop3, $pop2
 	return  	$pop5
 	.endfunc
 .Lfunc_end7:

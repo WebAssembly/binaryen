@@ -22,13 +22,13 @@ copysign_bug:                           # @copysign_bug
 	br_if   	$pop3, 1        # 1: down to label0
 .LBB0_2:                                # %if.end
 	end_block                       # label1:
+	i32.const	$push8=, 2
+	i32.const	$push7=, 3
 	f64.const	$push4=, 0x1p0
 	f64.copysign	$push5=, $pop4, $0
 	f64.const	$push10=, 0x0p0
 	f64.lt  	$push6=, $pop5, $pop10
-	i32.const	$push8=, 2
-	i32.const	$push7=, 3
-	i32.select	$1=, $pop6, $pop8, $pop7
+	i32.select	$1=, $pop8, $pop7, $pop6
 .LBB0_3:                                # %return
 	end_block                       # label0:
 	return  	$1

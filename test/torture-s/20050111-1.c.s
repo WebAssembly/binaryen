@@ -8,13 +8,13 @@ foo:                                    # @foo
 	.param  	i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i64.const	$push0=, 0
-	i64.eq  	$push1=, $0, $pop0
 	i32.const	$push5=, 0
 	i64.const	$push2=, 32
 	i64.shr_u	$push3=, $0, $pop2
 	i32.wrap/i64	$push4=, $pop3
-	i32.select	$push6=, $pop1, $pop5, $pop4
+	i64.const	$push0=, 0
+	i64.eq  	$push1=, $0, $pop0
+	i32.select	$push6=, $pop5, $pop4, $pop1
 	return  	$pop6
 	.endfunc
 .Lfunc_end0:

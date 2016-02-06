@@ -8,12 +8,12 @@ foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.lt_s	$push2=, $0, $pop0
 	i32.const	$push3=, 1
+	i32.const	$push0=, 0
+	i32.gt_s	$push1=, $0, $pop0
 	i32.const	$push5=, 0
-	i32.gt_s	$push1=, $0, $pop5
-	i32.select	$push4=, $pop2, $pop3, $pop1
+	i32.lt_s	$push2=, $0, $pop5
+	i32.select	$push4=, $pop3, $pop1, $pop2
 	return  	$pop4
 	.endfunc
 .Lfunc_end0:

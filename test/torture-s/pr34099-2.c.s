@@ -56,7 +56,7 @@ test4:                                  # @test4
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $1, $pop0
 	i32.const	$push2=, 1
-	i32.select	$push3=, $0, $pop1, $pop2
+	i32.select	$push3=, $pop1, $pop2, $0
 	return  	$pop3
 	.endfunc
 .Lfunc_end3:

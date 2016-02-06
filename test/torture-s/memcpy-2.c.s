@@ -55,14 +55,14 @@ main:                                   # @main
                                         #       Parent Loop BB0_3 Depth=3
                                         # =>      This Inner Loop Header: Depth=4
 	loop                            # label8:
-	i32.const	$push57=, 24
-	i32.shl 	$push2=, $6, $pop57
+	i32.const	$push57=, 65
 	i32.const	$push56=, 24
-	i32.shr_s	$push3=, $pop2, $pop56
-	i32.const	$push55=, 95
-	i32.gt_s	$push4=, $pop3, $pop55
-	i32.const	$push54=, 65
-	i32.select	$push5=, $pop4, $pop54, $6
+	i32.shl 	$push2=, $6, $pop56
+	i32.const	$push55=, 24
+	i32.shr_s	$push3=, $pop2, $pop55
+	i32.const	$push54=, 95
+	i32.gt_s	$push4=, $pop3, $pop54
+	i32.select	$push5=, $pop57, $6, $pop4
 	i32.store8	$push6=, u2+96($8), $pop5
 	i32.const	$push53=, 1
 	i32.add 	$6=, $pop6, $pop53
@@ -116,14 +116,14 @@ main:                                   # @main
 	loop                            # label13:
 	i32.add 	$push15=, $7, $8
 	i32.load8_u	$push16=, 0($pop15)
-	i32.const	$push67=, 24
-	i32.shl 	$push11=, $6, $pop67
+	i32.const	$push67=, 65
 	i32.const	$push66=, 24
-	i32.shr_s	$push12=, $pop11, $pop66
-	i32.const	$push65=, 95
-	i32.gt_s	$push13=, $pop12, $pop65
-	i32.const	$push64=, 65
-	i32.select	$push0=, $pop13, $pop64, $6
+	i32.shl 	$push11=, $6, $pop66
+	i32.const	$push65=, 24
+	i32.shr_s	$push12=, $pop11, $pop65
+	i32.const	$push64=, 95
+	i32.gt_s	$push13=, $pop12, $pop64
+	i32.select	$push0=, $pop67, $6, $pop13
 	tee_local	$push63=, $6=, $pop0
 	i32.const	$push62=, 255
 	i32.and 	$push14=, $pop63, $pop62

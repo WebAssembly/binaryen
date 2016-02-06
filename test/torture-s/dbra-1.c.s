@@ -56,10 +56,10 @@ f1:                                     # @f1
 	br_if   	$pop7, 0        # 0: down to label0
 # BB#9:                                 # %for.inc.8
 	i32.const	$push8=, 9
-	i32.eq  	$push9=, $0, $pop8
-	i32.const	$push20=, 9
 	i32.const	$push10=, -1
-	i32.select	$push11=, $pop9, $pop20, $pop10
+	i32.const	$push20=, 9
+	i32.eq  	$push9=, $0, $pop20
+	i32.select	$push11=, $pop8, $pop10, $pop9
 	return  	$pop11
 .LBB0_10:                               # %cleanup
 	end_block                       # label0:
@@ -138,11 +138,11 @@ f3:                                     # @f3
 	i32.eq  	$push16=, $0, $pop21
 	br_if   	$pop16, 0       # 0: down to label1
 # BB#9:                                 # %for.inc.8
-	i32.const	$push17=, 10
-	i32.eq  	$push18=, $0, $pop17
 	i32.const	$push22=, 9
 	i32.const	$push19=, -1
-	i32.select	$push20=, $pop18, $pop22, $pop19
+	i32.const	$push17=, 10
+	i32.eq  	$push18=, $0, $pop17
+	i32.select	$push20=, $pop22, $pop19, $pop18
 	return  	$pop20
 .LBB2_10:                               # %cleanup
 	end_block                       # label1:
@@ -221,11 +221,11 @@ f5:                                     # @f5
 	i32.eq  	$push17=, $0, $pop16
 	br_if   	$pop17, 0       # 0: down to label2
 # BB#9:                                 # %for.inc.8
-	i32.const	$push18=, -10
-	i32.eq  	$push19=, $0, $pop18
 	i32.const	$push21=, 9
 	i32.const	$push20=, -1
-	i32.select	$push22=, $pop19, $pop21, $pop20
+	i32.const	$push18=, -10
+	i32.eq  	$push19=, $0, $pop18
+	i32.select	$push22=, $pop21, $pop20, $pop19
 	return  	$pop22
 .LBB4_10:                               # %cleanup
 	end_block                       # label2:

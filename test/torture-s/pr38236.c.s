@@ -19,12 +19,12 @@ foo:                                    # @foo
 	i32.add 	$7=, $10, $7
 	i32.const	$8=, 8
 	i32.add 	$8=, $10, $8
-	i32.select	$push1=, $3, $7, $8
+	i32.select	$push1=, $7, $8, $3
 	i32.const	$push2=, 1
 	i32.store	$discard=, 0($pop1), $pop2
 	i32.const	$9=, 12
 	i32.add 	$9=, $10, $9
-	i32.select	$push0=, $2, $9, $0
+	i32.select	$push0=, $9, $0, $2
 	i32.load	$push3=, 0($pop0)
 	i32.const	$6=, 16
 	i32.add 	$10=, $10, $6

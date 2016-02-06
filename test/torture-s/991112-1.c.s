@@ -22,10 +22,10 @@ rl_character_len:                       # @rl_character_len
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$push0=, isprint@FUNCTION, $0
 	i32.const	$push2=, 1
 	i32.const	$push1=, 2
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.call	$push0=, isprint@FUNCTION, $0
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end1:

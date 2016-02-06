@@ -41,15 +41,15 @@ bar:                                    # @bar
 	loop                            # label2:
 	i32.load16_u	$push3=, 0($1)
 	tee_local	$push20=, $5=, $pop3
-	i32.const	$push4=, 256
-	i32.lt_u	$push5=, $pop20, $pop4
 	i32.const	$push6=, v2
-	i32.add 	$push7=, $5, $pop6
+	i32.add 	$push7=, $pop20, $pop6
 	i32.const	$push8=, 255
 	i32.and 	$push9=, $5, $pop8
 	i32.const	$push10=, v3
 	i32.add 	$push11=, $pop9, $pop10
-	i32.select	$push12=, $pop5, $pop7, $pop11
+	i32.const	$push4=, 256
+	i32.lt_u	$push5=, $5, $pop4
+	i32.select	$push12=, $pop7, $pop11, $pop5
 	i32.load8_u	$push13=, 0($pop12)
 	i32.store8	$discard=, 0($4), $pop13
 	i32.const	$push14=, 2

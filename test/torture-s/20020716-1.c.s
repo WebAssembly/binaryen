@@ -23,7 +23,7 @@ testcond:                               # @testcond
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 5046272
-	i32.select	$push2=, $0, $pop1, $pop0
+	i32.select	$push2=, $pop1, $pop0, $0
 	return  	$pop2
 	.endfunc
 .Lfunc_end1:

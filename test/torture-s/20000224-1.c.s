@@ -28,10 +28,10 @@ test:                                   # @test
 	i32.shl 	$push3=, $1, $pop18
 	i32.const	$push17=, 31
 	i32.shr_s	$push4=, $pop3, $pop17
-	i32.const	$push16=, 1
-	i32.lt_s	$push2=, $0, $pop16
-	i32.const	$push15=, 0
-	i32.select	$push5=, $pop2, $pop15, $0
+	i32.const	$push16=, 0
+	i32.const	$push15=, 1
+	i32.lt_s	$push2=, $0, $pop15
+	i32.select	$push5=, $pop16, $0, $pop2
 	i32.and 	$push6=, $pop4, $pop5
 	i32.add 	$2=, $2, $pop6
 	i32.const	$push14=, 1

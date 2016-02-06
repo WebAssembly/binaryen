@@ -29,13 +29,13 @@ main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
+	i32.const	$push4=, 2
+	i32.const	$push3=, 1
 	i32.const	$push0=, 0
 	i32.load	$push1=, z($pop0)
 	i32.const	$push7=, 0
 	i32.gt_s	$push2=, $pop1, $pop7
-	i32.const	$push4=, 2
-	i32.const	$push3=, 1
-	i32.select	$push5=, $pop2, $pop4, $pop3
+	i32.select	$push5=, $pop4, $pop3, $pop2
 	call    	foo@FUNCTION, $pop5
 	i32.const	$push6=, 0
 	call    	exit@FUNCTION, $pop6

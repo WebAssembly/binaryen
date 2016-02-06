@@ -23,21 +23,21 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.load8_u	$push6=, 0($0)
-	i32.const	$push19=, 7
-	i32.gt_s	$push1=, $2, $pop19
-	tee_local	$push18=, $3=, $pop1
-	i32.const	$push17=, 255
-	i32.const	$push16=, 255
-	i32.const	$push15=, 8
-	i32.sub 	$push3=, $pop15, $2
-	i32.shl 	$push4=, $pop16, $pop3
-	i32.select	$push5=, $pop18, $pop17, $pop4
+	i32.const	$push19=, 255
+	i32.const	$push18=, 255
+	i32.const	$push17=, 8
+	i32.sub 	$push3=, $pop17, $2
+	i32.shl 	$push4=, $pop18, $pop3
+	i32.const	$push16=, 7
+	i32.gt_s	$push1=, $2, $pop16
+	tee_local	$push15=, $3=, $pop1
+	i32.select	$push5=, $pop19, $pop4, $pop15
 	i32.and 	$push7=, $pop6, $pop5
 	i32.store8	$discard=, 0($1), $pop7
 	i32.const	$push14=, -8
 	i32.add 	$push2=, $2, $pop14
 	i32.const	$push13=, 0
-	i32.select	$2=, $3, $pop2, $pop13
+	i32.select	$2=, $pop2, $pop13, $3
 	i32.const	$push12=, 1
 	i32.add 	$0=, $0, $pop12
 	i32.const	$push11=, 1

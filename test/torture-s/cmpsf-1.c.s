@@ -8,10 +8,10 @@ feq:                                    # @feq
 	.param  	f32, f32
 	.result 	i32
 # BB#0:                                 # %entry
-	f32.eq  	$push0=, $0, $1
 	i32.const	$push2=, 13
 	i32.const	$push1=, 140
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	f32.eq  	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end0:
@@ -25,10 +25,10 @@ fne:                                    # @fne
 	.param  	f32, f32
 	.result 	i32
 # BB#0:                                 # %entry
-	f32.ne  	$push0=, $0, $1
 	i32.const	$push2=, 13
 	i32.const	$push1=, 140
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	f32.ne  	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end1:
@@ -42,10 +42,10 @@ flt:                                    # @flt
 	.param  	f32, f32
 	.result 	i32
 # BB#0:                                 # %entry
-	f32.lt  	$push0=, $0, $1
 	i32.const	$push2=, 13
 	i32.const	$push1=, 140
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	f32.lt  	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end2:
@@ -59,14 +59,14 @@ fge:                                    # @fge
 	.param  	f32, f32
 	.result 	i32
 # BB#0:                                 # %entry
+	i32.const	$push6=, 140
+	i32.const	$push5=, 13
 	f32.lt  	$push0=, $0, $1
 	f32.ne  	$push2=, $0, $0
 	f32.ne  	$push1=, $1, $1
 	i32.or  	$push3=, $pop2, $pop1
 	i32.or  	$push4=, $pop0, $pop3
-	i32.const	$push6=, 140
-	i32.const	$push5=, 13
-	i32.select	$push7=, $pop4, $pop6, $pop5
+	i32.select	$push7=, $pop6, $pop5, $pop4
 	return  	$pop7
 	.endfunc
 .Lfunc_end3:
@@ -80,10 +80,10 @@ fgt:                                    # @fgt
 	.param  	f32, f32
 	.result 	i32
 # BB#0:                                 # %entry
-	f32.gt  	$push0=, $0, $1
 	i32.const	$push2=, 13
 	i32.const	$push1=, 140
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	f32.gt  	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end4:
@@ -97,14 +97,14 @@ fle:                                    # @fle
 	.param  	f32, f32
 	.result 	i32
 # BB#0:                                 # %entry
+	i32.const	$push6=, 140
+	i32.const	$push5=, 13
 	f32.gt  	$push0=, $0, $1
 	f32.ne  	$push2=, $0, $0
 	f32.ne  	$push1=, $1, $1
 	i32.or  	$push3=, $pop2, $pop1
 	i32.or  	$push4=, $pop0, $pop3
-	i32.const	$push6=, 140
-	i32.const	$push5=, 13
-	i32.select	$push7=, $pop4, $pop6, $pop5
+	i32.select	$push7=, $pop6, $pop5, $pop4
 	return  	$pop7
 	.endfunc
 .Lfunc_end5:
@@ -139,21 +139,21 @@ main:                                   # @main
                                         #   Parent Loop BB6_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label8:
+	i32.const	$push40=, 13
+	i32.const	$push39=, 140
 	f32.load	$push0=, 0($2)
-	tee_local	$push40=, $5=, $pop0
-	f32.eq  	$push2=, $1, $pop40
-	i32.const	$push39=, 13
-	i32.const	$push38=, 140
-	i32.select	$push3=, $pop2, $pop39, $pop38
+	tee_local	$push38=, $5=, $pop0
+	f32.eq  	$push2=, $1, $pop38
+	i32.select	$push3=, $pop40, $pop39, $pop2
 	i32.load	$push4=, 0($4)
 	i32.ne  	$push5=, $pop3, $pop4
 	br_if   	$pop5, 9        # 9: down to label0
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB6_2 Depth=2
-	f32.ne  	$push6=, $1, $5
 	i32.const	$push43=, 13
 	i32.const	$push42=, 140
-	i32.select	$push7=, $pop6, $pop43, $pop42
+	f32.ne  	$push6=, $1, $5
+	i32.select	$push7=, $pop43, $pop42, $pop6
 	i32.const	$push41=, 4
 	i32.add 	$push8=, $4, $pop41
 	i32.load	$push9=, 0($pop8)
@@ -161,10 +161,10 @@ main:                                   # @main
 	br_if   	$pop10, 8       # 8: down to label1
 # BB#4:                                 # %if.end10
                                         #   in Loop: Header=BB6_2 Depth=2
+	i32.const	$push47=, 13
+	i32.const	$push46=, 140
 	f32.lt  	$push11=, $1, $5
-	tee_local	$push47=, $6=, $pop11
-	i32.const	$push46=, 13
-	i32.const	$push45=, 140
+	tee_local	$push45=, $6=, $pop11
 	i32.select	$push12=, $pop47, $pop46, $pop45
 	i32.const	$push44=, 8
 	i32.add 	$push13=, $4, $pop44
@@ -173,14 +173,14 @@ main:                                   # @main
 	br_if   	$pop15, 7       # 7: down to label2
 # BB#5:                                 # %if.end15
                                         #   in Loop: Header=BB6_2 Depth=2
+	i32.const	$push51=, 140
+	i32.const	$push50=, 13
 	f32.ne  	$push17=, $1, $1
 	f32.ne  	$push16=, $5, $5
 	i32.or  	$push18=, $pop17, $pop16
-	tee_local	$push51=, $7=, $pop18
-	i32.or  	$push19=, $6, $pop51
-	i32.const	$push50=, 140
-	i32.const	$push49=, 13
-	i32.select	$push20=, $pop19, $pop50, $pop49
+	tee_local	$push49=, $7=, $pop18
+	i32.or  	$push19=, $6, $pop49
+	i32.select	$push20=, $pop51, $pop50, $pop19
 	i32.const	$push48=, 12
 	i32.add 	$push21=, $4, $pop48
 	i32.load	$push22=, 0($pop21)
@@ -188,10 +188,10 @@ main:                                   # @main
 	br_if   	$pop23, 6       # 6: down to label3
 # BB#6:                                 # %if.end20
                                         #   in Loop: Header=BB6_2 Depth=2
+	i32.const	$push55=, 13
+	i32.const	$push54=, 140
 	f32.gt  	$push24=, $1, $5
-	tee_local	$push55=, $6=, $pop24
-	i32.const	$push54=, 13
-	i32.const	$push53=, 140
+	tee_local	$push53=, $6=, $pop24
 	i32.select	$push25=, $pop55, $pop54, $pop53
 	i32.const	$push52=, 16
 	i32.add 	$push26=, $4, $pop52
@@ -200,10 +200,10 @@ main:                                   # @main
 	br_if   	$pop28, 5       # 5: down to label4
 # BB#7:                                 # %if.end25
                                         #   in Loop: Header=BB6_2 Depth=2
-	i32.or  	$push29=, $6, $7
 	i32.const	$push58=, 140
 	i32.const	$push57=, 13
-	i32.select	$push30=, $pop29, $pop58, $pop57
+	i32.or  	$push29=, $6, $7
+	i32.select	$push30=, $pop58, $pop57, $pop29
 	i32.const	$push56=, 20
 	i32.add 	$push31=, $4, $pop56
 	i32.load	$push32=, 0($pop31)

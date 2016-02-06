@@ -54,7 +54,7 @@ bar:                                    # @bar
 	i32.add 	$push13=, $4, $pop30
 	i32.xor 	$push14=, $pop13, $8
 	i32.lt_u	$push15=, $pop14, $3
-	i32.select	$5=, $pop15, $1, $5
+	i32.select	$5=, $1, $5, $pop15
 	i32.ne  	$push16=, $1, $6
 	br_if   	$pop16, 0       # 0: up to label0
 # BB#4:                                 # %do.end

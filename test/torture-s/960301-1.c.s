@@ -25,7 +25,7 @@ bar:                                    # @bar
 	i32.store16	$discard=, foo($pop12):p2align=2, $pop7
 	i32.const	$push9=, 1
 	i32.const	$push8=, 2
-	i32.select	$push10=, $0, $pop9, $pop8
+	i32.select	$push10=, $pop9, $pop8, $0
 	return  	$pop10
 	.endfunc
 .Lfunc_end0:

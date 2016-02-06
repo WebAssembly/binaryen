@@ -23,16 +23,16 @@ test:                                   # @test
 	call    	__subtf3@FUNCTION, $8, $pop90, $pop3, $0, $1
 	block
 	block
+	i64.load	$push7=, 0($8)
 	i32.const	$push89=, 0
 	i32.lt_s	$push2=, $3, $pop89
 	tee_local	$push88=, $3=, $pop2
-	i64.load	$push7=, 0($8)
-	i64.select	$push0=, $pop88, $pop7, $0
+	i64.select	$push0=, $pop7, $0, $pop88
 	tee_local	$push87=, $0=, $pop0
 	i32.const	$push4=, 8
 	i32.add 	$push5=, $8, $pop4
 	i64.load	$push6=, 0($pop5)
-	i64.select	$push1=, $3, $pop6, $1
+	i64.select	$push1=, $pop6, $1, $3
 	tee_local	$push86=, $1=, $pop1
 	i64.const	$push85=, 0
 	i64.const	$push84=, 4611404543450677248

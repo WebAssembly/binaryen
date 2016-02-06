@@ -9,7 +9,7 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.select	$push1=, $0, $pop0, $2
+	i32.select	$push1=, $pop0, $2, $0
 	return  	$pop1
 	.endfunc
 .Lfunc_end0:

@@ -21,15 +21,15 @@ foo:                                    # @foo
 	block
 	i32.load8_s	$push1=, 0($5)
 	tee_local	$push24=, $4=, $pop1
-	i32.const	$push23=, -97
-	i32.add 	$push3=, $pop24, $pop23
-	i32.const	$push22=, 255
-	i32.and 	$push4=, $pop3, $pop22
-	i32.const	$push21=, 26
-	i32.lt_u	$push5=, $pop4, $pop21
-	i32.const	$push20=, -32
-	i32.add 	$push6=, $4, $pop20
-	i32.select	$push2=, $pop5, $pop6, $4
+	i32.const	$push23=, -32
+	i32.add 	$push6=, $pop24, $pop23
+	i32.const	$push22=, -97
+	i32.add 	$push3=, $4, $pop22
+	i32.const	$push21=, 255
+	i32.and 	$push4=, $pop3, $pop21
+	i32.const	$push20=, 26
+	i32.lt_u	$push5=, $pop4, $pop20
+	i32.select	$push2=, $pop6, $4, $pop5
 	tee_local	$push19=, $3=, $pop2
 	i32.const	$push18=, 66
 	i32.eq  	$push7=, $pop19, $pop18
@@ -64,7 +64,7 @@ foo:                                    # @foo
 	i32.and 	$push14=, $4, $pop13
 	i32.const	$push15=, 58
 	i32.eq  	$push16=, $pop14, $pop15
-	i32.select	$push17=, $pop16, $1, $5
+	i32.select	$push17=, $1, $5, $pop16
 	return  	$pop17
 .LBB0_6:                                # %if.end22
 	end_block                       # label6:

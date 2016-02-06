@@ -18,28 +18,24 @@ b:                                      # @b
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push17=, 0
-	i32.load	$push1=, k($pop17)
-	tee_local	$push16=, $1=, $pop1
-	i32.const	$push15=, 0
-	i32.load	$push2=, g+8($pop15):p2align=3
-	tee_local	$push14=, $0=, $pop2
-	i32.gt_s	$push3=, $pop16, $pop14
-	i32.select	$push4=, $pop3, $1, $0
-	tee_local	$push13=, $1=, $pop4
-	i32.const	$push12=, 0
-	i32.load	$push5=, g+12($pop12)
-	tee_local	$push11=, $0=, $pop5
-	i32.gt_s	$push6=, $pop13, $pop11
-	i32.select	$push7=, $pop6, $1, $0
-	i32.const	$push8=, 1
-	i32.add 	$push9=, $pop7, $pop8
-	i32.store	$discard=, k($pop0), $pop9
-	i32.const	$push10=, 0
-	return  	$pop10
+	i32.load	$0=, k($pop0)
+	i32.const	$push9=, 0
+	i32.load	$1=, g+8($pop9):p2align=3
+	i32.const	$push8=, 0
+	i32.load	$2=, g+12($pop8)
+	i32.gt_s	$push1=, $0, $1
+	i32.select	$0=, $0, $1, $pop1
+	i32.const	$push7=, 0
+	i32.gt_s	$push2=, $0, $2
+	i32.select	$push3=, $0, $2, $pop2
+	i32.const	$push4=, 1
+	i32.add 	$push5=, $pop3, $pop4
+	i32.store	$discard=, k($pop7), $pop5
+	i32.const	$push6=, 0
+	return  	$pop6
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -20,7 +20,7 @@ g:                                      # @g
 	i32.store	$discard=, 12($8), $0
 	i32.const	$7=, 12
 	i32.add 	$7=, $8, $7
-	i32.select	$push0=, $1, $7, $2
+	i32.select	$push0=, $7, $2, $1
 	i32.load	$push2=, 0($pop0)
 	i32.const	$6=, 16
 	i32.add 	$8=, $8, $6

@@ -10,7 +10,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$push1=, -1
 	i32.const	$push7=, 0
-	i32.select	$1=, $1, $pop1, $pop7
+	i32.select	$1=, $pop1, $pop7, $1
 	block
 	i32.const	$push6=, 0
 	i32.load	$push0=, yabba($pop6)

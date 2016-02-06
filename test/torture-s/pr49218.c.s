@@ -19,36 +19,36 @@ main:                                   # @main
 	call    	__fixsfti@FUNCTION, $9, $pop0
 	i64.const	$1=, 0
 	block
+	i64.load	$push12=, 0($9)
+	tee_local	$push17=, $5=, $pop12
+	i64.const	$push5=, 10
+	i64.gt_u	$push6=, $pop17, $pop5
 	i32.const	$push1=, 8
 	i32.add 	$push2=, $9, $pop1
 	i64.load	$push13=, 0($pop2)
-	tee_local	$push17=, $5=, $pop13
-	i64.const	$push16=, 0
-	i64.eq  	$push6=, $pop17, $pop16
-	i64.load	$push12=, 0($9)
-	tee_local	$push15=, $4=, $pop12
-	i64.const	$push4=, 10
-	i64.gt_u	$push5=, $pop15, $pop4
+	tee_local	$push16=, $4=, $pop13
+	i64.const	$push15=, 0
+	i64.gt_s	$push4=, $pop16, $pop15
 	i64.const	$push14=, 0
-	i64.gt_s	$push3=, $5, $pop14
-	i32.select	$push7=, $pop6, $pop5, $pop3
+	i64.eq  	$push3=, $4, $pop14
+	i32.select	$push7=, $pop6, $pop4, $pop3
 	br_if   	$pop7, 0        # 0: down to label0
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i64.const	$2=, 1
-	i64.add 	$0=, $4, $2
-	i64.lt_u	$3=, $0, $4
-	i64.extend_u/i32	$4=, $3
+	i64.add 	$0=, $5, $2
+	i64.lt_u	$3=, $0, $5
+	i64.extend_u/i32	$5=, $3
 	i64.eq  	$3=, $0, $1
-	i64.select	$4=, $3, $2, $4
-	i64.add 	$5=, $5, $4
+	i64.select	$5=, $2, $5, $3
+	i64.add 	$4=, $4, $5
 	#APP
 	#NO_APP
-	copy_local	$4=, $0
+	copy_local	$5=, $0
 	i64.const	$push8=, 11
 	i64.xor 	$push9=, $0, $pop8
-	i64.or  	$push10=, $5, $pop9
+	i64.or  	$push10=, $4, $pop9
 	i64.const	$push19=, 0
 	i64.ne  	$push11=, $pop10, $pop19
 	br_if   	$pop11, 0       # 0: up to label1

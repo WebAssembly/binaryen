@@ -8,11 +8,11 @@ foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load8_u	$push1=, next_buffer($pop0):p2align=2
 	i32.const	$push2=, 52783
+	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i32.select	$push3=, $pop1, $pop2, $pop5
+	i32.load8_u	$push1=, next_buffer($pop5):p2align=2
+	i32.select	$push3=, $pop2, $pop0, $pop1
 	i32.add 	$push4=, $pop3, $0
 	return  	$pop4
 	.endfunc

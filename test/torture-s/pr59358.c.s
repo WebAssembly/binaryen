@@ -89,11 +89,11 @@ main:                                   # @main
 .LBB1_4:                                # %if.else10
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label8:
-	i32.const	$push25=, 4
-	i32.eq  	$push6=, $1, $pop25
-	i32.const	$push24=, 24
-	i32.const	$push23=, 16
-	i32.select	$5=, $pop6, $pop24, $pop23
+	i32.const	$push25=, 24
+	i32.const	$push24=, 16
+	i32.const	$push23=, 4
+	i32.eq  	$push6=, $1, $pop23
+	i32.select	$5=, $pop25, $pop24, $pop6
 .LBB1_5:                                # %if.end15
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label7:
@@ -118,11 +118,11 @@ main:                                   # @main
 	br_if   	$pop9, 0        # 0: down to label9
 # BB#8:                                 # %if.else28
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push31=, 4
-	i32.eq  	$push10=, $1, $pop31
-	i32.const	$push30=, 12
-	i32.const	$push29=, 8
-	i32.select	$5=, $pop10, $pop30, $pop29
+	i32.const	$push31=, 12
+	i32.const	$push30=, 8
+	i32.const	$push29=, 4
+	i32.eq  	$push10=, $1, $pop29
+	i32.select	$5=, $pop31, $pop30, $pop10
 .LBB1_9:                                # %if.end34
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label9:

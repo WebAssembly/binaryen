@@ -8,11 +8,11 @@ feq:                                    # @feq
 	.param  	i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i64.const	$push0=, 0
-	i64.eq  	$push1=, $0, $pop0
 	i32.const	$push3=, 13
 	i32.const	$push2=, 140
-	i32.select	$push4=, $pop1, $pop3, $pop2
+	i64.const	$push0=, 0
+	i64.eq  	$push1=, $0, $pop0
+	i32.select	$push4=, $pop3, $pop2, $pop1
 	return  	$pop4
 	.endfunc
 .Lfunc_end0:
@@ -26,11 +26,11 @@ fne:                                    # @fne
 	.param  	i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i64.const	$push0=, 0
-	i64.eq  	$push1=, $0, $pop0
 	i32.const	$push3=, 140
 	i32.const	$push2=, 13
-	i32.select	$push4=, $pop1, $pop3, $pop2
+	i64.const	$push0=, 0
+	i64.eq  	$push1=, $0, $pop0
+	i32.select	$push4=, $pop3, $pop2, $pop1
 	return  	$pop4
 	.endfunc
 .Lfunc_end1:
@@ -44,11 +44,11 @@ flt:                                    # @flt
 	.param  	i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i64.const	$push0=, 0
-	i64.lt_s	$push1=, $0, $pop0
 	i32.const	$push3=, 13
 	i32.const	$push2=, 140
-	i32.select	$push4=, $pop1, $pop3, $pop2
+	i64.const	$push0=, 0
+	i64.lt_s	$push1=, $0, $pop0
+	i32.select	$push4=, $pop3, $pop2, $pop1
 	return  	$pop4
 	.endfunc
 .Lfunc_end2:
@@ -62,11 +62,11 @@ fge:                                    # @fge
 	.param  	i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i64.const	$push0=, -1
-	i64.gt_s	$push1=, $0, $pop0
 	i32.const	$push3=, 13
 	i32.const	$push2=, 140
-	i32.select	$push4=, $pop1, $pop3, $pop2
+	i64.const	$push0=, -1
+	i64.gt_s	$push1=, $0, $pop0
+	i32.select	$push4=, $pop3, $pop2, $pop1
 	return  	$pop4
 	.endfunc
 .Lfunc_end3:
@@ -80,11 +80,11 @@ fgt:                                    # @fgt
 	.param  	i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i64.const	$push0=, 0
-	i64.gt_s	$push1=, $0, $pop0
 	i32.const	$push3=, 13
 	i32.const	$push2=, 140
-	i32.select	$push4=, $pop1, $pop3, $pop2
+	i64.const	$push0=, 0
+	i64.gt_s	$push1=, $0, $pop0
+	i32.select	$push4=, $pop3, $pop2, $pop1
 	return  	$pop4
 	.endfunc
 .Lfunc_end4:
@@ -98,11 +98,11 @@ fle:                                    # @fle
 	.param  	i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i64.const	$push0=, 1
-	i64.lt_s	$push1=, $0, $pop0
 	i32.const	$push3=, 13
 	i32.const	$push2=, 140
-	i32.select	$push4=, $pop1, $pop3, $pop2
+	i64.const	$push0=, 1
+	i64.lt_s	$push1=, $0, $pop0
+	i32.select	$push4=, $pop3, $pop2, $pop1
 	return  	$pop4
 	.endfunc
 .Lfunc_end5:

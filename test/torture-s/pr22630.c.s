@@ -9,7 +9,7 @@ bla:                                    # @bla
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, j
-	i32.select	$push1=, $0, $0, $pop0
+	i32.select	$push1=, $0, $pop0, $0
 	i32.eq  	$push2=, $pop1, $0
 	br_if   	$pop2, 0        # 0: down to label0
 # BB#1:                                 # %if.then1

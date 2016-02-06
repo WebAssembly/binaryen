@@ -11,7 +11,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push1=, 4
 	i32.add 	$push2=, $0, $pop1
-	i32.select	$push0=, $2, $0, $pop2
+	i32.select	$push0=, $0, $pop2, $2
 	tee_local	$push5=, $4=, $pop0
 	i32.load	$2=, 0($pop5)
 	i32.const	$push3=, 1

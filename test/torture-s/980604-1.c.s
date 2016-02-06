@@ -8,14 +8,14 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	block
+	i32.const	$push0=, c
+	i32.const	$push1=, d
 	i32.const	$push8=, 0
 	i32.load	$push2=, a($pop8)
 	i32.const	$push7=, 0
 	i32.load	$push3=, b($pop7)
 	i32.lt_s	$push4=, $pop2, $pop3
-	i32.const	$push0=, c
-	i32.const	$push1=, d
-	i32.select	$push5=, $pop4, $pop0, $pop1
+	i32.select	$push5=, $pop0, $pop1, $pop4
 	i32.load	$push6=, 0($pop5)
 	br_if   	$pop6, 0        # 0: down to label0
 # BB#1:                                 # %if.end

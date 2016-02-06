@@ -8,11 +8,11 @@ foo:                                    # @foo
 	.param  	i64, i64
 	.result 	i64
 # BB#0:                                 # %entry
-	i64.or  	$push0=, $1, $0
-	i32.wrap/i64	$push1=, $pop0
 	i64.const	$push3=, 6
 	i64.add 	$push2=, $1, $0
-	i64.select	$push4=, $pop1, $pop3, $pop2
+	i64.or  	$push0=, $1, $0
+	i32.wrap/i64	$push1=, $pop0
+	i64.select	$push4=, $pop3, $pop2, $pop1
 	return  	$pop4
 	.endfunc
 .Lfunc_end0:

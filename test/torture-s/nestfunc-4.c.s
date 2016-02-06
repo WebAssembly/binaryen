@@ -9,18 +9,17 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %if.then
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push1=, level($pop10)
-	tee_local	$push9=, $0=, $pop1
-	i32.const	$push2=, 499
-	i32.gt_s	$push3=, $pop9, $pop2
-	i32.const	$push8=, 499
-	i32.select	$push4=, $pop3, $0, $pop8
-	i32.const	$push5=, 1
-	i32.add 	$push6=, $pop4, $pop5
-	i32.store	$discard=, level($pop0), $pop6
-	i32.const	$push7=, 0
-	call    	exit@FUNCTION, $pop7
+	i32.load	$0=, level($pop0)
+	i32.const	$push8=, 0
+	i32.const	$push1=, 499
+	i32.const	$push7=, 499
+	i32.gt_s	$push2=, $0, $pop7
+	i32.select	$push3=, $0, $pop1, $pop2
+	i32.const	$push4=, 1
+	i32.add 	$push5=, $pop3, $pop4
+	i32.store	$discard=, level($pop8), $pop5
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -35,18 +34,17 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push1=, level($pop10)
-	tee_local	$push9=, $0=, $pop1
-	i32.const	$push2=, 499
-	i32.gt_s	$push3=, $pop9, $pop2
-	i32.const	$push8=, 499
-	i32.select	$push4=, $pop3, $0, $pop8
-	i32.const	$push5=, 1
-	i32.add 	$push6=, $pop4, $pop5
-	i32.store	$discard=, level($pop0), $pop6
-	i32.const	$push7=, -42
-	return  	$pop7
+	i32.load	$0=, level($pop0)
+	i32.const	$push8=, 0
+	i32.const	$push1=, 499
+	i32.const	$push7=, 499
+	i32.gt_s	$push2=, $0, $pop7
+	i32.select	$push3=, $0, $pop1, $pop2
+	i32.const	$push4=, 1
+	i32.add 	$push5=, $pop3, $pop4
+	i32.store	$discard=, level($pop8), $pop5
+	i32.const	$push6=, -42
+	return  	$pop6
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

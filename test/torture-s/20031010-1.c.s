@@ -19,8 +19,8 @@ foo:                                    # @foo
 	i32.eq  	$push5=, $3, $pop4
 	br_if   	$pop5, 0        # 0: down to label1
 # BB#2:                                 # %if.then4
-	i32.select	$push1=, $4, $1, $0
-	i32.select	$push0=, $4, $0, $1
+	i32.select	$push1=, $1, $0, $4
+	i32.select	$push0=, $0, $1, $4
 	i32.sub 	$2=, $pop1, $pop0
 .LBB0_3:                                # %if.end8
 	end_block                       # label1:

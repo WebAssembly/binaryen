@@ -30,10 +30,10 @@ sreal_compare:                          # @sreal_compare
 	i32.gt_u	$push6=, $pop13, $pop12
 	br_if   	$pop6, 0        # 0: down to label0
 # BB#3:                                 # %if.end10
-	i32.lt_u	$push7=, $0, $1
 	i32.const	$push9=, -1
 	i32.const	$push8=, 0
-	i32.select	$2=, $pop7, $pop9, $pop8
+	i32.lt_u	$push7=, $0, $1
+	i32.select	$2=, $pop9, $pop8, $pop7
 .LBB0_4:                                # %return
 	end_block                       # label0:
 	return  	$2

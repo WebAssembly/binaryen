@@ -8,12 +8,12 @@ f:                                      # @f
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 2
-	i32.eq  	$push3=, $0, $pop2
 	i32.const	$push4=, 1
 	i32.const	$push0=, -2
 	i32.ne  	$push1=, $0, $pop0
-	i32.select	$push5=, $pop3, $pop4, $pop1
+	i32.const	$push2=, 2
+	i32.eq  	$push3=, $0, $pop2
+	i32.select	$push5=, $pop4, $pop1, $pop3
 	return  	$pop5
 	.endfunc
 .Lfunc_end0:

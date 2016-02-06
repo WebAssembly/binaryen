@@ -21,14 +21,14 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push6=, 7
-	i32.shr_u	$push0=, $0, $pop6
-	tee_local	$push13=, $2=, $pop0
 	i32.const	$push7=, 128
 	i32.or  	$push8=, $0, $pop7
 	i32.const	$push4=, 127
 	i32.and 	$push5=, $0, $pop4
-	i32.select	$push9=, $pop13, $pop8, $pop5
+	i32.const	$push6=, 7
+	i32.shr_u	$push0=, $0, $pop6
+	tee_local	$push13=, $2=, $pop0
+	i32.select	$push9=, $pop8, $pop5, $pop13
 	i32.store8	$discard=, 0($1), $pop9
 	i32.const	$push10=, 1
 	i32.add 	$1=, $1, $pop10
@@ -55,14 +55,14 @@ main:                                   # @main
 .LBB1_1:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i32.const	$push17=, 7
-	i32.shr_u	$push0=, $1, $pop17
-	tee_local	$push16=, $2=, $pop0
-	i32.const	$push15=, 128
-	i32.or  	$push2=, $1, $pop15
-	i32.const	$push14=, 127
-	i32.and 	$push1=, $1, $pop14
-	i32.select	$push3=, $pop16, $pop2, $pop1
+	i32.const	$push17=, 128
+	i32.or  	$push2=, $1, $pop17
+	i32.const	$push16=, 127
+	i32.and 	$push1=, $1, $pop16
+	i32.const	$push15=, 7
+	i32.shr_u	$push0=, $1, $pop15
+	tee_local	$push14=, $2=, $pop0
+	i32.select	$push3=, $pop2, $pop1, $pop14
 	i32.store8	$discard=, 0($0), $pop3
 	i32.const	$push13=, 1
 	i32.add 	$0=, $0, $pop13

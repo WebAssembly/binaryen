@@ -35,17 +35,17 @@ foo:                                    # @foo
 	br_if   	$pop5, 0        # 0: down to label1
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$push1=, 0
-	i32.gt_s	$push2=, $0, $pop1
 	i32.const	$push12=, 0
-	i32.sub 	$push3=, $pop12, $0
-	i32.select	$push0=, $pop2, $pop3, $0
-	tee_local	$push11=, $0=, $pop0
-	i32.const	$push10=, -1
-	i32.gt_s	$push6=, $pop11, $pop10
-	i32.const	$push9=, 0
-	i32.const	$push8=, 0
-	i32.sub 	$push7=, $pop8, $0
-	i32.select	$0=, $pop6, $pop9, $pop7
+	i32.const	$push11=, 0
+	i32.sub 	$push3=, $pop11, $0
+	i32.const	$push10=, 0
+	i32.gt_s	$push2=, $0, $pop10
+	i32.select	$push0=, $pop3, $0, $pop2
+	tee_local	$push9=, $0=, $pop0
+	i32.sub 	$push7=, $pop12, $pop9
+	i32.const	$push8=, -1
+	i32.gt_s	$push6=, $0, $pop8
+	i32.select	$0=, $pop1, $pop7, $pop6
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:

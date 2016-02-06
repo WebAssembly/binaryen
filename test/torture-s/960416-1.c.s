@@ -33,23 +33,23 @@ f_le:                                   # @f_le
 	i64.const	$push43=, 32
 	i64.shr_u	$push23=, $3, $pop43
 	i64.add 	$push30=, $pop29, $pop23
+	i32.const	$push9=, 0
 	i32.wrap/i64	$push4=, $8
 	tee_local	$push42=, $2=, $pop4
 	i32.wrap/i64	$push7=, $5
 	i32.sub 	$push8=, $pop42, $pop7
 	tee_local	$push41=, $0=, $pop8
-	i32.gt_u	$push11=, $pop41, $2
+	i32.sub 	$push10=, $pop9, $pop41
+	i32.gt_u	$push11=, $0, $2
 	tee_local	$push40=, $2=, $pop11
-	i32.const	$push9=, 0
-	i32.sub 	$push10=, $pop9, $0
-	i32.select	$push12=, $pop40, $pop10, $0
+	i32.select	$push12=, $pop10, $0, $pop40
 	i64.extend_u/i32	$push25=, $pop12
 	i32.sub 	$push2=, $4, $1
 	i64.extend_u/i32	$push24=, $pop2
 	i64.mul 	$push26=, $pop25, $pop24
 	i64.const	$push14=, -1
 	i64.const	$push13=, 0
-	i64.select	$push15=, $2, $pop14, $pop13
+	i64.select	$push15=, $pop14, $pop13, $2
 	i64.xor 	$push27=, $pop26, $pop15
 	tee_local	$push39=, $8=, $pop27
 	i64.const	$push38=, 32
@@ -99,13 +99,13 @@ f_be:                                   # @f_be
 	i64.const	$push51=, 4294967295
 	i64.and 	$push27=, $2, $pop51
 	i64.add 	$push31=, $pop30, $pop27
+	i32.const	$push7=, 0
 	i32.sub 	$push6=, $7, $1
 	tee_local	$push50=, $1=, $pop6
-	i32.gt_u	$push9=, $pop50, $7
+	i32.sub 	$push8=, $pop7, $pop50
+	i32.gt_u	$push9=, $1, $7
 	tee_local	$push49=, $7=, $pop9
-	i32.const	$push7=, 0
-	i32.sub 	$push8=, $pop7, $1
-	i32.select	$push10=, $pop49, $pop8, $1
+	i32.select	$push10=, $pop8, $1, $pop49
 	i64.extend_u/i32	$push23=, $pop10
 	i64.sub 	$push3=, $6, $5
 	i64.const	$push48=, 4294967295
@@ -113,7 +113,7 @@ f_be:                                   # @f_be
 	i64.mul 	$push24=, $pop23, $pop22
 	i64.const	$push12=, -1
 	i64.const	$push11=, 0
-	i64.select	$push13=, $7, $pop12, $pop11
+	i64.select	$push13=, $pop12, $pop11, $7
 	i64.xor 	$push25=, $pop24, $pop13
 	tee_local	$push47=, $6=, $pop25
 	i64.const	$push46=, 4294967295

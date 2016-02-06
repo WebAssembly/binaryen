@@ -8,10 +8,10 @@ nge:                                    # @nge
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.ge_s	$push0=, $0, $1
 	i32.const	$push2=, -1
 	i32.const	$push1=, 0
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.ge_s	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end0:
@@ -25,10 +25,10 @@ ngt:                                    # @ngt
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.gt_s	$push0=, $0, $1
 	i32.const	$push2=, -1
 	i32.const	$push1=, 0
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.gt_s	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end1:
@@ -42,10 +42,10 @@ nle:                                    # @nle
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.le_s	$push0=, $0, $1
 	i32.const	$push2=, -1
 	i32.const	$push1=, 0
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.le_s	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end2:
@@ -59,10 +59,10 @@ nlt:                                    # @nlt
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.lt_s	$push0=, $0, $1
 	i32.const	$push2=, -1
 	i32.const	$push1=, 0
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.lt_s	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end3:
@@ -76,10 +76,10 @@ neq:                                    # @neq
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.eq  	$push0=, $0, $1
 	i32.const	$push2=, -1
 	i32.const	$push1=, 0
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.eq  	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end4:
@@ -93,10 +93,10 @@ nne:                                    # @nne
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.ne  	$push0=, $0, $1
 	i32.const	$push2=, -1
 	i32.const	$push1=, 0
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.ne  	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end5:
@@ -110,10 +110,10 @@ ngeu:                                   # @ngeu
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.ge_u	$push0=, $0, $1
 	i32.const	$push2=, -1
 	i32.const	$push1=, 0
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.ge_u	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end6:
@@ -127,10 +127,10 @@ ngtu:                                   # @ngtu
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.gt_u	$push0=, $0, $1
 	i32.const	$push2=, -1
 	i32.const	$push1=, 0
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.gt_u	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end7:
@@ -144,10 +144,10 @@ nleu:                                   # @nleu
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.le_u	$push0=, $0, $1
 	i32.const	$push2=, -1
 	i32.const	$push1=, 0
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.le_u	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end8:
@@ -161,10 +161,10 @@ nltu:                                   # @nltu
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.lt_u	$push0=, $0, $1
 	i32.const	$push2=, -1
 	i32.const	$push1=, 0
-	i32.select	$push3=, $pop0, $pop2, $pop1
+	i32.lt_u	$push0=, $0, $1
+	i32.select	$push3=, $pop2, $pop1, $pop0
 	return  	$pop3
 	.endfunc
 .Lfunc_end9:

@@ -14,13 +14,13 @@ frob:                                   # @frob
 	i32.const	$push13=, 0
 	i32.store16	$discard=, p($pop13), $1
 	i32.const	$push12=, 0
-	i32.const	$push1=, -1
-	i32.add 	$push2=, $2, $pop1
-	i32.eq  	$push3=, $0, $pop2
 	i32.const	$push11=, 0
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $0, $pop4
-	i32.select	$push6=, $pop3, $pop11, $pop5
+	i32.const	$push1=, -1
+	i32.add 	$push2=, $2, $pop1
+	i32.eq  	$push3=, $0, $pop2
+	i32.select	$push6=, $pop11, $pop5, $pop3
 	tee_local	$push10=, $0=, $pop6
 	i32.store16	$discard=, g($pop12), $pop10
 	i32.const	$push7=, 65535
@@ -58,14 +58,14 @@ get_n:                                  # @get_n
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push26=, 65535
-	i32.and 	$push4=, $2, $pop26
-	tee_local	$push25=, $2=, $pop4
-	i32.eq  	$push5=, $pop25, $0
-	i32.const	$push24=, 0
+	i32.const	$push26=, 0
+	i32.const	$push25=, 65535
+	i32.and 	$push4=, $2, $pop25
+	tee_local	$push24=, $2=, $pop4
 	i32.const	$push23=, 1
-	i32.add 	$push6=, $2, $pop23
-	i32.select	$2=, $pop5, $pop24, $pop6
+	i32.add 	$push6=, $pop24, $pop23
+	i32.eq  	$push5=, $2, $0
+	i32.select	$2=, $pop26, $pop6, $pop5
 	i32.const	$push22=, 1
 	i32.add 	$1=, $1, $pop22
 	i32.const	$push21=, 65535

@@ -9,7 +9,7 @@ float_min1:                             # @float_min1
 	.result 	f32
 # BB#0:                                 # %entry
 	f32.lt  	$push0=, $0, $1
-	f32.select	$push1=, $pop0, $0, $1
+	f32.select	$push1=, $0, $1, $pop0
 	return  	$pop1
 	.endfunc
 .Lfunc_end0:
@@ -24,7 +24,7 @@ float_min2:                             # @float_min2
 	.result 	f32
 # BB#0:                                 # %entry
 	f32.le  	$push0=, $0, $1
-	f32.select	$push1=, $pop0, $0, $1
+	f32.select	$push1=, $0, $1, $pop0
 	return  	$pop1
 	.endfunc
 .Lfunc_end1:
@@ -39,7 +39,7 @@ float_max1:                             # @float_max1
 	.result 	f32
 # BB#0:                                 # %entry
 	f32.gt  	$push0=, $0, $1
-	f32.select	$push1=, $pop0, $0, $1
+	f32.select	$push1=, $0, $1, $pop0
 	return  	$pop1
 	.endfunc
 .Lfunc_end2:
@@ -54,7 +54,7 @@ float_max2:                             # @float_max2
 	.result 	f32
 # BB#0:                                 # %entry
 	f32.ge  	$push0=, $0, $1
-	f32.select	$push1=, $pop0, $0, $1
+	f32.select	$push1=, $0, $1, $pop0
 	return  	$pop1
 	.endfunc
 .Lfunc_end3:
@@ -69,7 +69,7 @@ double_min1:                            # @double_min1
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.lt  	$push0=, $0, $1
-	f64.select	$push1=, $pop0, $0, $1
+	f64.select	$push1=, $0, $1, $pop0
 	return  	$pop1
 	.endfunc
 .Lfunc_end4:
@@ -84,7 +84,7 @@ double_min2:                            # @double_min2
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.le  	$push0=, $0, $1
-	f64.select	$push1=, $pop0, $0, $1
+	f64.select	$push1=, $0, $1, $pop0
 	return  	$pop1
 	.endfunc
 .Lfunc_end5:
@@ -99,7 +99,7 @@ double_max1:                            # @double_max1
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.gt  	$push0=, $0, $1
-	f64.select	$push1=, $pop0, $0, $1
+	f64.select	$push1=, $0, $1, $pop0
 	return  	$pop1
 	.endfunc
 .Lfunc_end6:
@@ -114,7 +114,7 @@ double_max2:                            # @double_max2
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.ge  	$push0=, $0, $1
-	f64.select	$push1=, $pop0, $0, $1
+	f64.select	$push1=, $0, $1, $pop0
 	return  	$pop1
 	.endfunc
 .Lfunc_end7:

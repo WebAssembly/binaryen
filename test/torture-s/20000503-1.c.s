@@ -9,15 +9,14 @@ sub:                                    # @sub
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2
-	i32.add 	$push1=, $0, $pop0
-	tee_local	$push8=, $0=, $pop1
-	i32.const	$push2=, 0
-	i32.lt_s	$push3=, $pop8, $pop2
-	i32.const	$push7=, 0
-	i32.select	$push4=, $pop3, $pop7, $0
-	i32.const	$push5=, 2
-	i32.shl 	$push6=, $pop4, $pop5
-	return  	$pop6
+	i32.add 	$0=, $0, $pop0
+	i32.const	$push1=, 0
+	i32.const	$push6=, 0
+	i32.lt_s	$push2=, $0, $pop6
+	i32.select	$push3=, $pop1, $0, $pop2
+	i32.const	$push4=, 2
+	i32.shl 	$push5=, $pop3, $pop4
+	return  	$pop5
 	.endfunc
 .Lfunc_end0:
 	.size	sub, .Lfunc_end0-sub

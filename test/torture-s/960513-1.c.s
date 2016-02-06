@@ -30,18 +30,18 @@ f:                                      # @f
 	i32.const	$11=, 160
 	i32.add 	$11=, $31, $11
 	call    	__multf3@FUNCTION, $11, $1, $2, $pop65, $pop6
+	i64.load	$push9=, 160($31)
 	i32.const	$push4=, 1
 	i32.eq  	$push5=, $3, $pop4
 	tee_local	$push64=, $3=, $pop5
-	i64.load	$push9=, 160($31)
-	i64.select	$push11=, $pop64, $pop9, $5
+	i64.select	$push11=, $pop9, $5, $pop64
 	tee_local	$push63=, $5=, $pop11
 	i32.const	$push62=, 8
 	i32.const	$12=, 160
 	i32.add 	$12=, $31, $12
 	i32.add 	$push7=, $12, $pop62
 	i64.load	$push8=, 0($pop7)
-	i64.select	$push10=, $3, $pop8, $4
+	i64.select	$push10=, $pop8, $4, $3
 	tee_local	$push61=, $4=, $pop10
 	i32.const	$13=, 144
 	i32.add 	$13=, $31, $13
