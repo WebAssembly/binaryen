@@ -9,10 +9,10 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.lt_s	$push1=, $0, $pop0
+	i32.load	$push2=, a($pop0)
 	i32.const	$push8=, 0
-	i32.load	$push2=, a($pop8)
-	i32.select	$push3=, $pop1, $0, $pop2
+	i32.lt_s	$push1=, $0, $pop8
+	i32.select	$push3=, $0, $pop2, $pop1
 	i32.const	$push4=, 16
 	i32.shl 	$push5=, $pop3, $pop4
 	i32.const	$push7=, 16

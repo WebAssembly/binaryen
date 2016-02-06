@@ -10,7 +10,7 @@ doit:                                   # @doit
 # BB#0:                                 # %entry
 	i32.const	$push1=, .L.str
 	i32.const	$push0=, .L.str.1
-	i32.select	$push2=, $0, $pop1, $pop0
+	i32.select	$push2=, $pop1, $pop0, $0
 	i32.const	$push3=, 1
 	i32.add 	$push4=, $pop2, $pop3
 	return  	$pop4

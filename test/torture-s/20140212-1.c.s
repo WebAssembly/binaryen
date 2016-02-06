@@ -15,14 +15,14 @@ fn1:                                    # @fn1
 	tee_local	$push15=, $5=, $pop4
 	i32.load	$1=, d($pop15)
 	i32.load	$2=, f($5)
+	i32.const	$push9=, 54
 	i32.load	$push5=, a($5)
-	i32.ne  	$push6=, $pop5, $5
+	i32.ne  	$push6=, $5, $pop5
 	i32.load	$push7=, b($5)
-	i32.ne  	$push8=, $pop7, $5
+	i32.ne  	$push8=, $5, $pop7
 	i32.and 	$push0=, $pop6, $pop8
 	tee_local	$push14=, $4=, $pop0
-	i32.const	$push9=, 54
-	i32.select	$push1=, $pop14, $pop9, $5
+	i32.select	$push1=, $pop9, $5, $pop14
 	tee_local	$push13=, $3=, $pop1
 	i32.const	$push10=, 147
 	i32.mul 	$0=, $pop13, $pop10
@@ -80,14 +80,14 @@ main:                                   # @main
 	tee_local	$push16=, $5=, $pop3
 	i32.load	$1=, d($pop16)
 	i32.load	$2=, f($5)
+	i32.const	$push8=, 54
 	i32.load	$push4=, a($5)
-	i32.ne  	$push5=, $pop4, $5
+	i32.ne  	$push5=, $5, $pop4
 	i32.load	$push6=, b($5)
-	i32.ne  	$push7=, $pop6, $5
+	i32.ne  	$push7=, $5, $pop6
 	i32.and 	$push0=, $pop5, $pop7
 	tee_local	$push15=, $4=, $pop0
-	i32.const	$push8=, 54
-	i32.select	$0=, $pop15, $pop8, $5
+	i32.select	$0=, $pop8, $5, $pop15
 	copy_local	$3=, $5
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1

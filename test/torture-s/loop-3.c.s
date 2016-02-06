@@ -33,9 +33,9 @@ f:                                      # @f
 	i32.load	$push1=, n($pop12)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 1
-	i32.lt_s	$push4=, $0, $pop3
 	i32.const	$push11=, 1
-	i32.select	$push5=, $pop4, $0, $pop11
+	i32.lt_s	$push4=, $0, $pop11
+	i32.select	$push5=, $0, $pop3, $pop4
 	i32.const	$push6=, -1
 	i32.xor 	$push7=, $pop5, $pop6
 	i32.add 	$push8=, $pop2, $pop7

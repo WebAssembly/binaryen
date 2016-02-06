@@ -18,10 +18,10 @@ foo:                                    # @foo
 	br_if   	$pop3, 0        # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.gt_u	$push6=, $0, $1
-	i32.select	$2=, $pop6, $0, $1
+	i32.select	$2=, $0, $1, $pop6
 	block
 	i32.lt_u	$push4=, $0, $1
-	i32.select	$push5=, $pop4, $0, $1
+	i32.select	$push5=, $0, $1, $pop4
 	i32.const	$push17=, 1
 	i32.ne  	$push7=, $pop5, $pop17
 	br_if   	$pop7, 0        # 0: down to label1

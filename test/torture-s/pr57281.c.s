@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i64.extend_s/i32	$push2=, $pop6
 	i64.store	$discard=, 0($pop3), $pop2
 	i32.const	$push5=, 0
-	i32.select	$push4=, $0, $pop5, $1
+	i32.select	$push4=, $pop5, $1, $0
 	return  	$pop4
 	.endfunc
 .Lfunc_end0:
@@ -53,7 +53,7 @@ main:                                   # @main
 	i32.store	$3=, 0($1), $pop16
 	i32.load	$push2=, b($3)
 	tee_local	$push15=, $4=, $pop2
-	i32.select	$push4=, $0, $3, $pop15
+	i32.select	$push4=, $3, $pop15, $0
 	i32.store	$discard=, 0($1), $pop4
 	i32.load	$push5=, b($3)
 	i32.const	$push14=, -1

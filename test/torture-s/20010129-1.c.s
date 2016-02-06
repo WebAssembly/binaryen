@@ -120,7 +120,7 @@ foo:                                    # @foo
 # BB#3:                                 # %if.end17
                                         #   in Loop: Header=BB3_2 Depth=1
 	i32.const	$push42=, 1
-	i32.select	$8=, $2, $2, $pop42
+	i32.select	$8=, $2, $pop42, $2
 	block
 	block
 	br_if   	$3, 0           # 0: down to label6

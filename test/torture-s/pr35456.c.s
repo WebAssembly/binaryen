@@ -8,10 +8,10 @@ not_fabs:                               # @not_fabs
 	.param  	f64
 	.result 	f64
 # BB#0:                                 # %entry
+	f64.neg 	$push2=, $0
 	f64.const	$push0=, 0x0p0
 	f64.ge  	$push1=, $0, $pop0
-	f64.neg 	$push2=, $0
-	f64.select	$push3=, $pop1, $0, $pop2
+	f64.select	$push3=, $0, $pop2, $pop1
 	return  	$pop3
 	.endfunc
 .Lfunc_end0:

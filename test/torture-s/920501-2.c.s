@@ -309,10 +309,10 @@ facts:                                  # @facts
 	end_loop                        # label27:
 	end_block                       # label11:
 	i64.add 	$7=, $9, $15
-	i64.gt_u	$push23=, $8, $7
 	i64.sub 	$push24=, $8, $7
 	i64.sub 	$push25=, $7, $8
-	i64.select	$push26=, $pop23, $pop24, $pop25
+	i64.gt_u	$push23=, $8, $7
+	i64.select	$push26=, $pop24, $pop25, $pop23
 	i64.const	$push65=, 4294967295
 	i64.and 	$push28=, $pop26, $pop65
 	i64.const	$push64=, 4294967295

@@ -28,7 +28,7 @@ foo:                                    # @foo
 	end_block                       # label1:
 	i32.const	$push3=, -1
 	i32.lt_s	$push4=, $0, $pop3
-	i32.select	$push5=, $pop4, $0, $2
+	i32.select	$push5=, $0, $2, $pop4
 	return  	$pop5
 .LBB0_4:                                # %if.end5
 	end_block                       # label0:

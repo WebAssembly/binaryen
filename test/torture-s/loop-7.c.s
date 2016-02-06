@@ -16,7 +16,7 @@ foo:                                    # @foo
 	i32.const	$push8=, 1
 	i32.shl 	$push0=, $pop8, $2
 	i32.eq  	$push1=, $pop0, $0
-	i32.select	$1=, $pop1, $2, $1
+	i32.select	$1=, $2, $1, $pop1
 	i32.const	$push7=, 1
 	i32.add 	$2=, $2, $pop7
 	i32.const	$push6=, 9

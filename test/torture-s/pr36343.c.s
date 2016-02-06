@@ -37,7 +37,7 @@ foo:                                    # @foo
 	i32.add 	$6=, $8, $6
 	i32.const	$7=, 8
 	i32.add 	$7=, $8, $7
-	i32.select	$push0=, $0, $6, $7
+	i32.select	$push0=, $6, $7, $0
 	tee_local	$push5=, $2=, $pop0
 	call    	bar@FUNCTION, $pop5
 	block

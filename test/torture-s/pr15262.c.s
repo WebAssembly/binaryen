@@ -35,7 +35,7 @@ foo:                                    # @foo
 	i32.add 	$6=, $8, $6
 	i32.const	$7=, 12
 	i32.add 	$7=, $8, $7
-	i32.select	$push0=, $1, $6, $7
+	i32.select	$push0=, $6, $7, $1
 	i32.const	$push1=, 1084647014
 	i32.store	$discard=, 0($pop0), $pop1
 	i32.const	$5=, 16

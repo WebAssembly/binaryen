@@ -24,9 +24,9 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.add 	$push0=, $2, $1
 	call    	g@FUNCTION, $pop0
-	i32.eq  	$push1=, $2, $0
 	i32.const	$push2=, -1
-	i32.select	$push3=, $pop1, $1, $pop2
+	i32.eq  	$push1=, $2, $0
+	i32.select	$push3=, $1, $pop2, $pop1
 	return  	$pop3
 	.endfunc
 .Lfunc_end1:

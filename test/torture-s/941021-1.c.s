@@ -9,7 +9,7 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, glob_dbl
-	i32.select	$push1=, $0, $0, $pop0
+	i32.select	$push1=, $0, $pop0, $0
 	f64.store	$discard=, 0($pop1), $1
 	return  	$0
 	.endfunc

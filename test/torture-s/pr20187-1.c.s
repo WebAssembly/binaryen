@@ -15,7 +15,7 @@ test:                                   # @test
 	tee_local	$push11=, $0=, $pop1
 	i32.mul 	$push5=, $pop4, $pop11
 	i32.const	$push2=, 1
-	i32.select	$push3=, $0, $0, $pop2
+	i32.select	$push3=, $0, $pop2, $0
 	i32.and 	$push6=, $pop5, $pop3
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop6, $pop7
@@ -41,7 +41,7 @@ main:                                   # @main
 	tee_local	$push11=, $0=, $pop1
 	i32.mul 	$push5=, $pop4, $pop11
 	i32.const	$push2=, 1
-	i32.select	$push3=, $0, $0, $pop2
+	i32.select	$push3=, $0, $pop2, $0
 	i32.and 	$push6=, $pop5, $pop3
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop6, $pop7

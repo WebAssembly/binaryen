@@ -30,7 +30,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 3999996
 	i32.add 	$push1=, $1, $pop0
-	i32.select	$push2=, $0, $pop1, $1
+	i32.select	$push2=, $pop1, $1, $0
 	i32.load	$push3=, 0($pop2)
 	return  	$pop3
 	.endfunc

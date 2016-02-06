@@ -35,7 +35,7 @@ f4:                                     # @f4
 	end_block                       # label0:
 	i32.const	$push22=, .L.str.3
 	i32.const	$push8=, .L.str.1
-	i32.select	$0=, $0, $pop22, $pop8
+	i32.select	$0=, $pop22, $pop8, $0
 	i32.load	$2=, 12($16)
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
@@ -61,7 +61,7 @@ f4:                                     # @f4
 	i32.add 	$0=, $16, $pop13
 	i32.const	$push11=, .L.str.4
 	i32.const	$push23=, .L.str.3
-	i32.select	$push12=, $4, $pop11, $pop23
+	i32.select	$push12=, $pop11, $pop23, $4
 	i32.store	$discard=, 0($0), $pop12
 	i32.const	$push14=, 4
 	i32.add 	$0=, $16, $pop14

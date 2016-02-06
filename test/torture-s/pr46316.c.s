@@ -9,9 +9,9 @@ foo:                                    # @foo
 	.result 	i64
 # BB#0:                                 # %entry
 	i64.const	$push0=, -4
-	i64.lt_s	$push1=, $0, $pop0
 	i64.const	$push11=, -4
-	i64.select	$push2=, $pop1, $0, $pop11
+	i64.lt_s	$push1=, $0, $pop11
+	i64.select	$push2=, $0, $pop0, $pop1
 	i64.const	$push3=, -1
 	i64.xor 	$push4=, $pop2, $pop3
 	i64.add 	$push5=, $0, $pop4

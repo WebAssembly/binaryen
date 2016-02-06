@@ -8,11 +8,11 @@ foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 5
-	i32.lt_u	$push1=, $0, $pop0
 	i32.const	$push3=, 4
 	i32.const	$push2=, 8
-	i32.select	$push4=, $pop1, $pop3, $pop2
+	i32.const	$push0=, 5
+	i32.lt_u	$push1=, $0, $pop0
+	i32.select	$push4=, $pop3, $pop2, $pop1
 	return  	$pop4
 	.endfunc
 .Lfunc_end0:

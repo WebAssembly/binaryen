@@ -43,7 +43,7 @@ main:                                   # @main
 	i32.store	$discard=, d($2), $pop3
 	block
 	i32.store16	$push2=, i($2), $0
-	i32.select	$push4=, $1, $pop2, $2
+	i32.select	$push4=, $pop2, $2, $1
 	i32.store	$push5=, h($2), $pop4
 	i32.store	$push6=, a($2), $pop5
 	br_if   	$pop6, 0        # 0: down to label1

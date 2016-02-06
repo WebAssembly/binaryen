@@ -32,11 +32,11 @@ CalcPing:                               # @CalcPing
 	i32.add 	$push4=, $0, $1
 	f32.load	$push5=, 0($pop4):p2align=3
 	tee_local	$push20=, $6=, $pop5
+	f32.add 	$push7=, $3, $pop20
 	f32.const	$push19=, 0x0p0
-	f32.gt  	$push6=, $pop20, $pop19
+	f32.gt  	$push6=, $6, $pop19
 	tee_local	$push18=, $5=, $pop6
-	f32.add 	$push7=, $3, $6
-	f32.select	$3=, $pop18, $pop7, $3
+	f32.select	$3=, $pop7, $3, $pop18
 	i32.add 	$2=, $5, $2
 	i32.const	$push8=, 24
 	i32.add 	$1=, $1, $pop8
@@ -98,11 +98,11 @@ main:                                   # @main
 	i32.add 	$push3=, $10, $0
 	f32.load	$push4=, 0($pop3):p2align=3
 	tee_local	$push22=, $4=, $pop4
+	f32.add 	$push6=, $2, $pop22
 	f32.const	$push21=, 0x0p0
-	f32.gt  	$push5=, $pop22, $pop21
+	f32.gt  	$push5=, $4, $pop21
 	tee_local	$push20=, $3=, $pop5
-	f32.add 	$push6=, $2, $4
-	f32.select	$2=, $pop20, $pop6, $2
+	f32.select	$2=, $pop6, $2, $pop20
 	i32.add 	$1=, $3, $1
 	i32.const	$push19=, 24
 	i32.add 	$0=, $0, $pop19

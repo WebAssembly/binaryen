@@ -9,9 +9,9 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4
-	i32.lt_u	$push1=, $0, $pop0
 	i32.const	$push3=, 4
-	i32.select	$push2=, $pop1, $0, $pop3
+	i32.lt_u	$push1=, $0, $pop3
+	i32.select	$push2=, $0, $pop0, $pop1
 	return  	$pop2
 	.endfunc
 .Lfunc_end0:

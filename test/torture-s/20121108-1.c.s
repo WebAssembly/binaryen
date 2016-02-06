@@ -73,10 +73,10 @@ string_to_ip:                           # @string_to_ip
 	block
 	i32.load	$push4=, 12($9)
 	tee_local	$push28=, $1=, $pop4
-	i32.load8_u	$push5=, 0($pop28)
 	i32.const	$push27=, 1
-	i32.add 	$push6=, $1, $pop27
-	i32.select	$push0=, $pop5, $pop6, $1
+	i32.add 	$push6=, $pop28, $pop27
+	i32.load8_u	$push5=, 0($1)
+	i32.select	$push0=, $pop6, $1, $pop5
 	tee_local	$push26=, $1=, $pop0
 	i32.const	$push42=, 0
 	i32.eq  	$push43=, $pop26, $pop42
@@ -90,10 +90,10 @@ string_to_ip:                           # @string_to_ip
 	i32.or  	$0=, $pop10, $0
 	i32.load	$push11=, 12($9)
 	tee_local	$push32=, $1=, $pop11
-	i32.load8_u	$push12=, 0($pop32)
 	i32.const	$push31=, 1
-	i32.add 	$push13=, $1, $pop31
-	i32.select	$push1=, $pop12, $pop13, $1
+	i32.add 	$push13=, $pop32, $pop31
+	i32.load8_u	$push12=, 0($1)
+	i32.select	$push1=, $pop13, $1, $pop12
 	tee_local	$push30=, $1=, $pop1
 	i32.const	$push44=, 0
 	i32.eq  	$push45=, $pop30, $pop44
@@ -109,10 +109,10 @@ string_to_ip:                           # @string_to_ip
 	i32.or  	$0=, $pop16, $pop15
 	i32.load	$push17=, 12($9)
 	tee_local	$push36=, $1=, $pop17
-	i32.load8_u	$push18=, 0($pop36)
 	i32.const	$push19=, 1
-	i32.add 	$push20=, $1, $pop19
-	i32.select	$push2=, $pop18, $pop20, $1
+	i32.add 	$push20=, $pop36, $pop19
+	i32.load8_u	$push18=, 0($1)
+	i32.select	$push2=, $pop20, $1, $pop18
 	tee_local	$push35=, $1=, $pop2
 	i32.const	$push46=, 0
 	i32.eq  	$push47=, $pop35, $pop46

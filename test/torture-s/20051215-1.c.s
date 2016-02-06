@@ -32,11 +32,11 @@ foo:                                    # @foo
 .LBB0_4:                                # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
-	i32.const	$push9=, 0
-	i32.gt_s	$push2=, $0, $pop9
 	i32.mul 	$push3=, $4, $0
+	i32.const	$push9=, 0
 	i32.const	$push8=, 0
-	i32.select	$push4=, $pop2, $pop3, $pop8
+	i32.gt_s	$push2=, $0, $pop8
+	i32.select	$push4=, $pop3, $pop9, $pop2
 	i32.add 	$5=, $5, $pop4
 	i32.const	$push7=, 1
 	i32.add 	$3=, $3, $pop7

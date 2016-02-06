@@ -9,6 +9,9 @@ f:                                      # @f
 	.result 	i32
 	.local  	i64, i32
 # BB#0:                                 # %entry
+	i32.const	$push23=, 0
+	i32.const	$push21=, 1
+	i32.const	$push20=, 2
 	i32.load	$push4=, 4($2)
 	i32.load	$push5=, 4($0)
 	tee_local	$push28=, $4=, $pop5
@@ -30,14 +33,11 @@ f:                                      # @f
 	i64.sub 	$push16=, $pop8, $pop15
 	tee_local	$push26=, $3=, $pop16
 	i64.const	$push17=, 0
-	i64.gt_s	$push18=, $pop26, $pop17
-	i32.const	$push23=, 0
+	i64.lt_s	$push19=, $pop26, $pop17
+	i32.select	$push22=, $pop21, $pop20, $pop19
 	i64.const	$push25=, 0
-	i64.lt_s	$push19=, $3, $pop25
-	i32.const	$push21=, 1
-	i32.const	$push20=, 2
-	i32.select	$push22=, $pop19, $pop21, $pop20
-	i32.select	$push24=, $pop18, $pop23, $pop22
+	i64.gt_s	$push18=, $3, $pop25
+	i32.select	$push24=, $pop23, $pop22, $pop18
 	return  	$pop24
 	.endfunc
 .Lfunc_end0:

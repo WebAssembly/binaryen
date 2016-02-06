@@ -46,10 +46,10 @@ bug:                                    # @bug
 	br_if   	$pop10, 2       # 2: down to label1
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.lt_s	$push3=, $0, $2
 	i32.const	$push8=, 1
 	i32.add 	$push2=, $0, $pop8
-	i32.select	$0=, $pop3, $pop2, $2
+	i32.lt_s	$push3=, $0, $2
+	i32.select	$0=, $pop2, $2, $pop3
 	i32.const	$3=, 0
 	i32.mul 	$push4=, $0, $1
 	i32.const	$push7=, 36863

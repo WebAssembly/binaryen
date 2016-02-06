@@ -44,7 +44,7 @@ test:                                   # @test
 	i32.load	$push1=, x($pop0)
 	i32.const	$push3=, foo@FUNCTION
 	i32.const	$push2=, bar@FUNCTION
-	i32.select	$push4=, $0, $pop3, $pop2
+	i32.select	$push4=, $pop3, $pop2, $0
 	i32.call_indirect	$push5=, $pop4
 	i32.add 	$push7=, $pop1, $pop5
 	i32.const	$push9=, 0

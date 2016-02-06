@@ -39,7 +39,7 @@ baz:                                    # @baz
 	i32.const	$push0=, x
 	i32.const	$5=, 12
 	i32.add 	$5=, $6, $5
-	i32.select	$push1=, $0, $5, $pop0
+	i32.select	$push1=, $5, $pop0, $0
 	tee_local	$push3=, $0=, $pop1
 	i32.const	$push2=, .L.str
 	i32.store	$1=, 0($pop3), $pop2

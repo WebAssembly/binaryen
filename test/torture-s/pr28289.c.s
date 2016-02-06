@@ -9,7 +9,7 @@ ix86_split_ashr:                        # @ix86_split_ashr
 # BB#0:                                 # %entry
 	i32.const	$push1=, ok@FUNCTION
 	i32.const	$push0=, gen_x86_64_shrd@FUNCTION
-	i32.select	$push2=, $0, $pop1, $pop0
+	i32.select	$push2=, $pop1, $pop0, $0
 	i32.const	$push3=, 0
 	i32.call_indirect	$discard=, $pop2, $pop3
 	return
@@ -50,11 +50,11 @@ gen_x86_64_shrd:                        # @gen_x86_64_shrd
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push1=, one($pop0)
 	i32.const	$push3=, ok@FUNCTION
 	i32.const	$push2=, gen_x86_64_shrd@FUNCTION
-	i32.select	$push4=, $pop1, $pop3, $pop2
+	i32.const	$push0=, 0
+	i32.load	$push1=, one($pop0)
+	i32.select	$push4=, $pop3, $pop2, $pop1
 	i32.const	$push6=, 0
 	i32.call_indirect	$discard=, $pop4, $pop6
 	i32.const	$push5=, 1

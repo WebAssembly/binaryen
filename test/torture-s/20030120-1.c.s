@@ -9,7 +9,7 @@ test1:                                  # @test1
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
-	i32.select	$push1=, $0, $0, $pop0
+	i32.select	$push1=, $0, $pop0, $0
 	return  	$pop1
 	.endfunc
 .Lfunc_end0:
@@ -24,7 +24,7 @@ test2:                                  # @test2
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
-	i32.select	$push1=, $0, $0, $pop0
+	i32.select	$push1=, $0, $pop0, $0
 	return  	$pop1
 	.endfunc
 .Lfunc_end1:
@@ -39,11 +39,11 @@ test3:                                  # @test3
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	i32.and 	$push1=, $0, $pop0
-	i32.const	$push5=, 1
 	i32.const	$push2=, 0
 	i32.ne  	$push3=, $0, $pop2
-	i32.select	$push4=, $pop1, $pop5, $pop3
+	i32.const	$push5=, 1
+	i32.and 	$push1=, $0, $pop5
+	i32.select	$push4=, $pop0, $pop3, $pop1
 	return  	$pop4
 	.endfunc
 .Lfunc_end2:

@@ -32,11 +32,11 @@ fetch:                                  # @fetch
 	i32.add 	$push6=, $pop13, $pop5
 	i32.store	$discard=, fetch.fetch_count($pop3), $pop6
 	i32.const	$push12=, 0
-	i32.const	$push11=, 0
-	i32.gt_s	$push7=, $0, $pop11
 	i32.const	$push8=, 100
+	i32.const	$push11=, 0
 	i32.const	$push10=, 0
-	i32.select	$push9=, $pop7, $pop8, $pop10
+	i32.gt_s	$push7=, $0, $pop10
+	i32.select	$push9=, $pop8, $pop11, $pop7
 	i32.store	$discard=, sqlca($pop12), $pop9
 	return
 	.endfunc
@@ -69,12 +69,12 @@ load_data:                              # @load_data
 	i32.add 	$push7=, $pop20, $pop19
 	i32.store	$discard=, fetch.fetch_count($pop22), $pop7
 	i32.const	$push18=, 0
-	i32.const	$push17=, 0
-	i32.gt_s	$push8=, $3, $pop17
-	tee_local	$push16=, $0=, $pop8
 	i32.const	$push9=, 100
-	i32.const	$push15=, 0
-	i32.select	$push10=, $pop16, $pop9, $pop15
+	i32.const	$push17=, 0
+	i32.const	$push16=, 0
+	i32.gt_s	$push8=, $3, $pop16
+	tee_local	$push15=, $0=, $pop8
+	i32.select	$push10=, $pop9, $pop17, $pop15
 	i32.store	$discard=, sqlca($pop18), $pop10
 	block
 	br_if   	$0, 0           # 0: down to label0
@@ -139,12 +139,12 @@ main:                                   # @main
 	i32.add 	$push5=, $pop23, $pop22
 	i32.store	$discard=, fetch.fetch_count($pop25), $pop5
 	i32.const	$push21=, 0
-	i32.const	$push20=, 0
-	i32.gt_s	$push6=, $4, $pop20
-	tee_local	$push19=, $3=, $pop6
 	i32.const	$push7=, 100
-	i32.const	$push18=, 0
-	i32.select	$push8=, $pop19, $pop7, $pop18
+	i32.const	$push20=, 0
+	i32.const	$push19=, 0
+	i32.gt_s	$push6=, $4, $pop19
+	tee_local	$push18=, $3=, $pop6
+	i32.select	$push8=, $pop7, $pop20, $pop18
 	i32.store	$discard=, sqlca($pop21), $pop8
 	block
 	br_if   	$3, 0           # 0: down to label3

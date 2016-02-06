@@ -45,14 +45,14 @@ main:                                   # @main
 	i32.const	$push15=, 0
 	i32.store	$push1=, a($pop15), $0
 	tee_local	$push14=, $0=, $pop1
-	i32.const	$push2=, 2147483647
-	i32.and 	$push3=, $pop14, $pop2
 	i32.const	$push4=, 2
-	i32.shl 	$push5=, $0, $pop4
+	i32.shl 	$push5=, $pop14, $pop4
 	i32.const	$push6=, 1
 	i32.or  	$push7=, $pop5, $pop6
 	i32.const	$push13=, 0
-	i32.select	$push8=, $pop3, $pop7, $pop13
+	i32.const	$push2=, 2147483647
+	i32.and 	$push3=, $0, $pop2
+	i32.select	$push8=, $pop7, $pop13, $pop3
 	call    	foo@FUNCTION, $pop8
 	i32.const	$push12=, 0
 	return  	$pop12

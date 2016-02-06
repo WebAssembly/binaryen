@@ -98,11 +98,11 @@ main:                                   # @main
 	i32.ne  	$push17=, $3, $pop50
 	br_if   	$pop17, 2       # 2: down to label6
 # BB#8:                                 # %sw.bb22.i
-	i32.const	$push21=, 1
-	i32.eq  	$push22=, $1, $pop21
 	i32.const	$push23=, 1536
 	i32.or  	$push24=, $1, $pop23
-	i32.select	$1=, $pop22, $pop24, $1
+	i32.const	$push21=, 1
+	i32.eq  	$push22=, $1, $pop21
+	i32.select	$1=, $pop24, $1, $pop22
 	i32.const	$push19=, 0
 	i32.const	$push18=, -1
 	i32.add 	$push4=, $4, $pop18

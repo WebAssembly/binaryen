@@ -72,9 +72,9 @@ main:                                   # @main
 # BB#4:                                 # %if.then3
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push21=, 0
-	i32.gt_s	$push7=, $2, $pop21
 	i32.const	$push20=, 0
-	i32.select	$push8=, $pop7, $2, $pop20
+	i32.gt_s	$push7=, $2, $pop20
+	i32.select	$push8=, $2, $pop21, $pop7
 	i32.add 	$5=, $pop8, $5
 .LBB1_5:                                # %if.end8
                                         #   in Loop: Header=BB1_2 Depth=1

@@ -15,18 +15,18 @@ test_store_ccp:                         # @test_store_ccp
 	i32.sub 	$7=, $1, $2
 	i32.const	$2=, __stack_pointer
 	i32.store	$7=, 0($2), $7
-	i32.const	$push0=, 5
-	i32.lt_s	$push1=, $0, $pop0
 	i32.const	$push2=, 8
 	i32.gt_s	$push3=, $0, $pop2
 	i32.const	$4=, 8
 	i32.add 	$4=, $7, $4
 	i32.const	$5=, 4
 	i32.add 	$5=, $7, $5
-	i32.select	$push4=, $pop3, $4, $5
+	i32.select	$push4=, $4, $5, $pop3
+	i32.const	$push0=, 5
+	i32.lt_s	$push1=, $0, $pop0
 	i32.const	$6=, 12
 	i32.add 	$6=, $7, $6
-	i32.select	$push5=, $pop1, $6, $pop4
+	i32.select	$push5=, $6, $pop4, $pop1
 	tee_local	$push11=, $0=, $pop5
 	i32.const	$push6=, 10
 	i32.store	$discard=, 0($pop11), $pop6
@@ -59,18 +59,18 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	i32.sub 	$8=, $2, $3
 	i32.const	$3=, __stack_pointer
 	i32.store	$8=, 0($3), $8
-	i32.const	$push0=, 5
-	i32.lt_s	$push1=, $0, $pop0
 	i32.const	$push2=, 8
 	i32.gt_s	$push3=, $0, $pop2
 	i32.const	$5=, 8
 	i32.add 	$5=, $8, $5
 	i32.const	$6=, 4
 	i32.add 	$6=, $8, $6
-	i32.select	$push4=, $pop3, $5, $6
+	i32.select	$push4=, $5, $6, $pop3
+	i32.const	$push0=, 5
+	i32.lt_s	$push1=, $0, $pop0
 	i32.const	$7=, 12
 	i32.add 	$7=, $8, $7
-	i32.select	$push5=, $pop1, $7, $pop4
+	i32.select	$push5=, $7, $pop4, $pop1
 	tee_local	$push10=, $1=, $pop5
 	i32.store	$push6=, 0($pop10), $0
 	i32.const	$push7=, 1

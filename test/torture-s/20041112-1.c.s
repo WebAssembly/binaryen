@@ -6,25 +6,25 @@
 	.type	bar,@function
 bar:                                    # @bar
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push18=, 0
 	i32.load	$push1=, global($pop18)
-	tee_local	$push17=, $1=, $pop1
-	i32.const	$push16=, 0
-	i32.ne  	$push3=, $pop17, $pop16
+	tee_local	$push17=, $0=, $pop1
+	i32.const	$push7=, 1
+	i32.add 	$push8=, $pop17, $pop7
+	i32.const	$push9=, 2
+	i32.select	$push10=, $pop8, $pop9, $0
+	i32.const	$push16=, 1
+	i32.const	$push15=, 0
+	i32.ne  	$push3=, $0, $pop15
 	i32.const	$push2=, global
 	i32.const	$push4=, -1
 	i32.eq  	$push5=, $pop2, $pop4
 	i32.or  	$push6=, $pop3, $pop5
-	tee_local	$push15=, $0=, $pop6
-	i32.const	$push7=, 1
-	i32.add 	$push8=, $1, $pop7
-	i32.const	$push9=, 2
-	i32.select	$push10=, $1, $pop8, $pop9
-	i32.const	$push14=, 1
-	i32.select	$push11=, $pop15, $pop10, $pop14
+	tee_local	$push14=, $0=, $pop6
+	i32.select	$push11=, $pop10, $pop16, $pop14
 	i32.store	$discard=, global($pop0), $pop11
 	i32.const	$push13=, 1
 	i32.xor 	$push12=, $0, $pop13

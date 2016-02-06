@@ -8,19 +8,19 @@ foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push4=, 4
-	i32.or  	$push5=, $0, $pop4
-	i32.const	$push2=, 6
-	i32.eq  	$push6=, $pop5, $pop2
 	i32.const	$push8=, 1
+	i32.const	$push12=, 1
+	i32.const	$push7=, -1
 	i32.const	$push0=, 2
 	i32.or  	$push1=, $0, $pop0
-	i32.const	$push12=, 6
-	i32.ne  	$push3=, $pop1, $pop12
-	i32.const	$push11=, 1
-	i32.const	$push7=, -1
-	i32.select	$push9=, $pop3, $pop11, $pop7
-	i32.select	$push10=, $pop6, $pop8, $pop9
+	i32.const	$push2=, 6
+	i32.ne  	$push3=, $pop1, $pop2
+	i32.select	$push9=, $pop12, $pop7, $pop3
+	i32.const	$push4=, 4
+	i32.or  	$push5=, $0, $pop4
+	i32.const	$push11=, 6
+	i32.eq  	$push6=, $pop5, $pop11
+	i32.select	$push10=, $pop8, $pop9, $pop6
 	return  	$pop10
 	.endfunc
 .Lfunc_end0:

@@ -13,14 +13,15 @@ foo:                                    # @foo
 	i32.const	$push2=, 1
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.const	$push4=, 2047
-	i32.and 	$0=, $pop3, $pop4
+	i32.and 	$push5=, $pop3, $pop4
+	tee_local	$push12=, $0=, $pop5
+	i32.const	$push11=, 1
+	i32.gt_u	$push6=, $pop12, $pop11
 	i32.const	$push10=, 1
-	i32.gt_u	$push5=, $0, $pop10
+	i32.shl 	$push7=, $pop6, $pop10
 	i32.const	$push9=, 1
-	i32.shl 	$push6=, $pop5, $pop9
-	i32.const	$push8=, 1
-	i32.select	$push7=, $0, $pop6, $pop8
-	return  	$pop7
+	i32.select	$push8=, $pop7, $pop9, $0
+	return  	$pop8
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

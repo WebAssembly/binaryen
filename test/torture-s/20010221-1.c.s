@@ -20,7 +20,7 @@ main:                                   # @main
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.select	$0=, $1, $1, $0
+	i32.select	$0=, $1, $0, $1
 	i32.const	$push9=, 1
 	i32.add 	$1=, $1, $pop9
 	i32.lt_s	$push2=, $1, $2
