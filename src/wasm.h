@@ -511,10 +511,8 @@ public:
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     if (condition) {
-      printOpening(o, "br_if");
+      printOpening(o, "br_if ") << name;
       incIndent(o, indent);
-      printFullLine(o, indent, condition);
-      doIndent(o, indent) << name << '\n';
     } else {
       printOpening(o, "br ") << name;
       if (!value || value->is<Nop>()) {
@@ -525,6 +523,9 @@ public:
       incIndent(o, indent);
     }
     if (value && !value->is<Nop>()) printFullLine(o, indent, value);
+    if (condition) {
+      printFullLine(o, indent, condition);
+    }
     return decIndent(o, indent);
   }
 };

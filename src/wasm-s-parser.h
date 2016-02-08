@@ -868,10 +868,6 @@ private:
   Expression* makeBreak(Element& s) {
     auto ret = allocator.alloc<Break>();
     size_t i = 1;
-    if (s[0]->str() == BR_IF) {
-      ret->condition = parseExpression(s[i]);
-      i++;
-    }
     if (s[i]->dollared()) {
       ret->name = s[i]->str();
     } else {
@@ -881,7 +877,14 @@ private:
       ret->name = labelStack[labelStack.size() - 1 - offset];
     }
     i++;
-    if (i < s.size()) {
+    if (i == s.size()) return ret;
+    if (s[0]->str() == BR_IF) {
+      if (i + 1 < s.size()) {
+        ret->value = parseExpression(s[i]);
+        i++;
+      }
+      ret->condition = parseExpression(s[i]);
+    } else {
       ret->value = parseExpression(s[i]);
     }
     return ret;

@@ -233,16 +233,16 @@ private:
       Flow visitBreak(Break *curr) {
         NOTE_ENTER("Break");
         bool condition = true;
-        if (curr->condition) {
-          Flow flow = visit(curr->condition);
-          if (flow.breaking()) return flow;
-          condition = flow.value.getInteger();
-        }
         Flow flow(curr->name);
         if (curr->value) {
           flow = visit(curr->value);
           if (flow.breaking()) return flow;
           flow.breakTo = curr->name;
+        }
+        if (curr->condition) {
+          Flow conditionFlow = visit(curr->condition);
+          if (conditionFlow.breaking()) return conditionFlow;
+          condition = conditionFlow.value.getInteger();
         }
         return condition ? flow : Flow();
       }
