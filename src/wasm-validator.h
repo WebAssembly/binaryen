@@ -28,6 +28,8 @@ namespace wasm {
 struct WasmValidator : public WasmWalker<WasmValidator> {
   bool valid;
 
+  std::map<Name, WasmType> breakTypes; // breaks to a label must all have the same type, and the right type
+
 public:
   bool validate(Module& module) {
     valid = true;
@@ -37,11 +39,31 @@ public:
 
   // visitors
 
+  void visitBlock(Block *curr) {
+    // if we are break'ed to, then the value must be right for us
+    if (curr->name.is()) {
+      if (breakTypes.count(curr->name) > 0) {
+        shouldBeTrue(curr->type == breakTypes[curr->name]);
+        breakTypes.erase(curr->name);
+      }
+    }
+  }
   void visitLoop(Loop *curr) {
     if (curr->in.is()) {
       LoopChildChecker childChecker(curr->in);
       childChecker.walk(curr->body);
       shouldBeTrue(childChecker.valid);
+    }
+  }
+  void visitBreak(Break *curr) {
+    WasmType valueType = none;
+    if (curr->value) {
+      valueType = curr->value->type;
+    }
+    if (breakTypes.count(curr->name) == 0) {
+      breakTypes[curr->name] = valueType;
+    } else {
+      shouldBeTrue(valueType == breakTypes[curr->name]);
     }
   }
   void visitSetLocal(SetLocal *curr) {

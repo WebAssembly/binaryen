@@ -9,12 +9,11 @@
     (local $$7 i32)
     (local $$8 i32)
     (block $label$0
-      (br_if
+      (br_if $label$0
         (i32.lt_s
           (get_local $$2)
           (i32.const 1)
         )
-        $label$0
       )
       (set_local $$3
         (i32.shl
@@ -42,9 +41,8 @@
           (get_local $$1)
         )
         (block $label$3
-          (br_if
+          (br_if $label$3
             (get_local $$4)
-            $label$3
           )
           (loop $label$5 $label$4
             (i32.store align=4
@@ -69,9 +67,8 @@
                 (get_local $$5)
               )
             )
-            (br_if
+            (br_if $label$4
               (get_local $$8)
-              $label$4
             )
           )
         )
@@ -87,12 +84,11 @@
             (get_local $$3)
           )
         )
-        (br_if
+        (br_if $label$1
           (i32.ne
             (get_local $$5)
             (get_local $$2)
           )
-          $label$1
         )
       )
     )

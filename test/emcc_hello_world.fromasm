@@ -2349,12 +2349,11 @@
           (i32.const 4)
         )
       )
-      (br_if
+      (br_if $do-in$1
         (i32.lt_s
           (get_local $dest)
           (get_local $stop)
         )
-        $do-in$1
       )
     )
     (set_local $$vacopy_currentptr
@@ -12342,12 +12341,11 @@
                                     (i32.const 0)
                                   )
                                 )
-                                (br_if
+                                (br_if $do-once$95
                                   (i32.eq
                                     (get_local $$tobool$i$449$i)
                                     (i32.const 0)
                                   )
-                                  $do-once$95
                                 )
                                 (call $___fwritex
                                   (i32.const 4143)
@@ -12908,12 +12906,11 @@
                               (i32.const 0)
                             )
                           )
-                          (br_if
+                          (br_if $do-once$89
                             (i32.eq
                               (get_local $$tobool$i$i)
                               (i32.const 0)
                             )
-                            $do-once$89
                           )
                           (set_local $$sub$ptr$rhs$cast812$i
                             (get_local $$estr$2$i)
@@ -19075,9 +19072,8 @@
                                 (i32.const 0)
                               )
                             )
-                            (br_if
+                            (br_if $do-once$8
                               (get_local $$cmp126$i)
-                              $do-once$8
                             )
                           )
                         )
@@ -20911,9 +20907,8 @@
                                         (i32.const 0)
                                       )
                                     )
-                                    (br_if
+                                    (br_if $do-once$17
                                       (get_local $$cmp217$i)
-                                      $do-once$17
                                     )
                                   )
                                 )
@@ -22763,9 +22758,8 @@
                                 (get_local $$cmp66$i$190)
                               )
                             )
-                            (br_if
+                            (br_if $do-once$25
                               (get_local $$or$cond2$i)
-                              $do-once$25
                             )
                           )
                         )
@@ -24149,9 +24143,8 @@
                                                 (get_local $$add$ptr16$i$i)
                                               )
                                             )
-                                            (br_if
+                                            (br_if $do-once$35
                                               (get_local $$cmp44$i$i)
-                                              $do-once$35
                                             )
                                             (call_import $_abort)
                                           )
@@ -24552,9 +24545,8 @@
                                           (i32.const 0)
                                         )
                                       )
-                                      (br_if
+                                      (br_if $label$break$L331
                                         (get_local $$cmp120$i$53$i)
-                                        $label$break$L331
                                       )
                                       (set_local $$index$i$54$i
                                         (i32.add
@@ -24601,12 +24593,11 @@
                                                 (i32.const 0)
                                               )
                                             )
-                                            (br_if
+                                            (br_if $do-once$40
                                               (i32.eq
                                                 (get_local $$cond2$i$i)
                                                 (i32.const 0)
                                               )
-                                              $do-once$40
                                             )
                                             (set_local $$shl131$i$i
                                               (i32.shl
@@ -24695,9 +24686,8 @@
                                                 (i32.const 0)
                                               )
                                             )
-                                            (br_if
+                                            (br_if $label$break$L331
                                               (get_local $$cmp156$i$i)
-                                              $label$break$L331
                                             )
                                           )
                                         )
@@ -24804,9 +24794,8 @@
                                           (i32.const 0)
                                         )
                                       )
-                                      (br_if
+                                      (br_if $label$break$L331
                                         (get_local $$cmp185$i$i)
-                                        $label$break$L331
                                       )
                                       (set_local $$171
                                         (i32.load align=4
@@ -29192,9 +29181,8 @@
                           (i32.const 0)
                         )
                       )
-                      (br_if
+                      (br_if $do-once$5
                         (get_local $$cmp432)
-                        $do-once$5
                       )
                     )
                   )

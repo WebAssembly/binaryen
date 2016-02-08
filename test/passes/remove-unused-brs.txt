@@ -40,27 +40,24 @@
   )
   (func $b6 (param $i1 i32)
     (block $topmost
-      (br_if
+      (br_if $topmost
         (i32.const 1)
-        $topmost
       )
     )
   )
   (func $b7 (param $i1 i32)
     (block $topmost
-      (br_if
-        (i32.const 1)
-        $topmost
+      (br_if $topmost
         (i32.const 0)
+        (i32.const 1)
       )
     )
   )
   (func $b8 (param $i1 i32)
     (block $topmost
       (block $inner
-        (br_if
+        (br_if $topmost
           (i32.const 1)
-          $topmost
         )
       )
     )
@@ -68,9 +65,8 @@
   (func $b9 (param $i1 i32)
     (block $topmost
       (block $inner
-        (br_if
+        (br_if $topmost
           (i32.const 1)
-          $inner
         )
       )
     )
@@ -78,10 +74,9 @@
   (func $b10 (param $i1 i32)
     (block $topmost
       (block $inner
-        (br_if
-          (i32.const 1)
-          $topmost
+        (br_if $topmost
           (i32.const 0)
+          (i32.const 1)
         )
       )
     )
@@ -89,10 +84,9 @@
   (func $b11 (param $i1 i32)
     (block $topmost
       (block $inner
-        (br_if
-          (i32.const 1)
-          $inner
+        (br_if $inner
           (i32.const 0)
+          (i32.const 1)
         )
       )
     )
@@ -118,9 +112,8 @@
         (i32.const 1)
         (block $block0
           (i32.const 12)
-          (br_if
+          (br_if $topmost
             (i32.const 1)
-            $topmost
             (i32.const 1)
           )
         )
@@ -149,18 +142,16 @@
   )
   (func $b15
     (block $topmost
-      (br_if
+      (br_if $topmost
         (i32.const 17)
-        $topmost
       )
     )
   )
   (func $b15 (result i32)
     (block $topmost
-      (br_if
-        (i32.const 18)
-        $topmost
+      (br_if $topmost
         (i32.const 0)
+        (i32.const 18)
       )
     )
   )

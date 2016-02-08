@@ -104,12 +104,11 @@
         (set_local $$5
           (get_local $$1)
         )
-        (br_if
+        (br_if $label$2
           (i32.ne
             (get_local $$4)
             (get_local $$3)
           )
-          $label$2
         )
       )
       (loop $label$5 $label$4
@@ -142,12 +141,11 @@
             (get_local $$2)
           )
         )
-        (br_if
+        (br_if $label$4
           (i32.ne
             (get_local $$5)
             (get_local $$3)
           )
-          $label$4
         )
       )
       (set_local $$6
@@ -174,12 +172,11 @@
           (get_local $$2)
         )
       )
-      (br_if
+      (br_if $label$0
         (i32.ne
           (get_local $$0)
           (i32.const 100)
         )
-        $label$0
       )
     )
     (call $_Z6reporti

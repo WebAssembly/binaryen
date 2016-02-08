@@ -4,12 +4,11 @@
   (export "test1" $test1)
   (func $test0 (param $$0 i32) (result i32)
     (block $label$0
-      (br_if
+      (br_if $label$0
         (i32.gt_s
           (get_local $$0)
           (i32.const -1)
         )
-        $label$0
       )
       (set_local $$0
         (i32.div_s
@@ -52,12 +51,11 @@
       (set_local $$2
         (get_local $$1)
       )
-      (br_if
+      (br_if $label$0
         (i32.lt_s
           (get_local $$4)
           (get_local $$0)
         )
-        $label$0
       )
     )
     (return

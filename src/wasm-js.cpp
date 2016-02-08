@@ -311,8 +311,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
   if (wasmJSDebug) std::cout << "call_from_js returning " << ret << '\n';
 
   if (ret.type == none) EM_ASM({ Module['tempReturn'] = undefined });
-  else if (ret.type == i32) EM_ASM_({ Module['tempReturn'] = $0 }, ret.i32);
-  else if (ret.type == f32) EM_ASM_({ Module['tempReturn'] = $0 }, ret.f32);
-  else if (ret.type == f64) EM_ASM_({ Module['tempReturn'] = $0 }, ret.f64);
+  else if (ret.type == i32) EM_ASM_({ Module['tempReturn'] = $0 }, ret.geti32());
+  else if (ret.type == f32) EM_ASM_({ Module['tempReturn'] = $0 }, ret.getf32());
+  else if (ret.type == f64) EM_ASM_({ Module['tempReturn'] = $0 }, ret.getf64());
   else abort();
 }

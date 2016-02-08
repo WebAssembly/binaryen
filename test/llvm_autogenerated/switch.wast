@@ -11,12 +11,11 @@
   (export "bar64" $bar64)
   (func $bar32 (param $$0 i32)
     (block $label$0
-      (br_if
+      (br_if $label$0
         (i32.gt_u
           (get_local $$0)
           (i32.const 23)
         )
-        $label$0
       )
       (block $label$1
         (block $label$2
@@ -50,12 +49,11 @@
   )
   (func $bar64 (param $$0 i64)
     (block $label$0
-      (br_if
+      (br_if $label$0
         (i64.gt_u
           (get_local $$0)
           (i64.const 23)
         )
-        $label$0
       )
       (block $label$1
         (block $label$2

@@ -139,21 +139,19 @@
   (func $discard_result (param $$0 i32) (param $$1 i32) (param $$2 i32) (param $$3 i32) (param $$4 i32) (result i32)
     (block $label$0
       (block $label$1
-        (br_if
+        (br_if $label$1
           (i32.eq
             (get_local $$3)
             (i32.const 0)
           )
-          $label$1
         )
         (set_local $$0
           (call_import $def)
         )
         (br $label$0)
       )
-      (br_if
+      (br_if $label$0
         (get_local $$4)
-        $label$0
       )
       (call_import $memset
         (get_local $$0)
