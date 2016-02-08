@@ -19,7 +19,7 @@ __fprintf_chk:                          # @__fprintf_chk
 	block
 	i32.const	$push4=, 0
 	i32.load	$push0=, should_optimize($pop4)
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 0
 	i32.const	$push1=, 1
@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.load	$push2=, should_optimize($pop79)
 	i32.const	$push161=, 0
 	i32.eq  	$push162=, $pop2, $pop161
-	br_if   	$pop162, 0      # 0: down to label1
+	br_if   	0, $pop162      # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push85=, 0
 	i32.const	$push84=, 0
@@ -76,14 +76,14 @@ main:                                   # @main
 	block
 	i32.const	$push5=, 5
 	i32.ne  	$push6=, $0, $pop5
-	br_if   	$pop6, 0        # 0: down to label2
+	br_if   	0, $pop6        # 0: down to label2
 # BB#2:                                 # %if.end3
 	block
 	i32.const	$push86=, 0
 	i32.load	$push7=, should_optimize($pop86)
 	i32.const	$push163=, 0
 	i32.eq  	$push164=, $pop7, $pop163
-	br_if   	$pop164, 0      # 0: down to label3
+	br_if   	0, $pop164      # 0: down to label3
 # BB#3:                                 # %if.end6
 	i32.const	$push90=, 0
 	i32.const	$push8=, 1
@@ -97,7 +97,7 @@ main:                                   # @main
 	i32.load	$push10=, should_optimize($pop87)
 	i32.const	$push165=, 0
 	i32.eq  	$push166=, $pop10, $pop165
-	br_if   	$pop166, 0      # 0: down to label4
+	br_if   	0, $pop166      # 0: down to label4
 # BB#4:                                 # %if.end10
 	i32.const	$push11=, 0
 	i32.const	$push93=, 0
@@ -109,13 +109,13 @@ main:                                   # @main
 	block
 	i32.const	$push14=, 6
 	i32.ne  	$push15=, $0, $pop14
-	br_if   	$pop15, 0       # 0: down to label5
+	br_if   	0, $pop15       # 0: down to label5
 # BB#5:                                 # %if.end14
 	block
 	i32.load	$push16=, should_optimize($1)
 	i32.const	$push167=, 0
 	i32.eq  	$push168=, $pop16, $pop167
-	br_if   	$pop168, 0      # 0: down to label6
+	br_if   	0, $pop168      # 0: down to label6
 # BB#6:                                 # %if.end17
 	i32.const	$push97=, 0
 	i32.const	$push17=, 1
@@ -129,7 +129,7 @@ main:                                   # @main
 	i32.load	$push19=, should_optimize($pop94)
 	i32.const	$push169=, 0
 	i32.eq  	$push170=, $pop19, $pop169
-	br_if   	$pop170, 0      # 0: down to label7
+	br_if   	0, $pop170      # 0: down to label7
 # BB#7:                                 # %if.end21
 	i32.const	$push100=, 0
 	i32.const	$push99=, 0
@@ -139,14 +139,14 @@ main:                                   # @main
 	i32.call	$1=, __fprintf_chk@FUNCTION, $pop21, $0, $pop98
 	block
 	i32.ne  	$push22=, $1, $0
-	br_if   	$pop22, 0       # 0: down to label8
+	br_if   	0, $pop22       # 0: down to label8
 # BB#8:                                 # %if.end25
 	block
 	i32.const	$push101=, 0
 	i32.load	$push23=, should_optimize($pop101)
 	i32.const	$push171=, 0
 	i32.eq  	$push172=, $pop23, $pop171
-	br_if   	$pop172, 0      # 0: down to label9
+	br_if   	0, $pop172      # 0: down to label9
 # BB#9:                                 # %if.end28
 	i32.const	$push105=, 0
 	i32.const	$push24=, 1
@@ -160,7 +160,7 @@ main:                                   # @main
 	i32.load	$push26=, should_optimize($pop102)
 	i32.const	$push173=, 0
 	i32.eq  	$push174=, $pop26, $pop173
-	br_if   	$pop174, 0      # 0: down to label10
+	br_if   	0, $pop174      # 0: down to label10
 # BB#10:                                # %if.end32
 	i32.const	$push27=, 0
 	i32.const	$push108=, 0
@@ -170,13 +170,13 @@ main:                                   # @main
 	i32.const	$push106=, .L.str.3
 	i32.call	$0=, __fprintf_chk@FUNCTION, $pop29, $0, $pop106
 	block
-	br_if   	$0, 0           # 0: down to label11
+	br_if   	0, $0           # 0: down to label11
 # BB#11:                                # %if.end36
 	block
 	i32.load	$push30=, should_optimize($1)
 	i32.const	$push175=, 0
 	i32.eq  	$push176=, $pop30, $pop175
-	br_if   	$pop176, 0      # 0: down to label12
+	br_if   	0, $pop176      # 0: down to label12
 # BB#12:                                # %if.end39
 	i32.const	$push112=, 0
 	i32.const	$push31=, 1
@@ -204,7 +204,7 @@ main:                                   # @main
 	i32.load	$push33=, should_optimize($pop109)
 	i32.const	$push177=, 0
 	i32.eq  	$push178=, $pop33, $pop177
-	br_if   	$pop178, 0      # 0: down to label13
+	br_if   	0, $pop178      # 0: down to label13
 # BB#13:                                # %if.end43
 	i32.const	$push115=, 0
 	i32.const	$push114=, 0
@@ -228,14 +228,14 @@ main:                                   # @main
 	block
 	i32.const	$push35=, 5
 	i32.ne  	$push36=, $0, $pop35
-	br_if   	$pop36, 0       # 0: down to label14
+	br_if   	0, $pop36       # 0: down to label14
 # BB#14:                                # %if.end47
 	block
 	i32.const	$push116=, 0
 	i32.load	$push37=, should_optimize($pop116)
 	i32.const	$push179=, 0
 	i32.eq  	$push180=, $pop37, $pop179
-	br_if   	$pop180, 0      # 0: down to label15
+	br_if   	0, $pop180      # 0: down to label15
 # BB#15:                                # %if.end50
 	i32.const	$push120=, 0
 	i32.const	$push38=, 1
@@ -263,7 +263,7 @@ main:                                   # @main
 	i32.load	$push40=, should_optimize($pop117)
 	i32.const	$push181=, 0
 	i32.eq  	$push182=, $pop40, $pop181
-	br_if   	$pop182, 0      # 0: down to label16
+	br_if   	0, $pop182      # 0: down to label16
 # BB#16:                                # %if.end54
 	i32.const	$push41=, 0
 	i32.const	$push123=, 0
@@ -288,13 +288,13 @@ main:                                   # @main
 	block
 	i32.const	$push43=, 6
 	i32.ne  	$push44=, $0, $pop43
-	br_if   	$pop44, 0       # 0: down to label17
+	br_if   	0, $pop44       # 0: down to label17
 # BB#17:                                # %if.end58
 	block
 	i32.load	$push45=, should_optimize($2)
 	i32.const	$push183=, 0
 	i32.eq  	$push184=, $pop45, $pop183
-	br_if   	$pop184, 0      # 0: down to label18
+	br_if   	0, $pop184      # 0: down to label18
 # BB#18:                                # %if.end61
 	i32.const	$push127=, 0
 	i32.const	$push46=, 1
@@ -322,7 +322,7 @@ main:                                   # @main
 	i32.load	$push48=, should_optimize($pop124)
 	i32.const	$push185=, 0
 	i32.eq  	$push186=, $pop48, $pop185
-	br_if   	$pop186, 0      # 0: down to label19
+	br_if   	0, $pop186      # 0: down to label19
 # BB#19:                                # %if.end65
 	i32.const	$push130=, 0
 	i32.const	$push129=, 0
@@ -345,14 +345,14 @@ main:                                   # @main
 	i32.store	$62=, 0($26), $62
 	block
 	i32.ne  	$push50=, $0, $1
-	br_if   	$pop50, 0       # 0: down to label20
+	br_if   	0, $pop50       # 0: down to label20
 # BB#20:                                # %if.end69
 	block
 	i32.const	$push131=, 0
 	i32.load	$push51=, should_optimize($pop131)
 	i32.const	$push187=, 0
 	i32.eq  	$push188=, $pop51, $pop187
-	br_if   	$pop188, 0      # 0: down to label21
+	br_if   	0, $pop188      # 0: down to label21
 # BB#21:                                # %if.end72
 	i32.const	$push135=, 0
 	i32.const	$push52=, 1
@@ -380,7 +380,7 @@ main:                                   # @main
 	i32.load	$push54=, should_optimize($pop132)
 	i32.const	$push189=, 0
 	i32.eq  	$push190=, $pop54, $pop189
-	br_if   	$pop190, 0      # 0: down to label22
+	br_if   	0, $pop190      # 0: down to label22
 # BB#22:                                # %if.end76
 	i32.const	$push55=, 0
 	i32.const	$push138=, 0
@@ -403,13 +403,13 @@ main:                                   # @main
 	i32.const	$34=, __stack_pointer
 	i32.store	$62=, 0($34), $62
 	block
-	br_if   	$0, 0           # 0: down to label23
+	br_if   	0, $0           # 0: down to label23
 # BB#23:                                # %if.end80
 	block
 	i32.load	$push57=, should_optimize($2)
 	i32.const	$push191=, 0
 	i32.eq  	$push192=, $pop57, $pop191
-	br_if   	$pop192, 0      # 0: down to label24
+	br_if   	0, $pop192      # 0: down to label24
 # BB#24:                                # %if.end83
 	i32.const	$push142=, 0
 	i32.const	$push58=, 1
@@ -437,7 +437,7 @@ main:                                   # @main
 	i32.load	$push60=, should_optimize($pop139)
 	i32.const	$push193=, 0
 	i32.eq  	$push194=, $pop60, $pop193
-	br_if   	$pop194, 0      # 0: down to label25
+	br_if   	0, $pop194      # 0: down to label25
 # BB#25:                                # %if.end87
 	i32.const	$push145=, 0
 	i32.const	$push144=, 0
@@ -460,14 +460,14 @@ main:                                   # @main
 	i32.store	$62=, 0($42), $62
 	block
 	i32.ne  	$push62=, $0, $1
-	br_if   	$pop62, 0       # 0: down to label26
+	br_if   	0, $pop62       # 0: down to label26
 # BB#26:                                # %if.end91
 	block
 	i32.const	$push146=, 0
 	i32.load	$push63=, should_optimize($pop146)
 	i32.const	$push195=, 0
 	i32.eq  	$push196=, $pop63, $pop195
-	br_if   	$pop196, 0      # 0: down to label27
+	br_if   	0, $pop196      # 0: down to label27
 # BB#27:                                # %if.end94
 	i32.const	$push150=, 0
 	i32.const	$push149=, 0
@@ -494,7 +494,7 @@ main:                                   # @main
 	i32.load	$push66=, should_optimize($0)
 	i32.const	$push197=, 0
 	i32.eq  	$push198=, $pop66, $pop197
-	br_if   	$pop198, 0      # 0: down to label28
+	br_if   	0, $pop198      # 0: down to label28
 # BB#28:                                # %if.end98
 	i32.const	$push67=, 0
 	i32.const	$push153=, 0
@@ -519,13 +519,13 @@ main:                                   # @main
 	block
 	i32.const	$push69=, 7
 	i32.ne  	$push70=, $0, $pop69
-	br_if   	$pop70, 0       # 0: down to label29
+	br_if   	0, $pop70       # 0: down to label29
 # BB#29:                                # %if.end102
 	block
 	i32.load	$push71=, should_optimize($1)
 	i32.const	$push199=, 0
 	i32.eq  	$push200=, $pop71, $pop199
-	br_if   	$pop200, 0      # 0: down to label30
+	br_if   	0, $pop200      # 0: down to label30
 # BB#30:                                # %if.end105
 	i32.const	$push72=, 0
 	i32.const	$push156=, 0
@@ -551,7 +551,7 @@ main:                                   # @main
 	i32.load	$push74=, should_optimize($0)
 	i32.const	$push201=, 0
 	i32.eq  	$push202=, $pop74, $pop201
-	br_if   	$pop202, 0      # 0: down to label31
+	br_if   	0, $pop202      # 0: down to label31
 # BB#31:                                # %if.end109
 	i32.store	$push75=, should_optimize($0), $0
 	tee_local	$push158=, $0=, $pop75
@@ -574,14 +574,14 @@ main:                                   # @main
 	block
 	i32.const	$push76=, 2
 	i32.ne  	$push77=, $0, $pop76
-	br_if   	$pop77, 0       # 0: down to label32
+	br_if   	0, $pop77       # 0: down to label32
 # BB#32:                                # %if.end113
 	block
 	i32.const	$push159=, 0
 	i32.load	$push78=, should_optimize($pop159)
 	i32.const	$push203=, 0
 	i32.eq  	$push204=, $pop78, $pop203
-	br_if   	$pop204, 0      # 0: down to label33
+	br_if   	0, $pop204      # 0: down to label33
 # BB#33:                                # %if.end116
 	i32.const	$push160=, 0
 	i32.const	$61=, 16

@@ -35,7 +35,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push4=, 1
 	i32.ge_s	$push3=, $1, $pop4
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push8=, 0
 	return  	$pop8
@@ -74,7 +74,7 @@ main:                                   # @main
 	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $1, $pop3
-	br_if   	$pop4, 0        # 0: down to label3
+	br_if   	0, $pop4        # 0: down to label3
 .LBB2_2:                                # %while.body
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
@@ -83,7 +83,7 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop2
 	i32.const	$push1=, 8
 	i32.add 	$0=, $0, $pop1
-	br_if   	$1, 0           # 0: up to label4
+	br_if   	0, $1           # 0: up to label4
 .LBB2_3:                                # %cleanup.thread
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop                        # label5:
@@ -93,7 +93,7 @@ main:                                   # @main
 	i32.call	$discard=, hash_find_entry@FUNCTION, $6
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, 0        # 0: up to label1
+	br_if   	0, $pop6        # 0: up to label1
 # BB#4:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push0=, 0

@@ -21,18 +21,18 @@ foo:                                    # @foo
 	i32.add 	$2=, $2, $pop7
 	i32.const	$push6=, 9
 	i32.gt_s	$push2=, $2, $pop6
-	br_if   	$pop2, 1        # 1: down to label1
+	br_if   	1, $pop2        # 1: down to label1
 # BB#2:                                 # %for.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push9=, 0
 	i32.lt_s	$push3=, $1, $pop9
-	br_if   	$pop3, 0        # 0: up to label0
+	br_if   	0, $pop3        # 0: up to label0
 .LBB0_3:                                # %for.end
 	end_loop                        # label1:
 	block
 	i32.const	$push4=, -1
 	i32.le_s	$push5=, $1, $pop4
-	br_if   	$pop5, 0        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label2
 # BB#4:                                 # %if.end5
 	return
 .LBB0_5:                                # %if.then4

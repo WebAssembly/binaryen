@@ -11,11 +11,11 @@ aim_callhandler:                        # @aim_callhandler
 	block
 	i32.const	$push11=, 0
 	i32.eq  	$push12=, $1, $pop11
-	br_if   	$pop12, 0       # 0: down to label0
+	br_if   	0, $pop12       # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push1=, 65535
 	i32.eq  	$push2=, $3, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#2:                                 # %if.end3
 	block
 	i32.const	$push8=, 0
@@ -23,7 +23,7 @@ aim_callhandler:                        # @aim_callhandler
 	tee_local	$push7=, $1=, $pop0
 	i32.const	$push6=, 1
 	i32.ge_s	$push3=, $pop7, $pop6
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#3:                                 # %if.end7
 	i32.const	$push10=, 0
 	i32.const	$push9=, 1
@@ -56,7 +56,7 @@ main:                                   # @main
 	tee_local	$push4=, $0=, $pop0
 	i32.const	$push3=, 1
 	i32.lt_s	$push1=, $pop4, $pop3
-	br_if   	$pop1, 0        # 0: down to label2
+	br_if   	0, $pop1        # 0: down to label2
 # BB#1:                                 # %if.then6.i
 	call    	abort@FUNCTION
 	unreachable

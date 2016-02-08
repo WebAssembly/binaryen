@@ -29,7 +29,7 @@ f:                                      # @f
 	i32.load	$push7=, 0($2)
 	i32.const	$push8=, 10
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.load	$push10=, 12($6)
 	i32.const	$push11=, 7
@@ -44,7 +44,7 @@ f:                                      # @f
 	i64.load	$push17=, 0($2)
 	i64.const	$push18=, 10000000000
 	i64.ne  	$push19=, $pop17, $pop18
-	br_if   	$pop19, 0       # 0: down to label1
+	br_if   	0, $pop19       # 0: down to label1
 # BB#2:                                 # %if.end4
 	i32.load	$push20=, 12($6)
 	i32.const	$push21=, 3
@@ -59,7 +59,7 @@ f:                                      # @f
 	i32.load	$push27=, 0($2)
 	i32.const	$push28=, 11
 	i32.ne  	$push29=, $pop27, $pop28
-	br_if   	$pop29, 0       # 0: down to label2
+	br_if   	0, $pop29       # 0: down to label2
 # BB#3:                                 # %if.end7
 	i32.load	$push30=, 12($6)
 	i32.const	$push31=, 15
@@ -80,7 +80,7 @@ f:                                      # @f
 	i64.const	$push41=, -1475739525896764129
 	i64.const	$push40=, 4611846459164112977
 	i32.call	$push42=, __eqtf2@FUNCTION, $1, $pop39, $pop41, $pop40
-	br_if   	$pop42, 0       # 0: down to label3
+	br_if   	0, $pop42       # 0: down to label3
 # BB#4:                                 # %if.end10
 	i32.load	$push43=, 12($6)
 	i32.const	$push96=, 3
@@ -95,7 +95,7 @@ f:                                      # @f
 	i32.load	$push47=, 0($2)
 	i32.const	$push48=, 12
 	i32.ne  	$push49=, $pop47, $pop48
-	br_if   	$pop49, 0       # 0: down to label4
+	br_if   	0, $pop49       # 0: down to label4
 # BB#5:                                 # %if.end13
 	i32.load	$push50=, 12($6)
 	i32.const	$push100=, 3
@@ -110,7 +110,7 @@ f:                                      # @f
 	i32.load	$push54=, 0($2)
 	i32.const	$push55=, 13
 	i32.ne  	$push56=, $pop54, $pop55
-	br_if   	$pop56, 0       # 0: down to label5
+	br_if   	0, $pop56       # 0: down to label5
 # BB#6:                                 # %if.end16
 	i32.load	$push57=, 12($6)
 	i32.const	$push58=, 7
@@ -125,7 +125,7 @@ f:                                      # @f
 	i64.load	$push64=, 0($2)
 	i64.const	$push65=, 20000000000
 	i64.ne  	$push66=, $pop64, $pop65
-	br_if   	$pop66, 0       # 0: down to label6
+	br_if   	0, $pop66       # 0: down to label6
 # BB#7:                                 # %if.end19
 	i32.load	$push67=, 12($6)
 	i32.const	$push68=, 3
@@ -140,7 +140,7 @@ f:                                      # @f
 	i32.load	$push74=, 0($2)
 	i32.const	$push75=, 14
 	i32.ne  	$push76=, $pop74, $pop75
-	br_if   	$pop76, 0       # 0: down to label7
+	br_if   	0, $pop76       # 0: down to label7
 # BB#8:                                 # %if.end22
 	i32.load	$push77=, 12($6)
 	i32.const	$push78=, 7
@@ -155,7 +155,7 @@ f:                                      # @f
 	f64.load	$push84=, 0($2)
 	f64.const	$push85=, 0x1.5c28f5c28f5c3p1
 	f64.ne  	$push86=, $pop84, $pop85
-	br_if   	$pop86, 0       # 0: down to label8
+	br_if   	0, $pop86       # 0: down to label8
 # BB#9:                                 # %if.end25
 	i32.const	$5=, 16
 	i32.add 	$6=, $7, $5

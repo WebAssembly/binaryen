@@ -108,56 +108,56 @@ main:                                   # @main
 	i64.call	$push1=, g@FUNCTION, $pop0
 	i64.const	$push2=, 1297036692682702848
 	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i64.const	$push4=, 4660
 	i64.call	$push5=, g@FUNCTION, $pop4
 	i64.const	$push6=, 3752061439553044480
 	i64.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label1
 # BB#2:                                 # %if.end6
 	block
 	i64.const	$push8=, 1193046
 	i64.call	$push9=, g@FUNCTION, $pop8
 	i64.const	$push10=, 6211609577260056576
 	i64.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: down to label2
+	br_if   	0, $pop11       # 0: down to label2
 # BB#3:                                 # %if.end11
 	block
 	i64.const	$push12=, 305419896
 	i64.call	$push13=, g@FUNCTION, $pop12
 	i64.const	$push14=, 8671175384462524416
 	i64.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, 0       # 0: down to label3
+	br_if   	0, $pop15       # 0: down to label3
 # BB#4:                                 # %if.end16
 	block
 	i64.const	$push16=, 78187493520
 	i64.call	$push17=, g@FUNCTION, $pop16
 	i64.const	$push18=, -8036578753402372096
 	i64.ne  	$push19=, $pop17, $pop18
-	br_if   	$pop19, 0       # 0: down to label4
+	br_if   	0, $pop19       # 0: down to label4
 # BB#5:                                 # %if.end21
 	block
 	i64.const	$push20=, 20015998341138
 	i64.call	$push21=, g@FUNCTION, $pop20
 	i64.const	$push22=, 1337701400965152768
 	i64.ne  	$push23=, $pop21, $pop22
-	br_if   	$pop23, 0       # 0: down to label5
+	br_if   	0, $pop23       # 0: down to label5
 # BB#6:                                 # %if.end26
 	block
 	i64.const	$push24=, 5124095575331380
 	i64.call	$push25=, g@FUNCTION, $pop24
 	i64.const	$push26=, 3752220286069772800
 	i64.ne  	$push27=, $pop25, $pop26
-	br_if   	$pop27, 0       # 0: down to label6
+	br_if   	0, $pop27       # 0: down to label6
 # BB#7:                                 # %if.end31
 	block
 	i64.const	$push28=, 1311768467284833366
 	i64.call	$push29=, g@FUNCTION, $pop28
 	i64.const	$push30=, 6211610197754262546
 	i64.ne  	$push31=, $pop29, $pop30
-	br_if   	$pop31, 0       # 0: down to label7
+	br_if   	0, $pop31       # 0: down to label7
 # BB#8:                                 # %if.end36
 	i32.const	$push32=, 0
 	return  	$pop32

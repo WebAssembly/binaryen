@@ -26,11 +26,11 @@ f1:                                     # @f1
 	block
 	f32.const	$push2=, 0x0p0
 	f32.ne  	$push0=, $0, $pop2
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %entry
 	f32.const	$push3=, 0x0p0
 	f32.ne  	$push1=, $1, $pop3
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#2:                                 # %if.end
 	return  	$2
 .LBB1_3:                                # %if.then
@@ -53,11 +53,11 @@ f2:                                     # @f2
 	block
 	f32.const	$push2=, 0x1p0
 	f32.ne  	$push0=, $0, $pop2
-	br_if   	$pop0, 0        # 0: down to label1
+	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %entry
 	f32.const	$push3=, 0x1p0
 	f32.ne  	$push1=, $1, $pop3
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#2:                                 # %if.end
 	return  	$2
 .LBB2_3:                                # %if.then
@@ -81,25 +81,25 @@ gitter:                                 # @gitter
 	f32.load	$push1=, 0($4)
 	f32.const	$push25=, 0x0p0
 	f32.ne  	$push2=, $pop1, $pop25
-	br_if   	$pop2, 0        # 0: down to label2
+	br_if   	0, $pop2        # 0: down to label2
 # BB#1:                                 # %entry
 	f32.load	$push0=, 4($4)
 	f32.const	$push26=, 0x0p0
 	f32.ne  	$push3=, $pop0, $pop26
-	br_if   	$pop3, 0        # 0: down to label2
+	br_if   	0, $pop3        # 0: down to label2
 # BB#2:                                 # %f1.exit
 	block
 	f32.load	$push5=, 8($4)
 	f32.const	$push27=, 0x1p0
 	f32.ne  	$push8=, $pop5, $pop27
-	br_if   	$pop8, 0        # 0: down to label3
+	br_if   	0, $pop8        # 0: down to label3
 # BB#3:                                 # %f1.exit
 	i32.const	$push6=, 12
 	i32.add 	$push7=, $4, $pop6
 	f32.load	$push4=, 0($pop7)
 	f32.const	$push28=, 0x1p0
 	f32.ne  	$push9=, $pop4, $pop28
-	br_if   	$pop9, 0        # 0: down to label3
+	br_if   	0, $pop9        # 0: down to label3
 # BB#4:                                 # %f2.exit
 	f32.load	$6=, 0($1)
 	i32.const	$push10=, 0
@@ -109,7 +109,7 @@ gitter:                                 # @gitter
 	f32.gt  	$push12=, $6, $pop11
 	f32.ne  	$push13=, $6, $6
 	i32.or  	$push14=, $pop12, $pop13
-	br_if   	$pop14, 0       # 0: down to label4
+	br_if   	0, $pop14       # 0: down to label4
 # BB#5:                                 # %if.then
 	f64.promote/f32	$push15=, $6
 	tee_local	$push30=, $8=, $pop15
@@ -122,7 +122,7 @@ gitter:                                 # @gitter
 	f64.ne  	$push20=, $7, $7
 	i32.or  	$push22=, $pop21, $pop20
 	i32.or  	$push23=, $pop19, $pop22
-	br_if   	$pop23, 0       # 0: down to label4
+	br_if   	0, $pop23       # 0: down to label4
 # BB#6:                                 # %if.then15
 	i32.const	$push24=, 1065353216
 	i32.store	$discard=, 0($2), $pop24
@@ -153,26 +153,26 @@ main:                                   # @main
 	f32.load	$push1=, limit($pop10):p2align=4
 	f32.const	$push9=, 0x0p0
 	f32.ne  	$push2=, $pop1, $pop9
-	br_if   	$pop2, 0        # 0: down to label5
+	br_if   	0, $pop2        # 0: down to label5
 # BB#1:                                 # %entry
 	i32.const	$push12=, 0
 	f32.load	$push0=, limit+4($pop12)
 	f32.const	$push11=, 0x0p0
 	f32.ne  	$push3=, $pop0, $pop11
-	br_if   	$pop3, 0        # 0: down to label5
+	br_if   	0, $pop3        # 0: down to label5
 # BB#2:                                 # %f1.exit.i
 	block
 	i32.const	$push14=, 0
 	f32.load	$push5=, limit+8($pop14):p2align=3
 	f32.const	$push13=, 0x1p0
 	f32.ne  	$push6=, $pop5, $pop13
-	br_if   	$pop6, 0        # 0: down to label6
+	br_if   	0, $pop6        # 0: down to label6
 # BB#3:                                 # %f1.exit.i
 	i32.const	$push16=, 0
 	f32.load	$push4=, limit+12($pop16)
 	f32.const	$push15=, 0x1p0
 	f32.ne  	$push7=, $pop4, $pop15
-	br_if   	$pop7, 0        # 0: down to label6
+	br_if   	0, $pop7        # 0: down to label6
 # BB#4:                                 # %f2.exit.i
 	i32.const	$push8=, 0
 	call    	exit@FUNCTION, $pop8

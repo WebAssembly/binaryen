@@ -17,7 +17,7 @@ main:                                   # @main
 	i64.mul 	$push3=, $pop13, $0
 	i64.const	$push12=, 0
 	i64.ne  	$push4=, $pop3, $pop12
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push17=, 0
 	i64.load	$push5=, a+8($pop17)
@@ -29,7 +29,7 @@ main:                                   # @main
 	i64.or  	$push10=, $pop8, $pop9
 	i64.const	$push15=, 0
 	i64.ne  	$push11=, $pop10, $pop15
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.end
 	call    	abort@FUNCTION
 	unreachable

@@ -16,13 +16,13 @@ main:                                   # @main
 	loop                            # label0:
 	i32.const	$push17=, 0
 	i32.eq  	$push18=, $1, $pop17
-	br_if   	$pop18, 1       # 1: down to label1
+	br_if   	1, $pop18       # 1: down to label1
 # BB#2:                                 # %while.cond2.preheader.i
                                         #   in Loop: Header=BB0_1 Depth=1
 	block
 	i32.const	$push11=, .L.str+3
 	i32.ge_u	$push0=, $2, $pop11
-	br_if   	$pop0, 0        # 0: down to label2
+	br_if   	0, $pop0        # 0: down to label2
 .LBB0_3:                                # %land.rhs4.i
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
@@ -32,12 +32,12 @@ main:                                   # @main
 	i32.add 	$2=, $2, $pop13
 	i32.const	$push12=, 58
 	i32.eq  	$push1=, $0, $pop12
-	br_if   	$pop1, 1        # 1: down to label4
+	br_if   	1, $pop1        # 1: down to label4
 # BB#4:                                 # %land.rhs4.i
                                         #   in Loop: Header=BB0_3 Depth=2
 	i32.const	$push14=, .L.str+3
 	i32.lt_u	$push2=, $2, $pop14
-	br_if   	$pop2, 0        # 0: up to label3
+	br_if   	0, $pop2        # 0: up to label3
 .LBB0_5:                                # %while.end.thread.i
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label4:
@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop16
 	i32.const	$push15=, .L.str+3
 	i32.lt_u	$push3=, $2, $pop15
-	br_if   	$pop3, 0        # 0: up to label0
+	br_if   	0, $pop3        # 0: up to label0
 .LBB0_6:                                # %begfield.exit
 	end_loop                        # label1:
 	i32.const	$push4=, 1
@@ -57,7 +57,7 @@ main:                                   # @main
 	i32.select	$push7=, $2, $0, $pop6
 	i32.const	$push8=, .L.str+2
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label5
+	br_if   	0, $pop9        # 0: down to label5
 # BB#7:                                 # %if.end
 	i32.const	$push10=, 0
 	call    	exit@FUNCTION, $pop10

@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.load	$push3=, u($pop11)
 	i32.const	$push10=, 0
 	i32.lt_s	$push4=, $pop3, $pop10
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push13=, 0
 	call    	exit@FUNCTION, $pop13
@@ -74,7 +74,7 @@ main:                                   # @main
 	i32.load	$push7=, 0($pop6)
 	i32.const	$push14=, 0
 	i32.lt_s	$push8=, $pop7, $pop14
-	br_if   	$pop8, 0        # 0: down to label1
+	br_if   	0, $pop8        # 0: down to label1
 # BB#3:                                 # %if.then1
 	call    	abort@FUNCTION
 	unreachable

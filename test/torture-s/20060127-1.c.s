@@ -9,7 +9,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	block
 	i32.wrap/i64	$push0=, $0
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
@@ -30,7 +30,7 @@ main:                                   # @main
 	block
 	i32.const	$push1=, 0
 	i32.load	$push0=, a($pop1):p2align=3
-	br_if   	$pop0, 0        # 0: down to label1
+	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %f.exit
 	i32.const	$push2=, 0
 	return  	$pop2

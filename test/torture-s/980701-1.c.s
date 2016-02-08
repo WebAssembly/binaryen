@@ -39,7 +39,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, a
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable

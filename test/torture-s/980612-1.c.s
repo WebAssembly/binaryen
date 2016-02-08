@@ -44,7 +44,7 @@ main:                                   # @main
 	i32.and 	$push2=, $0, $pop1
 	i32.const	$push3=, 2
 	i32.gt_u	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable

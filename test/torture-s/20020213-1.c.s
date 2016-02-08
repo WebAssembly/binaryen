@@ -21,7 +21,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $1, $pop9
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

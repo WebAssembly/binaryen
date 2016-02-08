@@ -8,7 +8,7 @@ init:                                   # @init
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	br_if   	$0, 0           # 0: down to label0
+	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push0=, 0
 	i32.store	$discard=, 0($1), $pop0
@@ -45,7 +45,7 @@ main:                                   # @main
 	tee_local	$push15=, $6=, $pop0
 	i32.const	$push14=, 0
 	i32.lt_s	$push2=, $pop15, $pop14
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %while.body.lr.ph
 	i32.const	$push17=, 0
 	i32.load	$0=, pd($pop17)
@@ -57,7 +57,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	block
-	br_if   	$4, 0           # 0: down to label4
+	br_if   	0, $4           # 0: down to label4
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.load	$2=, 0($1)
@@ -68,7 +68,7 @@ main:                                   # @main
 	f64.le  	$push4=, $pop19, $pop18
 	f64.ne  	$push5=, $7, $7
 	i32.or  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label5
+	br_if   	0, $pop6        # 0: down to label5
 # BB#4:                                 # %if.then3
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push21=, 0
@@ -86,12 +86,12 @@ main:                                   # @main
 	end_block                       # label4:
 	i32.add 	$4=, $4, $3
 	i32.lt_s	$push10=, $4, $6
-	br_if   	$pop10, 0       # 0: up to label2
+	br_if   	0, $pop10       # 0: up to label2
 # BB#7:                                 # %while.end
 	end_loop                        # label3:
 	i32.const	$push11=, 1234567890
 	i32.ne  	$push12=, $5, $pop11
-	br_if   	$pop12, 0       # 0: down to label1
+	br_if   	0, $pop12       # 0: down to label1
 # BB#8:                                 # %if.end15
 	i32.const	$push13=, 0
 	i32.const	$10=, 6144

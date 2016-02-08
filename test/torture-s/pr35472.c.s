@@ -52,7 +52,7 @@ test:                                   # @test
 	i32.load	$push4=, 0($6):p2align=3
 	i32.const	$push5=, -1
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$2=, 128
 	i32.add 	$6=, $6, $2
@@ -104,7 +104,7 @@ main:                                   # @main
 	i32.load	$push3=, 0($6):p2align=3
 	i32.const	$push4=, -1
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %test.exit
 	i32.const	$push12=, 0
 	i32.const	$2=, 128

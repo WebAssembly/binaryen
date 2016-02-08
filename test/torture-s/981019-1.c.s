@@ -11,11 +11,11 @@ ff:                                     # @ff
 	block
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $0, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $2, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#2:                                 # %if.then2
 	call    	f1@FUNCTION
 	unreachable
@@ -31,12 +31,12 @@ ff:                                     # @ff
 	tee_local	$push5=, $3=, $pop0
 	i32.const	$push4=, 0
 	i32.eq  	$0=, $pop5, $pop4
-	br_if   	$3, 2           # 2: down to label1
+	br_if   	2, $3           # 2: down to label1
 # BB#5:                                 # %while.body
                                         #   in Loop: Header=BB0_4 Depth=1
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $2, $pop10
-	br_if   	$pop11, 0       # 0: up to label2
+	br_if   	0, $pop11       # 0: up to label2
 # BB#6:                                 # %land.lhs.true
 	end_loop                        # label3:
 	i32.const	$push2=, 0
@@ -48,7 +48,7 @@ ff:                                     # @ff
 	i32.const	$push1=, 0
 	i32.store	$discard=, f3.x($pop1), $0
 	block
-	br_if   	$2, 0           # 0: down to label4
+	br_if   	0, $2           # 0: down to label4
 # BB#8:                                 # %if.end16
 	return
 .LBB0_9:                                # %if.then15
@@ -121,7 +121,7 @@ main:                                   # @main
 	i32.eq  	$0=, $pop4, $pop3
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $1, $pop6
-	br_if   	$pop7, 0        # 0: up to label5
+	br_if   	0, $pop7        # 0: up to label5
 # BB#2:                                 # %ff.exit
 	end_loop                        # label6:
 	i32.const	$push1=, 0

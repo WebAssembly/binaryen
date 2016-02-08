@@ -4657,12 +4657,11 @@
                         )
                       )
                     )
-                    (br_if
+                    (br_if $label$165
                       (i32.ne
                         (get_local $var$62)
                         (i32.const 0)
                       )
-                      $label$165
                     )
                   )
                 )
@@ -6657,7 +6656,7 @@
                       (get_local $var$62)
                       (i32.const 7)
                     )
-                    (br_if
+                    (br_if $label$236
                       (i32.lt_u
                         (i32.shr_u
                           (i32.add
@@ -6671,7 +6670,6 @@
                           (i32.const 0)
                         )
                       )
-                      $label$236
                     )
                   )
                 )
@@ -7355,12 +7353,11 @@
                         (i32.const 1)
                       )
                     )
-                    (br_if
+                    (br_if $label$256
                       (i32.ne
                         (get_local $var$4)
                         (i32.const 32)
                       )
-                      $label$256
                     )
                   )
                 )

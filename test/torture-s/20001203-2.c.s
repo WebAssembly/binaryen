@@ -12,7 +12,7 @@ create_array_type:                      # @create_array_type
 	block
 	i32.const	$push46=, 0
 	i32.eq  	$push47=, $0, $pop46
-	br_if   	$pop47, 0       # 0: down to label0
+	br_if   	0, $pop47       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.load	$push4=, 0($1)
 	i32.const	$push5=, 3
@@ -25,7 +25,7 @@ create_array_type:                      # @create_array_type
 	block
 	i32.const	$push48=, 0
 	i32.eq  	$push49=, $1, $pop48
-	br_if   	$pop49, 0       # 0: down to label1
+	br_if   	0, $pop49       # 0: down to label1
 # BB#2:                                 # %cond.true
 	block
 	i32.const	$push8=, 20
@@ -40,7 +40,7 @@ create_array_type:                      # @create_array_type
 	i32.sub 	$push11=, $pop40, $pop37
 	i32.const	$push12=, 15
 	i32.le_s	$push13=, $pop11, $pop12
-	br_if   	$pop13, 0       # 0: down to label2
+	br_if   	0, $pop13       # 0: down to label2
 # BB#3:                                 # %if.end9
 	i32.const	$push15=, 12
 	i32.add 	$push16=, $1, $pop15
@@ -51,7 +51,7 @@ create_array_type:                      # @create_array_type
 	i32.store	$push14=, 0($2), $pop2
 	tee_local	$push41=, $5=, $pop14
 	i32.ne  	$push17=, $3, $pop41
-	br_if   	$pop17, 0       # 0: down to label3
+	br_if   	0, $pop17       # 0: down to label3
 # BB#4:                                 # %if.then16
 	i32.const	$push18=, 28
 	i32.add 	$push19=, $1, $pop18
@@ -79,7 +79,7 @@ create_array_type:                      # @create_array_type
 	i32.sub 	$push31=, $pop43, $2
 	i32.sub 	$push32=, $4, $2
 	i32.le_s	$push33=, $pop31, $pop32
-	br_if   	$pop33, 0       # 0: down to label4
+	br_if   	0, $pop33       # 0: down to label4
 # BB#6:                                 # %if.then36
 	i32.store	$discard=, 0($7), $4
 	copy_local	$5=, $4

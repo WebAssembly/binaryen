@@ -20,7 +20,7 @@ main:                                   # @main
 	i32.ne  	$push10=, $pop8, $pop9
 	block
 	block
-	br_if   	$pop10, 0
+	br_if   	0, $pop10
 .LBB0_1:                                  # %.preheader
                                         # =>This Inner Loop Header: Depth=1
 	loop
@@ -32,7 +32,7 @@ main:                                   # @main
 	i32.const	$push16=, 3
 	i32.ne  	$push17=, $pop15, $pop16
 	block
-	br_if   	$pop17, 0
+	br_if   	0, $pop17
 # BB#2:                                 #   in Loop: Header=.LBB0_1 Depth=1
 	i32.const	$push18=, 111
 	i32.rem_s	$push19=, $0, $pop18
@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.rem_s	$push21=, $0, $pop20
 	i32.const	$push22=, 0
 	i32.eq  	$push23=, $pop21, $pop22
-	br_if   	$pop23, 2
+	br_if   	2, $pop23
 	br      	0
 	end_loop
 	end_block

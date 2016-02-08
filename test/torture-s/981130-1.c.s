@@ -9,7 +9,7 @@ check:                                  # @check
 # BB#0:                                 # %entry
 	block
 	i32.ne  	$push0=, $0, $1
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
@@ -37,7 +37,7 @@ main:                                   # @main
 	i32.wrap/i64	$push2=, $pop1
 	i32.const	$push3=, 1
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %if.then.i
 	i32.const	$push7=, 0
 	call    	exit@FUNCTION, $pop7

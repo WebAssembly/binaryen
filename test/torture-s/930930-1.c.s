@@ -12,7 +12,7 @@ f:                                      # @f
 	copy_local	$5=, $0
 	block
 	i32.lt_u	$push1=, $3, $4
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 .LBB0_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -20,11 +20,11 @@ f:                                      # @f
 	i32.load	$push0=, 0($3)
 	tee_local	$push8=, $6=, $pop0
 	i32.ge_u	$push2=, $pop8, $2
-	br_if   	$pop2, 0        # 0: down to label3
+	br_if   	0, $pop2        # 0: down to label3
 # BB#2:                                 # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.lt_u	$push3=, $6, $1
-	br_if   	$pop3, 0        # 0: down to label3
+	br_if   	0, $pop3        # 0: down to label3
 # BB#3:                                 # %if.then3
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push4=, -4
@@ -36,11 +36,11 @@ f:                                      # @f
 	i32.const	$push5=, -4
 	i32.add 	$3=, $3, $pop5
 	i32.ge_u	$push6=, $3, $4
-	br_if   	$pop6, 0        # 0: up to label1
+	br_if   	0, $pop6        # 0: up to label1
 # BB#5:                                 # %out
 	end_loop                        # label2:
 	i32.eq  	$push7=, $5, $0
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#6:                                 # %if.then7
 	call    	abort@FUNCTION
 	unreachable

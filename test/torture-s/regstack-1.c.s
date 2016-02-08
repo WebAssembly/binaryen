@@ -254,42 +254,42 @@ main:                                   # @main
 	i64.const	$push67=, 0
 	i64.const	$push50=, 4612354521497075712
 	i32.call	$push51=, __netf2@FUNCTION, $15, $14, $pop67, $pop50
-	br_if   	$pop51, 0       # 0: down to label0
+	br_if   	0, $pop51       # 0: down to label0
 # BB#1:                                 # %entry
 	i64.const	$push123=, 0
 	i64.const	$push52=, 4613097791357452288
 	i32.call	$push53=, __netf2@FUNCTION, $13, $12, $pop123, $pop52
-	br_if   	$pop53, 0       # 0: down to label0
+	br_if   	0, $pop53       # 0: down to label0
 # BB#2:                                 # %entry
 	i64.const	$push124=, 0
 	i64.const	$push54=, 4613150567915585536
 	i32.call	$push55=, __netf2@FUNCTION, $5, $4, $pop124, $pop54
-	br_if   	$pop55, 0       # 0: down to label0
+	br_if   	0, $pop55       # 0: down to label0
 # BB#3:                                 # %entry
 	i64.const	$push125=, 0
 	i64.const	$push56=, 4613517804799262720
 	i32.call	$push57=, __netf2@FUNCTION, $11, $16, $pop125, $pop56
-	br_if   	$pop57, 0       # 0: down to label0
+	br_if   	0, $pop57       # 0: down to label0
 # BB#4:                                 # %entry
 	i64.const	$push126=, 0
 	i64.const	$push58=, 4613503511148101632
 	i32.call	$push59=, __netf2@FUNCTION, $17, $2, $pop126, $pop58
-	br_if   	$pop59, 0       # 0: down to label0
+	br_if   	0, $pop59       # 0: down to label0
 # BB#5:                                 # %entry
 	i64.const	$push127=, 0
 	i64.const	$push60=, 4613110985496985600
 	i32.call	$push61=, __netf2@FUNCTION, $8, $9, $pop127, $pop60
-	br_if   	$pop61, 0       # 0: down to label0
+	br_if   	0, $pop61       # 0: down to label0
 # BB#6:                                 # %entry
 	i64.const	$push128=, 0
 	i64.const	$push62=, 4612961451915608064
 	i32.call	$push63=, __netf2@FUNCTION, $1, $0, $pop128, $pop62
-	br_if   	$pop63, 0       # 0: down to label0
+	br_if   	0, $pop63       # 0: down to label0
 # BB#7:                                 # %entry
 	i64.const	$push129=, 0
 	i64.const	$push64=, 4613040616752807936
 	i32.call	$push65=, __eqtf2@FUNCTION, $7, $6, $pop129, $pop64
-	br_if   	$pop65, 0       # 0: down to label0
+	br_if   	0, $pop65       # 0: down to label0
 # BB#8:                                 # %if.end
 	i32.const	$push66=, 0
 	call    	exit@FUNCTION, $pop66

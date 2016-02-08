@@ -38,7 +38,7 @@ main:                                   # @main
 	i32.const	$5=, __stack_pointer
 	i32.store	$8=, 0($5), $8
 	block
-	br_if   	$0, 0           # 0: down to label0
+	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end
 	call    	exit@FUNCTION, $1
 	unreachable

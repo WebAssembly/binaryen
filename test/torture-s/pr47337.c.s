@@ -20,7 +20,7 @@ main:                                   # @main
 	i32.store	$discard=, a+1024($1), $pop32
 	i32.const	$push31=, 4
 	i32.add 	$1=, $1, $pop31
-	br_if   	$1, 0           # 0: up to label0
+	br_if   	0, $1           # 0: up to label0
 # BB#2:                                 # %for.cond7.preheader
 	end_loop                        # label1:
 	i32.const	$push3=, 0
@@ -29,7 +29,7 @@ main:                                   # @main
 	block
 	i32.const	$push48=, 0
 	i32.eq  	$push49=, $0, $pop48
-	br_if   	$pop49, 0       # 0: down to label2
+	br_if   	0, $pop49       # 0: down to label2
 # BB#3:                                 # %fnx.exit
 	i32.load	$push4=, b($1)
 	i32.const	$push5=, 1

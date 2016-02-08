@@ -34,7 +34,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	block
 	i32.ge_s	$push0=, $0, $1
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %doit
 	call    	do_abort@FUNCTION
 	unreachable

@@ -22,7 +22,7 @@ main:                                   # @main
 	i32.add 	$0=, $0, $pop7
 	i32.const	$push6=, 255
 	i32.and 	$push2=, $0, $pop6
-	br_if   	$pop2, 0        # 0: up to label0
+	br_if   	0, $pop2        # 0: up to label0
 # BB#2:                                 # %do.end
 	end_loop                        # label1:
 	block
@@ -30,7 +30,7 @@ main:                                   # @main
 	i32.load	$push3=, i($pop11)
 	i32.const	$push4=, 256
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$push12=, 0
 	call    	exit@FUNCTION, $pop12

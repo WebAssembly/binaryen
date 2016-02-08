@@ -23,12 +23,12 @@ sf:                                     # @sf
 	tee_local	$push7=, $2=, $pop0
 	i32.const	$push6=, 57
 	i32.ne  	$push2=, $pop7, $pop6
-	br_if   	$pop2, 2        # 2: down to label1
+	br_if   	2, $pop2        # 2: down to label1
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	copy_local	$0=, $3
 	i32.ne  	$push4=, $1, $3
-	br_if   	$pop4, 0        # 0: up to label2
+	br_if   	0, $pop4        # 0: up to label2
 # BB#3:                                 # %if.then
 	end_loop                        # label3:
 	i32.const	$push10=, 1
@@ -94,13 +94,13 @@ main:                                   # @main
 	block
 	i32.or  	$push12=, $7, $pop11
 	i32.ne  	$push13=, $pop10, $pop12
-	br_if   	$pop13, 0       # 0: down to label4
+	br_if   	0, $pop13       # 0: down to label4
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push14=, .L.str
 	i32.const	$8=, 8
 	i32.add 	$8=, $9, $8
 	i32.call	$push15=, strcmp@FUNCTION, $8, $pop14
-	br_if   	$pop15, 0       # 0: down to label4
+	br_if   	0, $pop15       # 0: down to label4
 # BB#2:                                 # %if.end
 	i32.const	$push16=, 0
 	i32.const	$2=, 16

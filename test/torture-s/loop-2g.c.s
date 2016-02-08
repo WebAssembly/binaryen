@@ -11,7 +11,7 @@ f:                                      # @f
 	block
 	i32.const	$push0=, 39
 	i32.gt_u	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.add 	$push2=, $1, $0
 	i32.const	$push5=, 254
@@ -46,7 +46,7 @@ main:                                   # @main
 	tee_local	$push13=, $0=, $pop0
 	i32.const	$push7=, -1
 	i32.eq  	$push8=, $pop13, $pop7
-	br_if   	$pop8, 0        # 0: down to label1
+	br_if   	0, $pop8        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 32766
 	i32.add 	$push10=, $0, $pop9

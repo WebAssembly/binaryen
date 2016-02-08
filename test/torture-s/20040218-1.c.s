@@ -76,14 +76,14 @@ main:                                   # @main
 	i32.call	$push2=, xb@FUNCTION, $2
 	i32.const	$push3=, 16255
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$3=, 8
 	i32.add 	$3=, $5, $3
 	i32.call	$push5=, xw@FUNCTION, $3
 	i32.const	$push6=, 81535
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false4
 	i32.const	$4=, 4
 	i32.add 	$4=, $5, $4
@@ -92,7 +92,7 @@ main:                                   # @main
 	i32.and 	$push10=, $pop8, $pop9
 	i32.const	$push11=, 16255
 	i32.ne  	$push12=, $pop10, $pop11
-	br_if   	$pop12, 0       # 0: down to label0
+	br_if   	0, $pop12       # 0: down to label0
 # BB#3:                                 # %if.end
 	i32.const	$push13=, 0
 	call    	exit@FUNCTION, $pop13

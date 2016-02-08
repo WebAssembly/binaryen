@@ -40,17 +40,17 @@ f0:                                     # @f0
 	i32.add 	$push3=, $pop8, $pop2
 	i32.store	$discard=, f0.washere($pop10), $pop3
 	block
-	br_if   	$1, 0           # 0: down to label0
+	br_if   	0, $1           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load16_u	$push4=, 0($0):p2align=2
 	i32.const	$push11=, 32
 	i32.ne  	$push5=, $pop4, $pop11
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false1
 	i32.load16_u	$push6=, 4($0):p2align=2
 	i32.const	$push12=, 32
 	i32.ne  	$push7=, $pop6, $pop12
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#3:                                 # %if.end
 	return
 .LBB1_4:                                # %if.then
@@ -75,12 +75,12 @@ test:                                   # @test
 	i32.load16_u	$push2=, 0($pop8):p2align=2
 	i32.const	$push7=, 8
 	i32.ne  	$push3=, $pop2, $pop7
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %lor.lhs.false
 	i32.load16_u	$push4=, 4($0):p2align=2
 	i32.const	$push9=, 8
 	i32.ne  	$push5=, $pop4, $pop9
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#2:                                 # %if.end
 	i32.const	$push6=, 0
 	call    	exit@FUNCTION, $pop6

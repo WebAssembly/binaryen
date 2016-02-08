@@ -13,7 +13,7 @@ foo:                                    # @foo
 	i32.load	$push0=, n($pop8)
 	i32.const	$push7=, 1
 	i32.lt_s	$push1=, $pop0, $pop7
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$push9=, 0
 	i32.load	$0=, a($pop9)
@@ -30,7 +30,7 @@ foo:                                    # @foo
 	i32.const	$push11=, 0
 	i32.load	$push2=, n($pop11)
 	i32.lt_s	$push3=, $1, $pop2
-	br_if   	$pop3, 0        # 0: up to label1
+	br_if   	0, $pop3        # 0: up to label1
 .LBB0_3:                                # %for.cond1.preheader
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -80,7 +80,7 @@ main:                                   # @main
 	i32.const	$push18=, 4
 	i32.add 	$2=, $2, $pop18
 	i32.lt_s	$push6=, $3, $0
-	br_if   	$pop6, 0        # 0: up to label3
+	br_if   	0, $pop6        # 0: up to label3
 # BB#2:                                 # %foo.exit
 	end_loop                        # label4:
 	i32.load	$2=, 0($4)
@@ -88,7 +88,7 @@ main:                                   # @main
 	i32.const	$push7=, 131068
 	i32.call	$discard=, memset@FUNCTION, $1, $pop8, $pop7
 	block
-	br_if   	$2, 0           # 0: down to label5
+	br_if   	0, $2           # 0: down to label5
 # BB#3:                                 # %if.end
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9

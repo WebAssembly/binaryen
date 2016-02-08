@@ -17,7 +17,7 @@ f:                                      # @f
 	i32.and 	$push2=, $1, $pop1
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $pop2, $pop12
-	br_if   	$pop13, 0       # 0: down to label0
+	br_if   	0, $pop13       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push10=, -1
 	i32.xor 	$push3=, $0, $pop10

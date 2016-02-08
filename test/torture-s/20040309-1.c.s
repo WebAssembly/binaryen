@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i32.shr_s	$push2=, $pop1, $pop8
 	i32.const	$push3=, -1
 	i32.gt_s	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %cond.true
 	i32.const	$push5=, 32768
 	i32.add 	$push6=, $0, $pop5

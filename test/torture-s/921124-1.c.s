@@ -24,19 +24,19 @@ g:                                      # @g
 	block
 	f64.const	$push0=, 0x1p0
 	f64.ne  	$push1=, $2, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %entry
 	f64.const	$push2=, 0x1p1
 	f64.ne  	$push3=, $3, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %entry
 	i32.const	$push4=, 3
 	i32.ne  	$push5=, $4, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#3:                                 # %entry
 	i32.const	$push6=, 4
 	i32.ne  	$push7=, $5, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#4:                                 # %if.end
 	return  	$4
 .LBB1_5:                                # %if.then

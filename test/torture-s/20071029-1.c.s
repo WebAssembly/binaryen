@@ -18,43 +18,43 @@ test:                                   # @test
 	i32.store	$2=, test.i($pop1), $pop0
 	block
 	i32.ne  	$push4=, $1, $3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i32.load	$push5=, 4($0)
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#2:                                 # %lor.lhs.false
 	i32.load	$push6=, 8($0)
-	br_if   	$pop6, 0        # 0: down to label1
+	br_if   	0, $pop6        # 0: down to label1
 # BB#3:                                 # %lor.lhs.false6
 	i32.load	$push7=, 12($0)
-	br_if   	$pop7, 0        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label1
 # BB#4:                                 # %lor.lhs.false10
 	i32.load	$push8=, 16($0)
-	br_if   	$pop8, 0        # 0: down to label1
+	br_if   	0, $pop8        # 0: down to label1
 # BB#5:                                 # %lor.lhs.false13
 	i32.load	$push9=, 20($0)
-	br_if   	$pop9, 0        # 0: down to label1
+	br_if   	0, $pop9        # 0: down to label1
 # BB#6:                                 # %lor.lhs.false16
 	i32.load	$push10=, 24($0)
-	br_if   	$pop10, 0       # 0: down to label1
+	br_if   	0, $pop10       # 0: down to label1
 # BB#7:                                 # %lor.lhs.false20
 	i32.load	$push11=, 28($0)
-	br_if   	$pop11, 0       # 0: down to label1
+	br_if   	0, $pop11       # 0: down to label1
 # BB#8:                                 # %lor.lhs.false23
 	i32.load	$push12=, 32($0)
-	br_if   	$pop12, 0       # 0: down to label1
+	br_if   	0, $pop12       # 0: down to label1
 # BB#9:                                 # %lor.lhs.false26
 	i32.load	$push13=, 36($0)
-	br_if   	$pop13, 0       # 0: down to label1
+	br_if   	0, $pop13       # 0: down to label1
 # BB#10:                                # %lor.lhs.false29
 	i32.load	$push14=, 40($0)
-	br_if   	$pop14, 0       # 0: down to label1
+	br_if   	0, $pop14       # 0: down to label1
 # BB#11:                                # %if.end34
 	block
 	i32.const	$push15=, 20
 	i32.eq  	$push16=, $2, $pop15
-	br_if   	$pop16, 0       # 0: down to label2
+	br_if   	0, $pop16       # 0: down to label2
 # BB#12:                                # %if.end37
 	return
 .LBB0_13:                               # %if.then36

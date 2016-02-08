@@ -24,13 +24,13 @@ main:                                   # @main
 	block
 	i32.const	$push5=, 0
 	i32.load	$push1=, y($pop5)
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push6=, 0
 	i32.load	$push0=, z($pop6)
 	i32.const	$push2=, 3
 	i32.ne  	$push3=, $pop0, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false1
 	i32.const	$push4=, 0
 	return  	$pop4

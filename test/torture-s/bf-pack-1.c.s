@@ -16,14 +16,14 @@ f:                                      # @f
 	i64.and 	$push2=, $pop9, $pop1
 	i64.const	$push3=, 4660
 	i64.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i64.const	$push5=, 281474976645120
 	i64.and 	$push6=, $1, $pop5
 	i64.const	$push7=, 95075992076288
 	i64.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label1
+	br_if   	0, $pop8        # 0: down to label1
 # BB#2:                                 # %if.end6
 	return  	$0
 .LBB0_3:                                # %if.then5

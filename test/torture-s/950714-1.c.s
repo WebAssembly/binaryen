@@ -32,52 +32,52 @@ main:                                   # @main
 	block
 	loop                            # label1:
 	i32.eq  	$push0=, $0, $9
-	br_if   	$pop0, 1        # 1: down to label2
+	br_if   	1, $pop0        # 1: down to label2
 # BB#2:                                 # %for.cond1.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.eq  	$push1=, $1, $9
-	br_if   	$pop1, 1        # 1: down to label2
+	br_if   	1, $pop1        # 1: down to label2
 # BB#3:                                 # %for.cond1.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.eq  	$push2=, $2, $9
-	br_if   	$pop2, 1        # 1: down to label2
+	br_if   	1, $pop2        # 1: down to label2
 # BB#4:                                 # %for.cond1.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.eq  	$push3=, $3, $9
-	br_if   	$pop3, 1        # 1: down to label2
+	br_if   	1, $pop3        # 1: down to label2
 # BB#5:                                 # %for.cond1.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.eq  	$push4=, $4, $9
-	br_if   	$pop4, 1        # 1: down to label2
+	br_if   	1, $pop4        # 1: down to label2
 # BB#6:                                 # %for.cond1.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.eq  	$push5=, $5, $9
-	br_if   	$pop5, 1        # 1: down to label2
+	br_if   	1, $pop5        # 1: down to label2
 # BB#7:                                 # %for.cond1.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.eq  	$push6=, $6, $9
-	br_if   	$pop6, 1        # 1: down to label2
+	br_if   	1, $pop6        # 1: down to label2
 # BB#8:                                 # %for.cond1.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.eq  	$push7=, $7, $9
-	br_if   	$pop7, 1        # 1: down to label2
+	br_if   	1, $pop7        # 1: down to label2
 # BB#9:                                 # %for.cond1.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.eq  	$push8=, $8, $9
-	br_if   	$pop8, 1        # 1: down to label2
+	br_if   	1, $pop8        # 1: down to label2
 # BB#10:                                # %for.cond1.8
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push23=, 1
 	i32.add 	$9=, $9, $pop23
 	i32.const	$push22=, 10
 	i32.lt_s	$push9=, $9, $pop22
-	br_if   	$pop9, 0        # 0: up to label1
+	br_if   	0, $pop9        # 0: up to label1
 	br      	2               # 2: down to label0
 .LBB0_11:                               # %label
 	end_loop                        # label2:
 	i32.const	$push10=, 1
 	i32.ne  	$push11=, $9, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#12:                                # %if.end9
 	i32.const	$push12=, 0
 	call    	exit@FUNCTION, $pop12

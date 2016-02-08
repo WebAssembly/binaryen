@@ -36,19 +36,19 @@ f2:                                     # @f2
 	f32.load	$push1=, 1($0):p2align=0
 	f32.const	$push4=, 0x1p0
 	f32.ne  	$push5=, $pop1, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push2=, 5
 	i32.add 	$push3=, $0, $pop2
 	f32.load	$push0=, 0($pop3):p2align=0
 	f32.const	$push6=, 0x0p0
 	f32.ne  	$push7=, $pop0, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false
 	i32.load8_u	$push8=, 0($0)
 	i32.const	$push9=, 42
 	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#3:                                 # %if.end
 	return
 .LBB2_4:                                # %if.then

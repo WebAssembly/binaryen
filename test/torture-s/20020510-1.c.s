@@ -16,15 +16,15 @@ testc:                                  # @testc
 	i32.shr_s	$push2=, $pop1, $pop5
 	i32.const	$push3=, 1
 	i32.lt_s	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label2
 # BB#1:                                 # %if.then
-	br_if   	$1, 1           # 1: down to label1
+	br_if   	1, $1           # 1: down to label1
 # BB#2:                                 # %if.then5
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.else
 	end_block                       # label2:
-	br_if   	$1, 1           # 1: down to label0
+	br_if   	1, $1           # 1: down to label0
 .LBB0_4:                                # %if.end9
 	end_block                       # label1:
 	return
@@ -52,15 +52,15 @@ tests:                                  # @tests
 	i32.shr_s	$push2=, $pop1, $pop5
 	i32.const	$push3=, 1
 	i32.lt_s	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label5
+	br_if   	0, $pop4        # 0: down to label5
 # BB#1:                                 # %if.then
-	br_if   	$1, 1           # 1: down to label4
+	br_if   	1, $1           # 1: down to label4
 # BB#2:                                 # %if.then5
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_3:                                # %if.else
 	end_block                       # label5:
-	br_if   	$1, 1           # 1: down to label3
+	br_if   	1, $1           # 1: down to label3
 .LBB1_4:                                # %if.end9
 	end_block                       # label4:
 	return
@@ -84,15 +84,15 @@ testi:                                  # @testi
 	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label8
+	br_if   	0, $pop1        # 0: down to label8
 # BB#1:                                 # %if.then
-	br_if   	$1, 1           # 1: down to label7
+	br_if   	1, $1           # 1: down to label7
 # BB#2:                                 # %if.then2
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_3:                                # %if.else
 	end_block                       # label8:
-	br_if   	$1, 1           # 1: down to label6
+	br_if   	1, $1           # 1: down to label6
 .LBB2_4:                                # %if.end6
 	end_block                       # label7:
 	return
@@ -116,15 +116,15 @@ testl:                                  # @testl
 	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label11
+	br_if   	0, $pop1        # 0: down to label11
 # BB#1:                                 # %if.then
-	br_if   	$1, 1           # 1: down to label10
+	br_if   	1, $1           # 1: down to label10
 # BB#2:                                 # %if.then2
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_3:                                # %if.else
 	end_block                       # label11:
-	br_if   	$1, 1           # 1: down to label9
+	br_if   	1, $1           # 1: down to label9
 .LBB3_4:                                # %if.end6
 	end_block                       # label10:
 	return

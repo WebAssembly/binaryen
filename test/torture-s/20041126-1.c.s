@@ -10,27 +10,27 @@ check:                                  # @check
 # BB#0:                                 # %entry
 	block
 	i32.load	$push0=, 0($0)
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %for.inc
 	i32.load	$push1=, 4($0)
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#2:                                 # %for.inc.1
 	i32.load	$push2=, 8($0)
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#3:                                 # %for.inc.2
 	i32.load	$push3=, 12($0)
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#4:                                 # %for.inc.3
 	i32.const	$3=, 5
 	i32.load	$push4=, 16($0)
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 .LBB0_5:                                # %for.cond1
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label2:
 	i32.const	$push5=, 9
 	i32.gt_s	$push6=, $3, $pop5
-	br_if   	$pop6, 2        # 2: down to label1
+	br_if   	2, $pop6        # 2: down to label1
 # BB#6:                                 # %for.body3
                                         #   in Loop: Header=BB0_5 Depth=1
 	i32.const	$push7=, 2
@@ -41,7 +41,7 @@ check:                                  # @check
 	i32.add 	$2=, $3, $pop10
 	copy_local	$3=, $1
 	i32.eq  	$push11=, $1, $2
-	br_if   	$pop11, 0       # 0: up to label2
+	br_if   	0, $pop11       # 0: up to label2
 # BB#7:                                 # %if.then6
 	end_loop                        # label3:
 	call    	abort@FUNCTION
@@ -90,7 +90,7 @@ main:                                   # @main
 	loop                            # label5:
 	i32.const	$push14=, 9
 	i32.gt_s	$push9=, $2, $pop14
-	br_if   	$pop9, 2        # 2: down to label4
+	br_if   	2, $pop9        # 2: down to label4
 # BB#2:                                 # %for.body3.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push16=, 2
@@ -101,7 +101,7 @@ main:                                   # @main
 	i32.add 	$1=, $2, $pop15
 	copy_local	$2=, $0
 	i32.eq  	$push13=, $0, $1
-	br_if   	$pop13, 0       # 0: up to label5
+	br_if   	0, $pop13       # 0: up to label5
 # BB#3:                                 # %if.then6.i
 	end_loop                        # label6:
 	call    	abort@FUNCTION

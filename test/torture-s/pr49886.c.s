@@ -55,24 +55,24 @@ mark_cell:                              # @mark_cell
 	block
 	i32.const	$push49=, 0
 	i32.eq  	$push50=, $0, $pop49
-	br_if   	$pop50, 0       # 0: down to label0
+	br_if   	0, $pop50       # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push2=, 0
 	i32.load	$push1=, cond($pop2)
 	i32.const	$push51=, 0
 	i32.eq  	$push52=, $pop1, $pop51
-	br_if   	$pop52, 0       # 0: down to label0
+	br_if   	0, $pop52       # 0: down to label0
 # BB#2:                                 # %land.lhs.true
 	i32.load	$push3=, 8($0)
 	i32.const	$push4=, 4
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#3:                                 # %land.lhs.true2
 	i32.load	$push0=, 0($0)
 	tee_local	$push41=, $0=, $pop0
 	i32.const	$push53=, 0
 	i32.eq  	$push54=, $pop41, $pop53
-	br_if   	$pop54, 0       # 0: down to label0
+	br_if   	0, $pop54       # 0: down to label0
 # BB#4:                                 # %land.lhs.true4
 	block
 	i32.const	$push43=, 2
@@ -83,7 +83,7 @@ mark_cell:                              # @mark_cell
 	i32.and 	$push9=, $pop7, $pop8
 	i32.const	$push55=, 0
 	i32.eq  	$push56=, $pop9, $pop55
-	br_if   	$pop56, 0       # 0: down to label1
+	br_if   	0, $pop56       # 0: down to label1
 # BB#5:                                 # %land.lhs.true17
 	block
 	i32.load8_u	$push10=, 0($1):p2align=1
@@ -91,7 +91,7 @@ mark_cell:                              # @mark_cell
 	i32.and 	$push11=, $pop10, $pop44
 	i32.const	$push57=, 0
 	i32.eq  	$push58=, $pop11, $pop57
-	br_if   	$pop58, 0       # 0: down to label2
+	br_if   	0, $pop58       # 0: down to label2
 # BB#6:                                 # %land.lhs.true33
 	block
 	i32.const	$push12=, 2
@@ -101,7 +101,7 @@ mark_cell:                              # @mark_cell
 	i32.and 	$push15=, $pop14, $pop45
 	i32.const	$push59=, 0
 	i32.eq  	$push60=, $pop15, $pop59
-	br_if   	$pop60, 0       # 0: down to label3
+	br_if   	0, $pop60       # 0: down to label3
 # BB#7:                                 # %land.lhs.true49
 	block
 	i32.const	$push46=, 1
@@ -111,7 +111,7 @@ mark_cell:                              # @mark_cell
 	i32.shr_u	$push19=, $pop17, $pop18
 	i32.const	$push61=, 0
 	i32.eq  	$push62=, $pop19, $pop61
-	br_if   	$pop62, 0       # 0: down to label4
+	br_if   	0, $pop62       # 0: down to label4
 # BB#8:                                 # %land.lhs.true65
 	block
 	i32.const	$push20=, 1
@@ -122,7 +122,7 @@ mark_cell:                              # @mark_cell
 	i32.and 	$push24=, $pop22, $pop23
 	i32.const	$push63=, 0
 	i32.eq  	$push64=, $pop24, $pop63
-	br_if   	$pop64, 0       # 0: down to label5
+	br_if   	0, $pop64       # 0: down to label5
 # BB#9:                                 # %land.lhs.true81
 	block
 	i32.load8_u	$push25=, 0($1)
@@ -130,7 +130,7 @@ mark_cell:                              # @mark_cell
 	i32.and 	$push27=, $pop25, $pop26
 	i32.const	$push65=, 0
 	i32.eq  	$push66=, $pop27, $pop65
-	br_if   	$pop66, 0       # 0: down to label6
+	br_if   	0, $pop66       # 0: down to label6
 # BB#10:                                # %land.lhs.true97
 	block
 	i32.const	$push28=, 1
@@ -141,7 +141,7 @@ mark_cell:                              # @mark_cell
 	i32.and 	$push32=, $pop30, $pop31
 	i32.const	$push67=, 0
 	i32.eq  	$push68=, $pop32, $pop67
-	br_if   	$pop68, 0       # 0: down to label7
+	br_if   	0, $pop68       # 0: down to label7
 # BB#11:                                # %land.lhs.true113
 	block
 	i32.load8_u	$push33=, 0($1)
@@ -149,14 +149,14 @@ mark_cell:                              # @mark_cell
 	i32.and 	$push35=, $pop33, $pop34
 	i32.const	$push69=, 0
 	i32.eq  	$push70=, $pop35, $pop69
-	br_if   	$pop70, 0       # 0: down to label8
+	br_if   	0, $pop70       # 0: down to label8
 # BB#12:                                # %land.lhs.true129
 	i32.const	$push36=, 1
 	i32.add 	$push37=, $0, $pop36
 	i32.load8_u	$push38=, 0($pop37)
 	i32.const	$push39=, 4
 	i32.and 	$push40=, $pop38, $pop39
-	br_if   	$pop40, 8       # 8: down to label0
+	br_if   	8, $pop40       # 8: down to label0
 # BB#13:                                # %if.then134
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable

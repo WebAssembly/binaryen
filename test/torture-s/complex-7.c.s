@@ -16,10 +16,10 @@ check_float:                            # @check_float
 	f32.load	$7=, f1+4($pop15)
 	block
 	f32.ne  	$push1=, $8, $9
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %entry
 	f32.ne  	$push2=, $6, $7
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false
 	f32.load	$8=, 0($2)
 	f32.load	$6=, 4($2)
@@ -28,10 +28,10 @@ check_float:                            # @check_float
 	i32.const	$push16=, 0
 	f32.load	$7=, f2+4($pop16)
 	f32.ne  	$push4=, $8, $9
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false
 	f32.ne  	$push5=, $6, $7
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#4:                                 # %lor.lhs.false4
 	f32.load	$8=, 0($3)
 	f32.load	$9=, 4($3)
@@ -40,10 +40,10 @@ check_float:                            # @check_float
 	i32.const	$push17=, 0
 	f32.load	$7=, f3+4($pop17)
 	f32.ne  	$push7=, $8, $6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#5:                                 # %lor.lhs.false4
 	f32.ne  	$push8=, $9, $7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#6:                                 # %lor.lhs.false8
 	f32.load	$8=, 0($4)
 	f32.load	$6=, 4($4)
@@ -52,10 +52,10 @@ check_float:                            # @check_float
 	i32.const	$push18=, 0
 	f32.load	$7=, f4+4($pop18)
 	f32.ne  	$push10=, $8, $9
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#7:                                 # %lor.lhs.false8
 	f32.ne  	$push11=, $6, $7
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#8:                                 # %lor.lhs.false12
 	f32.load	$8=, 0($5)
 	f32.load	$9=, 4($5)
@@ -64,10 +64,10 @@ check_float:                            # @check_float
 	i32.const	$push19=, 0
 	f32.load	$7=, f5+4($pop19)
 	f32.ne  	$push13=, $8, $6
-	br_if   	$pop13, 0       # 0: down to label0
+	br_if   	0, $pop13       # 0: down to label0
 # BB#9:                                 # %lor.lhs.false12
 	f32.ne  	$push14=, $9, $7
-	br_if   	$pop14, 0       # 0: down to label0
+	br_if   	0, $pop14       # 0: down to label0
 # BB#10:                                # %if.end
 	return
 .LBB0_11:                               # %if.then
@@ -94,10 +94,10 @@ check_double:                           # @check_double
 	f64.load	$7=, d1+8($pop15)
 	block
 	f64.ne  	$push1=, $8, $9
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %entry
 	f64.ne  	$push2=, $6, $7
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#2:                                 # %lor.lhs.false
 	f64.load	$8=, 0($2)
 	f64.load	$6=, 8($2)
@@ -106,10 +106,10 @@ check_double:                           # @check_double
 	i32.const	$push16=, 0
 	f64.load	$7=, d2+8($pop16)
 	f64.ne  	$push4=, $8, $9
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#3:                                 # %lor.lhs.false
 	f64.ne  	$push5=, $6, $7
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#4:                                 # %lor.lhs.false4
 	f64.load	$8=, 0($3)
 	f64.load	$9=, 8($3)
@@ -118,10 +118,10 @@ check_double:                           # @check_double
 	i32.const	$push17=, 0
 	f64.load	$7=, d3+8($pop17)
 	f64.ne  	$push7=, $8, $6
-	br_if   	$pop7, 0        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label1
 # BB#5:                                 # %lor.lhs.false4
 	f64.ne  	$push8=, $9, $7
-	br_if   	$pop8, 0        # 0: down to label1
+	br_if   	0, $pop8        # 0: down to label1
 # BB#6:                                 # %lor.lhs.false8
 	f64.load	$8=, 0($4)
 	f64.load	$6=, 8($4)
@@ -130,10 +130,10 @@ check_double:                           # @check_double
 	i32.const	$push18=, 0
 	f64.load	$7=, d4+8($pop18)
 	f64.ne  	$push10=, $8, $9
-	br_if   	$pop10, 0       # 0: down to label1
+	br_if   	0, $pop10       # 0: down to label1
 # BB#7:                                 # %lor.lhs.false8
 	f64.ne  	$push11=, $6, $7
-	br_if   	$pop11, 0       # 0: down to label1
+	br_if   	0, $pop11       # 0: down to label1
 # BB#8:                                 # %lor.lhs.false12
 	f64.load	$8=, 0($5)
 	f64.load	$9=, 8($5)
@@ -142,10 +142,10 @@ check_double:                           # @check_double
 	i32.const	$push19=, 0
 	f64.load	$7=, d5+8($pop19)
 	f64.ne  	$push13=, $8, $6
-	br_if   	$pop13, 0       # 0: down to label1
+	br_if   	0, $pop13       # 0: down to label1
 # BB#9:                                 # %lor.lhs.false12
 	f64.ne  	$push14=, $9, $7
-	br_if   	$pop14, 0       # 0: down to label1
+	br_if   	0, $pop14       # 0: down to label1
 # BB#10:                                # %if.end
 	return
 .LBB1_11:                               # %if.then
@@ -182,10 +182,10 @@ check_long_double:                      # @check_long_double
 	i64.load	$8=, ld1+16($pop35):p2align=4
 	block
 	i32.call	$push5=, __netf2@FUNCTION, $11, $10, $13, $12
-	br_if   	$pop5, 0        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label2
 # BB#1:                                 # %entry
 	i32.call	$push6=, __netf2@FUNCTION, $6, $7, $8, $9
-	br_if   	$pop6, 0        # 0: down to label2
+	br_if   	0, $pop6        # 0: down to label2
 # BB#2:                                 # %lor.lhs.false
 	i32.const	$push7=, 8
 	i32.add 	$push8=, $2, $pop7
@@ -204,10 +204,10 @@ check_long_double:                      # @check_long_double
 	i32.const	$push38=, 0
 	i64.load	$8=, ld2+16($pop38):p2align=4
 	i32.call	$push12=, __netf2@FUNCTION, $11, $10, $13, $12
-	br_if   	$pop12, 0       # 0: down to label2
+	br_if   	0, $pop12       # 0: down to label2
 # BB#3:                                 # %lor.lhs.false
 	i32.call	$push13=, __netf2@FUNCTION, $6, $7, $8, $9
-	br_if   	$pop13, 0       # 0: down to label2
+	br_if   	0, $pop13       # 0: down to label2
 # BB#4:                                 # %lor.lhs.false4
 	i32.const	$push14=, 8
 	i32.add 	$push15=, $3, $pop14
@@ -226,10 +226,10 @@ check_long_double:                      # @check_long_double
 	i32.const	$push41=, 0
 	i64.load	$8=, ld3+16($pop41):p2align=4
 	i32.call	$push19=, __netf2@FUNCTION, $12, $10, $6, $7
-	br_if   	$pop19, 0       # 0: down to label2
+	br_if   	0, $pop19       # 0: down to label2
 # BB#5:                                 # %lor.lhs.false4
 	i32.call	$push20=, __netf2@FUNCTION, $13, $11, $8, $9
-	br_if   	$pop20, 0       # 0: down to label2
+	br_if   	0, $pop20       # 0: down to label2
 # BB#6:                                 # %lor.lhs.false8
 	i32.const	$push21=, 8
 	i32.add 	$push22=, $4, $pop21
@@ -248,10 +248,10 @@ check_long_double:                      # @check_long_double
 	i32.const	$push44=, 0
 	i64.load	$8=, ld4+16($pop44):p2align=4
 	i32.call	$push26=, __netf2@FUNCTION, $11, $10, $13, $12
-	br_if   	$pop26, 0       # 0: down to label2
+	br_if   	0, $pop26       # 0: down to label2
 # BB#7:                                 # %lor.lhs.false8
 	i32.call	$push27=, __netf2@FUNCTION, $6, $7, $8, $9
-	br_if   	$pop27, 0       # 0: down to label2
+	br_if   	0, $pop27       # 0: down to label2
 # BB#8:                                 # %lor.lhs.false12
 	i32.const	$push28=, 8
 	i32.add 	$push29=, $5, $pop28
@@ -270,10 +270,10 @@ check_long_double:                      # @check_long_double
 	i32.const	$push47=, 0
 	i64.load	$8=, ld5+16($pop47):p2align=4
 	i32.call	$push33=, __netf2@FUNCTION, $12, $10, $6, $7
-	br_if   	$pop33, 0       # 0: down to label2
+	br_if   	0, $pop33       # 0: down to label2
 # BB#9:                                 # %lor.lhs.false12
 	i32.call	$push34=, __eqtf2@FUNCTION, $13, $11, $8, $9
-	br_if   	$pop34, 0       # 0: down to label2
+	br_if   	0, $pop34       # 0: down to label2
 # BB#10:                                # %if.end
 	return
 .LBB2_11:                               # %if.then

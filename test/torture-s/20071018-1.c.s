@@ -52,7 +52,7 @@ main:                                   # @main
 	i32.call	$push1=, foo@FUNCTION, $pop0
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $pop1, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	return  	$pop2

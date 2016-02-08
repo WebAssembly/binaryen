@@ -11,7 +11,7 @@ bar:                                    # @bar
 	block
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $1, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB0_2:                                # %if.then
@@ -32,7 +32,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push4=, 1
 	i32.lt_s	$push5=, $1, $pop4
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$push1=, 0
 	i32.const	$push12=, 0
@@ -52,7 +52,7 @@ foo:                                    # @foo
 	i32.call	$discard=, bar@FUNCTION, $1, $0
 	i32.const	$push13=, -1
 	i32.add 	$1=, $1, $pop13
-	br_if   	$1, 0           # 0: up to label2
+	br_if   	0, $1           # 0: up to label2
 .LBB1_3:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:

@@ -13,12 +13,12 @@ f:                                      # @f
 	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %land.lhs.true
 	i32.load	$push0=, 0($0)
 	i32.const	$push3=, -1
 	i32.ne  	$push1=, $pop0, $pop3
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#2:                                 # %land.rhs
 	i32.load	$push2=, 4($0)
 	i32.const	$push4=, -1

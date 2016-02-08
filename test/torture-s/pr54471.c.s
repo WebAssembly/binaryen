@@ -19,7 +19,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $3, $pop14
-	br_if   	$pop15, 0       # 0: down to label0
+	br_if   	0, $pop15       # 0: down to label0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -39,7 +39,7 @@ foo:                                    # @foo
 	i64.load	$1=, 16($11)
 	i32.const	$push3=, -1
 	i32.add 	$3=, $3, $pop3
-	br_if   	$3, 0           # 0: up to label1
+	br_if   	0, $3           # 0: up to label1
 # BB#2:                                 # %for.end
 	end_loop                        # label2:
 	i64.const	$push11=, 14348907
@@ -47,7 +47,7 @@ foo:                                    # @foo
 	i64.or  	$push5=, $pop4, $5
 	i64.const	$push10=, 0
 	i64.ne  	$push6=, $pop5, $pop10
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#3:                                 # %if.end
 	i64.const	$push13=, 14348907
 	i64.store	$discard=, 0($0), $pop13

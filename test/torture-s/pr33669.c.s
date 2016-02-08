@@ -24,12 +24,12 @@ foo:                                    # @foo
 	i32.rem_u	$push7=, $2, $5
 	i32.sub 	$push8=, $2, $pop7
 	i32.lt_u	$push9=, $5, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	i64.sub 	$3=, $1, $4
 	i32.load	$push10=, 4($0)
 	i32.le_u	$push11=, $pop10, $5
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.then13
 	i32.const	$push12=, 4
 	i32.add 	$push13=, $0, $pop12

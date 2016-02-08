@@ -14,7 +14,7 @@ check:                                  # @check
 	i32.load	$push0=, 12($0)
 	i32.const	$push1=, 99
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push3=, .L.str
 	i32.call	$1=, strcmp@FUNCTION, $0, $pop3
@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.const	$push1=, cell
 	i32.const	$push5=, .L.str
 	i32.call	$push6=, strcmp@FUNCTION, $pop1, $pop5
-	br_if   	$pop6, 0        # 0: down to label1
+	br_if   	0, $pop6        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push14=, 0
 	call    	exit@FUNCTION, $pop14

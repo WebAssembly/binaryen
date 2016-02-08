@@ -11,12 +11,12 @@ merge_overlapping_regs:                 # @merge_overlapping_regs
 	i32.load	$push0=, 0($0)
 	i32.const	$push4=, -1
 	i32.ne  	$push1=, $pop0, $pop4
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push2=, 4($0)
 	i32.const	$push5=, -1
 	i32.ne  	$push3=, $pop2, $pop5
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then
@@ -50,7 +50,7 @@ regrename_optimize:                     # @regrename_optimize
 	block
 	i32.const	$push30=, 0
 	i32.eq  	$push31=, $2, $pop30
-	br_if   	$pop31, 0       # 0: down to label1
+	br_if   	0, $pop31       # 0: down to label1
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
@@ -71,7 +71,7 @@ regrename_optimize:                     # @regrename_optimize
 	i32.or  	$3=, $3, $pop9
 	i32.const	$push10=, 1
 	i32.add 	$1=, $1, $pop10
-	br_if   	$2, 0           # 0: up to label2
+	br_if   	0, $2           # 0: up to label2
 # BB#2:                                 # %for.end
 	end_loop                        # label3:
 	i32.store	$2=, 8($11), $4
@@ -83,7 +83,7 @@ regrename_optimize:                     # @regrename_optimize
 	i32.store	$discard=, 0($pop27), $3
 	i32.const	$push13=, 0
 	i32.lt_s	$push14=, $1, $pop13
-	br_if   	$pop14, 0       # 0: down to label1
+	br_if   	0, $pop14       # 0: down to label1
 # BB#3:                                 # %if.end
 	i32.load	$push15=, 4($0)
 	i32.const	$push16=, 3

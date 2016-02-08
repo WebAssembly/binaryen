@@ -29,7 +29,7 @@ check_header:                           # @check_header
 	i32.load	$push0=, 4($0)
 	tee_local	$push21=, $1=, $pop0
 	i32.ge_u	$push6=, $pop22, $pop21
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %cond.true
 	i32.const	$push7=, 1
 	i32.add 	$push1=, $2, $pop7
@@ -38,7 +38,7 @@ check_header:                           # @check_header
 	end_block                       # label0:
 	block
 	i32.ge_u	$push8=, $2, $1
-	br_if   	$pop8, 0        # 0: down to label1
+	br_if   	0, $pop8        # 0: down to label1
 # BB#3:                                 # %cond.true.1
 	i32.const	$push9=, 1
 	i32.add 	$push2=, $2, $pop9
@@ -47,7 +47,7 @@ check_header:                           # @check_header
 	end_block                       # label1:
 	block
 	i32.ge_u	$push10=, $2, $1
-	br_if   	$pop10, 0       # 0: down to label2
+	br_if   	0, $pop10       # 0: down to label2
 # BB#5:                                 # %cond.true.2
 	i32.const	$push11=, 1
 	i32.add 	$push3=, $2, $pop11
@@ -56,7 +56,7 @@ check_header:                           # @check_header
 	end_block                       # label2:
 	block
 	i32.ge_u	$push12=, $2, $1
-	br_if   	$pop12, 0       # 0: down to label3
+	br_if   	0, $pop12       # 0: down to label3
 # BB#7:                                 # %cond.true.3
 	i32.const	$push13=, 1
 	i32.add 	$push4=, $2, $pop13
@@ -65,7 +65,7 @@ check_header:                           # @check_header
 	end_block                       # label3:
 	block
 	i32.ge_u	$push14=, $2, $1
-	br_if   	$pop14, 0       # 0: down to label4
+	br_if   	0, $pop14       # 0: down to label4
 # BB#9:                                 # %cond.true.4
 	i32.const	$push15=, 1
 	i32.add 	$push5=, $2, $pop15
@@ -74,7 +74,7 @@ check_header:                           # @check_header
 	end_block                       # label4:
 	block
 	i32.ge_u	$push16=, $2, $1
-	br_if   	$pop16, 0       # 0: down to label5
+	br_if   	0, $pop16       # 0: down to label5
 # BB#11:                                # %cond.true.5
 	i32.const	$push17=, 1
 	i32.add 	$push18=, $2, $pop17

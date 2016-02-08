@@ -13,7 +13,7 @@ put_field:                              # @put_field
 	i32.or  	$push2=, $pop0, $pop1
 	i32.const	$push5=, -8
 	i32.ne  	$push3=, $pop2, $pop5
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

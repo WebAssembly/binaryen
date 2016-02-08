@@ -15,21 +15,21 @@ bar:                                    # @bar
 	i32.load	$push2=, 0($pop13)
 	i32.const	$push3=, 1
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push5=, 4($1)
 	i32.const	$push6=, 2
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false3
 	i32.const	$push9=, 4
 	i32.ne  	$push10=, $0, $pop9
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#3:                                 # %lor.lhs.false3
 	i32.load	$push8=, 8($1)
 	i32.const	$push11=, 3
 	i32.ne  	$push12=, $pop8, $pop11
-	br_if   	$pop12, 0       # 0: down to label0
+	br_if   	0, $pop12       # 0: down to label0
 # BB#4:                                 # %if.end
 	return
 .LBB0_5:                                # %if.then
@@ -54,21 +54,21 @@ foo:                                    # @foo
 	i32.load	$push2=, 0($pop13)
 	i32.const	$push3=, 1
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %lor.lhs.false.i
 	i32.load	$push5=, 4($0)
 	i32.const	$push6=, 2
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label1
 # BB#2:                                 # %lor.lhs.false3.i
 	i32.const	$push9=, 4
 	i32.ne  	$push10=, $1, $pop9
-	br_if   	$pop10, 0       # 0: down to label1
+	br_if   	0, $pop10       # 0: down to label1
 # BB#3:                                 # %lor.lhs.false3.i
 	i32.load	$push8=, 8($0)
 	i32.const	$push11=, 3
 	i32.ne  	$push12=, $pop8, $pop11
-	br_if   	$pop12, 0       # 0: down to label1
+	br_if   	0, $pop12       # 0: down to label1
 # BB#4:                                 # %bar.exit
 	return
 .LBB1_5:                                # %if.then.i

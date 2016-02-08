@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.load	$push0=, e($pop15)
 	i32.const	$push14=, 1
 	i32.gt_s	$push1=, $pop0, $pop14
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.body.i
 	i32.const	$push17=, 0
 	i32.load	$1=, c($pop17)
@@ -30,7 +30,7 @@ main:                                   # @main
 	i32.const	$push18=, 1
 	i32.store	$push4=, m($pop19), $pop18
 	i32.ne  	$push6=, $pop5, $pop4
-	br_if   	$pop6, 0        # 0: down to label1
+	br_if   	0, $pop6        # 0: down to label1
 # BB#3:                                 # %bar.exit
 	i32.const	$push7=, 0
 	i32.const	$push23=, 0
@@ -47,7 +47,7 @@ main:                                   # @main
 	i32.or  	$push13=, $pop12, $pop21
 	i32.store	$discard=, m($1), $pop13
 	block
-	br_if   	$0, 0           # 0: down to label2
+	br_if   	0, $0           # 0: down to label2
 # BB#4:                                 # %if.end11
 	return  	$1
 .LBB0_5:                                # %if.then10

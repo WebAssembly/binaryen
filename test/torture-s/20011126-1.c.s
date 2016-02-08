@@ -12,7 +12,7 @@ main:                                   # @main
 	i32.load	$push0=, a($pop3)
 	i32.const	$push1=, -1
 	i32.le_s	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end5
 	i32.const	$push4=, 0
 	return  	$pop4

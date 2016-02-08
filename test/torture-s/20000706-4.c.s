@@ -10,14 +10,14 @@ bar:                                    # @bar
 	block
 	i32.const	$push3=, 2
 	i32.ne  	$push4=, $0, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push1=, 0
 	i32.load	$push2=, c($pop1)
 	i32.load	$push0=, 0($pop2)
 	i32.const	$push5=, 1
 	i32.ne  	$push6=, $pop0, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then
@@ -50,11 +50,11 @@ foo:                                    # @foo
 	i32.store	$push0=, 12($6), $0
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop0, $pop2
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$push4=, 2
 	i32.ne  	$push5=, $1, $pop4
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#2:                                 # %bar.exit
 	i32.const	$4=, 16
 	i32.add 	$6=, $6, $4

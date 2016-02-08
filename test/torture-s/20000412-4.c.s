@@ -17,7 +17,7 @@ f:                                      # @f
 	tee_local	$push12=, $5=, $pop11
 	i32.const	$push2=, 3
 	i32.ge_s	$push3=, $pop12, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i32.add 	$push4=, $2, $5
 	i32.const	$push14=, -1
@@ -32,14 +32,14 @@ f:                                      # @f
 	i32.add 	$2=, $2, $3
 	i32.const	$push17=, -1
 	i32.le_s	$push9=, $2, $pop17
-	br_if   	$pop9, 1        # 1: down to label2
+	br_if   	1, $pop9        # 1: down to label2
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push16=, 1
 	i32.add 	$5=, $5, $pop16
 	i32.const	$push15=, 2
 	i32.le_s	$push10=, $5, $pop15
-	br_if   	$pop10, 0       # 0: up to label1
+	br_if   	0, $pop10       # 0: up to label1
 	br      	2               # 2: down to label0
 .LBB0_4:                                # %if.then
 	end_loop                        # label2:

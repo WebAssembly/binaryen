@@ -147,7 +147,7 @@ foo:                                    # @foo
 	i32.store	$discard=, vol($pop79), $pop45
 	i32.const	$push77=, -1
 	i32.add 	$0=, $0, $pop77
-	br_if   	$0, 0           # 0: up to label2
+	br_if   	0, $0           # 0: up to label2
 # BB#3:                                 # %for.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label3:
@@ -155,7 +155,7 @@ foo:                                    # @foo
 	i32.load	$push46=, stop($pop88)
 	i32.const	$push89=, 0
 	i32.eq  	$push90=, $pop46, $pop89
-	br_if   	$pop90, 0       # 0: up to label0
+	br_if   	0, $pop90       # 0: up to label0
 # BB#4:                                 # %do.end
 	end_loop                        # label1:
 	return

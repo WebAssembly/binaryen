@@ -28,7 +28,7 @@ wwrite:                                 # @wwrite
 	block
 	i64.const	$push0=, 28
 	i64.gt_u	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %entry
 	i64.const	$push2=, 1
 	i64.shl 	$push3=, $pop2, $0
@@ -36,12 +36,12 @@ wwrite:                                 # @wwrite
 	i64.and 	$push5=, $pop3, $pop4
 	i64.const	$push6=, 0
 	i64.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 1        # 1: down to label0
+	br_if   	1, $pop7        # 1: down to label0
 .LBB1_2:                                # %entry
 	end_block                       # label1:
 	i64.const	$push8=, 47
 	i64.eq  	$push9=, $0, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#3:                                 # %sw.default
 	i32.const	$1=, 123
 .LBB1_4:                                # %return

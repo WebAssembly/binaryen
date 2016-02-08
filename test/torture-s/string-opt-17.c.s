@@ -30,7 +30,7 @@ check2:                                 # @check2
 	i32.load	$push0=, check2.r($pop5)
 	i32.const	$push1=, 5
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push6=, 0
 	i32.const	$push3=, 6
@@ -56,7 +56,7 @@ test2:                                  # @test2
 	i32.load	$push0=, check2.r($pop5)
 	i32.const	$push1=, 5
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %check2.exit
 	i32.const	$push6=, 0
 	i32.const	$push3=, 6
@@ -102,14 +102,14 @@ main:                                   # @main
 	i32.add 	$3=, $4, $3
 	block
 	i32.call	$push6=, memcmp@FUNCTION, $3, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label2
+	br_if   	0, $pop6        # 0: down to label2
 # BB#1:                                 # %if.end
 	block
 	i32.const	$push15=, 0
 	i32.load	$push7=, check2.r($pop15)
 	i32.const	$push8=, 5
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label3
+	br_if   	0, $pop9        # 0: down to label3
 # BB#2:                                 # %test2.exit
 	i32.const	$push16=, 0
 	i32.const	$push10=, 6
@@ -120,7 +120,7 @@ main:                                   # @main
 	i32.const	$push12=, 1
 	i32.const	$push18=, 0
 	i32.eq  	$push19=, $pop12, $pop18
-	br_if   	$pop19, 0       # 0: down to label4
+	br_if   	0, $pop19       # 0: down to label4
 # BB#3:                                 # %if.end8
 	i32.const	$push17=, 0
 	call    	exit@FUNCTION, $pop17

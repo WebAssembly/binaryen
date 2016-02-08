@@ -27,7 +27,7 @@ main:                                   # @main
 	block
 	i32.const	$push45=, 5
 	i32.ne  	$push4=, $1, $pop45
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push6=, .L.str.1
 	i32.const	$push7=, 6
@@ -42,7 +42,7 @@ main:                                   # @main
 	block
 	i32.const	$push50=, 6
 	i32.ne  	$push9=, $1, $pop50
-	br_if   	$pop9, 0        # 0: down to label1
+	br_if   	0, $pop9        # 0: down to label1
 # BB#2:                                 # %if.end6
 	i32.const	$push11=, 97
 	i32.const	$push56=, 0
@@ -55,14 +55,14 @@ main:                                   # @main
 	block
 	i32.const	$push14=, 1
 	i32.ne  	$push15=, $1, $pop14
-	br_if   	$pop15, 0       # 0: down to label2
+	br_if   	0, $pop15       # 0: down to label2
 # BB#3:                                 # %if.end11
 	i32.const	$push57=, 0
 	i32.load	$push16=, stdout($pop57)
 	i32.const	$push17=, .L.str.3
 	i32.call	$1=, fprintf@FUNCTION, $pop16, $pop17
 	block
-	br_if   	$1, 0           # 0: down to label3
+	br_if   	0, $1           # 0: down to label3
 # BB#4:                                 # %if.end16
 	i32.const	$push19=, .L.str
 	i32.const	$push20=, 5
@@ -91,7 +91,7 @@ main:                                   # @main
 	block
 	i32.const	$push58=, 5
 	i32.ne  	$push21=, $1, $pop58
-	br_if   	$pop21, 0       # 0: down to label4
+	br_if   	0, $pop21       # 0: down to label4
 # BB#5:                                 # %if.end21
 	i32.const	$push23=, .L.str.1
 	i32.const	$push24=, 6
@@ -120,7 +120,7 @@ main:                                   # @main
 	block
 	i32.const	$push64=, 6
 	i32.ne  	$push25=, $1, $pop64
-	br_if   	$pop25, 0       # 0: down to label5
+	br_if   	0, $pop25       # 0: down to label5
 # BB#6:                                 # %if.end26
 	i32.const	$push27=, 97
 	i32.const	$push72=, 0
@@ -147,7 +147,7 @@ main:                                   # @main
 	block
 	i32.const	$push29=, 1
 	i32.ne  	$push30=, $1, $pop29
-	br_if   	$pop30, 0       # 0: down to label6
+	br_if   	0, $pop30       # 0: down to label6
 # BB#7:                                 # %if.end31
 	i32.const	$push74=, 0
 	i32.load	$1=, stdout($pop74)
@@ -168,7 +168,7 @@ main:                                   # @main
 	i32.const	$18=, __stack_pointer
 	i32.store	$42=, 0($18), $42
 	block
-	br_if   	$1, 0           # 0: down to label7
+	br_if   	0, $1           # 0: down to label7
 # BB#8:                                 # %if.end36
 	i32.const	$push33=, 120
 	i32.const	$push77=, 0
@@ -195,7 +195,7 @@ main:                                   # @main
 	block
 	i32.const	$push35=, 1
 	i32.ne  	$push36=, $1, $pop35
-	br_if   	$pop36, 0       # 0: down to label8
+	br_if   	0, $pop36       # 0: down to label8
 # BB#9:                                 # %if.end41
 	i32.const	$push80=, 0
 	i32.load	$1=, stdout($pop80)
@@ -235,7 +235,7 @@ main:                                   # @main
 	block
 	i32.const	$push39=, 7
 	i32.ne  	$push40=, $1, $pop39
-	br_if   	$pop40, 0       # 0: down to label9
+	br_if   	0, $pop40       # 0: down to label9
 # BB#10:                                # %if.end46
 	i32.const	$push41=, 0
 	i32.load	$0=, stdout($pop41)
@@ -274,7 +274,7 @@ main:                                   # @main
 	block
 	i32.const	$push43=, 2
 	i32.ne  	$push44=, $1, $pop43
-	br_if   	$pop44, 0       # 0: down to label10
+	br_if   	0, $pop44       # 0: down to label10
 # BB#11:                                # %if.end51
 	i32.const	$41=, 16
 	i32.add 	$42=, $42, $41

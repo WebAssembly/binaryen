@@ -17,7 +17,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	tee_local	$push12=, $0=, $pop11
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $pop12, $pop14
-	br_if   	$pop15, 0       # 0: down to label0
+	br_if   	0, $pop15       # 0: down to label0
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -33,7 +33,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	i32.const	$push10=, 1
 	i32.add 	$1=, $1, $pop10
 	copy_local	$0=, $2
-	br_if   	$2, 0           # 0: up to label1
+	br_if   	0, $2           # 0: up to label1
 .LBB0_2:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -67,7 +67,7 @@ main:                                   # @main
 	i32.const	$push13=, 1
 	i32.add 	$0=, $0, $pop13
 	copy_local	$1=, $2
-	br_if   	$2, 0           # 0: up to label3
+	br_if   	0, $2           # 0: up to label3
 # BB#2:                                 # %add_unwind_adjustsp.exit
 	end_loop                        # label4:
 	block
@@ -75,7 +75,7 @@ main:                                   # @main
 	i32.load8_u	$push5=, bytes($pop18)
 	i32.const	$push6=, 136
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label5
+	br_if   	0, $pop7        # 0: down to label5
 # BB#3:                                 # %add_unwind_adjustsp.exit
 	i32.const	$push19=, 0
 	i32.load8_u	$push4=, bytes+1($pop19)
@@ -83,7 +83,7 @@ main:                                   # @main
 	i32.and 	$push9=, $pop4, $pop8
 	i32.const	$push10=, 7
 	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: down to label5
+	br_if   	0, $pop11       # 0: down to label5
 # BB#4:                                 # %if.end
 	i32.const	$push12=, 0
 	return  	$pop12

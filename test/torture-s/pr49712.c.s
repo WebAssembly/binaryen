@@ -24,7 +24,7 @@ bar:                                    # @bar
 	i32.load	$push0=, d($pop5)
 	i32.const	$push4=, 0
 	i32.gt_s	$push1=, $pop0, $pop4
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.cond4.preheader.preheader
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
@@ -55,7 +55,7 @@ main:                                   # @main
 	i32.load	$push2=, c($pop8)
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $pop2, $pop15
-	br_if   	$pop16, 0       # 0: down to label1
+	br_if   	0, $pop16       # 0: down to label1
 # BB#1:                                 # %while.body.preheader
 	i32.load	$push3=, d($0)
 	i32.const	$push10=, 1
@@ -67,7 +67,7 @@ main:                                   # @main
 	i32.and 	$push4=, $0, $pop11
 	i32.const	$push17=, 0
 	i32.eq  	$push18=, $pop4, $pop17
-	br_if   	$pop18, 0       # 0: up to label2
+	br_if   	0, $pop18       # 0: up to label2
 # BB#3:                                 # %for.cond4.preheader.preheader.i
                                         #   in Loop: Header=BB2_2 Depth=1
 	i32.const	$push5=, 0

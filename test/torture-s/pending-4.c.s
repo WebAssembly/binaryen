@@ -31,13 +31,13 @@ main:                                   # @main
 	block
 	i32.const	$push6=, 1
 	i32.eq  	$push0=, $4, $pop6
-	br_if   	$pop0, 0        # 0: down to label3
+	br_if   	0, $pop0        # 0: down to label3
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	block
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $4, $pop10
-	br_if   	$pop11, 0       # 0: down to label4
+	br_if   	0, $pop11       # 0: down to label4
 # BB#3:                                 # %if.else
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push8=, 1
@@ -48,11 +48,11 @@ main:                                   # @main
 	block
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $2, $pop1
-	br_if   	$pop2, 0        # 0: down to label5
+	br_if   	0, $pop2        # 0: down to label5
 # BB#5:                                 # %for.end
 	i32.const	$push3=, 7
 	i32.ne  	$push4=, $3, $pop3
-	br_if   	$pop4, 0        # 0: down to label5
+	br_if   	0, $pop4        # 0: down to label5
 # BB#6:                                 # %if.end7
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5

@@ -11,15 +11,15 @@ bar:                                    # @bar
 	i32.load8_u	$push0=, 0($0)
 	i32.const	$push5=, 111
 	i32.ne  	$push1=, $pop0, $pop5
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load8_u	$push2=, 1($0)
 	i32.const	$push6=, 111
 	i32.ne  	$push3=, $pop2, $pop6
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false6
 	i32.load8_u	$push4=, 2($0)
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#3:                                 # %if.end
 	return
 .LBB0_4:                                # %if.then

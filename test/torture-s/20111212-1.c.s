@@ -11,7 +11,7 @@ frob_entry:                             # @frob_entry
 	i32.load	$push0=, 0($0):p2align=0
 	i32.const	$push1=, 63
 	i32.gt_u	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push3=, -1
 	i32.store	$discard=, 0($0):p2align=0, $pop3

@@ -14,12 +14,12 @@ check:                                  # @check
 	i32.load16_u	$push0=, 0($0)
 	i32.const	$push5=, 1
 	i32.ne  	$push1=, $pop0, $pop5
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	f64.load	$push2=, 2($0):p2align=1
 	f64.const	$push3=, 0x1p4
 	f64.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$1=, 0
 .LBB0_3:                                # %return

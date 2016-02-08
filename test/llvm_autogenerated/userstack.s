@@ -73,21 +73,25 @@ allocarray:
 	.globl	non_mem_use
 	.type	non_mem_use,@function
 non_mem_use:
-	.local  	i32, i32, i32, i32, i32
-	i32.const	$0=, __stack_pointer
-	i32.load	$0=, 0($0)
-	i32.const	$1=, 16
-	i32.sub 	$4=, $0, $1
+	.param  	i32
+	.local  	i32, i32, i32, i32, i32, i32
 	i32.const	$1=, __stack_pointer
-	i32.store	$4=, 0($1), $4
-	i32.const	$3=, 8
-	i32.add 	$3=, $4, $3
-	call    	ext_func@FUNCTION, $3
-	call    	ext_func@FUNCTION, $4
-	i32.const	$2=, 16
-	i32.add 	$4=, $4, $2
+	i32.load	$1=, 0($1)
+	i32.const	$2=, 48
+	i32.sub 	$6=, $1, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
+	i32.store	$6=, 0($2), $6
+	i32.const	$4=, 8
+	i32.add 	$4=, $6, $4
+	call    	ext_func@FUNCTION, $4
+	call    	ext_func@FUNCTION, $6
+	i32.const	$5=, 16
+	i32.add 	$5=, $6, $5
+	i32.store	$discard=, 0($0), $5
+	i32.const	$3=, 48
+	i32.add 	$6=, $6, $3
+	i32.const	$3=, __stack_pointer
+	i32.store	$6=, 0($3), $6
 	return
 	.endfunc
 .Lfunc_end3:
@@ -119,9 +123,56 @@ allocarray_inbounds:
 	.type	dynamic_alloca,@function
 dynamic_alloca:
 	.param  	i32
+	.local  	i32, i32, i32, i32
+	i32.const	$1=, __stack_pointer
+	i32.load	$3=, 0($1)
+	copy_local	$4=, $3
+	i32.const	$push0=, 2
+	i32.shl 	$push1=, $0, $pop0
+	i32.const	$push2=, 15
+	i32.add 	$push3=, $pop1, $pop2
+	i32.const	$push4=, -16
+	i32.and 	$push5=, $pop3, $pop4
+	i32.sub 	$0=, $3, $pop5
+	copy_local	$3=, $0
+	i32.const	$push6=, 0
+	i32.store	$discard=, 0($0), $pop6
+	i32.const	$2=, __stack_pointer
+	i32.store	$3=, 0($2), $4
 	return
 	.endfunc
 .Lfunc_end5:
 	.size	dynamic_alloca, .Lfunc_end5-dynamic_alloca
+
+	.globl	dynamic_static_alloca
+	.type	dynamic_static_alloca,@function
+dynamic_static_alloca:
+	.param  	i32
+	.local  	i32, i32, i32, i32, i32
+	i32.const	$1=, __stack_pointer
+	i32.load	$1=, 0($1)
+	i32.const	$2=, 16
+	i32.sub 	$4=, $1, $2
+	copy_local	$5=, $4
+	i32.const	$2=, __stack_pointer
+	i32.store	$4=, 0($2), $4
+	i32.const	$push0=, 2
+	i32.shl 	$push1=, $0, $pop0
+	i32.const	$push2=, 15
+	i32.add 	$push3=, $pop1, $pop2
+	i32.const	$push4=, -16
+	i32.and 	$push5=, $pop3, $pop4
+	i32.sub 	$0=, $4, $pop5
+	copy_local	$4=, $0
+	i32.const	$push6=, 0
+	i32.store	$discard=, 0($0), $pop6
+	i32.const	$3=, 16
+	i32.add 	$4=, $5, $3
+	i32.const	$3=, __stack_pointer
+	i32.store	$4=, 0($3), $4
+	return
+	.endfunc
+.Lfunc_end6:
+	.size	dynamic_static_alloca, .Lfunc_end6-dynamic_static_alloca
 
 

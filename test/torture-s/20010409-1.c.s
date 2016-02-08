@@ -27,7 +27,7 @@ bar:                                    # @bar
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	br_if   	$1, 0           # 0: down to label0
+	br_if   	0, $1           # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
@@ -54,7 +54,7 @@ test:                                   # @test
 	i32.const	$push0=, 5000
 	i32.store	$discard=, c($pop1), $pop0
 	block
-	br_if   	$2, 0           # 0: down to label1
+	br_if   	0, $2           # 0: down to label1
 # BB#1:                                 # %if.then.i
 	call    	abort@FUNCTION
 	unreachable
@@ -85,7 +85,7 @@ main:                                   # @main
 	i32.const	$push3=, 5000
 	i32.store	$discard=, c($1), $pop3
 	block
-	br_if   	$0, 0           # 0: down to label2
+	br_if   	0, $0           # 0: down to label2
 # BB#1:                                 # %if.then.i.i
 	call    	abort@FUNCTION
 	unreachable

@@ -72,7 +72,7 @@ main:                                   # @main
 	i32.sub 	$push9=, $pop6, $pop8
 	i32.const	$push89=, 255
 	i32.and 	$push10=, $pop9, $pop89
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %lor.rhs
 	i32.const	$push12=, 0
 	i32.const	$push11=, 1
@@ -100,7 +100,7 @@ main:                                   # @main
 	i32.sub 	$push20=, $pop17, $pop19
 	i32.const	$push97=, 255
 	i32.and 	$push21=, $pop20, $pop97
-	br_if   	$pop21, 0       # 0: down to label1
+	br_if   	0, $pop21       # 0: down to label1
 # BB#3:                                 # %lor.rhs.1
 	i32.const	$push106=, 0
 	i32.const	$push22=, 1
@@ -130,7 +130,7 @@ main:                                   # @main
 	i32.sub 	$push30=, $pop27, $pop29
 	i32.const	$push107=, 255
 	i32.and 	$push31=, $pop30, $pop107
-	br_if   	$pop31, 0       # 0: down to label2
+	br_if   	0, $pop31       # 0: down to label2
 # BB#5:                                 # %lor.rhs.2
 	i32.const	$push33=, 0
 	i32.const	$push32=, 1
@@ -158,7 +158,7 @@ main:                                   # @main
 	i32.sub 	$push41=, $pop38, $pop40
 	i32.const	$push116=, 255
 	i32.and 	$push42=, $pop41, $pop116
-	br_if   	$pop42, 0       # 0: down to label3
+	br_if   	0, $pop42       # 0: down to label3
 # BB#7:                                 # %lor.rhs.3
 	i32.const	$push125=, 0
 	i32.const	$push43=, 1
@@ -188,7 +188,7 @@ main:                                   # @main
 	i32.sub 	$push51=, $pop48, $pop50
 	i32.const	$push126=, 255
 	i32.and 	$push52=, $pop51, $pop126
-	br_if   	$pop52, 0       # 0: down to label4
+	br_if   	0, $pop52       # 0: down to label4
 # BB#9:                                 # %lor.rhs.4
 	i32.const	$push54=, 0
 	i32.const	$push53=, 1
@@ -216,7 +216,7 @@ main:                                   # @main
 	i32.sub 	$push62=, $pop59, $pop61
 	i32.const	$push135=, 255
 	i32.and 	$push63=, $pop62, $pop135
-	br_if   	$pop63, 0       # 0: down to label5
+	br_if   	0, $pop63       # 0: down to label5
 # BB#11:                                # %lor.rhs.5
 	i32.const	$push144=, 0
 	i32.const	$push64=, 1
@@ -246,7 +246,7 @@ main:                                   # @main
 	i32.sub 	$push72=, $pop69, $pop71
 	i32.const	$push145=, 255
 	i32.and 	$push73=, $pop72, $pop145
-	br_if   	$pop73, 0       # 0: down to label6
+	br_if   	0, $pop73       # 0: down to label6
 # BB#13:                                # %lor.rhs.6
 	i32.const	$push75=, 0
 	i32.const	$push74=, 1
@@ -277,7 +277,7 @@ main:                                   # @main
 	i32.sub 	$push82=, $pop157, $pop81
 	i32.const	$push154=, 255
 	i32.and 	$push83=, $pop82, $pop154
-	br_if   	$pop83, 0       # 0: down to label7
+	br_if   	0, $pop83       # 0: down to label7
 # BB#15:                                # %lor.rhs.7
 	i32.const	$push165=, 0
 	i32.const	$push84=, 1

@@ -40,13 +40,13 @@ main:                                   # @main
 	i32.store	$push5=, count($pop13), $pop4
 	i32.const	$push12=, 2
 	i32.ne  	$push8=, $pop5, $pop12
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push16=, 0
 	i32.load	$push0=, arr+8($pop16):p2align=3
 	i32.const	$push9=, 3
 	i32.ne  	$push10=, $pop0, $pop9
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push11=, 0
 	return  	$pop11

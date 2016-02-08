@@ -52,7 +52,7 @@ f:                                      # @f
 	i32.load8_u	$push9=, 0($0)
 	i32.const	$push19=, 48
 	i32.eq  	$push10=, $pop9, $pop19
-	br_if   	$pop10, 0       # 0: up to label0
+	br_if   	0, $pop10       # 0: up to label0
 # BB#2:                                 # %while.end
 	end_loop                        # label1:
 	block
@@ -62,7 +62,7 @@ f:                                      # @f
 	i32.const	$push11=, 88
 	i32.store16	$push12=, 0($1):p2align=0, $pop11
 	i32.ne  	$push16=, $pop15, $pop12
-	br_if   	$pop16, 0       # 0: down to label2
+	br_if   	0, $pop16       # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$4=, 16
 	i32.add 	$5=, $5, $4

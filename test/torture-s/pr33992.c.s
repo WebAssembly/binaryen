@@ -10,7 +10,7 @@ bar:                                    # @bar
 	block
 	i64.const	$push0=, 0
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
@@ -46,7 +46,7 @@ do_test:                                # @do_test
 	i64.and 	$push1=, $pop0, $1
 	i64.const	$push12=, 0
 	i64.eq  	$push2=, $pop1, $pop12
-	br_if   	$pop2, 0        # 0: up to label1
+	br_if   	0, $pop2        # 0: up to label1
 # BB#2:                                 # %foo.exit
 	end_loop                        # label2:
 	i64.const	$push3=, 32
@@ -71,7 +71,7 @@ do_test:                                # @do_test
 	i64.and 	$push7=, $pop6, $1
 	i64.const	$push18=, 0
 	i64.eq  	$push8=, $pop7, $pop18
-	br_if   	$pop8, 0        # 0: up to label3
+	br_if   	0, $pop8        # 0: up to label3
 # BB#4:                                 # %foo.exit.1
 	end_loop                        # label4:
 	i64.const	$push9=, 32

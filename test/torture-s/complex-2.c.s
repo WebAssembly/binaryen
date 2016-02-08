@@ -33,13 +33,13 @@ main:                                   # @main
 	f64.load	$push1=, ag($pop6)
 	f64.const	$push5=, 0x1p0
 	f64.ne  	$push2=, $pop1, $pop5
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push8=, 0
 	f64.load	$push0=, ag+8($pop8)
 	f64.const	$push7=, 0x1p0
 	f64.ne  	$push3=, $pop0, $pop7
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %if.end26
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4

@@ -72,7 +72,7 @@ main:                                   # @main
 	i32.store	$discard=, p($pop3), $5
 	block
 	i32.eq  	$push2=, $1, $0
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	i32.const	$4=, 16

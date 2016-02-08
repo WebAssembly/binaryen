@@ -7,7 +7,7 @@ bar32:
 	block
 	i32.const	$push0=, 23
 	i32.gt_u	$push1=, $0, $pop0
-	br_if   	$pop1, 0
+	br_if   	0, $pop1
 	block
 	block
 	block
@@ -52,7 +52,7 @@ bar64:
 	block
 	i64.const	$push1=, 23
 	i64.gt_u	$push2=, $0, $pop1
-	br_if   	$pop2, 0
+	br_if   	0, $pop2
 	block
 	block
 	block

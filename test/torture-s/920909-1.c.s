@@ -14,7 +14,7 @@ f:                                      # @f
 	tee_local	$push8=, $0=, $pop0
 	i32.const	$push2=, 5
 	i32.gt_u	$push3=, $pop8, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %switch.lookup
 	i32.const	$push5=, 2
 	i32.shl 	$push6=, $0, $pop5

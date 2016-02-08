@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.load	$push0=, b($pop14)
 	i32.const	$push24=, 0
 	i32.eq  	$push25=, $pop0, $pop24
-	br_if   	$pop25, 0       # 0: down to label0
+	br_if   	0, $pop25       # 0: down to label0
 # BB#1:                                 # %for.inc.preheader
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
@@ -41,7 +41,7 @@ main:                                   # @main
 	i32.and 	$push9=, $0, $pop17
 	i32.const	$push11=, 1
 	i32.ne  	$push12=, $pop9, $pop11
-	br_if   	$pop12, 0       # 0: down to label1
+	br_if   	0, $pop12       # 0: down to label1
 # BB#3:                                 # %if.end
 	i32.const	$push13=, 0
 	return  	$pop13

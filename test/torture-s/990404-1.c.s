@@ -68,7 +68,7 @@ main:                                   # @main
 	i32.select	$push19=, $3, $0, $pop23
 	i32.const	$push59=, 0
 	i32.eq  	$push60=, $pop19, $pop59
-	br_if   	$pop60, 2       # 2: down to label0
+	br_if   	2, $pop60       # 2: down to label0
 # BB#2:                                 # %if.end7
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push58=, 9
@@ -99,7 +99,7 @@ main:                                   # @main
 	i32.add 	$4=, $4, $pop46
 	i32.const	$push45=, 10
 	i32.lt_s	$push21=, $4, $pop45
-	br_if   	$pop21, 0       # 0: up to label1
+	br_if   	0, $pop21       # 0: up to label1
 # BB#3:                                 # %if.then11
 	end_loop                        # label2:
 	call    	abort@FUNCTION

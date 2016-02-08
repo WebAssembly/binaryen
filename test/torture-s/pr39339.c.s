@@ -29,7 +29,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push13=, 2
 	i32.lt_s	$push14=, $2, $pop13
-	br_if   	$pop14, 0       # 0: down to label0
+	br_if   	0, $pop14       # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push12=, 4194304
 	i32.or  	$4=, $0, $pop12
@@ -52,7 +52,7 @@ foo:                                    # @foo
 	i32.add 	$0=, $0, $pop25
 	i32.const	$push24=, -1
 	i32.add 	$2=, $2, $pop24
-	br_if   	$2, 0           # 0: up to label1
+	br_if   	0, $2           # 0: up to label1
 .LBB0_3:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -136,7 +136,7 @@ main:                                   # @main
 	i32.load	$push23=, 0($pop20)
 	i32.const	$push30=, 1434451954
 	i32.ne  	$push24=, $pop23, $pop30
-	br_if   	$pop24, 0       # 0: down to label3
+	br_if   	0, $pop24       # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$push25=, 12
 	i32.const	$15=, 16
@@ -146,7 +146,7 @@ main:                                   # @main
 	i32.load	$push27=, 0($pop26)
 	i32.const	$push36=, 1434451954
 	i32.ne  	$push28=, $pop27, $pop36
-	br_if   	$pop28, 0       # 0: down to label4
+	br_if   	0, $pop28       # 0: down to label4
 # BB#2:                                 # %if.end13
 	i32.const	$push29=, 0
 	i32.const	$4=, 64

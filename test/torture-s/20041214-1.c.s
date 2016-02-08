@@ -20,7 +20,7 @@ g:                                      # @g
 	block
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $3, $pop12
-	br_if   	$pop13, 0       # 0: down to label0
+	br_if   	0, $pop13       # 0: down to label0
 # BB#1:                                 # %do_form_string.preheader
 	i32.const	$push6=, 2
 	i32.add 	$1=, $1, $pop6
@@ -41,7 +41,7 @@ g:                                      # @g
 	i32.load8_u	$2=, 0($1)
 	i32.const	$push7=, 2
 	i32.add 	$1=, $1, $pop7
-	br_if   	$2, 0           # 0: up to label1
+	br_if   	0, $2           # 0: up to label1
 .LBB0_3:                                # %all_done
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -121,7 +121,7 @@ main:                                   # @main
 	i32.add 	$10=, $11, $10
 	i32.call	$0=, strcmp@FUNCTION, $10, $0
 	block
-	br_if   	$0, 0           # 0: down to label3
+	br_if   	0, $0           # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$8=, 32
 	i32.add 	$11=, $11, $8

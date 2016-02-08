@@ -12,13 +12,13 @@ g:                                      # @g
 	block
 	i32.const	$push0=, 1
 	i32.gt_u	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %if.then2
 	i32.eq  	$push2=, $0, $1
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#2:                                 # %if.then2
 	i32.const	$0=, 0
-	br_if   	$1, 1           # 1: down to label0
+	br_if   	1, $1           # 1: down to label0
 .LBB0_3:                                # %if.end9
 	end_block                       # label1:
 	i32.const	$0=, 1

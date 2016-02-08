@@ -87,7 +87,7 @@ main:                                   # @main
 	i32.sub 	$push8=, $0, $pop7
 	i32.add 	$push10=, $pop9, $pop8
 	i32.ne  	$push11=, $pop10, $0
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#1:                                 # %for.cond
 	i32.const	$push56=, 0
 	i32.load	$push12=, nums+4($pop56)
@@ -110,7 +110,7 @@ main:                                   # @main
 	i32.sub 	$push20=, $0, $pop19
 	i32.add 	$push22=, $pop21, $pop20
 	i32.ne  	$push23=, $pop22, $0
-	br_if   	$pop23, 0       # 0: down to label0
+	br_if   	0, $pop23       # 0: down to label0
 # BB#2:                                 # %for.cond.1
 	i32.const	$push62=, 0
 	i32.load	$push24=, nums+8($pop62)
@@ -133,7 +133,7 @@ main:                                   # @main
 	i32.sub 	$push35=, $0, $pop34
 	i32.add 	$push37=, $pop36, $pop35
 	i32.ne  	$push38=, $pop37, $0
-	br_if   	$pop38, 0       # 0: down to label0
+	br_if   	0, $pop38       # 0: down to label0
 # BB#3:                                 # %for.cond.2
 	i32.const	$push63=, 0
 	call    	exit@FUNCTION, $pop63

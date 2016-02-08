@@ -18,7 +18,7 @@ find:                                   # @find
 	tee_local	$push8=, $0=, $pop0
 	i32.const	$push6=, 1
 	i32.lt_s	$push7=, $pop8, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %for.body
 	call    	ok@FUNCTION, $0
 	unreachable
@@ -40,7 +40,7 @@ ok:                                     # @ok
 	block
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2

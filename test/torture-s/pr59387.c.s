@@ -26,14 +26,14 @@ main:                                   # @main
 	i32.load	$push3=, d($pop8)
 	i32.const	$push16=, 0
 	i32.eq  	$push17=, $pop3, $pop16
-	br_if   	$pop17, 1       # 1: down to label1
+	br_if   	1, $pop17       # 1: down to label1
 # BB#2:                                 # %for.inc4
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push13=, 0
 	i32.const	$push12=, 1
 	i32.add 	$push0=, $0, $pop12
 	i32.store	$0=, a($pop13), $pop0
-	br_if   	$0, 0           # 0: up to label0
+	br_if   	0, $0           # 0: up to label0
 .LBB0_3:                                # %return
 	end_loop                        # label1:
 	i32.const	$push4=, 0

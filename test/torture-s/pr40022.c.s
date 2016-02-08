@@ -42,13 +42,13 @@ bar:                                    # @bar
 	tee_local	$push5=, $1=, $pop3
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $pop5, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 .LBB1_1:                                # %while.cond.while.cond_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	copy_local	$0=, $1
 	i32.load	$1=, 0($1)
-	br_if   	$1, 0           # 0: up to label1
+	br_if   	0, $1           # 0: up to label1
 .LBB1_2:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -58,13 +58,13 @@ bar:                                    # @bar
 	tee_local	$push6=, $1=, $pop4
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $pop6, $pop9
-	br_if   	$pop10, 0       # 0: down to label3
+	br_if   	0, $pop10       # 0: down to label3
 .LBB1_3:                                # %while.cond2.while.cond2_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
 	copy_local	$0=, $1
 	i32.load	$1=, 0($1)
-	br_if   	$1, 0           # 0: up to label4
+	br_if   	0, $1           # 0: up to label4
 .LBB1_4:                                # %while.end6
 	end_loop                        # label5:
 	end_block                       # label3:
@@ -97,22 +97,22 @@ main:                                   # @main
 	tee_local	$push10=, $0=, $pop0
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $pop10, $pop15
-	br_if   	$pop16, 0       # 0: down to label6
+	br_if   	0, $pop16       # 0: down to label6
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push1=, 0($0)
 	tee_local	$push13=, $0=, $pop1
 	i32.const	$push17=, 0
 	i32.eq  	$push18=, $pop13, $pop17
-	br_if   	$pop18, 0       # 0: down to label6
+	br_if   	0, $pop18       # 0: down to label6
 # BB#2:                                 # %lor.lhs.false2
 	i32.load	$push2=, 0($0)
 	tee_local	$push14=, $0=, $pop2
 	i32.const	$push19=, 0
 	i32.eq  	$push20=, $pop14, $pop19
-	br_if   	$pop20, 0       # 0: down to label6
+	br_if   	0, $pop20       # 0: down to label6
 # BB#3:                                 # %lor.lhs.false6
 	i32.load	$push8=, 0($0)
-	br_if   	$pop8, 0        # 0: down to label6
+	br_if   	0, $pop8        # 0: down to label6
 # BB#4:                                 # %if.end
 	i32.const	$push9=, 0
 	return  	$pop9

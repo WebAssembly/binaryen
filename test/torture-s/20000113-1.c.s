@@ -14,7 +14,7 @@ foobar:                                 # @foobar
 	tee_local	$push12=, $0=, $pop0
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $pop12, $pop14
-	br_if   	$pop15, 0       # 0: down to label0
+	br_if   	0, $pop15       # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push3=, 3
 	i32.and 	$push1=, $1, $pop3
@@ -26,7 +26,7 @@ foobar:                                 # @foobar
 	i32.and 	$push8=, $pop6, $pop7
 	i32.const	$push9=, 5
 	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push11=, 0
 	call    	exit@FUNCTION, $pop11

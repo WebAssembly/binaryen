@@ -13,7 +13,7 @@ f:                                      # @f
 	block
 	i32.const	$push5=, 2
 	i32.eq  	$push0=, $0, $pop5
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 31
 	i32.shr_s	$push2=, $0, $pop1

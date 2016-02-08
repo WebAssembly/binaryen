@@ -19,12 +19,12 @@ vafunction:                             # @vafunction
 	block
 	f64.const	$push0=, 0x1.bcp9
 	f64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	f64.const	$push2=, 0x1.f38p9
 	f64.ne  	$push3=, $1, $pop2
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#2:                                 # %if.end4
 	i32.load	$push4=, 12($6)
 	i32.const	$push73=, 7
@@ -39,7 +39,7 @@ vafunction:                             # @vafunction
 	f64.load	$push8=, 0($2)
 	f64.const	$push9=, 0x1p0
 	f64.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, 0       # 0: down to label2
+	br_if   	0, $pop10       # 0: down to label2
 # BB#3:                                 # %if.end7
 	i32.load	$push11=, 12($6)
 	i32.const	$push77=, 7
@@ -54,7 +54,7 @@ vafunction:                             # @vafunction
 	f64.load	$push15=, 0($2)
 	f64.const	$push16=, 0x1p1
 	f64.ne  	$push17=, $pop15, $pop16
-	br_if   	$pop17, 0       # 0: down to label3
+	br_if   	0, $pop17       # 0: down to label3
 # BB#4:                                 # %if.end10
 	i32.load	$push18=, 12($6)
 	i32.const	$push81=, 7
@@ -69,7 +69,7 @@ vafunction:                             # @vafunction
 	f64.load	$push22=, 0($2)
 	f64.const	$push23=, 0x1.8p1
 	f64.ne  	$push24=, $pop22, $pop23
-	br_if   	$pop24, 0       # 0: down to label4
+	br_if   	0, $pop24       # 0: down to label4
 # BB#5:                                 # %if.end13
 	i32.load	$push25=, 12($6)
 	i32.const	$push85=, 7
@@ -84,7 +84,7 @@ vafunction:                             # @vafunction
 	f64.load	$push29=, 0($2)
 	f64.const	$push30=, 0x1p2
 	f64.ne  	$push31=, $pop29, $pop30
-	br_if   	$pop31, 0       # 0: down to label5
+	br_if   	0, $pop31       # 0: down to label5
 # BB#6:                                 # %if.end16
 	i32.load	$push32=, 12($6)
 	i32.const	$push89=, 7
@@ -99,7 +99,7 @@ vafunction:                             # @vafunction
 	f64.load	$push36=, 0($2)
 	f64.const	$push37=, 0x1.4p2
 	f64.ne  	$push38=, $pop36, $pop37
-	br_if   	$pop38, 0       # 0: down to label6
+	br_if   	0, $pop38       # 0: down to label6
 # BB#7:                                 # %if.end19
 	i32.load	$push39=, 12($6)
 	i32.const	$push93=, 7
@@ -114,7 +114,7 @@ vafunction:                             # @vafunction
 	f64.load	$push43=, 0($2)
 	f64.const	$push44=, 0x1.8p2
 	f64.ne  	$push45=, $pop43, $pop44
-	br_if   	$pop45, 0       # 0: down to label7
+	br_if   	0, $pop45       # 0: down to label7
 # BB#8:                                 # %if.end22
 	i32.load	$push46=, 12($6)
 	i32.const	$push97=, 7
@@ -129,7 +129,7 @@ vafunction:                             # @vafunction
 	f64.load	$push50=, 0($2)
 	f64.const	$push51=, 0x1.cp2
 	f64.ne  	$push52=, $pop50, $pop51
-	br_if   	$pop52, 0       # 0: down to label8
+	br_if   	0, $pop52       # 0: down to label8
 # BB#9:                                 # %if.end25
 	i32.load	$push53=, 12($6)
 	i32.const	$push101=, 7
@@ -144,7 +144,7 @@ vafunction:                             # @vafunction
 	f64.load	$push57=, 0($2)
 	f64.const	$push58=, 0x1p3
 	f64.ne  	$push59=, $pop57, $pop58
-	br_if   	$pop59, 0       # 0: down to label9
+	br_if   	0, $pop59       # 0: down to label9
 # BB#10:                                # %if.end28
 	i32.load	$push60=, 12($6)
 	i32.const	$push61=, 7
@@ -159,7 +159,7 @@ vafunction:                             # @vafunction
 	f64.load	$push67=, 0($2)
 	f64.const	$push68=, 0x1.2p3
 	f64.ne  	$push69=, $pop67, $pop68
-	br_if   	$pop69, 0       # 0: down to label10
+	br_if   	0, $pop69       # 0: down to label10
 # BB#11:                                # %if.end31
 	i32.const	$5=, 16
 	i32.add 	$6=, $7, $5

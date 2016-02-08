@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.const	$push0=, q
 	i32.const	$push2=, 23
 	i32.call	$push3=, memcmp@FUNCTION, $pop1, $pop0, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
@@ -63,7 +63,7 @@ bar:                                    # @bar
 	i32.add 	$0=, $0, $pop83
 	i32.const	$push82=, 624
 	i32.ne  	$push8=, $2, $pop82
-	br_if   	$pop8, 0        # 0: up to label1
+	br_if   	0, $pop8        # 0: up to label1
 # BB#2:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push9=, 4
@@ -277,7 +277,7 @@ foo:                                    # @foo
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$push4=, 4($0), $pop3
-	br_if   	$pop4, 0        # 0: down to label3
+	br_if   	0, $pop4        # 0: down to label3
 # BB#1:                                 # %if.then
 	i32.const	$push44=, 8
 	i32.add 	$push5=, $0, $pop44
@@ -318,7 +318,7 @@ foo:                                    # @foo
 	copy_local	$2=, $3
 	i32.const	$push45=, 908
 	i32.ne  	$push20=, $1, $pop45
-	br_if   	$pop20, 0       # 0: up to label4
+	br_if   	0, $pop20       # 0: up to label4
 .LBB2_3:                                # %if.end
 	end_loop                        # label5:
 	end_block                       # label3:

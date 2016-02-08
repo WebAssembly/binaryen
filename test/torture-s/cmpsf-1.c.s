@@ -147,7 +147,7 @@ main:                                   # @main
 	i32.select	$push3=, $pop40, $pop39, $pop2
 	i32.load	$push4=, 0($4)
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 9        # 9: down to label0
+	br_if   	9, $pop5        # 9: down to label0
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB6_2 Depth=2
 	i32.const	$push43=, 13
@@ -158,7 +158,7 @@ main:                                   # @main
 	i32.add 	$push8=, $4, $pop41
 	i32.load	$push9=, 0($pop8)
 	i32.ne  	$push10=, $pop7, $pop9
-	br_if   	$pop10, 8       # 8: down to label1
+	br_if   	8, $pop10       # 8: down to label1
 # BB#4:                                 # %if.end10
                                         #   in Loop: Header=BB6_2 Depth=2
 	i32.const	$push47=, 13
@@ -170,7 +170,7 @@ main:                                   # @main
 	i32.add 	$push13=, $4, $pop44
 	i32.load	$push14=, 0($pop13)
 	i32.ne  	$push15=, $pop12, $pop14
-	br_if   	$pop15, 7       # 7: down to label2
+	br_if   	7, $pop15       # 7: down to label2
 # BB#5:                                 # %if.end15
                                         #   in Loop: Header=BB6_2 Depth=2
 	i32.const	$push51=, 140
@@ -185,7 +185,7 @@ main:                                   # @main
 	i32.add 	$push21=, $4, $pop48
 	i32.load	$push22=, 0($pop21)
 	i32.ne  	$push23=, $pop20, $pop22
-	br_if   	$pop23, 6       # 6: down to label3
+	br_if   	6, $pop23       # 6: down to label3
 # BB#6:                                 # %if.end20
                                         #   in Loop: Header=BB6_2 Depth=2
 	i32.const	$push55=, 13
@@ -197,7 +197,7 @@ main:                                   # @main
 	i32.add 	$push26=, $4, $pop52
 	i32.load	$push27=, 0($pop26)
 	i32.ne  	$push28=, $pop25, $pop27
-	br_if   	$pop28, 5       # 5: down to label4
+	br_if   	5, $pop28       # 5: down to label4
 # BB#7:                                 # %if.end25
                                         #   in Loop: Header=BB6_2 Depth=2
 	i32.const	$push58=, 140
@@ -208,7 +208,7 @@ main:                                   # @main
 	i32.add 	$push31=, $4, $pop56
 	i32.load	$push32=, 0($pop31)
 	i32.ne  	$push33=, $pop30, $pop32
-	br_if   	$pop33, 4       # 4: down to label5
+	br_if   	4, $pop33       # 4: down to label5
 # BB#8:                                 # %if.end30
                                         #   in Loop: Header=BB6_2 Depth=2
 	i32.const	$push62=, 24
@@ -219,7 +219,7 @@ main:                                   # @main
 	i32.add 	$2=, $2, $pop60
 	i32.const	$push59=, 8
 	i32.lt_s	$push34=, $3, $pop59
-	br_if   	$pop34, 0       # 0: up to label8
+	br_if   	0, $pop34       # 0: up to label8
 # BB#9:                                 # %for.end
                                         #   in Loop: Header=BB6_1 Depth=1
 	end_loop                        # label9:
@@ -227,7 +227,7 @@ main:                                   # @main
 	i32.add 	$0=, $0, $pop64
 	i32.const	$push63=, 8
 	i32.lt_s	$push35=, $0, $pop63
-	br_if   	$pop35, 0       # 0: up to label6
+	br_if   	0, $pop35       # 0: up to label6
 # BB#10:                                # %for.end33
 	end_loop                        # label7:
 	i32.const	$push36=, 0

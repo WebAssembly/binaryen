@@ -32,7 +32,7 @@ f:                                      # @f
 	i32.load16_u	$push1=, 0($0)
 	i32.const	$push2=, 4096
 	i32.lt_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$1=, __stack_pointer
 	i32.load	$1=, 0($1)
@@ -83,7 +83,7 @@ main:                                   # @main
 	i32.load16_u	$push1=, 0($0)
 	i32.const	$push2=, 4096
 	i32.lt_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.then.i
 	i32.const	$1=, __stack_pointer
 	i32.load	$1=, 0($1)
@@ -108,7 +108,7 @@ main:                                   # @main
 	i32.store16	$push7=, 2($0), $pop6
 	i32.load16_u	$push8=, 2($0)
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label2
+	br_if   	0, $pop9        # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$push10=, 0
 	call    	exit@FUNCTION, $pop10

@@ -28,7 +28,7 @@ foo:                                    # @foo
 	i32.store	$discard=, 0($pop7), $pop6
 	i32.const	$push8=, -16
 	i32.add 	$2=, $2, $pop8
-	br_if   	$2, 0           # 0: up to label0
+	br_if   	0, $2           # 0: up to label0
 # BB#2:                                 # %while.end
 	end_loop                        # label1:
 	return
@@ -68,14 +68,14 @@ main:                                   # @main
 	i64.store	$discard=, 0($pop4):p2align=2, $pop3
 	i32.const	$push10=, -16
 	i32.add 	$0=, $0, $pop10
-	br_if   	$0, 0           # 0: up to label2
+	br_if   	0, $0           # 0: up to label2
 # BB#2:                                 # %foo.exit
 	end_loop                        # label3:
 	block
 	i32.load	$push5=, 0($5):p2align=4
 	i32.const	$push6=, 6
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label4
+	br_if   	0, $pop7        # 0: down to label4
 # BB#3:                                 # %if.end
 	i32.const	$push8=, 0
 	i32.const	$4=, 1024

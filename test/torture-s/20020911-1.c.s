@@ -14,7 +14,7 @@ main:                                   # @main
 	tee_local	$push11=, $0=, $pop2
 	i32.const	$push4=, -1
 	i32.gt_s	$push5=, $pop11, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push3=, 65535
 	i32.and 	$push0=, $0, $pop3
@@ -22,7 +22,7 @@ main:                                   # @main
 	i32.add 	$push7=, $pop0, $pop6
 	i32.const	$push8=, 32768
 	i32.ge_s	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push10=, 0
 	return  	$pop10

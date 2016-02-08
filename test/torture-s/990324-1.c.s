@@ -12,7 +12,7 @@ f:                                      # @f
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push3=, 0
 	i32.gt_s	$push2=, $pop1, $pop3
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable

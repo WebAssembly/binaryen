@@ -16,7 +16,7 @@ main:                                   # @main
 	tee_local	$push5=, $0=, $pop0
 	i32.const	$push3=, 3
 	i32.le_u	$push4=, $pop5, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %sw.epilog
 	i32.const	$push7=, 0
 	return  	$pop7

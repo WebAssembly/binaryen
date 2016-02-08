@@ -59,7 +59,7 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	i32.store	$push2=, a($pop4):p2align=4, $0
 	i32.store	$push3=, a+4($pop5), $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 0
 	return  	$pop9

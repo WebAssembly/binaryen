@@ -34,7 +34,7 @@ main:                                   # @main
 	i32.store	$2=, b($pop3), $pop2
 	block
 	i32.le_s	$push1=, $0, $1
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$2
 .LBB1_2:                                # %if.then

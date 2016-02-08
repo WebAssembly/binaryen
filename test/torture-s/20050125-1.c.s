@@ -28,7 +28,7 @@ bracket_empty:                          # @bracket_empty
 	tee_local	$push9=, $1=, $pop0
 	i32.load	$push1=, 4($0)
 	i32.ge_u	$push2=, $pop9, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %land.lhs.true
 	i32.const	$push3=, 1
 	i32.add 	$push4=, $1, $pop3
@@ -36,7 +36,7 @@ bracket_empty:                          # @bracket_empty
 	i32.load8_u	$push5=, 0($1)
 	i32.const	$push6=, 93
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB1_3:                                # %lor.lhs.false

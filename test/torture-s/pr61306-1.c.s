@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.call	$push1=, fake_bswap32@FUNCTION, $pop0
 	i32.const	$push2=, -121
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4

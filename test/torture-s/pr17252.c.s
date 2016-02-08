@@ -18,7 +18,7 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	i32.load	$push2=, a($pop4)
 	i32.eq  	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push7=, 0
 	return  	$pop7

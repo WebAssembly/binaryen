@@ -10,7 +10,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push0=, -1
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
@@ -44,7 +44,7 @@ main:                                   # @main
 	block
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $0, $pop12
-	br_if   	$pop13, 0       # 0: down to label1
+	br_if   	0, $pop13       # 0: down to label1
 # BB#1:                                 # %foo.exit
 	i32.const	$push11=, 0
 	return  	$pop11

@@ -32,7 +32,7 @@ bar:                                    # @bar
 	tee_local	$push8=, $1=, $pop0
 	i32.const	$push7=, 10
 	i32.gt_s	$push5=, $pop8, $pop7
-	br_if   	$pop5, 0        # 0: up to label0
+	br_if   	0, $pop5        # 0: up to label0
 # BB#2:                                 # %do.end
 	end_loop                        # label1:
 	i32.add 	$push6=, $1, $0
@@ -79,7 +79,7 @@ foo:                                    # @foo
 	tee_local	$push9=, $1=, $pop0
 	i32.const	$push8=, 10
 	i32.gt_s	$push6=, $pop9, $pop8
-	br_if   	$pop6, 0        # 0: up to label2
+	br_if   	0, $pop6        # 0: up to label2
 # BB#2:                                 # %bar.exit
 	end_loop                        # label3:
 	i32.add 	$push7=, $1, $0
@@ -125,7 +125,7 @@ main:                                   # @main
 	block
 	i32.const	$push2=, 3
 	i32.ne  	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: down to label4
+	br_if   	0, $pop3        # 0: down to label4
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	i32.const	$7=, 16

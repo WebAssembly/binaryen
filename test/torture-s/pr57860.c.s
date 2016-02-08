@@ -24,7 +24,7 @@ foo:                                    # @foo
 	i32.load	$push1=, c($pop15)
 	i32.const	$push25=, 0
 	i32.eq  	$push26=, $pop1, $pop25
-	br_if   	$pop26, 0       # 0: down to label2
+	br_if   	0, $pop26       # 0: down to label2
 # BB#2:                                 # %for.inc.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push17=, 0
@@ -48,7 +48,7 @@ foo:                                    # @foo
 	i32.const	$push18=, 2
 	i32.shl 	$push8=, $pop19, $pop18
 	i32.load	$push9=, k($pop8)
-	br_if   	$pop9, 1        # 1: down to label1
+	br_if   	1, $pop9        # 1: down to label1
 # BB#4:                                 # %for.inc6
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push24=, 0
@@ -86,7 +86,7 @@ main:                                   # @main
 	i32.load	$push1=, c($pop17)
 	i32.const	$push30=, 0
 	i32.eq  	$push31=, $pop1, $pop30
-	br_if   	$pop31, 0       # 0: down to label5
+	br_if   	0, $pop31       # 0: down to label5
 # BB#2:                                 # %for.inc.preheader.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push19=, 0
@@ -111,7 +111,7 @@ main:                                   # @main
 	i32.const	$push20=, 2
 	i32.shl 	$push8=, $pop21, $pop20
 	i32.load	$push9=, k($pop8)
-	br_if   	$pop9, 1        # 1: down to label4
+	br_if   	1, $pop9        # 1: down to label4
 # BB#4:                                 # %for.inc6.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push27=, 0
@@ -126,7 +126,7 @@ main:                                   # @main
 	i32.load	$push10=, d($pop28)
 	i32.const	$push11=, 1
 	i32.ne  	$push12=, $pop10, $pop11
-	br_if   	$pop12, 0       # 0: down to label6
+	br_if   	0, $pop12       # 0: down to label6
 # BB#6:                                 # %if.end
 	i32.const	$push29=, 0
 	return  	$pop29

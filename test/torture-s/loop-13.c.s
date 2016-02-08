@@ -13,11 +13,11 @@ scale:                                  # @scale
 	tee_local	$push14=, $3=, $pop0
 	i32.const	$push13=, 1
 	i32.eq  	$push1=, $pop14, $pop13
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push15=, 1
 	i32.lt_s	$push2=, $2, $pop15
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#2:                                 # %for.body.preheader
 	i32.load	$4=, 4($1)
 	i32.load	$push3=, 0($1)
@@ -27,7 +27,7 @@ scale:                                  # @scale
 	i32.store	$discard=, 4($1), $pop5
 	i32.const	$push6=, 1
 	i32.eq  	$push7=, $2, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#3:                                 # %for.body.for.body_crit_edge.preheader
 	i32.const	$push8=, 12
 	i32.add 	$1=, $1, $pop8
@@ -50,7 +50,7 @@ scale:                                  # @scale
 	i32.add 	$2=, $2, $pop18
 	i32.const	$push17=, 8
 	i32.add 	$1=, $1, $pop17
-	br_if   	$2, 0           # 0: up to label1
+	br_if   	0, $2           # 0: up to label1
 .LBB0_5:                                # %if.end
 	end_loop                        # label2:
 	end_block                       # label0:

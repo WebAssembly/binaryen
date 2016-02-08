@@ -105,13 +105,13 @@ main:                                   # @main
 	i32.add 	$19=, $21, $19
 	block
 	i32.call	$push36=, memcmp@FUNCTION, $19, $21, $pop39
-	br_if   	$pop36, 0       # 0: down to label0
+	br_if   	0, $pop36       # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push52=, 30
 	i32.const	$20=, 32
 	i32.add 	$20=, $21, $20
 	i32.call	$push37=, memcmp@FUNCTION, $20, $21, $pop52
-	br_if   	$pop37, 0       # 0: down to label0
+	br_if   	0, $pop37       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push38=, 0
 	i32.const	$6=, 96

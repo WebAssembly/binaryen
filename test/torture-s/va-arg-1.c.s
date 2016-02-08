@@ -29,7 +29,7 @@ f:                                      # @f
 	i32.load	$push4=, 0($9)
 	i32.const	$push5=, 10
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.load	$push7=, 12($13)
 	i32.const	$push29=, 3
@@ -44,7 +44,7 @@ f:                                      # @f
 	i32.load	$push11=, 0($9)
 	i32.const	$push12=, 11
 	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	$pop13, 0       # 0: down to label1
+	br_if   	0, $pop13       # 0: down to label1
 # BB#2:                                 # %if.end4
 	i32.load	$push14=, 12($13)
 	i32.const	$push15=, 3
@@ -57,7 +57,7 @@ f:                                      # @f
 	i32.store	$discard=, 12($13), $pop20
 	block
 	i32.load	$push21=, 0($9)
-	br_if   	$pop21, 0       # 0: down to label2
+	br_if   	0, $pop21       # 0: down to label2
 # BB#3:                                 # %if.end7
 	i32.const	$12=, 16
 	i32.add 	$13=, $14, $12

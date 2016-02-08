@@ -12,7 +12,7 @@ f3:                                     # @f3
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push3=, 6
 	i32.ge_u	$push2=, $pop1, $pop3
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
@@ -35,7 +35,7 @@ f4:                                     # @f4
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 10
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
@@ -58,7 +58,7 @@ f5:                                     # @f5
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 18
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label2
+	br_if   	0, $pop3        # 0: down to label2
 # BB#1:                                 # %if.end
 	return
 .LBB2_2:                                # %if.then
@@ -81,7 +81,7 @@ f6:                                     # @f6
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 34
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label3
+	br_if   	0, $pop3        # 0: down to label3
 # BB#1:                                 # %if.end
 	return
 .LBB3_2:                                # %if.then
@@ -104,7 +104,7 @@ f7:                                     # @f7
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 66
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label4
+	br_if   	0, $pop3        # 0: down to label4
 # BB#1:                                 # %if.end
 	return
 .LBB4_2:                                # %if.then
@@ -127,7 +127,7 @@ f8:                                     # @f8
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 130
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label5
+	br_if   	0, $pop3        # 0: down to label5
 # BB#1:                                 # %if.end
 	return
 .LBB5_2:                                # %if.then
@@ -150,7 +150,7 @@ f9:                                     # @f9
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 258
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label6
+	br_if   	0, $pop3        # 0: down to label6
 # BB#1:                                 # %if.end
 	return
 .LBB6_2:                                # %if.then
@@ -173,7 +173,7 @@ f10:                                    # @f10
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 514
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label7
+	br_if   	0, $pop3        # 0: down to label7
 # BB#1:                                 # %if.end
 	return
 .LBB7_2:                                # %if.then
@@ -196,7 +196,7 @@ f11:                                    # @f11
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1026
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label8
+	br_if   	0, $pop3        # 0: down to label8
 # BB#1:                                 # %if.end
 	return
 .LBB8_2:                                # %if.then
@@ -219,7 +219,7 @@ f12:                                    # @f12
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 2050
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label9
+	br_if   	0, $pop3        # 0: down to label9
 # BB#1:                                 # %if.end
 	return
 .LBB9_2:                                # %if.then
@@ -242,7 +242,7 @@ f13:                                    # @f13
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 4098
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label10
+	br_if   	0, $pop3        # 0: down to label10
 # BB#1:                                 # %if.end
 	return
 .LBB10_2:                               # %if.then
@@ -265,7 +265,7 @@ f14:                                    # @f14
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 8194
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label11
+	br_if   	0, $pop3        # 0: down to label11
 # BB#1:                                 # %if.end
 	return
 .LBB11_2:                               # %if.then
@@ -288,7 +288,7 @@ f15:                                    # @f15
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 16386
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label12
+	br_if   	0, $pop3        # 0: down to label12
 # BB#1:                                 # %if.end
 	return
 .LBB12_2:                               # %if.then
@@ -311,7 +311,7 @@ f16:                                    # @f16
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 32770
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label13
+	br_if   	0, $pop3        # 0: down to label13
 # BB#1:                                 # %if.end
 	return
 .LBB13_2:                               # %if.then
@@ -334,7 +334,7 @@ f17:                                    # @f17
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 65538
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label14
+	br_if   	0, $pop3        # 0: down to label14
 # BB#1:                                 # %if.end
 	return
 .LBB14_2:                               # %if.then
@@ -357,7 +357,7 @@ f18:                                    # @f18
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 131074
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label15
+	br_if   	0, $pop3        # 0: down to label15
 # BB#1:                                 # %if.end
 	return
 .LBB15_2:                               # %if.then
@@ -380,7 +380,7 @@ f19:                                    # @f19
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 262146
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label16
+	br_if   	0, $pop3        # 0: down to label16
 # BB#1:                                 # %if.end
 	return
 .LBB16_2:                               # %if.then
@@ -403,7 +403,7 @@ f20:                                    # @f20
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 524290
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label17
+	br_if   	0, $pop3        # 0: down to label17
 # BB#1:                                 # %if.end
 	return
 .LBB17_2:                               # %if.then
@@ -426,7 +426,7 @@ f21:                                    # @f21
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1048578
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label18
+	br_if   	0, $pop3        # 0: down to label18
 # BB#1:                                 # %if.end
 	return
 .LBB18_2:                               # %if.then
@@ -449,7 +449,7 @@ f22:                                    # @f22
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 2097154
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label19
+	br_if   	0, $pop3        # 0: down to label19
 # BB#1:                                 # %if.end
 	return
 .LBB19_2:                               # %if.then
@@ -472,7 +472,7 @@ f23:                                    # @f23
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 4194306
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label20
+	br_if   	0, $pop3        # 0: down to label20
 # BB#1:                                 # %if.end
 	return
 .LBB20_2:                               # %if.then
@@ -495,7 +495,7 @@ f24:                                    # @f24
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 8388610
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label21
+	br_if   	0, $pop3        # 0: down to label21
 # BB#1:                                 # %if.end
 	return
 .LBB21_2:                               # %if.then
@@ -518,7 +518,7 @@ f25:                                    # @f25
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 16777218
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label22
+	br_if   	0, $pop3        # 0: down to label22
 # BB#1:                                 # %if.end
 	return
 .LBB22_2:                               # %if.then
@@ -541,7 +541,7 @@ f26:                                    # @f26
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 33554434
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label23
+	br_if   	0, $pop3        # 0: down to label23
 # BB#1:                                 # %if.end
 	return
 .LBB23_2:                               # %if.then
@@ -564,7 +564,7 @@ f27:                                    # @f27
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 67108866
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label24
+	br_if   	0, $pop3        # 0: down to label24
 # BB#1:                                 # %if.end
 	return
 .LBB24_2:                               # %if.then
@@ -587,7 +587,7 @@ f28:                                    # @f28
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 134217730
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label25
+	br_if   	0, $pop3        # 0: down to label25
 # BB#1:                                 # %if.end
 	return
 .LBB25_2:                               # %if.then
@@ -610,7 +610,7 @@ f29:                                    # @f29
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 268435458
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label26
+	br_if   	0, $pop3        # 0: down to label26
 # BB#1:                                 # %if.end
 	return
 .LBB26_2:                               # %if.then
@@ -633,7 +633,7 @@ f30:                                    # @f30
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 536870914
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label27
+	br_if   	0, $pop3        # 0: down to label27
 # BB#1:                                 # %if.end
 	return
 .LBB27_2:                               # %if.then
@@ -656,7 +656,7 @@ f31:                                    # @f31
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1073741826
 	i32.ge_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label28
+	br_if   	0, $pop3        # 0: down to label28
 # BB#1:                                 # %if.end
 	return
 .LBB28_2:                               # %if.then

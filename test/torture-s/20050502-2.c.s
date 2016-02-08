@@ -72,7 +72,7 @@ main:                                   # @main
 	i32.add 	$8=, $10, $8
 	block
 	i32.call	$push11=, memcmp@FUNCTION, $8, $pop10, $pop16
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push12=, 77
 	i32.store8	$discard=, 0($1):p2align=2, $pop12
@@ -83,7 +83,7 @@ main:                                   # @main
 	i32.add 	$9=, $10, $9
 	block
 	i32.call	$push14=, memcmp@FUNCTION, $9, $pop13, $pop21
-	br_if   	$pop14, 0       # 0: down to label1
+	br_if   	0, $pop14       # 0: down to label1
 # BB#2:                                 # %if.end7
 	i32.const	$push15=, 0
 	i32.const	$4=, 16

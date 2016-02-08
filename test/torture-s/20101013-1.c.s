@@ -61,7 +61,7 @@ build_int_cst:                          # @build_int_cst
 	block
 	i64.const	$push0=, 4
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB3_2:                                # %if.then

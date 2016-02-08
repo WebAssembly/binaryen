@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.call	$push1=, strchr@FUNCTION, $pop0, $pop6
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $pop1, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#1:                                 # %if.then.i
 	block
 	i32.const	$push9=, 0
@@ -23,7 +23,7 @@ main:                                   # @main
 	i32.call	$push3=, strchr@FUNCTION, $pop2, $pop8
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $pop3, $pop12
-	br_if   	$pop13, 0       # 0: down to label1
+	br_if   	0, $pop13       # 0: down to label1
 # BB#2:                                 # %foo.exit
 	i32.const	$push4=, 0
 	return  	$pop4

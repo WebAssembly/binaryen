@@ -36,7 +36,7 @@ main:                                   # @main
 	i32.load	$push0=, b($pop9)
 	i32.const	$push8=, -20
 	i32.eq  	$push1=, $pop0, $pop8
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$push12=, 0
 	i32.load	$0=, a($pop12)
@@ -63,7 +63,7 @@ main:                                   # @main
 	i64.store	$discard=, 0($2), $pop3
 	i32.const	$push13=, -20
 	i32.ne  	$push7=, $3, $pop13
-	br_if   	$pop7, 0        # 0: up to label1
+	br_if   	0, $pop7        # 0: up to label1
 .LBB1_3:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:

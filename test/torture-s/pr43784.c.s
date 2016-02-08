@@ -23,7 +23,7 @@ main:                                   # @main
 	i32.add 	$0=, $pop0, $pop9
 	i32.const	$push8=, 256
 	i32.ne  	$push1=, $0, $pop8
-	br_if   	$pop1, 0        # 0: up to label0
+	br_if   	0, $pop1        # 0: up to label0
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
 	call    	rp@FUNCTION, $4
@@ -37,14 +37,14 @@ main:                                   # @main
 	loop                            # label3:
 	i32.load8_u	$push4=, v+4($0)
 	i32.ne  	$push5=, $0, $pop4
-	br_if   	$pop5, 2        # 2: down to label2
+	br_if   	2, $pop5        # 2: down to label2
 # BB#4:                                 # %for.cond1
                                         #   in Loop: Header=BB0_3 Depth=1
 	i32.const	$push11=, 1
 	i32.add 	$0=, $0, $pop11
 	i32.const	$push10=, 255
 	i32.le_s	$push6=, $0, $pop10
-	br_if   	$pop6, 0        # 0: up to label3
+	br_if   	0, $pop6        # 0: up to label3
 # BB#5:                                 # %for.end12
 	end_loop                        # label4:
 	i32.const	$push7=, 0

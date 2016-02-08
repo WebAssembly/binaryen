@@ -23,7 +23,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	tee_local	$push10=, $2=, $pop8
 	i32.const	$push21=, 0
 	i32.eq  	$push22=, $pop10, $pop21
-	br_if   	$pop22, 0       # 0: down to label0
+	br_if   	0, $pop22       # 0: down to label0
 # BB#1:                                 # %if.then.lr.ph
 	i32.const	$push16=, 0
 	i32.load	$push5=, flag($pop16)
@@ -45,7 +45,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	copy_local	$3=, $2
 	i32.const	$push17=, 7
 	i32.shr_u	$2=, $2, $pop17
-	br_if   	$2, 0           # 0: up to label1
+	br_if   	0, $2           # 0: up to label1
 .LBB0_3:                                # %do.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -75,14 +75,14 @@ main:                                   # @main
 	i32.const	$push10=, 0
 	i32.load8_u	$push4=, bytes($pop10)
 	i32.ne  	$push5=, $1, $pop4
-	br_if   	$pop5, 0        # 0: down to label3
+	br_if   	0, $pop5        # 0: down to label3
 # BB#1:                                 # %add_unwind_adjustsp.exit
 	i32.const	$push14=, 0
 	i32.load8_u	$push0=, bytes+1($pop14)
 	i32.const	$push6=, 255
 	i32.and 	$push7=, $pop0, $pop6
 	i32.ne  	$push8=, $pop7, $0
-	br_if   	$pop8, 0        # 0: down to label3
+	br_if   	0, $pop8        # 0: down to label3
 # BB#2:                                 # %if.end
 	i32.const	$push9=, 0
 	return  	$pop9

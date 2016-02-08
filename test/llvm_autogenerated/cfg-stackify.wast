@@ -113,12 +113,12 @@
     (return)
   )
   (func $doublediamond (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
+    (i32.store align=4
+      (get_local $$2)
+      (i32.const 0)
+    )
     (block $label$0
       (block $label$1
-        (i32.store align=4
-          (get_local $$2)
-          (i32.const 0)
-        )
         (br_if $label$1
           (get_local $$0)
         )
@@ -128,11 +128,11 @@
         )
         (br $label$0)
       )
+      (i32.store align=4
+        (get_local $$2)
+        (i32.const 2)
+      )
       (block $label$2
-        (i32.store align=4
-          (get_local $$2)
-          (i32.const 2)
-        )
         (br_if $label$2
           (get_local $$1)
         )
@@ -157,13 +157,13 @@
   )
   (func $triangle (param $$0 i32) (param $$1 i32) (result i32)
     (local $$2 i32)
-    (block $label$0
-      (set_local $$2
-        (i32.store align=4
-          (get_local $$0)
-          (i32.const 0)
-        )
+    (set_local $$2
+      (i32.store align=4
+        (get_local $$0)
+        (i32.const 0)
       )
+    )
+    (block $label$0
       (br_if $label$0
         (get_local $$1)
       )
@@ -181,12 +181,12 @@
     )
   )
   (func $diamond (param $$0 i32) (param $$1 i32) (result i32)
+    (i32.store align=4
+      (get_local $$0)
+      (i32.const 0)
+    )
     (block $label$0
       (block $label$1
-        (i32.store align=4
-          (get_local $$0)
-          (i32.const 0)
-        )
         (br_if $label$1
           (get_local $$1)
         )
@@ -257,21 +257,21 @@
   )
   (func $doubletriangle (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
     (local $$3 i32)
-    (block $label$0
-      (set_local $$3
-        (i32.store align=4
-          (get_local $$2)
-          (i32.const 0)
-        )
+    (set_local $$3
+      (i32.store align=4
+        (get_local $$2)
+        (i32.const 0)
       )
+    )
+    (block $label$0
       (br_if $label$0
         (get_local $$0)
       )
+      (i32.store align=4
+        (get_local $$2)
+        (i32.const 2)
+      )
       (block $label$1
-        (i32.store align=4
-          (get_local $$2)
-          (i32.const 2)
-        )
         (br_if $label$1
           (get_local $$1)
         )
@@ -294,12 +294,12 @@
     )
   )
   (func $ifelse_earlyexits (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
+    (i32.store align=4
+      (get_local $$2)
+      (i32.const 0)
+    )
     (block $label$0
       (block $label$1
-        (i32.store align=4
-          (get_local $$2)
-          (i32.const 0)
-        )
         (br_if $label$1
           (get_local $$0)
         )
@@ -331,12 +331,12 @@
   )
   (func $doublediamond_in_a_loop (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
     (loop $label$1 $label$0
+      (i32.store align=4
+        (get_local $$2)
+        (i32.const 0)
+      )
       (block $label$2
         (block $label$3
-          (i32.store align=4
-            (get_local $$2)
-            (i32.const 0)
-          )
           (br_if $label$3
             (get_local $$0)
           )
@@ -346,11 +346,11 @@
           )
           (br $label$2)
         )
+        (i32.store align=4
+          (get_local $$2)
+          (i32.const 2)
+        )
         (block $label$4
-          (i32.store align=4
-            (get_local $$2)
-            (i32.const 2)
-          )
           (br_if $label$4
             (get_local $$1)
           )
@@ -570,13 +570,13 @@
       )
     )
     (loop $label$1 $label$0
-      (block $label$2
-        (set_local $$0
-          (i32.store align=4
-            (get_local $$2)
-            (i32.const 1)
-          )
+      (set_local $$0
+        (i32.store align=4
+          (get_local $$2)
+          (i32.const 1)
         )
+      )
+      (block $label$2
         (br_if $label$2
           (get_local $$3)
         )
@@ -662,11 +662,11 @@
         )
       )
       (loop $label$3 $label$2
+        (i32.store align=4
+          (get_local $$0)
+          (i32.const 2)
+        )
         (block $label$4
-          (i32.store align=4
-            (get_local $$0)
-            (i32.const 2)
-          )
           (br_if $label$4
             (i32.eq
               (i32.and
@@ -784,11 +784,11 @@
                 )
               )
             )
+            (i32.store align=4
+              (get_local $$0)
+              (i32.const 1)
+            )
             (block $label$4
-              (i32.store align=4
-                (get_local $$0)
-                (i32.const 1)
-              )
               (br_if $label$4
                 (get_local $$0)
               )
@@ -912,7 +912,7 @@
     )
     (block $label$1
       (br_if $label$1
-        (get_local $$0)
+        (i32.const 0)
       )
       (set_local $$0
         (i32.const 0)

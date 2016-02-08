@@ -27,7 +27,7 @@ main:                                   # @main
 	i32.load	$push0=, g($pop8)
 	i32.const	$push13=, 0
 	i32.eq  	$push14=, $pop0, $pop13
-	br_if   	$pop14, 0       # 0: down to label0
+	br_if   	0, $pop14       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push9=, 0
 	i32.load	$discard=, b($pop9)
@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.select	$push4=, $pop2, $2, $1
 	i32.store	$push5=, h($2), $pop4
 	i32.store	$push6=, a($2), $pop5
-	br_if   	$pop6, 0        # 0: down to label1
+	br_if   	0, $pop6        # 0: down to label1
 # BB#3:                                 # %if.end16
 	i32.const	$push7=, 0
 	return  	$pop7

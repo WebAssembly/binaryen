@@ -8,7 +8,7 @@ foo:
 	block
 	i32.const	$push3=, 1
 	i32.lt_s	$push0=, $2, $pop3
-	br_if   	$pop0, 0
+	br_if   	0, $pop0
 	i32.const	$push1=, 2
 	i32.shl 	$3=, $1, $pop1
 	i32.const	$5=, 0
@@ -20,7 +20,7 @@ foo:
 	copy_local	$7=, $0
 	copy_local	$8=, $1
 	block
-	br_if   	$4, 0
+	br_if   	0, $4
 .LBB0_3:
 	loop
 	i32.store	$discard=, 0($7), $6
@@ -29,7 +29,7 @@ foo:
 	i32.const	$push5=, 4
 	i32.add 	$7=, $7, $pop5
 	i32.add 	$6=, $6, $5
-	br_if   	$8, 0
+	br_if   	0, $8
 .LBB0_4:
 	end_loop
 	end_block
@@ -37,7 +37,7 @@ foo:
 	i32.add 	$5=, $5, $pop7
 	i32.add 	$0=, $0, $3
 	i32.ne  	$push2=, $5, $2
-	br_if   	$pop2, 0
+	br_if   	0, $pop2
 .LBB0_5:
 	end_loop
 	end_block

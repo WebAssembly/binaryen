@@ -371,7 +371,7 @@ test:                                   # @test
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
 	i32.ne  	$push2=, $pop1, $1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end44
 	return
 .LBB24_2:                               # %if.then
@@ -393,7 +393,7 @@ testu:                                  # @testu
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
 	i32.ne  	$push2=, $pop1, $1
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %if.end44
 	return
 .LBB25_2:                               # %if.then

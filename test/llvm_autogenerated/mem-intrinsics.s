@@ -99,12 +99,12 @@ discard_result:
 	block
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $3, $pop0
-	br_if   	$pop1, 0
+	br_if   	0, $pop1
 	i32.call	$0=, def@FUNCTION
 	br      	1
 .LBB7_2:
 	end_block
-	br_if   	$4, 0
+	br_if   	0, $4
 	i32.call	$discard=, memset@FUNCTION, $0, $1, $2
 .LBB7_4:
 	end_block

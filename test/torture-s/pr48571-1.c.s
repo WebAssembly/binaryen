@@ -17,7 +17,7 @@ bar:                                    # @bar
 	i32.store	$discard=, c+2496($0), $pop1
 	i32.const	$push2=, 4
 	i32.add 	$0=, $0, $pop2
-	br_if   	$0, 0           # 0: up to label0
+	br_if   	0, $0           # 0: up to label0
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
 	return
@@ -41,7 +41,7 @@ main:                                   # @main
 	i32.store	$discard=, c+2496($0), $pop5
 	i32.const	$push4=, 4
 	i32.add 	$0=, $0, $pop4
-	br_if   	$0, 0           # 0: up to label2
+	br_if   	0, $0           # 0: up to label2
 # BB#2:                                 # %for.end
 	end_loop                        # label3:
 	call    	bar@FUNCTION
@@ -54,7 +54,7 @@ main:                                   # @main
 	loop                            # label5:
 	i32.load	$push0=, 0($0)
 	i32.ne  	$push1=, $pop0, $1
-	br_if   	$pop1, 2        # 2: down to label4
+	br_if   	2, $pop1        # 2: down to label4
 # BB#4:                                 # %if.end
                                         #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$push9=, 1
@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.add 	$0=, $0, $pop7
 	i32.const	$push6=, 624
 	i32.lt_u	$push2=, $2, $pop6
-	br_if   	$pop2, 0        # 0: up to label5
+	br_if   	0, $pop2        # 0: up to label5
 # BB#5:                                 # %for.end8
 	end_loop                        # label6:
 	i32.const	$push3=, 0

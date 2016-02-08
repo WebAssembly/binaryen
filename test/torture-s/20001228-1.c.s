@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.store	$push1=, 12($2), $pop0
 	i32.load8_u	$push2=, 12($2):p2align=2
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4

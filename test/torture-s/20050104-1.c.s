@@ -10,7 +10,7 @@ foo:                                    # @foo
 	block
 	i64.const	$push0=, 10
 	i64.gt_s	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	return
 .LBB0_2:                                # %if.then

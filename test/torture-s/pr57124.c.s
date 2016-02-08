@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.load16_u	$push0=, 0($0)
 	i32.const	$push1=, 4095
 	i32.gt_u	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable

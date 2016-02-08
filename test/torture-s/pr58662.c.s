@@ -29,7 +29,7 @@ main:                                   # @main
 	block
 	i32.const	$push12=, 0
 	i32.load	$push11=, b($pop12)
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push20=, 0
 	return  	$pop20

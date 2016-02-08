@@ -13,7 +13,7 @@ ru:                                     # @ru
 	i32.and 	$push0=, $0, $pop8
 	i32.const	$push1=, 5
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i32.const	$push3=, 2
@@ -22,7 +22,7 @@ ru:                                     # @ru
 	i32.and 	$push5=, $pop4, $pop9
 	i32.const	$push6=, 7
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label1
 # BB#2:                                 # %if.end8
 	return  	$0
 .LBB0_3:                                # %if.then7
@@ -50,7 +50,7 @@ rs:                                     # @rs
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 5
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label2
+	br_if   	0, $pop3        # 0: down to label2
 # BB#1:                                 # %if.end8
 	return  	$0
 .LBB1_2:                                # %if.then

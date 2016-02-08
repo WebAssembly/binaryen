@@ -13,17 +13,17 @@ doit:                                   # @doit
 	block
 	i32.const	$push19=, 0
 	i32.eq  	$push20=, $0, $pop19
-	br_if   	$pop20, 0       # 0: down to label1
+	br_if   	0, $pop20       # 0: down to label1
 # BB#1:                                 # %entry
 	block
 	i32.const	$push9=, 1
 	i32.eq  	$push3=, $0, $pop9
-	br_if   	$pop3, 0        # 0: down to label2
+	br_if   	0, $pop3        # 0: down to label2
 # BB#2:                                 # %entry
 	block
 	i32.const	$push4=, 2
 	i32.ne  	$push5=, $0, $pop4
-	br_if   	$pop5, 0        # 0: down to label3
+	br_if   	0, $pop5        # 0: down to label3
 # BB#3:                                 # %do.body11.preheader
 	i64.load	$3=, 0($2)
 .LBB0_4:                                # %do.body11
@@ -35,7 +35,7 @@ doit:                                   # @doit
 	tee_local	$push17=, $5=, $pop2
 	i64.const	$push16=, 1
 	i64.shl 	$3=, $pop17, $pop16
-	br_if   	$1, 0           # 0: up to label4
+	br_if   	0, $1           # 0: up to label4
 # BB#5:                                 # %do.end16
 	end_loop                        # label5:
 	i64.store	$discard=, 0($2), $3
@@ -58,7 +58,7 @@ doit:                                   # @doit
 	tee_local	$push14=, $4=, $pop1
 	i32.const	$push13=, 1
 	i32.shl 	$0=, $pop14, $pop13
-	br_if   	$1, 0           # 0: up to label6
+	br_if   	0, $1           # 0: up to label6
 # BB#9:                                 # %do.end7
 	end_loop                        # label7:
 	i32.store	$discard=, 0($2), $0
@@ -77,7 +77,7 @@ doit:                                   # @doit
 	tee_local	$push11=, $4=, $pop0
 	i32.const	$push10=, 1
 	i32.shl 	$0=, $pop11, $pop10
-	br_if   	$1, 0           # 0: up to label8
+	br_if   	0, $1           # 0: up to label8
 # BB#12:                                # %do.end
 	end_loop                        # label9:
 	i32.store	$discard=, 0($2), $0

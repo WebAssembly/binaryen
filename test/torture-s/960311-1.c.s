@@ -29,7 +29,7 @@ b:                                      # @b
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push21=, 0
 	i32.eq  	$push22=, $pop1, $pop21
-	br_if   	$pop22, 0       # 0: down to label0
+	br_if   	0, $pop22       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
 	i32.const	$push18=, 0
@@ -44,7 +44,7 @@ b:                                      # @b
 	i32.and 	$push7=, $0, $pop6
 	i32.const	$push23=, 0
 	i32.eq  	$push24=, $pop7, $pop23
-	br_if   	$pop24, 0       # 0: down to label1
+	br_if   	0, $pop24       # 0: down to label1
 # BB#3:                                 # %if.then6
 	i32.const	$push8=, 0
 	i32.const	$push19=, 0
@@ -59,7 +59,7 @@ b:                                      # @b
 	i32.and 	$push13=, $0, $pop12
 	i32.const	$push25=, 0
 	i32.eq  	$push26=, $pop13, $pop25
-	br_if   	$pop26, 0       # 0: down to label2
+	br_if   	0, $pop26       # 0: down to label2
 # BB#5:                                 # %if.then14
 	i32.const	$push14=, 0
 	i32.const	$push20=, 0

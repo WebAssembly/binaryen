@@ -16,13 +16,13 @@ main:                                   # @main
 	i32.trunc_s/f64	$push3=, $pop10
 	i32.const	$push9=, 1023
 	i32.ne  	$push4=, $pop3, $pop9
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	f32.demote/f64	$push5=, $0
 	i32.trunc_s/f32	$push6=, $pop5
 	i32.const	$push11=, 1023
 	i32.ne  	$push7=, $pop6, $pop11
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push8=, 0
 	return  	$pop8

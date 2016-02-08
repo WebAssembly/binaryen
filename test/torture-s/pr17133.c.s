@@ -21,13 +21,13 @@ pure_alloc:                             # @pure_alloc
 	i32.add 	$push1=, $pop11, $pop10
 	i32.store	$push2=, foo($pop13), $pop1
 	i32.lt_u	$push3=, $pop2, $1
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 .LBB0_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push16=, 2
 	i32.le_u	$push4=, $1, $pop16
-	br_if   	$pop4, 0        # 0: up to label1
+	br_if   	0, $pop4        # 0: up to label1
 # BB#2:                                 # %while.body.if.then_crit_edge
 	end_loop                        # label2:
 	i32.const	$2=, 0
@@ -65,9 +65,9 @@ main:                                   # @main
 	i32.store	$push4=, foo($pop13), $pop0
 	tee_local	$push11=, $1=, $pop4
 	i32.ge_u	$push5=, $pop11, $0
-	br_if   	$pop5, 0        # 0: down to label5
+	br_if   	0, $pop5        # 0: down to label5
 # BB#1:                                 # %pure_alloc.exit
-	br_if   	$1, 1           # 1: down to label4
+	br_if   	1, $1           # 1: down to label4
 # BB#2:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable
@@ -75,7 +75,7 @@ main:                                   # @main
 	end_block                       # label5:
 	i32.const	$push6=, 3
 	i32.lt_u	$push7=, $0, $pop6
-	br_if   	$pop7, 1        # 1: down to label3
+	br_if   	1, $pop7        # 1: down to label3
 # BB#4:                                 # %pure_alloc.exit.thread.split
 	i32.const	$push8=, 0
 	i32.const	$push9=, 2

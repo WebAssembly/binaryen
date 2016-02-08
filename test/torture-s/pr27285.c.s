@@ -13,7 +13,7 @@ foo:                                    # @foo
 	tee_local	$push9=, $2=, $pop8
 	i32.const	$push20=, 0
 	i32.eq  	$push21=, $pop9, $pop20
-	br_if   	$pop21, 0       # 0: down to label0
+	br_if   	0, $pop21       # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push0=, 3
 	i32.add 	$0=, $0, $pop0
@@ -42,7 +42,7 @@ foo:                                    # @foo
 	i32.add 	$0=, $0, $pop12
 	i32.const	$push11=, 1
 	i32.add 	$1=, $1, $pop11
-	br_if   	$2, 0           # 0: up to label1
+	br_if   	0, $2           # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -110,28 +110,28 @@ main:                                   # @main
 	i32.load8_u	$push18=, 0($pop17)
 	i32.const	$push19=, 170
 	i32.ne  	$push20=, $pop18, $pop19
-	br_if   	$pop20, 0       # 0: down to label3
+	br_if   	0, $pop20       # 0: down to label3
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push21=, 4
 	i32.or  	$push22=, $8, $pop21
 	i32.load8_u	$push23=, 0($pop22):p2align=2
 	i32.const	$push24=, 187
 	i32.ne  	$push25=, $pop23, $pop24
-	br_if   	$pop25, 0       # 0: down to label3
+	br_if   	0, $pop25       # 0: down to label3
 # BB#2:                                 # %lor.lhs.false13
 	i32.const	$push26=, 5
 	i32.or  	$push27=, $8, $pop26
 	i32.load8_u	$push28=, 0($pop27)
 	i32.const	$push29=, 204
 	i32.ne  	$push30=, $pop28, $pop29
-	br_if   	$pop30, 0       # 0: down to label3
+	br_if   	0, $pop30       # 0: down to label3
 # BB#3:                                 # %lor.lhs.false22
 	i32.const	$push31=, 6
 	i32.or  	$push32=, $8, $pop31
 	i32.load8_u	$push33=, 0($pop32):p2align=1
 	i32.const	$push34=, 128
 	i32.ne  	$push35=, $pop33, $pop34
-	br_if   	$pop35, 0       # 0: down to label3
+	br_if   	0, $pop35       # 0: down to label3
 # BB#4:                                 # %if.end
 	i32.const	$push36=, 0
 	i32.const	$3=, 48

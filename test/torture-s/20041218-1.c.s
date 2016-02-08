@@ -56,25 +56,25 @@ check:                                  # @check
 # BB#0:                                 # %entry
 	block
 	i32.load	$push0=, 0($1)
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push1=, 4($1)
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false2
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $1, $pop2
 	i32.load	$push4=, 0($pop3)
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false5
 	i32.const	$push5=, 12
 	i32.add 	$push6=, $1, $pop5
 	i32.load	$push7=, 0($pop6)
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#4:                                 # %lor.lhs.false8
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $1, $pop8
 	i32.load8_u	$push10=, 0($pop9):p2align=2
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#5:                                 # %if.end
 	i32.const	$push11=, 1
 	return  	$pop11
@@ -101,13 +101,13 @@ foo:                                    # @foo
 	block
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $1, $pop9
-	br_if   	$pop10, 0       # 0: down to label2
+	br_if   	0, $pop10       # 0: down to label2
 # BB#1:                                 # %for.body
 	i32.const	$2=, 1
 	i32.load	$push1=, 0($0)
 	i32.const	$push7=, 1
 	i32.ne  	$push2=, $pop1, $pop7
-	br_if   	$pop2, 1        # 1: down to label1
+	br_if   	1, $pop2        # 1: down to label1
 # BB#2:                                 # %sw.bb
 	i32.const	$push4=, 0
 	i32.const	$push3=, 1

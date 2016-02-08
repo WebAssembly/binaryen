@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/legalize.ll"
+	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/legalize.ll"
 	.globl	shl_i3
 	.type	shl_i3,@function
 shl_i3:

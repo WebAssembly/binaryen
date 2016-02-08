@@ -59,7 +59,7 @@ main:                                   # @main
 	i32.store	$push6=, v($pop11), $pop5
 	i32.const	$push8=, 65535
 	i32.ne  	$push7=, $pop6, $pop8
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push12=, 0
 	return  	$pop12

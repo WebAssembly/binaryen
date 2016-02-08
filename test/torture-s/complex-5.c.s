@@ -73,14 +73,14 @@ main:                                   # @main
 	f32.store	$discard=, y+4($pop18), $pop14
 	block
 	f32.ne  	$push15=, $1, $3
-	br_if   	$pop15, 0       # 0: down to label0
+	br_if   	0, $pop15       # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push30=, 0
 	f32.load	$push0=, z+4($pop30)
 	i32.const	$push29=, 0
 	f32.load	$push1=, w+4($pop29)
 	f32.ne  	$push16=, $pop0, $pop1
-	br_if   	$pop16, 0       # 0: down to label0
+	br_if   	0, $pop16       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push17=, 0
 	call    	exit@FUNCTION, $pop17

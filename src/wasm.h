@@ -501,13 +501,13 @@ public:
 
 class Break : public Expression {
 public:
-  Break() : Expression(BreakId), condition(nullptr), value(nullptr) {
+  Break() : Expression(BreakId), value(nullptr), condition(nullptr) {
     type = unreachable;
   }
 
-  Expression *condition;
   Name name;
   Expression *value;
+  Expression *condition;
 
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     if (condition) {

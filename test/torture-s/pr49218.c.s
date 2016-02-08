@@ -32,7 +32,7 @@ main:                                   # @main
 	i64.const	$push14=, 0
 	i64.eq  	$push3=, $4, $pop14
 	i32.select	$push7=, $pop6, $pop4, $pop3
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -51,7 +51,7 @@ main:                                   # @main
 	i64.or  	$push10=, $4, $pop9
 	i64.const	$push19=, 0
 	i64.ne  	$push11=, $pop10, $pop19
-	br_if   	$pop11, 0       # 0: up to label1
+	br_if   	0, $pop11       # 0: up to label1
 .LBB0_2:                                # %if.end
 	end_loop                        # label2:
 	end_block                       # label0:

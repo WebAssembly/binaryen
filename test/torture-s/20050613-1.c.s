@@ -9,18 +9,18 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	block
 	i32.load	$push0=, 0($0)
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push1=, 4($0)
 	i32.const	$push2=, 5
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false2
 	i32.load	$push4=, 8($0)
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false4
 	i32.load	$push5=, 12($0)
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#4:                                 # %if.end
 	return
 .LBB0_5:                                # %if.then

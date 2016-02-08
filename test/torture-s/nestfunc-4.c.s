@@ -64,7 +64,7 @@ bar:                                    # @bar
 	tee_local	$push5=, $1=, $pop0
 	i32.const	$push2=, 499
 	i32.gt_s	$push3=, $pop5, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %cond.false
 	i32.call	$0=, foo@FUNCTION
 .LBB2_2:                                # %cond.end

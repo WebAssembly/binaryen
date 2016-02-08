@@ -12,7 +12,7 @@ bar:                                    # @bar
 	i64.load	$push0=, 0($0):p2align=0
 	i64.const	$push1=, 368664092428289
 	i64.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push3=, 7
 	i32.add 	$1=, $0, $pop3
@@ -23,14 +23,14 @@ bar:                                    # @bar
 	loop                            # label2:
 	i32.add 	$push4=, $1, $0
 	i32.load8_u	$push5=, 0($pop4)
-	br_if   	$pop5, 2        # 2: down to label1
+	br_if   	2, $pop5        # 2: down to label1
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push8=, 1
 	i32.add 	$0=, $0, $pop8
 	i32.const	$push7=, 2040
 	i32.le_u	$push6=, $0, $pop7
-	br_if   	$pop6, 0        # 0: up to label2
+	br_if   	0, $pop6        # 0: up to label2
 # BB#4:                                 # %for.end
 	end_loop                        # label3:
 	return
@@ -77,7 +77,7 @@ foo:                                    # @foo
 	i64.load	$push7=, a($pop16):p2align=0
 	i64.const	$push8=, 368664092428289
 	i64.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label4
+	br_if   	0, $pop9        # 0: down to label4
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	block
@@ -86,7 +86,7 @@ foo:                                    # @foo
 	i32.add 	$push11=, $1, $pop10
 	i32.const	$push12=, 2040
 	i32.gt_u	$push13=, $pop11, $pop12
-	br_if   	$pop13, 2       # 2: down to label5
+	br_if   	2, $pop13       # 2: down to label5
 # BB#2:                                 # %for.cond.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.load8_u	$0=, a($1)
@@ -94,7 +94,7 @@ foo:                                    # @foo
 	i32.add 	$1=, $1, $pop15
 	i32.const	$push23=, 0
 	i32.eq  	$push24=, $0, $pop23
-	br_if   	$pop24, 0       # 0: up to label6
+	br_if   	0, $pop24       # 0: up to label6
 # BB#3:                                 # %if.then2.i
 	end_loop                        # label7:
 	call    	abort@FUNCTION
@@ -142,7 +142,7 @@ main:                                   # @main
 	i64.load	$push7=, a($pop16):p2align=0
 	i64.const	$push8=, 368664092428289
 	i64.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label8
+	br_if   	0, $pop9        # 0: down to label8
 .LBB2_1:                                # %for.cond.i.i
                                         # =>This Inner Loop Header: Depth=1
 	block
@@ -151,7 +151,7 @@ main:                                   # @main
 	i32.add 	$push11=, $1, $pop10
 	i32.const	$push12=, 2040
 	i32.gt_u	$push13=, $pop11, $pop12
-	br_if   	$pop13, 2       # 2: down to label9
+	br_if   	2, $pop13       # 2: down to label9
 # BB#2:                                 # %for.cond.i.for.body.i_crit_edge.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$0=, a($1)
@@ -159,7 +159,7 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop15
 	i32.const	$push23=, 0
 	i32.eq  	$push24=, $0, $pop23
-	br_if   	$pop24, 0       # 0: up to label10
+	br_if   	0, $pop24       # 0: up to label10
 # BB#3:                                 # %if.then2.i.i
 	end_loop                        # label11:
 	call    	abort@FUNCTION

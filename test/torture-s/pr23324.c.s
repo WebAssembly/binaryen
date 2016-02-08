@@ -13,35 +13,35 @@ main:                                   # @main
 	f64.load	$push2=, wv6+32($pop13)
 	tee_local	$push12=, $0=, $pop2
 	f64.ne  	$push3=, $pop12, $0
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %caller_bf6.exit
 	block
 	i32.const	$push15=, 0
 	f32.load	$push4=, yv7($pop15):p2align=3
 	tee_local	$push14=, $1=, $pop4
 	f32.ne  	$push5=, $pop14, $1
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#2:                                 # %if.end26.i.i
 	block
 	i32.const	$push6=, 0
 	f64.load	$push7=, yv7+16($pop6)
 	tee_local	$push16=, $0=, $pop7
 	f64.ne  	$push8=, $pop16, $0
-	br_if   	$pop8, 0        # 0: down to label2
+	br_if   	0, $pop8        # 0: down to label2
 # BB#3:                                 # %if.end30.i.i
 	block
 	i32.const	$push18=, 0
 	f32.load	$push1=, yv7+24($pop18):p2align=3
 	tee_local	$push17=, $1=, $pop1
 	f32.ne  	$push9=, $pop17, $1
-	br_if   	$pop9, 0        # 0: down to label3
+	br_if   	0, $pop9        # 0: down to label3
 # BB#4:                                 # %if.end34.i.i
 	block
 	i32.const	$push20=, 0
 	f32.load	$push0=, zv7($pop20)
 	tee_local	$push19=, $1=, $pop0
 	f32.ne  	$push10=, $pop19, $1
-	br_if   	$pop10, 0       # 0: down to label4
+	br_if   	0, $pop10       # 0: down to label4
 # BB#5:                                 # %caller_bf7.exit
 	i32.const	$push11=, 0
 	return  	$pop11

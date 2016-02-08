@@ -30,12 +30,12 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 	tee_local	$push8=, $3=, $pop0
 	i32.load	$push6=, 8($pop8)
 	tee_local	$push7=, $2=, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.then.i
 	block
 	i32.load	$push5=, 4($3)
 	tee_local	$push9=, $2=, $pop5
-	br_if   	$pop9, 0        # 0: down to label1
+	br_if   	0, $pop9        # 0: down to label1
 # BB#2:                                 # %if.then3.i
 	i32.const	$push1=, 4
 	i32.add 	$push2=, $3, $pop1
@@ -69,7 +69,7 @@ main:                                   # @main
 	i32.call	$push3=, elf64_ia64_check_relocs@FUNCTION, $pop2, $pop1
 	i32.const	$push5=, abfd
 	i32.ne  	$push4=, $pop3, $pop5
-	br_if   	$pop4, 0        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push7=, 0
 	return  	$pop7

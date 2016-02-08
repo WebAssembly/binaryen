@@ -14,7 +14,7 @@ g:                                      # @g
 	block
 	i32.const	$push1=, 1
 	i32.lt_s	$push2=, $1, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i64.extend_s/i32	$4=, $3
 	copy_local	$3=, $1
@@ -28,7 +28,7 @@ g:                                      # @g
 	i32.add 	$2=, $2, $pop6
 	i32.const	$push5=, -1
 	i32.add 	$3=, $3, $pop5
-	br_if   	$3, 0           # 0: up to label1
+	br_if   	0, $3           # 0: up to label1
 # BB#3:                                 # %for.cond.for.end_crit_edge
 	end_loop                        # label2:
 	i64.store	$discard=, 0($0), $5

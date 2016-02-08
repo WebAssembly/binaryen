@@ -13,7 +13,7 @@ f:                                      # @f
 	block
 	i32.const	$push6=, 0
 	i32.gt_s	$push0=, $0, $pop6
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push1=, 65535
 	i32.and 	$push2=, $0, $pop1
@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.call	$push1=, f@FUNCTION, $pop0
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4

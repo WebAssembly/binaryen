@@ -13,7 +13,7 @@ foo:                                    # @foo
 	tee_local	$push10=, $1=, $pop0
 	i32.const	$push9=, 0
 	i32.gt_s	$push2=, $pop10, $pop9
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push3=, 2
 	i32.shl 	$push4=, $1, $pop3
@@ -24,13 +24,13 @@ foo:                                    # @foo
 	i32.load	$push5=, 0($1)
 	i32.const	$push12=, 1
 	i32.le_s	$push6=, $pop5, $pop12
-	br_if   	$pop6, 1        # 1: down to label2
+	br_if   	1, $pop6        # 1: down to label2
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push11=, 4
 	i32.add 	$1=, $1, $pop11
 	i32.le_u	$push7=, $1, $0
-	br_if   	$pop7, 0        # 0: up to label1
+	br_if   	0, $pop7        # 0: up to label1
 	br      	2               # 2: down to label0
 .LBB0_4:                                # %if.then
 	end_loop                        # label2:

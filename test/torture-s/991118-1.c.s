@@ -90,7 +90,7 @@ main:                                   # @main
 	i64.and 	$push12=, $1, $pop11
 	i64.const	$push13=, -7687337405579571200
 	i64.ne  	$push14=, $pop12, $pop13
-	br_if   	$pop14, 0       # 0: down to label0
+	br_if   	0, $pop14       # 0: down to label0
 # BB#1:                                 # %entry
 	i64.const	$push8=, 52
 	i64.shl 	$push9=, $3, $pop8
@@ -99,7 +99,7 @@ main:                                   # @main
 	i32.wrap/i64	$push2=, $pop10
 	i32.const	$push51=, 291
 	i32.ne  	$push15=, $pop2, $pop51
-	br_if   	$pop15, 0       # 0: down to label0
+	br_if   	0, $pop15       # 0: down to label0
 # BB#2:                                 # %if.end
 	block
 	i64.const	$push17=, 52
@@ -107,13 +107,13 @@ main:                                   # @main
 	i32.wrap/i64	$push19=, $pop18
 	i32.const	$push53=, 291
 	i32.ne  	$push21=, $pop19, $pop53
-	br_if   	$pop21, 0       # 0: down to label1
+	br_if   	0, $pop21       # 0: down to label1
 # BB#3:                                 # %if.end
 	i64.const	$push20=, 4503599627370495
 	i64.and 	$push16=, $2, $pop20
 	i64.const	$push22=, 2626808268586421
 	i64.ne  	$push23=, $pop16, $pop22
-	br_if   	$pop23, 0       # 0: down to label1
+	br_if   	0, $pop23       # 0: down to label1
 # BB#4:                                 # %if.end19
 	i32.const	$push25=, 0
 	i64.load	$0=, tmp4($pop25)
@@ -133,7 +133,7 @@ main:                                   # @main
 	i64.and 	$push34=, $1, $pop33
 	i64.const	$push35=, -3725223934242340864
 	i64.ne  	$push36=, $pop34, $pop35
-	br_if   	$pop36, 0       # 0: down to label2
+	br_if   	0, $pop36       # 0: down to label2
 # BB#5:                                 # %if.end19
 	i64.const	$push30=, 53
 	i64.shl 	$push31=, $3, $pop30
@@ -142,7 +142,7 @@ main:                                   # @main
 	i32.wrap/i64	$push24=, $pop32
 	i32.const	$push58=, 291
 	i32.ne  	$push37=, $pop24, $pop58
-	br_if   	$pop37, 0       # 0: down to label2
+	br_if   	0, $pop37       # 0: down to label2
 # BB#6:                                 # %if.end34
 	block
 	i64.const	$push39=, 53
@@ -150,13 +150,13 @@ main:                                   # @main
 	i32.wrap/i64	$push41=, $pop40
 	i32.const	$push60=, 291
 	i32.ne  	$push43=, $pop41, $pop60
-	br_if   	$pop43, 0       # 0: down to label3
+	br_if   	0, $pop43       # 0: down to label3
 # BB#7:                                 # %if.end34
 	i64.const	$push42=, 9007199254740991
 	i64.and 	$push38=, $2, $pop42
 	i64.const	$push44=, 7188242255599224
 	i64.ne  	$push45=, $pop38, $pop44
-	br_if   	$pop45, 0       # 0: down to label3
+	br_if   	0, $pop45       # 0: down to label3
 # BB#8:                                 # %if.end47
 	i32.const	$push46=, 0
 	call    	exit@FUNCTION, $pop46

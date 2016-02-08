@@ -13,10 +13,10 @@ foo:                                    # @foo
 	block
 	i32.const	$push0=, 13
 	i32.eq  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$1=, 1
-	br_if   	$0, 1           # 1: down to label0
+	br_if   	1, $0           # 1: down to label0
 .LBB0_2:                                # %if.end
 	end_block                       # label1:
 	i32.const	$1=, -1
@@ -53,14 +53,14 @@ main:                                   # @main
 	i32.shl 	$push5=, $pop4, $pop12
 	i32.sub 	$push6=, $pop3, $pop5
 	i32.ne  	$push7=, $pop0, $pop6
-	br_if   	$pop7, 2        # 2: down to label2
+	br_if   	2, $pop7        # 2: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push11=, 1
 	i32.add 	$0=, $0, $pop11
 	i32.const	$push10=, 29
 	i32.le_s	$push8=, $0, $pop10
-	br_if   	$pop8, 0        # 0: up to label3
+	br_if   	0, $pop8        # 0: up to label3
 # BB#3:                                 # %for.end
 	end_loop                        # label4:
 	i32.const	$push9=, 0

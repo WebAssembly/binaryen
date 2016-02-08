@@ -109,19 +109,19 @@ main:                                   # @main
 	i32.call	$push2=, bar@FUNCTION, $pop1
 	i32.const	$push12=, 8
 	i32.ne  	$push3=, $pop2, $pop12
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false3
 	i32.const	$push4=, 0
 	i32.call	$push5=, baz@FUNCTION, $pop4
 	i32.const	$push13=, 8
 	i32.ne  	$push6=, $pop5, $pop13
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false6
 	i32.const	$push7=, 1
 	i32.call	$push8=, baz@FUNCTION, $pop7
 	i32.const	$push9=, 6
 	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#3:                                 # %if.end
 	i32.const	$push11=, 0
 	return  	$pop11

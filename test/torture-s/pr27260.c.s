@@ -34,14 +34,14 @@ main:                                   # @main
 	block
 	loop                            # label1:
 	i32.load8_u	$push1=, buf($1)
-	br_if   	$pop1, 2        # 2: down to label0
+	br_if   	2, $pop1        # 2: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push14=, 1
 	i32.add 	$1=, $1, $pop14
 	i32.const	$push13=, 63
 	i32.le_s	$push2=, $1, $pop13
-	br_if   	$pop2, 0        # 0: up to label1
+	br_if   	0, $pop2        # 0: up to label1
 # BB#3:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push3=, buf
@@ -55,7 +55,7 @@ main:                                   # @main
 	loop                            # label4:
 	i32.const	$push16=, 63
 	i32.gt_s	$push5=, $1, $pop16
-	br_if   	$pop5, 2        # 2: down to label3
+	br_if   	2, $pop5        # 2: down to label3
 # BB#5:                                 # %for.cond3.for.body6_crit_edge
                                         #   in Loop: Header=BB1_4 Depth=1
 	i32.load8_u	$0=, buf($1)
@@ -63,7 +63,7 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop18
 	i32.const	$push17=, 1
 	i32.eq  	$push11=, $0, $pop17
-	br_if   	$pop11, 0       # 0: up to label4
+	br_if   	0, $pop11       # 0: up to label4
 # BB#6:                                 # %if.then11
 	end_loop                        # label5:
 	call    	abort@FUNCTION
@@ -81,7 +81,7 @@ main:                                   # @main
 	loop                            # label7:
 	i32.const	$push19=, 63
 	i32.gt_s	$push9=, $1, $pop19
-	br_if   	$pop9, 2        # 2: down to label6
+	br_if   	2, $pop9        # 2: down to label6
 # BB#9:                                 # %for.cond16.for.body19_crit_edge
                                         #   in Loop: Header=BB1_8 Depth=1
 	i32.load8_u	$0=, buf($1)
@@ -89,7 +89,7 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop20
 	i32.const	$push21=, 0
 	i32.eq  	$push22=, $0, $pop21
-	br_if   	$pop22, 0       # 0: up to label7
+	br_if   	0, $pop22       # 0: up to label7
 # BB#10:                                # %if.then24
 	end_loop                        # label8:
 	call    	abort@FUNCTION

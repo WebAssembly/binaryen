@@ -69,7 +69,7 @@ stack_uses:
 	i32.xor 	$push7=, $pop5, $pop6
 	i32.const	$push10=, 1
 	i32.ne  	$push8=, $pop7, $pop10
-	br_if   	$pop8, 0
+	br_if   	0, $pop8
 	i32.const	$push9=, 0
 	return  	$pop9
 .LBB4_2:
@@ -89,9 +89,9 @@ multiple_uses:
 	i32.load	$push0=, 0($2)
 	tee_local	$push3=, $3=, $pop0
 	i32.ge_u	$push1=, $pop3, $1
-	br_if   	$pop1, 0
+	br_if   	0, $pop1
 	i32.lt_u	$push2=, $3, $0
-	br_if   	$pop2, 0
+	br_if   	0, $pop2
 	i32.store	$discard=, 0($2), $3
 .LBB5_3:
 	end_block
@@ -179,5 +179,22 @@ commute:
 	.endfunc
 .Lfunc_end10:
 	.size	commute, .Lfunc_end10-commute
+
+	.globl	no_stackify_past_use
+	.type	no_stackify_past_use,@function
+no_stackify_past_use:
+	.param  	i32
+	.result 	i32
+	.local  	i32
+	i32.call	$1=, callee@FUNCTION, $0
+	i32.const	$push0=, 1
+	i32.add 	$push1=, $0, $pop0
+	i32.call	$push2=, callee@FUNCTION, $pop1
+	i32.add 	$push3=, $1, $pop2
+	i32.mul 	$push4=, $1, $pop3
+	return  	$pop4
+	.endfunc
+.Lfunc_end11:
+	.size	no_stackify_past_use, .Lfunc_end11-no_stackify_past_use
 
 

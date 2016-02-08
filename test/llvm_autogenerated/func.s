@@ -48,7 +48,7 @@ f4:
 	i32.and 	$push0=, $0, $pop2
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $pop0, $pop4
-	br_if   	$pop5, 0
+	br_if   	0, $pop5
 	i32.const	$push1=, 0
 	return  	$pop1
 .LBB4_2:

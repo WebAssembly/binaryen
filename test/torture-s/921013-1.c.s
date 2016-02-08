@@ -11,7 +11,7 @@ f:                                      # @f
 	block
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $3, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -27,7 +27,7 @@ f:                                      # @f
 	i32.add 	$0=, $0, $pop5
 	i32.const	$push0=, -1
 	i32.add 	$3=, $3, $pop0
-	br_if   	$3, 0           # 0: up to label1
+	br_if   	0, $3           # 0: up to label1
 .LBB0_2:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:

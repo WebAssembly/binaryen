@@ -25,7 +25,7 @@ main:                                   # @main
 	i32.const	$push7=, 0
 	i32.load	$push5=, expectedwidth($pop7)
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end26
 	i32.const	$push12=, 0
 	call    	exit@FUNCTION, $pop12

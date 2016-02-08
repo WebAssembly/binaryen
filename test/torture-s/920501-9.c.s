@@ -89,7 +89,7 @@ print_longlong:                         # @print_longlong
 	tee_local	$push6=, $3=, $pop0
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label1
+	br_if   	0, $pop8        # 0: down to label1
 # BB#1:                                 # %if.then
 	i32.const	$4=, __stack_pointer
 	i32.load	$4=, 0($4)
@@ -175,7 +175,7 @@ main:                                   # @main
 	i32.add 	$24=, $33, $24
 	i32.call	$0=, strcmp@FUNCTION, $pop1, $24
 	block
-	br_if   	$0, 0           # 0: down to label2
+	br_if   	0, $0           # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$5=, __stack_pointer
 	i32.load	$5=, 0($5)
@@ -200,7 +200,7 @@ main:                                   # @main
 	i32.add 	$26=, $33, $26
 	i32.call	$0=, strcmp@FUNCTION, $pop3, $26
 	block
-	br_if   	$0, 0           # 0: down to label3
+	br_if   	0, $0           # 0: down to label3
 # BB#2:                                 # %if.end11
 	i32.const	$9=, __stack_pointer
 	i32.load	$9=, 0($9)
@@ -225,7 +225,7 @@ main:                                   # @main
 	i32.add 	$28=, $33, $28
 	i32.call	$0=, strcmp@FUNCTION, $pop5, $28
 	block
-	br_if   	$0, 0           # 0: down to label4
+	br_if   	0, $0           # 0: down to label4
 # BB#3:                                 # %if.end19
 	i32.const	$13=, __stack_pointer
 	i32.load	$13=, 0($13)
@@ -250,7 +250,7 @@ main:                                   # @main
 	i32.add 	$30=, $33, $30
 	i32.call	$0=, strcmp@FUNCTION, $pop7, $30
 	block
-	br_if   	$0, 0           # 0: down to label5
+	br_if   	0, $0           # 0: down to label5
 # BB#4:                                 # %if.end27
 	i32.const	$17=, __stack_pointer
 	i32.load	$17=, 0($17)
@@ -275,7 +275,7 @@ main:                                   # @main
 	i32.add 	$32=, $33, $32
 	i32.call	$0=, strcmp@FUNCTION, $pop10, $32
 	block
-	br_if   	$0, 0           # 0: down to label6
+	br_if   	0, $0           # 0: down to label6
 # BB#5:                                 # %if.end35
 	i32.const	$push11=, 0
 	call    	exit@FUNCTION, $pop11

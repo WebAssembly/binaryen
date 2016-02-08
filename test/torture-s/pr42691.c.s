@@ -15,7 +15,7 @@ add:                                    # @add
 	f64.load	$push0=, 0($0)
 	tee_local	$push6=, $2=, $pop0
 	f64.eq  	$push1=, $pop7, $pop6
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end.preheader
 	i32.const	$push8=, 8
 	i32.add 	$1=, $1, $pop8
@@ -24,14 +24,14 @@ add:                                    # @add
 	loop                            # label1:
 	f64.const	$push10=, infinity
 	f64.ne  	$push2=, $3, $pop10
-	br_if   	$pop2, 1        # 1: down to label2
+	br_if   	1, $pop2        # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB0_2 Depth=1
 	f64.load	$3=, 0($1)
 	i32.const	$push9=, 8
 	i32.add 	$1=, $1, $pop9
 	f64.ne  	$push3=, $3, $2
-	br_if   	$pop3, 0        # 0: up to label1
+	br_if   	0, $pop3        # 0: up to label1
 	br      	2               # 2: down to label0
 .LBB0_4:                                # %if.then3
 	end_loop                        # label2:
@@ -73,7 +73,7 @@ main:                                   # @main
 	loop                            # label4:
 	f64.const	$push10=, infinity
 	f64.ne  	$push2=, $0, $pop10
-	br_if   	$pop2, 2        # 2: down to label3
+	br_if   	2, $pop2        # 2: down to label3
 # BB#2:                                 # %while.body.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	f64.load	$0=, 0($1)
@@ -81,7 +81,7 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop9
 	f64.const	$push8=, 0x1.7p4
 	f64.ne  	$push3=, $0, $pop8
-	br_if   	$pop3, 0        # 0: up to label4
+	br_if   	0, $pop3        # 0: up to label4
 # BB#3:                                 # %add.exit
 	end_loop                        # label5:
 	i32.const	$push4=, 0

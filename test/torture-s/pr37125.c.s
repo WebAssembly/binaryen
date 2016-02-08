@@ -14,7 +14,7 @@ func_44:                                # @func_44
 	i32.rem_u	$push2=, $pop1, $pop3
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $pop2, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

@@ -47,12 +47,12 @@ main:                                   # @main
 	block
 	i32.const	$push8=, y+2
 	i32.ne  	$push5=, $1, $pop8
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i32.const	$push13=, y+2
 	i32.ne  	$push6=, $0, $pop13
-	br_if   	$pop6, 0        # 0: down to label1
+	br_if   	0, $pop6        # 0: down to label1
 # BB#2:                                 # %if.end3
 	i32.const	$push7=, 0
 	return  	$pop7

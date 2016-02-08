@@ -27,7 +27,7 @@ foo:                                    # @foo
 	i64.load	$push7=, 0($0)
 	i64.const	$push8=, 16
 	i64.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$3=, 16
 	i32.add 	$4=, $4, $3
@@ -71,7 +71,7 @@ bar:                                    # @bar
 	i64.load	$push8=, 0($2)
 	i64.const	$push9=, 16
 	i64.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, 0       # 0: down to label1
+	br_if   	0, $pop10       # 0: down to label1
 # BB#1:                                 # %foo.exit
 	i32.const	$5=, 16
 	i32.add 	$6=, $7, $5

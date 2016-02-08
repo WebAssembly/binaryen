@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $1, $pop0
 	i32.ne  	$push2=, $pop1, $1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push7=, 0($0)
 	i32.const	$push5=, 0
@@ -43,7 +43,7 @@ main:                                   # @main
 	i32.load	$push0=, z+4($pop4)
 	i32.sub 	$push1=, $pop5, $pop0
 	i32.le_s	$push3=, $pop2, $pop1
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push7=, 0
 	call    	exit@FUNCTION, $pop7

@@ -48,7 +48,7 @@ main:                                   # @main
 	i32.call	$push0=, foo@FUNCTION
 	i32.const	$push1=, 640034342
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
@@ -56,14 +56,14 @@ main:                                   # @main
 	i32.load8_u	$push3=, a($0)
 	i32.const	$push4=, 38
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 2        # 2: down to label1
+	br_if   	2, $pop5        # 2: down to label1
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push6=, 1
 	i32.add 	$0=, $0, $pop6
 	i32.const	$push7=, 519
 	i32.le_u	$push8=, $0, $pop7
-	br_if   	$pop8, 0        # 0: up to label2
+	br_if   	0, $pop8        # 0: up to label2
 # BB#3:                                 # %for.end
 	end_loop                        # label3:
 	call    	bar@FUNCTION
@@ -73,7 +73,7 @@ main:                                   # @main
 	i32.load	$push9=, a+4($pop17)
 	i32.const	$push10=, 909588022
 	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: down to label4
+	br_if   	0, $pop11       # 0: down to label4
 # BB#4:                                 # %if.end9
 	i32.const	$push18=, 0
 	i32.const	$push12=, 909522486
@@ -85,14 +85,14 @@ main:                                   # @main
 	i32.load8_u	$push13=, a($0)
 	i32.const	$push21=, 54
 	i32.ne  	$push14=, $pop13, $pop21
-	br_if   	$pop14, 2       # 2: down to label5
+	br_if   	2, $pop14       # 2: down to label5
 # BB#6:                                 # %for.cond10
                                         #   in Loop: Header=BB2_5 Depth=1
 	i32.const	$push20=, 1
 	i32.add 	$0=, $0, $pop20
 	i32.const	$push19=, 519
 	i32.le_u	$push15=, $0, $pop19
-	br_if   	$pop15, 0       # 0: up to label6
+	br_if   	0, $pop15       # 0: up to label6
 # BB#7:                                 # %for.end22
 	end_loop                        # label7:
 	i32.const	$push16=, 0

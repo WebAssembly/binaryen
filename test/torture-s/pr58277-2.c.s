@@ -17,7 +17,7 @@ main:                                   # @main
 	i32.load	$push2=, g($pop10)
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $pop2, $pop14
-	br_if   	$pop15, 0       # 0: down to label1
+	br_if   	0, $pop15       # 0: down to label1
 # BB#1:                                 # %fn2.exit.thread.i
 	i32.load	$discard=, d($0)
 	br      	1               # 1: down to label0

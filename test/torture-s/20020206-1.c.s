@@ -27,17 +27,17 @@ baz:                                    # @baz
 	i32.load	$push0=, 0($0)
 	i32.const	$push1=, 176
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push3=, 4($0)
 	i32.const	$push4=, 52
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false3
 	i32.load	$push6=, 8($0)
 	i32.const	$push7=, 31
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#3:                                 # %if.end
 	return
 .LBB1_4:                                # %if.then

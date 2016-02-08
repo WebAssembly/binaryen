@@ -28,7 +28,7 @@ f:                                      # @f
 	i32.add 	$1=, $pop4, $pop7
 	i32.const	$push6=, 1073741840
 	i32.lt_s	$push5=, $0, $pop6
-	br_if   	$pop5, 0        # 0: up to label0
+	br_if   	0, $pop5        # 0: up to label0
 # BB#2:                                 # %do.end
 	end_loop                        # label1:
 	return  	$0

@@ -85,7 +85,7 @@ main:                                   # @main
 	f32.load	$push3=, 24($6):p2align=3
 	f32.const	$push6=, 0x1.2p3
 	f32.ne  	$push7=, $pop3, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push4=, 4
 	i32.const	$5=, 24
@@ -94,7 +94,7 @@ main:                                   # @main
 	f32.load	$push0=, 0($pop5)
 	f32.const	$push8=, 0x1.5p5
 	f32.ne  	$push9=, $pop0, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push10=, 0
 	i32.const	$2=, 32

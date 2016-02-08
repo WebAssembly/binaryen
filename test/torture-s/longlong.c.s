@@ -16,7 +16,7 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	tee_local	$push27=, $0=, $pop1
 	i32.const	$push26=, 31
 	i32.eq  	$push4=, $pop27, $pop26
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push32=, 0
 	i32.load	$push2=, r($pop32)
@@ -85,7 +85,7 @@ main:                                   # @main
 	block
 	i64.const	$push12=, 77
 	i64.ne  	$push13=, $1, $pop12
-	br_if   	$pop13, 0       # 0: down to label1
+	br_if   	0, $pop13       # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push19=, 0
 	call    	exit@FUNCTION, $pop19

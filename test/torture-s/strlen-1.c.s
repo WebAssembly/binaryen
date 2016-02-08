@@ -26,7 +26,7 @@ main:                                   # @main
 	block
 	i32.const	$push19=, 0
 	i32.eq  	$push20=, $1, $pop19
-	br_if   	$pop20, 0       # 0: down to label5
+	br_if   	0, $pop20       # 0: down to label5
 # BB#3:                                 # %for.body6.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push10=, u
@@ -41,7 +41,7 @@ main:                                   # @main
 	block
 	i32.const	$push21=, 0
 	i32.eq  	$push22=, $3, $pop21
-	br_if   	$pop22, 0       # 0: down to label6
+	br_if   	0, $pop22       # 0: down to label6
 # BB#5:                                 # %for.body9.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push13=, 97
@@ -58,14 +58,14 @@ main:                                   # @main
 	i64.store	$discard=, 0($4):p2align=0, $pop14
 	i32.call	$push1=, strlen@FUNCTION, $0
 	i32.ne  	$push2=, $3, $pop1
-	br_if   	$pop2, 4        # 4: down to label0
+	br_if   	4, $pop2        # 4: down to label0
 # BB#7:                                 # %for.cond1
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push8=, 1
 	i32.add 	$3=, $3, $pop8
 	i32.const	$push7=, 63
 	i32.le_u	$push3=, $3, $pop7
-	br_if   	$pop3, 0        # 0: up to label3
+	br_if   	0, $pop3        # 0: up to label3
 # BB#8:                                 # %for.inc26
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label4:
@@ -75,7 +75,7 @@ main:                                   # @main
 	i32.add 	$2=, $2, $pop17
 	i32.const	$push16=, 8
 	i32.lt_u	$push4=, $1, $pop16
-	br_if   	$pop4, 0        # 0: up to label1
+	br_if   	0, $pop4        # 0: up to label1
 # BB#9:                                 # %for.end28
 	end_loop                        # label2:
 	i32.const	$push5=, 0

@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.add 	$push5=, $pop4, $pop39
 	i32.const	$push38=, 0
 	i32.lt_s	$push6=, $pop5, $pop38
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable
@@ -35,7 +35,7 @@ main:                                   # @main
 	i32.add 	$push12=, $pop11, $pop43
 	i32.const	$push42=, 0
 	i32.lt_s	$push13=, $pop12, $pop42
-	br_if   	$pop13, 0       # 0: down to label1
+	br_if   	0, $pop13       # 0: down to label1
 # BB#3:                                 # %if.then4
 	call    	abort@FUNCTION
 	unreachable
@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.add 	$push15=, $pop14, $pop45
 	i32.const	$push44=, 0
 	i32.lt_s	$push16=, $pop15, $pop44
-	br_if   	$pop16, 0       # 0: down to label2
+	br_if   	0, $pop16       # 0: down to label2
 # BB#5:                                 # %if.then12
 	call    	abort@FUNCTION
 	unreachable
@@ -68,7 +68,7 @@ main:                                   # @main
 	i32.add 	$push23=, $pop22, $pop49
 	i32.const	$push48=, 0
 	i32.lt_s	$push24=, $pop23, $pop48
-	br_if   	$pop24, 0       # 0: down to label3
+	br_if   	0, $pop24       # 0: down to label3
 # BB#7:                                 # %if.then19
 	call    	abort@FUNCTION
 	unreachable
@@ -84,7 +84,7 @@ main:                                   # @main
 	i32.add 	$push30=, $pop29, $pop52
 	i32.const	$push51=, 0
 	i32.lt_s	$push31=, $pop30, $pop51
-	br_if   	$pop31, 0       # 0: down to label4
+	br_if   	0, $pop31       # 0: down to label4
 # BB#9:                                 # %if.then27
 	call    	abort@FUNCTION
 	unreachable
@@ -99,7 +99,7 @@ main:                                   # @main
 	i32.add 	$push35=, $pop34, $pop54
 	i32.const	$push53=, 0
 	i32.lt_s	$push36=, $pop35, $pop53
-	br_if   	$pop36, 0       # 0: down to label5
+	br_if   	0, $pop36       # 0: down to label5
 # BB#11:                                # %if.then42
 	call    	abort@FUNCTION
 	unreachable

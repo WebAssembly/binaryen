@@ -47,7 +47,7 @@ bar:                                    # @bar
 	i64.store	$discard=, 0($3), $pop17
 	i32.const	$push20=, 0
 	i32.eq  	$push21=, $2, $pop20
-	br_if   	$pop21, 0       # 0: up to label0
+	br_if   	0, $pop21       # 0: up to label0
 # BB#2:                                 # %if.end
 	end_loop                        # label1:
 	i32.const	$push11=, 3

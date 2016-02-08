@@ -33,14 +33,14 @@ foo:                                    # @foo
 	tee_local	$push19=, $3=, $pop2
 	i32.const	$push18=, 66
 	i32.eq  	$push7=, $pop19, $pop18
-	br_if   	$pop7, 0        # 0: down to label2
+	br_if   	0, $pop7        # 0: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
 	copy_local	$0=, $5
 	block
 	i32.const	$push26=, 65
 	i32.ne  	$push8=, $3, $pop26
-	br_if   	$pop8, 0        # 0: down to label3
+	br_if   	0, $pop8        # 0: down to label3
 .LBB0_3:                                # %do.body
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
@@ -50,7 +50,7 @@ foo:                                    # @foo
 	i32.load8_u	$push9=, 0($0)
 	i32.const	$push27=, 43
 	i32.eq  	$push10=, $pop9, $pop27
-	br_if   	$pop10, 0       # 0: up to label4
+	br_if   	0, $pop10       # 0: up to label4
 	br      	3               # 3: down to label2
 .LBB0_4:                                # %for.end
 	end_loop                        # label5:
@@ -58,7 +58,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push11=, 3
 	i32.lt_s	$push12=, $2, $pop11
-	br_if   	$pop12, 0       # 0: down to label6
+	br_if   	0, $pop12       # 0: down to label6
 # BB#5:                                 # %land.lhs.true17
 	i32.const	$push13=, 255
 	i32.and 	$push14=, $4, $pop13

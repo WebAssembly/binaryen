@@ -15,22 +15,22 @@ strtoul1:                               # @strtoul1
 	block
 	i32.const	$push2=, temp
 	i32.eq  	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.else
 	i32.const	$1=, 168
 	i32.const	$push4=, temp+4
 	i32.eq  	$push5=, $0, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#2:                                 # %if.else3
 	i32.const	$1=, 190
 	i32.const	$push6=, temp+8
 	i32.eq  	$push7=, $0, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#3:                                 # %if.else6
 	i32.const	$1=, 160
 	i32.const	$push8=, temp+12
 	i32.eq  	$push9=, $0, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#4:                                 # %if.end11
 	call    	abort@FUNCTION
 	unreachable
@@ -60,7 +60,7 @@ string_to_ip:                           # @string_to_ip
 	block
 	i32.const	$push40=, 0
 	i32.eq  	$push41=, $0, $pop40
-	br_if   	$pop41, 0       # 0: down to label1
+	br_if   	0, $pop41       # 0: down to label1
 # BB#1:                                 # %if.end9
 	i32.const	$5=, 12
 	i32.add 	$5=, $9, $5
@@ -80,7 +80,7 @@ string_to_ip:                           # @string_to_ip
 	tee_local	$push26=, $1=, $pop0
 	i32.const	$push42=, 0
 	i32.eq  	$push43=, $pop26, $pop42
-	br_if   	$pop43, 0       # 0: down to label3
+	br_if   	0, $pop43       # 0: down to label3
 # BB#2:                                 # %if.end9.1
 	i32.const	$6=, 12
 	i32.add 	$6=, $9, $6
@@ -97,7 +97,7 @@ string_to_ip:                           # @string_to_ip
 	tee_local	$push30=, $1=, $pop1
 	i32.const	$push44=, 0
 	i32.eq  	$push45=, $pop30, $pop44
-	br_if   	$pop45, 0       # 0: down to label3
+	br_if   	0, $pop45       # 0: down to label3
 # BB#3:                                 # %if.end9.2
 	i32.const	$7=, 12
 	i32.add 	$7=, $9, $7
@@ -116,7 +116,7 @@ string_to_ip:                           # @string_to_ip
 	tee_local	$push35=, $1=, $pop2
 	i32.const	$push46=, 0
 	i32.eq  	$push47=, $pop35, $pop46
-	br_if   	$pop47, 1       # 1: down to label2
+	br_if   	1, $pop47       # 1: down to label2
 # BB#4:                                 # %if.then3.3
 	i32.const	$8=, 12
 	i32.add 	$8=, $9, $8
@@ -198,7 +198,7 @@ main:                                   # @main
 	i32.const	$push6=, 0
 	i32.load	$push3=, result($pop6)
 	i32.ne  	$push4=, $0, $pop3
-	br_if   	$pop4, 0        # 0: down to label4
+	br_if   	0, $pop4        # 0: down to label4
 # BB#1:                                 # %if.end
 	i32.const	$push5=, .Lstr
 	i32.call	$discard=, puts@FUNCTION, $pop5

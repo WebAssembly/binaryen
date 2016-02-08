@@ -18,25 +18,25 @@ f:                                      # @f
 	block
 	i64.const	$push10=, 0
 	i64.lt_s	$push1=, $0, $pop10
-	br_if   	$pop1, 0        # 0: down to label2
+	br_if   	0, $pop1        # 0: down to label2
 # BB#1:                                 # %if.then
 	i64.const	$push12=, 0
 	i64.lt_s	$push5=, $1, $pop12
-	br_if   	$pop5, 2        # 2: down to label0
+	br_if   	2, $pop5        # 2: down to label0
 # BB#2:                                 # %if.then
 	i64.const	$push6=, -1
 	i64.le_s	$push7=, $2, $pop6
-	br_if   	$pop7, 1        # 1: down to label1
+	br_if   	1, $pop7        # 1: down to label1
 	br      	2               # 2: down to label0
 .LBB0_3:                                # %if.else
 	end_block                       # label2:
 	i64.const	$push13=, 0
 	i64.gt_s	$push2=, $1, $pop13
-	br_if   	$pop2, 1        # 1: down to label0
+	br_if   	1, $pop2        # 1: down to label0
 # BB#4:                                 # %if.else
 	i64.const	$push3=, 0
 	i64.lt_s	$push4=, $2, $pop3
-	br_if   	$pop4, 1        # 1: down to label0
+	br_if   	1, $pop4        # 1: down to label0
 .LBB0_5:                                # %if.end9
 	end_block                       # label1:
 	i32.const	$push8=, 0

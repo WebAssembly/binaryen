@@ -23,7 +23,7 @@ main:                                   # @main
 	block
 	i32.const	$push7=, 1
 	i32.ne  	$push8=, $0, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push13=, 0
 	return  	$pop13

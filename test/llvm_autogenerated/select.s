@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/select.ll"
+	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/select.ll"
 	.globl	select_i32_bool
 	.type	select_i32_bool,@function
 select_i32_bool:

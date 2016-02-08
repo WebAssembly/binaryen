@@ -13,7 +13,7 @@ f1:                                     # @f1
 	tee_local	$push3=, $1=, $pop0
 	i32.const	$push1=, 0
 	i32.ge_s	$push2=, $pop3, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end3
 	return  	$1
 .LBB0_2:                                # %if.then2
@@ -37,7 +37,7 @@ f2:                                     # @f2
 	tee_local	$push3=, $1=, $pop0
 	i32.const	$push1=, 0
 	i32.ge_s	$push2=, $pop3, $pop1
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %if.end3
 	return  	$1
 .LBB1_2:                                # %if.then2

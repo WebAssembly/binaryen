@@ -12,13 +12,13 @@ foo:                                    # @foo
 	i32.const	$push6=, 0
 	f64.load	$push3=, v($pop6)
 	f64.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %entry
 	f64.load	$push0=, 8($0)
 	i32.const	$push7=, 0
 	f64.load	$push1=, v+8($pop7)
 	f64.ne  	$push5=, $pop0, $pop1
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then
@@ -66,7 +66,7 @@ baz:                                    # @baz
 	tee_local	$push5=, $0=, $pop1
 	f64.ne  	$push2=, $pop5, $0
 	i32.or  	$push4=, $pop3, $pop2
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push9=, 0
 	return  	$pop9
@@ -98,7 +98,7 @@ main:                                   # @main
 	i32.and 	$push4=, $pop3, $pop2
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $pop4, $pop10
-	br_if   	$pop11, 0       # 0: down to label2
+	br_if   	0, $pop11       # 0: down to label2
 # BB#1:                                 # %baz.exit
 	i32.const	$push9=, 0
 	return  	$pop9

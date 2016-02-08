@@ -18,7 +18,7 @@ bar:                                    # @bar
 	i32.const	$push3=, g+288
 	i32.add 	$push4=, $pop11, $pop3
 	i32.ne  	$push5=, $pop4, $0
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push14=, 0
 	i32.const	$push6=, 1
@@ -27,7 +27,7 @@ bar:                                    # @bar
 	i32.const	$push8=, g
 	i32.add 	$push9=, $2, $pop8
 	i32.ne  	$push10=, $pop9, $1
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then

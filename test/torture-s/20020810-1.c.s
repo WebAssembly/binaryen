@@ -15,14 +15,14 @@ f:                                      # @f
 	tee_local	$push10=, $1=, $pop0
 	i32.wrap/i64	$push3=, $pop10
 	i32.ne  	$push4=, $pop1, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push8=, 4($0)
 	i64.const	$push5=, 32
 	i64.shr_u	$push6=, $1, $pop5
 	i32.wrap/i64	$push7=, $pop6
 	i32.ne  	$push9=, $pop8, $pop7
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then
@@ -57,12 +57,12 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, 0
-	br_if   	$pop0, 0        # 0: down to label1
+	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %lor.lhs.false.i
 	i32.const	$push1=, 1
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $pop1, $pop3
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#2:                                 # %if.end
 	i32.const	$push2=, 0
 	return  	$pop2

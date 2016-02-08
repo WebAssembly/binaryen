@@ -24,9 +24,9 @@ f:                                      # @f
 	block
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %entry
-	br_if   	$1, 0           # 0: down to label0
+	br_if   	0, $1           # 0: down to label0
 # BB#2:                                 # %if.then10
 	i32.const	$push0=, 0
 	i32.const	$push1=, 1

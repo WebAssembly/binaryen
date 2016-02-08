@@ -22,7 +22,7 @@ foo:                                    # @foo
 	i32.add 	$push7=, $pop5, $pop6
 	i32.const	$push8=, 16
 	i32.call	$push9=, memcmp@FUNCTION, $0, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

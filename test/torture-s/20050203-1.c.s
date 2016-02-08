@@ -22,7 +22,7 @@ main:                                   # @main
 	block
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2

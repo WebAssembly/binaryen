@@ -36,7 +36,7 @@ foo:                                    # @foo
 	i32.load	$push0=, 4($0)
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 4
 	i32.add 	$push4=, $0, $pop3

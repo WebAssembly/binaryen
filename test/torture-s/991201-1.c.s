@@ -37,7 +37,7 @@ reset_palette:                          # @reset_palette
 	i32.add 	$2=, $2, $pop15
 	i32.const	$push14=, 4
 	i32.add 	$0=, $0, $pop14
-	br_if   	$0, 0           # 0: up to label0
+	br_if   	0, $0           # 0: up to label0
 # BB#2:                                 # %bar.exit
 	end_loop                        # label1:
 	return
@@ -55,7 +55,7 @@ bar:                                    # @bar
 	block
 	i32.const	$push0=, 48
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label2
+	br_if   	0, $pop1        # 0: down to label2
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then

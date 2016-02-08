@@ -21,7 +21,7 @@ test:                                   # @test
 	i32.add 	$push2=, $0, $pop1
 	i32.load	$push0=, 0($pop2)
 	tee_local	$push13=, $0=, $pop0
-	br_if   	$pop13, 0       # 0: down to label0
+	br_if   	0, $pop13       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push7=, 20
 	i32.const	$push4=, .L.str
@@ -33,7 +33,7 @@ test:                                   # @test
 	i32.and 	$push9=, $2, $pop8
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $pop9, $pop14
-	br_if   	$pop15, 0       # 0: down to label0
+	br_if   	0, $pop15       # 0: down to label0
 # BB#2:                                 # %cond.true
 	i32.const	$push10=, 33816706
 	i32.call	$2=, fn3@FUNCTION, $pop10
@@ -96,7 +96,7 @@ fn2:                                    # @fn2
 	#APP
 	#NO_APP
 	block
-	br_if   	$0, 0           # 0: down to label1
+	br_if   	0, $0           # 0: down to label1
 # BB#1:                                 # %if.end
 	return
 .LBB2_2:                                # %if.then

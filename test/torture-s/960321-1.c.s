@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.load8_u	$push0=, a($pop3)
 	i32.const	$push1=, 100
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4

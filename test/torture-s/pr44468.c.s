@@ -76,7 +76,7 @@ main:                                   # @main
 	i32.call	$push1=, test1@FUNCTION, $pop11
 	i32.const	$push10=, 3
 	i32.ne  	$push2=, $pop1, $pop10
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push15=, 0
 	i64.store	$discard=, s+4($pop15):p2align=2, $0
@@ -85,7 +85,7 @@ main:                                   # @main
 	i32.call	$push3=, test2@FUNCTION, $pop14
 	i32.const	$push13=, 3
 	i32.ne  	$push4=, $pop3, $pop13
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#2:                                 # %if.end4
 	i32.const	$push16=, 0
 	i64.const	$push5=, 8589934593
@@ -95,7 +95,7 @@ main:                                   # @main
 	i32.call	$push7=, test3@FUNCTION, $pop6
 	i32.const	$push8=, 3
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label2
+	br_if   	0, $pop9        # 0: down to label2
 # BB#3:                                 # %if.end8
 	i32.const	$push17=, 0
 	return  	$pop17

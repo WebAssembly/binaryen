@@ -49,7 +49,7 @@ bar:                                    # @bar
 	block
 	i32.const	$push27=, 0
 	i32.eq  	$push28=, $3, $pop27
-	br_if   	$pop28, 0       # 0: down to label0
+	br_if   	0, $pop28       # 0: down to label0
 # BB#1:                                 # %if.then
 	i64.const	$push12=, 33
 	i64.shl 	$push13=, $1, $pop12
@@ -101,7 +101,7 @@ baz:                                    # @baz
 	block
 	i32.const	$push28=, 0
 	i32.eq  	$push29=, $2, $pop28
-	br_if   	$pop29, 0       # 0: down to label1
+	br_if   	0, $pop29       # 0: down to label1
 # BB#1:                                 # %if.then.i
 	i64.const	$push12=, 33
 	i64.shl 	$push13=, $1, $pop12
@@ -158,7 +158,7 @@ main:                                   # @main
 	block
 	i32.const	$push35=, 0
 	i32.eq  	$push36=, $2, $pop35
-	br_if   	$pop36, 0       # 0: down to label2
+	br_if   	0, $pop36       # 0: down to label2
 # BB#1:                                 # %if.then.i.i
 	i64.const	$push12=, 33
 	i64.shl 	$push13=, $1, $pop12
@@ -178,7 +178,7 @@ main:                                   # @main
 	i64.const	$push34=, 33
 	i64.shr_s	$push19=, $pop18, $pop34
 	i32.wrap/i64	$push20=, $pop19
-	br_if   	$pop20, 0       # 0: down to label3
+	br_if   	0, $pop20       # 0: down to label3
 # BB#3:                                 # %if.end
 	i32.const	$push21=, 0
 	return  	$pop21

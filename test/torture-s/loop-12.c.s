@@ -21,7 +21,7 @@ foo:                                    # @foo
 	tee_local	$push11=, $1=, $pop3
 	i32.const	$push10=, 49
 	i32.gt_u	$push4=, $pop11, $pop10
-	br_if   	$pop4, 0        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label2
 # BB#2:                                 # %is_end_of_statement.exit
                                         #   in Loop: Header=BB0_1 Depth=1
 	i64.const	$push15=, 562949961809921
@@ -32,7 +32,7 @@ foo:                                    # @foo
 	i32.wrap/i64	$push8=, $pop7
 	i32.const	$push18=, 0
 	i32.eq  	$push19=, $pop8, $pop18
-	br_if   	$pop19, 0       # 0: down to label2
+	br_if   	0, $pop19       # 0: down to label2
 # BB#3:                                 # %while.end
 	return
 .LBB0_4:                                # %while.body
@@ -73,7 +73,7 @@ main:                                   # @main
 	tee_local	$push11=, $1=, $pop3
 	i32.const	$push10=, 49
 	i32.gt_u	$push4=, $pop11, $pop10
-	br_if   	$pop4, 0        # 0: down to label5
+	br_if   	0, $pop4        # 0: down to label5
 # BB#2:                                 # %is_end_of_statement.exit.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i64.const	$push17=, 562949961809921
@@ -84,7 +84,7 @@ main:                                   # @main
 	i32.wrap/i64	$push8=, $pop7
 	i32.const	$push19=, 0
 	i32.eq  	$push20=, $pop8, $pop19
-	br_if   	$pop20, 0       # 0: down to label5
+	br_if   	0, $pop20       # 0: down to label5
 # BB#3:                                 # %foo.exit
 	i32.const	$push9=, 0
 	return  	$pop9

@@ -71,25 +71,25 @@ main:                                   # @main
 	i32.call	$push0=, f1@FUNCTION, $pop14
 	i32.const	$push13=, 2
 	i32.ne  	$push1=, $pop0, $pop13
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push16=, 1
 	i32.call	$push2=, f2@FUNCTION, $pop16
 	i32.const	$push15=, 2
 	i32.ne  	$push3=, $pop2, $pop15
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false3
 	i32.const	$push4=, 63
 	i32.call	$push5=, f3@FUNCTION, $pop4
 	i32.const	$push6=, 6
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false6
 	i32.const	$push8=, 1
 	i32.call	$push9=, f3@FUNCTION, $pop8
 	i32.const	$push10=, 4
 	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#4:                                 # %if.end
 	i32.const	$push12=, 0
 	return  	$pop12

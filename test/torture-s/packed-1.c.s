@@ -15,7 +15,7 @@ f:                                      # @f
 	i32.store16	$push2=, t($pop0), $pop1
 	i32.const	$push3=, 17
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB0_2:                                # %if.then

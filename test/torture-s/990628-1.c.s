@@ -77,7 +77,7 @@ load_data:                              # @load_data
 	i32.select	$push10=, $pop9, $pop17, $pop15
 	i32.store	$discard=, sqlca($pop18), $pop10
 	block
-	br_if   	$0, 0           # 0: down to label0
+	br_if   	0, $0           # 0: down to label0
 .LBB2_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -95,7 +95,7 @@ load_data:                              # @load_data
 	i32.add 	$3=, $pop29, $pop28
 	i32.const	$push27=, 1
 	i32.lt_s	$push11=, $3, $pop27
-	br_if   	$pop11, 0       # 0: up to label1
+	br_if   	0, $pop11       # 0: up to label1
 # BB#2:                                 # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
 	i32.const	$push12=, 0
@@ -147,7 +147,7 @@ main:                                   # @main
 	i32.select	$push8=, $pop7, $pop20, $pop18
 	i32.store	$discard=, sqlca($pop21), $pop8
 	block
-	br_if   	$3, 0           # 0: down to label3
+	br_if   	0, $3           # 0: down to label3
 # BB#1:                                 # %while.body.lr.ph.i
 	copy_local	$3=, $0
 .LBB3_2:                                # %while.body.i
@@ -165,7 +165,7 @@ main:                                   # @main
 	copy_local	$3=, $1
 	i32.const	$push30=, 1
 	i32.lt_s	$push9=, $4, $pop30
-	br_if   	$pop9, 0        # 0: up to label4
+	br_if   	0, $pop9        # 0: up to label4
 # BB#3:                                 # %while.cond.while.end_crit_edge.i
 	end_loop                        # label5:
 	i32.const	$push10=, 0
@@ -180,7 +180,7 @@ main:                                   # @main
 	i32.load	$push13=, 0($0)
 	i32.const	$push14=, 1431655765
 	i32.ne  	$push15=, $pop13, $pop14
-	br_if   	$pop15, 0       # 0: down to label6
+	br_if   	0, $pop15       # 0: down to label6
 # BB#5:                                 # %if.end
 	i32.const	$push16=, 0
 	call    	exit@FUNCTION, $pop16

@@ -14,12 +14,12 @@ foo:                                    # @foo
 	block
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $1, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.then
 	block
 	i32.const	$push1=, 0
 	i32.lt_s	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#2:                                 # %if.then1
 	i32.const	$push6=, 2
 	i32.add 	$2=, $0, $pop6

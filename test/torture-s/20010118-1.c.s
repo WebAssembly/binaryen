@@ -24,13 +24,13 @@ bar:                                    # @bar
 	block
 	i32.load	$push0=, 0($0)
 	i32.ne  	$push1=, $pop0, $1
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $0, $pop2
 	i32.load	$push4=, 0($pop3)
 	i32.eq  	$push5=, $pop4, $2
-	br_if   	$pop5, 1        # 1: down to label0
+	br_if   	1, $pop5        # 1: down to label0
 .LBB1_2:                                # %if.then
 	end_block                       # label1:
 	i32.load	$push6=, 16($0)

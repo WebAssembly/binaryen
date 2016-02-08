@@ -67,7 +67,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$push1=, x($pop3), $pop0
 	i32.call	$push2=, test@FUNCTION, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4

@@ -32,7 +32,7 @@ main:                                   # @main
 	i64.call	$push1=, div@FUNCTION, $pop0
 	i64.const	$push2=, -30212
 	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4

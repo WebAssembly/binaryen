@@ -77,13 +77,13 @@ main:                                   # @main
 	i32.load8_u	$push4=, buf($pop10)
 	i32.const	$push5=, 53
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push11=, 0
 	i32.load8_u	$push0=, buf+1($pop11)
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop0, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9

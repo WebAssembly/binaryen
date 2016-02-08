@@ -31,7 +31,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push151=, 0
 	i32.eq  	$push152=, $0, $pop151
-	br_if   	$pop152, 0      # 0: down to label0
+	br_if   	0, $pop152      # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push129=, 0
 	i64.load	$push39=, incs+72($pop129)
@@ -268,7 +268,7 @@ foo:                                    # @foo
 	i32.add 	$23=, $23, $18
 	i32.add 	$22=, $22, $19
 	i32.add 	$21=, $21, $20
-	br_if   	$0, 0           # 0: up to label1
+	br_if   	0, $0           # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -417,7 +417,7 @@ main:                                   # @main
 	i32.add 	$2=, $2, $1
 	i32.const	$push129=, 80
 	i32.ne  	$push41=, $3, $pop129
-	br_if   	$pop41, 0       # 0: up to label3
+	br_if   	0, $pop41       # 0: up to label3
 # BB#2:                                 # %for.end8
 	end_loop                        # label4:
 	i32.const	$push42=, 4

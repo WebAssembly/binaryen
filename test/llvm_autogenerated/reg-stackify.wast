@@ -4,6 +4,7 @@
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$vii (func (param i32 i32)))
   (type $FUNCSIG$i (func (result i32)))
+  (type $FUNCSIG$ii (func (param i32) (result i32)))
   (import $evoke_side_effects "env" "evoke_side_effects")
   (import $use_a "env" "use_a" (param i32))
   (import $use_b "env" "use_b" (param i32))
@@ -11,6 +12,7 @@
   (import $red "env" "red" (result i32))
   (import $green "env" "green" (result i32))
   (import $blue "env" "blue" (result i32))
+  (import $callee "env" "callee" (param i32) (result i32))
   (export "no0" $no0)
   (export "no1" $no1)
   (export "yes0" $yes0)
@@ -22,6 +24,7 @@
   (export "simple_multiple_use" $simple_multiple_use)
   (export "multiple_uses_in_same_insn" $multiple_uses_in_same_insn)
   (export "commute" $commute)
+  (export "no_stackify_past_use" $no_stackify_past_use)
   (func $no0 (param $$0 i32) (param $$1 i32) (result i32)
     (set_local $$1
       (i32.load align=4
@@ -231,6 +234,28 @@
           (call_import $green)
         )
         (call_import $blue)
+      )
+    )
+  )
+  (func $no_stackify_past_use (param $$0 i32) (result i32)
+    (local $$1 i32)
+    (set_local $$1
+      (call_import $callee
+        (get_local $$0)
+      )
+    )
+    (return
+      (i32.mul
+        (get_local $$1)
+        (i32.add
+          (get_local $$1)
+          (call_import $callee
+            (i32.add
+              (get_local $$0)
+              (i32.const 1)
+            )
+          )
+        )
       )
     )
   )

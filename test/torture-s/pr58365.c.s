@@ -34,7 +34,7 @@ main:                                   # @main
 	i32.load8_u	$push0=, i($pop27):p2align=2
 	i32.const	$push40=, 0
 	i32.eq  	$push41=, $pop0, $pop40
-	br_if   	$pop41, 0       # 0: down to label1
+	br_if   	0, $pop41       # 0: down to label1
 # BB#1:                                 # %if.then.i
 	i32.const	$push2=, 16
 	i32.const	$11=, 8
@@ -108,7 +108,7 @@ main:                                   # @main
 	i32.const	$push26=, 1
 	i32.store	$discard=, f+4($pop32), $pop26
 	block
-	br_if   	$1, 0           # 0: down to label2
+	br_if   	0, $1           # 0: down to label2
 # BB#4:                                 # %if.end
 	i32.const	$push39=, 0
 	i32.const	$4=, 32

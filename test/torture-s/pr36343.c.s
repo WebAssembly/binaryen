@@ -44,7 +44,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $0, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label1
 # BB#1:                                 # %if.then2
 	i32.load	$push3=, 0($2)
 	i32.load	$push4=, 0($pop3)
@@ -76,7 +76,7 @@ main:                                   # @main
 	f32.call	$push0=, foo@FUNCTION, $pop3
 	f32.const	$push1=, 0x0p0
 	f32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label2
+	br_if   	0, $pop2        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4

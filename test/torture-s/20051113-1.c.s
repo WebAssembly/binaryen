@@ -15,7 +15,7 @@ Sum:                                    # @Sum
 	tee_local	$push6=, $3=, $pop0
 	i32.const	$push5=, 1
 	i32.lt_s	$push1=, $pop6, $pop5
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push2=, 10
 	i32.add 	$0=, $0, $pop2
@@ -31,7 +31,7 @@ Sum:                                    # @Sum
 	i32.const	$push7=, 30
 	i32.add 	$0=, $0, $pop7
 	i32.lt_s	$push4=, $1, $3
-	br_if   	$pop4, 0        # 0: up to label1
+	br_if   	0, $pop4        # 0: up to label1
 .LBB0_3:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -55,7 +55,7 @@ Sum2:                                   # @Sum2
 	tee_local	$push6=, $3=, $pop0
 	i32.const	$push5=, 1
 	i32.lt_s	$push1=, $pop6, $pop5
-	br_if   	$pop1, 0        # 0: down to label3
+	br_if   	0, $pop1        # 0: down to label3
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push2=, 18
 	i32.add 	$0=, $0, $pop2
@@ -71,7 +71,7 @@ Sum2:                                   # @Sum2
 	i32.const	$push7=, 30
 	i32.add 	$0=, $0, $pop7
 	i32.lt_s	$push4=, $1, $3
-	br_if   	$pop4, 0        # 0: up to label4
+	br_if   	0, $pop4        # 0: up to label4
 .LBB1_3:                                # %for.end
 	end_loop                        # label5:
 	end_block                       # label3:
@@ -109,13 +109,13 @@ main:                                   # @main
 	i64.call	$push11=, Sum@FUNCTION, $0
 	i64.const	$push16=, 4311811859
 	i64.ne  	$push12=, $pop11, $pop16
-	br_if   	$pop12, 0       # 0: down to label6
+	br_if   	0, $pop12       # 0: down to label6
 # BB#1:                                 # %if.end
 	block
 	i64.call	$push13=, Sum2@FUNCTION, $0
 	i64.const	$push19=, 4311811859
 	i64.ne  	$push14=, $pop13, $pop19
-	br_if   	$pop14, 0       # 0: down to label7
+	br_if   	0, $pop14       # 0: down to label7
 # BB#2:                                 # %if.end25
 	i32.const	$push15=, 0
 	return  	$pop15
