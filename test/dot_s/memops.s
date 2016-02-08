@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.const	$3=, 1048576
 	i32.ne  	$push2=, $4, $3
 	copy_local	$5=, $1
-	br_if   	$pop2, 0
+	br_if   	0, $pop2
 	end_loop
 	loop
 	i32.const	$11=, 0
@@ -57,7 +57,7 @@ main:                                   # @main
 	i32.add 	$6=, $pop5, $6
 	i32.add 	$5=, $5, $2
 	i32.ne  	$push6=, $5, $3
-	br_if   	$pop6, 0
+	br_if   	0, $pop6
 	end_loop
 	i32.const	$push7=, 3
 	i32.mul 	$push8=, $6, $pop7
@@ -71,7 +71,7 @@ main:                                   # @main
 	i32.add 	$0=, $0, $2
 	i32.const	$push15=, 100
 	i32.ne  	$push16=, $0, $pop15
-	br_if   	$pop16, 0
+	br_if   	0, $pop16
 	end_loop
 	call    	_Z6reporti@FUNCTION, $6
 	i32.const	$push17=, 0

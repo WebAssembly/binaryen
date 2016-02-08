@@ -238,89 +238,89 @@ main:                                   # @main
 	block
 	i32.load	$push0=, bad_t0($0)
 	i32.call_indirect	$push1=, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.cond
 	i32.load	$push2=, bad_t0+4($0)
 	i32.call_indirect	$push3=, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %for.cond.1
 	i32.load	$push4=, bad_t0+8($0)
 	i32.call_indirect	$push5=, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#3:                                 # %for.cond.2
 	i32.load	$push6=, bad_t0+12($0)
 	i32.call_indirect	$push7=, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#4:                                 # %for.cond.3
 	i32.load	$push8=, bad_t0+16($0)
 	i32.call_indirect	$push9=, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#5:                                 # %for.cond.4
 	i32.load	$push10=, bad_t0+20($0)
 	i32.call_indirect	$push11=, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#6:                                 # %for.cond.5
 	i32.load	$1=, bad_t1($0)
 	i32.const	$2=, 1
 	block
 	i32.call_indirect	$push12=, $1, $2
-	br_if   	$pop12, 0       # 0: down to label1
+	br_if   	0, $pop12       # 0: down to label1
 # BB#7:                                 # %for.cond1
 	i32.load	$push13=, bad_t1+4($0)
 	i32.call_indirect	$push14=, $pop13, $2
-	br_if   	$pop14, 0       # 0: down to label1
+	br_if   	0, $pop14       # 0: down to label1
 # BB#8:                                 # %for.cond1.1
 	i32.load	$push15=, bad_t1+8($0)
 	i32.call_indirect	$push16=, $pop15, $2
-	br_if   	$pop16, 0       # 0: down to label1
+	br_if   	0, $pop16       # 0: down to label1
 # BB#9:                                 # %for.cond1.2
 	i32.load	$1=, bad_t2($0)
 	i32.const	$2=, .L.str
 	block
 	i32.call_indirect	$push17=, $1, $2
-	br_if   	$pop17, 0       # 0: down to label2
+	br_if   	0, $pop17       # 0: down to label2
 # BB#10:                                # %for.cond12
 	i32.load	$push18=, bad_t2+4($0)
 	i32.call_indirect	$push19=, $pop18, $2
-	br_if   	$pop19, 0       # 0: down to label2
+	br_if   	0, $pop19       # 0: down to label2
 # BB#11:                                # %for.cond12.1
 	block
 	i32.load	$push20=, good_t0($0)
 	i32.call_indirect	$push21=, $pop20
 	i32.const	$push32=, 0
 	i32.eq  	$push33=, $pop21, $pop32
-	br_if   	$pop33, 0       # 0: down to label3
+	br_if   	0, $pop33       # 0: down to label3
 # BB#12:                                # %for.cond23
 	i32.load	$push22=, good_t0+4($0)
 	i32.call_indirect	$push23=, $pop22
 	i32.const	$push34=, 0
 	i32.eq  	$push35=, $pop23, $pop34
-	br_if   	$pop35, 0       # 0: down to label3
+	br_if   	0, $pop35       # 0: down to label3
 # BB#13:                                # %for.cond23.1
 	i32.load	$push24=, good_t0+8($0)
 	i32.call_indirect	$push25=, $pop24
 	i32.const	$push36=, 0
 	i32.eq  	$push37=, $pop25, $pop36
-	br_if   	$pop37, 0       # 0: down to label3
+	br_if   	0, $pop37       # 0: down to label3
 # BB#14:                                # %for.cond23.2
 	block
 	i32.load	$push26=, opt_t0($0)
 	i32.call_indirect	$push27=, $pop26
 	i32.const	$push38=, 0
 	i32.eq  	$push39=, $pop27, $pop38
-	br_if   	$pop39, 0       # 0: down to label4
+	br_if   	0, $pop39       # 0: down to label4
 # BB#15:                                # %for.cond34
 	i32.load	$push28=, opt_t0+4($0)
 	i32.call_indirect	$push29=, $pop28
 	i32.const	$push40=, 0
 	i32.eq  	$push41=, $pop29, $pop40
-	br_if   	$pop41, 0       # 0: down to label4
+	br_if   	0, $pop41       # 0: down to label4
 # BB#16:                                # %for.cond34.1
 	i32.load	$push30=, opt_t0+8($0)
 	i32.call_indirect	$push31=, $pop30
 	i32.const	$push42=, 0
 	i32.eq  	$push43=, $pop31, $pop42
-	br_if   	$pop43, 0       # 0: down to label4
+	br_if   	0, $pop43       # 0: down to label4
 # BB#17:                                # %for.cond34.2
 	call    	exit@FUNCTION, $0
 	unreachable

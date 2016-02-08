@@ -952,12 +952,16 @@ class S2WasmBuilder {
         bstack.pop_back();
       } else if (match("br")) {
         auto curr = allocator.alloc<Break>();
+        bool hasCondition = false;
         if (*s == '_') {
           mustMatch("_if");
-          curr->condition = getInput();
-          skipComma();
+          hasCondition = true;
         }
         curr->name = getBranchLabel(getInt());
+        if (hasCondition) {
+          skipComma();
+          curr->condition = getInput();
+        }
         addToBlock(curr);
       } else if (match("call")) {
         makeCall(none);

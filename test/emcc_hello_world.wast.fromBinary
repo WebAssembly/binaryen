@@ -2448,12 +2448,11 @@
               (i32.const 4)
             )
           )
-          (br_if
+          (br_if $label$2
             (i32.lt_s
               (get_local $var$46)
               (get_local $var$49)
             )
-            $label$2
           )
         )
       )

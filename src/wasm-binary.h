@@ -663,12 +663,12 @@ assert(0);
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br);
     int offset = getBreakIndex(curr->name);
     o << int8_t(offset);
-    if (curr->condition) recurse(curr->condition);
     if (curr->value) {
       recurse(curr->value);
     } else {
       visitNop(nullptr);
     }
+    if (curr->condition) recurse(curr->condition);
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
@@ -1356,8 +1356,8 @@ public:
     if (debug) std::cerr << "zz node: Break" << std::endl;
     auto offset = getInt8();
     curr->name = getBreakName(offset);
-    if (code == BinaryConsts::BrIf) readExpression(curr->condition);
     readExpression(curr->value);
+    if (code == BinaryConsts::BrIf) readExpression(curr->condition);
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;

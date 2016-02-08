@@ -8,7 +8,7 @@ test0:
 	block
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
-	br_if   	$pop1, 0
+	br_if   	0, $pop1
 	i32.const	$push2=, 3
 	i32.div_s	$0=, $0, $pop2
 .LBB0_2:
@@ -35,7 +35,7 @@ test1:
 	i32.add 	$4=, $4, $pop1
 	copy_local	$2=, $1
 	i32.lt_s	$push0=, $4, $0
-	br_if   	$pop0, 0
+	br_if   	0, $pop0
 	end_loop
 	return  	$3
 	.endfunc
