@@ -27,12 +27,11 @@
           (i32.const 1)
         )
       )
-      (br_if
+      (br_if $label$0
         (i32.ne
           (get_local $$0)
           (i32.const 256)
         )
-        $label$0
       )
     )
     (return)
@@ -53,12 +52,11 @@
           (f32.const 1)
         )
       )
-      (br_if
+      (br_if $label$0
         (f32.ne
           (get_local $$0)
           (f32.const 256)
         )
-        $label$0
       )
     )
     (return)

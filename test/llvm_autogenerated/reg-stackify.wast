@@ -70,7 +70,7 @@
   )
   (func $stack_uses (param $$0 i32) (param $$1 i32) (param $$2 i32) (param $$3 i32) (result i32)
     (block $label$0
-      (br_if
+      (br_if $label$0
         (i32.ne
           (i32.xor
             (i32.xor
@@ -96,7 +96,6 @@
           )
           (i32.const 1)
         )
-        $label$0
       )
       (return
         (i32.const 0)
@@ -109,7 +108,7 @@
   (func $multiple_uses (param $$0 i32) (param $$1 i32) (param $$2 i32)
     (local $$3 i32)
     (block $label$0
-      (br_if
+      (br_if $label$0
         (i32.ge_u
           (set_local $$3
             (i32.load align=4
@@ -118,14 +117,12 @@
           )
           (get_local $$1)
         )
-        $label$0
       )
-      (br_if
+      (br_if $label$0
         (i32.lt_u
           (get_local $$3)
           (get_local $$0)
         )
-        $label$0
       )
       (i32.store align=4
         (get_local $$2)

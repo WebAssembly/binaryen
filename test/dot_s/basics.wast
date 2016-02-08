@@ -14,7 +14,7 @@
     )
     (block $label$0
       (block $label$1
-        (br_if
+        (br_if $label$1
           (i32.ne
             (i32.sub
               (get_local $$0)
@@ -34,7 +34,6 @@
             )
             (i32.const 1)
           )
-          $label$1
         )
         (loop $label$3 $label$2
           (set_local $$0
@@ -47,7 +46,7 @@
             )
           )
           (block $label$4
-            (br_if
+            (br_if $label$4
               (i32.ne
                 (i32.rem_s
                   (get_local $$0)
@@ -55,7 +54,6 @@
                 )
                 (i32.const 3)
               )
-              $label$4
             )
             (set_local $$0
               (i32.add
@@ -67,7 +65,7 @@
               )
             )
           )
-          (br_if
+          (br_if $label$1
             (i32.eq
               (i32.rem_s
                 (get_local $$0)
@@ -75,7 +73,6 @@
               )
               (i32.const 0)
             )
-            $label$1
           )
           (br $label$2)
         )
