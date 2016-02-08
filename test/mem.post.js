@@ -49,5 +49,5 @@ test('u32');
 test('f32');
 test('f64');
 
-Module.print('stack: ' + Module['_get_stack']());
+Module.print('stack: ' + (Module['_get_stack']() > 8));
 
