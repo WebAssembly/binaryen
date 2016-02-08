@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i32.const	$push2=, 2
 	i32.store	$push3=, 0($1), $pop2
 	i32.ne  	$push5=, $pop4, $pop3
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

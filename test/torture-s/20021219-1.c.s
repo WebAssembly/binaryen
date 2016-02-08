@@ -57,12 +57,12 @@ main:                                   # @main
 	tee_local	$push16=, $1=, $pop9
 	i32.const	$push15=, 32
 	i32.eq  	$push10=, $pop16, $pop15
-	br_if   	$pop10, 0       # 0: down to label2
+	br_if   	0, $pop10       # 0: down to label2
 # BB#2:                                 # %while.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push18=, 13
 	i32.eq  	$push11=, $1, $pop18
-	br_if   	$pop11, 0       # 0: down to label2
+	br_if   	0, $pop11       # 0: down to label2
 # BB#3:                                 # %while.end
 	i32.const	$push12=, 0
 	i32.const	$4=, 16

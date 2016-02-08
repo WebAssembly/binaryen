@@ -60,7 +60,7 @@ doit:                                   # @doit
 	block
 	i32.const	$push11=, 0
 	i32.eq  	$push12=, $2, $pop11
-	br_if   	$pop12, 0       # 0: down to label0
+	br_if   	0, $pop12       # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then

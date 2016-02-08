@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.add 	$push6=, $pop4, $pop5
 	i32.const	$push7=, 12
 	i32.lt_u	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable

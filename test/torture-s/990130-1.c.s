@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	i32.store	$discard=, dummy($pop0), $0
 	block
-	br_if   	$2, 0           # 0: down to label0
+	br_if   	0, $2           # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1

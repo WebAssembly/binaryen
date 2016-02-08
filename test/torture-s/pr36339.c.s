@@ -48,13 +48,13 @@ check_a:                                # @check_a
 	i32.load	$push2=, 0($pop1)
 	i32.const	$push3=, 42
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %land.lhs.true
 	i32.const	$1=, 0
 	i32.load	$push5=, 3($0)
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 1        # 1: down to label0
+	br_if   	1, $pop7        # 1: down to label0
 .LBB1_2:                                # %if.end
 	end_block                       # label1:
 	i32.const	$1=, -1
@@ -77,7 +77,7 @@ main:                                   # @main
 	i32.call	$push1=, try_a@FUNCTION, $pop0
 	i32.const	$push2=, -1
 	i32.le_s	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label2
+	br_if   	0, $pop3        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4

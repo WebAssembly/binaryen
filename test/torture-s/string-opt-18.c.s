@@ -25,7 +25,7 @@ test2:                                  # @test2
 	i32.const	$push4=, 8
 	i32.add 	$push2=, $0, $pop4
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
@@ -122,7 +122,7 @@ main:                                   # @main
 	block
 	i32.add 	$push2=, $5, $pop5
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %test2.exit
 	i32.const	$push4=, 0
 	i32.const	$2=, 16

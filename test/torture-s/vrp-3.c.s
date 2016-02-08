@@ -15,7 +15,7 @@ f:                                      # @f
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 25
 	i32.gt_u	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.then2
 	i32.const	$push4=, 31
 	i32.shr_s	$push5=, $0, $pop4

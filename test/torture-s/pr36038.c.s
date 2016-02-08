@@ -17,7 +17,7 @@ doit:                                   # @doit
 	tee_local	$push17=, $0=, $pop1
 	i32.const	$push6=, 6
 	i32.eq  	$push7=, $pop17, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push22=, 0
 	i32.load	$push2=, stack_base($pop22)
@@ -45,7 +45,7 @@ doit:                                   # @doit
 	i32.add 	$2=, $2, $pop24
 	i32.const	$push23=, 1
 	i32.add 	$1=, $1, $pop23
-	br_if   	$1, 0           # 0: up to label1
+	br_if   	0, $1           # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -107,7 +107,7 @@ main:                                   # @main
 	i32.const	$push1=, list
 	i32.const	$push16=, 80
 	i32.call	$push17=, memcmp@FUNCTION, $pop15, $pop1, $pop16
-	br_if   	$pop17, 0       # 0: down to label3
+	br_if   	0, $pop17       # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$push32=, 0
 	return  	$pop32

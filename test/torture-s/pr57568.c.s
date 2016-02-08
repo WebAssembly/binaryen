@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.load	$push0=, b($pop4)
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $pop0, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %land.lhs.true
 	i32.const	$push6=, 0
 	i32.load	$0=, c($pop6)
@@ -24,7 +24,7 @@ main:                                   # @main
 	i32.store	$discard=, 0($0), $pop3
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $1, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable

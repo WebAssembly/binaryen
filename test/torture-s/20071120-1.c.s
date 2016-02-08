@@ -42,7 +42,7 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	tee_local	$push14=, $0=, $pop0
 	i32.const	$push20=, 0
 	i32.eq  	$push21=, $pop14, $pop20
-	br_if   	$pop21, 0       # 0: down to label4
+	br_if   	0, $pop21       # 0: down to label4
 # BB#1:                                 # %if.then
 	i32.const	$push16=, 0
 	i32.const	$push3=, -1
@@ -56,20 +56,20 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	tee_local	$push17=, $0=, $pop1
 	i32.const	$push22=, 0
 	i32.eq  	$push23=, $pop17, $pop22
-	br_if   	$pop23, 3       # 3: down to label0
+	br_if   	3, $pop23       # 3: down to label0
 # BB#3:                                 # %land.lhs.true.i
 	i32.load	$push2=, 0($0)
 	tee_local	$push19=, $1=, $pop2
 	i32.const	$push24=, 0
 	i32.eq  	$push25=, $pop19, $pop24
-	br_if   	$pop25, 3       # 3: down to label0
+	br_if   	3, $pop25       # 3: down to label0
 # BB#4:                                 # %land.lhs.true.i25
 	i32.const	$push5=, -1
 	i32.add 	$push6=, $1, $pop5
 	i32.store	$push7=, 0($0), $pop6
 	i32.const	$push26=, 0
 	i32.eq  	$push27=, $pop7, $pop26
-	br_if   	$pop27, 2       # 2: down to label1
+	br_if   	2, $pop27       # 2: down to label1
 # BB#5:                                 # %VEC_deferred_access_base_last.exit29
 	i32.const	$push8=, 3
 	i32.shl 	$push9=, $1, $pop8
@@ -79,7 +79,7 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.load	$push13=, 0($pop12)
 	i32.const	$push28=, 0
 	i32.eq  	$push29=, $pop13, $pop28
-	br_if   	$pop29, 1       # 1: down to label2
+	br_if   	1, $pop29       # 1: down to label2
 .LBB2_6:                                # %if.end16
 	end_block                       # label3:
 	return

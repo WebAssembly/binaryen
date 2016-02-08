@@ -10,7 +10,7 @@ do_mknod:                               # @do_mknod
 	block
 	i32.const	$push0=, 360710264
 	i32.ne  	$push1=, $2, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
@@ -98,7 +98,7 @@ sys_mknod:                              # @sys_mknod
 	i32.or  	$push6=, $pop3, $pop5
 	i32.const	$push7=, 360710264
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label1
+	br_if   	0, $pop8        # 0: down to label1
 # BB#1:                                 # %if.then.i
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9

@@ -11,7 +11,7 @@ tar:                                    # @tar
 	block
 	i32.const	$push0=, 36863
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, -1
 	return  	$pop2
@@ -43,7 +43,7 @@ bug:                                    # @bug
 	i32.and 	$push1=, $3, $pop6
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $pop1, $pop9
-	br_if   	$pop10, 2       # 2: down to label1
+	br_if   	2, $pop10       # 2: down to label1
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push8=, 1
@@ -54,7 +54,7 @@ bug:                                    # @bug
 	i32.mul 	$push4=, $0, $1
 	i32.const	$push7=, 36863
 	i32.eq  	$push5=, $pop4, $pop7
-	br_if   	$pop5, 0        # 0: up to label2
+	br_if   	0, $pop5        # 0: up to label2
 # BB#3:                                 # %if.then.i
 	end_loop                        # label3:
 	call    	abort@FUNCTION

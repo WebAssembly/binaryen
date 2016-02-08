@@ -21,7 +21,7 @@ foo:                                    # @foo
 	i32.or  	$push5=, $pop2, $pop4
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $pop5, $pop12
-	br_if   	$pop13, 0       # 0: down to label0
+	br_if   	0, $pop13       # 0: down to label0
 .LBB0_1:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.or  	$push5=, $pop2, $pop4
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $pop5, $pop15
-	br_if   	$pop16, 0       # 0: down to label3
+	br_if   	0, $pop16       # 0: down to label3
 .LBB1_1:                                # %for.inc.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
@@ -71,7 +71,7 @@ main:                                   # @main
 	i32.store	$push6=, d($pop14), $0
 	i32.const	$push7=, 2
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label6
+	br_if   	0, $pop8        # 0: down to label6
 # BB#3:                                 # %if.end
 	i32.const	$push9=, 0
 	return  	$pop9

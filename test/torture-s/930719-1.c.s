@@ -9,14 +9,14 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	br_if   	$0, 0           # 0: down to label0
+	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	block
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $1, $pop0
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#2:                                 # %sw.bb.split
-	br_if   	$2, 1           # 1: down to label0
+	br_if   	1, $2           # 1: down to label0
 # BB#3:                                 # %if.end2
 	unreachable
 	unreachable

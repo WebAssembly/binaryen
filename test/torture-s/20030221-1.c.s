@@ -29,7 +29,7 @@ main:                                   # @main
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push8=, 10
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push12=, 0
 	i32.const	$2=, 16

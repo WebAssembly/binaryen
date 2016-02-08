@@ -48,14 +48,14 @@ main:                                   # @main
 	i32.shr_u	$push3=, $pop11, $pop2
 	i32.const	$push4=, 2147483646
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i32.const	$push6=, 5
 	i32.rem_u	$push7=, $0, $pop6
 	i32.const	$push8=, 2
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label1
+	br_if   	0, $pop9        # 0: down to label1
 # BB#2:                                 # %if.end7
 	i32.const	$push10=, 0
 	call    	exit@FUNCTION, $pop10

@@ -14,7 +14,7 @@ main:                                   # @main
 	tee_local	$push15=, $4=, $pop13
 	i32.const	$push14=, 0
 	i32.gt_s	$push0=, $pop15, $pop14
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$push18=, 0
 	i32.load	$0=, d($pop18)
@@ -24,14 +24,14 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	block
-	br_if   	$0, 0           # 0: down to label3
+	br_if   	0, $0           # 0: down to label3
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB0_2 Depth=1
 	block
 	block
 	i32.const	$push27=, 0
 	i32.eq  	$push28=, $1, $pop27
-	br_if   	$pop28, 0       # 0: down to label5
+	br_if   	0, $pop28       # 0: down to label5
 # BB#4:                                 # %if.then.if.end_crit_edge
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push19=, 0
@@ -59,7 +59,7 @@ main:                                   # @main
 	i32.const	$push23=, 0
 	i32.lt_s	$3=, $4, $pop23
 	copy_local	$4=, $2
-	br_if   	$3, 0           # 0: up to label1
+	br_if   	0, $3           # 0: up to label1
 # BB#8:                                 # %for.cond.for.end_crit_edge
 	end_loop                        # label2:
 	i32.const	$push4=, 0
@@ -76,7 +76,7 @@ main:                                   # @main
 	i32.and 	$push9=, $pop7, $pop8
 	i32.load	$push10=, a($pop9)
 	i32.store	$push11=, b($pop26), $pop10
-	br_if   	$pop11, 0       # 0: down to label6
+	br_if   	0, $pop11       # 0: down to label6
 # BB#10:                                # %if.end10
 	i32.const	$push12=, 0
 	return  	$pop12

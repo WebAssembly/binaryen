@@ -13,7 +13,7 @@ new_unit:                               # @new_unit
 	tee_local	$push9=, $1=, $pop7
 	i32.const	$push8=, 1
 	i32.ne  	$push0=, $pop9, $pop8
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $0, $pop2
@@ -25,14 +25,14 @@ new_unit:                               # @new_unit
 	i32.load	$push4=, 0($0)
 	i32.const	$push10=, 1
 	i32.ne  	$push5=, $pop4, $pop10
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#3:                                 # %if.then3
 	i32.const	$push6=, 0
 	i32.store	$discard=, 0($0), $pop6
 .LBB0_4:                                # %if.end5
 	end_block                       # label1:
 	block
-	br_if   	$1, 0           # 0: down to label2
+	br_if   	0, $1           # 0: down to label2
 # BB#5:                                 # %sw.epilog
 	return
 .LBB0_6:                                # %sw.default

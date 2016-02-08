@@ -16,13 +16,13 @@ main:                                   # @main
 	i32.add 	$0=, $0, $pop5
 	i32.const	$push4=, 256
 	i32.ne  	$push0=, $0, $pop4
-	br_if   	$pop0, 0        # 0: up to label0
+	br_if   	0, $pop0        # 0: up to label0
 # BB#2:                                 # %render_image_rgb_a.exit
 	end_loop                        # label1:
 	block
 	i32.const	$push1=, 256
 	i32.ne  	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label2
+	br_if   	0, $pop2        # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3

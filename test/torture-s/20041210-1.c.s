@@ -17,7 +17,7 @@ main:                                   # @main
 	i64.shr_u	$push2=, $0, $pop11
 	i32.wrap/i64	$push3=, $pop2
 	i32.ge_s	$push4=, $pop1, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push16=, 0
 	i64.load	$push5=, x+8($pop16)
@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.wrap/i64	$push8=, $pop7
 	i32.const	$push9=, -1
 	i32.gt_s	$push10=, $pop8, $pop9
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#2:                                 # %if.then2
 	call    	abort@FUNCTION
 	unreachable

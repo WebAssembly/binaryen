@@ -27,7 +27,7 @@ f:                                      # @f
 	block
 	i32.const	$push3=, -1
 	i32.eq  	$push0=, $0, $pop3
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %while.cond.while.end_crit_edge
 	i32.const	$push2=, 0
 	i32.const	$push4=, -1

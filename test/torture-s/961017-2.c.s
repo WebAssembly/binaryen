@@ -14,7 +14,7 @@ main:                                   # @main
 	loop                            # label0:
 	i32.const	$push1=, 16384
 	i32.add 	$0=, $0, $pop1
-	br_if   	$0, 0           # 0: up to label0
+	br_if   	0, $0           # 0: up to label0
 # BB#2:                                 # %do.end
 	end_loop                        # label1:
 	i32.const	$push0=, 0

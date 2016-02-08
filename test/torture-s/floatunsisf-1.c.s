@@ -21,7 +21,7 @@ main:                                   # @main
 	i32.const	$push6=, 0
 	f32.load	$push4=, f2($pop6)
 	f32.eq  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable

@@ -35,7 +35,7 @@ main:                                   # @main
 	i64.and 	$push10=, $2, $pop9
 	i64.const	$push11=, 0
 	i64.ne  	$push12=, $pop10, $pop11
-	br_if   	$pop12, 0       # 0: down to label0
+	br_if   	0, $pop12       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push18=, 0
 	return  	$pop18

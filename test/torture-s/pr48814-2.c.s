@@ -40,14 +40,14 @@ main:                                   # @main
 	i32.add 	$push0=, $1, $pop11
 	i32.store	$0=, count($pop12), $pop0
 	block
-	br_if   	$1, 0           # 0: down to label0
+	br_if   	0, $1           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push16=, 2
 	i32.shl 	$push6=, $0, $pop16
 	i32.load	$push7=, arr($pop6)
 	i32.const	$push8=, 3
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push10=, 0
 	return  	$pop10

@@ -11,25 +11,25 @@ foo:                                    # @foo
 	block
 	i32.const	$push0=, t+2
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push2=, 0($1)
 	i32.const	$push3=, t+69
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false2
 	i32.const	$push6=, t+81
 	i32.ne  	$push7=, $3, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false2
 	i32.const	$push8=, t+17
 	i32.ne  	$push9=, $2, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#4:                                 # %lor.lhs.false2
 	i32.load	$push5=, 4($1)
 	i32.const	$push10=, 27
 	i32.ne  	$push11=, $pop5, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#5:                                 # %if.end
 	i32.const	$push12=, 29
 	return  	$pop12

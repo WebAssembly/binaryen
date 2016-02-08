@@ -27,7 +27,7 @@ vafunction:                             # @vafunction
 	i32.add 	$push0=, $1, $pop17
 	i32.const	$push16=, 1
 	i32.and 	$push1=, $pop0, $pop16
-	br_if   	$pop1, 0        # 0: down to label4
+	br_if   	0, $pop1        # 0: down to label4
 # BB#2:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.load	$push9=, 12($6)
@@ -41,7 +41,7 @@ vafunction:                             # @vafunction
 	i32.store	$discard=, 12($6), $pop12
 	i32.load	$push13=, 0($2)
 	i32.eq  	$push14=, $1, $pop13
-	br_if   	$pop14, 1       # 1: down to label3
+	br_if   	1, $pop14       # 1: down to label3
 # BB#3:                                 # %if.then7
 	call    	abort@FUNCTION
 	unreachable
@@ -60,7 +60,7 @@ vafunction:                             # @vafunction
 	f64.load	$push6=, 0($2)
 	f64.convert_s/i32	$push7=, $1
 	f64.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, 3        # 3: down to label0
+	br_if   	3, $pop8        # 3: down to label0
 .LBB0_5:                                # %for.inc
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label3:
@@ -68,7 +68,7 @@ vafunction:                             # @vafunction
 	i32.add 	$1=, $1, $pop27
 	i32.const	$push26=, 19
 	i32.lt_s	$push15=, $1, $pop26
-	br_if   	$pop15, 0       # 0: up to label1
+	br_if   	0, $pop15       # 0: up to label1
 # BB#6:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$5=, 16

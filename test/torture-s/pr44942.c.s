@@ -28,7 +28,7 @@ test1:                                  # @test1
 	i32.load	$push7=, 0($9)
 	i32.const	$push8=, 1234
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$12=, 16
 	i32.add 	$13=, $14, $12
@@ -71,7 +71,7 @@ test2:                                  # @test2
 	i32.load	$push7=, 0($18)
 	i32.const	$push8=, 1234
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label1
+	br_if   	0, $pop9        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$21=, 16
 	i32.add 	$22=, $23, $21
@@ -114,7 +114,7 @@ test3:                                  # @test3
 	f64.load	$push7=, 0($9)
 	f64.const	$push8=, 0x1.348p10
 	f64.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label2
+	br_if   	0, $pop9        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$12=, 16
 	i32.add 	$13=, $14, $12
@@ -157,7 +157,7 @@ test4:                                  # @test4
 	f64.load	$push7=, 0($18)
 	f64.const	$push8=, 0x1.348p10
 	f64.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label3
+	br_if   	0, $pop9        # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$21=, 16
 	i32.add 	$22=, $23, $21

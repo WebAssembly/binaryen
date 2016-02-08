@@ -21,7 +21,7 @@ main:                                   # @main
 	i32.add 	$push2=, $0, $pop7
 	i32.const	$push6=, 255
 	i32.and 	$0=, $pop2, $pop6
-	br_if   	$0, 0           # 0: up to label0
+	br_if   	0, $0           # 0: up to label0
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
 	i32.const	$push10=, 0
@@ -31,7 +31,7 @@ main:                                   # @main
 	i32.and 	$push4=, $1, $pop3
 	i32.const	$push9=, 65535
 	i32.ne  	$push5=, $pop4, $pop9
-	br_if   	$pop5, 0        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$push11=, 0
 	return  	$pop11

@@ -35,7 +35,7 @@ bar:                                    # @bar
 	block
 	i32.const	$push4=, 2
 	i32.ne  	$push5=, $1, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then

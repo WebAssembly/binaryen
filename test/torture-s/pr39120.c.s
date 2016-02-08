@@ -54,7 +54,7 @@ main:                                   # @main
 	i32.load	$push3=, 12($5)
 	i32.const	$push4=, 1
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$3=, 16
 	i32.add 	$5=, $5, $3

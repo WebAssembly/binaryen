@@ -135,7 +135,7 @@ fnear:                                  # @fnear
 	tee_local	$push5=, $1=, $pop0
 	f32.const	$push1=, 0x0p0
 	f32.eq  	$push2=, $pop5, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %lor.rhs
 	f32.div 	$push3=, $0, $1
 	f32.const	$push4=, 0x1.e848p19
@@ -162,7 +162,7 @@ dnear:                                  # @dnear
 	tee_local	$push5=, $1=, $pop0
 	f64.const	$push1=, 0x0p0
 	f64.eq  	$push2=, $pop5, $pop1
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %lor.rhs
 	f64.div 	$push3=, $0, $1
 	f64.const	$push4=, 0x1.6bcc41e9p46
@@ -207,7 +207,7 @@ ldnear:                                 # @ldnear
 	i32.call	$push4=, __eqtf2@FUNCTION, $pop15, $pop13, $pop3, $pop12
 	i32.const	$push17=, 0
 	i32.eq  	$push18=, $pop4, $pop17
-	br_if   	$pop18, 0       # 0: down to label2
+	br_if   	0, $pop18       # 0: down to label2
 # BB#1:                                 # %lor.rhs
 	call    	__divtf3@FUNCTION, $10, $0, $1, $3, $2
 	i64.load	$push7=, 0($10)

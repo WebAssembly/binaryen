@@ -14,7 +14,7 @@ test:                                   # @test
 	tee_local	$push10=, $3=, $pop0
 	i32.const	$push9=, 1
 	i32.lt_s	$push1=, $pop10, $pop9
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %while.body.lr.ph
 	i32.const	$push13=, 0
 	i32.load	$0=, loop_2($pop13)
@@ -37,7 +37,7 @@ test:                                   # @test
 	i32.const	$push14=, 1
 	i32.add 	$1=, $1, $pop14
 	i32.gt_s	$push7=, $3, $2
-	br_if   	$pop7, 0        # 0: up to label1
+	br_if   	0, $pop7        # 0: up to label1
 # BB#3:                                 # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
 	i32.const	$push8=, 0

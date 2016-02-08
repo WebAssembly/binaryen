@@ -10,18 +10,18 @@ test01:                                 # @test01
 	block
 	i32.const	$push5=, 4
 	i32.le_u	$push0=, $0, $pop5
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i32.const	$push6=, 4
 	i32.le_u	$push1=, $1, $pop6
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#2:                                 # %if.end3
 	block
 	i32.sub 	$push2=, $0, $1
 	i32.const	$push3=, 5
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label2
 # BB#3:                                 # %if.end6
 	return
 .LBB0_4:                                # %if.then5
@@ -50,16 +50,16 @@ test02:                                 # @test02
 	block
 	i32.const	$push1=, 12
 	i32.lt_u	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label3
+	br_if   	0, $pop2        # 0: down to label3
 # BB#1:                                 # %entry
 	i32.const	$push3=, 16
 	i32.lt_u	$push4=, $1, $pop3
-	br_if   	$pop4, 0        # 0: down to label3
+	br_if   	0, $pop4        # 0: down to label3
 # BB#2:                                 # %entry
 	i32.sub 	$push0=, $0, $1
 	i32.const	$push5=, -17
 	i32.gt_u	$push6=, $pop0, $pop5
-	br_if   	$pop6, 0        # 0: down to label3
+	br_if   	0, $pop6        # 0: down to label3
 # BB#3:                                 # %if.then4
 	call    	abort@FUNCTION
 	unreachable

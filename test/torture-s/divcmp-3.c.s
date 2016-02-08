@@ -194,7 +194,7 @@ main:                                   # @main
 	i32.add 	$push1=, $pop0, $pop9
 	i32.const	$push8=, 99
 	i32.le_u	$push2=, $pop1, $pop8
-	br_if   	$pop2, 2        # 2: down to label0
+	br_if   	2, $pop2        # 2: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB12_1 Depth=1
 	i32.const	$push7=, 1
@@ -203,7 +203,7 @@ main:                                   # @main
 	i32.add 	$0=, $0, $pop6
 	i32.const	$push5=, 255
 	i32.le_s	$push3=, $1, $pop5
-	br_if   	$pop3, 0        # 0: up to label1
+	br_if   	0, $pop3        # 0: up to label1
 # BB#3:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push4=, 0

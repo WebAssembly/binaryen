@@ -34,7 +34,7 @@ main:                                   # @main
 	block
 	i32.const	$push20=, 0
 	i32.eq  	$push21=, $0, $pop20
-	br_if   	$pop21, 0       # 0: down to label0
+	br_if   	0, $pop21       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push17=, 0
 	i32.const	$push2=, -1
@@ -56,7 +56,7 @@ main:                                   # @main
 	i64.shr_u	$push10=, $pop8, $pop9
 	i32.wrap/i64	$push11=, $pop10
 	i32.call	$push12=, fn1@FUNCTION, $pop11
-	br_if   	$pop12, 0       # 0: down to label1
+	br_if   	0, $pop12       # 0: down to label1
 # BB#3:                                 # %if.end5
 	i32.const	$push13=, 0
 	call    	exit@FUNCTION, $pop13

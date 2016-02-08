@@ -16,7 +16,7 @@ f:                                      # @f
 	i32.xor 	$push3=, $pop2, $1
 	i32.const	$push4=, -1
 	i32.gt_s	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.then
 	return
 .LBB0_2:                                # %if.end

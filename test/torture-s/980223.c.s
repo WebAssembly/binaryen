@@ -35,7 +35,7 @@ foo:                                    # @foo
 	i32.load8_u	$push3=, 4($pop8):p2align=2
 	i32.const	$push7=, 64
 	i32.and 	$push4=, $pop3, $pop7
-	br_if   	$pop4, 0        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label2
 # BB#1:                                 # %entry.if.end7_crit_edge
 	i64.load	$4=, 0($2):p2align=2
 	br      	1               # 1: down to label1
@@ -48,7 +48,7 @@ foo:                                    # @foo
 	i64.store	$4=, 0($2):p2align=2, $pop1
 	i32.const	$push9=, 64
 	i32.and 	$push5=, $3, $pop9
-	br_if   	$pop5, 1        # 1: down to label0
+	br_if   	1, $pop5        # 1: down to label0
 .LBB1_3:                                # %if.end7
 	end_block                       # label1:
 	i64.store	$discard=, 0($0):p2align=2, $4
@@ -93,7 +93,7 @@ main:                                   # @main
 	i32.and 	$push2=, $0, $pop6
 	i32.const	$push13=, 0
 	i32.eq  	$push14=, $pop2, $pop13
-	br_if   	$pop14, 0       # 0: down to label3
+	br_if   	0, $pop14       # 0: down to label3
 # BB#1:                                 # %if.then.i
 	i32.const	$push11=, 0
 	i32.load	$push0=, cons2($pop11):p2align=4
@@ -105,7 +105,7 @@ main:                                   # @main
 	i32.and 	$push4=, $1, $pop9
 	i32.const	$push15=, 0
 	i32.eq  	$push16=, $pop4, $pop15
-	br_if   	$pop16, 0       # 0: down to label3
+	br_if   	0, $pop16       # 0: down to label3
 # BB#2:                                 # %if.then6.i
 	i64.load	$push5=, 8($5)
 	i64.store	$discard=, 0($5):p2align=2, $pop5

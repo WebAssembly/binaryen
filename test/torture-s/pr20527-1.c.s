@@ -10,7 +10,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	block
 	i32.gt_s	$push0=, $2, $3
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push1=, 2
 	i32.shl 	$push2=, $2, $pop1
@@ -41,7 +41,7 @@ f:                                      # @f
 	i32.const	$push13=, 4
 	i32.add 	$0=, $0, $pop13
 	i32.lt_s	$push9=, $4, $3
-	br_if   	$pop9, 0        # 0: up to label1
+	br_if   	0, $pop9        # 0: up to label1
 .LBB0_3:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -74,17 +74,17 @@ main:                                   # @main
 	i32.load	$push3=, 4($3)
 	i32.const	$push4=, 3
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label3
+	br_if   	0, $pop5        # 0: down to label3
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push6=, 8($3)
 	i32.const	$push7=, 9
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label3
+	br_if   	0, $pop8        # 0: down to label3
 # BB#2:                                 # %lor.lhs.false3
 	i32.load	$push9=, 12($3)
 	i32.const	$push10=, 21
 	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: down to label3
+	br_if   	0, $pop11       # 0: down to label3
 # BB#3:                                 # %if.end
 	i32.const	$push12=, 0
 	call    	exit@FUNCTION, $pop12

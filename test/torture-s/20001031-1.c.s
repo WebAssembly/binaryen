@@ -10,7 +10,7 @@ t1:                                     # @t1
 	block
 	i32.const	$push0=, 4100
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
@@ -44,7 +44,7 @@ t3:                                     # @t3
 	block
 	i64.const	$push0=, 2147487743
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %if.end
 	return
 .LBB2_2:                                # %if.then

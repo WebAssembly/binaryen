@@ -431,14 +431,14 @@ main:                                   # @main
 	i32.load	$push0=, ptr($pop42)
 	tee_local	$push41=, $0=, $pop0
 	i32.ne  	$push5=, $pop41, $0
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end4
 	block
 	i32.const	$push44=, 0
 	i32.load	$push6=, arrindex($pop44)
 	tee_local	$push43=, $0=, $pop6
 	i32.ne  	$push7=, $pop43, $0
-	br_if   	$pop7, 0        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label1
 # BB#2:                                 # %if.end12
 	i32.const	$push48=, 0
 	i32.const	$push47=, 0
@@ -450,7 +450,7 @@ main:                                   # @main
 	i32.const	$push45=, 1
 	i32.const	$push85=, 0
 	i32.eq  	$push86=, $pop45, $pop85
-	br_if   	$pop86, 0       # 0: down to label2
+	br_if   	0, $pop86       # 0: down to label2
 # BB#3:                                 # %if.end20
 	i32.const	$push52=, 0
 	i32.const	$push51=, 0
@@ -462,7 +462,7 @@ main:                                   # @main
 	i32.const	$push49=, 1
 	i32.const	$push87=, 0
 	i32.eq  	$push88=, $pop49, $pop87
-	br_if   	$pop88, 0       # 0: down to label3
+	br_if   	0, $pop88       # 0: down to label3
 # BB#4:                                 # %if.end28
 	i32.const	$push56=, 0
 	i32.const	$push55=, 0
@@ -474,7 +474,7 @@ main:                                   # @main
 	i32.const	$push53=, 1
 	i32.const	$push89=, 0
 	i32.eq  	$push90=, $pop53, $pop89
-	br_if   	$pop90, 0       # 0: down to label4
+	br_if   	0, $pop90       # 0: down to label4
 # BB#5:                                 # %if.end36
 	i32.const	$push60=, 0
 	i32.const	$push59=, 0
@@ -486,7 +486,7 @@ main:                                   # @main
 	i32.const	$push57=, 1
 	i32.const	$push91=, 0
 	i32.eq  	$push92=, $pop57, $pop91
-	br_if   	$pop92, 0       # 0: down to label5
+	br_if   	0, $pop92       # 0: down to label5
 # BB#6:                                 # %if.end44
 	block
 	i32.const	$push64=, 0
@@ -498,7 +498,7 @@ main:                                   # @main
 	i32.add 	$push13=, $pop12, $pop61
 	i32.store	$push14=, arrindex($pop63), $pop13
 	i32.ne  	$push16=, $pop15, $pop14
-	br_if   	$pop16, 0       # 0: down to label6
+	br_if   	0, $pop16       # 0: down to label6
 # BB#7:                                 # %if.end52
 	block
 	i32.const	$push68=, 0
@@ -510,7 +510,7 @@ main:                                   # @main
 	i32.add 	$push18=, $pop17, $pop65
 	i32.store	$push19=, arrindex($pop67), $pop18
 	i32.ne  	$push21=, $pop20, $pop19
-	br_if   	$pop21, 0       # 0: down to label7
+	br_if   	0, $pop21       # 0: down to label7
 # BB#8:                                 # %if.end64
 	block
 	i32.const	$push72=, 0
@@ -522,7 +522,7 @@ main:                                   # @main
 	i32.add 	$push23=, $pop22, $pop69
 	i32.store	$push24=, arrindex($pop71), $pop23
 	i32.ne  	$push26=, $pop25, $pop24
-	br_if   	$pop26, 0       # 0: down to label8
+	br_if   	0, $pop26       # 0: down to label8
 # BB#9:                                 # %if.end72
 	block
 	i32.const	$push76=, 0
@@ -534,7 +534,7 @@ main:                                   # @main
 	i32.add 	$push28=, $pop27, $pop73
 	i32.store	$push29=, arrindex($pop75), $pop28
 	i32.ne  	$push31=, $pop30, $pop29
-	br_if   	$pop31, 0       # 0: down to label9
+	br_if   	0, $pop31       # 0: down to label9
 # BB#10:                                # %if.end76
 	block
 	i32.const	$push80=, 0
@@ -545,7 +545,7 @@ main:                                   # @main
 	i32.store	$push34=, getptrcnt($pop80), $pop33
 	i32.const	$push77=, 1
 	i32.ne  	$push35=, $pop34, $pop77
-	br_if   	$pop35, 0       # 0: down to label10
+	br_if   	0, $pop35       # 0: down to label10
 # BB#11:                                # %if.end80
 	block
 	i32.const	$push84=, 0
@@ -556,7 +556,7 @@ main:                                   # @main
 	i32.store	$push38=, getintcnt($pop84), $pop37
 	i32.const	$push81=, 1
 	i32.ne  	$push39=, $pop38, $pop81
-	br_if   	$pop39, 0       # 0: down to label11
+	br_if   	0, $pop39       # 0: down to label11
 # BB#12:                                # %if.end84
 	i32.const	$push40=, 0
 	call    	exit@FUNCTION, $pop40

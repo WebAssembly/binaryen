@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.load	$push1=, a($pop12)
 	i32.const	$push26=, 0
 	i32.eq  	$push27=, $pop1, $pop26
-	br_if   	$pop27, 0       # 0: down to label0
+	br_if   	0, $pop27       # 0: down to label0
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
@@ -32,7 +32,7 @@ main:                                   # @main
 	tee_local	$push15=, $1=, $pop4
 	i32.const	$push28=, 0
 	i32.eq  	$push29=, $pop15, $pop28
-	br_if   	$pop29, 0       # 0: down to label1
+	br_if   	0, $pop29       # 0: down to label1
 # BB#3:                                 # %cond.false
 	i32.const	$push5=, -1
 	i32.rem_s	$0=, $pop5, $1
@@ -52,7 +52,7 @@ main:                                   # @main
 	i32.load	$push10=, b($pop20)
 	i32.const	$push19=, 255
 	i32.ne  	$push11=, $pop10, $pop19
-	br_if   	$pop11, 0       # 0: down to label2
+	br_if   	0, $pop11       # 0: down to label2
 # BB#5:                                 # %if.end23
 	i32.const	$push25=, 0
 	return  	$pop25

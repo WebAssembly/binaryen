@@ -48,7 +48,7 @@ main:                                   # @main
 	i64.const	$push7=, -8905435550453399112
 	i64.const	$push6=, 4611846683310179025
 	i32.call	$push8=, __eqtf2@FUNCTION, $pop5, $pop4, $pop7, $pop6
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 0
 	i32.const	$2=, 16

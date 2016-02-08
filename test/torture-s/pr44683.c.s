@@ -13,13 +13,13 @@ copysign_bug:                           # @copysign_bug
 	block
 	f64.const	$push9=, 0x0p0
 	f64.eq  	$push2=, $0, $pop9
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$1=, 1
 	f64.const	$push1=, 0x1p-1
 	f64.mul 	$push0=, $0, $pop1
 	f64.eq  	$push3=, $pop0, $0
-	br_if   	$pop3, 1        # 1: down to label0
+	br_if   	1, $pop3        # 1: down to label0
 .LBB0_2:                                # %if.end
 	end_block                       # label1:
 	i32.const	$push8=, 2
@@ -48,7 +48,7 @@ main:                                   # @main
 	i32.call	$push1=, copysign_bug@FUNCTION, $pop0
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label2
+	br_if   	0, $pop3        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4

@@ -46,7 +46,7 @@ baz3:                                   # @baz3
 	block
 	i32.const	$push1=, 0
 	i32.eq  	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 1
 	return  	$pop0
@@ -76,7 +76,7 @@ foo:                                    # @foo
 	i32.store	$discard=, baz1.l($pop29), $pop4
 	block
 	i32.ge_s	$push5=, $9, $1
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %if.then.lr.ph
 	i32.const	$push6=, 16
 	i32.and 	$3=, $2, $pop6
@@ -116,17 +116,17 @@ foo:                                    # @foo
 	i32.or  	$push17=, $2, $3
 	i32.const	$push45=, 0
 	i32.eq  	$push46=, $pop17, $pop45
-	br_if   	$pop46, 0       # 0: down to label4
+	br_if   	0, $pop46       # 0: down to label4
 # BB#3:                                 # %if.end17
                                         #   in Loop: Header=BB3_2 Depth=1
 	i32.const	$push42=, 1
 	i32.select	$8=, $2, $pop42, $2
 	block
 	block
-	br_if   	$3, 0           # 0: down to label6
+	br_if   	0, $3           # 0: down to label6
 # BB#4:                                 # %land.lhs.true25
                                         #   in Loop: Header=BB3_2 Depth=1
-	br_if   	$4, 2           # 2: down to label4
+	br_if   	2, $4           # 2: down to label4
 	br      	1               # 1: down to label5
 .LBB3_5:                                # %land.lhs.true20
                                         #   in Loop: Header=BB3_2 Depth=1
@@ -137,7 +137,7 @@ foo:                                    # @foo
 	i32.and 	$push20=, $6, $pop19
 	i32.or  	$push21=, $5, $pop20
 	i32.or  	$push22=, $10, $pop21
-	br_if   	$pop22, 1       # 1: down to label4
+	br_if   	1, $pop22       # 1: down to label4
 .LBB3_6:                                # %for.body
 	end_block                       # label5:
 	call    	abort@FUNCTION
@@ -153,7 +153,7 @@ foo:                                    # @foo
 	i32.add 	$9=, $9, $pop39
 	copy_local	$2=, $8
 	i32.lt_s	$push24=, $9, $1
-	br_if   	$pop24, 0       # 0: up to label2
+	br_if   	0, $pop24       # 0: up to label2
 .LBB3_8:                                # %while.end
 	end_loop                        # label3:
 	end_block                       # label1:

@@ -13,11 +13,11 @@ lisp_atan2:                             # @lisp_atan2
 	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push2=, 0
 	i32.gt_s	$push3=, $1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %if.then2
 	i32.const	$push4=, 31
 	i32.shr_s	$push5=, $1, $pop4
@@ -59,7 +59,7 @@ main:                                   # @main
 	i32.load	$push2=, 12($3)
 	i32.load	$push3=, 8($3)
 	i32.call	$push4=, lisp_atan2@FUNCTION, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 0
 	i32.const	$2=, 16

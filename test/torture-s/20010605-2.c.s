@@ -25,12 +25,12 @@ foo:                                    # @foo
 	f64.load	$push0=, 0($0)
 	f64.const	$push1=, 0x1p0
 	f64.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	f64.load	$push3=, 8($0)
 	f64.const	$push4=, 0x1p1
 	f64.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB1_3:                                # %if.then
@@ -52,12 +52,12 @@ bar:                                    # @bar
 	f32.load	$push0=, 0($0)
 	f32.const	$push1=, 0x1.8p1
 	f32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %lor.lhs.false
 	f32.load	$push3=, 4($0)
 	f32.const	$push4=, 0x1p2
 	f32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#2:                                 # %if.end
 	return
 .LBB2_3:                                # %if.then
@@ -83,7 +83,7 @@ baz:                                    # @baz
 	i64.const	$push12=, 0
 	i64.const	$push4=, 4612037862148276224
 	i32.call	$push5=, __netf2@FUNCTION, $pop3, $pop2, $pop12, $pop4
-	br_if   	$pop5, 0        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label2
 # BB#1:                                 # %lor.lhs.false
 	i64.load	$push9=, 16($0):p2align=4
 	i32.const	$push6=, 24
@@ -92,7 +92,7 @@ baz:                                    # @baz
 	i64.const	$push13=, 0
 	i64.const	$push10=, 4612108230892453888
 	i32.call	$push11=, __eqtf2@FUNCTION, $pop9, $pop8, $pop13, $pop10
-	br_if   	$pop11, 0       # 0: down to label2
+	br_if   	0, $pop11       # 0: down to label2
 # BB#2:                                 # %if.end
 	return
 .LBB3_3:                                # %if.then

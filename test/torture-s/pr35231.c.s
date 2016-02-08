@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.or  	$push0=, $1, $0
 	i32.const	$push1=, 1
 	i32.eq  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB0_2:                                # %if.then
@@ -36,7 +36,7 @@ main:                                   # @main
 	i32.call	$push1=, foo@FUNCTION, $pop0, $pop4
 	i32.const	$push3=, 2
 	i32.ne  	$push2=, $pop1, $pop3
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 0
 	return  	$pop5

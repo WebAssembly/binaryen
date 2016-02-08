@@ -13,7 +13,7 @@ test:                                   # @test
 	tee_local	$push16=, $1=, $pop15
 	i32.const	$push2=, 2
 	i32.lt_s	$push3=, $pop16, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 .LBB0_1:                                # %land.rhs
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -27,7 +27,7 @@ test:                                   # @test
 	i32.load8_u	$push7=, 0($pop17)
 	i32.const	$push8=, 47
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 1        # 1: down to label2
+	br_if   	1, $pop9        # 1: down to label2
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push10=, 4
@@ -39,7 +39,7 @@ test:                                   # @test
 	i32.load	$1=, 0($3)
 	i32.const	$push13=, 1
 	i32.gt_s	$push14=, $1, $pop13
-	br_if   	$pop14, 0       # 0: up to label1
+	br_if   	0, $pop14       # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:

@@ -60,7 +60,7 @@ main:                                   # @main
 	i32.load8_u	$push12=, 0($pop46)
 	i32.const	$push45=, 45
 	i32.ne  	$push13=, $pop12, $pop45
-	br_if   	$pop13, 1       # 1: down to label4
+	br_if   	1, $pop13       # 1: down to label4
 # BB#2:                                 # %while.body.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	block
@@ -68,13 +68,13 @@ main:                                   # @main
 	tee_local	$push47=, $3=, $pop1
 	i32.const	$push70=, 0
 	i32.eq  	$push71=, $pop47, $pop70
-	br_if   	$pop71, 0       # 0: down to label5
+	br_if   	0, $pop71       # 0: down to label5
 # BB#3:                                 # %land.lhs.true.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push14=, 2($5)
 	i32.const	$push72=, 0
 	i32.eq  	$push73=, $pop14, $pop72
-	br_if   	$pop73, 0       # 0: down to label5
+	br_if   	0, $pop73       # 0: down to label5
 # BB#4:                                 # %if.then.i
 	call    	abort@FUNCTION
 	unreachable
@@ -85,18 +85,18 @@ main:                                   # @main
 	block
 	i32.const	$push48=, 80
 	i32.eq  	$push15=, $3, $pop48
-	br_if   	$pop15, 0       # 0: down to label7
+	br_if   	0, $pop15       # 0: down to label7
 # BB#6:                                 # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	block
 	i32.const	$push49=, 117
 	i32.eq  	$push16=, $3, $pop49
-	br_if   	$pop16, 0       # 0: down to label8
+	br_if   	0, $pop16       # 0: down to label8
 # BB#7:                                 # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push50=, 45
 	i32.ne  	$push17=, $3, $pop50
-	br_if   	$pop17, 2       # 2: down to label6
+	br_if   	2, $pop17       # 2: down to label6
 # BB#8:                                 # %sw.bb22.i
 	i32.const	$push23=, 1536
 	i32.or  	$push24=, $1, $pop23
@@ -119,7 +119,7 @@ main:                                   # @main
 	i32.load	$push25=, 4($0)
 	i32.const	$push74=, 0
 	i32.eq  	$push75=, $pop25, $pop74
-	br_if   	$pop75, 0       # 0: down to label9
+	br_if   	0, $pop75       # 0: down to label9
 # BB#10:                                # %if.end19.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push54=, 0
@@ -153,16 +153,16 @@ main:                                   # @main
 	i32.const	$push57=, 0
 	i32.add 	$push7=, $0, $2
 	i32.store	$0=, e($pop57), $pop7
-	br_if   	$3, 0           # 0: up to label3
+	br_if   	0, $3           # 0: up to label3
 .LBB2_14:                               # %while.end.i
 	end_loop                        # label4:
 	i32.const	$push61=, 1
 	i32.lt_s	$push27=, $4, $pop61
-	br_if   	$pop27, 0       # 0: down to label2
+	br_if   	0, $pop27       # 0: down to label2
 # BB#15:                                # %while.end.i
 	i32.const	$push62=, 1
 	i32.and 	$push26=, $1, $pop62
-	br_if   	$pop26, 0       # 0: down to label2
+	br_if   	0, $pop26       # 0: down to label2
 # BB#16:                                # %if.then36.i
 	call    	abort@FUNCTION
 	unreachable
@@ -176,7 +176,7 @@ main:                                   # @main
 	i32.and 	$push30=, $1, $pop29
 	i32.const	$push76=, 0
 	i32.eq  	$push77=, $pop30, $pop76
-	br_if   	$pop77, 0       # 0: down to label10
+	br_if   	0, $pop77       # 0: down to label10
 # BB#18:                                # %if.then6.i
 	i32.const	$push66=, 0
 	i32.const	$push31=, 1
@@ -198,7 +198,7 @@ main:                                   # @main
 	i32.store	$3=, f($4), $pop36
 	i32.const	$push67=, 4
 	i32.add 	$4=, $4, $pop67
-	br_if   	$3, 0           # 0: up to label11
+	br_if   	0, $3           # 0: up to label11
 .LBB2_20:                               # %setup1.exit
 	end_loop                        # label12:
 	end_block                       # label10:
@@ -207,11 +207,11 @@ main:                                   # @main
 	i32.and 	$push39=, $1, $pop38
 	i32.const	$push78=, 0
 	i32.eq  	$push79=, $pop39, $pop78
-	br_if   	$pop79, 0       # 0: down to label13
+	br_if   	0, $pop79       # 0: down to label13
 # BB#21:                                # %setup1.exit
 	i32.const	$push69=, 0
 	i32.load	$push37=, a+16($pop69):p2align=4
-	br_if   	$pop37, 0       # 0: down to label13
+	br_if   	0, $pop37       # 0: down to label13
 # BB#22:                                # %if.then
 	call    	abort@FUNCTION
 	unreachable

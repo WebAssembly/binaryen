@@ -10,11 +10,11 @@ foo:                                    # @foo
 	block
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push2=, 7
 	i32.ge_s	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then

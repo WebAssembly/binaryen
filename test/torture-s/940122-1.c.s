@@ -19,7 +19,7 @@ g:                                      # @g
 	i32.const	$push6=, 0
 	i32.ne  	$push4=, $pop3, $pop6
 	i32.ne  	$push5=, $pop2, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$1
 .LBB0_2:                                # %if.then
@@ -49,7 +49,7 @@ f:                                      # @f
 	i32.const	$push6=, 0
 	i32.ne  	$push4=, $pop3, $pop6
 	i32.ne  	$push5=, $pop2, $pop4
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %g.exit
 	return  	$1
 .LBB1_2:                                # %if.then.i

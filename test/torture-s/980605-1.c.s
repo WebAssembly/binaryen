@@ -92,7 +92,7 @@ f:                                      # @f
 	block
 	i32.const	$push11=, 227
 	i32.ne  	$push12=, $0, $pop11
-	br_if   	$pop12, 0       # 0: down to label0
+	br_if   	0, $pop12       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$7=, 16
 	i32.add 	$8=, $8, $7

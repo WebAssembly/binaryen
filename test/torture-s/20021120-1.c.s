@@ -75,7 +75,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -497,7 +497,7 @@ foo:                                    # @foo
 	i32.add 	$0=, $0, $pop66
 	i32.const	$push99=, 0
 	f32.store	$discard=, gf+124($pop99), $32
-	br_if   	$0, 0           # 0: up to label1
+	br_if   	0, $0           # 0: up to label1
 .LBB0_2:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -598,7 +598,7 @@ main:                                   # @main
 	i32.add 	$2=, $2, $pop11
 	i32.const	$push10=, 32
 	i32.ne  	$push1=, $1, $pop10
-	br_if   	$pop1, 0        # 0: up to label3
+	br_if   	0, $pop1        # 0: up to label3
 # BB#2:                                 # %for.end
 	end_loop                        # label4:
 	i32.const	$push15=, 1
@@ -613,13 +613,13 @@ main:                                   # @main
 	f64.load	$push2=, 0($2)
 	f64.convert_s/i32	$push3=, $1
 	f64.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 2        # 2: down to label5
+	br_if   	2, $pop4        # 2: down to label5
 # BB#4:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB1_3 Depth=1
 	f32.load	$push5=, gf($1)
 	f32.convert_s/i32	$push6=, $3
 	f32.ne  	$push7=, $pop5, $pop6
-	br_if   	$pop7, 2        # 2: down to label5
+	br_if   	2, $pop7        # 2: down to label5
 # BB#5:                                 # %for.cond3
                                         #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$push19=, 1
@@ -630,7 +630,7 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop17
 	i32.const	$push16=, 31
 	i32.le_s	$push8=, $3, $pop16
-	br_if   	$pop8, 0        # 0: up to label6
+	br_if   	0, $pop8        # 0: up to label6
 # BB#6:                                 # %for.end17
 	end_loop                        # label7:
 	i32.const	$push9=, 0

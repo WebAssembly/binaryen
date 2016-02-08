@@ -35,20 +35,20 @@ mark_cell:                              # @mark_cell
 	i32.load	$push1=, 8($1)
 	i32.const	$push2=, 4
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %land.lhs.true
 	i32.load	$push0=, 0($1)
 	tee_local	$push9=, $1=, $pop0
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %land.lhs.true1
 	i32.const	$push4=, 2
 	i32.add 	$push5=, $1, $pop4
 	i32.load8_u	$push6=, 0($pop5):p2align=1
 	i32.const	$push7=, 4
 	i32.and 	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#3:                                 # %if.then
 	call    	Parrot_gc_mark_PMC_alive_fun@FUNCTION, $1, $1
 	unreachable

@@ -45,26 +45,26 @@ main:                                   # @main
 	block
 	i32.load16_u	$push15=, 46($4)
 	i32.ne  	$push16=, $0, $pop15
-	br_if   	$pop16, 0       # 0: down to label0
+	br_if   	0, $pop16       # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push17=, 40($4)
 	i32.ne  	$push18=, $pop17, $1
-	br_if   	$pop18, 0       # 0: down to label0
+	br_if   	0, $pop18       # 0: down to label0
 # BB#2:                                 # %lor.lhs.false9
 	i32.load16_u	$push19=, 38($4)
 	i32.const	$push20=, 3
 	i32.ne  	$push21=, $pop19, $pop20
-	br_if   	$pop21, 0       # 0: down to label0
+	br_if   	0, $pop21       # 0: down to label0
 # BB#3:                                 # %lor.lhs.false14
 	i32.load16_u	$push22=, 36($4)
 	i32.const	$push23=, 4
 	i32.ne  	$push24=, $pop22, $pop23
-	br_if   	$pop24, 0       # 0: down to label0
+	br_if   	0, $pop24       # 0: down to label0
 # BB#4:                                 # %lor.lhs.false19
 	i32.load8_u	$push25=, 31($4)
 	i32.const	$push26=, 99
 	i32.ne  	$push27=, $pop25, $pop26
-	br_if   	$pop27, 0       # 0: down to label0
+	br_if   	0, $pop27       # 0: down to label0
 # BB#5:                                 # %if.end
 	i32.const	$push28=, 0
 	call    	exit@FUNCTION, $pop28

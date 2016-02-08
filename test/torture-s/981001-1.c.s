@@ -12,7 +12,7 @@ sub:                                    # @sub
 	block
 	i32.const	$push0=, 2
 	i32.lt_s	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push3=, 31
 	i32.shr_u	$push4=, $0, $pop3
@@ -22,7 +22,7 @@ sub:                                    # @sub
 	block
 	i32.const	$push17=, 1
 	i32.and 	$push2=, $0, $pop17
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#2:                                 # %if.then2
 	i32.call	$0=, sub@FUNCTION, $1
 	i32.const	$push11=, -1
@@ -67,9 +67,9 @@ main:                                   # @main
 	i32.call	$push1=, sub@FUNCTION, $pop0
 	i32.const	$push2=, 832040
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label3
+	br_if   	0, $pop3        # 0: down to label3
 # BB#1:                                 # %if.end
-	br_if   	$0, 1           # 1: down to label2
+	br_if   	1, $0           # 1: down to label2
 # BB#2:                                 # %if.end2
 	i32.const	$push6=, 0
 	call    	exit@FUNCTION, $pop6

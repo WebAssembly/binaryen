@@ -32,7 +32,7 @@ bar:                                    # @bar
 	block
 	i32.const	$push28=, 0
 	i32.gt_s	$push7=, $1, $pop28
-	br_if   	$pop7, 0        # 0: down to label2
+	br_if   	0, $pop7        # 0: down to label2
 # BB#2:                                 # %if.then
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push29=, 20
@@ -56,7 +56,7 @@ bar:                                    # @bar
 	i32.lt_u	$push15=, $pop14, $3
 	i32.select	$5=, $1, $5, $pop15
 	i32.ne  	$push16=, $1, $6
-	br_if   	$pop16, 0       # 0: up to label0
+	br_if   	0, $pop16       # 0: up to label0
 # BB#4:                                 # %do.end
 	end_loop                        # label1:
 	i32.const	$push20=, 20

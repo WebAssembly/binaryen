@@ -9,7 +9,7 @@ f:                                      # @f
 	block
 	i32.const	$push2=, 0
 	i32.load	$push0=, b($pop2)
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %do.body.preheader
 	i32.const	$push3=, 0
 	i32.const	$push1=, 9
@@ -35,10 +35,10 @@ main:                                   # @main
 	tee_local	$push5=, $0=, $pop0
 	i32.const	$push1=, 9
 	i32.eq  	$push2=, $pop5, $pop1
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %entry
 	block
-	br_if   	$0, 0           # 0: down to label2
+	br_if   	0, $0           # 0: down to label2
 # BB#2:                                 # %f.exit.thread
 	i32.const	$push3=, 0
 	i32.const	$push4=, 9

@@ -11,7 +11,7 @@ x:                                      # @x
 	block
 	i32.const	$push5=, 0
 	i32.load	$push0=, s($pop5)
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push7=, 0
 	i32.load	$push1=, s+4($pop7)

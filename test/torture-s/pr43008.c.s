@@ -43,7 +43,7 @@ main:                                   # @main
 	i32.store	$0=, i($pop6), $pop8
 	block
 	i32.load	$push7=, 0($1)
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then

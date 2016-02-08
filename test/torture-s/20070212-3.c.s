@@ -19,7 +19,7 @@ bar:                                    # @bar
 	block
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $3, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.then3
 	i32.load	$1=, 0($4)
 .LBB0_2:                                # %if.end5

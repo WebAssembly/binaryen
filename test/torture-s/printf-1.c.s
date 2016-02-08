@@ -21,7 +21,7 @@ main:                                   # @main
 	block
 	i32.const	$push0=, 5
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push33=, .Lstr
 	i32.call	$discard=, puts@FUNCTION, $pop33
@@ -30,7 +30,7 @@ main:                                   # @main
 	block
 	i32.const	$push3=, 6
 	i32.ne  	$push4=, $0, $pop3
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#2:                                 # %if.end6
 	i32.const	$push5=, 97
 	i32.call	$discard=, putchar@FUNCTION, $pop5
@@ -39,7 +39,7 @@ main:                                   # @main
 	block
 	i32.const	$push7=, 1
 	i32.ne  	$push8=, $0, $pop7
-	br_if   	$pop8, 0        # 0: down to label2
+	br_if   	0, $pop8        # 0: down to label2
 # BB#3:                                 # %if.end16
 	i32.const	$2=, __stack_pointer
 	i32.load	$2=, 0($2)
@@ -75,7 +75,7 @@ main:                                   # @main
 	block
 	i32.const	$push10=, 5
 	i32.ne  	$push11=, $0, $pop10
-	br_if   	$pop11, 0       # 0: down to label3
+	br_if   	0, $pop11       # 0: down to label3
 # BB#4:                                 # %if.end21
 	i32.const	$10=, __stack_pointer
 	i32.load	$10=, 0($10)
@@ -111,7 +111,7 @@ main:                                   # @main
 	block
 	i32.const	$push13=, 6
 	i32.ne  	$push14=, $0, $pop13
-	br_if   	$pop14, 0       # 0: down to label4
+	br_if   	0, $pop14       # 0: down to label4
 # BB#5:                                 # %if.end26
 	i32.const	$18=, __stack_pointer
 	i32.load	$18=, 0($18)
@@ -147,7 +147,7 @@ main:                                   # @main
 	block
 	i32.const	$push16=, 1
 	i32.ne  	$push17=, $0, $pop16
-	br_if   	$pop17, 0       # 0: down to label5
+	br_if   	0, $pop17       # 0: down to label5
 # BB#6:                                 # %if.end31
 	i32.const	$26=, __stack_pointer
 	i32.load	$26=, 0($26)
@@ -181,7 +181,7 @@ main:                                   # @main
 	i32.const	$33=, __stack_pointer
 	i32.store	$53=, 0($33), $53
 	block
-	br_if   	$0, 0           # 0: down to label6
+	br_if   	0, $0           # 0: down to label6
 # BB#7:                                 # %if.end36
 	i32.const	$push19=, 120
 	i32.call	$discard=, putchar@FUNCTION, $pop19
@@ -204,7 +204,7 @@ main:                                   # @main
 	block
 	i32.const	$push21=, 1
 	i32.ne  	$push22=, $0, $pop21
-	br_if   	$pop22, 0       # 0: down to label7
+	br_if   	0, $pop22       # 0: down to label7
 # BB#8:                                 # %if.end41
 	i32.const	$push23=, .L.str.1
 	i32.call	$discard=, puts@FUNCTION, $pop23
@@ -227,7 +227,7 @@ main:                                   # @main
 	block
 	i32.const	$push25=, 7
 	i32.ne  	$push26=, $0, $pop25
-	br_if   	$pop26, 0       # 0: down to label8
+	br_if   	0, $pop26       # 0: down to label8
 # BB#9:                                 # %if.end46
 	i32.const	$42=, __stack_pointer
 	i32.load	$42=, 0($42)
@@ -263,7 +263,7 @@ main:                                   # @main
 	block
 	i32.const	$push29=, 2
 	i32.ne  	$push30=, $0, $pop29
-	br_if   	$pop30, 0       # 0: down to label9
+	br_if   	0, $pop30       # 0: down to label9
 # BB#10:                                # %if.end51
 	i32.const	$52=, 16
 	i32.add 	$53=, $53, $52

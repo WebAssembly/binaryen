@@ -19,17 +19,17 @@ foo:                                    # @foo
 	block
 	i32.const	$push0=, 11
 	i32.eq  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %entry
 	block
 	i32.const	$push67=, 8
 	i32.eq  	$push2=, $0, $pop67
-	br_if   	$pop2, 0        # 0: down to label2
+	br_if   	0, $pop2        # 0: down to label2
 # BB#2:                                 # %entry
 	block
 	i32.const	$push3=, 5
 	i32.ne  	$push4=, $0, $pop3
-	br_if   	$pop4, 0        # 0: down to label3
+	br_if   	0, $pop4        # 0: down to label3
 # BB#3:                                 # %sw.bb
 	i32.load	$push43=, 44($11)
 	i32.const	$push44=, 3
@@ -167,7 +167,7 @@ bar:                                    # @bar
 	block
 	i32.const	$push0=, 16386
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label4
+	br_if   	0, $pop1        # 0: down to label4
 # BB#1:                                 # %if.then
 	i32.const	$push25=, 0
 	i32.const	$push24=, 0
@@ -184,7 +184,7 @@ bar:                                    # @bar
 	i32.load	$push9=, 0($1)
 	i32.const	$push10=, 13
 	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: down to label5
+	br_if   	0, $pop11       # 0: down to label5
 # BB#2:                                 # %lor.lhs.false
 	i32.const	$push28=, 0
 	i32.const	$push27=, 0
@@ -200,7 +200,7 @@ bar:                                    # @bar
 	f64.load	$push19=, 0($1)
 	f64.const	$push20=, -0x1.cp3
 	f64.eq  	$push21=, $pop19, $pop20
-	br_if   	$pop21, 1       # 1: down to label4
+	br_if   	1, $pop21       # 1: down to label4
 .LBB1_3:                                # %if.then3
 	end_block                       # label5:
 	call    	abort@FUNCTION
@@ -254,7 +254,7 @@ f2:                                     # @f2
 	block
 	i32.const	$push0=, 16386
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label6
+	br_if   	0, $pop1        # 0: down to label6
 # BB#1:                                 # %if.then.i
 	i32.const	$push26=, 0
 	i32.const	$push25=, 0
@@ -271,7 +271,7 @@ f2:                                     # @f2
 	i32.load	$push9=, 0($1)
 	i32.const	$push10=, 13
 	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: down to label7
+	br_if   	0, $pop11       # 0: down to label7
 # BB#2:                                 # %lor.lhs.false.i
 	i32.const	$push12=, 0
 	i32.const	$push28=, 0
@@ -287,7 +287,7 @@ f2:                                     # @f2
 	f64.load	$push20=, 0($1)
 	f64.const	$push21=, -0x1.cp3
 	f64.eq  	$push22=, $pop20, $pop21
-	br_if   	$pop22, 1       # 1: down to label6
+	br_if   	1, $pop22       # 1: down to label6
 .LBB3_3:                                # %if.then3.i
 	end_block                       # label7:
 	call    	abort@FUNCTION
@@ -356,7 +356,7 @@ f4:                                     # @f4
 	block
 	i32.const	$push0=, 16386
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label8
+	br_if   	0, $pop1        # 0: down to label8
 # BB#1:                                 # %if.then.i
 	i32.const	$push25=, 0
 	i32.const	$push24=, 0
@@ -373,7 +373,7 @@ f4:                                     # @f4
 	i32.load	$push9=, 0($1)
 	i32.const	$push10=, 13
 	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: down to label9
+	br_if   	0, $pop11       # 0: down to label9
 # BB#2:                                 # %lor.lhs.false.i
 	i32.const	$push28=, 0
 	i32.const	$push27=, 0
@@ -389,7 +389,7 @@ f4:                                     # @f4
 	f64.load	$push19=, 0($1)
 	f64.const	$push20=, -0x1.cp3
 	f64.eq  	$push21=, $pop19, $pop20
-	br_if   	$pop21, 1       # 1: down to label8
+	br_if   	1, $pop21       # 1: down to label8
 .LBB5_3:                                # %if.then3.i
 	end_block                       # label9:
 	call    	abort@FUNCTION
@@ -428,17 +428,17 @@ f5:                                     # @f5
 	block
 	i32.const	$push1=, 11
 	i32.eq  	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label11
+	br_if   	0, $pop2        # 0: down to label11
 # BB#1:                                 # %entry
 	block
 	i32.const	$push68=, 8
 	i32.eq  	$push3=, $0, $pop68
-	br_if   	$pop3, 0        # 0: down to label12
+	br_if   	0, $pop3        # 0: down to label12
 # BB#2:                                 # %entry
 	block
 	i32.const	$push4=, 5
 	i32.ne  	$push5=, $0, $pop4
-	br_if   	$pop5, 0        # 0: down to label13
+	br_if   	0, $pop5        # 0: down to label13
 # BB#3:                                 # %sw.bb.i
 	i32.load	$push44=, 76($9)
 	i32.const	$push45=, 3
@@ -620,7 +620,7 @@ f7:                                     # @f7
 	block
 	i32.const	$push1=, 16386
 	i32.ne  	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label14
+	br_if   	0, $pop2        # 0: down to label14
 # BB#1:                                 # %if.then.i
 	i32.const	$push27=, 0
 	i32.const	$push26=, 0
@@ -637,7 +637,7 @@ f7:                                     # @f7
 	i32.load	$push9=, 0($1)
 	i32.const	$push10=, 13
 	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: down to label15
+	br_if   	0, $pop11       # 0: down to label15
 # BB#2:                                 # %lor.lhs.false.i
 	i32.const	$push30=, 0
 	i32.const	$push29=, 0
@@ -653,7 +653,7 @@ f7:                                     # @f7
 	f64.load	$push19=, 0($1)
 	f64.const	$push20=, -0x1.cp3
 	f64.eq  	$push21=, $pop19, $pop20
-	br_if   	$pop21, 1       # 1: down to label14
+	br_if   	1, $pop21       # 1: down to label14
 .LBB8_3:                                # %if.then3.i
 	end_block                       # label15:
 	call    	abort@FUNCTION
@@ -696,17 +696,17 @@ f8:                                     # @f8
 	block
 	i32.const	$push2=, 11
 	i32.eq  	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: down to label17
+	br_if   	0, $pop3        # 0: down to label17
 # BB#1:                                 # %entry
 	block
 	i32.const	$push69=, 8
 	i32.eq  	$push4=, $0, $pop69
-	br_if   	$pop4, 0        # 0: down to label18
+	br_if   	0, $pop4        # 0: down to label18
 # BB#2:                                 # %entry
 	block
 	i32.const	$push5=, 5
 	i32.ne  	$push6=, $0, $pop5
-	br_if   	$pop6, 0        # 0: down to label19
+	br_if   	0, $pop6        # 0: down to label19
 # BB#3:                                 # %sw.bb.i
 	i32.load	$push44=, 60($12)
 	i32.const	$push45=, 3
@@ -892,7 +892,7 @@ f11:                                    # @f11
 	block
 	i32.const	$push2=, 16386
 	i32.ne  	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: down to label20
+	br_if   	0, $pop3        # 0: down to label20
 # BB#1:                                 # %if.then.i
 	i32.const	$push27=, 0
 	i32.const	$push26=, 0
@@ -909,7 +909,7 @@ f11:                                    # @f11
 	i32.load	$push11=, 0($1)
 	i32.const	$push12=, 13
 	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	$pop13, 0       # 0: down to label21
+	br_if   	0, $pop13       # 0: down to label21
 # BB#2:                                 # %lor.lhs.false.i
 	i32.const	$push30=, 0
 	i32.const	$push29=, 0
@@ -925,7 +925,7 @@ f11:                                    # @f11
 	f64.load	$push21=, 0($1)
 	f64.const	$push22=, -0x1.cp3
 	f64.eq  	$push23=, $pop21, $pop22
-	br_if   	$pop23, 1       # 1: down to label20
+	br_if   	1, $pop23       # 1: down to label20
 .LBB11_3:                               # %if.then3.i
 	end_block                       # label21:
 	call    	abort@FUNCTION
@@ -968,17 +968,17 @@ f12:                                    # @f12
 	block
 	i32.const	$push3=, 11
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, 0        # 0: down to label23
+	br_if   	0, $pop4        # 0: down to label23
 # BB#1:                                 # %entry
 	block
 	i32.const	$push70=, 8
 	i32.eq  	$push5=, $0, $pop70
-	br_if   	$pop5, 0        # 0: down to label24
+	br_if   	0, $pop5        # 0: down to label24
 # BB#2:                                 # %entry
 	block
 	i32.const	$push6=, 5
 	i32.ne  	$push7=, $0, $pop6
-	br_if   	$pop7, 0        # 0: down to label25
+	br_if   	0, $pop7        # 0: down to label25
 # BB#3:                                 # %sw.bb.i
 	i32.load	$push46=, 60($12)
 	i32.const	$push47=, 3
@@ -1138,7 +1138,7 @@ main:                                   # @main
 	i32.const	$push52=, 0
 	i32.load	$push1=, x($pop52)
 	i32.ne  	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label26
+	br_if   	0, $pop2        # 0: down to label26
 # BB#1:                                 # %if.end
 	i32.const	$5=, __stack_pointer
 	i32.load	$5=, 0($5)
@@ -1165,7 +1165,7 @@ main:                                   # @main
 	i32.load	$push7=, bar_arg($pop54)
 	i32.const	$push53=, 16386
 	i32.ne  	$push8=, $pop7, $pop53
-	br_if   	$pop8, 0        # 0: down to label27
+	br_if   	0, $pop8        # 0: down to label27
 # BB#2:                                 # %if.end3
 	i32.const	$9=, __stack_pointer
 	i32.load	$9=, 0($9)
@@ -1186,7 +1186,7 @@ main:                                   # @main
 	i32.const	$push55=, 0
 	i32.load	$push10=, x($pop55)
 	i32.ne  	$push11=, $0, $pop10
-	br_if   	$pop11, 0       # 0: down to label28
+	br_if   	0, $pop11       # 0: down to label28
 # BB#3:                                 # %if.end6
 	i32.const	$13=, __stack_pointer
 	i32.load	$13=, 0($13)
@@ -1209,7 +1209,7 @@ main:                                   # @main
 	i32.load	$push14=, bar_arg($pop57)
 	i32.const	$push56=, 4
 	i32.ne  	$push15=, $pop14, $pop56
-	br_if   	$pop15, 0       # 0: down to label29
+	br_if   	0, $pop15       # 0: down to label29
 # BB#4:                                 # %if.end9
 	i32.const	$17=, __stack_pointer
 	i32.load	$17=, 0($17)
@@ -1240,7 +1240,7 @@ main:                                   # @main
 	i32.load	$push22=, foo_arg($pop58)
 	i32.const	$push23=, 38
 	i32.ne  	$push24=, $pop22, $pop23
-	br_if   	$pop24, 0       # 0: down to label30
+	br_if   	0, $pop24       # 0: down to label30
 # BB#5:                                 # %if.end12
 	i32.const	$21=, __stack_pointer
 	i32.load	$21=, 0($21)
@@ -1261,7 +1261,7 @@ main:                                   # @main
 	i32.const	$push59=, 0
 	i32.load	$push26=, x($pop59)
 	i32.ne  	$push27=, $0, $pop26
-	br_if   	$pop27, 0       # 0: down to label31
+	br_if   	0, $pop27       # 0: down to label31
 # BB#6:                                 # %if.end15
 	i32.const	$push28=, 7
 	call    	f7@FUNCTION, $pop28
@@ -1270,7 +1270,7 @@ main:                                   # @main
 	i32.load	$push29=, bar_arg($pop61)
 	i32.const	$push60=, 7
 	i32.ne  	$push30=, $pop29, $pop60
-	br_if   	$pop30, 0       # 0: down to label32
+	br_if   	0, $pop30       # 0: down to label32
 # BB#7:                                 # %if.end18
 	i32.const	$25=, __stack_pointer
 	i32.load	$25=, 0($25)
@@ -1297,7 +1297,7 @@ main:                                   # @main
 	i32.load	$push34=, foo_arg($pop62)
 	i32.const	$push35=, 2044
 	i32.ne  	$push36=, $pop34, $pop35
-	br_if   	$pop36, 0       # 0: down to label33
+	br_if   	0, $pop36       # 0: down to label33
 # BB#8:                                 # %if.end21
 	i32.const	$29=, __stack_pointer
 	i32.load	$29=, 0($29)
@@ -1318,7 +1318,7 @@ main:                                   # @main
 	i32.const	$push64=, 0
 	i32.load	$push38=, x($pop64)
 	i32.ne  	$push39=, $0, $pop38
-	br_if   	$pop39, 0       # 0: down to label34
+	br_if   	0, $pop39       # 0: down to label34
 # BB#9:                                 # %if.end24
 	i32.const	$push40=, 10
 	call    	f11@FUNCTION, $pop40
@@ -1327,7 +1327,7 @@ main:                                   # @main
 	i32.load	$push41=, bar_arg($pop66)
 	i32.const	$push65=, 10
 	i32.ne  	$push42=, $pop41, $pop65
-	br_if   	$pop42, 0       # 0: down to label35
+	br_if   	0, $pop42       # 0: down to label35
 # BB#10:                                # %if.end27
 	i32.const	$33=, __stack_pointer
 	i32.load	$33=, 0($33)
@@ -1358,7 +1358,7 @@ main:                                   # @main
 	i32.load	$push49=, foo_arg($pop67)
 	i32.const	$push50=, 2042
 	i32.ne  	$push51=, $pop49, $pop50
-	br_if   	$pop51, 0       # 0: down to label36
+	br_if   	0, $pop51       # 0: down to label36
 # BB#11:                                # %if.end30
 	i32.const	$push68=, 0
 	i32.const	$39=, 32

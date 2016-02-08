@@ -16,14 +16,14 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.load8_u	$push3=, 0($pop2):p2align=1
 	i32.const	$push4=, 4
 	i32.and 	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %sw.default
 	block
 	i32.const	$push34=, 16
 	i32.and 	$push10=, $2, $pop34
 	i32.const	$push36=, 0
 	i32.eq  	$push37=, $pop10, $pop36
-	br_if   	$pop37, 0       # 0: down to label2
+	br_if   	0, $pop37       # 0: down to label2
 # BB#2:                                 # %if.then
 	i32.const	$push11=, 26
 	i32.add 	$push12=, $0, $pop11
@@ -41,13 +41,13 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	block
 	i32.load	$push19=, 28($0)
 	i32.call_indirect	$push20=, $pop19, $0
-	br_if   	$pop20, 0       # 0: down to label3
+	br_if   	0, $pop20       # 0: down to label3
 # BB#4:                                 # %if.end
 	i32.const	$push18=, 1572864
 	i32.and 	$push13=, $2, $pop18
 	i32.const	$push38=, 0
 	i32.eq  	$push39=, $pop13, $pop38
-	br_if   	$pop39, 0       # 0: down to label3
+	br_if   	0, $pop39       # 0: down to label3
 # BB#5:                                 # %if.then39
 	i32.const	$push21=, 26
 	i32.add 	$0=, $0, $pop21
@@ -63,7 +63,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.and 	$push27=, $pop25, $pop26
 	i32.const	$push28=, 131072
 	i32.ne  	$push29=, $pop27, $pop28
-	br_if   	$pop29, 1       # 1: down to label0
+	br_if   	1, $pop29       # 1: down to label0
 # BB#7:                                 # %if.then55
 	i32.const	$push30=, 26
 	i32.add 	$0=, $0, $pop30

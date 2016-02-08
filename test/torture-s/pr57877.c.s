@@ -15,7 +15,7 @@ main:                                   # @main
 	tee_local	$push16=, $4=, $pop0
 	i32.const	$push15=, 1
 	i32.lt_s	$push3=, $pop16, $pop15
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %entry.foo.exit_crit_edge
 	i32.const	$push18=, 0
 	i32.load	$5=, e($pop18)
@@ -53,7 +53,7 @@ main:                                   # @main
 	i32.add 	$4=, $4, $pop23
 	i32.const	$push22=, 0
 	i32.lt_s	$push10=, $4, $pop22
-	br_if   	$pop10, 0       # 0: up to label2
+	br_if   	0, $pop10       # 0: up to label2
 # BB#4:                                 # %for.cond.for.end_crit_edge.i
 	end_loop                        # label3:
 	i32.const	$push11=, 0
@@ -63,7 +63,7 @@ main:                                   # @main
 	block
 	i32.const	$push12=, 1
 	i32.ne  	$push13=, $5, $pop12
-	br_if   	$pop13, 0       # 0: down to label4
+	br_if   	0, $pop13       # 0: down to label4
 # BB#6:                                 # %if.end
 	i32.const	$push14=, 0
 	return  	$pop14

@@ -43,7 +43,7 @@ DUPFFnew:                               # @DUPFFnew
 	i32.const	$push2=, 0
 	i32.store	$push3=, 8($pop12), $pop2
 	i32.lt_s	$push4=, $0, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $1, $pop9
@@ -158,24 +158,24 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	copy_local	$0=, $4
 	copy_local	$2=, $5
 	i32.lt_s	$push1=, $6, $7
-	br_if   	$pop1, 0        # 0: up to label1
+	br_if   	0, $pop1        # 0: up to label1
 # BB#2:                                 # %if.end
 	end_loop                        # label2:
 	block
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $6, $pop2
-	br_if   	$pop3, 0        # 0: down to label3
+	br_if   	0, $pop3        # 0: down to label3
 # BB#3:                                 # %if.end
 	i32.const	$push4=, 1
 	i32.ne  	$push5=, $7, $pop4
-	br_if   	$pop5, 0        # 0: down to label3
+	br_if   	0, $pop5        # 0: down to label3
 # BB#4:                                 # %if.end11
 	block
 	i32.load	$push6=, 8($3)
 	i32.load	$push7=, 0($pop6)
 	i32.const	$push26=, 0
 	i32.eq  	$push27=, $pop7, $pop26
-	br_if   	$pop27, 0       # 0: down to label4
+	br_if   	0, $pop27       # 0: down to label4
 # BB#5:                                 # %DUPFFnew.exit167
 	i32.const	$push8=, 12
 	i32.call	$7=, malloc@FUNCTION, $pop8
@@ -201,7 +201,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.store	$discard=, 8($6), $0
 	block
 	i32.lt_s	$push17=, $5, $2
-	br_if   	$pop17, 0       # 0: down to label5
+	br_if   	0, $pop17       # 0: down to label5
 # BB#6:                                 # %while.cond40.preheader.lr.ph
 	i32.const	$push25=, 4
 	i32.add 	$push18=, $3, $pop25
@@ -210,7 +210,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 .LBB7_7:                                # %while.cond40.preheader
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label6:
-	br_if   	$3, 0           # 0: up to label6
+	br_if   	0, $3           # 0: up to label6
 .LBB7_8:                                # %while.cond40
                                         # =>This Inner Loop Header: Depth=1
 	end_loop                        # label7:

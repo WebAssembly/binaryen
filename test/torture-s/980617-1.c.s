@@ -13,7 +13,7 @@ foo:                                    # @foo
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, 1
 	i32.gt_u	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
 	return
 .LBB0_2:                                # %if.else

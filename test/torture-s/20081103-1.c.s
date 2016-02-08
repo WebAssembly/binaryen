@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.const	$push0=, 0
 	i32.load	$push1=, A($pop0)
 	i32.ne  	$push3=, $pop2, $pop1
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.load	$push0=, A($pop6)
 	i32.store	$push3=, 0($pop2):p2align=0, $pop0
 	i32.ne  	$push5=, $pop4, $pop3
-	br_if   	$pop5, 0        # 0: down to label1
+	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %foo.exit
 	i32.const	$push8=, 0
 	i32.const	$2=, 16

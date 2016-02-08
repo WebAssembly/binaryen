@@ -59,7 +59,7 @@ main:                                   # @main
 	i64.store	$discard=, 8($2), $pop0
 	block
 	i32.load	$push1=, 8($2):p2align=3
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2

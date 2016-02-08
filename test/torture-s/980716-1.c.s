@@ -29,7 +29,7 @@ stub:                                   # @stub
 	i32.add 	$push3=, $pop11, $pop10
 	i32.store	$discard=, 12($5), $pop3
 	i32.load	$push4=, 0($1)
-	br_if   	$pop4, 0        # 0: up to label0
+	br_if   	0, $pop4        # 0: up to label0
 # BB#2:                                 # %while.end
 	end_loop                        # label1:
 	i32.store	$discard=, 12($5), $6
@@ -46,7 +46,7 @@ stub:                                   # @stub
 	i32.add 	$push8=, $pop15, $pop14
 	i32.store	$discard=, 12($5), $pop8
 	i32.load	$push9=, 0($1)
-	br_if   	$pop9, 0        # 0: up to label2
+	br_if   	0, $pop9        # 0: up to label2
 # BB#4:                                 # %while.end.1
 	end_loop                        # label3:
 	i32.const	$4=, 16

@@ -13,7 +13,7 @@ gcc_crash:                              # @gcc_crash
 	block
 	i32.const	$push0=, 52
 	i32.lt_s	$push1=, $1, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 .LBB0_1:                                # %top
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -21,7 +21,7 @@ gcc_crash:                              # @gcc_crash
 	i32.add 	$2=, $2, $pop4
 	i32.const	$push2=, 60
 	i32.gt_s	$push3=, $1, $pop2
-	br_if   	$pop3, 0        # 0: up to label1
+	br_if   	0, $pop3        # 0: up to label1
 # BB#2:                                 # %if.end6
 	end_loop                        # label2:
 	i32.store	$discard=, 0($0), $2

@@ -11,12 +11,12 @@ t:                                      # @t
 	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i32.const	$push0=, 256
 	i32.ge_s	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#2:                                 # %if.end3
 	return  	$0
 .LBB0_3:                                # %if.then2

@@ -27,12 +27,12 @@ foo:                                    # @foo
 	block
 	i32.const	$push8=, 1
 	i32.ne  	$push9=, $6, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.load	$push0=, 0($7)
 	i32.const	$push10=, 2
 	i32.ne  	$push11=, $pop0, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$10=, 16
 	i32.add 	$11=, $12, $10

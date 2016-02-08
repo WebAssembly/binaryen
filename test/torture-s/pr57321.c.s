@@ -10,7 +10,7 @@ main:                                   # @main
 	block
 	i32.const	$push3=, 0
 	i32.load	$push0=, a($pop3)
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then.i
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)

@@ -28,7 +28,7 @@ vafunction:                             # @vafunction
 	i32.load	$push4=, 0($1)
 	i32.const	$push5=, 1
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.load	$push7=, 12($5)
 	i32.const	$push71=, 3
@@ -43,7 +43,7 @@ vafunction:                             # @vafunction
 	i32.load	$push11=, 0($1)
 	i32.const	$push12=, 2
 	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	$pop13, 0       # 0: down to label1
+	br_if   	0, $pop13       # 0: down to label1
 # BB#2:                                 # %if.end4
 	i32.load	$push14=, 12($5)
 	i32.const	$push76=, 3
@@ -58,7 +58,7 @@ vafunction:                             # @vafunction
 	i32.load	$push18=, 0($1)
 	i32.const	$push72=, 3
 	i32.ne  	$push19=, $pop18, $pop72
-	br_if   	$pop19, 0       # 0: down to label2
+	br_if   	0, $pop19       # 0: down to label2
 # BB#3:                                 # %if.end7
 	i32.load	$push20=, 12($5)
 	i32.const	$push81=, 3
@@ -73,7 +73,7 @@ vafunction:                             # @vafunction
 	i32.load	$push24=, 0($1)
 	i32.const	$push77=, 4
 	i32.ne  	$push25=, $pop24, $pop77
-	br_if   	$pop25, 0       # 0: down to label3
+	br_if   	0, $pop25       # 0: down to label3
 # BB#4:                                 # %if.end10
 	i32.load	$push26=, 12($5)
 	i32.const	$push85=, 3
@@ -88,7 +88,7 @@ vafunction:                             # @vafunction
 	i32.load	$push30=, 0($1)
 	i32.const	$push31=, 5
 	i32.ne  	$push32=, $pop30, $pop31
-	br_if   	$pop32, 0       # 0: down to label4
+	br_if   	0, $pop32       # 0: down to label4
 # BB#5:                                 # %if.end13
 	i32.load	$push33=, 12($5)
 	i32.const	$push89=, 3
@@ -103,7 +103,7 @@ vafunction:                             # @vafunction
 	i32.load	$push37=, 0($1)
 	i32.const	$push38=, 6
 	i32.ne  	$push39=, $pop37, $pop38
-	br_if   	$pop39, 0       # 0: down to label5
+	br_if   	0, $pop39       # 0: down to label5
 # BB#6:                                 # %if.end16
 	i32.load	$push40=, 12($5)
 	i32.const	$push93=, 3
@@ -118,7 +118,7 @@ vafunction:                             # @vafunction
 	i32.load	$push44=, 0($1)
 	i32.const	$push45=, 7
 	i32.ne  	$push46=, $pop44, $pop45
-	br_if   	$pop46, 0       # 0: down to label6
+	br_if   	0, $pop46       # 0: down to label6
 # BB#7:                                 # %if.end19
 	i32.load	$push47=, 12($5)
 	i32.const	$push97=, 3
@@ -133,7 +133,7 @@ vafunction:                             # @vafunction
 	i32.load	$push51=, 0($1)
 	i32.const	$push52=, 8
 	i32.ne  	$push53=, $pop51, $pop52
-	br_if   	$pop53, 0       # 0: down to label7
+	br_if   	0, $pop53       # 0: down to label7
 # BB#8:                                 # %if.end22
 	i32.load	$push54=, 12($5)
 	i32.const	$push55=, 3
@@ -148,7 +148,7 @@ vafunction:                             # @vafunction
 	i32.load	$push61=, 0($1)
 	i32.const	$push62=, 9
 	i32.ne  	$push63=, $pop61, $pop62
-	br_if   	$pop63, 0       # 0: down to label8
+	br_if   	0, $pop63       # 0: down to label8
 # BB#9:                                 # %if.end25
 	i32.const	$4=, 16
 	i32.add 	$5=, $6, $4

@@ -38,7 +38,7 @@ main:                                   # @main
 	i32.wrap/i64	$push5=, $pop4
 	i32.const	$push6=, -1
 	i32.gt_s	$push7=, $pop5, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable

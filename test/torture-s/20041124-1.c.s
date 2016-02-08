@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.const	$push13=, 65535
 	i32.and 	$push7=, $pop14, $pop13
 	i32.ne  	$push9=, $pop2, $pop7
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push3=, 2
 	i32.const	$4=, 8
@@ -52,7 +52,7 @@ main:                                   # @main
 	i32.const	$push8=, 16
 	i32.shr_u	$push1=, $0, $pop8
 	i32.ne  	$push11=, $pop10, $pop1
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push12=, 0
 	call    	exit@FUNCTION, $pop12

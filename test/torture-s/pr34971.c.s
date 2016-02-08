@@ -20,7 +20,7 @@ test1:                                  # @test1
 	i64.shr_u	$push7=, $1, $pop6
 	i64.or  	$push8=, $pop5, $pop7
 	i64.ne  	$push9=, $pop8, $0
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

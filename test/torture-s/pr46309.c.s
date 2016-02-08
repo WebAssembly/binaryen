@@ -14,11 +14,11 @@ bar:                                    # @bar
 	i32.and 	$push2=, $pop12, $pop1
 	i32.const	$push3=, 2
 	i32.eq  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push10=, 1
 	i32.ne  	$push11=, $0, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.then
 	i32.const	$push6=, 0
 	i32.load	$push7=, q($pop6)
@@ -27,7 +27,7 @@ bar:                                    # @bar
 	i32.and 	$push5=, $pop8, $pop9
 	i32.const	$push13=, 0
 	i32.eq  	$push14=, $pop5, $pop13
-	br_if   	$pop14, 0       # 0: down to label0
+	br_if   	0, $pop14       # 0: down to label0
 # BB#3:                                 # %cond.true
 	call    	abort@FUNCTION
 	unreachable

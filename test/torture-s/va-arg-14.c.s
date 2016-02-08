@@ -33,7 +33,7 @@ vat:                                    # @vat
 	i32.load	$push5=, 0($0)
 	i32.const	$push51=, 1
 	i32.ne  	$push6=, $pop5, $pop51
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push63=, 0
 	i32.const	$push62=, 0
@@ -50,7 +50,7 @@ vat:                                    # @vat
 	i32.load	$push11=, 0($0)
 	i32.const	$push57=, 1
 	i32.ne  	$push12=, $pop11, $pop57
-	br_if   	$pop12, 0       # 0: down to label1
+	br_if   	0, $pop12       # 0: down to label1
 # BB#2:                                 # %if.end5
 	i32.load	$push13=, 12($4)
 	i32.const	$push68=, 3
@@ -65,7 +65,7 @@ vat:                                    # @vat
 	i32.load	$push17=, 0($0)
 	i32.const	$push64=, 1
 	i32.ne  	$push18=, $pop17, $pop64
-	br_if   	$pop18, 0       # 0: down to label2
+	br_if   	0, $pop18       # 0: down to label2
 # BB#3:                                 # %if.end8
 	i32.const	$push74=, 0
 	i32.store	$push19=, 12($4), $5
@@ -83,7 +83,7 @@ vat:                                    # @vat
 	i32.load	$push25=, 0($0)
 	i32.const	$push69=, 1
 	i32.ne  	$push26=, $pop25, $pop69
-	br_if   	$pop26, 0       # 0: down to label3
+	br_if   	0, $pop26       # 0: down to label3
 # BB#4:                                 # %if.end13
 	i32.const	$push80=, 0
 	i32.load	$push27=, global($pop80)
@@ -100,7 +100,7 @@ vat:                                    # @vat
 	i32.load	$push32=, 0($0)
 	i32.const	$push75=, 1
 	i32.ne  	$push33=, $pop32, $pop75
-	br_if   	$pop33, 0       # 0: down to label4
+	br_if   	0, $pop33       # 0: down to label4
 # BB#5:                                 # %if.end17
 	i32.const	$push34=, 0
 	i32.const	$push86=, 0
@@ -117,7 +117,7 @@ vat:                                    # @vat
 	i32.load	$push39=, 0($0)
 	i32.const	$push81=, 1
 	i32.ne  	$push40=, $pop39, $pop81
-	br_if   	$pop40, 0       # 0: down to label5
+	br_if   	0, $pop40       # 0: down to label5
 # BB#6:                                 # %if.end21
 	i32.load	$push41=, 12($4)
 	i32.const	$push42=, 3
@@ -132,7 +132,7 @@ vat:                                    # @vat
 	i32.load	$push48=, 0($0)
 	i32.const	$push49=, 1
 	i32.ne  	$push50=, $pop48, $pop49
-	br_if   	$pop50, 0       # 0: down to label6
+	br_if   	0, $pop50       # 0: down to label6
 # BB#7:                                 # %if.end24
 	i32.const	$3=, 16
 	i32.add 	$4=, $5, $3

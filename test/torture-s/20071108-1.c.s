@@ -69,23 +69,23 @@ main:                                   # @main
 	i32.add 	$6=, $8, $6
 	block
 	i32.ne  	$push2=, $pop1, $6
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false2
 	i32.load	$push3=, 4($0)
 	i32.const	$7=, 8
 	i32.add 	$7=, $8, $7
 	i32.ne  	$push4=, $pop3, $7
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false4
 	i32.load16_u	$push5=, 8($0):p2align=2
 	tee_local	$push12=, $0=, $pop5
 	i32.const	$push6=, 255
 	i32.and 	$push7=, $pop12, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false4
 	i32.const	$push8=, 256
 	i32.ge_u	$push9=, $0, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#4:                                 # %if.end
 	i32.const	$push10=, 0
 	i32.const	$3=, 16

@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.load	$push0=, e($pop26)
 	i32.const	$push32=, 0
 	i32.eq  	$push33=, $pop0, $pop32
-	br_if   	$pop33, 0       # 0: down to label0
+	br_if   	0, $pop33       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push29=, 0
 	i32.load	$push1=, i($pop29)
@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.wrap/i64	$push22=, $pop21
 	i32.const	$push23=, 1
 	i32.ne  	$push24=, $pop22, $pop23
-	br_if   	$pop24, 0       # 0: down to label1
+	br_if   	0, $pop24       # 0: down to label1
 # BB#3:                                 # %if.end7
 	i32.const	$push25=, 0
 	return  	$pop25

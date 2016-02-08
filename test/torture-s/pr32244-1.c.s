@@ -13,7 +13,7 @@ test1:                                  # @test1
 	i64.const	$push2=, 32
 	i64.shl 	$push3=, $pop1, $pop2
 	i64.ne  	$push4=, $pop3, $0
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

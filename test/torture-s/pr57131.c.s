@@ -38,7 +38,7 @@ main:                                   # @main
 	i64.load	$push16=, 8($4)
 	i64.add 	$push17=, $pop15, $pop16
 	i64.ne  	$push18=, $pop5, $pop17
-	br_if   	$pop18, 0       # 0: down to label0
+	br_if   	0, $pop18       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$3=, 48
 	i32.add 	$4=, $4, $3

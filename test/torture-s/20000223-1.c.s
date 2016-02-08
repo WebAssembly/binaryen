@@ -12,7 +12,7 @@ check:                                  # @check
 	i32.sub 	$push1=, $pop0, $1
 	i32.and 	$push2=, $1, $pop1
 	i32.ne  	$push3=, $pop2, $1
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

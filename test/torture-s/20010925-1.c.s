@@ -36,7 +36,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $2, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.call	$discard=, memcpy@FUNCTION, $0, $1, $2
 	i32.const	$3=, 0

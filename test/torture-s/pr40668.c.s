@@ -13,7 +13,7 @@ bar:                                    # @bar
 	tee_local	$push8=, $0=, $pop0
 	i32.const	$push2=, 8
 	i32.gt_u	$push3=, $pop8, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %entry
 	block
 	block

@@ -15,7 +15,7 @@ foo:                                    # @foo
 	tee_local	$push1283=, $2=, $pop0
 	i32.const	$push1=, 93
 	i32.gt_u	$push2=, $pop1283, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %entry
 	block
 	block
@@ -1766,7 +1766,7 @@ main:                                   # @main
 	tee_local	$push9=, $0=, $pop0
 	f64.const	$push2=, 0x1.851eb851eb852p-2
 	f64.lt  	$push3=, $pop9, $pop2
-	br_if   	$pop3, 0        # 0: down to label65
+	br_if   	0, $pop3        # 0: down to label65
 # BB#1:                                 # %entry
 	f64.const	$push4=, 0x1.ae147ae147ae1p-2
 	f64.le  	$push5=, $0, $pop4
@@ -1774,7 +1774,7 @@ main:                                   # @main
 	i32.or  	$push7=, $pop5, $pop6
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $pop7, $pop10
-	br_if   	$pop11, 0       # 0: down to label65
+	br_if   	0, $pop11       # 0: down to label65
 # BB#2:                                 # %if.end
 	i32.const	$push8=, 0
 	return  	$pop8

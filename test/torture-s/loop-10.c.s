@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.add 	$push2=, $pop3, $pop1
 	i32.store	$discard=, count($pop5), $pop2
 	block
-	br_if   	$0, 0           # 0: down to label0
+	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end4
 	i32.const	$push6=, 0
 	return  	$pop6

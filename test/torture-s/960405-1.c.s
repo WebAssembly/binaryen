@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.call	$push4=, __eqtf2@FUNCTION, $pop1, $pop0, $pop3, $pop2
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $pop4, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable

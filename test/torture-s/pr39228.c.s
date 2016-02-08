@@ -12,13 +12,13 @@ main:                                   # @main
 	i32.call	$push1=, __builtin_isinff@FUNCTION, $pop0
 	i32.const	$push2=, 0
 	i32.le_s	$push3=, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i32.const	$push4=, 1
 	i32.const	$push11=, 0
 	i32.eq  	$push12=, $pop4, $pop11
-	br_if   	$pop12, 0       # 0: down to label1
+	br_if   	0, $pop12       # 0: down to label1
 # BB#2:                                 # %if.end4
 	block
 	i64.const	$push6=, 0
@@ -26,7 +26,7 @@ main:                                   # @main
 	i32.call	$push7=, __builtin_isinfl@FUNCTION, $pop6, $pop5
 	i32.const	$push9=, 0
 	i32.le_s	$push8=, $pop7, $pop9
-	br_if   	$pop8, 0        # 0: down to label2
+	br_if   	0, $pop8        # 0: down to label2
 # BB#3:                                 # %if.end8
 	i32.const	$push10=, 0
 	return  	$pop10

@@ -24,7 +24,7 @@ main:                                   # @main
 	tee_local	$push24=, $0=, $pop23
 	i32.const	$push3=, 58
 	i32.lt_s	$push4=, $pop24, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.shr_s	$push9=, $pop8, $pop31
 	i32.const	$push10=, 57
 	i32.gt_s	$push11=, $pop9, $pop10
-	br_if   	$pop11, 0       # 0: up to label1
+	br_if   	0, $pop11       # 0: up to label1
 # BB#2:                                 # %while.end.loopexit
 	end_loop                        # label2:
 	i32.const	$push13=, 0
@@ -57,7 +57,7 @@ main:                                   # @main
 	i32.load8_u	$push15=, line($pop36)
 	i32.const	$push16=, 50
 	i32.ne  	$push17=, $pop15, $pop16
-	br_if   	$pop17, 0       # 0: down to label3
+	br_if   	0, $pop17       # 0: down to label3
 # BB#4:                                 # %while.end
 	i32.const	$push39=, 0
 	i32.load8_u	$push14=, line+1($pop39)
@@ -65,13 +65,13 @@ main:                                   # @main
 	i32.and 	$push18=, $pop14, $pop38
 	i32.const	$push37=, 48
 	i32.ne  	$push19=, $pop18, $pop37
-	br_if   	$pop19, 0       # 0: down to label3
+	br_if   	0, $pop19       # 0: down to label3
 # BB#5:                                 # %while.end
 	i32.const	$push41=, 255
 	i32.and 	$push20=, $0, $pop41
 	i32.const	$push40=, 48
 	i32.ne  	$push21=, $pop20, $pop40
-	br_if   	$pop21, 0       # 0: down to label3
+	br_if   	0, $pop21       # 0: down to label3
 # BB#6:                                 # %if.end
 	i32.const	$push22=, 0
 	return  	$pop22

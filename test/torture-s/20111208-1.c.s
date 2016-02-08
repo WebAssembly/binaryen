@@ -22,7 +22,7 @@ pack_unpack:                            # @pack_unpack
 	block
 	loop                            # label3:
 	i32.ge_u	$push1=, $3, $2
-	br_if   	$pop1, 4        # 4: down to label1
+	br_if   	4, $pop1        # 4: down to label1
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push9=, 1
@@ -31,13 +31,13 @@ pack_unpack:                            # @pack_unpack
 	tee_local	$push8=, $4=, $pop3
 	i32.const	$push7=, 108
 	i32.eq  	$push4=, $pop8, $pop7
-	br_if   	$pop4, 2        # 2: down to label2
+	br_if   	2, $pop4        # 2: down to label2
 # BB#4:                                 # %while.body
                                         #   in Loop: Header=BB0_2 Depth=2
 	copy_local	$3=, $1
 	i32.const	$push10=, 115
 	i32.ne  	$push5=, $4, $pop10
-	br_if   	$pop5, 0        # 0: up to label3
+	br_if   	0, $pop5        # 0: up to label3
 # BB#5:                                 # %sw.bb4
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label4:
@@ -97,7 +97,7 @@ main:                                   # @main
 	loop                            # label8:
 	i32.const	$push7=, .L.str.1+2
 	i32.ge_u	$push0=, $2, $pop7
-	br_if   	$pop0, 4        # 4: down to label6
+	br_if   	4, $pop0        # 4: down to label6
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB2_2 Depth=2
 	i32.const	$push10=, 1
@@ -106,13 +106,13 @@ main:                                   # @main
 	tee_local	$push9=, $3=, $pop3
 	i32.const	$push8=, 108
 	i32.eq  	$push4=, $pop9, $pop8
-	br_if   	$pop4, 2        # 2: down to label7
+	br_if   	2, $pop4        # 2: down to label7
 # BB#4:                                 # %while.body.i
                                         #   in Loop: Header=BB2_2 Depth=2
 	copy_local	$2=, $0
 	i32.const	$push11=, 115
 	i32.ne  	$push5=, $3, $pop11
-	br_if   	$pop5, 0        # 0: up to label8
+	br_if   	0, $pop5        # 0: up to label8
 # BB#5:                                 # %sw.bb4.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop                        # label9:
@@ -134,7 +134,7 @@ main:                                   # @main
 	end_loop                        # label6:
 	block
 	i32.load8_u	$push1=, 0($1)
-	br_if   	$pop1, 0        # 0: down to label10
+	br_if   	0, $pop1        # 0: down to label10
 # BB#8:                                 # %if.end
 	i32.const	$push2=, 0
 	return  	$pop2

@@ -108,7 +108,7 @@ prefetch_for_read:                      # @prefetch_for_read
 	loop                            # label0:
 	i32.const	$push0=, 4
 	i32.add 	$0=, $0, $pop0
-	br_if   	$0, 0           # 0: up to label0
+	br_if   	0, $0           # 0: up to label0
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
 	return
@@ -129,7 +129,7 @@ prefetch_for_write:                     # @prefetch_for_write
 	loop                            # label2:
 	i32.const	$push0=, 4
 	i32.add 	$0=, $0, $pop0
-	br_if   	$0, 0           # 0: up to label2
+	br_if   	0, $0           # 0: up to label2
 # BB#2:                                 # %for.end
 	end_loop                        # label3:
 	return

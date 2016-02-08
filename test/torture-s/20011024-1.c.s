@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.const	$push1=, buf
 	i32.const	$push2=, .L.str
 	i32.call	$push3=, strcmp@FUNCTION, $pop1, $pop2
-	br_if   	$pop3, 0        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %foo.exit
 	i32.const	$push11=, 0
 	i32.const	$push10=, 0

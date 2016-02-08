@@ -224,7 +224,7 @@ main:                                   # @main
 	i32.add 	$23=, $24, $23
 	i32.call	$3=, strcmp@FUNCTION, $23, $pop27
 	block
-	br_if   	$3, 0           # 0: down to label0
+	br_if   	0, $3           # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push53=, 0
 	call    	exit@FUNCTION, $pop53

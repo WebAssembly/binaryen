@@ -29,7 +29,7 @@ f:                                      # @f
 	tee_local	$push6=, $1=, $pop0
 	i32.const	$push5=, 65535
 	i32.and 	$push2=, $pop6, $pop5
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.then
 	#APP
 	#NO_APP
@@ -40,7 +40,7 @@ f:                                      # @f
 	i32.add 	$push3=, $1, $0
 	i32.const	$push7=, 65535
 	i32.and 	$push4=, $pop3, $pop7
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#3:                                 # %if.then.1
 	#APP
 	#NO_APP

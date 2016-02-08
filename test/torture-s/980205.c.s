@@ -27,12 +27,12 @@ fdouble:                                # @fdouble
 	block
 	f64.const	$push8=, 0x1p0
 	f64.ne  	$push9=, $0, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %entry
 	f64.load	$push0=, 0($1)
 	f64.const	$push10=, 0x1p1
 	f64.ne  	$push11=, $pop0, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$4=, 16
 	i32.add 	$5=, $6, $4

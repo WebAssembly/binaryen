@@ -9,10 +9,10 @@ verify:                                 # @verify
 # BB#0:                                 # %entry
 	block
 	i32.ne  	$push0=, $0, $2
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.ne  	$push1=, $1, $3
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then
@@ -51,11 +51,11 @@ main:                                   # @main
 	tee_local	$push103=, $15=, $pop18
 	i32.const	$push19=, 160
 	i32.ne  	$push20=, $pop103, $pop19
-	br_if   	$pop20, 0       # 0: down to label1
+	br_if   	0, $pop20       # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$push21=, 113
 	i32.ne  	$push22=, $3, $pop21
-	br_if   	$pop22, 0       # 0: down to label1
+	br_if   	0, $pop22       # 0: down to label1
 # BB#2:                                 # %verify.exit
 	i32.const	$push23=, 0
 	i32.mul 	$push4=, $1, $0
@@ -66,11 +66,11 @@ main:                                   # @main
 	block
 	i32.const	$push24=, 1500
 	i32.ne  	$push25=, $4, $pop24
-	br_if   	$pop25, 0       # 0: down to label2
+	br_if   	0, $pop25       # 0: down to label2
 # BB#3:                                 # %verify.exit
 	i32.const	$push26=, 1300
 	i32.ne  	$push27=, $5, $pop26
-	br_if   	$pop27, 0       # 0: down to label2
+	br_if   	0, $pop27       # 0: down to label2
 # BB#4:                                 # %verify.exit48
 	i32.div_s	$2=, $16, $17
 	i32.const	$push28=, 0
@@ -81,11 +81,11 @@ main:                                   # @main
 	block
 	i32.const	$push29=, 15
 	i32.ne  	$push30=, $6, $pop29
-	br_if   	$pop30, 0       # 0: down to label3
+	br_if   	0, $pop30       # 0: down to label3
 # BB#5:                                 # %verify.exit48
 	i32.const	$push31=, 7
 	i32.ne  	$push32=, $2, $pop31
-	br_if   	$pop32, 0       # 0: down to label3
+	br_if   	0, $pop32       # 0: down to label3
 # BB#6:                                 # %verify.exit54
 	i32.const	$push33=, 0
 	i32.and 	$push7=, $1, $0
@@ -96,11 +96,11 @@ main:                                   # @main
 	block
 	i32.const	$push34=, 2
 	i32.ne  	$push35=, $7, $pop34
-	br_if   	$pop35, 0       # 0: down to label4
+	br_if   	0, $pop35       # 0: down to label4
 # BB#7:                                 # %verify.exit54
 	i32.const	$push36=, 4
 	i32.ne  	$push37=, $8, $pop36
-	br_if   	$pop37, 0       # 0: down to label4
+	br_if   	0, $pop37       # 0: down to label4
 # BB#8:                                 # %verify.exit60
 	i32.const	$push38=, 0
 	i32.or  	$push9=, $1, $0
@@ -111,11 +111,11 @@ main:                                   # @main
 	block
 	i32.const	$push39=, 158
 	i32.ne  	$push40=, $9, $pop39
-	br_if   	$pop40, 0       # 0: down to label5
+	br_if   	0, $pop40       # 0: down to label5
 # BB#9:                                 # %verify.exit60
 	i32.const	$push41=, 109
 	i32.ne  	$push42=, $10, $pop41
-	br_if   	$pop42, 0       # 0: down to label5
+	br_if   	0, $pop42       # 0: down to label5
 # BB#10:                                # %verify.exit66
 	i32.const	$push43=, 0
 	i32.xor 	$push11=, $0, $1
@@ -126,11 +126,11 @@ main:                                   # @main
 	block
 	i32.const	$push44=, 156
 	i32.ne  	$push45=, $1, $pop44
-	br_if   	$pop45, 0       # 0: down to label6
+	br_if   	0, $pop45       # 0: down to label6
 # BB#11:                                # %verify.exit66
 	i32.const	$push46=, 105
 	i32.ne  	$push47=, $17, $pop46
-	br_if   	$pop47, 0       # 0: down to label6
+	br_if   	0, $pop47       # 0: down to label6
 # BB#12:                                # %verify.exit72
 	i32.const	$push48=, 0
 	i32.const	$push118=, 0
@@ -143,11 +143,11 @@ main:                                   # @main
 	block
 	i32.const	$push49=, -150
 	i32.ne  	$push50=, $11, $pop49
-	br_if   	$pop50, 0       # 0: down to label7
+	br_if   	0, $pop50       # 0: down to label7
 # BB#13:                                # %verify.exit72
 	i32.const	$push51=, -100
 	i32.ne  	$push52=, $12, $pop51
-	br_if   	$pop52, 0       # 0: down to label7
+	br_if   	0, $pop52       # 0: down to label7
 # BB#14:                                # %verify.exit78
 	i32.const	$push54=, 0
 	i32.const	$push53=, -1
@@ -160,11 +160,11 @@ main:                                   # @main
 	block
 	i32.const	$push55=, 150
 	i32.ne  	$push56=, $0, $pop55
-	br_if   	$pop56, 0       # 0: down to label8
+	br_if   	0, $pop56       # 0: down to label8
 # BB#15:                                # %verify.exit78
 	i32.const	$push57=, -101
 	i32.ne  	$push58=, $14, $pop57
-	br_if   	$pop58, 0       # 0: down to label8
+	br_if   	0, $pop58       # 0: down to label8
 # BB#16:                                # %verify.exit84
 	i32.const	$push71=, 0
 	i32.add 	$push60=, $4, $15
@@ -189,11 +189,11 @@ main:                                   # @main
 	block
 	i32.const	$push72=, 1675
 	i32.ne  	$push73=, $0, $pop72
-	br_if   	$pop73, 0       # 0: down to label9
+	br_if   	0, $pop73       # 0: down to label9
 # BB#17:                                # %verify.exit84
 	i32.const	$push74=, 1430
 	i32.ne  	$push75=, $16, $pop74
-	br_if   	$pop75, 0       # 0: down to label9
+	br_if   	0, $pop75       # 0: down to label9
 # BB#18:                                # %verify.exit90
 	i32.const	$push88=, 0
 	i32.mul 	$push77=, $4, $15
@@ -218,11 +218,11 @@ main:                                   # @main
 	block
 	i32.const	$push89=, 1456467968
 	i32.ne  	$push90=, $0, $pop89
-	br_if   	$pop90, 0       # 0: down to label10
+	br_if   	0, $pop90       # 0: down to label10
 # BB#19:                                # %verify.exit90
 	i32.const	$push91=, -1579586240
 	i32.ne  	$push92=, $16, $pop91
-	br_if   	$pop92, 0       # 0: down to label10
+	br_if   	0, $pop92       # 0: down to label10
 # BB#20:                                # %verify.exit96
 	i32.div_s	$0=, $3, $5
 	i32.div_s	$push93=, $15, $4
@@ -248,7 +248,7 @@ main:                                   # @main
 	i32.const	$push127=, 0
 	i32.store	$push101=, res+4($pop127), $0
 	i32.or  	$push102=, $pop100, $pop101
-	br_if   	$pop102, 0      # 0: down to label11
+	br_if   	0, $pop102      # 0: down to label11
 # BB#21:                                # %verify.exit102
 	i32.const	$push131=, 0
 	call    	exit@FUNCTION, $pop131

@@ -16,21 +16,21 @@ main:                                   # @main
 	i32.and 	$push3=, $pop15, $pop2
 	i32.const	$push4=, 2
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i32.const	$push6=, 3840
 	i32.and 	$push7=, $0, $pop6
 	i32.const	$push8=, 768
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label1
+	br_if   	0, $pop9        # 0: down to label1
 # BB#2:                                 # %if.end7
 	block
 	i32.const	$push10=, 61440
 	i32.and 	$push11=, $0, $pop10
 	i32.const	$push12=, 16384
 	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	$pop13, 0       # 0: down to label2
+	br_if   	0, $pop13       # 0: down to label2
 # BB#3:                                 # %if.end13
 	i32.const	$push14=, 0
 	call    	exit@FUNCTION, $pop14

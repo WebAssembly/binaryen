@@ -14,11 +14,11 @@ bar:                                    # @bar
 	tee_local	$push5=, $2=, $pop0
 	i32.load	$push1=, 4($1)
 	i32.eq  	$push2=, $pop5, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push3=, 8($1)
 	i32.eq  	$push4=, $2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#2:                                 # %if.end
 	return  	$1
 .LBB0_3:                                # %if.then
@@ -43,11 +43,11 @@ foo:                                    # @foo
 	tee_local	$push5=, $2=, $pop0
 	i32.load	$push2=, 4($0)
 	i32.eq  	$push3=, $pop5, $pop2
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %entry
 	i32.load	$push1=, 8($0)
 	i32.eq  	$push4=, $2, $pop1
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#2:                                 # %bar.exit
 	return  	$0
 .LBB1_3:                                # %if.then.i

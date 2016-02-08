@@ -32,7 +32,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$discard=, x+4($pop1), $pop0
 	block
-	br_if   	$0, 0           # 0: down to label0
+	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
 	return  	$pop3

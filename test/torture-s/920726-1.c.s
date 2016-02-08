@@ -26,13 +26,13 @@ first:                                  # @first
 	tee_local	$push9=, $3=, $pop0
 	i32.const	$push8=, 105
 	i32.eq  	$push1=, $pop9, $pop8
-	br_if   	$pop1, 0        # 0: down to label3
+	br_if   	0, $pop1        # 0: down to label3
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
 	block
 	i32.const	$push17=, 0
 	i32.eq  	$push18=, $3, $pop17
-	br_if   	$pop18, 0       # 0: down to label4
+	br_if   	0, $pop18       # 0: down to label4
 # BB#3:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push15=, 1
@@ -117,13 +117,13 @@ second:                                 # @second
 	tee_local	$push9=, $3=, $pop0
 	i32.const	$push8=, 105
 	i32.eq  	$push1=, $pop9, $pop8
-	br_if   	$pop1, 0        # 0: down to label8
+	br_if   	0, $pop1        # 0: down to label8
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	block
 	i32.const	$push17=, 0
 	i32.eq  	$push18=, $3, $pop17
-	br_if   	$pop18, 0       # 0: down to label9
+	br_if   	0, $pop18       # 0: down to label9
 # BB#3:                                 # %if.else
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push15=, 1
@@ -236,13 +236,13 @@ main:                                   # @main
 	i32.add 	$14=, $16, $14
 	i32.call	$1=, strcmp@FUNCTION, $pop3, $14
 	block
-	br_if   	$1, 0           # 0: down to label10
+	br_if   	0, $1           # 0: down to label10
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push5=, .L.str.2
 	i32.const	$15=, 16
 	i32.add 	$15=, $16, $15
 	i32.call	$1=, strcmp@FUNCTION, $pop5, $15
-	br_if   	$1, 0           # 0: down to label10
+	br_if   	0, $1           # 0: down to label10
 # BB#2:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2

@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.const	$push10=, 1
 	i32.or  	$push8=, $pop7, $pop10
 	i32.eq  	$push9=, $pop4, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push15=, 0
 	return  	$pop15

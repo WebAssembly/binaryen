@@ -93,7 +93,7 @@ main:                                   # @main
 	i32.call	$push26=, f@FUNCTION, $10, $pop25
 	i32.const	$push28=, 4660
 	i32.ne  	$push27=, $pop26, $pop28
-	br_if   	$pop27, 0       # 0: down to label0
+	br_if   	0, $pop27       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push38=, 0
 	call    	exit@FUNCTION, $pop38

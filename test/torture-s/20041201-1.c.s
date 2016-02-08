@@ -14,14 +14,14 @@ checkScc2:                              # @checkScc2
 	i32.load8_u	$push1=, 0($0)
 	i32.const	$push14=, 1
 	i32.ne  	$push2=, $pop1, $pop14
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.load8_u	$push0=, 1($0)
 	i32.const	$push3=, 255
 	i32.and 	$push4=, $pop0, $pop3
 	i32.const	$push5=, 2
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#2:                                 # %lor.rhs
 	i32.load8_u	$push7=, 2($0)
 	i32.const	$push8=, 3
@@ -53,7 +53,7 @@ main:                                   # @main
 	i32.load8_u	$push1=, s($pop15)
 	i32.const	$push14=, 1
 	i32.ne  	$push2=, $pop1, $pop14
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$push16=, 0
 	i32.load8_u	$push0=, s+1($pop16)
@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.and 	$push4=, $pop0, $pop3
 	i32.const	$push5=, 2
 	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label1
+	br_if   	0, $pop6        # 0: down to label1
 # BB#2:                                 # %lor.rhs.i
 	i32.const	$push7=, 0
 	i32.load8_u	$push8=, s+2($pop7)

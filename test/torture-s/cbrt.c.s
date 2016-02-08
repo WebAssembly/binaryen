@@ -34,7 +34,7 @@ cbrtl:                                  # @cbrtl
 	tee_local	$push78=, $3=, $pop2
 	i32.const	$push8=, 2146435072
 	i32.lt_s	$push9=, $pop78, $pop8
-	br_if   	$pop9, 0        # 0: down to label1
+	br_if   	0, $pop9        # 0: down to label1
 # BB#1:                                 # %if.then
 	f64.add 	$0=, $0, $0
 	br      	1               # 1: down to label0
@@ -44,7 +44,7 @@ cbrtl:                                  # @cbrtl
 	i32.or  	$push11=, $pop10, $3
 	i32.const	$push93=, 0
 	i32.eq  	$push94=, $pop11, $pop93
-	br_if   	$pop94, 0       # 0: down to label0
+	br_if   	0, $pop94       # 0: down to label0
 # BB#3:                                 # %if.end13
 	block
 	block
@@ -54,7 +54,7 @@ cbrtl:                                  # @cbrtl
 	tee_local	$push83=, $3=, $pop13
 	i32.const	$push14=, 1048575
 	i32.gt_s	$push15=, $pop83, $pop14
-	br_if   	$pop15, 0       # 0: down to label3
+	br_if   	0, $pop15       # 0: down to label3
 # BB#4:                                 # %if.then18
 	i32.const	$push86=, 4
 	i32.const	$10=, 8

@@ -13,7 +13,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push0=, 32
 	i32.gt_u	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %entry
 	block
 	block
@@ -207,14 +207,14 @@ foo:                                    # @foo
 	block
 	i32.const	$push2=, -62
 	i32.eq  	$push3=, $0, $pop2
-	br_if   	$pop3, 0        # 0: down to label33
+	br_if   	0, $pop3        # 0: down to label33
 # BB#34:                                # %entry
 	i32.const	$push4=, 98
 	i32.eq  	$1=, $0, $pop4
 	i32.const	$0=, 0
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $1, $pop5
-	br_if   	$pop6, 1        # 1: down to label0
+	br_if   	1, $pop6        # 1: down to label0
 # BB#35:                                # %sw.bb33
 	i32.const	$0=, 18
 	br      	1               # 1: down to label0

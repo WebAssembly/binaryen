@@ -160,28 +160,28 @@ main:                                   # @main
 	i32.shr_u	$push2=, $pop0, $pop1
 	i32.const	$push17=, 0
 	i32.eq  	$push18=, $pop2, $pop17
-	br_if   	$pop18, 0       # 0: down to label0
+	br_if   	0, $pop18       # 0: down to label0
 # BB#1:                                 # %if.end
 	block
 	i32.const	$push12=, 0
 	i32.load8_s	$push3=, b($pop12)
 	i32.const	$push11=, 0
 	i32.ge_s	$push4=, $pop3, $pop11
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#2:                                 # %if.end12
 	block
 	i32.const	$push14=, 0
 	i32.load	$push5=, c($pop14):p2align=3
 	i32.const	$push13=, 0
 	i32.ge_s	$push6=, $pop5, $pop13
-	br_if   	$pop6, 0        # 0: down to label2
+	br_if   	0, $pop6        # 0: down to label2
 # BB#3:                                 # %if.end16
 	block
 	i32.const	$push16=, 0
 	i32.load	$push7=, d($pop16)
 	i32.const	$push15=, 0
 	i32.ge_s	$push8=, $pop7, $pop15
-	br_if   	$pop8, 0        # 0: down to label3
+	br_if   	0, $pop8        # 0: down to label3
 # BB#4:                                 # %if.end28
 	i32.const	$push9=, 0
 	return  	$pop9

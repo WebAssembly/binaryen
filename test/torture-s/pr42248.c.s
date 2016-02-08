@@ -11,12 +11,12 @@ check:                                  # @check
 	f64.load	$push2=, 0($0)
 	f64.load	$push3=, 0($1)
 	f64.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %entry
 	f64.load	$push0=, 8($0)
 	f64.load	$push1=, 8($1)
 	f64.ne  	$push5=, $pop0, $pop1
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then

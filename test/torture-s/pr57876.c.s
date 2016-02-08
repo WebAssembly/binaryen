@@ -153,7 +153,7 @@ main:                                   # @main
 	block
 	i32.const	$push96=, 0
 	i32.eq  	$push97=, $1, $pop96
-	br_if   	$pop97, 0       # 0: down to label0
+	br_if   	0, $pop97       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$15=, 16
 	i32.add 	$17=, $17, $15

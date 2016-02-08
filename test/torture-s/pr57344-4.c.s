@@ -10,7 +10,7 @@ foo:                                    # @foo
 	block
 	i64.const	$push0=, -1220975898975746
 	i64.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	#APP
 	#NO_APP
@@ -44,7 +44,7 @@ main:                                   # @main
 	block
 	i32.const	$push31=, 0
 	i32.gt_s	$push2=, $0, $pop31
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %for.body.preheader
 	i64.const	$push3=, -1220975898975746
 	call    	foo@FUNCTION, $pop3
@@ -57,7 +57,7 @@ main:                                   # @main
 	i32.store	$discard=, i($pop40), $pop5
 	i32.const	$push6=, -1
 	i32.gt_s	$push7=, $0, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label1
 .LBB1_2:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
@@ -94,7 +94,7 @@ main:                                   # @main
 	i32.store	$discard=, i($pop45), $pop29
 	i32.const	$push41=, 0
 	i32.lt_s	$push30=, $0, $pop41
-	br_if   	$pop30, 0       # 0: up to label2
+	br_if   	0, $pop30       # 0: up to label2
 .LBB1_3:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:

@@ -11,7 +11,7 @@ maybe_next:                             # @maybe_next
 	block
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $1, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.load	$0=, 0($0):p2align=0
 .LBB0_2:                                # %if.end
@@ -42,7 +42,7 @@ main:                                   # @main
 	block
 	i32.call	$push1=, maybe_next@FUNCTION, $2, $pop0
 	i32.ne  	$push2=, $pop1, $3
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3

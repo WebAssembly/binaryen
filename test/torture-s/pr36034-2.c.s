@@ -40,7 +40,7 @@ test:                                   # @test
 	i32.add 	$2=, $2, $pop9
 	i32.const	$push8=, 400
 	i32.ne  	$push7=, $3, $pop8
-	br_if   	$pop7, 0        # 0: up to label0
+	br_if   	0, $pop7        # 0: up to label0
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
 	return
@@ -66,7 +66,7 @@ main:                                   # @main
 	f64.load	$push0=, 0($0):p2align=4
 	f64.const	$push19=, -0x1p0
 	f64.eq  	$push1=, $pop0, $pop19
-	br_if   	$pop1, 2        # 2: down to label2
+	br_if   	2, $pop1        # 2: down to label2
 # BB#2:                                 # %for.cond1
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push21=, 8
@@ -74,7 +74,7 @@ main:                                   # @main
 	f64.load	$push3=, 0($pop2)
 	f64.const	$push20=, -0x1p0
 	f64.eq  	$push4=, $pop3, $pop20
-	br_if   	$pop4, 2        # 2: down to label2
+	br_if   	2, $pop4        # 2: down to label2
 # BB#3:                                 # %for.cond1.1
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push23=, 16
@@ -82,7 +82,7 @@ main:                                   # @main
 	f64.load	$push6=, 0($pop5):p2align=4
 	f64.const	$push22=, -0x1p0
 	f64.eq  	$push7=, $pop6, $pop22
-	br_if   	$pop7, 2        # 2: down to label2
+	br_if   	2, $pop7        # 2: down to label2
 # BB#4:                                 # %for.cond1.2
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push25=, 24
@@ -90,7 +90,7 @@ main:                                   # @main
 	f64.load	$push9=, 0($pop8)
 	f64.const	$push24=, -0x1p0
 	f64.eq  	$push10=, $pop9, $pop24
-	br_if   	$pop10, 2       # 2: down to label2
+	br_if   	2, $pop10       # 2: down to label2
 # BB#5:                                 # %for.cond1.3
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push27=, 32
@@ -98,7 +98,7 @@ main:                                   # @main
 	f64.load	$push12=, 0($pop11):p2align=4
 	f64.const	$push26=, -0x1p0
 	f64.eq  	$push13=, $pop12, $pop26
-	br_if   	$pop13, 2       # 2: down to label2
+	br_if   	2, $pop13       # 2: down to label2
 # BB#6:                                 # %for.cond1.4
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push29=, 40
@@ -106,7 +106,7 @@ main:                                   # @main
 	f64.load	$push15=, 0($pop14)
 	f64.const	$push28=, -0x1p0
 	f64.eq  	$push16=, $pop15, $pop28
-	br_if   	$pop16, 2       # 2: down to label2
+	br_if   	2, $pop16       # 2: down to label2
 # BB#7:                                 # %for.cond1.5
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push32=, 1
@@ -115,7 +115,7 @@ main:                                   # @main
 	i32.add 	$0=, $0, $pop31
 	i32.const	$push30=, 5
 	i32.lt_s	$push17=, $1, $pop30
-	br_if   	$pop17, 0       # 0: up to label3
+	br_if   	0, $pop17       # 0: up to label3
 # BB#8:                                 # %for.end7
 	end_loop                        # label4:
 	i32.const	$push18=, 0

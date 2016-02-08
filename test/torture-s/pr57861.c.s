@@ -22,7 +22,7 @@ main:                                   # @main
 	i32.const	$push20=, 24
 	i32.shr_s	$push5=, $pop4, $pop20
 	i32.ge_u	$push7=, $pop6, $pop5
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.then.i.1
 	i32.load	$push8=, d($3)
 	i32.ne  	$push9=, $pop8, $3
@@ -46,7 +46,7 @@ main:                                   # @main
 	block
 	i32.const	$push17=, 65535
 	i32.and 	$push18=, $2, $pop17
-	br_if   	$pop18, 0       # 0: down to label1
+	br_if   	0, $pop18       # 0: down to label1
 # BB#3:                                 # %if.end
 	i32.const	$push19=, 0
 	return  	$pop19

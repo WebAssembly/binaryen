@@ -27,7 +27,7 @@ dummy:                                  # @dummy
 	i32.load	$push7=, 0($0)
 	i32.const	$push8=, 1234
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$3=, 16
 	i32.add 	$4=, $4, $3
@@ -74,7 +74,7 @@ test:                                   # @test
 	i32.load	$push6=, 0($1)
 	i32.const	$push15=, 1234
 	i32.ne  	$push7=, $pop6, $pop15
-	br_if   	$pop7, 0        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label1
 # BB#1:                                 # %dummy.exit
 	i32.store	$discard=, 0($2), $7
 	i32.load	$push8=, 0($2)
@@ -91,7 +91,7 @@ test:                                   # @test
 	i32.load	$push13=, 0($2)
 	i32.const	$push22=, 1234
 	i32.ne  	$push14=, $pop13, $pop22
-	br_if   	$pop14, 0       # 0: down to label2
+	br_if   	0, $pop14       # 0: down to label2
 # BB#2:                                 # %dummy.exit16
 	i32.const	$5=, 16
 	i32.add 	$6=, $7, $5

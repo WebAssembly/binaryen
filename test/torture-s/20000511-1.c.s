@@ -9,7 +9,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	block
 	i32.ne  	$push0=, $0, $1
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

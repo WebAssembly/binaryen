@@ -15,7 +15,7 @@ add512:                                 # @add512
 	tee_local	$push2=, $2=, $pop0
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 0($1), $0
 .LBB0_2:                                # %if.end
@@ -38,7 +38,7 @@ add513:                                 # @add513
 	i32.const	$push1=, 513
 	i32.add 	$push0=, $0, $pop1
 	tee_local	$push2=, $2=, $pop0
-	br_if   	$pop2, 0        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 0($1), $0
 .LBB1_2:                                # %if.end
@@ -70,22 +70,22 @@ main:                                   # @main
 	i32.add 	$3=, $5, $3
 	block
 	i32.call	$push4=, add512@FUNCTION, $pop3, $3
-	br_if   	$pop4, 0        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label2
 # BB#1:                                 # %entry
 	i32.load	$push0=, 12($5)
 	i32.ne  	$push5=, $pop0, $0
-	br_if   	$pop5, 0        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label2
 # BB#2:                                 # %lor.lhs.false2
 	i32.const	$push10=, -513
 	i32.const	$4=, 8
 	i32.add 	$4=, $5, $4
 	i32.call	$push7=, add513@FUNCTION, $pop10, $4
-	br_if   	$pop7, 0        # 0: down to label2
+	br_if   	0, $pop7        # 0: down to label2
 # BB#3:                                 # %lor.lhs.false2
 	i32.load	$push6=, 8($5)
 	i32.const	$push11=, -513
 	i32.ne  	$push8=, $pop6, $pop11
-	br_if   	$pop8, 0        # 0: down to label2
+	br_if   	0, $pop8        # 0: down to label2
 # BB#4:                                 # %if.end
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9

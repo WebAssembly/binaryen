@@ -8,12 +8,12 @@ bar:                                    # @bar
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	br_if   	$0, 0           # 0: down to label0
+	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	f64.load	$push0=, 0($1)
 	f64.const	$push1=, 0x1p0
 	f64.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then
@@ -44,7 +44,7 @@ main:                                   # @main
 	tee_local	$push14=, $0=, $pop12
 	f64.const	$push13=, 0x0p0
 	f64.gt  	$push0=, $pop14, $pop13
-	br_if   	$pop0, 0        # 0: down to label1
+	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %for.cond
 	i32.const	$push17=, 0
 	f64.load	$0=, a+8($pop17)
@@ -54,13 +54,13 @@ main:                                   # @main
 	i32.or  	$push3=, $pop1, $pop2
 	i32.const	$push19=, 0
 	i32.eq  	$push20=, $pop3, $pop19
-	br_if   	$pop20, 0       # 0: down to label1
+	br_if   	0, $pop20       # 0: down to label1
 # BB#2:                                 # %for.cond.1
 	i32.const	$push4=, 0
 	f64.load	$0=, a+16($pop4):p2align=4
 	f64.const	$push5=, 0x0p0
 	f64.gt  	$push6=, $0, $pop5
-	br_if   	$pop6, 0        # 0: down to label1
+	br_if   	0, $pop6        # 0: down to label1
 # BB#3:                                 # %for.cond.2
 	f64.store	$discard=, 8($4), $0
 	i32.const	$push7=, 1
@@ -76,7 +76,7 @@ main:                                   # @main
 	f64.store	$push8=, 8($4), $0
 	f64.const	$push9=, 0x1p0
 	f64.eq  	$push10=, $pop8, $pop9
-	br_if   	$pop10, 0       # 0: down to label2
+	br_if   	0, $pop10       # 0: down to label2
 # BB#5:                                 # %if.then.i
 	call    	abort@FUNCTION
 	unreachable

@@ -26,7 +26,7 @@ f:                                      # @f
 	i32.load	$push0=, 0($0)
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop0, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 1
 	return  	$pop1
@@ -37,7 +37,7 @@ f:                                      # @f
 	#APP
 	#NO_APP
 	block
-	br_if   	$2, 0           # 0: down to label1
+	br_if   	0, $2           # 0: down to label1
 # BB#3:                                 # %if.end6
 	i32.const	$push4=, env
 	i32.const	$push3=, 42

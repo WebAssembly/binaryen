@@ -46,20 +46,20 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 	i32.and 	$push3=, $pop2, $pop21
 	i32.const	$push20=, 10
 	i32.lt_u	$push4=, $pop3, $pop20
-	br_if   	$pop4, 0        # 0: up to label2
+	br_if   	0, $pop4        # 0: up to label2
 # BB#3:                                 # %while.end
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop                        # label3:
 	copy_local	$4=, $1
 	i32.eq  	$push5=, $6, $1
-	br_if   	$pop5, 1        # 1: down to label1
+	br_if   	1, $pop5        # 1: down to label1
 # BB#4:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB1_1 Depth=1
 	copy_local	$4=, $6
 	i32.sub 	$push6=, $6, $1
 	i32.const	$push26=, 3
 	i32.gt_s	$push7=, $pop6, $pop26
-	br_if   	$pop7, 1        # 1: down to label1
+	br_if   	1, $pop7        # 1: down to label1
 # BB#5:                                 # %if.end
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push30=, 3
@@ -74,25 +74,25 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 	copy_local	$4=, $6
 	i32.const	$push27=, 4
 	i32.lt_s	$push12=, $3, $pop27
-	br_if   	$pop12, 0       # 0: up to label0
+	br_if   	0, $pop12       # 0: up to label0
 .LBB1_6:                                # %while.end25
 	end_loop                        # label1:
 	i32.const	$6=, -1
 	block
 	i32.const	$push13=, 4
 	i32.ne  	$push14=, $3, $pop13
-	br_if   	$pop14, 0       # 0: down to label4
+	br_if   	0, $pop14       # 0: down to label4
 # BB#7:                                 # %land.lhs.true
 	block
 	i32.load8_u	$push15=, 0($4)
 	tee_local	$push31=, $2=, $pop15
 	i32.const	$push32=, 0
 	i32.eq  	$push33=, $pop31, $pop32
-	br_if   	$pop33, 0       # 0: down to label5
+	br_if   	0, $pop33       # 0: down to label5
 # BB#8:                                 # %land.lhs.true
 	i32.const	$push16=, 58
 	i32.ne  	$push17=, $2, $pop16
-	br_if   	$pop17, 1       # 1: down to label4
+	br_if   	1, $pop17       # 1: down to label4
 # BB#9:                                 # %if.then39
 	i32.const	$push18=, 1
 	i32.add 	$6=, $4, $pop18
@@ -141,20 +141,20 @@ main:                                   # @main
 	i32.and 	$push3=, $pop2, $pop23
 	i32.const	$push22=, 10
 	i32.lt_u	$push4=, $pop3, $pop22
-	br_if   	$pop4, 0        # 0: up to label8
+	br_if   	0, $pop4        # 0: up to label8
 # BB#3:                                 # %while.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop                        # label9:
 	copy_local	$3=, $0
 	i32.eq  	$push5=, $5, $0
-	br_if   	$pop5, 1        # 1: down to label7
+	br_if   	1, $pop5        # 1: down to label7
 # BB#4:                                 # %lor.lhs.false.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	copy_local	$3=, $5
 	i32.sub 	$push6=, $5, $0
 	i32.const	$push28=, 3
 	i32.gt_s	$push7=, $pop6, $pop28
-	br_if   	$pop7, 1        # 1: down to label7
+	br_if   	1, $pop7        # 1: down to label7
 # BB#5:                                 # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push32=, 3
@@ -169,24 +169,24 @@ main:                                   # @main
 	copy_local	$3=, $5
 	i32.const	$push29=, 4
 	i32.lt_s	$push12=, $2, $pop29
-	br_if   	$pop12, 0       # 0: up to label6
+	br_if   	0, $pop12       # 0: up to label6
 .LBB2_6:                                # %while.end25.i
 	end_loop                        # label7:
 	block
 	i32.const	$push13=, 4
 	i32.ne  	$push14=, $2, $pop13
-	br_if   	$pop14, 0       # 0: down to label10
+	br_if   	0, $pop14       # 0: down to label10
 # BB#7:                                 # %land.lhs.true.i
 	block
 	i32.load8_u	$push15=, 0($3)
 	tee_local	$push33=, $5=, $pop15
 	i32.const	$push34=, 0
 	i32.eq  	$push35=, $pop33, $pop34
-	br_if   	$pop35, 0       # 0: down to label11
+	br_if   	0, $pop35       # 0: down to label11
 # BB#8:                                 # %land.lhs.true.i
 	i32.const	$push16=, 58
 	i32.ne  	$push17=, $5, $pop16
-	br_if   	$pop17, 1       # 1: down to label10
+	br_if   	1, $pop17       # 1: down to label10
 # BB#9:                                 # %if.then39.i
 	i32.const	$push18=, 1
 	i32.add 	$5=, $3, $pop18

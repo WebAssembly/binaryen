@@ -12,19 +12,19 @@ main:                                   # @main
 	i32.load8_u	$push2=, object($pop10):p2align=2
 	i32.const	$push3=, 88
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push11=, 0
 	i32.load	$push0=, object+4($pop11)
 	i32.const	$push5=, 8
 	i32.ne  	$push6=, $pop0, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#2:                                 # %entry
 	i32.const	$push12=, 0
 	i32.load	$push1=, object+8($pop12)
 	i32.const	$push7=, 9
 	i32.ne  	$push8=, $pop1, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#3:                                 # %if.end
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9

@@ -25,7 +25,7 @@ g2:                                     # @g2
 	block
 	i32.const	$push0=, -559038737
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
@@ -51,13 +51,13 @@ f:                                      # @f
 	i32.load	$push2=, parsefile($pop4)
 	i32.load	$push0=, 0($pop2)
 	tee_local	$push3=, $0=, $pop0
-	br_if   	$pop3, 0        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$push5=, 0
 	i32.load	$push1=, el($pop5)
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $pop1, $pop6
-	br_if   	$pop7, 0        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label1
 # BB#2:                                 # %if.end
 	return  	$0
 .LBB2_3:                                # %alabel

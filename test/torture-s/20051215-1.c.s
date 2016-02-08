@@ -13,7 +13,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push6=, 1
 	i32.lt_s	$push0=, $1, $pop6
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$3=, 0
 	i32.const	$4=, 0
@@ -24,7 +24,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $2, $pop10
-	br_if   	$pop11, 0       # 0: down to label3
+	br_if   	0, $pop11       # 0: down to label3
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$push1=, 0($2)
@@ -41,7 +41,7 @@ foo:                                    # @foo
 	i32.const	$push7=, 1
 	i32.add 	$3=, $3, $pop7
 	i32.ne  	$push5=, $1, $3
-	br_if   	$pop5, 0        # 0: up to label1
+	br_if   	0, $pop5        # 0: up to label1
 .LBB0_5:                                # %for.end6
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -62,7 +62,7 @@ main:                                   # @main
 	i32.const	$push0=, 2
 	i32.const	$push3=, 0
 	i32.call	$push2=, foo@FUNCTION, $pop1, $pop0, $pop3
-	br_if   	$pop2, 0        # 0: down to label4
+	br_if   	0, $pop2        # 0: down to label4
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4

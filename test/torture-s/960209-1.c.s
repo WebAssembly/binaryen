@@ -14,7 +14,7 @@ f:                                      # @f
 	block
 	i32.const	$push6=, 0
 	i32.load	$push0=, yabba($pop6)
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end24
 	i32.const	$push8=, 0
 	i32.const	$push2=, 255
@@ -39,7 +39,7 @@ main:                                   # @main
 	block
 	i32.const	$push2=, 0
 	i32.load	$push0=, yabba($pop2)
-	br_if   	$pop0, 0        # 0: down to label1
+	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %if.end24.i
 	i32.const	$push3=, 0
 	i32.const	$push1=, an_array+1

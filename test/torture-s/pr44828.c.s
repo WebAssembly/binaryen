@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.shr_s	$push4=, $pop2, $pop3
 	i32.const	$push5=, 1
 	i32.ge_s	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push8=, 0
 	return  	$pop8

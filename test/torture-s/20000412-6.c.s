@@ -22,7 +22,7 @@ main:                                   # @main
 	i32.and 	$push8=, $pop6, $pop7
 	i32.const	$push9=, 491
 	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	$pop10, 0       # 0: down to label0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push14=, 0
 	call    	exit@FUNCTION, $pop14
@@ -45,7 +45,7 @@ bug:                                    # @bug
 # BB#0:                                 # %entry
 	block
 	i32.ge_u	$push0=, $1, $2
-	br_if   	$pop0, 0        # 0: down to label1
+	br_if   	0, $pop0        # 0: down to label1
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
@@ -56,7 +56,7 @@ bug:                                    # @bug
 	i32.const	$push4=, 2
 	i32.add 	$1=, $1, $pop4
 	i32.lt_u	$push5=, $1, $2
-	br_if   	$pop5, 0        # 0: up to label2
+	br_if   	0, $pop5        # 0: up to label2
 .LBB1_2:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:

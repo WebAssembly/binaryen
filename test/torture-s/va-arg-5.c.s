@@ -29,7 +29,7 @@ va_double:                              # @va_double
 	f64.load	$push4=, 0($1)
 	f64.const	$push5=, 0x1.921fafc8b007ap1
 	f64.ne  	$push6=, $pop4, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.load	$push7=, 12($5)
 	i32.const	$push35=, 7
@@ -44,7 +44,7 @@ va_double:                              # @va_double
 	f64.load	$push11=, 0($1)
 	f64.const	$push12=, 0x1.5bf04577d9557p1
 	f64.ne  	$push13=, $pop11, $pop12
-	br_if   	$pop13, 0       # 0: down to label1
+	br_if   	0, $pop13       # 0: down to label1
 # BB#2:                                 # %if.end4
 	i32.load	$push14=, 12($5)
 	i32.const	$push39=, 7
@@ -59,7 +59,7 @@ va_double:                              # @va_double
 	f64.load	$push18=, 0($1)
 	f64.const	$push19=, 0x1.1e3779131154cp1
 	f64.ne  	$push20=, $pop18, $pop19
-	br_if   	$pop20, 0       # 0: down to label2
+	br_if   	0, $pop20       # 0: down to label2
 # BB#3:                                 # %if.end7
 	i32.load	$push21=, 12($5)
 	i32.const	$push43=, 7
@@ -74,7 +74,7 @@ va_double:                              # @va_double
 	f64.load	$push25=, 0($1)
 	f64.const	$push26=, 0x1.12e0be1b5921ep1
 	f64.ne  	$push27=, $pop25, $pop26
-	br_if   	$pop27, 0       # 0: down to label3
+	br_if   	0, $pop27       # 0: down to label3
 # BB#4:                                 # %if.end10
 	i32.const	$4=, 16
 	i32.add 	$5=, $6, $4
@@ -136,7 +136,7 @@ va_long_double:                         # @va_long_double
 	i64.const	$push8=, -7338557514379428662
 	i64.const	$push7=, 4611846683218194439
 	i32.call	$push9=, __eqtf2@FUNCTION, $1, $pop6, $pop8, $pop7
-	br_if   	$pop9, 0        # 0: down to label4
+	br_if   	0, $pop9        # 0: down to label4
 # BB#1:                                 # %if.end
 	i32.load	$push10=, 12($6)
 	i32.const	$push51=, 15
@@ -157,7 +157,7 @@ va_long_double:                         # @va_long_double
 	i64.const	$push18=, 8163791057260899163
 	i64.const	$push17=, 4611787105943148885
 	i32.call	$push19=, __eqtf2@FUNCTION, $1, $pop16, $pop18, $pop17
-	br_if   	$pop19, 0       # 0: down to label5
+	br_if   	0, $pop19       # 0: down to label5
 # BB#2:                                 # %if.end4
 	i32.load	$push20=, 12($6)
 	i32.const	$push57=, 15
@@ -178,7 +178,7 @@ va_long_double:                         # @va_long_double
 	i64.const	$push28=, -4892607794577095924
 	i64.const	$push27=, 4611719242030715220
 	i32.call	$push29=, __eqtf2@FUNCTION, $1, $pop26, $pop28, $pop27
-	br_if   	$pop29, 0       # 0: down to label6
+	br_if   	0, $pop29       # 0: down to label6
 # BB#3:                                 # %if.end7
 	i32.load	$push30=, 12($6)
 	i32.const	$push63=, 15
@@ -199,7 +199,7 @@ va_long_double:                         # @va_long_double
 	i64.const	$push38=, -2718666384188054750
 	i64.const	$push37=, 4611706774898825505
 	i32.call	$push39=, __eqtf2@FUNCTION, $1, $pop36, $pop38, $pop37
-	br_if   	$pop39, 0       # 0: down to label7
+	br_if   	0, $pop39       # 0: down to label7
 # BB#4:                                 # %if.end10
 	i32.const	$5=, 16
 	i32.add 	$6=, $7, $5

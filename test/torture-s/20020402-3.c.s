@@ -18,7 +18,7 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	block
 	i32.const	$push24=, 1
 	i32.le_s	$push1=, $1, $pop24
-	br_if   	$pop1, 0        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label1
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
@@ -44,13 +44,13 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	copy_local	$3=, $2
 	i32.const	$push27=, 1
 	i32.gt_s	$push13=, $1, $pop27
-	br_if   	$pop13, 0       # 0: up to label2
+	br_if   	0, $pop13       # 0: up to label2
 # BB#2:                                 # %while.cond8.preheader
 	end_loop                        # label3:
 	i32.const	$3=, 0
 	i32.const	$push14=, -1
 	i32.le_s	$push15=, $4, $pop14
-	br_if   	$pop15, 1       # 1: down to label0
+	br_if   	1, $pop15       # 1: down to label0
 .LBB0_3:                                # %while.body10.preheader
 	end_block                       # label1:
 	i32.const	$push16=, 2
@@ -67,7 +67,7 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	i32.load	$push20=, 0($1)
 	i64.load	$push21=, 8($pop20)
 	i64.gt_u	$push22=, $pop21, $0
-	br_if   	$pop22, 1       # 1: down to label5
+	br_if   	1, $pop22       # 1: down to label5
 # BB#5:                                 # %while.cond8
                                         #   in Loop: Header=BB0_4 Depth=1
 	i32.const	$push34=, -1
@@ -77,7 +77,7 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	i32.const	$3=, 0
 	i32.const	$push32=, 1
 	i32.ge_s	$push23=, $4, $pop32
-	br_if   	$pop23, 0       # 0: up to label4
+	br_if   	0, $pop23       # 0: up to label4
 .LBB0_6:                                # %cleanup
 	end_loop                        # label5:
 	end_block                       # label0:

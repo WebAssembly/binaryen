@@ -23,7 +23,7 @@ main:                                   # @main
 	i64.shr_u	$push5=, $1, $pop65
 	i32.wrap/i64	$push6=, $pop5
 	i32.ne  	$push7=, $pop4, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %for.cond
 	i32.const	$push76=, 0
 	i64.load	$push8=, ffstesttab+8($pop76)
@@ -39,7 +39,7 @@ main:                                   # @main
 	i64.shr_u	$push13=, $1, $pop71
 	i32.wrap/i64	$push14=, $pop13
 	i32.ne  	$push15=, $pop12, $pop14
-	br_if   	$pop15, 0       # 0: down to label0
+	br_if   	0, $pop15       # 0: down to label0
 # BB#2:                                 # %for.cond.1
 	i32.const	$push82=, 0
 	i64.load	$push16=, ffstesttab+16($pop82):p2align=4
@@ -55,7 +55,7 @@ main:                                   # @main
 	i64.shr_u	$push21=, $1, $pop77
 	i32.wrap/i64	$push22=, $pop21
 	i32.ne  	$push23=, $pop20, $pop22
-	br_if   	$pop23, 0       # 0: down to label0
+	br_if   	0, $pop23       # 0: down to label0
 # BB#3:                                 # %for.cond.2
 	i32.const	$push88=, 0
 	i64.load	$push24=, ffstesttab+24($pop88)
@@ -71,7 +71,7 @@ main:                                   # @main
 	i64.shr_u	$push29=, $1, $pop83
 	i32.wrap/i64	$push30=, $pop29
 	i32.ne  	$push31=, $pop28, $pop30
-	br_if   	$pop31, 0       # 0: down to label0
+	br_if   	0, $pop31       # 0: down to label0
 # BB#4:                                 # %for.cond.3
 	i32.const	$push94=, 0
 	i64.load	$push32=, ffstesttab+32($pop94):p2align=4
@@ -87,7 +87,7 @@ main:                                   # @main
 	i64.shr_u	$push37=, $1, $pop89
 	i32.wrap/i64	$push38=, $pop37
 	i32.ne  	$push39=, $pop36, $pop38
-	br_if   	$pop39, 0       # 0: down to label0
+	br_if   	0, $pop39       # 0: down to label0
 # BB#5:                                 # %for.cond.4
 	i32.const	$push100=, 0
 	i64.load	$push40=, ffstesttab+40($pop100)
@@ -103,7 +103,7 @@ main:                                   # @main
 	i64.shr_u	$push45=, $1, $pop95
 	i32.wrap/i64	$push46=, $pop45
 	i32.ne  	$push47=, $pop44, $pop46
-	br_if   	$pop47, 0       # 0: down to label0
+	br_if   	0, $pop47       # 0: down to label0
 # BB#6:                                 # %for.cond.5
 	i32.const	$push106=, 0
 	i64.load	$push48=, ffstesttab+48($pop106):p2align=4
@@ -119,7 +119,7 @@ main:                                   # @main
 	i64.shr_u	$push53=, $1, $pop101
 	i32.wrap/i64	$push54=, $pop53
 	i32.ne  	$push55=, $pop52, $pop54
-	br_if   	$pop55, 0       # 0: down to label0
+	br_if   	0, $pop55       # 0: down to label0
 # BB#7:                                 # %for.cond.6
 	i32.const	$push112=, 0
 	i64.load	$push56=, ffstesttab+56($pop112)
@@ -135,7 +135,7 @@ main:                                   # @main
 	i64.shr_u	$push61=, $1, $pop107
 	i32.wrap/i64	$push62=, $pop61
 	i32.ne  	$push63=, $pop60, $pop62
-	br_if   	$pop63, 0       # 0: down to label0
+	br_if   	0, $pop63       # 0: down to label0
 # BB#8:                                 # %for.cond.7
 	i32.const	$push64=, 0
 	call    	exit@FUNCTION, $pop64

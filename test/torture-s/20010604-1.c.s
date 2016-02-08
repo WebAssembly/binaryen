@@ -13,19 +13,19 @@ f:                                      # @f
 	i32.and 	$push4=, $6, $pop3
 	i32.const	$push8=, 1
 	i32.ne  	$push5=, $pop4, $pop8
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push9=, 1
 	i32.xor 	$push0=, $3, $pop9
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#2:                                 # %entry
 	i32.const	$push10=, 1
 	i32.xor 	$push1=, $4, $pop10
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#3:                                 # %entry
 	i32.const	$push11=, 1
 	i32.xor 	$push2=, $5, $pop11
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#4:                                 # %if.end
 	i32.add 	$push6=, $1, $0
 	i32.add 	$push7=, $pop6, $2

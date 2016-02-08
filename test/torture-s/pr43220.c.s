@@ -56,7 +56,7 @@ main:                                   # @main
 	i32.add 	$4=, $4, $2
 	i32.const	$push13=, 1000000
 	i32.lt_s	$push11=, $4, $pop13
-	br_if   	$pop11, 0       # 0: up to label0
+	br_if   	0, $pop11       # 0: up to label0
 # BB#2:                                 # %if.end
 	end_loop                        # label1:
 	i32.const	$push12=, 0

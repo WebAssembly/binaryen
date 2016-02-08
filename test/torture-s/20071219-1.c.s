@@ -16,13 +16,13 @@ foo:                                    # @foo
 	i32.add 	$push0=, $0, $2
 	tee_local	$push4=, $3=, $pop0
 	i32.load8_u	$push1=, 0($pop4)
-	br_if   	$pop1, 2        # 2: down to label0
+	br_if   	2, $pop1        # 2: down to label0
 # BB#2:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	block
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $1, $pop7
-	br_if   	$pop8, 0        # 0: down to label3
+	br_if   	0, $pop8        # 0: down to label3
 # BB#3:                                 # %if.then3
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.store8	$discard=, 0($3), $1
@@ -33,7 +33,7 @@ foo:                                    # @foo
 	i32.add 	$2=, $2, $pop6
 	i32.const	$push5=, 25
 	i32.lt_u	$push2=, $2, $pop5
-	br_if   	$pop2, 0        # 0: up to label1
+	br_if   	0, $pop2        # 0: up to label1
 # BB#5:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push3=, 0

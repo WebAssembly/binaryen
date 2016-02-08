@@ -17,7 +17,7 @@ sign_bit_p:                             # @sign_bit_p
 	tee_local	$push20=, $0=, $pop0
 	i32.const	$push3=, 33
 	i32.lt_u	$push4=, $pop20, $pop3
-	br_if   	$pop4, 0        # 0: down to label1
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %if.then
 	i32.const	$push12=, 1
 	i32.const	$push10=, -33

@@ -67,7 +67,7 @@ main:                                   # @main
 	block
 	f64.const	$push1=, 0x1.cp2
 	f64.eq  	$push2=, $0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable

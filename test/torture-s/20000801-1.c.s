@@ -12,7 +12,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push9=, 1
 	i32.lt_s	$push0=, $1, $pop9
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -36,7 +36,7 @@ foo:                                    # @foo
 	i32.const	$push7=, 4
 	i32.add 	$0=, $0, $pop7
 	i32.lt_u	$push8=, $0, $2
-	br_if   	$pop8, 0        # 0: up to label1
+	br_if   	0, $pop8        # 0: up to label1
 .LBB0_2:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -71,7 +71,7 @@ main:                                   # @main
 	i32.const	$push4=, 1
 	i32.store16	$push5=, 12($4):p2align=2, $pop4
 	i32.ne  	$push7=, $pop6, $pop5
-	br_if   	$pop7, 0        # 0: down to label3
+	br_if   	0, $pop7        # 0: down to label3
 # BB#1:                                 # %if.end
 	call    	exit@FUNCTION, $0
 	unreachable

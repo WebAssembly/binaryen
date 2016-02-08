@@ -48,12 +48,12 @@ line_hints:                             # @line_hints
 	block
 	i32.const	$push56=, 0
 	i32.eq  	$push57=, $0, $pop56
-	br_if   	$pop57, 0       # 0: down to label1
+	br_if   	0, $pop57       # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$push51=, 4
 	i32.shr_s	$push4=, $4, $pop51
 	i32.gt_s	$push20=, $3, $pop4
-	br_if   	$pop20, 0       # 0: down to label1
+	br_if   	0, $pop20       # 0: down to label1
 # BB#2:                                 # %if.then21
 	i32.const	$push25=, 2
 	i32.const	$push24=, 1
@@ -70,12 +70,12 @@ line_hints:                             # @line_hints
 	end_block                       # label1:
 	i32.const	$push58=, 0
 	i32.eq  	$push59=, $1, $pop58
-	br_if   	$pop59, 0       # 0: down to label0
+	br_if   	0, $pop59       # 0: down to label0
 # BB#4:                                 # %if.else
 	i32.const	$push53=, 4
 	i32.shr_s	$push29=, $3, $pop53
 	i32.gt_s	$push30=, $4, $pop29
-	br_if   	$pop30, 0       # 0: down to label0
+	br_if   	0, $pop30       # 0: down to label0
 # BB#5:                                 # %if.then31
 	i32.const	$push31=, 29
 	i32.shr_u	$push32=, $1, $pop31
@@ -110,7 +110,7 @@ main:                                   # @main
 	i32.call	$push3=, line_hints@FUNCTION, $pop1, $pop0, $pop2
 	i32.const	$push4=, 1
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label2
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push6=, main.fh+12
 	i32.const	$push16=, main.gsf+16
@@ -118,7 +118,7 @@ main:                                   # @main
 	i32.call	$push7=, line_hints@FUNCTION, $pop6, $pop16, $pop15
 	i32.const	$push8=, 8
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label2
+	br_if   	0, $pop9        # 0: down to label2
 # BB#2:                                 # %lor.lhs.false3
 	i32.const	$push10=, main.fh+24
 	i32.const	$push18=, main.gsf+16
@@ -126,7 +126,7 @@ main:                                   # @main
 	i32.call	$push11=, line_hints@FUNCTION, $pop10, $pop18, $pop17
 	i32.const	$push12=, 4
 	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	$pop13, 0       # 0: down to label2
+	br_if   	0, $pop13       # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$push14=, 0
 	call    	exit@FUNCTION, $pop14

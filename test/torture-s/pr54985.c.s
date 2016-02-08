@@ -13,7 +13,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $1, $pop5
-	br_if   	$pop6, 0        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.load	$3=, 0($0)
 	i32.const	$push1=, 4
@@ -26,7 +26,7 @@ foo:                                    # @foo
 	i32.const	$4=, 0
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $1, $pop7
-	br_if   	$pop8, 1        # 1: down to label2
+	br_if   	1, $pop8        # 1: down to label2
 # BB#3:                                 # %while.cond.while.body_crit_edge
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push4=, 4
@@ -37,7 +37,7 @@ foo:                                    # @foo
 	copy_local	$0=, $4
 	copy_local	$3=, $5
 	i32.const	$4=, 1
-	br_if   	$2, 0           # 0: up to label1
+	br_if   	0, $2           # 0: up to label1
 .LBB0_4:                                # %cleanup
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -67,7 +67,7 @@ main:                                   # @main
 	i32.add 	$3=, $4, $3
 	block
 	i32.call	$push2=, foo@FUNCTION, $3, $pop1
-	br_if   	$pop2, 0        # 0: down to label3
+	br_if   	0, $pop2        # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
 	i32.const	$2=, 16

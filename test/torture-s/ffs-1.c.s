@@ -10,7 +10,7 @@ main:                                   # @main
 	block
 	i32.const	$push1=, 0
 	i32.load	$push0=, a($pop1)
-	br_if   	$pop0, 0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2

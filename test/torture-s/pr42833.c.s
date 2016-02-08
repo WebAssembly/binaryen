@@ -17,12 +17,12 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	tee_local	$push91=, $5=, $pop0
 	i32.const	$push6=, 117440512
 	i32.gt_s	$push7=, $pop91, $pop6
-	br_if   	$pop7, 0        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.else
 	block
 	i32.const	$push8=, -134217729
 	i32.gt_s	$push9=, $5, $pop8
-	br_if   	$pop9, 0        # 0: down to label1
+	br_if   	0, $pop9        # 0: down to label1
 # BB#2:                                 # %if.then13
 	i32.const	$push21=, 24
 	i32.shl 	$push22=, $0, $pop21
@@ -37,7 +37,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	tee_local	$push93=, $6=, $pop1
 	i32.const	$push10=, -8
 	i32.eq  	$push11=, $pop93, $pop10
-	br_if   	$pop11, 0       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#4:                                 # %if.else34
 	i32.const	$push12=, 24
 	i32.shl 	$push13=, $0, $pop12
@@ -46,7 +46,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	block
 	i32.const	$push95=, -1
 	i32.le_s	$push14=, $5, $pop95
-	br_if   	$pop14, 0       # 0: down to label2
+	br_if   	0, $pop14       # 0: down to label2
 # BB#5:                                 # %if.else48
 	i32.shl 	$3=, $3, $6
 	br      	1               # 1: down to label0
@@ -70,14 +70,14 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	tee_local	$push99=, $5=, $pop2
 	i32.const	$push98=, 7
 	i32.gt_s	$push25=, $pop99, $pop98
-	br_if   	$pop25, 0       # 0: down to label3
+	br_if   	0, $pop25       # 0: down to label3
 # BB#8:                                 # %if.else68
 	i32.const	$push5=, 8
 	i32.shr_u	$6=, $0, $pop5
 	block
 	i32.const	$push26=, -9
 	i32.gt_s	$push27=, $5, $pop26
-	br_if   	$pop27, 0       # 0: down to label4
+	br_if   	0, $pop27       # 0: down to label4
 # BB#9:                                 # %if.then72
 	i32.const	$push39=, 24
 	i32.shl 	$push40=, $6, $pop39
@@ -88,7 +88,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	end_block                       # label4:
 	i32.const	$push28=, -8
 	i32.eq  	$push29=, $5, $pop28
-	br_if   	$pop29, 0       # 0: down to label3
+	br_if   	0, $pop29       # 0: down to label3
 # BB#11:                                # %if.else96
 	i32.const	$push30=, 24
 	i32.shl 	$push31=, $6, $pop30
@@ -97,7 +97,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	block
 	i32.const	$push102=, -1
 	i32.le_s	$push32=, $5, $pop102
-	br_if   	$pop32, 0       # 0: down to label5
+	br_if   	0, $pop32       # 0: down to label5
 # BB#12:                                # %if.else112
 	i32.shl 	$4=, $4, $5
 	br      	1               # 1: down to label3
@@ -123,14 +123,14 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	tee_local	$push106=, $7=, $pop3
 	i32.const	$push105=, 7
 	i32.gt_s	$push44=, $pop106, $pop105
-	br_if   	$pop44, 0       # 0: down to label6
+	br_if   	0, $pop44       # 0: down to label6
 # BB#15:                                # %if.else133
 	i32.const	$push108=, 16
 	i32.shr_u	$2=, $0, $pop108
 	block
 	i32.const	$push45=, -9
 	i32.gt_s	$push46=, $7, $pop45
-	br_if   	$pop46, 0       # 0: down to label7
+	br_if   	0, $pop46       # 0: down to label7
 # BB#16:                                # %if.then137
 	i32.const	$push58=, 24
 	i32.shl 	$push59=, $2, $pop58
@@ -142,7 +142,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	i32.const	$5=, 0
 	i32.const	$push47=, -8
 	i32.eq  	$push48=, $7, $pop47
-	br_if   	$pop48, 0       # 0: down to label6
+	br_if   	0, $pop48       # 0: down to label6
 # BB#18:                                # %if.else161
 	i32.const	$push49=, 24
 	i32.shl 	$push50=, $2, $pop49
@@ -151,7 +151,7 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	block
 	i32.const	$push109=, -1
 	i32.le_s	$push51=, $7, $pop109
-	br_if   	$pop51, 0       # 0: down to label8
+	br_if   	0, $pop51       # 0: down to label8
 # BB#19:                                # %if.else177
 	i32.shl 	$5=, $5, $7
 	br      	1               # 1: down to label6
@@ -173,12 +173,12 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	tee_local	$push112=, $1=, $pop4
 	i32.const	$push61=, 7
 	i32.gt_s	$push62=, $pop112, $pop61
-	br_if   	$pop62, 0       # 0: down to label9
+	br_if   	0, $pop62       # 0: down to label9
 # BB#22:                                # %if.else199
 	block
 	i32.const	$push63=, -9
 	i32.gt_s	$push64=, $1, $pop63
-	br_if   	$pop64, 0       # 0: down to label10
+	br_if   	0, $pop64       # 0: down to label10
 # BB#23:                                # %if.then203
 	i32.const	$push75=, 31
 	i32.shr_s	$6=, $0, $pop75
@@ -187,14 +187,14 @@ helper_neon_rshl_s8:                    # @helper_neon_rshl_s8
 	end_block                       # label10:
 	i32.const	$push65=, -8
 	i32.eq  	$push66=, $1, $pop65
-	br_if   	$pop66, 0       # 0: down to label9
+	br_if   	0, $pop66       # 0: down to label9
 # BB#25:                                # %if.else227
 	i32.const	$push67=, 24
 	i32.shr_s	$0=, $0, $pop67
 	block
 	i32.const	$push114=, -1
 	i32.le_s	$push68=, $1, $pop114
-	br_if   	$pop68, 0       # 0: down to label11
+	br_if   	0, $pop68       # 0: down to label11
 # BB#26:                                # %if.else243
 	i32.shl 	$6=, $0, $1
 	br      	1               # 1: down to label9

@@ -48,7 +48,7 @@ get_n:                                  # @get_n
 	i32.load16_u	$push14=, g($pop16)
 	tee_local	$push15=, $2=, $pop14
 	i32.eq  	$push1=, $pop17, $pop15
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %while.body.lr.ph
 	i32.const	$push19=, 0
 	i32.load8_u	$push2=, e($pop19)
@@ -72,13 +72,13 @@ get_n:                                  # @get_n
 	i32.and 	$push7=, $1, $pop21
 	i32.const	$push20=, 4
 	i32.gt_u	$push8=, $pop7, $pop20
-	br_if   	$pop8, 1        # 1: down to label2
+	br_if   	1, $pop8        # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push27=, 65535
 	i32.and 	$push9=, $2, $pop27
 	i32.ne  	$push10=, $3, $pop9
-	br_if   	$pop10, 0       # 0: up to label1
+	br_if   	0, $pop10       # 0: up to label1
 .LBB1_4:                                # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
 	i32.const	$push11=, 0

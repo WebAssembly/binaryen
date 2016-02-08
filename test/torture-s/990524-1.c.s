@@ -23,18 +23,18 @@ loop:                                   # @loop
 	block
 	i32.const	$push12=, 34
 	i32.eq  	$push3=, $4, $pop12
-	br_if   	$pop3, 0        # 0: down to label2
+	br_if   	0, $pop3        # 0: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push17=, 92
 	i32.eq  	$push4=, $3, $pop17
-	br_if   	$pop4, 0        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label2
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push18=, 1
 	i32.add 	$0=, $0, $pop18
 	copy_local	$1=, $2
-	br_if   	$3, 1           # 1: up to label0
+	br_if   	1, $3           # 1: up to label0
 # BB#4:                                 # %loopDone2
 	block
 	i32.const	$push7=, a
@@ -42,7 +42,7 @@ loop:                                   # @loop
 	i32.const	$push9=, b
 	i32.sub 	$push10=, $pop9, $2
 	i32.ne  	$push11=, $pop8, $pop10
-	br_if   	$pop11, 0       # 0: down to label3
+	br_if   	0, $pop11       # 0: down to label3
 # BB#5:                                 # %if.end
 	return
 .LBB0_6:                                # %if.then

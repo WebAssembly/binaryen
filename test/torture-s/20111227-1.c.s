@@ -10,7 +10,7 @@ bar:                                    # @bar
 	block
 	i32.const	$push0=, -1
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	$pop1, 0        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
@@ -33,7 +33,7 @@ foo:                                    # @foo
 	block
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $1, $pop4
-	br_if   	$pop5, 0        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label2
 # BB#1:                                 # %if.then
 	call    	bar@FUNCTION, $0
 	br      	1               # 1: down to label1

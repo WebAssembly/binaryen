@@ -11,17 +11,17 @@ fn_4parms:                              # @fn_4parms
 	i32.load	$push0=, 0($1)
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	$pop2, 0        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push3=, 0($2)
 	i32.const	$push4=, 2
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	$pop5, 0        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false2
 	i32.load	$push6=, 0($3)
 	i32.const	$push7=, 3
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	$pop8, 0        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#3:                                 # %if.end
 	return
 .LBB0_4:                                # %if.then

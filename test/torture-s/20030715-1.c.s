@@ -30,13 +30,13 @@ server_type:                            # @server_type
 	i32.call	$push1=, strcmp@FUNCTION, $2, $pop0
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop1, $pop5
-	br_if   	$pop6, 0        # 0: down to label1
+	br_if   	0, $pop6        # 0: down to label1
 # BB#1:                                 # %if.else
 	i32.const	$4=, .L.str.2
 	i32.const	$3=, 1
 	i32.const	$push2=, .L.str.1
 	i32.call	$push3=, strcmp@FUNCTION, $2, $pop2
-	br_if   	$pop3, 1        # 1: down to label0
+	br_if   	1, $pop3        # 1: down to label0
 .LBB1_2:                                # %if.end9
 	end_block                       # label1:
 	i32.const	$push4=, 0

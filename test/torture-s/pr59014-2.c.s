@@ -31,7 +31,7 @@ main:                                   # @main
 	i64.call	$push2=, foo@FUNCTION, $pop1, $pop0
 	i64.const	$push3=, 34359738368
 	i64.ne  	$push4=, $pop2, $pop3
-	br_if   	$pop4, 0        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 0
 	return  	$pop5

@@ -28,7 +28,7 @@ debug:                                  # @debug
 	i32.load	$push7=, 0($9)
 	i32.const	$push8=, 10
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	$pop9, 0        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.load	$push10=, 12($13)
 	i32.const	$push11=, 7
@@ -43,7 +43,7 @@ debug:                                  # @debug
 	i64.load	$push17=, 0($9)
 	i64.const	$push18=, 20014547621496
 	i64.ne  	$push19=, $pop17, $pop18
-	br_if   	$pop19, 0       # 0: down to label1
+	br_if   	0, $pop19       # 0: down to label1
 # BB#2:                                 # %if.end4
 	i32.const	$12=, 16
 	i32.add 	$13=, $14, $12
