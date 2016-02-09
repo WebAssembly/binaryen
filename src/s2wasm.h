@@ -399,6 +399,8 @@ class S2WasmBuilder {
 
   void placeStack(size_t stackAllocation) {
     // Allocate space for a user stack. It starts zeroed-out so needs no segment
+    // Round to a 16-byte aligned address.
+    nextStatic = (nextStatic + 15) & static_cast<size_t>(-16);
     staticAddresses[".stack"] = nextStatic;
     nextStatic += stackAllocation;
     wasm.memory.initial = nextStatic;

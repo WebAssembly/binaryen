@@ -43,23 +43,16 @@ simd-5.c.s.wast
 980608-1.c.s.wast
 990513-1.c.s.wast
 991201-1.c.s.wast
-alloca-1.c.s.wast
 bitfld-5.c.s.wast
 memcpy-1.c.s.wast
 multi-ix.c.s.wast
-pr15296.c.s.wast
-pr27073.c.s.wast
-pr27285.c.s.wast
 pr29006.c.s.wast
-pr36339.c.s.wast
 pr37573.c.s.wast
-pr38969.c.s.wast
 pr42614.c.s.wast
 pr43236.c.s.wast
 pr44852.c.s.wast
 pr44942.c.s.wast
 pr48571-1.c.s.wast
-pr49279.c.s.wast
 pr51466.c.s.wast
 pr51581-1.c.s.wast
 pr51581-2.c.s.wast
@@ -74,8 +67,6 @@ pr56982.c.s.wast
 pr57124.c.s.wast
 pr57130.c.s.wast
 pr60960.c.s.wast
-pta-field-1.c.s.wast
-pta-field-2.c.s.wast
 stdarg-1.c.s.wast
 stdarg-2.c.s.wast
 stdarg-4.c.s.wast
@@ -108,7 +99,6 @@ va-arg-9.c.s.wast
 20030218-1.c.s.wast
 complex-7.c.s.wast
 pr30778.c.s.wast
-pr51323.c.s.wast
 
 # abort called: the tests are self-validating and call abort when they detect a
 # failure.  This may not be binaryen's fault (the toolchain may be emitting bad
