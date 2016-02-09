@@ -423,7 +423,10 @@ public:
     if (dot) {
       // type.operation (e.g. i32.add)
       WasmType type = stringToWasmType(str, false, true);
-      const char *op = dot + 1;
+      // Local copy to index into op without bounds checking.
+      constexpr size_t maxNameSize = 15;
+      char op[maxNameSize + 1] = { '\0' };
+      strncpy(op, dot + 1, maxNameSize);
       switch (op[0]) {
         case 'a': {
           if (op[1] == 'b') return makeUnary(s, UnaryOp::Abs, type);
