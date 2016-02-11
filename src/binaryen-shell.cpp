@@ -20,7 +20,6 @@
 // interpreter, like assert_* calls, so it can run the spec test suite.
 //
 
-#include <setjmp.h>
 #include <memory>
 
 #include "pass.h"
@@ -45,8 +44,9 @@ IString ASSERT_RETURN("assert_return"),
         INVOKE("invoke"),
         EXIT("exit");
 
-struct ExitException {
-};
+struct ExitException {};
+struct TrapException {};
+struct ParseException {};
 
 //
 // Implementation of the shell interpreter execution environment
@@ -195,11 +195,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.resize(newSize);
   }
 
-  jmp_buf trapState;
-
   void trap(const char* why) override {
     std::cerr << "[trap " << why << "]\n";
-    longjmp(trapState, 1);
+    throw TrapException();
   }
 };
 
@@ -267,7 +265,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
     if (id == MODULE) break;
     *checked = true;
     Colors::red(std::cerr);
-    std::cerr << *i << '/' << (root->size()-1);
+    std::cerr << *i << '/' << (root->size() - 1);
     Colors::green(std::cerr);
     std::cerr << " CHECKING: ";
     Colors::normal(std::cerr);
@@ -275,19 +273,21 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
     if (id == ASSERT_INVALID) {
       // a module invalidity test
       AllocatingModule wasm;
-      bool invalid = false;
-      jmp_buf trapState;
-      if (setjmp(trapState) == 0) {
-        *builder = std::unique_ptr<SExpressionWasmBuilder>(new SExpressionWasmBuilder(wasm, *curr[1], [&]() {
-          invalid = true;
-          longjmp(trapState, 1);
-        }));
-      }
       if (print_before || print_after) {
         Colors::bold(std::cout);
         std::cerr << "printing in module invalidity test:\n";
         Colors::normal(std::cout);
         std::cout << wasm;
+      }
+      bool invalid = false;
+      try {
+        *builder = std::unique_ptr<SExpressionWasmBuilder>(
+            new SExpressionWasmBuilder(wasm, *curr[1], [&]() {
+              invalid = true;
+              throw ParseException();
+            }));
+      } catch (const ParseException& e) {
+        invalid = true;
       }
       if (!invalid) {
         // maybe parsed ok, but otherwise incorrect
@@ -299,12 +299,12 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
       invocation.invoke();
     } else {
       // an invoke test
-      Invocation invocation(*curr[1], instance, *builder->get());
       bool trapped = false;
       Literal result;
-      if (setjmp(interface->trapState) == 0) {
+      try {
+        Invocation invocation(*curr[1], instance, *builder->get());
         result = invocation.invoke();
-      } else {
+      } catch (const TrapException& e) {
         trapped = true;
       }
       if (id == ASSERT_RETURN) {
