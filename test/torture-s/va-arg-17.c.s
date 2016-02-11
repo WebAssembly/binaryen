@@ -5,17 +5,16 @@
 	.globl	vafunction
 	.type	vafunction,@function
 vafunction:                             # @vafunction
-	.param  	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.param  	i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$2=, __stack_pointer
 	i32.load	$2=, 0($2)
 	i32.const	$3=, 16
 	i32.sub 	$5=, $2, $3
-	copy_local	$6=, $5
 	i32.const	$3=, __stack_pointer
 	i32.store	$5=, 0($3), $5
-	i32.store	$push0=, 12($5), $6
+	i32.store	$push0=, 12($5), $1
 	i32.const	$push69=, 7
 	i32.add 	$push1=, $pop0, $pop69
 	i32.const	$push68=, -8
@@ -151,7 +150,7 @@ vafunction:                             # @vafunction
 	br_if   	0, $pop65       # 0: down to label8
 # BB#9:                                 # %if.end25
 	i32.const	$4=, 16
-	i32.add 	$5=, $6, $4
+	i32.add 	$5=, $5, $4
 	i32.const	$4=, __stack_pointer
 	i32.store	$5=, 0($4), $5
 	return
@@ -201,63 +200,51 @@ vafunction:                             # @vafunction
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$5=, __stack_pointer
-	i32.load	$5=, 0($5)
-	i32.const	$6=, 80
-	i32.sub 	$7=, $5, $6
-	i32.const	$6=, __stack_pointer
-	i32.store	$7=, 0($6), $7
 	i32.const	$1=, __stack_pointer
 	i32.load	$1=, 0($1)
-	i32.const	$2=, 72
-	i32.sub 	$7=, $1, $2
+	i32.const	$2=, 80
+	i32.sub 	$3=, $1, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$7=, 0($2), $7
-	i64.const	$push0=, 4607182418800017408
-	i64.store	$discard=, 0($7), $pop0
-	i32.const	$push1=, 64
-	i32.add 	$0=, $7, $pop1
+	i32.store	$3=, 0($2), $3
+	i32.const	$push0=, 64
+	i32.add 	$push1=, $3, $pop0
 	i64.const	$push2=, 4621256167635550208
-	i64.store	$discard=, 0($0), $pop2
+	i64.store	$discard=, 0($pop1):p2align=4, $pop2
 	i32.const	$push3=, 56
-	i32.add 	$0=, $7, $pop3
-	i64.const	$push4=, 4620693217682128896
-	i64.store	$discard=, 0($0), $pop4
-	i32.const	$push5=, 48
-	i32.add 	$0=, $7, $pop5
-	i64.const	$push6=, 4619567317775286272
-	i64.store	$discard=, 0($0), $pop6
-	i32.const	$push7=, 40
-	i32.add 	$0=, $7, $pop7
-	i64.const	$push8=, 4618441417868443648
-	i64.store	$discard=, 0($0), $pop8
-	i32.const	$push9=, 32
-	i32.add 	$0=, $7, $pop9
-	i64.const	$push10=, 4617315517961601024
-	i64.store	$discard=, 0($0), $pop10
-	i32.const	$push11=, 24
-	i32.add 	$0=, $7, $pop11
-	i64.const	$push12=, 4616189618054758400
-	i64.store	$discard=, 0($0), $pop12
-	i32.const	$push13=, 16
-	i32.add 	$0=, $7, $pop13
-	i64.const	$push14=, 4613937818241073152
-	i64.store	$discard=, 0($0), $pop14
-	i32.const	$push15=, 8
-	i32.add 	$0=, $7, $pop15
-	i64.const	$push16=, 4611686018427387904
-	i64.store	$discard=, 0($0), $pop16
-	call    	vafunction@FUNCTION, $0
-	i32.const	$3=, __stack_pointer
-	i32.load	$3=, 0($3)
-	i32.const	$4=, 72
-	i32.add 	$7=, $3, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$7=, 0($4), $7
-	i32.const	$push17=, 0
-	call    	exit@FUNCTION, $pop17
+	i32.add 	$push4=, $3, $pop3
+	i64.const	$push5=, 4620693217682128896
+	i64.store	$discard=, 0($pop4), $pop5
+	i32.const	$push6=, 48
+	i32.add 	$push7=, $3, $pop6
+	i64.const	$push8=, 4619567317775286272
+	i64.store	$discard=, 0($pop7):p2align=4, $pop8
+	i32.const	$push9=, 40
+	i32.add 	$push10=, $3, $pop9
+	i64.const	$push11=, 4618441417868443648
+	i64.store	$discard=, 0($pop10), $pop11
+	i32.const	$push12=, 32
+	i32.add 	$push13=, $3, $pop12
+	i64.const	$push14=, 4617315517961601024
+	i64.store	$discard=, 0($pop13):p2align=4, $pop14
+	i32.const	$push15=, 24
+	i32.add 	$push16=, $3, $pop15
+	i64.const	$push17=, 4616189618054758400
+	i64.store	$discard=, 0($pop16), $pop17
+	i32.const	$push18=, 16
+	i32.add 	$push19=, $3, $pop18
+	i64.const	$push20=, 4613937818241073152
+	i64.store	$discard=, 0($pop19):p2align=4, $pop20
+	i32.const	$push21=, 8
+	i32.or  	$push22=, $3, $pop21
+	i64.const	$push23=, 4611686018427387904
+	i64.store	$discard=, 0($pop22), $pop23
+	i64.const	$push24=, 4607182418800017408
+	i64.store	$discard=, 0($3):p2align=4, $pop24
+	call    	vafunction@FUNCTION, $0, $3
+	i32.const	$push25=, 0
+	call    	exit@FUNCTION, $pop25
 	unreachable
 	.endfunc
 .Lfunc_end1:

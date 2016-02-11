@@ -2,7 +2,6 @@
 pr27260.c.s.wast
 
 # [trap final > memory]
-20000519-1.c.s.wast
 20000801-1.c.s.wast
 20010915-1.c.s.wast
 20020413-1.c.s.wast
@@ -11,7 +10,6 @@ pr27260.c.s.wast
 20030916-1.c.s.wast
 20031012-1.c.s.wast
 20040709-1.c.s.wast
-20041113-1.c.s.wast
 20041214-1.c.s.wast
 20050502-1.c.s.wast
 20050502-2.c.s.wast
@@ -19,7 +17,6 @@ pr27260.c.s.wast
 20070517-1.c.s.wast
 20071029-1.c.s.wast
 20071030-1.c.s.wast
-20071213-1.c.s.wast
 20080502-1.c.s.wast
 20080506-2.c.s.wast
 20100708-1.c.s.wast
@@ -29,9 +26,7 @@ pr27260.c.s.wast
 920726-1.c.s.wast
 930513-1.c.s.wast
 960327-1.c.s.wast
-980205.c.s.wast
 980605-1.c.s.wast
-980608-1.c.s.wast
 990513-1.c.s.wast
 991201-1.c.s.wast
 bitfld-5.c.s.wast
@@ -57,30 +52,12 @@ pr57130.c.s.wast
 pr60960.c.s.wast
 stdarg-1.c.s.wast
 stdarg-2.c.s.wast
-stdarg-4.c.s.wast
 string-opt-17.c.s.wast
 string-opt-18.c.s.wast
 struct-ret-1.c.s.wast
-va-arg-1.c.s.wast
-va-arg-11.c.s.wast
-va-arg-12.c.s.wast
-va-arg-13.c.s.wast
-va-arg-14.c.s.wast
-va-arg-15.c.s.wast
-va-arg-16.c.s.wast
-va-arg-17.c.s.wast
-va-arg-18.c.s.wast
-va-arg-19.c.s.wast
 va-arg-2.c.s.wast
-va-arg-20.c.s.wast
-va-arg-23.c.s.wast
-va-arg-24.c.s.wast
-va-arg-26.c.s.wast
-va-arg-4.c.s.wast
 va-arg-5.c.s.wast
 va-arg-6.c.s.wast
-va-arg-7.c.s.wast
-va-arg-8.c.s.wast
 va-arg-9.c.s.wast
 
 # [trap offset > memory]

@@ -6,270 +6,152 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$50=, __stack_pointer
-	i32.load	$50=, 0($50)
-	i32.const	$51=, 16
-	i32.sub 	$53=, $50, $51
-	i32.const	$51=, __stack_pointer
-	i32.store	$53=, 0($51), $53
-	i32.const	$push32=, .Lstr
-	i32.call	$discard=, printf@FUNCTION, $pop32
-	i32.const	$push31=, .Lstr
-	i32.call	$0=, printf@FUNCTION, $pop31
-	block
-	i32.const	$push0=, 5
-	i32.ne  	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %if.end
-	i32.const	$push33=, .Lstr
-	i32.call	$discard=, puts@FUNCTION, $pop33
-	i32.const	$push2=, .L.str.1
-	i32.call	$0=, printf@FUNCTION, $pop2
-	block
-	i32.const	$push3=, 6
-	i32.ne  	$push4=, $0, $pop3
-	br_if   	0, $pop4        # 0: down to label1
-# BB#2:                                 # %if.end6
-	i32.const	$push5=, 97
-	i32.call	$discard=, putchar@FUNCTION, $pop5
-	i32.const	$push6=, .L.str.2
-	i32.call	$0=, printf@FUNCTION, $pop6
-	block
-	i32.const	$push7=, 1
-	i32.ne  	$push8=, $0, $pop7
-	br_if   	0, $pop8        # 0: down to label2
-# BB#3:                                 # %if.end16
+	i32.const	$1=, __stack_pointer
+	i32.load	$1=, 0($1)
+	i32.const	$2=, 192
+	i32.sub 	$15=, $1, $2
 	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 4
-	i32.sub 	$53=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$53=, 0($3), $53
-	i32.const	$push9=, .Lstr
-	i32.store	$0=, 0($53), $pop9
-	i32.const	$push35=, .L.str.4
-	i32.call	$discard=, printf@FUNCTION, $pop35
-	i32.const	$4=, __stack_pointer
-	i32.load	$4=, 0($4)
-	i32.const	$5=, 4
-	i32.add 	$53=, $4, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$53=, 0($5), $53
-	i32.const	$6=, __stack_pointer
-	i32.load	$6=, 0($6)
-	i32.const	$7=, 4
-	i32.sub 	$53=, $6, $7
-	i32.const	$7=, __stack_pointer
-	i32.store	$53=, 0($7), $53
-	i32.store	$discard=, 0($53), $0
-	i32.const	$push34=, .L.str.4
-	i32.call	$0=, printf@FUNCTION, $pop34
-	i32.const	$8=, __stack_pointer
-	i32.load	$8=, 0($8)
-	i32.const	$9=, 4
-	i32.add 	$53=, $8, $9
-	i32.const	$9=, __stack_pointer
-	i32.store	$53=, 0($9), $53
+	i32.store	$15=, 0($2), $15
+	i32.const	$push45=, .Lstr
+	i32.const	$push44=, 0
+	i32.call	$discard=, printf@FUNCTION, $pop45, $pop44
 	block
-	i32.const	$push10=, 5
-	i32.ne  	$push11=, $0, $pop10
-	br_if   	0, $pop11       # 0: down to label3
+	i32.const	$push43=, .Lstr
+	i32.const	$push42=, 0
+	i32.call	$push0=, printf@FUNCTION, $pop43, $pop42
+	i32.const	$push1=, 5
+	i32.ne  	$push2=, $pop0, $pop1
+	br_if   	0, $pop2        # 0: down to label0
+# BB#1:                                 # %if.end
+	i32.const	$push47=, .Lstr
+	i32.call	$discard=, puts@FUNCTION, $pop47
+	block
+	i32.const	$push3=, .L.str.1
+	i32.const	$push46=, 0
+	i32.call	$push4=, printf@FUNCTION, $pop3, $pop46
+	i32.const	$push5=, 6
+	i32.ne  	$push6=, $pop4, $pop5
+	br_if   	0, $pop6        # 0: down to label1
+# BB#2:                                 # %if.end6
+	i32.const	$push7=, 97
+	i32.call	$discard=, putchar@FUNCTION, $pop7
+	block
+	i32.const	$push8=, .L.str.2
+	i32.const	$push9=, 0
+	i32.call	$push10=, printf@FUNCTION, $pop8, $pop9
+	i32.const	$push11=, 1
+	i32.ne  	$push12=, $pop10, $pop11
+	br_if   	0, $pop12       # 0: down to label2
+# BB#3:                                 # %if.end16
+	i32.const	$push13=, .Lstr
+	i32.store	$0=, 176($15):p2align=4, $pop13
+	i32.const	$push49=, .L.str.4
+	i32.const	$4=, 176
+	i32.add 	$4=, $15, $4
+	i32.call	$discard=, printf@FUNCTION, $pop49, $4
+	i32.store	$discard=, 160($15):p2align=4, $0
+	i32.const	$push48=, .L.str.4
+	i32.const	$5=, 160
+	i32.add 	$5=, $15, $5
+	block
+	i32.call	$push14=, printf@FUNCTION, $pop48, $5
+	i32.const	$push15=, 5
+	i32.ne  	$push16=, $pop14, $pop15
+	br_if   	0, $pop16       # 0: down to label3
 # BB#4:                                 # %if.end21
-	i32.const	$10=, __stack_pointer
-	i32.load	$10=, 0($10)
-	i32.const	$11=, 4
-	i32.sub 	$53=, $10, $11
-	i32.const	$11=, __stack_pointer
-	i32.store	$53=, 0($11), $53
-	i32.const	$push12=, .L.str.1
-	i32.store	$0=, 0($53), $pop12
-	i32.const	$push37=, .L.str.4
-	i32.call	$discard=, printf@FUNCTION, $pop37
-	i32.const	$12=, __stack_pointer
-	i32.load	$12=, 0($12)
-	i32.const	$13=, 4
-	i32.add 	$53=, $12, $13
-	i32.const	$13=, __stack_pointer
-	i32.store	$53=, 0($13), $53
-	i32.const	$14=, __stack_pointer
-	i32.load	$14=, 0($14)
-	i32.const	$15=, 4
-	i32.sub 	$53=, $14, $15
-	i32.const	$15=, __stack_pointer
-	i32.store	$53=, 0($15), $53
-	i32.store	$discard=, 0($53), $0
-	i32.const	$push36=, .L.str.4
-	i32.call	$0=, printf@FUNCTION, $pop36
-	i32.const	$16=, __stack_pointer
-	i32.load	$16=, 0($16)
-	i32.const	$17=, 4
-	i32.add 	$53=, $16, $17
-	i32.const	$17=, __stack_pointer
-	i32.store	$53=, 0($17), $53
+	i32.const	$push17=, .L.str.1
+	i32.store	$0=, 144($15):p2align=4, $pop17
+	i32.const	$push51=, .L.str.4
+	i32.const	$6=, 144
+	i32.add 	$6=, $15, $6
+	i32.call	$discard=, printf@FUNCTION, $pop51, $6
+	i32.store	$discard=, 128($15):p2align=4, $0
+	i32.const	$push50=, .L.str.4
+	i32.const	$7=, 128
+	i32.add 	$7=, $15, $7
 	block
-	i32.const	$push13=, 6
-	i32.ne  	$push14=, $0, $pop13
-	br_if   	0, $pop14       # 0: down to label4
+	i32.call	$push18=, printf@FUNCTION, $pop50, $7
+	i32.const	$push19=, 6
+	i32.ne  	$push20=, $pop18, $pop19
+	br_if   	0, $pop20       # 0: down to label4
 # BB#5:                                 # %if.end26
-	i32.const	$18=, __stack_pointer
-	i32.load	$18=, 0($18)
-	i32.const	$19=, 4
-	i32.sub 	$53=, $18, $19
-	i32.const	$19=, __stack_pointer
-	i32.store	$53=, 0($19), $53
-	i32.const	$push15=, .L.str.2
-	i32.store	$0=, 0($53), $pop15
-	i32.const	$push39=, .L.str.4
-	i32.call	$discard=, printf@FUNCTION, $pop39
-	i32.const	$20=, __stack_pointer
-	i32.load	$20=, 0($20)
-	i32.const	$21=, 4
-	i32.add 	$53=, $20, $21
-	i32.const	$21=, __stack_pointer
-	i32.store	$53=, 0($21), $53
-	i32.const	$22=, __stack_pointer
-	i32.load	$22=, 0($22)
-	i32.const	$23=, 4
-	i32.sub 	$53=, $22, $23
-	i32.const	$23=, __stack_pointer
-	i32.store	$53=, 0($23), $53
-	i32.store	$discard=, 0($53), $0
-	i32.const	$push38=, .L.str.4
-	i32.call	$0=, printf@FUNCTION, $pop38
-	i32.const	$24=, __stack_pointer
-	i32.load	$24=, 0($24)
-	i32.const	$25=, 4
-	i32.add 	$53=, $24, $25
-	i32.const	$25=, __stack_pointer
-	i32.store	$53=, 0($25), $53
+	i32.const	$push21=, .L.str.2
+	i32.store	$0=, 112($15):p2align=4, $pop21
+	i32.const	$push53=, .L.str.4
+	i32.const	$8=, 112
+	i32.add 	$8=, $15, $8
+	i32.call	$discard=, printf@FUNCTION, $pop53, $8
+	i32.store	$discard=, 96($15):p2align=4, $0
+	i32.const	$push52=, .L.str.4
+	i32.const	$9=, 96
+	i32.add 	$9=, $15, $9
 	block
-	i32.const	$push16=, 1
-	i32.ne  	$push17=, $0, $pop16
-	br_if   	0, $pop17       # 0: down to label5
+	i32.call	$push22=, printf@FUNCTION, $pop52, $9
+	i32.const	$push23=, 1
+	i32.ne  	$push24=, $pop22, $pop23
+	br_if   	0, $pop24       # 0: down to label5
 # BB#6:                                 # %if.end31
-	i32.const	$26=, __stack_pointer
-	i32.load	$26=, 0($26)
-	i32.const	$27=, 4
-	i32.sub 	$53=, $26, $27
-	i32.const	$27=, __stack_pointer
-	i32.store	$53=, 0($27), $53
-	i32.const	$push18=, .L.str.3
-	i32.store	$0=, 0($53), $pop18
-	i32.const	$push41=, .L.str.4
-	i32.call	$discard=, printf@FUNCTION, $pop41
-	i32.const	$28=, __stack_pointer
-	i32.load	$28=, 0($28)
-	i32.const	$29=, 4
-	i32.add 	$53=, $28, $29
-	i32.const	$29=, __stack_pointer
-	i32.store	$53=, 0($29), $53
-	i32.const	$30=, __stack_pointer
-	i32.load	$30=, 0($30)
-	i32.const	$31=, 4
-	i32.sub 	$53=, $30, $31
-	i32.const	$31=, __stack_pointer
-	i32.store	$53=, 0($31), $53
-	i32.store	$discard=, 0($53), $0
-	i32.const	$push40=, .L.str.4
-	i32.call	$0=, printf@FUNCTION, $pop40
-	i32.const	$32=, __stack_pointer
-	i32.load	$32=, 0($32)
-	i32.const	$33=, 4
-	i32.add 	$53=, $32, $33
-	i32.const	$33=, __stack_pointer
-	i32.store	$53=, 0($33), $53
+	i32.const	$push25=, .L.str.3
+	i32.store	$0=, 80($15):p2align=4, $pop25
+	i32.const	$push55=, .L.str.4
+	i32.const	$10=, 80
+	i32.add 	$10=, $15, $10
+	i32.call	$discard=, printf@FUNCTION, $pop55, $10
+	i32.store	$discard=, 64($15):p2align=4, $0
+	i32.const	$push54=, .L.str.4
+	i32.const	$11=, 64
+	i32.add 	$11=, $15, $11
 	block
-	br_if   	0, $0           # 0: down to label6
+	i32.call	$push26=, printf@FUNCTION, $pop54, $11
+	br_if   	0, $pop26       # 0: down to label6
 # BB#7:                                 # %if.end36
-	i32.const	$push19=, 120
-	i32.call	$discard=, putchar@FUNCTION, $pop19
-	i32.const	$34=, __stack_pointer
-	i32.load	$34=, 0($34)
-	i32.const	$35=, 4
-	i32.sub 	$53=, $34, $35
-	i32.const	$35=, __stack_pointer
-	i32.store	$53=, 0($35), $53
-	i32.const	$push42=, 120
-	i32.store	$discard=, 0($53), $pop42
-	i32.const	$push20=, .L.str.5
-	i32.call	$0=, printf@FUNCTION, $pop20
-	i32.const	$36=, __stack_pointer
-	i32.load	$36=, 0($36)
-	i32.const	$37=, 4
-	i32.add 	$53=, $36, $37
-	i32.const	$37=, __stack_pointer
-	i32.store	$53=, 0($37), $53
+	i32.const	$push27=, 120
+	i32.call	$discard=, putchar@FUNCTION, $pop27
+	i32.const	$push56=, 120
+	i32.store	$discard=, 48($15):p2align=4, $pop56
+	i32.const	$push28=, .L.str.5
+	i32.const	$12=, 48
+	i32.add 	$12=, $15, $12
 	block
-	i32.const	$push21=, 1
-	i32.ne  	$push22=, $0, $pop21
-	br_if   	0, $pop22       # 0: down to label7
+	i32.call	$push29=, printf@FUNCTION, $pop28, $12
+	i32.const	$push30=, 1
+	i32.ne  	$push31=, $pop29, $pop30
+	br_if   	0, $pop31       # 0: down to label7
 # BB#8:                                 # %if.end41
-	i32.const	$push23=, .L.str.1
-	i32.call	$discard=, puts@FUNCTION, $pop23
-	i32.const	$38=, __stack_pointer
-	i32.load	$38=, 0($38)
-	i32.const	$39=, 4
-	i32.sub 	$53=, $38, $39
-	i32.const	$39=, __stack_pointer
-	i32.store	$53=, 0($39), $53
-	i32.const	$push43=, .L.str.1
-	i32.store	$discard=, 0($53), $pop43
-	i32.const	$push24=, .L.str.6
-	i32.call	$0=, printf@FUNCTION, $pop24
-	i32.const	$40=, __stack_pointer
-	i32.load	$40=, 0($40)
-	i32.const	$41=, 4
-	i32.add 	$53=, $40, $41
-	i32.const	$41=, __stack_pointer
-	i32.store	$53=, 0($41), $53
+	i32.const	$push32=, .L.str.1
+	i32.call	$discard=, puts@FUNCTION, $pop32
+	i32.const	$push57=, .L.str.1
+	i32.store	$discard=, 32($15):p2align=4, $pop57
+	i32.const	$push33=, .L.str.6
+	i32.const	$13=, 32
+	i32.add 	$13=, $15, $13
 	block
-	i32.const	$push25=, 7
-	i32.ne  	$push26=, $0, $pop25
-	br_if   	0, $pop26       # 0: down to label8
+	i32.call	$push34=, printf@FUNCTION, $pop33, $13
+	i32.const	$push35=, 7
+	i32.ne  	$push36=, $pop34, $pop35
+	br_if   	0, $pop36       # 0: down to label8
 # BB#9:                                 # %if.end46
-	i32.const	$42=, __stack_pointer
-	i32.load	$42=, 0($42)
-	i32.const	$43=, 4
-	i32.sub 	$53=, $42, $43
-	i32.const	$43=, __stack_pointer
-	i32.store	$53=, 0($43), $53
-	i32.const	$push27=, 0
-	i32.store	$0=, 0($53), $pop27
-	i32.const	$push28=, .L.str.7
-	i32.call	$discard=, printf@FUNCTION, $pop28
-	i32.const	$44=, __stack_pointer
-	i32.load	$44=, 0($44)
-	i32.const	$45=, 4
-	i32.add 	$53=, $44, $45
-	i32.const	$45=, __stack_pointer
-	i32.store	$53=, 0($45), $53
-	i32.const	$46=, __stack_pointer
-	i32.load	$46=, 0($46)
-	i32.const	$47=, 4
-	i32.sub 	$53=, $46, $47
-	i32.const	$47=, __stack_pointer
-	i32.store	$53=, 0($47), $53
-	i32.store	$1=, 0($53), $0
-	i32.const	$push44=, .L.str.7
-	i32.call	$0=, printf@FUNCTION, $pop44
-	i32.const	$48=, __stack_pointer
-	i32.load	$48=, 0($48)
-	i32.const	$49=, 4
-	i32.add 	$53=, $48, $49
-	i32.const	$49=, __stack_pointer
-	i32.store	$53=, 0($49), $53
+	i32.const	$push37=, 0
+	i32.store	$0=, 16($15):p2align=4, $pop37
+	i32.const	$push38=, .L.str.7
+	i32.const	$14=, 16
+	i32.add 	$14=, $15, $14
+	i32.call	$discard=, printf@FUNCTION, $pop38, $14
+	i32.store	$discard=, 0($15):p2align=4, $0
 	block
-	i32.const	$push29=, 2
-	i32.ne  	$push30=, $0, $pop29
-	br_if   	0, $pop30       # 0: down to label9
+	i32.const	$push58=, .L.str.7
+	i32.call	$push39=, printf@FUNCTION, $pop58, $15
+	i32.const	$push40=, 2
+	i32.ne  	$push41=, $pop39, $pop40
+	br_if   	0, $pop41       # 0: down to label9
 # BB#10:                                # %if.end51
-	i32.const	$52=, 16
-	i32.add 	$53=, $53, $52
-	i32.const	$52=, __stack_pointer
-	i32.store	$53=, 0($52), $53
-	return  	$1
+	i32.const	$3=, 192
+	i32.add 	$15=, $15, $3
+	i32.const	$3=, __stack_pointer
+	i32.store	$15=, 0($3), $15
+	return  	$0
 .LBB0_11:                               # %if.then50
 	end_block                       # label9:
 	call    	abort@FUNCTION

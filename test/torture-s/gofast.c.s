@@ -427,14 +427,14 @@ fixunsdfsi:                             # @fixunsdfsi
 fail:                                   # @fail
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$6=, __stack_pointer
-	i32.load	$6=, 0($6)
-	i32.const	$7=, 16
-	i32.sub 	$9=, $6, $7
-	i32.const	$7=, __stack_pointer
-	i32.store	$9=, 0($7), $9
+	i32.const	$2=, __stack_pointer
+	i32.load	$2=, 0($2)
+	i32.const	$3=, 16
+	i32.sub 	$5=, $2, $3
+	i32.const	$3=, __stack_pointer
+	i32.store	$5=, 0($3), $5
 	i32.const	$push0=, 0
 	i32.load	$1=, stderr($pop0)
 	i32.const	$push6=, 0
@@ -443,25 +443,13 @@ fail:                                   # @fail
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$discard=, fail_count($pop6), $pop3
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 4
-	i32.sub 	$9=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$9=, 0($3), $9
-	i32.store	$discard=, 0($9), $0
+	i32.store	$discard=, 0($5):p2align=4, $0
 	i32.const	$push4=, .L.str
-	i32.call	$discard=, fprintf@FUNCTION, $1, $pop4
+	i32.call	$discard=, fprintf@FUNCTION, $1, $pop4, $5
+	i32.const	$4=, 16
+	i32.add 	$5=, $5, $4
 	i32.const	$4=, __stack_pointer
-	i32.load	$4=, 0($4)
-	i32.const	$5=, 4
-	i32.add 	$9=, $4, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$9=, 0($5), $9
-	i32.const	$8=, 16
-	i32.add 	$9=, $9, $8
-	i32.const	$8=, __stack_pointer
-	i32.store	$9=, 0($8), $9
+	i32.store	$5=, 0($4), $5
 	return  	$0
 	.endfunc
 .Lfunc_end30:

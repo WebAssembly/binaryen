@@ -7,35 +7,23 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$5=, __stack_pointer
-	i32.load	$5=, 0($5)
-	i32.const	$6=, 16
-	i32.sub 	$8=, $5, $6
-	i32.const	$6=, __stack_pointer
-	i32.store	$8=, 0($6), $8
 	i32.const	$1=, __stack_pointer
 	i32.load	$1=, 0($1)
-	i32.const	$2=, 8
-	i32.sub 	$8=, $1, $2
+	i32.const	$2=, 16
+	i32.sub 	$4=, $1, $2
 	i32.const	$2=, __stack_pointer
-	i32.store	$8=, 0($2), $8
+	i32.store	$4=, 0($2), $4
 	i64.const	$push0=, 4617315517961601024
-	i64.store	$discard=, 0($8), $pop0
+	i64.store	$discard=, 0($4):p2align=4, $pop0
 	i32.const	$push2=, buf
 	i32.const	$push1=, .L.str
-	i32.call_indirect	$discard=, $0, $pop2, $pop1
+	i32.call_indirect	$discard=, $0, $pop2, $pop1, $4
+	i32.const	$3=, 16
+	i32.add 	$4=, $4, $3
 	i32.const	$3=, __stack_pointer
-	i32.load	$3=, 0($3)
-	i32.const	$4=, 8
-	i32.add 	$8=, $3, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$8=, 0($4), $8
-	i32.const	$7=, 16
-	i32.add 	$8=, $8, $7
-	i32.const	$7=, __stack_pointer
-	i32.store	$8=, 0($7), $8
+	i32.store	$4=, 0($3), $4
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -47,31 +35,19 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$4=, __stack_pointer
-	i32.load	$4=, 0($4)
-	i32.const	$5=, 16
-	i32.sub 	$6=, $4, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$6=, 0($5), $6
 	i32.const	$0=, __stack_pointer
 	i32.load	$0=, 0($0)
-	i32.const	$1=, 8
-	i32.sub 	$6=, $0, $1
+	i32.const	$1=, 16
+	i32.sub 	$2=, $0, $1
 	i32.const	$1=, __stack_pointer
-	i32.store	$6=, 0($1), $6
+	i32.store	$2=, 0($1), $2
 	i64.const	$push1=, 4617315517961601024
-	i64.store	$discard=, 0($6), $pop1
+	i64.store	$discard=, 0($2):p2align=4, $pop1
 	i32.const	$push3=, buf
 	i32.const	$push2=, .L.str
-	i32.call	$discard=, sprintf@FUNCTION, $pop3, $pop2
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 8
-	i32.add 	$6=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$6=, 0($3), $6
+	i32.call	$discard=, sprintf@FUNCTION, $pop3, $pop2, $2
 	block
 	i32.const	$push10=, 0
 	i32.load8_u	$push4=, buf($pop10)
