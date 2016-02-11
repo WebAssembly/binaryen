@@ -758,11 +758,13 @@ public:
   std::ostream& doPrint(std::ostream &o, unsigned indent) {
     o << '(';
     prepareColor(o) << printWasmType(type) << ".store";
-    if (bytes < 4) {
+    if (bytes < 4 || (type == i64 && bytes < 8)) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {
         o << "16";
+      } else if (bytes == 4) {
+        o << "32";
       } else {
         abort();
       }

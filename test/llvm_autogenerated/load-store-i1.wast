@@ -47,7 +47,7 @@
     )
   )
   (func $store_i32_i1 (param $$0 i32) (param $$1 i32)
-    (i32.store align=8
+    (i32.store8 align=1
       (get_local $$0)
       (i32.and
         (get_local $$1)
@@ -57,7 +57,7 @@
     (return)
   )
   (func $store_i64_i1 (param $$0 i32) (param $$1 i64)
-    (i64.store align=8
+    (i64.store8 align=1
       (get_local $$0)
       (i64.and
         (get_local $$1)

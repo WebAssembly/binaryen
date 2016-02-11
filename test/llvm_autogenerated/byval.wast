@@ -268,7 +268,7 @@
         (get_local $$4)
       )
     )
-    (i32.store align=4
+    (i32.store8 align=4
       (i32.add
         (get_local $$4)
         (i32.const 32)

@@ -1,26 +1,18 @@
 # [trap highest > memory]
-930126-1.c.s.wast
-990222-1.c.s.wast
 pr27260.c.s.wast
-simd-5.c.s.wast
 
 # [trap final > memory]
 20000519-1.c.s.wast
 20000801-1.c.s.wast
-20010518-2.c.s.wast
 20010915-1.c.s.wast
 20020413-1.c.s.wast
 20021120-3.c.s.wast
-20021219-1.c.s.wast
 20030221-1.c.s.wast
-20030222-1.c.s.wast
 20030916-1.c.s.wast
 20031012-1.c.s.wast
 20040709-1.c.s.wast
 20041113-1.c.s.wast
 20041214-1.c.s.wast
-20050119-1.c.s.wast
-20050203-1.c.s.wast
 20050502-1.c.s.wast
 20050502-2.c.s.wast
 20070201-1.c.s.wast
@@ -31,7 +23,6 @@ simd-5.c.s.wast
 20080502-1.c.s.wast
 20080506-2.c.s.wast
 20100708-1.c.s.wast
-20120808-1.c.s.wast
 20121108-1.c.s.wast
 920501-8.c.s.wast
 920501-9.c.s.wast
@@ -48,7 +39,6 @@ memcpy-1.c.s.wast
 multi-ix.c.s.wast
 pr29006.c.s.wast
 pr37573.c.s.wast
-pr42614.c.s.wast
 pr43236.c.s.wast
 pr44852.c.s.wast
 pr44942.c.s.wast
@@ -58,13 +48,11 @@ pr51581-1.c.s.wast
 pr51581-2.c.s.wast
 pr51877.c.s.wast
 pr51933.c.s.wast
-pr52760.c.s.wast
 pr54471.c.s.wast
 pr56205.c.s.wast
 pr56837.c.s.wast
 pr56866.c.s.wast
 pr56982.c.s.wast
-pr57124.c.s.wast
 pr57130.c.s.wast
 pr60960.c.s.wast
 stdarg-1.c.s.wast
@@ -96,9 +84,7 @@ va-arg-8.c.s.wast
 va-arg-9.c.s.wast
 
 # [trap offset > memory]
-20030218-1.c.s.wast
 complex-7.c.s.wast
-pr30778.c.s.wast
 
 # abort called: the tests are self-validating and call abort when they detect a
 # failure.  This may not be binaryen's fault (the toolchain may be emitting bad
