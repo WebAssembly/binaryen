@@ -79,7 +79,7 @@
             (get_local $$10)
           )
         )
-        (i32.store align=8
+        (i32.store8 align=1
           (i32.add
             (get_local $$10)
             (get_local $$4)

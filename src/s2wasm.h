@@ -21,6 +21,8 @@
 #ifndef wasm_s2wasm_h
 #define wasm_s2wasm_h
 
+#include <limits.h>
+
 #include "wasm.h"
 #include "parsing.h"
 #include "asm_v_wasm.h"
@@ -649,7 +651,7 @@ class S2WasmBuilder {
       skipComma();
       auto curr = allocator.alloc<Load>();
       curr->type = type;
-      int32_t bytes = getInt()/8;
+      int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
       curr->signed_ = match("_s");
       match("_u");
@@ -669,7 +671,7 @@ class S2WasmBuilder {
       skipComma();
       auto curr = allocator.alloc<Store>();
       curr->type = type;
-      int32_t bytes = getInt();
+      int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
       Name assign = getAssign();
       getConst(&curr->offset);

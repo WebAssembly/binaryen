@@ -268,14 +268,14 @@
     )
   )
   (func $store_i8_with_folded_offset (param $$0 i32)
-    (i32.store offset=24 align=8
+    (i32.store8 offset=24 align=1
       (get_local $$0)
       (i32.const 0)
     )
     (return)
   )
   (func $store_i8_with_folded_gep_offset (param $$0 i32)
-    (i32.store offset=24 align=8
+    (i32.store8 offset=24 align=1
       (get_local $$0)
       (i32.const 0)
     )
@@ -333,9 +333,9 @@
   (func $aggregate_return_without_merge (param $$0 i32)
     (i32.store offset=8 align=4
       (get_local $$0)
-      (i32.store offset=12 align=16
+      (i32.store16 offset=12 align=2
         (get_local $$0)
-        (i32.store offset=14 align=8
+        (i32.store8 offset=14 align=1
           (get_local $$0)
           (i32.const 0)
         )

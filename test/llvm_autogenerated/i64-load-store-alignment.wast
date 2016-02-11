@@ -178,63 +178,63 @@
     (return)
   )
   (func $sti8_a1 (param $$0 i32) (param $$1 i64)
-    (i64.store align=8
+    (i64.store8 align=1
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $sti8_a2 (param $$0 i32) (param $$1 i64)
-    (i64.store align=2
+    (i64.store8 align=2
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $sti16_a1 (param $$0 i32) (param $$1 i64)
-    (i64.store align=1
+    (i64.store16 align=1
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $sti16_a2 (param $$0 i32) (param $$1 i64)
-    (i64.store align=16
+    (i64.store16 align=2
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $sti16_a4 (param $$0 i32) (param $$1 i64)
-    (i64.store align=4
+    (i64.store16 align=4
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $sti32_a1 (param $$0 i32) (param $$1 i64)
-    (i64.store align=1
+    (i64.store32 align=1
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $sti32_a2 (param $$0 i32) (param $$1 i64)
-    (i64.store align=2
+    (i64.store32 align=2
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $sti32_a4 (param $$0 i32) (param $$1 i64)
-    (i64.store align=32
+    (i64.store32 align=4
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $sti32_a8 (param $$0 i32) (param $$1 i64)
-    (i64.store align=8
+    (i64.store32 align=8
       (get_local $$0)
       (get_local $$1)
     )
