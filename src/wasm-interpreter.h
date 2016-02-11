@@ -374,71 +374,61 @@ private:
         Literal value = flow.value;
         NOTE_EVAL1(value);
         if (value.type == i32) {
-          int32_t v = value.geti32();
           switch (curr->op) {
-            case Clz: return Literal((int32_t)CountLeadingZeroes(v));
-            case Ctz: return Literal((int32_t)CountTrailingZeroes(v));
-            case Popcnt: return Literal((int32_t)PopCount(v));
+            case Clz:            return value.countLeadingZeroes();
+            case Ctz:            return value.countTrailingZeroes();
+            case Popcnt:         return value.popCount();
             case ReinterpretInt: return value.castToF32();
-            case ExtendSInt32: return Literal(int64_t(value.geti32()));
-            case ExtendUInt32: return Literal(uint64_t((uint32_t)value.geti32()));
-            case ConvertUInt32: return curr->type == f32 ? Literal(float(uint32_t(value.geti32()))) : Literal(double(uint32_t(value.geti32())));
-            case ConvertSInt32: return curr->type == f32 ? Literal(float(int32_t(value.geti32())))  : Literal(double(int32_t(value.geti32())));
+            case ExtendSInt32:   return value.extendToSI64();
+            case ExtendUInt32:   return value.extendToUI64();
+            case ConvertUInt32:  return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();
+            case ConvertSInt32:  return curr->type == f32 ? value.convertSToF32() : value.convertSToF64();
             default: abort();
           }
         }
         if (value.type == i64) {
-          int64_t v = value.geti64();
           switch (curr->op) {
-            case Clz: return Literal((int64_t)CountLeadingZeroes(v));
-            case Ctz: return Literal((int64_t)CountTrailingZeroes(v));
-            case Popcnt: return Literal((int64_t)PopCount(v));
-            case WrapInt64: return Literal(int32_t(value.geti64()));
+            case Clz:            return value.countLeadingZeroes();
+            case Ctz:            return value.countTrailingZeroes();
+            case Popcnt:         return value.popCount();
+            case WrapInt64:      return value.truncateToI32();
             case ReinterpretInt: return value.castToF64();
-            case ConvertUInt64: return curr->type == f32 ? Literal(float((uint64_t)value.geti64())) : Literal(double((uint64_t)value.geti64()));
-            case ConvertSInt64: return curr->type == f32 ? Literal(float(value.geti64())) : Literal(double(value.geti64()));
+            case ConvertUInt64:  return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();
+            case ConvertSInt64:  return curr->type == f32 ? value.convertSToF32() : value.convertSToF64();
             default: abort();
           }
         }
         if (value.type == f32) {
-          float v = value.getf32();
-          float ret;
           switch (curr->op) {
-            // operate on bits directly, to avoid signalling bit being set on a float
-            case Neg:     return Literal(value.reinterpreti32() ^ 0x80000000).castToF32(); break;
-            case Abs:     return Literal(value.reinterpreti32() & 0x7fffffff).castToF32(); break;
-            case Ceil:    ret = std::ceil(v); break;
-            case Floor:   ret = std::floor(v); break;
-            case Trunc:   ret = std::trunc(v); break;
-            case Nearest: ret = std::nearbyint(v); break;
-            case Sqrt:    ret = std::sqrt(v); break;
+            case Neg:              return value.neg();
+            case Abs:              return value.abs();
+            case Ceil:             return value.ceil();
+            case Floor:            return value.floor();
+            case Trunc:            return value.trunc();
+            case Nearest:          return value.nearbyint();
+            case Sqrt:             return value.sqrt();
             case TruncSFloat32:    return truncSFloat(curr, value);
             case TruncUFloat32:    return truncUFloat(curr, value);
-            case ReinterpretFloat: return Literal(value.reinterpreti32());
-            case PromoteFloat32:   return Literal(double(value.getf32()));
+            case ReinterpretFloat: return value.castToI32();
+            case PromoteFloat32:   return value.extendToF64();
             default: abort();
           }
-          return Literal(fixNaN(v, ret));
         }
         if (value.type == f64) {
-          double v = value.getf64();
-          double ret;
           switch (curr->op) {
-            // operate on bits directly, to avoid signalling bit being set on a float
-            case Neg:     return Literal(uint64_t((value.reinterpreti64() ^ 0x8000000000000000ULL))).castToF64(); break;
-            case Abs:     return Literal(uint64_t(value.reinterpreti64() & 0x7fffffffffffffffULL)).castToF64(); break;
-            case Ceil:    ret = std::ceil(v); break;
-            case Floor:   ret = std::floor(v); break;
-            case Trunc:   ret = std::trunc(v); break;
-            case Nearest: ret = std::nearbyint(v); break;
-            case Sqrt:    ret = std::sqrt(v); break;
+            case Neg:              return value.neg();
+            case Abs:              return value.abs();
+            case Ceil:             return value.ceil();
+            case Floor:            return value.floor();
+            case Trunc:            return value.trunc();
+            case Nearest:          return value.nearbyint();
+            case Sqrt:             return value.sqrt();
             case TruncSFloat64:    return truncSFloat(curr, value);
             case TruncUFloat64:    return truncUFloat(curr, value);
-            case ReinterpretFloat: return Literal(value.reinterpreti64());
-            case DemoteFloat64:    return Literal(float(value.getf64()));
+            case ReinterpretFloat: return value.castToI64();
+            case DemoteFloat64:    return value.truncateToF32();
             default: abort();
           }
-          return Literal(fixNaN(v, ret));
         }
         abort();
       }
@@ -454,167 +444,104 @@ private:
         assert(left.type == curr->left->type);
         assert(right.type == curr->right->type);
         if (left.type == i32) {
-          uint32_t l = left.geti32(), r = right.geti32();
-          int32_t l_signed = l, r_signed = r;
           switch (curr->op) {
-            case Add:      return Literal(l + r);
-            case Sub:      return Literal(l - r);
-            case Mul:      return Literal(l * r);
+            case Add:      return left.add(right);
+            case Sub:      return left.sub(right);
+            case Mul:      return left.mul(right);
             case DivS: {
-              if (r_signed == 0) trap("i32.div_s by 0");
-              if (l_signed == INT32_MIN && r_signed == -1) trap("i32.div_s overflow"); // signed division overflow
-              return Literal(l_signed / r_signed);
+              if (right.getInteger() == 0) trap("i32.div_s by 0");
+              if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) trap("i32.div_s overflow"); // signed division overflow
+              return left.divS(right);
             }
             case DivU: {
-              if (r == 0) trap("i32.div_u by 0");
-              return Literal(l / r);
+              if (right.getInteger() == 0) trap("i32.div_u by 0");
+              return left.divU(right);
             }
             case RemS: {
-              if (r_signed == 0) trap("i32.rem_s by 0");
-              if (l_signed == INT32_MIN && r_signed == -1) return Literal(int32_t(0));
-              return Literal(l_signed % r_signed);
+              if (right.getInteger() == 0) trap("i32.rem_s by 0");
+              if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) return Literal(int32_t(0));
+              return left.remS(right);
             }
             case RemU: {
-              if (r == 0) trap("i32.rem_u by 0");
-              return Literal(l % r);
+              if (right.getInteger() == 0) trap("i32.rem_u by 0");
+              return left.remU(right);
             }
-            case And:      return Literal(l & r);
-            case Or:       return Literal(l | r);
-            case Xor:      return Literal(l ^ r);
-            case Shl: {
-              r = r & 31;
-              return Literal(l << r);
-            }
-            case ShrU: {
-              r = r & 31;
-              return Literal(l >> r);
-            }
-            case ShrS: {
-              r_signed = r_signed & 31;
-              return Literal(l_signed >> r_signed);
-            }
-            case Eq:  return Literal(l == r);
-            case Ne:  return Literal(l != r);
-            case LtS: return Literal(l_signed < r_signed);
-            case LtU: return Literal(l < r);
-            case LeS: return Literal(l_signed <= r_signed);
-            case LeU: return Literal(l <= r);
-            case GtS: return Literal(l_signed > r_signed);
-            case GtU: return Literal(l > r);
-            case GeS: return Literal(l_signed >= r_signed);
-            case GeU: return Literal(l >= r);
+            case And:  return left.and_(right);
+            case Or:   return left.or_(right);
+            case Xor:  return left.xor_(right);
+            case Shl:  return left.shl(right.and_(Literal(int32_t(31))));
+            case ShrU: return left.shrU(right.and_(Literal(int32_t(31))));
+            case ShrS: return left.shrS(right.and_(Literal(int32_t(31))));
+            case Eq:   return left.eq(right);
+            case Ne:   return left.ne(right);
+            case LtS:  return left.ltS(right);
+            case LtU:  return left.ltU(right);
+            case LeS:  return left.leS(right);
+            case LeU:  return left.leU(right);
+            case GtS:  return left.gtS(right);
+            case GtU:  return left.gtU(right);
+            case GeS:  return left.geS(right);
+            case GeU:  return left.geU(right);
             default: abort();
           }
         } else if (left.type == i64) {
-          uint64_t l = left.geti64(), r = right.geti64();
-          int64_t l_signed = l, r_signed = r;
           switch (curr->op) {
-            case Add:      return Literal(l + r);
-            case Sub:      return Literal(l - r);
-            case Mul:      return Literal(l * r);
+            case Add:      return left.add(right);
+            case Sub:      return left.sub(right);
+            case Mul:      return left.mul(right);
             case DivS: {
-              if (r_signed == 0) trap("i64.div_s by 0");
-              if (l_signed == LLONG_MIN && r_signed == -1LL) trap("i64.div_s overflow"); // signed division overflow
-              return Literal(l_signed / r_signed);
+              if (right.getInteger() == 0) trap("i64.div_s by 0");
+              if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) trap("i64.div_s overflow"); // signed division overflow
+              return left.divS(right);
             }
             case DivU: {
-              if (r == 0) trap("i64.div_u by 0");
-              return Literal(l / r);
+              if (right.getInteger() == 0) trap("i64.div_u by 0");
+              return left.divU(right);
             }
             case RemS: {
-              if (r_signed == 0) trap("i64.rem_s by 0");
-              if (l_signed == LLONG_MIN && r_signed == -1LL) return Literal(int64_t(0));
-              return Literal(l_signed % r_signed);
+              if (right.getInteger() == 0) trap("i64.rem_s by 0");
+              if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) return Literal(int64_t(0));
+              return left.remS(right);
             }
             case RemU: {
-              if (r == 0) trap("i64.rem_u by 0");
-              return Literal(l % r);
+              if (right.getInteger() == 0) trap("i64.rem_u by 0");
+              return left.remU(right);
             }
-            case And:      return Literal(l & r);
-            case Or:       return Literal(l | r);
-            case Xor:      return Literal(l ^ r);
-            case Shl: {
-              r = r & 63;
-              return Literal(l << r);
-            }
-            case ShrU: {
-              r = r & 63;
-              return Literal(l >> r);
-            }
-            case ShrS: {
-              r_signed = r_signed & 63;
-              return Literal(l_signed >> r_signed);
-            }
-            case Eq:  return Literal(l == r);
-            case Ne:  return Literal(l != r);
-            case LtS: return Literal(l_signed < r_signed);
-            case LtU: return Literal(l < r);
-            case LeS: return Literal(l_signed <= r_signed);
-            case LeU: return Literal(l <= r);
-            case GtS: return Literal(l_signed > r_signed);
-            case GtU: return Literal(l > r);
-            case GeS: return Literal(l_signed >= r_signed);
-            case GeU: return Literal(l >= r);
+            case And:  return left.and_(right);
+            case Or:   return left.or_(right);
+            case Xor:  return left.xor_(right);
+            case Shl:  return left.shl(right.and_(Literal(int64_t(63))));
+            case ShrU: return left.shrU(right.and_(Literal(int64_t(63))));
+            case ShrS: return left.shrS(right.and_(Literal(int64_t(63))));
+            case Eq:   return left.eq(right);
+            case Ne:   return left.ne(right);
+            case LtS:  return left.ltS(right);
+            case LtU:  return left.ltU(right);
+            case LeS:  return left.leS(right);
+            case LeU:  return left.leU(right);
+            case GtS:  return left.gtS(right);
+            case GtU:  return left.gtU(right);
+            case GeS:  return left.geS(right);
+            case GeU:  return left.geU(right);
             default: abort();
           }
-        } else if (left.type == f32) {
-          float l = left.getf32(), r = right.getf32();
-          float ret;
+        } else if (left.type == f32 || left.type == f64) {
           switch (curr->op) {
-            case Add:      ret = l + r; break;
-            case Sub:      ret = l - r; break;
-            case Mul:      ret = l * r; break;
-            case Div:      ret = l / r; break;
-            // operate on bits directly, to avoid signalling bit being set on a float
-            case CopySign: return Literal((left.reinterpreti32() & 0x7fffffff) | (right.reinterpreti32() & 0x80000000)).castToF32(); break;
-            case Min: {
-              if (l == r && l == 0) ret = 1/l < 0 ? l : r;
-              else ret = std::min(l, r);
-              break;
-            }
-            case Max: {
-              if (l == r && l == 0) ret = 1/l < 0 ? r : l;
-              else ret = std::max(l, r);
-              break;
-            }
-            case Eq:  return Literal(l == r);
-            case Ne:  return Literal(l != r);
-            case Lt:  return Literal(l <  r);
-            case Le:  return Literal(l <= r);
-            case Gt:  return Literal(l >  r);
-            case Ge:  return Literal(l >= r);
+            case Add:      return left.add(right);
+            case Sub:      return left.sub(right);
+            case Mul:      return left.mul(right);
+            case Div:      return left.div(right);
+            case CopySign: return left.copysign(right);
+            case Min:      return left.min(right);
+            case Max:      return left.max(right);
+            case Eq:       return left.eq(right);
+            case Ne:       return left.ne(right);
+            case Lt:       return left.lt(right);
+            case Le:       return left.le(right);
+            case Gt:       return left.gt(right);
+            case Ge:       return left.ge(right);
             default: abort();
           }
-          return Literal(fixNaN(l, r, ret));
-        } else if (left.type == f64) {
-          double l = left.getf64(), r = right.getf64();
-          double ret;
-          switch (curr->op) {
-            case Add:      ret = l + r; break;
-            case Sub:      ret = l - r; break;
-            case Mul:      ret = l * r; break;
-            case Div:      ret = l / r; break;
-            // operate on bits directly, to avoid signalling bit being set on a float
-            case CopySign: return Literal((left.reinterpreti64() & 0x7fffffffffffffffUL) | (right.reinterpreti64() & 0x8000000000000000UL)).castToF64(); break;
-            case Min: {
-              if (l == r && l == 0) ret = 1/l < 0 ? l : r;
-              else ret = std::min(l, r);
-              break;
-            }
-            case Max: {
-              if (l == r && l == 0) ret = 1/l < 0 ? r : l;
-              else ret = std::max(l, r);
-              break;
-            }
-            case Eq:  return Literal(l == r);
-            case Ne:  return Literal(l != r);
-            case Lt:  return Literal(l <  r);
-            case Le:  return Literal(l <= r);
-            case Gt:  return Literal(l >  r);
-            case Ge:  return Literal(l >= r);
-            default: abort();
-          }
-          return Literal(fixNaN(l, r, ret));
         }
         abort();
       }
@@ -676,47 +603,11 @@ private:
         return Flow();
       }
 
-      float fixNaN(float u, float result) {
-        if (!isnan(result)) return result;
-        bool unan = isnan(u);
-        if (!unan) {
-          return Literal((int32_t)0x7fc00000).reinterpretf32();
-        }
-        return result;
-      }
-
-      double fixNaN(double u, double result) {
-        if (!isnan(result)) return result;
-        bool unan = isnan(u);
-        if (!unan) {
-          return Literal((int64_t)0x7ff8000000000000LL).reinterpretf64();
-        }
-        return result;
-      }
-
-      float fixNaN(float l, float r, float result) {
-        bool lnan = isnan(l), rnan = isnan(r);
-        if (!isnan(result) && !lnan && !rnan) return result;
-        if (!lnan && !rnan) {
-          return Literal((int32_t)0x7fc00000).reinterpretf32();
-        }
-        return Literal(Literal(lnan ? l : r).reinterpreti32() | 0xc00000).reinterpretf32();
-      }
-
-      double fixNaN(double l, double r, double result) {
-        bool lnan = isnan(l), rnan = isnan(r);
-        if (!isnan(result) && !lnan && !rnan) return result;
-        if (!lnan && !rnan) {
-          return Literal((int64_t)0x7ff8000000000000LL).reinterpretf64();
-        }
-        return Literal(int64_t(Literal(lnan ? l : r).reinterpreti64() | 0x8000000000000LL)).reinterpretf64();
-      }
-
       Literal truncSFloat(Unary* curr, Literal value) {
-        double val = curr->op == TruncSFloat32 ? value.getf32() : value.getf64();
+        double val = value.getFloat();
         if (isnan(val)) trap("truncSFloat of nan");
         if (curr->type == i32) {
-          if (val > (double)INT_MAX || val < (double)INT_MIN) trap("i32.truncSFloat overflow");
+          if (val > (double)std::numeric_limits<int32_t>::max() || val < (double)std::numeric_limits<int32_t>::min()) trap("i32.truncSFloat overflow");
           return Literal(int32_t(val));
         } else {
           int64_t converted = val;
@@ -726,10 +617,10 @@ private:
       }
 
       Literal truncUFloat(Unary* curr, Literal value) {
-        double val = curr->op == TruncUFloat32 ? value.getf32() : value.getf64();
+        double val = value.getFloat();
         if (isnan(val)) trap("truncUFloat of nan");
         if (curr->type == i32) {
-          if (val > (double)UINT_MAX || val <= (double)-1) trap("i64.truncUFloat overflow");
+          if (val > (double)std::numeric_limits<uint32_t>::max() || val <= (double)-1) trap("i64.truncUFloat overflow");
           return Literal(uint32_t(val));
         } else {
           uint64_t converted = val;
