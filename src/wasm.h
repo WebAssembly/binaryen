@@ -58,6 +58,7 @@
 #include "emscripten-optimizer/simple_ast.h"
 #include "mixed_arena.h"
 #include "pretty_printing.h"
+#include "support/bits.h"
 #include "support/utilities.h"
 
 namespace wasm {
@@ -169,13 +170,25 @@ public:
   Literal castToF32() {
     assert(type == WasmType::i32);
     Literal ret(i32);
-    ret.type = f32;
+    ret.type = WasmType::f32;
     return ret;
   }
   Literal castToF64() {
     assert(type == WasmType::i64);
     Literal ret(i64);
-    ret.type = f64;
+    ret.type = WasmType::f64;
+    return ret;
+  }
+  Literal castToI32() {
+    assert(type == WasmType::f32);
+    Literal ret(f32);
+    ret.type = WasmType::i32;
+    return ret;
+  }
+  Literal castToI64() {
+    assert(type == WasmType::f64);
+    Literal ret(f64);
+    ret.type = WasmType::i64;
     return ret;
   }
 
@@ -272,6 +285,55 @@ public:
     }
     restoreNormalColor(o);
     return o << ')';
+  }
+
+  Literal countLeadingZeroes() const {
+    if (type == WasmType::i32) return Literal((int32_t)CountLeadingZeroes(i32));
+    if (type == WasmType::i64) return Literal((int64_t)CountLeadingZeroes(i64));
+    WASM_UNREACHABLE();
+  }
+  Literal countTrailingZeroes() const {
+    if (type == WasmType::i32) return Literal((int32_t)CountTrailingZeroes(i32));
+    if (type == WasmType::i64) return Literal((int64_t)CountTrailingZeroes(i64));
+    WASM_UNREACHABLE();
+  }
+  Literal popCount() const {
+    if (type == WasmType::i32) return Literal((int32_t)PopCount(i32));
+    if (type == WasmType::i64) return Literal((int64_t)PopCount(i64));
+    WASM_UNREACHABLE();
+  }
+
+  Literal extendToSI64() const {
+    assert(type == WasmType::i32);
+    return Literal((int64_t)i32);
+  }
+  Literal extendToUI64() const {
+    assert(type == WasmType::i32);
+    return Literal((uint64_t)(uint32_t)i32);
+  }
+  Literal truncateToI32() const {
+    assert(type == WasmType::i64);
+    return Literal((int32_t)i64);
+  }
+  Literal convertSToF32() const {
+    if (type == WasmType::i32) return Literal(float(i32));
+    if (type == WasmType::i64) return Literal(float(i64));
+    WASM_UNREACHABLE();
+  }
+  Literal convertUToF32() const {
+    if (type == WasmType::i32) return Literal(float(uint32_t(i32)));
+    if (type == WasmType::i64) return Literal(float(uint64_t(i64)));
+    WASM_UNREACHABLE();
+  }
+  Literal convertSToF64() const {
+    if (type == WasmType::i32) return Literal(double(i32));
+    if (type == WasmType::i64) return Literal(double(i64));
+    WASM_UNREACHABLE();
+  }
+  Literal convertUToF64() const {
+    if (type == WasmType::i32) return Literal(double(uint32_t(i32)));
+    if (type == WasmType::i64) return Literal(double(uint64_t(i64)));
+    WASM_UNREACHABLE();
   }
 };
 

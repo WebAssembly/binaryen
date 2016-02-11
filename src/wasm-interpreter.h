@@ -374,29 +374,27 @@ private:
         Literal value = flow.value;
         NOTE_EVAL1(value);
         if (value.type == i32) {
-          int32_t v = value.geti32();
           switch (curr->op) {
-            case Clz: return Literal((int32_t)CountLeadingZeroes(v));
-            case Ctz: return Literal((int32_t)CountTrailingZeroes(v));
-            case Popcnt: return Literal((int32_t)PopCount(v));
+            case Clz: return value.countLeadingZeroes();
+            case Ctz: return value.countTrailingZeroes();
+            case Popcnt: return value.popCount();
             case ReinterpretInt: return value.castToF32();
-            case ExtendSInt32: return Literal(int64_t(value.geti32()));
-            case ExtendUInt32: return Literal(uint64_t((uint32_t)value.geti32()));
-            case ConvertUInt32: return curr->type == f32 ? Literal(float(uint32_t(value.geti32()))) : Literal(double(uint32_t(value.geti32())));
-            case ConvertSInt32: return curr->type == f32 ? Literal(float(int32_t(value.geti32())))  : Literal(double(int32_t(value.geti32())));
+            case ExtendSInt32: return value.extendToSI64();
+            case ExtendUInt32: return value.extendToUI64();
+            case ConvertUInt32: return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();
+            case ConvertSInt32: return curr->type == f32 ? value.convertSToF32() : value.convertSToF64();
             default: abort();
           }
         }
         if (value.type == i64) {
-          int64_t v = value.geti64();
           switch (curr->op) {
-            case Clz: return Literal((int64_t)CountLeadingZeroes(v));
-            case Ctz: return Literal((int64_t)CountTrailingZeroes(v));
-            case Popcnt: return Literal((int64_t)PopCount(v));
-            case WrapInt64: return Literal(int32_t(value.geti64()));
+            case Clz: return value.countLeadingZeroes();
+            case Ctz: return value.countTrailingZeroes();
+            case Popcnt: return value.popCount();
+            case WrapInt64: return value.truncateToI32();
             case ReinterpretInt: return value.castToF64();
-            case ConvertUInt64: return curr->type == f32 ? Literal(float((uint64_t)value.geti64())) : Literal(double((uint64_t)value.geti64()));
-            case ConvertSInt64: return curr->type == f32 ? Literal(float(value.geti64())) : Literal(double(value.geti64()));
+            case ConvertUInt64: return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();
+            case ConvertSInt64: return curr->type == f32 ? value.convertSToF32() : value.convertSToF64();
             default: abort();
           }
         }
