@@ -375,68 +375,60 @@ private:
         NOTE_EVAL1(value);
         if (value.type == i32) {
           switch (curr->op) {
-            case Clz: return value.countLeadingZeroes();
-            case Ctz: return value.countTrailingZeroes();
-            case Popcnt: return value.popCount();
+            case Clz:            return value.countLeadingZeroes();
+            case Ctz:            return value.countTrailingZeroes();
+            case Popcnt:         return value.popCount();
             case ReinterpretInt: return value.castToF32();
-            case ExtendSInt32: return value.extendToSI64();
-            case ExtendUInt32: return value.extendToUI64();
-            case ConvertUInt32: return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();
-            case ConvertSInt32: return curr->type == f32 ? value.convertSToF32() : value.convertSToF64();
+            case ExtendSInt32:   return value.extendToSI64();
+            case ExtendUInt32:   return value.extendToUI64();
+            case ConvertUInt32:  return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();
+            case ConvertSInt32:  return curr->type == f32 ? value.convertSToF32() : value.convertSToF64();
             default: abort();
           }
         }
         if (value.type == i64) {
           switch (curr->op) {
-            case Clz: return value.countLeadingZeroes();
-            case Ctz: return value.countTrailingZeroes();
-            case Popcnt: return value.popCount();
-            case WrapInt64: return value.truncateToI32();
+            case Clz:            return value.countLeadingZeroes();
+            case Ctz:            return value.countTrailingZeroes();
+            case Popcnt:         return value.popCount();
+            case WrapInt64:      return value.truncateToI32();
             case ReinterpretInt: return value.castToF64();
-            case ConvertUInt64: return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();
-            case ConvertSInt64: return curr->type == f32 ? value.convertSToF32() : value.convertSToF64();
+            case ConvertUInt64:  return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();
+            case ConvertSInt64:  return curr->type == f32 ? value.convertSToF32() : value.convertSToF64();
             default: abort();
           }
         }
         if (value.type == f32) {
-          float v = value.getf32();
-          float ret;
           switch (curr->op) {
-            // operate on bits directly, to avoid signalling bit being set on a float
-            case Neg:     return Literal(value.reinterpreti32() ^ 0x80000000).castToF32(); break;
-            case Abs:     return Literal(value.reinterpreti32() & 0x7fffffff).castToF32(); break;
-            case Ceil:    ret = std::ceil(v); break;
-            case Floor:   ret = std::floor(v); break;
-            case Trunc:   ret = std::trunc(v); break;
-            case Nearest: ret = std::nearbyint(v); break;
-            case Sqrt:    ret = std::sqrt(v); break;
+            case Neg:              return value.neg();
+            case Abs:              return value.abs();
+            case Ceil:             return value.ceil();
+            case Floor:            return value.floor();
+            case Trunc:            return value.trunc();
+            case Nearest:          return value.nearbyint();
+            case Sqrt:             return value.sqrt();
             case TruncSFloat32:    return truncSFloat(curr, value);
             case TruncUFloat32:    return truncUFloat(curr, value);
-            case ReinterpretFloat: return Literal(value.reinterpreti32());
-            case PromoteFloat32:   return Literal(double(value.getf32()));
+            case ReinterpretFloat: return value.castToI32();
+            case PromoteFloat32:   return value.extendToF64();
             default: abort();
           }
-          return Literal(fixNaN(v, ret));
         }
         if (value.type == f64) {
-          double v = value.getf64();
-          double ret;
           switch (curr->op) {
-            // operate on bits directly, to avoid signalling bit being set on a float
-            case Neg:     return Literal(uint64_t((value.reinterpreti64() ^ 0x8000000000000000ULL))).castToF64(); break;
-            case Abs:     return Literal(uint64_t(value.reinterpreti64() & 0x7fffffffffffffffULL)).castToF64(); break;
-            case Ceil:    ret = std::ceil(v); break;
-            case Floor:   ret = std::floor(v); break;
-            case Trunc:   ret = std::trunc(v); break;
-            case Nearest: ret = std::nearbyint(v); break;
-            case Sqrt:    ret = std::sqrt(v); break;
+            case Neg:              return value.neg();
+            case Abs:              return value.abs();
+            case Ceil:             return value.ceil();
+            case Floor:            return value.floor();
+            case Trunc:            return value.trunc();
+            case Nearest:          return value.nearbyint();
+            case Sqrt:             return value.sqrt();
             case TruncSFloat64:    return truncSFloat(curr, value);
             case TruncUFloat64:    return truncUFloat(curr, value);
-            case ReinterpretFloat: return Literal(value.reinterpreti64());
-            case DemoteFloat64:    return Literal(float(value.getf64()));
+            case ReinterpretFloat: return value.castToI64();
+            case DemoteFloat64:    return value.truncateToF32();
             default: abort();
           }
-          return Literal(fixNaN(v, ret));
         }
         abort();
       }
@@ -711,7 +703,7 @@ private:
       }
 
       Literal truncSFloat(Unary* curr, Literal value) {
-        double val = curr->op == TruncSFloat32 ? value.getf32() : value.getf64();
+        double val = value.getFloat();
         if (isnan(val)) trap("truncSFloat of nan");
         if (curr->type == i32) {
           if (val > (double)INT_MAX || val < (double)INT_MIN) trap("i32.truncSFloat overflow");
@@ -724,7 +716,7 @@ private:
       }
 
       Literal truncUFloat(Unary* curr, Literal value) {
-        double val = curr->op == TruncUFloat32 ? value.getf32() : value.getf64();
+        double val = value.getFloat();
         if (isnan(val)) trap("truncUFloat of nan");
         if (curr->type == i32) {
           if (val > (double)UINT_MAX || val <= (double)-1) trap("i64.truncUFloat overflow");

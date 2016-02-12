@@ -181,28 +181,28 @@ public:
   }
   Literal castToI32() {
     assert(type == WasmType::f32);
-    Literal ret(f32);
+    Literal ret(i32);
     ret.type = WasmType::i32;
     return ret;
   }
   Literal castToI64() {
     assert(type == WasmType::f64);
-    Literal ret(f64);
+    Literal ret(i64);
     ret.type = WasmType::i64;
     return ret;
   }
 
-  int32_t geti32() { assert(type == WasmType::i32); return i32; }
-  int64_t geti64() { assert(type == WasmType::i64); return i64; }
-  float   getf32() { assert(type == WasmType::f32); return bit_cast<float>(i32); }
-  double  getf64() { assert(type == WasmType::f64); return bit_cast<double>(i64); }
+  int32_t geti32() const { assert(type == WasmType::i32); return i32; }
+  int64_t geti64() const { assert(type == WasmType::i64); return i64; }
+  float   getf32() const { assert(type == WasmType::f32); return bit_cast<float>(i32); }
+  double  getf64() const { assert(type == WasmType::f64); return bit_cast<double>(i64); }
 
   int32_t* geti32Ptr() { assert(type == WasmType::i32); return &i32; } // careful!
 
-  int32_t reinterpreti32() { assert(type == WasmType::f32); return i32; }
-  int64_t reinterpreti64() { assert(type == WasmType::f64); return i64; }
-  float   reinterpretf32() { assert(type == WasmType::i32); return bit_cast<float>(i32); }
-  double  reinterpretf64() { assert(type == WasmType::i64); return bit_cast<double>(i64); }
+  int32_t reinterpreti32() const { assert(type == WasmType::f32); return i32; }
+  int64_t reinterpreti64() const { assert(type == WasmType::f64); return i64; }
+  float   reinterpretf32() const { assert(type == WasmType::i32); return bit_cast<float>(i32); }
+  double  reinterpretf64() const { assert(type == WasmType::i64); return bit_cast<double>(i64); }
 
   int64_t getInteger() {
     switch (type) {
@@ -311,10 +311,19 @@ public:
     assert(type == WasmType::i32);
     return Literal((uint64_t)(uint32_t)i32);
   }
+  Literal extendToF64() const {
+    assert(type == WasmType::f32);
+    return Literal(double(getf32()));
+  }
   Literal truncateToI32() const {
     assert(type == WasmType::i64);
     return Literal((int32_t)i64);
   }
+  Literal truncateToF32() const {
+    assert(type == WasmType::f64);
+    return Literal(float(getf64()));
+  }
+
   Literal convertSToF32() const {
     if (type == WasmType::i32) return Literal(float(i32));
     if (type == WasmType::i64) return Literal(float(i64));
@@ -334,6 +343,60 @@ public:
     if (type == WasmType::i32) return Literal(double(uint32_t(i32)));
     if (type == WasmType::i64) return Literal(double(uint64_t(i64)));
     WASM_UNREACHABLE();
+  }
+
+  Literal neg() const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 ^ 0x80000000);
+      case WasmType::i64: return Literal(i64 ^ 0x8000000000000000ULL);
+      case WasmType::f32: return Literal(i32 ^ 0x80000000).castToF32();
+      case WasmType::f64: return Literal(i64 ^ 0x8000000000000000ULL).castToF64();
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal abs() const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 & 0x7fffffff);
+      case WasmType::i64: return Literal(i64 & 0x7fffffffffffffffULL);
+      case WasmType::f32: return Literal(i32 & 0x7fffffff).castToF32();
+      case WasmType::f64: return Literal(i64 & 0x7fffffffffffffffULL).castToF64();
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal ceil() const {
+    switch (type) {
+      case WasmType::f32: return Literal(std::ceil(getf32()));
+      case WasmType::f64: return Literal(std::ceil(getf64()));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal floor() const {
+    switch (type) {
+      case WasmType::f32: return Literal(std::floor(getf32()));
+      case WasmType::f64: return Literal(std::floor(getf64()));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal trunc() const {
+    switch (type) {
+      case WasmType::f32: return Literal(std::trunc(getf32()));
+      case WasmType::f64: return Literal(std::trunc(getf64()));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal nearbyint() const {
+    switch (type) {
+      case WasmType::f32: return Literal(std::nearbyint(getf32()));
+      case WasmType::f64: return Literal(std::nearbyint(getf64()));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal sqrt() const {
+    switch (type) {
+      case WasmType::f32: return Literal(std::sqrt(getf32()));
+      case WasmType::f64: return Literal(std::sqrt(getf64()));
+      default: WASM_UNREACHABLE();
+    }
   }
 };
 
