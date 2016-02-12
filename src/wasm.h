@@ -348,18 +348,18 @@ public:
   Literal neg() const {
     switch (type) {
       case WasmType::i32: return Literal(i32 ^ 0x80000000);
-      case WasmType::i64: return Literal(i64 ^ 0x8000000000000000ULL);
+      case WasmType::i64: return Literal(int64_t(i64 ^ 0x8000000000000000ULL));
       case WasmType::f32: return Literal(i32 ^ 0x80000000).castToF32();
-      case WasmType::f64: return Literal(i64 ^ 0x8000000000000000ULL).castToF64();
+      case WasmType::f64: return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
       default: WASM_UNREACHABLE();
     }
   }
   Literal abs() const {
     switch (type) {
       case WasmType::i32: return Literal(i32 & 0x7fffffff);
-      case WasmType::i64: return Literal(i64 & 0x7fffffffffffffffULL);
+      case WasmType::i64: return Literal(int64_t(i64 & 0x7fffffffffffffffULL));
       case WasmType::f32: return Literal(i32 & 0x7fffffff).castToF32();
-      case WasmType::f64: return Literal(i64 & 0x7fffffffffffffffULL).castToF64();
+      case WasmType::f64: return Literal(int64_t(i64 & 0x7fffffffffffffffULL)).castToF64();
       default: WASM_UNREACHABLE();
     }
   }
