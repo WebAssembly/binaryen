@@ -100,6 +100,10 @@ public:
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
     memorySize = wasm.memory.initial;
     externalInterface->init(wasm);
+    if (wasm.start.is()) {
+      LiteralList arguments;
+      callFunction(wasm.start, arguments);
+    }
   }
 
   Literal callExport(IString name, LiteralList& arguments) {
