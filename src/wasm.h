@@ -612,7 +612,7 @@ public:
     switch (type) {
       case WasmType::f32: {
         auto l = getf32(), r = other.getf32();
-        if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
+        if (l == r && l == 0) return Literal(std::signbit(l) ? l : r);
         auto result = std::min(l, r);
         bool lnan = isnan(l), rnan = isnan(r);
         if (!isnan(result) && !lnan && !rnan) return Literal(result);
@@ -621,7 +621,7 @@ public:
       }
       case WasmType::f64: {
         auto l = getf64(), r = other.getf64();
-        if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
+        if (l == r && l == 0) return Literal(std::signbit(l) ? l : r);
         auto result = std::min(l, r);
         bool lnan = isnan(l), rnan = isnan(r);
         if (!isnan(result) && !lnan && !rnan) return Literal(result);
@@ -635,7 +635,7 @@ public:
     switch (type) {
       case WasmType::f32: {
         auto l = getf32(), r = other.getf32();
-        if (l == r && l == 0) return Literal(1/l < 0 ? r : l);
+        if (l == r && l == 0) return Literal(std::signbit(l) ? r : l);
         auto result = std::max(l, r);
         bool lnan = isnan(l), rnan = isnan(r);
         if (!isnan(result) && !lnan && !rnan) return Literal(result);
@@ -644,7 +644,7 @@ public:
       }
       case WasmType::f64: {
         auto l = getf64(), r = other.getf64();
-        if (l == r && l == 0) return Literal(1/l < 0 ? r : l);
+        if (l == r && l == 0) return Literal(std::signbit(l) ? r : l);
         auto result = std::max(l, r);
         bool lnan = isnan(l), rnan = isnan(r);
         if (!isnan(result) && !lnan && !rnan) return Literal(result);

@@ -450,7 +450,7 @@ private:
             case Mul:      return left.mul(right);
             case DivS: {
               if (right.getInteger() == 0) trap("i32.div_s by 0");
-              if (left.getInteger() == INT32_MIN && right.getInteger() == -1) trap("i32.div_s overflow"); // signed division overflow
+              if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) trap("i32.div_s overflow"); // signed division overflow
               return left.divS(right);
             }
             case DivU: {
@@ -459,7 +459,7 @@ private:
             }
             case RemS: {
               if (right.getInteger() == 0) trap("i32.rem_s by 0");
-              if (left.getInteger() == INT32_MIN && right.getInteger() == -1) return Literal(int32_t(0));
+              if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) return Literal(int32_t(0));
               return left.remS(right);
             }
             case RemU: {
@@ -607,7 +607,7 @@ private:
         double val = value.getFloat();
         if (isnan(val)) trap("truncSFloat of nan");
         if (curr->type == i32) {
-          if (val > (double)INT_MAX || val < (double)INT_MIN) trap("i32.truncSFloat overflow");
+          if (val > (double)std::numeric_limits<int32_t>::max() || val < (double)std::numeric_limits<int32_t>::min()) trap("i32.truncSFloat overflow");
           return Literal(int32_t(val));
         } else {
           int64_t converted = val;
@@ -620,7 +620,7 @@ private:
         double val = value.getFloat();
         if (isnan(val)) trap("truncUFloat of nan");
         if (curr->type == i32) {
-          if (val > (double)UINT_MAX || val <= (double)-1) trap("i64.truncUFloat overflow");
+          if (val > (double)std::numeric_limits<uint32_t>::max() || val <= (double)-1) trap("i64.truncUFloat overflow");
           return Literal(uint32_t(val));
         } else {
           uint64_t converted = val;
