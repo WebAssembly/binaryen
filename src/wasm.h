@@ -220,7 +220,7 @@ public:
     }
   }
 
-  bool operator==(Literal& other) {
+  bool operator==(const Literal& other) const {
     if (type != other.type) return false;
     switch (type) {
       case WasmType::none: return true;
@@ -395,6 +395,270 @@ public:
     switch (type) {
       case WasmType::f32: return Literal(std::sqrt(getf32()));
       case WasmType::f64: return Literal(std::sqrt(getf64()));
+      default: WASM_UNREACHABLE();
+    }
+  }
+
+  Literal add(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 + other.i32);
+      case WasmType::i64: return Literal(i64 + other.i64);
+      case WasmType::f32: return Literal(getf32() + other.getf32());
+      case WasmType::f64: return Literal(getf64() + other.getf64());
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal sub(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 - other.i32);
+      case WasmType::i64: return Literal(i64 - other.i64);
+      case WasmType::f32: return Literal(getf32() - other.getf32());
+      case WasmType::f64: return Literal(getf64() - other.getf64());
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal mul(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 * other.i32);
+      case WasmType::i64: return Literal(i64 * other.i64);
+      case WasmType::f32: return Literal(getf32() * other.getf32());
+      case WasmType::f64: return Literal(getf64() * other.getf64());
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal div(const Literal& other) const {
+    switch (type) {
+      case WasmType::f32: return Literal(getf32() / other.getf32());
+      case WasmType::f64: return Literal(getf64() / other.getf64());
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal divS(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 / other.i32);
+      case WasmType::i64: return Literal(i64 / other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal divU(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(uint32_t(i32) / uint32_t(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) / uint64_t(other.i64));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal remS(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 % other.i32);
+      case WasmType::i64: return Literal(i64 % other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal remU(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(uint32_t(i32) % uint32_t(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) % uint64_t(other.i64));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal and_(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 & other.i32);
+      case WasmType::i64: return Literal(i64 & other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal or_(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 | other.i32);
+      case WasmType::i64: return Literal(i64 | other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal xor_(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 ^ other.i32);
+      case WasmType::i64: return Literal(i64 ^ other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal shl(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 << other.i32);
+      case WasmType::i64: return Literal(i64 << other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal shrS(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 >> other.i32);
+      case WasmType::i64: return Literal(i64 >> other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal shrU(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(uint32_t(i32) >> uint32_t(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) >> uint64_t(other.i64));
+      default: WASM_UNREACHABLE();
+    }
+  }
+
+  Literal eq(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 == other.i32);
+      case WasmType::i64: return Literal(i64 == other.i64);
+      case WasmType::f32: return Literal(getf32() == other.getf32());
+      case WasmType::f64: return Literal(getf64() == other.getf64());
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal ne(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 != other.i32);
+      case WasmType::i64: return Literal(i64 != other.i64);
+      case WasmType::f32: return Literal(getf32() != other.getf32());
+      case WasmType::f64: return Literal(getf64() != other.getf64());
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal ltS(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 < other.i32);
+      case WasmType::i64: return Literal(i64 < other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal ltU(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(uint32_t(i32) < uint32_t(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) < uint64_t(other.i64));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal lt(const Literal& other) const {
+    switch (type) {
+      case WasmType::f32: return Literal(getf32() < other.getf32());
+      case WasmType::f64: return Literal(getf64() < other.getf64());
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal leS(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 <= other.i32);
+      case WasmType::i64: return Literal(i64 <= other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal leU(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(uint32_t(i32) <= uint32_t(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) <= uint64_t(other.i64));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal le(const Literal& other) const {
+    switch (type) {
+      case WasmType::f32: return Literal(getf32() <= other.getf32());
+      case WasmType::f64: return Literal(getf64() <= other.getf64());
+      default: WASM_UNREACHABLE();
+    }
+  }
+
+  Literal gtS(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 > other.i32);
+      case WasmType::i64: return Literal(i64 > other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal gtU(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(uint32_t(i32) > uint32_t(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) > uint64_t(other.i64));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal gt(const Literal& other) const {
+    switch (type) {
+      case WasmType::f32: return Literal(getf32() > other.getf32());
+      case WasmType::f64: return Literal(getf64() > other.getf64());
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal geS(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(i32 >= other.i32);
+      case WasmType::i64: return Literal(i64 >= other.i64);
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal geU(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(uint32_t(i32) >= uint32_t(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) >= uint64_t(other.i64));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal ge(const Literal& other) const {
+    switch (type) {
+      case WasmType::f32: return Literal(getf32() >= other.getf32());
+      case WasmType::f64: return Literal(getf64() >= other.getf64());
+      default: WASM_UNREACHABLE();
+    }
+  }
+
+  Literal min(const Literal& other) const {
+    switch (type) {
+      case WasmType::f32: {
+        auto l = getf32(), r = other.getf32();
+        if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
+        auto result = std::min(l, r);
+        bool lnan = isnan(l), rnan = isnan(r);
+        if (!isnan(result) && !lnan && !rnan) return Literal(result);
+        if (!lnan && !rnan) return Literal((int32_t)0x7fc00000).castToF32();
+        return Literal(lnan ? l : r).castToI32().or_(Literal(0xc00000)).castToF32();
+      }
+      case WasmType::f64: {
+        auto l = getf64(), r = other.getf64();
+        if (l == r && l == 0) return Literal(1/l < 0 ? l : r);
+        auto result = std::min(l, r);
+        bool lnan = isnan(l), rnan = isnan(r);
+        if (!isnan(result) && !lnan && !rnan) return Literal(result);
+        if (!lnan && !rnan) return Literal((int64_t)0x7ff8000000000000LL).castToF64();
+        return Literal(lnan ? l : r).castToI64().or_(Literal(int64_t(0x8000000000000LL))).castToF64();
+      }
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal max(const Literal& other) const {
+    switch (type) {
+      case WasmType::f32: {
+        auto l = getf32(), r = other.getf32();
+        if (l == r && l == 0) return Literal(1/l < 0 ? r : l);
+        auto result = std::max(l, r);
+        bool lnan = isnan(l), rnan = isnan(r);
+        if (!isnan(result) && !lnan && !rnan) return Literal(result);
+        if (!lnan && !rnan) return Literal((int32_t)0x7fc00000).castToF32();
+        return Literal(lnan ? l : r).castToI32().or_(Literal(0xc00000)).castToF32();
+      }
+      case WasmType::f64: {
+        auto l = getf64(), r = other.getf64();
+        if (l == r && l == 0) return Literal(1/l < 0 ? r : l);
+        auto result = std::max(l, r);
+        bool lnan = isnan(l), rnan = isnan(r);
+        if (!isnan(result) && !lnan && !rnan) return Literal(result);
+        if (!lnan && !rnan) return Literal((int64_t)0x7ff8000000000000LL).castToF64();
+        return Literal(lnan ? l : r).castToI64().or_(Literal(int64_t(0x8000000000000LL))).castToF64();
+      }
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal copysign(const Literal& other) const {
+    // operate on bits directly, to avoid signalling bit being set on a float
+    switch (type) {
+      case WasmType::f32: return Literal((i32 & 0x7fffffff) | (other.i32 & 0x80000000)).castToF32(); break;
+      case WasmType::f64: return Literal((i64 & 0x7fffffffffffffffUL) | (other.i64 & 0x8000000000000000UL)).castToF64(); break;
       default: WASM_UNREACHABLE();
     }
   }
