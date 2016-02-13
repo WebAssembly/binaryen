@@ -242,20 +242,24 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
                         std::unique_ptr<SExpressionWasmBuilder>* builder,
                         bool print_before, bool print_after,
                         Name entry) {
-  auto interface = new ShellExternalInterface();
-  auto instance = new ModuleInstance(*wasm, interface);
-  if (entry.is() > 0) {
-    Function* function = wasm->functionsMap[entry];
-    if (!function) {
-      std::cerr << "Unknown entry " << entry << std::endl;
-    } else {
-      ModuleInstance::LiteralList arguments;
-      for (NameType param : function->params) {
-        arguments.push_back(Literal(param.type));
-      }
-      try {
-        instance->callExport(entry, arguments);
-      } catch (ExitException& x) {
+  ShellExternalInterface* interface = nullptr;
+  ModuleInstance* instance = nullptr;
+  if (wasm) {
+    interface = new ShellExternalInterface();
+    instance = new ModuleInstance(*wasm, interface);
+    if (entry.is() > 0) {
+      Function* function = wasm->functionsMap[entry];
+      if (!function) {
+        std::cerr << "Unknown entry " << entry << std::endl;
+      } else {
+        ModuleInstance::LiteralList arguments;
+        for (NameType param : function->params) {
+          arguments.push_back(Literal(param.type));
+        }
+        try {
+          instance->callExport(entry, arguments);
+        } catch (ExitException& x) {
+        }
       }
     }
   }
@@ -280,12 +284,14 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
         std::cout << wasm;
       }
       bool invalid = false;
+      std::unique_ptr<SExpressionWasmBuilder> builder;
       try {
-        *builder = std::unique_ptr<SExpressionWasmBuilder>(
-            new SExpressionWasmBuilder(wasm, *curr[1], [&]() {
-              invalid = true;
-              throw ParseException();
-            }));
+        builder = std::unique_ptr<SExpressionWasmBuilder>(
+          new SExpressionWasmBuilder(wasm, *curr[1], [&]() {
+            invalid = true;
+            throw ParseException();
+          })
+        );
       } catch (const ParseException& e) {
         invalid = true;
       }
@@ -295,10 +301,12 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
       }
       assert(invalid);
     } else if (id == INVOKE) {
+      assert(wasm);
       Invocation invocation(curr, instance, *builder->get());
       invocation.invoke();
     } else {
       // an invoke test
+      assert(wasm);
       bool trapped = false;
       Literal result;
       try {
@@ -390,39 +398,45 @@ int main(int argc, const char* argv[]) {
   bool checked = false;
   size_t i = 0;
   while (i < root.size()) {
-    if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
-    AllocatingModule wasm;
-    std::unique_ptr<SExpressionWasmBuilder> builder(
-        new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }, options.debug));
-    i++;
+    Element& curr = *root[i];
+    IString id = curr[0]->str();
+    if (id == MODULE) {
+      if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
+      AllocatingModule wasm;
+      std::unique_ptr<SExpressionWasmBuilder> builder(
+          new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }, options.debug));
+      i++;
 
-    if (print_before) {
-      Colors::bold(std::cout);
-      std::cerr << "printing before:\n";
-      Colors::normal(std::cout);
-      std::cout << wasm;
-    }
-
-    MixedArena moreModuleAllocations;
-
-    if (passes.size() > 0) {
-      if (options.debug) std::cerr << "running passes...\n";
-      PassRunner passRunner(&moreModuleAllocations);
-      for (auto& passName : passes) {
-        passRunner.add(passName);
+      if (print_before) {
+        Colors::bold(std::cout);
+        std::cerr << "printing before:\n";
+        Colors::normal(std::cout);
+        std::cout << wasm;
       }
-      passRunner.run(&wasm);
-    }
 
-    if (print_after) {
-      Colors::bold(std::cout);
-      std::cerr << "printing after:\n";
-      Colors::normal(std::cout);
-      std::cout << wasm;
-    }
+      MixedArena moreModuleAllocations;
 
-    run_asserts(&i, &checked, &wasm, &root, &builder, print_before,
-                print_after, entry);
+      if (passes.size() > 0) {
+        if (options.debug) std::cerr << "running passes...\n";
+        PassRunner passRunner(&moreModuleAllocations);
+        for (auto& passName : passes) {
+          passRunner.add(passName);
+        }
+        passRunner.run(&wasm);
+      }
+
+      if (print_after) {
+        Colors::bold(std::cout);
+        std::cerr << "printing after:\n";
+        Colors::normal(std::cout);
+        std::cout << wasm;
+      }
+      run_asserts(&i, &checked, &wasm, &root, &builder, print_before,
+                  print_after, entry);
+    } else {
+      run_asserts(&i, &checked, nullptr, &root, nullptr, print_before,
+            print_after, entry);
+    }
   }
 
   if (checked) {

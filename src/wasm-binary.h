@@ -155,7 +155,8 @@ enum Section {
   Functions = 2,
   DataSegments = 4,
   FunctionTable = 5,
-  End = 6
+  End = 6,
+  Start = 7
 };
 
 enum FunctionEntry {
@@ -380,6 +381,7 @@ public:
   }
 
   void write() {
+    writeStart();
     writeMemory();
     writeSignatures();
     writeFunctions();
@@ -387,6 +389,13 @@ public:
     writeFunctionTable();
     writeEnd();
     finishUp();
+  }
+
+  void writeStart() {
+    if (!wasm->start.is()) return;
+    if (debug) std::cerr << "== writeStart" << std::endl;
+    o << int8_t(BinaryConsts::Start);
+    emitString(wasm->start.str);
   }
 
   void writeMemory() {
@@ -980,6 +989,7 @@ public:
       }
 
       switch (section) {
+        case BinaryConsts::Start:         readStart(); break;
         case BinaryConsts::Memory:        readMemory(); break;
         case BinaryConsts::Signatures:    readSignatures(); break;
         case BinaryConsts::Functions:     readFunctions(); break;
@@ -1080,6 +1090,11 @@ public:
   void verifyFloat64(double x) {
     double y = getFloat64();
     assert(x == y);
+  }
+
+  void readStart() {
+    if (debug) std::cerr << "== readStart" << std::endl;
+    wasm.start = getString();
   }
 
   void readMemory() {

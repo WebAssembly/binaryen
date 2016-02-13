@@ -104,6 +104,7 @@ public:
     shouldBeFalse(top > curr->initial);
   }
   void visitModule(Module *curr) {
+    // exports
     for (auto& exp : curr->exports) {
       Name name = exp->name;
       bool found = false;
@@ -114,6 +115,14 @@ public:
         }
       }
       shouldBeTrue(found);
+    }
+    // start
+    if (curr->start.is()) {
+      auto iter = curr->functionsMap.find(curr->start);
+      if (shouldBeTrue(iter != curr->functionsMap.end())) {
+        auto func = iter->second;
+        shouldBeTrue(func->params.size() == 0); // must be nullary
+      }
     }
   }
 
@@ -135,11 +144,13 @@ private:
 
   // helpers
 
-  void shouldBeTrue(bool result) {
+  bool shouldBeTrue(bool result) {
     if (!result) valid = false;
+    return result;
   }
-  void shouldBeFalse(bool result) {
+  bool shouldBeFalse(bool result) {
     if (result) valid = false;
+    return result;
   }
 
   void validateAlignment(size_t align) {
