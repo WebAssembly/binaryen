@@ -257,6 +257,7 @@ main:                                   # @main
 	i32.call	$push10=, calloc@FUNCTION, $pop9, $pop19
 	i32.store	$push11=, 8($pop20), $pop10
 	i32.store	$discard=, 8($pop11), $1
+	i32.load	$1=, 4($0)
 	i32.const	$push18=, 4
 	i32.or  	$push14=, $8, $pop18
 	i32.const	$push17=, 2
