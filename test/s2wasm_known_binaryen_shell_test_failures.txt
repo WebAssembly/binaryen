@@ -31,6 +31,7 @@ pr27260.c.s.wast
 991201-1.c.s.wast
 bitfld-5.c.s.wast
 memcpy-1.c.s.wast
+mode-dependent-address.c.s.wast
 multi-ix.c.s.wast
 pr29006.c.s.wast
 pr37573.c.s.wast
@@ -108,6 +109,7 @@ pr48814-1.c.s.wast
 990628-1.c.s.wast # malloc
 991112-1.c.s.wast # isprint
 align-2.c.s.wast # __eqtf2
+builtin-bitops-1.c.s.wast # __builtin_clrsb
 complex-5.c.s.wast # __divsc3
 ipa-sra-2.c.s.wast # calloc
 loop-2f.c.s.wast # open
@@ -143,3 +145,4 @@ string-opt-5.c.s.wast # strlen
 strlen-1.c.s.wast # strlen
 strncmp-1.c.s.wast # strcmp
 struct-cpy-1.c.s.wast # memset
+va-arg-10.c.s.wast # strlen

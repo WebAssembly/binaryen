@@ -24,7 +24,7 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, x+4
 	i32.store	$discard=, y($pop1), $pop0
