@@ -37,10 +37,10 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	i32.load	$push0=, v($pop8)
 	i32.const	$push4=, 1
-	i32.and 	$push5=, $pop0, $pop4
-	tee_local	$push7=, $0=, $pop5
-	i32.or  	$push6=, $pop3, $pop7
-	i32.store8	$discard=, s($pop10):p2align=2, $pop6
+	i32.and 	$push7=, $pop0, $pop4
+	tee_local	$push6=, $0=, $pop7
+	i32.or  	$push5=, $pop3, $pop6
+	i32.store8	$discard=, s($pop10):p2align=2, $pop5
 	block
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $0, $pop12

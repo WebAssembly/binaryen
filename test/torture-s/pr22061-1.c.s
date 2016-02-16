@@ -20,10 +20,10 @@ bar:                                    # @bar
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, N($pop0)
-	tee_local	$push3=, $1=, $pop1
-	i32.add 	$push2=, $0, $pop3
-	i32.store8	$discard=, 0($pop2), $1
+	i32.load	$push3=, N($pop0)
+	tee_local	$push2=, $1=, $pop3
+	i32.add 	$push1=, $0, $pop2
+	i32.store8	$discard=, 0($pop1), $1
 	return
 	.endfunc
 .Lfunc_end1:

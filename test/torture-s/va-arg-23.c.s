@@ -18,20 +18,20 @@ foo:                                    # @foo
 	i32.const	$push2=, 3
 	i32.add 	$push3=, $pop1, $pop2
 	i32.const	$push4=, -4
-	i32.and 	$push5=, $pop3, $pop4
-	tee_local	$push12=, $7=, $pop5
-	i32.const	$push6=, 4
-	i32.add 	$push7=, $pop12, $pop6
-	i32.store	$discard=, 12($11), $pop7
+	i32.and 	$push12=, $pop3, $pop4
+	tee_local	$push11=, $7=, $pop12
+	i32.const	$push5=, 4
+	i32.add 	$push6=, $pop11, $pop5
+	i32.store	$discard=, 12($11), $pop6
 	block
-	i32.const	$push8=, 1
-	i32.ne  	$push9=, $6, $pop8
-	br_if   	0, $pop9        # 0: down to label0
+	i32.const	$push7=, 1
+	i32.ne  	$push8=, $6, $pop7
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.load	$push0=, 0($7)
-	i32.const	$push10=, 2
-	i32.ne  	$push11=, $pop0, $pop10
-	br_if   	0, $pop11       # 0: down to label0
+	i32.const	$push9=, 2
+	i32.ne  	$push10=, $pop0, $pop9
+	br_if   	0, $pop10       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$10=, 16
 	i32.add 	$11=, $11, $10

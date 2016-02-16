@@ -1748,255 +1748,255 @@ main:                                   # @main
 	.result 	i32
 	.local  	i64
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i64.const	$push2=, 100
-	i64.store	$discard=, gull($pop1), $pop2
+	i32.const	$push0=, 0
+	i64.const	$push1=, 100
+	i64.store	$discard=, gull($pop0), $pop1
 	block
-	i32.const	$push101=, 3
-	i64.const	$push3=, -1
-	i64.call	$push4=, t1@FUNCTION, $pop101, $pop3
-	i64.const	$push5=, -6145
-	i64.ne  	$push6=, $pop4, $pop5
-	br_if   	0, $pop6        # 0: down to label33
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	i32.const	$push100=, 3
+	i64.const	$push2=, -1
+	i64.call	$push3=, t1@FUNCTION, $pop100, $pop2
+	i64.const	$push4=, -6145
+	i64.ne  	$push5=, $pop3, $pop4
+	br_if   	0, $pop5        # 0: down to label55
 # BB#1:                                 # %if.end
-	block
-	i32.const	$push102=, 3
-	i64.const	$push7=, 4294967295
-	i64.call	$push8=, t1@FUNCTION, $pop102, $pop7
-	i64.const	$push9=, 4294961151
-	i64.ne  	$push10=, $pop8, $pop9
-	br_if   	0, $pop10       # 0: down to label34
+	i32.const	$push101=, 3
+	i64.const	$push6=, 4294967295
+	i64.call	$push7=, t1@FUNCTION, $pop101, $pop6
+	i64.const	$push8=, 4294961151
+	i64.ne  	$push9=, $pop7, $pop8
+	br_if   	1, $pop9        # 1: down to label54
 # BB#2:                                 # %if.end4
-	block
-	i32.const	$push103=, 3
-	i64.const	$push11=, -1
-	i64.call	$push12=, t2@FUNCTION, $pop103, $pop11
-	i64.const	$push13=, -1540
-	i64.ne  	$push14=, $pop12, $pop13
-	br_if   	0, $pop14       # 0: down to label35
+	i32.const	$push102=, 3
+	i64.const	$push10=, -1
+	i64.call	$push11=, t2@FUNCTION, $pop102, $pop10
+	i64.const	$push12=, -1540
+	i64.ne  	$push13=, $pop11, $pop12
+	br_if   	2, $pop13       # 2: down to label53
 # BB#3:                                 # %if.end8
-	block
-	i32.const	$push104=, 3
-	i64.const	$push15=, 4294967295
-	i64.call	$push16=, t2@FUNCTION, $pop104, $pop15
-	i64.const	$push17=, 4294965756
-	i64.ne  	$push18=, $pop16, $pop17
-	br_if   	0, $pop18       # 0: down to label36
+	i32.const	$push103=, 3
+	i64.const	$push14=, 4294967295
+	i64.call	$push15=, t2@FUNCTION, $pop103, $pop14
+	i64.const	$push16=, 4294965756
+	i64.ne  	$push17=, $pop15, $pop16
+	br_if   	3, $pop17       # 3: down to label52
 # BB#4:                                 # %if.end12
-	block
-	i32.const	$push105=, 3
-	i64.const	$push19=, -1
-	i64.call	$push20=, t3@FUNCTION, $pop105, $pop19
-	i64.const	$push21=, -1537
-	i64.ne  	$push22=, $pop20, $pop21
-	br_if   	0, $pop22       # 0: down to label37
+	i32.const	$push104=, 3
+	i64.const	$push18=, -1
+	i64.call	$push19=, t3@FUNCTION, $pop104, $pop18
+	i64.const	$push20=, -1537
+	i64.ne  	$push21=, $pop19, $pop20
+	br_if   	4, $pop21       # 4: down to label51
 # BB#5:                                 # %if.end16
-	block
-	i32.const	$push106=, 3
-	i64.const	$push23=, 4294967295
-	i64.call	$push24=, t3@FUNCTION, $pop106, $pop23
-	i64.const	$push25=, 4294965759
-	i64.ne  	$push26=, $pop24, $pop25
-	br_if   	0, $pop26       # 0: down to label38
+	i32.const	$push105=, 3
+	i64.const	$push22=, 4294967295
+	i64.call	$push23=, t3@FUNCTION, $pop105, $pop22
+	i64.const	$push24=, 4294965759
+	i64.ne  	$push25=, $pop23, $pop24
+	br_if   	5, $pop25       # 5: down to label50
 # BB#6:                                 # %if.end20
-	block
-	i32.const	$push107=, 3
-	i64.const	$push27=, -1
-	i64.call	$push28=, t4@FUNCTION, $pop107, $pop27
-	i64.const	$push29=, -1534
-	i64.ne  	$push30=, $pop28, $pop29
-	br_if   	0, $pop30       # 0: down to label39
+	i32.const	$push106=, 3
+	i64.const	$push26=, -1
+	i64.call	$push27=, t4@FUNCTION, $pop106, $pop26
+	i64.const	$push28=, -1534
+	i64.ne  	$push29=, $pop27, $pop28
+	br_if   	6, $pop29       # 6: down to label49
 # BB#7:                                 # %if.end24
-	block
-	i32.const	$push108=, 3
-	i64.const	$push31=, 4294967295
-	i64.call	$push32=, t4@FUNCTION, $pop108, $pop31
-	i64.const	$push33=, 4294965762
-	i64.ne  	$push34=, $pop32, $pop33
-	br_if   	0, $pop34       # 0: down to label40
+	i32.const	$push107=, 3
+	i64.const	$push30=, 4294967295
+	i64.call	$push31=, t4@FUNCTION, $pop107, $pop30
+	i64.const	$push32=, 4294965762
+	i64.ne  	$push33=, $pop31, $pop32
+	br_if   	7, $pop33       # 7: down to label48
 # BB#8:                                 # %if.end28
-	block
-	i32.const	$push109=, 3
-	i64.const	$push35=, -1
-	i64.call	$push36=, t5@FUNCTION, $pop109, $pop35
-	i64.const	$push37=, -4
-	i64.ne  	$push38=, $pop36, $pop37
-	br_if   	0, $pop38       # 0: down to label41
+	i32.const	$push108=, 3
+	i64.const	$push34=, -1
+	i64.call	$push35=, t5@FUNCTION, $pop108, $pop34
+	i64.const	$push36=, -4
+	i64.ne  	$push37=, $pop35, $pop36
+	br_if   	8, $pop37       # 8: down to label47
 # BB#9:                                 # %if.end32
-	block
-	i32.const	$push110=, 3
-	i64.const	$push39=, 4294967295
-	i64.call	$push40=, t5@FUNCTION, $pop110, $pop39
-	i64.const	$push41=, 4294967292
-	i64.ne  	$push42=, $pop40, $pop41
-	br_if   	0, $pop42       # 0: down to label42
+	i32.const	$push109=, 3
+	i64.const	$push38=, 4294967295
+	i64.call	$push39=, t5@FUNCTION, $pop109, $pop38
+	i64.const	$push40=, 4294967292
+	i64.ne  	$push41=, $pop39, $pop40
+	br_if   	9, $pop41       # 9: down to label46
 # BB#10:                                # %if.end36
-	block
-	i32.const	$push111=, 3
-	i64.const	$push43=, -1
-	i64.call	$push44=, t6@FUNCTION, $pop111, $pop43
-	i64.const	$push45=, 2
-	i64.ne  	$push46=, $pop44, $pop45
-	br_if   	0, $pop46       # 0: down to label43
+	i32.const	$push110=, 3
+	i64.const	$push42=, -1
+	i64.call	$push43=, t6@FUNCTION, $pop110, $pop42
+	i64.const	$push44=, 2
+	i64.ne  	$push45=, $pop43, $pop44
+	br_if   	10, $pop45      # 10: down to label45
 # BB#11:                                # %if.end40
-	block
-	i32.const	$push112=, 3
-	i64.const	$push47=, 4294967295
-	i64.call	$push48=, t6@FUNCTION, $pop112, $pop47
-	i64.const	$push49=, 4294967298
-	i64.ne  	$push50=, $pop48, $pop49
-	br_if   	0, $pop50       # 0: down to label44
+	i32.const	$push111=, 3
+	i64.const	$push46=, 4294967295
+	i64.call	$push47=, t6@FUNCTION, $pop111, $pop46
+	i64.const	$push48=, 4294967298
+	i64.ne  	$push49=, $pop47, $pop48
+	br_if   	11, $pop49      # 11: down to label44
 # BB#12:                                # %if.end44
-	block
-	i32.const	$push113=, 3
-	i64.const	$push51=, -1
-	i64.call	$push52=, t7@FUNCTION, $pop113, $pop51
-	i64.const	$push53=, 1532
-	i64.ne  	$push54=, $pop52, $pop53
-	br_if   	0, $pop54       # 0: down to label45
+	i32.const	$push112=, 3
+	i64.const	$push50=, -1
+	i64.call	$push51=, t7@FUNCTION, $pop112, $pop50
+	i64.const	$push52=, 1532
+	i64.ne  	$push53=, $pop51, $pop52
+	br_if   	12, $pop53      # 12: down to label43
 # BB#13:                                # %if.end48
-	block
-	i32.const	$push114=, 3
-	i64.const	$push55=, 4294967295
-	i64.call	$push56=, t7@FUNCTION, $pop114, $pop55
-	i64.const	$push57=, 4294968828
-	i64.ne  	$push58=, $pop56, $pop57
-	br_if   	0, $pop58       # 0: down to label46
+	i32.const	$push113=, 3
+	i64.const	$push54=, 4294967295
+	i64.call	$push55=, t7@FUNCTION, $pop113, $pop54
+	i64.const	$push56=, 4294968828
+	i64.ne  	$push57=, $pop55, $pop56
+	br_if   	13, $pop57      # 13: down to label42
 # BB#14:                                # %if.end52
-	block
-	i32.const	$push115=, 3
-	i64.const	$push59=, -1
-	i64.call	$push60=, t8@FUNCTION, $pop115, $pop59
-	i64.const	$push61=, 1535
-	i64.ne  	$push62=, $pop60, $pop61
-	br_if   	0, $pop62       # 0: down to label47
+	i32.const	$push114=, 3
+	i64.const	$push58=, -1
+	i64.call	$push59=, t8@FUNCTION, $pop114, $pop58
+	i64.const	$push60=, 1535
+	i64.ne  	$push61=, $pop59, $pop60
+	br_if   	14, $pop61      # 14: down to label41
 # BB#15:                                # %if.end56
-	block
-	i32.const	$push116=, 3
-	i64.const	$push63=, 4294967295
-	i64.call	$push64=, t8@FUNCTION, $pop116, $pop63
-	i64.const	$push65=, 4294968831
-	i64.ne  	$push66=, $pop64, $pop65
-	br_if   	0, $pop66       # 0: down to label48
+	i32.const	$push115=, 3
+	i64.const	$push62=, 4294967295
+	i64.call	$push63=, t8@FUNCTION, $pop115, $pop62
+	i64.const	$push64=, 4294968831
+	i64.ne  	$push65=, $pop63, $pop64
+	br_if   	15, $pop65      # 15: down to label40
 # BB#16:                                # %if.end60
-	block
-	i32.const	$push117=, 3
-	i64.const	$push67=, -1
-	i64.call	$push68=, t9@FUNCTION, $pop117, $pop67
-	i64.const	$push69=, 1538
-	i64.ne  	$push70=, $pop68, $pop69
-	br_if   	0, $pop70       # 0: down to label49
+	i32.const	$push116=, 3
+	i64.const	$push66=, -1
+	i64.call	$push67=, t9@FUNCTION, $pop116, $pop66
+	i64.const	$push68=, 1538
+	i64.ne  	$push69=, $pop67, $pop68
+	br_if   	16, $pop69      # 16: down to label39
 # BB#17:                                # %if.end64
-	block
-	i32.const	$push118=, 3
-	i64.const	$push71=, 4294967295
-	i64.call	$push72=, t9@FUNCTION, $pop118, $pop71
-	i64.const	$push73=, 4294968834
-	i64.ne  	$push74=, $pop72, $pop73
-	br_if   	0, $pop74       # 0: down to label50
+	i32.const	$push117=, 3
+	i64.const	$push70=, 4294967295
+	i64.call	$push71=, t9@FUNCTION, $pop117, $pop70
+	i64.const	$push72=, 4294968834
+	i64.ne  	$push73=, $pop71, $pop72
+	br_if   	17, $pop73      # 17: down to label38
 # BB#18:                                # %if.end68
-	block
-	i32.const	$push122=, 3
-	i64.const	$push75=, -1
-	i64.call	$push76=, t10@FUNCTION, $pop122, $pop75
-	i32.const	$push121=, 0
-	i64.load	$push77=, gull($pop121)
-	i64.const	$push120=, 3
-	i64.mul 	$push78=, $pop77, $pop120
-	i64.const	$push119=, -1
-	i64.add 	$push79=, $pop78, $pop119
-	i64.ne  	$push80=, $pop76, $pop79
-	br_if   	0, $pop80       # 0: down to label51
+	i32.const	$push121=, 3
+	i64.const	$push74=, -1
+	i64.call	$push75=, t10@FUNCTION, $pop121, $pop74
+	i32.const	$push120=, 0
+	i64.load	$push76=, gull($pop120)
+	i64.const	$push119=, 3
+	i64.mul 	$push77=, $pop76, $pop119
+	i64.const	$push118=, -1
+	i64.add 	$push78=, $pop77, $pop118
+	i64.ne  	$push79=, $pop75, $pop78
+	br_if   	18, $pop79      # 18: down to label37
 # BB#19:                                # %if.end72
-	block
-	i32.const	$push126=, 3
-	i64.const	$push81=, 4294967295
-	i64.call	$push82=, t10@FUNCTION, $pop126, $pop81
-	i32.const	$push125=, 0
-	i64.load	$push83=, gull($pop125)
-	i64.const	$push124=, 3
-	i64.mul 	$push84=, $pop83, $pop124
-	i64.const	$push123=, 4294967295
-	i64.add 	$push85=, $pop84, $pop123
-	i64.ne  	$push86=, $pop82, $pop85
-	br_if   	0, $pop86       # 0: down to label52
+	i32.const	$push125=, 3
+	i64.const	$push80=, 4294967295
+	i64.call	$push81=, t10@FUNCTION, $pop125, $pop80
+	i32.const	$push124=, 0
+	i64.load	$push82=, gull($pop124)
+	i64.const	$push123=, 3
+	i64.mul 	$push83=, $pop82, $pop123
+	i64.const	$push122=, 4294967295
+	i64.add 	$push84=, $pop83, $pop122
+	i64.ne  	$push85=, $pop81, $pop84
+	br_if   	19, $pop85      # 19: down to label36
 # BB#20:                                # %if.end77
-	block
-	i32.const	$push130=, 3
-	i64.const	$push87=, -1
-	i64.call	$push88=, t11@FUNCTION, $pop130, $pop87
-	i32.const	$push129=, 0
-	i64.load	$push89=, gull($pop129)
-	i64.const	$push128=, -3
-	i64.mul 	$push90=, $pop89, $pop128
-	i64.const	$push127=, -1
-	i64.add 	$push91=, $pop90, $pop127
-	i64.ne  	$push92=, $pop88, $pop91
-	br_if   	0, $pop92       # 0: down to label53
+	i32.const	$push129=, 3
+	i64.const	$push86=, -1
+	i64.call	$push87=, t11@FUNCTION, $pop129, $pop86
+	i32.const	$push128=, 0
+	i64.load	$push88=, gull($pop128)
+	i64.const	$push127=, -3
+	i64.mul 	$push89=, $pop88, $pop127
+	i64.const	$push126=, -1
+	i64.add 	$push90=, $pop89, $pop126
+	i64.ne  	$push91=, $pop87, $pop90
+	br_if   	20, $pop91      # 20: down to label35
 # BB#21:                                # %if.end84
-	block
 	i32.const	$push135=, 3
-	i64.const	$push93=, 4294967295
-	i64.call	$push94=, t11@FUNCTION, $pop135, $pop93
+	i64.const	$push92=, 4294967295
+	i64.call	$push93=, t11@FUNCTION, $pop135, $pop92
 	i32.const	$push134=, 0
-	i64.load	$push0=, gull($pop134)
-	tee_local	$push133=, $0=, $pop0
-	i64.const	$push132=, -3
-	i64.mul 	$push95=, $pop133, $pop132
-	i64.const	$push131=, 4294967295
-	i64.add 	$push96=, $pop95, $pop131
-	i64.ne  	$push97=, $pop94, $pop96
-	br_if   	0, $pop97       # 0: down to label54
+	i64.load	$push133=, gull($pop134)
+	tee_local	$push132=, $0=, $pop133
+	i64.const	$push131=, -3
+	i64.mul 	$push94=, $pop132, $pop131
+	i64.const	$push130=, 4294967295
+	i64.add 	$push95=, $pop94, $pop130
+	i64.ne  	$push96=, $pop93, $pop95
+	br_if   	21, $pop96      # 21: down to label34
 # BB#22:                                # %if.end91
-	block
-	i64.const	$push98=, 100
-	i64.ne  	$push99=, $0, $pop98
-	br_if   	0, $pop99       # 0: down to label55
+	i64.const	$push97=, 100
+	i64.ne  	$push98=, $0, $pop97
+	br_if   	22, $pop98      # 22: down to label33
 # BB#23:                                # %if.end95
-	i32.const	$push100=, 0
-	call    	exit@FUNCTION, $pop100
+	i32.const	$push99=, 0
+	call    	exit@FUNCTION, $pop99
 	unreachable
-.LBB12_24:                              # %if.then94
+.LBB12_24:                              # %if.then
 	end_block                       # label55:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_25:                              # %if.then90
+.LBB12_25:                              # %if.then3
 	end_block                       # label54:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_26:                              # %if.then83
+.LBB12_26:                              # %if.then7
 	end_block                       # label53:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_27:                              # %if.then76
+.LBB12_27:                              # %if.then11
 	end_block                       # label52:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_28:                              # %if.then71
+.LBB12_28:                              # %if.then15
 	end_block                       # label51:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_29:                              # %if.then67
+.LBB12_29:                              # %if.then19
 	end_block                       # label50:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_30:                              # %if.then63
+.LBB12_30:                              # %if.then23
 	end_block                       # label49:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_31:                              # %if.then59
+.LBB12_31:                              # %if.then27
 	end_block                       # label48:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_32:                              # %if.then55
+.LBB12_32:                              # %if.then31
 	end_block                       # label47:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_33:                              # %if.then51
+.LBB12_33:                              # %if.then35
 	end_block                       # label46:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_34:                              # %if.then47
+.LBB12_34:                              # %if.then39
 	end_block                       # label45:
 	call    	abort@FUNCTION
 	unreachable
@@ -2004,47 +2004,47 @@ main:                                   # @main
 	end_block                       # label44:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_36:                              # %if.then39
+.LBB12_36:                              # %if.then47
 	end_block                       # label43:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_37:                              # %if.then35
+.LBB12_37:                              # %if.then51
 	end_block                       # label42:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_38:                              # %if.then31
+.LBB12_38:                              # %if.then55
 	end_block                       # label41:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_39:                              # %if.then27
+.LBB12_39:                              # %if.then59
 	end_block                       # label40:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_40:                              # %if.then23
+.LBB12_40:                              # %if.then63
 	end_block                       # label39:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_41:                              # %if.then19
+.LBB12_41:                              # %if.then67
 	end_block                       # label38:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_42:                              # %if.then15
+.LBB12_42:                              # %if.then71
 	end_block                       # label37:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_43:                              # %if.then11
+.LBB12_43:                              # %if.then76
 	end_block                       # label36:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_44:                              # %if.then7
+.LBB12_44:                              # %if.then83
 	end_block                       # label35:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_45:                              # %if.then3
+.LBB12_45:                              # %if.then90
 	end_block                       # label34:
 	call    	abort@FUNCTION
 	unreachable
-.LBB12_46:                              # %if.then
+.LBB12_46:                              # %if.then94
 	end_block                       # label33:
 	call    	abort@FUNCTION
 	unreachable

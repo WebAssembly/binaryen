@@ -14,10 +14,10 @@ foo:                                    # @foo
 	i32.const	$push8=, 0
 	i32.const	$push3=, 2241
 	i32.const	$push7=, 2241
-	i32.gt_s	$push4=, $0, $pop7
-	tee_local	$push6=, $1=, $pop4
-	i32.select	$push5=, $pop3, $0, $pop6
-	i32.store	$discard=, a+4($pop8), $pop5
+	i32.gt_s	$push6=, $0, $pop7
+	tee_local	$push5=, $1=, $pop6
+	i32.select	$push4=, $pop3, $0, $pop5
+	i32.store	$discard=, a+4($pop8), $pop4
 	block
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $1, $pop9

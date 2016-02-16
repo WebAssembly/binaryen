@@ -9,27 +9,31 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	br_if   	0, $0           # 0: down to label0
-# BB#1:                                 # %while.body.preheader
 	block
+	block
+	br_if   	0, $0           # 0: down to label2
+# BB#1:                                 # %while.body.preheader
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $1, $pop0
-	br_if   	0, $pop1        # 0: down to label1
+	br_if   	1, $pop1        # 1: down to label1
 # BB#2:                                 # %sw.bb.split
-	br_if   	1, $2           # 1: down to label0
-# BB#3:                                 # %if.end2
-	unreachable
-	unreachable
+	i32.const	$push3=, 0
+	i32.eq  	$push4=, $2, $pop3
+	br_if   	2, $pop4        # 2: down to label0
+.LBB0_3:                                # %cleanup
+	end_block                       # label2:
+	i32.const	$push2=, 0
+	return  	$pop2
 .LBB0_4:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	end_block                       # label1:
-	loop                            # label2:
-	br      	0               # 0: up to label2
-.LBB0_5:                                # %cleanup
-	end_loop                        # label3:
+	loop                            # label3:
+	br      	0               # 0: up to label3
+.LBB0_5:                                # %if.end2
+	end_loop                        # label4:
 	end_block                       # label0:
-	i32.const	$push2=, 0
-	return  	$pop2
+	unreachable
+	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

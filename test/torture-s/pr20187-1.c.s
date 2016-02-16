@@ -9,19 +9,19 @@ test:                                   # @test
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push4=, b($pop0)
+	i32.load	$push3=, b($pop0)
 	i32.const	$push12=, 0
-	i32.load	$push1=, a($pop12)
-	tee_local	$push11=, $0=, $pop1
-	i32.mul 	$push5=, $pop4, $pop11
-	i32.const	$push2=, 1
-	i32.select	$push3=, $0, $pop2, $0
-	i32.and 	$push6=, $pop5, $pop3
-	i32.const	$push7=, 255
-	i32.and 	$push8=, $pop6, $pop7
-	i32.const	$push10=, 0
-	i32.eq  	$push9=, $pop8, $pop10
-	return  	$pop9
+	i32.load	$push11=, a($pop12)
+	tee_local	$push10=, $0=, $pop11
+	i32.mul 	$push4=, $pop3, $pop10
+	i32.const	$push1=, 1
+	i32.select	$push2=, $0, $pop1, $0
+	i32.and 	$push5=, $pop4, $pop2
+	i32.const	$push6=, 255
+	i32.and 	$push7=, $pop5, $pop6
+	i32.const	$push9=, 0
+	i32.eq  	$push8=, $pop7, $pop9
+	return  	$pop8
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
@@ -35,19 +35,19 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push4=, b($pop0)
+	i32.load	$push3=, b($pop0)
 	i32.const	$push12=, 0
-	i32.load	$push1=, a($pop12)
-	tee_local	$push11=, $0=, $pop1
-	i32.mul 	$push5=, $pop4, $pop11
-	i32.const	$push2=, 1
-	i32.select	$push3=, $0, $pop2, $0
-	i32.and 	$push6=, $pop5, $pop3
-	i32.const	$push7=, 255
-	i32.and 	$push8=, $pop6, $pop7
-	i32.const	$push10=, 0
-	i32.ne  	$push9=, $pop8, $pop10
-	return  	$pop9
+	i32.load	$push11=, a($pop12)
+	tee_local	$push10=, $0=, $pop11
+	i32.mul 	$push4=, $pop3, $pop10
+	i32.const	$push1=, 1
+	i32.select	$push2=, $0, $pop1, $0
+	i32.and 	$push5=, $pop4, $pop2
+	i32.const	$push6=, 255
+	i32.and 	$push7=, $pop5, $pop6
+	i32.const	$push9=, 0
+	i32.ne  	$push8=, $pop7, $pop9
+	return  	$pop8
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

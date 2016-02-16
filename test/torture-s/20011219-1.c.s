@@ -23,12 +23,12 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
                                         # implicit-def: %vreg13
 	block
-	i32.const	$push1=, -10
-	i32.add 	$push0=, $0, $pop1
-	tee_local	$push4=, $0=, $pop0
-	i32.const	$push2=, 4
-	i32.gt_u	$push3=, $pop4, $pop2
-	br_if   	0, $pop3        # 0: down to label0
+	i32.const	$push0=, -10
+	i32.add 	$push4=, $0, $pop0
+	tee_local	$push3=, $0=, $pop4
+	i32.const	$push1=, 4
+	i32.gt_u	$push2=, $pop3, $pop1
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %entry
 	block
 	block

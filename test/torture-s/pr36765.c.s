@@ -10,17 +10,17 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 16
-	i32.call	$push1=, __builtin_malloc@FUNCTION, $pop0
-	tee_local	$push8=, $1=, $pop1
-	i32.const	$push2=, 0
-	i32.store	$discard=, 0($pop8), $pop2
-	i32.const	$push3=, 2
-	i32.shl 	$push4=, $0, $pop3
-	i32.add 	$push5=, $1, $pop4
-	i32.const	$push6=, 1
-	i32.store	$discard=, 0($pop5), $pop6
-	i32.load	$push7=, 0($1)
-	return  	$pop7
+	i32.call	$push8=, __builtin_malloc@FUNCTION, $pop0
+	tee_local	$push7=, $1=, $pop8
+	i32.const	$push1=, 0
+	i32.store	$discard=, 0($pop7), $pop1
+	i32.const	$push2=, 2
+	i32.shl 	$push3=, $0, $pop2
+	i32.add 	$push4=, $1, $pop3
+	i32.const	$push5=, 1
+	i32.store	$discard=, 0($pop4), $pop5
+	i32.load	$push6=, 0($1)
+	return  	$pop6
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

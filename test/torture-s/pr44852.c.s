@@ -17,30 +17,30 @@ sf:                                     # @sf
 	block
 	loop                            # label2:
 	i32.const	$push9=, -1
-	i32.add 	$push1=, $0, $pop9
-	tee_local	$push8=, $3=, $pop1
-	i32.load8_u	$push0=, 0($pop8)
-	tee_local	$push7=, $2=, $pop0
-	i32.const	$push6=, 57
-	i32.ne  	$push2=, $pop7, $pop6
-	br_if   	2, $pop2        # 2: down to label1
+	i32.add 	$push8=, $0, $pop9
+	tee_local	$push7=, $3=, $pop8
+	i32.load8_u	$push6=, 0($pop7)
+	tee_local	$push5=, $2=, $pop6
+	i32.const	$push4=, 57
+	i32.ne  	$push0=, $pop5, $pop4
+	br_if   	2, $pop0        # 2: down to label1
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	copy_local	$0=, $3
-	i32.ne  	$push4=, $1, $3
-	br_if   	0, $pop4        # 0: up to label2
+	i32.ne  	$push2=, $1, $3
+	br_if   	0, $pop2        # 0: up to label2
 # BB#3:                                 # %if.then
 	end_loop                        # label3:
 	i32.const	$push10=, 1
 	i32.add 	$0=, $3, $pop10
-	i32.const	$push5=, 48
-	i32.store8	$discard=, 0($1), $pop5
+	i32.const	$push3=, 48
+	i32.store8	$discard=, 0($1), $pop3
 	i32.const	$2=, 49
 	br      	1               # 1: down to label0
 .LBB0_4:                                # %while.end.loopexit
 	end_block                       # label1:
-	i32.const	$push3=, 1
-	i32.add 	$2=, $2, $pop3
+	i32.const	$push1=, 1
+	i32.add 	$2=, $2, $pop1
 	copy_local	$1=, $3
 .LBB0_5:                                # %while.end
 	end_block                       # label0:

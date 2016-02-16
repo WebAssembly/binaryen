@@ -33,26 +33,26 @@ foo:                                    # @foo
 	i32.const	$push1=, 4
 	i32.const	$6=, 8
 	i32.add 	$6=, $8, $6
-	i32.or  	$push2=, $6, $pop1
-	tee_local	$push8=, $2=, $pop2
-	i32.store	$discard=, 0($pop8), $0
+	i32.or  	$push8=, $6, $pop1
+	tee_local	$push7=, $2=, $pop8
+	i32.store	$discard=, 0($pop7), $0
 	i32.const	$push0=, 1
 	i32.store	$0=, 8($8):p2align=3, $pop0
 	i32.const	$7=, 8
 	i32.add 	$7=, $8, $7
-	i32.call	$push3=, bar@FUNCTION, $7
-	i32.store	$discard=, 4($pop3), $1
-	i32.load	$push4=, 0($2)
-	tee_local	$push7=, $2=, $pop4
-	i32.const	$push5=, 0
-	i32.store	$discard=, 0($pop7), $pop5
-	i32.store	$discard=, 0($1), $0
+	i32.call	$push2=, bar@FUNCTION, $7
+	i32.store	$discard=, 4($pop2), $1
 	i32.load	$push6=, 0($2)
+	tee_local	$push5=, $2=, $pop6
+	i32.const	$push3=, 0
+	i32.store	$discard=, 0($pop5), $pop3
+	i32.store	$discard=, 0($1), $0
+	i32.load	$push4=, 0($2)
 	i32.const	$5=, 16
 	i32.add 	$8=, $8, $5
 	i32.const	$5=, __stack_pointer
 	i32.store	$8=, 0($5), $8
-	return  	$pop6
+	return  	$pop4
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

@@ -22,8 +22,8 @@ g:                                      # @g
 	i32.eq  	$push13=, $3, $pop12
 	br_if   	0, $pop13       # 0: down to label0
 # BB#1:                                 # %do_form_string.preheader
-	i32.const	$push6=, 2
-	i32.add 	$1=, $1, $pop6
+	i32.const	$push5=, 2
+	i32.add 	$1=, $1, $pop5
 .LBB0_2:                                # %do_form_string
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -31,26 +31,26 @@ g:                                      # @g
 	i32.const	$push11=, 3
 	i32.add 	$push1=, $pop0, $pop11
 	i32.const	$push10=, -4
-	i32.and 	$push2=, $pop1, $pop10
-	tee_local	$push9=, $2=, $pop2
-	i32.const	$push8=, 4
-	i32.add 	$push3=, $pop9, $pop8
-	i32.store	$discard=, 12($7), $pop3
-	i32.load	$push4=, 0($2)
-	i32.call	$discard=, strcpy@FUNCTION, $0, $pop4
+	i32.and 	$push9=, $pop1, $pop10
+	tee_local	$push8=, $2=, $pop9
+	i32.const	$push7=, 4
+	i32.add 	$push2=, $pop8, $pop7
+	i32.store	$discard=, 12($7), $pop2
+	i32.load	$push3=, 0($2)
+	i32.call	$discard=, strcpy@FUNCTION, $0, $pop3
 	i32.load8_u	$2=, 0($1)
-	i32.const	$push7=, 2
-	i32.add 	$1=, $1, $pop7
+	i32.const	$push6=, 2
+	i32.add 	$1=, $1, $pop6
 	br_if   	0, $2           # 0: up to label1
 .LBB0_3:                                # %all_done
 	end_loop                        # label2:
 	end_block                       # label0:
-	i32.const	$push5=, 0
+	i32.const	$push4=, 0
 	i32.const	$6=, 16
 	i32.add 	$7=, $7, $6
 	i32.const	$6=, __stack_pointer
 	i32.store	$7=, 0($6), $7
-	return  	$pop5
+	return  	$pop4
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g

@@ -30,28 +30,27 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push6=, 0
-	i32.load	$push0=, b($pop6)
-	tee_local	$push5=, $0=, $pop0
-	i32.const	$push1=, 9
-	i32.eq  	$push2=, $pop5, $pop1
-	br_if   	0, $pop2        # 0: down to label1
-# BB#1:                                 # %entry
 	block
-	br_if   	0, $0           # 0: down to label2
+	i32.const	$push6=, 0
+	i32.load	$push5=, b($pop6)
+	tee_local	$push4=, $0=, $pop5
+	i32.const	$push0=, 9
+	i32.eq  	$push1=, $pop4, $pop0
+	br_if   	0, $pop1        # 0: down to label2
+# BB#1:                                 # %entry
+	br_if   	1, $0           # 1: down to label1
 # BB#2:                                 # %f.exit.thread
-	i32.const	$push3=, 0
-	i32.const	$push4=, 9
-	i32.store	$discard=, b($pop3), $pop4
-	br      	1               # 1: down to label1
-.LBB1_3:                                # %if.then
+	i32.const	$push2=, 0
+	i32.const	$push3=, 9
+	i32.store	$discard=, b($pop2), $pop3
+.LBB1_3:                                # %if.end
 	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB1_4:                                # %if.end
-	end_block                       # label1:
 	i32.const	$push7=, 0
 	return  	$pop7
+.LBB1_4:                                # %if.then
+	end_block                       # label1:
+	call    	abort@FUNCTION
+	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -37,63 +37,63 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	block
 	block
 	block
-	i32.const	$push15=, 0
-	i32.load	$push0=, deferred_access_no_check($pop15)
-	tee_local	$push14=, $0=, $pop0
+	i32.const	$push13=, 0
+	i32.load	$push12=, deferred_access_no_check($pop13)
+	tee_local	$push11=, $0=, $pop12
 	i32.const	$push20=, 0
-	i32.eq  	$push21=, $pop14, $pop20
+	i32.eq  	$push21=, $pop11, $pop20
 	br_if   	0, $pop21       # 0: down to label4
 # BB#1:                                 # %if.then
-	i32.const	$push16=, 0
-	i32.const	$push3=, -1
-	i32.add 	$push4=, $0, $pop3
-	i32.store	$discard=, deferred_access_no_check($pop16), $pop4
+	i32.const	$push14=, 0
+	i32.const	$push0=, -1
+	i32.add 	$push1=, $0, $pop0
+	i32.store	$discard=, deferred_access_no_check($pop14), $pop1
 	br      	1               # 1: down to label3
 .LBB2_2:                                # %if.else
 	end_block                       # label4:
-	i32.const	$push18=, 0
-	i32.load	$push1=, deferred_access_stack($pop18)
-	tee_local	$push17=, $0=, $pop1
+	i32.const	$push17=, 0
+	i32.load	$push16=, deferred_access_stack($pop17)
+	tee_local	$push15=, $0=, $pop16
 	i32.const	$push22=, 0
-	i32.eq  	$push23=, $pop17, $pop22
-	br_if   	3, $pop23       # 3: down to label0
+	i32.eq  	$push23=, $pop15, $pop22
+	br_if   	1, $pop23       # 1: down to label2
 # BB#3:                                 # %land.lhs.true.i
-	i32.load	$push2=, 0($0)
-	tee_local	$push19=, $1=, $pop2
+	i32.load	$push19=, 0($0)
+	tee_local	$push18=, $1=, $pop19
 	i32.const	$push24=, 0
-	i32.eq  	$push25=, $pop19, $pop24
-	br_if   	3, $pop25       # 3: down to label0
+	i32.eq  	$push25=, $pop18, $pop24
+	br_if   	1, $pop25       # 1: down to label2
 # BB#4:                                 # %land.lhs.true.i25
-	i32.const	$push5=, -1
-	i32.add 	$push6=, $1, $pop5
-	i32.store	$push7=, 0($0), $pop6
+	i32.const	$push2=, -1
+	i32.add 	$push3=, $1, $pop2
+	i32.store	$push4=, 0($0), $pop3
 	i32.const	$push26=, 0
-	i32.eq  	$push27=, $pop7, $pop26
+	i32.eq  	$push27=, $pop4, $pop26
 	br_if   	2, $pop27       # 2: down to label1
 # BB#5:                                 # %VEC_deferred_access_base_last.exit29
-	i32.const	$push8=, 3
-	i32.shl 	$push9=, $1, $pop8
-	i32.add 	$push10=, $pop9, $0
-	i32.const	$push11=, -8
-	i32.add 	$push12=, $pop10, $pop11
-	i32.load	$push13=, 0($pop12)
+	i32.const	$push5=, 3
+	i32.shl 	$push6=, $1, $pop5
+	i32.add 	$push7=, $pop6, $0
+	i32.const	$push8=, -8
+	i32.add 	$push9=, $pop7, $pop8
+	i32.load	$push10=, 0($pop9)
 	i32.const	$push28=, 0
-	i32.eq  	$push29=, $pop13, $pop28
-	br_if   	1, $pop29       # 1: down to label2
+	i32.eq  	$push29=, $pop10, $pop28
+	br_if   	3, $pop29       # 3: down to label0
 .LBB2_6:                                # %if.end16
 	end_block                       # label3:
 	return
-.LBB2_7:                                # %if.then15
+.LBB2_7:                                # %cond.false.i
 	end_block                       # label2:
-	call    	perform_access_checks@FUNCTION, $0
+	call    	vec_assert_fail@FUNCTION
 	unreachable
 .LBB2_8:                                # %cond.false.i26
 	end_block                       # label1:
 	call    	vec_assert_fail@FUNCTION
 	unreachable
-.LBB2_9:                                # %cond.false.i
+.LBB2_9:                                # %if.then15
 	end_block                       # label0:
-	call    	vec_assert_fail@FUNCTION
+	call    	perform_access_checks@FUNCTION, $0
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -110,17 +110,17 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.const	$push0=, 76
 	i32.call	$push1=, __builtin_malloc@FUNCTION, $pop0
-	i32.store	$push3=, deferred_access_stack($pop2), $pop1
-	tee_local	$push9=, $0=, $pop3
-	i32.const	$push4=, 2
-	i32.store	$discard=, 0($pop9), $pop4
-	i32.const	$push5=, 8
-	i32.add 	$push6=, $0, $pop5
-	i32.const	$push7=, 1
-	i32.store	$discard=, 0($pop6), $pop7
+	i32.store	$push9=, deferred_access_stack($pop2), $pop1
+	tee_local	$push8=, $0=, $pop9
+	i32.const	$push3=, 2
+	i32.store	$discard=, 0($pop8), $pop3
+	i32.const	$push4=, 8
+	i32.add 	$push5=, $0, $pop4
+	i32.const	$push6=, 1
+	i32.store	$discard=, 0($pop5), $pop6
 	call    	pop_to_parent_deferring_access_checks@FUNCTION
-	i32.const	$push8=, 0
-	return  	$pop8
+	i32.const	$push7=, 0
+	return  	$pop7
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

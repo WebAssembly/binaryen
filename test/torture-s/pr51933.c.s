@@ -33,38 +33,38 @@ bar:                                    # @bar
 	copy_local	$3=, $0
 	copy_local	$4=, $2
 	block
-	i32.const	$push18=, 1
-	i32.lt_s	$push2=, $0, $pop18
+	i32.const	$push17=, 1
+	i32.lt_s	$push2=, $0, $pop17
 	br_if   	0, $pop2        # 0: down to label1
 .LBB1_3:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.load16_u	$push3=, 0($1)
-	tee_local	$push20=, $5=, $pop3
-	i32.const	$push6=, v2
-	i32.add 	$push7=, $pop20, $pop6
-	i32.const	$push8=, 255
-	i32.and 	$push9=, $5, $pop8
-	i32.const	$push10=, v3
-	i32.add 	$push11=, $pop9, $pop10
-	i32.const	$push4=, 256
-	i32.lt_u	$push5=, $5, $pop4
-	i32.select	$push12=, $pop7, $pop11, $pop5
-	i32.load8_u	$push13=, 0($pop12)
-	i32.store8	$discard=, 0($4), $pop13
-	i32.const	$push14=, 2
-	i32.add 	$1=, $1, $pop14
-	i32.const	$push15=, -1
-	i32.add 	$3=, $3, $pop15
-	i32.const	$push19=, 1
-	i32.add 	$4=, $4, $pop19
+	i32.load16_u	$push20=, 0($1)
+	tee_local	$push19=, $5=, $pop20
+	i32.const	$push5=, v2
+	i32.add 	$push6=, $pop19, $pop5
+	i32.const	$push7=, 255
+	i32.and 	$push8=, $5, $pop7
+	i32.const	$push9=, v3
+	i32.add 	$push10=, $pop8, $pop9
+	i32.const	$push3=, 256
+	i32.lt_u	$push4=, $5, $pop3
+	i32.select	$push11=, $pop6, $pop10, $pop4
+	i32.load8_u	$push12=, 0($pop11)
+	i32.store8	$discard=, 0($4), $pop12
+	i32.const	$push13=, 2
+	i32.add 	$1=, $1, $pop13
+	i32.const	$push14=, -1
+	i32.add 	$3=, $3, $pop14
+	i32.const	$push18=, 1
+	i32.add 	$4=, $4, $pop18
 	br_if   	0, $3           # 0: up to label2
 .LBB1_4:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:
-	i32.add 	$push16=, $2, $0
-	i32.const	$push17=, 0
-	i32.store8	$discard=, 0($pop16), $pop17
+	i32.add 	$push15=, $2, $0
+	i32.const	$push16=, 0
+	i32.store8	$discard=, 0($pop15), $pop16
 	return  	$0
 	.endfunc
 .Lfunc_end1:

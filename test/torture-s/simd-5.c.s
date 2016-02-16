@@ -193,52 +193,52 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	call    	func2@FUNCTION
 	block
+	block
+	block
+	block
 	i32.const	$push14=, 0
 	i64.load	$push0=, w1($pop14)
 	i32.const	$push13=, 0
 	i64.load	$push1=, w3($pop13)
 	i64.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label3
 # BB#1:                                 # %if.end
-	block
 	i32.const	$push16=, 0
 	i64.load	$push3=, w2($pop16)
 	i32.const	$push15=, 0
 	i64.load	$push4=, w4($pop15)
 	i64.ne  	$push5=, $pop3, $pop4
-	br_if   	0, $pop5        # 0: down to label1
+	br_if   	1, $pop5        # 1: down to label2
 # BB#2:                                 # %if.end4
-	block
 	i32.const	$push18=, 0
 	i64.load	$push6=, z1($pop18)
 	i32.const	$push17=, 0
 	i64.load	$push7=, z3($pop17)
 	i64.ne  	$push8=, $pop6, $pop7
-	br_if   	0, $pop8        # 0: down to label2
+	br_if   	2, $pop8        # 2: down to label1
 # BB#3:                                 # %if.end8
-	block
 	i32.const	$push20=, 0
 	i64.load	$push9=, z2($pop20)
 	i32.const	$push19=, 0
 	i64.load	$push10=, z4($pop19)
 	i64.ne  	$push11=, $pop9, $pop10
-	br_if   	0, $pop11       # 0: down to label3
+	br_if   	3, $pop11       # 3: down to label0
 # BB#4:                                 # %if.end12
 	i32.const	$push12=, 0
 	return  	$pop12
-.LBB3_5:                                # %if.then11
+.LBB3_5:                                # %if.then
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
-.LBB3_6:                                # %if.then7
+.LBB3_6:                                # %if.then3
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
-.LBB3_7:                                # %if.then3
+.LBB3_7:                                # %if.then7
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
-.LBB3_8:                                # %if.then
+.LBB3_8:                                # %if.then11
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

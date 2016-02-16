@@ -8,32 +8,32 @@ bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
 	block
-	i32.load	$push0=, 0($0)
-	tee_local	$push12=, $0=, $pop0
-	i32.const	$push1=, -2
-	i32.and 	$push2=, $pop12, $pop1
-	i32.const	$push3=, 2
-	i32.eq  	$push4=, $pop2, $pop3
-	br_if   	0, $pop4        # 0: down to label0
+	block
+	i32.load	$push12=, 0($0)
+	tee_local	$push11=, $0=, $pop12
+	i32.const	$push0=, -2
+	i32.and 	$push1=, $pop11, $pop0
+	i32.const	$push2=, 2
+	i32.eq  	$push3=, $pop1, $pop2
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.then
-	i32.const	$push10=, 1
-	i32.ne  	$push11=, $0, $pop10
-	br_if   	0, $pop11       # 0: down to label0
+	i32.const	$push9=, 1
+	i32.ne  	$push10=, $0, $pop9
+	br_if   	0, $pop10       # 0: down to label1
 # BB#2:                                 # %if.then
-	i32.const	$push6=, 0
-	i32.load	$push7=, q($pop6)
-	i32.load	$push8=, 0($pop7)
-	i32.const	$push9=, 263
-	i32.and 	$push5=, $pop8, $pop9
-	i32.const	$push13=, 0
-	i32.eq  	$push14=, $pop5, $pop13
-	br_if   	0, $pop14       # 0: down to label0
-# BB#3:                                 # %cond.true
+	i32.const	$push5=, 0
+	i32.load	$push6=, q($pop5)
+	i32.load	$push7=, 0($pop6)
+	i32.const	$push8=, 263
+	i32.and 	$push4=, $pop7, $pop8
+	br_if   	1, $pop4        # 1: down to label0
+.LBB0_3:                                # %if.end
+	end_block                       # label1:
+	return
+.LBB0_4:                                # %cond.true
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_4:                                # %if.end
-	end_block                       # label0:
-	return
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -67,11 +67,11 @@ main:                                   # @main
 	i32.const	$push2=, 1
 	i32.store	$0=, 8($10), $pop2
 	i32.const	$push3=, 0
-	i32.store	$push4=, 12($10), $pop3
-	tee_local	$push5=, $1=, $pop4
+	i32.store	$push5=, 12($10), $pop3
+	tee_local	$push4=, $1=, $pop5
 	i32.const	$7=, 8
 	i32.add 	$7=, $10, $7
-	i32.store	$discard=, q($pop5), $7
+	i32.store	$discard=, q($pop4), $7
 	i32.const	$8=, 12
 	i32.add 	$8=, $10, $8
 	call    	bar@FUNCTION, $8

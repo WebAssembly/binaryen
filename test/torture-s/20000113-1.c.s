@@ -9,27 +9,27 @@ foobar:                                 # @foobar
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push2=, 1
-	i32.and 	$push0=, $0, $pop2
-	tee_local	$push12=, $0=, $pop0
+	i32.const	$push0=, 1
+	i32.and 	$push11=, $0, $pop0
+	tee_local	$push10=, $0=, $pop11
 	i32.const	$push14=, 0
-	i32.eq  	$push15=, $pop12, $pop14
+	i32.eq  	$push15=, $pop10, $pop14
 	br_if   	0, $pop15       # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.const	$push3=, 3
-	i32.and 	$push1=, $1, $pop3
-	tee_local	$push13=, $1=, $pop1
-	i32.sub 	$push4=, $pop13, $0
-	i32.mul 	$push5=, $pop4, $1
-	i32.add 	$push6=, $pop5, $2
-	i32.const	$push7=, 7
-	i32.and 	$push8=, $pop6, $pop7
-	i32.const	$push9=, 5
-	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	0, $pop10       # 0: down to label0
+	i32.const	$push1=, 3
+	i32.and 	$push13=, $1, $pop1
+	tee_local	$push12=, $1=, $pop13
+	i32.sub 	$push2=, $pop12, $0
+	i32.mul 	$push3=, $pop2, $1
+	i32.add 	$push4=, $pop3, $2
+	i32.const	$push5=, 7
+	i32.and 	$push6=, $pop4, $pop5
+	i32.const	$push7=, 5
+	i32.ne  	$push8=, $pop6, $pop7
+	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.end
-	i32.const	$push11=, 0
-	call    	exit@FUNCTION, $pop11
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB0_3:                                # %if.then
 	end_block                       # label0:

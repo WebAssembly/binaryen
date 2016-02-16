@@ -48,11 +48,11 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
-	i32.load	$push0=, count($pop4)
-	tee_local	$push3=, $0=, $pop0
-	i32.const	$push1=, 2
-	i32.add 	$push2=, $pop3, $pop1
-	i32.store	$discard=, count($pop5), $pop2
+	i32.load	$push3=, count($pop4)
+	tee_local	$push2=, $0=, $pop3
+	i32.const	$push0=, 2
+	i32.add 	$push1=, $pop2, $pop0
+	i32.store	$discard=, count($pop5), $pop1
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end7

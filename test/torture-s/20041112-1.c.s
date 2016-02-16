@@ -10,25 +10,25 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push18=, 0
-	i32.load	$push1=, global($pop18)
-	tee_local	$push17=, $0=, $pop1
-	i32.const	$push7=, 1
-	i32.add 	$push8=, $pop17, $pop7
-	i32.const	$push9=, 2
-	i32.select	$push10=, $pop8, $pop9, $0
-	i32.const	$push16=, 1
-	i32.const	$push15=, 0
-	i32.ne  	$push3=, $0, $pop15
-	i32.const	$push2=, global
-	i32.const	$push4=, -1
-	i32.eq  	$push5=, $pop2, $pop4
-	i32.or  	$push6=, $pop3, $pop5
-	tee_local	$push14=, $0=, $pop6
-	i32.select	$push11=, $pop10, $pop16, $pop14
-	i32.store	$discard=, global($pop0), $pop11
-	i32.const	$push13=, 1
-	i32.xor 	$push12=, $0, $pop13
-	return  	$pop12
+	i32.load	$push17=, global($pop18)
+	tee_local	$push16=, $0=, $pop17
+	i32.const	$push5=, 1
+	i32.add 	$push6=, $pop16, $pop5
+	i32.const	$push7=, 2
+	i32.select	$push8=, $pop6, $pop7, $0
+	i32.const	$push15=, 1
+	i32.const	$push14=, 0
+	i32.ne  	$push2=, $0, $pop14
+	i32.const	$push1=, global
+	i32.const	$push3=, -1
+	i32.eq  	$push4=, $pop1, $pop3
+	i32.or  	$push13=, $pop2, $pop4
+	tee_local	$push12=, $0=, $pop13
+	i32.select	$push9=, $pop8, $pop15, $pop12
+	i32.store	$discard=, global($pop0), $pop9
+	i32.const	$push11=, 1
+	i32.xor 	$push10=, $0, $pop11
+	return  	$pop10
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar

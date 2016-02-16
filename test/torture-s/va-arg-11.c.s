@@ -55,49 +55,49 @@ foo:                                    # @foo
 	i32.const	$push1=, 3
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, -4
-	i32.and 	$push4=, $pop2, $pop3
-	tee_local	$push36=, $1=, $pop4
-	i32.const	$push5=, 4
-	i32.add 	$push6=, $pop36, $pop5
-	i32.store	$discard=, 12($5), $pop6
-	i32.const	$push7=, 7
-	i32.add 	$push8=, $1, $pop7
-	i32.const	$push35=, -4
-	i32.and 	$push9=, $pop8, $pop35
-	tee_local	$push34=, $1=, $pop9
-	i32.const	$push33=, 4
-	i32.add 	$push10=, $pop34, $pop33
+	i32.and 	$push36=, $pop2, $pop3
+	tee_local	$push35=, $1=, $pop36
+	i32.const	$push4=, 4
+	i32.add 	$push5=, $pop35, $pop4
+	i32.store	$discard=, 12($5), $pop5
+	i32.const	$push6=, 7
+	i32.add 	$push7=, $1, $pop6
+	i32.const	$push34=, -4
+	i32.and 	$push33=, $pop7, $pop34
+	tee_local	$push32=, $1=, $pop33
+	i32.const	$push31=, 4
+	i32.add 	$push8=, $pop32, $pop31
+	i32.store	$discard=, 12($5), $pop8
+	i32.const	$push30=, 7
+	i32.add 	$push9=, $1, $pop30
+	i32.const	$push29=, -4
+	i32.and 	$push28=, $pop9, $pop29
+	tee_local	$push27=, $1=, $pop28
+	i32.const	$push26=, 4
+	i32.add 	$push10=, $pop27, $pop26
 	i32.store	$discard=, 12($5), $pop10
-	i32.const	$push32=, 7
-	i32.add 	$push11=, $1, $pop32
-	i32.const	$push31=, -4
-	i32.and 	$push12=, $pop11, $pop31
-	tee_local	$push30=, $1=, $pop12
-	i32.const	$push29=, 4
-	i32.add 	$push13=, $pop30, $pop29
-	i32.store	$discard=, 12($5), $pop13
-	i32.const	$push28=, 7
-	i32.add 	$push14=, $1, $pop28
-	i32.const	$push27=, -4
-	i32.and 	$push15=, $pop14, $pop27
-	tee_local	$push26=, $1=, $pop15
-	i32.const	$push25=, 4
-	i32.add 	$push16=, $pop26, $pop25
-	i32.store	$discard=, 12($5), $pop16
-	i32.const	$push24=, 7
-	i32.add 	$push17=, $1, $pop24
-	i32.const	$push23=, -4
-	i32.and 	$push18=, $pop17, $pop23
-	tee_local	$push22=, $1=, $pop18
+	i32.const	$push25=, 7
+	i32.add 	$push11=, $1, $pop25
+	i32.const	$push24=, -4
+	i32.and 	$push23=, $pop11, $pop24
+	tee_local	$push22=, $1=, $pop23
 	i32.const	$push21=, 4
-	i32.add 	$push19=, $pop22, $pop21
-	i32.store	$discard=, 12($5), $pop19
-	i32.load	$push20=, 0($1)
+	i32.add 	$push12=, $pop22, $pop21
+	i32.store	$discard=, 12($5), $pop12
+	i32.const	$push20=, 7
+	i32.add 	$push13=, $1, $pop20
+	i32.const	$push19=, -4
+	i32.and 	$push18=, $pop13, $pop19
+	tee_local	$push17=, $1=, $pop18
+	i32.const	$push16=, 4
+	i32.add 	$push14=, $pop17, $pop16
+	i32.store	$discard=, 12($5), $pop14
+	i32.load	$push15=, 0($1)
 	i32.const	$4=, 16
 	i32.add 	$5=, $5, $4
 	i32.const	$4=, __stack_pointer
 	i32.store	$5=, 0($4), $5
-	return  	$pop20
+	return  	$pop15
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

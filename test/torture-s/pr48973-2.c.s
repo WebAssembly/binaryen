@@ -10,20 +10,20 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push12=, 0
 	i32.const	$push11=, 0
-	i32.load8_u	$push3=, s($pop11):p2align=2
-	i32.const	$push4=, 254
-	i32.and 	$push5=, $pop3, $pop4
+	i32.load8_u	$push2=, s($pop11):p2align=2
+	i32.const	$push3=, 254
+	i32.and 	$push4=, $pop2, $pop3
 	i32.const	$push10=, 0
 	i32.load	$push0=, v($pop10)
 	i32.const	$push1=, 31
-	i32.shr_u	$push2=, $pop0, $pop1
-	tee_local	$push9=, $0=, $pop2
-	i32.or  	$push6=, $pop5, $pop9
-	i32.store8	$discard=, s($pop12):p2align=2, $pop6
+	i32.shr_u	$push9=, $pop0, $pop1
+	tee_local	$push8=, $0=, $pop9
+	i32.or  	$push5=, $pop4, $pop8
+	i32.store8	$discard=, s($pop12):p2align=2, $pop5
 	block
-	i32.const	$push7=, 1
-	i32.ne  	$push8=, $0, $pop7
-	br_if   	0, $pop8        # 0: down to label0
+	i32.const	$push6=, 1
+	i32.ne  	$push7=, $0, $pop6
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push13=, 0
 	return  	$pop13

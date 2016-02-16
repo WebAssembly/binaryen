@@ -8,43 +8,43 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	.param  	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push14=, 0
-	i32.const	$push1=, -516
-	i32.add 	$push2=, $0, $pop1
-	i32.const	$push3=, 2
-	i32.shr_s	$push9=, $pop2, $pop3
-	tee_local	$push13=, $3=, $pop9
-	i32.const	$push12=, 127
-	i32.and 	$push4=, $pop13, $pop12
-	i32.store8	$discard=, bytes($pop14), $pop4
+	i32.const	$push13=, 0
+	i32.const	$push0=, -516
+	i32.add 	$push1=, $0, $pop0
+	i32.const	$push2=, 2
+	i32.shr_s	$push12=, $pop1, $pop2
+	tee_local	$push11=, $3=, $pop12
+	i32.const	$push10=, 127
+	i32.and 	$push3=, $pop11, $pop10
+	i32.store8	$discard=, bytes($pop13), $pop3
 	block
-	i32.const	$push11=, 7
-	i32.shr_u	$push8=, $3, $pop11
-	tee_local	$push10=, $2=, $pop8
+	i32.const	$push9=, 7
+	i32.shr_u	$push8=, $3, $pop9
+	tee_local	$push7=, $2=, $pop8
 	i32.const	$push21=, 0
-	i32.eq  	$push22=, $pop10, $pop21
+	i32.eq  	$push22=, $pop7, $pop21
 	br_if   	0, $pop22       # 0: down to label0
 # BB#1:                                 # %if.then.lr.ph
-	i32.const	$push16=, 0
-	i32.load	$push5=, flag($pop16)
 	i32.const	$push15=, 0
-	i32.eq  	$1=, $pop5, $pop15
+	i32.load	$push4=, flag($pop15)
+	i32.const	$push14=, 0
+	i32.eq  	$1=, $pop4, $pop14
 	i32.const	$0=, bytes
 .LBB0_2:                                # %if.then
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push20=, 128
-	i32.or  	$push6=, $3, $pop20
-	i32.store8	$discard=, 0($0), $pop6
+	i32.or  	$push5=, $3, $pop20
+	i32.store8	$discard=, 0($0), $pop5
 	i32.add 	$0=, $0, $1
-	copy_local	$push0=, $2
-	tee_local	$push19=, $2=, $pop0
-	i32.const	$push18=, 127
-	i32.and 	$push7=, $pop19, $pop18
-	i32.store8	$discard=, 0($0), $pop7
+	copy_local	$push19=, $2
+	tee_local	$push18=, $2=, $pop19
+	i32.const	$push17=, 127
+	i32.and 	$push6=, $pop18, $pop17
+	i32.store8	$discard=, 0($0), $pop6
 	copy_local	$3=, $2
-	i32.const	$push17=, 7
-	i32.shr_u	$2=, $2, $pop17
+	i32.const	$push16=, 7
+	i32.shr_u	$2=, $2, $pop16
 	br_if   	0, $2           # 0: up to label1
 .LBB0_3:                                # %do.end
 	end_loop                        # label2:

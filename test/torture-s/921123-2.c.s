@@ -29,10 +29,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
-	i32.store	$push1=, b($pop0), $pop4
-	tee_local	$push3=, $0=, $pop1
-	i32.const	$push2=, 38
-	i32.store	$discard=, a($pop3), $pop2
+	i32.store	$push3=, b($pop0), $pop4
+	tee_local	$push2=, $0=, $pop3
+	i32.const	$push1=, 38
+	i32.store	$discard=, a($pop2), $pop1
 	call    	exit@FUNCTION, $0
 	unreachable
 	.endfunc

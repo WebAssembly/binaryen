@@ -101,31 +101,31 @@ main:                                   # @main
 	i32.const	$3=, 4
 	i32.add 	$3=, $4, $3
 	block
-	i32.call	$push6=, memcmp@FUNCTION, $3, $pop4, $pop5
-	br_if   	0, $pop6        # 0: down to label2
-# BB#1:                                 # %if.end
 	block
+	block
+	i32.call	$push6=, memcmp@FUNCTION, $3, $pop4, $pop5
+	br_if   	0, $pop6        # 0: down to label4
+# BB#1:                                 # %if.end
 	i32.const	$push15=, 0
 	i32.load	$push7=, check2.r($pop15)
 	i32.const	$push8=, 5
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	0, $pop9        # 0: down to label3
+	br_if   	1, $pop9        # 1: down to label3
 # BB#2:                                 # %test2.exit
 	i32.const	$push16=, 0
 	i32.const	$push10=, 6
 	i32.store	$discard=, check2.r($pop16), $pop10
 	i32.const	$push11=, 8020322
 	i32.store	$discard=, 4($4), $pop11
-	block
 	i32.const	$push12=, 1
 	i32.const	$push18=, 0
 	i32.eq  	$push19=, $pop12, $pop18
-	br_if   	0, $pop19       # 0: down to label4
+	br_if   	2, $pop19       # 2: down to label2
 # BB#3:                                 # %if.end8
 	i32.const	$push17=, 0
 	call    	exit@FUNCTION, $pop17
 	unreachable
-.LBB3_4:                                # %if.then7
+.LBB3_4:                                # %if.then
 	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
@@ -133,7 +133,7 @@ main:                                   # @main
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
-.LBB3_6:                                # %if.then
+.LBB3_6:                                # %if.then7
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable

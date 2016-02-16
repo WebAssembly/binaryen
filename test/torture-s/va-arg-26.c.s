@@ -19,17 +19,17 @@ f:                                      # @f
 	i32.const	$push1=, 7
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, -8
-	i32.and 	$push4=, $pop2, $pop3
-	tee_local	$push8=, $6=, $pop4
-	i32.const	$push5=, 8
-	i32.add 	$push6=, $pop8, $pop5
-	i32.store	$discard=, 12($10), $pop6
-	f64.load	$push7=, 0($6)
+	i32.and 	$push8=, $pop2, $pop3
+	tee_local	$push7=, $6=, $pop8
+	i32.const	$push4=, 8
+	i32.add 	$push5=, $pop7, $pop4
+	i32.store	$discard=, 12($10), $pop5
+	f64.load	$push6=, 0($6)
 	i32.const	$9=, 16
 	i32.add 	$10=, $10, $9
 	i32.const	$9=, __stack_pointer
 	i32.store	$10=, 0($9), $10
-	return  	$pop7
+	return  	$pop6
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

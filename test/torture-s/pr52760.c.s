@@ -17,45 +17,45 @@ foo:                                    # @foo
 	loop                            # label1:
 	i32.const	$push6=, 2
 	i32.add 	$2=, $1, $pop6
-	i32.const	$push11=, 4
-	i32.add 	$push12=, $1, $pop11
-	tee_local	$push32=, $5=, $pop12
-	i32.load16_u	$3=, 0($pop32)
-	i32.load16_u	$push7=, 0($2)
-	tee_local	$push31=, $4=, $pop7
+	i32.const	$push10=, 4
+	i32.add 	$push32=, $1, $pop10
+	tee_local	$push31=, $5=, $pop32
+	i32.load16_u	$3=, 0($pop31)
+	i32.load16_u	$push30=, 0($2)
+	tee_local	$push29=, $4=, $pop30
 	i32.const	$push2=, 8
-	i32.shr_u	$push8=, $pop31, $pop2
-	i32.const	$push30=, 8
-	i32.shl 	$push9=, $4, $pop30
-	i32.or  	$push10=, $pop8, $pop9
-	i32.store16	$discard=, 0($2), $pop10
-	i32.const	$push16=, 6
-	i32.add 	$push17=, $1, $pop16
-	tee_local	$push29=, $4=, $pop17
-	i32.load16_u	$2=, 0($pop29)
+	i32.shr_u	$push7=, $pop29, $pop2
 	i32.const	$push28=, 8
-	i32.shr_u	$push13=, $3, $pop28
-	i32.const	$push27=, 8
-	i32.shl 	$push14=, $3, $pop27
-	i32.or  	$push15=, $pop13, $pop14
-	i32.store16	$discard=, 0($5), $pop15
-	i32.load16_u	$3=, 0($1)
-	i32.const	$push26=, 8
-	i32.shr_u	$push18=, $2, $pop26
+	i32.shl 	$push8=, $4, $pop28
+	i32.or  	$push9=, $pop7, $pop8
+	i32.store16	$discard=, 0($2), $pop9
+	i32.const	$push14=, 6
+	i32.add 	$push27=, $1, $pop14
+	tee_local	$push26=, $4=, $pop27
+	i32.load16_u	$2=, 0($pop26)
 	i32.const	$push25=, 8
-	i32.shl 	$push19=, $2, $pop25
-	i32.or  	$push20=, $pop18, $pop19
-	i32.store16	$discard=, 0($4), $pop20
+	i32.shr_u	$push11=, $3, $pop25
 	i32.const	$push24=, 8
-	i32.shr_u	$push3=, $3, $pop24
+	i32.shl 	$push12=, $3, $pop24
+	i32.or  	$push13=, $pop11, $pop12
+	i32.store16	$discard=, 0($5), $pop13
+	i32.load16_u	$3=, 0($1)
 	i32.const	$push23=, 8
-	i32.shl 	$push4=, $3, $pop23
+	i32.shr_u	$push15=, $2, $pop23
+	i32.const	$push22=, 8
+	i32.shl 	$push16=, $2, $pop22
+	i32.or  	$push17=, $pop15, $pop16
+	i32.store16	$discard=, 0($4), $pop17
+	i32.const	$push21=, 8
+	i32.shr_u	$push3=, $3, $pop21
+	i32.const	$push20=, 8
+	i32.shl 	$push4=, $3, $pop20
 	i32.or  	$push5=, $pop3, $pop4
 	i32.store16	$discard=, 0($1), $pop5
-	i32.const	$push21=, -1
-	i32.add 	$0=, $0, $pop21
-	i32.const	$push22=, 8
-	i32.add 	$1=, $1, $pop22
+	i32.const	$push18=, -1
+	i32.add 	$0=, $0, $pop18
+	i32.const	$push19=, 8
+	i32.add 	$1=, $1, $pop19
 	br_if   	0, $0           # 0: up to label1
 .LBB0_2:                                # %for.end
 	end_loop                        # label2:

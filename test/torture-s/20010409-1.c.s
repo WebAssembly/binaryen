@@ -77,13 +77,13 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i32.store	$push1=, d+4($pop0), $pop5
-	tee_local	$push4=, $1=, $pop1
-	i32.load	$0=, b($pop4)
-	i32.const	$push2=, a
-	i32.store	$discard=, d($1), $pop2
-	i32.const	$push3=, 5000
-	i32.store	$discard=, c($1), $pop3
+	i32.store	$push4=, d+4($pop0), $pop5
+	tee_local	$push3=, $1=, $pop4
+	i32.load	$0=, b($pop3)
+	i32.const	$push1=, a
+	i32.store	$discard=, d($1), $pop1
+	i32.const	$push2=, 5000
+	i32.store	$discard=, c($1), $pop2
 	block
 	br_if   	0, $0           # 0: down to label2
 # BB#1:                                 # %if.then.i.i

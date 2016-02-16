@@ -12,51 +12,51 @@ foo:                                    # @foo
 	loop                            # label0:
 	i32.const	$push35=, 0
 	i32.const	$push34=, 0
-	i32.load	$push0=, q($pop34)
-	tee_local	$push33=, $0=, $pop0
-	i32.load8_s	$push1=, 2($pop33)
-	i32.store	$discard=, n($pop35), $pop1
-	i32.const	$push32=, 0
-	i32.load8_s	$push2=, 2($0)
-	i32.store	$discard=, n($pop32), $pop2
+	i32.load	$push33=, q($pop34)
+	tee_local	$push32=, $0=, $pop33
+	i32.load8_s	$push0=, 2($pop32)
+	i32.store	$discard=, n($pop35), $pop0
 	i32.const	$push31=, 0
-	i32.load8_s	$push3=, 2($0)
-	i32.store	$discard=, n($pop31), $pop3
+	i32.load8_s	$push1=, 2($0)
+	i32.store	$discard=, n($pop31), $pop1
 	i32.const	$push30=, 0
-	i32.load8_s	$push4=, 2($0)
-	i32.store	$discard=, n($pop30), $pop4
+	i32.load8_s	$push2=, 2($0)
+	i32.store	$discard=, n($pop30), $pop2
 	i32.const	$push29=, 0
+	i32.load8_s	$push3=, 2($0)
+	i32.store	$discard=, n($pop29), $pop3
 	i32.const	$push28=, 0
-	i32.load	$push5=, q($pop28)
-	tee_local	$push27=, $0=, $pop5
-	i32.load8_s	$push6=, 2($pop27)
-	i32.store	$discard=, n($pop29), $pop6
-	i32.const	$push26=, 0
-	i32.load8_s	$push7=, 2($0)
-	i32.store	$discard=, n($pop26), $pop7
-	i32.const	$push25=, 0
+	i32.const	$push27=, 0
+	i32.load	$push26=, q($pop27)
+	tee_local	$push25=, $0=, $pop26
+	i32.load8_s	$push4=, 2($pop25)
+	i32.store	$discard=, n($pop28), $pop4
 	i32.const	$push24=, 0
-	i32.load	$push8=, q($pop24)
-	tee_local	$push23=, $0=, $pop8
-	i32.load8_s	$push9=, 2($pop23)
-	i32.store	$discard=, n($pop25), $pop9
+	i32.load8_s	$push5=, 2($0)
+	i32.store	$discard=, n($pop24), $pop5
+	i32.const	$push23=, 0
 	i32.const	$push22=, 0
-	i32.load8_s	$push10=, 2($0)
-	i32.store	$discard=, n($pop22), $pop10
-	i32.const	$push21=, 0
-	i32.const	$push20=, 0
-	i32.load	$push11=, q($pop20)
-	tee_local	$push19=, $0=, $pop11
-	i32.load8_s	$push12=, 2($pop19)
-	i32.store	$discard=, n($pop21), $pop12
+	i32.load	$push21=, q($pop22)
+	tee_local	$push20=, $0=, $pop21
+	i32.load8_s	$push6=, 2($pop20)
+	i32.store	$discard=, n($pop23), $pop6
+	i32.const	$push19=, 0
+	i32.load8_s	$push7=, 2($0)
+	i32.store	$discard=, n($pop19), $pop7
 	i32.const	$push18=, 0
-	i32.load8_s	$push13=, 2($0)
-	i32.store	$discard=, n($pop18), $pop13
 	i32.const	$push17=, 0
-	i32.const	$push16=, 0
-	i32.load	$push14=, q($pop16)
-	i32.load8_s	$push15=, 2($pop14)
-	i32.store	$discard=, n($pop17), $pop15
+	i32.load	$push16=, q($pop17)
+	tee_local	$push15=, $0=, $pop16
+	i32.load8_s	$push8=, 2($pop15)
+	i32.store	$discard=, n($pop18), $pop8
+	i32.const	$push14=, 0
+	i32.load8_s	$push9=, 2($0)
+	i32.store	$discard=, n($pop14), $pop9
+	i32.const	$push13=, 0
+	i32.const	$push12=, 0
+	i32.load	$push10=, q($pop12)
+	i32.load8_s	$push11=, 2($pop10)
+	i32.store	$discard=, n($pop13), $pop11
 	br      	0               # 0: up to label0
 .LBB0_2:
 	end_loop                        # label1:

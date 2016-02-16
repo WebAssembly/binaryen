@@ -9,37 +9,37 @@ ba_compute_psd:                         # @ba_compute_psd
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push17=, 1
-	i32.shl 	$push2=, $0, $pop17
-	tee_local	$push16=, $1=, $pop2
-	i32.load16_s	$push3=, masktab($pop16)
-	i32.const	$push15=, 1
-	i32.shl 	$push4=, $pop3, $pop15
-	tee_local	$push14=, $3=, $pop4
+	i32.shl 	$push16=, $0, $pop17
+	tee_local	$push15=, $1=, $pop16
+	i32.load16_s	$push1=, masktab($pop15)
+	i32.const	$push14=, 1
+	i32.shl 	$push13=, $pop1, $pop14
+	tee_local	$push12=, $3=, $pop13
 	i32.load16_u	$push0=, psd($1)
-	i32.store16	$2=, bndpsd($pop14), $pop0
+	i32.store16	$2=, bndpsd($pop12), $pop0
 	block
-	i32.const	$push13=, 1
-	i32.add 	$push1=, $0, $pop13
-	tee_local	$push12=, $1=, $pop1
-	i32.const	$push11=, 3
-	i32.gt_s	$push6=, $pop12, $pop11
-	br_if   	0, $pop6        # 0: down to label0
+	i32.const	$push11=, 1
+	i32.add 	$push10=, $0, $pop11
+	tee_local	$push9=, $1=, $pop10
+	i32.const	$push8=, 3
+	i32.gt_s	$push3=, $pop9, $pop8
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
-	i32.const	$push5=, bndpsd
-	i32.add 	$3=, $3, $pop5
+	i32.const	$push2=, bndpsd
+	i32.add 	$3=, $3, $pop2
 	i32.const	$push19=, 1
-	i32.shl 	$push7=, $1, $pop19
-	i32.const	$push8=, psd
-	i32.add 	$1=, $pop7, $pop8
+	i32.shl 	$push4=, $1, $pop19
+	i32.const	$push5=, psd
+	i32.add 	$1=, $pop4, $pop5
 	i32.const	$push18=, 3
 	i32.sub 	$0=, $pop18, $0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.load16_u	$push10=, 0($1)
+	i32.load16_u	$push7=, 0($1)
 	i32.const	$push22=, 65535
-	i32.and 	$push9=, $2, $pop22
-	i32.add 	$2=, $pop10, $pop9
+	i32.and 	$push6=, $2, $pop22
+	i32.add 	$2=, $pop7, $pop6
 	i32.const	$push21=, 2
 	i32.add 	$1=, $1, $pop21
 	i32.const	$push20=, -1

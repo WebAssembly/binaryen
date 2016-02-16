@@ -10,14 +10,14 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push6=, 0
-	i32.load	$push1=, c($pop6)
-	tee_local	$push5=, $1=, $pop1
-	i32.const	$push2=, 1
-	i32.add 	$push3=, $pop5, $pop2
-	i32.store	$discard=, c($pop0), $pop3
+	i32.load	$push5=, c($pop6)
+	tee_local	$push4=, $1=, $pop5
+	i32.const	$push1=, 1
+	i32.add 	$push2=, $pop4, $pop1
+	i32.store	$discard=, c($pop0), $pop2
 	block
-	i32.ne  	$push4=, $1, $0
-	br_if   	0, $pop4        # 0: down to label0
+	i32.ne  	$push3=, $1, $0
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

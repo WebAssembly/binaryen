@@ -33,24 +33,24 @@ main:                                   # @main
 	i32.sub 	$13=, $8, $9
 	i32.const	$9=, __stack_pointer
 	i32.store	$13=, 0($9), $13
-	i32.const	$push1=, 1
-	i32.store	$3=, 12($13), $pop1
+	i32.const	$push0=, 1
+	i32.store	$3=, 12($13), $pop0
 	i32.const	$11=, 12
 	i32.add 	$11=, $13, $11
 	i32.const	$12=, 16
 	i32.add 	$12=, $13, $12
 	call    	init@FUNCTION, $11, $12
 	block
-	i32.load	$push0=, 12($13)
-	tee_local	$push15=, $6=, $pop0
-	i32.const	$push14=, 0
-	i32.lt_s	$push2=, $pop15, $pop14
-	br_if   	0, $pop2        # 0: down to label1
+	i32.load	$push14=, 12($13)
+	tee_local	$push13=, $6=, $pop14
+	i32.const	$push12=, 0
+	i32.lt_s	$push1=, $pop13, $pop12
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %while.body.lr.ph
-	i32.const	$push17=, 0
-	i32.load	$0=, pd($pop17)
 	i32.const	$push16=, 0
-	i32.load	$1=, pi($pop16)
+	i32.load	$0=, pd($pop16)
+	i32.const	$push15=, 0
+	i32.load	$1=, pi($pop15)
 	i32.const	$4=, -1
 	i32.const	$5=, 0
 .LBB1_2:                                # %while.body
@@ -62,43 +62,43 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.load	$2=, 0($1)
 	block
-	f64.load	$push3=, 0($0)
-	tee_local	$push19=, $7=, $pop3
-	f64.const	$push18=, 0x0p0
-	f64.le  	$push4=, $pop19, $pop18
-	f64.ne  	$push5=, $7, $7
-	i32.or  	$push6=, $pop4, $pop5
-	br_if   	0, $pop6        # 0: down to label5
+	f64.load	$push19=, 0($0)
+	tee_local	$push18=, $7=, $pop19
+	f64.const	$push17=, 0x0p0
+	f64.le  	$push2=, $pop18, $pop17
+	f64.ne  	$push3=, $7, $7
+	i32.or  	$push4=, $pop2, $pop3
+	br_if   	0, $pop4        # 0: down to label5
 # BB#4:                                 # %if.then3
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
-	i32.gt_s	$push7=, $2, $pop20
-	i32.select	$push8=, $2, $pop21, $pop7
-	i32.add 	$5=, $pop8, $5
+	i32.gt_s	$push5=, $2, $pop20
+	i32.select	$push6=, $2, $pop21, $pop5
+	i32.add 	$5=, $pop6, $5
 .LBB1_5:                                # %if.end8
                                         #   in Loop: Header=BB1_2 Depth=1
 	end_block                       # label5:
-	f64.convert_s/i32	$push9=, $2
-	f64.store	$discard=, 0($0), $pop9
+	f64.convert_s/i32	$push7=, $2
+	f64.store	$discard=, 0($0), $pop7
 .LBB1_6:                                # %if.end11
                                         #   in Loop: Header=BB1_2 Depth=1
 	end_block                       # label4:
 	i32.add 	$4=, $4, $3
-	i32.lt_s	$push10=, $4, $6
-	br_if   	0, $pop10       # 0: up to label2
+	i32.lt_s	$push8=, $4, $6
+	br_if   	0, $pop8        # 0: up to label2
 # BB#7:                                 # %while.end
 	end_loop                        # label3:
-	i32.const	$push11=, 1234567890
-	i32.ne  	$push12=, $5, $pop11
-	br_if   	0, $pop12       # 0: down to label1
+	i32.const	$push9=, 1234567890
+	i32.ne  	$push10=, $5, $pop9
+	br_if   	0, $pop10       # 0: down to label1
 # BB#8:                                 # %if.end15
-	i32.const	$push13=, 0
+	i32.const	$push11=, 0
 	i32.const	$10=, 6144
 	i32.add 	$13=, $13, $10
 	i32.const	$10=, __stack_pointer
 	i32.store	$13=, 0($10), $13
-	return  	$pop13
+	return  	$pop11
 .LBB1_9:                                # %if.then14
 	end_block                       # label1:
 	call    	abort@FUNCTION

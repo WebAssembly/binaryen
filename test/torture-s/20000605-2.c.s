@@ -10,38 +10,39 @@ f1:                                     # @f1
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
 	block
-	i32.load	$push0=, 0($0)
-	tee_local	$push11=, $4=, $pop0
-	i32.load	$push1=, 0($1)
-	i32.ge_s	$push2=, $pop11, $pop1
-	br_if   	0, $pop2        # 0: down to label0
+	block
+	i32.load	$push11=, 0($0)
+	tee_local	$push10=, $4=, $pop11
+	i32.load	$push0=, 0($1)
+	i32.ge_s	$push1=, $pop10, $pop0
+	br_if   	0, $pop1        # 0: down to label1
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
-	i32.const	$push3=, 5
-	i32.ge_s	$push4=, $3, $pop3
-	br_if   	1, $pop4        # 1: down to label2
+	loop                            # label2:
+	i32.const	$push2=, 5
+	i32.ge_s	$push3=, $3, $pop2
+	br_if   	3, $pop3        # 3: down to label0
 # BB#2:                                 # %for.inc
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.add 	$push6=, $4, $3
-	i32.const	$push5=, 1
-	i32.add 	$push7=, $pop6, $pop5
-	i32.store	$discard=, 0($0), $pop7
+	i32.add 	$push5=, $4, $3
+	i32.const	$push4=, 1
+	i32.add 	$push6=, $pop5, $pop4
+	i32.store	$discard=, 0($0), $pop6
 	i32.const	$push12=, 1
 	i32.add 	$2=, $3, $pop12
 	copy_local	$3=, $2
-	i32.add 	$push9=, $4, $2
-	i32.load	$push8=, 0($1)
-	i32.lt_s	$push10=, $pop9, $pop8
-	br_if   	0, $pop10       # 0: up to label1
-	br      	2               # 2: down to label0
-.LBB0_3:                                # %if.then
-	end_loop                        # label2:
+	i32.add 	$push8=, $4, $2
+	i32.load	$push7=, 0($1)
+	i32.lt_s	$push9=, $pop8, $pop7
+	br_if   	0, $pop9        # 0: up to label2
+.LBB0_3:                                # %for.end
+	end_loop                        # label3:
+	end_block                       # label1:
+	return
+.LBB0_4:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_4:                                # %for.end
-	end_block                       # label0:
-	return
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1

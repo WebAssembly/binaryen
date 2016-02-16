@@ -58,15 +58,15 @@ baz:                                    # @baz
 # BB#0:                                 # %entry
 	block
 	i32.const	$push8=, 0
-	f64.load	$push0=, v($pop8)
-	tee_local	$push7=, $0=, $pop0
-	f64.ne  	$push3=, $pop7, $0
-	i32.const	$push6=, 0
-	f64.load	$push1=, v+8($pop6)
-	tee_local	$push5=, $0=, $pop1
-	f64.ne  	$push2=, $pop5, $0
-	i32.or  	$push4=, $pop3, $pop2
-	br_if   	0, $pop4        # 0: down to label1
+	f64.load	$push7=, v($pop8)
+	tee_local	$push6=, $0=, $pop7
+	f64.ne  	$push1=, $pop6, $0
+	i32.const	$push5=, 0
+	f64.load	$push4=, v+8($pop5)
+	tee_local	$push3=, $0=, $pop4
+	f64.ne  	$push0=, $pop3, $0
+	i32.or  	$push2=, $pop1, $pop0
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push9=, 0
 	return  	$pop9
@@ -88,16 +88,16 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push8=, 0
-	f64.load	$push0=, v($pop8)
-	tee_local	$push7=, $0=, $pop0
-	f64.eq  	$push3=, $pop7, $0
-	i32.const	$push6=, 0
-	f64.load	$push1=, v+8($pop6)
-	tee_local	$push5=, $0=, $pop1
-	f64.eq  	$push2=, $pop5, $0
-	i32.and 	$push4=, $pop3, $pop2
+	f64.load	$push7=, v($pop8)
+	tee_local	$push6=, $0=, $pop7
+	f64.eq  	$push1=, $pop6, $0
+	i32.const	$push5=, 0
+	f64.load	$push4=, v+8($pop5)
+	tee_local	$push3=, $0=, $pop4
+	f64.eq  	$push0=, $pop3, $0
+	i32.and 	$push2=, $pop1, $pop0
 	i32.const	$push10=, 0
-	i32.eq  	$push11=, $pop4, $pop10
+	i32.eq  	$push11=, $pop2, $pop10
 	br_if   	0, $pop11       # 0: down to label2
 # BB#1:                                 # %baz.exit
 	i32.const	$push9=, 0

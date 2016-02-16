@@ -12,15 +12,15 @@ test1:                                  # @test1
 	i32.const	$push0=, 0
 	i64.load	$push1=, x($pop0)
 	i64.const	$push2=, 1099511627775
-	i64.and 	$push3=, $pop1, $pop2
-	tee_local	$push10=, $1=, $pop3
-	i64.const	$push4=, 8
-	i64.shl 	$push5=, $pop10, $pop4
-	i64.const	$push6=, 32
-	i64.shr_u	$push7=, $1, $pop6
-	i64.or  	$push8=, $pop5, $pop7
-	i64.ne  	$push9=, $pop8, $0
-	br_if   	0, $pop9        # 0: down to label0
+	i64.and 	$push10=, $pop1, $pop2
+	tee_local	$push9=, $1=, $pop10
+	i64.const	$push3=, 8
+	i64.shl 	$push4=, $pop9, $pop3
+	i64.const	$push5=, 32
+	i64.shr_u	$push6=, $1, $pop5
+	i64.or  	$push7=, $pop4, $pop6
+	i64.ne  	$push8=, $pop7, $0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

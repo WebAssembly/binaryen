@@ -56,46 +56,46 @@ foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push1=, 6
-	i32.add 	$push0=, $0, $pop1
-	tee_local	$push4=, $0=, $pop0
-	i32.const	$push2=, 11
-	i32.gt_u	$push3=, $pop4, $pop2
-	br_if   	0, $pop3        # 0: down to label0
+	block
+	block
+	i32.const	$push0=, 6
+	i32.add 	$push4=, $0, $pop0
+	tee_local	$push3=, $0=, $pop4
+	i32.const	$push1=, 11
+	i32.gt_u	$push2=, $pop3, $pop1
+	br_if   	0, $pop2        # 0: down to label2
 # BB#1:                                 # %entry
 	block
 	block
 	block
-	block
-	block
-	tableswitch	$0, 1, 1, 5, 5, 5, 5, 5, 2, 0, 3, 4, 4, 4 # 1: down to label4
-                                        # 5: down to label0
-                                        # 2: down to label3
-                                        # 0: down to label5
+	tableswitch	$0, 2, 2, 3, 3, 3, 3, 3, 4, 0, 5, 1, 1, 1 # 2: down to label3
                                         # 3: down to label2
                                         # 4: down to label1
+                                        # 0: down to label5
+                                        # 5: down to label0
+                                        # 1: down to label4
 .LBB4_2:                                # %sw.epilog9
 	end_block                       # label5:
 	return
-.LBB4_3:                                # %sw.bb
+.LBB4_3:                                # %sw.bb3
 	end_block                       # label4:
-	call    	fail1@FUNCTION
-	unreachable
-.LBB4_4:                                # %sw.bb1
-	end_block                       # label3:
-	call    	fail2@FUNCTION
-	unreachable
-.LBB4_5:                                # %sw.bb7
-	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB4_6:                                # %sw.bb3
-	end_block                       # label1:
 	call    	fail3@FUNCTION
 	unreachable
-.LBB4_7:                                # %sw.default
-	end_block                       # label0:
+.LBB4_4:                                # %sw.bb
+	end_block                       # label3:
+	call    	fail1@FUNCTION
+	unreachable
+.LBB4_5:                                # %sw.default
+	end_block                       # label2:
 	call    	fail4@FUNCTION
+	unreachable
+.LBB4_6:                                # %sw.bb1
+	end_block                       # label1:
+	call    	fail2@FUNCTION
+	unreachable
+.LBB4_7:                                # %sw.bb7
+	end_block                       # label0:
+	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end4:

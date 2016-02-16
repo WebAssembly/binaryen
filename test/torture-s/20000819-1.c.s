@@ -8,38 +8,39 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push1=, 0
-	i32.sub 	$push0=, $pop1, $1
-	tee_local	$push10=, $1=, $pop0
-	i32.const	$push9=, 0
-	i32.gt_s	$push2=, $pop10, $pop9
-	br_if   	0, $pop2        # 0: down to label0
+	block
+	i32.const	$push0=, 0
+	i32.sub 	$push10=, $pop0, $1
+	tee_local	$push9=, $1=, $pop10
+	i32.const	$push8=, 0
+	i32.gt_s	$push1=, $pop9, $pop8
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %for.body.preheader
-	i32.const	$push3=, 2
-	i32.shl 	$push4=, $1, $pop3
-	i32.add 	$1=, $0, $pop4
+	i32.const	$push2=, 2
+	i32.shl 	$push3=, $1, $pop2
+	i32.add 	$1=, $0, $pop3
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
-	i32.load	$push5=, 0($1)
+	loop                            # label2:
+	i32.load	$push4=, 0($1)
 	i32.const	$push12=, 1
-	i32.le_s	$push6=, $pop5, $pop12
-	br_if   	1, $pop6        # 1: down to label2
+	i32.le_s	$push5=, $pop4, $pop12
+	br_if   	3, $pop5        # 3: down to label0
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push11=, 4
 	i32.add 	$1=, $1, $pop11
-	i32.le_u	$push7=, $1, $0
-	br_if   	0, $pop7        # 0: up to label1
-	br      	2               # 2: down to label0
-.LBB0_4:                                # %if.then
-	end_loop                        # label2:
-	i32.const	$push8=, 0
-	call    	exit@FUNCTION, $pop8
-	unreachable
-.LBB0_5:                                # %for.end
-	end_block                       # label0:
+	i32.le_u	$push6=, $1, $0
+	br_if   	0, $pop6        # 0: up to label2
+.LBB0_4:                                # %for.end
+	end_loop                        # label3:
+	end_block                       # label1:
 	return
+.LBB0_5:                                # %if.then
+	end_block                       # label0:
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
+	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

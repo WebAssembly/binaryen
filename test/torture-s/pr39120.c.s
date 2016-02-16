@@ -43,18 +43,18 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$5=, 0($2), $5
 	i32.const	$push0=, 0
-	i32.store	$push1=, 12($5), $pop0
-	tee_local	$push6=, $0=, $pop1
+	i32.store	$push6=, 12($5), $pop0
+	tee_local	$push5=, $0=, $pop6
 	i32.const	$4=, 12
 	i32.add 	$4=, $5, $4
-	i32.call	$push2=, foo@FUNCTION, $4
-	i32.store	$discard=, x($pop6), $pop2
+	i32.call	$push1=, foo@FUNCTION, $4
+	i32.store	$discard=, x($pop5), $pop1
 	call    	bar@FUNCTION
 	block
-	i32.load	$push3=, 12($5)
-	i32.const	$push4=, 1
-	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	0, $pop5        # 0: down to label0
+	i32.load	$push2=, 12($5)
+	i32.const	$push3=, 1
+	i32.ne  	$push4=, $pop2, $pop3
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$3=, 16
 	i32.add 	$5=, $5, $3

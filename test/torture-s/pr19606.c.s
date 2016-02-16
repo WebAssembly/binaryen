@@ -41,30 +41,30 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push1=, 0
-	i32.load8_s	$push0=, a($pop1)
-	tee_local	$push11=, $0=, $pop0
-	i32.const	$push2=, 1
-	i32.shr_u	$push3=, $pop11, $pop2
-	i32.const	$push4=, 2147483646
-	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	0, $pop5        # 0: down to label0
-# BB#1:                                 # %if.end
 	block
-	i32.const	$push6=, 5
-	i32.rem_u	$push7=, $0, $pop6
-	i32.const	$push8=, 2
-	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	0, $pop9        # 0: down to label1
+	i32.const	$push0=, 0
+	i32.load8_s	$push11=, a($pop0)
+	tee_local	$push10=, $0=, $pop11
+	i32.const	$push1=, 1
+	i32.shr_u	$push2=, $pop10, $pop1
+	i32.const	$push3=, 2147483646
+	i32.ne  	$push4=, $pop2, $pop3
+	br_if   	0, $pop4        # 0: down to label1
+# BB#1:                                 # %if.end
+	i32.const	$push5=, 5
+	i32.rem_u	$push6=, $0, $pop5
+	i32.const	$push7=, 2
+	i32.ne  	$push8=, $pop6, $pop7
+	br_if   	1, $pop8        # 1: down to label0
 # BB#2:                                 # %if.end7
-	i32.const	$push10=, 0
-	call    	exit@FUNCTION, $pop10
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
-.LBB2_3:                                # %if.then6
+.LBB2_3:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
-.LBB2_4:                                # %if.then
+.LBB2_4:                                # %if.then6
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

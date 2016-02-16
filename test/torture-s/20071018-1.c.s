@@ -29,13 +29,13 @@ foo:                                    # @foo
 	i32.call	$push1=, __builtin_malloc@FUNCTION, $pop0
 	i32.add 	$push4=, $pop3, $pop1
 	i32.const	$push5=, -20
-	i32.add 	$push6=, $pop4, $pop5
-	tee_local	$push9=, $0=, $pop6
-	i32.const	$push7=, 0
-	i32.store	$discard=, 0($pop9), $pop7
+	i32.add 	$push9=, $pop4, $pop5
+	tee_local	$push8=, $0=, $pop9
+	i32.const	$push6=, 0
+	i32.store	$discard=, 0($pop8), $pop6
 	call    	bar@FUNCTION, $0
-	i32.load	$push8=, 0($0)
-	return  	$pop8
+	i32.load	$push7=, 0($0)
+	return  	$pop7
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

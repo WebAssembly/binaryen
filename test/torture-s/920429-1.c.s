@@ -9,22 +9,22 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push5=, 0
-	i32.load8_u	$push2=, 0($0)
-	tee_local	$push13=, $1=, $pop2
+	i32.const	$push4=, 0
+	i32.load8_u	$push13=, 0($0)
+	tee_local	$push12=, $1=, $pop13
 	i32.const	$push0=, 1
-	i32.shr_u	$push3=, $pop13, $pop0
-	i32.const	$push12=, 1
-	i32.and 	$push4=, $pop3, $pop12
-	i32.store	$discard=, i($pop5), $pop4
-	i32.const	$push11=, 0
-	i32.const	$push6=, 7
-	i32.and 	$push7=, $1, $pop6
-	i32.const	$push10=, 1
-	i32.add 	$push8=, $pop7, $pop10
-	i32.store	$discard=, j($pop11), $pop8
+	i32.shr_u	$push2=, $pop12, $pop0
+	i32.const	$push11=, 1
+	i32.and 	$push3=, $pop2, $pop11
+	i32.store	$discard=, i($pop4), $pop3
+	i32.const	$push10=, 0
+	i32.const	$push5=, 7
+	i32.and 	$push6=, $1, $pop5
 	i32.const	$push9=, 1
-	i32.add 	$push1=, $0, $pop9
+	i32.add 	$push7=, $pop6, $pop9
+	i32.store	$discard=, j($pop10), $pop7
+	i32.const	$push8=, 1
+	i32.add 	$push1=, $0, $pop8
 	return  	$pop1
 	.endfunc
 .Lfunc_end0:
@@ -40,10 +40,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
-	i32.store	$push1=, i($pop0), $pop4
-	tee_local	$push3=, $0=, $pop1
-	i32.const	$push2=, 2
-	i32.store	$discard=, j($pop3), $pop2
+	i32.store	$push3=, i($pop0), $pop4
+	tee_local	$push2=, $0=, $pop3
+	i32.const	$push1=, 2
+	i32.store	$discard=, j($pop2), $pop1
 	call    	exit@FUNCTION, $0
 	unreachable
 	.endfunc

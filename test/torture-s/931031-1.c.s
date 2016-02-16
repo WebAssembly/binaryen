@@ -8,15 +8,15 @@ f:                                      # @f
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push3=, 1
-	i32.load	$push0=, 4($0)
-	tee_local	$push7=, $0=, $pop0
-	i32.const	$push6=, 1
-	i32.add 	$push4=, $pop7, $pop6
-	i32.const	$push1=, 0
-	i32.lt_s	$push2=, $0, $pop1
-	i32.select	$push5=, $pop3, $pop4, $pop2
-	return  	$pop5
+	i32.const	$push2=, 1
+	i32.load	$push7=, 4($0)
+	tee_local	$push6=, $0=, $pop7
+	i32.const	$push5=, 1
+	i32.add 	$push3=, $pop6, $pop5
+	i32.const	$push0=, 0
+	i32.lt_s	$push1=, $0, $pop0
+	i32.select	$push4=, $pop2, $pop3, $pop1
+	return  	$pop4
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

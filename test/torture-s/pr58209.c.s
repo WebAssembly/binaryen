@@ -70,10 +70,10 @@ main:                                   # @main
 	loop                            # label3:
 	i32.const	$push10=, 4
 	i32.add 	$0=, $0, $pop10
-	i32.call	$push0=, foo@FUNCTION, $1
-	tee_local	$push9=, $3=, $pop0
-	i32.ne  	$push1=, $0, $pop9
-	br_if   	2, $pop1        # 2: down to label2
+	i32.call	$push9=, foo@FUNCTION, $1
+	tee_local	$push8=, $3=, $pop9
+	i32.ne  	$push0=, $0, $pop8
+	br_if   	2, $pop0        # 2: down to label2
 # BB#2:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$2=, buf
@@ -84,26 +84,26 @@ main:                                   # @main
 # BB#3:                                 # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push12=, -1
-	i32.add 	$push2=, $1, $pop12
-	i32.call	$push3=, foo@FUNCTION, $pop2
+	i32.add 	$push1=, $1, $pop12
+	i32.call	$push2=, foo@FUNCTION, $pop1
 	i32.const	$push11=, 4
-	i32.add 	$2=, $pop3, $pop11
+	i32.add 	$2=, $pop2, $pop11
 .LBB2_4:                                # %bar.exit
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label5:
-	i32.ne  	$push4=, $2, $3
-	br_if   	2, $pop4        # 2: down to label2
+	i32.ne  	$push3=, $2, $3
+	br_if   	2, $pop3        # 2: down to label2
 # BB#5:                                 # %for.cond
                                         #   in Loop: Header=BB2_1 Depth=1
-	i32.const	$push8=, 1
-	i32.add 	$1=, $1, $pop8
-	i32.const	$push7=, 26
-	i32.le_s	$push5=, $1, $pop7
-	br_if   	0, $pop5        # 0: up to label3
+	i32.const	$push7=, 1
+	i32.add 	$1=, $1, $pop7
+	i32.const	$push6=, 26
+	i32.le_s	$push4=, $1, $pop6
+	br_if   	0, $pop4        # 0: up to label3
 # BB#6:                                 # %for.end
 	end_loop                        # label4:
-	i32.const	$push6=, 0
-	return  	$pop6
+	i32.const	$push5=, 0
+	return  	$pop5
 .LBB2_7:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION

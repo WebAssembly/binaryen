@@ -13,14 +13,14 @@ f:                                      # @f
 	i32.load8_u	$push0=, 1($0)
 	i32.sub 	$0=, $pop1, $pop0
 	i32.const	$push2=, 31
-	i32.shr_s	$push3=, $0, $pop2
-	tee_local	$push9=, $1=, $pop3
-	i32.add 	$push4=, $0, $pop9
-	i32.xor 	$push5=, $pop4, $1
-	i32.const	$push8=, 31
-	i32.shr_u	$push6=, $0, $pop8
-	i32.add 	$push7=, $pop5, $pop6
-	return  	$pop7
+	i32.shr_s	$push9=, $0, $pop2
+	tee_local	$push8=, $1=, $pop9
+	i32.add 	$push3=, $0, $pop8
+	i32.xor 	$push4=, $pop3, $1
+	i32.const	$push7=, 31
+	i32.shr_u	$push5=, $0, $pop7
+	i32.add 	$push6=, $pop4, $pop5
+	return  	$pop6
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

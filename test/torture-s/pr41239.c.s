@@ -17,39 +17,39 @@ test:                                   # @test
 	i32.store	$6=, 0($4), $6
 	i32.load	$1=, 4($0)
 	block
-	i32.const	$push1=, 8
-	i32.add 	$push2=, $0, $pop1
-	i32.load	$push0=, 0($pop2)
-	tee_local	$push14=, $0=, $pop0
-	br_if   	0, $pop14       # 0: down to label0
+	i32.const	$push0=, 8
+	i32.add 	$push1=, $0, $pop0
+	i32.load	$push14=, 0($pop1)
+	tee_local	$push13=, $0=, $pop14
+	br_if   	0, $pop13       # 0: down to label0
 # BB#1:                                 # %if.then
-	i32.const	$push6=, 20
-	i32.const	$push4=, .L.str
-	i32.const	$push5=, 924
-	i32.const	$push3=, .L__func__.test
+	i32.const	$push5=, 20
+	i32.const	$push3=, .L.str
+	i32.const	$push4=, 924
+	i32.const	$push2=, .L__func__.test
 	i32.const	$push15=, 0
-	i32.call	$push7=, fn1@FUNCTION, $pop6, $pop4, $pop5, $pop3, $pop15
-	i32.const	$push8=, 255
-	i32.and 	$push9=, $pop7, $pop8
+	i32.call	$push6=, fn1@FUNCTION, $pop5, $pop3, $pop4, $pop2, $pop15
+	i32.const	$push7=, 255
+	i32.and 	$push8=, $pop6, $pop7
 	i32.const	$push17=, 0
-	i32.eq  	$push18=, $pop9, $pop17
+	i32.eq  	$push18=, $pop8, $pop17
 	br_if   	0, $pop18       # 0: down to label0
 # BB#2:                                 # %cond.true
-	i32.const	$push10=, 33816706
-	i32.call	$2=, fn3@FUNCTION, $pop10
-	i32.const	$push11=, .L.str.1
+	i32.const	$push9=, 33816706
+	i32.call	$2=, fn3@FUNCTION, $pop9
+	i32.const	$push10=, .L.str.1
 	i32.const	$push16=, 0
-	i32.call	$push12=, fn4@FUNCTION, $pop11, $pop16
-	i32.store	$discard=, 0($6):p2align=4, $pop12
+	i32.call	$push11=, fn4@FUNCTION, $pop10, $pop16
+	i32.store	$discard=, 0($6):p2align=4, $pop11
 	call    	fn2@FUNCTION, $2, $6
 .LBB0_3:                                # %if.end
 	end_block                       # label0:
-	i32.div_s	$push13=, $1, $0
+	i32.div_s	$push12=, $1, $0
 	i32.const	$5=, 16
 	i32.add 	$6=, $6, $5
 	i32.const	$5=, __stack_pointer
 	i32.store	$6=, 0($5), $6
-	return  	$pop13
+	return  	$pop12
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test

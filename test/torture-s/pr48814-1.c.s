@@ -24,32 +24,32 @@ incr:                                   # @incr
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push15=, 0
-	i32.load	$push2=, count($pop15)
-	tee_local	$push14=, $0=, $pop2
-	i32.const	$push6=, 2
-	i32.shl 	$push7=, $pop14, $pop6
-	i32.call	$push1=, incr@FUNCTION
-	i32.store	$discard=, arr($pop7), $pop1
+	i32.call	$0=, incr@FUNCTION
+	i32.const	$push14=, 0
+	i32.load	$push13=, count($pop14)
+	tee_local	$push12=, $1=, $pop13
+	i32.const	$push4=, 2
+	i32.shl 	$push5=, $pop12, $pop4
+	i32.store	$discard=, arr($pop5), $0
 	block
-	i32.const	$push13=, 0
-	i32.const	$push3=, 1
-	i32.add 	$push4=, $0, $pop3
-	i32.store	$push5=, count($pop13), $pop4
-	i32.const	$push12=, 2
-	i32.ne  	$push8=, $pop5, $pop12
-	br_if   	0, $pop8        # 0: down to label0
-# BB#1:                                 # %entry
-	i32.const	$push16=, 0
-	i32.load	$push0=, arr+8($pop16):p2align=3
-	i32.const	$push9=, 3
-	i32.ne  	$push10=, $pop0, $pop9
-	br_if   	0, $pop10       # 0: down to label0
-# BB#2:                                 # %if.end
 	i32.const	$push11=, 0
-	return  	$pop11
+	i32.const	$push1=, 1
+	i32.add 	$push2=, $1, $pop1
+	i32.store	$push3=, count($pop11), $pop2
+	i32.const	$push10=, 2
+	i32.ne  	$push6=, $pop3, $pop10
+	br_if   	0, $pop6        # 0: down to label0
+# BB#1:                                 # %entry
+	i32.const	$push15=, 0
+	i32.load	$push0=, arr+8($pop15):p2align=3
+	i32.const	$push7=, 3
+	i32.ne  	$push8=, $pop0, $pop7
+	br_if   	0, $pop8        # 0: down to label0
+# BB#2:                                 # %if.end
+	i32.const	$push9=, 0
+	return  	$pop9
 .LBB1_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

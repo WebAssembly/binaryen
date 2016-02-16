@@ -8,20 +8,20 @@ init_reg_last:                          # @init_reg_last
 	.local  	i64, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, reg_stat($pop0)
-	tee_local	$push11=, $1=, $pop1
-	i64.const	$push2=, 0
-	i64.store	$0=, 0($pop11):p2align=2, $pop2
-	i32.const	$push6=, 16
-	i32.add 	$push7=, $1, $pop6
-	i32.const	$push3=, 18
-	i32.add 	$push4=, $1, $pop3
-	i32.const	$push10=, 0
-	i32.store8	$push5=, 0($pop4):p2align=1, $pop10
-	i32.store16	$discard=, 0($pop7):p2align=2, $pop5
-	i32.const	$push8=, 8
-	i32.add 	$push9=, $1, $pop8
-	i64.store	$discard=, 0($pop9):p2align=2, $0
+	i32.load	$push11=, reg_stat($pop0)
+	tee_local	$push10=, $1=, $pop11
+	i64.const	$push1=, 0
+	i64.store	$0=, 0($pop10):p2align=2, $pop1
+	i32.const	$push5=, 16
+	i32.add 	$push6=, $1, $pop5
+	i32.const	$push2=, 18
+	i32.add 	$push3=, $1, $pop2
+	i32.const	$push9=, 0
+	i32.store8	$push4=, 0($pop3):p2align=1, $pop9
+	i32.store16	$discard=, 0($pop6):p2align=2, $pop4
+	i32.const	$push7=, 8
+	i32.add 	$push8=, $1, $pop7
+	i64.store	$discard=, 0($pop8):p2align=2, $0
 	return
 	.endfunc
 .Lfunc_end0:

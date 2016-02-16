@@ -9,42 +9,42 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push14=, 0
-	i32.load	$push0=, b($pop14)
+	i32.const	$push12=, 0
+	i32.load	$push0=, b($pop12)
 	i32.const	$push24=, 0
 	i32.eq  	$push25=, $pop0, $pop24
 	br_if   	0, $pop25       # 0: down to label0
 # BB#1:                                 # %for.inc.preheader
-	i32.const	$push16=, 0
-	i32.const	$push15=, 0
-	i32.store	$discard=, b($pop16), $pop15
+	i32.const	$push14=, 0
+	i32.const	$push13=, 0
+	i32.store	$discard=, b($pop14), $pop13
 .LBB0_2:                                # %for.end
 	end_block                       # label0:
 	i32.const	$push23=, 0
 	i32.const	$push22=, 0
 	i32.const	$push21=, 0
-	i32.load	$push1=, a($pop21)
-	tee_local	$push20=, $0=, $pop1
-	i32.const	$push2=, 16
-	i32.shl 	$push3=, $pop20, $pop2
-	i32.const	$push19=, 16
-	i32.shr_s	$push4=, $pop3, $pop19
-	i32.const	$push7=, -32768
-	i32.const	$push5=, 65535
-	i32.and 	$push6=, $0, $pop5
-	i32.select	$push8=, $pop4, $pop7, $pop6
-	tee_local	$push18=, $0=, $pop8
-	i32.store16	$push10=, e($pop22), $pop18
-	i32.store	$discard=, d($pop23), $pop10
+	i32.load	$push20=, a($pop21)
+	tee_local	$push19=, $0=, $pop20
+	i32.const	$push1=, 16
+	i32.shl 	$push2=, $pop19, $pop1
+	i32.const	$push18=, 16
+	i32.shr_s	$push3=, $pop2, $pop18
+	i32.const	$push6=, -32768
+	i32.const	$push4=, 65535
+	i32.and 	$push5=, $0, $pop4
+	i32.select	$push17=, $pop3, $pop6, $pop5
+	tee_local	$push16=, $0=, $pop17
+	i32.store16	$push8=, e($pop22), $pop16
+	i32.store	$discard=, d($pop23), $pop8
 	block
-	i32.const	$push17=, 65535
-	i32.and 	$push9=, $0, $pop17
-	i32.const	$push11=, 1
-	i32.ne  	$push12=, $pop9, $pop11
-	br_if   	0, $pop12       # 0: down to label1
+	i32.const	$push15=, 65535
+	i32.and 	$push7=, $0, $pop15
+	i32.const	$push9=, 1
+	i32.ne  	$push10=, $pop7, $pop9
+	br_if   	0, $pop10       # 0: down to label1
 # BB#3:                                 # %if.end
-	i32.const	$push13=, 0
-	return  	$pop13
+	i32.const	$push11=, 0
+	return  	$pop11
 .LBB0_4:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION

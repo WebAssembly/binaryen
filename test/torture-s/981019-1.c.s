@@ -9,50 +9,50 @@ ff:                                     # @ff
 	.local  	i32
 # BB#0:                                 # %entry
 	block
+	block
+	block
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $0, $pop6
-	br_if   	0, $pop7        # 0: down to label0
+	br_if   	0, $pop7        # 0: down to label2
 # BB#1:                                 # %entry
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $2, $pop8
-	br_if   	0, $pop9        # 0: down to label0
-# BB#2:                                 # %if.then2
-	call    	f1@FUNCTION
-	unreachable
-.LBB0_3:                                # %while.cond.preheader
-	end_block                       # label0:
-	i32.const	$push3=, 0
-	i32.load	$0=, f3.x($pop3)
-.LBB0_4:                                # %while.cond
+	br_if   	1, $2           # 1: down to label1
+.LBB0_2:                                # %while.cond.preheader
+	end_block                       # label2:
+	i32.const	$push2=, 0
+	i32.load	$0=, f3.x($pop2)
+.LBB0_3:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label2:
-	copy_local	$push0=, $0
-	tee_local	$push5=, $3=, $pop0
-	i32.const	$push4=, 0
-	i32.eq  	$0=, $pop5, $pop4
-	br_if   	2, $3           # 2: down to label1
-# BB#5:                                 # %while.body
-                                        #   in Loop: Header=BB0_4 Depth=1
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $2, $pop10
-	br_if   	0, $pop11       # 0: up to label2
-# BB#6:                                 # %land.lhs.true
-	end_loop                        # label3:
-	i32.const	$push2=, 0
-	i32.store	$discard=, f3.x($pop2), $0
-	i32.call	$discard=, f2@FUNCTION
-	unreachable
-.LBB0_7:                                # %while.end
-	end_block                       # label1:
+	loop                            # label4:
+	copy_local	$push5=, $0
+	tee_local	$push4=, $3=, $pop5
+	i32.const	$push3=, 0
+	i32.eq  	$0=, $pop4, $pop3
+	br_if   	2, $3           # 2: down to label3
+# BB#4:                                 # %while.body
+                                        #   in Loop: Header=BB0_3 Depth=1
+	i32.const	$push8=, 0
+	i32.eq  	$push9=, $2, $pop8
+	br_if   	0, $pop9        # 0: up to label4
+# BB#5:                                 # %land.lhs.true
+	end_loop                        # label5:
 	i32.const	$push1=, 0
 	i32.store	$discard=, f3.x($pop1), $0
-	block
-	br_if   	0, $2           # 0: down to label4
-# BB#8:                                 # %if.end16
+	i32.call	$discard=, f2@FUNCTION
+	unreachable
+.LBB0_6:                                # %while.end
+	end_block                       # label3:
+	i32.const	$push0=, 0
+	i32.store	$discard=, f3.x($pop0), $0
+	br_if   	1, $2           # 1: down to label0
+# BB#7:                                 # %if.end16
 	return
+.LBB0_8:                                # %if.then2
+	end_block                       # label1:
+	call    	f1@FUNCTION
+	unreachable
 .LBB0_9:                                # %if.then15
-	end_block                       # label4:
+	end_block                       # label0:
 	call    	f1@FUNCTION
 	unreachable
 	.endfunc
@@ -110,22 +110,22 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 0
-	i32.load	$0=, f3.x($pop2)
+	i32.const	$push1=, 0
+	i32.load	$0=, f3.x($pop1)
 .LBB4_1:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label5:
-	copy_local	$push0=, $0
-	tee_local	$push4=, $1=, $pop0
-	i32.const	$push3=, 0
-	i32.eq  	$0=, $pop4, $pop3
+	loop                            # label6:
+	copy_local	$push4=, $0
+	tee_local	$push3=, $1=, $pop4
+	i32.const	$push2=, 0
+	i32.eq  	$0=, $pop3, $pop2
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $1, $pop6
-	br_if   	0, $pop7        # 0: up to label5
+	br_if   	0, $pop7        # 0: up to label6
 # BB#2:                                 # %ff.exit
-	end_loop                        # label6:
-	i32.const	$push1=, 0
-	i32.store	$discard=, f3.x($pop1), $0
+	end_loop                        # label7:
+	i32.const	$push0=, 0
+	i32.store	$discard=, f3.x($pop0), $0
 	i32.const	$push5=, 0
 	return  	$pop5
 	.endfunc

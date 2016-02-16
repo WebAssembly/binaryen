@@ -8,42 +8,42 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push29=, 0
-	i32.load	$push0=, pars($pop29)
-	tee_local	$push28=, $1=, $pop0
-	i32.const	$push3=, 31
-	i32.and 	$push1=, $pop28, $pop3
-	tee_local	$push27=, $0=, $pop1
-	i32.const	$push26=, 31
-	i32.eq  	$push4=, $pop27, $pop26
-	br_if   	0, $pop4        # 0: down to label0
+	i32.const	$push28=, 0
+	i32.load	$push27=, pars($pop28)
+	tee_local	$push26=, $1=, $pop27
+	i32.const	$push0=, 31
+	i32.and 	$push25=, $pop26, $pop0
+	tee_local	$push24=, $0=, $pop25
+	i32.const	$push23=, 31
+	i32.eq  	$push1=, $pop24, $pop23
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push32=, 0
-	i32.load	$push2=, r($pop32)
-	tee_local	$push31=, $2=, $pop2
-	i32.const	$push23=, 3
-	i32.shl 	$push24=, $0, $pop23
-	i32.add 	$push25=, $pop31, $pop24
-	i32.const	$push5=, 2
-	i32.shr_u	$push6=, $1, $pop5
-	i32.const	$push7=, 248
-	i32.and 	$push8=, $pop6, $pop7
-	i32.add 	$push9=, $2, $pop8
-	i64.load	$push10=, 0($pop9)
-	i32.const	$push11=, 24
-	i32.shr_u	$push12=, $1, $pop11
-	i32.const	$push30=, 248
-	i32.and 	$push13=, $pop12, $pop30
-	i32.add 	$push14=, $2, $pop13
-	i64.load	$push15=, 0($pop14)
-	i64.const	$push16=, 3
-	i64.shl 	$push17=, $pop15, $pop16
-	i64.const	$push18=, 56
+	i32.load	$push31=, r($pop32)
+	tee_local	$push30=, $2=, $pop31
+	i32.const	$push20=, 3
+	i32.shl 	$push21=, $0, $pop20
+	i32.add 	$push22=, $pop30, $pop21
+	i32.const	$push2=, 2
+	i32.shr_u	$push3=, $1, $pop2
+	i32.const	$push4=, 248
+	i32.and 	$push5=, $pop3, $pop4
+	i32.add 	$push6=, $2, $pop5
+	i64.load	$push7=, 0($pop6)
+	i32.const	$push8=, 24
+	i32.shr_u	$push9=, $1, $pop8
+	i32.const	$push29=, 248
+	i32.and 	$push10=, $pop9, $pop29
+	i32.add 	$push11=, $2, $pop10
+	i64.load	$push12=, 0($pop11)
+	i64.const	$push13=, 3
+	i64.shl 	$push14=, $pop12, $pop13
+	i64.const	$push15=, 56
+	i64.and 	$push16=, $pop14, $pop15
+	i64.shr_u	$push17=, $pop7, $pop16
+	i64.const	$push18=, 255
 	i64.and 	$push19=, $pop17, $pop18
-	i64.shr_u	$push20=, $pop10, $pop19
-	i64.const	$push21=, 255
-	i64.and 	$push22=, $pop20, $pop21
-	i64.store	$discard=, 0($pop25), $pop22
+	i64.store	$discard=, 0($pop22), $pop19
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	return

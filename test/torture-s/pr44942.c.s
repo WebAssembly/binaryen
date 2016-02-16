@@ -18,16 +18,16 @@ test1:                                  # @test1
 	i32.const	$push1=, 3
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, -4
-	i32.and 	$push4=, $pop2, $pop3
-	tee_local	$push10=, $9=, $pop4
-	i32.const	$push5=, 4
-	i32.add 	$push6=, $pop10, $pop5
-	i32.store	$discard=, 12($13), $pop6
+	i32.and 	$push10=, $pop2, $pop3
+	tee_local	$push9=, $9=, $pop10
+	i32.const	$push4=, 4
+	i32.add 	$push5=, $pop9, $pop4
+	i32.store	$discard=, 12($13), $pop5
 	block
-	i32.load	$push7=, 0($9)
-	i32.const	$push8=, 1234
-	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	0, $pop9        # 0: down to label0
+	i32.load	$push6=, 0($9)
+	i32.const	$push7=, 1234
+	i32.ne  	$push8=, $pop6, $pop7
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$12=, 16
 	i32.add 	$13=, $13, $12
@@ -60,16 +60,16 @@ test2:                                  # @test2
 	i32.const	$push1=, 3
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, -4
-	i32.and 	$push4=, $pop2, $pop3
-	tee_local	$push10=, $18=, $pop4
-	i32.const	$push5=, 4
-	i32.add 	$push6=, $pop10, $pop5
-	i32.store	$discard=, 12($22), $pop6
+	i32.and 	$push10=, $pop2, $pop3
+	tee_local	$push9=, $18=, $pop10
+	i32.const	$push4=, 4
+	i32.add 	$push5=, $pop9, $pop4
+	i32.store	$discard=, 12($22), $pop5
 	block
-	i32.load	$push7=, 0($18)
-	i32.const	$push8=, 1234
-	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	0, $pop9        # 0: down to label1
+	i32.load	$push6=, 0($18)
+	i32.const	$push7=, 1234
+	i32.ne  	$push8=, $pop6, $pop7
+	br_if   	0, $pop8        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$21=, 16
 	i32.add 	$22=, $22, $21
@@ -102,16 +102,16 @@ test3:                                  # @test3
 	i32.const	$push1=, 7
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, -8
-	i32.and 	$push4=, $pop2, $pop3
-	tee_local	$push10=, $9=, $pop4
-	i32.const	$push5=, 8
-	i32.add 	$push6=, $pop10, $pop5
-	i32.store	$discard=, 12($13), $pop6
+	i32.and 	$push10=, $pop2, $pop3
+	tee_local	$push9=, $9=, $pop10
+	i32.const	$push4=, 8
+	i32.add 	$push5=, $pop9, $pop4
+	i32.store	$discard=, 12($13), $pop5
 	block
-	f64.load	$push7=, 0($9)
-	f64.const	$push8=, 0x1.348p10
-	f64.ne  	$push9=, $pop7, $pop8
-	br_if   	0, $pop9        # 0: down to label2
+	f64.load	$push6=, 0($9)
+	f64.const	$push7=, 0x1.348p10
+	f64.ne  	$push8=, $pop6, $pop7
+	br_if   	0, $pop8        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$12=, 16
 	i32.add 	$13=, $13, $12
@@ -144,16 +144,16 @@ test4:                                  # @test4
 	i32.const	$push1=, 7
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, -8
-	i32.and 	$push4=, $pop2, $pop3
-	tee_local	$push10=, $18=, $pop4
-	i32.const	$push5=, 8
-	i32.add 	$push6=, $pop10, $pop5
-	i32.store	$discard=, 12($22), $pop6
+	i32.and 	$push10=, $pop2, $pop3
+	tee_local	$push9=, $18=, $pop10
+	i32.const	$push4=, 8
+	i32.add 	$push5=, $pop9, $pop4
+	i32.store	$discard=, 12($22), $pop5
 	block
-	f64.load	$push7=, 0($18)
-	f64.const	$push8=, 0x1.348p10
-	f64.ne  	$push9=, $pop7, $pop8
-	br_if   	0, $pop9        # 0: down to label3
+	f64.load	$push6=, 0($18)
+	f64.const	$push7=, 0x1.348p10
+	f64.ne  	$push8=, $pop6, $pop7
+	br_if   	0, $pop8        # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$21=, 16
 	i32.add 	$22=, $22, $21

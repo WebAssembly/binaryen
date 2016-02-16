@@ -56,12 +56,12 @@ f:                                      # @f
 # BB#2:                                 # %while.end
 	end_loop                        # label1:
 	block
+	i32.const	$push11=, 88
+	i32.store16	$push12=, 0($1):p2align=0, $pop11
 	i32.const	$push13=, 12
 	i32.add 	$push14=, $5, $pop13
 	i32.load8_u	$push15=, 0($pop14):p2align=2
-	i32.const	$push11=, 88
-	i32.store16	$push12=, 0($1):p2align=0, $pop11
-	i32.ne  	$push16=, $pop15, $pop12
+	i32.ne  	$push16=, $pop12, $pop15
 	br_if   	0, $pop16       # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$4=, 16

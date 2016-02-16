@@ -9,15 +9,15 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push12=, 0
-	i32.load	$push1=, a($pop12)
+	i32.const	$push11=, 0
+	i32.load	$push1=, a($pop11)
 	i32.const	$push26=, 0
 	i32.eq  	$push27=, $pop1, $pop26
 	br_if   	0, $pop27       # 0: down to label0
 # BB#1:                                 # %for.cond.preheader
-	i32.const	$push14=, 0
 	i32.const	$push13=, 0
-	i32.store	$discard=, a($pop14), $pop13
+	i32.const	$push12=, 0
+	i32.store	$discard=, a($pop13), $pop12
 .LBB0_2:                                # %while.end
 	end_block                       # label0:
 	i32.const	$0=, 255
@@ -28,31 +28,31 @@ main:                                   # @main
 	i32.const	$push16=, 0
 	i32.load	$push3=, h($pop16)
 	i32.shr_s	$push0=, $pop2, $pop3
-	i32.store	$push4=, g($pop18), $pop0
-	tee_local	$push15=, $1=, $pop4
+	i32.store	$push15=, g($pop18), $pop0
+	tee_local	$push14=, $1=, $pop15
 	i32.const	$push28=, 0
-	i32.eq  	$push29=, $pop15, $pop28
+	i32.eq  	$push29=, $pop14, $pop28
 	br_if   	0, $pop29       # 0: down to label1
 # BB#3:                                 # %cond.false
-	i32.const	$push5=, -1
-	i32.rem_s	$0=, $pop5, $1
+	i32.const	$push4=, -1
+	i32.rem_s	$0=, $pop4, $1
 .LBB0_4:                                # %cond.end
 	end_block                       # label1:
 	i32.const	$push24=, 0
-	i32.load	$push9=, d($pop24)
+	i32.load	$push8=, d($pop24)
 	i32.const	$push23=, 0
 	i32.const	$push22=, 0
-	i32.store8	$push6=, f($pop22), $0
-	i32.store8	$push7=, e($pop23), $pop6
+	i32.store8	$push5=, f($pop22), $0
+	i32.store8	$push6=, e($pop23), $pop5
 	i32.const	$push21=, 255
-	i32.and 	$push8=, $pop7, $pop21
-	i32.store	$discard=, 0($pop9), $pop8
+	i32.and 	$push7=, $pop6, $pop21
+	i32.store	$discard=, 0($pop8), $pop7
 	block
 	i32.const	$push20=, 0
-	i32.load	$push10=, b($pop20)
+	i32.load	$push9=, b($pop20)
 	i32.const	$push19=, 255
-	i32.ne  	$push11=, $pop10, $pop19
-	br_if   	0, $pop11       # 0: down to label2
+	i32.ne  	$push10=, $pop9, $pop19
+	br_if   	0, $pop10       # 0: down to label2
 # BB#5:                                 # %if.end23
 	i32.const	$push25=, 0
 	return  	$pop25

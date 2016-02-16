@@ -11,11 +11,11 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.call	$push0=, malloc@FUNCTION, $1
 	i32.load	$push1=, 8($0)
-	i32.call	$push2=, memcpy@FUNCTION, $pop0, $0, $pop1
-	tee_local	$push4=, $2=, $pop2
-	i32.store	$discard=, 0($pop4), $0
-	i32.const	$push3=, 0
-	i32.store	$discard=, 4($2), $pop3
+	i32.call	$push4=, memcpy@FUNCTION, $pop0, $0, $pop1
+	tee_local	$push3=, $2=, $pop4
+	i32.store	$discard=, 0($pop3), $0
+	i32.const	$push2=, 0
+	i32.store	$discard=, 4($2), $pop2
 	i32.store	$discard=, 8($2), $1
 	return  	$2
 	.endfunc

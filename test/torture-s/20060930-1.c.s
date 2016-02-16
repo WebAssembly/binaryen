@@ -30,22 +30,22 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push4=, 1
-	i32.lt_s	$push5=, $1, $pop4
-	br_if   	0, $pop5        # 0: down to label1
+	i32.const	$push3=, 1
+	i32.lt_s	$push4=, $1, $pop3
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %for.body.lr.ph
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push12=, 0
 	i32.const	$push11=, 0
-	i32.sub 	$push3=, $pop11, $0
+	i32.sub 	$push2=, $pop11, $0
 	i32.const	$push10=, 0
-	i32.gt_s	$push2=, $0, $pop10
-	i32.select	$push0=, $pop3, $0, $pop2
-	tee_local	$push9=, $0=, $pop0
-	i32.sub 	$push7=, $pop12, $pop9
-	i32.const	$push8=, -1
-	i32.gt_s	$push6=, $0, $pop8
-	i32.select	$0=, $pop1, $pop7, $pop6
+	i32.gt_s	$push1=, $0, $pop10
+	i32.select	$push9=, $pop2, $0, $pop1
+	tee_local	$push8=, $0=, $pop9
+	i32.sub 	$push6=, $pop12, $pop8
+	i32.const	$push7=, -1
+	i32.gt_s	$push5=, $0, $pop7
+	i32.select	$0=, $pop0, $pop6, $pop5
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:

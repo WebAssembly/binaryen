@@ -10,26 +10,26 @@ f:                                      # @f
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push1=, 2147483647
-	i32.eq  	$push2=, $0, $pop1
-	br_if   	0, $pop2        # 0: down to label0
+	i32.const	$push0=, 2147483647
+	i32.eq  	$push1=, $0, $pop0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
-	i32.const	$push3=, 2
-	i32.shl 	$push4=, $0, $pop3
-	i32.const	$push5=, a
-	i32.add 	$2=, $pop4, $pop5
-	i32.const	$push6=, 2147483646
-	i32.sub 	$1=, $pop6, $0
+	i32.const	$push2=, 2
+	i32.shl 	$push3=, $0, $pop2
+	i32.const	$push4=, a
+	i32.add 	$2=, $pop3, $pop4
+	i32.const	$push5=, 2147483646
+	i32.sub 	$1=, $pop5, $0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push10=, -2
 	i32.store	$discard=, 0($2), $pop10
-	copy_local	$push0=, $1
-	tee_local	$push9=, $0=, $pop0
-	i32.const	$push8=, 2147483645
-	i32.eq  	$push7=, $pop9, $pop8
-	br_if   	1, $pop7        # 1: down to label2
+	copy_local	$push9=, $1
+	tee_local	$push8=, $0=, $pop9
+	i32.const	$push7=, 2147483645
+	i32.eq  	$push6=, $pop8, $pop7
+	br_if   	1, $pop6        # 1: down to label2
 # BB#3:                                 # %for.body
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push12=, 4

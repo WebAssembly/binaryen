@@ -9,28 +9,28 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	block
+	block
 	i32.const	$push9=, 0
 	i32.load	$push0=, Upgd_minor_ID($pop9)
 	i32.load	$push1=, 0($pop0)
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	0, $pop3        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.end
-	block
 	i32.const	$push10=, 0
 	i32.load	$push4=, Upgd_minor_ID1($pop10)
 	i32.load	$push5=, 0($pop4)
 	i32.const	$push6=, 1
 	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	0, $pop7        # 0: down to label1
+	br_if   	1, $pop7        # 1: down to label0
 # BB#2:                                 # %if.end3
 	i32.const	$push8=, 0
 	return  	$pop8
-.LBB0_3:                                # %if.then2
+.LBB0_3:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_4:                                # %if.then
+.LBB0_4:                                # %if.then2
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

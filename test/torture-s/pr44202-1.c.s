@@ -10,11 +10,11 @@ add512:                                 # @add512
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push1=, 512
-	i32.add 	$push0=, $0, $pop1
-	tee_local	$push2=, $2=, $pop0
+	i32.const	$push0=, 512
+	i32.add 	$push2=, $0, $pop0
+	tee_local	$push1=, $2=, $pop2
 	i32.const	$push3=, 0
-	i32.eq  	$push4=, $pop2, $pop3
+	i32.eq  	$push4=, $pop1, $pop3
 	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 0($1), $0
@@ -35,10 +35,10 @@ add513:                                 # @add513
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push1=, 513
-	i32.add 	$push0=, $0, $pop1
-	tee_local	$push2=, $2=, $pop0
-	br_if   	0, $pop2        # 0: down to label1
+	i32.const	$push0=, 513
+	i32.add 	$push2=, $0, $pop0
+	tee_local	$push1=, $2=, $pop2
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 0($1), $0
 .LBB1_2:                                # %if.end

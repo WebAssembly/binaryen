@@ -9,24 +9,24 @@ t:                                      # @t
 	.result 	i32
 # BB#0:                                 # %entry
 	block
+	block
 	i32.const	$push3=, 0
 	i32.eq  	$push4=, $0, $pop3
-	br_if   	0, $pop4        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %if.end
-	block
 	i32.const	$push0=, 256
 	i32.ge_s	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label1
+	br_if   	1, $pop1        # 1: down to label0
 # BB#2:                                 # %if.end3
 	return  	$0
-.LBB0_3:                                # %if.then2
+.LBB0_3:                                # %if.then
 	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_4:                                # %if.then
-	end_block                       # label0:
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
+	unreachable
+.LBB0_4:                                # %if.then2
+	end_block                       # label0:
+	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:

@@ -9,23 +9,23 @@ main:                                   # @main
 	.local  	f64
 # BB#0:                                 # %entry
 	block
-	i32.const	$push1=, 0
-	f64.load	$push2=, d($pop1)
-	f64.floor	$push0=, $pop2
-	tee_local	$push10=, $0=, $pop0
-	i32.trunc_s/f64	$push3=, $pop10
-	i32.const	$push9=, 1023
-	i32.ne  	$push4=, $pop3, $pop9
-	br_if   	0, $pop4        # 0: down to label0
+	i32.const	$push0=, 0
+	f64.load	$push1=, d($pop0)
+	f64.floor	$push10=, $pop1
+	tee_local	$push9=, $0=, $pop10
+	i32.trunc_s/f64	$push2=, $pop9
+	i32.const	$push8=, 1023
+	i32.ne  	$push3=, $pop2, $pop8
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	f32.demote/f64	$push5=, $0
-	i32.trunc_s/f32	$push6=, $pop5
+	f32.demote/f64	$push4=, $0
+	i32.trunc_s/f32	$push5=, $pop4
 	i32.const	$push11=, 1023
-	i32.ne  	$push7=, $pop6, $pop11
-	br_if   	0, $pop7        # 0: down to label0
+	i32.ne  	$push6=, $pop5, $pop11
+	br_if   	0, $pop6        # 0: down to label0
 # BB#2:                                 # %if.end
-	i32.const	$push8=, 0
-	return  	$pop8
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB0_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

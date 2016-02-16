@@ -24,12 +24,12 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	call    	ff@FUNCTION, $0
 	block
-	i32.const	$push1=, 2
-	i32.add 	$push0=, $0, $pop1
-	tee_local	$push6=, $1=, $pop0
-	i32.const	$push5=, 65535
-	i32.and 	$push2=, $pop6, $pop5
-	br_if   	0, $pop2        # 0: down to label0
+	i32.const	$push0=, 2
+	i32.add 	$push6=, $0, $pop0
+	tee_local	$push5=, $1=, $pop6
+	i32.const	$push4=, 65535
+	i32.and 	$push1=, $pop5, $pop4
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.then
 	#APP
 	#NO_APP
@@ -37,10 +37,10 @@ f:                                      # @f
 	end_block                       # label0:
 	call    	ff@FUNCTION, $0
 	block
-	i32.add 	$push3=, $1, $0
+	i32.add 	$push2=, $1, $0
 	i32.const	$push7=, 65535
-	i32.and 	$push4=, $pop3, $pop7
-	br_if   	0, $pop4        # 0: down to label1
+	i32.and 	$push3=, $pop2, $pop7
+	br_if   	0, $pop3        # 0: down to label1
 # BB#3:                                 # %if.then.1
 	#APP
 	#NO_APP

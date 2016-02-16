@@ -17,17 +17,17 @@ f:                                      # @f
 	i32.store	$6=, 0($3), $6
 	block
 	block
-	i32.store	$push0=, 12($6), $0
-	tee_local	$push3=, $0=, $pop0
+	i32.store	$push3=, 12($6), $0
+	tee_local	$push2=, $0=, $pop3
 	i32.const	$push4=, 0
-	i32.eq  	$push5=, $pop3, $pop4
+	i32.eq  	$push5=, $pop2, $pop4
 	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %if.end
-	i32.const	$push1=, -1
-	i32.add 	$push2=, $0, $pop1
+	i32.const	$push0=, -1
+	i32.add 	$push1=, $0, $pop0
 	i32.const	$5=, 12
 	i32.add 	$5=, $6, $5
-	i32.call	$0=, f@FUNCTION, $pop2, $5
+	i32.call	$0=, f@FUNCTION, $pop1, $5
 	br      	1               # 1: down to label0
 .LBB0_2:                                # %if.then
 	end_block                       # label1:

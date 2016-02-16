@@ -10,27 +10,27 @@ f:                                      # @f
 	.local  	i64
 # BB#0:                                 # %entry
 	block
-	i64.load	$push0=, 0($0):p2align=2
-	tee_local	$push9=, $1=, $pop0
-	i64.const	$push1=, 65535
-	i64.and 	$push2=, $pop9, $pop1
-	i64.const	$push3=, 4660
-	i64.ne  	$push4=, $pop2, $pop3
-	br_if   	0, $pop4        # 0: down to label0
-# BB#1:                                 # %if.end
 	block
-	i64.const	$push5=, 281474976645120
-	i64.and 	$push6=, $1, $pop5
-	i64.const	$push7=, 95075992076288
-	i64.ne  	$push8=, $pop6, $pop7
-	br_if   	0, $pop8        # 0: down to label1
+	i64.load	$push9=, 0($0):p2align=2
+	tee_local	$push8=, $1=, $pop9
+	i64.const	$push0=, 65535
+	i64.and 	$push1=, $pop8, $pop0
+	i64.const	$push2=, 4660
+	i64.ne  	$push3=, $pop1, $pop2
+	br_if   	0, $pop3        # 0: down to label1
+# BB#1:                                 # %if.end
+	i64.const	$push4=, 281474976645120
+	i64.and 	$push5=, $1, $pop4
+	i64.const	$push6=, 95075992076288
+	i64.ne  	$push7=, $pop5, $pop6
+	br_if   	1, $pop7        # 1: down to label0
 # BB#2:                                 # %if.end6
 	return  	$0
-.LBB0_3:                                # %if.then5
+.LBB0_3:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_4:                                # %if.then
+.LBB0_4:                                # %if.then5
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

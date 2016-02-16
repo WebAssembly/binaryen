@@ -17,9 +17,10 @@ inner:                                  # @inner
 	i32.store	$push0=, 12($5), $1
 	i32.store	$discard=, 8($5), $pop0
 	block
+	block
 	i32.const	$push1=, 10
 	i32.gt_u	$push2=, $0, $pop1
-	br_if   	0, $pop2        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %entry
 	block
 	block
@@ -33,19 +34,19 @@ inner:                                  # @inner
 	block
 	block
 	block
-	tableswitch	$0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 # 0: down to label12
-                                        # 1: down to label11
-                                        # 2: down to label10
-                                        # 3: down to label9
-                                        # 4: down to label8
-                                        # 5: down to label7
-                                        # 6: down to label6
-                                        # 7: down to label5
-                                        # 8: down to label4
-                                        # 9: down to label3
-                                        # 10: down to label2
+	tableswitch	$0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 10, 8, 9 # 0: down to label13
+                                        # 1: down to label12
+                                        # 2: down to label11
+                                        # 3: down to label10
+                                        # 4: down to label9
+                                        # 5: down to label8
+                                        # 6: down to label7
+                                        # 7: down to label6
+                                        # 10: down to label3
+                                        # 8: down to label5
+                                        # 9: down to label4
 .LBB0_2:                                # %sw.bb
-	end_block                       # label12:
+	end_block                       # label13:
 	i32.const	$push90=, 0
 	i32.load	$push91=, stdout($pop90)
 	i32.const	$push92=, .L.str
@@ -58,12 +59,12 @@ inner:                                  # @inner
 	i32.call	$push95=, vfprintf@FUNCTION, $pop94, $pop98, $pop93
 	i32.const	$push96=, 5
 	i32.eq  	$push97=, $pop95, $pop96
-	br_if   	10, $pop97      # 10: down to label1
+	br_if   	10, $pop97      # 10: down to label2
 # BB#3:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %sw.bb4
-	end_block                       # label11:
+	end_block                       # label12:
 	i32.const	$push81=, 0
 	i32.load	$push82=, stdout($pop81)
 	i32.const	$push83=, .L.str.1
@@ -76,12 +77,12 @@ inner:                                  # @inner
 	i32.call	$push86=, vfprintf@FUNCTION, $pop85, $pop100, $pop84
 	i32.const	$push87=, 6
 	i32.eq  	$push88=, $pop86, $pop87
-	br_if   	9, $pop88       # 9: down to label1
+	br_if   	9, $pop88       # 9: down to label2
 # BB#5:                                 # %if.then8
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_6:                                # %sw.bb10
-	end_block                       # label10:
+	end_block                       # label11:
 	i32.const	$push72=, 0
 	i32.load	$push73=, stdout($pop72)
 	i32.const	$push74=, .L.str.2
@@ -94,12 +95,12 @@ inner:                                  # @inner
 	i32.call	$push77=, vfprintf@FUNCTION, $pop76, $pop102, $pop75
 	i32.const	$push78=, 1
 	i32.eq  	$push79=, $pop77, $pop78
-	br_if   	8, $pop79       # 8: down to label1
+	br_if   	8, $pop79       # 8: down to label2
 # BB#7:                                 # %if.then14
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_8:                                # %sw.bb16
-	end_block                       # label9:
+	end_block                       # label10:
 	i32.const	$push65=, 0
 	i32.load	$push66=, stdout($pop65)
 	i32.const	$push67=, .L.str.3
@@ -112,12 +113,12 @@ inner:                                  # @inner
 	i32.call	$push70=, vfprintf@FUNCTION, $pop69, $pop104, $pop68
 	i32.const	$push120=, 0
 	i32.eq  	$push121=, $pop70, $pop120
-	br_if   	7, $pop121      # 7: down to label1
+	br_if   	7, $pop121      # 7: down to label2
 # BB#9:                                 # %if.then20
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_10:                               # %sw.bb22
-	end_block                       # label8:
+	end_block                       # label9:
 	i32.const	$push56=, 0
 	i32.load	$push57=, stdout($pop56)
 	i32.const	$push58=, .L.str.4
@@ -130,12 +131,12 @@ inner:                                  # @inner
 	i32.call	$push61=, vfprintf@FUNCTION, $pop60, $pop106, $pop59
 	i32.const	$push62=, 5
 	i32.eq  	$push63=, $pop61, $pop62
-	br_if   	6, $pop63       # 6: down to label1
+	br_if   	6, $pop63       # 6: down to label2
 # BB#11:                                # %if.then26
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_12:                               # %sw.bb28
-	end_block                       # label7:
+	end_block                       # label8:
 	i32.const	$push47=, 0
 	i32.load	$push48=, stdout($pop47)
 	i32.const	$push49=, .L.str.4
@@ -148,12 +149,12 @@ inner:                                  # @inner
 	i32.call	$push52=, vfprintf@FUNCTION, $pop51, $pop108, $pop50
 	i32.const	$push53=, 6
 	i32.eq  	$push54=, $pop52, $pop53
-	br_if   	5, $pop54       # 5: down to label1
+	br_if   	5, $pop54       # 5: down to label2
 # BB#13:                                # %if.then32
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_14:                               # %sw.bb34
-	end_block                       # label6:
+	end_block                       # label7:
 	i32.const	$push38=, 0
 	i32.load	$push39=, stdout($pop38)
 	i32.const	$push40=, .L.str.4
@@ -166,12 +167,12 @@ inner:                                  # @inner
 	i32.call	$push43=, vfprintf@FUNCTION, $pop42, $pop110, $pop41
 	i32.const	$push44=, 1
 	i32.eq  	$push45=, $pop43, $pop44
-	br_if   	4, $pop45       # 4: down to label1
+	br_if   	4, $pop45       # 4: down to label2
 # BB#15:                                # %if.then38
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_16:                               # %sw.bb40
-	end_block                       # label5:
+	end_block                       # label6:
 	i32.const	$push31=, 0
 	i32.load	$push32=, stdout($pop31)
 	i32.const	$push33=, .L.str.4
@@ -184,30 +185,12 @@ inner:                                  # @inner
 	i32.call	$push36=, vfprintf@FUNCTION, $pop35, $pop112, $pop34
 	i32.const	$push122=, 0
 	i32.eq  	$push123=, $pop36, $pop122
-	br_if   	3, $pop123      # 3: down to label1
+	br_if   	3, $pop123      # 3: down to label2
 # BB#17:                                # %if.then44
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_18:                               # %sw.bb46
-	end_block                       # label4:
-	i32.const	$push22=, 0
-	i32.load	$push23=, stdout($pop22)
-	i32.const	$push24=, .L.str.5
-	i32.load	$push21=, 12($5)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop23, $pop24, $pop21
-	i32.const	$push115=, 0
-	i32.load	$push26=, stdout($pop115)
-	i32.const	$push114=, .L.str.5
-	i32.load	$push25=, 8($5)
-	i32.call	$push27=, vfprintf@FUNCTION, $pop26, $pop114, $pop25
-	i32.const	$push28=, 1
-	i32.eq  	$push29=, $pop27, $pop28
-	br_if   	2, $pop29       # 2: down to label1
-# BB#19:                                # %if.then50
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_20:                               # %sw.bb52
-	end_block                       # label3:
+.LBB0_18:                               # %sw.bb52
+	end_block                       # label5:
 	i32.const	$push13=, 0
 	i32.load	$push14=, stdout($pop13)
 	i32.const	$push15=, .L.str.6
@@ -220,12 +203,12 @@ inner:                                  # @inner
 	i32.call	$push18=, vfprintf@FUNCTION, $pop17, $pop116, $pop16
 	i32.const	$push19=, 7
 	i32.eq  	$push20=, $pop18, $pop19
-	br_if   	1, $pop20       # 1: down to label1
-# BB#21:                                # %if.then56
+	br_if   	2, $pop20       # 2: down to label2
+# BB#19:                                # %if.then56
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_22:                               # %sw.bb58
-	end_block                       # label2:
+.LBB0_20:                               # %sw.bb58
+	end_block                       # label4:
 	i32.const	$push4=, 0
 	i32.load	$push5=, stdout($pop4)
 	i32.const	$push6=, .L.str.7
@@ -238,18 +221,37 @@ inner:                                  # @inner
 	i32.call	$push9=, vfprintf@FUNCTION, $pop8, $pop118, $pop7
 	i32.const	$push10=, 2
 	i32.eq  	$push11=, $pop9, $pop10
-	br_if   	0, $pop11       # 0: down to label1
-# BB#23:                                # %if.then62
+	br_if   	1, $pop11       # 1: down to label2
+# BB#21:                                # %if.then62
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_24:                               # %sw.epilog
-	end_block                       # label1:
+.LBB0_22:                               # %sw.bb46
+	end_block                       # label3:
+	i32.const	$push22=, 0
+	i32.load	$push23=, stdout($pop22)
+	i32.const	$push24=, .L.str.5
+	i32.load	$push21=, 12($5)
+	i32.call	$discard=, vfprintf@FUNCTION, $pop23, $pop24, $pop21
+	i32.const	$push115=, 0
+	i32.load	$push26=, stdout($pop115)
+	i32.const	$push114=, .L.str.5
+	i32.load	$push25=, 8($5)
+	i32.call	$push27=, vfprintf@FUNCTION, $pop26, $pop114, $pop25
+	i32.const	$push28=, 1
+	i32.ne  	$push29=, $pop27, $pop28
+	br_if   	2, $pop29       # 2: down to label0
+.LBB0_23:                               # %sw.epilog
+	end_block                       # label2:
 	i32.const	$4=, 16
 	i32.add 	$5=, $5, $4
 	i32.const	$4=, __stack_pointer
 	i32.store	$5=, 0($4), $5
 	return
-.LBB0_25:                               # %sw.default
+.LBB0_24:                               # %sw.default
+	end_block                       # label1:
+	call    	abort@FUNCTION
+	unreachable
+.LBB0_25:                               # %if.then50
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

@@ -11,18 +11,18 @@ f2:                                     # @f2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push11=, 0
-	i32.load	$push1=, x($pop11)
-	tee_local	$push10=, $1=, $pop1
-	i32.const	$push2=, 10
-	i32.add 	$push3=, $pop10, $pop2
-	i32.store	$discard=, x($pop0), $pop3
-	i32.trunc_u/f64	$push4=, $0
-	i32.const	$push9=, 10
-	i32.mul 	$push5=, $1, $pop9
-	i32.add 	$push6=, $pop4, $pop5
-	i32.const	$push7=, 45
-	i32.add 	$push8=, $pop6, $pop7
-	return  	$pop8
+	i32.load	$push10=, x($pop11)
+	tee_local	$push9=, $1=, $pop10
+	i32.const	$push1=, 10
+	i32.add 	$push2=, $pop9, $pop1
+	i32.store	$discard=, x($pop0), $pop2
+	i32.trunc_u/f64	$push3=, $0
+	i32.const	$push8=, 10
+	i32.mul 	$push4=, $1, $pop8
+	i32.add 	$push5=, $pop3, $pop4
+	i32.const	$push6=, 45
+	i32.add 	$push7=, $pop5, $pop6
+	return  	$pop7
 	.endfunc
 .Lfunc_end0:
 	.size	f2, .Lfunc_end0-f2
@@ -37,11 +37,11 @@ getval:                                 # @getval
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i32.load	$push1=, x($pop5)
-	tee_local	$push4=, $0=, $pop1
-	i32.const	$push2=, 1
-	i32.add 	$push3=, $pop4, $pop2
-	i32.store	$discard=, x($pop0), $pop3
+	i32.load	$push4=, x($pop5)
+	tee_local	$push3=, $0=, $pop4
+	i32.const	$push1=, 1
+	i32.add 	$push2=, $pop3, $pop1
+	i32.store	$discard=, x($pop0), $pop2
 	return  	$0
 	.endfunc
 .Lfunc_end1:
@@ -62,25 +62,25 @@ f:                                      # @f
 	i32.store	$4=, 0($2), $4
 	i32.const	$push0=, 0
 	i32.const	$push15=, 0
-	i32.load	$push1=, x($pop15)
-	tee_local	$push14=, $0=, $pop1
-	i32.const	$push2=, 20
-	i32.add 	$push3=, $pop14, $pop2
-	i32.store	$discard=, x($pop0), $pop3
-	i32.const	$push4=, 10
-	i32.mul 	$push5=, $0, $pop4
-	tee_local	$push13=, $0=, $pop5
-	i32.add 	$push6=, $pop13, $0
-	i32.const	$push7=, 207
-	i32.add 	$push8=, $pop6, $pop7
-	i32.store	$0=, 0($4):p2align=4, $pop8
-	i32.const	$push10=, buf
-	i32.const	$push9=, .L.str
-	i32.call	$discard=, sprintf@FUNCTION, $pop10, $pop9, $4
+	i32.load	$push14=, x($pop15)
+	tee_local	$push13=, $0=, $pop14
+	i32.const	$push1=, 20
+	i32.add 	$push2=, $pop13, $pop1
+	i32.store	$discard=, x($pop0), $pop2
+	i32.const	$push3=, 10
+	i32.mul 	$push12=, $0, $pop3
+	tee_local	$push11=, $0=, $pop12
+	i32.add 	$push4=, $pop11, $0
+	i32.const	$push5=, 207
+	i32.add 	$push6=, $pop4, $pop5
+	i32.store	$0=, 0($4):p2align=4, $pop6
+	i32.const	$push8=, buf
+	i32.const	$push7=, .L.str
+	i32.call	$discard=, sprintf@FUNCTION, $pop8, $pop7, $4
 	block
-	i32.const	$push11=, 227
-	i32.ne  	$push12=, $0, $pop11
-	br_if   	0, $pop12       # 0: down to label0
+	i32.const	$push9=, 227
+	i32.ne  	$push10=, $0, $pop9
+	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$3=, 16
 	i32.add 	$4=, $4, $3

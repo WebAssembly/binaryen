@@ -11,60 +11,60 @@ ieq:                                    # @ieq
 	block
 	block
 	block
-	i32.ne  	$push0=, $0, $1
-	tee_local	$push1=, $1=, $pop0
+	block
+	block
+	block
+	i32.ne  	$push1=, $0, $1
+	tee_local	$push0=, $1=, $pop1
 	i32.const	$push2=, 0
-	i32.eq  	$push3=, $pop1, $pop2
-	br_if   	0, $pop3        # 0: down to label2
+	i32.eq  	$push3=, $pop0, $pop2
+	br_if   	0, $pop3        # 0: down to label5
 # BB#1:                                 # %if.else
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $2, $pop4
-	br_if   	1, $pop5        # 1: down to label1
+	br_if   	1, $pop5        # 1: down to label4
 # BB#2:                                 # %if.then4
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.then
-	end_block                       # label2:
+	end_block                       # label5:
 	i32.const	$push6=, 0
 	i32.eq  	$push7=, $2, $pop6
-	br_if   	1, $pop7        # 1: down to label0
+	br_if   	1, $pop7        # 1: down to label3
 .LBB0_4:                                # %if.end6
-	end_block                       # label1:
+	end_block                       # label4:
 	block
 	block
-	block
-	br_if   	0, $1           # 0: down to label5
+	br_if   	0, $1           # 0: down to label7
 # BB#5:                                 # %if.then10
-	br_if   	1, $2           # 1: down to label4
+	br_if   	1, $2           # 1: down to label6
 # BB#6:                                 # %if.then12
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_7:                                # %if.else14
-	end_block                       # label5:
-	br_if   	1, $2           # 1: down to label3
+	end_block                       # label7:
+	br_if   	2, $2           # 2: down to label2
 .LBB0_8:                                # %if.end18
-	end_block                       # label4:
-	block
+	end_block                       # label6:
 	block
 	block
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $1, $pop8
-	br_if   	0, $pop9        # 0: down to label8
+	br_if   	0, $pop9        # 0: down to label9
 # BB#9:                                 # %if.else26
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $2, $pop10
-	br_if   	1, $pop11       # 1: down to label7
+	br_if   	1, $pop11       # 1: down to label8
 # BB#10:                                # %if.then28
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_11:                               # %if.then22
-	end_block                       # label8:
+	end_block                       # label9:
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $2, $pop12
-	br_if   	1, $pop13       # 1: down to label6
+	br_if   	3, $pop13       # 3: down to label1
 .LBB0_12:                               # %if.end30
-	end_block                       # label7:
-	block
+	end_block                       # label8:
 	block
 	block
 	br_if   	0, $1           # 0: down to label11
@@ -75,23 +75,23 @@ ieq:                                    # @ieq
 	unreachable
 .LBB0_15:                               # %if.else38
 	end_block                       # label11:
-	br_if   	1, $2           # 1: down to label9
+	br_if   	4, $2           # 4: down to label0
 .LBB0_16:                               # %if.end42
 	end_block                       # label10:
 	return  	$2
-.LBB0_17:                               # %if.then40
-	end_block                       # label9:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_18:                               # %if.then24
-	end_block                       # label6:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_19:                               # %if.then16
+.LBB0_17:                               # %if.then2
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_20:                               # %if.then2
+.LBB0_18:                               # %if.then16
+	end_block                       # label2:
+	call    	abort@FUNCTION
+	unreachable
+.LBB0_19:                               # %if.then24
+	end_block                       # label1:
+	call    	abort@FUNCTION
+	unreachable
+.LBB0_20:                               # %if.then40
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

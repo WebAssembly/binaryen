@@ -17,25 +17,25 @@ main:                                   # @main
 	#NO_APP
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
-	i64.load	$push0=, sv($pop16)
-	tee_local	$push15=, $1=, $pop0
-	i64.const	$push1=, 40
-	i64.shr_u	$push2=, $pop15, $pop1
-	i64.const	$push3=, 1
-	i64.add 	$push4=, $pop2, $pop3
-	tee_local	$push14=, $2=, $pop4
-	i64.const	$push13=, 40
-	i64.shl 	$push5=, $pop14, $pop13
-	i64.const	$push6=, 1099511627775
-	i64.and 	$push7=, $1, $pop6
-	i64.or  	$push8=, $pop5, $pop7
-	i64.store	$discard=, sv($pop17), $pop8
+	i64.load	$push15=, sv($pop16)
+	tee_local	$push14=, $1=, $pop15
+	i64.const	$push0=, 40
+	i64.shr_u	$push1=, $pop14, $pop0
+	i64.const	$push2=, 1
+	i64.add 	$push13=, $pop1, $pop2
+	tee_local	$push12=, $2=, $pop13
+	i64.const	$push11=, 40
+	i64.shl 	$push3=, $pop12, $pop11
+	i64.const	$push4=, 1099511627775
+	i64.and 	$push5=, $1, $pop4
+	i64.or  	$push6=, $pop3, $pop5
+	i64.store	$discard=, sv($pop17), $pop6
 	block
-	i64.const	$push9=, 16777215
-	i64.and 	$push10=, $2, $pop9
-	i64.const	$push11=, 0
-	i64.ne  	$push12=, $pop10, $pop11
-	br_if   	0, $pop12       # 0: down to label0
+	i64.const	$push7=, 16777215
+	i64.and 	$push8=, $2, $pop7
+	i64.const	$push9=, 0
+	i64.ne  	$push10=, $pop8, $pop9
+	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push18=, 0
 	return  	$pop18

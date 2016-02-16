@@ -10,14 +10,15 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.sub 	$5=, $0, $2
 	block
+	block
 	i32.const	$push0=, 0
 	i32.const	$push13=, 0
 	i32.gt_s	$push1=, $5, $pop13
-	i32.select	$push11=, $5, $pop0, $pop1
-	tee_local	$push12=, $5=, $pop11
+	i32.select	$push12=, $5, $pop0, $pop1
+	tee_local	$push11=, $5=, $pop12
 	i32.const	$push2=, 3
-	i32.ge_s	$push3=, $pop12, $pop2
-	br_if   	0, $pop3        # 0: down to label0
+	i32.ge_s	$push3=, $pop11, $pop2
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %for.body.lr.ph
 	i32.add 	$push4=, $2, $5
 	i32.const	$push14=, -1
@@ -28,26 +29,26 @@ f:                                      # @f
 	i32.sub 	$2=, $pop8, $1
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop                            # label2:
 	i32.add 	$2=, $2, $3
 	i32.const	$push17=, -1
 	i32.le_s	$push9=, $2, $pop17
-	br_if   	1, $pop9        # 1: down to label2
+	br_if   	3, $pop9        # 3: down to label0
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push16=, 1
 	i32.add 	$5=, $5, $pop16
 	i32.const	$push15=, 2
 	i32.le_s	$push10=, $5, $pop15
-	br_if   	0, $pop10       # 0: up to label1
-	br      	2               # 2: down to label0
-.LBB0_4:                                # %if.then
-	end_loop                        # label2:
+	br_if   	0, $pop10       # 0: up to label2
+.LBB0_4:                                # %for.cond6.preheader
+	end_loop                        # label3:
+	end_block                       # label1:
+	return
+.LBB0_5:                                # %if.then
+	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_5:                                # %for.cond6.preheader
-	end_block                       # label0:
-	return
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

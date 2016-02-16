@@ -10,38 +10,38 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	block
 	i32.load8_u	$push8=, 1($0)
-	tee_local	$push9=, $2=, $pop8
+	tee_local	$push7=, $2=, $pop8
 	i32.const	$push20=, 0
-	i32.eq  	$push21=, $pop9, $pop20
+	i32.eq  	$push21=, $pop7, $pop20
 	br_if   	0, $pop21       # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push0=, 3
 	i32.add 	$0=, $0, $pop0
-	i32.const	$push10=, 3
-	i32.add 	$1=, $1, $pop10
+	i32.const	$push9=, 3
+	i32.add 	$1=, $1, $pop9
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.load8_u	$push6=, 0($0)
+	i32.load8_u	$push5=, 0($0)
 	i32.const	$push19=, 255
 	i32.const	$push18=, 255
 	i32.const	$push17=, 8
-	i32.sub 	$push3=, $pop17, $2
-	i32.shl 	$push4=, $pop18, $pop3
+	i32.sub 	$push2=, $pop17, $2
+	i32.shl 	$push3=, $pop18, $pop2
 	i32.const	$push16=, 7
-	i32.gt_s	$push1=, $2, $pop16
-	tee_local	$push15=, $3=, $pop1
-	i32.select	$push5=, $pop19, $pop4, $pop15
-	i32.and 	$push7=, $pop6, $pop5
-	i32.store8	$discard=, 0($1), $pop7
-	i32.const	$push14=, -8
-	i32.add 	$push2=, $2, $pop14
-	i32.const	$push13=, 0
-	i32.select	$2=, $pop2, $pop13, $3
-	i32.const	$push12=, 1
-	i32.add 	$0=, $0, $pop12
+	i32.gt_s	$push15=, $2, $pop16
+	tee_local	$push14=, $3=, $pop15
+	i32.select	$push4=, $pop19, $pop3, $pop14
+	i32.and 	$push6=, $pop5, $pop4
+	i32.store8	$discard=, 0($1), $pop6
+	i32.const	$push13=, -8
+	i32.add 	$push1=, $2, $pop13
+	i32.const	$push12=, 0
+	i32.select	$2=, $pop1, $pop12, $3
 	i32.const	$push11=, 1
-	i32.add 	$1=, $1, $pop11
+	i32.add 	$0=, $0, $pop11
+	i32.const	$push10=, 1
+	i32.add 	$1=, $1, $pop10
 	br_if   	0, $2           # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop                        # label2:

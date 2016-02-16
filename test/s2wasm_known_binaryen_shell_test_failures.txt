@@ -2,12 +2,10 @@
 pr27260.c.s.wast
 
 # [trap final > memory]
-20000801-1.c.s.wast
 20010915-1.c.s.wast
 20020413-1.c.s.wast
 20021120-3.c.s.wast
 20030221-1.c.s.wast
-20030916-1.c.s.wast
 20031012-1.c.s.wast
 20040709-1.c.s.wast
 20041214-1.c.s.wast
@@ -18,14 +16,12 @@ pr27260.c.s.wast
 20071029-1.c.s.wast
 20071030-1.c.s.wast
 20080502-1.c.s.wast
-20080506-2.c.s.wast
 20100708-1.c.s.wast
 20121108-1.c.s.wast
 920501-8.c.s.wast
 920501-9.c.s.wast
 920726-1.c.s.wast
 930513-1.c.s.wast
-960327-1.c.s.wast
 980605-1.c.s.wast
 990513-1.c.s.wast
 991201-1.c.s.wast
@@ -67,22 +63,20 @@ complex-7.c.s.wast
 # abort called: the tests are self-validating and call abort when they detect a
 # failure.  This may not be binaryen's fault (the toolchain may be emitting bad
 # code) but it could be binaryen's fault.
-20001027-1.c.s.wast
 20030125-1.c.s.wast
 920612-1.c.s.wast
 920711-1.c.s.wast
 bcp-1.c.s.wast
 bitfld-3.c.s.wast
 builtin-constant.c.s.wast
-builtin-prefetch-4.c.s.wast
 eeprof-1.c.s.wast
 pr22493-1.c.s.wast
 pr32244-1.c.s.wast
 pr34971.c.s.wast
-pr48814-1.c.s.wast
 
 # callImport: the toolchain needs to properly use libc and a runtime. These
 # aren't binaryen's fault.
+20000815-1.c.s.wast # memset
 20000910-2.c.s.wast # strchr
 20000914-1.c.s.wast # malloc
 20011024-1.c.s.wast # strcmp
@@ -119,6 +113,8 @@ memcpy-bi.c.s.wast # memcpy
 memset-1.c.s.wast # memset
 memset-2.c.s.wast # memset
 memset-3.c.s.wast # memset
+pr33870-1.c.s.wast # memset
+pr33870.c.s.wast # memset
 pr34456.c.s.wast # qsort
 pr35472.c.s.wast # memset
 pr36038.c.s.wast # memcpy

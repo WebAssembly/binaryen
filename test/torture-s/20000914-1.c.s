@@ -45,13 +45,13 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 12
-	i32.call	$push1=, malloc@FUNCTION, $pop0
-	tee_local	$push4=, $0=, $pop1
-	i32.const	$push2=, 222
-	i32.store	$discard=, 8($pop4), $pop2
+	i32.call	$push4=, malloc@FUNCTION, $pop0
+	tee_local	$push3=, $0=, $pop4
+	i32.const	$push1=, 222
+	i32.store	$discard=, 8($pop3), $pop1
 	i32.call	$discard=, convert_like_real@FUNCTION, $0
-	i32.const	$push3=, 0
-	call    	exit@FUNCTION, $pop3
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end2:

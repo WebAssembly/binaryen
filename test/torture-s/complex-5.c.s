@@ -39,51 +39,51 @@ main:                                   # @main
 	f32.load	$0=, x+4($pop28)
 	i32.const	$push27=, 0
 	f32.load	$1=, y+4($pop27)
-	f32.const	$push9=, 0x1p0
-	f32.const	$push8=, 0x0p0
+	f32.const	$push8=, 0x1p0
+	f32.const	$push7=, 0x0p0
 	i32.const	$push26=, 0
 	i32.const	$push25=, 0
-	f32.load	$push2=, x($pop25)
-	tee_local	$push24=, $4=, $pop2
-	i32.const	$push23=, 0
-	f32.load	$push3=, y($pop23)
-	f32.add 	$push4=, $pop24, $pop3
-	f32.store	$push6=, z($pop26), $pop4
+	f32.load	$push24=, x($pop25)
+	tee_local	$push23=, $4=, $pop24
 	i32.const	$push22=, 0
-	f32.add 	$push5=, $0, $1
-	f32.store	$push7=, z+4($pop22), $pop5
+	f32.load	$push2=, y($pop22)
+	f32.add 	$push3=, $pop23, $pop2
+	f32.store	$push5=, z($pop26), $pop3
+	i32.const	$push21=, 0
+	f32.add 	$push4=, $0, $1
+	f32.store	$push6=, z+4($pop21), $pop4
 	i32.const	$7=, 8
 	i32.add 	$7=, $9, $7
-	call    	__divsc3@FUNCTION, $7, $pop9, $pop8, $pop6, $pop7
-	i32.const	$push21=, 0
-	f32.load	$1=, z($pop21)
+	call    	__divsc3@FUNCTION, $7, $pop8, $pop7, $pop5, $pop6
 	i32.const	$push20=, 0
-	f32.load	$3=, w($pop20)
-	i32.const	$push11=, 4
+	f32.load	$1=, z($pop20)
+	i32.const	$push19=, 0
+	f32.load	$3=, w($pop19)
+	i32.const	$push10=, 4
 	i32.const	$8=, 8
 	i32.add 	$8=, $9, $8
-	i32.or  	$push12=, $8, $pop11
-	f32.load	$2=, 0($pop12)
-	i32.const	$push19=, 0
-	f32.load	$push10=, 8($9):p2align=3
-	f32.add 	$push13=, $4, $pop10
-	f32.store	$discard=, y($pop19), $pop13
+	i32.or  	$push11=, $8, $pop10
+	f32.load	$2=, 0($pop11)
 	i32.const	$push18=, 0
-	f32.add 	$push14=, $0, $2
-	f32.store	$discard=, y+4($pop18), $pop14
+	f32.load	$push9=, 8($9):p2align=3
+	f32.add 	$push12=, $4, $pop9
+	f32.store	$discard=, y($pop18), $pop12
+	i32.const	$push17=, 0
+	f32.add 	$push13=, $0, $2
+	f32.store	$discard=, y+4($pop17), $pop13
 	block
-	f32.ne  	$push15=, $1, $3
-	br_if   	0, $pop15       # 0: down to label0
+	f32.ne  	$push14=, $1, $3
+	br_if   	0, $pop14       # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push30=, 0
 	f32.load	$push0=, z+4($pop30)
 	i32.const	$push29=, 0
 	f32.load	$push1=, w+4($pop29)
-	f32.ne  	$push16=, $pop0, $pop1
-	br_if   	0, $pop16       # 0: down to label0
+	f32.ne  	$push15=, $pop0, $pop1
+	br_if   	0, $pop15       # 0: down to label0
 # BB#2:                                 # %if.end
-	i32.const	$push17=, 0
-	call    	exit@FUNCTION, $pop17
+	i32.const	$push16=, 0
+	call    	exit@FUNCTION, $pop16
 	unreachable
 .LBB1_3:                                # %if.then
 	end_block                       # label0:

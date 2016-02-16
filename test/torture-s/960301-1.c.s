@@ -11,22 +11,22 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push14=, 0
-	i32.load16_u	$push1=, foo($pop14):p2align=2
-	tee_local	$push13=, $1=, $pop1
-	i32.const	$push2=, 12
-	i32.shr_u	$push3=, $pop13, $pop2
-	i32.store	$discard=, oldfoo($pop0), $pop3
-	i32.const	$push12=, 0
-	i32.const	$push5=, 4095
-	i32.and 	$push6=, $1, $pop5
-	i32.const	$push11=, 12
-	i32.shl 	$push4=, $0, $pop11
-	i32.or  	$push7=, $pop6, $pop4
-	i32.store16	$discard=, foo($pop12):p2align=2, $pop7
-	i32.const	$push9=, 1
-	i32.const	$push8=, 2
-	i32.select	$push10=, $pop9, $pop8, $0
-	return  	$pop10
+	i32.load16_u	$push13=, foo($pop14):p2align=2
+	tee_local	$push12=, $1=, $pop13
+	i32.const	$push1=, 12
+	i32.shr_u	$push2=, $pop12, $pop1
+	i32.store	$discard=, oldfoo($pop0), $pop2
+	i32.const	$push11=, 0
+	i32.const	$push4=, 4095
+	i32.and 	$push5=, $1, $pop4
+	i32.const	$push10=, 12
+	i32.shl 	$push3=, $0, $pop10
+	i32.or  	$push6=, $pop5, $pop3
+	i32.store16	$discard=, foo($pop11):p2align=2, $pop6
+	i32.const	$push8=, 1
+	i32.const	$push7=, 2
+	i32.select	$push9=, $pop8, $pop7, $0
+	return  	$pop9
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -41,19 +41,19 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	i32.const	$push11=, 0
-	i32.load16_u	$push1=, foo($pop11):p2align=2
-	tee_local	$push10=, $0=, $pop1
-	i32.const	$push2=, 12
-	i32.shr_u	$push3=, $pop10, $pop2
-	i32.store	$discard=, oldfoo($pop0), $pop3
-	i32.const	$push9=, 0
-	i32.const	$push4=, 4095
-	i32.and 	$push5=, $0, $pop4
-	i32.const	$push6=, 4096
-	i32.or  	$push7=, $pop5, $pop6
-	i32.store16	$discard=, foo($pop9):p2align=2, $pop7
+	i32.load16_u	$push10=, foo($pop11):p2align=2
+	tee_local	$push9=, $0=, $pop10
+	i32.const	$push1=, 12
+	i32.shr_u	$push2=, $pop9, $pop1
+	i32.store	$discard=, oldfoo($pop0), $pop2
 	i32.const	$push8=, 0
-	call    	exit@FUNCTION, $pop8
+	i32.const	$push3=, 4095
+	i32.and 	$push4=, $0, $pop3
+	i32.const	$push5=, 4096
+	i32.or  	$push6=, $pop4, $pop5
+	i32.store16	$discard=, foo($pop8):p2align=2, $pop6
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 	.endfunc
 .Lfunc_end1:

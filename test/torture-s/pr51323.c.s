@@ -62,50 +62,50 @@ main:                                   # @main
 	i32.const	$push4=, 4
 	i32.const	$4=, 32
 	i32.add 	$4=, $9, $4
-	i32.or  	$push5=, $4, $pop4
-	tee_local	$push23=, $0=, $pop5
+	i32.or  	$push23=, $4, $pop4
+	tee_local	$push22=, $0=, $pop23
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
 	i32.store	$push2=, v($pop1), $pop0
-	i32.store	$discard=, 0($pop23), $pop2
-	i32.const	$push7=, 8
+	i32.store	$discard=, 0($pop22), $pop2
+	i32.const	$push6=, 8
 	i32.const	$5=, 20
 	i32.add 	$5=, $9, $5
-	i32.add 	$push8=, $5, $pop7
-	i32.const	$push22=, 4
-	i32.store	$push6=, 40($9):p2align=3, $pop22
-	i32.store	$discard=, 0($pop8), $pop6
-	i64.load	$push9=, 32($9)
-	i64.store	$discard=, 20($9):p2align=2, $pop9
-	i32.const	$push10=, 9
+	i32.add 	$push7=, $5, $pop6
+	i32.const	$push21=, 4
+	i32.store	$push5=, 40($9):p2align=3, $pop21
+	i32.store	$discard=, 0($pop7), $pop5
+	i64.load	$push8=, 32($9)
+	i64.store	$discard=, 20($9):p2align=2, $pop8
+	i32.const	$push9=, 9
 	i32.const	$6=, 20
 	i32.add 	$6=, $9, $6
-	call    	bar@FUNCTION, $pop10, $6
-	i32.const	$push21=, 0
-	i32.const	$push11=, 17
-	i32.store	$push12=, v($pop21), $pop11
-	i32.store	$discard=, 0($0), $pop12
-	i32.const	$push13=, 16
-	i32.store	$discard=, 32($9):p2align=3, $pop13
-	i32.const	$push20=, 8
+	call    	bar@FUNCTION, $pop9, $6
+	i32.const	$push20=, 0
+	i32.const	$push10=, 17
+	i32.store	$push11=, v($pop20), $pop10
+	i32.store	$discard=, 0($0), $pop11
+	i32.const	$push12=, 16
+	i32.store	$discard=, 32($9):p2align=3, $pop12
+	i32.const	$push19=, 8
 	i32.const	$7=, 8
 	i32.add 	$7=, $9, $7
-	i32.add 	$push16=, $7, $pop20
-	i32.const	$push14=, 18
-	i32.store	$push15=, 40($9):p2align=3, $pop14
-	i32.store	$discard=, 0($pop16), $pop15
-	i64.load	$push17=, 32($9)
-	i64.store	$discard=, 8($9):p2align=2, $pop17
-	i32.const	$push19=, 9
+	i32.add 	$push15=, $7, $pop19
+	i32.const	$push13=, 18
+	i32.store	$push14=, 40($9):p2align=3, $pop13
+	i32.store	$discard=, 0($pop15), $pop14
+	i64.load	$push16=, 32($9)
+	i64.store	$discard=, 8($9):p2align=2, $pop16
+	i32.const	$push18=, 9
 	i32.const	$8=, 8
 	i32.add 	$8=, $9, $8
-	call    	bar@FUNCTION, $pop19, $8
-	i32.const	$push18=, 0
+	call    	bar@FUNCTION, $pop18, $8
+	i32.const	$push17=, 0
 	i32.const	$3=, 48
 	i32.add 	$9=, $9, $3
 	i32.const	$3=, __stack_pointer
 	i32.store	$9=, 0($3), $9
-	return  	$pop18
+	return  	$pop17
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

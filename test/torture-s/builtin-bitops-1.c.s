@@ -661,62 +661,103 @@ main:                                   # @main
                                         #     Child Loop BB18_2 Depth 2
                                         #     Child Loop BB18_8 Depth 2
                                         #     Child Loop BB18_12 Depth 2
-                                        #     Child Loop BB18_18 Depth 2
+                                        #     Child Loop BB18_16 Depth 2
+                                        #     Child Loop BB18_19 Depth 2
                                         #     Child Loop BB18_21 Depth 2
-                                        #     Child Loop BB18_23 Depth 2
 	block
 	block
 	block
 	block
-	loop                            # label43:
-	i32.const	$push282=, 2
-	i32.shl 	$push9=, $0, $pop282
-	tee_local	$push281=, $2=, $pop9
-	i32.load	$push1=, ints($pop281)
-	tee_local	$push280=, $10=, $pop1
-	i32.ctz 	$push10=, $pop280
-	tee_local	$push279=, $1=, $pop10
-	i32.const	$push278=, 1
-	i32.add 	$push11=, $pop279, $pop278
-	i32.const	$push277=, 0
-	i32.select	$5=, $pop11, $pop277, $10
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	block
+	loop                            # label84:
+	i32.const	$push272=, 2
+	i32.shl 	$push271=, $0, $pop272
+	tee_local	$push270=, $2=, $pop271
+	i32.load	$push269=, ints($pop270)
+	tee_local	$push268=, $10=, $pop269
+	i32.ctz 	$push267=, $pop268
+	tee_local	$push266=, $1=, $pop267
+	i32.const	$push265=, 1
+	i32.add 	$push3=, $pop266, $pop265
+	i32.const	$push264=, 0
+	i32.select	$5=, $pop3, $pop264, $10
 	i32.const	$9=, 0
 	i32.const	$4=, 0
 	block
 	i32.const	$push382=, 0
 	i32.eq  	$push383=, $10, $pop382
-	br_if   	0, $pop383      # 0: down to label45
+	br_if   	0, $pop383      # 0: down to label86
 .LBB18_2:                               # %for.body.i
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label46:
-	i32.const	$push283=, 1
-	i32.shl 	$push12=, $pop283, $9
-	i32.and 	$push13=, $pop12, $10
-	br_if   	1, $pop13       # 1: down to label47
+	loop                            # label87:
+	i32.const	$push273=, 1
+	i32.shl 	$push4=, $pop273, $9
+	i32.and 	$push5=, $pop4, $10
+	br_if   	1, $pop5        # 1: down to label88
 # BB#3:                                 # %for.inc.i
                                         #   in Loop: Header=BB18_2 Depth=2
-	i32.const	$push285=, 1
-	i32.add 	$9=, $9, $pop285
-	i32.const	$push284=, 32
-	i32.lt_u	$push14=, $9, $pop284
-	br_if   	0, $pop14       # 0: up to label46
+	i32.const	$push275=, 1
+	i32.add 	$9=, $9, $pop275
+	i32.const	$push274=, 32
+	i32.lt_u	$push6=, $9, $pop274
+	br_if   	0, $pop6        # 0: up to label87
 .LBB18_4:                               # %for.end.i
                                         #   in Loop: Header=BB18_1 Depth=1
-	end_loop                        # label47:
-	i32.const	$push286=, 1
-	i32.add 	$4=, $9, $pop286
+	end_loop                        # label88:
+	i32.const	$push276=, 1
+	i32.add 	$4=, $9, $pop276
 .LBB18_5:                               # %my_ffs.exit
                                         #   in Loop: Header=BB18_1 Depth=1
-	end_block                       # label45:
-	i32.ne  	$push15=, $5, $4
-	br_if   	5, $pop15       # 5: down to label39
+	end_block                       # label86:
+	i32.ne  	$push7=, $5, $4
+	br_if   	2, $pop7        # 2: down to label83
 # BB#6:                                 # %if.end
                                         #   in Loop: Header=BB18_1 Depth=1
 	block
 	i32.const	$push384=, 0
 	i32.eq  	$push385=, $10, $pop384
-	br_if   	0, $pop385      # 0: down to label48
+	br_if   	0, $pop385      # 0: down to label89
 # BB#7:                                 # %land.lhs.true
                                         #   in Loop: Header=BB18_1 Depth=1
 	i32.clz 	$5=, $10
@@ -725,808 +766,760 @@ main:                                   # @main
 .LBB18_8:                               # %for.body.i822
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label49:
-	i32.const	$push287=, 1
-	i32.shl 	$push16=, $pop287, $4
-	i32.and 	$push17=, $pop16, $10
-	br_if   	1, $pop17       # 1: down to label50
+	loop                            # label90:
+	i32.const	$push277=, 1
+	i32.shl 	$push8=, $pop277, $4
+	i32.and 	$push9=, $pop8, $10
+	br_if   	1, $pop9        # 1: down to label91
 # BB#9:                                 # %for.inc.i825
                                         #   in Loop: Header=BB18_8 Depth=2
-	i32.const	$push290=, 1
-	i32.add 	$9=, $9, $pop290
-	i32.const	$push289=, -1
-	i32.add 	$4=, $4, $pop289
-	i32.const	$push288=, 32
-	i32.lt_u	$push18=, $9, $pop288
-	br_if   	0, $pop18       # 0: up to label49
+	i32.const	$push280=, 1
+	i32.add 	$9=, $9, $pop280
+	i32.const	$push279=, -1
+	i32.add 	$4=, $4, $pop279
+	i32.const	$push278=, 32
+	i32.lt_u	$push10=, $9, $pop278
+	br_if   	0, $pop10       # 0: up to label90
 .LBB18_10:                              # %my_clz.exit
                                         #   in Loop: Header=BB18_1 Depth=1
-	end_loop                        # label50:
-	block
-	i32.ne  	$push19=, $5, $9
-	br_if   	0, $pop19       # 0: down to label51
+	end_loop                        # label91:
+	i32.ne  	$push11=, $5, $9
+	br_if   	15, $pop11      # 15: down to label71
 # BB#11:                                # %land.lhs.true13
                                         #   in Loop: Header=BB18_1 Depth=1
 	i32.const	$9=, 0
 .LBB18_12:                              # %for.body.i889
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label52:
-	i32.const	$push291=, 1
-	i32.shl 	$push20=, $pop291, $9
-	i32.and 	$push21=, $pop20, $10
-	br_if   	1, $pop21       # 1: down to label53
+	loop                            # label92:
+	i32.const	$push281=, 1
+	i32.shl 	$push12=, $pop281, $9
+	i32.and 	$push13=, $pop12, $10
+	br_if   	1, $pop13       # 1: down to label93
 # BB#13:                                # %for.inc.i892
                                         #   in Loop: Header=BB18_12 Depth=2
-	i32.const	$push293=, 1
-	i32.add 	$9=, $9, $pop293
-	i32.const	$push292=, 32
-	i32.lt_u	$push22=, $9, $pop292
-	br_if   	0, $pop22       # 0: up to label52
+	i32.const	$push283=, 1
+	i32.add 	$9=, $9, $pop283
+	i32.const	$push282=, 32
+	i32.lt_u	$push14=, $9, $pop282
+	br_if   	0, $pop14       # 0: up to label92
 .LBB18_14:                              # %my_ctz.exit
                                         #   in Loop: Header=BB18_1 Depth=1
-	end_loop                        # label53:
-	i32.eq  	$push23=, $1, $9
-	br_if   	1, $pop23       # 1: down to label48
-# BB#15:                                # %if.then18
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_16:                              # %if.then9
-	end_block                       # label51:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_17:                              # %if.end19
+	end_loop                        # label93:
+	i32.ne  	$push15=, $1, $9
+	br_if   	16, $pop15      # 16: down to label70
+.LBB18_15:                              # %if.end19
                                         #   in Loop: Header=BB18_1 Depth=1
-	end_block                       # label48:
+	end_block                       # label89:
 	i32.call	$1=, __builtin_clrsb@FUNCTION, $10
-	i32.const	$push296=, ints
-	i32.add 	$push0=, $2, $pop296
-	i32.load	$push2=, 0($pop0)
-	tee_local	$push295=, $10=, $pop2
-	i32.const	$push294=, 31
-	i32.shr_u	$4=, $pop295, $pop294
+	i32.const	$push287=, ints
+	i32.add 	$push0=, $2, $pop287
+	i32.load	$push286=, 0($pop0)
+	tee_local	$push285=, $10=, $pop286
+	i32.const	$push284=, 31
+	i32.shr_u	$4=, $pop285, $pop284
 	i32.const	$5=, 1
 	i32.const	$9=, 30
-.LBB18_18:                              # %for.body.i974
+.LBB18_16:                              # %for.body.i974
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label54:
-	i32.shr_u	$push24=, $10, $9
-	i32.const	$push297=, 1
-	i32.and 	$push25=, $pop24, $pop297
-	i32.ne  	$push26=, $pop25, $4
-	br_if   	1, $pop26       # 1: down to label55
-# BB#19:                                # %for.inc.i977
-                                        #   in Loop: Header=BB18_18 Depth=2
-	i32.const	$push300=, 1
-	i32.add 	$5=, $5, $pop300
-	i32.const	$push299=, -1
-	i32.add 	$9=, $9, $pop299
-	i32.const	$push298=, 32
-	i32.lt_u	$push27=, $5, $pop298
-	br_if   	0, $pop27       # 0: up to label54
-.LBB18_20:                              # %my_clrsb.exit
+	loop                            # label94:
+	i32.shr_u	$push16=, $10, $9
+	i32.const	$push288=, 1
+	i32.and 	$push17=, $pop16, $pop288
+	i32.ne  	$push18=, $pop17, $4
+	br_if   	1, $pop18       # 1: down to label95
+# BB#17:                                # %for.inc.i977
+                                        #   in Loop: Header=BB18_16 Depth=2
+	i32.const	$push291=, 1
+	i32.add 	$5=, $5, $pop291
+	i32.const	$push290=, -1
+	i32.add 	$9=, $9, $pop290
+	i32.const	$push289=, 32
+	i32.lt_u	$push19=, $5, $pop289
+	br_if   	0, $pop19       # 0: up to label94
+.LBB18_18:                              # %my_clrsb.exit
                                         #   in Loop: Header=BB18_1 Depth=1
-	end_loop                        # label55:
+	end_loop                        # label95:
 	i32.const	$4=, 0
 	i32.const	$9=, 0
-	i32.const	$push301=, -1
-	i32.add 	$push28=, $5, $pop301
-	i32.ne  	$push29=, $1, $pop28
-	br_if   	4, $pop29       # 4: down to label40
-.LBB18_21:                              # %for.body.i1069
+	i32.const	$push292=, -1
+	i32.add 	$push20=, $5, $pop292
+	i32.ne  	$push21=, $1, $pop20
+	br_if   	3, $pop21       # 3: down to label82
+.LBB18_19:                              # %for.body.i1069
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label56:
-	i32.const	$push305=, 1
-	i32.shl 	$push30=, $pop305, $9
-	i32.and 	$push31=, $pop30, $10
-	i32.const	$push304=, 0
-	i32.ne  	$push32=, $pop31, $pop304
-	i32.add 	$4=, $pop32, $4
-	i32.const	$push303=, 1
-	i32.add 	$9=, $9, $pop303
-	i32.const	$push302=, 32
-	i32.ne  	$push33=, $9, $pop302
-	br_if   	0, $pop33       # 0: up to label56
-# BB#22:                                # %my_popcount.exit
+	loop                            # label96:
+	i32.const	$push296=, 1
+	i32.shl 	$push22=, $pop296, $9
+	i32.and 	$push23=, $pop22, $10
+	i32.const	$push295=, 0
+	i32.ne  	$push24=, $pop23, $pop295
+	i32.add 	$4=, $pop24, $4
+	i32.const	$push294=, 1
+	i32.add 	$9=, $9, $pop294
+	i32.const	$push293=, 32
+	i32.ne  	$push25=, $9, $pop293
+	br_if   	0, $pop25       # 0: up to label96
+# BB#20:                                # %my_popcount.exit
                                         #   in Loop: Header=BB18_1 Depth=1
-	end_loop                        # label57:
+	end_loop                        # label97:
 	i32.const	$5=, 0
 	i32.const	$9=, 0
-	i32.popcnt	$push34=, $10
-	i32.ne  	$push35=, $pop34, $4
-	br_if   	3, $pop35       # 3: down to label41
-.LBB18_23:                              # %for.body.i1161
+	i32.popcnt	$push26=, $10
+	i32.ne  	$push27=, $pop26, $4
+	br_if   	4, $pop27       # 4: down to label81
+.LBB18_21:                              # %for.body.i1161
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label58:
-	i32.const	$push309=, 1
-	i32.shl 	$push36=, $pop309, $9
-	i32.and 	$push37=, $pop36, $10
-	i32.const	$push308=, 0
-	i32.ne  	$push38=, $pop37, $pop308
-	i32.add 	$5=, $pop38, $5
-	i32.const	$push307=, 1
-	i32.add 	$9=, $9, $pop307
-	i32.const	$push306=, 32
-	i32.ne  	$push39=, $9, $pop306
-	br_if   	0, $pop39       # 0: up to label58
-# BB#24:                                # %my_parity.exit
+	loop                            # label98:
+	i32.const	$push300=, 1
+	i32.shl 	$push28=, $pop300, $9
+	i32.and 	$push29=, $pop28, $10
+	i32.const	$push299=, 0
+	i32.ne  	$push30=, $pop29, $pop299
+	i32.add 	$5=, $pop30, $5
+	i32.const	$push298=, 1
+	i32.add 	$9=, $9, $pop298
+	i32.const	$push297=, 32
+	i32.ne  	$push31=, $9, $pop297
+	br_if   	0, $pop31       # 0: up to label98
+# BB#22:                                # %my_parity.exit
                                         #   in Loop: Header=BB18_1 Depth=1
-	end_loop                        # label59:
-	i32.xor 	$push40=, $5, $4
-	i32.const	$push310=, 1
-	i32.and 	$push41=, $pop40, $pop310
-	br_if   	2, $pop41       # 2: down to label42
-# BB#25:                                # %for.cond
+	end_loop                        # label99:
+	i32.xor 	$push32=, $5, $4
+	i32.const	$push301=, 1
+	i32.and 	$push33=, $pop32, $pop301
+	br_if   	5, $pop33       # 5: down to label80
+# BB#23:                                # %for.cond
                                         #   in Loop: Header=BB18_1 Depth=1
-	i32.const	$push276=, 1
-	i32.add 	$0=, $0, $pop276
+	i32.const	$push263=, 1
+	i32.add 	$0=, $0, $pop263
 	i32.const	$2=, 0
-	i32.const	$push275=, 12
-	i32.le_u	$push42=, $0, $pop275
-	br_if   	0, $pop42       # 0: up to label43
-.LBB18_26:                              # %for.body41
+	i32.const	$push262=, 12
+	i32.le_u	$push34=, $0, $pop262
+	br_if   	0, $pop34       # 0: up to label84
+.LBB18_24:                              # %for.body41
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB18_27 Depth 2
-                                        #     Child Loop BB18_33 Depth 2
-                                        #     Child Loop BB18_37 Depth 2
-                                        #     Child Loop BB18_43 Depth 2
-                                        #     Child Loop BB18_46 Depth 2
-                                        #     Child Loop BB18_48 Depth 2
-	end_loop                        # label44:
-	block
-	block
-	block
-	block
-	loop                            # label64:
-	i32.const	$push43=, 2
-	i32.shl 	$push44=, $2, $pop43
-	tee_local	$push316=, $0=, $pop44
-	i32.load	$push4=, longs($pop316)
-	tee_local	$push315=, $10=, $pop4
-	i32.ctz 	$push46=, $pop315
-	tee_local	$push314=, $1=, $pop46
-	i32.const	$push313=, 1
-	i32.add 	$push47=, $pop314, $pop313
-	i32.const	$push312=, 0
-	i32.select	$5=, $pop47, $pop312, $10
+                                        #     Child Loop BB18_25 Depth 2
+                                        #     Child Loop BB18_31 Depth 2
+                                        #     Child Loop BB18_35 Depth 2
+                                        #     Child Loop BB18_39 Depth 2
+                                        #     Child Loop BB18_42 Depth 2
+                                        #     Child Loop BB18_44 Depth 2
+	end_loop                        # label85:
+	loop                            # label100:
+	i32.const	$push35=, 2
+	i32.shl 	$push310=, $2, $pop35
+	tee_local	$push309=, $0=, $pop310
+	i32.load	$push308=, longs($pop309)
+	tee_local	$push307=, $10=, $pop308
+	i32.ctz 	$push306=, $pop307
+	tee_local	$push305=, $1=, $pop306
+	i32.const	$push304=, 1
+	i32.add 	$push37=, $pop305, $pop304
+	i32.const	$push303=, 0
+	i32.select	$5=, $pop37, $pop303, $10
 	i32.const	$9=, 0
 	i32.const	$4=, 0
 	block
 	i32.const	$push386=, 0
 	i32.eq  	$push387=, $10, $pop386
-	br_if   	0, $pop387      # 0: down to label66
-.LBB18_27:                              # %for.body.i1251
-                                        #   Parent Loop BB18_26 Depth=1
+	br_if   	0, $pop387      # 0: down to label102
+.LBB18_25:                              # %for.body.i1251
+                                        #   Parent Loop BB18_24 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label67:
-	i32.const	$push317=, 1
-	i32.shl 	$push48=, $pop317, $9
-	i32.and 	$push49=, $pop48, $10
-	br_if   	1, $pop49       # 1: down to label68
-# BB#28:                                # %for.inc.i1254
-                                        #   in Loop: Header=BB18_27 Depth=2
-	i32.const	$push50=, 1
-	i32.add 	$9=, $9, $pop50
-	i32.const	$push51=, 32
-	i32.lt_u	$push52=, $9, $pop51
-	br_if   	0, $pop52       # 0: up to label67
-.LBB18_29:                              # %for.end.i1257
-                                        #   in Loop: Header=BB18_26 Depth=1
-	end_loop                        # label68:
-	i32.const	$push53=, 1
-	i32.add 	$4=, $9, $pop53
-.LBB18_30:                              # %my_ffsl.exit
-                                        #   in Loop: Header=BB18_26 Depth=1
-	end_block                       # label66:
-	i32.ne  	$push54=, $5, $4
-	br_if   	5, $pop54       # 5: down to label60
-# BB#31:                                # %if.end49
-                                        #   in Loop: Header=BB18_26 Depth=1
+	loop                            # label103:
+	i32.const	$push311=, 1
+	i32.shl 	$push38=, $pop311, $9
+	i32.and 	$push39=, $pop38, $10
+	br_if   	1, $pop39       # 1: down to label104
+# BB#26:                                # %for.inc.i1254
+                                        #   in Loop: Header=BB18_25 Depth=2
+	i32.const	$push40=, 1
+	i32.add 	$9=, $9, $pop40
+	i32.const	$push41=, 32
+	i32.lt_u	$push42=, $9, $pop41
+	br_if   	0, $pop42       # 0: up to label103
+.LBB18_27:                              # %for.end.i1257
+                                        #   in Loop: Header=BB18_24 Depth=1
+	end_loop                        # label104:
+	i32.const	$push43=, 1
+	i32.add 	$4=, $9, $pop43
+.LBB18_28:                              # %my_ffsl.exit
+                                        #   in Loop: Header=BB18_24 Depth=1
+	end_block                       # label102:
+	i32.ne  	$push44=, $5, $4
+	br_if   	6, $pop44       # 6: down to label79
+# BB#29:                                # %if.end49
+                                        #   in Loop: Header=BB18_24 Depth=1
 	block
 	i32.const	$push388=, 0
 	i32.eq  	$push389=, $10, $pop388
-	br_if   	0, $pop389      # 0: down to label69
-# BB#32:                                # %land.lhs.true52
-                                        #   in Loop: Header=BB18_26 Depth=1
+	br_if   	0, $pop389      # 0: down to label105
+# BB#30:                                # %land.lhs.true52
+                                        #   in Loop: Header=BB18_24 Depth=1
 	i32.clz 	$5=, $10
 	i32.const	$9=, 0
 	i32.const	$4=, 31
-.LBB18_33:                              # %for.body.i1346
-                                        #   Parent Loop BB18_26 Depth=1
+.LBB18_31:                              # %for.body.i1346
+                                        #   Parent Loop BB18_24 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label70:
-	i32.const	$push318=, 1
-	i32.shl 	$push55=, $pop318, $4
-	i32.and 	$push56=, $pop55, $10
-	br_if   	1, $pop56       # 1: down to label71
-# BB#34:                                # %for.inc.i1349
-                                        #   in Loop: Header=BB18_33 Depth=2
-	i32.const	$push319=, 1
-	i32.add 	$9=, $9, $pop319
-	i32.const	$push57=, -1
-	i32.add 	$4=, $4, $pop57
-	i32.const	$push58=, 32
-	i32.lt_u	$push59=, $9, $pop58
-	br_if   	0, $pop59       # 0: up to label70
-.LBB18_35:                              # %my_clzl.exit
-                                        #   in Loop: Header=BB18_26 Depth=1
-	end_loop                        # label71:
-	block
-	i32.ne  	$push60=, $5, $9
-	br_if   	0, $pop60       # 0: down to label72
-# BB#36:                                # %land.lhs.true61
-                                        #   in Loop: Header=BB18_26 Depth=1
+	loop                            # label106:
+	i32.const	$push312=, 1
+	i32.shl 	$push45=, $pop312, $4
+	i32.and 	$push46=, $pop45, $10
+	br_if   	1, $pop46       # 1: down to label107
+# BB#32:                                # %for.inc.i1349
+                                        #   in Loop: Header=BB18_31 Depth=2
+	i32.const	$push313=, 1
+	i32.add 	$9=, $9, $pop313
+	i32.const	$push47=, -1
+	i32.add 	$4=, $4, $pop47
+	i32.const	$push48=, 32
+	i32.lt_u	$push49=, $9, $pop48
+	br_if   	0, $pop49       # 0: up to label106
+.LBB18_33:                              # %my_clzl.exit
+                                        #   in Loop: Header=BB18_24 Depth=1
+	end_loop                        # label107:
+	i32.ne  	$push50=, $5, $9
+	br_if   	17, $pop50      # 17: down to label69
+# BB#34:                                # %land.lhs.true61
+                                        #   in Loop: Header=BB18_24 Depth=1
 	i32.const	$9=, 0
-.LBB18_37:                              # %for.body.i1438
-                                        #   Parent Loop BB18_26 Depth=1
+.LBB18_35:                              # %for.body.i1438
+                                        #   Parent Loop BB18_24 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label73:
-	i32.const	$push320=, 1
-	i32.shl 	$push61=, $pop320, $9
-	i32.and 	$push62=, $pop61, $10
-	br_if   	1, $pop62       # 1: down to label74
-# BB#38:                                # %for.inc.i1441
-                                        #   in Loop: Header=BB18_37 Depth=2
-	i32.const	$push321=, 1
-	i32.add 	$9=, $9, $pop321
-	i32.const	$push63=, 32
-	i32.lt_u	$push64=, $9, $pop63
-	br_if   	0, $pop64       # 0: up to label73
-.LBB18_39:                              # %my_ctzl.exit
-                                        #   in Loop: Header=BB18_26 Depth=1
-	end_loop                        # label74:
-	i32.eq  	$push65=, $1, $9
-	br_if   	1, $pop65       # 1: down to label69
-# BB#40:                                # %if.then66
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_41:                              # %if.then57
-	end_block                       # label72:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_42:                              # %if.end67
-                                        #   in Loop: Header=BB18_26 Depth=1
-	end_block                       # label69:
+	loop                            # label108:
+	i32.const	$push314=, 1
+	i32.shl 	$push51=, $pop314, $9
+	i32.and 	$push52=, $pop51, $10
+	br_if   	1, $pop52       # 1: down to label109
+# BB#36:                                # %for.inc.i1441
+                                        #   in Loop: Header=BB18_35 Depth=2
+	i32.const	$push315=, 1
+	i32.add 	$9=, $9, $pop315
+	i32.const	$push53=, 32
+	i32.lt_u	$push54=, $9, $pop53
+	br_if   	0, $pop54       # 0: up to label108
+.LBB18_37:                              # %my_ctzl.exit
+                                        #   in Loop: Header=BB18_24 Depth=1
+	end_loop                        # label109:
+	i32.ne  	$push55=, $1, $9
+	br_if   	18, $pop55      # 18: down to label68
+.LBB18_38:                              # %if.end67
+                                        #   in Loop: Header=BB18_24 Depth=1
+	end_block                       # label105:
 	i32.call	$1=, __builtin_clrsbl@FUNCTION, $10
-	i32.const	$push45=, longs
-	i32.add 	$push3=, $0, $pop45
-	i32.load	$push5=, 0($pop3)
-	tee_local	$push322=, $10=, $pop5
-	i32.const	$push66=, 31
-	i32.shr_u	$4=, $pop322, $pop66
+	i32.const	$push36=, longs
+	i32.add 	$push1=, $0, $pop36
+	i32.load	$push317=, 0($pop1)
+	tee_local	$push316=, $10=, $pop317
+	i32.const	$push56=, 31
+	i32.shr_u	$4=, $pop316, $pop56
 	i32.const	$9=, 30
 	i32.const	$5=, 1
-.LBB18_43:                              # %for.body.i1532
-                                        #   Parent Loop BB18_26 Depth=1
+.LBB18_39:                              # %for.body.i1532
+                                        #   Parent Loop BB18_24 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label75:
-	i32.shr_u	$push67=, $10, $9
-	i32.const	$push323=, 1
-	i32.and 	$push68=, $pop67, $pop323
-	i32.ne  	$push69=, $pop68, $4
-	br_if   	1, $pop69       # 1: down to label76
-# BB#44:                                # %for.inc.i1535
-                                        #   in Loop: Header=BB18_43 Depth=2
-	i32.const	$push70=, 1
-	i32.add 	$5=, $5, $pop70
-	i32.const	$push71=, -1
-	i32.add 	$9=, $9, $pop71
-	i32.const	$push72=, 32
-	i32.lt_u	$push73=, $5, $pop72
-	br_if   	0, $pop73       # 0: up to label75
-.LBB18_45:                              # %my_clrsbl.exit
-                                        #   in Loop: Header=BB18_26 Depth=1
-	end_loop                        # label76:
+	loop                            # label110:
+	i32.shr_u	$push57=, $10, $9
+	i32.const	$push318=, 1
+	i32.and 	$push58=, $pop57, $pop318
+	i32.ne  	$push59=, $pop58, $4
+	br_if   	1, $pop59       # 1: down to label111
+# BB#40:                                # %for.inc.i1535
+                                        #   in Loop: Header=BB18_39 Depth=2
+	i32.const	$push60=, 1
+	i32.add 	$5=, $5, $pop60
+	i32.const	$push61=, -1
+	i32.add 	$9=, $9, $pop61
+	i32.const	$push62=, 32
+	i32.lt_u	$push63=, $5, $pop62
+	br_if   	0, $pop63       # 0: up to label110
+.LBB18_41:                              # %my_clrsbl.exit
+                                        #   in Loop: Header=BB18_24 Depth=1
+	end_loop                        # label111:
 	i32.const	$4=, 0
 	i32.const	$9=, 0
-	i32.const	$push74=, -1
-	i32.add 	$push75=, $5, $pop74
-	i32.ne  	$push76=, $1, $pop75
-	br_if   	4, $pop76       # 4: down to label61
-.LBB18_46:                              # %for.body.i1630
-                                        #   Parent Loop BB18_26 Depth=1
+	i32.const	$push64=, -1
+	i32.add 	$push65=, $5, $pop64
+	i32.ne  	$push66=, $1, $pop65
+	br_if   	7, $pop66       # 7: down to label78
+.LBB18_42:                              # %for.body.i1630
+                                        #   Parent Loop BB18_24 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label77:
-	i32.const	$push77=, 1
-	i32.shl 	$push78=, $pop77, $9
-	i32.and 	$push79=, $pop78, $10
-	i32.const	$push325=, 0
-	i32.ne  	$push80=, $pop79, $pop325
-	i32.add 	$4=, $pop80, $4
-	i32.const	$push324=, 1
-	i32.add 	$9=, $9, $pop324
-	i32.const	$push81=, 32
-	i32.ne  	$push82=, $9, $pop81
-	br_if   	0, $pop82       # 0: up to label77
-# BB#47:                                # %my_popcountl.exit
-                                        #   in Loop: Header=BB18_26 Depth=1
-	end_loop                        # label78:
+	loop                            # label112:
+	i32.const	$push67=, 1
+	i32.shl 	$push68=, $pop67, $9
+	i32.and 	$push69=, $pop68, $10
+	i32.const	$push320=, 0
+	i32.ne  	$push70=, $pop69, $pop320
+	i32.add 	$4=, $pop70, $4
+	i32.const	$push319=, 1
+	i32.add 	$9=, $9, $pop319
+	i32.const	$push71=, 32
+	i32.ne  	$push72=, $9, $pop71
+	br_if   	0, $pop72       # 0: up to label112
+# BB#43:                                # %my_popcountl.exit
+                                        #   in Loop: Header=BB18_24 Depth=1
+	end_loop                        # label113:
 	i32.const	$5=, 0
 	i32.const	$9=, 0
-	i32.popcnt	$push83=, $10
-	i32.ne  	$push84=, $pop83, $4
-	br_if   	3, $pop84       # 3: down to label62
-.LBB18_48:                              # %for.body.i1723
-                                        #   Parent Loop BB18_26 Depth=1
+	i32.popcnt	$push73=, $10
+	i32.ne  	$push74=, $pop73, $4
+	br_if   	8, $pop74       # 8: down to label77
+.LBB18_44:                              # %for.body.i1723
+                                        #   Parent Loop BB18_24 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label79:
-	i32.const	$push328=, 1
-	i32.shl 	$push85=, $pop328, $9
-	i32.and 	$push86=, $pop85, $10
-	i32.const	$push327=, 0
-	i32.ne  	$push87=, $pop86, $pop327
-	i32.add 	$5=, $pop87, $5
-	i32.const	$push326=, 1
-	i32.add 	$9=, $9, $pop326
-	i32.const	$push88=, 32
-	i32.ne  	$push89=, $9, $pop88
-	br_if   	0, $pop89       # 0: up to label79
-# BB#49:                                # %my_parityl.exit
-                                        #   in Loop: Header=BB18_26 Depth=1
-	end_loop                        # label80:
-	i32.xor 	$push90=, $5, $4
-	i32.const	$push329=, 1
-	i32.and 	$push91=, $pop90, $pop329
-	br_if   	2, $pop91       # 2: down to label63
-# BB#50:                                # %for.cond39
-                                        #   in Loop: Header=BB18_26 Depth=1
-	i32.const	$push311=, 1
-	i32.add 	$2=, $2, $pop311
+	loop                            # label114:
+	i32.const	$push323=, 1
+	i32.shl 	$push75=, $pop323, $9
+	i32.and 	$push76=, $pop75, $10
+	i32.const	$push322=, 0
+	i32.ne  	$push77=, $pop76, $pop322
+	i32.add 	$5=, $pop77, $5
+	i32.const	$push321=, 1
+	i32.add 	$9=, $9, $pop321
+	i32.const	$push78=, 32
+	i32.ne  	$push79=, $9, $pop78
+	br_if   	0, $pop79       # 0: up to label114
+# BB#45:                                # %my_parityl.exit
+                                        #   in Loop: Header=BB18_24 Depth=1
+	end_loop                        # label115:
+	i32.xor 	$push80=, $5, $4
+	i32.const	$push324=, 1
+	i32.and 	$push81=, $pop80, $pop324
+	br_if   	9, $pop81       # 9: down to label76
+# BB#46:                                # %for.cond39
+                                        #   in Loop: Header=BB18_24 Depth=1
+	i32.const	$push302=, 1
+	i32.add 	$2=, $2, $pop302
 	i32.const	$4=, 0
-	i32.const	$push92=, 12
-	i32.le_u	$push93=, $2, $pop92
-	br_if   	0, $pop93       # 0: up to label64
-.LBB18_51:                              # %for.body92
+	i32.const	$push82=, 12
+	i32.le_u	$push83=, $2, $pop82
+	br_if   	0, $pop83       # 0: up to label100
+.LBB18_47:                              # %for.body92
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB18_52 Depth 2
+                                        #     Child Loop BB18_48 Depth 2
+                                        #     Child Loop BB18_54 Depth 2
                                         #     Child Loop BB18_58 Depth 2
                                         #     Child Loop BB18_62 Depth 2
+                                        #     Child Loop BB18_66 Depth 2
                                         #     Child Loop BB18_68 Depth 2
-                                        #     Child Loop BB18_72 Depth 2
-                                        #     Child Loop BB18_74 Depth 2
-	end_loop                        # label65:
-	block
-	block
-	block
-	block
-	loop                            # label85:
-	i32.const	$push337=, 0
-	i32.const	$push94=, 3
-	i32.shl 	$push95=, $4, $pop94
-	tee_local	$push336=, $0=, $pop95
-	i64.load	$push7=, longlongs($pop336)
-	tee_local	$push335=, $8=, $pop7
-	i64.ctz 	$push97=, $pop335
-	tee_local	$push334=, $3=, $pop97
-	i64.const	$push333=, 1
-	i64.add 	$push98=, $pop334, $pop333
-	i32.wrap/i64	$push100=, $pop98
-	i64.const	$push332=, 0
-	i64.eq  	$push99=, $8, $pop332
-	tee_local	$push331=, $5=, $pop99
-	i32.select	$2=, $pop337, $pop100, $pop331
+	end_loop                        # label101:
+	loop                            # label116:
+	i32.const	$push336=, 0
+	i32.const	$push84=, 3
+	i32.shl 	$push335=, $4, $pop84
+	tee_local	$push334=, $0=, $pop335
+	i64.load	$push333=, longlongs($pop334)
+	tee_local	$push332=, $8=, $pop333
+	i64.ctz 	$push331=, $pop332
+	tee_local	$push330=, $3=, $pop331
+	i64.const	$push329=, 1
+	i64.add 	$push86=, $pop330, $pop329
+	i32.wrap/i64	$push87=, $pop86
+	i64.const	$push328=, 0
+	i64.eq  	$push327=, $8, $pop328
+	tee_local	$push326=, $5=, $pop327
+	i32.select	$2=, $pop336, $pop87, $pop326
 	i64.const	$7=, 0
 	i32.const	$9=, 0
 	i32.const	$10=, 0
 	block
-	br_if   	0, $5           # 0: down to label87
-.LBB18_52:                              # %for.body.i1814
-                                        #   Parent Loop BB18_51 Depth=1
+	br_if   	0, $5           # 0: down to label118
+.LBB18_48:                              # %for.body.i1814
+                                        #   Parent Loop BB18_47 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label88:
-	i64.const	$push339=, 1
-	i64.shl 	$push101=, $pop339, $7
-	i64.and 	$push102=, $pop101, $8
-	i64.const	$push338=, 0
-	i64.ne  	$push103=, $pop102, $pop338
-	br_if   	1, $pop103      # 1: down to label89
-# BB#53:                                # %for.inc.i1818
-                                        #   in Loop: Header=BB18_52 Depth=2
-	i32.const	$push105=, 1
-	i32.add 	$9=, $9, $pop105
-	i64.const	$push104=, 1
-	i64.add 	$7=, $7, $pop104
-	i64.const	$push106=, 64
-	i64.lt_u	$push107=, $7, $pop106
-	br_if   	0, $pop107      # 0: up to label88
-.LBB18_54:                              # %for.end.i1821
-                                        #   in Loop: Header=BB18_51 Depth=1
-	end_loop                        # label89:
-	i32.const	$push108=, 1
-	i32.add 	$10=, $9, $pop108
-.LBB18_55:                              # %my_ffsll.exit1823
-                                        #   in Loop: Header=BB18_51 Depth=1
-	end_block                       # label87:
-	i32.ne  	$push109=, $2, $10
-	br_if   	5, $pop109      # 5: down to label81
-# BB#56:                                # %if.end100
-                                        #   in Loop: Header=BB18_51 Depth=1
+	loop                            # label119:
+	i64.const	$push338=, 1
+	i64.shl 	$push88=, $pop338, $7
+	i64.and 	$push89=, $pop88, $8
+	i64.const	$push337=, 0
+	i64.ne  	$push90=, $pop89, $pop337
+	br_if   	1, $pop90       # 1: down to label120
+# BB#49:                                # %for.inc.i1818
+                                        #   in Loop: Header=BB18_48 Depth=2
+	i32.const	$push92=, 1
+	i32.add 	$9=, $9, $pop92
+	i64.const	$push91=, 1
+	i64.add 	$7=, $7, $pop91
+	i64.const	$push93=, 64
+	i64.lt_u	$push94=, $7, $pop93
+	br_if   	0, $pop94       # 0: up to label119
+.LBB18_50:                              # %for.end.i1821
+                                        #   in Loop: Header=BB18_47 Depth=1
+	end_loop                        # label120:
+	i32.const	$push95=, 1
+	i32.add 	$10=, $9, $pop95
+.LBB18_51:                              # %my_ffsll.exit1823
+                                        #   in Loop: Header=BB18_47 Depth=1
+	end_block                       # label118:
+	i32.ne  	$push96=, $2, $10
+	br_if   	10, $pop96      # 10: down to label75
+# BB#52:                                # %if.end100
+                                        #   in Loop: Header=BB18_47 Depth=1
 	i64.const	$7=, 0
 	block
-	i64.const	$push340=, 0
-	i64.eq  	$push110=, $8, $pop340
-	br_if   	0, $pop110      # 0: down to label90
-# BB#57:                                # %land.lhs.true103
-                                        #   in Loop: Header=BB18_51 Depth=1
+	i64.const	$push339=, 0
+	i64.eq  	$push97=, $8, $pop339
+	br_if   	0, $pop97       # 0: down to label121
+# BB#53:                                # %land.lhs.true103
+                                        #   in Loop: Header=BB18_47 Depth=1
 	i64.const	$6=, 63
-	i64.clz 	$push111=, $8
-	i32.wrap/i64	$10=, $pop111
+	i64.clz 	$push98=, $8
+	i32.wrap/i64	$10=, $pop98
 	i32.const	$9=, 0
-.LBB18_58:                              # %for.body.i1902
-                                        #   Parent Loop BB18_51 Depth=1
+.LBB18_54:                              # %for.body.i1902
+                                        #   Parent Loop BB18_47 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label91:
+	loop                            # label122:
+	i64.const	$push340=, 1
+	i64.const	$push99=, 4294967295
+	i64.and 	$push100=, $6, $pop99
+	i64.shl 	$push101=, $pop340, $pop100
+	i64.and 	$push102=, $pop101, $8
+	i64.const	$push103=, 0
+	i64.ne  	$push104=, $pop102, $pop103
+	br_if   	1, $pop104      # 1: down to label123
+# BB#55:                                # %for.inc.i1906
+                                        #   in Loop: Header=BB18_54 Depth=2
+	i32.const	$push105=, 1
+	i32.add 	$9=, $9, $pop105
 	i64.const	$push341=, 1
-	i64.const	$push112=, 4294967295
-	i64.and 	$push113=, $6, $pop112
-	i64.shl 	$push114=, $pop341, $pop113
-	i64.and 	$push115=, $pop114, $8
-	i64.const	$push116=, 0
-	i64.ne  	$push117=, $pop115, $pop116
-	br_if   	1, $pop117      # 1: down to label92
-# BB#59:                                # %for.inc.i1906
-                                        #   in Loop: Header=BB18_58 Depth=2
-	i32.const	$push118=, 1
-	i32.add 	$9=, $9, $pop118
-	i64.const	$push342=, 1
-	i64.add 	$7=, $7, $pop342
-	i64.const	$push119=, -1
-	i64.add 	$6=, $6, $pop119
-	i64.const	$push120=, 64
-	i64.lt_u	$push121=, $7, $pop120
-	br_if   	0, $pop121      # 0: up to label91
-.LBB18_60:                              # %my_clzll.exit1909
-                                        #   in Loop: Header=BB18_51 Depth=1
-	end_loop                        # label92:
-	block
-	i32.ne  	$push122=, $10, $9
-	br_if   	0, $pop122      # 0: down to label93
-# BB#61:                                # %land.lhs.true113
-                                        #   in Loop: Header=BB18_51 Depth=1
+	i64.add 	$7=, $7, $pop341
+	i64.const	$push106=, -1
+	i64.add 	$6=, $6, $pop106
+	i64.const	$push107=, 64
+	i64.lt_u	$push108=, $7, $pop107
+	br_if   	0, $pop108      # 0: up to label122
+.LBB18_56:                              # %my_clzll.exit1909
+                                        #   in Loop: Header=BB18_47 Depth=1
+	end_loop                        # label123:
+	i32.ne  	$push109=, $10, $9
+	br_if   	19, $pop109     # 19: down to label67
+# BB#57:                                # %land.lhs.true113
+                                        #   in Loop: Header=BB18_47 Depth=1
 	i64.const	$7=, 0
 	i32.wrap/i64	$10=, $3
 	i32.const	$9=, 0
-.LBB18_62:                              # %for.body.i1948
-                                        #   Parent Loop BB18_51 Depth=1
+.LBB18_58:                              # %for.body.i1948
+                                        #   Parent Loop BB18_47 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label94:
+	loop                            # label124:
+	i64.const	$push343=, 1
+	i64.shl 	$push110=, $pop343, $7
+	i64.and 	$push111=, $pop110, $8
+	i64.const	$push342=, 0
+	i64.ne  	$push112=, $pop111, $pop342
+	br_if   	1, $pop112      # 1: down to label125
+# BB#59:                                # %for.inc.i1952
+                                        #   in Loop: Header=BB18_58 Depth=2
+	i32.const	$push113=, 1
+	i32.add 	$9=, $9, $pop113
 	i64.const	$push344=, 1
-	i64.shl 	$push123=, $pop344, $7
-	i64.and 	$push124=, $pop123, $8
-	i64.const	$push343=, 0
-	i64.ne  	$push125=, $pop124, $pop343
-	br_if   	1, $pop125      # 1: down to label95
-# BB#63:                                # %for.inc.i1952
-                                        #   in Loop: Header=BB18_62 Depth=2
-	i32.const	$push126=, 1
-	i32.add 	$9=, $9, $pop126
-	i64.const	$push345=, 1
-	i64.add 	$7=, $7, $pop345
-	i64.const	$push127=, 64
-	i64.lt_u	$push128=, $7, $pop127
-	br_if   	0, $pop128      # 0: up to label94
-.LBB18_64:                              # %my_ctzll.exit1955
-                                        #   in Loop: Header=BB18_51 Depth=1
-	end_loop                        # label95:
-	i32.eq  	$push129=, $10, $9
-	br_if   	1, $pop129      # 1: down to label90
-# BB#65:                                # %if.then119
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_66:                              # %if.then109
-	end_block                       # label93:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_67:                              # %if.end120
-                                        #   in Loop: Header=BB18_51 Depth=1
-	end_block                       # label90:
+	i64.add 	$7=, $7, $pop344
+	i64.const	$push114=, 64
+	i64.lt_u	$push115=, $7, $pop114
+	br_if   	0, $pop115      # 0: up to label124
+.LBB18_60:                              # %my_ctzll.exit1955
+                                        #   in Loop: Header=BB18_47 Depth=1
+	end_loop                        # label125:
+	i32.ne  	$push116=, $10, $9
+	br_if   	20, $pop116     # 20: down to label66
+.LBB18_61:                              # %if.end120
+                                        #   in Loop: Header=BB18_47 Depth=1
+	end_block                       # label121:
 	i32.call	$10=, __builtin_clrsbll@FUNCTION, $8
-	i32.const	$push96=, longlongs
-	i32.add 	$push6=, $0, $pop96
-	i64.load	$push8=, 0($pop6)
-	tee_local	$push346=, $8=, $pop8
-	i64.const	$push130=, 63
-	i64.shr_u	$3=, $pop346, $pop130
+	i32.const	$push85=, longlongs
+	i32.add 	$push2=, $0, $pop85
+	i64.load	$push346=, 0($pop2)
+	tee_local	$push345=, $8=, $pop346
+	i64.const	$push117=, 63
+	i64.shr_u	$3=, $pop345, $pop117
 	i64.const	$7=, 62
 	i64.const	$6=, 1
 	i32.const	$9=, 1
-.LBB18_68:                              # %for.body.i2018
-                                        #   Parent Loop BB18_51 Depth=1
+.LBB18_62:                              # %for.body.i2018
+                                        #   Parent Loop BB18_47 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label96:
-	i64.shr_u	$push131=, $8, $7
+	loop                            # label126:
+	i64.shr_u	$push118=, $8, $7
 	i64.const	$push347=, 1
-	i64.and 	$push132=, $pop131, $pop347
-	i64.ne  	$push133=, $pop132, $3
-	br_if   	1, $pop133      # 1: down to label97
-# BB#69:                                # %for.inc.i2022
-                                        #   in Loop: Header=BB18_68 Depth=2
-	i32.const	$push135=, 1
-	i32.add 	$9=, $9, $pop135
-	i64.const	$push134=, 1
-	i64.add 	$6=, $6, $pop134
-	i64.const	$push136=, -1
-	i64.add 	$7=, $7, $pop136
-	i64.const	$push137=, 64
-	i64.lt_u	$push138=, $6, $pop137
-	br_if   	0, $pop138      # 0: up to label96
-.LBB18_70:                              # %my_clrsbll.exit2026
-                                        #   in Loop: Header=BB18_51 Depth=1
-	end_loop                        # label97:
-	i32.const	$push139=, -1
-	i32.add 	$push140=, $9, $pop139
-	i32.ne  	$push141=, $10, $pop140
-	br_if   	4, $pop141      # 4: down to label82
-# BB#71:                                # %if.end127
-                                        #   in Loop: Header=BB18_51 Depth=1
+	i64.and 	$push119=, $pop118, $pop347
+	i64.ne  	$push120=, $pop119, $3
+	br_if   	1, $pop120      # 1: down to label127
+# BB#63:                                # %for.inc.i2022
+                                        #   in Loop: Header=BB18_62 Depth=2
+	i32.const	$push122=, 1
+	i32.add 	$9=, $9, $pop122
+	i64.const	$push121=, 1
+	i64.add 	$6=, $6, $pop121
+	i64.const	$push123=, -1
+	i64.add 	$7=, $7, $pop123
+	i64.const	$push124=, 64
+	i64.lt_u	$push125=, $6, $pop124
+	br_if   	0, $pop125      # 0: up to label126
+.LBB18_64:                              # %my_clrsbll.exit2026
+                                        #   in Loop: Header=BB18_47 Depth=1
+	end_loop                        # label127:
+	i32.const	$push126=, -1
+	i32.add 	$push127=, $9, $pop126
+	i32.ne  	$push128=, $10, $pop127
+	br_if   	11, $pop128     # 11: down to label74
+# BB#65:                                # %if.end127
+                                        #   in Loop: Header=BB18_47 Depth=1
 	i64.popcnt	$6=, $8
 	i64.const	$7=, 0
 	i32.const	$9=, 0
-.LBB18_72:                              # %for.body.i2110
-                                        #   Parent Loop BB18_51 Depth=1
+.LBB18_66:                              # %for.body.i2110
+                                        #   Parent Loop BB18_47 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label98:
-	i64.const	$push142=, 1
-	i64.shl 	$push143=, $pop142, $7
-	i64.and 	$push144=, $pop143, $8
+	loop                            # label128:
+	i64.const	$push129=, 1
+	i64.shl 	$push130=, $pop129, $7
+	i64.and 	$push131=, $pop130, $8
 	i64.const	$push349=, 0
-	i64.ne  	$push145=, $pop144, $pop349
-	i32.add 	$9=, $pop145, $9
+	i64.ne  	$push132=, $pop131, $pop349
+	i32.add 	$9=, $pop132, $9
 	i64.const	$push348=, 1
 	i64.add 	$7=, $7, $pop348
-	i64.const	$push146=, 64
-	i64.ne  	$push147=, $7, $pop146
-	br_if   	0, $pop147      # 0: up to label98
-# BB#73:                                # %my_popcountll.exit2112
-                                        #   in Loop: Header=BB18_51 Depth=1
-	end_loop                        # label99:
+	i64.const	$push133=, 64
+	i64.ne  	$push134=, $7, $pop133
+	br_if   	0, $pop134      # 0: up to label128
+# BB#67:                                # %my_popcountll.exit2112
+                                        #   in Loop: Header=BB18_47 Depth=1
+	end_loop                        # label129:
 	i64.const	$7=, 0
 	i32.const	$10=, 0
-	i32.wrap/i64	$push148=, $6
-	i32.ne  	$push149=, $pop148, $9
-	br_if   	3, $pop149      # 3: down to label83
-.LBB18_74:                              # %for.body.i2196
-                                        #   Parent Loop BB18_51 Depth=1
+	i32.wrap/i64	$push135=, $6
+	i32.ne  	$push136=, $pop135, $9
+	br_if   	12, $pop136     # 12: down to label73
+.LBB18_68:                              # %for.body.i2196
+                                        #   Parent Loop BB18_47 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label100:
-	i64.const	$push150=, 1
-	i64.shl 	$push151=, $pop150, $7
-	i64.and 	$push152=, $pop151, $8
+	loop                            # label130:
+	i64.const	$push137=, 1
+	i64.shl 	$push138=, $pop137, $7
+	i64.and 	$push139=, $pop138, $8
 	i64.const	$push351=, 0
-	i64.ne  	$push153=, $pop152, $pop351
-	i32.add 	$10=, $pop153, $10
+	i64.ne  	$push140=, $pop139, $pop351
+	i32.add 	$10=, $pop140, $10
 	i64.const	$push350=, 1
 	i64.add 	$7=, $7, $pop350
-	i64.const	$push154=, 64
-	i64.ne  	$push155=, $7, $pop154
-	br_if   	0, $pop155      # 0: up to label100
-# BB#75:                                # %my_parityll.exit2199
-                                        #   in Loop: Header=BB18_51 Depth=1
-	end_loop                        # label101:
-	i32.xor 	$push156=, $10, $9
-	i32.const	$push157=, 1
-	i32.and 	$push158=, $pop156, $pop157
-	br_if   	2, $pop158      # 2: down to label84
-# BB#76:                                # %for.cond90
-                                        #   in Loop: Header=BB18_51 Depth=1
-	i32.const	$push330=, 1
-	i32.add 	$4=, $4, $pop330
-	i32.const	$push159=, 12
-	i32.le_u	$push160=, $4, $pop159
-	br_if   	0, $pop160      # 0: up to label85
-# BB#77:                                # %if.end148
-	end_loop                        # label86:
-	block
-	i32.const	$push161=, 0
-	i32.call	$push162=, __builtin_clrsb@FUNCTION, $pop161
-	i32.const	$push163=, 31
-	i32.ne  	$push164=, $pop162, $pop163
-	br_if   	0, $pop164      # 0: down to label102
-# BB#78:                                # %my_clrsb.exit2770
-	block
-	i32.const	$push165=, 1
-	i32.call	$push166=, __builtin_clrsb@FUNCTION, $pop165
-	i32.const	$push167=, 30
-	i32.ne  	$push168=, $pop166, $pop167
-	br_if   	0, $pop168      # 0: down to label103
-# BB#79:                                # %if.end198
-	block
-	i32.const	$push169=, -2147483648
-	i32.call	$push170=, __builtin_clrsb@FUNCTION, $pop169
-	br_if   	0, $pop170      # 0: down to label104
-# BB#80:                                # %my_clrsb.exit2597
-	block
-	i32.const	$push171=, 1073741824
-	i32.call	$push172=, __builtin_clrsb@FUNCTION, $pop171
-	br_if   	0, $pop172      # 0: down to label105
-# BB#81:                                # %my_clrsb.exit2514
-	block
-	i32.const	$push173=, 65536
-	i32.call	$push174=, __builtin_clrsb@FUNCTION, $pop173
-	i32.const	$push175=, 14
-	i32.ne  	$push176=, $pop174, $pop175
-	br_if   	0, $pop176      # 0: down to label106
-# BB#82:                                # %my_clrsb.exit2432
-	block
-	i32.const	$push177=, 32768
-	i32.call	$push178=, __builtin_clrsb@FUNCTION, $pop177
-	i32.const	$push179=, 15
-	i32.ne  	$push180=, $pop178, $pop179
-	br_if   	0, $pop180      # 0: down to label107
-# BB#83:                                # %my_clrsb.exit2348
-	block
-	i32.const	$push181=, -1515870811
-	i32.call	$push182=, __builtin_clrsb@FUNCTION, $pop181
-	br_if   	0, $pop182      # 0: down to label108
-# BB#84:                                # %my_clrsb.exit2273
-	block
-	i32.const	$push183=, 1515870810
-	i32.call	$push184=, __builtin_clrsb@FUNCTION, $pop183
-	br_if   	0, $pop184      # 0: down to label109
-# BB#85:                                # %for.body.i2179
-	block
-	i32.const	$push185=, -889323520
-	i32.call	$push186=, __builtin_clrsb@FUNCTION, $pop185
-	i32.const	$push187=, 1
-	i32.ne  	$push188=, $pop186, $pop187
-	br_if   	0, $pop188      # 0: down to label110
-# BB#86:                                # %for.body.i2093
-	block
-	i32.const	$push189=, 13303296
-	i32.call	$push190=, __builtin_clrsb@FUNCTION, $pop189
-	i32.const	$push191=, 7
-	i32.ne  	$push192=, $pop190, $pop191
-	br_if   	0, $pop192      # 0: down to label111
-# BB#87:                                # %for.body.i2004
-	block
-	i32.const	$push193=, 51966
-	i32.call	$push194=, __builtin_clrsb@FUNCTION, $pop193
-	i32.const	$push195=, 15
-	i32.ne  	$push196=, $pop194, $pop195
-	br_if   	0, $pop196      # 0: down to label112
-# BB#88:                                # %if.end423
+	i64.const	$push141=, 64
+	i64.ne  	$push142=, $7, $pop141
+	br_if   	0, $pop142      # 0: up to label130
+# BB#69:                                # %my_parityll.exit2199
+                                        #   in Loop: Header=BB18_47 Depth=1
+	end_loop                        # label131:
+	i32.xor 	$push143=, $10, $9
+	i32.const	$push144=, 1
+	i32.and 	$push145=, $pop143, $pop144
+	br_if   	13, $pop145     # 13: down to label72
+# BB#70:                                # %for.cond90
+                                        #   in Loop: Header=BB18_47 Depth=1
+	i32.const	$push325=, 1
+	i32.add 	$4=, $4, $pop325
+	i32.const	$push146=, 12
+	i32.le_u	$push147=, $4, $pop146
+	br_if   	0, $pop147      # 0: up to label116
+# BB#71:                                # %if.end148
+	end_loop                        # label117:
+	i32.const	$push148=, 0
+	i32.call	$push149=, __builtin_clrsb@FUNCTION, $pop148
+	i32.const	$push150=, 31
+	i32.ne  	$push151=, $pop149, $pop150
+	br_if   	18, $pop151     # 18: down to label65
+# BB#72:                                # %my_clrsb.exit2770
+	i32.const	$push152=, 1
+	i32.call	$push153=, __builtin_clrsb@FUNCTION, $pop152
+	i32.const	$push154=, 30
+	i32.ne  	$push155=, $pop153, $pop154
+	br_if   	19, $pop155     # 19: down to label64
+# BB#73:                                # %if.end198
+	i32.const	$push156=, -2147483648
+	i32.call	$push157=, __builtin_clrsb@FUNCTION, $pop156
+	br_if   	20, $pop157     # 20: down to label63
+# BB#74:                                # %my_clrsb.exit2597
+	i32.const	$push158=, 1073741824
+	i32.call	$push159=, __builtin_clrsb@FUNCTION, $pop158
+	br_if   	21, $pop159     # 21: down to label62
+# BB#75:                                # %my_clrsb.exit2514
+	i32.const	$push160=, 65536
+	i32.call	$push161=, __builtin_clrsb@FUNCTION, $pop160
+	i32.const	$push162=, 14
+	i32.ne  	$push163=, $pop161, $pop162
+	br_if   	22, $pop163     # 22: down to label61
+# BB#76:                                # %my_clrsb.exit2432
+	i32.const	$push164=, 32768
+	i32.call	$push165=, __builtin_clrsb@FUNCTION, $pop164
+	i32.const	$push166=, 15
+	i32.ne  	$push167=, $pop165, $pop166
+	br_if   	23, $pop167     # 23: down to label60
+# BB#77:                                # %my_clrsb.exit2348
+	i32.const	$push168=, -1515870811
+	i32.call	$push169=, __builtin_clrsb@FUNCTION, $pop168
+	br_if   	24, $pop169     # 24: down to label59
+# BB#78:                                # %my_clrsb.exit2273
+	i32.const	$push170=, 1515870810
+	i32.call	$push171=, __builtin_clrsb@FUNCTION, $pop170
+	br_if   	25, $pop171     # 25: down to label58
+# BB#79:                                # %for.body.i2179
+	i32.const	$push172=, -889323520
+	i32.call	$push173=, __builtin_clrsb@FUNCTION, $pop172
+	i32.const	$push174=, 1
+	i32.ne  	$push175=, $pop173, $pop174
+	br_if   	26, $pop175     # 26: down to label57
+# BB#80:                                # %for.body.i2093
+	i32.const	$push176=, 13303296
+	i32.call	$push177=, __builtin_clrsb@FUNCTION, $pop176
+	i32.const	$push178=, 7
+	i32.ne  	$push179=, $pop177, $pop178
+	br_if   	27, $pop179     # 27: down to label56
+# BB#81:                                # %for.body.i2004
+	i32.const	$push180=, 51966
+	i32.call	$push181=, __builtin_clrsb@FUNCTION, $pop180
+	i32.const	$push182=, 15
+	i32.ne  	$push183=, $pop181, $pop182
+	br_if   	28, $pop183     # 28: down to label55
+# BB#82:                                # %if.end423
 	i32.const	$push352=, -1
 	i32.call	$4=, __builtin_clrsb@FUNCTION, $pop352
 	i32.const	$10=, 30
 	i32.const	$9=, 1
-.LBB18_89:                              # %for.body.i1935
+.LBB18_83:                              # %for.body.i1935
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label113:
+	loop                            # label132:
 	i32.const	$push354=, -1
-	i32.shr_u	$push197=, $pop354, $10
+	i32.shr_u	$push184=, $pop354, $10
 	i32.const	$push353=, 1
-	i32.and 	$push198=, $pop197, $pop353
+	i32.and 	$push185=, $pop184, $pop353
 	i32.const	$push390=, 0
-	i32.eq  	$push391=, $pop198, $pop390
-	br_if   	1, $pop391      # 1: down to label114
-# BB#90:                                # %for.inc.i1938
-                                        #   in Loop: Header=BB18_89 Depth=1
+	i32.eq  	$push391=, $pop185, $pop390
+	br_if   	1, $pop391      # 1: down to label133
+# BB#84:                                # %for.inc.i1938
+                                        #   in Loop: Header=BB18_83 Depth=1
 	i32.const	$push357=, 1
 	i32.add 	$9=, $9, $pop357
 	i32.const	$push356=, -1
 	i32.add 	$10=, $10, $pop356
 	i32.const	$push355=, 32
-	i32.lt_u	$push199=, $9, $pop355
-	br_if   	0, $pop199      # 0: up to label113
-.LBB18_91:                              # %my_clrsb.exit1942
-	end_loop                        # label114:
-	block
-	i32.const	$push200=, -1
-	i32.add 	$push201=, $9, $pop200
-	i32.ne  	$push202=, $4, $pop201
-	br_if   	0, $pop202      # 0: down to label115
-# BB#92:                                # %if.end440
+	i32.lt_u	$push186=, $9, $pop355
+	br_if   	0, $pop186      # 0: up to label132
+.LBB18_85:                              # %my_clrsb.exit1942
+	end_loop                        # label133:
+	i32.const	$push187=, -1
+	i32.add 	$push188=, $9, $pop187
+	i32.ne  	$push189=, $4, $pop188
+	br_if   	29, $pop189     # 29: down to label54
+# BB#86:                                # %if.end440
 	i64.const	$8=, 0
 	i64.const	$7=, 63
 	i32.const	$9=, 0
-	block
 	i64.const	$push358=, 0
-	i32.call	$push203=, __builtin_clrsbll@FUNCTION, $pop358
-	i32.const	$push204=, 63
-	i32.ne  	$push205=, $pop203, $pop204
-	br_if   	0, $pop205      # 0: down to label116
-.LBB18_93:                              # %for.body.i1844
+	i32.call	$push190=, __builtin_clrsbll@FUNCTION, $pop358
+	i32.const	$push191=, 63
+	i32.ne  	$push192=, $pop190, $pop191
+	br_if   	30, $pop192     # 30: down to label53
+.LBB18_87:                              # %for.body.i1844
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label117:
-	i32.wrap/i64	$push206=, $7
+	loop                            # label134:
+	i32.wrap/i64	$push193=, $7
 	i32.const	$push392=, 0
-	i32.eq  	$push393=, $pop206, $pop392
-	br_if   	1, $pop393      # 1: down to label118
-# BB#94:                                # %for.inc.i1848
-                                        #   in Loop: Header=BB18_93 Depth=1
-	i32.const	$push208=, 1
-	i32.add 	$9=, $9, $pop208
-	i64.const	$push207=, 1
-	i64.add 	$8=, $8, $pop207
-	i64.const	$push209=, -1
-	i64.add 	$7=, $7, $pop209
-	i64.const	$push210=, 64
-	i64.lt_u	$push211=, $8, $pop210
-	br_if   	0, $pop211      # 0: up to label117
-.LBB18_95:                              # %my_clzll.exit1851
-	end_loop                        # label118:
-	block
-	i32.const	$push212=, 63
-	i32.ne  	$push213=, $9, $pop212
-	br_if   	0, $pop213      # 0: down to label119
-# BB#96:                                # %if.end465
+	i32.eq  	$push393=, $pop193, $pop392
+	br_if   	1, $pop393      # 1: down to label135
+# BB#88:                                # %for.inc.i1848
+                                        #   in Loop: Header=BB18_87 Depth=1
+	i32.const	$push195=, 1
+	i32.add 	$9=, $9, $pop195
+	i64.const	$push194=, 1
+	i64.add 	$8=, $8, $pop194
+	i64.const	$push196=, -1
+	i64.add 	$7=, $7, $pop196
+	i64.const	$push197=, 64
+	i64.lt_u	$push198=, $8, $pop197
+	br_if   	0, $pop198      # 0: up to label134
+.LBB18_89:                              # %my_clzll.exit1851
+	end_loop                        # label135:
+	i32.const	$push199=, 63
+	i32.ne  	$push200=, $9, $pop199
+	br_if   	31, $pop200     # 31: down to label52
+# BB#90:                                # %if.end465
 	i64.const	$push359=, 1
 	i32.call	$10=, __builtin_clrsbll@FUNCTION, $pop359
 	i64.const	$7=, 1
-.LBB18_97:                              # %for.body.i1799
+.LBB18_91:                              # %for.body.i1799
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label120:
+	loop                            # label136:
 	i32.const	$9=, 62
 	i64.const	$push360=, 63
-	i64.eq  	$push214=, $7, $pop360
-	br_if   	1, $pop214      # 1: down to label121
-# BB#98:                                # %for.inc.i1803
-                                        #   in Loop: Header=BB18_97 Depth=1
+	i64.eq  	$push201=, $7, $pop360
+	br_if   	1, $pop201      # 1: down to label137
+# BB#92:                                # %for.inc.i1803
+                                        #   in Loop: Header=BB18_91 Depth=1
 	i64.const	$push362=, 1
 	i64.add 	$7=, $7, $pop362
 	i32.const	$9=, 63
 	i64.const	$push361=, 64
-	i64.lt_u	$push215=, $7, $pop361
-	br_if   	0, $pop215      # 0: up to label120
-.LBB18_99:                              # %my_clrsbll.exit1807
-	end_loop                        # label121:
+	i64.lt_u	$push202=, $7, $pop361
+	br_if   	0, $pop202      # 0: up to label136
+.LBB18_93:                              # %my_clrsbll.exit1807
+	end_loop                        # label137:
 	i64.const	$8=, 0
 	i64.const	$7=, 0
-	block
-	i32.ne  	$push216=, $10, $9
-	br_if   	0, $pop216      # 0: down to label122
-.LBB18_100:                             # %for.body.i1759
+	i32.ne  	$push203=, $10, $9
+	br_if   	32, $pop203     # 32: down to label51
+.LBB18_94:                              # %for.body.i1759
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label124:
+	loop                            # label139:
 	i64.const	$push363=, 63
-	i64.eq  	$push217=, $7, $pop363
-	br_if   	2, $pop217      # 2: down to label123
-# BB#101:                               # %for.inc.i1763
-                                        #   in Loop: Header=BB18_100 Depth=1
-	i64.const	$push218=, 1
-	i64.add 	$7=, $7, $pop218
-	i64.const	$push219=, 64
-	i64.lt_u	$push220=, $7, $pop219
-	br_if   	0, $pop220      # 0: up to label124
-# BB#102:                               # %if.then481
-	end_loop                        # label125:
+	i64.eq  	$push204=, $7, $pop363
+	br_if   	2, $pop204      # 2: down to label138
+# BB#95:                                # %for.inc.i1763
+                                        #   in Loop: Header=BB18_94 Depth=1
+	i64.const	$push205=, 1
+	i64.add 	$7=, $7, $pop205
+	i64.const	$push206=, 64
+	i64.lt_u	$push207=, $7, $pop206
+	br_if   	0, $pop207      # 0: up to label139
+# BB#96:                                # %if.then481
+	end_loop                        # label140:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_103:                             # %for.body.i1731
+.LBB18_97:                              # %for.body.i1731
                                         # =>This Inner Loop Header: Depth=1
-	end_block                       # label123:
+	end_block                       # label138:
 	block
-	loop                            # label127:
+	loop                            # label142:
 	i64.const	$push364=, 63
-	i64.eq  	$push221=, $8, $pop364
-	br_if   	2, $pop221      # 2: down to label126
-# BB#104:                               # %for.inc.i1735
-                                        #   in Loop: Header=BB18_103 Depth=1
-	i64.const	$push222=, 1
-	i64.add 	$8=, $8, $pop222
-	i64.const	$push223=, 64
-	i64.lt_u	$push224=, $8, $pop223
-	br_if   	0, $pop224      # 0: up to label127
-# BB#105:                               # %if.then489
-	end_loop                        # label128:
+	i64.eq  	$push208=, $8, $pop364
+	br_if   	2, $pop208      # 2: down to label141
+# BB#98:                                # %for.inc.i1735
+                                        #   in Loop: Header=BB18_97 Depth=1
+	i64.const	$push209=, 1
+	i64.add 	$8=, $8, $pop209
+	i64.const	$push210=, 64
+	i64.lt_u	$push211=, $8, $pop210
+	br_if   	0, $pop211      # 0: up to label142
+# BB#99:                                # %if.then489
+	end_loop                        # label143:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_106:                             # %if.end490
-	end_block                       # label126:
-	block
-	i64.const	$push225=, -9223372036854775808
-	i32.call	$push226=, __builtin_clrsbll@FUNCTION, $pop225
-	br_if   	0, $pop226      # 0: down to label129
-# BB#107:                               # %for.body.i1665
+.LBB18_100:                             # %if.end490
+	end_block                       # label141:
+	i64.const	$push212=, -9223372036854775808
+	i32.call	$push213=, __builtin_clrsbll@FUNCTION, $pop212
+	br_if   	33, $pop213     # 33: down to label50
+# BB#101:                               # %for.body.i1665
 	i64.const	$7=, 63
 	i64.const	$8=, -1
-.LBB18_108:                             # %for.body.i1652
+.LBB18_102:                             # %for.body.i1652
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label130:
+	loop                            # label144:
 	i64.const	$push367=, 1
 	i64.add 	$8=, $8, $pop367
 	i64.const	$push366=, -1
@@ -1534,71 +1527,62 @@ main:                                   # @main
 	i32.wrap/i64	$9=, $7
 	copy_local	$7=, $6
 	i32.const	$push365=, 1
-	i32.ne  	$push227=, $9, $pop365
-	br_if   	0, $pop227      # 0: up to label130
-# BB#109:                               # %my_clzll.exit1659
-	end_loop                        # label131:
-	block
-	i32.wrap/i64	$push228=, $8
-	i32.const	$push229=, 62
-	i32.ne  	$push230=, $pop228, $pop229
-	br_if   	0, $pop230      # 0: down to label132
-# BB#110:                               # %for.body.i1612
-	block
-	i64.const	$push231=, 2
-	i32.call	$push232=, __builtin_clrsbll@FUNCTION, $pop231
-	i32.const	$push233=, 61
-	i32.ne  	$push234=, $pop232, $pop233
-	br_if   	0, $pop234      # 0: down to label133
-# BB#111:                               # %my_clrsbll.exit1525
-	block
-	i64.const	$push235=, 4611686018427387904
-	i32.call	$push236=, __builtin_clrsbll@FUNCTION, $pop235
-	br_if   	0, $pop236      # 0: down to label134
-# BB#112:                               # %for.body.i1425
-	block
-	i64.const	$push237=, 4294967296
-	i32.call	$push238=, __builtin_clrsbll@FUNCTION, $pop237
-	i32.const	$push239=, 30
-	i32.ne  	$push240=, $pop238, $pop239
-	br_if   	0, $pop240      # 0: down to label135
-# BB#113:                               # %for.body.i1332
-	block
-	i64.const	$push241=, 2147483648
-	i32.call	$push242=, __builtin_clrsbll@FUNCTION, $pop241
-	i32.const	$push243=, 31
-	i32.ne  	$push244=, $pop242, $pop243
-	br_if   	0, $pop244      # 0: down to label136
-# BB#114:                               # %my_clrsbll.exit1245
-	block
-	i64.const	$push245=, -6510615555426900571
-	i32.call	$push246=, __builtin_clrsbll@FUNCTION, $pop245
-	br_if   	0, $pop246      # 0: down to label137
-# BB#115:                               # %my_clrsbll.exit1152
-	block
-	i64.const	$push247=, 6510615555426900570
-	i32.call	$push248=, __builtin_clrsbll@FUNCTION, $pop247
-	br_if   	0, $pop248      # 0: down to label138
-# BB#116:                               # %for.body.i1053
-	block
-	i64.const	$push249=, -3819392241693097984
-	i32.call	$push250=, __builtin_clrsbll@FUNCTION, $pop249
-	i32.const	$push251=, 1
-	i32.ne  	$push252=, $pop250, $pop251
-	br_if   	0, $pop252      # 0: down to label139
-# BB#117:                               # %for.body.i964
-	block
-	i64.const	$push253=, 223195676147712
-	i32.call	$push254=, __builtin_clrsbll@FUNCTION, $pop253
-	i32.const	$push255=, 15
-	i32.ne  	$push256=, $pop254, $pop255
-	br_if   	0, $pop256      # 0: down to label140
-# BB#118:                               # %for.body.i925
+	i32.ne  	$push214=, $9, $pop365
+	br_if   	0, $pop214      # 0: up to label144
+# BB#103:                               # %my_clzll.exit1659
+	end_loop                        # label145:
+	i32.wrap/i64	$push215=, $8
+	i32.const	$push216=, 62
+	i32.ne  	$push217=, $pop215, $pop216
+	br_if   	34, $pop217     # 34: down to label49
+# BB#104:                               # %for.body.i1612
+	i64.const	$push218=, 2
+	i32.call	$push219=, __builtin_clrsbll@FUNCTION, $pop218
+	i32.const	$push220=, 61
+	i32.ne  	$push221=, $pop219, $pop220
+	br_if   	35, $pop221     # 35: down to label48
+# BB#105:                               # %my_clrsbll.exit1525
+	i64.const	$push222=, 4611686018427387904
+	i32.call	$push223=, __builtin_clrsbll@FUNCTION, $pop222
+	br_if   	36, $pop223     # 36: down to label47
+# BB#106:                               # %for.body.i1425
+	i64.const	$push224=, 4294967296
+	i32.call	$push225=, __builtin_clrsbll@FUNCTION, $pop224
+	i32.const	$push226=, 30
+	i32.ne  	$push227=, $pop225, $pop226
+	br_if   	37, $pop227     # 37: down to label46
+# BB#107:                               # %for.body.i1332
+	i64.const	$push228=, 2147483648
+	i32.call	$push229=, __builtin_clrsbll@FUNCTION, $pop228
+	i32.const	$push230=, 31
+	i32.ne  	$push231=, $pop229, $pop230
+	br_if   	38, $pop231     # 38: down to label45
+# BB#108:                               # %my_clrsbll.exit1245
+	i64.const	$push232=, -6510615555426900571
+	i32.call	$push233=, __builtin_clrsbll@FUNCTION, $pop232
+	br_if   	39, $pop233     # 39: down to label44
+# BB#109:                               # %my_clrsbll.exit1152
+	i64.const	$push234=, 6510615555426900570
+	i32.call	$push235=, __builtin_clrsbll@FUNCTION, $pop234
+	br_if   	40, $pop235     # 40: down to label43
+# BB#110:                               # %for.body.i1053
+	i64.const	$push236=, -3819392241693097984
+	i32.call	$push237=, __builtin_clrsbll@FUNCTION, $pop236
+	i32.const	$push238=, 1
+	i32.ne  	$push239=, $pop237, $pop238
+	br_if   	41, $pop239     # 41: down to label42
+# BB#111:                               # %for.body.i964
+	i64.const	$push240=, 223195676147712
+	i32.call	$push241=, __builtin_clrsbll@FUNCTION, $pop240
+	i32.const	$push242=, 15
+	i32.ne  	$push243=, $pop241, $pop242
+	br_if   	42, $pop243     # 42: down to label41
+# BB#112:                               # %for.body.i925
 	i64.const	$7=, 63
 	i64.const	$8=, -1
-.LBB18_119:                             # %for.body.i913
+.LBB18_113:                             # %for.body.i913
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label141:
+	loop                            # label146:
 	i64.const	$push373=, 4294967295
 	i64.and 	$6=, $7, $pop373
 	i64.const	$push372=, 1
@@ -1606,44 +1590,42 @@ main:                                   # @main
 	i64.const	$push371=, -1
 	i64.add 	$7=, $7, $pop371
 	i64.const	$push370=, 1
-	i64.shl 	$push257=, $pop370, $6
+	i64.shl 	$push244=, $pop370, $6
 	i64.const	$push369=, 3405695742
-	i64.and 	$push258=, $pop257, $pop369
+	i64.and 	$push245=, $pop244, $pop369
 	i64.const	$push368=, 0
-	i64.eq  	$push259=, $pop258, $pop368
-	br_if   	0, $pop259      # 0: up to label141
-# BB#120:                               # %my_clzll.exit
-	end_loop                        # label142:
-	block
-	i32.wrap/i64	$push260=, $8
-	i32.const	$push261=, 32
-	i32.ne  	$push262=, $pop260, $pop261
-	br_if   	0, $pop262      # 0: down to label143
-# BB#121:                               # %for.body.i877
-	block
-	i64.const	$push263=, 3405695742
-	i32.call	$push264=, __builtin_clrsbll@FUNCTION, $pop263
-	i32.const	$push265=, 31
-	i32.ne  	$push266=, $pop264, $pop265
-	br_if   	0, $pop266      # 0: down to label144
-# BB#122:                               # %if.end740
+	i64.eq  	$push246=, $pop245, $pop368
+	br_if   	0, $pop246      # 0: up to label146
+# BB#114:                               # %my_clzll.exit
+	end_loop                        # label147:
+	i32.wrap/i64	$push247=, $8
+	i32.const	$push248=, 32
+	i32.ne  	$push249=, $pop247, $pop248
+	br_if   	43, $pop249     # 43: down to label40
+# BB#115:                               # %for.body.i877
+	i64.const	$push250=, 3405695742
+	i32.call	$push251=, __builtin_clrsbll@FUNCTION, $pop250
+	i32.const	$push252=, 31
+	i32.ne  	$push253=, $pop251, $pop252
+	br_if   	44, $pop253     # 44: down to label39
+# BB#116:                               # %if.end740
 	i64.const	$push374=, -1
 	i32.call	$10=, __builtin_clrsbll@FUNCTION, $pop374
 	i64.const	$7=, 62
 	i64.const	$8=, 1
 	i32.const	$9=, 1
-.LBB18_123:                             # %for.body.i812
+.LBB18_117:                             # %for.body.i812
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label145:
+	loop                            # label148:
 	i64.const	$push377=, -1
-	i64.shr_u	$push267=, $pop377, $7
+	i64.shr_u	$push254=, $pop377, $7
 	i64.const	$push376=, 1
-	i64.and 	$push268=, $pop267, $pop376
+	i64.and 	$push255=, $pop254, $pop376
 	i64.const	$push375=, 0
-	i64.eq  	$push269=, $pop268, $pop375
-	br_if   	1, $pop269      # 1: down to label146
-# BB#124:                               # %for.inc.i816
-                                        #   in Loop: Header=BB18_123 Depth=1
+	i64.eq  	$push256=, $pop255, $pop375
+	br_if   	1, $pop256      # 1: down to label149
+# BB#118:                               # %for.inc.i816
+                                        #   in Loop: Header=BB18_117 Depth=1
 	i64.const	$push381=, 1
 	i64.add 	$8=, $8, $pop381
 	i32.const	$push380=, 1
@@ -1651,176 +1633,200 @@ main:                                   # @main
 	i64.const	$push379=, -1
 	i64.add 	$7=, $7, $pop379
 	i64.const	$push378=, 64
-	i64.lt_u	$push270=, $8, $pop378
-	br_if   	0, $pop270      # 0: up to label145
-.LBB18_125:                             # %my_clrsbll.exit
-	end_loop                        # label146:
+	i64.lt_u	$push257=, $8, $pop378
+	br_if   	0, $pop257      # 0: up to label148
+.LBB18_119:                             # %my_clrsbll.exit
+	end_loop                        # label149:
 	block
-	i32.const	$push271=, -1
-	i32.add 	$push272=, $9, $pop271
-	i32.ne  	$push273=, $10, $pop272
-	br_if   	0, $pop273      # 0: down to label147
-# BB#126:                               # %if.end753
-	i32.const	$push274=, 0
-	call    	exit@FUNCTION, $pop274
+	i32.const	$push258=, -1
+	i32.add 	$push259=, $9, $pop258
+	i32.ne  	$push260=, $10, $pop259
+	br_if   	0, $pop260      # 0: down to label150
+# BB#120:                               # %if.end753
+	i32.const	$push261=, 0
+	call    	exit@FUNCTION, $pop261
 	unreachable
-.LBB18_127:                             # %if.then744
-	end_block                       # label147:
+.LBB18_121:                             # %if.then744
+	end_block                       # label150:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_128:                             # %if.then719
-	end_block                       # label144:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_129:                             # %if.then710
-	end_block                       # label143:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_130:                             # %if.then694
-	end_block                       # label140:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_131:                             # %if.then669
-	end_block                       # label139:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_132:                             # %if.then644
-	end_block                       # label138:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_133:                             # %if.then619
-	end_block                       # label137:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_134:                             # %if.then594
-	end_block                       # label136:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_135:                             # %if.then569
-	end_block                       # label135:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_136:                             # %if.then544
-	end_block                       # label134:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_137:                             # %if.then519
-	end_block                       # label133:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_138:                             # %if.then510
-	end_block                       # label132:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_139:                             # %if.then494
-	end_block                       # label129:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_140:                             # %if.then469
-	end_block                       # label122:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_141:                             # %if.then460
-	end_block                       # label119:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_142:                             # %if.then444
-	end_block                       # label116:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_143:                             # %if.then427
-	end_block                       # label115:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_144:                             # %if.then402
-	end_block                       # label112:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_145:                             # %if.then377
-	end_block                       # label111:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_146:                             # %if.then352
-	end_block                       # label110:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_147:                             # %if.then327
-	end_block                       # label109:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_148:                             # %if.then302
-	end_block                       # label108:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_149:                             # %if.then277
-	end_block                       # label107:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_150:                             # %if.then252
-	end_block                       # label106:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_151:                             # %if.then227
-	end_block                       # label105:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_152:                             # %if.then202
-	end_block                       # label104:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_153:                             # %if.then177
-	end_block                       # label103:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_154:                             # %if.then152
-	end_block                       # label102:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_155:                             # %if.then140
-	end_block                       # label84:
-	call    	abort@FUNCTION
-	unreachable
-.LBB18_156:                             # %if.then133
+.LBB18_122:                             # %if.then
 	end_block                       # label83:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_157:                             # %if.then126
+.LBB18_123:                             # %if.then25
 	end_block                       # label82:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_158:                             # %if.then99
+.LBB18_124:                             # %if.then31
 	end_block                       # label81:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_159:                             # %if.then85
+.LBB18_125:                             # %if.then37
+	end_block                       # label80:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_126:                             # %if.then48
+	end_block                       # label79:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_127:                             # %if.then73
+	end_block                       # label78:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_128:                             # %if.then79
+	end_block                       # label77:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_129:                             # %if.then85
+	end_block                       # label76:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_130:                             # %if.then99
+	end_block                       # label75:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_131:                             # %if.then126
+	end_block                       # label74:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_132:                             # %if.then133
+	end_block                       # label73:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_133:                             # %if.then140
+	end_block                       # label72:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_134:                             # %if.then9
+	end_block                       # label71:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_135:                             # %if.then18
+	end_block                       # label70:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_136:                             # %if.then57
+	end_block                       # label69:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_137:                             # %if.then66
+	end_block                       # label68:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_138:                             # %if.then109
+	end_block                       # label67:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_139:                             # %if.then119
+	end_block                       # label66:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_140:                             # %if.then152
+	end_block                       # label65:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_141:                             # %if.then177
+	end_block                       # label64:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_142:                             # %if.then202
 	end_block                       # label63:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_160:                             # %if.then79
+.LBB18_143:                             # %if.then227
 	end_block                       # label62:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_161:                             # %if.then73
+.LBB18_144:                             # %if.then252
 	end_block                       # label61:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_162:                             # %if.then48
+.LBB18_145:                             # %if.then277
 	end_block                       # label60:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_163:                             # %if.then37
+.LBB18_146:                             # %if.then302
+	end_block                       # label59:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_147:                             # %if.then327
+	end_block                       # label58:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_148:                             # %if.then352
+	end_block                       # label57:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_149:                             # %if.then377
+	end_block                       # label56:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_150:                             # %if.then402
+	end_block                       # label55:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_151:                             # %if.then427
+	end_block                       # label54:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_152:                             # %if.then444
+	end_block                       # label53:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_153:                             # %if.then460
+	end_block                       # label52:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_154:                             # %if.then469
+	end_block                       # label51:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_155:                             # %if.then494
+	end_block                       # label50:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_156:                             # %if.then510
+	end_block                       # label49:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_157:                             # %if.then519
+	end_block                       # label48:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_158:                             # %if.then544
+	end_block                       # label47:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_159:                             # %if.then569
+	end_block                       # label46:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_160:                             # %if.then594
+	end_block                       # label45:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_161:                             # %if.then619
+	end_block                       # label44:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_162:                             # %if.then644
+	end_block                       # label43:
+	call    	abort@FUNCTION
+	unreachable
+.LBB18_163:                             # %if.then669
 	end_block                       # label42:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_164:                             # %if.then31
+.LBB18_164:                             # %if.then694
 	end_block                       # label41:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_165:                             # %if.then25
+.LBB18_165:                             # %if.then710
 	end_block                       # label40:
 	call    	abort@FUNCTION
 	unreachable
-.LBB18_166:                             # %if.then
+.LBB18_166:                             # %if.then719
 	end_block                       # label39:
 	call    	abort@FUNCTION
 	unreachable

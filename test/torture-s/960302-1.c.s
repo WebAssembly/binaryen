@@ -10,21 +10,21 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.load	$0=, a($pop0)
-	i32.const	$push7=, 1
-	i32.const	$push9=, -1
+	i32.const	$push6=, 1
+	i32.const	$push8=, -1
 	i32.const	$push1=, 31
 	i32.shr_u	$push2=, $0, $pop1
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push4=, -2
 	i32.and 	$push5=, $pop3, $pop4
-	i32.sub 	$push6=, $0, $pop5
-	tee_local	$push14=, $0=, $pop6
-	i32.const	$push13=, 1
-	i32.eq  	$push8=, $pop14, $pop13
-	i32.select	$push10=, $pop7, $pop9, $pop8
-	i32.const	$push12=, 0
-	i32.select	$push11=, $pop10, $pop12, $0
-	return  	$pop11
+	i32.sub 	$push14=, $0, $pop5
+	tee_local	$push13=, $0=, $pop14
+	i32.const	$push12=, 1
+	i32.eq  	$push7=, $pop13, $pop12
+	i32.select	$push9=, $pop6, $pop8, $pop7
+	i32.const	$push11=, 0
+	i32.select	$push10=, $pop9, $pop11, $0
+	return  	$pop10
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

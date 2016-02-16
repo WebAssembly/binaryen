@@ -72,34 +72,34 @@ main:                                   # @main
 	i64.const	$push0=, 8589934593
 	i64.store	$0=, s+4($pop12):p2align=2, $pop0
 	block
+	block
+	block
 	i32.const	$push11=, s
 	i32.call	$push1=, test1@FUNCTION, $pop11
 	i32.const	$push10=, 3
 	i32.ne  	$push2=, $pop1, $pop10
-	br_if   	0, $pop2        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push15=, 0
 	i64.store	$discard=, s+4($pop15):p2align=2, $0
-	block
 	i32.const	$push14=, s
 	i32.call	$push3=, test2@FUNCTION, $pop14
 	i32.const	$push13=, 3
 	i32.ne  	$push4=, $pop3, $pop13
-	br_if   	0, $pop4        # 0: down to label1
+	br_if   	1, $pop4        # 1: down to label1
 # BB#2:                                 # %if.end4
 	i32.const	$push16=, 0
 	i64.const	$push5=, 8589934593
 	i64.store	$discard=, s+4($pop16):p2align=2, $pop5
-	block
 	i32.const	$push6=, s
 	i32.call	$push7=, test3@FUNCTION, $pop6
 	i32.const	$push8=, 3
 	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	0, $pop9        # 0: down to label2
+	br_if   	2, $pop9        # 2: down to label0
 # BB#3:                                 # %if.end8
 	i32.const	$push17=, 0
 	return  	$pop17
-.LBB3_4:                                # %if.then7
+.LBB3_4:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
@@ -107,7 +107,7 @@ main:                                   # @main
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
-.LBB3_6:                                # %if.then
+.LBB3_6:                                # %if.then7
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

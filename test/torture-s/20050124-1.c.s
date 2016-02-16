@@ -12,27 +12,26 @@ foo:                                    # @foo
 	i32.const	$push0=, 1
 	i32.add 	$2=, $0, $pop0
 	block
+	block
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $1, $pop7
-	br_if   	0, $pop8        # 0: down to label0
+	br_if   	0, $pop8        # 0: down to label1
 # BB#1:                                 # %if.then
-	block
 	i32.const	$push1=, 0
 	i32.lt_s	$push2=, $0, $pop1
-	br_if   	0, $pop2        # 0: down to label1
+	br_if   	1, $pop2        # 1: down to label0
 # BB#2:                                 # %if.then1
 	i32.const	$push6=, 2
 	i32.add 	$2=, $0, $pop6
-	br      	1               # 1: down to label0
-.LBB0_3:                                # %if.else
+.LBB0_3:                                # %if.end5
 	end_block                       # label1:
+	return  	$2
+.LBB0_4:                                # %if.else
+	end_block                       # label0:
 	i32.const	$push3=, -1
 	i32.lt_s	$push4=, $0, $pop3
 	i32.select	$push5=, $0, $2, $pop4
 	return  	$pop5
-.LBB0_4:                                # %if.end5
-	end_block                       # label0:
-	return  	$2
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

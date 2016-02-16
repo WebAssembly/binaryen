@@ -11,31 +11,31 @@ main:                                   # @main
 	block
 	block
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.store8	$push1=, n($pop0), $pop11
-	tee_local	$push10=, $0=, $pop1
-	i32.load	$push2=, g($pop10)
+	i32.const	$push10=, 0
+	i32.store8	$push9=, n($pop0), $pop10
+	tee_local	$push8=, $0=, $pop9
+	i32.load	$push1=, g($pop8)
 	i32.const	$push14=, 0
-	i32.eq  	$push15=, $pop2, $pop14
+	i32.eq  	$push15=, $pop1, $pop14
 	br_if   	0, $pop15       # 0: down to label1
 # BB#1:                                 # %fn2.exit.thread.i
 	i32.load	$discard=, d($0)
 	br      	1               # 1: down to label0
 .LBB0_2:                                # %if.end.loopexit.i
 	end_block                       # label1:
-	i32.load	$push3=, h($0)
-	i32.store	$push4=, 0($pop3), $0
-	i32.const	$push5=, 1
-	i32.store8	$discard=, n($pop4), $pop5
+	i32.load	$push2=, h($0)
+	i32.store	$push3=, 0($pop2), $0
+	i32.const	$push4=, 1
+	i32.store8	$discard=, n($pop3), $pop4
 .LBB0_3:                                # %if.end
 	end_block                       # label0:
-	i32.const	$push6=, 0
-	i32.load	$push7=, s($pop6)
+	i32.const	$push5=, 0
+	i32.load	$push6=, s($pop5)
 	i32.const	$push13=, 0
-	i32.store	$push8=, 0($pop7), $pop13
-	tee_local	$push12=, $0=, $pop8
-	i32.store8	$push9=, n($pop12), $0
-	return  	$pop9
+	i32.store	$push12=, 0($pop6), $pop13
+	tee_local	$push11=, $0=, $pop12
+	i32.store8	$push7=, n($pop11), $0
+	return  	$pop7
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

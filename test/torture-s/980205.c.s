@@ -18,20 +18,20 @@ fdouble:                                # @fdouble
 	i32.const	$push2=, 7
 	i32.add 	$push3=, $pop1, $pop2
 	i32.const	$push4=, -8
-	i32.and 	$push5=, $pop3, $pop4
-	tee_local	$push12=, $1=, $pop5
-	i32.const	$push6=, 8
-	i32.add 	$push7=, $pop12, $pop6
-	i32.store	$discard=, 12($5), $pop7
+	i32.and 	$push12=, $pop3, $pop4
+	tee_local	$push11=, $1=, $pop12
+	i32.const	$push5=, 8
+	i32.add 	$push6=, $pop11, $pop5
+	i32.store	$discard=, 12($5), $pop6
 	block
-	f64.const	$push8=, 0x1p0
-	f64.ne  	$push9=, $0, $pop8
-	br_if   	0, $pop9        # 0: down to label0
+	f64.const	$push7=, 0x1p0
+	f64.ne  	$push8=, $0, $pop7
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %entry
 	f64.load	$push0=, 0($1)
-	f64.const	$push10=, 0x1p1
-	f64.ne  	$push11=, $pop0, $pop10
-	br_if   	0, $pop11       # 0: down to label0
+	f64.const	$push9=, 0x1p1
+	f64.ne  	$push10=, $pop0, $pop9
+	br_if   	0, $pop10       # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$4=, 16
 	i32.add 	$5=, $5, $4

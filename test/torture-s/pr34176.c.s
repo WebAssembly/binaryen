@@ -27,15 +27,15 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
-	i32.load	$push0=, foo.count($pop6)
-	tee_local	$push5=, $1=, $pop0
-	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop5, $pop1
-	i32.store	$discard=, foo.count($pop7), $pop2
+	i32.load	$push5=, foo.count($pop6)
+	tee_local	$push4=, $1=, $pop5
+	i32.const	$push0=, 1
+	i32.add 	$push1=, $pop4, $pop0
+	i32.store	$discard=, foo.count($pop7), $pop1
 	block
-	i32.const	$push4=, 1
-	i32.ge_s	$push3=, $1, $pop4
-	br_if   	0, $pop3        # 0: down to label0
+	i32.const	$push3=, 1
+	i32.ge_s	$push2=, $1, $pop3
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push8=, 0
 	return  	$pop8

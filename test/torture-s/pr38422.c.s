@@ -9,16 +9,16 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push10=, 0
-	i32.load	$push1=, s($pop10)
-	tee_local	$push9=, $0=, $pop1
-	i32.const	$push2=, 1
-	i32.shl 	$push3=, $pop9, $pop2
-	i32.const	$push4=, 1073741822
-	i32.and 	$push5=, $pop3, $pop4
-	i32.const	$push6=, -1073741824
-	i32.and 	$push7=, $0, $pop6
-	i32.or  	$push8=, $pop5, $pop7
-	i32.store	$discard=, s($pop0), $pop8
+	i32.load	$push9=, s($pop10)
+	tee_local	$push8=, $0=, $pop9
+	i32.const	$push1=, 1
+	i32.shl 	$push2=, $pop8, $pop1
+	i32.const	$push3=, 1073741822
+	i32.and 	$push4=, $pop2, $pop3
+	i32.const	$push5=, -1073741824
+	i32.and 	$push6=, $0, $pop5
+	i32.or  	$push7=, $pop4, $pop6
+	i32.store	$discard=, s($pop0), $pop7
 	return
 	.endfunc
 .Lfunc_end0:

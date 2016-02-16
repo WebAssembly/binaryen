@@ -7,17 +7,17 @@
 foo:                                    # @foo
 	.param  	i32, i64, i64
 # BB#0:                                 # %entry
-	i32.const	$push6=, 8
-	i32.add 	$push7=, $0, $pop6
+	i32.const	$push5=, 8
+	i32.add 	$push6=, $0, $pop5
 	i64.const	$push0=, 63
-	i64.shr_s	$push1=, $2, $pop0
-	tee_local	$push8=, $2=, $pop1
-	i64.const	$push4=, 4611846683310179025
-	i64.and 	$push5=, $pop8, $pop4
-	i64.store	$discard=, 0($pop7), $pop5
-	i64.const	$push2=, -8905435550453399112
-	i64.and 	$push3=, $2, $pop2
-	i64.store	$discard=, 0($0):p2align=4, $pop3
+	i64.shr_s	$push8=, $2, $pop0
+	tee_local	$push7=, $2=, $pop8
+	i64.const	$push3=, 4611846683310179025
+	i64.and 	$push4=, $pop7, $pop3
+	i64.store	$discard=, 0($pop6), $pop4
+	i64.const	$push1=, -8905435550453399112
+	i64.and 	$push2=, $2, $pop1
+	i64.store	$discard=, 0($0):p2align=4, $pop2
 	return
 	.endfunc
 .Lfunc_end0:

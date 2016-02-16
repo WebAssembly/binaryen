@@ -9,36 +9,36 @@ f:                                      # @f
 	.result 	i32
 	.local  	i64, i32
 # BB#0:                                 # %entry
-	i32.const	$push23=, 0
-	i32.const	$push21=, 1
-	i32.const	$push20=, 2
-	i32.load	$push4=, 4($2)
-	i32.load	$push5=, 4($0)
-	tee_local	$push28=, $4=, $pop5
-	i32.sub 	$push6=, $pop4, $pop28
-	i64.extend_s/i32	$push7=, $pop6
+	i32.const	$push20=, 0
+	i32.const	$push18=, 1
+	i32.const	$push17=, 2
+	i32.load	$push3=, 4($2)
+	i32.load	$push28=, 4($0)
+	tee_local	$push27=, $4=, $pop28
+	i32.sub 	$push4=, $pop3, $pop27
+	i64.extend_s/i32	$push5=, $pop4
 	i32.load	$push0=, 0($1)
-	i32.load	$push1=, 0($0)
-	tee_local	$push27=, $0=, $pop1
-	i32.sub 	$push2=, $pop0, $pop27
-	i64.extend_s/i32	$push3=, $pop2
-	i64.mul 	$push8=, $pop7, $pop3
-	i32.load	$push12=, 0($2)
-	i32.sub 	$push13=, $pop12, $0
-	i64.extend_s/i32	$push14=, $pop13
-	i32.load	$push9=, 4($1)
-	i32.sub 	$push10=, $pop9, $4
-	i64.extend_s/i32	$push11=, $pop10
-	i64.mul 	$push15=, $pop14, $pop11
-	i64.sub 	$push16=, $pop8, $pop15
-	tee_local	$push26=, $3=, $pop16
-	i64.const	$push17=, 0
-	i64.lt_s	$push19=, $pop26, $pop17
-	i32.select	$push22=, $pop21, $pop20, $pop19
-	i64.const	$push25=, 0
-	i64.gt_s	$push18=, $3, $pop25
-	i32.select	$push24=, $pop23, $pop22, $pop18
-	return  	$pop24
+	i32.load	$push26=, 0($0)
+	tee_local	$push25=, $0=, $pop26
+	i32.sub 	$push1=, $pop0, $pop25
+	i64.extend_s/i32	$push2=, $pop1
+	i64.mul 	$push6=, $pop5, $pop2
+	i32.load	$push10=, 0($2)
+	i32.sub 	$push11=, $pop10, $0
+	i64.extend_s/i32	$push12=, $pop11
+	i32.load	$push7=, 4($1)
+	i32.sub 	$push8=, $pop7, $4
+	i64.extend_s/i32	$push9=, $pop8
+	i64.mul 	$push13=, $pop12, $pop9
+	i64.sub 	$push24=, $pop6, $pop13
+	tee_local	$push23=, $3=, $pop24
+	i64.const	$push14=, 0
+	i64.lt_s	$push16=, $pop23, $pop14
+	i32.select	$push19=, $pop18, $pop17, $pop16
+	i64.const	$push22=, 0
+	i64.gt_s	$push15=, $3, $pop22
+	i32.select	$push21=, $pop20, $pop19, $pop15
+	return  	$pop21
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

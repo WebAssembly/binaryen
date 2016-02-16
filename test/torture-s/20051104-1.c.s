@@ -10,10 +10,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
-	i32.store	$push1=, s($pop0), $pop4
-	tee_local	$push3=, $0=, $pop1
-	i32.const	$push2=, .L.str
-	i32.store	$discard=, s+4($pop3), $pop2
+	i32.store	$push3=, s($pop0), $pop4
+	tee_local	$push2=, $0=, $pop3
+	i32.const	$push1=, .L.str
+	i32.store	$discard=, s+4($pop2), $pop1
 	return  	$0
 	.endfunc
 .Lfunc_end0:

@@ -9,29 +9,29 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push4=, 0
-	i32.load	$push0=, b($pop4)
+	block
+	i32.const	$push3=, 0
+	i32.load	$push0=, b($pop3)
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $pop0, $pop8
-	br_if   	0, $pop9        # 0: down to label0
+	br_if   	0, $pop9        # 0: down to label1
 # BB#1:                                 # %land.lhs.true
 	i32.const	$push6=, 0
 	i32.load	$0=, c($pop6)
-	i32.load	$push1=, 0($0)
-	tee_local	$push5=, $1=, $pop1
-	i32.const	$push2=, 1
-	i32.shl 	$push3=, $pop5, $pop2
-	i32.store	$discard=, 0($0), $pop3
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $1, $pop10
-	br_if   	0, $pop11       # 0: down to label0
-# BB#2:                                 # %if.then
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_3:                                # %if.end
-	end_block                       # label0:
+	i32.load	$push5=, 0($0)
+	tee_local	$push4=, $1=, $pop5
+	i32.const	$push1=, 1
+	i32.shl 	$push2=, $pop4, $pop1
+	i32.store	$discard=, 0($0), $pop2
+	br_if   	1, $1           # 1: down to label0
+.LBB0_2:                                # %if.end
+	end_block                       # label1:
 	i32.const	$push7=, 0
 	return  	$pop7
+.LBB0_3:                                # %if.then
+	end_block                       # label0:
+	call    	abort@FUNCTION
+	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

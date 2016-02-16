@@ -9,26 +9,26 @@ main:                                   # @main
 	.local  	i64
 # BB#0:                                 # %entry
 	block
-	i32.const	$push13=, 0
-	i64.load	$push0=, x($pop13):p2align=4
-	tee_local	$push12=, $0=, $pop0
-	i32.wrap/i64	$push1=, $pop12
-	i64.const	$push11=, 32
-	i64.shr_u	$push2=, $0, $pop11
-	i32.wrap/i64	$push3=, $pop2
-	i32.ge_s	$push4=, $pop1, $pop3
-	br_if   	0, $pop4        # 0: down to label0
+	i32.const	$push12=, 0
+	i64.load	$push11=, x($pop12):p2align=4
+	tee_local	$push10=, $0=, $pop11
+	i32.wrap/i64	$push0=, $pop10
+	i64.const	$push9=, 32
+	i64.shr_u	$push1=, $0, $pop9
+	i32.wrap/i64	$push2=, $pop1
+	i32.ge_s	$push3=, $pop0, $pop2
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push16=, 0
-	i64.load	$push5=, x+8($pop16)
-	tee_local	$push15=, $0=, $pop5
-	i64.const	$push14=, 32
-	i64.shr_u	$push6=, $pop15, $pop14
-	i64.and 	$push7=, $pop6, $0
-	i32.wrap/i64	$push8=, $pop7
-	i32.const	$push9=, -1
-	i32.gt_s	$push10=, $pop8, $pop9
-	br_if   	0, $pop10       # 0: down to label0
+	i64.load	$push15=, x+8($pop16)
+	tee_local	$push14=, $0=, $pop15
+	i64.const	$push13=, 32
+	i64.shr_u	$push4=, $pop14, $pop13
+	i64.and 	$push5=, $pop4, $0
+	i32.wrap/i64	$push6=, $pop5
+	i32.const	$push7=, -1
+	i32.gt_s	$push8=, $pop6, $pop7
+	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.then2
 	call    	abort@FUNCTION
 	unreachable

@@ -10,31 +10,31 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	block
 	block
+	block
 	i32.const	$push0=, 107
 	i32.eq  	$push1=, $1, $pop0
-	br_if   	0, $pop1        # 0: down to label1
+	br_if   	0, $pop1        # 0: down to label2
 # BB#1:                                 # %entry
-	block
 	i32.const	$push2=, 100
 	i32.ne  	$push3=, $1, $pop2
-	br_if   	0, $pop3        # 0: down to label2
+	br_if   	2, $pop3        # 2: down to label0
 # BB#2:                                 # %sw.bb
 	i32.load8_u	$push6=, 0($0)
 	i32.const	$push7=, 1
 	i32.shr_u	$1=, $pop6, $pop7
-	br      	2               # 2: down to label0
-.LBB0_3:                                # %sw.default
+	br      	1               # 1: down to label1
+.LBB0_3:                                # %sw.bb3
 	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_4:                                # %sw.bb3
-	end_block                       # label1:
 	i32.load8_u	$push4=, 3($0)
 	i32.const	$push5=, 4
 	i32.shr_u	$1=, $pop4, $pop5
-.LBB0_5:                                # %sw.epilog
-	end_block                       # label0:
+.LBB0_4:                                # %sw.epilog
+	end_block                       # label1:
 	return  	$1
+.LBB0_5:                                # %sw.default
+	end_block                       # label0:
+	call    	abort@FUNCTION
+	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

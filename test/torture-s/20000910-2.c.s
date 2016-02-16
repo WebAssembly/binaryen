@@ -8,33 +8,33 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	block
+	block
 	i32.const	$push7=, 0
 	i32.load	$push0=, list($pop7)
 	i32.const	$push6=, 42
 	i32.call	$push1=, strchr@FUNCTION, $pop0, $pop6
 	i32.const	$push10=, 0
 	i32.eq  	$push11=, $pop1, $pop10
-	br_if   	0, $pop11       # 0: down to label0
+	br_if   	0, $pop11       # 0: down to label1
 # BB#1:                                 # %if.then.i
-	block
 	i32.const	$push9=, 0
 	i32.load	$push2=, list+4($pop9)
 	i32.const	$push8=, 42
 	i32.call	$push3=, strchr@FUNCTION, $pop2, $pop8
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $pop3, $pop12
-	br_if   	0, $pop13       # 0: down to label1
+	br_if   	1, $pop13       # 1: down to label0
 # BB#2:                                 # %foo.exit
 	i32.const	$push4=, 0
 	return  	$pop4
-.LBB0_3:                                # %if.else.i
+.LBB0_3:                                # %if.then2.i
 	end_block                       # label1:
+	call    	abort@FUNCTION
+	unreachable
+.LBB0_4:                                # %if.else.i
+	end_block                       # label0:
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
-	unreachable
-.LBB0_4:                                # %if.then2.i
-	end_block                       # label0:
-	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:

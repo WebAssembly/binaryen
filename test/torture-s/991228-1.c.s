@@ -53,35 +53,35 @@ main:                                   # @main
 	i32.const	$push12=, 0
 	i32.load	$push0=, endianness_test($pop12):p2align=3
 	i32.const	$push1=, 2
-	i32.shl 	$push2=, $pop0, $pop1
-	tee_local	$push11=, $0=, $pop2
-	i32.load	$push3=, u($pop11)
-	i32.const	$push10=, 0
-	i32.lt_s	$push4=, $pop3, $pop10
-	br_if   	0, $pop4        # 0: down to label0
+	i32.shl 	$push11=, $pop0, $pop1
+	tee_local	$push10=, $0=, $pop11
+	i32.load	$push2=, u($pop10)
+	i32.const	$push9=, 0
+	i32.lt_s	$push3=, $pop2, $pop9
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push13=, 0
 	call    	exit@FUNCTION, $pop13
 	unreachable
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
-	i64.const	$push5=, -4625196817309499392
-	i64.store	$discard=, 8($4), $pop5
+	i64.const	$push4=, -4625196817309499392
+	i64.store	$discard=, 8($4), $pop4
 	i32.const	$3=, 8
 	i32.add 	$3=, $4, $3
 	block
-	i32.add 	$push6=, $3, $0
-	i32.load	$push7=, 0($pop6)
+	i32.add 	$push5=, $3, $0
+	i32.load	$push6=, 0($pop5)
 	i32.const	$push14=, 0
-	i32.lt_s	$push8=, $pop7, $pop14
-	br_if   	0, $pop8        # 0: down to label1
+	i32.lt_s	$push7=, $pop6, $pop14
+	br_if   	0, $pop7        # 0: down to label1
 # BB#3:                                 # %if.then1
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %if.end2
 	end_block                       # label1:
-	i32.const	$push9=, 0
-	call    	exit@FUNCTION, $pop9
+	i32.const	$push8=, 0
+	call    	exit@FUNCTION, $pop8
 	unreachable
 	.endfunc
 .Lfunc_end1:

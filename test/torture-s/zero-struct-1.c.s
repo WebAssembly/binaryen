@@ -45,22 +45,22 @@ main:                                   # @main
 	i32.add 	$push0=, $0, $pop9
 	i32.store	$0=, ff($pop10), $pop0
 	block
+	block
 	i32.const	$push8=, y+2
 	i32.ne  	$push5=, $1, $pop8
-	br_if   	0, $pop5        # 0: down to label0
+	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %if.end
-	block
 	i32.const	$push13=, y+2
 	i32.ne  	$push6=, $0, $pop13
-	br_if   	0, $pop6        # 0: down to label1
+	br_if   	1, $pop6        # 1: down to label0
 # BB#2:                                 # %if.end3
 	i32.const	$push7=, 0
 	return  	$pop7
-.LBB1_3:                                # %if.then2
+.LBB1_3:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
-.LBB1_4:                                # %if.then
+.LBB1_4:                                # %if.then2
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

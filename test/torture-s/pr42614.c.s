@@ -22,21 +22,21 @@ expect_func:                            # @expect_func
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
+	block
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %if.end
-	block
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $1, $pop2
-	br_if   	0, $pop3        # 0: down to label1
+	br_if   	1, $pop3        # 1: down to label0
 # BB#2:                                 # %if.end6
 	return
-.LBB1_3:                                # %if.then5
+.LBB1_3:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
-.LBB1_4:                                # %if.then
+.LBB1_4:                                # %if.then5
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

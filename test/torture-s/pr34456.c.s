@@ -58,28 +58,28 @@ compare:                                # @compare
 # BB#0:                                 # %entry
 	i32.load	$2=, 4($0)
 	block
-	i32.load	$push0=, 0($1)
-	tee_local	$push8=, $1=, $pop0
+	i32.load	$push8=, 0($1)
+	tee_local	$push7=, $1=, $pop8
 	i32.const	$push10=, 0
-	i32.eq  	$push11=, $pop8, $pop10
+	i32.eq  	$push11=, $pop7, $pop10
 	br_if   	0, $pop11       # 0: down to label0
 # BB#1:                                 # %land.lhs.true
-	i32.load	$push1=, 0($0)
-	i32.call_indirect	$push2=, $2, $pop1
+	i32.load	$push0=, 0($0)
+	i32.call_indirect	$push1=, $2, $pop0
 	i32.const	$push12=, 0
-	i32.eq  	$push13=, $pop2, $pop12
+	i32.eq  	$push13=, $pop1, $pop12
 	br_if   	0, $pop13       # 0: down to label0
 # BB#2:                                 # %if.then
-	i32.const	$push3=, 0
+	i32.const	$push2=, 0
 	i32.const	$push9=, 0
-	i32.load	$push4=, errors($pop9)
-	i32.const	$push5=, 1
-	i32.add 	$push6=, $pop4, $pop5
-	i32.store	$discard=, errors($pop3), $pop6
+	i32.load	$push3=, errors($pop9)
+	i32.const	$push4=, 1
+	i32.add 	$push5=, $pop3, $pop4
+	i32.store	$discard=, errors($pop2), $pop5
 .LBB3_3:                                # %if.end
 	end_block                       # label0:
-	i32.call_indirect	$push7=, $2, $1
-	return  	$pop7
+	i32.call_indirect	$push6=, $2, $1
+	return  	$pop6
 	.endfunc
 .Lfunc_end3:
 	.size	compare, .Lfunc_end3-compare

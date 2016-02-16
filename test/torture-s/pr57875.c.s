@@ -10,10 +10,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push16=, 0
-	i32.load	$push13=, i($pop16)
-	tee_local	$push15=, $4=, $pop13
-	i32.const	$push14=, 0
-	i32.gt_s	$push0=, $pop15, $pop14
+	i32.load	$push15=, i($pop16)
+	tee_local	$push14=, $4=, $pop15
+	i32.const	$push13=, 0
+	i32.gt_s	$push0=, $pop14, $pop13
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$push18=, 0

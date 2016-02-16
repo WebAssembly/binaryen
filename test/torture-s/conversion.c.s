@@ -131,15 +131,15 @@ fnear:                                  # @fnear
 # BB#0:                                 # %entry
 	i32.const	$2=, 1
 	block
-	f32.sub 	$push0=, $0, $1
-	tee_local	$push5=, $1=, $pop0
-	f32.const	$push1=, 0x0p0
-	f32.eq  	$push2=, $pop5, $pop1
-	br_if   	0, $pop2        # 0: down to label0
+	f32.sub 	$push5=, $0, $1
+	tee_local	$push4=, $1=, $pop5
+	f32.const	$push0=, 0x0p0
+	f32.eq  	$push1=, $pop4, $pop0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %lor.rhs
-	f32.div 	$push3=, $0, $1
-	f32.const	$push4=, 0x1.e848p19
-	f32.gt  	$2=, $pop3, $pop4
+	f32.div 	$push2=, $0, $1
+	f32.const	$push3=, 0x1.e848p19
+	f32.gt  	$2=, $pop2, $pop3
 .LBB6_2:                                # %lor.end
 	end_block                       # label0:
 	return  	$2
@@ -158,15 +158,15 @@ dnear:                                  # @dnear
 # BB#0:                                 # %entry
 	i32.const	$2=, 1
 	block
-	f64.sub 	$push0=, $0, $1
-	tee_local	$push5=, $1=, $pop0
-	f64.const	$push1=, 0x0p0
-	f64.eq  	$push2=, $pop5, $pop1
-	br_if   	0, $pop2        # 0: down to label1
+	f64.sub 	$push5=, $0, $1
+	tee_local	$push4=, $1=, $pop5
+	f64.const	$push0=, 0x0p0
+	f64.eq  	$push1=, $pop4, $pop0
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %lor.rhs
-	f64.div 	$push3=, $0, $1
-	f64.const	$push4=, 0x1.6bcc41e9p46
-	f64.gt  	$2=, $pop3, $pop4
+	f64.div 	$push2=, $0, $1
+	f64.const	$push3=, 0x1.6bcc41e9p46
+	f64.gt  	$2=, $pop2, $pop3
 .LBB7_2:                                # %lor.end
 	end_block                       # label1:
 	return  	$2
@@ -193,32 +193,32 @@ ldnear:                                 # @ldnear
 	i32.add 	$8=, $10, $8
 	call    	__subtf3@FUNCTION, $8, $0, $1, $2, $3
 	i32.const	$4=, 1
-	i64.load	$push0=, 16($10)
-	tee_local	$push15=, $3=, $pop0
-	i32.const	$push14=, 8
+	i64.load	$push15=, 16($10)
+	tee_local	$push14=, $3=, $pop15
+	i32.const	$push13=, 8
 	i32.const	$9=, 16
 	i32.add 	$9=, $10, $9
 	block
-	i32.add 	$push2=, $9, $pop14
-	i64.load	$push1=, 0($pop2)
-	tee_local	$push13=, $2=, $pop1
-	i64.const	$push3=, 0
-	i64.const	$push12=, 0
-	i32.call	$push4=, __eqtf2@FUNCTION, $pop15, $pop13, $pop3, $pop12
+	i32.add 	$push0=, $9, $pop13
+	i64.load	$push12=, 0($pop0)
+	tee_local	$push11=, $2=, $pop12
+	i64.const	$push1=, 0
+	i64.const	$push10=, 0
+	i32.call	$push2=, __eqtf2@FUNCTION, $pop14, $pop11, $pop1, $pop10
 	i32.const	$push17=, 0
-	i32.eq  	$push18=, $pop4, $pop17
+	i32.eq  	$push18=, $pop2, $pop17
 	br_if   	0, $pop18       # 0: down to label2
 # BB#1:                                 # %lor.rhs
 	call    	__divtf3@FUNCTION, $10, $0, $1, $3, $2
-	i64.load	$push7=, 0($10)
+	i64.load	$push5=, 0($10)
 	i32.const	$push16=, 8
-	i32.add 	$push5=, $10, $pop16
-	i64.load	$push6=, 0($pop5)
-	i64.const	$push9=, 8070450532247928832
-	i64.const	$push8=, 4641306360700491489
-	i32.call	$push10=, __gttf2@FUNCTION, $pop7, $pop6, $pop9, $pop8
-	i32.const	$push11=, 0
-	i32.gt_s	$4=, $pop10, $pop11
+	i32.add 	$push3=, $10, $pop16
+	i64.load	$push4=, 0($pop3)
+	i64.const	$push7=, 8070450532247928832
+	i64.const	$push6=, 4641306360700491489
+	i32.call	$push8=, __gttf2@FUNCTION, $pop5, $pop4, $pop7, $pop6
+	i32.const	$push9=, 0
+	i32.gt_s	$4=, $pop8, $pop9
 .LBB8_2:                                # %lor.end
 	end_block                       # label2:
 	i32.const	$7=, 32

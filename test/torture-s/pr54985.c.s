@@ -16,13 +16,13 @@ foo:                                    # @foo
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.load	$3=, 0($0)
-	i32.const	$push1=, 4
-	i32.add 	$0=, $0, $pop1
+	i32.const	$push0=, 4
+	i32.add 	$0=, $0, $pop0
 .LBB0_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push2=, -1
-	i32.add 	$1=, $1, $pop2
+	i32.const	$push1=, -1
+	i32.add 	$1=, $1, $pop1
 	i32.const	$4=, 0
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $1, $pop7
@@ -31,9 +31,9 @@ foo:                                    # @foo
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push4=, 4
 	i32.add 	$4=, $0, $pop4
-	i32.load	$push0=, 0($0)
-	tee_local	$push3=, $5=, $pop0
-	i32.lt_s	$2=, $pop3, $3
+	i32.load	$push3=, 0($0)
+	tee_local	$push2=, $5=, $pop3
+	i32.lt_s	$2=, $pop2, $3
 	copy_local	$0=, $4
 	copy_local	$3=, $5
 	i32.const	$4=, 1

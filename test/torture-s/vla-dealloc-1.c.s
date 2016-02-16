@@ -19,32 +19,32 @@ main:                                   # @main
 	i32.const	$push15=, 1000
 	i32.rem_s	$push0=, $3, $pop15
 	i32.const	$push14=, 2
-	i32.shl 	$push1=, $pop0, $pop14
-	tee_local	$push13=, $4=, $pop1
-	i32.const	$push12=, 19
-	i32.add 	$push2=, $pop13, $pop12
-	i32.const	$push11=, -16
-	i32.and 	$push3=, $pop2, $pop11
-	i32.sub 	$1=, $7, $pop3
+	i32.shl 	$push13=, $pop0, $pop14
+	tee_local	$push12=, $4=, $pop13
+	i32.const	$push11=, 19
+	i32.add 	$push1=, $pop12, $pop11
+	i32.const	$push10=, -16
+	i32.and 	$push2=, $pop1, $pop10
+	i32.sub 	$1=, $7, $pop2
 	copy_local	$7=, $1
-	i32.const	$push10=, 1
-	i32.store	$2=, 0($1):p2align=4, $pop10
-	i32.add 	$push4=, $1, $4
-	i32.const	$push9=, 2
-	i32.store	$discard=, 0($pop4), $pop9
-	i32.const	$push8=, 0
-	i32.store	$discard=, p($pop8), $1
+	i32.const	$push9=, 1
+	i32.store	$2=, 0($1):p2align=4, $pop9
+	i32.add 	$push3=, $1, $4
+	i32.const	$push8=, 2
+	i32.store	$discard=, 0($pop3), $pop8
+	i32.const	$push7=, 0
+	i32.store	$discard=, p($pop7), $1
 	i32.add 	$3=, $3, $2
 	copy_local	$7=, $0
-	i32.const	$push7=, 1000000
-	i32.ne  	$push5=, $3, $pop7
-	br_if   	0, $pop5        # 0: up to label0
+	i32.const	$push6=, 1000000
+	i32.ne  	$push4=, $3, $pop6
+	br_if   	0, $pop4        # 0: up to label0
 # BB#2:                                 # %cleanup5
 	end_loop                        # label1:
-	i32.const	$push6=, 0
+	i32.const	$push5=, 0
 	i32.const	$6=, __stack_pointer
 	i32.store	$7=, 0($6), $8
-	return  	$pop6
+	return  	$pop5
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

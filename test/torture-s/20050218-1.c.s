@@ -23,11 +23,11 @@ foo:                                    # @foo
 	loop                            # label1:
 	i32.load	$3=, 0($4)
 	i32.const	$7=, 2
-	i32.add 	$push1=, $0, $5
-	i32.call	$push0=, strlen@FUNCTION, $3
-	tee_local	$push5=, $8=, $pop0
-	i32.call	$push2=, strncmp@FUNCTION, $pop1, $3, $pop5
-	br_if   	1, $pop2        # 1: down to label2
+	i32.add 	$push0=, $0, $5
+	i32.call	$push5=, strlen@FUNCTION, $3
+	tee_local	$push4=, $8=, $pop5
+	i32.call	$push1=, strncmp@FUNCTION, $pop0, $3, $pop4
+	br_if   	1, $pop1        # 1: down to label2
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.add 	$5=, $8, $5
@@ -37,8 +37,8 @@ foo:                                    # @foo
 	br_if   	0, $pop11       # 0: down to label3
 # BB#4:                                 # %if.then6
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.call	$push3=, strlen@FUNCTION, $1
-	i32.add 	$5=, $pop3, $5
+	i32.call	$push2=, strlen@FUNCTION, $1
+	i32.add 	$5=, $pop2, $5
 .LBB0_5:                                # %for.inc
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
@@ -47,8 +47,8 @@ foo:                                    # @foo
 	i32.const	$push6=, 4
 	i32.add 	$4=, $4, $pop6
 	i32.const	$7=, 0
-	i32.lt_u	$push4=, $6, $2
-	br_if   	0, $pop4        # 0: up to label1
+	i32.lt_u	$push3=, $6, $2
+	br_if   	0, $pop3        # 0: up to label1
 .LBB0_6:                                # %cleanup
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -65,32 +65,32 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push12=, 0
-	i32.load	$0=, a($pop12):p2align=4
+	i32.const	$push11=, 0
+	i32.load	$0=, a($pop11):p2align=4
 	block
-	i32.const	$push11=, .L.str.4
-	i32.call	$push0=, strlen@FUNCTION, $0
-	tee_local	$push10=, $1=, $pop0
-	i32.call	$push2=, strncmp@FUNCTION, $pop11, $0, $pop10
-	br_if   	0, $pop2        # 0: down to label4
+	i32.const	$push10=, .L.str.4
+	i32.call	$push9=, strlen@FUNCTION, $0
+	tee_local	$push8=, $1=, $pop9
+	i32.call	$push0=, strncmp@FUNCTION, $pop10, $0, $pop8
+	br_if   	0, $pop0        # 0: down to label4
 # BB#1:                                 # %if.end.i
 	i32.const	$push15=, 0
 	i32.load	$0=, a+4($pop15)
 	i32.const	$push14=, .L.str.4
-	i32.add 	$push3=, $1, $pop14
-	i32.call	$push1=, strlen@FUNCTION, $0
-	tee_local	$push13=, $2=, $pop1
-	i32.call	$push4=, strncmp@FUNCTION, $pop3, $0, $pop13
-	br_if   	0, $pop4        # 0: down to label4
+	i32.add 	$push1=, $1, $pop14
+	i32.call	$push13=, strlen@FUNCTION, $0
+	tee_local	$push12=, $2=, $pop13
+	i32.call	$push2=, strncmp@FUNCTION, $pop1, $0, $pop12
+	br_if   	0, $pop2        # 0: down to label4
 # BB#2:                                 # %if.end.i.1
 	i32.const	$push16=, 0
 	i32.load	$0=, a+8($pop16):p2align=3
-	i32.add 	$push5=, $2, $1
-	i32.const	$push6=, .L.str.4
-	i32.add 	$push7=, $pop5, $pop6
-	i32.call	$push8=, strlen@FUNCTION, $0
-	i32.call	$push9=, strncmp@FUNCTION, $pop7, $0, $pop8
-	br_if   	0, $pop9        # 0: down to label4
+	i32.add 	$push3=, $2, $1
+	i32.const	$push4=, .L.str.4
+	i32.add 	$push5=, $pop3, $pop4
+	i32.call	$push6=, strlen@FUNCTION, $0
+	i32.call	$push7=, strncmp@FUNCTION, $pop5, $0, $pop6
+	br_if   	0, $pop7        # 0: down to label4
 # BB#3:                                 # %if.end.i.2
 	i32.const	$push17=, 0
 	return  	$pop17

@@ -9,38 +9,38 @@ doit:                                   # @doit
 # BB#0:                                 # %entry
 	block
 	i32.const	$push19=, 0
-	i32.load	$push0=, markstack_ptr($pop19)
-	tee_local	$push18=, $3=, $pop0
-	i32.const	$push4=, -4
-	i32.add 	$push5=, $pop18, $pop4
-	i32.load	$push1=, 0($pop5)
-	tee_local	$push17=, $0=, $pop1
-	i32.const	$push6=, 6
-	i32.eq  	$push7=, $pop17, $pop6
-	br_if   	0, $pop7        # 0: down to label0
+	i32.load	$push18=, markstack_ptr($pop19)
+	tee_local	$push17=, $3=, $pop18
+	i32.const	$push2=, -4
+	i32.add 	$push3=, $pop17, $pop2
+	i32.load	$push16=, 0($pop3)
+	tee_local	$push15=, $0=, $pop16
+	i32.const	$push4=, 6
+	i32.eq  	$push5=, $pop15, $pop4
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push22=, 0
-	i32.load	$push2=, stack_base($pop22)
-	i32.const	$push3=, 40
-	i32.add 	$2=, $pop2, $pop3
-	i32.const	$push10=, -6
-	i32.add 	$1=, $0, $pop10
+	i32.load	$push0=, stack_base($pop22)
+	i32.const	$push1=, 40
+	i32.add 	$2=, $pop0, $pop1
+	i32.const	$push8=, -6
+	i32.add 	$1=, $0, $pop8
 	i32.const	$push21=, -8
-	i32.add 	$push8=, $3, $pop21
-	i32.load	$push9=, 0($pop8)
-	i32.const	$push11=, 3
-	i32.shl 	$push12=, $pop9, $pop11
+	i32.add 	$push6=, $3, $pop21
+	i32.load	$push7=, 0($pop6)
+	i32.const	$push9=, 3
+	i32.shl 	$push10=, $pop7, $pop9
 	i32.const	$push20=, 3
-	i32.shl 	$push13=, $0, $pop20
-	i32.sub 	$0=, $pop12, $pop13
+	i32.shl 	$push11=, $0, $pop20
+	i32.sub 	$0=, $pop10, $pop11
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.add 	$push15=, $2, $0
+	i32.add 	$push13=, $2, $0
 	i32.const	$push25=, 16
-	i32.add 	$push16=, $pop15, $pop25
-	i64.load	$push14=, 0($2)
-	i64.store	$discard=, 0($pop16), $pop14
+	i32.add 	$push14=, $pop13, $pop25
+	i64.load	$push12=, 0($2)
+	i64.store	$discard=, 0($pop14), $pop12
 	i32.const	$push24=, -8
 	i32.add 	$2=, $2, $pop24
 	i32.const	$push23=, 1

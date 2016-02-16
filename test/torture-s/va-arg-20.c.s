@@ -18,16 +18,16 @@ foo:                                    # @foo
 	i32.const	$push1=, 7
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, -8
-	i32.and 	$push4=, $pop2, $pop3
-	tee_local	$push10=, $0=, $pop4
-	i32.const	$push5=, 8
-	i32.add 	$push6=, $pop10, $pop5
-	i32.store	$discard=, 12($4), $pop6
+	i32.and 	$push10=, $pop2, $pop3
+	tee_local	$push9=, $0=, $pop10
+	i32.const	$push4=, 8
+	i32.add 	$push5=, $pop9, $pop4
+	i32.store	$discard=, 12($4), $pop5
 	block
-	i64.load	$push7=, 0($0)
-	i64.const	$push8=, 16
-	i64.ne  	$push9=, $pop7, $pop8
-	br_if   	0, $pop9        # 0: down to label0
+	i64.load	$push6=, 0($0)
+	i64.const	$push7=, 16
+	i64.ne  	$push8=, $pop6, $pop7
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$3=, 16
 	i32.add 	$4=, $4, $3
@@ -61,16 +61,16 @@ bar:                                    # @bar
 	i32.const	$push2=, 7
 	i32.add 	$push3=, $pop1, $pop2
 	i32.const	$push4=, -8
-	i32.and 	$push5=, $pop3, $pop4
-	tee_local	$push11=, $2=, $pop5
-	i32.const	$push6=, 8
-	i32.add 	$push7=, $pop11, $pop6
-	i32.store	$discard=, 12($6), $pop7
+	i32.and 	$push11=, $pop3, $pop4
+	tee_local	$push10=, $2=, $pop11
+	i32.const	$push5=, 8
+	i32.add 	$push6=, $pop10, $pop5
+	i32.store	$discard=, 12($6), $pop6
 	block
-	i64.load	$push8=, 0($2)
-	i64.const	$push9=, 16
-	i64.ne  	$push10=, $pop8, $pop9
-	br_if   	0, $pop10       # 0: down to label1
+	i64.load	$push7=, 0($2)
+	i64.const	$push8=, 16
+	i64.ne  	$push9=, $pop7, $pop8
+	br_if   	0, $pop9        # 0: down to label1
 # BB#1:                                 # %foo.exit
 	i32.const	$5=, 16
 	i32.add 	$6=, $6, $5

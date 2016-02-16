@@ -34,17 +34,17 @@ doit:                                   # @doit
 	i32.call	$2=, malloc@FUNCTION, $pop0
 	i32.const	$push10=, 4
 	i32.call	$3=, malloc@FUNCTION, $pop10
-	i32.const	$push2=, 0
-	i32.load	$push3=, stdout($pop2)
-	i32.const	$push4=, .L.str
-	i32.store	$push1=, 0($2), $1
-	tee_local	$push9=, $1=, $pop1
-	i32.call	$discard=, vfprintf@FUNCTION, $pop3, $pop4, $pop9
-	i32.const	$push8=, 0
-	i32.load	$push6=, stdout($pop8)
-	i32.const	$push7=, .L.str
-	i32.store	$push5=, 0($3), $1
-	i32.call	$discard=, vfprintf@FUNCTION, $pop6, $pop7, $pop5
+	i32.const	$push1=, 0
+	i32.load	$push2=, stdout($pop1)
+	i32.const	$push3=, .L.str
+	i32.store	$push9=, 0($2), $1
+	tee_local	$push8=, $1=, $pop9
+	i32.call	$discard=, vfprintf@FUNCTION, $pop2, $pop3, $pop8
+	i32.const	$push7=, 0
+	i32.load	$push5=, stdout($pop7)
+	i32.const	$push6=, .L.str
+	i32.store	$push4=, 0($3), $1
+	i32.call	$discard=, vfprintf@FUNCTION, $pop5, $pop6, $pop4
 	block
 	i32.const	$push11=, 0
 	i32.eq  	$push12=, $3, $pop11

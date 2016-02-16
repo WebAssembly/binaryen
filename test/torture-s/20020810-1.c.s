@@ -9,20 +9,20 @@ f:                                      # @f
 	.local  	i64
 # BB#0:                                 # %entry
 	block
-	i32.load	$push1=, 0($0)
-	i32.const	$push2=, 0
-	i64.load	$push0=, R($pop2)
-	tee_local	$push10=, $1=, $pop0
-	i32.wrap/i64	$push3=, $pop10
-	i32.ne  	$push4=, $pop1, $pop3
-	br_if   	0, $pop4        # 0: down to label0
+	i32.load	$push0=, 0($0)
+	i32.const	$push1=, 0
+	i64.load	$push10=, R($pop1)
+	tee_local	$push9=, $1=, $pop10
+	i32.wrap/i64	$push2=, $pop9
+	i32.ne  	$push3=, $pop0, $pop2
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.load	$push8=, 4($0)
-	i64.const	$push5=, 32
-	i64.shr_u	$push6=, $1, $pop5
-	i32.wrap/i64	$push7=, $pop6
-	i32.ne  	$push9=, $pop8, $pop7
-	br_if   	0, $pop9        # 0: down to label0
+	i32.load	$push7=, 4($0)
+	i64.const	$push4=, 32
+	i64.shr_u	$push5=, $1, $pop4
+	i32.wrap/i64	$push6=, $pop5
+	i32.ne  	$push8=, $pop7, $pop6
+	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.end
 	return
 .LBB0_3:                                # %if.then

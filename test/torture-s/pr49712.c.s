@@ -49,40 +49,40 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, 0
-	i32.const	$push9=, 0
-	i32.store	$push1=, b($pop0), $pop9
-	tee_local	$push8=, $0=, $pop1
-	i32.load	$push2=, c($pop8)
+	i32.const	$push8=, 0
+	i32.store	$push7=, b($pop0), $pop8
+	tee_local	$push6=, $0=, $pop7
+	i32.load	$push1=, c($pop6)
 	i32.const	$push15=, 0
-	i32.eq  	$push16=, $pop2, $pop15
+	i32.eq  	$push16=, $pop1, $pop15
 	br_if   	0, $pop16       # 0: down to label1
 # BB#1:                                 # %while.body.preheader
-	i32.load	$push3=, d($0)
-	i32.const	$push10=, 1
-	i32.lt_s	$0=, $pop3, $pop10
+	i32.load	$push2=, d($0)
+	i32.const	$push9=, 1
+	i32.lt_s	$0=, $pop2, $pop9
 .LBB2_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.const	$push11=, 1
-	i32.and 	$push4=, $0, $pop11
+	i32.const	$push10=, 1
+	i32.and 	$push3=, $0, $pop10
 	i32.const	$push17=, 0
-	i32.eq  	$push18=, $pop4, $pop17
+	i32.eq  	$push18=, $pop3, $pop17
 	br_if   	0, $pop18       # 0: up to label2
 # BB#3:                                 # %for.cond4.preheader.preheader.i
                                         #   in Loop: Header=BB2_2 Depth=1
-	i32.const	$push5=, 0
+	i32.const	$push4=, 0
 	i32.const	$push14=, 0
-	i32.store	$push6=, a($pop5), $pop14
-	tee_local	$push13=, $0=, $pop6
-	i32.store	$discard=, e($pop13), $0
-	i32.const	$push12=, 1
-	i32.store	$discard=, d($0), $pop12
+	i32.store	$push13=, a($pop4), $pop14
+	tee_local	$push12=, $0=, $pop13
+	i32.store	$discard=, e($pop12), $0
+	i32.const	$push11=, 1
+	i32.store	$discard=, d($0), $pop11
 	br      	0               # 0: up to label2
 .LBB2_4:                                # %for.inc.1
 	end_loop                        # label3:
 	end_block                       # label1:
-	i32.const	$push7=, 2
-	i32.store	$discard=, b($0), $pop7
+	i32.const	$push5=, 2
+	i32.store	$discard=, b($0), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end2:

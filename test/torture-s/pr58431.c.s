@@ -17,64 +17,55 @@ main:                                   # @main
 	i32.store16	$2=, i($pop0), $pop2
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
-	i32.store	$push3=, b($pop17), $pop16
-	tee_local	$push15=, $4=, $pop3
-	i32.load	$0=, k($pop15)
+	i32.store	$push15=, b($pop17), $pop16
+	tee_local	$push14=, $4=, $pop15
+	i32.load	$0=, k($pop14)
 	i32.load8_s	$1=, a($4)
-	i32.const	$push4=, 24
-	i32.shl 	$push5=, $2, $pop4
-	i32.const	$push14=, 24
-	i32.shr_s	$2=, $pop5, $pop14
+	i32.const	$push3=, 24
+	i32.shl 	$push4=, $2, $pop3
+	i32.const	$push13=, 24
+	i32.shr_s	$2=, $pop4, $pop13
 	block
-	i32.load	$push6=, j($4)
-	br_if   	0, $pop6        # 0: down to label0
+	i32.load	$push5=, j($4)
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %lor.rhs
-	i32.load	$push7=, c($4)
-	i32.ne  	$3=, $pop7, $4
+	i32.load	$push6=, c($4)
+	i32.ne  	$3=, $pop6, $4
 .LBB0_2:                                # %lor.end
 	end_block                       # label0:
 	block
 	block
 	block
-	i32.ne  	$push8=, $1, $2
-	br_if   	0, $pop8        # 0: down to label3
+	block
+	i32.ne  	$push7=, $1, $2
+	br_if   	0, $pop7        # 0: down to label4
 # BB#3:                                 # %if.else
 	i32.const	$push24=, 0
 	i32.load	$4=, e($pop24)
 	i32.const	$push23=, 0
-	i32.const	$push12=, 1
-	i32.store8	$2=, h($pop23), $pop12
-	block
+	i32.const	$push11=, 1
+	i32.store8	$2=, h($pop23), $pop11
 	i32.const	$push35=, 0
 	i32.eq  	$push36=, $4, $pop35
-	br_if   	0, $pop36       # 0: down to label4
+	br_if   	2, $pop36       # 2: down to label2
 # BB#4:                                 # %for.inc17.preheader
 	i32.const	$push29=, 0
 	i32.const	$push28=, 0
 	i32.store	$discard=, e($pop29), $pop28
-	br      	2               # 2: down to label2
-.LBB0_5:                                # %for.end22.thread
+	br      	1               # 1: down to label3
+.LBB0_5:                                # %for.cond10thread-pre-split
 	end_block                       # label4:
-	i32.const	$push27=, 0
-	i32.store	$discard=, g($pop27), $0
-	i32.const	$push26=, 0
-	i32.store	$discard=, j($pop26), $3
-	i32.const	$push25=, 0
-	i32.store	$discard=, b($pop25), $2
-	br      	2               # 2: down to label1
-.LBB0_6:                                # %for.cond10thread-pre-split
-	end_block                       # label3:
 	i32.const	$push21=, 0
-	i32.load	$push9=, d($pop21)
+	i32.load	$push8=, d($pop21)
 	i32.const	$push20=, 0
-	i32.gt_s	$push10=, $pop9, $pop20
-	br_if   	0, $pop10       # 0: down to label2
-# BB#7:                                 # %for.inc.preheader
+	i32.gt_s	$push9=, $pop8, $pop20
+	br_if   	0, $pop9        # 0: down to label3
+# BB#6:                                 # %for.inc.preheader
 	i32.const	$push22=, 0
-	i32.const	$push11=, 1
-	i32.store	$discard=, d($pop22), $pop11
-.LBB0_8:                                # %for.end22
-	end_block                       # label2:
+	i32.const	$push10=, 1
+	i32.store	$discard=, d($pop22), $pop10
+.LBB0_7:                                # %for.end22
+	end_block                       # label3:
 	i32.const	$push33=, 0
 	i32.store	$discard=, g($pop33), $0
 	i32.const	$push32=, 0
@@ -82,12 +73,20 @@ main:                                   # @main
 	i32.const	$push31=, 0
 	i32.store	$discard=, j($pop31), $3
 	i32.const	$push30=, 0
-	i32.const	$push13=, 1
-	i32.store	$discard=, b($pop30), $pop13
-	br_if   	0, $4           # 0: down to label1
-# BB#9:                                 # %if.end27
+	i32.const	$push12=, 1
+	i32.store	$discard=, b($pop30), $pop12
+	br_if   	1, $4           # 1: down to label1
+# BB#8:                                 # %if.end27
 	i32.const	$push34=, 0
 	return  	$pop34
+.LBB0_9:                                # %for.end22.thread
+	end_block                       # label2:
+	i32.const	$push27=, 0
+	i32.store	$discard=, g($pop27), $0
+	i32.const	$push26=, 0
+	i32.store	$discard=, j($pop26), $3
+	i32.const	$push25=, 0
+	i32.store	$discard=, b($pop25), $2
 .LBB0_10:                               # %if.then26
 	end_block                       # label1:
 	call    	abort@FUNCTION

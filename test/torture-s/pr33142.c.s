@@ -20,16 +20,16 @@ lisp_atan2:                             # @lisp_atan2
 	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %if.then2
 	i32.const	$push4=, 31
-	i32.shr_s	$push5=, $1, $pop4
-	tee_local	$push13=, $2=, $pop5
-	i32.add 	$push6=, $1, $pop13
-	i32.xor 	$push7=, $pop6, $2
-	i32.const	$push12=, 31
-	i32.shr_s	$push8=, $0, $pop12
-	tee_local	$push11=, $1=, $pop8
-	i32.add 	$push9=, $0, $pop11
-	i32.xor 	$push10=, $pop9, $1
-	i32.le_s	$2=, $pop7, $pop10
+	i32.shr_s	$push13=, $1, $pop4
+	tee_local	$push12=, $2=, $pop13
+	i32.add 	$push5=, $1, $pop12
+	i32.xor 	$push6=, $pop5, $2
+	i32.const	$push11=, 31
+	i32.shr_s	$push10=, $0, $pop11
+	tee_local	$push9=, $1=, $pop10
+	i32.add 	$push7=, $0, $pop9
+	i32.xor 	$push8=, $pop7, $1
+	i32.le_s	$2=, $pop6, $pop8
 .LBB0_3:                                # %return
 	end_block                       # label0:
 	return  	$2

@@ -50,11 +50,11 @@ fn1:                                    # @fn1
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push10=, 0
-	i32.const	$push9=, 0
-	i32.load	$push3=, p($pop9)
 	i32.const	$push1=, 1
 	i32.store	$push2=, 0($0), $pop1
-	i32.add 	$push4=, $pop3, $pop2
+	i32.const	$push9=, 0
+	i32.load	$push3=, p($pop9)
+	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$push5=, p($pop10), $pop4
 	br_if   	0, $pop5        # 0: up to label1
 .LBB2_2:                                # %for.end

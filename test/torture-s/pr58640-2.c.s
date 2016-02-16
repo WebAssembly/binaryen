@@ -6,35 +6,35 @@
 	.type	fn1,@function
 fn1:                                    # @fn1
 	.result 	i32
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
-	i32.const	$push21=, 0
 	i32.const	$push20=, 0
-	i32.load	$push3=, a+36($pop20)
-	i32.store	$push4=, a($pop21):p2align=4, $pop3
-	i32.store	$discard=, a+4($pop1), $pop4
 	i32.const	$push19=, 0
-	i32.load	$0=, a+60($pop19)
+	i32.load	$push3=, a+36($pop19)
+	i32.store	$push4=, a($pop20):p2align=4, $pop3
+	i32.store	$discard=, a+4($pop1), $pop4
 	i32.const	$push18=, 0
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
+	i32.const	$push0=, 1
+	i32.store	$push2=, a+48($pop16):p2align=4, $pop0
+	i32.store	$push5=, c($pop17), $pop2
+	i32.store	$0=, c($pop18), $pop5
 	i32.const	$push15=, 0
+	i32.load	$1=, a+60($pop15)
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
-	i32.const	$push0=, 1
-	i32.store	$push2=, a+48($pop13):p2align=4, $pop0
-	i32.store	$push5=, c($pop14), $pop2
-	i32.store	$push6=, c($pop15), $pop5
-	i32.store	$push7=, a($pop16):p2align=4, $pop6
-	i32.store	$push8=, a+4($pop17), $pop7
-	i32.store	$discard=, c($pop18), $pop8
 	i32.const	$push12=, 0
+	i32.store	$push6=, a($pop12):p2align=4, $0
+	i32.store	$push7=, a+4($pop13), $pop6
+	i32.store	$discard=, c($pop14), $pop7
 	i32.const	$push11=, 0
-	i32.store	$push9=, a($pop11):p2align=4, $0
-	i32.store	$discard=, a+4($pop12), $pop9
 	i32.const	$push10=, 0
-	return  	$pop10
+	i32.store	$push8=, a($pop10):p2align=4, $1
+	i32.store	$discard=, a+4($pop11), $pop8
+	i32.const	$push9=, 0
+	return  	$pop9
 	.endfunc
 .Lfunc_end0:
 	.size	fn1, .Lfunc_end0-fn1

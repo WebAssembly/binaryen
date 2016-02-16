@@ -10,22 +10,22 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push1=, 0
-	i32.load16_s	$push2=, c($pop1)
-	tee_local	$push11=, $0=, $pop2
-	i32.const	$push4=, -1
-	i32.gt_s	$push5=, $pop11, $pop4
-	br_if   	0, $pop5        # 0: down to label0
+	i32.load16_s	$push11=, c($pop1)
+	tee_local	$push10=, $0=, $pop11
+	i32.const	$push3=, -1
+	i32.gt_s	$push4=, $pop10, $pop3
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.const	$push3=, 65535
-	i32.and 	$push0=, $0, $pop3
-	i32.const	$push6=, -32768
-	i32.add 	$push7=, $pop0, $pop6
-	i32.const	$push8=, 32768
-	i32.ge_s	$push9=, $pop7, $pop8
-	br_if   	0, $pop9        # 0: down to label0
+	i32.const	$push2=, 65535
+	i32.and 	$push0=, $0, $pop2
+	i32.const	$push5=, -32768
+	i32.add 	$push6=, $pop0, $pop5
+	i32.const	$push7=, 32768
+	i32.ge_s	$push8=, $pop6, $pop7
+	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.end
-	i32.const	$push10=, 0
-	return  	$pop10
+	i32.const	$push9=, 0
+	return  	$pop9
 .LBB0_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

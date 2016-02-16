@@ -62,40 +62,40 @@ main:                                   # @main
 	i32.const	$push8=, 4
 	i32.const	$7=, 4
 	i32.add 	$7=, $10, $7
-	i32.add 	$push9=, $7, $pop8
-	tee_local	$push18=, $1=, $pop9
-	i32.const	$push17=, 0
-	i32.store8	$0=, 0($pop18):p2align=2, $pop17
-	i32.const	$push10=, .L.str
-	i32.const	$push16=, 11
+	i32.add 	$push18=, $7, $pop8
+	tee_local	$push17=, $1=, $pop18
+	i32.const	$push16=, 0
+	i32.store8	$0=, 0($pop17):p2align=2, $pop16
+	i32.const	$push9=, .L.str
+	i32.const	$push15=, 11
 	i32.const	$8=, 4
 	i32.add 	$8=, $10, $8
 	block
-	i32.call	$push11=, memcmp@FUNCTION, $8, $pop10, $pop16
-	br_if   	0, $pop11       # 0: down to label0
+	block
+	i32.call	$push10=, memcmp@FUNCTION, $8, $pop9, $pop15
+	br_if   	0, $pop10       # 0: down to label1
 # BB#1:                                 # %if.end
-	i32.const	$push12=, 77
-	i32.store8	$discard=, 0($1):p2align=2, $pop12
+	i32.const	$push11=, 77
+	i32.store8	$discard=, 0($1):p2align=2, $pop11
 	i32.store8	$discard=, 12($10):p2align=2, $0
-	i32.const	$push13=, .L.str.1
+	i32.const	$push12=, .L.str.1
 	i32.const	$push21=, 11
 	i32.const	$9=, 4
 	i32.add 	$9=, $10, $9
-	block
-	i32.call	$push14=, memcmp@FUNCTION, $9, $pop13, $pop21
-	br_if   	0, $pop14       # 0: down to label1
+	i32.call	$push13=, memcmp@FUNCTION, $9, $pop12, $pop21
+	br_if   	1, $pop13       # 1: down to label0
 # BB#2:                                 # %if.end7
-	i32.const	$push15=, 0
+	i32.const	$push14=, 0
 	i32.const	$4=, 16
 	i32.add 	$10=, $10, $4
 	i32.const	$4=, __stack_pointer
 	i32.store	$10=, 0($4), $10
-	return  	$pop15
-.LBB2_3:                                # %if.then6
+	return  	$pop14
+.LBB2_3:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
-.LBB2_4:                                # %if.then
+.LBB2_4:                                # %if.then6
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

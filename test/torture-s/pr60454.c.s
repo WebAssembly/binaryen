@@ -10,23 +10,23 @@ fake_swap32:                            # @fake_swap32
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push2=, 65280
-	i32.and 	$push3=, $0, $pop2
-	tee_local	$push16=, $1=, $pop3
+	i32.and 	$push16=, $0, $pop2
+	tee_local	$push15=, $1=, $pop16
 	i32.const	$push0=, 24
 	i32.shl 	$push1=, $0, $pop0
-	i32.or  	$push9=, $pop16, $pop1
-	i32.const	$push15=, 24
-	i32.shr_u	$push8=, $0, $pop15
-	i32.or  	$push10=, $pop9, $pop8
-	i32.const	$push4=, 8
-	i32.shl 	$push5=, $1, $pop4
-	i32.or  	$push11=, $pop10, $pop5
-	i32.const	$push14=, 8
-	i32.shl 	$push6=, $0, $pop14
-	i32.const	$push13=, 65280
-	i32.and 	$push7=, $pop6, $pop13
-	i32.or  	$push12=, $pop11, $pop7
-	return  	$pop12
+	i32.or  	$push8=, $pop15, $pop1
+	i32.const	$push14=, 24
+	i32.shr_u	$push7=, $0, $pop14
+	i32.or  	$push9=, $pop8, $pop7
+	i32.const	$push3=, 8
+	i32.shl 	$push4=, $1, $pop3
+	i32.or  	$push10=, $pop9, $pop4
+	i32.const	$push13=, 8
+	i32.shl 	$push5=, $0, $pop13
+	i32.const	$push12=, 65280
+	i32.and 	$push6=, $pop5, $pop12
+	i32.or  	$push11=, $pop10, $pop6
+	return  	$pop11
 	.endfunc
 .Lfunc_end0:
 	.size	fake_swap32, .Lfunc_end0-fake_swap32

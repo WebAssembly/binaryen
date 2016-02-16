@@ -9,10 +9,10 @@ new_unit:                               # @new_unit
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.load	$push7=, 4($0)
-	tee_local	$push9=, $1=, $pop7
-	i32.const	$push8=, 1
-	i32.ne  	$push0=, $pop9, $pop8
+	i32.load	$push9=, 4($0)
+	tee_local	$push8=, $1=, $pop9
+	i32.const	$push7=, 1
+	i32.ne  	$push0=, $pop8, $pop7
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 4

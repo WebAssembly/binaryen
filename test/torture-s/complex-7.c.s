@@ -493,167 +493,167 @@ main:                                   # @main
 	i32.const	$push108=, 8
 	i32.const	$72=, 416
 	i32.add 	$72=, $98, $72
-	i32.or  	$push28=, $72, $pop108
-	tee_local	$push107=, $49=, $pop28
-	i64.store	$discard=, 0($pop107), $21
+	i32.or  	$push107=, $72, $pop108
+	tee_local	$push106=, $49=, $pop107
+	i64.store	$discard=, 0($pop106), $21
 	i64.store	$discard=, 416($98):p2align=4, $20
-	i32.const	$push29=, 24
+	i32.const	$push28=, 24
 	i32.const	$73=, 416
 	i32.add 	$73=, $98, $73
-	i32.add 	$push30=, $73, $pop29
-	tee_local	$push106=, $48=, $pop30
-	i64.store	$discard=, 0($pop106), $23
+	i32.add 	$push105=, $73, $pop28
+	tee_local	$push104=, $48=, $pop105
+	i64.store	$discard=, 0($pop104), $23
 	i64.store	$discard=, 432($98):p2align=4, $22
-	i32.const	$push105=, 8
+	i32.const	$push103=, 8
 	i32.const	$74=, 384
 	i32.add 	$74=, $98, $74
-	i32.or  	$push31=, $74, $pop105
-	tee_local	$push104=, $47=, $pop31
-	i64.store	$discard=, 0($pop104), $25
+	i32.or  	$push102=, $74, $pop103
+	tee_local	$push101=, $47=, $pop102
+	i64.store	$discard=, 0($pop101), $25
 	i64.store	$discard=, 384($98):p2align=4, $24
-	i32.const	$push103=, 24
+	i32.const	$push100=, 24
 	i32.const	$75=, 384
 	i32.add 	$75=, $98, $75
-	i32.add 	$push32=, $75, $pop103
-	tee_local	$push102=, $46=, $pop32
-	i64.store	$discard=, 0($pop102), $27
+	i32.add 	$push99=, $75, $pop100
+	tee_local	$push98=, $46=, $pop99
+	i64.store	$discard=, 0($pop98), $27
 	i64.store	$discard=, 400($98):p2align=4, $26
-	i32.const	$push101=, 8
+	i32.const	$push97=, 8
 	i32.const	$76=, 352
 	i32.add 	$76=, $98, $76
-	i32.or  	$push33=, $76, $pop101
-	tee_local	$push100=, $45=, $pop33
-	i64.store	$discard=, 0($pop100), $29
+	i32.or  	$push96=, $76, $pop97
+	tee_local	$push95=, $45=, $pop96
+	i64.store	$discard=, 0($pop95), $29
 	i64.store	$discard=, 352($98):p2align=4, $28
-	i32.const	$push99=, 24
+	i32.const	$push94=, 24
 	i32.const	$77=, 352
 	i32.add 	$77=, $98, $77
-	i32.add 	$push34=, $77, $pop99
-	tee_local	$push98=, $44=, $pop34
-	i64.store	$discard=, 0($pop98), $31
+	i32.add 	$push93=, $77, $pop94
+	tee_local	$push92=, $44=, $pop93
+	i64.store	$discard=, 0($pop92), $31
 	i64.store	$discard=, 368($98):p2align=4, $30
-	i32.const	$push97=, 8
+	i32.const	$push91=, 8
 	i32.const	$78=, 320
 	i32.add 	$78=, $98, $78
-	i32.or  	$push35=, $78, $pop97
-	tee_local	$push96=, $43=, $pop35
-	i64.store	$discard=, 0($pop96), $33
+	i32.or  	$push90=, $78, $pop91
+	tee_local	$push89=, $43=, $pop90
+	i64.store	$discard=, 0($pop89), $33
 	i64.store	$discard=, 320($98):p2align=4, $32
-	i32.const	$push95=, 24
+	i32.const	$push88=, 24
 	i32.const	$79=, 320
 	i32.add 	$79=, $98, $79
-	i32.add 	$push36=, $79, $pop95
-	tee_local	$push94=, $42=, $pop36
-	i64.store	$discard=, 0($pop94), $35
+	i32.add 	$push87=, $79, $pop88
+	tee_local	$push86=, $42=, $pop87
+	i64.store	$discard=, 0($pop86), $35
 	i64.store	$discard=, 336($98):p2align=4, $34
-	i32.const	$push93=, 8
+	i32.const	$push85=, 8
 	i32.const	$80=, 288
 	i32.add 	$80=, $98, $80
-	i32.or  	$push37=, $80, $pop93
-	tee_local	$push92=, $41=, $pop37
-	i64.store	$discard=, 0($pop92), $37
+	i32.or  	$push84=, $80, $pop85
+	tee_local	$push83=, $41=, $pop84
+	i64.store	$discard=, 0($pop83), $37
 	i64.store	$discard=, 288($98):p2align=4, $36
-	i32.const	$push91=, 24
+	i32.const	$push82=, 24
 	i32.const	$81=, 288
 	i32.add 	$81=, $98, $81
-	i32.add 	$push38=, $81, $pop91
-	tee_local	$push90=, $40=, $pop38
-	i64.store	$discard=, 0($pop90), $39
+	i32.add 	$push81=, $81, $pop82
+	tee_local	$push80=, $40=, $pop81
+	i64.store	$discard=, 0($pop80), $39
 	i64.store	$discard=, 304($98):p2align=4, $38
-	i32.const	$push89=, 24
+	i32.const	$push79=, 24
 	i32.const	$82=, 128
 	i32.add 	$82=, $98, $82
-	i32.add 	$push39=, $82, $pop89
-	i64.load	$push40=, 0($48)
-	i64.store	$discard=, 0($pop39), $pop40
-	i32.const	$push41=, 16
+	i32.add 	$push29=, $82, $pop79
+	i64.load	$push30=, 0($48)
+	i64.store	$discard=, 0($pop29), $pop30
+	i32.const	$push31=, 16
 	i32.const	$83=, 128
 	i32.add 	$83=, $98, $83
-	i32.add 	$push42=, $83, $pop41
-	i64.load	$push43=, 432($98):p2align=4
-	i64.store	$discard=, 0($pop42):p2align=4, $pop43
-	i32.const	$push88=, 8
+	i32.add 	$push32=, $83, $pop31
+	i64.load	$push33=, 432($98):p2align=4
+	i64.store	$discard=, 0($pop32):p2align=4, $pop33
+	i32.const	$push78=, 8
 	i32.const	$84=, 128
 	i32.add 	$84=, $98, $84
-	i32.or  	$push44=, $84, $pop88
-	i64.load	$push45=, 0($49)
-	i64.store	$discard=, 0($pop44), $pop45
-	i64.load	$push46=, 416($98):p2align=4
-	i64.store	$discard=, 128($98):p2align=4, $pop46
-	i32.const	$push87=, 24
+	i32.or  	$push34=, $84, $pop78
+	i64.load	$push35=, 0($49)
+	i64.store	$discard=, 0($pop34), $pop35
+	i64.load	$push36=, 416($98):p2align=4
+	i64.store	$discard=, 128($98):p2align=4, $pop36
+	i32.const	$push77=, 24
 	i32.const	$85=, 96
 	i32.add 	$85=, $98, $85
-	i32.add 	$push47=, $85, $pop87
-	i64.load	$push48=, 0($46)
-	i64.store	$discard=, 0($pop47), $pop48
-	i32.const	$push86=, 16
+	i32.add 	$push37=, $85, $pop77
+	i64.load	$push38=, 0($46)
+	i64.store	$discard=, 0($pop37), $pop38
+	i32.const	$push76=, 16
 	i32.const	$86=, 96
 	i32.add 	$86=, $98, $86
-	i32.add 	$push49=, $86, $pop86
-	i64.load	$push50=, 400($98):p2align=4
-	i64.store	$discard=, 0($pop49):p2align=4, $pop50
-	i32.const	$push85=, 8
+	i32.add 	$push39=, $86, $pop76
+	i64.load	$push40=, 400($98):p2align=4
+	i64.store	$discard=, 0($pop39):p2align=4, $pop40
+	i32.const	$push75=, 8
 	i32.const	$87=, 96
 	i32.add 	$87=, $98, $87
-	i32.or  	$push51=, $87, $pop85
-	i64.load	$push52=, 0($47)
-	i64.store	$discard=, 0($pop51), $pop52
-	i64.load	$push53=, 384($98):p2align=4
-	i64.store	$discard=, 96($98):p2align=4, $pop53
-	i32.const	$push84=, 24
+	i32.or  	$push41=, $87, $pop75
+	i64.load	$push42=, 0($47)
+	i64.store	$discard=, 0($pop41), $pop42
+	i64.load	$push43=, 384($98):p2align=4
+	i64.store	$discard=, 96($98):p2align=4, $pop43
+	i32.const	$push74=, 24
 	i32.const	$88=, 64
 	i32.add 	$88=, $98, $88
-	i32.add 	$push54=, $88, $pop84
-	i64.load	$push55=, 0($44)
-	i64.store	$discard=, 0($pop54), $pop55
-	i32.const	$push83=, 16
+	i32.add 	$push44=, $88, $pop74
+	i64.load	$push45=, 0($44)
+	i64.store	$discard=, 0($pop44), $pop45
+	i32.const	$push73=, 16
 	i32.const	$89=, 64
 	i32.add 	$89=, $98, $89
-	i32.add 	$push56=, $89, $pop83
-	i64.load	$push57=, 368($98):p2align=4
-	i64.store	$discard=, 0($pop56):p2align=4, $pop57
-	i32.const	$push82=, 8
+	i32.add 	$push46=, $89, $pop73
+	i64.load	$push47=, 368($98):p2align=4
+	i64.store	$discard=, 0($pop46):p2align=4, $pop47
+	i32.const	$push72=, 8
 	i32.const	$90=, 64
 	i32.add 	$90=, $98, $90
-	i32.or  	$push58=, $90, $pop82
-	i64.load	$push59=, 0($45)
-	i64.store	$discard=, 0($pop58), $pop59
-	i64.load	$push60=, 352($98):p2align=4
-	i64.store	$discard=, 64($98):p2align=4, $pop60
-	i32.const	$push81=, 24
+	i32.or  	$push48=, $90, $pop72
+	i64.load	$push49=, 0($45)
+	i64.store	$discard=, 0($pop48), $pop49
+	i64.load	$push50=, 352($98):p2align=4
+	i64.store	$discard=, 64($98):p2align=4, $pop50
+	i32.const	$push71=, 24
 	i32.const	$91=, 32
 	i32.add 	$91=, $98, $91
-	i32.add 	$push61=, $91, $pop81
-	i64.load	$push62=, 0($42)
-	i64.store	$discard=, 0($pop61), $pop62
-	i32.const	$push80=, 16
+	i32.add 	$push51=, $91, $pop71
+	i64.load	$push52=, 0($42)
+	i64.store	$discard=, 0($pop51), $pop52
+	i32.const	$push70=, 16
 	i32.const	$92=, 32
 	i32.add 	$92=, $98, $92
-	i32.add 	$push63=, $92, $pop80
-	i64.load	$push64=, 336($98):p2align=4
-	i64.store	$discard=, 0($pop63):p2align=4, $pop64
-	i32.const	$push79=, 8
+	i32.add 	$push53=, $92, $pop70
+	i64.load	$push54=, 336($98):p2align=4
+	i64.store	$discard=, 0($pop53):p2align=4, $pop54
+	i32.const	$push69=, 8
 	i32.const	$93=, 32
 	i32.add 	$93=, $98, $93
-	i32.or  	$push65=, $93, $pop79
-	i64.load	$push66=, 0($43)
-	i64.store	$discard=, 0($pop65), $pop66
-	i64.load	$push67=, 320($98):p2align=4
-	i64.store	$discard=, 32($98):p2align=4, $pop67
-	i32.const	$push78=, 24
-	i32.add 	$push68=, $98, $pop78
-	i64.load	$push69=, 0($40)
-	i64.store	$discard=, 0($pop68), $pop69
-	i32.const	$push77=, 16
-	i32.add 	$push70=, $98, $pop77
-	i64.load	$push71=, 304($98):p2align=4
-	i64.store	$discard=, 0($pop70):p2align=4, $pop71
-	i32.const	$push76=, 8
-	i32.or  	$push72=, $98, $pop76
-	i64.load	$push73=, 0($41)
-	i64.store	$discard=, 0($pop72), $pop73
-	i64.load	$push74=, 288($98):p2align=4
-	i64.store	$discard=, 0($98):p2align=4, $pop74
+	i32.or  	$push55=, $93, $pop69
+	i64.load	$push56=, 0($43)
+	i64.store	$discard=, 0($pop55), $pop56
+	i64.load	$push57=, 320($98):p2align=4
+	i64.store	$discard=, 32($98):p2align=4, $pop57
+	i32.const	$push68=, 24
+	i32.add 	$push58=, $98, $pop68
+	i64.load	$push59=, 0($40)
+	i64.store	$discard=, 0($pop58), $pop59
+	i32.const	$push67=, 16
+	i32.add 	$push60=, $98, $pop67
+	i64.load	$push61=, 304($98):p2align=4
+	i64.store	$discard=, 0($pop60):p2align=4, $pop61
+	i32.const	$push66=, 8
+	i32.or  	$push62=, $98, $pop66
+	i64.load	$push63=, 0($41)
+	i64.store	$discard=, 0($pop62), $pop63
+	i64.load	$push64=, 288($98):p2align=4
+	i64.store	$discard=, 0($98):p2align=4, $pop64
 	i32.const	$94=, 128
 	i32.add 	$94=, $98, $94
 	i32.const	$95=, 96
@@ -663,8 +663,8 @@ main:                                   # @main
 	i32.const	$97=, 32
 	i32.add 	$97=, $98, $97
 	call    	check_long_double@FUNCTION, $49, $94, $95, $96, $97, $98
-	i32.const	$push75=, 0
-	call    	exit@FUNCTION, $pop75
+	i32.const	$push65=, 0
+	call    	exit@FUNCTION, $pop65
 	unreachable
 	.endfunc
 .Lfunc_end3:

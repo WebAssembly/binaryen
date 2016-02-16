@@ -8,16 +8,16 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.load	$1=, 0($1)
-	i32.load	$push0=, 0($0)
-	tee_local	$push6=, $0=, $pop0
-	i32.const	$push1=, 1
-	i32.store	$discard=, 0($pop6), $pop1
+	i32.load	$push6=, 0($0)
+	tee_local	$push5=, $0=, $pop6
+	i32.const	$push0=, 1
+	i32.store	$discard=, 0($pop5), $pop0
 	block
-	i32.load	$push4=, 0($0)
-	i32.const	$push2=, 2
-	i32.store	$push3=, 0($1), $pop2
-	i32.ne  	$push5=, $pop4, $pop3
-	br_if   	0, $pop5        # 0: down to label0
+	i32.const	$push1=, 2
+	i32.store	$push2=, 0($1), $pop1
+	i32.load	$push3=, 0($0)
+	i32.ne  	$push4=, $pop2, $pop3
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

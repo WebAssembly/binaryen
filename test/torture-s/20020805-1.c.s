@@ -29,19 +29,19 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 2
+	i32.const	$push1=, 2
 	i32.const	$push0=, 0
-	i32.load	$push1=, n($pop0)
-	tee_local	$push10=, $0=, $pop1
-	i32.sub 	$push3=, $pop2, $pop10
-	i32.const	$push9=, 0
-	i32.sub 	$push4=, $pop9, $0
-	i32.or  	$push5=, $pop3, $pop4
-	i32.const	$push6=, 1
-	i32.or  	$push7=, $pop5, $pop6
-	call    	check@FUNCTION, $pop7
+	i32.load	$push10=, n($pop0)
+	tee_local	$push9=, $0=, $pop10
+	i32.sub 	$push2=, $pop1, $pop9
 	i32.const	$push8=, 0
-	call    	exit@FUNCTION, $pop8
+	i32.sub 	$push3=, $pop8, $0
+	i32.or  	$push4=, $pop2, $pop3
+	i32.const	$push5=, 1
+	i32.or  	$push6=, $pop4, $pop5
+	call    	check@FUNCTION, $pop6
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 	.endfunc
 .Lfunc_end1:
