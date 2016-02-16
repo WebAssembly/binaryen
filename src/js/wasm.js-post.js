@@ -90,21 +90,27 @@ function integrateWasmJS(Module) {
     }
   }
 
-  if (typeof WASM === 'object') {
+  if (typeof WASM === 'object' || typeof wasmEval === 'function') {
     // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
     // the wasm module at that time, and it receives imports and provides exports and so forth, the app
     // doesn't need to care that it is wasm and not asm.
     Module['asm'] = function(global, env, providedBuffer) {
       // Load the wasm module
       var binary = Module['readBinary'](Module['wasmCodeFile']);
-
       // Create an instance of the module using native support in the JS engine.
-      var instance = WASM.instantiateModule(binary, flatten({ // XXX for now, flatten the imports
+      var importObj = flatten({ // XXX for now, flatten the imports
         "global.Math": global.Math,
         "env": env,
         "asm2wasm": asm2wasmImports
-      }));
-
+      });
+      var instance;
+      if (typeof WASM === 'object') {
+        instance = WASM.instantiateModule(binary, importObj);
+      } else if (typeof wasmEval === 'function') {
+        instance = wasmEval(binary.buffer, importObj);
+      } else {
+        throw 'how to wasm?';
+      }
       mergeMemory(instance.memory);
 
       applyMappedGlobals();
