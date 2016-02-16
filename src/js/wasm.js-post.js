@@ -45,7 +45,9 @@ function integrateWasmJS(Module) {
     for (var x in obj) {
       for (var y in obj[x]) {
         if (ret[y]) Module['printErr']('warning: flatten dupe: ' + y);
-        ret[y] = obj[x][y];
+        if (typeof obj[x][y] === 'function') {
+          ret[y] = obj[x][y];
+        }
       }
     }
     return ret;
@@ -98,14 +100,14 @@ function integrateWasmJS(Module) {
       // Load the wasm module
       var binary = Module['readBinary'](Module['wasmCodeFile']);
       // Create an instance of the module using native support in the JS engine.
-      var importObj = flatten({ // XXX for now, flatten the imports
+      var importObj = {
         "global.Math": global.Math,
         "env": env,
         "asm2wasm": asm2wasmImports
-      });
+      };
       var instance;
       if (typeof WASM === 'object') {
-        instance = WASM.instantiateModule(binary, importObj);
+        instance = WASM.instantiateModule(binary, flatten(importObj));
       } else if (typeof wasmEval === 'function') {
         instance = wasmEval(binary.buffer, importObj);
       } else {
