@@ -335,7 +335,8 @@ enum ASTNodes {
   BrIf = 0x07,
   TableSwitch = 0x08,
   Return = 0x14,
-  Unreachable = 0x15
+  Unreachable = 0x15,
+  EndMarker = 0xff
 };
 
 enum MemoryAccess {
@@ -522,6 +523,7 @@ public:
         size_t start = o.size();
         depth = 0;
         recurse(function->body);
+        o << int8_t(BinaryConsts::EndMarker);
         assert(depth == 0);
         size_t size = o.size() - start;
         assert(size <= std::numeric_limits<uint16_t>::max());
@@ -623,7 +625,7 @@ public:
 
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
-    o << int8_t(BinaryConsts::Block) << LEB128(curr->list.size()); // XXX larger block size, divergence from v8 to get more code to build
+    o << int8_t(BinaryConsts::Block);
     breakStack.push_back(curr->name);
     size_t i = 0;
     for (auto* child : curr->list) {
@@ -631,13 +633,14 @@ public:
       recurse(child);
     }
     breakStack.pop_back();
+    o << int8_t(BinaryConsts::EndMarker);
   }
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
-    o << int8_t(curr->ifFalse ? BinaryConsts::IfElse : BinaryConsts::If);
     recurse(curr->condition);
     recurse(curr->ifTrue);
     if (curr->ifFalse) recurse(curr->ifFalse);
+    o << int8_t(curr->ifFalse ? BinaryConsts::IfElse : BinaryConsts::If);
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
@@ -648,6 +651,7 @@ public:
     recurse(curr->body);
     breakStack.pop_back();
     breakStack.pop_back();
+    o << int8_t(BinaryConsts::EndMarker);
   }
 
   int getBreakIndex(Name name) { // -1 if not found
@@ -656,28 +660,20 @@ public:
         return breakStack.size() - 1 - i;
       }
     }
-printf("bad!\n");
     std::cerr << "bad break: " << name << std::endl;
-
-
-
-assert(0);
-
-
     abort();
   }
 
   void visitBreak(Break *curr) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
-    o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br);
-    int offset = getBreakIndex(curr->name);
-    o << int8_t(offset);
     if (curr->value) {
       recurse(curr->value);
     } else {
       visitNop(nullptr);
     }
     if (curr->condition) recurse(curr->condition);
+    o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
+      << int8_t(getBreakIndex(curr->name));
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
@@ -692,8 +688,10 @@ assert(0);
     }
     o << (int16_t)getBreakIndex(curr->default_);
     recurse(curr->value);
+    o << int8_t(BinaryConsts::EndMarker);
     for (auto& c : curr->cases) {
       recurse(c.body);
+      o << int8_t(BinaryConsts::EndMarker);
     }
     breakStack.pop_back(); // name
     for (size_t i = 0; i < curr->cases.size(); i++) {
@@ -702,25 +700,25 @@ assert(0);
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
-    o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
+    o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
   }
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
-    o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
+    o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
-    o << int8_t(BinaryConsts::CallIndirect) << LEB128(getFunctionTypeIndex(curr->fullType->name));
     recurse(curr->target);
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
+    o << int8_t(BinaryConsts::CallIndirect) << LEB128(getFunctionTypeIndex(curr->fullType->name));
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
@@ -728,8 +726,8 @@ assert(0);
   }
   void visitSetLocal(SetLocal *curr) {
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
-    o << int8_t(BinaryConsts::SetLocal) << LEB128(mappedLocals[curr->name]);
     recurse(curr->value);
+    o << int8_t(BinaryConsts::SetLocal) << LEB128(mappedLocals[curr->name]);
   }
 
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
@@ -740,6 +738,7 @@ assert(0);
 
   void visitLoad(Load *curr) {
     if (debug) std::cerr << "zz node: Load" << std::endl;
+    recurse(curr->ptr);
     switch (curr->type) {
       case i32: {
         switch (curr->bytes) {
@@ -765,10 +764,11 @@ assert(0);
       default: abort();
     }
     emitMemoryAccess(curr->align, curr->bytes, curr->offset);
-    recurse(curr->ptr);
   }
   void visitStore(Store *curr) {
     if (debug) std::cerr << "zz node: Store" << std::endl;
+    recurse(curr->ptr);
+    recurse(curr->value);
     switch (curr->type) {
       case i32: {
         switch (curr->bytes) {
@@ -794,8 +794,6 @@ assert(0);
       default: abort();
     }
     emitMemoryAccess(curr->align, curr->bytes, curr->offset);
-    recurse(curr->ptr);
-    recurse(curr->value);
   }
   void visitConst(Const *curr) {
     if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
@@ -827,6 +825,7 @@ assert(0);
   }
   void visitUnary(Unary *curr) {
     if (debug) std::cerr << "zz node: Unary" << std::endl;
+    recurse(curr->value);
     switch (curr->op) {
       case Clz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Clz        : BinaryConsts::I64Clz); break;
       case Ctz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Ctz        : BinaryConsts::I64Ctz); break;
@@ -855,10 +854,11 @@ assert(0);
       case ReinterpretInt:   o << int8_t(curr->type == i32 ? BinaryConsts::I32ReinterpretF32 : BinaryConsts::I64ReinterpretF64); break;
       default: abort();
     }
-    recurse(curr->value);
   }
   void visitBinary(Binary *curr) {
     if (debug) std::cerr << "zz node: Binary" << std::endl;
+    recurse(curr->left);
+    recurse(curr->right);
     #define TYPED_CODE(code) { \
       switch (getReachableWasmType(curr->left->type, curr->right->type)) { \
         case i32: o << int8_t(BinaryConsts::I32##code); break; \
@@ -920,27 +920,25 @@ assert(0);
       case Ge:       FLOAT_TYPED_CODE(Ge);
       default:       abort();
     }
-    recurse(curr->left);
-    recurse(curr->right);
     #undef TYPED_CODE
     #undef INT_TYPED_CODE
     #undef FLOAT_TYPED_CODE
   }
   void visitSelect(Select *curr) {
     if (debug) std::cerr << "zz node: Select" << std::endl;
-    o << int8_t(BinaryConsts::Select);
     recurse(curr->ifTrue);
     recurse(curr->ifFalse);
     recurse(curr->condition);
+    o << int8_t(BinaryConsts::Select);
   }
   void visitReturn(Return *curr) {
     if (debug) std::cerr << "zz node: Return" << std::endl;
-    o << int8_t(BinaryConsts::Return);
     if (curr->value) {
       recurse(curr->value);
     } else {
       visitNop(nullptr);
     }
+    o << int8_t(BinaryConsts::Return);
   }
   void visitHost(Host *curr) {
     if (debug) std::cerr << "zz node: Host" << std::endl;
@@ -950,8 +948,8 @@ assert(0);
         break;
       }
       case GrowMemory: {
-        o << int8_t(BinaryConsts::GrowMemory);
         recurse(curr->operands[0]);
+        o << int8_t(BinaryConsts::GrowMemory);
         break;
       }
       default: abort();
@@ -1210,6 +1208,24 @@ public:
 
   std::vector<Name> breakStack;
 
+  std::vector<Expression*> expressionStack;
+
+  void processExpressions() { // until an end marker
+    while (1) {
+      Expression* curr;
+      readExpression(curr);
+      if (!curr) break; // end marker, done with this function/block/etc
+      expressionStack.push_back(curr);
+    }
+  }
+
+  Expression* popExpression() {
+    assert(expressionStack.size() > 0);
+    auto ret = expressionStack.back();
+    expressionStack.pop_back();
+    return ret;
+  }
+
   void processFunctions() {
     for (auto& func : functions) {
       Function* curr = func.func;
@@ -1229,10 +1245,14 @@ public:
       }
       // process body
       assert(breakStack.empty());
+      assert(expressionStack.empty());
       depth = 0;
-      readExpression(curr->body);
+      processExpressions();
+      assert(expressionStack.size() == 1);
+      curr->body = popExpression();
       assert(depth == 0);
       assert(breakStack.empty());
+      assert(expressionStack.empty());
       assert(pos == func.pos + func.size);
     }
   }
@@ -1298,6 +1318,7 @@ public:
       case BinaryConsts::Return:       visitReturn((curr = allocator.alloc<Return>())->cast<Return>()); break;
       case BinaryConsts::Nop:          visitNop((curr = allocator.alloc<Nop>())->cast<Nop>()); break;
       case BinaryConsts::Unreachable:  visitUnreachable((curr = allocator.alloc<Unreachable>())->cast<Unreachable>()); break;
+      case BinaryConsts::EndMarker:    curr = nullptr; break;
       default: {
         // otherwise, the code is a subcode TODO: optimize
         if (maybeVisit<Binary>(curr, code)) break;
@@ -1327,26 +1348,30 @@ public:
 
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
-    auto num = getLEB128(); // XXX larger block size, divergence from v8 to get more code to build
     curr->name = getNextLabel();
     breakStack.push_back(curr->name);
-    for (uint32_t i = 0; i < num; i++) {
-      if (debug) std::cerr << "  " << size_t(curr) << "\n zz Block element " << i << std::endl;
-      Expression* child;
-      readExpression(child);
-      curr->list.push_back(child);
+    size_t start = expressionStack.size(); // everything after this, that is left when we see the marker, is ours
+    processExpressions();
+    size_t end = expressionStack.size();
+    assert(end >= start);
+    for (size_t i = start; i < end; i++) {
+      if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
+      curr->list.push_back(expressionStack[i]);
     }
-    if (num > 0) {
+    expressionStack.resize(start);
+    if (curr->list.size() > 0) {
       curr->type = curr->list.back()->type;
     }
     breakStack.pop_back();
   }
   void visitIf(If *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: If" << std::endl;
-    readExpression(curr->condition);
-    readExpression(curr->ifTrue);
     if (code == BinaryConsts::IfElse) {
-      readExpression(curr->ifFalse);
+      curr->ifFalse = popExpression();
+    }
+    curr->ifTrue = popExpression();
+    curr->condition = popExpression();
+    if (code == BinaryConsts::IfElse) {
       curr->finalize();
     }
   }
@@ -1357,22 +1382,23 @@ public:
     curr->in = getNextLabel();
     breakStack.push_back(curr->out);
     breakStack.push_back(curr->in);
-    readExpression(curr->body);
+    processExpressions();
+    curr->body = popExpression();
     breakStack.pop_back();
     breakStack.pop_back();
     curr->finalize();
   }
 
   Name getBreakName(int offset) {
+    assert(breakStack.size() - 1 - offset < breakStack.size());
     return breakStack[breakStack.size() - 1 - offset];
   }
 
   void visitBreak(Break *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
-    auto offset = getInt8();
-    curr->name = getBreakName(offset);
-    readExpression(curr->value);
-    if (code == BinaryConsts::BrIf) readExpression(curr->condition);
+    curr->name = getBreakName(getInt8());
+    if (code == BinaryConsts::BrIf) curr->condition = popExpression();
+    curr->value = popExpression();
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
@@ -1390,9 +1416,11 @@ public:
       curr->targets.push_back(getBreakName(getInt16()));
     }
     curr->default_ = getBreakName(getInt16());
-    readExpression(curr->value);
+    processExpressions();
+    curr->value = popExpression();
     for (auto i = 0; i < numCases; i++) {
-      readExpression(curr->cases[i].body);
+      processExpressions();
+      curr->cases[i].body = popExpression();
     }
     breakStack.pop_back(); // name
     for (size_t i = 0; i < curr->cases.size(); i++) {
@@ -1404,10 +1432,9 @@ public:
     curr->target = target;
     auto type = wasm.functionTypesMap[wasm.functionsMap[curr->target]->type];
     auto num = type->params.size();
+    curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
-      Expression* operand;
-      readExpression(operand);
-      curr->operands.push_back(operand);
+      curr->operands[num - i - 1] = popExpression();
     }
     curr->type = type->result;
   }
@@ -1416,23 +1443,21 @@ public:
     curr->target = target;
     auto type = wasm.importsMap[curr->target]->type;
     auto num = type->params.size();
+    curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
-      Expression* operand;
-      readExpression(operand);
-      curr->operands.push_back(operand);
+      curr->operands[num - i - 1] = popExpression();
     }
     curr->type = type->result;
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
     curr->fullType = wasm.functionTypes[getLEB128()];
-    readExpression(curr->target);
     auto num = curr->fullType->params.size();
+    curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
-      Expression* operand;
-      readExpression(operand);
-      curr->operands.push_back(operand);
+      curr->operands[num - i - 1] = popExpression();
     }
+    curr->target = popExpression();
     curr->type = curr->fullType->result;
   }
   void visitGetLocal(GetLocal *curr) {
@@ -1445,7 +1470,7 @@ public:
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
     curr->name = mappedLocals[getLEB128()];
     assert(curr->name.is());
-    readExpression(curr->value);
+    curr->value = popExpression();
     curr->type = curr->value->type;
   }
 
@@ -1479,7 +1504,7 @@ public:
     }
     if (debug) std::cerr << "zz node: Load" << std::endl;
     readMemoryAccess(curr->align, curr->bytes, curr->offset);
-    readExpression(curr->ptr);
+    curr->ptr = popExpression();
     return true;
   }
   bool maybeVisitImpl(Store *curr, uint8_t code) {
@@ -1497,8 +1522,8 @@ public:
     }
     if (debug) std::cerr << "zz node: Store" << std::endl;
     readMemoryAccess(curr->align, curr->bytes, curr->offset);
-    readExpression(curr->ptr);
-    readExpression(curr->value);
+    curr->value = popExpression();
+    curr->ptr = popExpression();
     return true;
   }
   bool maybeVisitImpl(Const *curr, uint8_t code) {
@@ -1569,7 +1594,7 @@ public:
       default: return false;
     }
     if (debug) std::cerr << "zz node: Unary" << std::endl;
-    readExpression(curr->value);
+    curr->value = popExpression();
     return true;
   }
   bool maybeVisitImpl(Binary *curr, uint8_t code) {
@@ -1622,8 +1647,8 @@ public:
       default: return false;
     }
     if (debug) std::cerr << "zz node: Binary" << std::endl;
-    readExpression(curr->left);
-    readExpression(curr->right);
+    curr->right = popExpression();
+    curr->left = popExpression();
     return true;
     #undef TYPED_CODE
     #undef INT_TYPED_CODE
@@ -1631,14 +1656,14 @@ public:
   }
   void visitSelect(Select *curr) {
     if (debug) std::cerr << "zz node: Select" << std::endl;
-    readExpression(curr->ifTrue);
-    readExpression(curr->ifFalse);
-    readExpression(curr->condition);
+    curr->condition = popExpression();
+    curr->ifFalse = popExpression();
+    curr->ifTrue = popExpression();
     curr->finalize();
   }
   void visitReturn(Return *curr) {
     if (debug) std::cerr << "zz node: Return" << std::endl;
-    readExpression(curr->value);
+    curr->value = popExpression();
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
     switch (code) {
@@ -1650,7 +1675,7 @@ public:
       case BinaryConsts::GrowMemory: {
         curr->op = GrowMemory;
         curr->operands.resize(1);
-        readExpression(curr->operands[0]);
+        curr->operands[0] = popExpression();
         break;
       }
       default: return false;
