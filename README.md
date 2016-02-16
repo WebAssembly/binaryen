@@ -55,7 +55,7 @@ bin/binaryen-shell [.wast file] [options] [passes, see --help] [--help]
 The binaryen shell receives a .wast file as input, and can run transformation passes on it, as well as print it (before and/or after the transformations). For example, try
 
 ````
-bin/binaryen-shell test/passes/lower-if_else.wast --print-before
+bin/binaryen-shell test/passes/lower-if-else.wast --print-before
 ````
 
 That will pretty-print out one of the test cases in the test suite. To run a transformation pass on it, try
