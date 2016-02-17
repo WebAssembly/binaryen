@@ -165,14 +165,6 @@ public:
   void run(PassRunner* runner, Module* module) override;
 };
 
-// Standard pass utilities
-
-inline void printWasm(Module* module, std::ostream& o) {
-  PassRunner passRunner(nullptr);
-  passRunner.add<Printer>(o);
-  passRunner.run(module);
-}
-
 } // namespace wasm
 
 #endif // wasm_pass_h

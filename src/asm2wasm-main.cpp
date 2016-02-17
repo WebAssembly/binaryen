@@ -21,6 +21,7 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "wasm-printing.h"
 
 #include "asm2wasm.h"
 

@@ -27,6 +27,7 @@
 #include "parsing.h"
 #include "pass.h"
 #include "asm_v_wasm.h"
+#include "wasm-printing.h"
 
 namespace wasm {
 

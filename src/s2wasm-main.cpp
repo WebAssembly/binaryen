@@ -22,6 +22,7 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "s2wasm.h"
+#include "wasm-printing.h"
 
 using namespace cashew;
 using namespace wasm;

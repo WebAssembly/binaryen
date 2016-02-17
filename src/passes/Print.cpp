@@ -470,7 +470,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   }
 };
 
-// Main entry point. Eventually this will direct printing to one of various options.
+// Pass entry point. Eventually this will direct printing to one of various options.
 
 void Printer::run(PassRunner* runner, Module* module) {
   PrintSExpression print(o);
@@ -478,5 +478,13 @@ void Printer::run(PassRunner* runner, Module* module) {
 }
 
 static RegisterPass<Printer> registerPass("print", "print in s-expression format");
+
+// Print individual expressions
+
+std::ostream& printWasm(Expression* expression, std::ostream& o) {
+  PrintSExpression print(o);
+  print.visit(expression);
+  return o;
+}
 
 } // namespace wasm
