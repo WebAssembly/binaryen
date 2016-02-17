@@ -463,7 +463,7 @@ if torture:
   if unexpected_result_count:
     fail('%s failures' % unexpected_result_count, '0 failures')
 
-if has_vanilla_emcc:
+if has_vanilla_emcc and has_vanilla_llvm:
 
   print '\n[ checking emcc WASM_BACKEND testcases...]\n'
 
