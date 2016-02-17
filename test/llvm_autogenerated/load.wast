@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (export "ldi32" $ldi32)
   (export "ldi64" $ldi64)
   (export "ldf32" $ldf32)

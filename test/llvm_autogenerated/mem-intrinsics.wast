@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$i (func (result i32)))
   (import $memcpy "env" "memcpy" (param i32 i32 i32) (result i32))

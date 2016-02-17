@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (export "add32" $add32)
   (export "sub32" $sub32)
   (export "mul32" $mul32)

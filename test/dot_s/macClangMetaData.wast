@@ -1,5 +1,5 @@
 (module
-  (memory 30 4294967295
+  (memory 30
     (segment 16 "Hello, World!\00")
   )
   (type $FUNCSIG$ii (func (param i32) (result i32)))

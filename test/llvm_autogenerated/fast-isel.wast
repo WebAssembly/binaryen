@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (export "immediate_f32" $immediate_f32)
   (export "immediate_f64" $immediate_f64)
   (func $immediate_f32 (result f32)

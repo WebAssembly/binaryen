@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (export "eq_i32" $eq_i32)
   (export "ne_i32" $ne_i32)
   (export "slt_i32" $slt_i32)

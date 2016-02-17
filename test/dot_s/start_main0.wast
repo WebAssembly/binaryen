@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (start $_start)
   (export "main" $main)
   (export "_start" $_start)

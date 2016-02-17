@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (export "eq_i64" $eq_i64)
   (export "ne_i64" $ne_i64)
   (export "slt_i64" $slt_i64)

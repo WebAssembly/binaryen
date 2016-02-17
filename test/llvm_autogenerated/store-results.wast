@@ -1,5 +1,5 @@
 (module
-  (memory 20 4294967295)
+  (memory 20)
   (export "single_block" $single_block)
   (export "foo" $foo)
   (export "bar" $bar)

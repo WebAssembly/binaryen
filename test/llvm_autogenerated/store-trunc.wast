@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (export "trunc_i8_i32" $trunc_i8_i32)
   (export "trunc_i16_i32" $trunc_i16_i32)
   (export "trunc_i8_i64" $trunc_i8_i64)

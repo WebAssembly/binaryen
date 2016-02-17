@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (export "z2s_func" $z2s_func)
   (export "s2z_func" $s2z_func)
   (export "z2s_call" $z2s_call)

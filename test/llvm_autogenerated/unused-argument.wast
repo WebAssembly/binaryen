@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (type $FUNCSIG$i (func (result i32)))
   (import $return_something "env" "return_something" (result i32))
   (export "unused_first" $unused_first)

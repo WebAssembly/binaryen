@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (export "sti32" $sti32)
   (export "sti64" $sti64)
   (export "stf32" $stf32)

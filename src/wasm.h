@@ -1581,7 +1581,7 @@ public:
     incIndent(o, indent);
     doIndent(o, indent);
     printOpening(o, "memory") << " " << module.memory.initial;
-    if (module.memory.max) o << " " << module.memory.max;
+    if (module.memory.max && module.memory.max != (uint32_t)-1) o << " " << module.memory.max;
     for (auto segment : module.memory.segments) {
       o << "\n    (segment " << segment.offset << " \"";
       for (size_t i = 0; i < segment.size; i++) {

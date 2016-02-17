@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (type $FUNCSIG$vi (func (param i32)))
   (import $ext_byval_func "env" "ext_byval_func" (param i32))
   (import $ext_byval_func_align8 "env" "ext_byval_func_align8" (param i32))

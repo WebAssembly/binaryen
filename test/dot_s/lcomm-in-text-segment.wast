@@ -1,5 +1,5 @@
 (module
-  (memory 20 4294967295
+  (memory 20
     (segment 16 "\t\00\00\00")
   )
 )

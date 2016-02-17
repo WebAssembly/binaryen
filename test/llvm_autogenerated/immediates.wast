@@ -1,5 +1,5 @@
 (module
-  (memory 0 4294967295)
+  (memory 0)
   (export "zero_i32" $zero_i32)
   (export "one_i32" $one_i32)
   (export "max_i32" $max_i32)
