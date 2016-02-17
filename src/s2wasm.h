@@ -25,6 +25,7 @@
 
 #include "wasm.h"
 #include "parsing.h"
+#include "pass.h"
 #include "asm_v_wasm.h"
 
 namespace wasm {
@@ -1262,7 +1263,7 @@ public:
   // extra emscripten processing
   void emscriptenGlue(std::ostream& o) {
     if (debug) {
-      std::cerr << wasm << '\n';
+      printWasm(&wasm, std::cerr);
     }
 
     wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions

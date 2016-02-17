@@ -22,12 +22,11 @@
 // it easy to not just inspect but also to process. For example, some
 // things that this enables are:
 //
-//  * Pretty-printing: Implemented in this file (printing can help
-//                     understand the data structures here).
 //  * Interpreting: See wasm-interpreter.h.
 //  * Optimizing: See asm2wasm.h, which performs some optimizations
 //                after code generation.
 //  * Validation: See wasm-validator.h.
+//  * Pretty-printing: See Print.cpp.
 //
 
 //
@@ -756,18 +755,6 @@ public:
     assert(_id == T()._id);
     return (T*)this;
   }
-
-  inline std::ostream& print(std::ostream &o, unsigned indent); // avoid virtual here, for performance
-
-  friend std::ostream& operator<<(std::ostream &o, Expression* expression) {
-    return expression->print(o, 0);
-  }
-
-  static std::ostream& printFullLine(std::ostream &o, unsigned indent, Expression *expression) {
-    doIndent(o, indent);
-    expression->print(o, indent);
-    return o << '\n';
-  }
 };
 
 inline const char *getExpressionName(Expression *curr) {
@@ -801,10 +788,6 @@ typedef std::vector<Expression*> ExpressionList; // TODO: optimize?
 class Nop : public Expression {
 public:
   Nop() : Expression(NopId) {}
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    return printMinorOpening(o, "nop") << ')';
-  }
 };
 
 class Block : public Expression {
@@ -815,18 +798,6 @@ public:
 
   Name name;
   ExpressionList list;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "block");
-    if (name.is()) {
-      o << ' ' << name;
-    }
-    incIndent(o, indent);
-    for (auto expression : list) {
-      printFullLine(o, indent, expression);
-    }
-    return decIndent(o, indent);
-  }
 };
 
 class If : public Expression {
@@ -836,15 +807,6 @@ public:
   }
 
   Expression *condition, *ifTrue, *ifFalse;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, ifFalse ? "if_else" : "if");
-    incIndent(o, indent);
-    printFullLine(o, indent, condition);
-    printFullLine(o, indent, ifTrue);
-    if (ifFalse) printFullLine(o, indent, ifFalse);
-    return decIndent(o, indent);
-  }
 
   void finalize() {
     if (condition) {
@@ -860,29 +822,6 @@ public:
   Name out, in;
   Expression *body;
 
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "loop");
-    if (out.is()) {
-      o << ' ' << out;
-      assert(in.is()); // if just one is printed, it must be the in
-    }
-    if (in.is()) {
-      o << ' ' << in;
-    }
-    incIndent(o, indent);
-    auto block = body->dyn_cast<Block>();
-    if (block && block->name.isNull()) {
-      // wasm spec has loops containing children directly, while our ast
-      // has a single child for simplicity. print out the optimal form.
-      for (auto expression : block->list) {
-        printFullLine(o, indent, expression);
-      }
-    } else {
-      printFullLine(o, indent, body);
-    }
-    return decIndent(o, indent);
-  }
-
   void finalize() {
     type = body->type; // loop might have a type, if the body ends in something that does not break
   }
@@ -897,26 +836,6 @@ public:
   Name name;
   Expression *value;
   Expression *condition;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    if (condition) {
-      printOpening(o, "br_if ") << name;
-      incIndent(o, indent);
-    } else {
-      printOpening(o, "br ") << name;
-      if (!value || value->is<Nop>()) {
-        // avoid a new line just for the parens
-        o << ")";
-        return o;
-      }
-      incIndent(o, indent);
-    }
-    if (value && !value->is<Nop>()) printFullLine(o, indent, value);
-    if (condition) {
-      printFullLine(o, indent, condition);
-    }
-    return decIndent(o, indent);
-  }
 };
 
 class Switch : public Expression {
@@ -935,33 +854,6 @@ public:
   std::vector<Name> targets;
   Name default_;
   std::vector<Case> cases;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "tableswitch ");
-    if (name.is()) o << name;
-    incIndent(o, indent);
-    printFullLine(o, indent, value);
-    doIndent(o, indent) << "(table";
-    std::set<Name> caseNames;
-    for (auto& c : cases) {
-      caseNames.insert(c.name);
-    }
-    for (auto& t : targets) {
-      o << " (" << (caseNames.count(t) == 0 ? "br" : "case") << " " << (t.is() ? t : default_) << ")";
-    }
-    o << ")";
-    if (default_.is()) o << " (" << (caseNames.count(default_) == 0 ? "br" : "case") << " " << default_ << ")";
-    o << "\n";
-    for (auto& c : cases) {
-      doIndent(o, indent);
-      printMinorOpening(o, "case ") << c.name;
-      incIndent(o, indent);
-      printFullLine(o, indent, c.body);
-      decIndent(o, indent) << '\n';
-    }
-    return decIndent(o, indent);
-  }
-
 };
 
 class CallBase : public Expression {
@@ -976,36 +868,12 @@ public:
   Call() : CallBase(CallId) {}
 
   Name target;
-
-  std::ostream& printBody(std::ostream &o, unsigned indent) {
-    o << target;
-    if (operands.size() > 0) {
-      incIndent(o, indent);
-      for (auto operand : operands) {
-        printFullLine(o, indent, operand);
-      }
-      decIndent(o, indent);
-    } else {
-      o << ')';
-    }
-    return o;
-  }
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "call ");
-    return printBody(o, indent);
-  }
 };
 
 class CallImport : public Call {
 public:
   CallImport() {
     _id = CallImportId;
-  }
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "call_import ");
-    return printBody(o, indent);
   }
 };
 
@@ -1016,28 +884,6 @@ public:
   std::vector<WasmType> params;
 
   FunctionType() : result(none) {}
-
-  std::ostream& print(std::ostream &o, unsigned indent, bool full=false) {
-    if (full) {
-      printOpening(o, "type") << ' ' << name << " (func";
-    }
-    if (params.size() > 0) {
-      o << ' ';
-      printMinorOpening(o, "param");
-      for (auto& param : params) {
-        o << ' ' << printWasmType(param);
-      }
-      o << ')';
-    }
-    if (result != none) {
-      o << ' ';
-      printMinorOpening(o, "result ") << printWasmType(result) << ')';
-    }
-    if (full) {
-      o << "))";;
-    }
-    return o;
-  }
 
   bool operator==(FunctionType& b) {
     if (name != b.name) return false; // XXX
@@ -1059,16 +905,6 @@ public:
 
   FunctionType *fullType;
   Expression *target;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "call_indirect ") << fullType->name;
-    incIndent(o, indent);
-    printFullLine(o, indent, target);
-    for (auto operand : operands) {
-      printFullLine(o, indent, operand);
-    }
-    return decIndent(o, indent);
-  }
 };
 
 class GetLocal : public Expression {
@@ -1076,10 +912,6 @@ public:
   GetLocal() : Expression(GetLocalId) {}
 
   Name name;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    return printOpening(o, "get_local ") << name << ')';
-  }
 };
 
 class SetLocal : public Expression {
@@ -1088,13 +920,6 @@ public:
 
   Name name;
   Expression *value;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "set_local ") << name;
-    incIndent(o, indent);
-    printFullLine(o, indent, value);
-    return decIndent(o, indent);
-  }
 };
 
 class Load : public Expression {
@@ -1106,33 +931,6 @@ public:
   uint32_t offset;
   uint32_t align;
   Expression *ptr;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    o << '(';
-    prepareColor(o) << printWasmType(type) << ".load";
-    if (bytes < 4 || (type == i64 && bytes < 8)) {
-      if (bytes == 1) {
-        o << '8';
-      } else if (bytes == 2) {
-        o << "16";
-      } else if (bytes == 4) {
-        o << "32";
-      } else {
-        abort();
-      }
-      o << (signed_ ? "_s" : "_u");
-    }
-    restoreNormalColor(o);
-    if (offset) {
-      o << " offset=" << offset;
-    }
-    if (align) {
-      o << " align=" << align;
-    }
-    incIndent(o, indent);
-    printFullLine(o, indent, ptr);
-    return decIndent(o, indent);
-  }
 };
 
 class Store : public Expression {
@@ -1143,33 +941,6 @@ public:
   uint32_t offset;
   unsigned align;
   Expression *ptr, *value;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    o << '(';
-    prepareColor(o) << printWasmType(type) << ".store";
-    if (bytes < 4 || (type == i64 && bytes < 8)) {
-      if (bytes == 1) {
-        o << '8';
-      } else if (bytes == 2) {
-        o << "16";
-      } else if (bytes == 4) {
-        o << "32";
-      } else {
-        abort();
-      }
-    }
-    restoreNormalColor(o);
-    if (offset) {
-      o << " offset=" << offset;
-    }
-    if (align) {
-      o << " align=" << align;
-    }
-    incIndent(o, indent);
-    printFullLine(o, indent, ptr);
-    printFullLine(o, indent, value);
-    return decIndent(o, indent);
-  }
 };
 
 class Const : public Expression {
@@ -1183,10 +954,6 @@ public:
     type = value.type;
     return this;
   }
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    return o << value;
-  }
 };
 
 class Unary : public Expression {
@@ -1195,42 +962,6 @@ public:
 
   UnaryOp op;
   Expression *value;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    o << '(';
-    prepareColor(o) << printWasmType(type) << '.';
-    switch (op) {
-      case Clz:              o << "clz";     break;
-      case Ctz:              o << "ctz";     break;
-      case Popcnt:           o << "popcnt";  break;
-      case Neg:              o << "neg";     break;
-      case Abs:              o << "abs";     break;
-      case Ceil:             o << "ceil";    break;
-      case Floor:            o << "floor";   break;
-      case Trunc:            o << "trunc";   break;
-      case Nearest:          o << "nearest"; break;
-      case Sqrt:             o << "sqrt";    break;
-      case ExtendSInt32:     o << "extend_s/i32"; break;
-      case ExtendUInt32:     o << "extend_u/i32"; break;
-      case WrapInt64:        o << "wrap/i64"; break;
-      case TruncSFloat32:    o << "trunc_s/f32"; break;
-      case TruncUFloat32:    o << "trunc_u/f32"; break;
-      case TruncSFloat64:    o << "trunc_s/f64"; break;
-      case TruncUFloat64:    o << "trunc_u/f64"; break;
-      case ReinterpretFloat: o << "reinterpret/" << (type == i64 ? "f64" : "f32"); break;
-      case ConvertUInt32:    o << "convert_u/i32"; break;
-      case ConvertSInt32:    o << "convert_s/i32"; break;
-      case ConvertUInt64:    o << "convert_u/i64"; break;
-      case ConvertSInt64:    o << "convert_s/i64"; break;
-      case PromoteFloat32:   o << "promote/f32"; break;
-      case DemoteFloat64:    o << "demote/f64"; break;
-      case ReinterpretInt:   o << "reinterpret/" << (type == f64 ? "i64" : "i32"); break;
-      default: abort();
-    }
-    incIndent(o, indent);
-    printFullLine(o, indent, value);
-    return decIndent(o, indent);
-  }
 };
 
 class Binary : public Expression {
@@ -1239,50 +970,6 @@ public:
 
   BinaryOp op;
   Expression *left, *right;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    o << '(';
-    prepareColor(o) << printWasmType(isRelational() ? left->type : type) << '.';
-    switch (op) {
-      case Add:      o << "add";      break;
-      case Sub:      o << "sub";      break;
-      case Mul:      o << "mul";      break;
-      case DivS:     o << "div_s";    break;
-      case DivU:     o << "div_u";    break;
-      case RemS:     o << "rem_s";    break;
-      case RemU:     o << "rem_u";    break;
-      case And:      o << "and";      break;
-      case Or:       o << "or";       break;
-      case Xor:      o << "xor";      break;
-      case Shl:      o << "shl";      break;
-      case ShrU:     o << "shr_u";    break;
-      case ShrS:     o << "shr_s";    break;
-      case Div:      o << "div";      break;
-      case CopySign: o << "copysign"; break;
-      case Min:      o << "min";      break;
-      case Max:      o << "max";      break;
-      case Eq:       o << "eq";       break;
-      case Ne:       o << "ne";       break;
-      case LtS:      o << "lt_s";     break;
-      case LtU:      o << "lt_u";     break;
-      case LeS:      o << "le_s";     break;
-      case LeU:      o << "le_u";     break;
-      case GtS:      o << "gt_s";     break;
-      case GtU:      o << "gt_u";     break;
-      case GeS:      o << "ge_s";     break;
-      case GeU:      o << "ge_u";     break;
-      case Lt:       o << "lt";       break;
-      case Le:       o << "le";       break;
-      case Gt:       o << "gt";       break;
-      case Ge:       o << "ge";       break;
-      default:       abort();
-    }
-    restoreNormalColor(o);
-    incIndent(o, indent);
-    printFullLine(o, indent, left);
-    printFullLine(o, indent, right);
-    return decIndent(o, indent);
-  }
 
   // the type is always the type of the operands,
   // except for relationals
@@ -1305,16 +992,6 @@ public:
 
   Expression *ifTrue, *ifFalse, *condition;
 
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    o << '(';
-    prepareColor(o) << printWasmType(type) << ".select";
-    incIndent(o, indent);
-    printFullLine(o, indent, ifTrue);
-    printFullLine(o, indent, ifFalse);
-    printFullLine(o, indent, condition);
-    return decIndent(o, indent);
-  }
-
   void finalize() {
     type = getReachableWasmType(ifTrue->type, ifFalse->type);
   }
@@ -1327,18 +1004,6 @@ public:
   Return() : Expression(ReturnId), value(nullptr) {
     type = unreachable;
   }
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    printOpening(o, "return");
-    if (!value || value->is<Nop>()) {
-      // avoid a new line just for the parens
-      o << ")";
-      return o;
-    }
-    incIndent(o, indent);
-    printFullLine(o, indent, value);
-    return decIndent(o, indent);
-  }
 };
 
 class Host : public Expression {
@@ -1348,23 +1013,6 @@ public:
   HostOp op;
   Name nameOperand;
   ExpressionList operands;
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    switch (op) {
-      case PageSize: printOpening(o, "pagesize") << ')'; break;
-      case MemorySize: printOpening(o, "memory_size") << ')'; break;
-      case GrowMemory: {
-        printOpening(o, "grow_memory");
-        incIndent(o, indent);
-        printFullLine(o, indent, operands[0]);
-        decIndent(o, indent);
-        break;
-      }
-      case HasFeature: printOpening(o, "hasfeature ") << nameOperand << ')'; break;
-      default: abort();
-    }
-    return o;
-  }
 
   void finalize() {
     switch (op) {
@@ -1385,10 +1033,6 @@ class Unreachable : public Expression {
 public:
   Unreachable() : Expression(UnreachableId) {
     type = unreachable;
-  }
-
-  std::ostream& doPrint(std::ostream &o, unsigned indent) {
-    return printMinorOpening(o, "unreachable") << ')';
   }
 };
 
@@ -1411,39 +1055,6 @@ public:
   Expression *body;
 
   Function() : result(none) {}
-
-  std::ostream& print(std::ostream &o, unsigned indent) {
-    printOpening(o, "func ", true) << name;
-    if (type.is()) {
-      o << " (type " << type << ')';
-    }
-    if (params.size() > 0) {
-      for (auto& param : params) {
-        o << ' ';
-        printMinorOpening(o, "param ") << param.name << ' ' << printWasmType(param.type) << ")";
-      }
-    }
-    if (result != none) {
-      o << ' ';
-      printMinorOpening(o, "result ") << printWasmType(result) << ")";
-    }
-    incIndent(o, indent);
-    for (auto& local : locals) {
-      doIndent(o, indent);
-      printMinorOpening(o, "local ") << local.name << ' ' << printWasmType(local.type) << ")\n";
-    }
-    // It is ok to emit a block here, as a function can directly contain a list, even if our
-    // ast avoids that for simplicity. We can just do that optimization here..
-    if (body->is<Block>() && body->cast<Block>()->name.isNull()) {
-      Block* block = body->cast<Block>();
-      for (auto item : block->list) {
-        Expression::printFullLine(o, indent, item);
-      }
-    } else {
-      Expression::printFullLine(o, indent, body);
-    }
-    return decIndent(o, indent);
-  }
 };
 
 class Import {
@@ -1452,38 +1063,17 @@ public:
   FunctionType* type;
 
   Import() : type(nullptr) {}
-
-  std::ostream& print(std::ostream &o, unsigned indent) {
-    printOpening(o, "import ") << name << ' ';
-    printText(o, module.str) << ' ';
-    printText(o, base.str);
-    if (type) type->print(o, indent);
-    return o << ')';
-  }
 };
 
 class Export {
 public:
   Name name;  // exported name
   Name value; // internal name
-
-  std::ostream& print(std::ostream &o, unsigned indent) {
-    printOpening(o, "export ");
-    return printText(o, name.str) << ' ' << value << ')';
-  }
 };
 
 class Table {
 public:
   std::vector<Name> names;
-
-  std::ostream& print(std::ostream &o, unsigned indent) {
-    printOpening(o, "table");
-    for (auto name : names) {
-      o << ' ' << name;
-    }
-    return o << ')';
-  }
 };
 
 class Memory {
@@ -1575,71 +1165,6 @@ public:
     importsMap.erase(name);
   }
 
-  friend std::ostream& operator<<(std::ostream &o, Module module) {
-    unsigned indent = 0;
-    printOpening(o, "module", true);
-    incIndent(o, indent);
-    doIndent(o, indent);
-    printOpening(o, "memory") << " " << module.memory.initial;
-    if (module.memory.max && module.memory.max != (uint32_t)-1) o << " " << module.memory.max;
-    for (auto segment : module.memory.segments) {
-      o << "\n    (segment " << segment.offset << " \"";
-      for (size_t i = 0; i < segment.size; i++) {
-        unsigned char c = segment.data[i];
-        switch (c) {
-          case '\n': o << "\\n"; break;
-          case '\r': o << "\\0d"; break;
-          case '\t': o << "\\t"; break;
-          case '\f': o << "\\0c"; break;
-          case '\b': o << "\\08"; break;
-          case '\\': o << "\\\\"; break;
-          case '"' : o << "\\\""; break;
-          case '\'' : o << "\\'"; break;
-          default: {
-            if (c >= 32 && c < 127) {
-              o << c;
-            } else {
-              o << std::hex << '\\' << (c/16) << (c%16) << std::dec;
-            }
-          }
-        }
-      }
-      o << "\")";
-    }
-    o << (module.memory.segments.size() > 0 ? "\n  " : "") << ")\n";
-    if (module.start.is()) {
-      doIndent(o, indent);
-      printOpening(o, "start") << " " << module.start << ")\n";
-    }
-    for (auto& curr : module.functionTypes) {
-      doIndent(o, indent);
-      curr->print(o, indent, true);
-      o << '\n';
-    }
-    for (auto& curr : module.imports) {
-      doIndent(o, indent);
-      curr->print(o, indent);
-      o << '\n';
-    }
-    for (auto& curr : module.exports) {
-      doIndent(o, indent);
-      curr->print(o, indent);
-      o << '\n';
-    }
-    if (module.table.names.size() > 0) {
-      doIndent(o, indent);
-      module.table.print(o, indent);
-      o << '\n';
-    }
-    for (auto& curr : module.functions) {
-      doIndent(o, indent);
-      curr->print(o, indent);
-      o << '\n';
-    }
-    decIndent(o, indent);
-    return o << '\n';
-  }
-
 private:
   size_t functionTypeIndex, importIndex, exportIndex, functionIndex;
 };
@@ -1725,40 +1250,6 @@ struct WasmVisitor {
     }
   }
 };
-
-std::ostream& Expression::print(std::ostream &o, unsigned indent) {
-  struct ExpressionPrinter : public WasmVisitor<ExpressionPrinter, void> {
-    std::ostream &o;
-    unsigned indent;
-
-    ExpressionPrinter(std::ostream &o, unsigned indent) : o(o), indent(indent) {}
-
-    void visitBlock(Block *curr) { curr->doPrint(o, indent); }
-    void visitIf(If *curr) { curr->doPrint(o, indent); }
-    void visitLoop(Loop *curr) { curr->doPrint(o, indent); }
-    void visitBreak(Break *curr) { curr->doPrint(o, indent); }
-    void visitSwitch(Switch *curr) { curr->doPrint(o, indent); }
-    void visitCall(Call *curr) { curr->doPrint(o, indent); }
-    void visitCallImport(CallImport *curr) { curr->doPrint(o, indent); }
-    void visitCallIndirect(CallIndirect *curr) { curr->doPrint(o, indent); }
-    void visitGetLocal(GetLocal *curr) { curr->doPrint(o, indent); }
-    void visitSetLocal(SetLocal *curr) { curr->doPrint(o, indent); }
-    void visitLoad(Load *curr) { curr->doPrint(o, indent); }
-    void visitStore(Store *curr) { curr->doPrint(o, indent); }
-    void visitConst(Const *curr) { curr->doPrint(o, indent); }
-    void visitUnary(Unary *curr) { curr->doPrint(o, indent); }
-    void visitBinary(Binary *curr) { curr->doPrint(o, indent); }
-    void visitSelect(Select *curr) { curr->doPrint(o, indent); }
-    void visitReturn(Return *curr) { curr->doPrint(o, indent); }
-    void visitHost(Host *curr) { curr->doPrint(o, indent); }
-    void visitNop(Nop *curr) { curr->doPrint(o, indent); }
-    void visitUnreachable(Unreachable *curr) { curr->doPrint(o, indent); }
-  };
-
-  ExpressionPrinter(o, indent).visit(this);
-
-  return o;
-}
 
 //
 // Base class for all WasmWalkers

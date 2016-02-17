@@ -18,6 +18,7 @@
 // wasm2asm console tool
 //
 
+#include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
@@ -49,7 +50,8 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], options.debug);
-  output << wasm << std::endl;
+  printWasm(&wasm, output.getStream());
+  output << '\n';
 
   if (options.debug) std::cerr << "Done." << std::endl;
 }

@@ -281,7 +281,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
         Colors::bold(std::cout);
         std::cerr << "printing in module invalidity test:\n";
         Colors::normal(std::cout);
-        std::cout << wasm;
+        printWasm(&wasm, std::cout);
       }
       bool invalid = false;
       std::unique_ptr<SExpressionWasmBuilder> builder;
@@ -411,7 +411,7 @@ int main(int argc, const char* argv[]) {
         Colors::bold(std::cout);
         std::cerr << "printing before:\n";
         Colors::normal(std::cout);
-        std::cout << wasm;
+        printWasm(&wasm, std::cout);
       }
 
       MixedArena moreModuleAllocations;
@@ -429,7 +429,7 @@ int main(int argc, const char* argv[]) {
         Colors::bold(std::cout);
         std::cerr << "printing after:\n";
         Colors::normal(std::cout);
-        std::cout << wasm;
+        printWasm(&wasm, std::cout);
       }
       run_asserts(&i, &checked, &wasm, &root, &builder, print_before,
                   print_after, entry);

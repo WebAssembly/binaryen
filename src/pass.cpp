@@ -53,17 +53,6 @@ std::string PassRegistry::getPassDescription(std::string name) {
 
 // PassRunner
 
-void PassRunner::add(std::string passName) {
-  auto pass = PassRegistry::get()->createPass(passName);
-  assert(pass);
-  passes.push_back(pass);
-}
-
-template<class P>
-void PassRunner::add() {
-  passes.push_back(new P());
-}
-
 void PassRunner::run(Module* module) {
   for (auto pass : passes) {
     currPass = pass;

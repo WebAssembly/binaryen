@@ -80,6 +80,7 @@ SET(binaryen-shell_SOURCES
   src/passes/MergeBlocks.cpp
   src/passes/NameManager.cpp
   src/passes/PostEmscripten.cpp
+  src/passes/Print.cpp
   src/passes/RemoveImports.cpp
   src/passes/RemoveUnusedBrs.cpp
   src/passes/RemoveUnusedNames.cpp
@@ -98,6 +99,7 @@ SET(asm2wasm_SOURCES
   src/pass.cpp
   src/passes/MergeBlocks.cpp
   src/passes/PostEmscripten.cpp
+  src/passes/Print.cpp
   src/passes/RemoveUnusedBrs.cpp
   src/passes/RemoveUnusedNames.cpp
   src/passes/SimplifyLocals.cpp
@@ -126,6 +128,8 @@ SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm2asm DESTINATION bin)
 
 SET(s2wasm_SOURCES
+  src/pass.cpp
+  src/passes/Print.cpp
   src/s2wasm-main.cpp
 )
 ADD_EXECUTABLE(s2wasm
@@ -146,6 +150,8 @@ SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION bin)
 
 SET(wasm_dis_SOURCES
+  src/pass.cpp
+  src/passes/Print.cpp
   src/wasm-dis.cpp
 )
 ADD_EXECUTABLE(wasm-dis
