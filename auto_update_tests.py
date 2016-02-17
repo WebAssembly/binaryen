@@ -71,4 +71,15 @@ for wast in sorted(os.listdir('test')):
     actual = open('a.wast').read()
     open(os.path.join('test', wast + '.fromBinary'), 'w').write(actual)
 
+print '\n[ checking example testcases... ]\n'
+
+cmd = [os.environ.get('CXX') or 'g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.']
+if os.environ.get('COMPILER_FLAGS'):
+  for f in os.environ.get('COMPILER_FLAGS').split(' '):
+    cmd.append(f)
+print ' '.join(cmd)
+subprocess.check_call(cmd)
+actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
+open(os.path.join('test', 'example', 'find_div0s.txt'), 'w').write(actual)
+
 print '\n[ success! ]'
