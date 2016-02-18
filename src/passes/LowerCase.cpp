@@ -92,7 +92,8 @@ struct LowerCase : public WalkerPass<WasmWalker<LowerCase, void>> {
       top = next;
     }
     curr->cases.clear();
-    top->name = Name(std::string("forswitch$") + curr->name.str);
+    top->name = curr->name;
+    curr->name = Name();
     replaceCurrent(top);
   }
 };
