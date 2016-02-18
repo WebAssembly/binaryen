@@ -241,7 +241,6 @@ static void verify_result(Literal a, Literal b) {
 static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
                         Element* root,
                         std::unique_ptr<SExpressionWasmBuilder>* builder,
-                        bool print_before, bool print_after,
                         Name entry) {
   ShellExternalInterface* interface = nullptr;
   ModuleInstance* instance = nullptr;
@@ -278,12 +277,6 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
     if (id == ASSERT_INVALID) {
       // a module invalidity test
       AllocatingModule wasm;
-      if (print_before || print_after) {
-        Colors::bold(std::cout);
-        std::cerr << "printing in module invalidity test:\n";
-        Colors::normal(std::cout);
-        printWasm(&wasm, std::cout);
-      }
       bool invalid = false;
       std::unique_ptr<SExpressionWasmBuilder> builder;
       try {
@@ -342,8 +335,6 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
 //
 
 int main(int argc, const char* argv[]) {
-  bool print_before = false;
-  bool print_after = false;
   Name entry;
   std::vector<std::string> passes;
 
@@ -368,14 +359,6 @@ int main(int argc, const char* argv[]) {
            [&passes](Options*, const std::string&) {
              for (const auto* p : default_passes) passes.push_back(p);
            })
-      .add("--print-before", "", "Print modules before processing them",
-           Options::Arguments::Zero,
-           [&print_before](Options*, const std::string&) {
-             print_before = true;
-           })
-      .add("--print-after", "", "Print modules after processing them",
-           Options::Arguments::Zero,
-           [&print_after](Options*, const std::string&) { print_after = true; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -408,13 +391,6 @@ int main(int argc, const char* argv[]) {
           new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }, options.debug));
       i++;
 
-      if (print_before) {
-        Colors::bold(std::cout);
-        std::cerr << "printing before:\n";
-        Colors::normal(std::cout);
-        printWasm(&wasm, std::cout);
-      }
-
       MixedArena moreModuleAllocations;
 
       if (passes.size() > 0) {
@@ -426,17 +402,9 @@ int main(int argc, const char* argv[]) {
         passRunner.run(&wasm);
       }
 
-      if (print_after) {
-        Colors::bold(std::cout);
-        std::cerr << "printing after:\n";
-        Colors::normal(std::cout);
-        printWasm(&wasm, std::cout);
-      }
-      run_asserts(&i, &checked, &wasm, &root, &builder, print_before,
-                  print_after, entry);
+      run_asserts(&i, &checked, &wasm, &root, &builder, entry);
     } else {
-      run_asserts(&i, &checked, nullptr, &root, nullptr, print_before,
-            print_after, entry);
+      run_asserts(&i, &checked, nullptr, &root, nullptr, entry);
     }
   }
 

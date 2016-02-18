@@ -259,7 +259,7 @@ for asm in tests:
     # verify in wasm
     if interpreter:
       # remove imports, spec interpreter doesn't know what to do with them
-      subprocess.check_call([os.path.join('bin', 'binaryen-shell'), '--remove-imports', '--print-after', os.path.join('test', wasm)], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
+      subprocess.check_call([os.path.join('bin', 'binaryen-shell'), '--remove-imports', '--print', os.path.join('test', wasm)], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
       proc = subprocess.Popen([interpreter, 'ztemp.wast'], stderr=subprocess.PIPE)
       out, err = proc.communicate()
       if proc.returncode != 0:
@@ -286,7 +286,7 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
     opt = '-O' if passname == 'O' else '--' + passname
-    cmd = [os.path.join('bin', 'binaryen-shell'), '--print-after', opt, os.path.join('test', 'passes', t)]
+    cmd = [os.path.join('bin', 'binaryen-shell'), opt, os.path.join('test', 'passes', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
@@ -297,7 +297,7 @@ for t in tests:
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join('test', t)
-    cmd = [os.path.join('bin', 'binaryen-shell'), t, '--print-before']
+    cmd = [os.path.join('bin', 'binaryen-shell'), t, '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     assert err.replace('printing before:', '').strip() == '', 'bad err:' + err
