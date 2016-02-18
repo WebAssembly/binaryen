@@ -46,8 +46,7 @@ int main() {
         // Check if the right operand is a constant, and if it is 0
         auto right = curr->right->dyn_cast<Const>();
         if (right && right->value.getInteger() == 0) {
-          std::cout << "We found that ";
-          printWasm(curr->left, std::cout) << " is divided by zero\n";
+          std::cout << "We found that " << curr->left << " is divided by zero\n";
         }
       }
     }

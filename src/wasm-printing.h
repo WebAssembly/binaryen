@@ -33,5 +33,17 @@ extern std::ostream& printWasm(Expression* expression, std::ostream& o);
 
 }
 
+namespace std {
+
+std::ostream& operator<<(std::ostream& o, wasm::Module* module) {
+  return wasm::printWasm(module, o);
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
+  return wasm::printWasm(expression, o);
+}
+
+}
+
 #endif
 
