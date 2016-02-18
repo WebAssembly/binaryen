@@ -48,7 +48,7 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
-    cmd = [os.path.join('bin', 'binaryen-shell'), '--print-after', ('--' + passname if passname != 'O' else '-O'), os.path.join('test', 'passes', t)]
+    cmd = [os.path.join('bin', 'binaryen-shell'), ('--' + passname if passname != 'O' else '-O'), os.path.join('test', 'passes', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     open(os.path.join('test', 'passes', passname + '.txt'), 'w').write(actual)
@@ -73,7 +73,11 @@ for wast in sorted(os.listdir('test')):
 
 print '\n[ checking example testcases... ]\n'
 
-cmd = [os.environ.get('CXX') or 'g++', '-std=c++11', os.path.join('test', 'example', 'find_div0s.cpp'), '-Isrc', '-g', '-lsupport', '-Llib/.']
+cmd = [os.environ.get('CXX') or 'g++', '-std=c++11',
+       os.path.join('test', 'example', 'find_div0s.cpp'),
+       os.path.join('src', 'pass.cpp'),
+       os.path.join('src', 'passes', 'Print.cpp'),
+       '-Isrc', '-g', '-lsupport', '-Llib/.']
 if os.environ.get('COMPILER_FLAGS'):
   for f in os.environ.get('COMPILER_FLAGS').split(' '):
     cmd.append(f)

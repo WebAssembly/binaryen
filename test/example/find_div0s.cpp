@@ -8,6 +8,7 @@
 
 #include <ostream>
 #include <wasm.h>
+#include <wasm-printing.h>
 #include <wasm-s-parser.h>
 
 using namespace wasm;
@@ -34,7 +35,7 @@ int main() {
   SExpressionWasmBuilder builder(module, *root[0], [&]() { abort(); });
 
   // Print it out
-  std::cout << module;
+  printWasm(&module, std::cout);
 
   // Search it for divisions by zero: Walk the module, looking for
   // that operation.

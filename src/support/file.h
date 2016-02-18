@@ -44,6 +44,10 @@ class Output {
     return out << v;
   }
 
+  std::ostream& getStream() {
+    return out;
+  }
+
  private:
   Output() = delete;
   Output(const Output &) = delete;

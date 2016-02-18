@@ -71,10 +71,21 @@ struct PassRunner {
 
   PassRunner(MixedArena* allocator) : allocator(allocator) {}
 
-  void add(std::string passName);
+  void add(std::string passName) {
+    auto pass = PassRegistry::get()->createPass(passName);
+    assert(pass);
+    passes.push_back(pass);
+  }
 
   template<class P>
-  void add();
+  void add() {
+    passes.push_back(new P());
+  }
+
+  template<class P, class Arg>
+  void add(Arg& arg){
+    passes.push_back(new P(arg));
+  }
 
   void run(Module* module);
 
@@ -141,6 +152,17 @@ class NameManager : public WalkerPass<WasmWalker<NameManager>> {
 private:
   std::set<Name> names;
   size_t counter = 0;
+};
+
+// Prints out a module
+class Printer : public Pass {
+  std::ostream& o;
+
+public:
+  Printer() : o(std::cout) {}
+  Printer(std::ostream& o) : o(o) {}
+
+  void run(PassRunner* runner, Module* module) override;
 };
 
 } // namespace wasm

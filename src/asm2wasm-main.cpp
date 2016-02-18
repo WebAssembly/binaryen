@@ -21,6 +21,7 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "wasm-printing.h"
 
 #include "asm2wasm.h"
 
@@ -76,7 +77,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "printing..." << std::endl;
   Output output(options.extra["output"], options.debug);
-  output << wasm;
+  printWasm(&wasm, output.getStream());
 
   if (mappedGlobals) {
     if (options.debug)

@@ -22,6 +22,7 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "s2wasm.h"
+#include "wasm-printing.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -84,7 +85,8 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], options.debug);
-  output << wasm << meta.str() << std::endl;
+  printWasm(&wasm, output.getStream());
+  output << meta.str() << std::endl;
 
   if (options.debug) std::cerr << "Done." << std::endl;
 }
