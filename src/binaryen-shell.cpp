@@ -340,7 +340,7 @@ int main(int argc, const char* argv[]) {
 
   static const char* default_passes[] = {"remove-unused-brs",
                                          "remove-unused-names", "merge-blocks",
-                                         "simplify-locals"};
+                                         "simplify-locals", "reorder-locals"};
 
   Options options("binaryen-shell", "Execute .wast files");
   options

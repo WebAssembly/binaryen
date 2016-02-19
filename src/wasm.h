@@ -776,6 +776,7 @@ inline const char *getExpressionName(Expression *curr) {
     case Expression::Id::UnaryId: return "unary";
     case Expression::Id::BinaryId: return "binary";
     case Expression::Id::SelectId: return "select";
+    case Expression::Id::ReturnId: return "return";
     case Expression::Id::HostId: return "host";
     case Expression::Id::NopId: return "nop";
     case Expression::Id::UnreachableId: return "unreachable";
