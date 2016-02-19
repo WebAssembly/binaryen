@@ -30,10 +30,6 @@ struct ReorderLocals : public WalkerPass<WasmWalker<ReorderLocals, void>> {
 
   std::map<Name, uint32_t> counts;
 
-  void finalize(PassRunner* runner, Module *module) override {
-
-  }
-
   void visitFunction(Function *curr) {
     sort(curr->locals.begin(), curr->locals.end(), [this](NameType a, NameType b) -> bool {
         return this->counts[a.name] > this->counts[b.name];
