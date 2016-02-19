@@ -26,6 +26,7 @@
 #include "asm2wasm.h"
 #include "wasm-interpreter.h"
 #include "wasm-s-parser.h"
+#include "wasm-printing.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -124,7 +125,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input, char *mappedG
 // instantiates the loaded wasm (which might be from asm2wasm, or
 // s-expressions, or something else) with a JS external interface.
 extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
-  if (wasmJSDebug) std::cerr << "instantiating module: \n" << *module << '\n';
+  if (wasmJSDebug) std::cerr << "instantiating module: \n" << module << '\n';
 
   if (wasmJSDebug) std::cerr << "generating exports...\n";
 
@@ -200,7 +201,41 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     }
 
     Literal load(Load* load, size_t addr) override {
-      assert(load->align >= load->bytes);
+      if (load->align < load->bytes) {
+        double ret = EM_ASM_DOUBLE({
+          var addr = $0;
+          var bytes = $1;
+          var isFloat = $2;
+          var isSigned = $3;
+          var save0 = HEAP32[0];
+          var save1 = HEAP32[1];
+          for (var i = 0; i < bytes; i++) {
+            HEAPU8[i] = HEAPU8[addr + i];
+          }
+          var ret;
+          if (!isFloat) {
+            if (bytes === 1)      ret = isSigned ? HEAP8[0]  : HEAPU8[0];
+            else if (bytes === 2) ret = isSigned ? HEAP16[0] : HEAPU16[0];
+            else if (bytes === 4) ret = isSigned ? HEAP32[0] : HEAPU32[0];
+            else abort();
+          } else {
+            if (bytes === 4)      ret = HEAPF32[0];
+            else if (bytes === 8) ret = HEAPF64[0];
+            else abort();
+          }
+          HEAP32[0] = save0; HEAP32[1] = save1;
+          return ret;
+        }, addr, load->bytes, isWasmTypeFloat(load->type), load->signed_);
+        if (!isWasmTypeFloat(load->type)) {
+          return Literal((int32_t)ret);
+        } else if (load->bytes == 4) {
+          return Literal((float)ret);
+        } else if (load->bytes == 8) {
+          return Literal((double)ret);
+        }
+        abort();
+      }
+      // nicely aligned
       if (!isWasmTypeFloat(load->type)) {
         if (load->bytes == 1) {
           if (load->signed_) {
@@ -233,7 +268,33 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     }
 
     void store(Store* store, size_t addr, Literal value) override {
-      assert(store->align >= store->bytes);
+      if (store->align < store->bytes) {
+        double ret = EM_ASM_DOUBLE({
+          var addr = $0;
+          var bytes = $1;
+          var isFloat = $2;
+          var value = $3;
+          var save0 = HEAP32[0];
+          var save1 = HEAP32[1];
+          if (!isFloat) {
+            if (bytes === 1)      HEAPU8[0] = value;
+            else if (bytes === 2) HEAPU16[0] = value;
+            else if (bytes === 4) HEAPU32[0] = value;
+            else abort();
+          } else {
+            if (bytes === 4)      HEAPF32[0] = value;
+            else if (bytes === 8) HEAPF64[0] = value;
+            else abort();
+          }
+          for (var i = 0; i < bytes; i++) {
+            HEAPU8[addr + i] = HEAPU8[i];
+          }
+          HEAP32[0] = save0; HEAP32[1] = save1;
+          return ret;
+        }, addr, store->bytes, isWasmTypeFloat(store->type), isWasmTypeFloat(store->type) ? value.getFloat() : (double)value.getInteger());
+        return;
+      }
+      // nicely aligned
       if (!isWasmTypeFloat(store->type)) {
         if (store->bytes == 1) {
           EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, value.geti32());
