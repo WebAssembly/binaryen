@@ -1,0 +1,15 @@
+print: 4660
+print: 9029
+print: 305419896
+print: 591751049
+print: 878082202
+print: 1164413355
+print: -305419904
+print: -305419904
+print: -305419904
+print: -305419904
+print: -1
+print: -2
+print: -3
+print: -4
+
