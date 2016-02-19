@@ -270,8 +270,8 @@
     )
   )
   (func $fr (param $x f32)
-    (local $y f32)
     (local $z f64)
+    (local $y f32)
     (f32.demote/f64
       (get_local $z)
     )
@@ -288,9 +288,9 @@
   )
   (func $abs
     (local $asm2wasm_i32_temp i32)
-    (local $x i32)
-    (local $y f64)
     (local $z f32)
+    (local $y f64)
+    (local $x i32)
     (set_local $x
       (block
         (set_local $asm2wasm_i32_temp

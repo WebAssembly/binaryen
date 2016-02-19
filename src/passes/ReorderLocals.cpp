@@ -32,7 +32,10 @@ struct ReorderLocals : public WalkerPass<WasmWalker<ReorderLocals, void>> {
 
   void visitFunction(Function *curr) {
     sort(curr->locals.begin(), curr->locals.end(), [this](NameType a, NameType b) -> bool {
-        return this->counts[a.name] > this->counts[b.name];
+      if (this->counts[a.name] == this->counts[b.name]) {
+        return strcmp(a.name.str, b.name.str) > 0;
+      }
+      return this->counts[a.name] > this->counts[b.name];
     });
     counts.clear();
   }
