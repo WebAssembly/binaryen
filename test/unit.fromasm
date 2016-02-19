@@ -79,9 +79,9 @@
     )
   )
   (func $doubleCompares (param $x f64) (param $y f64) (result f64)
-    (local $t f64)
     (local $Int f64)
     (local $Double i32)
+    (local $t f64)
     (if
       (f64.gt
         (get_local $x)
@@ -287,10 +287,10 @@
     )
   )
   (func $abs
+    (local $asm2wasm_i32_temp i32)
     (local $x i32)
     (local $y f64)
     (local $z f32)
-    (local $asm2wasm_i32_temp i32)
     (set_local $x
       (block
         (set_local $asm2wasm_i32_temp
