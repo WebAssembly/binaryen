@@ -302,6 +302,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           EM_ASM_INT({ Module['info'].parent['HEAP16'][$0 >> 1] = $1 }, addr, value.geti32());
         } else if (store->bytes == 4) {
           EM_ASM_INT({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, addr, value.geti32());
+        } else if (store->bytes == 8) {
+          uint64_t v = value.geti64();
+          EM_ASM_INT({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, addr, uint32_t(v));
+          v >>= 32;
+          EM_ASM_INT({ Module['info'].parent['HEAP32'][$0 + 4 >> 2] = $1 }, addr, uint32_t(v));
         } else {
           abort();
         }
