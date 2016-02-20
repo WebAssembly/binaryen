@@ -26,11 +26,10 @@ main:                                   # @main
 	i32.store8	$discard=, buf+8($pop60):p2align=3, $0
 	i32.const	$push59=, 0
 	i64.store	$discard=, buf($pop59):p2align=4, $1
-	block
 	i32.const	$push58=, buf
 	i32.const	$push57=, .L.str
 	i32.call	$push3=, strcmp@FUNCTION, $pop58, $pop57
-	br_if   	0, $pop3        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %for.cond
 	i32.const	$push65=, 0
 	i32.const	$push64=, 0
@@ -43,7 +42,7 @@ main:                                   # @main
 	i32.const	$push6=, buf+1
 	i32.const	$push61=, .L.str
 	i32.call	$push7=, strcmp@FUNCTION, $pop6, $pop61
-	br_if   	0, $pop7        # 0: down to label1
+	br_if   	0, $pop7        # 0: down to label0
 # BB#3:                                 # %for.cond.1
 	i32.const	$push68=, 0
 	i32.store8	$discard=, buf+10($pop68):p2align=1, $0
@@ -52,7 +51,7 @@ main:                                   # @main
 	i32.const	$push8=, buf+2
 	i32.const	$push66=, .L.str
 	i32.call	$push9=, strcmp@FUNCTION, $pop8, $pop66
-	br_if   	0, $pop9        # 0: down to label1
+	br_if   	0, $pop9        # 0: down to label0
 # BB#4:                                 # %for.cond.2
 	i32.const	$push73=, 0
 	i32.const	$push72=, 0
@@ -65,7 +64,7 @@ main:                                   # @main
 	i32.const	$push12=, buf+3
 	i32.const	$push69=, .L.str
 	i32.call	$push13=, strcmp@FUNCTION, $pop12, $pop69
-	br_if   	0, $pop13       # 0: down to label1
+	br_if   	0, $pop13       # 0: down to label0
 # BB#5:                                 # %for.cond.3
 	i32.const	$push76=, 0
 	i32.store8	$discard=, buf+12($pop76):p2align=2, $0
@@ -74,7 +73,7 @@ main:                                   # @main
 	i32.const	$push14=, buf+4
 	i32.const	$push74=, .L.str
 	i32.call	$push15=, strcmp@FUNCTION, $pop14, $pop74
-	br_if   	0, $pop15       # 0: down to label1
+	br_if   	0, $pop15       # 0: down to label0
 # BB#6:                                 # %for.cond.4
 	i32.const	$push81=, 0
 	i32.const	$push80=, 0
@@ -87,7 +86,7 @@ main:                                   # @main
 	i32.const	$push18=, buf+5
 	i32.const	$push77=, .L.str
 	i32.call	$push19=, strcmp@FUNCTION, $pop18, $pop77
-	br_if   	0, $pop19       # 0: down to label1
+	br_if   	0, $pop19       # 0: down to label0
 # BB#7:                                 # %for.cond.5
 	i32.const	$push84=, 0
 	i32.store8	$discard=, buf+14($pop84):p2align=1, $0
@@ -96,7 +95,7 @@ main:                                   # @main
 	i32.const	$push20=, buf+6
 	i32.const	$push82=, .L.str
 	i32.call	$push21=, strcmp@FUNCTION, $pop20, $pop82
-	br_if   	0, $pop21       # 0: down to label1
+	br_if   	0, $pop21       # 0: down to label0
 # BB#8:                                 # %for.cond.6
 	i32.const	$push89=, 0
 	i32.const	$push88=, 0
@@ -109,7 +108,7 @@ main:                                   # @main
 	i32.const	$push24=, buf+7
 	i32.const	$push85=, .L.str
 	i32.call	$push25=, strcmp@FUNCTION, $pop24, $pop85
-	br_if   	0, $pop25       # 0: down to label1
+	br_if   	0, $pop25       # 0: down to label0
 # BB#9:                                 # %for.cond.7
 	i32.const	$push92=, 0
 	i32.store8	$discard=, buf+16($pop92):p2align=3, $0
@@ -118,7 +117,7 @@ main:                                   # @main
 	i32.const	$push26=, buf+8
 	i32.const	$push90=, .L.str
 	i32.call	$push27=, strcmp@FUNCTION, $pop26, $pop90
-	br_if   	0, $pop27       # 0: down to label1
+	br_if   	0, $pop27       # 0: down to label0
 # BB#10:                                # %for.cond.8
 	i32.const	$push97=, 0
 	i32.const	$push96=, 0
@@ -131,7 +130,7 @@ main:                                   # @main
 	i32.const	$push30=, buf+9
 	i32.const	$push93=, .L.str
 	i32.call	$push31=, strcmp@FUNCTION, $pop30, $pop93
-	br_if   	0, $pop31       # 0: down to label1
+	br_if   	0, $pop31       # 0: down to label0
 # BB#11:                                # %for.cond.9
 	i32.const	$push100=, 0
 	i32.store8	$discard=, buf+18($pop100):p2align=1, $0
@@ -140,7 +139,7 @@ main:                                   # @main
 	i32.const	$push32=, buf+10
 	i32.const	$push98=, .L.str
 	i32.call	$push33=, strcmp@FUNCTION, $pop32, $pop98
-	br_if   	0, $pop33       # 0: down to label1
+	br_if   	0, $pop33       # 0: down to label0
 # BB#12:                                # %for.cond.10
 	i32.const	$push105=, 0
 	i32.const	$push104=, 0
@@ -153,7 +152,7 @@ main:                                   # @main
 	i32.const	$push36=, buf+11
 	i32.const	$push101=, .L.str
 	i32.call	$push37=, strcmp@FUNCTION, $pop36, $pop101
-	br_if   	0, $pop37       # 0: down to label1
+	br_if   	0, $pop37       # 0: down to label0
 # BB#13:                                # %for.cond.11
 	i32.const	$push108=, 0
 	i32.store8	$discard=, buf+20($pop108):p2align=2, $0
@@ -162,7 +161,7 @@ main:                                   # @main
 	i32.const	$push38=, buf+12
 	i32.const	$push106=, .L.str
 	i32.call	$push39=, strcmp@FUNCTION, $pop38, $pop106
-	br_if   	0, $pop39       # 0: down to label1
+	br_if   	0, $pop39       # 0: down to label0
 # BB#14:                                # %for.cond.12
 	i32.const	$push113=, 0
 	i32.const	$push112=, 0
@@ -175,7 +174,7 @@ main:                                   # @main
 	i32.const	$push42=, buf+13
 	i32.const	$push109=, .L.str
 	i32.call	$push43=, strcmp@FUNCTION, $pop42, $pop109
-	br_if   	0, $pop43       # 0: down to label1
+	br_if   	0, $pop43       # 0: down to label0
 # BB#15:                                # %for.cond.13
 	i32.const	$push116=, 0
 	i32.store8	$discard=, buf+22($pop116):p2align=1, $0
@@ -184,7 +183,7 @@ main:                                   # @main
 	i32.const	$push44=, buf+14
 	i32.const	$push114=, .L.str
 	i32.call	$push45=, strcmp@FUNCTION, $pop44, $pop114
-	br_if   	0, $pop45       # 0: down to label1
+	br_if   	0, $pop45       # 0: down to label0
 # BB#16:                                # %for.cond.14
 	i32.const	$push120=, 0
 	i32.const	$push119=, 0
@@ -197,15 +196,11 @@ main:                                   # @main
 	i32.const	$push49=, buf+15
 	i32.const	$push48=, .L.str
 	i32.call	$push50=, strcmp@FUNCTION, $pop49, $pop48
-	br_if   	0, $pop50       # 0: down to label1
+	br_if   	0, $pop50       # 0: down to label0
 # BB#17:                                # %for.cond.15
 	i32.const	$push121=, 0
 	return  	$pop121
 .LBB0_18:                               # %if.then7
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_19:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

@@ -41,23 +41,24 @@ regrename_optimize:                     # @regrename_optimize
 	i32.sub 	$11=, $6, $7
 	i32.const	$7=, __stack_pointer
 	i32.store	$11=, 0($7), $11
-	i32.const	$push1=, 0
-	i32.store	$3=, 8($11), $pop1
 	i32.load	$2=, 0($0)
-	i32.store	$discard=, 12($11), $3
+	i32.const	$push1=, 0
+	i32.store	$push2=, 8($11), $pop1
+	i32.store	$3=, 12($11), $pop2
+	block
+	i32.const	$push30=, 0
+	i32.eq  	$push31=, $2, $pop30
+	br_if   	0, $pop31       # 0: down to label1
+# BB#1:
 	i32.const	$1=, -1
 	copy_local	$4=, $3
-	block
-	i32.const	$push29=, 0
-	i32.eq  	$push30=, $2, $pop29
-	br_if   	0, $pop30       # 0: down to label1
-.LBB1_1:                                # %for.body
+.LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	copy_local	$push0=, $0
-	i32.load	$push2=, 4($pop0)
-	i32.const	$push3=, 3
-	i32.shl 	$push23=, $pop2, $pop3
+	i32.load	$push3=, 4($pop0)
+	i32.const	$push24=, 3
+	i32.shl 	$push23=, $pop3, $pop24
 	tee_local	$push22=, $5=, $pop23
 	i32.load	$push4=, reg_class_contents($pop22):p2align=3
 	i32.const	$push21=, -1
@@ -69,40 +70,40 @@ regrename_optimize:                     # @regrename_optimize
 	i32.const	$push20=, -1
 	i32.xor 	$push7=, $pop6, $pop20
 	i32.or  	$3=, $3, $pop7
-	i32.const	$push8=, 1
-	i32.add 	$1=, $1, $pop8
+	i32.const	$push19=, 1
+	i32.add 	$1=, $1, $pop19
 	br_if   	0, $2           # 0: up to label2
-# BB#2:                                 # %for.end
+# BB#3:                                 # %for.end
 	end_loop                        # label3:
 	i32.store	$2=, 8($11), $4
-	i32.const	$push9=, 4
+	i32.const	$push8=, 4
 	i32.const	$9=, 8
 	i32.add 	$9=, $11, $9
-	i32.add 	$push25=, $9, $pop9
-	tee_local	$push24=, $4=, $pop25
-	i32.store	$discard=, 0($pop24), $3
-	i32.const	$push10=, 0
-	i32.lt_s	$push11=, $1, $pop10
-	br_if   	0, $pop11       # 0: down to label1
-# BB#3:                                 # %if.end
-	i32.load	$push12=, 4($0)
-	i32.const	$push13=, 3
-	i32.shl 	$push28=, $pop12, $pop13
-	tee_local	$push27=, $0=, $pop28
-	i32.load	$1=, reg_class_contents($pop27):p2align=3
-	i32.load	$push17=, reg_class_contents+4($0)
-	i32.const	$push14=, -1
-	i32.xor 	$push18=, $pop17, $pop14
-	i32.or  	$push19=, $3, $pop18
-	i32.store	$discard=, 0($4), $pop19
-	i32.const	$push26=, -1
-	i32.xor 	$push15=, $1, $pop26
-	i32.or  	$push16=, $2, $pop15
-	i32.store	$discard=, 8($11), $pop16
+	i32.add 	$push26=, $9, $pop8
+	tee_local	$push25=, $4=, $pop26
+	i32.store	$discard=, 0($pop25), $3
+	i32.const	$push9=, 0
+	i32.lt_s	$push10=, $1, $pop9
+	br_if   	0, $pop10       # 0: down to label1
+# BB#4:                                 # %if.end
+	i32.load	$push11=, 4($0)
+	i32.const	$push12=, 3
+	i32.shl 	$push29=, $pop11, $pop12
+	tee_local	$push28=, $0=, $pop29
+	i32.load	$1=, reg_class_contents($pop28):p2align=3
+	i32.load	$push16=, reg_class_contents+4($0)
+	i32.const	$push13=, -1
+	i32.xor 	$push17=, $pop16, $pop13
+	i32.or  	$push18=, $3, $pop17
+	i32.store	$discard=, 0($4), $pop18
+	i32.const	$push27=, -1
+	i32.xor 	$push14=, $1, $pop27
+	i32.or  	$push15=, $2, $pop14
+	i32.store	$discard=, 8($11), $pop15
 	i32.const	$10=, 8
 	i32.add 	$10=, $11, $10
 	call    	merge_overlapping_regs@FUNCTION, $10
-.LBB1_4:                                # %cleanup
+.LBB1_5:                                # %cleanup
 	end_block                       # label1:
 	i32.const	$8=, 16
 	i32.add 	$11=, $11, $8

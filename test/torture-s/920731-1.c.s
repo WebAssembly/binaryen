@@ -11,17 +11,17 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	block
-	i32.const	$push4=, 1
-	i32.and 	$push0=, $0, $pop4
+	i32.const	$push3=, 1
+	i32.and 	$push0=, $0, $pop3
 	br_if   	0, $pop0        # 0: down to label0
 .LBB0_1:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push5=, 1
 	i32.add 	$1=, $1, $pop5
-	i32.const	$push2=, 7
-	i32.gt_s	$push3=, $1, $pop2
-	br_if   	1, $pop3        # 1: down to label2
+	i32.const	$push4=, 7
+	i32.gt_s	$push2=, $1, $pop4
+	br_if   	1, $pop2        # 1: down to label2
 # BB#2:                                 # %for.inc
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push7=, 1

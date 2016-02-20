@@ -159,8 +159,6 @@ main:                                   # @main
 	i32.const	$6=, 12
 	i32.add 	$6=, $15, $6
 	block
-	block
-	block
 	i32.or  	$push0=, $6, $pop57
 	i32.load8_u	$push1=, 0($pop0)
 	i32.const	$push56=, 8
@@ -171,7 +169,7 @@ main:                                   # @main
 	i32.or  	$push13=, $pop12, $pop6
 	i32.const	$push54=, 33686018
 	i32.ne  	$push14=, $pop13, $pop54
-	br_if   	0, $pop14       # 0: down to label2
+	br_if   	0, $pop14       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push77=, 5
 	i32.const	$push76=, 5
@@ -209,7 +207,7 @@ main:                                   # @main
 	i32.or  	$push28=, $pop27, $pop21
 	i32.const	$push66=, 33686018
 	i32.ne  	$push29=, $pop28, $pop66
-	br_if   	1, $pop29       # 1: down to label1
+	br_if   	0, $pop29       # 0: down to label0
 # BB#2:                                 # %if.end6
 	i32.const	$push31=, 5
 	i32.const	$push85=, 5
@@ -251,7 +249,7 @@ main:                                   # @main
 	i32.or  	$push50=, $pop49, $pop41
 	i32.const	$push51=, 33686018
 	i32.ne  	$push52=, $pop50, $pop51
-	br_if   	2, $pop52       # 2: down to label0
+	br_if   	0, $pop52       # 0: down to label0
 # BB#3:                                 # %if.end11
 	i32.const	$push53=, 0
 	i32.const	$2=, 16
@@ -259,15 +257,7 @@ main:                                   # @main
 	i32.const	$2=, __stack_pointer
 	i32.store	$15=, 0($2), $15
 	return  	$pop53
-.LBB3_4:                                # %if.then
-	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB3_5:                                # %if.then5
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB3_6:                                # %if.then10
+.LBB3_4:                                # %if.then10
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

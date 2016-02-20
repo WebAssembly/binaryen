@@ -8,38 +8,39 @@ f1:                                     # @f1
 	.param  	i32, i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 0
 	block
 	block
-	i32.load	$push11=, 0($0)
-	tee_local	$push10=, $4=, $pop11
+	i32.load	$push9=, 0($0)
+	tee_local	$push8=, $4=, $pop9
 	i32.load	$push0=, 0($1)
-	i32.ge_s	$push1=, $pop10, $pop0
+	i32.ge_s	$push1=, $pop8, $pop0
 	br_if   	0, $pop1        # 0: down to label1
-.LBB0_1:                                # %for.body
+# BB#1:
+	i32.const	$3=, 0
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.const	$push2=, 5
-	i32.ge_s	$push3=, $3, $pop2
-	br_if   	3, $pop3        # 3: down to label0
-# BB#2:                                 # %for.inc
-                                        #   in Loop: Header=BB0_1 Depth=1
-	i32.add 	$push5=, $4, $3
-	i32.const	$push4=, 1
-	i32.add 	$push6=, $pop5, $pop4
-	i32.store	$discard=, 0($0), $pop6
+	i32.const	$push10=, 5
+	i32.ge_s	$push2=, $3, $pop10
+	br_if   	3, $pop2        # 3: down to label0
+# BB#3:                                 # %for.inc
+                                        #   in Loop: Header=BB0_2 Depth=1
+	i32.add 	$push3=, $4, $3
 	i32.const	$push12=, 1
-	i32.add 	$2=, $3, $pop12
+	i32.add 	$push4=, $pop3, $pop12
+	i32.store	$discard=, 0($0), $pop4
+	i32.const	$push11=, 1
+	i32.add 	$2=, $3, $pop11
 	copy_local	$3=, $2
-	i32.add 	$push8=, $4, $2
-	i32.load	$push7=, 0($1)
-	i32.lt_s	$push9=, $pop8, $pop7
-	br_if   	0, $pop9        # 0: up to label2
-.LBB0_3:                                # %for.end
+	i32.add 	$push6=, $4, $2
+	i32.load	$push5=, 0($1)
+	i32.lt_s	$push7=, $pop6, $pop5
+	br_if   	0, $pop7        # 0: up to label2
+.LBB0_4:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:
 	return
-.LBB0_4:                                # %if.then
+.LBB0_5:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

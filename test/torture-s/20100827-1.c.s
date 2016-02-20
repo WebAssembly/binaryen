@@ -19,19 +19,19 @@ foo:                                    # @foo
 .LBB0_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.add 	$push5=, $0, $1
-	tee_local	$push4=, $2=, $pop5
+	i32.add 	$push4=, $0, $1
+	tee_local	$push3=, $2=, $pop4
 	i32.const	$push9=, 0
-	i32.eq  	$push10=, $pop4, $pop9
+	i32.eq  	$push10=, $pop3, $pop9
 	br_if   	3, $pop10       # 3: down to label0
 # BB#2:                                 # %if.end5
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push1=, 1
-	i32.add 	$1=, $1, $pop1
 	i32.const	$push6=, 1
-	i32.add 	$push2=, $2, $pop6
-	i32.load8_u	$push3=, 0($pop2)
-	br_if   	0, $pop3        # 0: up to label2
+	i32.add 	$1=, $1, $pop6
+	i32.const	$push5=, 1
+	i32.add 	$push1=, $2, $pop5
+	i32.load8_u	$push2=, 0($pop1)
+	br_if   	0, $pop2        # 0: up to label2
 .LBB0_3:                                # %do.end
 	end_loop                        # label3:
 	end_block                       # label1:

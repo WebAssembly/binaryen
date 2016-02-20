@@ -43,73 +43,74 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
 	block
 	block
 	i32.call	$push0=, foo@FUNCTION
 	i32.const	$push1=, 640034342
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label1
-.LBB2_1:                                # %for.body
+# BB#1:
+	i32.const	$0=, 0
+.LBB2_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
 	block
 	loop                            # label4:
 	i32.load8_u	$push3=, a($0)
-	i32.const	$push4=, 38
-	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	2, $pop5        # 2: down to label3
-# BB#2:                                 # %for.cond
-                                        #   in Loop: Header=BB2_1 Depth=1
-	i32.const	$push6=, 1
-	i32.add 	$0=, $0, $pop6
-	i32.const	$push7=, 519
-	i32.le_u	$push8=, $0, $pop7
-	br_if   	0, $pop8        # 0: up to label4
-# BB#3:                                 # %for.end
+	i32.const	$push16=, 38
+	i32.ne  	$push4=, $pop3, $pop16
+	br_if   	2, $pop4        # 2: down to label3
+# BB#3:                                 # %for.cond
+                                        #   in Loop: Header=BB2_2 Depth=1
+	i32.const	$push15=, 1
+	i32.add 	$0=, $0, $pop15
+	i32.const	$push14=, 519
+	i32.le_u	$push5=, $0, $pop14
+	br_if   	0, $pop5        # 0: up to label4
+# BB#4:                                 # %for.end
 	end_loop                        # label5:
 	call    	bar@FUNCTION
 	i32.const	$0=, 0
 	i32.const	$push17=, 0
-	i32.load	$push9=, a+4($pop17)
-	i32.const	$push10=, 909588022
-	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	3, $pop11       # 3: down to label0
-# BB#4:                                 # %if.end9
+	i32.load	$push6=, a+4($pop17)
+	i32.const	$push7=, 909588022
+	i32.ne  	$push8=, $pop6, $pop7
+	br_if   	3, $pop8        # 3: down to label0
+# BB#5:                                 # %if.end9
 	i32.const	$push18=, 0
-	i32.const	$push12=, 909522486
-	i32.store	$discard=, a+4($pop18), $pop12
-.LBB2_5:                                # %for.body13
+	i32.const	$push9=, 909522486
+	i32.store	$discard=, a+4($pop18), $pop9
+.LBB2_6:                                # %for.body13
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label6:
-	i32.load8_u	$push13=, a($0)
+	i32.load8_u	$push10=, a($0)
 	i32.const	$push21=, 54
-	i32.ne  	$push14=, $pop13, $pop21
-	br_if   	3, $pop14       # 3: down to label2
-# BB#6:                                 # %for.cond10
-                                        #   in Loop: Header=BB2_5 Depth=1
+	i32.ne  	$push11=, $pop10, $pop21
+	br_if   	3, $pop11       # 3: down to label2
+# BB#7:                                 # %for.cond10
+                                        #   in Loop: Header=BB2_6 Depth=1
 	i32.const	$push20=, 1
 	i32.add 	$0=, $0, $pop20
 	i32.const	$push19=, 519
-	i32.le_u	$push15=, $0, $pop19
-	br_if   	0, $pop15       # 0: up to label6
-# BB#7:                                 # %for.end22
+	i32.le_u	$push12=, $0, $pop19
+	br_if   	0, $pop12       # 0: up to label6
+# BB#8:                                 # %for.end22
 	end_loop                        # label7:
-	i32.const	$push16=, 0
-	return  	$pop16
-.LBB2_8:                                # %if.then4
+	i32.const	$push13=, 0
+	return  	$pop13
+.LBB2_9:                                # %if.then4
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
-.LBB2_9:                                # %if.then18
+.LBB2_10:                               # %if.then18
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
-.LBB2_10:                               # %if.then
+.LBB2_11:                               # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
-.LBB2_11:                               # %if.then8
+.LBB2_12:                               # %if.then8
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

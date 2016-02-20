@@ -19,85 +19,31 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$0=, __stack_pointer
 	i32.load	$0=, 0($0)
 	i32.const	$1=, 80
-	i32.sub 	$11=, $0, $1
+	i32.sub 	$4=, $0, $1
 	i32.const	$1=, __stack_pointer
-	i32.store	$11=, 0($1), $11
-	i32.const	$push1=, 64
+	i32.store	$4=, 0($1), $4
+	i32.const	$push0=, gs
+	i32.const	$push1=, 72
 	i32.const	$2=, 8
-	i32.add 	$2=, $11, $2
-	i32.add 	$push2=, $2, $pop1
-	i32.const	$push38=, 0
-	i64.load	$push0=, gs+64($pop38):p2align=2
-	i64.store	$discard=, 0($pop2):p2align=2, $pop0
-	i32.const	$push4=, 56
+	i32.add 	$2=, $4, $2
+	i32.call	$discard=, memcpy@FUNCTION, $2, $pop0, $pop1
+	i32.const	$push2=, 4660
+	i32.const	$push6=, 0
 	i32.const	$3=, 8
-	i32.add 	$3=, $11, $3
-	i32.add 	$push5=, $3, $pop4
-	i32.const	$push37=, 0
-	i64.load	$push3=, gs+56($pop37):p2align=2
-	i64.store	$discard=, 0($pop5):p2align=2, $pop3
-	i32.const	$push7=, 48
-	i32.const	$4=, 8
-	i32.add 	$4=, $11, $4
-	i32.add 	$push8=, $4, $pop7
-	i32.const	$push36=, 0
-	i64.load	$push6=, gs+48($pop36):p2align=2
-	i64.store	$discard=, 0($pop8):p2align=2, $pop6
-	i32.const	$push10=, 40
-	i32.const	$5=, 8
-	i32.add 	$5=, $11, $5
-	i32.add 	$push11=, $5, $pop10
-	i32.const	$push35=, 0
-	i64.load	$push9=, gs+40($pop35):p2align=2
-	i64.store	$discard=, 0($pop11):p2align=2, $pop9
-	i32.const	$push13=, 32
-	i32.const	$6=, 8
-	i32.add 	$6=, $11, $6
-	i32.add 	$push14=, $6, $pop13
-	i32.const	$push34=, 0
-	i64.load	$push12=, gs+32($pop34):p2align=2
-	i64.store	$discard=, 0($pop14):p2align=2, $pop12
-	i32.const	$push16=, 24
-	i32.const	$7=, 8
-	i32.add 	$7=, $11, $7
-	i32.add 	$push17=, $7, $pop16
-	i32.const	$push33=, 0
-	i64.load	$push15=, gs+24($pop33):p2align=2
-	i64.store	$discard=, 0($pop17):p2align=2, $pop15
-	i32.const	$push19=, 16
-	i32.const	$8=, 8
-	i32.add 	$8=, $11, $8
-	i32.add 	$push20=, $8, $pop19
-	i32.const	$push32=, 0
-	i64.load	$push18=, gs+16($pop32):p2align=2
-	i64.store	$discard=, 0($pop20):p2align=2, $pop18
-	i32.const	$push22=, 8
-	i32.const	$9=, 8
-	i32.add 	$9=, $11, $9
-	i32.add 	$push23=, $9, $pop22
-	i32.const	$push31=, 0
-	i64.load	$push21=, gs+8($pop31):p2align=2
-	i64.store	$discard=, 0($pop23):p2align=2, $pop21
-	i32.const	$push30=, 0
-	i64.load	$push24=, gs($pop30):p2align=2
-	i64.store	$discard=, 8($11):p2align=2, $pop24
-	i32.const	$push25=, 4660
-	i32.const	$push29=, 0
-	i32.const	$10=, 8
-	i32.add 	$10=, $11, $10
+	i32.add 	$3=, $4, $3
 	block
-	i32.call	$push26=, f@FUNCTION, $10, $pop25, $pop29
-	i32.const	$push28=, 4660
-	i32.ne  	$push27=, $pop26, $pop28
-	br_if   	0, $pop27       # 0: down to label0
+	i32.call	$push3=, f@FUNCTION, $3, $pop2, $pop6
+	i32.const	$push5=, 4660
+	i32.ne  	$push4=, $pop3, $pop5
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push39=, 0
-	call    	exit@FUNCTION, $pop39
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

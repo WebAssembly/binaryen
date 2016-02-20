@@ -90,7 +90,7 @@ main:                                   # @main
 	i32.const	$push45=, 448
 	i32.ne  	$push4=, $3, $pop45
 	br_if   	0, $pop4        # 0: up to label5
-# BB#4:                                 # %for.body.i.preheader
+# BB#4:                                 # %for.body17
 	end_loop                        # label6:
 	i64.const	$push5=, 30064771079
 	i64.store	$push6=, 1024($7):p2align=4, $pop5

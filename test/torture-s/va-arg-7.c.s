@@ -24,12 +24,10 @@ debug:                                  # @debug
 	i32.add 	$push2=, $pop22, $pop21
 	i32.store	$discard=, 12($20), $pop2
 	block
-	block
-	block
 	i32.load	$push3=, 0($16)
 	i32.const	$push4=, 8
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	0, $pop5        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.load	$push6=, 12($20)
 	i32.const	$push30=, 3
@@ -43,7 +41,7 @@ debug:                                  # @debug
 	i32.load	$push9=, 0($16)
 	i32.const	$push10=, 9
 	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	1, $pop11       # 1: down to label1
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.end4
 	i32.load	$push12=, 12($20)
 	i32.const	$push13=, 3
@@ -57,22 +55,14 @@ debug:                                  # @debug
 	i32.load	$push18=, 0($16)
 	i32.const	$push19=, 10
 	i32.ne  	$push20=, $pop18, $pop19
-	br_if   	2, $pop20       # 2: down to label0
+	br_if   	0, $pop20       # 0: down to label0
 # BB#3:                                 # %if.end7
 	i32.const	$19=, 16
 	i32.add 	$20=, $20, $19
 	i32.const	$19=, __stack_pointer
 	i32.store	$20=, 0($19), $20
 	return
-.LBB0_4:                                # %if.then
-	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_5:                                # %if.then3
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_6:                                # %if.then6
+.LBB0_4:                                # %if.then6
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

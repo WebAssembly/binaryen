@@ -120,8 +120,8 @@ el:
 	.globl	filler
 	.p2align	4
 filler:
-	.skip	49152
-	.size	filler, 49152
+	.skip	522240
+	.size	filler, 522240
 
 
 	.ident	"clang version 3.9.0 "

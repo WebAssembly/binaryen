@@ -34,7 +34,7 @@ main:                                   # @main
 	i32.const	$9=, __stack_pointer
 	i32.store	$13=, 0($9), $13
 	i32.const	$push0=, 1
-	i32.store	$3=, 12($13), $pop0
+	i32.store	$4=, 12($13), $pop0
 	i32.const	$11=, 12
 	i32.add 	$11=, $13, $11
 	i32.const	$12=, 16
@@ -51,16 +51,16 @@ main:                                   # @main
 	i32.load	$0=, pd($pop16)
 	i32.const	$push15=, 0
 	i32.load	$1=, pi($pop15)
-	i32.const	$4=, -1
-	i32.const	$5=, 0
+	i32.const	$5=, -1
+	i32.const	$2=, 0
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	block
-	br_if   	0, $4           # 0: down to label4
+	br_if   	0, $5           # 0: down to label4
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB1_2 Depth=1
-	i32.load	$2=, 0($1)
+	i32.load	$3=, 0($1)
 	block
 	f64.load	$push19=, 0($0)
 	tee_local	$push18=, $7=, $pop19
@@ -73,24 +73,24 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
-	i32.gt_s	$push5=, $2, $pop20
-	i32.select	$push6=, $2, $pop21, $pop5
-	i32.add 	$5=, $pop6, $5
+	i32.gt_s	$push5=, $3, $pop20
+	i32.select	$push6=, $3, $pop21, $pop5
+	i32.add 	$2=, $pop6, $2
 .LBB1_5:                                # %if.end8
                                         #   in Loop: Header=BB1_2 Depth=1
 	end_block                       # label5:
-	f64.convert_s/i32	$push7=, $2
+	f64.convert_s/i32	$push7=, $3
 	f64.store	$discard=, 0($0), $pop7
 .LBB1_6:                                # %if.end11
                                         #   in Loop: Header=BB1_2 Depth=1
 	end_block                       # label4:
-	i32.add 	$4=, $4, $3
-	i32.lt_s	$push8=, $4, $6
+	i32.add 	$5=, $5, $4
+	i32.lt_s	$push8=, $5, $6
 	br_if   	0, $pop8        # 0: up to label2
 # BB#7:                                 # %while.end
 	end_loop                        # label3:
 	i32.const	$push9=, 1234567890
-	i32.ne  	$push10=, $5, $pop9
+	i32.ne  	$push10=, $2, $pop9
 	br_if   	0, $pop10       # 0: down to label1
 # BB#8:                                 # %if.end15
 	i32.const	$push11=, 0

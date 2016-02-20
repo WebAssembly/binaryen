@@ -71,11 +71,10 @@ test:                                   # @test
 	i32.add 	$push2=, $pop13, $pop12
 	i32.store	$discard=, 12($7), $pop2
 	block
-	block
 	i32.load	$push3=, 0($1)
 	i32.const	$push11=, 1234
 	i32.ne  	$push4=, $pop3, $pop11
-	br_if   	0, $pop4        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %dummy.exit
 	i32.store	$discard=, 0($3), $2
 	i32.load	$push5=, 0($3)
@@ -91,18 +90,14 @@ test:                                   # @test
 	i32.load	$push9=, 0($3)
 	i32.const	$push22=, 1234
 	i32.ne  	$push10=, $pop9, $pop22
-	br_if   	1, $pop10       # 1: down to label1
+	br_if   	0, $pop10       # 0: down to label1
 # BB#2:                                 # %dummy.exit16
 	i32.const	$6=, 16
 	i32.add 	$7=, $7, $6
 	i32.const	$6=, __stack_pointer
 	i32.store	$7=, 0($6), $7
 	return
-.LBB1_3:                                # %if.then.i
-	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB1_4:                                # %if.then.i15
+.LBB1_3:                                # %if.then.i15
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable

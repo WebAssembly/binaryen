@@ -15,18 +15,18 @@ f:                                      # @f
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	f32.load	$push2=, 0($1)
-	f32.load	$push3=, 0($2)
-	f32.eq  	$push4=, $pop2, $pop3
-	i32.store	$discard=, 0($0), $pop4
-	i32.const	$push1=, 4
-	i32.add 	$1=, $1, $pop1
+	f32.load	$push0=, 0($1)
+	f32.load	$push1=, 0($2)
+	f32.eq  	$push2=, $pop0, $pop1
+	i32.store	$discard=, 0($0), $pop2
 	i32.const	$push6=, 4
-	i32.add 	$2=, $2, $pop6
+	i32.add 	$1=, $1, $pop6
 	i32.const	$push5=, 4
-	i32.add 	$0=, $0, $pop5
-	i32.const	$push0=, -1
-	i32.add 	$3=, $3, $pop0
+	i32.add 	$2=, $2, $pop5
+	i32.const	$push4=, 4
+	i32.add 	$0=, $0, $pop4
+	i32.const	$push3=, -1
+	i32.add 	$3=, $3, $pop3
 	br_if   	0, $3           # 0: up to label1
 .LBB0_2:                                # %while.end
 	end_loop                        # label2:

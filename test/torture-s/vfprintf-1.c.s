@@ -18,9 +18,11 @@ inner:                                  # @inner
 	i32.store	$discard=, 8($5), $pop0
 	block
 	block
+	block
+	block
 	i32.const	$push1=, 10
 	i32.gt_u	$push2=, $0, $pop1
-	br_if   	0, $pop2        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label3
 # BB#1:                                 # %entry
 	block
 	block
@@ -32,9 +34,7 @@ inner:                                  # @inner
 	block
 	block
 	block
-	block
-	block
-	tableswitch	$0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 10, 8, 9 # 0: down to label13
+	tableswitch	$0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 11, 8, 9 # 0: down to label13
                                         # 1: down to label12
                                         # 2: down to label11
                                         # 3: down to label10
@@ -42,7 +42,7 @@ inner:                                  # @inner
                                         # 5: down to label8
                                         # 6: down to label7
                                         # 7: down to label6
-                                        # 10: down to label3
+                                        # 11: down to label2
                                         # 8: down to label5
                                         # 9: down to label4
 .LBB0_2:                                # %sw.bb
@@ -59,7 +59,7 @@ inner:                                  # @inner
 	i32.call	$push95=, vfprintf@FUNCTION, $pop93, $pop98, $pop94
 	i32.const	$push96=, 5
 	i32.eq  	$push97=, $pop95, $pop96
-	br_if   	10, $pop97      # 10: down to label2
+	br_if   	11, $pop97      # 11: down to label1
 # BB#3:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable
@@ -77,7 +77,7 @@ inner:                                  # @inner
 	i32.call	$push86=, vfprintf@FUNCTION, $pop84, $pop100, $pop85
 	i32.const	$push87=, 6
 	i32.eq  	$push88=, $pop86, $pop87
-	br_if   	9, $pop88       # 9: down to label2
+	br_if   	10, $pop88      # 10: down to label1
 # BB#5:                                 # %if.then8
 	call    	abort@FUNCTION
 	unreachable
@@ -95,7 +95,7 @@ inner:                                  # @inner
 	i32.call	$push77=, vfprintf@FUNCTION, $pop75, $pop102, $pop76
 	i32.const	$push78=, 1
 	i32.eq  	$push79=, $pop77, $pop78
-	br_if   	8, $pop79       # 8: down to label2
+	br_if   	9, $pop79       # 9: down to label1
 # BB#7:                                 # %if.then14
 	call    	abort@FUNCTION
 	unreachable
@@ -113,7 +113,7 @@ inner:                                  # @inner
 	i32.call	$push70=, vfprintf@FUNCTION, $pop68, $pop104, $pop69
 	i32.const	$push120=, 0
 	i32.eq  	$push121=, $pop70, $pop120
-	br_if   	7, $pop121      # 7: down to label2
+	br_if   	8, $pop121      # 8: down to label1
 # BB#9:                                 # %if.then20
 	call    	abort@FUNCTION
 	unreachable
@@ -131,7 +131,7 @@ inner:                                  # @inner
 	i32.call	$push61=, vfprintf@FUNCTION, $pop59, $pop106, $pop60
 	i32.const	$push62=, 5
 	i32.eq  	$push63=, $pop61, $pop62
-	br_if   	6, $pop63       # 6: down to label2
+	br_if   	7, $pop63       # 7: down to label1
 # BB#11:                                # %if.then26
 	call    	abort@FUNCTION
 	unreachable
@@ -149,7 +149,7 @@ inner:                                  # @inner
 	i32.call	$push52=, vfprintf@FUNCTION, $pop50, $pop108, $pop51
 	i32.const	$push53=, 6
 	i32.eq  	$push54=, $pop52, $pop53
-	br_if   	5, $pop54       # 5: down to label2
+	br_if   	6, $pop54       # 6: down to label1
 # BB#13:                                # %if.then32
 	call    	abort@FUNCTION
 	unreachable
@@ -167,7 +167,7 @@ inner:                                  # @inner
 	i32.call	$push43=, vfprintf@FUNCTION, $pop41, $pop110, $pop42
 	i32.const	$push44=, 1
 	i32.eq  	$push45=, $pop43, $pop44
-	br_if   	4, $pop45       # 4: down to label2
+	br_if   	5, $pop45       # 5: down to label1
 # BB#15:                                # %if.then38
 	call    	abort@FUNCTION
 	unreachable
@@ -185,7 +185,7 @@ inner:                                  # @inner
 	i32.call	$push36=, vfprintf@FUNCTION, $pop34, $pop112, $pop35
 	i32.const	$push122=, 0
 	i32.eq  	$push123=, $pop36, $pop122
-	br_if   	3, $pop123      # 3: down to label2
+	br_if   	4, $pop123      # 4: down to label1
 # BB#17:                                # %if.then44
 	call    	abort@FUNCTION
 	unreachable
@@ -203,7 +203,7 @@ inner:                                  # @inner
 	i32.call	$push18=, vfprintf@FUNCTION, $pop16, $pop116, $pop17
 	i32.const	$push19=, 7
 	i32.eq  	$push20=, $pop18, $pop19
-	br_if   	2, $pop20       # 2: down to label2
+	br_if   	3, $pop20       # 3: down to label1
 # BB#19:                                # %if.then56
 	call    	abort@FUNCTION
 	unreachable
@@ -221,12 +221,13 @@ inner:                                  # @inner
 	i32.call	$push9=, vfprintf@FUNCTION, $pop7, $pop118, $pop8
 	i32.const	$push10=, 2
 	i32.eq  	$push11=, $pop9, $pop10
-	br_if   	1, $pop11       # 1: down to label2
-# BB#21:                                # %if.then62
+	br_if   	2, $pop11       # 2: down to label1
+.LBB0_21:                               # %sw.default
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_22:                               # %sw.bb46
-	end_block                       # label3:
+	end_block                       # label2:
 	i32.const	$push21=, 0
 	i32.load	$push22=, stdout($pop21)
 	i32.const	$push24=, .L.str.5
@@ -239,19 +240,15 @@ inner:                                  # @inner
 	i32.call	$push27=, vfprintf@FUNCTION, $pop25, $pop114, $pop26
 	i32.const	$push28=, 1
 	i32.ne  	$push29=, $pop27, $pop28
-	br_if   	2, $pop29       # 2: down to label0
+	br_if   	1, $pop29       # 1: down to label0
 .LBB0_23:                               # %sw.epilog
-	end_block                       # label2:
+	end_block                       # label1:
 	i32.const	$4=, 16
 	i32.add 	$5=, $5, $4
 	i32.const	$4=, __stack_pointer
 	i32.store	$5=, 0($4), $5
 	return
-.LBB0_24:                               # %sw.default
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_25:                               # %if.then50
+.LBB0_24:                               # %if.then50
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

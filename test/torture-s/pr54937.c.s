@@ -9,35 +9,36 @@ t:                                      # @t
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
 	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-.LBB0_1:                                # %for.body
+# BB#1:
+	i32.const	$1=, 0
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	block
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $1, $pop8
 	br_if   	0, $pop9        # 0: down to label3
-# BB#2:                                 # %if.then
-                                        #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push2=, 0
-	i32.load	$push3=, terminate_me($pop2)
-	i32.const	$push7=, 0
-	call_indirect	$pop3, $pop7
-.LBB0_3:                                # %if.end
-                                        #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label3:
+# BB#3:                                 # %if.then
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push4=, 0
-	i32.store	$discard=, a($1), $pop4
-	i32.const	$push5=, 4
-	i32.add 	$1=, $1, $pop5
-	i32.const	$push6=, -1
-	i32.add 	$0=, $0, $pop6
+	i32.load	$push2=, terminate_me($pop4)
+	i32.const	$push3=, 0
+	call_indirect	$pop2, $pop3
+.LBB0_4:                                # %if.end
+                                        #   in Loop: Header=BB0_2 Depth=1
+	end_block                       # label3:
+	i32.const	$push7=, 0
+	i32.store	$discard=, a($1), $pop7
+	i32.const	$push6=, 4
+	i32.add 	$1=, $1, $pop6
+	i32.const	$push5=, -1
+	i32.add 	$0=, $0, $pop5
 	br_if   	0, $0           # 0: up to label1
-.LBB0_4:                                # %for.end
+.LBB0_5:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
 	return  	$1

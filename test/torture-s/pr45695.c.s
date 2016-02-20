@@ -44,7 +44,6 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	block
-	block
 	i32.const	$push11=, 1
 	i32.add 	$push10=, $0, $pop11
 	tee_local	$push9=, $2=, $pop10
@@ -54,20 +53,16 @@ main:                                   # @main
 	i32.call	$push1=, f@FUNCTION, $0, $pop9, $pop7
 	i32.const	$push2=, -1
 	i32.ne  	$push3=, $pop1, $pop2
-	br_if   	0, $pop3        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.call	$push4=, f@FUNCTION, $1, $2, $1
 	i32.const	$push12=, 1
 	i32.ne  	$push5=, $pop4, $pop12
-	br_if   	1, $pop5        # 1: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#2:                                 # %if.end9
 	i32.const	$push6=, 0
 	return  	$pop6
-.LBB2_3:                                # %if.then
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB2_4:                                # %if.then8
+.LBB2_3:                                # %if.then8
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

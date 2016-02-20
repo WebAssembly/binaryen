@@ -24,25 +24,26 @@ bracket_empty:                          # @bracket_empty
 	.local  	i32
 # BB#0:                                 # %entry
 	block
+	block
 	i32.load	$push9=, 0($0)
 	tee_local	$push8=, $1=, $pop9
 	i32.load	$push0=, 4($0)
 	i32.ge_u	$push1=, $pop8, $pop0
-	br_if   	0, $pop1        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %land.lhs.true
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $1, $pop2
 	i32.store	$discard=, 0($0), $pop3
 	i32.load8_u	$push4=, 0($1)
 	i32.const	$push5=, 93
-	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	0, $pop6        # 0: down to label0
-# BB#2:                                 # %if.end
-	return
-.LBB1_3:                                # %lor.lhs.false
-	end_block                       # label0:
+	i32.eq  	$push6=, $pop4, $pop5
+	br_if   	1, $pop6        # 1: down to label0
+.LBB1_2:                                # %lor.lhs.false
+	end_block                       # label1:
 	i32.const	$push7=, 7
 	i32.store	$discard=, 8($0), $pop7
+.LBB1_3:                                # %if.end
+	end_block                       # label0:
 	return
 	.endfunc
 .Lfunc_end1:

@@ -31,70 +31,70 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push34=, 0
-	i32.load	$0=, i($pop34)
-	i32.const	$push33=, 0
-	i32.const	$push32=, 0
-	i64.load	$push0=, .Lmain.t+8($pop32):p2align=0
-	i64.store	$discard=, s+24($pop33), $pop0
-	i32.const	$push31=, 0
-	i32.const	$push30=, 0
-	i64.load	$push1=, .Lmain.t($pop30):p2align=0
-	i64.store	$discard=, s+16($pop31):p2align=4, $pop1
+	i32.const	$push27=, 0
+	i32.load	$0=, i($pop27)
+	i32.const	$push26=, 0
+	i32.const	$push25=, 0
+	i64.load	$push0=, .Lmain.t+8($pop25):p2align=0
+	i64.store	$discard=, s+24($pop26), $pop0
+	i32.const	$push24=, 0
+	i32.const	$push23=, 0
+	i64.load	$push1=, .Lmain.t($pop23):p2align=0
+	i64.store	$discard=, s+16($pop24):p2align=4, $pop1
 	block
-	i32.const	$push29=, 0
-	i32.gt_s	$push2=, $0, $pop29
+	i32.const	$push22=, 0
+	i32.gt_s	$push2=, $0, $pop22
 	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %for.body.preheader
 	i64.const	$push3=, -1220975898975746
 	call    	foo@FUNCTION, $pop3
-	i32.const	$push39=, 0
-	i32.const	$push38=, 0
-	i32.load	$push37=, i($pop38)
-	tee_local	$push36=, $0=, $pop37
-	i32.const	$push35=, 1
-	i32.add 	$push4=, $pop36, $pop35
-	i32.store	$discard=, i($pop39), $pop4
+	i32.const	$push32=, 0
+	i32.const	$push31=, 0
+	i32.load	$push30=, i($pop31)
+	tee_local	$push29=, $0=, $pop30
+	i32.const	$push28=, 1
+	i32.add 	$push4=, $pop29, $pop28
+	i32.store	$discard=, i($pop32), $pop4
 	i32.const	$push5=, -1
 	i32.gt_s	$push6=, $0, $pop5
 	br_if   	0, $pop6        # 0: down to label1
 .LBB1_2:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.const	$push7=, 0
-	i64.load32_u	$push15=, s+24($pop7):p2align=3
 	i32.const	$push48=, 0
-	i64.load16_u	$push11=, s+28($pop48):p2align=2
+	i64.load32_u	$push12=, s+24($pop48):p2align=3
 	i32.const	$push47=, 0
-	i64.load8_u	$push8=, s+30($pop47):p2align=1
-	i64.const	$push9=, 16
-	i64.shl 	$push10=, $pop8, $pop9
-	i64.or  	$push12=, $pop11, $pop10
-	i64.const	$push13=, 32
-	i64.shl 	$push14=, $pop12, $pop13
-	i64.or  	$push16=, $pop15, $pop14
-	i64.const	$push20=, 7
-	i64.shl 	$push21=, $pop16, $pop20
+	i64.load16_u	$push9=, s+28($pop47):p2align=2
 	i32.const	$push46=, 0
-	i64.load	$push17=, s+16($pop46):p2align=4
-	i64.const	$push18=, 57
-	i64.shr_u	$push19=, $pop17, $pop18
-	i64.or  	$push22=, $pop21, $pop19
-	i64.const	$push23=, 8
-	i64.shl 	$push24=, $pop22, $pop23
-	i64.const	$push25=, 10
-	i64.shr_s	$push26=, $pop24, $pop25
-	call    	foo@FUNCTION, $pop26
-	i32.const	$push45=, 0
-	i32.const	$push44=, 0
-	i32.load	$push43=, i($pop44)
-	tee_local	$push42=, $0=, $pop43
-	i32.const	$push41=, 1
-	i32.add 	$push27=, $pop42, $pop41
-	i32.store	$discard=, i($pop45), $pop27
-	i32.const	$push40=, 0
-	i32.lt_s	$push28=, $0, $pop40
-	br_if   	0, $pop28       # 0: up to label2
+	i64.load8_u	$push7=, s+30($pop46):p2align=1
+	i64.const	$push45=, 16
+	i64.shl 	$push8=, $pop7, $pop45
+	i64.or  	$push10=, $pop9, $pop8
+	i64.const	$push44=, 32
+	i64.shl 	$push11=, $pop10, $pop44
+	i64.or  	$push13=, $pop12, $pop11
+	i64.const	$push43=, 7
+	i64.shl 	$push16=, $pop13, $pop43
+	i32.const	$push42=, 0
+	i64.load	$push14=, s+16($pop42):p2align=4
+	i64.const	$push41=, 57
+	i64.shr_u	$push15=, $pop14, $pop41
+	i64.or  	$push17=, $pop16, $pop15
+	i64.const	$push40=, 8
+	i64.shl 	$push18=, $pop17, $pop40
+	i64.const	$push39=, 10
+	i64.shr_s	$push19=, $pop18, $pop39
+	call    	foo@FUNCTION, $pop19
+	i32.const	$push38=, 0
+	i32.const	$push37=, 0
+	i32.load	$push36=, i($pop37)
+	tee_local	$push35=, $0=, $pop36
+	i32.const	$push34=, 1
+	i32.add 	$push20=, $pop35, $pop34
+	i32.store	$discard=, i($pop38), $pop20
+	i32.const	$push33=, 0
+	i32.lt_s	$push21=, $0, $pop33
+	br_if   	0, $pop21       # 0: up to label2
 .LBB1_3:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:

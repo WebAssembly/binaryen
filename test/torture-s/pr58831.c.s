@@ -41,8 +41,8 @@ fn1:                                    # @fn1
 	.param  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push8=, 0
-	i32.load	$push0=, p($pop8)
+	i32.const	$push7=, 0
+	i32.load	$push0=, p($pop7)
 	i32.const	$push13=, 0
 	i32.eq  	$push14=, $pop0, $pop13
 	br_if   	0, $pop14       # 0: down to label0
@@ -50,21 +50,21 @@ fn1:                                    # @fn1
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push10=, 0
-	i32.const	$push1=, 1
-	i32.store	$push2=, 0($0), $pop1
-	i32.const	$push9=, 0
-	i32.load	$push3=, p($pop9)
-	i32.add 	$push4=, $pop2, $pop3
-	i32.store	$push5=, p($pop10), $pop4
-	br_if   	0, $pop5        # 0: up to label1
+	i32.const	$push9=, 1
+	i32.store	$push1=, 0($0), $pop9
+	i32.const	$push8=, 0
+	i32.load	$push2=, p($pop8)
+	i32.add 	$push3=, $pop1, $pop2
+	i32.store	$push4=, p($pop10), $pop3
+	br_if   	0, $pop4        # 0: up to label1
 .LBB2_2:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
 	i32.const	$push12=, 0
 	i32.const	$push11=, 0
-	i32.const	$push6=, d
-	i32.store	$push7=, r($pop11), $pop6
-	i32.store	$discard=, b($pop12), $pop7
+	i32.const	$push5=, d
+	i32.store	$push6=, r($pop11), $pop5
+	i32.store	$discard=, b($pop12), $pop6
 	return
 	.endfunc
 .Lfunc_end2:

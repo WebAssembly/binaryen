@@ -82,6 +82,7 @@ pr34971.c.s.wast
 20011024-1.c.s.wast # strcmp
 20020406-1.c.s.wast # malloc
 20021011-1.c.s.wast # strcmp
+20030914-2.c.s.wast # memcpy
 20031204-1.c.s.wast # strcmp
 20041126-1.c.s.wast # memcpy
 20041218-1.c.s.wast # memset
@@ -105,6 +106,7 @@ pr34971.c.s.wast
 align-2.c.s.wast # __eqtf2
 builtin-bitops-1.c.s.wast # __builtin_clrsb
 complex-5.c.s.wast # __divsc3
+frame-address.c.s.wast # abort
 ipa-sra-2.c.s.wast # calloc
 loop-2f.c.s.wast # open
 loop-2g.c.s.wast # open
@@ -113,6 +115,7 @@ memcpy-bi.c.s.wast # memcpy
 memset-1.c.s.wast # memset
 memset-2.c.s.wast # memset
 memset-3.c.s.wast # memset
+pr28982b.c.s.wast # memset
 pr33870-1.c.s.wast # memset
 pr33870.c.s.wast # memset
 pr34456.c.s.wast # qsort

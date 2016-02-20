@@ -71,9 +71,8 @@ main:                                   # @main
 	i32.const	$8=, 4
 	i32.add 	$8=, $10, $8
 	block
-	block
 	i32.call	$push10=, memcmp@FUNCTION, $8, $pop9, $pop15
-	br_if   	0, $pop10       # 0: down to label1
+	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push11=, 77
 	i32.store8	$discard=, 0($1):p2align=2, $pop11
@@ -83,7 +82,7 @@ main:                                   # @main
 	i32.const	$9=, 4
 	i32.add 	$9=, $10, $9
 	i32.call	$push13=, memcmp@FUNCTION, $9, $pop12, $pop21
-	br_if   	1, $pop13       # 1: down to label0
+	br_if   	0, $pop13       # 0: down to label0
 # BB#2:                                 # %if.end7
 	i32.const	$push14=, 0
 	i32.const	$4=, 16
@@ -91,11 +90,7 @@ main:                                   # @main
 	i32.const	$4=, __stack_pointer
 	i32.store	$10=, 0($4), $10
 	return  	$pop14
-.LBB2_3:                                # %if.then
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB2_4:                                # %if.then6
+.LBB2_3:                                # %if.then6
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
