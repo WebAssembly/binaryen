@@ -267,8 +267,19 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
     }
 
-    void store(Store* store, size_t addr, Literal value) override {
-      if (store->align < store->bytes || (addr & (store->bytes-1))) {
+    void store(Store* store_, size_t addr, Literal value) override {
+      // support int64 stores
+      if (value.type == WasmType::i64) {
+        Store fake = *store_;
+        fake.bytes = 4;
+        uint64_t v = value.geti64();
+        store(&fake, addr, Literal(uint32_t(v)));
+        v >>= 32;
+        store(&fake, addr + 4, Literal(uint32_t(v)));
+        return;
+      }
+      // normal non-int64 value
+      if (store_->align < store_->bytes || (addr & (store_->bytes-1))) {
         EM_ASM_DOUBLE({
           var addr = $0;
           var bytes = $1;
@@ -290,29 +301,24 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             HEAPU8[addr + i] = HEAPU8[i];
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
-        }, addr, store->bytes, isWasmTypeFloat(store->type), isWasmTypeFloat(store->type) ? value.getFloat() : (double)value.getInteger());
+        }, addr, store_->bytes, isWasmTypeFloat(store_->type), isWasmTypeFloat(store_->type) ? value.getFloat() : (double)value.getInteger());
         return;
       }
       // nicely aligned
-      if (!isWasmTypeFloat(store->type)) {
-        if (store->bytes == 1) {
+      if (!isWasmTypeFloat(store_->type)) {
+        if (store_->bytes == 1) {
           EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, value.geti32());
-        } else if (store->bytes == 2) {
+        } else if (store_->bytes == 2) {
           EM_ASM_INT({ Module['info'].parent['HEAP16'][$0 >> 1] = $1 }, addr, value.geti32());
-        } else if (store->bytes == 4) {
+        } else if (store_->bytes == 4) {
           EM_ASM_INT({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, addr, value.geti32());
-        } else if (store->bytes == 8) {
-          uint64_t v = value.geti64();
-          EM_ASM_INT({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, addr, uint32_t(v));
-          v >>= 32;
-          EM_ASM_INT({ Module['info'].parent['HEAP32'][$0 + 4 >> 2] = $1 }, addr, uint32_t(v));
         } else {
           abort();
         }
       } else {
-        if (store->bytes == 4) {
+        if (store_->bytes == 4) {
           EM_ASM_DOUBLE({ Module['info'].parent['HEAPF32'][$0 >> 2] = $1 }, addr, value.getf32());
-        } else if (store->bytes == 8) {
+        } else if (store_->bytes == 8) {
           EM_ASM_DOUBLE({ Module['info'].parent['HEAPF64'][$0 >> 3] = $1 }, addr, value.getf64());
         } else {
           abort();
