@@ -201,7 +201,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     }
 
     Literal load(Load* load, size_t addr) override {
-      if (load->align < load->bytes) {
+      if (load->align < load->bytes || (addr & (load->bytes-1))) {
         double ret = EM_ASM_DOUBLE({
           var addr = $0;
           var bytes = $1;
@@ -268,8 +268,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     }
 
     void store(Store* store, size_t addr, Literal value) override {
-      if (store->align < store->bytes) {
-        double ret = EM_ASM_DOUBLE({
+      if (store->align < store->bytes || (addr & (store->bytes-1))) {
+        EM_ASM_DOUBLE({
           var addr = $0;
           var bytes = $1;
           var isFloat = $2;
@@ -290,7 +290,6 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             HEAPU8[addr + i] = HEAPU8[i];
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
-          return ret;
         }, addr, store->bytes, isWasmTypeFloat(store->type), isWasmTypeFloat(store->type) ? value.getFloat() : (double)value.getInteger());
         return;
       }
