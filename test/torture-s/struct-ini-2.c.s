@@ -9,8 +9,6 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	block
-	block
 	i32.const	$push0=, 0
 	i32.load16_u	$push15=, x($pop0):p2align=2
 	tee_local	$push14=, $0=, $pop15
@@ -18,32 +16,24 @@ main:                                   # @main
 	i32.and 	$push2=, $pop14, $pop1
 	i32.const	$push3=, 2
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	0, $pop4        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 3840
 	i32.and 	$push6=, $0, $pop5
 	i32.const	$push7=, 768
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	1, $pop8        # 1: down to label1
+	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.end7
 	i32.const	$push9=, 61440
 	i32.and 	$push10=, $0, $pop9
 	i32.const	$push11=, 16384
 	i32.ne  	$push12=, $pop10, $pop11
-	br_if   	2, $pop12       # 2: down to label0
+	br_if   	0, $pop12       # 0: down to label0
 # BB#3:                                 # %if.end13
 	i32.const	$push13=, 0
 	call    	exit@FUNCTION, $pop13
 	unreachable
-.LBB0_4:                                # %if.then
-	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_5:                                # %if.then6
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_6:                                # %if.then12
+.LBB0_4:                                # %if.then12
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

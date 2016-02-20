@@ -37,7 +37,7 @@ foo:                                    # @foo
 	i32.const	$push10=, 0
 	i32.load	$push4=, b($pop10)
 	i32.const	$push6=, 255
-	i32.const	$push5=, 131068
+	i32.const	$push5=, 522236
 	i32.call	$discard=, memset@FUNCTION, $pop4, $pop6, $pop5
 	return  	$0
 	.endfunc
@@ -53,13 +53,13 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %for.body.lr.ph.i
 	i32.const	$push2=, 0
-	i32.const	$push3=, 32768
+	i32.const	$push3=, 130560
 	i32.store	$discard=, n($pop2), $pop3
 	i32.const	$push17=, 0
-	i32.const	$push4=, 131072
+	i32.const	$push4=, 522240
 	i32.call	$push0=, malloc@FUNCTION, $pop4
 	i32.store	$2=, a($pop17), $pop0
-	i32.const	$push16=, 131072
+	i32.const	$push16=, 522240
 	i32.call	$push15=, malloc@FUNCTION, $pop16
 	tee_local	$push14=, $4=, $pop15
 	i32.const	$push13=, 0
@@ -85,7 +85,7 @@ main:                                   # @main
 	end_loop                        # label4:
 	i32.load	$2=, 0($4)
 	i32.const	$push7=, 255
-	i32.const	$push6=, 131068
+	i32.const	$push6=, 522236
 	i32.call	$discard=, memset@FUNCTION, $1, $pop7, $pop6
 	block
 	br_if   	0, $2           # 0: down to label5

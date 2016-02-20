@@ -9,31 +9,27 @@ main:                                   # @main
 	.local  	i64, i64
 # BB#0:                                 # %entry
 	block
-	i32.const	$push13=, 0
-	i64.load	$push0=, a($pop13)
+	i32.const	$push12=, 0
+	i64.load	$push0=, a($pop12)
 	i64.const	$push1=, 8589934591
-	i64.and 	$push12=, $pop0, $pop1
-	tee_local	$push11=, $0=, $pop12
-	i64.mul 	$push2=, $pop11, $0
-	i64.const	$push10=, 0
-	i64.ne  	$push3=, $pop2, $pop10
+	i64.and 	$push11=, $pop0, $pop1
+	tee_local	$push10=, $0=, $pop11
+	i64.mul 	$push2=, $pop10, $0
+	i64.const	$push9=, 0
+	i64.ne  	$push3=, $pop2, $pop9
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.const	$push17=, 0
-	i64.load	$push4=, a+8($pop17)
+	i32.const	$push16=, 0
+	i64.load	$push4=, a+8($pop16)
 	i64.const	$push5=, 1099511627775
-	i64.and 	$push16=, $pop4, $pop5
-	tee_local	$push15=, $1=, $pop16
-	i64.mul 	$push6=, $pop15, $0
+	i64.and 	$push15=, $pop4, $pop5
+	tee_local	$push14=, $1=, $pop15
+	i64.mul 	$push6=, $pop14, $0
 	i64.mul 	$push7=, $1, $1
 	i64.or  	$push8=, $pop6, $pop7
-	i64.const	$push14=, 0
-	i64.ne  	$push9=, $pop8, $pop14
-	br_if   	0, $pop9        # 0: down to label0
-# BB#2:                                 # %if.end
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_3:                                # %if.then
+	i64.const	$push13=, 0
+	i64.eq  	$discard=, $pop8, $pop13
+.LBB0_2:                                # %if.end
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

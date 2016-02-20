@@ -24,14 +24,13 @@ main:                                   # @main
 .LBB0_2:                                # %foo.exit
 	end_block                       # label0:
 	block
-	block
 	i32.const	$push19=, 0
 	i32.load	$push5=, a($pop19)
 	i32.const	$push18=, 0
 	i32.const	$push17=, 1
 	i32.store	$push4=, m($pop18), $pop17
 	i32.ne  	$push6=, $pop5, $pop4
-	br_if   	0, $pop6        # 0: down to label2
+	br_if   	0, $pop6        # 0: down to label1
 # BB#3:                                 # %bar.exit
 	i32.const	$push7=, 0
 	i32.const	$push23=, 0
@@ -47,14 +46,10 @@ main:                                   # @main
 	i32.const	$push20=, 1
 	i32.or  	$push12=, $pop11, $pop20
 	i32.store	$discard=, m($1), $pop12
-	br_if   	1, $0           # 1: down to label1
+	br_if   	0, $0           # 0: down to label1
 # BB#4:                                 # %if.end11
 	return  	$1
-.LBB0_5:                                # %if.then
-	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_6:                                # %if.then10
+.LBB0_5:                                # %if.then10
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable

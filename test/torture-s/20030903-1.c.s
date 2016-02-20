@@ -23,26 +23,8 @@ main:                                   # @main
 .LBB0_2:                                # %entry
 	end_block                       # label0:
 	block
-	block
-	block
-	block
-	tableswitch	$0, 0, 0, 3, 1, 2 # 0: down to label4
-                                        # 3: down to label1
-                                        # 1: down to label3
-                                        # 2: down to label2
-.LBB0_3:                                # %sw.bb
-	end_block                       # label4:
-	call    	y@FUNCTION
-	unreachable
-.LBB0_4:                                # %sw.bb2
-	end_block                       # label3:
-	call    	y@FUNCTION
-	unreachable
-.LBB0_5:                                # %sw.bb3
-	end_block                       # label2:
-	call    	y@FUNCTION
-	unreachable
-.LBB0_6:                                # %sw.bb1
+	tableswitch	$0, 0, 0, 0, 0, 0 # 0: down to label1
+.LBB0_3:                                # %sw.bb3
 	end_block                       # label1:
 	call    	y@FUNCTION
 	unreachable

@@ -8,31 +8,21 @@ test01:                                 # @test01
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	block
-	block
 	i32.const	$push5=, 4
 	i32.le_u	$push0=, $0, $pop5
-	br_if   	0, $pop0        # 0: down to label2
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push6=, 4
 	i32.le_u	$push1=, $1, $pop6
-	br_if   	1, $pop1        # 1: down to label1
+	br_if   	0, $pop1        # 0: down to label0
 # BB#2:                                 # %if.end3
 	i32.sub 	$push2=, $0, $1
 	i32.const	$push3=, 5
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	2, $pop4        # 2: down to label0
+	br_if   	0, $pop4        # 0: down to label0
 # BB#3:                                 # %if.end6
 	return
-.LBB0_4:                                # %if.then
-	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_5:                                # %if.then2
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_6:                                # %if.then5
+.LBB0_4:                                # %if.then5
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -51,21 +41,21 @@ test02:                                 # @test02
 	block
 	i32.const	$push1=, 12
 	i32.lt_u	$push2=, $0, $pop1
-	br_if   	0, $pop2        # 0: down to label4
+	br_if   	0, $pop2        # 0: down to label2
 # BB#1:                                 # %entry
 	i32.const	$push3=, 16
 	i32.lt_u	$push4=, $1, $pop3
-	br_if   	0, $pop4        # 0: down to label4
+	br_if   	0, $pop4        # 0: down to label2
 # BB#2:                                 # %entry
 	i32.sub 	$push0=, $0, $1
 	i32.const	$push5=, -17
 	i32.le_u	$push6=, $pop0, $pop5
-	br_if   	1, $pop6        # 1: down to label3
+	br_if   	1, $pop6        # 1: down to label1
 .LBB1_3:                                # %if.end6
-	end_block                       # label4:
+	end_block                       # label2:
 	return
 .LBB1_4:                                # %if.then4
-	end_block                       # label3:
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

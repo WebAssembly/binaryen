@@ -8,70 +8,70 @@ foo:                                    # @foo
 	.param  	i32
 	.local  	f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64, f64
 # BB#0:                                 # %entry
-	i32.const	$push98=, 0
-	f64.load	$129=, gd($pop98):p2align=4
 	i32.const	$push97=, 0
-	f64.load	$130=, gd+8($pop97)
+	f64.load	$129=, gd($pop97):p2align=4
 	i32.const	$push96=, 0
-	f64.load	$131=, gd+16($pop96):p2align=4
+	f64.load	$130=, gd+8($pop96)
 	i32.const	$push95=, 0
-	f64.load	$132=, gd+24($pop95)
+	f64.load	$131=, gd+16($pop95):p2align=4
 	i32.const	$push94=, 0
-	f64.load	$133=, gd+32($pop94):p2align=4
+	f64.load	$132=, gd+24($pop94)
 	i32.const	$push93=, 0
-	f64.load	$134=, gd+40($pop93)
+	f64.load	$133=, gd+32($pop93):p2align=4
 	i32.const	$push92=, 0
-	f64.load	$135=, gd+48($pop92):p2align=4
+	f64.load	$134=, gd+40($pop92)
 	i32.const	$push91=, 0
-	f64.load	$136=, gd+56($pop91)
+	f64.load	$135=, gd+48($pop91):p2align=4
 	i32.const	$push90=, 0
-	f64.load	$137=, gd+64($pop90):p2align=4
+	f64.load	$136=, gd+56($pop90)
 	i32.const	$push89=, 0
-	f64.load	$138=, gd+72($pop89)
+	f64.load	$137=, gd+64($pop89):p2align=4
 	i32.const	$push88=, 0
-	f64.load	$139=, gd+80($pop88):p2align=4
+	f64.load	$138=, gd+72($pop88)
 	i32.const	$push87=, 0
-	f64.load	$140=, gd+88($pop87)
+	f64.load	$139=, gd+80($pop87):p2align=4
 	i32.const	$push86=, 0
-	f64.load	$141=, gd+96($pop86):p2align=4
+	f64.load	$140=, gd+88($pop86)
 	i32.const	$push85=, 0
-	f64.load	$142=, gd+104($pop85)
+	f64.load	$141=, gd+96($pop85):p2align=4
 	i32.const	$push84=, 0
-	f64.load	$143=, gd+112($pop84):p2align=4
+	f64.load	$142=, gd+104($pop84)
 	i32.const	$push83=, 0
-	f64.load	$144=, gd+120($pop83)
+	f64.load	$143=, gd+112($pop83):p2align=4
 	i32.const	$push82=, 0
-	f64.load	$145=, gd+128($pop82):p2align=4
+	f64.load	$144=, gd+120($pop82)
 	i32.const	$push81=, 0
-	f64.load	$146=, gd+136($pop81)
+	f64.load	$145=, gd+128($pop81):p2align=4
 	i32.const	$push80=, 0
-	f64.load	$147=, gd+144($pop80):p2align=4
+	f64.load	$146=, gd+136($pop80)
 	i32.const	$push79=, 0
-	f64.load	$148=, gd+152($pop79)
+	f64.load	$147=, gd+144($pop79):p2align=4
 	i32.const	$push78=, 0
-	f64.load	$149=, gd+160($pop78):p2align=4
+	f64.load	$148=, gd+152($pop78)
 	i32.const	$push77=, 0
-	f64.load	$150=, gd+168($pop77)
+	f64.load	$149=, gd+160($pop77):p2align=4
 	i32.const	$push76=, 0
-	f64.load	$151=, gd+176($pop76):p2align=4
+	f64.load	$150=, gd+168($pop76)
 	i32.const	$push75=, 0
-	f64.load	$152=, gd+184($pop75)
+	f64.load	$151=, gd+176($pop75):p2align=4
 	i32.const	$push74=, 0
-	f64.load	$153=, gd+192($pop74):p2align=4
+	f64.load	$152=, gd+184($pop74)
 	i32.const	$push73=, 0
-	f64.load	$154=, gd+200($pop73)
+	f64.load	$153=, gd+192($pop73):p2align=4
 	i32.const	$push72=, 0
-	f64.load	$155=, gd+208($pop72):p2align=4
+	f64.load	$154=, gd+200($pop72)
 	i32.const	$push71=, 0
-	f64.load	$156=, gd+216($pop71)
+	f64.load	$155=, gd+208($pop71):p2align=4
 	i32.const	$push70=, 0
-	f64.load	$157=, gd+224($pop70):p2align=4
+	f64.load	$156=, gd+216($pop70)
 	i32.const	$push69=, 0
-	f64.load	$158=, gd+232($pop69)
+	f64.load	$157=, gd+224($pop69):p2align=4
 	i32.const	$push68=, 0
-	f64.load	$159=, gd+240($pop68):p2align=4
+	f64.load	$158=, gd+232($pop68)
 	i32.const	$push67=, 0
-	f64.load	$160=, gd+248($pop67)
+	f64.load	$159=, gd+240($pop67):p2align=4
+	i32.const	$push66=, 0
+	f64.load	$160=, gd+248($pop66)
 	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
@@ -493,10 +493,10 @@ foo:                                    # @foo
 	f64.add 	$push33=, $160, $64
 	f64.add 	$push65=, $96, $pop33
 	f64.add 	$160=, $128, $pop65
-	i32.const	$push66=, -1
-	i32.add 	$0=, $0, $pop66
 	i32.const	$push99=, 0
 	f32.store	$discard=, gf+124($pop99), $32
+	i32.const	$push98=, -1
+	i32.add 	$0=, $0, $pop98
 	br_if   	0, $0           # 0: up to label1
 .LBB0_2:                                # %for.end
 	end_loop                        # label2:

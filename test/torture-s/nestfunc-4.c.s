@@ -11,8 +11,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	i32.load	$0=, level($pop0)
 	i32.const	$push8=, 0
-	i32.const	$push1=, 499
-	i32.const	$push7=, 499
+	i32.const	$push1=, 2040
+	i32.const	$push7=, 2040
 	i32.gt_s	$push2=, $0, $pop7
 	i32.select	$push3=, $0, $pop1, $pop2
 	i32.const	$push4=, 1
@@ -36,8 +36,8 @@ foo:                                    # @foo
 	i32.const	$push0=, 0
 	i32.load	$0=, level($pop0)
 	i32.const	$push8=, 0
-	i32.const	$push1=, 499
-	i32.const	$push7=, 499
+	i32.const	$push1=, 2040
+	i32.const	$push7=, 2040
 	i32.gt_s	$push2=, $0, $pop7
 	i32.select	$push3=, $0, $pop1, $pop2
 	i32.const	$push4=, 1
@@ -62,7 +62,7 @@ bar:                                    # @bar
 	i32.const	$push0=, 0
 	i32.load	$push5=, level($pop0)
 	tee_local	$push4=, $1=, $pop5
-	i32.const	$push1=, 499
+	i32.const	$push1=, 2040
 	i32.gt_s	$push2=, $pop4, $pop1
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %cond.false

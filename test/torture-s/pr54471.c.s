@@ -14,53 +14,54 @@ foo:                                    # @foo
 	i32.sub 	$11=, $6, $7
 	i32.const	$7=, __stack_pointer
 	i32.store	$11=, 0($7), $11
-	i64.const	$5=, 0
-	i64.const	$4=, 1
 	block
 	i32.const	$push14=, 0
 	i32.eq  	$push15=, $3, $pop14
 	br_if   	0, $pop15       # 0: down to label0
-.LBB0_1:                                # %for.body
+# BB#1:
+	i64.const	$5=, 0
+	i64.const	$4=, 1
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	call    	__multi3@FUNCTION, $11, $1, $2, $4, $5
-	i32.const	$push0=, 8
-	i32.add 	$push1=, $11, $pop0
-	i64.load	$5=, 0($pop1)
+	i32.const	$push9=, 8
+	i32.add 	$push0=, $11, $pop9
+	i64.load	$5=, 0($pop0)
 	i64.load	$4=, 0($11)
 	i32.const	$9=, 16
 	i32.add 	$9=, $11, $9
 	call    	__multi3@FUNCTION, $9, $1, $2, $1, $2
-	i32.const	$push9=, 8
+	i32.const	$push8=, 8
 	i32.const	$10=, 16
 	i32.add 	$10=, $11, $10
-	i32.add 	$push2=, $10, $pop9
-	i64.load	$2=, 0($pop2)
+	i32.add 	$push1=, $10, $pop8
+	i64.load	$2=, 0($pop1)
 	i64.load	$1=, 16($11)
-	i32.const	$push3=, -1
-	i32.add 	$3=, $3, $pop3
+	i32.const	$push7=, -1
+	i32.add 	$3=, $3, $pop7
 	br_if   	0, $3           # 0: up to label1
-# BB#2:                                 # %for.end
+# BB#3:                                 # %for.end
 	end_loop                        # label2:
 	i64.const	$push11=, 14348907
-	i64.xor 	$push4=, $4, $pop11
-	i64.or  	$push5=, $pop4, $5
+	i64.xor 	$push2=, $4, $pop11
+	i64.or  	$push3=, $pop2, $5
 	i64.const	$push10=, 0
-	i64.ne  	$push6=, $pop5, $pop10
-	br_if   	0, $pop6        # 0: down to label0
-# BB#3:                                 # %if.end
+	i64.ne  	$push4=, $pop3, $pop10
+	br_if   	0, $pop4        # 0: down to label0
+# BB#4:                                 # %if.end
 	i64.const	$push13=, 14348907
 	i64.store	$discard=, 0($0), $pop13
-	i32.const	$push7=, 8
-	i32.add 	$push8=, $0, $pop7
+	i32.const	$push5=, 8
+	i32.add 	$push6=, $0, $pop5
 	i64.const	$push12=, 0
-	i64.store	$discard=, 0($pop8), $pop12
+	i64.store	$discard=, 0($pop6), $pop12
 	i32.const	$8=, 32
 	i32.add 	$11=, $11, $8
 	i32.const	$8=, __stack_pointer
 	i32.store	$11=, 0($8), $11
 	return
-.LBB0_4:                                # %if.then
+.LBB0_5:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

@@ -15,23 +15,20 @@ f:                                      # @f
 	i32.const	$4=, __stack_pointer
 	i32.store	$6=, 0($4), $6
 	block
-	block
-	block
-	block
 	i32.load8_u	$push0=, 0($0)
 	i32.const	$push1=, 97
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label3
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.load8_u	$push3=, 1($0)
 	i32.const	$push4=, 98
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	0, $pop5        # 0: down to label3
+	br_if   	0, $pop5        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false7
 	i32.load8_u	$push6=, 2($0)
 	i32.const	$push7=, 99
 	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	0, $pop8        # 0: down to label3
+	br_if   	0, $pop8        # 0: down to label0
 # BB#3:                                 # %if.end
 	i32.store	$push9=, 12($6), $2
 	i32.const	$push32=, 3
@@ -45,7 +42,7 @@ f:                                      # @f
 	i32.load	$push12=, 0($0)
 	i32.const	$push13=, 42
 	i32.ne  	$push14=, $pop12, $pop13
-	br_if   	1, $pop14       # 1: down to label2
+	br_if   	0, $pop14       # 0: down to label0
 # BB#4:                                 # %if.end17
 	i32.load	$push15=, 12($6)
 	i32.const	$push37=, 3
@@ -59,7 +56,7 @@ f:                                      # @f
 	i32.load	$push18=, 0($0)
 	i32.const	$push19=, 120
 	i32.ne  	$push20=, $pop18, $pop19
-	br_if   	2, $pop20       # 2: down to label1
+	br_if   	0, $pop20       # 0: down to label0
 # BB#5:                                 # %if.end21
 	i32.load	$push21=, 12($6)
 	i32.const	$push22=, 3
@@ -71,26 +68,14 @@ f:                                      # @f
 	i32.add 	$push26=, $pop38, $pop25
 	i32.store	$discard=, 12($6), $pop26
 	i32.load	$push27=, 0($0)
-	br_if   	3, $pop27       # 3: down to label0
+	br_if   	0, $pop27       # 0: down to label0
 # BB#6:                                 # %if.end25
 	i32.const	$5=, 16
 	i32.add 	$6=, $6, $5
 	i32.const	$5=, __stack_pointer
 	i32.store	$6=, 0($5), $6
 	return
-.LBB0_7:                                # %if.then
-	end_block                       # label3:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_8:                                # %if.then16
-	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_9:                                # %if.then20
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_10:                               # %if.then24
+.LBB0_7:                                # %if.then24
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

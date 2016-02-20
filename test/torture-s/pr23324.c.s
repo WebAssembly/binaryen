@@ -9,59 +9,39 @@ main:                                   # @main
 	.local  	f64, f32
 # BB#0:                                 # %entry
 	block
-	block
-	block
-	block
-	block
 	i32.const	$push9=, 0
 	f64.load	$push8=, wv6+32($pop9)
 	tee_local	$push7=, $0=, $pop8
 	f64.ne  	$push0=, $pop7, $0
-	br_if   	0, $pop0        # 0: down to label4
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %caller_bf6.exit
 	i32.const	$push12=, 0
 	f32.load	$push11=, yv7($pop12):p2align=3
 	tee_local	$push10=, $1=, $pop11
 	f32.ne  	$push1=, $pop10, $1
-	br_if   	1, $pop1        # 1: down to label3
+	br_if   	0, $pop1        # 0: down to label0
 # BB#2:                                 # %if.end26.i.i
 	i32.const	$push2=, 0
 	f64.load	$push14=, yv7+16($pop2)
 	tee_local	$push13=, $0=, $pop14
 	f64.ne  	$push3=, $pop13, $0
-	br_if   	2, $pop3        # 2: down to label2
+	br_if   	0, $pop3        # 0: down to label0
 # BB#3:                                 # %if.end30.i.i
 	i32.const	$push17=, 0
 	f32.load	$push16=, yv7+24($pop17):p2align=3
 	tee_local	$push15=, $1=, $pop16
 	f32.ne  	$push4=, $pop15, $1
-	br_if   	3, $pop4        # 3: down to label1
+	br_if   	0, $pop4        # 0: down to label0
 # BB#4:                                 # %if.end34.i.i
 	i32.const	$push20=, 0
 	f32.load	$push19=, zv7($pop20)
 	tee_local	$push18=, $1=, $pop19
 	f32.ne  	$push5=, $pop18, $1
-	br_if   	4, $pop5        # 4: down to label0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#5:                                 # %caller_bf7.exit
 	i32.const	$push6=, 0
 	return  	$pop6
-.LBB0_6:                                # %if.then109.i.i
-	end_block                       # label4:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_7:                                # %if.then5.i.i
-	end_block                       # label3:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_8:                                # %if.then29.i.i
-	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_9:                                # %if.then33.i.i
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_10:                               # %if.then37.i.i
+.LBB0_6:                                # %if.then37.i.i
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

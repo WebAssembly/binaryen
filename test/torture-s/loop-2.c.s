@@ -9,25 +9,26 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
-	i32.const	$1=, a
 	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
 	br_if   	0, $pop6        # 0: down to label0
-.LBB0_1:                                # %for.body
+# BB#1:
+	i32.const	$2=, 0
+	i32.const	$1=, a
+.LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push0=, -2
-	i32.add 	$push1=, $2, $pop0
-	i32.store	$discard=, 0($1), $pop1
-	i32.const	$push2=, 1
-	i32.add 	$2=, $2, $pop2
-	i32.const	$push3=, 4
-	i32.add 	$1=, $1, $pop3
-	i32.ne  	$push4=, $0, $2
-	br_if   	0, $pop4        # 0: up to label1
-.LBB0_2:                                # %for.end
+	i32.const	$push4=, -2
+	i32.add 	$push0=, $2, $pop4
+	i32.store	$discard=, 0($1), $pop0
+	i32.const	$push3=, 1
+	i32.add 	$2=, $2, $pop3
+	i32.const	$push2=, 4
+	i32.add 	$1=, $1, $pop2
+	i32.ne  	$push1=, $0, $2
+	br_if   	0, $pop1        # 0: up to label1
+.LBB0_3:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
 	return  	$2

@@ -31,35 +31,11 @@ foo:                                    # @foo
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %entry
 	block
-	block
-	block
-	block
-	block
-	tableswitch	$0, 0, 0, 1, 2, 3, 4 # 0: down to label5
-                                        # 1: down to label4
-                                        # 2: down to label3
-                                        # 3: down to label2
-                                        # 4: down to label1
-.LBB1_2:                                # %sw.bb
-	end_block                       # label5:
-	i32.load	$2=, 0($1)
-	br      	4               # 4: down to label0
-.LBB1_3:                                # %sw.bb1
-	end_block                       # label4:
-	i32.load	$2=, 0($1)
-	br      	3               # 3: down to label0
-.LBB1_4:                                # %sw.bb2
-	end_block                       # label3:
-	i32.load	$2=, 0($1)
-	br      	2               # 2: down to label0
-.LBB1_5:                                # %sw.bb3
-	end_block                       # label2:
-	i32.load	$2=, 0($1)
-	br      	1               # 1: down to label0
-.LBB1_6:                                # %sw.bb4
+	tableswitch	$0, 0, 0, 0, 0, 0, 0 # 0: down to label1
+.LBB1_2:                                # %sw.bb4
 	end_block                       # label1:
 	i32.load	$2=, 0($1)
-.LBB1_7:                                # %sw.epilog
+.LBB1_3:                                # %sw.epilog
 	end_block                       # label0:
 	return  	$2
 	.endfunc

@@ -73,8 +73,8 @@ foobar:                                 # @foobar
 	i32.const	$9=, 12
 	i32.add 	$9=, $13, $9
 	call    	bmp_iter_set_init@FUNCTION, $8, $0, $9
-	i32.load	$3=, 24($13):p2align=3
-	i32.load	$2=, 16($13):p2align=3
+	i32.load	$2=, 24($13):p2align=3
+	i32.load	$1=, 16($13):p2align=3
 	i32.load	$0=, 28($13)
 .LBB1_1:                                # %for.cond
                                         # =>This Loop Header: Depth=1
@@ -117,7 +117,7 @@ foobar:                                 # @foobar
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label3:
 	i32.const	$push15=, 1
-	i32.add 	$3=, $3, $pop15
+	i32.add 	$2=, $2, $pop15
 .LBB1_6:                                # %while.cond7.i.outer
                                         #   Parent Loop BB1_1 Depth=1
                                         # =>  This Loop Header: Depth=2
@@ -125,15 +125,15 @@ foobar:                                 # @foobar
 	loop                            # label6:
 	block
 	i32.const	$push16=, 2
-	i32.eq  	$push5=, $3, $pop16
+	i32.eq  	$push5=, $2, $pop16
 	br_if   	0, $pop5        # 0: down to label8
 # BB#7:                                 # %while.body9.i.preheader
                                         #   in Loop: Header=BB1_6 Depth=2
 	i32.const	$push18=, 2
-	i32.shl 	$push6=, $3, $pop18
-	i32.add 	$push7=, $2, $pop6
+	i32.shl 	$push6=, $2, $pop18
+	i32.add 	$push7=, $1, $pop6
 	i32.const	$push17=, 12
-	i32.add 	$1=, $pop7, $pop17
+	i32.add 	$3=, $pop7, $pop17
 .LBB1_8:                                # %while.body9.i
                                         #   Parent Loop BB1_1 Depth=1
                                         #     Parent Loop BB1_6 Depth=2
@@ -144,25 +144,25 @@ foobar:                                 # @foobar
 	i32.add 	$10=, $13, $10
 	i32.add 	$push20=, $10, $pop21
 	tee_local	$push19=, $4=, $pop20
-	i32.load	$push0=, 0($1)
+	i32.load	$push0=, 0($3)
 	i32.store	$0=, 0($pop19), $pop0
 	br_if   	4, $0           # 4: down to label7
 # BB#9:                                 # %if.end26.i
                                         #   in Loop: Header=BB1_8 Depth=3
 	i32.const	$push27=, 1
-	i32.add 	$3=, $3, $pop27
+	i32.add 	$2=, $2, $pop27
 	i32.const	$push26=, 4
-	i32.add 	$1=, $1, $pop26
+	i32.add 	$3=, $3, $pop26
 	i32.const	$push25=, 2
-	i32.ne  	$push11=, $3, $pop25
+	i32.ne  	$push11=, $2, $pop25
 	br_if   	0, $pop11       # 0: up to label9
 .LBB1_10:                               # %while.end30.i
                                         #   in Loop: Header=BB1_6 Depth=2
 	end_loop                        # label10:
 	end_block                       # label8:
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 0
-	br_if   	0, $2           # 0: up to label6
+	i32.load	$1=, 0($1)
+	i32.const	$2=, 0
+	br_if   	0, $1           # 0: up to label6
 	br      	4               # 4: down to label1
 .LBB1_11:                               # %while.cond16.preheader.i
                                         #   in Loop: Header=BB1_1 Depth=1

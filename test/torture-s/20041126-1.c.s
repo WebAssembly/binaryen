@@ -21,35 +21,36 @@ check:                                  # @check
 	i32.load	$push3=, 12($0)
 	br_if   	0, $pop3        # 0: down to label0
 # BB#4:                                 # %for.inc.3
-	i32.const	$3=, 5
 	i32.load	$push4=, 16($0)
 	br_if   	0, $pop4        # 0: down to label0
-.LBB0_5:                                # %for.cond1
+# BB#5:
+	i32.const	$3=, 5
+.LBB0_6:                                # %for.cond1
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label2:
-	i32.const	$push5=, 9
-	i32.gt_s	$push6=, $3, $pop5
-	br_if   	2, $pop6        # 2: down to label1
-# BB#6:                                 # %for.body3
-                                        #   in Loop: Header=BB0_5 Depth=1
-	i32.const	$push7=, 2
-	i32.shl 	$push8=, $3, $pop7
-	i32.add 	$push9=, $0, $pop8
-	i32.load	$1=, 0($pop9)
+	i32.const	$push9=, 9
+	i32.gt_s	$push5=, $3, $pop9
+	br_if   	2, $pop5        # 2: down to label1
+# BB#7:                                 # %for.body3
+                                        #   in Loop: Header=BB0_6 Depth=1
+	i32.const	$push11=, 2
+	i32.shl 	$push6=, $3, $pop11
+	i32.add 	$push7=, $0, $pop6
+	i32.load	$1=, 0($pop7)
 	i32.const	$push10=, 1
 	i32.add 	$2=, $3, $pop10
 	copy_local	$3=, $1
-	i32.eq  	$push11=, $1, $2
-	br_if   	0, $pop11       # 0: up to label2
-# BB#7:                                 # %if.then6
+	i32.eq  	$push8=, $1, $2
+	br_if   	0, $pop8        # 0: up to label2
+# BB#8:                                 # %if.then6
 	end_loop                        # label3:
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_8:                                # %for.end10
+.LBB0_9:                                # %for.end10
 	end_block                       # label1:
 	return
-.LBB0_9:                                # %if.then
+.LBB0_10:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

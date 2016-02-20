@@ -1752,153 +1752,131 @@ main:                                   # @main
 	i64.const	$push1=, 100
 	i64.store	$discard=, gull($pop0), $pop1
 	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
 	i32.const	$push100=, 3
 	i64.const	$push2=, -1
 	i64.call	$push3=, t1@FUNCTION, $pop100, $pop2
 	i64.const	$push4=, -6145
 	i64.ne  	$push5=, $pop3, $pop4
-	br_if   	0, $pop5        # 0: down to label55
+	br_if   	0, $pop5        # 0: down to label33
 # BB#1:                                 # %if.end
 	i32.const	$push101=, 3
 	i64.const	$push6=, 4294967295
 	i64.call	$push7=, t1@FUNCTION, $pop101, $pop6
 	i64.const	$push8=, 4294961151
 	i64.ne  	$push9=, $pop7, $pop8
-	br_if   	1, $pop9        # 1: down to label54
+	br_if   	0, $pop9        # 0: down to label33
 # BB#2:                                 # %if.end4
 	i32.const	$push102=, 3
 	i64.const	$push10=, -1
 	i64.call	$push11=, t2@FUNCTION, $pop102, $pop10
 	i64.const	$push12=, -1540
 	i64.ne  	$push13=, $pop11, $pop12
-	br_if   	2, $pop13       # 2: down to label53
+	br_if   	0, $pop13       # 0: down to label33
 # BB#3:                                 # %if.end8
 	i32.const	$push103=, 3
 	i64.const	$push14=, 4294967295
 	i64.call	$push15=, t2@FUNCTION, $pop103, $pop14
 	i64.const	$push16=, 4294965756
 	i64.ne  	$push17=, $pop15, $pop16
-	br_if   	3, $pop17       # 3: down to label52
+	br_if   	0, $pop17       # 0: down to label33
 # BB#4:                                 # %if.end12
 	i32.const	$push104=, 3
 	i64.const	$push18=, -1
 	i64.call	$push19=, t3@FUNCTION, $pop104, $pop18
 	i64.const	$push20=, -1537
 	i64.ne  	$push21=, $pop19, $pop20
-	br_if   	4, $pop21       # 4: down to label51
+	br_if   	0, $pop21       # 0: down to label33
 # BB#5:                                 # %if.end16
 	i32.const	$push105=, 3
 	i64.const	$push22=, 4294967295
 	i64.call	$push23=, t3@FUNCTION, $pop105, $pop22
 	i64.const	$push24=, 4294965759
 	i64.ne  	$push25=, $pop23, $pop24
-	br_if   	5, $pop25       # 5: down to label50
+	br_if   	0, $pop25       # 0: down to label33
 # BB#6:                                 # %if.end20
 	i32.const	$push106=, 3
 	i64.const	$push26=, -1
 	i64.call	$push27=, t4@FUNCTION, $pop106, $pop26
 	i64.const	$push28=, -1534
 	i64.ne  	$push29=, $pop27, $pop28
-	br_if   	6, $pop29       # 6: down to label49
+	br_if   	0, $pop29       # 0: down to label33
 # BB#7:                                 # %if.end24
 	i32.const	$push107=, 3
 	i64.const	$push30=, 4294967295
 	i64.call	$push31=, t4@FUNCTION, $pop107, $pop30
 	i64.const	$push32=, 4294965762
 	i64.ne  	$push33=, $pop31, $pop32
-	br_if   	7, $pop33       # 7: down to label48
+	br_if   	0, $pop33       # 0: down to label33
 # BB#8:                                 # %if.end28
 	i32.const	$push108=, 3
 	i64.const	$push34=, -1
 	i64.call	$push35=, t5@FUNCTION, $pop108, $pop34
 	i64.const	$push36=, -4
 	i64.ne  	$push37=, $pop35, $pop36
-	br_if   	8, $pop37       # 8: down to label47
+	br_if   	0, $pop37       # 0: down to label33
 # BB#9:                                 # %if.end32
 	i32.const	$push109=, 3
 	i64.const	$push38=, 4294967295
 	i64.call	$push39=, t5@FUNCTION, $pop109, $pop38
 	i64.const	$push40=, 4294967292
 	i64.ne  	$push41=, $pop39, $pop40
-	br_if   	9, $pop41       # 9: down to label46
+	br_if   	0, $pop41       # 0: down to label33
 # BB#10:                                # %if.end36
 	i32.const	$push110=, 3
 	i64.const	$push42=, -1
 	i64.call	$push43=, t6@FUNCTION, $pop110, $pop42
 	i64.const	$push44=, 2
 	i64.ne  	$push45=, $pop43, $pop44
-	br_if   	10, $pop45      # 10: down to label45
+	br_if   	0, $pop45       # 0: down to label33
 # BB#11:                                # %if.end40
 	i32.const	$push111=, 3
 	i64.const	$push46=, 4294967295
 	i64.call	$push47=, t6@FUNCTION, $pop111, $pop46
 	i64.const	$push48=, 4294967298
 	i64.ne  	$push49=, $pop47, $pop48
-	br_if   	11, $pop49      # 11: down to label44
+	br_if   	0, $pop49       # 0: down to label33
 # BB#12:                                # %if.end44
 	i32.const	$push112=, 3
 	i64.const	$push50=, -1
 	i64.call	$push51=, t7@FUNCTION, $pop112, $pop50
 	i64.const	$push52=, 1532
 	i64.ne  	$push53=, $pop51, $pop52
-	br_if   	12, $pop53      # 12: down to label43
+	br_if   	0, $pop53       # 0: down to label33
 # BB#13:                                # %if.end48
 	i32.const	$push113=, 3
 	i64.const	$push54=, 4294967295
 	i64.call	$push55=, t7@FUNCTION, $pop113, $pop54
 	i64.const	$push56=, 4294968828
 	i64.ne  	$push57=, $pop55, $pop56
-	br_if   	13, $pop57      # 13: down to label42
+	br_if   	0, $pop57       # 0: down to label33
 # BB#14:                                # %if.end52
 	i32.const	$push114=, 3
 	i64.const	$push58=, -1
 	i64.call	$push59=, t8@FUNCTION, $pop114, $pop58
 	i64.const	$push60=, 1535
 	i64.ne  	$push61=, $pop59, $pop60
-	br_if   	14, $pop61      # 14: down to label41
+	br_if   	0, $pop61       # 0: down to label33
 # BB#15:                                # %if.end56
 	i32.const	$push115=, 3
 	i64.const	$push62=, 4294967295
 	i64.call	$push63=, t8@FUNCTION, $pop115, $pop62
 	i64.const	$push64=, 4294968831
 	i64.ne  	$push65=, $pop63, $pop64
-	br_if   	15, $pop65      # 15: down to label40
+	br_if   	0, $pop65       # 0: down to label33
 # BB#16:                                # %if.end60
 	i32.const	$push116=, 3
 	i64.const	$push66=, -1
 	i64.call	$push67=, t9@FUNCTION, $pop116, $pop66
 	i64.const	$push68=, 1538
 	i64.ne  	$push69=, $pop67, $pop68
-	br_if   	16, $pop69      # 16: down to label39
+	br_if   	0, $pop69       # 0: down to label33
 # BB#17:                                # %if.end64
 	i32.const	$push117=, 3
 	i64.const	$push70=, 4294967295
 	i64.call	$push71=, t9@FUNCTION, $pop117, $pop70
 	i64.const	$push72=, 4294968834
 	i64.ne  	$push73=, $pop71, $pop72
-	br_if   	17, $pop73      # 17: down to label38
+	br_if   	0, $pop73       # 0: down to label33
 # BB#18:                                # %if.end68
 	i32.const	$push121=, 3
 	i64.const	$push74=, -1
@@ -1910,7 +1888,7 @@ main:                                   # @main
 	i64.const	$push118=, -1
 	i64.add 	$push78=, $pop77, $pop118
 	i64.ne  	$push79=, $pop75, $pop78
-	br_if   	18, $pop79      # 18: down to label37
+	br_if   	0, $pop79       # 0: down to label33
 # BB#19:                                # %if.end72
 	i32.const	$push125=, 3
 	i64.const	$push80=, 4294967295
@@ -1922,7 +1900,7 @@ main:                                   # @main
 	i64.const	$push122=, 4294967295
 	i64.add 	$push84=, $pop83, $pop122
 	i64.ne  	$push85=, $pop81, $pop84
-	br_if   	19, $pop85      # 19: down to label36
+	br_if   	0, $pop85       # 0: down to label33
 # BB#20:                                # %if.end77
 	i32.const	$push129=, 3
 	i64.const	$push86=, -1
@@ -1934,7 +1912,7 @@ main:                                   # @main
 	i64.const	$push126=, -1
 	i64.add 	$push90=, $pop89, $pop126
 	i64.ne  	$push91=, $pop87, $pop90
-	br_if   	20, $pop91      # 20: down to label35
+	br_if   	0, $pop91       # 0: down to label33
 # BB#21:                                # %if.end84
 	i32.const	$push135=, 3
 	i64.const	$push92=, 4294967295
@@ -1947,104 +1925,16 @@ main:                                   # @main
 	i64.const	$push130=, 4294967295
 	i64.add 	$push95=, $pop94, $pop130
 	i64.ne  	$push96=, $pop93, $pop95
-	br_if   	21, $pop96      # 21: down to label34
+	br_if   	0, $pop96       # 0: down to label33
 # BB#22:                                # %if.end91
 	i64.const	$push97=, 100
 	i64.ne  	$push98=, $0, $pop97
-	br_if   	22, $pop98      # 22: down to label33
+	br_if   	0, $pop98       # 0: down to label33
 # BB#23:                                # %if.end95
 	i32.const	$push99=, 0
 	call    	exit@FUNCTION, $pop99
 	unreachable
-.LBB12_24:                              # %if.then
-	end_block                       # label55:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_25:                              # %if.then3
-	end_block                       # label54:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_26:                              # %if.then7
-	end_block                       # label53:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_27:                              # %if.then11
-	end_block                       # label52:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_28:                              # %if.then15
-	end_block                       # label51:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_29:                              # %if.then19
-	end_block                       # label50:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_30:                              # %if.then23
-	end_block                       # label49:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_31:                              # %if.then27
-	end_block                       # label48:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_32:                              # %if.then31
-	end_block                       # label47:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_33:                              # %if.then35
-	end_block                       # label46:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_34:                              # %if.then39
-	end_block                       # label45:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_35:                              # %if.then43
-	end_block                       # label44:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_36:                              # %if.then47
-	end_block                       # label43:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_37:                              # %if.then51
-	end_block                       # label42:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_38:                              # %if.then55
-	end_block                       # label41:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_39:                              # %if.then59
-	end_block                       # label40:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_40:                              # %if.then63
-	end_block                       # label39:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_41:                              # %if.then67
-	end_block                       # label38:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_42:                              # %if.then71
-	end_block                       # label37:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_43:                              # %if.then76
-	end_block                       # label36:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_44:                              # %if.then83
-	end_block                       # label35:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_45:                              # %if.then90
-	end_block                       # label34:
-	call    	abort@FUNCTION
-	unreachable
-.LBB12_46:                              # %if.then94
+.LBB12_24:                              # %if.then94
 	end_block                       # label33:
 	call    	abort@FUNCTION
 	unreachable

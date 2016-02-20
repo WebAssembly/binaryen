@@ -31,68 +31,68 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i64
 # BB#0:                                 # %entry
-	i32.const	$push30=, 0
-	i32.load	$0=, i($pop30)
-	i32.const	$push29=, 0
-	i32.const	$push28=, 0
-	i64.load	$push0=, .Lmain.t+8($pop28):p2align=0
-	i64.store	$discard=, s+24($pop29), $pop0
-	i32.const	$push27=, 0
-	i32.const	$push26=, 0
-	i64.load	$push1=, .Lmain.t($pop26):p2align=0
-	i64.store	$discard=, s+16($pop27):p2align=4, $pop1
+	i32.const	$push24=, 0
+	i32.load	$0=, i($pop24)
+	i32.const	$push23=, 0
+	i32.const	$push22=, 0
+	i64.load	$push0=, .Lmain.t+8($pop22):p2align=0
+	i64.store	$discard=, s+24($pop23), $pop0
+	i32.const	$push21=, 0
+	i32.const	$push20=, 0
+	i64.load	$push1=, .Lmain.t($pop20):p2align=0
+	i64.store	$discard=, s+16($pop21):p2align=4, $pop1
 	block
-	i32.const	$push25=, 0
-	i32.gt_s	$push2=, $0, $pop25
+	i32.const	$push19=, 0
+	i32.gt_s	$push2=, $0, $pop19
 	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %for.body.preheader
 	i64.const	$push3=, -3161
 	call    	foo@FUNCTION, $pop3
-	i32.const	$push35=, 0
-	i32.const	$push34=, 0
-	i32.load	$push33=, i($pop34)
-	tee_local	$push32=, $0=, $pop33
-	i32.const	$push31=, 1
-	i32.add 	$push4=, $pop32, $pop31
-	i32.store	$discard=, i($pop35), $pop4
+	i32.const	$push29=, 0
+	i32.const	$push28=, 0
+	i32.load	$push27=, i($pop28)
+	tee_local	$push26=, $0=, $pop27
+	i32.const	$push25=, 1
+	i32.add 	$push4=, $pop26, $pop25
+	i32.store	$discard=, i($pop29), $pop4
 	i32.const	$push5=, -1
 	i32.gt_s	$push6=, $0, $pop5
 	br_if   	0, $pop6        # 0: down to label1
 .LBB1_2:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.const	$push7=, 0
-	i64.load	$push46=, s+16($pop7):p2align=4
-	tee_local	$push45=, $1=, $pop46
-	i64.const	$push11=, 7
-	i64.shl 	$push17=, $pop45, $pop11
-	i64.const	$push20=, 50
-	i64.shr_u	$push21=, $pop17, $pop20
-	i32.const	$push44=, 0
-	i64.load8_u	$push8=, s+24($pop44):p2align=3
+	i32.const	$push46=, 0
+	i64.load	$push45=, s+16($pop46):p2align=4
+	tee_local	$push44=, $1=, $pop45
 	i64.const	$push43=, 7
-	i64.shl 	$push12=, $pop8, $pop43
-	i64.const	$push9=, 57
-	i64.shr_u	$push10=, $1, $pop9
-	i64.or  	$push13=, $pop12, $pop10
-	i64.const	$push14=, 56
-	i64.shl 	$push15=, $pop13, $pop14
-	i64.const	$push42=, 56
-	i64.shr_s	$push16=, $pop15, $pop42
-	i64.const	$push18=, 14
-	i64.shl 	$push19=, $pop16, $pop18
-	i64.or  	$push22=, $pop21, $pop19
-	call    	foo@FUNCTION, $pop22
+	i64.shl 	$push13=, $pop44, $pop43
+	i64.const	$push42=, 50
+	i64.shr_u	$push15=, $pop13, $pop42
 	i32.const	$push41=, 0
-	i32.const	$push40=, 0
-	i32.load	$push39=, i($pop40)
-	tee_local	$push38=, $0=, $pop39
-	i32.const	$push37=, 1
-	i32.add 	$push23=, $pop38, $pop37
-	i32.store	$discard=, i($pop41), $pop23
-	i32.const	$push36=, 0
-	i32.lt_s	$push24=, $0, $pop36
-	br_if   	0, $pop24       # 0: up to label2
+	i64.load8_u	$push7=, s+24($pop41):p2align=3
+	i64.const	$push40=, 7
+	i64.shl 	$push9=, $pop7, $pop40
+	i64.const	$push39=, 57
+	i64.shr_u	$push8=, $1, $pop39
+	i64.or  	$push10=, $pop9, $pop8
+	i64.const	$push38=, 56
+	i64.shl 	$push11=, $pop10, $pop38
+	i64.const	$push37=, 56
+	i64.shr_s	$push12=, $pop11, $pop37
+	i64.const	$push36=, 14
+	i64.shl 	$push14=, $pop12, $pop36
+	i64.or  	$push16=, $pop15, $pop14
+	call    	foo@FUNCTION, $pop16
+	i32.const	$push35=, 0
+	i32.const	$push34=, 0
+	i32.load	$push33=, i($pop34)
+	tee_local	$push32=, $0=, $pop33
+	i32.const	$push31=, 1
+	i32.add 	$push17=, $pop32, $pop31
+	i32.store	$discard=, i($pop35), $pop17
+	i32.const	$push30=, 0
+	i32.lt_s	$push18=, $0, $pop30
+	br_if   	0, $pop18       # 0: up to label2
 .LBB1_3:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:

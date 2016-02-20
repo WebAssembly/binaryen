@@ -106,24 +106,19 @@ main:                                   # @main
 	i64.store	$push9=, 70($0):p2align=0, $pop8
 	i64.store	$discard=, 78($0):p2align=0, $pop9
 	block
-	block
 	i64.call	$push10=, Sum@FUNCTION, $0
 	i64.const	$push15=, 4311811859
 	i64.ne  	$push11=, $pop10, $pop15
-	br_if   	0, $pop11       # 0: down to label7
+	br_if   	0, $pop11       # 0: down to label6
 # BB#1:                                 # %if.end
 	i64.call	$push12=, Sum2@FUNCTION, $0
 	i64.const	$push19=, 4311811859
 	i64.ne  	$push13=, $pop12, $pop19
-	br_if   	1, $pop13       # 1: down to label6
+	br_if   	0, $pop13       # 0: down to label6
 # BB#2:                                 # %if.end25
 	i32.const	$push14=, 0
 	return  	$pop14
-.LBB2_3:                                # %if.then
-	end_block                       # label7:
-	call    	abort@FUNCTION
-	unreachable
-.LBB2_4:                                # %if.then24
+.LBB2_3:                                # %if.then24
 	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable

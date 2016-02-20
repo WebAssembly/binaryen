@@ -10,36 +10,39 @@ pure_alloc:                             # @pure_alloc
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.load	$0=, bar($pop0)
-	i32.const	$push14=, 0
-	i32.load	$1=, baz($pop14)
-	block
 	i32.const	$push13=, 0
+	i32.load	$1=, baz($pop13)
+	block
 	i32.const	$push12=, 0
-	i32.load	$push11=, foo($pop12)
-	tee_local	$push10=, $2=, $pop11
-	i32.const	$push9=, 2
-	i32.add 	$push1=, $pop10, $pop9
-	i32.store	$push2=, foo($pop13), $pop1
+	i32.const	$push11=, 0
+	i32.load	$push10=, foo($pop11)
+	tee_local	$push9=, $2=, $pop10
+	i32.const	$push8=, 2
+	i32.add 	$push1=, $pop9, $pop8
+	i32.store	$push2=, foo($pop12), $pop1
 	i32.lt_u	$push3=, $pop2, $1
 	br_if   	0, $pop3        # 0: down to label0
-.LBB0_1:                                # %if.end
+# BB#1:
+	i32.const	$push14=, 2
+	i32.gt_u	$1=, $1, $pop14
+.LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push16=, 2
-	i32.le_u	$push4=, $1, $pop16
-	br_if   	0, $pop4        # 0: up to label1
-# BB#2:                                 # %while.body.if.then_crit_edge
+	i32.const	$push16=, 0
+	i32.eq  	$push17=, $1, $pop16
+	br_if   	0, $pop17       # 0: up to label1
+# BB#3:                                 # %while.body.if.then_crit_edge
 	end_loop                        # label2:
 	i32.const	$2=, 0
 	i32.const	$push15=, 0
-	i32.const	$push5=, 2
-	i32.store	$discard=, foo($pop15), $pop5
-.LBB0_3:                                # %if.then
+	i32.const	$push4=, 2
+	i32.store	$discard=, foo($pop15), $pop4
+.LBB0_4:                                # %if.then
 	end_block                       # label0:
-	i32.add 	$push6=, $0, $2
-	i32.const	$push7=, -2
-	i32.and 	$push8=, $pop6, $pop7
-	return  	$pop8
+	i32.add 	$push5=, $0, $2
+	i32.const	$push6=, -2
+	i32.and 	$push7=, $pop5, $pop6
+	return  	$pop7
 	.endfunc
 .Lfunc_end0:
 	.size	pure_alloc, .Lfunc_end0-pure_alloc

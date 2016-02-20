@@ -16,23 +16,13 @@ vafunction:                             # @vafunction
 	i32.store	$6=, 0($4), $6
 	i32.store	$discard=, 12($6), $2
 	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
 	f64.const	$push0=, 0x1.bcp9
 	f64.ne  	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label10
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	f64.const	$push2=, 0x1.f38p9
 	f64.ne  	$push3=, $1, $pop2
-	br_if   	1, $pop3        # 1: down to label9
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %if.end4
 	i32.load	$push4=, 12($6)
 	i32.const	$push65=, 7
@@ -46,7 +36,7 @@ vafunction:                             # @vafunction
 	f64.load	$push7=, 0($2)
 	f64.const	$push8=, 0x1p0
 	f64.ne  	$push9=, $pop7, $pop8
-	br_if   	2, $pop9        # 2: down to label8
+	br_if   	0, $pop9        # 0: down to label0
 # BB#3:                                 # %if.end7
 	i32.load	$push10=, 12($6)
 	i32.const	$push70=, 7
@@ -60,7 +50,7 @@ vafunction:                             # @vafunction
 	f64.load	$push13=, 0($2)
 	f64.const	$push14=, 0x1p1
 	f64.ne  	$push15=, $pop13, $pop14
-	br_if   	3, $pop15       # 3: down to label7
+	br_if   	0, $pop15       # 0: down to label0
 # BB#4:                                 # %if.end10
 	i32.load	$push16=, 12($6)
 	i32.const	$push75=, 7
@@ -74,7 +64,7 @@ vafunction:                             # @vafunction
 	f64.load	$push19=, 0($2)
 	f64.const	$push20=, 0x1.8p1
 	f64.ne  	$push21=, $pop19, $pop20
-	br_if   	4, $pop21       # 4: down to label6
+	br_if   	0, $pop21       # 0: down to label0
 # BB#5:                                 # %if.end13
 	i32.load	$push22=, 12($6)
 	i32.const	$push80=, 7
@@ -88,7 +78,7 @@ vafunction:                             # @vafunction
 	f64.load	$push25=, 0($2)
 	f64.const	$push26=, 0x1p2
 	f64.ne  	$push27=, $pop25, $pop26
-	br_if   	5, $pop27       # 5: down to label5
+	br_if   	0, $pop27       # 0: down to label0
 # BB#6:                                 # %if.end16
 	i32.load	$push28=, 12($6)
 	i32.const	$push85=, 7
@@ -102,7 +92,7 @@ vafunction:                             # @vafunction
 	f64.load	$push31=, 0($2)
 	f64.const	$push32=, 0x1.4p2
 	f64.ne  	$push33=, $pop31, $pop32
-	br_if   	6, $pop33       # 6: down to label4
+	br_if   	0, $pop33       # 0: down to label0
 # BB#7:                                 # %if.end19
 	i32.load	$push34=, 12($6)
 	i32.const	$push90=, 7
@@ -116,7 +106,7 @@ vafunction:                             # @vafunction
 	f64.load	$push37=, 0($2)
 	f64.const	$push38=, 0x1.8p2
 	f64.ne  	$push39=, $pop37, $pop38
-	br_if   	7, $pop39       # 7: down to label3
+	br_if   	0, $pop39       # 0: down to label0
 # BB#8:                                 # %if.end22
 	i32.load	$push40=, 12($6)
 	i32.const	$push95=, 7
@@ -130,7 +120,7 @@ vafunction:                             # @vafunction
 	f64.load	$push43=, 0($2)
 	f64.const	$push44=, 0x1.cp2
 	f64.ne  	$push45=, $pop43, $pop44
-	br_if   	8, $pop45       # 8: down to label2
+	br_if   	0, $pop45       # 0: down to label0
 # BB#9:                                 # %if.end25
 	i32.load	$push46=, 12($6)
 	i32.const	$push100=, 7
@@ -144,7 +134,7 @@ vafunction:                             # @vafunction
 	f64.load	$push49=, 0($2)
 	f64.const	$push50=, 0x1p3
 	f64.ne  	$push51=, $pop49, $pop50
-	br_if   	9, $pop51       # 9: down to label1
+	br_if   	0, $pop51       # 0: down to label0
 # BB#10:                                # %if.end28
 	i32.load	$push52=, 12($6)
 	i32.const	$push53=, 7
@@ -158,54 +148,14 @@ vafunction:                             # @vafunction
 	f64.load	$push58=, 0($2)
 	f64.const	$push59=, 0x1.2p3
 	f64.ne  	$push60=, $pop58, $pop59
-	br_if   	10, $pop60      # 10: down to label0
+	br_if   	0, $pop60       # 0: down to label0
 # BB#11:                                # %if.end31
 	i32.const	$5=, 16
 	i32.add 	$6=, $6, $5
 	i32.const	$5=, __stack_pointer
 	i32.store	$6=, 0($5), $6
 	return
-.LBB0_12:                               # %if.then
-	end_block                       # label10:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_13:                               # %if.then3
-	end_block                       # label9:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_14:                               # %if.then6
-	end_block                       # label8:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_15:                               # %if.then9
-	end_block                       # label7:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_16:                               # %if.then12
-	end_block                       # label6:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_17:                               # %if.then15
-	end_block                       # label5:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_18:                               # %if.then18
-	end_block                       # label4:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_19:                               # %if.then21
-	end_block                       # label3:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_20:                               # %if.then24
-	end_block                       # label2:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_21:                               # %if.then27
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_22:                               # %if.then30
+.LBB0_12:                               # %if.then30
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

@@ -1151,21 +1151,21 @@ z:                                      # @z
 .LBB2_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label7:
-	i32.load	$push1=, 12($5)
-	i32.const	$push2=, 3
-	i32.add 	$push3=, $pop1, $pop2
-	i32.const	$push4=, -4
-	i32.and 	$push11=, $pop3, $pop4
-	tee_local	$push10=, $1=, $pop11
-	i32.const	$push5=, 4
-	i32.add 	$push6=, $pop10, $pop5
-	i32.store	$discard=, 12($5), $pop6
-	i32.const	$push0=, -1
-	i32.add 	$0=, $0, $pop0
-	i32.load	$push7=, 0($1)
-	i32.const	$push9=, 0
-	i32.const	$push8=, 2000
-	i32.call	$discard=, memset@FUNCTION, $pop7, $pop9, $pop8
+	i32.load	$push0=, 12($5)
+	i32.const	$push11=, 3
+	i32.add 	$push1=, $pop0, $pop11
+	i32.const	$push10=, -4
+	i32.and 	$push9=, $pop1, $pop10
+	tee_local	$push8=, $1=, $pop9
+	i32.const	$push7=, 4
+	i32.add 	$push2=, $pop8, $pop7
+	i32.store	$discard=, 12($5), $pop2
+	i32.const	$push6=, -1
+	i32.add 	$0=, $0, $pop6
+	i32.load	$push3=, 0($1)
+	i32.const	$push5=, 0
+	i32.const	$push4=, 2000
+	i32.call	$discard=, memset@FUNCTION, $pop3, $pop5, $pop4
 	br_if   	0, $0           # 0: up to label7
 .LBB2_2:                                # %while.end
 	end_loop                        # label8:

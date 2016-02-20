@@ -9,25 +9,26 @@ CalcPing:                               # @CalcPing
 	.result 	i32
 	.local  	i32, i32, f32, i64, i32, f32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
-	i32.const	$1=, 16
-	f32.const	$3=, 0x0p0
 	block
 	block
-	i64.load	$push15=, 0($0)
-	tee_local	$push14=, $4=, $pop15
-	i32.wrap/i64	$push0=, $pop14
+	i64.load	$push13=, 0($0)
+	tee_local	$push12=, $4=, $pop13
+	i32.wrap/i64	$push0=, $pop12
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %if.then
-	i64.const	$push12=, 32
-	i64.shr_u	$push13=, $4, $pop12
-	i32.wrap/i64	$1=, $pop13
+	i64.const	$push10=, 32
+	i64.shr_u	$push11=, $4, $pop10
+	i32.wrap/i64	$1=, $pop11
 	br      	1               # 1: down to label0
-.LBB0_2:                                # %for.body
-                                        # =>This Inner Loop Header: Depth=1
+.LBB0_2:
 	end_block                       # label1:
+	f32.const	$3=, 0x0p0
+	i32.const	$2=, 0
+	i32.const	$1=, 16
+.LBB0_3:                                # %for.body
+                                        # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.add 	$push3=, $0, $1
 	f32.load	$push20=, 0($pop3):p2align=3
@@ -38,24 +39,24 @@ CalcPing:                               # @CalcPing
 	tee_local	$push16=, $5=, $pop17
 	f32.select	$3=, $pop4, $3, $pop16
 	i32.add 	$2=, $5, $2
-	i32.const	$push5=, 24
-	i32.add 	$1=, $1, $pop5
-	i32.const	$push6=, 1552
-	i32.ne  	$push7=, $1, $pop6
-	br_if   	0, $pop7        # 0: up to label2
-# BB#3:                                 # %for.end
+	i32.const	$push15=, 24
+	i32.add 	$1=, $1, $pop15
+	i32.const	$push14=, 1552
+	i32.ne  	$push5=, $1, $pop14
+	br_if   	0, $pop5        # 0: up to label2
+# BB#4:                                 # %for.end
 	end_loop                        # label3:
 	i32.const	$1=, 9999
 	i32.const	$push21=, 0
 	i32.eq  	$push22=, $2, $pop21
 	br_if   	0, $pop22       # 0: down to label0
-# BB#4:                                 # %if.end9
-	f32.convert_s/i32	$push8=, $2
-	f32.div 	$push9=, $3, $pop8
-	f32.const	$push10=, 0x1.f4p9
-	f32.mul 	$push11=, $pop9, $pop10
-	i32.trunc_s/f32	$1=, $pop11
-.LBB0_5:                                # %cleanup
+# BB#5:                                 # %if.end9
+	f32.convert_s/i32	$push6=, $2
+	f32.div 	$push7=, $3, $pop6
+	f32.const	$push8=, 0x1.f4p9
+	f32.mul 	$push9=, $pop7, $pop8
+	i32.trunc_s/f32	$1=, $pop9
+.LBB0_6:                                # %cleanup
 	end_block                       # label0:
 	return  	$1
 	.endfunc
