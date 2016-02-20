@@ -210,7 +210,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           var save0 = HEAP32[0];
           var save1 = HEAP32[1];
           for (var i = 0; i < bytes; i++) {
-            HEAPU8[i] = HEAPU8[addr + i];
+            HEAPU8[i] = Module["info"].parent["HEAPU8"][addr + i];
           }
           var ret;
           if (!isFloat) {
@@ -272,6 +272,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       if (value.type == WasmType::i64) {
         Store fake = *store_;
         fake.bytes = 4;
+        fake.type = i32;
         uint64_t v = value.geti64();
         store(&fake, addr, Literal(uint32_t(v)));
         v >>= 32;
@@ -298,7 +299,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             else abort();
           }
           for (var i = 0; i < bytes; i++) {
-            HEAPU8[addr + i] = HEAPU8[i];
+            Module["info"].parent["HEAPU8"][addr + i] = HEAPU8[i];
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
         }, addr, store_->bytes, isWasmTypeFloat(store_->type), isWasmTypeFloat(store_->type) ? value.getFloat() : (double)value.getInteger());
