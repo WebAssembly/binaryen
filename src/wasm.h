@@ -59,6 +59,7 @@
 #include "pretty_printing.h"
 #include "support/bits.h"
 #include "support/utilities.h"
+#include "support/metrics.h"
 
 namespace wasm {
 
