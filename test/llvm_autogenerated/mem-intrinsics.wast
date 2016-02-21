@@ -75,7 +75,7 @@
       (i32.const 1)
     )
     (set_local $$0
-      (i32.load align=4
+      (i32.load
         (get_local $$0)
       )
     )
@@ -92,7 +92,7 @@
       (i32.const 1)
     )
     (set_local $$4
-      (i32.store align=4
+      (i32.store
         (get_local $$1)
         (get_local $$4)
       )
@@ -129,7 +129,7 @@
       (i32.const 1)
     )
     (set_local $$4
-      (i32.store align=4
+      (i32.store
         (get_local $$2)
         (get_local $$4)
       )

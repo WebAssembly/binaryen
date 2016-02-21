@@ -19,7 +19,7 @@
   (export "call_memcpy" $call_memcpy)
   (func $foo (result i32)
     (return
-      (i32.load offset=28 align=4
+      (i32.load offset=28
         (i32.const 0)
       )
     )

@@ -7,7 +7,7 @@
   (func $main (result i32)
     (local $$0 i32)
     (return
-      (i32.load align=4
+      (i32.load
         (i32.const 12)
       )
     )

@@ -128,48 +128,48 @@
     (block $label$0
       (br_if $label$0
         (call_indirect $FUNCSIG_i
-          (i32.load offset=16 align=4
+          (i32.load offset=16
             (get_local $$0)
           )
         )
       )
       (br_if $label$0
         (call_indirect $FUNCSIG_i
-          (i32.load offset=20 align=4
+          (i32.load offset=20
             (get_local $$0)
           )
         )
       )
       (br_if $label$0
         (call_indirect $FUNCSIG_i
-          (i32.load offset=24 align=4
+          (i32.load offset=24
             (get_local $$0)
           )
         )
       )
       (br_if $label$0
         (call_indirect $FUNCSIG_i
-          (i32.load offset=28 align=4
+          (i32.load offset=28
             (get_local $$0)
           )
         )
       )
       (br_if $label$0
         (call_indirect $FUNCSIG_i
-          (i32.load offset=32 align=4
+          (i32.load offset=32
             (get_local $$0)
           )
         )
       )
       (br_if $label$0
         (call_indirect $FUNCSIG_i
-          (i32.load offset=36 align=4
+          (i32.load offset=36
             (get_local $$0)
           )
         )
       )
       (set_local $$1
-        (i32.load offset=40 align=4
+        (i32.load offset=40
           (get_local $$0)
         )
       )
@@ -185,7 +185,7 @@
         )
         (br_if $label$1
           (call_indirect $FUNCSIG_ii
-            (i32.load offset=44 align=4
+            (i32.load offset=44
               (get_local $$0)
             )
             (get_local $$2)
@@ -193,14 +193,14 @@
         )
         (br_if $label$1
           (call_indirect $FUNCSIG_ii
-            (i32.load offset=48 align=4
+            (i32.load offset=48
               (get_local $$0)
             )
             (get_local $$2)
           )
         )
         (set_local $$1
-          (i32.load offset=52 align=4
+          (i32.load offset=52
             (get_local $$0)
           )
         )
@@ -216,7 +216,7 @@
           )
           (br_if $label$2
             (call_indirect $FUNCSIG_ii
-              (i32.load offset=56 align=4
+              (i32.load offset=56
                 (get_local $$0)
               )
               (get_local $$2)
@@ -226,7 +226,7 @@
             (br_if $label$3
               (i32.eq
                 (call_indirect $FUNCSIG_i
-                  (i32.load offset=60 align=4
+                  (i32.load offset=60
                     (get_local $$0)
                   )
                 )
@@ -236,7 +236,7 @@
             (br_if $label$3
               (i32.eq
                 (call_indirect $FUNCSIG_i
-                  (i32.load offset=64 align=4
+                  (i32.load offset=64
                     (get_local $$0)
                   )
                 )
@@ -246,7 +246,7 @@
             (br_if $label$3
               (i32.eq
                 (call_indirect $FUNCSIG_i
-                  (i32.load offset=68 align=4
+                  (i32.load offset=68
                     (get_local $$0)
                   )
                 )
@@ -257,7 +257,7 @@
               (br_if $label$4
                 (i32.eq
                   (call_indirect $FUNCSIG_i
-                    (i32.load offset=72 align=4
+                    (i32.load offset=72
                       (get_local $$0)
                     )
                   )
@@ -267,7 +267,7 @@
               (br_if $label$4
                 (i32.eq
                   (call_indirect $FUNCSIG_i
-                    (i32.load offset=76 align=4
+                    (i32.load offset=76
                       (get_local $$0)
                     )
                   )
@@ -277,7 +277,7 @@
               (br_if $label$4
                 (i32.eq
                   (call_indirect $FUNCSIG_i
-                    (i32.load offset=80 align=4
+                    (i32.load offset=80
                       (get_local $$0)
                     )
                   )

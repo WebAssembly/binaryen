@@ -38,21 +38,21 @@
         (f64.add
           (f64.add
             (f64.add
-              (f64.load align=8
+              (f64.load
                 (i32.const 8)
               )
-              (f64.load align=8
+              (f64.load
                 (i32.const 16)
               )
             )
             (f64.neg
-              (f64.load align=8
+              (f64.load
                 (i32.const 16)
               )
             )
           )
           (f64.neg
-            (f64.load align=8
+            (f64.load
               (i32.const 8)
             )
           )
@@ -60,7 +60,7 @@
       )
       (if
         (i32.gt_s
-          (i32.load align=4
+          (i32.load
             (i32.const 24)
           )
           (i32.const 0)
@@ -71,7 +71,7 @@
       )
       (if
         (f64.gt
-          (f64.load align=8
+          (f64.load
             (i32.const 32)
           )
           (f64.const 0)

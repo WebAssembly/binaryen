@@ -45,7 +45,7 @@
             (get_local $$4)
           )
           (loop $label$5 $label$4
-            (i32.store align=4
+            (i32.store
               (get_local $$7)
               (get_local $$6)
             )

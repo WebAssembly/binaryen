@@ -6,35 +6,35 @@
   (export "trunc_i16_i64" $trunc_i16_i64)
   (export "trunc_i32_i64" $trunc_i32_i64)
   (func $trunc_i8_i32 (param $$0 i32) (param $$1 i32)
-    (i32.store8 align=1
+    (i32.store8
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $trunc_i16_i32 (param $$0 i32) (param $$1 i32)
-    (i32.store16 align=2
+    (i32.store16
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $trunc_i8_i64 (param $$0 i32) (param $$1 i64)
-    (i64.store8 align=1
+    (i64.store8
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $trunc_i16_i64 (param $$0 i32) (param $$1 i64)
-    (i64.store16 align=2
+    (i64.store16
       (get_local $$0)
       (get_local $$1)
     )
     (return)
   )
   (func $trunc_i32_i64 (param $$0 i32) (param $$1 i64)
-    (i64.store32 align=4
+    (i64.store32
       (get_local $$0)
       (get_local $$1)
     )

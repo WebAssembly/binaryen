@@ -6,28 +6,28 @@
   (export "ldf64" $ldf64)
   (func $ldi32 (param $$0 i32) (result i32)
     (return
-      (i32.load align=4
+      (i32.load
         (get_local $$0)
       )
     )
   )
   (func $ldi64 (param $$0 i32) (result i64)
     (return
-      (i64.load align=8
+      (i64.load
         (get_local $$0)
       )
     )
   )
   (func $ldf32 (param $$0 i32) (result f32)
     (return
-      (f32.load align=4
+      (f32.load
         (get_local $$0)
       )
     )
   )
   (func $ldf64 (param $$0 i32) (result f64)
     (return
-      (f64.load align=8
+      (f64.load
         (get_local $$0)
       )
     )

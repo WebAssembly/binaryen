@@ -7,7 +7,7 @@
   (export "_Z6reporti" $_Z6reporti)
   (export "main" $main)
   (func $_Z6reporti (param $$0 i32)
-    (i32.store align=4
+    (i32.store
       (i32.const 8)
       (get_local $$0)
     )
@@ -34,7 +34,7 @@
       (i32.const 0)
     )
     (set_local $$7
-      (i32.load align=4
+      (i32.load
         (get_local $$7)
       )
     )
@@ -51,7 +51,7 @@
       (i32.const 0)
     )
     (set_local $$12
-      (i32.store align=4
+      (i32.store
         (get_local $$8)
         (get_local $$12)
       )
@@ -79,7 +79,7 @@
             (get_local $$10)
           )
         )
-        (i32.store8 align=1
+        (i32.store8
           (i32.add
             (get_local $$10)
             (get_local $$4)
@@ -124,7 +124,7 @@
         (set_local $$6
           (i32.add
             (i32.and
-              (i32.load8_u align=1
+              (i32.load8_u
                 (i32.add
                   (get_local $$11)
                   (get_local $$5)
@@ -195,7 +195,7 @@
       (i32.const 0)
     )
     (set_local $$12
-      (i32.store align=4
+      (i32.store
         (get_local $$9)
         (get_local $$12)
       )

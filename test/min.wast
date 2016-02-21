@@ -13,11 +13,11 @@
     (set_local $n
       (f32.neg
         (block $block0
-          (i32.store align=4
+          (i32.store
             (get_local $k)
             (get_local $p)
           )
-          (f32.load align=4
+          (f32.load
             (get_local $k)
           )
         )
