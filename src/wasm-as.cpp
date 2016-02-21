@@ -28,6 +28,7 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
+  bool printMetrics;
   Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
   options.add("--output", "-o", "Output file (stdout if not specified)",
               Options::Arguments::One,
@@ -35,6 +36,11 @@ int main(int argc, const char *argv[]) {
                 o->extra["output"] = argument;
                 Colors::disable();
               })
+      .add("--metrics", "", "prints binary metrics",
+           Options::Arguments::Zero,
+           [&printMetrics](Options*, const std::string&) {
+             printMetrics = true;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -52,8 +58,9 @@ int main(int argc, const char *argv[]) {
   SExpressionWasmBuilder builder(wasm, *root[0], [&]() { abort(); });
 
   if (options.debug) std::cerr << "binarification..." << std::endl;
-  BufferWithRandomAccess buffer(options.debug);
-  WasmBinaryWriter writer(&wasm, buffer, options.debug);
+  ByteStreamMetrics metrics;
+  BufferWithRandomAccess buffer(options.debug, printMetrics ? &metrics : nullptr);
+  WasmBinaryWriter writer(&wasm, buffer, options.debug, printMetrics ? &metrics : nullptr);
   writer.write();
 
   if (options.debug) std::cerr << "writing to output..." << std::endl;
@@ -61,4 +68,7 @@ int main(int argc, const char *argv[]) {
   buffer.writeTo(output);
 
   if (options.debug) std::cerr << "Done." << std::endl;
+  if (printMetrics) {
+    metrics.print(std::cerr, buffer.size());
+  }
 }

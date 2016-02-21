@@ -67,9 +67,10 @@ struct LEB128 {
 //
 class BufferWithRandomAccess : public std::vector<uint8_t> {
   bool debug;
+  ByteStreamMetrics *metrics;
 
 public:
-  BufferWithRandomAccess(bool debug) : debug(debug) {}
+  BufferWithRandomAccess(bool debug, ByteStreamMetrics *metrics) : debug(debug), metrics(metrics) {}
 
   BufferWithRandomAccess& operator<<(int8_t x) {
     if (debug) std::cerr << "writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")" << std::endl;
@@ -104,7 +105,9 @@ public:
   }
   BufferWithRandomAccess& operator<<(LEB128 x) {
     if (debug) std::cerr << "writeLEB128: " << x.value << " (at " << size() << ")" << std::endl;
+    if (metrics) metrics->enter("writeLEB128", size());
     x.write(this);
+    if (metrics) metrics->leave(size());
     return *this;
   }
 
@@ -361,7 +364,7 @@ class WasmBinaryWriter : public WasmVisitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
   bool debug;
-
+  ByteStreamMetrics* metrics;
   MixedArena allocator;
 
   void prepare() {
@@ -374,12 +377,19 @@ class WasmBinaryWriter : public WasmVisitor<WasmBinaryWriter, void> {
   }
 
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug) : o(o), debug(debug) {
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug, ByteStreamMetrics* metrics) : o(o), debug(debug), metrics(metrics) {
     wasm = allocator.alloc<Module>();
     *wasm = *input; // simple shallow copy; we won't be modifying any internals, just adding some function types, so this is fine
     prepare();
   }
-
+  void enterMetric(const char *name) {
+    if (!metrics) return;
+    metrics->enter(name, o.size());
+  }
+  void leaveMetric(const char *name = nullptr) {
+    if (!metrics) return;
+    metrics->leave(o.size(), name);
+  }
   void write() {
     writeStart();
     writeMemory();
@@ -724,11 +734,15 @@ assert(0);
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
+    enterMetric("visitGetLocal");
     o << int8_t(BinaryConsts::GetLocal) << LEB128(mappedLocals[curr->name]);
+    leaveMetric();
   }
   void visitSetLocal(SetLocal *curr) {
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
+    enterMetric("visitSetLocal");
     o << int8_t(BinaryConsts::SetLocal) << LEB128(mappedLocals[curr->name]);
+    leaveMetric();
     recurse(curr->value);
   }
 
@@ -799,6 +813,7 @@ assert(0);
   }
   void visitConst(Const *curr) {
     if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
+    enterMetric("visitConst");
     switch (curr->type) {
       case i32: {
         uint32_t value = curr->value.geti32();
@@ -823,6 +838,7 @@ assert(0);
       }
       default: abort();
     }
+    leaveMetric();
     if (debug) std::cerr << "zz const node done.\n";
   }
   void visitUnary(Unary *curr) {
