@@ -179,7 +179,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
-    if (curr->align) {
+    if (curr->align != curr->bytes) {
       o << " align=" << curr->align;
     }
     incIndent(o, indent);
@@ -204,7 +204,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
-    if (curr->align) {
+    if (curr->align != curr->bytes) {
       o << " align=" << curr->align;
     }
     incIndent(o, indent);

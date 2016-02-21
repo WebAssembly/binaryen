@@ -27,11 +27,11 @@
   (export "no_stackify_past_use" $no_stackify_past_use)
   (func $no0 (param $$0 i32) (param $$1 i32) (result i32)
     (set_local $$1
-      (i32.load align=4
+      (i32.load
         (get_local $$1)
       )
     )
-    (i32.store align=4
+    (i32.store
       (get_local $$0)
       (i32.const 0)
     )
@@ -41,11 +41,11 @@
   )
   (func $no1 (param $$0 i32) (param $$1 i32) (result i32)
     (set_local $$1
-      (i32.load align=4
+      (i32.load
         (get_local $$1)
       )
     )
-    (i32.store align=4
+    (i32.store
       (get_local $$0)
       (i32.const 0)
     )
@@ -54,19 +54,19 @@
     )
   )
   (func $yes0 (param $$0 i32) (param $$1 i32) (result i32)
-    (i32.store align=4
+    (i32.store
       (get_local $$0)
       (i32.const 0)
     )
     (return
-      (i32.load align=4
+      (i32.load
         (get_local $$1)
       )
     )
   )
   (func $yes1 (param $$0 i32) (result i32)
     (return
-      (i32.load align=4
+      (i32.load
         (get_local $$0)
       )
     )
@@ -114,7 +114,7 @@
       (br_if $label$0
         (i32.ge_u
           (set_local $$3
-            (i32.load align=4
+            (i32.load
               (get_local $$2)
             )
           )
@@ -127,7 +127,7 @@
           (get_local $$0)
         )
       )
-      (i32.store align=4
+      (i32.store
         (get_local $$2)
         (get_local $$3)
       )
@@ -137,13 +137,13 @@
   (func $stackify_store_across_side_effects (param $$0 i32)
     (local $$1 i64)
     (set_local $$1
-      (i64.store align=8
+      (i64.store
         (get_local $$0)
         (i64.const 4611686018427387904)
       )
     )
     (call_import $evoke_side_effects)
-    (i64.store align=8
+    (i64.store
       (get_local $$0)
       (get_local $$1)
     )

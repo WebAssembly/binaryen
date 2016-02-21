@@ -45,7 +45,7 @@
   (func $fpext_f32_f64 (param $$0 i32) (result f64)
     (return
       (f64.promote/f32
-        (f32.load align=4
+        (f32.load
           (get_local $$0)
         )
       )
@@ -54,7 +54,7 @@
   (func $fpconv_f64_f32 (param $$0 i32) (result f32)
     (return
       (f32.demote/f64
-        (f64.load align=8
+        (f64.load
           (get_local $$0)
         )
       )
@@ -345,7 +345,7 @@
       (i32.const 1)
     )
     (set_local $$183
-      (i32.load align=4
+      (i32.load
         (get_local $$183)
       )
     )
@@ -362,7 +362,7 @@
       (i32.const 1)
     )
     (set_local $$312
-      (i32.store align=4
+      (i32.store
         (get_local $$184)
         (get_local $$312)
       )
@@ -1418,7 +1418,7 @@
       )
     )
     (set_local $$174
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$249)
           (i32.const 8)
@@ -1435,7 +1435,7 @@
       )
     )
     (set_local $$177
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$250)
           (i32.const 8)
@@ -1443,17 +1443,17 @@
       )
     )
     (set_local $$173
-      (i64.load offset=480 align=8
+      (i64.load offset=480
         (get_local $$312)
       )
     )
     (set_local $$181
-      (i64.load offset=464 align=8
+      (i64.load offset=464
         (get_local $$312)
       )
     )
     (set_local $$169
-      (i64.load offset=496 align=8
+      (i64.load offset=496
         (get_local $$312)
       )
     )
@@ -1467,7 +1467,7 @@
       )
     )
     (set_local $$179
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$251)
           (i32.const 8)
@@ -1484,7 +1484,7 @@
       )
     )
     (set_local $$175
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$252)
           (i32.const 8)
@@ -1501,7 +1501,7 @@
       )
     )
     (set_local $$45
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$253)
           (i32.const 8)
@@ -1518,7 +1518,7 @@
       )
     )
     (set_local $$46
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$254)
           (i32.const 8)
@@ -1535,7 +1535,7 @@
       )
     )
     (set_local $$47
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$255)
           (i32.const 8)
@@ -1552,7 +1552,7 @@
       )
     )
     (set_local $$48
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$256)
           (i32.const 8)
@@ -1569,7 +1569,7 @@
       )
     )
     (set_local $$49
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$257)
           (i32.const 8)
@@ -1586,7 +1586,7 @@
       )
     )
     (set_local $$50
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$258)
           (i32.const 8)
@@ -1603,7 +1603,7 @@
       )
     )
     (set_local $$51
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$259)
           (i32.const 8)
@@ -1620,7 +1620,7 @@
       )
     )
     (set_local $$52
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$260)
           (i32.const 8)
@@ -1637,7 +1637,7 @@
       )
     )
     (set_local $$53
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$261)
           (i32.const 8)
@@ -1654,7 +1654,7 @@
       )
     )
     (set_local $$54
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$262)
           (i32.const 8)
@@ -1671,7 +1671,7 @@
       )
     )
     (set_local $$55
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$263)
           (i32.const 8)
@@ -1688,7 +1688,7 @@
       )
     )
     (set_local $$67
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$264)
           (i32.const 8)
@@ -1705,7 +1705,7 @@
       )
     )
     (set_local $$68
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$265)
           (i32.const 8)
@@ -1722,7 +1722,7 @@
       )
     )
     (set_local $$69
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$266)
           (i32.const 8)
@@ -1739,7 +1739,7 @@
       )
     )
     (set_local $$70
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$267)
           (i32.const 8)
@@ -1756,7 +1756,7 @@
       )
     )
     (set_local $$71
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$268)
           (i32.const 8)
@@ -1764,17 +1764,17 @@
       )
     )
     (set_local $$59
-      (i64.load offset=80 align=8
+      (i64.load offset=80
         (get_local $$312)
       )
     )
     (set_local $$60
-      (i64.load offset=96 align=8
+      (i64.load offset=96
         (get_local $$312)
       )
     )
     (set_local $$61
-      (i64.load offset=112 align=8
+      (i64.load offset=112
         (get_local $$312)
       )
     )
@@ -1788,7 +1788,7 @@
       )
     )
     (set_local $$72
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$269)
           (i32.const 8)
@@ -1805,7 +1805,7 @@
       )
     )
     (set_local $$73
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$270)
           (i32.const 8)
@@ -1822,7 +1822,7 @@
       )
     )
     (set_local $$74
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$271)
           (i32.const 8)
@@ -1839,7 +1839,7 @@
       )
     )
     (set_local $$75
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$272)
           (i32.const 8)
@@ -1856,7 +1856,7 @@
       )
     )
     (set_local $$76
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$273)
           (i32.const 8)
@@ -1873,7 +1873,7 @@
       )
     )
     (set_local $$77
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$274)
           (i32.const 8)
@@ -1890,7 +1890,7 @@
       )
     )
     (set_local $$87
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$275)
           (i32.const 8)
@@ -1907,7 +1907,7 @@
       )
     )
     (set_local $$88
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$276)
           (i32.const 8)
@@ -1924,7 +1924,7 @@
       )
     )
     (set_local $$89
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$277)
           (i32.const 8)
@@ -1932,7 +1932,7 @@
       )
     )
     (set_local $$90
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$312)
           (i32.const 8)
@@ -1949,7 +1949,7 @@
       )
     )
     (set_local $$91
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$278)
           (i32.const 8)
@@ -1957,7 +1957,7 @@
       )
     )
     (set_local $$84
-      (i64.load offset=64 align=8
+      (i64.load offset=64
         (get_local $$312)
       )
     )
@@ -1971,7 +1971,7 @@
       )
     )
     (set_local $$93
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$279)
           (i32.const 8)
@@ -1988,7 +1988,7 @@
       )
     )
     (set_local $$92
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$280)
           (i32.const 8)
@@ -2005,7 +2005,7 @@
       )
     )
     (set_local $$94
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$281)
           (i32.const 8)
@@ -2022,7 +2022,7 @@
       )
     )
     (set_local $$95
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$282)
           (i32.const 8)
@@ -2039,7 +2039,7 @@
       )
     )
     (set_local $$109
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$283)
           (i32.const 8)
@@ -2056,7 +2056,7 @@
       )
     )
     (set_local $$110
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$284)
           (i32.const 8)
@@ -2064,17 +2064,17 @@
       )
     )
     (set_local $$81
-      (i64.load align=8
+      (i64.load
         (get_local $$312)
       )
     )
     (set_local $$82
-      (i64.load offset=16 align=8
+      (i64.load offset=16
         (get_local $$312)
       )
     )
     (set_local $$83
-      (i64.load offset=32 align=8
+      (i64.load offset=32
         (get_local $$312)
       )
     )
@@ -2088,7 +2088,7 @@
       )
     )
     (set_local $$111
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$285)
           (i32.const 8)
@@ -2096,47 +2096,47 @@
       )
     )
     (set_local $$96
-      (i64.load offset=192 align=8
+      (i64.load offset=192
         (get_local $$312)
       )
     )
     (set_local $$97
-      (i64.load offset=208 align=8
+      (i64.load offset=208
         (get_local $$312)
       )
     )
     (set_local $$98
-      (i64.load offset=224 align=8
+      (i64.load offset=224
         (get_local $$312)
       )
     )
     (set_local $$44
-      (i64.load offset=240 align=8
+      (i64.load offset=240
         (get_local $$312)
       )
     )
     (set_local $$62
-      (i64.load offset=48 align=8
+      (i64.load offset=48
         (get_local $$312)
       )
     )
     (set_local $$63
-      (i64.load offset=176 align=8
+      (i64.load offset=176
         (get_local $$312)
       )
     )
     (set_local $$78
-      (i64.load offset=128 align=8
+      (i64.load offset=128
         (get_local $$312)
       )
     )
     (set_local $$79
-      (i64.load offset=144 align=8
+      (i64.load offset=144
         (get_local $$312)
       )
     )
     (set_local $$80
-      (i64.load offset=160 align=8
+      (i64.load offset=160
         (get_local $$312)
       )
     )
@@ -2150,7 +2150,7 @@
       )
     )
     (set_local $$112
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$286)
           (i32.const 8)
@@ -2167,7 +2167,7 @@
       )
     )
     (set_local $$113
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$287)
           (i32.const 8)
@@ -2184,7 +2184,7 @@
       )
     )
     (set_local $$114
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$288)
           (i32.const 8)
@@ -2201,7 +2201,7 @@
       )
     )
     (set_local $$115
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$289)
           (i32.const 8)
@@ -2218,7 +2218,7 @@
       )
     )
     (set_local $$116
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$290)
           (i32.const 8)
@@ -2235,7 +2235,7 @@
       )
     )
     (set_local $$117
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$291)
           (i32.const 8)
@@ -2252,7 +2252,7 @@
       )
     )
     (set_local $$118
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$292)
           (i32.const 8)
@@ -2260,12 +2260,12 @@
       )
     )
     (set_local $$104
-      (i64.load offset=384 align=8
+      (i64.load offset=384
         (get_local $$312)
       )
     )
     (set_local $$105
-      (i64.load offset=400 align=8
+      (i64.load offset=400
         (get_local $$312)
       )
     )
@@ -2279,7 +2279,7 @@
       )
     )
     (set_local $$119
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$293)
           (i32.const 8)
@@ -2287,12 +2287,12 @@
       )
     )
     (set_local $$106
-      (i64.load offset=416 align=8
+      (i64.load offset=416
         (get_local $$312)
       )
     )
     (set_local $$36
-      (i64.load offset=432 align=8
+      (i64.load offset=432
         (get_local $$312)
       )
     )
@@ -2306,7 +2306,7 @@
       )
     )
     (set_local $$120
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$294)
           (i32.const 8)
@@ -2314,17 +2314,17 @@
       )
     )
     (set_local $$33
-      (i64.load offset=352 align=8
+      (i64.load offset=352
         (get_local $$312)
       )
     )
     (set_local $$34
-      (i64.load offset=336 align=8
+      (i64.load offset=336
         (get_local $$312)
       )
     )
     (set_local $$35
-      (i64.load offset=368 align=8
+      (i64.load offset=368
         (get_local $$312)
       )
     )
@@ -2338,7 +2338,7 @@
       )
     )
     (set_local $$121
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$295)
           (i32.const 8)
@@ -2346,32 +2346,32 @@
       )
     )
     (set_local $$64
-      (i64.load offset=288 align=8
+      (i64.load offset=288
         (get_local $$312)
       )
     )
     (set_local $$65
-      (i64.load offset=272 align=8
+      (i64.load offset=272
         (get_local $$312)
       )
     )
     (set_local $$66
-      (i64.load offset=304 align=8
+      (i64.load offset=304
         (get_local $$312)
       )
     )
     (set_local $$86
-      (i64.load offset=256 align=8
+      (i64.load offset=256
         (get_local $$312)
       )
     )
     (set_local $$107
-      (i64.load offset=320 align=8
+      (i64.load offset=320
         (get_local $$312)
       )
     )
     (set_local $$108
-      (i64.load offset=448 align=8
+      (i64.load offset=448
         (get_local $$312)
       )
     )
@@ -2385,7 +2385,7 @@
       )
     )
     (set_local $$129
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$296)
           (i32.const 8)
@@ -2402,7 +2402,7 @@
       )
     )
     (set_local $$130
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$297)
           (i32.const 8)
@@ -2410,17 +2410,17 @@
       )
     )
     (set_local $$37
-      (i64.load offset=864 align=8
+      (i64.load offset=864
         (get_local $$312)
       )
     )
     (set_local $$38
-      (i64.load offset=848 align=8
+      (i64.load offset=848
         (get_local $$312)
       )
     )
     (set_local $$39
-      (i64.load offset=880 align=8
+      (i64.load offset=880
         (get_local $$312)
       )
     )
@@ -2434,7 +2434,7 @@
       )
     )
     (set_local $$131
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$298)
           (i32.const 8)
@@ -2442,17 +2442,17 @@
       )
     )
     (set_local $$122
-      (i64.load offset=736 align=8
+      (i64.load offset=736
         (get_local $$312)
       )
     )
     (set_local $$123
-      (i64.load offset=720 align=8
+      (i64.load offset=720
         (get_local $$312)
       )
     )
     (set_local $$124
-      (i64.load offset=752 align=8
+      (i64.load offset=752
         (get_local $$312)
       )
     )
@@ -2466,7 +2466,7 @@
       )
     )
     (set_local $$132
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$299)
           (i32.const 8)
@@ -2483,7 +2483,7 @@
       )
     )
     (set_local $$133
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$300)
           (i32.const 8)
@@ -2500,7 +2500,7 @@
       )
     )
     (set_local $$134
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$301)
           (i32.const 8)
@@ -2517,7 +2517,7 @@
       )
     )
     (set_local $$135
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$302)
           (i32.const 8)
@@ -2534,7 +2534,7 @@
       )
     )
     (set_local $$141
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$303)
           (i32.const 8)
@@ -2551,7 +2551,7 @@
       )
     )
     (set_local $$142
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$304)
           (i32.const 8)
@@ -2559,17 +2559,17 @@
       )
     )
     (set_local $$99
-      (i64.load offset=768 align=8
+      (i64.load offset=768
         (get_local $$312)
       )
     )
     (set_local $$100
-      (i64.load offset=784 align=8
+      (i64.load offset=784
         (get_local $$312)
       )
     )
     (set_local $$101
-      (i64.load offset=800 align=8
+      (i64.load offset=800
         (get_local $$312)
       )
     )
@@ -2583,7 +2583,7 @@
       )
     )
     (set_local $$143
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$305)
           (i32.const 8)
@@ -2591,27 +2591,27 @@
       )
     )
     (set_local $$136
-      (i64.load offset=640 align=8
+      (i64.load offset=640
         (get_local $$312)
       )
     )
     (set_local $$137
-      (i64.load offset=656 align=8
+      (i64.load offset=656
         (get_local $$312)
       )
     )
     (set_local $$138
-      (i64.load offset=672 align=8
+      (i64.load offset=672
         (get_local $$312)
       )
     )
     (set_local $$43
-      (i64.load offset=816 align=8
+      (i64.load offset=816
         (get_local $$312)
       )
     )
     (set_local $$128
-      (i64.load offset=688 align=8
+      (i64.load offset=688
         (get_local $$312)
       )
     )
@@ -2625,7 +2625,7 @@
       )
     )
     (set_local $$144
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$306)
           (i32.const 8)
@@ -2633,12 +2633,12 @@
       )
     )
     (set_local $$103
-      (i64.load offset=832 align=8
+      (i64.load offset=832
         (get_local $$312)
       )
     )
     (set_local $$140
-      (i64.load offset=704 align=8
+      (i64.load offset=704
         (get_local $$312)
       )
     )
@@ -2652,7 +2652,7 @@
       )
     )
     (set_local $$145
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$307)
           (i32.const 8)
@@ -2669,7 +2669,7 @@
       )
     )
     (set_local $$149
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$308)
           (i32.const 8)
@@ -2686,7 +2686,7 @@
       )
     )
     (set_local $$150
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$309)
           (i32.const 8)
@@ -2703,7 +2703,7 @@
       )
     )
     (set_local $$151
-      (i64.load align=8
+      (i64.load
         (i32.add
           (get_local $$310)
           (i32.const 8)
@@ -2711,82 +2711,82 @@
       )
     )
     (set_local $$40
-      (i64.load offset=1008 align=8
+      (i64.load offset=1008
         (get_local $$312)
       )
     )
     (set_local $$41
-      (i64.load offset=960 align=8
+      (i64.load offset=960
         (get_local $$312)
       )
     )
     (set_local $$42
-      (i64.load offset=976 align=8
+      (i64.load offset=976
         (get_local $$312)
       )
     )
     (set_local $$56
-      (i64.load offset=912 align=8
+      (i64.load offset=912
         (get_local $$312)
       )
     )
     (set_local $$57
-      (i64.load offset=928 align=8
+      (i64.load offset=928
         (get_local $$312)
       )
     )
     (set_local $$58
-      (i64.load offset=944 align=8
+      (i64.load offset=944
         (get_local $$312)
       )
     )
     (set_local $$85
-      (i64.load offset=896 align=8
+      (i64.load offset=896
         (get_local $$312)
       )
     )
     (set_local $$102
-      (i64.load offset=992 align=8
+      (i64.load offset=992
         (get_local $$312)
       )
     )
     (set_local $$125
-      (i64.load offset=592 align=8
+      (i64.load offset=592
         (get_local $$312)
       )
     )
     (set_local $$126
-      (i64.load offset=608 align=8
+      (i64.load offset=608
         (get_local $$312)
       )
     )
     (set_local $$127
-      (i64.load offset=624 align=8
+      (i64.load offset=624
         (get_local $$312)
       )
     )
     (set_local $$139
-      (i64.load offset=576 align=8
+      (i64.load offset=576
         (get_local $$312)
       )
     )
     (set_local $$146
-      (i64.load offset=528 align=8
+      (i64.load offset=528
         (get_local $$312)
       )
     )
     (set_local $$147
-      (i64.load offset=544 align=8
+      (i64.load offset=544
         (get_local $$312)
       )
     )
     (set_local $$148
-      (i64.load offset=560 align=8
+      (i64.load offset=560
         (get_local $$312)
       )
     )
     (set_local $$152
-      (i64.load offset=512 align=8
+      (i64.load offset=512
         (get_local $$312)
       )
     )
@@ -2799,7 +2799,7 @@
         (get_local $$311)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 8)
@@ -2807,7 +2807,7 @@
       (i64.select
         (i64.select
           (i64.select
-            (i64.load align=8
+            (i64.load
               (i32.add
                 (get_local $$311)
                 (i32.const 8)
@@ -2838,7 +2838,7 @@
         )
       )
     )
-    (i64.store align=8
+    (i64.store
       (get_local $$0)
       (i64.select
         (i64.select
@@ -2854,7 +2854,7 @@
         (get_local $$166)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 24)
@@ -2885,7 +2885,7 @@
         (get_local $$166)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 16)
@@ -2911,7 +2911,7 @@
         (get_local $$166)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 56)
@@ -2974,7 +2974,7 @@
         (get_local $$166)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 48)
@@ -3022,7 +3022,7 @@
         (get_local $$166)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 40)
@@ -3068,7 +3068,7 @@
         (get_local $$166)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 32)
@@ -3109,7 +3109,7 @@
         (get_local $$166)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 120)
@@ -3249,7 +3249,7 @@
         (get_local $$165)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 112)
@@ -3349,7 +3349,7 @@
         (get_local $$165)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 104)
@@ -3452,7 +3452,7 @@
         (get_local $$165)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 96)
@@ -3545,7 +3545,7 @@
         (get_local $$165)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 72)
@@ -3621,7 +3621,7 @@
         (get_local $$165)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 64)
@@ -3692,7 +3692,7 @@
         (get_local $$165)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 88)
@@ -3775,7 +3775,7 @@
         (get_local $$165)
       )
     )
-    (i64.store align=8
+    (i64.store
       (i32.add
         (get_local $$0)
         (i32.const 80)
@@ -3866,7 +3866,7 @@
       (i32.const 1)
     )
     (set_local $$312
-      (i32.store align=4
+      (i32.store
         (get_local $$185)
         (get_local $$312)
       )
