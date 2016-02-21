@@ -376,7 +376,6 @@ int main(int argc, const char* argv[]) {
   if (options.debug) std::cerr << "parsing text to s-expressions...\n";
   SExpressionParser parser(input.data());
   Element& root = *parser.root;
-  if (options.debug) std::cout << root << '\n';
 
   // A .wast may have multiple modules, with some asserts after them
   bool checked = false;

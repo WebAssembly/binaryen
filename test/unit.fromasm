@@ -426,6 +426,26 @@
       (br $for-in$1)
     )
   )
+  (func $ceiling_32_64 (param $u f32) (param $B f64)
+    (local $temp f32)
+    (set_local $temp
+      (f32.demote/f64
+        (f64.ceil
+          (get_local $B)
+        )
+      )
+    )
+    (set_local $temp
+      (f32.mul
+        (get_local $u)
+        (f32.ceil
+          (f32.demote/f64
+            (get_local $B)
+          )
+        )
+      )
+    )
+  )
   (func $z
     (nop)
   )

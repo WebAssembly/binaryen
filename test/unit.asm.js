@@ -6,6 +6,7 @@ function asm() {
   var Double = 0.0;
   var Math_fround = global.Math.fround;
   var Math_abs = global.Math.abs;
+  var Math_ceil = global.Math.ceil;
 
   function big_negative() {
     var temp = 0.0;
@@ -134,6 +135,13 @@ function asm() {
     for (i = 1; (i | 0) < 200; i = i + 1 | 0) {
       h(i | 0);
     }
+  }
+  function ceiling_32_64(u, B) {
+    u = Math_fround(u);
+    B = +B;
+    var temp = Math_fround(0);
+    temp = Math_fround(Math_ceil(B));
+    temp = Math_fround(u * Math_fround(Math_ceil(Math_fround(B))));
   }
 
   function z() {
