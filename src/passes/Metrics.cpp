@@ -30,8 +30,7 @@ struct Metrics : public WalkerPass<WasmWalker<Metrics>> {
   map<const char *, int> counts;
   void walk(Expression *&curr) override {
     WalkerPass::walk(curr);
-    if (!curr)
-      return;
+    if (!curr) return;
     auto name = getExpressionName(curr);
     counts[name]++;
   }
@@ -40,8 +39,10 @@ struct Metrics : public WalkerPass<WasmWalker<Metrics>> {
     o << "Counts"
       << "\n";
     vector<const char*> keys;
+    int total = 0;
     for (auto i : counts) {
       keys.push_back(i.first);
+      total += i.second;
     }
     sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
       return strcmp(b, a) > 0;
@@ -68,6 +69,7 @@ struct Metrics : public WalkerPass<WasmWalker<Metrics>> {
       }
       o << "\n";
     }
+    o << left << setw(16) << "Total" << ": " << setw(8) << total << '\n';
     lastMetricsPass = this;
   }
 };
