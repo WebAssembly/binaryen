@@ -104,6 +104,7 @@ inline const char* printWasmType(WasmType type) {
     case WasmType::i64: return "i64";
     case WasmType::f32: return "f32";
     case WasmType::f64: return "f64";
+    case WasmType::unreachable: return "unreachable";
     default: WASM_UNREACHABLE();
   }
 }
@@ -687,12 +688,6 @@ enum HostOp {
   PageSize, MemorySize, GrowMemory, HasFeature
 };
 
-#define assert_node(condition, node) \
-  if (!(condition)) { \
-    std::cerr << "node: " << (node) << std::endl; \
-    assert(0 && #condition); \
-  }
-
 //
 // Expressions
 //
@@ -981,7 +976,7 @@ public:
     if (isRelational()) {
       type = i32;
     } else {
-      assert_node(left->type != unreachable && right->type != unreachable ? left->type == right->type : true, this);
+      assert(left->type != unreachable && right->type != unreachable ? left->type == right->type : true);
       type = getReachableWasmType(left->type, right->type);
     }
   }
