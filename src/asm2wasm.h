@@ -197,6 +197,7 @@ private:
   IString Math_fround;
   IString Math_abs;
   IString Math_floor;
+  IString Math_ceil;
   IString Math_sqrt;
 
   // function types. we fill in this information as we see
@@ -457,6 +458,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         } else if (imported[2] == FLOOR) {
           assert(Math_floor.isNull());
           Math_floor = name;
+          return;
+        } else if (imported[2] == CEIL) {
+          assert(Math_ceil.isNull());
+          Math_ceil = name;
           return;
         } else if (imported[2] == SQRT) {
           assert(Math_sqrt.isNull());
@@ -1126,12 +1131,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             abort();
           }
         }
-        if (name == Math_floor || name == Math_sqrt) {
+        if (name == Math_floor || name == Math_sqrt || name == Math_ceil) {
           // overloaded on type: f32 or f64
           Expression* value = process(ast[2][0]);
           if (value->type == f32 || value->type == f64) {
             auto ret = allocator.alloc<Unary>();
-            ret->op = name == Math_floor ? Floor : Sqrt;
+            ret->op = name == Math_floor ? Floor : name == Math_ceil ? Ceil : Sqrt;
             ret->value = value;
             ret->type = value->type;
             return ret;
