@@ -128,6 +128,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       }
       return Literal();
     } else if (import->module == ENV && import->base == EXIT) {
+      // XXX hack for torture tests
       std::cout << "exit()\n";
       throw ExitException();
     }
