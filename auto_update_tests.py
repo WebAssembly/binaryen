@@ -52,6 +52,10 @@ for t in sorted(os.listdir(os.path.join('test', 'print'))):
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     open(os.path.join('test', 'print', wasm + '.txt'), 'w').write(actual)
+    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join('test', 'print', t), '--print-minified']
+    print '    ', ' '.join(cmd)
+    actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    open(os.path.join('test', 'print', wasm + '.minified.txt'), 'w').write(actual)
 
 for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):

@@ -156,11 +156,21 @@ private:
 
 // Prints out a module
 class Printer : public Pass {
+protected:
   std::ostream& o;
 
 public:
   Printer() : o(std::cout) {}
   Printer(std::ostream& o) : o(o) {}
+
+  void run(PassRunner* runner, Module* module) override;
+};
+
+// Prints out a minified module
+class MinifiedPrinter : public Printer {
+public:
+  MinifiedPrinter() : Printer() {}
+  MinifiedPrinter(std::ostream& o) : Printer(o) {}
 
   void run(PassRunner* runner, Module* module) override;
 };

@@ -220,6 +220,24 @@ def binary_format_check(wast, verify_final_result=True):
 
   return 'ab.wast'
 
+def minify_check(wast, verify_final_result=True):
+  # checks we can parse minified output
+
+  print '     (minify check)'
+  cmd = [os.path.join('bin', 'binaryen-shell'), wast, '--print-minified']
+  print '      ', ' '.join(cmd)
+  subprocess.check_call([os.path.join('bin', 'binaryen-shell'), wast, '--print-minified'], stdout=open('a.wasm', 'w'), stderr=subprocess.PIPE)
+  assert os.path.exists('a.wasm')
+  subprocess.check_call([os.path.join('bin', 'binaryen-shell'), 'a.wasm', '--print-minified'], stdout=open('b.wasm', 'w'), stderr=subprocess.PIPE)
+  assert os.path.exists('b.wasm')
+  if verify_final_result:
+    expected = open('a.wasm').read()
+    actual = open('b.wasm').read()
+    if actual != expected:
+      fail(actual, expected)
+  if os.path.exists('a.wasm'): os.unlink('a.wasm')
+  if os.path.exists('b.wasm'): os.unlink('b.wasm')
+
 # tests
 
 print '[ checking --help is useful... ]\n'
@@ -284,11 +302,15 @@ print '\n[ checking binaryen-shell parsing & printing... ]\n'
 for t in sorted(os.listdir(os.path.join('test', 'print'))):
   if t.endswith('.wast'):
     print '..', t
-    name = os.path.basename(t).replace('.wast', '')
+    wasm = os.path.basename(t).replace('.wast', '')
     cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join('test', 'print', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    fail_if_not_identical(actual, open(os.path.join('test', 'print', name + '.txt')).read())
+    fail_if_not_identical(actual, open(os.path.join('test', 'print', wasm + '.txt')).read())
+    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join('test', 'print', t), '--print-minified']
+    print '    ', ' '.join(cmd)
+    actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    fail_if_not_identical(actual, open(os.path.join('test', 'print', wasm + '.minified.txt')).read())
 
 print '\n[ checking binaryen-shell passes... ]\n'
 
@@ -319,6 +341,7 @@ for t in tests:
       fail(actual, expected)
 
     binary_format_check(t)
+    minify_check(t)
 
 print '\n[ checking binaryen-shell spec testcases... ]\n'
 

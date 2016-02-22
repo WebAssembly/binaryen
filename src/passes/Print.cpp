@@ -26,33 +26,51 @@ namespace wasm {
 struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   std::ostream& o;
   unsigned indent;
+  bool minify;
+  const char *maybeSpace;
+  const char *maybeNewLine;
 
-  PrintSExpression(std::ostream& o) : o(o), indent(0) {}
-
-  void printFullLine(Expression *expression) {
-    doIndent(o, indent);
-    visit(expression);
-    o << '\n';
+  PrintSExpression(std::ostream& o, bool minify = false)
+    : o(o), indent(0), minify(minify) {
+    maybeSpace = minify ? "" : " ";
+    maybeNewLine = minify ? "" : "\n";
   }
 
+  void incIndent() {
+    if (minify) return;
+    o << '\n';
+    indent++;
+  }
+  void decIndent() {
+    if (!minify) {
+      indent--;
+      doIndent(o, indent);
+    }
+    o << ')';
+  }
+  void printFullLine(Expression *expression) {
+    !minify && doIndent(o, indent);
+    visit(expression);
+    o << maybeNewLine;
+  }
   void visitBlock(Block *curr) {
     printOpening(o, "block");
     if (curr->name.is()) {
       o << ' ' << curr->name;
     }
-    incIndent(o, indent);
+    incIndent();
     for (auto expression : curr->list) {
       printFullLine(expression);
     }
-    decIndent(o, indent);
+    decIndent();
   }
   void visitIf(If *curr) {
     printOpening(o, curr->ifFalse ? "if_else" : "if");
-    incIndent(o, indent);
+    incIndent();
     printFullLine(curr->condition);
     printFullLine(curr->ifTrue);
     if (curr->ifFalse) printFullLine(curr->ifFalse);
-    decIndent(o, indent);
+    decIndent();
   }
   void visitLoop(Loop *curr) {
     printOpening(o, "loop");
@@ -63,7 +81,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     if (curr->in.is()) {
       o << ' ' << curr->in;
     }
-    incIndent(o, indent);
+    incIndent();
     auto block = curr->body->dyn_cast<Block>();
     if (block && block->name.isNull()) {
       // wasm spec has loops containing children directly, while our ast
@@ -74,12 +92,12 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     } else {
       printFullLine(curr->body);
     }
-    decIndent(o, indent);
+    decIndent();
   }
   void visitBreak(Break *curr) {
     if (curr->condition) {
       printOpening(o, "br_if ") << curr->name;
-      incIndent(o, indent);
+      incIndent();
     } else {
       printOpening(o, "br ") << curr->name;
       if (!curr->value || curr->value->is<Nop>()) {
@@ -87,18 +105,18 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
         o << ")";
         return;
       }
-      incIndent(o, indent);
+      incIndent();
     }
     if (curr->value && !curr->value->is<Nop>()) printFullLine(curr->value);
     if (curr->condition) {
       printFullLine(curr->condition);
     }
-    decIndent(o, indent);
+    decIndent();
   }
   void visitSwitch(Switch *curr) {
     printOpening(o, "tableswitch ");
     if (curr->name.is()) o << curr->name;
-    incIndent(o, indent);
+    incIndent();
     printFullLine(curr->value);
     doIndent(o, indent) << "(table";
     std::set<Name> caseNames;
@@ -106,29 +124,30 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
       caseNames.insert(c.name);
     }
     for (auto& t : curr->targets) {
-      o << " (" << (caseNames.count(t) == 0 ? "br" : "case") << " " << (t.is() ? t : curr->default_) << ")";
+      o << maybeSpace << "(" << (caseNames.count(t) == 0 ? "br" : "case") << " " << (t.is() ? t : curr->default_) << ")";
     }
     o << ")";
     if (curr->default_.is()) o << " (" << (caseNames.count(curr->default_) == 0 ? "br" : "case") << " " << curr->default_ << ")";
-    o << "\n";
+    o << maybeNewLine;
     for (auto& c : curr->cases) {
       doIndent(o, indent);
       printMinorOpening(o, "case ") << c.name;
-      incIndent(o, indent);
+      incIndent();
       printFullLine(c.body);
-      decIndent(o, indent) << '\n';
+      decIndent();
+      o << maybeNewLine;
     }
-    decIndent(o, indent);
+    decIndent();
   }
 
   void printCallBody(Call* curr) {
     o << curr->target;
     if (curr->operands.size() > 0) {
-      incIndent(o, indent);
+      incIndent();
       for (auto operand : curr->operands) {
         printFullLine(operand);
       }
-      decIndent(o, indent);
+      decIndent();
     } else {
       o << ')';
     }
@@ -144,21 +163,21 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   }
   void visitCallIndirect(CallIndirect *curr) {
     printOpening(o, "call_indirect ") << curr->fullType->name;
-    incIndent(o, indent);
+    incIndent();
     printFullLine(curr->target);
     for (auto operand : curr->operands) {
       printFullLine(operand);
     }
-    decIndent(o, indent);
+    decIndent();
   }
   void visitGetLocal(GetLocal *curr) {
     printOpening(o, "get_local ") << curr->name << ')';
   }
   void visitSetLocal(SetLocal *curr) {
     printOpening(o, "set_local ") << curr->name;
-    incIndent(o, indent);
+    incIndent();
     printFullLine(curr->value);
-    decIndent(o, indent);
+    decIndent();
   }
   void visitLoad(Load *curr) {
     o << '(';
@@ -182,9 +201,9 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     if (curr->align != curr->bytes) {
       o << " align=" << curr->align;
     }
-    incIndent(o, indent);
+    incIndent();
     printFullLine(curr->ptr);
-    decIndent(o, indent);
+    decIndent();
   }
   void visitStore(Store *curr) {
     o << '(';
@@ -207,10 +226,10 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     if (curr->align != curr->bytes) {
       o << " align=" << curr->align;
     }
-    incIndent(o, indent);
+    incIndent();
     printFullLine(curr->ptr);
     printFullLine(curr->value);
-    decIndent(o, indent);
+    decIndent();
   }
   void visitConst(Const *curr) {
     o << curr->value;
@@ -246,9 +265,9 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
       case ReinterpretInt:   o << "reinterpret/" << (curr->type == f64 ? "i64" : "i32"); break;
       default: abort();
     }
-    incIndent(o, indent);
+    incIndent();
     printFullLine(curr->value);
-    decIndent(o, indent);
+    decIndent();
   }
   void visitBinary(Binary *curr) {
     o << '(';
@@ -288,19 +307,19 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
       default:       abort();
     }
     restoreNormalColor(o);
-    incIndent(o, indent);
+    incIndent();
     printFullLine(curr->left);
     printFullLine(curr->right);
-    decIndent(o, indent);
+    decIndent();
   }
   void visitSelect(Select *curr) {
     o << '(';
     prepareColor(o) << printWasmType(curr->type) << ".select";
-    incIndent(o, indent);
+    incIndent();
     printFullLine(curr->ifTrue);
     printFullLine(curr->ifFalse);
     printFullLine(curr->condition);
-    decIndent(o, indent);
+    decIndent();
   }
   void visitReturn(Return *curr) {
     printOpening(o, "return");
@@ -309,9 +328,9 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
       o << ")";
       return;
     }
-    incIndent(o, indent);
+    incIndent();
     printFullLine(curr->value);
-    decIndent(o, indent);
+    decIndent();
   }
   void visitHost(Host *curr) {
     switch (curr->op) {
@@ -319,9 +338,9 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
       case MemorySize: printOpening(o, "memory_size") << ')'; break;
       case GrowMemory: {
         printOpening(o, "grow_memory");
-        incIndent(o, indent);
+        incIndent();
         printFullLine(curr->operands[0]);
-        decIndent(o, indent);
+        decIndent();
         break;
       }
       case HasFeature: printOpening(o, "hasfeature ") << curr->nameOperand << ')'; break;
@@ -340,7 +359,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
       printOpening(o, "type") << ' ' << curr->name << " (func";
     }
     if (curr->params.size() > 0) {
-      o << ' ';
+      o << maybeSpace;
       printMinorOpening(o, "param");
       for (auto& param : curr->params) {
         o << ' ' << printWasmType(param);
@@ -348,11 +367,11 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
       o << ')';
     }
     if (curr->result != none) {
-      o << ' ';
+      o << maybeSpace;
       printMinorOpening(o, "result ") << printWasmType(curr->result) << ')';
     }
     if (full) {
-      o << "))";;
+      o << "))";
     }
   }
   void visitImport(Import *curr) {
@@ -369,22 +388,23 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   void visitFunction(Function *curr) {
     printOpening(o, "func ", true) << curr->name;
     if (curr->type.is()) {
-      o << " (type " << curr->type << ')';
+      o << maybeSpace << "(type " << curr->type << ')';
     }
     if (curr->params.size() > 0) {
       for (auto& param : curr->params) {
-        o << ' ';
+        o << maybeSpace;
         printMinorOpening(o, "param ") << param.name << ' ' << printWasmType(param.type) << ")";
       }
     }
     if (curr->result != none) {
-      o << ' ';
+      o << maybeSpace;
       printMinorOpening(o, "result ") << printWasmType(curr->result) << ")";
     }
-    incIndent(o, indent);
+    incIndent();
     for (auto& local : curr->locals) {
       doIndent(o, indent);
-      printMinorOpening(o, "local ") << local.name << ' ' << printWasmType(local.type) << ")\n";
+      printMinorOpening(o, "local ") << local.name << ' ' << printWasmType(local.type) << ")";
+      o << maybeNewLine;
     }
     // It is ok to emit a block here, as a function can directly contain a list, even if our
     // ast avoids that for simplicity. We can just do that optimization here..
@@ -396,7 +416,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     } else {
       printFullLine(curr->body);
     }
-    decIndent(o, indent);
+    decIndent();
   }
   void visitTable(Table *curr) {
     printOpening(o, "table");
@@ -407,12 +427,13 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   }
   void visitModule(Module *curr) {
     printOpening(o, "module", true);
-    incIndent(o, indent);
+    incIndent();
     doIndent(o, indent);
     printOpening(o, "memory") << " " << curr->memory.initial;
     if (curr->memory.max && curr->memory.max != (uint32_t)-1) o << " " << curr->memory.max;
     for (auto segment : curr->memory.segments) {
-      o << "\n    (segment " << segment.offset << " \"";
+      o << maybeNewLine;
+      o << (minify ? "" : "    ") << "(segment " << segment.offset << " \"";
       for (size_t i = 0; i < segment.size; i++) {
         unsigned char c = segment.data[i];
         switch (c) {
@@ -435,38 +456,40 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
       }
       o << "\")";
     }
-    o << (curr->memory.segments.size() > 0 ? "\n  " : "") << ")\n";
+    o << ((curr->memory.segments.size() > 0 && !minify) ? "\n  " : "") << ")";
+    o << maybeNewLine;
     if (curr->start.is()) {
       doIndent(o, indent);
-      printOpening(o, "start") << " " << curr->start << ")\n";
+      printOpening(o, "start") << " " << curr->start << ")";
+      o << maybeNewLine;
     }
     for (auto& child : curr->functionTypes) {
       doIndent(o, indent);
       visitFunctionType(child, true);
-      o << '\n';
+      o << maybeNewLine;
     }
     for (auto& child : curr->imports) {
       doIndent(o, indent);
       visitImport(child);
-      o << '\n';
+      o << maybeNewLine;
     }
     for (auto& child : curr->exports) {
       doIndent(o, indent);
       visitExport(child);
-      o << '\n';
+      o << maybeNewLine;
     }
     if (curr->table.names.size() > 0) {
       doIndent(o, indent);
       visitTable(&curr->table);
-      o << '\n';
+      o << maybeNewLine;
     }
     for (auto& child : curr->functions) {
       doIndent(o, indent);
       visitFunction(child);
-      o << '\n';
+      o << maybeNewLine;
     }
-    decIndent(o, indent);
-    o << '\n';
+    decIndent();
+    o << maybeNewLine;
   }
 };
 
@@ -479,10 +502,18 @@ void Printer::run(PassRunner* runner, Module* module) {
 
 static RegisterPass<Printer> registerPass("print", "print in s-expression format");
 
+void MinifiedPrinter::run(PassRunner* runner, Module* module) {
+  PrintSExpression print(o, true);
+  print.visitModule(module);
+}
+
+
+static RegisterPass<MinifiedPrinter> registerMinifyPass("print-minified", "print in minified s-expression format");
+
 // Print individual expressions
 
-std::ostream& printWasm(Expression* expression, std::ostream& o) {
-  PrintSExpression print(o);
+std::ostream& printWasm(Expression* expression, std::ostream& o, bool minify = false) {
+  PrintSExpression print(o, minify);
   print.visit(expression);
   return o;
 }
