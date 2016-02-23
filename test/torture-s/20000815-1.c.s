@@ -117,38 +117,38 @@ remove_from_table:                      # @remove_from_table
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$4=, __stack_pointer
-	i32.load	$4=, 0($4)
-	i32.const	$5=, 48
-	i32.sub 	$10=, $4, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$10=, 0($5), $10
+	i32.const	$push17=, __stack_pointer
+	i32.load	$push18=, 0($pop17)
+	i32.const	$push19=, 48
+	i32.sub 	$7=, $pop18, $pop19
+	i32.const	$push20=, __stack_pointer
+	i32.store	$discard=, 0($pop20), $7
 	i32.const	$1=, 0
 	i32.const	$push8=, 0
 	i32.const	$push0=, 40
-	i32.const	$7=, 8
-	i32.add 	$7=, $10, $7
-	i32.call	$discard=, memset@FUNCTION, $7, $pop8, $pop0
+	i32.const	$4=, 8
+	i32.add 	$4=, $7, $4
+	i32.call	$discard=, memset@FUNCTION, $4, $pop8, $pop0
 	i32.const	$push1=, 1
-	i32.store8	$0=, 44($10):p2align=2, $pop1
+	i32.store8	$0=, 44($7):p2align=2, $pop1
 	i32.const	$push7=, 0
-	i32.const	$8=, 8
-	i32.add 	$8=, $10, $8
-	i32.store	$discard=, table($pop7):p2align=4, $8
-	i32.const	$9=, 8
-	i32.add 	$9=, $10, $9
-	copy_local	$2=, $9
+	i32.const	$5=, 8
+	i32.add 	$5=, $7, $5
+	i32.store	$discard=, table($pop7):p2align=4, $5
+	i32.const	$6=, 8
+	i32.add 	$6=, $7, $6
+	copy_local	$2=, $6
 .LBB3_1:                                # %for.body.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB3_2 Depth 2
 	block
 	loop                            # label8:
 	block
-	i32.const	$push17=, 0
-	i32.eq  	$push18=, $2, $pop17
-	br_if   	0, $pop18       # 0: down to label10
+	i32.const	$push23=, 0
+	i32.eq  	$push24=, $2, $pop23
+	br_if   	0, $pop24       # 0: down to label10
 .LBB3_2:                                # %for.body6.i
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
@@ -188,10 +188,10 @@ main:                                   # @main
 .LBB3_7:                                # %invalidate_memory.exit
 	end_loop                        # label9:
 	i32.const	$push5=, 0
-	i32.const	$6=, 48
-	i32.add 	$10=, $10, $6
-	i32.const	$6=, __stack_pointer
-	i32.store	$10=, 0($6), $10
+	i32.const	$push21=, 48
+	i32.add 	$7=, $7, $pop21
+	i32.const	$push22=, __stack_pointer
+	i32.store	$discard=, 0($pop22), $7
 	return  	$pop5
 .LBB3_8:                                # %if.then.i
 	end_block                       # label7:

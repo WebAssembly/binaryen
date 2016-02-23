@@ -7,23 +7,23 @@
 foo:                                    # @foo
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 16
-	i32.sub 	$5=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$5=, 0($3), $5
-	i32.store	$discard=, 0($5):p2align=4, $1
+	i32.const	$push3=, __stack_pointer
+	i32.load	$push4=, 0($pop3)
+	i32.const	$push5=, 16
+	i32.sub 	$2=, $pop4, $pop5
+	i32.const	$push6=, __stack_pointer
+	i32.store	$discard=, 0($pop6), $2
+	i32.store	$discard=, 0($2):p2align=4, $1
 	i32.const	$push2=, .L.str
-	i32.call	$discard=, sprintf@FUNCTION, $0, $pop2, $5
+	i32.call	$discard=, sprintf@FUNCTION, $0, $pop2, $2
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
-	i32.const	$4=, 16
-	i32.add 	$5=, $5, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$5=, 0($4), $5
+	i32.const	$push7=, 16
+	i32.add 	$2=, $2, $pop7
+	i32.const	$push8=, __stack_pointer
+	i32.store	$discard=, 0($pop8), $2
 	return  	$pop1
 	.endfunc
 .Lfunc_end0:
@@ -35,28 +35,28 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, __stack_pointer
-	i32.load	$0=, 0($0)
-	i32.const	$1=, 16
-	i32.sub 	$5=, $0, $1
-	i32.const	$1=, __stack_pointer
-	i32.store	$5=, 0($1), $5
+	i32.const	$push4=, __stack_pointer
+	i32.load	$push5=, 0($pop4)
+	i32.const	$push6=, 16
+	i32.sub 	$2=, $pop5, $pop6
+	i32.const	$push7=, __stack_pointer
+	i32.store	$discard=, 0($pop7), $2
 	i32.const	$push0=, 2
-	i32.const	$3=, 10
-	i32.add 	$3=, $5, $3
-	i32.add 	$push1=, $3, $pop0
-	i32.store	$discard=, 0($5):p2align=4, $pop1
+	i32.const	$0=, 10
+	i32.add 	$0=, $2, $0
+	i32.add 	$push1=, $0, $pop0
+	i32.store	$discard=, 0($2):p2align=4, $pop1
 	i32.const	$push2=, .L.str
-	i32.const	$4=, 10
-	i32.add 	$4=, $5, $4
-	i32.call	$discard=, sprintf@FUNCTION, $4, $pop2, $5
+	i32.const	$1=, 10
+	i32.add 	$1=, $2, $1
+	i32.call	$discard=, sprintf@FUNCTION, $1, $pop2, $2
 	i32.const	$push3=, 0
-	i32.const	$2=, 16
-	i32.add 	$5=, $5, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$5=, 0($2), $5
+	i32.const	$push8=, 16
+	i32.add 	$2=, $2, $pop8
+	i32.const	$push9=, __stack_pointer
+	i32.store	$discard=, 0($pop9), $2
 	return  	$pop3
 	.endfunc
 .Lfunc_end1:

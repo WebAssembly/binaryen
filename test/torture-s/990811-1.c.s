@@ -11,30 +11,27 @@ foo:                                    # @foo
 	block
 	block
 	block
-	block
 	i32.const	$push0=, 2
 	i32.eq  	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label3
+	br_if   	0, $pop1        # 0: down to label2
 # BB#1:                                 # %entry
 	i32.const	$push2=, 1
 	i32.eq  	$push3=, $0, $pop2
-	br_if   	1, $pop3        # 1: down to label2
+	br_if   	1, $pop3        # 1: down to label1
 # BB#2:                                 # %entry
-	br_if   	3, $0           # 3: down to label0
+	br_if   	2, $0           # 2: down to label0
 # BB#3:                                 # %sw.bb
 	i32.load	$0=, 0($1)
-	br      	2               # 2: down to label1
-.LBB0_4:                                # %sw.bb2
-	end_block                       # label3:
-	i32.load16_s	$0=, 0($1)
-	br      	1               # 1: down to label1
-.LBB0_5:                                # %sw.bb1
-	end_block                       # label2:
-	i32.load8_s	$0=, 0($1)
-.LBB0_6:                                # %return
-	end_block                       # label1:
 	return  	$0
-.LBB0_7:                                # %sw.epilog
+.LBB0_4:                                # %sw.bb2
+	end_block                       # label2:
+	i32.load16_s	$0=, 0($1)
+	return  	$0
+.LBB0_5:                                # %sw.bb1
+	end_block                       # label1:
+	i32.load8_s	$0=, 0($1)
+	return  	$0
+.LBB0_6:                                # %sw.epilog
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

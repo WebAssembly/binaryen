@@ -14,22 +14,19 @@ foo:                                    # @foo
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.then
 	block
-	block
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $3, $pop4
-	br_if   	0, $pop5        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label1
 # BB#2:                                 # %if.then4
 	i32.select	$push1=, $1, $0, $4
 	i32.select	$push0=, $0, $1, $4
 	i32.sub 	$1=, $pop1, $pop0
-	br      	1               # 1: down to label1
-.LBB0_3:
-	end_block                       # label2:
-	i32.sub 	$1=, $0, $1
-.LBB0_4:                                # %if.end8
-	end_block                       # label1:
 	return  	$1
-.LBB0_5:                                # %if.end9
+.LBB0_3:
+	end_block                       # label1:
+	i32.sub 	$1=, $0, $1
+	return  	$1
+.LBB0_4:                                # %if.end9
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -53,12 +50,12 @@ main:                                   # @main
 	i32.call	$push3=, foo@FUNCTION, $pop2, $pop1, $pop0, $pop6, $pop5
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $pop3, $pop7
-	br_if   	0, $pop8        # 0: down to label3
+	br_if   	0, $pop8        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_2:                                # %if.then
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

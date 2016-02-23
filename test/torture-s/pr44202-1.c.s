@@ -54,35 +54,35 @@ add513:                                 # @add513
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$5=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$5=, 0($2), $5
+	i32.const	$push12=, __stack_pointer
+	i32.load	$push13=, 0($pop12)
+	i32.const	$push14=, 16
+	i32.sub 	$3=, $pop13, $pop14
+	i32.const	$push15=, __stack_pointer
+	i32.store	$discard=, 0($pop15), $3
 	i32.const	$push1=, -1
-	i32.store	$push2=, 12($5), $pop1
-	i32.store	$0=, 8($5), $pop2
+	i32.store	$push2=, 12($3), $pop1
+	i32.store	$0=, 8($3), $pop2
 	i32.const	$push3=, -512
-	i32.const	$3=, 12
-	i32.add 	$3=, $5, $3
+	i32.const	$1=, 12
+	i32.add 	$1=, $3, $1
 	block
-	i32.call	$push4=, add512@FUNCTION, $pop3, $3
+	i32.call	$push4=, add512@FUNCTION, $pop3, $1
 	br_if   	0, $pop4        # 0: down to label2
 # BB#1:                                 # %entry
-	i32.load	$push0=, 12($5)
+	i32.load	$push0=, 12($3)
 	i32.ne  	$push5=, $pop0, $0
 	br_if   	0, $pop5        # 0: down to label2
 # BB#2:                                 # %lor.lhs.false2
 	i32.const	$push10=, -513
-	i32.const	$4=, 8
-	i32.add 	$4=, $5, $4
-	i32.call	$push7=, add513@FUNCTION, $pop10, $4
+	i32.const	$2=, 8
+	i32.add 	$2=, $3, $2
+	i32.call	$push7=, add513@FUNCTION, $pop10, $2
 	br_if   	0, $pop7        # 0: down to label2
 # BB#3:                                 # %lor.lhs.false2
-	i32.load	$push6=, 8($5)
+	i32.load	$push6=, 8($3)
 	i32.const	$push11=, -513
 	i32.ne  	$push8=, $pop6, $pop11
 	br_if   	0, $pop8        # 0: down to label2

@@ -19,25 +19,25 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, __stack_pointer
-	i32.load	$0=, 0($0)
-	i32.const	$1=, 80
-	i32.sub 	$4=, $0, $1
-	i32.const	$1=, __stack_pointer
-	i32.store	$4=, 0($1), $4
+	i32.const	$push8=, __stack_pointer
+	i32.load	$push9=, 0($pop8)
+	i32.const	$push10=, 80
+	i32.sub 	$2=, $pop9, $pop10
+	i32.const	$push11=, __stack_pointer
+	i32.store	$discard=, 0($pop11), $2
 	i32.const	$push0=, gs
 	i32.const	$push1=, 72
-	i32.const	$2=, 8
-	i32.add 	$2=, $4, $2
-	i32.call	$discard=, memcpy@FUNCTION, $2, $pop0, $pop1
+	i32.const	$0=, 8
+	i32.add 	$0=, $2, $0
+	i32.call	$discard=, memcpy@FUNCTION, $0, $pop0, $pop1
 	i32.const	$push2=, 4660
 	i32.const	$push6=, 0
-	i32.const	$3=, 8
-	i32.add 	$3=, $4, $3
+	i32.const	$1=, 8
+	i32.add 	$1=, $2, $1
 	block
-	i32.call	$push3=, f@FUNCTION, $3, $pop2, $pop6
+	i32.call	$push3=, f@FUNCTION, $1, $pop2, $pop6
 	i32.const	$push5=, 4660
 	i32.ne  	$push4=, $pop3, $pop5
 	br_if   	0, $pop4        # 0: down to label0

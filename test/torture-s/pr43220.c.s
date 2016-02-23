@@ -6,16 +6,16 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$6=, __stack_pointer
-	i32.load	$8=, 0($6)
-	copy_local	$9=, $8
+	i32.const	$push27=, __stack_pointer
+	i32.load	$6=, 0($pop27)
+	copy_local	$7=, $6
 	i32.const	$4=, 0
 .LBB0_1:                                # %lab
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	copy_local	$0=, $8
+	copy_local	$0=, $6
 	i32.const	$push26=, 1000
 	i32.rem_s	$push0=, $4, $pop26
 	i32.const	$push25=, 2
@@ -25,8 +25,8 @@ main:                                   # @main
 	i32.add 	$push1=, $pop23, $pop22
 	i32.const	$push21=, -16
 	i32.and 	$push2=, $pop1, $pop21
-	i32.sub 	$1=, $8, $pop2
-	copy_local	$8=, $1
+	i32.sub 	$1=, $6, $pop2
+	copy_local	$6=, $1
 	i32.const	$push20=, 1
 	i32.store	$2=, 0($1):p2align=4, $pop20
 	i32.add 	$push3=, $1, $3
@@ -34,8 +34,8 @@ main:                                   # @main
 	i32.store	$3=, 0($pop3), $pop19
 	i32.const	$push18=, 0
 	i32.store	$discard=, p($pop18), $1
-	copy_local	$8=, $0
-	copy_local	$0=, $8
+	copy_local	$6=, $0
+	copy_local	$0=, $6
 	i32.add 	$push4=, $4, $2
 	i32.const	$push17=, 1000
 	i32.rem_s	$push5=, $pop4, $pop17
@@ -45,14 +45,14 @@ main:                                   # @main
 	i32.add 	$push6=, $pop15, $pop14
 	i32.const	$push13=, -16
 	i32.and 	$push7=, $pop6, $pop13
-	i32.sub 	$1=, $8, $pop7
-	copy_local	$8=, $1
+	i32.sub 	$1=, $6, $pop7
+	copy_local	$6=, $1
 	i32.store	$discard=, 0($1):p2align=4, $2
 	i32.add 	$push8=, $1, $5
 	i32.store	$2=, 0($pop8), $3
 	i32.const	$push12=, 0
 	i32.store	$discard=, p($pop12), $1
-	copy_local	$8=, $0
+	copy_local	$6=, $0
 	i32.add 	$4=, $4, $2
 	i32.const	$push11=, 1000000
 	i32.lt_s	$push9=, $4, $pop11
@@ -60,8 +60,6 @@ main:                                   # @main
 # BB#2:                                 # %if.end
 	end_loop                        # label1:
 	i32.const	$push10=, 0
-	i32.const	$7=, __stack_pointer
-	i32.store	$8=, 0($7), $9
 	return  	$pop10
 	.endfunc
 .Lfunc_end0:

@@ -35,17 +35,17 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$3=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$3=, 0($2), $3
+	i32.const	$push1=, __stack_pointer
+	i32.load	$push2=, 0($pop1)
+	i32.const	$push3=, 16
+	i32.sub 	$1=, $pop2, $pop3
+	i32.const	$push4=, __stack_pointer
+	i32.store	$discard=, 0($pop4), $1
 	i32.const	$push0=, 0
-	i32.store	$discard=, 0($3):p2align=4, $pop0
-	call    	bar@FUNCTION, $0, $3
+	i32.store	$discard=, 0($1):p2align=4, $pop0
+	call    	bar@FUNCTION, $0, $1
 	unreachable
 	.endfunc
 .Lfunc_end2:

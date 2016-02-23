@@ -118,83 +118,81 @@ DUPFFshift_add:                         # @DUPFFshift_add
 DUPFFexgcd:                             # @DUPFFexgcd
 	.param  	i32, i32, i32, i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$9=, __stack_pointer
-	i32.load	$9=, 0($9)
-	i32.const	$10=, 16
-	i32.sub 	$12=, $9, $10
-	i32.const	$10=, __stack_pointer
-	i32.store	$12=, 0($10), $12
-	i32.load	$8=, 4($2)
-	i32.load	$7=, 4($3)
-	i32.const	$push1=, 4
-	i32.or  	$6=, $12, $pop1
+	i32.const	$push28=, __stack_pointer
+	i32.load	$push29=, 0($pop28)
+	i32.const	$push30=, 16
+	i32.sub 	$8=, $pop29, $pop30
+	i32.const	$push31=, __stack_pointer
+	i32.store	$discard=, 0($pop31), $8
+	i32.load	$7=, 4($2)
+	i32.load	$6=, 4($3)
 .LBB7_1:                                # %tailrecurse
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.store	$discard=, 0($6), $7
-	i32.store	$discard=, 0($12):p2align=4, $8
+	i32.store	$discard=, 4($8), $6
+	i32.store	$discard=, 0($8):p2align=4, $7
 	copy_local	$5=, $3
 	copy_local	$3=, $2
 	copy_local	$4=, $1
 	copy_local	$1=, $0
-	i32.const	$push21=, .L.str
-	i32.call	$discard=, printf@FUNCTION, $pop21, $12
-	i32.load	$7=, 4($3)
-	i32.load	$8=, 4($5)
+	i32.const	$push20=, .L.str
+	i32.call	$discard=, printf@FUNCTION, $pop20, $8
+	i32.load	$6=, 4($3)
+	i32.load	$7=, 4($5)
 	copy_local	$0=, $4
 	copy_local	$2=, $5
-	i32.lt_s	$push2=, $7, $8
-	br_if   	0, $pop2        # 0: up to label1
+	i32.lt_s	$push1=, $6, $7
+	br_if   	0, $pop1        # 0: up to label1
 # BB#2:                                 # %if.end
 	end_loop                        # label2:
 	block
-	i32.const	$push3=, 2
-	i32.ne  	$push4=, $7, $pop3
-	br_if   	0, $pop4        # 0: down to label3
+	i32.const	$push2=, 2
+	i32.ne  	$push3=, $6, $pop2
+	br_if   	0, $pop3        # 0: down to label3
 # BB#3:                                 # %if.end
-	i32.const	$push5=, 1
-	i32.ne  	$push6=, $8, $pop5
-	br_if   	0, $pop6        # 0: down to label3
+	i32.const	$push4=, 1
+	i32.ne  	$push5=, $7, $pop4
+	br_if   	0, $pop5        # 0: down to label3
 # BB#4:                                 # %if.end11
 	block
-	i32.load	$push7=, 8($3)
-	i32.load	$push8=, 0($pop7)
-	i32.const	$push29=, 0
-	i32.eq  	$push30=, $pop8, $pop29
-	br_if   	0, $pop30       # 0: down to label4
+	i32.load	$push6=, 8($3)
+	i32.load	$push7=, 0($pop6)
+	i32.const	$push34=, 0
+	i32.eq  	$push35=, $pop7, $pop34
+	br_if   	0, $pop35       # 0: down to label4
 # BB#5:                                 # %DUPFFnew.exit167
-	i32.const	$push9=, 12
-	i32.call	$push27=, malloc@FUNCTION, $pop9
-	tee_local	$push26=, $8=, $pop27
-	i32.const	$push10=, 2
-	i32.const	$push25=, 4
-	i32.call	$push11=, calloc@FUNCTION, $pop10, $pop25
-	i32.store	$push12=, 8($pop26), $pop11
-	i32.const	$push13=, 1
-	i32.store	$push14=, 0($8), $pop13
-	i32.store	$2=, 0($pop12), $pop14
-	i32.const	$push15=, 0
-	i32.store	$discard=, 4($8), $pop15
-	i32.const	$push24=, 12
-	i32.call	$7=, malloc@FUNCTION, $pop24
-	i32.const	$push16=, 3
-	i32.const	$push23=, 4
-	i32.call	$0=, calloc@FUNCTION, $pop16, $pop23
-	i64.const	$push17=, -4294967294
-	i64.store	$discard=, 0($7):p2align=2, $pop17
+	i32.const	$push8=, 12
+	i32.call	$push26=, malloc@FUNCTION, $pop8
+	tee_local	$push25=, $7=, $pop26
+	i32.const	$push9=, 2
+	i32.const	$push24=, 4
+	i32.call	$push10=, calloc@FUNCTION, $pop9, $pop24
+	i32.store	$push11=, 8($pop25), $pop10
+	i32.const	$push12=, 1
+	i32.store	$push13=, 0($7), $pop12
+	i32.store	$2=, 0($pop11), $pop13
+	i32.const	$push14=, 0
+	i32.store	$discard=, 4($7), $pop14
+	i32.const	$push23=, 12
+	i32.call	$6=, malloc@FUNCTION, $pop23
+	i32.const	$push15=, 3
 	i32.const	$push22=, 4
-	i32.add 	$push18=, $5, $pop22
-	i32.load	$5=, 0($pop18)
-	i32.store	$discard=, 8($7), $0
+	i32.call	$0=, calloc@FUNCTION, $pop15, $pop22
+	i64.const	$push16=, -4294967294
+	i64.store	$discard=, 0($6):p2align=2, $pop16
+	i32.const	$push21=, 4
+	i32.add 	$push17=, $5, $pop21
+	i32.load	$5=, 0($pop17)
+	i32.store	$discard=, 8($6), $0
 	block
-	i32.lt_s	$push19=, $5, $2
-	br_if   	0, $pop19       # 0: down to label5
+	i32.lt_s	$push18=, $5, $2
+	br_if   	0, $pop18       # 0: down to label5
 # BB#6:                                 # %while.cond40.preheader.lr.ph
-	i32.const	$push28=, 4
-	i32.add 	$push20=, $3, $pop28
-	i32.load	$push0=, 0($pop20)
+	i32.const	$push27=, 4
+	i32.add 	$push19=, $3, $pop27
+	i32.load	$push0=, 0($pop19)
 	i32.lt_s	$3=, $pop0, $5
 .LBB7_7:                                # %while.cond40.preheader
                                         # =>This Inner Loop Header: Depth=1
@@ -208,14 +206,14 @@ DUPFFexgcd:                             # @DUPFFexgcd
 .LBB7_9:                                # %if.end57
 	end_loop                        # label9:
 	end_block                       # label5:
-	i32.store	$discard=, 0($1), $8
-	i32.store	$discard=, 0($4), $7
+	i32.store	$discard=, 0($1), $7
+	i32.store	$discard=, 0($4), $6
 .LBB7_10:                               # %cleanup
 	end_block                       # label4:
-	i32.const	$11=, 16
-	i32.add 	$12=, $12, $11
-	i32.const	$11=, __stack_pointer
-	i32.store	$12=, 0($11), $12
+	i32.const	$push32=, 16
+	i32.add 	$8=, $8, $pop32
+	i32.const	$push33=, __stack_pointer
+	i32.store	$discard=, 0($pop33), $8
 	return  	$3
 .LBB7_11:                               # %if.then10
 	end_block                       # label3:
@@ -231,14 +229,14 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$4=, __stack_pointer
-	i32.load	$4=, 0($4)
-	i32.const	$5=, 16
-	i32.sub 	$9=, $4, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$9=, 0($5), $9
+	i32.const	$push19=, __stack_pointer
+	i32.load	$push20=, 0($pop19)
+	i32.const	$push21=, 16
+	i32.sub 	$6=, $pop20, $pop21
+	i32.const	$push22=, __stack_pointer
+	i32.store	$discard=, 0($pop22), $6
 	i32.const	$push0=, 12
 	i32.call	$0=, malloc@FUNCTION, $pop0
 	i32.const	$push2=, 2
@@ -249,35 +247,33 @@ main:                                   # @main
 	i32.store	$push6=, 0($0), $pop5
 	i32.store	$push7=, 4($pop4), $pop6
 	i32.store	$1=, 4($0), $pop7
-	i32.const	$push20=, 12
-	i32.call	$push19=, malloc@FUNCTION, $pop20
-	tee_local	$push18=, $3=, $pop19
+	i32.const	$push18=, 12
+	i32.call	$push17=, malloc@FUNCTION, $pop18
+	tee_local	$push16=, $3=, $pop17
 	i32.const	$push8=, 3
-	i32.const	$push17=, 4
-	i32.call	$push9=, calloc@FUNCTION, $pop8, $pop17
-	i32.store	$push10=, 8($pop18), $pop9
-	i32.store	$discard=, 8($pop10), $1
-	i32.const	$push16=, 2
-	i32.store	$push11=, 0($3), $pop16
-	i32.store	$1=, 4($3), $pop11
-	i32.load	$2=, 4($0)
 	i32.const	$push15=, 4
-	i32.or  	$push12=, $9, $pop15
-	i32.store	$discard=, 0($pop12), $1
-	i32.store	$discard=, 0($9):p2align=4, $2
-	i32.const	$push13=, .L.str.1
-	i32.call	$discard=, printf@FUNCTION, $pop13, $9
-	i32.const	$7=, 12
-	i32.add 	$7=, $9, $7
-	i32.const	$8=, 8
-	i32.add 	$8=, $9, $8
-	i32.call	$discard=, DUPFFexgcd@FUNCTION, $7, $8, $0, $3
-	i32.const	$push14=, 0
-	i32.const	$6=, 16
-	i32.add 	$9=, $9, $6
-	i32.const	$6=, __stack_pointer
-	i32.store	$9=, 0($6), $9
-	return  	$pop14
+	i32.call	$push9=, calloc@FUNCTION, $pop8, $pop15
+	i32.store	$push10=, 8($pop16), $pop9
+	i32.store	$discard=, 8($pop10), $1
+	i32.const	$push14=, 2
+	i32.store	$1=, 0($3), $pop14
+	i32.load	$2=, 4($0)
+	i32.store	$push11=, 4($3), $1
+	i32.store	$discard=, 4($6), $pop11
+	i32.store	$discard=, 0($6):p2align=4, $2
+	i32.const	$push12=, .L.str.1
+	i32.call	$discard=, printf@FUNCTION, $pop12, $6
+	i32.const	$4=, 12
+	i32.add 	$4=, $6, $4
+	i32.const	$5=, 8
+	i32.add 	$5=, $6, $5
+	i32.call	$discard=, DUPFFexgcd@FUNCTION, $4, $5, $0, $3
+	i32.const	$push13=, 0
+	i32.const	$push23=, 16
+	i32.add 	$6=, $6, $pop23
+	i32.const	$push24=, __stack_pointer
+	i32.store	$discard=, 0($pop24), $6
+	return  	$pop13
 	.endfunc
 .Lfunc_end8:
 	.size	main, .Lfunc_end8-main

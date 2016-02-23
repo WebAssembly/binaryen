@@ -30,14 +30,14 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	f64, i32, i32, i32, i32
+	.local  	f64, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$4=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
+	i32.const	$push19=, __stack_pointer
+	i32.load	$push20=, 0($pop19)
+	i32.const	$push21=, 16
+	i32.sub 	$2=, $pop20, $pop21
+	i32.const	$push22=, __stack_pointer
+	i32.store	$discard=, 0($pop22), $2
 	block
 	block
 	i32.const	$push15=, 0
@@ -53,21 +53,21 @@ main:                                   # @main
 	f64.le  	$push1=, $0, $pop16
 	f64.ne  	$push2=, $0, $0
 	i32.or  	$push3=, $pop1, $pop2
-	i32.const	$push19=, 0
-	i32.eq  	$push20=, $pop3, $pop19
-	br_if   	0, $pop20       # 0: down to label2
+	i32.const	$push23=, 0
+	i32.eq  	$push24=, $pop3, $pop23
+	br_if   	0, $pop24       # 0: down to label2
 # BB#2:                                 # %for.cond.1
 	i32.const	$push4=, 0
 	f64.load	$0=, a+16($pop4):p2align=4
 	f64.const	$push5=, 0x0p0
 	f64.gt  	$push6=, $0, $pop5
-	i32.const	$push21=, 0
-	i32.eq  	$push22=, $pop6, $pop21
-	br_if   	1, $pop22       # 1: down to label1
+	i32.const	$push25=, 0
+	i32.eq  	$push26=, $pop6, $pop25
+	br_if   	1, $pop26       # 1: down to label1
 .LBB1_3:                                # %e
 	end_block                       # label2:
 	block
-	f64.store	$push8=, 8($4), $0
+	f64.store	$push8=, 8($2), $0
 	f64.const	$push9=, 0x1p0
 	f64.eq  	$push10=, $pop8, $pop9
 	br_if   	0, $pop10       # 0: down to label3
@@ -81,11 +81,11 @@ main:                                   # @main
 	unreachable
 .LBB1_6:                                # %for.cond.2
 	end_block                       # label1:
-	f64.store	$discard=, 8($4), $0
+	f64.store	$discard=, 8($2), $0
 	i32.const	$push7=, 1
-	i32.const	$3=, 8
-	i32.add 	$3=, $4, $3
-	call    	bar@FUNCTION, $pop7, $3
+	i32.const	$1=, 8
+	i32.add 	$1=, $2, $1
+	call    	bar@FUNCTION, $pop7, $1
 	i32.const	$push18=, 1
 	call    	exit@FUNCTION, $pop18
 	unreachable

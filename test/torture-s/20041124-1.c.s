@@ -21,41 +21,37 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$5=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$5=, 0($2), $5
-	i32.const	$3=, 8
-	i32.add 	$3=, $5, $3
-	call    	foo@FUNCTION, $3
+	i32.const	$push14=, __stack_pointer
+	i32.load	$push15=, 0($pop14)
+	i32.const	$push16=, 16
+	i32.sub 	$2=, $pop15, $pop16
+	i32.const	$push17=, __stack_pointer
+	i32.store	$discard=, 0($pop17), $2
+	i32.const	$1=, 8
+	i32.add 	$1=, $2, $1
+	call    	foo@FUNCTION, $1
 	block
-	i32.load16_u	$push2=, 8($5):p2align=3
-	i32.const	$push5=, 0
-	i32.load	$push14=, gs($pop5)
-	tee_local	$push13=, $0=, $pop14
-	i32.const	$push12=, 65535
-	i32.and 	$push6=, $pop13, $pop12
-	i32.ne  	$push8=, $pop2, $pop6
-	br_if   	0, $pop8        # 0: down to label0
+	i32.load16_u	$push2=, 8($2):p2align=3
+	i32.const	$push3=, 0
+	i32.load	$push12=, gs($pop3)
+	tee_local	$push11=, $0=, $pop12
+	i32.const	$push10=, 65535
+	i32.and 	$push4=, $pop11, $pop10
+	i32.ne  	$push6=, $pop2, $pop4
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$push3=, 2
-	i32.const	$4=, 8
-	i32.add 	$4=, $5, $4
-	i32.or  	$push4=, $4, $pop3
-	i32.load16_u	$push0=, 0($pop4)
-	i32.const	$push15=, 65535
-	i32.and 	$push9=, $pop0, $pop15
-	i32.const	$push7=, 16
-	i32.shr_u	$push1=, $0, $pop7
-	i32.ne  	$push10=, $pop9, $pop1
-	br_if   	0, $pop10       # 0: down to label0
+	i32.load16_u	$push0=, 10($2)
+	i32.const	$push13=, 65535
+	i32.and 	$push7=, $pop0, $pop13
+	i32.const	$push5=, 16
+	i32.shr_u	$push1=, $0, $pop5
+	i32.ne  	$push8=, $pop7, $pop1
+	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.end
-	i32.const	$push11=, 0
-	call    	exit@FUNCTION, $pop11
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB1_3:                                # %if.then
 	end_block                       # label0:

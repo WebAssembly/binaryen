@@ -58,22 +58,22 @@ baz:                                    # @baz
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$5=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$5=, 0($2), $5
-	i32.const	$3=, 12
-	i32.add 	$3=, $5, $3
-	copy_local	$0=, $3
+	i32.const	$push2=, __stack_pointer
+	i32.load	$push3=, 0($pop2)
+	i32.const	$push4=, 16
+	i32.sub 	$3=, $pop3, $pop4
+	i32.const	$push5=, __stack_pointer
+	i32.store	$discard=, 0($pop5), $3
+	i32.const	$1=, 12
+	i32.add 	$1=, $3, $1
+	copy_local	$0=, $1
 	i32.const	$push0=, 0
-	i32.store	$discard=, 8($5):p2align=3, $pop0
-	i32.const	$4=, 8
-	i32.add 	$4=, $5, $4
-	i32.store	$discard=, 12($5), $4
+	i32.store	$discard=, 8($3):p2align=3, $pop0
+	i32.const	$2=, 8
+	i32.add 	$2=, $3, $2
+	i32.store	$discard=, 12($3), $2
 .LBB3_1:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:

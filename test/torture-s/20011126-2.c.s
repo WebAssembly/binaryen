@@ -6,17 +6,15 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$7=, __stack_pointer
-	i32.load	$7=, 0($7)
-	i32.const	$8=, 16
-	i32.sub 	$11=, $7, $8
-	i32.const	$8=, __stack_pointer
-	i32.store	$11=, 0($8), $11
-	i32.const	$10=, 12
-	i32.add 	$10=, $11, $10
-	copy_local	$5=, $10
+	i32.const	$push27=, __stack_pointer
+	i32.load	$push28=, 0($pop27)
+	i32.const	$push29=, 16
+	i32.sub 	$8=, $pop28, $pop29
+	i32.const	$7=, 12
+	i32.add 	$7=, $8, $7
+	copy_local	$5=, $7
 	i32.const	$1=, .L.str
 .LBB0_1:                                # %while.body.outer.outer.i
                                         # =>This Loop Header: Depth=1
@@ -107,10 +105,6 @@ main:                                   # @main
 	end_loop                        # label12:
 	end_block                       # label3:
 	i32.const	$push4=, 0
-	i32.const	$9=, 16
-	i32.add 	$11=, $11, $9
-	i32.const	$9=, __stack_pointer
-	i32.store	$11=, 0($9), $11
 	return  	$pop4
 .LBB0_11:                               # %while.body.outer.outer.i.loopexit
                                         #   in Loop: Header=BB0_1 Depth=1

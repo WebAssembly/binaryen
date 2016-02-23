@@ -22,23 +22,17 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %if.end
-	i32.const	$0=, __stack_pointer
-	i32.load	$0=, 0($0)
-	i32.const	$1=, 16
-	i32.sub 	$4=, $0, $1
-	i32.const	$1=, __stack_pointer
-	i32.store	$4=, 0($1), $4
+	i32.const	$push2=, __stack_pointer
+	i32.load	$push3=, 0($pop2)
+	i32.const	$push4=, 16
+	i32.sub 	$1=, $pop3, $pop4
 	i32.const	$push0=, 0
-	i32.const	$3=, 12
-	i32.add 	$3=, $4, $3
-	i32.store	$discard=, x($pop0), $3
+	i32.const	$0=, 12
+	i32.add 	$0=, $1, $0
+	i32.store	$discard=, x($pop0), $0
 	i32.const	$push1=, 0
-	i32.const	$2=, 16
-	i32.add 	$4=, $4, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
 	return  	$pop1
 	.endfunc
 .Lfunc_end1:

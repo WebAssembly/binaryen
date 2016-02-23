@@ -189,9 +189,8 @@ constant_shift:                         # @constant_shift
 	block
 	block
 	block
-	tableswitch	$1, 63, 63, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62 # 63: down to label12
+	tableswitch	$1, 1, 1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 # 1: down to label74
                                         # 0: down to label75
-                                        # 1: down to label74
                                         # 2: down to label73
                                         # 3: down to label72
                                         # 4: down to label71
@@ -253,322 +252,323 @@ constant_shift:                         # @constant_shift
                                         # 60: down to label15
                                         # 61: down to label14
                                         # 62: down to label13
+                                        # 63: down to label12
 .LBB1_2:                                # %sw.bb1
 	end_block                       # label75:
 	i64.const	$push64=, 1
 	i64.shr_s	$0=, $0, $pop64
-	br      	62              # 62: down to label12
-.LBB1_3:                                # %sw.bb3
+.LBB1_3:                                # %sw.epilog
 	end_block                       # label74:
+	return  	$0
+.LBB1_4:                                # %sw.bb3
+	end_block                       # label73:
 	i64.const	$push63=, 2
 	i64.shr_s	$0=, $0, $pop63
-	br      	61              # 61: down to label12
-.LBB1_4:                                # %sw.bb5
-	end_block                       # label73:
+	return  	$0
+.LBB1_5:                                # %sw.bb5
+	end_block                       # label72:
 	i64.const	$push62=, 3
 	i64.shr_s	$0=, $0, $pop62
-	br      	60              # 60: down to label12
-.LBB1_5:                                # %sw.bb7
-	end_block                       # label72:
+	return  	$0
+.LBB1_6:                                # %sw.bb7
+	end_block                       # label71:
 	i64.const	$push61=, 4
 	i64.shr_s	$0=, $0, $pop61
-	br      	59              # 59: down to label12
-.LBB1_6:                                # %sw.bb9
-	end_block                       # label71:
+	return  	$0
+.LBB1_7:                                # %sw.bb9
+	end_block                       # label70:
 	i64.const	$push60=, 5
 	i64.shr_s	$0=, $0, $pop60
-	br      	58              # 58: down to label12
-.LBB1_7:                                # %sw.bb11
-	end_block                       # label70:
+	return  	$0
+.LBB1_8:                                # %sw.bb11
+	end_block                       # label69:
 	i64.const	$push59=, 6
 	i64.shr_s	$0=, $0, $pop59
-	br      	57              # 57: down to label12
-.LBB1_8:                                # %sw.bb13
-	end_block                       # label69:
+	return  	$0
+.LBB1_9:                                # %sw.bb13
+	end_block                       # label68:
 	i64.const	$push58=, 7
 	i64.shr_s	$0=, $0, $pop58
-	br      	56              # 56: down to label12
-.LBB1_9:                                # %sw.bb15
-	end_block                       # label68:
+	return  	$0
+.LBB1_10:                               # %sw.bb15
+	end_block                       # label67:
 	i64.const	$push57=, 8
 	i64.shr_s	$0=, $0, $pop57
-	br      	55              # 55: down to label12
-.LBB1_10:                               # %sw.bb17
-	end_block                       # label67:
+	return  	$0
+.LBB1_11:                               # %sw.bb17
+	end_block                       # label66:
 	i64.const	$push56=, 9
 	i64.shr_s	$0=, $0, $pop56
-	br      	54              # 54: down to label12
-.LBB1_11:                               # %sw.bb19
-	end_block                       # label66:
+	return  	$0
+.LBB1_12:                               # %sw.bb19
+	end_block                       # label65:
 	i64.const	$push55=, 10
 	i64.shr_s	$0=, $0, $pop55
-	br      	53              # 53: down to label12
-.LBB1_12:                               # %sw.bb21
-	end_block                       # label65:
+	return  	$0
+.LBB1_13:                               # %sw.bb21
+	end_block                       # label64:
 	i64.const	$push54=, 11
 	i64.shr_s	$0=, $0, $pop54
-	br      	52              # 52: down to label12
-.LBB1_13:                               # %sw.bb23
-	end_block                       # label64:
+	return  	$0
+.LBB1_14:                               # %sw.bb23
+	end_block                       # label63:
 	i64.const	$push53=, 12
 	i64.shr_s	$0=, $0, $pop53
-	br      	51              # 51: down to label12
-.LBB1_14:                               # %sw.bb25
-	end_block                       # label63:
+	return  	$0
+.LBB1_15:                               # %sw.bb25
+	end_block                       # label62:
 	i64.const	$push52=, 13
 	i64.shr_s	$0=, $0, $pop52
-	br      	50              # 50: down to label12
-.LBB1_15:                               # %sw.bb27
-	end_block                       # label62:
+	return  	$0
+.LBB1_16:                               # %sw.bb27
+	end_block                       # label61:
 	i64.const	$push51=, 14
 	i64.shr_s	$0=, $0, $pop51
-	br      	49              # 49: down to label12
-.LBB1_16:                               # %sw.bb29
-	end_block                       # label61:
+	return  	$0
+.LBB1_17:                               # %sw.bb29
+	end_block                       # label60:
 	i64.const	$push50=, 15
 	i64.shr_s	$0=, $0, $pop50
-	br      	48              # 48: down to label12
-.LBB1_17:                               # %sw.bb31
-	end_block                       # label60:
+	return  	$0
+.LBB1_18:                               # %sw.bb31
+	end_block                       # label59:
 	i64.const	$push49=, 16
 	i64.shr_s	$0=, $0, $pop49
-	br      	47              # 47: down to label12
-.LBB1_18:                               # %sw.bb33
-	end_block                       # label59:
+	return  	$0
+.LBB1_19:                               # %sw.bb33
+	end_block                       # label58:
 	i64.const	$push48=, 17
 	i64.shr_s	$0=, $0, $pop48
-	br      	46              # 46: down to label12
-.LBB1_19:                               # %sw.bb35
-	end_block                       # label58:
+	return  	$0
+.LBB1_20:                               # %sw.bb35
+	end_block                       # label57:
 	i64.const	$push47=, 18
 	i64.shr_s	$0=, $0, $pop47
-	br      	45              # 45: down to label12
-.LBB1_20:                               # %sw.bb37
-	end_block                       # label57:
+	return  	$0
+.LBB1_21:                               # %sw.bb37
+	end_block                       # label56:
 	i64.const	$push46=, 19
 	i64.shr_s	$0=, $0, $pop46
-	br      	44              # 44: down to label12
-.LBB1_21:                               # %sw.bb39
-	end_block                       # label56:
+	return  	$0
+.LBB1_22:                               # %sw.bb39
+	end_block                       # label55:
 	i64.const	$push45=, 20
 	i64.shr_s	$0=, $0, $pop45
-	br      	43              # 43: down to label12
-.LBB1_22:                               # %sw.bb41
-	end_block                       # label55:
+	return  	$0
+.LBB1_23:                               # %sw.bb41
+	end_block                       # label54:
 	i64.const	$push44=, 21
 	i64.shr_s	$0=, $0, $pop44
-	br      	42              # 42: down to label12
-.LBB1_23:                               # %sw.bb43
-	end_block                       # label54:
+	return  	$0
+.LBB1_24:                               # %sw.bb43
+	end_block                       # label53:
 	i64.const	$push43=, 22
 	i64.shr_s	$0=, $0, $pop43
-	br      	41              # 41: down to label12
-.LBB1_24:                               # %sw.bb45
-	end_block                       # label53:
+	return  	$0
+.LBB1_25:                               # %sw.bb45
+	end_block                       # label52:
 	i64.const	$push42=, 23
 	i64.shr_s	$0=, $0, $pop42
-	br      	40              # 40: down to label12
-.LBB1_25:                               # %sw.bb47
-	end_block                       # label52:
+	return  	$0
+.LBB1_26:                               # %sw.bb47
+	end_block                       # label51:
 	i64.const	$push41=, 24
 	i64.shr_s	$0=, $0, $pop41
-	br      	39              # 39: down to label12
-.LBB1_26:                               # %sw.bb49
-	end_block                       # label51:
+	return  	$0
+.LBB1_27:                               # %sw.bb49
+	end_block                       # label50:
 	i64.const	$push40=, 25
 	i64.shr_s	$0=, $0, $pop40
-	br      	38              # 38: down to label12
-.LBB1_27:                               # %sw.bb51
-	end_block                       # label50:
+	return  	$0
+.LBB1_28:                               # %sw.bb51
+	end_block                       # label49:
 	i64.const	$push39=, 26
 	i64.shr_s	$0=, $0, $pop39
-	br      	37              # 37: down to label12
-.LBB1_28:                               # %sw.bb53
-	end_block                       # label49:
+	return  	$0
+.LBB1_29:                               # %sw.bb53
+	end_block                       # label48:
 	i64.const	$push38=, 27
 	i64.shr_s	$0=, $0, $pop38
-	br      	36              # 36: down to label12
-.LBB1_29:                               # %sw.bb55
-	end_block                       # label48:
+	return  	$0
+.LBB1_30:                               # %sw.bb55
+	end_block                       # label47:
 	i64.const	$push37=, 28
 	i64.shr_s	$0=, $0, $pop37
-	br      	35              # 35: down to label12
-.LBB1_30:                               # %sw.bb57
-	end_block                       # label47:
+	return  	$0
+.LBB1_31:                               # %sw.bb57
+	end_block                       # label46:
 	i64.const	$push36=, 29
 	i64.shr_s	$0=, $0, $pop36
-	br      	34              # 34: down to label12
-.LBB1_31:                               # %sw.bb59
-	end_block                       # label46:
+	return  	$0
+.LBB1_32:                               # %sw.bb59
+	end_block                       # label45:
 	i64.const	$push35=, 30
 	i64.shr_s	$0=, $0, $pop35
-	br      	33              # 33: down to label12
-.LBB1_32:                               # %sw.bb61
-	end_block                       # label45:
+	return  	$0
+.LBB1_33:                               # %sw.bb61
+	end_block                       # label44:
 	i64.const	$push34=, 31
 	i64.shr_s	$0=, $0, $pop34
-	br      	32              # 32: down to label12
-.LBB1_33:                               # %sw.bb63
-	end_block                       # label44:
+	return  	$0
+.LBB1_34:                               # %sw.bb63
+	end_block                       # label43:
 	i64.const	$push33=, 32
 	i64.shr_s	$0=, $0, $pop33
-	br      	31              # 31: down to label12
-.LBB1_34:                               # %sw.bb65
-	end_block                       # label43:
+	return  	$0
+.LBB1_35:                               # %sw.bb65
+	end_block                       # label42:
 	i64.const	$push32=, 33
 	i64.shr_s	$0=, $0, $pop32
-	br      	30              # 30: down to label12
-.LBB1_35:                               # %sw.bb67
-	end_block                       # label42:
+	return  	$0
+.LBB1_36:                               # %sw.bb67
+	end_block                       # label41:
 	i64.const	$push31=, 34
 	i64.shr_s	$0=, $0, $pop31
-	br      	29              # 29: down to label12
-.LBB1_36:                               # %sw.bb69
-	end_block                       # label41:
+	return  	$0
+.LBB1_37:                               # %sw.bb69
+	end_block                       # label40:
 	i64.const	$push30=, 35
 	i64.shr_s	$0=, $0, $pop30
-	br      	28              # 28: down to label12
-.LBB1_37:                               # %sw.bb71
-	end_block                       # label40:
+	return  	$0
+.LBB1_38:                               # %sw.bb71
+	end_block                       # label39:
 	i64.const	$push29=, 36
 	i64.shr_s	$0=, $0, $pop29
-	br      	27              # 27: down to label12
-.LBB1_38:                               # %sw.bb73
-	end_block                       # label39:
+	return  	$0
+.LBB1_39:                               # %sw.bb73
+	end_block                       # label38:
 	i64.const	$push28=, 37
 	i64.shr_s	$0=, $0, $pop28
-	br      	26              # 26: down to label12
-.LBB1_39:                               # %sw.bb75
-	end_block                       # label38:
+	return  	$0
+.LBB1_40:                               # %sw.bb75
+	end_block                       # label37:
 	i64.const	$push27=, 38
 	i64.shr_s	$0=, $0, $pop27
-	br      	25              # 25: down to label12
-.LBB1_40:                               # %sw.bb77
-	end_block                       # label37:
+	return  	$0
+.LBB1_41:                               # %sw.bb77
+	end_block                       # label36:
 	i64.const	$push26=, 39
 	i64.shr_s	$0=, $0, $pop26
-	br      	24              # 24: down to label12
-.LBB1_41:                               # %sw.bb79
-	end_block                       # label36:
+	return  	$0
+.LBB1_42:                               # %sw.bb79
+	end_block                       # label35:
 	i64.const	$push25=, 40
 	i64.shr_s	$0=, $0, $pop25
-	br      	23              # 23: down to label12
-.LBB1_42:                               # %sw.bb81
-	end_block                       # label35:
+	return  	$0
+.LBB1_43:                               # %sw.bb81
+	end_block                       # label34:
 	i64.const	$push24=, 41
 	i64.shr_s	$0=, $0, $pop24
-	br      	22              # 22: down to label12
-.LBB1_43:                               # %sw.bb83
-	end_block                       # label34:
+	return  	$0
+.LBB1_44:                               # %sw.bb83
+	end_block                       # label33:
 	i64.const	$push23=, 42
 	i64.shr_s	$0=, $0, $pop23
-	br      	21              # 21: down to label12
-.LBB1_44:                               # %sw.bb85
-	end_block                       # label33:
+	return  	$0
+.LBB1_45:                               # %sw.bb85
+	end_block                       # label32:
 	i64.const	$push22=, 43
 	i64.shr_s	$0=, $0, $pop22
-	br      	20              # 20: down to label12
-.LBB1_45:                               # %sw.bb87
-	end_block                       # label32:
+	return  	$0
+.LBB1_46:                               # %sw.bb87
+	end_block                       # label31:
 	i64.const	$push21=, 44
 	i64.shr_s	$0=, $0, $pop21
-	br      	19              # 19: down to label12
-.LBB1_46:                               # %sw.bb89
-	end_block                       # label31:
+	return  	$0
+.LBB1_47:                               # %sw.bb89
+	end_block                       # label30:
 	i64.const	$push20=, 45
 	i64.shr_s	$0=, $0, $pop20
-	br      	18              # 18: down to label12
-.LBB1_47:                               # %sw.bb91
-	end_block                       # label30:
+	return  	$0
+.LBB1_48:                               # %sw.bb91
+	end_block                       # label29:
 	i64.const	$push19=, 46
 	i64.shr_s	$0=, $0, $pop19
-	br      	17              # 17: down to label12
-.LBB1_48:                               # %sw.bb93
-	end_block                       # label29:
+	return  	$0
+.LBB1_49:                               # %sw.bb93
+	end_block                       # label28:
 	i64.const	$push18=, 47
 	i64.shr_s	$0=, $0, $pop18
-	br      	16              # 16: down to label12
-.LBB1_49:                               # %sw.bb95
-	end_block                       # label28:
+	return  	$0
+.LBB1_50:                               # %sw.bb95
+	end_block                       # label27:
 	i64.const	$push17=, 48
 	i64.shr_s	$0=, $0, $pop17
-	br      	15              # 15: down to label12
-.LBB1_50:                               # %sw.bb97
-	end_block                       # label27:
+	return  	$0
+.LBB1_51:                               # %sw.bb97
+	end_block                       # label26:
 	i64.const	$push16=, 49
 	i64.shr_s	$0=, $0, $pop16
-	br      	14              # 14: down to label12
-.LBB1_51:                               # %sw.bb99
-	end_block                       # label26:
+	return  	$0
+.LBB1_52:                               # %sw.bb99
+	end_block                       # label25:
 	i64.const	$push15=, 50
 	i64.shr_s	$0=, $0, $pop15
-	br      	13              # 13: down to label12
-.LBB1_52:                               # %sw.bb101
-	end_block                       # label25:
+	return  	$0
+.LBB1_53:                               # %sw.bb101
+	end_block                       # label24:
 	i64.const	$push14=, 51
 	i64.shr_s	$0=, $0, $pop14
-	br      	12              # 12: down to label12
-.LBB1_53:                               # %sw.bb103
-	end_block                       # label24:
+	return  	$0
+.LBB1_54:                               # %sw.bb103
+	end_block                       # label23:
 	i64.const	$push13=, 52
 	i64.shr_s	$0=, $0, $pop13
-	br      	11              # 11: down to label12
-.LBB1_54:                               # %sw.bb105
-	end_block                       # label23:
+	return  	$0
+.LBB1_55:                               # %sw.bb105
+	end_block                       # label22:
 	i64.const	$push12=, 53
 	i64.shr_s	$0=, $0, $pop12
-	br      	10              # 10: down to label12
-.LBB1_55:                               # %sw.bb107
-	end_block                       # label22:
+	return  	$0
+.LBB1_56:                               # %sw.bb107
+	end_block                       # label21:
 	i64.const	$push11=, 54
 	i64.shr_s	$0=, $0, $pop11
-	br      	9               # 9: down to label12
-.LBB1_56:                               # %sw.bb109
-	end_block                       # label21:
+	return  	$0
+.LBB1_57:                               # %sw.bb109
+	end_block                       # label20:
 	i64.const	$push10=, 55
 	i64.shr_s	$0=, $0, $pop10
-	br      	8               # 8: down to label12
-.LBB1_57:                               # %sw.bb111
-	end_block                       # label20:
+	return  	$0
+.LBB1_58:                               # %sw.bb111
+	end_block                       # label19:
 	i64.const	$push9=, 56
 	i64.shr_s	$0=, $0, $pop9
-	br      	7               # 7: down to label12
-.LBB1_58:                               # %sw.bb113
-	end_block                       # label19:
+	return  	$0
+.LBB1_59:                               # %sw.bb113
+	end_block                       # label18:
 	i64.const	$push8=, 57
 	i64.shr_s	$0=, $0, $pop8
-	br      	6               # 6: down to label12
-.LBB1_59:                               # %sw.bb115
-	end_block                       # label18:
+	return  	$0
+.LBB1_60:                               # %sw.bb115
+	end_block                       # label17:
 	i64.const	$push7=, 58
 	i64.shr_s	$0=, $0, $pop7
-	br      	5               # 5: down to label12
-.LBB1_60:                               # %sw.bb117
-	end_block                       # label17:
+	return  	$0
+.LBB1_61:                               # %sw.bb117
+	end_block                       # label16:
 	i64.const	$push6=, 59
 	i64.shr_s	$0=, $0, $pop6
-	br      	4               # 4: down to label12
-.LBB1_61:                               # %sw.bb119
-	end_block                       # label16:
+	return  	$0
+.LBB1_62:                               # %sw.bb119
+	end_block                       # label15:
 	i64.const	$push5=, 60
 	i64.shr_s	$0=, $0, $pop5
-	br      	3               # 3: down to label12
-.LBB1_62:                               # %sw.bb121
-	end_block                       # label15:
+	return  	$0
+.LBB1_63:                               # %sw.bb121
+	end_block                       # label14:
 	i64.const	$push4=, 61
 	i64.shr_s	$0=, $0, $pop4
-	br      	2               # 2: down to label12
-.LBB1_63:                               # %sw.bb123
-	end_block                       # label14:
+	return  	$0
+.LBB1_64:                               # %sw.bb123
+	end_block                       # label13:
 	i64.const	$push3=, 62
 	i64.shr_s	$0=, $0, $pop3
-	br      	1               # 1: down to label12
-.LBB1_64:                               # %sw.bb125
-	end_block                       # label13:
+	return  	$0
+.LBB1_65:                               # %sw.bb125
+	end_block                       # label12:
 	i64.const	$push2=, 63
 	i64.shr_s	$0=, $0, $pop2
-.LBB1_65:                               # %sw.epilog
-	end_block                       # label12:
 	return  	$0
 .LBB1_66:                               # %sw.default
 	end_block                       # label11:

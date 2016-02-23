@@ -64,14 +64,14 @@ test_double:                            # @test_double
 	.type	ctest_long_double,@function
 ctest_long_double:                      # @ctest_long_double
 	.param  	i32, i32
-	.local  	i64, i64, i64, i64, i32, i32, i32, i32
+	.local  	i64, i64, i64, i64, i32
 # BB#0:                                 # %entry
-	i32.const	$6=, __stack_pointer
-	i32.load	$6=, 0($6)
-	i32.const	$7=, 16
-	i32.sub 	$9=, $6, $7
-	i32.const	$7=, __stack_pointer
-	i32.store	$9=, 0($7), $9
+	i32.const	$push14=, __stack_pointer
+	i32.load	$push15=, 0($pop14)
+	i32.const	$push16=, 16
+	i32.sub 	$6=, $pop15, $pop16
+	i32.const	$push17=, __stack_pointer
+	i32.store	$discard=, 0($pop17), $6
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $1, $pop0
 	i64.load	$2=, 0($pop1)
@@ -82,11 +82,11 @@ ctest_long_double:                      # @ctest_long_double
 	i32.const	$push2=, 24
 	i32.add 	$push3=, $1, $pop2
 	i64.load	$push4=, 0($pop3)
-	call    	__subtf3@FUNCTION, $9, $pop7, $pop6, $pop5, $pop4
+	call    	__subtf3@FUNCTION, $6, $pop7, $pop6, $pop5, $pop4
 	i32.const	$push13=, 8
-	i32.add 	$push8=, $9, $pop13
+	i32.add 	$push8=, $6, $pop13
 	i64.load	$4=, 0($pop8)
-	i64.load	$5=, 0($9)
+	i64.load	$5=, 0($6)
 	i64.store	$discard=, 0($0):p2align=4, $3
 	i32.const	$push12=, 8
 	i32.add 	$push9=, $0, $pop12
@@ -95,10 +95,10 @@ ctest_long_double:                      # @ctest_long_double
 	i32.add 	$push10=, $0, $pop11
 	i64.store	$discard=, 0($pop10), $4
 	i64.store	$discard=, 16($0):p2align=4, $5
-	i32.const	$8=, 16
-	i32.add 	$9=, $9, $8
-	i32.const	$8=, __stack_pointer
-	i32.store	$9=, 0($8), $9
+	i32.const	$push18=, 16
+	i32.add 	$6=, $6, $pop18
+	i32.const	$push19=, __stack_pointer
+	i32.store	$discard=, 0($pop19), $6
 	return
 	.endfunc
 .Lfunc_end4:
