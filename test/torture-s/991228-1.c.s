@@ -7,29 +7,23 @@
 signbit:                                # @signbit
 	.param  	f64
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 16
-	i32.sub 	$6=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$6=, 0($3), $6
+	i32.const	$push7=, __stack_pointer
+	i32.load	$push8=, 0($pop7)
+	i32.const	$push9=, 16
+	i32.sub 	$3=, $pop8, $pop9
 	i32.const	$push0=, 0
 	i32.load	$1=, endianness_test($pop0):p2align=3
-	f64.store	$discard=, 8($6), $0
+	f64.store	$discard=, 8($3), $0
 	i32.const	$push1=, 2
 	i32.shl 	$push2=, $1, $pop1
-	i32.const	$5=, 8
-	i32.add 	$5=, $6, $5
-	i32.add 	$push3=, $5, $pop2
+	i32.const	$2=, 8
+	i32.add 	$2=, $3, $2
+	i32.add 	$push3=, $2, $pop2
 	i32.load	$push4=, 0($pop3)
 	i32.const	$push5=, 31
 	i32.shr_u	$push6=, $pop4, $pop5
-	i32.const	$4=, 16
-	i32.add 	$6=, $6, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$6=, 0($4), $6
 	return  	$pop6
 	.endfunc
 .Lfunc_end0:
@@ -41,14 +35,14 @@ signbit:                                # @signbit
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$4=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
+	i32.const	$push15=, __stack_pointer
+	i32.load	$push16=, 0($pop15)
+	i32.const	$push17=, 16
+	i32.sub 	$2=, $pop16, $pop17
+	i32.const	$push18=, __stack_pointer
+	i32.store	$discard=, 0($pop18), $2
 	block
 	i32.const	$push12=, 0
 	i32.load	$push0=, endianness_test($pop12):p2align=3
@@ -66,11 +60,11 @@ main:                                   # @main
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	i64.const	$push4=, -4625196817309499392
-	i64.store	$discard=, 8($4), $pop4
-	i32.const	$3=, 8
-	i32.add 	$3=, $4, $3
+	i64.store	$discard=, 8($2), $pop4
+	i32.const	$1=, 8
+	i32.add 	$1=, $2, $1
 	block
-	i32.add 	$push5=, $3, $0
+	i32.add 	$push5=, $1, $0
 	i32.load	$push6=, 0($pop5)
 	i32.const	$push14=, 0
 	i32.lt_s	$push7=, $pop6, $pop14

@@ -24,19 +24,19 @@ bar:                                    # @bar
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, i64, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, i64, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$62=, __stack_pointer
-	i32.load	$62=, 0($62)
-	i32.const	$63=, 524288
-	i32.sub 	$67=, $62, $63
-	i32.const	$63=, __stack_pointer
-	i32.store	$67=, 0($63), $67
+	i32.const	$push154=, __stack_pointer
+	i32.load	$push155=, 0($pop154)
+	i32.const	$push156=, 524288
+	i32.sub 	$64=, $pop155, $pop156
+	i32.const	$push157=, __stack_pointer
+	i32.store	$discard=, 0($pop157), $64
 	i32.const	$push53=, 0
 	i32.const	$push52=, 262144
-	i32.const	$65=, 262144
-	i32.add 	$65=, $67, $65
-	i32.call	$discard=, memset@FUNCTION, $65, $pop53, $pop52
+	i32.const	$62=, 262144
+	i32.add 	$62=, $64, $62
+	i32.call	$discard=, memset@FUNCTION, $62, $pop53, $pop52
 	f32.const	$41=, 0x0p0
 	f32.const	$42=, 0x0p0
 	f32.const	$43=, 0x0p0
@@ -58,9 +58,9 @@ foo:                                    # @foo
 	f32.const	$59=, 0x0p0
 	f32.const	$60=, 0x0p0
 	block
-	i32.const	$push154=, 0
-	i32.eq  	$push155=, $0, $pop154
-	br_if   	0, $pop155      # 0: down to label0
+	i32.const	$push160=, 0
+	i32.eq  	$push161=, $0, $pop160
+	br_if   	0, $pop161      # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push131=, 0
 	i64.load	$push130=, incs+72($pop131)
@@ -342,14 +342,14 @@ foo:                                    # @foo
 	i32.const	$push134=, 0
 	f32.store	$discard=, results+76($pop134), $41
 	i32.const	$push133=, 262144
-	i32.const	$66=, 262144
-	i32.add 	$66=, $67, $66
-	i32.call	$discard=, memcpy@FUNCTION, $67, $66, $pop133
-	call    	bar@FUNCTION, $67
-	i32.const	$64=, 524288
-	i32.add 	$67=, $67, $64
-	i32.const	$64=, __stack_pointer
-	i32.store	$67=, 0($64), $67
+	i32.const	$63=, 262144
+	i32.add 	$63=, $64, $63
+	i32.call	$discard=, memcpy@FUNCTION, $64, $63, $pop133
+	call    	bar@FUNCTION, $64
+	i32.const	$push158=, 524288
+	i32.add 	$64=, $64, $pop158
+	i32.const	$push159=, __stack_pointer
+	i32.store	$discard=, 0($pop159), $64
 	return
 	.endfunc
 .Lfunc_end1:

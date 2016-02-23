@@ -72,26 +72,28 @@ foo:                                    # @foo
 # BB#1:                                 # %entry
 	i32.const	$push0=, 1
 	i32.eq  	$push1=, $1, $pop0
-	br_if   	1, $pop1        # 1: down to label5
+	br_if   	2, $pop1        # 2: down to label4
 # BB#2:                                 # %entry
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $1, $pop2
-	br_if   	2, $pop3        # 2: down to label4
+	br_if   	1, $pop3        # 1: down to label5
 # BB#3:                                 # %if.then
 	i32.const	$push5=, 0
 	i32.store16	$discard=, s($pop5), $2
-	br      	2               # 2: down to label4
+	call    	bar@FUNCTION, $1
+	return
 .LBB1_4:                                # %if.then8
 	end_block                       # label6:
 	i32.const	$push7=, 0
 	i32.store	$discard=, l($pop7), $2
-	br      	1               # 1: down to label4
-.LBB1_5:                                # %if.then3
+.LBB1_5:                                # %if.end11
 	end_block                       # label5:
+	call    	bar@FUNCTION, $1
+	return
+.LBB1_6:                                # %if.then3
+	end_block                       # label4:
 	i32.const	$push4=, 0
 	i32.store	$discard=, i($pop4), $2
-.LBB1_6:                                # %if.end11
-	end_block                       # label4:
 	call    	bar@FUNCTION, $1
 	return
 	.endfunc

@@ -7,42 +7,33 @@
 check_fa_work:                          # @check_fa_work
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 16
-	i32.sub 	$8=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$8=, 0($3), $8
+	i32.const	$push6=, __stack_pointer
+	i32.load	$push7=, 0($pop6)
+	i32.const	$push8=, 16
+	i32.sub 	$5=, $pop7, $pop8
 	i32.const	$push0=, 0
-	i32.store8	$discard=, 15($8), $pop0
-	i32.const	$5=, 15
-	i32.add 	$5=, $8, $5
+	i32.store8	$discard=, 15($5), $pop0
+	i32.const	$2=, 15
+	i32.add 	$2=, $5, $2
 	block
-	block
-	i32.le_u	$push1=, $5, $0
-	br_if   	0, $pop1        # 0: down to label1
+	i32.le_u	$push1=, $2, $0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.else
 	i32.le_u	$push4=, $0, $1
-	i32.const	$6=, 15
-	i32.add 	$6=, $8, $6
-	i32.ge_u	$push5=, $6, $1
+	i32.const	$3=, 15
+	i32.add 	$3=, $5, $3
+	i32.ge_u	$push5=, $3, $1
 	i32.and 	$1=, $pop4, $pop5
-	br      	1               # 1: down to label0
+	return  	$1
 .LBB0_2:                                # %if.then
-	end_block                       # label1:
-	i32.ge_u	$push2=, $0, $1
-	i32.const	$7=, 15
-	i32.add 	$7=, $8, $7
-	i32.le_u	$push3=, $7, $1
-	i32.and 	$1=, $pop2, $pop3
-.LBB0_3:                                # %cleanup
 	end_block                       # label0:
-	i32.const	$4=, 16
-	i32.add 	$8=, $8, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$8=, 0($4), $8
+	i32.ge_u	$push2=, $0, $1
+	i32.const	$4=, 15
+	i32.add 	$4=, $5, $4
+	i32.le_u	$push3=, $4, $1
+	i32.and 	$1=, $pop2, $pop3
 	return  	$1
 	.endfunc
 .Lfunc_end0:
@@ -55,16 +46,16 @@ check_fa_work:                          # @check_fa_work
 check_fa_mid:                           # @check_fa_mid
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$3=, 0($1)
-	copy_local	$4=, $3
-	i32.call	$push0=, check_fa_work@FUNCTION, $0, $4
+	i32.const	$push3=, __stack_pointer
+	i32.load	$1=, 0($pop3)
+	copy_local	$2=, $1
+	i32.call	$push0=, check_fa_work@FUNCTION, $0, $2
 	i32.const	$push1=, 0
 	i32.ne  	$push2=, $pop0, $pop1
-	i32.const	$2=, __stack_pointer
-	i32.store	$3=, 0($2), $4
+	i32.const	$push4=, __stack_pointer
+	i32.store	$1=, 0($pop4), $2
 	return  	$pop2
 	.endfunc
 .Lfunc_end1:
@@ -77,23 +68,23 @@ check_fa_mid:                           # @check_fa_mid
 check_fa:                               # @check_fa
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$5=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$5=, 0($2), $5
-	i32.const	$4=, 15
-	i32.add 	$4=, $5, $4
-	i32.call	$push0=, check_fa_mid@FUNCTION, $4
+	i32.const	$push3=, __stack_pointer
+	i32.load	$push4=, 0($pop3)
+	i32.const	$push5=, 16
+	i32.sub 	$2=, $pop4, $pop5
+	i32.const	$push6=, __stack_pointer
+	i32.store	$discard=, 0($pop6), $2
+	i32.const	$1=, 15
+	i32.add 	$1=, $2, $1
+	i32.call	$push0=, check_fa_mid@FUNCTION, $1
 	i32.const	$push1=, 0
 	i32.ne  	$push2=, $pop0, $pop1
-	i32.const	$3=, 16
-	i32.add 	$5=, $5, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$5=, 0($3), $5
+	i32.const	$push7=, 16
+	i32.add 	$2=, $2, $pop7
+	i32.const	$push8=, __stack_pointer
+	i32.store	$discard=, 0($pop8), $2
 	return  	$pop2
 	.endfunc
 .Lfunc_end2:
@@ -124,12 +115,12 @@ main:                                   # @main
 	i32.call	$push0=, check_fa@FUNCTION, $0
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop0, $pop2
-	br_if   	0, $pop3        # 0: down to label2
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push1=, 0
 	return  	$pop1
 .LBB4_2:                                # %if.then
-	end_block                       # label2:
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

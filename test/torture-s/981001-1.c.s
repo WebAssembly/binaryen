@@ -80,6 +80,8 @@ main:                                   # @main
 	i32.const	$push3=, 256
 	i32.or  	$push4=, $0, $pop3
 	i32.store	$discard=, flg($pop7), $pop4
+	call    	abort@FUNCTION
+	unreachable
 .LBB1_4:                                # %if.then1
 	end_block                       # label2:
 	call    	abort@FUNCTION

@@ -6,23 +6,23 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 16
-	i32.sub 	$5=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$5=, 0($3), $5
+	i32.const	$push14=, __stack_pointer
+	i32.load	$push15=, 0($pop14)
+	i32.const	$push16=, 16
+	i32.sub 	$2=, $pop15, $pop16
+	i32.const	$push17=, __stack_pointer
+	i32.store	$discard=, 0($pop17), $2
 	i64.const	$push1=, 0
-	i64.store	$discard=, 0($5), $pop1
+	i64.store	$discard=, 0($2), $pop1
 	i32.const	$push0=, 0
-	i32.store	$1=, 8($5):p2align=3, $pop0
+	i32.store	$1=, 8($2):p2align=3, $pop0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label1:
-	i32.call	$0=, next@FUNCTION, $5
+	i32.call	$0=, next@FUNCTION, $2
 	block
 	br_if   	0, $1           # 0: down to label3
 # BB#2:                                 # %for.body
@@ -55,10 +55,10 @@ main:                                   # @main
 # BB#6:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push7=, 0
-	i32.const	$4=, 16
-	i32.add 	$5=, $5, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$5=, 0($4), $5
+	i32.const	$push18=, 16
+	i32.add 	$2=, $2, $pop18
+	i32.const	$push19=, __stack_pointer
+	i32.store	$discard=, 0($pop19), $2
 	return  	$pop7
 .LBB0_7:                                # %if.then
 	end_block                       # label0:

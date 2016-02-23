@@ -6,39 +6,40 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i64, i64
+	.local  	i64, i64
 # BB#0:                                 # %entry
-	i32.const	$0=, 0
-	i64.load	$1=, sv($0)
-	i64.const	$2=, -1099511627776
-	i64.or  	$1=, $1, $2
-	i64.store	$discard=, sv($0), $1
+	i32.const	$push22=, 0
+	i32.const	$push21=, 0
+	i64.load	$push0=, sv($pop21)
+	i64.const	$push1=, -1099511627776
+	i64.or  	$push2=, $pop0, $pop1
+	i64.store	$discard=, sv($pop22), $pop2
 	#APP
 	#NO_APP
-	i32.const	$push17=, 0
-	i32.const	$push16=, 0
-	i64.load	$push15=, sv($pop16)
-	tee_local	$push14=, $1=, $pop15
-	i64.const	$push0=, 40
-	i64.shr_u	$push1=, $pop14, $pop0
-	i64.const	$push2=, 1
-	i64.add 	$push13=, $pop1, $pop2
-	tee_local	$push12=, $2=, $pop13
-	i64.const	$push11=, 40
-	i64.shl 	$push3=, $pop12, $pop11
-	i64.const	$push4=, 1099511627775
-	i64.and 	$push5=, $1, $pop4
-	i64.or  	$push6=, $pop3, $pop5
-	i64.store	$discard=, sv($pop17), $pop6
+	i32.const	$push20=, 0
+	i32.const	$push19=, 0
+	i64.load	$push18=, sv($pop19)
+	tee_local	$push17=, $1=, $pop18
+	i64.const	$push3=, 40
+	i64.shr_u	$push4=, $pop17, $pop3
+	i64.const	$push5=, 1
+	i64.add 	$push16=, $pop4, $pop5
+	tee_local	$push15=, $0=, $pop16
+	i64.const	$push14=, 40
+	i64.shl 	$push6=, $pop15, $pop14
+	i64.const	$push7=, 1099511627775
+	i64.and 	$push8=, $1, $pop7
+	i64.or  	$push9=, $pop6, $pop8
+	i64.store	$discard=, sv($pop20), $pop9
 	block
-	i64.const	$push7=, 16777215
-	i64.and 	$push8=, $2, $pop7
-	i64.const	$push9=, 0
-	i64.ne  	$push10=, $pop8, $pop9
-	br_if   	0, $pop10       # 0: down to label0
+	i64.const	$push10=, 16777215
+	i64.and 	$push11=, $0, $pop10
+	i64.const	$push12=, 0
+	i64.ne  	$push13=, $pop11, $pop12
+	br_if   	0, $pop13       # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push18=, 0
-	return  	$pop18
+	i32.const	$push23=, 0
+	return  	$pop23
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

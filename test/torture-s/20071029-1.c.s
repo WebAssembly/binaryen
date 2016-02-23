@@ -75,30 +75,30 @@ test:                                   # @test
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 64
-	i32.sub 	$6=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$6=, 0($3), $6
+	i32.const	$push5=, __stack_pointer
+	i32.load	$push6=, 0($pop5)
+	i32.const	$push7=, 64
+	i32.sub 	$4=, $pop6, $pop7
+	i32.const	$push8=, __stack_pointer
+	i32.store	$discard=, 0($pop8), $4
 	i32.const	$push0=, 4
-	i32.const	$4=, 8
-	i32.add 	$4=, $6, $4
-	i32.or  	$1=, $4, $pop0
+	i32.const	$2=, 8
+	i32.add 	$2=, $4, $2
+	i32.or  	$1=, $2, $pop0
 	i32.const	$push1=, 1
 	i32.add 	$0=, $0, $pop1
 .LBB1_1:                                # %again
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.store	$discard=, 8($6):p2align=3, $0
+	i32.store	$discard=, 8($4):p2align=3, $0
 	i32.const	$push4=, 0
 	i32.const	$push3=, 52
 	i32.call	$discard=, memset@FUNCTION, $1, $pop4, $pop3
-	i32.const	$5=, 8
-	i32.add 	$5=, $6, $5
-	call    	test@FUNCTION, $5
+	i32.const	$3=, 8
+	i32.add 	$3=, $4, $3
+	call    	test@FUNCTION, $3
 	i32.const	$push2=, 1
 	i32.add 	$0=, $0, $pop2
 	br      	0               # 0: up to label2

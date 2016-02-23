@@ -6,17 +6,17 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$3=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$3=, 0($2), $3
+	i32.const	$push2=, __stack_pointer
+	i32.load	$push3=, 0($pop2)
+	i32.const	$push4=, 16
+	i32.sub 	$1=, $pop3, $pop4
+	i32.const	$push5=, __stack_pointer
+	i32.store	$discard=, 0($pop5), $1
 	i32.const	$push0=, .L.str.1
-	i32.store	$discard=, 0($3):p2align=4, $pop0
-	call    	doit@FUNCTION, $0, $3
+	i32.store	$discard=, 0($1):p2align=4, $pop0
+	call    	doit@FUNCTION, $0, $1
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
 	unreachable

@@ -52,27 +52,23 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$4=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
-	i32.const	$push0=, 2
-	i32.const	$3=, 12
-	i32.add 	$3=, $4, $3
-	i32.or  	$push1=, $3, $pop0
-	i32.const	$push2=, 0
-	i32.store	$push3=, 12($4), $pop2
-	i32.store8	$0=, 0($pop1):p2align=1, $pop3
+	i32.const	$push4=, __stack_pointer
+	i32.load	$push5=, 0($pop4)
+	i32.const	$push6=, 16
+	i32.sub 	$2=, $pop5, $pop6
+	i32.const	$push7=, __stack_pointer
+	i32.store	$discard=, 0($pop7), $2
+	i32.const	$push0=, 0
+	i32.store	$0=, 12($2), $pop0
+	i32.const	$push1=, 1
+	i32.store16	$1=, 12($2):p2align=2, $pop1
+	i32.store8	$discard=, 14($2):p2align=1, $0
 	block
-	i32.const	$push4=, 1
-	i32.store16	$push5=, 12($4):p2align=2, $pop4
-	i32.load	$push6=, 12($4)
-	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	0, $pop7        # 0: down to label3
+	i32.load	$push2=, 12($2)
+	i32.ne  	$push3=, $1, $pop2
+	br_if   	0, $pop3        # 0: down to label3
 # BB#1:                                 # %if.end
 	call    	exit@FUNCTION, $0
 	unreachable

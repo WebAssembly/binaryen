@@ -123,120 +123,120 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, __stack_pointer
-	i32.load	$0=, 0($0)
-	i32.const	$1=, 80
-	i32.sub 	$18=, $0, $1
-	i32.const	$1=, __stack_pointer
-	i32.store	$18=, 0($1), $18
+	i32.const	$push41=, __stack_pointer
+	i32.load	$push42=, 0($pop41)
+	i32.const	$push43=, 80
+	i32.sub 	$15=, $pop42, $pop43
+	i32.const	$push44=, __stack_pointer
+	i32.store	$discard=, 0($pop44), $15
 	i32.const	$push0=, .L.str
-	i32.store	$discard=, 12($18), $pop0
+	i32.store	$discard=, 12($15), $pop0
 	i32.const	$push2=, 1
 	i32.const	$push1=, 0
-	i32.const	$3=, 12
-	i32.add 	$3=, $18, $3
-	i32.const	$4=, 16
-	i32.add 	$4=, $18, $4
-	call    	foo@FUNCTION, $3, $4, $pop2, $pop1
+	i32.const	$0=, 12
+	i32.add 	$0=, $15, $0
+	i32.const	$1=, 16
+	i32.add 	$1=, $15, $1
+	call    	foo@FUNCTION, $0, $1, $pop2, $pop1
 	block
-	i32.load	$push3=, 12($18)
+	i32.load	$push3=, 12($15)
 	i32.const	$push4=, .L.str.1
 	i32.call	$push5=, strcmp@FUNCTION, $pop3, $pop4
 	br_if   	0, $pop5        # 0: down to label4
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push6=, .L.str.2
-	i32.const	$5=, 16
-	i32.add 	$5=, $18, $5
-	i32.call	$push7=, strcmp@FUNCTION, $5, $pop6
+	i32.const	$2=, 16
+	i32.add 	$2=, $15, $2
+	i32.call	$push7=, strcmp@FUNCTION, $2, $pop6
 	br_if   	0, $pop7        # 0: down to label4
 # BB#2:                                 # %if.end
 	i32.const	$push8=, .L.str.3
-	i32.store	$discard=, 12($18), $pop8
+	i32.store	$discard=, 12($15), $pop8
 	i32.const	$push10=, 0
 	i32.const	$push9=, 1
-	i32.const	$6=, 12
-	i32.add 	$6=, $18, $6
-	i32.const	$7=, 16
-	i32.add 	$7=, $18, $7
-	call    	foo@FUNCTION, $6, $7, $pop10, $pop9
-	i32.load	$push11=, 12($18)
+	i32.const	$3=, 12
+	i32.add 	$3=, $15, $3
+	i32.const	$4=, 16
+	i32.add 	$4=, $15, $4
+	call    	foo@FUNCTION, $3, $4, $pop10, $pop9
+	i32.load	$push11=, 12($15)
 	i32.const	$push12=, .L.str.4
 	i32.call	$push13=, strcmp@FUNCTION, $pop11, $pop12
 	br_if   	0, $pop13       # 0: down to label4
 # BB#3:                                 # %lor.lhs.false7
 	i32.const	$push14=, .L.str.5
-	i32.const	$8=, 16
-	i32.add 	$8=, $18, $8
-	i32.call	$push15=, strcmp@FUNCTION, $8, $pop14
+	i32.const	$5=, 16
+	i32.add 	$5=, $15, $5
+	i32.call	$push15=, strcmp@FUNCTION, $5, $pop14
 	br_if   	0, $pop15       # 0: down to label4
 # BB#4:                                 # %if.end12
 	i32.const	$push16=, .L.str.6
-	i32.store	$discard=, 12($18), $pop16
+	i32.store	$discard=, 12($15), $pop16
 	i32.const	$push17=, 1
 	i32.const	$push38=, 1
-	i32.const	$9=, 12
-	i32.add 	$9=, $18, $9
-	i32.const	$10=, 16
-	i32.add 	$10=, $18, $10
-	call    	foo@FUNCTION, $9, $10, $pop17, $pop38
-	i32.load	$push18=, 12($18)
+	i32.const	$6=, 12
+	i32.add 	$6=, $15, $6
+	i32.const	$7=, 16
+	i32.add 	$7=, $15, $7
+	call    	foo@FUNCTION, $6, $7, $pop17, $pop38
+	i32.load	$push18=, 12($15)
 	i32.const	$push19=, .L.str.7
 	i32.call	$push20=, strcmp@FUNCTION, $pop18, $pop19
 	br_if   	0, $pop20       # 0: down to label4
 # BB#5:                                 # %lor.lhs.false16
 	i32.const	$push21=, .L.str.8
-	i32.const	$11=, 16
-	i32.add 	$11=, $18, $11
-	i32.call	$push22=, strcmp@FUNCTION, $11, $pop21
+	i32.const	$8=, 16
+	i32.add 	$8=, $15, $8
+	i32.call	$push22=, strcmp@FUNCTION, $8, $pop21
 	br_if   	0, $pop22       # 0: down to label4
 # BB#6:                                 # %if.end21
 	i32.const	$push23=, .L.str.9
-	i32.store	$discard=, 12($18), $pop23
+	i32.store	$discard=, 12($15), $pop23
 	i32.const	$push24=, 1
 	i32.const	$push39=, 1
-	i32.const	$12=, 12
-	i32.add 	$12=, $18, $12
-	i32.const	$13=, 16
-	i32.add 	$13=, $18, $13
-	call    	foo@FUNCTION, $12, $13, $pop24, $pop39
-	i32.load	$push25=, 12($18)
+	i32.const	$9=, 12
+	i32.add 	$9=, $15, $9
+	i32.const	$10=, 16
+	i32.add 	$10=, $15, $10
+	call    	foo@FUNCTION, $9, $10, $pop24, $pop39
+	i32.load	$push25=, 12($15)
 	i32.const	$push26=, .L.str.10
 	i32.call	$push27=, strcmp@FUNCTION, $pop25, $pop26
 	br_if   	0, $pop27       # 0: down to label4
 # BB#7:                                 # %lor.lhs.false25
 	i32.const	$push28=, .L.str.11
-	i32.const	$14=, 16
-	i32.add 	$14=, $18, $14
-	i32.call	$push29=, strcmp@FUNCTION, $14, $pop28
+	i32.const	$11=, 16
+	i32.add 	$11=, $15, $11
+	i32.call	$push29=, strcmp@FUNCTION, $11, $pop28
 	br_if   	0, $pop29       # 0: down to label4
 # BB#8:                                 # %if.end30
 	i32.const	$push30=, .L.str.12
-	i32.store	$discard=, 12($18), $pop30
+	i32.store	$discard=, 12($15), $pop30
 	i32.const	$push31=, 0
 	i32.const	$push40=, 0
-	i32.const	$15=, 12
-	i32.add 	$15=, $18, $15
-	i32.const	$16=, 16
-	i32.add 	$16=, $18, $16
-	call    	foo@FUNCTION, $15, $16, $pop31, $pop40
-	i32.load	$push32=, 12($18)
+	i32.const	$12=, 12
+	i32.add 	$12=, $15, $12
+	i32.const	$13=, 16
+	i32.add 	$13=, $15, $13
+	call    	foo@FUNCTION, $12, $13, $pop31, $pop40
+	i32.load	$push32=, 12($15)
 	i32.const	$push33=, .L.str.13
 	i32.call	$push34=, strcmp@FUNCTION, $pop32, $pop33
 	br_if   	0, $pop34       # 0: down to label4
 # BB#9:                                 # %lor.lhs.false34
 	i32.const	$push35=, .L.str.14
-	i32.const	$17=, 16
-	i32.add 	$17=, $18, $17
-	i32.call	$push36=, strcmp@FUNCTION, $17, $pop35
+	i32.const	$14=, 16
+	i32.add 	$14=, $15, $14
+	i32.call	$push36=, strcmp@FUNCTION, $14, $pop35
 	br_if   	0, $pop36       # 0: down to label4
 # BB#10:                                # %if.end39
 	i32.const	$push37=, 0
-	i32.const	$2=, 80
-	i32.add 	$18=, $18, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$18=, 0($2), $18
+	i32.const	$push45=, 80
+	i32.add 	$15=, $15, $pop45
+	i32.const	$push46=, __stack_pointer
+	i32.store	$discard=, 0($pop46), $15
 	return  	$pop37
 .LBB3_11:                               # %if.then38
 	end_block                       # label4:

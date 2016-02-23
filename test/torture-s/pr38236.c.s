@@ -7,29 +7,23 @@
 foo:                                    # @foo
 	.param  	i32, i32, i32, i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$4=, __stack_pointer
-	i32.load	$4=, 0($4)
-	i32.const	$5=, 16
-	i32.sub 	$10=, $4, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$10=, 0($5), $10
-	i32.const	$7=, 12
-	i32.add 	$7=, $10, $7
-	i32.const	$8=, 8
-	i32.add 	$8=, $10, $8
-	i32.select	$push1=, $7, $8, $3
+	i32.const	$push4=, __stack_pointer
+	i32.load	$push5=, 0($pop4)
+	i32.const	$push6=, 16
+	i32.sub 	$7=, $pop5, $pop6
+	i32.const	$4=, 12
+	i32.add 	$4=, $7, $4
+	i32.const	$5=, 8
+	i32.add 	$5=, $7, $5
+	i32.select	$push1=, $4, $5, $3
 	i32.const	$push2=, 1
 	i32.store	$discard=, 0($pop1), $pop2
-	i32.const	$9=, 12
-	i32.add 	$9=, $10, $9
-	i32.select	$push0=, $9, $0, $2
+	i32.const	$6=, 12
+	i32.add 	$6=, $7, $6
+	i32.select	$push0=, $6, $0, $2
 	i32.load	$push3=, 0($pop0)
-	i32.const	$6=, 16
-	i32.add 	$10=, $10, $6
-	i32.const	$6=, __stack_pointer
-	i32.store	$10=, 0($6), $10
 	return  	$pop3
 	.endfunc
 .Lfunc_end0:

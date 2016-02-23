@@ -6,16 +6,16 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$5=, __stack_pointer
-	i32.load	$7=, 0($5)
-	copy_local	$8=, $7
+	i32.const	$push16=, __stack_pointer
+	i32.load	$5=, 0($pop16)
+	copy_local	$6=, $5
 	i32.const	$3=, 0
 .LBB0_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	copy_local	$0=, $7
+	copy_local	$0=, $5
 	i32.const	$push15=, 1000
 	i32.rem_s	$push0=, $3, $pop15
 	i32.const	$push14=, 2
@@ -25,8 +25,8 @@ main:                                   # @main
 	i32.add 	$push1=, $pop12, $pop11
 	i32.const	$push10=, -16
 	i32.and 	$push2=, $pop1, $pop10
-	i32.sub 	$1=, $7, $pop2
-	copy_local	$7=, $1
+	i32.sub 	$1=, $5, $pop2
+	copy_local	$5=, $1
 	i32.const	$push9=, 1
 	i32.store	$2=, 0($1):p2align=4, $pop9
 	i32.add 	$push3=, $1, $4
@@ -35,15 +35,13 @@ main:                                   # @main
 	i32.const	$push7=, 0
 	i32.store	$discard=, p($pop7), $1
 	i32.add 	$3=, $3, $2
-	copy_local	$7=, $0
+	copy_local	$5=, $0
 	i32.const	$push6=, 1000000
 	i32.ne  	$push4=, $3, $pop6
 	br_if   	0, $pop4        # 0: up to label0
 # BB#2:                                 # %cleanup5
 	end_loop                        # label1:
 	i32.const	$push5=, 0
-	i32.const	$6=, __stack_pointer
-	i32.store	$7=, 0($6), $8
 	return  	$pop5
 	.endfunc
 .Lfunc_end0:

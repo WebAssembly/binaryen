@@ -6,23 +6,26 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.load	$2=, count($1)
-	i32.load	$0=, dummy($1)
-	i32.const	$3=, 1
-	i32.add 	$3=, $2, $3
-	i32.store	$discard=, count($1), $3
+	i32.const	$push7=, 0
+	i32.load	$0=, dummy($pop7)
+	i32.const	$push6=, 0
+	i32.const	$push5=, 0
+	i32.load	$push4=, count($pop5)
+	tee_local	$push3=, $1=, $pop4
+	i32.const	$push0=, 1
+	i32.add 	$push1=, $pop3, $pop0
+	i32.store	$discard=, count($pop6), $pop1
 	#APP
 	#NO_APP
-	i32.const	$push0=, 0
-	i32.store	$discard=, dummy($pop0), $0
+	i32.const	$push2=, 0
+	i32.store	$discard=, dummy($pop2), $0
 	block
-	br_if   	0, $2           # 0: down to label0
+	br_if   	0, $1           # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push1=, 0
-	call    	exit@FUNCTION, $pop1
+	i32.const	$push8=, 0
+	call    	exit@FUNCTION, $pop8
 	unreachable
 .LBB0_2:                                # %if.then
 	end_block                       # label0:

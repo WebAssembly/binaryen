@@ -65,22 +65,22 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, f64, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, f64, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$6=, __stack_pointer
-	i32.load	$6=, 0($6)
-	i32.const	$7=, 768
-	i32.sub 	$14=, $6, $7
-	i32.const	$7=, __stack_pointer
-	i32.store	$14=, 0($7), $14
+	i32.const	$push30=, __stack_pointer
+	i32.load	$push31=, 0($pop30)
+	i32.const	$push32=, 768
+	i32.sub 	$11=, $pop31, $pop32
+	i32.const	$push33=, __stack_pointer
+	i32.store	$discard=, 0($pop33), $11
 	i32.const	$3=, 0
-	i32.const	$9=, 512
-	i32.add 	$9=, $14, $9
-	copy_local	$2=, $9
-	i32.const	$10=, 256
-	i32.add 	$10=, $14, $10
-	copy_local	$1=, $10
-	copy_local	$0=, $14
+	i32.const	$6=, 512
+	i32.add 	$6=, $11, $6
+	copy_local	$2=, $6
+	i32.const	$7=, 256
+	i32.add 	$7=, $11, $7
+	copy_local	$1=, $7
+	copy_local	$0=, $11
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
@@ -115,20 +115,20 @@ main:                                   # @main
 	f64.const	$push8=, 0x1p1
 	f64.const	$push7=, 0x1.8p1
 	i32.const	$push6=, 32
-	i32.const	$11=, 512
-	i32.add 	$11=, $14, $11
-	i32.const	$12=, 256
-	i32.add 	$12=, $14, $12
-	call    	foo@FUNCTION, $11, $12, $14, $pop8, $pop7, $pop6
+	i32.const	$8=, 512
+	i32.add 	$8=, $11, $8
+	i32.const	$9=, 256
+	i32.add 	$9=, $11, $9
+	call    	foo@FUNCTION, $8, $9, $11, $pop8, $pop7, $pop6
 	i32.const	$3=, 0
 	i32.const	$2=, 0
 .LBB1_3:                                # %for.body12
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label6:
-	i32.const	$13=, 512
-	i32.add 	$13=, $14, $13
-	i32.add 	$push9=, $13, $3
+	i32.const	$10=, 512
+	i32.add 	$10=, $11, $10
+	i32.add 	$push9=, $10, $3
 	f64.load	$push10=, 0($pop9)
 	f64.load	$push11=, expected($3)
 	f64.ne  	$push12=, $pop10, $pop11
@@ -145,10 +145,10 @@ main:                                   # @main
 # BB#5:                                 # %for.end19
 	end_loop                        # label7:
 	i32.const	$push14=, 0
-	i32.const	$8=, 768
-	i32.add 	$14=, $14, $8
-	i32.const	$8=, __stack_pointer
-	i32.store	$14=, 0($8), $14
+	i32.const	$push34=, 768
+	i32.add 	$11=, $11, $pop34
+	i32.const	$push35=, __stack_pointer
+	i32.store	$discard=, 0($pop35), $11
 	return  	$pop14
 .LBB1_6:                                # %if.then
 	end_block                       # label5:

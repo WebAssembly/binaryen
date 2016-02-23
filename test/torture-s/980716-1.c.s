@@ -6,52 +6,37 @@
 	.type	stub,@function
 stub:                                   # @stub
 	.param  	i32, i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, __stack_pointer
-	i32.load	$3=, 0($3)
-	i32.const	$4=, 16
-	i32.sub 	$6=, $3, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$6=, 0($4), $6
-	i32.store	$2=, 12($6), $1
+	i32.const	$push4=, __stack_pointer
+	i32.load	$push5=, 0($pop4)
+	i32.const	$push6=, 16
+	i32.sub 	$5=, $pop5, $pop6
+	i32.store	$2=, 12($5), $1
+	copy_local	$1=, $2
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	i32.load	$push0=, 12($6)
-	i32.const	$push12=, 3
-	i32.add 	$push1=, $pop0, $pop12
-	i32.const	$push11=, -4
-	i32.and 	$push10=, $pop1, $pop11
-	tee_local	$push9=, $1=, $pop10
-	i32.const	$push8=, 4
-	i32.add 	$push2=, $pop9, $pop8
-	i32.store	$discard=, 12($6), $pop2
-	i32.load	$push3=, 0($1)
-	br_if   	0, $pop3        # 0: up to label0
+	i32.const	$push2=, 4
+	i32.add 	$push0=, $1, $pop2
+	i32.store	$3=, 12($5), $pop0
+	i32.load	$4=, 0($1)
+	copy_local	$1=, $3
+	br_if   	0, $4           # 0: up to label0
 # BB#2:                                 # %while.end
 	end_loop                        # label1:
-	i32.store	$discard=, 12($6), $2
+	i32.store	$1=, 12($5), $2
 .LBB0_3:                                # %while.body.1
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.load	$push4=, 12($6)
-	i32.const	$push17=, 3
-	i32.add 	$push5=, $pop4, $pop17
-	i32.const	$push16=, -4
-	i32.and 	$push15=, $pop5, $pop16
-	tee_local	$push14=, $1=, $pop15
-	i32.const	$push13=, 4
-	i32.add 	$push6=, $pop14, $pop13
-	i32.store	$discard=, 12($6), $pop6
-	i32.load	$push7=, 0($1)
-	br_if   	0, $pop7        # 0: up to label2
+	i32.const	$push3=, 4
+	i32.add 	$push1=, $1, $pop3
+	i32.store	$3=, 12($5), $pop1
+	i32.load	$4=, 0($1)
+	copy_local	$1=, $3
+	br_if   	0, $4           # 0: up to label2
 # BB#4:                                 # %while.end.1
 	end_loop                        # label3:
-	i32.const	$5=, 16
-	i32.add 	$6=, $6, $5
-	i32.const	$5=, __stack_pointer
-	i32.store	$6=, 0($5), $6
 	return
 	.endfunc
 .Lfunc_end0:
@@ -63,29 +48,23 @@ stub:                                   # @stub
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$3=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$3=, 0($2), $3
-	i32.const	$push0=, 12
-	i32.or  	$push1=, $3, $pop0
-	i32.const	$push2=, 0
-	i32.store	$0=, 0($pop1), $pop2
-	i32.const	$push3=, 8
-	i32.or  	$push4=, $3, $pop3
-	i32.const	$push5=, .L.str.2
-	i32.store	$discard=, 0($pop4):p2align=3, $pop5
-	i32.const	$push6=, 4
-	i32.or  	$push7=, $3, $pop6
-	i32.const	$push8=, .L.str.1
-	i32.store	$discard=, 0($pop7), $pop8
-	i32.const	$push9=, .L.str
-	i32.store	$discard=, 0($3):p2align=4, $pop9
-	call    	stub@FUNCTION, $0, $3
+	i32.const	$push4=, __stack_pointer
+	i32.load	$push5=, 0($pop4)
+	i32.const	$push6=, 16
+	i32.sub 	$1=, $pop5, $pop6
+	i32.const	$push7=, __stack_pointer
+	i32.store	$discard=, 0($pop7), $1
+	i32.const	$push0=, 0
+	i32.store	$0=, 12($1), $pop0
+	i32.const	$push1=, .L.str.2
+	i32.store	$discard=, 8($1):p2align=3, $pop1
+	i32.const	$push2=, .L.str.1
+	i32.store	$discard=, 4($1), $pop2
+	i32.const	$push3=, .L.str
+	i32.store	$discard=, 0($1):p2align=4, $pop3
+	call    	stub@FUNCTION, $0, $1
 	call    	exit@FUNCTION, $0
 	unreachable
 	.endfunc

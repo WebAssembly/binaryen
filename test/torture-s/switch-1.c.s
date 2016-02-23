@@ -153,7 +153,7 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	.Lswitch.table,@object  # @switch.table
-	.section	.rodata..Lswitch.table,"a",@progbits
+	.section	.rodata.cst32,"aM",@progbits,32
 	.p2align	4
 .Lswitch.table:
 	.int32	30                      # 0x1e

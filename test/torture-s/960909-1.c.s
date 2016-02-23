@@ -11,15 +11,15 @@ ffs:                                    # @ffs
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	block
+	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	0, $pop6        # 0: down to label0
+	br_if   	0, $pop6        # 0: down to label1
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$1=, 1
-	block
 	i32.const	$push2=, 1
 	i32.and 	$push0=, $0, $pop2
-	br_if   	0, $pop0        # 0: down to label1
+	br_if   	1, $pop0        # 1: down to label0
 # BB#2:
 	i32.const	$2=, 1
 .LBB0_3:                                # %for.inc
@@ -33,13 +33,13 @@ ffs:                                    # @ffs
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $pop1, $pop7
 	br_if   	0, $pop8        # 0: up to label2
-	br      	3               # 3: down to label0
-.LBB0_4:
+.LBB0_4:                                # %cleanup
 	end_loop                        # label3:
 	end_block                       # label1:
-	i32.const	$2=, 1
-.LBB0_5:                                # %cleanup
+	return  	$2
+.LBB0_5:
 	end_block                       # label0:
+	i32.const	$2=, 1
 	return  	$2
 	.endfunc
 .Lfunc_end0:

@@ -6,14 +6,14 @@
 	.type	f,@function
 f:                                      # @f
 	.param  	i32, i32, i32, f64, i32
-	.local  	f64, i64, i32, f64, i64, i32, i32, i32, i32
+	.local  	f64, i64, i32, f64, i64, i32
 # BB#0:                                 # %entry
-	i32.const	$10=, __stack_pointer
-	i32.load	$10=, 0($10)
-	i32.const	$11=, 64
-	i32.sub 	$13=, $10, $11
-	i32.const	$11=, __stack_pointer
-	i32.store	$13=, 0($11), $13
+	i32.const	$push28=, __stack_pointer
+	i32.load	$push29=, 0($pop28)
+	i32.const	$push30=, 64
+	i32.sub 	$10=, $pop29, $pop30
+	i32.const	$push31=, __stack_pointer
+	i32.store	$discard=, 0($pop31), $10
 	i32.const	$push2=, 16
 	i32.add 	$push3=, $1, $pop2
 	i32.load	$7=, 0($pop3):p2align=3
@@ -22,51 +22,47 @@ f:                                      # @f
 	f64.load	$5=, 0($1)
 	f64.load	$8=, 0($4)
 	i32.const	$push7=, 48
-	i32.add 	$push8=, $13, $pop7
-	i32.const	$push31=, 16
-	i32.add 	$push5=, $4, $pop31
+	i32.add 	$push8=, $10, $pop7
+	i32.const	$push27=, 16
+	i32.add 	$push5=, $4, $pop27
 	i32.load	$push6=, 0($pop5):p2align=3
 	i32.store	$discard=, 0($pop8):p2align=4, $pop6
 	i32.const	$push9=, 44
-	i32.add 	$push10=, $13, $pop9
+	i32.add 	$push10=, $10, $pop9
 	i64.const	$push0=, 32
 	i64.shr_u	$push4=, $9, $pop0
 	i64.store32	$discard=, 0($pop10), $pop4
 	i32.const	$push11=, 40
-	i32.add 	$push12=, $13, $pop11
+	i32.add 	$push12=, $10, $pop11
 	i64.store32	$discard=, 0($pop12):p2align=3, $9
 	i32.const	$push13=, 32
-	i32.add 	$push14=, $13, $pop13
+	i32.add 	$push14=, $10, $pop13
 	f64.store	$discard=, 0($pop14):p2align=4, $8
 	i32.const	$push15=, 24
-	i32.add 	$push16=, $13, $pop15
+	i32.add 	$push16=, $10, $pop15
 	f64.store	$discard=, 0($pop16), $3
 	i32.const	$push17=, 20
-	i32.add 	$push18=, $13, $pop17
+	i32.add 	$push18=, $10, $pop17
 	i32.store	$4=, 0($pop18), $2
-	i32.const	$push30=, 16
-	i32.add 	$push19=, $13, $pop30
+	i32.const	$push26=, 16
+	i32.add 	$push19=, $10, $pop26
 	i32.store	$discard=, 0($pop19):p2align=4, $7
-	i32.const	$push20=, 12
-	i32.or  	$push21=, $13, $pop20
-	i64.const	$push29=, 32
-	i64.shr_u	$push1=, $6, $pop29
-	i64.store32	$discard=, 0($pop21), $pop1
-	i32.const	$push22=, 8
-	i32.or  	$push23=, $13, $pop22
-	i64.store32	$discard=, 0($pop23):p2align=3, $6
-	f64.store	$discard=, 0($13):p2align=4, $5
-	i32.const	$push25=, out
-	i32.const	$push24=, .L.str
-	i32.call	$discard=, sprintf@FUNCTION, $pop25, $pop24, $13
-	i32.const	$push26=, f.xr
-	i32.const	$push27=, 33
-	i32.call	$push28=, memcpy@FUNCTION, $0, $pop26, $pop27
-	i32.store8	$discard=, 33($pop28), $4
-	i32.const	$12=, 64
-	i32.add 	$13=, $13, $12
-	i32.const	$12=, __stack_pointer
-	i32.store	$13=, 0($12), $13
+	i64.const	$push25=, 32
+	i64.shr_u	$push1=, $6, $pop25
+	i64.store32	$discard=, 12($10), $pop1
+	i64.store32	$discard=, 8($10):p2align=3, $6
+	f64.store	$discard=, 0($10):p2align=4, $5
+	i32.const	$push21=, out
+	i32.const	$push20=, .L.str
+	i32.call	$discard=, sprintf@FUNCTION, $pop21, $pop20, $10
+	i32.const	$push22=, f.xr
+	i32.const	$push23=, 33
+	i32.call	$push24=, memcpy@FUNCTION, $0, $pop22, $pop23
+	i32.store8	$discard=, 33($pop24), $4
+	i32.const	$push32=, 64
+	i32.add 	$10=, $10, $pop32
+	i32.const	$push33=, __stack_pointer
+	i32.store	$discard=, 0($pop33), $10
 	return
 	.endfunc
 .Lfunc_end0:
@@ -78,146 +74,138 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	f64, f64, i64, f64, i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	f64, f64, i64, f64, i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$7=, __stack_pointer
-	i32.load	$7=, 0($7)
-	i32.const	$8=, 256
-	i32.sub 	$26=, $7, $8
-	i32.const	$8=, __stack_pointer
-	i32.store	$26=, 0($8), $26
-	i32.const	$push62=, 0
-	f64.load	$0=, d3($pop62)
-	i32.const	$push61=, 0
-	i64.load	$2=, B2+8($pop61)
-	i32.const	$push60=, 0
-	i64.load	$4=, B1+8($pop60)
-	i32.const	$push59=, 0
-	i32.load	$5=, B1+16($pop59):p2align=3
+	i32.const	$push60=, __stack_pointer
+	i32.load	$push61=, 0($pop60)
+	i32.const	$push62=, 256
+	i32.sub 	$22=, $pop61, $pop62
+	i32.const	$push63=, __stack_pointer
+	i32.store	$discard=, 0($pop63), $22
 	i32.const	$push58=, 0
-	i32.load8_s	$6=, c2($pop58)
+	f64.load	$0=, d3($pop58)
 	i32.const	$push57=, 0
-	f64.load	$1=, B2($pop57)
+	i64.load	$2=, B2+8($pop57)
 	i32.const	$push56=, 0
-	f64.load	$3=, B1($pop56)
-	i32.const	$push4=, 48
-	i32.const	$9=, 48
-	i32.add 	$9=, $26, $9
-	i32.add 	$push5=, $9, $pop4
+	i64.load	$4=, B1+8($pop56)
 	i32.const	$push55=, 0
-	i32.load	$push0=, B2+16($pop55):p2align=3
+	i32.load	$5=, B1+16($pop55):p2align=3
+	i32.const	$push54=, 0
+	i32.load8_s	$6=, c2($pop54)
+	i32.const	$push53=, 0
+	f64.load	$1=, B2($pop53)
+	i32.const	$push52=, 0
+	f64.load	$3=, B1($pop52)
+	i32.const	$push4=, 48
+	i32.const	$7=, 48
+	i32.add 	$7=, $22, $7
+	i32.add 	$push5=, $7, $pop4
+	i32.const	$push51=, 0
+	i32.load	$push0=, B2+16($pop51):p2align=3
 	i32.store	$discard=, 0($pop5):p2align=4, $pop0
 	i32.const	$push6=, 40
-	i32.const	$10=, 48
-	i32.add 	$10=, $26, $10
-	i32.add 	$push7=, $10, $pop6
+	i32.const	$8=, 48
+	i32.add 	$8=, $22, $8
+	i32.add 	$push7=, $8, $pop6
 	i64.store32	$discard=, 0($pop7):p2align=3, $2
 	i32.const	$push8=, 32
-	i32.const	$11=, 48
-	i32.add 	$11=, $26, $11
-	i32.add 	$push9=, $11, $pop8
+	i32.const	$9=, 48
+	i32.add 	$9=, $22, $9
+	i32.add 	$push9=, $9, $pop8
 	f64.store	$discard=, 0($pop9):p2align=4, $1
 	i32.const	$push10=, 24
-	i32.const	$12=, 48
-	i32.add 	$12=, $26, $12
-	i32.add 	$push11=, $12, $pop10
+	i32.const	$10=, 48
+	i32.add 	$10=, $22, $10
+	i32.add 	$push11=, $10, $pop10
 	f64.store	$discard=, 0($pop11), $0
 	i32.const	$push12=, 20
-	i32.const	$13=, 48
-	i32.add 	$13=, $26, $13
-	i32.add 	$push13=, $13, $pop12
+	i32.const	$11=, 48
+	i32.add 	$11=, $22, $11
+	i32.add 	$push13=, $11, $pop12
 	i32.store	$discard=, 0($pop13), $6
 	i32.const	$push14=, 16
-	i32.const	$14=, 48
-	i32.add 	$14=, $26, $14
-	i32.add 	$push15=, $14, $pop14
+	i32.const	$12=, 48
+	i32.add 	$12=, $22, $12
+	i32.add 	$push15=, $12, $pop14
 	i32.store	$discard=, 0($pop15):p2align=4, $5
-	i32.const	$push16=, 8
-	i32.const	$15=, 48
-	i32.add 	$15=, $26, $15
-	i32.or  	$push17=, $15, $pop16
-	i64.store32	$discard=, 0($pop17):p2align=3, $4
-	i32.const	$push18=, 44
-	i32.const	$16=, 48
-	i32.add 	$16=, $26, $16
-	i32.add 	$push19=, $16, $pop18
+	i32.const	$push16=, 44
+	i32.const	$13=, 48
+	i32.add 	$13=, $22, $13
+	i32.add 	$push17=, $13, $pop16
 	i64.const	$push1=, 32
 	i64.shr_u	$push3=, $2, $pop1
-	i64.store32	$discard=, 0($pop19), $pop3
-	i32.const	$push20=, 12
-	i32.const	$17=, 48
-	i32.add 	$17=, $26, $17
-	i32.or  	$push21=, $17, $pop20
-	i64.const	$push54=, 32
-	i64.shr_u	$push2=, $4, $pop54
-	i64.store32	$discard=, 0($pop21), $pop2
-	f64.store	$discard=, 48($26):p2align=4, $3
-	i32.const	$push23=, out
-	i32.const	$push22=, .L.str
-	i32.const	$18=, 48
-	i32.add 	$18=, $26, $18
-	i32.call	$discard=, sprintf@FUNCTION, $pop23, $pop22, $18
-	i32.const	$push53=, out
-	i32.const	$19=, 144
-	i32.add 	$19=, $26, $19
-	i32.call	$discard=, strcpy@FUNCTION, $19, $pop53
-	i32.const	$push52=, 0
-	f64.load	$0=, d3($pop52)
-	i32.const	$push51=, 0
-	i32.load	$5=, fp($pop51)
-	i32.const	$push50=, 0
-	i32.load8_s	$6=, c2($pop50)
-	i32.const	$push49=, 20
-	i32.const	$20=, 24
-	i32.add 	$20=, $26, $20
-	i32.add 	$push24=, $20, $pop49
+	i64.store32	$discard=, 0($pop17), $pop3
+	i64.store32	$discard=, 56($22):p2align=3, $4
+	f64.store	$discard=, 48($22):p2align=4, $3
+	i64.const	$push50=, 32
+	i64.shr_u	$push2=, $4, $pop50
+	i64.store32	$discard=, 60($22), $pop2
+	i32.const	$push19=, out
+	i32.const	$push18=, .L.str
+	i32.const	$14=, 48
+	i32.add 	$14=, $22, $14
+	i32.call	$discard=, sprintf@FUNCTION, $pop19, $pop18, $14
+	i32.const	$push49=, out
+	i32.const	$15=, 144
+	i32.add 	$15=, $22, $15
+	i32.call	$discard=, strcpy@FUNCTION, $15, $pop49
 	i32.const	$push48=, 0
-	i32.load	$push25=, B1+20($pop48)
-	i32.store	$discard=, 0($pop24), $pop25
-	i32.const	$push47=, 16
-	i32.const	$21=, 24
-	i32.add 	$21=, $26, $21
-	i32.add 	$push26=, $21, $pop47
+	f64.load	$0=, d3($pop48)
+	i32.const	$push47=, 0
+	i32.load	$5=, fp($pop47)
 	i32.const	$push46=, 0
-	i32.load	$push27=, B1+16($pop46):p2align=3
-	i32.store	$discard=, 0($pop26):p2align=3, $pop27
-	i32.const	$push45=, 8
-	i32.const	$22=, 24
-	i32.add 	$22=, $26, $22
-	i32.add 	$push28=, $22, $pop45
+	i32.load8_s	$6=, c2($pop46)
+	i32.const	$push45=, 20
+	i32.const	$16=, 24
+	i32.add 	$16=, $22, $16
+	i32.add 	$push20=, $16, $pop45
 	i32.const	$push44=, 0
-	i64.load	$push29=, B1+8($pop44)
-	i64.store	$discard=, 0($pop28), $pop29
-	i32.const	$push43=, 0
-	i64.load	$push30=, B1($pop43)
-	i64.store	$discard=, 24($26), $pop30
-	i32.const	$push42=, 16
-	i32.add 	$push31=, $26, $pop42
+	i32.load	$push21=, B1+20($pop44)
+	i32.store	$discard=, 0($pop20), $pop21
+	i32.const	$push43=, 16
+	i32.const	$17=, 24
+	i32.add 	$17=, $22, $17
+	i32.add 	$push22=, $17, $pop43
+	i32.const	$push42=, 0
+	i32.load	$push23=, B1+16($pop42):p2align=3
+	i32.store	$discard=, 0($pop22):p2align=3, $pop23
+	i32.const	$push24=, 8
+	i32.const	$18=, 24
+	i32.add 	$18=, $22, $18
+	i32.add 	$push25=, $18, $pop24
 	i32.const	$push41=, 0
-	i64.load	$push32=, B2+16($pop41)
-	i64.store	$discard=, 0($pop31), $pop32
-	i32.const	$push40=, 8
-	i32.add 	$push33=, $26, $pop40
-	i32.const	$push39=, 0
-	i64.load	$push34=, B2+8($pop39)
-	i64.store	$discard=, 0($pop33), $pop34
+	i64.load	$push26=, B1+8($pop41)
+	i64.store	$discard=, 0($pop25), $pop26
+	i32.const	$push40=, 0
+	i64.load	$push27=, B1($pop40)
+	i64.store	$discard=, 24($22), $pop27
+	i32.const	$push39=, 16
+	i32.add 	$push28=, $22, $pop39
 	i32.const	$push38=, 0
-	i64.load	$push35=, B2($pop38)
-	i64.store	$discard=, 0($26), $pop35
-	i32.const	$23=, 104
-	i32.add 	$23=, $26, $23
-	i32.const	$24=, 24
-	i32.add 	$24=, $26, $24
-	call_indirect	$5, $23, $24, $6, $0, $26
-	i32.const	$push37=, out
-	i32.const	$25=, 144
-	i32.add 	$25=, $26, $25
+	i64.load	$push29=, B2+16($pop38)
+	i64.store	$discard=, 0($pop28), $pop29
+	i32.const	$push37=, 8
+	i32.add 	$push30=, $22, $pop37
+	i32.const	$push36=, 0
+	i64.load	$push31=, B2+8($pop36)
+	i64.store	$discard=, 0($pop30), $pop31
+	i32.const	$push35=, 0
+	i64.load	$push32=, B2($pop35)
+	i64.store	$discard=, 0($22), $pop32
+	i32.const	$19=, 104
+	i32.add 	$19=, $22, $19
+	i32.const	$20=, 24
+	i32.add 	$20=, $22, $20
+	call_indirect	$5, $19, $20, $6, $0, $22
+	i32.const	$push34=, out
+	i32.const	$21=, 144
+	i32.add 	$21=, $22, $21
 	block
-	i32.call	$push36=, strcmp@FUNCTION, $25, $pop37
-	br_if   	0, $pop36       # 0: down to label0
+	i32.call	$push33=, strcmp@FUNCTION, $21, $pop34
+	br_if   	0, $pop33       # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push63=, 0
-	call    	exit@FUNCTION, $pop63
+	i32.const	$push59=, 0
+	call    	exit@FUNCTION, $pop59
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

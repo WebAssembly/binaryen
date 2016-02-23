@@ -7,25 +7,19 @@
 bad:                                    # @bad
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 16
-	i32.sub 	$6=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$6=, 0($3), $6
-	i32.store	$discard=, 8($6):p2align=3, $1
-	i32.const	$5=, 8
-	i32.add 	$5=, $6, $5
-	i32.add 	$push0=, $5, $0
+	i32.const	$push3=, __stack_pointer
+	i32.load	$push4=, 0($pop3)
+	i32.const	$push5=, 16
+	i32.sub 	$3=, $pop4, $pop5
+	i32.store	$discard=, 8($3):p2align=3, $1
+	i32.const	$2=, 8
+	i32.add 	$2=, $3, $2
+	i32.add 	$push0=, $2, $0
 	i32.const	$push1=, 0
 	i32.store8	$discard=, 0($pop0), $pop1
-	i32.load	$push2=, 8($6):p2align=3
-	i32.const	$4=, 16
-	i32.add 	$6=, $6, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$6=, 0($4), $6
+	i32.load	$push2=, 8($3):p2align=3
 	return  	$pop2
 	.endfunc
 .Lfunc_end0:

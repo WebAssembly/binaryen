@@ -66,14 +66,14 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, __stack_pointer
-	i32.load	$0=, 0($0)
-	i32.const	$1=, 16
-	i32.sub 	$3=, $0, $1
-	i32.const	$1=, __stack_pointer
-	i32.store	$3=, 0($1), $3
+	i32.const	$push11=, __stack_pointer
+	i32.load	$push12=, 0($pop11)
+	i32.const	$push13=, 16
+	i32.sub 	$1=, $pop12, $pop13
+	i32.const	$push14=, __stack_pointer
+	i32.store	$discard=, 0($pop14), $1
 	i32.const	$push0=, 0
 	i64.const	$push1=, 47
 	i64.store	$discard=, main.r+32($pop0):p2align=4, $pop1
@@ -84,14 +84,14 @@ main:                                   # @main
 	i64.const	$push3=, 58
 	i64.store	$discard=, m($pop9), $pop3
 	i64.const	$push4=, 2
-	i64.store	$discard=, 8($3), $pop4
+	i64.store	$discard=, 8($1), $pop4
 	i32.const	$push8=, 0
 	i64.const	$push5=, 1
 	i64.store	$discard=, main.r+120($pop8), $pop5
 	i32.const	$push7=, 0
-	i32.const	$2=, 8
-	i32.add 	$2=, $3, $2
-	i32.store	$discard=, cp($pop7), $2
+	i32.const	$0=, 8
+	i32.add 	$0=, $1, $0
+	i32.store	$discard=, cp($pop7), $0
 	i32.const	$push6=, 0
 	call    	exit@FUNCTION, $pop6
 	unreachable

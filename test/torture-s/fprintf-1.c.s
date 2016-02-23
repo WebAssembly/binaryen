@@ -6,14 +6,14 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 144
-	i32.sub 	$13=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$13=, 0($3), $13
+	i32.const	$push98=, __stack_pointer
+	i32.load	$push99=, 0($pop98)
+	i32.const	$push100=, 144
+	i32.sub 	$10=, $pop99, $pop100
+	i32.const	$push101=, __stack_pointer
+	i32.store	$discard=, 0($pop101), $10
 	i32.const	$push1=, .L.str
 	i32.const	$push2=, 5
 	i32.const	$push61=, 1
@@ -74,11 +74,11 @@ main:                                   # @main
 	i32.const	$push76=, 0
 	i32.load	$1=, stdout($pop76)
 	i32.const	$push75=, .L.str
-	i32.store	$discard=, 128($13):p2align=4, $pop75
+	i32.store	$discard=, 128($10):p2align=4, $pop75
 	i32.const	$push74=, .L.str.4
-	i32.const	$5=, 128
-	i32.add 	$5=, $13, $5
-	i32.call	$push25=, fprintf@FUNCTION, $1, $pop74, $5
+	i32.const	$2=, 128
+	i32.add 	$2=, $10, $2
+	i32.call	$push25=, fprintf@FUNCTION, $1, $pop74, $2
 	i32.const	$push73=, 5
 	i32.ne  	$push26=, $pop25, $pop73
 	br_if   	0, $pop26       # 0: down to label0
@@ -92,11 +92,11 @@ main:                                   # @main
 	i32.const	$push82=, 0
 	i32.load	$1=, stdout($pop82)
 	i32.const	$push81=, .L.str.1
-	i32.store	$discard=, 112($13):p2align=4, $pop81
+	i32.store	$discard=, 112($10):p2align=4, $pop81
 	i32.const	$push80=, .L.str.4
-	i32.const	$6=, 112
-	i32.add 	$6=, $13, $6
-	i32.call	$push30=, fprintf@FUNCTION, $1, $pop80, $6
+	i32.const	$3=, 112
+	i32.add 	$3=, $10, $3
+	i32.call	$push30=, fprintf@FUNCTION, $1, $pop80, $3
 	i32.const	$push79=, 6
 	i32.ne  	$push31=, $pop30, $pop79
 	br_if   	0, $pop31       # 0: down to label0
@@ -108,11 +108,11 @@ main:                                   # @main
 	i32.const	$push86=, 0
 	i32.load	$1=, stdout($pop86)
 	i32.const	$push34=, .L.str.2
-	i32.store	$discard=, 96($13):p2align=4, $pop34
+	i32.store	$discard=, 96($10):p2align=4, $pop34
 	i32.const	$push85=, .L.str.4
-	i32.const	$7=, 96
-	i32.add 	$7=, $13, $7
-	i32.call	$push35=, fprintf@FUNCTION, $1, $pop85, $7
+	i32.const	$4=, 96
+	i32.add 	$4=, $10, $4
+	i32.call	$push35=, fprintf@FUNCTION, $1, $pop85, $4
 	i32.const	$push36=, 1
 	i32.ne  	$push37=, $pop35, $pop36
 	br_if   	0, $pop37       # 0: down to label0
@@ -120,11 +120,11 @@ main:                                   # @main
 	i32.const	$push89=, 0
 	i32.load	$1=, stdout($pop89)
 	i32.const	$push38=, .L.str.3
-	i32.store	$discard=, 80($13):p2align=4, $pop38
+	i32.store	$discard=, 80($10):p2align=4, $pop38
 	i32.const	$push88=, .L.str.4
-	i32.const	$8=, 80
-	i32.add 	$8=, $13, $8
-	i32.call	$push39=, fprintf@FUNCTION, $1, $pop88, $8
+	i32.const	$5=, 80
+	i32.add 	$5=, $10, $5
+	i32.call	$push39=, fprintf@FUNCTION, $1, $pop88, $5
 	br_if   	0, $pop39       # 0: down to label0
 # BB#8:                                 # %if.end36
 	i32.const	$push41=, 120
@@ -134,11 +134,11 @@ main:                                   # @main
 	i32.const	$push91=, 0
 	i32.load	$1=, stdout($pop91)
 	i32.const	$push90=, 120
-	i32.store	$discard=, 64($13):p2align=4, $pop90
+	i32.store	$discard=, 64($10):p2align=4, $pop90
 	i32.const	$push42=, .L.str.5
-	i32.const	$9=, 64
-	i32.add 	$9=, $13, $9
-	i32.call	$push43=, fprintf@FUNCTION, $1, $pop42, $9
+	i32.const	$6=, 64
+	i32.add 	$6=, $10, $6
+	i32.call	$push43=, fprintf@FUNCTION, $1, $pop42, $6
 	i32.const	$push44=, 1
 	i32.ne  	$push45=, $pop43, $pop44
 	br_if   	0, $pop45       # 0: down to label0
@@ -146,18 +146,18 @@ main:                                   # @main
 	i32.const	$push95=, 0
 	i32.load	$1=, stdout($pop95)
 	i32.const	$push46=, .L.str.1
-	i32.store	$0=, 48($13):p2align=4, $pop46
+	i32.store	$0=, 48($10):p2align=4, $pop46
 	i32.const	$push47=, .L.str.6
-	i32.const	$10=, 48
-	i32.add 	$10=, $13, $10
-	i32.call	$discard=, fprintf@FUNCTION, $1, $pop47, $10
+	i32.const	$7=, 48
+	i32.add 	$7=, $10, $7
+	i32.call	$discard=, fprintf@FUNCTION, $1, $pop47, $7
 	i32.const	$push94=, 0
 	i32.load	$1=, stdout($pop94)
-	i32.store	$discard=, 32($13):p2align=4, $0
+	i32.store	$discard=, 32($10):p2align=4, $0
 	i32.const	$push93=, .L.str.6
-	i32.const	$11=, 32
-	i32.add 	$11=, $13, $11
-	i32.call	$push48=, fprintf@FUNCTION, $1, $pop93, $11
+	i32.const	$8=, 32
+	i32.add 	$8=, $10, $8
+	i32.call	$push48=, fprintf@FUNCTION, $1, $pop93, $8
 	i32.const	$push49=, 7
 	i32.ne  	$push50=, $pop48, $pop49
 	br_if   	0, $pop50       # 0: down to label0
@@ -165,23 +165,23 @@ main:                                   # @main
 	i32.const	$push51=, 0
 	i32.load	$0=, stdout($pop51)
 	i32.const	$push97=, 0
-	i32.store	$1=, 16($13):p2align=4, $pop97
+	i32.store	$1=, 16($10):p2align=4, $pop97
 	i32.const	$push52=, .L.str.7
-	i32.const	$12=, 16
-	i32.add 	$12=, $13, $12
-	i32.call	$discard=, fprintf@FUNCTION, $0, $pop52, $12
+	i32.const	$9=, 16
+	i32.add 	$9=, $10, $9
+	i32.call	$discard=, fprintf@FUNCTION, $0, $pop52, $9
 	i32.load	$0=, stdout($1)
-	i32.store	$discard=, 0($13):p2align=4, $1
+	i32.store	$discard=, 0($10):p2align=4, $1
 	i32.const	$push96=, .L.str.7
-	i32.call	$push53=, fprintf@FUNCTION, $0, $pop96, $13
+	i32.call	$push53=, fprintf@FUNCTION, $0, $pop96, $10
 	i32.const	$push54=, 2
 	i32.ne  	$push55=, $pop53, $pop54
 	br_if   	0, $pop55       # 0: down to label0
 # BB#11:                                # %if.end51
-	i32.const	$4=, 144
-	i32.add 	$13=, $13, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$13=, 0($4), $13
+	i32.const	$push102=, 144
+	i32.add 	$10=, $10, $pop102
+	i32.const	$push103=, __stack_pointer
+	i32.store	$discard=, 0($pop103), $10
 	return  	$1
 .LBB0_12:                               # %if.then50
 	end_block                       # label0:

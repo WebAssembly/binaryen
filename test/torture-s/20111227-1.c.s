@@ -30,22 +30,19 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.load16_u	$0=, 0($0)
 	block
-	block
 	i32.const	$push4=, 0
 	i32.eq  	$push5=, $1, $pop4
-	br_if   	0, $pop5        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %if.then
 	call    	bar@FUNCTION, $0
-	br      	1               # 1: down to label1
+	return
 .LBB1_2:                                # %if.else
-	end_block                       # label2:
+	end_block                       # label1:
 	i32.const	$push1=, 16
 	i32.shl 	$push2=, $0, $pop1
 	i32.const	$push3=, 16
 	i32.shr_s	$push0=, $pop2, $pop3
 	call    	bar@FUNCTION, $pop0
-.LBB1_3:                                # %if.end
-	end_block                       # label1:
 	return
 	.endfunc
 .Lfunc_end1:

@@ -24,31 +24,31 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, __stack_pointer
-	i32.load	$0=, 0($0)
-	i32.const	$1=, 16
-	i32.sub 	$4=, $0, $1
-	i32.const	$1=, __stack_pointer
-	i32.store	$4=, 0($1), $4
+	i32.const	$push5=, __stack_pointer
+	i32.load	$push6=, 0($pop5)
+	i32.const	$push7=, 16
+	i32.sub 	$1=, $pop6, $pop7
+	i32.const	$push8=, __stack_pointer
+	i32.store	$discard=, 0($pop8), $1
 	i32.const	$push3=, 0
 	i64.load	$push0=, s($pop3)
-	i64.store	$discard=, 8($4), $pop0
+	i64.store	$discard=, 8($1), $pop0
 	i32.const	$push1=, -2023406815
-	i32.const	$3=, 8
-	i32.add 	$3=, $4, $3
+	i32.const	$0=, 8
+	i32.add 	$0=, $1, $0
 	block
-	i32.call	$push2=, f@FUNCTION, $3, $pop1
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $pop2, $pop5
-	br_if   	0, $pop6        # 0: down to label0
+	i32.call	$push2=, f@FUNCTION, $0, $pop1
+	i32.const	$push11=, 0
+	i32.eq  	$push12=, $pop2, $pop11
+	br_if   	0, $pop12       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
-	i32.const	$2=, 16
-	i32.add 	$4=, $4, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
+	i32.const	$push9=, 16
+	i32.add 	$1=, $1, $pop9
+	i32.const	$push10=, __stack_pointer
+	i32.store	$discard=, 0($pop10), $1
 	return  	$pop4
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

@@ -33,22 +33,22 @@ merge_overlapping_regs:                 # @merge_overlapping_regs
 	.type	regrename_optimize,@function
 regrename_optimize:                     # @regrename_optimize
 	.param  	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$6=, __stack_pointer
-	i32.load	$6=, 0($6)
-	i32.const	$7=, 16
-	i32.sub 	$11=, $6, $7
-	i32.const	$7=, __stack_pointer
-	i32.store	$11=, 0($7), $11
+	i32.const	$push30=, __stack_pointer
+	i32.load	$push31=, 0($pop30)
+	i32.const	$push32=, 16
+	i32.sub 	$8=, $pop31, $pop32
+	i32.const	$push33=, __stack_pointer
+	i32.store	$discard=, 0($pop33), $8
 	i32.load	$2=, 0($0)
 	i32.const	$push1=, 0
-	i32.store	$push2=, 8($11), $pop1
-	i32.store	$3=, 12($11), $pop2
+	i32.store	$push2=, 8($8), $pop1
+	i32.store	$3=, 12($8), $pop2
 	block
-	i32.const	$push30=, 0
-	i32.eq  	$push31=, $2, $pop30
-	br_if   	0, $pop31       # 0: down to label1
+	i32.const	$push36=, 0
+	i32.eq  	$push37=, $2, $pop36
+	br_if   	0, $pop37       # 0: down to label1
 # BB#1:
 	i32.const	$1=, -1
 	copy_local	$4=, $3
@@ -75,11 +75,11 @@ regrename_optimize:                     # @regrename_optimize
 	br_if   	0, $2           # 0: up to label2
 # BB#3:                                 # %for.end
 	end_loop                        # label3:
-	i32.store	$2=, 8($11), $4
+	i32.store	$2=, 8($8), $4
 	i32.const	$push8=, 4
-	i32.const	$9=, 8
-	i32.add 	$9=, $11, $9
-	i32.add 	$push26=, $9, $pop8
+	i32.const	$6=, 8
+	i32.add 	$6=, $8, $6
+	i32.add 	$push26=, $6, $pop8
 	tee_local	$push25=, $4=, $pop26
 	i32.store	$discard=, 0($pop25), $3
 	i32.const	$push9=, 0
@@ -99,16 +99,16 @@ regrename_optimize:                     # @regrename_optimize
 	i32.const	$push27=, -1
 	i32.xor 	$push14=, $1, $pop27
 	i32.or  	$push15=, $2, $pop14
-	i32.store	$discard=, 8($11), $pop15
-	i32.const	$10=, 8
-	i32.add 	$10=, $11, $10
-	call    	merge_overlapping_regs@FUNCTION, $10
+	i32.store	$discard=, 8($8), $pop15
+	i32.const	$7=, 8
+	i32.add 	$7=, $8, $7
+	call    	merge_overlapping_regs@FUNCTION, $7
 .LBB1_5:                                # %cleanup
 	end_block                       # label1:
-	i32.const	$8=, 16
-	i32.add 	$11=, $11, $8
-	i32.const	$8=, __stack_pointer
-	i32.store	$11=, 0($8), $11
+	i32.const	$push34=, 16
+	i32.add 	$8=, $8, $pop34
+	i32.const	$push35=, __stack_pointer
+	i32.store	$discard=, 0($pop35), $8
 	return
 	.endfunc
 .Lfunc_end1:
@@ -120,35 +120,33 @@ regrename_optimize:                     # @regrename_optimize
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, __stack_pointer
-	i32.load	$0=, 0($0)
-	i32.const	$1=, 16
-	i32.sub 	$4=, $0, $1
-	i32.const	$1=, __stack_pointer
-	i32.store	$4=, 0($1), $4
-	i32.const	$push2=, 4
-	i32.or  	$push3=, $4, $pop2
-	i32.const	$push4=, 1
-	i32.store	$discard=, 0($pop3), $pop4
+	i32.const	$push7=, __stack_pointer
+	i32.load	$push8=, 0($pop7)
+	i32.const	$push9=, 16
+	i32.sub 	$1=, $pop8, $pop9
+	i32.const	$push10=, __stack_pointer
+	i32.store	$discard=, 0($pop10), $1
+	i32.const	$push2=, 1
+	i32.store	$discard=, 4($1), $pop2
+	i32.const	$push4=, 0
+	i64.const	$push3=, -1
+	i64.store	$discard=, reg_class_contents($pop4):p2align=4, $pop3
 	i32.const	$push6=, 0
-	i64.const	$push5=, -1
-	i64.store	$discard=, reg_class_contents($pop6):p2align=4, $pop5
-	i32.const	$push8=, 0
 	i64.const	$push0=, 0
-	i64.store	$push1=, 8($4), $pop0
-	i64.store	$discard=, reg_class_contents+8($pop8), $pop1
-	i32.const	$3=, 8
-	i32.add 	$3=, $4, $3
-	i32.store	$discard=, 0($4):p2align=3, $3
-	call    	regrename_optimize@FUNCTION, $4
-	i32.const	$push7=, 0
-	i32.const	$2=, 16
-	i32.add 	$4=, $4, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
-	return  	$pop7
+	i64.store	$push1=, 8($1), $pop0
+	i64.store	$discard=, reg_class_contents+8($pop6), $pop1
+	i32.const	$0=, 8
+	i32.add 	$0=, $1, $0
+	i32.store	$discard=, 0($1):p2align=3, $0
+	call    	regrename_optimize@FUNCTION, $1
+	i32.const	$push5=, 0
+	i32.const	$push11=, 16
+	i32.add 	$1=, $1, $pop11
+	i32.const	$push12=, __stack_pointer
+	i32.store	$discard=, 0($pop12), $1
+	return  	$pop5
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

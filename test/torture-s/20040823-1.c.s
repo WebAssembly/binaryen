@@ -29,20 +29,20 @@ bla:                                    # @bla
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$0=, __stack_pointer
-	i32.load	$0=, 0($0)
-	i32.const	$1=, 16
-	i32.sub 	$3=, $0, $1
-	i32.const	$1=, __stack_pointer
-	i32.store	$3=, 0($1), $3
+	i32.const	$push2=, __stack_pointer
+	i32.load	$push3=, 0($pop2)
+	i32.const	$push4=, 16
+	i32.sub 	$1=, $pop3, $pop4
+	i32.const	$push5=, __stack_pointer
+	i32.store	$discard=, 0($pop5), $1
 	i32.const	$push0=, 0
-	i32.const	$2=, 12
-	i32.add 	$2=, $3, $2
-	i32.store	$discard=, pwarn($pop0), $2
+	i32.const	$0=, 12
+	i32.add 	$0=, $1, $0
+	i32.store	$discard=, pwarn($pop0), $0
 	i32.const	$push1=, 1
-	i32.store	$discard=, 12($3), $pop1
+	i32.store	$discard=, 12($1), $pop1
 	call    	bla@FUNCTION
 	unreachable
 	.endfunc

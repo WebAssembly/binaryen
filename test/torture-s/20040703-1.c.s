@@ -257,51 +257,47 @@ num_lshift:                             # @num_lshift
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 32
-	i32.sub 	$5=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$5=, 0($2), $5
+	i32.const	$push18=, __stack_pointer
+	i32.load	$push19=, 0($pop18)
+	i32.const	$push20=, 32
+	i32.sub 	$2=, $pop19, $pop20
+	i32.const	$push21=, __stack_pointer
+	i32.store	$discard=, 0($pop21), $2
 	i32.const	$push0=, 0
 	i32.load	$0=, n($pop0)
 	i32.const	$push1=, 12
-	i32.add 	$push2=, $5, $pop1
-	i32.const	$push19=, 0
-	i32.load	$push3=, num+12($pop19)
+	i32.add 	$push2=, $2, $pop1
+	i32.const	$push17=, 0
+	i32.load	$push3=, num+12($pop17)
 	i32.store	$discard=, 0($pop2), $pop3
 	i32.const	$push4=, 8
-	i32.add 	$push5=, $5, $pop4
-	i32.const	$push18=, 0
-	i32.load	$push6=, num+8($pop18)
-	i32.store	$discard=, 0($pop5), $pop6
-	i32.const	$push17=, 0
-	i64.load	$push7=, num($pop17):p2align=2
-	i64.store	$discard=, 0($5):p2align=2, $pop7
-	i32.const	$push8=, 64
-	i32.const	$3=, 16
-	i32.add 	$3=, $5, $3
-	call    	num_lshift@FUNCTION, $3, $5, $pop8, $0
-	i32.const	$push9=, 4
-	i32.const	$4=, 16
-	i32.add 	$4=, $5, $4
-	block
-	i32.or  	$push10=, $4, $pop9
-	i32.load	$push11=, 0($pop10)
-	i32.const	$push12=, 196608
-	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	0, $pop13       # 0: down to label15
-# BB#1:                                 # %if.end
-	i32.load	$push14=, 16($5):p2align=3
-	br_if   	0, $pop14       # 0: down to label15
-# BB#2:                                 # %if.end3
-	i32.load	$push15=, 28($5)
-	br_if   	0, $pop15       # 0: down to label15
-# BB#3:                                 # %if.end6
+	i32.add 	$push5=, $2, $pop4
 	i32.const	$push16=, 0
-	call    	exit@FUNCTION, $pop16
+	i32.load	$push6=, num+8($pop16)
+	i32.store	$discard=, 0($pop5), $pop6
+	i32.const	$push15=, 0
+	i64.load	$push7=, num($pop15):p2align=2
+	i64.store	$discard=, 0($2):p2align=2, $pop7
+	i32.const	$push8=, 64
+	i32.const	$1=, 16
+	i32.add 	$1=, $2, $1
+	call    	num_lshift@FUNCTION, $1, $2, $pop8, $0
+	block
+	i32.load	$push9=, 20($2)
+	i32.const	$push10=, 196608
+	i32.ne  	$push11=, $pop9, $pop10
+	br_if   	0, $pop11       # 0: down to label15
+# BB#1:                                 # %if.end
+	i32.load	$push12=, 16($2):p2align=3
+	br_if   	0, $pop12       # 0: down to label15
+# BB#2:                                 # %if.end3
+	i32.load	$push13=, 28($2)
+	br_if   	0, $pop13       # 0: down to label15
+# BB#3:                                 # %if.end6
+	i32.const	$push14=, 0
+	call    	exit@FUNCTION, $pop14
 	unreachable
 .LBB1_4:                                # %if.then5
 	end_block                       # label15:

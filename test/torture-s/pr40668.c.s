@@ -28,17 +28,17 @@ bar:                                    # @bar
 	end_block                       # label4:
 	i32.const	$push6=, 305419896
 	i32.store	$discard=, 0($1):p2align=0, $pop6
-	br      	3               # 3: down to label0
+	return
 .LBB0_3:                                # %sw.bb1
 	end_block                       # label3:
 	i32.const	$push5=, 0
 	i32.store	$discard=, 0($1):p2align=0, $pop5
-	br      	2               # 2: down to label0
+	return
 .LBB0_4:                                # %sw.bb2
 	end_block                       # label2:
 	i32.const	$push4=, 0
 	i32.store	$discard=, 0($1):p2align=0, $pop4
-	br      	1               # 1: down to label0
+	return
 .LBB0_5:                                # %sw.bb3
 	end_block                       # label1:
 	i32.const	$push3=, 0

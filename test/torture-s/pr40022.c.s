@@ -7,23 +7,17 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 16
-	i32.sub 	$5=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$5=, 0($2), $5
-	i32.store	$discard=, 12($5), $0
-	i32.const	$4=, 12
-	i32.add 	$4=, $5, $4
+	i32.const	$push0=, __stack_pointer
+	i32.load	$push1=, 0($pop0)
+	i32.const	$push2=, 16
+	i32.sub 	$2=, $pop1, $pop2
+	i32.store	$discard=, 12($2), $0
+	i32.const	$1=, 12
+	i32.add 	$1=, $2, $1
 	#APP
 	#NO_APP
-	i32.const	$3=, 16
-	i32.add 	$5=, $5, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$5=, 0($3), $5
 	return  	$0
 	.endfunc
 .Lfunc_end0:

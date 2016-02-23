@@ -52,44 +52,43 @@ add:                                    # @add
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	f64, i32, i32, i32, i32, i32
+	.local  	i32, f64, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, __stack_pointer
-	i32.load	$2=, 0($2)
-	i32.const	$3=, 16
-	i32.sub 	$5=, $2, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$5=, 0($3), $5
+	i32.const	$push9=, __stack_pointer
+	i32.load	$push10=, 0($pop9)
+	i32.const	$push11=, 16
+	i32.sub 	$2=, $pop10, $pop11
+	i32.const	$push12=, __stack_pointer
+	i32.store	$discard=, 0($pop12), $2
 	i64.const	$push0=, 9218868437227405312
-	i64.store	$discard=, 0($5):p2align=4, $pop0
-	i32.const	$push7=, 8
-	i32.or  	$push6=, $5, $pop7
-	tee_local	$push5=, $1=, $pop6
+	i64.store	$discard=, 0($2):p2align=4, $pop0
 	i64.const	$push1=, 4627167142146473984
-	i64.store	$discard=, 0($pop5), $pop1
-	f64.const	$0=, infinity
+	i64.store	$discard=, 8($2), $pop1
+	i32.const	$push5=, 8
+	i32.or  	$0=, $2, $pop5
+	f64.const	$1=, infinity
 .LBB1_1:                                # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label5:
-	f64.const	$push10=, infinity
-	f64.ne  	$push2=, $0, $pop10
+	f64.const	$push8=, infinity
+	f64.ne  	$push2=, $1, $pop8
 	br_if   	2, $pop2        # 2: down to label4
 # BB#2:                                 # %while.body.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	f64.load	$0=, 0($1)
-	i32.const	$push9=, 8
-	i32.add 	$1=, $1, $pop9
-	f64.const	$push8=, 0x1.7p4
-	f64.ne  	$push3=, $0, $pop8
+	f64.load	$1=, 0($0)
+	i32.const	$push7=, 8
+	i32.add 	$0=, $0, $pop7
+	f64.const	$push6=, 0x1.7p4
+	f64.ne  	$push3=, $1, $pop6
 	br_if   	0, $pop3        # 0: up to label5
 # BB#3:                                 # %add.exit
 	end_loop                        # label6:
 	i32.const	$push4=, 0
-	i32.const	$4=, 16
-	i32.add 	$5=, $5, $4
-	i32.const	$4=, __stack_pointer
-	i32.store	$5=, 0($4), $5
+	i32.const	$push13=, 16
+	i32.add 	$2=, $2, $pop13
+	i32.const	$push14=, __stack_pointer
+	i32.store	$discard=, 0($pop14), $2
 	return  	$pop4
 .LBB1_4:                                # %if.then3.i
 	end_block                       # label4:
