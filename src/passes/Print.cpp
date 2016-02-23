@@ -502,6 +502,15 @@ void Printer::run(PassRunner* runner, Module* module) {
 
 static RegisterPass<Printer> registerPass("print", "print in s-expression format");
 
+// Prints out a minified module
+class MinifiedPrinter : public Printer {
+  public:
+  MinifiedPrinter() : Printer() {}
+  MinifiedPrinter(std::ostream& o) : Printer(o) {}
+
+  void run(PassRunner* runner, Module* module) override;
+};
+
 void MinifiedPrinter::run(PassRunner* runner, Module* module) {
   PrintSExpression print(o, true);
   print.visitModule(module);

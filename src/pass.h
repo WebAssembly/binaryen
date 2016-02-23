@@ -166,15 +166,6 @@ public:
   void run(PassRunner* runner, Module* module) override;
 };
 
-// Prints out a minified module
-class MinifiedPrinter : public Printer {
-public:
-  MinifiedPrinter() : Printer() {}
-  MinifiedPrinter(std::ostream& o) : Printer(o) {}
-
-  void run(PassRunner* runner, Module* module) override;
-};
-
 } // namespace wasm
 
 #endif // wasm_pass_h
