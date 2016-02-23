@@ -579,6 +579,7 @@ private:
           case GrowMemory: {
             Flow flow = visit(curr->operands[0]);
             if (flow.breaking()) return flow;
+            int32_t ret = instance.memorySize;
             uint32_t delta = flow.value.geti32();
             if (delta % pageSize != 0) trap("growMemory: delta not multiple");
             if (delta > uint32_t(-1) - pageSize) trap("growMemory: delta relatively too big");
@@ -587,7 +588,7 @@ private:
             if (newSize > instance.wasm.memory.max) trap("growMemory: exceeds max");
             instance.externalInterface->growMemory(instance.memorySize, newSize);
             instance.memorySize = newSize;
-            return Literal();
+            return Literal(ret);
           }
           case HasFeature: {
             IString id = curr->nameOperand;
