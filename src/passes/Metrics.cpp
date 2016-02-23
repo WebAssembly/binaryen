@@ -24,7 +24,7 @@ namespace wasm {
 using namespace std;
 
 // Prints metrics between optimization passes.
-struct Metrics : public WalkerPass<WasmWalker<Metrics>> {
+struct Metrics : public WalkerPass<PreOrPostWalker<Metrics>> {
   static Metrics *lastMetricsPass;
 
   map<const char *, int> counts;

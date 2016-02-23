@@ -1350,10 +1350,10 @@ struct ChildWalker : public WasmWalkerBase<ChildWalker<ParentType>> {
 //
 
 template<typename SubType, typename ReturnType = void>
-struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
+struct PreOrPostWalker : public WasmWalkerBase<SubType, ReturnType> {
   Expression* replace;
-
-  WasmWalker() : replace(nullptr) {}
+  bool postOrder;
+  PreOrPostWalker(bool postOrder = true) : replace(nullptr), postOrder(postOrder) {}
 
   // the visit* methods can call this to replace the current node
   void replaceCurrent(Expression *expression) {
@@ -1390,17 +1390,22 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
   ReturnType visitMemory(Memory *curr) {}
   ReturnType visitModule(Module *curr) {}
 
-  // children-first
   void walk(Expression*& curr) override {
     if (!curr) return;
-
-    ChildWalker<WasmWalker<SubType, ReturnType>>(*this).visit(curr);
-
-    this->visit(curr);
-
-    if (replace) {
-      curr = replace;
-      replace = nullptr;
+    if (postOrder) {
+      ChildWalker<PreOrPostWalker<SubType, ReturnType>>(*this).visit(curr);
+      this->visit(curr);
+      if (replace) {
+        curr = replace;
+        replace = nullptr;
+      }
+    } else {
+      this->visit(curr);
+      if (replace) {
+        curr = replace;
+        replace = nullptr;
+      }
+      ChildWalker<PreOrPostWalker<SubType, ReturnType>>(*this).visit(curr);
     }
   }
 
@@ -1424,6 +1429,143 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
       assert(!replace);
     }
     for (auto curr : module->functions) {
+      startWalk(curr);
+      self->visitFunction(curr);
+      assert(!replace);
+    }
+    self->visitTable(&module->table);
+    assert(!replace);
+    self->visitMemory(&module->memory);
+    assert(!replace);
+    self->visitModule(module);
+    assert(!replace);
+  }
+};
+
+template <typename SubType>
+struct RecursiveWalker : public WasmWalkerBase<SubType, void> {
+protected:
+  Expression *replace;
+
+public:
+  RecursiveWalker() : replace(nullptr) {}
+
+  // The visitXXX methods can call this to replace the current node.
+  void replaceCurrent(Expression *expression) {
+    assert(!replace);
+    replace = expression;
+  }
+
+  // The expression to be visited is passed in as a double pointer so its
+  // value can be replaced.
+  void recursiveVisit(Expression **curr) {
+    if (!*curr) {
+      return;
+    }
+    this->visit(*curr);
+    if (replace) {
+      *curr = replace;
+      replace = nullptr;
+    }
+  }
+  void visitBlock(Block *curr) {
+    ExpressionList &list = curr->list;
+    for (size_t z = 0; z < list.size(); z++) {
+      recursiveVisit(&list[z]);
+    }
+  }
+  void visitIf(If *curr) {
+    recursiveVisit(&curr->condition);
+    recursiveVisit(&curr->ifTrue);
+    recursiveVisit(&curr->ifFalse);
+  }
+  void visitLoop(Loop *curr) { recursiveVisit(&curr->body); }
+  void visitBreak(Break *curr) {
+    recursiveVisit(&curr->condition);
+    recursiveVisit(&curr->value);
+  }
+  void visitSwitch(Switch *curr) {
+    recursiveVisit(&curr->value);
+    for (auto &case_ : curr->cases) {
+      recursiveVisit(&case_.body);
+    }
+  }
+  void visitCall(Call *curr) {
+    ExpressionList &list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      recursiveVisit(&list[z]);
+    }
+  }
+  void visitCallImport(CallImport *curr) {
+    ExpressionList &list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      recursiveVisit(&list[z]);
+    }
+  }
+  void visitCallIndirect(CallIndirect *curr) {
+    recursiveVisit(&curr->target);
+    ExpressionList &list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      recursiveVisit(&list[z]);
+    }
+  }
+  void visitGetLocal(GetLocal *curr) {}
+  void visitSetLocal(SetLocal *curr) {
+    recursiveVisit(&curr->value);
+  }
+  void visitLoad(Load *curr) {
+    recursiveVisit(&curr->ptr);
+  }
+  void visitStore(Store *curr) {
+    recursiveVisit(&curr->ptr);
+    recursiveVisit(&curr->value);
+  }
+  void visitConst(Const *curr) {}
+  void visitUnary(Unary *curr) {
+    recursiveVisit(&curr->value);
+  }
+  void visitBinary(Binary *curr) {
+    recursiveVisit(&curr->left);
+    recursiveVisit(&curr->right);
+  }
+  void visitSelect(Select *curr) {
+    recursiveVisit(&curr->condition);
+    recursiveVisit(&curr->ifTrue);
+    recursiveVisit(&curr->ifFalse);
+  }
+  void visitHost(Host *curr) {
+    ExpressionList &list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      recursiveVisit(&list[z]);
+    }
+  }
+  void visitNop(Nop *curr) {}
+  void visitUnreachable(Unreachable *curr) {}
+  void visitFunctionType(FunctionType *curr) {}
+  void visitImport(Import *curr) {}
+  void visitExport(Export *curr) {}
+  void visitFunction(Function *curr) {}
+  void visitTable(Table *curr) {}
+  void visitMemory(Memory *curr) {}
+  void visitModule(Module *curr) {}
+  void startWalk(Function *func) override {
+    this->visit(func->body);
+  }
+  void startWalk(Module *module) override {
+    SubType *self = static_cast<SubType *>(this);
+    for (auto &curr : module->functionTypes) {
+      self->visitFunctionType(curr);
+      assert(!replace);
+    }
+    for (auto &curr : module->imports) {
+      self->visitImport(curr);
+      assert(!replace);
+    }
+    for (auto &curr : module->exports) {
+      self->visitExport(curr);
+      assert(!replace);
+    }
+    for (auto &curr : module->functions) {
       startWalk(curr);
       self->visitFunction(curr);
       assert(!replace);
