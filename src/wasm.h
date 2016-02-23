@@ -1017,7 +1017,7 @@ public:
         break;
       }
       case GrowMemory: {
-        type = none;
+        type = i32;
         break;
       }
       default: abort();
