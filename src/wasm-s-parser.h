@@ -868,18 +868,21 @@ private:
       i++;
     }
   }
-
+  Name getLabel(Element& s) {
+    if (s.dollared()) {
+      return s.str();
+    } else {
+      size_t offset = atol(s.c_str());
+      if (offset >= labelStack.size())
+        return getPrefixedName("invalid");
+      // offset, break to nth outside label
+      return labelStack[labelStack.size() - 1 - offset];
+    }
+  }
   Expression* makeBreak(Element& s) {
     auto ret = allocator.alloc<Break>();
     size_t i = 1;
-    if (s[i]->dollared()) {
-      ret->name = s[i]->str();
-    } else {
-      // offset, break to nth outside label
-      size_t offset = atol(s[i]->c_str());
-      assert(offset < labelStack.size());
-      ret->name = labelStack[labelStack.size() - 1 - offset];
-    }
+    ret->name = getLabel(*s[i]);
     i++;
     if (i == s.size()) return ret;
     if (s[0]->str() == BR_IF) {
@@ -911,16 +914,17 @@ private:
     } else {
       ret->name = getPrefixedName("switch");
     }
+    labelStack.push_back(ret->name);
     ret->value =  parseExpression(s[i]);
     i++;
     Element& table = *s[i];
     i++;
     for (size_t j = 1; j < table.size(); j++) {
       Element& curr = *table[j];
-      ret->targets.push_back(curr[1]->str());
+      ret->targets.push_back(getLabel(*curr[1]));
     }
     Element& curr = *s[i];
-    ret->default_ = curr[1]->str();
+    ret->default_ = getLabel(*curr[1]);
     i++;
     for (; i < s.size(); i++) {
       Element& curr = *s[i];
@@ -929,6 +933,7 @@ private:
       ret->cases.emplace_back(curr[1]->str(), makeMaybeBlock(curr, 2, curr.size()));
     }
     ret->type = ret->cases.size() > 0 ? ret->cases[0].body->type : none;
+    labelStack.pop_back();
     return ret;
   }
 
