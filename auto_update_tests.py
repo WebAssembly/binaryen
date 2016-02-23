@@ -44,6 +44,15 @@ for wasm in ['address.wast']:#os.listdir(os.path.join('test', 'spec')):
     expected_file = os.path.join('test', asm)
     open(expected_file, 'w').write(actual)
 
+for t in sorted(os.listdir(os.path.join('test', 'print'))):
+  if t.endswith('.wast'):
+    print '..', t
+    wasm = os.path.basename(t).replace('.wast', '')
+    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join('test', 'print', t), '--print']
+    print '    ', ' '.join(cmd)
+    actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    open(os.path.join('test', 'print', wasm + '.txt'), 'w').write(actual)
+
 for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):
     print '..', t

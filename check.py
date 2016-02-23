@@ -279,6 +279,17 @@ for asm in tests:
           raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
         raise Exception('wasm interpreter error')
 
+print '\n[ checking binaryen-shell parsing & printing... ]\n'
+
+for t in sorted(os.listdir(os.path.join('test', 'print'))):
+  if t.endswith('.wast'):
+    print '..', t
+    name = os.path.basename(t).replace('.wast', '')
+    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join('test', 'print', t), '--print']
+    print '    ', ' '.join(cmd)
+    actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    fail_if_not_identical(actual, open(os.path.join('test', 'print', name + '.txt')).read())
+
 print '\n[ checking binaryen-shell passes... ]\n'
 
 for t in sorted(os.listdir(os.path.join('test', 'passes'))):
