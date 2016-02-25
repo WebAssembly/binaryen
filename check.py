@@ -174,6 +174,12 @@ def split_wast(wast):
   i = 0
   while i >= 0:
     start = wast.find('(', i)
+    if start >= 0 and wast[start+1] == ';':
+      # block comment
+      i = wast.find(';)', start+2)
+      assert i > 0, wast[start:]
+      i += 2
+      continue
     skip = wast.find(';', i)
     if skip >= 0 and skip < start and skip + 1 < len(wast):
       if wast[skip+1] == ';':
@@ -188,7 +194,6 @@ def split_wast(wast):
       continue
     elif chunk.startswith(('(assert', '(invoke')):
       ret[-1][1].append(chunk)
-  assert len(ret) > 0
   return ret
 
 def binary_format_check(wast, verify_final_result=True):

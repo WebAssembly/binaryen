@@ -222,6 +222,7 @@ class SExpressionWasmBuilder {
   AllocatingModule& wasm;
   MixedArena& allocator;
   std::function<void ()> onError;
+  std::vector<Name> functionNames;
   int functionCounter;
   int importCounter;
   std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
@@ -258,6 +259,7 @@ private:
       // unnamed, use an index
       name = Name::fromInt(functionCounter);
     }
+    functionNames.push_back(name);
     functionCounter++;
     for (;i < s.size(); i++) {
       Element& curr = *s[i];
@@ -1036,7 +1038,12 @@ private:
 
   void parseTable(Element& s) {
     for (size_t i = 1; i < s.size(); i++) {
-      wasm.table.names.push_back(s[i]->str());
+      Name name = s[i]->str();
+      if (!s[i]->dollared()) {
+        // index, we haven't
+        name = functionNames[atoi(name.str)];
+      }
+      wasm.table.names.push_back(name);
     }
   }
 
