@@ -29,7 +29,7 @@ inline std::ostream& printWasm(Module* module, std::ostream& o) {
   return o;
 }
 
-extern std::ostream& printWasm(Expression* expression, std::ostream& o);
+extern std::ostream& printWasm(Expression* expression, std::ostream& o, bool minify = false);
 
 }
 

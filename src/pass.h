@@ -156,6 +156,7 @@ private:
 
 // Prints out a module
 class Printer : public Pass {
+protected:
   std::ostream& o;
 
 public:

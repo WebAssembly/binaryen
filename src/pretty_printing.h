@@ -32,18 +32,6 @@ inline std::ostream &doIndent(std::ostream &o, unsigned indent) {
   return o;
 }
 
-inline std::ostream &incIndent(std::ostream &o, unsigned& indent) {
-  o << '\n';
-  indent++;
-  return o; 
-}
-
-inline std::ostream &decIndent(std::ostream &o, unsigned& indent) {
-  indent--;
-  doIndent(o, indent);
-  return o << ')';
-}
-
 inline std::ostream &prepareMajorColor(std::ostream &o) {
   Colors::red(o);
   Colors::bold(o);
