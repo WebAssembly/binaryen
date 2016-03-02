@@ -29,6 +29,10 @@
 #include "support/bits.h"
 #include "wasm.h"
 
+#ifdef WASM_INTERPRETER_DEBUG
+#include "wasm-printing.h"
+#endif
+
 namespace wasm {
 
 using namespace cashew;
@@ -166,7 +170,7 @@ private:
         indent++;
 #if WASM_INTERPRETER_DEBUG == 2
         doIndent(std::cout, indent);
-        expression->print(std::cout, indent) << '\n';
+        std::cout << "\n" << expression << '\n';
         indent++;
 #endif
       }
@@ -445,8 +449,8 @@ private:
         if (flow.breaking()) return flow;
         Literal right = flow.value;
         NOTE_EVAL2(left, right);
-        assert(left.type == curr->left->type);
-        assert(right.type == curr->right->type);
+        assert(isConcreteWasmType(curr->left->type) ? left.type == curr->left->type : true);
+        assert(isConcreteWasmType(curr->right->type) ? right.type == curr->right->type : true);
         if (left.type == i32) {
           switch (curr->op) {
             case Add:      return left.add(right);
