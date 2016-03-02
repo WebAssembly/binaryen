@@ -109,13 +109,15 @@ Pass `--debug` on the command line to see debug info, about asm.js functions as 
 
 ### wasm.js
 
+Update your emscripten configuration file, setting the `BINARYEN_ROOT` variable to point to the directory containing binaryen.
+
 Run Emscripten's `emcc` command, passing it an additional flag:
 
 ```
-emcc -s 'BINARYEN="path-to-this-dir"' [whatever other emcc flags you want]
+emcc -s BINARYEN=1 [whatever other emcc flags you want]
 ```
 
-(Note the need for quotes on the path, and on the entire `BINARYEN=..` argument, due to how shell argument parsing works.) The `BINARYEN` flag tells it to emit code using `wasm.js`, and where to find `wasm.js` itself. The output `*.js` file will then contain the entire polyfill (`asm2wasm` translator + `wasm.js` interpreter). The asm.js code will be in `*.asm.js`.
+The `BINARYEN` flag tells it to emit code using `wasm.js`, and the `BINARYEN_ROOT` config variable tells where to find `wasm.js` itself. The output `*.js` file will then contain the entire polyfill (`asm2wasm` translator + `wasm.js` interpreter). The asm.js code will be in `*.asm.js`.
 
 ### C/C++ Source => asm2wasm => WebAssembly
 
@@ -144,13 +146,13 @@ s2wasm code.s > code.wast
 You can also use Emscripten, which will do those steps for you (as well as link to system libraries, etc.). You can use either normal Emscripten, including it's "fastcomp" fork of LLVM, or you can use "vanilla" LLVM, that is, pure upstream LLVM without Emscripten's additions. With Vanilla LLVM, you can build with
 
 ````
-./emcc input.cpp -s 'BINARYEN="path-to-binaryen"'
+./emcc input.cpp -s BINARYEN=1
 ````
 
 With normal Emscripten, you will need to tell it to use the WebAssembly backend, since its default is asm.js, by setting an env var,
 
 ````
-EMCC_WASM_BACKEND=1 ./emcc input.cpp -s 'BINARYEN="path-to-binaryen"'
+EMCC_WASM_BACKEND=1 ./emcc input.cpp -s BINARYEN=1
 ````
 
 (without the env var, the `BINARYEN` option will make it use the asm.js backend, then `asm2wasm`).

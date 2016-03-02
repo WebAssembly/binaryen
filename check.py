@@ -48,6 +48,8 @@ BASE_DIR = os.path.abspath('test')
 WATERFALL_BUILD_DIR = os.path.join(BASE_DIR, 'wasm-install')
 BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'wasm-install', 'bin'))
 
+os.environ['BINARYEN'] = os.getcwd()
+
 def fetch_waterfall():
   rev = open(os.path.join('test', 'revision')).read().strip()
   try:
@@ -525,7 +527,7 @@ if has_vanilla_emcc and has_vanilla_llvm:
       print '..', c
       base = c.replace('.cpp', '').replace('.c', '')
       expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
-      command = [VANILLA_EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
+      command = [VANILLA_EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
       print '....' + ' '.join(command)
       if os.path.exists('a.wasm.js'): os.unlink('a.wasm.js')
       subprocess.check_call(command)
@@ -565,13 +567,13 @@ if has_emcc:
 
   for method in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm']:
     for success in [1, 0]:
-      command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', 'hello_world.c') ]
+      command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', 'hello_world.c') ]
       if method:
         command += ['-s', 'BINARYEN_METHOD="' + method + '"']
       else:
         method = 'wasm-s-parser' # this is the default
       print method, ' : ', ' '.join(command), ' => ', success
-      subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      subprocess.check_call(command)
       def break_cashew():
         asm = open('a.wasm.asm.js').read()
         asm = asm.replace('"almost asm"', '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
@@ -621,7 +623,7 @@ if has_emcc:
       if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
       for opts in [[], ['-O1'], ['-O2'], ['-O3'], ['-Oz']]:
         for method in ['asm2wasm', 'wasm-s-parser', 'just-asm']:
-          command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN="' + os.getcwd() + '"', os.path.join('test', c)] + opts + extra
+          command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', c)] + opts + extra
           command += ['-s', 'BINARYEN_METHOD="' + method + '"']
           subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
           print '....' + ' '.join(command)
