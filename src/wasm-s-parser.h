@@ -524,7 +524,6 @@ public:
           abort_on(op);
         }
         case 's': {
-          if (op[1] == 'e') return makeSelect(s, type);
           if (op[1] == 'h') {
             if (op[2] == 'l') return makeBinary(s, BinaryOp::Shl, type);
             return makeBinary(s, op[4] == 'u' ? BinaryOp::ShrU : BinaryOp::ShrS, type);
@@ -598,7 +597,8 @@ public:
           abort_on(str);
         }
         case 's': {
-          if (str[1] == 'e') return makeSetLocal(s);
+          if (str[1] == 'e' && str[2] == 't') return makeSetLocal(s);
+          if (str[1] == 'e' && str[2] == 'l') return makeSelect(s);
           abort_on(str);
         }
         case 'r': {
@@ -637,12 +637,12 @@ private:
     return ret;
   }
 
-  Expression* makeSelect(Element& s, WasmType type) {
+  Expression* makeSelect(Element& s) {
     auto ret = allocator.alloc<Select>();
     ret->ifTrue = parseExpression(s[1]);
     ret->ifFalse = parseExpression(s[2]);
     ret->condition = parseExpression(s[3]);
-    ret->type = type;
+    ret->finalize();
     return ret;
   }
 

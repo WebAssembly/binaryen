@@ -314,7 +314,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   }
   void visitSelect(Select *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->type) << ".select";
+    prepareColor(o) << "select";
     incIndent();
     printFullLine(curr->ifTrue);
     printFullLine(curr->ifFalse);
