@@ -313,7 +313,7 @@
           (set_local $var$1
             (i32.const 0)
           )
-          (i32.select
+          (select
             (i32.sub
               (i32.const 0)
               (get_local $var$1)
