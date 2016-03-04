@@ -429,8 +429,10 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     printOpening(o, "module", true);
     incIndent();
     doIndent(o, indent);
-    printOpening(o, "memory") << " " << curr->memory.initial;
-    if (curr->memory.max && curr->memory.max != (uint32_t)-1) o << " " << curr->memory.max;
+    uint32_t initial_pages = (curr->memory.initial + (WASM_PAGE_SIZE - 1)) / WASM_PAGE_SIZE;
+    uint32_t max_pages = (curr->memory.max + (WASM_PAGE_SIZE - 1)) / WASM_PAGE_SIZE;
+    printOpening(o, "memory") << " " << initial_pages;
+    if (max_pages && max_pages != 65535) o << " " << max_pages;
     for (auto segment : curr->memory.segments) {
       o << maybeNewLine;
       o << (minify ? "" : "    ") << "(segment " << segment.offset << " \"";

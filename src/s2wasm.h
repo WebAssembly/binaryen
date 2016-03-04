@@ -67,6 +67,8 @@ class S2WasmBuilder {
     // small.
     if (stackAllocation) placeStack(stackAllocation);
     fix();
+    // Round up the initial memory to a page size.
+    wasm.memory.initial = (wasm.memory.initial + (WASM_PAGE_SIZE - 1L)) & ~(WASM_PAGE_SIZE - 1L);
   }
 
  private:

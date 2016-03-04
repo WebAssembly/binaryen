@@ -1072,6 +1072,8 @@ public:
   std::vector<Name> names;
 };
 
+#define WASM_PAGE_SIZE 0x10000  // 64k
+
 class Memory {
 public:
   struct Segment {
@@ -1085,7 +1087,7 @@ public:
   size_t initial, max;
   std::vector<Segment> segments;
 
-  Memory() : initial(0), max((uint32_t)-1) {}
+  Memory() : initial(0), max((uint32_t)-1 & ~(WASM_PAGE_SIZE - 1)) {}
 };
 
 class Module {
