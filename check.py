@@ -598,11 +598,11 @@ if has_emcc:
         proc = subprocess.Popen([has_node, 'a.wasm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = proc.communicate()
         if success:
-          assert proc.returncode == 0
-          assert 'hello, world!' in out
+          assert proc.returncode == 0, err
+          assert 'hello, world!' in out, out
         else:
-          assert proc.returncode != 0
-          assert 'hello, world!' not in out
+          assert proc.returncode != 0, err
+          assert 'hello, world!' not in out, out
 
   print '\n[ checking wasm.js testcases... ]\n'
 
