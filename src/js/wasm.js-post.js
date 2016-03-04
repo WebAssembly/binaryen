@@ -56,14 +56,16 @@ function integrateWasmJS(Module) {
   function mergeMemory(newBuffer) {
     // The wasm instance creates its memory. But static init code might have written to
     // buffer already, including the mem init file, and we must copy it over in a proper merge.
-    // TODO: support memory segments in the wasm module itself, but even so, we'd still
-    //       have other static init code. but then we could reuse STATIC_BASE..STATIC_BASE+STATIC_BUMP
     // TODO: avoid this copy, by avoiding such static init writes
     // TODO: in shorter term, just copy up to the last static init write
     var oldBuffer = Module['buffer'];
     assert(newBuffer.byteLength >= oldBuffer.byteLength, 'we might fail if we allocated more than TOTAL_MEMORY');
     var oldView = new Int8Array(oldBuffer);
     var newView = new Int8Array(newBuffer);
+    if ({{{ WASM_BACKEND }}}) {
+      // memory segments arrived in the wast, do not trample them
+      oldView.set(newView.subarray(STATIC_BASE, STATIC_BASE + STATIC_BUMP), STATIC_BASE);
+    }
     newView.set(oldView);
     updateGlobalBuffer(newBuffer);
     updateGlobalBufferViews();
