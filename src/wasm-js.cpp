@@ -148,19 +148,16 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
     void init(Module& wasm) override {
-      // if we have memory segments, create a new buffer here, just like native wasm support would.
-      // otherwise, no need to.
-      if (wasm.memory.segments.size() > 0) {
+      // create a new buffer here, just like native wasm support would.
+      EM_ASM_({
+        Module['outside']['newBuffer'] = new ArrayBuffer($0);
+      }, wasm.memory.initial);
+      for (auto segment : wasm.memory.segments) {
         EM_ASM_({
-          Module['outside']['newBuffer'] = new ArrayBuffer($0);
-        }, wasm.memory.initial);
-        for (auto segment : wasm.memory.segments) {
-          EM_ASM_({
-            var source = Module['HEAP8'].subarray($1, $1 + $2);
-            var target = new Int8Array(Module['outside']['newBuffer']);
-            target.set(source, $0);
-          }, segment.offset, segment.data, segment.size);
-        }
+          var source = Module['HEAP8'].subarray($1, $1 + $2);
+          var target = new Int8Array(Module['outside']['newBuffer']);
+          target.set(source, $0);
+        }, segment.offset, segment.data, segment.size);
       }
     }
 
