@@ -55,14 +55,18 @@ function integrateWasmJS(Module) {
 
   function mergeMemory(newBuffer) {
     // The wasm instance creates its memory. But static init code might have written to
-    // buffer already, and we must copy it over in a proper merge.
+    // buffer already, including the mem init file, and we must copy it over in a proper merge.
     // TODO: avoid this copy, by avoiding such static init writes
     // TODO: in shorter term, just copy up to the last static init write
     var oldBuffer = Module['buffer'];
     assert(newBuffer.byteLength >= oldBuffer.byteLength, 'we might fail if we allocated more than TOTAL_MEMORY');
-    // the wasm module does write out the memory initialization, in range STATIC_BASE..STATIC_BUMP, so avoid that
-    (new Int8Array(newBuffer).subarray(0, STATIC_BASE)).set(new Int8Array(oldBuffer).subarray(0, STATIC_BASE));
-    (new Int8Array(newBuffer).subarray(STATIC_BASE + STATIC_BUMP)).set(new Int8Array(oldBuffer).subarray(STATIC_BASE + STATIC_BUMP));
+    var oldView = new Int8Array(oldBuffer);
+    var newView = new Int8Array(newBuffer);
+    if ({{{ WASM_BACKEND }}}) {
+      // memory segments arrived in the wast, do not trample them
+      oldView.set(newView.subarray(STATIC_BASE, STATIC_BASE + STATIC_BUMP), STATIC_BASE);
+    }
+    newView.set(oldView);
     updateGlobalBuffer(newBuffer);
     updateGlobalBufferViews();
     Module['reallocBuffer'] = function(size) {
@@ -175,6 +179,8 @@ function integrateWasmJS(Module) {
       return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
     };
 
+    wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
+
     // Prepare to generate wasm, using either asm2wasm or wasm-s-parser
     var code = Module['read'](method == 'asm2wasm' ? Module['asmjsCodeFile'] : Module['wasmCodeFile']);
     var temp = wasmJS['_malloc'](code.length + 1);
@@ -185,8 +191,6 @@ function integrateWasmJS(Module) {
       wasmJS['_load_s_expr2wasm'](temp);
     }
     wasmJS['_free'](temp);
-
-    wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
 
     wasmJS['_instantiate'](temp);
 
