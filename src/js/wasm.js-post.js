@@ -177,6 +177,8 @@ function integrateWasmJS(Module) {
       return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
     };
 
+    wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
+
     // Prepare to generate wasm, using either asm2wasm or wasm-s-parser
     var code = Module['read'](method == 'asm2wasm' ? Module['asmjsCodeFile'] : Module['wasmCodeFile']);
     var temp = wasmJS['_malloc'](code.length + 1);
@@ -187,8 +189,6 @@ function integrateWasmJS(Module) {
       wasmJS['_load_s_expr2wasm'](temp);
     }
     wasmJS['_free'](temp);
-
-    wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
 
     wasmJS['_instantiate'](temp);
 
