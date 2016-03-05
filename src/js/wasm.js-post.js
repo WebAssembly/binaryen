@@ -88,6 +88,14 @@ function integrateWasmJS(Module) {
     };
   }
 
+  var WasmTypes = {
+    none: 0,
+    i32: 1,
+    i64: 2,
+    f32: 3,
+    f64: 4
+  };
+
   // wasm lacks globals, so asm2wasm maps them into locations in memory. that information cannot
   // be present in the wasm output of asm2wasm, so we store it in a side file. If we load asm2wasm
   // output, either generated ahead of time or on the client, we need to apply those mapped
@@ -129,14 +137,6 @@ function integrateWasmJS(Module) {
 
     return;
   }
-
-  var WasmTypes = {
-    none: 0,
-    i32: 1,
-    i64: 2,
-    f32: 3,
-    f64: 4
-  };
 
   // Use wasm.js to polyfill and execute code in a wasm interpreter.
   var wasmJS = WasmJS({});
