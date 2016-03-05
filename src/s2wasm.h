@@ -528,6 +528,7 @@ class S2WasmBuilder {
         last = last->cast<Loop>()->body;
       }
       last->cast<Block>()->list.push_back(curr);
+      last->cast<Block>()->finalize();
     };
     bstack.push_back(func->body);
     std::vector<Expression*> estack;
@@ -1023,6 +1024,7 @@ class S2WasmBuilder {
     for (auto block : loopBlocks) {
       block->name = Name();
     }
+    func->body->dyn_cast<Block>()->finalize();
     wasm.addFunction(func);
     // XXX for now, export all functions
     auto exp = allocator.alloc<Export>();
@@ -1243,6 +1245,7 @@ class S2WasmBuilder {
           call->operands.push_back(param);
         }
         block->list.push_back(call);
+        block->finalize();
       }
     }
   }

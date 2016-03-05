@@ -84,11 +84,13 @@ struct LowerCase : public WalkerPass<WasmWalker<LowerCase, void>> {
     if (curr->cases.size() == 0) return;
     auto top = allocator->alloc<Block>();
     top->list.push_back(curr);
+    top->finalize();
     for (auto& c : curr->cases) {
       top->name = c.name;
       auto next = allocator->alloc<Block>();
       next->list.push_back(top);
       next->list.push_back(c.body);
+      next->finalize();
       top = next;
     }
     curr->cases.clear();

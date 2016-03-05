@@ -380,6 +380,7 @@ private:
           if (!autoBlock) {
             autoBlock = allocator.alloc<Block>();
             autoBlock->list.push_back(func->body);
+            autoBlock->finalize();
             func->body = autoBlock;
           }
           autoBlock->list.push_back(ex);
@@ -699,7 +700,7 @@ private:
       ret->list.push_back(parseExpression(s[i]));
     }
     labelStack.pop_back();
-    if (ret->list.size() > 0) ret->type = ret->list.back()->type;
+    ret->finalize();
     return ret;
   }
 
@@ -802,9 +803,7 @@ private:
     for (; i < s.size() && i < stopAt; i++) {
       ret->list.push_back(parseExpression(s[i]));
     }
-    if (ret->list.size() > 0) {
-      ret->type = ret->list.back()->type;
-    }
+    ret->finalize();
     // Note that we do not name these implicit/synthetic blocks. They
     // are the effects of syntactic sugar, and nothing can branch to
     // them anyhow.

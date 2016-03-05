@@ -1359,9 +1359,7 @@ public:
       curr->list.push_back(expressionStack[i]);
     }
     expressionStack.resize(start);
-    if (curr->list.size() > 0) {
-      curr->type = curr->list.back()->type;
-    }
+    curr->finalize();
     breakStack.pop_back();
   }
   void visitIf(If *curr, uint8_t code) {

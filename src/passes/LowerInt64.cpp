@@ -112,7 +112,7 @@ struct LowerInt64 : public Pass {
       ret->list.push_back(curr);
       ret->list.push_back(set);
       ret->list.push_back(low); // so the block returns the low bits
-      ret->type = i32;
+      ret->finalize();
       fixes[ret] = high;
       replaceCurrent(ret);
     }
@@ -132,6 +132,7 @@ struct LowerInt64 : public Pass {
       set->type = value->type;
       ret->list.push_back(set);
     }
+    ret->finalize();
     return ret;
   }
 
