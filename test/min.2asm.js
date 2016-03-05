@@ -28,6 +28,7 @@ function asmFunc(global, env, buffer) {
   }
   wasm2asm_f32$0 = Math_fround(-wasm2asm_f32$1);
   n = wasm2asm_f32$0;
+  return Math_fround(wasm2asm_f32$0);
  }
  
  function littleswitch(x) {
