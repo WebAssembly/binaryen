@@ -125,10 +125,10 @@ function integrateWasmJS(Module) {
       var binary = Module['readBinary'](Module['wasmCodeFile']);
       // Create an instance of the module using native support in the JS engine.
       info['global'] = {
-        'Math': global.Math,
         'NaN': NaN,
         'Infinity': Infinity
       };
+      info['global.Math'] = global.Math;
       info['env'] = env;
       var instance;
       instance = Wasm.instantiateModule(binary, info);
