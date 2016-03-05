@@ -40,17 +40,29 @@ function integrateWasmJS(Module) {
     },
   };
 
-  function flatten(obj) {
-    var ret = {};
-    for (var x in obj) {
-      for (var y in obj[x]) {
-        if (ret[y]) Module['printErr']('warning: flatten dupe: ' + y);
-        if (typeof obj[x][y] === 'function') {
-          ret[y] = obj[x][y];
-        }
-      }
+  var info = {
+    global: null,
+    env: null,
+    asm2wasm: asm2wasmImports,
+    parent: Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
+  };
+
+  function lookupImport(mod, base) {
+    var lookup = info;
+    if (mod.indexOf('.') < 0) {
+      lookup = (lookup || {})[mod];
+    } else {
+      var parts = mod.split('.');
+      lookup = (lookup || {})[parts[0]];
+      lookup = (lookup || {})[parts[1]];
     }
-    return ret;
+    if (base) {
+      lookup = (lookup || {})[base];
+    }
+    if (lookup === undefined) {
+      abort('bad lookupImport to (' + mod + ').' + base);
+    }
+    return lookup;
   }
 
   function mergeMemory(newBuffer) {
@@ -104,16 +116,13 @@ function integrateWasmJS(Module) {
       // Load the wasm module
       var binary = Module['readBinary'](Module['wasmCodeFile']);
       // Create an instance of the module using native support in the JS engine.
-      var importObj = {
-        "global.Math": global.Math,
-        "env": env,
-        "asm2wasm": asm2wasmImports
-      };
+      info['global'] = { 'Math': global.Math };
+      info['env'] = env;
       var instance;
       if (typeof WASM === 'object') {
-        instance = WASM.instantiateModule(binary, flatten(importObj));
+        instance = WASM.instantiateModule(binary, info);
       } else if (typeof wasmEval === 'function') {
-        instance = wasmEval(binary.buffer, importObj);
+        instance = wasmEval(binary.buffer, info);
       } else {
         throw 'how to wasm?';
       }
@@ -142,28 +151,9 @@ function integrateWasmJS(Module) {
   wasmJS['outside'] = Module; // Inside wasm-js.cpp, Module['outside'] reaches the outside module.
 
   // Information for the instance of the module.
-  var info = wasmJS['info'] = {
-    global: null,
-    env: null,
-    asm2wasm: asm2wasmImports,
-    parent: Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
-  };
+  wasmJS['info'] = info;
 
-  wasmJS['lookupImport'] = function(mod, base) {
-    var lookup = info;
-    if (mod.indexOf('.') < 0) {
-      lookup = (lookup || {})[mod];
-    } else {
-      var parts = mod.split('.');
-      lookup = (lookup || {})[parts[0]];
-      lookup = (lookup || {})[parts[1]];
-    }
-    lookup = (lookup || {})[base];
-    if (lookup === undefined) {
-      abort('bad lookupImport to (' + mod + ').' + base);
-    }
-    return lookup;
-  }
+  wasmJS['lookupImport'] = lookupImport;
 
   // The asm.js function, called to "link" the asm.js module. At that time, we are provided imports
   // and respond with exports, and so forth.
