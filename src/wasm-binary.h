@@ -402,18 +402,10 @@ public:
   void writeMemory() {
     if (wasm->memory.max == 0) return;
     if (debug) std::cerr << "== writeMemory" << std::endl;
-    o << int8_t(BinaryConsts::Memory);
-    if (wasm->memory.initial == 0) { // XXX diverge from v8, 0 means 0, 1 and above are powers of 2 starting at 0
-      o << int8_t(0);
-    } else {
-      o << int8_t(std::min(ceil(log2(wasm->memory.initial)), 31.0) + 1); // up to 31 bits, don't let ceil get us to UINT_MAX which can overflow
-    }
-    if (wasm->memory.max == 0) {
-      o << int8_t(0);
-    } else {
-      o << int8_t(std::min(ceil(log2(wasm->memory.max)), 31.0) + 1);
-    }
-    o << int8_t(1); // export memory
+    o << int8_t(BinaryConsts::Memory)
+      << LEB128(wasm->memory.initial)
+      << LEB128(wasm->memory.max)
+      << int8_t(1); // export memory
   }
 
   void writeSignatures() {
@@ -1088,10 +1080,8 @@ public:
 
   void readMemory() {
     if (debug) std::cerr << "== readMemory" << std::endl;
-    size_t initial = getInt8();
-    wasm.memory.initial = initial == 0 ? 0 : std::pow<size_t>(2, initial - 1);
-    size_t max = getInt8();
-    wasm.memory.max = max == 0 ? 0 : std::pow<size_t>(2, max - 1);
+    wasm.memory.initial = getLEB128();
+    wasm.memory.max = getLEB128();
     verifyInt8(1); // export memory
   }
 
@@ -1671,4 +1661,3 @@ public:
 } // namespace wasm
 
 #endif // wasm_wasm_binary_h
-

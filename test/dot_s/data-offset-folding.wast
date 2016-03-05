@@ -1,5 +1,5 @@
 (module
-  (memory 420
+  (memory 1
     (segment 8 "\00\00\00\00")
     (segment 416 "`\00\00\00")
   )

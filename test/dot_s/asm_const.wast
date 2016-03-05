@@ -1,5 +1,5 @@
 (module
-  (memory 51
+  (memory 1
     (segment 16 "{ Module.print(\"hello, world!\"); }\00")
   )
   (type $FUNCSIG$vi (func (param i32)))

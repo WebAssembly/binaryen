@@ -1,5 +1,5 @@
 (module
-  (memory 12
+  (memory 1
     (segment 8 "\00\00\00\00")
   )
   (export "load_i32_with_folded_offset" $load_i32_with_folded_offset)

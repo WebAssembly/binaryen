@@ -5,7 +5,7 @@ Counts
  if             : 4       
 Total           : 18      
 (module
-  (memory 16777216 16777216)
+  (memory 256 256)
   (func $ifs
     (block $block0
       (if

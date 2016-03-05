@@ -102,7 +102,7 @@ public:
   Module& wasm;
 
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
-    memorySize = wasm.memory.initial;
+    memorySize = wasm.memory.initial * Memory::kPageSize;
     externalInterface->init(wasm);
     if (wasm.start.is()) {
       LiteralList arguments;

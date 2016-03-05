@@ -354,7 +354,7 @@ for t in tests:
 print '\n[ checking binaryen-shell spec testcases... ]\n'
 
 if len(requested) == 0:
-  BLACKLIST = []
+  BLACKLIST = ['i32.wast', 'i64.wast']
   spec_tests = [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join('test', 'spec'))) if t not in BLACKLIST]
 else:
   spec_tests = requested[:]

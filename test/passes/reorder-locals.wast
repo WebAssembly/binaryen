@@ -1,5 +1,5 @@
 (module
-  (memory 16777216 16777216)
+  (memory 256 256)
   (func $b0-yes (param $a i32) (param $b i32)
     (local $x i32)
     (local $y i32)

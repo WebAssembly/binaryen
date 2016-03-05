@@ -1,5 +1,5 @@
 (module
-  (memory 16777216 16777216)
+  (memory 256 256)
   (func $b0 (param $x i32)
     (i32.load
       (i32.add
