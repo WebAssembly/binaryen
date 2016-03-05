@@ -97,7 +97,7 @@ function integrateWasmJS(Module) {
     for (var name in mappedGlobals) {
       var global = mappedGlobals[name];
       if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
-      var value = wasmJS['lookupImport'](global.module, global.base);
+      var value = lookupImport(global.module, global.base);
       var address = global.address;
       switch (global.type) {
         case WasmTypes.i32: Module['HEAP32'][address >> 2] = value; break;
