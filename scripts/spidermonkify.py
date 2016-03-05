@@ -29,6 +29,7 @@ js = fix(js, 'instance = Wasm.instantiateModule(binary, info)', 'instance = Wasm
 js = js.replace('"' + base_wast_target + '"', '"' + base_wasm_target + '"')
 js = js.replace("'" + base_wast_target + "'", "'" + base_wasm_target + "'")
 open(js_target, 'w').write(js)
+shutil.copyfile(wast_target + '.mappedGlobals', wasm_target + '.mappedGlobals')
 
 # lower cases, spidermonkey has no support for them
 temp = wast_target + '.temp'
@@ -48,7 +49,7 @@ parts = memory.split(' ')
 parts[1] = str(int(math.ceil(float(parts[1]) / PAGE_SIZE)))
 if len(parts) == 3:
   parts[2] = str(int(math.ceil(float(parts[2]) / PAGE_SIZE)))
-wast = wast[:memory_start] + ' '.join(parts) + wast[memory_end:]
+wast = wast[:memory_start] + ' '.join(parts) + wast[memory_end:memory_end+1] + ' (export "memory" memory) ' + wast[memory_end+1:]
 open(wast_target, 'w').write(wast)
 
 # convert to binary using spidermonkey
