@@ -108,7 +108,7 @@ function integrateWasmJS(Module) {
     }
   }
 
-  if (typeof WASM === 'object' || typeof wasmEval === 'function') {
+  if (typeof Wasm === 'object') {
     // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
     // the wasm module at that time, and it receives imports and provides exports and so forth, the app
     // doesn't need to care that it is wasm and not asm.
@@ -119,13 +119,7 @@ function integrateWasmJS(Module) {
       info['global'] = { 'Math': global.Math };
       info['env'] = env;
       var instance;
-      if (typeof WASM === 'object') {
-        instance = WASM.instantiateModule(binary, info);
-      } else if (typeof wasmEval === 'function') {
-        instance = wasmEval(binary.buffer, info);
-      } else {
-        throw 'how to wasm?';
-      }
+      instance = Wasm.instantiateModule(binary, info);
       mergeMemory(instance.memory);
 
       applyMappedGlobals();
