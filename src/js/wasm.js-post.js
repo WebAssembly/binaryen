@@ -71,7 +71,9 @@ function integrateWasmJS(Module) {
     // TODO: avoid this copy, by avoiding such static init writes
     // TODO: in shorter term, just copy up to the last static init write
     var oldBuffer = Module['buffer'];
-    assert(newBuffer.byteLength >= oldBuffer.byteLength, 'we might fail if we allocated more than TOTAL_MEMORY');
+    if (newBuffer.byteLength < oldBuffer.byteLength) {
+      Module['printErr']('the new buffer in mergeMemory is smaller than the previous one. in native wasm, we should grow memory here');
+    }
     var oldView = new Int8Array(oldBuffer);
     var newView = new Int8Array(newBuffer);
     if ({{{ WASM_BACKEND }}}) {
