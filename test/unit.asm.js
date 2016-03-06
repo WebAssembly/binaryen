@@ -151,6 +151,16 @@ function asm() {
     abort(55);
     abort();
   }
+  function continues() {
+    while (1) {
+      print(1);
+      do {
+        print(5);
+        if (check()) continue;
+      } while (0);
+      print(2);
+    }
+  }
 
   function z() {
   }

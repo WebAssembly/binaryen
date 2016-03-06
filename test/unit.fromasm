@@ -466,6 +466,25 @@
       (i32.const 0)
     )
   )
+  (func $continues
+    (loop $while-out$0 $while-in$1
+      (call $print
+        (i32.const 1)
+      )
+      (loop $do-once$2 $unlikely-continue$3
+        (call $print
+          (i32.const 5)
+        )
+        (br_if $unlikely-continue$3
+          (call $check)
+        )
+      )
+      (call $print
+        (i32.const 2)
+      )
+      (br $while-in$1)
+    )
+  )
   (func $z
     (nop)
   )
