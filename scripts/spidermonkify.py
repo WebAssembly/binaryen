@@ -3,7 +3,11 @@ A bunch of hackish fixups for testing of SpiderMonkey support. We should
 get rid of these ASAP.
 '''
 
-import os, sys, math, shutil, subprocess
+import os
+import sys
+import math
+import shutil
+import subprocess
 
 import emscripten
 
@@ -24,7 +28,9 @@ def fix(js, before, after):
 # fix up js
 js = open(js_target).read()
 # send a buffer into wasm methods, not a typed array
-js = fix(js, 'instance = Wasm.instantiateModule(binary, info)', 'instance = Wasm.instantiateModule(binary.buffer, info)')
+js = fix(js,
+         'instance = Wasm.instantiateModule(binary, info)',
+         'instance = Wasm.instantiateModule(binary.buffer, info)')
 # use the wasm, not wast
 js = js.replace('"' + base_wast_target + '"', '"' + base_wasm_target + '"')
 js = js.replace("'" + base_wast_target + "'", "'" + base_wasm_target + "'")
@@ -33,7 +39,9 @@ shutil.copyfile(wast_target + '.mappedGlobals', wasm_target + '.mappedGlobals')
 
 # lower cases, spidermonkey has no support for them
 temp = wast_target + '.temp'
-subprocess.check_call([os.path.join(binaryen_root, 'bin', 'binaryen-shell'), wast_target, '--lower-case', '--print'], stdout=open(temp, 'w'))
+subprocess.check_call([os.path.join(binaryen_root, 'bin', 'binaryen-shell'),
+                       wast_target, '--lower-case', '--print'],
+                      stdout=open(temp, 'w'))
 shutil.copyfile(temp, wast_target)
 
 # fix up wast
@@ -49,9 +57,12 @@ parts = memory.split(' ')
 parts[1] = str(int(math.ceil(float(parts[1]) / PAGE_SIZE)))
 if len(parts) == 3:
   parts[2] = str(int(math.ceil(float(parts[2]) / PAGE_SIZE)))
-wast = wast[:memory_start] + ' '.join(parts) + wast[memory_end:memory_end+1] + ' (export "memory" memory) ' + wast[memory_end+1:]
+wast = wast[:memory_start] + ' '.join(parts) + wast[memory_end:memory_end+1] + \
+       ' (export "memory" memory) ' + wast[memory_end+1:]
 open(wast_target, 'w').write(wast)
 
 # convert to binary using spidermonkey
-subprocess.check_call(emscripten.shared.SPIDERMONKEY_ENGINE + ['-e', 'os.file.writeTypedArrayToFile("%s", new Uint8Array(wasmTextToBinary(os.file.readFile("%s"))))' % (wasm_target, wast_target)])
+subprocess.check_call(emscripten.shared.SPIDERMONKEY_ENGINE + ['-e',
+  'os.file.writeTypedArrayToFile("%s", new Uint8Array(wasmTextToBinary(os.file.readFile("%s"))))' % (wasm_target, wast_target)
+])
 
