@@ -1018,7 +1018,15 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
           CallImport *ret = allocator.alloc<CallImport>();
           ret->target = F64_TO_INT;
-          ret->operands.push_back(process(ast[2][2]));
+          auto input = process(ast[2][2]);
+          if (input->type == f32) {
+            auto conv = allocator.alloc<Unary>();
+            conv->op = PromoteFloat32;
+            conv->value = input;
+            conv->type = WasmType::f64;
+            input = conv;
+          }
+          ret->operands.push_back(input);
           ret->type = i32;
           static bool addedImport = false;
           if (!addedImport) {

@@ -41,8 +41,9 @@ function asm() {
     return !x;
   }
   function conversions() {
-    var i = 0, d = 0.0;
+    var i = 0, d = 0.0, f = Math_fround(0);
     i = ~~d;
+    i = ~~f;
     d = +(i | 0);
     d = +(i >>> 0);
   }

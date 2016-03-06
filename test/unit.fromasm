@@ -135,9 +135,17 @@
   (func $conversions
     (local $i i32)
     (local $d f64)
+    (local $f f32)
     (set_local $i
       (call_import $f64-to-int
         (get_local $d)
+      )
+    )
+    (set_local $i
+      (call_import $f64-to-int
+        (f64.promote/f32
+          (get_local $f)
+        )
       )
     )
     (set_local $d
