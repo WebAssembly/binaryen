@@ -59,12 +59,12 @@ parts[1] = str(int(math.ceil(float(parts[1]) / PAGE_SIZE)))
 if len(parts) == 3:
   parts[2] = str(int(math.ceil(float(parts[2]) / PAGE_SIZE)))
 wast = wast[:memory_start] + ' '.join(parts) + \
-       wast[memory_end:memory_end + 1] + \
-       ' (export "memory" memory) ' + wast[memory_end + 1:]
+  wast[memory_end:memory_end + 1] + \
+  ' (export "memory" memory) ' + wast[memory_end + 1:]
 open(wast_target, 'w').write(wast)
 
 # convert to binary using spidermonkey
-subprocess.check_call(emscripten.shared.SPIDERMONKEY_ENGINE + ['-e',
-  'os.file.writeTypedArrayToFile("%s", new Uint8Array(wasmTextToBinary(os.file.readFile("%s"))))' % (wasm_target, wast_target)
-])
-
+subprocess.check_call(emscripten.shared.SPIDERMONKEY_ENGINE +
+  ['-e', 'os.file.writeTypedArrayToFile("' + wasm_target + \
+  '", new Uint8Array(wasmTextToBinary(os.file.readFile("' + \
+  wast_target + '"))))'])
