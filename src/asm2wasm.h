@@ -204,8 +204,9 @@ private:
   // uses, in the first pass
 
   std::map<IString, FunctionType> importedFunctionTypes;
+  std::map<IString, std::vector<CallImport*>> importedFunctionCalls;
 
-  void noteImportedFunctionCall(Ref ast, WasmType resultType, AsmData *asmData) {
+  void noteImportedFunctionCall(Ref ast, WasmType resultType, AsmData *asmData, CallImport* call) {
     assert(ast[0] == CALL && ast[1][0] == NAME);
     IString importName = ast[1][1]->getIString();
     FunctionType type;
@@ -242,6 +243,7 @@ private:
     } else {
       importedFunctionTypes[importName] = type;
     }
+    importedFunctionCalls[importName].push_back(call);
   }
 
   FunctionType* getFunctionType(Ref parent, ExpressionList& operands) {
@@ -668,6 +670,20 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   for (auto curr : toErase) {
     wasm.removeImport(curr);
+  }
+
+  // fill out call_import - add extra params as needed. asm tolerates ffi overloading, wasm does not
+  for (auto& pair : importedFunctionCalls) {
+    IString name = pair.first;
+    auto& list = pair.second;
+    auto type = importedFunctionTypes[name];
+    for (auto* call : list) {
+      for (size_t i = call->operands.size(); i < type.params.size(); i++) {
+        auto val = allocator.alloc<Const>();
+        val->type = val->value.type = type.params[i];
+        call->operands.push_back(val);
+      }
+    }
   }
 
   // finalize indirect calls
@@ -1148,8 +1164,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (wasm.importsMap.find(name) != wasm.importsMap.end()) {
           Ref parent = astStackHelper.getParent();
           WasmType type = !!parent ? detectWasmType(parent, &asmData) : none;
-          ret = allocator.alloc<CallImport>();
-          noteImportedFunctionCall(ast, type, &asmData);
+          auto specific = allocator.alloc<CallImport>();
+          noteImportedFunctionCall(ast, type, &asmData, specific);
+          ret = specific;
         } else {
           ret = allocator.alloc<Call>();
         }

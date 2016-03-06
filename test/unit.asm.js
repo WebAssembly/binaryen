@@ -8,6 +8,8 @@ function asm() {
   var Math_abs = global.Math.abs;
   var Math_ceil = global.Math.ceil;
 
+  var abort = env.abort;
+
   function big_negative() {
     var temp = 0.0;
     temp = +-2147483648;
@@ -142,6 +144,11 @@ function asm() {
     var temp = Math_fround(0);
     temp = Math_fround(Math_ceil(B));
     temp = Math_fround(u * Math_fround(Math_ceil(Math_fround(B))));
+  }
+  function aborts() {
+    abort();
+    abort(55);
+    abort();
   }
 
   function z() {
