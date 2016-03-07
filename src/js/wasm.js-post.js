@@ -71,7 +71,9 @@ function integrateWasmJS(Module) {
     // TODO: avoid this copy, by avoiding such static init writes
     // TODO: in shorter term, just copy up to the last static init write
     var oldBuffer = Module['buffer'];
-    assert(newBuffer.byteLength >= oldBuffer.byteLength, 'we might fail if we allocated more than TOTAL_MEMORY');
+    if (newBuffer.byteLength < oldBuffer.byteLength) {
+      Module['printErr']('the new buffer in mergeMemory is smaller than the previous one. in native wasm, we should grow memory here');
+    }
     var oldView = new Int8Array(oldBuffer);
     var newView = new Int8Array(newBuffer);
     if ({{{ WASM_BACKEND }}}) {
@@ -122,13 +124,20 @@ function integrateWasmJS(Module) {
     // doesn't need to care that it is wasm and not asm.
     Module['asm'] = function(global, env, providedBuffer) {
       // Load the wasm module
-      var binary = Module['readBinary'](Module['wasmCodeFile']);
+      var binary;
+      if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
+        binary = Module['wasmBinary'];
+        assert(binary, "on the web, we need the wasm binary to be preloaded and set on Module['wasmBinary']. emcc.py will do that for you when generating HTML (but not JS)");
+        binary = new Uint8Array(binary);
+      } else {
+        binary = Module['readBinary'](Module['wasmCodeFile']);
+      }
       // Create an instance of the module using native support in the JS engine.
       info['global'] = {
-        'Math': global.Math,
         'NaN': NaN,
         'Infinity': Infinity
       };
+      info['global.Math'] = global.Math;
       info['env'] = env;
       var instance;
       instance = Wasm.instantiateModule(binary, info);

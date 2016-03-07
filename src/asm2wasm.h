@@ -66,6 +66,17 @@ struct AstStackHelper {
 
 std::vector<Ref> AstStackHelper::astStack;
 
+struct BreakSeeker : public WasmWalker<BreakSeeker> {
+  IString target; // look for this one
+  size_t found;
+
+  BreakSeeker(IString target) : target(target), found(false) {}
+
+  void visitBreak(Break *curr) {
+    if (curr->name == target) found++;
+  }
+};
+
 //
 // Asm2WasmPreProcessor - does some initial parsing/processing
 // of asm.js code.
@@ -204,8 +215,9 @@ private:
   // uses, in the first pass
 
   std::map<IString, FunctionType> importedFunctionTypes;
+  std::map<IString, std::vector<CallImport*>> importedFunctionCalls;
 
-  void noteImportedFunctionCall(Ref ast, WasmType resultType, AsmData *asmData) {
+  void noteImportedFunctionCall(Ref ast, WasmType resultType, AsmData *asmData, CallImport* call) {
     assert(ast[0] == CALL && ast[1][0] == NAME);
     IString importName = ast[1][1]->getIString();
     FunctionType type;
@@ -242,6 +254,7 @@ private:
     } else {
       importedFunctionTypes[importName] = type;
     }
+    importedFunctionCalls[importName].push_back(call);
   }
 
   FunctionType* getFunctionType(Ref parent, ExpressionList& operands) {
@@ -670,6 +683,20 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     wasm.removeImport(curr);
   }
 
+  // fill out call_import - add extra params as needed. asm tolerates ffi overloading, wasm does not
+  for (auto& pair : importedFunctionCalls) {
+    IString name = pair.first;
+    auto& list = pair.second;
+    auto type = importedFunctionTypes[name];
+    for (auto* call : list) {
+      for (size_t i = call->operands.size(); i < type.params.size(); i++) {
+        auto val = allocator.alloc<Const>();
+        val->type = val->value.type = type.params[i];
+        call->operands.push_back(val);
+      }
+    }
+  }
+
   // finalize indirect calls
 
   for (auto& pair : callIndirects) {
@@ -1002,7 +1029,15 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
           CallImport *ret = allocator.alloc<CallImport>();
           ret->target = F64_TO_INT;
-          ret->operands.push_back(process(ast[2][2]));
+          auto input = process(ast[2][2]);
+          if (input->type == f32) {
+            auto conv = allocator.alloc<Unary>();
+            conv->op = PromoteFloat32;
+            conv->value = input;
+            conv->type = WasmType::f64;
+            input = conv;
+          }
+          ret->operands.push_back(input);
           ret->type = i32;
           static bool addedImport = false;
           if (!addedImport) {
@@ -1148,8 +1183,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (wasm.importsMap.find(name) != wasm.importsMap.end()) {
           Ref parent = astStackHelper.getParent();
           WasmType type = !!parent ? detectWasmType(parent, &asmData) : none;
-          ret = allocator.alloc<CallImport>();
-          noteImportedFunctionCall(ast, type, &asmData);
+          auto specific = allocator.alloc<CallImport>();
+          noteImportedFunctionCall(ast, type, &asmData, specific);
+          ret = specific;
         } else {
           ret = allocator.alloc<Call>();
         }
@@ -1256,8 +1292,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       return ret;
     } else if (what == DO) {
       if (ast[1][0] == NUM && ast[1][1]->getNumber() == 0) {
-        // one-time loop
-        auto block = allocator.alloc<Block>();
+        // one-time loop, unless there is a continue
         IString stop;
         if (!parentLabel.isNull()) {
           stop = getBreakLabelName(parentLabel);
@@ -1265,13 +1300,27 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         } else {
           stop = getNextId("do-once");
         }
-        block->name = stop;
+        IString more = getNextId("unlikely-continue");
         breakStack.push_back(stop);
-        continueStack.push_back(IMPOSSIBLE_CONTINUE);
-        block->list.push_back(process(ast[2]));
+        continueStack.push_back(more);
+        auto child = process(ast[2]);
         continueStack.pop_back();
         breakStack.pop_back();
-        return block;
+        // if we never continued, we don't need a loop
+        BreakSeeker breakSeeker(more);
+        breakSeeker.walk(child);
+        if (breakSeeker.found == 0) {
+          auto block = allocator.alloc<Block>();
+          block->list.push_back(child);
+          block->name = stop;
+          return block;
+        } else {
+          auto loop = allocator.alloc<Loop>();
+          loop->body = child;
+          loop->out = stop;
+          loop->in = more;
+          return loop;
+        }
       }
       // general do-while loop
       auto ret = allocator.alloc<Loop>();
@@ -1489,18 +1538,6 @@ void Asm2WasmBuilder::optimize() {
         return;
       }
       // we might be broken to, but maybe there isn't a break (and we may have removed it, leading to this)
-
-      struct BreakSeeker : public WasmWalker<BreakSeeker> {
-        IString target; // look for this one
-        size_t found;
-
-        BreakSeeker(IString target) : target(target), found(false) {}
-
-        void visitBreak(Break *curr) {
-          if (curr->name == target) found++;
-        }
-      };
-
       // look for any breaks to this block
       BreakSeeker breakSeeker(curr->name);
       Expression *child = curr->list[0];

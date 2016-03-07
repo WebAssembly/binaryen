@@ -8,6 +8,8 @@ function asm() {
   var Math_abs = global.Math.abs;
   var Math_ceil = global.Math.ceil;
 
+  var abort = env.abort;
+
   function big_negative() {
     var temp = 0.0;
     temp = +-2147483648;
@@ -39,8 +41,9 @@ function asm() {
     return !x;
   }
   function conversions() {
-    var i = 0, d = 0.0;
+    var i = 0, d = 0.0, f = Math_fround(0);
     i = ~~d;
+    i = ~~f;
     d = +(i | 0);
     d = +(i >>> 0);
   }
@@ -142,6 +145,21 @@ function asm() {
     var temp = Math_fround(0);
     temp = Math_fround(Math_ceil(B));
     temp = Math_fround(u * Math_fround(Math_ceil(Math_fround(B))));
+  }
+  function aborts() {
+    abort();
+    abort(55);
+    abort();
+  }
+  function continues() {
+    while (1) {
+      print(1);
+      do {
+        print(5);
+        if (check()) continue;
+      } while (0);
+      print(2);
+    }
   }
 
   function z() {
