@@ -790,32 +790,38 @@ private:
   Expression* makeIf(Element& s) {
     auto ret = allocator.alloc<If>();
     ret->condition = parseExpression(s[1]);
+
     // ifTrue and ifFalse may get implicit blocks
-    Name ifTrueName = getPrefixedName("if-true");
-    labelStack.push_back(ifTrueName);
-    auto* ifTrue = parseExpression(s[2]);
-    labelStack.pop_back();
-    if (BreakSeeker::has(ifTrue, ifTrueName)) {
-      auto* block = allocator.alloc<Block>();
-      block->name = ifTrueName;
-      block->list.push_back(ifTrue);
-      block->finalize();
-      ifTrue = block;
-    }
-    ret->ifTrue = ifTrue;
-    if (s.size() == 4) {
-      Name ifFalseName = getPrefixedName("if-false");
-      labelStack.push_back(ifFalseName);
-      auto* ifFalse = parseExpression(s[3]);
-      labelStack.pop_back();
-      if (BreakSeeker::has(ifFalse, ifFalseName)) {
-        auto* block = allocator.alloc<Block>();
-        block->name = ifFalseName;
-        block->list.push_back(ifFalse);
-        block->finalize();
-        ifFalse = block;
+    auto handle = [&](const char* title, Element& s) {
+      Name name = getPrefixedName(title);
+      bool explicitThenElse = false;
+      if (s[0]->str() == THEN || s[0]->str() == ELSE) {
+        explicitThenElse = true;
+        if (s[1]->dollared()) {
+          name = s[1]->str();
+        }
       }
-      ret->ifFalse = ifFalse;
+      labelStack.push_back(name);
+      auto* ret = parseExpression(&s);
+      labelStack.pop_back();
+      if (explicitThenElse) {
+        ret->dyn_cast<Block>()->name = name;
+      } else {
+        // add a block if we must
+        if (BreakSeeker::has(ret, name)) {
+          auto* block = allocator.alloc<Block>();
+          block->name = name;
+          block->list.push_back(ret);
+          block->finalize();
+          ret = block;
+        }
+      }
+      return ret;
+    };
+
+    ret->ifTrue = handle("if-true", *s[2]);
+    if (s.size() == 4) {
+      ret->ifFalse = handle("if-else", *s[3]);
       ret->finalize();
     }
     return ret;
