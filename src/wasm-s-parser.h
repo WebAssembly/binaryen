@@ -569,6 +569,10 @@ public:
           }
           abort_on(str);
         }
+        case 'e': {
+          if (str[1] == 'l') return makeThenOrElse(s);
+          abort_on(str);
+        }
         case 'g': {
           if (str[1] == 'e') return makeGetLocal(s);
           if (str[1] == 'r') return makeHost(s, HostOp::GrowMemory);
@@ -609,6 +613,7 @@ public:
         }
         case 't': {
           if (str[1] == 'a') return makeSwitch(s); // aka tableswitch
+          if (str[1] == 'h') return makeThenOrElse(s);
           abort_on(str);
         }
         case 'u': {
@@ -701,6 +706,20 @@ private:
       ret->list.push_back(parseExpression(s[i]));
     }
     labelStack.pop_back();
+    ret->finalize();
+    return ret;
+  }
+
+  // Similar to block, but the label is handled by the enclosing if (since there might not be a then or else, ick)
+  Expression* makeThenOrElse(Element& s) {
+    auto ret = allocator.alloc<Block>();
+    size_t i = 1;
+    if (s[1]->isStr()) {
+      i++;
+    }
+    for (; i < s.size(); i++) {
+      ret->list.push_back(parseExpression(s[i]));
+    }
     ret->finalize();
     return ret;
   }
