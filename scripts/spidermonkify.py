@@ -28,10 +28,6 @@ def fix(js, before, after):
 
 # fix up js
 js = open(js_target).read()
-# send a buffer into wasm methods, not a typed array
-js = fix(js,
-         'instance = Wasm.instantiateModule(binary, info)',
-         'instance = Wasm.instantiateModule(binary.buffer, info)')
 # use the wasm, not wast
 js = js.replace('"' + base_wast_target + '"', '"' + base_wasm_target + '"')
 js = js.replace("'" + base_wast_target + "'", "'" + base_wasm_target + "'")
