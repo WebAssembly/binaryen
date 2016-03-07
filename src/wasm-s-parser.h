@@ -695,8 +695,9 @@ private:
   Expression* makeBlock(Element& s) {
     auto ret = allocator.alloc<Block>();
     size_t i = 1;
-    if (s[1]->isStr()) {
-      ret->name = s[1]->str();
+    if (i >= s.size()) return ret; // empty block
+    if (s[i]->isStr()) {
+      ret->name = s[i]->str();
       i++;
     } else {
       ret->name = getPrefixedName("block");
