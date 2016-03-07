@@ -940,11 +940,11 @@ private:
   }
 
   void parseMemory(Element& s) {
-    wasm.memory.initial = atoi(s[1]->c_str());
+    wasm.memory.initial = atoi(s[1]->c_str()) * 65536;
     if (s.size() == 2) return;
     size_t i = 2;
     if (s[i]->isStr()) {
-      wasm.memory.max = atoi(s[i]->c_str());
+      wasm.memory.max = atoi(s[i]->c_str()) * 65536;
       i++;
     }
     while (i < s.size()) {

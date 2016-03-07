@@ -1,5 +1,5 @@
 (module
-  (memory 16777216 16777216)
+  (memory 256 256)
   (export "floats" $floats)
   (func $floats (param $f f32) (result f32)
     (local $t f32)
