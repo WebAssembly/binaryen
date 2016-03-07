@@ -29,6 +29,7 @@
 #include "shared-constants.h"
 #include "parsing.h"
 #include "asm_v_wasm.h"
+#include "ast_utils.h"
 
 namespace wasm {
 
@@ -789,9 +790,32 @@ private:
   Expression* makeIf(Element& s) {
     auto ret = allocator.alloc<If>();
     ret->condition = parseExpression(s[1]);
-    ret->ifTrue = parseExpression(s[2]);
+    // ifTrue and ifFalse may get implicit blocks
+    Name ifTrueName = getPrefixedName("if-true");
+    labelStack.push_back(ifTrueName);
+    auto* ifTrue = parseExpression(s[2]);
+    labelStack.pop_back();
+    if (BreakSeeker::has(ifTrue, ifTrueName)) {
+      auto* block = allocator.alloc<Block>();
+      block->name = ifTrueName;
+      block->list.push_back(ifTrue);
+      block->finalize();
+      ifTrue = block;
+    }
+    ret->ifTrue = ifTrue;
     if (s.size() == 4) {
-      ret->ifFalse = parseExpression(s[3]);
+      Name ifFalseName = getPrefixedName("if-false");
+      labelStack.push_back(ifFalseName);
+      auto* ifFalse = parseExpression(s[3]);
+      labelStack.pop_back();
+      if (BreakSeeker::has(ifFalse, ifFalseName)) {
+        auto* block = allocator.alloc<Block>();
+        block->name = ifFalseName;
+        block->list.push_back(ifFalse);
+        block->finalize();
+        ifFalse = block;
+      }
+      ret->ifFalse = ifFalse;
       ret->finalize();
     }
     return ret;

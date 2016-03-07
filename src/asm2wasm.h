@@ -28,6 +28,7 @@
 #include "shared-constants.h"
 #include "asm_v_wasm.h"
 #include "pass.h"
+#include "ast_utils.h"
 
 namespace wasm {
 
@@ -65,17 +66,6 @@ struct AstStackHelper {
 };
 
 std::vector<Ref> AstStackHelper::astStack;
-
-struct BreakSeeker : public WasmWalker<BreakSeeker> {
-  IString target; // look for this one
-  size_t found;
-
-  BreakSeeker(IString target) : target(target), found(false) {}
-
-  void visitBreak(Break *curr) {
-    if (curr->name == target) found++;
-  }
-};
 
 //
 // Asm2WasmPreProcessor - does some initial parsing/processing
