@@ -41,6 +41,10 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["mapped globals"] = argument;
            })
+      .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["total memory"] = argument;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -50,6 +54,10 @@ int main(int argc, const char *argv[]) {
   const auto &mg_it = options.extra.find("mapped globals");
   const char *mappedGlobals =
       mg_it == options.extra.end() ? nullptr : mg_it->second.c_str();
+
+  const auto &tm_it = options.extra.find("total memory");
+  size_t totalMemory =
+      tm_it == options.extra.end() ? 16 * 1024 * 1024 : atoi(tm_it->second.c_str());
 
   Asm2WasmPreProcessor pre;
   auto input(
@@ -67,8 +75,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "wasming..." << std::endl;
   AllocatingModule wasm;
-  wasm.memory.initial = wasm.memory.max =
-      16 * 1024 * 1024;  // we would normally receive this from the compiler
+  wasm.memory.initial = wasm.memory.max = totalMemory;
   Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug);
   asm2wasm.processAsm(asmjs);
 
