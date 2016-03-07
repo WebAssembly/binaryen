@@ -124,7 +124,14 @@ function integrateWasmJS(Module) {
     // doesn't need to care that it is wasm and not asm.
     Module['asm'] = function(global, env, providedBuffer) {
       // Load the wasm module
-      var binary = Module['readBinary'](Module['wasmCodeFile']);
+      var binary;
+      if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
+        binary = Module['wasmBinary'];
+        assert(binary, "on the web, we need the wasm binary to be preloaded and set on Module['wasmBinary']. emcc.py will do that for you when generating HTML (but not JS)");
+        binary = new Uint8Array(binary);
+      } else {
+        binary = Module['readBinary'](Module['wasmCodeFile']);
+      }
       // Create an instance of the module using native support in the JS engine.
       info['global'] = {
         'NaN': NaN,
