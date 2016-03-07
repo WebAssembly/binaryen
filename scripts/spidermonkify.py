@@ -40,6 +40,7 @@ subprocess.check_call([os.path.join(binaryen_root, 'bin', 'binaryen-shell'),
                        wast_target, '--lower-case', '--print'],
                       stdout=open(temp, 'w'))
 shutil.copyfile(temp, wast_target)
+os.remove(temp)
 
 # fix up wast
 wast = open(wast_target).read()
