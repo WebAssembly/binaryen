@@ -329,6 +329,7 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
     cmd = [os.path.join('bin', 'binaryen-shell'), opt, os.path.join('test', 'passes', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    assert not err, err
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
 
 print '\n[ checking binaryen-shell testcases... ]\n'
