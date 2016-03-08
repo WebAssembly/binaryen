@@ -44,8 +44,6 @@ os.remove(temp)
 
 # fix up wast
 wast = open(wast_target).read()
-# tableswitch => br_table
-wast = wast.replace('(tableswitch', '(br_table')
 # memory to page sizes
 PAGE_SIZE = 64 * 1024
 memory_start = wast.find('(memory') + 1
