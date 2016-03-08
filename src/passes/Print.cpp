@@ -65,11 +65,22 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     decIndent();
   }
   void visitIf(If *curr) {
-    printOpening(o, curr->ifFalse ? "if_else" : "if");
+    printOpening(o, "if");
     incIndent();
     printFullLine(curr->condition);
-    printFullLine(curr->ifTrue);
-    if (curr->ifFalse) printFullLine(curr->ifFalse);
+    // ifTrue and False have implict blocks, avoid printing them if possible
+    if (curr->ifTrue->is<Block>() && curr->ifTrue->dyn_cast<Block>()->name.isNull() && curr->ifTrue->dyn_cast<Block>()->list.size() == 1) {
+      printFullLine(curr->ifTrue->dyn_cast<Block>()->list.back());
+    } else {
+      printFullLine(curr->ifTrue);
+    }
+    if (curr->ifFalse) {
+      if (curr->ifFalse->is<Block>() && curr->ifFalse->dyn_cast<Block>()->name.isNull() && curr->ifFalse->dyn_cast<Block>()->list.size() == 1) {
+        printFullLine(curr->ifFalse->dyn_cast<Block>()->list.back());
+      } else {
+        printFullLine(curr->ifFalse);
+      }
+    }
     decIndent();
   }
   void visitLoop(Loop *curr) {

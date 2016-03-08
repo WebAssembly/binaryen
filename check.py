@@ -317,7 +317,7 @@ for t in sorted(os.listdir(os.path.join('test', 'print'))):
     cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join('test', 'print', t), '--print-minified']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    fail_if_not_identical(actual, open(os.path.join('test', 'print', wasm + '.minified.txt')).read())
+    fail_if_not_identical(actual.strip(), open(os.path.join('test', 'print', wasm + '.minified.txt')).read().strip())
 
 print '\n[ checking binaryen-shell passes... ]\n'
 

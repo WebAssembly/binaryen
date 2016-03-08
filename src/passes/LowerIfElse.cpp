@@ -49,7 +49,7 @@ struct LowerIfElse : public WalkerPass<WasmWalker<LowerIfElse, void>> {
       block->name = name;
       block->list.push_back(curr);
       block->list.push_back(curr->ifFalse);
-      block->type = curr->type;
+      block->finalize();
       curr->ifFalse = nullptr;
       auto break_ = allocator->alloc<Break>();
       break_->name = name;

@@ -16,6 +16,7 @@ function (global, env, buffer) {
     p = p | 0;
     var n = fr(0);
     n = fr(-(c[k >> 2] = p, fr(g[k >> 2])));
+    return n;
   }
 
   return { floats: floats };

@@ -415,7 +415,7 @@
       (i32.const 1)
     )
     (loop $for-out$0 $for-in$1
-      (if_else
+      (if
         (i32.lt_s
           (get_local $i)
           (i32.const 200)

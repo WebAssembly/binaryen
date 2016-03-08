@@ -29,6 +29,7 @@
 #include "shared-constants.h"
 #include "parsing.h"
 #include "asm_v_wasm.h"
+#include "ast_utils.h"
 
 namespace wasm {
 
@@ -380,6 +381,7 @@ private:
           if (!autoBlock) {
             autoBlock = allocator.alloc<Block>();
             autoBlock->list.push_back(func->body);
+            autoBlock->finalize();
             func->body = autoBlock;
           }
           autoBlock->list.push_back(ex);
@@ -567,6 +569,10 @@ public:
           }
           abort_on(str);
         }
+        case 'e': {
+          if (str[1] == 'l') return makeThenOrElse(s);
+          abort_on(str);
+        }
         case 'g': {
           if (str[1] == 'e') return makeGetLocal(s);
           if (str[1] == 'r') return makeHost(s, HostOp::GrowMemory);
@@ -607,6 +613,7 @@ public:
         }
         case 't': {
           if (str[1] == 'a') return makeSwitch(s); // aka tableswitch
+          if (str[1] == 'h') return makeThenOrElse(s);
           abort_on(str);
         }
         case 'u': {
@@ -688,8 +695,9 @@ private:
   Expression* makeBlock(Element& s) {
     auto ret = allocator.alloc<Block>();
     size_t i = 1;
-    if (s[1]->isStr()) {
-      ret->name = s[1]->str();
+    if (i >= s.size()) return ret; // empty block
+    if (s[i]->isStr()) {
+      ret->name = s[i]->str();
       i++;
     } else {
       ret->name = getPrefixedName("block");
@@ -699,7 +707,21 @@ private:
       ret->list.push_back(parseExpression(s[i]));
     }
     labelStack.pop_back();
-    if (ret->list.size() > 0) ret->type = ret->list.back()->type;
+    ret->finalize();
+    return ret;
+  }
+
+  // Similar to block, but the label is handled by the enclosing if (since there might not be a then or else, ick)
+  Expression* makeThenOrElse(Element& s) {
+    auto ret = allocator.alloc<Block>();
+    size_t i = 1;
+    if (s[1]->isStr()) {
+      i++;
+    }
+    for (; i < s.size(); i++) {
+      ret->list.push_back(parseExpression(s[i]));
+    }
+    ret->finalize();
     return ret;
   }
 
@@ -788,9 +810,38 @@ private:
   Expression* makeIf(Element& s) {
     auto ret = allocator.alloc<If>();
     ret->condition = parseExpression(s[1]);
-    ret->ifTrue = parseExpression(s[2]);
+
+    // ifTrue and ifFalse may get implicit blocks
+    auto handle = [&](const char* title, Element& s) {
+      Name name = getPrefixedName(title);
+      bool explicitThenElse = false;
+      if (s[0]->str() == THEN || s[0]->str() == ELSE) {
+        explicitThenElse = true;
+        if (s[1]->dollared()) {
+          name = s[1]->str();
+        }
+      }
+      labelStack.push_back(name);
+      auto* ret = parseExpression(&s);
+      labelStack.pop_back();
+      if (explicitThenElse) {
+        ret->dyn_cast<Block>()->name = name;
+      } else {
+        // add a block if we must
+        if (BreakSeeker::has(ret, name)) {
+          auto* block = allocator.alloc<Block>();
+          block->name = name;
+          block->list.push_back(ret);
+          block->finalize();
+          ret = block;
+        }
+      }
+      return ret;
+    };
+
+    ret->ifTrue = handle("if-true", *s[2]);
     if (s.size() == 4) {
-      ret->ifFalse = parseExpression(s[3]);
+      ret->ifFalse = handle("if-else", *s[3]);
       ret->finalize();
     }
     return ret;
@@ -802,9 +853,7 @@ private:
     for (; i < s.size() && i < stopAt; i++) {
       ret->list.push_back(parseExpression(s[i]));
     }
-    if (ret->list.size() > 0) {
-      ret->type = ret->list.back()->type;
-    }
+    ret->finalize();
     // Note that we do not name these implicit/synthetic blocks. They
     // are the effects of syntactic sugar, and nothing can branch to
     // them anyhow.

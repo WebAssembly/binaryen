@@ -794,6 +794,12 @@ public:
 
   Name name;
   ExpressionList list;
+
+  void finalize() {
+    if (list.size() > 0) {
+      type = list.back()->type;
+    }
+  }
 };
 
 class If : public Expression {
