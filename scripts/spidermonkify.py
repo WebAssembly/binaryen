@@ -34,14 +34,6 @@ js = js.replace("'" + base_wast_target + "'", "'" + base_wasm_target + "'")
 open(js_target, 'w').write(js)
 shutil.copyfile(wast_target + '.mappedGlobals', wasm_target + '.mappedGlobals')
 
-# lower cases, spidermonkey has no support for them
-temp = wast_target + '.temp'
-subprocess.check_call([os.path.join(binaryen_root, 'bin', 'binaryen-shell'),
-                       wast_target, '--lower-case', '--print'],
-                      stdout=open(temp, 'w'))
-shutil.copyfile(temp, wast_target)
-os.remove(temp)
-
 # fix up wast
 wast = open(wast_target).read()
 # memory to page sizes
