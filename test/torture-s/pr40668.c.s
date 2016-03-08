@@ -19,7 +19,7 @@ bar:                                    # @bar
 	block
 	block
 	block
-	tableswitch	$0, 0, 0, 4, 4, 4, 4, 4, 1, 2, 3 # 0: down to label4
+	br_table 	$0, 0, 4, 4, 4, 4, 4, 1, 2, 3, 0 # 0: down to label4
                                         # 4: down to label0
                                         # 1: down to label3
                                         # 2: down to label2

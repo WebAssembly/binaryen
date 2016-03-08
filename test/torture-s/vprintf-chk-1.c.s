@@ -61,7 +61,7 @@ inner:                                  # @inner
 	block
 	block
 	block
-	tableswitch	$0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 # 0: down to label13
+	br_table 	$0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0 # 0: down to label13
                                         # 1: down to label12
                                         # 2: down to label11
                                         # 3: down to label10

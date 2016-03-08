@@ -46,7 +46,7 @@ foo:                                    # @foo
 	br_if   	0, $pop1        # 0: down to label31
 # BB#1:                                 # %entry
 	block
-	tableswitch	$0, 0, 0, 4, 3, 2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 3, 20, 21, 22, 23, 24, 25, 32, 26, 27, 28, 29, 30, 31 # 0: down to label32
+	br_table 	$0, 0, 4, 3, 2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 3, 20, 21, 22, 23, 24, 25, 32, 26, 27, 28, 29, 30, 31, 0 # 0: down to label32
                                         # 4: down to label28
                                         # 3: down to label29
                                         # 2: down to label30

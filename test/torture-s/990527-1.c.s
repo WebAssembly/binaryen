@@ -27,7 +27,7 @@ f:                                      # @f
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
 	i32.load	$push1=, sum($pop5)
-	i32.add 	$push2=, $0, $pop1
+	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 81
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$discard=, sum($pop0), $pop4

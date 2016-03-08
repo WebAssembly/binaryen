@@ -957,6 +957,16 @@ class S2WasmBuilder {
       } else if (match("end_loop")) {
         bstack.pop_back();
         bstack.pop_back();
+      } else if (match("br_table")) {
+        auto curr = allocator.alloc<Switch>();
+        curr->condition = getInput();
+        while (skipComma()) {
+          curr->targets.push_back(getBranchLabel(getInt()));
+        }
+        assert(curr->targets.size() > 0);
+        curr->default_ = curr->targets.back();
+        curr->targets.pop_back();
+        addToBlock(curr);
       } else if (match("br")) {
         auto curr = allocator.alloc<Break>();
         bool hasCondition = false;
@@ -989,15 +999,6 @@ class S2WasmBuilder {
         auto curr = allocator.alloc<Return>();
         if (*s == '$') {
           curr->value = getInput();
-        }
-        addToBlock(curr);
-      } else if (match("tableswitch")) {
-        auto curr = allocator.alloc<Switch>();
-        curr->condition = getInput();
-        skipComma();
-        curr->default_ = getBranchLabel(getInt());
-        while (skipComma()) {
-          curr->targets.push_back(getBranchLabel(getInt()));
         }
         addToBlock(curr);
       } else if (match("unreachable")) {
