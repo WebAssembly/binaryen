@@ -559,7 +559,7 @@ public:
         case 'b': {
           if (str[1] == 'l') return makeBlock(s);
           if (str[1] == 'r') {
-            if (str[3] == 't') return makeBreakTable(s);
+            if (str[2] == '_' && str[3] == 't') return makeBreakTable(s);
             return makeBreak(s);
           }
           abort_on(str);
