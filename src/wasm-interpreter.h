@@ -204,12 +204,33 @@ private:
 
       Flow visitBlock(Block *curr) {
         NOTE_ENTER("Block");
+        // special-case Block, because Block nesting (in their first element) can be incredibly deep
+        std::vector<Block*> stack;
+        stack.push_back(curr);
+        while (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
+          curr = curr->list[0]->cast<Block>();
+          stack.push_back(curr);
+        }
         Flow flow;
-        for (auto expression : curr->list) {
-          flow = visit(expression);
+        auto* top = stack.back();
+        while (stack.size() > 0) {
+          curr = stack.back();
+          stack.pop_back();
           if (flow.breaking()) {
             flow.clearIf(curr->name);
-            return flow;
+            continue;
+          }
+          auto& list = curr->list;
+          for (size_t i = 0; i < list.size(); i++) {
+            if (curr != top && i == 0) {
+              // one of the block recursions we already handled
+              continue;
+            }
+            flow = visit(list[i]);
+            if (flow.breaking()) {
+              flow.clearIf(curr->name);
+              break;
+            }
           }
         }
         return flow;

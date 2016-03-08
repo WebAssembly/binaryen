@@ -699,22 +699,55 @@ private:
   }
 
   Expression* makeBlock(Element& s) {
-    auto ret = allocator.alloc<Block>();
-    size_t i = 1;
-    if (i >= s.size()) return ret; // empty block
-    if (s[i]->isStr()) {
-      ret->name = s[i]->str();
-      i++;
-    } else {
-      ret->name = getPrefixedName("block");
+    // special-case Block, because Block nesting (in their first element) can be incredibly deep
+    auto curr = allocator.alloc<Block>();
+    auto* sp = &s;
+    std::vector<std::pair<Element*, Block*>> stack;
+    while (1) {
+      stack.emplace_back(sp, curr);
+      auto& s = *sp;
+      size_t i = 1;
+      if (i < s.size() && s[i]->isStr()) {
+        curr->name = s[i]->str();
+        i++;
+      } else {
+        curr->name = getPrefixedName("block");
+      }
+      labelStack.push_back(curr->name);
+      if (i >= s.size()) break; // labeled empty block
+      auto& first = *s[i];
+      if (first[0]->str() == BLOCK) {
+        // recurse
+        curr = allocator.alloc<Block>();
+        sp = &first;
+        continue;
+      }
+      break;
     }
-    labelStack.push_back(ret->name);
-    for (; i < s.size(); i++) {
-      ret->list.push_back(parseExpression(s[i]));
+    // we now have a stack of Blocks, with their labels, but no contents yet
+    for (int t = int(stack.size()) - 1; t >= 0; t--) {
+      auto* sp = stack[t].first;
+      auto* curr = stack[t].second;
+      auto& s = *sp;
+      size_t i = 1;
+      if (i < s.size()) {
+        if (s[i]->isStr()) {
+          i++;
+        }
+        if (t < int(stack.size()) - 1) {
+          // first child is one of our recursions
+          curr->list.push_back(stack[t + 1].second);
+          i++;
+        }
+        for (; i < s.size(); i++) {
+          curr->list.push_back(parseExpression(s[i]));
+        }
+      }
+      assert(labelStack.back() == curr->name);
+      labelStack.pop_back();
+      curr->finalize();
     }
-    labelStack.pop_back();
-    ret->finalize();
-    return ret;
+    return stack[0].second;
   }
 
   // Similar to block, but the label is handled by the enclosing if (since there might not be a then or else, ick)

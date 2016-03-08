@@ -54,13 +54,38 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     o << maybeNewLine;
   }
   void visitBlock(Block *curr) {
-    printOpening(o, "block");
-    if (curr->name.is()) {
-      o << ' ' << curr->name;
+    // special-case Block, because Block nesting (in their first element) can be incredibly deep
+    std::vector<Block*> stack;
+    while (1) {
+      if (stack.size() > 0) doIndent(o, indent);
+      stack.push_back(curr);
+      printOpening(o, "block");
+      if (curr->name.is()) {
+        o << ' ' << curr->name;
+      }
+      incIndent();
+      if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
+        // recurse into the first element
+        curr = curr->list[0]->cast<Block>();
+        continue;
+      } else {
+        break; // that's all we can recurse, start to unwind
+      }
     }
-    incIndent();
-    for (auto expression : curr->list) {
-      printFullLine(expression);
+    auto* top = stack.back();
+    while (stack.size() > 0) {
+      curr = stack.back();
+      stack.pop_back();
+      auto& list = curr->list;
+      for (size_t i = 0; i < list.size(); i++) {
+        if (curr != top && i == 0) {
+          // one of the block recursions we already handled
+          decIndent();
+          o << '\n';
+          continue;
+        }
+        printFullLine(list[i]);
+      }
     }
     decIndent();
   }

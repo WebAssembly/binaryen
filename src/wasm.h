@@ -1408,7 +1408,37 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
   void walk(Expression*& curr) override {
     if (!curr) return;
 
-    ChildWalker<WasmWalker<SubType, ReturnType>>(*this).visit(curr);
+    // special-case Block, because Block nesting (in their first element) can be incredibly deep
+    if (curr->is<Block>()) {
+      auto* block = curr->dyn_cast<Block>();
+      std::vector<Block*> stack;
+      stack.push_back(block);
+      while (block->list.size() > 0 && block->list[0]->is<Block>()) {
+        block = block->list[0]->cast<Block>();
+        stack.push_back(block);
+      }
+      // walk all the children
+      for (int i = int(stack.size()) - 1; i >= 0; i--) {
+        auto* block = stack[i];
+        auto& children = block->list;
+        for (size_t j = 0; j < children.size(); j++) {
+          if (i < int(stack.size()) - 1 && j == 0) {
+            // this is one of the stacked blocks, no need to walk its children, we are doing that ourselves
+            this->visit(children[0]);
+            if (replace) {
+              children[0] = replace;
+              replace = nullptr;
+            }
+          } else {
+            this->walk(children[j]);
+          }
+        }
+      }
+      // we walked all the children, and can rejoin later below to visit this node itself
+    } else {
+      // generic child-walking
+      ChildWalker<WasmWalker<SubType, ReturnType>>(*this).visit(curr);
+    }
 
     this->visit(curr);
 
