@@ -118,7 +118,7 @@ function integrateWasmJS(Module) {
     }
   }
 
-  if (typeof Wasm === 'object' || typeof _WASMEXP_ === 'object') {
+  if (typeof Wasm === 'object') {
     // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
     // the wasm module at that time, and it receives imports and provides exports and so forth, the app
     // doesn't need to care that it is wasm and not asm.
@@ -140,24 +140,7 @@ function integrateWasmJS(Module) {
       info['global.Math'] = global.Math;
       info['env'] = env;
       var instance;
-      if (typeof Wasm === 'object') {
-        instance = Wasm.instantiateModule(binary, info);
-      } else if (typeof _WASMEXP_ === 'object') {
-        // TODO(dschuff): Remove this when v8 supports 2-level imports and we rename _WASMEXP_
-        function flatten(obj) {
-          var ret = {};
-          for (var x in obj) {
-            for (var y in obj[x]) {
-              if (ret[y]) throw "Error: flatten dupe: " + y;
-              if (typeof obj[x][y] === "function") {
-                ret[y] = obj[x][y];
-              }
-            }
-          }
-          return ret;
-        }
-        instance = _WASMEXP_.instantiateModule(binary, flatten(info));
-      }
+      instance = Wasm.instantiateModule(binary, info);
       mergeMemory(instance.memory);
 
       applyMappedGlobals();
