@@ -23,11 +23,11 @@ foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 5
-	i32.shl 	$push3=, $0, $pop2
 	i32.const	$push0=, 16
 	i32.call	$push1=, __builtin_malloc@FUNCTION, $pop0
-	i32.add 	$push4=, $pop3, $pop1
+	i32.const	$push2=, 5
+	i32.shl 	$push3=, $0, $pop2
+	i32.add 	$push4=, $pop1, $pop3
 	i32.const	$push5=, -20
 	i32.add 	$push9=, $pop4, $pop5
 	tee_local	$push8=, $0=, $pop9

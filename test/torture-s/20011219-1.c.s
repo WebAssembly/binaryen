@@ -31,7 +31,7 @@ foo:                                    # @foo
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %entry
 	block
-	tableswitch	$0, 0, 0, 0, 0, 0, 0 # 0: down to label1
+	br_table 	$0, 0, 0, 0, 0, 0, 0 # 0: down to label1
 .LBB1_2:                                # %sw.bb4
 	end_block                       # label1:
 	i32.load	$2=, 0($1)

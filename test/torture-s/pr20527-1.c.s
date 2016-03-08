@@ -18,7 +18,7 @@ f:                                      # @f
 	i32.add 	$0=, $0, $pop11
 	i32.const	$push10=, -1
 	i32.add 	$4=, $2, $pop10
-	i32.add 	$push2=, $5, $1
+	i32.add 	$push2=, $1, $5
 	i32.const	$push9=, 4
 	i32.add 	$2=, $pop2, $pop9
 	i32.const	$1=, 0

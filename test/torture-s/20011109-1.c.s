@@ -68,7 +68,7 @@ foo:                                    # @foo
 	block
 	block
 	block
-	tableswitch	$0, 2, 2, 3, 3, 3, 3, 3, 4, 0, 5, 1, 1, 1 # 2: down to label3
+	br_table 	$0, 2, 3, 3, 3, 3, 3, 4, 0, 5, 1, 1, 1, 2 # 2: down to label3
                                         # 3: down to label2
                                         # 4: down to label1
                                         # 0: down to label5

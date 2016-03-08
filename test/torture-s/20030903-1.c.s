@@ -23,7 +23,7 @@ main:                                   # @main
 .LBB0_2:                                # %entry
 	end_block                       # label0:
 	block
-	tableswitch	$0, 0, 0, 0, 0, 0 # 0: down to label1
+	br_table 	$0, 0, 0, 0, 0, 0 # 0: down to label1
 .LBB0_3:                                # %sw.bb3
 	end_block                       # label1:
 	call    	y@FUNCTION

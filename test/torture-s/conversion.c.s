@@ -237,7 +237,7 @@ ldnear:                                 # @ldnear
 test_integer_to_float:                  # @test_integer_to_float
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %fnear.exit178
+# BB#0:                                 # %if.end103
 	return  	$0
 	.endfunc
 .Lfunc_end9:
@@ -370,7 +370,7 @@ sll2ld:                                 # @sll2ld
 test_longlong_integer_to_float:         # @test_longlong_integer_to_float
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %fnear.exit
+# BB#0:                                 # %if.end96
 	return  	$0
 	.endfunc
 .Lfunc_end16:

@@ -597,7 +597,7 @@ test10:
 	i32.gt_u	$push0=, $2, $pop1
 	br_if   	5, $pop0
 	copy_local	$4=, $3
-	tableswitch	$2, 0, 0, 1, 5, 2, 4
+	br_table	$2, 0, 1, 5, 2, 4, 0
 .LBB19_5:
 	end_loop
 	end_loop

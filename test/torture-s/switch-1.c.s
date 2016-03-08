@@ -72,7 +72,7 @@ main:                                   # @main
 # BB#4:                                 # %foo.exit
                                         #   in Loop: Header=BB1_1 Depth=1
 	block
-	tableswitch	$4, 0, 0, 1, 2, 1, 1, 3, 1, 4 # 0: down to label14
+	br_table 	$4, 0, 1, 2, 1, 1, 3, 1, 4, 0 # 0: down to label14
                                         # 1: down to label13
                                         # 2: down to label12
                                         # 3: down to label11

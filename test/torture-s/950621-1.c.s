@@ -36,7 +36,7 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %f.exit
+# BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable

@@ -14,7 +14,7 @@ bar32:
 	block
 	block
 	block
-	tableswitch	$0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5
+	br_table	$0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5, 0
 .LBB0_2:
 	end_block
 	call    	foo0@FUNCTION
@@ -60,7 +60,7 @@ bar64:
 	block
 	block
 	i32.wrap/i64	$push0=, $0
-	tableswitch	$pop0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5
+	br_table	$pop0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5, 0
 .LBB1_2:
 	end_block
 	call    	foo0@FUNCTION

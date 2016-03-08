@@ -212,7 +212,7 @@ f3:                                     # @f3
 	block
 	block
 	block
-	tableswitch	$0, 4, 4, 0, 1, 3, 2 # 4: down to label1
+	br_table 	$0, 4, 0, 1, 3, 2, 4 # 4: down to label1
                                         # 0: down to label5
                                         # 1: down to label4
                                         # 3: down to label2

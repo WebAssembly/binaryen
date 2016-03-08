@@ -71,7 +71,7 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 # BB#5:                                 # %VEC_deferred_access_base_last.exit29
 	i32.const	$push5=, 3
 	i32.shl 	$push6=, $1, $pop5
-	i32.add 	$push7=, $pop6, $0
+	i32.add 	$push7=, $0, $pop6
 	i32.const	$push8=, -8
 	i32.add 	$push9=, $pop7, $pop8
 	i32.load	$push10=, 0($pop9)

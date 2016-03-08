@@ -57,7 +57,7 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	end_block                       # label1:
 	i32.const	$push11=, 2
 	i32.shl 	$push12=, $4, $pop11
-	i32.add 	$push13=, $pop12, $5
+	i32.add 	$push13=, $5, $pop12
 	i32.const	$push14=, 4
 	i32.add 	$1=, $pop13, $pop14
 	i32.const	$push24=, 1

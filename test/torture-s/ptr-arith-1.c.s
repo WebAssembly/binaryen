@@ -8,7 +8,7 @@ f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.add 	$push0=, $1, $0
+	i32.add 	$push0=, $0, $1
 	i32.const	$push1=, 2
 	i32.add 	$push2=, $pop0, $pop1
 	return  	$pop2
