@@ -677,25 +677,16 @@ public:
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
-    o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->cases.size())
-                                           << int16_t(curr->targets.size() + 1);
-    for (size_t i = 0; i < curr->cases.size(); i++) {
-      breakStack.push_back(curr->cases[i].name);
-    }
-    breakStack.push_back(curr->name);
+    o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->targets.size() + 1) << int8_t(curr->value != nullptr);
     for (auto target : curr->targets) {
       o << (int16_t)getBreakIndex(target);
     }
     o << (int16_t)getBreakIndex(curr->default_);
-    recurse(curr->value);
+    recurse(curr->condition);
     o << int8_t(BinaryConsts::EndMarker);
-    for (auto& c : curr->cases) {
-      recurse(c.body);
+    if (curr->value) {
+      recurse(curr->value);
       o << int8_t(BinaryConsts::EndMarker);
-    }
-    breakStack.pop_back(); // name
-    for (size_t i = 0; i < curr->cases.size(); i++) {
-      breakStack.pop_back(); // case
     }
   }
   void visitCall(Call *curr) {
@@ -1400,29 +1391,17 @@ public:
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
-    auto numCases = getInt16();
     auto numTargets = getInt16();
-    for (auto i = 0; i < numCases; i++) {
-      Switch::Case c;
-      c.name = getNextLabel();
-      curr->cases.push_back(c);
-      breakStack.push_back(c.name);
-    }
-    curr->name = getNextLabel();
-    breakStack.push_back(curr->name);
+    auto hasValue = getInt8();
     for (auto i = 0; i < numTargets - 1; i++) {
       curr->targets.push_back(getBreakName(getInt16()));
     }
     curr->default_ = getBreakName(getInt16());
     processExpressions();
-    curr->value = popExpression();
-    for (auto i = 0; i < numCases; i++) {
+    curr->condition = popExpression();
+    if (hasValue) {
       processExpressions();
-      curr->cases[i].body = popExpression();
-    }
-    breakStack.pop_back(); // name
-    for (size_t i = 0; i < curr->cases.size(); i++) {
-      breakStack.pop_back(); // case
+      curr->value = popExpression();
     }
   }
   void visitCall(Call *curr, Name target) {

@@ -652,36 +652,24 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     }
     Expression *defaultBody = nullptr; // default must be last in asm.js
     Ref visitSwitch(Switch *curr) {
-      Ref ret = ValueBuilder::makeLabel(fromName(curr->name), ValueBuilder::makeBlock());
-      Ref value;
-      if (isStatement(curr->value)) {
+      assert(!curr->value);
+      Ref ret = ValueBuilder::makeBlock();
+      Ref condition;
+      if (isStatement(curr->condition)) {
         ScopedTemp temp(i32, parent);
-        flattenAppend(ret[2], visit(curr->value, temp));
-        value = temp.getAstName();
+        flattenAppend(ret[2], visit(curr->condition, temp));
+        condition = temp.getAstName();
       } else {
-        value = visit(curr->value, EXPRESSION_RESULT);
+        condition = visit(curr->condition, EXPRESSION_RESULT);
       }
-      Ref theSwitch = ValueBuilder::makeSwitch(value);
+      Ref theSwitch = ValueBuilder::makeSwitch(condition);
       ret[2][1]->push_back(theSwitch);
-      for (auto& c : curr->cases) {
-        if (c.name == curr->default_) {
-          defaultBody = c.body;
-          continue;
-        }
-        bool added = false;
-        for (size_t i = 0; i < curr->targets.size(); i++) {
-          if (curr->targets[i] == c.name) {
-            ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
-            added = true;
-          }
-        }
-        assert(added);
-        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(visit(c.body, NO_RESULT)), false);
+      for (size_t i = 0; i < curr->targets.size(); i++) {
+        ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
+        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->targets[i]))), false);
       }
-      if (defaultBody) {
-        ValueBuilder::appendDefaultToSwitch(theSwitch);
-        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(visit(defaultBody, NO_RESULT)), false);
-      }
+      ValueBuilder::appendDefaultToSwitch(theSwitch);
+      ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->default_))), false);
       return ret;
     }
 

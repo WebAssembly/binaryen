@@ -38,6 +38,13 @@ struct RemoveUnusedNames : public WalkerPass<WasmWalker<RemoveUnusedNames>> {
     }
   }
 
+  void visitSwitch(Switch *curr) {
+    for (auto name : curr->targets) {
+      branchesSeen.insert(name);
+    }
+    branchesSeen.insert(curr->default_);
+  }
+
   void visitFunction(Function *curr) {
     branchesSeen.clear();
   }

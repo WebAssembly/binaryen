@@ -125,29 +125,16 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     decIndent();
   }
   void visitSwitch(Switch *curr) {
-    printOpening(o, "tableswitch ");
-    if (curr->name.is()) o << curr->name;
-    incIndent();
-    printFullLine(curr->value);
-    doIndent(o, indent) << "(table";
-    std::set<Name> caseNames;
-    for (auto& c : curr->cases) {
-      caseNames.insert(c.name);
-    }
+    printOpening(o, "br_table");
     for (auto& t : curr->targets) {
-      o << maybeSpace << "(" << (caseNames.count(t) == 0 ? "br" : "case") << " " << (t.is() ? t : curr->default_) << ")";
+      o << " " << t;
     }
-    o << ")";
-    if (curr->default_.is()) o << " (" << (caseNames.count(curr->default_) == 0 ? "br" : "case") << " " << curr->default_ << ")";
-    o << maybeNewLine;
-    for (auto& c : curr->cases) {
-      doIndent(o, indent);
-      printMinorOpening(o, "case ") << c.name;
-      incIndent();
-      printFullLine(c.body);
-      decIndent();
-      o << maybeNewLine;
+    o << " " << curr->default_;
+    incIndent();
+    if (curr->value) {
+      printFullLine(curr->value);
     }
+    printFullLine(curr->condition);
     decIndent();
   }
 

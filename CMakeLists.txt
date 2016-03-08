@@ -76,7 +76,6 @@ ADD_LIBRARY(support STATIC ${support_SOURCES})
 SET(binaryen-shell_SOURCES
   src/binaryen-shell.cpp
   src/pass.cpp
-  src/passes/LowerCase.cpp
   src/passes/LowerIfElse.cpp
   src/passes/MergeBlocks.cpp
   src/passes/NameManager.cpp
