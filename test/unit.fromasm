@@ -177,10 +177,12 @@
   (func $switcher (param $x i32) (result i32)
     (block $switch-default$3
       (block $switch-case$2
-        (br_table $switch-case$1 $switch-case$2 $switch-default$3
-          (i32.sub
-            (get_local $x)
-            (i32.const 1)
+        (block $switch-case$1
+          (br_table $switch-case$1 $switch-case$2 $switch-default$3
+            (i32.sub
+              (get_local $x)
+              (i32.const 1)
+            )
           )
         )
         (return
@@ -193,10 +195,12 @@
     )
     (block $switch-default$7
       (block $switch-case$6
-        (br_table $switch-case$6 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-case$5 $switch-default$7
-          (i32.sub
-            (get_local $x)
-            (i32.const 5)
+        (block $switch-case$5
+          (br_table $switch-case$6 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-case$5 $switch-default$7
+            (i32.sub
+              (get_local $x)
+              (i32.const 5)
+            )
           )
         )
         (return
@@ -212,10 +216,12 @@
         (block $switch-case$15
           (block $switch-case$12
             (block $switch-case$9
-              (br_table $switch-case$15 $switch-default$16 $switch-default$16 $switch-case$12 $switch-default$16 $switch-default$16 $switch-default$16 $switch-default$16 $switch-case$9 $switch-default$16 $switch-case$8 $switch-default$16
-                (i32.sub
-                  (get_local $x)
-                  (i32.const 2)
+              (block $switch-case$8
+                (br_table $switch-case$15 $switch-default$16 $switch-default$16 $switch-case$12 $switch-default$16 $switch-default$16 $switch-default$16 $switch-default$16 $switch-case$9 $switch-default$16 $switch-case$8 $switch-default$16
+                  (i32.sub
+                    (get_local $x)
+                    (i32.const 2)
+                  )
                 )
               )
               (br $label$break$Lout)

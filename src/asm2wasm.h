@@ -1534,39 +1534,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 }
 
 void Asm2WasmBuilder::optimize() {
-  // Optimization passes. Note: no effort is made to free nodes that are no longer held on to.
-
-  struct BlockBreakOptimizer : public WasmWalker<BlockBreakOptimizer> {
-    void visitBlock(Block *curr) {
-      // if the block ends in a break on this very block, then just put the value there
-      Break *last = curr->list[curr->list.size()-1]->dyn_cast<Break>();
-      if (last && last->value && last->name == curr->name) {
-        curr->list[curr->list.size()-1] = last->value;
-      }
-      if (curr->list.size() > 1) return; // no hope to remove the block
-      // just one element; maybe we can return just the element
-      if (curr->name.isNull()) {
-        replaceCurrent(curr->list[0]); // cannot break into it
-        return;
-      }
-      // we might be broken to, but maybe there isn't a break (and we may have removed it, leading to this)
-      // look for any breaks to this block
-      BreakSeeker breakSeeker(curr->name);
-      Expression *child = curr->list[0];
-      breakSeeker.walk(child);
-      if (breakSeeker.found == 0) {
-        replaceCurrent(child); // no breaks to here, so eliminate the block
-      }
-    }
-  };
-
-  BlockBreakOptimizer blockBreakOptimizer;
-  for (auto pair : wasm.functionsMap) {
-    blockBreakOptimizer.startWalk(pair.second);
-  }
-
-  // Standard passes
-
   PassRunner passRunner(&allocator);
   passRunner.add("remove-unused-brs");
   passRunner.add("remove-unused-names");
