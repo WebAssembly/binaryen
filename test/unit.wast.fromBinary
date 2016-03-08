@@ -178,83 +178,86 @@
   )
   (func $switcher (type $6) (param $var$0 i32) (result i32)
     (block $label$0
-      (tableswitch $label$4
-        (i32.sub
-          (get_local $var$0)
-          (i32.const 1)
-        )
-        (table (case $label$1) (case $label$2)) (case $label$3)
-        (case $label$1
-          (br $label$0
-            (i32.const 1)
+      (block $label$1
+        (block $label$2
+          (block $label$3
+            (block $label$4
+              (br_table $label$4 $label$3 $label$2
+                (i32.sub
+                  (get_local $var$0)
+                  (i32.const 1)
+                )
+              )
+            )
+            (br $label$0
+              (i32.const 1)
+            )
           )
-        )
-        (case $label$2
           (br $label$0
             (i32.const 2)
           )
         )
-        (case $label$3
-          (nop)
-        )
+        (nop)
       )
-      (tableswitch $label$8
-        (i32.sub
-          (get_local $var$0)
-          (i32.const 5)
-        )
-        (table (case $label$6) (case $label$7) (case $label$7) (case $label$7) (case $label$7) (case $label$7) (case $label$7) (case $label$5)) (case $label$7)
-        (case $label$5
-          (br $label$0
-            (i32.const 121)
+      (block $label$5
+        (block $label$6
+          (block $label$7
+            (block $label$8
+              (br_table $label$7 $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$8 $label$6
+                (i32.sub
+                  (get_local $var$0)
+                  (i32.const 5)
+                )
+              )
+            )
+            (br $label$0
+              (i32.const 121)
+            )
           )
-        )
-        (case $label$6
           (br $label$0
             (i32.const 51)
           )
         )
-        (case $label$7
-          (nop)
-        )
+        (nop)
       )
-      (tableswitch $label$14
-        (i32.sub
-          (get_local $var$0)
-          (i32.const 2)
-        )
-        (table (case $label$12) (case $label$13) (case $label$13) (case $label$11) (case $label$13) (case $label$13) (case $label$13) (case $label$13) (case $label$10) (case $label$13) (case $label$9)) (case $label$13)
-        (case $label$9
-          (br $label$14)
-        )
-        (case $label$10
-          (br $label$14)
-        )
-        (case $label$11
-          (block $label$15
-            (loop $label$16 $label$17
-              (block $label$18
-                (br $label$16)
-                (br $label$17)
+      (block $label$9
+        (block $label$10
+          (block $label$11
+            (block $label$12
+              (block $label$13
+                (block $label$14
+                  (br_table $label$11 $label$10 $label$10 $label$12 $label$10 $label$10 $label$10 $label$10 $label$13 $label$10 $label$14 $label$10
+                    (i32.sub
+                      (get_local $var$0)
+                      (i32.const 2)
+                    )
+                  )
+                )
+                (br $label$9)
               )
+              (br $label$9)
             )
-            (br $label$14)
+            (block $label$15
+              (loop $label$16 $label$17
+                (block $label$18
+                  (br $label$16)
+                  (br $label$17)
+                )
+              )
+              (br $label$9)
+            )
           )
-        )
-        (case $label$12
           (block $label$19
             (loop $label$20 $label$21
               (block $label$22
-                (br $label$14)
+                (br $label$9)
                 (br $label$21)
               )
             )
-            (br $label$14)
+            (br $label$9)
           )
         )
-        (case $label$13
-          (nop)
-        )
+        (nop)
       )
       (i32.const 0)
     )

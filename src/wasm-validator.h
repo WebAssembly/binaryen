@@ -76,16 +76,6 @@ public:
     validateAlignment(curr->align);
   }
   void visitSwitch(Switch *curr) {
-    std::set<Name> inTable;
-    for (auto target : curr->targets) {
-      if (target.is()) {
-        inTable.insert(target);
-      }
-    }
-    for (auto& c : curr->cases) {
-      shouldBeFalse(c.name.is() && inTable.find(c.name) == inTable.end());
-    }
-    shouldBeFalse(curr->default_.is() && inTable.find(curr->default_) == inTable.end());
   }
   void visitUnary(Unary *curr) {
     shouldBeTrue(curr->value->type == curr->type);

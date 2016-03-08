@@ -256,40 +256,24 @@ private:
       }
       Flow visitSwitch(Switch *curr) {
         NOTE_ENTER("Switch");
-        Flow flow = visit(curr->value);
-        if (flow.breaking()) {
-          flow.clearIf(curr->name);
-          return flow;
-        }
+        Flow flow = visit(curr->condition);
+        if (flow.breaking()) return flow;
         NOTE_EVAL1(flow.value);
         int64_t index = flow.value.getInteger();
+
+        if (curr->value) {
+          flow = visit(curr->value);
+          if (flow.breaking()) return flow;
+          NOTE_EVAL1(flow.value);
+        } else {
+          flow = Flow();
+        }
+
         Name target = curr->default_;
         if (index >= 0 && (size_t)index < curr->targets.size()) {
           target = curr->targets[index];
         }
-        // This is obviously very inefficient. This should be a cached data structure
-        std::map<Name, size_t> caseMap; // name => index in cases
-        for (size_t i = 0; i < curr->cases.size(); i++) {
-          caseMap[curr->cases[i].name] = i;
-        }
-        auto iter = caseMap.find(target);
-        if (iter == caseMap.end()) {
-          // not in the cases, so this is a break
-          Flow flow(target);
-          flow.clearIf(curr->name);
-          return flow;
-        }
-        size_t caseIndex = iter->second;
-        assert(caseIndex < curr->cases.size());
-        while (caseIndex < curr->cases.size()) {
-          Switch::Case& c = curr->cases[caseIndex];
-          flow = visit(c.body);
-          if (flow.breaking()) {
-            flow.clearIf(curr->name);
-            break;
-          }
-          caseIndex++;
-        }
+        flow.breakTo = target;
         return flow;
       }
 

@@ -756,9 +756,8 @@
             (set_local $$4
               (get_local $$3)
             )
-            (tableswitch 
+            (br_table $label$5 $label$6 $label$0 $label$3 $label$2 $label$5
               (get_local $$2)
-              (table (br $label$5) (br $label$6) (br $label$0) (br $label$3) (br $label$2)) (br $label$5)
             )
           )
         )

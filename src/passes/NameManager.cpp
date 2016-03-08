@@ -44,7 +44,6 @@ void NameManager::visitBreak(Break* curr) {
   names.insert(curr->name);
 }
 void NameManager::visitSwitch(Switch* curr) {
-  names.insert(curr->name);
   names.insert(curr->default_);
   for (auto& target : curr->targets) {
     names.insert(target);

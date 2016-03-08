@@ -993,7 +993,7 @@ class S2WasmBuilder {
         addToBlock(curr);
       } else if (match("tableswitch")) {
         auto curr = allocator.alloc<Switch>();
-        curr->value = getInput();
+        curr->condition = getInput();
         skipComma();
         curr->default_ = getBranchLabel(getInt());
         while (skipComma()) {

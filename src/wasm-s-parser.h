@@ -558,7 +558,10 @@ public:
       switch (str[0]) {
         case 'b': {
           if (str[1] == 'l') return makeBlock(s);
-          if (str[1] == 'r') return makeBreak(s);
+          if (str[1] == 'r') {
+            if (str[2] == '_' && str[3] == 't') return makeBreakTable(s);
+            return makeBreak(s);
+          }
           abort_on(str);
         }
         case 'c': {
@@ -612,7 +615,6 @@ public:
           abort_on(str);
         }
         case 't': {
-          if (str[1] == 'a') return makeSwitch(s); // aka tableswitch
           if (str[1] == 'h') return makeThenOrElse(s);
           abort_on(str);
         }
@@ -948,43 +950,27 @@ private:
     return ret;
   }
 
+  Expression* makeBreakTable(Element& s) {
+    auto ret = allocator.alloc<Switch>();
+    size_t i = 1;
+    while (!s[i]->isList()) {
+      ret->targets.push_back(getLabel(*s[i++]));
+    }
+    ret->default_ = ret->targets.back();
+    ret->targets.pop_back();
+    ret->condition = parseExpression(s[i++]);
+    if (i < s.size()) {
+      ret->value = ret->condition;
+      ret->condition = parseExpression(s[i++]);
+    }
+    return ret;
+  }
+
   Expression* makeReturn(Element& s) {
     auto ret = allocator.alloc<Return>();
     if (s.size() >= 2) {
       ret->value = parseExpression(s[1]);
     }
-    return ret;
-  }
-
-  Expression* makeSwitch(Element& s) {
-    auto ret = allocator.alloc<Switch>();
-    size_t i = 1;
-    if (s[i]->isStr()) {
-      ret->name = s[i]->str();
-      i++;
-    } else {
-      ret->name = getPrefixedName("switch");
-    }
-    labelStack.push_back(ret->name);
-    ret->value =  parseExpression(s[i]);
-    i++;
-    Element& table = *s[i];
-    i++;
-    for (size_t j = 1; j < table.size(); j++) {
-      Element& curr = *table[j];
-      ret->targets.push_back(getLabel(*curr[1]));
-    }
-    Element& curr = *s[i];
-    ret->default_ = getLabel(*curr[1]);
-    i++;
-    for (; i < s.size(); i++) {
-      Element& curr = *s[i];
-      assert(curr[0]->str() == CASE);
-      if (curr.size() < 2) onError();
-      ret->cases.emplace_back(curr[1]->str(), makeMaybeBlock(curr, 2, curr.size()));
-    }
-    ret->type = ret->cases.size() > 0 ? ret->cases[0].body->type : none;
-    labelStack.pop_back();
     return ret;
   }
 

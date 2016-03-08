@@ -23,9 +23,8 @@
             (block $label$4
               (block $label$5
                 (block $label$6
-                  (tableswitch 
+                  (br_table $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$4 $label$4 $label$4 $label$4 $label$4 $label$4 $label$3 $label$2 $label$1 $label$6
                     (get_local $$0)
-                    (table (br $label$6) (br $label$6) (br $label$6) (br $label$6) (br $label$6) (br $label$6) (br $label$6) (br $label$5) (br $label$5) (br $label$5) (br $label$5) (br $label$5) (br $label$5) (br $label$5) (br $label$5) (br $label$4) (br $label$4) (br $label$4) (br $label$4) (br $label$4) (br $label$4) (br $label$3) (br $label$2) (br $label$1)) (br $label$6)
                   )
                 )
                 (call_import $foo0)
@@ -61,11 +60,10 @@
             (block $label$4
               (block $label$5
                 (block $label$6
-                  (tableswitch 
+                  (br_table $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$4 $label$4 $label$4 $label$4 $label$4 $label$4 $label$3 $label$2 $label$1 $label$6
                     (i32.wrap/i64
                       (get_local $$0)
                     )
-                    (table (br $label$6) (br $label$6) (br $label$6) (br $label$6) (br $label$6) (br $label$6) (br $label$6) (br $label$5) (br $label$5) (br $label$5) (br $label$5) (br $label$5) (br $label$5) (br $label$5) (br $label$5) (br $label$4) (br $label$4) (br $label$4) (br $label$4) (br $label$4) (br $label$4) (br $label$3) (br $label$2) (br $label$1)) (br $label$6)
                   )
                 )
                 (call_import $foo0)

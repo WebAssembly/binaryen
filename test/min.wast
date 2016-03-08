@@ -26,22 +26,21 @@
   )
   (func $littleswitch (param $x i32) (result i32)
     (block $topmost
-      (tableswitch $switch$0
-        (i32.sub
-          (get_local $x)
+      (block $switch-case$2
+        (block $switch-case$1
+          (br_table $switch-case$1 $switch-case$2 $switch-case$1
+            (i32.sub
+              (get_local $x)
+              (i32.const 1)
+            )
+          )
+        )
+        (br $topmost
           (i32.const 1)
         )
-        (table (case $switch-case$1) (case $switch-case$2)) (case $switch-case$1)
-        (case $switch-case$1
-          (br $topmost
-            (i32.const 1)
-          )
-        )
-        (case $switch-case$2
-          (br $topmost
-            (i32.const 2)
-          )
-        )
+      )
+      (br $topmost
+        (i32.const 2)
       )
       (i32.const 0)
     )

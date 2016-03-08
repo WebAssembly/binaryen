@@ -842,20 +842,14 @@ public:
 
 class Switch : public Expression {
 public:
-  Switch() : Expression(SwitchId) {}
+  Switch() : Expression(SwitchId), condition(nullptr), value(nullptr) {
+    type = unreachable;
+  }
 
-  struct Case {
-    Name name;
-    Expression *body;
-    Case() {}
-    Case(Name name, Expression *body) : name(name), body(body) {}
-  };
-
-  Name name;
-  Expression *value;
   std::vector<Name> targets;
   Name default_;
-  std::vector<Case> cases;
+  Expression *condition;
+  Expression *value;
 };
 
 class CallBase : public Expression {
@@ -1288,10 +1282,8 @@ struct ChildWalker : public WasmWalkerBase<ChildWalker<ParentType>> {
     parent.walk(curr->value);
   }
   void visitSwitch(Switch *curr) {
-    parent.walk(curr->value);
-    for (auto& case_ : curr->cases) {
-      parent.walk(case_.body);
-    }
+    parent.walk(curr->condition);
+    if (curr->value) parent.walk(curr->value);
   }
   void visitCall(Call *curr) {
     ExpressionList& list = curr->operands;

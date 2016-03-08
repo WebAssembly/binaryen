@@ -1404,7 +1404,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->finalize();
       return ret;
     } else if (what == SWITCH) {
-      IString name;
+      IString name; // for breaking out of the entire switch
       if (!parentLabel.isNull()) {
         name = getBreakLabelName(parentLabel);
         parentLabel = IString();
@@ -1412,10 +1412,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         name = getNextId("switch");
       }
       breakStack.push_back(name);
-      auto ret = allocator.alloc<Switch>();
-      ret->name = name;
-      ret->value = process(ast[1]);
-      assert(ret->value->type == i32);
+
+      auto br = allocator.alloc<Switch>();
+      br->condition = process(ast[1]);
+      assert(br->condition->type == i32);
+
       Ref cases = ast[2];
       bool seen = false;
       int min = 0; // the lowest index we see; we will offset to it
@@ -1435,18 +1436,23 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       }
       Binary* offsetor = allocator.alloc<Binary>();
       offsetor->op = BinaryOp::Sub;
-      offsetor->left = ret->value;
+      offsetor->left = br->condition;
       offsetor->right = allocator.alloc<Const>()->set(Literal(min));
       offsetor->type = i32;
-      ret->value = offsetor;
+      br->condition = offsetor;
+
+      auto top = allocator.alloc<Block>();
+      top->list.push_back(br);
+      top->finalize();
+
       for (unsigned i = 0; i < cases->size(); i++) {
         Ref curr = cases[i];
         Ref condition = curr[0];
         Ref body = curr[1];
-        Switch::Case case_;
-        case_.body = processStatements(body, 0);
+        auto case_ = processStatements(body, 0);
+        Name name;
         if (condition->isNull()) {
-          case_.name = ret->default_ = getNextId("switch-default");
+          name = br->default_ = getNextId("switch-default");
         } else {
           assert(condition[0] == NUM || condition[0] == UNARY_PREFIX);
           int32_t index = getLiteral(condition).geti32();
@@ -1454,26 +1460,35 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           index -= min;
           assert(index >= 0);
           size_t index_s = index;
-          case_.name = getNextId("switch-case");
-          if (ret->targets.size() <= index_s) {
-            ret->targets.resize(index_s+1);
+          name = getNextId("switch-case");
+          if (br->targets.size() <= index_s) {
+            br->targets.resize(index_s+1);
           }
-          ret->targets[index_s] = case_.name;
+          br->targets[index_s] = name;
         }
-        ret->cases.push_back(case_);
+        auto next = allocator.alloc<Block>();
+        top->name = name;
+        next->list.push_back(top);
+        next->list.push_back(case_);
+        next->finalize();
+        top = next;
       }
+
       // ensure a default
-      if (ret->default_.isNull()) {
-        Switch::Case defaultCase;
-        defaultCase.name = ret->default_ = getNextId("switch-default");
-        defaultCase.body = allocator.alloc<Nop>(); // ok if others fall through to this
-        ret->cases.push_back(defaultCase);
+      if (br->default_.isNull()) {
+        br->default_ = getNextId("switch-default");
       }
-      for (size_t i = 0; i < ret->targets.size(); i++) {
-        if (ret->targets[i].isNull()) ret->targets[i] = ret->default_;
+      for (size_t i = 0; i < br->targets.size(); i++) {
+        if (br->targets[i].isNull()) br->targets[i] = br->default_;
       }
-      // finalize
+      top->name = br->default_;
+
       breakStack.pop_back();
+
+      // Create a topmost block for breaking out of the entire switch
+      auto ret = allocator.alloc<Block>();
+      ret->name = name;
+      ret->list.push_back(top);
       return ret;
     }
     abort_on("confusing expression", ast);
@@ -1519,39 +1534,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 }
 
 void Asm2WasmBuilder::optimize() {
-  // Optimization passes. Note: no effort is made to free nodes that are no longer held on to.
-
-  struct BlockBreakOptimizer : public WasmWalker<BlockBreakOptimizer> {
-    void visitBlock(Block *curr) {
-      // if the block ends in a break on this very block, then just put the value there
-      Break *last = curr->list[curr->list.size()-1]->dyn_cast<Break>();
-      if (last && last->value && last->name == curr->name) {
-        curr->list[curr->list.size()-1] = last->value;
-      }
-      if (curr->list.size() > 1) return; // no hope to remove the block
-      // just one element; maybe we can return just the element
-      if (curr->name.isNull()) {
-        replaceCurrent(curr->list[0]); // cannot break into it
-        return;
-      }
-      // we might be broken to, but maybe there isn't a break (and we may have removed it, leading to this)
-      // look for any breaks to this block
-      BreakSeeker breakSeeker(curr->name);
-      Expression *child = curr->list[0];
-      breakSeeker.walk(child);
-      if (breakSeeker.found == 0) {
-        replaceCurrent(child); // no breaks to here, so eliminate the block
-      }
-    }
-  };
-
-  BlockBreakOptimizer blockBreakOptimizer;
-  for (auto pair : wasm.functionsMap) {
-    blockBreakOptimizer.startWalk(pair.second);
-  }
-
-  // Standard passes
-
   PassRunner passRunner(&allocator);
   passRunner.add("remove-unused-brs");
   passRunner.add("remove-unused-names");
