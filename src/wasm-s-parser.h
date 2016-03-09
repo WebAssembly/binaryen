@@ -430,7 +430,8 @@ public:
       WasmType type = stringToWasmType(str, false, true);
       // Local copy to index into op without bounds checking.
       constexpr size_t maxNameSize = 15;
-      char op[maxNameSize + 1] = { '\0' };
+      char op[maxNameSize + 1];
+      memset(op, 0, maxNameSize + 1); // ensure the whole string is cleared.
       strncpy(op, dot + 1, maxNameSize);
       switch (op[0]) {
         case 'a': {
@@ -522,6 +523,9 @@ public:
           if (op[1] == 'e') {
             if (op[2] == 'm') return makeBinary(s, op[4] == 'u' ? BinaryOp::RemU : BinaryOp::RemS, type);
             if (op[2] == 'i') return makeUnary(s, isWasmTypeFloat(type) ? UnaryOp::ReinterpretInt : UnaryOp::ReinterpretFloat, type);
+          }
+          if (op[1] == 'o' && op[2] == 't') {
+            return makeBinary(s, op[3] == 'l' ? BinaryOp::RotL : BinaryOp::RotR, type);
           }
           abort_on(op);
         }

@@ -287,6 +287,10 @@ enum ASTNodes {
   F64ConvertF32       = 0xb2,
   F64ReinterpretI64   = 0xb3,
   I64ReinterpretF64   = 0xb5,
+  I32RotR             = 0xb6,
+  I32RotL             = 0xb7,
+  I64RotR             = 0xb8,
+  I64RotL             = 0xb9,
   I32ReinterpretF32   = 0xfe, // XXX not in v8 spec doc
 
   I32LoadMem8S = 0x20,
@@ -883,6 +887,8 @@ public:
       case Shl:      INT_TYPED_CODE(Shl);;
       case ShrU:     INT_TYPED_CODE(ShrU);
       case ShrS:     INT_TYPED_CODE(ShrS);
+      case RotL:     INT_TYPED_CODE(RotL);
+      case RotR:     INT_TYPED_CODE(RotR);
       case Div:      FLOAT_TYPED_CODE(Div);
       case CopySign: FLOAT_TYPED_CODE(CopySign);
       case Min:      FLOAT_TYPED_CODE(Min);
@@ -1593,6 +1599,8 @@ public:
       INT_TYPED_CODE(Shl);
       INT_TYPED_CODE(ShrU);
       INT_TYPED_CODE(ShrS);
+      INT_TYPED_CODE(RotL);
+      INT_TYPED_CODE(RotR);
       FLOAT_TYPED_CODE(Div);
       FLOAT_TYPED_CODE(CopySign);
       FLOAT_TYPED_CODE(Min);

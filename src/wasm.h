@@ -45,6 +45,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <climits>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -503,6 +504,32 @@ public:
       default: WASM_UNREACHABLE();
     }
   }
+  template <typename T>
+  static T rol(T val, T count) {
+    T mask = sizeof(T) * CHAR_BIT - 1;
+    count &= mask;
+    return (val << count) | (val >> (-count & mask));
+  }
+  Literal rotL(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(rol(uint32_t(i32), uint32_t(other.i32)));
+      case WasmType::i64: return Literal(rol(uint64_t(i64), uint64_t(other.i64)));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  template <typename T>
+  static T ror (T val, T count) {
+    T mask = sizeof(T) * CHAR_BIT - 1;
+    count &= mask;
+    return (val >> count) | (val << (-count & mask));
+  }
+  Literal rotR(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(ror(uint32_t(i32), uint32_t(other.i32)));
+      case WasmType::i64: return Literal(ror(uint64_t(i64), uint64_t(other.i64)));
+      default: WASM_UNREACHABLE();
+    }
+  }
 
   Literal eq(const Literal& other) const {
     switch (type) {
@@ -676,7 +703,7 @@ enum UnaryOp {
 
 enum BinaryOp {
   Add, Sub, Mul, // int or float
-  DivS, DivU, RemS, RemU, And, Or, Xor, Shl, ShrU, ShrS, // int
+  DivS, DivU, RemS, RemU, And, Or, Xor, Shl, ShrU, ShrS, RotL, RotR, // int
   Div, CopySign, Min, Max, // float
   // relational ops
   Eq, Ne, // int or float

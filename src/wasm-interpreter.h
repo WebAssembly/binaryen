@@ -464,6 +464,8 @@ private:
             case Shl:  return left.shl(right.and_(Literal(int32_t(31))));
             case ShrU: return left.shrU(right.and_(Literal(int32_t(31))));
             case ShrS: return left.shrS(right.and_(Literal(int32_t(31))));
+            case RotL: return left.rotL(right);
+            case RotR: return left.rotR(right);
             case Eq:   return left.eq(right);
             case Ne:   return left.ne(right);
             case LtS:  return left.ltS(right);
@@ -505,6 +507,8 @@ private:
             case Shl:  return left.shl(right.and_(Literal(int64_t(63))));
             case ShrU: return left.shrU(right.and_(Literal(int64_t(63))));
             case ShrS: return left.shrS(right.and_(Literal(int64_t(63))));
+            case RotL: return left.rotL(right);
+            case RotR: return left.rotR(right);
             case Eq:   return left.eq(right);
             case Ne:   return left.ne(right);
             case LtS:  return left.ltS(right);
