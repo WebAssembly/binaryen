@@ -1,6 +1,8 @@
 '''
 A bunch of hackish fixups for testing of SpiderMonkey support. We should
 get rid of these ASAP.
+
+This is meant to be run using BINARYEN_SCRIPTS in emcc, and not standalone.
 '''
 
 import os
