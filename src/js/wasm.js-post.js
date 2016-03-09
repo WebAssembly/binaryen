@@ -20,11 +20,15 @@ function integrateWasmJS(Module) {
   //  * 'asm2wasm': load asm.js code and translate to wasm
   //  * 'just-asm': no wasm, just load the asm.js code and use that (good for testing)
   // The method can be set at compile time (BINARYEN_METHOD), or runtime by setting Module['wasmJSMethod'].
-  var method = Module['wasmJSMethod'] || 'wasm-s-parser';
+  var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'wasm-s-parser';
   assert(method == 'asm2wasm' || method == 'wasm-s-parser' || method == 'just-asm');
 
+  var wasmCodeFile = Module['wasmCodeFile'] || {{{ wasmCodeFile }}};
+
+  var asmjsCodeFile = Module['asmjsCodeFile'] || {{{ asmjsCodeFile }}};
+
   if (method == 'just-asm') {
-    eval(Module['read'](Module['asmjsCodeFile']));
+    eval(Module['read'](asmjsCodeFile));
     return;
   }
 
@@ -103,7 +107,7 @@ function integrateWasmJS(Module) {
   // output, either generated ahead of time or on the client, we need to apply those mapped
   // globals after loading the module.
   function applyMappedGlobals() {
-    var mappedGlobals = JSON.parse(Module['read'](Module['wasmCodeFile'] + '.mappedGlobals'));
+    var mappedGlobals = JSON.parse(Module['read'](wasmCodeFile + '.mappedGlobals'));
     for (var name in mappedGlobals) {
       var global = mappedGlobals[name];
       if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
@@ -130,7 +134,7 @@ function integrateWasmJS(Module) {
         assert(binary, "on the web, we need the wasm binary to be preloaded and set on Module['wasmBinary']. emcc.py will do that for you when generating HTML (but not JS)");
         binary = new Uint8Array(binary);
       } else {
-        binary = Module['readBinary'](Module['wasmCodeFile']);
+        binary = Module['readBinary'](wasmCodeFile);
       }
       // Create an instance of the module using native support in the JS engine.
       info['global'] = {
@@ -179,7 +183,7 @@ function integrateWasmJS(Module) {
     wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
 
     // Prepare to generate wasm, using either asm2wasm or wasm-s-parser
-    var code = Module['read'](method == 'asm2wasm' ? Module['asmjsCodeFile'] : Module['wasmCodeFile']);
+    var code = Module['read'](method == 'asm2wasm' ? asmjsCodeFile : wasmCodeFile);
     var temp = wasmJS['_malloc'](code.length + 1);
     wasmJS['writeAsciiToMemory'](code, temp);
     if (method == 'asm2wasm') {
