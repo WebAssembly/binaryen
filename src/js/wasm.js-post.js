@@ -145,11 +145,11 @@ function integrateWasmJS(Module) {
       info['env'] = env;
       var instance;
       instance = Wasm.instantiateModule(binary, info);
-      mergeMemory(instance.memory);
+      mergeMemory(instance.exports.memory);
 
       applyMappedGlobals();
 
-      return instance;
+      return instance.exports;
     };
 
     return;
