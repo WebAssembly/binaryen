@@ -1305,7 +1305,7 @@ public:
           }
           std::string sig = getSig(curr);
           sigsForCode[code].insert(sig);
-          std::string fixedTarget = std::string("_") + EMSCRIPTEN_ASM_CONST.str + '_' + sig;
+          std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str + std::string("_") + sig;
           curr->target = cashew::IString(fixedTarget.c_str(), false);
           arg->value = Literal(id);
           // add import, if necessary
