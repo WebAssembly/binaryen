@@ -58,6 +58,11 @@ int main(int argc, const char *argv[]) {
   const auto &tm_it = options.extra.find("total memory");
   size_t totalMemory =
       tm_it == options.extra.end() ? 16 * 1024 * 1024 : atoi(tm_it->second.c_str());
+  if (totalMemory & ~Memory::kPageMask) {
+    std::cerr << "Error: total memory size " << totalMemory <<
+        " is not a multiple of the 64k wasm page size\n";
+    exit(EXIT_FAILURE);
+  }
 
   Asm2WasmPreProcessor pre;
   auto input(
@@ -75,7 +80,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "wasming..." << std::endl;
   AllocatingModule wasm;
-  wasm.memory.initial = wasm.memory.max = totalMemory;
+  wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
   Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug);
   asm2wasm.processAsm(asmjs);
 

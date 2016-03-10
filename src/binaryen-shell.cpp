@@ -111,10 +111,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   ShellExternalInterface() : memory() {}
 
   void init(Module& wasm) override {
-    memory.resize(wasm.memory.initial);
+    memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     // apply memory segments
     for (auto segment : wasm.memory.segments) {
-      assert(segment.offset + segment.size <= wasm.memory.initial);
+      assert(segment.offset + segment.size <= wasm.memory.initial * wasm::Memory::kPageSize);
       for (size_t i = 0; i != segment.size; ++i) {
         memory.set(segment.offset + i, segment.data[i]);
       }

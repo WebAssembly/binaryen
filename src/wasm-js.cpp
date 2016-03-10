@@ -67,9 +67,14 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   Ref asmjs = builder.parseToplevel(input);
 
   module = new AllocatingModule();
-  module->memory.initial = EM_ASM_INT_V({
+  uint32_t providedMemory = EM_ASM_INT_V({
     return Module['providedTotalMemory']; // we receive the size of memory from emscripten
   });
+  if (providedMemory & ~Memory::kPageMask) {
+    std::cerr << "Error: provided memory is not a multiple of the 64k wasm page size\n";
+    exit(EXIT_FAILURE);
+  }
+  module->memory.initial = providedMemory / Memory::kPageSize;
   module->memory.max = pre.memoryGrowth ? -1 : module->memory.initial;
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
@@ -114,9 +119,14 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input, char *mappedG
     abort();
   });
 
-  module->memory.initial = EM_ASM_INT_V({
+  uint32_t providedMemory = EM_ASM_INT_V({
     return Module['providedTotalMemory']; // we receive the size of memory from emscripten
   });
+  if (providedMemory & ~Memory::kPageMask) {
+    std::cerr << "Error: provided memory is not a multiple of the 64k wasm page size\n";
+    exit(EXIT_FAILURE);
+  }
+  module->memory.initial = providedMemory / Memory::kPageSize;
   module->memory.max = (module->exportsMap.find(GROW_WASM_MEMORY) != module->exportsMap.end()) ? -1 : module->memory.initial;
 
   // global mapping is done in js in post.js
@@ -151,7 +161,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       // create a new buffer here, just like native wasm support would.
       EM_ASM_({
         Module['outside']['newBuffer'] = new ArrayBuffer($0);
-      }, wasm.memory.initial);
+      }, wasm.memory.initial * Memory::kPageSize);
       for (auto segment : wasm.memory.segments) {
         EM_ASM_({
           var source = Module['HEAP8'].subarray($1, $1 + $2);

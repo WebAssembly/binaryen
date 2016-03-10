@@ -1,4 +1,4 @@
 (module
-  (memory 9)
+  (memory 1)
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 8 }

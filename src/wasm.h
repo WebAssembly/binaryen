@@ -503,6 +503,20 @@ public:
       default: WASM_UNREACHABLE();
     }
   }
+  Literal rotL(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(RotateLeft(uint32_t(i32), uint32_t(other.i32)));
+      case WasmType::i64: return Literal(RotateLeft(uint64_t(i64), uint64_t(other.i64)));
+      default: WASM_UNREACHABLE();
+    }
+  }
+  Literal rotR(const Literal& other) const {
+    switch (type) {
+      case WasmType::i32: return Literal(RotateRight(uint32_t(i32), uint32_t(other.i32)));
+      case WasmType::i64: return Literal(RotateRight(uint64_t(i64), uint64_t(other.i64)));
+      default: WASM_UNREACHABLE();
+    }
+  }
 
   Literal eq(const Literal& other) const {
     switch (type) {
@@ -676,7 +690,7 @@ enum UnaryOp {
 
 enum BinaryOp {
   Add, Sub, Mul, // int or float
-  DivS, DivU, RemS, RemU, And, Or, Xor, Shl, ShrU, ShrS, // int
+  DivS, DivU, RemS, RemU, And, Or, Xor, Shl, ShrU, ShrS, RotL, RotR, // int
   Div, CopySign, Min, Max, // float
   // relational ops
   Eq, Ne, // int or float
@@ -1074,6 +1088,8 @@ public:
 
 class Memory {
 public:
+  static const size_t kPageSize = 64 * 1024;
+  static const size_t kPageMask = ~(kPageSize - 1);
   struct Segment {
     size_t offset;
     const char* data;
@@ -1082,7 +1098,7 @@ public:
     Segment(size_t offset, const char *data, size_t size) : offset(offset), data(data), size(size) {}
   };
 
-  size_t initial, max;
+  size_t initial, max; // sizes are in pages
   std::vector<Segment> segments;
 
   Memory() : initial(0), max((uint32_t)-1) {}

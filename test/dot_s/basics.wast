@@ -1,5 +1,5 @@
 (module
-  (memory 52
+  (memory 1
     (segment 16 "hello, world!\n\00")
     (segment 32 "vcq")
     (segment 48 "\16\00\00\00")

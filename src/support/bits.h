@@ -17,6 +17,7 @@
 #ifndef wasm_support_bits_h
 #define wasm_support_bits_h
 
+#include <climits>
 #include <cstdint>
 #include <type_traits>
 
@@ -64,6 +65,20 @@ template <typename T>
 int CountLeadingZeroes(T v) {
   return CountLeadingZeroes(typename std::make_unsigned<T>::type(v));
 }
+
+template <typename T>
+inline static T RotateLeft(T val, T count) {
+  T mask = sizeof(T) * CHAR_BIT - 1;
+  count &= mask;
+  return (val << count) | (val >> (-count & mask));
+}
+template <typename T>
+inline static T RotateRight(T val, T count) {
+  T mask = sizeof(T) * CHAR_BIT - 1;
+  count &= mask;
+  return (val >> count) | (val << (-count & mask));
+}
+
 
 }  // namespace wasm
 

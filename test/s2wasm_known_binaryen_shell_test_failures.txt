@@ -28,7 +28,6 @@ bitfld-5.c.s.wast
 memcpy-1.c.s.wast
 mode-dependent-address.c.s.wast
 multi-ix.c.s.wast
-pr29006.c.s.wast
 pr37573.c.s.wast
 pr43236.c.s.wast
 pr44852.c.s.wast

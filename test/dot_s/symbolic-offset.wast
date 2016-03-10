@@ -1,5 +1,5 @@
 (module
-  (memory 20
+  (memory 1
     (segment 8 "\01\00\00\00\00\00\00\00\00\00\00\00")
   )
   (export "f" $f)

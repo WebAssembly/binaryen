@@ -55,7 +55,8 @@ class S2WasmBuilder {
         ignoreUnknownSymbols(ignoreUnknownSymbols),
         startFunction(startFunction),
         globalBase(globalBase),
-        nextStatic(globalBase) {
+        nextStatic(globalBase),
+        initialMemory(0) {
     s = input;
     scan();
     s = input;
@@ -75,6 +76,7 @@ class S2WasmBuilder {
   size_t globalBase, // where globals can start to be statically allocated, i.e., the data segment
          nextStatic; // location of next static allocation
   std::map<Name, int32_t> staticAddresses; // name => address
+  size_t initialMemory; // Initial size (in bytes) of memory (after linking, this is rounded and set on the wasm object in pages)
 
   struct Relocation {
     uint32_t* data;
@@ -396,7 +398,7 @@ class S2WasmBuilder {
       addressSegments[nextStatic] = wasm.memory.segments.size();
       wasm.memory.segments.emplace_back(
           nextStatic, reinterpret_cast<char*>(raw), pointerSize);
-      wasm.memory.initial = nextStatic + pointerSize;
+      initialMemory = nextStatic + pointerSize;
     }
     nextStatic += pointerSize;
   }
@@ -407,7 +409,7 @@ class S2WasmBuilder {
     nextStatic = (nextStatic + 15) & static_cast<size_t>(-16);
     staticAddresses[".stack"] = nextStatic;
     nextStatic += stackAllocation;
-    wasm.memory.initial = nextStatic;
+    initialMemory = nextStatic;
   }
 
   void process() {
@@ -1154,7 +1156,7 @@ class S2WasmBuilder {
       wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], size);
     }
     nextStatic += size;
-    wasm.memory.initial = nextStatic;
+    initialMemory = nextStatic;
   }
 
   void parseLcomm(Name name, size_t align=1) {
@@ -1168,7 +1170,7 @@ class S2WasmBuilder {
     while (nextStatic % align) nextStatic++;
     staticAddresses[name] = nextStatic;
     nextStatic += size;
-    wasm.memory.initial = nextStatic;
+    initialMemory = nextStatic;
   }
 
   void skipImports() {
@@ -1183,6 +1185,11 @@ class S2WasmBuilder {
   }
 
   void fix() {
+    // Round the memory size up to a page, and update the page-increment versions
+    // of initial and max
+    wasm.memory.initial = ((initialMemory + Memory::kPageSize - 1) & Memory::kPageMask) /
+        Memory::kPageSize;
+
     auto ensureFunctionIndex = [&](Name name) {
       if (functionIndexes.count(name) == 0) {
         functionIndexes[name] = wasm.table.names.size();
