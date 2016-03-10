@@ -122,11 +122,25 @@ function integrateWasmJS(Module) {
     }
   }
 
+  function fixImports(imports) {
+    if (!{{{ WASM_BACKEND }}}) return imports;
+    var ret = {};
+    for (var i in imports) {
+      var fixed = i;
+      if (fixed[0] == '_') fixed = fixed.substr(1);
+      ret[fixed] = imports[i];
+    }
+    return ret;
+  }
+
   if (typeof Wasm === 'object') {
     // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
     // the wasm module at that time, and it receives imports and provides exports and so forth, the app
     // doesn't need to care that it is wasm and not asm.
     Module['asm'] = function(global, env, providedBuffer) {
+      global = fixImports(global);
+      env = fixImports(env);
+
       // Load the wasm module
       var binary;
       if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
@@ -169,6 +183,9 @@ function integrateWasmJS(Module) {
   // The asm.js function, called to "link" the asm.js module. At that time, we are provided imports
   // and respond with exports, and so forth.
   Module['asm'] = function(global, env, providedBuffer) {
+    global = fixImports(global);
+    env = fixImports(env);
+
     assert(providedBuffer === Module['buffer']); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
 
     info.global = global;
