@@ -149,7 +149,7 @@ function integrateWasmJS(Module) {
 
       applyMappedGlobals();
 
-      return instance;
+      return instance.exports;
     };
 
     return;
