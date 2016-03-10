@@ -44,6 +44,7 @@ class S2WasmBuilder {
   bool debug;
   bool ignoreUnknownSymbols;
   Name startFunction;
+  std::vector<Name> globls;
 
  public:
   S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug,
@@ -465,7 +466,8 @@ class S2WasmBuilder {
   }
 
   void parseGlobl() {
-    (void)getStr();
+    auto str = getStr();
+    globls.push_back(str);
     skipWhitespace();
   }
 
@@ -1029,10 +1031,6 @@ class S2WasmBuilder {
     }
     func->body->dyn_cast<Block>()->finalize();
     wasm.addFunction(func);
-    // XXX for now, export all functions
-    auto exp = allocator.alloc<Export>();
-    exp->name = exp->value = func->name;
-    wasm.addExport(exp);
   }
 
   void parseType() {
@@ -1189,6 +1187,15 @@ class S2WasmBuilder {
     // of initial and max
     wasm.memory.initial = ((initialMemory + Memory::kPageSize - 1) & Memory::kPageMask) /
         Memory::kPageSize;
+
+    // XXX For now, export all functions marked .globl.
+    for (Name name : globls) {
+      if (wasm.functionsMap.count(name)) {
+        auto exp = allocator.alloc<Export>();
+        exp->name = exp->value = name;
+        wasm.addExport(exp);
+      }
+    }
 
     auto ensureFunctionIndex = [&](Name name) {
       if (functionIndexes.count(name) == 0) {

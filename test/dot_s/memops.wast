@@ -4,7 +4,6 @@
   )
   (type $FUNCSIG$vi (func (param i32)))
   (import $emscripten_asm_const_vi "env" "emscripten_asm_const_vi" (param i32))
-  (export "_Z6reporti" $_Z6reporti)
   (export "main" $main)
   (func $_Z6reporti (param $$0 i32)
     (i32.store
