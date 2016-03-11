@@ -568,8 +568,9 @@ if has_emcc:
 
   print '\n[ checking wasm.js methods... ]\n'
 
-  for method in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm']:
+  for method_init in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm']:
     for success in [1, 0]:
+      method = method_init
       command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', 'hello_world.c') ]
       if method:
         command += ['-s', 'BINARYEN_METHOD="' + method + '"']
