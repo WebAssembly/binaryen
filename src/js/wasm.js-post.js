@@ -16,21 +16,24 @@
 
 function integrateWasmJS(Module) {
   // wasm.js has several methods for creating the compiled code module here:
+  //  * 'native-wasm' : use native WebAssembly support in the browser
   //  * 'wasm-s-parser': load s-expression code from a .wast and create wasm
   //  * 'asm2wasm': load asm.js code and translate to wasm
   //  * 'just-asm': no wasm, just load the asm.js code and use that (good for testing)
   // The method can be set at compile time (BINARYEN_METHOD), or runtime by setting Module['wasmJSMethod'].
-  var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'wasm-s-parser';
-  assert(method == 'asm2wasm' || method == 'wasm-s-parser' || method == 'just-asm');
+  // The method can be a comma-separated list, in which case, we will try the
+  // options one by one. Some of them can fail gracefully, and then we can try
+  // the next.
+
+  // inputs
+
+  var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'native-wasm,wasm-s-parser'; // by default, try native and then .wast
 
   var wasmCodeFile = Module['wasmCodeFile'] || {{{ wasmCodeFile }}};
 
   var asmjsCodeFile = Module['asmjsCodeFile'] || {{{ asmjsCodeFile }}};
 
-  if (method == 'just-asm') {
-    eval(Module['read'](asmjsCodeFile));
-    return;
-  }
+  // utilities
 
   var asm2wasmImports = { // special asm2wasm imports
     "f64-rem": function(x, y) {
@@ -133,7 +136,16 @@ function integrateWasmJS(Module) {
     return ret;
   }
 
-  if (typeof Wasm === 'object') {
+  // do-method functions
+
+  function doJustAsm() {
+    eval(Module['read'](asmjsCodeFile));
+    return typeof Module['asm'] === 'function'; // evalling the asm.js file should set this
+  }
+
+  function doNativeWasm() {
+    if (typeof Wasm !== 'object') return false;
+
     // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
     // the wasm module at that time, and it receives imports and provides exports and so forth, the app
     // doesn't need to care that it is wasm and not asm.
@@ -166,61 +178,83 @@ function integrateWasmJS(Module) {
       return instance.exports;
     };
 
-    return;
+    return true;
   }
 
-  // Use wasm.js to polyfill and execute code in a wasm interpreter.
-  var wasmJS = WasmJS({});
+  function doWasmPolyfill(method) {
+    // Use wasm.js to polyfill and execute code in a wasm interpreter.
+    var wasmJS = WasmJS({});
 
-  // XXX don't be confused. Module here is in the outside program. wasmJS is the inner wasm-js.cpp.
-  wasmJS['outside'] = Module; // Inside wasm-js.cpp, Module['outside'] reaches the outside module.
+    // XXX don't be confused. Module here is in the outside program. wasmJS is the inner wasm-js.cpp.
+    wasmJS['outside'] = Module; // Inside wasm-js.cpp, Module['outside'] reaches the outside module.
 
-  // Information for the instance of the module.
-  wasmJS['info'] = info;
+    // Information for the instance of the module.
+    wasmJS['info'] = info;
 
-  wasmJS['lookupImport'] = lookupImport;
+    wasmJS['lookupImport'] = lookupImport;
 
-  // The asm.js function, called to "link" the asm.js module. At that time, we are provided imports
-  // and respond with exports, and so forth.
-  Module['asm'] = function(global, env, providedBuffer) {
-    global = fixImports(global);
-    env = fixImports(env);
+    // The asm.js function, called to "link" the asm.js module. At that time, we are provided imports
+    // and respond with exports, and so forth.
+    Module['asm'] = function(global, env, providedBuffer) {
+      global = fixImports(global);
+      env = fixImports(env);
 
-    assert(providedBuffer === Module['buffer']); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
+      assert(providedBuffer === Module['buffer']); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
 
-    info.global = global;
-    info.env = env;
+      info.global = global;
+      info.env = env;
 
-    Module['reallocBuffer'] = function(size) {
-      var old = Module['buffer'];
-      wasmJS['asmExports']['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
-      return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
+      Module['reallocBuffer'] = function(size) {
+        var old = Module['buffer'];
+        wasmJS['asmExports']['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
+        return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
+      };
+
+      wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
+
+      // Prepare to generate wasm, using either asm2wasm or wasm-s-parser
+      var code = Module['read'](method == 'asm2wasm' ? asmjsCodeFile : wasmCodeFile);
+      var temp = wasmJS['_malloc'](code.length + 1);
+      wasmJS['writeAsciiToMemory'](code, temp);
+      if (method == 'asm2wasm') {
+        wasmJS['_load_asm2wasm'](temp);
+      } else {
+        wasmJS['_load_s_expr2wasm'](temp);
+      }
+      wasmJS['_free'](temp);
+
+      wasmJS['_instantiate'](temp);
+
+      if (Module['newBuffer']) {
+        mergeMemory(Module['newBuffer']);
+        Module['newBuffer'] = null;
+      }
+
+      if (method == 'wasm-s-parser') {
+        applyMappedGlobals();
+      }
+
+      return wasmJS['asmExports'];
     };
 
-    wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
+    return true;
+  }
 
-    // Prepare to generate wasm, using either asm2wasm or wasm-s-parser
-    var code = Module['read'](method == 'asm2wasm' ? asmjsCodeFile : wasmCodeFile);
-    var temp = wasmJS['_malloc'](code.length + 1);
-    wasmJS['writeAsciiToMemory'](code, temp);
-    if (method == 'asm2wasm') {
-      wasmJS['_load_asm2wasm'](temp);
+  // use the right method
+
+  var methods = method.split(',');
+  for (var i = 0; i < methods.length; i++) {
+    var curr = methods[i];
+    //console.log('using wasm/js method: ' + curr);
+    if (curr === 'native-wasm') {
+      if (doNativeWasm()) return;
+    } else if (curr === 'just-asm') {
+      if (doJustAsm()) return;
+    } else if (curr === 'asm2wasm' || curr === 'wasm-s-parser') {
+      if (doWasmPolyfill(curr)) return;
     } else {
-      wasmJS['_load_s_expr2wasm'](temp);
+      throw 'bad method: ' + curr;
     }
-    wasmJS['_free'](temp);
-
-    wasmJS['_instantiate'](temp);
-
-    if (Module['newBuffer']) {
-      mergeMemory(Module['newBuffer']);
-      Module['newBuffer'] = null;
-    }
-
-    if (method == 'wasm-s-parser') {
-      applyMappedGlobals();
-    }
-
-    return wasmJS['asmExports'];
-  };
+  }
 }
+
