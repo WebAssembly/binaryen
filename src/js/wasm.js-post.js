@@ -140,11 +140,19 @@ function integrateWasmJS(Module) {
 
   function doJustAsm() {
     eval(Module['read'](asmjsCodeFile));
-    return typeof Module['asm'] === 'function'; // evalling the asm.js file should set this
+    if (typeof Module['asm'] !== 'function') {
+      // evalling the asm.js file should have set this
+      Module['printErr']('asm evalling did not set the module properly');
+      return false;
+    }
+    return true;
   }
 
   function doNativeWasm() {
-    if (typeof Wasm !== 'object') return false;
+    if (typeof Wasm !== 'object') {
+      Module['printErr']('no native wasm support detected');
+      return false;
+    }
 
     // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
     // the wasm module at that time, and it receives imports and provides exports and so forth, the app
@@ -182,7 +190,10 @@ function integrateWasmJS(Module) {
   }
 
   function doWasmPolyfill(method) {
-    if (typeof WasmJS !== 'function') return false; // not built with wasm.js polyfill?
+    if (typeof WasmJS !== 'function') {
+      Module['printErr']('WasmJS not detected - polyfill not bundled?');
+      return false;
+    }
 
     // Use wasm.js to polyfill and execute code in a wasm interpreter.
     var wasmJS = WasmJS({});
@@ -247,7 +258,7 @@ function integrateWasmJS(Module) {
   var methods = method.split(',');
   for (var i = 0; i < methods.length; i++) {
     var curr = methods[i];
-    //console.log('using wasm/js method: ' + curr);
+    //Module['printErr']('using wasm/js method: ' + curr);
     if (curr === 'native-wasm') {
       if (doNativeWasm()) return;
     } else if (curr === 'just-asm') {
@@ -258,5 +269,6 @@ function integrateWasmJS(Module) {
       throw 'bad method: ' + curr;
     }
   }
+  throw 'no wasm method succeeded';
 }
 
