@@ -182,6 +182,8 @@ function integrateWasmJS(Module) {
   }
 
   function doWasmPolyfill(method) {
+    if (typeof WasmJS !== 'function') return false; // not built with wasm.js polyfill?
+
     // Use wasm.js to polyfill and execute code in a wasm interpreter.
     var wasmJS = WasmJS({});
 
