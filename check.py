@@ -568,8 +568,9 @@ if has_emcc:
 
   print '\n[ checking wasm.js methods... ]\n'
 
-  for method in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm']:
+  for method_init in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm']:
     for success in [1, 0]:
+      method = method_init
       command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', 'hello_world.c') ]
       if method:
         command += ['-s', 'BINARYEN_METHOD="' + method + '"']
@@ -577,6 +578,13 @@ if has_emcc:
         method = 'wasm-s-parser' # this is the default
       print method, ' : ', ' '.join(command), ' => ', success
       subprocess.check_call(command)
+
+      see_polyfill =  'var WasmJS = ' in open('a.wasm.js').read()
+      if method and 'asm2wasm' not in method and 'wasm-s-parser' not in method:
+        assert not see_polyfill, 'verify polyfill was not added - we specified a method, and it does not need it'
+      else:
+        assert see_polyfill, 'we need the polyfill'
+
       def break_cashew():
         asm = open('a.wasm.asm.js').read()
         asm = asm.replace('"almost asm"', '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
