@@ -1,3 +1,19 @@
+#! /usr/bin/env python
+
+#   Copyright 2016 WebAssembly Community Group participants
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
 '''
 A bunch of hackish fixups for testing of SpiderMonkey support. We should
 get rid of these ASAP.
@@ -5,11 +21,11 @@ get rid of these ASAP.
 This is meant to be run using BINARYEN_SCRIPTS in emcc, and not standalone.
 '''
 
-import os
-import sys
 import math
+import os
 import shutil
 import subprocess
+import sys
 
 import emscripten
 
@@ -47,13 +63,14 @@ parts = memory.split(' ')
 parts[1] = str(int(math.ceil(float(parts[1]) / PAGE_SIZE)))
 if len(parts) == 3:
   parts[2] = str(int(math.ceil(float(parts[2]) / PAGE_SIZE)))
-wast = wast[:memory_start] + ' '.join(parts) + \
-  wast[memory_end:memory_end + 1] + \
-  ' (export "memory" memory) ' + wast[memory_end + 1:]
+wast = (wast[:memory_start] + ' '.join(parts) +
+        wast[memory_end:memory_end + 1] +
+        ' (export "memory" memory) ' + wast[memory_end + 1:])
 open(wast_target, 'w').write(wast)
 
 # convert to binary using spidermonkey
-subprocess.check_call(emscripten.shared.SPIDERMONKEY_ENGINE +
-  ['-e', 'os.file.writeTypedArrayToFile("' + wasm_target + \
-  '", new Uint8Array(wasmTextToBinary(os.file.readFile("' + \
-  wast_target + '"))))'])
+subprocess.check_call(
+    emscripten.shared.SPIDERMONKEY_ENGINE +
+    ['-e', 'os.file.writeTypedArrayToFile("' + wasm_target +
+     '", new Uint8Array(wasmTextToBinary(os.file.readFile("' +
+     wast_target + '"))))'])
