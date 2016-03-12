@@ -26,6 +26,7 @@
 #include "asm2wasm.h"
 #include "wasm-interpreter.h"
 #include "wasm-s-parser.h"
+#include "wasm-binary.h"
 #include "wasm-printing.h"
 
 using namespace cashew;
@@ -100,6 +101,20 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   }
 }
 
+void finalizeModule() {
+  uint32_t providedMemory = EM_ASM_INT_V({
+    return Module['providedTotalMemory']; // we receive the size of memory from emscripten
+  });
+  if (providedMemory & ~Memory::kPageMask) {
+    std::cerr << "Error: provided memory is not a multiple of the 64k wasm page size\n";
+    exit(EXIT_FAILURE);
+  }
+  module->memory.initial = providedMemory / Memory::kPageSize;
+  module->memory.max = (module->exportsMap.find(GROW_WASM_MEMORY) != module->exportsMap.end()) ? -1 : module->memory.initial;
+
+  // global mapping is done in js in post.js
+}
+
 // loads wasm code in s-expression format
 extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input, char *mappedGlobals) {
   prepare2wasm();
@@ -119,17 +134,25 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input, char *mappedG
     abort();
   });
 
-  uint32_t providedMemory = EM_ASM_INT_V({
-    return Module['providedTotalMemory']; // we receive the size of memory from emscripten
-  });
-  if (providedMemory & ~Memory::kPageMask) {
-    std::cerr << "Error: provided memory is not a multiple of the 64k wasm page size\n";
-    exit(EXIT_FAILURE);
-  }
-  module->memory.initial = providedMemory / Memory::kPageSize;
-  module->memory.max = (module->exportsMap.find(GROW_WASM_MEMORY) != module->exportsMap.end()) ? -1 : module->memory.initial;
+  finalizeModule();
+}
 
-  // global mapping is done in js in post.js
+// loads wasm code in binary format
+extern "C" void EMSCRIPTEN_KEEPALIVE load_binary2wasm(char *raw, int32_t size, char *mappedGlobals) {
+  prepare2wasm();
+
+  if (wasmJSDebug) std::cerr << "wasm-binary parsing...\n";
+
+  module = new AllocatingModule();
+  std::vector<char> input;
+  input.resize(size);
+  for (int32_t i = 0; i < size; i++) {
+    input[i] = raw[i];
+  }
+  WasmBinaryBuilder parser(*module, input, debug);
+  parser.read();
+
+  finalizeModule();
 }
 
 // instantiates the loaded wasm (which might be from asm2wasm, or

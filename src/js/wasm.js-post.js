@@ -17,8 +17,9 @@
 function integrateWasmJS(Module) {
   // wasm.js has several methods for creating the compiled code module here:
   //  * 'native-wasm' : use native WebAssembly support in the browser
-  //  * 'wasm-s-parser': load s-expression code from a .wast and create wasm
-  //  * 'asm2wasm': load asm.js code and translate to wasm
+  //  * 'wasm-s-parser': load s-expression code from a .wast and interpret
+  //  * 'wasm-binary': load binary wasm and interpret
+  //  * 'asm2wasm': load asm.js code, translate to wasm, and interpret
   //  * 'just-asm': no wasm, just load the asm.js code and use that (good for testing)
   // The method can be set at compile time (BINARYEN_METHOD), or runtime by setting Module['wasmJSMethod'].
   // The method can be a comma-separated list, in which case, we will try the
@@ -29,8 +30,8 @@ function integrateWasmJS(Module) {
 
   var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'native-wasm,wasm-s-parser'; // by default, try native and then .wast
 
-  var wasmCodeFile = Module['wasmCodeFile'] || {{{ wasmCodeFile }}};
-
+  var wasmTextFile = Module['wasmTextFile'] || {{{ wasmTextFile }}};
+  var wasmBinaryFile = Module['wasmBinaryFile'] || {{{ wasmBinaryFile }}};
   var asmjsCodeFile = Module['asmjsCodeFile'] || {{{ asmjsCodeFile }}};
 
   // utilities
@@ -109,8 +110,8 @@ function integrateWasmJS(Module) {
   // be present in the wasm output of asm2wasm, so we store it in a side file. If we load asm2wasm
   // output, either generated ahead of time or on the client, we need to apply those mapped
   // globals after loading the module.
-  function applyMappedGlobals() {
-    var mappedGlobals = JSON.parse(Module['read'](wasmCodeFile + '.mappedGlobals'));
+  function applyMappedGlobals(globalsFileBase) {
+    var mappedGlobals = JSON.parse(Module['read'](globalsFileBase + '.mappedGlobals'));
     for (var name in mappedGlobals) {
       var global = mappedGlobals[name];
       if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
@@ -134,6 +135,18 @@ function integrateWasmJS(Module) {
       ret[fixed] = imports[i];
     }
     return ret;
+  }
+
+  function getBinary() {
+    var binary;
+    if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
+      binary = Module['wasmBinary'];
+      assert(binary, "on the web, we need the wasm binary to be preloaded and set on Module['wasmBinary']. emcc.py will do that for you when generating HTML (but not JS)");
+      binary = new Uint8Array(binary);
+    } else {
+      binary = Module['readBinary'](wasmBinaryFile);
+    }
+    return binary;
   }
 
   // do-method functions
@@ -161,16 +174,7 @@ function integrateWasmJS(Module) {
       global = fixImports(global);
       env = fixImports(env);
 
-      // Load the wasm module
-      var binary;
-      if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
-        binary = Module['wasmBinary'];
-        assert(binary, "on the web, we need the wasm binary to be preloaded and set on Module['wasmBinary']. emcc.py will do that for you when generating HTML (but not JS)");
-        binary = new Uint8Array(binary);
-      } else {
-        binary = Module['readBinary'](wasmCodeFile);
-      }
-      // Create an instance of the module using native support in the JS engine.
+      // Load the wasm module and create an instance of using native support in the JS engine.
       info['global'] = {
         'NaN': NaN,
         'Infinity': Infinity
@@ -178,10 +182,10 @@ function integrateWasmJS(Module) {
       info['global.Math'] = global.Math;
       info['env'] = env;
       var instance;
-      instance = Wasm.instantiateModule(binary, info);
+      instance = Wasm.instantiateModule(getBinary(), info);
       mergeMemory(instance.exports.memory);
 
-      applyMappedGlobals();
+      applyMappedGlobals(wasmBinaryFile);
 
       return instance.exports;
     };
@@ -226,13 +230,22 @@ function integrateWasmJS(Module) {
       wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
 
       // Prepare to generate wasm, using either asm2wasm or wasm-s-parser
-      var code = Module['read'](method == 'asm2wasm' ? asmjsCodeFile : wasmCodeFile);
+      var code;
+      if (method === 'wasm-binary') {
+        code = getBinary();
+      } else {
+        code = Module['read'](method == 'asm2wasm' ? asmjsCodeFile : wasmTextFile);
+      }
       var temp = wasmJS['_malloc'](code.length + 1);
       wasmJS['writeAsciiToMemory'](code, temp);
       if (method == 'asm2wasm') {
         wasmJS['_load_asm2wasm'](temp);
-      } else {
+      } else if (method === 'wasm-s-parser') {
         wasmJS['_load_s_expr2wasm'](temp);
+      } else if (method === 'wasm-binary') {
+        wasmJS['_load_binary2wasm'](temp);
+      } else {
+        throw 'what? ' + method;
       }
       wasmJS['_free'](temp);
 
@@ -244,7 +257,9 @@ function integrateWasmJS(Module) {
       }
 
       if (method == 'wasm-s-parser') {
-        applyMappedGlobals();
+        applyMappedGlobals(wasmTextFile);
+      } else if (method == 'wasm-binary') {
+        applyMappedGlobals(wasmBinaryFile);
       }
 
       return wasmJS['asmExports'];
@@ -263,7 +278,7 @@ function integrateWasmJS(Module) {
       if (doNativeWasm()) return;
     } else if (curr === 'just-asm') {
       if (doJustAsm()) return;
-    } else if (curr === 'asm2wasm' || curr === 'wasm-s-parser') {
+    } else if (curr === 'asm2wasm' || curr === 'wasm-s-parser' || curr === 'wasm-binary') {
       if (doWasmPolyfill(curr)) return;
     } else {
       throw 'bad method: ' + curr;
