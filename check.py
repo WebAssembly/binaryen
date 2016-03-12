@@ -146,7 +146,7 @@ if not interpreter:
 if not has_node:
   warn('no node found (did not check proper js form)')
 if not has_mozjs:
-  warn('no mozjs found (did not check asm.js validation)')
+  warn('no mozjs found (did not check native wasm support nor asm.js validation)')
 if not has_emcc:
   warn('no emcc found (did not check non-vanilla emscripten/binaryen integration)')
 if not has_vanilla_emcc:
@@ -565,6 +565,24 @@ if actual != expected:
   fail(actual, expected)
 
 if has_emcc:
+
+  if has_mozjs:
+
+    print '\n[ checking native wasm support ]\n'
+
+    command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', 'hello_world.c'), '-s', 'BINARYEN_METHOD="native-wasm"', '-s', 'BINARYEN_SCRIPTS="spidermonkify.py"']
+    print ' '.join(command)
+    subprocess.check_call(command)
+
+    proc = subprocess.Popen(['mozjs', 'a.wasm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert proc.returncode == 0, err
+    assert 'hello, world!' in out, out
+
+    proc = subprocess.Popen([has_node, 'a.wasm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert proc.returncode != 0, 'should fail on no wasm support'
+    assert 'no native wasm support detected' in err, err
 
   print '\n[ checking wasm.js methods... ]\n'
 
