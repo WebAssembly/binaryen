@@ -54,18 +54,12 @@ shutil.copyfile(wast_target + '.mappedGlobals', wasm_target + '.mappedGlobals')
 
 # fix up wast
 wast = open(wast_target).read()
-# memory to page sizes
-PAGE_SIZE = 64 * 1024
+# memory
 memory_start = wast.find('(memory') + 1
 memory_end = wast.find(')', memory_start)
-memory = wast[memory_start:memory_end]
-parts = memory.split(' ')
-parts[1] = str(int(math.ceil(float(parts[1]) / PAGE_SIZE)))
-if len(parts) == 3:
-  parts[2] = str(int(math.ceil(float(parts[2]) / PAGE_SIZE)))
-wast = (wast[:memory_start] + ' '.join(parts) +
-        wast[memory_end:memory_end + 1] +
-        ' (export "memory" memory) ' + wast[memory_end + 1:])
+wast = (wast[:memory_end + 1] +
+        ' (export "memory" memory) ' +
+        wast[memory_end + 1:])
 open(wast_target, 'w').write(wast)
 
 # convert to binary using spidermonkey
