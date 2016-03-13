@@ -21,7 +21,6 @@ get rid of these ASAP.
 This is meant to be run using BINARYEN_SCRIPTS in emcc, and not standalone.
 '''
 
-import math
 import os
 import shutil
 import subprocess
