@@ -55,16 +55,16 @@ bin/binaryen-shell [.wast file] [options] [passes, see --help] [--help]
 The binaryen shell receives a .wast file as input, and can run transformation passes on it, as well as print it (before and/or after the transformations). For example, try
 
 ````
-bin/binaryen-shell test/passes/lower-if-else.wast --print-before
+bin/binaryen-shell test/passes/lower-if-else.wast --print
 ````
 
 That will pretty-print out one of the test cases in the test suite. To run a transformation pass on it, try
 
 ````
-bin/binaryen-shell test/passes/lower-if-else.wast --print-before --print-after --lower-if-else
+bin/binaryen-shell test/passes/lower-if-else.wast --print --lower-if-else
 ````
 
-The `lower-if-else` pass lowers if-else into a block and a break. You can see the change the transformation causes by comparing the print before versus after.
+The `lower-if-else` pass lowers if-else into a block and a break. You can see the change the transformation causes by comparing the output of the two print commands.
 
 It's easy to add your own transformation passes to the shell, just add `.cpp` files into `src/passes`, and rebuild the shell. For example code, take a look at the [`lower-if-else` pass](https://github.com/WebAssembly/binaryen/blob/master/src/passes/LowerIfElse.cpp).
 
