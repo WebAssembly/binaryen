@@ -586,7 +586,7 @@ if has_emcc:
 
   print '\n[ checking wasm.js methods... ]\n'
 
-  for method_init in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm']:
+  for method_init in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm', 'wasm-binary']:
     for success in [1, 0]:
       method = method_init
       command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', 'hello_world.c') ]
@@ -598,7 +598,7 @@ if has_emcc:
       subprocess.check_call(command)
 
       see_polyfill =  'var WasmJS = ' in open('a.wasm.js').read()
-      if method and 'asm2wasm' not in method and 'wasm-s-parser' not in method:
+      if method and 'asm2wasm' not in method and 'wasm-s-parser' not in method and 'wasm-binary' not in method:
         assert not see_polyfill, 'verify polyfill was not added - we specified a method, and it does not need it'
       else:
         assert see_polyfill, 'we need the polyfill'
@@ -621,6 +621,11 @@ if has_emcc:
         break_cashew() # we don't use cashew, so ok to break it
         if not success:
           os.unlink('a.wasm.js')
+      elif method == 'wasm-binary':
+        os.unlink('a.wasm.wast') # we should not need the .wast
+        os.unlink('a.wasm.asm.js') # we should not need the .asm.js
+        if not success:
+          os.unlink('a.wasm.wasm')
       else:
         1/0
       if has_node:

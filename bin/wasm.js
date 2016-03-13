@@ -57210,67 +57210,6 @@ function __ZN4wasm17WasmBinaryBuilder8getInt16Ev(i1) {
  return i1 & 65535 | 0;
 }
 
-function _load_binary2wasm(i5, i6, i1) {
- i5 = i5 | 0;
- i6 = i6 | 0;
- i1 = i1 | 0;
- var i2 = 0, i3 = 0, i4 = 0;
- i4 = STACKTOP;
- STACKTOP = STACKTOP + 112 | 0;
- i2 = i4 + 100 | 0;
- i3 = i4;
- __ZL12prepare2wasmv();
- if (HEAP8[46196] | 0) __ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_PKc(43392, 14946) | 0;
- i1 = __Znwj(164) | 0;
- _memset(i1 | 0, 0, 164) | 0;
- __ZN4wasm16AllocatingModuleC2Ev(i1);
- HEAP32[10548] = i1;
- HEAP32[i2 >> 2] = 0;
- HEAP32[i2 + 4 >> 2] = 0;
- HEAP32[i2 + 8 >> 2] = 0;
- __ZNSt3__16vectorIcNS_9allocatorIcEEE6resizeEj(i2, i6);
- i1 = 0;
- while (1) {
-  if ((i1 | 0) >= (i6 | 0)) break;
-  HEAP8[(HEAP32[i2 >> 2] | 0) + i1 >> 0] = HEAP8[i5 + i1 >> 0] | 0;
-  i1 = i1 + 1 | 0;
- }
- i6 = HEAP32[10548] | 0;
- i5 = (HEAP32[10543] | 0) != 0;
- HEAP32[i3 >> 2] = i6;
- HEAP32[i3 + 4 >> 2] = i6 + 148;
- HEAP32[i3 + 8 >> 2] = i2;
- HEAP8[i3 + 12 >> 0] = i5 & 1;
- i5 = i3 + 16 | 0;
- i6 = i3 + 36 | 0;
- HEAP32[i3 + 64 >> 2] = 0;
- HEAP32[i3 + 68 >> 2] = 0;
- HEAP32[i5 >> 2] = 0;
- HEAP32[i5 + 4 >> 2] = 0;
- HEAP32[i5 + 8 >> 2] = 0;
- HEAP32[i5 + 12 >> 2] = 0;
- HEAP32[i6 >> 2] = 0;
- HEAP32[i6 + 4 >> 2] = 0;
- HEAP32[i6 + 8 >> 2] = 0;
- HEAP32[i6 + 12 >> 2] = 0;
- HEAP32[i6 + 16 >> 2] = 0;
- HEAP32[i6 + 20 >> 2] = 0;
- HEAP32[i3 + 60 >> 2] = i3 + 64;
- i6 = i3 + 72 | 0;
- HEAP32[i6 >> 2] = 0;
- HEAP32[i6 + 4 >> 2] = 0;
- HEAP32[i6 + 8 >> 2] = 0;
- HEAP32[i6 + 12 >> 2] = 0;
- HEAP32[i6 + 16 >> 2] = 0;
- HEAP32[i6 + 20 >> 2] = 0;
- __ZN4wasm17WasmBinaryBuilder4readEv(i3);
- __Z14finalizeModulev();
- __ZN4wasm17WasmBinaryBuilderD2Ev(i3);
- __ZNSt3__113__vector_baseIcNS_9allocatorIcEEED2Ev(i2);
- STACKTOP = i4;
- return;
-}
-
 function __ZN4wasm17WasmBinaryBuilder8getInt32Ev(i1) {
  i1 = i1 | 0;
  var i2 = 0, i3 = 0, i4 = 0, i5 = 0, i6 = 0;
@@ -57302,6 +57241,66 @@ function __ZN4wasm17WasmBinaryBuilder8getInt32Ev(i1) {
  }
  STACKTOP = i4;
  return i1 | 0;
+}
+
+function _load_binary2wasm(i4, i5) {
+ i4 = i4 | 0;
+ i5 = i5 | 0;
+ var i1 = 0, i2 = 0, i3 = 0, i6 = 0;
+ i6 = STACKTOP;
+ STACKTOP = STACKTOP + 112 | 0;
+ i2 = i6 + 100 | 0;
+ i3 = i6;
+ __ZL12prepare2wasmv();
+ if (HEAP8[46196] | 0) __ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_PKc(43392, 14946) | 0;
+ i1 = __Znwj(164) | 0;
+ _memset(i1 | 0, 0, 164) | 0;
+ __ZN4wasm16AllocatingModuleC2Ev(i1);
+ HEAP32[10548] = i1;
+ HEAP32[i2 >> 2] = 0;
+ HEAP32[i2 + 4 >> 2] = 0;
+ HEAP32[i2 + 8 >> 2] = 0;
+ __ZNSt3__16vectorIcNS_9allocatorIcEEE6resizeEj(i2, i5);
+ i1 = 0;
+ while (1) {
+  if ((i1 | 0) >= (i5 | 0)) break;
+  HEAP8[(HEAP32[i2 >> 2] | 0) + i1 >> 0] = HEAP8[i4 + i1 >> 0] | 0;
+  i1 = i1 + 1 | 0;
+ }
+ i5 = HEAP32[10548] | 0;
+ i4 = (HEAP32[10543] | 0) != 0;
+ HEAP32[i3 >> 2] = i5;
+ HEAP32[i3 + 4 >> 2] = i5 + 148;
+ HEAP32[i3 + 8 >> 2] = i2;
+ HEAP8[i3 + 12 >> 0] = i4 & 1;
+ i4 = i3 + 16 | 0;
+ i5 = i3 + 36 | 0;
+ HEAP32[i3 + 64 >> 2] = 0;
+ HEAP32[i3 + 68 >> 2] = 0;
+ HEAP32[i4 >> 2] = 0;
+ HEAP32[i4 + 4 >> 2] = 0;
+ HEAP32[i4 + 8 >> 2] = 0;
+ HEAP32[i4 + 12 >> 2] = 0;
+ HEAP32[i5 >> 2] = 0;
+ HEAP32[i5 + 4 >> 2] = 0;
+ HEAP32[i5 + 8 >> 2] = 0;
+ HEAP32[i5 + 12 >> 2] = 0;
+ HEAP32[i5 + 16 >> 2] = 0;
+ HEAP32[i5 + 20 >> 2] = 0;
+ HEAP32[i3 + 60 >> 2] = i3 + 64;
+ i5 = i3 + 72 | 0;
+ HEAP32[i5 >> 2] = 0;
+ HEAP32[i5 + 4 >> 2] = 0;
+ HEAP32[i5 + 8 >> 2] = 0;
+ HEAP32[i5 + 12 >> 2] = 0;
+ HEAP32[i5 + 16 >> 2] = 0;
+ HEAP32[i5 + 20 >> 2] = 0;
+ __ZN4wasm17WasmBinaryBuilder4readEv(i3);
+ __Z14finalizeModulev();
+ __ZN4wasm17WasmBinaryBuilderD2Ev(i3);
+ __ZNSt3__113__vector_baseIcNS_9allocatorIcEEED2Ev(i2);
+ STACKTOP = i6;
+ return;
 }
 
 function __ZN4wasm22SExpressionWasmBuilder14makeBreakTableERNS_7ElementE(i11, i10) {
@@ -61775,37 +61774,6 @@ function __ZN6cashew6ParserINS_3RefENS_19DotZeroValueBuilderEE9skipSpaceERPc(i4)
  return;
 }
 
-function _load_s_expr2wasm(i3, i1) {
- i3 = i3 | 0;
- i1 = i1 | 0;
- var i2 = 0, i4 = 0, i5 = 0;
- i4 = STACKTOP;
- STACKTOP = STACKTOP + 32 | 0;
- i2 = i4;
- __ZL12prepare2wasmv();
- if (HEAP8[46196] | 0) __ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_PKc(43392, 14916) | 0;
- i1 = __Znwj(24) | 0;
- __ZN4wasm17SExpressionParserC2EPc(i1, i3);
- HEAP32[10545] = i1;
- i1 = HEAP32[i1 + 20 >> 2] | 0;
- if (HEAP8[46196] | 0 ? (__ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_c(__ZN4wasmlsERNSt3__113basic_ostreamIcNS0_11char_traitsIcEEEERNS_7ElementE(43308, i1) | 0, 10) | 0, HEAP8[46196] | 0) : 0) __ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_PKc(43392, 14637) | 0;
- i5 = __Znwj(164) | 0;
- _memset(i5 | 0, 0, 164) | 0;
- __ZN4wasm16AllocatingModuleC2Ev(i5);
- HEAP32[10548] = i5;
- i3 = __Znwj(104) | 0;
- i1 = __ZN4wasm7Element4listEv(i1) | 0;
- i1 = HEAP32[HEAP32[i1 >> 2] >> 2] | 0;
- HEAP32[i2 + 16 >> 2] = i2;
- HEAP32[i2 >> 2] = 3620;
- __ZN4wasm22SExpressionWasmBuilderC2ERNS_16AllocatingModuleERNS_7ElementENSt3__18functionIFvvEEEb(i3, i5, i1, i2, 0);
- HEAP32[10546] = i3;
- __ZNSt3__18functionIFvvEED2Ev(i2);
- __Z14finalizeModulev();
- STACKTOP = i4;
- return;
-}
-
 function __ZNSt3__112basic_stringIwNS_11char_traitsIwEENS_9allocatorIwEEE6appendIPwEENS_9enable_ifIXsr21__is_forward_iteratorIT_EE5valueERS5_E4typeES9_S9_(i9, i5, i8) {
  i9 = i9 | 0;
  i5 = i5 | 0;
@@ -62139,6 +62107,36 @@ function __ZN4wasm17WasmBinaryBuilder11visitSelectEPNS_6SelectE(i3, i2) {
  i5 = HEAP32[i5 + 4 >> 2] | 0;
  HEAP32[i2 + 4 >> 2] = (i5 | 0) != 5 ? i5 : HEAP32[(HEAP32[i6 >> 2] | 0) + 4 >> 2] | 0;
  STACKTOP = i4;
+ return;
+}
+
+function _load_s_expr2wasm(i1) {
+ i1 = i1 | 0;
+ var i2 = 0, i3 = 0, i4 = 0, i5 = 0;
+ i3 = STACKTOP;
+ STACKTOP = STACKTOP + 32 | 0;
+ i2 = i3;
+ __ZL12prepare2wasmv();
+ if (HEAP8[46196] | 0) __ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_PKc(43392, 14916) | 0;
+ i4 = __Znwj(24) | 0;
+ __ZN4wasm17SExpressionParserC2EPc(i4, i1);
+ HEAP32[10545] = i4;
+ i1 = HEAP32[i4 + 20 >> 2] | 0;
+ if (HEAP8[46196] | 0 ? (__ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_c(__ZN4wasmlsERNSt3__113basic_ostreamIcNS0_11char_traitsIcEEEERNS_7ElementE(43308, i1) | 0, 10) | 0, HEAP8[46196] | 0) : 0) __ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_PKc(43392, 14637) | 0;
+ i5 = __Znwj(164) | 0;
+ _memset(i5 | 0, 0, 164) | 0;
+ __ZN4wasm16AllocatingModuleC2Ev(i5);
+ HEAP32[10548] = i5;
+ i4 = __Znwj(104) | 0;
+ i1 = __ZN4wasm7Element4listEv(i1) | 0;
+ i1 = HEAP32[HEAP32[i1 >> 2] >> 2] | 0;
+ HEAP32[i2 + 16 >> 2] = i2;
+ HEAP32[i2 >> 2] = 3620;
+ __ZN4wasm22SExpressionWasmBuilderC2ERNS_16AllocatingModuleERNS_7ElementENSt3__18functionIFvvEEEb(i4, i5, i1, i2, 0);
+ HEAP32[10546] = i4;
+ __ZNSt3__18functionIFvvEED2Ev(i2);
+ __Z14finalizeModulev();
+ STACKTOP = i3;
  return;
 }
 

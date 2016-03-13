@@ -116,7 +116,7 @@ void finalizeModule() {
 }
 
 // loads wasm code in s-expression format
-extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input, char *mappedGlobals) {
+extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input) {
   prepare2wasm();
 
   if (wasmJSDebug) std::cerr << "wasm-s-expression parsing...\n";
@@ -138,7 +138,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input, char *mappedG
 }
 
 // loads wasm code in binary format
-extern "C" void EMSCRIPTEN_KEEPALIVE load_binary2wasm(char *raw, int32_t size, char *mappedGlobals) {
+extern "C" void EMSCRIPTEN_KEEPALIVE load_binary2wasm(char *raw, int32_t size) {
   prepare2wasm();
 
   if (wasmJSDebug) std::cerr << "wasm-binary parsing...\n";

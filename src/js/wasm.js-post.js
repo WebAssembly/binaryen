@@ -236,14 +236,19 @@ function integrateWasmJS(Module) {
       } else {
         code = Module['read'](method == 'asm2wasm' ? asmjsCodeFile : wasmTextFile);
       }
-      var temp = wasmJS['_malloc'](code.length + 1);
-      wasmJS['writeAsciiToMemory'](code, temp);
+      var temp;
       if (method == 'asm2wasm') {
+        temp = wasmJS['_malloc'](code.length + 1);
+        wasmJS['writeAsciiToMemory'](code, temp);
         wasmJS['_load_asm2wasm'](temp);
       } else if (method === 'wasm-s-parser') {
+        temp = wasmJS['_malloc'](code.length + 1);
+        wasmJS['writeAsciiToMemory'](code, temp);
         wasmJS['_load_s_expr2wasm'](temp);
       } else if (method === 'wasm-binary') {
-        wasmJS['_load_binary2wasm'](temp);
+        temp = wasmJS['_malloc'](code.length);
+        wasmJS['HEAPU8'].set(code, temp);
+        wasmJS['_load_binary2wasm'](temp, code.length);
       } else {
         throw 'what? ' + method;
       }
