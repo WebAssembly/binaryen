@@ -522,7 +522,7 @@ public:
         o << int8_t(BinaryConsts::EndMarker);
         assert(depth == 0);
         size_t size = o.size() - start;
-        assert(size <= std::numeric_limits<uint16_t>::max());
+        assert(size <= std::numeric_limits<uint32_t>::max());
         if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
         o.writeAt(sizePos, uint32_t(size)); // XXX int32, diverge from v8 format, to get more code to compile
       } else {
@@ -1079,6 +1079,12 @@ public:
     assert(x == y);
   }
 
+  void ungetInt8() {
+    assert(pos > 0);
+    if (debug) std::cerr << "ungetInt8 (at " << pos << ")" << std::endl;
+    pos--;
+  }
+
   void readStart() {
     if (debug) std::cerr << "== readStart" << std::endl;
     wasm.start = getString();
@@ -1335,19 +1341,44 @@ public:
 
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
-    curr->name = getNextLabel();
-    breakStack.push_back(curr->name);
-    size_t start = expressionStack.size(); // everything after this, that is left when we see the marker, is ours
-    processExpressions();
-    size_t end = expressionStack.size();
-    assert(end >= start);
-    for (size_t i = start; i < end; i++) {
-      if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
-      curr->list.push_back(expressionStack[i]);
+    // special-case Block and de-recurse nested blocks in their first position, as that is
+    // a common pattern that can be very highly nested.
+    std::vector<Block*> stack;
+    while (1) {
+      curr->name = getNextLabel();
+      breakStack.push_back(curr->name);
+      stack.push_back(curr);
+      if (getInt8() == BinaryConsts::Block) {
+        // a recursion
+        curr = allocator.alloc<Block>();
+        continue;
+      } else {
+        // end of recursion
+        ungetInt8();
+        break;
+      }
     }
-    expressionStack.resize(start);
-    curr->finalize();
-    breakStack.pop_back();
+    Block* last = nullptr;
+    while (stack.size() > 0) {
+      curr = stack.back();
+      stack.pop_back();
+      size_t start = expressionStack.size(); // everything after this, that is left when we see the marker, is ours
+      if (last) {
+        // the previous block is our first-position element
+        expressionStack.push_back(last);
+      }
+      last = curr;
+      processExpressions();
+      size_t end = expressionStack.size();
+      assert(end >= start);
+      for (size_t i = start; i < end; i++) {
+        if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
+        curr->list.push_back(expressionStack[i]);
+      }
+      expressionStack.resize(start);
+      curr->finalize();
+      breakStack.pop_back();
+    }
   }
   void visitIf(If *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: If" << std::endl;
