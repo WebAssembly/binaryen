@@ -1655,6 +1655,7 @@ public:
     if (debug) std::cerr << "zz node: Binary" << std::endl;
     curr->right = popExpression();
     curr->left = popExpression();
+    curr->finalize();
     return true;
     #undef TYPED_CODE
     #undef INT_TYPED_CODE
@@ -1687,6 +1688,7 @@ public:
       default: return false;
     }
     if (debug) std::cerr << "zz node: Host" << std::endl;
+    curr->finalize();
     return true;
   }
   void visitNop(Nop *curr) {
