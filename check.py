@@ -683,11 +683,12 @@ if has_emcc:
 
             execute()
 
-            # binary and back
-            shutil.copyfile('a.wasm.wast', 'a.wasm.original.wast')
-            recreated = binary_format_check('a.wasm.wast', verify_final_result=False)
-            shutil.copyfile(recreated, 'a.wasm.wast')
-            execute()
+            if method in ['asm2wasm', 'wasm-s-parser']:
+              # binary and back
+              shutil.copyfile('a.wasm.wast', 'a.wasm.original.wast')
+              recreated = binary_format_check('a.wasm.wast', verify_final_result=False)
+              shutil.copyfile(recreated, 'a.wasm.wast')
+              execute()
 
 print '\n[ success! ]'
 
