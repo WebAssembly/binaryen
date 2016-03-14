@@ -522,7 +522,7 @@ public:
         o << int8_t(BinaryConsts::EndMarker);
         assert(depth == 0);
         size_t size = o.size() - start;
-        assert(size <= std::numeric_limits<uint16_t>::max());
+        assert(size <= std::numeric_limits<uint32_t>::max());
         if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
         o.writeAt(sizePos, uint32_t(size)); // XXX int32, diverge from v8 format, to get more code to compile
       } else {
@@ -650,7 +650,7 @@ public:
     o << int8_t(BinaryConsts::EndMarker);
   }
 
-  int getBreakIndex(Name name) { // -1 if not found
+  int32_t getBreakIndex(Name name) { // -1 if not found
     for (int i = breakStack.size() - 1; i >= 0; i--) {
       if (breakStack[i] == name) {
         return breakStack.size() - 1 - i;
@@ -669,15 +669,15 @@ public:
     }
     if (curr->condition) recurse(curr->condition);
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
-      << int8_t(getBreakIndex(curr->name));
+      << int32_t(getBreakIndex(curr->name));
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
     o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->targets.size() + 1) << int8_t(curr->value != nullptr);
     for (auto target : curr->targets) {
-      o << (int16_t)getBreakIndex(target);
+      o << (int32_t)getBreakIndex(target);
     }
-    o << (int16_t)getBreakIndex(curr->default_);
+    o << (int32_t)getBreakIndex(curr->default_);
     recurse(curr->condition);
     o << int8_t(BinaryConsts::EndMarker);
     if (curr->value) {
@@ -1079,6 +1079,12 @@ public:
     assert(x == y);
   }
 
+  void ungetInt8() {
+    assert(pos > 0);
+    if (debug) std::cerr << "ungetInt8 (at " << pos << ")" << std::endl;
+    pos--;
+  }
+
   void readStart() {
     if (debug) std::cerr << "== readStart" << std::endl;
     wasm.start = getString();
@@ -1335,19 +1341,44 @@ public:
 
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
-    curr->name = getNextLabel();
-    breakStack.push_back(curr->name);
-    size_t start = expressionStack.size(); // everything after this, that is left when we see the marker, is ours
-    processExpressions();
-    size_t end = expressionStack.size();
-    assert(end >= start);
-    for (size_t i = start; i < end; i++) {
-      if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
-      curr->list.push_back(expressionStack[i]);
+    // special-case Block and de-recurse nested blocks in their first position, as that is
+    // a common pattern that can be very highly nested.
+    std::vector<Block*> stack;
+    while (1) {
+      curr->name = getNextLabel();
+      breakStack.push_back(curr->name);
+      stack.push_back(curr);
+      if (getInt8() == BinaryConsts::Block) {
+        // a recursion
+        curr = allocator.alloc<Block>();
+        continue;
+      } else {
+        // end of recursion
+        ungetInt8();
+        break;
+      }
     }
-    expressionStack.resize(start);
-    curr->finalize();
-    breakStack.pop_back();
+    Block* last = nullptr;
+    while (stack.size() > 0) {
+      curr = stack.back();
+      stack.pop_back();
+      size_t start = expressionStack.size(); // everything after this, that is left when we see the marker, is ours
+      if (last) {
+        // the previous block is our first-position element
+        expressionStack.push_back(last);
+      }
+      last = curr;
+      processExpressions();
+      size_t end = expressionStack.size();
+      assert(end >= start);
+      for (size_t i = start; i < end; i++) {
+        if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
+        curr->list.push_back(expressionStack[i]);
+      }
+      expressionStack.resize(start);
+      curr->finalize();
+      breakStack.pop_back();
+    }
   }
   void visitIf(If *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: If" << std::endl;
@@ -1374,14 +1405,14 @@ public:
     curr->finalize();
   }
 
-  Name getBreakName(int offset) {
+  Name getBreakName(int32_t offset) {
     assert(breakStack.size() - 1 - offset < breakStack.size());
     return breakStack[breakStack.size() - 1 - offset];
   }
 
   void visitBreak(Break *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
-    curr->name = getBreakName(getInt8());
+    curr->name = getBreakName(getInt32());
     if (code == BinaryConsts::BrIf) curr->condition = popExpression();
     curr->value = popExpression();
   }
@@ -1390,9 +1421,9 @@ public:
     auto numTargets = getInt16();
     auto hasValue = getInt8();
     for (auto i = 0; i < numTargets - 1; i++) {
-      curr->targets.push_back(getBreakName(getInt16()));
+      curr->targets.push_back(getBreakName(getInt32()));
     }
-    curr->default_ = getBreakName(getInt16());
+    curr->default_ = getBreakName(getInt32());
     processExpressions();
     curr->condition = popExpression();
     if (hasValue) {
@@ -1624,6 +1655,7 @@ public:
     if (debug) std::cerr << "zz node: Binary" << std::endl;
     curr->right = popExpression();
     curr->left = popExpression();
+    curr->finalize();
     return true;
     #undef TYPED_CODE
     #undef INT_TYPED_CODE
@@ -1656,6 +1688,7 @@ public:
       default: return false;
     }
     if (debug) std::cerr << "zz node: Host" << std::endl;
+    curr->finalize();
     return true;
   }
   void visitNop(Nop *curr) {
