@@ -386,6 +386,7 @@ public:
   }
 
   void write() {
+    writeHeader();
     writeStart();
     writeMemory();
     writeSignatures();
@@ -394,6 +395,12 @@ public:
     writeFunctionTable();
     writeEnd();
     finishUp();
+  }
+
+  void writeHeader() {
+    if (debug) std::cerr << "== writeStart" << std::endl;
+    o << int32_t(0x6d736100); // magic number \0asm
+    o << int32_t(10);         // version number
   }
 
   void writeStart() {
@@ -966,6 +973,8 @@ public:
   WasmBinaryBuilder(AllocatingModule& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), pos(0) {}
 
   void read() {
+    readHeader();
+
     // read sections until the end
     while (1) {
       int8_t section = getInt8();
@@ -1083,6 +1092,11 @@ public:
     assert(pos > 0);
     if (debug) std::cerr << "ungetInt8 (at " << pos << ")" << std::endl;
     pos--;
+  }
+
+  void readHeader() {
+    verifyInt32(0x6d736100);
+    verifyInt32(10);
   }
 
   void readStart() {
