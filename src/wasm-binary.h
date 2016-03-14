@@ -650,7 +650,7 @@ public:
     o << int8_t(BinaryConsts::EndMarker);
   }
 
-  int getBreakIndex(Name name) { // -1 if not found
+  int32_t getBreakIndex(Name name) { // -1 if not found
     for (int i = breakStack.size() - 1; i >= 0; i--) {
       if (breakStack[i] == name) {
         return breakStack.size() - 1 - i;
@@ -669,15 +669,15 @@ public:
     }
     if (curr->condition) recurse(curr->condition);
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
-      << int8_t(getBreakIndex(curr->name));
+      << int32_t(getBreakIndex(curr->name));
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
     o << int8_t(BinaryConsts::TableSwitch) << int16_t(curr->targets.size() + 1) << int8_t(curr->value != nullptr);
     for (auto target : curr->targets) {
-      o << (int16_t)getBreakIndex(target);
+      o << (int32_t)getBreakIndex(target);
     }
-    o << (int16_t)getBreakIndex(curr->default_);
+    o << (int32_t)getBreakIndex(curr->default_);
     recurse(curr->condition);
     o << int8_t(BinaryConsts::EndMarker);
     if (curr->value) {
@@ -1405,14 +1405,14 @@ public:
     curr->finalize();
   }
 
-  Name getBreakName(int offset) {
+  Name getBreakName(int32_t offset) {
     assert(breakStack.size() - 1 - offset < breakStack.size());
     return breakStack[breakStack.size() - 1 - offset];
   }
 
   void visitBreak(Break *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
-    curr->name = getBreakName(getInt8());
+    curr->name = getBreakName(getInt32());
     if (code == BinaryConsts::BrIf) curr->condition = popExpression();
     curr->value = popExpression();
   }
@@ -1421,9 +1421,9 @@ public:
     auto numTargets = getInt16();
     auto hasValue = getInt8();
     for (auto i = 0; i < numTargets - 1; i++) {
-      curr->targets.push_back(getBreakName(getInt16()));
+      curr->targets.push_back(getBreakName(getInt32()));
     }
-    curr->default_ = getBreakName(getInt16());
+    curr->default_ = getBreakName(getInt32());
     processExpressions();
     curr->condition = popExpression();
     if (hasValue) {

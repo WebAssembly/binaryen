@@ -55575,7 +55575,7 @@ function __ZN4wasm17WasmBinaryBuilder11visitSwitchEPNS_6SwitchE(i11, i10) {
  i5 = i10 + 8 | 0;
  i7 = 0;
  while (1) {
-  i1 = __ZN4wasm17WasmBinaryBuilder12getBreakNameEi(i11, (__ZN4wasm17WasmBinaryBuilder8getInt16Ev(i11) | 0) & 65535) | 0;
+  i1 = __ZN4wasm17WasmBinaryBuilder12getBreakNameEi(i11, __ZN4wasm17WasmBinaryBuilder8getInt32Ev(i11) | 0) | 0;
   if ((i7 | 0) >= (i2 | 0)) break;
   HEAP32[i8 >> 2] = i1;
   i6 = HEAP32[i3 >> 2] | 0;
@@ -62469,36 +62469,6 @@ function __ZNSt3__16vectorIN4wasm8NameTypeENS_9allocatorIS2_EEE24__emplace_back_
  return;
 }
 
-function __ZN4wasm17WasmBinaryBuilder10visitBreakEPNS_5BreakEh(i4, i3, i2) {
- i4 = i4 | 0;
- i3 = i3 | 0;
- i2 = i2 | 0;
- var i1 = 0, i5 = 0, i6 = 0, i7 = 0;
- i5 = STACKTOP;
- STACKTOP = STACKTOP + 16 | 0;
- i1 = i5;
- if (HEAP8[i4 + 12 >> 0] | 0) {
-  i6 = __ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_PKc(43432, 18483) | 0;
-  i7 = __ZNKSt3__18ios_base6getlocEv(i6 + (HEAP32[(HEAP32[i6 >> 2] | 0) + -12 >> 2] | 0) | 0) | 0;
-  HEAP32[i1 >> 2] = i7;
-  i7 = __ZNKSt3__16locale9use_facetERNS0_2idE(i1, 44308) | 0;
-  i7 = FUNCTION_TABLE_iii[HEAP32[(HEAP32[i7 >> 2] | 0) + 28 >> 2] & 31](i7, 10) | 0;
-  __ZNSt3__16localeD2Ev(i1);
-  __ZNSt3__113basic_ostreamIcNS_11char_traitsIcEEE3putEc(i6, i7) | 0;
-  __ZNSt3__113basic_ostreamIcNS_11char_traitsIcEEE5flushEv(i6) | 0;
- }
- i7 = __ZN4wasm17WasmBinaryBuilder12getBreakNameEi(i4, (__ZN4wasm17WasmBinaryBuilder7getInt8Ev(i4) | 0) & 255) | 0;
- HEAP32[i3 + 8 >> 2] = i7;
- if (i2 << 24 >> 24 == 7) {
-  i7 = __ZN4wasm17WasmBinaryBuilder13popExpressionEv(i4) | 0;
-  HEAP32[i3 + 16 >> 2] = i7;
- }
- i7 = __ZN4wasm17WasmBinaryBuilder13popExpressionEv(i4) | 0;
- HEAP32[i3 + 12 >> 2] = i7;
- STACKTOP = i5;
- return;
-}
-
 function ___cxx_global_array_dtor(i1) {
  i1 = i1 | 0;
  __ZNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev(44536);
@@ -62612,6 +62582,36 @@ function __ZNSt3__16vectorIN4wasm8NameTypeENS_9allocatorIS2_EEE24__emplace_back_
  __ZNSt3__16vectorIN4wasm8NameTypeENS_9allocatorIS2_EEE26__swap_out_circular_bufferERNS_14__split_bufferIS2_RS4_EE(i8, i7);
  __ZNSt3__114__split_bufferIN4wasm8NameTypeERNS_9allocatorIS2_EEED2Ev(i7);
  STACKTOP = i9;
+ return;
+}
+
+function __ZN4wasm17WasmBinaryBuilder10visitBreakEPNS_5BreakEh(i4, i3, i2) {
+ i4 = i4 | 0;
+ i3 = i3 | 0;
+ i2 = i2 | 0;
+ var i1 = 0, i5 = 0, i6 = 0, i7 = 0;
+ i5 = STACKTOP;
+ STACKTOP = STACKTOP + 16 | 0;
+ i1 = i5;
+ if (HEAP8[i4 + 12 >> 0] | 0) {
+  i6 = __ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_PKc(43432, 18483) | 0;
+  i7 = __ZNKSt3__18ios_base6getlocEv(i6 + (HEAP32[(HEAP32[i6 >> 2] | 0) + -12 >> 2] | 0) | 0) | 0;
+  HEAP32[i1 >> 2] = i7;
+  i7 = __ZNKSt3__16locale9use_facetERNS0_2idE(i1, 44308) | 0;
+  i7 = FUNCTION_TABLE_iii[HEAP32[(HEAP32[i7 >> 2] | 0) + 28 >> 2] & 31](i7, 10) | 0;
+  __ZNSt3__16localeD2Ev(i1);
+  __ZNSt3__113basic_ostreamIcNS_11char_traitsIcEEE3putEc(i6, i7) | 0;
+  __ZNSt3__113basic_ostreamIcNS_11char_traitsIcEEE5flushEv(i6) | 0;
+ }
+ i7 = __ZN4wasm17WasmBinaryBuilder12getBreakNameEi(i4, __ZN4wasm17WasmBinaryBuilder8getInt32Ev(i4) | 0) | 0;
+ HEAP32[i3 + 8 >> 2] = i7;
+ if (i2 << 24 >> 24 == 7) {
+  i7 = __ZN4wasm17WasmBinaryBuilder13popExpressionEv(i4) | 0;
+  HEAP32[i3 + 16 >> 2] = i7;
+ }
+ i7 = __ZN4wasm17WasmBinaryBuilder13popExpressionEv(i4) | 0;
+ HEAP32[i3 + 12 >> 2] = i7;
+ STACKTOP = i5;
  return;
 }
 

@@ -672,12 +672,22 @@ if has_emcc:
             except:
               args = []
               print '     (no args)'
-            if has_node:
-              proc = subprocess.Popen([has_node, 'a.' + which + '.js'] + args, stdout=subprocess.PIPE)
-              out, err = proc.communicate()
-              assert proc.returncode == 0
-              if out.strip() != expected.strip():
-                fail(out, expected)
+
+            def execute():
+              if has_node:
+                proc = subprocess.Popen([has_node, 'a.' + which + '.js'] + args, stdout=subprocess.PIPE)
+                out, err = proc.communicate()
+                assert proc.returncode == 0
+                if out.strip() != expected.strip():
+                  fail(out, expected)
+
+            execute()
+
+            # binary and back
+            shutil.copyfile('a.wasm.wast', 'a.wasm.original.wast')
+            recreated = binary_format_check('a.wasm.wast', verify_final_result=False)
+            shutil.copyfile(recreated, 'a.wasm.wast')
+            execute()
 
 print '\n[ success! ]'
 
