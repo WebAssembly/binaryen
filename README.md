@@ -71,7 +71,7 @@ It's easy to add your own transformation passes to the shell, just add `.cpp` fi
 Some more notes:
 
  * See `bin/binaryen-shell --help` for the full list of options and passes.
- * Passing `--debug` will emit some debugging info.
+ * Passing `--debug=1` will emit some debugging info.
 
 ### asm2wasm
 
@@ -105,7 +105,7 @@ You should see something like this:
 
 On Linux and Mac you should see pretty colors as in that image. Set `COLORS=0` in the env to disable colors if you prefer that. Set `COLORS=1` in the env to force colors (useful when piping to `more`, for example).
 
-Pass `--debug` on the command line to see debug info, about asm.js functions as they are parsed, etc. `--debug=2` will show even more info.
+Pass `--debug=1` on the command line to see debug info, about asm.js functions as they are parsed, etc. `--debug=2` will show even more info.
 
 ### wasm.js
 
