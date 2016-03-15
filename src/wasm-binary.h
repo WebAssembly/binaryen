@@ -175,6 +175,7 @@ namespace Section {
   auto Memory = "memory";
   auto Signatures = "signatures";
   auto ImportTable = "import_table";
+  auto FunctionSignatures = "function_signatures";
   auto Functions = "functions"; // FIXME
   auto DataSegments = "data_segments";
   auto FunctionTable = "function_table";
@@ -414,6 +415,7 @@ public:
     writeMemory();
     writeSignatures();
     writeImports();
+    writeFunctionSignatures();
     writeFunctions();
     writeDataSegments();
     writeFunctionTable();
@@ -537,8 +539,20 @@ public:
     }
   }
 
+  void writeFunctionSignatures() {
+    if (wasm->functions.size() == 0) return;
+    if (debug) std::cerr << "== writeFunctionSignatures" << std::endl;
+    auto start = startSection(BinaryConsts::Section::FunctionSignatures);
+    o << LEB128(wasm->functions.size());
+    for (auto* curr : wasm->functions) {
+      if (debug) std::cerr << "write one" << std::endl;
+      o << LEB128(getFunctionTypeIndex(curr->type));
+    }
+    finishSection(start);
+  }
+
   void writeFunctions() {
-    if (wasm->functions.size() + wasm->imports.size() == 0) return;
+    if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeFunctions" << std::endl;
     auto start = startSection(BinaryConsts::Section::Functions);
     size_t total = wasm->functions.size();
@@ -560,7 +574,6 @@ public:
       o << int8_t(BinaryConsts::Named |
                   (BinaryConsts::Locals * (function && function->locals.size() > 0)) |
                   (BinaryConsts::Export * export_));
-      o << getFunctionTypeIndex(type);
       emitString(name.str);
       if (export_) emitString(exportedFunctions[name].str); // XXX addition to v8 binary format
       mapLocals(function);
@@ -1053,6 +1066,7 @@ public:
       else if (match(BinaryConsts::Section::Memory)) readMemory();
       else if (match(BinaryConsts::Section::Signatures)) readSignatures();
       else if (match(BinaryConsts::Section::ImportTable)) readImports();
+      else if (match(BinaryConsts::Section::FunctionSignatures)) readFunctionSignatures();
       else if (match(BinaryConsts::Section::Functions)) readFunctions();
       else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
       else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
@@ -1232,6 +1246,20 @@ public:
     }
   }
 
+  std::vector<FunctionType*> functionTypes;
+
+  void readFunctionSignatures() {
+    if (debug) std::cerr << "== readFunctionSignatures" << std::endl;
+    size_t num = getLEB128();
+    if (debug) std::cerr << "num: " << num << std::endl;
+    for (size_t i = 0; i < num; i++) {
+      if (debug) std::cerr << "read one" << std::endl;
+      auto index = getLEB128();
+      assert(index < wasm.functionTypes.size());
+      functionTypes.push_back(wasm.functionTypes[index]);
+    }
+  }
+
   std::vector<Name> mappedFunctions; // index => name of the Import or Function
 
   size_t nextLabel;
@@ -1246,7 +1274,7 @@ public:
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "read one at " << pos << std::endl;
       auto data = getInt8();
-      auto type = wasm.functionTypes[getInt16()];
+      auto type = functionTypes[i];
       bool named = data & BinaryConsts::Named;
       assert(named);
       bool locals = data & BinaryConsts::Locals;
