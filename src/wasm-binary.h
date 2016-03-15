@@ -468,7 +468,7 @@ public:
     o << LEB128(wasm->functionTypes.size());
     for (auto* type : wasm->functionTypes) {
       if (debug) std::cerr << "write one" << std::endl;
-      o << int8_t(type->params.size());
+      o << LEB128(type->params.size());
       o << binaryWasmType(type->result);
       for (auto param : type->params) {
         o << binaryWasmType(param);
@@ -1183,7 +1183,7 @@ public:
     for (size_t i = 0; i < numTypes; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = allocator.alloc<FunctionType>();
-      size_t numParams = getInt8();
+      size_t numParams = getLEB128();
       if (debug) std::cerr << "num params: " << numParams << std::endl;
       curr->result = getWasmType();
       for (size_t j = 0; j < numParams; j++) {

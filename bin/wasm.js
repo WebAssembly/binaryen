@@ -44549,7 +44549,7 @@ function __ZN4wasm17WasmBinaryBuilder14readSignaturesEv(i15) {
    __ZNSt3__113basic_ostreamIcNS_11char_traitsIcEEE5flushEv(i14) | 0;
   }
   i6 = __ZN10MixedArena5allocIN4wasm12FunctionTypeEEEPT_v(HEAP32[i5 >> 2] | 0) | 0;
-  i7 = (__ZN4wasm17WasmBinaryBuilder7getInt8Ev(i15) | 0) & 255;
+  i7 = __ZN4wasm17WasmBinaryBuilder9getLEB128Ev(i15) | 0;
   if (HEAP8[i4 >> 0] | 0) {
    i14 = __ZNSt3__113basic_ostreamIcNS_11char_traitsIcEEElsEj(__ZNSt3__1lsINS_11char_traitsIcEEEERNS_13basic_ostreamIcT_EES6_PKc(43576, 18059) | 0, i7) | 0;
    i12 = __ZNKSt3__18ios_base6getlocEv(i14 + (HEAP32[(HEAP32[i14 >> 2] | 0) + -12 >> 2] | 0) | 0) | 0;
