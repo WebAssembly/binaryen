@@ -125,47 +125,37 @@ public:
   SExpressionParser(char* input) : input(input) {
     root = nullptr;
     while (!root) { // keep parsing until we pass an initial comment
-      root = parseInnerList();
+      root = parse();
     }
   }
 
   Element* root;
 
 private:
-  // parses the internal part of a list, inside the parens.
-  Element* parseInnerList() {
-    if (input[0] == ';') {
-      // comment
-      input++;
-      if (input[0] == ';') {
-        while (input[0] != '\n') input++;
-        return nullptr;
-      }
-      input = strstr(input, ";)");
-      assert(input);
-      return nullptr;
-    }
-    auto ret = allocator.alloc<Element>();
-    while (1) {
-      Element* curr = parse();
-      if (!curr) return ret;
-      ret->list().push_back(curr);
-    }
-  }
-
   Element* parse() {
-    skipWhitespace();
-    if (input[0] == 0 || input[0] == ')') return nullptr;
-    if (input[0] == '(') {
-      // a list
-      input++;
-      auto ret = parseInnerList();
+    std::vector<Element *> stack;
+    Element *curr = allocator.alloc<Element>();
+    while (1) {
       skipWhitespace();
-      assert(input[0] == ')');
-      input++;
-      return ret;
+      if (input[0] == 0)
+        break;
+      if (input[0] == '(') {
+        input++;
+        stack.push_back(curr);
+        curr = allocator.alloc<Element>();
+      } else if (input[0] == ')') {
+        input++;
+        auto last = curr;
+        curr = stack.back();
+        assert(stack.size());
+        stack.pop_back();
+        curr->list().push_back(last);   
+      } else {
+        curr->list().push_back(parseString());
+      }
     }
-    return parseString();
+    assert(stack.size() == 0); 
+    return curr;
   }
 
   void skipWhitespace() {
