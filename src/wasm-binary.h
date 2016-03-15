@@ -623,19 +623,36 @@ public:
     finishSection(start);
   }
 
+  std::map<Name, uint32_t> mappedImports; // name of the Import => index
   uint32_t getImportIndex(Name name) {
-    // TODO: optimize
-    for (size_t i = 0; i < wasm->imports.size(); i++) {
-      if (wasm->imports[i]->name == name) return i;
+    if (mappedImports.size()) {
+      assert(mappedImports.count(name));
+      return mappedImports[name];
+    } else {
+      // Create name => index mapping. 
+      for (size_t i = 0; i < wasm->imports.size(); i++) {
+        assert(mappedImports.count(wasm->imports[i]->name) == 0);
+        mappedImports[wasm->imports[i]->name] = i;
+      }    
     }
-    abort();
+    assert(mappedImports.count(name));
+    return mappedImports[name];
   }
+  
+  std::map<Name, uint32_t> mappedFunctions; // name of the Function => index 
   uint32_t getFunctionIndex(Name name) {
-    // TODO: optimize
-    for (size_t i = 0; i < wasm->functions.size(); i++) {
-      if (wasm->functions[i]->name == name) return i;
+    if (mappedFunctions.size()) {
+      assert(mappedFunctions.count(name));
+      return mappedFunctions[name];
+    } else {
+      // Create name => index mapping. 
+      for (size_t i = 0; i < wasm->functions.size(); i++) {
+        assert(mappedFunctions.count(wasm->functions[i]->name) == 0);
+        mappedFunctions[wasm->functions[i]->name] = i;
+      }    
     }
-    abort();
+    assert(mappedFunctions.count(name));
+    return mappedFunctions[name];
   }
 
   void writeFunctionTable() {
