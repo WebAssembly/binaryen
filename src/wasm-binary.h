@@ -174,6 +174,7 @@ namespace BinaryConsts {
 namespace Section {
   auto Memory = "memory";
   auto Signatures = "signatures";
+  auto ImportTable = "import_table";
   auto Functions = "functions"; // FIXME
   auto DataSegments = "data_segments";
   auto FunctionTable = "function_table";
@@ -412,6 +413,7 @@ public:
     writeStart();
     writeMemory();
     writeSignatures();
+    writeImports();
     writeFunctions();
     writeDataSegments();
     writeFunctionTable();
@@ -430,11 +432,7 @@ public:
     int32_t ret = o.size();
     o << int32_t(0);
     o << int8_t(0);
-    int32_t size = strlen(name);
-    o << LEB128(size);
-    for (int32_t i = 0; i < size; i++) {
-      o << int8_t(name[i]);
-    }
+    writeInlineString(name);
     return ret;
   }
 
@@ -477,12 +475,26 @@ public:
     finishSection(start);
   }
 
-  int16_t getFunctionTypeIndex(Name type) {
+  int16_t getFunctionTypeIndex(Name type) { // TODO: int32_t
     // TODO: optimize
     for (size_t i = 0; i < wasm->functionTypes.size(); i++) {
       if (wasm->functionTypes[i]->name == type) return i;
     }
     abort();
+  }
+
+  void writeImports() {
+    if (wasm->imports.size() == 0) return;
+    if (debug) std::cerr << "== writeImports" << std::endl;
+    auto start = startSection(BinaryConsts::Section::ImportTable);
+    o << LEB128(wasm->imports.size());
+    for (auto* import : wasm->imports) {
+      if (debug) std::cerr << "write one" << std::endl;
+      o << LEB128(getFunctionTypeIndex(import->type->name));
+      writeInlineString(import->module.str);
+      writeInlineString(import->base.str);
+    }
+    finishSection(start);
   }
 
   std::map<Name, size_t> mappedLocals; // local name => index in compact form of [all int32s][all int64s]etc
@@ -529,7 +541,7 @@ public:
     if (wasm->functions.size() + wasm->imports.size() == 0) return;
     if (debug) std::cerr << "== writeFunctions" << std::endl;
     auto start = startSection(BinaryConsts::Section::Functions);
-    size_t total = wasm->imports.size() + wasm->functions.size();
+    size_t total = wasm->functions.size();
     o << LEB128(total);
     std::map<Name, Name> exportedFunctions;
     for (auto* e : wasm->exports) {
@@ -537,51 +549,38 @@ public:
     }
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
-      Import* import = i < wasm->imports.size() ? wasm->imports[i] : nullptr;
-      Function* function = i >= wasm->imports.size() ? wasm->functions[i - wasm->imports.size()] : nullptr;
+      Function* function = wasm->functions[i];
       Name name, type;
-      if (import) {
-        name = import->name;
-        type = import->type->name;
-      } else {
-        name = function->name;
-        type = function->type;
-        mappedLocals.clear();
-        numLocalsByType.clear();
-      }
+      name = function->name;
+      type = function->type;
+      mappedLocals.clear();
+      numLocalsByType.clear();
       if (debug) std::cerr << "writing" << name << std::endl;
       bool export_ = exportedFunctions.count(name) > 0;
       o << int8_t(BinaryConsts::Named |
-                  (BinaryConsts::Import * !!import) |
                   (BinaryConsts::Locals * (function && function->locals.size() > 0)) |
                   (BinaryConsts::Export * export_));
       o << getFunctionTypeIndex(type);
       emitString(name.str);
       if (export_) emitString(exportedFunctions[name].str); // XXX addition to v8 binary format
-      if (function) {
-        mapLocals(function);
-        if (function->locals.size() > 0) {
-          o << uint16_t(numLocalsByType[i32])
-            << uint16_t(numLocalsByType[i64])
-            << uint16_t(numLocalsByType[f32])
-            << uint16_t(numLocalsByType[f64]);
-        }
-        size_t sizePos = o.size();
-        o << (uint32_t)0; // placeholder, we fill in the size later when we have it // XXX int32, diverge from v8 format, to get more code to compile
-        size_t start = o.size();
-        depth = 0;
-        recurse(function->body);
-        o << int8_t(BinaryConsts::EndMarker);
-        assert(depth == 0);
-        size_t size = o.size() - start;
-        assert(size <= std::numeric_limits<uint32_t>::max());
-        if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
-        o.writeAt(sizePos, uint32_t(size)); // XXX int32, diverge from v8 format, to get more code to compile
-      } else {
-        // import
-        emitString(import->module.str); // XXX diverge
-        emitString(import->base.str);   //     from v8
+      mapLocals(function);
+      if (function->locals.size() > 0) {
+        o << uint16_t(numLocalsByType[i32])
+          << uint16_t(numLocalsByType[i64])
+          << uint16_t(numLocalsByType[f32])
+          << uint16_t(numLocalsByType[f64]);
       }
+      size_t sizePos = o.size();
+      o << (uint32_t)0; // placeholder, we fill in the size later when we have it // XXX int32, diverge from v8 format, to get more code to compile
+      size_t start = o.size();
+      depth = 0;
+      recurse(function->body);
+      o << int8_t(BinaryConsts::EndMarker);
+      assert(depth == 0);
+      size_t size = o.size() - start;
+      assert(size <= std::numeric_limits<uint32_t>::max());
+      if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
+      o.writeAt(sizePos, uint32_t(size)); // XXX int32, diverge from v8 format, to get more code to compile
     }
     finishSection(start);
   }
@@ -632,6 +631,14 @@ public:
   }
 
   // helpers
+
+  void writeInlineString(const char* name) {
+    int32_t size = strlen(name);
+    o << LEB128(size);
+    for (int32_t i = 0; i < size; i++) {
+      o << int8_t(name[i]);
+    }
+  }
 
   struct Buffer {
     const char* data;
@@ -1024,6 +1031,7 @@ public:
   WasmBinaryBuilder(AllocatingModule& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), pos(0) {}
 
   void read() {
+
     readHeader();
 
     // read sections until the end
@@ -1044,6 +1052,7 @@ public:
       if (match(BinaryConsts::Section::Start)) readStart();
       else if (match(BinaryConsts::Section::Memory)) readMemory();
       else if (match(BinaryConsts::Section::Signatures)) readSignatures();
+      else if (match(BinaryConsts::Section::ImportTable)) readImports();
       else if (match(BinaryConsts::Section::Functions)) readFunctions();
       else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
       else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
@@ -1127,6 +1136,17 @@ public:
     return ret;
   }
 
+  Name getInlineString() {
+    if (debug) std::cerr << "<==" << std::endl;
+    auto len = getLEB128();
+    std::string str;
+    for (size_t i = 0; i < len; i++) {
+      str = str + char(getInt8());
+    }
+    if (debug) std::cerr << "getInlineString: " << str << " ==>" << std::endl;
+    return Name(str);
+  }
+
   void verifyInt8(int8_t x) {
     int8_t y = getInt8();
     assert(x == y);
@@ -1193,6 +1213,25 @@ public:
     }
   }
 
+  void readImports() {
+    if (debug) std::cerr << "== readImports" << std::endl;
+    size_t num = getLEB128();
+    if (debug) std::cerr << "num: " << num << std::endl;
+    for (size_t i = 0; i < num; i++) {
+      if (debug) std::cerr << "read one" << std::endl;
+      auto curr = allocator.alloc<Import>();
+      curr->name = Name(std::string("import$") + std::to_string(i));
+      auto index = getLEB128();
+      assert(index < wasm.functionTypes.size());
+      curr->type = wasm.functionTypes[index];
+      assert(curr->type->name.is());
+      curr->module = getInlineString();
+      curr->base = getInlineString();
+      wasm.addImport(curr);
+      mappedFunctions.push_back(curr->name);
+    }
+  }
+
   std::vector<Name> mappedFunctions; // index => name of the Import or Function
 
   size_t nextLabel;
@@ -1203,14 +1242,13 @@ public:
 
   void readFunctions() {
     if (debug) std::cerr << "== readFunctions" << std::endl;
-    size_t total = getLEB128(); // imports and functions
+    size_t total = getLEB128();
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "read one at " << pos << std::endl;
       auto data = getInt8();
       auto type = wasm.functionTypes[getInt16()];
       bool named = data & BinaryConsts::Named;
       assert(named);
-      bool import = data & BinaryConsts::Import;
       bool locals = data & BinaryConsts::Locals;
       bool export_ = data & BinaryConsts::Export;
       Name name = getString();
@@ -1223,47 +1261,38 @@ public:
       }
       if (debug) std::cerr << "reading" << name << std::endl;
       mappedFunctions.push_back(name);
-      if (import) {
-        auto imp = allocator.alloc<Import>();
-        imp->name = name;
-        imp->module = getString(); // XXX diverge
-        imp->base = getString();   //     from v8
-        imp->type = type;
-        wasm.addImport(imp);
-      } else {
-        auto func = allocator.alloc<Function>();
-        func->name = name;
-        func->type = type->name;
-        func->result = type->result;
-        size_t nextVar = 0;
-        auto addVar = [&]() {
-          Name name = cashew::IString(("var$" + std::to_string(nextVar++)).c_str(), false);
-          return name;
-        };
-        for (size_t j = 0; j < type->params.size(); j++) {
-          func->params.emplace_back(addVar(), type->params[j]);
-        }
-        if (locals) {
-          auto addLocals = [&](WasmType type) {
-            int16_t num = getInt16();
-            while (num > 0) {
-              func->locals.emplace_back(addVar(), type);
-              num--;
-            }
-          };
-          addLocals(i32);
-          addLocals(i64);
-          addLocals(f32);
-          addLocals(f64);
-        }
-        size_t size = getInt32(); // XXX int32, diverge from v8 format, to get more code to compile
-        // we can't read the function yet - it might call other functions that are defined later,
-        // and we do depend on the function type, as well as the mappedFunctions table.
-        functions.emplace_back(func, pos, size);
-        pos += size;
-        func->body = nullptr; // will be filled later. but we do have the name and the type already.
-        wasm.addFunction(func);
+      auto func = allocator.alloc<Function>();
+      func->name = name;
+      func->type = type->name;
+      func->result = type->result;
+      size_t nextVar = 0;
+      auto addVar = [&]() {
+        Name name = cashew::IString(("var$" + std::to_string(nextVar++)).c_str(), false);
+        return name;
+      };
+      for (size_t j = 0; j < type->params.size(); j++) {
+        func->params.emplace_back(addVar(), type->params[j]);
       }
+      if (locals) {
+        auto addLocals = [&](WasmType type) {
+          int16_t num = getInt16();
+          while (num > 0) {
+            func->locals.emplace_back(addVar(), type);
+            num--;
+          }
+        };
+        addLocals(i32);
+        addLocals(i64);
+        addLocals(f32);
+        addLocals(f64);
+      }
+      size_t size = getInt32(); // XXX int32, diverge from v8 format, to get more code to compile
+      // we can't read the function yet - it might call other functions that are defined later,
+      // and we do depend on the function type, as well as the mappedFunctions table.
+      functions.emplace_back(func, pos, size);
+      pos += size;
+      func->body = nullptr; // will be filled later. but we do have the name and the type already.
+      wasm.addFunction(func);
     }
   }
 
@@ -1350,7 +1379,9 @@ public:
     if (debug) std::cerr << "== readFunctionTable" << std::endl;
     auto num = getLEB128();
     for (size_t i = 0; i < num; i++) {
-      wasm.table.names.push_back(mappedFunctions[getInt16()]);
+      auto index = getInt16();
+      assert(index < mappedFunctions.size());
+      wasm.table.names.push_back(mappedFunctions[index]);
     }
   }
 
@@ -1524,8 +1555,11 @@ public:
   void visitCallImport(CallImport *curr, Name target) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
     curr->target = target;
+    assert(wasm.importsMap.find(curr->target) != wasm.importsMap.end());
     auto type = wasm.importsMap[curr->target]->type;
+    assert(type);
     auto num = type->params.size();
+    if (debug) std::cerr << "zz node: CallImport " << target << " with type " << type->name << " and " << num << " params\n";
     curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
       curr->operands[num - i - 1] = popExpression();
