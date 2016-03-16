@@ -180,6 +180,7 @@ namespace Section {
   auto ExportTable = "export_table";
   auto DataSegments = "data_segments";
   auto FunctionTable = "function_table";
+  auto Names = "names";
   auto End = "end";
   auto Start = "start_function";
 };
@@ -422,6 +423,7 @@ public:
     writeExports();
     writeDataSegments();
     writeFunctionTable();
+    writeNames();
     writeEnd();
     finishUp();
   }
@@ -568,15 +570,11 @@ public:
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
       Function* function = wasm->functions[i];
-      Name name, type;
-      name = function->name;
-      type = function->type;
       mappedLocals.clear();
       numLocalsByType.clear();
-      if (debug) std::cerr << "writing" << name << std::endl;
+      if (debug) std::cerr << "writing" << function->name << std::endl;
       o << int8_t(BinaryConsts::Named |
                   (BinaryConsts::Locals * (function && function->locals.size() > 0)));
-      emitString(name.str);
       mapLocals(function);
       if (function->locals.size() > 0) {
         o << uint16_t(numLocalsByType[i32])
@@ -650,6 +648,18 @@ public:
     o << LEB128(wasm->table.names.size());
     for (auto name : wasm->table.names) {
       o << LEB128(getFunctionIndex(name));
+    }
+    finishSection(start);
+  }
+
+  void writeNames() {
+    if (wasm->functions.size() == 0) return;
+    if (debug) std::cerr << "== writeNames" << std::endl;
+    auto start = startSection(BinaryConsts::Section::Names);
+    o << LEB128(wasm->functions.size());
+    for (auto* curr : wasm->functions) {
+      writeInlineString(curr->name.str);
+      o << LEB128(0); // TODO: locals
     }
     finishSection(start);
   }
@@ -1095,6 +1105,7 @@ public:
       else if (match(BinaryConsts::Section::ExportTable)) readExports();
       else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
       else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
+      else if (match(BinaryConsts::Section::Names)) readNames();
       else if (match(BinaryConsts::Section::End)) {
         if (debug) std::cerr << "== readEnd" << std::endl;
         break;
@@ -1305,10 +1316,8 @@ public:
       bool named = data & BinaryConsts::Named;
       assert(named);
       bool locals = data & BinaryConsts::Locals;
-      Name name = getString();
-      if (debug) std::cerr << "reading" << name << std::endl;
+      if (debug) std::cerr << "reading" << i << std::endl;
       auto func = allocator.alloc<Function>();
-      func->name = name;
       func->type = type->name;
       func->result = type->result;
       size_t nextVar = 0;
@@ -1458,6 +1467,16 @@ public:
     for (size_t i = 0; i < num; i++) {
       auto index = getLEB128();
       functionTable.push_back(index);
+    }
+  }
+
+  void readNames() {
+    if (debug) std::cerr << "== readNames" << std::endl;
+    auto num = getLEB128();
+    for (size_t i = 0; i < num; i++) {
+      functions[i]->name = getInlineString();
+      auto numLocals = getLEB128();
+      assert(numLocals == 0); // TODO
     }
   }
 
