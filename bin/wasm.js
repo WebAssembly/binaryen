@@ -58311,7 +58311,7 @@ function __ZN4wasm17WasmBinaryBuilder17readFunctionTableEv(i7) {
    i1 = 5;
    break;
   }
-  i1 = (__ZN4wasm17WasmBinaryBuilder8getInt16Ev(i7) | 0) & 65535;
+  i1 = __ZN4wasm17WasmBinaryBuilder9getLEB128Ev(i7) | 0;
   i5 = HEAP32[i7 >> 2] | 0;
   i2 = HEAP32[i5 + 36 >> 2] | 0;
   if (i1 >>> 0 >= (HEAP32[i5 + 40 >> 2] | 0) - i2 >> 2 >>> 0) {
