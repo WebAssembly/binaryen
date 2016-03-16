@@ -21,6 +21,7 @@ function asmFunc(global, env, buffer) {
   print(HEAPU8[(i + 2 | 0) >> 0] | 0 | 0);
   print(HEAPU8[(i + 25 | 0) >> 0] | 0 | 0);
   print(HEAPU16[i >> 1] | 0 | 0);
+  print((wasm2asm_i32$0 = i, HEAPU8[wasm2asm_i32$0 >> 0] | 0 | 0 | (HEAPU8[(wasm2asm_i32$0 + 1 | 0) >> 0] | 0 | 0) << 8) | 0);
   print((wasm2asm_i32$0 = i, HEAPU8[(wasm2asm_i32$0 + 1 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2asm_i32$0 + 2 | 0) >> 0] | 0 | 0) << 8) | 0);
   print(HEAPU16[(i + 2 | 0) >> 1] | 0 | 0);
   print((wasm2asm_i32$0 = i, HEAPU8[(wasm2asm_i32$0 + 25 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2asm_i32$0 + 26 | 0) >> 0] | 0 | 0) << 8) | 0);

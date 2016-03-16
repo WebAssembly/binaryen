@@ -1100,6 +1100,7 @@ public:
 
   size_t initial, max; // sizes are in pages
   std::vector<Segment> segments;
+  Name exportName;
 
   Memory() : initial(0), max((uint32_t)-1) {}
 };

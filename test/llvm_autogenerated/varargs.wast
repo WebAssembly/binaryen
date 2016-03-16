@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (type $FUNCSIG$v (func))
   (import $callee "env" "callee")
   (export "end" $end)

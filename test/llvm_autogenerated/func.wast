@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (export "f0" $f0)
   (export "f1" $f1)
   (export "f2" $f2)

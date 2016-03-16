@@ -721,6 +721,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     wasm.addExport(export_);
   }
 
+  wasm.memory.exportName = MEMORY;
 }
 
 Function* Asm2WasmBuilder::processFunction(Ref ast) {

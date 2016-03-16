@@ -317,7 +317,20 @@ private:
     return IString((prefix + std::to_string(otherIndex++)).c_str(), false);
   }
 
-  void parseStart(Element& s) { wasm.addStart(s[1]->str()); }
+  Name getFunctionName(Element& s) {
+    if (s.dollared()) {
+      return s.str();
+    } else {
+      // index
+      size_t offset = atoi(s.str().c_str());
+      if (offset >= functionNames.size()) onError();
+      return functionNames[offset];
+    }
+  }
+
+  void parseStart(Element& s) {
+    wasm.addStart(getFunctionName(*s[1]));
+  }
 
   void parseFunction(Element& s) {
     auto func = currFunction = allocator.alloc<Function>();
@@ -1020,7 +1033,11 @@ private:
     return ret;
   }
 
+  bool hasMemory = false;
+
   void parseMemory(Element& s) {
+    hasMemory = true;
+
     wasm.memory.initial = atoi(s[1]->c_str());
     if (s.size() == 2) return;
     size_t i = 2;
@@ -1072,6 +1089,12 @@ private:
   }
 
   void parseExport(Element& s) {
+    if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
+      assert(s[2]->str() == MEMORY);
+      if (!hasMemory) onError();
+      wasm.memory.exportName = s[1]->str();
+      return;
+    }
     auto ex = allocator.alloc<Export>();
     ex->name = s[1]->str();
     ex->value = s[2]->str();

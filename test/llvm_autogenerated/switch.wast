@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (type $FUNCSIG$v (func))
   (import $foo0 "env" "foo0")
   (import $foo1 "env" "foo1")

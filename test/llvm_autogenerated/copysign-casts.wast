@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (export "fold_promote" $fold_promote)
   (export "fold_demote" $fold_demote)
   (func $fold_promote (param $$0 f64) (param $$1 f32) (result f64)

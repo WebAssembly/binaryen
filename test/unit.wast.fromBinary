@@ -9,9 +9,9 @@
   (type $4 (func (result f64)))
   (type $5 (func (result i32)))
   (type $6 (func (param i32) (result i32)))
-  (import $_emscripten_asm_const_vi "env" "_emscripten_asm_const_vi")
-  (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
-  (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
+  (import $import$0 "env" "_emscripten_asm_const_vi")
+  (import $import$1 "asm2wasm" "f64-to-int" (param f64) (result i32))
+  (import $import$2 "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
   (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative (type $1)
@@ -142,7 +142,7 @@
     (local $var$1 f64)
     (block $label$0
       (set_local $var$0
-        (call_import $f64-to-int
+        (call_import $import$1
           (get_local $var$1)
         )
       )
@@ -268,7 +268,7 @@
     )
   )
   (func $frem (type $4) (result f64)
-    (call_import $f64-rem
+    (call_import $import$2
       (f64.const 5.5)
       (f64.const 1.2)
     )
