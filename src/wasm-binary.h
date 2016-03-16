@@ -352,6 +352,7 @@ enum ASTNodes {
   StoreGlobal = 0x11,
   CallFunction = 0x12,
   CallIndirect = 0x13,
+  CallImport = 0x1f,
 
   Nop = 0x00,
   Block = 0x01,
@@ -616,13 +617,17 @@ public:
     finishSection(start);
   }
 
-  uint16_t getFunctionIndex(Name name) {
+  uint16_t getImportIndex(Name name) {
     // TODO: optimize
     for (size_t i = 0; i < wasm->imports.size(); i++) {
       if (wasm->imports[i]->name == name) return i;
     }
+    abort();
+  }
+  uint16_t getFunctionIndex(Name name) {
+    // TODO: optimize
     for (size_t i = 0; i < wasm->functions.size(); i++) {
-      if (wasm->functions[i]->name == name) return wasm->imports.size() + i;
+      if (wasm->functions[i]->name == name) return i;
     }
     abort();
   }
@@ -775,7 +780,7 @@ public:
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
+    o << int8_t(BinaryConsts::CallImport) << LEB128(getImportIndex(curr->target));
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
@@ -1242,7 +1247,6 @@ public:
       curr->module = getInlineString();
       curr->base = getInlineString();
       wasm.addImport(curr);
-      mappedFunctions.push_back(curr->name);
     }
   }
 
@@ -1259,8 +1263,6 @@ public:
       functionTypes.push_back(wasm.functionTypes[index]);
     }
   }
-
-  std::vector<Name> mappedFunctions; // index => name of the Import or Function
 
   size_t nextLabel;
 
@@ -1288,7 +1290,6 @@ public:
         wasm.addExport(e);
       }
       if (debug) std::cerr << "reading" << name << std::endl;
-      mappedFunctions.push_back(name);
       auto func = allocator.alloc<Function>();
       func->name = name;
       func->type = type->name;
@@ -1316,7 +1317,7 @@ public:
       }
       size_t size = getInt32(); // XXX int32, diverge from v8 format, to get more code to compile
       // we can't read the function yet - it might call other functions that are defined later,
-      // and we do depend on the function type, as well as the mappedFunctions table.
+      // and we do depend on the function type.
       functions.emplace_back(func, pos, size);
       pos += size;
       func->body = nullptr; // will be filled later. but we do have the name and the type already.
@@ -1408,8 +1409,8 @@ public:
     auto num = getLEB128();
     for (size_t i = 0; i < num; i++) {
       auto index = getInt16();
-      assert(index < mappedFunctions.size());
-      wasm.table.names.push_back(mappedFunctions[index]);
+      assert(index < wasm.functions.size());
+      wasm.table.names.push_back(wasm.functions[index]->name);
     }
   }
 
@@ -1429,19 +1430,8 @@ public:
       case BinaryConsts::Br:
       case BinaryConsts::BrIf:         visitBreak((curr = allocator.alloc<Break>())->cast<Break>(), code); break; // code distinguishes br from br_if
       case BinaryConsts::TableSwitch:  visitSwitch((curr = allocator.alloc<Switch>())->cast<Switch>()); break;
-      case BinaryConsts::CallFunction: {
-        // might be an import or not. we have to check here.
-        Name target = mappedFunctions[getLEB128()];
-        assert(target.is());
-        if (debug) std::cerr << "call(import?) target: " << target << std::endl;
-        if (wasm.importsMap.find(target) == wasm.importsMap.end()) {
-          assert(wasm.functionsMap.find(target) != wasm.functionsMap.end());
-          visitCall((curr = allocator.alloc<Call>())->cast<Call>(), target);
-        } else {
-          visitCallImport((curr = allocator.alloc<CallImport>())->cast<CallImport>(), target);
-        }
-        break;
-      }
+      case BinaryConsts::CallFunction: visitCall((curr = allocator.alloc<Call>())->cast<Call>()); break;
+      case BinaryConsts::CallImport:   visitCallImport((curr = allocator.alloc<CallImport>())->cast<CallImport>()); break;
       case BinaryConsts::CallIndirect: visitCallIndirect((curr = allocator.alloc<CallIndirect>())->cast<CallIndirect>()); break;
       case BinaryConsts::GetLocal:     visitGetLocal((curr = allocator.alloc<GetLocal>())->cast<GetLocal>()); break;
       case BinaryConsts::SetLocal:     visitSetLocal((curr = allocator.alloc<SetLocal>())->cast<SetLocal>()); break;
@@ -1569,9 +1559,9 @@ public:
       curr->value = popExpression();
     }
   }
-  void visitCall(Call *curr, Name target) {
+  void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
-    curr->target = target;
+    curr->target = wasm.functions[getLEB128()]->name;
     auto type = wasm.functionTypesMap[wasm.functionsMap[curr->target]->type];
     auto num = type->params.size();
     curr->operands.resize(num);
@@ -1580,14 +1570,14 @@ public:
     }
     curr->type = type->result;
   }
-  void visitCallImport(CallImport *curr, Name target) {
+  void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
-    curr->target = target;
+    curr->target = wasm.imports[getLEB128()]->name;
     assert(wasm.importsMap.find(curr->target) != wasm.importsMap.end());
     auto type = wasm.importsMap[curr->target]->type;
     assert(type);
     auto num = type->params.size();
-    if (debug) std::cerr << "zz node: CallImport " << target << " with type " << type->name << " and " << num << " params\n";
+    if (debug) std::cerr << "zz node: CallImport " << curr->target << " with type " << type->name << " and " << num << " params\n";
     curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
       curr->operands[num - i - 1] = popExpression();
