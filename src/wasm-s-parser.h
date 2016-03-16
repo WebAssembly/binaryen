@@ -1011,7 +1011,11 @@ private:
     return ret;
   }
 
+  bool hasMemory = false;
+
   void parseMemory(Element& s) {
+    hasMemory = true;
+
     wasm.memory.initial = atoi(s[1]->c_str());
     if (s.size() == 2) return;
     size_t i = 2;
@@ -1063,6 +1067,12 @@ private:
   }
 
   void parseExport(Element& s) {
+    if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
+      assert(s[2]->str() == MEMORY);
+      if (!hasMemory) onError();
+      wasm.memory.exportName = s[1]->str();
+      return;
+    }
     auto ex = allocator.alloc<Export>();
     ex->name = s[1]->str();
     ex->value = s[2]->str();

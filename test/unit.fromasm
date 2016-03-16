@@ -1,5 +1,6 @@
 (module
   (memory 256 256)
+  (export "memory" memory)
   (type $FUNCSIG$id (func (param f64) (result i32)))
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
   (type $FUNCSIG$vf (func (param f32)))

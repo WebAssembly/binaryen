@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (export "i32_wrap_i64" $i32_wrap_i64)
   (export "i64_extend_s_i32" $i64_extend_s_i32)
   (export "i64_extend_u_i32" $i64_extend_u_i32)

@@ -8,6 +8,7 @@
     (segment 96 "hi\00")
     (segment 100 "\00\00\00\00")
   )
+  (export "memory" memory)
   (type $FUNCSIG_i (func (result i32)))
   (type $FUNCSIG_ii (func (param i32) (result i32)))
   (type $FUNCSIG$vi (func (param i32)))

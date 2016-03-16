@@ -1,5 +1,6 @@
 (module
   (memory 1)
+  (export "memory" memory)
   (export "single_block" $single_block)
   (export "foo" $foo)
   (export "bar" $bar)

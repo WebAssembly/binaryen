@@ -483,6 +483,12 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     }
     o << ((curr->memory.segments.size() > 0 && !minify) ? "\n  " : "") << ")";
     o << maybeNewLine;
+    if (curr->memory.exportName.is()) {
+      doIndent(o, indent);
+      printOpening(o, "export ");
+      printText(o, curr->memory.exportName.str) << " memory)";
+      o << maybeNewLine;
+    }
     if (curr->start.is()) {
       doIndent(o, indent);
       printOpening(o, "start") << " " << curr->start << ")";

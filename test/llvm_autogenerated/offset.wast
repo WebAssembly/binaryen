@@ -2,6 +2,7 @@
   (memory 1
     (segment 8 "\00\00\00\00")
   )
+  (export "memory" memory)
   (export "load_i32_with_folded_offset" $load_i32_with_folded_offset)
   (export "load_i32_with_folded_gep_offset" $load_i32_with_folded_gep_offset)
   (export "load_i32_with_unfolded_gep_negative_offset" $load_i32_with_unfolded_gep_negative_offset)

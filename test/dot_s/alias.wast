@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (export "__exit" $__exit)
   (export "__needs_exit" $__needs_exit)
   (func $__exit

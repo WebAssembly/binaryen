@@ -4,6 +4,7 @@
     (segment 32 "vcq")
     (segment 48 "\16\00\00\00")
   )
+  (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
   (import $puts "env" "puts" (param i32))
   (export "main" $main)

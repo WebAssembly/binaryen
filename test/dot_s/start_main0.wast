@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (start $_start)
   (export "main" $main)
   (export "_start" $_start)

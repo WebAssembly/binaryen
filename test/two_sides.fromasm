@@ -1,5 +1,6 @@
 (module
   (memory 256 256)
+  (export "memory" memory)
   (type $FUNCSIG$id (func (param f64) (result i32)))
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (export "_test" $_test)

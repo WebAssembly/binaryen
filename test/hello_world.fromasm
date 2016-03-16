@@ -1,5 +1,6 @@
 (module
   (memory 256 256)
+  (export "memory" memory)
   (export "add" $add)
   (func $add (param $x i32) (param $y i32) (result i32)
     (return

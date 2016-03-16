@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (type $FUNCSIG$vijjj (func (param i32 i64 i64 i64)))
   (import $__lshrti3 "env" "__lshrti3" (param i32 i64 i64 i64))
   (import $__ashlti3 "env" "__ashlti3" (param i32 i64 i64 i64))

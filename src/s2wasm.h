@@ -1187,6 +1187,7 @@ class S2WasmBuilder {
     // of initial and max
     wasm.memory.initial = ((initialMemory + Memory::kPageSize - 1) & Memory::kPageMask) /
         Memory::kPageSize;
+    wasm.memory.exportName = MEMORY;
 
     // XXX For now, export all functions marked .globl.
     for (Name name : globls) {

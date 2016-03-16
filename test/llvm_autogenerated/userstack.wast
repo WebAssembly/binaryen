@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
   (import $ext_func "env" "ext_func" (param i32))
   (export "alloca32" $alloca32)

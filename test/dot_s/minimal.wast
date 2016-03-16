@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (export "main" $main)
   (func $main (result i32)
     (return

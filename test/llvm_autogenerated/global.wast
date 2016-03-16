@@ -13,6 +13,7 @@
     (segment 656 "\e0\00\00\00")
     (segment 1192 "\a4\04\00\00")
   )
+  (export "memory" memory)
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (import $memcpy "env" "memcpy" (param i32 i32 i32) (result i32))
   (export "foo" $foo)

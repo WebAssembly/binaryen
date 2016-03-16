@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (type $FUNCSIG$v (func))
   (import $abort "env" "abort")
   (export "f1" $f1)

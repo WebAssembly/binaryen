@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (export "add64" $add64)
   (export "sub64" $sub64)
   (export "mul64" $mul64)

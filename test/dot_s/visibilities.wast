@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (export "foo" $foo)
   (export "bar" $bar)
   (export "qux" $qux)

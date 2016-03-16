@@ -1,5 +1,6 @@
 (module
   (memory 0)
+  (export "memory" memory)
   (export "sext_i8_i32" $sext_i8_i32)
   (export "zext_i8_i32" $zext_i8_i32)
   (export "sext_i16_i32" $sext_i16_i32)

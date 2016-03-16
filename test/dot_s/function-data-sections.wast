@@ -4,6 +4,7 @@
     (segment 12 "\01\00\00\00")
     (segment 16 "33\13@")
   )
+  (export "memory" memory)
   (export "foo" $foo)
   (export "bar" $bar)
   (export "qux" $qux)
