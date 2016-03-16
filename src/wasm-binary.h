@@ -413,12 +413,12 @@ public:
 
   void write() {
     writeHeader();
-    writeStart();
     writeMemory();
     writeSignatures();
     writeImports();
     writeFunctionSignatures();
     writeFunctions();
+    writeStart();
     writeExports();
     writeDataSegments();
     writeFunctionTable();
@@ -450,7 +450,7 @@ public:
     if (!wasm->start.is()) return;
     if (debug) std::cerr << "== writeStart" << std::endl;
     auto start = startSection(BinaryConsts::Section::Start);
-    emitString(wasm->start.str);
+    o << LEB128(getFunctionIndex(wasm->start.str));
     finishSection(start);
   }
 
@@ -1214,7 +1214,7 @@ public:
 
   void readStart() {
     if (debug) std::cerr << "== readStart" << std::endl;
-    wasm.start = getString();
+    wasm.start = wasm.functions[getLEB128()]->name;
   }
 
   void readMemory() {
