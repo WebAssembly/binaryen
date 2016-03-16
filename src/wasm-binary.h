@@ -158,9 +158,9 @@ public:
     (*this)[i+2] = x & 0xff; x >>= 8;
     (*this)[i+3] = x & 0xff;
   }
-  void writeAt(size_t i, LEB128 x, size_t minimum = 0) {
-    if (debug) std::cerr << "backpatchLEB128: " << x.value << " (at " << i << "), minimum " << minimum << std::endl;
-    x.writeAt(this, i, minimum);
+  void writeAt(size_t i, LEB128 x) {
+    if (debug) std::cerr << "backpatchLEB128: " << x.value << " (at " << i << ")" << std::endl;
+    x.writeAt(this, i, 5); // fill all 5 bytes, we have to do this when backpatching
   }
 
   template <typename T>
@@ -448,7 +448,7 @@ public:
 
   void finishSection(int32_t start) {
     int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
-    o.writeAt(start, LEB128(size), 5);
+    o.writeAt(start, LEB128(size));
   }
 
   void writeStart() {
