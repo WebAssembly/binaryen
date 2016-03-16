@@ -218,4 +218,4 @@ Almost. Some decisions made in WebAssembly preclude that, for example, there are
 
 * Does it compile under Windows and/or Visual Studio?
 
-Yes, it does. Here's a step-by-step <a href="https://github.com/brakmic/brakmic/blob/master/webassembly/COMPILING_WIN32.md">tutorial</a> on how to compile it under **Windows 10 x64** with **CMake** and **Visual Studio 2015**
+Yes, it does. Here's a step-by-step [tutorial](https://github.com/brakmic/brakmic/blob/master/webassembly/COMPILING_WIN32.md "Compiling under Win32") on how to compile it under **Windows 10 x64** with **CMake** and **Visual Studio 2015**
