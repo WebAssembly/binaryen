@@ -781,7 +781,7 @@ public:
     }
     if (curr->condition) recurse(curr->condition);
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
-      << int32_t(getBreakIndex(curr->name));
+      << LEB128(getBreakIndex(curr->name));
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
@@ -1599,7 +1599,7 @@ public:
 
   void visitBreak(Break *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
-    curr->name = getBreakName(getInt32());
+    curr->name = getBreakName(getLEB128());
     if (code == BinaryConsts::BrIf) curr->condition = popExpression();
     curr->value = popExpression();
   }
