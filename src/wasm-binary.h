@@ -569,6 +569,8 @@ public:
     o << LEB128(total);
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
+      size_t sizePos = writeLEB128Placeholder();
+      size_t start = o.size();
       Function* function = wasm->functions[i];
       mappedLocals.clear();
       numLocalsByType.clear();
@@ -582,9 +584,6 @@ public:
           << uint16_t(numLocalsByType[f32])
           << uint16_t(numLocalsByType[f64]);
       }
-      size_t sizePos = o.size();
-      o << (uint32_t)0; // placeholder, we fill in the size later when we have it // XXX int32, diverge from v8 format, to get more code to compile
-      size_t start = o.size();
       depth = 0;
       recurse(function->body);
       o << int8_t(BinaryConsts::EndMarker);
@@ -592,7 +591,7 @@ public:
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
       if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
-      o.writeAt(sizePos, uint32_t(size)); // XXX int32, diverge from v8 format, to get more code to compile
+      o.writeAt(sizePos, LEB128(size));
     }
     finishSection(start);
   }
@@ -1311,6 +1310,8 @@ public:
     size_t total = getLEB128();
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "read one at " << pos << std::endl;
+      size_t size = getLEB128();
+      assert(size > 0); // we could also check it matches the seen size
       auto data = getInt8();
       auto type = functionTypes[i];
       bool named = data & BinaryConsts::Named;
@@ -1341,8 +1342,6 @@ public:
         addLocals(f32);
         addLocals(f64);
       }
-      size_t size = getInt32(); // XXX int32, diverge from v8 format, to get more code to compile
-      assert(size > 0); // we could also check it matches the see in the next {}
       {
         // process the function body
         if (debug) std::cerr << "processing function: " << i << std::endl;
