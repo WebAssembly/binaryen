@@ -617,10 +617,8 @@ public:
     o << LEB128(num);
     for (auto& segment : wasm->memory.segments) {
       if (segment.size == 0) continue;
-      o << int32_t(segment.offset);
-      emitBuffer(segment.data, segment.size);
-      o << int32_t(segment.size);
-      o << int8_t(1); // load at program start
+      o << LEB128(segment.offset);
+      writeInlineBuffer(segment.data, segment.size);
     }
     finishSection(start);
   }
@@ -663,6 +661,13 @@ public:
     o << LEB128(size);
     for (int32_t i = 0; i < size; i++) {
       o << int8_t(name[i]);
+    }
+  }
+
+  void writeInlineBuffer(const char* data, size_t size) {
+    o << LEB128(size);
+    for (size_t i = 0; i < size; i++) {
+      o << int8_t(data[i]);
     }
   }
 
@@ -1409,15 +1414,15 @@ public:
     auto num = getLEB128();
     for (size_t i = 0; i < num; i++) {
       Memory::Segment curr;
-      curr.offset = getInt32();
-      auto start = getInt32();
-      auto size = getInt32();
-      auto buffer = malloc(size);
-      memcpy(buffer, &input[start], size);
+      curr.offset = getLEB128();
+      auto size = getLEB128();
+      auto buffer = (char*)malloc(size);
+      for (size_t j = 0; j < size; j++) {
+        buffer[j] = char(getInt8());
+      }
       curr.data = (const char*)buffer;
       curr.size = size;
       wasm.memory.segments.push_back(curr);
-      verifyInt8(1); // load at program start
     }
   }
 
