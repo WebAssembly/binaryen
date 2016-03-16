@@ -308,7 +308,20 @@ private:
     return IString((prefix + std::to_string(otherIndex++)).c_str(), false);
   }
 
-  void parseStart(Element& s) { wasm.addStart(s[1]->str()); }
+  Name getFunctionName(Element& s) {
+    if (s.dollared()) {
+      return s.str();
+    } else {
+      // index
+      size_t offset = atoi(s.str().c_str());
+      if (offset >= functionNames.size()) onError();
+      return functionNames[offset];
+    }
+  }
+
+  void parseStart(Element& s) {
+    wasm.addStart(getFunctionName(*s[1]));
+  }
 
   void parseFunction(Element& s) {
     auto func = currFunction = allocator.alloc<Function>();
