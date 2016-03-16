@@ -480,7 +480,7 @@ public:
     finishSection(start);
   }
 
-  int16_t getFunctionTypeIndex(Name type) { // TODO: int32_t
+  int32_t getFunctionTypeIndex(Name type) {
     // TODO: optimize
     for (size_t i = 0; i < wasm->functionTypes.size(); i++) {
       if (wasm->functionTypes[i]->name == type) return i;
@@ -623,14 +623,14 @@ public:
     finishSection(start);
   }
 
-  uint16_t getImportIndex(Name name) {
+  uint32_t getImportIndex(Name name) {
     // TODO: optimize
     for (size_t i = 0; i < wasm->imports.size(); i++) {
       if (wasm->imports[i]->name == name) return i;
     }
     abort();
   }
-  uint16_t getFunctionIndex(Name name) {
+  uint32_t getFunctionIndex(Name name) {
     // TODO: optimize
     for (size_t i = 0; i < wasm->functions.size(); i++) {
       if (wasm->functions[i]->name == name) return i;
@@ -644,7 +644,7 @@ public:
     auto start = startSection(BinaryConsts::Section::FunctionTable);
     o << LEB128(wasm->table.names.size());
     for (auto name : wasm->table.names) {
-      o << getFunctionIndex(name);
+      o << LEB128(getFunctionIndex(name));
     }
     finishSection(start);
   }
@@ -1430,7 +1430,7 @@ public:
     if (debug) std::cerr << "== readFunctionTable" << std::endl;
     auto num = getLEB128();
     for (size_t i = 0; i < num; i++) {
-      auto index = getInt16();
+      auto index = getLEB128();
       assert(index < wasm.functions.size());
       wasm.table.names.push_back(wasm.functions[index]->name);
     }
