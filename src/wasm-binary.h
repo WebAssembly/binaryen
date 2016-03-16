@@ -575,15 +575,17 @@ public:
       mappedLocals.clear();
       numLocalsByType.clear();
       if (debug) std::cerr << "writing" << function->name << std::endl;
-      o << int8_t(BinaryConsts::Named |
-                  (BinaryConsts::Locals * (function && function->locals.size() > 0)));
       mapLocals(function);
-      if (function->locals.size() > 0) {
-        o << uint16_t(numLocalsByType[i32])
-          << uint16_t(numLocalsByType[i64])
-          << uint16_t(numLocalsByType[f32])
-          << uint16_t(numLocalsByType[f64]);
-      }
+      o << LEB128(
+        (numLocalsByType[i32] ? 1 : 0) +
+        (numLocalsByType[i64] ? 1 : 0) +
+        (numLocalsByType[f32] ? 1 : 0) +
+        (numLocalsByType[f64] ? 1 : 0)
+      );
+      if (numLocalsByType[i32]) o << LEB128(numLocalsByType[i32]) << binaryWasmType(i32);
+      if (numLocalsByType[i64]) o << LEB128(numLocalsByType[i64]) << binaryWasmType(i64);
+      if (numLocalsByType[f32]) o << LEB128(numLocalsByType[f32]) << binaryWasmType(f32);
+      if (numLocalsByType[f64]) o << LEB128(numLocalsByType[f64]) << binaryWasmType(f64);
       depth = 0;
       recurse(function->body);
       o << int8_t(BinaryConsts::EndMarker);
@@ -1312,11 +1314,7 @@ public:
       if (debug) std::cerr << "read one at " << pos << std::endl;
       size_t size = getLEB128();
       assert(size > 0); // we could also check it matches the seen size
-      auto data = getInt8();
       auto type = functionTypes[i];
-      bool named = data & BinaryConsts::Named;
-      assert(named);
-      bool locals = data & BinaryConsts::Locals;
       if (debug) std::cerr << "reading" << i << std::endl;
       auto func = allocator.alloc<Function>();
       func->type = type->name;
@@ -1329,18 +1327,14 @@ public:
       for (size_t j = 0; j < type->params.size(); j++) {
         func->params.emplace_back(addVar(), type->params[j]);
       }
-      if (locals) {
-        auto addLocals = [&](WasmType type) {
-          int16_t num = getInt16();
-          while (num > 0) {
-            func->locals.emplace_back(addVar(), type);
-            num--;
-          }
-        };
-        addLocals(i32);
-        addLocals(i64);
-        addLocals(f32);
-        addLocals(f64);
+      size_t numLocalTypes = getLEB128();
+      for (size_t t = 0; t < numLocalTypes; t++) {
+        auto num = getLEB128();
+        auto type = getWasmType();
+        while (num > 0) {
+          func->locals.emplace_back(addVar(), type);
+          num--;
+        }
       }
       {
         // process the function body
