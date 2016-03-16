@@ -432,11 +432,16 @@ public:
     o << int32_t(10);         // version number
   }
 
-  int32_t startSection(const char* name) {
-    // emit 5 bytes of 0, which we'll fill with LEB later
+  int32_t writeLEB128Placeholder() {
     int32_t ret = o.size();
     o << int32_t(0);
     o << int8_t(0);
+    return ret;
+  }
+
+  int32_t startSection(const char* name) {
+    // emit 5 bytes of 0, which we'll fill with LEB later
+    auto ret = writeLEB128Placeholder();
     writeInlineString(name);
     return ret;
   }
