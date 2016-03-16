@@ -176,7 +176,8 @@ namespace Section {
   auto Signatures = "signatures";
   auto ImportTable = "import_table";
   auto FunctionSignatures = "function_signatures";
-  auto Functions = "functions"; // FIXME
+  auto Functions = "functions";
+  auto ExportTable = "export_table";
   auto DataSegments = "data_segments";
   auto FunctionTable = "function_table";
   auto End = "end";
@@ -418,6 +419,7 @@ public:
     writeImports();
     writeFunctionSignatures();
     writeFunctions();
+    writeExports();
     writeDataSegments();
     writeFunctionTable();
     writeEnd();
@@ -558,10 +560,6 @@ public:
     auto start = startSection(BinaryConsts::Section::Functions);
     size_t total = wasm->functions.size();
     o << LEB128(total);
-    std::map<Name, Name> exportedFunctions;
-    for (auto* e : wasm->exports) {
-      exportedFunctions[e->value] = e->name;
-    }
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
       Function* function = wasm->functions[i];
@@ -571,12 +569,9 @@ public:
       mappedLocals.clear();
       numLocalsByType.clear();
       if (debug) std::cerr << "writing" << name << std::endl;
-      bool export_ = exportedFunctions.count(name) > 0;
       o << int8_t(BinaryConsts::Named |
-                  (BinaryConsts::Locals * (function && function->locals.size() > 0)) |
-                  (BinaryConsts::Export * export_));
+                  (BinaryConsts::Locals * (function && function->locals.size() > 0)));
       emitString(name.str);
-      if (export_) emitString(exportedFunctions[name].str); // XXX addition to v8 binary format
       mapLocals(function);
       if (function->locals.size() > 0) {
         o << uint16_t(numLocalsByType[i32])
@@ -595,6 +590,19 @@ public:
       assert(size <= std::numeric_limits<uint32_t>::max());
       if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
       o.writeAt(sizePos, uint32_t(size)); // XXX int32, diverge from v8 format, to get more code to compile
+    }
+    finishSection(start);
+  }
+
+  void writeExports() {
+    if (wasm->exports.size() == 0) return;
+    if (debug) std::cerr << "== writeexports" << std::endl;
+    auto start = startSection(BinaryConsts::Section::ExportTable);
+    o << LEB128(wasm->exports.size());
+    for (auto* curr : wasm->exports) {
+      if (debug) std::cerr << "write one" << std::endl;
+      o << LEB128(getFunctionIndex(curr->value));
+      writeInlineString(curr->name.str);
     }
     finishSection(start);
   }
@@ -1073,6 +1081,7 @@ public:
       else if (match(BinaryConsts::Section::ImportTable)) readImports();
       else if (match(BinaryConsts::Section::FunctionSignatures)) readFunctionSignatures();
       else if (match(BinaryConsts::Section::Functions)) readFunctions();
+      else if (match(BinaryConsts::Section::ExportTable)) readExports();
       else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
       else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
       else if (match(BinaryConsts::Section::End)) {
@@ -1280,15 +1289,7 @@ public:
       bool named = data & BinaryConsts::Named;
       assert(named);
       bool locals = data & BinaryConsts::Locals;
-      bool export_ = data & BinaryConsts::Export;
       Name name = getString();
-      if (export_) { // XXX addition to v8 binary format
-        Name exportName = getString();
-        auto e = allocator.alloc<Export>();
-        e->name = exportName;
-        e->value = name;
-        wasm.addExport(e);
-      }
       if (debug) std::cerr << "reading" << name << std::endl;
       auto func = allocator.alloc<Function>();
       func->name = name;
@@ -1322,6 +1323,22 @@ public:
       pos += size;
       func->body = nullptr; // will be filled later. but we do have the name and the type already.
       wasm.addFunction(func);
+    }
+  }
+
+  void readExports() {
+    if (debug) std::cerr << "== readExports" << std::endl;
+    size_t num = getLEB128();
+    if (debug) std::cerr << "num: " << num << std::endl;
+    for (size_t i = 0; i < num; i++) {
+      if (debug) std::cerr << "read one" << std::endl;
+      auto curr = allocator.alloc<Export>();
+      auto index = getLEB128();
+      assert(index < wasm.functions.size());
+      curr->value = wasm.functions[index]->name;
+      assert(curr->value.is());
+      curr->name = getInlineString();
+      wasm.addExport(curr);
     }
   }
 
