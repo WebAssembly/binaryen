@@ -1125,7 +1125,7 @@ public:
   Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0) {}
 
   void addFunctionType(FunctionType* curr) {
-    Name numericName = Name::fromInt(functionTypeIndex);
+    Name numericName = Name::fromInt(functionTypeIndex); // TODO: remove all these, assert on names already existing, do numeric stuff in wasm-s-parser etc.
     if (curr->name.isNull()) {
       curr->name = numericName;
     }

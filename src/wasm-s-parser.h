@@ -1142,12 +1142,7 @@ private:
 
   void parseTable(Element& s) {
     for (size_t i = 1; i < s.size(); i++) {
-      Name name = s[i]->str();
-      if (!s[i]->dollared()) {
-        // index, we haven't
-        name = functionNames[atoi(name.str)];
-      }
-      wasm.table.names.push_back(name);
+      wasm.table.names.push_back(getFunctionName(*s[i]));
     }
   }
 

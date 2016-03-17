@@ -79,6 +79,8 @@ inline static T RotateRight(T val, T count) {
   return (val >> count) | (val << (-count & mask));
 }
 
+extern uint32_t Log2(uint32_t v);
+extern uint32_t Pow2(uint32_t v);
 
 }  // namespace wasm
 
