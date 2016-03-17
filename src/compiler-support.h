@@ -32,6 +32,7 @@
 #elif defined(_MSC_VER)
 # define WASM_UNREACHABLE() __assume(false)
 #else
+# include <stdlib.h>
 # define WASM_UNREACHABLE() abort()
 #endif
 
