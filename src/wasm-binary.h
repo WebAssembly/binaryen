@@ -30,23 +30,34 @@
 
 namespace wasm {
 
-template<typename T>
+template<typename T, typename MiniT>
 struct LEB {
   T value;
 
   LEB() {}
   LEB(T value) : value(value) {}
 
+  bool isSigned() {
+    return int(MiniT(-1)) < 0; 
+  }
+
+  bool hasMore(T temp, MiniT byte) {
+    // for signed, we must ensure the last bit has the right sign, as it will zero extend
+    return isSigned() ? (temp != 0 && int32_t(temp) != -1) || (value >= 0 && (byte & 64)) || (value < 0 && !(byte & 64)): temp;
+  }
+
   void write(std::vector<uint8_t>* out) {
     T temp = value;
+    bool more;
     do {
       uint8_t byte = temp & 127;
       temp >>= 7;
-      if (temp) {
+      more = hasMore(temp, byte);
+      if (more) {
         byte = byte | 128;
       }
       out->push_back(byte);
-    } while (temp);
+    } while (more);
   }
 
   void writeAt(std::vector<uint8_t>* out, size_t at, size_t minimum = 0) {
@@ -56,7 +67,7 @@ struct LEB {
     do {
       uint8_t byte = temp & 127;
       temp >>= 7;
-      more = temp || offset + 1 < minimum;
+      more = hasMore(temp, byte) || offset + 1 < minimum;
       if (more) {
         byte = byte | 128;
       }
@@ -65,20 +76,32 @@ struct LEB {
     } while (more);
   }
 
-  void read(std::function<uint8_t ()> get) {
+  void read(std::function<MiniT ()> get) {
     value = 0;
     T shift = 0;
+    MiniT byte;
     while (1) {
-      uint8_t byte = get();
+      byte = get();
       value |= ((T(byte & 127)) << shift);
       if (!(byte & 128)) break;
       shift += 7;
     }
+    // if signed LEB, then we might need to sign-extend. (compile should optimize this out if not needed)
+    if (isSigned()) {
+      shift += 7;
+      if (byte & 64 && size_t(shift) < 8*sizeof(T)) {
+        // the highest bit we received was a 1, sign-extend all the rest
+        value = value | (T(-1) << shift);
+        assert(value < 0);
+      }
+    }
   }
 };
 
-typedef LEB<uint32_t> U32LEB;
-typedef LEB<uint64_t> U64LEB;
+typedef LEB<uint32_t, uint8_t> U32LEB;
+typedef LEB<uint64_t, uint8_t> U64LEB;
+typedef LEB<int32_t, int8_t> S32LEB;
+typedef LEB<int64_t, int8_t> S64LEB;
 
 //
 // We mostly stream into a buffer as we create the binary format, however,
@@ -129,6 +152,16 @@ public:
   }
   BufferWithRandomAccess& operator<<(U64LEB x) {
     if (debug) std::cerr << "writeU64LEB: " << x.value << " (at " << size() << ")" << std::endl;
+    x.write(this);
+    return *this;
+  }
+  BufferWithRandomAccess& operator<<(S32LEB x) {
+    if (debug) std::cerr << "writeS32LEB: " << x.value << " (at " << size() << ")" << std::endl;
+    x.write(this);
+    return *this;
+  }
+  BufferWithRandomAccess& operator<<(S64LEB x) {
+    if (debug) std::cerr << "writeS64LEB: " << x.value << " (at " << size() << ")" << std::endl;
     x.write(this);
     return *this;
   }
@@ -907,11 +940,11 @@ public:
     if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
     switch (curr->type) {
       case i32: {
-        o << int8_t(BinaryConsts::I32Const) << U32LEB(curr->value.geti32());
+        o << int8_t(BinaryConsts::I32Const) << S32LEB(curr->value.geti32());
         break;
       }
       case i64: {
-        o << int8_t(BinaryConsts::I64Const) << U64LEB(curr->value.geti64());
+        o << int8_t(BinaryConsts::I64Const) << S64LEB(curr->value.geti64());
         break;
       }
       case f32: {
@@ -1176,6 +1209,24 @@ public:
     U64LEB ret;
     ret.read([&]() {
       return getInt8();
+    });
+    if (debug) std::cerr << "getU64LEB: " << ret.value << " ==>" << std::endl;
+    return ret.value;
+  }
+  int32_t getS32LEB() {
+    if (debug) std::cerr << "<==" << std::endl;
+    S32LEB ret;
+    ret.read([&]() {
+      return (int8_t)getInt8();
+    });
+    if (debug) std::cerr << "getU32LEB: " << ret.value << " ==>" << std::endl;
+    return ret.value;
+  }
+  int64_t getS64LEB() {
+    if (debug) std::cerr << "<==" << std::endl;
+    S64LEB ret;
+    ret.read([&]() {
+      return (int8_t)getInt8();
     });
     if (debug) std::cerr << "getU64LEB: " << ret.value << " ==>" << std::endl;
     return ret.value;
@@ -1729,8 +1780,8 @@ public:
   }
   bool maybeVisitImpl(Const *curr, uint8_t code) {
     switch (code) {
-      case BinaryConsts::I32Const: curr->value = Literal(getU32LEB()); break;
-      case BinaryConsts::I64Const: curr->value = Literal(getU64LEB()); break;
+      case BinaryConsts::I32Const: curr->value = Literal(getS32LEB()); break;
+      case BinaryConsts::I64Const: curr->value = Literal(getS64LEB()); break;
       case BinaryConsts::F32Const: curr->value = Literal(getFloat32()); break;
       case BinaryConsts::F64Const: curr->value = Literal(getFloat64()); break;
       default: return false;
