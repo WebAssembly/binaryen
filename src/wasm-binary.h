@@ -30,14 +30,15 @@
 
 namespace wasm {
 
-struct LEB128 {
-  uint32_t value;
+template<typename T>
+struct LEB {
+  T value;
 
-  LEB128() {}
-  LEB128(uint32_t value) : value(value) {}
+  LEB() {}
+  LEB(T value) : value(value) {}
 
   void write(std::vector<uint8_t>* out) {
-    uint32_t temp = value;
+    T temp = value;
     do {
       uint8_t byte = temp & 127;
       temp >>= 7;
@@ -49,7 +50,7 @@ struct LEB128 {
   }
 
   void writeAt(std::vector<uint8_t>* out, size_t at, size_t minimum = 0) {
-    uint32_t temp = value;
+    T temp = value;
     size_t offset = 0;
     bool more;
     do {
@@ -66,15 +67,18 @@ struct LEB128 {
 
   void read(std::function<uint8_t ()> get) {
     value = 0;
-    uint32_t shift = 0;
+    T shift = 0;
     while (1) {
       uint8_t byte = get();
-      value |= ((byte & 127) << shift);
+      value |= ((T(byte & 127)) << shift);
       if (!(byte & 128)) break;
       shift += 7;
     }
   }
 };
+
+typedef LEB<uint32_t> LEB128;
+typedef LEB<uint64_t> LEB256;
 
 //
 // We mostly stream into a buffer as we create the binary format, however,
