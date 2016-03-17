@@ -77,8 +77,8 @@ struct LEB {
   }
 };
 
-typedef LEB<uint32_t> LEB128;
-typedef LEB<uint64_t> LEB256;
+typedef LEB<uint32_t> U32LEB;
+typedef LEB<uint64_t> U64LEB;
 
 //
 // We mostly stream into a buffer as we create the binary format, however,
@@ -122,13 +122,13 @@ public:
     push_back(x & 0xff);
     return *this;
   }
-  BufferWithRandomAccess& operator<<(LEB128 x) {
-    if (debug) std::cerr << "writeLEB128: " << x.value << " (at " << size() << ")" << std::endl;
+  BufferWithRandomAccess& operator<<(U32LEB x) {
+    if (debug) std::cerr << "writeU32LEB: " << x.value << " (at " << size() << ")" << std::endl;
     x.write(this);
     return *this;
   }
-  BufferWithRandomAccess& operator<<(LEB256 x) {
-    if (debug) std::cerr << "writeLEB256: " << x.value << " (at " << size() << ")" << std::endl;
+  BufferWithRandomAccess& operator<<(U64LEB x) {
+    if (debug) std::cerr << "writeU64LEB: " << x.value << " (at " << size() << ")" << std::endl;
     x.write(this);
     return *this;
   }
@@ -167,8 +167,8 @@ public:
     (*this)[i+2] = x & 0xff; x >>= 8;
     (*this)[i+3] = x & 0xff;
   }
-  void writeAt(size_t i, LEB128 x) {
-    if (debug) std::cerr << "backpatchLEB128: " << x.value << " (at " << i << ")" << std::endl;
+  void writeAt(size_t i, U32LEB x) {
+    if (debug) std::cerr << "backpatchU32LEB: " << x.value << " (at " << i << ")" << std::endl;
     x.writeAt(this, i, 5); // fill all 5 bytes, we have to do this when backpatching
   }
 
@@ -442,7 +442,7 @@ public:
     o << int32_t(10);         // version number
   }
 
-  int32_t writeLEB128Placeholder() {
+  int32_t writeU32LEBPlaceholder() {
     int32_t ret = o.size();
     o << int32_t(0);
     o << int8_t(0);
@@ -451,21 +451,21 @@ public:
 
   int32_t startSection(const char* name) {
     // emit 5 bytes of 0, which we'll fill with LEB later
-    auto ret = writeLEB128Placeholder();
+    auto ret = writeU32LEBPlaceholder();
     writeInlineString(name);
     return ret;
   }
 
   void finishSection(int32_t start) {
     int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
-    o.writeAt(start, LEB128(size));
+    o.writeAt(start, U32LEB(size));
   }
 
   void writeStart() {
     if (!wasm->start.is()) return;
     if (debug) std::cerr << "== writeStart" << std::endl;
     auto start = startSection(BinaryConsts::Section::Start);
-    o << LEB128(getFunctionIndex(wasm->start.str));
+    o << U32LEB(getFunctionIndex(wasm->start.str));
     finishSection(start);
   }
 
@@ -473,8 +473,8 @@ public:
     if (wasm->memory.max == 0) return;
     if (debug) std::cerr << "== writeMemory" << std::endl;
     auto start = startSection(BinaryConsts::Section::Memory);
-    o << LEB128(wasm->memory.initial)
-      << LEB128(wasm->memory.max)
+    o << U32LEB(wasm->memory.initial)
+      << U32LEB(wasm->memory.max)
       << int8_t(1); // export memory
     finishSection(start);
   }
@@ -483,10 +483,10 @@ public:
     if (wasm->functionTypes.size() == 0) return;
     if (debug) std::cerr << "== writeSignatures" << std::endl;
     auto start = startSection(BinaryConsts::Section::Signatures);
-    o << LEB128(wasm->functionTypes.size());
+    o << U32LEB(wasm->functionTypes.size());
     for (auto* type : wasm->functionTypes) {
       if (debug) std::cerr << "write one" << std::endl;
-      o << LEB128(type->params.size());
+      o << U32LEB(type->params.size());
       o << binaryWasmType(type->result);
       for (auto param : type->params) {
         o << binaryWasmType(param);
@@ -507,10 +507,10 @@ public:
     if (wasm->imports.size() == 0) return;
     if (debug) std::cerr << "== writeImports" << std::endl;
     auto start = startSection(BinaryConsts::Section::ImportTable);
-    o << LEB128(wasm->imports.size());
+    o << U32LEB(wasm->imports.size());
     for (auto* import : wasm->imports) {
       if (debug) std::cerr << "write one" << std::endl;
-      o << LEB128(getFunctionTypeIndex(import->type->name));
+      o << U32LEB(getFunctionTypeIndex(import->type->name));
       writeInlineString(import->module.str);
       writeInlineString(import->base.str);
     }
@@ -561,10 +561,10 @@ public:
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeFunctionSignatures" << std::endl;
     auto start = startSection(BinaryConsts::Section::FunctionSignatures);
-    o << LEB128(wasm->functions.size());
+    o << U32LEB(wasm->functions.size());
     for (auto* curr : wasm->functions) {
       if (debug) std::cerr << "write one" << std::endl;
-      o << LEB128(getFunctionTypeIndex(curr->type));
+      o << U32LEB(getFunctionTypeIndex(curr->type));
     }
     finishSection(start);
   }
@@ -574,26 +574,26 @@ public:
     if (debug) std::cerr << "== writeFunctions" << std::endl;
     auto start = startSection(BinaryConsts::Section::Functions);
     size_t total = wasm->functions.size();
-    o << LEB128(total);
+    o << U32LEB(total);
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
-      size_t sizePos = writeLEB128Placeholder();
+      size_t sizePos = writeU32LEBPlaceholder();
       size_t start = o.size();
       Function* function = wasm->functions[i];
       mappedLocals.clear();
       numLocalsByType.clear();
       if (debug) std::cerr << "writing" << function->name << std::endl;
       mapLocals(function);
-      o << LEB128(
+      o << U32LEB(
         (numLocalsByType[i32] ? 1 : 0) +
         (numLocalsByType[i64] ? 1 : 0) +
         (numLocalsByType[f32] ? 1 : 0) +
         (numLocalsByType[f64] ? 1 : 0)
       );
-      if (numLocalsByType[i32]) o << LEB128(numLocalsByType[i32]) << binaryWasmType(i32);
-      if (numLocalsByType[i64]) o << LEB128(numLocalsByType[i64]) << binaryWasmType(i64);
-      if (numLocalsByType[f32]) o << LEB128(numLocalsByType[f32]) << binaryWasmType(f32);
-      if (numLocalsByType[f64]) o << LEB128(numLocalsByType[f64]) << binaryWasmType(f64);
+      if (numLocalsByType[i32]) o << U32LEB(numLocalsByType[i32]) << binaryWasmType(i32);
+      if (numLocalsByType[i64]) o << U32LEB(numLocalsByType[i64]) << binaryWasmType(i64);
+      if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryWasmType(f32);
+      if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
       depth = 0;
       recurse(function->body);
       o << int8_t(BinaryConsts::EndMarker);
@@ -601,7 +601,7 @@ public:
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
       if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
-      o.writeAt(sizePos, LEB128(size));
+      o.writeAt(sizePos, U32LEB(size));
     }
     finishSection(start);
   }
@@ -610,10 +610,10 @@ public:
     if (wasm->exports.size() == 0) return;
     if (debug) std::cerr << "== writeexports" << std::endl;
     auto start = startSection(BinaryConsts::Section::ExportTable);
-    o << LEB128(wasm->exports.size());
+    o << U32LEB(wasm->exports.size());
     for (auto* curr : wasm->exports) {
       if (debug) std::cerr << "write one" << std::endl;
-      o << LEB128(getFunctionIndex(curr->value));
+      o << U32LEB(getFunctionIndex(curr->value));
       writeInlineString(curr->name.str);
     }
     finishSection(start);
@@ -626,10 +626,10 @@ public:
       if (segment.size > 0) num++;
     }
     auto start = startSection(BinaryConsts::Section::DataSegments);
-    o << LEB128(num);
+    o << U32LEB(num);
     for (auto& segment : wasm->memory.segments) {
       if (segment.size == 0) continue;
-      o << LEB128(segment.offset);
+      o << U32LEB(segment.offset);
       writeInlineBuffer(segment.data, segment.size);
     }
     finishSection(start);
@@ -654,9 +654,9 @@ public:
     if (wasm->table.names.size() == 0) return;
     if (debug) std::cerr << "== writeFunctionTable" << std::endl;
     auto start = startSection(BinaryConsts::Section::FunctionTable);
-    o << LEB128(wasm->table.names.size());
+    o << U32LEB(wasm->table.names.size());
     for (auto name : wasm->table.names) {
-      o << LEB128(getFunctionIndex(name));
+      o << U32LEB(getFunctionIndex(name));
     }
     finishSection(start);
   }
@@ -665,10 +665,10 @@ public:
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeNames" << std::endl;
     auto start = startSection(BinaryConsts::Section::Names);
-    o << LEB128(wasm->functions.size());
+    o << U32LEB(wasm->functions.size());
     for (auto* curr : wasm->functions) {
       writeInlineString(curr->name.str);
-      o << LEB128(0); // TODO: locals
+      o << U32LEB(0); // TODO: locals
     }
     finishSection(start);
   }
@@ -682,14 +682,14 @@ public:
 
   void writeInlineString(const char* name) {
     int32_t size = strlen(name);
-    o << LEB128(size);
+    o << U32LEB(size);
     for (int32_t i = 0; i < size; i++) {
       o << int8_t(name[i]);
     }
   }
 
   void writeInlineBuffer(const char* data, size_t size) {
-    o << LEB128(size);
+    o << U32LEB(size);
     for (size_t i = 0; i < size; i++) {
       o << int8_t(data[i]);
     }
@@ -789,15 +789,15 @@ public:
     }
     if (curr->condition) recurse(curr->condition);
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
-      << LEB128(getBreakIndex(curr->name));
+      << U32LEB(getBreakIndex(curr->name));
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
-    o << int8_t(BinaryConsts::TableSwitch) << LEB128(curr->targets.size());
+    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
     for (auto target : curr->targets) {
-      o << LEB128(getBreakIndex(target));
+      o << U32LEB(getBreakIndex(target));
     }
-    o << LEB128(getBreakIndex(curr->default_));
+    o << U32LEB(getBreakIndex(curr->default_));
     recurse(curr->condition);
     o << int8_t(BinaryConsts::EndMarker);
     if (curr->value) {
@@ -812,14 +812,14 @@ public:
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallFunction) << LEB128(getFunctionIndex(curr->target));
+    o << int8_t(BinaryConsts::CallFunction) << U32LEB(getFunctionIndex(curr->target));
   }
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallImport) << LEB128(getImportIndex(curr->target));
+    o << int8_t(BinaryConsts::CallImport) << U32LEB(getImportIndex(curr->target));
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
@@ -827,21 +827,21 @@ public:
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallIndirect) << LEB128(getFunctionTypeIndex(curr->fullType->name));
+    o << int8_t(BinaryConsts::CallIndirect) << U32LEB(getFunctionTypeIndex(curr->fullType->name));
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
-    o << int8_t(BinaryConsts::GetLocal) << LEB128(mappedLocals[curr->name]);
+    o << int8_t(BinaryConsts::GetLocal) << U32LEB(mappedLocals[curr->name]);
   }
   void visitSetLocal(SetLocal *curr) {
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
     recurse(curr->value);
-    o << int8_t(BinaryConsts::SetLocal) << LEB128(mappedLocals[curr->name]);
+    o << int8_t(BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->name]);
   }
 
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
-    o << LEB128(Log2(alignment ? alignment : bytes));
-    o << LEB128(offset);
+    o << U32LEB(Log2(alignment ? alignment : bytes));
+    o << U32LEB(offset);
   }
 
   void visitLoad(Load *curr) {
@@ -907,11 +907,11 @@ public:
     if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
     switch (curr->type) {
       case i32: {
-        o << int8_t(BinaryConsts::I32Const) << LEB128(curr->value.geti32());
+        o << int8_t(BinaryConsts::I32Const) << U32LEB(curr->value.geti32());
         break;
       }
       case i64: {
-        o << int8_t(BinaryConsts::I64Const) << LEB256(curr->value.geti64());
+        o << int8_t(BinaryConsts::I64Const) << U64LEB(curr->value.geti64());
         break;
       }
       case f32: {
@@ -1088,9 +1088,9 @@ public:
 
     // read sections until the end
     while (more()) {
-      auto sectionSize = getLEB128();
+      auto sectionSize = getU32LEB();
       assert(sectionSize < pos + input.size());
-      auto nameSize = getLEB128();
+      auto nameSize = getU32LEB();
       auto match = [&](const char* name) {
         for (size_t i = 0; i < nameSize; i++) {
           if (pos + i >= input.size()) return false;
@@ -1162,22 +1162,22 @@ public:
     return ret;
   }
 
-  uint32_t getLEB128() {
+  uint32_t getU32LEB() {
     if (debug) std::cerr << "<==" << std::endl;
-    LEB128 ret;
+    U32LEB ret;
     ret.read([&]() {
       return getInt8();
     });
-    if (debug) std::cerr << "getLEB128: " << ret.value << " ==>" << std::endl;
+    if (debug) std::cerr << "getU32LEB: " << ret.value << " ==>" << std::endl;
     return ret.value;
   }
-  uint64_t getLEB256() {
+  uint64_t getU64LEB() {
     if (debug) std::cerr << "<==" << std::endl;
-    LEB256 ret;
+    U64LEB ret;
     ret.read([&]() {
       return getInt8();
     });
-    if (debug) std::cerr << "getLEB256: " << ret.value << " ==>" << std::endl;
+    if (debug) std::cerr << "getU64LEB: " << ret.value << " ==>" << std::endl;
     return ret.value;
   }
   WasmType getWasmType() {
@@ -1202,7 +1202,7 @@ public:
 
   Name getInlineString() {
     if (debug) std::cerr << "<==" << std::endl;
-    auto len = getLEB128();
+    auto len = getU32LEB();
     std::string str;
     for (size_t i = 0; i < len; i++) {
       str = str + char(getInt8());
@@ -1250,24 +1250,24 @@ public:
 
   void readStart() {
     if (debug) std::cerr << "== readStart" << std::endl;
-    startIndex = getLEB128();
+    startIndex = getU32LEB();
   }
 
   void readMemory() {
     if (debug) std::cerr << "== readMemory" << std::endl;
-    wasm.memory.initial = getLEB128();
-    wasm.memory.max = getLEB128();
+    wasm.memory.initial = getU32LEB();
+    wasm.memory.max = getU32LEB();
     verifyInt8(1); // export memory
   }
 
   void readSignatures() {
     if (debug) std::cerr << "== readSignatures" << std::endl;
-    size_t numTypes = getLEB128();
+    size_t numTypes = getU32LEB();
     if (debug) std::cerr << "num: " << numTypes << std::endl;
     for (size_t i = 0; i < numTypes; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = allocator.alloc<FunctionType>();
-      size_t numParams = getLEB128();
+      size_t numParams = getU32LEB();
       if (debug) std::cerr << "num params: " << numParams << std::endl;
       curr->result = getWasmType();
       for (size_t j = 0; j < numParams; j++) {
@@ -1279,13 +1279,13 @@ public:
 
   void readImports() {
     if (debug) std::cerr << "== readImports" << std::endl;
-    size_t num = getLEB128();
+    size_t num = getU32LEB();
     if (debug) std::cerr << "num: " << num << std::endl;
     for (size_t i = 0; i < num; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = allocator.alloc<Import>();
       curr->name = Name(std::string("import$") + std::to_string(i));
-      auto index = getLEB128();
+      auto index = getU32LEB();
       assert(index < wasm.functionTypes.size());
       curr->type = wasm.functionTypes[index];
       assert(curr->type->name.is());
@@ -1299,11 +1299,11 @@ public:
 
   void readFunctionSignatures() {
     if (debug) std::cerr << "== readFunctionSignatures" << std::endl;
-    size_t num = getLEB128();
+    size_t num = getU32LEB();
     if (debug) std::cerr << "num: " << num << std::endl;
     for (size_t i = 0; i < num; i++) {
       if (debug) std::cerr << "read one" << std::endl;
-      auto index = getLEB128();
+      auto index = getU32LEB();
       assert(index < wasm.functionTypes.size());
       functionTypes.push_back(wasm.functionTypes[index]);
     }
@@ -1322,10 +1322,10 @@ public:
 
   void readFunctions() {
     if (debug) std::cerr << "== readFunctions" << std::endl;
-    size_t total = getLEB128();
+    size_t total = getU32LEB();
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "read one at " << pos << std::endl;
-      size_t size = getLEB128();
+      size_t size = getU32LEB();
       assert(size > 0); // we could also check it matches the seen size
       auto type = functionTypes[i];
       if (debug) std::cerr << "reading" << i << std::endl;
@@ -1340,9 +1340,9 @@ public:
       for (size_t j = 0; j < type->params.size(); j++) {
         func->params.emplace_back(addVar(), type->params[j]);
       }
-      size_t numLocalTypes = getLEB128();
+      size_t numLocalTypes = getU32LEB();
       for (size_t t = 0; t < numLocalTypes; t++) {
-        auto num = getLEB128();
+        auto num = getU32LEB();
         auto type = getWasmType();
         while (num > 0) {
           func->locals.emplace_back(addVar(), type);
@@ -1383,12 +1383,12 @@ public:
 
   void readExports() {
     if (debug) std::cerr << "== readExports" << std::endl;
-    size_t num = getLEB128();
+    size_t num = getU32LEB();
     if (debug) std::cerr << "num: " << num << std::endl;
     for (size_t i = 0; i < num; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = allocator.alloc<Export>();
-      auto index = getLEB128();
+      auto index = getU32LEB();
       assert(index < functionTypes.size());
       curr->name = getInlineString();
       exportIndexes[curr] = index;
@@ -1450,11 +1450,11 @@ public:
 
   void readDataSegments() {
     if (debug) std::cerr << "== readDataSegments" << std::endl;
-    auto num = getLEB128();
+    auto num = getU32LEB();
     for (size_t i = 0; i < num; i++) {
       Memory::Segment curr;
-      curr.offset = getLEB128();
-      auto size = getLEB128();
+      curr.offset = getU32LEB();
+      auto size = getU32LEB();
       auto buffer = (char*)malloc(size);
       for (size_t j = 0; j < size; j++) {
         buffer[j] = char(getInt8());
@@ -1469,19 +1469,19 @@ public:
 
   void readFunctionTable() {
     if (debug) std::cerr << "== readFunctionTable" << std::endl;
-    auto num = getLEB128();
+    auto num = getU32LEB();
     for (size_t i = 0; i < num; i++) {
-      auto index = getLEB128();
+      auto index = getU32LEB();
       functionTable.push_back(index);
     }
   }
 
   void readNames() {
     if (debug) std::cerr << "== readNames" << std::endl;
-    auto num = getLEB128();
+    auto num = getU32LEB();
     for (size_t i = 0; i < num; i++) {
       functions[i]->name = getInlineString();
-      auto numLocals = getLEB128();
+      auto numLocals = getU32LEB();
       assert(numLocals == 0); // TODO
     }
   }
@@ -1612,17 +1612,17 @@ public:
 
   void visitBreak(Break *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
-    curr->name = getBreakName(getLEB128());
+    curr->name = getBreakName(getU32LEB());
     if (code == BinaryConsts::BrIf) curr->condition = popExpression();
     curr->value = popExpression();
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
-    auto numTargets = getLEB128();
+    auto numTargets = getU32LEB();
     for (size_t i = 0; i < numTargets; i++) {
-      curr->targets.push_back(getBreakName(getLEB128()));
+      curr->targets.push_back(getBreakName(getU32LEB()));
     }
-    curr->default_ = getBreakName(getLEB128());
+    curr->default_ = getBreakName(getU32LEB());
     processExpressions();
     curr->condition = popExpression();
     processExpressions();
@@ -1631,7 +1631,7 @@ public:
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
-    auto index = getLEB128();
+    auto index = getU32LEB();
     auto type = functionTypes[index];
     auto num = type->params.size();
     curr->operands.resize(num);
@@ -1643,7 +1643,7 @@ public:
   }
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
-    curr->target = wasm.imports[getLEB128()]->name;
+    curr->target = wasm.imports[getU32LEB()]->name;
     assert(wasm.importsMap.find(curr->target) != wasm.importsMap.end());
     auto type = wasm.importsMap[curr->target]->type;
     assert(type);
@@ -1657,7 +1657,7 @@ public:
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
-    curr->fullType = wasm.functionTypes[getLEB128()];
+    curr->fullType = wasm.functionTypes[getU32LEB()];
     auto num = curr->fullType->params.size();
     curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
@@ -1668,21 +1668,21 @@ public:
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
-    curr->name = mappedLocals[getLEB128()];
+    curr->name = mappedLocals[getU32LEB()];
     assert(curr->name.is());
     curr->type = localTypes[curr->name];
   }
   void visitSetLocal(SetLocal *curr) {
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
-    curr->name = mappedLocals[getLEB128()];
+    curr->name = mappedLocals[getU32LEB()];
     assert(curr->name.is());
     curr->value = popExpression();
     curr->type = curr->value->type;
   }
 
   void readMemoryAccess(uint32_t& alignment, size_t bytes, uint32_t& offset) {
-    alignment = Pow2(getLEB128());
-    offset = getLEB128();
+    alignment = Pow2(getU32LEB());
+    offset = getU32LEB();
   }
 
   bool maybeVisitImpl(Load *curr, uint8_t code) {
@@ -1729,8 +1729,8 @@ public:
   }
   bool maybeVisitImpl(Const *curr, uint8_t code) {
     switch (code) {
-      case BinaryConsts::I32Const: curr->value = Literal(getLEB128()); break;
-      case BinaryConsts::I64Const: curr->value = Literal(getLEB256()); break;
+      case BinaryConsts::I32Const: curr->value = Literal(getU32LEB()); break;
+      case BinaryConsts::I64Const: curr->value = Literal(getU64LEB()); break;
       case BinaryConsts::F32Const: curr->value = Literal(getFloat32()); break;
       case BinaryConsts::F64Const: curr->value = Literal(getFloat64()); break;
       default: return false;
