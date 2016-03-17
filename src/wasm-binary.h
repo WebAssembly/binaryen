@@ -127,6 +127,11 @@ public:
     x.write(this);
     return *this;
   }
+  BufferWithRandomAccess& operator<<(LEB256 x) {
+    if (debug) std::cerr << "writeLEB256: " << x.value << " (at " << size() << ")" << std::endl;
+    x.write(this);
+    return *this;
+  }
 
   BufferWithRandomAccess& operator<<(uint8_t x) {
     return *this << (int8_t)x;
@@ -347,7 +352,6 @@ enum ASTNodes {
   F32StoreMem = 0x35,
   F64StoreMem = 0x36,
 
-  I8Const = 0x09,
   I32Const = 0x0a,
   I64Const = 0x0b,
   F64Const = 0x0c,
@@ -904,16 +908,11 @@ public:
     if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
     switch (curr->type) {
       case i32: {
-        uint32_t value = curr->value.geti32();
-        if (value <= 255) {
-          o << int8_t(BinaryConsts::I8Const) << uint8_t(value);
-          break;
-        }
-        o << int8_t(BinaryConsts::I32Const) << value;
+        o << int8_t(BinaryConsts::I32Const) << LEB128(curr->value.geti32());
         break;
       }
       case i64: {
-        o << int8_t(BinaryConsts::I64Const) << curr->value.geti64();
+        o << int8_t(BinaryConsts::I64Const) << LEB256(curr->value.geti64());
         break;
       }
       case f32: {
@@ -1171,6 +1170,15 @@ public:
       return getInt8();
     });
     if (debug) std::cerr << "getLEB128: " << ret.value << " ==>" << std::endl;
+    return ret.value;
+  }
+  uint64_t getLEB256() {
+    if (debug) std::cerr << "<==" << std::endl;
+    LEB256 ret;
+    ret.read([&]() {
+      return getInt8();
+    });
+    if (debug) std::cerr << "getLEB256: " << ret.value << " ==>" << std::endl;
     return ret.value;
   }
   WasmType getWasmType() {
@@ -1727,9 +1735,8 @@ public:
   }
   bool maybeVisitImpl(Const *curr, uint8_t code) {
     switch (code) {
-      case BinaryConsts::I8Const:  curr->value = Literal(int32_t(getInt8())); break;
-      case BinaryConsts::I32Const: curr->value = Literal(getInt32()); break;
-      case BinaryConsts::I64Const: curr->value = Literal(getInt64()); break;
+      case BinaryConsts::I32Const: curr->value = Literal(getLEB128()); break;
+      case BinaryConsts::I64Const: curr->value = Literal(getLEB256()); break;
       case BinaryConsts::F32Const: curr->value = Literal(getFloat32()); break;
       case BinaryConsts::F64Const: curr->value = Literal(getFloat64()); break;
       default: return false;
