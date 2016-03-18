@@ -150,7 +150,7 @@ class Asm2WasmBuilder {
   std::map<CallIndirect*, IString> callIndirects; // track these, as we need to fix them after we know the functionTableStarts. this maps call => its function table
 
   bool memoryGrowth;
-  int debug;
+  bool debug;
 
 public:
   std::map<IString, MappedGlobal> mappedGlobals;
@@ -254,7 +254,7 @@ private:
   }
 
 public:
- Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth, int debug)
+ Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth, bool debug)
      : wasm(wasm),
        allocator(wasm.allocator),
        nextGlobal(8),
@@ -729,10 +729,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   if (debug) {
     std::cout << "\nfunc: " << ast[1]->getIString().str << '\n';
-    if (debug >= 2) {
-      ast->stringify(std::cout);
-      std::cout << '\n';
-    }
+    ast->stringify(std::cout);
+    std::cout << '\n';
   }
 
   auto function = allocator.alloc<Function>();
@@ -802,11 +800,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   std::function<Expression* (Ref)> process = [&](Ref ast) -> Expression* {
     AstStackHelper astStackHelper(ast); // TODO: only create one when we need it?
-    if (debug >= 2) {
-      std::cout << "at: ";
-      ast->stringify(std::cout);
-      std::cout << '\n';
-    }
+    std::cout << "at: ";
+    ast->stringify(std::cout);
+    std::cout << '\n';
     IString what = ast[0]->getIString();
     if (what == STAT) {
       return process(ast[1]); // and drop return value, if any

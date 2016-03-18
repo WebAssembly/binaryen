@@ -19,7 +19,7 @@
 using namespace wasm;
 
 Options::Options(const std::string &command, const std::string &description)
-    : debug(0), positional(Arguments::Zero) {
+    : debug(false), positional(Arguments::Zero) {
   add("--help", "-h", "Show this help message and exit", Arguments::Zero,
       [this, command, description](Options *o, const std::string &) {
         std::cerr << command;
@@ -41,10 +41,8 @@ Options::Options(const std::string &command, const std::string &description)
         std::cerr << '\n';
         exit(EXIT_SUCCESS);
       });
-  add("--debug", "-d", "Print debug information to stderr", Arguments::Optional,
-      [](Options *o, const std::string &arguments) {
-        o->debug = arguments.size() ? std::stoi(arguments) : 1;
-      });
+  add("--debug", "-d", "Print debug information to stderr", Arguments::Zero,
+      [](Options *o, const std::string &arguments) {});
 }
 
 Options::~Options() {}
