@@ -119,13 +119,13 @@ emcc -s BINARYEN=1 [whatever other emcc flags you want]
 
 The `BINARYEN` flag tells it to emit code using `wasm.js`, and the `BINARYEN_ROOT` config variable tells where to find `wasm.js` itself. The output `*.js` file will then contain the entire polyfill (`asm2wasm` translator + `wasm.js` interpreter). The asm.js code will be in `*.asm.js`.
 
-### C/C++ Source => asm2wasm => WebAssembly
+### C/C++ Source ⇒ asm2wasm ⇒ WebAssembly
 
 When using `emcc` with the `BINARYEN` option, it will use Binaryen to build to WebAssembly. See the [emscripten wiki](https://github.com/kripken/emscripten/wiki/WebAssembly) for more details.
 
  * Build with `EMCC_DEBUG=1` in the env to see Emscripten's debug output as it runs the various tools, and also to save the intermediate files in `/tmp/emscripten_temp`. It will save both the `.s` and `.wast` files there (in addition to other files it normally saves).
 
-### C/C++ Source => WebAssembly LLVM backend => s2wasm => WebAssembly
+### C/C++ Source ⇒ WebAssembly LLVM backend ⇒ s2wasm ⇒ WebAssembly
 
 Binaryen's `s2wasm` tool can translate the `.s` output from the LLVM WebAssembly backend into WebAssembly. You can receive `.s` output from `llc`, and then run `s2wasm` on that:
 
