@@ -586,19 +586,20 @@ if has_emcc:
 
   print '\n[ checking wasm.js methods... ]\n'
 
-  for method_init in [None, 'asm2wasm', 'wasm-s-parser', 'just-asm', 'wasm-binary']:
+  for method_init in [None, 'interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary']:
     for success in [1, 0]:
       method = method_init
       command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', 'hello_world.c') ]
       if method:
         command += ['-s', 'BINARYEN_METHOD="' + method + '"']
       else:
-        method = 'wasm-s-parser' # this is the default
+        method = 'interpret-s-expr' # this is the default
       print method, ' : ', ' '.join(command), ' => ', success
       subprocess.check_call(command)
 
       see_polyfill =  'var WasmJS = ' in open('a.wasm.js').read()
-      if method and 'asm2wasm' not in method and 'wasm-s-parser' not in method and 'wasm-binary' not in method:
+
+      if method and 'interpret' not in method:
         assert not see_polyfill, 'verify polyfill was not added - we specified a method, and it does not need it'
       else:
         assert see_polyfill, 'we need the polyfill'
@@ -608,20 +609,20 @@ if has_emcc:
         asm = asm.replace('"almost asm"', '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
         asm = asm.replace("'almost asm'", '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
         open('a.wasm.asm.js', 'w').write(asm)
-      if method == 'asm2wasm':
+      if method == 'interpret-asm2wasm':
         os.unlink('a.wasm.wast') # we should not need the .wast
         if not success:
           break_cashew() # we need cashew
-      elif method == 'wasm-s-parser':
+      elif method == 'interpret-s-expr':
         os.unlink('a.wasm.asm.js') # we should not need the .asm.js
         if not success:
           os.unlink('a.wasm.wast.mappedGlobals')
-      elif method == 'just-asm':
+      elif method == 'asmjs':
         os.unlink('a.wasm.wast') # we should not need the .wast
         break_cashew() # we don't use cashew, so ok to break it
         if not success:
           os.unlink('a.wasm.js')
-      elif method == 'wasm-binary':
+      elif method == 'interpret-binary':
         os.unlink('a.wasm.wast') # we should not need the .wast
         os.unlink('a.wasm.asm.js') # we should not need the .asm.js
         if not success:
@@ -656,7 +657,7 @@ if has_emcc:
         extra = json.loads(open(emcc).read())
       if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
       for opts in [[], ['-O1'], ['-O2'], ['-O3'], ['-Oz']]:
-        for method in ['asm2wasm', 'wasm-s-parser', 'just-asm', 'wasm-binary']:
+        for method in ['interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary']:
           command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', c)] + opts + extra
           command += ['-s', 'BINARYEN_METHOD="' + method + '"']
           print '....' + ' '.join(command)
@@ -683,7 +684,7 @@ if has_emcc:
 
             execute()
 
-            if method in ['asm2wasm', 'wasm-s-parser']:
+            if method in ['interpret-asm2wasm', 'interpret-s-expr']:
               # binary and back
               shutil.copyfile('a.wasm.wast', 'a.wasm.original.wast')
               recreated = binary_format_check('a.wasm.wast', verify_final_result=False)

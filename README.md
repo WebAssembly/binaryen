@@ -121,18 +121,9 @@ The `BINARYEN` flag tells it to emit code using `wasm.js`, and the `BINARYEN_ROO
 
 ### C/C++ Source => asm2wasm => WebAssembly
 
-Using emcc you can generate asm.js files for direct parsing by `asm2wasm` on the commandline, for example using
+When using `emcc` with the `BINARYEN` option, it will use Binaryen to build to WebAssembly. See the [emscripten wiki](https://github.com/kripken/emscripten/wiki/WebAssembly) for more details.
 
-```
-emcc src.cpp -o a.html --separate-asm
-```
-
-That will emit `a.html`, `a.js`, and `a.asm.js`. That last file is the asm.js module, which you can pass into `asm2wasm`.
-
-For basic tests, that command should work, but in general you need a few more arguments to emcc, see what emcc.py does when given the `BINARYEN` option, including:
-
- * `ALIASING_FUNCTION_POINTERS=0` because WebAssembly does not allow aliased function pointers (there is a single table).
- * `GLOBAL_BASE=1000` because WebAssembly lacks global variables, so `asm2wasm` maps them onto addresses in memory. This requires that you have some reserved space for those variables. With that argument, we reserve the area up to `1000`.
+ * Build with `EMCC_DEBUG=1` in the env to see Emscripten's debug output as it runs the various tools, and also to save the intermediate files in `/tmp/emscripten_temp`. It will save both the `.s` and `.wast` files there (in addition to other files it normally saves).
 
 ### C/C++ Source => WebAssembly LLVM backend => s2wasm => WebAssembly
 
@@ -157,10 +148,7 @@ EMCC_WASM_BACKEND=1 ./emcc input.cpp -s BINARYEN=1
 
 (without the env var, the `BINARYEN` option will make it use the asm.js backend, then `asm2wasm`).
 
- * You can see vanilla LLVM tested with Emscripten in `check.py` in this repo (look for `VANILLA_EMCC` in that file), using an Emscripten submodule.
- * Due to current limitations of the WebAssembly backend, you might want to build with `-s ONLY_MY_CODE=1 -O1`, which will avoid linking in libc (which contains varargs, which are not yet supported), and optimizes so that the stack is not used (which is also not yet supported).
- * The output when building in this mode is similar to what you get in general when building with Binaryen in Emscripten: a main `.js` file, and the compiled code in a `.wast` file alongside it.
- * Build with `EMCC_DEBUG=1` in the env to see Emscripten's debug output as it runs the various tools, and also to save the intermediate files in `/tmp/emscripten_temp`. It will save both the `.s` and `.wast` files there (in addition to other files it normally saves).
+For more details, see the [emscripten wiki](https://github.com/kripken/emscripten/wiki/WebAssembly).
 
 ## Testing
 

@@ -17,10 +17,10 @@
 function integrateWasmJS(Module) {
   // wasm.js has several methods for creating the compiled code module here:
   //  * 'native-wasm' : use native WebAssembly support in the browser
-  //  * 'wasm-s-parser': load s-expression code from a .wast and interpret
-  //  * 'wasm-binary': load binary wasm and interpret
-  //  * 'asm2wasm': load asm.js code, translate to wasm, and interpret
-  //  * 'just-asm': no wasm, just load the asm.js code and use that (good for testing)
+  //  * 'interpret-s-expr': load s-expression code from a .wast and interpret
+  //  * 'interpret-binary': load binary wasm and interpret
+  //  * 'interpret-asm2wasm': load asm.js code, translate to wasm, and interpret
+  //  * 'asmjs': no wasm, just load the asm.js code and use that (good for testing)
   // The method can be set at compile time (BINARYEN_METHOD), or runtime by setting Module['wasmJSMethod'].
   // The method can be a comma-separated list, in which case, we will try the
   // options one by one. Some of them can fail gracefully, and then we can try
@@ -28,7 +28,7 @@ function integrateWasmJS(Module) {
 
   // inputs
 
-  var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'native-wasm,wasm-s-parser'; // by default, try native and then .wast
+  var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'native-wasm,interpret-s-expr'; // by default, try native and then .wast
 
   var wasmTextFile = Module['wasmTextFile'] || {{{ wasmTextFile }}};
   var wasmBinaryFile = Module['wasmBinaryFile'] || {{{ wasmBinaryFile }}};
@@ -229,23 +229,23 @@ function integrateWasmJS(Module) {
 
       wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
 
-      // Prepare to generate wasm, using either asm2wasm or wasm-s-parser
+      // Prepare to generate wasm, using either asm2wasm or s-exprs
       var code;
-      if (method === 'wasm-binary') {
+      if (method === 'interpret-binary') {
         code = getBinary();
       } else {
-        code = Module['read'](method == 'asm2wasm' ? asmjsCodeFile : wasmTextFile);
+        code = Module['read'](method == 'interpret-asm2wasm' ? asmjsCodeFile : wasmTextFile);
       }
       var temp;
-      if (method == 'asm2wasm') {
+      if (method == 'interpret-asm2wasm') {
         temp = wasmJS['_malloc'](code.length + 1);
         wasmJS['writeAsciiToMemory'](code, temp);
         wasmJS['_load_asm2wasm'](temp);
-      } else if (method === 'wasm-s-parser') {
+      } else if (method === 'interpret-s-expr') {
         temp = wasmJS['_malloc'](code.length + 1);
         wasmJS['writeAsciiToMemory'](code, temp);
         wasmJS['_load_s_expr2wasm'](temp);
-      } else if (method === 'wasm-binary') {
+      } else if (method === 'interpret-binary') {
         temp = wasmJS['_malloc'](code.length);
         wasmJS['HEAPU8'].set(code, temp);
         wasmJS['_load_binary2wasm'](temp, code.length);
@@ -261,9 +261,9 @@ function integrateWasmJS(Module) {
         Module['newBuffer'] = null;
       }
 
-      if (method == 'wasm-s-parser') {
+      if (method == 'interpret-s-expr') {
         applyMappedGlobals(wasmTextFile);
-      } else if (method == 'wasm-binary') {
+      } else if (method == 'interpret-binary') {
         applyMappedGlobals(wasmBinaryFile);
       }
 
@@ -281,9 +281,9 @@ function integrateWasmJS(Module) {
     //Module['printErr']('using wasm/js method: ' + curr);
     if (curr === 'native-wasm') {
       if (doNativeWasm()) return;
-    } else if (curr === 'just-asm') {
+    } else if (curr === 'asmjs') {
       if (doJustAsm()) return;
-    } else if (curr === 'asm2wasm' || curr === 'wasm-s-parser' || curr === 'wasm-binary') {
+    } else if (curr === 'interpret-asm2wasm' || curr === 'interpret-s-expr' || curr === 'interpret-binary') {
       if (doWasmPolyfill(curr)) return;
     } else {
       throw 'bad method: ' + curr;
