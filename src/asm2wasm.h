@@ -800,9 +800,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   std::function<Expression* (Ref)> process = [&](Ref ast) -> Expression* {
     AstStackHelper astStackHelper(ast); // TODO: only create one when we need it?
-    std::cout << "at: ";
-    ast->stringify(std::cout);
-    std::cout << '\n';
+    if (debug) {
+      std::cout << "at: ";
+      ast->stringify(std::cout);
+      std::cout << '\n';
+    }
     IString what = ast[0]->getIString();
     if (what == STAT) {
       return process(ast[1]); // and drop return value, if any
