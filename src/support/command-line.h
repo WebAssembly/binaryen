@@ -37,7 +37,7 @@ class Options {
   typedef std::function<void(Options *, const std::string &)> Action;
   enum class Arguments { Zero, One, N, Optional };
 
-  int debug;
+  bool debug;
   std::map<std::string, std::string> extra;
 
   Options(const std::string &command, const std::string &description);
