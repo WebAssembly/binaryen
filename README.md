@@ -109,9 +109,7 @@ Pass `--debug` on the command line to see debug info, about asm.js functions as 
 
 ### C/C++ Source ⇒ asm2wasm ⇒ WebAssembly
 
-When using `emcc` with the `BINARYEN` option, it will use Binaryen to build to WebAssembly. See the [emscripten wiki](https://github.com/kripken/emscripten/wiki/WebAssembly) for more details.
-
- * Build with `EMCC_DEBUG=1` in the env to see Emscripten's debug output as it runs the various tools, and also to save the intermediate files in `/tmp/emscripten_temp`. It will save both the `.s` and `.wast` files there (in addition to other files it normally saves).
+When using `emcc` with the `BINARYEN` option, it will use Binaryen to build to WebAssembly. This lets you compile C and C++ to WebAssembly, with emscripten using asm.js internally as a build step. Since emscripten's asm.js generation is very stable, and asm2wasm is a fairly simple process, this method of compiling C and C++ to WebAssembly is usable already. See the [emscripten wiki](https://github.com/kripken/emscripten/wiki/WebAssembly) for more details about how to use it.
 
 ### C/C++ Source ⇒ WebAssembly LLVM backend ⇒ s2wasm ⇒ WebAssembly
 
