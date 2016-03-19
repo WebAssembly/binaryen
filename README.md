@@ -23,7 +23,7 @@ This repository contains code that builds the following tools in `bin/`:
  * **asm2wasm**: An asm.js-to-WebAssembly compiler, built on Emscripten's asm optimizer infrastructure. This is used by Emscripten in Binaryen mode when it uses Emscripten's fastcomp asm.js backend.
  * **wasm2asm**: A WebAssembly-to-asm.js compiler, the reverse of `asm2wasm`. This is a work in progress.
  * **s2wasm**: A compiler from the `.s` format emitted by the new WebAssembly backend being developed in LLVM. This is used by Emscripten in Binaryen mode when it integrates with the new LLVM backend.
- * **wasm.js**: A WebAssembly-to-JavaScript bridge. wasm.js contains Binaryen components compiled to JavaScript, including the interpreter, `asm2wasm`, the S-Expression parser, etc., which allow you to load WebAssembly and execute it even if the browser doesn't have native support yet. Having `asm2wasm` also gives the option to take an asm.js build and execute it as WebAssembly, which is useful for testing.
+ * **wasm.js**: wasm.js contains Binaryen components compiled to JavaScript, including the interpreter, `asm2wasm`, the S-Expression parser, etc., which allow you to load WebAssembly and execute it even if the browser doesn't have native support yet. This can be useful as a (slow) polyfill.
 
 Usage instructions for each are below.
 
@@ -106,18 +106,6 @@ You should see something like this:
 On Linux and Mac you should see pretty colors as in that image. Set `COLORS=0` in the env to disable colors if you prefer that. Set `COLORS=1` in the env to force colors (useful when piping to `more`, for example).
 
 Pass `--debug` on the command line to see debug info, about asm.js functions as they are parsed, etc. `--debug=2` will show even more info.
-
-### wasm.js
-
-Update your emscripten configuration file, setting the `BINARYEN_ROOT` variable to point to the directory containing binaryen.
-
-Run Emscripten's `emcc` command, passing it an additional flag:
-
-```
-emcc -s BINARYEN=1 [whatever other emcc flags you want]
-```
-
-The `BINARYEN` flag tells it to emit code using `wasm.js`, and the `BINARYEN_ROOT` config variable tells where to find `wasm.js` itself. The output `*.js` file will then contain the entire polyfill (`asm2wasm` translator + `wasm.js` interpreter). The asm.js code will be in `*.asm.js`.
 
 ### C/C++ Source ⇒ asm2wasm ⇒ WebAssembly
 
