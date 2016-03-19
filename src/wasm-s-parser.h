@@ -1089,7 +1089,7 @@ private:
   }
 
   void parseExport(Element& s) {
-    if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
+    if (!s[2]->dollared() && !isdigit(s[2]->str()[0])) {
       assert(s[2]->str() == MEMORY);
       if (!hasMemory) onError();
       wasm.memory.exportName = s[1]->str();
