@@ -681,7 +681,7 @@ public:
 // Operators
 
 enum UnaryOp {
-  Clz, Ctz, Popcnt, // int
+  Clz, Ctz, Popcnt, EqZ, // int
   Neg, Abs, Ceil, Floor, Trunc, Nearest, Sqrt, // float
   // conversions
   ExtendSInt32, ExtendUInt32, WrapInt64, TruncSFloat32, TruncUFloat32, TruncSFloat64, TruncUFloat64, ReinterpretFloat, // int

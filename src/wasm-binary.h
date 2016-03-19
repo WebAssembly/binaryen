@@ -263,6 +263,7 @@ enum ASTNodes {
   I32Clz = 0x57,
   I32Ctz = 0x58,
   I32Popcnt = 0x59,
+  I32EqZ = 0xc0, // XXX
   BoolNot = 0x5a,
   I64Add = 0x5b,
   I64Sub = 0x5c,
@@ -290,6 +291,7 @@ enum ASTNodes {
   I64Clz = 0x72,
   I64Ctz = 0x73,
   I64Popcnt = 0x74,
+  I64EqZ = 0xc1, // XXX
   F32Add = 0x75,
   F32Sub = 0x76,
   F32Mul = 0x77,
@@ -966,6 +968,7 @@ public:
       case Clz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Clz        : BinaryConsts::I64Clz); break;
       case Ctz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Ctz        : BinaryConsts::I64Ctz); break;
       case Popcnt:           o << int8_t(curr->type == i32 ? BinaryConsts::I32Popcnt     : BinaryConsts::I64Popcnt); break;
+      case EqZ:              o << int8_t(curr->type == i32 ? BinaryConsts::I32EqZ        : BinaryConsts::I64EqZ); break;
       case Neg:              o << int8_t(curr->type == f32 ? BinaryConsts::F32Neg        : BinaryConsts::F64Neg); break;
       case Abs:              o << int8_t(curr->type == f32 ? BinaryConsts::F32Abs        : BinaryConsts::F64Abs); break;
       case Ceil:             o << int8_t(curr->type == f32 ? BinaryConsts::F32Ceil       : BinaryConsts::F64Ceil); break;
@@ -1798,6 +1801,8 @@ public:
       case BinaryConsts::I64Ctz:         curr->op = Ctz;           curr->type = i64; break;
       case BinaryConsts::I32Popcnt:      curr->op = Popcnt;        curr->type = i32; break;
       case BinaryConsts::I64Popcnt:      curr->op = Popcnt;        curr->type = i64; break;
+      case BinaryConsts::I32EqZ:         curr->op = EqZ;           curr->type = i32; break;
+      case BinaryConsts::I64EqZ:         curr->op = EqZ;           curr->type = i64; break;
       case BinaryConsts::F32Neg:         curr->op = Neg;           curr->type = f32; break;
       case BinaryConsts::F64Neg:         curr->op = Neg;           curr->type = f64; break;
       case BinaryConsts::F32Abs:         curr->op = Abs;           curr->type = f32; break;
