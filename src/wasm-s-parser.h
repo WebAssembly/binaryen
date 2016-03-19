@@ -487,7 +487,10 @@ public:
           abort_on(op);
         }
         case 'e': {
-          if (op[1] == 'q') return makeBinary(s, BinaryOp::Eq, type);
+          if (op[1] == 'q') {
+            if (op[2] == 0) return makeBinary(s, BinaryOp::Eq, type);
+            if (op[2] == 'z') return makeUnary(s, UnaryOp::EqZ, type);
+          }
           if (op[1] == 'x') return makeUnary(s, op[7] == 'u' ? UnaryOp::ExtendUInt32 : UnaryOp::ExtendSInt32, type);
           abort_on(op);
         }

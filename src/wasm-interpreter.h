@@ -391,6 +391,7 @@ private:
             case Clz:            return value.countLeadingZeroes();
             case Ctz:            return value.countTrailingZeroes();
             case Popcnt:         return value.popCount();
+            case EqZ:            return Literal(int32_t(value == Literal(int32_t(0))));
             case ReinterpretInt: return value.castToF32();
             case ExtendSInt32:   return value.extendToSI64();
             case ExtendUInt32:   return value.extendToUI64();
@@ -404,6 +405,7 @@ private:
             case Clz:            return value.countLeadingZeroes();
             case Ctz:            return value.countTrailingZeroes();
             case Popcnt:         return value.popCount();
+            case EqZ:            return Literal(int32_t(value == Literal(int64_t(0))));
             case WrapInt64:      return value.truncateToI32();
             case ReinterpretInt: return value.castToF64();
             case ConvertUInt64:  return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();

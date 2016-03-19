@@ -264,6 +264,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
       case Clz:              o << "clz";     break;
       case Ctz:              o << "ctz";     break;
       case Popcnt:           o << "popcnt";  break;
+      case EqZ:              o << "eqz";     break;
       case Neg:              o << "neg";     break;
       case Abs:              o << "abs";     break;
       case Ceil:             o << "ceil";    break;
