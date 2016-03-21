@@ -6,6 +6,8 @@
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
   (import $abort "env" "abort" (param i32))
+  (import $print "env" "print" (param i32))
+  (import $h "env" "h" (param i32))
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
@@ -416,7 +418,7 @@
         (nop)
         (br $for-out$0)
       )
-      (call $h
+      (call_import $h
         (get_local $i)
       )
       (set_local $i
@@ -461,18 +463,18 @@
   )
   (func $continues
     (loop $while-out$0 $while-in$1
-      (call $print
+      (call_import $print
         (i32.const 1)
       )
       (loop $do-once$2 $unlikely-continue$3
-        (call $print
+        (call_import $print
           (i32.const 5)
         )
         (br_if $unlikely-continue$3
-          (call $check)
+          (i32.const 0)
         )
       )
-      (call $print
+      (call_import $print
         (i32.const 2)
       )
       (br $while-in$1)

@@ -9,6 +9,8 @@ function asm() {
   var Math_ceil = global.Math.ceil;
 
   var abort = env.abort;
+  var print = env.print;
+  var h = env.h;
 
   function big_negative() {
     var temp = 0.0;
@@ -156,7 +158,7 @@ function asm() {
       print(1);
       do {
         print(5);
-        if (check()) continue;
+        if (0) continue;
       } while (0);
       print(2);
     }
