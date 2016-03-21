@@ -681,8 +681,10 @@ public:
 // Operators
 
 enum UnaryOp {
-  Clz, Ctz, Popcnt, EqZ, // int
+  Clz, Ctz, Popcnt, // int
   Neg, Abs, Ceil, Floor, Trunc, Nearest, Sqrt, // float
+  // relational
+  EqZ,
   // conversions
   ExtendSInt32, ExtendUInt32, WrapInt64, TruncSFloat32, TruncUFloat32, TruncSFloat64, TruncUFloat64, ReinterpretFloat, // int
   ConvertSInt32, ConvertUInt32, ConvertSInt64, ConvertUInt64, PromoteFloat32, DemoteFloat64, ReinterpretInt // float
@@ -972,6 +974,11 @@ public:
 
   UnaryOp op;
   Expression *value;
+
+  // the type is always the type of the operands,
+  // except for relationals
+
+  bool isRelational() { return op == EqZ; }
 };
 
 class Binary : public Expression {
