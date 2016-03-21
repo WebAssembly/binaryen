@@ -49,6 +49,7 @@ class S2WasmBuilder {
  public:
   S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug,
                 size_t globalBase, size_t stackAllocation,
+                size_t userInitialMemory, size_t userMaxMemory,
                 bool ignoreUnknownSymbols, Name startFunction)
       : wasm(wasm),
         allocator(wasm.allocator),
@@ -57,7 +58,19 @@ class S2WasmBuilder {
         startFunction(startFunction),
         globalBase(globalBase),
         nextStatic(globalBase),
-        initialMemory(0) {
+        minInitialMemory(0),
+        userInitialMemory(userInitialMemory),
+        userMaxMemory(userMaxMemory) {
+    if (userMaxMemory && userMaxMemory < userInitialMemory) {
+      Fatal() << "Specified max memory " << userMaxMemory <<
+          " is < specified initial memory " << userInitialMemory;
+    }
+    if (roundUpToPageSize(userMaxMemory) != userMaxMemory) {
+      Fatal() << "Specified max memory " << userMaxMemory << " is not a multiple of 64k";
+    }
+    if (roundUpToPageSize(userInitialMemory) != userInitialMemory) {
+      Fatal() << "Specified initial memory " << userInitialMemory << " is not a multiple of 64k";
+    }
     s = input;
     scan();
     s = input;
@@ -77,7 +90,10 @@ class S2WasmBuilder {
   size_t globalBase, // where globals can start to be statically allocated, i.e., the data segment
          nextStatic; // location of next static allocation
   std::map<Name, int32_t> staticAddresses; // name => address
-  size_t initialMemory; // Initial size (in bytes) of memory (after linking, this is rounded and set on the wasm object in pages)
+  size_t minInitialMemory; // Minimum initial size (in bytes) of memory.
+  size_t userInitialMemory; // Initial memory size (in bytes) specified by the user.
+  size_t userMaxMemory; // Max memory size (in bytes) specified by the user.
+  //(after linking, this is rounded and set on the wasm object in pages)
 
   struct Relocation {
     uint32_t* data;
@@ -95,6 +111,23 @@ class S2WasmBuilder {
   std::map<Name, size_t> functionIndexes;
 
   // utilities
+
+  // For fatal errors which could arise from input (i.e. not assertion failures)
+  class Fatal {
+   public:
+    Fatal() {
+      std::cerr << "Fatal: ";
+    }
+    template<typename T>
+    Fatal &operator<<(T arg) {
+      std::cerr << std::forward<T>(arg);
+      return *this;
+    }
+    ~Fatal() {
+      std::cerr << "\n";
+      exit(1);
+    }
+  };
 
   void skipWhitespace() {
     while (1) {
@@ -399,7 +432,7 @@ class S2WasmBuilder {
       addressSegments[nextStatic] = wasm.memory.segments.size();
       wasm.memory.segments.emplace_back(
           nextStatic, reinterpret_cast<char*>(raw), pointerSize);
-      initialMemory = nextStatic + pointerSize;
+      minInitialMemory = nextStatic + pointerSize;
     }
     nextStatic += pointerSize;
   }
@@ -410,7 +443,7 @@ class S2WasmBuilder {
     nextStatic = (nextStatic + 15) & static_cast<size_t>(-16);
     staticAddresses[".stack"] = nextStatic;
     nextStatic += stackAllocation;
-    initialMemory = nextStatic;
+    minInitialMemory = nextStatic;
   }
 
   void process() {
@@ -1155,7 +1188,7 @@ class S2WasmBuilder {
       wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], size);
     }
     nextStatic += size;
-    initialMemory = nextStatic;
+    minInitialMemory = nextStatic;
   }
 
   void parseLcomm(Name name, size_t align=1) {
@@ -1169,7 +1202,7 @@ class S2WasmBuilder {
     while (nextStatic % align) nextStatic++;
     staticAddresses[name] = nextStatic;
     nextStatic += size;
-    initialMemory = nextStatic;
+    minInitialMemory = nextStatic;
   }
 
   void skipImports() {
@@ -1183,11 +1216,25 @@ class S2WasmBuilder {
     }
   }
 
+  static size_t roundUpToPageSize(size_t size) {
+    return (size + Memory::kPageSize - 1) & Memory::kPageMask;
+  }
+
   void fix() {
     // Round the memory size up to a page, and update the page-increment versions
     // of initial and max
-    wasm.memory.initial = ((initialMemory + Memory::kPageSize - 1) & Memory::kPageMask) /
-        Memory::kPageSize;
+    size_t initialMem = roundUpToPageSize(minInitialMemory);
+    if (userInitialMemory) {
+      if (initialMem > userInitialMemory) {
+        Fatal() << "Specified initial memory size " << userInitialMemory <<
+          " is smaller than required size " << initialMem;
+      }
+      wasm.memory.initial = userInitialMemory / Memory::kPageSize;
+    } else {
+      wasm.memory.initial = initialMem / Memory::kPageSize;
+    }
+
+    if (userMaxMemory) wasm.memory.max = userMaxMemory / Memory::kPageSize;
     wasm.memory.exportName = MEMORY;
 
     // XXX For now, export all functions marked .globl.

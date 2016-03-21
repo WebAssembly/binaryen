@@ -58,6 +58,16 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["stack-allocation"] = argument;
            })
+      .add("--initial-memory", "-i", "Initial size of the linear memory",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["initial-memory"] = argument;
+           })
+      .add("--max-memory", "-m", "Maximum size of the linear memory",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["max-memory"] = argument;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -75,9 +85,18 @@ int main(int argc, const char *argv[]) {
       options.extra.find("stack-allocation") != options.extra.end()
           ? std::stoull(options.extra["stack-allocation"])
           : 0;
+  size_t initialMem =
+      options.extra.find("initial-memory") != options.extra.end()
+          ? std::stoull(options.extra["initial-memory"])
+          : 0;
+  size_t maxMem =
+      options.extra.find("max-memory") != options.extra.end()
+          ? std::stoull(options.extra["max-memory"])
+          : 0;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
   S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, globalBase,
-                       stackAllocation, ignoreUnknownSymbols, startFunction);
+                       stackAllocation, initialMem, maxMem, ignoreUnknownSymbols,
+                       startFunction);
 
   if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
   std::stringstream meta;
