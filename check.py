@@ -266,29 +266,31 @@ print '[ checking asm2wasm testcases... ]\n'
 
 for asm in tests:
   if asm.endswith('.asm.js'):
-    wasm = asm.replace('.asm.js', '.fromasm')
     cmd = [os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)]
     for precise in [1, 0]:
+      wasm = asm.replace('.asm.js', '.fromasm')
       if not precise:
         cmd += ['--imprecise']
         wasm += '.imprecise'
+      wasm = os.path.join('test', wasm)
       print '..', asm, wasm
       print '    ', ' '.join(cmd)
       actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
       assert err == '', 'bad err:' + err
 
       # verify output
-      if not os.path.exists(os.path.join('test', wasm)):
-        print actual
-        raise Exception('output .wast file does not exist')
-      expected = open(os.path.join('test', wasm)).read()
+      if not os.path.exists(wasm):
+        raise Exception('output .wast file %s does not exist' % wasm)
+      expected = open(wasm).read()
       if actual != expected:
         fail(actual, expected)
+
+      binary_format_check(wasm, verify_final_result=False)
 
       # verify in wasm
       if interpreter:
         # remove imports, spec interpreter doesn't know what to do with them
-        subprocess.check_call([os.path.join('bin', 'binaryen-shell'), '--remove-imports', '--print', os.path.join('test', wasm)], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
+        subprocess.check_call([os.path.join('bin', 'binaryen-shell'), '--remove-imports', '--print', wasm], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
         proc = subprocess.Popen([interpreter, 'ztemp.wast'], stderr=subprocess.PIPE)
         out, err = proc.communicate()
         if proc.returncode != 0:
