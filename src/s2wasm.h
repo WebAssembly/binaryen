@@ -812,7 +812,8 @@ class S2WasmBuilder {
           break;
         }
         case 'e': {
-          if (match("eq")) makeBinary(BinaryOp::Eq, i32);
+          if (match("eqz")) makeUnary(UnaryOp::EqZ, i32);
+          else if (match("eq")) makeBinary(BinaryOp::Eq, i32);
           else if (match("extend_s/i32")) makeUnary(UnaryOp::ExtendSInt32, type);
           else if (match("extend_u/i32")) makeUnary(UnaryOp::ExtendUInt32, type);
           else abort_on("type.e");

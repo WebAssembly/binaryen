@@ -259,7 +259,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   }
   void visitUnary(Unary *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->type) << '.';
+    prepareColor(o) << printWasmType(curr->isRelational() ? curr->value->type : curr->type) << '.';
     switch (curr->op) {
       case Clz:              o << "clz";     break;
       case Ctz:              o << "ctz";     break;
