@@ -29,6 +29,8 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
+  bool imprecise = false;
+
   Options options("asm2wasm", "Translate asm.js files to .wast files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
@@ -44,6 +46,10 @@ int main(int argc, const char *argv[]) {
       .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
              o->extra["total memory"] = argument;
+           })
+      .add("--imprecise", "-i", "Imprecise optimizations", Options::Arguments::Zero,
+           [&imprecise](Options *o, const std::string &) {
+             imprecise = true;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
@@ -81,7 +87,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   AllocatingModule wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug);
+  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise);
   asm2wasm.processAsm(asmjs);
 
   if (options.debug) std::cerr << "optimizing..." << std::endl;
