@@ -641,11 +641,17 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       for (unsigned k = 0; k < contents->size(); k++) {
         Ref pair = contents[k];
         IString key = pair[0]->getIString();
-        Ref value = pair[1];
-        assert(value[0] == NAME);
+        assert(pair[1][0] == NAME);
+        IString value = pair[1][1]->getIString();
+        if (key == Name("_emscripten_replace_memory")) {
+          // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
+          assert(wasm.functionsMap.find(value) == wasm.functionsMap.end());
+          continue;
+        }
+        assert(wasm.functionsMap.find(value) != wasm.functionsMap.end());
         auto export_ = allocator.alloc<Export>();
         export_->name = key;
-        export_->value = value[1]->getIString();
+        export_->value = value;
         wasm.addExport(export_);
       }
     }
