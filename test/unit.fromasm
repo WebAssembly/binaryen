@@ -129,9 +129,8 @@
   (func $intOps (result i32)
     (local $x i32)
     (return
-      (i32.eq
+      (i32.eqz
         (get_local $x)
-        (i32.const 0)
       )
     )
   )

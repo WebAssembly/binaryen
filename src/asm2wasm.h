@@ -1058,13 +1058,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         ret->type = WasmType::i32;
         return ret;
       } else if (ast[1] == L_NOT) {
-        // no logical unary not, so do == 0
-        auto ret = allocator.alloc<Binary>();
-        ret->op = Eq;
-        ret->left = process(ast[2]);
-        ret->right = allocator.alloc<Const>()->set(Literal(0));
-        assert(ret->left->type == ret->right->type);
-        ret->finalize();
+        auto ret = allocator.alloc<Unary>();
+        ret->op = EqZ;
+        ret->value = process(ast[2]);
+        ret->type = i32;
         return ret;
       }
       abort_on("bad unary", ast);
