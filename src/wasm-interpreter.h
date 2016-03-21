@@ -631,7 +631,7 @@ private:
           return Literal(int32_t(val));
         } else {
           int64_t converted = val;
-          if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap("i32.truncSFloat overflow");
+          if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap("i64.truncSFloat overflow");
           return Literal(converted);
         }
       }
@@ -640,7 +640,7 @@ private:
         double val = value.getFloat();
         if (isnan(val)) trap("truncUFloat of nan");
         if (curr->type == i32) {
-          if (val > (double)std::numeric_limits<uint32_t>::max() || val <= (double)-1) trap("i64.truncUFloat overflow");
+          if (val > (double)std::numeric_limits<uint32_t>::max() || val <= (double)-1) trap("i32.truncUFloat overflow");
           return Literal(uint32_t(val));
         } else {
           uint64_t converted = val;

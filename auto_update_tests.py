@@ -6,10 +6,16 @@ print '[ processing and updating testcases... ]\n'
 
 for asm in sorted(os.listdir('test')):
   if asm.endswith('.asm.js'):
-    print '..', asm
     wasm = asm.replace('.asm.js', '.fromasm')
-    actual, err = subprocess.Popen([os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    open(os.path.join('test', wasm), 'w').write(actual)
+    for precise in [1, 0]:
+      cmd = [os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)]
+      if not precise:
+        cmd += ['--imprecise']
+        wasm += '.imprecise'
+      print '..', asm, wasm
+      print '    ', ' '.join(cmd)
+      actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+      open(os.path.join('test', wasm), 'w').write(actual)
 
 for wasm in sorted(os.listdir('test')):
   if wasm.endswith('.wast') and os.path.basename(wasm) not in ['kitchen_sink.wast']: # i64s in kitchen_sink

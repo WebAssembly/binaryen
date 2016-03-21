@@ -151,6 +151,7 @@ class Asm2WasmBuilder {
 
   bool memoryGrowth;
   bool debug;
+  bool imprecise;
 
 public:
   std::map<IString, MappedGlobal> mappedGlobals;
@@ -254,13 +255,14 @@ private:
   }
 
 public:
- Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth, bool debug)
+ Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth, bool debug, bool imprecise)
      : wasm(wasm),
        allocator(wasm.allocator),
        nextGlobal(8),
        maxGlobal(1000),
        memoryGrowth(memoryGrowth),
-       debug(debug) {}
+       debug(debug),
+       imprecise(imprecise) {}
 
  void processAsm(Ref ast);
  void optimize();
@@ -1009,37 +1011,38 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else if (ast[1] == B_NOT) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2][0] == UNARY_PREFIX && ast[2][1] == B_NOT) {
-#if 0
-          auto ret = allocator.alloc<Unary>();
-          ret->op = TruncSFloat64; // equivalent to U, except for error handling, which asm.js doesn't have anyhow
-          ret->value = process(ast[2][2]);
-          ret->type = WasmType::i32;
-          return ret;
-#endif
-          // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
-          CallImport *ret = allocator.alloc<CallImport>();
-          ret->target = F64_TO_INT;
-          auto input = process(ast[2][2]);
-          if (input->type == f32) {
-            auto conv = allocator.alloc<Unary>();
-            conv->op = PromoteFloat32;
-            conv->value = input;
-            conv->type = WasmType::f64;
-            input = conv;
+          if (imprecise) {
+            auto ret = allocator.alloc<Unary>();
+            ret->value = process(ast[2][2]);
+            ret->op = ret->value->type == f64 ? TruncSFloat64 : TruncSFloat32; // imprecise, because this wasm thing might trap, while asm.js never would
+            ret->type = WasmType::i32;
+            return ret;
+          } else {
+            // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
+            CallImport *ret = allocator.alloc<CallImport>();
+            ret->target = F64_TO_INT;
+            auto input = process(ast[2][2]);
+            if (input->type == f32) {
+              auto conv = allocator.alloc<Unary>();
+              conv->op = PromoteFloat32;
+              conv->value = input;
+              conv->type = WasmType::f64;
+              input = conv;
+            }
+            ret->operands.push_back(input);
+            ret->type = i32;
+            static bool addedImport = false;
+            if (!addedImport) {
+              addedImport = true;
+              auto import = allocator.alloc<Import>(); // f64-to-int = asm2wasm.f64-to-int;
+              import->name = F64_TO_INT;
+              import->module = ASM2WASM;
+              import->base = F64_TO_INT;
+              import->type = ensureFunctionType("id", &wasm, allocator);
+              wasm.addImport(import);
+            }
+            return ret;
           }
-          ret->operands.push_back(input);
-          ret->type = i32;
-          static bool addedImport = false;
-          if (!addedImport) {
-            addedImport = true;
-            auto import = allocator.alloc<Import>(); // f64-to-int = asm2wasm.f64-to-int;
-            import->name = F64_TO_INT;
-            import->module = ASM2WASM;
-            import->base = F64_TO_INT;
-            import->type = ensureFunctionType("id", &wasm, allocator);
-            wasm.addImport(import);
-          }
-          return ret;
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();
