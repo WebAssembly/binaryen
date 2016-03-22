@@ -419,8 +419,9 @@ private:
     return nullptr;
   }
 
+  // ensure a nameless block
   Block* blockify(Expression* expression) {
-    if (expression->is<Block>()) return expression->dyn_cast<Block>();
+    if (expression->is<Block>() && !expression->cast<Block>()->name.is()) return expression->dyn_cast<Block>();
     auto ret = allocator.alloc<Block>();
     ret->list.push_back(expression);
     ret->finalize();

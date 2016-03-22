@@ -55,6 +55,7 @@ function asm() {
   }
   function switcher(x) {
     x = x | 0;
+    var waka = 0;
     switch (x | 0) {
       case 1: return 1;
       case 2: return 2;
@@ -79,6 +80,32 @@ function asm() {
         break;
       }
     }
+
+    L1 : while (1) {
+     L3 : while (1) switch (x) {
+     case -1:
+      {
+       break L1;
+       break;
+      }
+     case 116:
+      {
+       waka = 1;
+       break;
+      }
+     case 110:
+      {
+       break L3;
+       break;
+      }
+     default:
+      {
+       break L1;
+      }
+     }
+     h(120);
+    }
+
     return 0;
   }
   function blocker() {

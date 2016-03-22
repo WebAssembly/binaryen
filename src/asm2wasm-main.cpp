@@ -29,6 +29,7 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
+  bool opts = true;
   bool imprecise = false;
 
   Options options("asm2wasm", "Translate asm.js files to .wast files");
@@ -46,6 +47,10 @@ int main(int argc, const char *argv[]) {
       .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
              o->extra["total memory"] = argument;
+           })
+      .add("--no-opts", "-n", "Disable optimization passes", Options::Arguments::Zero,
+           [&opts](Options *o, const std::string &) {
+             opts = false;
            })
       .add("--imprecise", "-i", "Imprecise optimizations", Options::Arguments::Zero,
            [&imprecise](Options *o, const std::string &) {
@@ -90,8 +95,10 @@ int main(int argc, const char *argv[]) {
   Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise);
   asm2wasm.processAsm(asmjs);
 
-  if (options.debug) std::cerr << "optimizing..." << std::endl;
-  asm2wasm.optimize();
+  if (opts) {
+    if (options.debug) std::cerr << "optimizing..." << std::endl;
+    asm2wasm.optimize();
+  }
 
   if (options.debug) std::cerr << "printing..." << std::endl;
   Output output(options.extra["output"], options.debug);
