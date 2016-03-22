@@ -177,6 +177,7 @@
     )
   )
   (func $switcher (param $x i32) (result i32)
+    (local $waka i32)
     (block $switch-default$3
       (block $switch-case$2
         (block $switch-case$1
@@ -242,6 +243,42 @@
         )
         (br $label$break$Lout)
       )
+    )
+    (loop $label$break$L1 $label$continue$L1
+      (loop $label$break$L3 $label$continue$L3
+        (block $switch$17
+          (block $switch-default$21
+            (block $switch-default$21
+              (block $switch-case$20
+                (block $switch-case$19
+                  (block $switch-case$18
+                    (br_table $switch-case$18 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$20 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$19 $switch-default$21
+                      (i32.sub
+                        (get_local $x)
+                        (i32.const -1)
+                      )
+                    )
+                  )
+                  (br $label$break$L1)
+                  (br $switch$17)
+                )
+                (set_local $waka
+                  (i32.const 1)
+                )
+                (br $switch$17)
+              )
+              (br $label$break$L3)
+              (br $switch$17)
+            )
+            (br $label$break$L1)
+          )
+        )
+        (br $label$continue$L3)
+      )
+      (call_import $h
+        (i32.const 120)
+      )
+      (br $label$continue$L1)
     )
     (return
       (i32.const 0)
