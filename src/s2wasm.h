@@ -120,7 +120,7 @@ class S2WasmBuilder {
     }
     template<typename T>
     Fatal &operator<<(T arg) {
-      std::cerr << std::forward<T>(arg);
+      std::cerr << arg;
       return *this;
     }
     ~Fatal() {
