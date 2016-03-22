@@ -55,6 +55,8 @@ function integrateWasmJS(Module) {
     parent: Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
   };
 
+  var exports = null;
+
   function lookupImport(mod, base) {
     var lookup = info;
     if (mod.indexOf('.') < 0) {
@@ -93,7 +95,7 @@ function integrateWasmJS(Module) {
     updateGlobalBufferViews();
     Module['reallocBuffer'] = function(size) {
       var old = Module['buffer'];
-      wasmJS['asmExports']['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
+      exports['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
       return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
     };
   }
@@ -183,11 +185,12 @@ function integrateWasmJS(Module) {
       info['env'] = env;
       var instance;
       instance = Wasm.instantiateModule(getBinary(), info);
-      mergeMemory(instance.exports.memory);
+      exports = instance.exports;
+      mergeMemory(exports.memory);
 
       applyMappedGlobals(wasmBinaryFile);
 
-      return instance.exports;
+      return exports;
     };
 
     return true;
@@ -220,12 +223,6 @@ function integrateWasmJS(Module) {
 
       info.global = global;
       info.env = env;
-
-      Module['reallocBuffer'] = function(size) {
-        var old = Module['buffer'];
-        wasmJS['asmExports']['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
-        return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
-      };
 
       wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
 
@@ -267,7 +264,9 @@ function integrateWasmJS(Module) {
         applyMappedGlobals(wasmBinaryFile);
       }
 
-      return wasmJS['asmExports'];
+      exports = wasmJS['asmExports'];
+
+      return exports;
     };
 
     return true;
