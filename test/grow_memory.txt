@@ -1,0 +1,22 @@
+alloc 1MB: 0
+alloc 1MB: 1
+alloc 1MB: 2
+alloc 1MB: 3
+alloc 1MB: 4
+alloc 1MB: 5
+alloc 1MB: 6
+alloc 1MB: 7
+alloc 1MB: 8
+alloc 1MB: 9
+alloc 1MB: 10
+alloc 1MB: 11
+alloc 1MB: 12
+alloc 1MB: 13
+alloc 1MB: 14
+alloc 1MB: 15
+alloc 1MB: 16
+alloc 1MB: 17
+alloc 1MB: 18
+alloc 1MB: 19
+ok.
+
