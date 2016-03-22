@@ -625,10 +625,7 @@ public:
 
   std::map<Name, uint32_t> mappedImports; // name of the Import => index
   uint32_t getImportIndex(Name name) {
-    if (mappedImports.size()) {
-      assert(mappedImports.count(name));
-      return mappedImports[name];
-    } else {
+    if (!mappedImports.size()) {
       // Create name => index mapping. 
       for (size_t i = 0; i < wasm->imports.size(); i++) {
         assert(mappedImports.count(wasm->imports[i]->name) == 0);
@@ -641,10 +638,7 @@ public:
   
   std::map<Name, uint32_t> mappedFunctions; // name of the Function => index 
   uint32_t getFunctionIndex(Name name) {
-    if (mappedFunctions.size()) {
-      assert(mappedFunctions.count(name));
-      return mappedFunctions[name];
-    } else {
+    if (!mappedFunctions.size()) {
       // Create name => index mapping. 
       for (size_t i = 0; i < wasm->functions.size(); i++) {
         assert(mappedFunctions.count(wasm->functions[i]->name) == 0);
