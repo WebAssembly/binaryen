@@ -42,7 +42,7 @@ Options::Options(const std::string &command, const std::string &description)
         exit(EXIT_SUCCESS);
       });
   add("--debug", "-d", "Print debug information to stderr", Arguments::Zero,
-      [](Options *o, const std::string &arguments) {});
+      [&](Options *o, const std::string &arguments) { debug = true; });
 }
 
 Options::~Options() {}
