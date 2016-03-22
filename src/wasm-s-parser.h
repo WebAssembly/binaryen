@@ -23,6 +23,7 @@
 #define wasm_wasm_s_parser_h
 
 #include <cmath>
+#include <cctype>
 
 #include "wasm.h"
 #include "mixed_arena.h"
