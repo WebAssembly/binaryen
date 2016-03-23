@@ -116,10 +116,10 @@ va:                                     # @va
 	i32.const	$push46=, buf
 	i32.const	$push45=, .L.str
 	i32.call	$discard=, sprintf@FUNCTION, $pop46, $pop45, $16
+	i32.const	$push65=, __stack_pointer
 	i32.const	$push63=, 80
-	i32.add 	$16=, $16, $pop63
-	i32.const	$push64=, __stack_pointer
-	i32.store	$discard=, 0($pop64), $16
+	i32.add 	$push64=, $16, $pop63
+	i32.store	$discard=, 0($pop65), $pop64
 	return  	$3
 	.endfunc
 .Lfunc_end0:

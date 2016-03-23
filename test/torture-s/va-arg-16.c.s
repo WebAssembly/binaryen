@@ -102,10 +102,10 @@ vafunction:                             # @vafunction
 	f64.ne  	$push43=, $0, $pop42
 	br_if   	0, $pop43       # 0: down to label0
 # BB#11:                                # %if.end47
+	i32.const	$push52=, __stack_pointer
 	i32.const	$push50=, 16
-	i32.add 	$4=, $4, $pop50
-	i32.const	$push51=, __stack_pointer
-	i32.store	$discard=, 0($pop51), $4
+	i32.add 	$push51=, $4, $pop50
+	i32.store	$discard=, 0($pop52), $pop51
 	return
 .LBB0_12:                               # %if.then46
 	end_block                       # label0:

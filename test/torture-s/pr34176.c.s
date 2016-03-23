@@ -53,28 +53,28 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push3=, __stack_pointer
 	i32.load	$push4=, 0($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$4=, $pop4, $pop5
+	i32.sub 	$2=, $pop4, $pop5
 	i32.const	$push6=, __stack_pointer
-	i32.store	$discard=, 0($pop6), $4
-	i32.const	$2=, 12
-	i32.add 	$2=, $4, $2
-	i32.call	$discard=, hash_find_entry@FUNCTION, $2
+	i32.store	$discard=, 0($pop6), $2
+	i32.const	$push10=, 12
+	i32.add 	$push11=, $2, $pop10
+	i32.call	$discard=, hash_find_entry@FUNCTION, $pop11
 .LBB2_1:                                # %if.end
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_2 Depth 2
 	loop                            # label1:
-	i32.load	$1=, 12($4)
+	i32.load	$1=, 12($2)
 	i32.call	$discard=, foo@FUNCTION, $1
 	i32.const	$0=, 0
 	block
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $1, $pop9
-	br_if   	0, $pop10       # 0: down to label3
+	i32.const	$push14=, 0
+	i32.eq  	$push15=, $1, $pop14
+	br_if   	0, $pop15       # 0: down to label3
 .LBB2_2:                                # %while.body
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
@@ -88,19 +88,19 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop                        # label5:
 	end_block                       # label3:
-	i32.const	$3=, 12
-	i32.add 	$3=, $4, $3
-	i32.call	$discard=, hash_find_entry@FUNCTION, $3
-	i32.const	$push11=, 0
-	i32.eq  	$push12=, $0, $pop11
-	br_if   	0, $pop12       # 0: up to label1
+	i32.const	$push12=, 12
+	i32.add 	$push13=, $2, $pop12
+	i32.call	$discard=, hash_find_entry@FUNCTION, $pop13
+	i32.const	$push16=, 0
+	i32.eq  	$push17=, $0, $pop16
+	br_if   	0, $pop17       # 0: up to label1
 # BB#4:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push0=, 0
+	i32.const	$push9=, __stack_pointer
 	i32.const	$push7=, 16
-	i32.add 	$4=, $4, $pop7
-	i32.const	$push8=, __stack_pointer
-	i32.store	$discard=, 0($pop8), $4
+	i32.add 	$push8=, $2, $pop7
+	i32.store	$discard=, 0($pop9), $pop8
 	return  	$pop0
 	.endfunc
 .Lfunc_end2:

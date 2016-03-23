@@ -45,10 +45,10 @@ f:                                      # @f
 	f64.ne  	$push15=, $11, $pop14
 	br_if   	0, $pop15       # 0: down to label0
 # BB#3:                                 # %if.end11
+	i32.const	$push24=, __stack_pointer
 	i32.const	$push22=, 16
-	i32.add 	$12=, $12, $pop22
-	i32.const	$push23=, __stack_pointer
-	i32.store	$discard=, 0($pop23), $12
+	i32.add 	$push23=, $12, $pop22
+	i32.store	$discard=, 0($pop24), $pop23
 	return
 .LBB0_4:                                # %if.then10
 	end_block                       # label0:

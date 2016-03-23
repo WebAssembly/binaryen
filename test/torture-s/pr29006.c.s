@@ -40,10 +40,10 @@ main:                                   # @main
 	i64.load	$push5=, 1($0):p2align=0
 	i64.const	$push6=, 0
 	i64.ne  	$push7=, $pop5, $pop6
+	i32.const	$push15=, __stack_pointer
 	i32.const	$push13=, 16
-	i32.add 	$0=, $0, $pop13
-	i32.const	$push14=, __stack_pointer
-	i32.store	$discard=, 0($pop14), $0
+	i32.add 	$push14=, $0, $pop13
+	i32.store	$discard=, 0($pop15), $pop14
 	return  	$pop7
 	.endfunc
 .Lfunc_end1:

@@ -85,10 +85,10 @@ main:                                   # @main
 # BB#3:                                 # %add.exit
 	end_loop                        # label6:
 	i32.const	$push4=, 0
+	i32.const	$push15=, __stack_pointer
 	i32.const	$push13=, 16
-	i32.add 	$2=, $2, $pop13
-	i32.const	$push14=, __stack_pointer
-	i32.store	$discard=, 0($pop14), $2
+	i32.add 	$push14=, $2, $pop13
+	i32.store	$discard=, 0($pop15), $pop14
 	return  	$pop4
 .LBB1_4:                                # %if.then3.i
 	end_block                       # label4:

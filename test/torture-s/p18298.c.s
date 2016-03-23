@@ -10,9 +10,8 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, s
 	i32.call	$push1=, strcmp@FUNCTION, $pop0, $0
-	i32.const	$push2=, 0
-	i32.eq  	$push3=, $pop1, $pop2
-	return  	$pop3
+	i32.eqz 	$push2=, $pop1
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

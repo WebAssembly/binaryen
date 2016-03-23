@@ -33,10 +33,10 @@ fdouble:                                # @fdouble
 	f64.ne  	$push10=, $pop0, $pop9
 	br_if   	0, $pop10       # 0: down to label0
 # BB#2:                                 # %if.end
+	i32.const	$push19=, __stack_pointer
 	i32.const	$push17=, 16
-	i32.add 	$2=, $2, $pop17
-	i32.const	$push18=, __stack_pointer
-	i32.store	$discard=, 0($pop18), $2
+	i32.add 	$push18=, $2, $pop17
+	i32.store	$discard=, 0($pop19), $pop18
 	return
 .LBB0_3:                                # %if.then
 	end_block                       # label0:

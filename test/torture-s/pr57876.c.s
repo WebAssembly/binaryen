@@ -6,14 +6,14 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i64, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i64, i32, i32, i32
 # BB#0:                                 # %for.body4.1
 	i32.const	$push96=, __stack_pointer
 	i32.load	$push97=, 0($pop96)
 	i32.const	$push98=, 16
-	i32.sub 	$14=, $pop97, $pop98
+	i32.sub 	$13=, $pop97, $pop98
 	i32.const	$push99=, __stack_pointer
-	i32.store	$discard=, 0($pop99), $14
+	i32.store	$discard=, 0($pop99), $13
 	i32.const	$push0=, 0
 	i32.load	$0=, d($pop0)
 	i32.const	$push95=, 0
@@ -143,22 +143,22 @@ main:                                   # @main
 	i32.const	$push77=, -1
 	i32.add 	$push72=, $pop71, $pop77
 	i32.store	$push73=, h($11), $pop72
-	i32.eq  	$push74=, $11, $pop73
+	i32.eqz 	$push74=, $pop73
 	i64.extend_u/i32	$push75=, $pop74
 	i64.lt_s	$push76=, $pop75, $10
 	i32.store	$1=, e($11), $pop76
-	i32.const	$13=, 12
-	i32.add 	$13=, $14, $13
-	i32.store	$discard=, g($11), $13
+	i32.const	$push103=, 12
+	i32.add 	$push104=, $13, $pop103
+	i32.store	$discard=, g($11), $pop104
 	block
-	i32.const	$push102=, 0
-	i32.eq  	$push103=, $1, $pop102
-	br_if   	0, $pop103      # 0: down to label0
+	i32.const	$push105=, 0
+	i32.eq  	$push106=, $1, $pop105
+	br_if   	0, $pop106      # 0: down to label0
 # BB#1:                                 # %if.end
+	i32.const	$push102=, __stack_pointer
 	i32.const	$push100=, 16
-	i32.add 	$14=, $14, $pop100
-	i32.const	$push101=, __stack_pointer
-	i32.store	$discard=, 0($pop101), $14
+	i32.add 	$push101=, $13, $pop100
+	i32.store	$discard=, 0($pop102), $pop101
 	return  	$11
 .LBB0_2:                                # %if.then
 	end_block                       # label0:

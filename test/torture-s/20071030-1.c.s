@@ -69,34 +69,34 @@ CalcPing:                               # @CalcPing
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, f32, i32, f32, i32, i32, i32, i32
+	.local  	i32, i32, f32, i32, f32, i32
 # BB#0:                                 # %if.end.i
 	i32.const	$push23=, __stack_pointer
 	i32.load	$push24=, 0($pop23)
 	i32.const	$push25=, 1552
-	i32.sub 	$8=, $pop24, $pop25
+	i32.sub 	$5=, $pop24, $pop25
 	i32.const	$push26=, __stack_pointer
-	i32.store	$discard=, 0($pop26), $8
+	i32.store	$discard=, 0($pop26), $5
 	i32.const	$1=, 0
+	i32.const	$push30=, 8
+	i32.add 	$push31=, $5, $pop30
 	i32.const	$push15=, 0
 	i32.const	$push0=, 1544
-	i32.const	$5=, 8
-	i32.add 	$5=, $8, $5
-	i32.call	$discard=, memset@FUNCTION, $5, $pop15, $pop0
+	i32.call	$discard=, memset@FUNCTION, $pop31, $pop15, $pop0
 	i32.const	$0=, 16
+	i32.const	$push32=, 8
+	i32.add 	$push33=, $5, $pop32
 	i32.const	$push14=, 16
-	i32.const	$6=, 8
-	i32.add 	$6=, $8, $6
-	i32.add 	$push1=, $6, $pop14
+	i32.add 	$push1=, $pop33, $pop14
 	i32.const	$push2=, 1065353216
 	i32.store	$discard=, 0($pop1):p2align=3, $pop2
 	f32.const	$2=, 0x0p0
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
-	i32.const	$7=, 8
-	i32.add 	$7=, $8, $7
-	i32.add 	$push3=, $7, $0
+	i32.const	$push34=, 8
+	i32.add 	$push35=, $5, $pop34
+	i32.add 	$push3=, $pop35, $0
 	f32.load	$push22=, 0($pop3):p2align=3
 	tee_local	$push21=, $4=, $pop22
 	f32.add 	$push4=, $2, $pop21
@@ -113,9 +113,9 @@ main:                                   # @main
 # BB#2:                                 # %for.end.i
 	end_loop                        # label5:
 	block
-	i32.const	$push29=, 0
-	i32.eq  	$push30=, $1, $pop29
-	br_if   	0, $pop30       # 0: down to label6
+	i32.const	$push36=, 0
+	i32.eq  	$push37=, $1, $pop36
+	br_if   	0, $pop37       # 0: down to label6
 # BB#3:                                 # %CalcPing.exit
 	f32.convert_s/i32	$push6=, $1
 	f32.div 	$push7=, $2, $pop6
@@ -127,10 +127,10 @@ main:                                   # @main
 	br_if   	0, $pop12       # 0: down to label6
 # BB#4:                                 # %if.end
 	i32.const	$push13=, 0
+	i32.const	$push29=, __stack_pointer
 	i32.const	$push27=, 1552
-	i32.add 	$8=, $8, $pop27
-	i32.const	$push28=, __stack_pointer
-	i32.store	$discard=, 0($pop28), $8
+	i32.add 	$push28=, $5, $pop27
+	i32.store	$discard=, 0($pop29), $pop28
 	return  	$pop13
 .LBB1_5:                                # %if.then
 	end_block                       # label6:

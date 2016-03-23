@@ -28,9 +28,9 @@ first:                                  # @first
 	br_if   	0, $pop0        # 0: down to label3
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push20=, 0
-	i32.eq  	$push21=, $2, $pop20
-	br_if   	3, $pop21       # 3: down to label1
+	i32.const	$push21=, 0
+	i32.eq  	$push22=, $2, $pop21
+	br_if   	3, $pop22       # 3: down to label1
 # BB#3:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push12=, 1
@@ -62,10 +62,10 @@ first:                                  # @first
 	end_loop                        # label1:
 	i32.const	$push4=, 0
 	i32.store8	$discard=, 0($0), $pop4
+	i32.const	$push20=, __stack_pointer
 	i32.const	$push18=, 16
-	i32.add 	$4=, $4, $pop18
-	i32.const	$push19=, __stack_pointer
-	i32.store	$discard=, 0($pop19), $4
+	i32.add 	$push19=, $4, $pop18
+	i32.store	$discard=, 0($pop20), $pop19
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -99,9 +99,9 @@ second:                                 # @second
 	br_if   	0, $pop0        # 0: down to label7
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push20=, 0
-	i32.eq  	$push21=, $2, $pop20
-	br_if   	3, $pop21       # 3: down to label5
+	i32.const	$push21=, 0
+	i32.eq  	$push22=, $2, $pop21
+	br_if   	3, $pop22       # 3: down to label5
 # BB#3:                                 # %if.else
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push12=, 1
@@ -133,10 +133,10 @@ second:                                 # @second
 	end_loop                        # label5:
 	i32.const	$push4=, 0
 	i32.store8	$discard=, 0($0), $pop4
+	i32.const	$push20=, __stack_pointer
 	i32.const	$push18=, 16
-	i32.add 	$4=, $4, $pop18
-	i32.const	$push19=, __stack_pointer
-	i32.store	$discard=, 0($pop19), $4
+	i32.add 	$push19=, $4, $pop18
+	i32.store	$discard=, 0($pop20), $pop19
 	return  	$0
 	.endfunc
 .Lfunc_end1:
@@ -148,38 +148,38 @@ second:                                 # @second
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64, i32, i32, i32, i32, i32, i32
+	.local  	i64, i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, __stack_pointer
 	i32.load	$push9=, 0($pop8)
 	i32.const	$push10=, 256
-	i32.sub 	$6=, $pop9, $pop10
+	i32.sub 	$1=, $pop9, $pop10
 	i32.const	$push11=, __stack_pointer
-	i32.store	$discard=, 0($pop11), $6
+	i32.store	$discard=, 0($pop11), $1
 	i64.const	$push0=, 85899345925
-	i64.store	$0=, 16($6):p2align=4, $pop0
+	i64.store	$0=, 16($1):p2align=4, $pop0
+	i32.const	$push12=, 144
+	i32.add 	$push13=, $1, $pop12
 	i32.const	$push1=, .L.str.1
-	i32.const	$1=, 144
-	i32.add 	$1=, $6, $1
-	i32.const	$2=, 16
-	i32.add 	$2=, $6, $2
-	i32.call	$discard=, first@FUNCTION, $1, $pop1, $2
-	i64.store	$discard=, 0($6):p2align=4, $0
+	i32.const	$push14=, 16
+	i32.add 	$push15=, $1, $pop14
+	i32.call	$discard=, first@FUNCTION, $pop13, $pop1, $pop15
+	i64.store	$discard=, 0($1):p2align=4, $0
+	i32.const	$push16=, 32
+	i32.add 	$push17=, $1, $pop16
 	i32.const	$push6=, .L.str.1
-	i32.const	$3=, 32
-	i32.add 	$3=, $6, $3
-	i32.call	$discard=, second@FUNCTION, $3, $pop6, $6
-	i32.const	$push5=, .L.str.2
-	i32.const	$4=, 144
-	i32.add 	$4=, $6, $4
+	i32.call	$discard=, second@FUNCTION, $pop17, $pop6, $1
 	block
-	i32.call	$push2=, strcmp@FUNCTION, $pop5, $4
+	i32.const	$push5=, .L.str.2
+	i32.const	$push18=, 144
+	i32.add 	$push19=, $1, $pop18
+	i32.call	$push2=, strcmp@FUNCTION, $pop5, $pop19
 	br_if   	0, $pop2        # 0: down to label8
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push7=, .L.str.2
-	i32.const	$5=, 32
-	i32.add 	$5=, $6, $5
-	i32.call	$push3=, strcmp@FUNCTION, $pop7, $5
+	i32.const	$push20=, 32
+	i32.add 	$push21=, $1, $pop20
+	i32.call	$push3=, strcmp@FUNCTION, $pop7, $pop21
 	br_if   	0, $pop3        # 0: down to label8
 # BB#2:                                 # %if.end
 	i32.const	$push4=, 0

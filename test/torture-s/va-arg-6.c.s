@@ -107,10 +107,10 @@ f:                                      # @f
 	f64.ne  	$push50=, $6, $pop49
 	br_if   	0, $pop50       # 0: down to label0
 # BB#9:                                 # %if.end41
+	i32.const	$push65=, __stack_pointer
 	i32.const	$push63=, 16
-	i32.add 	$7=, $7, $pop63
-	i32.const	$push64=, __stack_pointer
-	i32.store	$discard=, 0($pop64), $7
+	i32.add 	$push64=, $7, $pop63
+	i32.store	$discard=, 0($pop65), $pop64
 	return  	$1
 .LBB0_10:                               # %if.then40
 	end_block                       # label0:

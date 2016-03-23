@@ -6,18 +6,18 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push3=, __stack_pointer
 	i32.load	$push4=, 0($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$2=, $pop4, $pop5
+	i32.sub 	$1=, $pop4, $pop5
 	i32.const	$push6=, __stack_pointer
-	i32.store	$discard=, 0($pop6), $2
-	i32.const	$1=, 15
-	i32.add 	$1=, $2, $1
-	call    	foo@FUNCTION, $1
-	i32.load8_s	$0=, 15($2)
+	i32.store	$discard=, 0($pop6), $1
+	i32.const	$push7=, 15
+	i32.add 	$push8=, $1, $pop7
+	call    	foo@FUNCTION, $pop8
+	i32.load8_s	$0=, 15($1)
 	call    	bar@FUNCTION
 	block
 	i32.const	$push0=, -1

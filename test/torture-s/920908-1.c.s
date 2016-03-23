@@ -35,10 +35,10 @@ f:                                      # @f
 	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.end7
 	i32.const	$push12=, 20
+	i32.const	$push19=, __stack_pointer
 	i32.const	$push17=, 16
-	i32.add 	$3=, $3, $pop17
-	i32.const	$push18=, __stack_pointer
-	i32.store	$discard=, 0($pop18), $3
+	i32.add 	$push18=, $3, $pop17
+	i32.store	$discard=, 0($pop19), $pop18
 	return  	$pop12
 .LBB0_3:                                # %if.then6
 	end_block                       # label0:

@@ -61,9 +61,9 @@ main:                                   # @main
 	i32.store	$push101=, g($1), $1
 	tee_local	$push100=, $3=, $pop101
 	i32.load	$push4=, l($pop100)
-	i32.const	$push162=, 0
-	i32.eq  	$push163=, $pop4, $pop162
-	br_if   	0, $pop163      # 0: down to label3
+	i32.const	$push163=, 0
+	i32.eq  	$push164=, $pop4, $pop163
+	br_if   	0, $pop164      # 0: down to label3
 # BB#2:                                 # %for.end
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load	$push5=, j($3)
@@ -125,9 +125,9 @@ main:                                   # @main
 	i32.load	$push22=, j($pop21)
 	i32.load	$push23=, 0($pop22)
 	i32.load	$push24=, 0($pop23)
-	i32.const	$push164=, 0
-	i32.eq  	$push165=, $pop24, $pop164
-	br_if   	0, $pop165      # 0: up to label8
+	i32.const	$push165=, 0
+	i32.eq  	$push166=, $pop24, $pop165
+	br_if   	0, $pop166      # 0: up to label8
 .LBB2_6:                                # %for.end.i
                                         #   in Loop: Header=BB2_4 Depth=2
 	end_loop                        # label9:
@@ -166,9 +166,9 @@ main:                                   # @main
 	tee_local	$push114=, $5=, $pop115
 	i32.store	$push44=, o($pop114), $5
 	i32.load	$push45=, p($pop44)
-	i32.const	$push166=, 0
-	i32.eq  	$push167=, $pop45, $pop166
-	br_if   	0, $pop167      # 0: up to label5
+	i32.const	$push167=, 0
+	i32.eq  	$push168=, $pop45, $pop167
+	br_if   	0, $pop168      # 0: up to label5
 .LBB2_7:                                # %foo.exit.thread
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop                        # label6:
@@ -191,9 +191,9 @@ main:                                   # @main
 	tee_local	$push127=, $4=, $pop128
 	i32.load	$push126=, b($pop127)
 	tee_local	$push125=, $6=, $pop126
-	i32.const	$push168=, 0
-	i32.eq  	$push169=, $pop125, $pop168
-	br_if   	0, $pop169      # 0: down to label10
+	i32.const	$push169=, 0
+	i32.eq  	$push170=, $pop125, $pop169
+	br_if   	0, $pop170      # 0: down to label10
 # BB#10:                                # %for.cond12.preheader.lr.ph
 	i32.load	$0=, c($4)
 .LBB2_11:                               # %for.cond12.preheader
@@ -295,15 +295,15 @@ main:                                   # @main
 	i32.const	$push142=, 2
 	i32.shl 	$push94=, $pop93, $pop142
 	i32.load	$push95=, a($pop94)
-	i32.const	$push170=, 0
-	i32.eq  	$push171=, $pop95, $pop170
-	br_if   	0, $pop171      # 0: down to label15
+	i32.const	$push171=, 0
+	i32.eq  	$push172=, $pop95, $pop171
+	br_if   	0, $pop172      # 0: down to label15
 # BB#16:                                # %if.end47
 	i32.const	$push96=, 0
+	i32.const	$push162=, __stack_pointer
 	i32.const	$push160=, 32
-	i32.add 	$8=, $8, $pop160
-	i32.const	$push161=, __stack_pointer
-	i32.store	$discard=, 0($pop161), $8
+	i32.add 	$push161=, $8, $pop160
+	i32.store	$discard=, 0($pop162), $pop161
 	return  	$pop96
 .LBB2_17:                               # %if.then46
 	end_block                       # label15:

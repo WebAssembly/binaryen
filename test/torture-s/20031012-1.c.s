@@ -26,10 +26,10 @@ main:                                   # @main
 	i32.ne  	$push4=, $pop3, $pop5
 	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %foo.exit
+	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 15008
-	i32.add 	$3=, $3, $pop10
-	i32.const	$push11=, __stack_pointer
-	i32.store	$discard=, 0($pop11), $3
+	i32.add 	$push11=, $3, $pop10
+	i32.store	$discard=, 0($pop12), $pop11
 	return  	$2
 .LBB0_2:                                # %if.then.i
 	end_block                       # label0:

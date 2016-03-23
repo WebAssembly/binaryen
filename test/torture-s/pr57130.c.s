@@ -39,59 +39,59 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push24=, __stack_pointer
 	i32.load	$push25=, 0($pop24)
 	i32.const	$push26=, 48
-	i32.sub 	$5=, $pop25, $pop26
+	i32.sub 	$2=, $pop25, $pop26
 	i32.const	$push27=, __stack_pointer
-	i32.store	$discard=, 0($pop27), $5
+	i32.store	$discard=, 0($pop27), $2
+	i32.const	$push31=, 32
+	i32.add 	$push32=, $2, $pop31
 	i32.const	$push2=, 8
-	i32.const	$2=, 32
-	i32.add 	$2=, $5, $2
-	i32.add 	$push23=, $2, $pop2
+	i32.add 	$push23=, $pop32, $pop2
 	tee_local	$push22=, $1=, $pop23
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.r+8($pop0)
 	i32.store	$discard=, 0($pop22):p2align=3, $pop1
 	i32.const	$push21=, 0
 	i64.load	$push3=, .Lmain.r($pop21):p2align=2
-	i64.store	$discard=, 32($5), $pop3
+	i64.store	$discard=, 32($2), $pop3
+	i32.const	$push33=, 16
+	i32.add 	$push34=, $2, $pop33
 	i32.const	$push20=, 8
-	i32.const	$3=, 16
-	i32.add 	$3=, $5, $3
-	i32.add 	$push4=, $3, $pop20
+	i32.add 	$push4=, $pop34, $pop20
 	i32.const	$push19=, 0
 	i64.load	$push5=, .Lmain.r+8($pop19):p2align=2
 	i64.store	$discard=, 0($pop4):p2align=2, $pop5
 	i32.const	$push18=, 0
 	i64.load	$push6=, .Lmain.r($pop18):p2align=2
-	i64.store	$discard=, 16($5):p2align=2, $pop6
-	i32.const	$4=, 16
-	i32.add 	$4=, $5, $4
-	call    	foo@FUNCTION, $4
+	i64.store	$discard=, 16($2):p2align=2, $pop6
+	i32.const	$push35=, 16
+	i32.add 	$push36=, $2, $pop35
+	call    	foo@FUNCTION, $pop36
 	i32.const	$push9=, -1
 	i32.store	$discard=, 0($1):p2align=3, $pop9
 	i32.const	$push17=, 0
-	i32.store	$0=, 32($5):p2align=3, $pop17
+	i32.store	$0=, 32($2):p2align=3, $pop17
 	i32.const	$push11=, 12
-	i32.add 	$push12=, $5, $pop11
+	i32.add 	$push12=, $2, $pop11
 	i32.const	$push7=, 2
-	i32.store	$push8=, 36($5), $pop7
-	i32.store	$push10=, 44($5), $pop8
+	i32.store	$push8=, 36($2), $pop7
+	i32.store	$push10=, 44($2), $pop8
 	i32.store	$discard=, 0($pop12), $pop10
 	i32.const	$push16=, 8
-	i32.add 	$push13=, $5, $pop16
+	i32.add 	$push13=, $2, $pop16
 	i32.load	$push14=, 0($1):p2align=3
 	i32.store	$discard=, 0($pop13), $pop14
-	i64.load	$push15=, 32($5)
-	i64.store	$discard=, 0($5):p2align=2, $pop15
-	call    	foo@FUNCTION, $5
+	i64.load	$push15=, 32($2)
+	i64.store	$discard=, 0($2):p2align=2, $pop15
+	call    	foo@FUNCTION, $2
+	i32.const	$push30=, __stack_pointer
 	i32.const	$push28=, 48
-	i32.add 	$5=, $5, $pop28
-	i32.const	$push29=, __stack_pointer
-	i32.store	$discard=, 0($pop29), $5
+	i32.add 	$push29=, $2, $pop28
+	i32.store	$discard=, 0($pop30), $pop29
 	return  	$0
 	.endfunc
 .Lfunc_end1:

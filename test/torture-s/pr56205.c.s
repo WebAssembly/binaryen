@@ -6,15 +6,15 @@
 	.type	f4,@function
 f4:                                     # @f4
 	.param  	i32, i32, i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push21=, __stack_pointer
 	i32.load	$push22=, 0($pop21)
 	i32.const	$push23=, 32
-	i32.sub 	$6=, $pop22, $pop23
+	i32.sub 	$5=, $pop22, $pop23
 	i32.const	$push24=, __stack_pointer
-	i32.store	$discard=, 0($pop24), $6
-	i32.store	$discard=, 28($6), $2
+	i32.store	$discard=, 0($pop24), $5
+	i32.store	$discard=, 28($5), $2
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %entry
@@ -35,7 +35,7 @@ f4:                                     # @f4
 	i32.const	$push18=, .L.str.3
 	i32.const	$push8=, .L.str.1
 	i32.select	$0=, $pop18, $pop8, $0
-	i32.load	$3=, 28($6)
+	i32.load	$3=, 28($5)
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
 	i32.load	$push9=, a($pop16)
@@ -44,40 +44,40 @@ f4:                                     # @f4
 	i32.store	$2=, a($pop17), $pop0
 	block
 	block
-	i32.const	$push27=, 0
-	i32.eq  	$push28=, $1, $pop27
-	br_if   	0, $pop28       # 0: down to label2
+	i32.const	$push30=, 0
+	i32.eq  	$push31=, $1, $pop30
+	br_if   	0, $pop31       # 0: down to label2
 # BB#4:                                 # %land.rhs.i
 	i32.load8_u	$4=, 0($1)
-	i32.store	$discard=, 20($6), $2
-	i32.store	$discard=, 16($6):p2align=4, $0
+	i32.store	$discard=, 20($5), $2
+	i32.store	$discard=, 16($5):p2align=4, $0
 	i32.const	$push11=, .L.str.4
 	i32.const	$push19=, .L.str.3
 	i32.select	$push12=, $pop11, $pop19, $4
-	i32.store	$discard=, 24($6):p2align=3, $pop12
-	i32.const	$5=, 16
-	i32.add 	$5=, $6, $5
-	call    	f1@FUNCTION, $1, $5
+	i32.store	$discard=, 24($5):p2align=3, $pop12
+	i32.const	$push28=, 16
+	i32.add 	$push29=, $5, $pop28
+	call    	f1@FUNCTION, $1, $pop29
 	i32.load8_u	$push13=, 0($1)
-	i32.const	$push29=, 0
-	i32.eq  	$push30=, $pop13, $pop29
-	br_if   	1, $pop30       # 1: down to label1
+	i32.const	$push32=, 0
+	i32.eq  	$push33=, $pop13, $pop32
+	br_if   	1, $pop33       # 1: down to label1
 # BB#5:                                 # %if.then.i
 	call    	f2@FUNCTION, $1, $3
 	br      	1               # 1: down to label1
 .LBB0_6:                                # %if.end.critedge.i
 	end_block                       # label2:
 	i32.const	$push20=, .L.str.3
-	i32.store	$discard=, 8($6):p2align=3, $pop20
-	i32.store	$discard=, 4($6), $2
-	i32.store	$discard=, 0($6):p2align=4, $0
-	call    	f1@FUNCTION, $1, $6
+	i32.store	$discard=, 8($5):p2align=3, $pop20
+	i32.store	$discard=, 4($5), $2
+	i32.store	$discard=, 0($5):p2align=4, $0
+	call    	f1@FUNCTION, $1, $5
 .LBB0_7:                                # %f3.exit
 	end_block                       # label1:
+	i32.const	$push27=, __stack_pointer
 	i32.const	$push25=, 32
-	i32.add 	$6=, $6, $pop25
-	i32.const	$push26=, __stack_pointer
-	i32.store	$discard=, 0($pop26), $6
+	i32.add 	$push26=, $5, $pop25
+	i32.store	$discard=, 0($pop27), $pop26
 	return
 	.endfunc
 .Lfunc_end0:
@@ -124,10 +124,10 @@ main:                                   # @main
 	br_if   	0, $pop9        # 0: down to label3
 # BB#2:                                 # %if.end
 	i32.const	$push10=, 0
+	i32.const	$push22=, __stack_pointer
 	i32.const	$push20=, 32
-	i32.add 	$0=, $0, $pop20
-	i32.const	$push21=, __stack_pointer
-	i32.store	$discard=, 0($pop21), $0
+	i32.add 	$push21=, $0, $pop20
+	i32.store	$discard=, 0($pop22), $pop21
 	return  	$pop10
 .LBB1_3:                                # %if.then
 	end_block                       # label3:
@@ -178,10 +178,10 @@ f1:                                     # @f1
 	i32.call	$push14=, strcmp@FUNCTION, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label4
 # BB#3:                                 # %if.end13
+	i32.const	$push23=, __stack_pointer
 	i32.const	$push21=, 16
-	i32.add 	$4=, $4, $pop21
-	i32.const	$push22=, __stack_pointer
-	i32.store	$discard=, 0($pop22), $4
+	i32.add 	$push22=, $4, $pop21
+	i32.store	$discard=, 0($pop23), $pop22
 	return
 .LBB2_4:                                # %if.then12
 	end_block                       # label4:

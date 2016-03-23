@@ -98,10 +98,10 @@ vat:                                    # @vat
 	i32.ne  	$push27=, $pop25, $pop26
 	br_if   	0, $pop27       # 0: down to label0
 # BB#7:                                 # %if.end36
+	i32.const	$push64=, __stack_pointer
 	i32.const	$push62=, 16
-	i32.add 	$3=, $3, $pop62
-	i32.const	$push63=, __stack_pointer
-	i32.store	$discard=, 0($pop63), $3
+	i32.add 	$push63=, $3, $pop62
+	i32.store	$discard=, 0($pop64), $pop63
 	return
 .LBB0_8:                                # %if.then35
 	end_block                       # label0:

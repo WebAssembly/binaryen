@@ -19,14 +19,14 @@ bar:                                    # @bar
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32, i32
-	.local  	i32, i64, i32, i32
+	.local  	i32, i64, i32
 # BB#0:                                 # %entry
 	i32.const	$push11=, __stack_pointer
 	i32.load	$push12=, 0($pop11)
 	i32.const	$push13=, 16
-	i32.sub 	$6=, $pop12, $pop13
+	i32.sub 	$5=, $pop12, $pop13
 	i32.const	$push14=, __stack_pointer
-	i32.store	$discard=, 0($pop14), $6
+	i32.store	$discard=, 0($pop14), $5
 	block
 	block
 	block
@@ -52,18 +52,18 @@ foo:                                    # @foo
 .LBB1_3:                                # %if.end7
 	end_block                       # label1:
 	i64.store	$discard=, 0($0):p2align=2, $4
+	i32.const	$push17=, __stack_pointer
 	i32.const	$push15=, 16
-	i32.add 	$6=, $6, $pop15
-	i32.const	$push16=, __stack_pointer
-	i32.store	$discard=, 0($pop16), $6
+	i32.add 	$push16=, $5, $pop15
+	i32.store	$discard=, 0($pop17), $pop16
 	return
 .LBB1_4:                                # %if.then6
 	end_block                       # label0:
 	i64.load	$push4=, 0($2):p2align=2
-	i64.store	$discard=, 8($6):p2align=2, $pop4
-	i32.const	$5=, 8
-	i32.add 	$5=, $6, $5
-	call    	bar@FUNCTION, $2, $5
+	i64.store	$discard=, 8($5):p2align=2, $pop4
+	i32.const	$push18=, 8
+	i32.add 	$push19=, $5, $pop18
+	call    	bar@FUNCTION, $2, $pop19
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -92,9 +92,9 @@ main:                                   # @main
 	block
 	i32.const	$push5=, 64
 	i32.and 	$push1=, $0, $pop5
-	i32.const	$push19=, 0
-	i32.eq  	$push20=, $pop1, $pop19
-	br_if   	0, $pop20       # 0: down to label4
+	i32.const	$push20=, 0
+	i32.eq  	$push21=, $pop1, $pop20
+	br_if   	0, $pop21       # 0: down to label4
 # BB#1:                                 # %if.then.i
 	i32.const	$push11=, 0
 	i32.load	$push10=, cons2($pop11):p2align=4
@@ -108,10 +108,10 @@ main:                                   # @main
 .LBB2_2:                                # %foo.exit
 	end_block                       # label4:
 	i32.const	$push12=, 0
+	i32.const	$push19=, __stack_pointer
 	i32.const	$push17=, 16
-	i32.add 	$2=, $2, $pop17
-	i32.const	$push18=, __stack_pointer
-	i32.store	$discard=, 0($pop18), $2
+	i32.add 	$push18=, $2, $pop17
+	i32.store	$discard=, 0($pop19), $pop18
 	return  	$pop12
 .LBB2_3:                                # %if.then6.i
 	end_block                       # label3:

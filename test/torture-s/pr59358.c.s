@@ -47,16 +47,16 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push35=, __stack_pointer
 	i32.load	$push36=, 0($pop35)
 	i32.const	$push37=, 16
-	i32.sub 	$9=, $pop36, $pop37
+	i32.sub 	$7=, $pop36, $pop37
 	i32.const	$push38=, __stack_pointer
-	i32.store	$discard=, 0($pop38), $9
+	i32.store	$discard=, 0($pop38), $7
 	i32.const	$push0=, 1
-	i32.store	$4=, 12($9), $pop0
+	i32.store	$4=, 12($7), $pop0
 	i32.const	$0=, 2
 	i32.const	$1=, 2
 	copy_local	$2=, $4
@@ -64,10 +64,10 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label5:
+	i32.const	$push42=, 12
+	i32.add 	$push43=, $7, $pop42
 	i32.const	$push18=, 16
-	i32.const	$7=, 12
-	i32.add 	$7=, $9, $7
-	i32.call	$3=, foo@FUNCTION, $7, $pop18
+	i32.call	$3=, foo@FUNCTION, $pop43, $pop18
 	copy_local	$5=, $0
 	block
 	i32.const	$push17=, -1
@@ -106,10 +106,10 @@ main:                                   # @main
 	br_if   	2, $pop6        # 2: down to label4
 # BB#6:                                 # %if.end18
                                         #   in Loop: Header=BB1_1 Depth=1
+	i32.const	$push44=, 12
+	i32.add 	$push45=, $7, $pop44
 	i32.const	$push26=, 7
-	i32.const	$8=, 12
-	i32.add 	$8=, $9, $8
-	i32.call	$3=, foo@FUNCTION, $8, $pop26
+	i32.call	$3=, foo@FUNCTION, $pop45, $pop26
 	copy_local	$5=, $2
 	block
 	i32.const	$push25=, 6
@@ -138,7 +138,7 @@ main:                                   # @main
 	i32.add 	$2=, $2, $4
 	i32.const	$push34=, 2
 	i32.add 	$0=, $0, $pop34
-	i32.store	$push33=, 12($9), $1
+	i32.store	$push33=, 12($7), $1
 	tee_local	$push32=, $6=, $pop33
 	i32.add 	$1=, $pop32, $4
 	i32.const	$push31=, 17
@@ -147,10 +147,10 @@ main:                                   # @main
 # BB#11:                                # %for.end
 	end_loop                        # label6:
 	i32.const	$push12=, 0
+	i32.const	$push41=, __stack_pointer
 	i32.const	$push39=, 16
-	i32.add 	$9=, $9, $pop39
-	i32.const	$push40=, __stack_pointer
-	i32.store	$discard=, 0($pop40), $9
+	i32.add 	$push40=, $7, $pop39
+	i32.store	$discard=, 0($pop41), $pop40
 	return  	$pop12
 .LBB1_12:                               # %if.then36
 	end_block                       # label4:

@@ -187,10 +187,10 @@ main:                                   # @main
 # BB#15:                                # %for.end43
 	end_loop                        # label7:
 	i32.const	$push16=, 0
+	i32.const	$push41=, __stack_pointer
 	i32.const	$push39=, 32
-	i32.add 	$13=, $13, $pop39
-	i32.const	$push40=, __stack_pointer
-	i32.store	$discard=, 0($pop40), $13
+	i32.add 	$push40=, $13, $pop39
+	i32.store	$discard=, 0($pop41), $pop40
 	return  	$pop16
 .LBB1_16:                               # %if.then
 	end_block                       # label5:

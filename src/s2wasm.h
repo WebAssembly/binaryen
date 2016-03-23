@@ -908,6 +908,8 @@ class S2WasmBuilder {
           else if (match("rem_u")) makeBinary(BinaryOp::RemU, type);
           else if (match("reinterpret/i32") || match("reinterpret/i64")) makeUnary(UnaryOp::ReinterpretInt, type);
           else if (match("reinterpret/f32") || match("reinterpret/f64")) makeUnary(UnaryOp::ReinterpretFloat, type);
+          else if (match("rotl")) makeBinary(BinaryOp::RotL, type);
+          else if (match("rotr")) makeBinary(BinaryOp::RotR, type);
           else abort_on("type.r");
           break;
         }

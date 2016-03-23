@@ -41,12 +41,11 @@ main:                                   # @main
 	block
 	loop                            # label3:
 	i32.call	$push0=, foo@FUNCTION, $0
-	i32.const	$push16=, 1
-	i32.const	$push15=, 0
-	i32.eq  	$push1=, $0, $pop15
+	i32.const	$push15=, 1
+	i32.eqz 	$push1=, $0
 	i32.const	$push14=, 1
 	i32.shl 	$push2=, $pop1, $pop14
-	i32.sub 	$push3=, $pop16, $pop2
+	i32.sub 	$push3=, $pop15, $pop2
 	i32.const	$push13=, 13
 	i32.eq  	$push4=, $0, $pop13
 	i32.const	$push12=, 1

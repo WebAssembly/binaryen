@@ -15,20 +15,19 @@ main:                                   # @main
 	i64.and 	$push11=, $pop0, $pop1
 	tee_local	$push10=, $0=, $pop11
 	i64.mul 	$push2=, $pop10, $0
-	i64.const	$push9=, 0
-	i64.ne  	$push3=, $pop2, $pop9
-	br_if   	0, $pop3        # 0: down to label0
+	i64.const	$push3=, 0
+	i64.ne  	$push4=, $pop2, $pop3
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.const	$push16=, 0
-	i64.load	$push4=, a+8($pop16)
-	i64.const	$push5=, 1099511627775
-	i64.and 	$push15=, $pop4, $pop5
-	tee_local	$push14=, $1=, $pop15
-	i64.mul 	$push6=, $pop14, $0
-	i64.mul 	$push7=, $1, $1
-	i64.or  	$push8=, $pop6, $pop7
-	i64.const	$push13=, 0
-	i64.eq  	$discard=, $pop8, $pop13
+	i32.const	$push15=, 0
+	i64.load	$push5=, a+8($pop15)
+	i64.const	$push6=, 1099511627775
+	i64.and 	$push14=, $pop5, $pop6
+	tee_local	$push13=, $1=, $pop14
+	i64.mul 	$push7=, $pop13, $0
+	i64.mul 	$push8=, $1, $1
+	i64.or  	$push9=, $pop7, $pop8
+	i64.eqz 	$discard=, $pop9
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	call    	abort@FUNCTION

@@ -15,38 +15,35 @@ sub:                                    # @sub
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %if.then
-	i32.const	$push3=, 31
-	i32.shr_u	$push4=, $0, $pop3
-	i32.add 	$push5=, $0, $pop4
-	i32.const	$push17=, 1
-	i32.shr_s	$1=, $pop5, $pop17
-	i32.const	$push16=, 1
-	i32.and 	$push2=, $0, $pop16
+	i32.const	$push14=, 1
+	i32.shr_u	$1=, $0, $pop14
+	i32.const	$push13=, 1
+	i32.and 	$push2=, $0, $pop13
 	br_if   	1, $pop2        # 1: down to label0
 # BB#2:                                 # %if.then2
 	i32.call	$0=, sub@FUNCTION, $1
-	i32.const	$push10=, -1
-	i32.add 	$push11=, $1, $pop10
-	i32.call	$push12=, sub@FUNCTION, $pop11
-	i32.const	$push18=, 1
-	i32.shl 	$push13=, $pop12, $pop18
-	i32.add 	$push14=, $0, $pop13
-	i32.mul 	$push15=, $0, $pop14
-	return  	$pop15
+	i32.const	$push7=, -1
+	i32.add 	$push8=, $1, $pop7
+	i32.call	$push9=, sub@FUNCTION, $pop8
+	i32.const	$push15=, 1
+	i32.shl 	$push10=, $pop9, $pop15
+	i32.add 	$push11=, $0, $pop10
+	i32.mul 	$push12=, $0, $pop11
+	return  	$pop12
 .LBB0_3:                                # %cleanup
 	end_block                       # label1:
 	return  	$0
 .LBB0_4:                                # %if.else
 	end_block                       # label0:
-	i32.const	$push21=, 1
-	i32.add 	$push6=, $1, $pop21
-	i32.call	$0=, sub@FUNCTION, $pop6
-	i32.call	$push20=, sub@FUNCTION, $1
-	tee_local	$push19=, $1=, $pop20
-	i32.mul 	$push8=, $pop19, $1
-	i32.mul 	$push7=, $0, $0
-	i32.add 	$push9=, $pop8, $pop7
-	return  	$pop9
+	i32.const	$push18=, 1
+	i32.add 	$push3=, $1, $pop18
+	i32.call	$0=, sub@FUNCTION, $pop3
+	i32.call	$push17=, sub@FUNCTION, $1
+	tee_local	$push16=, $1=, $pop17
+	i32.mul 	$push5=, $pop16, $1
+	i32.mul 	$push4=, $0, $0
+	i32.add 	$push6=, $pop5, $pop4
+	return  	$pop6
 	.endfunc
 .Lfunc_end0:
 	.size	sub, .Lfunc_end0-sub

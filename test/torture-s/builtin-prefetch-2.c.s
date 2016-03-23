@@ -46,10 +46,10 @@ simple_local:                           # @simple_local
 	i32.sub 	$0=, $pop1, $pop2
 	i32.const	$push3=, __stack_pointer
 	i32.store	$discard=, 0($pop3), $0
+	i32.const	$push6=, __stack_pointer
 	i32.const	$push4=, 416
-	i32.add 	$0=, $0, $pop4
-	i32.const	$push5=, __stack_pointer
-	i32.store	$discard=, 0($pop5), $0
+	i32.add 	$push5=, $0, $pop4
+	i32.store	$discard=, 0($pop6), $pop5
 	return
 	.endfunc
 .Lfunc_end3:

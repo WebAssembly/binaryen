@@ -446,10 +446,10 @@ fail:                                   # @fail
 	i32.store	$discard=, 0($2):p2align=4, $0
 	i32.const	$push4=, .L.str
 	i32.call	$discard=, fprintf@FUNCTION, $1, $pop4, $2
+	i32.const	$push13=, __stack_pointer
 	i32.const	$push11=, 16
-	i32.add 	$2=, $2, $pop11
-	i32.const	$push12=, __stack_pointer
-	i32.store	$discard=, 0($pop12), $2
+	i32.add 	$push12=, $2, $pop11
+	i32.store	$discard=, 0($pop13), $pop12
 	return  	$0
 	.endfunc
 .Lfunc_end30:

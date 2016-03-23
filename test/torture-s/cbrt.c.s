@@ -70,7 +70,7 @@ cbrtl:                                  # @cbrtl
 .LBB0_5:                                # %if.else
 	end_block                       # label3:
 	i32.const	$push10=, 3
-	i32.div_s	$push11=, $3, $pop10
+	i32.div_u	$push11=, $3, $pop10
 	i32.const	$push12=, 715094163
 	i32.add 	$push13=, $pop11, $pop12
 	i32.store	$discard=, 12($7), $pop13

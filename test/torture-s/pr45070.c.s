@@ -55,10 +55,10 @@ main:                                   # @main
 # BB#6:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push7=, 0
+	i32.const	$push20=, __stack_pointer
 	i32.const	$push18=, 16
-	i32.add 	$2=, $2, $pop18
-	i32.const	$push19=, __stack_pointer
-	i32.store	$discard=, 0($pop19), $2
+	i32.add 	$push19=, $2, $pop18
+	i32.store	$discard=, 0($pop20), $pop19
 	return  	$pop7
 .LBB0_7:                                # %if.then
 	end_block                       # label0:

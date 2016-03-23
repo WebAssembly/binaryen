@@ -23,10 +23,10 @@ ll_to_ld:                               # @ll_to_ld
 	i64.load	$push2=, 0($pop1)
 	i64.store	$discard=, 0($pop3), $pop2
 	i64.store	$discard=, 0($0):p2align=4, $1
+	i32.const	$push11=, __stack_pointer
 	i32.const	$push9=, 16
-	i32.add 	$2=, $2, $pop9
-	i32.const	$push10=, __stack_pointer
-	i32.store	$discard=, 0($pop10), $2
+	i32.add 	$push10=, $2, $pop9
+	i32.store	$discard=, 0($pop11), $pop10
 	return
 	.endfunc
 .Lfunc_end0:

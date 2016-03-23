@@ -25,21 +25,21 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %if.end
 	i32.const	$push5=, __stack_pointer
 	i32.load	$push6=, 0($pop5)
 	i32.const	$push7=, 16
-	i32.sub 	$1=, $pop6, $pop7
+	i32.sub 	$0=, $pop6, $pop7
 	i32.const	$push8=, __stack_pointer
-	i32.store	$discard=, 0($pop8), $1
+	i32.store	$discard=, 0($pop8), $0
 	i32.const	$push0=, 65280
-	i32.store16	$discard=, 14($1), $pop0
+	i32.store16	$discard=, 14($0), $pop0
 	i32.const	$push3=, 0
+	i32.const	$push9=, 14
+	i32.add 	$push10=, $0, $pop9
 	i32.const	$push1=, 2
-	i32.const	$0=, 14
-	i32.add 	$0=, $1, $0
-	i32.add 	$push2=, $0, $pop1
+	i32.add 	$push2=, $pop10, $pop1
 	i32.store	$discard=, q($pop3), $pop2
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4

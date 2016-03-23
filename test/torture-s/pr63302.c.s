@@ -9,20 +9,18 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, -9223372036854773761
-	i64.and 	$push13=, $0, $pop0
-	tee_local	$push12=, $0=, $pop13
-	i64.or  	$push1=, $pop12, $1
-	i64.const	$push2=, 0
-	i64.eq  	$push3=, $pop1, $pop2
-	i64.const	$push6=, -9223372036854775808
-	i64.xor 	$push7=, $0, $pop6
-	i64.const	$push4=, -1
-	i64.xor 	$push5=, $1, $pop4
-	i64.or  	$push8=, $pop7, $pop5
-	i64.const	$push11=, 0
-	i64.eq  	$push9=, $pop8, $pop11
-	i32.or  	$push10=, $pop3, $pop9
-	return  	$pop10
+	i64.and 	$push11=, $0, $pop0
+	tee_local	$push10=, $0=, $pop11
+	i64.or  	$push1=, $pop10, $1
+	i64.eqz 	$push2=, $pop1
+	i64.const	$push5=, -9223372036854775808
+	i64.xor 	$push6=, $0, $pop5
+	i64.const	$push3=, -1
+	i64.xor 	$push4=, $1, $pop3
+	i64.or  	$push7=, $pop6, $pop4
+	i64.eqz 	$push8=, $pop7
+	i32.or  	$push9=, $pop2, $pop8
+	return  	$pop9
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -36,14 +34,13 @@ bar:                                    # @bar
 	.result 	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, -2147481601
-	i64.and 	$push7=, $0, $pop0
-	tee_local	$push6=, $0=, $pop7
-	i64.const	$push1=, 0
-	i64.eq  	$push2=, $pop6, $pop1
-	i64.const	$push3=, -2147483648
-	i64.eq  	$push4=, $0, $pop3
-	i32.or  	$push5=, $pop2, $pop4
-	return  	$pop5
+	i64.and 	$push6=, $0, $pop0
+	tee_local	$push5=, $0=, $pop6
+	i64.eqz 	$push1=, $pop5
+	i64.const	$push2=, -2147483648
+	i64.eq  	$push3=, $0, $pop2
+	i32.or  	$push4=, $pop1, $pop3
+	return  	$pop4
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

@@ -8,14 +8,13 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push18=, 0
 	i32.const	$push17=, 0
-	i32.load	$push0=, a($pop17)
 	i32.const	$push16=, 0
-	i32.eq  	$push1=, $pop0, $pop16
+	i32.load	$push0=, a($pop16)
+	i32.eqz 	$push1=, $pop0
 	i32.const	$push2=, -30000
 	i32.div_s	$push3=, $pop1, $pop2
-	i32.store	$0=, d($pop18), $pop3
+	i32.store	$0=, d($pop17), $pop3
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
 	i32.load	$push7=, c($pop14)
@@ -32,8 +31,8 @@ main:                                   # @main
 	i32.load	$push10=, b($pop11)
 	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push19=, 0
-	return  	$pop19
+	i32.const	$push18=, 0
+	return  	$pop18
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

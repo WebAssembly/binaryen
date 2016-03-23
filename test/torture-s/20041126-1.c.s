@@ -108,10 +108,10 @@ main:                                   # @main
 .LBB1_4:                                # %check.exit
 	end_block                       # label4:
 	i32.const	$push8=, 0
+	i32.const	$push21=, __stack_pointer
 	i32.const	$push19=, 48
-	i32.add 	$3=, $3, $pop19
-	i32.const	$push20=, __stack_pointer
-	i32.store	$discard=, 0($pop20), $3
+	i32.add 	$push20=, $3, $pop19
+	i32.store	$discard=, 0($pop21), $pop20
 	return  	$pop8
 	.endfunc
 .Lfunc_end1:

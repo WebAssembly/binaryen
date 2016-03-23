@@ -8,58 +8,57 @@ invalidate_memory:                      # @invalidate_memory
 	.param  	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 0
-	i32.load8_u	$push14=, 0($0):p2align=2
-	tee_local	$push13=, $0=, $pop14
+	i32.load8_u	$push13=, 0($0):p2align=2
+	tee_local	$push12=, $0=, $pop13
 	i32.const	$push3=, 4
-	i32.and 	$push1=, $pop13, $pop3
-	i32.const	$push12=, 255
-	i32.and 	$push7=, $pop1, $pop12
-	i32.const	$push11=, 0
-	i32.eq  	$1=, $pop7, $pop11
+	i32.and 	$push1=, $pop12, $pop3
+	i32.const	$push11=, 255
+	i32.and 	$push7=, $pop1, $pop11
+	i32.eqz 	$1=, $pop7
 	i32.const	$push2=, 8
 	i32.and 	$push0=, $0, $pop2
 	i32.const	$push10=, 255
 	i32.and 	$2=, $pop0, $pop10
+	i32.const	$3=, 0
 .LBB0_1:                                # %for.body
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_2 Depth 2
 	block
 	loop                            # label1:
 	block
-	i32.const	$push17=, 2
-	i32.shl 	$push4=, $3, $pop17
-	i32.load	$push16=, table($pop4)
-	tee_local	$push15=, $0=, $pop16
-	i32.const	$push26=, 0
-	i32.eq  	$push27=, $pop15, $pop26
-	br_if   	0, $pop27       # 0: down to label3
+	i32.const	$push16=, 2
+	i32.shl 	$push4=, $3, $pop16
+	i32.load	$push15=, table($pop4)
+	tee_local	$push14=, $0=, $pop15
+	i32.const	$push25=, 0
+	i32.eq  	$push26=, $pop14, $pop25
+	br_if   	0, $pop26       # 0: down to label3
 .LBB0_2:                                # %for.body6
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label4:
-	copy_local	$push22=, $0
-	tee_local	$push21=, $4=, $pop22
-	i32.load	$0=, 4($pop21)
+	copy_local	$push21=, $0
+	tee_local	$push20=, $4=, $pop21
+	i32.load	$0=, 4($pop20)
 	block
-	i32.load16_u	$push20=, 36($4):p2align=2
-	tee_local	$push19=, $4=, $pop20
-	i32.const	$push18=, 255
-	i32.and 	$push5=, $pop19, $pop18
-	i32.const	$push28=, 0
-	i32.eq  	$push29=, $pop5, $pop28
-	br_if   	0, $pop29       # 0: down to label6
+	i32.load16_u	$push19=, 36($4):p2align=2
+	tee_local	$push18=, $4=, $pop19
+	i32.const	$push17=, 255
+	i32.and 	$push5=, $pop18, $pop17
+	i32.const	$push27=, 0
+	i32.eq  	$push28=, $pop5, $pop27
+	br_if   	0, $pop28       # 0: down to label6
 # BB#3:                                 # %land.lhs.true
                                         #   in Loop: Header=BB0_2 Depth=2
 	br_if   	6, $2           # 6: down to label0
 # BB#4:                                 # %land.lhs.true
                                         #   in Loop: Header=BB0_2 Depth=2
-	i32.const	$push23=, 256
-	i32.lt_u	$push8=, $4, $pop23
+	i32.const	$push22=, 256
+	i32.lt_u	$push8=, $4, $pop22
 	i32.or  	$push6=, $1, $pop8
-	i32.const	$push30=, 0
-	i32.eq  	$push31=, $pop6, $pop30
-	br_if   	6, $pop31       # 6: down to label0
+	i32.const	$push29=, 0
+	i32.eq  	$push30=, $pop6, $pop29
+	br_if   	6, $pop30       # 6: down to label0
 .LBB0_5:                                # %for.cond5.backedge
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_block                       # label6:
@@ -68,10 +67,10 @@ invalidate_memory:                      # @invalidate_memory
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label5:
 	end_block                       # label3:
-	i32.const	$push25=, 1
-	i32.add 	$3=, $3, $pop25
-	i32.const	$push24=, 31
-	i32.lt_s	$push9=, $3, $pop24
+	i32.const	$push24=, 1
+	i32.add 	$3=, $3, $pop24
+	i32.const	$push23=, 31
+	i32.lt_s	$push9=, $3, $pop23
 	br_if   	0, $pop9        # 0: up to label1
 # BB#7:                                 # %for.end16
 	end_loop                        # label2:
@@ -117,38 +116,38 @@ remove_from_table:                      # @remove_from_table
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push17=, __stack_pointer
 	i32.load	$push18=, 0($pop17)
 	i32.const	$push19=, 48
-	i32.sub 	$7=, $pop18, $pop19
+	i32.sub 	$4=, $pop18, $pop19
 	i32.const	$push20=, __stack_pointer
-	i32.store	$discard=, 0($pop20), $7
+	i32.store	$discard=, 0($pop20), $4
 	i32.const	$1=, 0
+	i32.const	$push24=, 8
+	i32.add 	$push25=, $4, $pop24
 	i32.const	$push8=, 0
 	i32.const	$push0=, 40
-	i32.const	$4=, 8
-	i32.add 	$4=, $7, $4
-	i32.call	$discard=, memset@FUNCTION, $4, $pop8, $pop0
+	i32.call	$discard=, memset@FUNCTION, $pop25, $pop8, $pop0
 	i32.const	$push1=, 1
-	i32.store8	$0=, 44($7):p2align=2, $pop1
+	i32.store8	$0=, 44($4):p2align=2, $pop1
 	i32.const	$push7=, 0
-	i32.const	$5=, 8
-	i32.add 	$5=, $7, $5
-	i32.store	$discard=, table($pop7):p2align=4, $5
-	i32.const	$6=, 8
-	i32.add 	$6=, $7, $6
-	copy_local	$2=, $6
+	i32.const	$push26=, 8
+	i32.add 	$push27=, $4, $pop26
+	i32.store	$discard=, table($pop7):p2align=4, $pop27
+	i32.const	$push28=, 8
+	i32.add 	$push29=, $4, $pop28
+	copy_local	$2=, $pop29
 .LBB3_1:                                # %for.body.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB3_2 Depth 2
 	block
 	loop                            # label8:
 	block
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $2, $pop23
-	br_if   	0, $pop24       # 0: down to label10
+	i32.const	$push30=, 0
+	i32.eq  	$push31=, $2, $pop30
+	br_if   	0, $pop31       # 0: down to label10
 .LBB3_2:                                # %for.body6.i
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
@@ -188,10 +187,10 @@ main:                                   # @main
 .LBB3_7:                                # %invalidate_memory.exit
 	end_loop                        # label9:
 	i32.const	$push5=, 0
+	i32.const	$push23=, __stack_pointer
 	i32.const	$push21=, 48
-	i32.add 	$7=, $7, $pop21
-	i32.const	$push22=, __stack_pointer
-	i32.store	$discard=, 0($pop22), $7
+	i32.add 	$push22=, $4, $pop21
+	i32.store	$discard=, 0($pop23), $pop22
 	return  	$pop5
 .LBB3_8:                                # %if.then.i
 	end_block                       # label7:

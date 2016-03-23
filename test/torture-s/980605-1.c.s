@@ -82,10 +82,10 @@ f:                                      # @f
 	i32.ne  	$push10=, $0, $pop9
 	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
+	i32.const	$push22=, __stack_pointer
 	i32.const	$push20=, 16
-	i32.add 	$1=, $1, $pop20
-	i32.const	$push21=, __stack_pointer
-	i32.store	$discard=, 0($pop21), $1
+	i32.add 	$push21=, $1, $pop20
+	i32.store	$discard=, 0($pop22), $pop21
 	return
 .LBB2_2:                                # %if.then
 	end_block                       # label0:
