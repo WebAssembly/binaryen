@@ -116,6 +116,15 @@ public:
     return callFunction(export_->value, arguments);
   }
 
+  std::string printFunctionStack() {
+    std::string ret = "/== (binaryen interpreter stack trace)\n";
+    for (int i = int(functionStack.size()) - 1; i >= 0; i--) {
+      ret += std::string("|: ") + functionStack[i].str + "\n";
+    }
+    ret += std::string("\\==\n");
+    return ret;
+  }
+
 private:
 
   size_t callDepth = 0;
@@ -123,6 +132,10 @@ private:
 #ifdef WASM_INTERPRETER_DEBUG
   int indent = 0;
 #endif
+
+  // Function stack. We maintain this explicitly to allow printing of
+  // stack traces.
+  std::vector<Name> functionStack;
 
   //
   // Calls a function. This can be used both internally (calls from
@@ -656,6 +669,7 @@ private:
 
     if (callDepth > maxCallDepth) externalInterface->trap("stack limit");
     callDepth++;
+    functionStack.push_back(name);
 
     Function *function = wasm.functionsMap[name];
     assert(function);
@@ -671,6 +685,8 @@ private:
     if (function->result == none) ret = Literal();
     assert(function->result == ret.type);
     callDepth--;
+    assert(functionStack.back() == name);
+    functionStack.pop_back();
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "exiting " << function->name << " with " << ret << '\n';
 #endif
