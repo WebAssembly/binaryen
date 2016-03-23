@@ -382,6 +382,18 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
   };
 
   instance = new ModuleInstance(*module, new JSExternalInterface());
+
+  // stack trace hooks
+  EM_ASM({
+    Module['outside']['extraStackTrace'] = function() {
+      return Pointer_stringify(Module['_interpreter_stack_trace']());
+    };
+  });
+}
+
+extern "C" int EMSCRIPTEN_KEEPALIVE interpreter_stack_trace() {
+  std::string stack = instance->printFunctionStack();
+  return (int)strdup(stack.c_str()); // XXX leak
 }
 
 // Does a call from js into an export of the module.
