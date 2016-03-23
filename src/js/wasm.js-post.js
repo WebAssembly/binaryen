@@ -49,10 +49,10 @@ function integrateWasmJS(Module) {
   };
 
   var info = {
-    global: null,
-    env: null,
-    asm2wasm: asm2wasmImports,
-    parent: Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
+    'global': null,
+    'env': null,
+    'asm2wasm': asm2wasmImports,
+    'parent': Module // Module inside wasm-js.cpp refers to wasm-js.cpp; this allows access to the outside program.
   };
 
   var exports = null;
