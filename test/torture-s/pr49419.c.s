@@ -107,26 +107,26 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %for.body.i.preheader
 	i32.const	$push46=, __stack_pointer
 	i32.load	$push47=, 0($pop46)
 	i32.const	$push48=, 48
-	i32.sub 	$5=, $pop47, $pop48
+	i32.sub 	$4=, $pop47, $pop48
 	i32.const	$push49=, __stack_pointer
-	i32.store	$discard=, 0($pop49), $5
+	i32.store	$discard=, 0($pop49), $4
 	i32.const	$2=, 0
 	i32.const	$push29=, 0
 	i32.const	$push1=, 36
-	i32.call	$discard=, memset@FUNCTION, $5, $pop29, $pop1
+	i32.call	$discard=, memset@FUNCTION, $4, $pop29, $pop1
 	i32.const	$push0=, 1
-	i32.store	$push2=, 0($5):p2align=4, $pop0
-	i32.store	$0=, 4($5), $pop2
-	i32.load	$1=, 12($5)
+	i32.store	$push2=, 0($4):p2align=4, $pop0
+	i32.store	$0=, 4($4), $pop2
+	i32.load	$1=, 12($4)
 	i32.const	$push3=, 2
-	i32.store	$3=, 8($5):p2align=3, $pop3
+	i32.store	$3=, 8($4):p2align=3, $pop3
 	i32.const	$push28=, 0
-	i32.store	$discard=, t($pop28), $5
+	i32.store	$discard=, t($pop28), $4
 	block
 	block
 	i32.ne  	$push4=, $1, $0
@@ -143,11 +143,11 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push33=, 12
 	i32.mul 	$push6=, $0, $pop33
-	i32.add 	$push7=, $5, $pop6
+	i32.add 	$push7=, $4, $pop6
 	i32.load	$0=, 4($pop7)
 	i32.const	$push32=, 12
 	i32.mul 	$push8=, $0, $pop32
-	i32.add 	$push9=, $5, $pop8
+	i32.add 	$push9=, $4, $pop8
 	i32.load	$push5=, 0($pop9)
 	i32.const	$push31=, 1
 	i32.eq  	$push11=, $pop5, $pop31
@@ -171,12 +171,12 @@ main:                                   # @main
 	br_if   	1, $pop14       # 1: down to label13
 # BB#6:                                 # %for.body10.i.preheader
 	i32.const	$3=, 1
+	block
+	i32.const	$push53=, 36
+	i32.add 	$push54=, $4, $pop53
 	i32.const	$push15=, 2
 	i32.shl 	$push16=, $1, $pop15
-	i32.const	$4=, 36
-	i32.add 	$4=, $5, $4
-	block
-	i32.add 	$push37=, $4, $pop16
+	i32.add 	$push37=, $pop54, $pop16
 	tee_local	$push36=, $0=, $pop37
 	i32.const	$push35=, 2
 	i32.store	$push17=, 0($pop36), $pop35
@@ -191,7 +191,7 @@ main:                                   # @main
 	loop                            # label16:
 	i32.const	$push45=, 12
 	i32.mul 	$push19=, $3, $pop45
-	i32.add 	$push44=, $5, $pop19
+	i32.add 	$push44=, $4, $pop19
 	tee_local	$push43=, $3=, $pop44
 	i32.load	$push20=, 8($pop43)
 	i32.store	$discard=, 0($0), $pop20
@@ -206,23 +206,23 @@ main:                                   # @main
 .LBB1_9:                                # %foo.exit
 	end_loop                        # label17:
 	end_block                       # label15:
-	i32.store	$1=, 36($5), $3
+	i32.store	$1=, 36($4), $3
 	br_if   	2, $2           # 2: down to label12
 # BB#10:                                # %if.end
 	i32.const	$push22=, 1
 	i32.ne  	$push23=, $1, $pop22
 	br_if   	2, $pop23       # 2: down to label12
 # BB#11:                                # %lor.lhs.false
-	i32.load	$push24=, 40($5)
+	i32.load	$push24=, 40($4)
 	i32.const	$push25=, 2
 	i32.ne  	$push26=, $pop24, $pop25
 	br_if   	2, $pop26       # 2: down to label12
 # BB#12:                                # %if.end6
 	i32.const	$push27=, 0
+	i32.const	$push52=, __stack_pointer
 	i32.const	$push50=, 48
-	i32.add 	$5=, $5, $pop50
-	i32.const	$push51=, __stack_pointer
-	i32.store	$discard=, 0($pop51), $5
+	i32.add 	$push51=, $4, $pop50
+	i32.store	$discard=, 0($pop52), $pop51
 	return  	$pop27
 .LBB1_13:                               # %if.then6.i
 	end_block                       # label14:
@@ -231,7 +231,7 @@ main:                                   # @main
 .LBB1_14:                               # %foo.exit.thread
 	end_block                       # label13:
 	i32.const	$push39=, 0
-	i32.store	$discard=, 36($5), $pop39
+	i32.store	$discard=, 36($4), $pop39
 .LBB1_15:                               # %if.then5
 	end_block                       # label12:
 	call    	abort@FUNCTION

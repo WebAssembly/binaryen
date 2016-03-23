@@ -6,47 +6,47 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push12=, __stack_pointer
 	i32.load	$push13=, 0($pop12)
 	i32.const	$push14=, 48
-	i32.sub 	$6=, $pop13, $pop14
+	i32.sub 	$1=, $pop13, $pop14
 	i32.const	$push15=, __stack_pointer
-	i32.store	$discard=, 0($pop15), $6
+	i32.store	$discard=, 0($pop15), $1
+	i32.const	$push19=, 24
+	i32.add 	$push20=, $1, $pop19
 	i32.const	$push2=, 16
-	i32.const	$1=, 24
-	i32.add 	$1=, $6, $1
-	i32.add 	$push3=, $1, $pop2
+	i32.add 	$push3=, $pop20, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.elem+16($pop0)
 	i32.store	$discard=, 0($pop3):p2align=3, $pop1
+	i32.const	$push21=, 24
+	i32.add 	$push22=, $1, $pop21
 	i32.const	$push5=, 8
-	i32.const	$2=, 24
-	i32.add 	$2=, $6, $2
-	i32.add 	$push6=, $2, $pop5
+	i32.add 	$push6=, $pop22, $pop5
 	i32.const	$push11=, 0
 	i64.load	$push4=, .Lmain.elem+8($pop11):p2align=2
 	i64.store	$discard=, 0($pop6), $pop4
 	i32.const	$push10=, 0
 	i64.load	$push7=, .Lmain.elem($pop10):p2align=2
-	i64.store	$discard=, 24($6), $pop7
-	i32.const	$3=, 24
-	i32.add 	$3=, $6, $3
-	i32.store	$discard=, 8($6):p2align=3, $3
-	i32.const	$4=, 24
-	i32.add 	$4=, $6, $4
-	i32.store	$discard=, 12($6), $4
+	i64.store	$discard=, 24($1), $pop7
+	i32.const	$push23=, 24
+	i32.add 	$push24=, $1, $pop23
+	i32.store	$discard=, 8($1):p2align=3, $pop24
+	i32.const	$push25=, 24
+	i32.add 	$push26=, $1, $pop25
+	i32.store	$discard=, 12($1), $pop26
 	i32.const	$push9=, 0
-	i32.store	$push8=, 16($6):p2align=3, $pop9
-	i32.store	$0=, 20($6), $pop8
-	i32.const	$5=, 8
-	i32.add 	$5=, $6, $5
-	call    	foobar@FUNCTION, $5
+	i32.store	$push8=, 16($1):p2align=3, $pop9
+	i32.store	$0=, 20($1), $pop8
+	i32.const	$push27=, 8
+	i32.add 	$push28=, $1, $pop27
+	call    	foobar@FUNCTION, $pop28
+	i32.const	$push18=, __stack_pointer
 	i32.const	$push16=, 48
-	i32.add 	$6=, $6, $pop16
-	i32.const	$push17=, __stack_pointer
-	i32.store	$discard=, 0($pop17), $6
+	i32.add 	$push17=, $1, $pop16
+	i32.store	$discard=, 0($pop18), $pop17
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -56,22 +56,22 @@ main:                                   # @main
 	.type	foobar,@function
 foobar:                                 # @foobar
 	.param  	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push31=, __stack_pointer
 	i32.load	$push32=, 0($pop31)
 	i32.const	$push33=, 32
-	i32.sub 	$10=, $pop32, $pop33
+	i32.sub 	$5=, $pop32, $pop33
 	i32.const	$push34=, __stack_pointer
-	i32.store	$discard=, 0($pop34), $10
-	i32.const	$5=, 16
-	i32.add 	$5=, $10, $5
-	i32.const	$6=, 12
-	i32.add 	$6=, $10, $6
-	call    	bmp_iter_set_init@FUNCTION, $5, $0, $6
-	i32.load	$2=, 24($10):p2align=3
-	i32.load	$1=, 16($10):p2align=3
-	i32.load	$0=, 28($10)
+	i32.store	$discard=, 0($pop34), $5
+	i32.const	$push38=, 16
+	i32.add 	$push39=, $5, $pop38
+	i32.const	$push40=, 12
+	i32.add 	$push41=, $5, $pop40
+	call    	bmp_iter_set_init@FUNCTION, $pop39, $0, $pop41
+	i32.load	$2=, 24($5):p2align=3
+	i32.load	$1=, 16($5):p2align=3
+	i32.load	$0=, 28($5)
 .LBB1_1:                                # %for.cond
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB1_3 Depth 2
@@ -81,9 +81,9 @@ foobar:                                 # @foobar
 	loop                            # label0:
 	block
 	block
-	i32.const	$push37=, 0
-	i32.eq  	$push38=, $0, $pop37
-	br_if   	0, $pop38       # 0: down to label3
+	i32.const	$push48=, 0
+	i32.eq  	$push49=, $0, $pop48
+	br_if   	0, $pop49       # 0: down to label3
 # BB#2:                                 # %while.cond.preheader.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push12=, 1
@@ -97,16 +97,16 @@ foobar:                                 # @foobar
 	i32.shr_u	$0=, $0, $pop14
 	i32.const	$push13=, 1
 	i32.and 	$push3=, $0, $pop13
-	i32.const	$push39=, 0
-	i32.eq  	$push40=, $pop3, $pop39
-	br_if   	0, $pop40       # 0: up to label4
+	i32.const	$push50=, 0
+	i32.eq  	$push51=, $pop3, $pop50
+	br_if   	0, $pop51       # 0: up to label4
 # BB#4:                                 # %while.cond.return.loopexit61_crit_edge.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop                        # label5:
+	i32.const	$push46=, 16
+	i32.add 	$push47=, $5, $pop46
 	i32.const	$push28=, 12
-	i32.const	$9=, 16
-	i32.add 	$9=, $10, $9
-	i32.add 	$push4=, $9, $pop28
+	i32.add 	$push4=, $pop47, $pop28
 	i32.store	$discard=, 0($pop4), $0
 	br      	1               # 1: down to label2
 .LBB1_5:                                # %if.end.i
@@ -135,10 +135,10 @@ foobar:                                 # @foobar
                                         #     Parent Loop BB1_6 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
 	loop                            # label9:
+	i32.const	$push42=, 16
+	i32.add 	$push43=, $5, $pop42
 	i32.const	$push21=, 12
-	i32.const	$7=, 16
-	i32.add 	$7=, $10, $7
-	i32.add 	$push20=, $7, $pop21
+	i32.add 	$push20=, $pop43, $pop21
 	tee_local	$push19=, $4=, $pop20
 	i32.load	$push0=, 0($3)
 	i32.store	$0=, 0($pop19), $pop0
@@ -174,9 +174,9 @@ foobar:                                 # @foobar
 	i32.shr_u	$0=, $0, $pop24
 	i32.const	$push23=, 1
 	i32.and 	$push9=, $0, $pop23
-	i32.const	$push41=, 0
-	i32.eq  	$push42=, $pop9, $pop41
-	br_if   	0, $pop42       # 0: up to label11
+	i32.const	$push52=, 0
+	i32.eq  	$push53=, $pop9, $pop52
+	br_if   	0, $pop53       # 0: up to label11
 # BB#13:                                # %while.cond16.return.loopexit_crit_edge.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop                        # label12:
@@ -184,20 +184,20 @@ foobar:                                 # @foobar
 .LBB1_14:                               # %for.inc
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label2:
+	i32.const	$push44=, 16
+	i32.add 	$push45=, $5, $pop44
 	i32.const	$push30=, 12
-	i32.const	$8=, 16
-	i32.add 	$8=, $10, $8
-	i32.add 	$push10=, $8, $pop30
+	i32.add 	$push10=, $pop45, $pop30
 	i32.const	$push29=, 1
 	i32.shr_u	$push1=, $0, $pop29
 	i32.store	$0=, 0($pop10), $pop1
 	br      	0               # 0: up to label0
 .LBB1_15:                               # %for.end
 	end_loop                        # label1:
+	i32.const	$push37=, __stack_pointer
 	i32.const	$push35=, 32
-	i32.add 	$10=, $10, $pop35
-	i32.const	$push36=, __stack_pointer
-	i32.store	$discard=, 0($pop36), $10
+	i32.add 	$push36=, $5, $pop35
+	i32.store	$discard=, 0($pop37), $pop36
 	return
 	.endfunc
 .Lfunc_end1:
@@ -222,13 +222,13 @@ bmp_iter_set_init:                      # @bmp_iter_set_init
 	end_block                       # label13:
 	i32.load	$4=, 8($1)
 	i32.load	$1=, 12($1)
-	i32.store	$push5=, 8($0), $3
-	i32.store	$push6=, 12($0), $1
-	i32.eq  	$push7=, $pop5, $pop6
+	i32.store	$discard=, 8($0), $3
+	i32.store	$push5=, 12($0), $1
+	i32.eqz 	$push6=, $pop5
 	i32.const	$push3=, 7
 	i32.shl 	$push4=, $4, $pop3
-	i32.or  	$push8=, $pop7, $pop4
-	i32.store	$discard=, 0($2), $pop8
+	i32.or  	$push7=, $pop6, $pop4
+	i32.store	$discard=, 0($2), $pop7
 	return
 	.endfunc
 .Lfunc_end2:

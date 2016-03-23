@@ -7,26 +7,26 @@
 try_a:                                  # @try_a
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push4=, __stack_pointer
 	i32.load	$push5=, 0($pop4)
 	i32.const	$push6=, 16
-	i32.sub 	$2=, $pop5, $pop6
+	i32.sub 	$1=, $pop5, $pop6
 	i32.const	$push7=, __stack_pointer
-	i32.store	$discard=, 0($pop7), $2
-	i32.store	$discard=, 8($2), $0
+	i32.store	$discard=, 0($pop7), $1
+	i32.store	$discard=, 8($1), $0
 	i32.const	$push0=, 0
-	i32.store	$discard=, 12($2), $pop0
+	i32.store	$discard=, 12($1), $pop0
+	i32.const	$push11=, 8
+	i32.add 	$push12=, $1, $pop11
 	i32.const	$push1=, 1
-	i32.const	$1=, 8
-	i32.add 	$1=, $2, $1
-	i32.or  	$push2=, $1, $pop1
+	i32.or  	$push2=, $pop12, $pop1
 	i32.call	$push3=, check_a@FUNCTION, $pop2
+	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
-	i32.add 	$2=, $2, $pop8
-	i32.const	$push9=, __stack_pointer
-	i32.store	$discard=, 0($pop9), $2
+	i32.add 	$push9=, $1, $pop8
+	i32.store	$discard=, 0($pop10), $pop9
 	return  	$pop3
 	.endfunc
 .Lfunc_end0:

@@ -42,8 +42,7 @@ main:                                   # @main
 	call    	qsort@FUNCTION, $pop1, $pop3, $pop2, $pop0
 	i32.const	$push4=, 0
 	i32.load	$push5=, errors($pop4)
-	i32.const	$push7=, 0
-	i32.eq  	$push6=, $pop5, $pop7
+	i32.eqz 	$push6=, $pop5
 	return  	$pop6
 	.endfunc
 .Lfunc_end2:

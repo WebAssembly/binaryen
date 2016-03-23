@@ -6,14 +6,14 @@
 	.type	msum_i4,@function
 msum_i4:                                # @msum_i4
 	.param  	i32, i32, i32
-	.local  	i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push47=, __stack_pointer
 	i32.load	$push48=, 0($pop47)
 	i32.const	$push49=, 64
-	i32.sub 	$9=, $pop48, $pop49
+	i32.sub 	$8=, $pop48, $pop49
 	i32.const	$push50=, __stack_pointer
-	i32.store	$discard=, 0($pop50), $9
+	i32.store	$discard=, 0($pop50), $8
 	i32.load	$push32=, 0($2)
 	tee_local	$push31=, $2=, $pop32
 	i32.const	$push30=, -1
@@ -37,17 +37,17 @@ msum_i4:                                # @msum_i4
 	i32.lt_s	$push6=, $2, $pop21
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
+	i32.const	$push54=, 32
+	i32.add 	$push55=, $8, $pop54
 	i32.const	$push9=, 0
 	i32.const	$push35=, 2
 	i32.shl 	$push7=, $2, $pop35
 	i32.const	$push34=, -4
 	i32.add 	$push8=, $pop7, $pop34
-	i32.const	$8=, 32
-	i32.add 	$8=, $9, $8
-	i32.call	$discard=, memset@FUNCTION, $8, $pop9, $pop8
+	i32.call	$discard=, memset@FUNCTION, $pop55, $pop9, $pop8
 	i32.const	$push33=, 16
 	i32.add 	$2=, $1, $pop33
-	copy_local	$7=, $9
+	copy_local	$7=, $8
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -105,19 +105,19 @@ msum_i4:                                # @msum_i4
 	i32.store	$discard=, 0($0), $7
 	i32.const	$push46=, 4
 	i32.add 	$0=, $0, $pop46
-	i32.load	$push19=, 0($9):p2align=4
-	i32.load	$push16=, 32($9):p2align=4
+	i32.load	$push19=, 0($8):p2align=4
+	i32.load	$push16=, 32($8):p2align=4
 	i32.const	$push45=, 1
 	i32.add 	$push17=, $pop16, $pop45
-	i32.store	$push18=, 32($9):p2align=4, $pop17
+	i32.store	$push18=, 32($8):p2align=4, $pop17
 	i32.ne  	$push20=, $pop19, $pop18
 	br_if   	0, $pop20       # 0: up to label3
 # BB#8:                                 # %do.end
 	end_loop                        # label4:
+	i32.const	$push53=, __stack_pointer
 	i32.const	$push51=, 64
-	i32.add 	$9=, $9, $pop51
-	i32.const	$push52=, __stack_pointer
-	i32.store	$discard=, 0($pop52), $9
+	i32.add 	$push52=, $8, $pop51
+	i32.store	$discard=, 0($pop53), $pop52
 	return
 	.endfunc
 .Lfunc_end0:
@@ -129,25 +129,25 @@ msum_i4:                                # @msum_i4
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push18=, __stack_pointer
 	i32.load	$push19=, 0($pop18)
 	i32.const	$push20=, 112
-	i32.sub 	$5=, $pop19, $pop20
-	copy_local	$2=, $5
-	i32.const	$4=, 36
-	i32.add 	$4=, $5, $4
-	copy_local	$3=, $4
+	i32.sub 	$4=, $pop19, $pop20
+	copy_local	$2=, $4
+	i32.const	$push21=, 36
+	i32.add 	$push22=, $4, $pop21
+	copy_local	$3=, $pop22
 	i32.const	$push0=, 0
-	i32.store	$discard=, 80($5):p2align=4, $pop0
+	i32.store	$discard=, 80($4):p2align=4, $pop0
 	i32.const	$push1=, 3
-	i32.store	$discard=, 48($5):p2align=4, $pop1
+	i32.store	$discard=, 48($4):p2align=4, $pop1
 .LBB1_1:                                # %for.body18.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label8:
-	i32.load	$0=, 80($5):p2align=4
-	i32.load	$1=, 48($5):p2align=4
+	i32.load	$0=, 80($4):p2align=4
+	i32.load	$1=, 48($4):p2align=4
 	i32.const	$push17=, 8
 	i32.add 	$push6=, $2, $pop17
 	i32.load	$push7=, 0($pop6)
@@ -164,7 +164,7 @@ main:                                   # @main
 	i32.add 	$2=, $2, $pop14
 	i32.const	$push13=, 1
 	i32.add 	$push9=, $0, $pop13
-	i32.store	$push10=, 80($5):p2align=4, $pop9
+	i32.store	$push10=, 80($4):p2align=4, $pop9
 	i32.ne  	$push11=, $1, $pop10
 	br_if   	0, $pop11       # 0: up to label8
 # BB#2:                                 # %msum_i4.exit

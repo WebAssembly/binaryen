@@ -49,10 +49,10 @@ test:                                   # @test
 	i32.ne  	$push19=, $pop17, $pop18
 	br_if   	0, $pop19       # 0: down to label0
 # BB#4:                                 # %if.end16
+	i32.const	$push28=, __stack_pointer
 	i32.const	$push26=, 16
-	i32.add 	$4=, $4, $pop26
-	i32.const	$push27=, __stack_pointer
-	i32.store	$discard=, 0($pop27), $4
+	i32.add 	$push27=, $4, $pop26
+	i32.store	$discard=, 0($pop28), $pop27
 	return
 .LBB0_5:                                # %if.then15
 	end_block                       # label0:

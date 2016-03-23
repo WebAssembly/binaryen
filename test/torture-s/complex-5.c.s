@@ -27,18 +27,20 @@ p:                                      # @p
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	f32, f32, f32, f32, f32, i32, i32
+	.local  	f32, f32, f32, f32, f32, i32
 # BB#0:                                 # %entry
 	i32.const	$push29=, __stack_pointer
 	i32.load	$push30=, 0($pop29)
 	i32.const	$push31=, 16
-	i32.sub 	$6=, $pop30, $pop31
+	i32.sub 	$5=, $pop30, $pop31
 	i32.const	$push32=, __stack_pointer
-	i32.store	$discard=, 0($pop32), $6
+	i32.store	$discard=, 0($pop32), $5
 	i32.const	$push26=, 0
 	f32.load	$0=, x+4($pop26)
 	i32.const	$push25=, 0
 	f32.load	$1=, y+4($pop25)
+	i32.const	$push33=, 8
+	i32.add 	$push34=, $5, $pop33
 	f32.const	$push8=, 0x1p0
 	f32.const	$push7=, 0x0p0
 	i32.const	$push24=, 0
@@ -52,16 +54,14 @@ main:                                   # @main
 	i32.const	$push19=, 0
 	f32.add 	$push4=, $0, $1
 	f32.store	$push6=, z+4($pop19), $pop4
-	i32.const	$5=, 8
-	i32.add 	$5=, $6, $5
-	call    	__divsc3@FUNCTION, $5, $pop8, $pop7, $pop5, $pop6
+	call    	__divsc3@FUNCTION, $pop34, $pop8, $pop7, $pop5, $pop6
 	i32.const	$push18=, 0
 	f32.load	$1=, z($pop18)
 	i32.const	$push17=, 0
 	f32.load	$3=, w($pop17)
-	f32.load	$2=, 12($6)
+	f32.load	$2=, 12($5)
 	i32.const	$push16=, 0
-	f32.load	$push9=, 8($6):p2align=3
+	f32.load	$push9=, 8($5):p2align=3
 	f32.add 	$push10=, $4, $pop9
 	f32.store	$discard=, y($pop16), $pop10
 	i32.const	$push15=, 0

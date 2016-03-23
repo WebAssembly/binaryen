@@ -43,10 +43,10 @@ f:                                      # @f
 	end_block                       # label0:
 	i32.const	$push6=, 256
 	i32.store16	$discard=, 2($0), $pop6
+	i32.const	$push15=, __stack_pointer
 	i32.const	$push13=, 16
-	i32.add 	$1=, $1, $pop13
-	i32.const	$push14=, __stack_pointer
-	i32.store	$discard=, 0($pop14), $1
+	i32.add 	$push14=, $1, $pop13
+	i32.store	$discard=, 0($pop15), $pop14
 	return  	$0
 	.endfunc
 .Lfunc_end1:

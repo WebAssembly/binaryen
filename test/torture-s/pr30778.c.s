@@ -33,31 +33,31 @@ init_reg_last:                          # @init_reg_last
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, __stack_pointer
 	i32.load	$push6=, 0($pop5)
 	i32.const	$push7=, 32
-	i32.sub 	$2=, $pop6, $pop7
+	i32.sub 	$1=, $pop6, $pop7
 	i32.const	$push8=, __stack_pointer
-	i32.store	$discard=, 0($pop8), $2
+	i32.store	$discard=, 0($pop8), $1
 	i32.const	$push3=, 0
-	i32.const	$1=, 8
-	i32.add 	$1=, $2, $1
-	i32.store	$discard=, reg_stat($pop3), $1
+	i32.const	$push12=, 8
+	i32.add 	$push13=, $1, $pop12
+	i32.store	$discard=, reg_stat($pop3), $pop13
 	i32.const	$push0=, -1
-	i32.store	$0=, 28($2), $pop0
+	i32.store	$0=, 28($1), $pop0
 	call    	init_reg_last@FUNCTION
 	block
-	i32.load	$push1=, 28($2)
+	i32.load	$push1=, 28($1)
 	i32.ne  	$push2=, $0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
+	i32.const	$push11=, __stack_pointer
 	i32.const	$push9=, 32
-	i32.add 	$2=, $2, $pop9
-	i32.const	$push10=, __stack_pointer
-	i32.store	$discard=, 0($pop10), $2
+	i32.add 	$push10=, $1, $pop9
+	i32.store	$discard=, 0($pop11), $pop10
 	return  	$pop4
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

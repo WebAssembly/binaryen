@@ -1055,24 +1055,24 @@ sr7777:                                 # @sr7777
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push554=, __stack_pointer
 	i32.load	$push555=, 0($pop554)
 	i32.const	$push556=, 32
-	i32.sub 	$42=, $pop555, $pop556
+	i32.sub 	$6=, $pop555, $pop556
 	i32.const	$push557=, __stack_pointer
-	i32.store	$discard=, 0($pop557), $42
+	i32.store	$discard=, 0($pop557), $6
 	i32.const	$2=, 0
 	i32.const	$0=, u
 .LBB24_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label1:
-	i32.const	$6=, 16
-	i32.add 	$6=, $42, $6
-	call    	uq4444@FUNCTION, $6, $0
-	i32.load	$push0=, 16($42):p2align=4
+	i32.const	$push561=, 16
+	i32.add 	$push562=, $6, $pop561
+	call    	uq4444@FUNCTION, $pop562, $0
+	i32.load	$push0=, 16($6):p2align=4
 	i32.load	$push2=, 0($0):p2align=4
 	i32.const	$push412=, 2
 	i32.shr_u	$push175=, $pop2, $pop412
@@ -1080,7 +1080,7 @@ main:                                   # @main
 	br_if   	2, $pop176      # 2: down to label0
 # BB#2:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push1=, 28($42)
+	i32.load	$push1=, 28($6)
 	i32.const	$push416=, 12
 	i32.add 	$push415=, $0, $pop416
 	tee_local	$push414=, $3=, $pop415
@@ -1091,12 +1091,12 @@ main:                                   # @main
 	br_if   	2, $pop178      # 2: down to label0
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$7=, 16
-	i32.add 	$7=, $42, $7
-	copy_local	$4=, $7
+	i32.const	$push563=, 16
+	i32.add 	$push564=, $6, $pop563
+	copy_local	$4=, $pop564
 	#APP
 	#NO_APP
-	i32.load	$push5=, 24($42):p2align=3
+	i32.load	$push5=, 24($6):p2align=3
 	i32.const	$push420=, 8
 	i32.add 	$push419=, $0, $pop420
 	tee_local	$push418=, $4=, $pop419
@@ -1107,7 +1107,7 @@ main:                                   # @main
 	br_if   	2, $pop180      # 2: down to label0
 # BB#4:                                 # %lor.lhs.false13
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push4=, 20($42)
+	i32.load	$push4=, 20($6)
 	i32.const	$push424=, 4
 	i32.add 	$push423=, $0, $pop424
 	tee_local	$push422=, $5=, $pop423
@@ -1118,15 +1118,15 @@ main:                                   # @main
 	br_if   	2, $pop182      # 2: down to label0
 # BB#5:                                 # %if.end20
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$8=, 16
-	i32.add 	$8=, $42, $8
-	copy_local	$1=, $8
+	i32.const	$push565=, 16
+	i32.add 	$push566=, $6, $pop565
+	copy_local	$1=, $pop566
 	#APP
 	#NO_APP
-	i32.const	$9=, 16
-	i32.add 	$9=, $42, $9
-	call    	ur4444@FUNCTION, $9, $0
-	i32.load	$push8=, 16($42):p2align=4
+	i32.const	$push567=, 16
+	i32.add 	$push568=, $6, $pop567
+	call    	ur4444@FUNCTION, $pop568, $0
+	i32.load	$push8=, 16($6):p2align=4
 	i32.load	$push10=, 0($0):p2align=4
 	i32.const	$push425=, 3
 	i32.and 	$push183=, $pop10, $pop425
@@ -1134,7 +1134,7 @@ main:                                   # @main
 	br_if   	2, $pop184      # 2: down to label0
 # BB#6:                                 # %lor.lhs.false26
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push9=, 28($42)
+	i32.load	$push9=, 28($6)
 	i32.load	$push11=, 0($3)
 	i32.const	$push426=, 3
 	i32.and 	$push185=, $pop11, $pop426
@@ -1142,12 +1142,12 @@ main:                                   # @main
 	br_if   	2, $pop186      # 2: down to label0
 # BB#7:                                 # %if.end33
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$10=, 16
-	i32.add 	$10=, $42, $10
-	copy_local	$1=, $10
+	i32.const	$push569=, 16
+	i32.add 	$push570=, $6, $pop569
+	copy_local	$1=, $pop570
 	#APP
 	#NO_APP
-	i32.load	$push13=, 24($42):p2align=3
+	i32.load	$push13=, 24($6):p2align=3
 	i32.load	$push15=, 0($4):p2align=3
 	i32.const	$push427=, 3
 	i32.and 	$push187=, $pop15, $pop427
@@ -1155,7 +1155,7 @@ main:                                   # @main
 	br_if   	2, $pop188      # 2: down to label0
 # BB#8:                                 # %lor.lhs.false39
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push12=, 20($42)
+	i32.load	$push12=, 20($6)
 	i32.load	$push14=, 0($5)
 	i32.const	$push428=, 3
 	i32.and 	$push189=, $pop14, $pop428
@@ -1163,21 +1163,21 @@ main:                                   # @main
 	br_if   	2, $pop190      # 2: down to label0
 # BB#9:                                 # %if.end46
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$11=, 16
-	i32.add 	$11=, $42, $11
-	copy_local	$1=, $11
+	i32.const	$push571=, 16
+	i32.add 	$push572=, $6, $pop571
+	copy_local	$1=, $pop572
 	#APP
 	#NO_APP
-	i32.const	$12=, 16
-	i32.add 	$12=, $42, $12
-	call    	uq1428@FUNCTION, $12, $0
-	i32.load	$push16=, 16($42):p2align=4
+	i32.const	$push573=, 16
+	i32.add 	$push574=, $6, $pop573
+	call    	uq1428@FUNCTION, $pop574, $0
+	i32.load	$push16=, 16($6):p2align=4
 	i32.load	$push18=, 0($0):p2align=4
 	i32.ne  	$push191=, $pop16, $pop18
 	br_if   	2, $pop191      # 2: down to label0
 # BB#10:                                # %lor.lhs.false53
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push17=, 28($42)
+	i32.load	$push17=, 28($6)
 	i32.load	$push19=, 0($3)
 	i32.const	$push429=, 3
 	i32.shr_u	$push192=, $pop19, $pop429
@@ -1185,12 +1185,12 @@ main:                                   # @main
 	br_if   	2, $pop193      # 2: down to label0
 # BB#11:                                # %if.end60
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$13=, 16
-	i32.add 	$13=, $42, $13
-	copy_local	$1=, $13
+	i32.const	$push575=, 16
+	i32.add 	$push576=, $6, $pop575
+	copy_local	$1=, $pop576
 	#APP
 	#NO_APP
-	i32.load	$push21=, 24($42):p2align=3
+	i32.load	$push21=, 24($6):p2align=3
 	i32.load	$push23=, 0($4):p2align=3
 	i32.const	$push430=, 1
 	i32.shr_u	$push194=, $pop23, $pop430
@@ -1198,7 +1198,7 @@ main:                                   # @main
 	br_if   	2, $pop195      # 2: down to label0
 # BB#12:                                # %lor.lhs.false66
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push20=, 20($42)
+	i32.load	$push20=, 20($6)
 	i32.load	$push22=, 0($5)
 	i32.const	$push431=, 2
 	i32.shr_u	$push196=, $pop22, $pop431
@@ -1206,19 +1206,19 @@ main:                                   # @main
 	br_if   	2, $pop197      # 2: down to label0
 # BB#13:                                # %if.end73
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$14=, 16
-	i32.add 	$14=, $42, $14
-	copy_local	$1=, $14
+	i32.const	$push577=, 16
+	i32.add 	$push578=, $6, $pop577
+	copy_local	$1=, $pop578
 	#APP
 	#NO_APP
-	i32.const	$15=, 16
-	i32.add 	$15=, $42, $15
-	call    	ur1428@FUNCTION, $15, $0
-	i32.load	$push24=, 16($42):p2align=4
+	i32.const	$push579=, 16
+	i32.add 	$push580=, $6, $pop579
+	call    	ur1428@FUNCTION, $pop580, $0
+	i32.load	$push24=, 16($6):p2align=4
 	br_if   	2, $pop24       # 2: down to label0
 # BB#14:                                # %lor.lhs.false80
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push25=, 28($42)
+	i32.load	$push25=, 28($6)
 	i32.load	$push198=, 0($3)
 	i32.const	$push432=, 7
 	i32.and 	$push199=, $pop198, $pop432
@@ -1226,12 +1226,12 @@ main:                                   # @main
 	br_if   	2, $pop200      # 2: down to label0
 # BB#15:                                # %if.end87
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$16=, 16
-	i32.add 	$16=, $42, $16
-	copy_local	$1=, $16
+	i32.const	$push581=, 16
+	i32.add 	$push582=, $6, $pop581
+	copy_local	$1=, $pop582
 	#APP
 	#NO_APP
-	i32.load	$push27=, 24($42):p2align=3
+	i32.load	$push27=, 24($6):p2align=3
 	i32.load	$push29=, 0($4):p2align=3
 	i32.const	$push433=, 1
 	i32.and 	$push201=, $pop29, $pop433
@@ -1239,7 +1239,7 @@ main:                                   # @main
 	br_if   	2, $pop202      # 2: down to label0
 # BB#16:                                # %lor.lhs.false93
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push26=, 20($42)
+	i32.load	$push26=, 20($6)
 	i32.load	$push28=, 0($5)
 	i32.const	$push434=, 3
 	i32.and 	$push203=, $pop28, $pop434
@@ -1247,15 +1247,15 @@ main:                                   # @main
 	br_if   	2, $pop204      # 2: down to label0
 # BB#17:                                # %if.end100
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$17=, 16
-	i32.add 	$17=, $42, $17
-	copy_local	$1=, $17
+	i32.const	$push583=, 16
+	i32.add 	$push584=, $6, $pop583
+	copy_local	$1=, $pop584
 	#APP
 	#NO_APP
-	i32.const	$18=, 16
-	i32.add 	$18=, $42, $18
-	call    	uq3333@FUNCTION, $18, $0
-	i32.load	$push30=, 16($42):p2align=4
+	i32.const	$push585=, 16
+	i32.add 	$push586=, $6, $pop585
+	call    	uq3333@FUNCTION, $pop586, $0
+	i32.load	$push30=, 16($6):p2align=4
 	i32.load	$push32=, 0($0):p2align=4
 	i32.const	$push435=, 3
 	i32.div_u	$push205=, $pop32, $pop435
@@ -1263,7 +1263,7 @@ main:                                   # @main
 	br_if   	2, $pop206      # 2: down to label0
 # BB#18:                                # %lor.lhs.false107
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push31=, 28($42)
+	i32.load	$push31=, 28($6)
 	i32.load	$push33=, 0($3)
 	i32.const	$push436=, 3
 	i32.div_u	$push207=, $pop33, $pop436
@@ -1271,12 +1271,12 @@ main:                                   # @main
 	br_if   	2, $pop208      # 2: down to label0
 # BB#19:                                # %if.end114
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$19=, 16
-	i32.add 	$19=, $42, $19
-	copy_local	$1=, $19
+	i32.const	$push587=, 16
+	i32.add 	$push588=, $6, $pop587
+	copy_local	$1=, $pop588
 	#APP
 	#NO_APP
-	i32.load	$push35=, 24($42):p2align=3
+	i32.load	$push35=, 24($6):p2align=3
 	i32.load	$push37=, 0($4):p2align=3
 	i32.const	$push437=, 3
 	i32.div_u	$push209=, $pop37, $pop437
@@ -1284,7 +1284,7 @@ main:                                   # @main
 	br_if   	2, $pop210      # 2: down to label0
 # BB#20:                                # %lor.lhs.false120
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push34=, 20($42)
+	i32.load	$push34=, 20($6)
 	i32.load	$push36=, 0($5)
 	i32.const	$push438=, 3
 	i32.div_u	$push211=, $pop36, $pop438
@@ -1292,15 +1292,15 @@ main:                                   # @main
 	br_if   	2, $pop212      # 2: down to label0
 # BB#21:                                # %if.end127
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$20=, 16
-	i32.add 	$20=, $42, $20
-	copy_local	$1=, $20
+	i32.const	$push589=, 16
+	i32.add 	$push590=, $6, $pop589
+	copy_local	$1=, $pop590
 	#APP
 	#NO_APP
-	i32.const	$21=, 16
-	i32.add 	$21=, $42, $21
-	call    	ur3333@FUNCTION, $21, $0
-	i32.load	$push38=, 16($42):p2align=4
+	i32.const	$push591=, 16
+	i32.add 	$push592=, $6, $pop591
+	call    	ur3333@FUNCTION, $pop592, $0
+	i32.load	$push38=, 16($6):p2align=4
 	i32.load	$push40=, 0($0):p2align=4
 	i32.const	$push439=, 3
 	i32.rem_u	$push213=, $pop40, $pop439
@@ -1308,7 +1308,7 @@ main:                                   # @main
 	br_if   	2, $pop214      # 2: down to label0
 # BB#22:                                # %lor.lhs.false134
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push39=, 28($42)
+	i32.load	$push39=, 28($6)
 	i32.load	$push41=, 0($3)
 	i32.const	$push440=, 3
 	i32.rem_u	$push215=, $pop41, $pop440
@@ -1316,12 +1316,12 @@ main:                                   # @main
 	br_if   	2, $pop216      # 2: down to label0
 # BB#23:                                # %if.end141
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$22=, 16
-	i32.add 	$22=, $42, $22
-	copy_local	$1=, $22
+	i32.const	$push593=, 16
+	i32.add 	$push594=, $6, $pop593
+	copy_local	$1=, $pop594
 	#APP
 	#NO_APP
-	i32.load	$push43=, 24($42):p2align=3
+	i32.load	$push43=, 24($6):p2align=3
 	i32.load	$push45=, 0($4):p2align=3
 	i32.const	$push441=, 3
 	i32.rem_u	$push217=, $pop45, $pop441
@@ -1329,7 +1329,7 @@ main:                                   # @main
 	br_if   	2, $pop218      # 2: down to label0
 # BB#24:                                # %lor.lhs.false147
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push42=, 20($42)
+	i32.load	$push42=, 20($6)
 	i32.load	$push44=, 0($5)
 	i32.const	$push442=, 3
 	i32.rem_u	$push219=, $pop44, $pop442
@@ -1337,15 +1337,15 @@ main:                                   # @main
 	br_if   	2, $pop220      # 2: down to label0
 # BB#25:                                # %if.end154
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$23=, 16
-	i32.add 	$23=, $42, $23
-	copy_local	$1=, $23
+	i32.const	$push595=, 16
+	i32.add 	$push596=, $6, $pop595
+	copy_local	$1=, $pop596
 	#APP
 	#NO_APP
-	i32.const	$24=, 16
-	i32.add 	$24=, $42, $24
-	call    	uq6565@FUNCTION, $24, $0
-	i32.load	$push46=, 16($42):p2align=4
+	i32.const	$push597=, 16
+	i32.add 	$push598=, $6, $pop597
+	call    	uq6565@FUNCTION, $pop598, $0
+	i32.load	$push46=, 16($6):p2align=4
 	i32.load	$push48=, 0($0):p2align=4
 	i32.const	$push443=, 6
 	i32.div_u	$push221=, $pop48, $pop443
@@ -1353,7 +1353,7 @@ main:                                   # @main
 	br_if   	2, $pop222      # 2: down to label0
 # BB#26:                                # %lor.lhs.false161
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push47=, 28($42)
+	i32.load	$push47=, 28($6)
 	i32.load	$push49=, 0($3)
 	i32.const	$push444=, 5
 	i32.div_u	$push223=, $pop49, $pop444
@@ -1361,12 +1361,12 @@ main:                                   # @main
 	br_if   	2, $pop224      # 2: down to label0
 # BB#27:                                # %if.end168
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$25=, 16
-	i32.add 	$25=, $42, $25
-	copy_local	$1=, $25
+	i32.const	$push599=, 16
+	i32.add 	$push600=, $6, $pop599
+	copy_local	$1=, $pop600
 	#APP
 	#NO_APP
-	i32.load	$push51=, 24($42):p2align=3
+	i32.load	$push51=, 24($6):p2align=3
 	i32.load	$push53=, 0($4):p2align=3
 	i32.const	$push445=, 6
 	i32.div_u	$push225=, $pop53, $pop445
@@ -1374,7 +1374,7 @@ main:                                   # @main
 	br_if   	2, $pop226      # 2: down to label0
 # BB#28:                                # %lor.lhs.false174
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push50=, 20($42)
+	i32.load	$push50=, 20($6)
 	i32.load	$push52=, 0($5)
 	i32.const	$push446=, 5
 	i32.div_u	$push227=, $pop52, $pop446
@@ -1382,15 +1382,15 @@ main:                                   # @main
 	br_if   	2, $pop228      # 2: down to label0
 # BB#29:                                # %if.end181
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$26=, 16
-	i32.add 	$26=, $42, $26
-	copy_local	$1=, $26
+	i32.const	$push601=, 16
+	i32.add 	$push602=, $6, $pop601
+	copy_local	$1=, $pop602
 	#APP
 	#NO_APP
-	i32.const	$27=, 16
-	i32.add 	$27=, $42, $27
-	call    	ur6565@FUNCTION, $27, $0
-	i32.load	$push54=, 16($42):p2align=4
+	i32.const	$push603=, 16
+	i32.add 	$push604=, $6, $pop603
+	call    	ur6565@FUNCTION, $pop604, $0
+	i32.load	$push54=, 16($6):p2align=4
 	i32.load	$push56=, 0($0):p2align=4
 	i32.const	$push447=, 6
 	i32.rem_u	$push229=, $pop56, $pop447
@@ -1398,7 +1398,7 @@ main:                                   # @main
 	br_if   	2, $pop230      # 2: down to label0
 # BB#30:                                # %lor.lhs.false188
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push55=, 28($42)
+	i32.load	$push55=, 28($6)
 	i32.load	$push57=, 0($3)
 	i32.const	$push448=, 5
 	i32.rem_u	$push231=, $pop57, $pop448
@@ -1406,12 +1406,12 @@ main:                                   # @main
 	br_if   	2, $pop232      # 2: down to label0
 # BB#31:                                # %if.end195
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$28=, 16
-	i32.add 	$28=, $42, $28
-	copy_local	$1=, $28
+	i32.const	$push605=, 16
+	i32.add 	$push606=, $6, $pop605
+	copy_local	$1=, $pop606
 	#APP
 	#NO_APP
-	i32.load	$push59=, 24($42):p2align=3
+	i32.load	$push59=, 24($6):p2align=3
 	i32.load	$push61=, 0($4):p2align=3
 	i32.const	$push449=, 6
 	i32.rem_u	$push233=, $pop61, $pop449
@@ -1419,7 +1419,7 @@ main:                                   # @main
 	br_if   	2, $pop234      # 2: down to label0
 # BB#32:                                # %lor.lhs.false201
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push58=, 20($42)
+	i32.load	$push58=, 20($6)
 	i32.load	$push60=, 0($5)
 	i32.const	$push450=, 5
 	i32.rem_u	$push235=, $pop60, $pop450
@@ -1427,15 +1427,15 @@ main:                                   # @main
 	br_if   	2, $pop236      # 2: down to label0
 # BB#33:                                # %if.end208
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$29=, 16
-	i32.add 	$29=, $42, $29
-	copy_local	$1=, $29
+	i32.const	$push607=, 16
+	i32.add 	$push608=, $6, $pop607
+	copy_local	$1=, $pop608
 	#APP
 	#NO_APP
-	i32.const	$30=, 16
-	i32.add 	$30=, $42, $30
-	call    	uq1414146@FUNCTION, $30, $0
-	i32.load	$push62=, 16($42):p2align=4
+	i32.const	$push609=, 16
+	i32.add 	$push610=, $6, $pop609
+	call    	uq1414146@FUNCTION, $pop610, $0
+	i32.load	$push62=, 16($6):p2align=4
 	i32.load	$push64=, 0($0):p2align=4
 	i32.const	$push451=, 14
 	i32.div_u	$push237=, $pop64, $pop451
@@ -1443,7 +1443,7 @@ main:                                   # @main
 	br_if   	2, $pop238      # 2: down to label0
 # BB#34:                                # %lor.lhs.false215
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push63=, 28($42)
+	i32.load	$push63=, 28($6)
 	i32.load	$push65=, 0($3)
 	i32.const	$push452=, 6
 	i32.div_u	$push239=, $pop65, $pop452
@@ -1451,12 +1451,12 @@ main:                                   # @main
 	br_if   	2, $pop240      # 2: down to label0
 # BB#35:                                # %if.end222
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$31=, 16
-	i32.add 	$31=, $42, $31
-	copy_local	$1=, $31
+	i32.const	$push611=, 16
+	i32.add 	$push612=, $6, $pop611
+	copy_local	$1=, $pop612
 	#APP
 	#NO_APP
-	i32.load	$push67=, 24($42):p2align=3
+	i32.load	$push67=, 24($6):p2align=3
 	i32.load	$push69=, 0($4):p2align=3
 	i32.const	$push453=, 14
 	i32.div_u	$push241=, $pop69, $pop453
@@ -1464,7 +1464,7 @@ main:                                   # @main
 	br_if   	2, $pop242      # 2: down to label0
 # BB#36:                                # %lor.lhs.false228
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push66=, 20($42)
+	i32.load	$push66=, 20($6)
 	i32.load	$push68=, 0($5)
 	i32.const	$push454=, 14
 	i32.div_u	$push243=, $pop68, $pop454
@@ -1472,15 +1472,15 @@ main:                                   # @main
 	br_if   	2, $pop244      # 2: down to label0
 # BB#37:                                # %if.end235
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$32=, 16
-	i32.add 	$32=, $42, $32
-	copy_local	$1=, $32
+	i32.const	$push613=, 16
+	i32.add 	$push614=, $6, $pop613
+	copy_local	$1=, $pop614
 	#APP
 	#NO_APP
-	i32.const	$33=, 16
-	i32.add 	$33=, $42, $33
-	call    	ur1414146@FUNCTION, $33, $0
-	i32.load	$push70=, 16($42):p2align=4
+	i32.const	$push615=, 16
+	i32.add 	$push616=, $6, $pop615
+	call    	ur1414146@FUNCTION, $pop616, $0
+	i32.load	$push70=, 16($6):p2align=4
 	i32.load	$push72=, 0($0):p2align=4
 	i32.const	$push455=, 14
 	i32.rem_u	$push245=, $pop72, $pop455
@@ -1488,7 +1488,7 @@ main:                                   # @main
 	br_if   	2, $pop246      # 2: down to label0
 # BB#38:                                # %lor.lhs.false242
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push71=, 28($42)
+	i32.load	$push71=, 28($6)
 	i32.load	$push73=, 0($3)
 	i32.const	$push456=, 6
 	i32.rem_u	$push247=, $pop73, $pop456
@@ -1496,12 +1496,12 @@ main:                                   # @main
 	br_if   	2, $pop248      # 2: down to label0
 # BB#39:                                # %if.end249
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$34=, 16
-	i32.add 	$34=, $42, $34
-	copy_local	$1=, $34
+	i32.const	$push617=, 16
+	i32.add 	$push618=, $6, $pop617
+	copy_local	$1=, $pop618
 	#APP
 	#NO_APP
-	i32.load	$push75=, 24($42):p2align=3
+	i32.load	$push75=, 24($6):p2align=3
 	i32.load	$push77=, 0($4):p2align=3
 	i32.const	$push457=, 14
 	i32.rem_u	$push249=, $pop77, $pop457
@@ -1509,7 +1509,7 @@ main:                                   # @main
 	br_if   	2, $pop250      # 2: down to label0
 # BB#40:                                # %lor.lhs.false255
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push74=, 20($42)
+	i32.load	$push74=, 20($6)
 	i32.load	$push76=, 0($5)
 	i32.const	$push458=, 14
 	i32.rem_u	$push251=, $pop76, $pop458
@@ -1517,15 +1517,15 @@ main:                                   # @main
 	br_if   	2, $pop252      # 2: down to label0
 # BB#41:                                # %if.end262
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$35=, 16
-	i32.add 	$35=, $42, $35
-	copy_local	$1=, $35
+	i32.const	$push619=, 16
+	i32.add 	$push620=, $6, $pop619
+	copy_local	$1=, $pop620
 	#APP
 	#NO_APP
-	i32.const	$36=, 16
-	i32.add 	$36=, $42, $36
-	call    	uq7777@FUNCTION, $36, $0
-	i32.load	$push78=, 16($42):p2align=4
+	i32.const	$push621=, 16
+	i32.add 	$push622=, $6, $pop621
+	call    	uq7777@FUNCTION, $pop622, $0
+	i32.load	$push78=, 16($6):p2align=4
 	i32.load	$push80=, 0($0):p2align=4
 	i32.const	$push459=, 7
 	i32.div_u	$push253=, $pop80, $pop459
@@ -1533,7 +1533,7 @@ main:                                   # @main
 	br_if   	2, $pop254      # 2: down to label0
 # BB#42:                                # %lor.lhs.false269
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push79=, 28($42)
+	i32.load	$push79=, 28($6)
 	i32.load	$push81=, 0($3)
 	i32.const	$push460=, 7
 	i32.div_u	$push255=, $pop81, $pop460
@@ -1541,12 +1541,12 @@ main:                                   # @main
 	br_if   	2, $pop256      # 2: down to label0
 # BB#43:                                # %if.end276
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$37=, 16
-	i32.add 	$37=, $42, $37
-	copy_local	$1=, $37
+	i32.const	$push623=, 16
+	i32.add 	$push624=, $6, $pop623
+	copy_local	$1=, $pop624
 	#APP
 	#NO_APP
-	i32.load	$push83=, 24($42):p2align=3
+	i32.load	$push83=, 24($6):p2align=3
 	i32.load	$push85=, 0($4):p2align=3
 	i32.const	$push461=, 7
 	i32.div_u	$push257=, $pop85, $pop461
@@ -1554,7 +1554,7 @@ main:                                   # @main
 	br_if   	2, $pop258      # 2: down to label0
 # BB#44:                                # %lor.lhs.false282
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push82=, 20($42)
+	i32.load	$push82=, 20($6)
 	i32.load	$push84=, 0($5)
 	i32.const	$push462=, 7
 	i32.div_u	$push259=, $pop84, $pop462
@@ -1562,15 +1562,15 @@ main:                                   # @main
 	br_if   	2, $pop260      # 2: down to label0
 # BB#45:                                # %if.end289
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$38=, 16
-	i32.add 	$38=, $42, $38
-	copy_local	$1=, $38
+	i32.const	$push625=, 16
+	i32.add 	$push626=, $6, $pop625
+	copy_local	$1=, $pop626
 	#APP
 	#NO_APP
-	i32.const	$39=, 16
-	i32.add 	$39=, $42, $39
-	call    	ur7777@FUNCTION, $39, $0
-	i32.load	$push86=, 16($42):p2align=4
+	i32.const	$push627=, 16
+	i32.add 	$push628=, $6, $pop627
+	call    	ur7777@FUNCTION, $pop628, $0
+	i32.load	$push86=, 16($6):p2align=4
 	i32.load	$push88=, 0($0):p2align=4
 	i32.const	$push463=, 7
 	i32.rem_u	$push261=, $pop88, $pop463
@@ -1578,7 +1578,7 @@ main:                                   # @main
 	br_if   	2, $pop262      # 2: down to label0
 # BB#46:                                # %lor.lhs.false296
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push87=, 28($42)
+	i32.load	$push87=, 28($6)
 	i32.load	$push89=, 0($3)
 	i32.const	$push464=, 7
 	i32.rem_u	$push263=, $pop89, $pop464
@@ -1586,12 +1586,12 @@ main:                                   # @main
 	br_if   	2, $pop264      # 2: down to label0
 # BB#47:                                # %if.end303
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$40=, 16
-	i32.add 	$40=, $42, $40
-	copy_local	$3=, $40
+	i32.const	$push629=, 16
+	i32.add 	$push630=, $6, $pop629
+	copy_local	$3=, $pop630
 	#APP
 	#NO_APP
-	i32.load	$push91=, 24($42):p2align=3
+	i32.load	$push91=, 24($6):p2align=3
 	i32.load	$push93=, 0($4):p2align=3
 	i32.const	$push465=, 7
 	i32.rem_u	$push265=, $pop93, $pop465
@@ -1599,7 +1599,7 @@ main:                                   # @main
 	br_if   	2, $pop266      # 2: down to label0
 # BB#48:                                # %lor.lhs.false309
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.load	$push90=, 20($42)
+	i32.load	$push90=, 20($6)
 	i32.load	$push92=, 0($5)
 	i32.const	$push466=, 7
 	i32.rem_u	$push267=, $pop92, $pop466
@@ -1607,9 +1607,9 @@ main:                                   # @main
 	br_if   	2, $pop268      # 2: down to label0
 # BB#49:                                # %if.end316
                                         #   in Loop: Header=BB24_1 Depth=1
-	i32.const	$41=, 16
-	i32.add 	$41=, $42, $41
-	copy_local	$3=, $41
+	i32.const	$push631=, 16
+	i32.add 	$push632=, $6, $pop631
+	copy_local	$3=, $pop632
 	#APP
 	#NO_APP
 	i32.const	$push469=, 1
@@ -1626,9 +1626,9 @@ main:                                   # @main
 .LBB24_51:                              # %for.body319
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	call    	sq4444@FUNCTION, $42, $0
+	call    	sq4444@FUNCTION, $6, $0
 	i32.load	$3=, 0($0):p2align=4
-	i32.load	$push94=, 0($42):p2align=4
+	i32.load	$push94=, 0($6):p2align=4
 	i32.const	$push472=, 31
 	i32.shr_s	$push270=, $3, $pop472
 	i32.const	$push471=, 30
@@ -1644,7 +1644,7 @@ main:                                   # @main
 	i32.add 	$push477=, $0, $pop478
 	tee_local	$push476=, $3=, $pop477
 	i32.load	$4=, 0($pop476)
-	i32.load	$push95=, 12($42)
+	i32.load	$push95=, 12($6)
 	i32.const	$push475=, 31
 	i32.shr_s	$push275=, $4, $pop475
 	i32.const	$push474=, 30
@@ -1656,14 +1656,14 @@ main:                                   # @main
 	br_if   	2, $pop279      # 2: down to label0
 # BB#53:                                # %if.end333
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$4=, $42
+	copy_local	$4=, $6
 	#APP
 	#NO_APP
 	i32.const	$push484=, 8
 	i32.add 	$push483=, $0, $pop484
 	tee_local	$push482=, $4=, $pop483
 	i32.load	$5=, 0($pop482):p2align=3
-	i32.load	$push97=, 8($42):p2align=3
+	i32.load	$push97=, 8($6):p2align=3
 	i32.const	$push481=, 31
 	i32.shr_s	$push280=, $5, $pop481
 	i32.const	$push480=, 30
@@ -1679,7 +1679,7 @@ main:                                   # @main
 	i32.add 	$push489=, $0, $pop490
 	tee_local	$push488=, $5=, $pop489
 	i32.load	$2=, 0($pop488)
-	i32.load	$push96=, 4($42)
+	i32.load	$push96=, 4($6)
 	i32.const	$push487=, 31
 	i32.shr_s	$push285=, $2, $pop487
 	i32.const	$push486=, 30
@@ -1691,12 +1691,12 @@ main:                                   # @main
 	br_if   	2, $pop289      # 2: down to label0
 # BB#55:                                # %if.end346
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sr4444@FUNCTION, $42, $0
+	call    	sr4444@FUNCTION, $6, $0
 	i32.load	$2=, 0($0):p2align=4
-	i32.load	$push98=, 0($42):p2align=4
+	i32.load	$push98=, 0($6):p2align=4
 	i32.const	$push493=, 31
 	i32.shr_s	$push290=, $2, $pop493
 	i32.const	$push492=, 30
@@ -1710,7 +1710,7 @@ main:                                   # @main
 # BB#56:                                # %lor.lhs.false353
                                         #   in Loop: Header=BB24_51 Depth=1
 	i32.load	$2=, 0($3)
-	i32.load	$push99=, 12($42)
+	i32.load	$push99=, 12($6)
 	i32.const	$push496=, 31
 	i32.shr_s	$push296=, $2, $pop496
 	i32.const	$push495=, 30
@@ -1723,11 +1723,11 @@ main:                                   # @main
 	br_if   	2, $pop301      # 2: down to label0
 # BB#57:                                # %if.end360
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
 	i32.load	$2=, 0($4):p2align=3
-	i32.load	$push101=, 8($42):p2align=3
+	i32.load	$push101=, 8($6):p2align=3
 	i32.const	$push499=, 31
 	i32.shr_s	$push302=, $2, $pop499
 	i32.const	$push498=, 30
@@ -1741,7 +1741,7 @@ main:                                   # @main
 # BB#58:                                # %lor.lhs.false366
                                         #   in Loop: Header=BB24_51 Depth=1
 	i32.load	$2=, 0($5)
-	i32.load	$push100=, 4($42)
+	i32.load	$push100=, 4($6)
 	i32.const	$push502=, 31
 	i32.shr_s	$push308=, $2, $pop502
 	i32.const	$push501=, 30
@@ -1754,18 +1754,18 @@ main:                                   # @main
 	br_if   	2, $pop313      # 2: down to label0
 # BB#59:                                # %if.end373
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sq1428@FUNCTION, $42, $0
-	i32.load	$push102=, 0($42):p2align=4
+	call    	sq1428@FUNCTION, $6, $0
+	i32.load	$push102=, 0($6):p2align=4
 	i32.load	$push104=, 0($0):p2align=4
 	i32.ne  	$push314=, $pop102, $pop104
 	br_if   	2, $pop314      # 2: down to label0
 # BB#60:                                # %lor.lhs.false380
                                         #   in Loop: Header=BB24_51 Depth=1
 	i32.load	$2=, 0($3)
-	i32.load	$push103=, 12($42)
+	i32.load	$push103=, 12($6)
 	i32.const	$push505=, 31
 	i32.shr_s	$push315=, $2, $pop505
 	i32.const	$push504=, 29
@@ -1777,11 +1777,11 @@ main:                                   # @main
 	br_if   	2, $pop319      # 2: down to label0
 # BB#61:                                # %if.end387
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
 	i32.load	$2=, 0($4):p2align=3
-	i32.load	$push106=, 8($42):p2align=3
+	i32.load	$push106=, 8($6):p2align=3
 	i32.const	$push507=, 31
 	i32.shr_u	$push320=, $2, $pop507
 	i32.add 	$push321=, $2, $pop320
@@ -1792,7 +1792,7 @@ main:                                   # @main
 # BB#62:                                # %lor.lhs.false393
                                         #   in Loop: Header=BB24_51 Depth=1
 	i32.load	$2=, 0($5)
-	i32.load	$push105=, 4($42)
+	i32.load	$push105=, 4($6)
 	i32.const	$push510=, 31
 	i32.shr_s	$push324=, $2, $pop510
 	i32.const	$push509=, 30
@@ -1804,16 +1804,16 @@ main:                                   # @main
 	br_if   	2, $pop328      # 2: down to label0
 # BB#63:                                # %if.end400
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sr1428@FUNCTION, $42, $0
-	i32.load	$push107=, 0($42):p2align=4
+	call    	sr1428@FUNCTION, $6, $0
+	i32.load	$push107=, 0($6):p2align=4
 	br_if   	2, $pop107      # 2: down to label0
 # BB#64:                                # %lor.lhs.false407
                                         #   in Loop: Header=BB24_51 Depth=1
 	i32.load	$2=, 0($3)
-	i32.load	$push108=, 12($42)
+	i32.load	$push108=, 12($6)
 	i32.const	$push513=, 31
 	i32.shr_s	$push329=, $2, $pop513
 	i32.const	$push512=, 29
@@ -1826,11 +1826,11 @@ main:                                   # @main
 	br_if   	2, $pop334      # 2: down to label0
 # BB#65:                                # %if.end414
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
 	i32.load	$2=, 0($4):p2align=3
-	i32.load	$push110=, 8($42):p2align=3
+	i32.load	$push110=, 8($6):p2align=3
 	i32.const	$push515=, 31
 	i32.shr_u	$push335=, $2, $pop515
 	i32.add 	$push336=, $2, $pop335
@@ -1842,7 +1842,7 @@ main:                                   # @main
 # BB#66:                                # %lor.lhs.false420
                                         #   in Loop: Header=BB24_51 Depth=1
 	i32.load	$2=, 0($5)
-	i32.load	$push109=, 4($42)
+	i32.load	$push109=, 4($6)
 	i32.const	$push518=, 31
 	i32.shr_s	$push340=, $2, $pop518
 	i32.const	$push517=, 30
@@ -1855,11 +1855,11 @@ main:                                   # @main
 	br_if   	2, $pop345      # 2: down to label0
 # BB#67:                                # %if.end427
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sq3333@FUNCTION, $42, $0
-	i32.load	$push111=, 0($42):p2align=4
+	call    	sq3333@FUNCTION, $6, $0
+	i32.load	$push111=, 0($6):p2align=4
 	i32.load	$push113=, 0($0):p2align=4
 	i32.const	$push519=, 3
 	i32.div_s	$push346=, $pop113, $pop519
@@ -1867,7 +1867,7 @@ main:                                   # @main
 	br_if   	2, $pop347      # 2: down to label0
 # BB#68:                                # %lor.lhs.false434
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push112=, 12($42)
+	i32.load	$push112=, 12($6)
 	i32.load	$push114=, 0($3)
 	i32.const	$push520=, 3
 	i32.div_s	$push348=, $pop114, $pop520
@@ -1875,10 +1875,10 @@ main:                                   # @main
 	br_if   	2, $pop349      # 2: down to label0
 # BB#69:                                # %if.end441
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	i32.load	$push116=, 8($42):p2align=3
+	i32.load	$push116=, 8($6):p2align=3
 	i32.load	$push118=, 0($4):p2align=3
 	i32.const	$push521=, 3
 	i32.div_s	$push350=, $pop118, $pop521
@@ -1886,7 +1886,7 @@ main:                                   # @main
 	br_if   	2, $pop351      # 2: down to label0
 # BB#70:                                # %lor.lhs.false447
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push115=, 4($42)
+	i32.load	$push115=, 4($6)
 	i32.load	$push117=, 0($5)
 	i32.const	$push522=, 3
 	i32.div_s	$push352=, $pop117, $pop522
@@ -1894,11 +1894,11 @@ main:                                   # @main
 	br_if   	2, $pop353      # 2: down to label0
 # BB#71:                                # %if.end454
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sr3333@FUNCTION, $42, $0
-	i32.load	$push119=, 0($42):p2align=4
+	call    	sr3333@FUNCTION, $6, $0
+	i32.load	$push119=, 0($6):p2align=4
 	i32.load	$push121=, 0($0):p2align=4
 	i32.const	$push523=, 3
 	i32.rem_s	$push354=, $pop121, $pop523
@@ -1906,7 +1906,7 @@ main:                                   # @main
 	br_if   	2, $pop355      # 2: down to label0
 # BB#72:                                # %lor.lhs.false461
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push120=, 12($42)
+	i32.load	$push120=, 12($6)
 	i32.load	$push122=, 0($3)
 	i32.const	$push524=, 3
 	i32.rem_s	$push356=, $pop122, $pop524
@@ -1914,10 +1914,10 @@ main:                                   # @main
 	br_if   	2, $pop357      # 2: down to label0
 # BB#73:                                # %if.end468
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	i32.load	$push124=, 8($42):p2align=3
+	i32.load	$push124=, 8($6):p2align=3
 	i32.load	$push126=, 0($4):p2align=3
 	i32.const	$push525=, 3
 	i32.rem_s	$push358=, $pop126, $pop525
@@ -1925,7 +1925,7 @@ main:                                   # @main
 	br_if   	2, $pop359      # 2: down to label0
 # BB#74:                                # %lor.lhs.false474
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push123=, 4($42)
+	i32.load	$push123=, 4($6)
 	i32.load	$push125=, 0($5)
 	i32.const	$push526=, 3
 	i32.rem_s	$push360=, $pop125, $pop526
@@ -1933,11 +1933,11 @@ main:                                   # @main
 	br_if   	2, $pop361      # 2: down to label0
 # BB#75:                                # %if.end481
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sq6565@FUNCTION, $42, $0
-	i32.load	$push127=, 0($42):p2align=4
+	call    	sq6565@FUNCTION, $6, $0
+	i32.load	$push127=, 0($6):p2align=4
 	i32.load	$push129=, 0($0):p2align=4
 	i32.const	$push527=, 6
 	i32.div_s	$push362=, $pop129, $pop527
@@ -1945,7 +1945,7 @@ main:                                   # @main
 	br_if   	2, $pop363      # 2: down to label0
 # BB#76:                                # %lor.lhs.false488
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push128=, 12($42)
+	i32.load	$push128=, 12($6)
 	i32.load	$push130=, 0($3)
 	i32.const	$push528=, 5
 	i32.div_s	$push364=, $pop130, $pop528
@@ -1953,10 +1953,10 @@ main:                                   # @main
 	br_if   	2, $pop365      # 2: down to label0
 # BB#77:                                # %if.end495
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	i32.load	$push132=, 8($42):p2align=3
+	i32.load	$push132=, 8($6):p2align=3
 	i32.load	$push134=, 0($4):p2align=3
 	i32.const	$push529=, 6
 	i32.div_s	$push366=, $pop134, $pop529
@@ -1964,7 +1964,7 @@ main:                                   # @main
 	br_if   	2, $pop367      # 2: down to label0
 # BB#78:                                # %lor.lhs.false501
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push131=, 4($42)
+	i32.load	$push131=, 4($6)
 	i32.load	$push133=, 0($5)
 	i32.const	$push530=, 5
 	i32.div_s	$push368=, $pop133, $pop530
@@ -1972,11 +1972,11 @@ main:                                   # @main
 	br_if   	2, $pop369      # 2: down to label0
 # BB#79:                                # %if.end508
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sr6565@FUNCTION, $42, $0
-	i32.load	$push135=, 0($42):p2align=4
+	call    	sr6565@FUNCTION, $6, $0
+	i32.load	$push135=, 0($6):p2align=4
 	i32.load	$push137=, 0($0):p2align=4
 	i32.const	$push531=, 6
 	i32.rem_s	$push370=, $pop137, $pop531
@@ -1984,7 +1984,7 @@ main:                                   # @main
 	br_if   	2, $pop371      # 2: down to label0
 # BB#80:                                # %lor.lhs.false515
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push136=, 12($42)
+	i32.load	$push136=, 12($6)
 	i32.load	$push138=, 0($3)
 	i32.const	$push532=, 5
 	i32.rem_s	$push372=, $pop138, $pop532
@@ -1992,10 +1992,10 @@ main:                                   # @main
 	br_if   	2, $pop373      # 2: down to label0
 # BB#81:                                # %if.end522
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	i32.load	$push140=, 8($42):p2align=3
+	i32.load	$push140=, 8($6):p2align=3
 	i32.load	$push142=, 0($4):p2align=3
 	i32.const	$push533=, 6
 	i32.rem_s	$push374=, $pop142, $pop533
@@ -2003,7 +2003,7 @@ main:                                   # @main
 	br_if   	2, $pop375      # 2: down to label0
 # BB#82:                                # %lor.lhs.false528
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push139=, 4($42)
+	i32.load	$push139=, 4($6)
 	i32.load	$push141=, 0($5)
 	i32.const	$push534=, 5
 	i32.rem_s	$push376=, $pop141, $pop534
@@ -2011,11 +2011,11 @@ main:                                   # @main
 	br_if   	2, $pop377      # 2: down to label0
 # BB#83:                                # %if.end535
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sq1414146@FUNCTION, $42, $0
-	i32.load	$push143=, 0($42):p2align=4
+	call    	sq1414146@FUNCTION, $6, $0
+	i32.load	$push143=, 0($6):p2align=4
 	i32.load	$push145=, 0($0):p2align=4
 	i32.const	$push535=, 14
 	i32.div_s	$push378=, $pop145, $pop535
@@ -2023,7 +2023,7 @@ main:                                   # @main
 	br_if   	2, $pop379      # 2: down to label0
 # BB#84:                                # %lor.lhs.false542
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push144=, 12($42)
+	i32.load	$push144=, 12($6)
 	i32.load	$push146=, 0($3)
 	i32.const	$push536=, 6
 	i32.div_s	$push380=, $pop146, $pop536
@@ -2031,10 +2031,10 @@ main:                                   # @main
 	br_if   	2, $pop381      # 2: down to label0
 # BB#85:                                # %if.end549
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	i32.load	$push148=, 8($42):p2align=3
+	i32.load	$push148=, 8($6):p2align=3
 	i32.load	$push150=, 0($4):p2align=3
 	i32.const	$push537=, 14
 	i32.div_s	$push382=, $pop150, $pop537
@@ -2042,7 +2042,7 @@ main:                                   # @main
 	br_if   	2, $pop383      # 2: down to label0
 # BB#86:                                # %lor.lhs.false555
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push147=, 4($42)
+	i32.load	$push147=, 4($6)
 	i32.load	$push149=, 0($5)
 	i32.const	$push538=, 14
 	i32.div_s	$push384=, $pop149, $pop538
@@ -2050,11 +2050,11 @@ main:                                   # @main
 	br_if   	2, $pop385      # 2: down to label0
 # BB#87:                                # %if.end562
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sr1414146@FUNCTION, $42, $0
-	i32.load	$push151=, 0($42):p2align=4
+	call    	sr1414146@FUNCTION, $6, $0
+	i32.load	$push151=, 0($6):p2align=4
 	i32.load	$push153=, 0($0):p2align=4
 	i32.const	$push539=, 14
 	i32.rem_s	$push386=, $pop153, $pop539
@@ -2062,7 +2062,7 @@ main:                                   # @main
 	br_if   	2, $pop387      # 2: down to label0
 # BB#88:                                # %lor.lhs.false569
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push152=, 12($42)
+	i32.load	$push152=, 12($6)
 	i32.load	$push154=, 0($3)
 	i32.const	$push540=, 6
 	i32.rem_s	$push388=, $pop154, $pop540
@@ -2070,10 +2070,10 @@ main:                                   # @main
 	br_if   	2, $pop389      # 2: down to label0
 # BB#89:                                # %if.end576
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	i32.load	$push156=, 8($42):p2align=3
+	i32.load	$push156=, 8($6):p2align=3
 	i32.load	$push158=, 0($4):p2align=3
 	i32.const	$push541=, 14
 	i32.rem_s	$push390=, $pop158, $pop541
@@ -2081,7 +2081,7 @@ main:                                   # @main
 	br_if   	2, $pop391      # 2: down to label0
 # BB#90:                                # %lor.lhs.false582
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push155=, 4($42)
+	i32.load	$push155=, 4($6)
 	i32.load	$push157=, 0($5)
 	i32.const	$push542=, 14
 	i32.rem_s	$push392=, $pop157, $pop542
@@ -2089,11 +2089,11 @@ main:                                   # @main
 	br_if   	2, $pop393      # 2: down to label0
 # BB#91:                                # %if.end589
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sq7777@FUNCTION, $42, $0
-	i32.load	$push159=, 0($42):p2align=4
+	call    	sq7777@FUNCTION, $6, $0
+	i32.load	$push159=, 0($6):p2align=4
 	i32.load	$push161=, 0($0):p2align=4
 	i32.const	$push543=, 7
 	i32.div_s	$push394=, $pop161, $pop543
@@ -2101,7 +2101,7 @@ main:                                   # @main
 	br_if   	2, $pop395      # 2: down to label0
 # BB#92:                                # %lor.lhs.false596
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push160=, 12($42)
+	i32.load	$push160=, 12($6)
 	i32.load	$push162=, 0($3)
 	i32.const	$push544=, 7
 	i32.div_s	$push396=, $pop162, $pop544
@@ -2109,10 +2109,10 @@ main:                                   # @main
 	br_if   	2, $pop397      # 2: down to label0
 # BB#93:                                # %if.end603
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	i32.load	$push164=, 8($42):p2align=3
+	i32.load	$push164=, 8($6):p2align=3
 	i32.load	$push166=, 0($4):p2align=3
 	i32.const	$push545=, 7
 	i32.div_s	$push398=, $pop166, $pop545
@@ -2120,7 +2120,7 @@ main:                                   # @main
 	br_if   	2, $pop399      # 2: down to label0
 # BB#94:                                # %lor.lhs.false609
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push163=, 4($42)
+	i32.load	$push163=, 4($6)
 	i32.load	$push165=, 0($5)
 	i32.const	$push546=, 7
 	i32.div_s	$push400=, $pop165, $pop546
@@ -2128,11 +2128,11 @@ main:                                   # @main
 	br_if   	2, $pop401      # 2: down to label0
 # BB#95:                                # %if.end616
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$2=, $42
+	copy_local	$2=, $6
 	#APP
 	#NO_APP
-	call    	sr7777@FUNCTION, $42, $0
-	i32.load	$push167=, 0($42):p2align=4
+	call    	sr7777@FUNCTION, $6, $0
+	i32.load	$push167=, 0($6):p2align=4
 	i32.load	$push169=, 0($0):p2align=4
 	i32.const	$push547=, 7
 	i32.rem_s	$push402=, $pop169, $pop547
@@ -2140,7 +2140,7 @@ main:                                   # @main
 	br_if   	2, $pop403      # 2: down to label0
 # BB#96:                                # %lor.lhs.false623
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push168=, 12($42)
+	i32.load	$push168=, 12($6)
 	i32.load	$push170=, 0($3)
 	i32.const	$push548=, 7
 	i32.rem_s	$push404=, $pop170, $pop548
@@ -2148,10 +2148,10 @@ main:                                   # @main
 	br_if   	2, $pop405      # 2: down to label0
 # BB#97:                                # %if.end630
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$3=, $42
+	copy_local	$3=, $6
 	#APP
 	#NO_APP
-	i32.load	$push172=, 8($42):p2align=3
+	i32.load	$push172=, 8($6):p2align=3
 	i32.load	$push174=, 0($4):p2align=3
 	i32.const	$push549=, 7
 	i32.rem_s	$push406=, $pop174, $pop549
@@ -2159,7 +2159,7 @@ main:                                   # @main
 	br_if   	2, $pop407      # 2: down to label0
 # BB#98:                                # %lor.lhs.false636
                                         #   in Loop: Header=BB24_51 Depth=1
-	i32.load	$push171=, 4($42)
+	i32.load	$push171=, 4($6)
 	i32.load	$push173=, 0($5)
 	i32.const	$push550=, 7
 	i32.rem_s	$push408=, $pop173, $pop550
@@ -2167,7 +2167,7 @@ main:                                   # @main
 	br_if   	2, $pop409      # 2: down to label0
 # BB#99:                                # %if.end643
                                         #   in Loop: Header=BB24_51 Depth=1
-	copy_local	$3=, $42
+	copy_local	$3=, $6
 	#APP
 	#NO_APP
 	i32.const	$push553=, 1
@@ -2180,10 +2180,10 @@ main:                                   # @main
 # BB#100:                               # %for.end646
 	end_loop                        # label4:
 	i32.const	$push411=, 0
+	i32.const	$push560=, __stack_pointer
 	i32.const	$push558=, 32
-	i32.add 	$42=, $42, $pop558
-	i32.const	$push559=, __stack_pointer
-	i32.store	$discard=, 0($pop559), $42
+	i32.add 	$push559=, $6, $pop558
+	i32.store	$discard=, 0($pop560), $pop559
 	return  	$pop411
 .LBB24_101:                             # %if.then642
 	end_block                       # label0:

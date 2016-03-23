@@ -153,10 +153,10 @@ main:                                   # @main
 # BB#7:                                 # %check.exit
 	end_loop                        # label9:
 	i32.const	$push41=, 0
+	i32.const	$push61=, __stack_pointer
 	i32.const	$push59=, 1152
-	i32.add 	$4=, $4, $pop59
-	i32.const	$push60=, __stack_pointer
-	i32.store	$discard=, 0($pop60), $4
+	i32.add 	$push60=, $4, $pop59
+	i32.store	$discard=, 0($pop61), $pop60
 	return  	$pop41
 .LBB1_8:                                # %if.then.i
 	end_block                       # label7:

@@ -78,10 +78,10 @@ main:                                   # @main
 	br_if   	0, $pop6        # 0: down to label4
 # BB#3:                                 # %if.end
 	i32.const	$push7=, 0
+	i32.const	$push21=, __stack_pointer
 	i32.const	$push19=, 1024
-	i32.add 	$2=, $2, $pop19
-	i32.const	$push20=, __stack_pointer
-	i32.store	$discard=, 0($pop20), $2
+	i32.add 	$push20=, $2, $pop19
+	i32.store	$discard=, 0($pop21), $pop20
 	return  	$pop7
 .LBB1_4:                                # %if.then
 	end_block                       # label4:

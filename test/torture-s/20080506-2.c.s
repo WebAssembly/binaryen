@@ -34,30 +34,30 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push1=, __stack_pointer
 	i32.load	$push2=, 0($pop1)
 	i32.const	$push3=, 16
-	i32.sub 	$4=, $pop2, $pop3
+	i32.sub 	$0=, $pop2, $pop3
 	i32.const	$push4=, __stack_pointer
-	i32.store	$discard=, 0($pop4), $4
-	i32.const	$0=, 12
-	i32.add 	$0=, $4, $0
-	i32.store	$discard=, 8($4), $0
-	i32.const	$1=, 12
-	i32.add 	$1=, $4, $1
-	i32.store	$discard=, 4($4), $1
-	i32.const	$2=, 8
-	i32.add 	$2=, $4, $2
-	i32.const	$3=, 4
-	i32.add 	$3=, $4, $3
-	call    	foo@FUNCTION, $2, $3
+	i32.store	$discard=, 0($pop4), $0
+	i32.const	$push8=, 12
+	i32.add 	$push9=, $0, $pop8
+	i32.store	$discard=, 8($0), $pop9
+	i32.const	$push10=, 12
+	i32.add 	$push11=, $0, $pop10
+	i32.store	$discard=, 4($0), $pop11
+	i32.const	$push12=, 8
+	i32.add 	$push13=, $0, $pop12
+	i32.const	$push14=, 4
+	i32.add 	$push15=, $0, $pop14
+	call    	foo@FUNCTION, $pop13, $pop15
 	i32.const	$push0=, 0
+	i32.const	$push7=, __stack_pointer
 	i32.const	$push5=, 16
-	i32.add 	$4=, $4, $pop5
-	i32.const	$push6=, __stack_pointer
-	i32.store	$discard=, 0($pop6), $4
+	i32.add 	$push6=, $0, $pop5
+	i32.store	$discard=, 0($pop7), $pop6
 	return  	$pop0
 	.endfunc
 .Lfunc_end1:

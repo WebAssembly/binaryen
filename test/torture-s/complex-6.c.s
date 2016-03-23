@@ -95,10 +95,10 @@ ctest_long_double:                      # @ctest_long_double
 	i32.add 	$push10=, $0, $pop11
 	i64.store	$discard=, 0($pop10), $4
 	i64.store	$discard=, 16($0):p2align=4, $5
+	i32.const	$push20=, __stack_pointer
 	i32.const	$push18=, 16
-	i32.add 	$6=, $6, $pop18
-	i32.const	$push19=, __stack_pointer
-	i32.store	$discard=, 0($pop19), $6
+	i32.add 	$push19=, $6, $pop18
+	i32.store	$discard=, 0($pop20), $pop19
 	return
 	.endfunc
 .Lfunc_end4:

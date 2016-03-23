@@ -51,10 +51,10 @@ bar:                                    # @bar
 	i64.ne  	$push7=, $pop5, $pop6
 	br_if   	0, $pop7        # 0: down to label1
 # BB#1:                                 # %foo.exit
+	i32.const	$push14=, __stack_pointer
 	i32.const	$push12=, 16
-	i32.add 	$3=, $3, $pop12
-	i32.const	$push13=, __stack_pointer
-	i32.store	$discard=, 0($pop13), $3
+	i32.add 	$push13=, $3, $pop12
+	i32.store	$discard=, 0($pop14), $pop13
 	return
 .LBB1_2:                                # %if.then.i
 	end_block                       # label1:

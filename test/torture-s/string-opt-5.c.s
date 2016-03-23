@@ -268,10 +268,10 @@ main:                                   # @main
 	i32.call	$push131=, memcmp@FUNCTION, $pop130, $pop128, $pop129
 	br_if   	0, $pop131      # 0: down to label0
 # BB#27:                                # %if.end184
+	i32.const	$push181=, __stack_pointer
 	i32.const	$push179=, 64
-	i32.add 	$4=, $4, $pop179
-	i32.const	$push180=, __stack_pointer
-	i32.store	$discard=, 0($pop180), $4
+	i32.add 	$push180=, $4, $pop179
+	i32.store	$discard=, 0($pop181), $pop180
 	return  	$1
 .LBB0_28:                               # %if.then183
 	end_block                       # label0:

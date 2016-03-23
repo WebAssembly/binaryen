@@ -327,14 +327,14 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	f32, i32, i32, i32, i32
+	.local  	f32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push48=, __stack_pointer
 	i32.load	$push49=, 0($pop48)
 	i32.const	$push50=, 16
-	i32.sub 	$4=, $pop49, $pop50
+	i32.sub 	$3=, $pop49, $pop50
 	i32.const	$push51=, __stack_pointer
-	i32.store	$discard=, 0($pop51), $4
+	i32.store	$discard=, 0($pop51), $3
 	i32.const	$2=, 0
 	i32.const	$push30=, 0
 	i32.const	$push1=, buffer
@@ -344,10 +344,10 @@ main:                                   # @main
 	tee_local	$push28=, $1=, $pop29
 	i32.const	$push5=, buffer+128
 	i32.add 	$push6=, $pop28, $pop5
-	i32.store	$discard=, 12($4), $pop6
+	i32.store	$discard=, 12($3), $pop6
 	i32.const	$push4=, buffer+64
 	i32.add 	$push0=, $1, $pop4
-	i32.store	$1=, 8($4), $pop0
+	i32.store	$1=, 8($3), $pop0
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label18:
@@ -380,11 +380,11 @@ main:                                   # @main
 	i32.const	$push39=, buffer
 	i32.add 	$push38=, $pop16, $pop39
 	tee_local	$push37=, $1=, $pop38
+	i32.const	$push55=, 8
+	i32.add 	$push56=, $3, $pop55
 	i32.const	$push18=, 2
 	i32.const	$push17=, 16
-	i32.const	$3=, 8
-	i32.add 	$3=, $4, $3
-	call    	foo@FUNCTION, $pop37, $3, $pop18, $pop17
+	call    	foo@FUNCTION, $pop37, $pop56, $pop18, $pop17
 .LBB1_3:                                # %for.body16
                                         # =>This Inner Loop Header: Depth=1
 	block
@@ -413,10 +413,10 @@ main:                                   # @main
 # BB#5:                                 # %for.end31
 	end_loop                        # label22:
 	i32.const	$push27=, 0
+	i32.const	$push54=, __stack_pointer
 	i32.const	$push52=, 16
-	i32.add 	$4=, $4, $pop52
-	i32.const	$push53=, __stack_pointer
-	i32.store	$discard=, 0($pop53), $4
+	i32.add 	$push53=, $3, $pop52
+	i32.store	$discard=, 0($pop54), $pop53
 	return  	$pop27
 .LBB1_6:                                # %if.then
 	end_block                       # label20:

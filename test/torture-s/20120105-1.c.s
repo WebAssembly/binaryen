@@ -27,10 +27,10 @@ main:                                   # @main
 	i32.or  	$push8=, $1, $pop7
 	i32.call	$push9=, extract@FUNCTION, $pop8
 	i32.store	$discard=, i($0), $pop9
+	i32.const	$push16=, __stack_pointer
 	i32.const	$push14=, 16
-	i32.add 	$1=, $1, $pop14
-	i32.const	$push15=, __stack_pointer
-	i32.store	$discard=, 0($pop15), $1
+	i32.add 	$push15=, $1, $pop14
+	i32.store	$discard=, 0($pop16), $pop15
 	return  	$0
 	.endfunc
 .Lfunc_end0:

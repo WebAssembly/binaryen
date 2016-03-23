@@ -90,10 +90,10 @@ f1:                                     # @f1
 	i64.ne  	$push17=, $1, $pop16
 	br_if   	1, $pop17       # 1: down to label5
 # BB#4:                                 # %if.end
+	i32.const	$push24=, __stack_pointer
 	i32.const	$push22=, 16
-	i32.add 	$3=, $3, $pop22
-	i32.const	$push23=, __stack_pointer
-	i32.store	$discard=, 0($pop23), $3
+	i32.add 	$push23=, $3, $pop22
+	i32.store	$discard=, 0($pop24), $pop23
 	return
 .LBB1_5:                                # %entry
 	end_block                       # label6:
@@ -191,10 +191,10 @@ f2:                                     # @f2
 	i64.ne  	$push23=, $3, $pop22
 	br_if   	0, $pop23       # 0: down to label7
 # BB#11:                                # %if.end
+	i32.const	$push30=, __stack_pointer
 	i32.const	$push28=, 16
-	i32.add 	$5=, $5, $pop28
-	i32.const	$push29=, __stack_pointer
-	i32.store	$discard=, 0($pop29), $5
+	i32.add 	$push29=, $5, $pop28
+	i32.store	$discard=, 0($pop30), $pop29
 	return
 .LBB2_12:                               # %if.then
 	end_block                       # label7:
@@ -210,33 +210,33 @@ f2:                                     # @f2
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push9=, __stack_pointer
 	i32.load	$push10=, 0($pop9)
 	i32.const	$push11=, 32
-	i32.sub 	$1=, $pop10, $pop11
+	i32.sub 	$0=, $pop10, $pop11
 	i32.const	$push12=, __stack_pointer
-	i32.store	$discard=, 0($pop12), $1
+	i32.store	$discard=, 0($pop12), $0
 	i64.const	$push0=, 17179869187
-	i64.store	$discard=, 16($1):p2align=4, $pop0
+	i64.store	$discard=, 16($0):p2align=4, $pop0
 	i32.const	$push2=, 1
 	i64.const	$push1=, 2
-	i32.const	$0=, 16
-	i32.add 	$0=, $1, $0
-	call    	f1@FUNCTION, $pop2, $pop1, $0
+	i32.const	$push16=, 16
+	i32.add 	$push17=, $0, $pop16
+	call    	f1@FUNCTION, $pop2, $pop1, $pop17
 	i64.const	$push3=, 42949672969
-	i64.store	$discard=, 0($1):p2align=4, $pop3
+	i64.store	$discard=, 0($0):p2align=4, $pop3
 	i32.const	$push7=, 5
 	i32.const	$push6=, 6
 	i32.const	$push5=, 7
 	i64.const	$push4=, 8
-	call    	f2@FUNCTION, $pop7, $pop6, $pop5, $pop4, $1
+	call    	f2@FUNCTION, $pop7, $pop6, $pop5, $pop4, $0
 	i32.const	$push8=, 0
+	i32.const	$push15=, __stack_pointer
 	i32.const	$push13=, 32
-	i32.add 	$1=, $1, $pop13
-	i32.const	$push14=, __stack_pointer
-	i32.store	$discard=, 0($pop14), $1
+	i32.add 	$push14=, $0, $pop13
+	i32.store	$discard=, 0($pop15), $pop14
 	return  	$pop8
 	.endfunc
 .Lfunc_end3:

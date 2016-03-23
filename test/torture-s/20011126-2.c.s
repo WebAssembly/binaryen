@@ -6,15 +6,15 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push27=, __stack_pointer
 	i32.load	$push28=, 0($pop27)
 	i32.const	$push29=, 16
-	i32.sub 	$8=, $pop28, $pop29
-	i32.const	$7=, 12
-	i32.add 	$7=, $8, $7
-	copy_local	$5=, $7
+	i32.sub 	$7=, $pop28, $pop29
+	i32.const	$push30=, 12
+	i32.add 	$push31=, $7, $pop30
+	copy_local	$5=, $pop31
 	i32.const	$1=, .L.str
 .LBB0_1:                                # %while.body.outer.outer.i
                                         # =>This Loop Header: Depth=1

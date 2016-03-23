@@ -102,32 +102,32 @@ baz_double:                             # @baz_double
 	.type	foo_ldouble_t,@function
 foo_ldouble_t:                          # @foo_ldouble_t
 	.param  	i32, i32
-	.local  	i64, i64, i64, i64, i32, i32, i32
+	.local  	i64, i64, i64, i64, i32
 # BB#0:                                 # %entry
 	i32.const	$push12=, __stack_pointer
 	i32.load	$push13=, 0($pop12)
 	i32.const	$push14=, 32
-	i32.sub 	$8=, $pop13, $pop14
+	i32.sub 	$6=, $pop13, $pop14
 	i32.const	$push15=, __stack_pointer
-	i32.store	$discard=, 0($pop15), $8
+	i32.store	$discard=, 0($pop15), $6
+	i32.const	$push19=, 16
+	i32.add 	$push20=, $6, $pop19
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
-	i32.const	$6=, 16
-	i32.add 	$6=, $8, $6
-	call    	__floatsitf@FUNCTION, $6, $pop1
+	call    	__floatsitf@FUNCTION, $pop20, $pop1
+	i32.const	$push21=, 16
+	i32.add 	$push22=, $6, $pop21
 	i32.const	$push2=, 8
-	i32.const	$7=, 16
-	i32.add 	$7=, $8, $7
-	i32.add 	$push3=, $7, $pop2
+	i32.add 	$push3=, $pop22, $pop2
 	i64.load	$2=, 0($pop3)
-	i64.load	$3=, 16($8)
+	i64.load	$3=, 16($6)
 	i32.const	$push4=, -1
 	i32.add 	$push5=, $1, $pop4
-	call    	__floatsitf@FUNCTION, $8, $pop5
+	call    	__floatsitf@FUNCTION, $6, $pop5
 	i32.const	$push11=, 8
-	i32.add 	$push6=, $8, $pop11
+	i32.add 	$push6=, $6, $pop11
 	i64.load	$4=, 0($pop6)
-	i64.load	$5=, 0($8)
+	i64.load	$5=, 0($6)
 	i32.const	$push10=, 8
 	i32.add 	$push7=, $0, $pop10
 	i64.store	$discard=, 0($pop7), $2
@@ -136,10 +136,10 @@ foo_ldouble_t:                          # @foo_ldouble_t
 	i64.store	$discard=, 0($pop9), $4
 	i64.store	$discard=, 0($0):p2align=4, $3
 	i64.store	$discard=, 16($0):p2align=4, $5
+	i32.const	$push18=, __stack_pointer
 	i32.const	$push16=, 32
-	i32.add 	$8=, $8, $pop16
-	i32.const	$push17=, __stack_pointer
-	i32.store	$discard=, 0($pop17), $8
+	i32.add 	$push17=, $6, $pop16
+	i32.store	$discard=, 0($pop18), $pop17
 	return
 	.endfunc
 .Lfunc_end6:

@@ -111,9 +111,9 @@ inner:                                  # @inner
 	i32.const	$push104=, .L.str.3
 	i32.load	$push69=, 8($2)
 	i32.call	$push70=, vfprintf@FUNCTION, $pop68, $pop104, $pop69
-	i32.const	$push126=, 0
-	i32.eq  	$push127=, $pop70, $pop126
-	br_if   	8, $pop127      # 8: down to label1
+	i32.const	$push127=, 0
+	i32.eq  	$push128=, $pop70, $pop127
+	br_if   	8, $pop128      # 8: down to label1
 # BB#9:                                 # %if.then20
 	call    	abort@FUNCTION
 	unreachable
@@ -183,9 +183,9 @@ inner:                                  # @inner
 	i32.const	$push112=, .L.str.4
 	i32.load	$push35=, 8($2)
 	i32.call	$push36=, vfprintf@FUNCTION, $pop34, $pop112, $pop35
-	i32.const	$push128=, 0
-	i32.eq  	$push129=, $pop36, $pop128
-	br_if   	4, $pop129      # 4: down to label1
+	i32.const	$push129=, 0
+	i32.eq  	$push130=, $pop36, $pop129
+	br_if   	4, $pop130      # 4: down to label1
 # BB#17:                                # %if.then44
 	call    	abort@FUNCTION
 	unreachable
@@ -243,10 +243,10 @@ inner:                                  # @inner
 	br_if   	1, $pop29       # 1: down to label0
 .LBB0_23:                               # %sw.epilog
 	end_block                       # label1:
+	i32.const	$push126=, __stack_pointer
 	i32.const	$push124=, 16
-	i32.add 	$2=, $2, $pop124
-	i32.const	$push125=, __stack_pointer
-	i32.store	$discard=, 0($pop125), $2
+	i32.add 	$push125=, $2, $pop124
+	i32.store	$discard=, 0($pop126), $pop125
 	return
 .LBB0_24:                               # %if.then50
 	end_block                       # label0:
@@ -262,14 +262,14 @@ inner:                                  # @inner
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push21=, __stack_pointer
 	i32.load	$push22=, 0($pop21)
 	i32.const	$push23=, 112
-	i32.sub 	$7=, $pop22, $pop23
+	i32.sub 	$1=, $pop22, $pop23
 	i32.const	$push24=, __stack_pointer
-	i32.store	$discard=, 0($pop24), $7
+	i32.store	$discard=, 0($pop24), $1
 	i32.const	$push0=, 0
 	i32.const	$push20=, 0
 	call    	inner@FUNCTION, $pop0, $pop20
@@ -283,48 +283,48 @@ main:                                   # @main
 	i32.const	$push17=, 0
 	call    	inner@FUNCTION, $pop3, $pop17
 	i32.const	$push4=, .L.str
-	i32.store	$discard=, 96($7):p2align=4, $pop4
+	i32.store	$discard=, 96($1):p2align=4, $pop4
 	i32.const	$push5=, 4
-	i32.const	$1=, 96
-	i32.add 	$1=, $7, $1
-	call    	inner@FUNCTION, $pop5, $1
+	i32.const	$push28=, 96
+	i32.add 	$push29=, $1, $pop28
+	call    	inner@FUNCTION, $pop5, $pop29
 	i32.const	$push6=, .L.str.1
-	i32.store	$0=, 80($7):p2align=4, $pop6
+	i32.store	$0=, 80($1):p2align=4, $pop6
 	i32.const	$push7=, 5
-	i32.const	$2=, 80
-	i32.add 	$2=, $7, $2
-	call    	inner@FUNCTION, $pop7, $2
+	i32.const	$push30=, 80
+	i32.add 	$push31=, $1, $pop30
+	call    	inner@FUNCTION, $pop7, $pop31
 	i32.const	$push8=, .L.str.2
-	i32.store	$discard=, 64($7):p2align=4, $pop8
+	i32.store	$discard=, 64($1):p2align=4, $pop8
 	i32.const	$push9=, 6
-	i32.const	$3=, 64
-	i32.add 	$3=, $7, $3
-	call    	inner@FUNCTION, $pop9, $3
+	i32.const	$push32=, 64
+	i32.add 	$push33=, $1, $pop32
+	call    	inner@FUNCTION, $pop9, $pop33
 	i32.const	$push10=, .L.str.3
-	i32.store	$discard=, 48($7):p2align=4, $pop10
+	i32.store	$discard=, 48($1):p2align=4, $pop10
 	i32.const	$push11=, 7
-	i32.const	$4=, 48
-	i32.add 	$4=, $7, $4
-	call    	inner@FUNCTION, $pop11, $4
+	i32.const	$push34=, 48
+	i32.add 	$push35=, $1, $pop34
+	call    	inner@FUNCTION, $pop11, $pop35
 	i32.const	$push12=, 120
-	i32.store	$discard=, 32($7):p2align=4, $pop12
+	i32.store	$discard=, 32($1):p2align=4, $pop12
 	i32.const	$push13=, 8
-	i32.const	$5=, 32
-	i32.add 	$5=, $7, $5
-	call    	inner@FUNCTION, $pop13, $5
-	i32.store	$discard=, 16($7):p2align=4, $0
+	i32.const	$push36=, 32
+	i32.add 	$push37=, $1, $pop36
+	call    	inner@FUNCTION, $pop13, $pop37
+	i32.store	$discard=, 16($1):p2align=4, $0
 	i32.const	$push14=, 9
-	i32.const	$6=, 16
-	i32.add 	$6=, $7, $6
-	call    	inner@FUNCTION, $pop14, $6
+	i32.const	$push38=, 16
+	i32.add 	$push39=, $1, $pop38
+	call    	inner@FUNCTION, $pop14, $pop39
 	i32.const	$push16=, 0
-	i32.store	$0=, 0($7):p2align=4, $pop16
+	i32.store	$0=, 0($1):p2align=4, $pop16
 	i32.const	$push15=, 10
-	call    	inner@FUNCTION, $pop15, $7
+	call    	inner@FUNCTION, $pop15, $1
+	i32.const	$push27=, __stack_pointer
 	i32.const	$push25=, 112
-	i32.add 	$7=, $7, $pop25
-	i32.const	$push26=, __stack_pointer
-	i32.store	$discard=, 0($pop26), $7
+	i32.add 	$push26=, $1, $pop25
+	i32.store	$discard=, 0($pop27), $pop26
 	return  	$0
 	.endfunc
 .Lfunc_end1:

@@ -45,9 +45,9 @@ test:                                   # @test
 	i64.const	$push97=, 0
 	i64.const	$push96=, 0
 	i32.call	$push42=, __eqtf2@FUNCTION, $0, $1, $pop97, $pop96
-	i32.const	$push139=, 0
-	i32.eq  	$push140=, $pop42, $pop139
-	br_if   	1, $pop140      # 1: down to label1
+	i32.const	$push140=, 0
+	i32.eq  	$push141=, $pop42, $pop140
+	br_if   	1, $pop141      # 1: down to label1
 # BB#2:                                 # %if.else
 	i64.const	$push98=, 0
 	i64.const	$push43=, 4611404543450677248
@@ -229,10 +229,10 @@ test:                                   # @test
 .LBB0_25:                               # %if.end19
 	end_block                       # label1:
 	i32.store	$discard=, 0($2), $4
+	i32.const	$push139=, __stack_pointer
 	i32.const	$push137=, 16
-	i32.add 	$5=, $5, $pop137
-	i32.const	$push138=, __stack_pointer
-	i32.store	$discard=, 0($pop138), $5
+	i32.add 	$push138=, $5, $pop137
+	i32.store	$discard=, 0($pop139), $pop138
 	return
 .LBB0_26:                               # %while.body.10
 	end_block                       # label0:
@@ -248,34 +248,34 @@ test:                                   # @test
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push9=, __stack_pointer
 	i32.load	$push10=, 0($pop9)
 	i32.const	$push11=, 16
-	i32.sub 	$4=, $pop10, $pop11
+	i32.sub 	$0=, $pop10, $pop11
 	i32.const	$push12=, __stack_pointer
-	i32.store	$discard=, 0($pop12), $4
+	i32.store	$discard=, 0($pop12), $0
 	i64.const	$push1=, 0
 	i64.const	$push0=, 4611826755915743232
-	i32.const	$0=, 12
-	i32.add 	$0=, $4, $0
-	call    	test@FUNCTION, $pop1, $pop0, $0
+	i32.const	$push13=, 12
+	i32.add 	$push14=, $0, $pop13
+	call    	test@FUNCTION, $pop1, $pop0, $pop14
 	i64.const	$push8=, 0
 	i64.const	$push2=, 4611897124659920896
-	i32.const	$1=, 12
-	i32.add 	$1=, $4, $1
-	call    	test@FUNCTION, $pop8, $pop2, $1
+	i32.const	$push15=, 12
+	i32.add 	$push16=, $0, $pop15
+	call    	test@FUNCTION, $pop8, $pop2, $pop16
 	i64.const	$push7=, 0
 	i64.const	$push3=, 4611967493404098560
-	i32.const	$2=, 12
-	i32.add 	$2=, $4, $2
-	call    	test@FUNCTION, $pop7, $pop3, $2
+	i32.const	$push17=, 12
+	i32.add 	$push18=, $0, $pop17
+	call    	test@FUNCTION, $pop7, $pop3, $pop18
 	i64.const	$push6=, 0
 	i64.const	$push4=, 4612037862148276224
-	i32.const	$3=, 12
-	i32.add 	$3=, $4, $3
-	call    	test@FUNCTION, $pop6, $pop4, $3
+	i32.const	$push19=, 12
+	i32.add 	$push20=, $0, $pop19
+	call    	test@FUNCTION, $pop6, $pop4, $pop20
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
 	unreachable

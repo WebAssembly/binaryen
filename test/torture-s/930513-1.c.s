@@ -20,10 +20,10 @@ f:                                      # @f
 	i32.const	$push2=, buf
 	i32.const	$push1=, .L.str
 	i32.call_indirect	$discard=, $0, $pop2, $pop1, $1
+	i32.const	$push9=, __stack_pointer
 	i32.const	$push7=, 16
-	i32.add 	$1=, $1, $pop7
-	i32.const	$push8=, __stack_pointer
-	i32.store	$discard=, 0($pop8), $1
+	i32.add 	$push8=, $1, $pop7
+	i32.store	$discard=, 0($pop9), $pop8
 	return  	$0
 	.endfunc
 .Lfunc_end0:

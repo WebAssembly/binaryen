@@ -43,10 +43,10 @@ debug:                                  # @debug
 	i32.ne  	$push14=, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label0
 # BB#3:                                 # %if.end11
+	i32.const	$push25=, __stack_pointer
 	i32.const	$push23=, 16
-	i32.add 	$18=, $18, $pop23
-	i32.const	$push24=, __stack_pointer
-	i32.store	$discard=, 0($pop24), $18
+	i32.add 	$push24=, $18, $pop23
+	i32.store	$discard=, 0($pop25), $pop24
 	return
 .LBB0_4:                                # %if.then10
 	end_block                       # label0:

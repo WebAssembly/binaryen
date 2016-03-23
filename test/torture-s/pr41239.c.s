@@ -31,9 +31,9 @@ test:                                   # @test
 	i32.call	$push6=, fn1@FUNCTION, $pop5, $pop3, $pop4, $pop2, $pop15
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop6, $pop7
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop8, $pop23
-	br_if   	0, $pop24       # 0: down to label0
+	i32.const	$push24=, 0
+	i32.eq  	$push25=, $pop8, $pop24
+	br_if   	0, $pop25       # 0: down to label0
 # BB#2:                                 # %cond.true
 	i32.const	$push9=, 33816706
 	i32.call	$2=, fn3@FUNCTION, $pop9
@@ -45,10 +45,10 @@ test:                                   # @test
 .LBB0_3:                                # %if.end
 	end_block                       # label0:
 	i32.div_s	$push12=, $1, $0
+	i32.const	$push23=, __stack_pointer
 	i32.const	$push21=, 16
-	i32.add 	$3=, $3, $pop21
-	i32.const	$push22=, __stack_pointer
-	i32.store	$discard=, 0($pop22), $3
+	i32.add 	$push22=, $3, $pop21
+	i32.store	$discard=, 0($pop23), $pop22
 	return  	$pop12
 	.endfunc
 .Lfunc_end0:

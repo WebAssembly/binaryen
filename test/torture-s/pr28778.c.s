@@ -28,10 +28,10 @@ find:                                   # @find
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label1
 # BB#3:                                 # %aglChoosePixelFormat.exit
+	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 128
-	i32.add 	$1=, $1, $pop8
-	i32.const	$push9=, __stack_pointer
-	i32.store	$discard=, 0($pop9), $1
+	i32.add 	$push9=, $1, $pop8
+	i32.store	$discard=, 0($pop10), $pop9
 	return
 .LBB0_4:                                # %if.then.i
 	end_block                       # label1:

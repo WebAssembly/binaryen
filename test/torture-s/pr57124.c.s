@@ -31,23 +31,23 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push2=, __stack_pointer
 	i32.load	$push3=, 0($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$2=, $pop3, $pop4
+	i32.sub 	$0=, $pop3, $pop4
 	i32.const	$push5=, __stack_pointer
-	i32.store	$discard=, 0($pop5), $2
+	i32.store	$discard=, 0($pop5), $0
 	i32.const	$push0=, 65531
-	i32.store16	$discard=, 14($2), $pop0
+	i32.store16	$discard=, 14($0), $pop0
 	i32.const	$push1=, 65526
-	i32.store16	$discard=, 12($2), $pop1
-	i32.const	$0=, 14
-	i32.add 	$0=, $2, $0
-	i32.const	$1=, 12
-	i32.add 	$1=, $2, $1
-	i32.call	$discard=, foo@FUNCTION, $0, $1
+	i32.store16	$discard=, 12($0), $pop1
+	i32.const	$push6=, 14
+	i32.add 	$push7=, $0, $pop6
+	i32.const	$push8=, 12
+	i32.add 	$push9=, $0, $pop8
+	i32.call	$discard=, foo@FUNCTION, $pop7, $pop9
 	unreachable
 	.endfunc
 .Lfunc_end1:

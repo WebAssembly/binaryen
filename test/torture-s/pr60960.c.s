@@ -124,31 +124,31 @@ f3:                                     # @f3
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push68=, __stack_pointer
 	i32.load	$push69=, 0($pop68)
 	i32.const	$push70=, 16
-	i32.sub 	$3=, $pop69, $pop70
+	i32.sub 	$0=, $pop69, $pop70
 	i32.const	$push71=, __stack_pointer
-	i32.store	$discard=, 0($pop71), $3
+	i32.store	$discard=, 0($pop71), $0
+	i32.const	$push75=, 12
+	i32.add 	$push76=, $0, $pop75
 	i32.const	$push51=, 5
 	i32.const	$push50=, 5
 	i32.const	$push49=, 5
 	i32.const	$push48=, 5
-	i32.const	$0=, 12
-	i32.add 	$0=, $3, $0
-	call    	f1@FUNCTION, $0, $pop51, $pop50, $pop49, $pop48
+	call    	f1@FUNCTION, $pop76, $pop51, $pop50, $pop49, $pop48
 	block
-	i32.load8_u	$push7=, 12($3):p2align=2
-	i32.load8_u	$push5=, 13($3)
+	i32.load8_u	$push7=, 12($0):p2align=2
+	i32.load8_u	$push5=, 13($0)
 	i32.const	$push47=, 8
 	i32.shl 	$push6=, $pop5, $pop47
 	i32.or  	$push8=, $pop7, $pop6
 	i32.const	$push46=, 65535
 	i32.and 	$push9=, $pop8, $pop46
-	i32.load8_u	$push2=, 14($3):p2align=1
-	i32.load8_u	$push0=, 15($3)
+	i32.load8_u	$push2=, 14($0):p2align=1
+	i32.load8_u	$push0=, 15($0)
 	i32.const	$push45=, 8
 	i32.shl 	$push1=, $pop0, $pop45
 	i32.or  	$push3=, $pop2, $pop1
@@ -159,22 +159,22 @@ main:                                   # @main
 	i32.ne  	$push11=, $pop10, $pop43
 	br_if   	0, $pop11       # 0: down to label0
 # BB#1:                                 # %if.end
+	i32.const	$push77=, 8
+	i32.add 	$push78=, $0, $pop77
 	i32.const	$push60=, 5
 	i32.const	$push59=, 5
 	i32.const	$push58=, 5
 	i32.const	$push57=, 5
-	i32.const	$1=, 8
-	i32.add 	$1=, $3, $1
-	call    	f2@FUNCTION, $1, $pop60, $pop59, $pop58, $pop57
-	i32.load8_u	$push19=, 8($3):p2align=2
-	i32.load8_u	$push17=, 9($3)
+	call    	f2@FUNCTION, $pop78, $pop60, $pop59, $pop58, $pop57
+	i32.load8_u	$push19=, 8($0):p2align=2
+	i32.load8_u	$push17=, 9($0)
 	i32.const	$push56=, 8
 	i32.shl 	$push18=, $pop17, $pop56
 	i32.or  	$push20=, $pop19, $pop18
 	i32.const	$push55=, 65535
 	i32.and 	$push21=, $pop20, $pop55
-	i32.load8_u	$push14=, 10($3):p2align=1
-	i32.load8_u	$push12=, 11($3)
+	i32.load8_u	$push14=, 10($0):p2align=1
+	i32.load8_u	$push12=, 11($0)
 	i32.const	$push54=, 8
 	i32.shl 	$push13=, $pop12, $pop54
 	i32.or  	$push15=, $pop14, $pop13
@@ -185,6 +185,8 @@ main:                                   # @main
 	i32.ne  	$push23=, $pop22, $pop52
 	br_if   	0, $pop23       # 0: down to label0
 # BB#2:                                 # %if.end6
+	i32.const	$push79=, 4
+	i32.add 	$push80=, $0, $pop79
 	i32.const	$push25=, 5
 	i32.const	$push67=, 5
 	i32.const	$push66=, 5
@@ -193,18 +195,16 @@ main:                                   # @main
 	i32.const	$push64=, 2
 	i32.const	$push63=, 2
 	i32.const	$push62=, 2
-	i32.const	$2=, 4
-	i32.add 	$2=, $3, $2
-	call    	f3@FUNCTION, $2, $pop25, $pop67, $pop66, $pop65, $pop24, $pop64, $pop63, $pop62
-	i32.load8_u	$push35=, 4($3):p2align=2
-	i32.load8_u	$push33=, 5($3)
+	call    	f3@FUNCTION, $pop80, $pop25, $pop67, $pop66, $pop65, $pop24, $pop64, $pop63, $pop62
+	i32.load8_u	$push35=, 4($0):p2align=2
+	i32.load8_u	$push33=, 5($0)
 	i32.const	$push27=, 8
 	i32.shl 	$push34=, $pop33, $pop27
 	i32.or  	$push36=, $pop35, $pop34
 	i32.const	$push37=, 65535
 	i32.and 	$push38=, $pop36, $pop37
-	i32.load8_u	$push29=, 6($3):p2align=1
-	i32.load8_u	$push26=, 7($3)
+	i32.load8_u	$push29=, 6($0):p2align=1
+	i32.load8_u	$push26=, 7($0)
 	i32.const	$push61=, 8
 	i32.shl 	$push28=, $pop26, $pop61
 	i32.or  	$push30=, $pop29, $pop28
@@ -216,10 +216,10 @@ main:                                   # @main
 	br_if   	0, $pop41       # 0: down to label0
 # BB#3:                                 # %if.end11
 	i32.const	$push42=, 0
+	i32.const	$push74=, __stack_pointer
 	i32.const	$push72=, 16
-	i32.add 	$3=, $3, $pop72
-	i32.const	$push73=, __stack_pointer
-	i32.store	$discard=, 0($pop73), $3
+	i32.add 	$push73=, $0, $pop72
+	i32.store	$discard=, 0($pop74), $pop73
 	return  	$pop42
 .LBB3_4:                                # %if.then10
 	end_block                       # label0:
