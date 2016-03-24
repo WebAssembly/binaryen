@@ -154,7 +154,10 @@ function integrateWasmJS(Module) {
   // do-method functions
 
   function doJustAsm() {
-    eval(Module['read'](asmjsCodeFile));
+    if (typeof Module['asm'] !== 'function') {
+      // you can load the .asm.js file before this, to avoid this sync xhr and eval
+      eval(Module['read'](asmjsCodeFile));
+    }
     if (typeof Module['asm'] !== 'function') {
       // evalling the asm.js file should have set this
       Module['printErr']('asm evalling did not set the module properly');
