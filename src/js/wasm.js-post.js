@@ -193,6 +193,8 @@ function integrateWasmJS(Module) {
       return exports;
     };
 
+    Module["usingWasm"] = true;
+
     return true;
   }
 
