@@ -43,7 +43,6 @@ IString WASM("wasm"),
         RETURN_FLOW("*return:)*");
 
 enum {
-  pageSize = 64*1024,
   maxCallDepth = 250
 };
 
@@ -102,7 +101,7 @@ public:
   Module& wasm;
 
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
-    memorySize = wasm.memory.initial * Memory::kPageSize;
+    memorySize = wasm.memory.initial;
     externalInterface->init(wasm);
     if (wasm.start.is()) {
       LiteralList arguments;
@@ -602,21 +601,20 @@ private:
       Flow visitHost(Host *curr) {
         NOTE_ENTER("Host");
         switch (curr->op) {
-          case PageSize:   return Literal((int32_t)pageSize);
-          case MemorySize: return Literal((int32_t)instance.memorySize);
+          case PageSize:   return Literal((int32_t)Memory::kPageSize);
+          case MemorySize: return Literal(int32_t(instance.memorySize * Memory::kPageSize));
           case GrowMemory: {
             Flow flow = visit(curr->operands[0]);
             if (flow.breaking()) return flow;
             int32_t ret = instance.memorySize;
             uint32_t delta = flow.value.geti32();
-            if (delta % pageSize != 0) trap("growMemory: delta not multiple");
-            if (delta > uint32_t(-1) - pageSize) trap("growMemory: delta relatively too big");
+            if (delta > uint32_t(-1) /Memory::kPageSize) trap("growMemory: delta relatively too big");
             if (instance.memorySize >= uint32_t(-1) - delta) trap("growMemory: delta objectively too big");
             uint32_t newSize = instance.memorySize + delta;
             if (newSize > instance.wasm.memory.max) trap("growMemory: exceeds max");
-            instance.externalInterface->growMemory(instance.memorySize, newSize);
+            instance.externalInterface->growMemory(instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
             instance.memorySize = newSize;
-            return Literal(ret);
+            return Literal(int32_t(ret * Memory::kPageSize));
           }
           case HasFeature: {
             IString id = curr->nameOperand;
@@ -693,7 +691,7 @@ private:
     return ret;
   }
 
-  size_t memorySize;
+  size_t memorySize; // in pages
 
   template <class LS>
   size_t getFinalAddress(LS* curr, Literal ptr) {
@@ -704,12 +702,13 @@ private:
         externalInterface->trap(ss.str().c_str());
       }
     };
+    uint32_t memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
-    trapIfGt(curr->offset, memorySize, "offset > memory");
-    trapIfGt(addr, memorySize - curr->offset, "final > memory");
+    trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
+    trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
-    trapIfGt(curr->bytes, memorySize, "bytes > memory");
-    trapIfGt(addr, memorySize - curr->bytes, "highest > memory");
+    trapIfGt(curr->bytes, memorySizeBytes, "bytes > memory");
+    trapIfGt(addr, memorySizeBytes - curr->bytes, "highest > memory");
     return addr;
   }
 
