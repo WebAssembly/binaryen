@@ -78,18 +78,18 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
   AllocatingModule wasm;
-  size_t globalBase = options.extra.find("global-base") != options.extra.end()
+  uint64_t globalBase = options.extra.find("global-base") != options.extra.end()
                           ? std::stoull(options.extra["global-base"])
                           : 1;
-  size_t stackAllocation =
+  uint64_t stackAllocation =
       options.extra.find("stack-allocation") != options.extra.end()
           ? std::stoull(options.extra["stack-allocation"])
           : 0;
-  size_t initialMem =
+  uint64_t initialMem =
       options.extra.find("initial-memory") != options.extra.end()
           ? std::stoull(options.extra["initial-memory"])
           : 0;
-  size_t maxMem =
+  uint64_t maxMem =
       options.extra.find("max-memory") != options.extra.end()
           ? std::stoull(options.extra["max-memory"])
           : 0;
