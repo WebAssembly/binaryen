@@ -36,7 +36,7 @@ bool wasm::isSInteger32(double x) {
 uint32_t wasm::toUInteger32(double x) {
   assert(isUInteger32(x));
   return x < std::numeric_limits<uint32_t>::max()
-             ? x
+             ? (uint32_t)x
              : std::numeric_limits<uint32_t>::max();
 }
 
