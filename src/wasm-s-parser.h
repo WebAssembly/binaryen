@@ -23,6 +23,7 @@
 #define wasm_wasm_s_parser_h
 
 #include <cmath>
+#include <limits>
 
 #include "wasm.h"
 #include "mixed_arena.h"
@@ -825,7 +826,7 @@ private:
         ret->align = atoi(eq);
       } else if (str[0] == 'o') {
         uint64_t offset = atoll(eq);
-        if (offset > 0xffffffff) onError();
+        if (offset > std::numeric_limits<uint32_t>::max()) onError();
         ret->offset = (uint32_t)offset;
       } else onError();
       i++;
