@@ -178,9 +178,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       }
       case i64: {
         switch (store->bytes) {
-          case 1: memory.set<int8_t>(addr, value.geti64()); break;
-          case 2: memory.set<int16_t>(addr, value.geti64()); break;
-          case 4: memory.set<int32_t>(addr, value.geti64()); break;
+          case 1: memory.set<int8_t>(addr, (int8_t)value.geti64()); break;
+          case 2: memory.set<int16_t>(addr, (int16_t)value.geti64()); break;
+          case 4: memory.set<int32_t>(addr, (int32_t)value.geti64()); break;
           case 8: memory.set<int64_t>(addr, value.geti64()); break;
           default: abort();
         }
