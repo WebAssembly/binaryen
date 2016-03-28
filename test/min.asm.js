@@ -6,6 +6,17 @@ function (global, env, buffer) {
 
   var fr = global.Math.fround;
 
+  var tDP = env.tempDoublePtr | 0;
+
+  var h8 = new global.Int8Array(buffer);
+  var h16 = new global.Int16Array(buffer);
+  var h32 = new global.Int32Array(buffer);
+  var hU8 = new global.Uint8Array(buffer);
+  var hU16 = new global.Uint16Array(buffer);
+  var hU32 = new global.Uint32Array(buffer);
+  var hF32 = new global.Float32Array(buffer);
+  var hF64 = new global.Float64Array(buffer);
+
   function floats(f) {
     f = fr(f);
     var t = fr(0);
@@ -17,6 +28,13 @@ function (global, env, buffer) {
     var n = fr(0);
     n = fr(-(c[k >> 2] = p, fr(g[k >> 2])));
     return n;
+  }
+  function bitcasts(i, f) {
+    i = i | 0;
+    f = Math_fround(f);
+    (h32[tDP >> 2] = i, fr(hF32[tDP >> 2])); // i32->f32
+    (h32[tDP >> 2] = i, +hF32[tDP >> 2]); // i32->f32, no fround
+    (hF32[tDP >> 2] = f, h32[tDP >> 2] | 0); // f32->i32
   }
 
   return { floats: floats };

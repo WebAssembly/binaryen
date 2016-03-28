@@ -1418,7 +1418,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       //  (HEAP32[tempDoublePtr >> 2] = i, +HEAPF32[tempDoublePtr >> 2]); // i32->f32, no fround
       //  (HEAPF32[tempDoublePtr >> 2] = f, HEAP32[tempDoublePtr >> 2] | 0); // f32->i32
       if (ast[1][0] == ASSIGN && ast[1][2][0] == SUB && ast[1][2][1][0] == NAME && ast[1][2][2][0] == BINARY && ast[1][2][2][1] == RSHIFT &&
-          ast[1][2][2][2][0] == NAME && ast[1][2][2][2][1] == TEMP_DOUBLE_PTR && ast[1][2][2][3][0] == NUM && ast[1][2][2][3][1]->getNumber() == 2) {
+          ast[1][2][2][2][0] == NAME && ast[1][2][2][2][1] == tempDoublePtr && ast[1][2][2][3][0] == NUM && ast[1][2][2][3][1]->getNumber() == 2) {
         // (?[tempDoublePtr >> 2] = ?, ?)  so far
         auto heap = ast[1][2][1][1]->getIString();
         if (views.find(heap) != views.end()) {
@@ -1437,7 +1437,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           if (readType != ASM_NONE) {
             if (readValue[0] == SUB && readValue[1][0] == NAME && readValue[2][0] == BINARY && readValue[2][1] == RSHIFT &&
-                readValue[2][2][0] == NAME && readValue[2][2][1] == TEMP_DOUBLE_PTR && readValue[2][3][0] == NUM && readValue[2][3][1]->getNumber() == 2) {
+                readValue[2][2][0] == NAME && readValue[2][2][1] == tempDoublePtr && readValue[2][3][0] == NUM && readValue[2][3][1]->getNumber() == 2) {
               // pattern looks right!
               Ref writtenValue = ast[1][3];
               if (writeType == ASM_INT && (readType == ASM_FLOAT || readType == ASM_DOUBLE)) {
