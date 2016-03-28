@@ -27,8 +27,13 @@ T wasm::read_file(const std::string &filename, bool debug) {
     exit(EXIT_FAILURE);
   }
   infile.seekg(0, std::ios::end);
-  size_t insize = infile.tellg();
-  T input(insize + 1, '\0');
+  std::streamoff insize = infile.tellg();
+  if (sizeof(size_t) == 4 && insize >= 0xFFFFFFFFU) {
+    // Building a 32-bit executable where size_t == 32 bits, we are not able to create strings larger than 2^32 bytes in length, so must abort here.
+    std::cerr << "Failed opening '" << filename << "': Input file too large: " << insize << " bytes. Try rebuilding in 64-bit mode." << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  T input((size_t)insize + 1, '\0');
   infile.seekg(0);
   infile.read(&input[0], insize);
   return input;
