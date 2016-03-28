@@ -248,7 +248,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
   if (wasm) {
     interface = new ShellExternalInterface();
     instance = new ModuleInstance(*wasm, interface);
-    if (entry.is() > 0) {
+    if (entry.is()) {
       Function* function = wasm->functionsMap[entry];
       if (!function) {
         std::cerr << "Unknown entry " << entry << std::endl;
