@@ -826,7 +826,7 @@ private:
       } else if (str[0] == 'o') {
         uint64_t offset = atoll(eq);
         if (offset > 0xffffffff) onError();
-        ret->offset = offset;
+        ret->offset = (uint32_t)offset;
       } else onError();
       i++;
     }
