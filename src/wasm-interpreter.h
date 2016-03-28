@@ -283,7 +283,7 @@ private:
         if (curr->condition) {
           Flow conditionFlow = visit(curr->condition);
           if (conditionFlow.breaking()) return conditionFlow;
-          condition = conditionFlow.value.getInteger();
+          condition = conditionFlow.value.getInteger() != 0;
         }
         return condition ? flow : Flow();
       }
