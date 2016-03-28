@@ -44,7 +44,7 @@ int32_t wasm::toSInteger32(double x) {
   assert(isSInteger32(x));
   return x > std::numeric_limits<int32_t>::min() &&
                  x < std::numeric_limits<int32_t>::max()
-             ? x
+             ? (int32_t)x
              : (x < 0 ? std::numeric_limits<int32_t>::min()
                       : std::numeric_limits<int32_t>::max());
 }
