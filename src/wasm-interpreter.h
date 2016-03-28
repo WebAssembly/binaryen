@@ -304,7 +304,7 @@ private:
 
         Name target = curr->default_;
         if (index >= 0 && (size_t)index < curr->targets.size()) {
-          target = curr->targets[index];
+          target = curr->targets[(size_t)index];
         }
         flow.breakTo = target;
         return flow;
