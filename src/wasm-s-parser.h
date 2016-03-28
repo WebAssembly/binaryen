@@ -23,6 +23,7 @@
 #define wasm_wasm_s_parser_h
 
 #include <cmath>
+#include <cctype>
 #include <limits>
 
 #include "wasm.h"
