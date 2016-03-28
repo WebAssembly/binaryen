@@ -259,7 +259,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
         }
         try {
           instance->callExport(entry, arguments);
-        } catch (ExitException& x) {
+        } catch (ExitException&) {
         }
       }
     }
@@ -287,7 +287,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
             throw ParseException();
           })
         );
-      } catch (const ParseException& e) {
+      } catch (const ParseException&) {
         invalid = true;
       }
       if (!invalid) {
@@ -307,7 +307,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
       try {
         Invocation invocation(*curr[1], instance, *builder->get());
         result = invocation.invoke();
-      } catch (const TrapException& e) {
+      } catch (const TrapException&) {
         trapped = true;
       }
       if (id == ASSERT_RETURN) {
