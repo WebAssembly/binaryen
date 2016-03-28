@@ -1,4 +1,4 @@
-function asm() {
+function asm(global, env, buffer) {
   "use asm";
 
   var t = global.NaN, u = global.Infinity;
@@ -7,10 +7,20 @@ function asm() {
   var Math_fround = global.Math.fround;
   var Math_abs = global.Math.abs;
   var Math_ceil = global.Math.ceil;
+  var tempDoublePtr = env.tempDoublePtr | 0;
 
   var abort = env.abort;
   var print = env.print;
   var h = env.h;
+
+  var HEAP8 = new global.Int8Array(buffer);
+  var HEAP16 = new global.Int16Array(buffer);
+  var HEAP32 = new global.Int32Array(buffer);
+  var HEAPU8 = new global.Uint8Array(buffer);
+  var HEAPU16 = new global.Uint16Array(buffer);
+  var HEAPU32 = new global.Uint32Array(buffer);
+  var HEAPF32 = new global.Float32Array(buffer);
+  var HEAPF64 = new global.Float64Array(buffer);
 
   function big_negative() {
     var temp = 0.0;
@@ -189,6 +199,13 @@ function asm() {
       } while (0);
       print(2);
     }
+  }
+  function bitcasts(i, f) {
+    i = i | 0;
+    f = Math_fround(f);
+    (HEAP32[tempDoublePtr >> 2] = i, Math_fround(HEAPF32[tempDoublePtr >> 2])); // i32->f32
+    (HEAP32[tempDoublePtr >> 2] = i, +HEAPF32[tempDoublePtr >> 2]); // i32->f32, no fround
+    (HEAPF32[tempDoublePtr >> 2] = f, HEAP32[tempDoublePtr >> 2] | 0); // f32->i32
   }
 
   function z() {
