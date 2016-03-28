@@ -695,7 +695,7 @@ private:
 
   template <class LS>
   size_t getFinalAddress(LS* curr, Literal ptr) {
-    auto trapIfGt = [this](size_t lhs, size_t rhs, const char* msg) {
+    auto trapIfGt = [this](uint64_t lhs, uint64_t rhs, const char* msg) {
       if (lhs > rhs) {
         std::stringstream ss;
         ss << msg << ": " << lhs << " > " << rhs;
