@@ -202,6 +202,8 @@ private:
   IString Math_ceil;
   IString Math_sqrt;
 
+  IString tempDoublePtr; // imported name of tempDoublePtr
+
   // function types. we fill in this information as we see
   // uses, in the first pass
 
@@ -483,6 +485,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     } else {
       assert(module[0] == NAME);
       moduleName = module[1]->getIString();
+      if (moduleName == ENV) {
+        if (imported[2] == TEMP_DOUBLE_PTR) {
+          assert(tempDoublePtr.isNull());
+          tempDoublePtr = name;
+          // we don't return here, as we can only optimize out some uses of tDP. So it remains imported
+        }
+      }
     }
     auto import = allocator.alloc<Import>();
     import->name = name;
@@ -1404,6 +1413,57 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->type = ret->ifTrue->type;
       return ret;
     } else if (what == SEQ) {
+      // Some (x, y) patterns can be optimized, like bitcasts,
+      //  (HEAP32[tempDoublePtr >> 2] = i, Math_fround(HEAPF32[tempDoublePtr >> 2])); // i32->f32
+      //  (HEAP32[tempDoublePtr >> 2] = i, +HEAPF32[tempDoublePtr >> 2]); // i32->f32, no fround
+      //  (HEAPF32[tempDoublePtr >> 2] = f, HEAP32[tempDoublePtr >> 2] | 0); // f32->i32
+      if (ast[1][0] == ASSIGN && ast[1][2][0] == SUB && ast[1][2][1][0] == NAME && ast[1][2][2][0] == BINARY && ast[1][2][2][1] == RSHIFT &&
+          ast[1][2][2][2][0] == NAME && ast[1][2][2][2][1] == TEMP_DOUBLE_PTR && ast[1][2][2][3][0] == NUM && ast[1][2][2][3][1]->getNumber() == 2) {
+        // (?[tempDoublePtr >> 2] = ?, ?)  so far
+        auto heap = ast[1][2][1][1]->getIString();
+        if (views.find(heap) != views.end()) {
+          AsmType writeType = views[heap].type;
+          AsmType readType = ASM_NONE;
+          Ref readValue;
+          if (ast[2][0] == BINARY && ast[2][1] == OR && ast[2][3][0] == NUM && ast[2][3][1]->getNumber() == 0) {
+            readType = ASM_INT;
+            readValue = ast[2][2];
+          } else if (ast[2][0] == UNARY_PREFIX && ast[2][1] == PLUS) {
+            readType = ASM_DOUBLE;
+            readValue = ast[2][2];
+          } else if (ast[2][0] == CALL && ast[2][1][0] == NAME && ast[2][1][1] == Math_fround) {
+            readType = ASM_FLOAT;
+            readValue = ast[2][2][0];
+          }
+          if (readType != ASM_NONE) {
+            if (readValue[0] == SUB && readValue[1][0] == NAME && readValue[2][0] == BINARY && readValue[2][1] == RSHIFT &&
+                readValue[2][2][0] == NAME && readValue[2][2][1] == TEMP_DOUBLE_PTR && readValue[2][3][0] == NUM && readValue[2][3][1]->getNumber() == 2) {
+              // pattern looks right!
+              Ref writtenValue = ast[1][3];
+              if (writeType == ASM_INT && (readType == ASM_FLOAT || readType == ASM_DOUBLE)) {
+                auto conv = allocator.alloc<Unary>();
+                conv->op = ReinterpretInt;
+                conv->value = process(writtenValue);
+                conv->type = WasmType::f32;
+                if (readType == ASM_DOUBLE) {
+                  auto promote = allocator.alloc<Unary>();
+                  promote->op = PromoteFloat32;
+                  promote->value = conv;
+                  promote->type = WasmType::f64;
+                  return promote;
+                }
+                return conv;
+              } else if (writeType == ASM_FLOAT && readType == ASM_INT) {
+                auto conv = allocator.alloc<Unary>();
+                conv->op = ReinterpretFloat;
+                conv->value = process(writtenValue);
+                conv->type = WasmType::i32;
+                return conv;
+              }
+            }
+          }
+        }
+      }
       auto ret = allocator.alloc<Block>();
       ret->list.push_back(process(ast[1]));
       ret->list.push_back(process(ast[2]));

@@ -517,40 +517,16 @@
     )
   )
   (func $bitcasts (param $i i32) (param $f f32)
-    (i32.store
-      (i32.load
-        (i32.const 40)
-      )
-      (get_local $i)
-    )
-    (f32.load
-      (i32.load
-        (i32.const 40)
-      )
-    )
-    (i32.store
-      (i32.load
-        (i32.const 40)
-      )
+    (f32.reinterpret/i32
       (get_local $i)
     )
     (f64.promote/f32
-      (f32.load
-        (i32.load
-          (i32.const 40)
-        )
+      (f32.reinterpret/i32
+        (get_local $i)
       )
     )
-    (f32.store
-      (i32.load
-        (i32.const 40)
-      )
+    (i32.reinterpret/f32
       (get_local $f)
-    )
-    (i32.load
-      (i32.load
-        (i32.const 40)
-      )
     )
   )
   (func $z
