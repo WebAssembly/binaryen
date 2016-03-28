@@ -703,7 +703,7 @@ class S2WasmBuilder {
       curr->align = curr->bytes;
       if (attributes[0]) {
         assert(strncmp(attributes[0], "p2align=", 8) == 0);
-        curr->align = pow(2, getInt(attributes[0] + 8));
+        curr->align = 1U << getInt(attributes[0] + 8);
       }
       setOutput(curr, assign);
     };
@@ -722,7 +722,7 @@ class S2WasmBuilder {
       curr->align = curr->bytes;
       if (attributes[0]) {
         assert(strncmp(attributes[0], "p2align=", 8) == 0);
-        curr->align = pow(2, getInt(attributes[0] + 8));
+        curr->align = 1U << getInt(attributes[0] + 8);
       }
       curr->value = inputs[1];
       setOutput(curr, assign);
@@ -1101,7 +1101,7 @@ class S2WasmBuilder {
       align = getInt();
       skipWhitespace();
     }
-    align = pow(2, align); // convert from power to actual bytes
+    align = (size_t)1 << align; // convert from power to actual bytes
     if (match(".lcomm")) {
       parseLcomm(name, align);
       return;
