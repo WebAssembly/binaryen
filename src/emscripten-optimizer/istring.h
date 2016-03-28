@@ -72,8 +72,9 @@ struct IString {
     } else {
       auto existing = strings->find(s);
       if (existing == strings->end()) {
-        char *copy = (char*)malloc(strlen(s)+1); // XXX leaked
-        strcpy(copy, s);
+        size_t len = strlen(s) + 1;
+        char *copy = (char*)malloc(len); // XXX leaked
+        strncpy(copy, s, len);
         s = copy;
         strings->insert(s);
       } else {
@@ -147,9 +148,9 @@ class IStringSet : public std::unordered_set<IString> {
 public:
   IStringSet() {}
   IStringSet(const char *init) { // comma-delimited list
-    int size = strlen(init);
-    char *curr = new char[size+1]; // leaked!
-    strcpy(curr, init);
+    int size = strlen(init) + 1;
+    char *curr = new char[size]; // leaked!
+    strncpy(curr, init, size);
     while (1) {
       char *end = strchr(curr, ' ');
       if (end) *end = 0;

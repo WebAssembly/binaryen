@@ -626,7 +626,7 @@ struct JSPrinter {
     maybeSpace(*s);
     int len = strlen(s);
     ensure(len+1);
-    strcpy(buffer + used, s);
+    strncpy(buffer + used, s, len+1);
     used += len;
   }
 
