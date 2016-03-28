@@ -25,7 +25,8 @@ using namespace wasm;
 bool wasm::isInteger(double x) { return fmod(x, 1) == 0; }
 
 bool wasm::isUInteger32(double x) {
-  return isInteger(x) && x >= 0 && x <= std::numeric_limits<uint32_t>::max();
+  return !std::signbit(x) && isInteger(x) &&
+         x <= std::numeric_limits<uint32_t>::max();
 }
 
 bool wasm::isSInteger32(double x) {
@@ -34,21 +35,22 @@ bool wasm::isSInteger32(double x) {
 }
 
 uint32_t wasm::toUInteger32(double x) {
-  return x < std::numeric_limits<uint32_t>::max()
-             ? x
-             : std::numeric_limits<uint32_t>::max();
+  return std::signbit(x) ? 0 : (x < std::numeric_limits<uint32_t>::max()
+                                    ? x
+                                    : std::numeric_limits<uint32_t>::max());
 }
 
 int32_t wasm::toSInteger32(double x) {
-  return x > std::numeric_limits<int32_t>::min() &&
-                 x < std::numeric_limits<int32_t>::max()
+  return (x > std::numeric_limits<int32_t>::min() &&
+          x < std::numeric_limits<int32_t>::max())
              ? x
-             : (x < 0 ? std::numeric_limits<int32_t>::min()
-                      : std::numeric_limits<int32_t>::max());
+             : (std::signbit(x) ? std::numeric_limits<int32_t>::min()
+                                : std::numeric_limits<int32_t>::max());
 }
 
 bool wasm::isUInteger64(double x) {
-  return isInteger(x) && x >= 0 && x <= std::numeric_limits<uint64_t>::max();
+  return !std::signbit(x) && isInteger(x) &&
+         x <= std::numeric_limits<uint64_t>::max();
 }
 
 bool wasm::isSInteger64(double x) {
@@ -57,15 +59,15 @@ bool wasm::isSInteger64(double x) {
 }
 
 uint64_t wasm::toUInteger64(double x) {
-  return x < (double)std::numeric_limits<uint64_t>::max()
-             ? (uint64_t)x
-             : std::numeric_limits<uint64_t>::max();
+  return std::signbit(x) ? 0 : (x < (double)std::numeric_limits<uint64_t>::max()
+                                    ? (uint64_t)x
+                                    : std::numeric_limits<uint64_t>::max());
 }
 
 int64_t wasm::toSInteger64(double x) {
-  return x > (double)std::numeric_limits<int64_t>::min() &&
-                 x < (double)std::numeric_limits<int64_t>::max()
+  return (x > (double)std::numeric_limits<int64_t>::min() &&
+          x < (double)std::numeric_limits<int64_t>::max())
              ? (int64_t)x
-             : (x < 0 ? std::numeric_limits<int64_t>::min()
-                      : std::numeric_limits<int64_t>::max());
+             : (std::signbit(x) ? std::numeric_limits<int64_t>::min()
+                                : std::numeric_limits<int64_t>::max());
 }
