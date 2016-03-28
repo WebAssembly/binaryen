@@ -641,7 +641,7 @@ private:
           if (val > (double)std::numeric_limits<int32_t>::max() || val < (double)std::numeric_limits<int32_t>::min()) trap("i32.truncSFloat overflow");
           return Literal(int32_t(val));
         } else {
-          int64_t converted = val;
+          int64_t converted = (int64_t)val;
           if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap("i64.truncSFloat overflow");
           return Literal(converted);
         }
@@ -654,7 +654,7 @@ private:
           if (val > (double)std::numeric_limits<uint32_t>::max() || val <= (double)-1) trap("i32.truncUFloat overflow");
           return Literal(uint32_t(val));
         } else {
-          uint64_t converted = val;
+          uint64_t converted = (uint64_t)val;
           if (converted < val - 1 || val <= (double)-1) trap("i64.truncUFloat overflow");
           return Literal(converted);
         }
