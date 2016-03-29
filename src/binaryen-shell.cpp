@@ -66,8 +66,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     std::vector<char> memory;
     template <typename T>
     static bool aligned(const char* address) {
-      static_assert(!(alignof(T) & (alignof(T) - 1)), "must be a power of 2");
-      return 0 == (reinterpret_cast<uintptr_t>(address) & (alignof(T) - 1));
+      static_assert(!(sizeof(T) & (sizeof(T) - 1)), "must be a power of 2");
+      return 0 == (reinterpret_cast<uintptr_t>(address) & (sizeof(T) - 1));
     }
     Memory(Memory&) = delete;
     Memory& operator=(const Memory&) = delete;
