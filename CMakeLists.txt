@@ -29,8 +29,10 @@ SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 
 IF(MSVC)
-  ADD_COMPILE_FLAG("/arch:sse2")
-  ADD_COMPILE_FLAG("/Wall")
+  IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled. 
+    ADD_COMPILE_FLAG("/arch:sse2")
+  ENDIF()
+  ADD_COMPILE_FLAG("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
   ADD_COMPILE_FLAG("/WX-")
   IF(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     ADD_COMPILE_FLAG("/O0")

@@ -283,7 +283,7 @@ private:
         if (curr->condition) {
           Flow conditionFlow = visit(curr->condition);
           if (conditionFlow.breaking()) return conditionFlow;
-          condition = conditionFlow.value.getInteger();
+          condition = conditionFlow.value.getInteger() != 0;
         }
         return condition ? flow : Flow();
       }
@@ -304,7 +304,7 @@ private:
 
         Name target = curr->default_;
         if (index >= 0 && (size_t)index < curr->targets.size()) {
-          target = curr->targets[index];
+          target = curr->targets[(size_t)index];
         }
         flow.breakTo = target;
         return flow;
@@ -641,7 +641,7 @@ private:
           if (val > (double)std::numeric_limits<int32_t>::max() || val < (double)std::numeric_limits<int32_t>::min()) trap("i32.truncSFloat overflow");
           return Literal(int32_t(val));
         } else {
-          int64_t converted = val;
+          int64_t converted = (int64_t)val;
           if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap("i64.truncSFloat overflow");
           return Literal(converted);
         }
@@ -654,7 +654,7 @@ private:
           if (val > (double)std::numeric_limits<uint32_t>::max() || val <= (double)-1) trap("i32.truncUFloat overflow");
           return Literal(uint32_t(val));
         } else {
-          uint64_t converted = val;
+          uint64_t converted = (uint64_t)val;
           if (converted < val - 1 || val <= (double)-1) trap("i64.truncUFloat overflow");
           return Literal(converted);
         }
@@ -695,7 +695,7 @@ private:
 
   template <class LS>
   size_t getFinalAddress(LS* curr, Literal ptr) {
-    auto trapIfGt = [this](size_t lhs, size_t rhs, const char* msg) {
+    auto trapIfGt = [this](uint64_t lhs, uint64_t rhs, const char* msg) {
       if (lhs > rhs) {
         std::stringstream ss;
         ss << msg << ": " << lhs << " > " << rhs;
