@@ -178,9 +178,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       }
       case i64: {
         switch (store->bytes) {
-          case 1: memory.set<int8_t>(addr, value.geti64()); break;
-          case 2: memory.set<int16_t>(addr, value.geti64()); break;
-          case 4: memory.set<int32_t>(addr, value.geti64()); break;
+          case 1: memory.set<int8_t>(addr, (int8_t)value.geti64()); break;
+          case 2: memory.set<int16_t>(addr, (int16_t)value.geti64()); break;
+          case 4: memory.set<int32_t>(addr, (int32_t)value.geti64()); break;
           case 8: memory.set<int64_t>(addr, value.geti64()); break;
           default: abort();
         }
@@ -248,7 +248,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
   if (wasm) {
     interface = new ShellExternalInterface();
     instance = new ModuleInstance(*wasm, interface);
-    if (entry.is() > 0) {
+    if (entry.is()) {
       Function* function = wasm->functionsMap[entry];
       if (!function) {
         std::cerr << "Unknown entry " << entry << std::endl;
@@ -259,7 +259,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
         }
         try {
           instance->callExport(entry, arguments);
-        } catch (ExitException& x) {
+        } catch (ExitException&) {
         }
       }
     }
@@ -287,7 +287,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
             throw ParseException();
           })
         );
-      } catch (const ParseException& e) {
+      } catch (const ParseException&) {
         invalid = true;
       }
       if (!invalid) {
@@ -307,7 +307,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
       try {
         Invocation invocation(*curr[1], instance, *builder->get());
         result = invocation.invoke();
-      } catch (const TrapException& e) {
+      } catch (const TrapException&) {
         trapped = true;
       }
       if (id == ASSERT_RETURN) {
