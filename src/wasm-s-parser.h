@@ -453,9 +453,8 @@ public:
       // type.operation (e.g. i32.add)
       WasmType type = stringToWasmType(str, false, true);
       // Local copy to index into op without bounds checking.
-      const size_t maxNameSize = 15;
-      char op[maxNameSize + 1];
-      memset(op, 0, maxNameSize + 1); // ensure the whole string is cleared.
+      enum { maxNameSize = 15 };
+      char op[maxNameSize + 1] = {'\0'};
       strncpy(op, dot + 1, maxNameSize);
       switch (op[0]) {
         case 'a': {
