@@ -639,13 +639,13 @@ class S2WasmBuilder {
     auto makeHost = [&](HostOp op) {
       Name assign = getAssign();
       auto curr = allocator.alloc<Host>();
-      curr->op = MemorySize;
+      curr->op = op;
       setOutput(curr, assign);
     };
     auto makeHost1 = [&](HostOp op) {
       Name assign = getAssign();
       auto curr = allocator.alloc<Host>();
-      curr->op = MemorySize;
+      curr->op = op;
       curr->operands.push_back(getInput());
       setOutput(curr, assign);
     };
