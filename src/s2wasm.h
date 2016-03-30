@@ -1305,6 +1305,12 @@ class S2WasmBuilder {
         block->finalize();
       }
     }
+
+    // ensure an explicit function type for indirect call targets
+    for (auto& name : wasm.table.names) {
+      auto* func = wasm.functionsMap[name];
+      func->type = ensureFunctionType(getSig(func), &wasm, allocator)->name;
+    }
   }
 
   template<class C>
