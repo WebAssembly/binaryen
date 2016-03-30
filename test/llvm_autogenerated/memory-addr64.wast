@@ -9,7 +9,9 @@
     )
   )
   (func $grow_memory (param $$0 i64)
-    (memory_size)
+    (grow_memory
+      (get_local $$0)
+    )
     (return)
   )
 )
