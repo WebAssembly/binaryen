@@ -752,16 +752,7 @@ class S2WasmBuilder {
           indirect->operands.push_back(inputs[i]);
         }
         setOutput(indirect, assign);
-        auto typeName = cashew::IString((std::string("FUNCSIG_") + getSig(indirect)).c_str(), false);
-        if (wasm.functionTypesMap.count(typeName) == 0) {
-          auto type = allocator.alloc<FunctionType>();
-          *type = sigToFunctionType(getSig(indirect));
-          type->name = typeName;
-          wasm.addFunctionType(type);
-          indirect->fullType = type;
-        } else {
-          indirect->fullType = wasm.functionTypesMap[typeName];
-        }
+        indirect->fullType = wasm.functionTypesMap[ensureFunctionType(getSig(indirect), &wasm, allocator)->name];
       } else {
         // non-indirect call
         CallBase* curr;
@@ -1313,6 +1304,12 @@ class S2WasmBuilder {
         block->list.push_back(call);
         block->finalize();
       }
+    }
+
+    // ensure an explicit function type for indirect call targets
+    for (auto& name : wasm.table.names) {
+      auto* func = wasm.functionsMap[name];
+      func->type = ensureFunctionType(getSig(func), &wasm, allocator)->name;
     }
   }
 

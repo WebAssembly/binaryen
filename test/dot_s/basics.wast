@@ -6,10 +6,11 @@
   )
   (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
+  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (import $puts "env" "puts" (param i32))
   (export "main" $main)
   (table $main)
-  (func $main (param $$0 i32) (param $$1 i32) (result i32)
+  (func $main (type $FUNCSIG$iii) (param $$0 i32) (param $$1 i32) (result i32)
     (call_import $puts
       (i32.const 16)
     )
