@@ -8,8 +8,6 @@
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
-  (type $FUNCSIG_v (func))
-  (type $FUNCSIG_i (func (result i32)))
   (import $i32_nullary "env" "i32_nullary" (result i32))
   (import $i64_nullary "env" "i64_nullary" (result i64))
   (import $float_nullary "env" "float_nullary" (result f32))
@@ -69,14 +67,14 @@
     )
   )
   (func $call_indirect_void (param $$0 i32)
-    (call_indirect $FUNCSIG_v
+    (call_indirect $FUNCSIG$v
       (get_local $$0)
     )
     (return)
   )
   (func $call_indirect_i32 (param $$0 i32) (result i32)
     (return
-      (call_indirect $FUNCSIG_i
+      (call_indirect $FUNCSIG$i
         (get_local $$0)
       )
     )
