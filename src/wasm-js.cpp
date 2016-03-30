@@ -286,6 +286,10 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           } else {
             ret = EM_ASM_INT({ return Module['info'].parent['HEAPU32'][$0 >> 2] }, addr);
           }
+        } else if (load->bytes == 8) {
+          uint32_t low  = EM_ASM_INT({ return Module['info'].parent['HEAP32'][$0 >> 2] }, addr);
+          uint32_t high = EM_ASM_INT({ return Module['info'].parent['HEAP32'][$0 >> 2] }, addr + 4);
+          return Literal(int64_t(low) | (int64_t(high) << 32));
         } else abort();
         return load->type == i32 ? Literal(ret) : Literal(int64_t(ret));
       } else {
