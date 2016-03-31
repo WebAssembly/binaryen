@@ -44,7 +44,7 @@ int main(int argc, const char *argv[]) {
   options.parse(argc, argv);
 
   auto input(
-      read_file<std::vector<char>>(options.extra["infile"], false, options.debug));
+      read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
   if (options.debug) std::cerr << "s-parsing..." << std::endl;
   SExpressionParser parser(input.data());
@@ -67,7 +67,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "j-printing..." << std::endl;
   JSPrinter jser(true, true, asmjs);
   jser.printAst();
-  Output output(options.extra["output"], false, options.debug);
+  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   output << jser.buffer << std::endl;
 
   if (options.debug) std::cerr << "done." << std::endl;

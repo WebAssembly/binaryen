@@ -74,7 +74,7 @@ int main(int argc, const char *argv[]) {
                       });
   options.parse(argc, argv);
 
-  auto input(read_file<std::string>(options.extra["infile"], false, options.debug));
+  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
   if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
   AllocatingModule wasm;
@@ -103,7 +103,7 @@ int main(int argc, const char *argv[]) {
   s2wasm.emscriptenGlue(meta);
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
-  Output output(options.extra["output"], false, options.debug);
+  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   printWasm(&wasm, output.getStream());
   output << meta.str() << std::endl;
 
