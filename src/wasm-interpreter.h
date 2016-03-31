@@ -636,7 +636,7 @@ private:
 
       Literal truncSFloat(Unary* curr, Literal value) {
         double val = value.getFloat();
-        if (isnan(val)) trap("truncSFloat of nan");
+        if (std::isnan(val)) trap("truncSFloat of nan");
         if (curr->type == i32) {
           if (val > (double)std::numeric_limits<int32_t>::max() || val < (double)std::numeric_limits<int32_t>::min()) trap("i32.truncSFloat overflow");
           return Literal(int32_t(val));
@@ -649,7 +649,7 @@ private:
 
       Literal truncUFloat(Unary* curr, Literal value) {
         double val = value.getFloat();
-        if (isnan(val)) trap("truncUFloat of nan");
+        if (std::isnan(val)) trap("truncUFloat of nan");
         if (curr->type == i32) {
           if (val > (double)std::numeric_limits<uint32_t>::max() || val <= (double)-1) trap("i32.truncUFloat overflow");
           return Literal(uint32_t(val));
