@@ -536,17 +536,19 @@ if has_vanilla_emcc and has_vanilla_llvm:
       print '..', c
       base = c.replace('.cpp', '').replace('.c', '')
       expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
-      command = [VANILLA_EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', 'wasm_backend', c), '-O1', '-s', 'ONLY_MY_CODE=1']
-      print '....' + ' '.join(command)
-      if os.path.exists('a.wasm.js'): os.unlink('a.wasm.js')
-      subprocess.check_call(command)
-      if has_node:
-        print '  (check in node)'
-        proc = subprocess.Popen([has_node, 'a.wasm.js'], stdout=subprocess.PIPE)
-        out, err = proc.communicate()
-        assert proc.returncode == 0
-        if out.strip() != expected.strip():
-          fail(out, expected)
+      for opts in [[], ['-O1'], ['-O2']]:
+        only = [] if opts != ['-O1'] or 'real' in base else ['-s', 'ONLY_MY_CODE=1'] # only my code is a hack we used early in wasm backend dev, which somehow worked, but only with -O1
+        command = [VANILLA_EMCC, '-o', 'a.wasm.js', os.path.join('test', 'wasm_backend', c)] + opts + only
+        print '....' + ' '.join(command)
+        if os.path.exists('a.wasm.js'): os.unlink('a.wasm.js')
+        subprocess.check_call(command)
+        if has_node:
+          print '  (check in node)'
+          proc = subprocess.Popen([has_node, 'a.wasm.js'], stdout=subprocess.PIPE)
+          out, err = proc.communicate()
+          assert proc.returncode == 0
+          if out.strip() != expected.strip():
+            fail(out, expected)
   finally:
     if has_vanilla_llvm:
       del os.environ['LLVM']
