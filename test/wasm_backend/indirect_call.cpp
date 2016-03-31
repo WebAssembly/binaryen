@@ -37,13 +37,13 @@ int main(int argc, char **argv) {
   for (int i = 0; i < 4 && i < argc*4; i++) {
     print("i", i);
     v curr = f1[i];
-    print("curr address to call", (int)curr);
+    //print("curr address to call", (int)curr);
     curr();
   }
   vi f2[4] = { other, yet, other, yet };
   for (int i = 0; i < 4 && i < argc*4; i++) {
     vi curr = f2[i];
-    print("curr", (int)curr);
+    //print("curr", (int)curr);
     curr(i);
   }
 }
