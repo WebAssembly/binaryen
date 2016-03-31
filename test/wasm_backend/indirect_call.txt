@@ -2,22 +2,14 @@ print: argc : 1
 print: addr of something : 0
 print: addr of more : 1
 print: i : 0
-print: curr address to call : 0
 print: something : 12
 print: i : 1
-print: curr address to call : 1
 print: more : -1
 print: i : 2
-print: curr address to call : 0
 print: something : 12
 print: i : 3
-print: curr address to call : 1
 print: more : -1
-print: curr : 2
 print: other : 40
-print: curr : 3
 print: yet : 100
-print: curr : 2
 print: other : 42
-print: curr : 3
 print: yet : 102

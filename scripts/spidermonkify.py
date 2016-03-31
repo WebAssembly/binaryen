@@ -51,16 +51,6 @@ js = js.replace("'" + base_wast_target + "'", "'" + base_wasm_target + "'")
 open(js_target, 'w').write(js)
 shutil.copyfile(wast_target + '.mappedGlobals', wasm_target + '.mappedGlobals')
 
-# fix up wast
-wast = open(wast_target).read()
-# memory
-memory_start = wast.find('(memory') + 1
-memory_end = wast.find(')', memory_start)
-wast = (wast[:memory_end + 1] +
-        ' (export "memory" memory) ' +
-        wast[memory_end + 1:])
-open(wast_target, 'w').write(wast)
-
 # convert to binary using spidermonkey
 subprocess.check_call(
     emscripten.shared.SPIDERMONKEY_ENGINE +
