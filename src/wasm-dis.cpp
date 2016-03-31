@@ -41,7 +41,7 @@ int main(int argc, const char *argv[]) {
                       });
   options.parse(argc, argv);
 
-  auto input(read_file<std::vector<char>>(options.extra["infile"], options.debug));
+  auto input(read_file<std::vector<char>>(options.extra["infile"], true, options.debug));
 
   if (options.debug) std::cerr << "parsing binary..." << std::endl;
   AllocatingModule wasm;
@@ -49,7 +49,7 @@ int main(int argc, const char *argv[]) {
   parser.read();
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
-  Output output(options.extra["output"], options.debug);
+  Output output(options.extra["output"], false, options.debug);
   printWasm(&wasm, output.getStream());
   output << '\n';
 

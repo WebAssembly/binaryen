@@ -372,7 +372,7 @@ int main(int argc, const char* argv[]) {
   }
   options.parse(argc, argv);
 
-  auto input(read_file<std::vector<char>>(options.extra["infile"], options.debug));
+  auto input(read_file<std::vector<char>>(options.extra["infile"], false, options.debug));
 
   if (options.debug) std::cerr << "parsing text to s-expressions...\n";
   SExpressionParser parser(input.data());
