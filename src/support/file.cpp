@@ -20,9 +20,12 @@
 #include <limits>
 
 template <typename T>
-T wasm::read_file(const std::string &filename, bool debug) {
+T wasm::read_file(const std::string &filename, bool binary, bool debug) {
   if (debug) std::cerr << "Loading '" << filename << "'..." << std::endl;
-  std::ifstream infile(filename);
+  std::ifstream infile;
+  auto flags = std::ifstream::in;
+  if (binary) flags |= std::ifstream::binary;
+  infile.open(filename, flags);
   if (!infile.is_open()) {
     std::cerr << "Failed opening '" << filename << "'" << std::endl;
     exit(EXIT_FAILURE);
@@ -41,15 +44,17 @@ T wasm::read_file(const std::string &filename, bool debug) {
 }
 
 // Explicit instantiations for the explicit specializations.
-template std::string wasm::read_file<>(const std::string &, bool);
-template std::vector<char> wasm::read_file<>(const std::string &, bool);
+template std::string wasm::read_file<>(const std::string &, bool, bool);
+template std::vector<char> wasm::read_file<>(const std::string &, bool, bool);
 
-wasm::Output::Output(const std::string &filename, bool debug)
-    : outfile(), out([this, filename, debug]() {
+wasm::Output::Output(const std::string &filename, bool binary, bool debug)
+    : outfile(), out([this, filename, binary, debug]() {
         std::streambuf *buffer;
         if (filename.size()) {
           if (debug) std::cerr << "Opening '" << filename << std::endl;
-          outfile.open(filename, std::ofstream::out | std::ofstream::trunc);
+          auto flags = std::ofstream::out | std::ofstream::trunc;
+          if (binary) flags |= std::ofstream::binary;
+          outfile.open(filename, flags);
           if (!outfile.is_open()) {
             std::cerr << "Failed opening '" << filename << "'" << std::endl;
             exit(EXIT_FAILURE);

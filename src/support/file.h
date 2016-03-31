@@ -29,15 +29,15 @@
 
 namespace wasm {
 template <typename T>
-T read_file(const std::string &filename, bool debug);
+T read_file(const std::string &filename, bool binary, bool debug);
 // Declare the valid explicit specializations.
-extern template std::string read_file<>(const std::string &, bool);
-extern template std::vector<char> read_file<>(const std::string &, bool);
+extern template std::string read_file<>(const std::string &, bool, bool);
+extern template std::vector<char> read_file<>(const std::string &, bool, bool);
 
 class Output {
  public:
   // An empty filename will open stdout instead.
-  Output(const std::string &filename, bool debug);
+  Output(const std::string &filename, bool binary, bool debug);
   ~Output() = default;
   template <typename T>
   std::ostream &operator<<(const T &v) {
