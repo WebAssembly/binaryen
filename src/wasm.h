@@ -233,7 +233,7 @@ public:
   }
 
   static void printFloat(std::ostream &o, float f) {
-    if (isnan(f)) {
+    if (std::isnan(f)) {
       const char *sign = std::signbit(f) ? "-" : "";
       o << sign << "nan";
       if (uint32_t payload = ~0xff800000u & bit_cast<uint32_t>(f)) {
@@ -249,7 +249,7 @@ public:
       o << "-0";
       return;
     }
-    if (isnan(d)) {
+    if (std::isnan(d)) {
       const char *sign = std::signbit(d) ? "-" : "";
       o << sign << "nan";
       if (uint64_t payload = ~0xfff0000000000000ull & bit_cast<uint64_t>(d)) {
@@ -628,8 +628,8 @@ public:
         auto l = getf32(), r = other.getf32();
         if (l == r && l == 0) return Literal(std::signbit(l) ? l : r);
         auto result = std::min(l, r);
-        bool lnan = isnan(l), rnan = isnan(r);
-        if (!isnan(result) && !lnan && !rnan) return Literal(result);
+        bool lnan = std::isnan(l), rnan = std::isnan(r);
+        if (!std::isnan(result) && !lnan && !rnan) return Literal(result);
         if (!lnan && !rnan) return Literal((int32_t)0x7fc00000).castToF32();
         return Literal(lnan ? l : r).castToI32().or_(Literal(0xc00000)).castToF32();
       }
@@ -637,8 +637,8 @@ public:
         auto l = getf64(), r = other.getf64();
         if (l == r && l == 0) return Literal(std::signbit(l) ? l : r);
         auto result = std::min(l, r);
-        bool lnan = isnan(l), rnan = isnan(r);
-        if (!isnan(result) && !lnan && !rnan) return Literal(result);
+        bool lnan = std::isnan(l), rnan = std::isnan(r);
+        if (!std::isnan(result) && !lnan && !rnan) return Literal(result);
         if (!lnan && !rnan) return Literal((int64_t)0x7ff8000000000000LL).castToF64();
         return Literal(lnan ? l : r).castToI64().or_(Literal(int64_t(0x8000000000000LL))).castToF64();
       }
@@ -651,8 +651,8 @@ public:
         auto l = getf32(), r = other.getf32();
         if (l == r && l == 0) return Literal(std::signbit(l) ? r : l);
         auto result = std::max(l, r);
-        bool lnan = isnan(l), rnan = isnan(r);
-        if (!isnan(result) && !lnan && !rnan) return Literal(result);
+        bool lnan = std::isnan(l), rnan = std::isnan(r);
+        if (!std::isnan(result) && !lnan && !rnan) return Literal(result);
         if (!lnan && !rnan) return Literal((int32_t)0x7fc00000).castToF32();
         return Literal(lnan ? l : r).castToI32().or_(Literal(0xc00000)).castToF32();
       }
@@ -660,8 +660,8 @@ public:
         auto l = getf64(), r = other.getf64();
         if (l == r && l == 0) return Literal(std::signbit(l) ? r : l);
         auto result = std::max(l, r);
-        bool lnan = isnan(l), rnan = isnan(r);
-        if (!isnan(result) && !lnan && !rnan) return Literal(result);
+        bool lnan = std::isnan(l), rnan = std::isnan(r);
+        if (!std::isnan(result) && !lnan && !rnan) return Literal(result);
         if (!lnan && !rnan) return Literal((int64_t)0x7ff8000000000000LL).castToF64();
         return Literal(lnan ? l : r).castToI64().or_(Literal(int64_t(0x8000000000000LL))).castToF64();
       }
