@@ -41,7 +41,7 @@ int main(int argc, const char *argv[]) {
                       });
   options.parse(argc, argv);
 
-  auto input(read_file<std::string>(options.extra["infile"], false, options.debug));
+  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
   if (options.debug) std::cerr << "s-parsing..." << std::endl;
   SExpressionParser parser(const_cast<char*>(input.c_str()));
@@ -57,7 +57,7 @@ int main(int argc, const char *argv[]) {
   writer.write();
 
   if (options.debug) std::cerr << "writing to output..." << std::endl;
-  Output output(options.extra["output"], true, options.debug);
+  Output output(options.extra["output"], Flags::Binary, options.debug ? Flags::Debug : Flags::Release);
   buffer.writeTo(output);
 
   if (options.debug) std::cerr << "Done." << std::endl;

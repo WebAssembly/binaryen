@@ -20,11 +20,11 @@
 #include <limits>
 
 template <typename T>
-T wasm::read_file(const std::string &filename, bool binary, bool debug) {
-  if (debug) std::cerr << "Loading '" << filename << "'..." << std::endl;
+T wasm::read_file(const std::string &filename, Flags::BinaryOption binary, Flags::DebugOption debug) {
+  if (debug == Flags::Debug) std::cerr << "Loading '" << filename << "'..." << std::endl;
   std::ifstream infile;
   auto flags = std::ifstream::in;
-  if (binary) flags |= std::ifstream::binary;
+  if (binary == Flags::Binary) flags |= std::ifstream::binary;
   infile.open(filename, flags);
   if (!infile.is_open()) {
     std::cerr << "Failed opening '" << filename << "'" << std::endl;
@@ -44,16 +44,16 @@ T wasm::read_file(const std::string &filename, bool binary, bool debug) {
 }
 
 // Explicit instantiations for the explicit specializations.
-template std::string wasm::read_file<>(const std::string &, bool, bool);
-template std::vector<char> wasm::read_file<>(const std::string &, bool, bool);
+template std::string wasm::read_file<>(const std::string &, Flags::BinaryOption, Flags::DebugOption);
+template std::vector<char> wasm::read_file<>(const std::string &, Flags::BinaryOption, Flags::DebugOption);
 
-wasm::Output::Output(const std::string &filename, bool binary, bool debug)
+wasm::Output::Output(const std::string &filename, Flags::BinaryOption binary, Flags::DebugOption debug)
     : outfile(), out([this, filename, binary, debug]() {
         std::streambuf *buffer;
         if (filename.size()) {
-          if (debug) std::cerr << "Opening '" << filename << std::endl;
+          if (debug == Flags::Debug) std::cerr << "Opening '" << filename << std::endl;
           auto flags = std::ofstream::out | std::ofstream::trunc;
-          if (binary) flags |= std::ofstream::binary;
+          if (binary == Flags::Binary) flags |= std::ofstream::binary;
           outfile.open(filename, flags);
           if (!outfile.is_open()) {
             std::cerr << "Failed opening '" << filename << "'" << std::endl;

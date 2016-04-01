@@ -77,7 +77,7 @@ int main(int argc, const char *argv[]) {
 
   Asm2WasmPreProcessor pre;
   auto input(
-      read_file<std::vector<char>>(options.extra["infile"], false, options.debug));
+      read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
   char *start = pre.process(input.data());
 
   if (options.debug) std::cerr << "parsing..." << std::endl;
@@ -101,7 +101,7 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.debug) std::cerr << "printing..." << std::endl;
-  Output output(options.extra["output"], false, options.debug);
+  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   printWasm(&wasm, output.getStream());
 
   if (mappedGlobals) {
