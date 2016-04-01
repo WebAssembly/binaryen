@@ -36,6 +36,8 @@ function integrateWasmJS(Module) {
 
   // utilities
 
+  var wasmPageSize = 64*1024;
+
   var asm2wasmImports = { // special asm2wasm imports
     "f64-rem": function(x, y) {
       return x % y;
@@ -94,8 +96,9 @@ function integrateWasmJS(Module) {
     updateGlobalBuffer(newBuffer);
     updateGlobalBufferViews();
     Module['reallocBuffer'] = function(size) {
+      size = Math.ceil(size / wasmPageSize) * wasmPageSize; // round up to wasm page size
       var old = Module['buffer'];
-      exports['__growWasmMemory'](size); // tiny wasm method that just does grow_memory
+      exports['__growWasmMemory'](size / wasmPageSize); // tiny wasm method that just does grow_memory
       return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
     };
   }
