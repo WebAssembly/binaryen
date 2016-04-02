@@ -177,6 +177,18 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     }, curr->name.str);
   }
 
+  // verify imports are provided
+  for (auto& pair : module->importsMap) {
+    auto& name = pair.first;
+    auto* import = pair.second;
+    EM_ASM_({
+      var mod = Pointer_stringify($0);
+      var base = Pointer_stringify($1);
+      var name = Pointer_stringify($2);
+      assert(Module['lookupImport'](mod, base), 'checking import ' + name + ' = ' + mod + '.' + base);
+    }, import->module.str, import->base.str, name.str);
+  }
+
   if (wasmJSDebug) std::cerr << "creating instance...\n";
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
