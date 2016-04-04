@@ -281,8 +281,8 @@ private:
         return;
       } else if (id == TYPE) {
         Name typeName = curr[1]->str();
-        if (wasm.functionTypesMap.find(typeName) == wasm.functionTypesMap.end()) onError();
-        FunctionType* type = wasm.functionTypesMap[typeName];
+        if (!wasm.checkFunctionType(typeName)) onError();
+        FunctionType* type = wasm.getFunctionType(typeName);
         functionTypes[name] = type->result;
         return;
       }
@@ -384,8 +384,8 @@ private:
       } else if (id == TYPE) {
         Name name = curr[1]->str();
         func->type = name;
-        if (wasm.functionTypesMap.find(name) == wasm.functionTypesMap.end()) onError();
-        FunctionType* type = wasm.functionTypesMap[name];
+        if (!wasm.checkFunctionType(name)) onError();
+        FunctionType* type = wasm.getFunctionType(name);
         func->result = type->result;
         for (size_t j = 0; j < type->params.size(); j++) {
           IString name = Name::fromInt(j);
@@ -960,7 +960,7 @@ private:
   Expression* makeCallImport(Element& s) {
     auto ret = allocator.alloc<CallImport>();
     ret->target = s[1]->str();
-    Import* import = wasm.importsMap[ret->target];
+    Import* import = wasm.getImport(ret->target);
     ret->type = import->type->result;
     parseCallOperands(s, 2, ret);
     return ret;
@@ -969,8 +969,8 @@ private:
   Expression* makeCallIndirect(Element& s) {
     auto ret = allocator.alloc<CallIndirect>();
     IString type = s[1]->str();
-    assert(wasm.functionTypesMap.find(type) != wasm.functionTypesMap.end());
-    ret->fullType = wasm.functionTypesMap[type];
+    ret->fullType = wasm.getFunctionType(type);
+    assert(ret->fullType);
     ret->type = ret->fullType->result;
     ret->target = parseExpression(s[2]);
     parseCallOperands(s, 3, ret);
@@ -1129,8 +1129,8 @@ private:
         type.result = stringToWasmType(params[1]->str());
       } else if (id == TYPE) {
         IString name = params[1]->str();
-        if (wasm.functionTypesMap.find(name) == wasm.functionTypesMap.end()) onError();
-        type = *wasm.functionTypesMap[name];
+        if (!wasm.checkFunctionType(name)) onError();
+        type = *wasm.getFunctionType(name);
       } else {
         onError();
       }

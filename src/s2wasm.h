@@ -752,7 +752,7 @@ class S2WasmBuilder {
           indirect->operands.push_back(inputs[i]);
         }
         setOutput(indirect, assign);
-        indirect->fullType = wasm.functionTypesMap[ensureFunctionType(getSig(indirect), &wasm, allocator)->name];
+        indirect->fullType = wasm.getFunctionType(ensureFunctionType(getSig(indirect), &wasm, allocator)->name);
       } else {
         // non-indirect call
         CallBase* curr;
@@ -782,7 +782,7 @@ class S2WasmBuilder {
         setOutput(curr, assign);
         if (curr->is<CallImport>()) {
           auto target = curr->cast<CallImport>()->target;
-          if (wasm.importsMap.count(target) == 0) {
+          if (!wasm.checkImport(target)) {
             auto import = allocator.alloc<Import>();
             import->name = import->base = target;
             import->module = ENV;
@@ -1232,7 +1232,7 @@ class S2WasmBuilder {
 
     // XXX For now, export all functions marked .globl.
     for (Name name : globls) {
-      if (wasm.functionsMap.count(name)) {
+      if (wasm.checkFunction(name)) {
         auto exp = allocator.alloc<Export>();
         exp->name = exp->value = name;
         wasm.addExport(exp);
@@ -1258,7 +1258,7 @@ class S2WasmBuilder {
         if (debug) std::cerr << "  ==> " << *(relocation.data) << '\n';
       } else {
         // must be a function address
-        if (wasm.functionsMap.count(name) == 0) {
+        if (!wasm.checkFunction(name)) {
           std::cerr << "Unknown symbol: " << name << '\n';
           if (!ignoreUnknownSymbols) abort();
           *(relocation.data) = 0;
@@ -1273,7 +1273,7 @@ class S2WasmBuilder {
         std::cerr << "Unknown start function: `" << startFunction << "`\n";
         abort();
       }
-      const auto *target = wasm.functionsMap[startFunction];
+      const auto *target = wasm.getFunction(startFunction);
       Name start("_start");
       if (implementedFunctions.count(start) != 0) {
         std::cerr << "Start function already present: `" << start << "`\n";
@@ -1308,7 +1308,7 @@ class S2WasmBuilder {
 
     // ensure an explicit function type for indirect call targets
     for (auto& name : wasm.table.names) {
-      auto* func = wasm.functionsMap[name];
+      auto* func = wasm.getFunction(name);
       func->type = ensureFunctionType(getSig(func), &wasm, allocator)->name;
     }
   }

@@ -1114,22 +1114,40 @@ public:
 
 class Module {
 public:
-  // internal wasm contents (don't access these from outside; use add*() and the *Map objects)
+  // wasm contents (generally you shouldn't access these from outside, except maybe for iterating; use add*() and the get() functions)
   std::vector<FunctionType*> functionTypes;
   std::vector<Import*> imports;
   std::vector<Export*> exports;
   std::vector<Function*> functions;
 
-  // publicly-accessible content
-  std::map<Name, FunctionType*> functionTypesMap;
-  std::map<Name, Import*> importsMap;
-  std::map<Name, Export*> exportsMap;
-  std::map<Name, Function*> functionsMap;
   Table table;
   Memory memory;
   Name start;
 
+private:
+  // TODO: add a build option where Names are just indices, and then these methods are not needed
+  std::map<Name, FunctionType*> functionTypesMap;
+  std::map<Name, Import*> importsMap;
+  std::map<Name, Export*> exportsMap;
+  std::map<Name, Function*> functionsMap;
+
+public:
   Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0) {}
+
+  FunctionType* getFunctionType(size_t i) { assert(i < functionTypes.size());return functionTypes[i]; }
+  Import* getImport(size_t i) { assert(i < imports.size()); return imports[i]; }
+  Export* getExport(size_t i) { assert(i < exports.size()); return exports[i]; }
+  Function* getFunction(size_t i) { assert(i < functions.size()); return functions[i]; }
+
+  FunctionType* getFunctionType(Name name) { assert(functionTypesMap[name]); return functionTypesMap[name]; }
+  Import* getImport(Name name) { assert(importsMap[name]); return importsMap[name]; }
+  Export* getExport(Name name) { assert(exportsMap[name]); return exportsMap[name]; }
+  Function* getFunction(Name name) { assert(functionsMap[name]); return functionsMap[name]; }
+
+  FunctionType* checkFunctionType(Name name) { if (functionTypesMap.find(name) == functionTypesMap.end()) return nullptr; return functionTypesMap[name]; }
+  Import* checkImport(Name name) { if (importsMap.find(name) == importsMap.end()) return nullptr; return importsMap[name]; }
+  Export* checkExport(Name name) { if (exportsMap.find(name) == exportsMap.end()) return nullptr; return exportsMap[name]; }
+  Function* checkFunction(Name name) { if (functionsMap.find(name) == functionsMap.end()) return nullptr; return functionsMap[name]; }
 
   void addFunctionType(FunctionType* curr) {
     Name numericName = Name::fromInt(functionTypeIndex); // TODO: remove all these, assert on names already existing, do numeric stuff in wasm-s-parser etc.

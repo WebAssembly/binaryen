@@ -113,8 +113,8 @@ FunctionType sigToFunctionType(std::string sig) {
 
 FunctionType* ensureFunctionType(std::string sig, Module* wasm, MixedArena& allocator) {
   cashew::IString name(("FUNCSIG$" + sig).c_str(), false);
-  if (wasm->functionTypesMap.find(name) != wasm->functionTypesMap.end()) {
-    return wasm->functionTypesMap[name];
+  if (wasm->checkFunctionType(name)) {
+    return wasm->getFunctionType(name);
   }
   // add new type
   auto type = allocator.alloc<FunctionType>();

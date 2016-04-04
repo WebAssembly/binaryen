@@ -655,10 +655,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         IString value = pair[1][1]->getIString();
         if (key == Name("_emscripten_replace_memory")) {
           // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
-          assert(wasm.functionsMap.find(value) == wasm.functionsMap.end());
+          assert(!wasm.checkFunction(value));
           continue;
         }
-        assert(wasm.functionsMap.find(value) != wasm.functionsMap.end());
+        assert(wasm.checkFunction(value));
         auto export_ = allocator.alloc<Export>();
         export_->name = key;
         export_->value = value;
@@ -671,18 +671,17 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   std::vector<IString> toErase;
 
-  for (auto& pair : wasm.importsMap) {
-    IString name = pair.first;
-    Import& import = *pair.second;
+  for (auto* import : wasm.imports) {
+    IString name = import->name;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       // special math builtins
-      FunctionType* builtin = getBuiltinFunctionType(import.module, import.base);
+      FunctionType* builtin = getBuiltinFunctionType(import->module, import->base);
       if (builtin) {
-        import.type = builtin;
+        import->type = builtin;
         continue;
       }
-      import.type = ensureFunctionType(getSig(&importedFunctionTypes[name]), &wasm, allocator);
-    } else if (import.module != ASM2WASM) { // special-case the special module
+      import->type = ensureFunctionType(getSig(&importedFunctionTypes[name]), &wasm, allocator);
+    } else if (import->module != ASM2WASM) { // special-case the special module
       // never actually used
       toErase.push_back(name);
     }
@@ -1186,7 +1185,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
         }
         Call* ret;
-        if (wasm.importsMap.find(name) != wasm.importsMap.end()) {
+        if (wasm.checkImport(name)) {
           Ref parent = astStackHelper.getParent();
           WasmType type = !!parent ? detectWasmType(parent, &asmData) : none;
           auto specific = allocator.alloc<CallImport>();

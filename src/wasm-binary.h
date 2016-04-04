@@ -1709,8 +1709,7 @@ public:
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
     curr->target = wasm.imports[getU32LEB()]->name;
-    assert(wasm.importsMap.find(curr->target) != wasm.importsMap.end());
-    auto type = wasm.importsMap[curr->target]->type;
+    auto type = wasm.getImport(curr->target)->type;
     assert(type);
     auto num = type->params.size();
     if (debug) std::cerr << "zz node: CallImport " << curr->target << " with type " << type->name << " and " << num << " params\n";

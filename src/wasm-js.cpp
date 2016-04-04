@@ -110,7 +110,7 @@ void finalizeModule() {
     exit(EXIT_FAILURE);
   }
   module->memory.initial = providedMemory / Memory::kPageSize;
-  module->memory.max = (module->exportsMap.find(GROW_WASM_MEMORY) != module->exportsMap.end()) ? -1 : module->memory.initial;
+  module->memory.max = module->checkExport(GROW_WASM_MEMORY) ? -1 : module->memory.initial;
 
   // global mapping is done in js in post.js
 }
@@ -165,8 +165,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
   EM_ASM({
     Module['asmExports'] = {};
   });
-  for (auto& pair : module->exportsMap) {
-    auto& curr = pair.second;
+  for (auto* curr : module->exports) {
     EM_ASM_({
       var name = Pointer_stringify($0);
       Module['asmExports'][name] = function() {
@@ -178,15 +177,13 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
   }
 
   // verify imports are provided
-  for (auto& pair : module->importsMap) {
-    auto& name = pair.first;
-    auto* import = pair.second;
+  for (auto* import : module->imports) {
     EM_ASM_({
       var mod = Pointer_stringify($0);
       var base = Pointer_stringify($1);
       var name = Pointer_stringify($2);
       assert(Module['lookupImport'](mod, base), 'checking import ' + name + ' = ' + mod + '.' + base);
-    }, import->module.str, import->base.str, name.str);
+    }, import->module.str, import->base.str, import->name.str);
   }
 
   if (wasmJSDebug) std::cerr << "creating instance...\n";
@@ -432,8 +429,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
   if (wasmJSDebug) std::cout << "call_from_js " << target << '\n';
 
   IString exportName(target);
-  IString functionName = instance->wasm.exportsMap[exportName]->value;
-  Function *function = instance->wasm.functionsMap[functionName];
+  IString functionName = instance->wasm.getExport(exportName)->value;
+  Function *function = instance->wasm.getFunction(functionName);
   assert(function);
   size_t seen = EM_ASM_INT_V({ return Module['tempArguments'].length });
   size_t actual = function->params.size();
