@@ -258,7 +258,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           if (!isFloat) {
             if (bytes === 1)      ret = isSigned ? HEAP8[0]  : HEAPU8[0];
             else if (bytes === 2) ret = isSigned ? HEAP16[0] : HEAPU16[0];
-            else if (bytes === 4) ret = isSigned ? HEAP32[0] : HEAPU32[0];
+            else if (bytes === 4 || bytes === 8) ret = isSigned ? HEAP32[0] : HEAPU32[0]; // if i64, return low 32 bits here
             else abort();
           } else {
             if (bytes === 4)      ret = HEAPF32[0];
@@ -269,6 +269,20 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           return ret;
         }, addr, load->bytes, isWasmTypeFloat(load->type), load->signed_);
         if (!isWasmTypeFloat(load->type)) {
+          if (load->type == i64) {
+            if (load->bytes == 8) {
+              int32_t high = EM_ASM_INT_V({
+                return HEAPU32[1];
+              });
+              return Literal(int64_t(int32_t(ret)) | (int64_t(int32_t(high)) << 32));
+            } else {
+              if (load->signed_) {
+                return Literal(int64_t(int32_t(ret)));
+              } else {
+                return Literal(int64_t(uint32_t(ret)));
+              }
+            }
+          }
           return Literal((int32_t)ret);
         } else if (load->bytes == 4) {
           return Literal((float)ret);
