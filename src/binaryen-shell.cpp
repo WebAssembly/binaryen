@@ -137,7 +137,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   Literal load(Load* load, size_t addr) override {
-    // ignore align - assume we are on x86 etc. which does that
     switch (load->type) {
       case i32: {
         switch (load->bytes) {
@@ -165,7 +164,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   void store(Store* store, size_t addr, Literal value) override {
-    // ignore align - assume we are on x86 etc. which does that
     switch (store->type) {
       case i32: {
         switch (store->bytes) {
