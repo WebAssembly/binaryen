@@ -1,0 +1,51 @@
+
+interface Literal {
+  void Literal(double x);
+};
+
+interface Name {
+  void Name(DOMString x);
+};
+
+interface Module {
+};
+
+interface AllocatingModule {
+};
+
+AllocatingModule implements Module;
+
+[Prefix="ModuleInstance::", NoDelete]
+interface ExternalInterface {
+};
+
+interface ShellExternalInterface {
+};
+
+ShellExternalInterface implements ExternalInterface;
+
+interface ModuleInstance {
+  void ModuleInstance([Ref] Module m, ExternalInterface i);
+
+  [Value] Literal callExport([Ref] Name name, [Ref] LiteralList arguments);
+};
+
+[Prefix="ModuleInstance::"]
+interface LiteralList {
+  void push_back([Ref] Literal l);
+};
+
+// S-Expressions
+
+interface Element {
+};
+
+interface SExpressionParser {
+  void SExpressionParser(DOMString input);
+  attribute Element root;
+};
+
+interface SExpressionWasmBuilder {
+  void SExpressionWasmBuilder([Ref] AllocatingModule wasm, [Ref] Element input, boolean debug);
+};
+

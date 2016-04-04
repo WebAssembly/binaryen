@@ -255,6 +255,9 @@ public:
     }
   }
 
+  // constructor without onError
+  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, bool debug=false) : SExpressionWasmBuilder(wasm, module, [&]() { abort(); }, debug) {}
+
 private:
 
   // pre-parse types and function definitions, so we know function return types before parsing their contents
