@@ -17,6 +17,7 @@
 #include <memory>
 
 #include "pass.h"
+#include "shell-interface.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-interpreter.h"
