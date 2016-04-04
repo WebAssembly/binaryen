@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.store	$0=, a($pop7), $pop1
 	i32.const	$push6=, 0
 	i32.load8_u	$1=, c($pop6)
-.LBB0_1:                                # %for.body2
+.LBB0_1:                                # %for.cond1.preheader
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	i32.const	$push11=, 0

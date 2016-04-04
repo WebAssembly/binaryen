@@ -14,7 +14,7 @@ stub:                                   # @stub
 	i32.sub 	$5=, $pop5, $pop6
 	i32.store	$2=, 12($5), $1
 	copy_local	$1=, $2
-.LBB0_1:                                # %while.body
+.LBB0_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	i32.const	$push2=, 4
@@ -26,7 +26,7 @@ stub:                                   # @stub
 # BB#2:                                 # %while.end
 	end_loop                        # label1:
 	i32.store	$1=, 12($5), $2
-.LBB0_3:                                # %while.body.1
+.LBB0_3:                                # %while.cond.1
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.const	$push3=, 4

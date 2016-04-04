@@ -18,7 +18,7 @@ main:                                   # @main
 	i32.const	$push10=, 0
 	i32.load	$push2=, d($pop10)
 	br_if   	0, $pop2        # 0: down to label1
-# BB#2:                                 # %for.inc25.i.preheader
+# BB#2:                                 # %for.body3.i.preheader
 	i32.const	$push6=, 0
 	i32.const	$push7=, 1
 	i32.store	$discard=, b($pop6), $pop7

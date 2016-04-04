@@ -79,7 +79,7 @@ foo:                                    # @foo
 	i32.const	$push30=, 0
 	i32.eq  	$push31=, $pop10, $pop30
 	br_if   	2, $pop31       # 2: down to label2
-.LBB2_5:                                # %while.body.backedge
+.LBB2_5:                                # %while.cond.backedge
                                         #   in Loop: Header=BB2_3 Depth=1
 	end_block                       # label3:
 	i32.add 	$push12=, $1, $5
@@ -94,7 +94,7 @@ foo:                                    # @foo
 	i32.eq  	$push13=, $pop25, $pop24
 	i32.and 	$push14=, $pop13, $2
 	br_if   	2, $pop14       # 2: down to label0
-# BB#6:                                 # %while.body.backedge
+# BB#6:                                 # %while.cond.backedge
                                         #   in Loop: Header=BB2_3 Depth=1
 	copy_local	$5=, $6
 	i32.const	$push29=, 34

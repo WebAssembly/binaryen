@@ -26,7 +26,7 @@ add:                                    # @add
 	f64.const	$push10=, infinity
 	f64.ne  	$push1=, $3, $pop10
 	br_if   	3, $pop1        # 3: down to label0
-# BB#3:                                 # %while.body
+# BB#3:                                 # %while.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	f64.load	$3=, 0($1)
 	i32.const	$push9=, 8
@@ -74,7 +74,7 @@ main:                                   # @main
 	f64.const	$push8=, infinity
 	f64.ne  	$push2=, $1, $pop8
 	br_if   	2, $pop2        # 2: down to label4
-# BB#2:                                 # %while.body.i
+# BB#2:                                 # %while.cond.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	f64.load	$1=, 0($0)
 	i32.const	$push7=, 8

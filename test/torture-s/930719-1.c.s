@@ -12,7 +12,7 @@ f:                                      # @f
 	block
 	block
 	br_if   	0, $0           # 0: down to label2
-# BB#1:                                 # %while.body.preheader
+# BB#1:                                 # %while.cond.preheader
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $1, $pop0
 	br_if   	1, $pop1        # 1: down to label1
@@ -24,7 +24,7 @@ f:                                      # @f
 	end_block                       # label2:
 	i32.const	$push2=, 0
 	return  	$pop2
-.LBB0_4:                                # %while.body
+.LBB0_4:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	end_block                       # label1:
 	loop                            # label3:
