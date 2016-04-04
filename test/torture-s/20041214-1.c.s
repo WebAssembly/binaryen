@@ -43,20 +43,42 @@ g:                                      # @g
 	.type	f,@function
 f:                                      # @f
 	.param  	i32, i32, i32
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, __stack_pointer
-	i32.load	$push2=, 0($pop1)
-	i32.const	$push3=, 16
-	i32.sub 	$3=, $pop2, $pop3
 	i32.const	$push4=, __stack_pointer
-	i32.store	$discard=, 0($pop4), $3
-	i32.store	$push0=, 12($3), $2
-	i32.call	$discard=, g@FUNCTION, $0, $1, $pop0
+	i32.load	$push5=, 0($pop4)
+	i32.const	$push6=, 16
+	i32.sub 	$4=, $pop5, $pop6
 	i32.const	$push7=, __stack_pointer
-	i32.const	$push5=, 16
-	i32.add 	$push6=, $3, $pop5
-	i32.store	$discard=, 0($pop7), $pop6
+	i32.store	$discard=, 0($pop7), $4
+	i32.load8_u	$3=, 0($1)
+	i32.store	$discard=, 12($4), $2
+	block
+	i32.const	$push11=, 0
+	i32.eq  	$push12=, $3, $pop11
+	br_if   	0, $pop12       # 0: down to label3
+# BB#1:                                 # %do_form_string.i.preheader
+	i32.load	$2=, 12($4)
+	i32.const	$push1=, 2
+	i32.add 	$1=, $1, $pop1
+.LBB1_2:                                # %do_form_string.i
+                                        # =>This Inner Loop Header: Depth=1
+	loop                            # label4:
+	i32.load	$push0=, 0($2)
+	i32.call	$discard=, strcpy@FUNCTION, $0, $pop0
+	i32.load8_u	$3=, 0($1)
+	i32.const	$push3=, 4
+	i32.add 	$2=, $2, $pop3
+	i32.const	$push2=, 2
+	i32.add 	$1=, $1, $pop2
+	br_if   	0, $3           # 0: up to label4
+.LBB1_3:                                # %g.exit
+	end_loop                        # label5:
+	end_block                       # label3:
+	i32.const	$push10=, __stack_pointer
+	i32.const	$push8=, 16
+	i32.add 	$push9=, $4, $pop8
+	i32.store	$discard=, 0($pop10), $pop9
 	return
 	.endfunc
 .Lfunc_end1:
@@ -88,7 +110,7 @@ main:                                   # @main
 	i32.const	$push13=, 22
 	i32.add 	$push14=, $2, $pop13
 	i32.call	$push3=, strcmp@FUNCTION, $pop14, $1
-	br_if   	0, $pop3        # 0: down to label3
+	br_if   	0, $pop3        # 0: down to label6
 # BB#1:                                 # %if.end
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 32
@@ -96,7 +118,7 @@ main:                                   # @main
 	i32.store	$discard=, 0($pop10), $pop9
 	return  	$0
 .LBB2_2:                                # %if.then
-	end_block                       # label3:
+	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

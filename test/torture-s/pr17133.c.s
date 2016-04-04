@@ -31,7 +31,7 @@ pure_alloc:                             # @pure_alloc
 	i32.const	$push16=, 0
 	i32.eq  	$push17=, $1, $pop16
 	br_if   	0, $pop17       # 0: up to label1
-# BB#3:                                 # %while.body.if.then_crit_edge
+# BB#3:                                 # %while.cond.if.then_crit_edge
 	end_loop                        # label2:
 	i32.const	$2=, 0
 	i32.const	$push15=, 0

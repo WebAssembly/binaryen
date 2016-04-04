@@ -16,7 +16,7 @@ foo:                                    # @foo
 	i32.load	$3=, h($pop12)
 	i32.const	$push11=, 0
 	i32.load	$4=, f($pop11)
-.LBB0_1:                                # %for.cond1thread-pre-split
+.LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	block
@@ -78,7 +78,7 @@ main:                                   # @main
 	i32.load	$1=, h($pop14)
 	i32.const	$push13=, 0
 	i32.load	$2=, f($pop13)
-.LBB1_1:                                # %for.cond1thread-pre-split.i
+.LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
 	block

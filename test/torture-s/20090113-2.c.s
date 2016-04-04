@@ -129,7 +129,7 @@ foobar:                                 # @foobar
 	i32.const	$push22=, 1
 	i32.add 	$push1=, $0, $pop22
 	i32.store	$0=, 0($2):p2align=3, $pop1
-.LBB1_6:                                # %while.cond7.outer.i
+.LBB1_6:                                # %while.cond5.i
                                         #   Parent Loop BB1_1 Depth=1
                                         # =>  This Loop Header: Depth=2
                                         #       Child Loop BB1_8 Depth 3

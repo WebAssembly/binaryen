@@ -8,46 +8,39 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	.param  	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push13=, 0
 	i32.const	$push0=, -516
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 2
-	i32.shr_s	$push12=, $pop1, $pop2
-	tee_local	$push11=, $3=, $pop12
-	i32.const	$push10=, 127
-	i32.and 	$push3=, $pop11, $pop10
-	i32.store8	$discard=, bytes($pop13), $pop3
-	block
-	i32.const	$push9=, 7
-	i32.shr_u	$push8=, $3, $pop9
-	tee_local	$push7=, $2=, $pop8
-	i32.const	$push20=, 0
-	i32.eq  	$push21=, $pop7, $pop20
-	br_if   	0, $pop21       # 0: down to label0
-# BB#1:                                 # %if.then.lr.ph
-	i32.const	$push14=, 0
-	i32.load	$push4=, flag($pop14)
-	i32.eqz 	$1=, $pop4
-	i32.const	$0=, bytes
-.LBB0_2:                                # %if.then
+	i32.shr_s	$0=, $pop1, $pop2
+	i32.const	$2=, 0
+	i32.const	$push6=, 0
+	i32.load	$1=, flag($pop6)
+.LBB0_1:                                # %a
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
-	i32.const	$push19=, 128
-	i32.or  	$push5=, $3, $pop19
-	i32.store8	$discard=, 0($0), $pop5
-	i32.add 	$0=, $0, $1
-	copy_local	$push18=, $2
-	tee_local	$push17=, $2=, $pop18
-	i32.const	$push16=, 127
-	i32.and 	$push6=, $pop17, $pop16
-	i32.store8	$discard=, 0($0), $pop6
-	copy_local	$3=, $2
-	i32.const	$push15=, 7
-	i32.shr_u	$2=, $2, $pop15
-	br_if   	0, $2           # 0: up to label1
-.LBB0_3:                                # %do.end
-	end_loop                        # label2:
-	end_block                       # label0:
+	loop                            # label0:
+	copy_local	$push9=, $0
+	tee_local	$push8=, $3=, $pop9
+	i32.const	$push7=, 7
+	i32.shr_u	$0=, $pop8, $pop7
+	i32.const	$push12=, 0
+	i32.eq  	$push13=, $0, $pop12
+	br_if   	1, $pop13       # 1: down to label1
+# BB#2:                                 # %if.then
+                                        #   in Loop: Header=BB0_1 Depth=1
+	br_if   	0, $1           # 0: up to label0
+# BB#3:                                 # %if.end7.thread
+                                        #   in Loop: Header=BB0_1 Depth=1
+	i32.const	$push11=, 128
+	i32.or  	$push3=, $3, $pop11
+	i32.store8	$discard=, bytes($2), $pop3
+	i32.const	$push10=, 1
+	i32.add 	$2=, $2, $pop10
+	br      	0               # 0: up to label0
+.LBB0_4:                                # %do.end
+	end_loop                        # label1:
+	i32.const	$push4=, 127
+	i32.and 	$push5=, $3, $pop4
+	i32.store8	$discard=, bytes($2), $pop5
 	return
 	.endfunc
 .Lfunc_end0:
@@ -59,33 +52,57 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
-# BB#0:                                 # %add_unwind_adjustsp.exit
+	.local  	i32, i32, i32, i32
+# BB#0:                                 # %entry
+	i32.const	$1=, 0
 	i32.const	$push12=, 0
 	i32.load	$0=, flag($pop12)
-	i32.const	$push11=, 0
-	i32.const	$push2=, 136
-	i32.store8	$1=, bytes($pop11), $pop2
-	i32.eqz 	$push1=, $0
-	i32.const	$push3=, 7
-	i32.store8	$0=, bytes($pop1), $pop3
+	i32.const	$2=, 904
+.LBB1_1:                                # %a.i
+                                        # =>This Inner Loop Header: Depth=1
+	loop                            # label2:
+	copy_local	$push15=, $2
+	tee_local	$push14=, $3=, $pop15
+	i32.const	$push13=, 7
+	i32.shr_u	$2=, $pop14, $pop13
+	i32.const	$push20=, 0
+	i32.eq  	$push21=, $2, $pop20
+	br_if   	1, $pop21       # 1: down to label3
+# BB#2:                                 # %if.then.i
+                                        #   in Loop: Header=BB1_1 Depth=1
+	br_if   	0, $0           # 0: up to label2
+# BB#3:                                 # %if.end7.thread.i
+                                        #   in Loop: Header=BB1_1 Depth=1
+	i32.const	$push17=, 128
+	i32.or  	$push0=, $3, $pop17
+	i32.store8	$discard=, bytes($1), $pop0
+	i32.const	$push16=, 1
+	i32.add 	$1=, $1, $pop16
+	br      	0               # 0: up to label2
+.LBB1_4:                                # %add_unwind_adjustsp.exit
+	end_loop                        # label3:
+	i32.const	$push2=, 127
+	i32.and 	$push3=, $3, $pop2
+	i32.store8	$discard=, bytes($1), $pop3
 	block
-	i32.const	$push10=, 0
-	i32.load8_u	$push4=, bytes($pop10)
-	i32.ne  	$push5=, $1, $pop4
-	br_if   	0, $pop5        # 0: down to label3
-# BB#1:                                 # %add_unwind_adjustsp.exit
-	i32.const	$push13=, 0
-	i32.load8_u	$push0=, bytes+1($pop13)
-	i32.const	$push6=, 255
-	i32.and 	$push7=, $pop0, $pop6
-	i32.ne  	$push8=, $pop7, $0
-	br_if   	0, $pop8        # 0: down to label3
-# BB#2:                                 # %if.end
-	i32.const	$push9=, 0
-	return  	$pop9
-.LBB1_3:                                # %if.then
-	end_block                       # label3:
+	i32.const	$push18=, 0
+	i32.load8_u	$push4=, bytes($pop18)
+	i32.const	$push5=, 136
+	i32.ne  	$push6=, $pop4, $pop5
+	br_if   	0, $pop6        # 0: down to label4
+# BB#5:                                 # %add_unwind_adjustsp.exit
+	i32.const	$push19=, 0
+	i32.load8_u	$push1=, bytes+1($pop19)
+	i32.const	$push7=, 255
+	i32.and 	$push8=, $pop1, $pop7
+	i32.const	$push9=, 7
+	i32.ne  	$push10=, $pop8, $pop9
+	br_if   	0, $pop10       # 0: down to label4
+# BB#6:                                 # %if.end
+	i32.const	$push11=, 0
+	return  	$pop11
+.LBB1_7:                                # %if.then
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
