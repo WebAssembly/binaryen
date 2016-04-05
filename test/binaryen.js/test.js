@@ -12,9 +12,23 @@ var input =
   '  )\n' +
   ')\n';
 
+console.log('input:');
+console.log(input);
+console.log('================');
+
 var module = new Binaryen.AllocatingModule();
 var parser = new Binaryen.SExpressionParser(input);
-var builder = new Binaryen.SExpressionWasmBuilder(module, parser.get_root(), false);
+
+console.log('s-expr dump:');
+parser.get_root().dump();
+var s_module = parser.get_root().getChild(0);
+console.log('================');
+
+var builder = new Binaryen.SExpressionWasmBuilder(module, s_module, true);
+
+console.log('module:');
+WasmPrinter.prototype.printModule(module);
+console.log('================');
 
 var interface_ = new Binaryen.ShellExternalInterface();
 var instance = new Binaryen.ModuleInstance(module, interface_);

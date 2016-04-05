@@ -42,6 +42,16 @@ interface LiteralList {
 // S-Expressions
 
 interface Element {
+  boolean isList();
+  boolean isStr();
+  void dump();
+
+  // list methods
+  [Operator="[]"] Element getChild(long i);
+  long size();
+
+  // string methods
+  [Const] DOMString c_str();
 };
 
 interface SExpressionParser {
@@ -51,5 +61,11 @@ interface SExpressionParser {
 
 interface SExpressionWasmBuilder {
   void SExpressionWasmBuilder([Ref] AllocatingModule wasm, [Ref] Element input, boolean debug);
+};
+
+// Wasm printing
+
+interface WasmPrinter {
+  static void printModule(Module m);
 };
 
