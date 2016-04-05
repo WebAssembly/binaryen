@@ -486,9 +486,8 @@ public:
 
   int32_t startSection(const char* name) {
     // emit 5 bytes of 0, which we'll fill with LEB later
-    auto ret = writeU32LEBPlaceholder();
     writeInlineString(name);
-    return ret;
+    return writeU32LEBPlaceholder();
   }
 
   void finishSection(int32_t start) {
@@ -1135,9 +1134,8 @@ public:
 
     // read sections until the end
     while (more()) {
-      auto sectionSize = getU32LEB();
-      assert(sectionSize < pos + input.size());
       auto nameSize = getU32LEB();
+      uint32_t sectionSize, before;
       auto match = [&](const char* name) {
         for (size_t i = 0; i < nameSize; i++) {
           if (pos + i >= input.size()) return false;
@@ -1145,7 +1143,11 @@ public:
           if (input[pos + i] != name[i]) return false;
         }
         if (strlen(name) != nameSize) return false;
+        // name matched, read section size and then section itself
         pos += nameSize;
+        sectionSize = getU32LEB();
+        before = pos;
+        assert(pos + sectionSize < input.size());
         return true;
       };
       if (match(BinaryConsts::Section::Start)) readStart();
@@ -1164,6 +1166,7 @@ public:
       } else {
         abort();
       }
+      assert(pos == before + sectionSize);
     }
 
     processFunctions();
