@@ -29,15 +29,15 @@ namespace wasm {
 
 struct RemoveImports : public WalkerPass<WasmWalker<RemoveImports>> {
   MixedArena* allocator;
-  std::map<Name, Import*> importsMap;
+  Module* module;
 
-  void prepare(PassRunner* runner, Module *module) override {
+  void prepare(PassRunner* runner, Module *module_) override {
     allocator = runner->allocator;
-    importsMap = module->importsMap;
+    module = module_;
   }
 
   void visitCallImport(CallImport *curr) {
-    WasmType type = importsMap[curr->target]->type->result;
+    WasmType type = module->getImport(curr->target)->type->result;
     if (type == none) {
       replaceCurrent(allocator->alloc<Nop>());
     } else {
@@ -48,8 +48,10 @@ struct RemoveImports : public WalkerPass<WasmWalker<RemoveImports>> {
   }
 
   void visitModule(Module *curr) {
-    curr->importsMap.clear();
-    curr->imports.clear();
+    auto imports = curr->imports; // copy
+    for (auto* import : imports) {
+      curr->removeImport(import->name);
+    }
   }
 };
 

@@ -110,7 +110,7 @@ public:
   }
 
   Literal callExport(IString name, LiteralList& arguments) {
-    Export *export_ = wasm.exportsMap[name];
+    Export *export_ = wasm.getExport(name);
     if (!export_) externalInterface->trap("callExport not found");
     return callFunction(export_->value, arguments);
   }
@@ -337,7 +337,7 @@ private:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        return instance.externalInterface->callImport(instance.wasm.importsMap[curr->target], arguments);
+        return instance.externalInterface->callImport(instance.wasm.getImport(curr->target), arguments);
       }
       Flow visitCallIndirect(CallIndirect *curr) {
         NOTE_ENTER("CallIndirect");
@@ -346,7 +346,7 @@ private:
         size_t index = target.value.geti32();
         if (index >= instance.wasm.table.names.size()) trap("callIndirect: overflow");
         Name name = instance.wasm.table.names[index];
-        Function *func = instance.wasm.functionsMap[name];
+        Function *func = instance.wasm.getFunction(name);
         if (func->type.is() && func->type != curr->fullType->name) trap("callIndirect: bad type");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
@@ -669,7 +669,7 @@ private:
     callDepth++;
     functionStack.push_back(name);
 
-    Function *function = wasm.functionsMap[name];
+    Function *function = wasm.getFunction(name);
     assert(function);
     FunctionScope scope(function, arguments);
 

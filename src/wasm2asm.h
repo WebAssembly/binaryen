@@ -287,7 +287,7 @@ void Wasm2AsmBuilder::addTables(Ref ast, Module *wasm) {
   std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
   for (size_t i = 0; i < wasm->table.names.size(); i++) {
     Name name = wasm->table.names[i];
-    auto func = wasm->functionsMap[name];
+    auto func = wasm->getFunction(name);
     std::string sig = getSig(func);
     auto& table = tables[sig];
     if (table.size() == 0) {

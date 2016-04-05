@@ -108,9 +108,8 @@ public:
     }
     // start
     if (curr->start.is()) {
-      auto iter = curr->functionsMap.find(curr->start);
-      if (shouldBeTrue(iter != curr->functionsMap.end())) {
-        auto func = iter->second;
+      auto func = curr->checkFunction(curr->start);
+      if (shouldBeTrue(func)) {
         shouldBeTrue(func->params.size() == 0); // must be nullary
       }
     }
