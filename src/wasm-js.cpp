@@ -132,7 +132,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input) {
   sExpressionWasmBuilder = new SExpressionWasmBuilder(*module, *root[0], [&]() {
     std::cerr << "error in parsing s-expressions to wasm\n";
     abort();
-  });
+  }, false);
 
   finalizeModule();
 }
