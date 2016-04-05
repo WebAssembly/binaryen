@@ -19,6 +19,7 @@
 //
 
 #include <wasm.h>
+#include <wasm-printing.h>
 #include <pass.h>
 
 namespace wasm {
@@ -553,7 +554,7 @@ static RegisterPass<MinifiedPrinter> registerMinifyPass("print-minified", "print
 
 // Print individual expressions
 
-std::ostream& printWasm(Expression* expression, std::ostream& o, bool minify = false) {
+std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify) {
   PrintSExpression print(o, minify);
   print.visit(expression);
   return o;

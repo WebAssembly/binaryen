@@ -1330,7 +1330,7 @@ public:
   // extra emscripten processing
   void emscriptenGlue(std::ostream& o) {
     if (debug) {
-      printWasm(&wasm, std::cerr);
+      WasmPrinter::printModule(&wasm, std::cerr);
     }
 
     wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions

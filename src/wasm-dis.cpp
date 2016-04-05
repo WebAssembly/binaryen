@@ -50,7 +50,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  printWasm(&wasm, output.getStream());
+  WasmPrinter::printModule(&wasm, output.getStream());
   output << '\n';
 
   if (options.debug) std::cerr << "Done." << std::endl;

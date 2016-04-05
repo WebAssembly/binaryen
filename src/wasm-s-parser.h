@@ -111,6 +111,10 @@ public:
     }
     return o;
   }
+
+  void dump() {
+    std::cout << "dumping " << this << " : " << *this << ".\n";
+  }
 };
 
 //
