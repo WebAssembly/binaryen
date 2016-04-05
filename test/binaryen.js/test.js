@@ -1,4 +1,6 @@
 
+Binaryen = Binaryen(); // instantiate the module
+
 var input =
   '(module\n' +
   '  (export "add" $add)\n' +

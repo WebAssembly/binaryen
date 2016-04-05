@@ -11,6 +11,7 @@ interface Module {
 };
 
 interface AllocatingModule {
+  void AllocatingModule();
 };
 
 AllocatingModule implements Module;
@@ -20,6 +21,7 @@ interface ExternalInterface {
 };
 
 interface ShellExternalInterface {
+  void ShellExternalInterface();
 };
 
 ShellExternalInterface implements ExternalInterface;
@@ -32,6 +34,8 @@ interface ModuleInstance {
 
 [Prefix="ModuleInstance::"]
 interface LiteralList {
+  void LiteralList();
+
   void push_back([Ref] Literal l);
 };
 
