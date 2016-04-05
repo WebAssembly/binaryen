@@ -1149,7 +1149,7 @@ public:
         pos += nameSize;
         sectionSize = getU32LEB();
         before = pos;
-        assert(pos + sectionSize < input.size());
+        assert(pos + sectionSize <= input.size());
         return true;
       };
       if (match(BinaryConsts::Section::Start)) readStart();
