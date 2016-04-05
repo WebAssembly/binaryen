@@ -35,7 +35,7 @@ int main() {
   SExpressionWasmBuilder builder(module, *root[0], [&]() { abort(); }, false);
 
   // Print it out
-  printWasm(&module, std::cout);
+  WasmPrinter::printModule(&module, std::cout);
 
   // Search it for divisions by zero: Walk the module, looking for
   // that operation.
