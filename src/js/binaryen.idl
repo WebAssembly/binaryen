@@ -1,10 +1,13 @@
 
 interface Literal {
   void Literal(double x);
+  double getf64();
 };
 
 interface Name {
   void Name(DOMString x);
+
+  [Const] DOMString c_str();
 };
 
 interface Module {

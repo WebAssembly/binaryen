@@ -33,7 +33,8 @@ console.log('================');
 var interface_ = new Binaryen.ShellExternalInterface();
 var instance = new Binaryen.ModuleInstance(module, interface_);
 
-var name = Binaryen.Name('add');
+var name = new Binaryen.Name('add');
+console.log('name: ' + name.c_str());
 
 var args = new Binaryen.LiteralList();
 args.push_back(new Binaryen.Literal(40));
