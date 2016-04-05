@@ -24,10 +24,10 @@ parser.get_root().dump();
 var s_module = parser.get_root().getChild(0);
 console.log('================');
 
-var builder = new Binaryen.SExpressionWasmBuilder(module, s_module, true);
+var builder = new Binaryen.SExpressionWasmBuilder(module, s_module);
 
 console.log('module:');
-WasmPrinter.prototype.printModule(module);
+Binaryen.WasmPrinter.prototype.printModule(module);
 console.log('================');
 
 var interface_ = new Binaryen.ShellExternalInterface();
