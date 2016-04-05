@@ -92,4 +92,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 51 }
+;; METADATA: { "asmConsts": {},"staticBump": 51, "initializers": [] }

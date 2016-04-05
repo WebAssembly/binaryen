@@ -110,6 +110,8 @@ class S2WasmBuilder {
 
   std::map<Name, size_t> functionIndexes;
 
+  std::vector<Name> initializerFunctions;
+
   // utilities
 
   // For fatal errors which could arise from input (i.e. not assertion failures)
@@ -459,13 +461,37 @@ class S2WasmBuilder {
       else if (match("imports")) skipImports();
       else if (match("data")) {}
       else if (match("ident")) {}
-      else if (match("section") || match("align") || match("p2align")) s = strchr(s, '\n');
+      else if (match("section")) parseToplevelSection();
+      else if (match("align") || match("p2align")) s = strchr(s, '\n');
       else if (match("Lfunc_end")) {
         // skip the next line, which has a .size we can ignore
         s = strstr(s, ".size");
         s = strchr(s, '\n');
       } else if (match("globl")) parseGlobl();
       else abort_on("process");
+    }
+  }
+
+  void parseToplevelSection() {
+    auto section = getCommaSeparated();
+    // Initializers are anything in a section whose name begins with .init_array
+    if (!strncmp(section.c_str(), ".init_array", strlen(".init_array") - 1)) parseInitializer();
+    s = strchr(s, '\n');
+  }
+
+  void parseInitializer() {
+    // Ignore the rest of the .section line
+    s = strchr(s, '\n');
+    while (*s) {
+      skipWhitespace();
+      if (match(".p2align")) s = strchr(s, '\n');
+      else if (match(".int32")) {
+        initializerFunctions.emplace_back(cleanFunction(getStr()));
+        assert(implementedFunctions.count(initializerFunctions.back()));
+        break;
+      } else {
+        abort_on("parseInitializer");
+      }
     }
   }
 
@@ -1413,7 +1439,11 @@ public:
     }
     o << "}";
     o << ",";
-    o << "\"staticBump\": " << (nextStatic - globalBase);
+    o << "\"staticBump\": " << (nextStatic - globalBase) << ", ";
+
+    o << "\"initializers\": [";
+    for (const auto& func : initializerFunctions) o << "\"" << func.c_str() << "\", ";
+    o << "]";
 
     o << " }";
   }

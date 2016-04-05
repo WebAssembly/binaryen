@@ -306,4 +306,4 @@
     (unreachable)
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 103 }
+;; METADATA: { "asmConsts": {},"staticBump": 103, "initializers": [] }
