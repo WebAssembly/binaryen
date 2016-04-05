@@ -387,30 +387,28 @@ enum ASTNodes {
   F32StoreMem = 0x35,
   F64StoreMem = 0x36,
 
-  I32Const = 0x0a,
-  I64Const = 0x0b,
-  F64Const = 0x0c,
-  F32Const = 0x0d,
-  GetLocal = 0x0e,
-  SetLocal = 0x0f,
-  LoadGlobal = 0x10,
-  StoreGlobal = 0x11,
-  CallFunction = 0x12,
-  CallIndirect = 0x13,
-  CallImport = 0x1f,
+  I32Const = 0x10,
+  I64Const = 0x11,
+  F64Const = 0x12,
+  F32Const = 0x13,
+  GetLocal = 0x14,
+  SetLocal = 0x15,
+  CallFunction = 0x16,
+  CallIndirect = 0x17,
+  CallImport = 0x18,
 
   Nop = 0x00,
   Block = 0x01,
   Loop = 0x02,
   If = 0x03,
-  IfElse = 0x04,
+  Else = 0x04,
   Select = 0x05,
   Br = 0x06,
   BrIf = 0x07,
   TableSwitch = 0x08,
-  Return = 0x14,
-  Unreachable = 0x15,
-  EndMarker = 0xff
+  Return = 0x09,
+  Unreachable = 0x0a,
+  End = 0x0f
 };
 
 enum MemoryAccess {
@@ -486,9 +484,8 @@ public:
 
   int32_t startSection(const char* name) {
     // emit 5 bytes of 0, which we'll fill with LEB later
-    auto ret = writeU32LEBPlaceholder();
     writeInlineString(name);
-    return ret;
+    return writeU32LEBPlaceholder();
   }
 
   void finishSection(int32_t start) {
@@ -631,7 +628,7 @@ public:
       if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
       depth = 0;
       recurse(function->body);
-      o << int8_t(BinaryConsts::EndMarker);
+      o << int8_t(BinaryConsts::End);
       assert(depth == 0);
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
@@ -795,14 +792,18 @@ public:
       recurse(child);
     }
     breakStack.pop_back();
-    o << int8_t(BinaryConsts::EndMarker);
+    o << int8_t(BinaryConsts::End);
   }
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
+    o << int8_t(BinaryConsts::If);
     recurse(curr->condition);
-    recurse(curr->ifTrue);
-    if (curr->ifFalse) recurse(curr->ifFalse);
-    o << int8_t(curr->ifFalse ? BinaryConsts::IfElse : BinaryConsts::If);
+    recurse(curr->ifTrue); // TODO: emit block contents directly, if block with no name
+    if (curr->ifFalse) {
+      o << int8_t(BinaryConsts::Else);
+      recurse(curr->ifFalse);
+    }
+    o << int8_t(BinaryConsts::End);
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
@@ -813,7 +814,7 @@ public:
     recurse(curr->body);
     breakStack.pop_back();
     breakStack.pop_back();
-    o << int8_t(BinaryConsts::EndMarker);
+    o << int8_t(BinaryConsts::End);
   }
 
   int32_t getBreakIndex(Name name) { // -1 if not found
@@ -845,13 +846,13 @@ public:
     }
     o << U32LEB(getBreakIndex(curr->default_));
     recurse(curr->condition);
-    o << int8_t(BinaryConsts::EndMarker);
+    o << int8_t(BinaryConsts::End);
     if (curr->value) {
       recurse(curr->value);
     } else {
       visitNop(nullptr);
     }
-    o << int8_t(BinaryConsts::EndMarker);
+    o << int8_t(BinaryConsts::End);
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
@@ -1135,9 +1136,8 @@ public:
 
     // read sections until the end
     while (more()) {
-      auto sectionSize = getU32LEB();
-      assert(sectionSize < pos + input.size());
       auto nameSize = getU32LEB();
+      uint32_t sectionSize, before;
       auto match = [&](const char* name) {
         for (size_t i = 0; i < nameSize; i++) {
           if (pos + i >= input.size()) return false;
@@ -1145,7 +1145,11 @@ public:
           if (input[pos + i] != name[i]) return false;
         }
         if (strlen(name) != nameSize) return false;
+        // name matched, read section size and then section itself
         pos += nameSize;
+        sectionSize = getU32LEB();
+        before = pos;
+        assert(pos + sectionSize <= input.size());
         return true;
       };
       if (match(BinaryConsts::Section::Start)) readStart();
@@ -1164,6 +1168,7 @@ public:
       } else {
         abort();
       }
+      assert(pos == before + sectionSize);
     }
 
     processFunctions();
@@ -1467,11 +1472,11 @@ public:
 
   std::vector<Expression*> expressionStack;
 
-  void processExpressions() { // until an end marker
+  BinaryConsts::ASTNodes processExpressions() { // until an end or else marker
     while (1) {
       Expression* curr;
-      readExpression(curr);
-      if (!curr) break; // end marker, done with this function/block/etc
+      auto ret = readExpression(curr);
+      if (!curr) return ret;
       expressionStack.push_back(curr);
     }
   }
@@ -1555,14 +1560,13 @@ public:
 
   int depth; // only for debugging
 
-  void readExpression(Expression*& curr) {
+  BinaryConsts::ASTNodes readExpression(Expression*& curr) {
     if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
     uint8_t code = getInt8();
     if (debug) std::cerr << "readExpression seeing " << (int)code << std::endl;
     switch (code) {
       case BinaryConsts::Block:        visitBlock((curr = allocator.alloc<Block>())->cast<Block>()); break;
-      case BinaryConsts::If:
-      case BinaryConsts::IfElse:       visitIf((curr = allocator.alloc<If>())->cast<If>(), code);  break;// code distinguishes if from if_else
+      case BinaryConsts::If:           visitIf((curr = allocator.alloc<If>())->cast<If>());  break;
       case BinaryConsts::Loop:         visitLoop((curr = allocator.alloc<Loop>())->cast<Loop>()); break;
       case BinaryConsts::Br:
       case BinaryConsts::BrIf:         visitBreak((curr = allocator.alloc<Break>())->cast<Break>(), code); break; // code distinguishes br from br_if
@@ -1576,7 +1580,8 @@ public:
       case BinaryConsts::Return:       visitReturn((curr = allocator.alloc<Return>())->cast<Return>()); break;
       case BinaryConsts::Nop:          visitNop((curr = allocator.alloc<Nop>())->cast<Nop>()); break;
       case BinaryConsts::Unreachable:  visitUnreachable((curr = allocator.alloc<Unreachable>())->cast<Unreachable>()); break;
-      case BinaryConsts::EndMarker:    curr = nullptr; break;
+      case BinaryConsts::End:
+      case BinaryConsts::Else:         curr = nullptr; break;
       default: {
         // otherwise, the code is a subcode TODO: optimize
         if (maybeVisit<Binary>(curr, code)) break;
@@ -1590,6 +1595,7 @@ public:
       }
     }
     if (debug) std::cerr << "zz recurse from " << depth-- << " at " << pos << std::endl;
+    return BinaryConsts::ASTNodes(code);
   }
 
   template<typename T>
@@ -1645,14 +1651,20 @@ public:
       breakStack.pop_back();
     }
   }
-  void visitIf(If *curr, uint8_t code) {
+  void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
-    if (code == BinaryConsts::IfElse) {
-      curr->ifFalse = popExpression();
-    }
+    size_t start = expressionStack.size();
+    auto next = processExpressions();
+    size_t end = expressionStack.size();
+    assert(end - start == 2);
     curr->ifTrue = popExpression();
     curr->condition = popExpression();
-    if (code == BinaryConsts::IfElse) {
+    if (next == BinaryConsts::Else) {
+      size_t start = expressionStack.size();
+      processExpressions();
+      size_t end = expressionStack.size();
+      assert(end - start == 1);
+      curr->ifFalse = popExpression();
       curr->finalize();
     }
   }
