@@ -90,7 +90,14 @@ cashew::IString GLOBAL("global"),
                 MATH_NEAREST("Math_NEAREST"),
                 MATH_SQRT("Math_sqrt"),
                 MATH_MIN("Math_max"),
-                MATH_MAX("Math_min");
+                MATH_MAX("Math_min"),
+                ASSERT_RETURN("assert_return"),
+                ASSERT_TRAP("assert_trap"),
+                ASSERT_INVALID("assert_invalid"),
+                SPECTEST("spectest"),
+                PRINT("print"),
+                INVOKE("invoke"),
+                EXIT("exit");
 
 }
 

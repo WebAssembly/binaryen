@@ -17,30 +17,38 @@
 #ifndef __wasm_printing_h__
 #define __wasm_printing_h__
 
+#include <ostream>
+
 #include "wasm.h"
 #include "pass.h"
 
 namespace wasm {
 
-inline std::ostream& printWasm(Module* module, std::ostream& o) {
-  PassRunner passRunner(nullptr);
-  passRunner.add<Printer>(o);
-  passRunner.run(module);
-  return o;
-}
+struct WasmPrinter {
+  static std::ostream& printModule(Module* module, std::ostream& o) {
+    PassRunner passRunner(nullptr);
+    passRunner.add<Printer>(o);
+    passRunner.run(module);
+    return o;
+  }
 
-extern std::ostream& printWasm(Expression* expression, std::ostream& o, bool minify = false);
+  static std::ostream& printModule(Module* module) {
+    return printModule(module, std::cout);
+  }
+
+  static std::ostream& printExpression(Expression* expression, std::ostream& o, bool minify = false);
+};
 
 }
 
 namespace std {
 
-std::ostream& operator<<(std::ostream& o, wasm::Module* module) {
-  return wasm::printWasm(module, o);
+inline std::ostream& operator<<(std::ostream& o, wasm::Module* module) {
+  return wasm::WasmPrinter::printModule(module, o);
 }
 
-std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
-  return wasm::printWasm(expression, o);
+inline std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
+  return wasm::WasmPrinter::printExpression(expression, o);
 }
 
 }

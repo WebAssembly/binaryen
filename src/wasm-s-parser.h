@@ -111,6 +111,10 @@ public:
     }
     return o;
   }
+
+  void dump() {
+    std::cout << "dumping " << this << " : " << *this << ".\n";
+  }
 };
 
 //
@@ -254,6 +258,9 @@ public:
       parseModuleElement(*module[i]);
     }
   }
+
+  // constructor without onError
+  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, bool debug=false) : SExpressionWasmBuilder(wasm, module, [&]() { abort(); }, debug) {}
 
 private:
 

@@ -102,7 +102,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  printWasm(&wasm, output.getStream());
+  WasmPrinter::printModule(&wasm, output.getStream());
 
   if (mappedGlobals) {
     if (options.debug)

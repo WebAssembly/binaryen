@@ -109,8 +109,8 @@ public:
     }
   }
 
-  Literal callExport(IString name, LiteralList& arguments) {
-    Export *export_ = wasm.getExport(name);
+  Literal callExport(Name name, LiteralList& arguments) {
+    Export *export_ = wasm.checkExport(name);
     if (!export_) externalInterface->trap("callExport not found");
     return callFunction(export_->value, arguments);
   }

@@ -32,10 +32,10 @@ int main() {
 
   // The parsed code has just one element, the module. Build the module
   // from that (and abort on any errors, but there won't be one here).
-  SExpressionWasmBuilder builder(module, *root[0], [&]() { abort(); });
+  SExpressionWasmBuilder builder(module, *root[0], [&]() { abort(); }, false);
 
   // Print it out
-  printWasm(&module, std::cout);
+  WasmPrinter::printModule(&module, std::cout);
 
   // Search it for divisions by zero: Walk the module, looking for
   // that operation.
