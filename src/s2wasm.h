@@ -80,7 +80,7 @@ class S2WasmBuilder {
     process();
     // Place the stack after the user's static data, to keep those addresses
     // small.
-    if (stackAllocation)  allocateStatic(stackAllocation, 16, ".stack");
+    if (stackAllocation) allocateStatic(stackAllocation, 16, ".stack");
     fix();
   }
 
