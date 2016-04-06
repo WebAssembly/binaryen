@@ -1,10 +1,10 @@
 (module
   (memory 1
     (segment 4 "\b0\08\00\00")
-    (segment 8 "9\05\00\00")
-    (segment 24 "\01\00\00\00")
-    (segment 28 "*\00\00\00")
-    (segment 32 "\ff\ff\ff\ff")
+    (segment 12 "9\05\00\00")
+    (segment 28 "\01\00\00\00")
+    (segment 32 "*\00\00\00")
+    (segment 36 "\ff\ff\ff\ff")
     (segment 64 "\00\00\00\00\01\00\00\00")
     (segment 72 "\ff\ff\ff\ff\ff\ff\ff\ff")
     (segment 92 "\00\00\00\80")
@@ -21,7 +21,7 @@
   (export "call_memcpy" $call_memcpy)
   (func $foo (result i32)
     (return
-      (i32.load offset=28
+      (i32.load offset=32
         (i32.const 0)
       )
     )
