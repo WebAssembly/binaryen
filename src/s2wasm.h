@@ -73,6 +73,8 @@ class S2WasmBuilder {
     s = input;
     scan();
     s = input;
+    // Don't allow anything to be allocated at address 0
+    if (globalBase == 0) nextStatic = 1;
     // Place the stack pointer at the bottom of the linear memory, to keep its
     // address small (and thus with a small encoding).
     placeStackPointer(stackAllocation);
@@ -427,14 +429,14 @@ class S2WasmBuilder {
   }
 
   void placeStackPointer(size_t stackAllocation) {
-    assert(nextStatic == globalBase); // we are the first allocation
+    assert(nextStatic == globalBase || nextStatic == 1); // we are the first allocation
+    const size_t pointerSize = 4;
+    // Unconditionally allocate space for the stack pointer. Emscripten
+    // allocates the stack itself, and initializes the stack pointer itself.
+    size_t address = allocateStatic(pointerSize, pointerSize, "__stack_pointer");
     if (stackAllocation) {
-      const size_t pointerSize = 4;
-      // Allocate space for the stack pointer
-      size_t address = allocateStatic(pointerSize, pointerSize, "__stack_pointer");
-
-      // Initialize the stack pointer to point to one past-the-end of the stack
-      // allocation.
+      // If we are allocating the stack, set up a relocation to initialize the
+      // stack pointer to point to one past-the-end of the stack allocation.
       auto* raw = new uint32_t;
       relocations.emplace_back(raw, ".stack", stackAllocation);
       assert(wasm.memory.segments.size() == 0);

@@ -1,6 +1,6 @@
 (module
   (memory 1
-    (segment 0 "\10\04\00\00")
+    (segment 4 " \04\00\00")
   )
   (export "memory" memory)
   (export "single_block" $single_block)
@@ -21,7 +21,7 @@
       (i32.const 0)
     )
     (loop $label$1 $label$0
-      (i32.store offset=4
+      (i32.store offset=8
         (i32.const 0)
         (i32.const 0)
       )
@@ -46,7 +46,7 @@
       (f32.const 0)
     )
     (loop $label$1 $label$0
-      (i32.store offset=4
+      (i32.store offset=8
         (i32.const 0)
         (i32.const 0)
       )
@@ -71,7 +71,7 @@
     (local $$3 i32)
     (local $$4 i32)
     (set_local $$1
-      (i32.const 0)
+      (i32.const 4)
     )
     (set_local $$1
       (i32.load
@@ -88,7 +88,7 @@
       )
     )
     (set_local $$2
-      (i32.const 0)
+      (i32.const 4)
     )
     (set_local $$4
       (i32.store
@@ -110,7 +110,7 @@
       )
     )
     (set_local $$3
-      (i32.const 0)
+      (i32.const 4)
     )
     (set_local $$4
       (i32.store
@@ -123,4 +123,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1056, "initializers": [] }

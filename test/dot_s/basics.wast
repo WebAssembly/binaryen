@@ -1,8 +1,8 @@
 (module
   (memory 1
-    (segment 0 "hello, world!\n\00")
-    (segment 16 "vcq")
-    (segment 32 "\06\00\00\00")
+    (segment 16 "hello, world!\n\00")
+    (segment 32 "vcq")
+    (segment 48 "\16\00\00\00")
   )
   (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
@@ -12,7 +12,7 @@
   (table $main)
   (func $main (type $FUNCSIG$iii) (param $$0 i32) (param $$1 i32) (result i32)
     (call_import $puts
-      (i32.const 0)
+      (i32.const 16)
     )
     (block $label$0
       (block $label$1
@@ -92,4 +92,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 36, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 52, "initializers": [] }

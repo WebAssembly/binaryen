@@ -1,6 +1,6 @@
 (module
   (memory 1
-    (segment 0 "\10\04\00\00")
+    (segment 4 "\10\04\00\00")
   )
   (export "memory" memory)
   (export "z2s_func" $z2s_func)

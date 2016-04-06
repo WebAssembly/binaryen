@@ -1,6 +1,6 @@
 (module
   (memory 1
-    (segment 0 "\10\04\00\00")
+    (segment 4 "\10\04\00\00")
   )
   (export "memory" memory)
   (type $FUNCSIG$dddd (func (param f64 f64 f64) (result f64)))
