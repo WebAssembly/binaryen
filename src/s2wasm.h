@@ -78,6 +78,10 @@ class S2WasmBuilder {
     // Place the stack pointer at the bottom of the linear memory, to keep its
     // address small (and thus with a small encoding).
     placeStackPointer(stackAllocation);
+    // Allocate __dso_handle. For asm.js, emscripten provides this in JS, but
+    // wasm modules can't import data objects. Its value can be 0 for static
+    // linking. In the future this can go in a crtbegin or similar file.
+    allocateStatic(4, 4, "__dso_handle");
     process();
     // Place the stack after the user's static data, to keep those addresses
     // small.
