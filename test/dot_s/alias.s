@@ -16,9 +16,11 @@ __exit:                           # @__exit
 	.globl	__needs_exit
 	.type	__needs_exit,@function
 __needs_exit:              # @__needs_exit
+        .result i32
 # BB#0:                                 # %entry
 	call    	__exit_needed@FUNCTION
-	return
+        i32.const       $push0=, __exit_needed@FUNCTION
+	return  $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	__needs_exit, .Lfunc_end1-__needs_exit
