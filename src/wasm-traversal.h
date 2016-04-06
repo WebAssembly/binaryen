@@ -34,7 +34,6 @@ namespace wasm {
 template<typename SubType, typename ReturnType>
 struct WasmVisitor {
   virtual ~WasmVisitor() {}
-  // should be pure virtual, but https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51048
   // Expression visitors
   ReturnType visitBlock(Block *curr) { abort(); }
   ReturnType visitIf(If *curr) { abort(); }
