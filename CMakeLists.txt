@@ -84,6 +84,7 @@ SET(binaryen-shell_SOURCES
   src/passes/LowerIfElse.cpp
   src/passes/MergeBlocks.cpp
   src/passes/NameManager.cpp
+  src/passes/OptimizeInstructions.cpp
   src/passes/PostEmscripten.cpp
   src/passes/Print.cpp
   src/passes/RemoveImports.cpp
@@ -104,6 +105,7 @@ SET(asm2wasm_SOURCES
   src/asm2wasm-main.cpp
   src/pass.cpp
   src/passes/MergeBlocks.cpp
+  src/passes/OptimizeInstructions.cpp
   src/passes/PostEmscripten.cpp
   src/passes/Print.cpp
   src/passes/RemoveUnusedBrs.cpp

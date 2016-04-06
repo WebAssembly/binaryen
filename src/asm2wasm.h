@@ -1603,6 +1603,7 @@ void Asm2WasmBuilder::optimize() {
   passRunner.add("remove-unused-brs");
   passRunner.add("remove-unused-names");
   passRunner.add("merge-blocks");
+  passRunner.add("optimize-instructions");
   passRunner.add("simplify-locals");
   passRunner.add("reorder-locals");
   if (maxGlobal < 1024) {
