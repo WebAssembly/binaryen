@@ -1443,7 +1443,12 @@ public:
     o << "\"staticBump\": " << (nextStatic - globalBase) << ", ";
 
     o << "\"initializers\": [";
-    for (const auto& func : initializerFunctions) o << "\"" << func.c_str() << "\", ";
+    first = true;
+    for (const auto& func : initializerFunctions) {
+    if (first) first = false;
+    else o << ", ";
+      o << "\"" << func.c_str() << "\"";
+    }
     o << "]";
 
     o << " }";
