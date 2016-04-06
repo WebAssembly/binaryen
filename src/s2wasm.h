@@ -1237,6 +1237,17 @@ class S2WasmBuilder {
     return (size + Memory::kPageSize - 1) & Memory::kPageMask;
   }
 
+  void exportFunction(Name name, bool must_export) {
+    if (!wasm.checkFunction(name)) {
+      assert(!must_export);
+      return;
+    }
+    if (wasm.checkExport(name)) return; // Already exported
+    auto exp = allocator.alloc<Export>();
+    exp->name = exp->value = name;
+    wasm.addExport(exp);
+  }
+
   void fix() {
     // The minimum initial memory size is the amount of static variables we have
     // allocated. Round it up to a page, and update the page-increment versions
@@ -1256,13 +1267,8 @@ class S2WasmBuilder {
     wasm.memory.exportName = MEMORY;
 
     // XXX For now, export all functions marked .globl.
-    for (Name name : globls) {
-      if (wasm.checkFunction(name)) {
-        auto exp = allocator.alloc<Export>();
-        exp->name = exp->value = name;
-        wasm.addExport(exp);
-      }
-    }
+    for (Name name : globls) exportFunction(name, false);
+    for (Name name : initializerFunctions) exportFunction(name, true);
 
     auto ensureFunctionIndex = [&](Name name) {
       if (functionIndexes.count(name) == 0) {
@@ -1309,9 +1315,7 @@ class S2WasmBuilder {
       auto* func = allocator.alloc<Function>();
       func->name = start;
       wasm.addFunction(func);
-      auto* exp = allocator.alloc<Export>();
-      exp->name = exp->value = start;
-      wasm.addExport(exp);
+      exportFunction(start, true);
       wasm.addStart(start);
       auto* block = allocator.alloc<Block>();
       func->body = block;
