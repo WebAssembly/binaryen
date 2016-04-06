@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (export "memory_size" $memory_size)
   (export "grow_memory" $grow_memory)

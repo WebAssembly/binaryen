@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (export "zero_i32" $zero_i32)
   (export "one_i32" $one_i32)

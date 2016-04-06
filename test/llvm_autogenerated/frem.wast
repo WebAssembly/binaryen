@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (type $FUNCSIG$fff (func (param f32 f32) (result f32)))
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))

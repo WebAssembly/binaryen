@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (export "foo" $foo)
   (func $foo (param $$0 i32) (param $$1 i32) (param $$2 i32)

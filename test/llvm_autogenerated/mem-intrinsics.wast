@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$i (func (result i32)))
@@ -73,7 +73,7 @@
     (local $$3 i32)
     (local $$4 i32)
     (set_local $$0
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$0
       (i32.load
@@ -90,7 +90,7 @@
       )
     )
     (set_local $$1
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$4
       (i32.store
@@ -127,7 +127,7 @@
       )
     )
     (set_local $$2
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$4
       (i32.store

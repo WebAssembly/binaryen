@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (type $FUNCSIG$v (func))
   (import $callee "env" "callee")
@@ -131,7 +131,7 @@
     (local $$7 i32)
     (local $$8 i32)
     (set_local $$5
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$5
       (i32.load
@@ -148,7 +148,7 @@
       )
     )
     (set_local $$6
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$8
       (i32.store
@@ -157,7 +157,7 @@
       )
     )
     (set_local $$1
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$1
       (i32.load
@@ -174,7 +174,7 @@
       )
     )
     (set_local $$2
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$8
       (i32.store
@@ -198,7 +198,7 @@
     )
     (call_import $callee)
     (set_local $$3
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$3
       (i32.load
@@ -215,7 +215,7 @@
       )
     )
     (set_local $$4
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$8
       (i32.store
@@ -233,7 +233,7 @@
       )
     )
     (set_local $$7
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$8
       (i32.store

@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (export "select_i32_bool" $select_i32_bool)
   (export "select_i32_eq" $select_i32_eq)

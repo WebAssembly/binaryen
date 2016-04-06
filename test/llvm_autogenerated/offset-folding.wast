@@ -7,7 +7,7 @@
   (export "test3" $test3)
   (func $test0 (result i32)
     (return
-      (i32.const 196)
+      (i32.const 192)
     )
   )
   (func $test1 (result i32)
@@ -17,7 +17,7 @@
   )
   (func $test2 (result i32)
     (return
-      (i32.const 8)
+      (i32.const 4)
     )
   )
   (func $test3 (result i32)
@@ -26,4 +26,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 215, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 216, "initializers": [] }

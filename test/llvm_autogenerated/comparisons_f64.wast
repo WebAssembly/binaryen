@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (export "ord_f64" $ord_f64)
   (export "uno_f64" $uno_f64)

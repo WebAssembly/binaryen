@@ -1,15 +1,15 @@
 (module
   (memory 1
-    (segment 8 "9\05\00\00")
-    (segment 24 "\01\00\00\00")
-    (segment 28 "*\00\00\00")
-    (segment 32 "\ff\ff\ff\ff")
-    (segment 64 "\00\00\00\00\01\00\00\00")
-    (segment 72 "\ff\ff\ff\ff\ff\ff\ff\ff")
-    (segment 92 "\00\00\00\80")
-    (segment 96 "\00\00\00@")
-    (segment 128 "\00\00\00\00\00\00\00\80")
-    (segment 136 "\00\00\00\00\00\00\00@")
+    (segment 4 "9\05\00\00")
+    (segment 20 "\01\00\00\00")
+    (segment 24 "*\00\00\00")
+    (segment 28 "\ff\ff\ff\ff")
+    (segment 56 "\00\00\00\00\01\00\00\00")
+    (segment 64 "\ff\ff\ff\ff\ff\ff\ff\ff")
+    (segment 84 "\00\00\00\80")
+    (segment 88 "\00\00\00@")
+    (segment 120 "\00\00\00\00\00\00\00\80")
+    (segment 128 "\00\00\00\00\00\00\00@")
     (segment 656 "\e0\00\00\00")
     (segment 1192 "\a4\04\00\00")
   )
@@ -20,7 +20,7 @@
   (export "call_memcpy" $call_memcpy)
   (func $foo (result i32)
     (return
-      (i32.load offset=28
+      (i32.load offset=24
         (i32.const 0)
       )
     )
@@ -35,4 +35,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1195, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1196, "initializers": [] }

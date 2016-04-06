@@ -19,7 +19,7 @@
       (i32.const 0)
     )
     (loop $label$1 $label$0
-      (i32.store offset=8
+      (i32.store offset=4
         (i32.const 0)
         (i32.const 0)
       )
@@ -44,7 +44,7 @@
       (f32.const 0)
     )
     (loop $label$1 $label$0
-      (i32.store offset=8
+      (i32.store offset=4
         (i32.const 0)
         (i32.const 0)
       )
@@ -69,7 +69,7 @@
     (local $$3 i32)
     (local $$4 i32)
     (set_local $$1
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$1
       (i32.load
@@ -86,7 +86,7 @@
       )
     )
     (set_local $$2
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$4
       (i32.store
@@ -108,7 +108,7 @@
       )
     )
     (set_local $$3
-      (i32.const 1)
+      (i32.const 0)
     )
     (set_local $$4
       (i32.store
@@ -121,4 +121,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 19, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 16, "initializers": [] }

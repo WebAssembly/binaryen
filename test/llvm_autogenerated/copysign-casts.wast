@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (export "fold_promote" $fold_promote)
   (export "fold_demote" $fold_demote)

@@ -1,6 +1,6 @@
 (module
   (memory 1
-    (segment 8 "\00\00\00\00")
+    (segment 4 "\00\00\00\00")
   )
   (export "memory" memory)
   (export "load_i32_with_folded_offset" $load_i32_with_folded_offset)
@@ -221,7 +221,7 @@
   )
   (func $load_i32_from_global_address (result i32)
     (return
-      (i32.load offset=8
+      (i32.load offset=4
         (i32.const 0)
       )
     )
@@ -234,7 +234,7 @@
     (return)
   )
   (func $store_i32_to_global_address
-    (i32.store offset=8
+    (i32.store offset=4
       (i32.const 0)
       (i32.const 0)
     )
@@ -349,4 +349,4 @@
     (return)
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 11, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 8, "initializers": [] }

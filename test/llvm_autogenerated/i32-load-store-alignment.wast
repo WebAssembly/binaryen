@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (export "ldi32_a1" $ldi32_a1)
   (export "ldi32_a2" $ldi32_a2)

@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (export "immediate_f32" $immediate_f32)
   (export "immediate_f64" $immediate_f64)

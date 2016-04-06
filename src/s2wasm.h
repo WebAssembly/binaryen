@@ -80,7 +80,7 @@ class S2WasmBuilder {
     process();
     // Place the stack after the user's static data, to keep those addresses
     // small.
-    if (stackAllocation) placeStack(stackAllocation);
+    if (stackAllocation)  allocateStatic(stackAllocation, 16, ".stack");
     fix();
   }
 
@@ -420,32 +420,31 @@ class S2WasmBuilder {
     }
   }
 
+  // Allocate a static variable and return its address in linear memory
+  size_t allocateStatic(size_t allocSize, size_t alignment, Name name) {
+    size_t address = (nextStatic + alignment - 1) & static_cast<size_t>(-static_cast<ssize_t>(alignment));
+    staticAddresses[name] = address;
+    nextStatic = address + allocSize;
+    minInitialMemory = nextStatic;
+    return address;
+  }
+
   void placeStackPointer(size_t stackAllocation) {
     assert(nextStatic == globalBase); // we are the first allocation
-    // Allocate space for the stack pointer
-    staticAddresses["__stack_pointer"] = nextStatic;
     const size_t pointerSize = 4;
+    // Always allocate space for the stack pointer
+    size_t address = allocateStatic(pointerSize, pointerSize, "__stack_pointer");
+
     if (stackAllocation) {
       // If we are also allocating the stack, initialize the stack pointer to
       // point to one past-the-end of the stack allocation.
       auto* raw = new uint32_t;
       relocations.emplace_back(raw, ".stack", stackAllocation);
       assert(wasm.memory.segments.size() == 0);
-      addressSegments[nextStatic] = wasm.memory.segments.size();
+      addressSegments[address] = wasm.memory.segments.size();
       wasm.memory.segments.emplace_back(
-          nextStatic, reinterpret_cast<char*>(raw), pointerSize);
-      minInitialMemory = nextStatic + pointerSize;
+          address, reinterpret_cast<char*>(raw), pointerSize);
     }
-    nextStatic += pointerSize;
-  }
-
-  void placeStack(size_t stackAllocation) {
-    // Allocate space for a user stack. It starts zeroed-out so needs no segment
-    // Round to a 16-byte aligned address.
-    nextStatic = (nextStatic + 15) & static_cast<size_t>(-16);
-    staticAddresses[".stack"] = nextStatic;
-    nextStatic += stackAllocation;
-    minInitialMemory = nextStatic;
   }
 
   void process() {
@@ -1200,14 +1199,11 @@ class S2WasmBuilder {
       relocations[r].data = (uint32_t*)&(*raw)[i];
     }
     // assign the address, add to memory
-    while (nextStatic % align) nextStatic++;
-    staticAddresses[name] = nextStatic;
+    size_t address = allocateStatic(size, align, name);
     if (!zero) {
-      addressSegments[nextStatic] = wasm.memory.segments.size();
-      wasm.memory.segments.emplace_back(nextStatic, (const char*)&(*raw)[0], size);
+      addressSegments[address] = wasm.memory.segments.size();
+      wasm.memory.segments.emplace_back(address, (const char*)&(*raw)[0], size);
     }
-    nextStatic += size;
-    minInitialMemory = nextStatic;
   }
 
   void parseLcomm(Name name, size_t align=1) {
@@ -1218,10 +1214,7 @@ class S2WasmBuilder {
       skipComma();
       getInt();
     }
-    while (nextStatic % align) nextStatic++;
-    staticAddresses[name] = nextStatic;
-    nextStatic += size;
-    minInitialMemory = nextStatic;
+    allocateStatic(size, align, name);
   }
 
   void skipImports() {

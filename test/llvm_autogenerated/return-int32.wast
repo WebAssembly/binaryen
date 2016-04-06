@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (export "return_i32" $return_i32)
   (func $return_i32 (param $$0 i32) (result i32)

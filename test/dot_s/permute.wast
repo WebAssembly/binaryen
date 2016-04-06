@@ -4,4 +4,4 @@
   )
   (export "memory" memory)
 )
-;; METADATA: { "asmConsts": {},"staticBump": 271, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 272, "initializers": [] }
