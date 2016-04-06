@@ -1,5 +1,6 @@
 (module
   (memory 1
+    (segment 0 "\b0\08\00\00")
     (segment 4 "9\05\00\00")
     (segment 20 "\01\00\00\00")
     (segment 24 "*\00\00\00")
@@ -35,4 +36,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1196, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 2224, "initializers": [] }

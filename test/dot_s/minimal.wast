@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory 0)
   (export "memory" memory)
   (export "main" $main)
   (func $main (result i32)
@@ -8,4 +8,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 0, "initializers": [] }

@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory 0)
   (export "memory" memory)
   (export "__exit" $__exit)
   (export "__needs_exit" $__needs_exit)
@@ -12,4 +12,4 @@
     (return)
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 0, "initializers": [] }

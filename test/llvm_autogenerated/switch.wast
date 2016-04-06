@@ -1,5 +1,7 @@
 (module
-  (memory 1)
+  (memory 1
+    (segment 0 "\10\04\00\00")
+  )
   (export "memory" memory)
   (type $FUNCSIG$v (func))
   (import $foo0 "env" "foo0")
@@ -87,4 +89,4 @@
     (return)
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

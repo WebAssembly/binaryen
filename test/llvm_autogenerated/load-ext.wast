@@ -1,5 +1,7 @@
 (module
-  (memory 1)
+  (memory 1
+    (segment 0 "\10\04\00\00")
+  )
   (export "memory" memory)
   (export "sext_i8_i32" $sext_i8_i32)
   (export "zext_i8_i32" $zext_i8_i32)
@@ -82,4 +84,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

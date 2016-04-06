@@ -1,5 +1,7 @@
 (module
-  (memory 1)
+  (memory 1
+    (segment 0 "\10\04\00\00")
+  )
   (export "memory" memory)
   (export "i32_wrap_i64" $i32_wrap_i64)
   (export "i64_extend_s_i32" $i64_extend_s_i32)
@@ -213,4 +215,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

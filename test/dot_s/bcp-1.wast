@@ -1,12 +1,12 @@
 (module
   (memory 1
-    (segment 16 "\00\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00\05\00\00\00")
-    (segment 40 "\06\00\00\00\07\00\00\00\08\00\00\00")
-    (segment 52 "\t\00\00\00\n\00\00\00")
-    (segment 60 "\0b\00\00\00\0c\00\00\00\0d\00\00\00")
-    (segment 72 "\0e\00\00\00\0f\00\00\00\10\00\00\00")
-    (segment 96 "hi\00")
-    (segment 100 "\00\00\00\00")
+    (segment 0 "\00\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00\05\00\00\00")
+    (segment 24 "\06\00\00\00\07\00\00\00\08\00\00\00")
+    (segment 36 "\t\00\00\00\n\00\00\00")
+    (segment 44 "\0b\00\00\00\0c\00\00\00\0d\00\00\00")
+    (segment 56 "\0e\00\00\00\0f\00\00\00\10\00\00\00")
+    (segment 80 "hi\00")
+    (segment 84 "\00\00\00\00")
   )
   (export "memory" memory)
   (type $FUNCSIG$i (func (result i32)))
@@ -129,6 +129,34 @@
     (block $label$0
       (br_if $label$0
         (call_indirect $FUNCSIG$i
+          (i32.load
+            (get_local $$0)
+          )
+        )
+      )
+      (br_if $label$0
+        (call_indirect $FUNCSIG$i
+          (i32.load offset=4
+            (get_local $$0)
+          )
+        )
+      )
+      (br_if $label$0
+        (call_indirect $FUNCSIG$i
+          (i32.load offset=8
+            (get_local $$0)
+          )
+        )
+      )
+      (br_if $label$0
+        (call_indirect $FUNCSIG$i
+          (i32.load offset=12
+            (get_local $$0)
+          )
+        )
+      )
+      (br_if $label$0
+        (call_indirect $FUNCSIG$i
           (i32.load offset=16
             (get_local $$0)
           )
@@ -141,36 +169,8 @@
           )
         )
       )
-      (br_if $label$0
-        (call_indirect $FUNCSIG$i
-          (i32.load offset=24
-            (get_local $$0)
-          )
-        )
-      )
-      (br_if $label$0
-        (call_indirect $FUNCSIG$i
-          (i32.load offset=28
-            (get_local $$0)
-          )
-        )
-      )
-      (br_if $label$0
-        (call_indirect $FUNCSIG$i
-          (i32.load offset=32
-            (get_local $$0)
-          )
-        )
-      )
-      (br_if $label$0
-        (call_indirect $FUNCSIG$i
-          (i32.load offset=36
-            (get_local $$0)
-          )
-        )
-      )
       (set_local $$1
-        (i32.load offset=40
+        (i32.load offset=24
           (get_local $$0)
         )
       )
@@ -186,7 +186,7 @@
         )
         (br_if $label$1
           (call_indirect $FUNCSIG$ii
-            (i32.load offset=44
+            (i32.load offset=28
               (get_local $$0)
             )
             (get_local $$2)
@@ -194,19 +194,19 @@
         )
         (br_if $label$1
           (call_indirect $FUNCSIG$ii
-            (i32.load offset=48
+            (i32.load offset=32
               (get_local $$0)
             )
             (get_local $$2)
           )
         )
         (set_local $$1
-          (i32.load offset=52
+          (i32.load offset=36
             (get_local $$0)
           )
         )
         (set_local $$2
-          (i32.const 96)
+          (i32.const 80)
         )
         (block $label$2
           (br_if $label$2
@@ -217,7 +217,7 @@
           )
           (br_if $label$2
             (call_indirect $FUNCSIG$ii
-              (i32.load offset=56
+              (i32.load offset=40
                 (get_local $$0)
               )
               (get_local $$2)
@@ -227,7 +227,7 @@
             (br_if $label$3
               (i32.eq
                 (call_indirect $FUNCSIG$i
-                  (i32.load offset=60
+                  (i32.load offset=44
                     (get_local $$0)
                   )
                 )
@@ -237,7 +237,7 @@
             (br_if $label$3
               (i32.eq
                 (call_indirect $FUNCSIG$i
-                  (i32.load offset=64
+                  (i32.load offset=48
                     (get_local $$0)
                   )
                 )
@@ -247,7 +247,7 @@
             (br_if $label$3
               (i32.eq
                 (call_indirect $FUNCSIG$i
-                  (i32.load offset=68
+                  (i32.load offset=52
                     (get_local $$0)
                   )
                 )
@@ -258,7 +258,7 @@
               (br_if $label$4
                 (i32.eq
                   (call_indirect $FUNCSIG$i
-                    (i32.load offset=72
+                    (i32.load offset=56
                       (get_local $$0)
                     )
                   )
@@ -268,7 +268,7 @@
               (br_if $label$4
                 (i32.eq
                   (call_indirect $FUNCSIG$i
-                    (i32.load offset=76
+                    (i32.load offset=60
                       (get_local $$0)
                     )
                   )
@@ -278,7 +278,7 @@
               (br_if $label$4
                 (i32.eq
                   (call_indirect $FUNCSIG$i
-                    (i32.load offset=80
+                    (i32.load offset=64
                       (get_local $$0)
                     )
                   )
@@ -306,4 +306,4 @@
     (unreachable)
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 104, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 88, "initializers": [] }

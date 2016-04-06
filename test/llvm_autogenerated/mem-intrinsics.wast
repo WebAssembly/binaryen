@@ -1,5 +1,7 @@
 (module
-  (memory 1)
+  (memory 1
+    (segment 0 "\10\04\00\00")
+  )
   (export "memory" memory)
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$i (func (result i32)))
@@ -165,4 +167,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

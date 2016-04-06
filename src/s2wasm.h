@@ -58,7 +58,6 @@ class S2WasmBuilder {
         startFunction(startFunction),
         globalBase(globalBase),
         nextStatic(globalBase),
-        minInitialMemory(0),
         userInitialMemory(userInitialMemory),
         userMaxMemory(userMaxMemory) {
     if (userMaxMemory && userMaxMemory < userInitialMemory) {
@@ -90,7 +89,6 @@ class S2WasmBuilder {
   size_t globalBase, // where globals can start to be statically allocated, i.e., the data segment
          nextStatic; // location of next static allocation
   std::map<Name, int32_t> staticAddresses; // name => address
-  size_t minInitialMemory; // Minimum initial size (in bytes) of memory.
   size_t userInitialMemory; // Initial memory size (in bytes) specified by the user.
   size_t userMaxMemory; // Max memory size (in bytes) specified by the user.
   //(after linking, this is rounded and set on the wasm object in pages)
@@ -422,22 +420,21 @@ class S2WasmBuilder {
 
   // Allocate a static variable and return its address in linear memory
   size_t allocateStatic(size_t allocSize, size_t alignment, Name name) {
-    size_t address = (nextStatic + alignment - 1) & static_cast<size_t>(-static_cast<ssize_t>(alignment));
+    size_t address = alignAddr(nextStatic, alignment);
     staticAddresses[name] = address;
     nextStatic = address + allocSize;
-    minInitialMemory = nextStatic;
     return address;
   }
 
   void placeStackPointer(size_t stackAllocation) {
     assert(nextStatic == globalBase); // we are the first allocation
-    const size_t pointerSize = 4;
-    // Always allocate space for the stack pointer
-    size_t address = allocateStatic(pointerSize, pointerSize, "__stack_pointer");
-
     if (stackAllocation) {
-      // If we are also allocating the stack, initialize the stack pointer to
-      // point to one past-the-end of the stack allocation.
+      const size_t pointerSize = 4;
+      // Allocate space for the stack pointer
+      size_t address = allocateStatic(pointerSize, pointerSize, "__stack_pointer");
+
+      // Initialize the stack pointer to point to one past-the-end of the stack
+      // allocation.
       auto* raw = new uint32_t;
       relocations.emplace_back(raw, ".stack", stackAllocation);
       assert(wasm.memory.segments.size() == 0);
@@ -1233,9 +1230,10 @@ class S2WasmBuilder {
   }
 
   void fix() {
-    // Round the memory size up to a page, and update the page-increment versions
+    // The minimum initial memory size is the amount of static variables we have
+    // allocated. Round it up to a page, and update the page-increment versions
     // of initial and max
-    size_t initialMem = roundUpToPageSize(minInitialMemory);
+    size_t initialMem = roundUpToPageSize(nextStatic);
     if (userInitialMemory) {
       if (initialMem > userInitialMemory) {
         Fatal() << "Specified initial memory size " << userInitialMemory <<

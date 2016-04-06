@@ -1,6 +1,6 @@
 (module
   (memory 1
-    (segment 16 "{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }\00")
+    (segment 0 "{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }\00")
   )
   (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
@@ -205,4 +205,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }", ["vi"]]},"staticBump": 67, "initializers": [] }
+;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }", ["vi"]]},"staticBump": 51, "initializers": [] }

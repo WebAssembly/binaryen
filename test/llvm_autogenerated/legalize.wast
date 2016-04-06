@@ -1,5 +1,7 @@
 (module
-  (memory 1)
+  (memory 1
+    (segment 0 "\10\04\00\00")
+  )
   (export "memory" memory)
   (type $FUNCSIG$vijjj (func (param i32 i64 i64 i64)))
   (import $__lshrti3 "env" "__lshrti3" (param i32 i64 i64 i64))
@@ -3875,4 +3877,4 @@
     (return)
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

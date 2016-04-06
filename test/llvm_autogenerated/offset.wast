@@ -1,5 +1,6 @@
 (module
   (memory 1
+    (segment 0 "\10\04\00\00")
     (segment 4 "\00\00\00\00")
   )
   (export "memory" memory)
@@ -349,4 +350,4 @@
     (return)
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 8, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
