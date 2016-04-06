@@ -1,7 +1,7 @@
 (module
   (memory 1
-    (segment 16 "\0c\00\00\00")
+    (segment 20 "\10\00\00\00")
   )
   (export "memory" memory)
 )
-;; METADATA: { "asmConsts": {},"staticBump": 20, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 24, "initializers": [] }

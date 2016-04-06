@@ -9,7 +9,7 @@
   (export "test3" $test3)
   (func $test0 (result i32)
     (return
-      (i32.const 196)
+      (i32.const 200)
     )
   )
   (func $test1 (result i32)
@@ -19,7 +19,7 @@
   )
   (func $test2 (result i32)
     (return
-      (i32.const 8)
+      (i32.const 12)
     )
   )
   (func $test3 (result i32)

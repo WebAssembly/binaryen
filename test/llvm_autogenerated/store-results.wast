@@ -21,7 +21,7 @@
       (i32.const 0)
     )
     (loop $label$1 $label$0
-      (i32.store offset=8
+      (i32.store offset=12
         (i32.const 0)
         (i32.const 0)
       )
@@ -46,7 +46,7 @@
       (f32.const 0)
     )
     (loop $label$1 $label$0
-      (i32.store offset=8
+      (i32.store offset=12
         (i32.const 0)
         (i32.const 0)
       )

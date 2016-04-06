@@ -1,8 +1,8 @@
 (module
   (memory 1
-    (segment 8 "\00\00\00\00")
-    (segment 12 "\01\00\00\00")
-    (segment 16 "33\13@")
+    (segment 12 "\00\00\00\00")
+    (segment 16 "\01\00\00\00")
+    (segment 20 "33\13@")
   )
   (export "memory" memory)
   (export "foo" $foo)
@@ -25,4 +25,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 20, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 24, "initializers": [] }
