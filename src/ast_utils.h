@@ -18,6 +18,7 @@
 #define wasm_ast_utils_h
 
 #include "wasm.h"
+#include "wasm-traversal.h"
 
 namespace wasm {
 

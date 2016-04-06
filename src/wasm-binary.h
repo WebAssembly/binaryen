@@ -25,6 +25,7 @@
 #include <ostream>
 
 #include "wasm.h"
+#include "wasm-traversal.h"
 #include "shared-constants.h"
 #include "asm_v_wasm.h"
 
