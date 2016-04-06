@@ -315,6 +315,106 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
   }
 };
 
-}
+// Traversal in the order of execution. This is quick and simple, but
+// does not provide the same comprehensive information that a full
+// conversion to basic blocks would. What it does give is a quick
+// way to view straightline execution traces, i.e., that have no
+// branching. This can let optimizations get most of what they
+// want without the cost of creating another AST.
+//
+// When execution is no longer linear, this notifies via a call
+// to noteNonLinear().
+
+struct FastExecutionWalker : public WasmWalkerBase<FastExecutionWalker> {
+  FastExecutionWalker() {}
+
+  void noteNonLinear() { abort(); } // must be overridden
+
+  void visitBlock(Block *curr) {
+    ExpressionList& list = curr->list;
+    for (size_t z = 0; z < list.size(); z++) {
+      visit(list[z]);
+    }
+  }
+  void visitIf(If *curr) {
+    visit(curr->condition);
+    noteNonLinear();
+    visit(curr->ifTrue);
+    noteNonLinear();
+    visit(curr->ifFalse);
+    noteNonLinear();
+  }
+  void visitLoop(Loop *curr) {
+    noteNonLinear();
+    visit(curr->body);
+  }
+  void visitBreak(Break *curr) {
+    if (curr->value) visit(curr->value);
+    if (curr->condition) visit(curr->condition);
+    noteNonLinear();
+  }
+  void visitSwitch(Switch *curr) {
+    visit(curr->condition);
+    if (curr->value) visit(curr->value);
+    noteNonLinear();
+  }
+  void visitCall(Call *curr) {
+    ExpressionList& list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      visit(list[z]);
+    }
+  }
+  void visitCallImport(CallImport *curr) {
+    ExpressionList& list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      visit(list[z]);
+    }
+  }
+  void visitCallIndirect(CallIndirect *curr) {
+    visit(curr->target);
+    ExpressionList& list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      visit(list[z]);
+    }
+  }
+  void visitGetLocal(GetLocal *curr) {}
+  void visitSetLocal(SetLocal *curr) {
+    visit(curr->value);
+  }
+  void visitLoad(Load *curr) {
+    visit(curr->ptr);
+  }
+  void visitStore(Store *curr) {
+    visit(curr->ptr);
+    visit(curr->value);
+  }
+  void visitConst(Const *curr) {}
+  void visitUnary(Unary *curr) {
+    visit(curr->value);
+  }
+  void visitBinary(Binary *curr) {
+    visit(curr->left);
+    visit(curr->right);
+  }
+  void visitSelect(Select *curr) {
+    visit(curr->ifTrue);
+    visit(curr->ifFalse);
+    visit(curr->condition);
+  }
+  void visitReturn(Return *curr) {
+    visit(curr->value);
+    noteNonLinear();
+  }
+  void visitHost(Host *curr) {
+    ExpressionList& list = curr->operands;
+    for (size_t z = 0; z < list.size(); z++) {
+      visit(list[z]);
+    }
+  }
+  void visitNop(Nop *curr) {}
+  void visitUnreachable(Unreachable *curr) {}
+};
+
+} // namespace wasm
 
 #endif // wasm_traversal_h
