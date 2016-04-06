@@ -1,5 +1,7 @@
 (module
-  (memory 0)
+  (memory 1
+    (segment 4 "\10\04\00\00")
+  )
   (export "memory" memory)
   (export "test0" $test0)
   (export "test1" $test1)
@@ -64,4 +66,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

@@ -1,5 +1,7 @@
 (module
-  (memory 0)
+  (memory 1
+    (segment 4 "\10\04\00\00")
+  )
   (export "memory" memory)
   (export "ldi32" $ldi32)
   (export "ldi64" $ldi64)
@@ -34,4 +36,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

@@ -1,5 +1,7 @@
 (module
-  (memory 0)
+  (memory 1
+    (segment 4 "\10\04\00\00")
+  )
   (export "memory" memory)
   (export "add64" $add64)
   (export "sub64" $sub64)
@@ -159,4 +161,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

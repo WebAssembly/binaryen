@@ -1,5 +1,7 @@
 (module
-  (memory 0)
+  (memory 1
+    (segment 4 "\10\04\00\00")
+  )
   (export "memory" memory)
   (export "z2s_func" $z2s_func)
   (export "s2z_func" $s2z_func)
@@ -54,4 +56,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

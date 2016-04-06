@@ -1,5 +1,7 @@
 (module
-  (memory 0)
+  (memory 1
+    (segment 4 "\10\04\00\00")
+  )
   (export "memory" memory)
   (type $FUNCSIG$vijjj (func (param i32 i64 i64 i64)))
   (import $__lshrti3 "env" "__lshrti3" (param i32 i64 i64 i64))
@@ -343,7 +345,7 @@
     (local $$311 i32)
     (local $$312 i32)
     (set_local $$183
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$183
       (i32.load
@@ -360,7 +362,7 @@
       )
     )
     (set_local $$184
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$312
       (i32.store
@@ -3864,7 +3866,7 @@
       )
     )
     (set_local $$185
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$312
       (i32.store
@@ -3875,4 +3877,4 @@
     (return)
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

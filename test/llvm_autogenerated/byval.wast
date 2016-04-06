@@ -1,5 +1,7 @@
 (module
-  (memory 0)
+  (memory 1
+    (segment 4 "\10\04\00\00")
+  )
   (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
   (import $ext_byval_func "env" "ext_byval_func" (param i32))
@@ -19,7 +21,7 @@
     (local $$4 i32)
     (local $$5 i32)
     (set_local $$1
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$1
       (i32.load
@@ -36,7 +38,7 @@
       )
     )
     (set_local $$2
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$5
       (i32.store
@@ -72,7 +74,7 @@
       )
     )
     (set_local $$3
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$5
       (i32.store
@@ -89,7 +91,7 @@
     (local $$4 i32)
     (local $$5 i32)
     (set_local $$1
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$1
       (i32.load
@@ -106,7 +108,7 @@
       )
     )
     (set_local $$2
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$5
       (i32.store
@@ -142,7 +144,7 @@
       )
     )
     (set_local $$3
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$5
       (i32.store
@@ -158,7 +160,7 @@
     (local $$3 i32)
     (local $$4 i32)
     (set_local $$1
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$1
       (i32.load
@@ -175,7 +177,7 @@
       )
     )
     (set_local $$2
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$4
       (i32.store
@@ -214,7 +216,7 @@
       )
     )
     (set_local $$3
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$4
       (i32.store
@@ -235,7 +237,7 @@
     (local $$8 i32)
     (local $$9 i32)
     (set_local $$1
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$1
       (i32.load
@@ -252,7 +254,7 @@
       )
     )
     (set_local $$2
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$9
       (i32.store
@@ -372,7 +374,7 @@
       )
     )
     (set_local $$3
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$9
       (i32.store
@@ -389,4 +391,4 @@
     (return)
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

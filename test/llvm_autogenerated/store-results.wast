@@ -1,5 +1,7 @@
 (module
-  (memory 1)
+  (memory 1
+    (segment 4 " \04\00\00")
+  )
   (export "memory" memory)
   (export "single_block" $single_block)
   (export "foo" $foo)
@@ -69,7 +71,7 @@
     (local $$3 i32)
     (local $$4 i32)
     (set_local $$1
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$1
       (i32.load
@@ -86,7 +88,7 @@
       )
     )
     (set_local $$2
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$4
       (i32.store
@@ -108,7 +110,7 @@
       )
     )
     (set_local $$3
-      (i32.const 1)
+      (i32.const 4)
     )
     (set_local $$4
       (i32.store
@@ -121,4 +123,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 19, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1056, "initializers": [] }

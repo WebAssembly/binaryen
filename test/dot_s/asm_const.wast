@@ -15,4 +15,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world!\"); }", ["vi"]]},"staticBump": 50, "initializers": [] }
+;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world!\"); }", ["vi"]]},"staticBump": 51, "initializers": [] }

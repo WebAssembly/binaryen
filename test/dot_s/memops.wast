@@ -205,4 +205,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }", ["vi"]]},"staticBump": 66, "initializers": [] }
+;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }", ["vi"]]},"staticBump": 67, "initializers": [] }

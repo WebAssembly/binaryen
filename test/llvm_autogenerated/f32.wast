@@ -1,5 +1,7 @@
 (module
-  (memory 0)
+  (memory 1
+    (segment 4 "\10\04\00\00")
+  )
   (export "memory" memory)
   (type $FUNCSIG$ffff (func (param f32 f32 f32) (result f32)))
   (import $fmaf "env" "fmaf" (param f32 f32 f32) (result f32))
@@ -141,4 +143,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 4, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

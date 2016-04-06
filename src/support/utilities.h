@@ -35,6 +35,19 @@ inline Destination bit_cast(const Source& source) {
   return destination;
 }
 
+inline bool isPowerOf2(uint32_t v) {
+  return v && !(v & (v - 1));
+}
+
+inline size_t alignAddr(size_t address, size_t alignment) {
+  assert(alignment && isPowerOf2((uint32_t)alignment) &&
+         "Alignment is not a power of two!");
+
+  assert(address + alignment - 1 >= address);
+
+  return ((address + alignment - 1) & ~(alignment - 1));
+}
+
 }  // namespace wasm
 
 #endif   // wasm_support_utilities_h
