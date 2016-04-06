@@ -405,9 +405,10 @@ class S2WasmBuilder {
 
   void scan() {
     while (*s) {
-      s = strstr(s, "\n	.type	");
+      skipWhitespace();
+      s = strstr(s, ".type");
       if (!s) break;
-      mustMatch("\n	.type	");
+      mustMatch(".type");
       Name name = getCommaSeparated();
       skipComma();
       if (!match("@function")) continue;
@@ -1282,6 +1283,8 @@ class S2WasmBuilder {
         if (debug) std::cerr << "  ==> " << *(relocation.data) << '\n';
       } else {
         // must be a function address
+        auto aliased = aliasedFunctions.find(name);
+        if (aliased != aliasedFunctions.end()) name = aliased->second;
         if (!wasm.checkFunction(name)) {
           std::cerr << "Unknown symbol: " << name << '\n';
           if (!ignoreUnknownSymbols) abort();
