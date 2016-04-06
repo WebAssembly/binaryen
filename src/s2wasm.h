@@ -1445,8 +1445,8 @@ public:
     o << "\"initializers\": [";
     first = true;
     for (const auto& func : initializerFunctions) {
-    if (first) first = false;
-    else o << ", ";
+      if (first) first = false;
+      else o << ", ";
       o << "\"" << func.c_str() << "\"";
     }
     o << "]";
