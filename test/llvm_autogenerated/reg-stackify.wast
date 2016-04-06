@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$vi (func (param i32)))

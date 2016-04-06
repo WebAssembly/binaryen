@@ -80,7 +80,7 @@ int main(int argc, const char *argv[]) {
   AllocatingModule wasm;
   uint64_t globalBase = options.extra.find("global-base") != options.extra.end()
                           ? std::stoull(options.extra["global-base"])
-                          : 1;
+                          : 0;
   uint64_t stackAllocation =
       options.extra.find("stack-allocation") != options.extra.end()
           ? std::stoull(options.extra["stack-allocation"])

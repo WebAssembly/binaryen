@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (export "ord_f32" $ord_f32)
   (export "uno_f32" $uno_f32)

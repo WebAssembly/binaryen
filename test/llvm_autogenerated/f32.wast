@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory 1)
   (export "memory" memory)
   (type $FUNCSIG$ffff (func (param f32 f32 f32) (result f32)))
   (import $fmaf "env" "fmaf" (param f32 f32 f32) (result f32))
