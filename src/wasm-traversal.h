@@ -191,6 +191,28 @@ struct ChildWalker : public WasmWalkerBase<ChildWalker<ParentType>> {
   void visitUnreachable(Unreachable *curr) {}
 };
 
+// Walker that allows replacements
+template<typename SubType, typename ReturnType = void>
+struct WasmReplacerWalker : public WasmWalkerBase<SubType, ReturnType> {
+  Expression* replace = nullptr;
+
+  // methods can call this to replace the current node
+  void replaceCurrent(Expression *expression) {
+    replace = expression;
+  }
+
+  void walk(Expression*& curr) override {
+    if (!curr) return;
+
+    this->visit(curr);
+
+    if (replace) {
+      curr = replace;
+      replace = nullptr;
+    }
+  }
+};
+
 //
 // Simple WebAssembly children-first walking (i.e., post-order, if you look
 // at the children as subtrees of the current node), with the ability to replace
@@ -198,16 +220,7 @@ struct ChildWalker : public WasmWalkerBase<ChildWalker<ParentType>> {
 //
 
 template<typename SubType, typename ReturnType = void>
-struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
-  Expression* replace;
-
-  WasmWalker() : replace(nullptr) {}
-
-  // the visit* methods can call this to replace the current node
-  void replaceCurrent(Expression *expression) {
-    replace = expression;
-  }
-
+struct WasmWalker : public WasmReplacerWalker<SubType, ReturnType> {
   // By default, do nothing
   ReturnType visitBlock(Block *curr) {}
   ReturnType visitIf(If *curr) {}
@@ -258,11 +271,7 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
         for (size_t j = 0; j < children.size(); j++) {
           if (i < int(stack.size()) - 1 && j == 0) {
             // this is one of the stacked blocks, no need to walk its children, we are doing that ourselves
-            this->visit(children[0]);
-            if (replace) {
-              children[0] = replace;
-              replace = nullptr;
-            }
+            WasmReplacerWalker<SubType, ReturnType>::walk(children[0]);
           } else {
             this->walk(children[j]);
           }
@@ -274,12 +283,7 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
       ChildWalker<WasmWalker<SubType, ReturnType>>(*this).visit(curr);
     }
 
-    this->visit(curr);
-
-    if (replace) {
-      curr = replace;
-      replace = nullptr;
-    }
+    WasmReplacerWalker<SubType, ReturnType>::walk(curr);
   }
 
   void startWalk(Function *func) override {
@@ -291,27 +295,20 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
     SubType* self = static_cast<SubType*>(this);
     for (auto curr : module->functionTypes) {
       self->visitFunctionType(curr);
-      assert(!replace);
     }
     for (auto curr : module->imports) {
       self->visitImport(curr);
-      assert(!replace);
     }
     for (auto curr : module->exports) {
       self->visitExport(curr);
-      assert(!replace);
     }
     for (auto curr : module->functions) {
       startWalk(curr);
       self->visitFunction(curr);
-      assert(!replace);
     }
     self->visitTable(&module->table);
-    assert(!replace);
     self->visitMemory(&module->memory);
-    assert(!replace);
     self->visitModule(module);
-    assert(!replace);
   }
 };
 
@@ -325,7 +322,7 @@ struct WasmWalker : public WasmWalkerBase<SubType, ReturnType> {
 // When execution is no longer linear, this notifies via a call
 // to noteNonLinear().
 
-struct FastExecutionWalker : public WasmWalkerBase<FastExecutionWalker> {
+struct FastExecutionWalker : public WasmReplacerWalker<FastExecutionWalker> {
   FastExecutionWalker() {}
 
   void noteNonLinear() { abort(); } // must be overridden
@@ -333,82 +330,82 @@ struct FastExecutionWalker : public WasmWalkerBase<FastExecutionWalker> {
   void visitBlock(Block *curr) {
     ExpressionList& list = curr->list;
     for (size_t z = 0; z < list.size(); z++) {
-      visit(list[z]);
+      walk(list[z]);
     }
   }
   void visitIf(If *curr) {
-    visit(curr->condition);
+    walk(curr->condition);
     noteNonLinear();
-    visit(curr->ifTrue);
+    walk(curr->ifTrue);
     noteNonLinear();
-    visit(curr->ifFalse);
+    walk(curr->ifFalse);
     noteNonLinear();
   }
   void visitLoop(Loop *curr) {
     noteNonLinear();
-    visit(curr->body);
+    walk(curr->body);
   }
   void visitBreak(Break *curr) {
-    if (curr->value) visit(curr->value);
-    if (curr->condition) visit(curr->condition);
+    if (curr->value) walk(curr->value);
+    if (curr->condition) walk(curr->condition);
     noteNonLinear();
   }
   void visitSwitch(Switch *curr) {
-    visit(curr->condition);
-    if (curr->value) visit(curr->value);
+    walk(curr->condition);
+    if (curr->value) walk(curr->value);
     noteNonLinear();
   }
   void visitCall(Call *curr) {
     ExpressionList& list = curr->operands;
     for (size_t z = 0; z < list.size(); z++) {
-      visit(list[z]);
+      walk(list[z]);
     }
   }
   void visitCallImport(CallImport *curr) {
     ExpressionList& list = curr->operands;
     for (size_t z = 0; z < list.size(); z++) {
-      visit(list[z]);
+      walk(list[z]);
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
-    visit(curr->target);
+    walk(curr->target);
     ExpressionList& list = curr->operands;
     for (size_t z = 0; z < list.size(); z++) {
-      visit(list[z]);
+      walk(list[z]);
     }
   }
   void visitGetLocal(GetLocal *curr) {}
   void visitSetLocal(SetLocal *curr) {
-    visit(curr->value);
+    walk(curr->value);
   }
   void visitLoad(Load *curr) {
-    visit(curr->ptr);
+    walk(curr->ptr);
   }
   void visitStore(Store *curr) {
-    visit(curr->ptr);
-    visit(curr->value);
+    walk(curr->ptr);
+    walk(curr->value);
   }
   void visitConst(Const *curr) {}
   void visitUnary(Unary *curr) {
-    visit(curr->value);
+    walk(curr->value);
   }
   void visitBinary(Binary *curr) {
-    visit(curr->left);
-    visit(curr->right);
+    walk(curr->left);
+    walk(curr->right);
   }
   void visitSelect(Select *curr) {
-    visit(curr->ifTrue);
-    visit(curr->ifFalse);
-    visit(curr->condition);
+    walk(curr->ifTrue);
+    walk(curr->ifFalse);
+    walk(curr->condition);
   }
   void visitReturn(Return *curr) {
-    visit(curr->value);
+    walk(curr->value);
     noteNonLinear();
   }
   void visitHost(Host *curr) {
     ExpressionList& list = curr->operands;
     for (size_t z = 0; z < list.size(); z++) {
-      visit(list[z]);
+      walk(list[z]);
     }
   }
   void visitNop(Nop *curr) {}
