@@ -39,6 +39,48 @@ struct BreakSeeker : public WasmWalker<BreakSeeker> {
   }
 };
 
+// Look for side effects, including control flow
+// TODO: look at individual locals
+
+struct EffectAnalyzer : public WasmWalker<EffectAnalyzer> {
+  bool branches = false;
+  bool calls = false;
+  bool readsLocal = false;
+  bool writesLocal = false;
+  bool readsMemory = false;
+  bool writesMemory = false;
+
+  bool accessesLocal() { return readsLocal || writesLocal; }
+  bool accessesMemory() { return calls || readsMemory || writesMemory; }
+  bool hasSideEffects() { return calls || writesLocal || writesMemory; }
+
+  // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
+  bool invalidates(EffectAnalyzer& other) {
+    return branches || ((writesMemory || calls) && other.accessesMemory()) || (writesLocal && other.accessesLocal());
+  }
+
+  void visitIf(If *curr) { branches = true; }
+  void visitBreak(Break *curr) { branches = true; }
+  void visitSwitch(Switch *curr) { branches = true; }
+  void visitCall(Call *curr) { calls = true; }
+  void visitCallImport(CallImport *curr) { calls = true; }
+  void visitCallIndirect(CallIndirect *curr) { calls = true; }
+  void visitGetLocal(GetLocal *curr) { readsLocal = true; }
+  void visitSetLocal(SetLocal *curr) { writesLocal = true; }
+  void visitLoad(Load *curr) { readsMemory = true; }
+  void visitStore(Store *curr) { writesMemory = true; }
+  void visitReturn(Return *curr) { branches = true; }
+  void visitHost(Host *curr) { calls = true; }
+  void visitUnreachable(Unreachable *curr) { branches = true; }
+};
+
+struct ExpressionManipulator {
+  // Nop is the smallest node, so we can always nop-ify another node in our arena
+  static void nop(Expression* target) {
+    *static_cast<Nop*>(target) = Nop();
+  }
+};
+
 } // namespace wasm
 
 #endif // wasm_ast_utils_h
