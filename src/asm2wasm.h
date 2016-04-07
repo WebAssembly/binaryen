@@ -1606,6 +1606,7 @@ void Asm2WasmBuilder::optimize() {
   passRunner.add("optimize-instructions");
   passRunner.add("simplify-locals");
   passRunner.add("reorder-locals");
+  passRunner.add("vacuum");
   if (maxGlobal < 1024) {
     passRunner.add("post-emscripten");
   }
