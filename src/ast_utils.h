@@ -56,7 +56,9 @@ struct EffectAnalyzer : public WasmWalker<EffectAnalyzer> {
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
   bool invalidates(EffectAnalyzer& other) {
-    return branches || ((writesMemory || calls) && other.accessesMemory()) || (writesLocal && other.accessesLocal());
+    return branches || other.branches
+                    || ((writesMemory || calls) && other.accessesMemory())       || (writesLocal && other.accessesLocal())
+                    || (accessesMemory() && (other.writesMemory || other.calls)) || (accessesLocal() && other.writesLocal);
   }
 
   void visitIf(If *curr) { branches = true; }
