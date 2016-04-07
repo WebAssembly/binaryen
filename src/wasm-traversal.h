@@ -103,8 +103,31 @@ struct WasmVisitor {
 template<typename SubType, typename ReturnType = void>
 struct WasmWalkerBase : public WasmVisitor<SubType, ReturnType> {
   virtual void walk(Expression*& curr) { abort(); }
-  virtual void startWalk(Function *func) { abort(); }
-  virtual void startWalk(Module *module) { abort(); }
+
+  void startWalk(Function *func) {
+    walk(func->body);
+  }
+
+  void startWalk(Module *module) {
+    // Dispatch statically through the SubType.
+    SubType* self = static_cast<SubType*>(this);
+    for (auto curr : module->functionTypes) {
+      self->visitFunctionType(curr);
+    }
+    for (auto curr : module->imports) {
+      self->visitImport(curr);
+    }
+    for (auto curr : module->exports) {
+      self->visitExport(curr);
+    }
+    for (auto curr : module->functions) {
+      startWalk(curr);
+      self->visitFunction(curr);
+    }
+    self->visitTable(&module->table);
+    self->visitMemory(&module->memory);
+    self->visitModule(module);
+  }
 };
 
 template<typename ParentType>
@@ -284,31 +307,6 @@ struct WasmWalker : public WasmReplacerWalker<SubType, ReturnType> {
     }
 
     WasmReplacerWalker<SubType, ReturnType>::walk(curr);
-  }
-
-  void startWalk(Function *func) override {
-    walk(func->body);
-  }
-
-  void startWalk(Module *module) override {
-    // Dispatch statically through the SubType.
-    SubType* self = static_cast<SubType*>(this);
-    for (auto curr : module->functionTypes) {
-      self->visitFunctionType(curr);
-    }
-    for (auto curr : module->imports) {
-      self->visitImport(curr);
-    }
-    for (auto curr : module->exports) {
-      self->visitExport(curr);
-    }
-    for (auto curr : module->functions) {
-      startWalk(curr);
-      self->visitFunction(curr);
-    }
-    self->visitTable(&module->table);
-    self->visitMemory(&module->memory);
-    self->visitModule(module);
   }
 };
 
