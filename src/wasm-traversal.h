@@ -95,6 +95,9 @@ struct WasmVisitor {
       default: WASM_UNREACHABLE();
     }
   }
+
+#undef DELEGATE
+
 };
 
 //
@@ -320,94 +323,112 @@ struct WasmWalker : public WasmReplacerWalker<SubType, ReturnType> {
 // When execution is no longer linear, this notifies via a call
 // to noteNonLinear().
 
-struct FastExecutionWalker : public WasmReplacerWalker<FastExecutionWalker> {
+template<typename SubType>
+struct FastExecutionWalker : public WasmReplacerWalker<SubType> {
   FastExecutionWalker() {}
 
-  void noteNonLinear() { abort(); } // must be overridden
+  void noteNonLinear() {}
+
+#define DELEGATE_noteNonLinear() \
+  static_cast<SubType*>(this)->noteNonLinear()
+#define DELEGATE_walk(ARG) \
+  static_cast<SubType*>(this)->walk(ARG)
 
   void visitBlock(Block *curr) {
     ExpressionList& list = curr->list;
     for (size_t z = 0; z < list.size(); z++) {
-      walk(list[z]);
+      DELEGATE_walk(list[z]);
     }
   }
   void visitIf(If *curr) {
-    walk(curr->condition);
-    noteNonLinear();
-    walk(curr->ifTrue);
-    noteNonLinear();
-    walk(curr->ifFalse);
-    noteNonLinear();
+    DELEGATE_walk(curr->condition);
+    DELEGATE_noteNonLinear();
+    DELEGATE_walk(curr->ifTrue);
+    DELEGATE_noteNonLinear();
+    DELEGATE_walk(curr->ifFalse);
+    DELEGATE_noteNonLinear();
   }
   void visitLoop(Loop *curr) {
-    noteNonLinear();
-    walk(curr->body);
+    DELEGATE_noteNonLinear();
+    DELEGATE_walk(curr->body);
   }
   void visitBreak(Break *curr) {
-    if (curr->value) walk(curr->value);
-    if (curr->condition) walk(curr->condition);
-    noteNonLinear();
+    if (curr->value) DELEGATE_walk(curr->value);
+    if (curr->condition) DELEGATE_walk(curr->condition);
+    DELEGATE_noteNonLinear();
   }
   void visitSwitch(Switch *curr) {
-    walk(curr->condition);
-    if (curr->value) walk(curr->value);
-    noteNonLinear();
+    DELEGATE_walk(curr->condition);
+    if (curr->value) DELEGATE_walk(curr->value);
+    DELEGATE_noteNonLinear();
   }
   void visitCall(Call *curr) {
     ExpressionList& list = curr->operands;
     for (size_t z = 0; z < list.size(); z++) {
-      walk(list[z]);
+      DELEGATE_walk(list[z]);
     }
   }
   void visitCallImport(CallImport *curr) {
     ExpressionList& list = curr->operands;
     for (size_t z = 0; z < list.size(); z++) {
-      walk(list[z]);
+      DELEGATE_walk(list[z]);
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
-    walk(curr->target);
+    DELEGATE_walk(curr->target);
     ExpressionList& list = curr->operands;
     for (size_t z = 0; z < list.size(); z++) {
-      walk(list[z]);
+      DELEGATE_walk(list[z]);
     }
   }
   void visitGetLocal(GetLocal *curr) {}
   void visitSetLocal(SetLocal *curr) {
-    walk(curr->value);
+    DELEGATE_walk(curr->value);
   }
   void visitLoad(Load *curr) {
-    walk(curr->ptr);
+    DELEGATE_walk(curr->ptr);
   }
   void visitStore(Store *curr) {
-    walk(curr->ptr);
-    walk(curr->value);
+    DELEGATE_walk(curr->ptr);
+    DELEGATE_walk(curr->value);
   }
   void visitConst(Const *curr) {}
   void visitUnary(Unary *curr) {
-    walk(curr->value);
+    DELEGATE_walk(curr->value);
   }
   void visitBinary(Binary *curr) {
-    walk(curr->left);
-    walk(curr->right);
+    DELEGATE_walk(curr->left);
+    DELEGATE_walk(curr->right);
   }
   void visitSelect(Select *curr) {
-    walk(curr->ifTrue);
-    walk(curr->ifFalse);
-    walk(curr->condition);
+    DELEGATE_walk(curr->ifTrue);
+    DELEGATE_walk(curr->ifFalse);
+    DELEGATE_walk(curr->condition);
   }
   void visitReturn(Return *curr) {
-    walk(curr->value);
-    noteNonLinear();
+    DELEGATE_walk(curr->value);
+    DELEGATE_noteNonLinear();
   }
   void visitHost(Host *curr) {
     ExpressionList& list = curr->operands;
     for (size_t z = 0; z < list.size(); z++) {
-      walk(list[z]);
+      DELEGATE_walk(list[z]);
     }
   }
   void visitNop(Nop *curr) {}
   void visitUnreachable(Unreachable *curr) {}
+
+  void visitFunctionType(FunctionType *curr) {}
+  void visitImport(Import *curr) {}
+  void visitExport(Export *curr) {}
+  void visitFunction(Function *curr) {}
+  void visitTable(Table *curr) {}
+  void visitMemory(Memory *curr) {}
+  void visitModule(Module *curr) {}
+
+#undef DELEGATE_noteNonLinear
+#undef DELEGATE_walk
+
 };
 
 } // namespace wasm
