@@ -141,14 +141,13 @@
         (get_local $d)
       )
     )
-    (set_local $i
-      (i32.trunc_s/f32
-        (get_local $f)
-      )
-    )
     (set_local $d
       (f64.convert_s/i32
-        (get_local $i)
+        (set_local $i
+          (i32.trunc_s/f32
+            (get_local $f)
+          )
+        )
       )
     )
     (set_local $d
@@ -292,17 +291,16 @@
   )
   (func $big_uint_div_u (result i32)
     (local $x i32)
-    (set_local $x
-      (i32.and
-        (i32.div_u
-          (i32.const -1)
-          (i32.const 2)
-        )
-        (i32.const -1)
-      )
-    )
     (return
-      (get_local $x)
+      (set_local $x
+        (i32.and
+          (i32.div_u
+            (i32.const -1)
+            (i32.const 2)
+          )
+          (i32.const -1)
+        )
+      )
     )
   )
   (func $fr (param $x f32)
@@ -329,13 +327,12 @@
     (local $x i32)
     (set_local $x
       (block
-        (set_local $asm2wasm_i32_temp
-          (i32.const 0)
-        )
         (select
           (i32.sub
             (i32.const 0)
-            (get_local $asm2wasm_i32_temp)
+            (set_local $asm2wasm_i32_temp
+              (i32.const 0)
+            )
           )
           (get_local $asm2wasm_i32_temp)
           (i32.lt_s
@@ -358,11 +355,6 @@
   )
   (func $neg
     (local $x f32)
-    (set_local $x
-      (f32.neg
-        (get_local $x)
-      )
-    )
     (call_indirect $FUNCSIG$vf
       (i32.add
         (i32.and
@@ -371,7 +363,11 @@
         )
         (i32.const 8)
       )
-      (get_local $x)
+      (set_local $x
+        (f32.neg
+          (get_local $x)
+        )
+      )
     )
   )
   (func $cneg (param $x f32)
