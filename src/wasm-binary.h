@@ -434,6 +434,7 @@ int8_t binaryWasmType(WasmType type) {
 class WasmBinaryWriter : public WasmVisitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
+  bool useOpcodeTable;
   bool debug;
 
   MixedArena allocator;
@@ -448,7 +449,9 @@ class WasmBinaryWriter : public WasmVisitor<WasmBinaryWriter, void> {
   }
 
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug) : o(o), debug(debug) {
+  WasmBinaryWriter(Module *input, BufferWithRandomAccess &o,
+                   bool useOpcodeTable, bool debug)
+      : o(o), useOpcodeTable(useOpcodeTable), debug(debug) {
     wasm = allocator.alloc<Module>();
     *wasm = *input; // simple shallow copy; we won't be modifying any internals, just adding some function types, so this is fine
     prepare();
