@@ -126,6 +126,16 @@
       (get_local $a) ;; no
       (call_import $waka)
     )
+    (block $out-of-block
+      (set_local $a (i32.const 1337))
+      (block $b
+        (block $c
+          (br $b)
+        )
+        (set_local $a (i32.const 9876))
+      )
+      (get_local $a)
+    )
   )
 )
 

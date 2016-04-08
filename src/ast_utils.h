@@ -61,6 +61,7 @@ struct EffectAnalyzer : public WasmWalker<EffectAnalyzer> {
                     || (accessesMemory() && (other.writesMemory || other.calls)) || (accessesLocal() && other.writesLocal);
   }
 
+  void visitBlock(Block *curr) { branches = true; }
   void visitIf(If *curr) { branches = true; }
   void visitBreak(Break *curr) { branches = true; }
   void visitSwitch(Switch *curr) { branches = true; }
