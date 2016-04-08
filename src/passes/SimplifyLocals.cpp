@@ -45,16 +45,14 @@ struct SimplifyLocals : public WalkerPass<FastExecutionWalker<SimplifyLocals>> {
 
   void visitBlock(Block *curr) {
     // note locals, we can sink them from here TODO sink from elsewhere?
-    ExpressionList& list = curr->list;
-    for (size_t z = 0; z < list.size(); z++) {
-      walk(list[z]);
-      auto* item = list[z];
-      if (item->is<SetLocal>()) {
-        Name name = item->cast<SetLocal>()->name;
+    derecurseBlocks(curr, [&](Block* block) {}, [&](Block* block, Expression*& child) {
+      walk(child);
+      if (child->is<SetLocal>()) {
+        Name name = child->cast<SetLocal>()->name;
         assert(sinkables.count(name) == 0);
-        sinkables.emplace(std::make_pair(name, SinkableInfo(&list[z])));
+        sinkables.emplace(std::make_pair(name, SinkableInfo(&child)));
       }
-    }
+    }, [&](Block* block) {});
   }
 
   void visitGetLocal(GetLocal *curr) {

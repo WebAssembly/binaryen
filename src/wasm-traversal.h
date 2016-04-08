@@ -98,6 +98,32 @@ struct WasmVisitor {
 
 #undef DELEGATE
 
+  // Helper method to de-recurse blocks, which often nest in their first position very heavily
+  void derecurseBlocks(Block* block, std::function<void (Block*)> preBlock,
+                                     std::function<void (Block*, Expression*&)> onChild,
+                                     std::function<void (Block*)> postBlock) {
+    std::vector<Block*> stack;
+    stack.push_back(block);
+    while (block->list.size() > 0 && block->list[0]->is<Block>()) {
+      block = block->list[0]->cast<Block>();
+      stack.push_back(block);
+    }
+    for (size_t i = 0; i < stack.size(); i++) {
+      preBlock(stack[i]);
+    }
+    for (int i = int(stack.size()) - 1; i >= 0; i--) {
+      auto* block = stack[i];
+      auto& list = block->list;
+      for (size_t j = 0; j < list.size(); j++) {
+        if (i < int(stack.size()) - 1 && j == 0) {
+          // nested block, we already called its pre
+        } else {
+          onChild(block, list[j]);
+        }
+      }
+      postBlock(block);
+    }
+  }
 };
 
 //
