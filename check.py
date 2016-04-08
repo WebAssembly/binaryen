@@ -262,6 +262,19 @@ for e in executables:
   assert e in err, 'Expected help to contain program name, got:\n%s' % err
   assert len(err.split('\n')) > 8, 'Expected some help, got:\n%s' % err
 
+print '\n[ checking binaryen-shell passes... ]\n'
+
+for t in sorted(os.listdir(os.path.join('test', 'passes'))):
+  if t.endswith('.wast'):
+    print '..', t
+    passname = os.path.basename(t).replace('.wast', '')
+    opt = '-O' if passname == 'O' else '--' + passname
+    cmd = [os.path.join('bin', 'binaryen-shell'), opt, os.path.join('test', 'passes', t), '--print']
+    print '    ', ' '.join(cmd)
+    actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    assert not err, err
+    fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
+
 print '[ checking asm2wasm testcases... ]\n'
 
 for asm in tests:
@@ -324,19 +337,6 @@ for t in sorted(os.listdir(os.path.join('test', 'print'))):
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     fail_if_not_identical(actual.strip(), open(os.path.join('test', 'print', wasm + '.minified.txt')).read().strip())
-
-print '\n[ checking binaryen-shell passes... ]\n'
-
-for t in sorted(os.listdir(os.path.join('test', 'passes'))):
-  if t.endswith('.wast'):
-    print '..', t
-    passname = os.path.basename(t).replace('.wast', '')
-    opt = '-O' if passname == 'O' else '--' + passname
-    cmd = [os.path.join('bin', 'binaryen-shell'), opt, os.path.join('test', 'passes', t), '--print']
-    print '    ', ' '.join(cmd)
-    actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    assert not err, err
-    fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
 
 print '\n[ checking binaryen-shell testcases... ]\n'
 

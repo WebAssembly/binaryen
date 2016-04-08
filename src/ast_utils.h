@@ -18,6 +18,7 @@
 #define wasm_ast_utils_h
 
 #include "wasm.h"
+#include "wasm-traversal.h"
 
 namespace wasm {
 
@@ -35,6 +36,68 @@ struct BreakSeeker : public WasmWalker<BreakSeeker> {
     BreakSeeker breakSeeker(target);
     breakSeeker.walk(tree);
     return breakSeeker.found > 0;
+  }
+};
+
+// Look for side effects, including control flow
+// TODO: look at individual locals
+
+struct EffectAnalyzer : public WasmWalker<EffectAnalyzer> {
+  bool branches = false;
+  bool calls = false;
+  bool readsLocal = false;
+  bool writesLocal = false;
+  bool readsMemory = false;
+  bool writesMemory = false;
+
+  bool accessesLocal() { return readsLocal || writesLocal; }
+  bool accessesMemory() { return calls || readsMemory || writesMemory; }
+  bool hasSideEffects() { return calls || writesLocal || writesMemory; }
+  bool hasAnything() { return branches || calls || readsLocal || writesLocal || readsMemory || writesMemory; }
+
+  // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
+  bool invalidates(EffectAnalyzer& other) {
+    return branches || other.branches
+                    || ((writesMemory || calls) && other.accessesMemory())       || (writesLocal && other.accessesLocal())
+                    || (accessesMemory() && (other.writesMemory || other.calls)) || (accessesLocal() && other.writesLocal);
+  }
+
+  // the checks above happen after the node's children were processed, in the order of execution
+  // we must also check for control flow that happens before the children, i.e., loops
+  bool checkPre(Expression* curr) {
+    if (curr->is<Loop>()) {
+      branches = true;
+      return true;
+    }
+    return false;
+  }
+
+  bool checkPost(Expression* curr) {
+    visit(curr);
+    return hasAnything();
+  }
+
+  void visitBlock(Block *curr) { branches = true; }
+  void visitLoop(Loop *curr) { branches = true; }
+  void visitIf(If *curr) { branches = true; }
+  void visitBreak(Break *curr) { branches = true; }
+  void visitSwitch(Switch *curr) { branches = true; }
+  void visitCall(Call *curr) { calls = true; }
+  void visitCallImport(CallImport *curr) { calls = true; }
+  void visitCallIndirect(CallIndirect *curr) { calls = true; }
+  void visitGetLocal(GetLocal *curr) { readsLocal = true; }
+  void visitSetLocal(SetLocal *curr) { writesLocal = true; }
+  void visitLoad(Load *curr) { readsMemory = true; }
+  void visitStore(Store *curr) { writesMemory = true; }
+  void visitReturn(Return *curr) { branches = true; }
+  void visitHost(Host *curr) { calls = true; }
+  void visitUnreachable(Unreachable *curr) { branches = true; }
+};
+
+struct ExpressionManipulator {
+  // Nop is the smallest node, so we can always nop-ify another node in our arena
+  static void nop(Expression* target) {
+    *static_cast<Nop*>(target) = Nop();
   }
 };
 

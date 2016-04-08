@@ -15,27 +15,109 @@
  */
 
 //
-// Miscellaneous locals-related optimizations
+// Locals-related optimizations
 //
+// This "sinks" set_locals, pushing them to the next get_local where possible
 
 #include <wasm.h>
+#include <wasm-traversal.h>
 #include <pass.h>
+#include <ast_utils.h>
 
 namespace wasm {
 
-struct SimplifyLocals : public WalkerPass<WasmWalker<SimplifyLocals>> {
-  void visitBlock(Block *curr) {
-    // look for pairs of setlocal-getlocal, which can be just a setlocal (since it returns a value)
-    if (curr->list.size() == 0) return;
-    for (size_t i = 0; i < curr->list.size() - 1; i++) {
-      auto set = curr->list[i]->dyn_cast<SetLocal>();
-      if (!set) continue;
-      auto get = curr->list[i + 1]->dyn_cast<GetLocal>();
-      if (!get) continue;
-      if (set->name != get->name) continue;
-      curr->list.erase(curr->list.begin() + i + 1);
-      i -= 1;
+struct SimplifyLocals : public WalkerPass<FastExecutionWalker<SimplifyLocals>> {
+  struct SinkableInfo {
+    Expression** item;
+    EffectAnalyzer effects;
+
+    SinkableInfo(Expression** item) : item(item) {
+      effects.walk(*item);
     }
+  };
+
+  // locals in current linear execution trace, which we try to sink
+  std::map<Name, SinkableInfo> sinkables;
+
+  void noteNonLinear() {
+    sinkables.clear();
+  }
+
+  void visitBlock(Block *curr) {
+    // note locals, we can sink them from here TODO sink from elsewhere?
+    derecurseBlocks(curr, [&](Block* block) {
+      // curr was already checked by walk()
+      if (block != curr) checkPre(block);
+    }, [&](Block* block, Expression*& child) {
+      walk(child);
+      if (child->is<SetLocal>()) {
+        Name name = child->cast<SetLocal>()->name;
+        assert(sinkables.count(name) == 0);
+        sinkables.emplace(std::make_pair(name, SinkableInfo(&child)));
+      }
+    }, [&](Block* block) {
+      if (block != curr) checkPost(block);
+    });
+  }
+
+  void visitGetLocal(GetLocal *curr) {
+    auto found = sinkables.find(curr->name);
+    if (found != sinkables.end()) {
+      // sink it, and nop the origin TODO: clean up nops
+      replaceCurrent(*found->second.item);
+      // reuse the getlocal that is dying
+      *found->second.item = curr;
+      ExpressionManipulator::nop(curr);
+      sinkables.erase(found);
+    }
+  }
+
+  void visitSetLocal(SetLocal *curr) {
+    walk(curr->value);
+    // if we are a potentially-sinkable thing, forget it - this
+    // write overrides the last TODO: optimizable
+    // TODO: if no get_locals left, can remove the set as well (== expressionizer in emscripten optimizer)
+    auto found = sinkables.find(curr->name);
+    if (found != sinkables.end()) {
+      sinkables.erase(found);
+    }
+  }
+
+  void checkInvalidations(EffectAnalyzer& effects) {
+    // TODO: this is O(bad)
+    std::vector<Name> invalidated;
+    for (auto& sinkable : sinkables) {
+      if (effects.invalidates(sinkable.second.effects)) {
+        invalidated.push_back(sinkable.first);
+      }
+    }
+    for (auto name : invalidated) {
+      sinkables.erase(name);
+    }
+  }
+
+  void checkPre(Expression* curr) {
+    EffectAnalyzer effects;
+    if (effects.checkPre(curr)) {
+      checkInvalidations(effects);
+    }
+  }
+
+  void checkPost(Expression* curr) {
+    EffectAnalyzer effects;
+    if (effects.checkPost(curr)) {
+      checkInvalidations(effects);
+    }
+  }
+
+  void walk(Expression*& curr) override {
+    if (!curr) return;
+
+    checkPre(curr);
+
+    FastExecutionWalker::walk(curr);
+
+    checkPost(curr);
   }
 };
 

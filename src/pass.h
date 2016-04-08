@@ -20,6 +20,7 @@
 #include <functional>
 
 #include "wasm.h"
+#include "wasm-traversal.h"
 #include "mixed_arena.h"
 
 namespace wasm {
