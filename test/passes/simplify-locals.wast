@@ -145,5 +145,18 @@
       (get_local $a)
     )
   )
+  (func $Ia (param $a i32) (result i32)
+    (local $b i32)
+    (block $switch$0
+      (block $switch-default$6
+        (set_local $b
+          (i32.const 60)
+        )
+      )
+    )
+    (return
+      (get_local $b)
+    )
+  )
 )
 
