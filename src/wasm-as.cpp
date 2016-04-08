@@ -28,7 +28,7 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  bool useOpcodeTable = false;
+  bool useOpTable = false;
   Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
   options.add("--output", "-o", "Output file (stdout if not specified)",
               Options::Arguments::One,
@@ -36,10 +36,10 @@ int main(int argc, const char *argv[]) {
                 o->extra["output"] = argument;
                 Colors::disable();
               })
-    .add("--use-opcode-table", "", "uses opcode tables",
+    .add("--use-op-table", "", "uses op tables",
          Options::Arguments::Zero,
-         [&useOpcodeTable](Options*, const std::string&) {
-           useOpcodeTable = true;
+         [&useOpTable](Options*, const std::string&) {
+           useOpTable = true;
          })
     .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
@@ -59,7 +59,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "binarification..." << std::endl;
   BufferWithRandomAccess buffer(options.debug);
-  WasmBinaryWriter writer(&wasm, buffer, useOpcodeTable, options.debug);
+  WasmBinaryWriter writer(&wasm, buffer, useOpTable, options.debug);
   writer.write();
 
   if (options.debug) std::cerr << "writing to output..." << std::endl;

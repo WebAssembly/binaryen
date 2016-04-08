@@ -431,12 +431,134 @@ int8_t binaryWasmType(WasmType type) {
   }
 }
 
+#define MAX_IMMEDIATE_BITS 4
+#define MAX_IMMEDIATE (1 << MAX_IMMEDIATE_BITS)
+
+#define MAX_LOCAL_IMMEDIATE 4
+
 class WasmBinaryWriter : public WasmVisitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
-  bool useOpcodeTable;
-  bool debug;
+  bool useOpTable;
+  struct OpTable : WasmWalker<OpTable> {
+    WasmBinaryWriter &writer;
+    std::map<int32_t, int32_t> opMap;
+    std::map<int32_t, int32_t> opFrequency;
+    bool debug;
+    OpTable(WasmBinaryWriter &writer) : writer(writer), debug(true) {
 
+    }
+    int32_t encodeOp(int8_t op) {
+      return op;
+    }
+    int32_t encodeOpWithImmediate(int8_t op, size_t immediate) {
+      return (op << MAX_IMMEDIATE_BITS) | immediate;
+    }
+    void visitOp(int8_t op) {
+      opFrequency[encodeOp(op)]++;
+    }
+    void visitOpWithImmediate(int8_t op, size_t immediate, size_t maxImmediate) {
+      if (immediate < maxImmediate) {
+        opFrequency[encodeOpWithImmediate(op, immediate)]++;
+      } else {
+        visitOp(op);
+      }
+    }
+    void visitBlock(Block *curr) {
+      visitOp(BinaryConsts::Block);
+      visitOp(BinaryConsts::End);
+    }
+    void visitIf(If *curr) {
+      visitOp(BinaryConsts::If);
+      if (curr->ifFalse) {
+        visitOp(BinaryConsts::Else);
+      }
+      visitOp(BinaryConsts::End);
+    }
+    void visitLoop(Loop *curr) {
+      visitOp(BinaryConsts::Loop);
+      // TODO: Immediate
+      visitOp(BinaryConsts::End);
+    }
+//    void visitBreak(Break *curr) { abort(); }
+//    void visitSwitch(Switch *curr) { abort(); }
+//    void visitCall(Call *curr) { abort(); }
+//    void visitCallImport(CallImport *curr) { abort(); }
+//    void visitCallIndirect(CallIndirect *curr) { abort(); }
+    void visitGetLocal(GetLocal *curr) {
+      visitOpWithImmediate(BinaryConsts::GetLocal, writer.mappedLocals[curr->name], MAX_LOCAL_IMMEDIATE);
+    }
+    void visitSetLocal(SetLocal *curr) {
+      // std::cerr << "Set Local: " << writer.mappedLocals[curr->name] << std::endl;
+      visitOpWithImmediate(BinaryConsts::SetLocal, writer.mappedLocals[curr->name], MAX_LOCAL_IMMEDIATE);
+    }
+//    void visitLoad(Load *curr) { abort(); }
+//    void visitStore(Store *curr) { abort(); }
+//    void visitConst(Const *curr) { abort(); }
+    void visitUnary(Unary *curr) {
+      visitOp(getUnaryOp(curr));
+    }
+    void visitBinary(Binary *curr) {
+      visitOp(getBinaryOp(curr));
+    }
+    void visitSelect(Select *curr) { abort(); }
+    void visitReturn(Return *curr) {
+      visitOp(BinaryConsts::Return);
+    }
+    void visitHost(Host *curr) { abort(); }
+    void visitNop(Nop *curr) {
+      visitOp(BinaryConsts::Nop);
+    }
+    void visitUnreachable(Unreachable *curr) {
+      visitOp(BinaryConsts::Unreachable);
+    }
+    void clear() {
+      opFrequency.clear();
+      opMap.clear();
+
+      // Default Ops
+      visitOp(BinaryConsts::Nop);
+    }
+    void finish() {
+      std::vector<int32_t> ops;
+      for (auto i : opFrequency) {
+        ops.push_back(i.first);
+      }
+      sort(ops.begin(), ops.end(), [this](int32_t a, int32_t b) -> bool {
+        return opFrequency[a] > opFrequency[b];
+      });
+      int32_t i = 0;
+      if (debug) std::cerr << "== opTable" << std::endl;
+      for (auto op : ops) {
+        if (debug) {
+          std::cerr << "0x" << std::hex << i <<
+            ", frq: " << std::dec << opFrequency[op] <<
+            ", key: " << "0x" << std::hex << op << std::endl;
+        }
+        opMap[op] = i++;
+        if (i >= 256) {
+          break;
+        }
+      }
+    }
+    // Get the op mapping.
+    int8_t getOp(int8_t op) {
+      assert(opMap.count(encodeOp(op)));
+      return opMap[encodeOp(op)];
+    }
+
+    bool getOpWithImmediate(int8_t op, size_t immediate, int8_t *opWithImmediate) {
+      // std::cerr << "getOpWithImmediate: " << immediate << std::endl;
+      if (opMap.count(encodeOpWithImmediate(op, immediate))) {
+        *opWithImmediate = opMap[encodeOpWithImmediate(op, immediate)];
+        return true;
+      }
+      return false;
+    }
+  };
+
+  OpTable opTable;
+  bool debug;
   MixedArena allocator;
 
   void prepare() {
@@ -450,8 +572,8 @@ class WasmBinaryWriter : public WasmVisitor<WasmBinaryWriter, void> {
 
 public:
   WasmBinaryWriter(Module *input, BufferWithRandomAccess &o,
-                   bool useOpcodeTable, bool debug)
-      : o(o), useOpcodeTable(useOpcodeTable), debug(debug) {
+                   bool useOpTable, bool debug)
+      : o(o), useOpTable(useOpTable), opTable(*this), debug(debug) {
     wasm = allocator.alloc<Module>();
     *wasm = *input; // simple shallow copy; we won't be modifying any internals, just adding some function types, so this is fine
     prepare();
@@ -605,6 +727,12 @@ public:
     finishSection(start);
   }
 
+  void writeOpTable(Function* function) {
+    opTable.clear();
+    opTable.walk(function->body);
+    opTable.finish();
+  }
+
   void writeFunctions() {
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeFunctions" << std::endl;
@@ -612,14 +740,15 @@ public:
     size_t total = wasm->functions.size();
     o << U32LEB(total);
     for (size_t i = 0; i < total; i++) {
+      Function* function = wasm->functions[i];
+      mappedLocals.clear();
+      mapLocals(function);
+      if (useOpTable) writeOpTable(function);
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
       size_t sizePos = writeU32LEBPlaceholder();
       size_t start = o.size();
-      Function* function = wasm->functions[i];
-      mappedLocals.clear();
       numLocalsByType.clear();
       if (debug) std::cerr << "writing" << function->name << std::endl;
-      mapLocals(function);
       o << U32LEB(
         (numLocalsByType[i32] ? 1 : 0) +
         (numLocalsByType[i64] ? 1 : 0) +
@@ -788,7 +917,7 @@ public:
 
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
-    o << int8_t(BinaryConsts::Block);
+    o << getOp(int8_t(BinaryConsts::Block));
     breakStack.push_back(curr->name);
     size_t i = 0;
     for (auto* child : curr->list) {
@@ -796,29 +925,29 @@ public:
       recurse(child);
     }
     breakStack.pop_back();
-    o << int8_t(BinaryConsts::End);
+    o << getOp(int8_t(BinaryConsts::End));
   }
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
-    o << int8_t(BinaryConsts::If);
+    o << getOp(int8_t(BinaryConsts::If));
     recurse(curr->condition);
     recurse(curr->ifTrue); // TODO: emit block contents directly, if block with no name
     if (curr->ifFalse) {
-      o << int8_t(BinaryConsts::Else);
+      o << getOp(int8_t(BinaryConsts::Else));
       recurse(curr->ifFalse);
     }
-    o << int8_t(BinaryConsts::End);
+    o << getOp(int8_t(BinaryConsts::End));
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
     // TODO: optimize, as we usually have a block as our singleton child
-    o << int8_t(BinaryConsts::Loop) << int8_t(1);
+    o << getOp(int8_t(BinaryConsts::Loop)) << int8_t(1);
     breakStack.push_back(curr->out);
     breakStack.push_back(curr->in);
     recurse(curr->body);
     breakStack.pop_back();
     breakStack.pop_back();
-    o << int8_t(BinaryConsts::End);
+    o << getOp(int8_t(BinaryConsts::End));
   }
 
   int32_t getBreakIndex(Name name) { // -1 if not found
@@ -882,14 +1011,23 @@ public:
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
-    o << int8_t(BinaryConsts::GetLocal) << U32LEB(mappedLocals[curr->name]);
+    int8_t op;
+    if (getOpWithImmediate(BinaryConsts::GetLocal, mappedLocals[curr->name], &op)) {
+      o << op;
+    } else {
+      o << getOp(int8_t(BinaryConsts::GetLocal)) << U32LEB(mappedLocals[curr->name]);
+    }
   }
   void visitSetLocal(SetLocal *curr) {
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
     recurse(curr->value);
-    o << int8_t(BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->name]);
+    int8_t op;
+    if (getOpWithImmediate(BinaryConsts::SetLocal, mappedLocals[curr->name], &op)) {
+      o << op;
+    } else {
+      o << getOp(int8_t(BinaryConsts::SetLocal)) << U32LEB(mappedLocals[curr->name]);
+    }
   }
-
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
     o << U32LEB(Log2(alignment ? alignment : bytes));
     o << U32LEB(offset);
@@ -977,65 +1115,65 @@ public:
     }
     if (debug) std::cerr << "zz const node done.\n";
   }
-  void visitUnary(Unary *curr) {
-    if (debug) std::cerr << "zz node: Unary" << std::endl;
-    recurse(curr->value);
+  static int8_t getUnaryOp(Unary *curr) {
     switch (curr->op) {
-      case Clz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Clz        : BinaryConsts::I64Clz); break;
-      case Ctz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Ctz        : BinaryConsts::I64Ctz); break;
-      case Popcnt:           o << int8_t(curr->type == i32 ? BinaryConsts::I32Popcnt     : BinaryConsts::I64Popcnt); break;
-      case EqZ:              o << int8_t(curr->type == i32 ? BinaryConsts::I32EqZ        : BinaryConsts::I64EqZ); break;
-      case Neg:              o << int8_t(curr->type == f32 ? BinaryConsts::F32Neg        : BinaryConsts::F64Neg); break;
-      case Abs:              o << int8_t(curr->type == f32 ? BinaryConsts::F32Abs        : BinaryConsts::F64Abs); break;
-      case Ceil:             o << int8_t(curr->type == f32 ? BinaryConsts::F32Ceil       : BinaryConsts::F64Ceil); break;
-      case Floor:            o << int8_t(curr->type == f32 ? BinaryConsts::F32Floor      : BinaryConsts::F64Floor); break;
-      case Trunc:            o << int8_t(curr->type == f32 ? BinaryConsts::F32Trunc      : BinaryConsts::F64Trunc); break;
-      case Nearest:          o << int8_t(curr->type == f32 ? BinaryConsts::F32NearestInt : BinaryConsts::F64NearestInt); break;
-      case Sqrt:             o << int8_t(curr->type == f32 ? BinaryConsts::F32Sqrt       : BinaryConsts::F64Sqrt); break;
-      case ExtendSInt32:     o << int8_t(BinaryConsts::I64SConvertI32); break;
-      case ExtendUInt32:     o << int8_t(BinaryConsts::I64UConvertI32); break;
-      case WrapInt64:        o << int8_t(BinaryConsts::I32ConvertI64); break;
-      case TruncUFloat32:    o << int8_t(curr->type == i32 ? BinaryConsts::F32UConvertI32 : BinaryConsts::F32UConvertI64); break;
-      case TruncSFloat32:    o << int8_t(curr->type == i32 ? BinaryConsts::F32SConvertI32 : BinaryConsts::F32SConvertI64); break;
-      case TruncUFloat64:    o << int8_t(curr->type == i32 ? BinaryConsts::F64UConvertI32 : BinaryConsts::F64UConvertI64); break;
-      case TruncSFloat64:    o << int8_t(curr->type == i32 ? BinaryConsts::F64SConvertI32 : BinaryConsts::F64SConvertI64); break;
-      case ConvertUInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::I32UConvertF32 : BinaryConsts::I32UConvertF64); break;
-      case ConvertSInt32:    o << int8_t(curr->type == f32 ? BinaryConsts::I32SConvertF32 : BinaryConsts::I32SConvertF64); break;
-      case ConvertUInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64UConvertF32 : BinaryConsts::I64UConvertF64); break;
-      case ConvertSInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::I64SConvertF32 : BinaryConsts::I64SConvertF64); break;
-      case DemoteFloat64:    o << int8_t(BinaryConsts::F32ConvertF64); break;
-      case PromoteFloat32:   o << int8_t(BinaryConsts::F64ConvertF32); break;
-      case ReinterpretFloat: o << int8_t(curr->type == f32 ? BinaryConsts::F32ReinterpretI32 : BinaryConsts::F64ReinterpretI64); break;
-      case ReinterpretInt:   o << int8_t(curr->type == i32 ? BinaryConsts::I32ReinterpretF32 : BinaryConsts::I64ReinterpretF64); break;
+      case Clz:              return int8_t(curr->type == i32 ? BinaryConsts::I32Clz        : BinaryConsts::I64Clz); break;
+      case Ctz:              return int8_t(curr->type == i32 ? BinaryConsts::I32Ctz        : BinaryConsts::I64Ctz); break;
+      case Popcnt:           return int8_t(curr->type == i32 ? BinaryConsts::I32Popcnt     : BinaryConsts::I64Popcnt); break;
+      case EqZ:              return int8_t(curr->type == i32 ? BinaryConsts::I32EqZ        : BinaryConsts::I64EqZ); break;
+      case Neg:              return int8_t(curr->type == f32 ? BinaryConsts::F32Neg        : BinaryConsts::F64Neg); break;
+      case Abs:              return int8_t(curr->type == f32 ? BinaryConsts::F32Abs        : BinaryConsts::F64Abs); break;
+      case Ceil:             return int8_t(curr->type == f32 ? BinaryConsts::F32Ceil       : BinaryConsts::F64Ceil); break;
+      case Floor:            return int8_t(curr->type == f32 ? BinaryConsts::F32Floor      : BinaryConsts::F64Floor); break;
+      case Trunc:            return int8_t(curr->type == f32 ? BinaryConsts::F32Trunc      : BinaryConsts::F64Trunc); break;
+      case Nearest:          return int8_t(curr->type == f32 ? BinaryConsts::F32NearestInt : BinaryConsts::F64NearestInt); break;
+      case Sqrt:             return int8_t(curr->type == f32 ? BinaryConsts::F32Sqrt       : BinaryConsts::F64Sqrt); break;
+      case ExtendSInt32:     return int8_t(BinaryConsts::I64SConvertI32); break;
+      case ExtendUInt32:     return int8_t(BinaryConsts::I64UConvertI32); break;
+      case WrapInt64:        return int8_t(BinaryConsts::I32ConvertI64); break;
+      case TruncUFloat32:    return int8_t(curr->type == i32 ? BinaryConsts::F32UConvertI32 : BinaryConsts::F32UConvertI64); break;
+      case TruncSFloat32:    return int8_t(curr->type == i32 ? BinaryConsts::F32SConvertI32 : BinaryConsts::F32SConvertI64); break;
+      case TruncUFloat64:    return int8_t(curr->type == i32 ? BinaryConsts::F64UConvertI32 : BinaryConsts::F64UConvertI64); break;
+      case TruncSFloat64:    return int8_t(curr->type == i32 ? BinaryConsts::F64SConvertI32 : BinaryConsts::F64SConvertI64); break;
+      case ConvertUInt32:    return int8_t(curr->type == f32 ? BinaryConsts::I32UConvertF32 : BinaryConsts::I32UConvertF64); break;
+      case ConvertSInt32:    return int8_t(curr->type == f32 ? BinaryConsts::I32SConvertF32 : BinaryConsts::I32SConvertF64); break;
+      case ConvertUInt64:    return int8_t(curr->type == f32 ? BinaryConsts::I64UConvertF32 : BinaryConsts::I64UConvertF64); break;
+      case ConvertSInt64:    return int8_t(curr->type == f32 ? BinaryConsts::I64SConvertF32 : BinaryConsts::I64SConvertF64); break;
+      case DemoteFloat64:    return int8_t(BinaryConsts::F32ConvertF64); break;
+      case PromoteFloat32:   return int8_t(BinaryConsts::F64ConvertF32); break;
+      case ReinterpretFloat: return int8_t(curr->type == f32 ? BinaryConsts::F32ReinterpretI32 : BinaryConsts::F64ReinterpretI64); break;
+      case ReinterpretInt:   return int8_t(curr->type == i32 ? BinaryConsts::I32ReinterpretF32 : BinaryConsts::I64ReinterpretF64); break;
       default: abort();
     }
   }
-  void visitBinary(Binary *curr) {
-    if (debug) std::cerr << "zz node: Binary" << std::endl;
-    recurse(curr->left);
-    recurse(curr->right);
+  void visitUnary(Unary *curr) {
+    if (debug) std::cerr << "zz node: Unary" << std::endl;
+    recurse(curr->value);
+    o << getOp(getUnaryOp(curr));
+  }
+  static int8_t getBinaryOp(Binary *curr) {
     #define TYPED_CODE(code) { \
       switch (getReachableWasmType(curr->left->type, curr->right->type)) { \
-        case i32: o << int8_t(BinaryConsts::I32##code); break; \
-        case i64: o << int8_t(BinaryConsts::I64##code); break; \
-        case f32: o << int8_t(BinaryConsts::F32##code); break; \
-        case f64: o << int8_t(BinaryConsts::F64##code); break; \
+        case i32: return int8_t(BinaryConsts::I32##code); break; \
+        case i64: return int8_t(BinaryConsts::I64##code); break; \
+        case f32: return int8_t(BinaryConsts::F32##code); break; \
+        case f64: return int8_t(BinaryConsts::F64##code); break; \
         default: abort(); \
       } \
       break; \
     }
     #define INT_TYPED_CODE(code) { \
       switch (getReachableWasmType(curr->left->type, curr->right->type)) { \
-        case i32: o << int8_t(BinaryConsts::I32##code); break; \
-        case i64: o << int8_t(BinaryConsts::I64##code); break; \
+        case i32: return int8_t(BinaryConsts::I32##code); break; \
+        case i64: return int8_t(BinaryConsts::I64##code); break; \
         default: abort(); \
       } \
       break; \
     }
     #define FLOAT_TYPED_CODE(code) { \
       switch (getReachableWasmType(curr->left->type, curr->right->type)) { \
-        case f32: o << int8_t(BinaryConsts::F32##code); break; \
-        case f64: o << int8_t(BinaryConsts::F64##code); break; \
+        case f32: return int8_t(BinaryConsts::F32##code); break; \
+        case f64: return int8_t(BinaryConsts::F64##code); break; \
         default: abort(); \
       } \
       break; \
@@ -1081,12 +1219,27 @@ public:
     #undef INT_TYPED_CODE
     #undef FLOAT_TYPED_CODE
   }
+  int8_t getOp(int8_t op) {
+    return (useOpTable ? opTable.getOp(op) : op);
+  }
+  bool getOpWithImmediate(int8_t op, size_t immediate, int8_t *opWithImmediate) {
+    if (!useOpTable) {
+      return false;
+    }
+    return opTable.getOpWithImmediate(op, immediate, opWithImmediate);
+  }
+  void visitBinary(Binary *curr) {
+    if (debug) std::cerr << "zz node: Binary" << std::endl;
+    recurse(curr->left);
+    recurse(curr->right);
+    o << getOp(getBinaryOp(curr));
+  }
   void visitSelect(Select *curr) {
     if (debug) std::cerr << "zz node: Select" << std::endl;
     recurse(curr->ifTrue);
     recurse(curr->ifFalse);
     recurse(curr->condition);
-    o << int8_t(BinaryConsts::Select);
+    o << getOp(int8_t(BinaryConsts::Select));
   }
   void visitReturn(Return *curr) {
     if (debug) std::cerr << "zz node: Return" << std::endl;
@@ -1095,18 +1248,18 @@ public:
     } else {
       visitNop(nullptr);
     }
-    o << int8_t(BinaryConsts::Return);
+    o << getOp(int8_t(BinaryConsts::Return));
   }
   void visitHost(Host *curr) {
     if (debug) std::cerr << "zz node: Host" << std::endl;
     switch (curr->op) {
       case MemorySize: {
-        o << int8_t(BinaryConsts::MemorySize);
+        o << getOp(int8_t(BinaryConsts::MemorySize));
         break;
       }
       case GrowMemory: {
         recurse(curr->operands[0]);
-        o << int8_t(BinaryConsts::GrowMemory);
+        o << getOp(int8_t(BinaryConsts::GrowMemory));
         break;
       }
       default: abort();
@@ -1114,11 +1267,11 @@ public:
   }
   void visitNop(Nop *curr) {
     if (debug) std::cerr << "zz node: Nop" << std::endl;
-    o << int8_t(BinaryConsts::Nop);
+    o << getOp(int8_t(BinaryConsts::Nop));
   }
   void visitUnreachable(Unreachable *curr) {
     if (debug) std::cerr << "zz node: Unreachable" << std::endl;
-    o << int8_t(BinaryConsts::Unreachable);
+    o << getOp(int8_t(BinaryConsts::Unreachable));
   }
 };
 

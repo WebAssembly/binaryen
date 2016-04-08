@@ -90,7 +90,7 @@ struct ByteStreamMetrics {
         return strcmp(b, a) > 0;
     });
     // Pretty Markdown Tables
-    o << "| Name                             |    Samples |       Size |    % Total |  Sample Size |\n";
+    o << "| Name                             |      Count |       Size |    % Total |    Avg. Size |\n";
     o << "|:---------------------------------|-----------:|-----------:|-----------:|-------------:|\n";
     for (auto* key : keys) {
       Metric m = this->metrics[key];
