@@ -1278,6 +1278,9 @@ class S2WasmBuilder {
           std::cerr << "function index: " << name << ": "
                     << functionIndexes[name] << '\n';
         }
+        // For now export all address-taken functions because pointers to them
+        // may escape the wasm module.
+        exportFunction(name, true);
       }
     };
     for (auto& relocation : relocations) {
