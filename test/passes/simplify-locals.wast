@@ -136,6 +136,14 @@
       )
       (get_local $a)
     )
+    (block $loopey
+      (set_local $a (i32.const 1337))
+      (loop
+        (get_local $a)
+        (set_local $a (i32.const 9876))
+      )
+      (get_local $a)
+    )
   )
 )
 

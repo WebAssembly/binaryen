@@ -78,14 +78,7 @@ struct SimplifyLocals : public WalkerPass<FastExecutionWalker<SimplifyLocals>> {
     }
   }
 
-  void walk(Expression*& curr) override {
-    if (!curr) return;
-
-    FastExecutionWalker::walk(curr);
-
-    // invalidations TODO: this is O(n^2) in sinkables
-    EffectAnalyzer effects;
-    effects.visit(curr);
+  void checkInvalidations(EffectAnalyzer& effects) {
     std::vector<Name> invalidated;
     for (auto& sinkable : sinkables) {
       if (effects.invalidates(sinkable.second.effects)) {
@@ -94,6 +87,24 @@ struct SimplifyLocals : public WalkerPass<FastExecutionWalker<SimplifyLocals>> {
     }
     for (auto name : invalidated) {
       sinkables.erase(name);
+    }
+  }
+
+  void walk(Expression*& curr) override {
+    if (!curr) return;
+
+    EffectAnalyzer effects;
+
+    if (effects.checkPre(curr)) {
+      checkInvalidations(effects);
+    }
+
+    FastExecutionWalker::walk(curr);
+
+    // TODO: this is O(n^2) in sinkables
+
+    if (effects.checkPost(curr)) {
+      checkInvalidations(effects);
     }
   }
 };

@@ -53,6 +53,7 @@ struct EffectAnalyzer : public WasmWalker<EffectAnalyzer> {
   bool accessesLocal() { return readsLocal || writesLocal; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
   bool hasSideEffects() { return calls || writesLocal || writesMemory; }
+  bool hasAnything() { return branches || calls || readsLocal || writesLocal || readsMemory || writesMemory; }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
   bool invalidates(EffectAnalyzer& other) {
@@ -61,7 +62,23 @@ struct EffectAnalyzer : public WasmWalker<EffectAnalyzer> {
                     || (accessesMemory() && (other.writesMemory || other.calls)) || (accessesLocal() && other.writesLocal);
   }
 
+  // the checks above happen after the node's children were processed, in the order of execution
+  // we must also check for control flow that happens before the children, i.e., loops
+  bool checkPre(Expression* curr) {
+    if (curr->is<Loop>()) {
+      branches = true;
+      return true;
+    }
+    return false;
+  }
+
+  bool checkPost(Expression* curr) {
+    visit(curr);
+    return hasAnything();
+  }
+
   void visitBlock(Block *curr) { branches = true; }
+  void visitLoop(Loop *curr) { branches = true; }
   void visitIf(If *curr) { branches = true; }
   void visitBreak(Break *curr) { branches = true; }
   void visitSwitch(Switch *curr) { branches = true; }
