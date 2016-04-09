@@ -7,6 +7,7 @@ function (global, env, buffer) {
   var fr = global.Math.fround;
 
   var tDP = env.tempDoublePtr | 0;
+  var ctz32 = env._llvm_cttz_i32;
 
   var h8 = new global.Int8Array(buffer);
   var h16 = new global.Int16Array(buffer);
@@ -35,6 +36,9 @@ function (global, env, buffer) {
     (h32[tDP >> 2] = i, fr(hF32[tDP >> 2])); // i32->f32
     (h32[tDP >> 2] = i, +hF32[tDP >> 2]); // i32->f32, no fround
     (hF32[tDP >> 2] = f, h32[tDP >> 2] | 0); // f32->i32
+  }
+  function ctzzzz() {
+    return ctz32(0x1234) | 0;
   }
 
   return { floats: floats };

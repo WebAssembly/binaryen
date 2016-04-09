@@ -28552,100 +28552,6 @@
       )
     )
   )
-  (func $_llvm_cttz_i32 (param $x i32) (result i32)
-    (local $ret i32)
-    (if
-      (i32.lt_s
-        (set_local $ret
-          (i32.load8_s
-            (i32.add
-              (i32.load
-                (i32.const 40)
-              )
-              (i32.and
-                (get_local $x)
-                (i32.const 255)
-              )
-            )
-          )
-        )
-        (i32.const 8)
-      )
-      (return
-        (get_local $ret)
-      )
-    )
-    (if
-      (i32.lt_s
-        (set_local $ret
-          (i32.load8_s
-            (i32.add
-              (i32.load
-                (i32.const 40)
-              )
-              (i32.and
-                (i32.shr_s
-                  (get_local $x)
-                  (i32.const 8)
-                )
-                (i32.const 255)
-              )
-            )
-          )
-        )
-        (i32.const 8)
-      )
-      (return
-        (i32.add
-          (get_local $ret)
-          (i32.const 8)
-        )
-      )
-    )
-    (if
-      (i32.lt_s
-        (set_local $ret
-          (i32.load8_s
-            (i32.add
-              (i32.load
-                (i32.const 40)
-              )
-              (i32.and
-                (i32.shr_s
-                  (get_local $x)
-                  (i32.const 16)
-                )
-                (i32.const 255)
-              )
-            )
-          )
-        )
-        (i32.const 8)
-      )
-      (return
-        (i32.add
-          (get_local $ret)
-          (i32.const 16)
-        )
-      )
-    )
-    (return
-      (i32.add
-        (i32.load8_s
-          (i32.add
-            (i32.load
-              (i32.const 40)
-            )
-            (i32.shr_u
-              (get_local $x)
-              (i32.const 24)
-            )
-          )
-        )
-        (i32.const 24)
-      )
-    )
-  )
   (func $___muldsi3 (param $$a i32) (param $$b i32) (result i32)
     (local $$8 i32)
     (local $$6 i32)
@@ -29580,7 +29486,7 @@
               (set_local $$_0$0
                 (i32.shr_u
                   (get_local $$n_sroa_1_4_extract_trunc)
-                  (call $_llvm_cttz_i32
+                  (i32.ctz
                     (get_local $$d_sroa_1_4_extract_trunc)
                   )
                 )
@@ -30055,7 +29961,7 @@
             )
             (block
               (set_local $$78
-                (call $_llvm_cttz_i32
+                (i32.ctz
                   (get_local $$d_sroa_0_0_extract_trunc)
                 )
               )

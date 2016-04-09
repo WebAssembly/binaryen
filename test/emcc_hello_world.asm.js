@@ -77,6 +77,7 @@ Module["asm"] =  (function(global, env, buffer) {
   var _pthread_cleanup_push=env._pthread_cleanup_push;
   var _sysconf=env._sysconf;
   var ___syscall146=env.___syscall146;
+  var _llvm_cttz_i32=env._llvm_cttz_i32;
   var tempFloat = 0.0;
 
 // EMSCRIPTEN_START_FUNCS
@@ -6756,17 +6757,6 @@ function _bitshift64Ashr(low, high, bits) {
     }
     tempRet0 = (high|0) < 0 ? -1 : 0;
     return (high >> (bits - 32))|0;
-  }
-function _llvm_cttz_i32(x) {
-    x = x|0;
-    var ret = 0;
-    ret = ((HEAP8[(((cttz_i8)+(x & 0xff))>>0)])|0);
-    if ((ret|0) < 8) return ret|0;
-    ret = ((HEAP8[(((cttz_i8)+((x >> 8)&0xff))>>0)])|0);
-    if ((ret|0) < 8) return (ret + 8)|0;
-    ret = ((HEAP8[(((cttz_i8)+((x >> 16)&0xff))>>0)])|0);
-    if ((ret|0) < 8) return (ret + 16)|0;
-    return (((HEAP8[(((cttz_i8)+(x >>> 24))>>0)])|0) + 24)|0;
   }
 
 // ======== compiled code from system/lib/compiler-rt , see readme therein

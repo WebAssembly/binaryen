@@ -202,6 +202,8 @@ private:
   IString Math_ceil;
   IString Math_sqrt;
 
+  IString llvm_cttz_i32;
+
   IString tempDoublePtr; // imported name of tempDoublePtr
 
   // function types. we fill in this information as we see
@@ -486,10 +488,15 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       assert(module[0] == NAME);
       moduleName = module[1]->getIString();
       if (moduleName == ENV) {
-        if (imported[2] == TEMP_DOUBLE_PTR) {
+        auto base = imported[2]->getIString();
+        if (base == TEMP_DOUBLE_PTR) {
           assert(tempDoublePtr.isNull());
           tempDoublePtr = name;
           // we don't return here, as we can only optimize out some uses of tDP. So it remains imported
+        } else if (base == LLVM_CTTZ_I32) {
+          assert(llvm_cttz_i32.isNull());
+          llvm_cttz_i32 = name;
+          return;
         }
       }
     }
@@ -1092,10 +1099,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->type = WasmType::i32;
           return ret;
         }
-        if (name == Math_clz32) {
+        if (name == Math_clz32 || name == llvm_cttz_i32) {
           assert(ast[2]->size() == 1);
           auto ret = allocator.alloc<Unary>();
-          ret->op = Clz;
+          ret->op = name == Math_clz32 ? Clz : Ctz;
           ret->value = process(ast[2][0]);
           ret->type = WasmType::i32;
           return ret;
