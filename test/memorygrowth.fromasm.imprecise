@@ -9653,11 +9653,9 @@
         )
         (loop $while-out$2 $while-in$3
           (br_if $while-out$2
-            (i32.eqz
-              (i32.ge_s
-                (get_local $c)
-                (i32.const 4)
-              )
+            (i32.lt_s
+              (get_local $c)
+              (i32.const 4)
             )
           )
           (i32.store
@@ -9690,11 +9688,9 @@
     )
     (loop $while-out$4 $while-in$5
       (br_if $while-out$4
-        (i32.eqz
-          (i32.gt_s
-            (get_local $c)
-            (i32.const 0)
-          )
+        (i32.le_s
+          (get_local $c)
+          (i32.const 0)
         )
       )
       (i32.store8
@@ -9803,11 +9799,9 @@
             )
             (loop $while-out$0 $while-in$1
               (br_if $while-out$0
-                (i32.eqz
-                  (i32.lt_s
-                    (get_local $a)
-                    (get_local $e)
-                  )
+                (i32.ge_s
+                  (get_local $a)
+                  (get_local $e)
                 )
               )
               (i32.store8
@@ -9826,11 +9820,9 @@
         )
         (loop $while-out$2 $while-in$3
           (br_if $while-out$2
-            (i32.eqz
-              (i32.lt_s
-                (get_local $a)
-                (get_local $g)
-              )
+            (i32.ge_s
+              (get_local $a)
+              (get_local $g)
             )
           )
           (i32.store
@@ -9849,11 +9841,9 @@
     )
     (loop $while-out$4 $while-in$5
       (br_if $while-out$4
-        (i32.eqz
-          (i32.lt_s
-            (get_local $a)
-            (get_local $d)
-          )
+        (i32.ge_s
+          (get_local $a)
+          (get_local $d)
         )
       )
       (i32.store8

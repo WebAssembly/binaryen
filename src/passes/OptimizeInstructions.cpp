@@ -36,6 +36,28 @@ struct OptimizeInstructions : public WalkerPass<WasmWalker<OptimizeInstructions>
       }
     }
   }
+  void visitUnary(Unary* curr) {
+    if (curr->op == EqZ) {
+      // fold comparisons that flow into an EqZ
+      auto* child = curr->value->dyn_cast<Binary>();
+      if (child && (child->type == i32 || child->type == i64)) {
+        switch (child->op) {
+          case Eq:  child->op = Ne; break;
+          case Ne:  child->op = Eq; break;
+          case LtS: child->op = GeS; break;
+          case LtU: child->op = GeU; break;
+          case LeS: child->op = GtS; break;
+          case LeU: child->op = GtU; break;
+          case GtS: child->op = LeS; break;
+          case GtU: child->op = LeU; break;
+          case GeS: child->op = LtS; break;
+          case GeU: child->op = LtU; break;
+          default: return;
+        }
+        replaceCurrent(child);
+      }
+    }
+  }
 };
 
 static RegisterPass<OptimizeInstructions> registerPass("optimize-instructions", "optimizes instruction combinations");

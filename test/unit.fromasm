@@ -443,11 +443,9 @@
     )
     (loop $for-out$0 $for-in$1
       (br_if $for-out$0
-        (i32.eqz
-          (i32.lt_s
-            (get_local $i)
-            (i32.const 200)
-          )
+        (i32.ge_s
+          (get_local $i)
+          (i32.const 200)
         )
       )
       (call_import $h
