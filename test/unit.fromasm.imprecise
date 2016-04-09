@@ -438,13 +438,13 @@
       (i32.const 1)
     )
     (loop $for-out$0 $for-in$1
-      (if
-        (i32.lt_s
-          (get_local $i)
-          (i32.const 200)
+      (br_if $for-out$0
+        (i32.eqz
+          (i32.lt_s
+            (get_local $i)
+            (i32.const 200)
+          )
         )
-        (nop)
-        (br $for-out$0)
       )
       (call_import $h
         (get_local $i)

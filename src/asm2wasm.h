@@ -133,6 +133,8 @@ class Asm2WasmBuilder {
 
   MixedArena &allocator;
 
+  Builder builder;
+
   // globals
 
   unsigned nextGlobal; // next place to put a global
@@ -267,6 +269,7 @@ public:
  Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth, bool debug, bool imprecise)
      : wasm(wasm),
        allocator(wasm.allocator),
+       builder(wasm),
        nextGlobal(8),
        maxGlobal(1000),
        memoryGrowth(memoryGrowth),
@@ -783,7 +786,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     Name x64("x64"), y64("y64");
     func->locals.emplace_back(x64, i64);
     func->locals.emplace_back(y64, i64);
-    Builder builder(wasm);
     auto* body = allocator.alloc<Block>();
     auto recreateI64 = [&](Name target, Name low, Name high) {
       return builder.makeSetLocal(
@@ -1393,9 +1395,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         Break *breakOut = allocator.alloc<Break>();
         breakOut->name = out;
         If *condition = allocator.alloc<If>();
-        condition->condition = process(ast[1]);
-        condition->ifTrue = allocator.alloc<Nop>();
-        condition->ifFalse = breakOut;
+        condition->condition = builder.makeUnary(EqZ, process(ast[1]));
+        condition->ifTrue = breakOut;
         auto body = allocator.alloc<Block>();
         body->list.push_back(condition);
         body->list.push_back(process(ast[2]));
@@ -1491,9 +1492,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Break *breakOut = allocator.alloc<Break>();
       breakOut->name = out;
       If *condition = allocator.alloc<If>();
-      condition->condition = process(fcond);
-      condition->ifTrue = allocator.alloc<Nop>();
-      condition->ifFalse = breakOut;
+      condition->condition = builder.makeUnary(EqZ, process(fcond));
+      condition->ifTrue = breakOut;
       auto body = allocator.alloc<Block>();
       body->list.push_back(condition);
       body->list.push_back(process(fbody));
