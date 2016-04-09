@@ -827,7 +827,7 @@ public:
   Expression *condition, *ifTrue, *ifFalse;
 
   void finalize() {
-    if (condition) {
+    if (ifFalse) {
       type = getReachableWasmType(ifTrue->type, ifFalse->type);
     }
   }
