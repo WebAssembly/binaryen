@@ -29,6 +29,7 @@
 #include "asm_v_wasm.h"
 #include "pass.h"
 #include "ast_utils.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -205,6 +206,10 @@ private:
   IString llvm_cttz_i32;
 
   IString tempDoublePtr; // imported name of tempDoublePtr
+
+  // possibly-minified names, detected via their exports
+  IString udivmoddi4;
+  IString getTempRet0;
 
   // function types. we fill in this information as we see
   // uses, in the first pass
@@ -664,6 +669,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
           assert(!wasm.checkFunction(value));
           continue;
+        } else if (key == UDIVMODDI4) {
+          udivmoddi4 = value;
+        } else if (key == GET_TEMP_RET0) {
+          getTempRet0 = value;
         }
         assert(wasm.checkFunction(value));
         auto export_ = allocator.alloc<Export>();
@@ -746,10 +755,108 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   }
 
   wasm.memory.exportName = MEMORY;
+
+  if (udivmoddi4.is()) {
+    // generate a wasm-optimized __udivmoddi4 method, which we can do much more efficiently in wasm
+    assert(getTempRet0.is());
+    // first, figure out which minified global is tempRet0
+    int tempRet0;
+    {
+      Expression* curr = wasm.getFunction(getTempRet0)->body;
+      if (curr->is<Block>()) curr = curr->cast<Block>()->list[0];
+      curr = curr->cast<Return>()->value;
+      auto* load = curr->cast<Load>();
+      auto* ptr = load->ptr->cast<Const>();
+      tempRet0 = ptr->value.geti32() + load->offset;
+    }
+    // udivmoddi4 receives xl, xh, yl, yl, r, and
+    //    if r then *r = x % y
+    //    returns x / y
+    auto* func = wasm.getFunction(udivmoddi4);
+    assert(!func->type.is());
+    Name xl = func->params[0].name,
+         xh = func->params[1].name,
+         yl = func->params[2].name,
+         yh = func->params[3].name,
+         r = func->params[4].name;
+    func->locals.clear();
+    Name x64("x64"), y64("y64");
+    func->locals.emplace_back(x64, i64);
+    func->locals.emplace_back(y64, i64);
+    Builder builder(wasm);
+    auto* body = allocator.alloc<Block>();
+    auto recreateI64 = [&](Name target, Name low, Name high) {
+      return builder.makeSetLocal(
+        target,
+        builder.makeBinary(
+          Or,
+          builder.makeUnary(
+            ExtendUInt32,
+            builder.makeGetLocal(low, i32)
+          ),
+          builder.makeBinary(
+            Shl,
+            builder.makeUnary(
+              ExtendUInt32,
+              builder.makeGetLocal(high, i32)
+            ),
+            builder.makeConst(Literal(int64_t(32)))
+          )
+        )
+      );
+    };
+    body->list.push_back(recreateI64(x64, xl, xh));
+    body->list.push_back(recreateI64(y64, yl, yh));
+    body->list.push_back(
+      builder.makeIf(
+        builder.makeGetLocal(r, i32),
+        builder.makeStore(
+          8, 0, 8,
+          builder.makeGetLocal(r, i32),
+          builder.makeBinary(
+            RemU,
+            builder.makeGetLocal(x64, i64),
+            builder.makeGetLocal(y64, i64)
+          )
+        )
+      )
+    );
+    body->list.push_back(
+      builder.makeSetLocal(
+        x64,
+        builder.makeBinary(
+          DivU,
+          builder.makeGetLocal(x64, i64),
+          builder.makeGetLocal(y64, i64)
+        )
+      )
+    );
+    body->list.push_back(
+      builder.makeStore(
+        4, 0, 4,
+        builder.makeConst(Literal(int32_t(tempRet0))),
+        builder.makeUnary(
+          WrapInt64,
+          builder.makeBinary(
+            ShrU,
+            builder.makeGetLocal(x64, i64),
+            builder.makeConst(Literal(int64_t(32)))
+          )
+        )
+      )
+    );
+    body->list.push_back(
+      builder.makeUnary(
+        WrapInt64,
+        builder.makeGetLocal(x64, i64)
+      )
+    );
+    func->body = body;
+  }
 }
 
 Function* Asm2WasmBuilder::processFunction(Ref ast) {
-  //if (ast[1] != IString("qta")) return nullptr;
+  auto name = ast[1]->getIString();
 
   if (debug) {
     std::cout << "\nfunc: " << ast[1]->getIString().str << '\n';
@@ -758,7 +865,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   }
 
   auto function = allocator.alloc<Function>();
-  function->name = ast[1]->getIString();
+  function->name = name;
   Ref params = ast[2];
   Ref body = ast[3];
 
@@ -1601,7 +1708,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   // cleanups/checks
   assert(breakStack.size() == 0 && continueStack.size() == 0);
   assert(parentLabel.isNull());
-
   return function;
 }
 
