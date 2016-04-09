@@ -742,7 +742,8 @@ public:
     ReturnId,
     HostId,
     NopId,
-    UnreachableId
+    UnreachableId,
+    NumExpressionIds
   };
   Id _id;
 
