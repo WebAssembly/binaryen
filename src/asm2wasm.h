@@ -756,10 +756,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   wasm.memory.exportName = MEMORY;
 
-  if (udivmoddi4.is()) {
+  if (udivmoddi4.is() && getTempRet0.is()) {
     // generate a wasm-optimized __udivmoddi4 method, which we can do much more efficiently in wasm
-    assert(getTempRet0.is());
-    // first, figure out which minified global is tempRet0
+    // we can only do this if we know getTempRet0 as well since we use it to figure out which minified global is tempRet0
+    // (getTempRet0 might be an import, if this is a shared module, so we can't optimize that case)
     int tempRet0;
     {
       Expression* curr = wasm.getFunction(getTempRet0)->body;
