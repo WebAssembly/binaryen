@@ -31,8 +31,12 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   const char *maybeSpace;
   const char *maybeNewLine;
 
-  PrintSExpression(std::ostream& o, bool minify = false)
-    : o(o), indent(0), minify(minify) {
+  PrintSExpression(std::ostream& o) : o(o), indent(0) {
+    setMinify(false);
+  }
+
+  void setMinify(bool minify_) {
+    minify = minify_;
     maybeSpace = minify ? "" : " ";
     maybeNewLine = minify ? "" : "\n";
   }
@@ -526,8 +530,6 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   }
 };
 
-// Pass entry point. Eventually this will direct printing to one of various options.
-
 void Printer::run(PassRunner* runner, Module* module) {
   PrintSExpression print(o);
   print.visitModule(module);
@@ -536,26 +538,26 @@ void Printer::run(PassRunner* runner, Module* module) {
 static RegisterPass<Printer> registerPass("print", "print in s-expression format");
 
 // Prints out a minified module
+
 class MinifiedPrinter : public Printer {
   public:
   MinifiedPrinter() : Printer() {}
   MinifiedPrinter(std::ostream& o) : Printer(o) {}
 
-  void run(PassRunner* runner, Module* module) override;
+  void run(PassRunner* runner, Module* module) override {
+    PrintSExpression print(o);
+    print.setMinify(true);
+    print.visitModule(module);
+  }
 };
-
-void MinifiedPrinter::run(PassRunner* runner, Module* module) {
-  PrintSExpression print(o, true);
-  print.visitModule(module);
-}
-
 
 static RegisterPass<MinifiedPrinter> registerMinifyPass("print-minified", "print in minified s-expression format");
 
 // Print individual expressions
 
 std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify) {
-  PrintSExpression print(o, minify);
+  PrintSExpression print(o);
+  print.setMinify(minify);
   print.visit(expression);
   return o;
 }
