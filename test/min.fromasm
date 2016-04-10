@@ -42,4 +42,11 @@
       (get_local $f)
     )
   )
+  (func $ctzzzz (result i32)
+    (return
+      (i32.ctz
+        (i32.const 4660)
+      )
+    )
+  )
 )

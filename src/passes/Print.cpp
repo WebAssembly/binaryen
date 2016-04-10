@@ -26,16 +26,26 @@ namespace wasm {
 
 struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   std::ostream& o;
-  unsigned indent;
+  unsigned indent = 0;
+
   bool minify;
   const char *maybeSpace;
   const char *maybeNewLine;
 
-  PrintSExpression(std::ostream& o, bool minify = false)
-    : o(o), indent(0), minify(minify) {
+  bool fullAST = false; // whether to not elide nodes in output when possible
+                        // (like implicit blocks)
+
+  PrintSExpression(std::ostream& o) : o(o) {
+    setMinify(false);
+  }
+
+  void setMinify(bool minify_) {
+    minify = minify_;
     maybeSpace = minify ? "" : " ";
     maybeNewLine = minify ? "" : "\n";
   }
+
+  void setFullAST(bool fullAST_) { fullAST = fullAST_; }
 
   void incIndent() {
     if (minify) return;
@@ -95,13 +105,13 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     incIndent();
     printFullLine(curr->condition);
     // ifTrue and False have implict blocks, avoid printing them if possible
-    if (curr->ifTrue->is<Block>() && curr->ifTrue->dyn_cast<Block>()->name.isNull() && curr->ifTrue->dyn_cast<Block>()->list.size() == 1) {
+    if (!fullAST && curr->ifTrue->is<Block>() && curr->ifTrue->dyn_cast<Block>()->name.isNull() && curr->ifTrue->dyn_cast<Block>()->list.size() == 1) {
       printFullLine(curr->ifTrue->dyn_cast<Block>()->list.back());
     } else {
       printFullLine(curr->ifTrue);
     }
     if (curr->ifFalse) {
-      if (curr->ifFalse->is<Block>() && curr->ifFalse->dyn_cast<Block>()->name.isNull() && curr->ifFalse->dyn_cast<Block>()->list.size() == 1) {
+      if (!fullAST && curr->ifFalse->is<Block>() && curr->ifFalse->dyn_cast<Block>()->name.isNull() && curr->ifFalse->dyn_cast<Block>()->list.size() == 1) {
         printFullLine(curr->ifFalse->dyn_cast<Block>()->list.back());
       } else {
         printFullLine(curr->ifFalse);
@@ -120,7 +130,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     }
     incIndent();
     auto block = curr->body->dyn_cast<Block>();
-    if (block && block->name.isNull()) {
+    if (!fullAST && block && block->name.isNull()) {
       // wasm spec has loops containing children directly, while our ast
       // has a single child for simplicity. print out the optimal form.
       for (auto expression : block->list) {
@@ -435,7 +445,7 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
     }
     // It is ok to emit a block here, as a function can directly contain a list, even if our
     // ast avoids that for simplicity. We can just do that optimization here..
-    if (curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
+    if (!fullAST && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
       Block* block = curr->body->cast<Block>();
       for (auto item : block->list) {
         printFullLine(item);
@@ -526,8 +536,6 @@ struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
   }
 };
 
-// Pass entry point. Eventually this will direct printing to one of various options.
-
 void Printer::run(PassRunner* runner, Module* module) {
   PrintSExpression print(o);
   print.visitModule(module);
@@ -536,26 +544,42 @@ void Printer::run(PassRunner* runner, Module* module) {
 static RegisterPass<Printer> registerPass("print", "print in s-expression format");
 
 // Prints out a minified module
+
 class MinifiedPrinter : public Printer {
   public:
   MinifiedPrinter() : Printer() {}
   MinifiedPrinter(std::ostream& o) : Printer(o) {}
 
-  void run(PassRunner* runner, Module* module) override;
+  void run(PassRunner* runner, Module* module) override {
+    PrintSExpression print(o);
+    print.setMinify(true);
+    print.visitModule(module);
+  }
 };
 
-void MinifiedPrinter::run(PassRunner* runner, Module* module) {
-  PrintSExpression print(o, true);
-  print.visitModule(module);
-}
-
-
 static RegisterPass<MinifiedPrinter> registerMinifyPass("print-minified", "print in minified s-expression format");
+
+// Prints out a module withough elision, i.e., the full ast
+
+class FullPrinter : public Printer {
+  public:
+  FullPrinter() : Printer() {}
+  FullPrinter(std::ostream& o) : Printer(o) {}
+
+  void run(PassRunner* runner, Module* module) override {
+    PrintSExpression print(o);
+    print.setFullAST(true);
+    print.visitModule(module);
+  }
+};
+
+static RegisterPass<FullPrinter> registerFullASTPass("print-full", "print in full s-expression format");
 
 // Print individual expressions
 
 std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify) {
-  PrintSExpression print(o, minify);
+  PrintSExpression print(o);
+  print.setMinify(minify);
   print.visit(expression);
   return o;
 }

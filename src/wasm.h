@@ -742,7 +742,8 @@ public:
     ReturnId,
     HostId,
     NopId,
-    UnreachableId
+    UnreachableId,
+    NumExpressionIds
   };
   Id _id;
 
@@ -827,7 +828,7 @@ public:
   Expression *condition, *ifTrue, *ifFalse;
 
   void finalize() {
-    if (condition) {
+    if (ifFalse) {
       type = getReachableWasmType(ifTrue->type, ifFalse->type);
     }
   }
@@ -975,10 +976,9 @@ public:
   UnaryOp op;
   Expression *value;
 
-  // the type is always the type of the operands,
-  // except for relationals
-
   bool isRelational() { return op == EqZ; }
+
+  // no finalize since some opcodes have more than one type, so user must set it anyhow
 };
 
 class Binary : public Expression {

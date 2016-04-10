@@ -29,6 +29,7 @@
 #include "asm_v_wasm.h"
 #include "pass.h"
 #include "ast_utils.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -132,6 +133,8 @@ class Asm2WasmBuilder {
 
   MixedArena &allocator;
 
+  Builder builder;
+
   // globals
 
   unsigned nextGlobal; // next place to put a global
@@ -202,7 +205,13 @@ private:
   IString Math_ceil;
   IString Math_sqrt;
 
+  IString llvm_cttz_i32;
+
   IString tempDoublePtr; // imported name of tempDoublePtr
+
+  // possibly-minified names, detected via their exports
+  IString udivmoddi4;
+  IString getTempRet0;
 
   // function types. we fill in this information as we see
   // uses, in the first pass
@@ -260,6 +269,7 @@ public:
  Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth, bool debug, bool imprecise)
      : wasm(wasm),
        allocator(wasm.allocator),
+       builder(wasm),
        nextGlobal(8),
        maxGlobal(1000),
        memoryGrowth(memoryGrowth),
@@ -486,10 +496,15 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       assert(module[0] == NAME);
       moduleName = module[1]->getIString();
       if (moduleName == ENV) {
-        if (imported[2] == TEMP_DOUBLE_PTR) {
+        auto base = imported[2]->getIString();
+        if (base == TEMP_DOUBLE_PTR) {
           assert(tempDoublePtr.isNull());
           tempDoublePtr = name;
           // we don't return here, as we can only optimize out some uses of tDP. So it remains imported
+        } else if (base == LLVM_CTTZ_I32) {
+          assert(llvm_cttz_i32.isNull());
+          llvm_cttz_i32 = name;
+          return;
         }
       }
     }
@@ -657,6 +672,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
           assert(!wasm.checkFunction(value));
           continue;
+        } else if (key == UDIVMODDI4) {
+          udivmoddi4 = value;
+        } else if (key == GET_TEMP_RET0) {
+          getTempRet0 = value;
         }
         assert(wasm.checkFunction(value));
         auto export_ = allocator.alloc<Export>();
@@ -739,10 +758,107 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   }
 
   wasm.memory.exportName = MEMORY;
+
+  if (udivmoddi4.is() && getTempRet0.is()) {
+    // generate a wasm-optimized __udivmoddi4 method, which we can do much more efficiently in wasm
+    // we can only do this if we know getTempRet0 as well since we use it to figure out which minified global is tempRet0
+    // (getTempRet0 might be an import, if this is a shared module, so we can't optimize that case)
+    int tempRet0;
+    {
+      Expression* curr = wasm.getFunction(getTempRet0)->body;
+      if (curr->is<Block>()) curr = curr->cast<Block>()->list[0];
+      curr = curr->cast<Return>()->value;
+      auto* load = curr->cast<Load>();
+      auto* ptr = load->ptr->cast<Const>();
+      tempRet0 = ptr->value.geti32() + load->offset;
+    }
+    // udivmoddi4 receives xl, xh, yl, yl, r, and
+    //    if r then *r = x % y
+    //    returns x / y
+    auto* func = wasm.getFunction(udivmoddi4);
+    assert(!func->type.is());
+    Name xl = func->params[0].name,
+         xh = func->params[1].name,
+         yl = func->params[2].name,
+         yh = func->params[3].name,
+         r = func->params[4].name;
+    func->locals.clear();
+    Name x64("x64"), y64("y64");
+    func->locals.emplace_back(x64, i64);
+    func->locals.emplace_back(y64, i64);
+    auto* body = allocator.alloc<Block>();
+    auto recreateI64 = [&](Name target, Name low, Name high) {
+      return builder.makeSetLocal(
+        target,
+        builder.makeBinary(
+          Or,
+          builder.makeUnary(
+            ExtendUInt32,
+            builder.makeGetLocal(low, i32)
+          ),
+          builder.makeBinary(
+            Shl,
+            builder.makeUnary(
+              ExtendUInt32,
+              builder.makeGetLocal(high, i32)
+            ),
+            builder.makeConst(Literal(int64_t(32)))
+          )
+        )
+      );
+    };
+    body->list.push_back(recreateI64(x64, xl, xh));
+    body->list.push_back(recreateI64(y64, yl, yh));
+    body->list.push_back(
+      builder.makeIf(
+        builder.makeGetLocal(r, i32),
+        builder.makeStore(
+          8, 0, 8,
+          builder.makeGetLocal(r, i32),
+          builder.makeBinary(
+            RemU,
+            builder.makeGetLocal(x64, i64),
+            builder.makeGetLocal(y64, i64)
+          )
+        )
+      )
+    );
+    body->list.push_back(
+      builder.makeSetLocal(
+        x64,
+        builder.makeBinary(
+          DivU,
+          builder.makeGetLocal(x64, i64),
+          builder.makeGetLocal(y64, i64)
+        )
+      )
+    );
+    body->list.push_back(
+      builder.makeStore(
+        4, 0, 4,
+        builder.makeConst(Literal(int32_t(tempRet0))),
+        builder.makeUnary(
+          WrapInt64,
+          builder.makeBinary(
+            ShrU,
+            builder.makeGetLocal(x64, i64),
+            builder.makeConst(Literal(int64_t(32)))
+          )
+        )
+      )
+    );
+    body->list.push_back(
+      builder.makeUnary(
+        WrapInt64,
+        builder.makeGetLocal(x64, i64)
+      )
+    );
+    func->body = body;
+  }
 }
 
 Function* Asm2WasmBuilder::processFunction(Ref ast) {
-  //if (ast[1] != IString("qta")) return nullptr;
+  auto name = ast[1]->getIString();
 
   if (debug) {
     std::cout << "\nfunc: " << ast[1]->getIString().str << '\n';
@@ -751,7 +867,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   }
 
   auto function = allocator.alloc<Function>();
-  function->name = ast[1]->getIString();
+  function->name = name;
   Ref params = ast[2];
   Ref body = ast[3];
 
@@ -1092,10 +1208,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->type = WasmType::i32;
           return ret;
         }
-        if (name == Math_clz32) {
+        if (name == Math_clz32 || name == llvm_cttz_i32) {
           assert(ast[2]->size() == 1);
           auto ret = allocator.alloc<Unary>();
-          ret->op = Clz;
+          ret->op = name == Math_clz32 ? Clz : Ctz;
           ret->value = process(ast[2][0]);
           ret->type = WasmType::i32;
           return ret;
@@ -1279,9 +1395,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         Break *breakOut = allocator.alloc<Break>();
         breakOut->name = out;
         If *condition = allocator.alloc<If>();
-        condition->condition = process(ast[1]);
-        condition->ifTrue = allocator.alloc<Nop>();
-        condition->ifFalse = breakOut;
+        condition->condition = builder.makeUnary(EqZ, process(ast[1]));
+        condition->ifTrue = breakOut;
         auto body = allocator.alloc<Block>();
         body->list.push_back(condition);
         body->list.push_back(process(ast[2]));
@@ -1377,9 +1492,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Break *breakOut = allocator.alloc<Break>();
       breakOut->name = out;
       If *condition = allocator.alloc<If>();
-      condition->condition = process(fcond);
-      condition->ifTrue = allocator.alloc<Nop>();
-      condition->ifFalse = breakOut;
+      condition->condition = builder.makeUnary(EqZ, process(fcond));
+      condition->ifTrue = breakOut;
       auto body = allocator.alloc<Block>();
       body->list.push_back(condition);
       body->list.push_back(process(fbody));
@@ -1594,7 +1708,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   // cleanups/checks
   assert(breakStack.size() == 0 && continueStack.size() == 0);
   assert(parentLabel.isNull());
-
   return function;
 }
 
