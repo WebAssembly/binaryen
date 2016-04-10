@@ -366,7 +366,7 @@ struct PostWalker : public Walker<SubType> {
 // to noteNonLinear().
 
 template<typename SubType>
-struct SimpleExecutionWalker : public Walker<SubType> {
+struct SimpleExecutionWalker : public PostWalker<SubType> {
   SimpleExecutionWalker() {}
 
   // subclasses should implement this
@@ -421,96 +421,16 @@ struct SimpleExecutionWalker : public Walker<SubType> {
         self->addTask(SubType::scan, &curr->cast<Switch>()->condition);
         break;
       }
-      case Expression::Id::CallId: {
-        self->addTask(SubType::doVisitCall, currp);
-        auto& list = curr->cast<Call>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->addTask(SubType::scan, &list[i]);
-        }
-        break;
-      }
-      case Expression::Id::CallImportId: {
-        self->addTask(SubType::doVisitCallImport, currp);
-        auto& list = curr->cast<CallImport>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->addTask(SubType::scan, &list[i]);
-        }
-        break;
-      }
-      case Expression::Id::CallIndirectId: {
-        self->addTask(SubType::doVisitCallIndirect, currp);
-        auto& list = curr->cast<CallIndirect>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->addTask(SubType::scan, &list[i]);
-        }
-        self->addTask(SubType::scan, &curr->cast<CallIndirect>()->target);
-        break;
-      }
-      case Expression::Id::GetLocalId: {
-        self->addTask(SubType::doVisitGetLocal, currp); // TODO: optimize leaves with a direct call?
-        break;
-      }
-      case Expression::Id::SetLocalId: {
-        self->addTask(SubType::doVisitSetLocal, currp);
-        self->addTask(SubType::scan, &curr->cast<SetLocal>()->value);
-        break;
-      }
-      case Expression::Id::LoadId: {
-        self->addTask(SubType::doVisitLoad, currp);
-        self->addTask(SubType::scan, &curr->cast<Load>()->ptr);
-        break;
-      }
-      case Expression::Id::StoreId: {
-        self->addTask(SubType::doVisitStore, currp);
-        self->addTask(SubType::scan, &curr->cast<Store>()->value);
-        self->addTask(SubType::scan, &curr->cast<Store>()->ptr);
-        break;
-      }
-      case Expression::Id::ConstId: {
-        self->addTask(SubType::doVisitConst, currp);
-        break;
-      }
-      case Expression::Id::UnaryId: {
-        self->addTask(SubType::doVisitUnary, currp);
-        self->addTask(SubType::scan, &curr->cast<Unary>()->value);
-        break;
-      }
-      case Expression::Id::BinaryId: {
-        self->addTask(SubType::doVisitBinary, currp);
-        self->addTask(SubType::scan, &curr->cast<Binary>()->right);
-        self->addTask(SubType::scan, &curr->cast<Binary>()->left);
-        break;
-      }
-      case Expression::Id::SelectId: {
-        self->addTask(SubType::doVisitSelect, currp);
-        self->addTask(SubType::scan, &curr->cast<Select>()->condition);
-        self->addTask(SubType::scan, &curr->cast<Select>()->ifFalse);
-        self->addTask(SubType::scan, &curr->cast<Select>()->ifTrue);
-        break;
-      }
       case Expression::Id::ReturnId: {
         self->addTask(SubType::doVisitReturn, currp);
         self->addTask(SubType::doNoteNonLinear, currp);
         self->maybeAddTask(SubType::scan, &curr->cast<Return>()->value);
         break;
       }
-      case Expression::Id::HostId: {
-        self->addTask(SubType::doVisitHost, currp);
-        auto& list = curr->cast<Host>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->addTask(SubType::scan, &list[i]);
-        }
-        break;
+      default: {
+        // other node types do not have control flow, use regular post-order
+        PostWalker<SubType>::scan(self, currp);
       }
-      case Expression::Id::NopId: {
-        self->addTask(SubType::doVisitNop, currp);
-        break;
-      }
-      case Expression::Id::UnreachableId: {
-        self->addTask(SubType::doVisitUnreachable, currp);
-        break;
-      }
-      default: WASM_UNREACHABLE();
     }
   }
 };
