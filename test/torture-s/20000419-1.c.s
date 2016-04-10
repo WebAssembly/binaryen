@@ -46,13 +46,43 @@ sister:                                 # @sister
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %sister.exit
+	.local  	i32, i32
+# BB#0:                                 # %entry
+	i32.const	$push8=, __stack_pointer
+	i32.load	$push9=, 0($pop8)
+	i32.const	$push10=, 16
+	i32.sub 	$1=, $pop9, $pop10
+	i32.const	$push11=, __stack_pointer
+	i32.store	$discard=, 0($pop11), $1
+	i32.const	$push12=, 4
+	i32.add 	$push13=, $1, $pop12
+	i32.const	$push2=, 8
+	i32.add 	$push3=, $pop13, $pop2
 	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	i32.load	$push1=, .Lmain.f+8($pop0)
+	i32.store	$discard=, 0($pop3), $pop1
+	i32.const	$push7=, 0
+	i64.load	$push4=, .Lmain.f($pop7):p2align=2
+	i64.store	$discard=, 4($1):p2align=2, $pop4
+	i32.const	$push14=, 4
+	i32.add 	$push15=, $1, $pop14
+	i32.const	$push5=, 1
+	call    	sister@FUNCTION, $pop15, $pop5, $0
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+
+	.type	.Lmain.f,@object        # @main.f
+	.section	.rodata..Lmain.f,"a",@progbits
+	.p2align	2
+.Lmain.f:
+	.int32	7                       # 0x7
+	.int32	8                       # 0x8
+	.int32	9                       # 0x9
+	.size	.Lmain.f, 12
 
 
 	.ident	"clang version 3.9.0 "

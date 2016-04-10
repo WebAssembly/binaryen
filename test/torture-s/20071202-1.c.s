@@ -12,18 +12,14 @@ foo:                                    # @foo
 	i32.load	$push0=, 4($0)
 	i32.store	$discard=, 0($0), $pop0
 	i32.store	$discard=, 4($0), $1
-	i32.const	$push1=, 28
-	i32.add 	$push2=, $0, $pop1
-	i32.const	$push3=, 0
-	i32.store	$1=, 0($pop2), $pop3
-	i32.const	$push8=, 12
-	i32.add 	$push9=, $0, $pop8
-	i32.const	$push4=, 20
-	i32.add 	$push5=, $0, $pop4
-	i64.const	$push6=, 0
-	i64.store	$push7=, 0($pop5):p2align=2, $pop6
-	i64.store	$discard=, 0($pop9):p2align=2, $pop7
-	i32.store	$discard=, 8($0), $1
+	i32.const	$push6=, 16
+	i32.add 	$push7=, $0, $pop6
+	i32.const	$push3=, 24
+	i32.add 	$push4=, $0, $pop3
+	i64.const	$push1=, 0
+	i64.store	$push2=, 8($0):p2align=2, $pop1
+	i64.store	$push5=, 0($pop4):p2align=2, $pop2
+	i64.store	$discard=, 0($pop7):p2align=2, $pop5
 	return
 	.endfunc
 .Lfunc_end0:

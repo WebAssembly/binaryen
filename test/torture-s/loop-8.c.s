@@ -32,25 +32,25 @@ main:                                   # @main
 	.result 	i32
 	.local  	f64, i32
 # BB#0:                                 # %entry
-	i32.const	$push19=, __stack_pointer
-	i32.load	$push20=, 0($pop19)
-	i32.const	$push21=, 16
-	i32.sub 	$1=, $pop20, $pop21
-	i32.const	$push22=, __stack_pointer
-	i32.store	$discard=, 0($pop22), $1
+	i32.const	$push17=, __stack_pointer
+	i32.load	$push18=, 0($pop17)
+	i32.const	$push19=, 16
+	i32.sub 	$1=, $pop18, $pop19
+	i32.const	$push20=, __stack_pointer
+	i32.store	$discard=, 0($pop20), $1
 	block
 	block
-	i32.const	$push15=, 0
-	f64.load	$push14=, a($pop15):p2align=4
-	tee_local	$push13=, $0=, $pop14
-	f64.const	$push12=, 0x0p0
-	f64.gt  	$push0=, $pop13, $pop12
+	i32.const	$push11=, 0
+	f64.load	$push10=, a($pop11):p2align=4
+	tee_local	$push9=, $0=, $pop10
+	f64.const	$push8=, 0x0p0
+	f64.gt  	$push0=, $pop9, $pop8
 	br_if   	0, $pop0        # 0: down to label2
 # BB#1:                                 # %for.cond
-	i32.const	$push17=, 0
-	f64.load	$0=, a+8($pop17)
-	f64.const	$push16=, 0x0p0
-	f64.le  	$push1=, $0, $pop16
+	i32.const	$push13=, 0
+	f64.load	$0=, a+8($pop13)
+	f64.const	$push12=, 0x0p0
+	f64.le  	$push1=, $0, $pop12
 	f64.ne  	$push2=, $0, $0
 	i32.or  	$push3=, $pop1, $pop2
 	i32.const	$push25=, 0
@@ -66,28 +66,23 @@ main:                                   # @main
 	br_if   	1, $pop28       # 1: down to label1
 .LBB1_3:                                # %e
 	end_block                       # label2:
-	block
-	f64.store	$push8=, 8($1), $0
-	f64.const	$push9=, 0x1p0
-	f64.eq  	$push10=, $pop8, $pop9
-	br_if   	0, $pop10       # 0: down to label3
-# BB#4:                                 # %if.then.i
-	call    	abort@FUNCTION
+	f64.store	$discard=, 8($1), $0
+	i32.const	$push15=, 0
+	i32.const	$push21=, 8
+	i32.add 	$push22=, $1, $pop21
+	call    	bar@FUNCTION, $pop15, $pop22
+	i32.const	$push14=, 0
+	call    	exit@FUNCTION, $pop14
 	unreachable
-.LBB1_5:                                # %bar.exit
-	end_block                       # label3:
-	i32.const	$push11=, 0
-	call    	exit@FUNCTION, $pop11
-	unreachable
-.LBB1_6:                                # %for.cond.2
+.LBB1_4:                                # %for.cond.2
 	end_block                       # label1:
 	f64.store	$discard=, 8($1), $0
 	i32.const	$push7=, 1
 	i32.const	$push23=, 8
 	i32.add 	$push24=, $1, $pop23
 	call    	bar@FUNCTION, $pop7, $pop24
-	i32.const	$push18=, 1
-	call    	exit@FUNCTION, $pop18
+	i32.const	$push16=, 1
+	call    	exit@FUNCTION, $pop16
 	unreachable
 	.endfunc
 .Lfunc_end1:

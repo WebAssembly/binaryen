@@ -13,7 +13,7 @@ t:                                      # @t
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:
+# BB#1:                                 # %for.body.preheader
 	i32.const	$1=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1

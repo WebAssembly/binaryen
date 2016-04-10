@@ -126,253 +126,245 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push140=, __stack_pointer
-	i32.load	$push141=, 0($pop140)
-	i32.const	$push142=, 112
-	i32.sub 	$3=, $pop141, $pop142
-	i32.const	$push143=, __stack_pointer
-	i32.store	$discard=, 0($pop143), $3
-	i32.const	$push12=, 28
-	i32.add 	$push13=, $3, $pop12
-	i32.const	$push2=, 0
-	i32.load	$push14=, .Lmain.e+28($pop2)
-	i32.store	$discard=, 0($pop13), $pop14
+	i32.const	$push133=, __stack_pointer
+	i32.load	$push134=, 0($pop133)
+	i32.const	$push135=, 112
+	i32.sub 	$3=, $pop134, $pop135
+	i32.const	$push136=, __stack_pointer
+	i32.store	$discard=, 0($pop136), $3
 	i32.const	$push0=, 24
-	i32.add 	$push15=, $3, $pop0
-	i32.const	$push113=, 0
-	i32.load	$push16=, .Lmain.e+24($pop113):p2align=3
-	i32.store	$discard=, 0($pop15):p2align=3, $pop16
-	i32.const	$push147=, 32
-	i32.add 	$push148=, $3, $pop147
-	i32.const	$push112=, 24
-	i32.add 	$push1=, $pop148, $pop112
-	i32.const	$push111=, 0
-	i64.load	$push3=, .Lmain.c+24($pop111)
-	i64.store	$discard=, 0($pop1), $pop3
-	i32.const	$push149=, 32
-	i32.add 	$push150=, $3, $pop149
+	i32.add 	$push12=, $3, $pop0
+	i32.const	$push2=, 0
+	i64.load	$push13=, .Lmain.e+24($pop2)
+	i64.store	$discard=, 0($pop12), $pop13
+	i32.const	$push14=, 20
+	i32.add 	$push15=, $3, $pop14
+	i32.const	$push108=, 0
+	i32.load	$push16=, .Lmain.e+20($pop108)
+	i32.store	$discard=, 0($pop15), $pop16
 	i32.const	$push4=, 16
-	i32.add 	$push5=, $pop150, $pop4
-	i32.const	$push110=, 0
-	i64.load	$push6=, .Lmain.c+16($pop110):p2align=4
+	i32.add 	$push17=, $3, $pop4
+	i32.const	$push107=, 0
+	i32.load	$push18=, .Lmain.e+16($pop107):p2align=4
+	i32.store	$discard=, 0($pop17):p2align=4, $pop18
+	i32.const	$push140=, 32
+	i32.add 	$push141=, $3, $pop140
+	i32.const	$push106=, 24
+	i32.add 	$push1=, $pop141, $pop106
+	i32.const	$push105=, 0
+	i64.load	$push3=, .Lmain.c+24($pop105)
+	i64.store	$discard=, 0($pop1), $pop3
+	i32.const	$push142=, 32
+	i32.add 	$push143=, $3, $pop142
+	i32.const	$push104=, 16
+	i32.add 	$push5=, $pop143, $pop104
+	i32.const	$push103=, 0
+	i64.load	$push6=, .Lmain.c+16($pop103):p2align=4
 	i64.store	$discard=, 0($pop5):p2align=4, $pop6
 	i32.const	$push11=, 3
 	i32.store	$discard=, 84($3), $pop11
-	i32.const	$push109=, 16
-	i32.add 	$push17=, $3, $pop109
-	i32.const	$push108=, 0
-	i64.load	$push18=, .Lmain.e+16($pop108):p2align=4
-	i64.store	$discard=, 0($pop17):p2align=4, $pop18
-	i32.const	$push107=, 0
-	i64.load	$push7=, .Lmain.c+8($pop107)
+	i32.const	$push102=, 0
+	i32.load	$push19=, .Lmain.e+4($pop102)
+	i32.store	$discard=, 4($3), $pop19
+	i32.const	$push101=, 0
+	i32.load	$push20=, .Lmain.e($pop101):p2align=4
+	i32.store	$discard=, 0($3):p2align=4, $pop20
+	i32.const	$push100=, 0
+	i32.load	$push21=, .Lmain.e+8($pop100):p2align=3
+	i32.store	$discard=, 8($3):p2align=3, $pop21
+	i32.const	$push99=, 0
+	i32.load	$push22=, .Lmain.e+12($pop99)
+	i32.store	$discard=, 12($3), $pop22
+	i32.const	$push98=, 0
+	i64.load	$push7=, .Lmain.c+8($pop98)
 	i64.store	$discard=, 40($3), $pop7
-	i32.const	$push106=, 0
-	i64.load	$push8=, .Lmain.c($pop106):p2align=4
+	i32.const	$push97=, 0
+	i64.load	$push8=, .Lmain.c($pop97):p2align=4
 	i64.store	$discard=, 32($3):p2align=4, $pop8
 	i64.const	$push9=, 4621819117588971520
 	i64.store	$discard=, 64($3), $pop9
 	i64.const	$push10=, 4618441417868443648
 	i64.store	$discard=, 72($3), $pop10
-	i32.const	$push105=, 0
-	i64.load	$push19=, .Lmain.e+8($pop105)
-	i64.store	$discard=, 8($3), $pop19
-	i32.const	$push104=, 0
-	i64.load	$push20=, .Lmain.e($pop104):p2align=4
-	i64.store	$discard=, 0($3):p2align=4, $pop20
-	i32.const	$push151=, 32
-	i32.add 	$push152=, $3, $pop151
-	i32.store	$discard=, 80($3):p2align=3, $pop152
-	i32.store	$discard=, 104($3):p2align=3, $3
-	i32.const	$push153=, 88
-	i32.add 	$push154=, $3, $pop153
-	i32.const	$push155=, 64
-	i32.add 	$push156=, $3, $pop155
-	call    	foo@FUNCTION, $pop154, $pop156
-	block
-	f64.load	$push21=, 0($3):p2align=4
-	f64.const	$push22=, 0x0p0
-	f64.ne  	$push23=, $pop21, $pop22
-	br_if   	0, $pop23       # 0: down to label6
-# BB#1:                                 # %lor.lhs.false
-	f64.load	$push24=, 8($3)
-	f64.const	$push25=, 0x1.4p4
-	f64.ne  	$push26=, $pop24, $pop25
-	br_if   	0, $pop26       # 0: down to label6
-# BB#2:                                 # %lor.lhs.false9
-	f64.load	$push27=, 16($3):p2align=4
-	f64.const	$push28=, 0x1.4p3
-	f64.ne  	$push29=, $pop27, $pop28
-	br_if   	0, $pop29       # 0: down to label6
-# BB#3:                                 # %lor.lhs.false12
-	f64.load	$push30=, 24($3)
-	f64.const	$push31=, -0x1.4p3
-	f64.ne  	$push32=, $pop30, $pop31
-	br_if   	0, $pop32       # 0: down to label6
-# BB#4:                                 # %if.end
-	i32.const	$push157=, 64
-	i32.add 	$push158=, $3, $pop157
-	i32.const	$push36=, 20
-	i32.add 	$push37=, $pop158, $pop36
-	i32.const	$push38=, 2
-	i32.store	$discard=, 0($pop37), $pop38
-	i32.const	$push39=, 28
-	i32.add 	$push40=, $3, $pop39
-	i32.const	$push41=, 0
-	i32.load	$push42=, .Lmain.e+28($pop41)
-	i32.store	$discard=, 0($pop40), $pop42
-	i32.const	$push43=, 24
-	i32.add 	$push121=, $3, $pop43
-	tee_local	$push120=, $0=, $pop121
-	i32.const	$push119=, 0
-	i32.load	$push44=, .Lmain.e+24($pop119):p2align=3
-	i32.store	$discard=, 0($pop120):p2align=3, $pop44
-	i32.const	$push45=, 16
-	i32.add 	$push118=, $3, $pop45
-	tee_local	$push117=, $2=, $pop118
-	i32.const	$push116=, 0
-	i64.load	$push46=, .Lmain.e+16($pop116):p2align=4
-	i64.store	$discard=, 0($pop117):p2align=4, $pop46
-	i32.const	$push115=, 0
-	i64.load	$push47=, .Lmain.e+8($pop115)
-	i64.store	$discard=, 8($3), $pop47
-	i32.const	$push114=, 0
-	i64.load	$push48=, .Lmain.e($pop114):p2align=4
-	i64.store	$discard=, 0($3):p2align=4, $pop48
-	i32.const	$push159=, 88
-	i32.add 	$push160=, $3, $pop159
-	i32.const	$push161=, 64
-	i32.add 	$push162=, $3, $pop161
-	call    	foo@FUNCTION, $pop160, $pop162
-	f64.load	$push49=, 0($3):p2align=4
-	f64.const	$push50=, 0x1.ep5
-	f64.ne  	$push51=, $pop49, $pop50
-	br_if   	0, $pop51       # 0: down to label6
-# BB#5:                                 # %if.end
-	f64.load	$push33=, 8($3)
-	f64.const	$push52=, 0x1.4p4
-	f64.ne  	$push53=, $pop33, $pop52
-	br_if   	0, $pop53       # 0: down to label6
-# BB#6:                                 # %if.end
-	f64.load	$push34=, 0($2):p2align=4
-	f64.const	$push54=, -0x1.4p3
-	f64.ne  	$push55=, $pop34, $pop54
-	br_if   	0, $pop55       # 0: down to label6
-# BB#7:                                 # %if.end
-	f64.load	$push35=, 0($0)
-	f64.const	$push56=, 0x1.d8p6
-	f64.ne  	$push57=, $pop35, $pop56
-	br_if   	0, $pop57       # 0: down to label6
-# BB#8:                                 # %if.end30
-	i32.const	$push163=, 64
-	i32.add 	$push164=, $3, $pop163
-	i32.const	$push61=, 20
-	i32.add 	$push62=, $pop164, $pop61
-	i32.const	$push63=, 1
-	i32.store	$discard=, 0($pop62), $pop63
-	i32.const	$push64=, 28
-	i32.add 	$push65=, $3, $pop64
-	i32.const	$push66=, 0
-	i32.load	$push67=, .Lmain.e+28($pop66)
-	i32.store	$discard=, 0($pop65), $pop67
-	i32.const	$push68=, 24
-	i32.add 	$push129=, $3, $pop68
-	tee_local	$push128=, $0=, $pop129
-	i32.const	$push127=, 0
-	i32.load	$push69=, .Lmain.e+24($pop127):p2align=3
-	i32.store	$discard=, 0($pop128):p2align=3, $pop69
-	i32.const	$push70=, 16
-	i32.add 	$push126=, $3, $pop70
-	tee_local	$push125=, $2=, $pop126
-	i32.const	$push124=, 0
-	i64.load	$push71=, .Lmain.e+16($pop124):p2align=4
-	i64.store	$discard=, 0($pop125):p2align=4, $pop71
-	i32.const	$push123=, 0
-	i64.load	$push72=, .Lmain.e+8($pop123)
-	i64.store	$discard=, 8($3), $pop72
-	i32.const	$push122=, 0
-	i64.load	$push73=, .Lmain.e($pop122):p2align=4
-	i64.store	$discard=, 0($3):p2align=4, $pop73
-	i32.const	$push165=, 88
-	i32.add 	$push166=, $3, $pop165
-	i32.const	$push167=, 64
-	i32.add 	$push168=, $3, $pop167
-	call    	foo@FUNCTION, $pop166, $pop168
-	f64.load	$push74=, 0($3):p2align=4
-	f64.const	$push75=, -0x1.4p4
-	f64.ne  	$push76=, $pop74, $pop75
-	br_if   	0, $pop76       # 0: down to label6
-# BB#9:                                 # %if.end30
-	f64.load	$push58=, 8($3)
-	f64.const	$push77=, -0x1.4p3
-	f64.ne  	$push78=, $pop58, $pop77
-	br_if   	0, $pop78       # 0: down to label6
-# BB#10:                                # %if.end30
-	f64.load	$push59=, 0($2):p2align=4
-	f64.const	$push130=, 0x1.d8p6
-	f64.ne  	$push79=, $pop59, $pop130
-	br_if   	0, $pop79       # 0: down to label6
-# BB#11:                                # %if.end30
-	f64.load	$push60=, 0($0)
-	f64.const	$push131=, 0x1.d8p6
-	f64.ne  	$push80=, $pop60, $pop131
-	br_if   	0, $pop80       # 0: down to label6
-# BB#12:                                # %if.end46
-	i32.const	$push87=, 28
-	i32.add 	$push88=, $3, $pop87
-	i32.const	$push169=, 64
-	i32.add 	$push170=, $3, $pop169
-	i32.const	$push84=, 20
-	i32.add 	$push85=, $pop170, $pop84
-	i32.const	$push86=, 0
-	i32.store	$push137=, 0($pop85), $pop86
-	tee_local	$push136=, $2=, $pop137
-	i32.load	$push89=, .Lmain.e+28($pop136)
-	i32.store	$discard=, 0($pop88), $pop89
-	i32.const	$push90=, 24
-	i32.add 	$push135=, $3, $pop90
-	tee_local	$push134=, $1=, $pop135
-	i32.load	$push91=, .Lmain.e+24($2):p2align=3
-	i32.store	$discard=, 0($pop134):p2align=3, $pop91
-	i32.const	$push92=, 16
-	i32.add 	$push133=, $3, $pop92
-	tee_local	$push132=, $0=, $pop133
-	i64.load	$push93=, .Lmain.e+16($2):p2align=4
-	i64.store	$discard=, 0($pop132):p2align=4, $pop93
-	i64.load	$push94=, .Lmain.e+8($2)
-	i64.store	$discard=, 8($3), $pop94
-	i64.load	$push95=, .Lmain.e($2):p2align=4
-	i64.store	$discard=, 0($3):p2align=4, $pop95
-	i32.const	$push171=, 88
-	i32.add 	$push172=, $3, $pop171
-	i32.const	$push173=, 64
-	i32.add 	$push174=, $3, $pop173
-	call    	foo@FUNCTION, $pop172, $pop174
-	f64.load	$push96=, 0($3):p2align=4
-	f64.const	$push97=, 0x0p0
-	f64.ne  	$push98=, $pop96, $pop97
-	br_if   	0, $pop98       # 0: down to label6
-# BB#13:                                # %if.end46
-	f64.load	$push81=, 8($3)
-	f64.const	$push138=, 0x1.d8p6
-	f64.ne  	$push99=, $pop81, $pop138
-	br_if   	0, $pop99       # 0: down to label6
-# BB#14:                                # %if.end46
-	f64.load	$push82=, 0($0):p2align=4
-	f64.const	$push139=, 0x1.d8p6
-	f64.ne  	$push100=, $pop82, $pop139
-	br_if   	0, $pop100      # 0: down to label6
-# BB#15:                                # %if.end46
-	f64.load	$push83=, 0($1)
-	f64.const	$push101=, 0x1.d8p6
-	f64.ne  	$push102=, $pop83, $pop101
-	br_if   	0, $pop102      # 0: down to label6
-# BB#16:                                # %if.end62
-	i32.const	$push103=, 0
-	i32.const	$push146=, __stack_pointer
-	i32.const	$push144=, 112
+	i32.const	$push144=, 32
 	i32.add 	$push145=, $3, $pop144
-	i32.store	$discard=, 0($pop146), $pop145
-	return  	$pop103
+	i32.store	$discard=, 80($3):p2align=3, $pop145
+	i32.store	$discard=, 104($3):p2align=3, $3
+	i32.const	$push146=, 88
+	i32.add 	$push147=, $3, $pop146
+	i32.const	$push148=, 64
+	i32.add 	$push149=, $3, $pop148
+	call    	foo@FUNCTION, $pop147, $pop149
+	block
+	f64.load	$push23=, 0($3):p2align=4
+	f64.const	$push24=, 0x0p0
+	f64.ne  	$push25=, $pop23, $pop24
+	br_if   	0, $pop25       # 0: down to label6
+# BB#1:                                 # %lor.lhs.false
+	f64.load	$push26=, 8($3)
+	f64.const	$push27=, 0x1.4p4
+	f64.ne  	$push28=, $pop26, $pop27
+	br_if   	0, $pop28       # 0: down to label6
+# BB#2:                                 # %lor.lhs.false9
+	f64.load	$push29=, 16($3):p2align=4
+	f64.const	$push30=, 0x1.4p3
+	f64.ne  	$push31=, $pop29, $pop30
+	br_if   	0, $pop31       # 0: down to label6
+# BB#3:                                 # %lor.lhs.false12
+	f64.load	$push32=, 24($3)
+	f64.const	$push33=, -0x1.4p3
+	f64.ne  	$push34=, $pop32, $pop33
+	br_if   	0, $pop34       # 0: down to label6
+# BB#4:                                 # %if.end
+	i32.const	$push150=, 64
+	i32.add 	$push151=, $3, $pop150
+	i32.const	$push38=, 20
+	i32.add 	$push39=, $pop151, $pop38
+	i32.const	$push40=, 2
+	i32.store	$discard=, 0($pop39), $pop40
+	i32.const	$push43=, 24
+	i32.add 	$push115=, $3, $pop43
+	tee_local	$push114=, $0=, $pop115
+	i32.const	$push41=, 0
+	i64.load	$push42=, .Lmain.e+24($pop41)
+	i64.store	$discard=, 0($pop114), $pop42
+	i32.const	$push45=, 16
+	i32.add 	$push113=, $3, $pop45
+	tee_local	$push112=, $1=, $pop113
+	i32.const	$push111=, 0
+	i64.load	$push44=, .Lmain.e+16($pop111):p2align=4
+	i64.store	$discard=, 0($pop112):p2align=4, $pop44
+	i32.const	$push110=, 0
+	i64.load	$push46=, .Lmain.e($pop110):p2align=4
+	i64.store	$discard=, 0($3):p2align=4, $pop46
+	i32.const	$push109=, 0
+	i64.load	$push47=, .Lmain.e+8($pop109)
+	i64.store	$discard=, 8($3), $pop47
+	i32.const	$push152=, 88
+	i32.add 	$push153=, $3, $pop152
+	i32.const	$push154=, 64
+	i32.add 	$push155=, $3, $pop154
+	call    	foo@FUNCTION, $pop153, $pop155
+	f64.load	$push48=, 0($3):p2align=4
+	f64.const	$push49=, 0x1.ep5
+	f64.ne  	$push50=, $pop48, $pop49
+	br_if   	0, $pop50       # 0: down to label6
+# BB#5:                                 # %if.end
+	f64.load	$push35=, 8($3)
+	f64.const	$push51=, 0x1.4p4
+	f64.ne  	$push52=, $pop35, $pop51
+	br_if   	0, $pop52       # 0: down to label6
+# BB#6:                                 # %if.end
+	f64.load	$push36=, 0($1):p2align=4
+	f64.const	$push53=, -0x1.4p3
+	f64.ne  	$push54=, $pop36, $pop53
+	br_if   	0, $pop54       # 0: down to label6
+# BB#7:                                 # %if.end
+	f64.load	$push37=, 0($0)
+	f64.const	$push55=, 0x1.d8p6
+	f64.ne  	$push56=, $pop37, $pop55
+	br_if   	0, $pop56       # 0: down to label6
+# BB#8:                                 # %if.end30
+	i32.const	$push156=, 64
+	i32.add 	$push157=, $3, $pop156
+	i32.const	$push60=, 20
+	i32.add 	$push61=, $pop157, $pop60
+	i32.const	$push62=, 1
+	i32.store	$discard=, 0($pop61), $pop62
+	i32.const	$push65=, 24
+	i32.add 	$push122=, $3, $pop65
+	tee_local	$push121=, $0=, $pop122
+	i32.const	$push63=, 0
+	i64.load	$push64=, .Lmain.e+24($pop63)
+	i64.store	$discard=, 0($pop121), $pop64
+	i32.const	$push67=, 16
+	i32.add 	$push120=, $3, $pop67
+	tee_local	$push119=, $1=, $pop120
+	i32.const	$push118=, 0
+	i64.load	$push66=, .Lmain.e+16($pop118):p2align=4
+	i64.store	$discard=, 0($pop119):p2align=4, $pop66
+	i32.const	$push117=, 0
+	i64.load	$push68=, .Lmain.e($pop117):p2align=4
+	i64.store	$discard=, 0($3):p2align=4, $pop68
+	i32.const	$push116=, 0
+	i64.load	$push69=, .Lmain.e+8($pop116)
+	i64.store	$discard=, 8($3), $pop69
+	i32.const	$push158=, 88
+	i32.add 	$push159=, $3, $pop158
+	i32.const	$push160=, 64
+	i32.add 	$push161=, $3, $pop160
+	call    	foo@FUNCTION, $pop159, $pop161
+	f64.load	$push70=, 0($3):p2align=4
+	f64.const	$push71=, -0x1.4p4
+	f64.ne  	$push72=, $pop70, $pop71
+	br_if   	0, $pop72       # 0: down to label6
+# BB#9:                                 # %if.end30
+	f64.load	$push57=, 8($3)
+	f64.const	$push73=, -0x1.4p3
+	f64.ne  	$push74=, $pop57, $pop73
+	br_if   	0, $pop74       # 0: down to label6
+# BB#10:                                # %if.end30
+	f64.load	$push58=, 0($1):p2align=4
+	f64.const	$push123=, 0x1.d8p6
+	f64.ne  	$push75=, $pop58, $pop123
+	br_if   	0, $pop75       # 0: down to label6
+# BB#11:                                # %if.end30
+	f64.load	$push59=, 0($0)
+	f64.const	$push124=, 0x1.d8p6
+	f64.ne  	$push76=, $pop59, $pop124
+	br_if   	0, $pop76       # 0: down to label6
+# BB#12:                                # %if.end46
+	i32.const	$push84=, 24
+	i32.add 	$push130=, $3, $pop84
+	tee_local	$push129=, $2=, $pop130
+	i32.const	$push162=, 64
+	i32.add 	$push163=, $3, $pop162
+	i32.const	$push80=, 20
+	i32.add 	$push81=, $pop163, $pop80
+	i32.const	$push82=, 0
+	i32.store	$push128=, 0($pop81), $pop82
+	tee_local	$push127=, $1=, $pop128
+	i64.load	$push83=, .Lmain.e+24($pop127)
+	i64.store	$discard=, 0($pop129), $pop83
+	i32.const	$push86=, 16
+	i32.add 	$push126=, $3, $pop86
+	tee_local	$push125=, $0=, $pop126
+	i64.load	$push85=, .Lmain.e+16($1):p2align=4
+	i64.store	$discard=, 0($pop125):p2align=4, $pop85
+	i64.load	$push87=, .Lmain.e($1):p2align=4
+	i64.store	$discard=, 0($3):p2align=4, $pop87
+	i64.load	$push88=, .Lmain.e+8($1)
+	i64.store	$discard=, 8($3), $pop88
+	i32.const	$push164=, 88
+	i32.add 	$push165=, $3, $pop164
+	i32.const	$push166=, 64
+	i32.add 	$push167=, $3, $pop166
+	call    	foo@FUNCTION, $pop165, $pop167
+	f64.load	$push89=, 0($3):p2align=4
+	f64.const	$push90=, 0x0p0
+	f64.ne  	$push91=, $pop89, $pop90
+	br_if   	0, $pop91       # 0: down to label6
+# BB#13:                                # %if.end46
+	f64.load	$push77=, 8($3)
+	f64.const	$push131=, 0x1.d8p6
+	f64.ne  	$push92=, $pop77, $pop131
+	br_if   	0, $pop92       # 0: down to label6
+# BB#14:                                # %if.end46
+	f64.load	$push78=, 0($0):p2align=4
+	f64.const	$push132=, 0x1.d8p6
+	f64.ne  	$push93=, $pop78, $pop132
+	br_if   	0, $pop93       # 0: down to label6
+# BB#15:                                # %if.end46
+	f64.load	$push79=, 0($2)
+	f64.const	$push94=, 0x1.d8p6
+	f64.ne  	$push95=, $pop79, $pop94
+	br_if   	0, $pop95       # 0: down to label6
+# BB#16:                                # %if.end62
+	i32.const	$push96=, 0
+	i32.const	$push139=, __stack_pointer
+	i32.const	$push137=, 112
+	i32.add 	$push138=, $3, $pop137
+	i32.store	$discard=, 0($pop139), $pop138
+	return  	$pop96
 .LBB1_17:                               # %if.then61
 	end_block                       # label6:
 	call    	abort@FUNCTION

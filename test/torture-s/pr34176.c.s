@@ -66,25 +66,28 @@ main:                                   # @main
 	i32.call	$discard=, hash_find_entry@FUNCTION, $pop11
 .LBB2_1:                                # %if.end
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB2_2 Depth 2
+                                        #     Child Loop BB2_3 Depth 2
 	loop                            # label1:
-	i32.load	$1=, 12($2)
-	i32.call	$discard=, foo@FUNCTION, $1
-	i32.const	$0=, 0
+	i32.load	$0=, 12($2)
+	i32.call	$discard=, foo@FUNCTION, $0
+	i32.const	$1=, 0
 	block
 	i32.const	$push14=, 0
-	i32.eq  	$push15=, $1, $pop14
+	i32.eq  	$push15=, $0, $pop14
 	br_if   	0, $pop15       # 0: down to label3
-.LBB2_2:                                # %while.body
+# BB#2:                                 # %while.body.preheader
+                                        #   in Loop: Header=BB2_1 Depth=1
+	i32.const	$1=, 0
+.LBB2_3:                                # %while.body
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label4:
 	i32.const	$push2=, -1
-	i32.add 	$1=, $1, $pop2
+	i32.add 	$0=, $0, $pop2
 	i32.const	$push1=, 8
-	i32.add 	$0=, $0, $pop1
-	br_if   	0, $1           # 0: up to label4
-.LBB2_3:                                # %cleanup.thread
+	i32.add 	$1=, $1, $pop1
+	br_if   	0, $0           # 0: up to label4
+.LBB2_4:                                # %cleanup.thread
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop                        # label5:
 	end_block                       # label3:
@@ -92,9 +95,9 @@ main:                                   # @main
 	i32.add 	$push13=, $2, $pop12
 	i32.call	$discard=, hash_find_entry@FUNCTION, $pop13
 	i32.const	$push16=, 0
-	i32.eq  	$push17=, $0, $pop16
+	i32.eq  	$push17=, $1, $pop16
 	br_if   	0, $pop17       # 0: up to label1
-# BB#4:                                 # %for.end
+# BB#5:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push0=, 0
 	i32.const	$push9=, __stack_pointer

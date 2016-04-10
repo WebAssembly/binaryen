@@ -27,22 +27,19 @@ foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %for.inc9.3
 	i32.const	$push0=, 0
-	i32.const	$push1=, 1126498304
-	i32.store	$discard=, foo.tmp+8($pop0):p2align=3, $pop1
-	i32.const	$push11=, 0
-	i32.const	$push2=, 1118306304
-	i32.store	$discard=, foo.tmp+4($pop11), $pop2
-	i32.const	$push10=, 0
-	i32.const	$push3=, 1095761920
-	i32.store	$discard=, foo.tmp($pop10):p2align=4, $pop3
-	i64.const	$push4=, 4803089003686395904
-	i64.store	$discard=, 0($0):p2align=2, $pop4
+	i32.const	$push2=, 1095761920
+	i32.store	$discard=, foo.tmp($pop0):p2align=4, $pop2
 	i32.const	$push9=, 0
-	i64.load	$push5=, foo.tmp+8($pop9)
-	i64.store32	$push6=, 8($0), $pop5
-	i64.const	$push7=, 32
-	i64.shr_u	$push8=, $pop6, $pop7
-	i64.store32	$discard=, 12($0), $pop8
+	i64.const	$push1=, 4838273375797772288
+	i64.store	$discard=, foo.tmp+4($pop9):p2align=2, $pop1
+	i64.const	$push3=, 4803089003686395904
+	i64.store	$discard=, 0($0):p2align=2, $pop3
+	i32.const	$push8=, 0
+	i64.load	$push4=, foo.tmp+8($pop8)
+	i64.store32	$push5=, 8($0), $pop4
+	i64.const	$push6=, 32
+	i64.shr_u	$push7=, $pop5, $pop6
+	i64.store32	$discard=, 12($0), $pop7
 	return
 	.endfunc
 .Lfunc_end1:

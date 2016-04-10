@@ -25,10 +25,10 @@ main:                                   # @main
 	i64.add 	$0=, $0, $pop8
 	i32.const	$push7=, 8
 	i32.add 	$2=, $2, $pop7
-	i64.const	$push6=, 63
-	i64.le_s	$push3=, $0, $pop6
+	i64.const	$push6=, 64
+	i64.lt_s	$push3=, $0, $pop6
 	br_if   	0, $pop3        # 0: up to label1
-# BB#3:
+# BB#3:                                 # %constant_shift.exit.preheader
 	end_loop                        # label2:
 	i32.const	$2=, 0
 	i32.const	$1=, .Lswitch.table

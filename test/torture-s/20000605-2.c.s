@@ -15,7 +15,7 @@ f1:                                     # @f1
 	i32.load	$push0=, 0($1)
 	i32.ge_s	$push1=, $pop8, $pop0
 	br_if   	0, $pop1        # 0: down to label1
-# BB#1:
+# BB#1:                                 # %for.body.preheader
 	i32.const	$3=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
@@ -54,9 +54,22 @@ f1:                                     # @f1
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %for.inc.i
+	.local  	i32, i32
+# BB#0:                                 # %entry
+	i32.const	$push2=, __stack_pointer
+	i32.load	$push3=, 0($pop2)
+	i32.const	$push4=, 16
+	i32.sub 	$1=, $pop3, $pop4
+	i32.const	$push5=, __stack_pointer
+	i32.store	$discard=, 0($pop5), $1
+	i32.const	$push1=, 1
+	i32.store	$discard=, 0($1):p2align=3, $pop1
 	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	i32.store	$0=, 8($1):p2align=3, $pop0
+	i32.const	$push6=, 8
+	i32.add 	$push7=, $1, $pop6
+	call    	f1@FUNCTION, $pop7, $1
+	call    	exit@FUNCTION, $0
 	unreachable
 	.endfunc
 .Lfunc_end1:

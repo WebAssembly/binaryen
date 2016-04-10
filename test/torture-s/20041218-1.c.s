@@ -135,15 +135,21 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %sw.bb.i
-	i32.const	$push1=, 0
+# BB#0:                                 # %entry
+	i32.const	$push2=, __stack_pointer
+	i32.load	$push3=, 0($pop2)
+	i32.const	$push4=, 16
+	i32.sub 	$0=, $pop3, $pop4
+	i32.const	$push5=, __stack_pointer
+	i32.store	$discard=, 0($pop5), $0
+	i32.const	$push6=, 12
+	i32.add 	$push7=, $0, $pop6
 	i32.const	$push0=, 1
-	i32.store	$discard=, baz.v($pop1), $pop0
-	i32.const	$push3=, baz.v+4
-	i32.const	$push4=, 0
-	i32.const	$push2=, 40
-	i32.call	$discard=, memset@FUNCTION, $pop3, $pop4, $pop2
-	i32.call	$discard=, dummy2@FUNCTION, $0, $0
+	i32.store	$push1=, 12($0), $pop0
+	i32.const	$push8=, 8
+	i32.add 	$push9=, $0, $pop8
+	i32.call	$discard=, foo@FUNCTION, $pop7, $pop1, $pop9
+	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end5:

@@ -21,7 +21,7 @@ test:                                   # @test
 	i32.const	$push1=, 2
 	i32.lt_s	$push2=, $0, $pop1
 	br_if   	0, $pop2        # 0: down to label2
-# BB#1:
+# BB#1:                                 # %for.body.preheader
 	i32.const	$1=, 1
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1

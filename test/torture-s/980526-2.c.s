@@ -88,7 +88,6 @@ sys_mknod:                              # @sys_mknod
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
 	i32.const	$push0=, 14
 	i32.shl 	$push1=, $2, $pop0
 	i32.const	$push2=, -4194304
@@ -96,16 +95,7 @@ sys_mknod:                              # @sys_mknod
 	i32.const	$push4=, 255
 	i32.and 	$push5=, $2, $pop4
 	i32.or  	$push6=, $pop3, $pop5
-	i32.const	$push7=, 360710264
-	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	0, $pop8        # 0: down to label1
-# BB#1:                                 # %if.then.i
-	i32.const	$push9=, 0
-	call    	exit@FUNCTION, $pop9
-	unreachable
-.LBB2_2:                                # %if.else.i
-	end_block                       # label1:
-	call    	abort@FUNCTION
+	call    	do_mknod@FUNCTION, $2, $2, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end2:

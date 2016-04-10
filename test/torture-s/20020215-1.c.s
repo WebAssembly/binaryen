@@ -6,20 +6,23 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32
-	.local  	i64
+	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.load	$push0=, 4($1)
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop0, $pop1
-	i32.store	$discard=, 4($1), $pop2
-	i64.load	$2=, 0($1):p2align=2
-	i32.const	$push3=, 8
-	i32.add 	$push4=, $0, $pop3
-	i32.const	$push7=, 8
-	i32.add 	$push5=, $1, $pop7
-	i32.load	$push6=, 0($pop5)
-	i32.store	$discard=, 0($pop4), $pop6
-	i64.store	$discard=, 0($0):p2align=2, $2
+	i32.store	$2=, 4($1), $pop2
+	i32.const	$push4=, 8
+	i32.add 	$push6=, $1, $pop4
+	i32.load	$3=, 0($pop6)
+	i32.load	$push3=, 0($1)
+	i32.store	$discard=, 0($0), $pop3
+	i32.const	$push9=, 8
+	i32.add 	$push5=, $0, $pop9
+	i32.store	$discard=, 0($pop5), $3
+	i32.const	$push7=, 4
+	i32.add 	$push8=, $0, $pop7
+	i32.store	$discard=, 0($pop8), $2
 	return
 	.endfunc
 .Lfunc_end0:

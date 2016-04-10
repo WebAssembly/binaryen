@@ -13,7 +13,7 @@ f:                                      # @f
 	block
 	i32.lt_u	$push0=, $3, $4
 	br_if   	0, $pop0        # 0: down to label1
-# BB#1:
+# BB#1:                                 # %if.end.preheader
 	copy_local	$5=, $0
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
@@ -60,12 +60,18 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %f.exit
+# BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, mem
 	i32.store	$discard=, mem+396($pop1), $pop0
-	i32.const	$push2=, 0
-	call    	exit@FUNCTION, $pop2
+	i32.const	$push5=, mem+400
+	i32.const	$push4=, mem+24
+	i32.const	$push3=, mem+32
+	i32.const	$push2=, mem+396
+	i32.const	$push7=, mem+396
+	i32.call	$discard=, f@FUNCTION, $pop5, $pop4, $pop3, $pop2, $pop7
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end1:

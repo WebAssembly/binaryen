@@ -26,10 +26,10 @@ main:                                   # @main
 	i64.add 	$0=, $0, $pop19
 	i32.const	$push18=, 8
 	i32.add 	$2=, $2, $pop18
-	i64.const	$push17=, 63
-	i64.le_s	$push3=, $0, $pop17
+	i64.const	$push17=, 64
+	i64.lt_s	$push3=, $0, $pop17
 	br_if   	0, $pop3        # 0: up to label2
-# BB#3:
+# BB#3:                                 # %for.body4.preheader
 	end_loop                        # label3:
 	i64.const	$0=, 0
 	i32.const	$2=, sext
@@ -47,10 +47,10 @@ main:                                   # @main
 	i64.add 	$0=, $0, $pop23
 	i32.const	$push22=, 8
 	i32.add 	$2=, $2, $pop22
-	i64.const	$push21=, 63
-	i64.le_s	$push7=, $0, $pop21
+	i64.const	$push21=, 64
+	i64.lt_s	$push7=, $0, $pop21
 	br_if   	0, $pop7        # 0: up to label4
-# BB#6:
+# BB#6:                                 # %for.body16.preheader
 	end_loop                        # label5:
 	i32.const	$2=, 0
 	i32.const	$1=, zext
@@ -68,10 +68,10 @@ main:                                   # @main
 	i32.add 	$2=, $2, $pop27
 	i32.const	$push26=, 8
 	i32.add 	$1=, $1, $pop26
-	i32.const	$push25=, 63
-	i32.le_s	$push11=, $2, $pop25
+	i32.const	$push25=, 64
+	i32.lt_s	$push11=, $2, $pop25
 	br_if   	0, $pop11       # 0: up to label6
-# BB#9:
+# BB#9:                                 # %for.body28.preheader
 	end_loop                        # label7:
 	i32.const	$2=, 0
 	i32.const	$1=, sext

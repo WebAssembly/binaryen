@@ -21,11 +21,11 @@ CalcPing:                               # @CalcPing
 	i64.shr_u	$push11=, $4, $pop10
 	i32.wrap/i64	$1=, $pop11
 	return  	$1
-.LBB0_2:
+.LBB0_2:                                # %if.end
 	end_block                       # label0:
-	f32.const	$3=, 0x0p0
 	i32.const	$2=, 0
 	i32.const	$1=, 16
+	f32.const	$3=, 0x0p0
 .LBB0_3:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:

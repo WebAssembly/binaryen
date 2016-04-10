@@ -16,7 +16,9 @@ foo:                                    # @foo
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $pop0, $pop7
 	br_if   	0, $pop8        # 0: down to label1
-.LBB0_1:                                # %if.end
+# BB#1:                                 # %if.end.preheader
+	i32.const	$1=, 0
+.LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.add 	$push4=, $0, $1
@@ -24,19 +26,19 @@ foo:                                    # @foo
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $pop3, $pop9
 	br_if   	3, $pop10       # 3: down to label0
-# BB#2:                                 # %if.end5
-                                        #   in Loop: Header=BB0_1 Depth=1
+# BB#3:                                 # %if.end5
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push6=, 1
 	i32.add 	$1=, $1, $pop6
 	i32.const	$push5=, 1
 	i32.add 	$push1=, $2, $pop5
 	i32.load8_u	$push2=, 0($pop1)
 	br_if   	0, $pop2        # 0: up to label2
-.LBB0_3:                                # %do.end
+.LBB0_4:                                # %do.end
 	end_loop                        # label3:
 	end_block                       # label1:
 	return  	$1
-.LBB0_4:                                # %if.then4
+.LBB0_5:                                # %if.then4
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable

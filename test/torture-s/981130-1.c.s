@@ -29,22 +29,13 @@ check:                                  # @check
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
-	i32.const	$push6=, 0
+	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i64.load	$push0=, s2($pop5)
-	i64.store	$push1=, s1($pop6), $pop0
-	i32.wrap/i64	$push2=, $pop1
-	i32.const	$push3=, 1
-	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	0, $pop4        # 0: down to label1
-# BB#1:                                 # %if.then.i
-	i32.const	$push7=, 0
-	call    	exit@FUNCTION, $pop7
-	unreachable
-.LBB1_2:                                # %if.else.i
-	end_block                       # label1:
-	call    	abort@FUNCTION
+	i64.load	$push1=, s2($pop5)
+	i64.store	$push2=, s1($pop0), $pop1
+	i32.wrap/i64	$push3=, $pop2
+	i32.const	$push4=, 1
+	call    	check@FUNCTION, $pop3, $pop4
 	unreachable
 	.endfunc
 .Lfunc_end1:

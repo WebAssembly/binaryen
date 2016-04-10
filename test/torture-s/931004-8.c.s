@@ -18,42 +18,42 @@ f:                                      # @f
 	i32.store	$push12=, 12($4), $1
 	tee_local	$push11=, $1=, $pop12
 	i32.const	$push10=, 4
-	i32.add 	$push2=, $pop11, $pop10
-	i32.store	$discard=, 12($4), $pop2
+	i32.add 	$push0=, $pop11, $pop10
+	i32.store	$discard=, 12($4), $pop0
 	block
 	block
 	block
-	i32.const	$push0=, 0
-	i32.le_s	$push1=, $0, $pop0
+	i32.const	$push9=, 1
+	i32.lt_s	$push1=, $0, $pop9
 	br_if   	0, $pop1        # 0: down to label2
-# BB#1:
+# BB#1:                                 # %for.body.preheader
 	i32.const	$3=, 10
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i32.load8_s	$push3=, 0($1)
-	i32.ne  	$push4=, $3, $pop3
-	br_if   	3, $pop4        # 3: down to label1
+	i32.load8_s	$push2=, 0($1)
+	i32.ne  	$push3=, $3, $pop2
+	br_if   	3, $pop3        # 3: down to label1
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push16=, 8
-	i32.add 	$push5=, $1, $pop16
-	i32.store	$discard=, 12($4), $pop5
+	i32.add 	$push4=, $1, $pop16
+	i32.store	$discard=, 12($4), $pop4
 	i32.const	$push15=, 4
 	i32.add 	$1=, $1, $pop15
 	i32.const	$push14=, -9
 	i32.add 	$2=, $3, $pop14
 	i32.const	$push13=, 1
 	i32.add 	$3=, $3, $pop13
-	i32.lt_s	$push6=, $2, $0
-	br_if   	0, $pop6        # 0: up to label3
+	i32.lt_s	$push5=, $2, $0
+	br_if   	0, $pop5        # 0: up to label3
 .LBB0_4:                                # %for.end
 	end_loop                        # label4:
 	end_block                       # label2:
-	i32.load	$push7=, 0($1)
-	i32.const	$push8=, 123
-	i32.ne  	$push9=, $pop7, $pop8
-	br_if   	1, $pop9        # 1: down to label0
+	i32.load	$push6=, 0($1)
+	i32.const	$push7=, 123
+	i32.ne  	$push8=, $pop6, $pop7
+	br_if   	1, $pop8        # 1: down to label0
 # BB#5:                                 # %if.end10
 	i32.const	$push23=, __stack_pointer
 	i32.const	$push21=, 16

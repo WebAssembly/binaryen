@@ -14,7 +14,9 @@ f:                                      # @f
 	i32.const	$push3=, 1
 	i32.and 	$push0=, $0, $pop3
 	br_if   	0, $pop0        # 0: down to label0
-.LBB0_1:                                # %for.inc
+# BB#1:                                 # %for.inc.preheader
+	i32.const	$1=, 0
+.LBB0_2:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push5=, 1
@@ -22,8 +24,8 @@ f:                                      # @f
 	i32.const	$push4=, 7
 	i32.gt_s	$push2=, $1, $pop4
 	br_if   	1, $pop2        # 1: down to label2
-# BB#2:                                 # %for.inc
-                                        #   in Loop: Header=BB0_1 Depth=1
+# BB#3:                                 # %for.inc
+                                        #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push7=, 1
 	i32.shr_s	$0=, $0, $pop7
 	i32.const	$push6=, 1
@@ -31,7 +33,7 @@ f:                                      # @f
 	i32.const	$push8=, 0
 	i32.eq  	$push9=, $pop1, $pop8
 	br_if   	0, $pop9        # 0: up to label1
-.LBB0_3:                                # %for.end
+.LBB0_4:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
 	return  	$1

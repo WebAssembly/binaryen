@@ -77,7 +77,7 @@ foo:                                    # @foo
 	i64.const	$push8=, 368664092428289
 	i64.ne  	$push9=, $pop7, $pop8
 	br_if   	0, $pop9        # 0: down to label4
-# BB#1:
+# BB#1:                                 # %for.cond.i.preheader
 	i32.const	$2=, 8
 .LBB1_2:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
@@ -142,7 +142,7 @@ main:                                   # @main
 	i64.const	$push8=, 368664092428289
 	i64.ne  	$push9=, $pop7, $pop8
 	br_if   	0, $pop9        # 0: down to label8
-# BB#1:
+# BB#1:                                 # %for.cond.i.i.preheader
 	i32.const	$2=, 8
 .LBB2_2:                                # %for.cond.i.i
                                         # =>This Inner Loop Header: Depth=1
