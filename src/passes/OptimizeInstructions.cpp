@@ -25,7 +25,7 @@
 
 namespace wasm {
 
-struct OptimizeInstructions : public WalkerPass<WasmWalker<OptimizeInstructions>> {
+struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions>> {
   void visitIf(If* curr) {
     // flip branches to get rid of an i32.eqz
     if (curr->ifFalse) {

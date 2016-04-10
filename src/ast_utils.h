@@ -22,7 +22,7 @@
 
 namespace wasm {
 
-struct BreakSeeker : public WasmWalker<BreakSeeker> {
+struct BreakSeeker : public PostWalker<BreakSeeker> {
   Name target; // look for this one
   size_t found;
 
@@ -42,7 +42,7 @@ struct BreakSeeker : public WasmWalker<BreakSeeker> {
 // Look for side effects, including control flow
 // TODO: look at individual locals
 
-struct EffectAnalyzer : public WasmWalker<EffectAnalyzer> {
+struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   bool branches = false;
   bool calls = false;
   bool readsLocal = false;

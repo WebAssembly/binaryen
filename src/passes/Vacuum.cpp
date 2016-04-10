@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-struct Vacuum : public WalkerPass<WasmWalker<Vacuum>> {
+struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
   void visitBlock(Block *curr) {
     // compress out nops
     int skip = 0;

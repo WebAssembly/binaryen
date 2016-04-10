@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-struct RemoveUnusedNames : public WalkerPass<WasmWalker<RemoveUnusedNames>> {
+struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
   // We maintain a list of branches that we saw in children, then when we reach
   // a parent block, we know if it was branched to
   std::set<Name> branchesSeen;

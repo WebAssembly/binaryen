@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-struct PrintSExpression : public WasmVisitor<PrintSExpression, void> {
+struct PrintSExpression : public Visitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
 

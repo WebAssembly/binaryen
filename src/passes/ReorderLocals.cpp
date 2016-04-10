@@ -26,7 +26,7 @@
 
 namespace wasm {
 
-struct ReorderLocals : public WalkerPass<WasmWalker<ReorderLocals, void>> {
+struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
 
   std::map<Name, uint32_t> counts;
 
