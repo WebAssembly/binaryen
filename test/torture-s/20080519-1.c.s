@@ -35,80 +35,80 @@ regrename_optimize:                     # @regrename_optimize
 	.param  	i32
 	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push30=, __stack_pointer
-	i32.load	$push31=, 0($pop30)
-	i32.const	$push32=, 16
-	i32.sub 	$6=, $pop31, $pop32
-	i32.const	$push33=, __stack_pointer
-	i32.store	$discard=, 0($pop33), $6
+	i32.const	$push29=, __stack_pointer
+	i32.load	$push30=, 0($pop29)
+	i32.const	$push31=, 16
+	i32.sub 	$6=, $pop30, $pop31
+	i32.const	$push32=, __stack_pointer
+	i32.store	$discard=, 0($pop32), $6
 	i32.load	$2=, 0($0)
-	i32.const	$push1=, 0
-	i32.store	$push2=, 8($6), $pop1
-	i32.store	$3=, 12($6), $pop2
+	i64.const	$push1=, 0
+	i64.store	$discard=, 8($6):p2align=2, $pop1
 	block
-	i32.const	$push41=, 0
-	i32.eq  	$push42=, $2, $pop41
-	br_if   	0, $pop42       # 0: down to label1
-# BB#1:
+	i32.const	$push40=, 0
+	i32.eq  	$push41=, $2, $pop40
+	br_if   	0, $pop41       # 0: down to label1
+# BB#1:                                 # %for.body.preheader
+	i32.const	$3=, 0
 	i32.const	$1=, -1
-	copy_local	$4=, $3
+	i32.const	$4=, 0
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	copy_local	$push0=, $0
-	i32.load	$push3=, 4($pop0)
-	i32.const	$push24=, 3
-	i32.shl 	$push23=, $pop3, $pop24
-	tee_local	$push22=, $5=, $pop23
-	i32.load	$push4=, reg_class_contents($pop22):p2align=3
-	i32.const	$push21=, -1
-	i32.xor 	$push5=, $pop4, $pop21
-	i32.or  	$4=, $4, $pop5
+	i32.load	$push2=, 4($pop0)
+	i32.const	$push23=, 3
+	i32.shl 	$push22=, $pop2, $pop23
+	tee_local	$push21=, $5=, $pop22
+	i32.load	$push3=, reg_class_contents($pop21):p2align=3
+	i32.const	$push20=, -1
+	i32.xor 	$push4=, $pop3, $pop20
+	i32.or  	$4=, $4, $pop4
 	copy_local	$0=, $2
 	i32.load	$2=, 0($0)
-	i32.load	$push6=, reg_class_contents+4($5)
-	i32.const	$push20=, -1
-	i32.xor 	$push7=, $pop6, $pop20
-	i32.or  	$3=, $3, $pop7
-	i32.const	$push19=, 1
-	i32.add 	$1=, $1, $pop19
+	i32.load	$push5=, reg_class_contents+4($5)
+	i32.const	$push19=, -1
+	i32.xor 	$push6=, $pop5, $pop19
+	i32.or  	$3=, $3, $pop6
+	i32.const	$push18=, 1
+	i32.add 	$1=, $1, $pop18
 	br_if   	0, $2           # 0: up to label2
 # BB#3:                                 # %for.end
 	end_loop                        # label3:
 	i32.store	$2=, 8($6), $4
-	i32.const	$push37=, 8
-	i32.add 	$push38=, $6, $pop37
-	i32.const	$push8=, 4
-	i32.add 	$push26=, $pop38, $pop8
-	tee_local	$push25=, $4=, $pop26
-	i32.store	$discard=, 0($pop25), $3
-	i32.const	$push9=, 0
-	i32.lt_s	$push10=, $1, $pop9
-	br_if   	0, $pop10       # 0: down to label1
+	i32.const	$push36=, 8
+	i32.add 	$push37=, $6, $pop36
+	i32.const	$push7=, 4
+	i32.add 	$push25=, $pop37, $pop7
+	tee_local	$push24=, $4=, $pop25
+	i32.store	$discard=, 0($pop24), $3
+	i32.const	$push8=, 0
+	i32.lt_s	$push9=, $1, $pop8
+	br_if   	0, $pop9        # 0: down to label1
 # BB#4:                                 # %if.end
-	i32.load	$push11=, 4($0)
-	i32.const	$push12=, 3
-	i32.shl 	$push29=, $pop11, $pop12
-	tee_local	$push28=, $0=, $pop29
-	i32.load	$1=, reg_class_contents($pop28):p2align=3
-	i32.load	$push16=, reg_class_contents+4($0)
-	i32.const	$push13=, -1
-	i32.xor 	$push17=, $pop16, $pop13
-	i32.or  	$push18=, $3, $pop17
-	i32.store	$discard=, 0($4), $pop18
-	i32.const	$push27=, -1
-	i32.xor 	$push14=, $1, $pop27
-	i32.or  	$push15=, $2, $pop14
-	i32.store	$discard=, 8($6), $pop15
-	i32.const	$push39=, 8
-	i32.add 	$push40=, $6, $pop39
-	call    	merge_overlapping_regs@FUNCTION, $pop40
+	i32.load	$push10=, 4($0)
+	i32.const	$push11=, 3
+	i32.shl 	$push28=, $pop10, $pop11
+	tee_local	$push27=, $0=, $pop28
+	i32.load	$1=, reg_class_contents($pop27):p2align=3
+	i32.load	$push15=, reg_class_contents+4($0)
+	i32.const	$push12=, -1
+	i32.xor 	$push16=, $pop15, $pop12
+	i32.or  	$push17=, $3, $pop16
+	i32.store	$discard=, 0($4), $pop17
+	i32.const	$push26=, -1
+	i32.xor 	$push13=, $1, $pop26
+	i32.or  	$push14=, $2, $pop13
+	i32.store	$discard=, 8($6), $pop14
+	i32.const	$push38=, 8
+	i32.add 	$push39=, $6, $pop38
+	call    	merge_overlapping_regs@FUNCTION, $pop39
 .LBB1_5:                                # %cleanup
 	end_block                       # label1:
-	i32.const	$push36=, __stack_pointer
-	i32.const	$push34=, 16
-	i32.add 	$push35=, $6, $pop34
-	i32.store	$discard=, 0($pop36), $pop35
+	i32.const	$push35=, __stack_pointer
+	i32.const	$push33=, 16
+	i32.add 	$push34=, $6, $pop33
+	i32.store	$discard=, 0($pop35), $pop34
 	return
 	.endfunc
 .Lfunc_end1:

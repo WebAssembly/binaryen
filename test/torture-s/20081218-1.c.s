@@ -49,7 +49,7 @@ main:                                   # @main
 	i32.const	$push1=, 640034342
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label1
-# BB#1:
+# BB#1:                                 # %for.body.preheader
 	i32.const	$0=, 0
 .LBB2_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1

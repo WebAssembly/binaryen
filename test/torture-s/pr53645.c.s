@@ -1619,7 +1619,7 @@ main:                                   # @main
 	i32.const	$push467=, 2
 	i32.lt_u	$push269=, $2, $pop467
 	br_if   	0, $pop269      # 0: up to label1
-# BB#50:
+# BB#50:                                # %for.body319.preheader
 	end_loop                        # label2:
 	i32.const	$1=, 0
 	i32.const	$0=, s

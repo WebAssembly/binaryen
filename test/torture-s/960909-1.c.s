@@ -11,20 +11,20 @@ ffs:                                    # @ffs
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	block
-	block
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
-	br_if   	0, $pop6        # 0: down to label1
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %for.cond.preheader
-	i32.const	$1=, 1
+	i32.const	$2=, 1
 	i32.const	$push2=, 1
 	i32.and 	$push0=, $0, $pop2
-	br_if   	1, $pop0        # 1: down to label0
-# BB#2:
+	br_if   	0, $pop0        # 0: down to label0
+# BB#2:                                 # %for.inc.preheader
+	i32.const	$1=, 1
 	i32.const	$2=, 1
 .LBB0_3:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop                            # label1:
 	i32.const	$push4=, 1
 	i32.add 	$2=, $2, $pop4
 	i32.const	$push3=, 1
@@ -32,14 +32,10 @@ ffs:                                    # @ffs
 	i32.and 	$push1=, $1, $0
 	i32.const	$push7=, 0
 	i32.eq  	$push8=, $pop1, $pop7
-	br_if   	0, $pop8        # 0: up to label2
+	br_if   	0, $pop8        # 0: up to label1
 .LBB0_4:                                # %cleanup
-	end_loop                        # label3:
-	end_block                       # label1:
-	return  	$2
-.LBB0_5:
+	end_loop                        # label2:
 	end_block                       # label0:
-	i32.const	$2=, 1
 	return  	$2
 	.endfunc
 .Lfunc_end0:
@@ -56,11 +52,11 @@ f:                                      # @f
 	block
 	i32.const	$push0=, 0
 	i32.eq  	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label4
+	br_if   	0, $pop1        # 0: down to label3
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
-	end_block                       # label4:
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

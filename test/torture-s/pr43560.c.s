@@ -14,7 +14,7 @@ test:                                   # @test
 	i32.const	$push0=, 2
 	i32.lt_s	$push1=, $pop7, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:
+# BB#1:                                 # %land.rhs.preheader
 	i32.const	$push5=, 4
 	i32.add 	$1=, $0, $pop5
 .LBB0_2:                                # %land.rhs

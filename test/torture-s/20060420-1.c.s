@@ -21,7 +21,7 @@ foo:                                    # @foo
 	i32.const	$7=, 0
 .LBB0_2:                                # %land.rhs
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB0_4 Depth 2
+                                        #     Child Loop BB0_5 Depth 2
 	loop                            # label1:
 	i32.add 	$push1=, $7, $0
 	i32.const	$push85=, 15
@@ -37,13 +37,15 @@ foo:                                    # @foo
 	tee_local	$push92=, $9=, $pop93
 	i32.add 	$push4=, $pop3, $pop92
 	f32.load	$25=, 0($pop4)
-	copy_local	$28=, $26
-	copy_local	$8=, $27
 	block
 	i32.const	$push91=, 2
 	i32.lt_s	$push5=, $2, $pop91
 	br_if   	0, $pop5        # 0: down to label3
-.LBB0_4:                                # %for.body4
+# BB#4:                                 # %for.body4.preheader
+                                        #   in Loop: Header=BB0_2 Depth=1
+	copy_local	$28=, $26
+	copy_local	$8=, $27
+.LBB0_5:                                # %for.body4
                                         #   Parent Loop BB0_2 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label4:
@@ -56,7 +58,7 @@ foo:                                    # @foo
 	i32.const	$push95=, -1
 	i32.add 	$28=, $28, $pop95
 	br_if   	0, $28          # 0: up to label4
-.LBB0_5:                                # %for.end
+.LBB0_6:                                # %for.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_loop                        # label5:
 	end_block                       # label3:
@@ -66,7 +68,7 @@ foo:                                    # @foo
 	i32.add 	$7=, $7, $pop97
 	i32.lt_s	$push10=, $7, $3
 	br_if   	0, $pop10       # 0: up to label1
-.LBB0_6:                                # %for.cond12.preheader
+.LBB0_7:                                # %for.cond12.preheader
 	end_loop                        # label2:
 	end_block                       # label0:
 	block
@@ -75,7 +77,7 @@ foo:                                    # @foo
 	tee_local	$push86=, $26=, $pop87
 	i32.ge_s	$push12=, $7, $pop86
 	br_if   	0, $pop12       # 0: down to label6
-# BB#7:                                 # %for.body15.lr.ph
+# BB#8:                                 # %for.body15.lr.ph
 	i32.const	$push13=, -16
 	i32.add 	$push14=, $3, $pop13
 	i32.sub 	$push15=, $pop14, $7
@@ -86,9 +88,9 @@ foo:                                    # @foo
 	i32.add 	$5=, $1, $pop89
 	i32.const	$push88=, -1
 	i32.add 	$6=, $2, $pop88
-.LBB0_8:                                # %for.body15
+.LBB0_9:                                # %for.body15
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB0_9 Depth 2
+                                        #     Child Loop BB0_11 Depth 2
 	loop                            # label7:
 	i32.load	$push17=, 0($1)
 	i32.const	$push117=, 2
@@ -136,14 +138,16 @@ foo:                                    # @foo
 	i32.const	$push101=, 52
 	i32.add 	$push29=, $28, $pop101
 	f32.load	$11=, 0($pop29)
-	copy_local	$8=, $6
-	copy_local	$9=, $5
 	block
 	i32.const	$push100=, 2
 	i32.lt_s	$push30=, $2, $pop100
 	br_if   	0, $pop30       # 0: down to label9
-.LBB0_9:                                # %for.body33
-                                        #   Parent Loop BB0_8 Depth=1
+# BB#10:                                # %for.body33.preheader
+                                        #   in Loop: Header=BB0_9 Depth=1
+	copy_local	$8=, $6
+	copy_local	$9=, $5
+.LBB0_11:                               # %for.body33
+                                        #   Parent Loop BB0_9 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label10:
 	i32.load	$push31=, 0($9)
@@ -210,8 +214,8 @@ foo:                                    # @foo
 	i32.const	$push118=, -1
 	i32.add 	$8=, $8, $pop118
 	br_if   	0, $8           # 0: up to label10
-.LBB0_10:                               # %for.end56
-                                        #   in Loop: Header=BB0_8 Depth=1
+.LBB0_12:                               # %for.end56
+                                        #   in Loop: Header=BB0_9 Depth=1
 	end_loop                        # label11:
 	end_block                       # label9:
 	i32.add 	$push148=, $0, $27
@@ -260,38 +264,40 @@ foo:                                    # @foo
 	i32.add 	$7=, $7, $pop134
 	i32.lt_s	$push72=, $7, $26
 	br_if   	0, $pop72       # 0: up to label7
-# BB#11:                                # %for.cond73.preheader.loopexit
+# BB#13:                                # %for.cond73.preheader.loopexit
 	end_loop                        # label8:
 	i32.const	$push73=, 16
 	i32.add 	$7=, $4, $pop73
-.LBB0_12:                               # %for.cond73.preheader
+.LBB0_14:                               # %for.cond73.preheader
 	end_block                       # label6:
 	block
 	i32.ge_s	$push74=, $7, $3
 	br_if   	0, $pop74       # 0: down to label12
-# BB#13:                                # %for.body75.lr.ph
+# BB#15:                                # %for.body75.lr.ph
 	i32.load	$27=, 0($1)
 	i32.const	$push99=, 4
 	i32.add 	$1=, $1, $pop99
 	i32.const	$push98=, -1
 	i32.add 	$26=, $2, $pop98
-.LBB0_14:                               # %for.body75
+.LBB0_16:                               # %for.body75
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB0_15 Depth 2
+                                        #     Child Loop BB0_18 Depth 2
 	loop                            # label13:
 	i32.const	$push152=, 2
 	i32.shl 	$push151=, $7, $pop152
 	tee_local	$push150=, $9=, $pop151
 	i32.add 	$push75=, $27, $pop150
 	f32.load	$25=, 0($pop75)
-	copy_local	$28=, $26
-	copy_local	$8=, $1
 	block
 	i32.const	$push149=, 2
 	i32.lt_s	$push76=, $2, $pop149
 	br_if   	0, $pop76       # 0: down to label15
-.LBB0_15:                               # %for.body81
-                                        #   Parent Loop BB0_14 Depth=1
+# BB#17:                                # %for.body81.preheader
+                                        #   in Loop: Header=BB0_16 Depth=1
+	copy_local	$28=, $26
+	copy_local	$8=, $1
+.LBB0_18:                               # %for.body81
+                                        #   Parent Loop BB0_16 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label16:
 	i32.load	$push77=, 0($8)
@@ -303,8 +309,8 @@ foo:                                    # @foo
 	i32.const	$push153=, -1
 	i32.add 	$28=, $28, $pop153
 	br_if   	0, $28          # 0: up to label16
-.LBB0_16:                               # %for.end87
-                                        #   in Loop: Header=BB0_14 Depth=1
+.LBB0_19:                               # %for.end87
+                                        #   in Loop: Header=BB0_16 Depth=1
 	end_loop                        # label17:
 	end_block                       # label15:
 	i32.add 	$push80=, $0, $9
@@ -313,7 +319,7 @@ foo:                                    # @foo
 	i32.add 	$7=, $7, $pop155
 	i32.ne  	$push81=, $7, $3
 	br_if   	0, $pop81       # 0: up to label13
-.LBB0_17:                               # %for.end91
+.LBB0_20:                               # %for.end91
 	end_loop                        # label14:
 	end_block                       # label12:
 	return

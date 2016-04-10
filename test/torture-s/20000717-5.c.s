@@ -96,13 +96,45 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %foo.exit
+	.local  	i32
+# BB#0:                                 # %entry
+	i32.const	$push10=, __stack_pointer
+	i32.load	$push11=, 0($pop10)
+	i32.const	$push12=, 16
+	i32.sub 	$0=, $pop11, $pop12
+	i32.const	$push13=, __stack_pointer
+	i32.store	$discard=, 0($pop13), $0
+	i32.const	$push14=, 4
+	i32.add 	$push15=, $0, $pop14
+	i32.const	$push2=, 8
+	i32.add 	$push3=, $pop15, $pop2
 	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	i32.load	$push1=, .Lmain.t+8($pop0)
+	i32.store	$discard=, 0($pop3), $pop1
+	i32.const	$push9=, 0
+	i64.load	$push4=, .Lmain.t($pop9):p2align=2
+	i64.store	$discard=, 4($0):p2align=2, $pop4
+	i32.const	$push16=, 4
+	i32.add 	$push17=, $0, $pop16
+	i32.const	$push7=, 4
+	i32.const	$push6=, 5
+	i32.const	$push5=, 6
+	i32.call	$discard=, foo@FUNCTION, $pop17, $pop7, $pop6, $pop5
+	i32.const	$push8=, 0
+	call    	exit@FUNCTION, $pop8
 	unreachable
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+
+	.type	.Lmain.t,@object        # @main.t
+	.section	.rodata..Lmain.t,"a",@progbits
+	.p2align	2
+.Lmain.t:
+	.int32	1                       # 0x1
+	.int32	2                       # 0x2
+	.int32	3                       # 0x3
+	.size	.Lmain.t, 12
 
 
 	.ident	"clang version 3.9.0 "

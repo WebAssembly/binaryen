@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.const	$push3=, 1
 	i32.lt_s	$push0=, $1, $pop3
 	br_if   	0, $pop0        # 0: down to label0
-# BB#1:
+# BB#1:                                 # %while.body.preheader
 	i32.add 	$2=, $0, $1
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1

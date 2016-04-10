@@ -13,9 +13,9 @@ foo:                                    # @foo
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $0, $pop5
 	br_if   	0, $pop6        # 0: down to label1
-# BB#1:
-	i32.const	$3=, 1
+# BB#1:                                 # %for.cond1.preheader.preheader
 	i32.const	$2=, 0
+	i32.const	$3=, 1
 .LBB0_2:                                # %for.cond1.preheader
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:

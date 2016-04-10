@@ -34,7 +34,7 @@ bar:                                    # @bar
 	i32.const	$push11=, 1
 	i32.lt_s	$push2=, $0, $pop11
 	br_if   	0, $pop2        # 0: down to label1
-# BB#3:
+# BB#3:                                 # %for.body.preheader
 	copy_local	$3=, $0
 	copy_local	$4=, $2
 .LBB1_4:                                # %for.body

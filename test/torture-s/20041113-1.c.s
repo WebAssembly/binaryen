@@ -71,12 +71,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push7=, __stack_pointer
-	i32.load	$push8=, 0($pop7)
-	i32.const	$push9=, 16
-	i32.sub 	$3=, $pop8, $pop9
-	i32.const	$push10=, __stack_pointer
-	i32.store	$discard=, 0($pop10), $3
+	i32.const	$push8=, __stack_pointer
+	i32.load	$push9=, 0($pop8)
+	i32.const	$push10=, 16
+	i32.sub 	$3=, $pop9, $pop10
+	i32.const	$push11=, __stack_pointer
+	i32.store	$discard=, 0($pop11), $3
 	i32.const	$push0=, 0
 	f64.load	$push1=, a($pop0)
 	f64.const	$push2=, 0x1.4p3
@@ -84,12 +84,14 @@ main:                                   # @main
 	i32.trunc_s/f64	$2=, $pop3
 	i32.const	$push4=, 3
 	i32.store	$discard=, 8($3):p2align=3, $pop4
-	i64.const	$push5=, 8589934593
-	i64.store	$discard=, 0($3):p2align=4, $pop5
+	i32.const	$push5=, 2
+	i32.store	$discard=, 4($3), $pop5
+	i32.const	$push6=, 1
+	i32.store	$discard=, 0($3):p2align=4, $pop6
 	i32.store	$discard=, 12($3), $2
 	call    	test@FUNCTION, $2, $3
-	i32.const	$push6=, 0
-	call    	exit@FUNCTION, $pop6
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 	.endfunc
 .Lfunc_end1:

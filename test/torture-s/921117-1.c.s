@@ -32,29 +32,33 @@ check:                                  # @check
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push13=, 0
+	i32.const	$push16=, 0
 	i32.const	$push0=, 99
-	i32.store	$discard=, cell+12($pop13), $pop0
+	i32.store	$discard=, cell+12($pop16), $pop0
+	i32.const	$push15=, 0
+	i32.const	$push14=, 0
+	i32.load8_u	$push2=, .L.str+10($pop14)
+	i32.store8	$discard=, cell+10($pop15):p2align=1, $pop2
+	i32.const	$push13=, 0
 	i32.const	$push12=, 0
+	i32.load16_u	$push3=, .L.str+8($pop12):p2align=0
+	i32.store16	$discard=, cell+8($pop13):p2align=2, $pop3
 	i32.const	$push11=, 0
-	i32.load8_u	$push2=, .L.str+10($pop11)
-	i32.store8	$discard=, cell+10($pop12):p2align=1, $pop2
 	i32.const	$push10=, 0
+	i32.load	$push4=, .L.str+4($pop10):p2align=0
+	i32.store	$discard=, cell+4($pop11), $pop4
 	i32.const	$push9=, 0
-	i32.load16_u	$push3=, .L.str+8($pop9):p2align=0
-	i32.store16	$discard=, cell+8($pop10):p2align=2, $pop3
 	i32.const	$push8=, 0
-	i32.const	$push7=, 0
-	i64.load	$push4=, .L.str($pop7):p2align=0
-	i64.store	$discard=, cell($pop8):p2align=2, $pop4
+	i32.load	$push5=, .L.str($pop8):p2align=0
+	i32.store	$discard=, cell($pop9), $pop5
 	block
 	i32.const	$push1=, cell
-	i32.const	$push5=, .L.str
-	i32.call	$push6=, strcmp@FUNCTION, $pop1, $pop5
-	br_if   	0, $pop6        # 0: down to label1
+	i32.const	$push6=, .L.str
+	i32.call	$push7=, strcmp@FUNCTION, $pop1, $pop6
+	br_if   	0, $pop7        # 0: down to label1
 # BB#1:                                 # %if.end
-	i32.const	$push14=, 0
-	call    	exit@FUNCTION, $pop14
+	i32.const	$push17=, 0
+	call    	exit@FUNCTION, $pop17
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label1:

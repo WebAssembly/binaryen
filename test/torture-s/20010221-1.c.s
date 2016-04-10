@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.const	$push5=, 1
 	i32.lt_s	$push0=, $pop6, $pop5
 	br_if   	0, $pop0        # 0: down to label0
-# BB#1:
+# BB#1:                                 # %for.body.preheader
 	i32.const	$0=, 45
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1

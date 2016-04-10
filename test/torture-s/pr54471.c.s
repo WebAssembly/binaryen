@@ -18,7 +18,7 @@ foo:                                    # @foo
 	i32.const	$push24=, 0
 	i32.eq  	$push25=, $3, $pop24
 	br_if   	0, $pop25       # 0: down to label0
-# BB#1:
+# BB#1:                                 # %for.body.preheader
 	i64.const	$5=, 0
 	i64.const	$4=, 1
 .LBB0_2:                                # %for.body

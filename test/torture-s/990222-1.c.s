@@ -24,7 +24,7 @@ main:                                   # @main
 	i32.const	$push2=, 58
 	i32.lt_s	$push3=, $pop18, $pop2
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:
+# BB#1:                                 # %while.body.preheader
 	i32.const	$1=, line+1
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1

@@ -77,14 +77,17 @@ msum_i4:                                # @msum_i4
 	i32.lt_s	$4=, $3, $pop41
 .LBB0_4:                                # %do.body
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB0_5 Depth 2
+                                        #     Child Loop BB0_6 Depth 2
 	loop                            # label3:
+	i32.const	$7=, 0
+	block
+	br_if   	0, $4           # 0: down to label5
+# BB#5:                                 # %for.body18.preheader
+                                        #   in Loop: Header=BB0_4 Depth=1
 	i32.const	$7=, 0
 	copy_local	$2=, $3
 	copy_local	$6=, $1
-	block
-	br_if   	0, $4           # 0: down to label5
-.LBB0_5:                                # %for.body18
+.LBB0_6:                                # %for.body18
                                         #   Parent Loop BB0_4 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label6:
@@ -95,11 +98,11 @@ msum_i4:                                # @msum_i4
 	i32.const	$push43=, -1
 	i32.add 	$2=, $2, $pop43
 	br_if   	0, $2           # 0: up to label6
-# BB#6:                                 # %for.end22.loopexit
+# BB#7:                                 # %for.end22.loopexit
                                         #   in Loop: Header=BB0_4 Depth=1
 	end_loop                        # label7:
 	i32.add 	$1=, $1, $5
-.LBB0_7:                                # %for.end22
+.LBB0_8:                                # %for.end22
                                         #   in Loop: Header=BB0_4 Depth=1
 	end_block                       # label5:
 	i32.store	$discard=, 0($0), $7
@@ -112,7 +115,7 @@ msum_i4:                                # @msum_i4
 	i32.store	$push18=, 32($8):p2align=4, $pop17
 	i32.ne  	$push20=, $pop19, $pop18
 	br_if   	0, $pop20       # 0: up to label3
-# BB#8:                                 # %do.end
+# BB#9:                                 # %do.end
 	end_loop                        # label4:
 	i32.const	$push53=, __stack_pointer
 	i32.const	$push51=, 64

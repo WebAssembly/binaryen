@@ -48,20 +48,15 @@ test:                                   # @test
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push0=, .L.str
+	i32.const	$push1=, 200
+	call    	foo@FUNCTION, $2, $pop0, $pop1
 	i32.const	$push2=, 0
-	i32.load	$2=, b($pop2)
-	i32.const	$push1=, 0
-	i32.const	$push0=, 5000
-	i32.store	$discard=, c($pop1), $pop0
-	block
-	br_if   	0, $2           # 0: down to label1
-# BB#1:                                 # %if.then.i
-	call    	abort@FUNCTION
-	unreachable
-.LBB2_2:                                # %if.end.i
-	end_block                       # label1:
-	i32.const	$push3=, 0
-	call    	exit@FUNCTION, $pop3
+	i32.const	$push4=, 65536
+	i32.const	$push6=, 0
+	i32.load	$push3=, b($pop6)
+	i32.select	$push5=, $pop2, $pop4, $pop3
+	i32.call	$discard=, bar@FUNCTION, $2, $pop5, $2, $2, $2
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -73,25 +68,21 @@ test:                                   # @test
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push5=, 0
-	i32.store	$push4=, d+4($pop0), $pop5
-	tee_local	$push3=, $1=, $pop4
-	i32.load	$0=, b($pop3)
+	i32.const	$push9=, 0
+	i32.store	$push8=, d+4($pop0), $pop9
+	tee_local	$push7=, $0=, $pop8
 	i32.const	$push1=, a
-	i32.store	$discard=, d($1), $pop1
-	i32.const	$push2=, 5000
-	i32.store	$discard=, c($1), $pop2
-	block
-	br_if   	0, $0           # 0: down to label2
-# BB#1:                                 # %if.then.i.i
-	call    	abort@FUNCTION
-	unreachable
-.LBB3_2:                                # %if.end.i.i
-	end_block                       # label2:
-	call    	exit@FUNCTION, $1
+	i32.store	$discard=, d($pop7), $pop1
+	i32.const	$push2=, .L.str
+	i32.const	$push3=, 200
+	call    	foo@FUNCTION, $0, $pop2, $pop3
+	i32.const	$push5=, 65536
+	i32.load	$push4=, b($0)
+	i32.select	$push6=, $0, $pop5, $pop4
+	i32.call	$discard=, bar@FUNCTION, $0, $pop6, $0, $0, $0
 	unreachable
 	.endfunc
 .Lfunc_end3:
@@ -123,6 +114,12 @@ c:
 d:
 	.skip	8
 	.size	d, 8
+
+	.type	.L.str,@object          # @.str
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L.str:
+	.asciz	"test"
+	.size	.L.str, 5
 
 	.hidden	a                       # @a
 	.type	a,@object

@@ -23,7 +23,7 @@ check:                                  # @check
 # BB#4:                                 # %for.inc.3
 	i32.load	$push4=, 16($0)
 	br_if   	0, $pop4        # 0: down to label0
-# BB#5:
+# BB#5:                                 # %for.cond1.preheader
 	i32.const	$3=, 5
 .LBB0_6:                                # %for.cond1
                                         # =>This Inner Loop Header: Depth=1

@@ -5,23 +5,26 @@
 	.globl	init_reg_last
 	.type	init_reg_last,@function
 init_reg_last:                          # @init_reg_last
-	.local  	i64, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push11=, reg_stat($pop0)
-	tee_local	$push10=, $1=, $pop11
-	i64.const	$push1=, 0
-	i64.store	$0=, 0($pop10):p2align=2, $pop1
+	i32.load	$push14=, reg_stat($pop0)
+	tee_local	$push13=, $1=, $pop14
 	i32.const	$push5=, 16
-	i32.add 	$push6=, $1, $pop5
+	i32.add 	$push6=, $pop13, $pop5
 	i32.const	$push2=, 18
 	i32.add 	$push3=, $1, $pop2
-	i32.const	$push9=, 0
-	i32.store8	$push4=, 0($pop3):p2align=1, $pop9
-	i32.store16	$discard=, 0($pop6):p2align=2, $pop4
+	i32.const	$push12=, 0
+	i32.store	$push1=, 0($1), $pop12
+	i32.store8	$push4=, 0($pop3):p2align=1, $pop1
+	i32.store16	$0=, 0($pop6):p2align=2, $pop4
 	i32.const	$push7=, 8
 	i32.add 	$push8=, $1, $pop7
-	i64.store	$discard=, 0($pop8):p2align=2, $0
+	i64.const	$push9=, 0
+	i64.store	$discard=, 0($pop8):p2align=2, $pop9
+	i32.const	$push10=, 4
+	i32.add 	$push11=, $1, $pop10
+	i32.store	$discard=, 0($pop11), $0
 	return
 	.endfunc
 .Lfunc_end0:

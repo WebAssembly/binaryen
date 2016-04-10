@@ -13,7 +13,7 @@ foo:                                    # @foo
 	i32.const	$2=, 1
 .LBB0_1:                                # %for.cond
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB0_3 Depth 2
+                                        #     Child Loop BB0_4 Depth 2
 	loop                            # label0:
 	copy_local	$push25=, $0
 	tee_local	$push24=, $5=, $pop25
@@ -36,12 +36,14 @@ foo:                                    # @foo
 	br_if   	0, $pop4        # 0: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	copy_local	$0=, $5
 	block
 	i32.const	$push26=, 65
 	i32.ne  	$push5=, $3, $pop26
 	br_if   	0, $pop5        # 0: down to label3
-.LBB0_3:                                # %do.body
+# BB#3:                                 # %do.body.preheader
+                                        #   in Loop: Header=BB0_1 Depth=1
+	copy_local	$0=, $5
+.LBB0_4:                                # %do.body
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label4:
@@ -52,24 +54,24 @@ foo:                                    # @foo
 	i32.eq  	$push7=, $pop6, $pop27
 	br_if   	0, $pop7        # 0: up to label4
 	br      	3               # 3: down to label2
-.LBB0_4:                                # %for.end
+.LBB0_5:                                # %for.end
 	end_loop                        # label5:
 	end_block                       # label3:
 	block
 	i32.const	$push8=, 3
 	i32.lt_s	$push9=, $2, $pop8
 	br_if   	0, $pop9        # 0: down to label6
-# BB#5:                                 # %land.lhs.true17
+# BB#6:                                 # %land.lhs.true17
 	i32.const	$push10=, 255
 	i32.and 	$push11=, $4, $pop10
 	i32.const	$push12=, 58
 	i32.eq  	$push13=, $pop11, $pop12
 	i32.select	$push14=, $1, $5, $pop13
 	return  	$pop14
-.LBB0_6:                                # %if.end22
+.LBB0_7:                                # %if.end22
 	end_block                       # label6:
 	return  	$5
-.LBB0_7:                                # %cleanup.thread
+.LBB0_8:                                # %cleanup.thread
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
 	i32.const	$push30=, 1
@@ -78,7 +80,7 @@ foo:                                    # @foo
 	i32.add 	$2=, $2, $pop29
 	copy_local	$1=, $5
 	br      	0               # 0: up to label0
-.LBB0_8:
+.LBB0_9:
 	end_loop                        # label1:
 	.endfunc
 .Lfunc_end0:

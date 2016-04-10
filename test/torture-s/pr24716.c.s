@@ -95,7 +95,8 @@ f:                                      # @f
 	i32.const	$push19=, 0
 	i32.gt_s	$push6=, $0, $pop19
 	br_if   	0, $pop6        # 0: up to label7
-# BB#13:                                #   in Loop: Header=BB0_1 Depth=1
+# BB#13:                                # %do.body22.preheader
+                                        #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label8:
 	copy_local	$4=, $0
 .LBB0_14:                               # %do.body22

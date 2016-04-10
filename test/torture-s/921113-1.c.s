@@ -142,38 +142,24 @@ gitter:                                 # @gitter
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
-	i32.const	$push10=, 0
-	f32.load	$push1=, limit($pop10):p2align=4
-	f32.const	$push9=, 0x0p0
-	f32.ne  	$push2=, $pop1, $pop9
-	br_if   	0, $pop2        # 0: down to label4
-# BB#1:                                 # %entry
-	i32.const	$push12=, 0
-	f32.load	$push0=, limit+4($pop12)
-	f32.const	$push11=, 0x0p0
-	f32.ne  	$push3=, $pop0, $pop11
-	br_if   	0, $pop3        # 0: down to label4
-# BB#2:                                 # %f1.exit.i
-	i32.const	$push14=, 0
-	f32.load	$push5=, limit+8($pop14):p2align=3
-	f32.const	$push13=, 0x1p0
-	f32.ne  	$push6=, $pop5, $pop13
-	br_if   	0, $pop6        # 0: down to label4
-# BB#3:                                 # %f1.exit.i
-	i32.const	$push16=, 0
-	f32.load	$push4=, limit+12($pop16)
-	f32.const	$push15=, 0x1p0
-	f32.ne  	$push7=, $pop4, $pop15
-	br_if   	0, $pop7        # 0: down to label4
-# BB#4:                                 # %f2.exit.i
-	i32.const	$push8=, 0
-	call    	exit@FUNCTION, $pop8
-	unreachable
-.LBB4_5:                                # %if.then.i32.i
-	end_block                       # label4:
-	call    	abort@FUNCTION
+	i32.const	$push4=, __stack_pointer
+	i32.load	$push5=, 0($pop4)
+	i32.const	$push6=, 16
+	i32.sub 	$1=, $pop5, $pop6
+	i32.const	$push7=, __stack_pointer
+	i32.store	$discard=, 0($pop7), $1
+	i32.const	$push1=, pos
+	i32.const	$push8=, 8
+	i32.add 	$push9=, $1, $pop8
+	i32.const	$push10=, 12
+	i32.add 	$push11=, $1, $pop10
+	i32.const	$push0=, limit
+	f32.const	$push2=, 0x1p0
+	i32.call	$discard=, gitter@FUNCTION, $0, $pop1, $pop9, $pop11, $pop0, $pop2
+	i32.const	$push3=, 0
+	call    	exit@FUNCTION, $pop3
 	unreachable
 	.endfunc
 .Lfunc_end4:

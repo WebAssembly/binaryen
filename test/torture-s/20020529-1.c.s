@@ -127,18 +127,18 @@ main:                                   # @main
 	i32.sub 	$5=, $pop20, $pop21
 	i32.const	$push22=, __stack_pointer
 	i32.store	$discard=, 0($pop22), $5
-	i32.const	$push1=, 0
-	i32.store	$0=, 0($5):p2align=3, $pop1
+	i32.const	$push0=, 0
+	i32.store	$0=, 0($5):p2align=3, $pop0
 	i32.store	$discard=, 4($5), $5
 	i32.load	$2=, f1.beenhere($0)
-	i32.const	$push0=, 23
-	i32.store16	$3=, 8($5):p2align=3, $pop0
+	i32.const	$push1=, 23
+	i32.store16	$3=, 8($5):p2align=3, $pop1
 	block
 	block
 	i32.const	$push10=, 1
 	i32.gt_s	$push2=, $2, $pop10
 	br_if   	0, $pop2        # 0: down to label6
-# BB#1:
+# BB#1:                                 # %f1.exit.i.preheader
 	i32.const	$push5=, 8
 	i32.add 	$1=, $5, $pop5
 .LBB3_2:                                # %f1.exit.i

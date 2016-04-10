@@ -60,15 +60,15 @@ main:                                   # @main
 	block
 	block
 	block
-	i32.const	$push13=, 0
 	i32.const	$push12=, 0
-	i32.load	$push2=, foo($pop12)
-	i32.const	$push3=, 2
-	i32.add 	$push0=, $pop2, $pop3
-	i32.store	$push11=, foo($pop13), $pop0
-	tee_local	$push10=, $1=, $pop11
-	i32.ge_u	$push4=, $pop10, $0
-	br_if   	0, $pop4        # 0: down to label5
+	i32.const	$push11=, 0
+	i32.load	$push2=, foo($pop11)
+	i32.const	$push10=, 2
+	i32.add 	$push0=, $pop2, $pop10
+	i32.store	$push9=, foo($pop12), $pop0
+	tee_local	$push8=, $1=, $pop9
+	i32.ge_u	$push3=, $pop8, $0
+	br_if   	0, $pop3        # 0: down to label5
 # BB#1:                                 # %pure_alloc.exit
 	br_if   	1, $1           # 1: down to label4
 # BB#2:                                 # %if.then
@@ -76,17 +76,17 @@ main:                                   # @main
 	unreachable
 .LBB1_3:                                # %if.end.lr.ph.i
 	end_block                       # label5:
-	i32.const	$push5=, 3
-	i32.lt_u	$push6=, $0, $pop5
-	br_if   	1, $pop6        # 1: down to label3
+	i32.const	$push13=, 2
+	i32.le_u	$push4=, $0, $pop13
+	br_if   	1, $pop4        # 1: down to label3
 # BB#4:                                 # %pure_alloc.exit.thread.split
-	i32.const	$push7=, 0
-	i32.const	$push8=, 2
-	i32.store	$discard=, foo($pop7), $pop8
+	i32.const	$push5=, 0
+	i32.const	$push6=, 2
+	i32.store	$discard=, foo($pop5), $pop6
 .LBB1_5:                                # %if.end
 	end_block                       # label4:
-	i32.const	$push9=, 0
-	return  	$pop9
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB1_6:                                # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
 	end_block                       # label3:
