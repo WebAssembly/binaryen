@@ -1285,6 +1285,7 @@ class S2WasmBuilder {
 
     // XXX For now, export all functions marked .globl.
     for (Name name : globls) exportFunction(name, false);
+    for (Name name : initializerFunctions) exportFunction(name, true);
 
     auto ensureFunctionIndex = [this](Name name) {
       if (functionIndexes.count(name) == 0) {
