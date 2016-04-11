@@ -79,7 +79,6 @@
     (local $ia i32)
     (local $b i32)
     (local $Ea i32)
-    (local $p i32)
     (local $P i32)
     (local $Oa i32)
     (local $Ha i32)
@@ -134,6 +133,7 @@
     (local $Ka i32)
     (local $F i32)
     (local $Ba i32)
+    (local $p i32)
     (set_local $b
       (i32.load
         (i32.const 8)
@@ -326,9 +326,7 @@
                 (get_local $b)
               )
               (return
-                (set_local $p
-                  (get_local $m)
-                )
+                (get_local $m)
               )
             )
           )
@@ -705,9 +703,7 @@
                     (get_local $b)
                   )
                   (return
-                    (set_local $p
-                      (get_local $o)
-                    )
+                    (get_local $o)
                   )
                 )
               )
@@ -1456,11 +1452,9 @@
                     (get_local $b)
                   )
                   (return
-                    (set_local $p
-                      (i32.add
-                        (get_local $A)
-                        (i32.const 8)
-                      )
+                    (i32.add
+                      (get_local $A)
+                      (i32.const 8)
                     )
                   )
                 )
@@ -2995,11 +2989,9 @@
                         (get_local $b)
                       )
                       (return
-                        (set_local $p
-                          (i32.add
-                            (get_local $V)
-                            (i32.const 8)
-                          )
+                        (i32.add
+                          (get_local $V)
+                          (i32.const 8)
                         )
                       )
                     )
@@ -3121,11 +3113,9 @@
           (get_local $b)
         )
         (return
-          (set_local $p
-            (i32.add
-              (get_local $ea)
-              (i32.const 8)
-            )
+          (i32.add
+            (get_local $ea)
+            (i32.const 8)
           )
         )
       )
@@ -3181,11 +3171,9 @@
           (get_local $b)
         )
         (return
-          (set_local $p
-            (i32.add
-              (get_local $ea)
-              (i32.const 8)
-            )
+          (i32.add
+            (get_local $ea)
+            (i32.const 8)
           )
         )
       )
@@ -3281,9 +3269,7 @@
           (get_local $b)
         )
         (return
-          (set_local $p
-            (i32.const 0)
-          )
+          (i32.const 0)
         )
       )
     )
@@ -3319,9 +3305,7 @@
             (get_local $b)
           )
           (return
-            (set_local $p
-              (i32.const 0)
-            )
+            (i32.const 0)
           )
         )
       )
@@ -5276,11 +5260,9 @@
                       (get_local $b)
                     )
                     (return
-                      (set_local $p
-                        (i32.add
-                          (get_local $ca)
-                          (i32.const 8)
-                        )
+                      (i32.add
+                        (get_local $ca)
+                        (i32.const 8)
                       )
                     )
                   )
@@ -6197,11 +6179,9 @@
               (get_local $b)
             )
             (return
-              (set_local $p
-                (i32.add
-                  (get_local $ja)
-                  (i32.const 8)
-                )
+              (i32.add
+                (get_local $ja)
+                (i32.const 8)
               )
             )
           )
@@ -6219,9 +6199,7 @@
       (get_local $b)
     )
     (return
-      (set_local $p
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $fb (param $a i32)
@@ -10273,9 +10251,7 @@
       )
       (block
         (i32.store
-          (set_local $b
-            (call $Qa)
-          )
+          (call $Qa)
           (i32.sub
             (i32.const 0)
             (get_local $a)
@@ -10335,13 +10311,8 @@
         (i32.const 1160)
       )
       (set_local $a
-        (i32.load
-          (set_local $b
-            (i32.add
-              (call $ib)
-              (i32.const 64)
-            )
-          )
+        (i32.load offset=64
+          (call $ib)
         )
       )
       (set_local $a

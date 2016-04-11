@@ -79,7 +79,6 @@
     (local $i9 i32)
     (local $i16 i32)
     (local $i79 i32)
-    (local $i13 i32)
     (local $i89 i32)
     (local $i82 i32)
     (local $i51 i32)
@@ -134,6 +133,7 @@
     (local $i64 i32)
     (local $i48 i32)
     (local $i27 i32)
+    (local $i13 i32)
     (block $do-once$0
       (if
         (i32.lt_u
@@ -305,9 +305,7 @@
                 )
               )
               (return
-                (set_local $i13
-                  (get_local $i10)
-                )
+                (get_local $i10)
               )
             )
           )
@@ -680,9 +678,7 @@
                     (get_local $i4)
                   )
                   (return
-                    (set_local $i13
-                      (get_local $i12)
-                    )
+                    (get_local $i12)
                   )
                 )
               )
@@ -1424,11 +1420,9 @@
                     )
                   )
                   (return
-                    (set_local $i13
-                      (i32.add
-                        (get_local $i22)
-                        (i32.const 8)
-                      )
+                    (i32.add
+                      (get_local $i22)
+                      (i32.const 8)
                     )
                   )
                 )
@@ -2955,11 +2949,9 @@
                       )
                     )
                     (return
-                      (set_local $i13
-                        (i32.add
-                          (get_local $i44)
-                          (i32.const 8)
-                        )
+                      (i32.add
+                        (get_local $i44)
+                        (i32.const 8)
                       )
                     )
                   )
@@ -3076,11 +3068,9 @@
           )
         )
         (return
-          (set_local $i13
-            (i32.add
-              (get_local $i53)
-              (i32.const 8)
-            )
+          (i32.add
+            (get_local $i53)
+            (i32.const 8)
           )
         )
       )
@@ -3132,11 +3122,9 @@
           )
         )
         (return
-          (set_local $i13
-            (i32.add
-              (get_local $i53)
-              (i32.const 8)
-            )
+          (i32.add
+            (get_local $i53)
+            (i32.const 8)
           )
         )
       )
@@ -3240,9 +3228,7 @@
         (get_local $i31)
       )
       (return
-        (set_local $i13
-          (i32.const 0)
-        )
+        (i32.const 0)
       )
     )
     (if
@@ -3277,9 +3263,7 @@
         (i32.const 0)
       )
       (return
-        (set_local $i13
-          (i32.const 0)
-        )
+        (i32.const 0)
       )
     )
     (block $label$break$L257
@@ -5238,11 +5222,9 @@
                       )
                     )
                     (return
-                      (set_local $i13
-                        (i32.add
-                          (get_local $i44)
-                          (i32.const 8)
-                        )
+                      (i32.add
+                        (get_local $i44)
+                        (i32.const 8)
                       )
                     )
                   )
@@ -6156,11 +6138,9 @@
               )
             )
             (return
-              (set_local $i13
-                (i32.add
-                  (get_local $i59)
-                  (i32.const 8)
-                )
+              (i32.add
+                (get_local $i59)
+                (i32.const 8)
               )
             )
           )
@@ -6172,9 +6152,7 @@
       (i32.const 12)
     )
     (return
-      (set_local $i13
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $_free (param $i1 i32)
