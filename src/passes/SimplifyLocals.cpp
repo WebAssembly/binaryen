@@ -26,7 +26,7 @@
 
 namespace wasm {
 
-struct SimplifyLocals : public WalkerPass<SimpleExecutionWalker<SimplifyLocals>> {
+struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>> {
   struct SinkableInfo {
     Expression** item;
     EffectAnalyzer effects;
@@ -103,7 +103,7 @@ struct SimplifyLocals : public WalkerPass<SimpleExecutionWalker<SimplifyLocals>>
 
   // override scan to add a pre and a post check task to all nodes
   static void scan(SimplifyLocals* self, Expression** currp) {
-    self->addTask(visitPost, currp);
+    self->pushTask(visitPost, currp);
 
     auto* curr = *currp;
 
@@ -111,7 +111,7 @@ struct SimplifyLocals : public WalkerPass<SimpleExecutionWalker<SimplifyLocals>>
     if (curr->is<Block>()) {
       // special-case blocks, by marking their children as locals.
       // TODO sink from elsewhere? (need to make sure value is not used)
-      self->addTask(SimplifyLocals::doNoteNonLinear, currp);
+      self->pushTask(SimplifyLocals::doNoteNonLinear, currp);
       auto& list = curr->cast<Block>()->list;
       int size = list.size();
       // we can't sink the last element, as it might be a return value;
@@ -119,15 +119,15 @@ struct SimplifyLocals : public WalkerPass<SimpleExecutionWalker<SimplifyLocals>>
       // it would be invalidated.
       for (int i = size - 1; i >= 0; i--) {
         if (i < size - 1) {
-          self->addTask(tryMarkSinkable, &list[i]);
+          self->pushTask(tryMarkSinkable, &list[i]);
         }
-        self->addTask(scan, &list[i]);
+        self->pushTask(scan, &list[i]);
       }
     } else {
-      WalkerPass<SimpleExecutionWalker<SimplifyLocals>>::scan(self, currp);
+      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::scan(self, currp);
     }
 
-    self->addTask(visitPre, currp);
+    self->pushTask(visitPre, currp);
   }
 };
 

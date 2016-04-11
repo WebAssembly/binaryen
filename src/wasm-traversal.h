@@ -164,15 +164,15 @@ struct Walker : public Visitor<SubType> {
 
   std::vector<Task> stack;
 
-  void addTask(TaskFunc func, Expression** currp) {
+  void pushTask(TaskFunc func, Expression** currp) {
     stack.emplace_back(func, currp);
   }
-  void maybeAddTask(TaskFunc func, Expression** currp) {
+  void maybePushTask(TaskFunc func, Expression** currp) {
     if (*currp) {
       stack.emplace_back(func, currp);
     }
   }
-  Task getTask() {
+  Task popTask() {
     auto ret = stack.back();
     stack.pop_back();
     return ret;
@@ -180,9 +180,9 @@ struct Walker : public Visitor<SubType> {
 
   void walk(Expression*& root) {
     assert(stack.size() == 0);
-    addTask(SubType::scan, &root);
+    pushTask(SubType::scan, &root);
     while (stack.size() > 0) {
-      auto task = getTask();
+      auto task = popTask();
       assert(*task.currp);
       task.func(static_cast<SubType*>(this), task.currp);
       if (replace) {
@@ -231,123 +231,123 @@ struct PostWalker : public Walker<SubType> {
     switch (curr->_id) {
       case Expression::Id::InvalidId: abort();
       case Expression::Id::BlockId: {
-        self->addTask(SubType::doVisitBlock, currp);
+        self->pushTask(SubType::doVisitBlock, currp);
         auto& list = curr->cast<Block>()->list;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->addTask(SubType::scan, &list[i]);
+          self->pushTask(SubType::scan, &list[i]);
         }
         break;
       }
       case Expression::Id::IfId: {
-        self->addTask(SubType::doVisitIf, currp);
-        self->maybeAddTask(SubType::scan, &curr->cast<If>()->ifFalse);
-        self->addTask(SubType::scan, &curr->cast<If>()->ifTrue);
-        self->addTask(SubType::scan, &curr->cast<If>()->condition);
+        self->pushTask(SubType::doVisitIf, currp);
+        self->maybePushTask(SubType::scan, &curr->cast<If>()->ifFalse);
+        self->pushTask(SubType::scan, &curr->cast<If>()->ifTrue);
+        self->pushTask(SubType::scan, &curr->cast<If>()->condition);
         break;
       }
       case Expression::Id::LoopId: {
-        self->addTask(SubType::doVisitLoop, currp);
-        self->addTask(SubType::scan, &curr->cast<Loop>()->body);
+        self->pushTask(SubType::doVisitLoop, currp);
+        self->pushTask(SubType::scan, &curr->cast<Loop>()->body);
         break;
       }
       case Expression::Id::BreakId: {
-        self->addTask(SubType::doVisitBreak, currp);
-        self->maybeAddTask(SubType::scan, &curr->cast<Break>()->condition);
-        self->maybeAddTask(SubType::scan, &curr->cast<Break>()->value);
+        self->pushTask(SubType::doVisitBreak, currp);
+        self->maybePushTask(SubType::scan, &curr->cast<Break>()->condition);
+        self->maybePushTask(SubType::scan, &curr->cast<Break>()->value);
         break;
       }
       case Expression::Id::SwitchId: {
-        self->addTask(SubType::doVisitSwitch, currp);
-        self->maybeAddTask(SubType::scan, &curr->cast<Switch>()->value);
-        self->addTask(SubType::scan, &curr->cast<Switch>()->condition);
+        self->pushTask(SubType::doVisitSwitch, currp);
+        self->maybePushTask(SubType::scan, &curr->cast<Switch>()->value);
+        self->pushTask(SubType::scan, &curr->cast<Switch>()->condition);
         break;
       }
       case Expression::Id::CallId: {
-        self->addTask(SubType::doVisitCall, currp);
+        self->pushTask(SubType::doVisitCall, currp);
         auto& list = curr->cast<Call>()->operands;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->addTask(SubType::scan, &list[i]);
+          self->pushTask(SubType::scan, &list[i]);
         }
         break;
       }
       case Expression::Id::CallImportId: {
-        self->addTask(SubType::doVisitCallImport, currp);
+        self->pushTask(SubType::doVisitCallImport, currp);
         auto& list = curr->cast<CallImport>()->operands;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->addTask(SubType::scan, &list[i]);
+          self->pushTask(SubType::scan, &list[i]);
         }
         break;
       }
       case Expression::Id::CallIndirectId: {
-        self->addTask(SubType::doVisitCallIndirect, currp);
+        self->pushTask(SubType::doVisitCallIndirect, currp);
         auto& list = curr->cast<CallIndirect>()->operands;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->addTask(SubType::scan, &list[i]);
+          self->pushTask(SubType::scan, &list[i]);
         }
-        self->addTask(SubType::scan, &curr->cast<CallIndirect>()->target);
+        self->pushTask(SubType::scan, &curr->cast<CallIndirect>()->target);
         break;
       }
       case Expression::Id::GetLocalId: {
-        self->addTask(SubType::doVisitGetLocal, currp); // TODO: optimize leaves with a direct call?
+        self->pushTask(SubType::doVisitGetLocal, currp); // TODO: optimize leaves with a direct call?
         break;
       }
       case Expression::Id::SetLocalId: {
-        self->addTask(SubType::doVisitSetLocal, currp);
-        self->addTask(SubType::scan, &curr->cast<SetLocal>()->value);
+        self->pushTask(SubType::doVisitSetLocal, currp);
+        self->pushTask(SubType::scan, &curr->cast<SetLocal>()->value);
         break;
       }
       case Expression::Id::LoadId: {
-        self->addTask(SubType::doVisitLoad, currp);
-        self->addTask(SubType::scan, &curr->cast<Load>()->ptr);
+        self->pushTask(SubType::doVisitLoad, currp);
+        self->pushTask(SubType::scan, &curr->cast<Load>()->ptr);
         break;
       }
       case Expression::Id::StoreId: {
-        self->addTask(SubType::doVisitStore, currp);
-        self->addTask(SubType::scan, &curr->cast<Store>()->value);
-        self->addTask(SubType::scan, &curr->cast<Store>()->ptr);
+        self->pushTask(SubType::doVisitStore, currp);
+        self->pushTask(SubType::scan, &curr->cast<Store>()->value);
+        self->pushTask(SubType::scan, &curr->cast<Store>()->ptr);
         break;
       }
       case Expression::Id::ConstId: {
-        self->addTask(SubType::doVisitConst, currp);
+        self->pushTask(SubType::doVisitConst, currp);
         break;
       }
       case Expression::Id::UnaryId: {
-        self->addTask(SubType::doVisitUnary, currp);
-        self->addTask(SubType::scan, &curr->cast<Unary>()->value);
+        self->pushTask(SubType::doVisitUnary, currp);
+        self->pushTask(SubType::scan, &curr->cast<Unary>()->value);
         break;
       }
       case Expression::Id::BinaryId: {
-        self->addTask(SubType::doVisitBinary, currp);
-        self->addTask(SubType::scan, &curr->cast<Binary>()->right);
-        self->addTask(SubType::scan, &curr->cast<Binary>()->left);
+        self->pushTask(SubType::doVisitBinary, currp);
+        self->pushTask(SubType::scan, &curr->cast<Binary>()->right);
+        self->pushTask(SubType::scan, &curr->cast<Binary>()->left);
         break;
       }
       case Expression::Id::SelectId: {
-        self->addTask(SubType::doVisitSelect, currp);
-        self->addTask(SubType::scan, &curr->cast<Select>()->condition);
-        self->addTask(SubType::scan, &curr->cast<Select>()->ifFalse);
-        self->addTask(SubType::scan, &curr->cast<Select>()->ifTrue);
+        self->pushTask(SubType::doVisitSelect, currp);
+        self->pushTask(SubType::scan, &curr->cast<Select>()->condition);
+        self->pushTask(SubType::scan, &curr->cast<Select>()->ifFalse);
+        self->pushTask(SubType::scan, &curr->cast<Select>()->ifTrue);
         break;
       }
       case Expression::Id::ReturnId: {
-        self->addTask(SubType::doVisitReturn, currp);
-        self->maybeAddTask(SubType::scan, &curr->cast<Return>()->value);
+        self->pushTask(SubType::doVisitReturn, currp);
+        self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
         break;
       }
       case Expression::Id::HostId: {
-        self->addTask(SubType::doVisitHost, currp);
+        self->pushTask(SubType::doVisitHost, currp);
         auto& list = curr->cast<Host>()->operands;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->addTask(SubType::scan, &list[i]);
+          self->pushTask(SubType::scan, &list[i]);
         }
         break;
       }
       case Expression::Id::NopId: {
-        self->addTask(SubType::doVisitNop, currp);
+        self->pushTask(SubType::doVisitNop, currp);
         break;
       }
       case Expression::Id::UnreachableId: {
-        self->addTask(SubType::doVisitUnreachable, currp);
+        self->pushTask(SubType::doVisitUnreachable, currp);
         break;
       }
       default: WASM_UNREACHABLE();
@@ -366,8 +366,8 @@ struct PostWalker : public Walker<SubType> {
 // to noteNonLinear().
 
 template<typename SubType>
-struct SimpleExecutionWalker : public PostWalker<SubType> {
-  SimpleExecutionWalker() {}
+struct LinearExecutionWalker : public PostWalker<SubType> {
+  LinearExecutionWalker() {}
 
   // subclasses should implement this
   void noteNonLinear() { abort(); }
@@ -383,48 +383,48 @@ struct SimpleExecutionWalker : public PostWalker<SubType> {
     switch (curr->_id) {
       case Expression::Id::InvalidId: abort();
       case Expression::Id::BlockId: {
-        self->addTask(SubType::doVisitBlock, currp);
-        self->addTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::doVisitBlock, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
         auto& list = curr->cast<Block>()->list;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->addTask(SubType::scan, &list[i]);
+          self->pushTask(SubType::scan, &list[i]);
         }
         break;
       }
       case Expression::Id::IfId: {
-        self->addTask(SubType::doVisitIf, currp);
-        self->addTask(SubType::doNoteNonLinear, currp);
-        self->maybeAddTask(SubType::scan, &curr->cast<If>()->ifFalse);
-        self->addTask(SubType::doNoteNonLinear, currp);
-        self->addTask(SubType::scan, &curr->cast<If>()->ifTrue);
-        self->addTask(SubType::doNoteNonLinear, currp);
-        self->addTask(SubType::scan, &curr->cast<If>()->condition);
+        self->pushTask(SubType::doVisitIf, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->maybePushTask(SubType::scan, &curr->cast<If>()->ifFalse);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<If>()->ifTrue);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<If>()->condition);
         break;
       }
       case Expression::Id::LoopId: {
-        self->addTask(SubType::doVisitLoop, currp);
-        self->addTask(SubType::scan, &curr->cast<Loop>()->body);
-        self->addTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::doVisitLoop, currp);
+        self->pushTask(SubType::scan, &curr->cast<Loop>()->body);
+        self->pushTask(SubType::doNoteNonLinear, currp);
         break;
       }
       case Expression::Id::BreakId: {
-        self->addTask(SubType::doVisitBreak, currp);
-        self->addTask(SubType::doNoteNonLinear, currp);
-        self->maybeAddTask(SubType::scan, &curr->cast<Break>()->condition);
-        self->maybeAddTask(SubType::scan, &curr->cast<Break>()->value);
+        self->pushTask(SubType::doVisitBreak, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->maybePushTask(SubType::scan, &curr->cast<Break>()->condition);
+        self->maybePushTask(SubType::scan, &curr->cast<Break>()->value);
         break;
       }
       case Expression::Id::SwitchId: {
-        self->addTask(SubType::doVisitSwitch, currp);
-        self->addTask(SubType::doNoteNonLinear, currp);
-        self->maybeAddTask(SubType::scan, &curr->cast<Switch>()->value);
-        self->addTask(SubType::scan, &curr->cast<Switch>()->condition);
+        self->pushTask(SubType::doVisitSwitch, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->maybePushTask(SubType::scan, &curr->cast<Switch>()->value);
+        self->pushTask(SubType::scan, &curr->cast<Switch>()->condition);
         break;
       }
       case Expression::Id::ReturnId: {
-        self->addTask(SubType::doVisitReturn, currp);
-        self->addTask(SubType::doNoteNonLinear, currp);
-        self->maybeAddTask(SubType::scan, &curr->cast<Return>()->value);
+        self->pushTask(SubType::doVisitReturn, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
         break;
       }
       default: {
