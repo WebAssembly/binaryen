@@ -207,7 +207,7 @@ private:
 #endif
 
     // Execute a statement
-    class ExpressionRunner : public WasmVisitor<ExpressionRunner, Flow> {
+    class ExpressionRunner : public Visitor<ExpressionRunner, Flow> {
       ModuleInstance& instance;
       FunctionScope& scope;
 

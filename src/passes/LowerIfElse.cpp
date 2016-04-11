@@ -32,7 +32,7 @@
 
 namespace wasm {
 
-struct LowerIfElse : public WalkerPass<WasmWalker<LowerIfElse, void>> {
+struct LowerIfElse : public WalkerPass<PostWalker<LowerIfElse>> {
   MixedArena* allocator;
   std::unique_ptr<NameManager> namer;
 

@@ -2,7 +2,7 @@
 //
 // Tiny example, using Binaryen to walk a WebAssembly module in search
 // for direct integer divisions by zero. To do so, we inherit from
-// WasmWalker, and implement visitBinary, which is called on every
+// PostWalker, and implement visitBinary, which is called on every
 // Binary node in the module's functions.
 //
 
@@ -39,7 +39,7 @@ int main() {
 
   // Search it for divisions by zero: Walk the module, looking for
   // that operation.
-  struct DivZeroSeeker : public WasmWalker<DivZeroSeeker> {
+  struct DivZeroSeeker : public PostWalker<DivZeroSeeker> {
     void visitBinary(Binary* curr) {
       // In every Binary, look for integer divisions
       if (curr->op == BinaryOp::DivS || curr->op == BinaryOp::DivU) {

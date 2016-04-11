@@ -27,7 +27,7 @@
 
 namespace wasm {
 
-struct RemoveImports : public WalkerPass<WasmWalker<RemoveImports>> {
+struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
   MixedArena* allocator;
   Module* module;
 

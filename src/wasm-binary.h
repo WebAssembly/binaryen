@@ -431,7 +431,7 @@ int8_t binaryWasmType(WasmType type) {
   }
 }
 
-class WasmBinaryWriter : public WasmVisitor<WasmBinaryWriter, void> {
+class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
   bool debug;

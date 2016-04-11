@@ -24,16 +24,16 @@ namespace wasm {
 using namespace std;
 
 // Prints metrics between optimization passes.
-struct Metrics : public WalkerPass<WasmWalker<Metrics>> {
+struct Metrics : public WalkerPass<PostWalker<Metrics>> {
   static Metrics *lastMetricsPass;
 
   map<const char *, int> counts;
-  void walk(Expression *&curr) override {
-    WalkerPass::walk(curr);
-    if (!curr) return;
+
+  void visitExpression(Expression* curr) {
     auto name = getExpressionName(curr);
     counts[name]++;
   }
+
   void finalize(PassRunner *runner, Module *module) override {
     ostream &o = cout;
     o << "Counts"

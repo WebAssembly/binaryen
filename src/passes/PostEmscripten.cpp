@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-struct PostEmscripten : public WalkerPass<WasmWalker<PostEmscripten>> {
+struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
   // When we have a Load from a local value (typically a GetLocal) plus a constant offset,
   // we may be able to fold it in.
   // The semantics of the Add are to wrap, while wasm offset semantics purposefully do

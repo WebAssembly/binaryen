@@ -392,7 +392,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
 }
 
 void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
-  struct ExpressionScanner : public WasmWalker<ExpressionScanner> {
+  struct ExpressionScanner : public PostWalker<ExpressionScanner> {
     Wasm2AsmBuilder* parent;
 
     ExpressionScanner(Wasm2AsmBuilder* parent) : parent(parent) {}
@@ -467,6 +467,9 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
         parent->setStatement(curr);
       }
     }
+    void visitReturn(Return *curr) {
+      abort();
+    }
     void visitHost(Host *curr) {
       for (auto item : curr->operands) {
         if (parent->isStatement(item)) {
@@ -480,7 +483,7 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
 }
 
 Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
-  struct ExpressionProcessor : public WasmVisitor<ExpressionProcessor, Ref> {
+  struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2AsmBuilder* parent;
     IString result;
     ExpressionProcessor(Wasm2AsmBuilder* parent) : parent(parent) {}
@@ -521,7 +524,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
     Ref visit(Expression* curr, IString nextResult) {
       IString old = result;
       result = nextResult;
-      Ref ret = WasmVisitor::visit(curr);
+      Ref ret = Visitor::visit(curr);
       result = old; // keep it consistent for the rest of this frame, which may call visit on multiple children
       return ret;
     }
@@ -1082,6 +1085,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Expression* curr, IString result) {
             )
           )
         );
+    }
+    Ref visitReturn(Return *curr) {
+      abort();
     }
     Ref visitHost(Host *curr) {
       abort();

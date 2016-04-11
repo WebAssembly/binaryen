@@ -26,7 +26,7 @@
 
 namespace wasm {
 
-struct SimplifyLocals : public WalkerPass<FastExecutionWalker<SimplifyLocals>> {
+struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>> {
   struct SinkableInfo {
     Expression** item;
     EffectAnalyzer effects;
@@ -43,23 +43,6 @@ struct SimplifyLocals : public WalkerPass<FastExecutionWalker<SimplifyLocals>> {
     sinkables.clear();
   }
 
-  void visitBlock(Block *curr) {
-    // note locals, we can sink them from here TODO sink from elsewhere?
-    derecurseBlocks(curr, [&](Block* block) {
-      // curr was already checked by walk()
-      if (block != curr) checkPre(block);
-    }, [&](Block* block, Expression*& child) {
-      walk(child);
-      if (child->is<SetLocal>()) {
-        Name name = child->cast<SetLocal>()->name;
-        assert(sinkables.count(name) == 0);
-        sinkables.emplace(std::make_pair(name, SinkableInfo(&child)));
-      }
-    }, [&](Block* block) {
-      if (block != curr) checkPost(block);
-    });
-  }
-
   void visitGetLocal(GetLocal *curr) {
     auto found = sinkables.find(curr->name);
     if (found != sinkables.end()) {
@@ -73,7 +56,6 @@ struct SimplifyLocals : public WalkerPass<FastExecutionWalker<SimplifyLocals>> {
   }
 
   void visitSetLocal(SetLocal *curr) {
-    walk(curr->value);
     // if we are a potentially-sinkable thing, forget it - this
     // write overrides the last TODO: optimizable
     // TODO: if no get_locals left, can remove the set as well (== expressionizer in emscripten optimizer)
@@ -96,28 +78,56 @@ struct SimplifyLocals : public WalkerPass<FastExecutionWalker<SimplifyLocals>> {
     }
   }
 
-  void checkPre(Expression* curr) {
+  static void visitPre(SimplifyLocals* self, Expression** currp) {
     EffectAnalyzer effects;
-    if (effects.checkPre(curr)) {
-      checkInvalidations(effects);
+    if (effects.checkPre(*currp)) {
+      self->checkInvalidations(effects);
     }
   }
 
-  void checkPost(Expression* curr) {
+  static void visitPost(SimplifyLocals* self, Expression** currp) {
     EffectAnalyzer effects;
-    if (effects.checkPost(curr)) {
-      checkInvalidations(effects);
+    if (effects.checkPost(*currp)) {
+      self->checkInvalidations(effects);
     }
   }
 
-  void walk(Expression*& curr) override {
-    if (!curr) return;
+  static void tryMarkSinkable(SimplifyLocals* self, Expression** currp) {
+    auto* curr = (*currp)->dyn_cast<SetLocal>();
+    if (curr) {
+      Name name = curr->name;
+      assert(self->sinkables.count(name) == 0);
+      self->sinkables.emplace(std::make_pair(name, SinkableInfo(currp)));
+    }
+  }
 
-    checkPre(curr);
+  // override scan to add a pre and a post check task to all nodes
+  static void scan(SimplifyLocals* self, Expression** currp) {
+    self->pushTask(visitPost, currp);
 
-    FastExecutionWalker::walk(curr);
+    auto* curr = *currp;
 
-    checkPost(curr);
+
+    if (curr->is<Block>()) {
+      // special-case blocks, by marking their children as locals.
+      // TODO sink from elsewhere? (need to make sure value is not used)
+      self->pushTask(SimplifyLocals::doNoteNonLinear, currp);
+      auto& list = curr->cast<Block>()->list;
+      int size = list.size();
+      // we can't sink the last element, as it might be a return value;
+      // and anyhow, control flow is nonlinear at the end of the block so
+      // it would be invalidated.
+      for (int i = size - 1; i >= 0; i--) {
+        if (i < size - 1) {
+          self->pushTask(tryMarkSinkable, &list[i]);
+        }
+        self->pushTask(scan, &list[i]);
+      }
+    } else {
+      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::scan(self, currp);
+    }
+
+    self->pushTask(visitPre, currp);
   }
 };
 
