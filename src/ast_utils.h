@@ -40,26 +40,38 @@ struct BreakSeeker : public PostWalker<BreakSeeker> {
 };
 
 // Look for side effects, including control flow
-// TODO: look at individual locals
+// TODO: optimize
 
 struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   bool branches = false;
   bool calls = false;
-  bool readsLocal = false;
-  bool writesLocal = false;
+  std::set<Name> localsRead;
+  std::set<Name> localsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
 
-  bool accessesLocal() { return readsLocal || writesLocal; }
+  bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
-  bool hasSideEffects() { return calls || writesLocal || writesMemory; }
-  bool hasAnything() { return branches || calls || readsLocal || writesLocal || readsMemory || writesMemory; }
+  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory; }
+  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory; }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
   bool invalidates(EffectAnalyzer& other) {
-    return branches || other.branches
-                    || ((writesMemory || calls) && other.accessesMemory())       || (writesLocal && other.accessesLocal())
-                    || (accessesMemory() && (other.writesMemory || other.calls)) || (accessesLocal() && other.writesLocal);
+    if (branches || other.branches
+                 || ((writesMemory || calls) && other.accessesMemory())
+                 || (accessesMemory() && (other.writesMemory || other.calls))) {
+      return true;
+    }
+    assert(localsWritten.size() + localsRead.size() <= 1); // the code below is fast on that case, of one element vs many
+    for (auto local : localsWritten) {
+      if (other.localsWritten.count(local) || other.localsRead.count(local)) {
+        return true;
+      }
+    }
+    for (auto local : localsRead) {
+      if (other.localsWritten.count(local)) return true;
+    }
+    return false;
   }
 
   // the checks above happen after the node's children were processed, in the order of execution
@@ -85,8 +97,12 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   void visitCall(Call *curr) { calls = true; }
   void visitCallImport(CallImport *curr) { calls = true; }
   void visitCallIndirect(CallIndirect *curr) { calls = true; }
-  void visitGetLocal(GetLocal *curr) { readsLocal = true; }
-  void visitSetLocal(SetLocal *curr) { writesLocal = true; }
+  void visitGetLocal(GetLocal *curr) {
+    localsRead.insert(curr->name);
+  }
+  void visitSetLocal(SetLocal *curr) {
+    localsWritten.insert(curr->name);
+  }
   void visitLoad(Load *curr) { readsMemory = true; }
   void visitStore(Store *curr) { writesMemory = true; }
   void visitReturn(Return *curr) { branches = true; }

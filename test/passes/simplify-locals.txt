@@ -47,48 +47,53 @@
       (i32.const 17)
     )
     (block $block2
+      (nop)
+      (nop)
       (set_local $a
         (i32.const 1)
       )
       (set_local $b
         (i32.const 2)
       )
-      (get_local $a)
-      (get_local $b)
       (set_local $a
         (i32.const 3)
       )
       (set_local $b
         (i32.const 4)
       )
-      (set_local $a
-        (i32.const 5)
-      )
+      (nop)
       (nop)
       (set_local $b
         (i32.const 6)
       )
-      (get_local $a)
+      (set_local $a
+        (i32.const 5)
+      )
       (set_local $a
         (i32.const 7)
       )
       (set_local $b
         (i32.const 8)
       )
+      (nop)
+      (nop)
+      (call_import $waka)
       (set_local $a
         (i32.const 9)
       )
       (set_local $b
         (i32.const 10)
       )
-      (call_import $waka)
-      (get_local $a)
-      (get_local $b)
       (set_local $a
         (i32.const 11)
       )
       (set_local $b
         (i32.const 12)
+      )
+      (nop)
+      (nop)
+      (i32.load
+        (i32.const 24)
       )
       (set_local $a
         (i32.const 13)
@@ -96,16 +101,17 @@
       (set_local $b
         (i32.const 14)
       )
-      (i32.load
-        (i32.const 24)
-      )
-      (get_local $a)
-      (get_local $b)
       (set_local $a
         (i32.const 15)
       )
       (set_local $b
         (i32.const 16)
+      )
+      (nop)
+      (nop)
+      (i32.store
+        (i32.const 48)
+        (i32.const 96)
       )
       (set_local $a
         (i32.const 17)
@@ -113,12 +119,6 @@
       (set_local $b
         (i32.const 18)
       )
-      (i32.store
-        (i32.const 48)
-        (i32.const 96)
-      )
-      (get_local $a)
-      (get_local $b)
     )
     (block $block3
       (nop)
@@ -267,12 +267,12 @@
     )
   )
   (func $memories (param $i2 i32) (param $i3 i32)
-    (set_local $i3
-      (i32.const 1)
-    )
+    (nop)
     (i32.store8
       (get_local $i2)
-      (get_local $i3)
+      (set_local $i3
+        (i32.const 1)
+      )
     )
   )
 )
