@@ -30,7 +30,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   void visitIf(If* curr) {
     if (!curr->ifFalse) {
       // try to reduce an   if (condition) br  =>  br_if (condition) , which might open up other optimization opportunities
-      Break* br = curr->ifTrue->dyn_cast<Break>();
+      Break* br = curr->ifTrue->dynCast<Break>();
       if (br && !br->condition) { // TODO: if there is a condition, join them
         br->condition = curr->condition;
         replaceCurrent(br);
@@ -40,7 +40,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     if (isConcreteWasmType(curr->type)) return; // already has a returned value
     // an if_else that indirectly returns a value by breaking to the same target can potentially remove both breaks, and break outside once
     auto getLast = [](Expression *side) -> Expression* {
-      Block* b = side->dyn_cast<Block>();
+      Block* b = side->dynCast<Block>();
       if (!b) return nullptr;
       if (b->list.size() == 0) return nullptr;
       return b->list.back();
@@ -49,7 +49,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       Expression* last = getLast(side);
       if (!last) return Name();
       Block* b = side->cast<Block>();
-      Break* br = last->dyn_cast<Break>();
+      Break* br = last->dynCast<Break>();
       if (!br) return Name();
       if (br->condition) return Name();
       if (!br->value) return Name();
@@ -76,14 +76,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     if (curr->list.size() == 0) return;
     // preparation - remove all code after an unconditional break, since it can't execute, and it might confuse us (we look at the last)
     for (size_t i = 0; i < curr->list.size()-1; i++) {
-      Break* br = curr->list[i]->dyn_cast<Break>();
+      Break* br = curr->list[i]->dynCast<Break>();
       if (br && !br->condition) {
         curr->list.resize(i+1);
         break;
       }
     }
     Expression* last = curr->list.back();
-    if (Break* br = last->dyn_cast<Break>()) {
+    if (Break* br = last->dynCast<Break>()) {
       if (br->condition) return;
       if (br->name == curr->name) {
         if (!br->value) {

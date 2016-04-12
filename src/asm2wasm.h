@@ -433,7 +433,7 @@ private:
 
   // ensure a nameless block
   Block* blockify(Expression* expression) {
-    if (expression->is<Block>() && !expression->cast<Block>()->name.is()) return expression->dyn_cast<Block>();
+    if (expression->is<Block>() && !expression->cast<Block>()->name.is()) return expression->dynCast<Block>();
     auto ret = allocator.alloc<Block>();
     ret->list.push_back(expression);
     ret->finalize();
@@ -1351,7 +1351,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto ret = processStatements(ast[1], 0);
       if (name.is()) {
         breakStack.pop_back();
-        Block* block = ret->dyn_cast<Block>();
+        Block* block = ret->dynCast<Block>();
         if (block && block->name.isNull()) {
           block->name = name;
         } else {

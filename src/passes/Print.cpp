@@ -105,14 +105,14 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     incIndent();
     printFullLine(curr->condition);
     // ifTrue and False have implict blocks, avoid printing them if possible
-    if (!fullAST && curr->ifTrue->is<Block>() && curr->ifTrue->dyn_cast<Block>()->name.isNull() && curr->ifTrue->dyn_cast<Block>()->list.size() == 1) {
-      printFullLine(curr->ifTrue->dyn_cast<Block>()->list.back());
+    if (!fullAST && curr->ifTrue->is<Block>() && curr->ifTrue->dynCast<Block>()->name.isNull() && curr->ifTrue->dynCast<Block>()->list.size() == 1) {
+      printFullLine(curr->ifTrue->dynCast<Block>()->list.back());
     } else {
       printFullLine(curr->ifTrue);
     }
     if (curr->ifFalse) {
-      if (!fullAST && curr->ifFalse->is<Block>() && curr->ifFalse->dyn_cast<Block>()->name.isNull() && curr->ifFalse->dyn_cast<Block>()->list.size() == 1) {
-        printFullLine(curr->ifFalse->dyn_cast<Block>()->list.back());
+      if (!fullAST && curr->ifFalse->is<Block>() && curr->ifFalse->dynCast<Block>()->name.isNull() && curr->ifFalse->dynCast<Block>()->list.size() == 1) {
+        printFullLine(curr->ifFalse->dynCast<Block>()->list.back());
       } else {
         printFullLine(curr->ifFalse);
       }
@@ -129,7 +129,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << ' ' << curr->in;
     }
     incIndent();
-    auto block = curr->body->dyn_cast<Block>();
+    auto block = curr->body->dynCast<Block>();
     if (!fullAST && block && block->name.isNull()) {
       // wasm spec has loops containing children directly, while our ast
       // has a single child for simplicity. print out the optimal form.

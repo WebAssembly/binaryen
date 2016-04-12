@@ -10,32 +10,20 @@
     (local $a i32)
     (local $b i32)
     (nop)
-    (set_local $x
-      (i32.const 5)
-    )
+    (i32.const 5)
     (block $block0
       (nop)
-      (set_local $x
-        (i32.const 7)
-      )
+      (i32.const 7)
     )
     (nop)
-    (set_local $x
-      (i32.const 11)
-    )
-    (set_local $x
-      (i32.const 9)
-    )
+    (i32.const 11)
+    (i32.const 9)
     (get_local $y)
     (block $block1
-      (set_local $x
-        (i32.const 8)
-      )
+      (i32.const 8)
       (get_local $y)
     )
-    (set_local $x
-      (i32.const 11)
-    )
+    (i32.const 11)
     (get_local $y)
     (nop)
     (nop)
@@ -43,82 +31,62 @@
     (nop)
     (nop)
     (nop)
-    (set_local $x
-      (i32.const 17)
-    )
+    (i32.const 17)
     (block $block2
+      (nop)
+      (nop)
       (set_local $a
         (i32.const 1)
       )
-      (set_local $b
-        (i32.const 2)
-      )
-      (get_local $a)
-      (get_local $b)
+      (i32.const 2)
       (set_local $a
         (i32.const 3)
       )
-      (set_local $b
-        (i32.const 4)
-      )
+      (i32.const 4)
+      (nop)
+      (nop)
+      (i32.const 6)
       (set_local $a
         (i32.const 5)
       )
-      (nop)
-      (set_local $b
-        (i32.const 6)
-      )
-      (get_local $a)
       (set_local $a
         (i32.const 7)
       )
-      (set_local $b
-        (i32.const 8)
-      )
+      (i32.const 8)
+      (nop)
+      (nop)
+      (call_import $waka)
       (set_local $a
         (i32.const 9)
       )
-      (set_local $b
-        (i32.const 10)
-      )
-      (call_import $waka)
-      (get_local $a)
-      (get_local $b)
+      (i32.const 10)
       (set_local $a
         (i32.const 11)
       )
-      (set_local $b
-        (i32.const 12)
+      (i32.const 12)
+      (nop)
+      (nop)
+      (i32.load
+        (i32.const 24)
       )
       (set_local $a
         (i32.const 13)
       )
-      (set_local $b
-        (i32.const 14)
-      )
-      (i32.load
-        (i32.const 24)
-      )
-      (get_local $a)
-      (get_local $b)
+      (i32.const 14)
       (set_local $a
         (i32.const 15)
       )
-      (set_local $b
-        (i32.const 16)
-      )
-      (set_local $a
-        (i32.const 17)
-      )
-      (set_local $b
-        (i32.const 18)
-      )
+      (i32.const 16)
+      (nop)
+      (nop)
       (i32.store
         (i32.const 48)
         (i32.const 96)
       )
-      (get_local $a)
-      (get_local $b)
+      (set_local $a
+        (i32.const 17)
+      )
+      (i32.const 18)
     )
     (block $block3
       (nop)
@@ -266,13 +234,34 @@
       (get_local $b)
     )
   )
-  (func $memories (param $i2 i32) (param $i3 i32)
-    (set_local $i3
-      (i32.const 1)
-    )
+  (func $memories (param $i2 i32) (param $i3 i32) (param $bi2 i32) (param $bi3 i32) (param $ci3 i32) (param $di3 i32)
+    (local $set_with_no_get i32)
+    (nop)
     (i32.store8
       (get_local $i2)
-      (get_local $i3)
+      (i32.const 1)
     )
+    (nop)
+    (i32.store8
+      (set_local $bi3
+        (i32.const 1)
+      )
+      (get_local $bi3)
+    )
+    (nop)
+    (i32.store8
+      (get_local $bi3)
+      (get_local $bi3)
+    )
+    (set_local $di3
+      (set_local $bi3
+        (i32.const 123)
+      )
+    )
+    (i32.store8
+      (get_local $bi3)
+      (get_local $di3)
+    )
+    (i32.const 456)
   )
 )

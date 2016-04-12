@@ -17,7 +17,9 @@
 //
 // Locals-related optimizations
 //
-// This "sinks" set_locals, pushing them to the next get_local where possible
+// This "sinks" set_locals, pushing them to the next get_local where possible,
+// and removing the set if there are no gets remaining (the latter is
+// particularly useful in ssa mode, but not only).
 
 #include <wasm.h>
 #include <wasm-traversal.h>
@@ -39,6 +41,12 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
   // locals in current linear execution trace, which we try to sink
   std::map<Name, SinkableInfo> sinkables;
 
+  // name => # of get_locals for it
+  std::map<Name, int> numGetLocals;
+
+  // for each set_local, its origin pointer
+  std::map<SetLocal*, Expression**> setLocalOrigins;
+
   void noteNonLinear() {
     sinkables.clear();
   }
@@ -52,6 +60,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       *found->second.item = curr;
       ExpressionManipulator::nop(curr);
       sinkables.erase(found);
+    } else {
+      numGetLocals[curr->name]++;
     }
   }
 
@@ -79,21 +89,32 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
   }
 
   static void visitPre(SimplifyLocals* self, Expression** currp) {
+    Expression* curr = *currp;
+
     EffectAnalyzer effects;
-    if (effects.checkPre(*currp)) {
+    if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
     }
   }
 
   static void visitPost(SimplifyLocals* self, Expression** currp) {
+    Expression* curr = *currp;
+
     EffectAnalyzer effects;
-    if (effects.checkPost(*currp)) {
+    if (effects.checkPost(curr)) {
       self->checkInvalidations(effects);
+    }
+
+    // noting origins in the post means it happens after a
+    // get_local was replaced by a set_local in a sinking
+    // operation, so we track those movements properly.
+    if (curr->is<SetLocal>()) {
+      self->setLocalOrigins[curr->cast<SetLocal>()] = currp;
     }
   }
 
   static void tryMarkSinkable(SimplifyLocals* self, Expression** currp) {
-    auto* curr = (*currp)->dyn_cast<SetLocal>();
+    auto* curr = (*currp)->dynCast<SetLocal>();
     if (curr) {
       Name name = curr->name;
       assert(self->sinkables.count(name) == 0);
@@ -106,7 +127,6 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     self->pushTask(visitPost, currp);
 
     auto* curr = *currp;
-
 
     if (curr->is<Block>()) {
       // special-case blocks, by marking their children as locals.
@@ -128,6 +148,33 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     }
 
     self->pushTask(visitPre, currp);
+  }
+
+  void visitFunction(Function *curr) {
+    // after optimizing a function, we can see if we have set_locals
+    // for a local with no remaining gets, in which case, we can
+    // remove the set.
+    std::vector<SetLocal*> optimizables;
+    for (auto pair : setLocalOrigins) {
+      SetLocal* curr = pair.first;
+      if (numGetLocals[curr->name] == 0) {
+        // no gets, can remove the set and leave just the value
+        optimizables.push_back(curr);
+      }
+    }
+    for (auto* curr : optimizables) {
+      Expression** origin = setLocalOrigins[curr];
+      *origin = curr->value;
+      // nested set_values need to be handled properly.
+      // consider (set_local x (set_local y (..)), where both can be
+      // reduced to their values, and we might do it in either
+      // order.
+      if (curr->value->is<SetLocal>()) {
+        setLocalOrigins[curr->value->cast<SetLocal>()] = origin;
+      }
+    }
+    numGetLocals.clear();
+    setLocalOrigins.clear();
   }
 };
 

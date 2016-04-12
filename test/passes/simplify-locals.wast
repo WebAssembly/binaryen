@@ -158,7 +158,8 @@
       (get_local $b)
     )
   )
-  (func $memories (param $i2 i32) (param $i3 i32)
+  (func $memories (param $i2 i32) (param $i3 i32) (param $bi2 i32) (param $bi3 i32) (param $ci3 i32) (param $di3 i32)
+    (local $set_with_no_get i32)
     (set_local $i3
       (i32.const 1)
     )
@@ -166,6 +167,28 @@
       (get_local $i2)
       (get_local $i3)
     )
+    (set_local $bi3
+      (i32.const 1)
+    )
+    (i32.store8
+      (get_local $bi3)
+      (get_local $bi3)
+    )
+    (set_local $ci3
+      (get_local $bi3)
+    )
+    (i32.store8
+      (get_local $bi3)
+      (get_local $ci3)
+    )
+    (set_local $di3
+      (set_local $bi3 (i32.const 123))
+    )
+    (i32.store8
+      (get_local $bi3)
+      (get_local $di3)
+    )
+    (set_local $set_with_no_get (i32.const 456))
   )
 )
 

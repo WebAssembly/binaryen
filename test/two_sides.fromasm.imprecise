@@ -6,31 +6,28 @@
     (local $d6 f64)
     (if
       (get_local $i5)
-      (block
-        (set_local $d6
-          (f64.convert_s/i32
-            (i32.mul
-              (get_local $i2)
-              (get_local $i1)
-            )
-          )
-        )
-        (return
-          (set_local $i5
-            (i32.trunc_s/f64
-              (set_local $d6
-                (f64.mul
-                  (f64.add
-                    (f64.convert_s/i32
-                      (get_local $i3)
-                    )
-                    (get_local $d6)
+      (return
+        (set_local $i5
+          (i32.trunc_s/f64
+            (set_local $d6
+              (f64.mul
+                (f64.add
+                  (f64.convert_s/i32
+                    (get_local $i3)
                   )
-                  (f64.add
-                    (get_local $d6)
+                  (set_local $d6
                     (f64.convert_s/i32
-                      (get_local $i4)
+                      (i32.mul
+                        (get_local $i2)
+                        (get_local $i1)
+                      )
                     )
+                  )
+                )
+                (f64.add
+                  (get_local $d6)
+                  (f64.convert_s/i32
+                    (get_local $i4)
                   )
                 )
               )
@@ -38,32 +35,29 @@
           )
         )
       )
-      (block
-        (set_local $d6
-          (f64.convert_s/i32
-            (i32.mul
-              (get_local $i4)
-              (get_local $i3)
-            )
-          )
-        )
-        (return
-          (set_local $i5
-            (i32.trunc_s/f64
-              (set_local $d6
-                (f64.mul
-                  (f64.add
-                    (f64.convert_s/i32
-                      (get_local $i3)
-                    )
-                    (get_local $d6)
+      (return
+        (set_local $i5
+          (i32.trunc_s/f64
+            (set_local $d6
+              (f64.mul
+                (f64.add
+                  (f64.convert_s/i32
+                    (get_local $i3)
                   )
-                  (f64.add
+                  (set_local $d6
                     (f64.convert_s/i32
-                      (get_local $i4)
+                      (i32.mul
+                        (get_local $i4)
+                        (get_local $i3)
+                      )
                     )
-                    (get_local $d6)
                   )
+                )
+                (f64.add
+                  (f64.convert_s/i32
+                    (get_local $i4)
+                  )
+                  (get_local $d6)
                 )
               )
             )
