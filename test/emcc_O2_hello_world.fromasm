@@ -133,7 +133,6 @@
     (local $i64 i32)
     (local $i48 i32)
     (local $i27 i32)
-    (local $i13 i32)
     (block $do-once$0
       (if
         (i32.lt_u

@@ -43,13 +43,9 @@
   )
   (func $zero
     (local $b i32)
-    (local $c i32)
-    (local $a i32)
     (get_local $b)
   )
   (func $null
-    (local $c i32)
-    (local $a i32)
     (nop)
   )
 )

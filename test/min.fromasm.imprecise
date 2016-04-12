@@ -12,7 +12,6 @@
     )
   )
   (func $neg (param $k i32) (param $p i32) (result f32)
-    (local $n f32)
     (return
       (f32.neg
         (block

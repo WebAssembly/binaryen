@@ -20,6 +20,10 @@
 // This "sinks" set_locals, pushing them to the next get_local where possible,
 // and removing the set if there are no gets remaining (the latter is
 // particularly useful in ssa mode, but not only).
+//
+// After this pass, some locals may be completely unused. reorder-locals
+// can get rid of those (the operation is trivial there after it sorts by use
+// frequency).
 
 #include <wasm.h>
 #include <wasm-traversal.h>

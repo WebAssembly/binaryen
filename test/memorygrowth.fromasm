@@ -133,7 +133,6 @@
     (local $Ka i32)
     (local $F i32)
     (local $Ba i32)
-    (local $p i32)
     (set_local $b
       (i32.load
         (i32.const 8)
@@ -10215,7 +10214,6 @@
   )
   (func $Pa (param $a i32) (result i32)
     (local $c i32)
-    (local $b i32)
     (if
       (i32.gt_u
         (get_local $a)
@@ -10277,7 +10275,6 @@
   )
   (func $Qa (result i32)
     (local $a i32)
-    (local $b i32)
     (if
       (i32.load
         (i32.const 1160)
