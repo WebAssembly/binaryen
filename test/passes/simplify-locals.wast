@@ -2,6 +2,8 @@
   (memory 256 256)
   (import $waka "env" "waka")
   (import $waka_int "env" "waka_int" (result i32))
+  (import $_i64Subtract "env" "i64sub" (param i32 i32 i32 i32) (result i32))
+  (import $___udivmoddi4 "env" "moddi" (param i32 i32 i32 i32 i32) (result i32))
   (func $b0-yes (param $i1 i32)
     (local $x i32)
     (local $y i32)
@@ -189,6 +191,201 @@
       (get_local $di3)
     )
     (set_local $set_with_no_get (i32.const 456))
+  )
+  (func $___remdi3 (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
+    (local $$1$1 i32)
+    (local $$1$0 i32)
+    (local $$rem i32)
+    (local $__stackBase__ i32)
+    (local $$2$1 i32)
+    (local $$2$0 i32)
+    (local $$4$1 i32)
+    (local $$4$0 i32)
+    (local $$10$1 i32)
+    (local $$10$0 i32)
+    (local $$6$0 i32)
+    (set_local $__stackBase__
+      (i32.load
+        (i32.const 8)
+      )
+    )
+    (i32.store
+      (i32.const 8)
+      (i32.add
+        (i32.load
+          (i32.const 8)
+        )
+        (i32.const 16)
+      )
+    )
+    (set_local $$rem
+      (get_local $__stackBase__)
+    )
+    (set_local $$1$0
+      (i32.or
+        (i32.shr_s
+          (get_local $$a$1)
+          (i32.const 31)
+        )
+        (i32.shl
+          (if
+            (i32.lt_s
+              (get_local $$a$1)
+              (i32.const 0)
+            )
+            (i32.const -1)
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+      )
+    )
+    (set_local $$1$1
+      (i32.or
+        (i32.shr_s
+          (if
+            (i32.lt_s
+              (get_local $$a$1)
+              (i32.const 0)
+            )
+            (i32.const -1)
+            (i32.const 0)
+          )
+          (i32.const 31)
+        )
+        (i32.shl
+          (if
+            (i32.lt_s
+              (get_local $$a$1)
+              (i32.const 0)
+            )
+            (i32.const -1)
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+      )
+    )
+    (set_local $$2$0
+      (i32.or
+        (i32.shr_s
+          (get_local $$b$1)
+          (i32.const 31)
+        )
+        (i32.shl
+          (if
+            (i32.lt_s
+              (get_local $$b$1)
+              (i32.const 0)
+            )
+            (i32.const -1)
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+      )
+    )
+    (set_local $$2$1
+      (i32.or
+        (i32.shr_s
+          (if
+            (i32.lt_s
+              (get_local $$b$1)
+              (i32.const 0)
+            )
+            (i32.const -1)
+            (i32.const 0)
+          )
+          (i32.const 31)
+        )
+        (i32.shl
+          (if
+            (i32.lt_s
+              (get_local $$b$1)
+              (i32.const 0)
+            )
+            (i32.const -1)
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+      )
+    )
+    (set_local $$4$0
+      (call_import $_i64Subtract
+        (i32.xor
+          (get_local $$1$0)
+          (get_local $$a$0)
+        )
+        (i32.xor
+          (get_local $$1$1)
+          (get_local $$a$1)
+        )
+        (get_local $$1$0)
+        (get_local $$1$1)
+      )
+    )
+    (set_local $$4$1 ;; first this moves, then $$4$0 should be able to move
+      (i32.load
+        (i32.const 168)
+      )
+    )
+    (call_import $___udivmoddi4
+      (get_local $$4$0)
+      (get_local $$4$1)
+      (call_import $_i64Subtract
+        (i32.xor
+          (get_local $$2$0)
+          (get_local $$b$0)
+        )
+        (i32.xor
+          (get_local $$2$1)
+          (get_local $$b$1)
+        )
+        (get_local $$2$0)
+        (get_local $$2$1)
+      )
+      (i32.load
+        (i32.const 168)
+      )
+      (get_local $$rem)
+    )
+    (set_local $$10$0
+      (call_import $_i64Subtract
+        (i32.xor
+          (i32.load
+            (get_local $$rem)
+          )
+          (get_local $$1$0)
+        )
+        (i32.xor
+          (i32.load offset=4
+            (get_local $$rem)
+          )
+          (get_local $$1$1)
+        )
+        (get_local $$1$0)
+        (get_local $$1$1)
+      )
+    )
+    (set_local $$10$1
+      (i32.load
+        (i32.const 168)
+      )
+    )
+    (i32.store
+      (i32.const 8)
+      (get_local $__stackBase__)
+    )
+    (return
+      (block
+        (i32.store
+          (i32.const 168)
+          (get_local $$10$1)
+        )
+        (get_local $$10$0)
+      )
+    )
   )
 )
 
