@@ -11,7 +11,6 @@
   (export "big_negative" $big_negative)
   (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative
-    (local $temp f64)
     (f64.const -2147483648)
     (f64.const -2147483648)
     (f64.const -21474836480)
@@ -19,7 +18,6 @@
     (f64.const -0.039625)
   )
   (func $importedDoubles (result f64)
-    (local $temp f64)
     (f64.add
       (f64.add
         (f64.add
@@ -71,7 +69,6 @@
   (func $doubleCompares (param $x f64) (param $y f64) (result f64)
     (local $Int f64)
     (local $Double i32)
-    (local $t f64)
     (if
       (f64.gt
         (get_local $x)
@@ -145,7 +142,6 @@
     )
   )
   (func $seq
-    (local $J f64)
     (f64.sub
       (block
         (f64.const 0.1)
@@ -158,7 +154,6 @@
     )
   )
   (func $switcher (param $x i32) (result i32)
-    (local $waka i32)
     (block $switch-default$3
       (block $switch-case$2
         (block $switch-case$1
@@ -274,7 +269,6 @@
     )
   )
   (func $big_uint_div_u (result i32)
-    (local $x i32)
     (return
       (i32.and
         (i32.div_u
@@ -304,9 +298,6 @@
   )
   (func $abs
     (local $asm2wasm_i32_temp i32)
-    (local $z f32)
-    (local $y f64)
-    (local $x i32)
     (block
       (select
         (i32.sub
@@ -433,7 +424,6 @@
     )
   )
   (func $ceiling_32_64 (param $u f32) (param $B f64)
-    (local $temp f32)
     (f32.demote/f64
       (f64.ceil
         (get_local $B)

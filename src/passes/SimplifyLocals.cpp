@@ -20,6 +20,10 @@
 // This "sinks" set_locals, pushing them to the next get_local where possible,
 // and removing the set if there are no gets remaining (the latter is
 // particularly useful in ssa mode, but not only).
+//
+// After this pass, some locals may be completely unused. reorder-locals
+// can get rid of those (the operation is trivial there after it sorts by use
+// frequency).
 
 #include <wasm.h>
 #include <wasm-traversal.h>
@@ -41,6 +45,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
   // locals in current linear execution trace, which we try to sink
   std::map<Name, SinkableInfo> sinkables;
 
+  bool sunk;
+
   // name => # of get_locals for it
   std::map<Name, int> numGetLocals;
 
@@ -60,6 +66,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       *found->second.item = curr;
       ExpressionManipulator::nop(curr);
       sinkables.erase(found);
+      sunk = true;
     } else {
       numGetLocals[curr->name]++;
     }
@@ -150,31 +157,42 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     self->pushTask(visitPre, currp);
   }
 
-  void visitFunction(Function *curr) {
-    // after optimizing a function, we can see if we have set_locals
-    // for a local with no remaining gets, in which case, we can
-    // remove the set.
-    std::vector<SetLocal*> optimizables;
-    for (auto pair : setLocalOrigins) {
-      SetLocal* curr = pair.first;
-      if (numGetLocals[curr->name] == 0) {
-        // no gets, can remove the set and leave just the value
-        optimizables.push_back(curr);
+  void startWalk(Function *func) {
+    // multiple passes may be required per function, consider this:
+    //    x = load
+    //    y = store
+    //    c(x, y)
+    // the load cannot cross the store, but y can be sunk, after which so can x
+    do {
+      sunk = false;
+      // main operation
+      walk(func->body);
+      // after optimizing a function, we can see if we have set_locals
+      // for a local with no remaining gets, in which case, we can
+      // remove the set.
+      std::vector<SetLocal*> optimizables;
+      for (auto pair : setLocalOrigins) {
+        SetLocal* curr = pair.first;
+        if (numGetLocals[curr->name] == 0) {
+          // no gets, can remove the set and leave just the value
+          optimizables.push_back(curr);
+        }
       }
-    }
-    for (auto* curr : optimizables) {
-      Expression** origin = setLocalOrigins[curr];
-      *origin = curr->value;
-      // nested set_values need to be handled properly.
-      // consider (set_local x (set_local y (..)), where both can be
-      // reduced to their values, and we might do it in either
-      // order.
-      if (curr->value->is<SetLocal>()) {
-        setLocalOrigins[curr->value->cast<SetLocal>()] = origin;
+      for (auto* curr : optimizables) {
+        Expression** origin = setLocalOrigins[curr];
+        *origin = curr->value;
+        // nested set_values need to be handled properly.
+        // consider (set_local x (set_local y (..)), where both can be
+        // reduced to their values, and we might do it in either
+        // order.
+        if (curr->value->is<SetLocal>()) {
+          setLocalOrigins[curr->value->cast<SetLocal>()] = origin;
+        }
       }
-    }
-    numGetLocals.clear();
-    setLocalOrigins.clear();
+      // clean up
+      numGetLocals.clear();
+      setLocalOrigins.clear();
+    } while (sunk);
   }
 };
 

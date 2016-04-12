@@ -41,4 +41,11 @@
       (get_local $b)
     )
   )
+  (func $zero
+    (local $b i32)
+    (get_local $b)
+  )
+  (func $null
+    (nop)
+  )
 )

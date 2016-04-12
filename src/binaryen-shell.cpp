@@ -174,12 +174,6 @@ int main(int argc, const char* argv[]) {
   Name entry;
   std::vector<std::string> passes;
 
-  static const char* default_passes[] = {"remove-unused-brs",
-                                         "remove-unused-names", "merge-blocks",
-                                         "optimize-instructions",
-                                         "simplify-locals", "reorder-locals",
-                                         "vacuum"};
-
   Options options("binaryen-shell", "Execute .wast files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
@@ -195,7 +189,7 @@ int main(int argc, const char* argv[]) {
       .add("", "-O", "execute default optimization passes",
            Options::Arguments::Zero,
            [&passes](Options*, const std::string&) {
-             for (const auto* p : default_passes) passes.push_back(p);
+             passes.push_back("O");
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
@@ -234,7 +228,11 @@ int main(int argc, const char* argv[]) {
         if (options.debug) std::cerr << "running passes...\n";
         PassRunner passRunner(&moreModuleAllocations);
         for (auto& passName : passes) {
-          passRunner.add(passName);
+          if (passName == "O") {
+            passRunner.addDefaultOptimizationPasses();
+          } else {
+            passRunner.add(passName);
+          }
         }
         passRunner.run(&wasm);
       }
