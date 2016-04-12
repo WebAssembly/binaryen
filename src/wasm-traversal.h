@@ -141,7 +141,7 @@ struct Walker : public Visitor<SubType> {
       self->visitExport(curr);
     }
     for (auto curr : module->functions) {
-      startWalk(curr);
+      self->startWalk(curr);
       self->visitFunction(curr);
     }
     self->visitTable(&module->table);
