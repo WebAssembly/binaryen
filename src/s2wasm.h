@@ -1255,11 +1255,11 @@ class S2WasmBuilder {
     auto* targetType = ensureFunctionType(sig, &wasm, wasm.allocator);
     wasm::Builder wasmBuilder(wasm);
     std::vector<NameType> params {{"$0", i32}, {"$1", i32}};
-    std::vector<NameType> locals;
-    Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), none, std::move(locals));
-    auto* glTarget = wasmBuilder.makeGetLocal(params[0].name, params[0].type);
-    auto* glArg = wasmBuilder.makeGetLocal(params[1].name, params[1].type);
-    auto* call = wasmBuilder.makeCallIndirect(targetType, glTarget, {glArg});
+    Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), none, {});
+    auto* call = wasmBuilder.makeCallIndirect(
+                     targetType,
+                     wasmBuilder.makeGetLocal(params[0].name, params[0].type),
+                     {wasmBuilder.makeGetLocal(params[1].name, params[1].type)});
     auto* ret = wasmBuilder.makeReturn(call);
     f->body = ret;
     wasm.addFunction(f);
