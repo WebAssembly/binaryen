@@ -33,7 +33,6 @@ namespace wasm {
 
 template<typename SubType, typename ReturnType = void>
 struct Visitor {
-  virtual ~Visitor() {}
   // Expression visitors
   ReturnType visitBlock(Block *curr) {}
   ReturnType visitIf(If *curr) {}
