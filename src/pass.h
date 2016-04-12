@@ -88,6 +88,10 @@ struct PassRunner {
     passes.push_back(new P(arg));
   }
 
+  // Adds the default set of optimization passes; this is
+  // what -O does.
+  void addDefaultOptimizationPasses();
+
   void run(Module* module);
 
   // Get the last pass that was already executed of a certain type.

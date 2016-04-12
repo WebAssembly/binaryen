@@ -1713,13 +1713,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
 void Asm2WasmBuilder::optimize() {
   PassRunner passRunner(&allocator);
-  passRunner.add("remove-unused-brs");
-  passRunner.add("remove-unused-names");
-  passRunner.add("merge-blocks");
-  passRunner.add("optimize-instructions");
-  passRunner.add("simplify-locals");
-  passRunner.add("reorder-locals");
-  passRunner.add("vacuum");
+  passRunner.addDefaultOptimizationPasses();
   if (maxGlobal < 1024) {
     passRunner.add("post-emscripten");
   }
