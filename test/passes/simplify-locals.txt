@@ -387,7 +387,9 @@
         )
       )
     )
-    (set_local $$4$0
+    (nop)
+    (nop)
+    (call_import $___udivmoddi4
       (call_import $_i64Subtract
         (i32.xor
           (get_local $$1$0)
@@ -400,10 +402,6 @@
         (get_local $$1$0)
         (get_local $$1$1)
       )
-    )
-    (nop)
-    (call_import $___udivmoddi4
-      (get_local $$4$0)
       (i32.load
         (i32.const 168)
       )
