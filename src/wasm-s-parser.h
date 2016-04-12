@@ -897,7 +897,7 @@ private:
       auto* ret = parseExpression(&s);
       labelStack.pop_back();
       if (explicitThenElse) {
-        ret->dyn_cast<Block>()->name = name;
+        ret->dynCast<Block>()->name = name;
       } else {
         // add a block if we must
         if (BreakSeeker::has(ret, name)) {

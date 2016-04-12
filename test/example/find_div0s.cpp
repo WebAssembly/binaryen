@@ -44,7 +44,7 @@ int main() {
       // In every Binary, look for integer divisions
       if (curr->op == BinaryOp::DivS || curr->op == BinaryOp::DivU) {
         // Check if the right operand is a constant, and if it is 0
-        auto right = curr->right->dyn_cast<Const>();
+        auto right = curr->right->dynCast<Const>();
         if (right && right->value.getInteger() == 0) {
           std::cout << "We found that " << curr->left << " is divided by zero\n";
         }

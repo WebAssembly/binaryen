@@ -52,7 +52,7 @@ struct Invocation {
     name = invoke[1]->str();
     for (size_t j = 2; j < invoke.size(); j++) {
       Expression* argument = builder.parseExpression(*invoke[j]);
-      arguments.push_back(argument->dyn_cast<Const>()->value);
+      arguments.push_back(argument->dynCast<Const>()->value);
     }
   }
 
@@ -150,7 +150,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
         if (curr.size() >= 3) {
           Literal expected = builder->get()
                                  ->parseExpression(*curr[2])
-                                 ->dyn_cast<Const>()
+                                 ->dynCast<Const>()
                                  ->value;
           std::cerr << "seen " << result << ", expected " << expected << '\n';
           verify_result(expected, result);

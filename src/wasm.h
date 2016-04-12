@@ -758,7 +758,7 @@ public:
   }
 
   template<class T>
-  T* dyn_cast() {
+  T* dynCast() {
     return _id == T()._id ? (T*)this : nullptr;
   }
 

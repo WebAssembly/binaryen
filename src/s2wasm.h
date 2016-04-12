@@ -1086,7 +1086,7 @@ class S2WasmBuilder {
     for (auto block : loopBlocks) {
       block->name = Name();
     }
-    func->body->dyn_cast<Block>()->finalize();
+    func->body->dynCast<Block>()->finalize();
     wasm.addFunction(func);
   }
 

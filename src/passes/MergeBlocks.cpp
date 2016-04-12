@@ -29,7 +29,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     while (more) {
       more = false;
       for (size_t i = 0; i < curr->list.size(); i++) {
-        Block* child = curr->list[i]->dyn_cast<Block>();
+        Block* child = curr->list[i]->dynCast<Block>();
         if (!child) continue;
         if (child->name.is()) continue; // named blocks can have breaks to them (and certainly do, if we ran RemoveUnusedNames and RemoveUnusedBrs)
         ExpressionList merged;

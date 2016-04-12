@@ -44,12 +44,12 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
   void visitMemoryOp(T *curr) {
     if (curr->offset) return;
     Expression* ptr = curr->ptr;
-    auto add = ptr->dyn_cast<Binary>();
+    auto add = ptr->dynCast<Binary>();
     if (!add || add->op != Add) return;
     assert(add->type == i32);
-    auto c = add->right->dyn_cast<Const>();
+    auto c = add->right->dynCast<Const>();
     if (!c) {
-      c = add->left->dyn_cast<Const>();
+      c = add->left->dynCast<Const>();
       if (c) {
         // if one is a const, it's ok to swap
         add->left = add->right;

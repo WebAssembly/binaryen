@@ -114,7 +114,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
   }
 
   static void tryMarkSinkable(SimplifyLocals* self, Expression** currp) {
-    auto* curr = (*currp)->dyn_cast<SetLocal>();
+    auto* curr = (*currp)->dynCast<SetLocal>();
     if (curr) {
       Name name = curr->name;
       assert(self->sinkables.count(name) == 0);

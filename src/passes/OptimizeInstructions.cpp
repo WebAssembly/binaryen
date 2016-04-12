@@ -29,7 +29,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions>
   void visitIf(If* curr) {
     // flip branches to get rid of an i32.eqz
     if (curr->ifFalse) {
-      auto condition = curr->condition->dyn_cast<Unary>();
+      auto condition = curr->condition->dynCast<Unary>();
       if (condition && condition->op == EqZ && condition->value->type == i32) {
         curr->condition = condition->value;
         std::swap(curr->ifTrue, curr->ifFalse);
@@ -39,7 +39,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions>
   void visitUnary(Unary* curr) {
     if (curr->op == EqZ) {
       // fold comparisons that flow into an EqZ
-      auto* child = curr->value->dyn_cast<Binary>();
+      auto* child = curr->value->dynCast<Binary>();
       if (child && (child->type == i32 || child->type == i64)) {
         switch (child->op) {
           case Eq:  child->op = Ne; break;
