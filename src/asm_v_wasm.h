@@ -82,7 +82,7 @@ std::string getSig(CallBase *call) {
   return ret;
 }
 
-std::string getSig(WasmType result, ExpressionList& operands) {
+std::string getSig(WasmType result, const ExpressionList& operands) {
   std::string ret;
   ret += getSig(result);
   for (auto operand : operands) {

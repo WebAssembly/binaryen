@@ -27,6 +27,18 @@ class Builder {
 public:
   Builder(AllocatingModule& wasm) : allocator(wasm.allocator) {}
 
+  Function* makeFunction(Name name,
+                         std::vector<NameType>&& params,
+                         WasmType resultType,
+                         std::vector<NameType>&& locals) {
+    auto* func = allocator.alloc<Function>();
+    func->name = name;
+    func->params = params;
+    func->result = resultType;
+    func->locals = locals;
+    return func;
+  }
+
   // Nop TODO: add all the rest
   // Block
   If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse=nullptr) {
@@ -41,6 +53,15 @@ public:
   // CallBase
   // Call
   // CallImport
+  // Also do a version which takes a sig?
+  CallIndirect* makeCallIndirect(FunctionType* type, Expression* target, std::vector<Expression*>&& args) {
+    auto* call = allocator.alloc<CallIndirect>();
+    call->fullType = type;
+    call->type = type->result;
+    call->target = target;
+    call->operands = args;
+    return call;
+  }
   // FunctionType
   GetLocal* makeGetLocal(Name name, WasmType type) {
     auto* ret = allocator.alloc<GetLocal>();
@@ -104,7 +125,11 @@ public:
     return ret;
   }
   // Select
-  // Return
+  Return* makeReturn(Expression *value) {
+    auto* ret = allocator.alloc<Return>();
+    ret->value = value;
+    return ret;
+  }
   // Host
   // Unreachable
 
@@ -113,4 +138,3 @@ public:
 } // namespace wasm
 
 #endif // wasm_builder_h
-

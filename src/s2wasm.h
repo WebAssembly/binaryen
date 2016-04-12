@@ -27,6 +27,7 @@
 #include "parsing.h"
 #include "pass.h"
 #include "asm_v_wasm.h"
+#include "wasm-builder.h"
 #include "wasm-printing.h"
 
 namespace wasm {
@@ -558,9 +559,11 @@ class S2WasmBuilder {
     auto getNextId = [&nextId]() {
       return cashew::IString(('$' + std::to_string(nextId++)).c_str(), false);
     };
+    wasm::Builder builder(wasm);
+    std::vector<NameType> params;
+    WasmType resultType = none;
+    std::vector<NameType> locals;
 
-    auto func = allocator.alloc<Function>();
-    func->name = name;
     std::map<Name, WasmType> localTypes;
     // params and result
     while (1) {
@@ -568,24 +571,26 @@ class S2WasmBuilder {
         while (1) {
           Name name = getNextId();
           WasmType type = getType();
-          func->params.emplace_back(name, type);
+          params.emplace_back(name, type);
           localTypes[name] = type;
           skipWhitespace();
           if (!match(",")) break;
         }
       } else if (match(".result")) {
-        func->result = getType();
+        resultType = getType();
       } else if (match(".local")) {
         while (1) {
           Name name = getNextId();
           WasmType type = getType();
-          func->locals.emplace_back(name, type);
+          locals.emplace_back(name, type);
           localTypes[name] = type;
           skipWhitespace();
           if (!match(",")) break;
         }
       } else break;
     }
+    Function* func = builder.makeFunction(name, std::move(params), resultType, std::move(locals));
+
     // parse body
     func->body = allocator.alloc<Block>();
     std::vector<Expression*> bstack;
@@ -772,17 +777,17 @@ class S2WasmBuilder {
     auto makeCall = [&](WasmType type) {
       if (match("_indirect")) {
         // indirect call
-        auto indirect = allocator.alloc<CallIndirect>();
         Name assign = getAssign();
         int num = getNumInputs();
         auto inputs = getInputs(num);
-        indirect->target = inputs[0];
-        indirect->type = type;
-        for (int i = 1; i < num; i++) {
-          indirect->operands.push_back(inputs[i]);
-        }
+        auto input = inputs.begin();
+        auto* target = *input;
+        std::vector<Expression*> operands(++input, inputs.end());
+        auto* funcType = ensureFunctionType(getSig(type, operands), &wasm, allocator);
+        assert(type == funcType->result);
+        auto* indirect = builder.makeCallIndirect(funcType, target, std::move(operands));
         setOutput(indirect, assign);
-        indirect->fullType = wasm.getFunctionType(ensureFunctionType(getSig(indirect), &wasm, allocator)->name);
+
       } else {
         // non-indirect call
         CallBase* curr;
@@ -1057,11 +1062,7 @@ class S2WasmBuilder {
         curr->type = curr->value->type;
         setOutput(curr, assign);
       } else if (match("return")) {
-        auto curr = allocator.alloc<Return>();
-        if (*s == '$') {
-          curr->value = getInput();
-        }
-        addToBlock(curr);
+        addToBlock(builder.makeReturn(*s == '$' ? getInput() : nullptr));
       } else if (match("unreachable")) {
         addToBlock(allocator.alloc<Unreachable>());
       } else if (match("memory_size")) {
@@ -1248,6 +1249,22 @@ class S2WasmBuilder {
     wasm.addExport(exp);
   }
 
+  void getDyncallThunk(const std::string& sig) {
+    // hard-code the sig for testing for now. vi is the signature for static destructors
+    assert(sig == "vi");
+    auto* targetType = ensureFunctionType(sig, &wasm, wasm.allocator);
+    wasm::Builder wasmBuilder(wasm);
+    std::vector<NameType> params {{"$0", i32}, {"$1", i32}};
+    Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), none, {});
+    auto* call = wasmBuilder.makeCallIndirect(
+                     targetType,
+                     wasmBuilder.makeGetLocal(params[0].name, params[0].type),
+                     {wasmBuilder.makeGetLocal(params[1].name, params[1].type)});
+    auto* ret = wasmBuilder.makeReturn(call);
+    f->body = ret;
+    wasm.addFunction(f);
+  }
+
   void fix() {
     // The minimum initial memory size is the amount of static variables we have
     // allocated. Round it up to a page, and update the page-increment versions
@@ -1270,7 +1287,7 @@ class S2WasmBuilder {
     for (Name name : globls) exportFunction(name, false);
     for (Name name : initializerFunctions) exportFunction(name, true);
 
-    auto ensureFunctionIndex = [&](Name name) {
+    auto ensureFunctionIndex = [this](Name name) {
       if (functionIndexes.count(name) == 0) {
         functionIndexes[name] = wasm.table.names.size();
         wasm.table.names.push_back(name);
