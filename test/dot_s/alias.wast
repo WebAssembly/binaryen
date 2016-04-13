@@ -15,5 +15,12 @@
       (i32.const 0)
     )
   )
+  (func $dynCall_v (param $fptr i32)
+    (return
+      (call_indirect $FUNCSIG$v
+        (get_local $fptr)
+      )
+    )
+  )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }

@@ -305,5 +305,20 @@
     (call_import $abort)
     (unreachable)
   )
+  (func $dynCall_i (param $fptr i32) (result i32)
+    (return
+      (call_indirect $FUNCSIG$i
+        (get_local $fptr)
+      )
+    )
+  )
+  (func $dynCall_ii (param $fptr i32) (param $$0 i32) (result i32)
+    (return
+      (call_indirect $FUNCSIG$ii
+        (get_local $fptr)
+        (get_local $$0)
+      )
+    )
+  )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 104, "initializers": [] }

@@ -91,5 +91,14 @@
       (get_local $$0)
     )
   )
+  (func $dynCall_iii (param $fptr i32) (param $$0 i32) (param $$1 i32) (result i32)
+    (return
+      (call_indirect $FUNCSIG$iii
+        (get_local $fptr)
+        (get_local $$0)
+        (get_local $$1)
+      )
+    )
+  )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 52, "initializers": [] }
