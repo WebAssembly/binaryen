@@ -1253,8 +1253,8 @@ class S2WasmBuilder {
     std::unordered_set<std::string> sigs;
     wasm::Builder wasmBuilder(wasm);
     for (const auto& indirectFunc : wasm.table.names) {
-     std::string sig(getSig(wasm.getFunction(indirectFunc)));
-     auto* funcType = ensureFunctionType(sig, &wasm, wasm.allocator);
+      std::string sig(getSig(wasm.getFunction(indirectFunc)));
+      auto* funcType = ensureFunctionType(sig, &wasm, wasm.allocator);
       if (!sigs.insert(sig).second) continue; // Sig is already in the set
       std::vector<NameType> params;
       params.emplace_back("fptr", i32); // function pointer param
@@ -1269,6 +1269,7 @@ class S2WasmBuilder {
       auto* ret = wasmBuilder.makeReturn(wasmBuilder.makeCallIndirect(funcType, fptr, std::move(args)));
       f->body = ret;
       wasm.addFunction(f);
+      exportFunction(f->name, true);
     }
   }
 

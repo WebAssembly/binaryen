@@ -11,6 +11,10 @@
   (export "ffjjdi" $ffjjdi)
   (export "vd2" $vd2)
   (export "main" $main)
+  (export "dynCall_i" $dynCall_i)
+  (export "dynCall_jf" $dynCall_jf)
+  (export "dynCall_vd" $dynCall_vd)
+  (export "dynCall_ffjjdi" $dynCall_ffjjdi)
   (table $i $jf $vd $ffjjdi $vd2)
   (func $i (type $FUNCSIG$i) (result i32)
     (return
