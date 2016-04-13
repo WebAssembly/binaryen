@@ -63,11 +63,9 @@
     )
   )
   (func $dynCall_vd (param $fptr i32) (param $$0 f64)
-    (return
-      (call_indirect $FUNCSIG$vd
-        (get_local $fptr)
-        (get_local $$0)
-      )
+    (call_indirect $FUNCSIG$vd
+      (get_local $fptr)
+      (get_local $$0)
     )
   )
   (func $dynCall_ffjjdi (param $fptr i32) (param $$0 f32) (param $$1 i64) (param $$2 i64) (param $$3 f64) (param $$4 i32) (result f32)

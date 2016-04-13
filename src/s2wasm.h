@@ -1261,13 +1261,13 @@ class S2WasmBuilder {
       int p = 0;
       for (const auto& ty : funcType->params) params.emplace_back("$" + std::to_string(p++), ty);
       Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
-      auto* fptr = wasmBuilder.makeGetLocal("fptr", i32);
+      Expression* fptr = wasmBuilder.makeGetLocal("fptr", i32);
       std::vector<Expression*> args;
       for (unsigned i = 0; i < funcType->params.size(); ++i) {
         args.push_back(wasmBuilder.makeGetLocal("$" + std::to_string(i), funcType->params[i]));
       }
-      auto* ret = wasmBuilder.makeReturn(wasmBuilder.makeCallIndirect(funcType, fptr, std::move(args)));
-      f->body = ret;
+      Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, std::move(args));
+      f->body = funcType->result == none ? call : wasmBuilder.makeReturn(call);
       wasm.addFunction(f);
       exportFunction(f->name, true);
     }

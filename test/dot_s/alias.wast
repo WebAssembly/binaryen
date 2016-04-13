@@ -17,10 +17,8 @@
     )
   )
   (func $dynCall_v (param $fptr i32)
-    (return
-      (call_indirect $FUNCSIG$v
-        (get_local $fptr)
-      )
+    (call_indirect $FUNCSIG$v
+      (get_local $fptr)
     )
   )
 )
