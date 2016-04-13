@@ -33,6 +33,8 @@
   (export "opt1" $opt1)
   (export "opt2" $opt2)
   (export "main" $main)
+  (export "dynCall_i" $dynCall_i)
+  (export "dynCall_ii" $dynCall_ii)
   (table $bad0 $bad1 $bad5 $bad7 $bad8 $bad10 $bad2 $bad3 $bad6 $bad4 $bad9 $good0 $good1 $good2 $opt0 $opt1 $opt2)
   (func $bad0 (type $FUNCSIG$i) (result i32)
     (return
@@ -304,6 +306,21 @@
     )
     (call_import $abort)
     (unreachable)
+  )
+  (func $dynCall_i (param $fptr i32) (result i32)
+    (return
+      (call_indirect $FUNCSIG$i
+        (get_local $fptr)
+      )
+    )
+  )
+  (func $dynCall_ii (param $fptr i32) (param $$0 i32) (result i32)
+    (return
+      (call_indirect $FUNCSIG$ii
+        (get_local $fptr)
+        (get_local $$0)
+      )
+    )
   )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 104, "initializers": [] }

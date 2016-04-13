@@ -29,6 +29,7 @@ using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   bool ignoreUnknownSymbols = false;
+  bool generateEmscriptenGlue = false;
   std::string startFunction;
   Options options("s2wasm", "Link .s file into .wast");
   options
@@ -68,6 +69,11 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["max-memory"] = argument;
            })
+      .add("--emscripten-glue", "-e", "Generate emscripten glue",
+           Options::Arguments::Zero,
+           [&generateEmscriptenGlue](Options *, const std::string &) {
+             generateEmscriptenGlue = true;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -98,9 +104,12 @@ int main(int argc, const char *argv[]) {
                        stackAllocation, initialMem, maxMem, ignoreUnknownSymbols,
                        startFunction);
 
-  if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
   std::stringstream meta;
-  s2wasm.emscriptenGlue(meta);
+  if (generateEmscriptenGlue) {
+    if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
+    // dyncall thunks
+    s2wasm.emscriptenGlue(meta);
+  }
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);

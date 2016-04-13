@@ -1249,20 +1249,28 @@ class S2WasmBuilder {
     wasm.addExport(exp);
   }
 
-  void getDyncallThunk(const std::string& sig) {
-    // hard-code the sig for testing for now. vi is the signature for static destructors
-    assert(sig == "vi");
-    auto* targetType = ensureFunctionType(sig, &wasm, wasm.allocator);
+  void makeDynCallThunks() {
+    std::unordered_set<std::string> sigs;
     wasm::Builder wasmBuilder(wasm);
-    std::vector<NameType> params {{"$0", i32}, {"$1", i32}};
-    Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), none, {});
-    auto* call = wasmBuilder.makeCallIndirect(
-                     targetType,
-                     wasmBuilder.makeGetLocal(params[0].name, params[0].type),
-                     {wasmBuilder.makeGetLocal(params[1].name, params[1].type)});
-    auto* ret = wasmBuilder.makeReturn(call);
-    f->body = ret;
-    wasm.addFunction(f);
+    for (const auto& indirectFunc : wasm.table.names) {
+      std::string sig(getSig(wasm.getFunction(indirectFunc)));
+      auto* funcType = ensureFunctionType(sig, &wasm, wasm.allocator);
+      if (!sigs.insert(sig).second) continue; // Sig is already in the set
+      std::vector<NameType> params;
+      params.emplace_back("fptr", i32); // function pointer param
+      int p = 0;
+      for (const auto& ty : funcType->params) params.emplace_back("$" + std::to_string(p++), ty);
+      Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
+      Expression* fptr = wasmBuilder.makeGetLocal("fptr", i32);
+      std::vector<Expression*> args;
+      for (unsigned i = 0; i < funcType->params.size(); ++i) {
+        args.push_back(wasmBuilder.makeGetLocal("$" + std::to_string(i), funcType->params[i]));
+      }
+      Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, std::move(args));
+      f->body = funcType->result == none ? call : wasmBuilder.makeReturn(call);
+      wasm.addFunction(f);
+      exportFunction(f->name, true);
+    }
   }
 
   void fix() {
@@ -1382,6 +1390,8 @@ public:
     }
 
     wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
+
+    makeDynCallThunks();
 
     o << ";; METADATA: { ";
     // find asmConst calls, and emit their metadata

@@ -9,6 +9,7 @@
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (import $puts "env" "puts" (param i32))
   (export "main" $main)
+  (export "dynCall_iii" $dynCall_iii)
   (table $main)
   (func $main (type $FUNCSIG$iii) (param $$0 i32) (param $$1 i32) (result i32)
     (call_import $puts
@@ -89,6 +90,15 @@
     )
     (return
       (get_local $$0)
+    )
+  )
+  (func $dynCall_iii (param $fptr i32) (param $$0 i32) (param $$1 i32) (result i32)
+    (return
+      (call_indirect $FUNCSIG$iii
+        (get_local $fptr)
+        (get_local $$0)
+        (get_local $$1)
+      )
     )
   )
 )
