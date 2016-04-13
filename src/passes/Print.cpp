@@ -20,7 +20,7 @@
 
 #include <wasm.h>
 #include <wasm-printing.h>
-#include <pass.h>
+#include "pass.h"
 
 namespace wasm {
 

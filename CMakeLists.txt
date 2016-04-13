@@ -67,33 +67,16 @@ IF (UNIX AND
   ADD_COMPILE_FLAG("-fcolor-diagnostics")
 ENDIF()
 
+# Static libraries
+ADD_SUBDIRECTORY(src/support)
+ADD_SUBDIRECTORY(src/emscripten-optimizer)
+
 # Sources.
-
-SET(support_SOURCES
-  src/support/bits.cpp
-  src/support/colors.cpp
-  src/support/command-line.cpp
-  src/support/file.cpp
-  src/support/safe_integer.cpp
-)
-ADD_LIBRARY(support STATIC ${support_SOURCES})
-
-SET(optimizer_SOURCES
-  src/emscripten-optimizer/parser.cpp
-  src/emscripten-optimizer/simple_ast.cpp
-  src/emscripten-optimizer/optimizer-shared.cpp
-)
-ADD_LIBRARY(optimizer STATIC ${optimizer_SOURCES})
-
-
-SET(pass_SOURCES
-   src/pass.cpp
-   src/passes/Print.cpp
- )
-ADD_LIBRARY(pass STATIC ${pass_SOURCES})
 
 SET(binaryen-shell_SOURCES
   src/binaryen-shell.cpp
+  src/pass.cpp
+  src/passes/Print.cpp
   src/passes/LowerIfElse.cpp
   src/passes/MergeBlocks.cpp
   src/passes/NameManager.cpp
@@ -109,13 +92,15 @@ SET(binaryen-shell_SOURCES
 )
 ADD_EXECUTABLE(binaryen-shell
                ${binaryen-shell_SOURCES})
-TARGET_LINK_LIBRARIES(binaryen-shell pass support)
+TARGET_LINK_LIBRARIES(binaryen-shell support)
 SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS binaryen-shell DESTINATION bin)
 
 SET(asm2wasm_SOURCES
   src/asm2wasm-main.cpp
+  src/pass.cpp
+  src/passes/Print.cpp
   src/passes/MergeBlocks.cpp
   src/passes/OptimizeInstructions.cpp
   src/passes/PostEmscripten.cpp
@@ -127,7 +112,7 @@ SET(asm2wasm_SOURCES
 )
 ADD_EXECUTABLE(asm2wasm
                ${asm2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(asm2wasm optimizer pass support)
+TARGET_LINK_LIBRARIES(asm2wasm optimizer support)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION bin)
@@ -144,10 +129,12 @@ INSTALL(TARGETS wasm2asm DESTINATION bin)
 
 SET(s2wasm_SOURCES
   src/s2wasm-main.cpp
+  src/pass.cpp
+  src/passes/Print.cpp
 )
 ADD_EXECUTABLE(s2wasm
                ${s2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(s2wasm pass support)
+TARGET_LINK_LIBRARIES(s2wasm support)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS s2wasm DESTINATION bin)
@@ -164,10 +151,12 @@ INSTALL(TARGETS wasm-as DESTINATION bin)
 
 SET(wasm_dis_SOURCES
   src/wasm-dis.cpp
+  src/pass.cpp
+  src/passes/Print.cpp
 )
 ADD_EXECUTABLE(wasm-dis
                ${wasm_dis_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-dis pass support)
+TARGET_LINK_LIBRARIES(wasm-dis support)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION bin)
