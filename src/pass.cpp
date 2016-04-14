@@ -77,8 +77,8 @@ void PassRunner::run(Module* module) {
     }
     pass->run(this, module);
     if (debug) {
-      std::chrono::high_resolution_clock::time_point after = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double> diff = std::chrono::duration_cast<std::chrono::duration<double>>(after - before);
+      auto after = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> diff = after - before;
       std::cerr << "[PassRunner]   pass took " << diff.count() << " seconds." << std::endl;
     }
   }
