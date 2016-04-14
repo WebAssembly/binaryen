@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <chrono>
+
 #include <pass.h>
 
 namespace wasm {
@@ -35,7 +37,9 @@ void PassRegistry::registerPass(const char* name, const char *description, Creat
 
 Pass* PassRegistry::createPass(std::string name) {
   if (passInfos.find(name) == passInfos.end()) return nullptr;
-  return passInfos[name].create();
+  auto ret = passInfos[name].create();
+  ret->name = name;
+  return ret;
 }
 
 std::vector<std::string> PassRegistry::getRegisteredNames() {
@@ -66,7 +70,17 @@ void PassRunner::addDefaultOptimizationPasses() {
 void PassRunner::run(Module* module) {
   for (auto pass : passes) {
     currPass = pass;
+    std::chrono::high_resolution_clock::time_point before;
+    if (debug) {
+      std::cerr << "[PassRunner] running pass: " << pass->name << std::endl;
+      before = std::chrono::high_resolution_clock::now();
+    }
     pass->run(this, module);
+    if (debug) {
+      auto after = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> diff = after - before;
+      std::cerr << "[PassRunner]   pass took " << diff.count() << " seconds." << std::endl;
+    }
   }
 }
 

@@ -69,8 +69,11 @@ struct PassRunner {
   MixedArena* allocator;
   std::vector<Pass*> passes;
   Pass* currPass;
+  bool debug = false;
 
   PassRunner(MixedArena* allocator) : allocator(allocator) {}
+
+  void setDebug(bool debug_) { debug = debug_; }
 
   void add(std::string passName) {
     auto pass = PassRegistry::get()->createPass(passName);
@@ -112,6 +115,9 @@ public:
   virtual void run(PassRunner* runner, Module* module) = 0;
   // Override this to perform finalization work after the pass runs.
   virtual void finalize(PassRunner* runner, Module* module) {}
+
+  std::string name;
+
 protected:
   Pass() {}
   Pass(Pass &) {}
