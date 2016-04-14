@@ -120,7 +120,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
           new SExpressionWasmBuilder(wasm, *curr[1], [&]() {
             invalid = true;
             throw ParseException();
-          }, false)
+          })
         );
       } catch (const ParseException&) {
         invalid = true;
@@ -219,7 +219,7 @@ int main(int argc, const char* argv[]) {
       if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
       AllocatingModule wasm;
       std::unique_ptr<SExpressionWasmBuilder> builder(
-          new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }, options.debug));
+          new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }));
       i++;
 
       MixedArena moreModuleAllocations;
