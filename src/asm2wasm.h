@@ -782,10 +782,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
          yl = func->params[2].name,
          yh = func->params[3].name,
          r = func->params[4].name;
-    func->locals.clear();
+    func->vars.clear();
     Name x64("x64"), y64("y64");
-    func->locals.emplace_back(x64, i64);
-    func->locals.emplace_back(y64, i64);
+    func->vars.emplace_back(x64, i64);
+    func->vars.emplace_back(y64, i64);
     auto* body = allocator.alloc<Block>();
     auto recreateI64 = [&](Name target, Name low, Name high) {
       return builder.makeSetLocal(
@@ -884,7 +884,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     return IString((std::string("label$continue$") + label.str).c_str(), false);
   };
 
-  IStringSet functionVariables; // params or locals 
+  IStringSet functionVariables; // params or vars
 
   IString parentLabel; // set in LABEL, then read in WHILE/DO/SWITCH
   std::vector<IString> breakStack; // where a break will go
@@ -910,7 +910,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Ref pair = curr[1][j];
       IString name = pair[0]->getIString();
       AsmType asmType = detectType(pair[1], nullptr, true, Math_fround);
-      function->locals.emplace_back(name, asmToWasmType(asmType));
+      function->vars.emplace_back(name, asmToWasmType(asmType));
       functionVariables.insert(name);
       asmData.addVar(name, asmType);
     }
@@ -921,7 +921,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   auto ensureI32Temp = [&]() {
     if (addedI32Temp) return;
     addedI32Temp = true;
-    function->locals.emplace_back(I32_TEMP, i32);
+    function->vars.emplace_back(I32_TEMP, i32);
     functionVariables.insert(I32_TEMP);
     asmData.addVar(I32_TEMP, ASM_INT);
   };

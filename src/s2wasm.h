@@ -562,7 +562,7 @@ class S2WasmBuilder {
     wasm::Builder builder(wasm);
     std::vector<NameType> params;
     WasmType resultType = none;
-    std::vector<NameType> locals;
+    std::vector<NameType> vars;
 
     std::map<Name, WasmType> localTypes;
     // params and result
@@ -582,14 +582,14 @@ class S2WasmBuilder {
         while (1) {
           Name name = getNextId();
           WasmType type = getType();
-          locals.emplace_back(name, type);
+          vars.emplace_back(name, type);
           localTypes[name] = type;
           skipWhitespace();
           if (!match(",")) break;
         }
       } else break;
     }
-    Function* func = builder.makeFunction(name, std::move(params), resultType, std::move(locals));
+    Function* func = builder.makeFunction(name, std::move(params), resultType, std::move(vars));
 
     // parse body
     func->body = allocator.alloc<Block>();
@@ -1351,7 +1351,7 @@ class S2WasmBuilder {
         size_t paramNum = 0;
         for (const NameType& nt : target->params) {
           Name name = Name::fromInt(paramNum++);
-          func->locals.emplace_back(name, nt.type);
+          func->vars.emplace_back(name, nt.type);
           auto* param = allocator.alloc<GetLocal>();
           param->name = name;
           param->type = nt.type;

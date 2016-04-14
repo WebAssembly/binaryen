@@ -31,16 +31,16 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
   std::map<Name, uint32_t> counts;
 
   void visitFunction(Function *curr) {
-    auto& locals = curr->locals;
-    sort(locals.begin(), locals.end(), [this](NameType a, NameType b) -> bool {
+    auto& vars = curr->vars;
+    sort(vars.begin(), vars.end(), [this](NameType a, NameType b) -> bool {
       if (this->counts[a.name] == this->counts[b.name]) {
         return strcmp(a.name.str, b.name.str) > 0;
       }
       return this->counts[a.name] > this->counts[b.name];
     });
-    // drop completely unused locals
-    while (locals.size() > 0 && counts[locals.back().name] == 0) {
-      locals.pop_back();
+    // drop completely unused vars
+    while (vars.size() > 0 && counts[vars.back().name] == 0) {
+      vars.pop_back();
     }
     counts.clear();
   }

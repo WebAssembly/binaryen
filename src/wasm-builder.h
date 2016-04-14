@@ -30,12 +30,12 @@ public:
   Function* makeFunction(Name name,
                          std::vector<NameType>&& params,
                          WasmType resultType,
-                         std::vector<NameType>&& locals) {
+                         std::vector<NameType>&& vars) {
     auto* func = allocator.alloc<Function>();
     func->name = name;
     func->params = params;
     func->result = resultType;
-    func->locals = locals;
+    func->vars = vars;
     return func;
   }
 

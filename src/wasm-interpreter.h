@@ -166,7 +166,7 @@ private:
           }
           locals[function->params[i].name] = arguments[i];
         }
-        for (auto& local : function->locals) {
+        for (auto& local : function->vars) {
           locals[local.name].type = local.type;
         }
       }

@@ -318,7 +318,7 @@ private:
   // function parsing state
   Function *currFunction = nullptr;
   std::map<Name, WasmType> currLocalTypes;
-  size_t localIndex; // params and locals
+  size_t localIndex; // params and vars
   size_t otherIndex;
   std::vector<Name> labelStack;
 
@@ -381,7 +381,7 @@ private:
           if (id == PARAM) {
             func->params.emplace_back(name, type);
           } else {
-            func->locals.emplace_back(name, type);
+            func->vars.emplace_back(name, type);
           }
           localIndex++;
           currLocalTypes[name] = type;
@@ -712,7 +712,7 @@ private:
     if (i < numParams) {
       return currFunction->params[i].name;
     } else {
-      return currFunction->locals[i - currFunction->params.size()].name;
+      return currFunction->vars[i - currFunction->params.size()].name;
     }
   }
 
