@@ -242,11 +242,10 @@ class SExpressionWasmBuilder {
   int functionCounter;
   int importCounter;
   std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
-  bool debug;
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, std::function<void ()> onError, bool debug=false) : wasm(wasm), allocator(wasm.allocator), onError(onError), importCounter(0), debug(debug) {
+  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), allocator(wasm.allocator), onError(onError), importCounter(0) {
     assert(module[0]->str() == MODULE);
     functionCounter = 0;
     for (unsigned i = 1; i < module.size(); i++) {
@@ -260,7 +259,7 @@ public:
   }
 
   // constructor without onError
-  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, bool debug=false) : SExpressionWasmBuilder(wasm, module, [&]() { abort(); }, debug) {}
+  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module) : SExpressionWasmBuilder(wasm, module, [&]() { abort(); }) {}
 
 private:
 
@@ -351,7 +350,6 @@ private:
       // unnamed, use an index
       func->name = Name::fromInt(functionCounter);
     }
-    if (debug) std::cerr << "parse function " << func->name << '\n';
     functionCounter++;
     func->body = nullptr;
     localIndex = 0;
@@ -452,7 +450,6 @@ public:
   #define abort_on(str) { std::cerr << "aborting on " << str << '\n'; onError(); }
 
   Expression* parseExpression(Element& s) {
-    //if (debug) std::cerr << "parse expression " << s << '\n';
     IString id = s[0]->str();
     const char *str = id.str;
     const char *dot = strchr(str, '.');
