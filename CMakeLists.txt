@@ -20,6 +20,13 @@ FUNCTION(ADD_COMPILE_FLAG value)
   ENDFOREACH(variable)
 ENDFUNCTION()
 
+FUNCTION(ADD_LINK_FLAG value)
+  MESSAGE(STATUS "Linking with ${value}")
+  FOREACH(variable CMAKE_EXE_LINKER_FLAGS)
+    SET(${variable} "${${variable}} ${value}" PARENT_SCOPE)
+  ENDFOREACH(variable)
+ENDFUNCTION()
+
 # Compiler setup.
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -51,6 +58,7 @@ ELSE()
   ADD_COMPILE_FLAG("-Wextra")
   ADD_COMPILE_FLAG("-Wno-unused-parameter")
   ADD_COMPILE_FLAG("-fno-omit-frame-pointer")
+  ADD_LINK_FLAG("-pthread")
   IF(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     ADD_COMPILE_FLAG("-O0")
     ADD_COMPILE_FLAG("-g3")
@@ -75,6 +83,7 @@ SET(support_SOURCES
   src/support/command-line.cpp
   src/support/file.cpp
   src/support/safe_integer.cpp
+  src/support/threads.cpp
 )
 ADD_LIBRARY(support STATIC ${support_SOURCES})
 

@@ -573,7 +573,7 @@ cmd = [os.environ.get('CXX') or 'g++', '-std=c++11',
        os.path.join('test', 'example', 'find_div0s.cpp'),
        os.path.join('src', 'pass.cpp'),
        os.path.join('src', 'passes', 'Print.cpp'),
-       '-Isrc', '-g', '-lsupport', '-Llib/.']
+       '-Isrc', '-g', '-lsupport', '-Llib/.', '-pthread']
 if os.environ.get('COMPILER_FLAGS'):
   for f in os.environ.get('COMPILER_FLAGS').split(' '):
     cmd.append(f)

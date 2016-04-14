@@ -24,6 +24,8 @@
 namespace wasm {
 
 struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
+  bool isFunctionParallel() { return true; }
+
   void visitBlock(Block *curr) {
     bool more = true;
     while (more) {

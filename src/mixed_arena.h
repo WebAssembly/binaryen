@@ -19,6 +19,8 @@
 
 #include <vector>
 
+#include "support/threads.h"
+
 //
 // Arena allocation for mixed-type data.
 //
@@ -29,6 +31,10 @@ struct MixedArena {
 
   template<class T>
   T* alloc() {
+    // allocations must be on main thread, and single-threaded
+    assert(wasm::Thread::onMainThread());
+    assert(!wasm::ThreadPool::isRunning());
+
     const size_t CHUNK = 10000;
     size_t currSize = (sizeof(T) + 7) & (-8); // same alignment as malloc TODO optimize?
     assert(currSize < CHUNK);
@@ -43,6 +49,9 @@ struct MixedArena {
   }
 
   void clear() {
+    assert(wasm::Thread::onMainThread());
+    assert(!wasm::ThreadPool::isRunning());
+
     for (char* chunk : chunks) {
       delete[] chunk;
     }

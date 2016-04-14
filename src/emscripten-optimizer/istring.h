@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "../support/threads.h"
+
 namespace cashew {
 
 struct IString {
@@ -66,22 +68,25 @@ struct IString {
     typedef std::unordered_set<const char *, CStringHash, CStringEqual> StringSet;
     static StringSet* strings = new StringSet();
 
-    if (reuse) {
-      auto result = strings->insert(s); // if already present, does nothing
-      str = *(result.first);
-    } else {
-      auto existing = strings->find(s);
-      if (existing == strings->end()) {
+    auto existing = strings->find(s);
+
+    if (existing == strings->end()) {
+      // the StringSet is a global shared structure, which can be modified
+      // only on the main thread and only when other threads cannot race.
+      assert(wasm::Thread::onMainThread());
+      assert(!wasm::ThreadPool::isRunning());
+      if (!reuse) {
         size_t len = strlen(s) + 1;
         char *copy = (char*)malloc(len); // XXX leaked
         strncpy(copy, s, len);
         s = copy;
-        strings->insert(s);
-      } else {
-        s = *existing;
       }
-      str = s;
+      strings->insert(s);
+    } else {
+      s = *existing;
     }
+
+    str = s;
   }
 
   void set(const IString &s) {

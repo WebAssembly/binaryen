@@ -24,6 +24,8 @@
 namespace wasm {
 
 struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
+  bool isFunctionParallel() { return true; }
+
   void visitBlock(Block *curr) {
     // compress out nops
     int skip = 0;
