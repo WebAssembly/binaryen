@@ -262,6 +262,8 @@ for e in executables:
   assert e in err, 'Expected help to contain program name, got:\n%s' % err
   assert len(err.split('\n')) > 8, 'Expected some help, got:\n%s' % err
 
+# waka
+
 if torture:
 
   print '\n[ checking torture testcases... ]\n'
