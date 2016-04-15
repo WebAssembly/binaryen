@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "../support/threads.h"
+#include "support/threads.h"
 
 namespace cashew {
 

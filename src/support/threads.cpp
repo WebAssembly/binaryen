@@ -25,9 +25,11 @@
 
 #ifdef BINARYEN_THREAD_DEBUG
 static std::mutex debug;
-#define DEBUG_PRINT(x) { std::lock_guard<std::mutex> lock(debug); x; }
+#define DEBUG_THREAD(x) { std::lock_guard<std::mutex> lock(debug); std::cerr << "[THREAD " << std::this_thread::get_id() << "] " << x; }
+#define DEBUG_POOL(x) { std::lock_guard<std::mutex> lock(debug); std::cerr << "[POOL] " << x; }
 #else
-#define DEBUG_PRINT(x)
+#define DEBUG_THREAD(x)
+#define DEBUG_POOL(x)
 #endif
 
 
@@ -35,8 +37,8 @@ namespace wasm {
 
 // Global thread information
 
-std::atomic_bool setMainThreadId(false);
-std::thread::id mainThreadId;
+static std::atomic_bool setMainThreadId(false);
+static std::thread::id mainThreadId;
 
 struct MainThreadNoter {
   MainThreadNoter() {
@@ -64,6 +66,7 @@ Thread::~Thread() {
   assert(onMainThread());
   {
     std::lock_guard<std::mutex> lock(mutex);
+    // notify the thread that it can exit
     done = true;
     condition.notify_one();
   }
@@ -72,13 +75,14 @@ Thread::~Thread() {
 
 void Thread::work(std::function<ThreadWorkState ()> doWork_) {
   // TODO: fancy work stealing
-  DEBUG_PRINT(std::cerr << "[Thread] send work to thread\n");
+  DEBUG_THREAD("send work to thread\n");
   assert(onMainThread());
   {
     std::lock_guard<std::mutex> lock(mutex);
+    // notify the thread that it can do some work
     doWork = doWork_;
     condition.notify_one();
-    DEBUG_PRINT(std::cerr << "[Thread] work sent\n");
+    DEBUG_THREAD("work sent\n");
   }
 }
 
@@ -91,16 +95,16 @@ bool Thread::onMainThread() {
 void Thread::mainLoop(void *self_) {
   auto* self = static_cast<Thread*>(self_);
   while (1) {
-    DEBUG_PRINT(std::cerr << "[Thread] checking for work\n");
+    DEBUG_THREAD("checking for work\n");
     {
       std::unique_lock<std::mutex> lock(self->mutex);
       if (self->doWork) {
-        DEBUG_PRINT(std::cerr << "[Thread] doing work\n");
+        DEBUG_THREAD("doing work\n");
         // run tasks until they are all done
         while (self->doWork() == ThreadWorkState::More) {}
         self->doWork = nullptr;
       } else if (self->done) {
-        DEBUG_PRINT(std::cerr << "[Thread] done\n");
+        DEBUG_THREAD("done\n");
         return;
       }
     }
@@ -108,7 +112,7 @@ void Thread::mainLoop(void *self_) {
     {
       std::unique_lock<std::mutex> lock(self->mutex);
       if (!self->done && !self->doWork) {
-        DEBUG_PRINT(std::cerr << "[Thread] thread waiting\n");
+        DEBUG_THREAD("thread waiting\n");
         self->condition.wait(lock);
       }
     }
@@ -120,23 +124,22 @@ void Thread::mainLoop(void *self_) {
 
 void ThreadPool::initialize(size_t num) {
   if (num == 1) return; // no multiple cores, don't create threads
-  DEBUG_PRINT(std::cerr << "[Pool] initialize()\n");
+  DEBUG_POOL("initialize()\n");
   std::unique_lock<std::mutex> lock(mutex);
   ready.store(threads.size()); // initial state before first resetThreadsAreReady()
   resetThreadsAreReady();
   for (size_t i = 0; i < num; i++) {
     threads.emplace_back(std::unique_ptr<Thread>(new Thread()));
   }
-  DEBUG_PRINT(std::cerr << "[Pool] initialize() waiting\n");
+  DEBUG_POOL("initialize() waiting\n");
   condition.wait(lock, [this]() { return areThreadsReady(); });
-  DEBUG_PRINT(std::cerr << "[Pool] initialize() is done\n");
+  DEBUG_POOL("initialize() is done\n");
 }
 
 ThreadPool* ThreadPool::get() {
   if (!pool) {
     assert(Thread::onMainThread());
-    size_t num = std::thread::hardware_concurrency();
-    if (num < 2) num = 1;
+    size_t num = std::max(1U, std::thread::hardware_concurrency());
     pool = std::unique_ptr<ThreadPool>(new ThreadPool());
     pool->initialize(num);
   }
@@ -148,14 +151,14 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
   // If no multiple cores, or on a side thread, do not use worker threads
   if (num == 0 || !Thread::onMainThread()) {
     // just run sequentially
-    DEBUG_PRINT(std::cerr << "[Pool] work() sequentially\n");
+    DEBUG_POOL("work() sequentially\n");
     assert(doWorkers.size() > 0);
     while (doWorkers[0]() == ThreadWorkState::More) {}
     return;
   }
   // run in parallel on threads
   // TODO: fancy work stealing
-  DEBUG_PRINT(std::cerr << "[Pool] work() on threads\n");
+  DEBUG_POOL("work() on threads\n");
   assert(doWorkers.size() == num);
   assert(!running);
   running = true;
@@ -164,11 +167,11 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
   for (size_t i = 0; i < num; i++) {
     threads[i]->work(doWorkers[i]);
   }
-  DEBUG_PRINT(std::cerr << "[Pool] main thread waiting\n");
+  DEBUG_POOL("main thread waiting\n");
   condition.wait(lock, [this]() { return areThreadsReady(); });
-  DEBUG_PRINT(std::cerr << "[Pool] main thread waiting\n");
+  DEBUG_POOL("main thread waiting\n");
   running = false;
-  DEBUG_PRINT(std::cerr << "[Pool] work() is done\n");
+  DEBUG_POOL("work() is done\n");
 }
 
 size_t ThreadPool::size() {
@@ -180,20 +183,20 @@ bool ThreadPool::isRunning() {
 }
 
 void ThreadPool::notifyThreadIsReady() {
-  DEBUG_PRINT(std::cerr << "[Pool] notify thread is ready\n";)
+  DEBUG_POOL("notify thread is ready\n";)
   std::lock_guard<std::mutex> lock(mutex);
   ready.fetch_add(1);
   condition.notify_one();
 }
 
 void ThreadPool::resetThreadsAreReady() {
-  DEBUG_PRINT(std::cerr << "[Pool] reset threads are ready\n";)
-  assert(ready.load() == threads.size());
-  ready.store(0);
+  DEBUG_POOL("reset threads are ready\n";)
+  auto old = ready.exchange(0);
+  assert(old == threads.size());
 }
 
 bool ThreadPool::areThreadsReady() {
-  DEBUG_PRINT(std::cerr << "[Pool] are threads ready?\n";)
+  DEBUG_POOL("are threads ready?\n";)
   return ready.load() == threads.size();
 }
 
