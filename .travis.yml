@@ -32,11 +32,6 @@ matrix:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['cmake', 'nodejs', 'g++-5']
 
-  allow_failures:
-    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=thread"
-      compiler: clang
-      addons: *clang36
-
 before_install:
   - export CC="${CC}-${COMPILER_VERSION}"
   - export CXX="${CXX}-${COMPILER_VERSION}"
