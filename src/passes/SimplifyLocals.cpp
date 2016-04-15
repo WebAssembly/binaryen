@@ -33,6 +33,8 @@
 namespace wasm {
 
 struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>> {
+  bool isFunctionParallel() { return true; }
+
   struct SinkableInfo {
     Expression** item;
     EffectAnalyzer effects;
@@ -157,7 +159,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     self->pushTask(visitPre, currp);
   }
 
-  void startWalk(Function *func) {
+  void walk(Expression*& root) {
     // multiple passes may be required per function, consider this:
     //    x = load
     //    y = store
@@ -166,7 +168,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     do {
       sunk = false;
       // main operation
-      walk(func->body);
+      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::walk(root);
       // after optimizing a function, we can see if we have set_locals
       // for a local with no remaining gets, in which case, we can
       // remove the set.
@@ -192,6 +194,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       // clean up
       numGetLocals.clear();
       setLocalOrigins.clear();
+      sinkables.clear();
     } while (sunk);
   }
 };

@@ -1402,8 +1402,6 @@ public:
       std::map<std::string, size_t> ids;
       std::set<std::string> allSigs;
 
-      AsmConstWalker(S2WasmBuilder* parent) : parent(parent) {}
-
       void visitCallImport(CallImport* curr) {
         if (curr->target == EMSCRIPTEN_ASM_CONST) {
           auto arg = curr->operands[0]->cast<Const>();
@@ -1455,7 +1453,8 @@ public:
         return code;
       }
     };
-    AsmConstWalker walker(this);
+    AsmConstWalker walker;
+    walker.parent = this;
     walker.startWalk(&wasm);
     // print
     o << "\"asmConsts\": {";

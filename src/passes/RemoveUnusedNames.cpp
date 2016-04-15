@@ -24,6 +24,8 @@
 namespace wasm {
 
 struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
+  bool isFunctionParallel() { return true; }
+
   // We maintain a list of branches that we saw in children, then when we reach
   // a parent block, we know if it was branched to
   std::set<Name> branchesSeen;
