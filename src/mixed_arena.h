@@ -31,7 +31,7 @@ struct MixedArena {
 
   template<class T>
   T* alloc() {
-    // allocations must be on main thread, and single-threaded
+    // this structure should not be modified by multiple threads at once.
     assert(!wasm::ThreadPool::isRunning());
 
     const size_t CHUNK = 10000;

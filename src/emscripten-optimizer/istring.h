@@ -71,8 +71,8 @@ struct IString {
     auto existing = strings->find(s);
 
     if (existing == strings->end()) {
-      // the StringSet is a global shared structure, which can be modified
-      // only on the main thread and only when other threads cannot race.
+      // the StringSet cache is a global shared structure, which should
+      // not be modified by multiple threads at once.
       assert(!wasm::ThreadPool::isRunning());
       if (!reuse) {
         size_t len = strlen(s) + 1;
