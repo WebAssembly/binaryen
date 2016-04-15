@@ -438,7 +438,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printMinorOpening(o, "result ") << printWasmType(curr->result) << ")";
     }
     incIndent();
-    for (auto& local : curr->locals) {
+    for (auto& local : curr->vars) {
       doIndent(o, indent);
       printMinorOpening(o, "local ") << local.name << ' ' << printWasmType(local.type) << ")";
       o << maybeNewLine;

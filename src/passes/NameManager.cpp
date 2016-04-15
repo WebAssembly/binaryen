@@ -63,8 +63,8 @@ void NameManager::visitFunction(Function* curr) {
   for (auto& param : curr->params) {
     names.insert(param.name);
   }
-  for (auto& local : curr->locals) {
-    names.insert(local.name);
+  for (auto& var : curr->vars) {
+    names.insert(var.name);
   }
 }
 void NameManager::visitImport(Import* curr) {

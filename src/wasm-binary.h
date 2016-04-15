@@ -558,14 +558,14 @@ public:
       size_t curr = mappedLocals.size();
       mappedLocals[param.name] = curr;
     }
-    for (auto& local : function->locals) {
-      numLocalsByType[local.type]++;
+    for (auto& var : function->vars) {
+      numLocalsByType[var.type]++;
     }
     std::map<WasmType, size_t> currLocalsByType;
-    for (auto& local : function->locals) {
+    for (auto& var : function->vars) {
       size_t index = function->params.size();
-      Name name = local.name;
-      WasmType type = local.type;
+      Name name = var.name;
+      WasmType type = var.type;
       currLocalsByType[type]++; // increment now for simplicity, must decrement it in returns
       if (type == i32) {
         mappedLocals[name] = index + currLocalsByType[i32] - 1;
@@ -1416,7 +1416,7 @@ public:
         auto num = getU32LEB();
         auto type = getWasmType();
         while (num > 0) {
-          func->locals.emplace_back(addVar(), type);
+          func->vars.emplace_back(addVar(), type);
           num--;
         }
       }
@@ -1431,9 +1431,9 @@ public:
           mappedLocals.push_back(func->params[i].name);
           localTypes[func->params[i].name] = func->params[i].type;
         }
-        for (size_t i = 0; i < func->locals.size(); i++) {
-          mappedLocals.push_back(func->locals[i].name);
-          localTypes[func->locals[i].name] = func->locals[i].type;
+        for (size_t i = 0; i < func->vars.size(); i++) {
+          mappedLocals.push_back(func->vars[i].name);
+          localTypes[func->vars[i].name] = func->vars[i].type;
         }
         // process body
         assert(breakStack.empty());

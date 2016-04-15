@@ -1066,8 +1066,8 @@ class Function {
 public:
   Name name;
   WasmType result;
-  std::vector<NameType> params;
-  std::vector<NameType> locals;
+  std::vector<NameType> params; // function locals are params
+  std::vector<NameType> vars;   // plus vars
   Name type; // if null, it is implicit in params and result
   Expression *body;
 

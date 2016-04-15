@@ -366,9 +366,9 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
       flattenAppend(ret, processFunctionBody(func->body, NO_RESULT));
     }
   }
-  // locals, including new temp locals
-  for (auto& local : func->locals) {
-    ValueBuilder::appendToVar(theVar, fromName(local.name), makeAsmCoercedZero(wasmToAsmType(local.type)));
+  // vars, including new temp vars
+  for (auto& var : func->vars) {
+    ValueBuilder::appendToVar(theVar, fromName(var.name), makeAsmCoercedZero(wasmToAsmType(var.type)));
   }
   for (auto f : frees[i32]) {
     ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_INT));
