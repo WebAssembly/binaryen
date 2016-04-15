@@ -58,9 +58,6 @@ public:
   // it returns false.
   void work(std::function<ThreadWorkState ()> doWork);
 
-  // Checks if execution is the main thread.
-  static bool onMainThread();
-
 private:
   static void mainLoop(void *self);
 };

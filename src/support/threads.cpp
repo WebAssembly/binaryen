@@ -37,33 +37,18 @@ namespace wasm {
 
 // Global thread information
 
-static std::atomic_bool setMainThreadId(false);
-static std::thread::id mainThreadId;
-
-struct MainThreadNoter {
-  MainThreadNoter() {
-    // global ctors are called on main thread
-    mainThreadId = std::this_thread::get_id();
-    setMainThreadId = true;
-  }
-};
-
-static MainThreadNoter mainThreadNoter;
-
 static std::unique_ptr<ThreadPool> pool;
 
 
 // Thread
 
 Thread::Thread() {
-  // main thread object's constructor itself can
-  // happen before onMainThread is ready
-  assert(onMainThread());
+  assert(!ThreadPool::get()->isRunning());
   thread = std::unique_ptr<std::thread>(new std::thread(mainLoop, this));
 }
 
 Thread::~Thread() {
-  assert(onMainThread());
+  assert(!ThreadPool::get()->isRunning());
   {
     std::lock_guard<std::mutex> lock(mutex);
     // notify the thread that it can exit
@@ -76,7 +61,6 @@ Thread::~Thread() {
 void Thread::work(std::function<ThreadWorkState ()> doWork_) {
   // TODO: fancy work stealing
   DEBUG_THREAD("send work to thread\n");
-  assert(onMainThread());
   {
     std::lock_guard<std::mutex> lock(mutex);
     // notify the thread that it can do some work
@@ -84,12 +68,6 @@ void Thread::work(std::function<ThreadWorkState ()> doWork_) {
     condition.notify_one();
     DEBUG_THREAD("work sent\n");
   }
-}
-
-bool Thread::onMainThread() {
-  // mainThread Id might not be set yet if we are in a global ctor, but
-  // that is on the main thread anyhow
-  return !setMainThreadId || std::this_thread::get_id() == mainThreadId;
 }
 
 void Thread::mainLoop(void *self_) {
@@ -138,7 +116,6 @@ void ThreadPool::initialize(size_t num) {
 
 ThreadPool* ThreadPool::get() {
   if (!pool) {
-    assert(Thread::onMainThread());
     size_t num = std::max(1U, std::thread::hardware_concurrency());
     pool = std::unique_ptr<ThreadPool>(new ThreadPool());
     pool->initialize(num);
@@ -149,7 +126,7 @@ ThreadPool* ThreadPool::get() {
 void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers) {
   size_t num = threads.size();
   // If no multiple cores, or on a side thread, do not use worker threads
-  if (num == 0 || !Thread::onMainThread()) {
+  if (num == 0) {
     // just run sequentially
     DEBUG_POOL("work() sequentially\n");
     assert(doWorkers.size() > 0);

@@ -32,7 +32,6 @@ struct MixedArena {
   template<class T>
   T* alloc() {
     // allocations must be on main thread, and single-threaded
-    assert(wasm::Thread::onMainThread());
     assert(!wasm::ThreadPool::isRunning());
 
     const size_t CHUNK = 10000;
@@ -49,7 +48,6 @@ struct MixedArena {
   }
 
   void clear() {
-    assert(wasm::Thread::onMainThread());
     assert(!wasm::ThreadPool::isRunning());
 
     for (char* chunk : chunks) {
