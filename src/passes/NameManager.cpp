@@ -60,11 +60,11 @@ void NameManager::visitFunctionType(FunctionType* curr) {
 }
 void NameManager::visitFunction(Function* curr) {
   names.insert(curr->name);
-  for (auto& param : curr->params) {
-    names.insert(param.name);
-  }
-  for (auto& var : curr->vars) {
-    names.insert(var.name);
+  for (Index i = 0; i < curr->getNumLocals(); i++) {
+    Name name = curr->tryLocalName(i);
+    if (name.is()) {
+      names.insert(name);
+    }
   }
 }
 void NameManager::visitImport(Import* curr) {

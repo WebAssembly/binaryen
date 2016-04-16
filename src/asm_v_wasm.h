@@ -67,8 +67,8 @@ std::string getSig(FunctionType *type) {
 std::string getSig(Function *func) {
   std::string ret;
   ret += getSig(func->result);
-  for (auto param : func->params) {
-    ret += getSig(param.type);
+  for (auto type : func->params) {
+    ret += getSig(type);
   }
   return ret;
 }

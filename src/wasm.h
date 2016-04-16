@@ -64,7 +64,11 @@ namespace wasm {
 
 // We use a Name for all of the identifiers. These are IStrings, so they are
 // all interned - comparisons etc are just pointer comparisons, so there is no
-// perf loss. Having names everywhere makes using the AST much nicer.
+// perf loss. Having names everywhere makes using the AST much nicer (for
+// example, block names are strings and not offsets, which makes composition
+// - adding blocks, removing blocks - easy). One exception is local variables,
+// where we do use indices, as they are a large proportion of the AST,
+// perf matters a lot there, and compositionality is not a problem.
 // TODO: as an optimization, IString values < some threshold could be considered
 //       numerical indices directly.
 
@@ -83,6 +87,10 @@ struct Name : public cashew::IString {
     return cashew::IString(std::to_string(i).c_str(), false);
   }
 };
+
+// An index in a wasm module
+
+typedef uint32_t Index;
 
 // Types
 
@@ -924,14 +932,14 @@ class GetLocal : public Expression {
 public:
   GetLocal() : Expression(GetLocalId) {}
 
-  Name name;
+  Index index;
 };
 
 class SetLocal : public Expression {
 public:
   SetLocal() : Expression(SetLocalId) {}
 
-  Name name;
+  Index index;
   Expression *value;
 };
 
@@ -1055,23 +1063,65 @@ public:
 
 // Globals
 
-struct NameType {
-  Name name;
-  WasmType type;
-  NameType() : name(nullptr), type(none) {}
-  NameType(Name name, WasmType type) : name(name), type(type) {}
-};
-
 class Function {
 public:
   Name name;
   WasmType result;
-  std::vector<NameType> params; // function locals are params
-  std::vector<NameType> vars;   // plus vars
+  std::vector<WasmType> params; // function locals are
+  std::vector<WasmType> vars;   // params plus vars
   Name type; // if null, it is implicit in params and result
   Expression *body;
 
+  // local names. these are optional.
+  std::vector<Name> localNames;
+  std::map<Name, Index> localIndices;
+
   Function() : result(none) {}
+
+  size_t getNumParams() {
+    return params.size();
+  }
+  size_t getNumVars() {
+    return vars.size();
+  }
+  size_t getNumLocals() {
+    return params.size() + vars.size();
+  }
+
+  bool isParam(Index index) {
+    return index < params.size();
+  }
+  bool isVar(Index index) {
+    return index >= params.size();
+  }
+
+  Name getLocalName(Index index) {
+    assert(index < localNames.size() && localNames[index].is());
+    return localNames[index];
+  }
+  Name tryLocalName(Index index) {
+    if (index < localNames.size() && localNames[index].is()) {
+      return localNames[index];
+    }
+    // this is an unnamed local
+    return Name();
+  }
+  Index getLocalIndex(Name name) {
+    assert(localIndices.count(name) > 0);
+    return localIndices[name];
+  }
+  Index getVarIndexBase() {
+    return params.size();
+  }
+  WasmType getLocalType(Index index) {
+    if (isParam(index)) {
+      return params[index];
+    } else if (isVar(index)) {
+      return vars[index - getVarIndexBase()];
+    } else {
+      WASM_UNREACHABLE();
+    }
+  }
 };
 
 class Import {

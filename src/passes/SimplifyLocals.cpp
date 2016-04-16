@@ -45,12 +45,12 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
   };
 
   // locals in current linear execution trace, which we try to sink
-  std::map<Name, SinkableInfo> sinkables;
+  std::map<Index, SinkableInfo> sinkables;
 
   bool sunk;
 
-  // name => # of get_locals for it
-  std::map<Name, int> numGetLocals;
+  // local => # of get_locals for it
+  std::map<Index, int> numGetLocals;
 
   // for each set_local, its origin pointer
   std::map<SetLocal*, Expression**> setLocalOrigins;
@@ -60,7 +60,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
   }
 
   void visitGetLocal(GetLocal *curr) {
-    auto found = sinkables.find(curr->name);
+    auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
       // sink it, and nop the origin TODO: clean up nops
       replaceCurrent(*found->second.item);
@@ -70,7 +70,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       sinkables.erase(found);
       sunk = true;
     } else {
-      numGetLocals[curr->name]++;
+      numGetLocals[curr->index]++;
     }
   }
 
@@ -78,7 +78,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     // if we are a potentially-sinkable thing, forget it - this
     // write overrides the last TODO: optimizable
     // TODO: if no get_locals left, can remove the set as well (== expressionizer in emscripten optimizer)
-    auto found = sinkables.find(curr->name);
+    auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
       sinkables.erase(found);
     }
@@ -86,14 +86,14 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
 
   void checkInvalidations(EffectAnalyzer& effects) {
     // TODO: this is O(bad)
-    std::vector<Name> invalidated;
+    std::vector<Index> invalidated;
     for (auto& sinkable : sinkables) {
       if (effects.invalidates(sinkable.second.effects)) {
         invalidated.push_back(sinkable.first);
       }
     }
-    for (auto name : invalidated) {
-      sinkables.erase(name);
+    for (auto index : invalidated) {
+      sinkables.erase(index);
     }
   }
 
@@ -125,9 +125,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
   static void tryMarkSinkable(SimplifyLocals* self, Expression** currp) {
     auto* curr = (*currp)->dynCast<SetLocal>();
     if (curr) {
-      Name name = curr->name;
-      assert(self->sinkables.count(name) == 0);
-      self->sinkables.emplace(std::make_pair(name, SinkableInfo(currp)));
+      Index index = curr->index;
+      assert(self->sinkables.count(index) == 0);
+      self->sinkables.emplace(std::make_pair(index, SinkableInfo(currp)));
     }
   }
 
@@ -175,7 +175,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       std::vector<SetLocal*> optimizables;
       for (auto pair : setLocalOrigins) {
         SetLocal* curr = pair.first;
-        if (numGetLocals[curr->name] == 0) {
+        if (numGetLocals[curr->index] == 0) {
           // no gets, can remove the set and leave just the value
           optimizables.push_back(curr);
         }

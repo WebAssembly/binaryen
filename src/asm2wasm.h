@@ -742,16 +742,18 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // apply memory growth, if relevant
   if (memoryGrowth) {
     // create and export a function that just calls memory growth
-    auto growWasmMemory = allocator.alloc<Function>();
-    growWasmMemory->name = GROW_WASM_MEMORY;
-    growWasmMemory->params.emplace_back(NEW_SIZE, i32); // the new size
-    auto get = allocator.alloc<GetLocal>();
-    get->name = NEW_SIZE;
-    auto grow = allocator.alloc<Host>();
-    grow->op = GrowMemory;
-    grow->operands.push_back(get);
-    growWasmMemory->body = grow;
-    wasm.addFunction(growWasmMemory);
+    Builder builder(wasm);
+    wasm.addFunction(builder.makeFunction(
+      GROW_WASM_MEMORY,
+      { { NEW_SIZE, i32 } },
+      none,
+      {},
+      builder.makeHost(
+        GrowMemory,
+        Name(),
+        { builder.makeGetLocal(0, i32) }
+      )
+    ));
     auto export_ = allocator.alloc<Export>();
     export_->name = export_->value = GROW_WASM_MEMORY;
     wasm.addExport(export_);
@@ -777,17 +779,16 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     //    returns x / y
     auto* func = wasm.getFunction(udivmoddi4);
     assert(!func->type.is());
-    Name xl = func->params[0].name,
-         xh = func->params[1].name,
-         yl = func->params[2].name,
-         yh = func->params[3].name,
-         r = func->params[4].name;
-    func->vars.clear();
-    Name x64("x64"), y64("y64");
-    func->vars.emplace_back(x64, i64);
-    func->vars.emplace_back(y64, i64);
+    Builder::clearLocals(func);
+    Index xl  = Builder::addParam(func, "xl", i32),
+          xh  = Builder::addParam(func, "xh", i32),
+          yl  = Builder::addParam(func, "yl", i32),
+          yh  = Builder::addParam(func, "yh", i32),
+          r   = Builder::addParam(func, "r", i32),
+          x64 = Builder::addVar(func, "x64", i64),
+          y64 = Builder::addVar(func, "y64", i64);
     auto* body = allocator.alloc<Block>();
-    auto recreateI64 = [&](Name target, Name low, Name high) {
+    auto recreateI64 = [&](Index target, Index low, Index high) {
       return builder.makeSetLocal(
         target,
         builder.makeBinary(
@@ -899,7 +900,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     assert(curr[0] == ASSIGN && curr[2][0] == NAME);
     IString name = curr[2][1]->getIString();
     AsmType asmType = detectType(curr[3], nullptr, false, Math_fround);
-    function->params.emplace_back(name, asmToWasmType(asmType));
+    Builder::addParam(function, name, asmToWasmType(asmType));
     functionVariables.insert(name);
     asmData.addParam(name, asmType);
   }
@@ -910,7 +911,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Ref pair = curr[1][j];
       IString name = pair[0]->getIString();
       AsmType asmType = detectType(pair[1], nullptr, true, Math_fround);
-      function->vars.emplace_back(name, asmToWasmType(asmType));
+      Builder::addVar(function, name, asmToWasmType(asmType));
       functionVariables.insert(name);
       asmData.addVar(name, asmType);
     }
@@ -921,7 +922,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   auto ensureI32Temp = [&]() {
     if (addedI32Temp) return;
     addedI32Temp = true;
-    function->vars.emplace_back(I32_TEMP, i32);
+    Builder::addVar(function, I32_TEMP, i32);
     functionVariables.insert(I32_TEMP);
     asmData.addVar(I32_TEMP, ASM_INT);
   };
@@ -946,7 +947,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         IString name = ast[2][1]->getIString();
         if (functionVariables.has(name)) {
           auto ret = allocator.alloc<SetLocal>();
-          ret->name = ast[2][1]->getIString();
+          ret->index = function->getLocalIndex(ast[2][1]->getIString());
           ret->value = process(ast[3]);
           ret->type = ret->value->type;
           return ret;
@@ -1041,7 +1042,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       if (functionVariables.has(name)) {
         // var in scope
         auto ret = allocator.alloc<GetLocal>();
-        ret->name = name;
+        ret->index = function->getLocalIndex(name);
         ret->type = asmToWasmType(asmData.getType(name));
         return ret;
       }
@@ -1248,12 +1249,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             // No wasm support, so use a temp local
             ensureI32Temp();
             auto set = allocator.alloc<SetLocal>();
-            set->name = I32_TEMP;
+            set->index = function->getLocalIndex(I32_TEMP);
             set->value = value;
             set->type = i32;
             auto get = [&]() {
               auto ret = allocator.alloc<GetLocal>();
-              ret->name = I32_TEMP;
+              ret->index = function->getLocalIndex(I32_TEMP);
               ret->type = i32;
               return ret;
             };
