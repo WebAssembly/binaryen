@@ -68,19 +68,36 @@ void PassRunner::addDefaultOptimizationPasses() {
 }
 
 void PassRunner::run(Module* module) {
+  std::chrono::high_resolution_clock::time_point beforeEverything;
+  size_t padding = 0;
+  if (debug) {
+    std::cerr << "[PassRunner] running passes..." << std::endl;
+    beforeEverything = std::chrono::high_resolution_clock::now();
+    for (auto pass : passes) {
+      padding = std::max(padding, pass->name.size());
+    }
+  }
   for (auto pass : passes) {
     currPass = pass;
     std::chrono::high_resolution_clock::time_point before;
     if (debug) {
-      std::cerr << "[PassRunner] running pass: " << pass->name << std::endl;
+      std::cerr << "[PassRunner]   running pass: " << pass->name << "... ";
+      for (size_t i = 0; i < padding - pass->name.size(); i++) {
+        std::cerr << ' ';
+      }
       before = std::chrono::high_resolution_clock::now();
     }
     pass->run(this, module);
     if (debug) {
       auto after = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> diff = after - before;
-      std::cerr << "[PassRunner]   pass took " << diff.count() << " seconds." << std::endl;
+      std::cerr << diff.count() << " seconds." << std::endl;
     }
+  }
+  if (debug) {
+    auto after = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = after - beforeEverything;
+    std::cerr << "[PassRunner] passes took " << diff.count() << " seconds." << std::endl;
   }
 }
 
