@@ -50,7 +50,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
   bool sunk;
 
   // local => # of get_locals for it
-  std::map<Index, int> numGetLocals;
+  std::vector<int> numGetLocals;
 
   // for each set_local, its origin pointer
   std::map<SetLocal*, Expression**> setLocalOrigins;
@@ -166,6 +166,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     //    c(x, y)
     // the load cannot cross the store, but y can be sunk, after which so can x
     do {
+      numGetLocals.resize(getFunction()->getNumLocals());
       sunk = false;
       // main operation
       WalkerPass<LinearExecutionWalker<SimplifyLocals>>::walk(root);
