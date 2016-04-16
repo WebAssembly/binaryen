@@ -155,7 +155,7 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
 }
 
 size_t ThreadPool::size() {
-  return threads.size();
+  return std::max(size_t(1), threads.size());
 }
 
 bool ThreadPool::isRunning() {
