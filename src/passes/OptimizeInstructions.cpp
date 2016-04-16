@@ -25,7 +25,7 @@
 
 namespace wasm {
 
-struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions>> {
+struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions, Visitor<OptimizeInstructions>>> {
   bool isFunctionParallel() { return true; }
 
   void visitIf(If* curr) {

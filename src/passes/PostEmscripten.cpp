@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
+struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten, Visitor<PostEmscripten>>> {
   bool isFunctionParallel() { return true; }
 
   // When we have a Load from a local value (typically a GetLocal) plus a constant offset,

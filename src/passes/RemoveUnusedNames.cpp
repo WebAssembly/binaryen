@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
+struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames, Visitor<RemoveUnusedNames>>> {
   bool isFunctionParallel() { return true; }
 
   // We maintain a list of branches that we saw in children, then when we reach

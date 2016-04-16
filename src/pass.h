@@ -143,7 +143,7 @@ public:
 // e.g. through PassRunner::getLast
 
 // Handles names in a module, in particular adding names without duplicates
-class NameManager : public WalkerPass<PostWalker<NameManager>> {
+class NameManager : public WalkerPass<PostWalker<NameManager, Visitor<NameManager>>> {
  public:
   Name getUnique(std::string prefix);
   // TODO: getUniqueInFunction

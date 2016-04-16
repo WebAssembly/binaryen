@@ -25,7 +25,7 @@
 
 namespace wasm {
 
-struct WasmValidator : public PostWalker<WasmValidator> {
+struct WasmValidator : public PostWalker<WasmValidator, Visitor<WasmValidator>> {
   bool valid;
 
   std::map<Name, WasmType> breakTypes; // breaks to a label must all have the same type, and the right type
@@ -118,7 +118,7 @@ public:
 private:
 
   // the "in" label has a none type, since no one can receive its value. make sure no one breaks to it with a value.
-  struct LoopChildChecker : public PostWalker<LoopChildChecker> {
+  struct LoopChildChecker : public PostWalker<LoopChildChecker, Visitor<LoopChildChecker>> {
     Name in;
     bool valid = true;
 
