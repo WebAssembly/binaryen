@@ -9568,9 +9568,7 @@
               (i32.const 76)
             )
             (block
-              (set_local $label
-                (i32.const 0)
-              )
+              (i32.const 0)
               (set_local $$a$0
                 (call $_fmt_u
                   (get_local $$148)

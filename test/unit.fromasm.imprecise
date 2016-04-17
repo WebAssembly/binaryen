@@ -127,13 +127,11 @@
     )
   )
   (func $conversions
-    (local $i i32)
     (local $d f64)
+    (local $i i32)
     (local $f f32)
-    (set_local $i
-      (i32.trunc_s/f64
-        (get_local $d)
-      )
+    (i32.trunc_s/f64
+      (get_local $d)
     )
     (set_local $d
       (f64.convert_s/i32

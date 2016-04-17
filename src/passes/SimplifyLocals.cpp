@@ -75,10 +75,11 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   }
 
   void visitSetLocal(SetLocal *curr) {
-    // if we are a potentially-sinkable thing, forget it - this
-    // write overrides the last TODO: optimizable
+    // if we are a potentially-sinkable thing, then the previous
+    // store is dead, leave just the value
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
+      *found->second.item = (*found->second.item)->cast<SetLocal>()->value;
       sinkables.erase(found);
     }
   }

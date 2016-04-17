@@ -39,47 +39,31 @@
     (block $block2
       (nop)
       (nop)
-      (set_local $a
-        (i32.const 1)
-      )
+      (i32.const 1)
       (i32.const 2)
-      (set_local $a
-        (i32.const 3)
-      )
+      (i32.const 3)
       (i32.const 4)
       (nop)
       (nop)
       (i32.const 6)
-      (set_local $a
-        (i32.const 5)
-      )
-      (set_local $a
-        (i32.const 7)
-      )
+      (i32.const 5)
+      (i32.const 7)
       (i32.const 8)
       (nop)
       (nop)
       (call_import $waka)
-      (set_local $a
-        (i32.const 9)
-      )
+      (i32.const 9)
       (i32.const 10)
-      (set_local $a
-        (i32.const 11)
-      )
+      (i32.const 11)
       (i32.const 12)
       (nop)
       (nop)
       (i32.load
         (i32.const 24)
       )
-      (set_local $a
-        (i32.const 13)
-      )
+      (i32.const 13)
       (i32.const 14)
-      (set_local $a
-        (i32.const 15)
-      )
+      (i32.const 15)
       (i32.const 16)
       (nop)
       (nop)
