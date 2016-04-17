@@ -62,7 +62,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   void visitGetLocal(GetLocal *curr) {
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
-      // sink it, and nop the origin TODO: clean up nops
+      // sink it, and nop the origin
       replaceCurrent(*found->second.item);
       // reuse the getlocal that is dying
       *found->second.item = curr;
@@ -77,7 +77,6 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   void visitSetLocal(SetLocal *curr) {
     // if we are a potentially-sinkable thing, forget it - this
     // write overrides the last TODO: optimizable
-    // TODO: if no get_locals left, can remove the set as well (== expressionizer in emscripten optimizer)
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
       sinkables.erase(found);
