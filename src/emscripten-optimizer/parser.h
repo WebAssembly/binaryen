@@ -237,7 +237,7 @@ class Parser {
           while (1) {
             if (*src >= '0' && *src <= '9') { num *= 16; num += *src - '0'; }
             else if (*src >= 'a' && *src <= 'f') { num *= 16; num += *src - 'a' + 10; }
-            else if (*src >= 'A' && *src <= 'F') { num *= 16; num += *src - 'F' + 10; }
+            else if (*src >= 'A' && *src <= 'F') { num *= 16; num += *src - 'A' + 10; }
             else break;
             src++;
           }
