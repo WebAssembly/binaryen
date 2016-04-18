@@ -117,6 +117,9 @@ void ThreadPool::initialize(size_t num) {
 ThreadPool* ThreadPool::get() {
   if (!pool) {
     size_t num = std::max(1U, std::thread::hardware_concurrency());
+    if (getenv("BINARYEN_CORES")) {
+      num = std::stoi(getenv("BINARYEN_CORES"));
+    }
     pool = std::unique_ptr<ThreadPool>(new ThreadPool());
     pool->initialize(num);
   }
@@ -152,7 +155,7 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
 }
 
 size_t ThreadPool::size() {
-  return threads.size();
+  return std::max(size_t(1), threads.size());
 }
 
 bool ThreadPool::isRunning() {
