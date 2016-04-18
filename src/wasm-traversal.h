@@ -127,11 +127,16 @@ struct Walker : public Visitor<SubType> {
   // function either (which could be very inefficient).
   bool isFunctionParallel() { return false; }
 
-  // Node replacing as we walk - call replaceCurrent from
-  // your visitors.
+  // Useful methods for visitor implementions
 
+  // Replace the current node
   void replaceCurrent(Expression *expression) {
     replace = expression;
+  }
+
+  // Get the current function
+  Function* getFunction() {
+    return currFunction;
   }
 
   // Walk starting
@@ -149,12 +154,18 @@ struct Walker : public Visitor<SubType> {
       self->visitExport(curr);
     }
 
+    auto processFunction = [](SubType* instance, Function* func) {
+      instance->setFunction(func);
+      instance->walk(func->body);
+      instance->visitFunction(func);
+      instance->setFunction(nullptr);
+    };
+
     // if this is not a function-parallel traversal, run
     // sequentially
     if (!self->isFunctionParallel()) {
       for (auto curr : module->functions) {
-        self->walk(curr->body);
-        self->visitFunction(curr);
+        processFunction(self, curr);
       }
     } else {
       // execute in parallel on helper threads
@@ -167,7 +178,7 @@ struct Walker : public Visitor<SubType> {
       for (size_t i = 0; i < num; i++) {
         auto* instance = new SubType();
         instances.push_back(std::unique_ptr<SubType>(instance));
-        doWorkers.push_back([instance, &nextFunction, numFunctions, &module]() {
+        doWorkers.push_back([instance, &nextFunction, numFunctions, &module, processFunction]() {
           auto index = nextFunction.fetch_add(1);
           // get the next task, if there is one
           if (index >= numFunctions) {
@@ -175,8 +186,7 @@ struct Walker : public Visitor<SubType> {
           }
           Function* curr = module->functions[index];
           // do the current task
-          instance->walk(curr->body);
-          instance->visitFunction(curr);
+          processFunction(instance, curr);
           if (index + 1 == numFunctions) {
             return ThreadWorkState::Finished; // we did the last one
           }
@@ -256,9 +266,14 @@ struct Walker : public Visitor<SubType> {
   static void doVisitNop(SubType* self, Expression** currp)          { self->visitExpression(*currp); self->visitNop((*currp)->cast<Nop>()); }
   static void doVisitUnreachable(SubType* self, Expression** currp)  { self->visitExpression(*currp); self->visitUnreachable((*currp)->cast<Unreachable>()); }
 
+  void setFunction(Function *func) {
+    currFunction = func;
+  }
+
 private:
   Expression *replace = nullptr; // a node to replace
   std::vector<Task> stack; // stack of tasks
+  Function* currFunction = nullptr; // current function being processed
 };
 
 // Walks in post-order, i.e., children first. When there isn't an obvious
