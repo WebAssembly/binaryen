@@ -52,6 +52,10 @@ function asm(global, env, buffer) {
     var x = 0;
     return !x;
   }
+  function hexLiterals() {
+    var i = 0;
+    i = 0x0 + 0x12ABCdef + 0xFEDcba90;
+  }
   function conversions() {
     var i = 0, d = 0.0, f = Math_fround(0);
     i = ~~d;

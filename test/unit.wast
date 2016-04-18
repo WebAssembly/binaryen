@@ -134,6 +134,15 @@
       (i32.const 0)
     )
   )
+  (func $hexLiterals
+    (i32.add
+      (i32.add
+        (i32.const 0)
+        (i32.const 313249263)
+      )
+      (i32.const -19088752)
+    )
+  )
   (func $conversions
     (local $i i32)
     (local $d f64)
