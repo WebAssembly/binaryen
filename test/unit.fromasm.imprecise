@@ -289,8 +289,8 @@
     )
   )
   (func $fr (param $x f32)
-    (local $z f64)
     (local $y f32)
+    (local $z f64)
     (f32.demote/f64
       (get_local $z)
     )

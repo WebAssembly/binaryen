@@ -28,6 +28,7 @@
 #include "wasm-traversal.h"
 #include "shared-constants.h"
 #include "asm_v_wasm.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -550,40 +551,39 @@ public:
     finishSection(start);
   }
 
-  std::map<Name, size_t> mappedLocals; // local name => index in compact form of [all int32s][all int64s]etc
+  std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
   std::map<WasmType, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
   void mapLocals(Function* function) {
-    for (auto& param : function->params) {
+    for (Index i = 0; i < function->getNumParams(); i++) {
       size_t curr = mappedLocals.size();
-      mappedLocals[param.name] = curr;
+      mappedLocals[i] = curr;
     }
-    for (auto& var : function->vars) {
-      numLocalsByType[var.type]++;
+    for (auto type : function->vars) {
+      numLocalsByType[type]++;
     }
     std::map<WasmType, size_t> currLocalsByType;
-    for (auto& var : function->vars) {
-      size_t index = function->params.size();
-      Name name = var.name;
-      WasmType type = var.type;
+    for (Index i = function->getVarIndexBase(); i < function->getNumLocals(); i++) {
+      size_t index = function->getVarIndexBase();
+      WasmType type = function->getLocalType(i);
       currLocalsByType[type]++; // increment now for simplicity, must decrement it in returns
       if (type == i32) {
-        mappedLocals[name] = index + currLocalsByType[i32] - 1;
+        mappedLocals[i] = index + currLocalsByType[i32] - 1;
         continue;
       }
       index += numLocalsByType[i32];
       if (type == i64) {
-        mappedLocals[name] = index + currLocalsByType[i64] - 1;
+        mappedLocals[i] = index + currLocalsByType[i64] - 1;
         continue;
       }
       index += numLocalsByType[i64];
       if (type == f32) {
-        mappedLocals[name] = index + currLocalsByType[f32] - 1;
+        mappedLocals[i] = index + currLocalsByType[f32] - 1;
         continue;
       }
       index += numLocalsByType[f32];
       if (type == f64) {
-        mappedLocals[name] = index + currLocalsByType[f64] - 1;
+        mappedLocals[i] = index + currLocalsByType[f64] - 1;
         continue;
       }
       abort();
@@ -879,12 +879,12 @@ public:
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
-    o << int8_t(BinaryConsts::GetLocal) << U32LEB(mappedLocals[curr->name]);
+    o << int8_t(BinaryConsts::GetLocal) << U32LEB(mappedLocals[curr->index]);
   }
   void visitSetLocal(SetLocal *curr) {
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
     recurse(curr->value);
-    o << int8_t(BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->name]);
+    o << int8_t(BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
   }
 
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
@@ -1390,6 +1390,7 @@ public:
 
   std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
   std::map<size_t, std::vector<Call*>> functionCalls; // at index i we have all calls to i
+  Function* currFunction = nullptr;
 
   void readFunctions() {
     if (debug) std::cerr << "== readFunctions" << std::endl;
@@ -1400,41 +1401,36 @@ public:
       assert(size > 0); // we could also check it matches the seen size
       auto type = functionTypes[i];
       if (debug) std::cerr << "reading" << i << std::endl;
-      auto func = allocator.alloc<Function>();
-      func->type = type->name;
-      func->result = type->result;
       size_t nextVar = 0;
       auto addVar = [&]() {
         Name name = cashew::IString(("var$" + std::to_string(nextVar++)).c_str(), false);
         return name;
       };
+      std::vector<NameType> params, vars;
       for (size_t j = 0; j < type->params.size(); j++) {
-        func->params.emplace_back(addVar(), type->params[j]);
+        params.emplace_back(addVar(), type->params[j]);
       }
       size_t numLocalTypes = getU32LEB();
       for (size_t t = 0; t < numLocalTypes; t++) {
         auto num = getU32LEB();
         auto type = getWasmType();
         while (num > 0) {
-          func->vars.emplace_back(addVar(), type);
+          vars.emplace_back(addVar(), type);
           num--;
         }
       }
+      auto func = Builder(wasm).makeFunction(
+        Name("TODO"),
+        std::move(params),
+        type->result,
+        std::move(vars)
+      );
+      func->type = type->name;
+      currFunction = func;
       {
         // process the function body
         if (debug) std::cerr << "processing function: " << i << std::endl;
         nextLabel = 0;
-        // prepare locals
-        mappedLocals.clear();
-        localTypes.clear();
-        for (size_t i = 0; i < func->params.size(); i++) {
-          mappedLocals.push_back(func->params[i].name);
-          localTypes[func->params[i].name] = func->params[i].type;
-        }
-        for (size_t i = 0; i < func->vars.size(); i++) {
-          mappedLocals.push_back(func->vars[i].name);
-          localTypes[func->vars[i].name] = func->vars[i].type;
-        }
         // process body
         assert(breakStack.empty());
         assert(expressionStack.empty());
@@ -1446,6 +1442,7 @@ public:
         assert(breakStack.empty());
         assert(expressionStack.empty());
       }
+      currFunction = nullptr;
       functions.push_back(func);
     }
   }
@@ -1465,9 +1462,6 @@ public:
       exportIndexes[curr] = index;
     }
   }
-
-  std::vector<Name> mappedLocals; // index => local name
-  std::map<Name, WasmType> localTypes; // TODO: optimize
 
   std::vector<Name> breakStack;
 
@@ -1745,14 +1739,14 @@ public:
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
-    curr->name = mappedLocals[getU32LEB()];
-    assert(curr->name.is());
-    curr->type = localTypes[curr->name];
+    curr->index = getU32LEB();
+    assert(curr->index < currFunction->getNumLocals());
+    curr->type = currFunction->getLocalType(curr->index);
   }
   void visitSetLocal(SetLocal *curr) {
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
-    curr->name = mappedLocals[getU32LEB()];
-    assert(curr->name.is());
+    curr->index = getU32LEB();
+    assert(curr->index < currFunction->getNumLocals());
     curr->value = popExpression();
     curr->type = curr->value->type;
   }

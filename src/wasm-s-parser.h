@@ -32,6 +32,7 @@
 #include "parsing.h"
 #include "asm_v_wasm.h"
 #include "ast_utils.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -341,21 +342,33 @@ private:
   }
 
   void parseFunction(Element& s) {
-    auto func = currFunction = allocator.alloc<Function>();
     size_t i = 1;
+    Name name;
     if (s[i]->isStr()) {
-      func->name = s[i]->str();
+      name = s[i]->str();
       i++;
     } else {
       // unnamed, use an index
-      func->name = Name::fromInt(functionCounter);
+      name = Name::fromInt(functionCounter);
     }
     functionCounter++;
-    func->body = nullptr;
+    Expression* body = nullptr;
     localIndex = 0;
     otherIndex = 0;
     std::vector<NameType> typeParams; // we may have both params and a type. store the type info here
+    std::vector<NameType> params;
+    std::vector<NameType> vars;
+    WasmType result = none;
+    Name type;
     Block* autoBlock = nullptr; // we may need to add a block for the very top level
+    auto makeFunction = [&]() {
+      currFunction = Builder(wasm).makeFunction(
+        name,
+        std::move(params),
+        result,
+        std::move(vars)
+      );
+    };
     for (;i < s.size(); i++) {
       Element& curr = *s[i];
       IString id = curr[0]->str();
@@ -377,21 +390,21 @@ private:
           }
           j++;
           if (id == PARAM) {
-            func->params.emplace_back(name, type);
+            params.emplace_back(name, type);
           } else {
-            func->vars.emplace_back(name, type);
+            vars.emplace_back(name, type);
           }
           localIndex++;
           currLocalTypes[name] = type;
         }
       } else if (id == RESULT) {
-        func->result = stringToWasmType(curr[1]->str());
+        result = stringToWasmType(curr[1]->str());
       } else if (id == TYPE) {
         Name name = curr[1]->str();
-        func->type = name;
+        type = name;
         if (!wasm.checkFunctionType(name)) onError();
         FunctionType* type = wasm.getFunctionType(name);
-        func->result = type->result;
+        result = type->result;
         for (size_t j = 0; j < type->params.size(); j++) {
           IString name = Name::fromInt(j);
           WasmType currType = type->params[j];
@@ -400,25 +413,32 @@ private:
         }
       } else {
         // body
-        if (typeParams.size() > 0 && func->params.size() == 0) {
-          func->params = typeParams;
+        if (typeParams.size() > 0 && params.size() == 0) {
+          params = typeParams;
         }
+        if (!currFunction) makeFunction();
         Expression* ex = parseExpression(curr);
-        if (!func->body) {
-          func->body = ex;
+        if (!body) {
+          body = ex;
         } else {
           if (!autoBlock) {
             autoBlock = allocator.alloc<Block>();
-            autoBlock->list.push_back(func->body);
+            autoBlock->list.push_back(body);
             autoBlock->finalize();
-            func->body = autoBlock;
+            body = autoBlock;
           }
           autoBlock->list.push_back(ex);
         }
       }
     }
-    if (!func->body) func->body = allocator.alloc<Nop>();
-    wasm.addFunction(func);
+    if (!currFunction) {
+      makeFunction();
+      body = allocator.alloc<Nop>();
+    }
+    assert(currFunction->result == result);
+    currFunction->body = body;
+    currFunction->type = type;
+    wasm.addFunction(currFunction);
     currLocalTypes.clear();
     labelStack.clear();
     currFunction = nullptr;
@@ -701,30 +721,24 @@ private:
     return ret;
   }
 
-  Name getLocalName(Element& s) {
-    if (s.dollared()) return s.str();
+  Index getLocalIndex(Element& s) {
+    if (s.dollared()) return currFunction->getLocalIndex(s.str());
     // this is a numeric index
-    size_t i = atoi(s.c_str());
-    size_t numParams = currFunction->params.size();
-    if (i < numParams) {
-      return currFunction->params[i].name;
-    } else {
-      return currFunction->vars[i - currFunction->params.size()].name;
-    }
+    return atoi(s.c_str());
   }
 
   Expression* makeGetLocal(Element& s) {
     auto ret = allocator.alloc<GetLocal>();
-    ret->name = getLocalName(*s[1]);
-    ret->type = currLocalTypes[ret->name];
+    ret->index = getLocalIndex(*s[1]);
+    ret->type = currFunction->getLocalType(ret->index);
     return ret;
   }
 
   Expression* makeSetLocal(Element& s) {
     auto ret = allocator.alloc<SetLocal>();
-    ret->name = getLocalName(*s[1]);
+    ret->index = getLocalIndex(*s[1]);
     ret->value = parseExpression(s[2]);
-    ret->type = currLocalTypes[ret->name];
+    ret->type = currFunction->getLocalType(ret->index);
     return ret;
   }
 

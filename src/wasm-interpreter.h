@@ -156,18 +156,21 @@ private:
                     << arguments.size() << " arguments." << std::endl;
           abort();
         }
-        for (size_t i = 0; i < arguments.size(); i++) {
-          if (function->params[i].type != arguments[i].type) {
-            std::cerr << "Function `" << function->name << "` expects type "
-                      << printWasmType(function->params[i].type)
-                      << " for parameter " << i << ", got "
-                      << printWasmType(arguments[i].type) << "." << std::endl;
-            abort();
+        for (size_t i = 0; i < function->getNumLocals(); i++) {
+          if (i < arguments.size()) {
+            assert(function->isParam(i));
+            if (function->params[i] != arguments[i].type) {
+              std::cerr << "Function `" << function->name << "` expects type "
+                        << printWasmType(function->params[i])
+                        << " for parameter " << i << ", got "
+                        << printWasmType(arguments[i].type) << "." << std::endl;
+              abort();
+            }
+            locals[function->getLocalName(i)] = arguments[i];
+          } else {
+            assert(function->isVar(i));
+            locals[function->getLocalName(i)].type = function->getLocalType(i);
           }
-          locals[function->params[i].name] = arguments[i];
-        }
-        for (auto& local : function->vars) {
-          locals[local.name].type = local.type;
         }
       }
     };
@@ -356,14 +359,14 @@ private:
 
       Flow visitGetLocal(GetLocal *curr) {
         NOTE_ENTER("GetLocal");
-        IString name = curr->name;
+        IString name = scope.function->getLocalName(curr->index);
         NOTE_NAME(name);
         NOTE_EVAL1(scope.locals[name]);
         return scope.locals[name];
       }
       Flow visitSetLocal(SetLocal *curr) {
         NOTE_ENTER("SetLocal");
-        IString name = curr->name;
+        IString name = scope.function->getLocalName(curr->index);
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
         NOTE_NAME(name);

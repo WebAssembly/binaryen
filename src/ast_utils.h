@@ -45,8 +45,8 @@ struct BreakSeeker : public PostWalker<BreakSeeker> {
 struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   bool branches = false;
   bool calls = false;
-  std::set<Name> localsRead;
-  std::set<Name> localsWritten;
+  std::set<Index> localsRead;
+  std::set<Index> localsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
 
@@ -98,10 +98,10 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   void visitCallImport(CallImport *curr) { calls = true; }
   void visitCallIndirect(CallIndirect *curr) { calls = true; }
   void visitGetLocal(GetLocal *curr) {
-    localsRead.insert(curr->name);
+    localsRead.insert(curr->index);
   }
   void visitSetLocal(SetLocal *curr) {
-    localsWritten.insert(curr->name);
+    localsWritten.insert(curr->index);
   }
   void visitLoad(Load *curr) { readsMemory = true; }
   void visitStore(Store *curr) { writesMemory = true; }

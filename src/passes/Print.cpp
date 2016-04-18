@@ -35,6 +35,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   bool fullAST = false; // whether to not elide nodes in output when possible
                         // (like implicit blocks)
 
+  Function* currFunction = nullptr;
+
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
   }
@@ -64,6 +66,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     visit(expression);
     o << maybeNewLine;
   }
+
+  Name printableLocal(Index index) {
+    Name name = currFunction->tryLocalName(index);
+    if (!name.is()) {
+      name = Name::fromInt(index);
+    }
+    return name;
+  }
+
   void visitBlock(Block *curr) {
     // special-case Block, because Block nesting (in their first element) can be incredibly deep
     std::vector<Block*> stack;
@@ -205,10 +216,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitGetLocal(GetLocal *curr) {
-    printOpening(o, "get_local ") << curr->name << ')';
+    printOpening(o, "get_local ") << printableLocal(curr->index) << ')';
   }
   void visitSetLocal(SetLocal *curr) {
-    printOpening(o, "set_local ") << curr->name;
+    printOpening(o, "set_local ") << printableLocal(curr->index);
     incIndent();
     printFullLine(curr->value);
     decIndent();
@@ -423,14 +434,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printText(o, curr->name.str) << ' ' << curr->value << ')';
   }
   void visitFunction(Function *curr) {
+    currFunction = curr;
     printOpening(o, "func ", true) << curr->name;
     if (curr->type.is()) {
       o << maybeSpace << "(type " << curr->type << ')';
     }
     if (curr->params.size() > 0) {
-      for (auto& param : curr->params) {
+      for (size_t i = 0; i < curr->params.size(); i++) {
         o << maybeSpace;
-        printMinorOpening(o, "param ") << param.name << ' ' << printWasmType(param.type) << ")";
+        printMinorOpening(o, "param ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ")";
       }
     }
     if (curr->result != none) {
@@ -438,9 +450,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printMinorOpening(o, "result ") << printWasmType(curr->result) << ")";
     }
     incIndent();
-    for (auto& local : curr->vars) {
+    for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
       doIndent(o, indent);
-      printMinorOpening(o, "local ") << local.name << ' ' << printWasmType(local.type) << ")";
+      printMinorOpening(o, "local ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ")";
       o << maybeNewLine;
     }
     // It is ok to emit a block here, as a function can directly contain a list, even if our

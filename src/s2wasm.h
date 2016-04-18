@@ -638,8 +638,8 @@ class S2WasmBuilder {
           inputs[i] = nullptr;
         } else {
           auto curr = allocator.alloc<GetLocal>();
-          curr->name = getStrToSep();
-          curr->type = localTypes[curr->name];
+          curr->index = func->getLocalIndex(getStrToSep());
+          curr->type = func->getLocalType(curr->index);
           inputs[i] = curr;
         }
         if (*s == ')') s++; // tolerate 0(argument) syntax, where we started at the 'a'
@@ -664,7 +664,7 @@ class S2WasmBuilder {
         push(curr);
       } else { // set to a local
         auto set = allocator.alloc<SetLocal>();
-        set->name = assign;
+        set->index = func->getLocalIndex(assign);
         set->value = curr;
         set->type = curr->type;
         addToBlock(set);
@@ -1056,7 +1056,7 @@ class S2WasmBuilder {
         Name assign = getAssign();
         skipComma();
         auto curr = allocator.alloc<SetLocal>();
-        curr->name = getAssign();
+        curr->index = func->getLocalIndex(getAssign());
         skipComma();
         curr->value = getInput();
         curr->type = curr->value->type;
@@ -1261,10 +1261,10 @@ class S2WasmBuilder {
       int p = 0;
       for (const auto& ty : funcType->params) params.emplace_back("$" + std::to_string(p++), ty);
       Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
-      Expression* fptr = wasmBuilder.makeGetLocal("fptr", i32);
+      Expression* fptr = wasmBuilder.makeGetLocal(0, i32);
       std::vector<Expression*> args;
       for (unsigned i = 0; i < funcType->params.size(); ++i) {
-        args.push_back(wasmBuilder.makeGetLocal("$" + std::to_string(i), funcType->params[i]));
+        args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
       }
       Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, std::move(args));
       f->body = funcType->result == none ? call : wasmBuilder.makeReturn(call);
@@ -1344,17 +1344,18 @@ class S2WasmBuilder {
       wasm.addStart(start);
       auto* block = allocator.alloc<Block>();
       func->body = block;
-      {  // Create the call, matching its parameters.
+      {
+        // Create the call, matching its parameters.
         // TODO allow calling with non-default values.
         auto* call = allocator.alloc<Call>();
         call->target = startFunction;
         size_t paramNum = 0;
-        for (const NameType& nt : target->params) {
+        for (WasmType type : target->params) {
           Name name = Name::fromInt(paramNum++);
-          func->vars.emplace_back(name, nt.type);
+          Builder::addVar(func, name, type);
           auto* param = allocator.alloc<GetLocal>();
-          param->name = name;
-          param->type = nt.type;
+          param->index = func->getLocalIndex(name);
+          param->type = type;
           call->operands.push_back(param);
         }
         block->list.push_back(call);

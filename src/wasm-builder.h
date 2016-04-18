@@ -21,21 +21,46 @@
 
 namespace wasm {
 
+// Useful data structures
+
+struct NameType {
+  Name name;
+  WasmType type;
+  NameType() : name(nullptr), type(none) {}
+  NameType(Name name, WasmType type) : name(name), type(type) {}
+};
+
+// General AST node builder
+
 class Builder {
   MixedArena &allocator;
 
 public:
   Builder(AllocatingModule& wasm) : allocator(wasm.allocator) {}
 
+  // make* functions, create nodes
+
   Function* makeFunction(Name name,
                          std::vector<NameType>&& params,
                          WasmType resultType,
-                         std::vector<NameType>&& vars) {
+                         std::vector<NameType>&& vars,
+                         Expression* body = nullptr) {
     auto* func = allocator.alloc<Function>();
     func->name = name;
-    func->params = params;
     func->result = resultType;
-    func->vars = vars;
+    func->body = body;
+
+    for (auto& param : params) {
+      func->params.push_back(param.type);
+      func->localIndices[param.name] = func->localNames.size();
+      func->localNames.push_back(param.name);
+    }
+    for (auto& var : vars) {
+      func->vars.push_back(var.type);
+      func->localIndices[var.name] = func->localNames.size();
+      func->localNames.push_back(var.name);
+    }
+
     return func;
   }
 
@@ -63,15 +88,15 @@ public:
     return call;
   }
   // FunctionType
-  GetLocal* makeGetLocal(Name name, WasmType type) {
+  GetLocal* makeGetLocal(Index index, WasmType type) {
     auto* ret = allocator.alloc<GetLocal>();
-    ret->name = name;
+    ret->index = index;
     ret->type = type;
     return ret;
   }
-  SetLocal* makeSetLocal(Name name, Expression* value) {
+  SetLocal* makeSetLocal(Index index, Expression* value) {
     auto* ret = allocator.alloc<SetLocal>();
-    ret->name = name;
+    ret->index = index;
     ret->value = value;
     ret->type = value->type;
     return ret;
@@ -130,9 +155,43 @@ public:
     ret->value = value;
     return ret;
   }
-  // Host
+  Host* makeHost(HostOp op, Name nameOperand, ExpressionList&& operands) {
+    auto* ret = allocator.alloc<Host>();
+    ret->op = op;
+    ret->nameOperand = nameOperand;
+    ret->operands = operands;
+    return ret;
+  }
   // Unreachable
 
+  // Additional utility functions for building on top of nodes
+
+  static Index addParam(Function* func, Name name, WasmType type) {
+    // only ok to add a param if no vars, otherwise indices are invalidated
+    assert(func->localIndices.size() == func->params.size());
+    func->params.push_back(type);
+    Index index = func->localNames.size();
+    func->localIndices[name] = index;
+    func->localNames.push_back(name);
+    return index;
+  }
+
+  static Index addVar(Function* func, Name name, WasmType type) {
+    // always ok to add a var, it does not affect other indices
+    assert(func->localIndices.size() == func->params.size() + func->vars.size());
+    func->vars.emplace_back(type);
+    Index index = func->localNames.size();
+    func->localIndices[name] = index;
+    func->localNames.push_back(name);
+    return index;
+  }
+
+  static void clearLocals(Function* func) {
+    func->params.clear();
+    func->vars.clear();
+    func->localNames.clear();
+    func->localIndices.clear();
+  }
 };
 
 } // namespace wasm

@@ -89,8 +89,8 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
         std::cerr << "Unknown entry " << entry << std::endl;
       } else {
         ModuleInstance::LiteralList arguments;
-        for (NameType param : function->params) {
-          arguments.push_back(Literal(param.type));
+        for (WasmType param : function->params) {
+          arguments.push_back(Literal(param));
         }
         try {
           instance->callExport(entry, arguments);
