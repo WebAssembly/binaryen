@@ -129,7 +129,7 @@ struct Asm2WasmPreProcessor {
 //
 
 class Asm2WasmBuilder {
-  AllocatingModule& wasm;
+  Module& wasm;
 
   MixedArena &allocator;
 
@@ -266,7 +266,7 @@ private:
   }
 
 public:
- Asm2WasmBuilder(AllocatingModule& wasm, bool memoryGrowth, bool debug, bool imprecise)
+ Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),

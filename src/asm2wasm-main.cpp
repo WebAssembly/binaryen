@@ -90,7 +90,7 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.debug) std::cerr << "wasming..." << std::endl;
-  AllocatingModule wasm;
+  Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
   Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise);
   asm2wasm.processAsm(asmjs);

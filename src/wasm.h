@@ -1124,6 +1124,8 @@ public:
   Memory memory;
   Name start;
 
+  MixedArena allocator;
+
 private:
   // TODO: add a build option where Names are just indices, and then these methods are not needed
   std::map<Name, FunctionType*> functionTypesMap;
@@ -1205,11 +1207,6 @@ public:
 
 private:
   size_t functionTypeIndex, importIndex, exportIndex, functionIndex;
-};
-
-class AllocatingModule : public Module {
- public:
-  MixedArena allocator;
 };
 
 } // namespace wasm

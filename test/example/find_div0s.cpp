@@ -28,7 +28,7 @@ int main() {
   // Parse the S-Expression text, and prepare to build a WebAssembly module.
   SExpressionParser parser(input);
   Element& root = *parser.root;
-  AllocatingModule module;
+  Module module;
 
   // The parsed code has just one element, the module. Build the module
   // from that (and abort on any errors, but there won't be one here).

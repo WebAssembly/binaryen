@@ -25,7 +25,7 @@ class Builder {
   MixedArena &allocator;
 
 public:
-  Builder(AllocatingModule& wasm) : allocator(wasm.allocator) {}
+  Builder(Module& wasm) : allocator(wasm.allocator) {}
 
   Function* makeFunction(Name name,
                          std::vector<NameType>&& params,

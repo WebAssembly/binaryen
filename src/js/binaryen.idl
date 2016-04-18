@@ -13,12 +13,6 @@ interface Name {
 interface Module {
 };
 
-interface AllocatingModule {
-  void AllocatingModule();
-};
-
-AllocatingModule implements Module;
-
 [Prefix="ModuleInstance::", NoDelete]
 interface ExternalInterface {
 };
@@ -63,7 +57,7 @@ interface SExpressionParser {
 };
 
 interface SExpressionWasmBuilder {
-  void SExpressionWasmBuilder([Ref] AllocatingModule wasm, [Ref] Element input, boolean debug);
+  void SExpressionWasmBuilder([Ref] Module wasm, [Ref] Element input, boolean debug);
 };
 
 // Wasm printing
