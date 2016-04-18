@@ -616,7 +616,7 @@ private:
             if (newSize > instance.wasm.memory.max) trap("growMemory: exceeds max");
             instance.externalInterface->growMemory(instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
             instance.memorySize = newSize;
-            return Literal(int32_t(ret * Memory::kPageSize));
+            return Literal(int32_t(ret));
           }
           case HasFeature: {
             IString id = curr->nameOperand;
