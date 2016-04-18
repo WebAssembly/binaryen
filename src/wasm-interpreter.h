@@ -292,24 +292,23 @@ private:
       }
       Flow visitSwitch(Switch *curr) {
         NOTE_ENTER("Switch");
-        Flow flow = visit(curr->condition);
-        if (flow.breaking()) return flow;
-        NOTE_EVAL1(flow.value);
-        int64_t index = flow.value.getInteger();
-
+        Flow flow;
+        Literal value;
         if (curr->value) {
           flow = visit(curr->value);
           if (flow.breaking()) return flow;
-          NOTE_EVAL1(flow.value);
-        } else {
-          flow = Flow();
+          value = flow.value;
+          NOTE_EVAL1(value);
         }
-
+        flow = visit(curr->condition);
+        if (flow.breaking()) return flow;
+        int64_t index = flow.value.getInteger();
         Name target = curr->default_;
         if (index >= 0 && (size_t)index < curr->targets.size()) {
           target = curr->targets[(size_t)index];
         }
         flow.breakTo = target;
+        flow.value = value;
         return flow;
       }
 
