@@ -217,16 +217,16 @@ namespace BinaryConsts {
 
 namespace Section {
   auto Memory = "memory";
-  auto Signatures = "signatures";
-  auto ImportTable = "import_table";
-  auto FunctionSignatures = "function_signatures";
-  auto Functions = "functions";
-  auto ExportTable = "export_table";
-  auto DataSegments = "data_segments";
-  auto FunctionTable = "function_table";
-  auto Names = "names";
+  auto Signatures = "type";
+  auto ImportTable = "import";
+  auto FunctionSignatures = "function";
+  auto Functions = "code";
+  auto ExportTable = "export";
+  auto DataSegments = "data";
+  auto FunctionTable = "table";
+  auto Names = "name";
   auto End = "end";
-  auto Start = "start_function";
+  auto Start = "start";
 };
 
 enum FunctionEntry {
