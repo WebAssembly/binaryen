@@ -236,7 +236,7 @@ private:
 //
 
 class SExpressionWasmBuilder {
-  AllocatingModule& wasm;
+  Module& wasm;
   MixedArena& allocator;
   std::function<void ()> onError;
   std::vector<Name> functionNames;
@@ -246,7 +246,7 @@ class SExpressionWasmBuilder {
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), allocator(wasm.allocator), onError(onError), importCounter(0) {
+  SExpressionWasmBuilder(Module& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), allocator(wasm.allocator), onError(onError), importCounter(0) {
     assert(module[0]->str() == MODULE);
     functionCounter = 0;
     for (unsigned i = 1; i < module.size(); i++) {
@@ -260,7 +260,7 @@ public:
   }
 
   // constructor without onError
-  SExpressionWasmBuilder(AllocatingModule& wasm, Element& module) : SExpressionWasmBuilder(wasm, module, [&]() { abort(); }) {}
+  SExpressionWasmBuilder(Module& wasm, Element& module) : SExpressionWasmBuilder(wasm, module, [&]() { abort(); }) {}
 
 private:
 

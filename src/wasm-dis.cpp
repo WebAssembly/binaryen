@@ -44,7 +44,7 @@ int main(int argc, const char *argv[]) {
   auto input(read_file<std::vector<char>>(options.extra["infile"], Flags::Binary, options.debug ? Flags::Debug : Flags::Release));
 
   if (options.debug) std::cerr << "parsing binary..." << std::endl;
-  AllocatingModule wasm;
+  Module wasm;
   WasmBinaryBuilder parser(wasm, input, options.debug);
   parser.read();
 

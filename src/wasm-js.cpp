@@ -41,7 +41,7 @@ Asm2WasmBuilder* asm2wasm = nullptr;
 SExpressionParser* sExpressionParser = nullptr;
 SExpressionWasmBuilder* sExpressionWasmBuilder = nullptr;
 ModuleInstance* instance = nullptr;
-AllocatingModule* module = nullptr;
+Module* module = nullptr;
 bool wasmJSDebug = false;
 
 static void prepare2wasm() {
@@ -67,7 +67,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(input);
 
-  module = new AllocatingModule();
+  module = new Module();
   uint32_t providedMemory = EM_ASM_INT_V({
     return Module['providedTotalMemory']; // we receive the size of memory from emscripten
   });
@@ -127,7 +127,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input) {
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
 
-  module = new AllocatingModule();
+  module = new Module();
   // A .wast may have multiple modules, with some asserts after them, but we just read the first here.
   sExpressionWasmBuilder = new SExpressionWasmBuilder(*module, *root[0], [&]() {
     std::cerr << "error in parsing s-expressions to wasm\n";
@@ -143,7 +143,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_binary2wasm(char *raw, int32_t size) {
 
   if (wasmJSDebug) std::cerr << "wasm-binary parsing...\n";
 
-  module = new AllocatingModule();
+  module = new Module();
   std::vector<char> input;
   input.resize(size);
   for (int32_t i = 0; i < size; i++) {

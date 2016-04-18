@@ -39,7 +39,7 @@ cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 //
 
 class S2WasmBuilder {
-  AllocatingModule& wasm;
+  Module& wasm;
   MixedArena& allocator;
   const char* s;
   bool debug;
@@ -48,7 +48,7 @@ class S2WasmBuilder {
   std::vector<Name> globls;
 
  public:
-  S2WasmBuilder(AllocatingModule& wasm, const char* input, bool debug,
+  S2WasmBuilder(Module& wasm, const char* input, bool debug,
                 size_t globalBase, size_t stackAllocation,
                 size_t userInitialMemory, size_t userMaxMemory,
                 bool ignoreUnknownSymbols, Name startFunction)

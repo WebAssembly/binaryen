@@ -83,7 +83,7 @@ int main(int argc, const char *argv[]) {
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
   if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
-  AllocatingModule wasm;
+  Module wasm;
   uint64_t globalBase = options.extra.find("global-base") != options.extra.end()
                           ? std::stoull(options.extra["global-base"])
                           : 0;

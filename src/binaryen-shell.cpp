@@ -74,7 +74,7 @@ static void verify_result(Literal a, Literal b) {
   }
 }
 
-static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
+static void run_asserts(size_t* i, bool* checked, Module* wasm,
                         Element* root,
                         std::unique_ptr<SExpressionWasmBuilder>* builder,
                         Name entry) {
@@ -112,7 +112,7 @@ static void run_asserts(size_t* i, bool* checked, AllocatingModule* wasm,
     std::cerr << curr << '\n';
     if (id == ASSERT_INVALID) {
       // a module invalidity test
-      AllocatingModule wasm;
+      Module wasm;
       bool invalid = false;
       std::unique_ptr<SExpressionWasmBuilder> builder;
       try {
@@ -217,7 +217,7 @@ int main(int argc, const char* argv[]) {
     IString id = curr[0]->str();
     if (id == MODULE) {
       if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
-      AllocatingModule wasm;
+      Module wasm;
       std::unique_ptr<SExpressionWasmBuilder> builder(
           new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }));
       i++;

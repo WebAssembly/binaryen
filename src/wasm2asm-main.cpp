@@ -51,7 +51,7 @@ int main(int argc, const char *argv[]) {
   Element &root = *parser.root;
 
   if (options.debug) std::cerr << "w-parsing..." << std::endl;
-  AllocatingModule wasm;
+  Module wasm;
   SExpressionWasmBuilder builder(wasm, *root[0], [&]() { abort(); });
 
   if (options.debug) std::cerr << "asming..." << std::endl;
