@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
+struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBlocks>>> {
   bool isFunctionParallel() { return true; }
 
   void visitBlock(Block *curr) {

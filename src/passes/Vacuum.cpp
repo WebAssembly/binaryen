@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
+struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
   bool isFunctionParallel() { return true; }
 
   void visitBlock(Block *curr) {

@@ -32,7 +32,7 @@
 
 namespace wasm {
 
-struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>> {
+struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, Visitor<SimplifyLocals>>> {
   bool isFunctionParallel() { return true; }
 
   struct SinkableInfo {
@@ -153,7 +153,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
         self->pushTask(scan, &list[i]);
       }
     } else {
-      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::scan(self, currp);
+      WalkerPass<LinearExecutionWalker<SimplifyLocals, Visitor<SimplifyLocals>>>::scan(self, currp);
     }
 
     self->pushTask(visitPre, currp);
@@ -169,7 +169,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       numGetLocals.resize(getFunction()->getNumLocals());
       sunk = false;
       // main operation
-      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::walk(root);
+      WalkerPass<LinearExecutionWalker<SimplifyLocals, Visitor<SimplifyLocals>>>::walk(root);
       // after optimizing a function, we can see if we have set_locals
       // for a local with no remaining gets, in which case, we can
       // remove the set.
