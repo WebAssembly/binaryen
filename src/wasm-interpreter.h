@@ -604,7 +604,7 @@ private:
         NOTE_ENTER("Host");
         switch (curr->op) {
           case PageSize:   return Literal((int32_t)Memory::kPageSize);
-          case MemorySize: return Literal(int32_t(instance.memorySize * Memory::kPageSize));
+          case CurrentMemory: return Literal(int32_t(instance.memorySize * Memory::kPageSize));
           case GrowMemory: {
             Flow flow = visit(curr->operands[0]);
             if (flow.breaking()) return flow;

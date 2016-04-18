@@ -237,7 +237,7 @@ enum FunctionEntry {
 };
 
 enum ASTNodes {
-  MemorySize = 0x3b,
+  CurrentMemory = 0x3b,
   GrowMemory = 0x39,
   I32Add = 0x40,
   I32Sub = 0x41,
@@ -1097,8 +1097,8 @@ public:
   void visitHost(Host *curr) {
     if (debug) std::cerr << "zz node: Host" << std::endl;
     switch (curr->op) {
-      case MemorySize: {
-        o << int8_t(BinaryConsts::MemorySize);
+      case CurrentMemory: {
+        o << int8_t(BinaryConsts::CurrentMemory);
         break;
       }
       case GrowMemory: {
@@ -1943,8 +1943,8 @@ public:
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
     switch (code) {
-      case BinaryConsts::MemorySize: {
-        curr->op = MemorySize;
+      case BinaryConsts::CurrentMemory: {
+        curr->op = CurrentMemory;
         curr->type = i32;
         break;
       }
