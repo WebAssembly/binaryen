@@ -709,7 +709,7 @@ enum BinaryOp {
 };
 
 enum HostOp {
-  PageSize, MemorySize, GrowMemory, HasFeature
+  PageSize, CurrentMemory, GrowMemory, HasFeature
 };
 
 //
@@ -1041,7 +1041,7 @@ public:
 
   void finalize() {
     switch (op) {
-      case PageSize: case MemorySize: case HasFeature: {
+      case PageSize: case CurrentMemory: case HasFeature: {
         type = i32;
         break;
       }

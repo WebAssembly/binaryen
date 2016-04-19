@@ -292,24 +292,23 @@ private:
       }
       Flow visitSwitch(Switch *curr) {
         NOTE_ENTER("Switch");
-        Flow flow = visit(curr->condition);
-        if (flow.breaking()) return flow;
-        NOTE_EVAL1(flow.value);
-        int64_t index = flow.value.getInteger();
-
+        Flow flow;
+        Literal value;
         if (curr->value) {
           flow = visit(curr->value);
           if (flow.breaking()) return flow;
-          NOTE_EVAL1(flow.value);
-        } else {
-          flow = Flow();
+          value = flow.value;
+          NOTE_EVAL1(value);
         }
-
+        flow = visit(curr->condition);
+        if (flow.breaking()) return flow;
+        int64_t index = flow.value.getInteger();
         Name target = curr->default_;
         if (index >= 0 && (size_t)index < curr->targets.size()) {
           target = curr->targets[(size_t)index];
         }
         flow.breakTo = target;
+        flow.value = value;
         return flow;
       }
 
@@ -605,7 +604,7 @@ private:
         NOTE_ENTER("Host");
         switch (curr->op) {
           case PageSize:   return Literal((int32_t)Memory::kPageSize);
-          case MemorySize: return Literal(int32_t(instance.memorySize * Memory::kPageSize));
+          case CurrentMemory: return Literal(int32_t(instance.memorySize));
           case GrowMemory: {
             Flow flow = visit(curr->operands[0]);
             if (flow.breaking()) return flow;
@@ -617,7 +616,7 @@ private:
             if (newSize > instance.wasm.memory.max) trap("growMemory: exceeds max");
             instance.externalInterface->growMemory(instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
             instance.memorySize = newSize;
-            return Literal(int32_t(ret * Memory::kPageSize));
+            return Literal(int32_t(ret));
           }
           case HasFeature: {
             IString id = curr->nameOperand;

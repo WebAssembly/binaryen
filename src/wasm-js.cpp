@@ -132,7 +132,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input) {
   sExpressionWasmBuilder = new SExpressionWasmBuilder(*module, *root[0], [&]() {
     std::cerr << "error in parsing s-expressions to wasm\n";
     abort();
-  }, false);
+  });
 
   finalizeModule();
 }
@@ -436,7 +436,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
   size_t actual = function->params.size();
   ModuleInstance::LiteralList arguments;
   for (size_t i = 0; i < actual; i++) {
-    WasmType type = function->params[i].type;
+    WasmType type = function->params[i];
     // add the parameter, with a zero value if JS did not provide it.
     if (type == i32) {
       arguments.push_back(Literal(i < seen ? EM_ASM_INT({ return Module['tempArguments'][$0] }, i) : (int32_t)0));

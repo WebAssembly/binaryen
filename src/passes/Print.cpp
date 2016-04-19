@@ -383,7 +383,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitHost(Host *curr) {
     switch (curr->op) {
       case PageSize: printOpening(o, "pagesize") << ')'; break;
-      case MemorySize: printOpening(o, "memory_size") << ')'; break;
+      case CurrentMemory: printOpening(o, "current_memory") << ')'; break;
       case GrowMemory: {
         printOpening(o, "grow_memory");
         incIndent();

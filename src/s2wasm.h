@@ -1066,7 +1066,7 @@ class S2WasmBuilder {
       } else if (match("unreachable")) {
         addToBlock(allocator.alloc<Unreachable>());
       } else if (match("memory_size")) {
-        makeHost(MemorySize);
+        makeHost(CurrentMemory);
       } else if (match("grow_memory")) {
         makeHost1(GrowMemory);
       } else if (match(".Lfunc_end")) {

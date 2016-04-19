@@ -623,7 +623,7 @@ public:
             if (id == CALL) return makeCall(s);
             if (id == CALL_IMPORT) return makeCallImport(s);
             if (id == CALL_INDIRECT) return makeCallIndirect(s);
-          }
+          } else if (str[1] == 'u') return makeHost(s, HostOp::CurrentMemory);
           abort_on(str);
         }
         case 'e': {
@@ -645,10 +645,6 @@ public:
         }
         case 'l': {
           if (str[1] == 'o') return makeLoop(s);
-          abort_on(str);
-        }
-        case 'm': {
-          if (str[1] == 'e') return makeHost(s, HostOp::MemorySize);
           abort_on(str);
         }
         case 'n': {

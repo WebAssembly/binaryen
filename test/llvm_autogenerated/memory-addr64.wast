@@ -7,7 +7,7 @@
   (export "grow_memory" $grow_memory)
   (func $memory_size (result i64)
     (return
-      (memory_size)
+      (current_memory)
     )
   )
   (func $grow_memory (param $$0 i64)
