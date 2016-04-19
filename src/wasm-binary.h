@@ -419,6 +419,10 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
+enum TypeForms {
+  Basic = 0x40
+};
+
 } // namespace BinaryConsts
 
 int8_t binaryWasmType(WasmType type) {
@@ -520,10 +524,16 @@ public:
     o << U32LEB(wasm->functionTypes.size());
     for (auto* type : wasm->functionTypes) {
       if (debug) std::cerr << "write one" << std::endl;
+      o << int8_t(BinaryConsts::TypeForms::Basic);
       o << U32LEB(type->params.size());
-      o << binaryWasmType(type->result);
       for (auto param : type->params) {
         o << binaryWasmType(param);
+      }
+      if (type->result == none) {
+        o << U32LEB(0);
+      } else {
+        o << U32LEB(1);
+        o << binaryWasmType(type->result);
       }
     }
     finishSection(start);
@@ -1338,11 +1348,19 @@ public:
     for (size_t i = 0; i < numTypes; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = allocator.alloc<FunctionType>();
+      auto form = getInt8();
+      assert(form == BinaryConsts::TypeForms::Basic);
       size_t numParams = getU32LEB();
       if (debug) std::cerr << "num params: " << numParams << std::endl;
-      curr->result = getWasmType();
       for (size_t j = 0; j < numParams; j++) {
         curr->params.push_back(getWasmType());
+      }
+      auto numResults = getU32LEB();
+      if (numResults == 0) {
+        curr->result = none;
+      } else {
+        assert(numResults == 1);
+        curr->result = getWasmType();
       }
       wasm.addFunctionType(curr);
     }
