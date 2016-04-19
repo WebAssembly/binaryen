@@ -161,6 +161,11 @@ struct Walker : public VisitorType {
     replace = expression;
   }
 
+  // Get the current module
+  Module* getModule() {
+    return currModule;
+  }
+
   // Get the current function
   Function* getFunction() {
     return currFunction;
@@ -169,6 +174,8 @@ struct Walker : public VisitorType {
   // Walk starting
 
   void startWalk(Module *module) {
+    setModule(module);
+
     // Dispatch statically through the SubType.
     SubType* self = static_cast<SubType*>(this);
     for (auto curr : module->functionTypes) {
@@ -204,6 +211,7 @@ struct Walker : public VisitorType {
       size_t numFunctions = module->functions.size();
       for (size_t i = 0; i < num; i++) {
         auto* instance = new SubType();
+        instance->setModule(getModule());
         instances.push_back(std::unique_ptr<SubType>(instance));
         doWorkers.push_back([instance, &nextFunction, numFunctions, &module, processFunction]() {
           auto index = nextFunction.fetch_add(1);
@@ -293,6 +301,10 @@ struct Walker : public VisitorType {
   static void doVisitNop(SubType* self, Expression** currp)          { self->visitNop((*currp)->cast<Nop>()); }
   static void doVisitUnreachable(SubType* self, Expression** currp)  { self->visitUnreachable((*currp)->cast<Unreachable>()); }
 
+  void setModule(Module *module) {
+    currModule = module;
+  }
+
   void setFunction(Function *func) {
     currFunction = func;
   }
@@ -301,6 +313,7 @@ private:
   Expression *replace = nullptr; // a node to replace
   std::vector<Task> stack; // stack of tasks
   Function* currFunction = nullptr; // current function being processed
+  Module* currModule = nullptr; // current module being processed
 };
 
 // Walks in post-order, i.e., children first. When there isn't an obvious
