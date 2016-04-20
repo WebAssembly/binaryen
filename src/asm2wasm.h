@@ -761,6 +761,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   wasm.memory.exportName = MEMORY;
 
+#if 0 // enable asm2wasm i64 optimizations when browsers have consistent i64 support in wasm
   if (udivmoddi4.is() && getTempRet0.is()) {
     // generate a wasm-optimized __udivmoddi4 method, which we can do much more efficiently in wasm
     // we can only do this if we know getTempRet0 as well since we use it to figure out which minified global is tempRet0
@@ -856,6 +857,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     );
     func->body = body;
   }
+#endif
 }
 
 Function* Asm2WasmBuilder::processFunction(Ref ast) {
