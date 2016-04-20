@@ -215,6 +215,11 @@ public:
 
 namespace BinaryConsts {
 
+enum Meta {
+  Magic = 0x6d736100,
+  Version = 11
+};
+
 namespace Section {
   auto Memory = "memory";
   auto Signatures = "type";
@@ -477,8 +482,8 @@ public:
 
   void writeHeader() {
     if (debug) std::cerr << "== writeHeader" << std::endl;
-    o << int32_t(0x6d736100); // magic number \0asm
-    o << int32_t(10);         // version number
+    o << int32_t(BinaryConsts::Magic); // magic number \0asm
+    o << int32_t(BinaryConsts::Version);
   }
 
   int32_t writeU32LEBPlaceholder() {
@@ -1325,8 +1330,8 @@ public:
 
   void readHeader() {
     if (debug) std::cerr << "== readHeader" << std::endl;
-    verifyInt32(0x6d736100);
-    verifyInt32(10);
+    verifyInt32(BinaryConsts::Magic);
+    verifyInt32(BinaryConsts::Version);
   }
 
   void readStart() {
