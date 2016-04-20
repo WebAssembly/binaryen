@@ -605,14 +605,11 @@ if has_emcc:
 
   print '\n[ checking wasm.js methods... ]\n'
 
-  for method_init in [None, 'interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary']:
+  for method_init in ['interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary']:
     for success in [1, 0]:
       method = method_init
       command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', 'hello_world.c') ]
-      if method:
-        command += ['-s', 'BINARYEN_METHOD="' + method + '"']
-      else:
-        method = 'interpret-s-expr' # this is the default
+      command += ['-s', 'BINARYEN_METHOD="' + method + '"']
       print method, ' : ', ' '.join(command), ' => ', success
       subprocess.check_call(command)
 
