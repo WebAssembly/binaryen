@@ -480,24 +480,28 @@ class S2WasmBuilder {
   void parseToplevelSection() {
     auto section = getCommaSeparated();
     // Initializers are anything in a section whose name begins with .init_array
-    if (!strncmp(section.c_str(), ".init_array", strlen(".init_array") - 1)) parseInitializer();
+    if (!strncmp(section.c_str(), ".init_array", strlen(".init_array") - 1)) {
+      parseInitializer();
+      return;
+    }
     s = strchr(s, '\n');
   }
 
   void parseInitializer() {
     // Ignore the rest of the .section line
     s = strchr(s, '\n');
-    while (*s) {
+    skipWhitespace();
+    // The section may start with .p2align
+    if (match(".p2align")) {
+      s = strchr(s, '\n');
       skipWhitespace();
-      if (match(".p2align")) s = strchr(s, '\n');
-      else if (match(".int32")) {
-        initializerFunctions.emplace_back(cleanFunction(getStr()));
-        assert(implementedFunctions.count(initializerFunctions.back()));
-        break;
-      } else {
-        abort_on("parseInitializer");
-      }
     }
+    mustMatch(".int32");
+    do {
+      initializerFunctions.emplace_back(cleanFunction(getStr()));
+      assert(implementedFunctions.count(initializerFunctions.back()));
+      skipWhitespace();
+    } while (match(".int32"));
   }
 
   void parseText() {
