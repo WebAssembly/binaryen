@@ -28,11 +28,9 @@
 #include "pass.h"
 #include "asm_v_wasm.h"
 #include "wasm-builder.h"
-#include "wasm-printing.h"
+#include "wasm-link.h"
 
 namespace wasm {
-
-cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 
 //
 // S2WasmBuilder - parses a .s file into WebAssembly
@@ -43,99 +41,27 @@ class S2WasmBuilder {
   MixedArena& allocator;
   const char* s;
   bool debug;
-  bool ignoreUnknownSymbols;
-  Name startFunction;
-  std::vector<Name> globls;
+  LinkerModule& linker;
 
  public:
   S2WasmBuilder(Module& wasm, const char* input, bool debug,
-                size_t globalBase, size_t stackAllocation,
-                size_t userInitialMemory, size_t userMaxMemory,
-                bool ignoreUnknownSymbols, Name startFunction)
+                LinkerModule& linker)
       : wasm(wasm),
         allocator(wasm.allocator),
         debug(debug),
-        ignoreUnknownSymbols(ignoreUnknownSymbols),
-        startFunction(startFunction),
-        globalBase(globalBase),
-        nextStatic(globalBase),
-        userInitialMemory(userInitialMemory),
-        userMaxMemory(userMaxMemory) {
-    if (userMaxMemory && userMaxMemory < userInitialMemory) {
-      Fatal() << "Specified max memory " << userMaxMemory <<
-          " is < specified initial memory " << userInitialMemory;
-    }
-    if (roundUpToPageSize(userMaxMemory) != userMaxMemory) {
-      Fatal() << "Specified max memory " << userMaxMemory << " is not a multiple of 64k";
-    }
-    if (roundUpToPageSize(userInitialMemory) != userInitialMemory) {
-      Fatal() << "Specified initial memory " << userInitialMemory << " is not a multiple of 64k";
-    }
+        linker(linker) {
+
     s = input;
     scan();
     s = input;
-    // Don't allow anything to be allocated at address 0
-    if (globalBase == 0) nextStatic = 1;
-    // Place the stack pointer at the bottom of the linear memory, to keep its
-    // address small (and thus with a small encoding).
-    placeStackPointer(stackAllocation);
-    // Allocate __dso_handle. For asm.js, emscripten provides this in JS, but
-    // wasm modules can't import data objects. Its value is 0 for the main
-    // executable, which is all we have with static linking. In the future this
-    // can go in a crtbegin or similar file.
-    allocateStatic(4, 4, "__dso_handle");
+
     process();
-    // Place the stack after the user's static data, to keep those addresses
-    // small.
-    if (stackAllocation) allocateStatic(stackAllocation, 16, ".stack");
-    fix();
+
+    linker.layout();
   }
 
  private:
-  // state
-
-  size_t globalBase, // where globals can start to be statically allocated, i.e., the data segment
-         nextStatic; // location of next static allocation
-  std::map<Name, int32_t> staticAddresses; // name => address
-  size_t userInitialMemory; // Initial memory size (in bytes) specified by the user.
-  size_t userMaxMemory; // Max memory size (in bytes) specified by the user.
-  //(after linking, this is rounded and set on the wasm object in pages)
-
-  struct Relocation {
-    uint32_t* data;
-    Name value;
-    int offset;
-    Relocation(uint32_t* data, Name value, int offset) : data(data), value(value), offset(offset) {}
-  };
-  std::vector<Relocation> relocations;
-
-  std::set<Name> implementedFunctions;
-  std::map<Name, Name> aliasedFunctions;
-
-  std::map<size_t, size_t> addressSegments; // address => segment index
-
-  std::map<Name, size_t> functionIndexes;
-
-  std::vector<Name> initializerFunctions;
-
   // utilities
-
-  // For fatal errors which could arise from input (i.e. not assertion failures)
-  class Fatal {
-   public:
-    Fatal() {
-      std::cerr << "Fatal: ";
-    }
-    template<typename T>
-    Fatal &operator<<(T arg) {
-      std::cerr << arg;
-      return *this;
-    }
-    ~Fatal() {
-      std::cerr << "\n";
-      exit(1);
-    }
-  };
 
   void skipWhitespace() {
     while (1) {
@@ -283,7 +209,7 @@ class S2WasmBuilder {
         s++;
         offset = -getInt();
       }
-      relocations.emplace_back(target, name, offset);
+      linker.addRelocation(target, name, offset);
       return true;
     }
   }
@@ -416,40 +342,14 @@ class S2WasmBuilder {
       if (match(".hidden")) mustMatch(name.str);
       mustMatch(name.str);
       if (match(":")) {
-        implementedFunctions.insert(name);
+        linker.addImplementedFunction(name);
       } else if (match("=")) {
         Name alias = getAtSeparated();
         mustMatch("@FUNCTION");
-        aliasedFunctions.insert({name, alias});
+        linker.addAliasedFunction(name, alias);
       } else {
         abort_on("unknown directive");
       }
-    }
-  }
-
-  // Allocate a static variable and return its address in linear memory
-  size_t allocateStatic(size_t allocSize, size_t alignment, Name name) {
-    size_t address = alignAddr(nextStatic, alignment);
-    staticAddresses[name] = address;
-    nextStatic = address + allocSize;
-    return address;
-  }
-
-  void placeStackPointer(size_t stackAllocation) {
-    assert(nextStatic == globalBase || nextStatic == 1); // we are the first allocation
-    const size_t pointerSize = 4;
-    // Unconditionally allocate space for the stack pointer. Emscripten
-    // allocates the stack itself, and initializes the stack pointer itself.
-    size_t address = allocateStatic(pointerSize, pointerSize, "__stack_pointer");
-    if (stackAllocation) {
-      // If we are allocating the stack, set up a relocation to initialize the
-      // stack pointer to point to one past-the-end of the stack allocation.
-      auto* raw = new uint32_t;
-      relocations.emplace_back(raw, ".stack", stackAllocation);
-      assert(wasm.memory.segments.size() == 0);
-      addressSegments[address] = wasm.memory.segments.size();
-      wasm.memory.segments.emplace_back(
-          address, reinterpret_cast<char*>(raw), pointerSize);
     }
   }
 
@@ -498,8 +398,7 @@ class S2WasmBuilder {
     }
     mustMatch(".int32");
     do {
-      initializerFunctions.emplace_back(cleanFunction(getStr()));
-      assert(implementedFunctions.count(initializerFunctions.back()));
+      linker.addInitializerFunction(cleanFunction(getStr()));
       skipWhitespace();
     } while (match(".int32"));
   }
@@ -534,8 +433,7 @@ class S2WasmBuilder {
   }
 
   void parseGlobl() {
-    auto str = getStr();
-    globls.push_back(str);
+    linker.addGlobal(getStr());
     skipWhitespace();
   }
 
@@ -796,10 +694,8 @@ class S2WasmBuilder {
         // non-indirect call
         CallBase* curr;
         Name assign = getAssign();
-        Name target = cleanFunction(getCommaSeparated());
-        auto aliased = aliasedFunctions.find(target);
-        if (aliased != aliasedFunctions.end()) target = aliased->second;
-        if (implementedFunctions.count(target) != 0) {
+        Name target = linker.resolveAlias(cleanFunction(getCommaSeparated()));
+        if (linker.isFunctionImplemented(target)) {
           auto specific = allocator.alloc<Call>();
           specific->target = target;
           curr = specific;
@@ -1136,7 +1032,7 @@ class S2WasmBuilder {
     mustMatch(":");
     auto raw = new std::vector<char>(); // leaked intentionally, no new allocation in Memory
     bool zero = true;
-    std::vector<std::pair<size_t, size_t>> currRelocations; // [index in relocations, offset in raw]
+    std::vector<std::pair<LinkerModule::Relocation*, size_t>> currRelocations; // [relocation, offset in raw]
     while (1) {
       skipWhitespace();
       if (match(".asci")) {
@@ -1178,7 +1074,7 @@ class S2WasmBuilder {
         size_t size = raw->size();
         raw->resize(size + 4);
         if (getConst((uint32_t*)&(*raw)[size])) { // just the size, as we may reallocate; we must fix this later, if it's a relocation
-          currRelocations.emplace_back(relocations.size()-1, size);
+          currRelocations.emplace_back(linker.getCurrentRelocation(), size);
         }
         zero = false;
       } else if (match(".int64")) {
@@ -1204,15 +1100,14 @@ class S2WasmBuilder {
     }
     // raw is now finalized, prepare relocations
     for (auto& curr : currRelocations) {
-      auto r = curr.first;
+      auto* r = curr.first;
       auto i = curr.second;
-      relocations[r].data = (uint32_t*)&(*raw)[i];
+      r->data = (uint32_t*)&(*raw)[i];
     }
     // assign the address, add to memory
-    size_t address = allocateStatic(size, align, name);
+    size_t address = linker.allocateStatic(size, align, name);
     if (!zero) {
-      addressSegments[address] = wasm.memory.segments.size();
-      wasm.memory.segments.emplace_back(address, (const char*)&(*raw)[0], size);
+      linker.addAddressSegment(address, (const char*)&(*raw)[0], size);
     }
   }
 
@@ -1224,7 +1119,7 @@ class S2WasmBuilder {
       skipComma();
       getInt();
     }
-    allocateStatic(size, align, name);
+    linker.allocateStatic(size, align, name);
   }
 
   void skipImports() {
@@ -1238,256 +1133,7 @@ class S2WasmBuilder {
     }
   }
 
-  static size_t roundUpToPageSize(size_t size) {
-    return (size + Memory::kPageSize - 1) & Memory::kPageMask;
-  }
 
-  void exportFunction(Name name, bool must_export) {
-    if (!wasm.checkFunction(name)) {
-      assert(!must_export);
-      return;
-    }
-    if (wasm.checkExport(name)) return; // Already exported
-    auto exp = allocator.alloc<Export>();
-    exp->name = exp->value = name;
-    wasm.addExport(exp);
-  }
-
-  void makeDynCallThunks() {
-    std::unordered_set<std::string> sigs;
-    wasm::Builder wasmBuilder(wasm);
-    for (const auto& indirectFunc : wasm.table.names) {
-      std::string sig(getSig(wasm.getFunction(indirectFunc)));
-      auto* funcType = ensureFunctionType(sig, &wasm, wasm.allocator);
-      if (!sigs.insert(sig).second) continue; // Sig is already in the set
-      std::vector<NameType> params;
-      params.emplace_back("fptr", i32); // function pointer param
-      int p = 0;
-      for (const auto& ty : funcType->params) params.emplace_back("$" + std::to_string(p++), ty);
-      Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
-      Expression* fptr = wasmBuilder.makeGetLocal(0, i32);
-      std::vector<Expression*> args;
-      for (unsigned i = 0; i < funcType->params.size(); ++i) {
-        args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
-      }
-      Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, std::move(args));
-      f->body = funcType->result == none ? call : wasmBuilder.makeReturn(call);
-      wasm.addFunction(f);
-      exportFunction(f->name, true);
-    }
-  }
-
-  void fix() {
-    // The minimum initial memory size is the amount of static variables we have
-    // allocated. Round it up to a page, and update the page-increment versions
-    // of initial and max
-    size_t initialMem = roundUpToPageSize(nextStatic);
-    if (userInitialMemory) {
-      if (initialMem > userInitialMemory) {
-        Fatal() << "Specified initial memory size " << userInitialMemory <<
-          " is smaller than required size " << initialMem;
-      }
-      wasm.memory.initial = userInitialMemory / Memory::kPageSize;
-    } else {
-      wasm.memory.initial = initialMem / Memory::kPageSize;
-    }
-
-    if (userMaxMemory) wasm.memory.max = userMaxMemory / Memory::kPageSize;
-    wasm.memory.exportName = MEMORY;
-
-    // XXX For now, export all functions marked .globl.
-    for (Name name : globls) exportFunction(name, false);
-    for (Name name : initializerFunctions) exportFunction(name, true);
-
-    auto ensureFunctionIndex = [this](Name name) {
-      if (functionIndexes.count(name) == 0) {
-        functionIndexes[name] = wasm.table.names.size();
-        wasm.table.names.push_back(name);
-        if (debug) {
-          std::cerr << "function index: " << name << ": "
-                    << functionIndexes[name] << '\n';
-        }
-      }
-    };
-    for (auto& relocation : relocations) {
-      Name name = relocation.value;
-      if (debug) std::cerr << "fix relocation " << name << '\n';
-      const auto& symbolAddress = staticAddresses.find(name);
-      if (symbolAddress != staticAddresses.end()) {
-        *(relocation.data) = symbolAddress->second + relocation.offset;
-        if (debug) std::cerr << "  ==> " << *(relocation.data) << '\n';
-      } else {
-        // must be a function address
-        auto aliased = aliasedFunctions.find(name);
-        if (aliased != aliasedFunctions.end()) name = aliased->second;
-        if (!wasm.checkFunction(name)) {
-          std::cerr << "Unknown symbol: " << name << '\n';
-          if (!ignoreUnknownSymbols) abort();
-          *(relocation.data) = 0;
-        } else {
-          ensureFunctionIndex(name);
-          *(relocation.data) = functionIndexes[name] + relocation.offset;
-        }
-      }
-    }
-    if (!!startFunction) {
-      if (implementedFunctions.count(startFunction) == 0) {
-        std::cerr << "Unknown start function: `" << startFunction << "`\n";
-        abort();
-      }
-      const auto *target = wasm.getFunction(startFunction);
-      Name start("_start");
-      if (implementedFunctions.count(start) != 0) {
-        std::cerr << "Start function already present: `" << start << "`\n";
-        abort();
-      }
-      auto* func = allocator.alloc<Function>();
-      func->name = start;
-      wasm.addFunction(func);
-      exportFunction(start, true);
-      wasm.addStart(start);
-      auto* block = allocator.alloc<Block>();
-      func->body = block;
-      {
-        // Create the call, matching its parameters.
-        // TODO allow calling with non-default values.
-        auto* call = allocator.alloc<Call>();
-        call->target = startFunction;
-        size_t paramNum = 0;
-        for (WasmType type : target->params) {
-          Name name = Name::fromInt(paramNum++);
-          Builder::addVar(func, name, type);
-          auto* param = allocator.alloc<GetLocal>();
-          param->index = func->getLocalIndex(name);
-          param->type = type;
-          call->operands.push_back(param);
-        }
-        block->list.push_back(call);
-        block->finalize();
-      }
-    }
-
-    // ensure an explicit function type for indirect call targets
-    for (auto& name : wasm.table.names) {
-      auto* func = wasm.getFunction(name);
-      func->type = ensureFunctionType(getSig(func), &wasm, allocator)->name;
-    }
-  }
-
-  template<class C>
-  void printSet(std::ostream& o, C& c) {
-    o << "[";
-    bool first = true;
-    for (auto& item : c) {
-      if (first) first = false;
-      else o << ",";
-      o << '"' << item << '"';
-    }
-    o << "]";
-  }
-
-public:
-
-  // extra emscripten processing
-  void emscriptenGlue(std::ostream& o) {
-    if (debug) {
-      WasmPrinter::printModule(&wasm, std::cerr);
-    }
-
-    wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
-
-    makeDynCallThunks();
-
-    o << ";; METADATA: { ";
-    // find asmConst calls, and emit their metadata
-    struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker>> {
-      S2WasmBuilder* parent;
-
-      std::map<std::string, std::set<std::string>> sigsForCode;
-      std::map<std::string, size_t> ids;
-      std::set<std::string> allSigs;
-
-      void visitCallImport(CallImport* curr) {
-        if (curr->target == EMSCRIPTEN_ASM_CONST) {
-          auto arg = curr->operands[0]->cast<Const>();
-          size_t segmentIndex = parent->addressSegments[arg->value.geti32()];
-          std::string code = escape(parent->wasm.memory.segments[segmentIndex].data);
-          int32_t id;
-          if (ids.count(code) == 0) {
-            id = ids.size();
-            ids[code] = id;
-          } else {
-            id = ids[code];
-          }
-          std::string sig = getSig(curr);
-          sigsForCode[code].insert(sig);
-          std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str + std::string("_") + sig;
-          curr->target = cashew::IString(fixedTarget.c_str(), false);
-          arg->value = Literal(id);
-          // add import, if necessary
-          if (allSigs.count(sig) == 0) {
-            allSigs.insert(sig);
-            auto import = parent->allocator.alloc<Import>();
-            import->name = import->base = curr->target;
-            import->module = ENV;
-            import->type = ensureFunctionType(getSig(curr), &parent->wasm, parent->allocator);
-            parent->wasm.addImport(import);
-          }
-        }
-      }
-
-      std::string escape(const char *input) {
-        std::string code = input;
-        // replace newlines quotes with escaped newlines
-        size_t curr = 0;
-        while ((curr = code.find("\\n", curr)) != std::string::npos) {
-          code = code.replace(curr, 2, "\\\\n");
-          curr += 3; // skip this one
-        }
-        // replace double quotes with escaped single quotes
-        curr = 0;
-        while ((curr = code.find('"', curr)) != std::string::npos) {
-          if (curr == 0 || code[curr-1] != '\\') {
-            code = code.replace(curr, 1, "\\" "\"");
-            curr += 2; // skip this one
-          } else { // already escaped, escape the slash as well
-            code = code.replace(curr, 1, "\\" "\\" "\"");
-            curr += 3; // skip this one
-          }
-        }
-        return code;
-      }
-    };
-    AsmConstWalker walker;
-    walker.parent = this;
-    walker.startWalk(&wasm);
-    // print
-    o << "\"asmConsts\": {";
-    bool first = true;
-    for (auto& pair : walker.sigsForCode) {
-      auto& code = pair.first;
-      auto& sigs = pair.second;
-      if (first) first = false;
-      else o << ",";
-      o << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
-      printSet(o, sigs);
-      o << "]";
-    }
-    o << "}";
-    o << ",";
-    o << "\"staticBump\": " << (nextStatic - globalBase) << ", ";
-
-    o << "\"initializers\": [";
-    first = true;
-    for (const auto& func : initializerFunctions) {
-      if (first) first = false;
-      else o << ", ";
-      o << "\"" << func.c_str() << "\"";
-    }
-    o << "]";
-
-    o << " }";
-  }
 };
 
 } // namespace wasm

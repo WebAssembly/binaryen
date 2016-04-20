@@ -100,15 +100,15 @@ int main(int argc, const char *argv[]) {
           ? std::stoull(options.extra["max-memory"])
           : 0;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
-  S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, globalBase,
-                       stackAllocation, initialMem, maxMem, ignoreUnknownSymbols,
-                       startFunction);
+  LinkerModule lm(wasm, globalBase, stackAllocation, initialMem, maxMem,
+                  ignoreUnknownSymbols, startFunction, options.debug);
+  S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, lm);
 
   std::stringstream meta;
   if (generateEmscriptenGlue) {
     if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
     // dyncall thunks
-    s2wasm.emscriptenGlue(meta);
+    lm.emscriptenGlue(meta);
   }
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
