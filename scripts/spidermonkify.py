@@ -51,11 +51,14 @@ js = js.replace("'" + base_wast_target + "'", "'" + base_wasm_target + "'")
 open(js_target, 'w').write(js)
 shutil.copyfile(wast_target + '.mappedGlobals', wasm_target + '.mappedGlobals')
 
-# convert to binary using spidermonkey, something like
-#mozjs -e 'os.file.writeTypedArrayToFile("moz.wasm",
-#new Uint8Array(wasmTextToBinary(os.file.readFile("test/hello_world.wast"))))'
-#investigate with
-#>>> map(chr, map(ord, open('moz.wasm').read()))
+# convert to binary using spidermonkey
+'''
+using something like
+mozjs -e 'os.file.writeTypedArrayToFile("moz.wasm",
+new Uint8Array(wasmTextToBinary(os.file.readFile("test/hello_world.wast"))))'
+investigate with
+>>> map(chr, map(ord, open('moz.wasm').read()))
+'''
 subprocess.check_call(
     emscripten.shared.SPIDERMONKEY_ENGINE +
     ['-e', 'os.file.writeTypedArrayToFile("' + wasm_target +
