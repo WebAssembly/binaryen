@@ -38646,7 +38646,7 @@ function __ZN4wasm17WasmBinaryBuilder14maybeVisitImplEPNS_5UnaryEh(i4, i3, i2) {
    i5 = 49;
    break;
   }
- case 254:
+ case 180:
   {
    HEAP32[i3 + 8 >> 2] = 25;
    HEAP32[i3 + 4 >> 2] = 3;

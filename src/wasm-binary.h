@@ -361,12 +361,12 @@ enum ASTNodes {
   F64UConvertI64      = 0xb1,
   F64ConvertF32       = 0xb2,
   F64ReinterpretI64   = 0xb3,
+  I32ReinterpretF32   = 0xb4,
   I64ReinterpretF64   = 0xb5,
   I32RotR             = 0xb6,
   I32RotL             = 0xb7,
   I64RotR             = 0xb8,
   I64RotL             = 0xb9,
-  I32ReinterpretF32   = 0xfe, // XXX not in v8 spec doc
 
   I32LoadMem8S = 0x20,
   I32LoadMem8U = 0x21,
