@@ -117,6 +117,37 @@ struct ExpressionManipulator {
   }
 };
 
+struct ExpressionAnalyzer {
+  // Given a stack of expressions, checks if the topmost is used as a result.
+  // For example, if the parent is a block and the node is before the last position,
+  // it is not used.
+  static bool isResultUsed(std::vector<Expression*> stack, Function* func) {
+    for (int i = int(stack.size()) - 2; i >= 0; i--) {
+      auto* curr = stack[i];
+      auto* above = stack[i + 1];
+      // only if and block can drop values
+      if (curr->is<Block>()) {
+        auto* block = curr->cast<Block>();
+        for (size_t j = 0; j < block->list.size() - 1; j++) {
+          if (block->list[j] == above) return false;
+        }
+        assert(block->list.back() == above);
+        // continue down
+      } else if (curr->is<If>()) {
+        auto* iff = curr->cast<If>();
+        if (!iff->ifFalse) return false;
+        if (above == iff->condition) return true;
+        assert(above == iff->ifTrue || above == iff->ifFalse);
+        // continue down
+      } else {
+        return true; // all other node types use the result
+      }
+    }
+    // The value might be used, so it depends on if the function returns
+    return func->result != none;
+  }
+};
+
 } // namespace wasm
 
 #endif // wasm_ast_utils_h
