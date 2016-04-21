@@ -34,24 +34,6 @@ namespace wasm {
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 
 
-// For fatal errors which could arise from input (i.e. not assertion failures)
-class Fatal {
- public:
-  Fatal() {
-    std::cerr << "Fatal: ";
-  }
-  template<typename T>
-  Fatal &operator<<(T arg) {
-    std::cerr << arg;
-    return *this;
-  }
-  ~Fatal() {
-    std::cerr << "\n";
-    exit(1);
-  }
-};
-
-
 // Wasm module linking/layout information
 class Linker {
  public:

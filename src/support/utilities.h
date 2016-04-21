@@ -54,6 +54,24 @@ std::unique_ptr<T> make_unique(Args&&... args)
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
+// For fatal errors which could arise from input (i.e. not assertion failures)
+class Fatal {
+ public:
+  Fatal() {
+    std::cerr << "Fatal: ";
+  }
+  template<typename T>
+  Fatal &operator<<(T arg) {
+    std::cerr << arg;
+    return *this;
+  }
+  ~Fatal() {
+    std::cerr << "\n";
+    exit(1);
+  }
+};
+
+
 }  // namespace wasm
 
 #endif   // wasm_support_utilities_h
