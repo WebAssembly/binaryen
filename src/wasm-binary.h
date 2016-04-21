@@ -1440,7 +1440,7 @@ public:
         }
       }
       auto func = Builder(wasm).makeFunction(
-        Name("TODO"),
+        Name::fromInt(i),
         std::move(params),
         type->result,
         std::move(vars)
