@@ -269,8 +269,7 @@ enum ASTNodes {
   I32Clz = 0x57,
   I32Ctz = 0x58,
   I32Popcnt = 0x59,
-  I32EqZ = 0xc0, // XXX
-  BoolNot = 0x5a,
+  I32EqZ = 0x5a,
   I64Add = 0x5b,
   I64Sub = 0x5c,
   I64Mul = 0x5d,
@@ -297,7 +296,7 @@ enum ASTNodes {
   I64Clz = 0x72,
   I64Ctz = 0x73,
   I64Popcnt = 0x74,
-  I64EqZ = 0xc1, // XXX
+  I64EqZ = 0xba,
   F32Add = 0x75,
   F32Sub = 0x76,
   F32Mul = 0x77,
