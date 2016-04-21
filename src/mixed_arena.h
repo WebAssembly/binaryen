@@ -17,6 +17,7 @@
 #ifndef wasm_mixed_arena_h
 #define wasm_mixed_arena_h
 
+#include <cassert>
 #include <vector>
 
 #include "support/threads.h"
