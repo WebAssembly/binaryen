@@ -518,7 +518,7 @@ public:
     auto start = startSection(BinaryConsts::Section::Memory);
     o << U32LEB(wasm->memory.initial)
       << U32LEB(wasm->memory.max)
-      << int8_t(1); // export memory
+      << int8_t(wasm->memory.exportName.is()); // export memory
     finishSection(start);
   }
 
@@ -1343,7 +1343,10 @@ public:
     if (debug) std::cerr << "== readMemory" << std::endl;
     wasm.memory.initial = getU32LEB();
     wasm.memory.max = getU32LEB();
-    verifyInt8(1); // export memory
+    auto exportMemory = getInt8();
+    if (exportMemory) {
+      wasm.memory.exportName = Name("memory");
+    }
   }
 
   void readSignatures() {
