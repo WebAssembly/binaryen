@@ -60,9 +60,9 @@ std::string PassRegistry::getPassDescription(std::string name) {
 void PassRunner::addDefaultOptimizationPasses() {
   add("remove-unused-brs");
   add("remove-unused-names");
-  add("merge-blocks");
   add("optimize-instructions");
   add("simplify-locals");
+  add("merge-blocks");
   add("reorder-locals");
   add("vacuum");
 }

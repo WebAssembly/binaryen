@@ -20,6 +20,7 @@
 
 #include <wasm.h>
 #include <pass.h>
+#include <ast_utils.h>
 
 namespace wasm {
 
@@ -40,6 +41,13 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
     }
     if (skip > 0) {
       list.resize(size - skip);
+    }
+    if (!curr->name.is()) {
+      if (list.size() == 1) {
+        replaceCurrent(list[0]);
+      } else if (list.size() == 0) {
+        ExpressionManipulator::nop(curr);
+      }
     }
   }
 };
