@@ -803,8 +803,8 @@ public:
   }
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
-    o << int8_t(BinaryConsts::If);
     recurse(curr->condition);
+    o << int8_t(BinaryConsts::If);
     recurse(curr->ifTrue); // TODO: emit block contents directly, if block with no name
     if (curr->ifFalse) {
       o << int8_t(BinaryConsts::Else);
@@ -1670,12 +1670,12 @@ public:
   }
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
+    curr->condition = popExpression();
     size_t start = expressionStack.size();
     auto next = processExpressions();
     size_t end = expressionStack.size();
-    assert(end - start == 2);
+    assert(end - start == 1);
     curr->ifTrue = popExpression();
-    curr->condition = popExpression();
     if (next == BinaryConsts::Else) {
       size_t start = expressionStack.size();
       processExpressions();
