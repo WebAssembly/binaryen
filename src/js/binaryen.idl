@@ -57,7 +57,7 @@ interface SExpressionParser {
 };
 
 interface SExpressionWasmBuilder {
-  void SExpressionWasmBuilder([Ref] Module wasm, [Ref] Element input, boolean debug);
+  void SExpressionWasmBuilder([Ref] Module wasm, [Ref] Element input);
 };
 
 // Wasm printing
