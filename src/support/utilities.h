@@ -17,7 +17,10 @@
 #ifndef wasm_support_utilities_h
 #define wasm_support_utilities_h
 
+#include <cassert>
+#include <cstdint>
 #include <cstring>
+#include <memory>
 #include <type_traits>
 
 namespace wasm {

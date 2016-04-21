@@ -19,113 +19,29 @@
 
 #include "mixed_arena.h"
 #include "emscripten-optimizer/optimizer.h"
+#include "wasm.h"
 
 namespace wasm {
 
-WasmType asmToWasmType(AsmType asmType) {
-  switch (asmType) {
-    case ASM_INT: return WasmType::i32;
-    case ASM_DOUBLE: return WasmType::f64;
-    case ASM_FLOAT: return WasmType::f32;
-    case ASM_NONE: return WasmType::none;
-    default: {}
-  }
-  abort();
-}
+WasmType asmToWasmType(AsmType asmType);
 
-AsmType wasmToAsmType(WasmType type) {
-  switch (type) {
-    case WasmType::i32: return ASM_INT;
-    case WasmType::f32: return ASM_FLOAT;
-    case WasmType::f64: return ASM_DOUBLE;
-    case WasmType::none: return ASM_NONE;
-    default: {}
-  }
-  abort();
-}
+AsmType wasmToAsmType(WasmType type);
 
-char getSig(WasmType type) {
-  switch (type) {
-    case i32:  return 'i';
-    case i64:  return 'j';
-    case f32:  return 'f';
-    case f64:  return 'd';
-    case none: return 'v';
-    default: abort();
-  }
-}
+char getSig(WasmType type);
 
-std::string getSig(FunctionType *type) {
-  std::string ret;
-  ret += getSig(type->result);
-  for (auto param : type->params) {
-    ret += getSig(param);
-  }
-  return ret;
-}
+std::string getSig(FunctionType *type);
 
-std::string getSig(Function *func) {
-  std::string ret;
-  ret += getSig(func->result);
-  for (auto type : func->params) {
-    ret += getSig(type);
-  }
-  return ret;
-}
+std::string getSig(Function *func);
 
-std::string getSig(CallBase *call) {
-  std::string ret;
-  ret += getSig(call->type);
-  for (auto operand : call->operands) {
-    ret += getSig(operand->type);
-  }
-  return ret;
-}
+std::string getSig(CallBase *call);
 
-std::string getSig(WasmType result, const ExpressionList& operands) {
-  std::string ret;
-  ret += getSig(result);
-  for (auto operand : operands) {
-    ret += getSig(operand->type);
-  }
-  return ret;
-}
+std::string getSig(WasmType result, const ExpressionList& operands);
 
-WasmType sigToWasmType(char sig) {
-  switch (sig) {
-    case 'i': return i32;
-    case 'j': return i64;
-    case 'f': return f32;
-    case 'd': return f64;
-    case 'v': return none;
-    default: abort();
-  }
-}
+WasmType sigToWasmType(char sig);
 
-FunctionType sigToFunctionType(std::string sig) {
-  FunctionType ret;
-  ret.result = sigToWasmType(sig[0]);
-  for (size_t i = 1; i < sig.size(); i++) {
-    ret.params.push_back(sigToWasmType(sig[i]));
-  }
-  return ret;
-}
+FunctionType sigToFunctionType(std::string sig);
 
-FunctionType* ensureFunctionType(std::string sig, Module* wasm, MixedArena& allocator) {
-  cashew::IString name(("FUNCSIG$" + sig).c_str(), false);
-  if (wasm->checkFunctionType(name)) {
-    return wasm->getFunctionType(name);
-  }
-  // add new type
-  auto type = allocator.alloc<FunctionType>();
-  type->name = name;
-  type->result = sigToWasmType(sig[0]);
-  for (size_t i = 1; i < sig.size(); i++) {
-    type->params.push_back(sigToWasmType(sig[i]));
-  }
-  wasm->addFunctionType(type);
-  return type;
-}
+FunctionType* ensureFunctionType(std::string sig, Module* wasm, MixedArena& allocator);
 
 } // namespace wasm
 

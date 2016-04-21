@@ -89,6 +89,7 @@ ADD_LIBRARY(support STATIC ${support_SOURCES})
 
 SET(binaryen-shell_SOURCES
   src/binaryen-shell.cpp
+  src/asm_v_wasm.cpp
   src/pass.cpp
   src/passes/LowerIfElse.cpp
   src/passes/MergeBlocks.cpp
@@ -113,6 +114,7 @@ INSTALL(TARGETS binaryen-shell DESTINATION bin)
 
 SET(asm2wasm_SOURCES
   src/asm2wasm-main.cpp
+  src/asm_v_wasm.cpp
   src/pass.cpp
   src/passes/MergeBlocks.cpp
   src/passes/OptimizeInstructions.cpp
@@ -136,6 +138,7 @@ INSTALL(TARGETS asm2wasm DESTINATION bin)
 
 SET(wasm2asm_SOURCES
   src/wasm2asm-main.cpp
+  src/asm_v_wasm.cpp
   src/emscripten-optimizer/parser.cpp
   src/emscripten-optimizer/simple_ast.cpp
   src/emscripten-optimizer/optimizer-shared.cpp
@@ -148,8 +151,10 @@ SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm2asm DESTINATION bin)
 
 SET(s2wasm_SOURCES
+  src/asm_v_wasm.cpp
   src/pass.cpp
   src/passes/Print.cpp
+  src/wasm-linker.cpp
   src/s2wasm-main.cpp
 )
 ADD_EXECUTABLE(s2wasm
@@ -161,6 +166,7 @@ INSTALL(TARGETS s2wasm DESTINATION bin)
 
 SET(wasm_as_SOURCES
   src/wasm-as.cpp
+  src/asm_v_wasm.cpp
 )
 ADD_EXECUTABLE(wasm-as
                ${wasm_as_SOURCES})
