@@ -272,6 +272,7 @@
     )
   )
   (func $blocker
+    (nop)
   )
   (func $frem (result f64)
     (return
