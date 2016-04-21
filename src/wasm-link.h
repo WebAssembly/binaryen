@@ -1,10 +1,26 @@
+/*
+ * Copyright 2016 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-// Stupid linker
+// (very) basic linking functionality for s2wasm.
+// Performs some of the tasks that will eventually be done by a real linker.
+// Currently can allocate static variables and the stack, lay out memory
+// and initial segment contents, and process relocations. (In particular, there
+// is no merging of multiple modules). Currently this is only inteded to turn
+// a .s file produced by LLVM into a usable wast file.
 
-// No memory merging yet? (only one module has static objects)
-// Tracks implemented, aliased functions (
-
-// Merging: Add functions from 2nd module into Indexes
 
 #ifndef WASM_WASM_LINK_H
 #define WASM_WASM_LINK_H
@@ -93,26 +109,6 @@ class LinkerModule {
     return address;
   }
 
-  void placeStackPointer(size_t stackAllocation) {
-    // ensure this is the first allocation
-    assert(nextStatic == globalBase || nextStatic == 1);
-    const size_t pointerSize = 4;
-    // Unconditionally allocate space for the stack pointer. Emscripten
-    // allocates the stack itself, and initializes the stack pointer itself.
-    size_t address = allocateStatic(pointerSize, pointerSize, "__stack_pointer");
-    if (stackAllocation) {
-      // If we are allocating the stack, set up a relocation to initialize the
-      // stack pointer to point to one past-the-end of the stack allocation.
-      auto* raw = new uint32_t;
-      relocations.emplace_back(
-          make_unique<Relocation>(raw, ".stack", stackAllocation));
-      assert(wasm.memory.segments.size() == 0);
-      addressSegments[address] = wasm.memory.segments.size();
-      wasm.memory.segments.emplace_back(
-          address, reinterpret_cast<char*>(raw), pointerSize);
-    }
-  }
-
   void addGlobal(Name name) {
     globls.push_back(name);
   }
@@ -151,6 +147,9 @@ class LinkerModule {
     assert(implementedFunctions.count(name));
   }
 
+  // Allocate the user stack, set up the initial memory size of the module, lay
+  // out the linear memory, process the relocations, and set up the indirect
+  // function table.
   void layout() {
     // Place the stack after the user's static data, to keep those addresses
     // small.
@@ -252,7 +251,8 @@ class LinkerModule {
     }
   }
 
-  // extra emscripten processing
+  // Support for emscripten integration: generates dyncall thunks, emits
+  // metadata for asmConsts, staticBump and initializer functions.
   void emscriptenGlue(std::ostream& o) {
     if (debug) {
       WasmPrinter::printModule(&wasm, std::cerr);
@@ -354,6 +354,28 @@ class LinkerModule {
   }
 
  private:
+  // Allocate space for a stack pointer and (if stackAllocation > 0) set up a
+  // relocation for it to point to the top of the stack.
+  void placeStackPointer(size_t stackAllocation) {
+    // ensure this is the first allocation
+    assert(nextStatic == globalBase || nextStatic == 1);
+    const size_t pointerSize = 4;
+    // Unconditionally allocate space for the stack pointer. Emscripten
+    // allocates the stack itself, and initializes the stack pointer itself.
+    size_t address = allocateStatic(pointerSize, pointerSize, "__stack_pointer");
+    if (stackAllocation) {
+      // If we are allocating the stack, set up a relocation to initialize the
+      // stack pointer to point to one past-the-end of the stack allocation.
+      auto* raw = new uint32_t;
+      relocations.emplace_back(
+          make_unique<Relocation>(raw, ".stack", stackAllocation));
+      assert(wasm.memory.segments.size() == 0);
+      addressSegments[address] = wasm.memory.segments.size();
+      wasm.memory.segments.emplace_back(
+          address, reinterpret_cast<char*>(raw), pointerSize);
+    }
+  }
+
   template<class C>
   void printSet(std::ostream& o, C& c) {
     o << "[";
@@ -366,6 +388,8 @@ class LinkerModule {
     o << "]";
   }
 
+  // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
+  // signature in the indirect function table.
   void makeDynCallThunks() {
     std::unordered_set<std::string> sigs;
     wasm::Builder wasmBuilder(wasm);
