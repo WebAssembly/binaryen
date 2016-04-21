@@ -1182,6 +1182,9 @@ public:
         if (debug) std::cerr << "== readEnd" << std::endl;
         break;
       } else {
+        std::cerr << "unfamiliar section: ";
+        for (size_t i = 0; i < nameSize; i++) std::cerr << input[pos + i];
+        std::cerr << std::endl;
         abort();
       }
       assert(pos == before + sectionSize);
