@@ -58,6 +58,9 @@ mozjs -e 'os.file.writeTypedArrayToFile("moz.wasm",
 new Uint8Array(wasmTextToBinary(os.file.readFile("test/hello_world.wast"))))'
 investigate with
 >>> map(chr, map(ord, open('moz.wasm').read()))
+or
+import json; print json.dumps(map(chr,
+map(ord, open('moz.wasm').read()))).replace(',', '\n')
 '''
 subprocess.check_call(
     emscripten.shared.SPIDERMONKEY_ENGINE +
