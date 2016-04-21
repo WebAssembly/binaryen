@@ -48,6 +48,12 @@ inline size_t alignAddr(size_t address, size_t alignment) {
   return ((address + alignment - 1) & ~(alignment - 1));
 }
 
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
 }  // namespace wasm
 
 #endif   // wasm_support_utilities_h
