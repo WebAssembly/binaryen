@@ -23,10 +23,12 @@
 using namespace wasm;
 
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
+namespace wasm {
 // These are defined (not just declared) in shared-constants.h, so we can't just
 // include that header.  TODO: Move the definitions into a cpp file.
-cashew::IString ENV;
-cashew::IString MEMORY;
+extern cashew::IString ENV;
+extern cashew::IString MEMORY;
+}
 
 
 void Linker::placeStackPointer(size_t stackAllocation) {

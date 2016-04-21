@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <iostream>
 #include <type_traits>
 
 namespace wasm {

@@ -75,6 +75,9 @@ IF (UNIX AND
   ADD_COMPILE_FLAG("-fcolor-diagnostics")
 ENDIF()
 
+# Static libraries
+ADD_SUBDIRECTORY(src/asmjs)
+
 # Sources.
 
 SET(support_SOURCES
@@ -89,7 +92,6 @@ ADD_LIBRARY(support STATIC ${support_SOURCES})
 
 SET(binaryen-shell_SOURCES
   src/binaryen-shell.cpp
-  src/asm_v_wasm.cpp
   src/pass.cpp
   src/passes/LowerIfElse.cpp
   src/passes/MergeBlocks.cpp
@@ -107,14 +109,13 @@ SET(binaryen-shell_SOURCES
 )
 ADD_EXECUTABLE(binaryen-shell
                ${binaryen-shell_SOURCES})
-TARGET_LINK_LIBRARIES(binaryen-shell support)
+TARGET_LINK_LIBRARIES(binaryen-shell asmjs support)
 SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS binaryen-shell DESTINATION bin)
 
 SET(asm2wasm_SOURCES
   src/asm2wasm-main.cpp
-  src/asm_v_wasm.cpp
   src/pass.cpp
   src/passes/MergeBlocks.cpp
   src/passes/OptimizeInstructions.cpp
@@ -131,27 +132,25 @@ SET(asm2wasm_SOURCES
 )
 ADD_EXECUTABLE(asm2wasm
                ${asm2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(asm2wasm support)
+TARGET_LINK_LIBRARIES(asm2wasm asmjs support)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION bin)
 
 SET(wasm2asm_SOURCES
   src/wasm2asm-main.cpp
-  src/asm_v_wasm.cpp
   src/emscripten-optimizer/parser.cpp
   src/emscripten-optimizer/simple_ast.cpp
   src/emscripten-optimizer/optimizer-shared.cpp
 )
 ADD_EXECUTABLE(wasm2asm
                ${wasm2asm_SOURCES})
-TARGET_LINK_LIBRARIES(wasm2asm support)
+TARGET_LINK_LIBRARIES(wasm2asm asmjs support)
 SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm2asm DESTINATION bin)
 
 SET(s2wasm_SOURCES
-  src/asm_v_wasm.cpp
   src/pass.cpp
   src/passes/Print.cpp
   src/wasm-linker.cpp
@@ -159,18 +158,17 @@ SET(s2wasm_SOURCES
 )
 ADD_EXECUTABLE(s2wasm
                ${s2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(s2wasm support)
+TARGET_LINK_LIBRARIES(s2wasm asmjs support)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS s2wasm DESTINATION bin)
 
 SET(wasm_as_SOURCES
   src/wasm-as.cpp
-  src/asm_v_wasm.cpp
 )
 ADD_EXECUTABLE(wasm-as
                ${wasm_as_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-as support)
+TARGET_LINK_LIBRARIES(wasm-as asmjs support)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION bin)
