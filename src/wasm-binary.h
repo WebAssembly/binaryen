@@ -847,19 +847,17 @@ public:
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
-    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
-    for (auto target : curr->targets) {
-      o << U32LEB(getBreakIndex(target));
-    }
-    o << U32LEB(getBreakIndex(curr->default_));
-    recurse(curr->condition);
-    o << int8_t(BinaryConsts::End); // XXX
     if (curr->value) {
       recurse(curr->value);
     } else {
       visitNop(nullptr);
     }
-    o << int8_t(BinaryConsts::End); // XXX
+    recurse(curr->condition);
+    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
+    for (auto target : curr->targets) {
+      o << U32LEB(getBreakIndex(target));
+    }
+    o << U32LEB(getBreakIndex(curr->default_));
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
@@ -1714,16 +1712,13 @@ public:
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
+    curr->condition = popExpression();
+    curr->value = popExpression();
     auto numTargets = getU32LEB();
     for (size_t i = 0; i < numTargets; i++) {
       curr->targets.push_back(getBreakName(getU32LEB()));
     }
     curr->default_ = getBreakName(getU32LEB());
-    processExpressions();
-    curr->condition = popExpression();
-    processExpressions();
-    curr->value = popExpression();
-    if (curr->value->is<Nop>()) curr->value = nullptr;
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
