@@ -28,7 +28,7 @@
 #include "pass.h"
 #include "asm_v_wasm.h"
 #include "wasm-builder.h"
-#include "wasm-link.h"
+#include "wasm-linker.h"
 
 namespace wasm {
 
@@ -41,11 +41,11 @@ class S2WasmBuilder {
   MixedArena& allocator;
   const char* s;
   bool debug;
-  LinkerModule& linker;
+  Linker& linker;
 
  public:
   S2WasmBuilder(Module& wasm, const char* input, bool debug,
-                LinkerModule& linker)
+                Linker& linker)
       : wasm(wasm),
         allocator(wasm.allocator),
         debug(debug),
@@ -1032,7 +1032,7 @@ class S2WasmBuilder {
     mustMatch(":");
     auto raw = new std::vector<char>(); // leaked intentionally, no new allocation in Memory
     bool zero = true;
-    std::vector<std::pair<LinkerModule::Relocation*, size_t>> currRelocations; // [relocation, offset in raw]
+    std::vector<std::pair<Linker::Relocation*, size_t>> currRelocations; // [relocation, offset in raw]
     while (1) {
       skipWhitespace();
       if (match(".asci")) {

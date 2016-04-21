@@ -25,7 +25,6 @@
 #ifndef WASM_WASM_LINK_H
 #define WASM_WASM_LINK_H
 
-//#include "asm_v_wasm.h"
 #include "support/utilities.h"
 #include "wasm.h"
 #include "wasm-printing.h"
@@ -54,7 +53,7 @@ class Fatal {
 
 
 // Wasm module linking/layout information
-class LinkerModule {
+class Linker {
  public:
   struct Relocation {
     uint32_t* data;
@@ -64,7 +63,7 @@ class LinkerModule {
         data(data), value(value), offset(offset) {}
   };
 
-  LinkerModule(Module& wasm, size_t globalBase, size_t stackAllocation,
+  Linker(Module& wasm, size_t globalBase, size_t stackAllocation,
                size_t userInitialMemory, size_t userMaxMemory,
                bool ignoreUnknownSymbols, Name startFunction,
                bool debug) :
@@ -265,7 +264,7 @@ class LinkerModule {
     o << ";; METADATA: { ";
     // find asmConst calls, and emit their metadata
     struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker>> {
-      LinkerModule* parent;
+      Linker* parent;
 
       std::map<std::string, std::set<std::string>> sigsForCode;
       std::map<std::string, size_t> ids;
