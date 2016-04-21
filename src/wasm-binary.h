@@ -230,7 +230,6 @@ namespace Section {
   auto DataSegments = "data";
   auto FunctionTable = "table";
   auto Names = "name";
-  auto End = "end";
   auto Start = "start";
 };
 
@@ -476,7 +475,6 @@ public:
     writeDataSegments();
     writeFunctionTable();
     writeNames();
-    writeEnd();
     finishUp();
   }
 
@@ -644,7 +642,6 @@ public:
       if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
       depth = 0;
       recurse(function->body);
-      o << int8_t(BinaryConsts::End);
       assert(depth == 0);
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
@@ -729,11 +726,6 @@ public:
       writeInlineString(curr->name.str);
       o << U32LEB(0); // TODO: locals
     }
-    finishSection(start);
-  }
-
-  void writeEnd() {
-    auto start = startSection(BinaryConsts::Section::End);
     finishSection(start);
   }
 
@@ -862,13 +854,13 @@ public:
     }
     o << U32LEB(getBreakIndex(curr->default_));
     recurse(curr->condition);
-    o << int8_t(BinaryConsts::End);
+    o << int8_t(BinaryConsts::End); // XXX
     if (curr->value) {
       recurse(curr->value);
     } else {
       visitNop(nullptr);
     }
-    o << int8_t(BinaryConsts::End);
+    o << int8_t(BinaryConsts::End); // XXX
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
@@ -1178,10 +1170,10 @@ public:
       else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
       else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
       else if (match(BinaryConsts::Section::Names)) readNames();
-      else if (match(BinaryConsts::Section::End)) {
-        if (debug) std::cerr << "== readEnd" << std::endl;
-        break;
-      } else {
+      else {
+        std::cerr << "unfamiliar section: ";
+        for (size_t i = 0; i < nameSize; i++) std::cerr << input[pos + i];
+        std::cerr << std::endl;
         abort();
       }
       assert(pos == before + sectionSize);
@@ -1417,6 +1409,7 @@ public:
   std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
   std::map<size_t, std::vector<Call*>> functionCalls; // at index i we have all calls to i
   Function* currFunction = nullptr;
+  size_t endOfFunction;
 
   void readFunctions() {
     if (debug) std::cerr << "== readFunctions" << std::endl;
@@ -1424,7 +1417,8 @@ public:
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "read one at " << pos << std::endl;
       size_t size = getU32LEB();
-      assert(size > 0); // we could also check it matches the seen size
+      assert(size > 0);
+      endOfFunction = pos + size;
       auto type = functionTypes[i];
       if (debug) std::cerr << "reading" << i << std::endl;
       size_t nextVar = 0;
@@ -1467,6 +1461,7 @@ public:
         assert(depth == 0);
         assert(breakStack.empty());
         assert(expressionStack.empty());
+        assert(pos == endOfFunction);
       }
       currFunction = nullptr;
       functions.push_back(func);
@@ -1493,7 +1488,7 @@ public:
 
   std::vector<Expression*> expressionStack;
 
-  BinaryConsts::ASTNodes processExpressions() { // until an end or else marker
+  BinaryConsts::ASTNodes processExpressions() { // until an end or else marker, or the end of the function
     while (1) {
       Expression* curr;
       auto ret = readExpression(curr);
@@ -1582,6 +1577,10 @@ public:
   int depth; // only for debugging
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr) {
+    if (pos == endOfFunction) {
+      curr = nullptr;
+      return BinaryConsts::End;
+    }
     if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
     uint8_t code = getInt8();
     if (debug) std::cerr << "readExpression seeing " << (int)code << std::endl;
