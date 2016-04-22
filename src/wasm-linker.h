@@ -89,6 +89,14 @@ class LinkerObject {
     initializerFunctions.emplace_back(name);
     assert(implementedFunctions.count(name));
   }
+
+  bool isEmpty() {
+    return globls.empty() && implementedFunctions.empty() &&
+        aliasedFunctions.empty() &&
+        // 2 static objs and 1 reloc are created by the linker on construction.
+        relocations.size() <= 1 &&  staticObjects.size() <= 2;
+  }
+
   friend class Linker;
 
   Module wasm;
@@ -121,11 +129,10 @@ class LinkerObject {
 
 class Linker {
  public:
-  Linker(LinkerObject &mainObj, size_t globalBase, size_t stackAllocation,
+  Linker(size_t globalBase, size_t stackAllocation,
          size_t userInitialMemory, size_t userMaxMemory,
          bool ignoreUnknownSymbols, Name startFunction,
          bool debug) :
-      exe(mainObj),
       ignoreUnknownSymbols(ignoreUnknownSymbols),
       startFunction(startFunction),
       globalBase(globalBase),
@@ -149,7 +156,6 @@ class Linker {
     // Don't allow anything to be allocated at address 0
     if (globalBase == 0) nextStatic = 1;
 
-    assert(mainObj.staticObjects.empty());
     // Place the stack pointer at the bottom of the linear memory, to keep its
     // address small (and thus with a small encoding).
     placeStackPointer(stackAllocation);
@@ -160,6 +166,9 @@ class Linker {
     exe.addStatic(4, 4, "__dso_handle");
   }
 
+  // Return a reference to the LinkerObject for the main executable. If empty,
+  // it can be passed to an S2WasmBuilder and constructed.
+  LinkerObject& getExecutable() { return exe; }
 
   // Allocate the user stack, set up the initial memory size of the module, lay
   // out the linear memory, process the relocations, and set up the indirect
@@ -215,7 +224,7 @@ class Linker {
   }
 
   // The final linked executable (created from merging the object files)
-  LinkerObject &exe;
+  LinkerObject exe;
 
   bool ignoreUnknownSymbols;
   Name startFunction;

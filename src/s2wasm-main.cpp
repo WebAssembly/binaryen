@@ -101,12 +101,10 @@ int main(int argc, const char *argv[]) {
           : 0;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
 
-  LinkerObject mainObject;
-  Linker linker(mainObject, globalBase, stackAllocation, initialMem, maxMem,
+  Linker linker(globalBase, stackAllocation, initialMem, maxMem,
                 ignoreUnknownSymbols, startFunction, options.debug);
-  // Currently we require that the linker be constructed before S2WasmBuilder.
-  // TODO(dschuff): improve this as we evolve the API.
-  S2WasmBuilder s2wasm(mainObject, input.c_str(), options.debug);
+
+  S2WasmBuilder s2wasm(linker.getExecutable(), input.c_str(), options.debug);
 
   linker.layout();
 
@@ -119,7 +117,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  WasmPrinter::printModule(&mainObject.wasm, output.getStream());
+  WasmPrinter::printModule(&linker.getExecutable().wasm, output.getStream());
   output << meta.str() << std::endl;
 
   if (options.debug) std::cerr << "Done." << std::endl;

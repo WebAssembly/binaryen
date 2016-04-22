@@ -49,7 +49,7 @@ class S2WasmBuilder {
         allocator(wasm.allocator),
         debug(debug),
         linkerObj(linkerObj) {
-
+    if (!linkerObj.isEmpty()) Fatal() << "Cannot construct an S2WasmBuilder in an non-empty LinkerObject";
     s = input;
     scan();
     s = input;
