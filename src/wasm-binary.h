@@ -464,16 +464,18 @@ public:
 
   void write() {
     writeHeader();
-    writeMemory();
+
     writeSignatures();
     writeImports();
     writeFunctionSignatures();
-    writeFunctions();
-    writeStart();
-    writeExports();
-    writeDataSegments();
     writeFunctionTable();
+    writeMemory();
+    writeExports();
+    writeStart();
+    writeFunctions();
+    writeDataSegments();
     writeNames();
+
     finishUp();
   }
 
