@@ -815,7 +815,7 @@ public:
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
     // TODO: optimize, as we usually have a block as our singleton child
-    o << int8_t(BinaryConsts::Loop) << int8_t(1);
+    o << int8_t(BinaryConsts::Loop);
     breakStack.push_back(curr->out);
     breakStack.push_back(curr->in);
     recurse(curr->body);
@@ -1668,6 +1668,23 @@ public:
       breakStack.pop_back();
     }
   }
+
+  Expression* getMaybeBlock() {
+    auto start = expressionStack.size();
+    processExpressions();
+    size_t end = expressionStack.size();
+    if (end - start == 1) {
+      return popExpression();
+    } else {
+      auto* body = allocator.alloc<Block>();
+      for (size_t i = start; i < end; i++) {
+        body->list.push_back(expressionStack[i]);
+      }
+      expressionStack.resize(start);
+      return body;
+    }
+  }
+
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
     curr->condition = popExpression();
@@ -1687,13 +1704,11 @@ public:
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
-    verifyInt8(1); // size TODO: generalize
     curr->out = getNextLabel();
     curr->in = getNextLabel();
     breakStack.push_back(curr->out);
     breakStack.push_back(curr->in);
-    processExpressions();
-    curr->body = popExpression();
+    curr->body = getMaybeBlock();
     breakStack.pop_back();
     breakStack.pop_back();
     curr->finalize();
