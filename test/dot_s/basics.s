@@ -48,7 +48,7 @@ main:                                   # @main
 	end_block
 	i32.const	$push11=, -12
 	i32.add 	$0=, $0, $pop11
-	i32.const	$discard=, main # just take address for testing
+	i32.const	$discard=, main@FUNCTION # just take address for testing
 	end_block
 	return  	$0
 .Lfunc_end0:

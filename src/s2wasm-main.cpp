@@ -102,7 +102,8 @@ int main(int argc, const char *argv[]) {
           : 0;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
   Linker lm(wasm, globalBase, stackAllocation, initialMem, maxMem,
-                  ignoreUnknownSymbols, startFunction, options.debug);
+            ignoreUnknownSymbols, startFunction, options.debug);
+
   S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, lm);
 
   std::stringstream meta;
