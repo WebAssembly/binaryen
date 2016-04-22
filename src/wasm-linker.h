@@ -29,7 +29,8 @@
 
 namespace wasm {
 
-// Wasm module linking/layout information
+// An "object file" for linking. Contains a wasm module, plus the associated
+// information needed for linking/layout.
 class LinkerObject {
  public:
   struct Relocation {
@@ -91,10 +92,7 @@ class LinkerObject {
   }
 
   bool isEmpty() {
-    return globls.empty() && implementedFunctions.empty() &&
-        aliasedFunctions.empty() &&
-        // 2 static objs and 1 reloc are created by the linker on construction.
-        relocations.size() <= 1 &&  staticObjects.size() <= 2;
+    return wasm.functions.empty();
   }
 
   friend class Linker;
@@ -127,6 +125,9 @@ class LinkerObject {
 
 };
 
+// Class which performs some linker-like functionality; namely taking an object
+// file with relocations, laying out the linear memory and segments, and
+// applying the relocations, resulting in an executable wasm module.
 class Linker {
  public:
   Linker(size_t globalBase, size_t stackAllocation,
