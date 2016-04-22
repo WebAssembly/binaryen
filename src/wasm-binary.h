@@ -1485,11 +1485,16 @@ public:
 
   std::vector<Expression*> expressionStack;
 
-  BinaryConsts::ASTNodes processExpressions() { // until an end or else marker, or the end of the function
+  BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
+
+  void processExpressions() { // until an end or else marker, or the end of the function
     while (1) {
       Expression* curr;
       auto ret = readExpression(curr);
-      if (!curr) return ret;
+      if (!curr) {
+        lastSeparator = ret;
+        return;
+      }
       expressionStack.push_back(curr);
     }
   }
@@ -1688,19 +1693,12 @@ public:
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
     curr->condition = popExpression();
-    size_t start = expressionStack.size();
-    auto next = processExpressions();
-    size_t end = expressionStack.size();
-    assert(end - start == 1);
-    curr->ifTrue = popExpression();
-    if (next == BinaryConsts::Else) {
-      size_t start = expressionStack.size();
-      processExpressions();
-      size_t end = expressionStack.size();
-      assert(end - start == 1);
-      curr->ifFalse = popExpression();
+    curr->ifTrue = getMaybeBlock();
+    if (lastSeparator == BinaryConsts::Else) {
+      curr->ifFalse = getMaybeBlock();
       curr->finalize();
     }
+    assert(lastSeparator == BinaryConsts::End);
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
