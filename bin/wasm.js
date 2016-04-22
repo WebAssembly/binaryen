@@ -38459,56 +38459,56 @@ function __ZN4wasm17WasmBinaryBuilder14maybeVisitImplEPNS_5UnaryEh(i4, i3, i2) {
    i5 = 49;
    break;
   }
- case 159:
+ case 169:
   {
    HEAP32[i3 + 8 >> 2] = 20;
    HEAP32[i3 + 4 >> 2] = 3;
    i5 = 49;
    break;
   }
- case 160:
+ case 175:
   {
    HEAP32[i3 + 8 >> 2] = 20;
    HEAP32[i3 + 4 >> 2] = 4;
    i5 = 49;
    break;
   }
- case 157:
+ case 168:
   {
    HEAP32[i3 + 8 >> 2] = 19;
    HEAP32[i3 + 4 >> 2] = 3;
    i5 = 49;
    break;
   }
- case 158:
+ case 174:
   {
    HEAP32[i3 + 8 >> 2] = 19;
    HEAP32[i3 + 4 >> 2] = 4;
    i5 = 49;
    break;
   }
- case 164:
+ case 171:
   {
    HEAP32[i3 + 8 >> 2] = 22;
    HEAP32[i3 + 4 >> 2] = 3;
    i5 = 49;
    break;
   }
- case 165:
+ case 177:
   {
    HEAP32[i3 + 8 >> 2] = 22;
    HEAP32[i3 + 4 >> 2] = 4;
    i5 = 49;
    break;
   }
- case 162:
+ case 170:
   {
    HEAP32[i3 + 8 >> 2] = 21;
    HEAP32[i3 + 4 >> 2] = 3;
    i5 = 49;
    break;
   }
- case 163:
+ case 176:
   {
    HEAP32[i3 + 8 >> 2] = 21;
    HEAP32[i3 + 4 >> 2] = 4;
@@ -38536,56 +38536,56 @@ function __ZN4wasm17WasmBinaryBuilder14maybeVisitImplEPNS_5UnaryEh(i4, i3, i2) {
    i5 = 49;
    break;
   }
- case 169:
+ case 159:
   {
    HEAP32[i3 + 8 >> 2] = 15;
    HEAP32[i3 + 4 >> 2] = 1;
    i5 = 49;
    break;
   }
- case 175:
+ case 160:
   {
    HEAP32[i3 + 8 >> 2] = 17;
    HEAP32[i3 + 4 >> 2] = 1;
    i5 = 49;
    break;
   }
- case 168:
+ case 157:
   {
    HEAP32[i3 + 8 >> 2] = 14;
    HEAP32[i3 + 4 >> 2] = 1;
    i5 = 49;
    break;
   }
- case 174:
+ case 158:
   {
    HEAP32[i3 + 8 >> 2] = 16;
    HEAP32[i3 + 4 >> 2] = 1;
    i5 = 49;
    break;
   }
- case 171:
+ case 164:
   {
    HEAP32[i3 + 8 >> 2] = 15;
    HEAP32[i3 + 4 >> 2] = 2;
    i5 = 49;
    break;
   }
- case 177:
+ case 165:
   {
    HEAP32[i3 + 8 >> 2] = 17;
    HEAP32[i3 + 4 >> 2] = 2;
    i5 = 49;
    break;
   }
- case 170:
+ case 162:
   {
    HEAP32[i3 + 8 >> 2] = 14;
    HEAP32[i3 + 4 >> 2] = 2;
    i5 = 49;
    break;
   }
- case 176:
+ case 163:
   {
    HEAP32[i3 + 8 >> 2] = 16;
    HEAP32[i3 + 4 >> 2] = 2;
