@@ -861,9 +861,9 @@ public:
     recurse(curr->condition);
     o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
     for (auto target : curr->targets) {
-      o << U32LEB(getBreakIndex(target));
+      o << uint32_t(getBreakIndex(target));
     }
-    o << U32LEB(getBreakIndex(curr->default_));
+    o << uint32_t(getBreakIndex(curr->default_));
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
@@ -1742,9 +1742,9 @@ public:
     curr->value = popExpression();
     auto numTargets = getU32LEB();
     for (size_t i = 0; i < numTargets; i++) {
-      curr->targets.push_back(getBreakName(getU32LEB()));
+      curr->targets.push_back(getBreakName(getInt32()));
     }
-    curr->default_ = getBreakName(getU32LEB());
+    curr->default_ = getBreakName(getInt32());
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;

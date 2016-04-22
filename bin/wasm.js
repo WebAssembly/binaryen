@@ -60128,7 +60128,7 @@ function __ZN4wasm17WasmBinaryBuilder11visitSwitchEPNS_6SwitchE(i9, i10) {
  i5 = i10 + 8 | 0;
  i7 = 0;
  while (1) {
-  i1 = __ZN4wasm17WasmBinaryBuilder12getBreakNameEi(i9, __ZN4wasm17WasmBinaryBuilder9getU32LEBEv(i9) | 0) | 0;
+  i1 = __ZN4wasm17WasmBinaryBuilder12getBreakNameEi(i9, __ZN4wasm17WasmBinaryBuilder8getInt32Ev(i9) | 0) | 0;
   if ((i7 | 0) == (i2 | 0)) break;
   HEAP32[i8 >> 2] = i1;
   i6 = HEAP32[i3 >> 2] | 0;
