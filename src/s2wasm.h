@@ -41,23 +41,20 @@ class S2WasmBuilder {
   MixedArena& allocator;
   const char* s;
   bool debug;
-  Linker& linker;
+  LinkerObject& linkerObj;
 
  public:
-  S2WasmBuilder(Module& wasm, const char* input, bool debug,
-                Linker& linker)
-      : wasm(wasm),
+  S2WasmBuilder(LinkerObject& linkerObj, const char* input, bool debug)
+      : wasm(linkerObj.wasm),
         allocator(wasm.allocator),
         debug(debug),
-        linker(linker) {
+        linkerObj(linkerObj) {
 
     s = input;
     scan();
     s = input;
 
     process();
-
-    linker.layout();
   }
 
  private:
@@ -201,7 +198,9 @@ class S2WasmBuilder {
     } else {
       // a global constant, we need to fix it up later
       Name name = getStrToSep();
-      Linker::Relocation::Kind kind = isFunctionName(name) ? Linker::Relocation::kFunction : Linker::Relocation::kData;
+      LinkerObject::Relocation::Kind kind = isFunctionName(name) ?
+          LinkerObject::Relocation::kFunction :
+          LinkerObject::Relocation::kData;
       int offset = 0;
       if (*s == '+') {
         s++;
@@ -210,7 +209,7 @@ class S2WasmBuilder {
         s++;
         offset = -getInt();
       }
-      linker.addRelocation(kind, target, cleanFunction(name), offset);
+      linkerObj.addRelocation(kind, target, cleanFunction(name), offset);
       return true;
     }
   }
@@ -347,11 +346,11 @@ class S2WasmBuilder {
       if (match(".hidden")) mustMatch(name.str);
       mustMatch(name.str);
       if (match(":")) {
-        linker.addImplementedFunction(name);
+        linkerObj.addImplementedFunction(name);
       } else if (match("=")) {
         Name alias = getAtSeparated();
         mustMatch("@FUNCTION");
-        linker.addAliasedFunction(name, alias);
+        linkerObj.addAliasedFunction(name, alias);
       } else {
         abort_on("unknown directive");
       }
@@ -403,7 +402,7 @@ class S2WasmBuilder {
     }
     mustMatch(".int32");
     do {
-      linker.addInitializerFunction(cleanFunction(getStr()));
+      linkerObj.addInitializerFunction(cleanFunction(getStr()));
       skipWhitespace();
     } while (match(".int32"));
   }
@@ -438,7 +437,7 @@ class S2WasmBuilder {
   }
 
   void parseGlobl() {
-    linker.addGlobal(getStr());
+    linkerObj.addGlobal(getStr());
     skipWhitespace();
   }
 
@@ -699,8 +698,8 @@ class S2WasmBuilder {
         // non-indirect call
         CallBase* curr;
         Name assign = getAssign();
-        Name target = linker.resolveAlias(cleanFunction(getCommaSeparated()));
-        if (linker.isFunctionImplemented(target)) {
+        Name target = linkerObj.resolveAlias(cleanFunction(getCommaSeparated()));
+        if (linkerObj.isFunctionImplemented(target)) {
           auto specific = allocator.alloc<Call>();
           specific->target = target;
           curr = specific;
@@ -1037,7 +1036,7 @@ class S2WasmBuilder {
     mustMatch(":");
     auto raw = new std::vector<char>(); // leaked intentionally, no new allocation in Memory
     bool zero = true;
-    std::vector<std::pair<Linker::Relocation*, size_t>> currRelocations; // [relocation, offset in raw]
+    std::vector<std::pair<LinkerObject::Relocation*, size_t>> currRelocations; // [relocation, offset in raw]
     while (1) {
       skipWhitespace();
       if (match(".asci")) {
@@ -1079,7 +1078,7 @@ class S2WasmBuilder {
         size_t size = raw->size();
         raw->resize(size + 4);
         if (getConst((uint32_t*)&(*raw)[size])) { // just the size, as we may reallocate; we must fix this later, if it's a relocation
-          currRelocations.emplace_back(linker.getCurrentRelocation(), size);
+          currRelocations.emplace_back(linkerObj.getCurrentRelocation(), size);
         }
         zero = false;
       } else if (match(".int64")) {
@@ -1110,9 +1109,9 @@ class S2WasmBuilder {
       r->data = (uint32_t*)&(*raw)[i];
     }
     // assign the address, add to memory
-    linker.addStatic(size, align, name);
+    linkerObj.addStatic(size, align, name);
     if (!zero) {
-      linker.addSegment(name, (const char*)&(*raw)[0], size);
+      linkerObj.addSegment(name, (const char*)&(*raw)[0], size);
     }
   }
 
@@ -1124,7 +1123,7 @@ class S2WasmBuilder {
       skipComma();
       getInt();
     }
-    linker.addStatic(size, align, name);
+    linkerObj.addStatic(size, align, name);
   }
 
   void skipImports() {

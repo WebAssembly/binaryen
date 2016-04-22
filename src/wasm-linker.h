@@ -29,7 +29,8 @@
 
 namespace wasm {
 
-class Linker {
+// Wasm module linking/layout information
+class LinkerObject {
  public:
   struct Relocation {
     enum Kind { kData, kFunction };
@@ -43,50 +44,7 @@ class Linker {
         kind(kind), data(data), symbol(symbol), addend(addend) {}
   };
 
-  Linker(Module& wasm, size_t globalBase, size_t stackAllocation,
-               size_t userInitialMemory, size_t userMaxMemory,
-               bool ignoreUnknownSymbols, Name startFunction,
-               bool debug) :
-      wasm(wasm),
-      ignoreUnknownSymbols(ignoreUnknownSymbols),
-      startFunction(startFunction),
-      globalBase(globalBase),
-      nextStatic(globalBase),
-      userInitialMemory(userInitialMemory),
-      userMaxMemory(userMaxMemory),
-      stackAllocation(stackAllocation),
-      debug(debug) {
-    if (userMaxMemory && userMaxMemory < userInitialMemory) {
-      Fatal() << "Specified max memory " << userMaxMemory <<
-          " is < specified initial memory " << userInitialMemory;
-    }
-    if (roundUpToPageSize(userMaxMemory) != userMaxMemory) {
-      Fatal() << "Specified max memory " << userMaxMemory <<
-          " is not a multiple of 64k";
-    }
-    if (roundUpToPageSize(userInitialMemory) != userInitialMemory) {
-      Fatal() << "Specified initial memory " << userInitialMemory <<
-          " is not a multiple of 64k";
-    }
-    // Don't allow anything to be allocated at address 0
-    if (globalBase == 0) nextStatic = 1;
-    // Place the stack pointer at the bottom of the linear memory, to keep its
-    // address small (and thus with a small encoding).
-    placeStackPointer(stackAllocation);
-    // Allocate __dso_handle. For asm.js, emscripten provides this in JS, but
-    // wasm modules can't import data objects. Its value is 0 for the main
-    // executable, which is all we have with static linking. In the future this
-    // can go in a crtbegin or similar file.
-    addStatic(4, 4, "__dso_handle");
-  }
-
-  // Allocate a static variable and return its address in linear memory
-  size_t allocateStatic(size_t allocSize, size_t alignment, Name name) {
-    size_t address = alignAddr(nextStatic, alignment);
-    staticAddresses[name] = address;
-    nextStatic = address + allocSize;
-    return address;
-  }
+  LinkerObject() {}
 
   // Allocate a static object
   void addStatic(size_t allocSize, size_t alignment, Name name) {
@@ -98,7 +56,7 @@ class Linker {
   }
 
   void addRelocation(Relocation::Kind kind, uint32_t* target, Name name, int addend) {
-    relocations.emplace_back(make_unique<Relocation>(kind, target, name, addend));
+    relocations.emplace_back(new Relocation(kind, target, name, addend));
   }
   Relocation* getCurrentRelocation() {
     return relocations.back().get();
@@ -131,6 +89,77 @@ class Linker {
     initializerFunctions.emplace_back(name);
     assert(implementedFunctions.count(name));
   }
+  friend class Linker;
+
+  Module wasm;
+
+ private:
+  struct StaticObject {
+    size_t allocSize;
+    size_t alignment;
+    Name name;
+    StaticObject(size_t allocSize, size_t alignment, Name name) :
+        allocSize(allocSize), alignment(alignment), name(name) {}
+  };
+
+  std::vector<Name> globls;
+
+  std::vector<StaticObject> staticObjects;
+  std::vector<std::unique_ptr<Relocation>> relocations;
+
+  std::set<Name> implementedFunctions;
+  std::unordered_map<cashew::IString, Name> aliasedFunctions;
+
+  std::map<Name, size_t> segments; // name => segment index (in wasm module)
+
+  std::vector<Name> initializerFunctions;
+
+  LinkerObject(const LinkerObject&) = delete;
+  LinkerObject& operator=(const LinkerObject&) = delete;
+
+};
+
+class Linker {
+ public:
+  Linker(LinkerObject &mainObj, size_t globalBase, size_t stackAllocation,
+         size_t userInitialMemory, size_t userMaxMemory,
+         bool ignoreUnknownSymbols, Name startFunction,
+         bool debug) :
+      exe(mainObj),
+      ignoreUnknownSymbols(ignoreUnknownSymbols),
+      startFunction(startFunction),
+      globalBase(globalBase),
+      nextStatic(globalBase),
+      userInitialMemory(userInitialMemory),
+      userMaxMemory(userMaxMemory),
+      stackAllocation(stackAllocation),
+      debug(debug) {
+    if (userMaxMemory && userMaxMemory < userInitialMemory) {
+      Fatal() << "Specified max memory " << userMaxMemory <<
+          " is < specified initial memory " << userInitialMemory;
+    }
+    if (roundUpToPageSize(userMaxMemory) != userMaxMemory) {
+      Fatal() << "Specified max memory " << userMaxMemory <<
+          " is not a multiple of 64k";
+    }
+    if (roundUpToPageSize(userInitialMemory) != userInitialMemory) {
+      Fatal() << "Specified initial memory " << userInitialMemory <<
+          " is not a multiple of 64k";
+    }
+    // Don't allow anything to be allocated at address 0
+    if (globalBase == 0) nextStatic = 1;
+
+    assert(mainObj.staticObjects.empty());
+    // Place the stack pointer at the bottom of the linear memory, to keep its
+    // address small (and thus with a small encoding).
+    placeStackPointer(stackAllocation);
+    // Allocate __dso_handle. For asm.js, emscripten provides this in JS, but
+    // wasm modules can't import data objects. Its value is 0 for the main
+    // executable, which is all we have with static linking. In the future this
+    // can go in a crtbegin or similar file.
+    exe.addStatic(4, 4, "__dso_handle");
+  }
+
 
   // Allocate the user stack, set up the initial memory size of the module, lay
   // out the linear memory, process the relocations, and set up the indirect
@@ -142,13 +171,13 @@ class Linker {
   void emscriptenGlue(std::ostream& o);
 
  private:
-  struct StaticObject {
-    size_t allocSize;
-    size_t alignment;
-    Name name;
-    StaticObject(size_t allocSize, size_t alignment, Name name) :
-        allocSize(allocSize), alignment(alignment), name(name) {}
-  };
+  // Allocate a static variable and return its address in linear memory
+  size_t allocateStatic(size_t allocSize, size_t alignment, Name name) {
+    size_t address = alignAddr(nextStatic, alignment);
+    staticAddresses[name] = address;
+    nextStatic = address + allocSize;
+    return address;
+  }
 
   // Allocate space for a stack pointer and (if stackAllocation > 0) set up a
   // relocation for it to point to the top of the stack.
@@ -175,21 +204,21 @@ class Linker {
   }
 
   void exportFunction(Name name, bool must_export) {
-    if (!wasm.checkFunction(name)) {
+    if (!exe.wasm.checkFunction(name)) {
       assert(!must_export);
       return;
     }
-    if (wasm.checkExport(name)) return; // Already exported
-    auto exp = wasm.allocator.alloc<Export>();
+    if (exe.wasm.checkExport(name)) return; // Already exported
+    auto exp = exe.wasm.allocator.alloc<Export>();
     exp->name = exp->value = name;
-    wasm.addExport(exp);
+    exe.wasm.addExport(exp);
   }
 
+  // The final linked executable (created from merging the object files)
+  LinkerObject &exe;
 
-  Module& wasm;
   bool ignoreUnknownSymbols;
   Name startFunction;
-  std::vector<Name> globls;
 
   // where globals can start to be statically allocated, i.e., the data segment
   size_t globalBase;
@@ -200,20 +229,9 @@ class Linker {
   size_t stackAllocation;
   bool debug;
 
-  std::vector<StaticObject> staticObjects;
   std::unordered_map<cashew::IString, int32_t> staticAddresses; // name => address
-
-  std::vector<std::unique_ptr<Relocation>> relocations;
-
-  std::set<Name> implementedFunctions;
-  std::unordered_map<cashew::IString, Name> aliasedFunctions;
-
-  std::map<Name, size_t> segments; // name => segment index (in wasm module)
   std::unordered_map<size_t, size_t> segmentsByAddress; // address => segment index
-
   std::unordered_map<cashew::IString, size_t> functionIndexes;
-
-  std::vector<Name> initializerFunctions;
 
 };
 

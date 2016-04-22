@@ -84,7 +84,6 @@ int main(int argc, const char *argv[]) {
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
   if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
-  Module wasm;
   uint64_t globalBase = options.extra.find("global-base") != options.extra.end()
                           ? std::stoull(options.extra["global-base"])
                           : 0;
@@ -101,21 +100,26 @@ int main(int argc, const char *argv[]) {
           ? std::stoull(options.extra["max-memory"])
           : 0;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
-  Linker lm(wasm, globalBase, stackAllocation, initialMem, maxMem,
-            ignoreUnknownSymbols, startFunction, options.debug);
 
-  S2WasmBuilder s2wasm(wasm, input.c_str(), options.debug, lm);
+  LinkerObject mainObject;
+  Linker linker(mainObject, globalBase, stackAllocation, initialMem, maxMem,
+                ignoreUnknownSymbols, startFunction, options.debug);
+  // Currently we require that the linker be constructed before S2WasmBuilder.
+  // TODO(dschuff): improve this as we evolve the API.
+  S2WasmBuilder s2wasm(mainObject, input.c_str(), options.debug);
+
+  linker.layout();
 
   std::stringstream meta;
   if (generateEmscriptenGlue) {
     if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
     // dyncall thunks
-    lm.emscriptenGlue(meta);
+    linker.emscriptenGlue(meta);
   }
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  WasmPrinter::printModule(&wasm, output.getStream());
+  WasmPrinter::printModule(&mainObject.wasm, output.getStream());
   output << meta.str() << std::endl;
 
   if (options.debug) std::cerr << "Done." << std::endl;
