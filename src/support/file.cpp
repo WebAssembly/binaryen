@@ -37,7 +37,7 @@ T wasm::read_file(const std::string &filename, Flags::BinaryOption binary, Flags
     std::cerr << "Failed opening '" << filename << "': Input file too large: " << insize << " bytes. Try rebuilding in 64-bit mode." << std::endl;
     exit(EXIT_FAILURE);
   }
-  T input(size_t(insize) + 1, '\0');
+  T input(size_t(insize) + (binary == Flags::Binary ? 0 : 1), '\0');
   infile.seekg(0);
   infile.read(&input[0], insize);
   return input;

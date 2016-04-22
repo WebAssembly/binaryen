@@ -65,7 +65,14 @@ public:
   }
 
   // Nop TODO: add all the rest
-  // Block
+  Block* makeBlock(Expression* first = nullptr) {
+    auto* ret = allocator.alloc<Block>();
+    if (first) {
+      ret->list.push_back(first);
+      ret->finalize();
+    }
+    return ret;
+  }
   If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse=nullptr) {
     auto* ret = allocator.alloc<If>();
     ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;
@@ -191,6 +198,12 @@ public:
     func->vars.clear();
     func->localNames.clear();
     func->localIndices.clear();
+  }
+
+  // ensure a node is a block, if it isn't already
+  Block* blockify(Expression* any) {
+    if (any->is<Block>()) return any->cast<Block>();
+    return makeBlock(any);
   }
 };
 

@@ -181,9 +181,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     o << " " << curr->default_;
     incIndent();
-    if (curr->value) {
-      printFullLine(curr->value);
-    }
+    if (curr->value && !curr->value->is<Nop>()) printFullLine(curr->value);
     printFullLine(curr->condition);
     decIndent();
   }

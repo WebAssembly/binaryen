@@ -230,7 +230,6 @@ namespace Section {
   auto DataSegments = "data";
   auto FunctionTable = "table";
   auto Names = "name";
-  auto End = "end";
   auto Start = "start";
 };
 
@@ -270,8 +269,7 @@ enum ASTNodes {
   I32Clz = 0x57,
   I32Ctz = 0x58,
   I32Popcnt = 0x59,
-  I32EqZ = 0xc0, // XXX
-  BoolNot = 0x5a,
+  I32EqZ = 0x5a,
   I64Add = 0x5b,
   I64Sub = 0x5c,
   I64Mul = 0x5d,
@@ -298,7 +296,7 @@ enum ASTNodes {
   I64Clz = 0x72,
   I64Ctz = 0x73,
   I64Popcnt = 0x74,
-  I64EqZ = 0xc1, // XXX
+  I64EqZ = 0xba,
   F32Add = 0x75,
   F32Sub = 0x76,
   F32Mul = 0x77,
@@ -363,12 +361,12 @@ enum ASTNodes {
   F64UConvertI64      = 0xb1,
   F64ConvertF32       = 0xb2,
   F64ReinterpretI64   = 0xb3,
+  I32ReinterpretF32   = 0xb4,
   I64ReinterpretF64   = 0xb5,
   I32RotR             = 0xb6,
   I32RotL             = 0xb7,
   I64RotR             = 0xb8,
   I64RotL             = 0xb9,
-  I32ReinterpretF32   = 0xfe, // XXX not in v8 spec doc
 
   I32LoadMem8S = 0x20,
   I32LoadMem8U = 0x21,
@@ -476,7 +474,6 @@ public:
     writeDataSegments();
     writeFunctionTable();
     writeNames();
-    writeEnd();
     finishUp();
   }
 
@@ -518,7 +515,7 @@ public:
     auto start = startSection(BinaryConsts::Section::Memory);
     o << U32LEB(wasm->memory.initial)
       << U32LEB(wasm->memory.max)
-      << int8_t(1); // export memory
+      << int8_t(wasm->memory.exportName.is()); // export memory
     finishSection(start);
   }
 
@@ -644,7 +641,6 @@ public:
       if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
       depth = 0;
       recurse(function->body);
-      o << int8_t(BinaryConsts::End);
       assert(depth == 0);
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
@@ -732,11 +728,6 @@ public:
     finishSection(start);
   }
 
-  void writeEnd() {
-    auto start = startSection(BinaryConsts::Section::End);
-    finishSection(start);
-  }
-
   // helpers
 
   void writeInlineString(const char* name) {
@@ -812,19 +803,23 @@ public:
   }
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
-    o << int8_t(BinaryConsts::If);
     recurse(curr->condition);
-    recurse(curr->ifTrue); // TODO: emit block contents directly, if block with no name
+    o << int8_t(BinaryConsts::If);
+    breakStack.push_back(IMPOSSIBLE_CONTINUE); // the binary format requires this; we have a block if we need one; TODO: optimize
+    recurse(curr->ifTrue); // TODO: emit block contents directly, if possible
+    breakStack.pop_back();
     if (curr->ifFalse) {
       o << int8_t(BinaryConsts::Else);
+      breakStack.push_back(IMPOSSIBLE_CONTINUE); // TODO ditto
       recurse(curr->ifFalse);
+      breakStack.pop_back();
     }
     o << int8_t(BinaryConsts::End);
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
     // TODO: optimize, as we usually have a block as our singleton child
-    o << int8_t(BinaryConsts::Loop) << int8_t(1);
+    o << int8_t(BinaryConsts::Loop);
     breakStack.push_back(curr->out);
     breakStack.push_back(curr->in);
     recurse(curr->body);
@@ -856,19 +851,17 @@ public:
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
-    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
-    for (auto target : curr->targets) {
-      o << U32LEB(getBreakIndex(target));
-    }
-    o << U32LEB(getBreakIndex(curr->default_));
-    recurse(curr->condition);
-    o << int8_t(BinaryConsts::End);
     if (curr->value) {
       recurse(curr->value);
     } else {
       visitNop(nullptr);
     }
-    o << int8_t(BinaryConsts::End);
+    recurse(curr->condition);
+    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
+    for (auto target : curr->targets) {
+      o << U32LEB(getBreakIndex(target));
+    }
+    o << U32LEB(getBreakIndex(curr->default_));
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
@@ -1178,10 +1171,10 @@ public:
       else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
       else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
       else if (match(BinaryConsts::Section::Names)) readNames();
-      else if (match(BinaryConsts::Section::End)) {
-        if (debug) std::cerr << "== readEnd" << std::endl;
-        break;
-      } else {
+      else {
+        std::cerr << "unfamiliar section: ";
+        for (size_t i = 0; i < nameSize; i++) std::cerr << input[pos + i];
+        std::cerr << std::endl;
         abort();
       }
       assert(pos == before + sectionSize);
@@ -1343,7 +1336,10 @@ public:
     if (debug) std::cerr << "== readMemory" << std::endl;
     wasm.memory.initial = getU32LEB();
     wasm.memory.max = getU32LEB();
-    verifyInt8(1); // export memory
+    auto exportMemory = getInt8();
+    if (exportMemory) {
+      wasm.memory.exportName = Name("memory");
+    }
   }
 
   void readSignatures() {
@@ -1414,6 +1410,7 @@ public:
   std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
   std::map<size_t, std::vector<Call*>> functionCalls; // at index i we have all calls to i
   Function* currFunction = nullptr;
+  size_t endOfFunction;
 
   void readFunctions() {
     if (debug) std::cerr << "== readFunctions" << std::endl;
@@ -1421,7 +1418,8 @@ public:
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "read one at " << pos << std::endl;
       size_t size = getU32LEB();
-      assert(size > 0); // we could also check it matches the seen size
+      assert(size > 0);
+      endOfFunction = pos + size;
       auto type = functionTypes[i];
       if (debug) std::cerr << "reading" << i << std::endl;
       size_t nextVar = 0;
@@ -1443,7 +1441,7 @@ public:
         }
       }
       auto func = Builder(wasm).makeFunction(
-        Name("TODO"),
+        Name::fromInt(i),
         std::move(params),
         type->result,
         std::move(vars)
@@ -1458,12 +1456,11 @@ public:
         assert(breakStack.empty());
         assert(expressionStack.empty());
         depth = 0;
-        processExpressions();
-        assert(expressionStack.size() == 1);
-        func->body = popExpression();
+        func->body = getMaybeBlock();
         assert(depth == 0);
         assert(breakStack.empty());
         assert(expressionStack.empty());
+        assert(pos == endOfFunction);
       }
       currFunction = nullptr;
       functions.push_back(func);
@@ -1490,11 +1487,16 @@ public:
 
   std::vector<Expression*> expressionStack;
 
-  BinaryConsts::ASTNodes processExpressions() { // until an end or else marker
+  BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
+
+  void processExpressions() { // until an end or else marker, or the end of the function
     while (1) {
       Expression* curr;
       auto ret = readExpression(curr);
-      if (!curr) return ret;
+      if (!curr) {
+        lastSeparator = ret;
+        return;
+      }
       expressionStack.push_back(curr);
     }
   }
@@ -1579,6 +1581,10 @@ public:
   int depth; // only for debugging
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr) {
+    if (pos == endOfFunction) {
+      curr = nullptr;
+      return BinaryConsts::End;
+    }
     if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
     uint8_t code = getInt8();
     if (debug) std::cerr << "readExpression seeing " << (int)code << std::endl;
@@ -1669,32 +1675,49 @@ public:
       breakStack.pop_back();
     }
   }
+
+  Expression* getMaybeBlock() {
+    auto start = expressionStack.size();
+    processExpressions();
+    size_t end = expressionStack.size();
+    if (start - end == 1) {
+      return popExpression();
+    }
+    auto* block = allocator.alloc<Block>();
+    for (size_t i = start; i < end; i++) {
+      block->list.push_back(expressionStack[i]);
+    }
+    block->finalize();
+    expressionStack.resize(start);
+    return block;
+  }
+
+  Expression* getBlock() {
+    Name label = getNextLabel();
+    breakStack.push_back(label);
+    auto* block = Builder(wasm).blockify(getMaybeBlock());
+    breakStack.pop_back();
+    block->cast<Block>()->name = label;
+    return block;
+  }
+
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
-    size_t start = expressionStack.size();
-    auto next = processExpressions();
-    size_t end = expressionStack.size();
-    assert(end - start == 2);
-    curr->ifTrue = popExpression();
     curr->condition = popExpression();
-    if (next == BinaryConsts::Else) {
-      size_t start = expressionStack.size();
-      processExpressions();
-      size_t end = expressionStack.size();
-      assert(end - start == 1);
-      curr->ifFalse = popExpression();
+    curr->ifTrue = getBlock();
+    if (lastSeparator == BinaryConsts::Else) {
+      curr->ifFalse = getBlock();
       curr->finalize();
     }
+    assert(lastSeparator == BinaryConsts::End);
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
-    verifyInt8(1); // size TODO: generalize
     curr->out = getNextLabel();
     curr->in = getNextLabel();
     breakStack.push_back(curr->out);
     breakStack.push_back(curr->in);
-    processExpressions();
-    curr->body = popExpression();
+    curr->body = getMaybeBlock();
     breakStack.pop_back();
     breakStack.pop_back();
     curr->finalize();
@@ -1713,16 +1736,13 @@ public:
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
+    curr->condition = popExpression();
+    curr->value = popExpression();
     auto numTargets = getU32LEB();
     for (size_t i = 0; i < numTargets; i++) {
       curr->targets.push_back(getBreakName(getU32LEB()));
     }
     curr->default_ = getBreakName(getU32LEB());
-    processExpressions();
-    curr->condition = popExpression();
-    processExpressions();
-    curr->value = popExpression();
-    if (curr->value->is<Nop>()) curr->value = nullptr;
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
