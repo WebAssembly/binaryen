@@ -805,10 +805,14 @@ public:
     if (debug) std::cerr << "zz node: If" << std::endl;
     recurse(curr->condition);
     o << int8_t(BinaryConsts::If);
-    recurse(curr->ifTrue); // TODO: emit block contents directly, if block with no name
+    breakStack.push_back(IMPOSSIBLE_CONTINUE); // the binary format requires this; we have a block if we need one; TODO: optimize
+    recurse(curr->ifTrue); // TODO: emit block contents directly, if possible
+    breakStack.pop_back();
     if (curr->ifFalse) {
       o << int8_t(BinaryConsts::Else);
+      breakStack.push_back(IMPOSSIBLE_CONTINUE); // TODO ditto
       recurse(curr->ifFalse);
+      breakStack.pop_back();
     }
     o << int8_t(BinaryConsts::End);
   }
@@ -1678,24 +1682,31 @@ public:
     auto start = expressionStack.size();
     processExpressions();
     size_t end = expressionStack.size();
-    if (end - start == 1) {
-      return popExpression();
-    } else {
-      auto* body = allocator.alloc<Block>();
-      for (size_t i = start; i < end; i++) {
-        body->list.push_back(expressionStack[i]);
-      }
-      expressionStack.resize(start);
-      return body;
+    // TODO: optimize case of 1 expression and 0 breaks in this scope
+    auto* block = allocator.alloc<Block>();
+    for (size_t i = start; i < end; i++) {
+      block->list.push_back(expressionStack[i]);
     }
+    block->finalize();
+    expressionStack.resize(start);
+    return block;
+  }
+
+  Expression* getBlock() {
+    Name label = getNextLabel();
+    breakStack.push_back(label);
+    auto* block = getMaybeBlock()->cast<Block>(); // TODO: when getMaybeBlock is optimized, blockify only when needed
+    breakStack.pop_back();
+    block->name = label;
+    return block;
   }
 
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
     curr->condition = popExpression();
-    curr->ifTrue = getMaybeBlock();
+    curr->ifTrue = getBlock();
     if (lastSeparator == BinaryConsts::Else) {
-      curr->ifFalse = getMaybeBlock();
+      curr->ifFalse = getBlock();
       curr->finalize();
     }
     assert(lastSeparator == BinaryConsts::End);

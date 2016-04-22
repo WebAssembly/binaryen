@@ -68,8 +68,10 @@
           )
           (i32.const 0)
         )
-        (br $label$0
-          (f64.const -3.4)
+        (block $label$1
+          (br $label$0
+            (f64.const -3.4)
+          )
         )
       )
       (if
@@ -79,8 +81,10 @@
           )
           (f64.const 0)
         )
-        (br $label$0
-          (f64.const 5.6)
+        (block $label$2
+          (br $label$0
+            (f64.const 5.6)
+          )
         )
       )
       (f64.const 1.2)
@@ -96,8 +100,10 @@
           (get_local $var$0)
           (f64.const 0)
         )
-        (br $label$0
-          (f64.const 1.2)
+        (block $label$1
+          (br $label$0
+            (f64.const 1.2)
+          )
         )
       )
       (if
@@ -105,8 +111,10 @@
           (get_local $var$4)
           (f64.const 0)
         )
-        (br $label$0
-          (f64.const -3.4)
+        (block $label$2
+          (br $label$0
+            (f64.const -3.4)
+          )
         )
       )
       (if
@@ -114,8 +122,10 @@
           (get_local $var$2)
           (i32.const 0)
         )
-        (br $label$0
-          (f64.const 5.6)
+        (block $label$3
+          (br $label$0
+            (f64.const 5.6)
+          )
         )
       )
       (if
@@ -123,8 +133,10 @@
           (get_local $var$0)
           (get_local $var$1)
         )
-        (br $label$0
-          (get_local $var$0)
+        (block $label$4
+          (br $label$0
+            (get_local $var$0)
+          )
         )
       )
       (get_local $var$1)
