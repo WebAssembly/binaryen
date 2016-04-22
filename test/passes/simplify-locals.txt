@@ -71,9 +71,7 @@
         (i32.const 48)
         (i32.const 96)
       )
-      (set_local $a
-        (i32.const 17)
-      )
+      (i32.const 17)
       (i32.const 18)
     )
     (block $block3
@@ -183,18 +181,17 @@
       (call_import $waka)
     )
     (block $out-of-block
-      (set_local $a
-        (i32.const 1337)
-      )
+      (nop)
+      (nop)
       (block $b
         (block $c
-          (br $b)
+          (br $b
+            (i32.const 1337)
+          )
         )
-        (set_local $a
-          (i32.const 9876)
-        )
+        (nop)
+        (i32.const 9876)
       )
-      (get_local $a)
     )
     (block $loopey
       (set_local $a
@@ -213,13 +210,11 @@
     (local $b i32)
     (block $switch$0
       (block $switch-default$6
-        (set_local $b
-          (i32.const 60)
-        )
+        (nop)
       )
     )
     (return
-      (get_local $b)
+      (i32.const 60)
     )
   )
   (func $memories (param $i2 i32) (param $i3 i32) (param $bi2 i32) (param $bi3 i32) (param $ci3 i32) (param $di3 i32)
@@ -442,5 +437,84 @@
         (get_local $$10$0)
       )
     )
+  )
+  (func $block-returns
+    (local $x i32)
+    (set_local $x
+      (block $out
+        (nop)
+        (br_if $out
+          (block $waka
+            (nop)
+            (br_if $waka
+              (i32.const 12)
+              (i32.const 1)
+            )
+            (nop)
+            (i32.const 34)
+          )
+          (i32.const 1)
+        )
+        (get_local $x)
+        (block $waka2
+          (set_local $x
+            (if
+              (i32.const 1)
+              (block
+                (nop)
+                (i32.const 13)
+              )
+              (block
+                (nop)
+                (i32.const 24)
+              )
+            )
+          )
+          (nop)
+        )
+        (br_if $out
+          (if
+            (i32.const 1)
+            (block $block3
+              (nop)
+              (i32.const 14)
+            )
+            (block $block5
+              (nop)
+              (i32.const 25)
+            )
+          )
+          (i32.const 1)
+        )
+        (block $sink-out-of-me-i-have-but-one-exit
+          (nop)
+        )
+        (nop)
+        (i32.const 99)
+      )
+    )
+  )
+  (func $multiple (param $s i32) (param $r i32) (param $f i32) (param $p i32) (param $t i32) (param $m i32)
+    (nop)
+    (set_local $r
+      (i32.add
+        (get_local $f)
+        (get_local $p)
+      )
+    )
+    (set_local $t
+      (get_local $p)
+    )
+    (set_local $p
+      (i32.load
+        (i32.const 0)
+      )
+    )
+    (i32.store
+      (get_local $r)
+      (get_local $t)
+    )
+    (get_local $m)
+    (get_local $t)
   )
 )

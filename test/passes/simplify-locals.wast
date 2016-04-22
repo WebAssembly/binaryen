@@ -387,5 +387,69 @@
       )
     )
   )
+  (func $block-returns
+    (local $x i32)
+    (block $out
+      (block $waka
+        (set_local $x (i32.const 12))
+        (br_if $waka
+          (i32.const 1)
+        )
+        (set_local $x (i32.const 34))
+      )
+      (br_if $out ;; barrier
+        (i32.const 1)
+      )
+      (get_local $x) ;; a use, so setlocals are not all killed
+      (block $waka2
+        (if
+          (i32.const 1)
+          (set_local $x (i32.const 13))
+          (set_local $x (i32.const 24))
+        )
+        (if
+          (i32.const 1)
+          (block
+            (set_local $x (i32.const 14))
+          )
+          (block
+            (set_local $x (i32.const 25))
+          )
+        )
+      )
+      (br_if $out ;; barrier
+        (i32.const 1)
+      )
+      (block $sink-out-of-me-i-have-but-one-exit
+        (set_local $x (i32.const 99))
+      )
+      (get_local $x)
+    )
+  )
+  (func $multiple (param $s i32) (param $r i32) (param $f i32) (param $p i32) (param $t i32) (param $m i32)
+    (set_local $s
+      (get_local $m)
+    )
+    (set_local $r
+      (i32.add
+        (get_local $f)
+        (get_local $p)
+      )
+    )
+    (set_local $t ;; t is equal to p's original value; p must not be set to before t gets that value
+      (get_local $p)
+    )
+    (set_local $p
+      (i32.load
+        (i32.const r)
+      )
+    )
+    (i32.store
+      (get_local $r)
+      (get_local $t)
+    )
+    (get_local $s)
+    (get_local $t)
+  )
 )
 
