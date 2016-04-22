@@ -1456,9 +1456,7 @@ public:
         assert(breakStack.empty());
         assert(expressionStack.empty());
         depth = 0;
-        processExpressions();
-        assert(expressionStack.size() == 1);
-        func->body = popExpression();
+        func->body = getMaybeBlock();
         assert(depth == 0);
         assert(breakStack.empty());
         assert(expressionStack.empty());
@@ -1682,7 +1680,9 @@ public:
     auto start = expressionStack.size();
     processExpressions();
     size_t end = expressionStack.size();
-    // TODO: optimize case of 1 expression and 0 breaks in this scope
+    if (start - end == 1) {
+      return popExpression();
+    }
     auto* block = allocator.alloc<Block>();
     for (size_t i = start; i < end; i++) {
       block->list.push_back(expressionStack[i]);
@@ -1695,9 +1695,9 @@ public:
   Expression* getBlock() {
     Name label = getNextLabel();
     breakStack.push_back(label);
-    auto* block = getMaybeBlock()->cast<Block>(); // TODO: when getMaybeBlock is optimized, blockify only when needed
+    auto* block = Builder(wasm).blockify(getMaybeBlock());
     breakStack.pop_back();
-    block->name = label;
+    block->cast<Block>()->name = label;
     return block;
   }
 
