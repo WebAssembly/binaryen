@@ -89,8 +89,6 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
     return hasAnything();
   }
 
-  void visitBlock(Block *curr) { branches = true; }
-  void visitLoop(Loop *curr) { branches = true; }
   void visitIf(If *curr) { branches = true; }
   void visitBreak(Break *curr) { branches = true; }
   void visitSwitch(Switch *curr) { branches = true; }
