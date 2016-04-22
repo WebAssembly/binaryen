@@ -467,10 +467,10 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   LinearExecutionWalker() {}
 
   // subclasses should implement this
-  void noteNonLinear() { abort(); }
+  void noteNonLinear(Expression* curr) { abort(); }
 
   static void doNoteNonLinear(SubType* self, Expression** currp) {
-    self->noteNonLinear();
+    self->noteNonLinear(*currp);
   }
 
   static void scan(SubType* self, Expression** currp) {
