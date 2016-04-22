@@ -37,21 +37,29 @@ void Linker::placeStackPointer(size_t stackAllocation) {
   const size_t pointerSize = 4;
   // Unconditionally allocate space for the stack pointer. Emscripten
   // allocates the stack itself, and initializes the stack pointer itself.
-  size_t address = allocateStatic(pointerSize, pointerSize, "__stack_pointer");
+  addStatic(pointerSize, pointerSize, "__stack_pointer");
   if (stackAllocation) {
     // If we are allocating the stack, set up a relocation to initialize the
     // stack pointer to point to one past-the-end of the stack allocation.
     auto* raw = new uint32_t;
-    relocations.emplace_back(
-        make_unique<Relocation>(raw, ".stack", stackAllocation));
+    addRelocation(Relocation::kData, raw, ".stack", stackAllocation);
     assert(wasm.memory.segments.size() == 0);
-    addressSegments[address] = wasm.memory.segments.size();
-    wasm.memory.segments.emplace_back(
-        address, reinterpret_cast<char*>(raw), pointerSize);
+    addSegment("__stack_pointer", reinterpret_cast<char*>(raw), pointerSize);
   }
 }
 
 void Linker::layout() {
+  // Allocate all user statics
+  for (const auto& obj : staticObjects) {
+    allocateStatic(obj.allocSize, obj.alignment, obj.name);
+  }
+  // Update the segments with their addresses now that they have been allocated.
+  for (auto& seg : segments) {
+    size_t address = staticAddresses[seg.first];
+    wasm.memory.segments[seg.second].offset = address;
+    segmentsByAddress[address] = seg.second;
+  }
+
   // Place the stack after the user's static data, to keep those addresses
   // small.
   if (stackAllocation) allocateStatic(stackAllocation, 16, ".stack");
@@ -88,36 +96,35 @@ void Linker::layout() {
     }
   };
   for (auto& relocation : relocations) {
-    Name name = relocation->value;
+    Name name = relocation->symbol;
     if (debug) std::cerr << "fix relocation " << name << '\n';
-    const auto& symbolAddress = staticAddresses.find(name);
-    if (symbolAddress != staticAddresses.end()) {
-      *(relocation->data) = symbolAddress->second + relocation->offset;
+
+    if (relocation->kind == Relocation::kData) {
+      const auto& symbolAddress = staticAddresses.find(name);
+      assert(symbolAddress != staticAddresses.end());
+      *(relocation->data) = symbolAddress->second + relocation->addend;
       if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
     } else {
-      // must be a function address
-      auto aliased = aliasedFunctions.find(name);
-      if (aliased != aliasedFunctions.end()) name = aliased->second;
+      // function address
+      name = resolveAlias(name);
       if (!wasm.checkFunction(name)) {
         std::cerr << "Unknown symbol: " << name << '\n';
-        if (!ignoreUnknownSymbols) abort();
+        if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
         *(relocation->data) = 0;
       } else {
         ensureFunctionIndex(name);
-        *(relocation->data) = functionIndexes[name] + relocation->offset;
+        *(relocation->data) = functionIndexes[name] + relocation->addend;
       }
     }
   }
   if (!!startFunction) {
     if (implementedFunctions.count(startFunction) == 0) {
-      std::cerr << "Unknown start function: `" << startFunction << "`\n";
-      abort();
+      Fatal() << "Unknown start function: `" << startFunction << "`\n";
     }
     const auto *target = wasm.getFunction(startFunction);
     Name start("_start");
     if (implementedFunctions.count(start) != 0) {
-      std::cerr << "Start function already present: `" << start << "`\n";
-      abort();
+      Fatal() << "Start function already present: `" << start << "`\n";
     }
     auto* func = wasm.allocator.alloc<Function>();
     func->name = start;
@@ -173,7 +180,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
     void visitCallImport(CallImport* curr) {
       if (curr->target == EMSCRIPTEN_ASM_CONST) {
         auto arg = curr->operands[0]->cast<Const>();
-        size_t segmentIndex = parent->addressSegments[arg->value.geti32()];
+        size_t segmentIndex = parent->segmentsByAddress[arg->value.geti32()];
         std::string code = escape(parent->wasm.memory.segments[segmentIndex].data);
         int32_t id;
         if (ids.count(code) == 0) {

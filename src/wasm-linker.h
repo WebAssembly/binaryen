@@ -29,15 +29,18 @@
 
 namespace wasm {
 
-// Wasm module linking/layout information
 class Linker {
  public:
   struct Relocation {
+    enum Kind { kData, kFunction };
+    Kind kind; // Whether the symbol refers to data or a function.
+    // Instead of section offsets as relocation targets, for now this is just
+    // a pointer to the memory to rewrite.
     uint32_t* data;
-    Name value;
-    int offset;
-    Relocation(uint32_t* data, Name value, int offset) :
-        data(data), value(value), offset(offset) {}
+    Name symbol; // Like the symbol index in ELF r_info field
+    int addend; // Like the ELF r_addend field
+    Relocation(Kind kind, uint32_t* data, Name symbol, int addend) :
+        kind(kind), data(data), symbol(symbol), addend(addend) {}
   };
 
   Linker(Module& wasm, size_t globalBase, size_t stackAllocation,
@@ -74,7 +77,7 @@ class Linker {
     // wasm modules can't import data objects. Its value is 0 for the main
     // executable, which is all we have with static linking. In the future this
     // can go in a crtbegin or similar file.
-    allocateStatic(4, 4, "__dso_handle");
+    addStatic(4, 4, "__dso_handle");
   }
 
   // Allocate a static variable and return its address in linear memory
@@ -85,15 +88,17 @@ class Linker {
     return address;
   }
 
-  // Allocate space for a stack pointer and (if stackAllocation > 0) set up a
-  // relocation for it to point to the top of the stack.
-  void placeStackPointer(size_t stackAllocation);
+  // Allocate a static object
+  void addStatic(size_t allocSize, size_t alignment, Name name) {
+    staticObjects.emplace_back(allocSize, alignment, name);
+  }
+
   void addGlobal(Name name) {
     globls.push_back(name);
   }
 
-  void addRelocation(uint32_t* target, Name name, int offset) {
-    relocations.emplace_back(make_unique<Relocation>(target, name, offset));
+  void addRelocation(Relocation::Kind kind, uint32_t* target, Name name, int addend) {
+    relocations.emplace_back(make_unique<Relocation>(kind, target, name, addend));
   }
   Relocation* getCurrentRelocation() {
     return relocations.back().get();
@@ -116,9 +121,10 @@ class Linker {
     return name;
   }
 
-  void addAddressSegment(size_t address, const char* data, size_t size) {
-    addressSegments[address] = wasm.memory.segments.size();
-    wasm.memory.segments.emplace_back(address, data, size);
+  // Add an initializer segment for the named static variable.
+  void addSegment(Name name, const char* data, size_t size) {
+    segments[name] = wasm.memory.segments.size();
+    wasm.memory.segments.emplace_back(0, data, size);
   }
 
   void addInitializerFunction(Name name) {
@@ -136,6 +142,18 @@ class Linker {
   void emscriptenGlue(std::ostream& o);
 
  private:
+  struct StaticObject {
+    size_t allocSize;
+    size_t alignment;
+    Name name;
+    StaticObject(size_t allocSize, size_t alignment, Name name) :
+        allocSize(allocSize), alignment(alignment), name(name) {}
+  };
+
+  // Allocate space for a stack pointer and (if stackAllocation > 0) set up a
+  // relocation for it to point to the top of the stack.
+  void placeStackPointer(size_t stackAllocation);
+
   template<class C>
   void printSet(std::ostream& o, C& c) {
     o << "[";
@@ -182,16 +200,18 @@ class Linker {
   size_t stackAllocation;
   bool debug;
 
-  std::map<Name, int32_t> staticAddresses; // name => address
+  std::vector<StaticObject> staticObjects;
+  std::unordered_map<cashew::IString, int32_t> staticAddresses; // name => address
 
   std::vector<std::unique_ptr<Relocation>> relocations;
 
   std::set<Name> implementedFunctions;
-  std::map<Name, Name> aliasedFunctions;
+  std::unordered_map<cashew::IString, Name> aliasedFunctions;
 
-  std::map<size_t, size_t> addressSegments; // address => segment index
+  std::map<Name, size_t> segments; // name => segment index (in wasm module)
+  std::unordered_map<size_t, size_t> segmentsByAddress; // address => segment index
 
-  std::map<Name, size_t> functionIndexes;
+  std::unordered_map<cashew::IString, size_t> functionIndexes;
 
   std::vector<Name> initializerFunctions;
 

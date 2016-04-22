@@ -200,7 +200,8 @@ class S2WasmBuilder {
       return false;
     } else {
       // a global constant, we need to fix it up later
-      Name name = cleanFunction(getStrToSep());
+      Name name = getStrToSep();
+      Linker::Relocation::Kind kind = isFunctionName(name) ? Linker::Relocation::kFunction : Linker::Relocation::kData;
       int offset = 0;
       if (*s == '+') {
         s++;
@@ -209,7 +210,7 @@ class S2WasmBuilder {
         s++;
         offset = -getInt();
       }
-      linker.addRelocation(target, name, offset);
+      linker.addRelocation(kind, target, cleanFunction(name), offset);
       return true;
     }
   }
@@ -318,7 +319,11 @@ class S2WasmBuilder {
     abort_on("getType");
   }
 
-  // The LLVM backend emits function names as name@FUNCTION. We can drop the @ and after it.
+  // The LLVM backend emits function names as name@FUNCTION.
+  bool isFunctionName(Name name) {
+    return strstr(name.str, "@FUNCTION");
+  }
+  // Drop the @ and after it.
   Name cleanFunction(Name name) {
     if (!strchr(name.str, '@')) return name;
     char *temp = strdup(name.str);
@@ -1105,9 +1110,9 @@ class S2WasmBuilder {
       r->data = (uint32_t*)&(*raw)[i];
     }
     // assign the address, add to memory
-    size_t address = linker.allocateStatic(size, align, name);
+    linker.addStatic(size, align, name);
     if (!zero) {
-      linker.addAddressSegment(address, (const char*)&(*raw)[0], size);
+      linker.addSegment(name, (const char*)&(*raw)[0], size);
     }
   }
 
@@ -1119,7 +1124,7 @@ class S2WasmBuilder {
       skipComma();
       getInt();
     }
-    linker.allocateStatic(size, align, name);
+    linker.addStatic(size, align, name);
   }
 
   void skipImports() {
