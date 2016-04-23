@@ -115,6 +115,4 @@ struct MixedArena {
   }
 };
 
-extern MixedArena globalAllocator;
-
 #endif // wasm_mixed_arena_h
