@@ -58,7 +58,8 @@
 struct MixedArena {
   // fast bump allocation
   std::vector<char*> chunks;
-  int index; // in last chunk
+  size_t chunkSize = 32768;
+  size_t index; // in last chunk
 
   // multithreaded allocation - each arena is valid on a specific thread.
   // if we are on the wrong thread, we safely look in the linked
@@ -88,11 +89,14 @@ struct MixedArena {
       }
       return curr->allocSpace(size);
     }
-    const size_t CHUNK = 10000;
     size = (size + 7) & (-8); // same alignment as malloc TODO optimize?
-    assert(size < CHUNK);
-    if (chunks.size() == 0 || index + size >= CHUNK) {
-      chunks.push_back(new char[CHUNK]);
+    bool mustAllocate = false;
+    while (chunkSize <= size) {
+      chunkSize *= 2;
+      mustAllocate = true;
+    }
+    if (chunks.size() == 0 || index + size >= chunkSize || mustAllocate) {
+      chunks.push_back(new char[chunkSize]);
       index = 0;
     }
     auto* ret = chunks.back() + index;
