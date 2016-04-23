@@ -73,8 +73,7 @@ struct MixedArena {
     next = nullptr;
   }
 
-  template<class T>
-  T* alloc() {
+  void* allocSpace(size_t size) {
     // the bump allocator data should not be modified by multiple threads at once.
     if (std::this_thread::get_id() != threadId) {
       // TODO use a fast double-checked locking pattern.
@@ -87,17 +86,23 @@ struct MixedArena {
           curr->next = new MixedArena(); // will have our thread id
         }
       }
-      return curr->alloc<T>();
+      return curr->allocSpace(size);
     }
     const size_t CHUNK = 10000;
-    size_t currSize = (sizeof(T) + 7) & (-8); // same alignment as malloc TODO optimize?
-    assert(currSize < CHUNK);
-    if (chunks.size() == 0 || index + currSize >= CHUNK) {
+    size = (size + 7) & (-8); // same alignment as malloc TODO optimize?
+    assert(size < CHUNK);
+    if (chunks.size() == 0 || index + size >= CHUNK) {
       chunks.push_back(new char[CHUNK]);
       index = 0;
     }
-    T* ret = (T*)(chunks.back() + index);
-    index += currSize;
+    auto* ret = chunks.back() + index;
+    index += size;
+    return static_cast<void*>(ret);
+  }
+
+  template<class T>
+  T* alloc() {
+    auto* ret = static_cast<T*>(allocSpace(sizeof(T)));
     new (ret) T();
     return ret;
   }
