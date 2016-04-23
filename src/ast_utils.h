@@ -136,6 +136,16 @@ struct ExpressionManipulator {
   static void nop(InputType* target) {
     convert<InputType, Nop>(target);
   }
+
+  // Convert a node that allocates
+  template<typename InputType, typename OutputType>
+  static OutputType* convert(InputType *input, MixedArena& allocator) {
+    assert(sizeof(OutputType) <= sizeof(InputType));
+    input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
+    OutputType* output = (OutputType*)(input);
+    new (output) OutputType(allocator);
+    return output;
+  }
 };
 
 struct ExpressionAnalyzer {

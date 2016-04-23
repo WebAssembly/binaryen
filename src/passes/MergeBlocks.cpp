@@ -34,7 +34,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
         Block* child = curr->list[i]->dynCast<Block>();
         if (!child) continue;
         if (child->name.is()) continue; // named blocks can have breaks to them (and certainly do, if we ran RemoveUnusedNames and RemoveUnusedBrs)
-        ExpressionList merged;
+        ExpressionList merged(getModule()->allocator);
         for (size_t j = 0; j < i; j++) {
           merged.push_back(curr->list[j]);
         }

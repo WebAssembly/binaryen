@@ -71,24 +71,6 @@ std::string getSig(Function *func) {
   return ret;
 }
 
-std::string getSig(CallBase *call) {
-  std::string ret;
-  ret += getSig(call->type);
-  for (auto operand : call->operands) {
-    ret += getSig(operand->type);
-  }
-  return ret;
-}
-
-std::string getSig(WasmType result, const ExpressionList& operands) {
-  std::string ret;
-  ret += getSig(result);
-  for (auto operand : operands) {
-    ret += getSig(operand->type);
-  }
-  return ret;
-}
-
 WasmType sigToWasmType(char sig) {
   switch (sig) {
     case 'i': return i32;
@@ -100,22 +82,22 @@ WasmType sigToWasmType(char sig) {
   }
 }
 
-FunctionType sigToFunctionType(std::string sig) {
-  FunctionType ret;
-  ret.result = sigToWasmType(sig[0]);
+FunctionType* sigToFunctionType(std::string sig, MixedArena& allocator) {
+  auto ret = allocator.alloc<FunctionType>();
+  ret->result = sigToWasmType(sig[0]);
   for (size_t i = 1; i < sig.size(); i++) {
-    ret.params.push_back(sigToWasmType(sig[i]));
+    ret->params.push_back(sigToWasmType(sig[i]));
   }
   return ret;
 }
 
-FunctionType* ensureFunctionType(std::string sig, Module* wasm, MixedArena& allocator) {
+FunctionType* ensureFunctionType(std::string sig, Module* wasm) {
   cashew::IString name(("FUNCSIG$" + sig).c_str(), false);
   if (wasm->checkFunctionType(name)) {
     return wasm->getFunctionType(name);
   }
   // add new type
-  auto type = allocator.alloc<FunctionType>();
+  auto type = wasm->allocator.alloc<FunctionType>();
   type->name = name;
   type->result = sigToWasmType(sig[0]);
   for (size_t i = 1; i < sig.size(); i++) {

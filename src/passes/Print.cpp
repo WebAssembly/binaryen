@@ -186,7 +186,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
 
-  void printCallBody(Call* curr) {
+  template<typename CallBase>
+  void printCallBody(CallBase* curr) {
     o << curr->target;
     if (curr->operands.size() > 0) {
       incIndent();

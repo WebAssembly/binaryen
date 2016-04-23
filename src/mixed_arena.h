@@ -107,7 +107,7 @@ struct MixedArena {
   template<class T>
   T* alloc() {
     auto* ret = static_cast<T*>(allocSpace(sizeof(T)));
-    new (ret) T();
+    new (ret) T(*this); // allocated objects receive the allocator, so they can allocate more later if necessary
     return ret;
   }
 
@@ -121,6 +121,135 @@ struct MixedArena {
   ~MixedArena() {
     clear();
     if (next) delete next;
+  }
+};
+
+
+//
+// A vector that allocates in an arena.
+//
+// TODO: consider not saving the allocator, but requiring it be
+//       passed in when needed, would make this (and thus Blocks etc.
+//       smaller)
+//
+// TODO: specialize on the initial size of the array
+
+template <typename T>
+class ArenaVector {
+  MixedArena& allocator;
+  T* data = nullptr;
+  size_t usedElements = 0,
+         allocatedElements = 0;
+
+  void allocate(size_t size) {
+    allocatedElements = size;
+    data = static_cast<T*>(allocator.allocSpace(sizeof(T) * allocatedElements));
+  }
+
+  void reallocate(size_t size) {
+    T* old = data;
+    allocate(size);
+    for (size_t i = 0; i < usedElements; i++) {
+      data[i] = old[i];
+    }
+  }
+
+public:
+  ArenaVector(MixedArena& allocator) : allocator(allocator) {}
+
+  ArenaVector(ArenaVector<T>&& other) : allocator(other.allocator) {
+    *this = other;
+  }
+
+  T& operator[](size_t index) const {
+    assert(index < usedElements);
+    return data[index];
+  }
+
+  size_t size() const {
+    return usedElements;
+  }
+
+  void resize(size_t size) {
+    if (size > allocatedElements) {
+      reallocate(size);
+    }
+    // construct new elements
+    for (size_t i = usedElements; i < size; i++) {
+      new (data + i) T();
+    }
+    usedElements = size;
+  }
+
+  T& back() const {
+    assert(usedElements > 0);
+    return data[usedElements - 1];
+  }
+
+  T& pop_back() {
+    assert(usedElements > 0);
+    usedElements--;
+    return data[usedElements];
+  }
+
+  void push_back(T item) {
+    if (usedElements == allocatedElements) {
+      reallocate((allocatedElements + 1) * 2); // TODO: optimize
+    }
+    data[usedElements] = item;
+    usedElements++;
+  }
+
+  template<typename ListType>
+  void set(ListType& list) {
+    size_t size = list.size();
+    if (allocatedElements < size) {
+      allocate(size);
+    }
+    for (size_t i = 0; i < size; i++) {
+      data[i] = list[i];
+    }
+    usedElements = size;
+  }
+
+  void operator=(ArenaVector<T>& other) {
+    set(other);
+  }
+
+  void operator=(ArenaVector<T>&& other) {
+    data = other.data;
+    usedElements = other.usedElements;
+    allocatedElements = other.allocatedElements;
+    other.data = nullptr;
+    other.usedElements = other.allocatedElements = 0;
+  }
+
+  // iteration
+
+  struct Iterator {
+    const ArenaVector<T>* parent;
+    size_t index;
+
+    Iterator(const ArenaVector<T>* parent, size_t index) : parent(parent), index(index) {}
+
+    bool operator!=(const Iterator& other) const {
+      return index != other.index || parent != other.parent;
+    }
+
+    void operator++() {
+      index++;
+    }
+
+    T& operator*() {
+      return (*parent)[index];
+    }
+  };
+
+  Iterator begin() const {
+    return Iterator(this, 0);
+  }
+  Iterator end() const {
+    return Iterator(this, usedElements);
   }
 };
 

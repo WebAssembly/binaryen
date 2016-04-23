@@ -103,6 +103,8 @@ void flattenAppend(Ref ast, Ref extra) {
 
 
 class Wasm2AsmBuilder {
+  MixedArena allocator;
+
 public:
   Wasm2AsmBuilder(bool debug) : debug(debug), tableSize(-1) {}
 
@@ -423,7 +425,12 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
       }
     }
     void visitCallImport(CallImport *curr) {
-      visitCall(curr);
+      for (auto item : curr->operands) {
+        if (parent->isStatement(item)) {
+          parent->setStatement(curr);
+          break;
+        }
+      }
     }
     void visitCallIndirect(CallIndirect *curr) {
       if (parent->isStatement(curr->target)) {
@@ -487,6 +494,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     Wasm2AsmBuilder* parent;
     IString result;
     Function* func;
+    MixedArena allocator;
     ExpressionProcessor(Wasm2AsmBuilder* parent, Function* func) : parent(parent), func(func) {}
 
     // A scoped temporary variable.
@@ -635,7 +643,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         // we need an equivalent to an if here, so use that code
         Break fakeBreak = *curr;
         fakeBreak.condition = nullptr;
-        If fakeIf;
+        If fakeIf(allocator);
         fakeIf.condition = curr->condition;
         fakeIf.ifTrue = &fakeBreak;
         return visit(&fakeIf, result);
@@ -709,7 +717,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return makeStatementizedCall(curr->operands, ValueBuilder::makeBlock(), theCall, result, curr->type);
     }
     Ref visitCallImport(CallImport *curr) {
-      return visitCall(curr);
+      abort();
     }
     Ref visitCallIndirect(CallIndirect *curr)  {
       std::string stable = std::string("FUNCTION_TABLE_") + getSig(curr->fullType);
@@ -751,7 +759,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     Ref visitLoad(Load *curr) {
       if (isStatement(curr)) {
         ScopedTemp temp(i32, parent);
-        GetLocal fakeLocal;
+        GetLocal fakeLocal(allocator);
         fakeLocal.index = func->getLocalIndex(temp.getName());
         Load fakeLoad = *curr;
         fakeLoad.ptr = &fakeLocal;
@@ -762,11 +770,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       if (curr->align != 0 && curr->align < curr->bytes) {
         // set the pointer to a local
         ScopedTemp temp(i32, parent);
-        SetLocal set;
+        SetLocal set(allocator);
         set.index = func->getLocalIndex(temp.getName());
         set.value = curr->ptr;
         Ref ptrSet = visit(&set, NO_RESULT);
-        GetLocal get;
+        GetLocal get(allocator);
         get.index = func->getLocalIndex(temp.getName());
         // fake loads
         Load load = *curr;
@@ -814,9 +822,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       if (isStatement(curr)) {
         ScopedTemp tempPtr(i32, parent);
         ScopedTemp tempValue(curr->type, parent);
-        GetLocal fakeLocalPtr;
+        GetLocal fakeLocalPtr(allocator);
         fakeLocalPtr.index = func->getLocalIndex(tempPtr.getName());
-        GetLocal fakeLocalValue;
+        GetLocal fakeLocalValue(allocator);
         fakeLocalValue.index = func->getLocalIndex(tempValue.getName());
         Store fakeStore = *curr;
         fakeStore.ptr = &fakeLocalPtr;
@@ -829,19 +837,19 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       if (curr->align != 0 && curr->align < curr->bytes) {
         // set the pointer to a local
         ScopedTemp temp(i32, parent);
-        SetLocal set;
+        SetLocal set(allocator);
         set.index = func->getLocalIndex(temp.getName());
         set.value = curr->ptr;
         Ref ptrSet = visit(&set, NO_RESULT);
-        GetLocal get;
+        GetLocal get(allocator);
         get.index = func->getLocalIndex(temp.getName());
         // set the value to a local
         ScopedTemp tempValue(curr->value->type, parent);
-        SetLocal setValue;
+        SetLocal setValue(allocator);
         setValue.index = func->getLocalIndex(tempValue.getName());
         setValue.value = curr->value;
         Ref valueSet = visit(&setValue, NO_RESULT);
-        GetLocal getValue;
+        GetLocal getValue(allocator);
         getValue.index = func->getLocalIndex(tempValue.getName());
         // fake stores
         Store store = *curr;
@@ -850,19 +858,19 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         Ref rest;
         switch (curr->type) {
           case i32: {
-            Const _255;
+            Const _255(allocator);
             _255.value = Literal(int32_t(255));
             _255.type = i32;
             for (size_t i = 0; i < curr->bytes; i++) {
-              Const shift;
+              Const shift(allocator);
               shift.value = Literal(int32_t(8*i));
               shift.type = i32;
-              Binary shifted;
+              Binary shifted(allocator);
               shifted.op = ShrU;
               shifted.left = &getValue;
               shifted.right = &shift;
               shifted.type = i32;
-              Binary anded;
+              Binary anded(allocator);
               anded.op = And;
               anded.left = i > 0 ? static_cast<Expression*>(&shifted) : static_cast<Expression*>(&getValue);
               anded.right = &_255;
@@ -910,7 +918,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         case i32: return ValueBuilder::makeInt(curr->value.geti32());
         case f32: {
           Ref ret = ValueBuilder::makeCall(MATH_FROUND);
-          Const fake;
+          Const fake(allocator);
           fake.value = Literal(double(curr->value.getf32()));
           fake.type = f64;
           ret[2]->push_back(visitConst(&fake));
@@ -929,7 +937,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     Ref visitUnary(Unary *curr) {
       if (isStatement(curr)) {
         ScopedTemp temp(curr->value->type, parent);
-        GetLocal fakeLocal;
+        GetLocal fakeLocal(allocator);
         fakeLocal.index = func->getLocalIndex(temp.getName());
         Unary fakeUnary = *curr;
         fakeUnary.value = &fakeLocal;
@@ -977,10 +985,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     Ref visitBinary(Binary *curr) {
       if (isStatement(curr)) {
         ScopedTemp tempLeft(curr->left->type, parent);
-        GetLocal fakeLocalLeft;
+        GetLocal fakeLocalLeft(allocator);
         fakeLocalLeft.index = func->getLocalIndex(tempLeft.getName());
         ScopedTemp tempRight(curr->right->type, parent);
-        GetLocal fakeLocalRight;
+        GetLocal fakeLocalRight(allocator);
         fakeLocalRight.index = func->getLocalIndex(tempRight.getName());
         Binary fakeBinary = *curr;
         fakeBinary.left = &fakeLocalLeft;
@@ -1050,13 +1058,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     Ref visitSelect(Select *curr) {
       if (isStatement(curr)) {
         ScopedTemp tempIfTrue(curr->ifTrue->type, parent);
-        GetLocal fakeLocalIfTrue;
+        GetLocal fakeLocalIfTrue(allocator);
         fakeLocalIfTrue.index = func->getLocalIndex(tempIfTrue.getName());
         ScopedTemp tempIfFalse(curr->ifFalse->type, parent);
-        GetLocal fakeLocalIfFalse;
+        GetLocal fakeLocalIfFalse(allocator);
         fakeLocalIfFalse.index = func->getLocalIndex(tempIfFalse.getName());
         ScopedTemp tempCondition(i32, parent);
-        GetLocal fakeCondition;
+        GetLocal fakeCondition(allocator);
         fakeCondition.index = func->getLocalIndex(tempCondition.getName());
         Select fakeSelect = *curr;
         fakeSelect.ifTrue = &fakeLocalIfTrue;
