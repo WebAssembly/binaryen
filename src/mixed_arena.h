@@ -66,32 +66,28 @@ struct MixedArena {
   // TODO: we don't really need locking here, atomics could suffice
   std::thread::id threadId;
   std::mutex mutex;
-  std::atomic<MixedArena*> next;
+  MixedArena* next;
 
   MixedArena() {
     threadId = std::this_thread::get_id();
-    next.store(nullptr);
+    next = nullptr;
   }
 
   template<class T>
   T* alloc() {
     // the bump allocator data should not be modified by multiple threads at once.
     if (std::this_thread::get_id() != threadId) {
-      // use a double-checked locking pattern.
-      MixedArena* temp = next.load(std::memory_order_relaxed);
-      std::atomic_thread_fence(std::memory_order_acquire);
-      if (!temp) {
-        // prepare to carefully add a new arena, with our thread id, as the next
-        std::lock_guard<std::mutex> lock(mutex);
-        // note that we may have waited on the lock, while someone was creating next
-        temp = next.load(std::memory_order_relaxed);
-        if (!temp) {
-          temp = new MixedArena();
-          std::atomic_thread_fence(std::memory_order_release);
-          next.store(temp, std::memory_order_relaxed);
+      // TODO use a fast double-checked locking pattern.
+      std::lock_guard<std::mutex> lock(mutex);
+      MixedArena* curr = this;
+      while (std::this_thread::get_id() != curr->threadId) {
+        if (curr->next) {
+          curr = curr->next;
+        } else {
+          curr->next = new MixedArena(); // will have our thread id
         }
       }
-      return temp->alloc<T>();
+      return curr->alloc<T>();
     }
     const size_t CHUNK = 10000;
     size_t currSize = (sizeof(T) + 7) & (-8); // same alignment as malloc TODO optimize?
@@ -107,10 +103,6 @@ struct MixedArena {
   }
 
   void clear() {
-    std::lock_guard<std::mutex> lock(mutex);
-    if (next.load()) {
-      next.load()->clear();
-    }
     for (char* chunk : chunks) {
       delete[] chunk;
     }
@@ -119,6 +111,7 @@ struct MixedArena {
 
   ~MixedArena() {
     clear();
+    if (next) delete next;
   }
 };
 
