@@ -3963,7 +3963,6 @@
                   (i32.const 9)
                 )
                 (br $label$break$L9)
-                (br $switch$2)
               )
               (set_local $$incdec$ptr169276$lcssa
                 (get_local $$incdec$ptr169274)
@@ -3972,7 +3971,6 @@
                 (get_local $$incdec$ptr169274)
               )
               (br $label$break$L9)
-              (br $switch$2)
             )
           )
         )
@@ -5394,7 +5392,6 @@
                                                                           (get_local $$l10n$3)
                                                                         )
                                                                         (br $label$continue$L1)
-                                                                        (br $switch$25)
                                                                       )
                                                                       (i32.store
                                                                         (i32.load
@@ -5415,7 +5412,6 @@
                                                                         (get_local $$l10n$3)
                                                                       )
                                                                       (br $label$continue$L1)
-                                                                      (br $switch$25)
                                                                     )
                                                                     (i32.store
                                                                       (set_local $$76
@@ -5451,7 +5447,6 @@
                                                                       (get_local $$l10n$3)
                                                                     )
                                                                     (br $label$continue$L1)
-                                                                    (br $switch$25)
                                                                   )
                                                                   (i32.store16
                                                                     (i32.load
@@ -5475,7 +5470,6 @@
                                                                     (get_local $$l10n$3)
                                                                   )
                                                                   (br $label$continue$L1)
-                                                                  (br $switch$25)
                                                                 )
                                                                 (i32.store8
                                                                   (i32.load
@@ -5499,7 +5493,6 @@
                                                                   (get_local $$l10n$3)
                                                                 )
                                                                 (br $label$continue$L1)
-                                                                (br $switch$25)
                                                               )
                                                               (i32.store
                                                                 (i32.load
@@ -5520,7 +5513,6 @@
                                                                 (get_local $$l10n$3)
                                                               )
                                                               (br $label$continue$L1)
-                                                              (br $switch$25)
                                                             )
                                                             (i32.store
                                                               (set_local $$86
@@ -5556,7 +5548,6 @@
                                                               (get_local $$l10n$3)
                                                             )
                                                             (br $label$continue$L1)
-                                                            (br $switch$25)
                                                           )
                                                           (set_local $$cnt$0
                                                             (get_local $$cnt$1)
@@ -9328,7 +9319,6 @@
                 (get_local $$l10n$3)
               )
               (br $label$continue$L1)
-              (br $switch$24)
             )
             (set_local $$a$2
               (get_local $$incdec$ptr169275)
@@ -10440,7 +10430,6 @@
                                   (get_local $$6)
                                 )
                                 (br $label$break$L1)
-                                (br $switch$3)
                               )
                               (set_local $$13
                                 (i32.load
@@ -10499,7 +10488,6 @@
                                 )
                               )
                               (br $label$break$L1)
-                              (br $switch$3)
                             )
                             (set_local $$26
                               (i32.load
@@ -10549,7 +10537,6 @@
                               (i32.const 0)
                             )
                             (br $label$break$L1)
-                            (br $switch$3)
                           )
                           (set_local $$39
                             (i32.load
@@ -10606,7 +10593,6 @@
                             (get_local $$42)
                           )
                           (br $label$break$L1)
-                          (br $switch$3)
                         )
                         (set_local $$53
                           (i32.load
@@ -10679,7 +10665,6 @@
                           (get_local $$56)
                         )
                         (br $label$break$L1)
-                        (br $switch$3)
                       )
                       (set_local $$67
                         (i32.load
@@ -10732,7 +10717,6 @@
                         (i32.const 0)
                       )
                       (br $label$break$L1)
-                      (br $switch$3)
                     )
                     (set_local $$78
                       (i32.load
@@ -10805,7 +10789,6 @@
                       (get_local $$81)
                     )
                     (br $label$break$L1)
-                    (br $switch$3)
                   )
                   (set_local $$92
                     (i32.load
@@ -10858,7 +10841,6 @@
                     (i32.const 0)
                   )
                   (br $label$break$L1)
-                  (br $switch$3)
                 )
                 (set_local $$103
                   (f64.load
@@ -10902,7 +10884,6 @@
                   (get_local $$103)
                 )
                 (br $label$break$L1)
-                (br $switch$3)
               )
               (set_local $$110
                 (f64.load
@@ -10946,7 +10927,6 @@
                 (get_local $$110)
               )
               (br $label$break$L1)
-              (br $switch$3)
             )
             (br $label$break$L1)
           )

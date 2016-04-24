@@ -4,5 +4,12 @@
     (i32.const 50)
     (i32.const 51)
     (i32.const 52)
+    (block $waka1
+      (i32.const 53)
+      (br $waka1)
+    )
+    (block $waka2
+      (br $waka2)
+    )
   )
 )

@@ -32,14 +32,25 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
     int skip = 0;
     auto& list = curr->list;
     size_t size = list.size();
+    bool needResize = false;
     for (size_t z = 0; z < size; z++) {
       if (list[z]->is<Nop>()) {
         skip++;
-      } else if (skip > 0) {
-        list[z - skip] = list[z];
+        needResize = true;
+      } else {
+        if (skip > 0) {
+          list[z - skip] = list[z];
+        }
+        // if this is an unconditional br, the rest is dead code
+        Break* br = list[z - skip]->dynCast<Break>();
+        if (br && !br->condition) {
+          list.resize(z - skip + 1);
+          needResize = false;
+          break;
+        }
       }
     }
-    if (skip > 0) {
+    if (needResize) {
       list.resize(size - skip);
     }
     if (!curr->name.is()) {
