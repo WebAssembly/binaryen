@@ -23,6 +23,21 @@
       )
       (i32.const 58)
     )
+    (if
+      (i32.const 100)
+      (nop)
+      (i32.const 101)
+    )
+    (if
+      (i32.const 102)
+      (i32.const 103)
+      (nop)
+    )
+    (if
+      (i32.const 104)
+      (nop)
+      (nop)
+    )
   )
 )
 

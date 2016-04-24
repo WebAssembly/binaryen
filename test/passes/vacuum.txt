@@ -16,5 +16,16 @@
         (i32.const 57)
       )
     )
+    (if
+      (i32.eqz
+        (i32.const 100)
+      )
+      (i32.const 101)
+    )
+    (if
+      (i32.const 102)
+      (i32.const 103)
+    )
+    (i32.const 104)
   )
 )

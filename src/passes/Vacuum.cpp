@@ -21,6 +21,7 @@
 #include <wasm.h>
 #include <pass.h>
 #include <ast_utils.h>
+#include <wasm-builder.h>
 
 namespace wasm {
 
@@ -59,6 +60,25 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
         replaceCurrent(list[0]);
       } else if (list.size() == 0) {
         ExpressionManipulator::nop(curr);
+      }
+    }
+  }
+
+  void visitIf(If* curr) {
+    if (curr->ifFalse) {
+      if (curr->ifFalse->is<Nop>()) {
+        curr->ifFalse = nullptr;
+      } else if (curr->ifTrue->is<Nop>()) {
+        curr->ifTrue = curr->ifFalse;
+        curr->ifFalse = nullptr;
+        curr->condition = Builder(*getModule()).makeUnary(EqZ, curr->condition, curr->condition->type);
+      }
+    }
+    if (!curr->ifFalse) {
+      // no else
+      if (curr->ifTrue->is<Nop>()) {
+        // no nothing
+        replaceCurrent(curr->condition);
       }
     }
   }
