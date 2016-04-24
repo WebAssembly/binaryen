@@ -27,6 +27,8 @@ namespace wasm {
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>> {
   bool isFunctionParallel() { return true; }
 
+  bool anotherCycle;
+
   typedef std::vector<Break*> Flows;
 
   // list of breaks that are currently flowing. if they reach their target without
@@ -68,6 +70,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           if (flows[i]->name == name) {
             ExpressionManipulator::nop(flows[i]);
             skip++;
+            self->anotherCycle = true;
           } else if (skip > 0) {
             flows[i - skip] = flows[i];
           }
@@ -79,6 +82,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     } else if (curr->is<Loop>()) {
       // TODO we might optimize branches out of here
       flows.clear();
+    } else if (curr->is<Nop>()) {
+      // ignore (could be result of a previous cycle)
     } else {
       // anything else stops the flow
       flows.clear();
@@ -100,6 +105,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       if (br && !br->condition) { // TODO: if there is a condition, join them
         br->condition = curr->condition;
         replaceCurrent(br);
+        anotherCycle = true;
       }
     }
   }
@@ -125,7 +131,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     }
   }
 
-  // TODO: multiple rounds?
+  void walk(Expression*& root) {
+    // multiple cycles may be needed
+    do {
+      anotherCycle = false;
+      WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>>::walk(root);
+      assert(ifStack.empty());
+      assert(flows.empty());
+    } while (anotherCycle);
+  }
 };
 
 static RegisterPass<RemoveUnusedBrs> registerPass("remove-unused-brs", "removes breaks from locations that are not needed");

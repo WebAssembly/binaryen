@@ -10864,7 +10864,6 @@
                 (get_local $$arg)
                 (get_local $$110)
               )
-              (br $label$break$L1)
             )
           )
         )
