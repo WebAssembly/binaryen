@@ -65,6 +65,7 @@ void PassRunner::addDefaultOptimizationPasses() {
   add("merge-blocks");
   add("reorder-locals");
   add("vacuum");
+  add("optimize-instructions");
 }
 
 void PassRunner::run(Module* module) {

@@ -2,23 +2,27 @@
   (memory 256 256)
   (func $b0-yes (param $i1 i32)
     (block $topmost
+      (nop)
     )
   )
   (func $b1 (param $i1 i32)
     (block $topmost
-      (i32.const 0)
+      (br $topmost
+        (i32.const 0)
+      )
     )
   )
   (func $b2 (param $i1 i32)
     (block $topmost
       (block $inner
-        (br $topmost)
+        (nop)
       )
     )
   )
   (func $b3-yes (param $i1 i32)
     (block $topmost
       (block $inner
+        (nop)
       )
     )
   )
@@ -34,7 +38,9 @@
   (func $b5 (param $i1 i32)
     (block $topmost
       (block $inner
-        (i32.const 0)
+        (br $inner
+          (i32.const 0)
+        )
       )
     )
   )
@@ -97,11 +103,15 @@
         (i32.const 1)
         (block $block1
           (i32.const 12)
-          (i32.const 1)
+          (br $topmost
+            (i32.const 1)
+          )
         )
         (block $block3
           (i32.const 27)
-          (i32.const 2)
+          (br $topmost
+            (i32.const 2)
+          )
         )
       )
     )
@@ -152,6 +162,79 @@
       (br_if $topmost
         (i32.const 0)
         (i32.const 18)
+      )
+    )
+  )
+  (func $b16
+    (block $a
+      (block $b
+        (block $c
+          (nop)
+        )
+        (nop)
+      )
+      (nop)
+    )
+    (block $a
+      (block $b
+        (block $c
+          (nop)
+        )
+        (nop)
+      )
+      (nop)
+    )
+    (block $a
+      (block $b
+        (block $c
+          (nop)
+        )
+        (nop)
+      )
+      (nop)
+    )
+  )
+  (func $b17
+    (block $a
+      (if
+        (i32.const 0)
+        (block $block1
+          (nop)
+        )
+        (block $block3
+          (nop)
+        )
+      )
+    )
+    (block $a
+      (if
+        (i32.const 0)
+        (i32.const 1)
+        (block $block6
+          (nop)
+        )
+      )
+    )
+    (block $a
+      (if
+        (i32.const 0)
+        (block $block8
+          (nop)
+        )
+        (i32.const 1)
+      )
+    )
+    (block $c
+      (block $b
+        (if
+          (i32.const 0)
+          (block $block11
+            (nop)
+          )
+          (block $block13
+            (nop)
+          )
+        )
       )
     )
   )

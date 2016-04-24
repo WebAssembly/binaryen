@@ -4,5 +4,28 @@
     (i32.const 50)
     (i32.const 51)
     (i32.const 52)
+    (block $waka1
+      (i32.const 53)
+      (br $waka1)
+    )
+    (block $waka2
+      (br $waka2)
+    )
+    (block $waka3
+      (br_table $waka3 $waka3 $waka3
+        (i32.const 57)
+      )
+    )
+    (if
+      (i32.eqz
+        (i32.const 100)
+      )
+      (i32.const 101)
+    )
+    (if
+      (i32.const 102)
+      (i32.const 103)
+    )
+    (i32.const 104)
   )
 )
