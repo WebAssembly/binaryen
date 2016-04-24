@@ -30,18 +30,15 @@ Usage instructions for each are below.
 
 ## Building
 
-First run `update.py` to initialize the git submodules and fetch the test files. You may need to re-run `update.py` from time to time.
-
-Then do
-
 ```
 cmake . && make
 ```
 Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`
 
-* `binaryen-shell` and `asm2wasm` require a C++11 compiler.
-* If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten. You'll need the `incoming` branch there (which you can get via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).
-* `wasm.js` also requires Emscripten. You can compile it with `build.sh`. A pre-compiled build is provided in this repo already, so you don't need to.
+* A C++11 compiler is required.
+* The JavaScript components can be built using `build-js.sh`, see notes inside. Normally this is not needed as builds are provided in this repo already.
+
+If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten. You'll need the `incoming` branch there (which you can get via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)), for more details see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly).
 
 ## Running
 
@@ -145,7 +142,7 @@ For more details, see the [emscripten wiki](https://github.com/kripken/emscripte
 
 (or `python check.py`) will run `binaryen-shell`, `asm2wasm`, `wasm.js`, etc. on the testcases in `test/`, and verify their outputs.
 
-It will also run `s2wasm` through the last known good LLVM output from the [build waterfall][], as fetched by `update.py`.
+It will also run `s2wasm` through the last known good LLVM output from the [build waterfall][].
 
   [build waterfall]: https://build.chromium.org/p/client.wasm.llvm/console
 
@@ -158,7 +155,7 @@ The `check.py` script supports some options:
  * If an interpreter is provided, we run the output through it, checking for parse errors.
  * If tests are provided, we run exactly those. If none are provided, we run them all.
  * Some tests require `emcc` or `nodejs` in the path. They will not run if the tool cannot be found, and you'll see a warning.
- * We have tests from upstream in `tests/spec` and `tests/waterfall`, in git submodules. Running `./update.py` should update those.
+ * We have tests from upstream in `tests/spec` and `tests/waterfall`, in git submodules. Running `./check.py` should update those.
 
 ## Design Principles
 

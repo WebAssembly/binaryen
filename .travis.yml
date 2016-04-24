@@ -42,7 +42,7 @@ install:
 
 before_script:
   # Check the style of a subset of Python code until the other code is updated.
-  - flake8 update.py ./scripts/*
+  - flake8 ./scripts/*
 
 script:
   - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
