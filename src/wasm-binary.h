@@ -456,9 +456,7 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   }
 
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug) : o(o), debug(debug) {
-    wasm = allocator.alloc<Module>();
-    *wasm = *input; // simple shallow copy; we won't be modifying any internals, just adding some function types, so this is fine
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug) : wasm(input), o(o), debug(debug) {
     prepare();
   }
 

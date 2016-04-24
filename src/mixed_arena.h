@@ -17,24 +17,82 @@
 #ifndef wasm_mixed_arena_h
 #define wasm_mixed_arena_h
 
+#include <atomic>
 #include <cassert>
+#include <memory>
+#include <mutex>
+#include <thread>
 #include <vector>
-
-#include "support/threads.h"
 
 //
 // Arena allocation for mixed-type data.
 //
+// Arena-style bump allocation is important for two reasons: First, so that
+// allocation is quick, and second, so that allocated items are close together,
+// which is cache-friendy. Arena allocation is also useful for a minor third
+// reason which is to make freeing all the items in an arena very quick.
+//
+// Each WebAssembly Module has an arena allocator, which should be used
+// for all of its AST nodes and so forth. When the Module is destroyed, the
+// entire arena is cleaned up.
+//
+// When allocating an object in an arena, the object's proper constructor
+// is called. Note that destructors are not called, because to make the
+// arena simple and fast we do not track internal allocations inside it
+// (and we can also avoid the need for virtual destructors).
+//
+// In general, optimization passes avoid allocation as much as possible.
+// Many passes only remove or modify nodes anyhow, others can often
+// reuse nodes that are being optimized out. This keeps things
+// cache-friendly, and also makes the operations trivially thread-safe.
+// In the rare case that a pass does need to allocate, and it is a
+// parallel pass (so multiple threads might access the allocator),
+// the MixedArena instance will notice if it is on a different thread
+// than that arena's original thread, and will perform the allocation
+// in a side arena for that other thread. This is done in a transparent
+// way to the outside; as a result, it is always safe to allocate using
+// a MixedArena, no matter which thread you are on. Allocations will
+// of course be fastest on the original thread for the arena.
+//
 
 struct MixedArena {
+  // fast bump allocation
   std::vector<char*> chunks;
   int index; // in last chunk
 
+  // multithreaded allocation - each arena is valid on a specific thread.
+  // if we are on the wrong thread, we safely look in the linked
+  // list of next, adding an allocator if necessary
+  // TODO: we don't really need locking here, atomics could suffice
+  std::thread::id threadId;
+  std::mutex mutex;
+  std::atomic<MixedArena*> next;
+
+  MixedArena() {
+    threadId = std::this_thread::get_id();
+    next.store(nullptr);
+  }
+
   template<class T>
   T* alloc() {
-    // this structure should not be modified by multiple threads at once.
-    assert(!wasm::ThreadPool::isRunning());
-
+    // the bump allocator data should not be modified by multiple threads at once.
+    if (std::this_thread::get_id() != threadId) {
+      // use a double-checked locking pattern.
+      MixedArena* temp = next.load(std::memory_order_relaxed);
+      std::atomic_thread_fence(std::memory_order_acquire);
+      if (!temp) {
+        // prepare to carefully add a new arena, with our thread id, as the next
+        std::lock_guard<std::mutex> lock(mutex);
+        // note that we may have waited on the lock, while someone was creating next
+        temp = next.load(std::memory_order_relaxed);
+        if (!temp) {
+          temp = new MixedArena();
+          std::atomic_thread_fence(std::memory_order_release);
+          next.store(temp, std::memory_order_relaxed);
+        }
+      }
+      return temp->alloc<T>();
+    }
     const size_t CHUNK = 10000;
     size_t currSize = (sizeof(T) + 7) & (-8); // same alignment as malloc TODO optimize?
     assert(currSize < CHUNK);
@@ -49,8 +107,10 @@ struct MixedArena {
   }
 
   void clear() {
-    assert(!wasm::ThreadPool::isRunning());
-
+    std::lock_guard<std::mutex> lock(mutex);
+    if (next.load()) {
+      next.load()->clear();
+    }
     for (char* chunk : chunks) {
       delete[] chunk;
     }
