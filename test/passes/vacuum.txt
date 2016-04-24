@@ -11,5 +11,10 @@
     (block $waka2
       (br $waka2)
     )
+    (block $waka3
+      (br_table $waka3 $waka3 $waka3
+        (i32.const 57)
+      )
+    )
   )
 )

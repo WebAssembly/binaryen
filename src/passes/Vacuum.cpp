@@ -43,7 +43,8 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
         }
         // if this is an unconditional br, the rest is dead code
         Break* br = list[z - skip]->dynCast<Break>();
-        if (br && !br->condition) {
+        Switch* sw = list[z - skip]->dynCast<Switch>();
+        if ((br && !br->condition) || sw) {
           list.resize(z - skip + 1);
           needResize = false;
           break;
