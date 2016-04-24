@@ -156,7 +156,10 @@ struct Walker : public VisitorType {
 
   // Useful methods for visitor implementions
 
-  // Replace the current node
+  // Replace the current node. You can call this in your visit*() methods.
+  // Note that the visit*() for the result node is not called for you (i.e.,
+  // just one visit*() method is called by the traversal; if you replace a node,
+  // and you want to process the output, you must do that explicitly).
   void replaceCurrent(Expression *expression) {
     replace = expression;
   }
@@ -467,10 +470,10 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   LinearExecutionWalker() {}
 
   // subclasses should implement this
-  void noteNonLinear() { abort(); }
+  void noteNonLinear(Expression* curr) { abort(); }
 
   static void doNoteNonLinear(SubType* self, Expression** currp) {
-    self->noteNonLinear();
+    self->noteNonLinear(*currp);
   }
 
   static void scan(SubType* self, Expression** currp) {
