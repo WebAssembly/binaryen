@@ -16,7 +16,9 @@
 
 #include <assert.h>
 
+#include <algorithm>
 #include <iostream>
+#include <string>
 
 #include "threads.h"
 
