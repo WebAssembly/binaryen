@@ -157,5 +157,78 @@
       )
     )
   )
+  (func $b16
+    (block $a
+      (block $b
+        (block $c
+          (br $a)
+        )
+        (br $a)
+      )
+      (br $a)
+    )
+    (block $a
+      (block $b
+        (block $c
+          (br $c)
+        )
+        (br $b)
+      )
+      (br $a)
+    )
+    (block $a
+      (block $b
+        (block $c
+          (br $b)
+        )
+        (br $a)
+      )
+      (br $a)
+    )
+  )
+  (func $b17
+    (block $a
+      (if
+        (i32.const 0)
+        (block
+          (br $a)
+        )
+        (block
+          (br $a)
+        )
+      )
+    )
+    (block $a
+      (if
+        (i32.const 0)
+        (i32.const 1)
+        (block
+          (br $a)
+        )
+      )
+    )
+    (block $a
+      (if
+        (i32.const 0)
+        (block
+          (br $a)
+        )
+        (i32.const 1)
+      )
+    )
+    (block $c
+      (block $b
+        (if
+          (i32.const 0)
+          (block
+            (br $b)
+          )
+          (block
+            (br $c)
+          )
+        )
+      )
+    )
+  )
 )
 

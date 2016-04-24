@@ -15,89 +15,119 @@
  */
 
 //
-// Removes branches that go to where they go anyhow
+// Removes branches for which we go to where they go anyhow
 //
 
 #include <wasm.h>
 #include <pass.h>
+#include <ast_utils.h>
 
 namespace wasm {
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>> {
   bool isFunctionParallel() { return true; }
 
-  // preparation: try to unify branches, as the fewer there are, the higher a chance we can remove them
-  // specifically for if-else, turn an if-else with branches to the same target at the end of each
-  // child, and with a value, to a branch to that target containing the if-else
+  typedef std::vector<Break*> Flows;
+
+  // list of breaks that are currently flowing. if they reach their target without
+  // interference, they can be removed (or their value forwarded TODO)
+  Flows flows;
+
+  // a stack for if-else contents, we merge their outputs
+  std::vector<Flows> ifStack;
+
+  static void visitAny(RemoveUnusedBrs* self, Expression** currp) {
+    auto* curr = *currp;
+    auto& flows = self->flows;
+
+    if (curr->is<Break>()) {
+      flows.clear();
+      auto* br = curr->cast<Break>();
+      if (!br->condition && !br->value) { // TODO: optimize in those cases?
+        // a break, let's see where it flows to
+        flows.push_back(br);
+      }
+    } else if (curr->is<Switch>()) {
+      flows.clear();
+    } else if (curr->is<If>()) {
+      auto* iff = curr->cast<If>();
+      if (iff->ifFalse) {
+        assert(self->ifStack.size() > 0);
+        for (auto* flow : self->ifStack.back()) {
+          flows.push_back(flow);
+        }
+        self->ifStack.pop_back();
+      }
+    } else if (curr->is<Block>()) {
+      // any breaks flowing to here are unnecessary, as we get here anyhow
+      auto name = curr->cast<Block>()->name;
+      if (name.is()) {
+        size_t size = flows.size();
+        size_t skip = 0;
+        for (size_t i = 0; i < size; i++) {
+          if (flows[i]->name == name) {
+            ExpressionManipulator::nop(flows[i]);
+            skip++;
+          } else if (skip > 0) {
+            flows[i - skip] = flows[i];
+          }
+        }
+        if (skip > 0) {
+          flows.resize(size - skip);
+        }
+      }
+    } else if (curr->is<Loop>()) {
+      // TODO we might optimize branches out of here
+      flows.clear();
+    } else {
+      // anything else stops the flow
+      flows.clear();
+    }
+  }
+
+  static void clear(RemoveUnusedBrs* self, Expression** currp) {
+    self->flows.clear();
+  }
+
+  static void saveIfTrue(RemoveUnusedBrs* self, Expression** currp) {
+    self->ifStack.push_back(std::move(self->flows));
+  }
+
   void visitIf(If* curr) {
     if (!curr->ifFalse) {
-      // try to reduce an   if (condition) br  =>  br_if (condition) , which might open up other optimization opportunities
+      // if without an else. try to reduce   if (condition) br  =>  br_if (condition)
       Break* br = curr->ifTrue->dynCast<Break>();
       if (br && !br->condition) { // TODO: if there is a condition, join them
         br->condition = curr->condition;
         replaceCurrent(br);
       }
-      return;
-    }
-    if (isConcreteWasmType(curr->type)) return; // already has a returned value
-    // an if_else that indirectly returns a value by breaking to the same target can potentially remove both breaks, and break outside once
-    auto getLast = [](Expression *side) -> Expression* {
-      Block* b = side->dynCast<Block>();
-      if (!b) return nullptr;
-      if (b->list.size() == 0) return nullptr;
-      return b->list.back();
-    };
-    auto process = [&](Expression *side, bool doIt) {
-      Expression* last = getLast(side);
-      if (!last) return Name();
-      Block* b = side->cast<Block>();
-      Break* br = last->dynCast<Break>();
-      if (!br) return Name();
-      if (br->condition) return Name();
-      if (!br->value) return Name();
-      if (doIt) {
-        b->list[b->list.size()-1] = br->value;
-      }
-      return br->name;
-    };
-    // do both, or none
-    if (process(curr->ifTrue, false).is() && process(curr->ifTrue, false) == process(curr->ifFalse, false)) {
-      auto br = getLast(curr->ifTrue)->cast<Break>(); // we are about to discard this, so why not reuse it!
-      process(curr->ifTrue, true);
-      process(curr->ifFalse, true);
-      curr->type = br->value->type; // if_else now returns a value
-      br->value = curr;
-      // no need to change anything else in the br - target is correct already
-      replaceCurrent(br);
     }
   }
 
-  // main portion
-  void visitBlock(Block *curr) {
-    if (curr->name.isNull()) return;
-    if (curr->list.size() == 0) return;
-    // preparation - remove all code after an unconditional break, since it can't execute, and it might confuse us (we look at the last)
-    for (size_t i = 0; i < curr->list.size()-1; i++) {
-      Break* br = curr->list[i]->dynCast<Break>();
-      if (br && !br->condition) {
-        curr->list.resize(i+1);
-        break;
+  // override scan to add a pre and a post check task to all nodes
+  static void scan(RemoveUnusedBrs* self, Expression** currp) {
+    self->pushTask(visitAny, currp);
+
+    auto* iff = (*currp)->dynCast<If>();
+
+    if (iff) {
+      self->pushTask(doVisitIf, currp);
+      if (iff->ifFalse) {
+      // we need to join up if-else control flow, and clear after the condition
+        self->pushTask(scan, &iff->ifFalse);
+        self->pushTask(saveIfTrue, currp); // safe the ifTrue flow, we'll join it later
       }
-    }
-    Expression* last = curr->list.back();
-    if (Break* br = last->dynCast<Break>()) {
-      if (br->condition) return;
-      if (br->name == curr->name) {
-        if (!br->value) {
-          curr->list.pop_back();
-        } else {
-          curr->list[curr->list.size()-1] = br->value; // can replace with the value
-        }
-      }
+      self->pushTask(scan, &iff->ifTrue);
+      self->pushTask(clear, currp); // clear all flow after the condition
+      self->pushTask(scan, &iff->condition);
+    } else {
+      WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>>::scan(self, currp);
     }
   }
+
+  // TODO: multiple rounds?
 };
 
-static RegisterPass<RemoveUnusedBrs> registerPass("remove-unused-brs", "removes breaks from locations that are never branched to");
+static RegisterPass<RemoveUnusedBrs> registerPass("remove-unused-brs", "removes breaks from locations that are not needed");
 
 } // namespace wasm

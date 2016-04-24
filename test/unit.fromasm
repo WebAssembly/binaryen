@@ -228,7 +228,6 @@
         (loop $while-out$13 $while-in$14
           (br $label$break$Lout)
         )
-        (br $label$break$Lout)
       )
     )
     (loop $label$break$L1 $label$continue$L1
