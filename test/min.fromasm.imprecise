@@ -4,24 +4,20 @@
   (export "floats" $floats)
   (func $floats (param $f f32) (result f32)
     (local $t f32)
-    (return
-      (f32.add
-        (get_local $t)
-        (get_local $f)
-      )
+    (f32.add
+      (get_local $t)
+      (get_local $f)
     )
   )
   (func $neg (param $k i32) (param $p i32) (result f32)
-    (return
-      (f32.neg
-        (block
-          (i32.store
-            (get_local $k)
-            (get_local $p)
-          )
-          (f32.load
-            (get_local $k)
-          )
+    (f32.neg
+      (block
+        (i32.store
+          (get_local $k)
+          (get_local $p)
+        )
+        (f32.load
+          (get_local $k)
         )
       )
     )
@@ -40,10 +36,8 @@
     )
   )
   (func $ctzzzz (result i32)
-    (return
-      (i32.ctz
-        (i32.const 4660)
-      )
+    (i32.ctz
+      (i32.const 4660)
     )
   )
 )

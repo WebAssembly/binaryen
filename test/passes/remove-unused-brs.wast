@@ -230,5 +230,33 @@
       )
     )
   )
+  (func $ret-1
+    (return)
+  )
+  (func $ret-2
+    (block
+      (block
+        (return)
+      )
+    )
+  )
+  (func $ret-3
+    (block
+      (if
+        (i32.const 0)
+        (return)
+        (block
+          (return)
+        )
+      )
+    )
+  )
+  (func $ret-value (result i32)
+    (block
+      (block
+        (return (i32.const 1))
+      )
+    )
+  )
 )
 

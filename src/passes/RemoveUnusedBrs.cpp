@@ -56,6 +56,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       } else {
         self->valueCanFlow = false;
       }
+    } else if (curr->is<Return>()) {
+      flows.clear();
+      flows.push_back(currp);
+      self->valueCanFlow = true; // start optimistic
     } else if (curr->is<If>()) {
       auto* iff = curr->cast<If>();
       if (iff->ifFalse) {
@@ -73,8 +77,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         size_t size = flows.size();
         size_t skip = 0;
         for (size_t i = 0; i < size; i++) {
-          auto* flow = (*flows[i])->cast<Break>();
-          if (flow->name == name) {
+          auto* flow = (*flows[i])->dynCast<Break>();
+          if (flow && flow->name == name) {
             if (!flow->value || self->valueCanFlow) {
               if (!flow->value) {
                 // br => nop
@@ -96,6 +100,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         // drop a nop at the end of a block, which prevents a value flowing
         while (block->list.size() > 0 && block->list.back()->is<Nop>()) {
           block->list.resize(block->list.size() - 1);
+          self->anotherCycle = true;
         }
       }
     } else if (curr->is<Nop>()) {
@@ -155,7 +160,20 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       anotherCycle = false;
       WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>>::walk(root);
       assert(ifStack.empty());
-      assert(flows.empty());
+      // flows may contain returns, which are flowing out and so can be optimized
+      for (size_t i = 0; i < flows.size(); i++) {
+        auto* flow = (*flows[i])->cast<Return>(); // cannot be a break
+        if (!flow->value) {
+          // return => nop
+          ExpressionManipulator::nop(flow);
+          anotherCycle = true;
+        } else if (valueCanFlow) {
+          // return with value => value
+          *flows[i] = flow->value;
+          anotherCycle = true;
+        }
+      }
+      flows.clear();
     } while (anotherCycle);
   }
 };

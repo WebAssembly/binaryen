@@ -62,9 +62,7 @@
         (f64.const 5.6)
       )
     )
-    (return
-      (f64.const 1.2)
-    )
+    (f64.const 1.2)
   )
   (func $doubleCompares (param $x f64) (param $y f64) (result f64)
     (local $Int f64)
@@ -105,16 +103,12 @@
         (get_local $x)
       )
     )
-    (return
-      (get_local $y)
-    )
+    (get_local $y)
   )
   (func $intOps (result i32)
     (local $x i32)
-    (return
-      (i32.eqz
-        (get_local $x)
-      )
+    (i32.eqz
+      (get_local $x)
     )
   )
   (func $hexLiterals
@@ -256,30 +250,24 @@
       )
       (br $label$continue$L1)
     )
-    (return
-      (i32.const 0)
-    )
+    (i32.const 0)
   )
   (func $blocker
     (nop)
   )
   (func $frem (result f64)
-    (return
-      (call_import $f64-rem
-        (f64.const 5.5)
-        (f64.const 1.2)
-      )
+    (call_import $f64-rem
+      (f64.const 5.5)
+      (f64.const 1.2)
     )
   )
   (func $big_uint_div_u (result i32)
-    (return
-      (i32.and
-        (i32.div_u
-          (i32.const -1)
-          (i32.const 2)
-        )
+    (i32.and
+      (i32.div_u
         (i32.const -1)
+        (i32.const 2)
       )
+      (i32.const -1)
     )
   )
   (func $fr (param $x f32)
@@ -295,9 +283,7 @@
     (f32.const 0)
   )
   (func $negZero (result f64)
-    (return
-      (f64.const -0)
-    )
+    (f64.const -0)
   )
   (func $abs
     (local $asm2wasm_i32_temp i32)
@@ -384,9 +370,7 @@
         )
       )
     )
-    (return
-      (get_local $i)
-    )
+    (get_local $i)
   )
   (func $cneg_nosemicolon
     (call_indirect $FUNCSIG$vi

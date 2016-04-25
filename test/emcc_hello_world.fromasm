@@ -91,15 +91,11 @@
       )
       (call_import $abort)
     )
-    (return
-      (get_local $ret)
-    )
+    (get_local $ret)
   )
   (func $stackSave (result i32)
-    (return
-      (i32.load
-        (i32.const 8)
-      )
+    (i32.load
+      (i32.const 8)
     )
   )
   (func $stackRestore (param $top i32)
@@ -245,10 +241,8 @@
     )
   )
   (func $getTempRet0 (result i32)
-    (return
-      (i32.load
-        (i32.const 168)
-      )
+    (i32.load
+      (i32.const 168)
     )
   )
   (func $_main (result i32)
@@ -287,9 +281,7 @@
       (i32.const 8)
       (get_local $sp)
     )
-    (return
-      (i32.const 0)
-    )
+    (i32.const 0)
   )
   (func $_frexp (param $$x f64) (param $$e i32) (result f64)
     (local $$x$addr$0 f64)
@@ -329,97 +321,95 @@
     (i32.load
       (i32.const 168)
     )
-    (return
-      (block $switch$0
+    (block $switch$0
+      (block $switch-default$3
         (block $switch-default$3
-          (block $switch-default$3
-            (block $switch-case$2
-              (block $switch-case$1
-                (br_table $switch-case$1 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-case$2 $switch-default$3
-                  (i32.sub
-                    (set_local $$conv
-                      (i32.and
-                        (get_local $$2)
-                        (i32.const 2047)
-                      )
+          (block $switch-case$2
+            (block $switch-case$1
+              (br_table $switch-case$1 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-case$2 $switch-default$3
+                (i32.sub
+                  (set_local $$conv
+                    (i32.and
+                      (get_local $$2)
+                      (i32.const 2047)
                     )
-                    (i32.const 0)
                   )
+                  (i32.const 0)
                 )
               )
-              (set_local $$storemerge
-                (if
-                  (f64.ne
+            )
+            (set_local $$storemerge
+              (if
+                (f64.ne
+                  (get_local $$x)
+                  (f64.const 0)
+                )
+                (block
+                  (set_local $$x$addr$0
+                    (call $_frexp
+                      (f64.mul
+                        (get_local $$x)
+                        (f64.const 18446744073709551615)
+                      )
+                      (get_local $$e)
+                    )
+                  )
+                  (i32.add
+                    (i32.load
+                      (get_local $$e)
+                    )
+                    (i32.const -64)
+                  )
+                )
+                (block
+                  (set_local $$x$addr$0
                     (get_local $$x)
-                    (f64.const 0)
                   )
-                  (block
-                    (set_local $$x$addr$0
-                      (call $_frexp
-                        (f64.mul
-                          (get_local $$x)
-                          (f64.const 18446744073709551615)
-                        )
-                        (get_local $$e)
-                      )
-                    )
-                    (i32.add
-                      (i32.load
-                        (get_local $$e)
-                      )
-                      (i32.const -64)
-                    )
-                  )
-                  (block
-                    (set_local $$x$addr$0
-                      (get_local $$x)
-                    )
-                    (i32.const 0)
-                  )
+                  (i32.const 0)
                 )
               )
-              (i32.store
-                (get_local $$e)
-                (get_local $$storemerge)
-              )
-              (br $switch$0
-                (get_local $$x$addr$0)
-              )
+            )
+            (i32.store
+              (get_local $$e)
+              (get_local $$storemerge)
             )
             (br $switch$0
-              (get_local $$x)
+              (get_local $$x$addr$0)
             )
           )
-          (i32.store
-            (get_local $$e)
-            (i32.add
-              (get_local $$conv)
-              (i32.const -1022)
-            )
-          )
-          (i32.store
-            (i32.load
-              (i32.const 24)
-            )
-            (get_local $$0)
-          )
-          (i32.store offset=4
-            (i32.load
-              (i32.const 24)
-            )
-            (i32.or
-              (i32.and
-                (get_local $$1)
-                (i32.const -2146435073)
-              )
-              (i32.const 1071644672)
-            )
+          (br $switch$0
+            (get_local $$x)
           )
         )
-        (f64.load
+        (i32.store
+          (get_local $$e)
+          (i32.add
+            (get_local $$conv)
+            (i32.const -1022)
+          )
+        )
+        (i32.store
           (i32.load
             (i32.const 24)
           )
+          (get_local $$0)
+        )
+        (i32.store offset=4
+          (i32.load
+            (i32.const 24)
+          )
+          (i32.or
+            (i32.and
+              (get_local $$1)
+              (i32.const -2146435073)
+            )
+            (i32.const 1071644672)
+          )
+        )
+      )
+      (f64.load
+        (i32.load
+          (i32.const 24)
         )
       )
     )
@@ -428,11 +418,9 @@
     (i32.load
       (i32.const 8)
     )
-    (return
-      (call $_frexp
-        (get_local $$x)
-        (get_local $$e)
-      )
+    (call $_frexp
+      (get_local $$x)
+      (get_local $$e)
     )
   )
   (func $_strerror (param $$e i32) (result i32)
@@ -603,26 +591,22 @@
         (br $while-in$3)
       )
     )
-    (return
-      (get_local $$s$0$lcssa)
-    )
+    (get_local $$s$0$lcssa)
   )
   (func $___errno_location (result i32)
     (i32.load
       (i32.const 8)
     )
-    (return
-      (if
-        (i32.eq
-          (i32.load
-            (i32.const 16)
-          )
-          (i32.const 0)
+    (if
+      (i32.eq
+        (i32.load
+          (i32.const 16)
         )
-        (i32.const 60)
-        (i32.load offset=60
-          (call_import $_pthread_self)
-        )
+        (i32.const 0)
+      )
+      (i32.const 60)
+      (i32.load offset=60
+        (call_import $_pthread_self)
       )
     )
   )
@@ -675,9 +659,7 @@
       (i32.const 8)
       (get_local $sp)
     )
-    (return
-      (get_local $$call1)
-    )
+    (get_local $$call1)
   )
   (func $___stdout_write (param $$f i32) (param $$buf i32) (param $$len i32) (result i32)
     (local $$vararg_buffer i32)
@@ -773,9 +755,7 @@
       (i32.const 8)
       (get_local $sp)
     )
-    (return
-      (get_local $$call3)
-    )
+    (get_local $$call3)
   )
   (func $___stdio_seek (param $$f i32) (param $$off i32) (param $$whence i32) (result i32)
     (local $$vararg_buffer i32)
@@ -863,9 +843,7 @@
       (i32.const 8)
       (get_local $sp)
     )
-    (return
-      (get_local $$1)
-    )
+    (get_local $$1)
   )
   (func $_fflush (param $$f i32) (result i32)
     (local $$f$addr$022 i32)
@@ -881,164 +859,162 @@
     (i32.load
       (i32.const 8)
     )
-    (return
-      (block $do-once$0
-        (if
-          (i32.eq
-            (get_local $$f)
-            (i32.const 0)
-          )
-          (block
-            (set_local $$cond10
-              (if
-                (i32.eq
-                  (i32.load
-                    (i32.const 12)
-                  )
-                  (i32.const 0)
-                )
-                (i32.const 0)
-                (call $_fflush
-                  (i32.load
-                    (i32.const 12)
-                  )
-                )
-              )
-            )
-            (call_import $___lock
-              (i32.const 44)
-            )
+    (block $do-once$0
+      (if
+        (i32.eq
+          (get_local $$f)
+          (i32.const 0)
+        )
+        (block
+          (set_local $$cond10
             (if
               (i32.eq
-                (set_local $$f$addr$0$19
-                  (i32.load
-                    (i32.const 40)
-                  )
+                (i32.load
+                  (i32.const 12)
                 )
                 (i32.const 0)
               )
-              (set_local $$r$0$lcssa
+              (i32.const 0)
+              (call $_fflush
+                (i32.load
+                  (i32.const 12)
+                )
+              )
+            )
+          )
+          (call_import $___lock
+            (i32.const 44)
+          )
+          (if
+            (i32.eq
+              (set_local $$f$addr$0$19
+                (i32.load
+                  (i32.const 40)
+                )
+              )
+              (i32.const 0)
+            )
+            (set_local $$r$0$lcssa
+              (get_local $$cond10)
+            )
+            (block
+              (set_local $$f$addr$022
+                (get_local $$f$addr$0$19)
+              )
+              (set_local $$r$021
                 (get_local $$cond10)
               )
-              (block
-                (set_local $$f$addr$022
-                  (get_local $$f$addr$0$19)
-                )
-                (set_local $$r$021
-                  (get_local $$cond10)
-                )
-                (loop $while-out$2 $while-in$3
-                  (set_local $$cond19
-                    (if
-                      (i32.gt_s
-                        (i32.load offset=76
-                          (get_local $$f$addr$022)
-                        )
-                        (i32.const -1)
-                      )
-                      (call $___lockfile
+              (loop $while-out$2 $while-in$3
+                (set_local $$cond19
+                  (if
+                    (i32.gt_s
+                      (i32.load offset=76
                         (get_local $$f$addr$022)
                       )
-                      (i32.const 0)
+                      (i32.const -1)
                     )
+                    (call $___lockfile
+                      (get_local $$f$addr$022)
+                    )
+                    (i32.const 0)
                   )
-                  (set_local $$r$1
-                    (if
-                      (i32.gt_u
-                        (i32.load offset=20
-                          (get_local $$f$addr$022)
-                        )
-                        (i32.load offset=28
-                          (get_local $$f$addr$022)
-                        )
+                )
+                (set_local $$r$1
+                  (if
+                    (i32.gt_u
+                      (i32.load offset=20
+                        (get_local $$f$addr$022)
                       )
-                      (i32.or
-                        (call $___fflush_unlocked
-                          (get_local $$f$addr$022)
-                        )
-                        (get_local $$r$021)
+                      (i32.load offset=28
+                        (get_local $$f$addr$022)
+                      )
+                    )
+                    (i32.or
+                      (call $___fflush_unlocked
+                        (get_local $$f$addr$022)
                       )
                       (get_local $$r$021)
                     )
+                    (get_local $$r$021)
                   )
-                  (if
-                    (i32.ne
-                      (get_local $$cond19)
-                      (i32.const 0)
-                    )
-                    (call $___unlockfile
-                      (get_local $$f$addr$022)
-                    )
-                  )
-                  (if
-                    (i32.eq
-                      (set_local $$f$addr$0
-                        (i32.load offset=56
-                          (get_local $$f$addr$022)
-                        )
-                      )
-                      (i32.const 0)
-                    )
-                    (block
-                      (set_local $$r$0$lcssa
-                        (get_local $$r$1)
-                      )
-                      (br $while-out$2)
-                    )
-                    (block
-                      (set_local $$f$addr$022
-                        (get_local $$f$addr$0)
-                      )
-                      (set_local $$r$021
-                        (get_local $$r$1)
-                      )
-                    )
-                  )
-                  (br $while-in$3)
                 )
+                (if
+                  (i32.ne
+                    (get_local $$cond19)
+                    (i32.const 0)
+                  )
+                  (call $___unlockfile
+                    (get_local $$f$addr$022)
+                  )
+                )
+                (if
+                  (i32.eq
+                    (set_local $$f$addr$0
+                      (i32.load offset=56
+                        (get_local $$f$addr$022)
+                      )
+                    )
+                    (i32.const 0)
+                  )
+                  (block
+                    (set_local $$r$0$lcssa
+                      (get_local $$r$1)
+                    )
+                    (br $while-out$2)
+                  )
+                  (block
+                    (set_local $$f$addr$022
+                      (get_local $$f$addr$0)
+                    )
+                    (set_local $$r$021
+                      (get_local $$r$1)
+                    )
+                  )
+                )
+                (br $while-in$3)
               )
             )
-            (call_import $___unlock
-              (i32.const 44)
-            )
-            (get_local $$r$0$lcssa)
           )
-          (block
-            (if
-              (i32.le_s
-                (i32.load offset=76
-                  (get_local $$f)
-                )
-                (i32.const -1)
+          (call_import $___unlock
+            (i32.const 44)
+          )
+          (get_local $$r$0$lcssa)
+        )
+        (block
+          (if
+            (i32.le_s
+              (i32.load offset=76
+                (get_local $$f)
               )
-              (br $do-once$0
-                (call $___fflush_unlocked
-                  (get_local $$f)
-                )
-              )
+              (i32.const -1)
             )
-            (set_local $$phitmp
-              (i32.eq
-                (call $___lockfile
-                  (get_local $$f)
-                )
-                (i32.const 0)
-              )
-            )
-            (set_local $$call1
+            (br $do-once$0
               (call $___fflush_unlocked
                 (get_local $$f)
               )
             )
-            (if
-              (get_local $$phitmp)
-              (get_local $$call1)
-              (block
-                (call $___unlockfile
-                  (get_local $$f)
-                )
-                (get_local $$call1)
+          )
+          (set_local $$phitmp
+            (i32.eq
+              (call $___lockfile
+                (get_local $$f)
               )
+              (i32.const 0)
+            )
+          )
+          (set_local $$call1
+            (call $___fflush_unlocked
+              (get_local $$f)
+            )
+          )
+          (if
+            (get_local $$phitmp)
+            (get_local $$call1)
+            (block
+              (call $___unlockfile
+                (get_local $$f)
+              )
+              (get_local $$call1)
             )
           )
         )
@@ -1093,23 +1069,18 @@
       (i32.const 8)
       (get_local $sp)
     )
-    (return
-      (get_local $$call)
-    )
+    (get_local $$call)
   )
   (func $___lockfile (param $$f i32) (result i32)
     (i32.load
       (i32.const 8)
     )
-    (return
-      (i32.const 0)
-    )
+    (i32.const 0)
   )
   (func $___unlockfile (param $$f i32)
     (i32.load
       (i32.const 8)
     )
-    (return)
   )
   (func $___stdio_write (param $$f i32) (param $$buf i32) (param $$len i32) (result i32)
     (local $$iov$0 i32)
@@ -1536,9 +1507,7 @@
       (i32.const 8)
       (get_local $sp)
     )
-    (return
-      (get_local $$retval$0)
-    )
+    (get_local $$retval$0)
   )
   (func $_vfprintf (param $$f i32) (param $$fmt i32) (param $$ap i32) (result i32)
     (local $sp i32)
@@ -1876,9 +1845,7 @@
       (i32.const 8)
       (get_local $sp)
     )
-    (return
-      (get_local $$retval$0)
-    )
+    (get_local $$retval$0)
   )
   (func $___fwritex (param $$s i32) (param $$l i32) (param $$f i32) (result i32)
     (local $$i$0$lcssa36 i32)
@@ -2145,9 +2112,7 @@
         )
       )
     )
-    (return
-      (get_local $$retval$0)
-    )
+    (get_local $$retval$0)
   )
   (func $___towrite (param $$f i32) (result i32)
     (local $$2 i32)
@@ -2189,61 +2154,59 @@
       (get_local $$mode)
       (get_local $$conv3)
     )
-    (return
-      (if
-        (i32.eq
-          (i32.and
-            (set_local $$1
-              (i32.load
-                (get_local $$f)
-              )
+    (if
+      (i32.eq
+        (i32.and
+          (set_local $$1
+            (i32.load
+              (get_local $$f)
             )
-            (i32.const 8)
           )
+          (i32.const 8)
+        )
+        (i32.const 0)
+      )
+      (block
+        (i32.store offset=8
+          (get_local $$f)
           (i32.const 0)
         )
-        (block
-          (i32.store offset=8
-            (get_local $$f)
-            (i32.const 0)
-          )
-          (i32.store offset=4
-            (get_local $$f)
-            (i32.const 0)
-          )
-          (i32.store offset=28
-            (get_local $$f)
-            (set_local $$2
-              (i32.load offset=44
-                (get_local $$f)
-              )
+        (i32.store offset=4
+          (get_local $$f)
+          (i32.const 0)
+        )
+        (i32.store offset=28
+          (get_local $$f)
+          (set_local $$2
+            (i32.load offset=44
+              (get_local $$f)
             )
           )
-          (i32.store offset=20
-            (get_local $$f)
+        )
+        (i32.store offset=20
+          (get_local $$f)
+          (get_local $$2)
+        )
+        (i32.store offset=16
+          (get_local $$f)
+          (i32.add
             (get_local $$2)
-          )
-          (i32.store offset=16
-            (get_local $$f)
-            (i32.add
-              (get_local $$2)
-              (i32.load offset=48
-                (get_local $$f)
-              )
+            (i32.load offset=48
+              (get_local $$f)
             )
           )
-          (i32.const 0)
         )
-        (block
-          (i32.store
-            (get_local $$f)
-            (i32.or
-              (get_local $$1)
-              (i32.const 32)
-            )
+        (i32.const 0)
+      )
+      (block
+        (i32.store
+          (get_local $$f)
+          (i32.or
+            (get_local $$1)
+            (i32.const 32)
           )
-          (i32.const -1)
         )
+        (i32.const -1)
       )
     )
   )
@@ -2251,208 +2214,206 @@
     (i32.load
       (i32.const 8)
     )
-    (return
-      (block $do-once$0
-        (if
-          (i32.eq
-            (get_local $$s)
-            (i32.const 0)
-          )
-          (i32.const 1)
-          (block
-            (if
-              (i32.lt_u
-                (get_local $$wc)
-                (i32.const 128)
+    (block $do-once$0
+      (if
+        (i32.eq
+          (get_local $$s)
+          (i32.const 0)
+        )
+        (i32.const 1)
+        (block
+          (if
+            (i32.lt_u
+              (get_local $$wc)
+              (i32.const 128)
+            )
+            (block
+              (i32.store8
+                (get_local $$s)
+                (i32.and
+                  (get_local $$wc)
+                  (i32.const 255)
+                )
               )
-              (block
-                (i32.store8
-                  (get_local $$s)
-                  (i32.and
-                    (get_local $$wc)
-                    (i32.const 255)
-                  )
-                )
-                (br $do-once$0
-                  (i32.const 1)
-                )
+              (br $do-once$0
+                (i32.const 1)
               )
             )
-            (if
+          )
+          (if
+            (i32.lt_u
+              (get_local $$wc)
+              (i32.const 2048)
+            )
+            (block
+              (i32.store8
+                (get_local $$s)
+                (i32.and
+                  (i32.or
+                    (i32.shr_u
+                      (get_local $$wc)
+                      (i32.const 6)
+                    )
+                    (i32.const 192)
+                  )
+                  (i32.const 255)
+                )
+              )
+              (i32.store8 offset=1
+                (get_local $$s)
+                (i32.and
+                  (i32.or
+                    (i32.and
+                      (get_local $$wc)
+                      (i32.const 63)
+                    )
+                    (i32.const 128)
+                  )
+                  (i32.const 255)
+                )
+              )
+              (br $do-once$0
+                (i32.const 2)
+              )
+            )
+          )
+          (if
+            (i32.or
               (i32.lt_u
                 (get_local $$wc)
-                (i32.const 2048)
+                (i32.const 55296)
               )
-              (block
-                (i32.store8
-                  (get_local $$s)
-                  (i32.and
-                    (i32.or
+              (i32.eq
+                (i32.and
+                  (get_local $$wc)
+                  (i32.const -8192)
+                )
+                (i32.const 57344)
+              )
+            )
+            (block
+              (i32.store8
+                (get_local $$s)
+                (i32.and
+                  (i32.or
+                    (i32.shr_u
+                      (get_local $$wc)
+                      (i32.const 12)
+                    )
+                    (i32.const 224)
+                  )
+                  (i32.const 255)
+                )
+              )
+              (i32.store8 offset=1
+                (get_local $$s)
+                (i32.and
+                  (i32.or
+                    (i32.and
                       (i32.shr_u
                         (get_local $$wc)
                         (i32.const 6)
                       )
-                      (i32.const 192)
+                      (i32.const 63)
                     )
-                    (i32.const 255)
+                    (i32.const 128)
                   )
+                  (i32.const 255)
                 )
-                (i32.store8 offset=1
-                  (get_local $$s)
-                  (i32.and
-                    (i32.or
-                      (i32.and
-                        (get_local $$wc)
-                        (i32.const 63)
-                      )
-                      (i32.const 128)
+              )
+              (i32.store8 offset=2
+                (get_local $$s)
+                (i32.and
+                  (i32.or
+                    (i32.and
+                      (get_local $$wc)
+                      (i32.const 63)
                     )
-                    (i32.const 255)
+                    (i32.const 128)
                   )
+                  (i32.const 255)
                 )
-                (br $do-once$0
-                  (i32.const 2)
-                )
+              )
+              (br $do-once$0
+                (i32.const 3)
               )
             )
-            (if
-              (i32.or
-                (i32.lt_u
-                  (get_local $$wc)
-                  (i32.const 55296)
-                )
-                (i32.eq
-                  (i32.and
-                    (get_local $$wc)
-                    (i32.const -8192)
+          )
+          (if
+            (i32.lt_u
+              (i32.add
+                (get_local $$wc)
+                (i32.const -65536)
+              )
+              (i32.const 1048576)
+            )
+            (block
+              (i32.store8
+                (get_local $$s)
+                (i32.and
+                  (i32.or
+                    (i32.shr_u
+                      (get_local $$wc)
+                      (i32.const 18)
+                    )
+                    (i32.const 240)
                   )
-                  (i32.const 57344)
+                  (i32.const 255)
                 )
               )
-              (block
-                (i32.store8
-                  (get_local $$s)
-                  (i32.and
-                    (i32.or
+              (i32.store8 offset=1
+                (get_local $$s)
+                (i32.and
+                  (i32.or
+                    (i32.and
                       (i32.shr_u
                         (get_local $$wc)
                         (i32.const 12)
                       )
-                      (i32.const 224)
+                      (i32.const 63)
                     )
-                    (i32.const 255)
+                    (i32.const 128)
                   )
-                )
-                (i32.store8 offset=1
-                  (get_local $$s)
-                  (i32.and
-                    (i32.or
-                      (i32.and
-                        (i32.shr_u
-                          (get_local $$wc)
-                          (i32.const 6)
-                        )
-                        (i32.const 63)
-                      )
-                      (i32.const 128)
-                    )
-                    (i32.const 255)
-                  )
-                )
-                (i32.store8 offset=2
-                  (get_local $$s)
-                  (i32.and
-                    (i32.or
-                      (i32.and
-                        (get_local $$wc)
-                        (i32.const 63)
-                      )
-                      (i32.const 128)
-                    )
-                    (i32.const 255)
-                  )
-                )
-                (br $do-once$0
-                  (i32.const 3)
+                  (i32.const 255)
                 )
               )
-            )
-            (if
-              (i32.lt_u
-                (i32.add
-                  (get_local $$wc)
-                  (i32.const -65536)
-                )
-                (i32.const 1048576)
-              )
-              (block
-                (i32.store8
-                  (get_local $$s)
-                  (i32.and
-                    (i32.or
+              (i32.store8 offset=2
+                (get_local $$s)
+                (i32.and
+                  (i32.or
+                    (i32.and
                       (i32.shr_u
                         (get_local $$wc)
-                        (i32.const 18)
+                        (i32.const 6)
                       )
-                      (i32.const 240)
+                      (i32.const 63)
                     )
-                    (i32.const 255)
+                    (i32.const 128)
                   )
+                  (i32.const 255)
                 )
-                (i32.store8 offset=1
-                  (get_local $$s)
-                  (i32.and
-                    (i32.or
-                      (i32.and
-                        (i32.shr_u
-                          (get_local $$wc)
-                          (i32.const 12)
-                        )
-                        (i32.const 63)
-                      )
-                      (i32.const 128)
-                    )
-                    (i32.const 255)
-                  )
-                )
-                (i32.store8 offset=2
-                  (get_local $$s)
-                  (i32.and
-                    (i32.or
-                      (i32.and
-                        (i32.shr_u
-                          (get_local $$wc)
-                          (i32.const 6)
-                        )
-                        (i32.const 63)
-                      )
-                      (i32.const 128)
-                    )
-                    (i32.const 255)
-                  )
-                )
-                (i32.store8 offset=3
-                  (get_local $$s)
-                  (i32.and
-                    (i32.or
-                      (i32.and
-                        (get_local $$wc)
-                        (i32.const 63)
-                      )
-                      (i32.const 128)
-                    )
-                    (i32.const 255)
-                  )
-                )
-                (i32.const 4)
               )
-              (block
-                (i32.store
-                  (call $___errno_location)
-                  (i32.const 84)
+              (i32.store8 offset=3
+                (get_local $$s)
+                (i32.and
+                  (i32.or
+                    (i32.and
+                      (get_local $$wc)
+                      (i32.const 63)
+                    )
+                    (i32.const 128)
+                  )
+                  (i32.const 255)
                 )
-                (i32.const -1)
               )
+              (i32.const 4)
+            )
+            (block
+              (i32.store
+                (call $___errno_location)
+                (i32.const 84)
+              )
+              (i32.const -1)
             )
           )
         )
@@ -2463,18 +2424,16 @@
     (i32.load
       (i32.const 8)
     )
-    (return
-      (if
-        (i32.eq
-          (get_local $$s)
-          (i32.const 0)
-        )
+    (if
+      (i32.eq
+        (get_local $$s)
         (i32.const 0)
-        (call $_wcrtomb
-          (get_local $$s)
-          (get_local $$wc)
-          (i32.const 0)
-        )
+      )
+      (i32.const 0)
+      (call $_wcrtomb
+        (get_local $$s)
+        (get_local $$wc)
+        (i32.const 0)
       )
     )
   )
@@ -2934,39 +2893,35 @@
         )
       )
     )
-    (return
-      (if
-        (i32.ne
-          (get_local $$n$addr$3)
-          (i32.const 0)
-        )
-        (get_local $$s$2)
+    (if
+      (i32.ne
+        (get_local $$n$addr$3)
         (i32.const 0)
       )
+      (get_local $$s$2)
+      (i32.const 0)
     )
   )
   (func $___syscall_ret (param $$r i32) (result i32)
     (i32.load
       (i32.const 8)
     )
-    (return
-      (if
-        (i32.gt_u
-          (get_local $$r)
-          (i32.const -4096)
-        )
-        (block
-          (i32.store
-            (call $___errno_location)
-            (i32.sub
-              (i32.const 0)
-              (get_local $$r)
-            )
-          )
-          (i32.const -1)
-        )
+    (if
+      (i32.gt_u
         (get_local $$r)
+        (i32.const -4096)
       )
+      (block
+        (i32.store
+          (call $___errno_location)
+          (i32.sub
+            (i32.const 0)
+            (get_local $$r)
+          )
+        )
+        (i32.const -1)
+      )
+      (get_local $$r)
     )
   )
   (func $___fflush_unlocked (param $$f i32) (result i32)
@@ -3106,9 +3061,7 @@
         )
       )
     )
-    (return
-      (get_local $$retval$0)
-    )
+    (get_local $$retval$0)
   )
   (func $_cleanup (param $$p i32)
     (i32.load
@@ -3125,7 +3078,6 @@
         (get_local $$p)
       )
     )
-    (return)
   )
   (func $_printf_core (param $$f i32) (param $$fmt i32) (param $$ap i32) (param $$nl_arg i32) (param $$nl_type i32) (result i32)
     (local $label i32)
@@ -10059,9 +10011,7 @@
       (i32.const 8)
       (get_local $sp)
     )
-    (return
-      (get_local $$retval$0)
-    )
+    (get_local $$retval$0)
   )
   (func $_pop_arg_336 (param $$arg i32) (param $$type i32) (param $$ap i32)
     (local $$13 i32)
@@ -10669,7 +10619,6 @@
         )
       )
     )
-    (return)
   )
   (func $_fmt_u (param $$0 i32) (param $$1 i32) (param $$s i32) (result i32)
     (local $$8 i32)
@@ -10883,9 +10832,7 @@
         )
       )
     )
-    (return
-      (get_local $$s$addr$1$lcssa)
-    )
+    (get_local $$s$addr$1$lcssa)
   )
   (func $_pad (param $$f i32) (param $$c i32) (param $$w i32) (param $$l i32) (param $$fl i32)
     (local $$sub i32)
@@ -11085,7 +11032,6 @@
       (i32.const 8)
       (get_local $sp)
     )
-    (return)
   )
   (func $_malloc (param $$bytes i32) (result i32)
     (local $$119 i32)
@@ -17819,9 +17765,7 @@
       (call $___errno_location)
       (i32.const 12)
     )
-    (return
-      (i32.const 0)
-    )
+    (i32.const 0)
   )
   (func $_free (param $$mem i32)
     (local $$p$1 i32)
@@ -19893,7 +19837,6 @@
       (i32.const 208)
       (i32.const -1)
     )
-    (return)
   )
   (func $runPostSets
     (nop)
@@ -19903,53 +19846,45 @@
       (get_local $b)
       (get_local $d)
     )
-    (return
-      (block
-        (i32.store
-          (i32.const 168)
-          (i32.sub
-            (i32.sub
-              (get_local $b)
-              (get_local $d)
-            )
-            (i32.gt_u
-              (get_local $c)
-              (get_local $a)
-            )
-          )
-        )
+    (i32.store
+      (i32.const 168)
+      (i32.sub
         (i32.sub
-          (get_local $a)
+          (get_local $b)
+          (get_local $d)
+        )
+        (i32.gt_u
           (get_local $c)
+          (get_local $a)
         )
       )
+    )
+    (i32.sub
+      (get_local $a)
+      (get_local $c)
     )
   )
   (func $_i64Add (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
     (local $l i32)
-    (return
-      (block
-        (i32.store
-          (i32.const 168)
-          (i32.add
+    (i32.store
+      (i32.const 168)
+      (i32.add
+        (i32.add
+          (get_local $b)
+          (get_local $d)
+        )
+        (i32.lt_u
+          (set_local $l
             (i32.add
-              (get_local $b)
-              (get_local $d)
-            )
-            (i32.lt_u
-              (set_local $l
-                (i32.add
-                  (get_local $a)
-                  (get_local $c)
-                )
-              )
               (get_local $a)
+              (get_local $c)
             )
           )
+          (get_local $a)
         )
-        (get_local $l)
       )
     )
+    (get_local $l)
   )
   (func $_memset (param $ptr i32) (param $value i32) (param $num i32) (result i32)
     (local $unaligned i32)
@@ -20081,11 +20016,9 @@
       )
       (br $while-in$5)
     )
-    (return
-      (i32.sub
-        (get_local $ptr)
-        (get_local $num)
-      )
+    (i32.sub
+      (get_local $ptr)
+      (get_local $num)
     )
   )
   (func $_bitshift64Lshr (param $low i32) (param $high i32) (param $bits i32) (result i32)
@@ -20132,13 +20065,11 @@
       (i32.const 168)
       (i32.const 0)
     )
-    (return
-      (i32.shr_u
-        (get_local $high)
-        (i32.sub
-          (get_local $bits)
-          (i32.const 32)
-        )
+    (i32.shr_u
+      (get_local $high)
+      (i32.sub
+        (get_local $bits)
+        (i32.const 32)
       )
     )
   )
@@ -20198,9 +20129,7 @@
         )
       )
     )
-    (return
-      (i32.const 0)
-    )
+    (i32.const 0)
   )
   (func $_memcpy (param $dest i32) (param $src i32) (param $num i32) (result i32)
     (local $ret i32)
@@ -20344,9 +20273,7 @@
       )
       (br $while-in$5)
     )
-    (return
-      (get_local $ret)
-    )
+    (get_local $ret)
   )
   (func $_bitshift64Ashr (param $low i32) (param $high i32) (param $bits i32) (result i32)
     (if
@@ -20399,13 +20326,11 @@
         (i32.const 0)
       )
     )
-    (return
-      (i32.shr_s
-        (get_local $high)
-        (i32.sub
-          (get_local $bits)
-          (i32.const 32)
-        )
+    (i32.shr_s
+      (get_local $high)
+      (i32.sub
+        (get_local $bits)
+        (i32.const 32)
       )
     )
   )
@@ -20460,48 +20385,44 @@
         (get_local $$1)
       )
     )
-    (return
-      (block
-        (i32.store
-          (i32.const 168)
-          (i32.add
-            (i32.add
-              (i32.shr_u
-                (get_local $$8)
-                (i32.const 16)
-              )
-              (i32.mul
-                (get_local $$11)
-                (get_local $$6)
-              )
-            )
-            (i32.shr_u
-              (i32.add
-                (i32.and
-                  (get_local $$8)
-                  (i32.const 65535)
-                )
-                (get_local $$12)
-              )
-              (i32.const 16)
-            )
+    (i32.store
+      (i32.const 168)
+      (i32.add
+        (i32.add
+          (i32.shr_u
+            (get_local $$8)
+            (i32.const 16)
+          )
+          (i32.mul
+            (get_local $$11)
+            (get_local $$6)
           )
         )
-        (i32.or
-          (i32.const 0)
-          (i32.or
-            (i32.shl
-              (i32.add
-                (get_local $$8)
-                (get_local $$12)
-              )
-              (i32.const 16)
-            )
+        (i32.shr_u
+          (i32.add
             (i32.and
-              (get_local $$3)
+              (get_local $$8)
               (i32.const 65535)
             )
+            (get_local $$12)
           )
+          (i32.const 16)
+        )
+      )
+    )
+    (i32.or
+      (i32.const 0)
+      (i32.or
+        (i32.shl
+          (i32.add
+            (get_local $$8)
+            (get_local $$12)
+          )
+          (i32.const 16)
+        )
+        (i32.and
+          (get_local $$3)
+          (i32.const 65535)
         )
       )
     )
@@ -20603,63 +20524,61 @@
         )
       )
     )
-    (return
-      (call $_i64Subtract
-        (i32.xor
-          (call $___udivmoddi4
-            (call $_i64Subtract
-              (i32.xor
-                (get_local $$1$0)
-                (get_local $$a$0)
-              )
-              (i32.xor
-                (get_local $$1$1)
-                (get_local $$a$1)
-              )
-              (get_local $$1$0)
-              (get_local $$1$1)
-            )
-            (i32.load
-              (i32.const 168)
-            )
-            (call $_i64Subtract
-              (i32.xor
-                (get_local $$2$0)
-                (get_local $$b$0)
-              )
-              (i32.xor
-                (get_local $$2$1)
-                (get_local $$b$1)
-              )
-              (get_local $$2$0)
-              (get_local $$2$1)
-            )
-            (i32.load
-              (i32.const 168)
-            )
-            (i32.const 0)
-          )
-          (set_local $$7$0
+    (call $_i64Subtract
+      (i32.xor
+        (call $___udivmoddi4
+          (call $_i64Subtract
             (i32.xor
-              (get_local $$2$0)
               (get_local $$1$0)
+              (get_local $$a$0)
             )
+            (i32.xor
+              (get_local $$1$1)
+              (get_local $$a$1)
+            )
+            (get_local $$1$0)
+            (get_local $$1$1)
           )
-        )
-        (i32.xor
           (i32.load
             (i32.const 168)
           )
-          (set_local $$7$1
+          (call $_i64Subtract
+            (i32.xor
+              (get_local $$2$0)
+              (get_local $$b$0)
+            )
             (i32.xor
               (get_local $$2$1)
-              (get_local $$1$1)
+              (get_local $$b$1)
             )
+            (get_local $$2$0)
+            (get_local $$2$1)
+          )
+          (i32.load
+            (i32.const 168)
+          )
+          (i32.const 0)
+        )
+        (set_local $$7$0
+          (i32.xor
+            (get_local $$2$0)
+            (get_local $$1$0)
           )
         )
-        (get_local $$7$0)
-        (get_local $$7$1)
       )
+      (i32.xor
+        (i32.load
+          (i32.const 168)
+        )
+        (set_local $$7$1
+          (i32.xor
+            (get_local $$2$1)
+            (get_local $$1$1)
+          )
+        )
+      )
+      (get_local $$7$0)
+      (get_local $$7$1)
     )
   )
   (func $___remdi3 (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
@@ -20838,15 +20757,11 @@
       (i32.const 8)
       (get_local $__stackBase__)
     )
-    (return
-      (block
-        (i32.store
-          (i32.const 168)
-          (get_local $$10$1)
-        )
-        (get_local $$10$0)
-      )
+    (i32.store
+      (i32.const 168)
+      (get_local $$10$1)
     )
+    (get_local $$10$0)
   )
   (func $___muldi3 (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
     (local $$x_sroa_0_0_extract_trunc i32)
@@ -20863,53 +20778,47 @@
         )
       )
     )
-    (return
-      (block
-        (i32.store
-          (i32.const 168)
-          (i32.or
-            (i32.add
-              (i32.add
-                (i32.mul
-                  (get_local $$b$1)
-                  (get_local $$x_sroa_0_0_extract_trunc)
-                )
-                (i32.mul
-                  (get_local $$a$1)
-                  (get_local $$y_sroa_0_0_extract_trunc)
-                )
-              )
-              (set_local $$1$1
-                (i32.load
-                  (i32.const 168)
-                )
-              )
+    (i32.store
+      (i32.const 168)
+      (i32.or
+        (i32.add
+          (i32.add
+            (i32.mul
+              (get_local $$b$1)
+              (get_local $$x_sroa_0_0_extract_trunc)
             )
-            (i32.and
-              (get_local $$1$1)
-              (i32.const 0)
+            (i32.mul
+              (get_local $$a$1)
+              (get_local $$y_sroa_0_0_extract_trunc)
+            )
+          )
+          (set_local $$1$1
+            (i32.load
+              (i32.const 168)
             )
           )
         )
-        (i32.or
+        (i32.and
+          (get_local $$1$1)
           (i32.const 0)
-          (i32.and
-            (get_local $$1$0)
-            (i32.const -1)
-          )
         )
+      )
+    )
+    (i32.or
+      (i32.const 0)
+      (i32.and
+        (get_local $$1$0)
+        (i32.const -1)
       )
     )
   )
   (func $___udivdi3 (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
-    (return
-      (call $___udivmoddi4
-        (get_local $$a$0)
-        (get_local $$a$1)
-        (get_local $$b$0)
-        (get_local $$b$1)
-        (i32.const 0)
-      )
+    (call $___udivmoddi4
+      (get_local $$a$0)
+      (get_local $$a$1)
+      (get_local $$b$0)
+      (get_local $$b$1)
+      (i32.const 0)
     )
   )
   (func $___uremdi3 (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
@@ -20942,18 +20851,14 @@
       (i32.const 8)
       (get_local $__stackBase__)
     )
-    (return
-      (block
-        (i32.store
-          (i32.const 168)
-          (i32.load offset=4
-            (get_local $$rem)
-          )
-        )
-        (i32.load
-          (get_local $$rem)
-        )
+    (i32.store
+      (i32.const 168)
+      (i32.load offset=4
+        (get_local $$rem)
       )
+    )
+    (i32.load
+      (get_local $$rem)
     )
   )
   (func $___udivmoddi4 (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (param $$rem i32) (result i32)
@@ -21991,89 +21896,81 @@
         )
       )
     )
-    (return
-      (block
-        (i32.store
-          (i32.const 168)
-          (i32.or
-            (i32.or
-              (i32.or
-                (i32.shr_u
-                  (i32.or
-                    (i32.const 0)
-                    (get_local $$q_sroa_0_0_insert_ext75$0)
-                  )
-                  (i32.const 31)
-                )
-                (i32.shl
-                  (get_local $$q_sroa_0_0_insert_insert77$1)
-                  (i32.const 1)
-                )
-              )
-              (i32.and
-                (i32.or
-                  (i32.shl
-                    (get_local $$q_sroa_0_0_insert_ext75$1)
-                    (i32.const 1)
-                  )
-                  (i32.shr_u
-                    (get_local $$q_sroa_0_0_insert_ext75$0)
-                    (i32.const 31)
-                  )
-                )
-                (i32.const 0)
-              )
-            )
-            (get_local $$carry_0_lcssa$1)
-          )
-        )
+    (i32.store
+      (i32.const 168)
+      (i32.or
         (i32.or
+          (i32.or
+            (i32.shr_u
+              (i32.or
+                (i32.const 0)
+                (get_local $$q_sroa_0_0_insert_ext75$0)
+              )
+              (i32.const 31)
+            )
+            (i32.shl
+              (get_local $$q_sroa_0_0_insert_insert77$1)
+              (i32.const 1)
+            )
+          )
           (i32.and
             (i32.or
               (i32.shl
-                (get_local $$q_sroa_0_0_insert_ext75$0)
+                (get_local $$q_sroa_0_0_insert_ext75$1)
                 (i32.const 1)
               )
               (i32.shr_u
-                (i32.const 0)
+                (get_local $$q_sroa_0_0_insert_ext75$0)
                 (i32.const 31)
               )
             )
-            (i32.const -2)
+            (i32.const 0)
           )
-          (get_local $$carry_0_lcssa$0)
         )
+        (get_local $$carry_0_lcssa$1)
       )
+    )
+    (i32.or
+      (i32.and
+        (i32.or
+          (i32.shl
+            (get_local $$q_sroa_0_0_insert_ext75$0)
+            (i32.const 1)
+          )
+          (i32.shr_u
+            (i32.const 0)
+            (i32.const 31)
+          )
+        )
+        (i32.const -2)
+      )
+      (get_local $$carry_0_lcssa$0)
     )
   )
   (func $dynCall_ii (param $index i32) (param $a1 i32) (result i32)
-    (return
-      (call_indirect $FUNCSIG$ii
-        (i32.add
-          (i32.and
-            (get_local $index)
-            (i32.const 1)
-          )
-          (i32.const 0)
+    (call_indirect $FUNCSIG$ii
+      (i32.add
+        (i32.and
+          (get_local $index)
+          (i32.const 1)
         )
-        (get_local $a1)
+        (i32.const 0)
       )
+      (get_local $a1)
     )
   )
   (func $dynCall_iiii (param $index i32) (param $a1 i32) (param $a2 i32) (param $a3 i32) (result i32)
-    (return
-      (call_indirect $FUNCSIG$iiii
-        (i32.add
-          (i32.and
-            (get_local $index)
-            (i32.const 7)
-          )
-          (i32.const 2)
+    (call_indirect $FUNCSIG$iiii
+      (i32.add
+        (i32.and
+          (get_local $index)
+          (i32.const 7)
         )
-        (get_local $a1)
-        (get_local $a2)
-        (get_local $a3)
+        (i32.const 2)
       )
+      (get_local $a1)
+      (get_local $a2)
+      (get_local $a3)
     )
   )
   (func $dynCall_vi (param $index i32) (param $a1 i32)
@@ -22092,17 +21989,13 @@
     (call_import $nullFunc_ii
       (i32.const 0)
     )
-    (return
-      (i32.const 0)
-    )
+    (i32.const 0)
   )
   (func $b1 (param $p0 i32) (param $p1 i32) (param $p2 i32) (result i32)
     (call_import $nullFunc_iiii
       (i32.const 1)
     )
-    (return
-      (i32.const 0)
-    )
+    (i32.const 0)
   )
   (func $b2 (param $p0 i32)
     (call_import $nullFunc_vi

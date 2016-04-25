@@ -210,4 +210,30 @@
       )
     )
   )
+  (func $ret-1
+    (nop)
+  )
+  (func $ret-2
+    (block $block0
+      (block $block1
+      )
+    )
+  )
+  (func $ret-3
+    (block $block0
+      (if
+        (i32.const 0)
+        (nop)
+        (block $block3
+        )
+      )
+    )
+  )
+  (func $ret-value (result i32)
+    (block $block0
+      (block $block1
+        (i32.const 1)
+      )
+    )
+  )
 )
