@@ -37,26 +37,27 @@ void Linker::placeStackPointer(size_t stackAllocation) {
   const size_t pointerSize = 4;
   // Unconditionally allocate space for the stack pointer. Emscripten
   // allocates the stack itself, and initializes the stack pointer itself.
-  addStatic(pointerSize, pointerSize, "__stack_pointer");
+  out.addStatic(pointerSize, pointerSize, "__stack_pointer");
   if (stackAllocation) {
     // If we are allocating the stack, set up a relocation to initialize the
     // stack pointer to point to one past-the-end of the stack allocation.
     auto* raw = new uint32_t;
-    addRelocation(Relocation::kData, raw, ".stack", stackAllocation);
-    assert(wasm.memory.segments.size() == 0);
-    addSegment("__stack_pointer", reinterpret_cast<char*>(raw), pointerSize);
+    out.addRelocation(LinkerObject::Relocation::kData, raw, ".stack", stackAllocation);
+    assert(out.wasm.memory.segments.size() == 0);
+    out.addSegment("__stack_pointer", reinterpret_cast<char*>(raw), pointerSize);
   }
 }
 
 void Linker::layout() {
   // Allocate all user statics
-  for (const auto& obj : staticObjects) {
+  for (const auto& obj : out.staticObjects) {
     allocateStatic(obj.allocSize, obj.alignment, obj.name);
   }
+
   // Update the segments with their addresses now that they have been allocated.
-  for (auto& seg : segments) {
+  for (auto& seg : out.segments) {
     size_t address = staticAddresses[seg.first];
-    wasm.memory.segments[seg.second].offset = address;
+    out.wasm.memory.segments[seg.second].offset = address;
     segmentsByAddress[address] = seg.second;
   }
 
@@ -73,41 +74,41 @@ void Linker::layout() {
       Fatal() << "Specified initial memory size " << userInitialMemory <<
           " is smaller than required size " << initialMem;
     }
-    wasm.memory.initial = userInitialMemory / Memory::kPageSize;
+    out.wasm.memory.initial = userInitialMemory / Memory::kPageSize;
   } else {
-    wasm.memory.initial = initialMem / Memory::kPageSize;
+    out.wasm.memory.initial = initialMem / Memory::kPageSize;
   }
 
-  if (userMaxMemory) wasm.memory.max = userMaxMemory / Memory::kPageSize;
-  wasm.memory.exportName = MEMORY;
+  if (userMaxMemory) out.wasm.memory.max = userMaxMemory / Memory::kPageSize;
+  out.wasm.memory.exportName = MEMORY;
 
   // XXX For now, export all functions marked .globl.
-  for (Name name : globls) exportFunction(name, false);
-  for (Name name : initializerFunctions) exportFunction(name, true);
+  for (Name name : out.globls) exportFunction(name, false);
+  for (Name name : out.initializerFunctions) exportFunction(name, true);
 
   auto ensureFunctionIndex = [this](Name name) {
     if (functionIndexes.count(name) == 0) {
-      functionIndexes[name] = wasm.table.names.size();
-      wasm.table.names.push_back(name);
+      functionIndexes[name] = out.wasm.table.names.size();
+      out.wasm.table.names.push_back(name);
       if (debug) {
         std::cerr << "function index: " << name << ": "
                   << functionIndexes[name] << '\n';
       }
     }
   };
-  for (auto& relocation : relocations) {
+  for (auto& relocation : out.relocations) {
     Name name = relocation->symbol;
     if (debug) std::cerr << "fix relocation " << name << '\n';
 
-    if (relocation->kind == Relocation::kData) {
+    if (relocation->kind == LinkerObject::Relocation::kData) {
       const auto& symbolAddress = staticAddresses.find(name);
       assert(symbolAddress != staticAddresses.end());
       *(relocation->data) = symbolAddress->second + relocation->addend;
       if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
     } else {
       // function address
-      name = resolveAlias(name);
-      if (!wasm.checkFunction(name)) {
+      name = out.resolveAlias(name);
+      if (!out.wasm.checkFunction(name)) {
         std::cerr << "Unknown symbol: " << name << '\n';
         if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
         *(relocation->data) = 0;
@@ -118,31 +119,31 @@ void Linker::layout() {
     }
   }
   if (!!startFunction) {
-    if (implementedFunctions.count(startFunction) == 0) {
+    if (out.implementedFunctions.count(startFunction) == 0) {
       Fatal() << "Unknown start function: `" << startFunction << "`\n";
     }
-    const auto *target = wasm.getFunction(startFunction);
+    const auto *target = out.wasm.getFunction(startFunction);
     Name start("_start");
-    if (implementedFunctions.count(start) != 0) {
+    if (out.implementedFunctions.count(start) != 0) {
       Fatal() << "Start function already present: `" << start << "`\n";
     }
-    auto* func = wasm.allocator.alloc<Function>();
+    auto* func = out.wasm.allocator.alloc<Function>();
     func->name = start;
-    wasm.addFunction(func);
+    out.wasm.addFunction(func);
     exportFunction(start, true);
-    wasm.addStart(start);
-    auto* block = wasm.allocator.alloc<Block>();
+    out.wasm.addStart(start);
+    auto* block = out.wasm.allocator.alloc<Block>();
     func->body = block;
     {
       // Create the call, matching its parameters.
       // TODO allow calling with non-default values.
-      auto* call = wasm.allocator.alloc<Call>();
+      auto* call = out.wasm.allocator.alloc<Call>();
       call->target = startFunction;
       size_t paramNum = 0;
       for (WasmType type : target->params) {
         Name name = Name::fromInt(paramNum++);
         Builder::addVar(func, name, type);
-        auto* param = wasm.allocator.alloc<GetLocal>();
+        auto* param = out.wasm.allocator.alloc<GetLocal>();
         param->index = func->getLocalIndex(name);
         param->type = type;
         call->operands.push_back(param);
@@ -153,18 +154,18 @@ void Linker::layout() {
   }
 
   // ensure an explicit function type for indirect call targets
-  for (auto& name : wasm.table.names) {
-    auto* func = wasm.getFunction(name);
-    func->type = ensureFunctionType(getSig(func), &wasm, wasm.allocator)->name;
+  for (auto& name : out.wasm.table.names) {
+    auto* func = out.wasm.getFunction(name);
+    func->type = ensureFunctionType(getSig(func), &out.wasm, out.wasm.allocator)->name;
   }
 }
 
 void Linker::emscriptenGlue(std::ostream& o) {
   if (debug) {
-    WasmPrinter::printModule(&wasm, std::cerr);
+    WasmPrinter::printModule(&out.wasm, std::cerr);
   }
 
-  wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
+  out.wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
 
   makeDynCallThunks();
 
@@ -181,7 +182,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
       if (curr->target == EMSCRIPTEN_ASM_CONST) {
         auto arg = curr->operands[0]->cast<Const>();
         size_t segmentIndex = parent->segmentsByAddress[arg->value.geti32()];
-        std::string code = escape(parent->wasm.memory.segments[segmentIndex].data);
+        std::string code = escape(parent->out.wasm.memory.segments[segmentIndex].data);
         int32_t id;
         if (ids.count(code) == 0) {
           id = ids.size();
@@ -197,11 +198,11 @@ void Linker::emscriptenGlue(std::ostream& o) {
         // add import, if necessary
         if (allSigs.count(sig) == 0) {
           allSigs.insert(sig);
-          auto import = parent->wasm.allocator.alloc<Import>();
+          auto import = parent->out.wasm.allocator.alloc<Import>();
           import->name = import->base = curr->target;
           import->module = ENV;
-          import->type = ensureFunctionType(getSig(curr), &parent->wasm, parent->wasm.allocator);
-          parent->wasm.addImport(import);
+          import->type = ensureFunctionType(getSig(curr), &parent->out.wasm, parent->out.wasm.allocator);
+          parent->out.wasm.addImport(import);
         }
       }
     }
@@ -230,7 +231,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
   };
   AsmConstWalker walker;
   walker.parent = this;
-  walker.startWalk(&wasm);
+  walker.startWalk(&out.wasm);
   // print
   o << "\"asmConsts\": {";
   bool first = true;
@@ -249,7 +250,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
 
   o << "\"initializers\": [";
   first = true;
-  for (const auto& func : initializerFunctions) {
+  for (const auto& func : out.initializerFunctions) {
     if (first) first = false;
     else o << ", ";
     o << "\"" << func.c_str() << "\"";
@@ -261,10 +262,10 @@ void Linker::emscriptenGlue(std::ostream& o) {
 
 void Linker::makeDynCallThunks() {
   std::unordered_set<std::string> sigs;
-  wasm::Builder wasmBuilder(wasm);
-  for (const auto& indirectFunc : wasm.table.names) {
-    std::string sig(getSig(wasm.getFunction(indirectFunc)));
-    auto* funcType = ensureFunctionType(sig, &wasm, wasm.allocator);
+  wasm::Builder wasmBuilder(out.wasm);
+  for (const auto& indirectFunc : out.wasm.table.names) {
+    std::string sig(getSig(out.wasm.getFunction(indirectFunc)));
+    auto* funcType = ensureFunctionType(sig, &out.wasm, out.wasm.allocator);
     if (!sigs.insert(sig).second) continue; // Sig is already in the set
     std::vector<NameType> params;
     params.emplace_back("fptr", i32); // function pointer param
@@ -278,7 +279,7 @@ void Linker::makeDynCallThunks() {
     }
     Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, std::move(args));
     f->body = funcType->result == none ? call : wasmBuilder.makeReturn(call);
-    wasm.addFunction(f);
+    out.wasm.addFunction(f);
     exportFunction(f->name, true);
   }
 }
