@@ -104,7 +104,7 @@ int main(int argc, const char *argv[]) {
   Linker linker(globalBase, stackAllocation, initialMem, maxMem,
                 ignoreUnknownSymbols, startFunction, options.debug);
 
-  S2WasmBuilder s2wasm(linker.getExecutable(), input.c_str(), options.debug);
+  S2WasmBuilder s2wasm(linker.getOutput(), input.c_str(), options.debug);
 
   linker.layout();
 
@@ -117,7 +117,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  WasmPrinter::printModule(&linker.getExecutable().wasm, output.getStream());
+  WasmPrinter::printModule(&linker.getOutput().wasm, output.getStream());
   output << meta.str() << std::endl;
 
   if (options.debug) std::cerr << "Done." << std::endl;

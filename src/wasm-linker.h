@@ -164,12 +164,12 @@ class Linker {
     // wasm modules can't import data objects. Its value is 0 for the main
     // executable, which is all we have with static linking. In the future this
     // can go in a crtbegin or similar file.
-    exe.addStatic(4, 4, "__dso_handle");
+    out.addStatic(4, 4, "__dso_handle");
   }
 
   // Return a reference to the LinkerObject for the main executable. If empty,
   // it can be passed to an S2WasmBuilder and constructed.
-  LinkerObject& getExecutable() { return exe; }
+  LinkerObject& getOutput() { return out; }
 
   // Allocate the user stack, set up the initial memory size of the module, lay
   // out the linear memory, process the relocations, and set up the indirect
@@ -214,18 +214,18 @@ class Linker {
   }
 
   void exportFunction(Name name, bool must_export) {
-    if (!exe.wasm.checkFunction(name)) {
+    if (!out.wasm.checkFunction(name)) {
       assert(!must_export);
       return;
     }
-    if (exe.wasm.checkExport(name)) return; // Already exported
-    auto exp = exe.wasm.allocator.alloc<Export>();
+    if (out.wasm.checkExport(name)) return; // Already exported
+    auto exp = out.wasm.allocator.alloc<Export>();
     exp->name = exp->value = name;
-    exe.wasm.addExport(exp);
+    out.wasm.addExport(exp);
   }
 
-  // The final linked executable (created from merging the object files)
-  LinkerObject exe;
+  // The output module (linked executable)
+  LinkerObject out;
 
   bool ignoreUnknownSymbols;
   Name startFunction;
