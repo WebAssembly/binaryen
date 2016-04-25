@@ -91,6 +91,10 @@ class LinkerObject {
     assert(implementedFunctions.count(name));
   }
 
+  void addUndefinedFunctionCall(Call* call) {
+    undefinedFunctions[call->target].push_back(call);
+  }
+
   bool isEmpty() {
     return wasm.functions.empty();
   }
@@ -115,6 +119,9 @@ class LinkerObject {
 
   std::set<Name> implementedFunctions;
   std::unordered_map<cashew::IString, Name> aliasedFunctions;
+
+  using CallList = std::vector<Call*>;
+  std::map<Name, CallList> undefinedFunctions;
 
   std::map<Name, size_t> segments; // name => segment index (in wasm module)
 

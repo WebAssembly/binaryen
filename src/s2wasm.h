@@ -696,17 +696,13 @@ class S2WasmBuilder {
 
       } else {
         // non-indirect call
-        CallBase* curr;
         Name assign = getAssign();
         Name target = linkerObj.resolveAlias(cleanFunction(getCommaSeparated()));
-        if (linkerObj.isFunctionImplemented(target)) {
-          auto specific = allocator.alloc<Call>();
-          specific->target = target;
-          curr = specific;
-        } else {
-          auto specific = allocator.alloc<CallImport>();
-          specific->target = target;
-          curr = specific;
+
+        Call* curr = allocator.alloc<Call>();
+        curr->target = target;
+        if (!linkerObj.isFunctionImplemented(target)) {
+          linkerObj.addUndefinedFunctionCall(curr);
         }
         curr->type = type;
         skipWhitespace();
@@ -719,16 +715,6 @@ class S2WasmBuilder {
           }
         }
         setOutput(curr, assign);
-        if (curr->is<CallImport>()) {
-          auto target = curr->cast<CallImport>()->target;
-          if (!wasm.checkImport(target)) {
-            auto import = allocator.alloc<Import>();
-            import->name = import->base = target;
-            import->module = ENV;
-            import->type = ensureFunctionType(getSig(curr), &wasm, allocator);
-            wasm.addImport(import);
-          }
-        }
       }
     };
     auto handleTyped = [&](WasmType type) {
