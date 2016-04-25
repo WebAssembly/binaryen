@@ -16,7 +16,7 @@ console.log('input:');
 console.log(input);
 console.log('================');
 
-var module = new Binaryen.AllocatingModule();
+var module = new Binaryen.Module();
 var parser = new Binaryen.SExpressionParser(input);
 
 console.log('s-expr dump:');
