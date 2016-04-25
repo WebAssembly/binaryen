@@ -842,12 +842,10 @@ public:
     if (debug) std::cerr << "zz node: Break" << std::endl;
     if (curr->value) {
       recurse(curr->value);
-    } else {
-      visitNop(nullptr);
     }
     if (curr->condition) recurse(curr->condition);
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
-      << U32LEB(getBreakIndex(curr->name));
+      << U32LEB(curr->value ? 1 : 0) << U32LEB(getBreakIndex(curr->name));
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
@@ -1730,9 +1728,11 @@ public:
 
   void visitBreak(Break *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
+    auto arity = getU32LEB();
+    assert(arity == 0 || arity == 1);
     curr->name = getBreakName(getU32LEB());
     if (code == BinaryConsts::BrIf) curr->condition = popExpression();
-    curr->value = popExpression();
+    if (arity == 1) curr->value = popExpression();
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
