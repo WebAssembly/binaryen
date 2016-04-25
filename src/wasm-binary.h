@@ -851,11 +851,9 @@ public:
     if (debug) std::cerr << "zz node: Switch" << std::endl;
     if (curr->value) {
       recurse(curr->value);
-    } else {
-      visitNop(nullptr);
     }
     recurse(curr->condition);
-    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
+    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->value ? 1 : 0) << U32LEB(curr->targets.size());
     for (auto target : curr->targets) {
       o << uint32_t(getBreakIndex(target));
     }
@@ -1734,8 +1732,10 @@ public:
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
+    auto arity = getU32LEB();
+    assert(arity == 0 || arity == 1);
     curr->condition = popExpression();
-    curr->value = popExpression();
+    if (arity == 1) curr->value = popExpression();
     auto numTargets = getU32LEB();
     for (size_t i = 0; i < numTargets; i++) {
       curr->targets.push_back(getBreakName(getInt32()));
