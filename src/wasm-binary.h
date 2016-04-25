@@ -1095,10 +1095,8 @@ public:
     if (debug) std::cerr << "zz node: Return" << std::endl;
     if (curr->value) {
       recurse(curr->value);
-    } else {
-      visitNop(nullptr);
     }
-    o << int8_t(BinaryConsts::Return);
+    o << int8_t(BinaryConsts::Return) << U32LEB(curr->value ? 1 : 0);
   }
   void visitHost(Host *curr) {
     if (debug) std::cerr << "zz node: Host" << std::endl;
@@ -1982,7 +1980,11 @@ public:
   }
   void visitReturn(Return *curr) {
     if (debug) std::cerr << "zz node: Return" << std::endl;
-    curr->value = popExpression();
+    auto arity = getU32LEB();
+    assert(arity == 0 || arity == 1);
+    if (arity == 1) {
+      curr->value = popExpression();
+    }
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
     switch (code) {
