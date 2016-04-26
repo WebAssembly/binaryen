@@ -90,8 +90,7 @@
   )
   (func $b12-yes (result i32)
     (block $topmost
-      (if
-        (i32.const 1)
+      (select
         (block $block1
           (i32.const 12)
           (i32.const 1)
@@ -100,6 +99,7 @@
           (i32.const 27)
           (i32.const 2)
         )
+        (i32.const 1)
       )
     )
   )
@@ -126,14 +126,14 @@
   )
   (func $b14 (result i32)
     (block $topmost
-      (if
-        (i32.const 1)
+      (select
         (block $block1
           (i32.const 12)
         )
         (block $block3
           (i32.const 27)
         )
+        (i32.const 1)
       )
     )
   )
@@ -174,38 +174,38 @@
   )
   (func $b17
     (block $a
-      (if
-        (i32.const 0)
+      (select
         (block $block1
         )
         (block $block3
         )
+        (i32.const 0)
       )
     )
     (block $a
-      (if
-        (i32.const 0)
+      (select
         (i32.const 1)
         (block $block6
         )
+        (i32.const 0)
       )
     )
     (block $a
-      (if
-        (i32.const 0)
+      (select
         (block $block8
         )
         (i32.const 1)
+        (i32.const 0)
       )
     )
     (block $c
       (block $b
-        (if
-          (i32.const 0)
+        (select
           (block $block11
           )
           (block $block13
           )
+          (i32.const 0)
         )
       )
     )
@@ -221,11 +221,11 @@
   )
   (func $ret-3
     (block $block0
-      (if
-        (i32.const 0)
+      (select
         (nop)
         (block $block3
         )
+        (i32.const 0)
       )
     )
   )
@@ -233,6 +233,51 @@
     (block $block0
       (block $block1
         (i32.const 1)
+      )
+    )
+  )
+  (func $no-select-but-the-last
+    (block $a
+      (if
+        (i32.const 0)
+        (i32.const 1)
+        (block $block2
+          (br $a
+            (i32.const 2)
+          )
+          (i32.const 3)
+        )
+      )
+      (if
+        (i32.const 0)
+        (block $block4
+          (br $a
+            (i32.const 2)
+          )
+          (i32.const 3)
+        )
+        (i32.const 1)
+      )
+      (if
+        (block $block6
+          (br $a
+            (i32.const 2)
+          )
+          (i32.const 3)
+        )
+        (i32.const 0)
+        (i32.const 1)
+      )
+      (select
+        (block $a
+          (i32.const 1)
+        )
+        (block $a
+          (i32.const 2)
+        )
+        (block $a
+          (i32.const 0)
+        )
       )
     )
   )

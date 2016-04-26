@@ -52,7 +52,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
-  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory; }
+  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches; }
   bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory; }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
