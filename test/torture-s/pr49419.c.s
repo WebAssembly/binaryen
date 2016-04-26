@@ -121,10 +121,10 @@ main:                                   # @main
 	i32.const	$push0=, 36
 	i32.call	$discard=, memset@FUNCTION, $4, $pop29, $pop0
 	i64.const	$push1=, 4294967297
-	i64.store	$discard=, 0($4):p2align=4, $pop1
+	i64.store	$discard=, 0($4), $pop1
 	i32.load	$2=, 12($4)
 	i32.const	$push2=, 2
-	i32.store	$3=, 8($4):p2align=3, $pop2
+	i32.store	$3=, 8($4), $pop2
 	i32.const	$push28=, 0
 	i32.store	$discard=, t($pop28), $4
 	i32.const	$0=, 1

@@ -132,7 +132,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.store	$discard=, 4($9), $7
-	i32.store	$discard=, 0($9):p2align=4, $8
+	i32.store	$discard=, 0($9), $8
 	copy_local	$5=, $3
 	copy_local	$3=, $2
 	copy_local	$4=, $1
@@ -260,7 +260,7 @@ main:                                   # @main
 	i64.store	$discard=, 0($1):p2align=2, $pop10
 	i32.const	$push13=, 2
 	i32.store	$discard=, 4($3), $pop13
-	i32.store	$discard=, 0($3):p2align=4, $0
+	i32.store	$discard=, 0($3), $0
 	i32.const	$push11=, .L.str.1
 	i32.call	$discard=, printf@FUNCTION, $pop11, $3
 	i32.const	$push27=, 12

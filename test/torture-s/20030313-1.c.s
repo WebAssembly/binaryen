@@ -98,25 +98,25 @@ main:                                   # @main
 	i32.const	$push3=, 0
 	i32.load	$0=, x($pop3)
 	i32.const	$push2=, 3
-	i32.store	$discard=, 16($2):p2align=4, $pop2
+	i32.store	$discard=, 16($2), $pop2
 	i32.const	$push11=, 0
 	i32.load	$1=, x+4($pop11)
 	i32.store	$discard=, 20($2), $0
 	i32.const	$push4=, 4
-	i32.store	$discard=, 24($2):p2align=3, $pop4
+	i32.store	$discard=, 24($2), $pop4
 	i32.store	$discard=, 28($2), $1
 	i32.const	$push10=, 0
 	i32.load	$0=, x+8($pop10)
 	i32.const	$push5=, 5
-	i32.store	$discard=, 32($2):p2align=4, $pop5
+	i32.store	$discard=, 32($2), $pop5
 	i32.const	$push9=, 0
 	i32.load	$1=, x+12($pop9)
 	i32.store	$discard=, 36($2), $0
 	i32.const	$push6=, 6
-	i32.store	$discard=, 40($2):p2align=3, $pop6
+	i32.store	$discard=, 40($2), $pop6
 	i32.store	$discard=, 44($2), $1
 	i64.const	$push0=, 47244640257
-	i64.store	$discard=, 0($2):p2align=4, $pop0
+	i64.store	$discard=, 0($2), $pop0
 	i64.const	$push1=, 51539607554
 	i64.store	$discard=, 8($2), $pop1
 	i32.const	$push7=, 12

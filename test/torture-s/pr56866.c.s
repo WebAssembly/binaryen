@@ -36,13 +36,13 @@ main:                                   # @main
 	i32.const	$push2=, 256
 	i32.call	$discard=, memset@FUNCTION, $pop95, $pop52, $pop2
 	i32.const	$push4=, 19088743
-	i32.store	$discard=, 2592($10):p2align=4, $pop4
+	i32.store	$discard=, 2592($10), $pop4
 	i32.const	$push5=, 17767
-	i32.store16	$discard=, 1056($10):p2align=4, $pop5
+	i32.store16	$discard=, 1056($10), $pop5
 	i32.const	$push6=, 115
-	i32.store8	$discard=, 288($10):p2align=4, $pop6
+	i32.store8	$discard=, 288($10), $pop6
 	i64.const	$push3=, 81985529216486895
-	i64.store	$discard=, 5664($10):p2align=4, $pop3
+	i64.store	$discard=, 5664($10), $pop3
 	i32.const	$push96=, 5664
 	i32.add 	$push97=, $10, $pop96
 	i32.store	$discard=, 28($10), $pop97
@@ -177,7 +177,7 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	block
-	i64.load	$push29=, 3616($10):p2align=4
+	i64.load	$push29=, 3616($10)
 	i64.const	$push30=, -1224658842671273011
 	i64.ne  	$push31=, $pop29, $pop30
 	br_if   	0, $pop31       # 0: down to label8
@@ -188,7 +188,7 @@ main:                                   # @main
 	i32.eq  	$push129=, $pop33, $pop128
 	br_if   	0, $pop129      # 0: down to label8
 # BB#10:                                # %if.end
-	i64.load	$push76=, 1568($10):p2align=4
+	i64.load	$push76=, 1568($10)
 	tee_local	$push75=, $2=, $pop76
 	i32.wrap/i64	$push34=, $pop75
 	i32.const	$push35=, 1728127813
@@ -199,7 +199,7 @@ main:                                   # @main
 	i64.ge_u	$push38=, $2, $pop37
 	br_if   	0, $pop38       # 0: down to label8
 # BB#12:                                # %if.end71
-	i32.load	$push78=, 544($10):p2align=4
+	i32.load	$push78=, 544($10)
 	tee_local	$push77=, $0=, $pop78
 	i32.const	$push39=, 65535
 	i32.and 	$push40=, $pop77, $pop39
@@ -211,7 +211,7 @@ main:                                   # @main
 	i32.ge_u	$push44=, $0, $pop43
 	br_if   	0, $pop44       # 0: down to label8
 # BB#14:                                # %if.end81
-	i32.load16_u	$push80=, 32($10):p2align=4
+	i32.load16_u	$push80=, 32($10)
 	tee_local	$push79=, $0=, $pop80
 	i32.const	$push45=, 255
 	i32.and 	$push46=, $pop79, $pop45

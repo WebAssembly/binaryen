@@ -20,9 +20,9 @@ main:                                   # @main
 	i32.add 	$push1=, $6, $pop0
 	i64.const	$push2=, 0
 	i64.store	$push3=, 0($pop1), $pop2
-	i64.store	$push6=, 0($pop5):p2align=4, $pop3
+	i64.store	$push6=, 0($pop5), $pop3
 	i64.store	$push7=, 8($6), $pop6
-	i64.store	$discard=, 0($6):p2align=4, $pop7
+	i64.store	$discard=, 0($6), $pop7
 	i32.const	$push40=, 0
 	i32.load	$push8=, i($pop40)
 	i32.const	$push9=, d+1
@@ -80,7 +80,7 @@ main:                                   # @main
 # BB#8:                                 # %for.end
 	end_loop                        # label1:
 	block
-	i64.load	$push50=, 0($6):p2align=4
+	i64.load	$push50=, 0($6)
 	tee_local	$push49=, $5=, $pop50
 	i64.const	$push21=, 65535
 	i64.and 	$push22=, $pop49, $pop21
@@ -97,7 +97,7 @@ main:                                   # @main
 	i32.ne  	$push29=, $pop27, $pop28
 	br_if   	0, $pop29       # 0: down to label5
 # BB#10:                                # %for.end
-	i32.load	$push17=, 0($6):p2align=4
+	i32.load	$push17=, 0($6)
 	i32.const	$push30=, -16777216
 	i32.lt_u	$push31=, $pop17, $pop30
 	br_if   	0, $pop31       # 0: down to label5

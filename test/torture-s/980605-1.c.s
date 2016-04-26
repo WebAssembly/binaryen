@@ -73,7 +73,7 @@ f:                                      # @f
 	i32.add 	$push4=, $pop11, $0
 	i32.const	$push5=, 207
 	i32.add 	$push6=, $pop4, $pop5
-	i32.store	$0=, 0($1):p2align=4, $pop6
+	i32.store	$0=, 0($1), $pop6
 	i32.const	$push8=, buf
 	i32.const	$push7=, .L.str
 	i32.call	$discard=, sprintf@FUNCTION, $pop8, $pop7, $1

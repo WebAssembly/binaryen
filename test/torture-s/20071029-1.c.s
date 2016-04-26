@@ -92,7 +92,7 @@ foo:                                    # @foo
 .LBB1_1:                                # %again
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.store	$discard=, 8($2):p2align=3, $0
+	i32.store	$discard=, 8($2), $0
 	i32.const	$push4=, 0
 	i32.const	$push3=, 52
 	i32.call	$discard=, memset@FUNCTION, $1, $pop4, $pop3

@@ -9,10 +9,10 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
 	i32.shl 	$0=, $0, $pop0
-	i32.load8_u	$push1=, arr($0):p2align=2
+	i32.load8_u	$push1=, arr($0)
 	i32.const	$push3=, 2
 	i32.add 	$push2=, $pop1, $pop3
-	i32.store8	$discard=, arr($0):p2align=2, $pop2
+	i32.store8	$discard=, arr($0), $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -27,23 +27,23 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push13=, 0
 	i32.const	$push1=, 127
-	i32.store8	$discard=, arr($pop13):p2align=2, $pop1
+	i32.store8	$discard=, arr($pop13), $pop1
 	i32.const	$push12=, 0
 	i32.const	$push2=, 254
-	i32.store8	$discard=, arr+4($pop12):p2align=2, $pop2
+	i32.store8	$discard=, arr+4($pop12), $pop2
 	i32.const	$push11=, 0
 	call    	foo@FUNCTION, $pop11
 	i32.const	$push3=, 1
 	call    	foo@FUNCTION, $pop3
 	block
 	i32.const	$push10=, 0
-	i32.load8_u	$push4=, arr($pop10):p2align=2
+	i32.load8_u	$push4=, arr($pop10)
 	i32.const	$push5=, 129
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push14=, 0
-	i32.load8_u	$push0=, arr+4($pop14):p2align=2
+	i32.load8_u	$push0=, arr+4($pop14)
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop0, $pop7
 	br_if   	0, $pop8        # 0: down to label0

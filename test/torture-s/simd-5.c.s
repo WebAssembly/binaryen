@@ -22,31 +22,31 @@ func1:                                  # @func1
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$0=, q1+4($pop0):p2align=2
+	i32.load16_u	$0=, q1+4($pop0)
 	i32.const	$push41=, 0
 	i32.load16_u	$1=, q1+2($pop41)
 	i32.const	$push40=, 0
-	i32.load16_u	$2=, q1($pop40):p2align=3
+	i32.load16_u	$2=, q1($pop40)
 	i32.const	$push39=, 0
-	i32.load16_u	$5=, q2($pop39):p2align=3
+	i32.load16_u	$5=, q2($pop39)
 	i32.const	$push38=, 0
 	i32.load16_u	$4=, q2+2($pop38)
 	i32.const	$push37=, 0
-	i32.load16_u	$3=, q2+4($pop37):p2align=2
+	i32.load16_u	$3=, q2+4($pop37)
 	i32.const	$push36=, 0
 	i32.load16_u	$6=, q3+6($pop36)
 	i32.const	$push35=, 0
-	i32.load16_u	$7=, q3+4($pop35):p2align=2
+	i32.load16_u	$7=, q3+4($pop35)
 	i32.const	$push34=, 0
 	i32.load16_u	$8=, q3+2($pop34)
 	i32.const	$push33=, 0
-	i32.load16_u	$9=, q3($pop33):p2align=3
+	i32.load16_u	$9=, q3($pop33)
 	i32.const	$push32=, 0
-	i32.load16_u	$13=, q4($pop32):p2align=3
+	i32.load16_u	$13=, q4($pop32)
 	i32.const	$push31=, 0
 	i32.load16_u	$12=, q4+2($pop31)
 	i32.const	$push30=, 0
-	i32.load16_u	$11=, q4+4($pop30):p2align=2
+	i32.load16_u	$11=, q4+4($pop30)
 	i32.const	$push29=, 0
 	i32.load16_u	$10=, q4+6($pop29)
 	i32.const	$push28=, 0
@@ -58,42 +58,42 @@ func1:                                  # @func1
 	i32.store16	$14=, w1+6($pop28), $pop6
 	i32.const	$push25=, 0
 	i32.mul 	$push5=, $3, $0
-	i32.store16	$0=, w1+4($pop25):p2align=2, $pop5
+	i32.store16	$0=, w1+4($pop25), $pop5
 	i32.const	$push24=, 0
 	i32.mul 	$push4=, $4, $1
 	i32.store16	$1=, w1+2($pop24), $pop4
 	i32.const	$push23=, 0
 	i32.mul 	$push3=, $5, $2
-	i32.store16	$2=, w1($pop23):p2align=3, $pop3
+	i32.store16	$2=, w1($pop23), $pop3
 	i32.const	$push22=, 0
 	i32.mul 	$push10=, $10, $6
 	i32.store16	$5=, w2+6($pop22), $pop10
 	i32.const	$push21=, 0
 	i32.mul 	$push9=, $11, $7
-	i32.store16	$4=, w2+4($pop21):p2align=2, $pop9
+	i32.store16	$4=, w2+4($pop21), $pop9
 	i32.const	$push20=, 0
 	i32.mul 	$push8=, $12, $8
 	i32.store16	$3=, w2+2($pop20), $pop8
 	i32.const	$push19=, 0
 	i32.mul 	$push7=, $13, $9
-	i32.store16	$6=, w2($pop19):p2align=3, $pop7
+	i32.store16	$6=, w2($pop19), $pop7
 	call    	func0@FUNCTION
 	i32.const	$push18=, 0
 	i32.store16	$discard=, w3+6($pop18), $14
 	i32.const	$push17=, 0
-	i32.store16	$discard=, w3+4($pop17):p2align=2, $0
+	i32.store16	$discard=, w3+4($pop17), $0
 	i32.const	$push16=, 0
 	i32.store16	$discard=, w3+2($pop16), $1
 	i32.const	$push15=, 0
-	i32.store16	$discard=, w3($pop15):p2align=3, $2
+	i32.store16	$discard=, w3($pop15), $2
 	i32.const	$push14=, 0
 	i32.store16	$discard=, w4+6($pop14), $5
 	i32.const	$push13=, 0
-	i32.store16	$discard=, w4+4($pop13):p2align=2, $4
+	i32.store16	$discard=, w4+4($pop13), $4
 	i32.const	$push12=, 0
 	i32.store16	$discard=, w4+2($pop12), $3
 	i32.const	$push11=, 0
-	i32.store16	$discard=, w4($pop11):p2align=3, $6
+	i32.store16	$discard=, w4($pop11), $6
 	return
 	.endfunc
 .Lfunc_end1:
@@ -107,31 +107,31 @@ func2:                                  # @func2
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$0=, q1+4($pop0):p2align=2
+	i32.load16_u	$0=, q1+4($pop0)
 	i32.const	$push41=, 0
 	i32.load16_u	$1=, q1+2($pop41)
 	i32.const	$push40=, 0
-	i32.load16_u	$2=, q1($pop40):p2align=3
+	i32.load16_u	$2=, q1($pop40)
 	i32.const	$push39=, 0
-	i32.load16_u	$5=, q2($pop39):p2align=3
+	i32.load16_u	$5=, q2($pop39)
 	i32.const	$push38=, 0
 	i32.load16_u	$4=, q2+2($pop38)
 	i32.const	$push37=, 0
-	i32.load16_u	$3=, q2+4($pop37):p2align=2
+	i32.load16_u	$3=, q2+4($pop37)
 	i32.const	$push36=, 0
 	i32.load16_u	$6=, q3+6($pop36)
 	i32.const	$push35=, 0
-	i32.load16_u	$7=, q3+4($pop35):p2align=2
+	i32.load16_u	$7=, q3+4($pop35)
 	i32.const	$push34=, 0
 	i32.load16_u	$8=, q3+2($pop34)
 	i32.const	$push33=, 0
-	i32.load16_u	$9=, q3($pop33):p2align=3
+	i32.load16_u	$9=, q3($pop33)
 	i32.const	$push32=, 0
-	i32.load16_u	$13=, q4($pop32):p2align=3
+	i32.load16_u	$13=, q4($pop32)
 	i32.const	$push31=, 0
 	i32.load16_u	$12=, q4+2($pop31)
 	i32.const	$push30=, 0
-	i32.load16_u	$11=, q4+4($pop30):p2align=2
+	i32.load16_u	$11=, q4+4($pop30)
 	i32.const	$push29=, 0
 	i32.load16_u	$10=, q4+6($pop29)
 	i32.const	$push28=, 0
@@ -143,42 +143,42 @@ func2:                                  # @func2
 	i32.store16	$14=, z1+6($pop28), $pop6
 	i32.const	$push25=, 0
 	i32.add 	$push5=, $3, $0
-	i32.store16	$0=, z1+4($pop25):p2align=2, $pop5
+	i32.store16	$0=, z1+4($pop25), $pop5
 	i32.const	$push24=, 0
 	i32.add 	$push4=, $4, $1
 	i32.store16	$1=, z1+2($pop24), $pop4
 	i32.const	$push23=, 0
 	i32.add 	$push3=, $5, $2
-	i32.store16	$2=, z1($pop23):p2align=3, $pop3
+	i32.store16	$2=, z1($pop23), $pop3
 	i32.const	$push22=, 0
 	i32.sub 	$push10=, $6, $10
 	i32.store16	$5=, z2+6($pop22), $pop10
 	i32.const	$push21=, 0
 	i32.sub 	$push9=, $7, $11
-	i32.store16	$4=, z2+4($pop21):p2align=2, $pop9
+	i32.store16	$4=, z2+4($pop21), $pop9
 	i32.const	$push20=, 0
 	i32.sub 	$push8=, $8, $12
 	i32.store16	$3=, z2+2($pop20), $pop8
 	i32.const	$push19=, 0
 	i32.sub 	$push7=, $9, $13
-	i32.store16	$6=, z2($pop19):p2align=3, $pop7
+	i32.store16	$6=, z2($pop19), $pop7
 	call    	func1@FUNCTION
 	i32.const	$push18=, 0
 	i32.store16	$discard=, z3+6($pop18), $14
 	i32.const	$push17=, 0
-	i32.store16	$discard=, z3+4($pop17):p2align=2, $0
+	i32.store16	$discard=, z3+4($pop17), $0
 	i32.const	$push16=, 0
 	i32.store16	$discard=, z3+2($pop16), $1
 	i32.const	$push15=, 0
-	i32.store16	$discard=, z3($pop15):p2align=3, $2
+	i32.store16	$discard=, z3($pop15), $2
 	i32.const	$push14=, 0
 	i32.store16	$discard=, z4+6($pop14), $5
 	i32.const	$push13=, 0
-	i32.store16	$discard=, z4+4($pop13):p2align=2, $4
+	i32.store16	$discard=, z4+4($pop13), $4
 	i32.const	$push12=, 0
 	i32.store16	$discard=, z4+2($pop12), $3
 	i32.const	$push11=, 0
-	i32.store16	$discard=, z4($pop11):p2align=3, $6
+	i32.store16	$discard=, z4($pop11), $6
 	return
 	.endfunc
 .Lfunc_end2:

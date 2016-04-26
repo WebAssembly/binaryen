@@ -88,36 +88,38 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 94
-	i32.call	$push0=, malloc@FUNCTION, $pop1
-	i32.const	$push2=, 0
-	i32.const	$push18=, 94
-	i32.call	$push17=, memset@FUNCTION, $pop0, $pop2, $pop18
-	tee_local	$push16=, $0=, $pop17
-	i32.const	$push3=, 3
-	i32.store	$discard=, 0($pop16):p2align=0, $pop3
-	i64.const	$push4=, 555
-	i64.store	$push5=, 10($0):p2align=0, $pop4
-	i64.store	$discard=, 18($0):p2align=0, $pop5
-	i64.const	$push6=, 999
-	i64.store	$push7=, 40($0):p2align=0, $pop6
-	i64.store	$discard=, 48($0):p2align=0, $pop7
-	i64.const	$push8=, 4311810305
-	i64.store	$push9=, 70($0):p2align=0, $pop8
-	i64.store	$discard=, 78($0):p2align=0, $pop9
+	i32.const	$push0=, 94
+	i32.call	$push19=, malloc@FUNCTION, $pop0
+	tee_local	$push18=, $0=, $pop19
+	i32.const	$push1=, 4
+	i32.add 	$push2=, $pop18, $pop1
+	i32.const	$push4=, 0
+	i32.const	$push3=, 90
+	i32.call	$discard=, memset@FUNCTION, $pop2, $pop4, $pop3
+	i32.const	$push5=, 3
+	i32.store	$discard=, 0($0):p2align=0, $pop5
+	i64.const	$push6=, 555
+	i64.store	$push7=, 10($0):p2align=0, $pop6
+	i64.store	$discard=, 18($0):p2align=0, $pop7
+	i64.const	$push8=, 999
+	i64.store	$push9=, 40($0):p2align=0, $pop8
+	i64.store	$discard=, 48($0):p2align=0, $pop9
+	i64.const	$push10=, 4311810305
+	i64.store	$push11=, 70($0):p2align=0, $pop10
+	i64.store	$discard=, 78($0):p2align=0, $pop11
 	block
-	i64.call	$push10=, Sum@FUNCTION, $0
-	i64.const	$push15=, 4311811859
-	i64.ne  	$push11=, $pop10, $pop15
-	br_if   	0, $pop11       # 0: down to label6
-# BB#1:                                 # %if.end
-	i64.call	$push12=, Sum2@FUNCTION, $0
-	i64.const	$push19=, 4311811859
-	i64.ne  	$push13=, $pop12, $pop19
+	i64.call	$push12=, Sum@FUNCTION, $0
+	i64.const	$push17=, 4311811859
+	i64.ne  	$push13=, $pop12, $pop17
 	br_if   	0, $pop13       # 0: down to label6
+# BB#1:                                 # %if.end
+	i64.call	$push14=, Sum2@FUNCTION, $0
+	i64.const	$push20=, 4311811859
+	i64.ne  	$push15=, $pop14, $pop20
+	br_if   	0, $pop15       # 0: down to label6
 # BB#2:                                 # %if.end25
-	i32.const	$push14=, 0
-	return  	$pop14
+	i32.const	$push16=, 0
+	return  	$pop16
 .LBB2_3:                                # %if.then24
 	end_block                       # label6:
 	call    	abort@FUNCTION

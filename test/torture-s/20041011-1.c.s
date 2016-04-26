@@ -25,123 +25,123 @@ t1:                                     # @t1
 	i32.const	$push66=, 0
 	i32.load	$3=, gvol+4($pop66)
 	i32.const	$push65=, 0
-	i32.load	$4=, gvol+8($pop65):p2align=3
+	i32.load	$4=, gvol+8($pop65)
 	i32.const	$push64=, 0
 	i32.load	$5=, gvol+12($pop64)
 	i32.const	$push63=, 0
-	i32.load	$6=, gvol+16($pop63):p2align=4
+	i32.load	$6=, gvol+16($pop63)
 	i32.const	$push62=, 0
 	i32.load	$7=, gvol+20($pop62)
 	i32.const	$push61=, 0
-	i32.load	$8=, gvol+24($pop61):p2align=3
+	i32.load	$8=, gvol+24($pop61)
 	i32.const	$push60=, 0
 	i32.load	$9=, gvol+28($pop60)
 	i32.const	$push59=, 0
-	i32.load	$10=, gvol+32($pop59):p2align=4
+	i32.load	$10=, gvol+32($pop59)
 	i32.const	$push58=, 0
 	i32.load	$11=, gvol+36($pop58)
 	i32.const	$push57=, 0
-	i32.load	$12=, gvol+40($pop57):p2align=3
+	i32.load	$12=, gvol+40($pop57)
 	i32.const	$push56=, 0
 	i32.load	$13=, gvol+44($pop56)
 	i32.const	$push55=, 0
-	i32.load	$14=, gvol+48($pop55):p2align=4
+	i32.load	$14=, gvol+48($pop55)
 	i32.const	$push54=, 0
 	i32.load	$15=, gvol+52($pop54)
 	i32.const	$push53=, 0
-	i32.load	$16=, gvol+56($pop53):p2align=3
+	i32.load	$16=, gvol+56($pop53)
 	i32.const	$push52=, 0
 	i32.load	$17=, gvol+60($pop52)
 	i32.const	$push51=, 0
-	i32.load	$18=, gvol+64($pop51):p2align=4
+	i32.load	$18=, gvol+64($pop51)
 	i32.const	$push50=, 0
 	i32.load	$19=, gvol+68($pop50)
 	i32.const	$push49=, 0
-	i32.load	$20=, gvol+72($pop49):p2align=3
+	i32.load	$20=, gvol+72($pop49)
 	i32.const	$push48=, 0
 	i32.load	$21=, gvol+76($pop48)
 	i32.const	$push47=, 0
-	i32.load	$22=, gvol+80($pop47):p2align=4
+	i32.load	$22=, gvol+80($pop47)
 	i32.const	$push46=, 0
 	i32.load	$23=, gvol+84($pop46)
 	i32.const	$push45=, 0
-	i32.load	$24=, gvol+88($pop45):p2align=3
+	i32.load	$24=, gvol+88($pop45)
 	i32.const	$push44=, 0
 	i32.load	$25=, gvol+92($pop44)
 	i32.const	$push43=, 0
-	i32.load	$26=, gvol+96($pop43):p2align=4
+	i32.load	$26=, gvol+96($pop43)
 	i32.const	$push42=, 0
 	i32.load	$27=, gvol+100($pop42)
 	i32.const	$push41=, 0
-	i32.load	$28=, gvol+104($pop41):p2align=3
+	i32.load	$28=, gvol+104($pop41)
 	i32.const	$push40=, 0
 	i32.load	$29=, gvol+108($pop40)
 	i32.const	$push39=, 0
-	i32.load	$30=, gvol+112($pop39):p2align=4
+	i32.load	$30=, gvol+112($pop39)
 	i32.const	$push38=, 0
 	i32.load	$31=, gvol+116($pop38)
 	i32.const	$push37=, 0
-	i32.load	$32=, gvol+120($pop37):p2align=3
+	i32.load	$32=, gvol+120($pop37)
 	i32.const	$push36=, 0
 	i32.store	$discard=, gvol+4($pop36), $3
 	i32.const	$push35=, 0
-	i32.store	$discard=, gvol+8($pop35):p2align=3, $4
+	i32.store	$discard=, gvol+8($pop35), $4
 	i32.const	$push34=, 0
 	i32.store	$discard=, gvol+12($pop34), $5
 	i32.const	$push33=, 0
-	i32.store	$discard=, gvol+16($pop33):p2align=4, $6
+	i32.store	$discard=, gvol+16($pop33), $6
 	i32.const	$push32=, 0
 	i32.store	$discard=, gvol+20($pop32), $7
 	i32.const	$push31=, 0
-	i32.store	$discard=, gvol+24($pop31):p2align=3, $8
+	i32.store	$discard=, gvol+24($pop31), $8
 	i32.const	$push30=, 0
 	i32.store	$discard=, gvol+28($pop30), $9
 	i32.const	$push29=, 0
-	i32.store	$discard=, gvol+32($pop29):p2align=4, $10
+	i32.store	$discard=, gvol+32($pop29), $10
 	i32.const	$push28=, 0
 	i32.store	$discard=, gvol+36($pop28), $11
 	i32.const	$push27=, 0
-	i32.store	$discard=, gvol+40($pop27):p2align=3, $12
+	i32.store	$discard=, gvol+40($pop27), $12
 	i32.const	$push26=, 0
 	i32.store	$discard=, gvol+44($pop26), $13
 	i32.const	$push25=, 0
-	i32.store	$discard=, gvol+48($pop25):p2align=4, $14
+	i32.store	$discard=, gvol+48($pop25), $14
 	i32.const	$push24=, 0
 	i32.store	$discard=, gvol+52($pop24), $15
 	i32.const	$push23=, 0
-	i32.store	$discard=, gvol+56($pop23):p2align=3, $16
+	i32.store	$discard=, gvol+56($pop23), $16
 	i32.const	$push22=, 0
 	i32.store	$discard=, gvol+60($pop22), $17
 	i32.const	$push21=, 0
-	i32.store	$discard=, gvol+64($pop21):p2align=4, $18
+	i32.store	$discard=, gvol+64($pop21), $18
 	i32.const	$push20=, 0
 	i32.store	$discard=, gvol+68($pop20), $19
 	i32.const	$push19=, 0
-	i32.store	$discard=, gvol+72($pop19):p2align=3, $20
+	i32.store	$discard=, gvol+72($pop19), $20
 	i32.const	$push18=, 0
 	i32.store	$discard=, gvol+76($pop18), $21
 	i32.const	$push17=, 0
-	i32.store	$discard=, gvol+80($pop17):p2align=4, $22
+	i32.store	$discard=, gvol+80($pop17), $22
 	i32.const	$push16=, 0
 	i32.store	$discard=, gvol+84($pop16), $23
 	i32.const	$push15=, 0
-	i32.store	$discard=, gvol+88($pop15):p2align=3, $24
+	i32.store	$discard=, gvol+88($pop15), $24
 	i32.const	$push14=, 0
 	i32.store	$discard=, gvol+92($pop14), $25
 	i32.const	$push13=, 0
-	i32.store	$discard=, gvol+96($pop13):p2align=4, $26
+	i32.store	$discard=, gvol+96($pop13), $26
 	i32.const	$push12=, 0
 	i32.store	$discard=, gvol+100($pop12), $27
 	i32.const	$push11=, 0
-	i32.store	$discard=, gvol+104($pop11):p2align=3, $28
+	i32.store	$discard=, gvol+104($pop11), $28
 	i32.const	$push10=, 0
 	i32.store	$discard=, gvol+108($pop10), $29
 	i32.const	$push9=, 0
-	i32.store	$discard=, gvol+112($pop9):p2align=4, $30
+	i32.store	$discard=, gvol+112($pop9), $30
 	i32.const	$push8=, 0
 	i32.store	$discard=, gvol+116($pop8), $31
 	i32.const	$push7=, 0
-	i32.store	$discard=, gvol+120($pop7):p2align=3, $32
+	i32.store	$discard=, gvol+120($pop7), $32
 	i32.const	$push6=, -1
 	i32.add 	$0=, $0, $pop6
 	br_if   	0, $0           # 0: up to label1
@@ -180,123 +180,123 @@ t2:                                     # @t2
 	i32.const	$push65=, 0
 	i32.load	$3=, gvol+4($pop65)
 	i32.const	$push64=, 0
-	i32.load	$4=, gvol+8($pop64):p2align=3
+	i32.load	$4=, gvol+8($pop64)
 	i32.const	$push63=, 0
 	i32.load	$5=, gvol+12($pop63)
 	i32.const	$push62=, 0
-	i32.load	$6=, gvol+16($pop62):p2align=4
+	i32.load	$6=, gvol+16($pop62)
 	i32.const	$push61=, 0
 	i32.load	$7=, gvol+20($pop61)
 	i32.const	$push60=, 0
-	i32.load	$8=, gvol+24($pop60):p2align=3
+	i32.load	$8=, gvol+24($pop60)
 	i32.const	$push59=, 0
 	i32.load	$9=, gvol+28($pop59)
 	i32.const	$push58=, 0
-	i32.load	$10=, gvol+32($pop58):p2align=4
+	i32.load	$10=, gvol+32($pop58)
 	i32.const	$push57=, 0
 	i32.load	$11=, gvol+36($pop57)
 	i32.const	$push56=, 0
-	i32.load	$12=, gvol+40($pop56):p2align=3
+	i32.load	$12=, gvol+40($pop56)
 	i32.const	$push55=, 0
 	i32.load	$13=, gvol+44($pop55)
 	i32.const	$push54=, 0
-	i32.load	$14=, gvol+48($pop54):p2align=4
+	i32.load	$14=, gvol+48($pop54)
 	i32.const	$push53=, 0
 	i32.load	$15=, gvol+52($pop53)
 	i32.const	$push52=, 0
-	i32.load	$16=, gvol+56($pop52):p2align=3
+	i32.load	$16=, gvol+56($pop52)
 	i32.const	$push51=, 0
 	i32.load	$17=, gvol+60($pop51)
 	i32.const	$push50=, 0
-	i32.load	$18=, gvol+64($pop50):p2align=4
+	i32.load	$18=, gvol+64($pop50)
 	i32.const	$push49=, 0
 	i32.load	$19=, gvol+68($pop49)
 	i32.const	$push48=, 0
-	i32.load	$20=, gvol+72($pop48):p2align=3
+	i32.load	$20=, gvol+72($pop48)
 	i32.const	$push47=, 0
 	i32.load	$21=, gvol+76($pop47)
 	i32.const	$push46=, 0
-	i32.load	$22=, gvol+80($pop46):p2align=4
+	i32.load	$22=, gvol+80($pop46)
 	i32.const	$push45=, 0
 	i32.load	$23=, gvol+84($pop45)
 	i32.const	$push44=, 0
-	i32.load	$24=, gvol+88($pop44):p2align=3
+	i32.load	$24=, gvol+88($pop44)
 	i32.const	$push43=, 0
 	i32.load	$25=, gvol+92($pop43)
 	i32.const	$push42=, 0
-	i32.load	$26=, gvol+96($pop42):p2align=4
+	i32.load	$26=, gvol+96($pop42)
 	i32.const	$push41=, 0
 	i32.load	$27=, gvol+100($pop41)
 	i32.const	$push40=, 0
-	i32.load	$28=, gvol+104($pop40):p2align=3
+	i32.load	$28=, gvol+104($pop40)
 	i32.const	$push39=, 0
 	i32.load	$29=, gvol+108($pop39)
 	i32.const	$push38=, 0
-	i32.load	$30=, gvol+112($pop38):p2align=4
+	i32.load	$30=, gvol+112($pop38)
 	i32.const	$push37=, 0
 	i32.load	$31=, gvol+116($pop37)
 	i32.const	$push36=, 0
-	i32.load	$32=, gvol+120($pop36):p2align=3
+	i32.load	$32=, gvol+120($pop36)
 	i32.const	$push35=, 0
 	i32.store	$discard=, gvol+4($pop35), $3
 	i32.const	$push34=, 0
-	i32.store	$discard=, gvol+8($pop34):p2align=3, $4
+	i32.store	$discard=, gvol+8($pop34), $4
 	i32.const	$push33=, 0
 	i32.store	$discard=, gvol+12($pop33), $5
 	i32.const	$push32=, 0
-	i32.store	$discard=, gvol+16($pop32):p2align=4, $6
+	i32.store	$discard=, gvol+16($pop32), $6
 	i32.const	$push31=, 0
 	i32.store	$discard=, gvol+20($pop31), $7
 	i32.const	$push30=, 0
-	i32.store	$discard=, gvol+24($pop30):p2align=3, $8
+	i32.store	$discard=, gvol+24($pop30), $8
 	i32.const	$push29=, 0
 	i32.store	$discard=, gvol+28($pop29), $9
 	i32.const	$push28=, 0
-	i32.store	$discard=, gvol+32($pop28):p2align=4, $10
+	i32.store	$discard=, gvol+32($pop28), $10
 	i32.const	$push27=, 0
 	i32.store	$discard=, gvol+36($pop27), $11
 	i32.const	$push26=, 0
-	i32.store	$discard=, gvol+40($pop26):p2align=3, $12
+	i32.store	$discard=, gvol+40($pop26), $12
 	i32.const	$push25=, 0
 	i32.store	$discard=, gvol+44($pop25), $13
 	i32.const	$push24=, 0
-	i32.store	$discard=, gvol+48($pop24):p2align=4, $14
+	i32.store	$discard=, gvol+48($pop24), $14
 	i32.const	$push23=, 0
 	i32.store	$discard=, gvol+52($pop23), $15
 	i32.const	$push22=, 0
-	i32.store	$discard=, gvol+56($pop22):p2align=3, $16
+	i32.store	$discard=, gvol+56($pop22), $16
 	i32.const	$push21=, 0
 	i32.store	$discard=, gvol+60($pop21), $17
 	i32.const	$push20=, 0
-	i32.store	$discard=, gvol+64($pop20):p2align=4, $18
+	i32.store	$discard=, gvol+64($pop20), $18
 	i32.const	$push19=, 0
 	i32.store	$discard=, gvol+68($pop19), $19
 	i32.const	$push18=, 0
-	i32.store	$discard=, gvol+72($pop18):p2align=3, $20
+	i32.store	$discard=, gvol+72($pop18), $20
 	i32.const	$push17=, 0
 	i32.store	$discard=, gvol+76($pop17), $21
 	i32.const	$push16=, 0
-	i32.store	$discard=, gvol+80($pop16):p2align=4, $22
+	i32.store	$discard=, gvol+80($pop16), $22
 	i32.const	$push15=, 0
 	i32.store	$discard=, gvol+84($pop15), $23
 	i32.const	$push14=, 0
-	i32.store	$discard=, gvol+88($pop14):p2align=3, $24
+	i32.store	$discard=, gvol+88($pop14), $24
 	i32.const	$push13=, 0
 	i32.store	$discard=, gvol+92($pop13), $25
 	i32.const	$push12=, 0
-	i32.store	$discard=, gvol+96($pop12):p2align=4, $26
+	i32.store	$discard=, gvol+96($pop12), $26
 	i32.const	$push11=, 0
 	i32.store	$discard=, gvol+100($pop11), $27
 	i32.const	$push10=, 0
-	i32.store	$discard=, gvol+104($pop10):p2align=3, $28
+	i32.store	$discard=, gvol+104($pop10), $28
 	i32.const	$push9=, 0
 	i32.store	$discard=, gvol+108($pop9), $29
 	i32.const	$push8=, 0
-	i32.store	$discard=, gvol+112($pop8):p2align=4, $30
+	i32.store	$discard=, gvol+112($pop8), $30
 	i32.const	$push7=, 0
 	i32.store	$discard=, gvol+116($pop7), $31
 	i32.const	$push6=, 0
-	i32.store	$discard=, gvol+120($pop6):p2align=3, $32
+	i32.store	$discard=, gvol+120($pop6), $32
 	i32.const	$push5=, -1
 	i32.add 	$0=, $0, $pop5
 	br_if   	0, $0           # 0: up to label4
@@ -339,123 +339,123 @@ t3:                                     # @t3
 	i32.const	$push66=, 0
 	i32.load	$3=, gvol+4($pop66)
 	i32.const	$push65=, 0
-	i32.load	$4=, gvol+8($pop65):p2align=3
+	i32.load	$4=, gvol+8($pop65)
 	i32.const	$push64=, 0
 	i32.load	$5=, gvol+12($pop64)
 	i32.const	$push63=, 0
-	i32.load	$6=, gvol+16($pop63):p2align=4
+	i32.load	$6=, gvol+16($pop63)
 	i32.const	$push62=, 0
 	i32.load	$7=, gvol+20($pop62)
 	i32.const	$push61=, 0
-	i32.load	$8=, gvol+24($pop61):p2align=3
+	i32.load	$8=, gvol+24($pop61)
 	i32.const	$push60=, 0
 	i32.load	$9=, gvol+28($pop60)
 	i32.const	$push59=, 0
-	i32.load	$10=, gvol+32($pop59):p2align=4
+	i32.load	$10=, gvol+32($pop59)
 	i32.const	$push58=, 0
 	i32.load	$11=, gvol+36($pop58)
 	i32.const	$push57=, 0
-	i32.load	$12=, gvol+40($pop57):p2align=3
+	i32.load	$12=, gvol+40($pop57)
 	i32.const	$push56=, 0
 	i32.load	$13=, gvol+44($pop56)
 	i32.const	$push55=, 0
-	i32.load	$14=, gvol+48($pop55):p2align=4
+	i32.load	$14=, gvol+48($pop55)
 	i32.const	$push54=, 0
 	i32.load	$15=, gvol+52($pop54)
 	i32.const	$push53=, 0
-	i32.load	$16=, gvol+56($pop53):p2align=3
+	i32.load	$16=, gvol+56($pop53)
 	i32.const	$push52=, 0
 	i32.load	$17=, gvol+60($pop52)
 	i32.const	$push51=, 0
-	i32.load	$18=, gvol+64($pop51):p2align=4
+	i32.load	$18=, gvol+64($pop51)
 	i32.const	$push50=, 0
 	i32.load	$19=, gvol+68($pop50)
 	i32.const	$push49=, 0
-	i32.load	$20=, gvol+72($pop49):p2align=3
+	i32.load	$20=, gvol+72($pop49)
 	i32.const	$push48=, 0
 	i32.load	$21=, gvol+76($pop48)
 	i32.const	$push47=, 0
-	i32.load	$22=, gvol+80($pop47):p2align=4
+	i32.load	$22=, gvol+80($pop47)
 	i32.const	$push46=, 0
 	i32.load	$23=, gvol+84($pop46)
 	i32.const	$push45=, 0
-	i32.load	$24=, gvol+88($pop45):p2align=3
+	i32.load	$24=, gvol+88($pop45)
 	i32.const	$push44=, 0
 	i32.load	$25=, gvol+92($pop44)
 	i32.const	$push43=, 0
-	i32.load	$26=, gvol+96($pop43):p2align=4
+	i32.load	$26=, gvol+96($pop43)
 	i32.const	$push42=, 0
 	i32.load	$27=, gvol+100($pop42)
 	i32.const	$push41=, 0
-	i32.load	$28=, gvol+104($pop41):p2align=3
+	i32.load	$28=, gvol+104($pop41)
 	i32.const	$push40=, 0
 	i32.load	$29=, gvol+108($pop40)
 	i32.const	$push39=, 0
-	i32.load	$30=, gvol+112($pop39):p2align=4
+	i32.load	$30=, gvol+112($pop39)
 	i32.const	$push38=, 0
 	i32.load	$31=, gvol+116($pop38)
 	i32.const	$push37=, 0
-	i32.load	$32=, gvol+120($pop37):p2align=3
+	i32.load	$32=, gvol+120($pop37)
 	i32.const	$push36=, 0
 	i32.store	$discard=, gvol+4($pop36), $3
 	i32.const	$push35=, 0
-	i32.store	$discard=, gvol+8($pop35):p2align=3, $4
+	i32.store	$discard=, gvol+8($pop35), $4
 	i32.const	$push34=, 0
 	i32.store	$discard=, gvol+12($pop34), $5
 	i32.const	$push33=, 0
-	i32.store	$discard=, gvol+16($pop33):p2align=4, $6
+	i32.store	$discard=, gvol+16($pop33), $6
 	i32.const	$push32=, 0
 	i32.store	$discard=, gvol+20($pop32), $7
 	i32.const	$push31=, 0
-	i32.store	$discard=, gvol+24($pop31):p2align=3, $8
+	i32.store	$discard=, gvol+24($pop31), $8
 	i32.const	$push30=, 0
 	i32.store	$discard=, gvol+28($pop30), $9
 	i32.const	$push29=, 0
-	i32.store	$discard=, gvol+32($pop29):p2align=4, $10
+	i32.store	$discard=, gvol+32($pop29), $10
 	i32.const	$push28=, 0
 	i32.store	$discard=, gvol+36($pop28), $11
 	i32.const	$push27=, 0
-	i32.store	$discard=, gvol+40($pop27):p2align=3, $12
+	i32.store	$discard=, gvol+40($pop27), $12
 	i32.const	$push26=, 0
 	i32.store	$discard=, gvol+44($pop26), $13
 	i32.const	$push25=, 0
-	i32.store	$discard=, gvol+48($pop25):p2align=4, $14
+	i32.store	$discard=, gvol+48($pop25), $14
 	i32.const	$push24=, 0
 	i32.store	$discard=, gvol+52($pop24), $15
 	i32.const	$push23=, 0
-	i32.store	$discard=, gvol+56($pop23):p2align=3, $16
+	i32.store	$discard=, gvol+56($pop23), $16
 	i32.const	$push22=, 0
 	i32.store	$discard=, gvol+60($pop22), $17
 	i32.const	$push21=, 0
-	i32.store	$discard=, gvol+64($pop21):p2align=4, $18
+	i32.store	$discard=, gvol+64($pop21), $18
 	i32.const	$push20=, 0
 	i32.store	$discard=, gvol+68($pop20), $19
 	i32.const	$push19=, 0
-	i32.store	$discard=, gvol+72($pop19):p2align=3, $20
+	i32.store	$discard=, gvol+72($pop19), $20
 	i32.const	$push18=, 0
 	i32.store	$discard=, gvol+76($pop18), $21
 	i32.const	$push17=, 0
-	i32.store	$discard=, gvol+80($pop17):p2align=4, $22
+	i32.store	$discard=, gvol+80($pop17), $22
 	i32.const	$push16=, 0
 	i32.store	$discard=, gvol+84($pop16), $23
 	i32.const	$push15=, 0
-	i32.store	$discard=, gvol+88($pop15):p2align=3, $24
+	i32.store	$discard=, gvol+88($pop15), $24
 	i32.const	$push14=, 0
 	i32.store	$discard=, gvol+92($pop14), $25
 	i32.const	$push13=, 0
-	i32.store	$discard=, gvol+96($pop13):p2align=4, $26
+	i32.store	$discard=, gvol+96($pop13), $26
 	i32.const	$push12=, 0
 	i32.store	$discard=, gvol+100($pop12), $27
 	i32.const	$push11=, 0
-	i32.store	$discard=, gvol+104($pop11):p2align=3, $28
+	i32.store	$discard=, gvol+104($pop11), $28
 	i32.const	$push10=, 0
 	i32.store	$discard=, gvol+108($pop10), $29
 	i32.const	$push9=, 0
-	i32.store	$discard=, gvol+112($pop9):p2align=4, $30
+	i32.store	$discard=, gvol+112($pop9), $30
 	i32.const	$push8=, 0
 	i32.store	$discard=, gvol+116($pop8), $31
 	i32.const	$push7=, 0
-	i32.store	$discard=, gvol+120($pop7):p2align=3, $32
+	i32.store	$discard=, gvol+120($pop7), $32
 	i32.const	$push6=, -1
 	i32.add 	$0=, $0, $pop6
 	br_if   	0, $0           # 0: up to label7
@@ -494,123 +494,123 @@ t4:                                     # @t4
 	i32.const	$push65=, 0
 	i32.load	$3=, gvol+4($pop65)
 	i32.const	$push64=, 0
-	i32.load	$4=, gvol+8($pop64):p2align=3
+	i32.load	$4=, gvol+8($pop64)
 	i32.const	$push63=, 0
 	i32.load	$5=, gvol+12($pop63)
 	i32.const	$push62=, 0
-	i32.load	$6=, gvol+16($pop62):p2align=4
+	i32.load	$6=, gvol+16($pop62)
 	i32.const	$push61=, 0
 	i32.load	$7=, gvol+20($pop61)
 	i32.const	$push60=, 0
-	i32.load	$8=, gvol+24($pop60):p2align=3
+	i32.load	$8=, gvol+24($pop60)
 	i32.const	$push59=, 0
 	i32.load	$9=, gvol+28($pop59)
 	i32.const	$push58=, 0
-	i32.load	$10=, gvol+32($pop58):p2align=4
+	i32.load	$10=, gvol+32($pop58)
 	i32.const	$push57=, 0
 	i32.load	$11=, gvol+36($pop57)
 	i32.const	$push56=, 0
-	i32.load	$12=, gvol+40($pop56):p2align=3
+	i32.load	$12=, gvol+40($pop56)
 	i32.const	$push55=, 0
 	i32.load	$13=, gvol+44($pop55)
 	i32.const	$push54=, 0
-	i32.load	$14=, gvol+48($pop54):p2align=4
+	i32.load	$14=, gvol+48($pop54)
 	i32.const	$push53=, 0
 	i32.load	$15=, gvol+52($pop53)
 	i32.const	$push52=, 0
-	i32.load	$16=, gvol+56($pop52):p2align=3
+	i32.load	$16=, gvol+56($pop52)
 	i32.const	$push51=, 0
 	i32.load	$17=, gvol+60($pop51)
 	i32.const	$push50=, 0
-	i32.load	$18=, gvol+64($pop50):p2align=4
+	i32.load	$18=, gvol+64($pop50)
 	i32.const	$push49=, 0
 	i32.load	$19=, gvol+68($pop49)
 	i32.const	$push48=, 0
-	i32.load	$20=, gvol+72($pop48):p2align=3
+	i32.load	$20=, gvol+72($pop48)
 	i32.const	$push47=, 0
 	i32.load	$21=, gvol+76($pop47)
 	i32.const	$push46=, 0
-	i32.load	$22=, gvol+80($pop46):p2align=4
+	i32.load	$22=, gvol+80($pop46)
 	i32.const	$push45=, 0
 	i32.load	$23=, gvol+84($pop45)
 	i32.const	$push44=, 0
-	i32.load	$24=, gvol+88($pop44):p2align=3
+	i32.load	$24=, gvol+88($pop44)
 	i32.const	$push43=, 0
 	i32.load	$25=, gvol+92($pop43)
 	i32.const	$push42=, 0
-	i32.load	$26=, gvol+96($pop42):p2align=4
+	i32.load	$26=, gvol+96($pop42)
 	i32.const	$push41=, 0
 	i32.load	$27=, gvol+100($pop41)
 	i32.const	$push40=, 0
-	i32.load	$28=, gvol+104($pop40):p2align=3
+	i32.load	$28=, gvol+104($pop40)
 	i32.const	$push39=, 0
 	i32.load	$29=, gvol+108($pop39)
 	i32.const	$push38=, 0
-	i32.load	$30=, gvol+112($pop38):p2align=4
+	i32.load	$30=, gvol+112($pop38)
 	i32.const	$push37=, 0
 	i32.load	$31=, gvol+116($pop37)
 	i32.const	$push36=, 0
-	i32.load	$32=, gvol+120($pop36):p2align=3
+	i32.load	$32=, gvol+120($pop36)
 	i32.const	$push35=, 0
 	i32.store	$discard=, gvol+4($pop35), $3
 	i32.const	$push34=, 0
-	i32.store	$discard=, gvol+8($pop34):p2align=3, $4
+	i32.store	$discard=, gvol+8($pop34), $4
 	i32.const	$push33=, 0
 	i32.store	$discard=, gvol+12($pop33), $5
 	i32.const	$push32=, 0
-	i32.store	$discard=, gvol+16($pop32):p2align=4, $6
+	i32.store	$discard=, gvol+16($pop32), $6
 	i32.const	$push31=, 0
 	i32.store	$discard=, gvol+20($pop31), $7
 	i32.const	$push30=, 0
-	i32.store	$discard=, gvol+24($pop30):p2align=3, $8
+	i32.store	$discard=, gvol+24($pop30), $8
 	i32.const	$push29=, 0
 	i32.store	$discard=, gvol+28($pop29), $9
 	i32.const	$push28=, 0
-	i32.store	$discard=, gvol+32($pop28):p2align=4, $10
+	i32.store	$discard=, gvol+32($pop28), $10
 	i32.const	$push27=, 0
 	i32.store	$discard=, gvol+36($pop27), $11
 	i32.const	$push26=, 0
-	i32.store	$discard=, gvol+40($pop26):p2align=3, $12
+	i32.store	$discard=, gvol+40($pop26), $12
 	i32.const	$push25=, 0
 	i32.store	$discard=, gvol+44($pop25), $13
 	i32.const	$push24=, 0
-	i32.store	$discard=, gvol+48($pop24):p2align=4, $14
+	i32.store	$discard=, gvol+48($pop24), $14
 	i32.const	$push23=, 0
 	i32.store	$discard=, gvol+52($pop23), $15
 	i32.const	$push22=, 0
-	i32.store	$discard=, gvol+56($pop22):p2align=3, $16
+	i32.store	$discard=, gvol+56($pop22), $16
 	i32.const	$push21=, 0
 	i32.store	$discard=, gvol+60($pop21), $17
 	i32.const	$push20=, 0
-	i32.store	$discard=, gvol+64($pop20):p2align=4, $18
+	i32.store	$discard=, gvol+64($pop20), $18
 	i32.const	$push19=, 0
 	i32.store	$discard=, gvol+68($pop19), $19
 	i32.const	$push18=, 0
-	i32.store	$discard=, gvol+72($pop18):p2align=3, $20
+	i32.store	$discard=, gvol+72($pop18), $20
 	i32.const	$push17=, 0
 	i32.store	$discard=, gvol+76($pop17), $21
 	i32.const	$push16=, 0
-	i32.store	$discard=, gvol+80($pop16):p2align=4, $22
+	i32.store	$discard=, gvol+80($pop16), $22
 	i32.const	$push15=, 0
 	i32.store	$discard=, gvol+84($pop15), $23
 	i32.const	$push14=, 0
-	i32.store	$discard=, gvol+88($pop14):p2align=3, $24
+	i32.store	$discard=, gvol+88($pop14), $24
 	i32.const	$push13=, 0
 	i32.store	$discard=, gvol+92($pop13), $25
 	i32.const	$push12=, 0
-	i32.store	$discard=, gvol+96($pop12):p2align=4, $26
+	i32.store	$discard=, gvol+96($pop12), $26
 	i32.const	$push11=, 0
 	i32.store	$discard=, gvol+100($pop11), $27
 	i32.const	$push10=, 0
-	i32.store	$discard=, gvol+104($pop10):p2align=3, $28
+	i32.store	$discard=, gvol+104($pop10), $28
 	i32.const	$push9=, 0
 	i32.store	$discard=, gvol+108($pop9), $29
 	i32.const	$push8=, 0
-	i32.store	$discard=, gvol+112($pop8):p2align=4, $30
+	i32.store	$discard=, gvol+112($pop8), $30
 	i32.const	$push7=, 0
 	i32.store	$discard=, gvol+116($pop7), $31
 	i32.const	$push6=, 0
-	i32.store	$discard=, gvol+120($pop6):p2align=3, $32
+	i32.store	$discard=, gvol+120($pop6), $32
 	i32.const	$push5=, -1
 	i32.add 	$0=, $0, $pop5
 	br_if   	0, $0           # 0: up to label10
@@ -651,123 +651,123 @@ t5:                                     # @t5
 	i32.const	$push64=, 0
 	i32.load	$3=, gvol+4($pop64)
 	i32.const	$push63=, 0
-	i32.load	$4=, gvol+8($pop63):p2align=3
+	i32.load	$4=, gvol+8($pop63)
 	i32.const	$push62=, 0
 	i32.load	$5=, gvol+12($pop62)
 	i32.const	$push61=, 0
-	i32.load	$6=, gvol+16($pop61):p2align=4
+	i32.load	$6=, gvol+16($pop61)
 	i32.const	$push60=, 0
 	i32.load	$7=, gvol+20($pop60)
 	i32.const	$push59=, 0
-	i32.load	$8=, gvol+24($pop59):p2align=3
+	i32.load	$8=, gvol+24($pop59)
 	i32.const	$push58=, 0
 	i32.load	$9=, gvol+28($pop58)
 	i32.const	$push57=, 0
-	i32.load	$10=, gvol+32($pop57):p2align=4
+	i32.load	$10=, gvol+32($pop57)
 	i32.const	$push56=, 0
 	i32.load	$11=, gvol+36($pop56)
 	i32.const	$push55=, 0
-	i32.load	$12=, gvol+40($pop55):p2align=3
+	i32.load	$12=, gvol+40($pop55)
 	i32.const	$push54=, 0
 	i32.load	$13=, gvol+44($pop54)
 	i32.const	$push53=, 0
-	i32.load	$14=, gvol+48($pop53):p2align=4
+	i32.load	$14=, gvol+48($pop53)
 	i32.const	$push52=, 0
 	i32.load	$15=, gvol+52($pop52)
 	i32.const	$push51=, 0
-	i32.load	$16=, gvol+56($pop51):p2align=3
+	i32.load	$16=, gvol+56($pop51)
 	i32.const	$push50=, 0
 	i32.load	$17=, gvol+60($pop50)
 	i32.const	$push49=, 0
-	i32.load	$18=, gvol+64($pop49):p2align=4
+	i32.load	$18=, gvol+64($pop49)
 	i32.const	$push48=, 0
 	i32.load	$19=, gvol+68($pop48)
 	i32.const	$push47=, 0
-	i32.load	$20=, gvol+72($pop47):p2align=3
+	i32.load	$20=, gvol+72($pop47)
 	i32.const	$push46=, 0
 	i32.load	$21=, gvol+76($pop46)
 	i32.const	$push45=, 0
-	i32.load	$22=, gvol+80($pop45):p2align=4
+	i32.load	$22=, gvol+80($pop45)
 	i32.const	$push44=, 0
 	i32.load	$23=, gvol+84($pop44)
 	i32.const	$push43=, 0
-	i32.load	$24=, gvol+88($pop43):p2align=3
+	i32.load	$24=, gvol+88($pop43)
 	i32.const	$push42=, 0
 	i32.load	$25=, gvol+92($pop42)
 	i32.const	$push41=, 0
-	i32.load	$26=, gvol+96($pop41):p2align=4
+	i32.load	$26=, gvol+96($pop41)
 	i32.const	$push40=, 0
 	i32.load	$27=, gvol+100($pop40)
 	i32.const	$push39=, 0
-	i32.load	$28=, gvol+104($pop39):p2align=3
+	i32.load	$28=, gvol+104($pop39)
 	i32.const	$push38=, 0
 	i32.load	$29=, gvol+108($pop38)
 	i32.const	$push37=, 0
-	i32.load	$30=, gvol+112($pop37):p2align=4
+	i32.load	$30=, gvol+112($pop37)
 	i32.const	$push36=, 0
 	i32.load	$31=, gvol+116($pop36)
 	i32.const	$push35=, 0
-	i32.load	$32=, gvol+120($pop35):p2align=3
+	i32.load	$32=, gvol+120($pop35)
 	i32.const	$push34=, 0
 	i32.store	$discard=, gvol+4($pop34), $3
 	i32.const	$push33=, 0
-	i32.store	$discard=, gvol+8($pop33):p2align=3, $4
+	i32.store	$discard=, gvol+8($pop33), $4
 	i32.const	$push32=, 0
 	i32.store	$discard=, gvol+12($pop32), $5
 	i32.const	$push31=, 0
-	i32.store	$discard=, gvol+16($pop31):p2align=4, $6
+	i32.store	$discard=, gvol+16($pop31), $6
 	i32.const	$push30=, 0
 	i32.store	$discard=, gvol+20($pop30), $7
 	i32.const	$push29=, 0
-	i32.store	$discard=, gvol+24($pop29):p2align=3, $8
+	i32.store	$discard=, gvol+24($pop29), $8
 	i32.const	$push28=, 0
 	i32.store	$discard=, gvol+28($pop28), $9
 	i32.const	$push27=, 0
-	i32.store	$discard=, gvol+32($pop27):p2align=4, $10
+	i32.store	$discard=, gvol+32($pop27), $10
 	i32.const	$push26=, 0
 	i32.store	$discard=, gvol+36($pop26), $11
 	i32.const	$push25=, 0
-	i32.store	$discard=, gvol+40($pop25):p2align=3, $12
+	i32.store	$discard=, gvol+40($pop25), $12
 	i32.const	$push24=, 0
 	i32.store	$discard=, gvol+44($pop24), $13
 	i32.const	$push23=, 0
-	i32.store	$discard=, gvol+48($pop23):p2align=4, $14
+	i32.store	$discard=, gvol+48($pop23), $14
 	i32.const	$push22=, 0
 	i32.store	$discard=, gvol+52($pop22), $15
 	i32.const	$push21=, 0
-	i32.store	$discard=, gvol+56($pop21):p2align=3, $16
+	i32.store	$discard=, gvol+56($pop21), $16
 	i32.const	$push20=, 0
 	i32.store	$discard=, gvol+60($pop20), $17
 	i32.const	$push19=, 0
-	i32.store	$discard=, gvol+64($pop19):p2align=4, $18
+	i32.store	$discard=, gvol+64($pop19), $18
 	i32.const	$push18=, 0
 	i32.store	$discard=, gvol+68($pop18), $19
 	i32.const	$push17=, 0
-	i32.store	$discard=, gvol+72($pop17):p2align=3, $20
+	i32.store	$discard=, gvol+72($pop17), $20
 	i32.const	$push16=, 0
 	i32.store	$discard=, gvol+76($pop16), $21
 	i32.const	$push15=, 0
-	i32.store	$discard=, gvol+80($pop15):p2align=4, $22
+	i32.store	$discard=, gvol+80($pop15), $22
 	i32.const	$push14=, 0
 	i32.store	$discard=, gvol+84($pop14), $23
 	i32.const	$push13=, 0
-	i32.store	$discard=, gvol+88($pop13):p2align=3, $24
+	i32.store	$discard=, gvol+88($pop13), $24
 	i32.const	$push12=, 0
 	i32.store	$discard=, gvol+92($pop12), $25
 	i32.const	$push11=, 0
-	i32.store	$discard=, gvol+96($pop11):p2align=4, $26
+	i32.store	$discard=, gvol+96($pop11), $26
 	i32.const	$push10=, 0
 	i32.store	$discard=, gvol+100($pop10), $27
 	i32.const	$push9=, 0
-	i32.store	$discard=, gvol+104($pop9):p2align=3, $28
+	i32.store	$discard=, gvol+104($pop9), $28
 	i32.const	$push8=, 0
 	i32.store	$discard=, gvol+108($pop8), $29
 	i32.const	$push7=, 0
-	i32.store	$discard=, gvol+112($pop7):p2align=4, $30
+	i32.store	$discard=, gvol+112($pop7), $30
 	i32.const	$push6=, 0
 	i32.store	$discard=, gvol+116($pop6), $31
 	i32.const	$push5=, 0
-	i32.store	$discard=, gvol+120($pop5):p2align=3, $32
+	i32.store	$discard=, gvol+120($pop5), $32
 	i32.const	$push4=, -1
 	i32.add 	$0=, $0, $pop4
 	br_if   	0, $0           # 0: up to label13
@@ -807,123 +807,123 @@ t6:                                     # @t6
 	i32.const	$push64=, 0
 	i32.load	$2=, gvol+4($pop64)
 	i32.const	$push63=, 0
-	i32.load	$3=, gvol+8($pop63):p2align=3
+	i32.load	$3=, gvol+8($pop63)
 	i32.const	$push62=, 0
 	i32.load	$4=, gvol+12($pop62)
 	i32.const	$push61=, 0
-	i32.load	$5=, gvol+16($pop61):p2align=4
+	i32.load	$5=, gvol+16($pop61)
 	i32.const	$push60=, 0
 	i32.load	$6=, gvol+20($pop60)
 	i32.const	$push59=, 0
-	i32.load	$7=, gvol+24($pop59):p2align=3
+	i32.load	$7=, gvol+24($pop59)
 	i32.const	$push58=, 0
 	i32.load	$8=, gvol+28($pop58)
 	i32.const	$push57=, 0
-	i32.load	$9=, gvol+32($pop57):p2align=4
+	i32.load	$9=, gvol+32($pop57)
 	i32.const	$push56=, 0
 	i32.load	$10=, gvol+36($pop56)
 	i32.const	$push55=, 0
-	i32.load	$11=, gvol+40($pop55):p2align=3
+	i32.load	$11=, gvol+40($pop55)
 	i32.const	$push54=, 0
 	i32.load	$12=, gvol+44($pop54)
 	i32.const	$push53=, 0
-	i32.load	$13=, gvol+48($pop53):p2align=4
+	i32.load	$13=, gvol+48($pop53)
 	i32.const	$push52=, 0
 	i32.load	$14=, gvol+52($pop52)
 	i32.const	$push51=, 0
-	i32.load	$15=, gvol+56($pop51):p2align=3
+	i32.load	$15=, gvol+56($pop51)
 	i32.const	$push50=, 0
 	i32.load	$16=, gvol+60($pop50)
 	i32.const	$push49=, 0
-	i32.load	$17=, gvol+64($pop49):p2align=4
+	i32.load	$17=, gvol+64($pop49)
 	i32.const	$push48=, 0
 	i32.load	$18=, gvol+68($pop48)
 	i32.const	$push47=, 0
-	i32.load	$19=, gvol+72($pop47):p2align=3
+	i32.load	$19=, gvol+72($pop47)
 	i32.const	$push46=, 0
 	i32.load	$20=, gvol+76($pop46)
 	i32.const	$push45=, 0
-	i32.load	$21=, gvol+80($pop45):p2align=4
+	i32.load	$21=, gvol+80($pop45)
 	i32.const	$push44=, 0
 	i32.load	$22=, gvol+84($pop44)
 	i32.const	$push43=, 0
-	i32.load	$23=, gvol+88($pop43):p2align=3
+	i32.load	$23=, gvol+88($pop43)
 	i32.const	$push42=, 0
 	i32.load	$24=, gvol+92($pop42)
 	i32.const	$push41=, 0
-	i32.load	$25=, gvol+96($pop41):p2align=4
+	i32.load	$25=, gvol+96($pop41)
 	i32.const	$push40=, 0
 	i32.load	$26=, gvol+100($pop40)
 	i32.const	$push39=, 0
-	i32.load	$27=, gvol+104($pop39):p2align=3
+	i32.load	$27=, gvol+104($pop39)
 	i32.const	$push38=, 0
 	i32.load	$28=, gvol+108($pop38)
 	i32.const	$push37=, 0
-	i32.load	$29=, gvol+112($pop37):p2align=4
+	i32.load	$29=, gvol+112($pop37)
 	i32.const	$push36=, 0
 	i32.load	$30=, gvol+116($pop36)
 	i32.const	$push35=, 0
-	i32.load	$31=, gvol+120($pop35):p2align=3
+	i32.load	$31=, gvol+120($pop35)
 	i32.const	$push34=, 0
 	i32.store	$discard=, gvol+4($pop34), $2
 	i32.const	$push33=, 0
-	i32.store	$discard=, gvol+8($pop33):p2align=3, $3
+	i32.store	$discard=, gvol+8($pop33), $3
 	i32.const	$push32=, 0
 	i32.store	$discard=, gvol+12($pop32), $4
 	i32.const	$push31=, 0
-	i32.store	$discard=, gvol+16($pop31):p2align=4, $5
+	i32.store	$discard=, gvol+16($pop31), $5
 	i32.const	$push30=, 0
 	i32.store	$discard=, gvol+20($pop30), $6
 	i32.const	$push29=, 0
-	i32.store	$discard=, gvol+24($pop29):p2align=3, $7
+	i32.store	$discard=, gvol+24($pop29), $7
 	i32.const	$push28=, 0
 	i32.store	$discard=, gvol+28($pop28), $8
 	i32.const	$push27=, 0
-	i32.store	$discard=, gvol+32($pop27):p2align=4, $9
+	i32.store	$discard=, gvol+32($pop27), $9
 	i32.const	$push26=, 0
 	i32.store	$discard=, gvol+36($pop26), $10
 	i32.const	$push25=, 0
-	i32.store	$discard=, gvol+40($pop25):p2align=3, $11
+	i32.store	$discard=, gvol+40($pop25), $11
 	i32.const	$push24=, 0
 	i32.store	$discard=, gvol+44($pop24), $12
 	i32.const	$push23=, 0
-	i32.store	$discard=, gvol+48($pop23):p2align=4, $13
+	i32.store	$discard=, gvol+48($pop23), $13
 	i32.const	$push22=, 0
 	i32.store	$discard=, gvol+52($pop22), $14
 	i32.const	$push21=, 0
-	i32.store	$discard=, gvol+56($pop21):p2align=3, $15
+	i32.store	$discard=, gvol+56($pop21), $15
 	i32.const	$push20=, 0
 	i32.store	$discard=, gvol+60($pop20), $16
 	i32.const	$push19=, 0
-	i32.store	$discard=, gvol+64($pop19):p2align=4, $17
+	i32.store	$discard=, gvol+64($pop19), $17
 	i32.const	$push18=, 0
 	i32.store	$discard=, gvol+68($pop18), $18
 	i32.const	$push17=, 0
-	i32.store	$discard=, gvol+72($pop17):p2align=3, $19
+	i32.store	$discard=, gvol+72($pop17), $19
 	i32.const	$push16=, 0
 	i32.store	$discard=, gvol+76($pop16), $20
 	i32.const	$push15=, 0
-	i32.store	$discard=, gvol+80($pop15):p2align=4, $21
+	i32.store	$discard=, gvol+80($pop15), $21
 	i32.const	$push14=, 0
 	i32.store	$discard=, gvol+84($pop14), $22
 	i32.const	$push13=, 0
-	i32.store	$discard=, gvol+88($pop13):p2align=3, $23
+	i32.store	$discard=, gvol+88($pop13), $23
 	i32.const	$push12=, 0
 	i32.store	$discard=, gvol+92($pop12), $24
 	i32.const	$push11=, 0
-	i32.store	$discard=, gvol+96($pop11):p2align=4, $25
+	i32.store	$discard=, gvol+96($pop11), $25
 	i32.const	$push10=, 0
 	i32.store	$discard=, gvol+100($pop10), $26
 	i32.const	$push9=, 0
-	i32.store	$discard=, gvol+104($pop9):p2align=3, $27
+	i32.store	$discard=, gvol+104($pop9), $27
 	i32.const	$push8=, 0
 	i32.store	$discard=, gvol+108($pop8), $28
 	i32.const	$push7=, 0
-	i32.store	$discard=, gvol+112($pop7):p2align=4, $29
+	i32.store	$discard=, gvol+112($pop7), $29
 	i32.const	$push6=, 0
 	i32.store	$discard=, gvol+116($pop6), $30
 	i32.const	$push5=, 0
-	i32.store	$discard=, gvol+120($pop5):p2align=3, $31
+	i32.store	$discard=, gvol+120($pop5), $31
 	i32.const	$push4=, -1
 	i32.add 	$0=, $0, $pop4
 	br_if   	0, $0           # 0: up to label16
@@ -964,123 +964,123 @@ t7:                                     # @t7
 	i32.const	$push66=, 0
 	i32.load	$2=, gvol+4($pop66)
 	i32.const	$push65=, 0
-	i32.load	$3=, gvol+8($pop65):p2align=3
+	i32.load	$3=, gvol+8($pop65)
 	i32.const	$push64=, 0
 	i32.load	$4=, gvol+12($pop64)
 	i32.const	$push63=, 0
-	i32.load	$5=, gvol+16($pop63):p2align=4
+	i32.load	$5=, gvol+16($pop63)
 	i32.const	$push62=, 0
 	i32.load	$6=, gvol+20($pop62)
 	i32.const	$push61=, 0
-	i32.load	$7=, gvol+24($pop61):p2align=3
+	i32.load	$7=, gvol+24($pop61)
 	i32.const	$push60=, 0
 	i32.load	$8=, gvol+28($pop60)
 	i32.const	$push59=, 0
-	i32.load	$9=, gvol+32($pop59):p2align=4
+	i32.load	$9=, gvol+32($pop59)
 	i32.const	$push58=, 0
 	i32.load	$10=, gvol+36($pop58)
 	i32.const	$push57=, 0
-	i32.load	$11=, gvol+40($pop57):p2align=3
+	i32.load	$11=, gvol+40($pop57)
 	i32.const	$push56=, 0
 	i32.load	$12=, gvol+44($pop56)
 	i32.const	$push55=, 0
-	i32.load	$13=, gvol+48($pop55):p2align=4
+	i32.load	$13=, gvol+48($pop55)
 	i32.const	$push54=, 0
 	i32.load	$14=, gvol+52($pop54)
 	i32.const	$push53=, 0
-	i32.load	$15=, gvol+56($pop53):p2align=3
+	i32.load	$15=, gvol+56($pop53)
 	i32.const	$push52=, 0
 	i32.load	$16=, gvol+60($pop52)
 	i32.const	$push51=, 0
-	i32.load	$17=, gvol+64($pop51):p2align=4
+	i32.load	$17=, gvol+64($pop51)
 	i32.const	$push50=, 0
 	i32.load	$18=, gvol+68($pop50)
 	i32.const	$push49=, 0
-	i32.load	$19=, gvol+72($pop49):p2align=3
+	i32.load	$19=, gvol+72($pop49)
 	i32.const	$push48=, 0
 	i32.load	$20=, gvol+76($pop48)
 	i32.const	$push47=, 0
-	i32.load	$21=, gvol+80($pop47):p2align=4
+	i32.load	$21=, gvol+80($pop47)
 	i32.const	$push46=, 0
 	i32.load	$22=, gvol+84($pop46)
 	i32.const	$push45=, 0
-	i32.load	$23=, gvol+88($pop45):p2align=3
+	i32.load	$23=, gvol+88($pop45)
 	i32.const	$push44=, 0
 	i32.load	$24=, gvol+92($pop44)
 	i32.const	$push43=, 0
-	i32.load	$25=, gvol+96($pop43):p2align=4
+	i32.load	$25=, gvol+96($pop43)
 	i32.const	$push42=, 0
 	i32.load	$26=, gvol+100($pop42)
 	i32.const	$push41=, 0
-	i32.load	$27=, gvol+104($pop41):p2align=3
+	i32.load	$27=, gvol+104($pop41)
 	i32.const	$push40=, 0
 	i32.load	$28=, gvol+108($pop40)
 	i32.const	$push39=, 0
-	i32.load	$29=, gvol+112($pop39):p2align=4
+	i32.load	$29=, gvol+112($pop39)
 	i32.const	$push38=, 0
 	i32.load	$30=, gvol+116($pop38)
 	i32.const	$push37=, 0
-	i32.load	$31=, gvol+120($pop37):p2align=3
+	i32.load	$31=, gvol+120($pop37)
 	i32.const	$push36=, 0
 	i32.store	$discard=, gvol+4($pop36), $2
 	i32.const	$push35=, 0
-	i32.store	$discard=, gvol+8($pop35):p2align=3, $3
+	i32.store	$discard=, gvol+8($pop35), $3
 	i32.const	$push34=, 0
 	i32.store	$discard=, gvol+12($pop34), $4
 	i32.const	$push33=, 0
-	i32.store	$discard=, gvol+16($pop33):p2align=4, $5
+	i32.store	$discard=, gvol+16($pop33), $5
 	i32.const	$push32=, 0
 	i32.store	$discard=, gvol+20($pop32), $6
 	i32.const	$push31=, 0
-	i32.store	$discard=, gvol+24($pop31):p2align=3, $7
+	i32.store	$discard=, gvol+24($pop31), $7
 	i32.const	$push30=, 0
 	i32.store	$discard=, gvol+28($pop30), $8
 	i32.const	$push29=, 0
-	i32.store	$discard=, gvol+32($pop29):p2align=4, $9
+	i32.store	$discard=, gvol+32($pop29), $9
 	i32.const	$push28=, 0
 	i32.store	$discard=, gvol+36($pop28), $10
 	i32.const	$push27=, 0
-	i32.store	$discard=, gvol+40($pop27):p2align=3, $11
+	i32.store	$discard=, gvol+40($pop27), $11
 	i32.const	$push26=, 0
 	i32.store	$discard=, gvol+44($pop26), $12
 	i32.const	$push25=, 0
-	i32.store	$discard=, gvol+48($pop25):p2align=4, $13
+	i32.store	$discard=, gvol+48($pop25), $13
 	i32.const	$push24=, 0
 	i32.store	$discard=, gvol+52($pop24), $14
 	i32.const	$push23=, 0
-	i32.store	$discard=, gvol+56($pop23):p2align=3, $15
+	i32.store	$discard=, gvol+56($pop23), $15
 	i32.const	$push22=, 0
 	i32.store	$discard=, gvol+60($pop22), $16
 	i32.const	$push21=, 0
-	i32.store	$discard=, gvol+64($pop21):p2align=4, $17
+	i32.store	$discard=, gvol+64($pop21), $17
 	i32.const	$push20=, 0
 	i32.store	$discard=, gvol+68($pop20), $18
 	i32.const	$push19=, 0
-	i32.store	$discard=, gvol+72($pop19):p2align=3, $19
+	i32.store	$discard=, gvol+72($pop19), $19
 	i32.const	$push18=, 0
 	i32.store	$discard=, gvol+76($pop18), $20
 	i32.const	$push17=, 0
-	i32.store	$discard=, gvol+80($pop17):p2align=4, $21
+	i32.store	$discard=, gvol+80($pop17), $21
 	i32.const	$push16=, 0
 	i32.store	$discard=, gvol+84($pop16), $22
 	i32.const	$push15=, 0
-	i32.store	$discard=, gvol+88($pop15):p2align=3, $23
+	i32.store	$discard=, gvol+88($pop15), $23
 	i32.const	$push14=, 0
 	i32.store	$discard=, gvol+92($pop14), $24
 	i32.const	$push13=, 0
-	i32.store	$discard=, gvol+96($pop13):p2align=4, $25
+	i32.store	$discard=, gvol+96($pop13), $25
 	i32.const	$push12=, 0
 	i32.store	$discard=, gvol+100($pop12), $26
 	i32.const	$push11=, 0
-	i32.store	$discard=, gvol+104($pop11):p2align=3, $27
+	i32.store	$discard=, gvol+104($pop11), $27
 	i32.const	$push10=, 0
 	i32.store	$discard=, gvol+108($pop10), $28
 	i32.const	$push9=, 0
-	i32.store	$discard=, gvol+112($pop9):p2align=4, $29
+	i32.store	$discard=, gvol+112($pop9), $29
 	i32.const	$push8=, 0
 	i32.store	$discard=, gvol+116($pop8), $30
 	i32.const	$push7=, 0
-	i32.store	$discard=, gvol+120($pop7):p2align=3, $31
+	i32.store	$discard=, gvol+120($pop7), $31
 	i32.const	$push6=, -1
 	i32.add 	$0=, $0, $pop6
 	br_if   	0, $0           # 0: up to label19
@@ -1121,123 +1121,123 @@ t8:                                     # @t8
 	i32.const	$push66=, 0
 	i32.load	$2=, gvol+4($pop66)
 	i32.const	$push65=, 0
-	i32.load	$3=, gvol+8($pop65):p2align=3
+	i32.load	$3=, gvol+8($pop65)
 	i32.const	$push64=, 0
 	i32.load	$4=, gvol+12($pop64)
 	i32.const	$push63=, 0
-	i32.load	$5=, gvol+16($pop63):p2align=4
+	i32.load	$5=, gvol+16($pop63)
 	i32.const	$push62=, 0
 	i32.load	$6=, gvol+20($pop62)
 	i32.const	$push61=, 0
-	i32.load	$7=, gvol+24($pop61):p2align=3
+	i32.load	$7=, gvol+24($pop61)
 	i32.const	$push60=, 0
 	i32.load	$8=, gvol+28($pop60)
 	i32.const	$push59=, 0
-	i32.load	$9=, gvol+32($pop59):p2align=4
+	i32.load	$9=, gvol+32($pop59)
 	i32.const	$push58=, 0
 	i32.load	$10=, gvol+36($pop58)
 	i32.const	$push57=, 0
-	i32.load	$11=, gvol+40($pop57):p2align=3
+	i32.load	$11=, gvol+40($pop57)
 	i32.const	$push56=, 0
 	i32.load	$12=, gvol+44($pop56)
 	i32.const	$push55=, 0
-	i32.load	$13=, gvol+48($pop55):p2align=4
+	i32.load	$13=, gvol+48($pop55)
 	i32.const	$push54=, 0
 	i32.load	$14=, gvol+52($pop54)
 	i32.const	$push53=, 0
-	i32.load	$15=, gvol+56($pop53):p2align=3
+	i32.load	$15=, gvol+56($pop53)
 	i32.const	$push52=, 0
 	i32.load	$16=, gvol+60($pop52)
 	i32.const	$push51=, 0
-	i32.load	$17=, gvol+64($pop51):p2align=4
+	i32.load	$17=, gvol+64($pop51)
 	i32.const	$push50=, 0
 	i32.load	$18=, gvol+68($pop50)
 	i32.const	$push49=, 0
-	i32.load	$19=, gvol+72($pop49):p2align=3
+	i32.load	$19=, gvol+72($pop49)
 	i32.const	$push48=, 0
 	i32.load	$20=, gvol+76($pop48)
 	i32.const	$push47=, 0
-	i32.load	$21=, gvol+80($pop47):p2align=4
+	i32.load	$21=, gvol+80($pop47)
 	i32.const	$push46=, 0
 	i32.load	$22=, gvol+84($pop46)
 	i32.const	$push45=, 0
-	i32.load	$23=, gvol+88($pop45):p2align=3
+	i32.load	$23=, gvol+88($pop45)
 	i32.const	$push44=, 0
 	i32.load	$24=, gvol+92($pop44)
 	i32.const	$push43=, 0
-	i32.load	$25=, gvol+96($pop43):p2align=4
+	i32.load	$25=, gvol+96($pop43)
 	i32.const	$push42=, 0
 	i32.load	$26=, gvol+100($pop42)
 	i32.const	$push41=, 0
-	i32.load	$27=, gvol+104($pop41):p2align=3
+	i32.load	$27=, gvol+104($pop41)
 	i32.const	$push40=, 0
 	i32.load	$28=, gvol+108($pop40)
 	i32.const	$push39=, 0
-	i32.load	$29=, gvol+112($pop39):p2align=4
+	i32.load	$29=, gvol+112($pop39)
 	i32.const	$push38=, 0
 	i32.load	$30=, gvol+116($pop38)
 	i32.const	$push37=, 0
-	i32.load	$31=, gvol+120($pop37):p2align=3
+	i32.load	$31=, gvol+120($pop37)
 	i32.const	$push36=, 0
 	i32.store	$discard=, gvol+4($pop36), $2
 	i32.const	$push35=, 0
-	i32.store	$discard=, gvol+8($pop35):p2align=3, $3
+	i32.store	$discard=, gvol+8($pop35), $3
 	i32.const	$push34=, 0
 	i32.store	$discard=, gvol+12($pop34), $4
 	i32.const	$push33=, 0
-	i32.store	$discard=, gvol+16($pop33):p2align=4, $5
+	i32.store	$discard=, gvol+16($pop33), $5
 	i32.const	$push32=, 0
 	i32.store	$discard=, gvol+20($pop32), $6
 	i32.const	$push31=, 0
-	i32.store	$discard=, gvol+24($pop31):p2align=3, $7
+	i32.store	$discard=, gvol+24($pop31), $7
 	i32.const	$push30=, 0
 	i32.store	$discard=, gvol+28($pop30), $8
 	i32.const	$push29=, 0
-	i32.store	$discard=, gvol+32($pop29):p2align=4, $9
+	i32.store	$discard=, gvol+32($pop29), $9
 	i32.const	$push28=, 0
 	i32.store	$discard=, gvol+36($pop28), $10
 	i32.const	$push27=, 0
-	i32.store	$discard=, gvol+40($pop27):p2align=3, $11
+	i32.store	$discard=, gvol+40($pop27), $11
 	i32.const	$push26=, 0
 	i32.store	$discard=, gvol+44($pop26), $12
 	i32.const	$push25=, 0
-	i32.store	$discard=, gvol+48($pop25):p2align=4, $13
+	i32.store	$discard=, gvol+48($pop25), $13
 	i32.const	$push24=, 0
 	i32.store	$discard=, gvol+52($pop24), $14
 	i32.const	$push23=, 0
-	i32.store	$discard=, gvol+56($pop23):p2align=3, $15
+	i32.store	$discard=, gvol+56($pop23), $15
 	i32.const	$push22=, 0
 	i32.store	$discard=, gvol+60($pop22), $16
 	i32.const	$push21=, 0
-	i32.store	$discard=, gvol+64($pop21):p2align=4, $17
+	i32.store	$discard=, gvol+64($pop21), $17
 	i32.const	$push20=, 0
 	i32.store	$discard=, gvol+68($pop20), $18
 	i32.const	$push19=, 0
-	i32.store	$discard=, gvol+72($pop19):p2align=3, $19
+	i32.store	$discard=, gvol+72($pop19), $19
 	i32.const	$push18=, 0
 	i32.store	$discard=, gvol+76($pop18), $20
 	i32.const	$push17=, 0
-	i32.store	$discard=, gvol+80($pop17):p2align=4, $21
+	i32.store	$discard=, gvol+80($pop17), $21
 	i32.const	$push16=, 0
 	i32.store	$discard=, gvol+84($pop16), $22
 	i32.const	$push15=, 0
-	i32.store	$discard=, gvol+88($pop15):p2align=3, $23
+	i32.store	$discard=, gvol+88($pop15), $23
 	i32.const	$push14=, 0
 	i32.store	$discard=, gvol+92($pop14), $24
 	i32.const	$push13=, 0
-	i32.store	$discard=, gvol+96($pop13):p2align=4, $25
+	i32.store	$discard=, gvol+96($pop13), $25
 	i32.const	$push12=, 0
 	i32.store	$discard=, gvol+100($pop12), $26
 	i32.const	$push11=, 0
-	i32.store	$discard=, gvol+104($pop11):p2align=3, $27
+	i32.store	$discard=, gvol+104($pop11), $27
 	i32.const	$push10=, 0
 	i32.store	$discard=, gvol+108($pop10), $28
 	i32.const	$push9=, 0
-	i32.store	$discard=, gvol+112($pop9):p2align=4, $29
+	i32.store	$discard=, gvol+112($pop9), $29
 	i32.const	$push8=, 0
 	i32.store	$discard=, gvol+116($pop8), $30
 	i32.const	$push7=, 0
-	i32.store	$discard=, gvol+120($pop7):p2align=3, $31
+	i32.store	$discard=, gvol+120($pop7), $31
 	i32.const	$push6=, -1
 	i32.add 	$0=, $0, $pop6
 	br_if   	0, $0           # 0: up to label22
@@ -1278,123 +1278,123 @@ t9:                                     # @t9
 	i32.const	$push66=, 0
 	i32.load	$2=, gvol+4($pop66)
 	i32.const	$push65=, 0
-	i32.load	$3=, gvol+8($pop65):p2align=3
+	i32.load	$3=, gvol+8($pop65)
 	i32.const	$push64=, 0
 	i32.load	$4=, gvol+12($pop64)
 	i32.const	$push63=, 0
-	i32.load	$5=, gvol+16($pop63):p2align=4
+	i32.load	$5=, gvol+16($pop63)
 	i32.const	$push62=, 0
 	i32.load	$6=, gvol+20($pop62)
 	i32.const	$push61=, 0
-	i32.load	$7=, gvol+24($pop61):p2align=3
+	i32.load	$7=, gvol+24($pop61)
 	i32.const	$push60=, 0
 	i32.load	$8=, gvol+28($pop60)
 	i32.const	$push59=, 0
-	i32.load	$9=, gvol+32($pop59):p2align=4
+	i32.load	$9=, gvol+32($pop59)
 	i32.const	$push58=, 0
 	i32.load	$10=, gvol+36($pop58)
 	i32.const	$push57=, 0
-	i32.load	$11=, gvol+40($pop57):p2align=3
+	i32.load	$11=, gvol+40($pop57)
 	i32.const	$push56=, 0
 	i32.load	$12=, gvol+44($pop56)
 	i32.const	$push55=, 0
-	i32.load	$13=, gvol+48($pop55):p2align=4
+	i32.load	$13=, gvol+48($pop55)
 	i32.const	$push54=, 0
 	i32.load	$14=, gvol+52($pop54)
 	i32.const	$push53=, 0
-	i32.load	$15=, gvol+56($pop53):p2align=3
+	i32.load	$15=, gvol+56($pop53)
 	i32.const	$push52=, 0
 	i32.load	$16=, gvol+60($pop52)
 	i32.const	$push51=, 0
-	i32.load	$17=, gvol+64($pop51):p2align=4
+	i32.load	$17=, gvol+64($pop51)
 	i32.const	$push50=, 0
 	i32.load	$18=, gvol+68($pop50)
 	i32.const	$push49=, 0
-	i32.load	$19=, gvol+72($pop49):p2align=3
+	i32.load	$19=, gvol+72($pop49)
 	i32.const	$push48=, 0
 	i32.load	$20=, gvol+76($pop48)
 	i32.const	$push47=, 0
-	i32.load	$21=, gvol+80($pop47):p2align=4
+	i32.load	$21=, gvol+80($pop47)
 	i32.const	$push46=, 0
 	i32.load	$22=, gvol+84($pop46)
 	i32.const	$push45=, 0
-	i32.load	$23=, gvol+88($pop45):p2align=3
+	i32.load	$23=, gvol+88($pop45)
 	i32.const	$push44=, 0
 	i32.load	$24=, gvol+92($pop44)
 	i32.const	$push43=, 0
-	i32.load	$25=, gvol+96($pop43):p2align=4
+	i32.load	$25=, gvol+96($pop43)
 	i32.const	$push42=, 0
 	i32.load	$26=, gvol+100($pop42)
 	i32.const	$push41=, 0
-	i32.load	$27=, gvol+104($pop41):p2align=3
+	i32.load	$27=, gvol+104($pop41)
 	i32.const	$push40=, 0
 	i32.load	$28=, gvol+108($pop40)
 	i32.const	$push39=, 0
-	i32.load	$29=, gvol+112($pop39):p2align=4
+	i32.load	$29=, gvol+112($pop39)
 	i32.const	$push38=, 0
 	i32.load	$30=, gvol+116($pop38)
 	i32.const	$push37=, 0
-	i32.load	$31=, gvol+120($pop37):p2align=3
+	i32.load	$31=, gvol+120($pop37)
 	i32.const	$push36=, 0
 	i32.store	$discard=, gvol+4($pop36), $2
 	i32.const	$push35=, 0
-	i32.store	$discard=, gvol+8($pop35):p2align=3, $3
+	i32.store	$discard=, gvol+8($pop35), $3
 	i32.const	$push34=, 0
 	i32.store	$discard=, gvol+12($pop34), $4
 	i32.const	$push33=, 0
-	i32.store	$discard=, gvol+16($pop33):p2align=4, $5
+	i32.store	$discard=, gvol+16($pop33), $5
 	i32.const	$push32=, 0
 	i32.store	$discard=, gvol+20($pop32), $6
 	i32.const	$push31=, 0
-	i32.store	$discard=, gvol+24($pop31):p2align=3, $7
+	i32.store	$discard=, gvol+24($pop31), $7
 	i32.const	$push30=, 0
 	i32.store	$discard=, gvol+28($pop30), $8
 	i32.const	$push29=, 0
-	i32.store	$discard=, gvol+32($pop29):p2align=4, $9
+	i32.store	$discard=, gvol+32($pop29), $9
 	i32.const	$push28=, 0
 	i32.store	$discard=, gvol+36($pop28), $10
 	i32.const	$push27=, 0
-	i32.store	$discard=, gvol+40($pop27):p2align=3, $11
+	i32.store	$discard=, gvol+40($pop27), $11
 	i32.const	$push26=, 0
 	i32.store	$discard=, gvol+44($pop26), $12
 	i32.const	$push25=, 0
-	i32.store	$discard=, gvol+48($pop25):p2align=4, $13
+	i32.store	$discard=, gvol+48($pop25), $13
 	i32.const	$push24=, 0
 	i32.store	$discard=, gvol+52($pop24), $14
 	i32.const	$push23=, 0
-	i32.store	$discard=, gvol+56($pop23):p2align=3, $15
+	i32.store	$discard=, gvol+56($pop23), $15
 	i32.const	$push22=, 0
 	i32.store	$discard=, gvol+60($pop22), $16
 	i32.const	$push21=, 0
-	i32.store	$discard=, gvol+64($pop21):p2align=4, $17
+	i32.store	$discard=, gvol+64($pop21), $17
 	i32.const	$push20=, 0
 	i32.store	$discard=, gvol+68($pop20), $18
 	i32.const	$push19=, 0
-	i32.store	$discard=, gvol+72($pop19):p2align=3, $19
+	i32.store	$discard=, gvol+72($pop19), $19
 	i32.const	$push18=, 0
 	i32.store	$discard=, gvol+76($pop18), $20
 	i32.const	$push17=, 0
-	i32.store	$discard=, gvol+80($pop17):p2align=4, $21
+	i32.store	$discard=, gvol+80($pop17), $21
 	i32.const	$push16=, 0
 	i32.store	$discard=, gvol+84($pop16), $22
 	i32.const	$push15=, 0
-	i32.store	$discard=, gvol+88($pop15):p2align=3, $23
+	i32.store	$discard=, gvol+88($pop15), $23
 	i32.const	$push14=, 0
 	i32.store	$discard=, gvol+92($pop14), $24
 	i32.const	$push13=, 0
-	i32.store	$discard=, gvol+96($pop13):p2align=4, $25
+	i32.store	$discard=, gvol+96($pop13), $25
 	i32.const	$push12=, 0
 	i32.store	$discard=, gvol+100($pop12), $26
 	i32.const	$push11=, 0
-	i32.store	$discard=, gvol+104($pop11):p2align=3, $27
+	i32.store	$discard=, gvol+104($pop11), $27
 	i32.const	$push10=, 0
 	i32.store	$discard=, gvol+108($pop10), $28
 	i32.const	$push9=, 0
-	i32.store	$discard=, gvol+112($pop9):p2align=4, $29
+	i32.store	$discard=, gvol+112($pop9), $29
 	i32.const	$push8=, 0
 	i32.store	$discard=, gvol+116($pop8), $30
 	i32.const	$push7=, 0
-	i32.store	$discard=, gvol+120($pop7):p2align=3, $31
+	i32.store	$discard=, gvol+120($pop7), $31
 	i32.const	$push6=, -1
 	i32.add 	$0=, $0, $pop6
 	br_if   	0, $0           # 0: up to label25
@@ -1437,123 +1437,123 @@ t10:                                    # @t10
 	i32.const	$push67=, 0
 	i32.load	$3=, gvol+4($pop67)
 	i32.const	$push66=, 0
-	i32.load	$4=, gvol+8($pop66):p2align=3
+	i32.load	$4=, gvol+8($pop66)
 	i32.const	$push65=, 0
 	i32.load	$5=, gvol+12($pop65)
 	i32.const	$push64=, 0
-	i32.load	$6=, gvol+16($pop64):p2align=4
+	i32.load	$6=, gvol+16($pop64)
 	i32.const	$push63=, 0
 	i32.load	$7=, gvol+20($pop63)
 	i32.const	$push62=, 0
-	i32.load	$8=, gvol+24($pop62):p2align=3
+	i32.load	$8=, gvol+24($pop62)
 	i32.const	$push61=, 0
 	i32.load	$9=, gvol+28($pop61)
 	i32.const	$push60=, 0
-	i32.load	$10=, gvol+32($pop60):p2align=4
+	i32.load	$10=, gvol+32($pop60)
 	i32.const	$push59=, 0
 	i32.load	$11=, gvol+36($pop59)
 	i32.const	$push58=, 0
-	i32.load	$12=, gvol+40($pop58):p2align=3
+	i32.load	$12=, gvol+40($pop58)
 	i32.const	$push57=, 0
 	i32.load	$13=, gvol+44($pop57)
 	i32.const	$push56=, 0
-	i32.load	$14=, gvol+48($pop56):p2align=4
+	i32.load	$14=, gvol+48($pop56)
 	i32.const	$push55=, 0
 	i32.load	$15=, gvol+52($pop55)
 	i32.const	$push54=, 0
-	i32.load	$16=, gvol+56($pop54):p2align=3
+	i32.load	$16=, gvol+56($pop54)
 	i32.const	$push53=, 0
 	i32.load	$17=, gvol+60($pop53)
 	i32.const	$push52=, 0
-	i32.load	$18=, gvol+64($pop52):p2align=4
+	i32.load	$18=, gvol+64($pop52)
 	i32.const	$push51=, 0
 	i32.load	$19=, gvol+68($pop51)
 	i32.const	$push50=, 0
-	i32.load	$20=, gvol+72($pop50):p2align=3
+	i32.load	$20=, gvol+72($pop50)
 	i32.const	$push49=, 0
 	i32.load	$21=, gvol+76($pop49)
 	i32.const	$push48=, 0
-	i32.load	$22=, gvol+80($pop48):p2align=4
+	i32.load	$22=, gvol+80($pop48)
 	i32.const	$push47=, 0
 	i32.load	$23=, gvol+84($pop47)
 	i32.const	$push46=, 0
-	i32.load	$24=, gvol+88($pop46):p2align=3
+	i32.load	$24=, gvol+88($pop46)
 	i32.const	$push45=, 0
 	i32.load	$25=, gvol+92($pop45)
 	i32.const	$push44=, 0
-	i32.load	$26=, gvol+96($pop44):p2align=4
+	i32.load	$26=, gvol+96($pop44)
 	i32.const	$push43=, 0
 	i32.load	$27=, gvol+100($pop43)
 	i32.const	$push42=, 0
-	i32.load	$28=, gvol+104($pop42):p2align=3
+	i32.load	$28=, gvol+104($pop42)
 	i32.const	$push41=, 0
 	i32.load	$29=, gvol+108($pop41)
 	i32.const	$push40=, 0
-	i32.load	$30=, gvol+112($pop40):p2align=4
+	i32.load	$30=, gvol+112($pop40)
 	i32.const	$push39=, 0
 	i32.load	$31=, gvol+116($pop39)
 	i32.const	$push38=, 0
-	i32.load	$32=, gvol+120($pop38):p2align=3
+	i32.load	$32=, gvol+120($pop38)
 	i32.const	$push37=, 0
 	i32.store	$discard=, gvol+4($pop37), $3
 	i32.const	$push36=, 0
-	i32.store	$discard=, gvol+8($pop36):p2align=3, $4
+	i32.store	$discard=, gvol+8($pop36), $4
 	i32.const	$push35=, 0
 	i32.store	$discard=, gvol+12($pop35), $5
 	i32.const	$push34=, 0
-	i32.store	$discard=, gvol+16($pop34):p2align=4, $6
+	i32.store	$discard=, gvol+16($pop34), $6
 	i32.const	$push33=, 0
 	i32.store	$discard=, gvol+20($pop33), $7
 	i32.const	$push32=, 0
-	i32.store	$discard=, gvol+24($pop32):p2align=3, $8
+	i32.store	$discard=, gvol+24($pop32), $8
 	i32.const	$push31=, 0
 	i32.store	$discard=, gvol+28($pop31), $9
 	i32.const	$push30=, 0
-	i32.store	$discard=, gvol+32($pop30):p2align=4, $10
+	i32.store	$discard=, gvol+32($pop30), $10
 	i32.const	$push29=, 0
 	i32.store	$discard=, gvol+36($pop29), $11
 	i32.const	$push28=, 0
-	i32.store	$discard=, gvol+40($pop28):p2align=3, $12
+	i32.store	$discard=, gvol+40($pop28), $12
 	i32.const	$push27=, 0
 	i32.store	$discard=, gvol+44($pop27), $13
 	i32.const	$push26=, 0
-	i32.store	$discard=, gvol+48($pop26):p2align=4, $14
+	i32.store	$discard=, gvol+48($pop26), $14
 	i32.const	$push25=, 0
 	i32.store	$discard=, gvol+52($pop25), $15
 	i32.const	$push24=, 0
-	i32.store	$discard=, gvol+56($pop24):p2align=3, $16
+	i32.store	$discard=, gvol+56($pop24), $16
 	i32.const	$push23=, 0
 	i32.store	$discard=, gvol+60($pop23), $17
 	i32.const	$push22=, 0
-	i32.store	$discard=, gvol+64($pop22):p2align=4, $18
+	i32.store	$discard=, gvol+64($pop22), $18
 	i32.const	$push21=, 0
 	i32.store	$discard=, gvol+68($pop21), $19
 	i32.const	$push20=, 0
-	i32.store	$discard=, gvol+72($pop20):p2align=3, $20
+	i32.store	$discard=, gvol+72($pop20), $20
 	i32.const	$push19=, 0
 	i32.store	$discard=, gvol+76($pop19), $21
 	i32.const	$push18=, 0
-	i32.store	$discard=, gvol+80($pop18):p2align=4, $22
+	i32.store	$discard=, gvol+80($pop18), $22
 	i32.const	$push17=, 0
 	i32.store	$discard=, gvol+84($pop17), $23
 	i32.const	$push16=, 0
-	i32.store	$discard=, gvol+88($pop16):p2align=3, $24
+	i32.store	$discard=, gvol+88($pop16), $24
 	i32.const	$push15=, 0
 	i32.store	$discard=, gvol+92($pop15), $25
 	i32.const	$push14=, 0
-	i32.store	$discard=, gvol+96($pop14):p2align=4, $26
+	i32.store	$discard=, gvol+96($pop14), $26
 	i32.const	$push13=, 0
 	i32.store	$discard=, gvol+100($pop13), $27
 	i32.const	$push12=, 0
-	i32.store	$discard=, gvol+104($pop12):p2align=3, $28
+	i32.store	$discard=, gvol+104($pop12), $28
 	i32.const	$push11=, 0
 	i32.store	$discard=, gvol+108($pop11), $29
 	i32.const	$push10=, 0
-	i32.store	$discard=, gvol+112($pop10):p2align=4, $30
+	i32.store	$discard=, gvol+112($pop10), $30
 	i32.const	$push9=, 0
 	i32.store	$discard=, gvol+116($pop9), $31
 	i32.const	$push8=, 0
-	i32.store	$discard=, gvol+120($pop8):p2align=3, $32
+	i32.store	$discard=, gvol+120($pop8), $32
 	i32.const	$push7=, -1
 	i32.add 	$0=, $0, $pop7
 	br_if   	0, $0           # 0: up to label28
@@ -1595,123 +1595,123 @@ t11:                                    # @t11
 	i32.const	$push67=, 0
 	i32.load	$3=, gvol+4($pop67)
 	i32.const	$push66=, 0
-	i32.load	$4=, gvol+8($pop66):p2align=3
+	i32.load	$4=, gvol+8($pop66)
 	i32.const	$push65=, 0
 	i32.load	$5=, gvol+12($pop65)
 	i32.const	$push64=, 0
-	i32.load	$6=, gvol+16($pop64):p2align=4
+	i32.load	$6=, gvol+16($pop64)
 	i32.const	$push63=, 0
 	i32.load	$7=, gvol+20($pop63)
 	i32.const	$push62=, 0
-	i32.load	$8=, gvol+24($pop62):p2align=3
+	i32.load	$8=, gvol+24($pop62)
 	i32.const	$push61=, 0
 	i32.load	$9=, gvol+28($pop61)
 	i32.const	$push60=, 0
-	i32.load	$10=, gvol+32($pop60):p2align=4
+	i32.load	$10=, gvol+32($pop60)
 	i32.const	$push59=, 0
 	i32.load	$11=, gvol+36($pop59)
 	i32.const	$push58=, 0
-	i32.load	$12=, gvol+40($pop58):p2align=3
+	i32.load	$12=, gvol+40($pop58)
 	i32.const	$push57=, 0
 	i32.load	$13=, gvol+44($pop57)
 	i32.const	$push56=, 0
-	i32.load	$14=, gvol+48($pop56):p2align=4
+	i32.load	$14=, gvol+48($pop56)
 	i32.const	$push55=, 0
 	i32.load	$15=, gvol+52($pop55)
 	i32.const	$push54=, 0
-	i32.load	$16=, gvol+56($pop54):p2align=3
+	i32.load	$16=, gvol+56($pop54)
 	i32.const	$push53=, 0
 	i32.load	$17=, gvol+60($pop53)
 	i32.const	$push52=, 0
-	i32.load	$18=, gvol+64($pop52):p2align=4
+	i32.load	$18=, gvol+64($pop52)
 	i32.const	$push51=, 0
 	i32.load	$19=, gvol+68($pop51)
 	i32.const	$push50=, 0
-	i32.load	$20=, gvol+72($pop50):p2align=3
+	i32.load	$20=, gvol+72($pop50)
 	i32.const	$push49=, 0
 	i32.load	$21=, gvol+76($pop49)
 	i32.const	$push48=, 0
-	i32.load	$22=, gvol+80($pop48):p2align=4
+	i32.load	$22=, gvol+80($pop48)
 	i32.const	$push47=, 0
 	i32.load	$23=, gvol+84($pop47)
 	i32.const	$push46=, 0
-	i32.load	$24=, gvol+88($pop46):p2align=3
+	i32.load	$24=, gvol+88($pop46)
 	i32.const	$push45=, 0
 	i32.load	$25=, gvol+92($pop45)
 	i32.const	$push44=, 0
-	i32.load	$26=, gvol+96($pop44):p2align=4
+	i32.load	$26=, gvol+96($pop44)
 	i32.const	$push43=, 0
 	i32.load	$27=, gvol+100($pop43)
 	i32.const	$push42=, 0
-	i32.load	$28=, gvol+104($pop42):p2align=3
+	i32.load	$28=, gvol+104($pop42)
 	i32.const	$push41=, 0
 	i32.load	$29=, gvol+108($pop41)
 	i32.const	$push40=, 0
-	i32.load	$30=, gvol+112($pop40):p2align=4
+	i32.load	$30=, gvol+112($pop40)
 	i32.const	$push39=, 0
 	i32.load	$31=, gvol+116($pop39)
 	i32.const	$push38=, 0
-	i32.load	$32=, gvol+120($pop38):p2align=3
+	i32.load	$32=, gvol+120($pop38)
 	i32.const	$push37=, 0
 	i32.store	$discard=, gvol+4($pop37), $3
 	i32.const	$push36=, 0
-	i32.store	$discard=, gvol+8($pop36):p2align=3, $4
+	i32.store	$discard=, gvol+8($pop36), $4
 	i32.const	$push35=, 0
 	i32.store	$discard=, gvol+12($pop35), $5
 	i32.const	$push34=, 0
-	i32.store	$discard=, gvol+16($pop34):p2align=4, $6
+	i32.store	$discard=, gvol+16($pop34), $6
 	i32.const	$push33=, 0
 	i32.store	$discard=, gvol+20($pop33), $7
 	i32.const	$push32=, 0
-	i32.store	$discard=, gvol+24($pop32):p2align=3, $8
+	i32.store	$discard=, gvol+24($pop32), $8
 	i32.const	$push31=, 0
 	i32.store	$discard=, gvol+28($pop31), $9
 	i32.const	$push30=, 0
-	i32.store	$discard=, gvol+32($pop30):p2align=4, $10
+	i32.store	$discard=, gvol+32($pop30), $10
 	i32.const	$push29=, 0
 	i32.store	$discard=, gvol+36($pop29), $11
 	i32.const	$push28=, 0
-	i32.store	$discard=, gvol+40($pop28):p2align=3, $12
+	i32.store	$discard=, gvol+40($pop28), $12
 	i32.const	$push27=, 0
 	i32.store	$discard=, gvol+44($pop27), $13
 	i32.const	$push26=, 0
-	i32.store	$discard=, gvol+48($pop26):p2align=4, $14
+	i32.store	$discard=, gvol+48($pop26), $14
 	i32.const	$push25=, 0
 	i32.store	$discard=, gvol+52($pop25), $15
 	i32.const	$push24=, 0
-	i32.store	$discard=, gvol+56($pop24):p2align=3, $16
+	i32.store	$discard=, gvol+56($pop24), $16
 	i32.const	$push23=, 0
 	i32.store	$discard=, gvol+60($pop23), $17
 	i32.const	$push22=, 0
-	i32.store	$discard=, gvol+64($pop22):p2align=4, $18
+	i32.store	$discard=, gvol+64($pop22), $18
 	i32.const	$push21=, 0
 	i32.store	$discard=, gvol+68($pop21), $19
 	i32.const	$push20=, 0
-	i32.store	$discard=, gvol+72($pop20):p2align=3, $20
+	i32.store	$discard=, gvol+72($pop20), $20
 	i32.const	$push19=, 0
 	i32.store	$discard=, gvol+76($pop19), $21
 	i32.const	$push18=, 0
-	i32.store	$discard=, gvol+80($pop18):p2align=4, $22
+	i32.store	$discard=, gvol+80($pop18), $22
 	i32.const	$push17=, 0
 	i32.store	$discard=, gvol+84($pop17), $23
 	i32.const	$push16=, 0
-	i32.store	$discard=, gvol+88($pop16):p2align=3, $24
+	i32.store	$discard=, gvol+88($pop16), $24
 	i32.const	$push15=, 0
 	i32.store	$discard=, gvol+92($pop15), $25
 	i32.const	$push14=, 0
-	i32.store	$discard=, gvol+96($pop14):p2align=4, $26
+	i32.store	$discard=, gvol+96($pop14), $26
 	i32.const	$push13=, 0
 	i32.store	$discard=, gvol+100($pop13), $27
 	i32.const	$push12=, 0
-	i32.store	$discard=, gvol+104($pop12):p2align=3, $28
+	i32.store	$discard=, gvol+104($pop12), $28
 	i32.const	$push11=, 0
 	i32.store	$discard=, gvol+108($pop11), $29
 	i32.const	$push10=, 0
-	i32.store	$discard=, gvol+112($pop10):p2align=4, $30
+	i32.store	$discard=, gvol+112($pop10), $30
 	i32.const	$push9=, 0
 	i32.store	$discard=, gvol+116($pop9), $31
 	i32.const	$push8=, 0
-	i32.store	$discard=, gvol+120($pop8):p2align=3, $32
+	i32.store	$discard=, gvol+120($pop8), $32
 	i32.const	$push7=, -1
 	i32.add 	$0=, $0, $pop7
 	br_if   	0, $0           # 0: up to label31

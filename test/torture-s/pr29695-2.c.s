@@ -78,7 +78,7 @@ f5:                                     # @f5
 	.result 	i64
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, c($pop0):p2align=3
+	i32.load	$push1=, c($pop0)
 	i32.const	$push6=, 0
 	i32.lt_s	$push2=, $pop1, $pop6
 	i64.extend_u/i32	$push3=, $pop2
@@ -155,7 +155,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push10=, 0
-	i32.load8_u	$push0=, a($pop10):p2align=2
+	i32.load8_u	$push0=, a($pop10)
 	i32.const	$push1=, 7
 	i32.shr_u	$push2=, $pop0, $pop1
 	i32.const	$push17=, 0
@@ -169,7 +169,7 @@ main:                                   # @main
 	br_if   	0, $pop4        # 0: down to label0
 # BB#2:                                 # %if.end12
 	i32.const	$push14=, 0
-	i32.load	$push5=, c($pop14):p2align=3
+	i32.load	$push5=, c($pop14)
 	i32.const	$push13=, 0
 	i32.ge_s	$push6=, $pop5, $pop13
 	br_if   	0, $pop6        # 0: down to label0

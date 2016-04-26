@@ -326,7 +326,7 @@ main:                                   # @main
 	i64.const	$push14=, 0
 	i64.store	$discard=, 0($2), $pop14
 	block
-	i64.load	$push15=, 0($8):p2align=4
+	i64.load	$push15=, 0($8)
 	i64.const	$push16=, 1234111117
 	i64.ne  	$push17=, $pop15, $pop16
 	br_if   	0, $pop17       # 0: down to label28
@@ -336,7 +336,7 @@ main:                                   # @main
 	i64.ne  	$push20=, $pop18, $pop19
 	br_if   	0, $pop20       # 0: down to label28
 # BB#13:                                # %lor.lhs.false5
-	i64.load	$push21=, 16($8):p2align=4
+	i64.load	$push21=, 16($8)
 	i64.const	$push22=, 1234111127
 	i64.ne  	$push23=, $pop21, $pop22
 	br_if   	0, $pop23       # 0: down to label28

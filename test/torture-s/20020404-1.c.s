@@ -9,10 +9,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push11=, 0
-	i32.load8_u	$push3=, bfd_make_section_anyway.foo_section($pop11):p2align=3
+	i32.load8_u	$push3=, bfd_make_section_anyway.foo_section($pop11)
 	i32.const	$push4=, 1
 	i32.or  	$push5=, $pop3, $pop4
-	i32.store8	$discard=, bfd_make_section_anyway.foo_section($pop1):p2align=3, $pop5
+	i32.store8	$discard=, bfd_make_section_anyway.foo_section($pop1), $pop5
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
 	i64.const	$push0=, 3735928559

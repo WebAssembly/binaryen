@@ -18,11 +18,11 @@ main:                                   # @main
 	i64.load	$push0=, .Lmain.buf+8($pop9)
 	i64.store	$discard=, 8($0), $pop0
 	i32.const	$push8=, 0
-	i64.load	$push1=, .Lmain.buf($pop8):p2align=4
-	i64.store	$discard=, 0($0):p2align=4, $pop1
+	i64.load	$push1=, .Lmain.buf($pop8)
+	i64.store	$discard=, 0($0), $pop1
 	block
 	i32.call	$push2=, strlen@FUNCTION, $0
-	i32.store8	$push3=, 0($0):p2align=4, $pop2
+	i32.store8	$push3=, 0($0), $pop2
 	i32.const	$push4=, 255
 	i32.and 	$push5=, $pop3, $pop4
 	i32.const	$push6=, 10

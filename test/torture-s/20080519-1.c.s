@@ -60,7 +60,7 @@ regrename_optimize:                     # @regrename_optimize
 	i32.const	$push23=, 3
 	i32.shl 	$push22=, $pop2, $pop23
 	tee_local	$push21=, $5=, $pop22
-	i32.load	$push3=, reg_class_contents($pop21):p2align=3
+	i32.load	$push3=, reg_class_contents($pop21)
 	i32.const	$push20=, -1
 	i32.xor 	$push4=, $pop3, $pop20
 	i32.or  	$4=, $4, $pop4
@@ -90,7 +90,7 @@ regrename_optimize:                     # @regrename_optimize
 	i32.const	$push11=, 3
 	i32.shl 	$push28=, $pop10, $pop11
 	tee_local	$push27=, $0=, $pop28
-	i32.load	$1=, reg_class_contents($pop27):p2align=3
+	i32.load	$1=, reg_class_contents($pop27)
 	i32.load	$push15=, reg_class_contents+4($0)
 	i32.const	$push12=, -1
 	i32.xor 	$push16=, $pop15, $pop12
@@ -132,14 +132,14 @@ main:                                   # @main
 	i32.store	$discard=, 4($0), $pop2
 	i32.const	$push4=, 0
 	i64.const	$push3=, -1
-	i64.store	$discard=, reg_class_contents($pop4):p2align=4, $pop3
+	i64.store	$discard=, reg_class_contents($pop4), $pop3
 	i32.const	$push6=, 0
 	i64.const	$push0=, 0
 	i64.store	$push1=, 8($0), $pop0
 	i64.store	$discard=, reg_class_contents+8($pop6), $pop1
 	i32.const	$push14=, 8
 	i32.add 	$push15=, $0, $pop14
-	i32.store	$discard=, 0($0):p2align=3, $pop15
+	i32.store	$discard=, 0($0), $pop15
 	call    	regrename_optimize@FUNCTION, $0
 	i32.const	$push5=, 0
 	i32.const	$push13=, __stack_pointer

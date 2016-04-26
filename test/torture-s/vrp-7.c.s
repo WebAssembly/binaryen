@@ -9,7 +9,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push2=, 0
 	i32.const	$push9=, 0
-	i32.load8_u	$push3=, t($pop9):p2align=2
+	i32.load8_u	$push3=, t($pop9)
 	i32.const	$push6=, 254
 	i32.and 	$push7=, $pop3, $pop6
 	i32.const	$push0=, 4
@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i32.const	$push4=, 1
 	i32.and 	$push5=, $pop1, $pop4
 	i32.or  	$push8=, $pop7, $pop5
-	i32.store8	$discard=, t($pop2):p2align=2, $pop8
+	i32.store8	$discard=, t($pop2), $pop8
 	return
 	.endfunc
 .Lfunc_end0:
@@ -34,7 +34,7 @@ main:                                   # @main
 	call    	foo@FUNCTION, $pop0
 	block
 	i32.const	$push4=, 0
-	i32.load8_u	$push1=, t($pop4):p2align=2
+	i32.load8_u	$push1=, t($pop4)
 	i32.const	$push2=, 1
 	i32.and 	$push3=, $pop1, $pop2
 	i32.const	$push6=, 0

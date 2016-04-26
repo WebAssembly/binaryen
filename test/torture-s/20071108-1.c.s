@@ -77,7 +77,7 @@ main:                                   # @main
 	i32.ne  	$push3=, $pop2, $pop27
 	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false4
-	i32.load16_u	$push12=, 8($0):p2align=2
+	i32.load16_u	$push12=, 8($0)
 	tee_local	$push11=, $0=, $pop12
 	i32.const	$push4=, 255
 	i32.and 	$push5=, $pop11, $pop4

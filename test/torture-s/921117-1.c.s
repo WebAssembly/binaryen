@@ -38,11 +38,11 @@ main:                                   # @main
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
 	i32.load8_u	$push2=, .L.str+10($pop14)
-	i32.store8	$discard=, cell+10($pop15):p2align=1, $pop2
+	i32.store8	$discard=, cell+10($pop15), $pop2
 	i32.const	$push13=, 0
 	i32.const	$push12=, 0
 	i32.load16_u	$push3=, .L.str+8($pop12):p2align=0
-	i32.store16	$discard=, cell+8($pop13):p2align=2, $pop3
+	i32.store16	$discard=, cell+8($pop13), $pop3
 	i32.const	$push11=, 0
 	i32.const	$push10=, 0
 	i32.load	$push4=, .L.str+4($pop10):p2align=0

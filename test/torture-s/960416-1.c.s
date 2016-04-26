@@ -13,7 +13,7 @@ f_le:                                   # @f_le
 	tee_local	$push50=, $8=, $pop51
 	i64.const	$push10=, 4294967295
 	i64.and 	$push11=, $pop50, $pop10
-	i32.load	$push49=, 0($0):p2align=3
+	i32.load	$push49=, 0($0)
 	tee_local	$push48=, $1=, $pop49
 	i64.extend_u/i32	$push9=, $pop48
 	i64.mul 	$push47=, $pop11, $pop9
@@ -88,7 +88,7 @@ f_be:                                   # @f_be
 	i64.const	$push10=, 4294967295
 	i64.and 	$push51=, $pop52, $pop10
 	tee_local	$push50=, $3=, $pop51
-	i32.load	$push49=, 0($1):p2align=3
+	i32.load	$push49=, 0($1)
 	tee_local	$push48=, $1=, $pop49
 	i64.extend_u/i32	$push12=, $pop48
 	i64.const	$push47=, 4294967295

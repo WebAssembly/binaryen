@@ -43,7 +43,7 @@ main:                                   # @main
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push15=, 0
-	i32.load	$push0=, arr+8($pop15):p2align=3
+	i32.load	$push0=, arr+8($pop15)
 	i32.const	$push7=, 3
 	i32.ne  	$push8=, $pop0, $pop7
 	br_if   	0, $pop8        # 0: down to label0

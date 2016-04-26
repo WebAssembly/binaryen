@@ -85,7 +85,7 @@ main:                                   # @main
 	i32.const	$push5=, 4
 	i32.store	$discard=, 12($0), $pop5
 	i32.const	$push6=, 255
-	i32.store8	$discard=, 4($0):p2align=2, $pop6
+	i32.store8	$discard=, 4($0), $pop6
 	i32.const	$push36=, 16
 	i32.add 	$push37=, $0, $pop36
 	i32.const	$push11=, 16
@@ -96,21 +96,21 @@ main:                                   # @main
 	i32.add 	$push8=, $pop39, $pop7
 	i64.const	$push9=, 0
 	i64.store	$push10=, 0($pop8), $pop9
-	i64.store	$discard=, 0($pop12):p2align=4, $pop10
+	i64.store	$discard=, 0($pop12), $pop10
 	i32.const	$push25=, 0
 	i32.store	$push13=, 28($0), $pop25
-	i32.store	$push14=, 24($0):p2align=3, $pop13
+	i32.store	$push14=, 24($0), $pop13
 	i32.store	$push15=, 20($0), $pop14
-	i32.store	$discard=, 16($0):p2align=4, $pop15
+	i32.store	$discard=, 16($0), $pop15
 	i32.const	$push24=, 0
 	i64.load	$push4=, .Lmain.e($pop24):p2align=2
 	i64.store	$discard=, 48($0), $pop4
 	i32.const	$push40=, 16
 	i32.add 	$push41=, $0, $pop40
-	i32.store	$discard=, 8($0):p2align=3, $pop41
+	i32.store	$discard=, 8($0), $pop41
 	i32.const	$push42=, 8
 	i32.add 	$push43=, $0, $pop42
-	i32.store	$discard=, 0($0):p2align=3, $pop43
+	i32.store	$discard=, 0($0), $pop43
 	i32.const	$push44=, 48
 	i32.add 	$push45=, $0, $pop44
 	i32.const	$push17=, 65

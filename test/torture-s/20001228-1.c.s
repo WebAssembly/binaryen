@@ -27,7 +27,7 @@ foo2:                                   # @foo2
 	i32.sub 	$0=, $pop3, $pop4
 	i32.const	$push0=, 1
 	i32.store	$discard=, 12($0), $pop0
-	i32.load8_s	$push1=, 12($0):p2align=2
+	i32.load8_s	$push1=, 12($0)
 	return  	$pop1
 	.endfunc
 .Lfunc_end1:
@@ -50,7 +50,7 @@ main:                                   # @main
 	block
 	i32.const	$push0=, 1
 	i32.store	$push1=, 12($0), $pop0
-	i32.load8_u	$push2=, 12($0):p2align=2
+	i32.load8_u	$push2=, 12($0)
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end

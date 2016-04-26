@@ -82,17 +82,17 @@ main:                                   # @main
 	i32.const	$push28=, __stack_pointer
 	i32.store	$discard=, 0($pop28), $1
 	i32.const	$push0=, 5130
-	i32.store16	$discard=, 16($1):p2align=3, $pop0
+	i32.store16	$discard=, 16($1), $pop0
 	i32.const	$push1=, 11
 	i32.store8	$discard=, 19($1), $pop1
 	i32.const	$push2=, 12
-	i32.store8	$discard=, 22($1):p2align=1, $pop2
+	i32.store8	$discard=, 22($1), $pop2
 	i32.const	$push3=, 21
-	i32.store8	$discard=, 20($1):p2align=2, $pop3
+	i32.store8	$discard=, 20($1), $pop3
 	i32.const	$push4=, 22
 	i32.store8	$discard=, 23($1), $pop4
 	i32.const	$push5=, 30
-	i32.store8	$discard=, 18($1):p2align=1, $pop5
+	i32.store8	$discard=, 18($1), $pop5
 	i32.const	$push6=, 31
 	i32.store8	$discard=, 21($1), $pop6
 	i32.const	$push29=, 16
@@ -101,20 +101,20 @@ main:                                   # @main
 	i32.add 	$push24=, $pop30, $pop7
 	tee_local	$push23=, $0=, $pop24
 	i32.const	$push8=, 32
-	i32.store8	$discard=, 0($pop23):p2align=3, $pop8
+	i32.store8	$discard=, 0($pop23), $pop8
 	i32.const	$push31=, 12
 	i32.add 	$push32=, $1, $pop31
 	i32.const	$push9=, 2
 	i32.add 	$push10=, $pop32, $pop9
-	i32.load8_u	$push11=, 18($1):p2align=1
-	i32.store8	$discard=, 0($pop10):p2align=1, $pop11
+	i32.load8_u	$push11=, 18($1)
+	i32.store8	$discard=, 0($pop10), $pop11
 	i32.const	$push33=, 8
 	i32.add 	$push34=, $1, $pop33
 	i32.const	$push22=, 2
 	i32.add 	$push12=, $pop34, $pop22
 	i32.load8_u	$push13=, 21($1)
-	i32.store8	$discard=, 0($pop12):p2align=1, $pop13
-	i32.load16_u	$push14=, 16($1):p2align=3
+	i32.store8	$discard=, 0($pop12), $pop13
+	i32.load16_u	$push14=, 16($1)
 	i32.store16	$discard=, 12($1), $pop14
 	i32.load16_u	$push15=, 19($1):p2align=0
 	i32.store16	$discard=, 8($1), $pop15
@@ -122,8 +122,8 @@ main:                                   # @main
 	i32.add 	$push36=, $1, $pop35
 	i32.const	$push21=, 2
 	i32.add 	$push16=, $pop36, $pop21
-	i32.load8_u	$push17=, 0($0):p2align=3
-	i32.store8	$discard=, 0($pop16):p2align=1, $pop17
+	i32.load8_u	$push17=, 0($0)
+	i32.store8	$discard=, 0($pop16), $pop17
 	i32.load16_u	$push18=, 22($1)
 	i32.store16	$discard=, 4($1), $pop18
 	i32.const	$push37=, 12

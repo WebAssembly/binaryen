@@ -61,7 +61,7 @@ main:                                   # @main
 	f32.load	$3=, w($pop17)
 	f32.load	$2=, 12($5)
 	i32.const	$push16=, 0
-	f32.load	$push9=, 8($5):p2align=3
+	f32.load	$push9=, 8($5)
 	f32.add 	$push10=, $4, $pop9
 	f32.store	$discard=, y($pop16), $pop10
 	i32.const	$push15=, 0

@@ -418,7 +418,7 @@ main:                                   # @main
 	call    	facts@FUNCTION, $pop5, $pop4, $pop3, $pop2
 	block
 	i32.const	$push17=, 0
-	i64.load	$push16=, factab($pop17):p2align=4
+	i64.load	$push16=, factab($pop17)
 	tee_local	$push15=, $0=, $pop16
 	i32.wrap/i64	$push6=, $pop15
 	i32.const	$push7=, 7
@@ -432,7 +432,7 @@ main:                                   # @main
 	br_if   	0, $pop11       # 0: down to label37
 # BB#2:                                 # %entry
 	i32.const	$push18=, 0
-	i32.load	$push1=, factab+8($pop18):p2align=3
+	i32.load	$push1=, factab+8($pop18)
 	i32.const	$push12=, 262657
 	i32.ne  	$push13=, $pop1, $pop12
 	br_if   	0, $pop13       # 0: down to label37

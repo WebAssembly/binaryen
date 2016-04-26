@@ -134,8 +134,8 @@ foo_ldouble_t:                          # @foo_ldouble_t
 	i32.const	$push8=, 24
 	i32.add 	$push9=, $0, $pop8
 	i64.store	$discard=, 0($pop9), $4
-	i64.store	$discard=, 0($0):p2align=4, $3
-	i64.store	$discard=, 16($0):p2align=4, $5
+	i64.store	$discard=, 0($0), $3
+	i64.store	$discard=, 16($0), $5
 	i32.const	$push18=, __stack_pointer
 	i32.const	$push16=, 32
 	i32.add 	$push17=, $6, $pop16
@@ -153,7 +153,7 @@ bar_ldouble_t:                          # @bar_ldouble_t
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 0
-	i64.store	$discard=, 0($0):p2align=4, $pop0
+	i64.store	$discard=, 0($0), $pop0
 	i32.const	$push1=, 8
 	i32.add 	$push2=, $0, $pop1
 	i64.const	$push3=, 4612108230892453888
@@ -171,7 +171,7 @@ baz_ldouble_t:                          # @baz_ldouble_t
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 0
-	i64.store	$discard=, 0($0):p2align=4, $pop0
+	i64.store	$discard=, 0($0), $pop0
 	i32.const	$push1=, 8
 	i32.add 	$push2=, $0, $pop1
 	i64.const	$push3=, 4611967493404098560

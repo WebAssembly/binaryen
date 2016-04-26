@@ -37,7 +37,7 @@ foo:                                    # @foo
 	i32.const	$push11=, 0
 	i32.store	$6=, f1.beenhere($pop11), $4
 	i32.load	$4=, 0($0)
-	i32.store16	$discard=, 0($5):p2align=2, $3
+	i32.store16	$discard=, 0($5), $3
 	br_if   	1, $4           # 1: down to label3
 # BB#5:                                 # %if.end8
                                         #   in Loop: Header=BB0_1 Depth=1
@@ -128,11 +128,11 @@ main:                                   # @main
 	i32.const	$push22=, __stack_pointer
 	i32.store	$discard=, 0($pop22), $5
 	i32.const	$push0=, 0
-	i32.store	$0=, 0($5):p2align=3, $pop0
+	i32.store	$0=, 0($5), $pop0
 	i32.store	$discard=, 4($5), $5
 	i32.load	$2=, f1.beenhere($0)
 	i32.const	$push1=, 23
-	i32.store16	$3=, 8($5):p2align=3, $pop1
+	i32.store16	$3=, 8($5), $pop1
 	block
 	block
 	i32.const	$push10=, 1
@@ -154,7 +154,7 @@ main:                                   # @main
 # BB#3:                                 # %if.end.i
                                         #   in Loop: Header=BB3_2 Depth=1
 	i32.const	$push4=, 0
-	i32.store16	$3=, 0($1):p2align=3, $pop4
+	i32.store16	$3=, 0($1), $pop4
 	i32.const	$push16=, 1
 	i32.le_s	$push6=, $2, $pop16
 	br_if   	0, $pop6        # 0: up to label8

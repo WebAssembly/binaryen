@@ -98,16 +98,16 @@ main:                                   # @main
 	i32.add 	$push4=, $pop15, $pop3
 	i32.load	$push5=, 36($0)
 	i32.store	$discard=, 0($pop4), $pop5
-	i32.load	$push6=, 32($0):p2align=3
+	i32.load	$push6=, 32($0)
 	i32.store	$discard=, 16($0), $pop6
 	i32.const	$push7=, 3
 	i32.store	$discard=, 4($0), $pop7
 	i32.const	$push16=, 24
 	i32.add 	$push17=, $0, $pop16
-	i32.store	$discard=, 0($0):p2align=4, $pop17
+	i32.store	$discard=, 0($0), $pop17
 	i32.const	$push18=, 16
 	i32.add 	$push19=, $0, $pop18
-	i32.store	$discard=, 8($0):p2align=3, $pop19
+	i32.store	$discard=, 8($0), $pop19
 	i32.const	$push8=, 2
 	i32.call	$discard=, f@FUNCTION, $pop8, $0
 	i32.const	$push9=, 0

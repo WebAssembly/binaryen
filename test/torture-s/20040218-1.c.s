@@ -8,7 +8,7 @@ xb:                                     # @xb
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.load8_u	$push0=, 0($0):p2align=2
+	i32.load8_u	$push0=, 0($0)
 	i32.load	$push1=, 4($0)
 	i32.add 	$push2=, $pop0, $pop1
 	return  	$pop2
@@ -24,7 +24,7 @@ xw:                                     # @xw
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.load16_u	$push0=, 0($0):p2align=2
+	i32.load16_u	$push0=, 0($0)
 	i32.load	$push1=, 4($0)
 	i32.add 	$push2=, $pop0, $pop1
 	return  	$pop2
@@ -40,7 +40,7 @@ yb:                                     # @yb
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.load8_u	$push0=, 0($0):p2align=1
+	i32.load8_u	$push0=, 0($0)
 	i32.load16_u	$push1=, 2($0)
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, 16

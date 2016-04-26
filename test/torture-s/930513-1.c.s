@@ -16,7 +16,7 @@ f:                                      # @f
 	i32.const	$push6=, __stack_pointer
 	i32.store	$discard=, 0($pop6), $1
 	i64.const	$push0=, 4617315517961601024
-	i64.store	$discard=, 0($1):p2align=4, $pop0
+	i64.store	$discard=, 0($1), $pop0
 	i32.const	$push2=, buf
 	i32.const	$push1=, .L.str
 	i32.call_indirect	$discard=, $0, $pop2, $pop1, $1
@@ -44,7 +44,7 @@ main:                                   # @main
 	i32.const	$push15=, __stack_pointer
 	i32.store	$discard=, 0($pop15), $0
 	i64.const	$push1=, 4617315517961601024
-	i64.store	$discard=, 0($0):p2align=4, $pop1
+	i64.store	$discard=, 0($0), $pop1
 	i32.const	$push3=, buf
 	i32.const	$push2=, .L.str
 	i32.call	$discard=, sprintf@FUNCTION, $pop3, $pop2, $0

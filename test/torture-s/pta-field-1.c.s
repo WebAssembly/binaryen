@@ -35,7 +35,7 @@ foo:                                    # @foo
 	i32.store	$discard=, 0($0), $pop1
 	i32.const	$push10=, 4
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$discard=, 8($0):p2align=3, $pop11
+	i32.store	$discard=, 8($0), $pop11
 	i32.store	$discard=, 12($0), $0
 	i32.const	$push12=, 8
 	i32.add 	$push13=, $0, $pop12
@@ -70,7 +70,7 @@ main:                                   # @main
 	i32.store	$discard=, 0($0), $pop1
 	i32.const	$push11=, 4
 	i32.add 	$push12=, $0, $pop11
-	i32.store	$discard=, 8($0):p2align=3, $pop12
+	i32.store	$discard=, 8($0), $pop12
 	i32.store	$discard=, 12($0), $0
 	i32.const	$push13=, 8
 	i32.add 	$push14=, $0, $pop13

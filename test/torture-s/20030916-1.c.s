@@ -71,7 +71,7 @@ main:                                   # @main
 	i32.add 	$push4=, $3, $pop3
 	i64.const	$push5=, 0
 	i64.store	$push6=, 0($pop4), $pop5
-	i64.store	$0=, 0($pop8):p2align=4, $pop6
+	i64.store	$0=, 0($pop8), $pop6
 	i32.const	$push11=, 1020
 	i32.add 	$push12=, $3, $pop11
 	i32.const	$push2=, 0
@@ -83,11 +83,11 @@ main:                                   # @main
 	i32.const	$push13=, 1012
 	i32.add 	$push14=, $3, $pop13
 	i64.store	$push9=, 8($3), $0
-	i64.store	$push10=, 0($3):p2align=4, $pop9
+	i64.store	$push10=, 0($3), $pop9
 	i64.store	$push15=, 0($pop14):p2align=2, $pop10
 	i64.store	$push18=, 0($pop17):p2align=2, $pop15
 	i64.store	$discard=, 0($pop20):p2align=2, $pop18
-	i32.store	$discard=, 992($3):p2align=4, $2
+	i32.store	$discard=, 992($3), $2
 	copy_local	$1=, $3
 .LBB1_3:                                # %for.body3
                                         # =>This Inner Loop Header: Depth=1

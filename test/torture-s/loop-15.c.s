@@ -76,11 +76,11 @@ main:                                   # @main
                                         #       Child Loop BB1_12 Depth 3
 	loop                            # label8:
 	i64.const	$push20=, 4294967296
-	i64.store	$discard=, 0($12):p2align=4, $pop20
+	i64.store	$discard=, 0($12), $pop20
 	i64.const	$push19=, 12884901890
 	i64.store	$discard=, 8($12), $pop19
 	i32.const	$push18=, 4
-	i32.store	$8=, 0($7):p2align=4, $pop18
+	i32.store	$8=, 0($7), $pop18
 	block
 	i32.le_s	$push2=, $6, $3
 	br_if   	0, $pop2        # 0: down to label10

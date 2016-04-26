@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.const	$push3=, 4
 	i32.store16	$discard=, 20($2), $pop3
 	i32.const	$push4=, 0
-	i32.store	$push5=, 16($2):p2align=3, $pop4
+	i32.store	$push5=, 16($2), $pop4
 	i32.store8	$push6=, 15($2), $pop5
 	i32.store8	$discard=, 14($2), $pop6
 	i32.const	$push0=, 1
@@ -34,8 +34,8 @@ main:                                   # @main
 	i32.store16	$discard=, 38($2), $pop9
 	i32.load16_u	$push10=, 20($2)
 	i32.store16	$discard=, 36($2), $pop10
-	i32.load	$push11=, 16($2):p2align=3
-	i32.store	$discard=, 32($2):p2align=3, $pop11
+	i32.load	$push11=, 16($2)
+	i32.store	$discard=, 32($2), $pop11
 	i32.load8_u	$push12=, 15($2)
 	i32.store8	$discard=, 31($2), $pop12
 	i32.load8_u	$push13=, 14($2)

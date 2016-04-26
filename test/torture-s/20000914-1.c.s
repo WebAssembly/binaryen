@@ -22,7 +22,7 @@ convert_like_real:                      # @convert_like_real
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.load8_u	$push0=, 8($0):p2align=2
+	i32.load8_u	$push0=, 8($0)
 	i32.const	$push1=, 222
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label0

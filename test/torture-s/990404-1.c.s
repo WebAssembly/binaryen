@@ -15,7 +15,7 @@ main:                                   # @main
 	block
 	loop                            # label1:
 	i32.const	$push44=, 0
-	i32.load	$0=, x($pop44):p2align=4
+	i32.load	$0=, x($pop44)
 	i32.const	$push43=, 0
 	i32.load	$1=, x+4($pop43)
 	i32.const	$push42=, 0
@@ -24,7 +24,7 @@ main:                                   # @main
 	tee_local	$push39=, $13=, $pop40
 	i32.select	$0=, $0, $pop42, $pop39
 	i32.const	$push38=, 0
-	i32.load	$2=, x+8($pop38):p2align=3
+	i32.load	$2=, x+8($pop38)
 	i32.gt_s	$push37=, $1, $0
 	tee_local	$push36=, $12=, $pop37
 	i32.select	$0=, $1, $0, $pop36
@@ -34,7 +34,7 @@ main:                                   # @main
 	tee_local	$push33=, $11=, $pop34
 	i32.select	$0=, $2, $0, $pop33
 	i32.const	$push32=, 0
-	i32.load	$2=, x+16($pop32):p2align=4
+	i32.load	$2=, x+16($pop32)
 	i32.gt_s	$push31=, $1, $0
 	tee_local	$push30=, $10=, $pop31
 	i32.select	$0=, $1, $0, $pop30
@@ -44,7 +44,7 @@ main:                                   # @main
 	tee_local	$push27=, $9=, $pop28
 	i32.select	$0=, $2, $0, $pop27
 	i32.const	$push26=, 0
-	i32.load	$2=, x+24($pop26):p2align=3
+	i32.load	$2=, x+24($pop26)
 	i32.gt_s	$push25=, $1, $0
 	tee_local	$push24=, $8=, $pop25
 	i32.select	$0=, $1, $0, $pop24
@@ -54,7 +54,7 @@ main:                                   # @main
 	tee_local	$push21=, $7=, $pop22
 	i32.select	$0=, $2, $0, $pop21
 	i32.const	$push20=, 0
-	i32.load	$2=, x+32($pop20):p2align=4
+	i32.load	$2=, x+32($pop20)
 	i32.const	$push19=, 0
 	i32.load	$3=, x+36($pop19)
 	i32.gt_s	$push18=, $1, $0

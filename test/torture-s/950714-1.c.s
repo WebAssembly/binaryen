@@ -10,23 +10,23 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$9=, 0
 	i32.const	$push21=, 0
-	i32.load	$0=, array($pop21):p2align=4
+	i32.load	$0=, array($pop21)
 	i32.const	$push20=, 0
 	i32.load	$1=, array+4($pop20)
 	i32.const	$push19=, 0
-	i32.load	$2=, array+8($pop19):p2align=3
+	i32.load	$2=, array+8($pop19)
 	i32.const	$push18=, 0
 	i32.load	$3=, array+12($pop18)
 	i32.const	$push17=, 0
-	i32.load	$4=, array+16($pop17):p2align=4
+	i32.load	$4=, array+16($pop17)
 	i32.const	$push16=, 0
 	i32.load	$5=, array+20($pop16)
 	i32.const	$push15=, 0
-	i32.load	$6=, array+24($pop15):p2align=3
+	i32.load	$6=, array+24($pop15)
 	i32.const	$push14=, 0
 	i32.load	$7=, array+28($pop14)
 	i32.const	$push13=, 0
-	i32.load	$8=, array+32($pop13):p2align=4
+	i32.load	$8=, array+32($pop13)
 .LBB0_1:                                # %for.cond1.preheader
                                         # =>This Inner Loop Header: Depth=1
 	block

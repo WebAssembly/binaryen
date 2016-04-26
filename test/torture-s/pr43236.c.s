@@ -25,9 +25,9 @@ main:                                   # @main
 	i32.const	$push44=, 28
 	i32.add 	$push1=, $pop57, $pop44
 	i32.const	$push2=, 257
-	i32.store16	$push3=, 0($pop1):p2align=2, $pop2
-	i32.store16	$push15=, 0($pop14):p2align=2, $pop3
-	i32.store16	$discard=, 0($pop29):p2align=2, $pop15
+	i32.store16	$push3=, 0($pop1), $pop2
+	i32.store16	$push15=, 0($pop14), $pop3
+	i32.store16	$discard=, 0($pop29), $pop15
 	i32.const	$push4=, 24
 	i32.add 	$push30=, $2, $pop4
 	i32.const	$push58=, 32
@@ -39,9 +39,9 @@ main:                                   # @main
 	i32.const	$push42=, 24
 	i32.add 	$push5=, $pop61, $pop42
 	i32.const	$push6=, 16843009
-	i32.store	$push7=, 0($pop5):p2align=3, $pop6
-	i32.store	$push17=, 0($pop16):p2align=3, $pop7
-	i32.store	$discard=, 0($pop30):p2align=3, $pop17
+	i32.store	$push7=, 0($pop5), $pop6
+	i32.store	$push17=, 0($pop16), $pop7
+	i32.store	$discard=, 0($pop30), $pop17
 	i32.const	$push62=, 32
 	i32.add 	$push63=, $2, $pop62
 	i32.const	$push8=, 16
@@ -51,10 +51,10 @@ main:                                   # @main
 	i32.const	$push41=, 16
 	i32.add 	$push9=, $pop65, $pop41
 	i64.const	$push10=, 72340172838076673
-	i64.store	$push11=, 0($pop9):p2align=4, $pop10
-	i64.store	$push12=, 64($2):p2align=4, $pop11
+	i64.store	$push11=, 0($pop9), $pop10
+	i64.store	$push12=, 64($2), $pop11
 	i64.store	$push13=, 72($2), $pop12
-	i64.store	$0=, 0($pop18):p2align=4, $pop13
+	i64.store	$0=, 0($pop18), $pop13
 	i32.const	$push66=, 32
 	i32.add 	$push67=, $2, $pop66
 	i32.const	$push21=, 18
@@ -69,13 +69,13 @@ main:                                   # @main
 	i32.const	$push39=, 16
 	i32.add 	$push31=, $2, $pop39
 	i64.store	$push19=, 40($2), $0
-	i64.store	$push20=, 32($2):p2align=4, $pop19
-	i64.store	$0=, 0($pop31):p2align=4, $pop20
+	i64.store	$push20=, 32($2), $pop19
+	i64.store	$0=, 0($pop31), $pop20
 	i32.const	$push38=, 18
 	i32.add 	$push33=, $2, $pop38
 	i32.store16	$discard=, 0($pop33), $1
 	i64.store	$push32=, 8($2), $0
-	i64.store	$discard=, 0($2):p2align=4, $pop32
+	i64.store	$discard=, 0($2), $pop32
 	i64.const	$push25=, 0
 	i64.store	$push26=, 74($2):p2align=1, $pop25
 	i64.store	$push28=, 42($2):p2align=1, $pop26

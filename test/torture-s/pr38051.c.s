@@ -144,35 +144,35 @@ mymemcmp:                               # @mymemcmp
 	i32.const	$push53=, 2
 	i32.add 	$2=, $2, $pop53
 # BB#14:
-	i32.const	$9=, 33
+	i32.const	$9=, 32
 	br      	7               # 7: down to label0
 .LBB0_15:
 	end_block                       # label7:
-	i32.const	$9=, 1
+	i32.const	$9=, 0
 	br      	6               # 6: down to label0
 .LBB0_16:
 	end_block                       # label6:
-	i32.const	$9=, 6
+	i32.const	$9=, 5
 	br      	5               # 5: down to label0
 .LBB0_17:
 	end_block                       # label5:
-	i32.const	$9=, 10
+	i32.const	$9=, 9
 	br      	4               # 4: down to label0
 .LBB0_18:
 	end_block                       # label4:
-	i32.const	$9=, 14
+	i32.const	$9=, 13
 	br      	3               # 3: down to label0
 .LBB0_19:
 	end_block                       # label3:
-	i32.const	$9=, 22
+	i32.const	$9=, 21
 	br      	2               # 2: down to label0
 .LBB0_20:
 	end_block                       # label2:
-	i32.const	$9=, 25
+	i32.const	$9=, 24
 	br      	1               # 1: down to label0
 .LBB0_21:
 	end_block                       # label1:
-	i32.const	$9=, 29
+	i32.const	$9=, 28
 .LBB0_22:                               # =>This Inner Loop Header: Depth=1
 	end_block                       # label0:
 	loop                            # label14:
@@ -299,7 +299,7 @@ mymemcmp:                               # @mymemcmp
 	i32.ne  	$push54=, $pop93, $pop91
 	br_if   	70, $pop54      # 70: down to label17
 # BB#24:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 36
+	i32.const	$9=, 35
 	br      	72              # 72: up to label14
 .LBB0_25:                               # %if.end37.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -312,7 +312,7 @@ mymemcmp:                               # @mymemcmp
 	i32.eq  	$push184=, $2, $pop183
 	br_if   	70, $pop184     # 70: down to label16
 # BB#26:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 37
+	i32.const	$9=, 36
 	br      	71              # 71: up to label14
 .LBB0_27:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label86:
@@ -321,7 +321,7 @@ mymemcmp:                               # @mymemcmp
 	i32.const	$push97=, 16
 	i32.add 	$1=, $1, $pop97
 # BB#28:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 22
+	i32.const	$9=, 21
 	br      	70              # 70: up to label14
 .LBB0_29:                               # %do.body.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -329,7 +329,7 @@ mymemcmp:                               # @mymemcmp
 	i32.ne  	$push58=, $4, $8
 	br_if   	36, $pop58      # 36: down to label48
 # BB#30:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 25
+	i32.const	$9=, 24
 	br      	69              # 69: up to label14
 .LBB0_31:                               # %do3.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -341,7 +341,7 @@ mymemcmp:                               # @mymemcmp
 	i32.ne  	$push61=, $pop79, $pop77
 	br_if   	63, $pop61      # 63: down to label20
 # BB#32:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 28
+	i32.const	$9=, 27
 	br      	68              # 68: up to label14
 .LBB0_33:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label83:
@@ -350,7 +350,7 @@ mymemcmp:                               # @mymemcmp
 	i32.const	$push81=, 4
 	i32.add 	$8=, $1, $pop81
 # BB#34:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 29
+	i32.const	$9=, 28
 	br      	67              # 67: up to label14
 .LBB0_35:                               # %do2.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -362,7 +362,7 @@ mymemcmp:                               # @mymemcmp
 	i32.ne  	$push64=, $pop86, $pop84
 	br_if   	62, $pop64      # 62: down to label19
 # BB#36:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 32
+	i32.const	$9=, 31
 	br      	66              # 66: up to label14
 .LBB0_37:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label81:
@@ -383,7 +383,7 @@ mymemcmp:                               # @mymemcmp
 	i32.add 	$push148=, $10, $pop147
 	copy_local	$2=, $pop148
 # BB#39:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 35
+	i32.const	$9=, 34
 	br      	64              # 64: up to label14
 .LBB0_40:                               # %do.body.i116.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -409,7 +409,7 @@ mymemcmp:                               # @mymemcmp
 	i32.add 	$push144=, $10, $pop143
 	copy_local	$2=, $pop144
 # BB#42:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 24
+	i32.const	$9=, 23
 	br      	62              # 62: up to label14
 .LBB0_43:                               # %do.body.i.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -435,7 +435,7 @@ mymemcmp:                               # @mymemcmp
 	i32.add 	$push156=, $10, $pop155
 	copy_local	$2=, $pop156
 # BB#45:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 27
+	i32.const	$9=, 26
 	br      	60              # 60: up to label14
 .LBB0_46:                               # %do.body.i140.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -461,7 +461,7 @@ mymemcmp:                               # @mymemcmp
 	i32.add 	$push152=, $10, $pop151
 	copy_local	$2=, $pop152
 # BB#48:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 31
+	i32.const	$9=, 30
 	br      	58              # 58: up to label14
 .LBB0_49:                               # %do.body.i128.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -482,7 +482,7 @@ mymemcmp:                               # @mymemcmp
 	i32.eq  	$push66=, $4, $8
 	br_if   	45, $pop66      # 45: down to label26
 # BB#51:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 39
+	i32.const	$9=, 38
 	br      	56              # 56: up to label14
 .LBB0_52:                               # %if.then43.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -496,7 +496,7 @@ mymemcmp:                               # @mymemcmp
 	i32.add 	$push140=, $10, $pop139
 	copy_local	$2=, $pop140
 # BB#53:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 40
+	i32.const	$9=, 39
 	br      	55              # 55: up to label14
 .LBB0_54:                               # %do.body.i104.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -523,7 +523,7 @@ mymemcmp:                               # @mymemcmp
 	i32.ne  	$push22=, $pop125, $pop123
 	br_if   	46, $pop22      # 46: down to label22
 # BB#56:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 17
+	i32.const	$9=, 16
 	br      	53              # 53: up to label14
 .LBB0_57:                               # %if.end54.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -536,7 +536,7 @@ mymemcmp:                               # @mymemcmp
 	i32.eq  	$push186=, $2, $pop185
 	br_if   	46, $pop186     # 46: down to label21
 # BB#58:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 18
+	i32.const	$9=, 17
 	br      	52              # 52: up to label14
 .LBB0_59:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label67:
@@ -545,7 +545,7 @@ mymemcmp:                               # @mymemcmp
 	i32.const	$push129=, 16
 	i32.add 	$0=, $0, $pop129
 # BB#60:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 1
+	i32.const	$9=, 0
 	br      	51              # 51: up to label14
 .LBB0_61:                               # %do.body.i23
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -557,7 +557,7 @@ mymemcmp:                               # @mymemcmp
 	i32.ne  	$push28=, $pop106, $5
 	br_if   	18, $pop28      # 18: down to label47
 # BB#62:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 6
+	i32.const	$9=, 5
 	br      	50              # 50: up to label14
 .LBB0_63:                               # %do3.i42
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -572,14 +572,14 @@ mymemcmp:                               # @mymemcmp
 	i32.ne  	$push33=, $pop112, $pop110
 	br_if   	39, $pop33      # 39: down to label25
 # BB#64:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 9
+	i32.const	$9=, 8
 	br      	49              # 49: up to label14
 .LBB0_65:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label64:
 	i32.const	$push30=, 4
 	i32.add 	$1=, $0, $pop30
 # BB#66:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 10
+	i32.const	$9=, 9
 	br      	48              # 48: up to label14
 .LBB0_67:                               # %do2.i50
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -594,7 +594,7 @@ mymemcmp:                               # @mymemcmp
 	i32.ne  	$push38=, $pop118, $pop116
 	br_if   	38, $pop38      # 38: down to label24
 # BB#68:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 13
+	i32.const	$9=, 12
 	br      	47              # 47: up to label14
 .LBB0_69:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label62:
@@ -615,7 +615,7 @@ mymemcmp:                               # @mymemcmp
 	i32.add 	$push168=, $10, $pop167
 	copy_local	$2=, $pop168
 # BB#71:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 16
+	i32.const	$9=, 15
 	br      	45              # 45: up to label14
 .LBB0_72:                               # %do.body.i170.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -641,7 +641,7 @@ mymemcmp:                               # @mymemcmp
 	i32.add 	$push164=, $10, $pop163
 	copy_local	$2=, $pop164
 # BB#74:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 3
+	i32.const	$9=, 2
 	br      	43              # 43: up to label14
 .LBB0_75:                               # %do.body.i.i30
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -667,7 +667,7 @@ mymemcmp:                               # @mymemcmp
 	i32.add 	$push176=, $10, $pop175
 	copy_local	$2=, $pop176
 # BB#77:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 8
+	i32.const	$9=, 7
 	br      	41              # 41: up to label14
 .LBB0_78:                               # %do.body.i194.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -693,7 +693,7 @@ mymemcmp:                               # @mymemcmp
 	i32.add 	$push172=, $10, $pop171
 	copy_local	$2=, $pop172
 # BB#80:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 12
+	i32.const	$9=, 11
 	br      	39              # 39: up to label14
 .LBB0_81:                               # %do.body.i182.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -707,14 +707,14 @@ mymemcmp:                               # @mymemcmp
 	i32.eq  	$push39=, $1, $4
 	br_if   	23, $pop39      # 23: down to label30
 # BB#82:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 4
+	i32.const	$9=, 3
 	br      	38              # 38: up to label14
 .LBB0_83:                               # %mymemcmp1.exit162.i
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label53:
 	i32.sub 	$0=, $1, $4
 # BB#84:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 5
+	i32.const	$9=, 4
 	br      	37              # 37: up to label14
 .LBB0_85:                               # %cleanup
 	end_block                       # label52:
@@ -730,7 +730,7 @@ mymemcmp:                               # @mymemcmp
 	i32.eq  	$push42=, $pop130, $5
 	br_if   	23, $pop42      # 23: down to label27
 # BB#87:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 20
+	i32.const	$9=, 19
 	br      	35              # 35: up to label14
 .LBB0_88:                               # %if.then63.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -744,7 +744,7 @@ mymemcmp:                               # @mymemcmp
 	i32.add 	$push160=, $10, $pop159
 	copy_local	$2=, $pop160
 # BB#89:                                #   in Loop: Header=BB0_22 Depth=1
-	i32.const	$9=, 21
+	i32.const	$9=, 20
 	br      	34              # 34: up to label14
 .LBB0_90:                               # %do.body.i158.i
                                         #   in Loop: Header=BB0_22 Depth=1
@@ -760,135 +760,135 @@ mymemcmp:                               # @mymemcmp
 	br      	5               # 5: down to label43
 .LBB0_91:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label48:
-	i32.const	$9=, 23
+	i32.const	$9=, 22
 	br      	32              # 32: up to label14
 .LBB0_92:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label47:
-	i32.const	$9=, 2
+	i32.const	$9=, 1
 	br      	31              # 31: up to label14
 .LBB0_93:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label46:
-	i32.const	$9=, 3
+	i32.const	$9=, 2
 	br      	30              # 30: up to label14
 .LBB0_94:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label45:
-	i32.const	$9=, 4
+	i32.const	$9=, 3
 	br      	29              # 29: up to label14
 .LBB0_95:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label44:
-	i32.const	$9=, 21
+	i32.const	$9=, 20
 	br      	28              # 28: up to label14
 .LBB0_96:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label43:
-	i32.const	$9=, 4
+	i32.const	$9=, 3
 	br      	27              # 27: up to label14
 .LBB0_97:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label42:
-	i32.const	$9=, 24
+	i32.const	$9=, 23
 	br      	26              # 26: up to label14
 .LBB0_98:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label41:
-	i32.const	$9=, 4
+	i32.const	$9=, 3
 	br      	25              # 25: up to label14
 .LBB0_99:                               #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label40:
-	i32.const	$9=, 27
+	i32.const	$9=, 26
 	br      	24              # 24: up to label14
 .LBB0_100:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label39:
-	i32.const	$9=, 4
+	i32.const	$9=, 3
 	br      	23              # 23: up to label14
 .LBB0_101:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label38:
-	i32.const	$9=, 31
+	i32.const	$9=, 30
 	br      	22              # 22: up to label14
 .LBB0_102:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label37:
-	i32.const	$9=, 4
+	i32.const	$9=, 3
 	br      	21              # 21: up to label14
 .LBB0_103:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label36:
-	i32.const	$9=, 35
+	i32.const	$9=, 34
 	br      	20              # 20: up to label14
 .LBB0_104:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label35:
-	i32.const	$9=, 4
+	i32.const	$9=, 3
 	br      	19              # 19: up to label14
 .LBB0_105:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label34:
-	i32.const	$9=, 40
+	i32.const	$9=, 39
 	br      	18              # 18: up to label14
 .LBB0_106:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label33:
-	i32.const	$9=, 4
+	i32.const	$9=, 3
 	br      	17              # 17: up to label14
 .LBB0_107:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label32:
-	i32.const	$9=, 8
+	i32.const	$9=, 7
 	br      	16              # 16: up to label14
 .LBB0_108:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label31:
-	i32.const	$9=, 4
+	i32.const	$9=, 3
 	br      	15              # 15: up to label14
 .LBB0_109:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label30:
-	i32.const	$9=, 12
+	i32.const	$9=, 11
 	br      	14              # 14: up to label14
 .LBB0_110:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label29:
-	i32.const	$9=, 16
+	i32.const	$9=, 15
 	br      	13              # 13: up to label14
 .LBB0_111:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label28:
-	i32.const	$9=, 4
+	i32.const	$9=, 3
 	br      	12              # 12: up to label14
 .LBB0_112:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label27:
-	i32.const	$9=, 5
+	i32.const	$9=, 4
 	br      	11              # 11: up to label14
 .LBB0_113:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label26:
-	i32.const	$9=, 5
+	i32.const	$9=, 4
 	br      	10              # 10: up to label14
 .LBB0_114:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label25:
-	i32.const	$9=, 7
+	i32.const	$9=, 6
 	br      	9               # 9: up to label14
 .LBB0_115:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label24:
-	i32.const	$9=, 11
+	i32.const	$9=, 10
 	br      	8               # 8: up to label14
 .LBB0_116:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label23:
-	i32.const	$9=, 14
+	i32.const	$9=, 13
 	br      	7               # 7: up to label14
 .LBB0_117:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label22:
-	i32.const	$9=, 15
+	i32.const	$9=, 14
 	br      	6               # 6: up to label14
 .LBB0_118:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label21:
-	i32.const	$9=, 19
+	i32.const	$9=, 18
 	br      	5               # 5: up to label14
 .LBB0_119:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label20:
-	i32.const	$9=, 26
+	i32.const	$9=, 25
 	br      	4               # 4: up to label14
 .LBB0_120:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label19:
-	i32.const	$9=, 30
+	i32.const	$9=, 29
 	br      	3               # 3: up to label14
 .LBB0_121:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label18:
-	i32.const	$9=, 33
+	i32.const	$9=, 32
 	br      	2               # 2: up to label14
 .LBB0_122:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label17:
-	i32.const	$9=, 34
+	i32.const	$9=, 33
 	br      	1               # 1: up to label14
 .LBB0_123:                              #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label16:
-	i32.const	$9=, 38
+	i32.const	$9=, 37
 	br      	0               # 0: up to label14
 .LBB0_124:
 	end_loop                        # label15:
@@ -918,15 +918,15 @@ main:                                   # @main
 	i32.const	$push23=, 0
 	i32.const	$push22=, 0
 	i32.load8_u	$push4=, .L.str.1+14($pop22)
-	i32.store8	$discard=, buf+182($pop23):p2align=1, $pop4
+	i32.store8	$discard=, buf+182($pop23), $pop4
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
 	i32.load16_u	$push5=, .L.str.1+12($pop20):p2align=0
-	i32.store16	$discard=, buf+180($pop21):p2align=2, $pop5
+	i32.store16	$discard=, buf+180($pop21), $pop5
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.load	$push6=, .L.str.1+8($pop18):p2align=0
-	i32.store	$discard=, buf+176($pop19):p2align=3, $pop6
+	i32.store	$discard=, buf+176($pop19), $pop6
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
 	i64.load	$push3=, .L.str($pop16):p2align=0

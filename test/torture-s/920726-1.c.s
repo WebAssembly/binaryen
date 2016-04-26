@@ -47,7 +47,7 @@ first:                                  # @first
 	i32.add 	$push1=, $pop10, $pop9
 	i32.store	$discard=, 12($4), $pop1
 	i32.load	$push2=, 0($2)
-	i32.store	$discard=, 0($4):p2align=4, $pop2
+	i32.store	$discard=, 0($4), $pop2
 	i32.const	$push8=, .L.str
 	i32.call	$discard=, sprintf@FUNCTION, $0, $pop8, $4
 	i32.call	$push3=, strlen@FUNCTION, $0
@@ -118,7 +118,7 @@ second:                                 # @second
 	i32.add 	$push1=, $pop10, $pop9
 	i32.store	$discard=, 12($4), $pop1
 	i32.load	$push2=, 0($2)
-	i32.store	$discard=, 0($4):p2align=4, $pop2
+	i32.store	$discard=, 0($4), $pop2
 	i32.const	$push8=, .L.str
 	i32.call	$discard=, sprintf@FUNCTION, $0, $pop8, $4
 	i32.call	$push3=, strlen@FUNCTION, $0
@@ -157,14 +157,14 @@ main:                                   # @main
 	i32.const	$push11=, __stack_pointer
 	i32.store	$discard=, 0($pop11), $1
 	i64.const	$push0=, 85899345925
-	i64.store	$0=, 16($1):p2align=4, $pop0
+	i64.store	$0=, 16($1), $pop0
 	i32.const	$push12=, 144
 	i32.add 	$push13=, $1, $pop12
 	i32.const	$push1=, .L.str.1
 	i32.const	$push14=, 16
 	i32.add 	$push15=, $1, $pop14
 	i32.call	$discard=, first@FUNCTION, $pop13, $pop1, $pop15
-	i64.store	$discard=, 0($1):p2align=4, $0
+	i64.store	$discard=, 0($1), $0
 	i32.const	$push16=, 32
 	i32.add 	$push17=, $1, $pop16
 	i32.const	$push6=, .L.str.1

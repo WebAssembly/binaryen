@@ -9,11 +9,11 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push8=, 0
-	i64.load	$push1=, x($pop8):p2align=4
+	i64.load	$push1=, x($pop8)
 	i32.const	$push7=, 0
 	i64.load	$push0=, x+8($pop7)
 	i32.const	$push6=, 0
-	i64.load	$push3=, y($pop6):p2align=4
+	i64.load	$push3=, y($pop6)
 	i32.const	$push5=, 0
 	i64.load	$push2=, y+8($pop5)
 	i32.call	$push4=, __eqtf2@FUNCTION, $pop1, $pop0, $pop3, $pop2

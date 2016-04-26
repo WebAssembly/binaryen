@@ -443,7 +443,7 @@ fail:                                   # @fail
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$discard=, fail_count($pop6), $pop3
-	i32.store	$discard=, 0($2):p2align=4, $0
+	i32.store	$discard=, 0($2), $0
 	i32.const	$push4=, .L.str
 	i32.call	$discard=, fprintf@FUNCTION, $1, $pop4, $2
 	i32.const	$push13=, __stack_pointer

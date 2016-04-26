@@ -19,7 +19,7 @@ f4:                                     # @f4
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push14=, 0
-	i32.load8_u	$push1=, c($pop14):p2align=4
+	i32.load8_u	$push1=, c($pop14)
 	i32.const	$push2=, 255
 	i32.and 	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
@@ -50,11 +50,11 @@ f4:                                     # @f4
 # BB#4:                                 # %land.rhs.i
 	i32.load8_u	$4=, 0($1)
 	i32.store	$discard=, 20($5), $2
-	i32.store	$discard=, 16($5):p2align=4, $0
+	i32.store	$discard=, 16($5), $0
 	i32.const	$push11=, .L.str.4
 	i32.const	$push19=, .L.str.3
 	i32.select	$push12=, $pop11, $pop19, $4
-	i32.store	$discard=, 24($5):p2align=3, $pop12
+	i32.store	$discard=, 24($5), $pop12
 	i32.const	$push28=, 16
 	i32.add 	$push29=, $5, $pop28
 	call    	f1@FUNCTION, $1, $pop29
@@ -68,9 +68,9 @@ f4:                                     # @f4
 .LBB0_6:                                # %if.end.critedge.i
 	end_block                       # label2:
 	i32.const	$push20=, .L.str.3
-	i32.store	$discard=, 8($5):p2align=3, $pop20
+	i32.store	$discard=, 8($5), $pop20
 	i32.store	$discard=, 4($5), $2
-	i32.store	$discard=, 0($5):p2align=4, $0
+	i32.store	$discard=, 0($5), $0
 	call    	f1@FUNCTION, $1, $5
 .LBB0_7:                                # %f3.exit
 	end_block                       # label1:
@@ -102,11 +102,11 @@ main:                                   # @main
 	i32.const	$push1=, 16
 	i32.add 	$push2=, $0, $pop1
 	i32.const	$push3=, 26
-	i32.store	$discard=, 0($pop2):p2align=4, $pop3
+	i32.store	$discard=, 0($pop2), $pop3
 	i64.const	$push4=, 4622945017495814144
 	i64.store	$discard=, 8($0), $pop4
 	i32.const	$push5=, .L.str.1
-	i32.store	$discard=, 0($0):p2align=4, $pop5
+	i32.store	$discard=, 0($0), $pop5
 	i32.const	$push13=, 0
 	i32.const	$push6=, .L.str
 	call    	f4@FUNCTION, $pop13, $pop6, $0
@@ -218,7 +218,7 @@ f2:                                     # @f2
 	f64.ne  	$push10=, $pop8, $pop9
 	br_if   	0, $pop10       # 0: down to label5
 # BB#3:                                 # %lor.lhs.false7
-	i32.load	$push11=, 8($1):p2align=3
+	i32.load	$push11=, 8($1)
 	i32.const	$push12=, 26
 	i32.ne  	$push13=, $pop11, $pop12
 	br_if   	0, $pop13       # 0: down to label5

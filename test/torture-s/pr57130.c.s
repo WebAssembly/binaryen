@@ -54,7 +54,7 @@ main:                                   # @main
 	tee_local	$push21=, $1=, $pop22
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.r+8($pop0)
-	i32.store	$discard=, 0($pop21):p2align=3, $pop1
+	i32.store	$discard=, 0($pop21), $pop1
 	i32.const	$push20=, 0
 	i64.load	$push3=, .Lmain.r($pop20):p2align=2
 	i64.store	$0=, 32($2), $pop3
@@ -79,7 +79,7 @@ main:                                   # @main
 	i32.store	$discard=, 0($pop9), $pop10
 	i32.const	$push17=, 8
 	i32.add 	$push11=, $2, $pop17
-	i32.load	$push12=, 0($1):p2align=3
+	i32.load	$push12=, 0($1)
 	i32.store	$discard=, 0($pop11), $pop12
 	i32.const	$push13=, 4
 	i32.add 	$push14=, $2, $pop13

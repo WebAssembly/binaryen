@@ -20,7 +20,7 @@ main:                                   # @main
 	i32.add 	$push3=, $pop20, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.elem+16($pop0)
-	i32.store	$discard=, 0($pop3):p2align=3, $pop1
+	i32.store	$discard=, 0($pop3), $pop1
 	i32.const	$push21=, 24
 	i32.add 	$push22=, $1, $pop21
 	i32.const	$push5=, 8
@@ -33,12 +33,12 @@ main:                                   # @main
 	i64.store	$discard=, 24($1), $pop7
 	i32.const	$push23=, 24
 	i32.add 	$push24=, $1, $pop23
-	i32.store	$discard=, 8($1):p2align=3, $pop24
+	i32.store	$discard=, 8($1), $pop24
 	i32.const	$push25=, 24
 	i32.add 	$push26=, $1, $pop25
 	i32.store	$discard=, 12($1), $pop26
 	i32.const	$push9=, 0
-	i32.store	$push8=, 16($1):p2align=3, $pop9
+	i32.store	$push8=, 16($1), $pop9
 	i32.store	$0=, 20($1), $pop8
 	i32.const	$push27=, 8
 	i32.add 	$push28=, $1, $pop27
@@ -73,7 +73,7 @@ foobar:                                 # @foobar
 	i32.add 	$push49=, $5, $pop48
 	i32.const	$push4=, 8
 	i32.add 	$2=, $pop49, $pop4
-	i32.load	$1=, 16($5):p2align=3
+	i32.load	$1=, 16($5)
 	i32.load	$0=, 28($5)
 .LBB1_1:                                # %for.cond
                                         # =>This Loop Header: Depth=1
@@ -115,7 +115,7 @@ foobar:                                 # @foobar
 .LBB1_5:                                # %if.end.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label3:
-	i32.load	$push5=, 0($2):p2align=3
+	i32.load	$push5=, 0($2)
 	i32.const	$push17=, 1
 	i32.add 	$0=, $pop5, $pop17
 .LBB1_6:                                # %while.body6.i
@@ -170,7 +170,7 @@ foobar:                                 # @foobar
 .LBB1_12:                               # %while.cond16.preheader.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop                        # label7:
-	i32.store	$discard=, 0($2):p2align=3, $0
+	i32.store	$discard=, 0($2), $0
 	i32.const	$push52=, 16
 	i32.add 	$push53=, $5, $pop52
 	i32.const	$push26=, 12

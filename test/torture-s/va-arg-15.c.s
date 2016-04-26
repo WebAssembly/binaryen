@@ -101,7 +101,7 @@ main:                                   # @main
 	i32.const	$push3=, 128
 	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 17
-	i32.store	$discard=, 0($pop4):p2align=4, $pop5
+	i32.store	$discard=, 0($pop4), $pop5
 	i32.const	$push6=, 120
 	i32.add 	$push7=, $1, $pop6
 	i64.const	$push8=, 4625196817309499392
@@ -109,7 +109,7 @@ main:                                   # @main
 	i32.const	$push9=, 112
 	i32.add 	$push10=, $1, $pop9
 	i32.const	$push11=, 15
-	i32.store	$discard=, 0($pop10):p2align=4, $pop11
+	i32.store	$discard=, 0($pop10), $pop11
 	i32.const	$push12=, 104
 	i32.add 	$push13=, $1, $pop12
 	i64.const	$push14=, 4624070917402656768
@@ -117,7 +117,7 @@ main:                                   # @main
 	i32.const	$push15=, 96
 	i32.add 	$push16=, $1, $pop15
 	i32.const	$push17=, 13
-	i32.store	$discard=, 0($pop16):p2align=4, $pop17
+	i32.store	$discard=, 0($pop16), $pop17
 	i32.const	$push18=, 88
 	i32.add 	$push19=, $1, $pop18
 	i64.const	$push20=, 4622945017495814144
@@ -125,7 +125,7 @@ main:                                   # @main
 	i32.const	$push21=, 80
 	i32.add 	$push22=, $1, $pop21
 	i32.const	$push23=, 11
-	i32.store	$discard=, 0($pop22):p2align=4, $pop23
+	i32.store	$discard=, 0($pop22), $pop23
 	i32.const	$push24=, 72
 	i32.add 	$push25=, $1, $pop24
 	i64.const	$push26=, 4621819117588971520
@@ -133,7 +133,7 @@ main:                                   # @main
 	i32.const	$push27=, 64
 	i32.add 	$push28=, $1, $pop27
 	i32.const	$push29=, 9
-	i32.store	$discard=, 0($pop28):p2align=4, $pop29
+	i32.store	$discard=, 0($pop28), $pop29
 	i32.const	$push30=, 56
 	i32.add 	$push31=, $1, $pop30
 	i64.const	$push32=, 4620693217682128896
@@ -141,7 +141,7 @@ main:                                   # @main
 	i32.const	$push33=, 48
 	i32.add 	$push34=, $1, $pop33
 	i32.const	$push35=, 7
-	i32.store	$discard=, 0($pop34):p2align=4, $pop35
+	i32.store	$discard=, 0($pop34), $pop35
 	i32.const	$push36=, 40
 	i32.add 	$push37=, $1, $pop36
 	i64.const	$push38=, 4618441417868443648
@@ -149,7 +149,7 @@ main:                                   # @main
 	i32.const	$push39=, 32
 	i32.add 	$push40=, $1, $pop39
 	i32.const	$push41=, 5
-	i32.store	$discard=, 0($pop40):p2align=4, $pop41
+	i32.store	$discard=, 0($pop40), $pop41
 	i32.const	$push42=, 24
 	i32.add 	$push43=, $1, $pop42
 	i64.const	$push44=, 4616189618054758400
@@ -157,11 +157,11 @@ main:                                   # @main
 	i32.const	$push45=, 16
 	i32.add 	$push46=, $1, $pop45
 	i32.const	$push47=, 3
-	i32.store	$discard=, 0($pop46):p2align=4, $pop47
+	i32.store	$discard=, 0($pop46), $pop47
 	i64.const	$push48=, 4611686018427387904
 	i64.store	$discard=, 8($1), $pop48
 	i32.const	$push49=, 1
-	i32.store	$discard=, 0($1):p2align=4, $pop49
+	i32.store	$discard=, 0($1), $pop49
 	call    	vafunction@FUNCTION, $0, $1
 	i32.const	$push50=, 0
 	call    	exit@FUNCTION, $pop50

@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 	i32.const	$push12=, 0
 	i32.const	$push0=, 2
-	i32.store8	$discard=, buf+64($pop12):p2align=4, $pop0
+	i32.store8	$discard=, buf+64($pop12), $pop0
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
