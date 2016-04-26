@@ -175,6 +175,36 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       }
       flows.clear();
     } while (anotherCycle);
+    // finally, we may have simplified ifs enough to turn them into selects
+    struct Selectifier : public WalkerPass<PostWalker<Selectifier, Visitor<Selectifier>>> {
+      void visitIf(If* curr) {
+        if (curr->ifFalse) {
+          // if with else, consider turning it into a select if there is no control flow
+          // TODO: estimate cost
+          EffectAnalyzer condition;
+          condition.walk(curr->condition);
+          if (!condition.hasSideEffects()) {
+            EffectAnalyzer ifTrue;
+            ifTrue.walk(curr->ifTrue);
+            if (!ifTrue.hasSideEffects()) {
+              EffectAnalyzer ifFalse;
+              ifFalse.walk(curr->ifFalse);
+              if (!ifFalse.hasSideEffects()) {
+                auto* select = getModule()->allocator.alloc<Select>();
+                select->condition = curr->condition;
+                select->ifTrue = curr->ifTrue;
+                select->ifFalse = curr->ifFalse;
+                select->finalize();
+                replaceCurrent(select);
+              }
+            }
+          }
+        }
+      }
+    };
+    Selectifier selectifier;
+    selectifier.setModule(getModule());
+    selectifier.walk(root);
   }
 };
 
