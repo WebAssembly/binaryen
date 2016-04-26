@@ -32,6 +32,12 @@ struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
     if (curr->name == target) found++;
   }
 
+  void visitSwitch(Switch *curr) {
+    for (auto name : curr->targets) {
+      if (name == target) found++;
+    }
+  }
+
   static bool has(Expression* tree, Name target) {
     BreakSeeker breakSeeker(target);
     breakSeeker.walk(tree);
