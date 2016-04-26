@@ -16,6 +16,7 @@
 
 #include "wasm-linker.h"
 #include "asm_v_wasm.h"
+#include "ast_utils.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
 #include "wasm-printing.h"
@@ -68,8 +69,7 @@ void Linker::layout() {
                   "Cannot reallocate a CallImport in a Call arena slot");
     for (auto* call : f.second) {
       Call callCopy = std::move(*call);
-      call->~Call();
-      CallImport* newCall = new (call) CallImport;
+      CallImport* newCall = ExpressionManipulator::convert<Call, CallImport>(call);
       newCall->type = callCopy.type;
       newCall->operands = std::move(callCopy.operands);
       newCall->target = target;
