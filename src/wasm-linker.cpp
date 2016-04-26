@@ -49,13 +49,40 @@ void Linker::placeStackPointer(size_t stackAllocation) {
 }
 
 void Linker::layout() {
+  // Convert calls to undefined functions to call_imports
+  for (const auto& f : out.undefinedFunctions) {
+    Name target = f.first;
+    // Create an import for the target if necessary.
+    if (!out.wasm.checkImport(target)) {
+      auto import = out.wasm.allocator.alloc<Import>();
+      import->name = import->base = target;
+      import->module = ENV;
+      import->type = ensureFunctionType(getSig(*f.second.begin()), &out.wasm,
+                                        out.wasm.allocator);
+      out.wasm.addImport(import);
+    }
+    // Change each call. The target is the same since it's still the name.
+    // Delete and re-allocate the Expression as CallImport to avoid undefined
+    // behavior.
+    static_assert(sizeof(Call) >= sizeof(CallImport),
+                  "Cannot reallocate a CallImport in a Call arena slot");
+    for (auto* call : f.second) {
+      Call callCopy = std::move(*call);
+      call->~Call();
+      CallImport* newCall = new (call) CallImport;
+      newCall->type = callCopy.type;
+      newCall->operands = std::move(callCopy.operands);
+      newCall->target = target;
+    }
+  }
+
   // Allocate all user statics
   for (const auto& obj : out.staticObjects) {
     allocateStatic(obj.allocSize, obj.alignment, obj.name);
   }
 
   // Update the segments with their addresses now that they have been allocated.
-  for (auto& seg : out.segments) {
+  for (const auto& seg : out.segments) {
     size_t address = staticAddresses[seg.first];
     out.wasm.memory.segments[seg.second].offset = address;
     segmentsByAddress[address] = seg.second;
