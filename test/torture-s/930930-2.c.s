@@ -27,7 +27,7 @@ test_endianness_vol:                    # @test_endianness_vol
 	i32.sub 	$0=, $pop5, $pop6
 	i64.const	$push0=, 4621819117588971520
 	i64.store	$discard=, 8($0), $pop0
-	i32.load	$push1=, 8($0):p2align=3
+	i32.load	$push1=, 8($0)
 	i32.const	$push2=, 0
 	i32.ne  	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -52,7 +52,7 @@ main:                                   # @main
 	i64.const	$push0=, 4621819117588971520
 	i64.store	$discard=, 8($0), $pop0
 	block
-	i32.load	$push1=, 8($0):p2align=3
+	i32.load	$push1=, 8($0)
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 0

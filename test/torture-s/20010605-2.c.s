@@ -76,7 +76,7 @@ baz:                                    # @baz
 	.param  	i32
 # BB#0:                                 # %entry
 	block
-	i64.load	$push3=, 0($0):p2align=4
+	i64.load	$push3=, 0($0)
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $0, $pop0
 	i64.load	$push2=, 0($pop1)
@@ -85,7 +85,7 @@ baz:                                    # @baz
 	i32.call	$push5=, __netf2@FUNCTION, $pop3, $pop2, $pop12, $pop4
 	br_if   	0, $pop5        # 0: down to label2
 # BB#1:                                 # %lor.lhs.false
-	i64.load	$push9=, 16($0):p2align=4
+	i64.load	$push9=, 16($0)
 	i32.const	$push6=, 24
 	i32.add 	$push7=, $0, $pop6
 	i64.load	$push8=, 0($pop7)

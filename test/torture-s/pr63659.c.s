@@ -24,7 +24,7 @@ main:                                   # @main
 	block
 	i32.const	$push18=, 0
 	i32.const	$push17=, 0
-	i32.load8_s	$push2=, c($pop17):p2align=2
+	i32.load8_s	$push2=, c($pop17)
 	i32.const	$push16=, 0
 	i32.load	$push3=, h($pop16)
 	i32.shr_s	$push0=, $pop2, $pop3

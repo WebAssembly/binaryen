@@ -41,7 +41,7 @@ main:                                   # @main
 	block
 	block
 	i32.const	$push11=, 0
-	f64.load	$push10=, a($pop11):p2align=4
+	f64.load	$push10=, a($pop11)
 	tee_local	$push9=, $0=, $pop10
 	f64.const	$push8=, 0x0p0
 	f64.gt  	$push0=, $pop9, $pop8
@@ -58,7 +58,7 @@ main:                                   # @main
 	br_if   	0, $pop26       # 0: down to label2
 # BB#2:                                 # %for.cond.1
 	i32.const	$push4=, 0
-	f64.load	$0=, a+16($pop4):p2align=4
+	f64.load	$0=, a+16($pop4)
 	f64.const	$push5=, 0x0p0
 	f64.gt  	$push6=, $0, $pop5
 	i32.const	$push27=, 0

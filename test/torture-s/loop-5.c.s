@@ -55,7 +55,7 @@ main:                                   # @main
 	i32.const	$push18=, 1
 	i32.store	$discard=, a($pop17), $pop18
 	i32.const	$push16=, 0
-	i64.load	$0=, a($pop16):p2align=4
+	i64.load	$0=, a($pop16)
 	i32.const	$push48=, 0
 	i32.const	$push14=, 4
 	i32.add 	$push15=, $2, $pop14

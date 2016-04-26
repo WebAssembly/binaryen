@@ -39,7 +39,7 @@ check:                                  # @check
 	i32.const	$push19=, 0
 	i32.load	$0=, fails($pop19)
 	i32.const	$push18=, 0
-	f32.load	$push9=, a+32($pop18):p2align=4
+	f32.load	$push9=, a+32($pop18)
 	f32.load	$push8=, 8($3)
 	f32.eq  	$push10=, $pop9, $pop8
 	br_if   	1, $pop10       # 1: down to label2
@@ -94,7 +94,7 @@ main:                                   # @main
 	i32.store	$discard=, 0($pop21), $0
 	i32.const	$push16=, 0
 	i32.const	$push0=, -952139264
-	i32.store	$discard=, a+32($pop16):p2align=4, $pop0
+	i32.store	$discard=, a+32($pop16), $pop0
 	i32.const	$push25=, 20
 	i32.add 	$push26=, $0, $pop25
 	i32.const	$push1=, 4
@@ -103,24 +103,24 @@ main:                                   # @main
 	i64.load	$push3=, a+28($pop15):p2align=2
 	i64.store	$discard=, 0($pop2):p2align=2, $pop3
 	i32.const	$push14=, 0
-	i32.load	$push4=, a+24($pop14):p2align=3
+	i32.load	$push4=, a+24($pop14)
 	i32.store	$discard=, 20($0), $pop4
 	i32.const	$push27=, 8
 	i32.add 	$push28=, $0, $pop27
 	i32.const	$push5=, 8
 	i32.add 	$push6=, $pop28, $pop5
 	i32.const	$push13=, 0
-	i32.load	$push7=, a+32($pop13):p2align=4
+	i32.load	$push7=, a+32($pop13)
 	i32.store	$discard=, 0($pop6), $pop7
 	i32.const	$push12=, 0
 	i64.load	$push8=, a+24($pop12)
 	i64.store	$discard=, 8($0):p2align=2, $pop8
-	i32.const	$push29=, 8
+	i32.const	$push29=, 20
 	i32.add 	$push30=, $0, $pop29
-	i32.store	$discard=, 4($0), $pop30
-	i32.const	$push31=, 20
+	i32.store	$discard=, 0($0), $pop30
+	i32.const	$push31=, 8
 	i32.add 	$push32=, $0, $pop31
-	i32.store	$discard=, 0($0):p2align=4, $pop32
+	i32.store	$discard=, 4($0), $pop32
 	i32.const	$push9=, 1
 	call    	check@FUNCTION, $pop9, $0
 	block

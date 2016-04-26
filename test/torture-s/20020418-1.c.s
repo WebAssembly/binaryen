@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.const	$push5=, __stack_pointer
 	i32.store	$discard=, 0($pop5), $0
 	i32.const	$push0=, 53
-	i32.store	$discard=, 8($0):p2align=3, $pop0
+	i32.store	$discard=, 8($0), $pop0
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $0, $pop6
 	call    	gcc_crash@FUNCTION, $pop7

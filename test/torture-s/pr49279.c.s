@@ -32,7 +32,7 @@ foo:                                    # @foo
 	i32.store	$discard=, 0($pop9), $3
 	i32.store	$discard=, 12($3), $0
 	i32.const	$push0=, 1
-	i32.store	$0=, 8($3):p2align=3, $pop0
+	i32.store	$0=, 8($3), $pop0
 	i32.const	$push13=, 8
 	i32.add 	$push14=, $3, $pop13
 	i32.call	$push1=, bar@FUNCTION, $pop14

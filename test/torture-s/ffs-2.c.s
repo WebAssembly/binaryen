@@ -10,7 +10,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push56=, 0
-	i64.load	$push55=, ffstesttab($pop56):p2align=4
+	i64.load	$push55=, ffstesttab($pop56)
 	tee_local	$push54=, $1=, $pop55
 	i32.wrap/i64	$push53=, $pop54
 	tee_local	$push52=, $0=, $pop53
@@ -42,7 +42,7 @@ main:                                   # @main
 	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %for.cond.1
 	i32.const	$push72=, 0
-	i64.load	$push71=, ffstesttab+16($pop72):p2align=4
+	i64.load	$push71=, ffstesttab+16($pop72)
 	tee_local	$push70=, $1=, $pop71
 	i32.wrap/i64	$push69=, $pop70
 	tee_local	$push68=, $0=, $pop69
@@ -74,7 +74,7 @@ main:                                   # @main
 	br_if   	0, $pop23       # 0: down to label0
 # BB#4:                                 # %for.cond.3
 	i32.const	$push88=, 0
-	i64.load	$push87=, ffstesttab+32($pop88):p2align=4
+	i64.load	$push87=, ffstesttab+32($pop88)
 	tee_local	$push86=, $1=, $pop87
 	i32.wrap/i64	$push85=, $pop86
 	tee_local	$push84=, $0=, $pop85
@@ -106,7 +106,7 @@ main:                                   # @main
 	br_if   	0, $pop35       # 0: down to label0
 # BB#6:                                 # %for.cond.5
 	i32.const	$push104=, 0
-	i64.load	$push103=, ffstesttab+48($pop104):p2align=4
+	i64.load	$push103=, ffstesttab+48($pop104)
 	tee_local	$push102=, $1=, $pop103
 	i32.wrap/i64	$push101=, $pop102
 	tee_local	$push100=, $0=, $pop101

@@ -18,13 +18,13 @@ check2848va:                            # @check2848va
 	i32.const	$push3=, -16
 	i32.and 	$push25=, $pop2, $pop3
 	tee_local	$push24=, $1=, $pop25
-	i64.load	$4=, 0($pop24):p2align=4
+	i64.load	$4=, 0($pop24)
 	i32.const	$push23=, 0
-	i64.load	$5=, s2848($pop23):p2align=4
+	i64.load	$5=, s2848($pop23)
 	i32.const	$push4=, 16
 	i32.add 	$push5=, $1, $pop4
 	i32.store	$discard=, 12($6), $pop5
-	i32.load	$2=, 8($1):p2align=3
+	i32.load	$2=, 8($1)
 	i64.const	$push7=, 32
 	i64.shr_u	$push8=, $4, $pop7
 	i32.wrap/i64	$1=, $pop8
@@ -51,7 +51,7 @@ check2848va:                            # @check2848va
 	br_if   	0, $pop16       # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$push28=, 0
-	i32.load	$push15=, s2848+8($pop28):p2align=3
+	i32.load	$push15=, s2848+8($pop28)
 	i32.eq  	$push17=, $pop15, $2
 	br_if   	1, $pop17       # 1: down to label1
 .LBB0_4:                                # %if.then2
@@ -85,13 +85,13 @@ main:                                   # @main
 	i32.store	$discard=, 0($pop14), $1
 	i32.const	$push9=, 0
 	i64.const	$push0=, 3107062874477850347
-	i64.store	$discard=, s2848($pop9):p2align=4, $pop0
+	i64.store	$discard=, s2848($pop9), $pop0
 	i32.const	$push8=, 0
 	i32.const	$push1=, -218144346
-	i32.store	$0=, s2848+8($pop8):p2align=3, $pop1
+	i32.store	$0=, s2848+8($pop8), $pop1
 	i32.const	$push2=, -267489557
-	i32.store	$discard=, 16($1):p2align=4, $pop2
-	i32.store	$discard=, 24($1):p2align=3, $0
+	i32.store	$discard=, 16($1), $pop2
+	i32.store	$discard=, 24($1), $0
 	i32.const	$push3=, 723419448
 	i32.store	$discard=, 20($1), $pop3
 	i32.const	$push7=, 0
@@ -99,7 +99,7 @@ main:                                   # @main
 	i32.store	$discard=, 28($1), $pop4
 	i32.const	$push18=, 16
 	i32.add 	$push19=, $1, $pop18
-	i32.store	$discard=, 0($1):p2align=4, $pop19
+	i32.store	$discard=, 0($1), $pop19
 	call    	check2848va@FUNCTION, $0, $1
 	block
 	i32.const	$push6=, 0

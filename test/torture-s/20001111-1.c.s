@@ -11,7 +11,7 @@ foo:                                    # @foo
 	i32.const	$push2=, 52783
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i32.load8_u	$push1=, next_buffer($pop5):p2align=2
+	i32.load8_u	$push1=, next_buffer($pop5)
 	i32.select	$push3=, $pop2, $pop0, $pop1
 	i32.add 	$push4=, $pop3, $0
 	return  	$pop4
@@ -39,7 +39,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push2=, 0
-	i32.load8_u	$push0=, next_buffer($pop2):p2align=2
+	i32.load8_u	$push0=, next_buffer($pop2)
 	i32.const	$push5=, 0
 	i32.eq  	$push6=, $pop0, $pop5
 	br_if   	0, $pop6        # 0: down to label0
@@ -50,7 +50,7 @@ main:                                   # @main
 	end_block                       # label0:
 	i32.const	$push4=, 0
 	i32.const	$push1=, 1
-	i32.store8	$discard=, next_buffer($pop4):p2align=2, $pop1
+	i32.store8	$discard=, next_buffer($pop4), $pop1
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

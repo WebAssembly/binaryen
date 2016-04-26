@@ -78,14 +78,14 @@ mark_cell:                              # @mark_cell
 	i32.const	$push41=, 2
 	i32.add 	$push40=, $0, $pop41
 	tee_local	$push39=, $1=, $pop40
-	i32.load8_u	$push5=, 0($pop39):p2align=1
+	i32.load8_u	$push5=, 0($pop39)
 	i32.const	$push6=, 4
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push55=, 0
 	i32.eq  	$push56=, $pop7, $pop55
 	br_if   	1, $pop56       # 1: down to label0
 # BB#5:                                 # %land.lhs.true17
-	i32.load8_u	$push8=, 0($1):p2align=1
+	i32.load8_u	$push8=, 0($1)
 	i32.const	$push42=, 2
 	i32.and 	$push9=, $pop8, $pop42
 	i32.const	$push57=, 0
@@ -94,7 +94,7 @@ mark_cell:                              # @mark_cell
 # BB#6:                                 # %land.lhs.true33
 	i32.const	$push10=, 2
 	i32.add 	$push11=, $0, $pop10
-	i32.load8_u	$push12=, 0($pop11):p2align=1
+	i32.load8_u	$push12=, 0($pop11)
 	i32.const	$push43=, 1
 	i32.and 	$push13=, $pop12, $pop43
 	i32.const	$push59=, 0

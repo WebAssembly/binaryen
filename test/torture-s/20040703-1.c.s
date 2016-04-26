@@ -295,7 +295,7 @@ main:                                   # @main
 	i32.ne  	$push14=, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label15
 # BB#1:                                 # %if.end
-	i32.load	$push15=, 16($1):p2align=3
+	i32.load	$push15=, 16($1)
 	br_if   	0, $pop15       # 0: down to label15
 # BB#2:                                 # %if.end3
 	i32.load	$push16=, 28($1)

@@ -35,7 +35,7 @@ main:                                   # @main
 	i32.sub 	$0=, $pop5, $pop6
 	i32.const	$push7=, __stack_pointer
 	i32.store	$discard=, 0($pop7), $0
-	i32.store	$discard=, 8($0):p2align=3, $0
+	i32.store	$discard=, 8($0), $0
 	block
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $0, $pop8

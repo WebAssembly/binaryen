@@ -140,7 +140,7 @@ f:                                      # @f
 	i32.add 	$push28=, $6, $pop31
 	i64.load	$push29=, 0($pop28)
 	i64.store	$discard=, 0($pop30), $pop29
-	i64.store	$discard=, 0($0):p2align=4, $2
+	i64.store	$discard=, 0($0), $2
 	i32.const	$push72=, __stack_pointer
 	i32.const	$push70=, 192
 	i32.add 	$push71=, $6, $pop70

@@ -76,10 +76,10 @@ main:                                   # @main
 	i32.store	$discard=, 0($pop14), $0
 	i32.const	$push0=, 0
 	i64.const	$push1=, 47
-	i64.store	$discard=, main.r+32($pop0):p2align=4, $pop1
+	i64.store	$discard=, main.r+32($pop0), $pop1
 	i32.const	$push10=, 0
 	i64.const	$push2=, 11
-	i64.store	$discard=, main.r+64($pop10):p2align=4, $pop2
+	i64.store	$discard=, main.r+64($pop10), $pop2
 	i32.const	$push9=, 0
 	i64.const	$push3=, 58
 	i64.store	$discard=, m($pop9), $pop3

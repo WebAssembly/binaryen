@@ -63,9 +63,9 @@ main:                                   # @main
 	i32.const	$push5=, __stack_pointer
 	i32.store	$discard=, 0($pop5), $1
 	i32.const	$push1=, 1
-	i32.store	$discard=, 0($1):p2align=3, $pop1
+	i32.store	$discard=, 0($1), $pop1
 	i32.const	$push0=, 0
-	i32.store	$0=, 8($1):p2align=3, $pop0
+	i32.store	$0=, 8($1), $pop0
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $1, $pop6
 	call    	f1@FUNCTION, $pop7, $1

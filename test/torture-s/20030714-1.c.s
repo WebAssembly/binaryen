@@ -13,7 +13,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	block
 	i32.const	$push1=, 2
 	i32.add 	$push2=, $1, $pop1
-	i32.load8_u	$push3=, 0($pop2):p2align=1
+	i32.load8_u	$push3=, 0($pop2)
 	i32.const	$push4=, 4
 	i32.and 	$push5=, $pop3, $pop4
 	br_if   	0, $pop5        # 0: down to label1

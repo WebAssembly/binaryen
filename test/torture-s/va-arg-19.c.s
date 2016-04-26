@@ -119,7 +119,7 @@ main:                                   # @main
 	i32.const	$push0=, 32
 	i32.add 	$push1=, $1, $pop0
 	i32.const	$push2=, 9
-	i32.store	$discard=, 0($pop1):p2align=4, $pop2
+	i32.store	$discard=, 0($pop1), $pop2
 	i32.const	$push3=, 24
 	i32.add 	$push4=, $1, $pop3
 	i64.const	$push5=, 34359738375
@@ -127,11 +127,11 @@ main:                                   # @main
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $1, $pop6
 	i64.const	$push8=, 25769803781
-	i64.store	$discard=, 0($pop7):p2align=4, $pop8
+	i64.store	$discard=, 0($pop7), $pop8
 	i64.const	$push9=, 17179869187
 	i64.store	$discard=, 8($1), $pop9
 	i64.const	$push10=, 8589934593
-	i64.store	$discard=, 0($1):p2align=4, $pop10
+	i64.store	$discard=, 0($1), $pop10
 	call    	vafunction@FUNCTION, $0, $1
 	i32.const	$push11=, 0
 	call    	exit@FUNCTION, $pop11

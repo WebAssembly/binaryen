@@ -12,12 +12,12 @@ main:                                   # @main
 	i32.load16_u	$0=, x+6($pop0)
 	i32.const	$push41=, 0
 	i32.const	$push40=, 0
-	i32.load16_u	$push1=, x+4($pop40):p2align=2
+	i32.load16_u	$push1=, x+4($pop40)
 	i32.const	$push2=, 65528
 	i32.and 	$push3=, $pop1, $pop2
-	i32.store16	$discard=, x+4($pop41):p2align=2, $pop3
+	i32.store16	$discard=, x+4($pop41), $pop3
 	i32.const	$push39=, 0
-	i32.load16_u	$1=, x+8($pop39):p2align=2
+	i32.load16_u	$1=, x+8($pop39)
 	i32.const	$push38=, 0
 	i32.const	$push37=, 65528
 	i32.and 	$push4=, $0, $pop37
@@ -27,9 +27,9 @@ main:                                   # @main
 	i32.const	$push35=, 0
 	i32.const	$push34=, 65528
 	i32.and 	$push5=, $1, $pop34
-	i32.store16	$discard=, x+8($pop35):p2align=2, $pop5
+	i32.store16	$discard=, x+8($pop35), $pop5
 	i32.const	$push33=, 0
-	i32.load16_u	$1=, x+12($pop33):p2align=2
+	i32.load16_u	$1=, x+12($pop33)
 	i32.const	$push32=, 0
 	i32.const	$push31=, 65528
 	i32.and 	$push6=, $0, $pop31
@@ -39,9 +39,9 @@ main:                                   # @main
 	i32.const	$push29=, 0
 	i32.const	$push28=, 65528
 	i32.and 	$push7=, $1, $pop28
-	i32.store16	$discard=, x+12($pop29):p2align=2, $pop7
+	i32.store16	$discard=, x+12($pop29), $pop7
 	i32.const	$push27=, 0
-	i32.load16_u	$1=, x+16($pop27):p2align=2
+	i32.load16_u	$1=, x+16($pop27)
 	i32.const	$push26=, 0
 	i32.const	$push25=, 65528
 	i32.and 	$push8=, $0, $pop25
@@ -51,9 +51,9 @@ main:                                   # @main
 	i32.const	$push23=, 0
 	i32.const	$push22=, 65528
 	i32.and 	$push9=, $1, $pop22
-	i32.store16	$discard=, x+16($pop23):p2align=2, $pop9
+	i32.store16	$discard=, x+16($pop23), $pop9
 	i32.const	$push21=, 0
-	i32.load16_u	$1=, x+20($pop21):p2align=2
+	i32.load16_u	$1=, x+20($pop21)
 	i32.const	$push20=, 0
 	i32.load16_u	$2=, x+22($pop20)
 	i32.const	$push19=, 0
@@ -63,7 +63,7 @@ main:                                   # @main
 	i32.const	$push17=, 0
 	i32.const	$push16=, 65528
 	i32.and 	$push11=, $1, $pop16
-	i32.store16	$discard=, x+20($pop17):p2align=2, $pop11
+	i32.store16	$discard=, x+20($pop17), $pop11
 	i32.const	$push15=, 0
 	i32.const	$push14=, 65528
 	i32.and 	$push12=, $2, $pop14

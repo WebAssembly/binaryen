@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.store	$discard=, 0($pop5), $0
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $0, $pop9
-	i32.store	$discard=, 8($0):p2align=3, $pop10
+	i32.store	$discard=, 8($0), $pop10
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $0, $pop11
 	i32.const	$push0=, 10

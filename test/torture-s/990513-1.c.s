@@ -72,7 +72,7 @@ main:                                   # @main
 # BB#2:                                 # %foo.exit
 	end_loop                        # label3:
 	block
-	i32.load	$push4=, 0($2):p2align=4
+	i32.load	$push4=, 0($2)
 	i32.const	$push5=, 6
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label4

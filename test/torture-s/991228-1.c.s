@@ -14,7 +14,7 @@ signbit:                                # @signbit
 	i32.const	$push9=, 16
 	i32.sub 	$2=, $pop8, $pop9
 	i32.const	$push0=, 0
-	i32.load	$1=, endianness_test($pop0):p2align=3
+	i32.load	$1=, endianness_test($pop0)
 	f64.store	$discard=, 8($2), $0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $2, $pop10
@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.store	$discard=, 0($pop18), $1
 	block
 	i32.const	$push12=, 0
-	i32.load	$push0=, endianness_test($pop12):p2align=3
+	i32.load	$push0=, endianness_test($pop12)
 	i32.const	$push1=, 2
 	i32.shl 	$push11=, $pop0, $pop1
 	tee_local	$push10=, $0=, $pop11

@@ -135,7 +135,7 @@ testA:                                  # @testA
 	tee_local	$push86=, $2=, $pop87
 	i32.const	$push85=, 16
 	i32.shr_u	$push4=, $pop86, $pop85
-	i32.store8	$discard=, sA($pop91):p2align=2, $pop4
+	i32.store8	$discard=, sA($pop91), $pop4
 	i32.const	$push84=, 0
 	i32.const	$push83=, 1103515245
 	i32.mul 	$push5=, $2, $pop83
@@ -153,7 +153,7 @@ testA:                                  # @testA
 	tee_local	$push74=, $2=, $pop75
 	i32.const	$push73=, 16
 	i32.shr_u	$push8=, $pop74, $pop73
-	i32.store8	$discard=, sA+2($pop78):p2align=1, $pop8
+	i32.store8	$discard=, sA+2($pop78), $pop8
 	i32.const	$push72=, 0
 	i32.const	$push71=, 1103515245
 	i32.mul 	$push9=, $2, $pop71
@@ -279,7 +279,7 @@ fn1B:                                   # @fn1B
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sB($pop0):p2align=3
+	i32.load	$push1=, sB($pop0)
 	i32.const	$push2=, 17
 	i32.shl 	$push3=, $0, $pop2
 	i32.add 	$push4=, $pop1, $pop3
@@ -299,7 +299,7 @@ fn2B:                                   # @fn2B
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sB($pop0):p2align=3
+	i32.load	$push1=, sB($pop0)
 	i32.const	$push2=, 17
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -320,7 +320,7 @@ retitB:                                 # @retitB
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sB($pop0):p2align=3
+	i32.load	$push1=, sB($pop0)
 	i32.const	$push2=, 17
 	i32.shr_u	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -338,11 +338,11 @@ fn3B:                                   # @fn3B
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push8=, 0
-	i32.load	$push1=, sB($pop8):p2align=3
+	i32.load	$push1=, sB($pop8)
 	i32.const	$push2=, 17
 	i32.shl 	$push3=, $0, $pop2
 	i32.add 	$push4=, $pop1, $pop3
-	i32.store	$push5=, sB($pop0):p2align=3, $pop4
+	i32.store	$push5=, sB($pop0), $pop4
 	i32.const	$push7=, 17
 	i32.shr_u	$push6=, $pop5, $pop7
 	return  	$pop6
@@ -367,7 +367,7 @@ testB:                                  # @testB
 	tee_local	$push124=, $3=, $pop125
 	i32.const	$push123=, 16
 	i32.shr_u	$push5=, $pop124, $pop123
-	i32.store8	$discard=, sB($pop129):p2align=3, $pop5
+	i32.store8	$discard=, sB($pop129), $pop5
 	i32.const	$push122=, 0
 	i32.const	$push121=, 1103515245
 	i32.mul 	$push6=, $3, $pop121
@@ -385,7 +385,7 @@ testB:                                  # @testB
 	tee_local	$push112=, $3=, $pop113
 	i32.const	$push111=, 16
 	i32.shr_u	$push9=, $pop112, $pop111
-	i32.store8	$discard=, sB+2($pop116):p2align=1, $pop9
+	i32.store8	$discard=, sB+2($pop116), $pop9
 	i32.const	$push110=, 0
 	i32.const	$push109=, 1103515245
 	i32.mul 	$push10=, $3, $pop109
@@ -403,7 +403,7 @@ testB:                                  # @testB
 	tee_local	$push100=, $3=, $pop101
 	i32.const	$push99=, 16
 	i32.shr_u	$push13=, $pop100, $pop99
-	i32.store8	$discard=, sB+4($pop104):p2align=2, $pop13
+	i32.store8	$discard=, sB+4($pop104), $pop13
 	i32.const	$push98=, 0
 	i32.const	$push97=, 1103515245
 	i32.mul 	$push14=, $3, $pop97
@@ -421,7 +421,7 @@ testB:                                  # @testB
 	tee_local	$push88=, $3=, $pop89
 	i32.const	$push87=, 16
 	i32.shr_u	$push17=, $pop88, $pop87
-	i32.store8	$discard=, sB+6($pop92):p2align=1, $pop17
+	i32.store8	$discard=, sB+6($pop92), $pop17
 	i32.const	$push86=, 0
 	i32.const	$push85=, 1103515245
 	i32.mul 	$push18=, $3, $pop85
@@ -432,7 +432,7 @@ testB:                                  # @testB
 	i32.shr_u	$push19=, $pop82, $pop81
 	i32.store8	$discard=, sB+7($pop86), $pop19
 	i32.const	$push80=, 0
-	i32.load	$0=, sB($pop80):p2align=3
+	i32.load	$0=, sB($pop80)
 	block
 	i32.const	$push79=, 0
 	i32.const	$push78=, 1103515245
@@ -465,7 +465,7 @@ testB:                                  # @testB
 	i32.const	$push59=, 131071
 	i32.and 	$push25=, $0, $pop59
 	i32.or  	$push1=, $pop24, $pop25
-	i32.store	$push58=, sB($pop61):p2align=3, $pop1
+	i32.store	$push58=, sB($pop61), $pop1
 	tee_local	$push57=, $3=, $pop58
 	i32.add 	$push27=, $pop26, $pop57
 	i32.const	$push56=, 17
@@ -509,7 +509,7 @@ testB:                                  # @testB
 	tee_local	$push134=, $3=, $pop135
 	i32.or  	$push46=, $pop45, $pop134
 	i32.add 	$push2=, $pop47, $pop46
-	i32.store	$push133=, sB($pop156):p2align=3, $pop2
+	i32.store	$push133=, sB($pop156), $pop2
 	tee_local	$push132=, $4=, $pop133
 	i32.const	$push32=, 1
 	i32.shl 	$push33=, $0, $pop32
@@ -652,7 +652,7 @@ testC:                                  # @testC
 	tee_local	$push124=, $1=, $pop125
 	i32.const	$push123=, 16
 	i32.shr_u	$push4=, $pop124, $pop123
-	i32.store8	$discard=, sC($pop129):p2align=3, $pop4
+	i32.store8	$discard=, sC($pop129), $pop4
 	i32.const	$push122=, 0
 	i32.const	$push121=, 1103515245
 	i32.mul 	$push5=, $1, $pop121
@@ -670,7 +670,7 @@ testC:                                  # @testC
 	tee_local	$push112=, $1=, $pop113
 	i32.const	$push111=, 16
 	i32.shr_u	$push8=, $pop112, $pop111
-	i32.store8	$discard=, sC+2($pop116):p2align=1, $pop8
+	i32.store8	$discard=, sC+2($pop116), $pop8
 	i32.const	$push110=, 0
 	i32.const	$push109=, 1103515245
 	i32.mul 	$push9=, $1, $pop109
@@ -684,7 +684,7 @@ testC:                                  # @testC
 	tee_local	$push102=, $3=, $pop103
 	i32.const	$push101=, 16
 	i32.shr_u	$push12=, $pop102, $pop101
-	i32.store8	$discard=, sC+4($pop110):p2align=2, $pop12
+	i32.store8	$discard=, sC+4($pop110), $pop12
 	i32.const	$push100=, 0
 	i32.const	$push99=, 1103515245
 	i32.mul 	$push13=, $3, $pop99
@@ -702,7 +702,7 @@ testC:                                  # @testC
 	tee_local	$push90=, $3=, $pop91
 	i32.const	$push89=, 16
 	i32.shr_u	$push16=, $pop90, $pop89
-	i32.store8	$discard=, sC+6($pop94):p2align=1, $pop16
+	i32.store8	$discard=, sC+6($pop94), $pop16
 	i32.const	$push88=, 0
 	i32.const	$push87=, 1103515245
 	i32.mul 	$push17=, $3, $pop87
@@ -947,7 +947,7 @@ testD:                                  # @testD
 	tee_local	$push92=, $0=, $pop93
 	i32.const	$push5=, 16
 	i32.shr_u	$push6=, $pop92, $pop5
-	i32.store8	$discard=, sD($pop0):p2align=3, $pop6
+	i32.store8	$discard=, sD($pop0), $pop6
 	i32.const	$push91=, 0
 	i32.const	$push90=, 1103515245
 	i32.mul 	$push7=, $0, $pop90
@@ -965,7 +965,7 @@ testD:                                  # @testD
 	tee_local	$push81=, $0=, $pop82
 	i32.const	$push80=, 16
 	i32.shr_u	$push10=, $pop81, $pop80
-	i32.store8	$discard=, sD+2($pop85):p2align=1, $pop10
+	i32.store8	$discard=, sD+2($pop85), $pop10
 	i32.const	$push79=, 0
 	i32.const	$push78=, 1103515245
 	i32.mul 	$push11=, $0, $pop78
@@ -983,7 +983,7 @@ testD:                                  # @testD
 	tee_local	$push69=, $0=, $pop70
 	i32.const	$push68=, 16
 	i32.shr_u	$push14=, $pop69, $pop68
-	i32.store8	$discard=, sD+4($pop73):p2align=2, $pop14
+	i32.store8	$discard=, sD+4($pop73), $pop14
 	i32.const	$push67=, 0
 	i32.const	$push66=, 1103515245
 	i32.mul 	$push15=, $0, $pop66
@@ -1001,7 +1001,7 @@ testD:                                  # @testD
 	tee_local	$push57=, $0=, $pop58
 	i32.const	$push56=, 16
 	i32.shr_u	$push18=, $pop57, $pop56
-	i32.store8	$discard=, sD+6($pop61):p2align=1, $pop18
+	i32.store8	$discard=, sD+6($pop61), $pop18
 	i32.const	$push55=, 0
 	i32.const	$push54=, 1103515245
 	i32.mul 	$push19=, $0, $pop54
@@ -1177,7 +1177,7 @@ testE:                                  # @testE
 	tee_local	$push156=, $0=, $pop157
 	i32.const	$push5=, 16
 	i32.shr_u	$push6=, $pop156, $pop5
-	i32.store8	$discard=, sE($pop0):p2align=3, $pop6
+	i32.store8	$discard=, sE($pop0), $pop6
 	i32.const	$push155=, 0
 	i32.const	$push154=, 1103515245
 	i32.mul 	$push7=, $0, $pop154
@@ -1195,7 +1195,7 @@ testE:                                  # @testE
 	tee_local	$push145=, $0=, $pop146
 	i32.const	$push144=, 16
 	i32.shr_u	$push10=, $pop145, $pop144
-	i32.store8	$discard=, sE+2($pop149):p2align=1, $pop10
+	i32.store8	$discard=, sE+2($pop149), $pop10
 	i32.const	$push143=, 0
 	i32.const	$push142=, 1103515245
 	i32.mul 	$push11=, $0, $pop142
@@ -1213,7 +1213,7 @@ testE:                                  # @testE
 	tee_local	$push133=, $0=, $pop134
 	i32.const	$push132=, 16
 	i32.shr_u	$push14=, $pop133, $pop132
-	i32.store8	$discard=, sE+4($pop137):p2align=2, $pop14
+	i32.store8	$discard=, sE+4($pop137), $pop14
 	i32.const	$push131=, 0
 	i32.const	$push130=, 1103515245
 	i32.mul 	$push15=, $0, $pop130
@@ -1231,7 +1231,7 @@ testE:                                  # @testE
 	tee_local	$push121=, $0=, $pop122
 	i32.const	$push120=, 16
 	i32.shr_u	$push18=, $pop121, $pop120
-	i32.store8	$discard=, sE+6($pop125):p2align=1, $pop18
+	i32.store8	$discard=, sE+6($pop125), $pop18
 	i32.const	$push119=, 0
 	i32.const	$push118=, 1103515245
 	i32.mul 	$push19=, $0, $pop118
@@ -1249,7 +1249,7 @@ testE:                                  # @testE
 	tee_local	$push109=, $0=, $pop110
 	i32.const	$push108=, 16
 	i32.shr_u	$push22=, $pop109, $pop108
-	i32.store8	$discard=, sE+8($pop113):p2align=3, $pop22
+	i32.store8	$discard=, sE+8($pop113), $pop22
 	i32.const	$push107=, 0
 	i32.const	$push106=, 1103515245
 	i32.mul 	$push23=, $0, $pop106
@@ -1267,7 +1267,7 @@ testE:                                  # @testE
 	tee_local	$push97=, $0=, $pop98
 	i32.const	$push96=, 16
 	i32.shr_u	$push26=, $pop97, $pop96
-	i32.store8	$discard=, sE+10($pop101):p2align=1, $pop26
+	i32.store8	$discard=, sE+10($pop101), $pop26
 	i32.const	$push95=, 0
 	i32.const	$push94=, 1103515245
 	i32.mul 	$push27=, $0, $pop94
@@ -1285,7 +1285,7 @@ testE:                                  # @testE
 	tee_local	$push85=, $0=, $pop86
 	i32.const	$push84=, 16
 	i32.shr_u	$push30=, $pop85, $pop84
-	i32.store8	$discard=, sE+12($pop89):p2align=2, $pop30
+	i32.store8	$discard=, sE+12($pop89), $pop30
 	i32.const	$push83=, 0
 	i32.const	$push82=, 1103515245
 	i32.mul 	$push31=, $0, $pop82
@@ -1303,7 +1303,7 @@ testE:                                  # @testE
 	tee_local	$push73=, $0=, $pop74
 	i32.const	$push72=, 16
 	i32.shr_u	$push34=, $pop73, $pop72
-	i32.store8	$discard=, sE+14($pop77):p2align=1, $pop34
+	i32.store8	$discard=, sE+14($pop77), $pop34
 	i32.const	$push71=, 0
 	i32.const	$push70=, 1103515245
 	i32.mul 	$push35=, $0, $pop70
@@ -1479,7 +1479,7 @@ testF:                                  # @testF
 	tee_local	$push156=, $0=, $pop157
 	i32.const	$push5=, 16
 	i32.shr_u	$push6=, $pop156, $pop5
-	i32.store8	$discard=, sF($pop0):p2align=3, $pop6
+	i32.store8	$discard=, sF($pop0), $pop6
 	i32.const	$push155=, 0
 	i32.const	$push154=, 1103515245
 	i32.mul 	$push7=, $0, $pop154
@@ -1497,7 +1497,7 @@ testF:                                  # @testF
 	tee_local	$push145=, $0=, $pop146
 	i32.const	$push144=, 16
 	i32.shr_u	$push10=, $pop145, $pop144
-	i32.store8	$discard=, sF+2($pop149):p2align=1, $pop10
+	i32.store8	$discard=, sF+2($pop149), $pop10
 	i32.const	$push143=, 0
 	i32.const	$push142=, 1103515245
 	i32.mul 	$push11=, $0, $pop142
@@ -1515,7 +1515,7 @@ testF:                                  # @testF
 	tee_local	$push133=, $0=, $pop134
 	i32.const	$push132=, 16
 	i32.shr_u	$push14=, $pop133, $pop132
-	i32.store8	$discard=, sF+4($pop137):p2align=2, $pop14
+	i32.store8	$discard=, sF+4($pop137), $pop14
 	i32.const	$push131=, 0
 	i32.const	$push130=, 1103515245
 	i32.mul 	$push15=, $0, $pop130
@@ -1533,7 +1533,7 @@ testF:                                  # @testF
 	tee_local	$push121=, $0=, $pop122
 	i32.const	$push120=, 16
 	i32.shr_u	$push18=, $pop121, $pop120
-	i32.store8	$discard=, sF+6($pop125):p2align=1, $pop18
+	i32.store8	$discard=, sF+6($pop125), $pop18
 	i32.const	$push119=, 0
 	i32.const	$push118=, 1103515245
 	i32.mul 	$push19=, $0, $pop118
@@ -1551,7 +1551,7 @@ testF:                                  # @testF
 	tee_local	$push109=, $0=, $pop110
 	i32.const	$push108=, 16
 	i32.shr_u	$push22=, $pop109, $pop108
-	i32.store8	$discard=, sF+8($pop113):p2align=3, $pop22
+	i32.store8	$discard=, sF+8($pop113), $pop22
 	i32.const	$push107=, 0
 	i32.const	$push106=, 1103515245
 	i32.mul 	$push23=, $0, $pop106
@@ -1569,7 +1569,7 @@ testF:                                  # @testF
 	tee_local	$push97=, $0=, $pop98
 	i32.const	$push96=, 16
 	i32.shr_u	$push26=, $pop97, $pop96
-	i32.store8	$discard=, sF+10($pop101):p2align=1, $pop26
+	i32.store8	$discard=, sF+10($pop101), $pop26
 	i32.const	$push95=, 0
 	i32.const	$push94=, 1103515245
 	i32.mul 	$push27=, $0, $pop94
@@ -1587,7 +1587,7 @@ testF:                                  # @testF
 	tee_local	$push85=, $0=, $pop86
 	i32.const	$push84=, 16
 	i32.shr_u	$push30=, $pop85, $pop84
-	i32.store8	$discard=, sF+12($pop89):p2align=2, $pop30
+	i32.store8	$discard=, sF+12($pop89), $pop30
 	i32.const	$push83=, 0
 	i32.const	$push82=, 1103515245
 	i32.mul 	$push31=, $0, $pop82
@@ -1605,7 +1605,7 @@ testF:                                  # @testF
 	tee_local	$push73=, $0=, $pop74
 	i32.const	$push72=, 16
 	i32.shr_u	$push34=, $pop73, $pop72
-	i32.store8	$discard=, sF+14($pop77):p2align=1, $pop34
+	i32.store8	$discard=, sF+14($pop77), $pop34
 	i32.const	$push71=, 0
 	i32.const	$push70=, 1103515245
 	i32.mul 	$push35=, $0, $pop70
@@ -1680,7 +1680,7 @@ fn1G:                                   # @fn1G
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sG($pop0):p2align=3
+	i32.load	$push1=, sG($pop0)
 	i32.const	$push2=, 25
 	i32.shl 	$push3=, $0, $pop2
 	i32.add 	$push4=, $pop1, $pop3
@@ -1700,7 +1700,7 @@ fn2G:                                   # @fn2G
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sG($pop0):p2align=3
+	i32.load	$push1=, sG($pop0)
 	i32.const	$push2=, 25
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -1721,7 +1721,7 @@ retitG:                                 # @retitG
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sG($pop0):p2align=3
+	i32.load	$push1=, sG($pop0)
 	i32.const	$push2=, 25
 	i32.shr_u	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -1739,11 +1739,11 @@ fn3G:                                   # @fn3G
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push8=, 0
-	i32.load	$push1=, sG($pop8):p2align=3
+	i32.load	$push1=, sG($pop8)
 	i32.const	$push2=, 25
 	i32.shl 	$push3=, $0, $pop2
 	i32.add 	$push4=, $pop1, $pop3
-	i32.store	$push5=, sG($pop0):p2align=3, $pop4
+	i32.store	$push5=, sG($pop0), $pop4
 	i32.const	$push7=, 25
 	i32.shr_u	$push6=, $pop5, $pop7
 	return  	$pop6
@@ -1768,7 +1768,7 @@ testG:                                  # @testG
 	tee_local	$push180=, $2=, $pop181
 	i32.const	$push179=, 16
 	i32.shr_u	$push4=, $pop180, $pop179
-	i32.store8	$discard=, sG($pop185):p2align=3, $pop4
+	i32.store8	$discard=, sG($pop185), $pop4
 	i32.const	$push178=, 0
 	i32.const	$push177=, 1103515245
 	i32.mul 	$push5=, $2, $pop177
@@ -1786,7 +1786,7 @@ testG:                                  # @testG
 	tee_local	$push168=, $2=, $pop169
 	i32.const	$push167=, 16
 	i32.shr_u	$push8=, $pop168, $pop167
-	i32.store8	$discard=, sG+2($pop172):p2align=1, $pop8
+	i32.store8	$discard=, sG+2($pop172), $pop8
 	i32.const	$push166=, 0
 	i32.const	$push165=, 1103515245
 	i32.mul 	$push9=, $2, $pop165
@@ -1804,7 +1804,7 @@ testG:                                  # @testG
 	tee_local	$push156=, $2=, $pop157
 	i32.const	$push155=, 16
 	i32.shr_u	$push12=, $pop156, $pop155
-	i32.store8	$discard=, sG+4($pop160):p2align=2, $pop12
+	i32.store8	$discard=, sG+4($pop160), $pop12
 	i32.const	$push154=, 0
 	i32.const	$push153=, 1103515245
 	i32.mul 	$push13=, $2, $pop153
@@ -1822,7 +1822,7 @@ testG:                                  # @testG
 	tee_local	$push144=, $2=, $pop145
 	i32.const	$push143=, 16
 	i32.shr_u	$push16=, $pop144, $pop143
-	i32.store8	$discard=, sG+6($pop148):p2align=1, $pop16
+	i32.store8	$discard=, sG+6($pop148), $pop16
 	i32.const	$push142=, 0
 	i32.const	$push141=, 1103515245
 	i32.mul 	$push17=, $2, $pop141
@@ -1840,7 +1840,7 @@ testG:                                  # @testG
 	tee_local	$push132=, $2=, $pop133
 	i32.const	$push131=, 16
 	i32.shr_u	$push20=, $pop132, $pop131
-	i32.store8	$discard=, sG+8($pop136):p2align=3, $pop20
+	i32.store8	$discard=, sG+8($pop136), $pop20
 	i32.const	$push130=, 0
 	i32.const	$push129=, 1103515245
 	i32.mul 	$push21=, $2, $pop129
@@ -1858,7 +1858,7 @@ testG:                                  # @testG
 	tee_local	$push120=, $2=, $pop121
 	i32.const	$push119=, 16
 	i32.shr_u	$push24=, $pop120, $pop119
-	i32.store8	$discard=, sG+10($pop124):p2align=1, $pop24
+	i32.store8	$discard=, sG+10($pop124), $pop24
 	i32.const	$push118=, 0
 	i32.const	$push117=, 1103515245
 	i32.mul 	$push25=, $2, $pop117
@@ -1876,7 +1876,7 @@ testG:                                  # @testG
 	tee_local	$push108=, $2=, $pop109
 	i32.const	$push107=, 16
 	i32.shr_u	$push28=, $pop108, $pop107
-	i32.store8	$discard=, sG+12($pop112):p2align=2, $pop28
+	i32.store8	$discard=, sG+12($pop112), $pop28
 	i32.const	$push106=, 0
 	i32.const	$push105=, 1103515245
 	i32.mul 	$push29=, $2, $pop105
@@ -1894,7 +1894,7 @@ testG:                                  # @testG
 	tee_local	$push96=, $2=, $pop97
 	i32.const	$push95=, 16
 	i32.shr_u	$push32=, $pop96, $pop95
-	i32.store8	$discard=, sG+14($pop100):p2align=1, $pop32
+	i32.store8	$discard=, sG+14($pop100), $pop32
 	i32.const	$push94=, 0
 	i32.const	$push93=, 1103515245
 	i32.mul 	$push33=, $2, $pop93
@@ -1932,13 +1932,13 @@ testG:                                  # @testG
 	i32.const	$push71=, 25
 	i32.shl 	$push37=, $2, $pop71
 	i32.const	$push70=, 0
-	i32.load	$push69=, sG($pop70):p2align=3
+	i32.load	$push69=, sG($pop70)
 	tee_local	$push68=, $2=, $pop69
 	i32.const	$push67=, 33554431
 	i32.and 	$push66=, $pop68, $pop67
 	tee_local	$push65=, $0=, $pop66
 	i32.or  	$push38=, $pop37, $pop65
-	i32.store	$push39=, sG($pop72):p2align=3, $pop38
+	i32.store	$push39=, sG($pop72), $pop38
 	i32.add 	$push41=, $pop40, $pop39
 	i32.const	$push64=, 25
 	i32.shr_u	$push42=, $pop41, $pop64
@@ -1969,7 +1969,7 @@ testG:                                  # @testG
 	i32.shl 	$push53=, $pop190, $pop189
 	i32.or  	$push54=, $pop53, $0
 	i32.add 	$push1=, $pop55, $pop54
-	i32.store	$push188=, sG($pop202):p2align=3, $pop1
+	i32.store	$push188=, sG($pop202), $pop1
 	tee_local	$push187=, $0=, $pop188
 	i32.xor 	$push56=, $pop187, $2
 	i32.const	$push186=, 33554431
@@ -2023,7 +2023,7 @@ fn1H:                                   # @fn1H
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sH($pop0):p2align=3
+	i32.load	$push1=, sH($pop0)
 	i32.const	$push2=, 23
 	i32.shl 	$push3=, $0, $pop2
 	i32.add 	$push4=, $pop1, $pop3
@@ -2043,7 +2043,7 @@ fn2H:                                   # @fn2H
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sH($pop0):p2align=3
+	i32.load	$push1=, sH($pop0)
 	i32.const	$push2=, 23
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -2064,7 +2064,7 @@ retitH:                                 # @retitH
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sH($pop0):p2align=3
+	i32.load	$push1=, sH($pop0)
 	i32.const	$push2=, 23
 	i32.shr_u	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -2082,11 +2082,11 @@ fn3H:                                   # @fn3H
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push8=, 0
-	i32.load	$push1=, sH($pop8):p2align=3
+	i32.load	$push1=, sH($pop8)
 	i32.const	$push2=, 23
 	i32.shl 	$push3=, $0, $pop2
 	i32.add 	$push4=, $pop1, $pop3
-	i32.store	$push5=, sH($pop0):p2align=3, $pop4
+	i32.store	$push5=, sH($pop0), $pop4
 	i32.const	$push7=, 23
 	i32.shr_u	$push6=, $pop5, $pop7
 	return  	$pop6
@@ -2111,7 +2111,7 @@ testH:                                  # @testH
 	tee_local	$push180=, $2=, $pop181
 	i32.const	$push179=, 16
 	i32.shr_u	$push4=, $pop180, $pop179
-	i32.store8	$discard=, sH($pop185):p2align=3, $pop4
+	i32.store8	$discard=, sH($pop185), $pop4
 	i32.const	$push178=, 0
 	i32.const	$push177=, 1103515245
 	i32.mul 	$push5=, $2, $pop177
@@ -2129,7 +2129,7 @@ testH:                                  # @testH
 	tee_local	$push168=, $2=, $pop169
 	i32.const	$push167=, 16
 	i32.shr_u	$push8=, $pop168, $pop167
-	i32.store8	$discard=, sH+2($pop172):p2align=1, $pop8
+	i32.store8	$discard=, sH+2($pop172), $pop8
 	i32.const	$push166=, 0
 	i32.const	$push165=, 1103515245
 	i32.mul 	$push9=, $2, $pop165
@@ -2147,7 +2147,7 @@ testH:                                  # @testH
 	tee_local	$push156=, $2=, $pop157
 	i32.const	$push155=, 16
 	i32.shr_u	$push12=, $pop156, $pop155
-	i32.store8	$discard=, sH+4($pop160):p2align=2, $pop12
+	i32.store8	$discard=, sH+4($pop160), $pop12
 	i32.const	$push154=, 0
 	i32.const	$push153=, 1103515245
 	i32.mul 	$push13=, $2, $pop153
@@ -2165,7 +2165,7 @@ testH:                                  # @testH
 	tee_local	$push144=, $2=, $pop145
 	i32.const	$push143=, 16
 	i32.shr_u	$push16=, $pop144, $pop143
-	i32.store8	$discard=, sH+6($pop148):p2align=1, $pop16
+	i32.store8	$discard=, sH+6($pop148), $pop16
 	i32.const	$push142=, 0
 	i32.const	$push141=, 1103515245
 	i32.mul 	$push17=, $2, $pop141
@@ -2183,7 +2183,7 @@ testH:                                  # @testH
 	tee_local	$push132=, $2=, $pop133
 	i32.const	$push131=, 16
 	i32.shr_u	$push20=, $pop132, $pop131
-	i32.store8	$discard=, sH+8($pop136):p2align=3, $pop20
+	i32.store8	$discard=, sH+8($pop136), $pop20
 	i32.const	$push130=, 0
 	i32.const	$push129=, 1103515245
 	i32.mul 	$push21=, $2, $pop129
@@ -2201,7 +2201,7 @@ testH:                                  # @testH
 	tee_local	$push120=, $2=, $pop121
 	i32.const	$push119=, 16
 	i32.shr_u	$push24=, $pop120, $pop119
-	i32.store8	$discard=, sH+10($pop124):p2align=1, $pop24
+	i32.store8	$discard=, sH+10($pop124), $pop24
 	i32.const	$push118=, 0
 	i32.const	$push117=, 1103515245
 	i32.mul 	$push25=, $2, $pop117
@@ -2219,7 +2219,7 @@ testH:                                  # @testH
 	tee_local	$push108=, $2=, $pop109
 	i32.const	$push107=, 16
 	i32.shr_u	$push28=, $pop108, $pop107
-	i32.store8	$discard=, sH+12($pop112):p2align=2, $pop28
+	i32.store8	$discard=, sH+12($pop112), $pop28
 	i32.const	$push106=, 0
 	i32.const	$push105=, 1103515245
 	i32.mul 	$push29=, $2, $pop105
@@ -2237,7 +2237,7 @@ testH:                                  # @testH
 	tee_local	$push96=, $2=, $pop97
 	i32.const	$push95=, 16
 	i32.shr_u	$push32=, $pop96, $pop95
-	i32.store8	$discard=, sH+14($pop100):p2align=1, $pop32
+	i32.store8	$discard=, sH+14($pop100), $pop32
 	i32.const	$push94=, 0
 	i32.const	$push93=, 1103515245
 	i32.mul 	$push33=, $2, $pop93
@@ -2275,13 +2275,13 @@ testH:                                  # @testH
 	i32.const	$push71=, 23
 	i32.shl 	$push37=, $2, $pop71
 	i32.const	$push70=, 0
-	i32.load	$push69=, sH($pop70):p2align=3
+	i32.load	$push69=, sH($pop70)
 	tee_local	$push68=, $2=, $pop69
 	i32.const	$push67=, 8388607
 	i32.and 	$push66=, $pop68, $pop67
 	tee_local	$push65=, $0=, $pop66
 	i32.or  	$push38=, $pop37, $pop65
-	i32.store	$push39=, sH($pop72):p2align=3, $pop38
+	i32.store	$push39=, sH($pop72), $pop38
 	i32.add 	$push41=, $pop40, $pop39
 	i32.const	$push64=, 23
 	i32.shr_u	$push42=, $pop41, $pop64
@@ -2312,7 +2312,7 @@ testH:                                  # @testH
 	i32.shl 	$push53=, $pop190, $pop189
 	i32.or  	$push54=, $pop53, $0
 	i32.add 	$push1=, $pop55, $pop54
-	i32.store	$push188=, sH($pop202):p2align=3, $pop1
+	i32.store	$push188=, sH($pop202), $pop1
 	tee_local	$push187=, $0=, $pop188
 	i32.xor 	$push56=, $pop187, $2
 	i32.const	$push186=, 8388607
@@ -2366,7 +2366,7 @@ fn1I:                                   # @fn1I
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sI($pop0):p2align=3
+	i32.load16_u	$push1=, sI($pop0)
 	i32.const	$push2=, 7
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -2386,7 +2386,7 @@ fn2I:                                   # @fn2I
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sI($pop0):p2align=3
+	i32.load16_u	$push1=, sI($pop0)
 	i32.const	$push2=, 7
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -2407,7 +2407,7 @@ retitI:                                 # @retitI
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sI($pop0):p2align=3
+	i32.load16_u	$push1=, sI($pop0)
 	i32.const	$push2=, 7
 	i32.shr_u	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -2426,7 +2426,7 @@ fn3I:                                   # @fn3I
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push14=, 0
-	i32.load16_u	$push13=, sI($pop14):p2align=3
+	i32.load16_u	$push13=, sI($pop14)
 	tee_local	$push12=, $1=, $pop13
 	i32.const	$push1=, 7
 	i32.shr_u	$push2=, $pop12, $pop1
@@ -2437,7 +2437,7 @@ fn3I:                                   # @fn3I
 	i32.const	$push4=, 127
 	i32.and 	$push5=, $1, $pop4
 	i32.or  	$push6=, $pop3, $pop5
-	i32.store16	$discard=, sI($pop0):p2align=3, $pop6
+	i32.store16	$discard=, sI($pop0), $pop6
 	i32.const	$push7=, 511
 	i32.and 	$push8=, $0, $pop7
 	return  	$pop8
@@ -2462,7 +2462,7 @@ testI:                                  # @testI
 	tee_local	$push150=, $1=, $pop151
 	i32.const	$push5=, 16
 	i32.shr_u	$push6=, $pop150, $pop5
-	i32.store8	$discard=, sI($pop0):p2align=3, $pop6
+	i32.store8	$discard=, sI($pop0), $pop6
 	i32.const	$push149=, 0
 	i32.const	$push148=, 1103515245
 	i32.mul 	$push7=, $1, $pop148
@@ -2480,7 +2480,7 @@ testI:                                  # @testI
 	tee_local	$push139=, $1=, $pop140
 	i32.const	$push138=, 16
 	i32.shr_u	$push10=, $pop139, $pop138
-	i32.store8	$discard=, sI+2($pop143):p2align=1, $pop10
+	i32.store8	$discard=, sI+2($pop143), $pop10
 	i32.const	$push137=, 0
 	i32.const	$push136=, 1103515245
 	i32.mul 	$push11=, $1, $pop136
@@ -2498,7 +2498,7 @@ testI:                                  # @testI
 	tee_local	$push127=, $1=, $pop128
 	i32.const	$push126=, 16
 	i32.shr_u	$push14=, $pop127, $pop126
-	i32.store8	$discard=, sI+4($pop131):p2align=2, $pop14
+	i32.store8	$discard=, sI+4($pop131), $pop14
 	i32.const	$push125=, 0
 	i32.const	$push124=, 1103515245
 	i32.mul 	$push15=, $1, $pop124
@@ -2516,7 +2516,7 @@ testI:                                  # @testI
 	tee_local	$push115=, $1=, $pop116
 	i32.const	$push114=, 16
 	i32.shr_u	$push18=, $pop115, $pop114
-	i32.store8	$discard=, sI+6($pop119):p2align=1, $pop18
+	i32.store8	$discard=, sI+6($pop119), $pop18
 	i32.const	$push113=, 0
 	i32.const	$push112=, 1103515245
 	i32.mul 	$push19=, $1, $pop112
@@ -2534,7 +2534,7 @@ testI:                                  # @testI
 	tee_local	$push103=, $1=, $pop104
 	i32.const	$push102=, 16
 	i32.shr_u	$push22=, $pop103, $pop102
-	i32.store8	$discard=, sI+8($pop107):p2align=3, $pop22
+	i32.store8	$discard=, sI+8($pop107), $pop22
 	i32.const	$push101=, 0
 	i32.const	$push100=, 1103515245
 	i32.mul 	$push23=, $1, $pop100
@@ -2552,7 +2552,7 @@ testI:                                  # @testI
 	tee_local	$push91=, $1=, $pop92
 	i32.const	$push90=, 16
 	i32.shr_u	$push26=, $pop91, $pop90
-	i32.store8	$discard=, sI+10($pop95):p2align=1, $pop26
+	i32.store8	$discard=, sI+10($pop95), $pop26
 	i32.const	$push89=, 0
 	i32.const	$push88=, 1103515245
 	i32.mul 	$push27=, $1, $pop88
@@ -2570,7 +2570,7 @@ testI:                                  # @testI
 	tee_local	$push79=, $1=, $pop80
 	i32.const	$push78=, 16
 	i32.shr_u	$push30=, $pop79, $pop78
-	i32.store8	$discard=, sI+12($pop83):p2align=2, $pop30
+	i32.store8	$discard=, sI+12($pop83), $pop30
 	i32.const	$push77=, 0
 	i32.const	$push76=, 1103515245
 	i32.mul 	$push31=, $1, $pop76
@@ -2588,7 +2588,7 @@ testI:                                  # @testI
 	tee_local	$push67=, $1=, $pop68
 	i32.const	$push66=, 16
 	i32.shr_u	$push34=, $pop67, $pop66
-	i32.store8	$discard=, sI+14($pop71):p2align=1, $pop34
+	i32.store8	$discard=, sI+14($pop71), $pop34
 	i32.const	$push65=, 0
 	i32.const	$push64=, 1103515245
 	i32.mul 	$push35=, $1, $pop64
@@ -2599,7 +2599,7 @@ testI:                                  # @testI
 	i32.shr_u	$push36=, $pop61, $pop60
 	i32.store8	$discard=, sI+15($pop65), $pop36
 	i32.const	$push59=, 0
-	i32.load16_u	$0=, sI($pop59):p2align=3
+	i32.load16_u	$0=, sI($pop59)
 	i32.const	$push58=, 0
 	i32.const	$push57=, 0
 	i32.const	$push37=, -341751747
@@ -2622,7 +2622,7 @@ testI:                                  # @testI
 	i32.const	$push45=, 127
 	i32.and 	$push46=, $0, $pop45
 	i32.or  	$push50=, $pop49, $pop46
-	i32.store16	$discard=, sI($pop58):p2align=3, $pop50
+	i32.store16	$discard=, sI($pop58), $pop50
 	return
 	.endfunc
 .Lfunc_end54:
@@ -2671,7 +2671,7 @@ fn2J:                                   # @fn2J
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sJ($pop0):p2align=2
+	i32.load16_u	$push1=, sJ($pop0)
 	i32.const	$push2=, 9
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -2692,7 +2692,7 @@ retitJ:                                 # @retitJ
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sJ($pop0):p2align=2
+	i32.load16_u	$push1=, sJ($pop0)
 	i32.const	$push2=, 9
 	i32.shr_u	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -2711,7 +2711,7 @@ fn3J:                                   # @fn3J
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push14=, 0
-	i32.load16_u	$push13=, sJ($pop14):p2align=2
+	i32.load16_u	$push13=, sJ($pop14)
 	tee_local	$push12=, $1=, $pop13
 	i32.const	$push1=, 9
 	i32.shr_u	$push2=, $pop12, $pop1
@@ -2722,7 +2722,7 @@ fn3J:                                   # @fn3J
 	i32.const	$push4=, 511
 	i32.and 	$push5=, $1, $pop4
 	i32.or  	$push6=, $pop3, $pop5
-	i32.store16	$discard=, sJ($pop0):p2align=2, $pop6
+	i32.store16	$discard=, sJ($pop0), $pop6
 	i32.const	$push7=, 127
 	i32.and 	$push8=, $0, $pop7
 	return  	$pop8
@@ -2747,7 +2747,7 @@ testJ:                                  # @testJ
 	tee_local	$push74=, $0=, $pop75
 	i32.const	$push73=, 16
 	i32.shr_u	$push3=, $pop74, $pop73
-	i32.store8	$discard=, sJ($pop79):p2align=2, $pop3
+	i32.store8	$discard=, sJ($pop79), $pop3
 	i32.const	$push72=, 0
 	i32.const	$push71=, 1103515245
 	i32.mul 	$push4=, $0, $pop71
@@ -2765,7 +2765,7 @@ testJ:                                  # @testJ
 	tee_local	$push62=, $0=, $pop63
 	i32.const	$push61=, 16
 	i32.shr_u	$push7=, $pop62, $pop61
-	i32.store8	$discard=, sJ+2($pop66):p2align=1, $pop7
+	i32.store8	$discard=, sJ+2($pop66), $pop7
 	i32.const	$push60=, 0
 	i32.const	$push59=, 1103515245
 	i32.mul 	$push8=, $0, $pop59
@@ -2787,11 +2787,11 @@ testJ:                                  # @testJ
 	i32.const	$push46=, 9
 	i32.shl 	$push13=, $pop47, $pop46
 	i32.const	$push45=, 0
-	i32.load16_u	$push10=, sJ($pop45):p2align=2
+	i32.load16_u	$push10=, sJ($pop45)
 	i32.const	$push44=, 511
 	i32.and 	$push14=, $pop10, $pop44
 	i32.or  	$push15=, $pop13, $pop14
-	i32.store16	$discard=, sJ($pop54):p2align=2, $pop15
+	i32.store16	$discard=, sJ($pop54), $pop15
 	i32.const	$push43=, 0
 	i32.load	$0=, sJ($pop43)
 	block
@@ -2836,7 +2836,7 @@ testJ:                                  # @testJ
 	i32.const	$push80=, 511
 	i32.and 	$push30=, $0, $pop80
 	i32.or  	$push33=, $pop32, $pop30
-	i32.store16	$discard=, sJ($pop89):p2align=2, $pop33
+	i32.store16	$discard=, sJ($pop89), $pop33
 	return
 .LBB60_2:                               # %if.then
 	end_block                       # label5:
@@ -2957,7 +2957,7 @@ testK:                                  # @testK
 	tee_local	$push54=, $1=, $pop55
 	i32.const	$push5=, 16
 	i32.shr_u	$push6=, $pop54, $pop5
-	i32.store8	$discard=, sK($pop0):p2align=2, $pop6
+	i32.store8	$discard=, sK($pop0), $pop6
 	i32.const	$push53=, 0
 	i32.const	$push52=, 1103515245
 	i32.mul 	$push7=, $1, $pop52
@@ -2975,7 +2975,7 @@ testK:                                  # @testK
 	tee_local	$push43=, $1=, $pop44
 	i32.const	$push42=, 16
 	i32.shr_u	$push10=, $pop43, $pop42
-	i32.store8	$discard=, sK+2($pop47):p2align=1, $pop10
+	i32.store8	$discard=, sK+2($pop47), $pop10
 	i32.const	$push41=, 0
 	i32.const	$push40=, 1103515245
 	i32.mul 	$push11=, $1, $pop40
@@ -3038,7 +3038,7 @@ fn1L:                                   # @fn1L
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sL($pop0):p2align=3
+	i32.load	$push1=, sL($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 63
 	i32.and 	$push4=, $pop2, $pop3
@@ -3056,7 +3056,7 @@ fn2L:                                   # @fn2L
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sL($pop0):p2align=3
+	i32.load	$push1=, sL($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 63
 	i32.and 	$push4=, $pop2, $pop3
@@ -3075,7 +3075,7 @@ retitL:                                 # @retitL
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sL($pop0):p2align=3
+	i32.load	$push1=, sL($pop0)
 	i32.const	$push2=, 63
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -3094,7 +3094,7 @@ fn3L:                                   # @fn3L
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push10=, 0
-	i32.load	$push9=, sL($pop10):p2align=3
+	i32.load	$push9=, sL($pop10)
 	tee_local	$push8=, $1=, $pop9
 	i32.add 	$push1=, $pop8, $0
 	i32.const	$push2=, 63
@@ -3103,7 +3103,7 @@ fn3L:                                   # @fn3L
 	i32.const	$push3=, -64
 	i32.and 	$push4=, $1, $pop3
 	i32.or  	$push5=, $pop6, $pop4
-	i32.store	$discard=, sL($pop0):p2align=3, $pop5
+	i32.store	$discard=, sL($pop0), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end71:
@@ -3126,7 +3126,7 @@ testL:                                  # @testL
 	tee_local	$push104=, $3=, $pop105
 	i32.const	$push103=, 16
 	i32.shr_u	$push4=, $pop104, $pop103
-	i32.store8	$discard=, sL($pop109):p2align=3, $pop4
+	i32.store8	$discard=, sL($pop109), $pop4
 	i32.const	$push102=, 0
 	i32.const	$push101=, 1103515245
 	i32.mul 	$push5=, $3, $pop101
@@ -3144,7 +3144,7 @@ testL:                                  # @testL
 	tee_local	$push92=, $3=, $pop93
 	i32.const	$push91=, 16
 	i32.shr_u	$push8=, $pop92, $pop91
-	i32.store8	$discard=, sL+2($pop96):p2align=1, $pop8
+	i32.store8	$discard=, sL+2($pop96), $pop8
 	i32.const	$push90=, 0
 	i32.const	$push89=, 1103515245
 	i32.mul 	$push9=, $3, $pop89
@@ -3162,7 +3162,7 @@ testL:                                  # @testL
 	tee_local	$push80=, $3=, $pop81
 	i32.const	$push79=, 16
 	i32.shr_u	$push12=, $pop80, $pop79
-	i32.store8	$discard=, sL+4($pop84):p2align=2, $pop12
+	i32.store8	$discard=, sL+4($pop84), $pop12
 	i32.const	$push78=, 0
 	i32.const	$push77=, 1103515245
 	i32.mul 	$push13=, $3, $pop77
@@ -3180,7 +3180,7 @@ testL:                                  # @testL
 	tee_local	$push68=, $3=, $pop69
 	i32.const	$push67=, 16
 	i32.shr_u	$push16=, $pop68, $pop67
-	i32.store8	$discard=, sL+6($pop72):p2align=1, $pop16
+	i32.store8	$discard=, sL+6($pop72), $pop16
 	i32.const	$push66=, 0
 	i32.const	$push65=, 1103515245
 	i32.mul 	$push17=, $3, $pop65
@@ -3191,7 +3191,7 @@ testL:                                  # @testL
 	i32.shr_u	$push18=, $pop62, $pop61
 	i32.store8	$discard=, sL+7($pop66), $pop18
 	i32.const	$push60=, 0
-	i32.load	$0=, sL($pop60):p2align=3
+	i32.load	$0=, sL($pop60)
 	block
 	i32.const	$push59=, 0
 	i32.const	$push58=, 1103515245
@@ -3218,7 +3218,7 @@ testL:                                  # @testL
 	i32.const	$push42=, -64
 	i32.and 	$push22=, $0, $pop42
 	i32.or  	$push1=, $pop21, $pop22
-	i32.store	$push41=, sL($pop44):p2align=3, $pop1
+	i32.store	$push41=, sL($pop44), $pop1
 	tee_local	$push40=, $3=, $pop41
 	i32.add 	$push23=, $pop40, $1
 	i32.xor 	$push25=, $pop24, $pop23
@@ -3248,7 +3248,7 @@ testL:                                  # @testL
 	i32.const	$push110=, -64
 	i32.and 	$push27=, $3, $pop110
 	i32.or  	$push38=, $pop37, $pop27
-	i32.store	$discard=, sL($pop119):p2align=3, $pop38
+	i32.store	$discard=, sL($pop119), $pop38
 	return
 .LBB72_2:                               # %if.then
 	end_block                       # label6:
@@ -3369,7 +3369,7 @@ testM:                                  # @testM
 	tee_local	$push101=, $1=, $pop102
 	i32.const	$push100=, 16
 	i32.shr_u	$push3=, $pop101, $pop100
-	i32.store8	$discard=, sM($pop106):p2align=3, $pop3
+	i32.store8	$discard=, sM($pop106), $pop3
 	i32.const	$push99=, 0
 	i32.const	$push98=, 1103515245
 	i32.mul 	$push4=, $1, $pop98
@@ -3387,7 +3387,7 @@ testM:                                  # @testM
 	tee_local	$push89=, $1=, $pop90
 	i32.const	$push88=, 16
 	i32.shr_u	$push7=, $pop89, $pop88
-	i32.store8	$discard=, sM+2($pop93):p2align=1, $pop7
+	i32.store8	$discard=, sM+2($pop93), $pop7
 	i32.const	$push87=, 0
 	i32.const	$push86=, 1103515245
 	i32.mul 	$push8=, $1, $pop86
@@ -3401,7 +3401,7 @@ testM:                                  # @testM
 	tee_local	$push79=, $3=, $pop80
 	i32.const	$push78=, 16
 	i32.shr_u	$push11=, $pop79, $pop78
-	i32.store8	$discard=, sM+4($pop87):p2align=2, $pop11
+	i32.store8	$discard=, sM+4($pop87), $pop11
 	i32.const	$push77=, 0
 	i32.const	$push76=, 1103515245
 	i32.mul 	$push12=, $3, $pop76
@@ -3419,7 +3419,7 @@ testM:                                  # @testM
 	tee_local	$push67=, $3=, $pop68
 	i32.const	$push66=, 16
 	i32.shr_u	$push15=, $pop67, $pop66
-	i32.store8	$discard=, sM+6($pop71):p2align=1, $pop15
+	i32.store8	$discard=, sM+6($pop71), $pop15
 	i32.const	$push65=, 0
 	i32.const	$push64=, 1103515245
 	i32.mul 	$push16=, $3, $pop64
@@ -3521,7 +3521,7 @@ fn1N:                                   # @fn1N
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sN($pop0):p2align=3
+	i32.load	$push1=, sN($pop0)
 	i32.const	$push2=, 6
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -3541,7 +3541,7 @@ fn2N:                                   # @fn2N
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sN($pop0):p2align=3
+	i32.load	$push1=, sN($pop0)
 	i32.const	$push2=, 6
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -3562,7 +3562,7 @@ retitN:                                 # @retitN
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sN($pop0):p2align=3
+	i32.load	$push1=, sN($pop0)
 	i32.const	$push2=, 6
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.const	$push4=, 63
@@ -3623,7 +3623,7 @@ testN:                                  # @testN
 	tee_local	$push165=, $5=, $pop166
 	i32.const	$push164=, 16
 	i32.shr_u	$push9=, $pop165, $pop164
-	i32.store8	$discard=, sN($pop4):p2align=3, $pop9
+	i32.store8	$discard=, sN($pop4), $pop9
 	i32.const	$push163=, 0
 	i32.const	$push162=, 1103515245
 	i32.mul 	$push10=, $5, $pop162
@@ -3641,7 +3641,7 @@ testN:                                  # @testN
 	tee_local	$push153=, $5=, $pop154
 	i32.const	$push152=, 16
 	i32.shr_u	$push13=, $pop153, $pop152
-	i32.store8	$discard=, sN+2($pop157):p2align=1, $pop13
+	i32.store8	$discard=, sN+2($pop157), $pop13
 	i32.const	$push151=, 0
 	i32.const	$push150=, 1103515245
 	i32.mul 	$push14=, $5, $pop150
@@ -3659,7 +3659,7 @@ testN:                                  # @testN
 	tee_local	$push141=, $5=, $pop142
 	i32.const	$push140=, 16
 	i32.shr_u	$push17=, $pop141, $pop140
-	i32.store8	$discard=, sN+4($pop145):p2align=2, $pop17
+	i32.store8	$discard=, sN+4($pop145), $pop17
 	i32.const	$push139=, 0
 	i32.const	$push138=, 1103515245
 	i32.mul 	$push18=, $5, $pop138
@@ -3677,7 +3677,7 @@ testN:                                  # @testN
 	tee_local	$push129=, $5=, $pop130
 	i32.const	$push128=, 16
 	i32.shr_u	$push21=, $pop129, $pop128
-	i32.store8	$discard=, sN+6($pop133):p2align=1, $pop21
+	i32.store8	$discard=, sN+6($pop133), $pop21
 	i32.const	$push127=, 0
 	i32.const	$push126=, 1103515245
 	i32.mul 	$push22=, $5, $pop126
@@ -3894,7 +3894,7 @@ fn1O:                                   # @fn1O
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sO+8($pop0):p2align=3
+	i32.load	$push1=, sO+8($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -3912,7 +3912,7 @@ fn2O:                                   # @fn2O
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sO+8($pop0):p2align=3
+	i32.load	$push1=, sO+8($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -3931,7 +3931,7 @@ retitO:                                 # @retitO
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sO+8($pop0):p2align=3
+	i32.load	$push1=, sO+8($pop0)
 	i32.const	$push2=, 4095
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -3986,7 +3986,7 @@ testO:                                  # @testO
 	tee_local	$push202=, $1=, $pop203
 	i32.const	$push201=, 16
 	i32.shr_u	$push9=, $pop202, $pop201
-	i32.store8	$discard=, sO($pop4):p2align=3, $pop9
+	i32.store8	$discard=, sO($pop4), $pop9
 	i32.const	$push200=, 0
 	i32.const	$push199=, 1103515245
 	i32.mul 	$push10=, $1, $pop199
@@ -4004,7 +4004,7 @@ testO:                                  # @testO
 	tee_local	$push190=, $1=, $pop191
 	i32.const	$push189=, 16
 	i32.shr_u	$push13=, $pop190, $pop189
-	i32.store8	$discard=, sO+2($pop194):p2align=1, $pop13
+	i32.store8	$discard=, sO+2($pop194), $pop13
 	i32.const	$push188=, 0
 	i32.const	$push187=, 1103515245
 	i32.mul 	$push14=, $1, $pop187
@@ -4022,7 +4022,7 @@ testO:                                  # @testO
 	tee_local	$push178=, $1=, $pop179
 	i32.const	$push177=, 16
 	i32.shr_u	$push17=, $pop178, $pop177
-	i32.store8	$discard=, sO+4($pop182):p2align=2, $pop17
+	i32.store8	$discard=, sO+4($pop182), $pop17
 	i32.const	$push176=, 0
 	i32.const	$push175=, 1103515245
 	i32.mul 	$push18=, $1, $pop175
@@ -4040,7 +4040,7 @@ testO:                                  # @testO
 	tee_local	$push166=, $1=, $pop167
 	i32.const	$push165=, 16
 	i32.shr_u	$push21=, $pop166, $pop165
-	i32.store8	$discard=, sO+6($pop170):p2align=1, $pop21
+	i32.store8	$discard=, sO+6($pop170), $pop21
 	i32.const	$push164=, 0
 	i32.const	$push163=, 1103515245
 	i32.mul 	$push22=, $1, $pop163
@@ -4058,7 +4058,7 @@ testO:                                  # @testO
 	tee_local	$push154=, $1=, $pop155
 	i32.const	$push153=, 16
 	i32.shr_u	$push25=, $pop154, $pop153
-	i32.store8	$discard=, sO+8($pop158):p2align=3, $pop25
+	i32.store8	$discard=, sO+8($pop158), $pop25
 	i32.const	$push152=, 0
 	i32.const	$push151=, 1103515245
 	i32.mul 	$push26=, $1, $pop151
@@ -4076,7 +4076,7 @@ testO:                                  # @testO
 	tee_local	$push142=, $1=, $pop143
 	i32.const	$push141=, 16
 	i32.shr_u	$push29=, $pop142, $pop141
-	i32.store8	$discard=, sO+10($pop146):p2align=1, $pop29
+	i32.store8	$discard=, sO+10($pop146), $pop29
 	i32.const	$push140=, 0
 	i32.const	$push139=, 1103515245
 	i32.mul 	$push30=, $1, $pop139
@@ -4094,7 +4094,7 @@ testO:                                  # @testO
 	tee_local	$push130=, $1=, $pop131
 	i32.const	$push129=, 16
 	i32.shr_u	$push33=, $pop130, $pop129
-	i32.store8	$discard=, sO+12($pop134):p2align=2, $pop33
+	i32.store8	$discard=, sO+12($pop134), $pop33
 	i32.const	$push128=, 0
 	i32.const	$push127=, 1103515245
 	i32.mul 	$push34=, $1, $pop127
@@ -4112,7 +4112,7 @@ testO:                                  # @testO
 	tee_local	$push118=, $1=, $pop119
 	i32.const	$push117=, 16
 	i32.shr_u	$push37=, $pop118, $pop117
-	i32.store8	$discard=, sO+14($pop122):p2align=1, $pop37
+	i32.store8	$discard=, sO+14($pop122), $pop37
 	i32.const	$push116=, 0
 	i32.const	$push115=, 1103515245
 	i32.mul 	$push38=, $1, $pop115
@@ -4289,7 +4289,7 @@ fn1P:                                   # @fn1P
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sP($pop0):p2align=3
+	i32.load	$push1=, sP($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -4307,7 +4307,7 @@ fn2P:                                   # @fn2P
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sP($pop0):p2align=3
+	i32.load	$push1=, sP($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -4326,7 +4326,7 @@ retitP:                                 # @retitP
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sP($pop0):p2align=3
+	i32.load	$push1=, sP($pop0)
 	i32.const	$push2=, 4095
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -4381,7 +4381,7 @@ testP:                                  # @testP
 	tee_local	$push202=, $1=, $pop203
 	i32.const	$push201=, 16
 	i32.shr_u	$push9=, $pop202, $pop201
-	i32.store8	$discard=, sP($pop4):p2align=3, $pop9
+	i32.store8	$discard=, sP($pop4), $pop9
 	i32.const	$push200=, 0
 	i32.const	$push199=, 1103515245
 	i32.mul 	$push10=, $1, $pop199
@@ -4399,7 +4399,7 @@ testP:                                  # @testP
 	tee_local	$push190=, $1=, $pop191
 	i32.const	$push189=, 16
 	i32.shr_u	$push13=, $pop190, $pop189
-	i32.store8	$discard=, sP+2($pop194):p2align=1, $pop13
+	i32.store8	$discard=, sP+2($pop194), $pop13
 	i32.const	$push188=, 0
 	i32.const	$push187=, 1103515245
 	i32.mul 	$push14=, $1, $pop187
@@ -4417,7 +4417,7 @@ testP:                                  # @testP
 	tee_local	$push178=, $1=, $pop179
 	i32.const	$push177=, 16
 	i32.shr_u	$push17=, $pop178, $pop177
-	i32.store8	$discard=, sP+4($pop182):p2align=2, $pop17
+	i32.store8	$discard=, sP+4($pop182), $pop17
 	i32.const	$push176=, 0
 	i32.const	$push175=, 1103515245
 	i32.mul 	$push18=, $1, $pop175
@@ -4435,7 +4435,7 @@ testP:                                  # @testP
 	tee_local	$push166=, $1=, $pop167
 	i32.const	$push165=, 16
 	i32.shr_u	$push21=, $pop166, $pop165
-	i32.store8	$discard=, sP+6($pop170):p2align=1, $pop21
+	i32.store8	$discard=, sP+6($pop170), $pop21
 	i32.const	$push164=, 0
 	i32.const	$push163=, 1103515245
 	i32.mul 	$push22=, $1, $pop163
@@ -4453,7 +4453,7 @@ testP:                                  # @testP
 	tee_local	$push154=, $1=, $pop155
 	i32.const	$push153=, 16
 	i32.shr_u	$push25=, $pop154, $pop153
-	i32.store8	$discard=, sP+8($pop158):p2align=3, $pop25
+	i32.store8	$discard=, sP+8($pop158), $pop25
 	i32.const	$push152=, 0
 	i32.const	$push151=, 1103515245
 	i32.mul 	$push26=, $1, $pop151
@@ -4471,7 +4471,7 @@ testP:                                  # @testP
 	tee_local	$push142=, $1=, $pop143
 	i32.const	$push141=, 16
 	i32.shr_u	$push29=, $pop142, $pop141
-	i32.store8	$discard=, sP+10($pop146):p2align=1, $pop29
+	i32.store8	$discard=, sP+10($pop146), $pop29
 	i32.const	$push140=, 0
 	i32.const	$push139=, 1103515245
 	i32.mul 	$push30=, $1, $pop139
@@ -4489,7 +4489,7 @@ testP:                                  # @testP
 	tee_local	$push130=, $1=, $pop131
 	i32.const	$push129=, 16
 	i32.shr_u	$push33=, $pop130, $pop129
-	i32.store8	$discard=, sP+12($pop134):p2align=2, $pop33
+	i32.store8	$discard=, sP+12($pop134), $pop33
 	i32.const	$push128=, 0
 	i32.const	$push127=, 1103515245
 	i32.mul 	$push34=, $1, $pop127
@@ -4507,7 +4507,7 @@ testP:                                  # @testP
 	tee_local	$push118=, $1=, $pop119
 	i32.const	$push117=, 16
 	i32.shr_u	$push37=, $pop118, $pop117
-	i32.store8	$discard=, sP+14($pop122):p2align=1, $pop37
+	i32.store8	$discard=, sP+14($pop122), $pop37
 	i32.const	$push116=, 0
 	i32.const	$push115=, 1103515245
 	i32.mul 	$push38=, $1, $pop115
@@ -4684,7 +4684,7 @@ fn1Q:                                   # @fn1Q
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sQ($pop0):p2align=3
+	i32.load	$push1=, sQ($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -4702,7 +4702,7 @@ fn2Q:                                   # @fn2Q
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sQ($pop0):p2align=3
+	i32.load	$push1=, sQ($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -4721,7 +4721,7 @@ retitQ:                                 # @retitQ
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sQ($pop0):p2align=3
+	i32.load	$push1=, sQ($pop0)
 	i32.const	$push2=, 4095
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -4740,7 +4740,7 @@ fn3Q:                                   # @fn3Q
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push10=, 0
-	i32.load	$push9=, sQ($pop10):p2align=3
+	i32.load	$push9=, sQ($pop10)
 	tee_local	$push8=, $1=, $pop9
 	i32.add 	$push1=, $pop8, $0
 	i32.const	$push2=, 4095
@@ -4749,7 +4749,7 @@ fn3Q:                                   # @fn3Q
 	i32.const	$push3=, -4096
 	i32.and 	$push4=, $1, $pop3
 	i32.or  	$push5=, $pop6, $pop4
-	i32.store	$discard=, sQ($pop0):p2align=3, $pop5
+	i32.store	$discard=, sQ($pop0), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end101:
@@ -4772,7 +4772,7 @@ testQ:                                  # @testQ
 	tee_local	$push152=, $1=, $pop153
 	i32.const	$push5=, 16
 	i32.shr_u	$push6=, $pop152, $pop5
-	i32.store8	$discard=, sQ($pop0):p2align=3, $pop6
+	i32.store8	$discard=, sQ($pop0), $pop6
 	i32.const	$push151=, 0
 	i32.const	$push150=, 1103515245
 	i32.mul 	$push7=, $1, $pop150
@@ -4790,7 +4790,7 @@ testQ:                                  # @testQ
 	tee_local	$push141=, $1=, $pop142
 	i32.const	$push140=, 16
 	i32.shr_u	$push10=, $pop141, $pop140
-	i32.store8	$discard=, sQ+2($pop145):p2align=1, $pop10
+	i32.store8	$discard=, sQ+2($pop145), $pop10
 	i32.const	$push139=, 0
 	i32.const	$push138=, 1103515245
 	i32.mul 	$push11=, $1, $pop138
@@ -4808,7 +4808,7 @@ testQ:                                  # @testQ
 	tee_local	$push129=, $1=, $pop130
 	i32.const	$push128=, 16
 	i32.shr_u	$push14=, $pop129, $pop128
-	i32.store8	$discard=, sQ+4($pop133):p2align=2, $pop14
+	i32.store8	$discard=, sQ+4($pop133), $pop14
 	i32.const	$push127=, 0
 	i32.const	$push126=, 1103515245
 	i32.mul 	$push15=, $1, $pop126
@@ -4826,7 +4826,7 @@ testQ:                                  # @testQ
 	tee_local	$push117=, $1=, $pop118
 	i32.const	$push116=, 16
 	i32.shr_u	$push18=, $pop117, $pop116
-	i32.store8	$discard=, sQ+6($pop121):p2align=1, $pop18
+	i32.store8	$discard=, sQ+6($pop121), $pop18
 	i32.const	$push115=, 0
 	i32.const	$push114=, 1103515245
 	i32.mul 	$push19=, $1, $pop114
@@ -4844,7 +4844,7 @@ testQ:                                  # @testQ
 	tee_local	$push105=, $1=, $pop106
 	i32.const	$push104=, 16
 	i32.shr_u	$push22=, $pop105, $pop104
-	i32.store8	$discard=, sQ+8($pop109):p2align=3, $pop22
+	i32.store8	$discard=, sQ+8($pop109), $pop22
 	i32.const	$push103=, 0
 	i32.const	$push102=, 1103515245
 	i32.mul 	$push23=, $1, $pop102
@@ -4862,7 +4862,7 @@ testQ:                                  # @testQ
 	tee_local	$push93=, $1=, $pop94
 	i32.const	$push92=, 16
 	i32.shr_u	$push26=, $pop93, $pop92
-	i32.store8	$discard=, sQ+10($pop97):p2align=1, $pop26
+	i32.store8	$discard=, sQ+10($pop97), $pop26
 	i32.const	$push91=, 0
 	i32.const	$push90=, 1103515245
 	i32.mul 	$push27=, $1, $pop90
@@ -4880,7 +4880,7 @@ testQ:                                  # @testQ
 	tee_local	$push81=, $1=, $pop82
 	i32.const	$push80=, 16
 	i32.shr_u	$push30=, $pop81, $pop80
-	i32.store8	$discard=, sQ+12($pop85):p2align=2, $pop30
+	i32.store8	$discard=, sQ+12($pop85), $pop30
 	i32.const	$push79=, 0
 	i32.const	$push78=, 1103515245
 	i32.mul 	$push31=, $1, $pop78
@@ -4898,9 +4898,9 @@ testQ:                                  # @testQ
 	tee_local	$push69=, $1=, $pop70
 	i32.const	$push68=, 16
 	i32.shr_u	$push34=, $pop69, $pop68
-	i32.store8	$discard=, sQ+14($pop73):p2align=1, $pop34
+	i32.store8	$discard=, sQ+14($pop73), $pop34
 	i32.const	$push67=, 0
-	i32.load	$0=, sQ($pop67):p2align=3
+	i32.load	$0=, sQ($pop67)
 	i32.const	$push66=, 0
 	i32.const	$push65=, 1103515245
 	i32.mul 	$push35=, $1, $pop65
@@ -4934,7 +4934,7 @@ testQ:                                  # @testQ
 	i32.const	$push37=, -4096
 	i32.and 	$push38=, $0, $pop37
 	i32.or  	$push51=, $pop50, $pop38
-	i32.store	$discard=, sQ($pop60):p2align=3, $pop51
+	i32.store	$discard=, sQ($pop60), $pop51
 	return
 	.endfunc
 .Lfunc_end102:
@@ -4970,7 +4970,7 @@ fn1R:                                   # @fn1R
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sR($pop0):p2align=3
+	i32.load	$push1=, sR($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -4988,7 +4988,7 @@ fn2R:                                   # @fn2R
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sR($pop0):p2align=3
+	i32.load	$push1=, sR($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -5007,7 +5007,7 @@ retitR:                                 # @retitR
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sR($pop0):p2align=3
+	i32.load	$push1=, sR($pop0)
 	i32.const	$push2=, 4095
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -5026,7 +5026,7 @@ fn3R:                                   # @fn3R
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push10=, 0
-	i32.load	$push9=, sR($pop10):p2align=3
+	i32.load	$push9=, sR($pop10)
 	tee_local	$push8=, $1=, $pop9
 	i32.add 	$push1=, $pop8, $0
 	i32.const	$push2=, 4095
@@ -5035,7 +5035,7 @@ fn3R:                                   # @fn3R
 	i32.const	$push3=, -4096
 	i32.and 	$push4=, $1, $pop3
 	i32.or  	$push5=, $pop6, $pop4
-	i32.store	$discard=, sR($pop0):p2align=3, $pop5
+	i32.store	$discard=, sR($pop0), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end107:
@@ -5058,7 +5058,7 @@ testR:                                  # @testR
 	tee_local	$push152=, $1=, $pop153
 	i32.const	$push5=, 16
 	i32.shr_u	$push6=, $pop152, $pop5
-	i32.store8	$discard=, sR($pop0):p2align=3, $pop6
+	i32.store8	$discard=, sR($pop0), $pop6
 	i32.const	$push151=, 0
 	i32.const	$push150=, 1103515245
 	i32.mul 	$push7=, $1, $pop150
@@ -5076,7 +5076,7 @@ testR:                                  # @testR
 	tee_local	$push141=, $1=, $pop142
 	i32.const	$push140=, 16
 	i32.shr_u	$push10=, $pop141, $pop140
-	i32.store8	$discard=, sR+2($pop145):p2align=1, $pop10
+	i32.store8	$discard=, sR+2($pop145), $pop10
 	i32.const	$push139=, 0
 	i32.const	$push138=, 1103515245
 	i32.mul 	$push11=, $1, $pop138
@@ -5094,7 +5094,7 @@ testR:                                  # @testR
 	tee_local	$push129=, $1=, $pop130
 	i32.const	$push128=, 16
 	i32.shr_u	$push14=, $pop129, $pop128
-	i32.store8	$discard=, sR+4($pop133):p2align=2, $pop14
+	i32.store8	$discard=, sR+4($pop133), $pop14
 	i32.const	$push127=, 0
 	i32.const	$push126=, 1103515245
 	i32.mul 	$push15=, $1, $pop126
@@ -5112,7 +5112,7 @@ testR:                                  # @testR
 	tee_local	$push117=, $1=, $pop118
 	i32.const	$push116=, 16
 	i32.shr_u	$push18=, $pop117, $pop116
-	i32.store8	$discard=, sR+6($pop121):p2align=1, $pop18
+	i32.store8	$discard=, sR+6($pop121), $pop18
 	i32.const	$push115=, 0
 	i32.const	$push114=, 1103515245
 	i32.mul 	$push19=, $1, $pop114
@@ -5130,7 +5130,7 @@ testR:                                  # @testR
 	tee_local	$push105=, $1=, $pop106
 	i32.const	$push104=, 16
 	i32.shr_u	$push22=, $pop105, $pop104
-	i32.store8	$discard=, sR+8($pop109):p2align=3, $pop22
+	i32.store8	$discard=, sR+8($pop109), $pop22
 	i32.const	$push103=, 0
 	i32.const	$push102=, 1103515245
 	i32.mul 	$push23=, $1, $pop102
@@ -5148,7 +5148,7 @@ testR:                                  # @testR
 	tee_local	$push93=, $1=, $pop94
 	i32.const	$push92=, 16
 	i32.shr_u	$push26=, $pop93, $pop92
-	i32.store8	$discard=, sR+10($pop97):p2align=1, $pop26
+	i32.store8	$discard=, sR+10($pop97), $pop26
 	i32.const	$push91=, 0
 	i32.const	$push90=, 1103515245
 	i32.mul 	$push27=, $1, $pop90
@@ -5166,7 +5166,7 @@ testR:                                  # @testR
 	tee_local	$push81=, $1=, $pop82
 	i32.const	$push80=, 16
 	i32.shr_u	$push30=, $pop81, $pop80
-	i32.store8	$discard=, sR+12($pop85):p2align=2, $pop30
+	i32.store8	$discard=, sR+12($pop85), $pop30
 	i32.const	$push79=, 0
 	i32.const	$push78=, 1103515245
 	i32.mul 	$push31=, $1, $pop78
@@ -5184,9 +5184,9 @@ testR:                                  # @testR
 	tee_local	$push69=, $1=, $pop70
 	i32.const	$push68=, 16
 	i32.shr_u	$push34=, $pop69, $pop68
-	i32.store8	$discard=, sR+14($pop73):p2align=1, $pop34
+	i32.store8	$discard=, sR+14($pop73), $pop34
 	i32.const	$push67=, 0
-	i32.load	$0=, sR($pop67):p2align=3
+	i32.load	$0=, sR($pop67)
 	i32.const	$push66=, 0
 	i32.const	$push65=, 1103515245
 	i32.mul 	$push35=, $1, $pop65
@@ -5220,7 +5220,7 @@ testR:                                  # @testR
 	i32.const	$push37=, -4096
 	i32.and 	$push38=, $0, $pop37
 	i32.or  	$push51=, $pop50, $pop38
-	i32.store	$discard=, sR($pop60):p2align=3, $pop51
+	i32.store	$discard=, sR($pop60), $pop51
 	return
 	.endfunc
 .Lfunc_end108:
@@ -5256,7 +5256,7 @@ fn1S:                                   # @fn1S
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sS($pop0):p2align=3
+	i32.load16_u	$push1=, sS($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 1
 	i32.and 	$push4=, $pop2, $pop3
@@ -5274,7 +5274,7 @@ fn2S:                                   # @fn2S
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sS($pop0):p2align=3
+	i32.load16_u	$push1=, sS($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 1
 	i32.and 	$push4=, $pop2, $pop3
@@ -5293,7 +5293,7 @@ retitS:                                 # @retitS
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sS($pop0):p2align=3
+	i32.load16_u	$push1=, sS($pop0)
 	i32.const	$push2=, 1
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -5312,7 +5312,7 @@ fn3S:                                   # @fn3S
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push10=, 0
-	i32.load16_u	$push9=, sS($pop10):p2align=3
+	i32.load16_u	$push9=, sS($pop10)
 	tee_local	$push8=, $1=, $pop9
 	i32.add 	$push1=, $pop8, $0
 	i32.const	$push4=, 1
@@ -5321,7 +5321,7 @@ fn3S:                                   # @fn3S
 	i32.const	$push2=, 65534
 	i32.and 	$push3=, $1, $pop2
 	i32.or  	$push5=, $pop6, $pop3
-	i32.store16	$discard=, sS($pop0):p2align=3, $pop5
+	i32.store16	$discard=, sS($pop0), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end113:
@@ -5344,7 +5344,7 @@ testS:                                  # @testS
 	tee_local	$push151=, $1=, $pop152
 	i32.const	$push5=, 16
 	i32.shr_u	$push6=, $pop151, $pop5
-	i32.store8	$discard=, sS($pop0):p2align=3, $pop6
+	i32.store8	$discard=, sS($pop0), $pop6
 	i32.const	$push150=, 0
 	i32.const	$push149=, 1103515245
 	i32.mul 	$push7=, $1, $pop149
@@ -5362,7 +5362,7 @@ testS:                                  # @testS
 	tee_local	$push140=, $1=, $pop141
 	i32.const	$push139=, 16
 	i32.shr_u	$push10=, $pop140, $pop139
-	i32.store8	$discard=, sS+2($pop144):p2align=1, $pop10
+	i32.store8	$discard=, sS+2($pop144), $pop10
 	i32.const	$push138=, 0
 	i32.const	$push137=, 1103515245
 	i32.mul 	$push11=, $1, $pop137
@@ -5380,7 +5380,7 @@ testS:                                  # @testS
 	tee_local	$push128=, $1=, $pop129
 	i32.const	$push127=, 16
 	i32.shr_u	$push14=, $pop128, $pop127
-	i32.store8	$discard=, sS+4($pop132):p2align=2, $pop14
+	i32.store8	$discard=, sS+4($pop132), $pop14
 	i32.const	$push126=, 0
 	i32.const	$push125=, 1103515245
 	i32.mul 	$push15=, $1, $pop125
@@ -5398,7 +5398,7 @@ testS:                                  # @testS
 	tee_local	$push116=, $1=, $pop117
 	i32.const	$push115=, 16
 	i32.shr_u	$push18=, $pop116, $pop115
-	i32.store8	$discard=, sS+6($pop120):p2align=1, $pop18
+	i32.store8	$discard=, sS+6($pop120), $pop18
 	i32.const	$push114=, 0
 	i32.const	$push113=, 1103515245
 	i32.mul 	$push19=, $1, $pop113
@@ -5416,7 +5416,7 @@ testS:                                  # @testS
 	tee_local	$push104=, $1=, $pop105
 	i32.const	$push103=, 16
 	i32.shr_u	$push22=, $pop104, $pop103
-	i32.store8	$discard=, sS+8($pop108):p2align=3, $pop22
+	i32.store8	$discard=, sS+8($pop108), $pop22
 	i32.const	$push102=, 0
 	i32.const	$push101=, 1103515245
 	i32.mul 	$push23=, $1, $pop101
@@ -5434,7 +5434,7 @@ testS:                                  # @testS
 	tee_local	$push92=, $1=, $pop93
 	i32.const	$push91=, 16
 	i32.shr_u	$push26=, $pop92, $pop91
-	i32.store8	$discard=, sS+10($pop96):p2align=1, $pop26
+	i32.store8	$discard=, sS+10($pop96), $pop26
 	i32.const	$push90=, 0
 	i32.const	$push89=, 1103515245
 	i32.mul 	$push27=, $1, $pop89
@@ -5452,7 +5452,7 @@ testS:                                  # @testS
 	tee_local	$push80=, $1=, $pop81
 	i32.const	$push79=, 16
 	i32.shr_u	$push30=, $pop80, $pop79
-	i32.store8	$discard=, sS+12($pop84):p2align=2, $pop30
+	i32.store8	$discard=, sS+12($pop84), $pop30
 	i32.const	$push78=, 0
 	i32.const	$push77=, 1103515245
 	i32.mul 	$push31=, $1, $pop77
@@ -5470,9 +5470,9 @@ testS:                                  # @testS
 	tee_local	$push68=, $1=, $pop69
 	i32.const	$push67=, 16
 	i32.shr_u	$push34=, $pop68, $pop67
-	i32.store8	$discard=, sS+14($pop72):p2align=1, $pop34
+	i32.store8	$discard=, sS+14($pop72), $pop34
 	i32.const	$push66=, 0
-	i32.load16_u	$0=, sS($pop66):p2align=3
+	i32.load16_u	$0=, sS($pop66)
 	i32.const	$push65=, 0
 	i32.const	$push64=, 1103515245
 	i32.mul 	$push35=, $1, $pop64
@@ -5504,7 +5504,7 @@ testS:                                  # @testS
 	i32.const	$push37=, 65534
 	i32.and 	$push38=, $0, $pop37
 	i32.or  	$push50=, $pop49, $pop38
-	i32.store16	$discard=, sS($pop59):p2align=3, $pop50
+	i32.store16	$discard=, sS($pop59), $pop50
 	block
 	i32.const	$push51=, 1
 	i32.const	$push154=, 0
@@ -5561,7 +5561,7 @@ fn2T:                                   # @fn2T
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sT($pop0):p2align=2
+	i32.load16_u	$push1=, sT($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 1
 	i32.and 	$push4=, $pop2, $pop3
@@ -5580,7 +5580,7 @@ retitT:                                 # @retitT
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sT($pop0):p2align=2
+	i32.load16_u	$push1=, sT($pop0)
 	i32.const	$push2=, 1
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -5599,7 +5599,7 @@ fn3T:                                   # @fn3T
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push10=, 0
-	i32.load16_u	$push9=, sT($pop10):p2align=2
+	i32.load16_u	$push9=, sT($pop10)
 	tee_local	$push8=, $1=, $pop9
 	i32.add 	$push1=, $pop8, $0
 	i32.const	$push4=, 1
@@ -5608,7 +5608,7 @@ fn3T:                                   # @fn3T
 	i32.const	$push2=, 65534
 	i32.and 	$push3=, $1, $pop2
 	i32.or  	$push5=, $pop6, $pop3
-	i32.store16	$discard=, sT($pop0):p2align=2, $pop5
+	i32.store16	$discard=, sT($pop0), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end119:
@@ -5631,7 +5631,7 @@ testT:                                  # @testT
 	tee_local	$push72=, $0=, $pop73
 	i32.const	$push71=, 16
 	i32.shr_u	$push3=, $pop72, $pop71
-	i32.store8	$discard=, sT($pop77):p2align=2, $pop3
+	i32.store8	$discard=, sT($pop77), $pop3
 	i32.const	$push70=, 0
 	i32.const	$push69=, 1103515245
 	i32.mul 	$push4=, $0, $pop69
@@ -5649,7 +5649,7 @@ testT:                                  # @testT
 	tee_local	$push60=, $0=, $pop61
 	i32.const	$push59=, 16
 	i32.shr_u	$push7=, $pop60, $pop59
-	i32.store8	$discard=, sT+2($pop64):p2align=1, $pop7
+	i32.store8	$discard=, sT+2($pop64), $pop7
 	i32.const	$push58=, 0
 	i32.const	$push57=, 1103515245
 	i32.mul 	$push8=, $0, $pop57
@@ -5671,11 +5671,11 @@ testT:                                  # @testT
 	i32.const	$push44=, 1
 	i32.and 	$push13=, $pop45, $pop44
 	i32.const	$push43=, 0
-	i32.load16_u	$push10=, sT($pop43):p2align=2
+	i32.load16_u	$push10=, sT($pop43)
 	i32.const	$push42=, 65534
 	i32.and 	$push14=, $pop10, $pop42
 	i32.or  	$push15=, $pop13, $pop14
-	i32.store16	$discard=, sT($pop52):p2align=2, $pop15
+	i32.store16	$discard=, sT($pop52), $pop15
 	i32.const	$push41=, 0
 	i32.load	$0=, sT($pop41)
 	block
@@ -5718,7 +5718,7 @@ testT:                                  # @testT
 	i32.const	$push79=, 65534
 	i32.and 	$push20=, $0, $pop79
 	i32.or  	$push31=, $pop30, $pop20
-	i32.store16	$discard=, sT($pop88):p2align=2, $pop31
+	i32.store16	$discard=, sT($pop88), $pop31
 	i32.const	$push78=, 1
 	i32.const	$push89=, 0
 	i32.eq  	$push90=, $pop78, $pop89
@@ -5763,7 +5763,7 @@ fn1U:                                   # @fn1U
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sU($pop0):p2align=3
+	i32.load16_u	$push1=, sU($pop0)
 	i32.const	$push2=, 6
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -5783,7 +5783,7 @@ fn2U:                                   # @fn2U
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sU($pop0):p2align=3
+	i32.load16_u	$push1=, sU($pop0)
 	i32.const	$push2=, 6
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -5804,7 +5804,7 @@ retitU:                                 # @retitU
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, sU($pop0):p2align=3
+	i32.load16_u	$push1=, sU($pop0)
 	i32.const	$push2=, 6
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.const	$push4=, 1
@@ -5825,7 +5825,7 @@ fn3U:                                   # @fn3U
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push16=, 0
-	i32.load16_u	$push15=, sU($pop16):p2align=3
+	i32.load16_u	$push15=, sU($pop16)
 	tee_local	$push14=, $1=, $pop15
 	i32.const	$push1=, 6
 	i32.shr_u	$push2=, $pop14, $pop1
@@ -5838,7 +5838,7 @@ fn3U:                                   # @fn3U
 	i32.const	$push6=, 65471
 	i32.and 	$push7=, $1, $pop6
 	i32.or  	$push8=, $pop5, $pop7
-	i32.store16	$discard=, sU($pop0):p2align=3, $pop8
+	i32.store16	$discard=, sU($pop0), $pop8
 	i32.const	$push9=, 1
 	i32.and 	$push10=, $0, $pop9
 	return  	$pop10
@@ -5863,7 +5863,7 @@ testU:                                  # @testU
 	tee_local	$push214=, $2=, $pop215
 	i32.const	$push213=, 16
 	i32.shr_u	$push7=, $pop214, $pop213
-	i32.store8	$discard=, sU($pop2):p2align=3, $pop7
+	i32.store8	$discard=, sU($pop2), $pop7
 	i32.const	$push212=, 0
 	i32.const	$push211=, 1103515245
 	i32.mul 	$push8=, $2, $pop211
@@ -5881,7 +5881,7 @@ testU:                                  # @testU
 	tee_local	$push202=, $2=, $pop203
 	i32.const	$push201=, 16
 	i32.shr_u	$push11=, $pop202, $pop201
-	i32.store8	$discard=, sU+2($pop206):p2align=1, $pop11
+	i32.store8	$discard=, sU+2($pop206), $pop11
 	i32.const	$push200=, 0
 	i32.const	$push199=, 1103515245
 	i32.mul 	$push12=, $2, $pop199
@@ -5899,7 +5899,7 @@ testU:                                  # @testU
 	tee_local	$push190=, $2=, $pop191
 	i32.const	$push189=, 16
 	i32.shr_u	$push15=, $pop190, $pop189
-	i32.store8	$discard=, sU+4($pop194):p2align=2, $pop15
+	i32.store8	$discard=, sU+4($pop194), $pop15
 	i32.const	$push188=, 0
 	i32.const	$push187=, 1103515245
 	i32.mul 	$push16=, $2, $pop187
@@ -5917,7 +5917,7 @@ testU:                                  # @testU
 	tee_local	$push178=, $2=, $pop179
 	i32.const	$push177=, 16
 	i32.shr_u	$push19=, $pop178, $pop177
-	i32.store8	$discard=, sU+6($pop182):p2align=1, $pop19
+	i32.store8	$discard=, sU+6($pop182), $pop19
 	i32.const	$push176=, 0
 	i32.const	$push175=, 1103515245
 	i32.mul 	$push20=, $2, $pop175
@@ -5935,7 +5935,7 @@ testU:                                  # @testU
 	tee_local	$push166=, $2=, $pop167
 	i32.const	$push165=, 16
 	i32.shr_u	$push23=, $pop166, $pop165
-	i32.store8	$discard=, sU+8($pop170):p2align=3, $pop23
+	i32.store8	$discard=, sU+8($pop170), $pop23
 	i32.const	$push164=, 0
 	i32.const	$push163=, 1103515245
 	i32.mul 	$push24=, $2, $pop163
@@ -5953,7 +5953,7 @@ testU:                                  # @testU
 	tee_local	$push154=, $2=, $pop155
 	i32.const	$push153=, 16
 	i32.shr_u	$push27=, $pop154, $pop153
-	i32.store8	$discard=, sU+10($pop158):p2align=1, $pop27
+	i32.store8	$discard=, sU+10($pop158), $pop27
 	i32.const	$push152=, 0
 	i32.const	$push151=, 1103515245
 	i32.mul 	$push28=, $2, $pop151
@@ -5971,7 +5971,7 @@ testU:                                  # @testU
 	tee_local	$push142=, $2=, $pop143
 	i32.const	$push141=, 16
 	i32.shr_u	$push31=, $pop142, $pop141
-	i32.store8	$discard=, sU+12($pop146):p2align=2, $pop31
+	i32.store8	$discard=, sU+12($pop146), $pop31
 	i32.const	$push140=, 0
 	i32.const	$push139=, 1103515245
 	i32.mul 	$push32=, $2, $pop139
@@ -5989,7 +5989,7 @@ testU:                                  # @testU
 	tee_local	$push130=, $2=, $pop131
 	i32.const	$push129=, 16
 	i32.shr_u	$push35=, $pop130, $pop129
-	i32.store8	$discard=, sU+14($pop134):p2align=1, $pop35
+	i32.store8	$discard=, sU+14($pop134), $pop35
 	i32.const	$push128=, 0
 	i32.const	$push127=, 1103515245
 	i32.mul 	$push36=, $2, $pop127
@@ -6000,7 +6000,7 @@ testU:                                  # @testU
 	i32.shr_u	$push37=, $pop124, $pop123
 	i32.store8	$discard=, sU+15($pop128), $pop37
 	i32.const	$push122=, 0
-	i32.load16_u	$0=, sU($pop122):p2align=3
+	i32.load16_u	$0=, sU($pop122)
 	i32.const	$push121=, 0
 	i32.const	$push120=, 1103515245
 	i32.mul 	$push38=, $2, $pop120
@@ -6028,7 +6028,7 @@ testU:                                  # @testU
 	tee_local	$push107=, $2=, $pop108
 	i32.or  	$push106=, $pop44, $pop107
 	tee_local	$push105=, $0=, $pop106
-	i32.store16	$discard=, sU($pop114):p2align=3, $pop105
+	i32.store16	$discard=, sU($pop114), $pop105
 	block
 	i32.const	$push46=, 65472
 	i32.and 	$push47=, $0, $pop46
@@ -6074,7 +6074,7 @@ testU:                                  # @testU
 	i32.and 	$push63=, $pop61, $pop62
 	i32.or  	$push226=, $pop63, $2
 	tee_local	$push225=, $3=, $pop226
-	i32.store16	$discard=, sU($pop232):p2align=3, $pop225
+	i32.store16	$discard=, sU($pop232), $pop225
 	i32.const	$push64=, 65472
 	i32.and 	$push65=, $3, $pop64
 	i32.const	$push224=, 6
@@ -6132,7 +6132,7 @@ testU:                                  # @testU
 	i32.const	$push244=, 64
 	i32.and 	$push95=, $pop94, $pop244
 	i32.or  	$push96=, $pop95, $2
-	i32.store16	$discard=, sU($pop83):p2align=3, $pop96
+	i32.store16	$discard=, sU($pop83), $pop96
 	i32.const	$push243=, 16
 	i32.shr_u	$push80=, $1, $pop243
 	i32.add 	$push97=, $0, $pop80
@@ -6231,7 +6231,7 @@ fn3V:                                   # @fn3V
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push16=, 0
-	i32.load16_u	$push15=, sV($pop16):p2align=2
+	i32.load16_u	$push15=, sV($pop16)
 	tee_local	$push14=, $1=, $pop15
 	i32.const	$push1=, 8
 	i32.shr_u	$push2=, $pop14, $pop1
@@ -6244,7 +6244,7 @@ fn3V:                                   # @fn3V
 	i32.const	$push6=, 65279
 	i32.and 	$push7=, $1, $pop6
 	i32.or  	$push8=, $pop5, $pop7
-	i32.store16	$discard=, sV($pop0):p2align=2, $pop8
+	i32.store16	$discard=, sV($pop0), $pop8
 	i32.const	$push9=, 1
 	i32.and 	$push10=, $0, $pop9
 	return  	$pop10
@@ -6269,7 +6269,7 @@ testV:                                  # @testV
 	tee_local	$push104=, $0=, $pop105
 	i32.const	$push103=, 16
 	i32.shr_u	$push4=, $pop104, $pop103
-	i32.store8	$discard=, sV($pop109):p2align=2, $pop4
+	i32.store8	$discard=, sV($pop109), $pop4
 	i32.const	$push102=, 0
 	i32.const	$push101=, 1103515245
 	i32.mul 	$push5=, $0, $pop101
@@ -6287,7 +6287,7 @@ testV:                                  # @testV
 	tee_local	$push92=, $0=, $pop93
 	i32.const	$push91=, 16
 	i32.shr_u	$push8=, $pop92, $pop91
-	i32.store8	$discard=, sV+2($pop96):p2align=1, $pop8
+	i32.store8	$discard=, sV+2($pop96), $pop8
 	i32.const	$push90=, 0
 	i32.const	$push89=, 1103515245
 	i32.mul 	$push9=, $0, $pop89
@@ -6308,11 +6308,11 @@ testV:                                  # @testV
 	i32.const	$push78=, 256
 	i32.and 	$push16=, $pop15, $pop78
 	i32.const	$push77=, 0
-	i32.load16_u	$push11=, sV($pop77):p2align=2
+	i32.load16_u	$push11=, sV($pop77)
 	i32.const	$push76=, 65279
 	i32.and 	$push17=, $pop11, $pop76
 	i32.or  	$push18=, $pop16, $pop17
-	i32.store16	$discard=, sV($pop84):p2align=2, $pop18
+	i32.store16	$discard=, sV($pop84), $pop18
 	i32.const	$push75=, 0
 	i32.load	$0=, sV($pop75)
 	block
@@ -6363,7 +6363,7 @@ testV:                                  # @testV
 	i32.and 	$push30=, $0, $pop29
 	i32.or  	$push115=, $pop28, $pop30
 	tee_local	$push114=, $2=, $pop115
-	i32.store16	$discard=, sV($pop123):p2align=2, $pop114
+	i32.store16	$discard=, sV($pop123), $pop114
 	i32.const	$push31=, 65280
 	i32.and 	$push32=, $2, $pop31
 	i32.const	$push113=, 8
@@ -6422,7 +6422,7 @@ testV:                                  # @testV
 	i32.const	$push139=, 256
 	i32.and 	$push59=, $pop58, $pop139
 	i32.or  	$push60=, $pop59, $0
-	i32.store16	$discard=, sV($pop50):p2align=2, $pop60
+	i32.store16	$discard=, sV($pop50), $pop60
 	i32.const	$push138=, 16
 	i32.shr_u	$push47=, $3, $pop138
 	i32.add 	$push61=, $1, $pop47
@@ -6451,8 +6451,8 @@ retmeW:                                 # @retmeW
 	i32.const	$push1=, 24
 	i32.add 	$push3=, $1, $pop1
 	i64.load	$2=, 0($pop3)
-	i64.load	$push0=, 0($1):p2align=4
-	i64.store	$discard=, 0($0):p2align=4, $pop0
+	i64.load	$push0=, 0($1)
+	i64.store	$discard=, 0($0), $pop0
 	i32.const	$push13=, 24
 	i32.add 	$push2=, $0, $pop13
 	i64.store	$discard=, 0($pop2), $2
@@ -6463,8 +6463,8 @@ retmeW:                                 # @retmeW
 	i32.add 	$push5=, $0, $pop4
 	i32.const	$push12=, 16
 	i32.add 	$push6=, $1, $pop12
-	i64.load	$push7=, 0($pop6):p2align=4
-	i64.store	$discard=, 0($pop5):p2align=4, $pop7
+	i64.load	$push7=, 0($pop6)
+	i64.store	$discard=, 0($pop5), $pop7
 	i32.const	$push11=, 8
 	i32.add 	$push9=, $0, $pop11
 	i64.store	$discard=, 0($pop9), $2
@@ -6482,7 +6482,7 @@ fn1W:                                   # @fn1W
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sW+16($pop0):p2align=4
+	i32.load	$push1=, sW+16($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -6500,7 +6500,7 @@ fn2W:                                   # @fn2W
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sW+16($pop0):p2align=4
+	i32.load	$push1=, sW+16($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -6519,7 +6519,7 @@ retitW:                                 # @retitW
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sW+16($pop0):p2align=4
+	i32.load	$push1=, sW+16($pop0)
 	i32.const	$push2=, 4095
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -6538,7 +6538,7 @@ fn3W:                                   # @fn3W
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push10=, 0
-	i32.load	$push9=, sW+16($pop10):p2align=4
+	i32.load	$push9=, sW+16($pop10)
 	tee_local	$push8=, $1=, $pop9
 	i32.add 	$push1=, $pop8, $0
 	i32.const	$push2=, 4095
@@ -6547,7 +6547,7 @@ fn3W:                                   # @fn3W
 	i32.const	$push3=, -4096
 	i32.and 	$push4=, $1, $pop3
 	i32.or  	$push5=, $pop6, $pop4
-	i32.store	$discard=, sW+16($pop0):p2align=4, $pop5
+	i32.store	$discard=, sW+16($pop0), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end137:
@@ -6560,94 +6560,98 @@ fn3W:                                   # @fn3W
 testW:                                  # @testW
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$1=, myrnd.s($pop0)
 	i32.const	$0=, -32
 .LBB138_1:                              # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label15:
-	i32.const	$push39=, 1103515245
-	i32.mul 	$push1=, $1, $pop39
-	i32.const	$push38=, 12345
-	i32.add 	$1=, $pop1, $pop38
-	i32.const	$push37=, 16
-	i32.shr_u	$push2=, $1, $pop37
-	i32.store8	$discard=, sW+32($0), $pop2
-	i32.const	$push36=, 1
-	i32.add 	$0=, $0, $pop36
+	i32.const	$push44=, 0
+	i32.const	$push43=, 0
+	i32.load	$push0=, myrnd.s($pop43)
+	i32.const	$push42=, 1103515245
+	i32.mul 	$push1=, $pop0, $pop42
+	i32.const	$push41=, 12345
+	i32.add 	$push2=, $pop1, $pop41
+	i32.store	$push3=, myrnd.s($pop44), $pop2
+	i32.const	$push40=, 16
+	i32.shr_u	$push4=, $pop3, $pop40
+	i32.store8	$discard=, sW+32($0), $pop4
+	i32.const	$push39=, 1
+	i32.add 	$0=, $0, $pop39
 	br_if   	0, $0           # 0: up to label15
 # BB#2:                                 # %for.end
 	end_loop                        # label16:
-	i32.const	$push3=, 0
-	i32.const	$push7=, 1103515245
-	i32.mul 	$push8=, $1, $pop7
-	i32.const	$push9=, 12345
-	i32.add 	$push71=, $pop8, $pop9
-	tee_local	$push70=, $1=, $pop71
-	i32.const	$push10=, 16
-	i32.shr_u	$push11=, $pop70, $pop10
-	i32.const	$push12=, 2047
-	i32.and 	$push13=, $pop11, $pop12
-	i32.const	$push69=, 0
-	i32.load	$push6=, sW+16($pop69):p2align=4
-	i32.const	$push17=, -4096
-	i32.and 	$push68=, $pop6, $pop17
-	tee_local	$push67=, $0=, $pop68
-	i32.or  	$push18=, $pop13, $pop67
-	i32.store	$discard=, sW+16($pop3):p2align=4, $pop18
-	i32.const	$push66=, 0
-	i32.const	$push65=, 0
-	i32.const	$push64=, 1103515245
-	i32.mul 	$push14=, $1, $pop64
-	i32.const	$push63=, 12345
-	i32.add 	$push15=, $pop14, $pop63
-	i32.store	$push16=, myrnd.s($pop65), $pop15
-	i32.const	$push62=, 1103515245
-	i32.mul 	$push19=, $pop16, $pop62
-	i32.const	$push61=, 12345
-	i32.add 	$push60=, $pop19, $pop61
-	tee_local	$push59=, $1=, $pop60
-	i32.const	$push58=, 16
-	i32.shr_u	$push20=, $pop59, $pop58
-	i32.const	$push57=, 2047
-	i32.and 	$push21=, $pop20, $pop57
-	i32.or  	$push25=, $pop21, $0
-	i32.store	$discard=, sW+16($pop66):p2align=4, $pop25
-	i32.const	$push56=, 0
-	i32.const	$push55=, 0
-	i32.const	$push54=, 0
-	i32.const	$push53=, 1103515245
-	i32.mul 	$push22=, $1, $pop53
-	i32.const	$push52=, 12345
-	i32.add 	$push23=, $pop22, $pop52
-	i32.store	$push24=, myrnd.s($pop54), $pop23
-	i32.const	$push51=, 1103515245
-	i32.mul 	$push26=, $pop24, $pop51
-	i32.const	$push50=, 12345
-	i32.add 	$push49=, $pop26, $pop50
-	tee_local	$push48=, $1=, $pop49
-	i32.const	$push47=, 1103515245
-	i32.mul 	$push29=, $pop48, $pop47
-	i32.const	$push46=, 12345
-	i32.add 	$push30=, $pop29, $pop46
-	i32.store	$push31=, myrnd.s($pop55), $pop30
-	i32.const	$push45=, 16
-	i32.shr_u	$push32=, $pop31, $pop45
-	i32.const	$push44=, 2047
-	i32.and 	$push33=, $pop32, $pop44
-	i32.const	$push43=, 16
-	i32.shr_u	$push27=, $1, $pop43
-	i32.const	$push42=, 2047
-	i32.and 	$push28=, $pop27, $pop42
-	i32.add 	$push34=, $pop33, $pop28
-	i32.or  	$push35=, $pop34, $0
-	i32.store	$discard=, sW+16($pop56):p2align=4, $pop35
-	i32.const	$push41=, 0
-	i64.const	$push4=, 4612055454334320640
-	i64.store	$discard=, sW+8($pop41), $pop4
-	i32.const	$push40=, 0
-	i64.const	$push5=, 0
-	i64.store	$discard=, sW($pop40):p2align=4, $pop5
+	i32.const	$push5=, 0
+	i32.const	$push77=, 0
+	i32.load	$push9=, myrnd.s($pop77)
+	i32.const	$push10=, 1103515245
+	i32.mul 	$push11=, $pop9, $pop10
+	i32.const	$push12=, 12345
+	i32.add 	$push76=, $pop11, $pop12
+	tee_local	$push75=, $1=, $pop76
+	i32.const	$push13=, 16
+	i32.shr_u	$push14=, $pop75, $pop13
+	i32.const	$push15=, 2047
+	i32.and 	$push16=, $pop14, $pop15
+	i32.const	$push74=, 0
+	i32.load	$push8=, sW+16($pop74)
+	i32.const	$push20=, -4096
+	i32.and 	$push73=, $pop8, $pop20
+	tee_local	$push72=, $0=, $pop73
+	i32.or  	$push21=, $pop16, $pop72
+	i32.store	$discard=, sW+16($pop5), $pop21
+	i32.const	$push71=, 0
+	i32.const	$push70=, 0
+	i32.const	$push69=, 1103515245
+	i32.mul 	$push17=, $1, $pop69
+	i32.const	$push68=, 12345
+	i32.add 	$push18=, $pop17, $pop68
+	i32.store	$push19=, myrnd.s($pop70), $pop18
+	i32.const	$push67=, 1103515245
+	i32.mul 	$push22=, $pop19, $pop67
+	i32.const	$push66=, 12345
+	i32.add 	$push65=, $pop22, $pop66
+	tee_local	$push64=, $1=, $pop65
+	i32.const	$push63=, 16
+	i32.shr_u	$push23=, $pop64, $pop63
+	i32.const	$push62=, 2047
+	i32.and 	$push24=, $pop23, $pop62
+	i32.or  	$push28=, $pop24, $0
+	i32.store	$discard=, sW+16($pop71), $pop28
+	i32.const	$push61=, 0
+	i32.const	$push60=, 0
+	i32.const	$push59=, 0
+	i32.const	$push58=, 1103515245
+	i32.mul 	$push25=, $1, $pop58
+	i32.const	$push57=, 12345
+	i32.add 	$push26=, $pop25, $pop57
+	i32.store	$push27=, myrnd.s($pop59), $pop26
+	i32.const	$push56=, 1103515245
+	i32.mul 	$push29=, $pop27, $pop56
+	i32.const	$push55=, 12345
+	i32.add 	$push54=, $pop29, $pop55
+	tee_local	$push53=, $1=, $pop54
+	i32.const	$push52=, 1103515245
+	i32.mul 	$push32=, $pop53, $pop52
+	i32.const	$push51=, 12345
+	i32.add 	$push33=, $pop32, $pop51
+	i32.store	$push34=, myrnd.s($pop60), $pop33
+	i32.const	$push50=, 16
+	i32.shr_u	$push35=, $pop34, $pop50
+	i32.const	$push49=, 2047
+	i32.and 	$push36=, $pop35, $pop49
+	i32.const	$push48=, 16
+	i32.shr_u	$push30=, $1, $pop48
+	i32.const	$push47=, 2047
+	i32.and 	$push31=, $pop30, $pop47
+	i32.add 	$push37=, $pop36, $pop31
+	i32.or  	$push38=, $pop37, $0
+	i32.store	$discard=, sW+16($pop61), $pop38
+	i32.const	$push46=, 0
+	i64.const	$push6=, 4612055454334320640
+	i64.store	$discard=, sW+8($pop46), $pop6
+	i32.const	$push45=, 0
+	i64.const	$push7=, 0
+	i64.store	$discard=, sW($pop45), $pop7
 	return
 	.endfunc
 .Lfunc_end138:
@@ -6664,8 +6668,8 @@ retmeX:                                 # @retmeX
 	i32.const	$push1=, 24
 	i32.add 	$push3=, $1, $pop1
 	i64.load	$2=, 0($pop3)
-	i64.load	$push0=, 0($1):p2align=4
-	i64.store	$discard=, 0($0):p2align=4, $pop0
+	i64.load	$push0=, 0($1)
+	i64.store	$discard=, 0($0), $pop0
 	i32.const	$push13=, 24
 	i32.add 	$push2=, $0, $pop13
 	i64.store	$discard=, 0($pop2), $2
@@ -6676,8 +6680,8 @@ retmeX:                                 # @retmeX
 	i32.add 	$push5=, $0, $pop4
 	i32.const	$push12=, 16
 	i32.add 	$push6=, $1, $pop12
-	i64.load	$push7=, 0($pop6):p2align=4
-	i64.store	$discard=, 0($pop5):p2align=4, $pop7
+	i64.load	$push7=, 0($pop6)
+	i64.store	$discard=, 0($pop5), $pop7
 	i32.const	$push11=, 8
 	i32.add 	$push9=, $0, $pop11
 	i64.store	$discard=, 0($pop9), $2
@@ -6695,7 +6699,7 @@ fn1X:                                   # @fn1X
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sX($pop0):p2align=4
+	i32.load	$push1=, sX($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -6713,7 +6717,7 @@ fn2X:                                   # @fn2X
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sX($pop0):p2align=4
+	i32.load	$push1=, sX($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -6732,7 +6736,7 @@ retitX:                                 # @retitX
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sX($pop0):p2align=4
+	i32.load	$push1=, sX($pop0)
 	i32.const	$push2=, 4095
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -6751,7 +6755,7 @@ fn3X:                                   # @fn3X
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push10=, 0
-	i32.load	$push9=, sX($pop10):p2align=4
+	i32.load	$push9=, sX($pop10)
 	tee_local	$push8=, $1=, $pop9
 	i32.add 	$push1=, $pop8, $0
 	i32.const	$push2=, 4095
@@ -6760,7 +6764,7 @@ fn3X:                                   # @fn3X
 	i32.const	$push3=, -4096
 	i32.and 	$push4=, $1, $pop3
 	i32.or  	$push5=, $pop6, $pop4
-	i32.store	$discard=, sX($pop0):p2align=4, $pop5
+	i32.store	$discard=, sX($pop0), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end143:
@@ -6773,94 +6777,98 @@ fn3X:                                   # @fn3X
 testX:                                  # @testX
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$1=, myrnd.s($pop0)
 	i32.const	$0=, -32
 .LBB144_1:                              # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label17:
-	i32.const	$push39=, 1103515245
-	i32.mul 	$push1=, $1, $pop39
-	i32.const	$push38=, 12345
-	i32.add 	$1=, $pop1, $pop38
-	i32.const	$push37=, 16
-	i32.shr_u	$push2=, $1, $pop37
-	i32.store8	$discard=, sX+32($0), $pop2
-	i32.const	$push36=, 1
-	i32.add 	$0=, $0, $pop36
+	i32.const	$push44=, 0
+	i32.const	$push43=, 0
+	i32.load	$push0=, myrnd.s($pop43)
+	i32.const	$push42=, 1103515245
+	i32.mul 	$push1=, $pop0, $pop42
+	i32.const	$push41=, 12345
+	i32.add 	$push2=, $pop1, $pop41
+	i32.store	$push3=, myrnd.s($pop44), $pop2
+	i32.const	$push40=, 16
+	i32.shr_u	$push4=, $pop3, $pop40
+	i32.store8	$discard=, sX+32($0), $pop4
+	i32.const	$push39=, 1
+	i32.add 	$0=, $0, $pop39
 	br_if   	0, $0           # 0: up to label17
 # BB#2:                                 # %for.end
 	end_loop                        # label18:
-	i32.const	$push3=, 0
-	i32.const	$push7=, 1103515245
-	i32.mul 	$push8=, $1, $pop7
-	i32.const	$push9=, 12345
-	i32.add 	$push71=, $pop8, $pop9
-	tee_local	$push70=, $1=, $pop71
-	i32.const	$push10=, 16
-	i32.shr_u	$push11=, $pop70, $pop10
-	i32.const	$push12=, 2047
-	i32.and 	$push13=, $pop11, $pop12
-	i32.const	$push69=, 0
-	i32.load	$push6=, sX($pop69):p2align=4
-	i32.const	$push17=, -4096
-	i32.and 	$push68=, $pop6, $pop17
-	tee_local	$push67=, $0=, $pop68
-	i32.or  	$push18=, $pop13, $pop67
-	i32.store	$discard=, sX($pop3):p2align=4, $pop18
-	i32.const	$push66=, 0
-	i32.const	$push65=, 0
-	i32.const	$push64=, 1103515245
-	i32.mul 	$push14=, $1, $pop64
-	i32.const	$push63=, 12345
-	i32.add 	$push15=, $pop14, $pop63
-	i32.store	$push16=, myrnd.s($pop65), $pop15
-	i32.const	$push62=, 1103515245
-	i32.mul 	$push19=, $pop16, $pop62
-	i32.const	$push61=, 12345
-	i32.add 	$push60=, $pop19, $pop61
-	tee_local	$push59=, $1=, $pop60
-	i32.const	$push58=, 16
-	i32.shr_u	$push20=, $pop59, $pop58
-	i32.const	$push57=, 2047
-	i32.and 	$push21=, $pop20, $pop57
-	i32.or  	$push25=, $pop21, $0
-	i32.store	$discard=, sX($pop66):p2align=4, $pop25
-	i32.const	$push56=, 0
-	i32.const	$push55=, 0
-	i32.const	$push54=, 0
-	i32.const	$push53=, 1103515245
-	i32.mul 	$push22=, $1, $pop53
-	i32.const	$push52=, 12345
-	i32.add 	$push23=, $pop22, $pop52
-	i32.store	$push24=, myrnd.s($pop54), $pop23
-	i32.const	$push51=, 1103515245
-	i32.mul 	$push26=, $pop24, $pop51
-	i32.const	$push50=, 12345
-	i32.add 	$push49=, $pop26, $pop50
-	tee_local	$push48=, $1=, $pop49
-	i32.const	$push47=, 1103515245
-	i32.mul 	$push29=, $pop48, $pop47
-	i32.const	$push46=, 12345
-	i32.add 	$push30=, $pop29, $pop46
-	i32.store	$push31=, myrnd.s($pop55), $pop30
-	i32.const	$push45=, 16
-	i32.shr_u	$push32=, $pop31, $pop45
-	i32.const	$push44=, 2047
-	i32.and 	$push33=, $pop32, $pop44
-	i32.const	$push43=, 16
-	i32.shr_u	$push27=, $1, $pop43
-	i32.const	$push42=, 2047
-	i32.and 	$push28=, $pop27, $pop42
-	i32.add 	$push34=, $pop33, $pop28
-	i32.or  	$push35=, $pop34, $0
-	i32.store	$discard=, sX($pop56):p2align=4, $pop35
-	i32.const	$push41=, 0
-	i64.const	$push4=, 4612055454334320640
-	i64.store	$discard=, sX+24($pop41), $pop4
-	i32.const	$push40=, 0
-	i64.const	$push5=, 0
-	i64.store	$discard=, sX+16($pop40):p2align=4, $pop5
+	i32.const	$push5=, 0
+	i32.const	$push77=, 0
+	i32.load	$push9=, myrnd.s($pop77)
+	i32.const	$push10=, 1103515245
+	i32.mul 	$push11=, $pop9, $pop10
+	i32.const	$push12=, 12345
+	i32.add 	$push76=, $pop11, $pop12
+	tee_local	$push75=, $1=, $pop76
+	i32.const	$push13=, 16
+	i32.shr_u	$push14=, $pop75, $pop13
+	i32.const	$push15=, 2047
+	i32.and 	$push16=, $pop14, $pop15
+	i32.const	$push74=, 0
+	i32.load	$push8=, sX($pop74)
+	i32.const	$push20=, -4096
+	i32.and 	$push73=, $pop8, $pop20
+	tee_local	$push72=, $0=, $pop73
+	i32.or  	$push21=, $pop16, $pop72
+	i32.store	$discard=, sX($pop5), $pop21
+	i32.const	$push71=, 0
+	i32.const	$push70=, 0
+	i32.const	$push69=, 1103515245
+	i32.mul 	$push17=, $1, $pop69
+	i32.const	$push68=, 12345
+	i32.add 	$push18=, $pop17, $pop68
+	i32.store	$push19=, myrnd.s($pop70), $pop18
+	i32.const	$push67=, 1103515245
+	i32.mul 	$push22=, $pop19, $pop67
+	i32.const	$push66=, 12345
+	i32.add 	$push65=, $pop22, $pop66
+	tee_local	$push64=, $1=, $pop65
+	i32.const	$push63=, 16
+	i32.shr_u	$push23=, $pop64, $pop63
+	i32.const	$push62=, 2047
+	i32.and 	$push24=, $pop23, $pop62
+	i32.or  	$push28=, $pop24, $0
+	i32.store	$discard=, sX($pop71), $pop28
+	i32.const	$push61=, 0
+	i32.const	$push60=, 0
+	i32.const	$push59=, 0
+	i32.const	$push58=, 1103515245
+	i32.mul 	$push25=, $1, $pop58
+	i32.const	$push57=, 12345
+	i32.add 	$push26=, $pop25, $pop57
+	i32.store	$push27=, myrnd.s($pop59), $pop26
+	i32.const	$push56=, 1103515245
+	i32.mul 	$push29=, $pop27, $pop56
+	i32.const	$push55=, 12345
+	i32.add 	$push54=, $pop29, $pop55
+	tee_local	$push53=, $1=, $pop54
+	i32.const	$push52=, 1103515245
+	i32.mul 	$push32=, $pop53, $pop52
+	i32.const	$push51=, 12345
+	i32.add 	$push33=, $pop32, $pop51
+	i32.store	$push34=, myrnd.s($pop60), $pop33
+	i32.const	$push50=, 16
+	i32.shr_u	$push35=, $pop34, $pop50
+	i32.const	$push49=, 2047
+	i32.and 	$push36=, $pop35, $pop49
+	i32.const	$push48=, 16
+	i32.shr_u	$push30=, $1, $pop48
+	i32.const	$push47=, 2047
+	i32.and 	$push31=, $pop30, $pop47
+	i32.add 	$push37=, $pop36, $pop31
+	i32.or  	$push38=, $pop37, $0
+	i32.store	$discard=, sX($pop61), $pop38
+	i32.const	$push46=, 0
+	i64.const	$push6=, 4612055454334320640
+	i64.store	$discard=, sX+24($pop46), $pop6
+	i32.const	$push45=, 0
+	i64.const	$push7=, 0
+	i64.store	$discard=, sX+16($pop45), $pop7
 	return
 	.endfunc
 .Lfunc_end144:
@@ -6877,8 +6885,8 @@ retmeY:                                 # @retmeY
 	i32.const	$push1=, 24
 	i32.add 	$push3=, $1, $pop1
 	i64.load	$2=, 0($pop3)
-	i64.load	$push0=, 0($1):p2align=4
-	i64.store	$discard=, 0($0):p2align=4, $pop0
+	i64.load	$push0=, 0($1)
+	i64.store	$discard=, 0($0), $pop0
 	i32.const	$push13=, 24
 	i32.add 	$push2=, $0, $pop13
 	i64.store	$discard=, 0($pop2), $2
@@ -6889,8 +6897,8 @@ retmeY:                                 # @retmeY
 	i32.add 	$push5=, $0, $pop4
 	i32.const	$push12=, 16
 	i32.add 	$push6=, $1, $pop12
-	i64.load	$push7=, 0($pop6):p2align=4
-	i64.store	$discard=, 0($pop5):p2align=4, $pop7
+	i64.load	$push7=, 0($pop6)
+	i64.store	$discard=, 0($pop5), $pop7
 	i32.const	$push11=, 8
 	i32.add 	$push9=, $0, $pop11
 	i64.store	$discard=, 0($pop9), $2
@@ -6908,7 +6916,7 @@ fn1Y:                                   # @fn1Y
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sY($pop0):p2align=4
+	i32.load	$push1=, sY($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -6926,7 +6934,7 @@ fn2Y:                                   # @fn2Y
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sY($pop0):p2align=4
+	i32.load	$push1=, sY($pop0)
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 4095
 	i32.and 	$push4=, $pop2, $pop3
@@ -6945,7 +6953,7 @@ retitY:                                 # @retitY
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sY($pop0):p2align=4
+	i32.load	$push1=, sY($pop0)
 	i32.const	$push2=, 4095
 	i32.and 	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -6964,7 +6972,7 @@ fn3Y:                                   # @fn3Y
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push10=, 0
-	i32.load	$push9=, sY($pop10):p2align=4
+	i32.load	$push9=, sY($pop10)
 	tee_local	$push8=, $1=, $pop9
 	i32.add 	$push1=, $pop8, $0
 	i32.const	$push2=, 4095
@@ -6973,7 +6981,7 @@ fn3Y:                                   # @fn3Y
 	i32.const	$push3=, -4096
 	i32.and 	$push4=, $1, $pop3
 	i32.or  	$push5=, $pop6, $pop4
-	i32.store	$discard=, sY($pop0):p2align=4, $pop5
+	i32.store	$discard=, sY($pop0), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end149:
@@ -6986,94 +6994,98 @@ fn3Y:                                   # @fn3Y
 testY:                                  # @testY
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$1=, myrnd.s($pop0)
 	i32.const	$0=, -32
 .LBB150_1:                              # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label19:
-	i32.const	$push39=, 1103515245
-	i32.mul 	$push1=, $1, $pop39
-	i32.const	$push38=, 12345
-	i32.add 	$1=, $pop1, $pop38
-	i32.const	$push37=, 16
-	i32.shr_u	$push2=, $1, $pop37
-	i32.store8	$discard=, sY+32($0), $pop2
-	i32.const	$push36=, 1
-	i32.add 	$0=, $0, $pop36
+	i32.const	$push44=, 0
+	i32.const	$push43=, 0
+	i32.load	$push0=, myrnd.s($pop43)
+	i32.const	$push42=, 1103515245
+	i32.mul 	$push1=, $pop0, $pop42
+	i32.const	$push41=, 12345
+	i32.add 	$push2=, $pop1, $pop41
+	i32.store	$push3=, myrnd.s($pop44), $pop2
+	i32.const	$push40=, 16
+	i32.shr_u	$push4=, $pop3, $pop40
+	i32.store8	$discard=, sY+32($0), $pop4
+	i32.const	$push39=, 1
+	i32.add 	$0=, $0, $pop39
 	br_if   	0, $0           # 0: up to label19
 # BB#2:                                 # %for.end
 	end_loop                        # label20:
-	i32.const	$push3=, 0
-	i32.const	$push7=, 1103515245
-	i32.mul 	$push8=, $1, $pop7
-	i32.const	$push9=, 12345
-	i32.add 	$push71=, $pop8, $pop9
-	tee_local	$push70=, $1=, $pop71
-	i32.const	$push10=, 16
-	i32.shr_u	$push11=, $pop70, $pop10
-	i32.const	$push12=, 2047
-	i32.and 	$push13=, $pop11, $pop12
-	i32.const	$push69=, 0
-	i32.load	$push6=, sY($pop69):p2align=4
-	i32.const	$push17=, -4096
-	i32.and 	$push68=, $pop6, $pop17
-	tee_local	$push67=, $0=, $pop68
-	i32.or  	$push18=, $pop13, $pop67
-	i32.store	$discard=, sY($pop3):p2align=4, $pop18
-	i32.const	$push66=, 0
-	i32.const	$push65=, 0
-	i32.const	$push64=, 1103515245
-	i32.mul 	$push14=, $1, $pop64
-	i32.const	$push63=, 12345
-	i32.add 	$push15=, $pop14, $pop63
-	i32.store	$push16=, myrnd.s($pop65), $pop15
-	i32.const	$push62=, 1103515245
-	i32.mul 	$push19=, $pop16, $pop62
-	i32.const	$push61=, 12345
-	i32.add 	$push60=, $pop19, $pop61
-	tee_local	$push59=, $1=, $pop60
-	i32.const	$push58=, 16
-	i32.shr_u	$push20=, $pop59, $pop58
-	i32.const	$push57=, 2047
-	i32.and 	$push21=, $pop20, $pop57
-	i32.or  	$push25=, $pop21, $0
-	i32.store	$discard=, sY($pop66):p2align=4, $pop25
-	i32.const	$push56=, 0
-	i32.const	$push55=, 0
-	i32.const	$push54=, 0
-	i32.const	$push53=, 1103515245
-	i32.mul 	$push22=, $1, $pop53
-	i32.const	$push52=, 12345
-	i32.add 	$push23=, $pop22, $pop52
-	i32.store	$push24=, myrnd.s($pop54), $pop23
-	i32.const	$push51=, 1103515245
-	i32.mul 	$push26=, $pop24, $pop51
-	i32.const	$push50=, 12345
-	i32.add 	$push49=, $pop26, $pop50
-	tee_local	$push48=, $1=, $pop49
-	i32.const	$push47=, 1103515245
-	i32.mul 	$push29=, $pop48, $pop47
-	i32.const	$push46=, 12345
-	i32.add 	$push30=, $pop29, $pop46
-	i32.store	$push31=, myrnd.s($pop55), $pop30
-	i32.const	$push45=, 16
-	i32.shr_u	$push32=, $pop31, $pop45
-	i32.const	$push44=, 2047
-	i32.and 	$push33=, $pop32, $pop44
-	i32.const	$push43=, 16
-	i32.shr_u	$push27=, $1, $pop43
-	i32.const	$push42=, 2047
-	i32.and 	$push28=, $pop27, $pop42
-	i32.add 	$push34=, $pop33, $pop28
-	i32.or  	$push35=, $pop34, $0
-	i32.store	$discard=, sY($pop56):p2align=4, $pop35
-	i32.const	$push41=, 0
-	i64.const	$push4=, 4612055454334320640
-	i64.store	$discard=, sY+24($pop41), $pop4
-	i32.const	$push40=, 0
-	i64.const	$push5=, 0
-	i64.store	$discard=, sY+16($pop40):p2align=4, $pop5
+	i32.const	$push5=, 0
+	i32.const	$push77=, 0
+	i32.load	$push9=, myrnd.s($pop77)
+	i32.const	$push10=, 1103515245
+	i32.mul 	$push11=, $pop9, $pop10
+	i32.const	$push12=, 12345
+	i32.add 	$push76=, $pop11, $pop12
+	tee_local	$push75=, $1=, $pop76
+	i32.const	$push13=, 16
+	i32.shr_u	$push14=, $pop75, $pop13
+	i32.const	$push15=, 2047
+	i32.and 	$push16=, $pop14, $pop15
+	i32.const	$push74=, 0
+	i32.load	$push8=, sY($pop74)
+	i32.const	$push20=, -4096
+	i32.and 	$push73=, $pop8, $pop20
+	tee_local	$push72=, $0=, $pop73
+	i32.or  	$push21=, $pop16, $pop72
+	i32.store	$discard=, sY($pop5), $pop21
+	i32.const	$push71=, 0
+	i32.const	$push70=, 0
+	i32.const	$push69=, 1103515245
+	i32.mul 	$push17=, $1, $pop69
+	i32.const	$push68=, 12345
+	i32.add 	$push18=, $pop17, $pop68
+	i32.store	$push19=, myrnd.s($pop70), $pop18
+	i32.const	$push67=, 1103515245
+	i32.mul 	$push22=, $pop19, $pop67
+	i32.const	$push66=, 12345
+	i32.add 	$push65=, $pop22, $pop66
+	tee_local	$push64=, $1=, $pop65
+	i32.const	$push63=, 16
+	i32.shr_u	$push23=, $pop64, $pop63
+	i32.const	$push62=, 2047
+	i32.and 	$push24=, $pop23, $pop62
+	i32.or  	$push28=, $pop24, $0
+	i32.store	$discard=, sY($pop71), $pop28
+	i32.const	$push61=, 0
+	i32.const	$push60=, 0
+	i32.const	$push59=, 0
+	i32.const	$push58=, 1103515245
+	i32.mul 	$push25=, $1, $pop58
+	i32.const	$push57=, 12345
+	i32.add 	$push26=, $pop25, $pop57
+	i32.store	$push27=, myrnd.s($pop59), $pop26
+	i32.const	$push56=, 1103515245
+	i32.mul 	$push29=, $pop27, $pop56
+	i32.const	$push55=, 12345
+	i32.add 	$push54=, $pop29, $pop55
+	tee_local	$push53=, $1=, $pop54
+	i32.const	$push52=, 1103515245
+	i32.mul 	$push32=, $pop53, $pop52
+	i32.const	$push51=, 12345
+	i32.add 	$push33=, $pop32, $pop51
+	i32.store	$push34=, myrnd.s($pop60), $pop33
+	i32.const	$push50=, 16
+	i32.shr_u	$push35=, $pop34, $pop50
+	i32.const	$push49=, 2047
+	i32.and 	$push36=, $pop35, $pop49
+	i32.const	$push48=, 16
+	i32.shr_u	$push30=, $1, $pop48
+	i32.const	$push47=, 2047
+	i32.and 	$push31=, $pop30, $pop47
+	i32.add 	$push37=, $pop36, $pop31
+	i32.or  	$push38=, $pop37, $0
+	i32.store	$discard=, sY($pop61), $pop38
+	i32.const	$push46=, 0
+	i64.const	$push6=, 4612055454334320640
+	i64.store	$discard=, sY+24($pop46), $pop6
+	i32.const	$push45=, 0
+	i64.const	$push7=, 0
+	i64.store	$discard=, sY+16($pop45), $pop7
 	return
 	.endfunc
 .Lfunc_end150:
@@ -7090,8 +7102,8 @@ retmeZ:                                 # @retmeZ
 	i32.const	$push1=, 24
 	i32.add 	$push3=, $1, $pop1
 	i64.load	$2=, 0($pop3)
-	i64.load	$push0=, 0($1):p2align=4
-	i64.store	$discard=, 0($0):p2align=4, $pop0
+	i64.load	$push0=, 0($1)
+	i64.store	$discard=, 0($0), $pop0
 	i32.const	$push13=, 24
 	i32.add 	$push2=, $0, $pop13
 	i64.store	$discard=, 0($pop2), $2
@@ -7102,8 +7114,8 @@ retmeZ:                                 # @retmeZ
 	i32.add 	$push5=, $0, $pop4
 	i32.const	$push12=, 16
 	i32.add 	$push6=, $1, $pop12
-	i64.load	$push7=, 0($pop6):p2align=4
-	i64.store	$discard=, 0($pop5):p2align=4, $pop7
+	i64.load	$push7=, 0($pop6)
+	i64.store	$discard=, 0($pop5), $pop7
 	i32.const	$push11=, 8
 	i32.add 	$push9=, $0, $pop11
 	i64.store	$discard=, 0($pop9), $2
@@ -7121,7 +7133,7 @@ fn1Z:                                   # @fn1Z
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sZ+16($pop0):p2align=4
+	i32.load	$push1=, sZ+16($pop0)
 	i32.const	$push2=, 20
 	i32.shl 	$push3=, $0, $pop2
 	i32.add 	$push4=, $pop1, $pop3
@@ -7141,7 +7153,7 @@ fn2Z:                                   # @fn2Z
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sZ+16($pop0):p2align=4
+	i32.load	$push1=, sZ+16($pop0)
 	i32.const	$push2=, 20
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.add 	$push4=, $pop3, $0
@@ -7162,7 +7174,7 @@ retitZ:                                 # @retitZ
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, sZ+16($pop0):p2align=4
+	i32.load	$push1=, sZ+16($pop0)
 	i32.const	$push2=, 20
 	i32.shr_u	$push3=, $pop1, $pop2
 	return  	$pop3
@@ -7180,11 +7192,11 @@ fn3Z:                                   # @fn3Z
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push8=, 0
-	i32.load	$push1=, sZ+16($pop8):p2align=4
+	i32.load	$push1=, sZ+16($pop8)
 	i32.const	$push2=, 20
 	i32.shl 	$push3=, $0, $pop2
 	i32.add 	$push4=, $pop1, $pop3
-	i32.store	$push5=, sZ+16($pop0):p2align=4, $pop4
+	i32.store	$push5=, sZ+16($pop0), $pop4
 	i32.const	$push7=, 20
 	i32.shr_u	$push6=, $pop5, $pop7
 	return  	$pop6
@@ -7199,126 +7211,130 @@ fn3Z:                                   # @fn3Z
 testZ:                                  # @testZ
 	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 0
-	i32.load	$2=, myrnd.s($pop2)
 	i32.const	$1=, -32
 .LBB156_1:                              # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label21:
-	i32.const	$push47=, 1103515245
-	i32.mul 	$push3=, $2, $pop47
-	i32.const	$push46=, 12345
-	i32.add 	$2=, $pop3, $pop46
-	i32.const	$push45=, 16
-	i32.shr_u	$push4=, $2, $pop45
-	i32.store8	$discard=, sZ+32($1), $pop4
-	i32.const	$push44=, 1
-	i32.add 	$1=, $1, $pop44
+	i32.const	$push52=, 0
+	i32.const	$push51=, 0
+	i32.load	$push2=, myrnd.s($pop51)
+	i32.const	$push50=, 1103515245
+	i32.mul 	$push3=, $pop2, $pop50
+	i32.const	$push49=, 12345
+	i32.add 	$push4=, $pop3, $pop49
+	i32.store	$push5=, myrnd.s($pop52), $pop4
+	i32.const	$push48=, 16
+	i32.shr_u	$push6=, $pop5, $pop48
+	i32.store8	$discard=, sZ+32($1), $pop6
+	i32.const	$push47=, 1
+	i32.add 	$1=, $1, $pop47
 	br_if   	0, $1           # 0: up to label21
 # BB#2:                                 # %for.end
 	end_loop                        # label22:
-	i32.const	$push71=, 0
-	i32.load	$0=, sZ+16($pop71):p2align=4
-	i32.const	$push70=, 0
-	i32.const	$push69=, 1103515245
-	i32.mul 	$push7=, $2, $pop69
-	i32.const	$push68=, 12345
-	i32.add 	$push67=, $pop7, $pop68
-	tee_local	$push66=, $2=, $pop67
-	i32.const	$push65=, 1103515245
-	i32.mul 	$push9=, $pop66, $pop65
-	i32.const	$push64=, 12345
-	i32.add 	$push0=, $pop9, $pop64
-	i32.store	$1=, myrnd.s($pop70), $pop0
-	i32.const	$push63=, 0
-	i32.const	$push62=, 16
-	i32.shr_u	$push8=, $2, $pop62
-	i32.const	$push61=, 2047
-	i32.and 	$push60=, $pop8, $pop61
-	tee_local	$push59=, $4=, $pop60
-	i32.const	$push58=, 20
-	i32.shl 	$push11=, $pop59, $pop58
-	i32.const	$push12=, 1048575
-	i32.and 	$push57=, $0, $pop12
-	tee_local	$push56=, $2=, $pop57
-	i32.or  	$push13=, $pop11, $pop56
-	i32.store	$0=, sZ+16($pop63):p2align=4, $pop13
-	i32.const	$push55=, 0
-	i64.const	$push5=, 4612055454334320640
-	i64.store	$discard=, sZ+8($pop55), $pop5
-	i32.const	$push54=, 0
-	i64.const	$push6=, 0
-	i64.store	$discard=, sZ($pop54):p2align=4, $pop6
+	i32.const	$push77=, 0
+	i32.load	$3=, sZ+16($pop77)
+	i32.const	$push76=, 0
+	i32.const	$push75=, 0
+	i32.load	$push9=, myrnd.s($pop75)
+	i32.const	$push74=, 1103515245
+	i32.mul 	$push10=, $pop9, $pop74
+	i32.const	$push73=, 12345
+	i32.add 	$push72=, $pop10, $pop73
+	tee_local	$push71=, $4=, $pop72
+	i32.const	$push70=, 1103515245
+	i32.mul 	$push12=, $pop71, $pop70
+	i32.const	$push69=, 12345
+	i32.add 	$push0=, $pop12, $pop69
+	i32.store	$1=, myrnd.s($pop76), $pop0
+	i32.const	$push68=, 0
+	i32.const	$push67=, 16
+	i32.shr_u	$push11=, $4, $pop67
+	i32.const	$push66=, 2047
+	i32.and 	$push65=, $pop11, $pop66
+	tee_local	$push64=, $4=, $pop65
+	i32.const	$push63=, 20
+	i32.shl 	$push14=, $pop64, $pop63
+	i32.const	$push15=, 1048575
+	i32.and 	$push62=, $3, $pop15
+	tee_local	$push61=, $3=, $pop62
+	i32.or  	$push16=, $pop14, $pop61
+	i32.store	$0=, sZ+16($pop68), $pop16
+	i32.const	$push60=, 0
+	i64.const	$push7=, 4612055454334320640
+	i64.store	$discard=, sZ+8($pop60), $pop7
+	i32.const	$push59=, 0
+	i64.const	$push8=, 0
+	i64.store	$discard=, sZ($pop59), $pop8
 	block
-	i32.const	$push53=, 16
-	i32.shr_u	$push10=, $1, $pop53
-	i32.const	$push52=, 2047
-	i32.and 	$push51=, $pop10, $pop52
-	tee_local	$push50=, $3=, $pop51
-	i32.add 	$push17=, $pop50, $4
-	i32.const	$push49=, 20
-	i32.shl 	$push14=, $3, $pop49
-	i32.add 	$push15=, $0, $pop14
-	i32.const	$push48=, 20
-	i32.shr_u	$push16=, $pop15, $pop48
-	i32.ne  	$push18=, $pop17, $pop16
-	br_if   	0, $pop18       # 0: down to label23
+	i32.const	$push58=, 16
+	i32.shr_u	$push13=, $1, $pop58
+	i32.const	$push57=, 2047
+	i32.and 	$push56=, $pop13, $pop57
+	tee_local	$push55=, $2=, $pop56
+	i32.add 	$push20=, $pop55, $4
+	i32.const	$push54=, 20
+	i32.shl 	$push17=, $2, $pop54
+	i32.add 	$push18=, $0, $pop17
+	i32.const	$push53=, 20
+	i32.shr_u	$push19=, $pop18, $pop53
+	i32.ne  	$push21=, $pop20, $pop19
+	br_if   	0, $pop21       # 0: down to label23
 # BB#3:                                 # %if.end80
-	i32.const	$push95=, 0
-	i32.const	$push94=, 0
+	i32.const	$push101=, 0
+	i32.const	$push100=, 0
+	i32.const	$push99=, 1103515245
+	i32.mul 	$push22=, $1, $pop99
+	i32.const	$push98=, 12345
+	i32.add 	$push97=, $pop22, $pop98
+	tee_local	$push96=, $1=, $pop97
+	i32.const	$push28=, -1029531031
+	i32.mul 	$push29=, $pop96, $pop28
+	i32.const	$push30=, -740551042
+	i32.add 	$push95=, $pop29, $pop30
+	tee_local	$push94=, $4=, $pop95
 	i32.const	$push93=, 1103515245
-	i32.mul 	$push19=, $1, $pop93
+	i32.mul 	$push32=, $pop94, $pop93
 	i32.const	$push92=, 12345
-	i32.add 	$push91=, $pop19, $pop92
-	tee_local	$push90=, $1=, $pop91
-	i32.const	$push25=, -1029531031
-	i32.mul 	$push26=, $pop90, $pop25
-	i32.const	$push27=, -740551042
-	i32.add 	$push89=, $pop26, $pop27
+	i32.add 	$push33=, $pop32, $pop92
+	i32.store	$push34=, myrnd.s($pop100), $pop33
+	i32.const	$push91=, 16
+	i32.shr_u	$push35=, $pop34, $pop91
+	i32.const	$push90=, 2047
+	i32.and 	$push89=, $pop35, $pop90
 	tee_local	$push88=, $0=, $pop89
-	i32.const	$push87=, 1103515245
-	i32.mul 	$push29=, $pop88, $pop87
-	i32.const	$push86=, 12345
-	i32.add 	$push30=, $pop29, $pop86
-	i32.store	$push31=, myrnd.s($pop94), $pop30
-	i32.const	$push85=, 16
-	i32.shr_u	$push32=, $pop31, $pop85
-	i32.const	$push84=, 2047
-	i32.and 	$push83=, $pop32, $pop84
-	tee_local	$push82=, $4=, $pop83
-	i32.const	$push81=, 20
-	i32.shl 	$push35=, $pop82, $pop81
-	i32.const	$push80=, 16
-	i32.shr_u	$push28=, $0, $pop80
-	i32.const	$push79=, 2047
-	i32.and 	$push78=, $pop28, $pop79
-	tee_local	$push77=, $0=, $pop78
-	i32.const	$push76=, 20
-	i32.shl 	$push33=, $pop77, $pop76
-	i32.or  	$push34=, $pop33, $2
-	i32.add 	$push1=, $pop35, $pop34
-	i32.store	$push75=, sZ+16($pop95):p2align=4, $pop1
-	tee_local	$push74=, $3=, $pop75
-	i32.const	$push20=, 4
-	i32.shl 	$push21=, $1, $pop20
-	i32.const	$push22=, 2146435072
-	i32.and 	$push23=, $pop21, $pop22
-	i32.or  	$push24=, $pop23, $2
-	i32.xor 	$push73=, $pop74, $pop24
-	tee_local	$push72=, $1=, $pop73
-	i32.const	$push36=, 1040384
-	i32.and 	$push37=, $pop72, $pop36
-	br_if   	0, $pop37       # 0: down to label23
+	i32.const	$push87=, 20
+	i32.shl 	$push38=, $pop88, $pop87
+	i32.const	$push86=, 16
+	i32.shr_u	$push31=, $4, $pop86
+	i32.const	$push85=, 2047
+	i32.and 	$push84=, $pop31, $pop85
+	tee_local	$push83=, $4=, $pop84
+	i32.const	$push82=, 20
+	i32.shl 	$push36=, $pop83, $pop82
+	i32.or  	$push37=, $pop36, $3
+	i32.add 	$push1=, $pop38, $pop37
+	i32.store	$push81=, sZ+16($pop101), $pop1
+	tee_local	$push80=, $2=, $pop81
+	i32.const	$push23=, 4
+	i32.shl 	$push24=, $1, $pop23
+	i32.const	$push25=, 2146435072
+	i32.and 	$push26=, $pop24, $pop25
+	i32.or  	$push27=, $pop26, $3
+	i32.xor 	$push79=, $pop80, $pop27
+	tee_local	$push78=, $1=, $pop79
+	i32.const	$push39=, 1040384
+	i32.and 	$push40=, $pop78, $pop39
+	br_if   	0, $pop40       # 0: down to label23
 # BB#4:                                 # %lor.lhs.false98
-	i32.add 	$push42=, $4, $0
-	i32.const	$push39=, 20
-	i32.shr_u	$push40=, $3, $pop39
-	i32.ne  	$push43=, $pop42, $pop40
-	br_if   	0, $pop43       # 0: down to label23
+	i32.add 	$push45=, $0, $4
+	i32.const	$push42=, 20
+	i32.shr_u	$push43=, $2, $pop42
+	i32.ne  	$push46=, $pop45, $pop43
+	br_if   	0, $pop46       # 0: down to label23
 # BB#5:                                 # %lor.lhs.false98
-	i32.const	$push41=, 8191
-	i32.and 	$push38=, $1, $pop41
-	br_if   	0, $pop38       # 0: down to label23
+	i32.const	$push44=, 8191
+	i32.and 	$push41=, $1, $pop44
+	br_if   	0, $pop41       # 0: down to label23
 # BB#6:                                 # %if.end121
 	return
 .LBB156_7:                              # %if.then120

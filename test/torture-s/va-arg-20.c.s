@@ -79,7 +79,7 @@ main:                                   # @main
 	i32.const	$push7=, __stack_pointer
 	i32.store	$discard=, 0($pop7), $0
 	i64.const	$push0=, 16
-	i64.store	$discard=, 0($0):p2align=4, $pop0
+	i64.store	$discard=, 0($0), $pop0
 	i32.const	$push1=, 0
 	i32.const	$push3=, 0
 	call    	bar@FUNCTION, $pop1, $pop3, $0

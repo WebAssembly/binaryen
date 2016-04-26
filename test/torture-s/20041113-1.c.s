@@ -83,11 +83,11 @@ main:                                   # @main
 	f64.div 	$push3=, $pop1, $pop2
 	i32.trunc_s/f64	$2=, $pop3
 	i32.const	$push4=, 3
-	i32.store	$discard=, 8($3):p2align=3, $pop4
+	i32.store	$discard=, 8($3), $pop4
 	i32.const	$push5=, 2
 	i32.store	$discard=, 4($3), $pop5
 	i32.const	$push6=, 1
-	i32.store	$discard=, 0($3):p2align=4, $pop6
+	i32.store	$discard=, 0($3), $pop6
 	i32.store	$discard=, 12($3), $2
 	call    	test@FUNCTION, $2, $3
 	i32.const	$push7=, 0

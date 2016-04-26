@@ -70,7 +70,7 @@ main:                                   # @main
 	i32.add 	$push7=, $1, $pop6
 	copy_local	$0=, $pop7
 	i32.const	$push0=, 0
-	i32.store	$discard=, 8($1):p2align=3, $pop0
+	i32.store	$discard=, 8($1), $pop0
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $1, $pop8
 	i32.store	$discard=, 12($1), $pop9

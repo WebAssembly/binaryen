@@ -374,7 +374,7 @@ main:                                   # @main
 	i32.store	$discard=, b+16380($pop64), $pop4
 	i32.const	$push63=, 0
 	i64.const	$push2=, -9223372030412324864
-	i64.store	$discard=, a($pop63):p2align=4, $pop2
+	i64.store	$discard=, a($pop63), $pop2
 	call    	f1@FUNCTION
 	call    	f2@FUNCTION
 	i32.const	$0=, 0

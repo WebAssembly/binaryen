@@ -12,24 +12,24 @@ fn1:                                    # @fn1
 	i32.const	$push23=, 0
 	i32.const	$push22=, 0
 	i32.load	$push3=, a+36($pop22)
-	i32.store	$push4=, a($pop23):p2align=4, $pop3
+	i32.store	$push4=, a($pop23), $pop3
 	i32.store	$discard=, a+4($pop1), $pop4
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
 	i32.const	$push0=, 1
-	i32.store	$push2=, a+48($pop20):p2align=4, $pop0
+	i32.store	$push2=, a+48($pop20), $pop0
 	i32.store	$0=, c($pop21), $pop2
 	i32.const	$push19=, 0
 	i32.load	$1=, a+60($pop19)
 	i32.const	$push18=, 0
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
-	i32.store	$push5=, a($pop16):p2align=4, $0
+	i32.store	$push5=, a($pop16), $0
 	i32.store	$push6=, c($pop17), $pop5
 	i32.store	$0=, a+4($pop18), $pop6
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
-	i32.store	$push8=, a($pop14):p2align=4, $1
+	i32.store	$push8=, a($pop14), $1
 	i32.store	$discard=, a+4($pop15), $pop8
 	i32.const	$push13=, 0
 	i32.const	$push12=, 0
@@ -56,12 +56,12 @@ main:                                   # @main
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
 	i32.const	$push0=, 1
-	i32.store	$push1=, a+48($pop6):p2align=4, $pop0
+	i32.store	$push1=, a+48($pop6), $pop0
 	i32.store	$discard=, c($pop7), $pop1
 	block
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
-	i32.store	$push2=, a($pop4):p2align=4, $0
+	i32.store	$push2=, a($pop4), $0
 	i32.store	$push3=, a+4($pop5), $pop2
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end

@@ -99,35 +99,35 @@ main:                                   # @main
 # BB#2:                                 # %for.body6.preheader
 	end_loop                        # label5:
 	i32.const	$push3=, 101
-	i32.store16	$discard=, 8($1):p2align=3, $pop3
+	i32.store16	$discard=, 8($1), $pop3
 	i32.const	$push4=, 104
 	i32.store16	$discard=, 14($1), $pop4
 	i32.const	$push5=, 105
-	i32.store16	$discard=, 16($1):p2align=4, $pop5
+	i32.store16	$discard=, 16($1), $pop5
 	i32.const	$push6=, 106
 	i32.store16	$discard=, 18($1), $pop6
 	i32.const	$push7=, 107
-	i32.store16	$discard=, 20($1):p2align=2, $pop7
+	i32.store16	$discard=, 20($1), $pop7
 	i32.const	$push8=, 109
-	i32.store16	$discard=, 24($1):p2align=3, $pop8
+	i32.store16	$discard=, 24($1), $pop8
 	i32.const	$push9=, 110
 	i32.store16	$discard=, 26($1), $pop9
 	i32.const	$push10=, 111
-	i32.store16	$discard=, 28($1):p2align=2, $pop10
+	i32.store16	$discard=, 28($1), $pop10
 	i32.const	$push11=, 113
-	i32.store16	$discard=, 32($1):p2align=4, $pop11
+	i32.store16	$discard=, 32($1), $pop11
 	i32.const	$push12=, 0
 	i32.store16	$discard=, 34($1), $pop12
 	i32.const	$push13=, 1638
 	i32.store16	$discard=, 10($1), $pop13
 	i32.const	$push14=, 1383
-	i32.store16	$discard=, 12($1):p2align=2, $pop14
+	i32.store16	$discard=, 12($1), $pop14
 	i32.const	$push15=, 8300
 	i32.store16	$discard=, 22($1), $pop15
 	i32.const	$push16=, 1392
 	i32.store16	$discard=, 30($1), $pop16
 	i64.const	$push2=, 28147922879250529
-	i64.store	$discard=, 0($1):p2align=4, $pop2
+	i64.store	$discard=, 0($1), $pop2
 	call    	foo@FUNCTION
 	block
 	i32.const	$push17=, 17

@@ -164,14 +164,14 @@ main:                                   # @main
 	i32.store	$discard=, 0($pop14), $1
 	i32.const	$push0=, temp
 	i32.call	$push1=, string_to_ip@FUNCTION, $pop0
-	i32.store	$0=, 16($1):p2align=4, $pop1
+	i32.store	$0=, 16($1), $pop1
 	i32.const	$push2=, .L.str
 	i32.const	$push18=, 16
 	i32.add 	$push19=, $1, $pop18
 	i32.call	$discard=, printf@FUNCTION, $pop2, $pop19
 	i32.const	$push9=, 0
 	i32.load	$push3=, result($pop9)
-	i32.store	$discard=, 0($1):p2align=4, $pop3
+	i32.store	$discard=, 0($1), $pop3
 	i32.const	$push8=, .L.str
 	i32.call	$discard=, printf@FUNCTION, $pop8, $1
 	block

@@ -88,10 +88,10 @@ main:                                   # @main
 	i32.store	$discard=, 0($pop19), $0
 	i32.const	$push12=, 0
 	i32.load8_u	$push0=, .L.str+9($pop12)
-	i32.store8	$discard=, 6($0):p2align=1, $pop0
+	i32.store8	$discard=, 6($0), $pop0
 	i32.const	$push11=, 0
 	i32.load16_u	$push1=, .L.str+7($pop11):p2align=0
-	i32.store16	$discard=, 4($0):p2align=2, $pop1
+	i32.store16	$discard=, 4($0), $pop1
 	block
 	i32.const	$push20=, 4
 	i32.add 	$push21=, $0, $pop20

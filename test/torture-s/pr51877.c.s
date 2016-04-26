@@ -14,7 +14,7 @@ bar:                                    # @bar
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$push4=, bar.n($pop0), $pop3
 	i32.store	$discard=, 0($0), $pop4
-	i32.store8	$discard=, 4($0):p2align=2, $1
+	i32.store8	$discard=, 4($0), $1
 	i32.const	$push5=, 5
 	i32.add 	$push6=, $0, $pop5
 	i32.const	$push8=, 0
@@ -122,7 +122,7 @@ main:                                   # @main
 	br_if   	0, $pop6        # 0: down to label2
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push51=, 0
-	i32.load8_u	$push9=, a+4($pop51):p2align=2
+	i32.load8_u	$push9=, a+4($pop51)
 	i32.const	$push50=, 3
 	i32.ne  	$push10=, $pop9, $pop50
 	br_if   	0, $pop10       # 0: down to label2
@@ -134,7 +134,7 @@ main:                                   # @main
 	br_if   	0, $pop12       # 0: down to label2
 # BB#3:                                 # %lor.lhs.false
 	i32.const	$push53=, 0
-	i32.load8_u	$push8=, b+4($pop53):p2align=2
+	i32.load8_u	$push8=, b+4($pop53)
 	i32.const	$push13=, 255
 	i32.and 	$push14=, $pop8, $pop13
 	i32.const	$push15=, 4
@@ -151,7 +151,7 @@ main:                                   # @main
 	br_if   	0, $pop20       # 0: down to label2
 # BB#5:                                 # %lor.lhs.false13
 	i32.const	$push57=, 0
-	i32.load8_u	$push23=, a+4($pop57):p2align=2
+	i32.load8_u	$push23=, a+4($pop57)
 	i32.const	$push56=, 3
 	i32.ne  	$push24=, $pop23, $pop56
 	br_if   	0, $pop24       # 0: down to label2
@@ -163,7 +163,7 @@ main:                                   # @main
 	br_if   	0, $pop25       # 0: down to label2
 # BB#7:                                 # %lor.lhs.false13
 	i32.const	$push60=, 0
-	i32.load8_u	$push22=, b+4($pop60):p2align=2
+	i32.load8_u	$push22=, b+4($pop60)
 	i32.const	$push26=, 255
 	i32.and 	$push27=, $pop22, $pop26
 	i32.const	$push28=, 7
@@ -180,7 +180,7 @@ main:                                   # @main
 	br_if   	0, $pop34       # 0: down to label2
 # BB#9:                                 # %lor.lhs.false28
 	i32.const	$push62=, 0
-	i32.load8_u	$push37=, a+4($pop62):p2align=2
+	i32.load8_u	$push37=, a+4($pop62)
 	i32.const	$push38=, 7
 	i32.ne  	$push39=, $pop37, $pop38
 	br_if   	0, $pop39       # 0: down to label2
@@ -192,7 +192,7 @@ main:                                   # @main
 	br_if   	0, $pop41       # 0: down to label2
 # BB#11:                                # %lor.lhs.false28
 	i32.const	$push64=, 0
-	i32.load8_u	$push36=, b+4($pop64):p2align=2
+	i32.load8_u	$push36=, b+4($pop64)
 	i32.const	$push42=, 255
 	i32.and 	$push43=, $pop36, $pop42
 	i32.const	$push44=, 7

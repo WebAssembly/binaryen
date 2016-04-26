@@ -11,7 +11,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push14=, 0
-	i32.load16_u	$push13=, foo($pop14):p2align=2
+	i32.load16_u	$push13=, foo($pop14)
 	tee_local	$push12=, $1=, $pop13
 	i32.const	$push1=, 12
 	i32.shr_u	$push2=, $pop12, $pop1
@@ -22,7 +22,7 @@ bar:                                    # @bar
 	i32.const	$push10=, 12
 	i32.shl 	$push3=, $0, $pop10
 	i32.or  	$push6=, $pop5, $pop3
-	i32.store16	$discard=, foo($pop11):p2align=2, $pop6
+	i32.store16	$discard=, foo($pop11), $pop6
 	i32.const	$push8=, 1
 	i32.const	$push7=, 2
 	i32.select	$push9=, $pop8, $pop7, $0
@@ -41,7 +41,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	i32.const	$push11=, 0
-	i32.load16_u	$push10=, foo($pop11):p2align=2
+	i32.load16_u	$push10=, foo($pop11)
 	tee_local	$push9=, $0=, $pop10
 	i32.const	$push1=, 12
 	i32.shr_u	$push2=, $pop9, $pop1
@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.and 	$push4=, $0, $pop3
 	i32.const	$push5=, 4096
 	i32.or  	$push6=, $pop4, $pop5
-	i32.store16	$discard=, foo($pop8):p2align=2, $pop6
+	i32.store16	$discard=, foo($pop8), $pop6
 	i32.const	$push7=, 0
 	call    	exit@FUNCTION, $pop7
 	unreachable

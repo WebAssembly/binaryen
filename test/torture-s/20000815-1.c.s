@@ -8,7 +8,7 @@ invalidate_memory:                      # @invalidate_memory
 	.param  	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.load8_u	$push13=, 0($0):p2align=2
+	i32.load8_u	$push13=, 0($0)
 	tee_local	$push12=, $0=, $pop13
 	i32.const	$push3=, 4
 	i32.and 	$push1=, $pop12, $pop3
@@ -41,7 +41,7 @@ invalidate_memory:                      # @invalidate_memory
 	tee_local	$push20=, $4=, $pop21
 	i32.load	$0=, 4($pop20)
 	block
-	i32.load16_u	$push19=, 36($4):p2align=2
+	i32.load16_u	$push19=, 36($4)
 	tee_local	$push18=, $4=, $pop19
 	i32.const	$push17=, 255
 	i32.and 	$push5=, $pop18, $pop17
@@ -131,11 +131,11 @@ main:                                   # @main
 	i32.const	$push0=, 40
 	i32.call	$discard=, memset@FUNCTION, $pop25, $pop8, $pop0
 	i32.const	$push1=, 1
-	i32.store8	$0=, 44($4):p2align=2, $pop1
+	i32.store8	$0=, 44($4), $pop1
 	i32.const	$push7=, 0
 	i32.const	$push26=, 8
 	i32.add 	$push27=, $4, $pop26
-	i32.store	$discard=, table($pop7):p2align=4, $pop27
+	i32.store	$discard=, table($pop7), $pop27
 	i32.const	$push28=, 8
 	i32.add 	$push29=, $4, $pop28
 	copy_local	$2=, $pop29
@@ -156,7 +156,7 @@ main:                                   # @main
 	tee_local	$push12=, $3=, $pop13
 	i32.load	$2=, 4($pop12)
 	block
-	i32.load16_u	$push11=, 36($3):p2align=2
+	i32.load16_u	$push11=, 36($3)
 	tee_local	$push10=, $3=, $pop11
 	i32.const	$push9=, 256
 	i32.lt_u	$push2=, $pop10, $pop9

@@ -32,7 +32,7 @@ foo:                                    # @foo
 	block
 	i32.load	$push7=, 0($1)
 	tee_local	$push6=, $1=, $pop7
-	i32.load8_u	$push1=, 4($pop6):p2align=2
+	i32.load8_u	$push1=, 4($pop6)
 	i32.const	$push5=, 64
 	i32.and 	$push2=, $pop1, $pop5
 	br_if   	0, $pop2        # 0: down to label2
@@ -43,7 +43,7 @@ foo:                                    # @foo
 	end_block                       # label2:
 	i32.load	$push10=, 0($1)
 	tee_local	$push9=, $1=, $pop10
-	i32.load8_u	$3=, 4($pop9):p2align=2
+	i32.load8_u	$3=, 4($pop9)
 	i64.load	$push0=, 8($1):p2align=2
 	i64.store	$4=, 0($2):p2align=2, $pop0
 	i32.const	$push8=, 64
@@ -84,7 +84,7 @@ main:                                   # @main
 	i32.const	$push16=, __stack_pointer
 	i32.store	$discard=, 0($pop16), $2
 	i32.const	$push7=, 0
-	i32.load8_u	$0=, cons2+4($pop7):p2align=2
+	i32.load8_u	$0=, cons2+4($pop7)
 	i32.const	$push6=, 0
 	i64.load	$push0=, .Lmain.y($pop6)
 	i64.store	$discard=, 8($2), $pop0
@@ -97,9 +97,9 @@ main:                                   # @main
 	br_if   	0, $pop21       # 0: down to label4
 # BB#1:                                 # %if.then.i
 	i32.const	$push11=, 0
-	i32.load	$push10=, cons2($pop11):p2align=4
+	i32.load	$push10=, cons2($pop11)
 	tee_local	$push9=, $0=, $pop10
-	i32.load8_u	$1=, 4($pop9):p2align=2
+	i32.load8_u	$1=, 4($pop9)
 	i64.load	$push2=, 8($0):p2align=2
 	i64.store	$discard=, 8($2), $pop2
 	i32.const	$push8=, 64

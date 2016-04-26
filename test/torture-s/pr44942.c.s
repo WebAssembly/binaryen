@@ -175,7 +175,7 @@ main:                                   # @main
 	i32.const	$push10=, __stack_pointer
 	i32.store	$discard=, 0($pop10), $3
 	i32.const	$push0=, 1234
-	i32.store	$0=, 120($3):p2align=3, $pop0
+	i32.store	$0=, 120($3), $pop0
 	i32.const	$push14=, 112
 	i32.add 	$push15=, $3, $pop14
 	call    	test1@FUNCTION, $0, $0, $0, $0, $0, $0, $0, $1, $pop15
@@ -183,7 +183,7 @@ main:                                   # @main
 	i32.add 	$push17=, $3, $pop16
 	i32.const	$push1=, 32
 	i32.add 	$push2=, $pop17, $pop1
-	i32.store	$discard=, 0($pop2):p2align=4, $0
+	i32.store	$discard=, 0($pop2), $0
 	i32.const	$push18=, 64
 	i32.add 	$push19=, $3, $pop18
 	call    	test2@FUNCTION, $0, $0, $0, $0, $0, $0, $0, $1, $1, $0, $1, $1, $0, $1, $pop19
@@ -194,7 +194,7 @@ main:                                   # @main
 	call    	test3@FUNCTION, $2, $2, $2, $2, $2, $2, $2, $1, $pop21
 	i32.const	$push6=, 32
 	i32.add 	$push4=, $3, $pop6
-	i64.store	$discard=, 0($pop4):p2align=4, $1
+	i64.store	$discard=, 0($pop4), $1
 	call    	test4@FUNCTION, $2, $2, $2, $2, $2, $2, $2, $1, $1, $2, $1, $1, $2, $1, $3
 	i32.const	$push5=, 0
 	i32.const	$push13=, __stack_pointer

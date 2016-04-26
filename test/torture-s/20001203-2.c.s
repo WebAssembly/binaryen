@@ -21,7 +21,7 @@ create_array_type:                      # @create_array_type
 	i32.store	$discard=, 0($0), $pop3
 	i32.load	$1=, 4($0)
 	i32.const	$push4=, 1
-	i32.store16	$discard=, 8($0):p2align=2, $pop4
+	i32.store16	$discard=, 8($0), $pop4
 	i32.const	$3=, 0
 	block
 	i32.const	$push47=, 0

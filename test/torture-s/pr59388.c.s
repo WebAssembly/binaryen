@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i32.load8_u	$push1=, b($pop5):p2align=2
+	i32.load8_u	$push1=, b($pop5)
 	i32.const	$push2=, 1
 	i32.and 	$push3=, $pop1, $pop2
 	i32.store	$push4=, a($pop0), $pop3

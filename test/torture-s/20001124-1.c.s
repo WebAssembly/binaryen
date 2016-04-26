@@ -13,10 +13,10 @@ main:                                   # @main
 	i32.store	$discard=, s($pop1), $pop0
 	i32.const	$push10=, 0
 	i32.const	$push3=, 9
-	i32.store8	$discard=, s+4($pop10):p2align=2, $pop3
+	i32.store8	$discard=, s+4($pop10), $pop3
 	i32.const	$push9=, 0
 	i32.const	$push2=, s
-	i32.store	$discard=, i+8($pop9):p2align=3, $pop2
+	i32.store	$discard=, i+8($pop9), $pop2
 	i32.const	$push8=, 0
 	i64.const	$push4=, 2048
 	i64.store	$discard=, i($pop8), $pop4

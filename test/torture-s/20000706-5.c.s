@@ -100,7 +100,7 @@ main:                                   # @main
 	i32.const	$push3=, 8
 	i32.add 	$push4=, $pop16, $pop3
 	i32.const	$push1=, 3
-	i32.store	$push2=, 24($0):p2align=3, $pop1
+	i32.store	$push2=, 24($0), $pop1
 	i32.store	$discard=, 0($pop4), $pop2
 	i32.const	$push17=, 4
 	i32.add 	$push18=, $0, $pop17

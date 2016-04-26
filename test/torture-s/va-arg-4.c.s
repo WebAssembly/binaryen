@@ -106,9 +106,9 @@ main:                                   # @main
 	i64.load	$push10=, main.x($pop13):p2align=0
 	i64.store	$discard=, 16($1):p2align=2, $pop10
 	i64.const	$push11=, 515396075562
-	i64.store	$discard=, 0($1):p2align=4, $pop11
+	i64.store	$discard=, 0($1), $pop11
 	i32.const	$push12=, 0
-	i32.store	$0=, 8($1):p2align=3, $pop12
+	i32.store	$0=, 8($1), $pop12
 	i32.const	$push26=, 16
 	i32.add 	$push27=, $1, $pop26
 	call    	f@FUNCTION, $pop27, $0, $1

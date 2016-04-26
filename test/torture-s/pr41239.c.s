@@ -40,7 +40,7 @@ test:                                   # @test
 	i32.const	$push10=, .L.str.1
 	i32.const	$push16=, 0
 	i32.call	$push11=, fn4@FUNCTION, $pop10, $pop16
-	i32.store	$discard=, 0($3):p2align=4, $pop11
+	i32.store	$discard=, 0($3), $pop11
 	call    	fn2@FUNCTION, $2, $3
 .LBB0_3:                                # %if.end
 	end_block                       # label0:
@@ -146,7 +146,7 @@ main:                                   # @main
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.s+8($pop0)
-	i32.store	$discard=, 0($pop3):p2align=3, $pop1
+	i32.store	$discard=, 0($pop3), $pop1
 	i32.const	$push5=, 0
 	i64.load	$push4=, .Lmain.s($pop5):p2align=2
 	i64.store	$discard=, 0($0), $pop4

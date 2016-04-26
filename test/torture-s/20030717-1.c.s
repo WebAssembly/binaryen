@@ -9,7 +9,7 @@ bar:                                    # @bar
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.load16_u	$2=, 0($1):p2align=2
+	i32.load16_u	$2=, 0($1)
 	i32.load	$push26=, 4($1)
 	tee_local	$push25=, $7=, $pop26
 	i32.load	$push24=, 24($0)

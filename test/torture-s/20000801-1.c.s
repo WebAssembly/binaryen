@@ -63,8 +63,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	i32.store	$0=, 12($2), $pop0
 	i32.const	$push1=, 1
-	i32.store16	$1=, 12($2):p2align=2, $pop1
-	i32.store8	$discard=, 14($2):p2align=1, $0
+	i32.store16	$1=, 12($2), $pop1
+	i32.store8	$discard=, 14($2), $0
 	block
 	i32.load	$push2=, 12($2)
 	i32.ne  	$push3=, $1, $pop2

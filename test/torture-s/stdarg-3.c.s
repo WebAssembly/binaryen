@@ -371,28 +371,28 @@ f7:                                     # @f7
 	i32.load	$push7=, 0($3)
 	i32.store	$discard=, s1+28($pop35), $pop7
 	i32.const	$push34=, 0
-	i32.load	$push9=, 0($4):p2align=3
-	i32.store	$discard=, s1+24($pop34):p2align=3, $pop9
+	i32.load	$push9=, 0($4)
+	i32.store	$discard=, s1+24($pop34), $pop9
 	i32.const	$push33=, 0
 	i32.load	$push11=, 0($5)
 	i32.store	$discard=, s1+20($pop33), $pop11
 	i32.const	$push32=, 0
-	i32.load	$push13=, 0($6):p2align=3
-	i32.store	$discard=, s1+16($pop32):p2align=3, $pop13
+	i32.load	$push13=, 0($6)
+	i32.store	$discard=, s1+16($pop32), $pop13
 	i32.const	$push31=, 0
 	i32.load	$push15=, 0($7)
 	i32.store	$discard=, s1+12($pop31), $pop15
 	i32.const	$push30=, 0
-	i32.load	$push17=, 0($8):p2align=3
-	i32.store	$discard=, s1+8($pop30):p2align=3, $pop17
+	i32.load	$push17=, 0($8)
+	i32.store	$discard=, s1+8($pop30), $pop17
 	i32.store	$discard=, 12($10), $1
 	i32.store	$discard=, 12($10), $2
 	i32.const	$push29=, 0
-	i32.load	$push18=, 0($9):p2align=3
-	i32.store	$discard=, s1($pop29):p2align=3, $pop18
+	i32.load	$push18=, 0($9)
+	i32.store	$discard=, s1($pop29), $pop18
 	i32.const	$push28=, 0
 	i32.const	$push27=, 0
-	i32.load	$push19=, s1($pop27):p2align=3
+	i32.load	$push19=, s1($pop27)
 	i32.store	$discard=, bar_arg($pop28), $pop19
 	i32.const	$push26=, -1
 	i32.add 	$0=, $0, $pop26
@@ -445,19 +445,19 @@ f8:                                     # @f8
 	i32.store	$discard=, s2+4($pop25), $pop4
 	i32.store	$discard=, 12($7), $1
 	i32.const	$push24=, 0
-	i32.load	$push5=, 0($0):p2align=3
-	i32.store	$discard=, s2($pop24):p2align=3, $pop5
+	i32.load	$push5=, 0($0)
+	i32.store	$discard=, s2($pop24), $pop5
 	i32.const	$push23=, 0
 	i32.load	$push7=, 0($2)
 	i32.store	$discard=, s2+12($pop23), $pop7
 	i32.const	$push22=, 0
-	i32.load	$push9=, 0($3):p2align=3
-	i32.store	$discard=, s2+8($pop22):p2align=3, $pop9
+	i32.load	$push9=, 0($3)
+	i32.store	$discard=, s2+8($pop22), $pop9
 	i32.store	$discard=, 12($7), $4
 	i32.const	$push21=, 0
-	i32.load	$5=, s2+8($pop21):p2align=3
+	i32.load	$5=, s2+8($pop21)
 	i32.const	$push20=, 0
-	i32.load	$push11=, 16($0):p2align=3
+	i32.load	$push11=, 16($0)
 	i32.store	$discard=, y($pop20), $pop11
 	i32.const	$push19=, 0
 	i32.store	$discard=, bar_arg($pop19), $5
@@ -480,33 +480,33 @@ f8:                                     # @f8
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i64, i32, i32, i32
+	.local  	i32, i64, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push329=, __stack_pointer
 	i32.load	$push330=, 0($pop329)
 	i32.const	$push331=, 752
-	i32.sub 	$6=, $pop330, $pop331
+	i32.sub 	$5=, $pop330, $pop331
 	i32.const	$push332=, __stack_pointer
-	i32.store	$discard=, 0($pop332), $6
+	i32.store	$discard=, 0($pop332), $5
 	i32.const	$push336=, 624
-	i32.add 	$push337=, $6, $pop336
+	i32.add 	$push337=, $5, $pop336
 	i32.const	$push236=, 24
 	i32.add 	$push0=, $pop337, $pop236
 	i64.const	$push1=, 55834574859
 	i64.store	$discard=, 0($pop0), $pop1
 	i32.const	$push338=, 624
-	i32.add 	$push339=, $6, $pop338
+	i32.add 	$push339=, $5, $pop338
 	i32.const	$push235=, 16
 	i32.add 	$push2=, $pop339, $pop235
 	i64.const	$push3=, 38654705671
-	i64.store	$discard=, 0($pop2):p2align=4, $pop3
+	i64.store	$discard=, 0($pop2), $pop3
 	i64.const	$push4=, 21474836483
-	i64.store	$discard=, 632($6), $pop4
+	i64.store	$discard=, 632($5), $pop4
 	i64.const	$push5=, 8589934593
-	i64.store	$discard=, 624($6):p2align=4, $pop5
+	i64.store	$discard=, 624($5), $pop5
 	i32.const	$push6=, 7
 	i32.const	$push340=, 624
-	i32.add 	$push341=, $6, $pop340
+	i32.add 	$push341=, $5, $pop340
 	call    	f1@FUNCTION, $pop6, $pop341
 	block
 	i32.const	$push234=, 0
@@ -516,42 +516,42 @@ main:                                   # @main
 	br_if   	0, $pop9        # 0: down to label24
 # BB#1:                                 # %if.end
 	i32.const	$push342=, 560
-	i32.add 	$push343=, $6, $pop342
+	i32.add 	$push343=, $5, $pop342
 	i32.const	$push10=, 48
 	i32.add 	$push11=, $pop343, $pop10
 	i64.const	$push12=, 4634204016564240384
-	i64.store	$discard=, 0($pop11):p2align=4, $pop12
+	i64.store	$discard=, 0($pop11), $pop12
 	i32.const	$push344=, 560
-	i32.add 	$push345=, $6, $pop344
+	i32.add 	$push345=, $5, $pop344
 	i32.const	$push13=, 40
 	i32.add 	$push14=, $pop345, $pop13
 	i64.const	$push15=, 4629700416936869888
 	i64.store	$discard=, 0($pop14), $pop15
 	i32.const	$push346=, 560
-	i32.add 	$push347=, $6, $pop346
+	i32.add 	$push347=, $5, $pop346
 	i32.const	$push16=, 32
 	i32.add 	$push17=, $pop347, $pop16
 	i64.const	$push18=, 4625196817309499392
-	i64.store	$discard=, 0($pop17):p2align=4, $pop18
+	i64.store	$discard=, 0($pop17), $pop18
 	i32.const	$push348=, 560
-	i32.add 	$push349=, $6, $pop348
+	i32.add 	$push349=, $5, $pop348
 	i32.const	$push239=, 24
 	i32.add 	$push19=, $pop349, $pop239
 	i64.const	$push20=, 4620693217682128896
 	i64.store	$discard=, 0($pop19), $pop20
 	i32.const	$push350=, 560
-	i32.add 	$push351=, $6, $pop350
+	i32.add 	$push351=, $5, $pop350
 	i32.const	$push238=, 16
 	i32.add 	$push21=, $pop351, $pop238
 	i64.const	$push22=, 4616189618054758400
-	i64.store	$discard=, 0($pop21):p2align=4, $pop22
+	i64.store	$discard=, 0($pop21), $pop22
 	i64.const	$push23=, 4611686018427387904
-	i64.store	$discard=, 568($6), $pop23
+	i64.store	$discard=, 568($5), $pop23
 	i64.const	$push24=, 4607182418800017408
-	i64.store	$discard=, 560($6):p2align=4, $pop24
+	i64.store	$discard=, 560($5), $pop24
 	i32.const	$push25=, 6
 	i32.const	$push352=, 560
-	i32.add 	$push353=, $6, $pop352
+	i32.add 	$push353=, $5, $pop352
 	call    	f2@FUNCTION, $pop25, $pop353
 	i32.const	$push237=, 0
 	f64.load	$push26=, d($pop237)
@@ -560,10 +560,10 @@ main:                                   # @main
 	br_if   	0, $pop28       # 0: down to label24
 # BB#2:                                 # %if.end3
 	i64.const	$push30=, 12884901889
-	i64.store	$discard=, 544($6):p2align=4, $pop30
+	i64.store	$discard=, 544($5), $pop30
 	i32.const	$push31=, 2
 	i32.const	$push354=, 544
-	i32.add 	$push355=, $6, $pop354
+	i32.add 	$push355=, $5, $pop354
 	call    	f3@FUNCTION, $pop31, $pop355
 	i32.const	$push241=, 0
 	i32.load	$push32=, bar_arg($pop241)
@@ -578,12 +578,12 @@ main:                                   # @main
 	br_if   	0, $pop34       # 0: down to label24
 # BB#4:                                 # %if.end7
 	i64.const	$push36=, 4626041242239631360
-	i64.store	$discard=, 536($6), $pop36
+	i64.store	$discard=, 536($5), $pop36
 	i64.const	$push37=, 4625478292286210048
-	i64.store	$discard=, 528($6):p2align=4, $pop37
+	i64.store	$discard=, 528($5), $pop37
 	i32.const	$push38=, 2
 	i32.const	$push356=, 528
-	i32.add 	$push357=, $6, $pop356
+	i32.add 	$push357=, $5, $pop356
 	call    	f4@FUNCTION, $pop38, $pop357
 	i32.const	$push244=, 0
 	i32.load	$push39=, bar_arg($pop244)
@@ -598,122 +598,122 @@ main:                                   # @main
 	br_if   	0, $pop43       # 0: down to label24
 # BB#6:                                 # %if.end12
 	i32.const	$push358=, 688
-	i32.add 	$push359=, $6, $pop358
-	i32.const	$push52=, 8
+	i32.add 	$push359=, $5, $pop358
+	i32.const	$push52=, 16
 	i32.add 	$push259=, $pop359, $pop52
-	tee_local	$push258=, $5=, $pop259
-	i64.const	$push49=, 4624633867356078080
-	i64.store	$push50=, 728($6), $pop49
-	i64.store	$discard=, 0($pop258), $pop50
-	i32.const	$push47=, 131
-	i32.store	$0=, 720($6):p2align=3, $pop47
+	tee_local	$push258=, $4=, $pop259
 	i32.const	$push48=, 251
-	i32.store	$1=, 736($6):p2align=3, $pop48
+	i32.store	$push49=, 736($5), $pop48
+	i32.store	$discard=, 0($pop258), $pop49
+	i32.const	$push47=, 131
+	i32.store	$0=, 720($5), $pop47
+	i64.const	$push50=, 4624633867356078080
+	i64.store	$1=, 728($5), $pop50
 	i32.const	$push360=, 720
-	i32.add 	$push361=, $6, $pop360
+	i32.add 	$push361=, $5, $pop360
 	i32.const	$push54=, 20
 	i32.add 	$push56=, $pop361, $pop54
 	i32.load	$2=, 0($pop56)
 	i32.const	$push362=, 688
-	i32.add 	$push363=, $6, $pop362
-	i32.const	$push53=, 16
+	i32.add 	$push363=, $5, $pop362
+	i32.const	$push53=, 8
 	i32.add 	$push257=, $pop363, $pop53
-	tee_local	$push256=, $4=, $pop257
-	i32.store	$discard=, 0($pop256):p2align=3, $1
-	i64.load	$3=, 720($6)
+	tee_local	$push256=, $3=, $pop257
+	i64.store	$discard=, 0($pop256), $1
+	i64.load	$1=, 720($5)
 	i32.const	$push364=, 688
-	i32.add 	$push365=, $6, $pop364
+	i32.add 	$push365=, $5, $pop364
 	i32.const	$push255=, 20
 	i32.add 	$push55=, $pop365, $pop255
 	i32.store	$discard=, 0($pop55), $2
 	i64.const	$push51=, 4640924231633207296
-	i64.store	$discard=, 744($6), $pop51
-	i64.store	$discard=, 688($6), $3
+	i64.store	$discard=, 744($5), $pop51
+	i64.store	$discard=, 688($5), $1
 	i64.const	$push58=, 4640466834796052480
-	i64.store	$discard=, 712($6), $pop58
+	i64.store	$discard=, 712($5), $pop58
 	i32.const	$push57=, 254
-	i32.store	$1=, 0($4):p2align=3, $pop57
+	i32.store	$2=, 0($4), $pop57
 	i32.const	$push366=, 496
-	i32.add 	$push367=, $6, $pop366
+	i32.add 	$push367=, $5, $pop366
 	i32.const	$push254=, 16
 	i32.add 	$push59=, $pop367, $pop254
-	i64.load	$push60=, 736($6)
+	i64.load	$push60=, 736($5)
 	i64.store	$discard=, 0($pop59), $pop60
 	i32.const	$push368=, 496
-	i32.add 	$push369=, $6, $pop368
+	i32.add 	$push369=, $5, $pop368
 	i32.const	$push61=, 24
 	i32.add 	$push62=, $pop369, $pop61
-	i64.load	$push63=, 744($6)
+	i64.load	$push63=, 744($5)
 	i64.store	$discard=, 0($pop62), $pop63
 	i32.const	$push370=, 496
-	i32.add 	$push371=, $6, $pop370
+	i32.add 	$push371=, $5, $pop370
 	i32.const	$push253=, 8
 	i32.add 	$push64=, $pop371, $pop253
-	i64.load	$push65=, 728($6)
+	i64.load	$push65=, 728($5)
 	i64.store	$discard=, 0($pop64), $pop65
-	i64.load	$push66=, 720($6)
-	i64.store	$discard=, 496($6), $pop66
+	i64.load	$push66=, 720($5)
+	i64.store	$discard=, 496($5), $pop66
 	i32.const	$push372=, 464
-	i32.add 	$push373=, $6, $pop372
+	i32.add 	$push373=, $5, $pop372
 	i32.const	$push252=, 24
 	i32.add 	$push67=, $pop373, $pop252
-	i64.load	$push68=, 712($6)
+	i64.load	$push68=, 712($5)
 	i64.store	$discard=, 0($pop67), $pop68
 	i32.const	$push374=, 464
-	i32.add 	$push375=, $6, $pop374
+	i32.add 	$push375=, $5, $pop374
 	i32.const	$push251=, 16
 	i32.add 	$push69=, $pop375, $pop251
 	i64.load	$push70=, 0($4)
 	i64.store	$discard=, 0($pop69), $pop70
 	i32.const	$push376=, 464
-	i32.add 	$push377=, $6, $pop376
+	i32.add 	$push377=, $5, $pop376
 	i32.const	$push250=, 8
 	i32.add 	$push71=, $pop377, $pop250
-	i64.load	$push72=, 0($5)
+	i64.load	$push72=, 0($3)
 	i64.store	$discard=, 0($pop71), $pop72
-	i64.load	$push73=, 688($6)
-	i64.store	$discard=, 464($6), $pop73
+	i64.load	$push73=, 688($5)
+	i64.store	$discard=, 464($5), $pop73
 	i32.const	$push378=, 432
-	i32.add 	$push379=, $6, $pop378
+	i32.add 	$push379=, $5, $pop378
 	i32.const	$push249=, 24
 	i32.add 	$push74=, $pop379, $pop249
-	i64.load	$push75=, 744($6)
+	i64.load	$push75=, 744($5)
 	i64.store	$discard=, 0($pop74), $pop75
 	i32.const	$push380=, 432
-	i32.add 	$push381=, $6, $pop380
+	i32.add 	$push381=, $5, $pop380
 	i32.const	$push248=, 16
 	i32.add 	$push76=, $pop381, $pop248
-	i64.load	$push77=, 736($6)
+	i64.load	$push77=, 736($5)
 	i64.store	$discard=, 0($pop76), $pop77
 	i32.const	$push382=, 432
-	i32.add 	$push383=, $6, $pop382
+	i32.add 	$push383=, $5, $pop382
 	i32.const	$push247=, 8
 	i32.add 	$push78=, $pop383, $pop247
-	i64.load	$push79=, 728($6)
+	i64.load	$push79=, 728($5)
 	i64.store	$discard=, 0($pop78), $pop79
-	i64.load	$push80=, 720($6)
-	i64.store	$discard=, 432($6), $pop80
+	i64.load	$push80=, 720($5)
+	i64.store	$discard=, 432($5), $pop80
 	i32.const	$push384=, 432
-	i32.add 	$push385=, $6, $pop384
-	i32.store	$discard=, 424($6):p2align=3, $pop385
+	i32.add 	$push385=, $5, $pop384
+	i32.store	$discard=, 424($5), $pop385
 	i32.const	$push386=, 464
-	i32.add 	$push387=, $6, $pop386
-	i32.store	$discard=, 420($6), $pop387
+	i32.add 	$push387=, $5, $pop386
+	i32.store	$discard=, 420($5), $pop387
 	i32.const	$push388=, 496
-	i32.add 	$push389=, $6, $pop388
-	i32.store	$discard=, 416($6):p2align=4, $pop389
+	i32.add 	$push389=, $5, $pop388
+	i32.store	$discard=, 416($5), $pop389
 	i32.const	$push81=, 2
 	i32.const	$push390=, 416
-	i32.add 	$push391=, $6, $pop390
+	i32.add 	$push391=, $5, $pop390
 	call    	f5@FUNCTION, $pop81, $pop391
 	i32.const	$push246=, 0
-	i32.load	$push82=, s1($pop246):p2align=3
+	i32.load	$push82=, s1($pop246)
 	i32.ne  	$push83=, $0, $pop82
 	br_if   	0, $pop83       # 0: down to label24
 # BB#7:                                 # %if.end12
 	i32.const	$push260=, 0
-	i32.load	$push44=, s1+16($pop260):p2align=3
-	i32.ne  	$push84=, $pop44, $1
+	i32.load	$push44=, s1+16($pop260)
+	i32.ne  	$push84=, $pop44, $2
 	br_if   	0, $pop84       # 0: down to label24
 # BB#8:                                 # %if.end12
 	i32.const	$push261=, 0
@@ -729,113 +729,113 @@ main:                                   # @main
 	br_if   	0, $pop88       # 0: down to label24
 # BB#10:                                # %if.end23
 	i32.const	$push392=, 384
-	i32.add 	$push393=, $6, $pop392
+	i32.add 	$push393=, $5, $pop392
 	i32.const	$push92=, 24
 	i32.add 	$push93=, $pop393, $pop92
 	i32.const	$push394=, 720
-	i32.add 	$push395=, $6, $pop394
+	i32.add 	$push395=, $5, $pop394
 	i32.const	$push281=, 24
 	i32.add 	$push280=, $pop395, $pop281
 	tee_local	$push279=, $4=, $pop280
 	i64.load	$push94=, 0($pop279)
 	i64.store	$discard=, 0($pop93), $pop94
 	i32.const	$push396=, 384
-	i32.add 	$push397=, $6, $pop396
+	i32.add 	$push397=, $5, $pop396
 	i32.const	$push95=, 16
 	i32.add 	$push96=, $pop397, $pop95
 	i32.const	$push398=, 720
-	i32.add 	$push399=, $6, $pop398
+	i32.add 	$push399=, $5, $pop398
 	i32.const	$push278=, 16
 	i32.add 	$push277=, $pop399, $pop278
-	tee_local	$push276=, $5=, $pop277
+	tee_local	$push276=, $0=, $pop277
 	i64.load	$push97=, 0($pop276)
 	i64.store	$discard=, 0($pop96), $pop97
 	i32.const	$push400=, 384
-	i32.add 	$push401=, $6, $pop400
+	i32.add 	$push401=, $5, $pop400
 	i32.const	$push98=, 8
 	i32.add 	$push99=, $pop401, $pop98
 	i32.const	$push402=, 720
-	i32.add 	$push403=, $6, $pop402
+	i32.add 	$push403=, $5, $pop402
 	i32.const	$push275=, 8
 	i32.add 	$push274=, $pop403, $pop275
-	tee_local	$push273=, $0=, $pop274
+	tee_local	$push273=, $2=, $pop274
 	i64.load	$push100=, 0($pop273)
 	i64.store	$discard=, 0($pop99), $pop100
-	i64.load	$push101=, 720($6)
-	i64.store	$discard=, 384($6), $pop101
+	i64.load	$push101=, 720($5)
+	i64.store	$discard=, 384($5), $pop101
 	i32.const	$push404=, 352
-	i32.add 	$push405=, $6, $pop404
+	i32.add 	$push405=, $5, $pop404
 	i32.const	$push272=, 24
 	i32.add 	$push102=, $pop405, $pop272
 	i32.const	$push406=, 688
-	i32.add 	$push407=, $6, $pop406
+	i32.add 	$push407=, $5, $pop406
 	i32.const	$push271=, 24
 	i32.add 	$push103=, $pop407, $pop271
 	i64.load	$push104=, 0($pop103)
 	i64.store	$discard=, 0($pop102), $pop104
 	i32.const	$push408=, 352
-	i32.add 	$push409=, $6, $pop408
+	i32.add 	$push409=, $5, $pop408
 	i32.const	$push270=, 16
 	i32.add 	$push105=, $pop409, $pop270
 	i32.const	$push410=, 688
-	i32.add 	$push411=, $6, $pop410
+	i32.add 	$push411=, $5, $pop410
 	i32.const	$push269=, 16
 	i32.add 	$push106=, $pop411, $pop269
 	i64.load	$push107=, 0($pop106)
 	i64.store	$discard=, 0($pop105), $pop107
 	i32.const	$push412=, 352
-	i32.add 	$push413=, $6, $pop412
+	i32.add 	$push413=, $5, $pop412
 	i32.const	$push268=, 8
 	i32.add 	$push108=, $pop413, $pop268
 	i32.const	$push414=, 688
-	i32.add 	$push415=, $6, $pop414
+	i32.add 	$push415=, $5, $pop414
 	i32.const	$push267=, 8
 	i32.add 	$push109=, $pop415, $pop267
 	i64.load	$push110=, 0($pop109)
 	i64.store	$discard=, 0($pop108), $pop110
-	i64.load	$push111=, 688($6)
-	i64.store	$discard=, 352($6), $pop111
+	i64.load	$push111=, 688($5)
+	i64.store	$discard=, 352($5), $pop111
 	i32.const	$push416=, 320
-	i32.add 	$push417=, $6, $pop416
+	i32.add 	$push417=, $5, $pop416
 	i32.const	$push266=, 24
 	i32.add 	$push112=, $pop417, $pop266
 	i64.load	$push113=, 0($4)
 	i64.store	$discard=, 0($pop112), $pop113
 	i32.const	$push418=, 320
-	i32.add 	$push419=, $6, $pop418
+	i32.add 	$push419=, $5, $pop418
 	i32.const	$push265=, 16
 	i32.add 	$push114=, $pop419, $pop265
-	i64.load	$push115=, 0($5)
+	i64.load	$push115=, 0($0)
 	i64.store	$discard=, 0($pop114), $pop115
 	i32.const	$push420=, 320
-	i32.add 	$push421=, $6, $pop420
+	i32.add 	$push421=, $5, $pop420
 	i32.const	$push264=, 8
 	i32.add 	$push116=, $pop421, $pop264
-	i64.load	$push117=, 0($0)
+	i64.load	$push117=, 0($2)
 	i64.store	$discard=, 0($pop116), $pop117
-	i64.load	$push118=, 720($6)
-	i64.store	$discard=, 320($6), $pop118
+	i64.load	$push118=, 720($5)
+	i64.store	$discard=, 320($5), $pop118
 	i32.const	$push422=, 320
-	i32.add 	$push423=, $6, $pop422
-	i32.store	$discard=, 312($6):p2align=3, $pop423
+	i32.add 	$push423=, $5, $pop422
+	i32.store	$discard=, 312($5), $pop423
 	i32.const	$push424=, 352
-	i32.add 	$push425=, $6, $pop424
-	i32.store	$discard=, 308($6), $pop425
+	i32.add 	$push425=, $5, $pop424
+	i32.store	$discard=, 308($5), $pop425
 	i32.const	$push426=, 384
-	i32.add 	$push427=, $6, $pop426
-	i32.store	$discard=, 304($6):p2align=4, $pop427
+	i32.add 	$push427=, $5, $pop426
+	i32.store	$discard=, 304($5), $pop427
 	i32.const	$push119=, 3
 	i32.const	$push428=, 304
-	i32.add 	$push429=, $6, $pop428
+	i32.add 	$push429=, $5, $pop428
 	call    	f5@FUNCTION, $pop119, $pop429
 	i32.const	$push263=, 0
-	i32.load	$push120=, s1($pop263):p2align=3
+	i32.load	$push120=, s1($pop263)
 	i32.const	$push121=, 131
 	i32.ne  	$push122=, $pop120, $pop121
 	br_if   	0, $pop122      # 0: down to label24
 # BB#11:                                # %if.end23
 	i32.const	$push282=, 0
-	i32.load	$push89=, s1+16($pop282):p2align=3
+	i32.load	$push89=, s1+16($pop282)
 	i32.const	$push123=, 251
 	i32.ne  	$push124=, $pop89, $pop123
 	br_if   	0, $pop124      # 0: down to label24
@@ -853,64 +853,64 @@ main:                                   # @main
 	br_if   	0, $pop128      # 0: down to label24
 # BB#14:                                # %if.end32
 	i32.const	$push130=, 138
-	i32.store	$discard=, 680($6):p2align=3, $pop130
+	i32.store	$discard=, 680($5), $pop130
 	i64.const	$push131=, 4625196817309499392
-	i64.store	$discard=, 672($6), $pop131
+	i64.store	$discard=, 672($5), $pop131
 	i64.const	$push133=, 4640396466051874816
-	i64.store	$discard=, 656($6), $pop133
+	i64.store	$discard=, 656($5), $pop133
 	i32.const	$push132=, 257
-	i32.store	$4=, 664($6):p2align=3, $pop132
+	i32.store	$4=, 664($5), $pop132
 	i32.const	$push430=, 288
-	i32.add 	$push431=, $6, $pop430
+	i32.add 	$push431=, $5, $pop430
 	i32.const	$push134=, 12
 	i32.add 	$push135=, $pop431, $pop134
 	i32.const	$push432=, 672
-	i32.add 	$push433=, $6, $pop432
+	i32.add 	$push433=, $5, $pop432
 	i32.const	$push288=, 12
 	i32.add 	$push136=, $pop433, $pop288
 	i32.load	$push137=, 0($pop136)
 	i32.store	$discard=, 0($pop135), $pop137
 	i32.const	$push434=, 288
-	i32.add 	$push435=, $6, $pop434
+	i32.add 	$push435=, $5, $pop434
 	i32.const	$push138=, 8
 	i32.add 	$push139=, $pop435, $pop138
-	i32.load	$push140=, 680($6):p2align=3
-	i32.store	$discard=, 0($pop139):p2align=3, $pop140
-	i32.load	$push141=, 676($6)
-	i32.store	$discard=, 292($6), $pop141
-	i32.load	$push142=, 672($6):p2align=3
-	i32.store	$discard=, 288($6):p2align=3, $pop142
+	i32.load	$push140=, 680($5)
+	i32.store	$discard=, 0($pop139), $pop140
+	i32.load	$push141=, 676($5)
+	i32.store	$discard=, 292($5), $pop141
+	i32.load	$push142=, 672($5)
+	i32.store	$discard=, 288($5), $pop142
 	i32.const	$push436=, 272
-	i32.add 	$push437=, $6, $pop436
+	i32.add 	$push437=, $5, $pop436
 	i32.const	$push287=, 8
 	i32.add 	$push143=, $pop437, $pop287
-	i64.load	$push144=, 664($6)
+	i64.load	$push144=, 664($5)
 	i64.store	$discard=, 0($pop143), $pop144
-	i64.load	$push145=, 656($6)
-	i64.store	$discard=, 272($6), $pop145
+	i64.load	$push145=, 656($5)
+	i64.store	$discard=, 272($5), $pop145
 	i32.const	$push438=, 256
-	i32.add 	$push439=, $6, $pop438
+	i32.add 	$push439=, $5, $pop438
 	i32.const	$push286=, 8
 	i32.add 	$push146=, $pop439, $pop286
-	i64.load	$push147=, 680($6)
+	i64.load	$push147=, 680($5)
 	i64.store	$discard=, 0($pop146), $pop147
-	i64.load	$push148=, 672($6)
-	i64.store	$discard=, 256($6), $pop148
+	i64.load	$push148=, 672($5)
+	i64.store	$discard=, 256($5), $pop148
 	i32.const	$push440=, 256
-	i32.add 	$push441=, $6, $pop440
-	i32.store	$discard=, 248($6):p2align=3, $pop441
+	i32.add 	$push441=, $5, $pop440
+	i32.store	$discard=, 248($5), $pop441
 	i32.const	$push442=, 272
-	i32.add 	$push443=, $6, $pop442
-	i32.store	$discard=, 244($6), $pop443
+	i32.add 	$push443=, $5, $pop442
+	i32.store	$discard=, 244($5), $pop443
 	i32.const	$push444=, 288
-	i32.add 	$push445=, $6, $pop444
-	i32.store	$discard=, 240($6):p2align=4, $pop445
+	i32.add 	$push445=, $5, $pop444
+	i32.store	$discard=, 240($5), $pop445
 	i32.const	$push149=, 2
 	i32.const	$push446=, 240
-	i32.add 	$push447=, $6, $pop446
+	i32.add 	$push447=, $5, $pop446
 	call    	f6@FUNCTION, $pop149, $pop447
 	i32.const	$push285=, 0
-	i32.load	$push150=, s2+8($pop285):p2align=3
+	i32.load	$push150=, s2+8($pop285)
 	i32.ne  	$push151=, $4, $pop150
 	br_if   	0, $pop151      # 0: down to label24
 # BB#15:                                # %if.end32
@@ -921,53 +921,53 @@ main:                                   # @main
 	br_if   	0, $pop153      # 0: down to label24
 # BB#16:                                # %if.end41
 	i32.const	$push448=, 224
-	i32.add 	$push449=, $6, $pop448
+	i32.add 	$push449=, $5, $pop448
 	i32.const	$push155=, 8
 	i32.add 	$push156=, $pop449, $pop155
 	i32.const	$push450=, 672
-	i32.add 	$push451=, $6, $pop450
+	i32.add 	$push451=, $5, $pop450
 	i32.const	$push296=, 8
 	i32.add 	$push295=, $pop451, $pop296
 	tee_local	$push294=, $4=, $pop295
 	i64.load	$push157=, 0($pop294)
 	i64.store	$discard=, 0($pop156), $pop157
 	i32.const	$push452=, 208
-	i32.add 	$push453=, $6, $pop452
+	i32.add 	$push453=, $5, $pop452
 	i32.const	$push293=, 8
 	i32.add 	$push158=, $pop453, $pop293
 	i32.const	$push454=, 656
-	i32.add 	$push455=, $6, $pop454
+	i32.add 	$push455=, $5, $pop454
 	i32.const	$push292=, 8
 	i32.add 	$push159=, $pop455, $pop292
 	i64.load	$push160=, 0($pop159)
 	i64.store	$discard=, 0($pop158), $pop160
-	i64.load	$push161=, 672($6)
-	i64.store	$discard=, 224($6), $pop161
-	i64.load	$push162=, 656($6)
-	i64.store	$discard=, 208($6), $pop162
+	i64.load	$push161=, 672($5)
+	i64.store	$discard=, 224($5), $pop161
+	i64.load	$push162=, 656($5)
+	i64.store	$discard=, 208($5), $pop162
 	i32.const	$push456=, 192
-	i32.add 	$push457=, $6, $pop456
+	i32.add 	$push457=, $5, $pop456
 	i32.const	$push291=, 8
 	i32.add 	$push163=, $pop457, $pop291
 	i64.load	$push164=, 0($4)
 	i64.store	$discard=, 0($pop163), $pop164
-	i64.load	$push165=, 672($6)
-	i64.store	$discard=, 192($6), $pop165
+	i64.load	$push165=, 672($5)
+	i64.store	$discard=, 192($5), $pop165
 	i32.const	$push458=, 192
-	i32.add 	$push459=, $6, $pop458
-	i32.store	$discard=, 184($6):p2align=3, $pop459
+	i32.add 	$push459=, $5, $pop458
+	i32.store	$discard=, 184($5), $pop459
 	i32.const	$push460=, 208
-	i32.add 	$push461=, $6, $pop460
-	i32.store	$discard=, 180($6), $pop461
+	i32.add 	$push461=, $5, $pop460
+	i32.store	$discard=, 180($5), $pop461
 	i32.const	$push462=, 224
-	i32.add 	$push463=, $6, $pop462
-	i32.store	$discard=, 176($6):p2align=4, $pop463
+	i32.add 	$push463=, $5, $pop462
+	i32.store	$discard=, 176($5), $pop463
 	i32.const	$push166=, 3
 	i32.const	$push464=, 176
-	i32.add 	$push465=, $6, $pop464
+	i32.add 	$push465=, $5, $pop464
 	call    	f6@FUNCTION, $pop166, $pop465
 	i32.const	$push290=, 0
-	i32.load	$push167=, s2+8($pop290):p2align=3
+	i32.load	$push167=, s2+8($pop290)
 	i32.const	$push168=, 138
 	i32.ne  	$push169=, $pop167, $pop168
 	br_if   	0, $pop169      # 0: down to label24
@@ -979,113 +979,113 @@ main:                                   # @main
 	br_if   	0, $pop171      # 0: down to label24
 # BB#18:                                # %if.end46
 	i32.const	$push466=, 144
-	i32.add 	$push467=, $6, $pop466
+	i32.add 	$push467=, $5, $pop466
 	i32.const	$push175=, 24
 	i32.add 	$push176=, $pop467, $pop175
 	i32.const	$push468=, 688
-	i32.add 	$push469=, $6, $pop468
+	i32.add 	$push469=, $5, $pop468
 	i32.const	$push316=, 24
 	i32.add 	$push177=, $pop469, $pop316
 	i64.load	$push178=, 0($pop177)
 	i64.store	$discard=, 0($pop176), $pop178
 	i32.const	$push470=, 144
-	i32.add 	$push471=, $6, $pop470
+	i32.add 	$push471=, $5, $pop470
 	i32.const	$push179=, 16
 	i32.add 	$push180=, $pop471, $pop179
 	i32.const	$push472=, 688
-	i32.add 	$push473=, $6, $pop472
+	i32.add 	$push473=, $5, $pop472
 	i32.const	$push315=, 16
 	i32.add 	$push181=, $pop473, $pop315
 	i64.load	$push182=, 0($pop181)
 	i64.store	$discard=, 0($pop180), $pop182
 	i32.const	$push474=, 144
-	i32.add 	$push475=, $6, $pop474
+	i32.add 	$push475=, $5, $pop474
 	i32.const	$push183=, 8
 	i32.add 	$push184=, $pop475, $pop183
 	i32.const	$push476=, 688
-	i32.add 	$push477=, $6, $pop476
+	i32.add 	$push477=, $5, $pop476
 	i32.const	$push314=, 8
 	i32.add 	$push185=, $pop477, $pop314
 	i64.load	$push186=, 0($pop185)
 	i64.store	$discard=, 0($pop184), $pop186
-	i64.load	$push187=, 688($6)
-	i64.store	$discard=, 144($6), $pop187
+	i64.load	$push187=, 688($5)
+	i64.store	$discard=, 144($5), $pop187
 	i32.const	$push478=, 112
-	i32.add 	$push479=, $6, $pop478
+	i32.add 	$push479=, $5, $pop478
 	i32.const	$push313=, 24
 	i32.add 	$push188=, $pop479, $pop313
 	i32.const	$push480=, 720
-	i32.add 	$push481=, $6, $pop480
+	i32.add 	$push481=, $5, $pop480
 	i32.const	$push312=, 24
 	i32.add 	$push311=, $pop481, $pop312
 	tee_local	$push310=, $4=, $pop311
 	i64.load	$push189=, 0($pop310)
 	i64.store	$discard=, 0($pop188), $pop189
 	i32.const	$push482=, 112
-	i32.add 	$push483=, $6, $pop482
+	i32.add 	$push483=, $5, $pop482
 	i32.const	$push309=, 16
 	i32.add 	$push190=, $pop483, $pop309
 	i32.const	$push484=, 720
-	i32.add 	$push485=, $6, $pop484
+	i32.add 	$push485=, $5, $pop484
 	i32.const	$push308=, 16
 	i32.add 	$push307=, $pop485, $pop308
-	tee_local	$push306=, $5=, $pop307
+	tee_local	$push306=, $0=, $pop307
 	i64.load	$push191=, 0($pop306)
 	i64.store	$discard=, 0($pop190), $pop191
 	i32.const	$push486=, 112
-	i32.add 	$push487=, $6, $pop486
+	i32.add 	$push487=, $5, $pop486
 	i32.const	$push305=, 8
 	i32.add 	$push192=, $pop487, $pop305
 	i32.const	$push488=, 720
-	i32.add 	$push489=, $6, $pop488
+	i32.add 	$push489=, $5, $pop488
 	i32.const	$push304=, 8
 	i32.add 	$push303=, $pop489, $pop304
-	tee_local	$push302=, $0=, $pop303
+	tee_local	$push302=, $2=, $pop303
 	i64.load	$push193=, 0($pop302)
 	i64.store	$discard=, 0($pop192), $pop193
-	i64.load	$push194=, 720($6)
-	i64.store	$discard=, 112($6), $pop194
+	i64.load	$push194=, 720($5)
+	i64.store	$discard=, 112($5), $pop194
 	i32.const	$push490=, 80
-	i32.add 	$push491=, $6, $pop490
+	i32.add 	$push491=, $5, $pop490
 	i32.const	$push301=, 24
 	i32.add 	$push195=, $pop491, $pop301
 	i64.load	$push196=, 0($4)
 	i64.store	$discard=, 0($pop195), $pop196
 	i32.const	$push492=, 80
-	i32.add 	$push493=, $6, $pop492
+	i32.add 	$push493=, $5, $pop492
 	i32.const	$push300=, 16
 	i32.add 	$push197=, $pop493, $pop300
-	i64.load	$push198=, 0($5)
+	i64.load	$push198=, 0($0)
 	i64.store	$discard=, 0($pop197), $pop198
 	i32.const	$push494=, 80
-	i32.add 	$push495=, $6, $pop494
+	i32.add 	$push495=, $5, $pop494
 	i32.const	$push299=, 8
 	i32.add 	$push199=, $pop495, $pop299
-	i64.load	$push200=, 0($0)
+	i64.load	$push200=, 0($2)
 	i64.store	$discard=, 0($pop199), $pop200
-	i64.load	$push201=, 720($6)
-	i64.store	$discard=, 80($6), $pop201
+	i64.load	$push201=, 720($5)
+	i64.store	$discard=, 80($5), $pop201
 	i32.const	$push496=, 80
-	i32.add 	$push497=, $6, $pop496
-	i32.store	$discard=, 72($6):p2align=3, $pop497
+	i32.add 	$push497=, $5, $pop496
+	i32.store	$discard=, 72($5), $pop497
 	i32.const	$push498=, 112
-	i32.add 	$push499=, $6, $pop498
-	i32.store	$discard=, 68($6), $pop499
+	i32.add 	$push499=, $5, $pop498
+	i32.store	$discard=, 68($5), $pop499
 	i32.const	$push500=, 144
-	i32.add 	$push501=, $6, $pop500
-	i32.store	$discard=, 64($6):p2align=4, $pop501
+	i32.add 	$push501=, $5, $pop500
+	i32.store	$discard=, 64($5), $pop501
 	i32.const	$push202=, 2
 	i32.const	$push502=, 64
-	i32.add 	$push503=, $6, $pop502
+	i32.add 	$push503=, $5, $pop502
 	call    	f7@FUNCTION, $pop202, $pop503
 	i32.const	$push298=, 0
-	i32.load	$push203=, s1($pop298):p2align=3
+	i32.load	$push203=, s1($pop298)
 	i32.const	$push204=, 131
 	i32.ne  	$push205=, $pop203, $pop204
 	br_if   	0, $pop205      # 0: down to label24
 # BB#19:                                # %if.end46
 	i32.const	$push317=, 0
-	i32.load	$push172=, s1+16($pop317):p2align=3
+	i32.load	$push172=, s1+16($pop317)
 	i32.const	$push206=, 254
 	i32.ne  	$push207=, $pop172, $pop206
 	br_if   	0, $pop207      # 0: down to label24
@@ -1109,51 +1109,51 @@ main:                                   # @main
 	br_if   	0, $pop214      # 0: down to label24
 # BB#23:                                # %if.end58
 	i32.const	$push504=, 48
-	i32.add 	$push505=, $6, $pop504
+	i32.add 	$push505=, $5, $pop504
 	i32.const	$push216=, 8
 	i32.add 	$push217=, $pop505, $pop216
 	i32.const	$push506=, 656
-	i32.add 	$push507=, $6, $pop506
+	i32.add 	$push507=, $5, $pop506
 	i32.const	$push327=, 8
 	i32.add 	$push218=, $pop507, $pop327
 	i64.load	$push219=, 0($pop218)
 	i64.store	$discard=, 0($pop217), $pop219
 	i32.const	$push508=, 32
-	i32.add 	$push509=, $6, $pop508
+	i32.add 	$push509=, $5, $pop508
 	i32.const	$push326=, 8
 	i32.add 	$push220=, $pop509, $pop326
 	i32.const	$push510=, 672
-	i32.add 	$push511=, $6, $pop510
+	i32.add 	$push511=, $5, $pop510
 	i32.const	$push325=, 8
 	i32.add 	$push324=, $pop511, $pop325
 	tee_local	$push323=, $4=, $pop324
 	i64.load	$push221=, 0($pop323)
 	i64.store	$discard=, 0($pop220), $pop221
-	i64.load	$push222=, 656($6)
-	i64.store	$discard=, 48($6), $pop222
-	i64.load	$push223=, 672($6)
-	i64.store	$discard=, 32($6), $pop223
+	i64.load	$push222=, 656($5)
+	i64.store	$discard=, 48($5), $pop222
+	i64.load	$push223=, 672($5)
+	i64.store	$discard=, 32($5), $pop223
 	i32.const	$push512=, 16
-	i32.add 	$push513=, $6, $pop512
+	i32.add 	$push513=, $5, $pop512
 	i32.const	$push322=, 8
 	i32.add 	$push224=, $pop513, $pop322
 	i64.load	$push225=, 0($4)
 	i64.store	$discard=, 0($pop224), $pop225
-	i64.load	$push226=, 672($6)
-	i64.store	$discard=, 16($6), $pop226
+	i64.load	$push226=, 672($5)
+	i64.store	$discard=, 16($5), $pop226
 	i32.const	$push514=, 16
-	i32.add 	$push515=, $6, $pop514
-	i32.store	$discard=, 8($6):p2align=3, $pop515
+	i32.add 	$push515=, $5, $pop514
+	i32.store	$discard=, 8($5), $pop515
 	i32.const	$push516=, 32
-	i32.add 	$push517=, $6, $pop516
-	i32.store	$discard=, 4($6), $pop517
+	i32.add 	$push517=, $5, $pop516
+	i32.store	$discard=, 4($5), $pop517
 	i32.const	$push518=, 48
-	i32.add 	$push519=, $6, $pop518
-	i32.store	$discard=, 0($6):p2align=4, $pop519
+	i32.add 	$push519=, $5, $pop518
+	i32.store	$discard=, 0($5), $pop519
 	i32.const	$push227=, 3
-	call    	f8@FUNCTION, $pop227, $6
+	call    	f8@FUNCTION, $pop227, $5
 	i32.const	$push321=, 0
-	i32.load	$push228=, s2+8($pop321):p2align=3
+	i32.load	$push228=, s2+8($pop321)
 	i32.const	$push229=, 257
 	i32.ne  	$push230=, $pop228, $pop229
 	br_if   	0, $pop230      # 0: down to label24
@@ -1167,7 +1167,7 @@ main:                                   # @main
 	i32.const	$push233=, 0
 	i32.const	$push335=, __stack_pointer
 	i32.const	$push333=, 752
-	i32.add 	$push334=, $6, $pop333
+	i32.add 	$push334=, $5, $pop333
 	i32.store	$discard=, 0($pop335), $pop334
 	return  	$pop233
 .LBB9_26:                               # %if.then62

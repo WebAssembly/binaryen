@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.const	$push24=, 0
 	i32.const	$push23=, 0
 	i64.load	$push1=, .Lmain.t($pop23):p2align=0
-	i64.store	$discard=, s+16($pop24):p2align=4, $pop1
+	i64.store	$discard=, s+16($pop24), $pop1
 	block
 	i32.const	$push22=, 0
 	i32.gt_s	$push2=, $0, $pop22
@@ -62,11 +62,11 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.const	$push48=, 0
-	i64.load32_u	$push12=, s+24($pop48):p2align=3
+	i64.load32_u	$push12=, s+24($pop48)
 	i32.const	$push47=, 0
-	i64.load16_u	$push9=, s+28($pop47):p2align=2
+	i64.load16_u	$push9=, s+28($pop47)
 	i32.const	$push46=, 0
-	i64.load8_u	$push7=, s+30($pop46):p2align=1
+	i64.load8_u	$push7=, s+30($pop46)
 	i64.const	$push45=, 16
 	i64.shl 	$push8=, $pop7, $pop45
 	i64.or  	$push10=, $pop9, $pop8
@@ -76,7 +76,7 @@ main:                                   # @main
 	i64.const	$push43=, 7
 	i64.shl 	$push16=, $pop13, $pop43
 	i32.const	$push42=, 0
-	i64.load	$push14=, s+16($pop42):p2align=4
+	i64.load	$push14=, s+16($pop42)
 	i64.const	$push41=, 57
 	i64.shr_u	$push15=, $pop14, $pop41
 	i64.or  	$push17=, $pop16, $pop15

@@ -66,7 +66,7 @@ test1:                                  # @test1
 	i32.add 	$push24=, $pop33, $pop0
 	tee_local	$push23=, $9=, $pop24
 	i32.const	$push1=, 0
-	i32.store8	$0=, 0($pop23):p2align=3, $pop1
+	i32.store8	$0=, 0($pop23), $pop1
 	i32.const	$push34=, 32
 	i32.add 	$push35=, $10, $pop34
 	i32.const	$push5=, 8
@@ -88,8 +88,8 @@ test1:                                  # @test1
 	i32.const	$push18=, 24
 	i32.add 	$push17=, $10, $pop18
 	tee_local	$push16=, $6=, $pop17
-	i32.load8_u	$push7=, 0($9):p2align=3
-	i32.store8	$discard=, 0($pop16):p2align=3, $pop7
+	i32.load8_u	$push7=, 0($9)
+	i32.store8	$discard=, 0($pop16), $pop7
 	i64.load	$2=, 0($8)
 	i32.const	$push15=, 16
 	i32.add 	$push14=, $10, $pop15
@@ -106,8 +106,8 @@ test1:                                  # @test1
 	i64.load	$1=, 0($7)
 	i64.load	$2=, 0($8)
 	i64.load	$3=, 32($10)
-	i32.load8_u	$push9=, 0($9):p2align=3
-	i32.store8	$discard=, 0($6):p2align=3, $pop9
+	i32.load8_u	$push9=, 0($9)
+	i32.store8	$discard=, 0($6), $pop9
 	i64.store	$discard=, 0($5), $1
 	i64.store	$discard=, 0($4), $2
 	i64.store	$discard=, 0($10), $3
@@ -140,7 +140,7 @@ test2:                                  # @test2
 	i32.add 	$push35=, $pop44, $pop0
 	tee_local	$push34=, $3=, $pop35
 	i32.const	$push1=, 0
-	i32.store8	$0=, 0($pop34):p2align=3, $pop1
+	i32.store8	$0=, 0($pop34), $pop1
 	i32.const	$push45=, 32
 	i32.add 	$push46=, $9, $pop45
 	i32.const	$push5=, 8
@@ -162,8 +162,8 @@ test2:                                  # @test2
 	i32.const	$push29=, 24
 	i32.add 	$push28=, $9, $pop29
 	tee_local	$push27=, $6=, $pop28
-	i32.load8_u	$push7=, 0($3):p2align=3
-	i32.store8	$discard=, 0($pop27):p2align=3, $pop7
+	i32.load8_u	$push7=, 0($3)
+	i32.store8	$discard=, 0($pop27), $pop7
 	i64.load	$2=, 0($8)
 	i32.const	$push26=, 16
 	i32.add 	$push25=, $9, $pop26
@@ -177,8 +177,8 @@ test2:                                  # @test2
 	i64.store	$discard=, 0($9), $1
 	i32.const	$push8=, 1
 	call    	foo@FUNCTION, $9, $pop8
-	i32.load8_u	$push9=, 0($3):p2align=3
-	i32.store8	$discard=, 0($6):p2align=3, $pop9
+	i32.load8_u	$push9=, 0($3)
+	i32.store8	$discard=, 0($6), $pop9
 	i64.load	$1=, 0($8)
 	i64.load	$2=, 32($9)
 	i32.load	$3=, p($0)
@@ -189,7 +189,7 @@ test2:                                  # @test2
 	i32.const	$push20=, 24
 	i32.add 	$push11=, $3, $pop20
 	i32.load8_u	$push12=, 0($pop11)
-	i32.store8	$discard=, 0($6):p2align=3, $pop12
+	i32.store8	$discard=, 0($6), $pop12
 	i32.const	$push19=, 16
 	i32.add 	$push13=, $3, $pop19
 	i64.load	$push14=, 0($pop13):p2align=0
@@ -229,7 +229,7 @@ test3:                                  # @test3
 	i32.add 	$push55=, $pop64, $pop0
 	tee_local	$push54=, $10=, $pop55
 	i32.const	$push1=, 0
-	i32.store8	$0=, 0($pop54):p2align=3, $pop1
+	i32.store8	$0=, 0($pop54), $pop1
 	i32.const	$push65=, 32
 	i32.add 	$push66=, $11, $pop65
 	i32.const	$push5=, 8
@@ -251,8 +251,8 @@ test3:                                  # @test3
 	i32.const	$push49=, 24
 	i32.add 	$push48=, $11, $pop49
 	tee_local	$push47=, $7=, $pop48
-	i32.load8_u	$push11=, 0($10):p2align=3
-	i32.store8	$discard=, 0($pop47):p2align=3, $pop11
+	i32.load8_u	$push11=, 0($10)
+	i32.store8	$discard=, 0($pop47), $pop11
 	i64.load	$2=, 0($9)
 	i32.const	$push46=, 16
 	i32.add 	$push45=, $11, $pop46
@@ -268,12 +268,12 @@ test3:                                  # @test3
 	call    	foo@FUNCTION, $11, $pop12
 	i32.load	$push40=, p($0)
 	tee_local	$push39=, $4=, $pop40
-	i32.load	$push13=, 32($11):p2align=3
+	i32.load	$push13=, 32($11)
 	i32.store	$discard=, 0($pop39):p2align=0, $pop13
 	i32.const	$push38=, 24
 	i32.add 	$push37=, $4, $pop38
 	tee_local	$push36=, $3=, $pop37
-	i32.load8_u	$push14=, 0($10):p2align=3
+	i32.load8_u	$push14=, 0($10)
 	i32.store8	$discard=, 0($pop36), $pop14
 	i32.const	$push9=, 20
 	i32.add 	$push15=, $4, $pop9
@@ -286,7 +286,7 @@ test3:                                  # @test3
 	i32.const	$push34=, 16
 	i32.add 	$push33=, $4, $pop34
 	tee_local	$push32=, $10=, $pop33
-	i32.load	$push17=, 0($8):p2align=3
+	i32.load	$push17=, 0($8)
 	i32.store	$discard=, 0($pop32):p2align=0, $pop17
 	i32.const	$push7=, 12
 	i32.add 	$push18=, $4, $pop7
@@ -299,13 +299,13 @@ test3:                                  # @test3
 	i32.const	$push30=, 8
 	i32.add 	$push29=, $4, $pop30
 	tee_local	$push28=, $8=, $pop29
-	i32.load	$push20=, 0($9):p2align=3
+	i32.load	$push20=, 0($9)
 	i32.store	$discard=, 0($pop28):p2align=0, $pop20
 	i32.const	$push21=, 4
 	i32.add 	$push22=, $4, $pop21
 	i32.load	$push23=, 36($11)
 	i32.store	$discard=, 0($pop22):p2align=0, $pop23
-	i32.load8_u	$push24=, 0($7):p2align=3
+	i32.load8_u	$push24=, 0($7)
 	i32.store8	$discard=, 0($3), $pop24
 	i64.load	$push25=, 0($6)
 	i64.store	$discard=, 0($10):p2align=0, $pop25

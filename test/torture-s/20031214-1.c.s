@@ -23,7 +23,7 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	i32.load	$0=, k($pop0)
 	i32.const	$push9=, 0
-	i32.load	$1=, g+8($pop9):p2align=3
+	i32.load	$1=, g+8($pop9)
 	i32.const	$push8=, 0
 	i32.load	$2=, g+12($pop8)
 	i32.gt_s	$push1=, $0, $1

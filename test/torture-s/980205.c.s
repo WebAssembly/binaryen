@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.const	$push6=, __stack_pointer
 	i32.store	$discard=, 0($pop6), $0
 	i64.const	$push0=, 4611686018427387904
-	i64.store	$discard=, 0($0):p2align=4, $pop0
+	i64.store	$discard=, 0($0), $pop0
 	f64.const	$push1=, 0x1p0
 	call    	fdouble@FUNCTION, $pop1, $0
 	i32.const	$push2=, 0

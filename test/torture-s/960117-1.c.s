@@ -33,7 +33,7 @@ get_tok:                                # @get_tok
 	i32.store16	$push4=, curval($pop6), $pop5
 	tee_local	$push3=, $0=, $pop4
 	i32.const	$push2=, 99
-	i32.store8	$discard=, id_space($pop3):p2align=4, $pop2
+	i32.store8	$discard=, id_space($pop3), $pop2
 	return  	$0
 	.endfunc
 .Lfunc_end1:

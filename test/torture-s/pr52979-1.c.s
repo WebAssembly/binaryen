@@ -19,9 +19,9 @@ bar:                                    # @bar
 	.local  	i64, i64, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i64.load8_u	$0=, a+4($pop0):p2align=2
+	i64.load8_u	$0=, a+4($pop0)
 	i32.const	$push25=, 0
-	i64.load32_u	$1=, a($pop25):p2align=3
+	i64.load32_u	$1=, a($pop25)
 	i32.const	$push24=, 0
 	i32.const	$push23=, 0
 	i32.store8	$push22=, b+4($pop24), $pop23
@@ -41,11 +41,11 @@ bar:                                    # @bar
 	tee_local	$push12=, $0=, $pop13
 	i64.const	$push11=, 32
 	i64.shr_u	$push6=, $pop12, $pop11
-	i64.store8	$discard=, a+4($pop16):p2align=2, $pop6
+	i64.store8	$discard=, a+4($pop16), $pop6
 	i32.const	$push10=, 0
 	i64.const	$push4=, 2147483648
 	i64.or  	$push5=, $0, $pop4
-	i64.store32	$discard=, a($pop10):p2align=3, $pop5
+	i64.store32	$discard=, a($pop10), $pop5
 	block
 	i32.const	$push27=, 0
 	i32.eq  	$push28=, $3, $pop27
@@ -71,9 +71,9 @@ baz:                                    # @baz
 	.local  	i64, i64, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i64.load8_u	$0=, a+4($pop0):p2align=2
+	i64.load8_u	$0=, a+4($pop0)
 	i32.const	$push26=, 0
-	i64.load32_u	$1=, a($pop26):p2align=3
+	i64.load32_u	$1=, a($pop26)
 	i32.const	$push25=, 0
 	i32.const	$push24=, 0
 	i32.store8	$push23=, b+4($pop25), $pop24
@@ -93,11 +93,11 @@ baz:                                    # @baz
 	tee_local	$push13=, $0=, $pop14
 	i64.const	$push12=, 32
 	i64.shr_u	$push6=, $pop13, $pop12
-	i64.store8	$discard=, a+4($pop17):p2align=2, $pop6
+	i64.store8	$discard=, a+4($pop17), $pop6
 	i32.const	$push11=, 0
 	i64.const	$push4=, 2147483648
 	i64.or  	$push5=, $0, $pop4
-	i64.store32	$discard=, a($pop11):p2align=3, $pop5
+	i64.store32	$discard=, a($pop11), $pop5
 	block
 	i32.const	$push28=, 0
 	i32.eq  	$push29=, $2, $pop28
@@ -112,8 +112,8 @@ baz:                                    # @baz
 	end_block                       # label1:
 	i32.load	$2=, b($3):p2align=0
 	i32.load8_u	$push10=, b+4($3)
-	i32.store8	$discard=, a+4($3):p2align=2, $pop10
-	i32.store	$discard=, a($3):p2align=3, $2
+	i32.store8	$discard=, a+4($3), $pop10
+	i32.store	$discard=, a($3), $2
 	return
 	.endfunc
 .Lfunc_end2:
@@ -128,9 +128,9 @@ main:                                   # @main
 	.local  	i64, i64, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i64.load8_u	$0=, a+4($pop0):p2align=2
+	i64.load8_u	$0=, a+4($pop0)
 	i32.const	$push32=, 0
-	i64.load32_u	$1=, a($pop32):p2align=3
+	i64.load32_u	$1=, a($pop32)
 	i32.const	$push31=, 0
 	i32.const	$push30=, 0
 	i32.store8	$push29=, b+4($pop31), $pop30
@@ -150,11 +150,11 @@ main:                                   # @main
 	tee_local	$push19=, $0=, $pop20
 	i64.const	$push18=, 32
 	i64.shr_u	$push6=, $pop19, $pop18
-	i64.store8	$discard=, a+4($pop23):p2align=2, $pop6
+	i64.store8	$discard=, a+4($pop23), $pop6
 	i32.const	$push17=, 0
 	i64.const	$push4=, 2147483648
 	i64.or  	$push5=, $0, $pop4
-	i64.store32	$discard=, a($pop17):p2align=3, $pop5
+	i64.store32	$discard=, a($pop17), $pop5
 	block
 	i32.const	$push35=, 0
 	i32.eq  	$push36=, $2, $pop35
@@ -169,10 +169,10 @@ main:                                   # @main
 	end_block                       # label2:
 	i32.load	$2=, b($3):p2align=0
 	i32.load8_u	$push10=, b+4($3)
-	i32.store8	$discard=, a+4($3):p2align=2, $pop10
-	i32.store	$discard=, a($3):p2align=3, $2
+	i32.store8	$discard=, a+4($3), $pop10
+	i32.store	$discard=, a($3), $2
 	block
-	i64.load32_u	$push11=, a($3):p2align=3
+	i64.load32_u	$push11=, a($3)
 	i64.const	$push12=, 33
 	i64.shl 	$push13=, $pop11, $pop12
 	i64.const	$push34=, 33

@@ -70,7 +70,7 @@ baz:                                    # @baz
 	i32.const	$push2=, 6
 	i32.store	$discard=, 0($pop5), $pop2
 	i32.const	$push3=, 8
-	i32.store	$discard=, 0($1):p2align=4, $pop3
+	i32.store	$discard=, 0($1), $pop3
 	i32.load	$push4=, 0($0)
 	return  	$pop4
 	.endfunc

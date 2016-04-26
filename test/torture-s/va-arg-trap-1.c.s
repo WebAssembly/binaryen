@@ -44,7 +44,7 @@ main:                                   # @main
 	i32.const	$push4=, __stack_pointer
 	i32.store	$discard=, 0($pop4), $1
 	i32.const	$push0=, 0
-	i32.store	$discard=, 0($1):p2align=4, $pop0
+	i32.store	$discard=, 0($1), $pop0
 	call    	bar@FUNCTION, $0, $1
 	unreachable
 	.endfunc

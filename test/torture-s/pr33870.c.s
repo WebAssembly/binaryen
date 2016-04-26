@@ -170,7 +170,7 @@ sort_pagelist:                          # @sort_pagelist
 	br_if   	4, $pop7        # 4: down to label3
 # BB#20:                                # %if.then7
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.load	$push43=, 0($4):p2align=4
+	i32.load	$push43=, 0($4)
 	tee_local	$push42=, $9=, $pop43
 	i32.ne  	$5=, $pop42, $6
 	i32.ne  	$3=, $7, $6
@@ -265,14 +265,14 @@ sort_pagelist:                          # @sort_pagelist
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label4:
 	i32.load	$push13=, 0($2)
-	i32.store	$discard=, 0($4):p2align=4, $pop13
+	i32.store	$discard=, 0($4), $pop13
 .LBB0_36:                               # %while.cond.backedge
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
 	br_if   	0, $0           # 0: up to label1
 # BB#37:                                # %while.end.loopexit
 	end_loop                        # label2:
-	i32.load	$8=, 0($10):p2align=4
+	i32.load	$8=, 0($10)
 .LBB0_38:                               # %while.end
 	end_block                       # label0:
 	i32.const	$5=, 1
@@ -427,16 +427,16 @@ main:                                   # @main
 	i32.add 	$push10=, $2, $pop9
 	i32.store	$discard=, 0($pop12), $pop10
 	i32.const	$push0=, 5
-	i32.store	$discard=, 0($2):p2align=4, $pop0
+	i32.store	$discard=, 0($2), $pop0
 	i32.const	$push1=, 40
 	i32.add 	$push2=, $2, $pop1
 	i32.store	$discard=, 28($2), $pop2
 	i32.const	$push3=, 4
-	i32.store	$discard=, 40($2):p2align=3, $pop3
+	i32.store	$discard=, 40($2), $pop3
 	i32.const	$push8=, 1
-	i32.store	$discard=, 80($2):p2align=4, $pop8
+	i32.store	$discard=, 80($2), $pop8
 	i32.const	$push13=, 3
-	i32.store	$discard=, 120($2):p2align=3, $pop13
+	i32.store	$discard=, 120($2), $pop13
 	i32.const	$push14=, 148
 	i32.add 	$push15=, $2, $pop14
 	i32.const	$push16=, 0

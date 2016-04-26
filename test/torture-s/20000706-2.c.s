@@ -121,11 +121,11 @@ main:                                   # @main
 	i64.const	$push0=, 8589934593
 	i64.store	$discard=, 24($3), $pop0
 	i32.const	$push1=, 3
-	i32.store	$0=, 32($3):p2align=3, $pop1
+	i32.store	$0=, 32($3), $pop1
 	i32.const	$push2=, 4
 	i32.store	$1=, 36($3), $pop2
 	i32.const	$push3=, 5
-	i32.store	$2=, 40($3):p2align=3, $pop3
+	i32.store	$2=, 40($3), $pop3
 	i32.const	$push18=, 4
 	i32.add 	$push19=, $3, $pop18
 	i32.const	$push4=, 12
