@@ -17,6 +17,7 @@
 #include "wasm-linker.h"
 #include "asm_v_wasm.h"
 #include "ast_utils.h"
+#include "s2wasm.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
 #include "wasm-printing.h"
@@ -51,7 +52,7 @@ void Linker::placeStackPointer(size_t stackAllocation) {
 
 void Linker::layout() {
   // Convert calls to undefined functions to call_imports
-  for (const auto& f : out.undefinedFunctions) {
+  for (const auto& f : out.undefinedFunctionCalls) {
     Name target = f.first;
     // Create an import for the target if necessary.
     if (!out.wasm.checkImport(target)) {
@@ -145,12 +146,12 @@ void Linker::layout() {
     }
   }
   if (!!startFunction) {
-    if (out.implementedFunctions.count(startFunction) == 0) {
+    if (out.symbolInfo.implementedFunctions.count(startFunction) == 0) {
       Fatal() << "Unknown start function: `" << startFunction << "`\n";
     }
     const auto *target = out.wasm.getFunction(startFunction);
     Name start("_start");
-    if (out.implementedFunctions.count(start) != 0) {
+    if (out.symbolInfo.implementedFunctions.count(start) != 0) {
       Fatal() << "Start function already present: `" << start << "`\n";
     }
     auto* func = out.wasm.allocator.alloc<Function>();
@@ -185,6 +186,35 @@ void Linker::layout() {
     func->type = ensureFunctionType(getSig(func), &out.wasm)->name;
   }
 }
+
+bool Linker::linkObject(S2WasmBuilder& builder) {
+  LinkerObject::SymbolInfo *newSymbols = builder.getSymbolInfo();
+  // check for multiple definitions
+  for (const Name& symbol : newSymbols->implementedFunctions) {
+    if (out.symbolInfo.implementedFunctions.count(symbol)) {
+      // TODO: Figure out error handling for library-style pieces
+      // TODO: give LinkerObjects (or builders) names for better errors.
+      std::cerr << "Error: multiple definition of symbol " << symbol << "\n";
+      return false;
+    }
+  }
+  // Allow duplicate aliases only if they refer to the same name. For now we
+  // do not expect aliases in compiler-rt files.
+  // TODO: figure out what the semantics of merging aliases should be.
+  for (const auto& alias : newSymbols->aliasedFunctions) {
+    if (out.symbolInfo.aliasedFunctions.count(alias.first) &&
+        out.symbolInfo.aliasedFunctions[alias.first] != alias.second) {
+      std::cerr << "Error: conflicting definitions for alias "
+                << alias.first.c_str() << "\n";
+      return false;
+    }
+  }
+  out.symbolInfo.merge(std::move(*newSymbols));
+  builder.build(&out, &out.symbolInfo);
+  delete newSymbols;
+  return true;
+}
+
 
 void Linker::emscriptenGlue(std::ostream& o) {
   if (debug) {

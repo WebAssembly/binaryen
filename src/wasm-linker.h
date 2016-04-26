@@ -29,6 +29,8 @@
 
 namespace wasm {
 
+class S2WasmBuilder;
+
 // An "object file" for linking. Contains a wasm module, plus the associated
 // information needed for linking/layout.
 class LinkerObject {
@@ -43,6 +45,26 @@ class LinkerObject {
     int addend; // Like the ELF r_addend field
     Relocation(Kind kind, uint32_t* data, Name symbol, int addend) :
         kind(kind), data(data), symbol(symbol), addend(addend) {}
+  };
+  // Information about symbols
+  struct SymbolInfo {
+    std::unordered_set<cashew::IString> implementedFunctions;
+    std::unordered_set<cashew::IString> undefinedFunctions;
+    // TODO: it's not clear that this really belongs here.
+    std::unordered_map<cashew::IString, Name> aliasedFunctions;
+
+    // For now, do not support weak symbols or anything special. Just directly
+    // merge the functions together, and remove any newly-defined functions
+    // from undefinedFunction
+    void merge(SymbolInfo&& other) {
+      for (const auto& func : other.implementedFunctions) {
+        undefinedFunctions.erase(func);
+      }
+      implementedFunctions.insert(other.implementedFunctions.begin(),
+                                  other.implementedFunctions.end());
+      aliasedFunctions.insert(other.aliasedFunctions.begin(),
+                              other.aliasedFunctions.end());
+    }
   };
 
   LinkerObject() {}
@@ -63,20 +85,15 @@ class LinkerObject {
     return relocations.back().get();
   }
 
-  void addImplementedFunction(Name name) {
-    implementedFunctions.insert(name);
-  }
+
   bool isFunctionImplemented(Name name) {
-    return implementedFunctions.count(name) != 0;
+    return symbolInfo.implementedFunctions.count(name) != 0;
   }
 
-  void addAliasedFunction(Name name, Name alias) {
-    aliasedFunctions.insert({name, alias});
-  }
   // If name is an alias, return what it points to. Otherwise return name
   Name resolveAlias(Name name) {
-    auto aliased = aliasedFunctions.find(name);
-    if (aliased != aliasedFunctions.end()) return aliased->second;
+    auto aliased = symbolInfo.aliasedFunctions.find(name);
+    if (aliased != symbolInfo.aliasedFunctions.end()) return aliased->second;
     return name;
   }
 
@@ -88,11 +105,12 @@ class LinkerObject {
 
   void addInitializerFunction(Name name) {
     initializerFunctions.emplace_back(name);
-    assert(implementedFunctions.count(name));
+    assert(symbolInfo.implementedFunctions.count(name));
   }
 
   void addUndefinedFunctionCall(Call* call) {
-    undefinedFunctions[call->target].push_back(call);
+    symbolInfo.undefinedFunctions.insert(call->target);
+    undefinedFunctionCalls[call->target].push_back(call);
   }
 
   bool isEmpty() {
@@ -117,11 +135,10 @@ class LinkerObject {
   std::vector<StaticObject> staticObjects;
   std::vector<std::unique_ptr<Relocation>> relocations;
 
-  std::set<Name> implementedFunctions;
-  std::unordered_map<cashew::IString, Name> aliasedFunctions;
+  SymbolInfo symbolInfo;
 
   using CallList = std::vector<Call*>;
-  std::map<Name, CallList> undefinedFunctions;
+  std::map<Name, CallList> undefinedFunctionCalls;
 
   std::map<Name, size_t> segments; // name => segment index (in wasm module)
 
@@ -186,6 +203,9 @@ class Linker {
   // Support for emscripten integration: generates dyncall thunks, emits
   // metadata for asmConsts, staticBump and initializer functions.
   void emscriptenGlue(std::ostream& o);
+
+  // Add an object to the link by constructing it in-place with a builder.
+  bool linkObject(S2WasmBuilder& builder);
 
  private:
   // Allocate a static variable and return its address in linear memory
