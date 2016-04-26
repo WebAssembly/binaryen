@@ -65,8 +65,6 @@ void Linker::layout() {
     // Change each call. The target is the same since it's still the name.
     // Delete and re-allocate the Expression as CallImport to avoid undefined
     // behavior.
-    static_assert(sizeof(Call) >= sizeof(CallImport),
-                  "Cannot reallocate a CallImport in a Call arena slot");
     for (auto* call : f.second) {
       Call callCopy = std::move(*call);
       CallImport* newCall = ExpressionManipulator::convert<Call, CallImport>(call);
