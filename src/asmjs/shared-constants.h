@@ -17,7 +17,7 @@
 #ifndef wasm_shared_constants_h
 #define wasm_shared_constants_h
 
-#include "emscripten-optimizer/optimizer.h"
+#include "emscripten-optimizer/istring.h"
 
 namespace wasm {
 

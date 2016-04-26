@@ -55,10 +55,12 @@ class S2WasmBuilder {
         {}
 
   void build(LinkerObject *obj, LinkerObject::SymbolInfo* info) {
-    if (!linkerObj->isEmpty()) Fatal() << "Cannot construct an S2WasmBuilder in an non-empty LinkerObject";
+    if (!obj->isEmpty()) Fatal() << "Cannot construct an S2WasmBuilder in an non-empty LinkerObject";
     if (!info)
       info = getSymbolInfo();
     linkerObj = obj;
+    wasm = &obj->wasm;
+    allocator = &wasm->allocator;
 
     s = inputStart;
     process();
