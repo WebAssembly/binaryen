@@ -842,22 +842,18 @@ public:
     if (debug) std::cerr << "zz node: Break" << std::endl;
     if (curr->value) {
       recurse(curr->value);
-    } else {
-      visitNop(nullptr);
     }
     if (curr->condition) recurse(curr->condition);
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
-      << U32LEB(getBreakIndex(curr->name));
+      << U32LEB(curr->value ? 1 : 0) << U32LEB(getBreakIndex(curr->name));
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
     if (curr->value) {
       recurse(curr->value);
-    } else {
-      visitNop(nullptr);
     }
     recurse(curr->condition);
-    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
+    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->value ? 1 : 0) << U32LEB(curr->targets.size());
     for (auto target : curr->targets) {
       o << uint32_t(getBreakIndex(target));
     }
@@ -868,14 +864,14 @@ public:
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallFunction) << U32LEB(getFunctionIndex(curr->target));
+    o << int8_t(BinaryConsts::CallFunction) << U32LEB(curr->operands.size()) << U32LEB(getFunctionIndex(curr->target));
   }
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallImport) << U32LEB(getImportIndex(curr->target));
+    o << int8_t(BinaryConsts::CallImport) << U32LEB(curr->operands.size()) << U32LEB(getImportIndex(curr->target));
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
@@ -883,7 +879,7 @@ public:
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallIndirect) << U32LEB(getFunctionTypeIndex(curr->fullType->name));
+    o << int8_t(BinaryConsts::CallIndirect) << U32LEB(curr->operands.size()) << U32LEB(getFunctionTypeIndex(curr->fullType->name));
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
@@ -1097,10 +1093,8 @@ public:
     if (debug) std::cerr << "zz node: Return" << std::endl;
     if (curr->value) {
       recurse(curr->value);
-    } else {
-      visitNop(nullptr);
     }
-    o << int8_t(BinaryConsts::Return);
+    o << int8_t(BinaryConsts::Return) << U32LEB(curr->value ? 1 : 0);
   }
   void visitHost(Host *curr) {
     if (debug) std::cerr << "zz node: Host" << std::endl;
@@ -1730,14 +1724,18 @@ public:
 
   void visitBreak(Break *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
+    auto arity = getU32LEB();
+    assert(arity == 0 || arity == 1);
     curr->name = getBreakName(getU32LEB());
     if (code == BinaryConsts::BrIf) curr->condition = popExpression();
-    curr->value = popExpression();
+    if (arity == 1) curr->value = popExpression();
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
+    auto arity = getU32LEB();
+    assert(arity == 0 || arity == 1);
     curr->condition = popExpression();
-    curr->value = popExpression();
+    if (arity == 1) curr->value = popExpression();
     auto numTargets = getU32LEB();
     for (size_t i = 0; i < numTargets; i++) {
       curr->targets.push_back(getBreakName(getInt32()));
@@ -1746,9 +1744,11 @@ public:
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
+    auto arity = getU32LEB();
     auto index = getU32LEB();
     auto type = functionTypes[index];
     auto num = type->params.size();
+    assert(num == arity);
     curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
       curr->operands[num - i - 1] = popExpression();
@@ -1758,10 +1758,12 @@ public:
   }
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
+    auto arity = getU32LEB();
     curr->target = wasm.imports[getU32LEB()]->name;
     auto type = wasm.getImport(curr->target)->type;
     assert(type);
     auto num = type->params.size();
+    assert(num == arity);
     if (debug) std::cerr << "zz node: CallImport " << curr->target << " with type " << type->name << " and " << num << " params\n";
     curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
@@ -1771,8 +1773,10 @@ public:
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
+    auto arity = getU32LEB();
     curr->fullType = wasm.functionTypes[getU32LEB()];
     auto num = curr->fullType->params.size();
+    assert(num == arity);
     curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
       curr->operands[num - i - 1] = popExpression();
@@ -1982,7 +1986,11 @@ public:
   }
   void visitReturn(Return *curr) {
     if (debug) std::cerr << "zz node: Return" << std::endl;
-    curr->value = popExpression();
+    auto arity = getU32LEB();
+    assert(arity == 0 || arity == 1);
+    if (arity == 1) {
+      curr->value = popExpression();
+    }
   }
   bool maybeVisitImpl(Host *curr, uint8_t code) {
     switch (code) {
