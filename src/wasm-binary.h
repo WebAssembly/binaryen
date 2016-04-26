@@ -29,6 +29,7 @@
 #include "shared-constants.h"
 #include "asm_v_wasm.h"
 #include "wasm-builder.h"
+#include "ast_utils.h"
 
 namespace wasm {
 
@@ -801,17 +802,30 @@ public:
     breakStack.pop_back();
     o << int8_t(BinaryConsts::End);
   }
+
+  // emits a node, but if it is a block with no name, emit a list of its contents
+  void recursePossibleBlockContents(Expression* curr) {
+    auto* block = curr->dynCast<Block>();
+    if (!block || (block->name.is() && BreakSeeker::has(curr, block->name))) {
+      recurse(curr);
+      return;
+    }
+    for (auto* child : block->list) {
+      recurse(child);
+    }
+  }
+
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
     recurse(curr->condition);
     o << int8_t(BinaryConsts::If);
     breakStack.push_back(IMPOSSIBLE_CONTINUE); // the binary format requires this; we have a block if we need one; TODO: optimize
-    recurse(curr->ifTrue); // TODO: emit block contents directly, if possible
+    recursePossibleBlockContents(curr->ifTrue); // TODO: emit block contents directly, if possible
     breakStack.pop_back();
     if (curr->ifFalse) {
       o << int8_t(BinaryConsts::Else);
       breakStack.push_back(IMPOSSIBLE_CONTINUE); // TODO ditto
-      recurse(curr->ifFalse);
+      recursePossibleBlockContents(curr->ifFalse);
       breakStack.pop_back();
     }
     o << int8_t(BinaryConsts::End);
