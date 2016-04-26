@@ -68,6 +68,7 @@ void Linker::layout() {
       Call callCopy = std::move(*call);
       call->~Call();
       CallImport* newCall = new (call) CallImport;
+      newCall->type = callCopy.type;
       newCall->operands = std::move(callCopy.operands);
       newCall->target = target;
     }

@@ -701,10 +701,10 @@ class S2WasmBuilder {
 
         Call* curr = allocator.alloc<Call>();
         curr->target = target;
+        curr->type = type;
         if (!linkerObj.isFunctionImplemented(target)) {
           linkerObj.addUndefinedFunctionCall(curr);
         }
-        curr->type = type;
         skipWhitespace();
         if (*s == ',') {
           skipComma();
