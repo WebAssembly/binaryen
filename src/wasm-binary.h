@@ -26,7 +26,7 @@
 
 #include "wasm.h"
 #include "wasm-traversal.h"
-#include "shared-constants.h"
+#include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
 #include "wasm-builder.h"
 #include "ast_utils.h"

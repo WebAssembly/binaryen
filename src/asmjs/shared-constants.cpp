@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 WebAssembly Community Group participants
+ * Copyright 2016 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef wasm_shared_constants_h
-#define wasm_shared_constants_h
-
-#include "emscripten-optimizer/optimizer.h"
+#include "asmjs/shared-constants.h"
 
 namespace wasm {
 
@@ -100,5 +97,3 @@ cashew::IString GLOBAL("global"),
                 EXIT("exit");
 
 }
-
-#endif // wasm_shared_constants_h

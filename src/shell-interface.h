@@ -18,7 +18,7 @@
 // Implementation of the shell interpreter execution environment
 //
 
-#include "shared-constants.h"
+#include "asmjs/shared-constants.h"
 #include "wasm.h"
 #include "wasm-interpreter.h"
 
@@ -177,4 +177,3 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 };
 
 }
-

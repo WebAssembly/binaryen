@@ -19,14 +19,14 @@
 
 #include <sstream>
 
+#include "asmjs/shared-constants.h"
 #include "mixed_arena.h"
-#include "shared-constants.h"
 #include "support/utilities.h"
 #include "wasm.h"
 
 namespace wasm {
 
-Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) {
+inline Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) {
   const char *str = s.str;
   auto ret = allocator.alloc<Const>();
   ret->type = type;
