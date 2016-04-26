@@ -49,6 +49,11 @@ struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
 // TODO: optimize
 
 struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer>> {
+  EffectAnalyzer() {}
+  EffectAnalyzer(Expression *ast) {
+    walk(ast);
+  }
+
   bool branches = false;
   bool calls = false;
   std::set<Index> localsRead;

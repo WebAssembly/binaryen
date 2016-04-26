@@ -181,14 +181,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         if (curr->ifFalse) {
           // if with else, consider turning it into a select if there is no control flow
           // TODO: estimate cost
-          EffectAnalyzer condition;
-          condition.walk(curr->condition);
+          EffectAnalyzer condition(curr->condition);
           if (!condition.hasSideEffects()) {
-            EffectAnalyzer ifTrue;
-            ifTrue.walk(curr->ifTrue);
+            EffectAnalyzer ifTrue(curr->ifTrue);
             if (!ifTrue.hasSideEffects()) {
-              EffectAnalyzer ifFalse;
-              ifFalse.walk(curr->ifFalse);
+              EffectAnalyzer ifFalse(curr->ifFalse);
               if (!ifFalse.hasSideEffects()) {
                 auto* select = getModule()->allocator.alloc<Select>();
                 select->condition = curr->condition;
