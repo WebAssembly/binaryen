@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_shared_constants_h
-#define wasm_shared_constants_h
+#ifndef wasm_asmjs_shared_constants_h
+#define wasm_asmjs_shared_constants_h
 
 #include "emscripten-optimizer/istring.h"
 
@@ -101,4 +101,4 @@ extern cashew::IString GLOBAL,
 
 }
 
-#endif // wasm_shared_constants_h
+#endif // wasm_asmjs_shared_constants_h

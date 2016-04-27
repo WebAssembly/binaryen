@@ -56,8 +56,7 @@ class S2WasmBuilder {
 
   void build(LinkerObject *obj, LinkerObject::SymbolInfo* info) {
     if (!obj->isEmpty()) Fatal() << "Cannot construct an S2WasmBuilder in an non-empty LinkerObject";
-    if (!info)
-      info = getSymbolInfo();
+    if (!info) info = getSymbolInfo();
     linkerObj = obj;
     wasm = &obj->wasm;
     allocator = &wasm->allocator;
@@ -705,7 +704,7 @@ class S2WasmBuilder {
         auto input = inputs.begin();
         auto* target = *input;
         std::vector<Expression*> operands(++input, inputs.end());
-        auto* funcType = ensureFunctionType(getSig(type, operands), &wasm);
+        auto* funcType = ensureFunctionType(getSig(type, operands), wasm);
         assert(type == funcType->result);
         auto* indirect = builder.makeCallIndirect(funcType, target, std::move(operands));
         setOutput(indirect, assign);
