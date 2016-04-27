@@ -519,6 +519,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     if (type != WasmType::none) {
       // wasm has no imported constants, so allocate a global, and we need to write the value into that
       allocateGlobal(name, type, true, import->module, import->base);
+      delete import;
     } else {
       wasm.addImport(import);
     }
