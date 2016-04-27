@@ -1067,7 +1067,7 @@ private:
       Element& curr = *s[i];
       assert(curr[0]->str() == SEGMENT);
       const char *input = curr[2]->c_str();
-      char *data = (char*)malloc(strlen(input)); // over-allocated, since escaping collapses, but whatever
+      char data[strlen(input)];
       char *write = data;
       while (1) {
         if (input[0] == 0) break;
@@ -1101,7 +1101,7 @@ private:
         *write++ = input[0];
         input++;
       }
-      wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data, write - data);
+      wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), (const char*)data, write - data);
       i++;
     }
   }
