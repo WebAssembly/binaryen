@@ -74,11 +74,11 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
                         Element* root,
                         std::unique_ptr<SExpressionWasmBuilder>* builder,
                         Name entry) {
-  ShellExternalInterface* interface = nullptr;
-  ModuleInstance* instance = nullptr;
+  std::unique_ptr<ShellExternalInterface> interface;
+  std::unique_ptr<ModuleInstance> instance;
   if (wasm) {
-    interface = new ShellExternalInterface();
-    instance = new ModuleInstance(*wasm, interface);
+    interface = make_unique<ShellExternalInterface>();
+    instance = make_unique<ModuleInstance>(*wasm, interface.get());
     if (entry.is()) {
       Function* function = wasm->getFunction(entry);
       if (!function) {
@@ -128,7 +128,7 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
       assert(invalid);
     } else if (id == INVOKE) {
       assert(wasm);
-      Invocation invocation(curr, instance, *builder->get());
+      Invocation invocation(curr, instance.get(), *builder->get());
       invocation.invoke();
     } else {
       // an invoke test
@@ -136,7 +136,7 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
       bool trapped = false;
       Literal result;
       try {
-        Invocation invocation(*curr[1], instance, *builder->get());
+        Invocation invocation(*curr[1], instance.get(), *builder->get());
         result = invocation.invoke();
       } catch (const TrapException&) {
         trapped = true;
