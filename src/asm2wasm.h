@@ -216,13 +216,13 @@ private:
   // function types. we fill in this information as we see
   // uses, in the first pass
 
-  std::map<IString, FunctionType*> importedFunctionTypes;
+  std::map<IString, std::unique_ptr<FunctionType>> importedFunctionTypes;
   std::map<IString, std::vector<CallImport*>> importedFunctionCalls;
 
   void noteImportedFunctionCall(Ref ast, WasmType resultType, AsmData *asmData, CallImport* call) {
     assert(ast[0] == CALL && ast[1][0] == NAME);
     IString importName = ast[1][1]->getIString();
-    auto* type = allocator.alloc<FunctionType>();
+    std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
     type->name = IString((std::string("type$") + importName.str).c_str(), false); // TODO: make a list of such types
     type->result = resultType;
     Ref args = ast[2];
@@ -231,7 +231,7 @@ private:
     }
     // if we already saw this signature, verify it's the same (or else handle that)
     if (importedFunctionTypes.find(importName) != importedFunctionTypes.end()) {
-      FunctionType* previous = importedFunctionTypes[importName];
+      FunctionType* previous = importedFunctionTypes[importName].get();
 #if 0
       std::cout << "compare " << importName.str << "\nfirst: ";
       type.print(std::cout, 0);
@@ -254,7 +254,7 @@ private:
         }
       }
     } else {
-      importedFunctionTypes[importName] = type;
+      importedFunctionTypes[importName].swap(type);
     }
     importedFunctionCalls[importName].push_back(call);
   }
@@ -508,7 +508,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         }
       }
     }
-    auto import = allocator.alloc<Import>();
+    auto import = new Import();
     import->name = name;
     import->module = moduleName;
     import->base = imported[2]->getIString();
@@ -678,7 +678,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           getTempRet0 = value;
         }
         assert(wasm.checkFunction(value));
-        auto export_ = allocator.alloc<Export>();
+        auto export_ = new Export;
         export_->name = key;
         export_->value = value;
         wasm.addExport(export_);
@@ -690,7 +690,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   std::vector<IString> toErase;
 
-  for (auto* import : wasm.imports) {
+  for (auto& import : wasm.imports) {
     IString name = import->name;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       // special math builtins
@@ -699,7 +699,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         import->type = builtin;
         continue;
       }
-      import->type = ensureFunctionType(getSig(importedFunctionTypes[name]), &wasm);
+      import->type = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm);
     } else if (import->module != ASM2WASM) { // special-case the special module
       // never actually used
       toErase.push_back(name);
@@ -714,7 +714,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   for (auto& pair : importedFunctionCalls) {
     IString name = pair.first;
     auto& list = pair.second;
-    auto type = importedFunctionTypes[name];
+    auto type = importedFunctionTypes[name].get();
     for (auto* call : list) {
       for (size_t i = call->operands.size(); i < type->params.size(); i++) {
         auto val = allocator.alloc<Const>();
@@ -754,7 +754,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         { builder.makeGetLocal(0, i32) }
       )
     ));
-    auto export_ = allocator.alloc<Export>();
+    auto export_ = new Export;
     export_->name = export_->value = GROW_WASM_MEMORY;
     wasm.addExport(export_);
   }
@@ -869,7 +869,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     std::cout << '\n';
   }
 
-  auto function = allocator.alloc<Function>();
+  auto function = new Function;
   function->name = name;
   Ref params = ast[2];
   Ref body = ast[3];
@@ -1017,7 +1017,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         static bool addedImport = false;
         if (!addedImport) {
           addedImport = true;
-          auto import = allocator.alloc<Import>(); // f64-rem = asm2wasm.f64-rem;
+          auto import = new Import; // f64-rem = asm2wasm.f64-rem;
           import->name = F64_REM;
           import->module = ASM2WASM;
           import->base = F64_REM;
@@ -1055,7 +1055,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         static bool addedImport = false;
         if (!addedImport) {
           addedImport = true;
-          auto import = allocator.alloc<Import>(); // debugger = asm2wasm.debugger;
+          auto import = new Import; // debugger = asm2wasm.debugger;
           import->name = DEBUGGER;
           import->module = ASM2WASM;
           import->base = DEBUGGER;
@@ -1168,7 +1168,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             static bool addedImport = false;
             if (!addedImport) {
               addedImport = true;
-              auto import = allocator.alloc<Import>(); // f64-to-int = asm2wasm.f64-to-int;
+              auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
               import->name = F64_TO_INT;
               import->module = ASM2WASM;
               import->base = F64_TO_INT;

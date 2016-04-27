@@ -56,7 +56,7 @@ void Linker::layout() {
     Name target = f.first;
     // Create an import for the target if necessary.
     if (!out.wasm.checkImport(target)) {
-      auto import = out.wasm.allocator.alloc<Import>();
+      auto import = new Import;
       import->name = import->base = target;
       import->module = ENV;
       import->type = ensureFunctionType(getSig(*f.second.begin()), &out.wasm);
@@ -154,7 +154,7 @@ void Linker::layout() {
     if (out.symbolInfo.implementedFunctions.count(start) != 0) {
       Fatal() << "Start function already present: `" << start << "`\n";
     }
-    auto* func = out.wasm.allocator.alloc<Function>();
+    auto* func = new Function;
     func->name = start;
     out.wasm.addFunction(func);
     exportFunction(start, true);
@@ -254,7 +254,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
         // add import, if necessary
         if (allSigs.count(sig) == 0) {
           allSigs.insert(sig);
-          auto import = parent->out.wasm.allocator.alloc<Import>();
+          auto import = new Import;
           import->name = import->base = curr->target;
           import->module = ENV;
           import->type = ensureFunctionType(getSig(curr), &parent->out.wasm);

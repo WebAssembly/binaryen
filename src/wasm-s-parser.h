@@ -1113,14 +1113,14 @@ private:
       wasm.memory.exportName = s[1]->str();
       return;
     }
-    auto ex = allocator.alloc<Export>();
+    auto ex = new Export;
     ex->name = s[1]->str();
     ex->value = s[2]->str();
     wasm.addExport(ex);
   }
 
   void parseImport(Element& s) {
-    auto im = allocator.alloc<Import>();
+    auto im = new Import;
     size_t i = 1;
     if (s.size() > 3 && s[3]->isStr()) {
       im->name = s[i++]->str();
@@ -1131,7 +1131,7 @@ private:
     im->module = s[i++]->str();
     if (!s[i]->isStr()) onError();
     im->base = s[i++]->str();
-    FunctionType* type = allocator.alloc<FunctionType>();
+    std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
     if (s.size() > i) {
       Element& params = *s[i];
       IString id = params[0]->str();
@@ -1154,7 +1154,7 @@ private:
         type->result = stringToWasmType(result[1]->str());
       }
     }
-    im->type = ensureFunctionType(getSig(type), &wasm);
+    im->type = ensureFunctionType(getSig(type.get()), &wasm);
     wasm.addImport(im);
   }
 
@@ -1165,7 +1165,7 @@ private:
   }
 
   void parseType(Element& s) {
-    auto type = allocator.alloc<FunctionType>();
+    auto type = new FunctionType;
     size_t i = 1;
     if (s[i]->isStr()) {
       type->name = s[i]->str();

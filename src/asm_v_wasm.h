@@ -55,7 +55,7 @@ std::string getSig(WasmType result, const ListType& operands) {
 
 WasmType sigToWasmType(char sig);
 
-FunctionType sigToFunctionType(std::string sig);
+FunctionType* sigToFunctionType(std::string sig);
 
 FunctionType* ensureFunctionType(std::string sig, Module* wasm);
 

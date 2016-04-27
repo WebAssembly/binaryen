@@ -246,7 +246,7 @@ class Linker {
       return;
     }
     if (out.wasm.checkExport(name)) return; // Already exported
-    auto exp = out.wasm.allocator.alloc<Export>();
+    auto exp = new Export;
     exp->name = exp->value = name;
     out.wasm.addExport(exp);
   }

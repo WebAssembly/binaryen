@@ -447,9 +447,9 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
 
   void prepare() {
     // we need function types for all our functions
-    for (auto* func : wasm->functions) {
+    for (auto& func : wasm->functions) {
       if (func->type.isNull()) {
-        func->type = ensureFunctionType(getSig(func), wasm)->name;
+        func->type = ensureFunctionType(getSig(func.get()), wasm)->name;
       }
     }
   }
@@ -523,7 +523,7 @@ public:
     if (debug) std::cerr << "== writeSignatures" << std::endl;
     auto start = startSection(BinaryConsts::Section::Signatures);
     o << U32LEB(wasm->functionTypes.size());
-    for (auto* type : wasm->functionTypes) {
+    for (auto& type : wasm->functionTypes) {
       if (debug) std::cerr << "write one" << std::endl;
       o << int8_t(BinaryConsts::TypeForms::Basic);
       o << U32LEB(type->params.size());
@@ -553,7 +553,7 @@ public:
     if (debug) std::cerr << "== writeImports" << std::endl;
     auto start = startSection(BinaryConsts::Section::ImportTable);
     o << U32LEB(wasm->imports.size());
-    for (auto* import : wasm->imports) {
+    for (auto& import : wasm->imports) {
       if (debug) std::cerr << "write one" << std::endl;
       o << U32LEB(getFunctionTypeIndex(import->type->name));
       writeInlineString(import->module.str);
@@ -606,7 +606,7 @@ public:
     if (debug) std::cerr << "== writeFunctionSignatures" << std::endl;
     auto start = startSection(BinaryConsts::Section::FunctionSignatures);
     o << U32LEB(wasm->functions.size());
-    for (auto* curr : wasm->functions) {
+    for (auto& curr : wasm->functions) {
       if (debug) std::cerr << "write one" << std::endl;
       o << U32LEB(getFunctionTypeIndex(curr->type));
     }
@@ -623,7 +623,7 @@ public:
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
       size_t sizePos = writeU32LEBPlaceholder();
       size_t start = o.size();
-      Function* function = wasm->functions[i];
+      Function* function = wasm->getFunction(i);
       mappedLocals.clear();
       numLocalsByType.clear();
       if (debug) std::cerr << "writing" << function->name << std::endl;
@@ -654,7 +654,7 @@ public:
     if (debug) std::cerr << "== writeexports" << std::endl;
     auto start = startSection(BinaryConsts::Section::ExportTable);
     o << U32LEB(wasm->exports.size());
-    for (auto* curr : wasm->exports) {
+    for (auto& curr : wasm->exports) {
       if (debug) std::cerr << "write one" << std::endl;
       o << U32LEB(getFunctionIndex(curr->value));
       writeInlineString(curr->name.str);
@@ -720,7 +720,7 @@ public:
     if (debug) std::cerr << "== writeNames" << std::endl;
     auto start = startSection(BinaryConsts::Section::Names);
     o << U32LEB(wasm->functions.size());
-    for (auto* curr : wasm->functions) {
+    for (auto& curr : wasm->functions) {
       writeInlineString(curr->name.str);
       o << U32LEB(0); // TODO: locals
     }
@@ -1354,7 +1354,7 @@ public:
     if (debug) std::cerr << "num: " << numTypes << std::endl;
     for (size_t i = 0; i < numTypes; i++) {
       if (debug) std::cerr << "read one" << std::endl;
-      auto curr = allocator.alloc<FunctionType>();
+      auto curr = new FunctionType;
       auto form = getInt8();
       assert(form == BinaryConsts::TypeForms::Basic);
       size_t numParams = getU32LEB();
@@ -1379,11 +1379,11 @@ public:
     if (debug) std::cerr << "num: " << num << std::endl;
     for (size_t i = 0; i < num; i++) {
       if (debug) std::cerr << "read one" << std::endl;
-      auto curr = allocator.alloc<Import>();
+      auto curr = new Import;
       curr->name = Name(std::string("import$") + std::to_string(i));
       auto index = getU32LEB();
       assert(index < wasm.functionTypes.size());
-      curr->type = wasm.functionTypes[index];
+      curr->type = wasm.getFunctionType(index);
       assert(curr->type->name.is());
       curr->module = getInlineString();
       curr->base = getInlineString();
@@ -1400,8 +1400,7 @@ public:
     for (size_t i = 0; i < num; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto index = getU32LEB();
-      assert(index < wasm.functionTypes.size());
-      functionTypes.push_back(wasm.functionTypes[index]);
+      functionTypes.push_back(wasm.getFunctionType(index));
     }
   }
 
@@ -1481,7 +1480,7 @@ public:
     if (debug) std::cerr << "num: " << num << std::endl;
     for (size_t i = 0; i < num; i++) {
       if (debug) std::cerr << "read one" << std::endl;
-      auto curr = allocator.alloc<Export>();
+      auto curr = new Export;
       auto index = getU32LEB();
       assert(index < functionTypes.size());
       curr->name = getInlineString();
@@ -1774,7 +1773,7 @@ public:
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
     auto arity = getU32LEB();
-    curr->fullType = wasm.functionTypes[getU32LEB()];
+    curr->fullType = wasm.getFunctionType(getU32LEB());
     auto num = curr->fullType->params.size();
     assert(num == arity);
     curr->operands.resize(num);

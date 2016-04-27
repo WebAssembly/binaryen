@@ -205,8 +205,8 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
   // create heaps, etc
   addBasics(asmFunc[3]);
-  for (auto import : wasm->imports) {
-    addImport(asmFunc[3], import);
+  for (auto& import : wasm->imports) {
+    addImport(asmFunc[3], import.get());
   }
   // figure out the table size
   tableSize = wasm->table.names.size();
@@ -216,8 +216,8 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   }
   tableSize = pow2ed;
   // functions
-  for (auto func : wasm->functions) {
-    asmFunc[3]->push_back(processFunction(func));
+  for (auto& func : wasm->functions) {
+    asmFunc[3]->push_back(processFunction(func.get()));
   }
   addTables(asmFunc[3], wasm);
   // memory XXX
@@ -320,7 +320,7 @@ void Wasm2AsmBuilder::addTables(Ref ast, Module *wasm) {
 
 void Wasm2AsmBuilder::addExports(Ref ast, Module *wasm) {
   Ref exports = ValueBuilder::makeObject();
-  for (auto export_ : wasm->exports) {
+  for (auto& export_ : wasm->exports) {
     ValueBuilder::appendToObject(exports, fromName(export_->name), ValueBuilder::makeName(fromName(export_->value)));
   }
   ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));

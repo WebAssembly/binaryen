@@ -522,17 +522,17 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     for (auto& child : curr->functionTypes) {
       doIndent(o, indent);
-      visitFunctionType(child, true);
+      visitFunctionType(child.get(), true);
       o << maybeNewLine;
     }
     for (auto& child : curr->imports) {
       doIndent(o, indent);
-      visitImport(child);
+      visitImport(child.get());
       o << maybeNewLine;
     }
     for (auto& child : curr->exports) {
       doIndent(o, indent);
-      visitExport(child);
+      visitExport(child.get());
       o << maybeNewLine;
     }
     if (curr->table.names.size() > 0) {
@@ -542,7 +542,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     for (auto& child : curr->functions) {
       doIndent(o, indent);
-      visitFunction(child);
+      visitFunction(child.get());
       o << maybeNewLine;
     }
     decIndent();
