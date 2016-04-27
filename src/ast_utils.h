@@ -49,6 +49,11 @@ struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
 // TODO: optimize
 
 struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer>> {
+  EffectAnalyzer() {}
+  EffectAnalyzer(Expression *ast) {
+    walk(ast);
+  }
+
   bool branches = false;
   bool calls = false;
   std::set<Index> localsRead;
@@ -115,9 +120,21 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
 };
 
 struct ExpressionManipulator {
-  // Nop is the smallest node, so we can always nop-ify another node in our arena
-  static void nop(Expression* target) {
-    *static_cast<Nop*>(target) = Nop();
+  // Re-use a node's memory. This helps avoid allocation when optimizing.
+  template<typename InputType, typename OutputType>
+  static OutputType* convert(InputType *input) {
+    static_assert(sizeof(OutputType) <= sizeof(InputType),
+                  "Can only convert to a smaller size Expression node");
+    input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
+    OutputType* output = (OutputType*)(input);
+    new (output) OutputType;
+    return output;
+  }
+
+  // Convenience method for nop, which is a common conversion
+  template<typename InputType>
+  static void nop(InputType* target) {
+    convert<InputType, Nop>(target);
   }
 };
 
