@@ -316,7 +316,7 @@ private:
   }
 
   // function parsing state
-  Function *currFunction = nullptr;
+  std::unique_ptr<Function> currFunction;
   std::map<Name, WasmType> currLocalTypes;
   size_t localIndex; // params and vars
   size_t otherIndex;
@@ -362,12 +362,12 @@ private:
     Name type;
     Block* autoBlock = nullptr; // we may need to add a block for the very top level
     auto makeFunction = [&]() {
-      currFunction = Builder(wasm).makeFunction(
+      currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
         name,
         std::move(params),
         result,
         std::move(vars)
-      );
+      ));
     };
     for (;i < s.size(); i++) {
       Element& curr = *s[i];
@@ -438,10 +438,9 @@ private:
     assert(currFunction->result == result);
     currFunction->body = body;
     currFunction->type = type;
-    wasm.addFunction(currFunction);
+    wasm.addFunction(currFunction.release());
     currLocalTypes.clear();
     labelStack.clear();
-    currFunction = nullptr;
   }
 
   WasmType stringToWasmType(IString str, bool allowError=false, bool prefix=false) {
