@@ -123,7 +123,8 @@ struct ExpressionManipulator {
   // Re-use a node's memory. This helps avoid allocation when optimizing.
   template<typename InputType, typename OutputType>
   static OutputType* convert(InputType *input) {
-    static_assert(sizeof(OutputType) <= sizeof(InputType));
+    static_assert(sizeof(OutputType) <= sizeof(InputType),
+                  "Can only convert to a smaller size Expression node");
     input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
     OutputType* output = (OutputType*)(input);
     new (output) OutputType;
