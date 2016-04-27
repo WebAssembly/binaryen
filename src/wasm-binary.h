@@ -23,6 +23,7 @@
 
 #include <istream>
 #include <ostream>
+#include <type_traits>
 
 #include "wasm.h"
 #include "wasm-traversal.h"
@@ -40,13 +41,9 @@ struct LEB {
   LEB() {}
   LEB(T value) : value(value) {}
 
-  bool isSigned() {
-    return int(MiniT(-1)) < 0; 
-  }
-
   bool hasMore(T temp, MiniT byte) {
     // for signed, we must ensure the last bit has the right sign, as it will zero extend
-    return isSigned() ? (temp != 0 && int32_t(temp) != -1) || (value >= 0 && (byte & 64)) || (value < 0 && !(byte & 64)): (temp != 0);
+    return std::is_signed<T>::value ? (temp != 0 && int32_t(temp) != -1) || (value >= 0 && (byte & 64)) || (value < 0 && !(byte & 64)): (temp != 0);
   }
 
   void write(std::vector<uint8_t>* out) {
@@ -90,11 +87,12 @@ struct LEB {
       shift += 7;
     }
     // if signed LEB, then we might need to sign-extend. (compile should optimize this out if not needed)
-    if (isSigned()) {
+    if (std::is_signed<T>::value) {
       shift += 7;
       if (byte & 64 && size_t(shift) < 8*sizeof(T)) {
-        // the highest bit we received was a 1, sign-extend all the rest
-        value = value | (T(-1) << shift);
+        size_t sext_bits = 8*sizeof(T) - size_t(shift);
+        value <<= sext_bits;
+        value >>= sext_bits;
         assert(value < 0);
       }
     }
