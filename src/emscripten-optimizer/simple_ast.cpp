@@ -56,6 +56,15 @@ bool Ref::operator!() {
 
 Arena arena;
 
+Arena::~Arena() {
+  for (auto* chunk : chunks) {
+    delete[] chunk;
+  }
+  for (auto* chunk : arr_chunks) {
+    delete[] chunk;
+  }
+}
+
 Ref Arena::alloc() {
   if (chunks.size() == 0 || index == CHUNK_SIZE) {
     chunks.push_back(new Value[CHUNK_SIZE]);
