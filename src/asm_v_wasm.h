@@ -33,15 +33,31 @@ std::string getSig(FunctionType *type);
 
 std::string getSig(Function *func);
 
-std::string getSig(CallBase *call);
+template<typename CallBase>
+std::string getSig(CallBase *call) {
+  std::string ret;
+  ret += getSig(call->type);
+  for (auto operand : call->operands) {
+    ret += getSig(operand->type);
+  }
+  return ret;
+}
 
-std::string getSig(WasmType result, const ExpressionList& operands);
+template<typename ListType>
+std::string getSig(WasmType result, const ListType& operands) {
+  std::string ret;
+  ret += getSig(result);
+  for (auto operand : operands) {
+    ret += getSig(operand->type);
+  }
+  return ret;
+}
 
 WasmType sigToWasmType(char sig);
 
 FunctionType sigToFunctionType(std::string sig);
 
-FunctionType* ensureFunctionType(std::string sig, Module* wasm, MixedArena& allocator);
+FunctionType* ensureFunctionType(std::string sig, Module* wasm);
 
 } // namespace wasm
 

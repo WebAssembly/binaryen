@@ -61,6 +61,7 @@ class Element {
 
 public:
   Element() : isList_(true) {}
+  Element(MixedArena& allocator) : Element() {}
 
   bool isList() { return isList_; }
   bool isStr() { return !isList_; }
@@ -1131,30 +1132,30 @@ private:
     im->module = s[i++]->str();
     if (!s[i]->isStr()) onError();
     im->base = s[i++]->str();
-    FunctionType type;
+    FunctionType* type = allocator.alloc<FunctionType>();
     if (s.size() > i) {
       Element& params = *s[i];
       IString id = params[0]->str();
       if (id == PARAM) {
         for (size_t i = 1; i < params.size(); i++) {
-          type.params.push_back(stringToWasmType(params[i]->str()));
+          type->params.push_back(stringToWasmType(params[i]->str()));
         }
       } else if (id == RESULT) {
-        type.result = stringToWasmType(params[1]->str());
+        type->result = stringToWasmType(params[1]->str());
       } else if (id == TYPE) {
         IString name = params[1]->str();
         if (!wasm.checkFunctionType(name)) onError();
-        type = *wasm.getFunctionType(name);
+        *type = *wasm.getFunctionType(name);
       } else {
         onError();
       }
       if (s.size() > i+1) {
         Element& result = *s[i+1];
         assert(result[0]->str() == RESULT);
-        type.result = stringToWasmType(result[1]->str());
+        type->result = stringToWasmType(result[1]->str());
       }
     }
-    im->type = ensureFunctionType(getSig(&type), &wasm, allocator);
+    im->type = ensureFunctionType(getSig(type), &wasm);
     wasm.addImport(im);
   }
 

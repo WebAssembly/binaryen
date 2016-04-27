@@ -91,7 +91,7 @@ public:
     call->fullType = type;
     call->type = type->result;
     call->target = target;
-    call->operands = args;
+    call->operands.set(args);
     return call;
   }
   // FunctionType
@@ -162,11 +162,11 @@ public:
     ret->value = value;
     return ret;
   }
-  Host* makeHost(HostOp op, Name nameOperand, ExpressionList&& operands) {
+  Host* makeHost(HostOp op, Name nameOperand, std::vector<Expression*>&& operands) {
     auto* ret = allocator.alloc<Host>();
     ret->op = op;
     ret->nameOperand = nameOperand;
-    ret->operands = operands;
+    ret->operands.set(operands);
     return ret;
   }
   // Unreachable

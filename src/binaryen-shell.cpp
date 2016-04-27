@@ -34,10 +34,6 @@
 using namespace cashew;
 using namespace wasm;
 
-// Globals
-
-MixedArena globalAllocator;
-
 //
 // An invocation into a module
 //

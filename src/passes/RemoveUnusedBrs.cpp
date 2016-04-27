@@ -82,7 +82,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
             if (!flow->value || self->valueCanFlow) {
               if (!flow->value) {
                 // br => nop
-                ExpressionManipulator::nop(flow);
+                ExpressionManipulator::nop<Break>(flow);
               } else {
                 // br with value => value
                 *flows[i] = flow->value;

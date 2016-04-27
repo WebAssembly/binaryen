@@ -689,7 +689,7 @@ class S2WasmBuilder {
         auto input = inputs.begin();
         auto* target = *input;
         std::vector<Expression*> operands(++input, inputs.end());
-        auto* funcType = ensureFunctionType(getSig(type, operands), &wasm, allocator);
+        auto* funcType = ensureFunctionType(getSig(type, operands), &wasm);
         assert(type == funcType->result);
         auto* indirect = builder.makeCallIndirect(funcType, target, std::move(operands));
         setOutput(indirect, assign);
