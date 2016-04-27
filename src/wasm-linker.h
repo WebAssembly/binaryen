@@ -103,6 +103,11 @@ class LinkerObject {
     wasm.memory.segments.emplace_back(0, data, size);
   }
 
+  void addSegment(Name name, std::vector<char>& data) {
+    segments[name] = wasm.memory.segments.size();
+    wasm.memory.segments.emplace_back(0, data);
+  }
+
   void addInitializerFunction(Name name) {
     initializerFunctions.emplace_back(name);
     assert(symbolInfo.implementedFunctions.count(name));

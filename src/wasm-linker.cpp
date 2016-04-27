@@ -43,10 +43,11 @@ void Linker::placeStackPointer(size_t stackAllocation) {
   if (stackAllocation) {
     // If we are allocating the stack, set up a relocation to initialize the
     // stack pointer to point to one past-the-end of the stack allocation.
-    auto* raw = new uint32_t;
-    out.addRelocation(LinkerObject::Relocation::kData, raw, ".stack", stackAllocation);
+    std::vector<char> raw;
+    raw.resize(pointerSize);
+    out.addRelocation(LinkerObject::Relocation::kData, (uint32_t*)&raw[0], ".stack", stackAllocation);
     assert(out.wasm.memory.segments.size() == 0);
-    out.addSegment("__stack_pointer", reinterpret_cast<char*>(raw), pointerSize);
+    out.addSegment("__stack_pointer", raw);
   }
 }
 
@@ -238,7 +239,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
       if (curr->target == EMSCRIPTEN_ASM_CONST) {
         auto arg = curr->operands[0]->cast<Const>();
         size_t segmentIndex = parent->segmentsByAddress[arg->value.geti32()];
-        std::string code = escape(parent->out.wasm.memory.segments[segmentIndex].data);
+        std::string code = escape(&parent->out.wasm.memory.segments[segmentIndex].data[0]);
         int32_t id;
         if (ids.count(code) == 0) {
           id = ids.size();

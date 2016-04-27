@@ -666,14 +666,14 @@ public:
     if (wasm->memory.segments.size() == 0) return;
     uint32_t num = 0;
     for (auto& segment : wasm->memory.segments) {
-      if (segment.size > 0) num++;
+      if (segment.data.size() > 0) num++;
     }
     auto start = startSection(BinaryConsts::Section::DataSegments);
     o << U32LEB(num);
     for (auto& segment : wasm->memory.segments) {
-      if (segment.size == 0) continue;
+      if (segment.data.size() == 0) continue;
       o << U32LEB(segment.offset);
-      writeInlineBuffer(segment.data, segment.size);
+      writeInlineBuffer(&segment.data[0], segment.data.size());
     }
     finishSection(start);
   }
@@ -1548,15 +1548,13 @@ public:
     auto num = getU32LEB();
     for (size_t i = 0; i < num; i++) {
       Memory::Segment curr;
-      curr.offset = getU32LEB();
+      auto offset = getU32LEB();
       auto size = getU32LEB();
-      auto buffer = (char*)malloc(size);
+      char buffer[size];
       for (size_t j = 0; j < size; j++) {
         buffer[j] = char(getInt8());
       }
-      curr.data = (const char*)buffer;
-      curr.size = size;
-      wasm.memory.segments.push_back(curr);
+      wasm.memory.segments.emplace_back(offset, (const char*)buffer, size);
     }
   }
 

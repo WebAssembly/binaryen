@@ -485,7 +485,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     for (auto segment : curr->memory.segments) {
       o << maybeNewLine;
       o << (minify ? "" : "    ") << "(segment " << segment.offset << " \"";
-      for (size_t i = 0; i < segment.size; i++) {
+      for (size_t i = 0; i < segment.data.size(); i++) {
         unsigned char c = segment.data[i];
         switch (c) {
           case '\n': o << "\\n"; break;

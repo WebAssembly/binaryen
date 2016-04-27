@@ -1035,7 +1035,7 @@ class S2WasmBuilder {
     }
     mustMatch(name.str);
     mustMatch(":");
-    auto raw = new std::vector<char>(); // leaked intentionally, no new allocation in Memory
+    std::vector<char> raw;
     bool zero = true;
     std::vector<std::pair<LinkerObject::Relocation*, size_t>> currRelocations; // [relocation, offset in raw]
     while (1) {
@@ -1049,8 +1049,8 @@ class S2WasmBuilder {
           z = true;
         }
         auto quoted = getQuoted();
-        raw->insert(raw->end(), quoted.begin(), quoted.end());
-        if (z) raw->push_back(0);
+        raw.insert(raw.end(), quoted.begin(), quoted.end());
+        if (z) raw.push_back(0);
         zero = false;
       } else if (match(".zero") || match(".skip")) {
         int32_t size = getInt();
@@ -1063,43 +1063,43 @@ class S2WasmBuilder {
           if (value != 0) zero = false;
         }
         for (size_t i = 0, e = size; i < e; i++) {
-          raw->push_back(value);
+          raw.push_back(value);
         }
       } else if (match(".int8")) {
-        size_t size = raw->size();
-        raw->resize(size + 1);
-        (*(int8_t*)(&(*raw)[size])) = getInt();
+        size_t size = raw.size();
+        raw.resize(size + 1);
+        (*(int8_t*)(&raw[size])) = getInt();
         zero = false;
       } else if (match(".int16")) {
-        size_t size = raw->size();
-        raw->resize(size + 2);
-        (*(int16_t*)(&(*raw)[size])) = getInt();
+        size_t size = raw.size();
+        raw.resize(size + 2);
+        (*(int16_t*)(&raw[size])) = getInt();
         zero = false;
       } else if (match(".int32")) {
-        size_t size = raw->size();
-        raw->resize(size + 4);
-        if (getConst((uint32_t*)&(*raw)[size])) { // just the size, as we may reallocate; we must fix this later, if it's a relocation
+        size_t size = raw.size();
+        raw.resize(size + 4);
+        if (getConst((uint32_t*)&raw[size])) { // just the size, as we may reallocate; we must fix this later, if it's a relocation
           currRelocations.emplace_back(linkerObj->getCurrentRelocation(), size);
         }
         zero = false;
       } else if (match(".int64")) {
-        size_t size = raw->size();
-        raw->resize(size + 8);
-        (*(int64_t*)(&(*raw)[size])) = getInt64();
+        size_t size = raw.size();
+        raw.resize(size + 8);
+        (*(int64_t*)(&raw[size])) = getInt64();
         zero = false;
       } else {
         break;
       }
     }
     skipWhitespace();
-    size_t size = raw->size();
+    size_t size = raw.size();
     if (match(".size")) {
       mustMatch(name.str);
       mustMatch(",");
       size_t seenSize = atoi(getStr().str); // TODO: optimize
       assert(seenSize >= size);
-      while (raw->size() < seenSize) {
-        raw->push_back(0);
+      while (raw.size() < seenSize) {
+        raw.push_back(0);
       }
       size = seenSize;
     }
@@ -1107,12 +1107,12 @@ class S2WasmBuilder {
     for (auto& curr : currRelocations) {
       auto* r = curr.first;
       auto i = curr.second;
-      r->data = (uint32_t*)&(*raw)[i];
+      r->data = (uint32_t*)&raw[i];
     }
     // assign the address, add to memory
     linkerObj->addStatic(size, align, name);
     if (!zero) {
-      linkerObj->addSegment(name, (const char*)&(*raw)[0], size);
+      linkerObj->addSegment(name, raw);
     }
   }
 

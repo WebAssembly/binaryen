@@ -1169,10 +1169,15 @@ public:
   static const size_t kPageMask = ~(kPageSize - 1);
   struct Segment {
     size_t offset;
-    const char* data;
-    size_t size;
+    std::vector<char> data; // TODO: optimize
     Segment() {}
-    Segment(size_t offset, const char *data, size_t size) : offset(offset), data(data), size(size) {}
+    Segment(size_t offset, const char *init, size_t size) : offset(offset) {
+      data.resize(size);
+      memcpy(&data[0], init, size);
+    }
+    Segment(size_t offset, std::vector<char>& init) : offset(offset) {
+      data.swap(init);
+    }
   };
 
   size_t initial, max; // sizes are in pages
