@@ -1112,14 +1112,14 @@ private:
       wasm.memory.exportName = s[1]->str();
       return;
     }
-    auto ex = new Export;
+    std::unique_ptr<Export> ex = make_unique<Export>();
     ex->name = s[1]->str();
     ex->value = s[2]->str();
-    wasm.addExport(ex);
+    wasm.addExport(ex.release());
   }
 
   void parseImport(Element& s) {
-    auto im = new Import;
+    std::unique_ptr<Import> im = make_unique<Import>();
     size_t i = 1;
     if (s.size() > 3 && s[3]->isStr()) {
       im->name = s[i++]->str();
@@ -1154,7 +1154,7 @@ private:
       }
     }
     im->type = ensureFunctionType(getSig(type.get()), &wasm);
-    wasm.addImport(im);
+    wasm.addImport(im.release());
   }
 
   void parseTable(Element& s) {
@@ -1164,7 +1164,7 @@ private:
   }
 
   void parseType(Element& s) {
-    auto type = new FunctionType;
+    std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
     size_t i = 1;
     if (s[i]->isStr()) {
       type->name = s[i]->str();
@@ -1182,7 +1182,7 @@ private:
         type->result = stringToWasmType(curr[1]->str());
       }
     }
-    wasm.addFunctionType(type);
+    wasm.addFunctionType(type.release());
   }
 };
 
