@@ -881,12 +881,11 @@ public:
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch() : condition(nullptr), value(nullptr) {}
-  Switch(MixedArena& allocator) : Switch() {
+  Switch(MixedArena& allocator) : targets(allocator), condition(nullptr), value(nullptr) {
     type = unreachable;
   }
 
-  std::vector<Name> targets;
+  ArenaVector<Name> targets;
   Name default_;
   Expression *condition;
   Expression *value;
