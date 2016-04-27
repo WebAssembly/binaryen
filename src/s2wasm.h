@@ -37,24 +37,38 @@ namespace wasm {
 //
 
 class S2WasmBuilder {
-  Module& wasm;
-  MixedArena& allocator;
+  const char* inputStart;
   const char* s;
   bool debug;
-  LinkerObject& linkerObj;
+  Module* wasm;
+  MixedArena* allocator;
+  LinkerObject* linkerObj;
 
  public:
-  S2WasmBuilder(LinkerObject& linkerObj, const char* input, bool debug)
-      : wasm(linkerObj.wasm),
-        allocator(wasm.allocator),
+  S2WasmBuilder(const char* input, bool debug)
+      : inputStart(input),
+        s(input),
         debug(debug),
-        linkerObj(linkerObj) {
-    if (!linkerObj.isEmpty()) Fatal() << "Cannot construct an S2WasmBuilder in an non-empty LinkerObject";
-    s = input;
-    scan();
-    s = input;
+        wasm(nullptr),
+        allocator(nullptr),
+        linkerObj(nullptr)
+        {}
 
+  void build(LinkerObject *obj, LinkerObject::SymbolInfo* info) {
+    if (!obj->isEmpty()) Fatal() << "Cannot construct an S2WasmBuilder in an non-empty LinkerObject";
+    if (!info) info = getSymbolInfo();
+    linkerObj = obj;
+    wasm = &obj->wasm;
+    allocator = &wasm->allocator;
+
+    s = inputStart;
     process();
+  }
+
+  LinkerObject::SymbolInfo* getSymbolInfo() {
+    auto* info = new LinkerObject::SymbolInfo();
+    scan(info);
+    return info;
   }
 
  private:
@@ -209,7 +223,7 @@ class S2WasmBuilder {
         s++;
         offset = -getInt();
       }
-      linkerObj.addRelocation(kind, target, cleanFunction(name), offset);
+      linkerObj->addRelocation(kind, target, cleanFunction(name), offset);
       return true;
     }
   }
@@ -334,7 +348,8 @@ class S2WasmBuilder {
 
   // processors
 
-  void scan() {
+  void scan(LinkerObject::SymbolInfo* info) {
+    s = inputStart;
     while (*s) {
       skipWhitespace();
       s = strstr(s, ".type");
@@ -346,11 +361,11 @@ class S2WasmBuilder {
       if (match(".hidden")) mustMatch(name.str);
       mustMatch(name.str);
       if (match(":")) {
-        linkerObj.addImplementedFunction(name);
+        info->implementedFunctions.insert(name);
       } else if (match("=")) {
         Name alias = getAtSeparated();
         mustMatch("@FUNCTION");
-        linkerObj.addAliasedFunction(name, alias);
+        info->aliasedFunctions.insert({name, alias});
       } else {
         abort_on("unknown directive");
       }
@@ -402,7 +417,7 @@ class S2WasmBuilder {
     }
     mustMatch(".int32");
     do {
-      linkerObj.addInitializerFunction(cleanFunction(getStr()));
+      linkerObj->addInitializerFunction(cleanFunction(getStr()));
       skipWhitespace();
     } while (match(".int32"));
   }
@@ -437,7 +452,7 @@ class S2WasmBuilder {
   }
 
   void parseGlobl() {
-    linkerObj.addGlobal(getStr());
+    linkerObj->addGlobal(getStr());
     skipWhitespace();
   }
 
@@ -465,7 +480,7 @@ class S2WasmBuilder {
     auto getNextId = [&nextId]() {
       return cashew::IString(('$' + std::to_string(nextId++)).c_str(), false);
     };
-    wasm::Builder builder(wasm);
+    wasm::Builder builder(*wasm);
     std::vector<NameType> params;
     WasmType resultType = none;
     std::vector<NameType> vars;
@@ -498,7 +513,7 @@ class S2WasmBuilder {
     Function* func = builder.makeFunction(name, std::move(params), resultType, std::move(vars));
 
     // parse body
-    func->body = allocator.alloc<Block>();
+    func->body = allocator->alloc<Block>();
     std::vector<Expression*> bstack;
     auto addToBlock = [&bstack](Expression* curr) {
       Expression* last = bstack.back();
@@ -543,7 +558,7 @@ class S2WasmBuilder {
           skipToSep();
           inputs[i] = nullptr;
         } else {
-          auto curr = allocator.alloc<GetLocal>();
+          auto curr = allocator->alloc<GetLocal>();
           curr->index = func->getLocalIndex(getStrToSep());
           curr->type = func->getLocalType(curr->index);
           inputs[i] = curr;
@@ -569,7 +584,7 @@ class S2WasmBuilder {
       } else if (assign.str[1] == 'p') { // push
         push(curr);
       } else { // set to a local
-        auto set = allocator.alloc<SetLocal>();
+        auto set = allocator->alloc<SetLocal>();
         set->index = func->getLocalIndex(assign);
         set->value = curr;
         set->type = curr->type;
@@ -597,7 +612,7 @@ class S2WasmBuilder {
     auto makeBinary = [&](BinaryOp op, WasmType type) {
       Name assign = getAssign();
       skipComma();
-      auto curr = allocator.alloc<Binary>();
+      auto curr = allocator->alloc<Binary>();
       curr->op = op;
       auto inputs = getInputs(2);
       curr->left = inputs[0];
@@ -609,7 +624,7 @@ class S2WasmBuilder {
     auto makeUnary = [&](UnaryOp op, WasmType type) {
       Name assign = getAssign();
       skipComma();
-      auto curr = allocator.alloc<Unary>();
+      auto curr = allocator->alloc<Unary>();
       curr->op = op;
       curr->value = getInput();
       curr->type = type;
@@ -617,20 +632,20 @@ class S2WasmBuilder {
     };
     auto makeHost = [&](HostOp op) {
       Name assign = getAssign();
-      auto curr = allocator.alloc<Host>();
+      auto curr = allocator->alloc<Host>();
       curr->op = op;
       setOutput(curr, assign);
     };
     auto makeHost1 = [&](HostOp op) {
       Name assign = getAssign();
-      auto curr = allocator.alloc<Host>();
+      auto curr = allocator->alloc<Host>();
       curr->op = op;
       curr->operands.push_back(getInput());
       setOutput(curr, assign);
     };
     auto makeLoad = [&](WasmType type) {
       skipComma();
-      auto curr = allocator.alloc<Load>();
+      auto curr = allocator->alloc<Load>();
       curr->type = type;
       int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
@@ -650,7 +665,7 @@ class S2WasmBuilder {
     };
     auto makeStore = [&](WasmType type) {
       skipComma();
-      auto curr = allocator.alloc<Store>();
+      auto curr = allocator->alloc<Store>();
       curr->type = type;
       int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
@@ -671,7 +686,7 @@ class S2WasmBuilder {
     auto makeSelect = [&](WasmType type) {
       Name assign = getAssign();
       skipComma();
-      auto curr = allocator.alloc<Select>();
+      auto curr = allocator->alloc<Select>();
       auto inputs = getInputs(3);
       curr->ifTrue = inputs[0];
       curr->ifFalse = inputs[1];
@@ -689,7 +704,7 @@ class S2WasmBuilder {
         auto input = inputs.begin();
         auto* target = *input;
         std::vector<Expression*> operands(++input, inputs.end());
-        auto* funcType = ensureFunctionType(getSig(type, operands), &wasm);
+        auto* funcType = ensureFunctionType(getSig(type, operands), wasm);
         assert(type == funcType->result);
         auto* indirect = builder.makeCallIndirect(funcType, target, std::move(operands));
         setOutput(indirect, assign);
@@ -697,13 +712,13 @@ class S2WasmBuilder {
       } else {
         // non-indirect call
         Name assign = getAssign();
-        Name target = linkerObj.resolveAlias(cleanFunction(getCommaSeparated()));
+        Name target = linkerObj->resolveAlias(cleanFunction(getCommaSeparated()));
 
-        Call* curr = allocator.alloc<Call>();
+        Call* curr = allocator->alloc<Call>();
         curr->target = target;
         curr->type = type;
-        if (!linkerObj.isFunctionImplemented(target)) {
-          linkerObj.addUndefinedFunctionCall(curr);
+        if (!linkerObj->isFunctionImplemented(target)) {
+          linkerObj->addUndefinedFunctionCall(curr);
         }
         skipWhitespace();
         if (*s == ',') {
@@ -731,13 +746,13 @@ class S2WasmBuilder {
             Name assign = getAssign();
             if (type == i32) {
               // may be a relocation
-              auto curr = allocator.alloc<Const>();
+              auto curr = allocator->alloc<Const>();
               curr->type = curr->value.type = i32;
               getConst((uint32_t*)curr->value.geti32Ptr());
               setOutput(curr, assign);
             } else {
               cashew::IString str = getStr();
-              setOutput(parseConst(str, type, allocator), assign);
+              setOutput(parseConst(str, type, *allocator), assign);
             }
           }
           else if (match("call")) makeCall(type);
@@ -891,7 +906,7 @@ class S2WasmBuilder {
       } else if (match("f64.")) {
         handleTyped(f64);
       } else if (match("block")) {
-        auto curr = allocator.alloc<Block>();
+        auto curr = allocator->alloc<Block>();
         curr->name = getNextLabel();
         addToBlock(curr);
         bstack.push_back(curr);
@@ -900,11 +915,11 @@ class S2WasmBuilder {
       } else if (match(".LBB")) {
         s = strchr(s, '\n');
       } else if (match("loop")) {
-        auto curr = allocator.alloc<Loop>();
+        auto curr = allocator->alloc<Loop>();
         addToBlock(curr);
         curr->in = getNextLabel();
         curr->out = getNextLabel();
-        auto block = allocator.alloc<Block>();
+        auto block = allocator->alloc<Block>();
         block->name = curr->out; // temporary, fake - this way, on bstack we have the right label at the right offset for a br
         curr->body = block;
         loopBlocks.push_back(block);
@@ -914,7 +929,7 @@ class S2WasmBuilder {
         bstack.pop_back();
         bstack.pop_back();
       } else if (match("br_table")) {
-        auto curr = allocator.alloc<Switch>();
+        auto curr = allocator->alloc<Switch>();
         curr->condition = getInput();
         while (skipComma()) {
           curr->targets.push_back(getBranchLabel(getInt()));
@@ -924,7 +939,7 @@ class S2WasmBuilder {
         curr->targets.pop_back();
         addToBlock(curr);
       } else if (match("br")) {
-        auto curr = allocator.alloc<Break>();
+        auto curr = allocator->alloc<Break>();
         bool hasCondition = false;
         if (*s == '_') {
           mustMatch("_if");
@@ -945,7 +960,7 @@ class S2WasmBuilder {
       } else if (match("tee_local")) {
         Name assign = getAssign();
         skipComma();
-        auto curr = allocator.alloc<SetLocal>();
+        auto curr = allocator->alloc<SetLocal>();
         curr->index = func->getLocalIndex(getAssign());
         skipComma();
         curr->value = getInput();
@@ -954,7 +969,7 @@ class S2WasmBuilder {
       } else if (match("return")) {
         addToBlock(builder.makeReturn(*s == '$' ? getInput() : nullptr));
       } else if (match("unreachable")) {
-        addToBlock(allocator.alloc<Unreachable>());
+        addToBlock(allocator->alloc<Unreachable>());
       } else if (match("memory_size")) {
         makeHost(CurrentMemory);
       } else if (match("grow_memory")) {
@@ -978,7 +993,7 @@ class S2WasmBuilder {
       block->name = Name();
     }
     func->body->dynCast<Block>()->finalize();
-    wasm.addFunction(func);
+    wasm->addFunction(func);
   }
 
   void parseType() {
@@ -1064,7 +1079,7 @@ class S2WasmBuilder {
         size_t size = raw->size();
         raw->resize(size + 4);
         if (getConst((uint32_t*)&(*raw)[size])) { // just the size, as we may reallocate; we must fix this later, if it's a relocation
-          currRelocations.emplace_back(linkerObj.getCurrentRelocation(), size);
+          currRelocations.emplace_back(linkerObj->getCurrentRelocation(), size);
         }
         zero = false;
       } else if (match(".int64")) {
@@ -1095,9 +1110,9 @@ class S2WasmBuilder {
       r->data = (uint32_t*)&(*raw)[i];
     }
     // assign the address, add to memory
-    linkerObj.addStatic(size, align, name);
+    linkerObj->addStatic(size, align, name);
     if (!zero) {
-      linkerObj.addSegment(name, (const char*)&(*raw)[0], size);
+      linkerObj->addSegment(name, (const char*)&(*raw)[0], size);
     }
   }
 
@@ -1109,7 +1124,7 @@ class S2WasmBuilder {
       skipComma();
       getInt();
     }
-    linkerObj.addStatic(size, align, name);
+    linkerObj->addStatic(size, align, name);
   }
 
   void skipImports() {

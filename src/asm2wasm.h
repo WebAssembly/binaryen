@@ -25,7 +25,7 @@
 #include "wasm.h"
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
-#include "shared-constants.h"
+#include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
 #include "pass.h"
 #include "ast_utils.h"

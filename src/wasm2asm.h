@@ -24,11 +24,11 @@
 
 #include <cmath>
 
+#include "asmjs/shared-constants.h"
 #include "wasm.h"
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
-#include "shared-constants.h"
 
 namespace wasm {
 

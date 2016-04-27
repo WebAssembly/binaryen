@@ -104,7 +104,13 @@ int main(int argc, const char *argv[]) {
   Linker linker(globalBase, stackAllocation, initialMem, maxMem,
                 ignoreUnknownSymbols, startFunction, options.debug);
 
-  S2WasmBuilder s2wasm(linker.getOutput(), input.c_str(), options.debug);
+  S2WasmBuilder mainbuilder(input.c_str(), options.debug);
+  linker.linkObject(mainbuilder);
+
+  // In the future, there will be code to open additional files/buffers and
+  // link additional objects, as well as archive members (which only get linked if needed), e.g.:
+  // S2WasmBuilder lazyObject(some_other_buffer, options.debug)
+  // linker.linkLazyObject(lazyObject); // calls builder.scan to get symbol info, then build
 
   linker.layout();
 

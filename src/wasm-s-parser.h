@@ -27,8 +27,8 @@
 #include <limits>
 
 #include "wasm.h"
+#include "asmjs/shared-constants.h"
 #include "mixed_arena.h"
-#include "shared-constants.h"
 #include "parsing.h"
 #include "asm_v_wasm.h"
 #include "ast_utils.h"
