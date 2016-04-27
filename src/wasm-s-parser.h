@@ -52,7 +52,7 @@ int unhex(char c) {
 //
 
 class Element {
-  typedef std::vector<Element*> List;
+  typedef ArenaVector<Element*> List;
 
   bool isList_;
   List list_;
@@ -60,8 +60,7 @@ class Element {
   bool dollared_;
 
 public:
-  Element() : isList_(true) {}
-  Element(MixedArena& allocator) : Element() {}
+  Element(MixedArena& allocator) : isList_(true), list_(allocator) {}
 
   bool isList() { return isList_; }
   bool isStr() { return !isList_; }
