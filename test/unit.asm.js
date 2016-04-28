@@ -207,9 +207,11 @@ function asm(global, env, buffer) {
   function bitcasts(i, f) {
     i = i | 0;
     f = Math_fround(f);
+    var d = 0.0;
     (HEAP32[tempDoublePtr >> 2] = i, Math_fround(HEAPF32[tempDoublePtr >> 2])); // i32->f32
     (HEAP32[tempDoublePtr >> 2] = i, +HEAPF32[tempDoublePtr >> 2]); // i32->f32, no fround
     (HEAPF32[tempDoublePtr >> 2] = f, HEAP32[tempDoublePtr >> 2] | 0); // f32->i32
+    (HEAPF32[tempDoublePtr >> 2] = d, HEAP32[tempDoublePtr >> 2] | 0); // f64 with implict f32 conversion, ->i32
   }
 
   function z() {
