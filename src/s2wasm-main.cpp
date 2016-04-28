@@ -32,6 +32,7 @@ int main(int argc, const char *argv[]) {
   bool ignoreUnknownSymbols = false;
   bool generateEmscriptenGlue = false;
   std::string startFunction;
+  std::vector<std::string> archiveLibraries;
   Options options("s2wasm", "Link .s file into .wast");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
@@ -75,13 +76,19 @@ int main(int argc, const char *argv[]) {
            [&generateEmscriptenGlue](Options *, const std::string &) {
              generateEmscriptenGlue = true;
            })
+      .add("--library", "-l", "Add archive library",
+           Options::Arguments::N,
+           [&archiveLibraries](Options *o, const std::string &argument) {
+             archiveLibraries.push_back(argument);
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
+  auto debugFlag = options.debug ? Flags::Debug : Flags::Release;
+  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, debugFlag));
 
   if (options.debug) std::cerr << "Parsing and wasming..." << std::endl;
   uint64_t globalBase = options.extra.find("global-base") != options.extra.end()
@@ -107,10 +114,13 @@ int main(int argc, const char *argv[]) {
   S2WasmBuilder mainbuilder(input.c_str(), options.debug);
   linker.linkObject(mainbuilder);
 
-  // In the future, there will be code to open additional files/buffers and
-  // link additional objects, as well as archive members (which only get linked if needed), e.g.:
-  // S2WasmBuilder lazyObject(some_other_buffer, options.debug)
-  // linker.linkLazyObject(lazyObject); // calls builder.scan to get symbol info, then build
+  for(const auto& m : archiveLibraries) {
+    auto archiveFile(read_file<std::vector<char>>(m, Flags::Binary, debugFlag));
+    bool error;
+    Archive lib(archiveFile, error);
+    if (error) Fatal() << "Error opening archive " << m << "\n";
+    linker.linkArchive(lib);
+  }
 
   linker.layout();
 

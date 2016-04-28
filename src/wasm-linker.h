@@ -24,6 +24,7 @@
 #ifndef WASM_WASM_LINK_H
 #define WASM_WASM_LINK_H
 
+#include "support/archive.h"
 #include "support/utilities.h"
 #include "wasm.h"
 
@@ -56,7 +57,7 @@ class LinkerObject {
     // For now, do not support weak symbols or anything special. Just directly
     // merge the functions together, and remove any newly-defined functions
     // from undefinedFunction
-    void merge(SymbolInfo&& other) {
+    void merge(SymbolInfo& other) {
       for (const auto& func : other.implementedFunctions) {
         undefinedFunctions.erase(func);
       }
@@ -211,6 +212,8 @@ class Linker {
 
   // Add an object to the link by constructing it in-place with a builder.
   bool linkObject(S2WasmBuilder& builder);
+
+  bool linkArchive(Archive& archive);
 
  private:
   // Allocate a static variable and return its address in linear memory
