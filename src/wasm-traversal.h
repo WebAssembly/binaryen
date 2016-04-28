@@ -181,14 +181,14 @@ struct Walker : public VisitorType {
 
     // Dispatch statically through the SubType.
     SubType* self = static_cast<SubType*>(this);
-    for (auto curr : module->functionTypes) {
-      self->visitFunctionType(curr);
+    for (auto& curr : module->functionTypes) {
+      self->visitFunctionType(curr.get());
     }
-    for (auto curr : module->imports) {
-      self->visitImport(curr);
+    for (auto& curr : module->imports) {
+      self->visitImport(curr.get());
     }
-    for (auto curr : module->exports) {
-      self->visitExport(curr);
+    for (auto& curr : module->exports) {
+      self->visitExport(curr.get());
     }
 
     auto processFunction = [](SubType* instance, Function* func) {
@@ -201,8 +201,8 @@ struct Walker : public VisitorType {
     // if this is not a function-parallel traversal, run
     // sequentially
     if (!self->isFunctionParallel()) {
-      for (auto curr : module->functions) {
-        processFunction(self, curr);
+      for (auto& curr : module->functions) {
+        processFunction(self, curr.get());
       }
     } else {
       // execute in parallel on helper threads
@@ -222,7 +222,7 @@ struct Walker : public VisitorType {
           if (index >= numFunctions) {
             return ThreadWorkState::Finished; // nothing left
           }
-          Function* curr = module->functions[index];
+          Function* curr = module->functions[index].get();
           // do the current task
           processFunction(instance, curr);
           if (index + 1 == numFunctions) {

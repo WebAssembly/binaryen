@@ -45,7 +45,7 @@ public:
                          WasmType resultType,
                          std::vector<NameType>&& vars,
                          Expression* body = nullptr) {
-    auto* func = allocator.alloc<Function>();
+    auto* func = new Function;
     func->name = name;
     func->result = resultType;
     func->body = body;

@@ -43,10 +43,11 @@ void Linker::placeStackPointer(size_t stackAllocation) {
   if (stackAllocation) {
     // If we are allocating the stack, set up a relocation to initialize the
     // stack pointer to point to one past-the-end of the stack allocation.
-    auto* raw = new uint32_t;
-    out.addRelocation(LinkerObject::Relocation::kData, raw, ".stack", stackAllocation);
+    std::vector<char> raw;
+    raw.resize(pointerSize);
+    out.addRelocation(LinkerObject::Relocation::kData, (uint32_t*)&raw[0], ".stack", stackAllocation);
     assert(out.wasm.memory.segments.size() == 0);
-    out.addSegment("__stack_pointer", reinterpret_cast<char*>(raw), pointerSize);
+    out.addSegment("__stack_pointer", raw);
   }
 }
 
@@ -56,7 +57,7 @@ void Linker::layout() {
     Name target = f.first;
     // Create an import for the target if necessary.
     if (!out.wasm.checkImport(target)) {
-      auto import = out.wasm.allocator.alloc<Import>();
+      auto import = new Import;
       import->name = import->base = target;
       import->module = ENV;
       import->type = ensureFunctionType(getSig(*f.second.begin()), &out.wasm);
@@ -154,7 +155,7 @@ void Linker::layout() {
     if (out.symbolInfo.implementedFunctions.count(start) != 0) {
       Fatal() << "Start function already present: `" << start << "`\n";
     }
-    auto* func = out.wasm.allocator.alloc<Function>();
+    auto* func = new Function;
     func->name = start;
     out.wasm.addFunction(func);
     exportFunction(start, true);
@@ -238,7 +239,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
       if (curr->target == EMSCRIPTEN_ASM_CONST) {
         auto arg = curr->operands[0]->cast<Const>();
         size_t segmentIndex = parent->segmentsByAddress[arg->value.geti32()];
-        std::string code = escape(parent->out.wasm.memory.segments[segmentIndex].data);
+        std::string code = escape(&parent->out.wasm.memory.segments[segmentIndex].data[0]);
         int32_t id;
         if (ids.count(code) == 0) {
           id = ids.size();
@@ -254,7 +255,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
         // add import, if necessary
         if (allSigs.count(sig) == 0) {
           allSigs.insert(sig);
-          auto import = parent->out.wasm.allocator.alloc<Import>();
+          auto import = new Import;
           import->name = import->base = curr->target;
           import->module = ENV;
           import->type = ensureFunctionType(getSig(curr), &parent->out.wasm);

@@ -121,19 +121,19 @@ static std::vector<std::unordered_map<IString, int>> precedences; // op, type =>
 struct Init {
   Init() {
     // operators, rtl, type
-    operatorClasses.push_back(OperatorClass(".",         false, OperatorClass::Binary));
-    operatorClasses.push_back(OperatorClass("! ~ + -",   true,  OperatorClass::Prefix));
-    operatorClasses.push_back(OperatorClass("* / %",     false, OperatorClass::Binary));
-    operatorClasses.push_back(OperatorClass("+ -",       false, OperatorClass::Binary));
-    operatorClasses.push_back(OperatorClass("<< >> >>>", false, OperatorClass::Binary));
-    operatorClasses.push_back(OperatorClass("< <= > >=", false, OperatorClass::Binary));
-    operatorClasses.push_back(OperatorClass("== !=",     false, OperatorClass::Binary));
-    operatorClasses.push_back(OperatorClass("&",         false, OperatorClass::Binary));
-    operatorClasses.push_back(OperatorClass("^",         false, OperatorClass::Binary));
-    operatorClasses.push_back(OperatorClass("|",         false, OperatorClass::Binary));
-    operatorClasses.push_back(OperatorClass("? :",       true,  OperatorClass::Tertiary));
-    operatorClasses.push_back(OperatorClass("=",         true,  OperatorClass::Binary));
-    operatorClasses.push_back(OperatorClass(",",         true,  OperatorClass::Binary));
+    operatorClasses.emplace_back(".",         false, OperatorClass::Binary);
+    operatorClasses.emplace_back("! ~ + -",   true,  OperatorClass::Prefix);
+    operatorClasses.emplace_back("* / %",     false, OperatorClass::Binary);
+    operatorClasses.emplace_back("+ -",       false, OperatorClass::Binary);
+    operatorClasses.emplace_back("<< >> >>>", false, OperatorClass::Binary);
+    operatorClasses.emplace_back("< <= > >=", false, OperatorClass::Binary);
+    operatorClasses.emplace_back("== !=",     false, OperatorClass::Binary);
+    operatorClasses.emplace_back("&",         false, OperatorClass::Binary);
+    operatorClasses.emplace_back("^",         false, OperatorClass::Binary);
+    operatorClasses.emplace_back("|",         false, OperatorClass::Binary);
+    operatorClasses.emplace_back("? :",       true,  OperatorClass::Tertiary);
+    operatorClasses.emplace_back("=",         true,  OperatorClass::Binary);
+    operatorClasses.emplace_back(",",         true,  OperatorClass::Binary);
 
     precedences.resize(OperatorClass::Tertiary + 1);
 

@@ -881,12 +881,11 @@ public:
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch() : condition(nullptr), value(nullptr) {}
-  Switch(MixedArena& allocator) : Switch() {
+  Switch(MixedArena& allocator) : targets(allocator), condition(nullptr), value(nullptr) {
     type = unreachable;
   }
 
-  std::vector<Name> targets;
+  ArenaVector<Name> targets;
   Name default_;
   Expression *condition;
   Expression *value;
@@ -912,9 +911,9 @@ class FunctionType {
 public:
   Name name;
   WasmType result;
-  ArenaVector<WasmType> params;
+  std::vector<WasmType> params;
 
-  FunctionType(MixedArena& allocator) : result(none), params(allocator) {}
+  FunctionType() : result(none) {}
 
   bool operator==(FunctionType& b) {
     if (name != b.name) return false; // XXX
@@ -1097,7 +1096,7 @@ public:
   std::vector<Name> localNames;
   std::map<Name, Index> localIndices;
 
-  Function(MixedArena& allocator) : result(none) {}
+  Function() : result(none) {}
 
   size_t getNumParams() {
     return params.size();
@@ -1147,7 +1146,7 @@ public:
 
 class Import {
 public:
-  Import(MixedArena& allocator) : type(nullptr) {}
+  Import() : type(nullptr) {}
 
   Name name, module, base; // name = module.base
   FunctionType* type;
@@ -1155,8 +1154,6 @@ public:
 
 class Export {
 public:
-  Export(MixedArena& allocator) {}
-
   Name name;  // exported name
   Name value; // internal name
 };
@@ -1172,10 +1169,15 @@ public:
   static const size_t kPageMask = ~(kPageSize - 1);
   struct Segment {
     size_t offset;
-    const char* data;
-    size_t size;
+    std::vector<char> data; // TODO: optimize
     Segment() {}
-    Segment(size_t offset, const char *data, size_t size) : offset(offset), data(data), size(size) {}
+    Segment(size_t offset, const char *init, size_t size) : offset(offset) {
+      data.resize(size);
+      memcpy(&data[0], init, size);
+    }
+    Segment(size_t offset, std::vector<char>& init) : offset(offset) {
+      data.swap(init);
+    }
   };
 
   size_t initial, max; // sizes are in pages
@@ -1188,10 +1190,10 @@ public:
 class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except maybe for iterating; use add*() and the get() functions)
-  std::vector<FunctionType*> functionTypes;
-  std::vector<Import*> imports;
-  std::vector<Export*> exports;
-  std::vector<Function*> functions;
+  std::vector<std::unique_ptr<FunctionType>> functionTypes;
+  std::vector<std::unique_ptr<Import>> imports;
+  std::vector<std::unique_ptr<Export>> exports;
+  std::vector<std::unique_ptr<Function>> functions;
 
   Table table;
   Memory memory;
@@ -1209,10 +1211,10 @@ private:
 public:
   Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0) {}
 
-  FunctionType* getFunctionType(size_t i) { assert(i < functionTypes.size());return functionTypes[i]; }
-  Import* getImport(size_t i) { assert(i < imports.size()); return imports[i]; }
-  Export* getExport(size_t i) { assert(i < exports.size()); return exports[i]; }
-  Function* getFunction(size_t i) { assert(i < functions.size()); return functions[i]; }
+  FunctionType* getFunctionType(size_t i) { assert(i < functionTypes.size()); return functionTypes[i].get(); }
+  Import* getImport(size_t i) { assert(i < imports.size()); return imports[i].get(); }
+  Export* getExport(size_t i) { assert(i < exports.size()); return exports[i].get(); }
+  Function* getFunction(size_t i) { assert(i < functions.size()); return functions[i].get(); }
 
   FunctionType* getFunctionType(Name name) { assert(functionTypesMap[name]); return functionTypesMap[name]; }
   Import* getImport(Name name) { assert(importsMap[name]); return importsMap[name]; }
@@ -1229,7 +1231,7 @@ public:
     if (curr->name.isNull()) {
       curr->name = numericName;
     }
-    functionTypes.push_back(curr);
+    functionTypes.push_back(std::unique_ptr<FunctionType>(curr));
     functionTypesMap[curr->name] = curr;
     functionTypesMap[numericName] = curr;
     functionTypeIndex++;
@@ -1239,7 +1241,7 @@ public:
     if (curr->name.isNull()) {
       curr->name = numericName;
     }
-    imports.push_back(curr);
+    imports.push_back(std::unique_ptr<Import>(curr));
     importsMap[curr->name] = curr;
     importsMap[numericName] = curr;
     importIndex++;
@@ -1249,7 +1251,7 @@ public:
     if (curr->name.isNull()) {
       curr->name = numericName;
     }
-    exports.push_back(curr);
+    exports.push_back(std::unique_ptr<Export>(curr));
     exportsMap[curr->name] = curr;
     exportsMap[numericName] = curr;
     exportIndex++;
@@ -1259,7 +1261,7 @@ public:
     if (curr->name.isNull()) {
       curr->name = numericName;
     }
-    functions.push_back(curr);
+    functions.push_back(std::unique_ptr<Function>(curr));
     functionsMap[curr->name] = curr;
     functionsMap[numericName] = curr;
     functionIndex++;

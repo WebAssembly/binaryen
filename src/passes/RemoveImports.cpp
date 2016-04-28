@@ -48,9 +48,12 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports, Visitor<Remov
   }
 
   void visitModule(Module *curr) {
-    auto imports = curr->imports; // copy
-    for (auto* import : imports) {
-      curr->removeImport(import->name);
+    std::vector<Name> names;
+    for (auto& import : curr->imports) {
+      names.push_back(import->name);
+    }
+    for (auto& name : names) {
+      curr->removeImport(name);
     }
   }
 };

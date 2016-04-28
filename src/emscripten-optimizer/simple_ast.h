@@ -84,6 +84,7 @@ struct Arena {
   int arr_index;
 
   Arena() : index(0), arr_index(0) {}
+  ~Arena();
 
   Ref alloc();
   ArrayStorage* allocArray();

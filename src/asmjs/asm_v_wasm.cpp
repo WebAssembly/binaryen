@@ -82,8 +82,8 @@ WasmType sigToWasmType(char sig) {
   }
 }
 
-FunctionType* sigToFunctionType(std::string sig, MixedArena& allocator) {
-  auto ret = allocator.alloc<FunctionType>();
+FunctionType* sigToFunctionType(std::string sig) {
+  auto ret = new FunctionType;
   ret->result = sigToWasmType(sig[0]);
   for (size_t i = 1; i < sig.size(); i++) {
     ret->params.push_back(sigToWasmType(sig[i]));
@@ -97,7 +97,7 @@ FunctionType* ensureFunctionType(std::string sig, Module* wasm) {
     return wasm->getFunctionType(name);
   }
   // add new type
-  auto type = wasm->allocator.alloc<FunctionType>();
+  auto type = new FunctionType;
   type->name = name;
   type->result = sigToWasmType(sig[0]);
   for (size_t i = 1; i < sig.size(); i++) {
