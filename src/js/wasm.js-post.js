@@ -156,55 +156,54 @@ function integrateWasmJS(Module) {
 
   // do-method functions
 
-  function doJustAsm() {
-    if (typeof Module['asm'] !== 'function') {
-      // you can load the .asm.js file before this, to avoid this sync xhr and eval
-      eval(Module['read'](asmjsCodeFile));
+  function doJustAsm(global, env, providedBuffer) {
+    // if no Module.asm, or it's the method handler helper (see below), then apply
+    // the asmjs
+    if (typeof Module['asm'] !== 'function' || Module['asm'] === methodHandler) {
+      if (!Module['asmPreload']) {
+        // you can load the .asm.js file before this, to avoid this sync xhr and eval
+        eval(Module['read'](asmjsCodeFile)); // set Module.asm
+      } else {
+        Module['asm'] = Module['asmPreload'];
+      }
     }
     if (typeof Module['asm'] !== 'function') {
-      // evalling the asm.js file should have set this
       Module['printErr']('asm evalling did not set the module properly');
       return false;
     }
-    return true;
+    return Module['asm'](global, env, providedBuffer);
   }
 
-  function doNativeWasm() {
+  function doNativeWasm(global, env, providedBuffer) {
     if (typeof Wasm !== 'object') {
       Module['printErr']('no native wasm support detected');
       return false;
     }
-
-    // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
-    // the wasm module at that time, and it receives imports and provides exports and so forth, the app
-    // doesn't need to care that it is wasm and not asm.
-    Module['asm'] = function(global, env, providedBuffer) {
-      global = fixImports(global);
-      env = fixImports(env);
-
-      // Load the wasm module and create an instance of using native support in the JS engine.
-      info['global'] = {
-        'NaN': NaN,
-        'Infinity': Infinity
-      };
-      info['global.Math'] = global.Math;
-      info['env'] = env;
-      var instance;
-      instance = Wasm.instantiateModule(getBinary(), info);
-      exports = instance.exports;
-      mergeMemory(exports.memory);
-
-      applyMappedGlobals(wasmBinaryFile);
-
-      return exports;
+    // Load the wasm module and create an instance of using native support in the JS engine.
+    info['global'] = {
+      'NaN': NaN,
+      'Infinity': Infinity
     };
+    info['global.Math'] = global.Math;
+    info['env'] = env;
+    var instance;
+    try {
+      instance = Wasm.instantiateModule(getBinary(), info);
+    } catch (e) {
+      Module['printErr']('failed to compile wasm module: ' + e);
+      return false;
+    }
+    exports = instance.exports;
+    mergeMemory(exports.memory);
+
+    applyMappedGlobals(wasmBinaryFile);
 
     Module["usingWasm"] = true;
 
-    return true;
+    return exports;
   }
 
-  function doWasmPolyfill(method) {
+  function doWasmPolyfill(global, env, providedBuffer, method) {
     if (typeof WasmJS !== 'function') {
       Module['printErr']('WasmJS not detected - polyfill not bundled?');
       return false;
@@ -221,81 +220,95 @@ function integrateWasmJS(Module) {
 
     wasmJS['lookupImport'] = lookupImport;
 
-    // The asm.js function, called to "link" the asm.js module. At that time, we are provided imports
-    // and respond with exports, and so forth.
-    Module['asm'] = function(global, env, providedBuffer) {
-      global = fixImports(global);
-      env = fixImports(env);
+    assert(providedBuffer === Module['buffer']); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
 
-      assert(providedBuffer === Module['buffer']); // we should not even need to pass it as a 3rd arg for wasm, but that's the asm.js way.
+    info.global = global;
+    info.env = env;
 
-      info.global = global;
-      info.env = env;
+    wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
 
-      wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
-
-      // Prepare to generate wasm, using either asm2wasm or s-exprs
-      var code;
-      if (method === 'interpret-binary') {
-        code = getBinary();
-      } else {
-        code = Module['read'](method == 'interpret-asm2wasm' ? asmjsCodeFile : wasmTextFile);
-      }
-      var temp;
-      if (method == 'interpret-asm2wasm') {
-        temp = wasmJS['_malloc'](code.length + 1);
-        wasmJS['writeAsciiToMemory'](code, temp);
-        wasmJS['_load_asm2wasm'](temp);
-      } else if (method === 'interpret-s-expr') {
-        temp = wasmJS['_malloc'](code.length + 1);
-        wasmJS['writeAsciiToMemory'](code, temp);
-        wasmJS['_load_s_expr2wasm'](temp);
-      } else if (method === 'interpret-binary') {
-        temp = wasmJS['_malloc'](code.length);
-        wasmJS['HEAPU8'].set(code, temp);
-        wasmJS['_load_binary2wasm'](temp, code.length);
-      } else {
-        throw 'what? ' + method;
-      }
-      wasmJS['_free'](temp);
-
-      wasmJS['_instantiate'](temp);
-
-      if (Module['newBuffer']) {
-        mergeMemory(Module['newBuffer']);
-        Module['newBuffer'] = null;
-      }
-
-      if (method == 'interpret-s-expr') {
-        applyMappedGlobals(wasmTextFile);
-      } else if (method == 'interpret-binary') {
-        applyMappedGlobals(wasmBinaryFile);
-      }
-
-      exports = wasmJS['asmExports'];
-
-      return exports;
-    };
-
-    return true;
-  }
-
-  // use the right method
-
-  var methods = method.split(',');
-  for (var i = 0; i < methods.length; i++) {
-    var curr = methods[i];
-    //Module['printErr']('using wasm/js method: ' + curr);
-    if (curr === 'native-wasm') {
-      if (doNativeWasm()) return;
-    } else if (curr === 'asmjs') {
-      if (doJustAsm()) return;
-    } else if (curr === 'interpret-asm2wasm' || curr === 'interpret-s-expr' || curr === 'interpret-binary') {
-      if (doWasmPolyfill(curr)) return;
+    // Prepare to generate wasm, using either asm2wasm or s-exprs
+    var code;
+    if (method === 'interpret-binary') {
+      code = getBinary();
     } else {
-      throw 'bad method: ' + curr;
+      code = Module['read'](method == 'interpret-asm2wasm' ? asmjsCodeFile : wasmTextFile);
     }
+    var temp;
+    if (method == 'interpret-asm2wasm') {
+      temp = wasmJS['_malloc'](code.length + 1);
+      wasmJS['writeAsciiToMemory'](code, temp);
+      wasmJS['_load_asm2wasm'](temp);
+    } else if (method === 'interpret-s-expr') {
+      temp = wasmJS['_malloc'](code.length + 1);
+      wasmJS['writeAsciiToMemory'](code, temp);
+      wasmJS['_load_s_expr2wasm'](temp);
+    } else if (method === 'interpret-binary') {
+      temp = wasmJS['_malloc'](code.length);
+      wasmJS['HEAPU8'].set(code, temp);
+      wasmJS['_load_binary2wasm'](temp, code.length);
+    } else {
+      throw 'what? ' + method;
+    }
+    wasmJS['_free'](temp);
+
+    wasmJS['_instantiate'](temp);
+
+    if (Module['newBuffer']) {
+      mergeMemory(Module['newBuffer']);
+      Module['newBuffer'] = null;
+    }
+
+    if (method == 'interpret-s-expr') {
+      applyMappedGlobals(wasmTextFile);
+    } else if (method == 'interpret-binary') {
+      applyMappedGlobals(wasmBinaryFile);
+    }
+
+    exports = wasmJS['asmExports'];
+
+    return exports;
   }
-  throw 'no wasm method succeeded';
+
+  // We may have a preloaded value in Module.asm, save it
+  Module['asmPreload'] = Module['asm'];
+
+  // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
+  // the wasm module at that time, and it receives imports and provides exports and so forth, the app
+  // doesn't need to care that it is wasm or olyfilled wasm or asm.js.
+
+  Module['asm'] = function(global, env, providedBuffer) {
+    global = fixImports(global);
+    env = fixImports(env);
+
+    // try the methods. each should return the exports if it succeeded
+
+    var exports;
+    var methods = method.split(',');
+
+    for (var i = 0; i < methods.length; i++) {
+      var curr = methods[i];
+
+      Module['printErr']('trying binaryen method: ' + curr);
+
+      if (curr === 'native-wasm') {
+        if (exports = doNativeWasm(global, env, providedBuffer)) break;
+      } else if (curr === 'asmjs') {
+        if (exports = doJustAsm(global, env, providedBuffer)) break;
+      } else if (curr === 'interpret-asm2wasm' || curr === 'interpret-s-expr' || curr === 'interpret-binary') {
+        if (exports = doWasmPolyfill(global, env, providedBuffer, curr)) break;
+      } else {
+        throw 'bad method: ' + curr;
+      }
+    }
+
+    if (!exports) throw 'no binaryen method succeeded';
+
+    Module['printErr']('binaryen method succeeded.');
+
+    return exports;
+  };
+
+  var methodHandler = Module['asm']; // note our method handler, as we may modify Module['asm'] later
 }
 
