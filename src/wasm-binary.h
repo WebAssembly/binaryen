@@ -1550,11 +1550,12 @@ public:
       Memory::Segment curr;
       auto offset = getU32LEB();
       auto size = getU32LEB();
-      char buffer[size];
+      std::vector<char> buffer;
+      buffer.resize(size);
       for (size_t j = 0; j < size; j++) {
         buffer[j] = char(getInt8());
       }
-      wasm.memory.segments.emplace_back(offset, (const char*)buffer, size);
+      wasm.memory.segments.emplace_back(offset, (const char*)&buffer[0], size);
     }
   }
 
