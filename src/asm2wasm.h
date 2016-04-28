@@ -222,7 +222,7 @@ private:
   void noteImportedFunctionCall(Ref ast, WasmType resultType, AsmData *asmData, CallImport* call) {
     assert(ast[0] == CALL && ast[1][0] == NAME);
     IString importName = ast[1][1]->getIString();
-    std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
+    auto type = make_unique<FunctionType>();
     type->name = IString((std::string("type$") + importName.str).c_str(), false); // TODO: make a list of such types
     type->result = resultType;
     Ref args = ast[2];
