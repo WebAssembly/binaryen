@@ -21,6 +21,7 @@
 #ifndef wasm_wasm_binary_h
 #define wasm_wasm_binary_h
 
+#include <cassert>
 #include <istream>
 #include <ostream>
 #include <type_traits>
@@ -36,6 +37,8 @@ namespace wasm {
 
 template<typename T, typename MiniT>
 struct LEB {
+  static_assert(sizeof(MiniT) == 1, "MiniT must be a byte");
+
   T value;
 
   LEB() {}
@@ -76,24 +79,37 @@ struct LEB {
     } while (more);
   }
 
-  void read(std::function<MiniT ()> get) {
+  void read(std::function<MiniT()> get) {
     value = 0;
     T shift = 0;
     MiniT byte;
     while (1) {
       byte = get();
-      value |= ((T(byte & 127)) << shift);
-      if (!(byte & 128)) break;
+      bool last = !(byte & 128);
+      T payload = byte & 127;
+      typedef typename std::make_unsigned<T>::type mask_type;
+      auto shift_mask = 0 == shift
+                            ? ~mask_type(0)
+                            : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
+      T significant_payload = payload & shift_mask;
+      if (significant_payload != payload) {
+        assert(std::is_signed<T>::value && last &&
+               "dropped bits only valid for signed LEB");
+      }
+      value |= significant_payload << shift;
+      if (last) break;
       shift += 7;
+      assert(size_t(shift) < sizeof(T) * 8 && "LEB overflow");
     }
-    // if signed LEB, then we might need to sign-extend. (compile should optimize this out if not needed)
+    // If signed LEB, then we might need to sign-extend. (compile should
+    // optimize this out if not needed).
     if (std::is_signed<T>::value) {
       shift += 7;
-      if (byte & 64 && size_t(shift) < 8*sizeof(T)) {
-        size_t sext_bits = 8*sizeof(T) - size_t(shift);
+      if ((byte & 64) && size_t(shift) < 8 * sizeof(T)) {
+        size_t sext_bits = 8 * sizeof(T) - size_t(shift);
         value <<= sext_bits;
         value >>= sext_bits;
-        assert(value < 0);
+        assert(value < 0 && "signe-extend should produces a negative value");
       }
     }
   }
