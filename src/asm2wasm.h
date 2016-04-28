@@ -1579,6 +1579,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 auto conv = allocator.alloc<Unary>();
                 conv->op = ReinterpretFloat;
                 conv->value = process(writtenValue);
+                if (conv->value->type == f64) {
+                  // this has an implicit f64->f32 in the write to memory
+                  conv->value = builder.makeUnary(DemoteFloat64, conv->value, f32);
+                }
                 conv->type = WasmType::i32;
                 return conv;
               }
