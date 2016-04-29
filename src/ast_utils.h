@@ -23,7 +23,7 @@
 namespace wasm {
 
 struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
-  Name target; // look for this one
+  Name target; // look for this one XXX looking by name may fall prey to duplicate names
   size_t found;
 
   BreakSeeker(Name target) : target(target), found(false) {}
