@@ -1018,8 +1018,8 @@ public:
       case ConvertSInt64:    o << int8_t(curr->type == f32 ? BinaryConsts::F32SConvertI64 : BinaryConsts::F64SConvertI64); break;
       case DemoteFloat64:    o << int8_t(BinaryConsts::F32ConvertF64); break;
       case PromoteFloat32:   o << int8_t(BinaryConsts::F64ConvertF32); break;
-      case ReinterpretFloat: o << int8_t(curr->type == f32 ? BinaryConsts::F32ReinterpretI32 : BinaryConsts::F64ReinterpretI64); break;
-      case ReinterpretInt:   o << int8_t(curr->type == i32 ? BinaryConsts::I32ReinterpretF32 : BinaryConsts::I64ReinterpretF64); break;
+      case ReinterpretFloat: o << int8_t(curr->type == i32 ? BinaryConsts::F32ReinterpretI32 : BinaryConsts::F64ReinterpretI64); break;
+      case ReinterpretInt:   o << int8_t(curr->type == f32 ? BinaryConsts::I32ReinterpretF32 : BinaryConsts::I64ReinterpretF64); break;
       default: abort();
     }
   }
