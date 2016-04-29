@@ -4,10 +4,10 @@ Binaryen = Binaryen(); // instantiate the module
 var input =
   '(module\n' +
   '  (export "add" $add)\n' +
-  '  (func $add (param $x f64) (param $y f64) (result f64)\n' +
-  '    (f64.add\n' +
-  '      (get_local $x)\n' +
-  '      (get_local $y)\n' +
+  '  (func $add (param $x f32) (param $y f64) (result i32)\n' +
+  '    (i32.add\n' +
+  '      (i32.trunc_s/f32 (get_local $x))\n' +
+  '      (i32.trunc_s/f64 (get_local $y))\n' +
   '    )\n' +
   '  )\n' +
   ')\n';
@@ -37,8 +37,8 @@ var name = new Binaryen.Name('add');
 console.log('name: ' + name.c_str());
 
 var args = new Binaryen.LiteralList();
-args.push_back(new Binaryen.Literal(40));
-args.push_back(new Binaryen.Literal(2));
+args.push_back(new Binaryen.F32Literal(40));
+args.push_back(new Binaryen.F64Literal(2));
 
-console.log('answer is ' + instance.callExport(name, args).getf64() + '.');
+console.log('answer is ' + instance.callExport(name, args).geti32() + '.');
 

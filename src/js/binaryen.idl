@@ -1,8 +1,37 @@
+enum WasmType {
+  "none",
+  "i32",
+  "i64",
+  "f32",
+  "f64",
+  "unreachable"
+};
 
 interface Literal {
   void Literal(double x);
+  attribute WasmType type;
+  float getf32();
+  long geti32();
   double getf64();
 };
+
+interface I32Literal {
+  void I32Literal(double x);
+};
+
+I32Literal implements Literal;
+
+interface F32Literal {
+  void F32Literal(double x);
+};
+
+F32Literal implements Literal;
+
+interface F64Literal {
+  void F64Literal(double x);
+};
+
+F64Literal implements Literal;
 
 interface Name {
   void Name(DOMString x);
