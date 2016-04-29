@@ -401,7 +401,7 @@
       (f32.demote/f64
         (f64.const 10)
       )
-      (f64.reinterpret/i64
+      (f32.reinterpret/i32
         (i32.const 10)
       )
       (f64.convert_s/i32
@@ -422,7 +422,7 @@
       (f64.reinterpret/i64
         (i64.const 100)
       )
-      (i64.reinterpret/f64
+      (i32.reinterpret/f32
         (f32.const 10)
       )
       (i64.reinterpret/f64
