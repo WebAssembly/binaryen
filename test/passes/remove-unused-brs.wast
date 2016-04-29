@@ -91,7 +91,7 @@
       )
     )
   )
-  (func $b12-yes (result i32)
+  (func $b12-yes
     (block $topmost
       (if_else (i32.const 1)
         (block
@@ -149,7 +149,7 @@
       )
     )
   )
-  (func $b15 (result i32)
+  (func $b15
     (block $topmost
       (if
         (i32.const 18)

@@ -572,6 +572,7 @@ print '\n[ checking example testcases... ]\n'
 cmd = [os.environ.get('CXX') or 'g++', '-std=c++11',
        os.path.join('test', 'example', 'find_div0s.cpp'),
        os.path.join('src', 'pass.cpp'),
+       os.path.join('src', 'wasm.cpp'),
        os.path.join('src', 'passes', 'Print.cpp'),
        '-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
 if os.environ.get('COMPILER_FLAGS'):

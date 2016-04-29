@@ -217,6 +217,7 @@ int main(int argc, const char* argv[]) {
       std::unique_ptr<SExpressionWasmBuilder> builder(
           new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }));
       i++;
+      assert(WasmValidator().validate(wasm));
 
       MixedArena moreModuleAllocations;
 

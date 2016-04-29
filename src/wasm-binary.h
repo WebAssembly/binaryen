@@ -31,6 +31,7 @@
 #include "asm_v_wasm.h"
 #include "wasm-builder.h"
 #include "ast_utils.h"
+#include "wasm-validator.h"
 
 namespace wasm {
 
@@ -1187,6 +1188,10 @@ public:
     }
 
     processFunctions();
+
+    if (!WasmValidator().validate(wasm)) {
+      abort();
+    }
   }
 
   bool more() {
@@ -1727,6 +1732,7 @@ public:
     curr->name = getBreakName(getU32LEB());
     if (code == BinaryConsts::BrIf) curr->condition = popExpression();
     if (arity == 1) curr->value = popExpression();
+    curr->finalize();
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;

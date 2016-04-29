@@ -60,7 +60,7 @@ ldi64:
 ldi64_a16:
 	.param  	i32
 	.result 	i64
-	i64.load	$push0=, 0($0):p2align=4
+	i64.load	$push0=, 0($0):p2align=3
 	return  	$pop0
 	.endfunc
 .Lfunc_end5:
@@ -219,7 +219,7 @@ sti64:
 	.type	sti64_a16,@function
 sti64_a16:
 	.param  	i32, i64
-	i64.store	$discard=, 0($0):p2align=4, $1
+	i64.store	$discard=, 0($0):p2align=3, $1
 	return
 	.endfunc
 .Lfunc_end20:
