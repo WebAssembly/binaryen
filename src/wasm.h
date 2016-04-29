@@ -833,11 +833,13 @@ public:
   Name name;
   ExpressionList list;
 
-  void finalize() {
-    if (list.size() > 0) {
-      type = list.back()->type;
-    }
+  // set the type of a block if you already know it
+  void finalize(WasmType type_) {
+    type = type;
   }
+
+  // set the type of a block based on its contents. this scans the block, so it is not fast
+  void finalize();
 };
 
 class If : public SpecificExpression<Expression::IfId> {
@@ -877,6 +879,12 @@ public:
   Name name;
   Expression *value;
   Expression *condition;
+
+  void finalize() {
+    if (condition) {
+      type = none;
+    }
+  }
 };
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
@@ -1022,7 +1030,6 @@ public:
     if (isRelational()) {
       type = i32;
     } else {
-      assert(left->type != unreachable && right->type != unreachable ? left->type == right->type : true);
       type = getReachableWasmType(left->type, right->type);
     }
   }
