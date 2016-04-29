@@ -53,15 +53,15 @@ main:                                   # @main
 	i32.const	$push47=, 0
 	i32.load	$0=, a+4($pop47)
 	i32.const	$push46=, 0
-	i32.load	$1=, a($pop46):p2align=4
+	i32.load	$1=, a($pop46)
 	i32.const	$push45=, 0
 	i32.load	$2=, a+12($pop45)
 	i32.const	$push44=, 0
-	i32.load	$3=, a+8($pop44):p2align=3
+	i32.load	$3=, a+8($pop44)
 	i32.const	$push43=, 0
 	i32.load	$4=, a+20($pop43)
 	i32.const	$push42=, 0
-	i32.load	$5=, a+16($pop42):p2align=4
+	i32.load	$5=, a+16($pop42)
 .LBB1_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -102,7 +102,7 @@ main:                                   # @main
 	br_if   	8, $pop2        # 8: down to label4
 # BB#5:                                 # %if.end6.i49
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.load	$push3=, 0($8):p2align=3
+	i32.load	$push3=, 0($8)
 	i32.le_u	$push4=, $pop3, $1
 	br_if   	8, $pop4        # 8: down to label4
 .LBB1_6:                                # %if.end.1
@@ -118,7 +118,7 @@ main:                                   # @main
 	br_if   	6, $pop25       # 6: down to label5
 # BB#8:                                 # %if.end6.i63.1
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.load	$push26=, 0($8):p2align=3
+	i32.load	$push26=, 0($8)
 	i32.eq  	$push27=, $pop26, $3
 	br_if   	3, $pop27       # 3: down to label8
 	br      	6               # 6: down to label5
@@ -130,7 +130,7 @@ main:                                   # @main
 	br_if   	5, $pop29       # 5: down to label5
 # BB#10:                                # %if.end6.i63
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.load	$push30=, 0($8):p2align=3
+	i32.load	$push30=, 0($8)
 	i32.ne  	$push31=, $pop30, $1
 	br_if   	5, $pop31       # 5: down to label5
 .LBB1_11:                               # %land.lhs.true.1
@@ -146,7 +146,7 @@ main:                                   # @main
 	br_if   	1, $pop33       # 1: down to label8
 # BB#13:                                # %if.end6.i.1
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.load	$push34=, 0($8):p2align=3
+	i32.load	$push34=, 0($8)
 	i32.lt_u	$push35=, $pop34, $3
 	br_if   	1, $pop35       # 1: down to label8
 	br      	3               # 3: down to label6
@@ -169,7 +169,7 @@ main:                                   # @main
 	br_if   	5, $pop8        # 5: down to label4
 # BB#17:                                # %if.end6.i49.1
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.load	$push9=, 0($8):p2align=3
+	i32.load	$push9=, 0($8)
 	i32.le_u	$push10=, $pop9, $3
 	br_if   	5, $pop10       # 5: down to label4
 .LBB1_18:                               # %if.end.2
@@ -186,7 +186,7 @@ main:                                   # @main
 # BB#20:                                # %if.end6.i63.2
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$6=, 3
-	i32.load	$push22=, 0($8):p2align=3
+	i32.load	$push22=, 0($8)
 	i32.eq  	$push23=, $pop22, $5
 	br_if   	6, $pop23       # 6: up to label1
 	br      	3               # 3: down to label5
@@ -203,7 +203,7 @@ main:                                   # @main
 	br_if   	4, $pop37       # 4: down to label3
 # BB#23:                                # %if.end6.i.2
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.load	$push38=, 0($8):p2align=3
+	i32.load	$push38=, 0($8)
 	i32.ge_u	$push39=, $pop38, $5
 	br_if   	1, $pop39       # 1: down to label6
 	br      	4               # 4: down to label3
@@ -225,9 +225,9 @@ main:                                   # @main
 	i32.lt_s	$push15=, $6, $7
 	br_if   	2, $pop15       # 2: down to label4
 # BB#27:                                # %if.end6.i49.2
-	i32.load	$push16=, 0($8):p2align=3
+	i32.load	$push16=, 0($8)
 	i32.const	$push17=, 0
-	i32.load	$push18=, a+16($pop17):p2align=4
+	i32.load	$push18=, a+16($pop17)
 	i32.le_u	$push19=, $pop16, $pop18
 	br_if   	2, $pop19       # 2: down to label4
 	br      	5               # 5: down to label2

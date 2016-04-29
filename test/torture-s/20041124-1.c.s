@@ -33,7 +33,7 @@ main:                                   # @main
 	i32.add 	$push19=, $1, $pop18
 	call    	foo@FUNCTION, $pop19
 	block
-	i32.load16_u	$push2=, 8($1):p2align=3
+	i32.load16_u	$push2=, 8($1)
 	i32.const	$push3=, 0
 	i32.load	$push12=, gs($pop3)
 	tee_local	$push11=, $0=, $pop12

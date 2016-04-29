@@ -46,16 +46,16 @@ main:                                   # @main
 # BB#0:                                 # %if.end7
 	i32.const	$push0=, 0
 	i32.const	$push7=, 0
-	i32.store	$push6=, a+32($pop0):p2align=4, $pop7
+	i32.store	$push6=, a+32($pop0), $pop7
 	tee_local	$push5=, $0=, $pop6
 	i32.const	$push1=, a
-	i32.store	$discard=, a+512($pop5):p2align=4, $pop1
+	i32.store	$discard=, a+512($pop5), $pop1
 	i32.const	$push2=, a+32
-	i32.store	$discard=, a+256($0):p2align=4, $pop2
+	i32.store	$discard=, a+256($0), $pop2
 	i32.const	$push3=, a+64
-	i32.store	$discard=, a+128($0):p2align=4, $pop3
+	i32.store	$discard=, a+128($0), $pop3
 	i32.const	$push4=, a+96
-	i32.store	$discard=, a+64($0):p2align=4, $pop4
+	i32.store	$discard=, a+64($0), $pop4
 	call    	exit@FUNCTION, $0
 	unreachable
 	.endfunc

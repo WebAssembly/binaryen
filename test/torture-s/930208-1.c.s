@@ -9,7 +9,7 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.load16_u	$1=, 0($0):p2align=2
+	i32.load16_u	$1=, 0($0)
 	i32.load8_u	$push0=, 3($0)
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop0, $pop1

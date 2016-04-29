@@ -73,7 +73,7 @@ check:                                  # @check
 # BB#4:                                 # %lor.lhs.false8
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $1, $pop8
-	i32.load8_u	$push10=, 0($pop9):p2align=2
+	i32.load8_u	$push10=, 0($pop9)
 	br_if   	0, $pop10       # 0: down to label0
 # BB#5:                                 # %if.end
 	i32.const	$push11=, 1

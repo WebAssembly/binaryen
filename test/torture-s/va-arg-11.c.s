@@ -17,11 +17,11 @@ main:                                   # @main
 	i32.const	$push0=, 16
 	i32.add 	$push1=, $1, $pop0
 	i32.const	$push2=, 0
-	i32.store	$0=, 0($pop1):p2align=4, $pop2
+	i32.store	$0=, 0($pop1), $pop2
 	i64.const	$push3=, 4294967298
 	i64.store	$discard=, 8($1), $pop3
 	i64.const	$push4=, 12884901892
-	i64.store	$discard=, 0($1):p2align=4, $pop4
+	i64.store	$discard=, 0($1), $pop4
 	block
 	i32.call	$push5=, foo@FUNCTION, $0, $1
 	br_if   	0, $pop5        # 0: down to label0

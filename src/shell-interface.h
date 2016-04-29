@@ -18,7 +18,7 @@
 // Implementation of the shell interpreter execution environment
 //
 
-#include "shared-constants.h"
+#include "asmjs/shared-constants.h"
 #include "wasm.h"
 #include "wasm-interpreter.h"
 
@@ -88,9 +88,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   void init(Module& wasm) override {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     // apply memory segments
-    for (auto segment : wasm.memory.segments) {
-      assert(segment.offset + segment.size <= wasm.memory.initial * wasm::Memory::kPageSize);
-      for (size_t i = 0; i != segment.size; ++i) {
+    for (auto& segment : wasm.memory.segments) {
+      assert(segment.offset + segment.data.size() <= wasm.memory.initial * wasm::Memory::kPageSize);
+      for (size_t i = 0; i != segment.data.size(); ++i) {
         memory.set(segment.offset + i, segment.data[i]);
       }
     }
@@ -177,4 +177,3 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 };
 
 }
-

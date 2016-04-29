@@ -238,7 +238,7 @@ main:                                   # @main
 	block
 	block
 	i32.const	$push39=, 0
-	i32.load	$push0=, bad_t0($pop39):p2align=4
+	i32.load	$push0=, bad_t0($pop39)
 	i32.call_indirect	$push1=, $pop0
 	br_if   	0, $pop1        # 0: down to label3
 # BB#1:                                 # %for.cond
@@ -248,7 +248,7 @@ main:                                   # @main
 	br_if   	0, $pop3        # 0: down to label3
 # BB#2:                                 # %for.cond.1
 	i32.const	$push53=, 0
-	i32.load	$push4=, bad_t0+8($pop53):p2align=3
+	i32.load	$push4=, bad_t0+8($pop53)
 	i32.call_indirect	$push5=, $pop4
 	br_if   	0, $pop5        # 0: down to label3
 # BB#3:                                 # %for.cond.2
@@ -258,7 +258,7 @@ main:                                   # @main
 	br_if   	0, $pop7        # 0: down to label3
 # BB#4:                                 # %for.cond.3
 	i32.const	$push55=, 0
-	i32.load	$push8=, bad_t0+16($pop55):p2align=4
+	i32.load	$push8=, bad_t0+16($pop55)
 	i32.call_indirect	$push9=, $pop8
 	br_if   	0, $pop9        # 0: down to label3
 # BB#5:                                 # %for.cond.4

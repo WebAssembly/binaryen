@@ -63,7 +63,7 @@ main:                                   # @main
 	i32.const	$push5=, __stack_pointer
 	i32.store	$discard=, 0($pop5), $1
 	i64.const	$push0=, 85899345930
-	i64.store	$discard=, 0($1):p2align=4, $pop0
+	i64.store	$discard=, 0($1), $pop0
 	i32.call	$discard=, f@FUNCTION, $0, $1
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1

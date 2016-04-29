@@ -30,7 +30,7 @@ CalcPing:                               # @CalcPing
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.add 	$push3=, $0, $1
-	f32.load	$push20=, 0($pop3):p2align=3
+	f32.load	$push20=, 0($pop3)
 	tee_local	$push19=, $6=, $pop20
 	f32.add 	$push4=, $3, $pop19
 	f32.const	$push18=, 0x0p0
@@ -89,7 +89,7 @@ main:                                   # @main
 	i32.const	$push14=, 16
 	i32.add 	$push1=, $pop33, $pop14
 	i32.const	$push2=, 1065353216
-	i32.store	$discard=, 0($pop1):p2align=3, $pop2
+	i32.store	$discard=, 0($pop1), $pop2
 	f32.const	$2=, 0x0p0
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
@@ -97,7 +97,7 @@ main:                                   # @main
 	i32.const	$push34=, 8
 	i32.add 	$push35=, $5, $pop34
 	i32.add 	$push3=, $pop35, $0
-	f32.load	$push22=, 0($pop3):p2align=3
+	f32.load	$push22=, 0($pop3)
 	tee_local	$push21=, $4=, $pop22
 	f32.add 	$push4=, $2, $pop21
 	f32.const	$push20=, 0x0p0

@@ -31,7 +31,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
-	i32.load8_u	$push1=, s($pop9):p2align=2
+	i32.load8_u	$push1=, s($pop9)
 	i32.const	$push2=, 254
 	i32.and 	$push3=, $pop1, $pop2
 	i32.const	$push8=, 0
@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.and 	$push7=, $pop0, $pop4
 	tee_local	$push6=, $0=, $pop7
 	i32.or  	$push5=, $pop3, $pop6
-	i32.store8	$discard=, s($pop10):p2align=2, $pop5
+	i32.store8	$discard=, s($pop10), $pop5
 	block
 	i32.const	$push12=, 0
 	i32.eq  	$push13=, $0, $pop12

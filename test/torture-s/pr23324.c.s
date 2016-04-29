@@ -16,7 +16,7 @@ main:                                   # @main
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %caller_bf6.exit
 	i32.const	$push12=, 0
-	f32.load	$push11=, yv7($pop12):p2align=3
+	f32.load	$push11=, yv7($pop12)
 	tee_local	$push10=, $1=, $pop11
 	f32.ne  	$push1=, $pop10, $1
 	br_if   	0, $pop1        # 0: down to label0
@@ -28,7 +28,7 @@ main:                                   # @main
 	br_if   	0, $pop3        # 0: down to label0
 # BB#3:                                 # %if.end30.i.i
 	i32.const	$push17=, 0
-	f32.load	$push16=, yv7+24($pop17):p2align=3
+	f32.load	$push16=, yv7+24($pop17)
 	tee_local	$push15=, $1=, $pop16
 	f32.ne  	$push4=, $pop15, $1
 	br_if   	0, $pop4        # 0: down to label0

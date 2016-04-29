@@ -87,9 +87,9 @@ public:
   void visitMemory(Memory *curr) {
     shouldBeFalse(curr->initial > curr->max);
     size_t top = 0;
-    for (auto segment : curr->segments) {
+    for (auto& segment : curr->segments) {
       shouldBeFalse(segment.offset < top);
-      top = segment.offset + segment.size;
+      top = segment.offset + segment.data.size();
     }
     shouldBeFalse(top > curr->initial);
   }

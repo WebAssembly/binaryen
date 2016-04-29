@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i64.store	$discard=, 0($pop6), $pop4
 	i64.const	$push1=, -8905435550453399112
 	i64.and 	$push2=, $2, $pop1
-	i64.store	$discard=, 0($0):p2align=4, $pop2
+	i64.store	$discard=, 0($0), $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -41,7 +41,7 @@ main:                                   # @main
 	i64.const	$push0=, -4611967493404098560
 	call    	foo@FUNCTION, $0, $pop1, $pop0
 	block
-	i64.load	$push3=, 0($0):p2align=4
+	i64.load	$push3=, 0($0)
 	i64.load	$push2=, 8($0)
 	i64.const	$push5=, -8905435550453399112
 	i64.const	$push4=, 4611846683310179025

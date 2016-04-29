@@ -66,7 +66,7 @@ main:                                   # @main
 	i64.store	$discard=, b+136($pop17), $pop0
 	i32.const	$push16=, 0
 	i64.const	$push1=, 6003104017374052362
-	i64.store	$discard=, b+16($pop16):p2align=4, $pop1
+	i64.store	$discard=, b+16($pop16), $pop1
 	i64.load	$push3=, 16($0)
 	i64.load	$push4=, 136($0)
 	i64.const	$push5=, 3
@@ -78,7 +78,7 @@ main:                                   # @main
 	i64.and 	$push11=, $pop9, $pop10
 	i64.store	$discard=, 16($0), $pop11
 	i32.const	$push15=, 0
-	i64.load	$1=, b+16($pop15):p2align=4
+	i64.load	$1=, b+16($pop15)
 	i32.const	$push14=, 0
 	i32.const	$push2=, -2013265854
 	i32.store	$discard=, pars($pop14), $pop2

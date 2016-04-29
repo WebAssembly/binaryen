@@ -92,7 +92,7 @@ print_longlong:                         # @print_longlong
 	br_if   	0, $pop16       # 0: down to label1
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 20($4), $2
-	i32.store	$discard=, 16($4):p2align=4, $3
+	i32.store	$discard=, 16($4), $3
 	i32.const	$push2=, .L.str
 	i32.const	$push13=, 16
 	i32.add 	$push14=, $4, $pop13
@@ -100,7 +100,7 @@ print_longlong:                         # @print_longlong
 	br      	1               # 1: down to label0
 .LBB5_2:                                # %if.else
 	end_block                       # label1:
-	i32.store	$discard=, 0($4):p2align=4, $2
+	i32.store	$discard=, 0($4), $2
 	i32.const	$push3=, .L.str.1
 	i32.call	$discard=, sprintf@FUNCTION, $1, $pop3, $4
 .LBB5_3:                                # %if.end
@@ -129,7 +129,7 @@ main:                                   # @main
 	i32.const	$push24=, __stack_pointer
 	i32.store	$discard=, 0($pop24), $0
 	i32.const	$push0=, 1
-	i32.store	$discard=, 64($0):p2align=4, $pop0
+	i32.store	$discard=, 64($0), $pop0
 	i32.const	$push25=, 80
 	i32.add 	$push26=, $0, $pop25
 	i32.const	$push17=, .L.str.1
@@ -144,7 +144,7 @@ main:                                   # @main
 	br_if   	0, $pop2        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 305419896
-	i32.store	$discard=, 48($0):p2align=4, $pop3
+	i32.store	$discard=, 48($0), $pop3
 	i32.const	$push31=, 80
 	i32.add 	$push32=, $0, $pop31
 	i32.const	$push18=, .L.str.1
@@ -158,7 +158,7 @@ main:                                   # @main
 	br_if   	0, $pop5        # 0: down to label2
 # BB#2:                                 # %if.end11
 	i64.const	$push6=, 1311768467732155613
-	i64.store	$discard=, 32($0):p2align=4, $pop6
+	i64.store	$discard=, 32($0), $pop6
 	i32.const	$push37=, 80
 	i32.add 	$push38=, $0, $pop37
 	i32.const	$push19=, .L.str
@@ -172,7 +172,7 @@ main:                                   # @main
 	br_if   	0, $pop8        # 0: down to label2
 # BB#3:                                 # %if.end19
 	i64.const	$push9=, -1
-	i64.store	$discard=, 16($0):p2align=4, $pop9
+	i64.store	$discard=, 16($0), $pop9
 	i32.const	$push43=, 80
 	i32.add 	$push44=, $0, $pop43
 	i32.const	$push20=, .L.str
@@ -186,7 +186,7 @@ main:                                   # @main
 	br_if   	0, $pop11       # 0: down to label2
 # BB#4:                                 # %if.end27
 	i32.const	$push12=, -1430532899
-	i32.store	$discard=, 0($0):p2align=4, $pop12
+	i32.store	$discard=, 0($0), $pop12
 	i32.const	$push49=, 80
 	i32.add 	$push50=, $0, $pop49
 	i32.const	$push13=, .L.str.1

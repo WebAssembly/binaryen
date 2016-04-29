@@ -36,9 +36,9 @@ main:                                   # @main
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
 	i32.load8_u	$push0=, p+8($pop15)
-	i32.store8	$discard=, headline+8($pop16):p2align=3, $pop0
+	i32.store8	$discard=, headline+8($pop16), $pop0
 	i32.const	$push14=, 0
-	i64.store	$discard=, headline($pop14):p2align=4, $0
+	i64.store	$discard=, headline($pop14), $0
 	i32.const	$push13=, 0
 	i32.const	$push1=, 32
 	i32.store8	$1=, headline+17($pop13), $pop1

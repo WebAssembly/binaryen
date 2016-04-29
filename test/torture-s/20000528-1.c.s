@@ -10,7 +10,7 @@ main:                                   # @main
 	block
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
-	i32.load16_u	$push0=, l($pop4):p2align=2
+	i32.load16_u	$push0=, l($pop4)
 	i32.store16	$push1=, s($pop5), $pop0
 	i32.const	$push2=, 65534
 	i32.ne  	$push3=, $pop1, $pop2

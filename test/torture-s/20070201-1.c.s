@@ -15,7 +15,7 @@ foo:                                    # @foo
 	i32.sub 	$2=, $pop4, $pop5
 	i32.const	$push6=, __stack_pointer
 	i32.store	$discard=, 0($pop6), $2
-	i32.store	$discard=, 0($2):p2align=4, $1
+	i32.store	$discard=, 0($2), $1
 	i32.const	$push2=, .L.str
 	i32.call	$discard=, sprintf@FUNCTION, $0, $pop2, $2
 	i32.const	$push0=, 1
@@ -47,7 +47,7 @@ main:                                   # @main
 	i32.add 	$push12=, $0, $pop11
 	i32.const	$push0=, 2
 	i32.add 	$push1=, $pop12, $pop0
-	i32.store	$discard=, 0($0):p2align=4, $pop1
+	i32.store	$discard=, 0($0), $pop1
 	i32.const	$push13=, 10
 	i32.add 	$push14=, $0, $pop13
 	i32.const	$push2=, .L.str

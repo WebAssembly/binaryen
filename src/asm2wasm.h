@@ -25,7 +25,7 @@
 #include "wasm.h"
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
-#include "shared-constants.h"
+#include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
 #include "pass.h"
 #include "ast_utils.h"
@@ -216,45 +216,45 @@ private:
   // function types. we fill in this information as we see
   // uses, in the first pass
 
-  std::map<IString, FunctionType> importedFunctionTypes;
+  std::map<IString, std::unique_ptr<FunctionType>> importedFunctionTypes;
   std::map<IString, std::vector<CallImport*>> importedFunctionCalls;
 
   void noteImportedFunctionCall(Ref ast, WasmType resultType, AsmData *asmData, CallImport* call) {
     assert(ast[0] == CALL && ast[1][0] == NAME);
     IString importName = ast[1][1]->getIString();
-    FunctionType type;
-    type.name = IString((std::string("type$") + importName.str).c_str(), false); // TODO: make a list of such types
-    type.result = resultType;
+    auto type = make_unique<FunctionType>();
+    type->name = IString((std::string("type$") + importName.str).c_str(), false); // TODO: make a list of such types
+    type->result = resultType;
     Ref args = ast[2];
     for (unsigned i = 0; i < args->size(); i++) {
-      type.params.push_back(detectWasmType(args[i], asmData));
+      type->params.push_back(detectWasmType(args[i], asmData));
     }
     // if we already saw this signature, verify it's the same (or else handle that)
     if (importedFunctionTypes.find(importName) != importedFunctionTypes.end()) {
-      FunctionType& previous = importedFunctionTypes[importName];
+      FunctionType* previous = importedFunctionTypes[importName].get();
 #if 0
       std::cout << "compare " << importName.str << "\nfirst: ";
       type.print(std::cout, 0);
       std::cout << "\nsecond: ";
       previous.print(std::cout, 0) << ".\n";
 #endif
-      if (type != previous) {
+      if (*type != *previous) {
         // merge it in. we'll add on extra 0 parameters for ones not actually used, etc.
-        for (size_t i = 0; i < type.params.size(); i++) {
-          if (previous.params.size() > i) {
-            if (previous.params[i] == none) {
-              previous.params[i] = type.params[i]; // use a more concrete type
+        for (size_t i = 0; i < type->params.size(); i++) {
+          if (previous->params.size() > i) {
+            if (previous->params[i] == none) {
+              previous->params[i] = type->params[i]; // use a more concrete type
             }
           } else {
-            previous.params.push_back(type.params[i]); // add a new param
+            previous->params.push_back(type->params[i]); // add a new param
           }
         }
-        if (previous.result == none) {
-          previous.result = type.result; // use a more concrete type
+        if (previous->result == none) {
+          previous->result = type->result; // use a more concrete type
         }
       }
     } else {
-      importedFunctionTypes[importName] = type;
+      importedFunctionTypes[importName].swap(type);
     }
     importedFunctionCalls[importName].push_back(call);
   }
@@ -262,7 +262,7 @@ private:
   FunctionType* getFunctionType(Ref parent, ExpressionList& operands) {
     // generate signature
     WasmType result = !!parent ? detectWasmType(parent, nullptr) : none;
-    return ensureFunctionType(getSig(result, operands), &wasm, allocator);
+    return ensureFunctionType(getSig(result, operands), &wasm);
   }
 
 public:
@@ -423,9 +423,9 @@ private:
       if (base == ABS) {
         assert(operands && operands->size() == 1);
         WasmType type = (*operands)[0]->type;
-        if (type == i32) return ensureFunctionType("ii", &wasm, allocator);
-        if (type == f32) return ensureFunctionType("ff", &wasm, allocator);
-        if (type == f64) return ensureFunctionType("dd", &wasm, allocator);
+        if (type == i32) return ensureFunctionType("ii", &wasm);
+        if (type == f32) return ensureFunctionType("ff", &wasm);
+        if (type == f64) return ensureFunctionType("dd", &wasm);
       }
     }
     return nullptr;
@@ -508,7 +508,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         }
       }
     }
-    auto import = allocator.alloc<Import>();
+    auto import = new Import();
     import->name = name;
     import->module = moduleName;
     import->base = imported[2]->getIString();
@@ -519,6 +519,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     if (type != WasmType::none) {
       // wasm has no imported constants, so allocate a global, and we need to write the value into that
       allocateGlobal(name, type, true, import->module, import->base);
+      delete import;
     } else {
       wasm.addImport(import);
     }
@@ -678,7 +679,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           getTempRet0 = value;
         }
         assert(wasm.checkFunction(value));
-        auto export_ = allocator.alloc<Export>();
+        auto export_ = new Export;
         export_->name = key;
         export_->value = value;
         wasm.addExport(export_);
@@ -690,7 +691,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   std::vector<IString> toErase;
 
-  for (auto* import : wasm.imports) {
+  for (auto& import : wasm.imports) {
     IString name = import->name;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       // special math builtins
@@ -699,7 +700,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         import->type = builtin;
         continue;
       }
-      import->type = ensureFunctionType(getSig(&importedFunctionTypes[name]), &wasm, allocator);
+      import->type = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm);
     } else if (import->module != ASM2WASM) { // special-case the special module
       // never actually used
       toErase.push_back(name);
@@ -714,11 +715,11 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   for (auto& pair : importedFunctionCalls) {
     IString name = pair.first;
     auto& list = pair.second;
-    auto type = importedFunctionTypes[name];
+    auto type = importedFunctionTypes[name].get();
     for (auto* call : list) {
-      for (size_t i = call->operands.size(); i < type.params.size(); i++) {
+      for (size_t i = call->operands.size(); i < type->params.size(); i++) {
         auto val = allocator.alloc<Const>();
-        val->type = val->value.type = type.params[i];
+        val->type = val->value.type = type->params[i];
         call->operands.push_back(val);
       }
     }
@@ -754,7 +755,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         { builder.makeGetLocal(0, i32) }
       )
     ));
-    auto export_ = allocator.alloc<Export>();
+    auto export_ = new Export;
     export_->name = export_->value = GROW_WASM_MEMORY;
     wasm.addExport(export_);
   }
@@ -869,7 +870,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     std::cout << '\n';
   }
 
-  auto function = allocator.alloc<Function>();
+  auto function = new Function;
   function->name = name;
   Ref params = ast[2];
   Ref body = ast[3];
@@ -1017,11 +1018,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         static bool addedImport = false;
         if (!addedImport) {
           addedImport = true;
-          auto import = allocator.alloc<Import>(); // f64-rem = asm2wasm.f64-rem;
+          auto import = new Import; // f64-rem = asm2wasm.f64-rem;
           import->name = F64_REM;
           import->module = ASM2WASM;
           import->base = F64_REM;
-          import->type = ensureFunctionType("ddd", &wasm, allocator);
+          import->type = ensureFunctionType("ddd", &wasm);
           wasm.addImport(import);
         }
         return call;
@@ -1055,11 +1056,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         static bool addedImport = false;
         if (!addedImport) {
           addedImport = true;
-          auto import = allocator.alloc<Import>(); // debugger = asm2wasm.debugger;
+          auto import = new Import; // debugger = asm2wasm.debugger;
           import->name = DEBUGGER;
           import->module = ASM2WASM;
           import->base = DEBUGGER;
-          import->type = ensureFunctionType("v", &wasm, allocator);
+          import->type = ensureFunctionType("v", &wasm);
           wasm.addImport(import);
         }
         return call;
@@ -1168,11 +1169,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             static bool addedImport = false;
             if (!addedImport) {
               addedImport = true;
-              auto import = allocator.alloc<Import>(); // f64-to-int = asm2wasm.f64-to-int;
+              auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
               import->name = F64_TO_INT;
               import->module = ASM2WASM;
               import->base = F64_TO_INT;
-              import->type = ensureFunctionType("id", &wasm, allocator);
+              import->type = ensureFunctionType("id", &wasm);
               wasm.addImport(import);
             }
             return ret;
@@ -1303,20 +1304,25 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             abort();
           }
         }
-        Call* ret;
+        Expression* ret;
+        ExpressionList* operands;
         if (wasm.checkImport(name)) {
           Ref parent = astStackHelper.getParent();
           WasmType type = !!parent ? detectWasmType(parent, &asmData) : none;
           auto specific = allocator.alloc<CallImport>();
           noteImportedFunctionCall(ast, type, &asmData, specific);
+          specific->target = name;
+          operands = &specific->operands;
           ret = specific;
         } else {
-          ret = allocator.alloc<Call>();
+          auto specific = allocator.alloc<Call>();
+          specific->target = name;
+          operands = &specific->operands;
+          ret = specific;
         }
-        ret->target = name;
         Ref args = ast[2];
         for (unsigned i = 0; i < args->size(); i++) {
-          ret->operands.push_back(process(args[i]));
+          operands->push_back(process(args[i]));
         }
         return ret;
       }
@@ -1573,6 +1579,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 auto conv = allocator.alloc<Unary>();
                 conv->op = ReinterpretFloat;
                 conv->value = process(writtenValue);
+                if (conv->value->type == f64) {
+                  // this has an implicit f64->f32 in the write to memory
+                  conv->value = builder.makeUnary(DemoteFloat64, conv->value, f32);
+                }
                 conv->type = WasmType::i32;
                 return conv;
               }

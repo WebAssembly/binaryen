@@ -57,11 +57,11 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.const	$push38=, 0
-	i64.load32_u	$push11=, s+8($pop38):p2align=3
+	i64.load32_u	$push11=, s+8($pop38)
 	i32.const	$push37=, 0
-	i64.load16_u	$push8=, s+12($pop37):p2align=2
+	i64.load16_u	$push8=, s+12($pop37)
 	i32.const	$push36=, 0
-	i64.load8_u	$push6=, s+14($pop36):p2align=1
+	i64.load8_u	$push6=, s+14($pop36)
 	i64.const	$push35=, 16
 	i64.shl 	$push7=, $pop6, $pop35
 	i64.or  	$push9=, $pop8, $pop7

@@ -66,7 +66,7 @@ main:                                   # @main
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push11=, 0
-	i32.load	$0=, a($pop11):p2align=4
+	i32.load	$0=, a($pop11)
 	block
 	i32.const	$push10=, .L.str.4
 	i32.call	$push9=, strlen@FUNCTION, $0
@@ -84,7 +84,7 @@ main:                                   # @main
 	br_if   	0, $pop2        # 0: down to label4
 # BB#2:                                 # %if.end.i.1
 	i32.const	$push16=, 0
-	i32.load	$0=, a+8($pop16):p2align=3
+	i32.load	$0=, a+8($pop16)
 	i32.add 	$push3=, $2, $1
 	i32.const	$push4=, .L.str.4
 	i32.add 	$push5=, $pop3, $pop4

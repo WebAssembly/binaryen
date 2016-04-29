@@ -11,7 +11,7 @@ sign_bit_p:                             # @sign_bit_p
 # BB#0:                                 # %entry
 	block
 	block
-	i32.load16_u	$push0=, 0($0):p2align=2
+	i32.load16_u	$push0=, 0($0)
 	i32.const	$push1=, 511
 	i32.and 	$push20=, $pop0, $pop1
 	tee_local	$push19=, $0=, $pop20

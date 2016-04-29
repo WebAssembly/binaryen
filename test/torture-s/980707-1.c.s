@@ -97,10 +97,10 @@ main:                                   # @main
 	copy_local	$0=, $3
 	i32.const	$push20=, 0
 	i32.load8_u	$push0=, .L.str+4($pop20)
-	i32.store8	$discard=, 4($3):p2align=2, $pop0
+	i32.store8	$discard=, 4($3), $pop0
 	i32.const	$push19=, 0
 	i32.load	$push1=, .L.str($pop19):p2align=0
-	i32.store	$discard=, 0($3):p2align=4, $pop1
+	i32.store	$discard=, 0($3), $pop1
 	i32.const	$1=, 0
 .LBB1_1:                                # %while.cond1.i
                                         # =>This Loop Header: Depth=1
@@ -170,7 +170,7 @@ main:                                   # @main
 	i32.shl 	$push6=, $1, $pop5
 	i32.const	$push7=, 0
 	i32.store	$push8=, buildargv.arglist($pop6), $pop7
-	i32.load	$push34=, buildargv.arglist($pop8):p2align=4
+	i32.load	$push34=, buildargv.arglist($pop8)
 	tee_local	$push33=, $0=, $pop34
 	i32.load8_u	$push9=, 0($pop33)
 	i32.const	$push10=, 97
@@ -192,7 +192,7 @@ main:                                   # @main
 	br_if   	1, $pop17       # 1: down to label12
 # BB#14:                                # %if.end104
 	i32.const	$push37=, 0
-	i32.load	$push18=, buildargv.arglist+8($pop37):p2align=3
+	i32.load	$push18=, buildargv.arglist+8($pop37)
 	br_if   	1, $pop18       # 1: down to label12
 # BB#15:                                # %if.end109
 	i32.const	$push38=, 0

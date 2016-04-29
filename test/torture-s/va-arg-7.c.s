@@ -71,9 +71,9 @@ main:                                   # @main
 	i32.const	$push6=, __stack_pointer
 	i32.store	$discard=, 0($pop6), $2
 	i32.const	$push0=, 10
-	i32.store	$discard=, 8($2):p2align=3, $pop0
+	i32.store	$discard=, 8($2), $pop0
 	i64.const	$push1=, 38654705672
-	i64.store	$discard=, 0($2):p2align=4, $pop1
+	i64.store	$discard=, 0($2), $pop1
 	call    	debug@FUNCTION, $0, $0, $0, $0, $0, $0, $0, $1, $1, $1, $1, $1, $1, $1, $1, $1, $2
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2

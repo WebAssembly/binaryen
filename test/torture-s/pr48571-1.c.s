@@ -8,7 +8,7 @@ bar:                                    # @bar
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
-	i32.load	$1=, c($pop1):p2align=4
+	i32.load	$1=, c($pop1)
 	i32.const	$0=, 4
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1

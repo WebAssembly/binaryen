@@ -27,8 +27,8 @@
 #include <limits>
 
 #include "wasm.h"
+#include "asmjs/shared-constants.h"
 #include "mixed_arena.h"
-#include "shared-constants.h"
 #include "parsing.h"
 #include "asm_v_wasm.h"
 #include "ast_utils.h"
@@ -52,7 +52,7 @@ int unhex(char c) {
 //
 
 class Element {
-  typedef std::vector<Element*> List;
+  typedef ArenaVector<Element*> List;
 
   bool isList_;
   List list_;
@@ -60,7 +60,7 @@ class Element {
   bool dollared_;
 
 public:
-  Element() : isList_(true) {}
+  Element(MixedArena& allocator) : isList_(true), list_(allocator) {}
 
   bool isList() { return isList_; }
   bool isStr() { return !isList_; }
@@ -316,7 +316,7 @@ private:
   }
 
   // function parsing state
-  Function *currFunction = nullptr;
+  std::unique_ptr<Function> currFunction;
   std::map<Name, WasmType> currLocalTypes;
   size_t localIndex; // params and vars
   size_t otherIndex;
@@ -362,12 +362,12 @@ private:
     Name type;
     Block* autoBlock = nullptr; // we may need to add a block for the very top level
     auto makeFunction = [&]() {
-      currFunction = Builder(wasm).makeFunction(
+      currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
         name,
         std::move(params),
         result,
         std::move(vars)
-      );
+      ));
     };
     for (;i < s.size(); i++) {
       Element& curr = *s[i];
@@ -438,10 +438,9 @@ private:
     assert(currFunction->result == result);
     currFunction->body = body;
     currFunction->type = type;
-    wasm.addFunction(currFunction);
+    wasm.addFunction(currFunction.release());
     currLocalTypes.clear();
     labelStack.clear();
-    currFunction = nullptr;
   }
 
   WasmType stringToWasmType(IString str, bool allowError=false, bool prefix=false) {
@@ -1067,8 +1066,9 @@ private:
       Element& curr = *s[i];
       assert(curr[0]->str() == SEGMENT);
       const char *input = curr[2]->c_str();
-      char *data = (char*)malloc(strlen(input)); // over-allocated, since escaping collapses, but whatever
-      char *write = data;
+      std::vector<char> data;
+      data.resize(strlen(input));
+      char *write = (char*)&data[0];
       while (1) {
         if (input[0] == 0) break;
         if (input[0] == '\\') {
@@ -1101,7 +1101,7 @@ private:
         *write++ = input[0];
         input++;
       }
-      wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data, write - data);
+      wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), (const char*)&data[0], write - (const char*)&data[0]);
       i++;
     }
   }
@@ -1113,14 +1113,14 @@ private:
       wasm.memory.exportName = s[1]->str();
       return;
     }
-    auto ex = allocator.alloc<Export>();
+    std::unique_ptr<Export> ex = make_unique<Export>();
     ex->name = s[1]->str();
     ex->value = s[2]->str();
-    wasm.addExport(ex);
+    wasm.addExport(ex.release());
   }
 
   void parseImport(Element& s) {
-    auto im = allocator.alloc<Import>();
+    std::unique_ptr<Import> im = make_unique<Import>();
     size_t i = 1;
     if (s.size() > 3 && s[3]->isStr()) {
       im->name = s[i++]->str();
@@ -1131,31 +1131,31 @@ private:
     im->module = s[i++]->str();
     if (!s[i]->isStr()) onError();
     im->base = s[i++]->str();
-    FunctionType type;
+    std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
     if (s.size() > i) {
       Element& params = *s[i];
       IString id = params[0]->str();
       if (id == PARAM) {
         for (size_t i = 1; i < params.size(); i++) {
-          type.params.push_back(stringToWasmType(params[i]->str()));
+          type->params.push_back(stringToWasmType(params[i]->str()));
         }
       } else if (id == RESULT) {
-        type.result = stringToWasmType(params[1]->str());
+        type->result = stringToWasmType(params[1]->str());
       } else if (id == TYPE) {
         IString name = params[1]->str();
         if (!wasm.checkFunctionType(name)) onError();
-        type = *wasm.getFunctionType(name);
+        *type = *wasm.getFunctionType(name);
       } else {
         onError();
       }
       if (s.size() > i+1) {
         Element& result = *s[i+1];
         assert(result[0]->str() == RESULT);
-        type.result = stringToWasmType(result[1]->str());
+        type->result = stringToWasmType(result[1]->str());
       }
     }
-    im->type = ensureFunctionType(getSig(&type), &wasm, allocator);
-    wasm.addImport(im);
+    im->type = ensureFunctionType(getSig(type.get()), &wasm);
+    wasm.addImport(im.release());
   }
 
   void parseTable(Element& s) {
@@ -1165,7 +1165,7 @@ private:
   }
 
   void parseType(Element& s) {
-    auto type = allocator.alloc<FunctionType>();
+    std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
     size_t i = 1;
     if (s[i]->isStr()) {
       type->name = s[i]->str();
@@ -1183,7 +1183,7 @@ private:
         type->result = stringToWasmType(curr[1]->str());
       }
     }
-    wasm.addFunctionType(type);
+    wasm.addFunctionType(type.release());
   }
 };
 

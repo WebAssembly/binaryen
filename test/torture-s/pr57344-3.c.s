@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
 	i64.load	$push1=, .Lmain.t($pop20):p2align=0
-	i64.store	$discard=, s+16($pop21):p2align=4, $pop1
+	i64.store	$discard=, s+16($pop21), $pop1
 	block
 	i32.const	$push19=, 0
 	i32.gt_s	$push2=, $0, $pop19
@@ -62,14 +62,14 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.const	$push46=, 0
-	i64.load	$push45=, s+16($pop46):p2align=4
+	i64.load	$push45=, s+16($pop46)
 	tee_local	$push44=, $1=, $pop45
 	i64.const	$push43=, 7
 	i64.shl 	$push13=, $pop44, $pop43
 	i64.const	$push42=, 50
 	i64.shr_u	$push15=, $pop13, $pop42
 	i32.const	$push41=, 0
-	i64.load8_u	$push7=, s+24($pop41):p2align=3
+	i64.load8_u	$push7=, s+24($pop41)
 	i64.const	$push40=, 7
 	i64.shl 	$push9=, $pop7, $pop40
 	i64.const	$push39=, 57

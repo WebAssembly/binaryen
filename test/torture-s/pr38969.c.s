@@ -30,7 +30,7 @@ bar:                                    # @bar
 	i32.store	$discard=, 0($pop8), $3
 	i32.load	$2=, 4($1)
 	i32.load	$push0=, 0($1)
-	i32.store	$1=, 16($3):p2align=3, $pop0
+	i32.store	$1=, 16($3), $pop0
 	i32.const	$push12=, 8
 	i32.add 	$push13=, $3, $pop12
 	i32.const	$push2=, 4
@@ -77,7 +77,7 @@ main:                                   # @main
 	i32.add 	$push19=, $0, $pop18
 	call    	bar@FUNCTION, $pop17, $pop19
 	block
-	f32.load	$push3=, 24($0):p2align=3
+	f32.load	$push3=, 24($0)
 	f32.const	$push4=, 0x1.2p3
 	f32.ne  	$push5=, $pop3, $pop4
 	br_if   	0, $pop5        # 0: down to label0

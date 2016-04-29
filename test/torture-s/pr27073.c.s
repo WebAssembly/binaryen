@@ -67,7 +67,7 @@ main:                                   # @main
 	i32.const	$push0=, 500
 	call    	foo@FUNCTION, $1, $0, $0, $0, $pop4, $pop3, $pop35, $pop2, $pop1, $pop0
 	block
-	i32.load	$push5=, 0($1):p2align=4
+	i32.load	$push5=, 0($1)
 	i32.const	$push34=, 100
 	i32.ne  	$push6=, $pop5, $pop34
 	br_if   	0, $pop6        # 0: down to label3
@@ -77,7 +77,7 @@ main:                                   # @main
 	i32.ne  	$push8=, $pop7, $pop36
 	br_if   	0, $pop8        # 0: down to label3
 # BB#2:                                 # %for.cond.1
-	i32.load	$push9=, 8($1):p2align=3
+	i32.load	$push9=, 8($1)
 	i32.const	$push10=, 300
 	i32.ne  	$push11=, $pop9, $pop10
 	br_if   	0, $pop11       # 0: down to label3
@@ -87,7 +87,7 @@ main:                                   # @main
 	i32.ne  	$push14=, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label3
 # BB#4:                                 # %for.cond.3
-	i32.load	$push15=, 16($1):p2align=4
+	i32.load	$push15=, 16($1)
 	i32.const	$push16=, 500
 	i32.ne  	$push17=, $pop15, $pop16
 	br_if   	0, $pop17       # 0: down to label3
@@ -97,7 +97,7 @@ main:                                   # @main
 	i32.ne  	$push20=, $pop18, $pop19
 	br_if   	0, $pop20       # 0: down to label3
 # BB#6:                                 # %for.cond.5
-	i32.load	$push21=, 24($1):p2align=3
+	i32.load	$push21=, 24($1)
 	i32.const	$push22=, 200
 	i32.ne  	$push23=, $pop21, $pop22
 	br_if   	0, $pop23       # 0: down to label3
@@ -107,7 +107,7 @@ main:                                   # @main
 	i32.ne  	$push26=, $pop24, $pop25
 	br_if   	0, $pop26       # 0: down to label3
 # BB#8:                                 # %for.cond.7
-	i32.load	$push27=, 32($1):p2align=4
+	i32.load	$push27=, 32($1)
 	i32.const	$push28=, 400
 	i32.ne  	$push29=, $pop27, $pop28
 	br_if   	0, $pop29       # 0: down to label3

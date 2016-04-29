@@ -108,7 +108,7 @@ ret7:                                   # @ret7
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, d($pop0):p2align=2
+	i32.load16_u	$push1=, d($pop0)
 	return  	$pop1
 	.endfunc
 .Lfunc_end6:
@@ -122,7 +122,7 @@ ret8:                                   # @ret8
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load8_u	$push1=, d+2($pop0):p2align=1
+	i32.load8_u	$push1=, d+2($pop0)
 	return  	$pop1
 	.endfunc
 .Lfunc_end7:
@@ -291,7 +291,7 @@ fn7_1:                                  # @fn7_1
 	i32.const	$push3=, 0
 	i32.load	$push1=, d($pop3)
 	i32.add 	$push2=, $pop1, $0
-	i32.store16	$discard=, d($pop0):p2align=2, $pop2
+	i32.store16	$discard=, d($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end15:
@@ -312,7 +312,7 @@ fn8_1:                                  # @fn8_1
 	i32.add 	$push4=, $pop1, $pop3
 	i32.const	$push6=, 16
 	i32.shr_u	$push5=, $pop4, $pop6
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop5
+	i32.store8	$discard=, d+2($pop0), $pop5
 	return
 	.endfunc
 .Lfunc_end16:
@@ -478,7 +478,7 @@ fn7_2:                                  # @fn7_2
 	i32.load	$push1=, d($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store16	$discard=, d($pop0):p2align=2, $pop3
+	i32.store16	$discard=, d($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end24:
@@ -498,7 +498,7 @@ fn8_2:                                  # @fn8_2
 	i32.add 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 16
 	i32.shr_u	$push5=, $pop3, $pop4
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop5
+	i32.store8	$discard=, d+2($pop0), $pop5
 	return
 	.endfunc
 .Lfunc_end25:
@@ -663,7 +663,7 @@ fn7_3:                                  # @fn7_3
 	i32.load	$push1=, d($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store16	$discard=, d($pop0):p2align=2, $pop3
+	i32.store16	$discard=, d($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end33:
@@ -683,7 +683,7 @@ fn8_3:                                  # @fn8_3
 	i32.add 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 16
 	i32.shr_u	$push5=, $pop3, $pop4
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop5
+	i32.store8	$discard=, d+2($pop0), $pop5
 	return
 	.endfunc
 .Lfunc_end34:
@@ -870,7 +870,7 @@ fn7_4:                                  # @fn7_4
 	i32.const	$push3=, 0
 	i32.load	$push1=, d($pop3)
 	i32.sub 	$push2=, $pop1, $0
-	i32.store16	$discard=, d($pop0):p2align=2, $pop2
+	i32.store16	$discard=, d($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end42:
@@ -891,7 +891,7 @@ fn8_4:                                  # @fn8_4
 	i32.sub 	$push4=, $pop1, $pop3
 	i32.const	$push6=, 16
 	i32.shr_u	$push5=, $pop4, $pop6
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop5
+	i32.store8	$discard=, d+2($pop0), $pop5
 	return
 	.endfunc
 .Lfunc_end43:
@@ -1059,7 +1059,7 @@ fn7_5:                                  # @fn7_5
 	i32.load	$push1=, d($pop4)
 	i32.const	$push2=, 65535
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store16	$discard=, d($pop0):p2align=2, $pop3
+	i32.store16	$discard=, d($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end51:
@@ -1079,7 +1079,7 @@ fn8_5:                                  # @fn8_5
 	i32.add 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 16
 	i32.shr_u	$push5=, $pop3, $pop4
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop5
+	i32.store8	$discard=, d+2($pop0), $pop5
 	return
 	.endfunc
 .Lfunc_end52:
@@ -1244,7 +1244,7 @@ fn7_6:                                  # @fn7_6
 	i32.load	$push1=, d($pop4)
 	i32.const	$push2=, 65535
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store16	$discard=, d($pop0):p2align=2, $pop3
+	i32.store16	$discard=, d($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end60:
@@ -1264,7 +1264,7 @@ fn8_6:                                  # @fn8_6
 	i32.add 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 16
 	i32.shr_u	$push5=, $pop3, $pop4
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop5
+	i32.store8	$discard=, d+2($pop0), $pop5
 	return
 	.endfunc
 .Lfunc_end61:
@@ -2022,9 +2022,9 @@ fn7_a:                                  # @fn7_a
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
-	i32.load16_u	$push1=, d($pop3):p2align=2
+	i32.load16_u	$push1=, d($pop3)
 	i32.div_u	$push2=, $pop1, $0
-	i32.store16	$discard=, d($pop0):p2align=2, $pop2
+	i32.store16	$discard=, d($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end96:
@@ -2039,9 +2039,9 @@ fn8_a:                                  # @fn8_a
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
-	i32.load8_u	$push1=, d+2($pop3):p2align=1
+	i32.load8_u	$push1=, d+2($pop3)
 	i32.div_u	$push2=, $pop1, $0
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop2
+	i32.store8	$discard=, d+2($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end97:
@@ -2229,9 +2229,9 @@ fn7_b:                                  # @fn7_b
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
-	i32.load16_u	$push1=, d($pop3):p2align=2
+	i32.load16_u	$push1=, d($pop3)
 	i32.rem_u	$push2=, $pop1, $0
-	i32.store16	$discard=, d($pop0):p2align=2, $pop2
+	i32.store16	$discard=, d($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end105:
@@ -2246,9 +2246,9 @@ fn8_b:                                  # @fn8_b
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
-	i32.load8_u	$push1=, d+2($pop3):p2align=1
+	i32.load8_u	$push1=, d+2($pop3)
 	i32.rem_u	$push2=, $pop1, $0
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop2
+	i32.store8	$discard=, d+2($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end106:
@@ -2412,7 +2412,7 @@ fn7_c:                                  # @fn7_c
 	i32.load	$push1=, d($pop4)
 	i32.const	$push2=, 3
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store16	$discard=, d($pop0):p2align=2, $pop3
+	i32.store16	$discard=, d($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end114:
@@ -2432,7 +2432,7 @@ fn8_c:                                  # @fn8_c
 	i32.add 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 16
 	i32.shr_u	$push5=, $pop3, $pop4
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop5
+	i32.store8	$discard=, d+2($pop0), $pop5
 	return
 	.endfunc
 .Lfunc_end115:
@@ -2597,7 +2597,7 @@ fn7_d:                                  # @fn7_d
 	i32.load	$push1=, d($pop4)
 	i32.const	$push2=, 65529
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store16	$discard=, d($pop0):p2align=2, $pop3
+	i32.store16	$discard=, d($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end123:
@@ -2617,7 +2617,7 @@ fn8_d:                                  # @fn8_d
 	i32.add 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 16
 	i32.shr_u	$push5=, $pop3, $pop4
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop5
+	i32.store8	$discard=, d+2($pop0), $pop5
 	return
 	.endfunc
 .Lfunc_end124:
@@ -3277,10 +3277,10 @@ fn7_h:                                  # @fn7_h
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
-	i32.load16_u	$push1=, d($pop4):p2align=2
+	i32.load16_u	$push1=, d($pop4)
 	i32.const	$push2=, 17
 	i32.div_u	$push3=, $pop1, $pop2
-	i32.store16	$discard=, d($pop0):p2align=2, $pop3
+	i32.store16	$discard=, d($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end159:
@@ -3295,10 +3295,10 @@ fn8_h:                                  # @fn8_h
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
-	i32.load8_u	$push1=, d+2($pop4):p2align=1
+	i32.load8_u	$push1=, d+2($pop4)
 	i32.const	$push2=, 17
 	i32.div_u	$push3=, $pop1, $pop2
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop3
+	i32.store8	$discard=, d+2($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end160:
@@ -3493,10 +3493,10 @@ fn7_i:                                  # @fn7_i
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
-	i32.load16_u	$push1=, d($pop4):p2align=2
+	i32.load16_u	$push1=, d($pop4)
 	i32.const	$push2=, 19
 	i32.rem_u	$push3=, $pop1, $pop2
-	i32.store16	$discard=, d($pop0):p2align=2, $pop3
+	i32.store16	$discard=, d($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end168:
@@ -3511,10 +3511,10 @@ fn8_i:                                  # @fn8_i
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
-	i32.load8_u	$push1=, d+2($pop4):p2align=1
+	i32.load8_u	$push1=, d+2($pop4)
 	i32.const	$push2=, 19
 	i32.rem_u	$push3=, $pop1, $pop2
-	i32.store8	$discard=, d+2($pop0):p2align=1, $pop3
+	i32.store8	$discard=, d+2($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end169:

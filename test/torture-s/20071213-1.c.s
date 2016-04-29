@@ -219,14 +219,14 @@ main:                                   # @main
 	i32.const	$push12=, __stack_pointer
 	i32.store	$discard=, 0($pop12), $0
 	i64.const	$push0=, 17179869187
-	i64.store	$discard=, 16($0):p2align=4, $pop0
+	i64.store	$discard=, 16($0), $pop0
 	i32.const	$push2=, 1
 	i64.const	$push1=, 2
 	i32.const	$push16=, 16
 	i32.add 	$push17=, $0, $pop16
 	call    	f1@FUNCTION, $pop2, $pop1, $pop17
 	i64.const	$push3=, 42949672969
-	i64.store	$discard=, 0($0):p2align=4, $pop3
+	i64.store	$discard=, 0($0), $pop3
 	i32.const	$push7=, 5
 	i32.const	$push6=, 6
 	i32.const	$push5=, 7

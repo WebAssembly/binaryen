@@ -184,7 +184,7 @@ main:                                   # @main
 	i32.const	$push31=, f
 	i32.store	$discard=, e($pop65), $pop31
 	i32.const	$push64=, 0
-	i32.store	$discard=, f($pop64):p2align=4, $4
+	i32.store	$discard=, f($pop64), $4
 	i32.const	$4=, 4
 .LBB2_17:                               # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
@@ -207,7 +207,7 @@ main:                                   # @main
 	br_if   	1, $pop77       # 1: down to label2
 # BB#19:                                # %setup1.exit
 	i32.const	$push69=, 0
-	i32.load	$push35=, a+16($pop69):p2align=4
+	i32.load	$push35=, a+16($pop69)
 	br_if   	1, $pop35       # 1: down to label2
 .LBB2_20:                               # %if.then
 	end_block                       # label3:

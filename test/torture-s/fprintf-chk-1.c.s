@@ -178,7 +178,7 @@ main:                                   # @main
 	i32.const	$push122=, 0
 	i32.load	$0=, stdout($pop122)
 	i32.const	$push32=, .L.str
-	i32.store	$1=, 208($3):p2align=4, $pop32
+	i32.store	$1=, 208($3), $pop32
 	i32.const	$push121=, .L.str.4
 	i32.const	$push185=, 208
 	i32.add 	$push186=, $3, $pop185
@@ -193,7 +193,7 @@ main:                                   # @main
 	i32.const	$push125=, 0
 	i32.store	$push34=, should_optimize($pop126), $pop125
 	i32.load	$0=, stdout($pop34)
-	i32.store	$discard=, 192($3):p2align=4, $1
+	i32.store	$discard=, 192($3), $1
 	i32.const	$push124=, .L.str.4
 	i32.const	$push187=, 192
 	i32.add 	$push188=, $3, $pop187
@@ -214,7 +214,7 @@ main:                                   # @main
 	i32.const	$push130=, 0
 	i32.load	$0=, stdout($pop130)
 	i32.const	$push40=, .L.str.1
-	i32.store	$1=, 176($3):p2align=4, $pop40
+	i32.store	$1=, 176($3), $pop40
 	i32.const	$push129=, .L.str.4
 	i32.const	$push189=, 176
 	i32.add 	$push190=, $3, $pop189
@@ -230,7 +230,7 @@ main:                                   # @main
 	i32.store	$push134=, should_optimize($pop42), $pop135
 	tee_local	$push133=, $2=, $pop134
 	i32.load	$0=, stdout($pop133)
-	i32.store	$discard=, 160($3):p2align=4, $1
+	i32.store	$discard=, 160($3), $1
 	i32.const	$push132=, .L.str.4
 	i32.const	$push191=, 160
 	i32.add 	$push192=, $3, $pop191
@@ -250,7 +250,7 @@ main:                                   # @main
 	i32.const	$push138=, 0
 	i32.load	$0=, stdout($pop138)
 	i32.const	$push48=, .L.str.2
-	i32.store	$2=, 144($3):p2align=4, $pop48
+	i32.store	$2=, 144($3), $pop48
 	i32.const	$push137=, .L.str.4
 	i32.const	$push193=, 144
 	i32.add 	$push194=, $3, $pop193
@@ -265,7 +265,7 @@ main:                                   # @main
 	i32.const	$push141=, 0
 	i32.store	$push50=, should_optimize($pop142), $pop141
 	i32.load	$0=, stdout($pop50)
-	i32.store	$discard=, 128($3):p2align=4, $2
+	i32.store	$discard=, 128($3), $2
 	i32.const	$push140=, .L.str.4
 	i32.const	$push195=, 128
 	i32.add 	$push196=, $3, $pop195
@@ -285,7 +285,7 @@ main:                                   # @main
 	i32.const	$push146=, 0
 	i32.load	$0=, stdout($pop146)
 	i32.const	$push55=, .L.str.3
-	i32.store	$1=, 112($3):p2align=4, $pop55
+	i32.store	$1=, 112($3), $pop55
 	i32.const	$push145=, .L.str.4
 	i32.const	$push197=, 112
 	i32.add 	$push198=, $3, $pop197
@@ -301,7 +301,7 @@ main:                                   # @main
 	i32.store	$push150=, should_optimize($pop57), $pop151
 	tee_local	$push149=, $2=, $pop150
 	i32.load	$0=, stdout($pop149)
-	i32.store	$discard=, 96($3):p2align=4, $1
+	i32.store	$discard=, 96($3), $1
 	i32.const	$push148=, .L.str.4
 	i32.const	$push199=, 96
 	i32.add 	$push200=, $3, $pop199
@@ -319,7 +319,7 @@ main:                                   # @main
 	i32.const	$push154=, 0
 	i32.load	$0=, stdout($pop154)
 	i32.const	$push61=, 120
-	i32.store	$2=, 80($3):p2align=4, $pop61
+	i32.store	$2=, 80($3), $pop61
 	i32.const	$push153=, .L.str.5
 	i32.const	$push201=, 80
 	i32.add 	$push202=, $3, $pop201
@@ -334,7 +334,7 @@ main:                                   # @main
 	i32.const	$push157=, 0
 	i32.store	$push63=, should_optimize($pop158), $pop157
 	i32.load	$0=, stdout($pop63)
-	i32.store	$discard=, 64($3):p2align=4, $2
+	i32.store	$discard=, 64($3), $2
 	i32.const	$push156=, .L.str.5
 	i32.const	$push203=, 64
 	i32.add 	$push204=, $3, $pop203
@@ -354,7 +354,7 @@ main:                                   # @main
 	tee_local	$push161=, $0=, $pop162
 	i32.load	$1=, stdout($pop161)
 	i32.const	$push67=, .L.str.1
-	i32.store	$2=, 48($3):p2align=4, $pop67
+	i32.store	$2=, 48($3), $pop67
 	i32.const	$push160=, .L.str.6
 	i32.const	$push205=, 48
 	i32.add 	$push206=, $3, $pop205
@@ -369,7 +369,7 @@ main:                                   # @main
 	i32.store	$push167=, should_optimize($pop69), $pop168
 	tee_local	$push166=, $1=, $pop167
 	i32.load	$0=, stdout($pop166)
-	i32.store	$discard=, 32($3):p2align=4, $2
+	i32.store	$discard=, 32($3), $2
 	i32.const	$push165=, .L.str.6
 	i32.const	$push207=, 32
 	i32.add 	$push208=, $3, $pop207
@@ -388,7 +388,7 @@ main:                                   # @main
 	i32.store	$push171=, should_optimize($pop74), $pop172
 	tee_local	$push170=, $0=, $pop171
 	i32.load	$1=, stdout($pop170)
-	i32.store	$discard=, 16($3):p2align=4, $0
+	i32.store	$discard=, 16($3), $0
 	i32.const	$push169=, .L.str.7
 	i32.const	$push209=, 16
 	i32.add 	$push210=, $3, $pop209
@@ -401,7 +401,7 @@ main:                                   # @main
 	i32.store	$push175=, should_optimize($0), $0
 	tee_local	$push174=, $0=, $pop175
 	i32.load	$1=, stdout($pop174)
-	i32.store	$discard=, 0($3):p2align=4, $0
+	i32.store	$discard=, 0($3), $0
 	i32.const	$push173=, .L.str.7
 	i32.call	$push76=, __fprintf_chk@FUNCTION, $1, $0, $pop173, $3
 	i32.const	$push77=, 2

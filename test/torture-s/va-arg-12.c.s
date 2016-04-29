@@ -75,11 +75,11 @@ main:                                   # @main
 	i32.const	$push0=, 16
 	i32.add 	$push1=, $1, $pop0
 	i64.const	$push2=, 0
-	i64.store	$discard=, 0($pop1):p2align=4, $pop2
+	i64.store	$discard=, 0($pop1), $pop2
 	i64.const	$push3=, 4622382067542392832
 	i64.store	$discard=, 8($1), $pop3
 	i64.const	$push4=, 4621819117588971520
-	i64.store	$discard=, 0($1):p2align=4, $pop4
+	i64.store	$discard=, 0($1), $pop4
 	call    	f@FUNCTION, $0, $0, $0, $0, $0, $0, $0, $0, $0, $1
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5

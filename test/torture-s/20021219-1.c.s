@@ -30,14 +30,14 @@ main:                                   # @main
 	i32.add 	$push3=, $pop24, $pop2
 	i32.const	$push0=, 0
 	i32.load8_u	$push1=, .Lmain.str+10($pop0)
-	i32.store8	$discard=, 0($pop3):p2align=1, $pop1
+	i32.store8	$discard=, 0($pop3), $pop1
 	i32.const	$push25=, 4
 	i32.add 	$push26=, $2, $pop25
 	i32.const	$push5=, 8
 	i32.add 	$push6=, $pop26, $pop5
 	i32.const	$push13=, 0
 	i32.load16_u	$push4=, .Lmain.str+8($pop13):p2align=0
-	i32.store16	$discard=, 0($pop6):p2align=2, $pop4
+	i32.store16	$discard=, 0($pop6), $pop4
 	i32.const	$push12=, 0
 	i64.load	$push7=, .Lmain.str($pop12):p2align=0
 	i64.store	$discard=, 4($2):p2align=2, $pop7

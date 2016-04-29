@@ -8,7 +8,7 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load8_s	$push1=, i($pop0):p2align=2
+	i32.load8_s	$push1=, i($pop0)
 	return  	$pop1
 	.endfunc
 .Lfunc_end0:
@@ -31,7 +31,7 @@ main:                                   # @main
 	block
 	block
 	i32.const	$push25=, 0
-	i32.load8_u	$push0=, i($pop25):p2align=2
+	i32.load8_u	$push0=, i($pop25)
 	i32.const	$push59=, 0
 	i32.eq  	$push60=, $pop0, $pop59
 	br_if   	0, $pop60       # 0: down to label1
@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.add 	$push3=, $pop56, $pop2
 	i32.const	$push28=, 0
 	i32.load	$push1=, f+16($pop28)
-	i32.store	$discard=, 0($pop3):p2align=3, $pop1
+	i32.store	$discard=, 0($pop3), $pop1
 	i32.const	$push27=, 0
 	i64.load	$0=, f($pop27):p2align=2
 	i32.const	$push57=, 8
@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $pop46, $pop7
 	i32.const	$push29=, 0
-	i32.store	$discard=, 0($pop8):p2align=3, $pop29
+	i32.store	$discard=, 0($pop8), $pop29
 	i32.const	$push47=, 8
 	i32.add 	$push48=, $2, $pop47
 	i32.const	$push9=, 8
@@ -75,14 +75,14 @@ main:                                   # @main
 	i32.load	$push13=, 12($2)
 	i32.store	$discard=, h+4($pop36), $pop13
 	i32.const	$push35=, 0
-	i32.load	$push14=, 8($2):p2align=3
+	i32.load	$push14=, 8($2)
 	i32.store	$discard=, h($pop35), $pop14
 	i32.const	$push34=, 0
 	i32.const	$push49=, 8
 	i32.add 	$push50=, $2, $pop49
 	i32.const	$push15=, 16
 	i32.add 	$push16=, $pop50, $pop15
-	i32.load	$push17=, 0($pop16):p2align=3
+	i32.load	$push17=, 0($pop16)
 	i32.store	$discard=, h+16($pop34), $pop17
 	i32.const	$push33=, 0
 	i32.const	$push51=, 8
@@ -96,7 +96,7 @@ main:                                   # @main
 	i32.add 	$push54=, $2, $pop53
 	i32.const	$push21=, 8
 	i32.add 	$push22=, $pop54, $pop21
-	i32.load	$push23=, 0($pop22):p2align=3
+	i32.load	$push23=, 0($pop22)
 	i32.store	$discard=, h+8($pop32), $pop23
 	i32.const	$push31=, 0
 	i32.load	$1=, h+4($pop31)

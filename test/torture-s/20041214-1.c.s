@@ -101,7 +101,7 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	i32.store	$0=, 4($2), $pop0
 	i32.const	$push1=, .L.str.1
-	i32.store	$1=, 0($2):p2align=4, $pop1
+	i32.store	$1=, 0($2), $pop1
 	i32.const	$push11=, 22
 	i32.add 	$push12=, $2, $pop11
 	i32.const	$push2=, .L.str

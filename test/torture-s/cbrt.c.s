@@ -97,7 +97,7 @@ cbrtl:                                  # @cbrtl
 	f64.mul 	$push39=, $1, $pop38
 	f64.store	$1=, 8($7), $pop39
 	i32.const	$push40=, 0
-	i32.store	$discard=, 8($7):p2align=3, $pop40
+	i32.store	$discard=, 8($7), $pop40
 	i64.reinterpret/f64	$push41=, $1
 	i64.const	$push42=, 32
 	i64.shr_u	$push43=, $pop41, $pop42

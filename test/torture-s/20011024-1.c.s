@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push6=, 0
 	i32.const	$push0=, 6513249
-	i32.store	$discard=, buf($pop6):p2align=4, $pop0
+	i32.store	$discard=, buf($pop6), $pop0
 	block
 	i32.const	$push1=, buf
 	i32.const	$push2=, .L.str
@@ -19,11 +19,11 @@ main:                                   # @main
 	i32.const	$push11=, 0
 	i32.const	$push10=, 0
 	i32.load8_u	$push4=, .L.str.1+8($pop10)
-	i32.store8	$discard=, buf+8($pop11):p2align=3, $pop4
+	i32.store8	$discard=, buf+8($pop11), $pop4
 	i32.const	$push9=, 0
 	i32.const	$push8=, 0
 	i64.load	$push5=, .L.str.1($pop8):p2align=0
-	i64.store	$discard=, buf($pop9):p2align=4, $pop5
+	i64.store	$discard=, buf($pop9), $pop5
 	i32.const	$push7=, 0
 	return  	$pop7
 .LBB0_2:                                # %if.then1.i

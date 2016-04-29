@@ -49,7 +49,7 @@ test:                                   # @test
 	i32.const	$push7=, 64
 	i32.call	$discard=, memcpy@FUNCTION, $pop3, $0, $pop7
 	block
-	i32.load	$push4=, 0($0):p2align=3
+	i32.load	$push4=, 0($0)
 	i32.const	$push5=, -1
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label0
@@ -101,7 +101,7 @@ main:                                   # @main
 	i32.const	$push6=, 64
 	i32.call	$discard=, memcpy@FUNCTION, $pop2, $0, $pop6
 	block
-	i32.load	$push3=, 0($0):p2align=3
+	i32.load	$push3=, 0($0)
 	i32.const	$push4=, -1
 	i32.ne  	$push5=, $pop3, $pop4
 	br_if   	0, $pop5        # 0: down to label1

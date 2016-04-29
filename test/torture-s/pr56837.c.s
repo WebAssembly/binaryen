@@ -38,7 +38,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label3:
-	i32.load	$push1=, 0($0):p2align=3
+	i32.load	$push1=, 0($0)
 	i32.const	$push9=, -1
 	i32.ne  	$push3=, $pop1, $pop9
 	br_if   	2, $pop3        # 2: down to label2

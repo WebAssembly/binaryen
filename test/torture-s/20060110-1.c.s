@@ -26,7 +26,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push4=, 0
-	i64.load32_s	$push0=, a($pop4):p2align=3
+	i64.load32_s	$push0=, a($pop4)
 	i32.const	$push3=, 0
 	i64.load	$push1=, b($pop3)
 	i64.ne  	$push2=, $pop0, $pop1

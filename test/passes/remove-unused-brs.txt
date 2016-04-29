@@ -2,45 +2,36 @@
   (memory 256 256)
   (func $b0-yes (param $i1 i32)
     (block $topmost
-      (nop)
     )
   )
   (func $b1 (param $i1 i32)
     (block $topmost
-      (br $topmost
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
   (func $b2 (param $i1 i32)
     (block $topmost
       (block $inner
-        (nop)
       )
     )
   )
   (func $b3-yes (param $i1 i32)
     (block $topmost
       (block $inner
-        (nop)
       )
     )
   )
   (func $b4 (param $i1 i32)
     (block $topmost
       (block $inner
-        (br $topmost
-          (i32.const 0)
-        )
+        (i32.const 0)
       )
     )
   )
   (func $b5 (param $i1 i32)
     (block $topmost
       (block $inner
-        (br $inner
-          (i32.const 0)
-        )
+        (i32.const 0)
       )
     )
   )
@@ -99,20 +90,16 @@
   )
   (func $b12-yes (result i32)
     (block $topmost
-      (if
-        (i32.const 1)
+      (select
         (block $block1
           (i32.const 12)
-          (br $topmost
-            (i32.const 1)
-          )
+          (i32.const 1)
         )
         (block $block3
           (i32.const 27)
-          (br $topmost
-            (i32.const 2)
-          )
+          (i32.const 2)
         )
+        (i32.const 1)
       )
     )
   )
@@ -139,14 +126,14 @@
   )
   (func $b14 (result i32)
     (block $topmost
-      (if
-        (i32.const 1)
+      (select
         (block $block1
           (i32.const 12)
         )
         (block $block3
           (i32.const 27)
         )
+        (i32.const 1)
       )
     )
   )
@@ -169,71 +156,127 @@
     (block $a
       (block $b
         (block $c
-          (nop)
         )
-        (nop)
       )
-      (nop)
     )
     (block $a
       (block $b
         (block $c
-          (nop)
         )
-        (nop)
       )
-      (nop)
     )
     (block $a
       (block $b
         (block $c
-          (nop)
         )
-        (nop)
       )
-      (nop)
     )
   )
   (func $b17
     (block $a
-      (if
-        (i32.const 0)
+      (select
         (block $block1
-          (nop)
         )
         (block $block3
-          (nop)
         )
+        (i32.const 0)
       )
     )
     (block $a
-      (if
-        (i32.const 0)
+      (select
         (i32.const 1)
         (block $block6
-          (nop)
         )
+        (i32.const 0)
       )
     )
     (block $a
-      (if
-        (i32.const 0)
+      (select
         (block $block8
-          (nop)
         )
         (i32.const 1)
+        (i32.const 0)
       )
     )
     (block $c
       (block $b
-        (if
-          (i32.const 0)
+        (select
           (block $block11
-            (nop)
           )
           (block $block13
-            (nop)
           )
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $ret-1
+    (nop)
+  )
+  (func $ret-2
+    (block $block0
+      (block $block1
+      )
+    )
+  )
+  (func $ret-3
+    (block $block0
+      (select
+        (nop)
+        (block $block3
+        )
+        (i32.const 0)
+      )
+    )
+  )
+  (func $ret-value (result i32)
+    (block $block0
+      (block $block1
+        (i32.const 1)
+      )
+    )
+  )
+  (func $no-select-but-the-last
+    (block $a
+      (if
+        (i32.const 0)
+        (i32.const 1)
+        (block $block2
+          (br $a
+            (i32.const 2)
+          )
+          (i32.const 3)
+        )
+      )
+      (if
+        (i32.const 0)
+        (block $block4
+          (br $a
+            (i32.const 2)
+          )
+          (i32.const 3)
+        )
+        (i32.const 1)
+      )
+      (if
+        (block $block6
+          (br $a
+            (i32.const 2)
+          )
+          (i32.const 3)
+        )
+        (i32.const 0)
+        (i32.const 1)
+      )
+      (select
+        (block $a
+          (i32.const 1)
+        )
+        (block $a
+          (i32.const 2)
+        )
+        (block $a
+          (i32.const 0)
         )
       )
     )

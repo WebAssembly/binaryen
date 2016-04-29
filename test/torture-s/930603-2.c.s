@@ -11,7 +11,7 @@ f:                                      # @f
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
 	i32.const	$push1=, 1
-	i32.store	$push2=, w($pop3):p2align=4, $pop1
+	i32.store	$push2=, w($pop3), $pop1
 	i32.store	$discard=, w+12($pop0), $pop2
 	return  	$0
 	.endfunc
@@ -27,13 +27,13 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push6=, 0
-	i32.load	$0=, w+8($pop6):p2align=3
+	i32.load	$0=, w+8($pop6)
 	i32.const	$push5=, 0
 	i32.load	$1=, w+4($pop5)
 	i32.const	$push4=, 0
 	i32.const	$push3=, 0
 	i32.const	$push0=, 1
-	i32.store	$push1=, w($pop3):p2align=4, $pop0
+	i32.store	$push1=, w($pop3), $pop0
 	i32.store	$discard=, w+12($pop4), $pop1
 	block
 	i32.or  	$push2=, $1, $0

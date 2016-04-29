@@ -18,14 +18,14 @@ main:                                   # @main
 	i32.const	$push2=, 16
 	i32.add 	$push3=, $2, $pop2
 	i32.const	$push15=, 0
-	i32.load	$push1=, .Lmain.args+16($pop15):p2align=4
-	i32.store	$discard=, 0($pop3):p2align=4, $pop1
+	i32.load	$push1=, .Lmain.args+16($pop15)
+	i32.store	$discard=, 0($pop3), $pop1
 	i32.const	$push14=, 0
 	i64.load	$push4=, .Lmain.args+8($pop14)
 	i64.store	$discard=, 8($2), $pop4
 	i32.const	$push13=, 0
-	i64.load	$push5=, .Lmain.args($pop13):p2align=4
-	i64.store	$discard=, 0($2):p2align=4, $pop5
+	i64.load	$push5=, .Lmain.args($pop13)
+	i64.store	$discard=, 0($2), $pop5
 	i32.const	$push12=, 5
 	i32.call	$discard=, x@FUNCTION, $pop12, $2
 	block

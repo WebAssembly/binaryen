@@ -89,7 +89,7 @@ main:                                   # @main
 	i64.const	$push0=, 528280977420
 	i64.store	$discard=, 8($0), $pop0
 	i64.const	$push1=, 47244640266
-	i64.store	$discard=, 0($0):p2align=4, $pop1
+	i64.store	$discard=, 0($0), $pop1
 	i32.const	$push2=, 3
 	i32.call	$discard=, f@FUNCTION, $pop2, $0
 	i32.const	$push3=, 0

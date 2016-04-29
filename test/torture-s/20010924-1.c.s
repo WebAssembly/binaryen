@@ -10,7 +10,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push37=, 0
-	i32.load8_u	$push0=, a1($pop37):p2align=2
+	i32.load8_u	$push0=, a1($pop37)
 	i32.const	$push1=, 52
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label0

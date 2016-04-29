@@ -186,7 +186,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
 
-  void printCallBody(Call* curr) {
+  template<typename CallBase>
+  void printCallBody(CallBase* curr) {
     o << curr->target;
     if (curr->operands.size() > 0) {
       incIndent();
@@ -484,7 +485,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     for (auto segment : curr->memory.segments) {
       o << maybeNewLine;
       o << (minify ? "" : "    ") << "(segment " << segment.offset << " \"";
-      for (size_t i = 0; i < segment.size; i++) {
+      for (size_t i = 0; i < segment.data.size(); i++) {
         unsigned char c = segment.data[i];
         switch (c) {
           case '\n': o << "\\n"; break;
@@ -521,17 +522,17 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     for (auto& child : curr->functionTypes) {
       doIndent(o, indent);
-      visitFunctionType(child, true);
+      visitFunctionType(child.get(), true);
       o << maybeNewLine;
     }
     for (auto& child : curr->imports) {
       doIndent(o, indent);
-      visitImport(child);
+      visitImport(child.get());
       o << maybeNewLine;
     }
     for (auto& child : curr->exports) {
       doIndent(o, indent);
-      visitExport(child);
+      visitExport(child.get());
       o << maybeNewLine;
     }
     if (curr->table.names.size() > 0) {
@@ -541,7 +542,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     for (auto& child : curr->functions) {
       doIndent(o, indent);
-      visitFunction(child);
+      visitFunction(child.get());
       o << maybeNewLine;
     }
     decIndent();

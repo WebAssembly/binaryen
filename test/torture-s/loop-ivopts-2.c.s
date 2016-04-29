@@ -93,34 +93,34 @@ main:                                   # @main
 # BB#4:                                 # %for.body17
 	end_loop                        # label6:
 	i64.const	$push5=, 30064771079
-	i64.store	$push6=, 1024($4):p2align=4, $pop5
+	i64.store	$push6=, 1024($4), $pop5
 	i64.store	$push7=, 1032($4), $pop6
-	i64.store	$push8=, 1040($4):p2align=4, $pop7
+	i64.store	$push8=, 1040($4), $pop7
 	i64.store	$push9=, 1048($4), $pop8
-	i64.store	$discard=, 1056($4):p2align=4, $pop9
+	i64.store	$discard=, 1056($4), $pop9
 	i32.const	$push10=, 7
-	i32.store	$push11=, 1064($4):p2align=3, $pop10
+	i32.store	$push11=, 1064($4), $pop10
 	i32.store	$push12=, 1068($4), $pop11
-	i32.store	$push13=, 1072($4):p2align=4, $pop12
+	i32.store	$push13=, 1072($4), $pop12
 	i32.store	$push14=, 1076($4), $pop13
-	i32.store	$push15=, 1080($4):p2align=3, $pop14
+	i32.store	$push15=, 1080($4), $pop14
 	i32.store	$push16=, 1084($4), $pop15
-	i32.store	$push17=, 1088($4):p2align=4, $pop16
+	i32.store	$push17=, 1088($4), $pop16
 	i32.store	$push18=, 1092($4), $pop17
-	i32.store	$push19=, 1096($4):p2align=3, $pop18
+	i32.store	$push19=, 1096($4), $pop18
 	i32.store	$push20=, 1100($4), $pop19
-	i32.store	$push21=, 1104($4):p2align=4, $pop20
+	i32.store	$push21=, 1104($4), $pop20
 	i32.store	$push22=, 1108($4), $pop21
-	i32.store	$push23=, 1112($4):p2align=3, $pop22
+	i32.store	$push23=, 1112($4), $pop22
 	i32.store	$0=, 1116($4), $pop23
 	i32.const	$push24=, 8
-	i32.store	$push25=, 1120($4):p2align=4, $pop24
+	i32.store	$push25=, 1120($4), $pop24
 	i32.store	$push26=, 1124($4), $pop25
-	i32.store	$push27=, 1128($4):p2align=3, $pop26
+	i32.store	$push27=, 1128($4), $pop26
 	i32.store	$push28=, 1132($4), $pop27
-	i32.store	$push29=, 1136($4):p2align=4, $pop28
+	i32.store	$push29=, 1136($4), $pop28
 	i32.store	$push30=, 1140($4), $pop29
-	i32.store	$push31=, 1144($4):p2align=3, $pop30
+	i32.store	$push31=, 1144($4), $pop30
 	i32.store	$1=, 1148($4), $pop31
 	i32.const	$3=, 0
 	copy_local	$2=, $4

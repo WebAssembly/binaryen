@@ -68,7 +68,7 @@ main:                                   # @main
 	i64.const	$push0=, 20014547621496
 	i64.store	$discard=, 8($1), $pop0
 	i32.const	$push1=, 10
-	i32.store	$discard=, 0($1):p2align=4, $pop1
+	i32.store	$discard=, 0($1), $pop1
 	call    	debug@FUNCTION, $0, $0, $0, $0, $0, $0, $0, $0, $0, $1
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2

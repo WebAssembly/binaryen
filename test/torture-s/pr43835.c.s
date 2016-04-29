@@ -46,7 +46,7 @@ mark_cell:                              # @mark_cell
 # BB#2:                                 # %land.lhs.true1
 	i32.const	$push3=, 2
 	i32.add 	$push4=, $1, $pop3
-	i32.load8_u	$push5=, 0($pop4):p2align=1
+	i32.load8_u	$push5=, 0($pop4)
 	i32.const	$push6=, 4
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push12=, 0
@@ -78,7 +78,7 @@ main:                                   # @main
 	i32.const	$push6=, __stack_pointer
 	i32.store	$discard=, 0($pop6), $0
 	i32.const	$push1=, 4
-	i32.store	$discard=, 8($0):p2align=3, $pop1
+	i32.store	$discard=, 8($0), $pop1
 	i64.const	$push0=, 180388626432
 	i64.store	$discard=, 0($0), $pop0
 	i32.const	$push10=, 12

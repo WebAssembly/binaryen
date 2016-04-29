@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.sub 	$1=, $5, $pop2
 	copy_local	$5=, $1
 	i32.const	$push9=, 1
-	i32.store	$2=, 0($1):p2align=4, $pop9
+	i32.store	$2=, 0($1), $pop9
 	i32.add 	$push3=, $1, $4
 	i32.const	$push8=, 2
 	i32.store	$discard=, 0($pop3), $pop8

@@ -78,10 +78,10 @@ main:                                   # @main
 	i32.const	$push2=, 16
 	i32.add 	$push3=, $3, $pop2
 	i32.const	$push4=, 0
-	i32.store	$discard=, 0($pop3):p2align=4, $pop4
+	i32.store	$discard=, 0($pop3), $pop4
 	i64.const	$push5=, 0
 	i64.store	$push6=, 8($3), $pop5
-	i64.store	$discard=, 0($3):p2align=4, $pop6
+	i64.store	$discard=, 0($3), $pop6
 	i32.const	$2=, 5
 .LBB1_1:                                # %for.cond1.i
                                         # =>This Inner Loop Header: Depth=1

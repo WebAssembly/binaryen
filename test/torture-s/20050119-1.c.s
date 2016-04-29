@@ -42,9 +42,9 @@ main:                                   # @main
 	i32.const	$push7=, __stack_pointer
 	i32.store	$discard=, 0($pop7), $1
 	i32.const	$push0=, 50462977
-	i32.store	$discard=, 8($1):p2align=3, $pop0
+	i32.store	$discard=, 8($1), $pop0
 	i32.const	$push1=, 3
-	i32.store8	$discard=, 12($1):p2align=2, $pop1
+	i32.store8	$discard=, 12($1), $pop1
 	i32.const	$push2=, 258
 	i32.store16	$discard=, 13($1):p2align=0, $pop2
 	i32.const	$push3=, 0

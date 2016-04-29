@@ -290,7 +290,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
       // nicely aligned
       if (!isWasmTypeFloat(load->type)) {
-        int32_t ret;
+        int64_t ret;
         if (load->bytes == 1) {
           if (load->signed_) {
             ret = EM_ASM_INT({ return Module['info'].parent['HEAP8'][$0] }, addr);
@@ -307,14 +307,14 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           if (load->signed_) {
             ret = EM_ASM_INT({ return Module['info'].parent['HEAP32'][$0 >> 2] }, addr);
           } else {
-            ret = EM_ASM_INT({ return Module['info'].parent['HEAPU32'][$0 >> 2] }, addr);
+            ret = uint32_t(EM_ASM_INT({ return Module['info'].parent['HEAPU32'][$0 >> 2] }, addr));
           }
         } else if (load->bytes == 8) {
           uint32_t low  = EM_ASM_INT({ return Module['info'].parent['HEAP32'][$0 >> 2] }, addr);
           uint32_t high = EM_ASM_INT({ return Module['info'].parent['HEAP32'][$0 >> 2] }, addr + 4);
-          return Literal(int64_t(low) | (int64_t(high) << 32));
+          ret = uint64_t(low) | (uint64_t(high) << 32);
         } else abort();
-        return load->type == i32 ? Literal(ret) : Literal(int64_t(ret));
+        return load->type == i32 ? Literal(int32_t(ret)) : Literal(ret);
       } else {
         if (load->bytes == 4) {
           return Literal((float)EM_ASM_DOUBLE({ return Module['info'].parent['HEAPF32'][$0 >> 2] }, addr));

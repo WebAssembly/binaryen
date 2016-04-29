@@ -10,7 +10,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, 0
-	i32.load16_u	$push15=, x($pop0):p2align=2
+	i32.load16_u	$push15=, x($pop0)
 	tee_local	$push14=, $0=, $pop15
 	i32.const	$push1=, 15
 	i32.and 	$push2=, $pop14, $pop1

@@ -35,7 +35,7 @@ matrix:
 before_install:
   - export CC="${CC}-${COMPILER_VERSION}"
   - export CXX="${CXX}-${COMPILER_VERSION}"
-  - export ASAN_OPTIONS="detect_leaks=0 symbolize=1"
+  - export ASAN_OPTIONS="symbolize=1"
 
 install:
   - pip install --user flake8

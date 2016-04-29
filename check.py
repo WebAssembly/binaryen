@@ -212,19 +212,19 @@ def binary_format_check(wast, verify_final_result=True):
   cmd = [os.path.join('bin', 'wasm-as'), wast, '-o', 'a.wasm']
   print '      ', ' '.join(cmd)
   if os.path.exists('a.wasm'): os.unlink('a.wasm')
-  subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  subprocess.check_call(cmd, stdout=subprocess.PIPE)
   assert os.path.exists('a.wasm')
 
   cmd = [os.path.join('bin', 'wasm-dis'), 'a.wasm', '-o', 'ab.wast']
   print '      ', ' '.join(cmd)
   if os.path.exists('ab.wast'): os.unlink('ab.wast')
-  subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  subprocess.check_call(cmd, stdout=subprocess.PIPE)
   assert os.path.exists('ab.wast')
 
   # make sure it is a valid wast
   cmd = [os.path.join('bin', 'binaryen-shell'), 'ab.wast']
   print '      ', ' '.join(cmd)
-  subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
   if verify_final_result:
     expected = open(wast + '.fromBinary').read()
@@ -550,7 +550,7 @@ if has_vanilla_emcc and has_vanilla_llvm:
       base = c.replace('.cpp', '').replace('.c', '')
       expected = open(os.path.join('test', 'wasm_backend', base + '.txt')).read()
       for opts in [[], ['-O1'], ['-O2']]:
-        only = [] if opts != ['-O1'] or 'real' in base else ['-s', 'ONLY_MY_CODE=1'] # only my code is a hack we used early in wasm backend dev, which somehow worked, but only with -O1
+        only = [] if opts != ['-O1'] or '_only' not in base else ['-s', 'ONLY_MY_CODE=1'] # only my code is a hack we used early in wasm backend dev, which somehow worked, but only with -O1
         command = [VANILLA_EMCC, '-o', 'a.wasm.js', os.path.join('test', 'wasm_backend', c)] + opts + only
         print '....' + ' '.join(command)
         if os.path.exists('a.wasm.js'): os.unlink('a.wasm.js')

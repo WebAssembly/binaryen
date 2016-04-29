@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.const	$push12=, __stack_pointer
 	i32.store	$discard=, 0($pop12), $2
 	i64.const	$push0=, 9218868437227405312
-	i64.store	$discard=, 0($2):p2align=4, $pop0
+	i64.store	$discard=, 0($2), $pop0
 	i64.const	$push1=, 4627167142146473984
 	i64.store	$discard=, 8($2), $pop1
 	i32.const	$push5=, 8

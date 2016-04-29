@@ -66,7 +66,7 @@ main:                                   # @main
 	i32.store	$discard=, markstack_ptr($pop31), $pop8
 	i32.const	$push30=, 0
 	i32.const	$push9=, 2
-	i32.store	$discard=, indices+32($pop30):p2align=4, $pop9
+	i32.store	$discard=, indices+32($pop30), $pop9
 	i32.const	$push29=, 0
 	i32.const	$push10=, 1
 	i32.store	$discard=, indices+28($pop29), $pop10
@@ -75,13 +75,13 @@ main:                                   # @main
 	i32.store	$discard=, stack_base($pop28), $pop11
 	i32.const	$push27=, 0
 	i64.const	$push0=, 0
-	i64.store	$discard=, list($pop27):p2align=4, $pop0
+	i64.store	$discard=, list($pop27), $pop0
 	i32.const	$push26=, 0
 	i64.const	$push2=, 1
 	i64.store	$discard=, list+8($pop26), $pop2
 	i32.const	$push25=, 0
 	i64.const	$push3=, 2
-	i64.store	$discard=, list+16($pop25):p2align=4, $pop3
+	i64.store	$discard=, list+16($pop25), $pop3
 	i32.const	$push24=, 0
 	i64.const	$push4=, 3
 	i64.store	$discard=, list+24($pop24), $pop4
@@ -90,17 +90,17 @@ main:                                   # @main
 	i64.store	$discard=, list+72($pop23), $pop7
 	i32.const	$push22=, 0
 	i64.const	$push12=, 7
-	i64.store	$discard=, list+64($pop22):p2align=4, $pop12
+	i64.store	$discard=, list+64($pop22), $pop12
 	i32.const	$push21=, 0
 	i64.const	$push13=, 6
 	i64.store	$discard=, list+56($pop21), $pop13
 	i32.const	$push20=, 0
 	i64.const	$push14=, 5
-	i64.store	$discard=, list+48($pop20):p2align=4, $pop14
+	i64.store	$discard=, list+48($pop20), $pop14
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i64.const	$push5=, 4
-	i64.store	$push6=, list+32($pop18):p2align=4, $pop5
+	i64.store	$push6=, list+32($pop18), $pop5
 	i64.store	$discard=, list+40($pop19), $pop6
 	block
 	i32.const	$push15=, expect

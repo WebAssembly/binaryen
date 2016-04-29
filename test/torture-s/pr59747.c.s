@@ -30,7 +30,7 @@ main:                                   # @main
 	i32.load16_u	$1=, e($pop15)
 	i32.const	$push14=, 0
 	i32.const	$push1=, 1
-	i32.store	$discard=, a($pop14):p2align=4, $pop1
+	i32.store	$discard=, a($pop14), $pop1
 	block
 	i32.const	$push20=, 0
 	i32.eq  	$push21=, $0, $pop20

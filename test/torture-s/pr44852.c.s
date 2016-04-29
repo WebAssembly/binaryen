@@ -68,14 +68,14 @@ main:                                   # @main
 	i32.add 	$push3=, $pop27, $pop2
 	i32.const	$push0=, 0
 	i32.load8_u	$push1=, .Lmain.s+6($pop0)
-	i32.store8	$discard=, 0($pop3):p2align=1, $pop1
+	i32.store8	$discard=, 0($pop3), $pop1
 	i32.const	$push28=, 8
 	i32.add 	$push29=, $0, $pop28
 	i32.const	$push5=, 4
 	i32.add 	$push6=, $pop29, $pop5
 	i32.const	$push18=, 0
 	i32.load16_u	$push4=, .Lmain.s+4($pop18):p2align=0
-	i32.store16	$discard=, 0($pop6):p2align=2, $pop4
+	i32.store16	$discard=, 0($pop6), $pop4
 	i32.const	$push17=, 0
 	i32.load	$push7=, .Lmain.s($pop17):p2align=0
 	i32.store	$discard=, 8($0), $pop7

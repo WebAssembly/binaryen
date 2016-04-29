@@ -149,11 +149,13 @@ namespace cashew {
 // IStringSet
 
 class IStringSet : public std::unordered_set<IString> {
+  std::vector<char> data;
 public:
   IStringSet() {}
   IStringSet(const char *init) { // comma-delimited list
     int size = strlen(init) + 1;
-    char *curr = new char[size]; // leaked!
+    data.resize(size);
+    char *curr = &data[0];
     strncpy(curr, init, size);
     while (1) {
       char *end = strchr(curr, ' ');

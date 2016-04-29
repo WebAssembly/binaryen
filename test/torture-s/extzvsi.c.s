@@ -9,7 +9,7 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, x($pop0):p2align=3
+	i32.load	$push1=, x($pop0)
 	i32.const	$push2=, 1
 	i32.shr_u	$push3=, $pop1, $pop2
 	i32.const	$push4=, 2047

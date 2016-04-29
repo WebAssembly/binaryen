@@ -48,14 +48,14 @@ main:                                   # @main
 	i32.add 	$push3=, $pop30, $pop2
 	i32.const	$push0=, 0
 	i32.load8_u	$push1=, .Lmain.x+10($pop0)
-	i32.store8	$discard=, 0($pop3):p2align=1, $pop1
+	i32.store8	$discard=, 0($pop3), $pop1
 	i32.const	$push31=, 4
 	i32.add 	$push32=, $2, $pop31
 	i32.const	$push5=, 8
 	i32.add 	$push6=, $pop32, $pop5
 	i32.const	$push20=, 0
 	i32.load16_u	$push4=, .Lmain.x+8($pop20):p2align=0
-	i32.store16	$discard=, 0($pop6):p2align=2, $pop4
+	i32.store16	$discard=, 0($pop6), $pop4
 	i32.const	$push19=, 0
 	i64.load	$push7=, .Lmain.x($pop19):p2align=0
 	i64.store	$discard=, 4($2):p2align=2, $pop7
@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.add 	$push18=, $pop34, $pop8
 	tee_local	$push17=, $1=, $pop18
 	i32.const	$push16=, 0
-	i32.store8	$0=, 0($pop17):p2align=2, $pop16
+	i32.store8	$0=, 0($pop17), $pop16
 	block
 	i32.const	$push35=, 4
 	i32.add 	$push36=, $2, $pop35
@@ -75,8 +75,8 @@ main:                                   # @main
 	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push11=, 77
-	i32.store8	$discard=, 0($1):p2align=2, $pop11
-	i32.store8	$discard=, 12($2):p2align=2, $0
+	i32.store8	$discard=, 0($1), $pop11
+	i32.store8	$discard=, 12($2), $0
 	i32.const	$push37=, 4
 	i32.add 	$push38=, $2, $pop37
 	i32.const	$push12=, .L.str.1

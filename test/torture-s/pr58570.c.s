@@ -35,9 +35,9 @@ main:                                   # @main
 	end_block                       # label0:
 	block
 	i32.const	$push31=, 0
-	i64.load32_u	$push12=, d($pop31):p2align=4
+	i64.load32_u	$push12=, d($pop31)
 	i32.const	$push30=, 0
-	i64.load16_u	$push9=, d+4($pop30):p2align=2
+	i64.load16_u	$push9=, d+4($pop30)
 	i64.const	$push10=, 32
 	i64.shl 	$push11=, $pop9, $pop10
 	i64.or  	$push13=, $pop12, $pop11

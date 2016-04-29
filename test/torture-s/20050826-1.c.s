@@ -54,10 +54,10 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, a
-	i32.const	$push2=, 0
-	i32.const	$push1=, 2048
-	i32.call	$discard=, memset@FUNCTION, $pop0, $pop2, $pop1
+	i32.const	$push2=, a+7
+	i32.const	$push1=, 0
+	i32.const	$push0=, 2041
+	i32.call	$discard=, memset@FUNCTION, $pop2, $pop1, $pop0
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.load8_u	$push5=, .L.str.1+4($pop18)
@@ -119,10 +119,10 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, a
-	i32.const	$push2=, 0
-	i32.const	$push1=, 2048
-	i32.call	$discard=, memset@FUNCTION, $pop0, $pop2, $pop1
+	i32.const	$push2=, a+7
+	i32.const	$push1=, 0
+	i32.const	$push0=, 2041
+	i32.call	$discard=, memset@FUNCTION, $pop2, $pop1, $pop0
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.load8_u	$push5=, .L.str.1+4($pop18)

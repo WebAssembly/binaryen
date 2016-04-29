@@ -29,7 +29,11 @@
 
 namespace wasm {
 
-class Linker {
+class S2WasmBuilder;
+
+// An "object file" for linking. Contains a wasm module, plus the associated
+// information needed for linking/layout.
+class LinkerObject {
  public:
   struct Relocation {
     enum Kind { kData, kFunction };
@@ -42,12 +46,123 @@ class Linker {
     Relocation(Kind kind, uint32_t* data, Name symbol, int addend) :
         kind(kind), data(data), symbol(symbol), addend(addend) {}
   };
+  // Information about symbols
+  struct SymbolInfo {
+    std::unordered_set<cashew::IString> implementedFunctions;
+    std::unordered_set<cashew::IString> undefinedFunctions;
+    // TODO: it's not clear that this really belongs here.
+    std::unordered_map<cashew::IString, Name> aliasedFunctions;
 
-  Linker(Module& wasm, size_t globalBase, size_t stackAllocation,
-               size_t userInitialMemory, size_t userMaxMemory,
-               bool ignoreUnknownSymbols, Name startFunction,
-               bool debug) :
-      wasm(wasm),
+    // For now, do not support weak symbols or anything special. Just directly
+    // merge the functions together, and remove any newly-defined functions
+    // from undefinedFunction
+    void merge(SymbolInfo&& other) {
+      for (const auto& func : other.implementedFunctions) {
+        undefinedFunctions.erase(func);
+      }
+      implementedFunctions.insert(other.implementedFunctions.begin(),
+                                  other.implementedFunctions.end());
+      aliasedFunctions.insert(other.aliasedFunctions.begin(),
+                              other.aliasedFunctions.end());
+    }
+  };
+
+  LinkerObject() {}
+
+  // Allocate a static object
+  void addStatic(size_t allocSize, size_t alignment, Name name) {
+    staticObjects.emplace_back(allocSize, alignment, name);
+  }
+
+  void addGlobal(Name name) {
+    globls.push_back(name);
+  }
+
+  void addRelocation(Relocation::Kind kind, uint32_t* target, Name name, int addend) {
+    relocations.emplace_back(new Relocation(kind, target, name, addend));
+  }
+  Relocation* getCurrentRelocation() {
+    return relocations.back().get();
+  }
+
+
+  bool isFunctionImplemented(Name name) {
+    return symbolInfo.implementedFunctions.count(name) != 0;
+  }
+
+  // If name is an alias, return what it points to. Otherwise return name
+  Name resolveAlias(Name name) {
+    auto aliased = symbolInfo.aliasedFunctions.find(name);
+    if (aliased != symbolInfo.aliasedFunctions.end()) return aliased->second;
+    return name;
+  }
+
+  // Add an initializer segment for the named static variable.
+  void addSegment(Name name, const char* data, size_t size) {
+    segments[name] = wasm.memory.segments.size();
+    wasm.memory.segments.emplace_back(0, data, size);
+  }
+
+  void addSegment(Name name, std::vector<char>& data) {
+    segments[name] = wasm.memory.segments.size();
+    wasm.memory.segments.emplace_back(0, data);
+  }
+
+  void addInitializerFunction(Name name) {
+    initializerFunctions.emplace_back(name);
+    assert(symbolInfo.implementedFunctions.count(name));
+  }
+
+  void addUndefinedFunctionCall(Call* call) {
+    symbolInfo.undefinedFunctions.insert(call->target);
+    undefinedFunctionCalls[call->target].push_back(call);
+  }
+
+  bool isEmpty() {
+    return wasm.functions.empty();
+  }
+
+  friend class Linker;
+
+  Module wasm;
+
+ private:
+  struct StaticObject {
+    size_t allocSize;
+    size_t alignment;
+    Name name;
+    StaticObject(size_t allocSize, size_t alignment, Name name) :
+        allocSize(allocSize), alignment(alignment), name(name) {}
+  };
+
+  std::vector<Name> globls;
+
+  std::vector<StaticObject> staticObjects;
+  std::vector<std::unique_ptr<Relocation>> relocations;
+
+  SymbolInfo symbolInfo;
+
+  using CallList = std::vector<Call*>;
+  std::map<Name, CallList> undefinedFunctionCalls;
+
+  std::map<Name, size_t> segments; // name => segment index (in wasm module)
+
+  std::vector<Name> initializerFunctions;
+
+  LinkerObject(const LinkerObject&) = delete;
+  LinkerObject& operator=(const LinkerObject&) = delete;
+
+};
+
+// Class which performs some linker-like functionality; namely taking an object
+// file with relocations, laying out the linear memory and segments, and
+// applying the relocations, resulting in an executable wasm module.
+class Linker {
+ public:
+  Linker(size_t globalBase, size_t stackAllocation,
+         size_t userInitialMemory, size_t userMaxMemory,
+         bool ignoreUnknownSymbols, Name startFunction,
+         bool debug) :
       ignoreUnknownSymbols(ignoreUnknownSymbols),
       startFunction(startFunction),
       globalBase(globalBase),
@@ -70,6 +185,7 @@ class Linker {
     }
     // Don't allow anything to be allocated at address 0
     if (globalBase == 0) nextStatic = 1;
+
     // Place the stack pointer at the bottom of the linear memory, to keep its
     // address small (and thus with a small encoding).
     placeStackPointer(stackAllocation);
@@ -77,60 +193,12 @@ class Linker {
     // wasm modules can't import data objects. Its value is 0 for the main
     // executable, which is all we have with static linking. In the future this
     // can go in a crtbegin or similar file.
-    addStatic(4, 4, "__dso_handle");
+    out.addStatic(4, 4, "__dso_handle");
   }
 
-  // Allocate a static variable and return its address in linear memory
-  size_t allocateStatic(size_t allocSize, size_t alignment, Name name) {
-    size_t address = alignAddr(nextStatic, alignment);
-    staticAddresses[name] = address;
-    nextStatic = address + allocSize;
-    return address;
-  }
-
-  // Allocate a static object
-  void addStatic(size_t allocSize, size_t alignment, Name name) {
-    staticObjects.emplace_back(allocSize, alignment, name);
-  }
-
-  void addGlobal(Name name) {
-    globls.push_back(name);
-  }
-
-  void addRelocation(Relocation::Kind kind, uint32_t* target, Name name, int addend) {
-    relocations.emplace_back(make_unique<Relocation>(kind, target, name, addend));
-  }
-  Relocation* getCurrentRelocation() {
-    return relocations.back().get();
-  }
-
-  void addImplementedFunction(Name name) {
-    implementedFunctions.insert(name);
-  }
-  bool isFunctionImplemented(Name name) {
-    return implementedFunctions.count(name) != 0;
-  }
-
-  void addAliasedFunction(Name name, Name alias) {
-    aliasedFunctions.insert({name, alias});
-  }
-  // If name is an alias, return what it points to. Otherwise return name
-  Name resolveAlias(Name name) {
-    auto aliased = aliasedFunctions.find(name);
-    if (aliased != aliasedFunctions.end()) return aliased->second;
-    return name;
-  }
-
-  // Add an initializer segment for the named static variable.
-  void addSegment(Name name, const char* data, size_t size) {
-    segments[name] = wasm.memory.segments.size();
-    wasm.memory.segments.emplace_back(0, data, size);
-  }
-
-  void addInitializerFunction(Name name) {
-    initializerFunctions.emplace_back(name);
-    assert(implementedFunctions.count(name));
-  }
+  // Return a reference to the LinkerObject for the main executable. If empty,
+  // it can be passed to an S2WasmBuilder and constructed.
+  LinkerObject& getOutput() { return out; }
 
   // Allocate the user stack, set up the initial memory size of the module, lay
   // out the linear memory, process the relocations, and set up the indirect
@@ -141,14 +209,17 @@ class Linker {
   // metadata for asmConsts, staticBump and initializer functions.
   void emscriptenGlue(std::ostream& o);
 
+  // Add an object to the link by constructing it in-place with a builder.
+  bool linkObject(S2WasmBuilder& builder);
+
  private:
-  struct StaticObject {
-    size_t allocSize;
-    size_t alignment;
-    Name name;
-    StaticObject(size_t allocSize, size_t alignment, Name name) :
-        allocSize(allocSize), alignment(alignment), name(name) {}
-  };
+  // Allocate a static variable and return its address in linear memory
+  size_t allocateStatic(size_t allocSize, size_t alignment, Name name) {
+    size_t address = alignAddr(nextStatic, alignment);
+    staticAddresses[name] = address;
+    nextStatic = address + allocSize;
+    return address;
+  }
 
   // Allocate space for a stack pointer and (if stackAllocation > 0) set up a
   // relocation for it to point to the top of the stack.
@@ -175,21 +246,21 @@ class Linker {
   }
 
   void exportFunction(Name name, bool must_export) {
-    if (!wasm.checkFunction(name)) {
+    if (!out.wasm.checkFunction(name)) {
       assert(!must_export);
       return;
     }
-    if (wasm.checkExport(name)) return; // Already exported
-    auto exp = wasm.allocator.alloc<Export>();
+    if (out.wasm.checkExport(name)) return; // Already exported
+    auto exp = new Export;
     exp->name = exp->value = name;
-    wasm.addExport(exp);
+    out.wasm.addExport(exp);
   }
 
+  // The output module (linked executable)
+  LinkerObject out;
 
-  Module& wasm;
   bool ignoreUnknownSymbols;
   Name startFunction;
-  std::vector<Name> globls;
 
   // where globals can start to be statically allocated, i.e., the data segment
   size_t globalBase;
@@ -200,20 +271,9 @@ class Linker {
   size_t stackAllocation;
   bool debug;
 
-  std::vector<StaticObject> staticObjects;
   std::unordered_map<cashew::IString, int32_t> staticAddresses; // name => address
-
-  std::vector<std::unique_ptr<Relocation>> relocations;
-
-  std::set<Name> implementedFunctions;
-  std::unordered_map<cashew::IString, Name> aliasedFunctions;
-
-  std::map<Name, size_t> segments; // name => segment index (in wasm module)
   std::unordered_map<size_t, size_t> segmentsByAddress; // address => segment index
-
   std::unordered_map<cashew::IString, size_t> functionIndexes;
-
-  std::vector<Name> initializerFunctions;
 
 };
 

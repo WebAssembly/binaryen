@@ -8,7 +8,7 @@ foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
 	block
-	i32.load8_s	$push0=, 0($0):p2align=2
+	i32.load8_s	$push0=, 0($0)
 	i32.const	$push1=, -17
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, 1

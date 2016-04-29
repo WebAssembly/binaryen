@@ -230,5 +230,72 @@
       )
     )
   )
+  (func $ret-1
+    (return)
+  )
+  (func $ret-2
+    (block
+      (block
+        (return)
+      )
+    )
+  )
+  (func $ret-3
+    (block
+      (if
+        (i32.const 0)
+        (return)
+        (block
+          (return)
+        )
+      )
+    )
+  )
+  (func $ret-value (result i32)
+    (block
+      (block
+        (return (i32.const 1))
+      )
+    )
+  )
+  (func $no-select-but-the-last
+    (block $a
+      (if
+        (i32.const 0)
+        (i32.const 1)
+        (block
+          (br $a (i32.const 2))
+          (i32.const 3)
+        )
+      )
+      (if
+        (i32.const 0)
+        (block
+          (br $a (i32.const 2))
+          (i32.const 3)
+        )
+        (i32.const 1)
+      )
+      (if
+        (block
+          (br $a (i32.const 2))
+          (i32.const 3)
+        )
+        (i32.const 0)
+        (i32.const 1)
+      )
+      (if ;; brs to the inner $a's get removed, the it is selectifiable
+        (block $a
+          (br $a (i32.const 0))
+        )
+        (block $a
+          (br $a (i32.const 1))
+        )
+        (block $a
+          (br $a (i32.const 2))
+        )
+      )
+    )
+  )
 )
 

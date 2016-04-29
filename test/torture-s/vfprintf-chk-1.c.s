@@ -448,42 +448,42 @@ main:                                   # @main
 	i32.const	$push17=, 0
 	call    	inner@FUNCTION, $pop3, $pop17
 	i32.const	$push4=, .L.str
-	i32.store	$discard=, 96($1):p2align=4, $pop4
+	i32.store	$discard=, 96($1), $pop4
 	i32.const	$push5=, 4
 	i32.const	$push28=, 96
 	i32.add 	$push29=, $1, $pop28
 	call    	inner@FUNCTION, $pop5, $pop29
 	i32.const	$push6=, .L.str.1
-	i32.store	$0=, 80($1):p2align=4, $pop6
+	i32.store	$0=, 80($1), $pop6
 	i32.const	$push7=, 5
 	i32.const	$push30=, 80
 	i32.add 	$push31=, $1, $pop30
 	call    	inner@FUNCTION, $pop7, $pop31
 	i32.const	$push8=, .L.str.2
-	i32.store	$discard=, 64($1):p2align=4, $pop8
+	i32.store	$discard=, 64($1), $pop8
 	i32.const	$push9=, 6
 	i32.const	$push32=, 64
 	i32.add 	$push33=, $1, $pop32
 	call    	inner@FUNCTION, $pop9, $pop33
 	i32.const	$push10=, .L.str.3
-	i32.store	$discard=, 48($1):p2align=4, $pop10
+	i32.store	$discard=, 48($1), $pop10
 	i32.const	$push11=, 7
 	i32.const	$push34=, 48
 	i32.add 	$push35=, $1, $pop34
 	call    	inner@FUNCTION, $pop11, $pop35
 	i32.const	$push12=, 120
-	i32.store	$discard=, 32($1):p2align=4, $pop12
+	i32.store	$discard=, 32($1), $pop12
 	i32.const	$push13=, 8
 	i32.const	$push36=, 32
 	i32.add 	$push37=, $1, $pop36
 	call    	inner@FUNCTION, $pop13, $pop37
-	i32.store	$discard=, 16($1):p2align=4, $0
+	i32.store	$discard=, 16($1), $0
 	i32.const	$push14=, 9
 	i32.const	$push38=, 16
 	i32.add 	$push39=, $1, $pop38
 	call    	inner@FUNCTION, $pop14, $pop39
 	i32.const	$push16=, 0
-	i32.store	$0=, 0($1):p2align=4, $pop16
+	i32.store	$0=, 0($1), $pop16
 	i32.const	$push15=, 10
 	call    	inner@FUNCTION, $pop15, $1
 	i32.const	$push27=, __stack_pointer
