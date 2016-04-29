@@ -9,6 +9,7 @@
     (call_import $exit
       (i32.const 0)
     )
+    (unreachable)
   )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }

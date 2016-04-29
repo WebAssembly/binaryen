@@ -7,5 +7,6 @@ main:
 	.local i32
 	i32.const $push0=, 0
 	call exit@FUNCTION, $pop0
+	unreachable
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
