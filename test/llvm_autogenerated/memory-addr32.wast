@@ -3,9 +3,9 @@
     (segment 4 "\10\04\00\00")
   )
   (export "memory" memory)
-  (export "memory_size" $memory_size)
+  (export "current_memory" $current_memory)
   (export "grow_memory" $grow_memory)
-  (func $memory_size (result i32)
+  (func $current_memory (result i32)
     (return
       (current_memory)
     )
