@@ -109,7 +109,7 @@ struct LEB {
         size_t sext_bits = 8 * sizeof(T) - size_t(shift);
         value <<= sext_bits;
         value >>= sext_bits;
-        assert(value < 0 && "signe-extend should produces a negative value");
+        assert(value < 0 && "sign-extend should produces a negative value");
       }
     }
   }
