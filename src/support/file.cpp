@@ -23,7 +23,7 @@ template <typename T>
 T wasm::read_file(const std::string &filename, Flags::BinaryOption binary, Flags::DebugOption debug) {
   if (debug == Flags::Debug) std::cerr << "Loading '" << filename << "'..." << std::endl;
   std::ifstream infile;
-  auto flags = std::ifstream::in;
+  std::ios_base::openmode flags = std::ifstream::in;
   if (binary == Flags::Binary) flags |= std::ifstream::binary;
   infile.open(filename, flags);
   if (!infile.is_open()) {
