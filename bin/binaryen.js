@@ -70659,7 +70659,7 @@ function __ZN4wasm6Module15getFunctionTypeENS_4NameE(i1, i2) {
  var i3 = 0;
  i1 = i1 + 144 | 0;
  i3 = __ZNSt3__13mapIN4wasm4NameEPNS1_12FunctionTypeENS_4lessIS2_EENS_9allocatorINS_4pairIKS2_S4_EEEEEixERS9_(i1, i2) | 0;
- if (!(HEAP32[i3 >> 2] | 0)) ___assert_fail(14073, 13546, 1234, 14096); else {
+ if (!(HEAP32[i3 >> 2] | 0)) ___assert_fail(14073, 13546, 1219, 14096); else {
   i3 = __ZNSt3__13mapIN4wasm4NameEPNS1_12FunctionTypeENS_4lessIS2_EENS_9allocatorINS_4pairIKS2_S4_EEEEEixERS9_(i1, i2) | 0;
   return HEAP32[i3 >> 2] | 0;
  }
@@ -71219,7 +71219,7 @@ function __ZN4wasm6Module11getFunctionENS_4NameE(i1, i2) {
  var i3 = 0;
  i1 = i1 + 180 | 0;
  i3 = __ZNSt3__13mapIN4wasm4NameEPNS1_8FunctionENS_4lessIS2_EENS_9allocatorINS_4pairIKS2_S4_EEEEEixERS9_(i1, i2) | 0;
- if (!(HEAP32[i3 >> 2] | 0)) ___assert_fail(15571, 13546, 1237, 15590); else {
+ if (!(HEAP32[i3 >> 2] | 0)) ___assert_fail(15571, 13546, 1222, 15590); else {
   i3 = __ZNSt3__13mapIN4wasm4NameEPNS1_8FunctionENS_4lessIS2_EENS_9allocatorINS_4pairIKS2_S4_EEEEEixERS9_(i1, i2) | 0;
   return HEAP32[i3 >> 2] | 0;
  }
@@ -71230,7 +71230,7 @@ function __ZN4wasm8Function13getLocalIndexENS_4NameE(i1, i2) {
  i1 = i1 | 0;
  i2 = i2 | 0;
  i1 = i1 + 52 | 0;
- if (!(__ZNKSt3__16__treeINS_12__value_typeIN4wasm4NameEjEENS_19__map_value_compareIS3_S4_NS_4lessIS3_EELb1EEENS_9allocatorIS4_EEE14__count_uniqueIS3_EEjRKT_(i1, i2) | 0)) ___assert_fail(14802, 13546, 1145, 14831); else {
+ if (!(__ZNKSt3__16__treeINS_12__value_typeIN4wasm4NameEjEENS_19__map_value_compareIS3_S4_NS_4lessIS3_EELb1EEENS_9allocatorIS4_EEE14__count_uniqueIS3_EEjRKT_(i1, i2) | 0)) ___assert_fail(14802, 13546, 1130, 14831); else {
   i2 = __ZNSt3__13mapIN4wasm4NameEjNS_4lessIS2_EENS_9allocatorINS_4pairIKS2_jEEEEEixERS7_(i1, i2) | 0;
   return HEAP32[i2 >> 2] | 0;
  }
@@ -71325,7 +71325,7 @@ function __ZN4wasm6Module9getImportENS_4NameE(i1, i2) {
  var i3 = 0;
  i1 = i1 + 156 | 0;
  i3 = __ZNSt3__13mapIN4wasm4NameEPNS1_6ImportENS_4lessIS2_EENS_9allocatorINS_4pairIKS2_S4_EEEEEixERS9_(i1, i2) | 0;
- if (!(HEAP32[i3 >> 2] | 0)) ___assert_fail(14744, 13546, 1235, 14761); else {
+ if (!(HEAP32[i3 >> 2] | 0)) ___assert_fail(14744, 13546, 1220, 14761); else {
   i3 = __ZNSt3__13mapIN4wasm4NameEPNS1_6ImportENS_4lessIS2_EENS_9allocatorINS_4pairIKS2_S4_EEEEEixERS9_(i1, i2) | 0;
   return HEAP32[i3 >> 2] | 0;
  }
@@ -72892,7 +72892,7 @@ function __ZN4wasm6Binary8finalizeEv(i3) {
  if ((HEAP32[i3 + 8 >> 2] | 0) > 18) HEAP32[i3 + 4 >> 2] = 1; else {
   i2 = HEAP32[(HEAP32[i3 + 12 >> 2] | 0) + 4 >> 2] | 0;
   i1 = HEAP32[(HEAP32[i3 + 16 >> 2] | 0) + 4 >> 2] | 0;
-  if ((i2 | 0) != 5 ? !((i1 | 0) == 5 | (i2 | 0) == (i1 | 0)) : 0) ___assert_fail(14229, 13546, 1040, 14320);
+  if ((i2 | 0) != 5 ? !((i1 | 0) == 5 | (i2 | 0) == (i1 | 0)) : 0) ___assert_fail(14229, 13546, 1025, 14320);
   HEAP32[i3 + 4 >> 2] = (i2 | 0) != 5 ? i2 : i1;
  }
  return;
@@ -76492,7 +76492,7 @@ function __ZN4wasm8Function12getLocalNameEj(i4, i3) {
  var i1 = 0, i2 = 0;
  i1 = HEAP32[i4 + 40 >> 2] | 0;
  if ((HEAP32[i4 + 44 >> 2] | 0) - i1 >> 2 >>> 0 > i3 >>> 0 ? (i2 = HEAP32[i1 + (i3 << 2) >> 2] | 0, i2 | 0) : 0) return i2 | 0;
- ___assert_fail(15756, 13546, 1134, 15808);
+ ___assert_fail(15756, 13546, 1119, 15808);
  return 0;
 }
 
@@ -81479,13 +81479,13 @@ function __ZN4wasm11FullPrinterD0Ev(i1) {
 
 function __ZN4wasm10Expression4castINS_12CallIndirectEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 8) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 8) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_11UnreachableEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 20) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 20) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
@@ -81572,7 +81572,7 @@ function __ZNKSt3__110__function6__funcIZN4wasm12RegisterPassINS2_17RemoveUnused
 
 function __ZN4wasm10Expression4castINS_10CallImportEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 7) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 7) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
@@ -81616,7 +81616,7 @@ function __ZNKSt3__110__function6__funcIZN4wasm12RegisterPassINS2_14SimplifyLoca
 
 function __ZN4wasm10Expression4castINS_8SetLocalEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 10) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 10) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
@@ -81653,7 +81653,7 @@ function __ZN4wasm7PrinterD0Ev(i1) {
 
 function __ZN4wasm10Expression4castINS_8GetLocalEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 9) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 9) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
@@ -81689,19 +81689,19 @@ function __ZNSt3__110__function6__funcIZN4wasm12RegisterPassINS2_15MinifiedPrint
 
 function __ZN4wasm10Expression4castINS_6SelectEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 16) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 16) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_6ReturnEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 17) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 17) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_6BinaryEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 15) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 15) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
@@ -81725,25 +81725,25 @@ function __ZNK4wasm7Literal6geti32Ev(i1) {
 
 function __ZN4wasm10Expression4castINS_6SwitchEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 5) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 5) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_5UnaryEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 14) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 14) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_5StoreEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 12) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 12) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_5ConstEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 13) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 13) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
@@ -81795,25 +81795,25 @@ function __ZN4wasm4PassD0Ev(i1) {
 
 function __ZN4wasm10Expression4castINS_5BreakEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 4) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 4) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_5BlockEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 1) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 1) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_4LoadEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 11) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 11) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_4HostEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 18) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 18) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
@@ -81834,19 +81834,19 @@ function __ZNSt3__110__function6__funcIZN4wasm22SExpressionWasmBuilderC1ERNS2_6M
 
 function __ZN4wasm10Expression4castINS_4LoopEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 3) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 3) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_4CallEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 6) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 6) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
 function __ZN4wasm10Expression4castINS_3NopEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 19) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 19) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 
@@ -81882,7 +81882,7 @@ function __ZNSt3__110__function6__funcIZN4wasm12RegisterPassINS2_11FullPrinterEE
 
 function __ZN4wasm10Expression4castINS_2IfEEEPT_v(i1) {
  i1 = i1 | 0;
- if ((HEAP32[i1 >> 2] | 0) == 2) return i1 | 0; else ___assert_fail(14861, 13546, 794, 14892);
+ if ((HEAP32[i1 >> 2] | 0) == 2) return i1 | 0; else ___assert_fail(14861, 13546, 779, 14892);
  return 0;
 }
 

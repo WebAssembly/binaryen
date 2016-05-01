@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-#include <memory>
+// Literal type subclasses for Web IDL
 
-#include "pass.h"
-#include "shell-interface.h"
-#include "support/command-line.h"
-#include "support/file.h"
-#include "wasm-interpreter.h"
-#include "wasm-printing.h"
-#include "wasm-s-parser.h"
-#include "wasm-validator.h"
-
-using namespace wasm;
-
-#include "js/webidl.h"
-#include "../glue.cpp"
-
+class I32Literal : public Literal {
+public:
+  I32Literal(int32_t  init) : Literal(init) {}
+};
+class F32Literal : public Literal {
+public:
+  F32Literal(float  init) : Literal(init) {}
+};
+class F64Literal : public Literal {
+public:
+  F64Literal(double  init) : Literal(init) {}
+};

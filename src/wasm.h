@@ -686,21 +686,6 @@ public:
   }
 };
 
-// Literal type subclasses for Web IDL
-
-class I32Literal : public Literal {
-public:
-  I32Literal(int32_t  init) : Literal(init) {}
-};
-class F32Literal : public Literal {
-public:
-  F32Literal(float  init) : Literal(init) {}
-};
-class F64Literal : public Literal {
-public:
-  F64Literal(double  init) : Literal(init) {}
-};
-
 // Operators
 
 enum UnaryOp {
