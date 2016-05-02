@@ -455,7 +455,14 @@ private:
             case TruncSFloat64:    return truncSFloat(curr, value);
             case TruncUFloat64:    return truncUFloat(curr, value);
             case ReinterpretFloat: return value.castToI64();
-            case DemoteFloat64:    return value.truncateToF32();
+            case DemoteFloat64: {
+              double val = value.getFloat();
+              if (std::isnan(val)) return Literal(float(val));
+              if (std::isinf(val)) return Literal(float(val));
+              if (val < -std::numeric_limits<float>::max()) return Literal(-std::numeric_limits<float>::infinity());
+              if (val > std::numeric_limits<float>::max()) return Literal(std::numeric_limits<float>::infinity());
+              return value.truncateToF32();
+            }
             default: abort();
           }
         }
