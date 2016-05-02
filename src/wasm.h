@@ -1180,7 +1180,7 @@ public:
     Segment() {}
     Segment(size_t offset, const char *init, size_t size) : offset(offset) {
       data.resize(size);
-      memcpy(&data[0], init, size);
+      std::copy_n(init, size, data.begin());
     }
     Segment(size_t offset, std::vector<char>& init) : offset(offset) {
       data.swap(init);
