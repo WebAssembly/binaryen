@@ -640,12 +640,19 @@ private:
         double val = value.getFloat();
         if (std::isnan(val)) trap("truncSFloat of nan");
         if (curr->type == i32) {
-          if (val > (double)std::numeric_limits<int32_t>::max() || val < (double)std::numeric_limits<int32_t>::min()) trap("i32.truncSFloat overflow");
+          if (value.type == f32) {
+            if (!isInRangeI32TruncS(value.reinterpreti32())) trap("i32.truncSFloat overflow");
+          } else {
+            if (!isInRangeI32TruncS(value.reinterpreti64())) trap("i32.truncSFloat overflow");
+          }
           return Literal(int32_t(val));
         } else {
-          int64_t converted = (int64_t)val;
-          if ((val >= 1 && converted <= 0) || val < (double)LLONG_MIN) trap("i64.truncSFloat overflow");
-          return Literal(converted);
+          if (value.type == f32) {
+            if (!isInRangeI64TruncS(value.reinterpreti32())) trap("i64.truncSFloat overflow");
+          } else {
+            if (!isInRangeI64TruncS(value.reinterpreti64())) trap("i64.truncSFloat overflow");
+          }
+          return Literal(int64_t(val));
         }
       }
 
@@ -653,12 +660,19 @@ private:
         double val = value.getFloat();
         if (std::isnan(val)) trap("truncUFloat of nan");
         if (curr->type == i32) {
-          if (val > (double)std::numeric_limits<uint32_t>::max() || val <= (double)-1) trap("i32.truncUFloat overflow");
+          if (value.type == f32) {
+            if (!isInRangeI32TruncU(value.reinterpreti32())) trap("i32.truncUFloat overflow");
+          } else {
+            if (!isInRangeI32TruncU(value.reinterpreti64())) trap("i32.truncUFloat overflow");
+          }
           return Literal(uint32_t(val));
         } else {
-          uint64_t converted = (uint64_t)val;
-          if (converted < val - 1 || val <= (double)-1) trap("i64.truncUFloat overflow");
-          return Literal(converted);
+          if (value.type == f32) {
+            if (!isInRangeI64TruncU(value.reinterpreti32())) trap("i64.truncUFloat overflow");
+          } else {
+            if (!isInRangeI64TruncU(value.reinterpreti64())) trap("i64.truncUFloat overflow");
+          }
+          return Literal(uint64_t(val));
         }
       }
 

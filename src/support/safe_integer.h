@@ -29,6 +29,16 @@ bool isUInteger64(double x);
 bool isSInteger64(double x);
 uint64_t toUInteger64(double x);
 int64_t toSInteger64(double x);
+// The isInRange* functions all expect to be passed the binary representation
+// of a float or double.
+bool isInRangeI32TruncS(int32_t i);
+bool isInRangeI64TruncS(int32_t i);
+bool isInRangeI32TruncU(int32_t i);
+bool isInRangeI64TruncU(int32_t i);
+bool isInRangeI32TruncS(int64_t i);
+bool isInRangeI32TruncU(int64_t i);
+bool isInRangeI64TruncS(int64_t i);
+bool isInRangeI64TruncU(int64_t i);
 }  // namespace wasm
 
 #endif  // wasm_safe_integer_h
