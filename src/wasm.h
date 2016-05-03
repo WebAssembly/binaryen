@@ -436,8 +436,46 @@ public:
   }
   Literal div(const Literal& other) const {
     switch (type) {
-      case WasmType::f32: return Literal(getf32() / other.getf32());
-      case WasmType::f64: return Literal(getf64() / other.getf64());
+      case WasmType::f32: {
+        float lhs = getf32(), rhs = other.getf32();
+        float sign = std::signbit(lhs) == std::signbit(rhs) ? 0.f : -0.f;
+        switch (std::fpclassify(rhs)) {
+          case FP_ZERO:
+          switch (std::fpclassify(lhs)) {
+            case FP_NAN: return *this;
+            case FP_ZERO: return Literal(std::copysign(std::numeric_limits<float>::quiet_NaN(), sign));
+            case FP_NORMAL: // fallthrough
+            case FP_SUBNORMAL: // fallthrough
+            case FP_INFINITE: return Literal(std::copysign(std::numeric_limits<float>::infinity(), sign));
+            default: WASM_UNREACHABLE();
+          }
+          case FP_NAN: // fallthrough
+          case FP_INFINITE: // fallthrough
+          case FP_NORMAL: // fallthrough
+          case FP_SUBNORMAL: return Literal(lhs / rhs);
+          default: WASM_UNREACHABLE();
+        }
+      }
+      case WasmType::f64: {
+        double lhs = getf64(), rhs = other.getf64();
+        double sign = std::signbit(lhs) == std::signbit(rhs) ? 0. : -0.;
+        switch (std::fpclassify(rhs)) {
+          case FP_ZERO:
+          switch (std::fpclassify(lhs)) {
+            case FP_NAN: return *this;
+            case FP_ZERO: return Literal(std::copysign(std::numeric_limits<double>::quiet_NaN(), sign));
+            case FP_NORMAL: // fallthrough
+            case FP_SUBNORMAL: // fallthrough
+            case FP_INFINITE: return Literal(std::copysign(std::numeric_limits<double>::infinity(), sign));
+            default: WASM_UNREACHABLE();
+          }
+          case FP_NAN: // fallthrough
+          case FP_INFINITE: // fallthrough
+          case FP_NORMAL: // fallthrough
+          case FP_SUBNORMAL: return Literal(lhs / rhs);
+          default: WASM_UNREACHABLE();
+        }
+      }
       default: WASM_UNREACHABLE();
     }
   }
