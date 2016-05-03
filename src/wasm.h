@@ -530,22 +530,22 @@ public:
   }
   Literal shl(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(i32 << other.i32);
-      case WasmType::i64: return Literal(i64 << other.i64);
+      case WasmType::i32: return Literal(uint32_t(i32) << (other.i32 & 0x1f));
+      case WasmType::i64: return Literal(uint64_t(i64) << (other.i64 & 0x3f));
       default: WASM_UNREACHABLE();
     }
   }
   Literal shrS(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(i32 >> other.i32);
-      case WasmType::i64: return Literal(i64 >> other.i64);
+      case WasmType::i32: return Literal(i32 >> (other.i32 & 0x1f));
+      case WasmType::i64: return Literal(i64 >> (other.i64 & 0x3f));
       default: WASM_UNREACHABLE();
     }
   }
   Literal shrU(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) >> uint32_t(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) >> uint64_t(other.i64));
+      case WasmType::i32: return Literal(uint32_t(i32) >> uint32_t(other.i32 & 0x1f));
+      case WasmType::i64: return Literal(uint64_t(i64) >> uint64_t(other.i64 & 0x3f));
       default: WASM_UNREACHABLE();
     }
   }
