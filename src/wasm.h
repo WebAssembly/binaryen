@@ -409,8 +409,8 @@ public:
 
   Literal add(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(i32 + other.i32);
-      case WasmType::i64: return Literal(i64 + other.i64);
+      case WasmType::i32: return Literal(uint32_t(i32) + uint32_t(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) + uint64_t(other.i64));
       case WasmType::f32: return Literal(getf32() + other.getf32());
       case WasmType::f64: return Literal(getf64() + other.getf64());
       default: WASM_UNREACHABLE();
@@ -418,8 +418,8 @@ public:
   }
   Literal sub(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(i32 - other.i32);
-      case WasmType::i64: return Literal(i64 - other.i64);
+      case WasmType::i32: return Literal(uint32_t(i32) - uint32_t(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) - uint64_t(other.i64));
       case WasmType::f32: return Literal(getf32() - other.getf32());
       case WasmType::f64: return Literal(getf64() - other.getf64());
       default: WASM_UNREACHABLE();
@@ -427,8 +427,8 @@ public:
   }
   Literal mul(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(i32 * other.i32);
-      case WasmType::i64: return Literal(i64 * other.i64);
+      case WasmType::i32: return Literal(uint32_t(i32) * uint32_t(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) * uint64_t(other.i64));
       case WasmType::f32: return Literal(getf32() * other.getf32());
       case WasmType::f64: return Literal(getf64() * other.getf64());
       default: WASM_UNREACHABLE();
