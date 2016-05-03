@@ -975,6 +975,8 @@ public:
   uint32_t offset;
   uint32_t align;
   Expression *ptr;
+
+  // type must be set during creation, cannot be inferred
 };
 
 class Store : public SpecificExpression<Expression::StoreId> {
@@ -986,6 +988,10 @@ public:
   uint32_t offset;
   unsigned align;
   Expression *ptr, *value;
+
+  void finalize() {
+    type = value->type;
+  }
 };
 
 class Const : public SpecificExpression<Expression::ConstId> {

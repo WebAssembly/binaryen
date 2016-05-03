@@ -31,6 +31,7 @@ static_assert(sizeof(BinaryenLiteral) == sizeof(Literal), "Binaryen C API litera
 
 BinaryenLiteral toBinaryenLiteral(Literal x) {
   BinaryenLiteral ret;
+  ret.type = x.type;
   switch (x.type) {
     case WasmType::i32: ret.i32 = x.geti32(); break;
     case WasmType::i64: ret.i64 = x.geti64(); break;
@@ -103,7 +104,7 @@ BinaryenOp BinaryenFloor(void) { return Floor; }
 BinaryenOp BinaryenTrunc(void) { return Trunc; }
 BinaryenOp BinaryenNearest(void) { return Nearest; }
 BinaryenOp BinaryenSqrt(void) { return Sqrt; }
-BinaryenOp BinaryenEqz(void) { return EqZ; }
+BinaryenOp BinaryenEqZ(void) { return EqZ; }
 BinaryenOp BinaryenExtendSInt32(void) { return ExtendSInt32; }
 BinaryenOp BinaryenExtentUInt32(void) { return ExtendUInt32; }
 BinaryenOp BinaryenWrapInt64(void) { return WrapInt64; }
@@ -146,7 +147,7 @@ BinaryenOp BinaryenLeS(void) { return LeS; }
 BinaryenOp BinaryenLeU(void) { return LeU; }
 BinaryenOp BinaryenGtS(void) { return GtS; }
 BinaryenOp BinaryenGtU(void) { return GtU; }
-BinaryenOp BinaryenGes(void) { return GeS; }
+BinaryenOp BinaryenGeS(void) { return GeS; }
 BinaryenOp BinaryenGeU(void) { return GeU; }
 BinaryenOp BinaryenLt(void) { return Lt; }
 BinaryenOp BinaryenLe(void) { return Le; }
@@ -177,6 +178,7 @@ BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module, BinaryenExpressionRef
   return ret;
 }
 BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* out, const char* in, BinaryenExpressionRef body) {
+  if (out && !in) abort();
   return Builder(*((Module*)module)).makeLoop(out ? Name(out) : Name(), in ? Name(in) : Name(), (Expression*)body);
 }
 BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, BinaryenExpressionRef value, BinaryenExpressionRef condition) {
@@ -235,12 +237,13 @@ BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex i
   ret->finalize();
   return ret;
 }
-BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenExpressionRef ptr) {
+BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenType type, BinaryenExpressionRef ptr) {
   auto* ret = ((Module*)module)->allocator.alloc<Load>();
   ret->bytes = bytes;
   ret->signed_ = signed_;
   ret->offset = offset;
-  ret->align = align;
+  ret->align = align ? align : bytes;
+  ret->type = WasmType(type);
   ret->ptr = (Expression*)ptr;
   ret->finalize();
   return ret;
@@ -249,7 +252,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
   auto* ret = ((Module*)module)->allocator.alloc<Store>();
   ret->bytes = bytes;
   ret->offset = offset;
-  ret->align = align;
+  ret->align = align ? align : bytes;
   ret->ptr = (Expression*)ptr;
   ret->value = (Expression*)value;
   ret->finalize();
@@ -328,8 +331,8 @@ BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* intern
 BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName) {
   auto* wasm = (Module*)module;
   auto* ret = new Export();
-  ret->name = internalName;
-  ret->value = externalName;
+  ret->value = internalName;
+  ret->name = externalName;
   wasm->addExport(ret);
   return ret;
 }
@@ -349,7 +352,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
   auto* wasm = (Module*)module;
   wasm->memory.initial = initial;
   wasm->memory.max = maximum;
-  wasm->memory.exportName = exportName;
+  if (exportName) wasm->memory.exportName = exportName;
   for (BinaryenIndex i = 0; i < numSegments; i++) {
     wasm->memory.segments.emplace_back(segmentOffsets[i], segments[i], segmentSizes[i]);
   }

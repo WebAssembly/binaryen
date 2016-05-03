@@ -117,7 +117,7 @@ BinaryenOp BinaryenFloor(void);
 BinaryenOp BinaryenTrunc(void);
 BinaryenOp BinaryenNearest(void);
 BinaryenOp BinaryenSqrt(void);
-BinaryenOp BinaryenEqz(void);
+BinaryenOp BinaryenEqZ(void);
 BinaryenOp BinaryenExtendSInt32(void);
 BinaryenOp BinaryenExtentUInt32(void);
 BinaryenOp BinaryenWrapInt64(void);
@@ -160,7 +160,7 @@ BinaryenOp BinaryenLeS(void);
 BinaryenOp BinaryenLeU(void);
 BinaryenOp BinaryenGtS(void);
 BinaryenOp BinaryenGtU(void);
-BinaryenOp BinaryenGes(void);
+BinaryenOp BinaryenGeS(void);
 BinaryenOp BinaryenGeU(void);
 BinaryenOp BinaryenLt(void);
 BinaryenOp BinaryenLe(void);
@@ -177,18 +177,18 @@ typedef void* BinaryenExpressionRef;
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren);
 // If: ifFalse can be NULL
 BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module, BinaryenExpressionRef condition, BinaryenExpressionRef ifTrue, BinaryenExpressionRef ifFalse);
-// Loop: out and in can be NULL
+// Loop: both out and in can be NULL, or just out can be NULL
 BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* out, const char* in, BinaryenExpressionRef body);
 // Break: value and condition can be NULL
 BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, BinaryenExpressionRef value, BinaryenExpressionRef condition);
-// Switch: value and condition can be NULL
+// Switch: value can be NULL
 BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **names, BinaryenIndex numNames, const char* defaultName, BinaryenExpressionRef condition, BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenFunctionTypeRef type);
 BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenType type);
 BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
-BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenExpressionRef ptr);
+BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenType type, BinaryenExpressionRef ptr);
 BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, uint32_t align, BinaryenExpressionRef ptr, BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module, struct BinaryenLiteral value);
 BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef value, BinaryenType type);
@@ -226,6 +226,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
 // Memory. One per module
 
 // Each segment has data in segments, a start offset in segmentOffsets, and a size in segmentSizes.
+// exportName can be NULL
 void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char **segments, BinaryenIndex* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments);
 
 // Start function. One per module

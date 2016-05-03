@@ -92,6 +92,9 @@ ADD_LIBRARY(support STATIC ${support_SOURCES})
 
 SET(binaryen_c_SOURCES
   src/binaryen-c.cpp
+  src/pass.cpp
+  src/passes/Print.cpp
+  src/wasm.cpp
 )
 ADD_LIBRARY(binaryen-c STATIC ${binaryen_c_SOURCES})
 

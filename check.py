@@ -570,12 +570,12 @@ if has_vanilla_emcc and has_vanilla_llvm:
 print '\n[ checking example testcases... ]\n'
 
 for t in sorted(os.listdir(os.path.join('test', 'example'))):
-  cmd = [os.path.join('src', 'pass.cpp'),
-         os.path.join('src', 'wasm.cpp'),
-         os.path.join('src', 'passes', 'Print.cpp'),
-         '-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
+  cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
   if t.endswith('.cpp'):
-    cmd = [os.path.join('test', 'example', t)] + cmd
+    cmd = [os.path.join('test', 'example', t),
+           os.path.join('src', 'pass.cpp'),
+           os.path.join('src', 'wasm.cpp'),
+           os.path.join('src', 'passes', 'Print.cpp')] + cmd
   elif t.endswith('.c'):
     # build the C file separately
     extra = [os.environ.get('CC') or 'gcc',
