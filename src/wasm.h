@@ -763,7 +763,9 @@ public:
   WasmType type; // the type of the expression: its *output*, not necessarily its input(s)
 
   Expression(Id id) : _id(id), type(none) {}
- 
+
+  void finalize() {}
+
   template<class T>
   bool is() {
     return int(_id) == int(T::SpecificId);
