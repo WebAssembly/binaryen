@@ -207,7 +207,8 @@ class S2WasmBuilder {
   // returns whether this is a relocation
   bool getConst(uint32_t* target) {
     if (isdigit(*s) || *s == '-') {
-      *target = getInt();
+      int32_t val = getInt();
+      memcpy(target, &val, sizeof(val));
       return false;
     } else {
       // a global constant, we need to fix it up later
@@ -1073,7 +1074,8 @@ class S2WasmBuilder {
       } else if (match(".int16")) {
         size_t size = raw.size();
         raw.resize(size + 2);
-        (*(int16_t*)(&raw[size])) = getInt();
+        int16_t val = getInt();
+        memcpy(&raw[size], &val, sizeof(val));
         zero = false;
       } else if (match(".int32")) {
         size_t size = raw.size();
@@ -1085,7 +1087,8 @@ class S2WasmBuilder {
       } else if (match(".int64")) {
         size_t size = raw.size();
         raw.resize(size + 8);
-        (*(int64_t*)(&raw[size])) = getInt64();
+        int64_t val = getInt64();
+        memcpy(&raw[size], &val, sizeof(val));
         zero = false;
       } else {
         break;
