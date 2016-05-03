@@ -13,7 +13,7 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
           packages: ['cmake', 'nodejs', 'clang-3.6']
 
-    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=undefined -fsanitize-blacklist=`pwd`/ubsan.blacklist"
+    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,function,integer-divide-by-zero,nonnull-attribute,object-size,return,returns-nonnull-attribute,unreachable,unsigned-integer-overflow,vla-bound,vptr -fsanitize-blacklist=`pwd`/ubsan.blacklist"
       compiler: clang
       addons: *clang36
 
