@@ -1067,42 +1067,46 @@ private:
       Element& curr = *s[i];
       assert(curr[0]->str() == SEGMENT);
       const char *input = curr[2]->c_str();
-      std::vector<char> data;
-      data.resize(strlen(input));
-      char *write = (char*)&data[0];
-      while (1) {
-        if (input[0] == 0) break;
-        if (input[0] == '\\') {
-          if (input[1] == '"') {
-            *write++ = '"';
-            input += 2;
-            continue;
-          } else if (input[1] == '\'') {
-            *write++ = '\'';
-            input += 2;
-            continue;
-          } else if (input[1] == '\\') {
-            *write++ = '\\';
-            input += 2;
-            continue;
-          } else if (input[1] == 'n') {
-            *write++ = '\n';
-            input += 2;
-            continue;
-          } else if (input[1] == 't') {
-            *write++ = '\t';
-            input += 2;
-            continue;
-          } else {
-            *write++ = (char)(unhex(input[1])*16 + unhex(input[2]));
-            input += 3;
-            continue;
+      if (auto size = strlen(input)) {
+        std::vector<char> data;
+        data.resize(size);
+        char *write = data.data();
+        while (1) {
+          if (input[0] == 0) break;
+          if (input[0] == '\\') {
+            if (input[1] == '"') {
+              *write++ = '"';
+              input += 2;
+              continue;
+            } else if (input[1] == '\'') {
+              *write++ = '\'';
+              input += 2;
+              continue;
+            } else if (input[1] == '\\') {
+              *write++ = '\\';
+              input += 2;
+              continue;
+            } else if (input[1] == 'n') {
+              *write++ = '\n';
+              input += 2;
+              continue;
+            } else if (input[1] == 't') {
+              *write++ = '\t';
+              input += 2;
+              continue;
+            } else {
+              *write++ = (char)(unhex(input[1])*16 + unhex(input[2]));
+              input += 3;
+              continue;
+            }
           }
+          *write++ = input[0];
+          input++;
         }
-        *write++ = input[0];
-        input++;
+        wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data.data(), write - data.data());
+      } else {
+        wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), "", 0);
       }
-      wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), (const char*)&data[0], write - (const char*)&data[0]);
       i++;
     }
   }
