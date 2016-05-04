@@ -95,17 +95,30 @@ for wast in sorted(os.listdir('test')):
 
 print '\n[ checking example testcases... ]\n'
 
-cmd = [os.environ.get('CXX') or 'g++', '-std=c++11',
-       os.path.join('test', 'example', 'find_div0s.cpp'),
-       os.path.join('src', 'pass.cpp'),
-       os.path.join('src', 'passes', 'Print.cpp'),
-       '-Isrc', '-g', '-lsupport', '-Llib/.']
-if os.environ.get('COMPILER_FLAGS'):
-  for f in os.environ.get('COMPILER_FLAGS').split(' '):
-    cmd.append(f)
-print ' '.join(cmd)
-subprocess.check_call(cmd)
-actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
-open(os.path.join('test', 'example', 'find_div0s.txt'), 'w').write(actual)
+for t in sorted(os.listdir(os.path.join('test', 'example'))):
+  cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
+  if t.endswith('.cpp'):
+    cmd = [os.path.join('test', 'example', t),
+           os.path.join('src', 'pass.cpp'),
+           os.path.join('src', 'wasm.cpp'),
+           os.path.join('src', 'passes', 'Print.cpp')] + cmd
+  elif t.endswith('.c'):
+    # build the C file separately
+    extra = [os.environ.get('CC') or 'gcc',
+             os.path.join('test', 'example', t), '-c', '-o', 'example.o',
+             '-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
+    print ' '.join(extra)
+    subprocess.check_call(extra)
+    cmd = ['example.o', '-lbinaryen-c'] + cmd
+  else:
+    continue
+  if os.environ.get('COMPILER_FLAGS'):
+    for f in os.environ.get('COMPILER_FLAGS').split(' '):
+      cmd.append(f)
+  cmd = [os.environ.get('CXX') or 'g++', '-std=c++11'] + cmd
+  print ' '.join(cmd)
+  subprocess.check_call(cmd)
+  actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
+  open(os.path.join('test', 'example', '.'.join(t.split('.')[:-1]) + '.txt'), 'w').write(actual)
 
 print '\n[ success! ]'

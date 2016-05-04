@@ -967,10 +967,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             case Trunc:         ret = ValueBuilder::makeCall(MATH_TRUNC, value); break;
             case Nearest:       ret = ValueBuilder::makeCall(MATH_NEAREST, value); break;
             case Sqrt:          ret = ValueBuilder::makeCall(MATH_SQRT, value); break;
-            case TruncSFloat32: ret = ValueBuilder::makePrefix(B_NOT, ValueBuilder::makePrefix(B_NOT, value)); break;
+            //case TruncSFloat32: ret = ValueBuilder::makePrefix(B_NOT, ValueBuilder::makePrefix(B_NOT, value)); break;
             case PromoteFloat32:
-            case ConvertSInt32: ret = ValueBuilder::makePrefix(PLUS, ValueBuilder::makeBinary(value, OR, ValueBuilder::makeNum(0))); break;
-            case ConvertUInt32: ret = ValueBuilder::makePrefix(PLUS, ValueBuilder::makeBinary(value, TRSHIFT, ValueBuilder::makeNum(0))); break;
+            //case ConvertSInt32: ret = ValueBuilder::makePrefix(PLUS, ValueBuilder::makeBinary(value, OR, ValueBuilder::makeNum(0))); break;
+            //case ConvertUInt32: ret = ValueBuilder::makePrefix(PLUS, ValueBuilder::makeBinary(value, TRSHIFT, ValueBuilder::makeNum(0))); break;
             case DemoteFloat64: ret = value; break;
             default: std::cerr << curr << '\n'; abort();
           }

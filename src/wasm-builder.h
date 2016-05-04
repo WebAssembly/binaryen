@@ -131,32 +131,46 @@ public:
     ret->type = value.type;
     return ret;
   }
-  Unary* makeUnary(UnaryOp op, Expression *value, WasmType type=none) {
+  Unary* makeUnary(UnaryOp op, Expression *value) {
     auto* ret = allocator.alloc<Unary>();
     ret->op = op; ret->value = value;
-    if (type != none) {
-      ret->type = type; // some opcodes have more than one type, user must provide it
-    } else {
-      switch (op) {
-        case Clz:
-        case Ctz:
-        case Popcnt:
-        case Neg:
-        case Abs:
-        case Ceil:
-        case Floor:
-        case Trunc:
-        case Nearest:
-        case Sqrt: ret->type = value->type; break;
-        case EqZ: ret->type = i32; break;
-        case ExtendSInt32: case ExtendUInt32: ret->type = i64; break;
-        case WrapInt64: ret->type = i32; break;
-        case PromoteFloat32: ret->type = f64; break;
-        case DemoteFloat64: ret->type = f32; break;
-        case TruncSFloat32: case TruncUFloat32: case TruncSFloat64: case TruncUFloat64: case ReinterpretFloat:
-        case ConvertSInt32: case ConvertUInt32: case ConvertSInt64: case ConvertUInt64: case ReinterpretInt: abort(); // user needs to say the type
-        default: abort();
-      }
+    switch (op) {
+      case Clz:
+      case Ctz:
+      case Popcnt:
+      case Neg:
+      case Abs:
+      case Ceil:
+      case Floor:
+      case Trunc:
+      case Nearest:
+      case Sqrt: ret->type = value->type; break;
+      case EqZ: ret->type = i32; break;
+      case ExtendSInt32: case ExtendUInt32: ret->type = i64; break;
+      case WrapInt64: ret->type = i32; break;
+      case PromoteFloat32: ret->type = f64; break;
+      case DemoteFloat64: ret->type = f32; break;
+      case TruncSFloat32ToInt32:
+      case TruncUFloat32ToInt32:
+      case TruncSFloat64ToInt32:
+      case TruncUFloat64ToInt32:
+      case ReinterpretFloat32: ret->type = i32; break;
+      case TruncSFloat32ToInt64:
+      case TruncUFloat32ToInt64:
+      case TruncSFloat64ToInt64:
+      case TruncUFloat64ToInt64:
+      case ReinterpretFloat64: ret->type = i64; break;
+      case ReinterpretInt32:
+      case ConvertSInt32ToFloat32:
+      case ConvertUInt32ToFloat32:
+      case ConvertSInt64ToFloat32:
+      case ConvertUInt64ToFloat32: ret->type = f32; break;
+      case ReinterpretInt64:
+      case ConvertSInt32ToFloat64:
+      case ConvertUInt32ToFloat64:
+      case ConvertSInt64ToFloat64:
+      case ConvertUInt64ToFloat64: ret->type = f64; break;
+      default: abort();
     }
     return ret;
   }

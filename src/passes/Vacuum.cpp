@@ -71,7 +71,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
       } else if (curr->ifTrue->is<Nop>()) {
         curr->ifTrue = curr->ifFalse;
         curr->ifFalse = nullptr;
-        curr->condition = Builder(*getModule()).makeUnary(EqZ, curr->condition, curr->condition->type);
+        curr->condition = Builder(*getModule()).makeUnary(EqZ, curr->condition);
       }
     }
     if (!curr->ifFalse) {

@@ -104,6 +104,8 @@ struct BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x);
 //
 // Some expressions have optional parameters, like Return may not
 // return a value. You can supply a NULL pointer in those cases.
+//
+// For more information, see wasm.h
 
 typedef int32_t BinaryenOp;
 
@@ -121,18 +123,28 @@ BinaryenOp BinaryenEqZ(void);
 BinaryenOp BinaryenExtendSInt32(void);
 BinaryenOp BinaryenExtentUInt32(void);
 BinaryenOp BinaryenWrapInt64(void);
-BinaryenOp BinaryenTruncSFloat32(void);
-BinaryenOp BinaryenTruncUFloat32(void);
-BinaryenOp BinaryenTruncSFloat64(void);
-BinaryenOp BinaryenTruncUFloat64(void);
-BinaryenOp BinaryenReinterpretFloat(void);
-BinaryenOp BinaryenConvertSInt32(void);
-BinaryenOp BinaryenConvertUInt32(void);
-BinaryenOp BinaryenConvertSInt64(void);
-BinaryenOp BinaryenConvertUInt64(void);
+BinaryenOp BinaryenTruncSFloat32ToInt32(void);
+BinaryenOp BinaryenTruncSFloat32ToInt64(void);
+BinaryenOp BinaryenTruncUFloat32ToInt32(void);
+BinaryenOp BinaryenTruncUFloat32ToInt64(void);
+BinaryenOp BinaryenTruncSFloat64ToInt32(void);
+BinaryenOp BinaryenTruncSFloat64ToInt64(void);
+BinaryenOp BinaryenTruncUFloat64ToInt32(void);
+BinaryenOp BinaryenTruncUFloat64ToInt64(void);
+BinaryenOp BinaryenReinterpretFloat32(void);
+BinaryenOp BinaryenReinterpretFloat64(void);
+BinaryenOp BinaryenConvertSInt32ToFloat32(void);
+BinaryenOp BinaryenConvertSInt32ToFloat64(void);
+BinaryenOp BinaryenConvertUInt32ToFloat32(void);
+BinaryenOp BinaryenConvertUInt32ToFloat64(void);
+BinaryenOp BinaryenConvertSInt64ToFloat32(void);
+BinaryenOp BinaryenConvertSInt64ToFloat64(void);
+BinaryenOp BinaryenConvertUInt64ToFloat32(void);
+BinaryenOp BinaryenConvertUInt64ToFloat64(void);
 BinaryenOp BinaryenPromoteFloat32(void);
 BinaryenOp BinaryenDemoteFloat64(void);
-BinaryenOp BinaryenReinterpretInt(void);
+BinaryenOp BinaryenReinterpretInt32(void);
+BinaryenOp BinaryenReinterpretInt64(void);
 BinaryenOp BinaryenAdd(void);
 BinaryenOp BinaryenSub(void);
 BinaryenOp BinaryenMul(void);
@@ -191,7 +203,7 @@ BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex i
 BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenType type, BinaryenExpressionRef ptr);
 BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, uint32_t align, BinaryenExpressionRef ptr, BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module, struct BinaryenLiteral value);
-BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef value, BinaryenType type);
+BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef left, BinaryenExpressionRef right);
 BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module, BinaryenExpressionRef condition, BinaryenExpressionRef ifTrue, BinaryenExpressionRef ifFalse);
 // Return: value can be NULL

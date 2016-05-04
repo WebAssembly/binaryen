@@ -732,8 +732,14 @@ enum UnaryOp {
   // relational
   EqZ,
   // conversions
-  ExtendSInt32, ExtendUInt32, WrapInt64, TruncSFloat32, TruncUFloat32, TruncSFloat64, TruncUFloat64, ReinterpretFloat, // int
-  ConvertSInt32, ConvertUInt32, ConvertSInt64, ConvertUInt64, PromoteFloat32, DemoteFloat64, ReinterpretInt // float
+  ExtendSInt32, ExtendUInt32, // extend i32 to i64
+  WrapInt64, // i64 to i32
+  TruncSFloat32ToInt32, TruncSFloat32ToInt64, TruncUFloat32ToInt32, TruncUFloat32ToInt64, TruncSFloat64ToInt32, TruncSFloat64ToInt64, TruncUFloat64ToInt32, TruncUFloat64ToInt64, // float to int
+  ReinterpretFloat32, ReinterpretFloat64, // reintepret bits to int
+  ConvertSInt32ToFloat32, ConvertSInt32ToFloat64, ConvertUInt32ToFloat32, ConvertUInt32ToFloat64, ConvertSInt64ToFloat32, ConvertSInt64ToFloat64, ConvertUInt64ToFloat32, ConvertUInt64ToFloat64, // int to float
+  PromoteFloat32, // f32 to f64
+  DemoteFloat64, // f64 to f32
+  ReinterpretInt32, ReinterpretInt64 // reinterpret bits to float
 };
 
 enum BinaryOp {

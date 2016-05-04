@@ -299,18 +299,28 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       case ExtendSInt32:     o << "extend_s/i32"; break;
       case ExtendUInt32:     o << "extend_u/i32"; break;
       case WrapInt64:        o << "wrap/i64"; break;
-      case TruncSFloat32:    o << "trunc_s/f32"; break;
-      case TruncUFloat32:    o << "trunc_u/f32"; break;
-      case TruncSFloat64:    o << "trunc_s/f64"; break;
-      case TruncUFloat64:    o << "trunc_u/f64"; break;
-      case ReinterpretFloat: o << "reinterpret/" << (curr->type == i64 ? "f64" : "f32"); break;
-      case ConvertUInt32:    o << "convert_u/i32"; break;
-      case ConvertSInt32:    o << "convert_s/i32"; break;
-      case ConvertUInt64:    o << "convert_u/i64"; break;
-      case ConvertSInt64:    o << "convert_s/i64"; break;
+      case TruncSFloat32ToInt32:
+      case TruncSFloat32ToInt64: o << "trunc_s/f32"; break;
+      case TruncUFloat32ToInt32:
+      case TruncUFloat32ToInt64: o << "trunc_u/f32"; break;
+      case TruncSFloat64ToInt32:
+      case TruncSFloat64ToInt64: o << "trunc_s/f64"; break;
+      case TruncUFloat64ToInt32:
+      case TruncUFloat64ToInt64: o << "trunc_u/f64"; break;
+      case ReinterpretFloat32:
+      case ReinterpretFloat64: o << "reinterpret/" << (curr->type == i64 ? "f64" : "f32"); break;
+      case ConvertUInt32ToFloat32:
+      case ConvertUInt32ToFloat64: o << "convert_u/i32"; break;
+      case ConvertSInt32ToFloat32:
+      case ConvertSInt32ToFloat64: o << "convert_s/i32"; break;
+      case ConvertUInt64ToFloat32:
+      case ConvertUInt64ToFloat64: o << "convert_u/i64"; break;
+      case ConvertSInt64ToFloat32:
+      case ConvertSInt64ToFloat64: o << "convert_s/i64"; break;
       case PromoteFloat32:   o << "promote/f32"; break;
       case DemoteFloat64:    o << "demote/f64"; break;
-      case ReinterpretInt:   o << "reinterpret/" << (curr->type == f64 ? "i64" : "i32"); break;
+      case ReinterpretInt32:
+      case ReinterpretInt64: o << "reinterpret/" << (curr->type == f64 ? "i64" : "i32"); break;
       default: abort();
     }
     incIndent();

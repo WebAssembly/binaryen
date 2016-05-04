@@ -1101,7 +1101,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         auto ret = process(ast[2]); // we are a +() coercion
         if (ret->type == i32) {
           auto conv = allocator.alloc<Unary>();
-          conv->op = isUnsignedCoercion(ast[2]) ? ConvertUInt32 : ConvertSInt32;
+          conv->op = isUnsignedCoercion(ast[2]) ? ConvertUInt32ToFloat64 : ConvertSInt32ToFloat64;
           conv->value = ret;
           conv->type = WasmType::f64;
           return conv;
@@ -1149,7 +1149,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           if (imprecise) {
             auto ret = allocator.alloc<Unary>();
             ret->value = process(ast[2][2]);
-            ret->op = ret->value->type == f64 ? TruncSFloat64 : TruncSFloat32; // imprecise, because this wasm thing might trap, while asm.js never would
+            ret->op = ret->value->type == f64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32; // imprecise, because this wasm thing might trap, while asm.js never would
             ret->type = WasmType::i32;
             return ret;
           } else {
@@ -1233,7 +1233,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           if (ret->value->type == f64) {
             ret->op = DemoteFloat64;
           } else if (ret->value->type == i32) {
-            ret->op = ConvertSInt32;
+            ret->op = ConvertSInt32ToFloat32;
           } else if (ret->value->type == f32) {
             return ret->value;
           } else if (ret->value->type == none) { // call, etc.
@@ -1564,7 +1564,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               Ref writtenValue = ast[1][3];
               if (writeType == ASM_INT && (readType == ASM_FLOAT || readType == ASM_DOUBLE)) {
                 auto conv = allocator.alloc<Unary>();
-                conv->op = ReinterpretInt;
+                conv->op = ReinterpretInt32;
                 conv->value = process(writtenValue);
                 conv->type = WasmType::f32;
                 if (readType == ASM_DOUBLE) {
@@ -1577,11 +1577,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 return conv;
               } else if (writeType == ASM_FLOAT && readType == ASM_INT) {
                 auto conv = allocator.alloc<Unary>();
-                conv->op = ReinterpretFloat;
+                conv->op = ReinterpretFloat32;
                 conv->value = process(writtenValue);
                 if (conv->value->type == f64) {
                   // this has an implicit f64->f32 in the write to memory
-                  conv->value = builder.makeUnary(DemoteFloat64, conv->value, f32);
+                  conv->value = builder.makeUnary(DemoteFloat64, conv->value);
                 }
                 conv->type = WasmType::i32;
                 return conv;
