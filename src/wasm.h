@@ -165,7 +165,13 @@ private:
     int64_t i64;
   };
 
-public:
+  // The RHS of shl/shru/shrs must be masked by bitwidth.
+  template <typename T>
+  static T shiftMask(T val) {
+    return val & (sizeof(T) * 8 - 1);
+  }
+
+ public:
   Literal() : type(WasmType::none), i64(0) {}
   explicit Literal(WasmType type) : type(type), i64(0) {}
   explicit Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
@@ -530,22 +536,22 @@ public:
   }
   Literal shl(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) << (other.i32 & 0x1f));
-      case WasmType::i64: return Literal(uint64_t(i64) << (other.i64 & 0x3f));
+      case WasmType::i32: return Literal(uint32_t(i32) << shiftMask(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) << shiftMask(other.i64));
       default: WASM_UNREACHABLE();
     }
   }
   Literal shrS(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(i32 >> (other.i32 & 0x1f));
-      case WasmType::i64: return Literal(i64 >> (other.i64 & 0x3f));
+      case WasmType::i32: return Literal(i32 >> shiftMask(other.i32));
+      case WasmType::i64: return Literal(i64 >> shiftMask(other.i64));
       default: WASM_UNREACHABLE();
     }
   }
   Literal shrU(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) >> uint32_t(other.i32 & 0x1f));
-      case WasmType::i64: return Literal(uint64_t(i64) >> uint64_t(other.i64 & 0x3f));
+      case WasmType::i32: return Literal(uint32_t(i32) >> shiftMask(other.i32));
+      case WasmType::i64: return Literal(uint64_t(i64) >> shiftMask(other.i64));
       default: WASM_UNREACHABLE();
     }
   }
