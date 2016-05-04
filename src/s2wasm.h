@@ -55,9 +55,10 @@ class S2WasmBuilder {
         linkerObj(nullptr)
         {}
 
-  void build(LinkerObject *obj, LinkerObject::SymbolInfo* info) {
-    if (!symbolInfo)
-      symbolInfo.reset(getSymbolInfo());
+  void build(LinkerObject *obj) {
+    // If getSymbolInfo has not already been called, populate the symbol
+    // info now.
+    if (!symbolInfo) symbolInfo.reset(getSymbolInfo());
     linkerObj = obj;
     wasm = &obj->wasm;
     allocator = &wasm->allocator;
@@ -66,6 +67,8 @@ class S2WasmBuilder {
     process();
   }
 
+  // getSymbolInfo scans the .s file to determine what symbols it defines
+  // and references.
   LinkerObject::SymbolInfo* getSymbolInfo() {
     if (!symbolInfo) {
       symbolInfo = make_unique<LinkerObject::SymbolInfo>();

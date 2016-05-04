@@ -50,8 +50,9 @@ uint32_t ArchiveMemberHeader::getSize() const {
   auto* end = static_cast<const char*>(memchr(size, ' ', sizeof(size)));
   std::string sizeString((const char*) size, end);
   auto sizeInt = std::stoll(sizeString, nullptr, 10);
-  if (sizeInt < 0 || sizeInt >= std::numeric_limits<uint32_t>::max())
+  if (sizeInt < 0 || sizeInt >= std::numeric_limits<uint32_t>::max()) {
     wasm::Fatal() << "Malformed archive: size parsing failed\n";
+  }
   return static_cast<uint32_t>(sizeInt);
 }
 
@@ -129,11 +130,11 @@ std::string Archive::Child::getRawName() const {
 Archive::Child Archive::Child::getNext(bool& error) const {
   size_t toSkip = len;
   // Members are aligned to even byte boundaries.
-  if (toSkip & 1)
-    ++toSkip;
+  if (toSkip & 1) ++toSkip;
   const uint8_t* nextLoc = data + toSkip;
-  if (nextLoc >= (uint8_t*)&*parent->data.end()) // End of the archive.
+  if (nextLoc >= (uint8_t*)&*parent->data.end()) { // End of the archive.
     return Child();
+  }
 
   return Child(parent, nextLoc, &error);
 }
@@ -142,17 +143,20 @@ std::string Archive::Child::getName() const {
   std::string name = getRawName();
   // Check if it's a special name.
   if (name[0] == '/') {
-    if (name.size() == 1) // Linker member.
+    if (name.size() == 1) {// Linker member.
       return name;
-    if (name.size() == 2 && name[1] == '/') // String table.
+    }
+    if (name.size() == 2 && name[1] == '/') {// String table.
       return name;
+    }
     // It's a long name.
     // Get the offset.
     int offset = std::stoi(name.substr(1), nullptr, 10);
 
     // Verify it.
-    if (offset < 0 || (unsigned)offset >= parent->stringTable.len)
+    if (offset < 0 || (unsigned)offset >= parent->stringTable.len) {
       wasm::Fatal() << "Malformed archive: name parsing failed\n";
+    }
 
     std::string addr(parent->stringTable.data + offset,
                      parent->stringTable.data + parent->stringTable.len);
@@ -162,15 +166,15 @@ std::string Archive::Child::getName() const {
     return addr.substr(0, end - 1);
   }
   // It's a simple name.
-  if (name[name.size() - 1] == '/')
+  if (name[name.size() - 1] == '/') {
     return name.substr(0, name.size() - 1);
+  }
   return name;
 }
 
 
 Archive::child_iterator Archive::child_begin(bool SkipInternal) const {
-  if (data.size() == 0)
-    return child_end();
+  if (data.size() == 0) return child_end();
 
   if (SkipInternal) {
     child_iterator it;

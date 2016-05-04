@@ -211,8 +211,12 @@ class Linker {
   void emscriptenGlue(std::ostream& o);
 
   // Add an object to the link by constructing it in-place with a builder.
+  // Returns false if an error occurred.
   bool linkObject(S2WasmBuilder& builder);
 
+  // Add an archive to the link. Any objects in the archive that satisfy a
+  // currently-undefined reference will be added to the link.
+  // Returns false if an error occurred.
   bool linkArchive(Archive& archive);
 
  private:

@@ -55,7 +55,7 @@ void Linker::layout() {
   // Convert calls to undefined functions to call_imports
   for (const auto& f : out.undefinedFunctionCalls) {
     Name target = f.first;
-    if(!out.symbolInfo.undefinedFunctions.count(target)) continue;
+    if (!out.symbolInfo.undefinedFunctions.count(target)) continue;
     // Create an import for the target if necessary.
     if (!out.wasm.checkImport(target)) {
       auto import = new Import;
@@ -212,7 +212,7 @@ bool Linker::linkObject(S2WasmBuilder& builder) {
     }
   }
   out.symbolInfo.merge(*newSymbols);
-  builder.build(&out, &out.symbolInfo);
+  builder.build(&out);
   return true;
 }
 
@@ -229,7 +229,7 @@ bool Linker::linkArchive(Archive& archive) {
     auto* memberSymbols = memberBuilder.getSymbolInfo();
     for (const Name& symbol : memberSymbols->implementedFunctions) {
       if (out.symbolInfo.undefinedFunctions.count(symbol)) {
-        if(!linkObject(memberBuilder)) return false;
+        if (!linkObject(memberBuilder)) return false;
         break;
       }
     }

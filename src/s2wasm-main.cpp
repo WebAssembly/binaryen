@@ -114,7 +114,7 @@ int main(int argc, const char *argv[]) {
   S2WasmBuilder mainbuilder(input.c_str(), options.debug);
   linker.linkObject(mainbuilder);
 
-  for(const auto& m : archiveLibraries) {
+  for (const auto& m : archiveLibraries) {
     auto archiveFile(read_file<std::vector<char>>(m, Flags::Binary, debugFlag));
     bool error;
     Archive lib(archiveFile, error);
