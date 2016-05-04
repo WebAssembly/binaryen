@@ -406,11 +406,13 @@ private:
             case Ctz:            return value.countTrailingZeroes();
             case Popcnt:         return value.popCount();
             case EqZ:            return Literal(int32_t(value == Literal(int32_t(0))));
-            case ReinterpretInt: return value.castToF32();
+            case ReinterpretInt32: return value.castToF32();
             case ExtendSInt32:   return value.extendToSI64();
             case ExtendUInt32:   return value.extendToUI64();
-            case ConvertUInt32:  return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();
-            case ConvertSInt32:  return curr->type == f32 ? value.convertSToF32() : value.convertSToF64();
+            case ConvertUInt32ToFloat32: return value.convertUToF32();
+            case ConvertUInt32ToFloat64: return value.convertUToF64();
+            case ConvertSInt32ToFloat32: return value.convertSToF32();
+            case ConvertSInt32ToFloat64: return value.convertSToF64();
             default: abort();
           }
         }
@@ -421,9 +423,11 @@ private:
             case Popcnt:         return value.popCount();
             case EqZ:            return Literal(int32_t(value == Literal(int64_t(0))));
             case WrapInt64:      return value.truncateToI32();
-            case ReinterpretInt: return value.castToF64();
-            case ConvertUInt64:  return curr->type == f32 ? value.convertUToF32() : value.convertUToF64();
-            case ConvertSInt64:  return curr->type == f32 ? value.convertSToF32() : value.convertSToF64();
+            case ReinterpretInt64: return value.castToF64();
+            case ConvertUInt64ToFloat32: return value.convertUToF32();
+            case ConvertUInt64ToFloat64: return value.convertUToF64();
+            case ConvertSInt64ToFloat32: return value.convertSToF32();
+            case ConvertSInt64ToFloat64: return value.convertSToF64();
             default: abort();
           }
         }
@@ -436,9 +440,11 @@ private:
             case Trunc:            return value.trunc();
             case Nearest:          return value.nearbyint();
             case Sqrt:             return value.sqrt();
-            case TruncSFloat32:    return truncSFloat(curr, value);
-            case TruncUFloat32:    return truncUFloat(curr, value);
-            case ReinterpretFloat: return value.castToI32();
+            case TruncSFloat32ToInt32:
+            case TruncSFloat32ToInt64: return truncSFloat(curr, value);
+            case TruncUFloat32ToInt32:
+            case TruncUFloat32ToInt64: return truncUFloat(curr, value);
+            case ReinterpretFloat32: return value.castToI32();
             case PromoteFloat32:   return value.extendToF64();
             default: abort();
           }
@@ -452,9 +458,11 @@ private:
             case Trunc:            return value.trunc();
             case Nearest:          return value.nearbyint();
             case Sqrt:             return value.sqrt();
-            case TruncSFloat64:    return truncSFloat(curr, value);
-            case TruncUFloat64:    return truncUFloat(curr, value);
-            case ReinterpretFloat: return value.castToI64();
+            case TruncSFloat64ToInt32:
+            case TruncSFloat64ToInt64: return truncSFloat(curr, value);
+            case TruncUFloat64ToInt32:
+            case TruncUFloat64ToInt64: return truncUFloat(curr, value);
+            case ReinterpretFloat64: return value.castToI64();
             case DemoteFloat64: {
               double val = value.getFloat();
               if (std::isnan(val)) return Literal(float(val));

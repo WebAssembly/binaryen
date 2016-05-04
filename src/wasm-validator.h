@@ -123,18 +123,28 @@ public:
       case ExtendSInt32:
       case ExtendUInt32:
       case WrapInt64:
-      case TruncSFloat32:
-      case TruncUFloat32:
-      case TruncSFloat64:
-      case TruncUFloat64:
-      case ReinterpretFloat:
-      case ConvertUInt32:
-      case ConvertSInt32:
-      case ConvertUInt64:
-      case ConvertSInt64:
+      case TruncSFloat32ToInt32:
+      case TruncSFloat32ToInt64:
+      case TruncUFloat32ToInt32:
+      case TruncUFloat32ToInt64:
+      case TruncSFloat64ToInt32:
+      case TruncSFloat64ToInt64:
+      case TruncUFloat64ToInt32:
+      case TruncUFloat64ToInt64:
+      case ReinterpretFloat32:
+      case ReinterpretFloat64:
+      case ConvertUInt32ToFloat32:
+      case ConvertUInt32ToFloat64:
+      case ConvertSInt32ToFloat32:
+      case ConvertSInt32ToFloat64:
+      case ConvertUInt64ToFloat32:
+      case ConvertUInt64ToFloat64:
+      case ConvertSInt64ToFloat32:
+      case ConvertSInt64ToFloat64:
       case PromoteFloat32:
       case DemoteFloat64:
-      case ReinterpretInt: {
+      case ReinterpretInt32:
+      case ReinterpretInt64: {
         //if (curr->value->type != unreachable) {
           shouldBeUnequal(curr->value->type, curr->type, curr, "conversion unaries must not return the same type");
         //}

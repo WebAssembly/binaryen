@@ -757,10 +757,10 @@ class S2WasmBuilder {
             }
           }
           else if (match("call")) makeCall(type);
-          else if (match("convert_s/i32")) makeUnary(UnaryOp::ConvertSInt32, type);
-          else if (match("convert_u/i32")) makeUnary(UnaryOp::ConvertUInt32, type);
-          else if (match("convert_s/i64")) makeUnary(UnaryOp::ConvertSInt64, type);
-          else if (match("convert_u/i64")) makeUnary(UnaryOp::ConvertUInt64, type);
+          else if (match("convert_s/i32")) makeUnary(type == f32 ? UnaryOp::ConvertSInt32ToFloat32 : UnaryOp::ConvertSInt32ToFloat64, type);
+          else if (match("convert_u/i32")) makeUnary(type == f32 ? UnaryOp::ConvertUInt32ToFloat32 : UnaryOp::ConvertUInt32ToFloat64, type);
+          else if (match("convert_s/i64")) makeUnary(type == f32 ? UnaryOp::ConvertSInt64ToFloat32 : UnaryOp::ConvertSInt64ToFloat64, type);
+          else if (match("convert_u/i64")) makeUnary(type == f32 ? UnaryOp::ConvertUInt64ToFloat32 : UnaryOp::ConvertUInt64ToFloat64, type);
           else if (match("clz")) makeUnary(UnaryOp::Clz, type);
           else if (match("ctz")) makeUnary(UnaryOp::Ctz, type);
           else if (match("copysign")) makeBinary(BinaryOp::CopySign, type);
@@ -838,8 +838,10 @@ class S2WasmBuilder {
         case 'r': {
           if (match("rem_s")) makeBinary(BinaryOp::RemS, type);
           else if (match("rem_u")) makeBinary(BinaryOp::RemU, type);
-          else if (match("reinterpret/i32") || match("reinterpret/i64")) makeUnary(UnaryOp::ReinterpretInt, type);
-          else if (match("reinterpret/f32") || match("reinterpret/f64")) makeUnary(UnaryOp::ReinterpretFloat, type);
+          else if (match("reinterpret/i32")) makeUnary(UnaryOp::ReinterpretInt32, type);
+          else if (match("reinterpret/i64")) makeUnary(UnaryOp::ReinterpretInt64, type);
+          else if (match("reinterpret/f32")) makeUnary(UnaryOp::ReinterpretFloat32, type);
+          else if (match("reinterpret/f64")) makeUnary(UnaryOp::ReinterpretFloat64, type);
           else if (match("rotl")) makeBinary(BinaryOp::RotL, type);
           else if (match("rotr")) makeBinary(BinaryOp::RotR, type);
           else abort_on("type.r");
@@ -857,10 +859,10 @@ class S2WasmBuilder {
           break;
         }
         case 't': {
-          if (match("trunc_s/f32")) makeUnary(UnaryOp::TruncSFloat32, type);
-          else if (match("trunc_u/f32")) makeUnary(UnaryOp::TruncUFloat32, type);
-          else if (match("trunc_s/f64")) makeUnary(UnaryOp::TruncSFloat64, type);
-          else if (match("trunc_u/f64")) makeUnary(UnaryOp::TruncUFloat64, type);
+          if (match("trunc_s/f32")) makeUnary(type == i32 ? UnaryOp::TruncSFloat32ToInt32 : UnaryOp::TruncSFloat32ToInt64, type);
+          else if (match("trunc_u/f32")) makeUnary(type == i32 ? UnaryOp::TruncUFloat32ToInt32 : UnaryOp::TruncUFloat32ToInt64, type);
+          else if (match("trunc_s/f64")) makeUnary(type == i32 ? UnaryOp::TruncSFloat64ToInt32 : UnaryOp::TruncSFloat64ToInt64, type);
+          else if (match("trunc_u/f64")) makeUnary(type == i32 ? UnaryOp::TruncUFloat64ToInt32 : UnaryOp::TruncUFloat64ToInt64, type);
           else if (match("trunc")) makeUnary(UnaryOp::Trunc, type);
           else abort_on("type.t");
           break;

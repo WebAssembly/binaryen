@@ -10,11 +10,11 @@
 
 // helpers
 
-BinaryenExpressionRef makeUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenType inputType, BinaryenType outputType) {
-  if (inputType == BinaryenInt32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)), outputType);
-  if (inputType == BinaryenInt64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)), outputType);
-  if (inputType == BinaryenFloat32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612)), outputType);
-  if (inputType == BinaryenFloat64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)), outputType);
+BinaryenExpressionRef makeUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenType inputType) {
+  if (inputType == BinaryenInt32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)));
+  if (inputType == BinaryenInt64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)));
+  if (inputType == BinaryenFloat32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612)));
+  if (inputType == BinaryenFloat64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)));
   abort();
 }
 
@@ -81,32 +81,42 @@ int main() {
 
   BinaryenExpressionRef bodyList[] = {
     // Unary
-    makeUnary(module, BinaryenClz(), 1, 1),
-    makeUnary(module, BinaryenCtz(), 2, 2),
-    makeUnary(module, BinaryenPopcnt(), 1, 1),
-    makeUnary(module, BinaryenNeg(), 3, 3),
-    makeUnary(module, BinaryenAbs(), 4, 3),
-    makeUnary(module, BinaryenCeil(), 3, 3),
-    makeUnary(module, BinaryenFloor(), 4, 4),
-    makeUnary(module, BinaryenTrunc(), 3, 3),
-    makeUnary(module, BinaryenNearest(), 3, 3),
-    makeUnary(module, BinaryenSqrt(), 4, 4),
-    makeUnary(module, BinaryenEqZ(), 1, 1),
-    makeUnary(module, BinaryenExtendSInt32(), 1, 2),
-    makeUnary(module, BinaryenExtentUInt32(), 1, 2),
-    makeUnary(module, BinaryenWrapInt64(), 2, 1),
-    makeUnary(module, BinaryenTruncSFloat32(), 3, 1),
-    makeUnary(module, BinaryenTruncUFloat32(), 3, 2),
-    makeUnary(module, BinaryenTruncSFloat64(), 4, 2),
-    makeUnary(module, BinaryenTruncUFloat64(), 4, 1),
-    makeUnary(module, BinaryenReinterpretFloat(), 3, 1),
-    makeUnary(module, BinaryenConvertSInt32(), 1, 3),
-    makeUnary(module, BinaryenConvertUInt32(), 1, 4),
-    makeUnary(module, BinaryenConvertSInt64(), 2, 3),
-    makeUnary(module, BinaryenConvertUInt64(), 2, 4),
-    makeUnary(module, BinaryenPromoteFloat32(), 3, 4),
-    makeUnary(module, BinaryenDemoteFloat64(), 4, 3),
-    makeUnary(module, BinaryenReinterpretInt(), 1, 3),
+    makeUnary(module, BinaryenClz(), 1),
+    makeUnary(module, BinaryenCtz(), 2),
+    makeUnary(module, BinaryenPopcnt(), 1),
+    makeUnary(module, BinaryenNeg(), 3),
+    makeUnary(module, BinaryenAbs(), 4),
+    makeUnary(module, BinaryenCeil(), 3),
+    makeUnary(module, BinaryenFloor(), 4),
+    makeUnary(module, BinaryenTrunc(), 3),
+    makeUnary(module, BinaryenNearest(), 3),
+    makeUnary(module, BinaryenSqrt(), 4),
+    makeUnary(module, BinaryenEqZ(), 1),
+    makeUnary(module, BinaryenExtendSInt32(), 1),
+    makeUnary(module, BinaryenExtentUInt32(), 1),
+    makeUnary(module, BinaryenWrapInt64(), 2),
+    makeUnary(module, BinaryenTruncSFloat32ToInt32(), 3),
+    makeUnary(module, BinaryenTruncSFloat32ToInt64(), 3),
+    makeUnary(module, BinaryenTruncUFloat32ToInt32(), 3),
+    makeUnary(module, BinaryenTruncUFloat32ToInt64(), 3),
+    makeUnary(module, BinaryenTruncSFloat64ToInt32(), 4),
+    makeUnary(module, BinaryenTruncSFloat64ToInt64(), 4),
+    makeUnary(module, BinaryenTruncUFloat64ToInt32(), 4),
+    makeUnary(module, BinaryenTruncUFloat64ToInt64(), 4),
+    makeUnary(module, BinaryenReinterpretFloat32(), 3),
+    makeUnary(module, BinaryenReinterpretFloat64(), 4),
+    makeUnary(module, BinaryenConvertSInt32ToFloat32(), 1),
+    makeUnary(module, BinaryenConvertSInt32ToFloat64(), 1),
+    makeUnary(module, BinaryenConvertUInt32ToFloat32(), 1),
+    makeUnary(module, BinaryenConvertUInt32ToFloat64(), 1),
+    makeUnary(module, BinaryenConvertSInt64ToFloat32(), 2),
+    makeUnary(module, BinaryenConvertSInt64ToFloat64(), 2),
+    makeUnary(module, BinaryenConvertUInt64ToFloat32(), 2),
+    makeUnary(module, BinaryenConvertUInt64ToFloat64(), 2),
+    makeUnary(module, BinaryenPromoteFloat32(), 3),
+    makeUnary(module, BinaryenDemoteFloat64(), 4),
+    makeUnary(module, BinaryenReinterpretInt32(), 1),
+    makeUnary(module, BinaryenReinterpretInt64(), 1),
     // Binary
     makeBinary(module, BinaryenAdd(), 1),
     makeBinary(module, BinaryenSub(), 4),

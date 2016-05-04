@@ -108,18 +108,28 @@ BinaryenOp BinaryenEqZ(void) { return EqZ; }
 BinaryenOp BinaryenExtendSInt32(void) { return ExtendSInt32; }
 BinaryenOp BinaryenExtentUInt32(void) { return ExtendUInt32; }
 BinaryenOp BinaryenWrapInt64(void) { return WrapInt64; }
-BinaryenOp BinaryenTruncSFloat32(void) { return TruncSFloat32; }
-BinaryenOp BinaryenTruncUFloat32(void) { return TruncUFloat32; }
-BinaryenOp BinaryenTruncSFloat64(void) { return TruncSFloat64; }
-BinaryenOp BinaryenTruncUFloat64(void) { return TruncUFloat64; }
-BinaryenOp BinaryenReinterpretFloat(void) { return ReinterpretFloat; }
-BinaryenOp BinaryenConvertSInt32(void) { return ConvertSInt32; }
-BinaryenOp BinaryenConvertUInt32(void) { return ConvertUInt32; }
-BinaryenOp BinaryenConvertSInt64(void) { return ConvertSInt64; }
-BinaryenOp BinaryenConvertUInt64(void) { return ConvertUInt64; }
+BinaryenOp BinaryenTruncSFloat32ToInt32(void) { return TruncSFloat32ToInt32; }
+BinaryenOp BinaryenTruncSFloat32ToInt64(void) { return TruncSFloat32ToInt64; }
+BinaryenOp BinaryenTruncUFloat32ToInt32(void) { return TruncUFloat32ToInt32; }
+BinaryenOp BinaryenTruncUFloat32ToInt64(void) { return TruncUFloat32ToInt64; }
+BinaryenOp BinaryenTruncSFloat64ToInt32(void) { return TruncSFloat64ToInt32; }
+BinaryenOp BinaryenTruncSFloat64ToInt64(void) { return TruncSFloat64ToInt64; }
+BinaryenOp BinaryenTruncUFloat64ToInt32(void) { return TruncUFloat64ToInt32; }
+BinaryenOp BinaryenTruncUFloat64ToInt64(void) { return TruncUFloat64ToInt64; }
+BinaryenOp BinaryenReinterpretFloat32(void) { return ReinterpretFloat32; }
+BinaryenOp BinaryenReinterpretFloat64(void) { return ReinterpretFloat64; }
+BinaryenOp BinaryenConvertSInt32ToFloat32(void) { return ConvertSInt32ToFloat32; }
+BinaryenOp BinaryenConvertSInt32ToFloat64(void) { return ConvertSInt32ToFloat64; }
+BinaryenOp BinaryenConvertUInt32ToFloat32(void) { return ConvertUInt32ToFloat32; }
+BinaryenOp BinaryenConvertUInt32ToFloat64(void) { return ConvertUInt32ToFloat64; }
+BinaryenOp BinaryenConvertSInt64ToFloat32(void) { return ConvertSInt64ToFloat32; }
+BinaryenOp BinaryenConvertSInt64ToFloat64(void) { return ConvertSInt64ToFloat64; }
+BinaryenOp BinaryenConvertUInt64ToFloat32(void) { return ConvertUInt64ToFloat32; }
+BinaryenOp BinaryenConvertUInt64ToFloat64(void) { return ConvertUInt64ToFloat64; }
 BinaryenOp BinaryenPromoteFloat32(void) { return PromoteFloat32; }
 BinaryenOp BinaryenDemoteFloat64(void) { return DemoteFloat64; }
-BinaryenOp BinaryenReinterpretInt(void) { return ReinterpretInt; }
+BinaryenOp BinaryenReinterpretInt32(void) { return ReinterpretInt32; }
+BinaryenOp BinaryenReinterpretInt64(void) { return ReinterpretInt64; }
 BinaryenOp BinaryenAdd(void) { return Add; }
 BinaryenOp BinaryenSub(void) { return Sub; }
 BinaryenOp BinaryenMul(void) { return Mul; }
@@ -261,8 +271,8 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module, BinaryenLiteral value) {
   return Builder(*((Module*)module)).makeConst(fromBinaryenLiteral(value));
 }
-BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef value, BinaryenType type) {
-  return Builder(*((Module*)module)).makeUnary(UnaryOp(op), (Expression*)value, WasmType(type));
+BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef value) {
+  return Builder(*((Module*)module)).makeUnary(UnaryOp(op), (Expression*)value);
 }
 BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef left, BinaryenExpressionRef right) {
   return Builder(*((Module*)module)).makeBinary(BinaryOp(op), (Expression*)left, (Expression*)right);
