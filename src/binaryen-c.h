@@ -198,6 +198,16 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **name
 BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenFunctionTypeRef type);
+// GetLocal: Note the 'type' parameter. It might seem redundant, since the
+//           local at that index must have a type. However, this API lets you
+//           build code "top-down": create a node, then its parents, and so
+//           on, and finally create the function at the end. (Note that in fact
+//           you do not mention a function when creating ExpressionRefs, only
+//           a module.) And since GetLocal is a leaf node, we need to be told
+//           its type. (Other nodes detect their type either from their
+//           type or their opcode, or failing that, their children. But
+//           GetLocal has no children, it is where a "stream" of type info
+//           begins.)
 BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenType type);
 BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenType type, BinaryenExpressionRef ptr);
