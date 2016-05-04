@@ -17,7 +17,8 @@
 /* Minimal class for interacting with archives. The API is inspired by LLVM's
  * Archive class, (in case we want to switch to using that at some point);
  * however we are missing useful error-handling capabilities and other utilities
- * that LLVM has (e.g. ErrorOr, MemoryBuffer, StringRef)
+ * that LLVM has (e.g. ErrorOr, MemoryBuffer, StringRef).
+ * We only support the GNU format (not the BSD or COFF variants)
  */
 
 #ifndef wasm_support_archive_h
