@@ -801,7 +801,9 @@ public:
   WasmType type; // the type of the expression: its *output*, not necessarily its input(s)
 
   Expression(Id id) : _id(id), type(none) {}
- 
+
+  void finalize() {}
+
   template<class T>
   bool is() {
     return int(_id) == int(T::SpecificId);
@@ -1011,6 +1013,8 @@ public:
   uint32_t offset;
   uint32_t align;
   Expression *ptr;
+
+  // type must be set during creation, cannot be inferred
 };
 
 class Store : public SpecificExpression<Expression::StoreId> {
@@ -1022,6 +1026,10 @@ public:
   uint32_t offset;
   unsigned align;
   Expression *ptr, *value;
+
+  void finalize() {
+    type = value->type;
+  }
 };
 
 class Const : public SpecificExpression<Expression::ConstId> {

@@ -569,21 +569,33 @@ if has_vanilla_emcc and has_vanilla_llvm:
 
 print '\n[ checking example testcases... ]\n'
 
-cmd = [os.environ.get('CXX') or 'g++', '-std=c++11',
-       os.path.join('test', 'example', 'find_div0s.cpp'),
-       os.path.join('src', 'pass.cpp'),
-       os.path.join('src', 'wasm.cpp'),
-       os.path.join('src', 'passes', 'Print.cpp'),
-       '-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
-if os.environ.get('COMPILER_FLAGS'):
-  for f in os.environ.get('COMPILER_FLAGS').split(' '):
-    cmd.append(f)
-print ' '.join(cmd)
-subprocess.check_call(cmd)
-actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
-expected = open(os.path.join('test', 'example', 'find_div0s.txt')).read()
-if actual != expected:
-  fail(actual, expected)
+for t in sorted(os.listdir(os.path.join('test', 'example'))):
+  cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
+  if t.endswith('.cpp'):
+    cmd = [os.path.join('test', 'example', t),
+           os.path.join('src', 'pass.cpp'),
+           os.path.join('src', 'wasm.cpp'),
+           os.path.join('src', 'passes', 'Print.cpp')] + cmd
+  elif t.endswith('.c'):
+    # build the C file separately
+    extra = [os.environ.get('CC') or 'gcc',
+             os.path.join('test', 'example', t), '-c', '-o', 'example.o',
+             '-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
+    print ' '.join(extra)
+    subprocess.check_call(extra)
+    cmd = ['example.o', '-lbinaryen-c'] + cmd
+  else:
+    continue
+  if os.environ.get('COMPILER_FLAGS'):
+    for f in os.environ.get('COMPILER_FLAGS').split(' '):
+      cmd.append(f)
+  cmd = [os.environ.get('CXX') or 'g++', '-std=c++11'] + cmd
+  print ' '.join(cmd)
+  subprocess.check_call(cmd)
+  actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
+  expected = open(os.path.join('test', 'example', '.'.join(t.split('.')[:-1]) + '.txt')).read()
+  if actual != expected:
+    fail(actual, expected)
 
 if has_emcc:
 

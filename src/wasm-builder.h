@@ -79,8 +79,18 @@ public:
     ret->finalize();
     return ret;
   }
-  // Loop
-  // Break
+  Loop* makeLoop(Name out, Name in, Expression* body) {
+    auto* ret = allocator.alloc<Loop>();
+    ret->out = out; ret->in = in; ret->body = body;
+    ret->finalize();
+    return ret;
+  }
+  Break* makeBreak(Name name, Expression* value=nullptr, Expression* condition=nullptr) {
+    auto* ret = allocator.alloc<Break>();
+    ret->name = name; ret->value = value; ret->condition = condition;
+    ret->finalize();
+    return ret;
+  }
   // Switch
   // CallBase
   // Call
