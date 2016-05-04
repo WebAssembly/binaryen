@@ -165,7 +165,7 @@ private:
     int64_t i64;
   };
 
-  // The RHS of shl/shru/shrs must be masked by bidwidth.
+  // The RHS of shl/shru/shrs must be masked by bitwidth.
   template <typename T>
   static T shiftMask(T val) {
     return val & (sizeof(T) * 8 - 1);
