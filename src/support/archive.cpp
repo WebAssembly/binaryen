@@ -37,11 +37,14 @@ class ArchiveMemberHeader {
 };
 
 std::string ArchiveMemberHeader::getName() const {
+  char endChar;
   if (fileName[0] == '/') {
-    assert(fileName[1] == '/');
-    return "//";
+    // Special name (string table or reference, or symbol table)
+    endChar = ' ';
+  } else {
+    endChar = '/'; // regular name
   }
-  auto* end = static_cast<const uint8_t*>(memchr(fileName, '/', sizeof(fileName)));
+  auto* end = static_cast<const uint8_t*>(memchr(fileName, endChar, sizeof(fileName)));
   if (!end) end = fileName + sizeof(fileName);
   return std::string((char*)(fileName), end - fileName);
 }
@@ -216,6 +219,7 @@ void Archive::dump() const {
   printf("Archive data %p len %lu, firstRegularData %p\n",
          data.data(), data.size(), firstRegularData);
   printf("Symbol table %p, len %u\n", symbolTable.data, symbolTable.len);
+  printf("string table %p, len %u\n", stringTable.data, stringTable.len);
   const uint8_t* buf = symbolTable.data;
   if (!buf) {
     for (auto c = child_begin(), e = child_end(); c != e; ++c) {

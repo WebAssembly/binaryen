@@ -512,6 +512,12 @@ fail_if_not_contained(output, '(func $bar')
 if 'baz' in output:
   raise Exception('output should not contain "baz": ' + output)
 
+# Test an archive using a string table
+cmd = [s2wasm, os.path.join('test', 'linker', 'main.s'), '-l', os.path.join('test', 'linker', 'archive', 'barlong.a')]
+output = run_command(cmd)
+# bar should be linked from the archive
+fail_if_not_contained(output, '(func $bar')
+
 
 if torture:
 
