@@ -46,9 +46,9 @@ BinaryenExpressionRef makeSomething(BinaryenModuleRef module) {
   return makeInt32(module, 1337);
 }
 
-// main
+// tests
 
-int main() {
+void test_core() {
 
   // Core types
 
@@ -219,5 +219,126 @@ int main() {
 
   // Clean up the module, which owns all the objects we created above
   BinaryenModuleDispose(module);
+}
+
+void test_relooper() {
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
+  BinaryenType localTypes[] = { BinaryenInt32() };
+
+  { // trivial: just one block
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block = RelooperAddBlock(relooper, makeSomething(module));
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "just-one-block", v, localTypes, 1, body);
+  }
+  { // two blocks
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperAddBranch(block0, block1, NULL, NULL); // no condition, no code on branch
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "two-blocks", v, localTypes, 1, body);
+  }
+  { // two blocks with code between them
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperAddBranch(block0, block1, NULL, makeInt32(module, 77)); // code on branch
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "two-blocks-plus-code", v, localTypes, 1, body);
+  }
+  { // two blocks in a loop
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperAddBranch(block0, block1, NULL, NULL);
+    RelooperAddBranch(block1, block0, NULL, NULL);
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "loop", v, localTypes, 1, body);
+  }
+  { // two blocks in a loop with codes
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperAddBranch(block0, block1, NULL, makeInt32(module, 33));
+    RelooperAddBranch(block1, block0, NULL, makeInt32(module, -66));
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "loop-plus-code", v, localTypes, 1, body);
+  }
+  { // split
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
+    RelooperAddBranch(block0, block1, makeInt32(module, 55), NULL);
+    RelooperAddBranch(block0, block2, NULL, NULL);
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "split", v, localTypes, 1, body);
+  }
+  { // split + code
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
+    RelooperAddBranch(block0, block1, makeInt32(module, 55), makeInt32(module, 10));
+    RelooperAddBranch(block0, block2, NULL, makeInt32(module, 20));
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "split-plus-code", v, localTypes, 1, body);
+  }
+  { // if
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
+    RelooperAddBranch(block0, block1, makeInt32(module, 55), NULL);
+    RelooperAddBranch(block0, block2, NULL, NULL);
+    RelooperAddBranch(block1, block2, NULL, NULL);
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "if", v, localTypes, 1, body);
+  }
+  { // if + code
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
+    RelooperAddBranch(block0, block1, makeInt32(module, 55), makeInt32(module, -1));
+    RelooperAddBranch(block0, block2, NULL, makeInt32(module, -2));
+    RelooperAddBranch(block1, block2, NULL, makeInt32(module, -3));
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "if-plus-code", v, localTypes, 1, body);
+  }
+  { // if-else
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
+    RelooperBlockRef block3 = RelooperAddBlock(relooper, makeInt32(module, 3));
+    RelooperAddBranch(block0, block1, makeInt32(module, 55), NULL);
+    RelooperAddBranch(block0, block2, NULL, NULL);
+    RelooperAddBranch(block1, block3, NULL, NULL);
+    RelooperAddBranch(block2, block3, NULL, NULL);
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "if-else", v, localTypes, 1, body);
+  }
+  { // loop+tail
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
+    RelooperAddBranch(block0, block1, NULL, NULL);
+    RelooperAddBranch(block1, block0, makeInt32(module, 10), NULL);
+    RelooperAddBranch(block1, block2, NULL, NULL);
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "loop-tail", v, localTypes, 1, body);
+  }
+
+  BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
+}
+
+int main() {
+  test_core();
+  test_relooper();
 }
 

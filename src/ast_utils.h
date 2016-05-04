@@ -119,6 +119,23 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   void visitUnreachable(Unreachable *curr) { branches = true; }
 };
 
+// Meausure the size of an AST
+struct Measurer : public PostWalker<Measurer, UnifiedExpressionVisitor<Measurer>> {
+  size_t size = 0;
+
+  void visitExpression(Expression* curr) {
+    size++;
+  }
+
+  static bool measure(Expression* tree) {
+    Measurer measurer;
+    measurer.walk(tree);
+    return measurer.size;
+  }
+};
+
+// Manipulate expressions
+
 struct ExpressionManipulator {
   // Re-use a node's memory. This helps avoid allocation when optimizing.
   template<typename InputType, typename OutputType>

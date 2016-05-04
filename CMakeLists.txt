@@ -92,6 +92,7 @@ ADD_LIBRARY(support STATIC ${support_SOURCES})
 
 SET(binaryen_c_SOURCES
   src/binaryen-c.cpp
+  src/cfg/Relooper.cpp
   src/pass.cpp
   src/passes/Print.cpp
   src/wasm.cpp

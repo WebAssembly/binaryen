@@ -346,3 +346,190 @@ BinaryenFloat64: 4
     )
   )
 )
+(module
+  (memory 0)
+  (type $v (func))
+  (func $just-one-block (type $v)
+    (local $0 i32)
+    (i32.const 1337)
+  )
+  (func $two-blocks (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+    )
+    (block
+      (i32.const 1)
+    )
+  )
+  (func $two-blocks-plus-code (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+      (block
+        (i32.const 77)
+      )
+    )
+    (block
+      (i32.const 1)
+    )
+  )
+  (func $loop (type $v)
+    (local $0 i32)
+    (loop $shape$0$break $shape$0$continue
+      (block
+        (i32.const 0)
+      )
+      (block
+        (i32.const 1)
+        (block
+          (br $shape$0$continue)
+        )
+      )
+    )
+  )
+  (func $loop-plus-code (type $v)
+    (local $0 i32)
+    (loop $shape$0$break $shape$0$continue
+      (block
+        (i32.const 0)
+        (block
+          (i32.const 33)
+        )
+      )
+      (block
+        (i32.const 1)
+        (block
+          (i32.const -66)
+          (br $shape$0$continue)
+        )
+      )
+    )
+  )
+  (func $split (type $v)
+    (local $0 i32)
+    (i32.const 0)
+    (block $shape$1$break
+      (if
+        (i32.const 55)
+        (block
+          (i32.const 1)
+        )
+        (block
+          (i32.const 2)
+        )
+      )
+    )
+  )
+  (func $split-plus-code (type $v)
+    (local $0 i32)
+    (i32.const 0)
+    (block $shape$1$break
+      (if
+        (i32.const 55)
+        (block
+          (i32.const 10)
+          (block
+            (i32.const 1)
+          )
+        )
+        (block
+          (i32.const 20)
+          (block
+            (i32.const 2)
+          )
+        )
+      )
+    )
+  )
+  (func $if (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+      (block $shape$1$break
+        (if
+          (i32.const 55)
+          (block
+            (i32.const 1)
+            (block
+              (br $shape$1$break)
+            )
+          )
+        )
+      )
+    )
+    (block
+      (i32.const 2)
+    )
+  )
+  (func $if-plus-code (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+      (block $shape$1$break
+        (if
+          (i32.const 55)
+          (block
+            (i32.const -1)
+            (block
+              (i32.const 1)
+              (block
+                (i32.const -3)
+                (br $shape$1$break)
+              )
+            )
+          )
+          (i32.const -2)
+        )
+      )
+    )
+    (block
+      (i32.const 2)
+    )
+  )
+  (func $if-else (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+      (block $shape$1$break
+        (if
+          (i32.const 55)
+          (block
+            (i32.const 1)
+            (block
+              (br $shape$1$break)
+            )
+          )
+          (block
+            (i32.const 2)
+            (block
+              (br $shape$1$break)
+            )
+          )
+        )
+      )
+    )
+    (block
+      (i32.const 3)
+    )
+  )
+  (func $loop-tail (type $v)
+    (local $0 i32)
+    (loop $shape$0$break $shape$0$continue
+      (block
+        (i32.const 0)
+      )
+      (block
+        (i32.const 1)
+        (if
+          (i32.const 10)
+          (br $shape$0$continue)
+          (br $shape$0$break)
+        )
+      )
+    )
+    (block
+      (i32.const 2)
+    )
+  )
+)
