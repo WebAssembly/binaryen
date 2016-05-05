@@ -37,6 +37,7 @@ class Archive {
   // uninterpreted bytes (most uses) and C strings (a few uses e.g. strchr)
   // because most things in these buffers are not nul-terminated
   using Buffer = std::vector<char>;
+
  public:
   struct SubBuffer {
     const uint8_t* data;
@@ -54,32 +55,31 @@ class Archive {
       return reinterpret_cast<const ArchiveMemberHeader*>(data);
     }
     Child getNext(bool& error) const;
+
    public:
-    Child() {};
-    Child(const Archive* parent, const uint8_t* data, bool *error);
+    Child(){};
+    Child(const Archive* parent, const uint8_t* data, bool* error);
     // Size of actual member data (no header/padding)
     uint32_t getSize() const;
     SubBuffer getBuffer() const;
     std::string getRawName() const;
     std::string getName() const;
-    bool operator== (const Child& other) const {
-      return data == other.data;
-    }
+    bool operator==(const Child& other) const { return data == other.data; }
   };
   class child_iterator {
     friend class Archive;
     Child child;
-    bool error = false; // TODO: use std::error_code instead?
+    bool error = false;  // TODO: use std::error_code instead?
    public:
     child_iterator() {}
     explicit child_iterator(bool error) : error(error) {}
     child_iterator(const Child& c) : child(c) {}
     const Child* operator->() const { return &child; }
     const Child& operator*() const { return child; }
-    bool operator== (const child_iterator& other) const {
+    bool operator==(const child_iterator& other) const {
       return child == other.child;
     }
-    bool operator!= (const child_iterator& other) const {
+    bool operator!=(const child_iterator& other) const {
       return !(*this == other);
     }
     child_iterator& operator++() {
@@ -93,15 +93,13 @@ class Archive {
   child_iterator child_begin(bool SkipInternal = true) const;
   child_iterator child_end() const;
   void dump() const;
+
  private:
-  void setFirstRegular(const Child& c) {
-    firstRegularData = c.data;
-  }
+  void setFirstRegular(const Child& c) { firstRegularData = c.data; }
   Buffer& data;
   SubBuffer symbolTable = {nullptr, 0};
   SubBuffer stringTable = {nullptr, 0};
   const uint8_t* firstRegularData;
 };
 
-
-#endif   // wasm_support_archive_h
+#endif  // wasm_support_archive_h
