@@ -1,2 +1,2 @@
-void bar() {
-}
+void quux();
+void bar() { quux(); }
