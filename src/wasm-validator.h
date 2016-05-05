@@ -86,7 +86,7 @@ public:
     noteBreak(curr->default_, curr->value);
   }
   void visitSetLocal(SetLocal *curr) {
-    shouldBeTrue(curr->type == curr->value->type, curr, "set_local type might be correct");
+    shouldBeEqual(curr->type, curr->value->type, curr, "set_local type must be correct");
   }
   void visitLoad(Load *curr) {
     validateAlignment(curr->align);
