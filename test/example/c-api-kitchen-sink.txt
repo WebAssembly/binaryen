@@ -533,7 +533,7 @@ raw:
       (i32.const 2)
     )
   )
-  (func $loop-tail (type $v)
+  (func $nontrivial-loop-plus-phi-to-head (type $v)
     (local $0 i32)
     (block
       (i32.const 0)
@@ -707,7 +707,7 @@ optimized:
     )
     (i32.const 2)
   )
-  (func $loop-tail (type $v)
+  (func $nontrivial-loop-plus-phi-to-head (type $v)
     (local $0 i32)
     (i32.const 0)
     (i32.const 10)

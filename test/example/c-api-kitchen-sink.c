@@ -351,7 +351,7 @@ void test_relooper() {
     RelooperAddBranch(block4, block5, NULL, NULL);
     RelooperAddBranch(block5, block6, NULL, makeInt32(module, 40));
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "loop-tail", v, localTypes, 1, body);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "nontrivial-loop-plus-phi-to-head", v, localTypes, 1, body);
   }
 
   printf("raw:\n");
