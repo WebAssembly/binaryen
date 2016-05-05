@@ -106,8 +106,11 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<Reord
     curr->localNames.resize(newToOld.size());
     curr->localIndices.clear();
     for (size_t i = 0; i < newToOld.size(); i++) {
-      curr->localNames[i] = oldLocalNames[newToOld[i]];
-      curr->localIndices[oldLocalNames[newToOld[i]]] = i;
+      if (newToOld[i] < oldLocalNames.size()) {
+        auto old = oldLocalNames[newToOld[i]];
+        curr->localNames[i] = old;
+        curr->localIndices[old] = i;
+      }
     }
   }
 
