@@ -2,7 +2,11 @@
 
 import os, sys, subprocess, difflib
 
-os.environ['LD_LIBRARY_PATH'] += os.pathsep + 'lib' # find our dynamic libraries
+# find our dynamic libraries
+if os.environ.get('LD_LIBRARY_PATH'):
+  os.environ['LD_LIBRARY_PATH'] += os.pathsep + 'lib'
+else:
+  os.environ['LD_LIBRARY_PATH'] = 'lib'
 
 print '[ processing and updating testcases... ]\n'
 
