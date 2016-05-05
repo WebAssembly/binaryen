@@ -233,7 +233,6 @@ bool Linker::linkArchive(Archive& archive) {
       auto* memberSymbols = memberBuilder.getSymbolInfo();
       for (const Name& symbol : memberSymbols->implementedFunctions) {
         if (out.symbolInfo.undefinedFunctions.count(symbol)) {
-          std::cout << "sym " << symbol << "\n";
           if (!linkObject(memberBuilder)) return false;
           selected = true;
           break;
