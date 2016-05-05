@@ -188,7 +188,7 @@ function integrateWasmJS(Module) {
     info['env'] = env;
     var instance;
     try {
-      instance = Wasm.instantiateModule(getBinary(), info);
+      instance = Wasm['instantiateModule'](getBinary(), info);
     } catch (e) {
       Module['printErr']('failed to compile wasm module: ' + e);
       return false;
