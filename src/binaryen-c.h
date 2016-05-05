@@ -196,7 +196,7 @@ BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module, BinaryenExpressionRef
 // Loop: both out and in can be NULL, or just out can be NULL
 BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* out, const char* in, BinaryenExpressionRef body);
 // Break: value and condition can be NULL
-BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, BinaryenExpressionRef value, BinaryenExpressionRef condition);
+BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, BinaryenExpressionRef condition, BinaryenExpressionRef value);
 // Switch: value can be NULL
 BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **names, BinaryenIndex numNames, const char* defaultName, BinaryenExpressionRef condition, BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
@@ -257,7 +257,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
 
 // Start function. One per module
 
-void BinaryenSetStart(BinaryenModuleRef module, const char* name);
+void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start);
 
 //
 // ========== Module Operations ==========
@@ -265,6 +265,10 @@ void BinaryenSetStart(BinaryenModuleRef module, const char* name);
 
 // Print a module to stdout.
 void BinaryenModulePrint(BinaryenModuleRef module);
+
+// Validate a module, showing errors on problems.
+//  @return 0 if an error occurred, 1 if validated succesfully
+int BinaryenModuleValidate(BinaryenModuleRef module);
 
 // Run the standard optimization passes on the module.
 void BinaryenModuleOptimize(BinaryenModuleRef module);

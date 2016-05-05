@@ -23,6 +23,7 @@
 #include "wasm.h"
 #include "wasm-builder.h"
 #include "wasm-printing.h"
+#include "wasm-validator.h"
 #include "cfg/Relooper.h"
 
 using namespace wasm;
@@ -193,7 +194,7 @@ BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* out, co
   if (out && !in) abort();
   return Builder(*((Module*)module)).makeLoop(out ? Name(out) : Name(), in ? Name(in) : Name(), (Expression*)body);
 }
-BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, BinaryenExpressionRef value, BinaryenExpressionRef condition) {
+BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, BinaryenExpressionRef condition, BinaryenExpressionRef value) {
   return Builder(*((Module*)module)).makeBreak(name, (Expression*)value, (Expression*)condition);
 }
 BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **names, BinaryenIndex numNames, const char* defaultName, BinaryenExpressionRef condition, BinaryenExpressionRef value) {
@@ -372,9 +373,9 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
 
 // Start function. One per module
 
-void BinaryenSetStart(BinaryenModuleRef module, const char* name) {
+void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start) {
   auto* wasm = (Module*)module;
-  wasm->addStart(name);
+  wasm->addStart(((Function*)start)->name);
 }
 
 //
@@ -383,6 +384,11 @@ void BinaryenSetStart(BinaryenModuleRef module, const char* name) {
 
 void BinaryenModulePrint(BinaryenModuleRef module) {
   WasmPrinter::printModule((Module*)module);
+}
+
+int BinaryenModuleValidate(BinaryenModuleRef module) {
+  Module* wasm = (Module*)module;
+  return WasmValidator().validate(*wasm) ? 1 : 0;
 }
 
 void BinaryenModuleOptimize(BinaryenModuleRef module) {

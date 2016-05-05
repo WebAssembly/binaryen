@@ -1,4 +1,5 @@
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -71,7 +72,8 @@ void test_core() {
                         constF32Bits = BinaryenConst(module, BinaryenLiteralFloat32Bits(0xffff1234)),
                         constF64Bits = BinaryenConst(module, BinaryenLiteralFloat64Bits(0xffff12345678abcdLL));
 
-  const char* switchNames[] = { "the-body" };
+  const char* switchValueNames[] = { "the-value" };
+  const char* switchBodyNames[] = { "the-body" };
 
   BinaryenExpressionRef callOperands2[] = { makeInt32(module, 13), makeFloat64(module, 3.7) };
   BinaryenExpressionRef callOperands4[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3), makeFloat64(module, 3.7) };
@@ -157,12 +159,12 @@ void test_core() {
     BinaryenLoop(module, "out", "in", makeInt32(module, 0)),
     BinaryenLoop(module, NULL, "in2", makeInt32(module, 0)),
     BinaryenLoop(module, NULL, NULL, makeInt32(module, 0)),
-    BinaryenBreak(module, "the-body", makeInt32(module, 0), makeInt32(module, 1)),
+    BinaryenBreak(module, "the-value", makeInt32(module, 0), makeInt32(module, 1)),
     BinaryenBreak(module, "the-body", makeInt32(module, 2), NULL),
-    BinaryenBreak(module, "the-body", NULL, makeInt32(module, 3)),
+    BinaryenBreak(module, "the-value", NULL, makeInt32(module, 3)),
     BinaryenBreak(module, "the-body", NULL, NULL),
-    BinaryenSwitch(module, switchNames, 1, "the-body", makeInt32(module, 0), makeInt32(module, 1)),
-    BinaryenSwitch(module, switchNames, 1, "the-body", makeInt32(module, 2), NULL),
+    BinaryenSwitch(module, switchValueNames, 1, "the-value", makeInt32(module, 0), makeInt32(module, 1)),
+    BinaryenSwitch(module, switchBodyNames, 1, "the-body", makeInt32(module, 2), NULL),
     BinaryenCall(module, "kitchen-sinker", callOperands4, 4),
     BinaryenCallImport(module, "an-imported", callOperands2, 2),
     BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4, 4, iiIfF),
@@ -182,8 +184,9 @@ void test_core() {
     BinaryenUnreachable(module),
   };
 
-  // Make the main body of the function
-  BinaryenExpressionRef body = BinaryenBlock(module, "the-body", bodyList, sizeof(bodyList) / sizeof(BinaryenExpressionRef));
+  // Make the main body of the function. one block with a return value, one without
+  BinaryenExpressionRef value = BinaryenBlock(module, "the-value", bodyList, sizeof(bodyList) / sizeof(BinaryenExpressionRef));
+  BinaryenExpressionRef body = BinaryenBlock(module, "the-body", &value, 1);
 
   // Create the function
   BinaryenType localTypes[] = { BinaryenInt32() };
@@ -212,7 +215,12 @@ void test_core() {
 
   // Start function. One per module
 
-  BinaryenSetStart(module, "sinker");
+  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
+  BinaryenFunctionRef starter = BinaryenAddFunction(module, "starter", v, NULL, 0, BinaryenNop(module));
+  BinaryenSetStart(module, starter);
+
+  // Verify it validates
+  assert(BinaryenModuleValidate(module));
 
   // Print it out
   BinaryenModulePrint(module);
@@ -354,11 +362,16 @@ void test_relooper() {
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "nontrivial-loop-plus-phi-to-head", v, localTypes, 1, body);
   }
 
+  assert(BinaryenModuleValidate(module));
+
   printf("raw:\n");
   BinaryenModulePrint(module);
 
-  printf("optimized:\n");
   BinaryenModuleOptimize(module);
+
+  assert(BinaryenModuleValidate(module));
+
+  printf("optimized:\n");
   BinaryenModulePrint(module);
 
   BinaryenModuleDispose(module);
