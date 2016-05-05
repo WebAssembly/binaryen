@@ -95,10 +95,22 @@ SET(binaryen_c_SOURCES
   src/binaryen-c.cpp
   src/cfg/Relooper.cpp
   src/pass.cpp
+  src/passes/LowerIfElse.cpp
+  src/passes/MergeBlocks.cpp
+  src/passes/NameManager.cpp
+  src/passes/OptimizeInstructions.cpp
+  src/passes/PostEmscripten.cpp
   src/passes/Print.cpp
+  src/passes/RemoveImports.cpp
+  src/passes/RemoveUnusedBrs.cpp
+  src/passes/RemoveUnusedNames.cpp
+  src/passes/SimplifyLocals.cpp
+  src/passes/ReorderLocals.cpp
+  src/passes/Vacuum.cpp
+  src/passes/Metrics.cpp
   src/wasm.cpp
 )
-ADD_LIBRARY(binaryen-c STATIC ${binaryen_c_SOURCES})
+ADD_LIBRARY(binaryen-c SHARED ${binaryen_c_SOURCES})
 
 SET(binaryen-shell_SOURCES
   src/binaryen-shell.cpp

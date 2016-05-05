@@ -354,7 +354,13 @@ void test_relooper() {
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "loop-tail", v, localTypes, 1, body);
   }
 
+  printf("raw:\n");
   BinaryenModulePrint(module);
+
+  printf("optimized:\n");
+  BinaryenModuleOptimize(module);
+  BinaryenModulePrint(module);
+
   BinaryenModuleDispose(module);
 }
 

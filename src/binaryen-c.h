@@ -266,6 +266,9 @@ void BinaryenSetStart(BinaryenModuleRef module, const char* name);
 // Print a module to stdout.
 void BinaryenModulePrint(BinaryenModuleRef module);
 
+// Run the standard optimization passes on the module.
+void BinaryenModuleOptimize(BinaryenModuleRef module);
+
 //
 // ========== CFG / Relooper ==========
 //

@@ -19,6 +19,7 @@
 //===============================
 
 #include "binaryen-c.h"
+#include "pass.h"
 #include "wasm.h"
 #include "wasm-builder.h"
 #include "wasm-printing.h"
@@ -382,6 +383,13 @@ void BinaryenSetStart(BinaryenModuleRef module, const char* name) {
 
 void BinaryenModulePrint(BinaryenModuleRef module) {
   WasmPrinter::printModule((Module*)module);
+}
+
+void BinaryenModuleOptimize(BinaryenModuleRef module) {
+  Module* wasm = (Module*)module;
+  PassRunner passRunner(wasm);
+  passRunner.addDefaultOptimizationPasses();
+  passRunner.run();
 }
 
 //

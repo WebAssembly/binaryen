@@ -2,6 +2,8 @@
 
 import os, sys, subprocess, difflib
 
+os.environ['LD_LIBRARY_PATH'] = 'lib' # find our dynamic libraries
+
 print '[ processing and updating testcases... ]\n'
 
 for asm in sorted(os.listdir('test')):
