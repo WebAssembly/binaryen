@@ -246,11 +246,37 @@ private:
     }
   }
 
+  static uint32_t NaNPayload(float f) {
+    assert(std::isnan(f) && "expected a NaN");
+    // SEEEEEEE EFFFFFFF FFFFFFFF FFFFFFFF
+    // NaN has all-one exponent and non-zero fraction.
+    return ~0xff800000u & bit_cast<uint32_t>(f);
+  }
+
+  static uint64_t NaNPayload(double f) {
+    assert(std::isnan(f) && "expected a NaN");
+    // SEEEEEEE EEEEFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
+    // NaN has all-one exponent and non-zero fraction.
+    return ~0xfff0000000000000ull & bit_cast<uint64_t>(f);
+  }
+
+  static float setQuietNaN(float f) {
+    assert(std::isnan(f) && "expected a NaN");
+    // An SNaN is a NaN with the most significant fraction bit clear.
+    return bit_cast<float>(0x00400000u | bit_cast<uint32_t>(f));
+  }
+
+  static double setQuietNaN(double f) {
+    assert(std::isnan(f) && "expected a NaN");
+    // An SNaN is a NaN with the most significant fraction bit clear.
+    return bit_cast<double>(0x0008000000000000ull | bit_cast<uint64_t>(f));
+  }
+
   static void printFloat(std::ostream &o, float f) {
     if (std::isnan(f)) {
       const char *sign = std::signbit(f) ? "-" : "";
       o << sign << "nan";
-      if (uint32_t payload = ~0xff800000u & bit_cast<uint32_t>(f)) {
+      if (uint32_t payload = NaNPayload(f)) {
         o << ":0x" << std::hex << payload << std::dec;
       }
       return;
@@ -266,7 +292,7 @@ private:
     if (std::isnan(d)) {
       const char *sign = std::signbit(d) ? "-" : "";
       o << sign << "nan";
-      if (uint64_t payload = ~0xfff0000000000000ull & bit_cast<uint64_t>(d)) {
+      if (uint64_t payload = NaNPayload(d)) {
         o << ":0x" << std::hex << payload << std::dec;
       }
       return;
@@ -448,7 +474,7 @@ private:
         switch (std::fpclassify(rhs)) {
           case FP_ZERO:
           switch (std::fpclassify(lhs)) {
-            case FP_NAN: return *this;
+            case FP_NAN: return Literal(setQuietNaN(lhs));
             case FP_ZERO: return Literal(std::copysign(std::numeric_limits<float>::quiet_NaN(), sign));
             case FP_NORMAL: // fallthrough
             case FP_SUBNORMAL: // fallthrough
@@ -468,7 +494,7 @@ private:
         switch (std::fpclassify(rhs)) {
           case FP_ZERO:
           switch (std::fpclassify(lhs)) {
-            case FP_NAN: return *this;
+            case FP_NAN: return Literal(setQuietNaN(lhs));
             case FP_ZERO: return Literal(std::copysign(std::numeric_limits<double>::quiet_NaN(), sign));
             case FP_NORMAL: // fallthrough
             case FP_SUBNORMAL: // fallthrough
