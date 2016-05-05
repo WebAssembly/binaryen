@@ -49,7 +49,7 @@ WATERFALL_BUILD_DIR = os.path.join(BASE_DIR, 'wasm-install')
 BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'wasm-install', 'bin'))
 
 os.environ['BINARYEN'] = os.getcwd()
-os.environ['LD_LIBRARY_PATH'] = 'lib' # find our dynamic libraries
+os.environ['LD_LIBRARY_PATH'] += os.pathsep + 'lib' # find our dynamic libraries
 
 def fetch_waterfall():
   rev = open(os.path.join('test', 'revision')).read().strip()
