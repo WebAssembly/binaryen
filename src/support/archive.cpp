@@ -210,8 +210,8 @@ static uint32_t read32be(const uint8_t* buf) {
 }
 
 void Archive::dump() const {
-  printf("Archive data %p len %lu, firstRegularData %p\n", data.data(),
-         (long unsigned)data.size(), firstRegularData);
+  printf("Archive data %p len %zu, firstRegularData %p\n", data.data(),
+         data.size(), firstRegularData);
   printf("Symbol table %p, len %u\n", symbolTable.data, symbolTable.len);
   printf("string table %p, len %u\n", stringTable.data, stringTable.len);
   const uint8_t* buf = symbolTable.data;
