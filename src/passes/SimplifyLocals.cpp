@@ -162,12 +162,16 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
 
     // post-block cleanups
     if (curr->name.is()) {
-      unoptimizableBlocks.erase(curr->name);
-    }
-    if (hasBreaks) {
-      // more than one path to here, so nonlinear
-      sinkables.clear();
-      blockBreaks.erase(curr->name);
+      if (unoptimizableBlocks.count(curr->name)) {
+        sinkables.clear();
+        unoptimizableBlocks.erase(curr->name);
+      }
+
+      if (hasBreaks) {
+        // more than one path to here, so nonlinear
+        sinkables.clear();
+        blockBreaks.erase(curr->name);
+      }
     }
   }
 

@@ -451,5 +451,24 @@
     (get_local $s)
     (get_local $t)
   )
+  (func $switch-def (param $i3 i32) (result i32)
+    (local $i1 i32)
+    (set_local $i1
+      (i32.const 10)
+    )
+    (block $switch$def
+      (block $switch-case$1
+        (br_table $switch-case$1 $switch$def
+          (get_local $i3)
+        )
+      )
+      (set_local $i1
+        (i32.const 1)
+      )
+    )
+    (return
+      (get_local $i1)
+    )
+  )
 )
 
