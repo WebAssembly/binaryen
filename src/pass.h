@@ -22,6 +22,7 @@
 #include "wasm.h"
 #include "wasm-traversal.h"
 #include "mixed_arena.h"
+#include "support/utilities.h"
 
 namespace wasm {
 
@@ -66,18 +67,19 @@ struct RegisterPass {
 // Runs a set of passes, in order
 //
 struct PassRunner {
+  Module* wasm;
   MixedArena* allocator;
   std::vector<Pass*> passes;
   Pass* currPass;
   bool debug = false;
 
-  PassRunner(MixedArena* allocator) : allocator(allocator) {}
+  PassRunner(Module* wasm) : wasm(wasm), allocator(&wasm->allocator) {}
 
   void setDebug(bool debug_) { debug = debug_; }
 
   void add(std::string passName) {
     auto pass = PassRegistry::get()->createPass(passName);
-    assert(pass);
+    if (!pass) Fatal() << "Could not find pass: " << passName << "\n";
     passes.push_back(pass);
   }
 
@@ -95,7 +97,7 @@ struct PassRunner {
   // what -O does.
   void addDefaultOptimizationPasses();
 
-  void run(Module* module);
+  void run();
 
   // Get the last pass that was already executed of a certain type.
   template<class P>

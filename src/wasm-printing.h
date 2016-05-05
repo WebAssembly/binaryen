@@ -26,9 +26,9 @@ namespace wasm {
 
 struct WasmPrinter {
   static std::ostream& printModule(Module* module, std::ostream& o) {
-    PassRunner passRunner(nullptr);
+    PassRunner passRunner(module);
     passRunner.add<Printer>(o);
-    passRunner.run(module);
+    passRunner.run();
     return o;
   }
 

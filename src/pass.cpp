@@ -68,7 +68,7 @@ void PassRunner::addDefaultOptimizationPasses() {
   add("optimize-instructions");
 }
 
-void PassRunner::run(Module* module) {
+void PassRunner::run() {
   std::chrono::high_resolution_clock::time_point beforeEverything;
   size_t padding = 0;
   if (debug) {
@@ -88,7 +88,7 @@ void PassRunner::run(Module* module) {
       }
       before = std::chrono::high_resolution_clock::now();
     }
-    pass->run(this, module);
+    pass->run(this, wasm);
     if (debug) {
       auto after = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> diff = after - before;
