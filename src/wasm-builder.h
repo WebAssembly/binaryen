@@ -64,7 +64,9 @@ public:
     return func;
   }
 
-  // Nop TODO: add all the rest
+  Nop* makeNop() {
+    return allocator.alloc<Nop>();
+  }
   Block* makeBlock(Expression* first = nullptr) {
     auto* ret = allocator.alloc<Block>();
     if (first) {
@@ -224,10 +226,25 @@ public:
     func->localIndices.clear();
   }
 
-  // ensure a node is a block, if it isn't already
-  Block* blockify(Expression* any) {
-    if (any->is<Block>()) return any->cast<Block>();
-    return makeBlock(any);
+  // ensure a node is a block, if it isn't already, and optionally append to the block
+  Block* blockify(Expression* any, Expression* append = nullptr) {
+    Block* block = nullptr;
+    if (any) block = any->dynCast<Block>();
+    if (!block) block = makeBlock(any);
+    if (append) {
+      block->list.push_back(append);
+      block->finalize();
+    }
+    return block;
+  }
+
+  // a helper for the common pattern of a sequence of two expressions. Similar to
+  // blockify, but does *not* reuse a block if the first is one.
+  Block* makeSequence(Expression* left, Expression* right) {
+    auto* block = makeBlock(left);
+    block->list.push_back(right);
+    block->finalize();
+    return block;
   }
 };
 

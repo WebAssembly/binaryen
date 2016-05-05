@@ -22,6 +22,7 @@
 #include "wasm.h"
 #include "wasm-builder.h"
 #include "wasm-printing.h"
+#include "cfg/Relooper.h"
 
 using namespace wasm;
 
@@ -381,6 +382,49 @@ void BinaryenSetStart(BinaryenModuleRef module, const char* name) {
 
 void BinaryenModulePrint(BinaryenModuleRef module) {
   WasmPrinter::printModule((Module*)module);
+}
+
+//
+// ========== CFG / Relooper ==========
+//
+
+RelooperRef RelooperCreate() {
+  return RelooperRef(new CFG::Relooper());
+}
+
+RelooperBlockRef RelooperAddBlock(RelooperRef relooper, BinaryenExpressionRef code) {
+  auto* R = (CFG::Relooper*)relooper;
+  auto* ret = new CFG::Block((Expression*)code);
+  R->AddBlock(ret);
+  return RelooperRef(ret);
+}
+
+void RelooperAddBranch(RelooperBlockRef from, RelooperBlockRef to, BinaryenExpressionRef condition, BinaryenExpressionRef code) {
+  auto* fromBlock = (CFG::Block*)from;
+  auto* toBlock = (CFG::Block*)to;
+  fromBlock->AddBranchTo(toBlock, (Expression*)condition, (Expression*)code);
+}
+
+RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper, BinaryenExpressionRef code, BinaryenExpressionRef condition) {
+  auto* R = (CFG::Relooper*)relooper;
+  auto* ret = new CFG::Block((Expression*)code, (Expression*)condition);
+  R->AddBlock(ret);
+  return RelooperRef(ret);
+}
+
+void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, BinaryenIndex index, BinaryenExpressionRef code) {
+  auto* fromBlock = (CFG::Block*)from;
+  auto* toBlock = (CFG::Block*)to;
+  fromBlock->AddBranchTo(toBlock, (wasm::Index)index, (Expression*)code);
+}
+
+BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper, BinaryenModuleRef module) {
+  auto* R = (CFG::Relooper*)relooper;
+  R->Calculate((CFG::Block*)entry);
+  CFG::RelooperBuilder builder(*(Module*)module, labelHelper);
+  auto* ret = R->Render(builder);
+  delete R;
+  return BinaryenExpressionRef(ret);
 }
 
 } // extern "C"

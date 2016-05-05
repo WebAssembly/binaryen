@@ -18,7 +18,11 @@
 // Binaryen C API
 //
 // The first part of the API lets you create modules and their parts.
+//
 // The second part of the API lets you perform operations on modules.
+//
+// The third part of the API lets you provide a general control-flow
+//   graph (CFG) as input.
 //================
 
 #ifndef binaryen_h
@@ -261,6 +265,41 @@ void BinaryenSetStart(BinaryenModuleRef module, const char* name);
 
 // Print a module to stdout.
 void BinaryenModulePrint(BinaryenModuleRef module);
+
+//
+// ========== CFG / Relooper ==========
+//
+// General usage is (1) create a relooper, (2) create blocks, (3) add
+// branches between them, (4) render the output.
+//
+// See Relooper.h for more details
+
+typedef void* RelooperRef;
+typedef void* RelooperBlockRef;
+
+// Create a relooper instance
+RelooperRef RelooperCreate();
+
+// Create a basic block that ends with nothing, or with some simple branching
+RelooperBlockRef RelooperAddBlock(RelooperRef relooper, BinaryenExpressionRef code);
+
+// Create a branch to another basic block
+// The branch can have code on it, that is executed as the branch happens. this is useful for phis. otherwise, code can be NULL
+void RelooperAddBranch(RelooperBlockRef from, RelooperBlockRef to, BinaryenExpressionRef condition, BinaryenExpressionRef code);
+
+// Create a basic block that ends a switch on a condition
+RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper, BinaryenExpressionRef code, BinaryenExpressionRef condition);
+
+// Create a switch-style branch to another basic block. The block's switch table will have an index for this branch
+void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, BinaryenIndex index, BinaryenExpressionRef code);
+
+// Generate structed wasm control flow from the CFG of blocks and branches that were created
+// on this relooper instance. This returns the rendered output, and also disposes of the
+// relooper and its blocks and branches, as they are no longer needed.
+//   @param labelHelper To render irreducible control flow, we may need a helper variable to
+//                      guide us to the right target label. This value should be an index of
+//                      an i32 local variable that is free for us to use.
+BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper, BinaryenModuleRef module);
 
 #ifdef __cplusplus
 } // extern "C"
