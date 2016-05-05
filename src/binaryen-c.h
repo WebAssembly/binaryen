@@ -273,6 +273,13 @@ int BinaryenModuleValidate(BinaryenModuleRef module);
 // Run the standard optimization passes on the module.
 void BinaryenModuleOptimize(BinaryenModuleRef module);
 
+// Serialize a module into binary form.
+// @return how many bytes were written. This will be less than or equal to bufferSize
+size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize);
+
+// Deserialize a module from binary form.
+BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
+
 //
 // ========== CFG / Relooper ==========
 //

@@ -21,6 +21,7 @@
 #include "binaryen-c.h"
 #include "pass.h"
 #include "wasm.h"
+#include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
@@ -396,6 +397,26 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   PassRunner passRunner(wasm);
   passRunner.addDefaultOptimizationPasses();
   passRunner.run();
+}
+
+size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize) {
+  Module* wasm = (Module*)module;
+  BufferWithRandomAccess buffer(false);
+  WasmBinaryWriter writer(wasm, buffer, false);
+  writer.write();
+  size_t bytes = std::min(buffer.size(), outputSize);
+  std::copy_n(buffer.begin(), bytes, output);
+  return bytes;
+}
+
+BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
+  auto* wasm = new Module;
+  std::vector<char> buffer(false);
+  buffer.resize(inputSize);
+  std::copy_n(input, inputSize, buffer.begin());
+  WasmBinaryBuilder parser(*wasm, buffer, false);
+  parser.read();
+  return wasm;
 }
 
 //

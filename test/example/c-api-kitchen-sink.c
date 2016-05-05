@@ -377,8 +377,38 @@ void test_relooper() {
   BinaryenModuleDispose(module);
 }
 
+void test_binaries() {
+  char buffer[1024];
+  size_t size;
+
+  { // create a module and write it to binary
+    BinaryenModuleRef module = BinaryenModuleCreate();
+    BinaryenType params[2] = { BinaryenInt32(), BinaryenInt32() };
+    BinaryenFunctionTypeRef iii = BinaryenAddFunctionType(module, "iii", BinaryenInt32(), params, 2);
+    BinaryenExpressionRef x = BinaryenGetLocal(module, 0, BinaryenInt32()),
+                          y = BinaryenGetLocal(module, 1, BinaryenInt32());
+    BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAdd(), x, y);
+    BinaryenFunctionRef adder = BinaryenAddFunction(module, "adder", iii, NULL, 0, add);
+    size = BinaryenModuleWrite(module, buffer, 1024); // write out the module
+    BinaryenModuleDispose(module);
+  }
+
+  assert(size > 0);
+  assert(size < 512); // this is a tiny module
+
+  // read the module from the binary
+  BinaryenModuleRef module = BinaryenModuleRead(buffer, size);
+
+  // validate, print, and free
+  assert(BinaryenModuleValidate(module));
+  printf("module loaded from binary form:\n");
+  BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
+}
+
 int main() {
   test_core();
   test_relooper();
+  test_binaries();
 }
 
