@@ -126,6 +126,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       for (auto target : sw->targets) {
         self->unoptimizableBlocks.insert(target);
       }
+      self->unoptimizableBlocks.insert(sw->default_);
       // TODO: we could use this info to stop gathering data on these blocks
     }
     self->sinkables.clear();
