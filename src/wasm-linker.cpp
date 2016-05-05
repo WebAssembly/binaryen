@@ -217,23 +217,32 @@ bool Linker::linkObject(S2WasmBuilder& builder) {
 }
 
 bool Linker::linkArchive(Archive& archive) {
-  for (auto child = archive.child_begin(), end = archive.child_end();
-       child != end; ++child) {
-    Archive::SubBuffer memberBuf = child->getBuffer();
-    // S2WasmBuilder expects its input to be NUL-terminated. Archive members are
-    // not NUL-terminated. So we have to copy the contents out before parsing.
-    std::vector<char> memberString(memberBuf.len + 1);
-    memcpy(memberString.data(), memberBuf.data, memberBuf.len);
-    memberString[memberBuf.len] = '\0';
-    S2WasmBuilder memberBuilder(memberString.data(), false);
-    auto* memberSymbols = memberBuilder.getSymbolInfo();
-    for (const Name& symbol : memberSymbols->implementedFunctions) {
-      if (out.symbolInfo.undefinedFunctions.count(symbol)) {
-        if (!linkObject(memberBuilder)) return false;
-        break;
+  bool selected;
+  do {
+    selected = false;
+    for (auto child = archive.child_begin(), end = archive.child_end();
+         child != end; ++child) {
+      Archive::SubBuffer memberBuf = child->getBuffer();
+      // S2WasmBuilder expects its input to be NUL-terminated. Archive members
+      // are
+      // not NUL-terminated. So we have to copy the contents out before parsing.
+      std::vector<char> memberString(memberBuf.len + 1);
+      memcpy(memberString.data(), memberBuf.data, memberBuf.len);
+      memberString[memberBuf.len] = '\0';
+      S2WasmBuilder memberBuilder(memberString.data(), false);
+      auto* memberSymbols = memberBuilder.getSymbolInfo();
+      for (const Name& symbol : memberSymbols->implementedFunctions) {
+        if (out.symbolInfo.undefinedFunctions.count(symbol)) {
+          std::cout << "sym " << symbol << "\n";
+          if (!linkObject(memberBuilder)) return false;
+          selected = true;
+          break;
+        }
       }
     }
-  }
+    // If we selected an archive member, it may depend on another archive member
+    // so continue to make passes over the members until no more are added.
+  } while (selected);
   return true;
 }
 
