@@ -22,6 +22,7 @@
 #include "wasm.h"
 #include "wasm-traversal.h"
 #include "mixed_arena.h"
+#include "support/utilities.h"
 
 namespace wasm {
 
@@ -78,7 +79,7 @@ struct PassRunner {
 
   void add(std::string passName) {
     auto pass = PassRegistry::get()->createPass(passName);
-    assert(pass);
+    if (!pass) Fatal() << "Could not find pass: " << passName << "\n";
     passes.push_back(pass);
   }
 
