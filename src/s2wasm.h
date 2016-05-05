@@ -43,6 +43,7 @@ class S2WasmBuilder {
   Module* wasm;
   MixedArena* allocator;
   LinkerObject* linkerObj;
+  std::unique_ptr<LinkerObject::SymbolInfo> symbolInfo;
 
  public:
   S2WasmBuilder(const char* input, bool debug)
@@ -54,9 +55,10 @@ class S2WasmBuilder {
         linkerObj(nullptr)
         {}
 
-  void build(LinkerObject *obj, LinkerObject::SymbolInfo* info) {
-    if (!obj->isEmpty()) Fatal() << "Cannot construct an S2WasmBuilder in an non-empty LinkerObject";
-    if (!info) info = getSymbolInfo();
+  void build(LinkerObject *obj) {
+    // If getSymbolInfo has not already been called, populate the symbol
+    // info now.
+    if (!symbolInfo) symbolInfo.reset(getSymbolInfo());
     linkerObj = obj;
     wasm = &obj->wasm;
     allocator = &wasm->allocator;
@@ -65,10 +67,14 @@ class S2WasmBuilder {
     process();
   }
 
+  // getSymbolInfo scans the .s file to determine what symbols it defines
+  // and references.
   LinkerObject::SymbolInfo* getSymbolInfo() {
-    auto* info = new LinkerObject::SymbolInfo();
-    scan(info);
-    return info;
+    if (!symbolInfo) {
+      symbolInfo = make_unique<LinkerObject::SymbolInfo>();
+      scan(symbolInfo.get());
+    }
+    return symbolInfo.get();
   }
 
  private:

@@ -81,6 +81,7 @@ ADD_SUBDIRECTORY(src/asmjs)
 # Sources.
 
 SET(support_SOURCES
+  src/support/archive.cpp
   src/support/bits.cpp
   src/support/colors.cpp
   src/support/command-line.cpp
