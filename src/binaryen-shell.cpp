@@ -223,7 +223,7 @@ int main(int argc, const char* argv[]) {
 
       if (passes.size() > 0) {
         if (options.debug) std::cerr << "running passes...\n";
-        PassRunner passRunner(&moreModuleAllocations);
+        PassRunner passRunner(&wasm);
         if (options.debug) passRunner.setDebug(true);
         for (auto& passName : passes) {
           if (passName == "O") {
@@ -232,7 +232,7 @@ int main(int argc, const char* argv[]) {
             passRunner.add(passName);
           }
         }
-        passRunner.run(&wasm);
+        passRunner.run();
       }
 
       run_asserts(&i, &checked, &wasm, &root, &builder, entry);

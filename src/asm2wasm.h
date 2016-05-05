@@ -1725,12 +1725,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 }
 
 void Asm2WasmBuilder::optimize() {
-  PassRunner passRunner(&allocator);
+  PassRunner passRunner(&wasm);
   passRunner.addDefaultOptimizationPasses();
   if (maxGlobal < 1024) {
     passRunner.add("post-emscripten");
   }
-  passRunner.run(&wasm);
+  passRunner.run();
 }
 
 } // namespace wasm

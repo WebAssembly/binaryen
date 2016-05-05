@@ -66,12 +66,13 @@ struct RegisterPass {
 // Runs a set of passes, in order
 //
 struct PassRunner {
+  Module* wasm;
   MixedArena* allocator;
   std::vector<Pass*> passes;
   Pass* currPass;
   bool debug = false;
 
-  PassRunner(MixedArena* allocator) : allocator(allocator) {}
+  PassRunner(Module* wasm) : wasm(wasm), allocator(&wasm->allocator) {}
 
   void setDebug(bool debug_) { debug = debug_; }
 
@@ -95,7 +96,7 @@ struct PassRunner {
   // what -O does.
   void addDefaultOptimizationPasses();
 
-  void run(Module* module);
+  void run();
 
   // Get the last pass that was already executed of a certain type.
   template<class P>
