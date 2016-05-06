@@ -606,7 +606,7 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
     # build the C file separately
     extra = [os.environ.get('CC') or 'gcc',
              os.path.join('test', 'example', t), '-c', '-o', 'example.o',
-             '-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
+             '-Isrc', '-g', '-Llib/.', '-pthread']
     print ' '.join(extra)
     subprocess.check_call(extra)
     # Link against the binaryen C library DSO, using an executable-relative rpath
