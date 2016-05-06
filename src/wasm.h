@@ -1022,6 +1022,10 @@ public:
   ExpressionList operands;
   FunctionType *fullType;
   Expression *target;
+
+  void finalize() {
+    type = fullType->result;
+  }
 };
 
 class GetLocal : public SpecificExpression<Expression::GetLocalId> {

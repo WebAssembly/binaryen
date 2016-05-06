@@ -209,21 +209,23 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **name
   ret->finalize();
   return ret;
 }
-BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands) {
+BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
   auto* ret = ((Module*)module)->allocator.alloc<Call>();
   ret->target = target;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
   }
+  ret->type = WasmType(returnType);
   ret->finalize();
   return ret;
 }
-BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands) {
+BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
   auto* ret = ((Module*)module)->allocator.alloc<CallImport>();
   ret->target = target;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
   }
+  ret->type = WasmType(returnType);
   ret->finalize();
   return ret;
 }

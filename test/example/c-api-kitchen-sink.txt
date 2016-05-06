@@ -10,9 +10,9 @@ BinaryenFloat64: 4
   (export "mem" memory)
   (start $starter)
   (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
-  (type $viF (func (param i32 f64)))
+  (type $fiF (func (param i32 f64) (result f32)))
   (type $v (func))
-  (import $an-imported "module" "base" (param i32 f64))
+  (import $an-imported "module" "base" (param i32 f64) (result f32))
   (export "kitchen_sinker" $kitchen-sinker)
   (table $kitchen-sinker)
   (func $kitchen-sinker (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
@@ -293,22 +293,28 @@ BinaryenFloat64: 4
         (br_table $the-body $the-body
           (i32.const 2)
         )
-        (call $kitchen-sinker
-          (i32.const 13)
-          (i64.const 37)
-          (f32.const 1.2999999523162842)
-          (f64.const 3.7)
+        (i32.eqz
+          (call $kitchen-sinker
+            (i32.const 13)
+            (i64.const 37)
+            (f32.const 1.2999999523162842)
+            (f64.const 3.7)
+          )
         )
-        (call_import $an-imported
-          (i32.const 13)
-          (f64.const 3.7)
+        (f32.eqz
+          (call_import $an-imported
+            (i32.const 13)
+            (f64.const 3.7)
+          )
         )
-        (call_indirect $iiIfF
-          (i32.const 2449)
-          (i32.const 13)
-          (i64.const 37)
-          (f32.const 1.2999999523162842)
-          (f64.const 3.7)
+        (i32.eqz
+          (call_indirect $iiIfF
+            (i32.const 2449)
+            (i32.const 13)
+            (i64.const 37)
+            (f32.const 1.2999999523162842)
+            (f64.const 3.7)
+          )
         )
         (get_local $0)
         (set_local $0
