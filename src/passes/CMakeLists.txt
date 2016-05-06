@@ -1,4 +1,5 @@
 SET(passes_SOURCES
+  pass.cpp
   LowerIfElse.cpp
   MergeBlocks.cpp
   Metrics.cpp
@@ -13,4 +14,4 @@ SET(passes_SOURCES
   SimplifyLocals.cpp
   Vacuum.cpp
 )
-ADD_LIBRARY(passes STATIC ${passes_SOURCES})
+ADD_LIBRARY(passes OBJECT ${passes_SOURCES})
