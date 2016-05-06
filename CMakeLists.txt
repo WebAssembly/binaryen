@@ -111,6 +111,7 @@ SET(binaryen_c_SOURCES
   src/wasm.cpp
 )
 ADD_LIBRARY(binaryen-c SHARED ${binaryen_c_SOURCES})
+TARGET_LINK_LIBRARIES(binaryen-c asmjs support)
 
 SET(binaryen-shell_SOURCES
   src/binaryen-shell.cpp
