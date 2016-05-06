@@ -36,6 +36,7 @@ struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
     for (auto name : curr->targets) {
       if (name == target) found++;
     }
+    if (curr->default_ == target) found++;
   }
 
   static bool has(Expression* tree, Name target) {

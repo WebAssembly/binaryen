@@ -1,0 +1,17 @@
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $0 (type $0)
+    (if
+      (nop)
+      (block $label$0
+        (block $label$1
+          (br_table $label$1
+            (nop)
+          )
+        )
+      )
+    )
+  )
+)
+
