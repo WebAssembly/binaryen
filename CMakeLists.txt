@@ -61,6 +61,7 @@ ELSE()
   ADD_COMPILE_FLAG("-Wextra")
   ADD_COMPILE_FLAG("-Wno-unused-parameter")
   ADD_COMPILE_FLAG("-fno-omit-frame-pointer")
+  ADD_COMPILE_FLAG("-fPIC")
   IF(CMAKE_THREAD_LIBS_INIT)
     ADD_LINK_FLAG("${CMAKE_THREAD_LIBS_INIT}")
   ENDIF()
@@ -116,6 +117,7 @@ SET(binaryen_c_SOURCES
   src/wasm.cpp
 )
 ADD_LIBRARY(binaryen-c SHARED ${binaryen_c_SOURCES})
+TARGET_LINK_LIBRARIES(binaryen-c asmjs support)
 
 SET(binaryen-shell_SOURCES
   src/binaryen-shell.cpp
