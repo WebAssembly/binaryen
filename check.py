@@ -50,12 +50,6 @@ BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'wasm-install', 'bin
 
 os.environ['BINARYEN'] = os.getcwd()
 
-# find our dynamic libraries
-if os.environ.get('LD_LIBRARY_PATH'):
-  os.environ['LD_LIBRARY_PATH'] += os.pathsep + 'lib'
-else:
-  os.environ['LD_LIBRARY_PATH'] = 'lib'
-
 def fetch_waterfall():
   rev = open(os.path.join('test', 'revision')).read().strip()
   try:
@@ -601,7 +595,8 @@ if has_vanilla_emcc and has_vanilla_llvm:
 print '\n[ checking example testcases... ]\n'
 
 for t in sorted(os.listdir(os.path.join('test', 'example'))):
-  cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
+  output_file = os.path.join('bin', 'example')
+  cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread', '-o', output_file]
   if t.endswith('.cpp'):
     cmd = [os.path.join('test', 'example', t),
            os.path.join('src', 'pass.cpp'),
@@ -614,7 +609,8 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
              '-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
     print ' '.join(extra)
     subprocess.check_call(extra)
-    cmd = ['example.o', '-lbinaryen-c'] + cmd
+    # Link against the binaryen C library DSO, using an executable-relative rpath
+    cmd = ['example.o', '-lbinaryen-c'] + cmd + ['-Wl,-rpath=$ORIGIN/../lib']
   else:
     continue
   if os.environ.get('COMPILER_FLAGS'):
@@ -622,9 +618,12 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
       cmd.append(f)
   cmd = [os.environ.get('CXX') or 'g++', '-std=c++11'] + cmd
   print ' '.join(cmd)
-  subprocess.check_call(cmd)
-  actual = subprocess.Popen(['./a.out'], stdout=subprocess.PIPE).communicate()[0]
-  expected = open(os.path.join('test', 'example', '.'.join(t.split('.')[:-1]) + '.txt')).read()
+  try:
+    subprocess.check_call(cmd)
+    actual = subprocess.Popen([output_file], stdout=subprocess.PIPE).communicate()[0]
+    expected = open(os.path.join('test', 'example', '.'.join(t.split('.')[:-1]) + '.txt')).read()
+  finally:
+    os.remove(output_file)
   if actual != expected:
     fail(actual, expected)
 
