@@ -1,5 +1,5 @@
 PROJECT(binaryen C CXX)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
 
 IF(NOT CMAKE_BUILD_TYPE)
   MESSAGE(STATUS "No build type selected, default to Release")
@@ -49,6 +49,7 @@ IF(MSVC)
   ELSE()
     ADD_COMPILE_FLAG("/O2")
   ENDIF()
+  SET(all_passes passes)
 ELSE()
   SET(THREADS_PREFER_PTHREAD_FLAG ON)
   SET(CMAKE_THREAD_PREFER_PTHREAD ON)
@@ -72,6 +73,11 @@ ELSE()
     ADD_COMPILE_FLAG("-O2")
     ADD_DEFINITIONS("-UNDEBUG")  # Keep asserts.
   ENDIF()
+  if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    SET(all_passes "-force_load" passes)
+  ELSE()
+    SET(all_passes "-Wl,--whole-archive" passes "-Wl,-no-whole-archive")
+  ENDIF()
 ENDIF()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
@@ -89,21 +95,22 @@ ADD_SUBDIRECTORY(src/support)
 
 # Sources.
 
+
 SET(binaryen_c_SOURCES
   src/binaryen-c.cpp
   src/cfg/Relooper.cpp
   src/wasm.cpp
 )
-ADD_LIBRARY(binaryen-c SHARED ${binaryen_c_SOURCES} $<TARGET_OBJECTS:passes>)
-TARGET_LINK_LIBRARIES(binaryen-c asmjs support)
+ADD_LIBRARY(binaryen-c SHARED ${binaryen_c_SOURCES})
+TARGET_LINK_LIBRARIES(binaryen-c asmjs ${all_passes} support)
 
 SET(binaryen-shell_SOURCES
   src/binaryen-shell.cpp
   src/wasm.cpp
 )
 ADD_EXECUTABLE(binaryen-shell
-               ${binaryen-shell_SOURCES} $<TARGET_OBJECTS:passes>)
-TARGET_LINK_LIBRARIES(binaryen-shell asmjs emscripten-optimizer support)
+               ${binaryen-shell_SOURCES})
+TARGET_LINK_LIBRARIES(binaryen-shell asmjs emscripten-optimizer ${all_passes} support)
 SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS binaryen-shell DESTINATION bin)
@@ -113,8 +120,8 @@ SET(asm2wasm_SOURCES
   src/wasm.cpp
 )
 ADD_EXECUTABLE(asm2wasm
-               ${asm2wasm_SOURCES} $<TARGET_OBJECTS:passes>)
-TARGET_LINK_LIBRARIES(asm2wasm asmjs emscripten-optimizer support)
+               ${asm2wasm_SOURCES})
+TARGET_LINK_LIBRARIES(asm2wasm asmjs emscripten-optimizer ${all_passes} support)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION bin)
@@ -136,8 +143,8 @@ SET(s2wasm_SOURCES
   src/wasm.cpp
 )
 ADD_EXECUTABLE(s2wasm
-               ${s2wasm_SOURCES} $<TARGET_OBJECTS:passes>)
-TARGET_LINK_LIBRARIES(s2wasm asmjs support)
+               ${s2wasm_SOURCES})
+TARGET_LINK_LIBRARIES(s2wasm asmjs passes support)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS s2wasm DESTINATION bin)
@@ -147,8 +154,8 @@ SET(wasm_as_SOURCES
   src/wasm.cpp
 )
 ADD_EXECUTABLE(wasm-as
-               ${wasm_as_SOURCES} $<TARGET_OBJECTS:passes>)
-TARGET_LINK_LIBRARIES(wasm-as asmjs support)
+               ${wasm_as_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-as asmjs passes support)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION bin)
@@ -158,8 +165,8 @@ SET(wasm_dis_SOURCES
   src/wasm.cpp
 )
 ADD_EXECUTABLE(wasm-dis
-               ${wasm_dis_SOURCES} $<TARGET_OBJECTS:passes>)
-TARGET_LINK_LIBRARIES(wasm-dis support)
+               ${wasm_dis_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-dis passes support)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION bin)
