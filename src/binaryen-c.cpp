@@ -72,7 +72,7 @@ BinaryenType BinaryenFloat64(void) { return f64; }
 
 // Modules
 
-BinaryenModuleRef BinaryenModuleCreate() { return new Module(); }
+BinaryenModuleRef BinaryenModuleCreate(void) { return new Module(); }
 void BinaryenModuleDispose(BinaryenModuleRef module) { delete (Module*)module; }
 
 // Function types
@@ -425,7 +425,7 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
 // ========== CFG / Relooper ==========
 //
 
-RelooperRef RelooperCreate() {
+RelooperRef RelooperCreate(void) {
   return RelooperRef(new CFG::Relooper());
 }
 

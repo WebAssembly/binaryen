@@ -73,7 +73,7 @@ BinaryenType BinaryenFloat64(void);
 
 typedef void* BinaryenModuleRef;
 
-BinaryenModuleRef BinaryenModuleCreate();
+BinaryenModuleRef BinaryenModuleCreate(void);
 void BinaryenModuleDispose(BinaryenModuleRef module);
 
 // Function types
@@ -298,7 +298,7 @@ typedef void* RelooperRef;
 typedef void* RelooperBlockRef;
 
 // Create a relooper instance
-RelooperRef RelooperCreate();
+RelooperRef RelooperCreate(void);
 
 // Create a basic block that ends with nothing, or with some simple branching
 RelooperBlockRef RelooperAddBlock(RelooperRef relooper, BinaryenExpressionRef code);
