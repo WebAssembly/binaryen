@@ -28,9 +28,11 @@ if os.environ.get('LD_LIBRARY_PATH'):
 else:
   os.environ['LD_LIBRARY_PATH'] = 'lib'
 
+counter = 0
+
 while True:
   # Random decisions
-  num = random.randint(2, 100)  # TODO: 250+
+  num = random.randint(2, 250)  # TODO: 250+
   density = random.random() * random.random()
   decisions = [random.randint(1, num * 20) for x in range(num * 3)]
   branches = [0] * num
@@ -46,10 +48,11 @@ while True:
     b.remove(defaults[i])
     branches[i] = b
   optimize = random.random() < 0.5
-  print num, density, optimize
+  print counter, ':', num, density, optimize
+  counter += 1
 
   for temp in ['fuzz.wasm', 'fuzz.wast', 'fast.txt', 'fuzz.slow.js',
-               'fuzz.cpp']:
+               'fuzz.c']:
     try:
       os.unlink(temp)
     except:
@@ -206,12 +209,15 @@ int main() {
   // write out all the decisions, then the body of the function
   BinaryenExpressionRef full[numDecisions + 1];
 
-  for (int i = 0; i < numDecisions; i++) {
-    full[i] = BinaryenStore(module,
-      4, 0, 0,
-      BinaryenConst(module, BinaryenLiteralInt32(8 + 4 * i)),
-      BinaryenConst(module, BinaryenLiteralInt32(decisions[i]))
-    );
+  {
+    int i;
+    for (i = 0; i < numDecisions; i++) {
+      full[i] = BinaryenStore(module,
+        4, 0, 0,
+        BinaryenConst(module, BinaryenLiteralInt32(8 + 4 * i)),
+        BinaryenConst(module, BinaryenLiteralInt32(decisions[i]))
+      );
+    }
   }
   full[numDecisions] = body;
   BinaryenExpressionRef all = BinaryenBlock(module, NULL, full,
@@ -255,18 +261,19 @@ int main() {
   slow += '}'
 
   open('fuzz.slow.js', 'w').write(slow)
-  open('fuzz.cpp', 'w').write(fast)
+  open('fuzz.c', 'w').write(fast)
 
   print '.'
-  cmd = ['g++', 'fuzz.cpp', '-Isrc', '-g', '-lbinaryen-c', '-lasmjs',
-         '-lsupport', '-Llib/.', '-pthread', '-o', 'fuzz', '-g']
+  cmd = [os.environ.get('CC') or 'gcc', 'fuzz.c', '-Isrc',
+         '-lbinaryen-c', '-lasmjs',
+         '-lsupport', '-Llib/.', '-pthread', '-o', 'fuzz']
   subprocess.check_call(cmd)
   print '^'
   subprocess.check_call(['./fuzz'], stdout=open('fuzz.wast', 'w'))
   print '*'
-  subprocess.call(['bin/binaryen-shell', 'fuzz.wast'],
-                  stdout=open('fast.txt', 'w'), stderr=subprocess.PIPE)
-  fast_out = open('fast.txt').read()
+  fast_out = subprocess.Popen(['bin/binaryen-shell', 'fuzz.wast'],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE).communicate()[0]
   print '-'
   slow_out = subprocess.Popen(['nodejs', 'fuzz.slow.js'],
                               stdout=subprocess.PIPE,
