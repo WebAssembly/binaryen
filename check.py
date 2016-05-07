@@ -599,14 +599,14 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
   cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread', '-o', output_file]
   if t.endswith('.cpp'):
     cmd = [os.path.join('test', 'example', t),
-           os.path.join('src', 'pass.cpp'),
+           os.path.join('src', 'passes', 'pass.cpp'),
            os.path.join('src', 'wasm.cpp'),
            os.path.join('src', 'passes', 'Print.cpp')] + cmd
   elif t.endswith('.c'):
     # build the C file separately
     extra = [os.environ.get('CC') or 'gcc',
              os.path.join('test', 'example', t), '-c', '-o', 'example.o',
-             '-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread']
+             '-Isrc', '-g', '-Llib/.', '-pthread']
     print ' '.join(extra)
     subprocess.check_call(extra)
     # Link against the binaryen C library DSO, using an executable-relative rpath
