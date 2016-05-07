@@ -165,9 +165,15 @@ void test_core() {
     BinaryenBreak(module, "the-body", NULL, NULL),
     BinaryenSwitch(module, switchValueNames, 1, "the-value", makeInt32(module, 0), makeInt32(module, 1)),
     BinaryenSwitch(module, switchBodyNames, 1, "the-body", makeInt32(module, 2), NULL),
-    BinaryenCall(module, "kitchen-sinker", callOperands4, 4),
-    BinaryenCallImport(module, "an-imported", callOperands2, 2),
-    BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4, 4, iiIfF),
+    BinaryenUnary(module, BinaryenEqZ(), // check the output type of the call node
+      BinaryenCall(module, "kitchen-sinker", callOperands4, 4, BinaryenInt32())
+    ),
+    BinaryenUnary(module, BinaryenEqZ(), // check the output type of the call node
+      BinaryenCallImport(module, "an-imported", callOperands2, 2, BinaryenFloat32())
+    ),
+    BinaryenUnary(module, BinaryenEqZ(), // check the output type of the call node
+      BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4, 4, iiIfF)
+    ),
     BinaryenGetLocal(module, 0, BinaryenInt32()),
     BinaryenSetLocal(module, 0, makeInt32(module, 101)),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(), makeInt32(module, 1)),
@@ -195,8 +201,8 @@ void test_core() {
   // Imports
 
   BinaryenType iparams[2] = { BinaryenInt32(), BinaryenFloat64() };
-  BinaryenFunctionTypeRef viF = BinaryenAddFunctionType(module, "viF", BinaryenNone(), iparams, 2);
-  BinaryenAddImport(module, "an-imported", "module", "base", viF);
+  BinaryenFunctionTypeRef fiF = BinaryenAddFunctionType(module, "fiF", BinaryenFloat32(), iparams, 2);
+  BinaryenAddImport(module, "an-imported", "module", "base", fiF);
 
   // Exports
 
