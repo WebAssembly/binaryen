@@ -15,7 +15,9 @@
  */
 
 //
-// Sorts functions by access frequency.
+// Sorts functions by access frequency. This helps reduce the size of wasm binaries
+// because references to frequently called functions need fewer bytes to encode
+// function indices.
 //
 
 
@@ -40,8 +42,8 @@ struct ReorderFunctions : public WalkerPass<PostWalker<ReorderFunctions, Visitor
       counts[curr]++;
     }
     sort(module->functions.begin(), module->functions.end(), [this](
-      std::unique_ptr<Function> &a,
-      std::unique_ptr<Function> &b) -> bool {
+      std::unique_ptr<Function>& a,
+      std::unique_ptr<Function>& b) -> bool {
       if (this->counts[a->name] == this->counts[b->name]) {
         return strcmp(a->name.str, b->name.str) > 0;
       }
