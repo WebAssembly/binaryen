@@ -32,7 +32,7 @@ counter = 0
 
 while True:
   # Random decisions
-  num = random.randint(2, 250)  # TODO: 250+
+  num = random.randint(2, 250)
   density = random.random() * random.random()
   decisions = [random.randint(1, num * 20) for x in range(num * 3)]
   branches = [0] * num
