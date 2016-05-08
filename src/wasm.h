@@ -913,7 +913,7 @@ public:
 
   // set the type of a block if you already know it
   void finalize(WasmType type_) {
-    type = type;
+    type = type_;
   }
 
   // set the type of a block based on its contents. this scans the block, so it is not fast
