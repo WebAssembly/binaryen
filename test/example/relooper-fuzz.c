@@ -229,12 +229,15 @@ int main() {
 
   BinaryenExpressionRef full[numDecisions + 1]; // write out all the decisions, then the body of the function
 
-  for (int i = 0; i < numDecisions; i++) {
-    full[i] = BinaryenStore(module,
-      4, 0, 0,
-      BinaryenConst(module, BinaryenLiteralInt32(8 + 4 * i)),
-      BinaryenConst(module, BinaryenLiteralInt32(decisions[i]))
-    );
+  {
+    int i;
+    for (i = 0; i < numDecisions; i++) {
+      full[i] = BinaryenStore(module,
+        4, 0, 0,
+        BinaryenConst(module, BinaryenLiteralInt32(8 + 4 * i)),
+        BinaryenConst(module, BinaryenLiteralInt32(decisions[i]))
+      );
+    }
   }
   full[numDecisions] = body;
   BinaryenExpressionRef all = BinaryenBlock(module, NULL, full, numDecisions + 1);
