@@ -61,32 +61,48 @@ struct MixedArena {
   size_t chunkSize = 32768;
   size_t index; // in last chunk
 
-  // multithreaded allocation - each arena is valid on a specific thread.
-  // if we are on the wrong thread, we safely look in the linked
-  // list of next, adding an allocator if necessary
-  // TODO: we don't really need locking here, atomics could suffice
   std::thread::id threadId;
-  std::mutex mutex;
-  MixedArena* next;
+
+  // multithreaded allocation - each arena is valid on a specific thread.
+  // if we are on the wrong thread, we atomically look in the linked
+  // list of next, adding an allocator if necessary
+  std::atomic<MixedArena*> next;
 
   MixedArena() {
     threadId = std::this_thread::get_id();
-    next = nullptr;
+    next.store(nullptr);
   }
 
   void* allocSpace(size_t size) {
     // the bump allocator data should not be modified by multiple threads at once.
-    if (std::this_thread::get_id() != threadId) {
-      // TODO use a fast double-checked locking pattern.
-      std::lock_guard<std::mutex> lock(mutex);
+    auto myId = std::this_thread::get_id();
+    if (myId != threadId) {
       MixedArena* curr = this;
-      while (std::this_thread::get_id() != curr->threadId) {
-        if (curr->next) {
-          curr = curr->next;
-        } else {
-          curr->next = new MixedArena(); // will have our thread id
+      MixedArena* allocated = nullptr;
+      while (myId != curr->threadId) {
+        auto seen = curr->next.load();
+        if (seen) {
+          curr = seen;
+          continue;
         }
+        // there is a nullptr for next, so we may be able to place a new
+        // allocator for us there. but carefully, as others may do so as
+        // well. we may waste a few allocations here, but it doesn't matter
+        // as this can only happen as the chain is built up, i.e.,
+        // O(# of cores) per allocator, and our allocatrs are long-lived.
+        if (!allocated) {
+          allocated = new MixedArena(); // has our thread id
+        }
+        if (curr->next.compare_exchange_weak(seen, allocated)) {
+          // we replaced it, so we are the next in the chain
+          // we can forget about allocated, it is owned by the chain now
+          allocated = nullptr;
+          break;
+        }
+        // otherwise, the cmpxchg updated seen, and we continue to loop
+        curr = seen;
       }
+      if (allocated) delete allocated;
       return curr->allocSpace(size);
     }
     size = (size + 7) & (-8); // same alignment as malloc TODO optimize?
@@ -120,7 +136,7 @@ struct MixedArena {
 
   ~MixedArena() {
     clear();
-    if (next) delete next;
+    if (next.load()) delete next.load();
   }
 };
 
