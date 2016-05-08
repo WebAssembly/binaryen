@@ -165,7 +165,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
   EM_ASM({
     Module['asmExports'] = {};
   });
-  for (auto* curr : module->exports) {
+  for (auto& curr : module->exports) {
     EM_ASM_({
       var name = Pointer_stringify($0);
       Module['asmExports'][name] = function() {
@@ -177,7 +177,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
   }
 
   // verify imports are provided
-  for (auto* import : module->imports) {
+  for (auto& import : module->imports) {
     EM_ASM_({
       var mod = Pointer_stringify($0);
       var base = Pointer_stringify($1);
@@ -199,7 +199,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           var source = Module['HEAP8'].subarray($1, $1 + $2);
           var target = new Int8Array(Module['outside']['newBuffer']);
           target.set(source, $0);
-        }, segment.offset, segment.data, segment.size);
+        }, segment.offset, &segment.data[0], segment.data.size());
       }
     }
 
@@ -241,11 +241,13 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
     Literal load(Load* load, size_t addr) override {
       if (load->align < load->bytes || (addr & (load->bytes-1))) {
+        int64_t out64;
         double ret = EM_ASM_DOUBLE({
           var addr = $0;
           var bytes = $1;
           var isFloat = $2;
           var isSigned = $3;
+          var out64 = $4;
           var save0 = HEAP32[0];
           var save1 = HEAP32[1];
           for (var i = 0; i < bytes; i++) {
@@ -255,8 +257,12 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           if (!isFloat) {
             if (bytes === 1)      ret = isSigned ? HEAP8[0]  : HEAPU8[0];
             else if (bytes === 2) ret = isSigned ? HEAP16[0] : HEAPU16[0];
-            else if (bytes === 4 || bytes === 8) ret = isSigned ? HEAP32[0] : HEAPU32[0]; // if i64, return low 32 bits here
-            else abort();
+            else if (bytes === 4) ret = isSigned ? HEAP32[0] : HEAPU32[0];
+            else if (bytes === 8) {
+              for (var i = 0; i < bytes; i++) {
+                HEAPU8[out64 + i] = HEAPU8[i];
+              }
+            } else abort();
           } else {
             if (bytes === 4)      ret = HEAPF32[0];
             else if (bytes === 8) ret = HEAPF64[0];
@@ -264,14 +270,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
           return ret;
-        }, addr, load->bytes, isWasmTypeFloat(load->type), load->signed_);
+        }, addr, load->bytes, isWasmTypeFloat(load->type), load->signed_, &out64);
         if (!isWasmTypeFloat(load->type)) {
           if (load->type == i64) {
             if (load->bytes == 8) {
-              int32_t high = EM_ASM_INT_V({
-                return HEAPU32[1];
-              });
-              return Literal(int64_t(int32_t(ret)) | (int64_t(int32_t(high)) << 32));
+              return Literal(out64);
             } else {
               if (load->signed_) {
                 return Literal(int64_t(int32_t(ret)));
