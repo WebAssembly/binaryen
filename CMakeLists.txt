@@ -96,13 +96,13 @@ ADD_SUBDIRECTORY(src/support)
 # Sources.
 
 
-SET(binaryen_c_SOURCES
+SET(binaryen_SOURCES
   src/binaryen-c.cpp
   src/cfg/Relooper.cpp
   src/wasm.cpp
 )
-ADD_LIBRARY(binaryen-c SHARED ${binaryen_c_SOURCES})
-TARGET_LINK_LIBRARIES(binaryen-c asmjs ${all_passes} support)
+ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
+TARGET_LINK_LIBRARIES(binaryen asmjs ${all_passes} support)
 
 SET(binaryen-shell_SOURCES
   src/binaryen-shell.cpp
