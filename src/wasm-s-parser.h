@@ -27,6 +27,7 @@
 #include <limits>
 
 #include "wasm.h"
+#include "wasm-binary.h"
 #include "asmjs/shared-constants.h"
 #include "mixed_arena.h"
 #include "parsing.h"
@@ -248,6 +249,19 @@ public:
   // Assumes control of and modifies the input.
   SExpressionWasmBuilder(Module& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), allocator(wasm.allocator), onError(onError), importCounter(0) {
     assert(module[0]->str() == MODULE);
+    if (module.size() > 1 && module[1]->isStr()) {
+      // these s-expressions contain a binary module, actually
+      auto str = module[1]->c_str();
+      if (auto size = strlen(str)) {
+        std::vector<char> data;
+        stringToBinary(str, size, data);
+        WasmBinaryBuilder binaryBuilder(wasm, data, false);
+        binaryBuilder.read();
+      } else {
+        onError();
+      }
+      return;
+    }
     functionCounter = 0;
     for (unsigned i = 1; i < module.size(); i++) {
       preParseFunctionType(*module[i]);
