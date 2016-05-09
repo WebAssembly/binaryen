@@ -15,9 +15,9 @@
  */
 
 //
-// Sorts functions by access frequency. This helps reduce the size of wasm binaries
-// because references to frequently called functions need fewer bytes to encode
-// function indices.
+// Sorts functions by their static use count. This helps reduce the size of wasm
+// binaries because fewer bytes are needed to encode references to frequently
+// used functions.
 //
 
 
