@@ -251,15 +251,16 @@ public:
     assert(module[0]->str() == MODULE);
     if (module.size() > 1 && module[1]->isStr()) {
       // these s-expressions contain a binary module, actually
-      auto str = module[1]->c_str();
-      if (auto size = strlen(str)) {
-        std::vector<char> data;
-        stringToBinary(str, size, data);
-        WasmBinaryBuilder binaryBuilder(wasm, data, false);
-        binaryBuilder.read();
-      } else {
-        onError();
+      std::vector<char> data;
+      size_t i = 1;
+      while (i < module.size()) {
+        auto str = module[i++]->c_str();
+        if (auto size = strlen(str)) {
+          stringToBinary(str, size, data);
+        }
       }
+      WasmBinaryBuilder binaryBuilder(wasm, data, false);
+      binaryBuilder.read();
       return;
     }
     functionCounter = 0;
