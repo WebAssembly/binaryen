@@ -1164,13 +1164,14 @@ class WasmBinaryBuilder {
   Module& wasm;
   MixedArena& allocator;
   std::vector<char>& input;
+  std::function<void ()> onError;
   bool debug;
 
   size_t pos = 0;
   int32_t startIndex = -1;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
+  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, std::function<void ()> onError, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), onError(onError), debug(debug) {}
 
   void read() {
 

@@ -259,7 +259,7 @@ public:
           stringToBinary(str, size, data);
         }
       }
-      WasmBinaryBuilder binaryBuilder(wasm, data, false);
+      WasmBinaryBuilder binaryBuilder(wasm, data, onError, false);
       binaryBuilder.read();
       return;
     }
