@@ -123,17 +123,6 @@ SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION bin)
 
-SET(wasm2asm_SOURCES
-  src/wasm2asm-main.cpp
-  src/wasm.cpp
-)
-ADD_EXECUTABLE(wasm2asm
-               ${wasm2asm_SOURCES})
-TARGET_LINK_LIBRARIES(wasm2asm asmjs emscripten-optimizer support)
-SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD 11)
-SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD_REQUIRED ON)
-INSTALL(TARGETS wasm2asm DESTINATION bin)
-
 SET(s2wasm_SOURCES
   src/wasm-linker.cpp
   src/s2wasm-main.cpp
