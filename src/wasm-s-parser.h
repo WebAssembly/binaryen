@@ -1051,6 +1051,48 @@ private:
     return ret;
   }
 
+  // converts an s-expression string representing binary data into an output sequence of raw bytes
+  void stringToBinary(const char* input, size_t size, std::vector<char>& data) {
+    data.resize(size);
+    char *write = data.data();
+    while (1) {
+      if (input[0] == 0) break;
+      if (input[0] == '\\') {
+        if (input[1] == '"') {
+          *write++ = '"';
+          input += 2;
+          continue;
+        } else if (input[1] == '\'') {
+          *write++ = '\'';
+          input += 2;
+          continue;
+        } else if (input[1] == '\\') {
+          *write++ = '\\';
+          input += 2;
+          continue;
+        } else if (input[1] == 'n') {
+          *write++ = '\n';
+          input += 2;
+          continue;
+        } else if (input[1] == 't') {
+          *write++ = '\t';
+          input += 2;
+          continue;
+        } else {
+          *write++ = (char)(unhex(input[1])*16 + unhex(input[2]));
+          input += 3;
+          continue;
+        }
+      }
+      *write++ = input[0];
+      input++;
+    }
+    assert(write >= data.data());
+    size_t written = write - data.data();
+    assert(written <= data.size());
+    data.resize(written);
+  }
+
   bool hasMemory = false;
 
   void parseMemory(Element& s) {
@@ -1069,41 +1111,8 @@ private:
       const char *input = curr[2]->c_str();
       if (auto size = strlen(input)) {
         std::vector<char> data;
-        data.resize(size);
-        char *write = data.data();
-        while (1) {
-          if (input[0] == 0) break;
-          if (input[0] == '\\') {
-            if (input[1] == '"') {
-              *write++ = '"';
-              input += 2;
-              continue;
-            } else if (input[1] == '\'') {
-              *write++ = '\'';
-              input += 2;
-              continue;
-            } else if (input[1] == '\\') {
-              *write++ = '\\';
-              input += 2;
-              continue;
-            } else if (input[1] == 'n') {
-              *write++ = '\n';
-              input += 2;
-              continue;
-            } else if (input[1] == 't') {
-              *write++ = '\t';
-              input += 2;
-              continue;
-            } else {
-              *write++ = (char)(unhex(input[1])*16 + unhex(input[2]));
-              input += 3;
-              continue;
-            }
-          }
-          *write++ = input[0];
-          input++;
-        }
-        wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data.data(), write - data.data());
+        stringToBinary(input, size, data);
+        wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data.data(), data.size());
       } else {
         wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), "", 0);
       }
