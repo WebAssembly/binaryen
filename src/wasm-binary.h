@@ -1164,13 +1164,14 @@ class WasmBinaryBuilder {
   Module& wasm;
   MixedArena& allocator;
   std::vector<char>& input;
+  std::function<void ()> onError;
   bool debug;
 
   size_t pos = 0;
   int32_t startIndex = -1;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
+  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, std::function<void ()> onError, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), onError(onError), debug(debug) {}
 
   void read() {
 
@@ -1225,7 +1226,7 @@ public:
   }
 
   uint8_t getInt8() {
-    assert(more());
+    if (!more()) onError();
     if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << " (at " << pos << ")" << std::endl;
     return input[pos++];
   }
@@ -1329,27 +1330,27 @@ public:
 
   void verifyInt8(int8_t x) {
     int8_t y = getInt8();
-    assert(x == y);
+    if (x != y) onError();
   }
   void verifyInt16(int16_t x) {
     int16_t y = getInt16();
-    assert(x == y);
+    if (x != y) onError();
   }
   void verifyInt32(int32_t x) {
     int32_t y = getInt32();
-    assert(x == y);
+    if (x != y) onError();
   }
   void verifyInt64(int64_t x) {
     int64_t y = getInt64();
-    assert(x == y);
+    if (x != y) onError();
   }
   void verifyFloat32(float x) {
     float y = getFloat32();
-    assert(x == y);
+    if (x != y) onError();
   }
   void verifyFloat64(double x) {
     double y = getFloat64();
-    assert(x == y);
+    if (x != y) onError();
   }
 
   void ungetInt8() {

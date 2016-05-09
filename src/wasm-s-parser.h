@@ -27,6 +27,7 @@
 #include <limits>
 
 #include "wasm.h"
+#include "wasm-binary.h"
 #include "asmjs/shared-constants.h"
 #include "mixed_arena.h"
 #include "parsing.h"
@@ -248,6 +249,20 @@ public:
   // Assumes control of and modifies the input.
   SExpressionWasmBuilder(Module& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), allocator(wasm.allocator), onError(onError), importCounter(0) {
     assert(module[0]->str() == MODULE);
+    if (module.size() > 1 && module[1]->isStr()) {
+      // these s-expressions contain a binary module, actually
+      std::vector<char> data;
+      size_t i = 1;
+      while (i < module.size()) {
+        auto str = module[i++]->c_str();
+        if (auto size = strlen(str)) {
+          stringToBinary(str, size, data);
+        }
+      }
+      WasmBinaryBuilder binaryBuilder(wasm, data, onError, false);
+      binaryBuilder.read();
+      return;
+    }
     functionCounter = 0;
     for (unsigned i = 1; i < module.size(); i++) {
       preParseFunctionType(*module[i]);
@@ -1051,6 +1066,50 @@ private:
     return ret;
   }
 
+  // converts an s-expression string representing binary data into an output sequence of raw bytes
+  // this appends to data, which may already contain content.
+  void stringToBinary(const char* input, size_t size, std::vector<char>& data) {
+    auto originalSize = data.size();
+    data.resize(originalSize + size);
+    char *write = data.data() + originalSize;
+    while (1) {
+      if (input[0] == 0) break;
+      if (input[0] == '\\') {
+        if (input[1] == '"') {
+          *write++ = '"';
+          input += 2;
+          continue;
+        } else if (input[1] == '\'') {
+          *write++ = '\'';
+          input += 2;
+          continue;
+        } else if (input[1] == '\\') {
+          *write++ = '\\';
+          input += 2;
+          continue;
+        } else if (input[1] == 'n') {
+          *write++ = '\n';
+          input += 2;
+          continue;
+        } else if (input[1] == 't') {
+          *write++ = '\t';
+          input += 2;
+          continue;
+        } else {
+          *write++ = (char)(unhex(input[1])*16 + unhex(input[2]));
+          input += 3;
+          continue;
+        }
+      }
+      *write++ = input[0];
+      input++;
+    }
+    assert(write >= data.data());
+    size_t actual = write - data.data();
+    assert(actual <= data.size());
+    data.resize(actual);
+  }
+
   bool hasMemory = false;
 
   void parseMemory(Element& s) {
@@ -1069,41 +1128,8 @@ private:
       const char *input = curr[2]->c_str();
       if (auto size = strlen(input)) {
         std::vector<char> data;
-        data.resize(size);
-        char *write = data.data();
-        while (1) {
-          if (input[0] == 0) break;
-          if (input[0] == '\\') {
-            if (input[1] == '"') {
-              *write++ = '"';
-              input += 2;
-              continue;
-            } else if (input[1] == '\'') {
-              *write++ = '\'';
-              input += 2;
-              continue;
-            } else if (input[1] == '\\') {
-              *write++ = '\\';
-              input += 2;
-              continue;
-            } else if (input[1] == 'n') {
-              *write++ = '\n';
-              input += 2;
-              continue;
-            } else if (input[1] == 't') {
-              *write++ = '\t';
-              input += 2;
-              continue;
-            } else {
-              *write++ = (char)(unhex(input[1])*16 + unhex(input[2]));
-              input += 3;
-              continue;
-            }
-          }
-          *write++ = input[0];
-          input++;
-        }
-        wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data.data(), write - data.data());
+        stringToBinary(input, size, data);
+        wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data.data(), data.size());
       } else {
         wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), "", 0);
       }
