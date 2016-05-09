@@ -1066,9 +1066,11 @@ private:
   }
 
   // converts an s-expression string representing binary data into an output sequence of raw bytes
+  // this appends to data, which may already contain content.
   void stringToBinary(const char* input, size_t size, std::vector<char>& data) {
-    data.resize(size);
-    char *write = data.data();
+    auto originalSize = data.size();
+    data.resize(originalSize + size);
+    char *write = data.data() + originalSize;
     while (1) {
       if (input[0] == 0) break;
       if (input[0] == '\\') {
@@ -1102,9 +1104,9 @@ private:
       input++;
     }
     assert(write >= data.data());
-    size_t written = write - data.data();
-    assert(written <= data.size());
-    data.resize(written);
+    size_t actual = write - data.data();
+    assert(actual <= data.size());
+    data.resize(actual);
   }
 
   bool hasMemory = false;
