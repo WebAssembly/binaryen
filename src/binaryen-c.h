@@ -85,7 +85,7 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
 // Literals. These are passed by value.
 
 struct BinaryenLiteral {
-  int type; // size of enum in c++
+  int32_t type;
   union {
     int32_t i32;
     int64_t i64;
