@@ -14,7 +14,7 @@
 BinaryenExpressionRef makeUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenType inputType) {
   if (inputType == BinaryenInt32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)));
   if (inputType == BinaryenInt64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)));
-  if (inputType == BinaryenFloat32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612)));
+  if (inputType == BinaryenFloat32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)));
   if (inputType == BinaryenFloat64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)));
   abort();
 }
@@ -22,7 +22,7 @@ BinaryenExpressionRef makeUnary(BinaryenModuleRef module, BinaryenOp op, Binarye
 BinaryenExpressionRef makeBinary(BinaryenModuleRef module, BinaryenOp op, BinaryenType type) {
   if (type == BinaryenInt32()) return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)), BinaryenConst(module, BinaryenLiteralInt32(-11)));
   if (type == BinaryenInt64()) return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)), BinaryenConst(module, BinaryenLiteralInt64(-23)));
-  if (type == BinaryenFloat32()) return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612)), BinaryenConst(module, BinaryenLiteralFloat32(-62.5)));
+  if (type == BinaryenFloat32()) return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)), BinaryenConst(module, BinaryenLiteralFloat32(-62.5)));
   if (type == BinaryenFloat64()) return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)), BinaryenConst(module, BinaryenLiteralFloat64(-9007.333)));
   abort();
 }
@@ -67,7 +67,7 @@ void test_core() {
 
   BinaryenExpressionRef constI32 = BinaryenConst(module, BinaryenLiteralInt32(1)),
                         constI64 = BinaryenConst(module, BinaryenLiteralInt64(2)),
-                        constF32 = BinaryenConst(module, BinaryenLiteralFloat32(3.14)),
+                        constF32 = BinaryenConst(module, BinaryenLiteralFloat32(3.14f)),
                         constF64 = BinaryenConst(module, BinaryenLiteralFloat64(2.1828)),
                         constF32Bits = BinaryenConst(module, BinaryenLiteralFloat32Bits(0xffff1234)),
                         constF64Bits = BinaryenConst(module, BinaryenLiteralFloat64Bits(0xffff12345678abcdLL));
@@ -76,7 +76,7 @@ void test_core() {
   const char* switchBodyNames[] = { "the-body" };
 
   BinaryenExpressionRef callOperands2[] = { makeInt32(module, 13), makeFloat64(module, 3.7) };
-  BinaryenExpressionRef callOperands4[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3), makeFloat64(module, 3.7) };
+  BinaryenExpressionRef callOperands4[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3f), makeFloat64(module, 3.7) };
 
   BinaryenType params[4] = { BinaryenInt32(), BinaryenInt64(), BinaryenFloat32(), BinaryenFloat64() };
   BinaryenFunctionTypeRef iiIfF = BinaryenAddFunctionType(module, "iiIfF", BinaryenInt32(), params, 4);
@@ -417,4 +417,3 @@ int main() {
   test_relooper();
   test_binaries();
 }
-
