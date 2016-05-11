@@ -92,9 +92,9 @@ public:
   struct ExternalInterface {
     virtual void init(Module& wasm) {}
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
-    virtual Literal load(Load* load, size_t addr) = 0;
-    virtual void store(Store* store, size_t addr, Literal value) = 0;
-    virtual void growMemory(size_t oldSize, size_t newSize) = 0;
+    virtual Literal load(Load* load, Address addr) = 0;
+    virtual void store(Store* store, Address addr, Literal value) = 0;
+    virtual void growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
   };
 
@@ -722,10 +722,10 @@ private:
     return ret;
   }
 
-  size_t memorySize; // in pages
+  Address memorySize; // in pages
 
   template <class LS>
-  size_t getFinalAddress(LS* curr, Literal ptr) {
+  Address getFinalAddress(LS* curr, Literal ptr) {
     auto trapIfGt = [this](uint64_t lhs, uint64_t rhs, const char* msg) {
       if (lhs > rhs) {
         std::stringstream ss;
@@ -733,7 +733,7 @@ private:
         externalInterface->trap(ss.str().c_str());
       }
     };
-    uint32_t memorySizeBytes = memorySize * Memory::kPageSize;
+    Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
