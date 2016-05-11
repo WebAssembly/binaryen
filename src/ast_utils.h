@@ -53,12 +53,12 @@ struct DirectCallGraphAnalyzer : public PostWalker<DirectCallGraphAnalyzer, Visi
   std::vector<Function*> queue;
   std::unordered_set<Function*> reachable;
 
-  DirectCallGraphAnalyzer(Module* module, std::vector<Function*> root) : module(module) {
-    for (auto curr : root) {
+  DirectCallGraphAnalyzer(Module* module, const std::vector<Function*>& root) : module(module) {
+    for (auto* curr : root) {
       queue.push_back(curr);
     }
     while (queue.size()) {
-      Function* curr = queue.back();
+      auto* curr = queue.back();
       queue.pop_back();
       if (reachable.count(curr) == 0) {
         reachable.insert(curr);
