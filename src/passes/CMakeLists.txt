@@ -10,6 +10,7 @@ SET(passes_SOURCES
   RemoveImports.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
+  RemoveUnusedFunctions.cpp
   ReorderLocals.cpp
   SimplifyLocals.cpp
   Vacuum.cpp
