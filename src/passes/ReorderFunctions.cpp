@@ -41,9 +41,9 @@ struct ReorderFunctions : public WalkerPass<PostWalker<ReorderFunctions, Visitor
     for (auto& curr : module->table.names) {
       counts[curr]++;
     }
-    sort(module->functions.begin(), module->functions.end(), [this](
-      std::unique_ptr<Function>& a,
-      std::unique_ptr<Function>& b) -> bool {
+    std::sort(module->functions.begin(), module->functions.end(), [this](
+      const std::unique_ptr<Function>& a,
+      const std::unique_ptr<Function>& b) -> bool {
       if (this->counts[a->name] == this->counts[b->name]) {
         return strcmp(a->name.str, b->name.str) > 0;
       }
