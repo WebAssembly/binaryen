@@ -66,14 +66,14 @@ int CountLeadingZeroes(T v) {
   return CountLeadingZeroes(typename std::make_unsigned<T>::type(v));
 }
 
-template <typename T>
-inline static T RotateLeft(T val, T count) {
+template <typename T, typename U>
+inline static T RotateLeft(T val, U count) {
   T mask = sizeof(T) * CHAR_BIT - 1;
   count &= mask;
   return (val << count) | (val >> (-count & mask));
 }
-template <typename T>
-inline static T RotateRight(T val, T count) {
+template <typename T, typename U>
+inline static T RotateRight(T val, U count) {
   T mask = sizeof(T) * CHAR_BIT - 1;
   count &= mask;
   return (val >> count) | (val << (-count & mask));
