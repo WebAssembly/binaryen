@@ -10,12 +10,12 @@ f1:                                     # @f1
 # BB#0:                                 # %entry
 	block
 	i32.sub 	$push3=, $0, $1
-	tee_local	$push2=, $1=, $pop3
+	tee_local	$push2=, $0=, $pop3
 	i32.const	$push0=, 0
 	i32.ge_s	$push1=, $pop2, $pop0
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end3
-	return  	$1
+	return  	$0
 .LBB0_2:                                # %if.then2
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -34,12 +34,12 @@ f2:                                     # @f2
 # BB#0:                                 # %entry
 	block
 	i32.sub 	$push3=, $0, $1
-	tee_local	$push2=, $1=, $pop3
+	tee_local	$push2=, $0=, $pop3
 	i32.const	$push0=, 0
 	i32.ge_s	$push1=, $pop2, $pop0
 	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %if.end3
-	return  	$1
+	return  	$0
 .LBB1_2:                                # %if.then2
 	end_block                       # label1:
 	call    	abort@FUNCTION

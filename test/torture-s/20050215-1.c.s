@@ -17,20 +17,20 @@ main:                                   # @main
 	i32.eq  	$push18=, $pop1, $pop17
 	br_if   	0, $pop18       # 0: down to label2
 # BB#1:                                 # %if.then
-	i32.const	$push16=, v
+	i32.const	$push14=, v
 	i32.const	$push10=, 7
-	i32.and 	$push11=, $pop16, $pop10
+	i32.and 	$push11=, $pop14, $pop10
 	br_if   	1, $pop11       # 1: down to label1
 	br      	2               # 2: down to label0
 .LBB0_2:                                # %lor.lhs.false
 	end_block                       # label2:
-	i32.const	$push15=, v
+	i32.const	$push16=, v
 	i32.const	$push6=, 1
-	i32.and 	$push7=, $pop15, $pop6
+	i32.and 	$push7=, $pop16, $pop6
 	i32.eqz 	$push8=, $pop7
-	i32.const	$push14=, v
+	i32.const	$push15=, v
 	i32.const	$push2=, 7
-	i32.and 	$push3=, $pop14, $pop2
+	i32.and 	$push3=, $pop15, $pop2
 	i32.const	$push4=, 0
 	i32.ne  	$push5=, $pop3, $pop4
 	i32.or  	$push9=, $pop8, $pop5

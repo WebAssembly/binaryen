@@ -7,14 +7,14 @@
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end5
-	i32.const	$push2=, t+8
-	i32.const	$push1=, 255
-	i32.const	$push0=, 324
-	i32.call	$discard=, memset@FUNCTION, $pop2, $pop1, $pop0
-	i32.const	$push3=, 0
+	i32.const	$push3=, t+8
+	i32.const	$push2=, 255
+	i32.const	$push1=, 324
+	i32.call	$discard=, memset@FUNCTION, $pop3, $pop2, $pop1
+	i32.const	$push4=, 0
 	i32.const	$push5=, 0
-	i32.store	$push4=, t+4($pop3), $pop5
-	return  	$pop4
+	i32.store	$push0=, t+4($pop4), $pop5
+	return  	$pop0
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

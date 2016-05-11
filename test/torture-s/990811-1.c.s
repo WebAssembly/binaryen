@@ -21,16 +21,16 @@ foo:                                    # @foo
 # BB#2:                                 # %entry
 	br_if   	2, $0           # 2: down to label0
 # BB#3:                                 # %sw.bb
-	i32.load	$0=, 0($1)
-	return  	$0
+	i32.load	$push6=, 0($1)
+	return  	$pop6
 .LBB0_4:                                # %sw.bb2
 	end_block                       # label2:
-	i32.load16_s	$0=, 0($1)
-	return  	$0
+	i32.load16_s	$push4=, 0($1)
+	return  	$pop4
 .LBB0_5:                                # %sw.bb1
 	end_block                       # label1:
-	i32.load8_s	$0=, 0($1)
-	return  	$0
+	i32.load8_s	$push5=, 0($1)
+	return  	$pop5
 .LBB0_6:                                # %sw.epilog
 	end_block                       # label0:
 	call    	abort@FUNCTION

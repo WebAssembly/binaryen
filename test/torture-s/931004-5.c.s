@@ -58,34 +58,35 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push12=, __stack_pointer
 	i32.const	$push9=, __stack_pointer
 	i32.load	$push10=, 0($pop9)
 	i32.const	$push11=, 32
-	i32.sub 	$1=, $pop10, $pop11
-	i32.const	$push12=, __stack_pointer
-	i32.store	$discard=, 0($pop12), $1
+	i32.sub 	$push19=, $pop10, $pop11
+	i32.store	$push21=, 0($pop12), $pop19
+	tee_local	$push20=, $0=, $pop21
 	i32.const	$push0=, 1310730
-	i32.store	$discard=, 16($1), $pop0
+	i32.store	$discard=, 16($pop20), $pop0
 	i32.const	$push1=, 11
-	i32.store16	$discard=, 20($1), $pop1
+	i32.store16	$discard=, 20($0), $pop1
 	i32.const	$push2=, 1441804
-	i32.store	$discard=, 24($1), $pop2
+	i32.store	$discard=, 24($0), $pop2
 	i32.const	$push3=, 21
-	i32.store16	$discard=, 22($1), $pop3
-	i32.load	$push4=, 16($1)
-	i32.store	$discard=, 12($1), $pop4
-	i32.load	$push5=, 20($1)
-	i32.store	$discard=, 8($1), $pop5
-	i32.load	$push6=, 24($1)
-	i32.store	$discard=, 4($1), $pop6
+	i32.store16	$discard=, 22($0), $pop3
+	i32.load	$push4=, 16($0)
+	i32.store	$discard=, 12($0), $pop4
+	i32.load	$push5=, 20($0)
+	i32.store	$discard=, 8($0), $pop5
+	i32.load	$push6=, 24($0)
+	i32.store	$discard=, 4($0), $pop6
 	i32.const	$push13=, 12
-	i32.add 	$push14=, $1, $pop13
+	i32.add 	$push14=, $0, $pop13
 	i32.const	$push15=, 8
-	i32.add 	$push16=, $1, $pop15
+	i32.add 	$push16=, $0, $pop15
 	i32.const	$push17=, 4
-	i32.add 	$push18=, $1, $pop17
+	i32.add 	$push18=, $0, $pop17
 	i32.const	$push7=, 123
 	i32.call	$discard=, f@FUNCTION, $0, $pop14, $pop16, $pop18, $pop7
 	i32.const	$push8=, 0

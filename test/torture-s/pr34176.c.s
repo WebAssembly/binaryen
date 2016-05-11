@@ -55,15 +55,16 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push3=, __stack_pointer
-	i32.load	$push4=, 0($pop3)
-	i32.const	$push5=, 16
-	i32.sub 	$2=, $pop4, $pop5
-	i32.const	$push6=, __stack_pointer
-	i32.store	$discard=, 0($pop6), $2
-	i32.const	$push10=, 12
-	i32.add 	$push11=, $2, $pop10
-	i32.call	$discard=, hash_find_entry@FUNCTION, $pop11
+	i32.const	$push4=, __stack_pointer
+	i32.const	$push1=, __stack_pointer
+	i32.load	$push2=, 0($pop1)
+	i32.const	$push3=, 16
+	i32.sub 	$push12=, $pop2, $pop3
+	i32.store	$push14=, 0($pop4), $pop12
+	tee_local	$push13=, $2=, $pop14
+	i32.const	$push8=, 12
+	i32.add 	$push9=, $pop13, $pop8
+	i32.call	$discard=, hash_find_entry@FUNCTION, $pop9
 .LBB2_1:                                # %if.end
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_3 Depth 2
@@ -72,9 +73,9 @@ main:                                   # @main
 	i32.call	$discard=, foo@FUNCTION, $0
 	i32.const	$1=, 0
 	block
-	i32.const	$push14=, 0
-	i32.eq  	$push15=, $0, $pop14
-	br_if   	0, $pop15       # 0: down to label3
+	i32.const	$push17=, 0
+	i32.eq  	$push18=, $0, $pop17
+	br_if   	0, $pop18       # 0: down to label3
 # BB#2:                                 # %while.body.preheader
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$1=, 0
@@ -82,28 +83,28 @@ main:                                   # @main
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label4:
-	i32.const	$push2=, -1
-	i32.add 	$0=, $0, $pop2
-	i32.const	$push1=, 8
-	i32.add 	$1=, $1, $pop1
+	i32.const	$push16=, -1
+	i32.add 	$0=, $0, $pop16
+	i32.const	$push15=, 8
+	i32.add 	$1=, $1, $pop15
 	br_if   	0, $0           # 0: up to label4
 .LBB2_4:                                # %cleanup.thread
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop                        # label5:
 	end_block                       # label3:
-	i32.const	$push12=, 12
-	i32.add 	$push13=, $2, $pop12
-	i32.call	$discard=, hash_find_entry@FUNCTION, $pop13
-	i32.const	$push16=, 0
-	i32.eq  	$push17=, $1, $pop16
-	br_if   	0, $pop17       # 0: up to label1
+	i32.const	$push10=, 12
+	i32.add 	$push11=, $2, $pop10
+	i32.call	$discard=, hash_find_entry@FUNCTION, $pop11
+	i32.const	$push19=, 0
+	i32.eq  	$push20=, $1, $pop19
+	br_if   	0, $pop20       # 0: up to label1
 # BB#5:                                 # %for.end
 	end_loop                        # label2:
+	i32.const	$push7=, __stack_pointer
+	i32.const	$push5=, 16
+	i32.add 	$push6=, $2, $pop5
+	i32.store	$discard=, 0($pop7), $pop6
 	i32.const	$push0=, 0
-	i32.const	$push9=, __stack_pointer
-	i32.const	$push7=, 16
-	i32.add 	$push8=, $2, $pop7
-	i32.store	$discard=, 0($pop9), $pop8
 	return  	$pop0
 	.endfunc
 .Lfunc_end2:

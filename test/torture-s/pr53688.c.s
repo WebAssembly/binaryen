@@ -28,32 +28,32 @@ init:                                   # @init
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64, i32
+	.local  	i32, i64
 # BB#0:                                 # %entry
 	call    	init@FUNCTION
 	i32.const	$push17=, 0
-	i64.load	$0=, p($pop17):p2align=0
+	i64.load	$1=, p($pop17):p2align=0
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
 	i32.load8_u	$push0=, p+8($pop15)
 	i32.store8	$discard=, headline+8($pop16), $pop0
 	i32.const	$push14=, 0
-	i64.store	$discard=, headline($pop14), $0
+	i64.store	$discard=, headline($pop14), $1
 	i32.const	$push13=, 0
 	i32.const	$push1=, 32
-	i32.store8	$1=, headline+17($pop13), $pop1
+	i32.store8	$0=, headline+17($pop13), $pop1
 	i32.const	$push12=, 0
-	i64.load	$0=, p+9($pop12):p2align=0
+	i64.load	$1=, p+9($pop12):p2align=0
 	i32.const	$push11=, 0
 	i64.const	$push2=, 2314885530818453536
 	i64.store	$discard=, headline+9($pop11):p2align=0, $pop2
 	i32.const	$push10=, 0
-	i64.store	$discard=, headline+10($pop10):p2align=1, $0
+	i64.store	$discard=, headline+10($pop10):p2align=1, $1
 	i32.const	$push4=, headline+18
 	i32.const	$push3=, 238
-	i32.call	$discard=, memset@FUNCTION, $pop4, $1, $pop3
+	i32.call	$discard=, memset@FUNCTION, $pop4, $0, $pop3
 	block
-	i32.wrap/i64	$push5=, $0
+	i32.wrap/i64	$push5=, $1
 	i32.const	$push6=, 255
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push8=, 83

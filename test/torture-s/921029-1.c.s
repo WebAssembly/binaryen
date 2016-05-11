@@ -8,18 +8,18 @@ build:                                  # @build
 	.param  	i32, i32
 	.result 	i64
 # BB#0:                                 # %entry
-	i32.const	$push3=, 0
+	i32.const	$push6=, 0
 	i32.const	$push10=, 0
-	i64.extend_u/i32	$push0=, $0
-	i64.const	$push1=, 32
-	i64.shl 	$push2=, $pop0, $pop1
-	i64.store	$push4=, hpart($pop10), $pop2
+	i64.extend_u/i32	$push3=, $0
+	i64.const	$push4=, 32
+	i64.shl 	$push5=, $pop3, $pop4
+	i64.store	$push0=, hpart($pop10), $pop5
 	i32.const	$push9=, 0
-	i64.extend_u/i32	$push5=, $1
-	i64.store	$push6=, lpart($pop9), $pop5
-	i64.or  	$push7=, $pop4, $pop6
-	i64.store	$push8=, back($pop3), $pop7
-	return  	$pop8
+	i64.extend_u/i32	$push7=, $1
+	i64.store	$push1=, lpart($pop9), $pop7
+	i64.or  	$push8=, $pop0, $pop1
+	i64.store	$push2=, back($pop6), $pop8
+	return  	$pop2
 	.endfunc
 .Lfunc_end0:
 	.size	build, .Lfunc_end0-build

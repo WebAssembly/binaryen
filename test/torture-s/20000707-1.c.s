@@ -49,29 +49,28 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push7=, __stack_pointer
-	i32.load	$push8=, 0($pop7)
-	i32.const	$push9=, 16
-	i32.sub 	$1=, $pop8, $pop9
-	i32.const	$push10=, __stack_pointer
-	i32.store	$discard=, 0($pop10), $1
-	i32.const	$push11=, 4
-	i32.add 	$push12=, $1, $pop11
-	i32.const	$push2=, 8
-	i32.add 	$push3=, $pop12, $pop2
+	i32.const	$push8=, __stack_pointer
+	i32.const	$push5=, __stack_pointer
+	i32.load	$push6=, 0($pop5)
+	i32.const	$push7=, 16
+	i32.sub 	$push11=, $pop6, $pop7
+	i32.store	$push15=, 0($pop8), $pop11
+	tee_local	$push14=, $0=, $pop15
+	i32.const	$push2=, 12
+	i32.add 	$push3=, $pop14, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.x+8($pop0)
 	i32.store	$discard=, 0($pop3), $pop1
-	i32.const	$push6=, 0
-	i64.load	$push4=, .Lmain.x($pop6):p2align=2
-	i64.store	$discard=, 4($1):p2align=2, $pop4
-	i32.const	$push13=, 4
-	i32.add 	$push14=, $1, $pop13
-	call    	bar@FUNCTION, $pop14, $0, $0
-	i32.const	$push5=, 0
-	call    	exit@FUNCTION, $pop5
+	i32.const	$push13=, 0
+	i64.load	$push4=, .Lmain.x($pop13):p2align=2
+	i64.store	$discard=, 4($0):p2align=2, $pop4
+	i32.const	$push9=, 4
+	i32.add 	$push10=, $0, $pop9
+	call    	bar@FUNCTION, $pop10, $0, $0
+	i32.const	$push12=, 0
+	call    	exit@FUNCTION, $pop12
 	unreachable
 	.endfunc
 .Lfunc_end2:

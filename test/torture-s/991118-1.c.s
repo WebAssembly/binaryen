@@ -73,21 +73,21 @@ main:                                   # @main
 	.local  	i64, i64, i64, i64
 # BB#0:                                 # %entry
 	i32.const	$push3=, 0
-	i64.load	$0=, tmp2($pop3)
+	i64.load	$2=, tmp2($pop3)
 	i32.const	$push49=, 0
 	i32.const	$push48=, 0
 	i64.load	$push47=, tmp($pop48)
 	tee_local	$push46=, $3=, $pop47
 	i64.const	$push4=, -8690468286197432320
 	i64.xor 	$push5=, $pop46, $pop4
-	i64.store	$1=, tmp($pop49), $pop5
+	i64.store	$0=, tmp($pop49), $pop5
 	i32.const	$push45=, 0
 	i64.const	$push6=, 2381903268435576
-	i64.xor 	$push0=, $0, $pop6
-	i64.store	$2=, tmp2($pop45), $pop0
+	i64.xor 	$push0=, $2, $pop6
+	i64.store	$1=, tmp2($pop45), $pop0
 	block
 	i64.const	$push10=, -4096
-	i64.and 	$push11=, $1, $pop10
+	i64.and 	$push11=, $0, $pop10
 	i64.const	$push12=, -7687337405579571200
 	i64.ne  	$push13=, $pop11, $pop12
 	br_if   	0, $pop13       # 0: down to label0
@@ -102,33 +102,33 @@ main:                                   # @main
 	br_if   	0, $pop14       # 0: down to label0
 # BB#2:                                 # %if.end
 	i64.const	$push16=, 52
-	i64.shr_s	$push17=, $0, $pop16
+	i64.shr_s	$push17=, $2, $pop16
 	i32.wrap/i64	$push18=, $pop17
 	i32.const	$push52=, 291
 	i32.ne  	$push20=, $pop18, $pop52
 	br_if   	0, $pop20       # 0: down to label0
 # BB#3:                                 # %if.end
 	i64.const	$push19=, 4503599627370495
-	i64.and 	$push15=, $2, $pop19
+	i64.and 	$push15=, $1, $pop19
 	i64.const	$push21=, 2626808268586421
 	i64.ne  	$push22=, $pop15, $pop21
 	br_if   	0, $pop22       # 0: down to label0
 # BB#4:                                 # %if.end19
 	i32.const	$push24=, 0
-	i64.load	$0=, tmp4($pop24)
+	i64.load	$2=, tmp4($pop24)
 	i32.const	$push57=, 0
 	i32.const	$push56=, 0
 	i64.load	$push55=, tmp3($pop56)
 	tee_local	$push54=, $3=, $pop55
 	i64.const	$push25=, -4345234143098716160
 	i64.xor 	$push26=, $pop54, $pop25
-	i64.store	$1=, tmp3($pop57), $pop26
+	i64.store	$0=, tmp3($pop57), $pop26
 	i32.const	$push53=, 0
 	i64.const	$push27=, 6885502895806072
-	i64.xor 	$push1=, $0, $pop27
-	i64.store	$2=, tmp4($pop53), $pop1
+	i64.xor 	$push1=, $2, $pop27
+	i64.store	$1=, tmp4($pop53), $pop1
 	i64.const	$push31=, -2048
-	i64.and 	$push32=, $1, $pop31
+	i64.and 	$push32=, $0, $pop31
 	i64.const	$push33=, -3725223934242340864
 	i64.ne  	$push34=, $pop32, $pop33
 	br_if   	0, $pop34       # 0: down to label0
@@ -143,14 +143,14 @@ main:                                   # @main
 	br_if   	0, $pop35       # 0: down to label0
 # BB#6:                                 # %if.end34
 	i64.const	$push37=, 53
-	i64.shr_s	$push38=, $0, $pop37
+	i64.shr_s	$push38=, $2, $pop37
 	i32.wrap/i64	$push39=, $pop38
 	i32.const	$push60=, 291
 	i32.ne  	$push41=, $pop39, $pop60
 	br_if   	0, $pop41       # 0: down to label0
 # BB#7:                                 # %if.end34
 	i64.const	$push40=, 9007199254740991
-	i64.and 	$push36=, $2, $pop40
+	i64.and 	$push36=, $1, $pop40
 	i64.const	$push42=, 7188242255599224
 	i64.ne  	$push43=, $pop36, $pop42
 	br_if   	0, $pop43       # 0: down to label0

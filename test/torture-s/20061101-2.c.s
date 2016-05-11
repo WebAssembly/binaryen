@@ -41,17 +41,18 @@ bug:                                    # @bug
 	loop                            # label2:
 	i32.const	$push6=, 1
 	i32.and 	$push1=, $3, $pop6
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $pop1, $pop9
-	br_if   	2, $pop10       # 2: down to label1
+	i32.const	$push11=, 0
+	i32.eq  	$push12=, $pop1, $pop11
+	br_if   	2, $pop12       # 2: down to label1
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push8=, 1
-	i32.add 	$push2=, $0, $pop8
-	i32.lt_s	$push3=, $0, $2
-	i32.select	$0=, $pop2, $2, $pop3
 	i32.const	$3=, 0
-	i32.mul 	$push4=, $0, $1
+	i32.const	$push10=, 1
+	i32.add 	$push2=, $0, $pop10
+	i32.lt_s	$push3=, $0, $2
+	i32.select	$push9=, $pop2, $2, $pop3
+	tee_local	$push8=, $0=, $pop9
+	i32.mul 	$push4=, $pop8, $1
 	i32.const	$push7=, 36863
 	i32.eq  	$push5=, $pop4, $pop7
 	br_if   	0, $pop5        # 0: up to label2

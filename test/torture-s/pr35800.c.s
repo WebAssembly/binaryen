@@ -53,17 +53,17 @@ main:                                   # @main
 	loop                            # label3:
 	i32.load	$push0=, 0($0)
 	i32.load8_u	$push1=, 0($pop0)
-	i32.const	$push8=, 105
-	i32.ne  	$push2=, $pop1, $pop8
+	i32.const	$push5=, 105
+	i32.ne  	$push2=, $pop1, $pop5
 	br_if   	2, $pop2        # 2: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push7=, -1
-	i32.add 	$1=, $1, $pop7
-	i32.const	$push6=, 4
-	i32.add 	$0=, $0, $pop6
-	i32.const	$push5=, -34
-	i32.ge_s	$push3=, $1, $pop5
+	i32.const	$push8=, -1
+	i32.add 	$1=, $1, $pop8
+	i32.const	$push7=, 4
+	i32.add 	$0=, $0, $pop7
+	i32.const	$push6=, -34
+	i32.ge_s	$push3=, $1, $pop6
 	br_if   	0, $pop3        # 0: up to label3
 # BB#3:                                 # %if.end21
 	end_loop                        # label4:

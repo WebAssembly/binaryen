@@ -9,14 +9,15 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push6=, __stack_pointer
 	i32.const	$push3=, __stack_pointer
 	i32.load	$push4=, 0($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$1=, $pop4, $pop5
-	i32.const	$push6=, __stack_pointer
-	i32.store	$discard=, 0($pop6), $1
+	i32.sub 	$push10=, $pop4, $pop5
+	i32.store	$push12=, 0($pop6), $pop10
+	tee_local	$push11=, $1=, $pop12
 	i64.const	$push0=, 4617315517961601024
-	i64.store	$discard=, 0($1), $pop0
+	i64.store	$discard=, 0($pop11), $pop0
 	i32.const	$push2=, buf
 	i32.const	$push1=, .L.str
 	i32.call_indirect	$discard=, $0, $pop2, $pop1, $1
@@ -24,7 +25,7 @@ f:                                      # @f
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $1, $pop7
 	i32.store	$discard=, 0($pop9), $pop8
-	return  	$0
+	return  	$1
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -37,26 +38,27 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push12=, __stack_pointer
-	i32.load	$push13=, 0($pop12)
-	i32.const	$push14=, 16
-	i32.sub 	$0=, $pop13, $pop14
-	i32.const	$push15=, __stack_pointer
-	i32.store	$discard=, 0($pop15), $0
+	i32.const	$push13=, __stack_pointer
+	i32.const	$push10=, __stack_pointer
+	i32.load	$push11=, 0($pop10)
+	i32.const	$push12=, 16
+	i32.sub 	$push14=, $pop11, $pop12
+	i32.store	$push17=, 0($pop13), $pop14
+	tee_local	$push16=, $0=, $pop17
 	i64.const	$push1=, 4617315517961601024
-	i64.store	$discard=, 0($0), $pop1
+	i64.store	$discard=, 0($pop16), $pop1
 	i32.const	$push3=, buf
 	i32.const	$push2=, .L.str
 	i32.call	$discard=, sprintf@FUNCTION, $pop3, $pop2, $0
 	block
-	i32.const	$push10=, 0
-	i32.load8_u	$push4=, buf($pop10)
+	i32.const	$push15=, 0
+	i32.load8_u	$push4=, buf($pop15)
 	i32.const	$push5=, 53
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$push11=, 0
-	i32.load8_u	$push0=, buf+1($pop11)
+	i32.const	$push18=, 0
+	i32.load8_u	$push0=, buf+1($pop18)
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop0, $pop7
 	br_if   	0, $pop8        # 0: down to label0

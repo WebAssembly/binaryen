@@ -10,10 +10,10 @@ main:                                   # @main
 	block
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
-	i32.load16_u	$push0=, l($pop4)
-	i32.store16	$push1=, s($pop5), $pop0
+	i32.load16_u	$push1=, l($pop4)
+	i32.store16	$push0=, s($pop5), $pop1
 	i32.const	$push2=, 65534
-	i32.ne  	$push3=, $pop1, $pop2
+	i32.ne  	$push3=, $pop0, $pop2
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push6=, 0

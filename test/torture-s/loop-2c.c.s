@@ -14,23 +14,23 @@ f:                                      # @f
 	i32.eq  	$push12=, $0, $pop11
 	br_if   	0, $pop12       # 0: down to label0
 # BB#1:                                 # %for.body.preheader
-	i32.const	$push3=, 2
-	i32.shl 	$push4=, $0, $pop3
-	i32.const	$push5=, a-4
-	i32.add 	$2=, $pop4, $pop5
-	i32.const	$push0=, 3
-	i32.mul 	$push1=, $0, $pop0
-	i32.add 	$push2=, $1, $pop1
+	i32.const	$push4=, 2
+	i32.shl 	$push5=, $0, $pop4
+	i32.const	$push6=, a-4
+	i32.add 	$2=, $pop5, $pop6
+	i32.const	$push1=, 3
+	i32.mul 	$push2=, $0, $pop1
+	i32.add 	$push3=, $1, $pop2
 	i32.const	$push7=, -3
-	i32.add 	$1=, $pop2, $pop7
+	i32.add 	$1=, $pop3, $pop7
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push10=, -1
 	i32.add 	$0=, $0, $pop10
-	i32.store	$push6=, 0($2), $1
+	i32.store	$push0=, 0($2), $1
 	i32.const	$push9=, -3
-	i32.add 	$1=, $pop6, $pop9
+	i32.add 	$1=, $pop0, $pop9
 	i32.const	$push8=, -4
 	i32.add 	$2=, $2, $pop8
 	br_if   	0, $0           # 0: up to label1
@@ -56,22 +56,22 @@ g:                                      # @g
 	i32.eq  	$push11=, $0, $pop10
 	br_if   	0, $pop11       # 0: down to label3
 # BB#1:                                 # %for.body.preheader.i
-	i32.const	$push0=, 3
-	i32.mul 	$push1=, $0, $pop0
-	i32.const	$push2=, a-3
-	i32.add 	$2=, $pop1, $pop2
-	i32.const	$push3=, 2
-	i32.shl 	$push4=, $0, $pop3
-	i32.const	$push5=, a-4
-	i32.add 	$1=, $pop4, $pop5
+	i32.const	$push1=, 3
+	i32.mul 	$push2=, $0, $pop1
+	i32.const	$push3=, a-3
+	i32.add 	$2=, $pop2, $pop3
+	i32.const	$push4=, 2
+	i32.shl 	$push5=, $0, $pop4
+	i32.const	$push6=, a-4
+	i32.add 	$1=, $pop5, $pop6
 .LBB1_2:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
 	i32.const	$push9=, -1
 	i32.add 	$0=, $0, $pop9
-	i32.store	$push6=, 0($1), $2
+	i32.store	$push0=, 0($1), $2
 	i32.const	$push8=, -3
-	i32.add 	$2=, $pop6, $pop8
+	i32.add 	$2=, $pop0, $pop8
 	i32.const	$push7=, -4
 	i32.add 	$1=, $1, $pop7
 	br_if   	0, $0           # 0: up to label4

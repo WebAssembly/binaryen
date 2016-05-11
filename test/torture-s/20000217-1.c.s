@@ -12,13 +12,14 @@ showbug:                                # @showbug
 	i32.load16_u	$push1=, 0($0)
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, 65528
-	i32.add 	$push4=, $pop2, $pop3
-	i32.store16	$push5=, 0($0), $pop4
-	i32.const	$push9=, 65528
-	i32.and 	$push6=, $pop5, $pop9
-	i32.const	$push7=, 7
-	i32.gt_u	$push8=, $pop6, $pop7
-	return  	$pop8
+	i32.add 	$push9=, $pop2, $pop3
+	tee_local	$push8=, $1=, $pop9
+	i32.store16	$discard=, 0($0), $pop8
+	i32.const	$push7=, 65528
+	i32.and 	$push4=, $1, $pop7
+	i32.const	$push5=, 7
+	i32.gt_u	$push6=, $pop4, $pop5
+	return  	$pop6
 	.endfunc
 .Lfunc_end0:
 	.size	showbug, .Lfunc_end0-showbug

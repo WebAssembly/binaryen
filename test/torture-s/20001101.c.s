@@ -8,11 +8,11 @@ dummy:                                  # @dummy
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 1
-	i32.store	$0=, 0($0), $pop0
-	i32.const	$push1=, 7
-	i32.store	$discard=, 0($1), $pop1
-	return  	$0
+	i32.const	$push2=, 7
+	i32.store	$discard=, 0($1), $pop2
+	i32.const	$push1=, 1
+	i32.store	$push0=, 0($0), $pop1
+	return  	$pop0
 	.endfunc
 .Lfunc_end0:
 	.size	dummy, .Lfunc_end0-dummy

@@ -14,7 +14,7 @@ ieq:                                    # @ieq
 	block
 	block
 	i32.ne  	$push1=, $0, $1
-	tee_local	$push0=, $1=, $pop1
+	tee_local	$push0=, $0=, $pop1
 	i32.const	$push2=, 0
 	i32.eq  	$push3=, $pop0, $pop2
 	br_if   	0, $pop3        # 0: down to label4
@@ -32,7 +32,7 @@ ieq:                                    # @ieq
 	end_block                       # label3:
 	block
 	block
-	br_if   	0, $1           # 0: down to label6
+	br_if   	0, $0           # 0: down to label6
 # BB#4:                                 # %if.then10
 	br_if   	1, $2           # 1: down to label5
 # BB#5:                                 # %if.then12
@@ -46,7 +46,7 @@ ieq:                                    # @ieq
 	block
 	block
 	i32.const	$push8=, 0
-	i32.eq  	$push9=, $1, $pop8
+	i32.eq  	$push9=, $0, $pop8
 	br_if   	0, $pop9        # 0: down to label8
 # BB#8:                                 # %if.else26
 	i32.const	$push10=, 0
@@ -62,7 +62,7 @@ ieq:                                    # @ieq
 	end_block                       # label7:
 	block
 	block
-	br_if   	0, $1           # 0: down to label10
+	br_if   	0, $0           # 0: down to label10
 # BB#11:                                # %if.then34
 	br_if   	1, $2           # 1: down to label9
 # BB#12:                                # %if.then36
@@ -117,7 +117,7 @@ ine:                                    # @ine
 	br_if   	1, $pop4        # 1: down to label11
 .LBB1_4:                                # %if.end6
 	end_block                       # label12:
-	return  	$2
+	return  	$0
 .LBB1_5:                                # %if.then2
 	end_block                       # label11:
 	call    	abort@FUNCTION
@@ -149,7 +149,7 @@ ilt:                                    # @ilt
 	br_if   	1, $2           # 1: down to label14
 .LBB2_4:                                # %if.end6
 	end_block                       # label15:
-	return  	$2
+	return  	$0
 .LBB2_5:                                # %if.then4
 	end_block                       # label14:
 	call    	abort@FUNCTION
@@ -185,7 +185,7 @@ ile:                                    # @ile
 	br_if   	1, $pop4        # 1: down to label17
 .LBB3_4:                                # %if.end6
 	end_block                       # label18:
-	return  	$2
+	return  	$0
 .LBB3_5:                                # %if.then2
 	end_block                       # label17:
 	call    	abort@FUNCTION
@@ -217,7 +217,7 @@ igt:                                    # @igt
 	br_if   	1, $2           # 1: down to label20
 .LBB4_4:                                # %if.end6
 	end_block                       # label21:
-	return  	$2
+	return  	$0
 .LBB4_5:                                # %if.then4
 	end_block                       # label20:
 	call    	abort@FUNCTION
@@ -253,7 +253,7 @@ ige:                                    # @ige
 	br_if   	1, $pop4        # 1: down to label23
 .LBB5_4:                                # %if.end6
 	end_block                       # label24:
-	return  	$2
+	return  	$0
 .LBB5_5:                                # %if.then2
 	end_block                       # label23:
 	call    	abort@FUNCTION

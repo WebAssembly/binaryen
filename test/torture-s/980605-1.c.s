@@ -54,38 +54,38 @@ getval:                                 # @getval
 f:                                      # @f
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push16=, __stack_pointer
-	i32.load	$push17=, 0($pop16)
-	i32.const	$push18=, 16
-	i32.sub 	$1=, $pop17, $pop18
-	i32.const	$push19=, __stack_pointer
-	i32.store	$discard=, 0($pop19), $1
+	i32.const	$push14=, __stack_pointer
+	i32.const	$push11=, __stack_pointer
+	i32.load	$push12=, 0($pop11)
+	i32.const	$push13=, 16
+	i32.sub 	$push18=, $pop12, $pop13
+	i32.store	$0=, 0($pop14), $pop18
 	i32.const	$push0=, 0
-	i32.const	$push15=, 0
-	i32.load	$push14=, x($pop15)
-	tee_local	$push13=, $0=, $pop14
+	i32.const	$push23=, 0
+	i32.load	$push22=, x($pop23)
+	tee_local	$push21=, $1=, $pop22
 	i32.const	$push1=, 20
-	i32.add 	$push2=, $pop13, $pop1
+	i32.add 	$push2=, $pop21, $pop1
 	i32.store	$discard=, x($pop0), $pop2
 	i32.const	$push3=, 10
-	i32.mul 	$push12=, $0, $pop3
-	tee_local	$push11=, $0=, $pop12
-	i32.add 	$push4=, $pop11, $0
+	i32.mul 	$push20=, $1, $pop3
+	tee_local	$push19=, $1=, $pop20
+	i32.add 	$push4=, $pop19, $1
 	i32.const	$push5=, 207
 	i32.add 	$push6=, $pop4, $pop5
-	i32.store	$0=, 0($1), $pop6
+	i32.store	$1=, 0($0), $pop6
 	i32.const	$push8=, buf
 	i32.const	$push7=, .L.str
-	i32.call	$discard=, sprintf@FUNCTION, $pop8, $pop7, $1
+	i32.call	$discard=, sprintf@FUNCTION, $pop8, $pop7, $0
 	block
 	i32.const	$push9=, 227
-	i32.ne  	$push10=, $0, $pop9
+	i32.ne  	$push10=, $1, $pop9
 	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push22=, __stack_pointer
-	i32.const	$push20=, 16
-	i32.add 	$push21=, $1, $pop20
-	i32.store	$discard=, 0($pop22), $pop21
+	i32.const	$push17=, __stack_pointer
+	i32.const	$push15=, 16
+	i32.add 	$push16=, $0, $pop15
+	i32.store	$discard=, 0($pop17), $pop16
 	return
 .LBB2_2:                                # %if.then
 	end_block                       # label0:

@@ -9,10 +9,10 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 3
-	i32.shl 	$push1=, $0, $pop0
-	i32.const	$push2=, a
-	i32.add 	$1=, $pop1, $pop2
+	i32.const	$push1=, 3
+	i32.shl 	$push2=, $0, $pop1
+	i32.const	$push3=, a
+	i32.add 	$1=, $pop2, $pop3
 	i32.const	$2=, 256
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
@@ -22,10 +22,10 @@ f:                                      # @f
 	i32.const	$push9=, 4
 	i32.add 	$0=, $0, $pop9
 	i32.const	$push8=, 2
-	i32.shl 	$push3=, $2, $pop8
-	i32.store	$push4=, a($pop3), $1
+	i32.shl 	$push4=, $2, $pop8
+	i32.store	$push0=, a($pop4), $1
 	i32.const	$push7=, 32
-	i32.add 	$1=, $pop4, $pop7
+	i32.add 	$1=, $pop0, $pop7
 	i32.const	$push6=, 1073741840
 	i32.lt_s	$push5=, $0, $pop6
 	br_if   	0, $pop5        # 0: up to label0
@@ -42,21 +42,23 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end7
-	i32.const	$push0=, 0
+	i32.const	$push1=, 0
+	i32.const	$push2=, a
+	i32.store	$discard=, a+512($pop1), $pop2
+	i32.const	$push10=, 0
+	i32.const	$push3=, a+32
+	i32.store	$discard=, a+256($pop10), $pop3
+	i32.const	$push9=, 0
+	i32.const	$push4=, a+64
+	i32.store	$discard=, a+128($pop9), $pop4
+	i32.const	$push8=, 0
+	i32.const	$push5=, a+96
+	i32.store	$discard=, a+64($pop8), $pop5
 	i32.const	$push7=, 0
-	i32.store	$push6=, a+32($pop0), $pop7
-	tee_local	$push5=, $0=, $pop6
-	i32.const	$push1=, a
-	i32.store	$discard=, a+512($pop5), $pop1
-	i32.const	$push2=, a+32
-	i32.store	$discard=, a+256($0), $pop2
-	i32.const	$push3=, a+64
-	i32.store	$discard=, a+128($0), $pop3
-	i32.const	$push4=, a+96
-	i32.store	$discard=, a+64($0), $pop4
-	call    	exit@FUNCTION, $0
+	i32.const	$push6=, 0
+	i32.store	$push0=, a+32($pop7), $pop6
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:

@@ -7,20 +7,20 @@
 bar:                                    # @bar
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.load	$1=, c($pop1)
+	i32.const	$push0=, 0
+	i32.load	$1=, c($pop0)
 	i32.const	$0=, 4
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	i32.const	$push5=, 1
-	i32.shl 	$push0=, $1, $pop5
-	i32.store	$1=, c($0), $pop0
-	i32.const	$push4=, 4
-	i32.add 	$0=, $0, $pop4
-	i32.const	$push3=, 2496
-	i32.ne  	$push2=, $0, $pop3
-	br_if   	0, $pop2        # 0: up to label0
+	i32.const	$push4=, 1
+	i32.shl 	$1=, $1, $pop4
+	i32.store	$discard=, c($0), $1
+	i32.const	$push3=, 4
+	i32.add 	$0=, $0, $pop3
+	i32.const	$push2=, 2496
+	i32.ne  	$push1=, $0, $pop2
+	br_if   	0, $pop1        # 0: up to label0
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
 	return

@@ -31,15 +31,15 @@ f:                                      # @f
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.add 	$2=, $2, $3
-	i32.const	$push17=, -1
-	i32.le_s	$push9=, $2, $pop17
+	i32.const	$push15=, -1
+	i32.le_s	$push9=, $2, $pop15
 	br_if   	3, $pop9        # 3: down to label0
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push16=, 1
-	i32.add 	$5=, $5, $pop16
-	i32.const	$push15=, 2
-	i32.le_s	$push10=, $5, $pop15
+	i32.const	$push17=, 1
+	i32.add 	$5=, $5, $pop17
+	i32.const	$push16=, 2
+	i32.le_s	$push10=, $5, $pop16
 	br_if   	0, $pop10       # 0: up to label2
 .LBB0_4:                                # %for.cond6.preheader
 	end_loop                        # label3:

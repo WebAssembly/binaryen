@@ -8,16 +8,16 @@ main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
+	i32.const	$push3=, 0
 	i32.const	$push8=, 0
-	i32.const	$push0=, 2
-	i32.store	$push2=, x00($pop8), $pop0
-	i32.store	$discard=, y00($pop1), $pop2
+	i32.const	$push2=, 2
+	i32.store	$push0=, x00($pop8), $pop2
+	i32.store	$discard=, y00($pop3), $pop0
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
-	i32.const	$push3=, 22
-	i32.store	$push4=, x01($pop6), $pop3
-	i32.store	$discard=, y01($pop7), $pop4
+	i32.const	$push4=, 22
+	i32.store	$push1=, x01($pop6), $pop4
+	i32.store	$discard=, y01($pop7), $pop1
 	i32.const	$push5=, 0
 	return  	$pop5
 	.endfunc

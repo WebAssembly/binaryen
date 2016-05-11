@@ -7,15 +7,16 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, __stack_pointer
 	i32.load	$push1=, 0($pop0)
 	i32.const	$push2=, 16
-	i32.sub 	$2=, $pop1, $pop2
-	i32.store	$discard=, 12($2), $0
-	i32.const	$1=, 12
-	i32.add 	$1=, $2, $1
+	i32.sub 	$push5=, $pop1, $pop2
+	tee_local	$push4=, $1=, $pop5
+	i32.store	$discard=, 12($pop4), $0
+	i32.const	$push3=, 12
+	i32.add 	$1=, $1, $pop3
 	#APP
 	#NO_APP
 	return  	$0
@@ -31,11 +32,11 @@ bar:                                    # @bar
 	.param  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.call	$push0=, foo@FUNCTION, $1
-	i32.store	$push4=, 0($0), $pop0
+	i32.call	$push4=, foo@FUNCTION, $1
 	tee_local	$push3=, $1=, $pop4
+	i32.store	$push0=, 0($0), $pop3
 	i32.const	$push7=, 0
-	i32.eq  	$push8=, $pop3, $pop7
+	i32.eq  	$push8=, $pop0, $pop7
 	br_if   	0, $pop8        # 0: down to label0
 .LBB1_1:                                # %while.cond.while.cond_crit_edge
                                         # =>This Inner Loop Header: Depth=1
@@ -47,11 +48,11 @@ bar:                                    # @bar
 	end_loop                        # label2:
 	end_block                       # label0:
 	block
-	i32.call	$push1=, foo@FUNCTION, $2
-	i32.store	$push6=, 0($0), $pop1
+	i32.call	$push6=, foo@FUNCTION, $2
 	tee_local	$push5=, $1=, $pop6
+	i32.store	$push1=, 0($0), $pop5
 	i32.const	$push9=, 0
-	i32.eq  	$push10=, $pop5, $pop9
+	i32.eq  	$push10=, $pop1, $pop9
 	br_if   	0, $pop10       # 0: down to label3
 .LBB1_3:                                # %while.cond2.while.cond2_crit_edge
                                         # =>This Inner Loop Header: Depth=1

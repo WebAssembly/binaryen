@@ -74,14 +74,16 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %alabel.i
-	i32.const	$push0=, 0
-	i32.const	$push5=, 0
-	i32.store	$push1=, el($pop0), $pop5
-	i32.load	$push2=, parsefile($pop1)
-	i32.const	$push3=, -559038737
-	i32.store	$push4=, 0($pop2), $pop3
-	i32.call	$discard=, g2@FUNCTION, $pop4
+	i32.const	$push1=, 0
+	i32.load	$0=, parsefile($pop1)
+	i32.const	$push4=, 0
+	i32.const	$push3=, 0
+	i32.store	$discard=, el($pop4), $pop3
+	i32.const	$push2=, -559038737
+	i32.store	$push0=, 0($0), $pop2
+	i32.call	$discard=, g2@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end3:

@@ -24,25 +24,25 @@ line_hints:                             # @line_hints
 	i32.load	$push4=, 4($2)
 	i32.load	$push5=, 4($1)
 	i32.sub 	$push40=, $pop4, $pop5
-	tee_local	$push39=, $1=, $pop40
+	tee_local	$push39=, $2=, $pop40
 	i32.sub 	$push7=, $pop41, $pop39
 	i32.load	$push38=, 8($0)
 	tee_local	$push37=, $6=, $pop38
-	i32.select	$push36=, $pop7, $1, $pop37
-	tee_local	$push35=, $1=, $pop36
+	i32.select	$push36=, $pop7, $2, $pop37
+	tee_local	$push35=, $2=, $pop36
 	i32.load	$push34=, 0($0)
-	tee_local	$push33=, $2=, $pop34
+	tee_local	$push33=, $1=, $pop34
 	i32.select	$0=, $pop42, $pop35, $pop33
 	i32.const	$push8=, 31
 	i32.shr_s	$push32=, $0, $pop8
 	tee_local	$push31=, $4=, $pop32
 	i32.add 	$push9=, $0, $pop31
 	i32.xor 	$4=, $pop9, $4
-	i32.select	$1=, $1, $3, $2
+	i32.select	$2=, $2, $3, $1
 	i32.const	$push30=, 31
-	i32.shr_s	$push29=, $1, $pop30
+	i32.shr_s	$push29=, $2, $pop30
 	tee_local	$push28=, $3=, $pop29
-	i32.add 	$push10=, $1, $pop28
+	i32.add 	$push10=, $2, $pop28
 	i32.xor 	$3=, $pop10, $3
 	block
 	block
@@ -63,13 +63,13 @@ line_hints:                             # @line_hints
 	tee_local	$push50=, $0=, $pop51
 	i32.const	$push17=, 3
 	i32.xor 	$push18=, $pop50, $pop17
-	i32.select	$push12=, $6, $7, $2
+	i32.select	$push12=, $6, $7, $1
 	i32.select	$5=, $pop18, $0, $pop12
 	br      	1               # 1: down to label0
 .LBB0_3:                                # %if.else
 	end_block                       # label1:
 	i32.const	$push58=, 0
-	i32.eq  	$push59=, $1, $pop58
+	i32.eq  	$push59=, $2, $pop58
 	br_if   	0, $pop59       # 0: down to label0
 # BB#4:                                 # %if.else
 	i32.const	$push52=, 4
@@ -78,7 +78,7 @@ line_hints:                             # @line_hints
 	br_if   	0, $pop20       # 0: down to label0
 # BB#5:                                 # %if.then31
 	i32.const	$push21=, 29
-	i32.shr_u	$push22=, $1, $pop21
+	i32.shr_u	$push22=, $2, $pop21
 	i32.const	$push23=, 4
 	i32.and 	$push24=, $pop22, $pop23
 	i32.const	$push55=, 4
@@ -86,7 +86,7 @@ line_hints:                             # @line_hints
 	tee_local	$push53=, $0=, $pop54
 	i32.const	$push25=, 12
 	i32.xor 	$push26=, $pop53, $pop25
-	i32.select	$push0=, $7, $6, $2
+	i32.select	$push0=, $7, $6, $1
 	i32.select	$push27=, $pop26, $0, $pop0
 	return  	$pop27
 .LBB0_6:                                # %if.end40

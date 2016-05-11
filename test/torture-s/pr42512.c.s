@@ -8,33 +8,34 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load16_u	$1=, g_3($pop0)
-	i32.const	$0=, -1
+	i32.const	$push1=, 0
+	i32.load16_u	$0=, g_3($pop1)
+	i32.const	$1=, -1
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	i32.const	$push8=, 65535
-	i32.and 	$push1=, $1, $pop8
-	i32.or  	$1=, $pop1, $0
-	i32.const	$push7=, 255
-	i32.add 	$push2=, $0, $pop7
-	i32.const	$push6=, 255
-	i32.and 	$0=, $pop2, $pop6
-	br_if   	0, $0           # 0: up to label0
+	i32.const	$push11=, 65535
+	i32.and 	$push2=, $0, $pop11
+	i32.or  	$0=, $pop2, $1
+	i32.const	$push10=, 255
+	i32.add 	$push3=, $1, $pop10
+	i32.const	$push9=, 255
+	i32.and 	$push8=, $pop3, $pop9
+	tee_local	$push7=, $1=, $pop8
+	br_if   	0, $pop7        # 0: up to label0
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
-	i32.const	$push10=, 0
-	i32.store16	$discard=, g_3($pop10), $1
 	block
-	i32.const	$push3=, 65535
-	i32.and 	$push4=, $1, $pop3
-	i32.const	$push9=, 65535
-	i32.ne  	$push5=, $pop4, $pop9
-	br_if   	0, $pop5        # 0: down to label2
+	i32.const	$push13=, 0
+	i32.store16	$push0=, g_3($pop13), $0
+	i32.const	$push4=, 65535
+	i32.and 	$push5=, $pop0, $pop4
+	i32.const	$push12=, 65535
+	i32.ne  	$push6=, $pop5, $pop12
+	br_if   	0, $pop6        # 0: down to label2
 # BB#3:                                 # %if.end
-	i32.const	$push11=, 0
-	return  	$pop11
+	i32.const	$push14=, 0
+	return  	$pop14
 .LBB0_4:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION

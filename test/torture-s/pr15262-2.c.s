@@ -14,14 +14,14 @@ foo:                                    # @foo
 	i32.store	$discard=, 0($pop7), $pop4
 	i32.const	$push5=, 2
 	i32.store	$discard=, 0($1), $pop5
-	i32.load	$1=, 0($0)
+	i32.load	$0=, 0($0)
 	i32.const	$push1=, 0
 	f32.load	$push0=, 0($2)
 	i32.const	$push6=, 0
 	f32.load	$push2=, X($pop6)
 	f32.add 	$push3=, $pop0, $pop2
 	f32.store	$discard=, X($pop1), $pop3
-	return  	$1
+	return  	$0
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

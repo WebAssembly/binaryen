@@ -8,9 +8,9 @@ ns_name_skip:                           # @ns_name_skip
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.store	$push1=, 0($0), $pop0
-	return  	$pop1
+	i32.const	$push1=, 0
+	i32.store	$push0=, 0($0), $pop1
+	return  	$pop0
 	.endfunc
 .Lfunc_end0:
 	.size	ns_name_skip, .Lfunc_end0-ns_name_skip

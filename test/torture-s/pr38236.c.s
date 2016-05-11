@@ -12,9 +12,10 @@ foo:                                    # @foo
 	i32.const	$push4=, __stack_pointer
 	i32.load	$push5=, 0($pop4)
 	i32.const	$push6=, 16
-	i32.sub 	$4=, $pop5, $pop6
+	i32.sub 	$push14=, $pop5, $pop6
+	tee_local	$push13=, $4=, $pop14
 	i32.const	$push7=, 12
-	i32.add 	$push8=, $4, $pop7
+	i32.add 	$push8=, $pop13, $pop7
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $4, $pop9
 	i32.select	$push1=, $pop8, $pop10, $3

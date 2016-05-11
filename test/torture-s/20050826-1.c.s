@@ -54,10 +54,10 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, a+7
-	i32.const	$push1=, 0
-	i32.const	$push0=, 2041
-	i32.call	$discard=, memset@FUNCTION, $pop2, $pop1, $pop0
+	i32.const	$push3=, a+7
+	i32.const	$push2=, 0
+	i32.const	$push1=, 2041
+	i32.call	$discard=, memset@FUNCTION, $pop3, $pop2, $pop1
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.load8_u	$push5=, .L.str.1+4($pop18)
@@ -68,9 +68,9 @@ foo:                                    # @foo
 	i32.store	$discard=, a+1($pop17):p2align=0, $pop6
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
-	i32.const	$push3=, 1
-	i32.store8	$push4=, a($pop14), $pop3
-	i32.store8	$0=, a+6($pop15), $pop4
+	i32.const	$push4=, 1
+	i32.store8	$push0=, a($pop14), $pop4
+	i32.store8	$0=, a+6($pop15), $pop0
 	block
 	i32.const	$push13=, 0
 	i64.load	$push7=, a($pop13):p2align=0
@@ -119,10 +119,10 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, a+7
-	i32.const	$push1=, 0
-	i32.const	$push0=, 2041
-	i32.call	$discard=, memset@FUNCTION, $pop2, $pop1, $pop0
+	i32.const	$push3=, a+7
+	i32.const	$push2=, 0
+	i32.const	$push1=, 2041
+	i32.call	$discard=, memset@FUNCTION, $pop3, $pop2, $pop1
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.load8_u	$push5=, .L.str.1+4($pop18)
@@ -133,9 +133,9 @@ main:                                   # @main
 	i32.store	$discard=, a+1($pop17):p2align=0, $pop6
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
-	i32.const	$push3=, 1
-	i32.store8	$push4=, a($pop14), $pop3
-	i32.store8	$0=, a+6($pop15), $pop4
+	i32.const	$push4=, 1
+	i32.store8	$push0=, a($pop14), $pop4
+	i32.store8	$0=, a+6($pop15), $pop0
 	block
 	i32.const	$push13=, 0
 	i64.load	$push7=, a($pop13):p2align=0

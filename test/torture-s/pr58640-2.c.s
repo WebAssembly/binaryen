@@ -8,37 +8,37 @@ fn1:                                    # @fn1
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %if.end
-	i32.const	$push1=, 0
+	i32.const	$push9=, 0
+	i32.const	$push24=, 0
 	i32.const	$push23=, 0
+	i32.load	$push10=, a+36($pop23)
+	i32.store	$push1=, a($pop24), $pop10
+	i32.store	$discard=, a+4($pop9), $pop1
 	i32.const	$push22=, 0
-	i32.load	$push3=, a+36($pop22)
-	i32.store	$push4=, a($pop23), $pop3
-	i32.store	$discard=, a+4($pop1), $pop4
+	i32.load	$1=, a+60($pop22)
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
-	i32.const	$push0=, 1
-	i32.store	$push2=, a+48($pop20), $pop0
-	i32.store	$0=, c($pop21), $pop2
+	i32.const	$push8=, 1
+	i32.store	$push3=, a($pop20), $pop8
+	i32.store	$0=, a+4($pop21), $pop3
 	i32.const	$push19=, 0
-	i32.load	$1=, a+60($pop19)
 	i32.const	$push18=, 0
+	i32.store	$push6=, a($pop18), $1
+	i32.store	$discard=, a+4($pop19), $pop6
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
-	i32.store	$push5=, a($pop16), $0
-	i32.store	$push6=, c($pop17), $pop5
-	i32.store	$0=, a+4($pop18), $pop6
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
-	i32.store	$push8=, a($pop14), $1
-	i32.store	$discard=, a+4($pop15), $pop8
 	i32.const	$push13=, 0
 	i32.const	$push12=, 0
+	i32.store	$push0=, a+48($pop12), $0
+	i32.store	$push2=, c($pop13), $pop0
+	i32.store	$push4=, c($pop14), $pop2
+	i32.store	$push5=, c($pop15), $pop4
+	i32.store	$push7=, c($pop16), $pop5
+	i32.store	$discard=, c($pop17), $pop7
 	i32.const	$push11=, 0
-	i32.store	$push7=, c($pop11), $0
-	i32.store	$push9=, c($pop12), $pop7
-	i32.store	$discard=, c($pop13), $pop9
-	i32.const	$push10=, 0
-	return  	$pop10
+	return  	$pop11
 	.endfunc
 .Lfunc_end0:
 	.size	fn1, .Lfunc_end0-fn1
@@ -55,15 +55,15 @@ main:                                   # @main
 	i32.load	$0=, a+60($pop8)
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
-	i32.const	$push0=, 1
-	i32.store	$push1=, a+48($pop6), $pop0
-	i32.store	$discard=, c($pop7), $pop1
+	i32.const	$push3=, 1
+	i32.store	$push0=, a+48($pop6), $pop3
+	i32.store	$discard=, c($pop7), $pop0
 	block
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
-	i32.store	$push2=, a($pop4), $0
-	i32.store	$push3=, a+4($pop5), $pop2
-	br_if   	0, $pop3        # 0: down to label0
+	i32.store	$push1=, a($pop4), $0
+	i32.store	$push2=, a+4($pop5), $pop1
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 0
 	return  	$pop9

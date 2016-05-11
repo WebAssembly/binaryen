@@ -46,7 +46,8 @@ bug:                                    # @bug
 	block
 	i32.ge_u	$push0=, $1, $2
 	br_if   	0, $pop0        # 0: down to label1
-.LBB1_1:                                # %for.body
+# BB#1:                                 # %for.body.preheader
+.LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.const	$push7=, 65535
@@ -57,7 +58,7 @@ bug:                                    # @bug
 	i32.add 	$1=, $1, $pop6
 	i32.lt_u	$push3=, $1, $2
 	br_if   	0, $pop3        # 0: up to label2
-.LBB1_2:                                # %for.end
+.LBB1_3:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:
 	i32.const	$push4=, 65535

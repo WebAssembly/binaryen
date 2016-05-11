@@ -25,8 +25,8 @@ foo:                                    # @foo
 	br_if   	0, $pop0        # 0: down to label5
 # BB#3:                                 # %for.end.thread
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push4=, 1
-	i32.shl 	$push2=, $3, $pop4
+	i32.const	$push3=, 1
+	i32.shl 	$push2=, $3, $pop3
 	i32.sub 	$1=, $pop2, $2
 	br      	1               # 1: down to label4
 .LBB0_4:                                # %for.end
@@ -38,8 +38,8 @@ foo:                                    # @foo
 .LBB0_5:                                # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label4:
-	i32.const	$push3=, -1
-	i32.add 	$0=, $0, $pop3
+	i32.const	$push4=, -1
+	i32.add 	$0=, $0, $pop4
 	copy_local	$2=, $3
 	copy_local	$3=, $1
 	br_if   	0, $0           # 0: up to label2

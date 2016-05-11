@@ -37,11 +37,11 @@ baz:                                    # @baz
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, baz.v
-	i32.const	$push2=, 85
-	i32.const	$push1=, 44
-	i32.call	$push3=, memset@FUNCTION, $pop0, $pop2, $pop1
-	return  	$pop3
+	i32.const	$push1=, baz.v
+	i32.const	$push3=, 85
+	i32.const	$push2=, 44
+	i32.call	$push0=, memset@FUNCTION, $pop1, $pop3, $pop2
+	return  	$pop0
 	.endfunc
 .Lfunc_end2:
 	.size	baz, .Lfunc_end2-baz
@@ -93,37 +93,38 @@ check:                                  # @check
 foo:                                    # @foo
 	.param  	i32, i32, i32
 	.result 	i32
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %for.cond
-	i32.const	$push0=, 0
-	i32.store	$3=, 0($2), $pop0
+	i32.const	$4=, 0
+	i32.const	$push6=, 0
+	i32.store	$3=, 0($2), $pop6
 	block
 	block
 	i32.const	$push9=, 0
 	i32.eq  	$push10=, $1, $pop9
 	br_if   	0, $pop10       # 0: down to label2
 # BB#1:                                 # %for.body
-	i32.const	$2=, 1
-	i32.load	$push1=, 0($0)
+	i32.const	$4=, 1
+	i32.load	$push0=, 0($0)
 	i32.const	$push7=, 1
-	i32.ne  	$push2=, $pop1, $pop7
-	br_if   	1, $pop2        # 1: down to label1
+	i32.ne  	$push1=, $pop0, $pop7
+	br_if   	1, $pop1        # 1: down to label1
 # BB#2:                                 # %sw.bb
-	i32.const	$push4=, 0
-	i32.const	$push3=, 1
-	i32.store	$discard=, baz.v($pop4), $pop3
-	i32.const	$push6=, baz.v+4
+	i32.const	$push3=, 0
+	i32.const	$push2=, 1
+	i32.store	$discard=, baz.v($pop3), $pop2
+	i32.const	$push5=, baz.v+4
 	i32.const	$push8=, 0
-	i32.const	$push5=, 40
-	i32.call	$discard=, memset@FUNCTION, $pop6, $pop8, $pop5
-	i32.call	$discard=, dummy2@FUNCTION, $2, $2
+	i32.const	$push4=, 40
+	i32.call	$discard=, memset@FUNCTION, $pop5, $pop8, $pop4
+	i32.call	$discard=, dummy2@FUNCTION, $4, $4
 	unreachable
 .LBB4_3:                                # %for.end
 	end_block                       # label2:
-	i32.store	$2=, 0($2), $3
+	i32.store	$discard=, 0($2), $3
 .LBB4_4:                                # %cleanup2
 	end_block                       # label1:
-	return  	$2
+	return  	$4
 	.endfunc
 .Lfunc_end4:
 	.size	foo, .Lfunc_end4-foo
@@ -136,19 +137,20 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push5=, __stack_pointer
 	i32.const	$push2=, __stack_pointer
 	i32.load	$push3=, 0($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$0=, $pop3, $pop4
-	i32.const	$push5=, __stack_pointer
-	i32.store	$discard=, 0($pop5), $0
+	i32.sub 	$push10=, $pop3, $pop4
+	i32.store	$push12=, 0($pop5), $pop10
+	tee_local	$push11=, $0=, $pop12
 	i32.const	$push6=, 12
-	i32.add 	$push7=, $0, $pop6
-	i32.const	$push0=, 1
-	i32.store	$push1=, 12($0), $pop0
+	i32.add 	$push7=, $pop11, $pop6
+	i32.const	$push1=, 1
+	i32.store	$push0=, 12($0), $pop1
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $0, $pop8
-	i32.call	$discard=, foo@FUNCTION, $pop7, $pop1, $pop9
+	i32.call	$discard=, foo@FUNCTION, $pop7, $pop0, $pop9
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

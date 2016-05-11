@@ -89,40 +89,40 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push12=, __stack_pointer
-	i32.load	$push13=, 0($pop12)
-	i32.const	$push14=, 160
-	i32.sub 	$2=, $pop13, $pop14
-	i32.const	$push15=, __stack_pointer
-	i32.store	$discard=, 0($pop15), $2
+	i32.const	$push11=, __stack_pointer
+	i32.const	$push8=, __stack_pointer
+	i32.load	$push9=, 0($pop8)
+	i32.const	$push10=, 160
+	i32.sub 	$push12=, $pop9, $pop10
+	i32.store	$0=, 0($pop11), $pop12
 	i32.const	$push3=, 0
-	i32.load	$0=, x($pop3)
+	i32.load	$1=, x($pop3)
 	i32.const	$push2=, 3
-	i32.store	$discard=, 16($2), $pop2
-	i32.const	$push11=, 0
-	i32.load	$1=, x+4($pop11)
-	i32.store	$discard=, 20($2), $0
+	i32.store	$discard=, 16($0), $pop2
+	i32.const	$push16=, 0
+	i32.load	$2=, x+4($pop16)
+	i32.store	$discard=, 20($0), $1
 	i32.const	$push4=, 4
-	i32.store	$discard=, 24($2), $pop4
-	i32.store	$discard=, 28($2), $1
-	i32.const	$push10=, 0
-	i32.load	$0=, x+8($pop10)
+	i32.store	$discard=, 24($0), $pop4
+	i32.store	$discard=, 28($0), $2
+	i32.const	$push15=, 0
+	i32.load	$1=, x+8($pop15)
 	i32.const	$push5=, 5
-	i32.store	$discard=, 32($2), $pop5
-	i32.const	$push9=, 0
-	i32.load	$1=, x+12($pop9)
-	i32.store	$discard=, 36($2), $0
+	i32.store	$discard=, 32($0), $pop5
+	i32.const	$push14=, 0
+	i32.load	$2=, x+12($pop14)
+	i32.store	$discard=, 36($0), $1
 	i32.const	$push6=, 6
-	i32.store	$discard=, 40($2), $pop6
-	i32.store	$discard=, 44($2), $1
+	i32.store	$discard=, 40($0), $pop6
+	i32.store	$discard=, 44($0), $2
 	i64.const	$push0=, 47244640257
-	i64.store	$discard=, 0($2), $pop0
+	i64.store	$discard=, 0($0), $pop0
 	i64.const	$push1=, 51539607554
-	i64.store	$discard=, 8($2), $pop1
+	i64.store	$discard=, 8($0), $pop1
 	i32.const	$push7=, 12
-	call    	foo@FUNCTION, $2, $pop7
-	i32.const	$push8=, 0
-	call    	exit@FUNCTION, $pop8
+	call    	foo@FUNCTION, $0, $pop7
+	i32.const	$push13=, 0
+	call    	exit@FUNCTION, $pop13
 	unreachable
 	.endfunc
 .Lfunc_end1:

@@ -7,24 +7,24 @@
 init_reg_last:                          # @init_reg_last
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push14=, reg_stat($pop0)
+	i32.const	$push2=, 0
+	i32.load	$push14=, reg_stat($pop2)
 	tee_local	$push13=, $1=, $pop14
 	i32.const	$push12=, 0
 	i32.store	$0=, 0($pop13), $pop12
-	i32.const	$push1=, 8
-	i32.add 	$push2=, $1, $pop1
-	i64.const	$push3=, 0
-	i64.store	$discard=, 0($pop2):p2align=2, $pop3
+	i32.const	$push3=, 8
+	i32.add 	$push4=, $1, $pop3
+	i64.const	$push5=, 0
+	i64.store	$discard=, 0($pop4):p2align=2, $pop5
 	i32.const	$push10=, 4
 	i32.add 	$push11=, $1, $pop10
-	i32.const	$push7=, 16
-	i32.add 	$push8=, $1, $pop7
-	i32.const	$push4=, 18
-	i32.add 	$push5=, $1, $pop4
-	i32.store8	$push6=, 0($pop5), $0
-	i32.store16	$push9=, 0($pop8), $pop6
-	i32.store	$discard=, 0($pop11), $pop9
+	i32.const	$push8=, 16
+	i32.add 	$push9=, $1, $pop8
+	i32.const	$push6=, 18
+	i32.add 	$push7=, $1, $pop6
+	i32.store8	$push0=, 0($pop7), $0
+	i32.store16	$push1=, 0($pop9), $pop0
+	i32.store	$discard=, 0($pop11), $pop1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -38,16 +38,17 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push5=, __stack_pointer
-	i32.load	$push6=, 0($pop5)
-	i32.const	$push7=, 32
-	i32.sub 	$1=, $pop6, $pop7
-	i32.const	$push8=, __stack_pointer
-	i32.store	$discard=, 0($pop8), $1
-	i32.const	$push3=, 0
-	i32.const	$push12=, 8
-	i32.add 	$push13=, $1, $pop12
-	i32.store	$discard=, reg_stat($pop3), $pop13
+	i32.const	$push15=, 0
+	i32.const	$push6=, __stack_pointer
+	i32.const	$push3=, __stack_pointer
+	i32.load	$push4=, 0($pop3)
+	i32.const	$push5=, 32
+	i32.sub 	$push12=, $pop4, $pop5
+	i32.store	$push14=, 0($pop6), $pop12
+	tee_local	$push13=, $1=, $pop14
+	i32.const	$push10=, 8
+	i32.add 	$push11=, $pop13, $pop10
+	i32.store	$discard=, reg_stat($pop15), $pop11
 	i32.const	$push0=, -1
 	i32.store	$0=, 28($1), $pop0
 	call    	init_reg_last@FUNCTION
@@ -56,12 +57,12 @@ main:                                   # @main
 	i32.ne  	$push2=, $0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push4=, 0
-	i32.const	$push11=, __stack_pointer
-	i32.const	$push9=, 32
-	i32.add 	$push10=, $1, $pop9
-	i32.store	$discard=, 0($pop11), $pop10
-	return  	$pop4
+	i32.const	$push9=, __stack_pointer
+	i32.const	$push7=, 32
+	i32.add 	$push8=, $1, $pop7
+	i32.store	$discard=, 0($pop9), $pop8
+	i32.const	$push16=, 0
+	return  	$pop16
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

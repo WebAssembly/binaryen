@@ -39,23 +39,23 @@ main:                                   # @main
 	block
 	loop                            # label3:
 	i32.load	$push1=, 0($0)
-	i32.const	$push9=, -1
-	i32.ne  	$push3=, $pop1, $pop9
+	i32.const	$push6=, -1
+	i32.ne  	$push3=, $pop1, $pop6
 	br_if   	2, $pop3        # 2: down to label2
 # BB#2:                                 # %for.body
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push10=, 4
-	i32.add 	$push2=, $0, $pop10
+	i32.const	$push7=, 4
+	i32.add 	$push2=, $0, $pop7
 	i32.load	$push0=, 0($pop2)
 	br_if   	2, $pop0        # 2: down to label2
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push8=, 1
-	i32.add 	$1=, $1, $pop8
-	i32.const	$push7=, 8
-	i32.add 	$0=, $0, $pop7
-	i32.const	$push6=, 1023
-	i32.le_s	$push4=, $1, $pop6
+	i32.const	$push10=, 1
+	i32.add 	$1=, $1, $pop10
+	i32.const	$push9=, 8
+	i32.add 	$0=, $0, $pop9
+	i32.const	$push8=, 1023
+	i32.le_s	$push4=, $1, $pop8
 	br_if   	0, $pop4        # 0: up to label3
 # BB#4:                                 # %for.end
 	end_loop                        # label4:

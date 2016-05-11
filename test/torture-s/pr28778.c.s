@@ -8,12 +8,12 @@ find:                                   # @find
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push7=, __stack_pointer
 	i32.const	$push4=, __stack_pointer
 	i32.load	$push5=, 0($pop4)
 	i32.const	$push6=, 128
-	i32.sub 	$1=, $pop5, $pop6
-	i32.const	$push7=, __stack_pointer
-	i32.store	$discard=, 0($pop7), $1
+	i32.sub 	$push11=, $pop5, $pop6
+	i32.store	$1=, 0($pop7), $pop11
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.else

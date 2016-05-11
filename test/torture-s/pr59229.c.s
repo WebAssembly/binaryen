@@ -51,12 +51,12 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push9=, __stack_pointer
 	i32.const	$push6=, __stack_pointer
 	i32.load	$push7=, 0($pop6)
 	i32.const	$push8=, 16
-	i32.sub 	$2=, $pop7, $pop8
-	i32.const	$push9=, __stack_pointer
-	i32.store	$discard=, 0($pop9), $2
+	i32.sub 	$push17=, $pop7, $pop8
+	i32.store	$2=, 0($pop9), $pop17
 	block
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
@@ -94,18 +94,19 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.const	$push5=, 0
 	i32.store	$0=, i($pop1), $pop5
-	copy_local	$1=, $0
+	i32.const	$1=, 0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.const	$push8=, .L.str.1
-	call    	foo@FUNCTION, $pop8, $1
+	i32.const	$push10=, .L.str.1
+	call    	foo@FUNCTION, $pop10, $1
 	i32.load	$push2=, i($0)
-	i32.const	$push7=, 1
-	i32.add 	$push0=, $pop2, $pop7
-	i32.store	$1=, i($0), $pop0
+	i32.const	$push9=, 1
+	i32.add 	$push8=, $pop2, $pop9
+	tee_local	$push7=, $1=, $pop8
+	i32.store	$push0=, i($0), $pop7
 	i32.const	$push6=, 16
-	i32.lt_s	$push3=, $1, $pop6
+	i32.lt_s	$push3=, $pop0, $pop6
 	br_if   	0, $pop3        # 0: up to label2
 # BB#2:                                 # %for.end
 	end_loop                        # label3:

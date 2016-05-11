@@ -10,17 +10,17 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push14=, 0
-	i32.load	$push0=, e($pop14)
+	i32.load	$push1=, e($pop14)
 	i32.const	$push13=, 1
-	i32.gt_s	$push1=, $pop0, $pop13
-	br_if   	0, $pop1        # 0: down to label0
+	i32.gt_s	$push2=, $pop1, $pop13
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %for.body.i
 	i32.const	$push16=, 0
-	i32.load	$1=, c($pop16)
-	i32.load	$push2=, 0($1)
+	i32.load	$0=, c($pop16)
+	i32.load	$push3=, 0($0)
 	i32.const	$push15=, 1
-	i32.xor 	$push3=, $pop2, $pop15
-	i32.store	$discard=, 0($1), $pop3
+	i32.xor 	$push4=, $pop3, $pop15
+	i32.store	$discard=, 0($0), $pop4
 .LBB0_2:                                # %foo.exit
 	end_block                       # label0:
 	block
@@ -28,27 +28,27 @@ main:                                   # @main
 	i32.load	$push5=, a($pop19)
 	i32.const	$push18=, 0
 	i32.const	$push17=, 1
-	i32.store	$push4=, m($pop18), $pop17
-	i32.ne  	$push6=, $pop5, $pop4
+	i32.store	$push0=, m($pop18), $pop17
+	i32.ne  	$push6=, $pop5, $pop0
 	br_if   	0, $pop6        # 0: down to label1
 # BB#3:                                 # %bar.exit
 	i32.const	$push7=, 0
-	i32.const	$push23=, 0
-	i32.store	$push22=, e($pop7), $pop23
-	tee_local	$push21=, $1=, $pop22
-	i32.load	$0=, c($pop21)
-	i32.load	$push8=, 0($0)
+	i32.load	$1=, c($pop7)
+	i32.const	$push22=, 0
+	i32.const	$push21=, 0
+	i32.store	$0=, e($pop22), $pop21
+	i32.load	$push8=, 0($1)
 	i32.const	$push9=, 1
 	i32.xor 	$push10=, $pop8, $pop9
-	i32.store	$discard=, 0($0), $pop10
-	i32.load	$0=, a($1)
-	i32.load	$push11=, m($1)
+	i32.store	$discard=, 0($1), $pop10
+	i32.load	$1=, a($0)
+	i32.load	$push11=, m($0)
 	i32.const	$push20=, 1
 	i32.or  	$push12=, $pop11, $pop20
-	i32.store	$discard=, m($1), $pop12
-	br_if   	0, $0           # 0: down to label1
+	i32.store	$discard=, m($0), $pop12
+	br_if   	0, $1           # 0: down to label1
 # BB#4:                                 # %if.end11
-	return  	$1
+	return  	$0
 .LBB0_5:                                # %if.then10
 	end_block                       # label1:
 	call    	abort@FUNCTION

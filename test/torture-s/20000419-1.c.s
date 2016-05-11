@@ -46,30 +46,29 @@ sister:                                 # @sister
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push8=, __stack_pointer
-	i32.load	$push9=, 0($pop8)
-	i32.const	$push10=, 16
-	i32.sub 	$1=, $pop9, $pop10
-	i32.const	$push11=, __stack_pointer
-	i32.store	$discard=, 0($pop11), $1
-	i32.const	$push12=, 4
-	i32.add 	$push13=, $1, $pop12
-	i32.const	$push2=, 8
-	i32.add 	$push3=, $pop13, $pop2
+	i32.const	$push9=, __stack_pointer
+	i32.const	$push6=, __stack_pointer
+	i32.load	$push7=, 0($pop6)
+	i32.const	$push8=, 16
+	i32.sub 	$push12=, $pop7, $pop8
+	i32.store	$push16=, 0($pop9), $pop12
+	tee_local	$push15=, $0=, $pop16
+	i32.const	$push2=, 12
+	i32.add 	$push3=, $pop15, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.f+8($pop0)
 	i32.store	$discard=, 0($pop3), $pop1
-	i32.const	$push7=, 0
-	i64.load	$push4=, .Lmain.f($pop7):p2align=2
-	i64.store	$discard=, 4($1):p2align=2, $pop4
-	i32.const	$push14=, 4
-	i32.add 	$push15=, $1, $pop14
+	i32.const	$push14=, 0
+	i64.load	$push4=, .Lmain.f($pop14):p2align=2
+	i64.store	$discard=, 4($0):p2align=2, $pop4
+	i32.const	$push10=, 4
+	i32.add 	$push11=, $0, $pop10
 	i32.const	$push5=, 1
-	call    	sister@FUNCTION, $pop15, $pop5, $0
-	i32.const	$push6=, 0
-	call    	exit@FUNCTION, $pop6
+	call    	sister@FUNCTION, $pop11, $pop5, $0
+	i32.const	$push13=, 0
+	call    	exit@FUNCTION, $pop13
 	unreachable
 	.endfunc
 .Lfunc_end2:

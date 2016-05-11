@@ -15,12 +15,12 @@ find:                                   # @find
 	i32.mul 	$push4=, $pop2, $pop3
 	i32.const	$push9=, 2
 	i32.shr_s	$push8=, $pop4, $pop9
-	tee_local	$push7=, $0=, $pop8
+	tee_local	$push7=, $1=, $pop8
 	i32.const	$push5=, 1
 	i32.lt_s	$push6=, $pop7, $pop5
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %for.body
-	call    	ok@FUNCTION, $0
+	call    	ok@FUNCTION, $1
 	unreachable
 .LBB0_2:                                # %for.end
 	end_block                       # label0:
@@ -61,12 +61,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push5=, __stack_pointer
 	i32.const	$push2=, __stack_pointer
 	i32.load	$push3=, 0($pop2)
 	i32.const	$push4=, 48
-	i32.sub 	$0=, $pop3, $pop4
-	i32.const	$push5=, __stack_pointer
-	i32.store	$discard=, 0($pop5), $0
+	i32.sub 	$push6=, $pop3, $pop4
+	i32.store	$0=, 0($pop5), $pop6
 	i32.const	$push0=, 48
 	i32.add 	$push1=, $0, $pop0
 	call    	find@FUNCTION, $0, $pop1

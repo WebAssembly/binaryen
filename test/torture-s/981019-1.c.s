@@ -72,12 +72,12 @@ f1:                                     # @f1
 f3:                                     # @f3
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push4=, 0
-	i32.load	$push1=, f3.x($pop4)
-	i32.eqz 	$push2=, $pop1
-	i32.store	$push3=, f3.x($pop0), $pop2
-	return  	$pop3
+	i32.load	$push2=, f3.x($pop4)
+	i32.eqz 	$push3=, $pop2
+	i32.store	$push0=, f3.x($pop1), $pop3
+	return  	$pop0
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3

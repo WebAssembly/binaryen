@@ -188,21 +188,21 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label1:
-	i32.const	$push10=, 24
-	i32.shr_s	$push0=, $0, $pop10
-	i32.const	$push9=, -300
-	i32.add 	$push1=, $pop0, $pop9
-	i32.const	$push8=, 99
-	i32.le_u	$push2=, $pop1, $pop8
+	i32.const	$push7=, 24
+	i32.shr_s	$push0=, $0, $pop7
+	i32.const	$push6=, -300
+	i32.add 	$push1=, $pop0, $pop6
+	i32.const	$push5=, 99
+	i32.le_u	$push2=, $pop1, $pop5
 	br_if   	2, $pop2        # 2: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB12_1 Depth=1
-	i32.const	$push7=, 1
-	i32.add 	$1=, $1, $pop7
-	i32.const	$push6=, 16777216
-	i32.add 	$0=, $0, $pop6
-	i32.const	$push5=, 255
-	i32.le_s	$push3=, $1, $pop5
+	i32.const	$push10=, 1
+	i32.add 	$1=, $1, $pop10
+	i32.const	$push9=, 16777216
+	i32.add 	$0=, $0, $pop9
+	i32.const	$push8=, 255
+	i32.le_s	$push3=, $1, $pop8
 	br_if   	0, $pop3        # 0: up to label1
 # BB#3:                                 # %for.end
 	end_loop                        # label2:

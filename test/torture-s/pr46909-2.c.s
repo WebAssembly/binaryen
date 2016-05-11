@@ -41,24 +41,24 @@ main:                                   # @main
 	block
 	loop                            # label3:
 	i32.call	$push0=, foo@FUNCTION, $0
-	i32.const	$push15=, 1
+	i32.const	$push13=, 1
 	i32.eqz 	$push1=, $0
-	i32.const	$push14=, 1
-	i32.shl 	$push2=, $pop1, $pop14
-	i32.sub 	$push3=, $pop15, $pop2
-	i32.const	$push13=, 13
-	i32.eq  	$push4=, $0, $pop13
 	i32.const	$push12=, 1
-	i32.shl 	$push5=, $pop4, $pop12
+	i32.shl 	$push2=, $pop1, $pop12
+	i32.sub 	$push3=, $pop13, $pop2
+	i32.const	$push11=, 13
+	i32.eq  	$push4=, $0, $pop11
+	i32.const	$push10=, 1
+	i32.shl 	$push5=, $pop4, $pop10
 	i32.sub 	$push6=, $pop3, $pop5
 	i32.ne  	$push7=, $pop0, $pop6
 	br_if   	2, $pop7        # 2: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push11=, 1
-	i32.add 	$0=, $0, $pop11
-	i32.const	$push10=, 29
-	i32.le_s	$push8=, $0, $pop10
+	i32.const	$push15=, 1
+	i32.add 	$0=, $0, $pop15
+	i32.const	$push14=, 29
+	i32.le_s	$push8=, $0, $pop14
 	br_if   	0, $pop8        # 0: up to label3
 # BB#3:                                 # %for.end
 	end_loop                        # label4:

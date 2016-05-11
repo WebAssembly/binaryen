@@ -47,17 +47,17 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push13=, 0
-	i32.load	$push0=, b($pop13)
+	i32.load	$push1=, b($pop13)
 	i32.const	$push12=, 0
-	i32.gt_s	$push1=, $pop0, $pop12
+	i32.gt_s	$push2=, $pop1, $pop12
 	i32.const	$push11=, 0
 	i32.load	$push10=, a($pop11)
 	tee_local	$push9=, $0=, $pop10
-	i32.const	$push2=, 1
-	i32.and 	$push3=, $pop9, $pop2
-	i32.or  	$push4=, $pop1, $pop3
+	i32.const	$push3=, 1
+	i32.and 	$push4=, $pop9, $pop3
+	i32.or  	$push5=, $pop2, $pop4
 	i32.const	$push15=, 0
-	i32.eq  	$push16=, $pop4, $pop15
+	i32.eq  	$push16=, $pop5, $pop15
 	br_if   	0, $pop16       # 0: down to label3
 .LBB1_1:                                # %for.inc.i
                                         # =>This Inner Loop Header: Depth=1
@@ -68,9 +68,9 @@ main:                                   # @main
 	end_block                       # label3:
 	block
 	i32.const	$push14=, 0
-	i32.store	$push5=, d($pop14), $0
+	i32.store	$push0=, d($pop14), $0
 	i32.const	$push6=, 2
-	i32.ne  	$push7=, $pop5, $pop6
+	i32.ne  	$push7=, $pop0, $pop6
 	br_if   	0, $pop7        # 0: down to label6
 # BB#3:                                 # %if.end
 	i32.const	$push8=, 0
