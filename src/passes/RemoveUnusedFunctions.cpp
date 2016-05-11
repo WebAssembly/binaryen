@@ -45,7 +45,7 @@ struct RemoveUnusedFunctions : public Pass {
     // Compute function reachability starting from the root set.
     DirectCallGraphAnalyzer analyzer(module, root);
     // Remove unreachable functions.
-    std::vector<std::unique_ptr<Function>>::iterator it = module->functions.begin();
+    auto it = module->functions.begin();
     while (it != module->functions.end()) {
       if (analyzer.reachable.count(it->get()) == 0) {
         it = module->functions.erase(it);
