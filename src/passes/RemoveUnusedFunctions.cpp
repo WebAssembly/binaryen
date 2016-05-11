@@ -45,16 +45,10 @@ struct RemoveUnusedFunctions : public Pass {
     // Compute function reachability starting from the root set.
     DirectCallGraphAnalyzer analyzer(module, root);
     // Remove unreachable functions.
-    auto it = module->functions.begin();
-    auto end = module->functions.end();
-    while (it != end) {
-      if (analyzer.reachable.count(it->get()) == 0) {
-        std::swap(it, --end);
-      } else {
-        it++;
-      }
-    }
-    module->functions.erase(it, module->functions.end());
+    auto& v = module->functions;
+    v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Function>& curr) {
+      return analyzer.reachable.count(curr.get()) == 0;
+    }), v.end());
     assert(module->functions.size() == analyzer.reachable.size());
   }
 };
