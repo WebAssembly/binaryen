@@ -33,10 +33,10 @@ extern cashew::IString MEMORY;
 }
 
 
-void Linker::placeStackPointer(size_t stackAllocation) {
+void Linker::placeStackPointer(Address stackAllocation) {
   // ensure this is the first allocation
   assert(nextStatic == globalBase || nextStatic == 1);
-  const size_t pointerSize = 4;
+  const Address pointerSize = 4;
   // Unconditionally allocate space for the stack pointer. Emscripten
   // allocates the stack itself, and initializes the stack pointer itself.
   out.addStatic(pointerSize, pointerSize, "__stack_pointer");
@@ -85,7 +85,7 @@ void Linker::layout() {
 
   // Update the segments with their addresses now that they have been allocated.
   for (const auto& seg : out.segments) {
-    size_t address = staticAddresses[seg.first];
+    Address address = staticAddresses[seg.first];
     out.wasm.memory.segments[seg.second].offset = address;
     segmentsByAddress[address] = seg.second;
   }
@@ -97,7 +97,7 @@ void Linker::layout() {
   // The minimum initial memory size is the amount of static variables we have
   // allocated. Round it up to a page, and update the page-increment versions
   // of initial and max
-  size_t initialMem = roundUpToPageSize(nextStatic);
+  Address initialMem = roundUpToPageSize(nextStatic);
   if (userInitialMemory) {
     if (initialMem > userInitialMemory) {
       Fatal() << "Specified initial memory size " << userInitialMemory <<
@@ -260,13 +260,13 @@ void Linker::emscriptenGlue(std::ostream& o) {
     Linker* parent;
 
     std::map<std::string, std::set<std::string>> sigsForCode;
-    std::map<std::string, size_t> ids;
+    std::map<std::string, Address> ids;
     std::set<std::string> allSigs;
 
     void visitCallImport(CallImport* curr) {
       if (curr->target == EMSCRIPTEN_ASM_CONST) {
         auto arg = curr->operands[0]->cast<Const>();
-        size_t segmentIndex = parent->segmentsByAddress[arg->value.geti32()];
+        Address segmentIndex = parent->segmentsByAddress[arg->value.geti32()];
         std::string code = escape(&parent->out.wasm.memory.segments[segmentIndex].data[0]);
         int32_t id;
         if (ids.count(code) == 0) {

@@ -71,7 +71,7 @@ class LinkerObject {
   LinkerObject() {}
 
   // Allocate a static object
-  void addStatic(size_t allocSize, size_t alignment, Name name) {
+  void addStatic(Address allocSize, Address alignment, Name name) {
     staticObjects.emplace_back(allocSize, alignment, name);
   }
 
@@ -99,7 +99,7 @@ class LinkerObject {
   }
 
   // Add an initializer segment for the named static variable.
-  void addSegment(Name name, const char* data, size_t size) {
+  void addSegment(Name name, const char* data, Address size) {
     segments[name] = wasm.memory.segments.size();
     wasm.memory.segments.emplace_back(0, data, size);
   }
@@ -129,10 +129,10 @@ class LinkerObject {
 
  private:
   struct StaticObject {
-    size_t allocSize;
-    size_t alignment;
+    Address allocSize;
+    Address alignment;
     Name name;
-    StaticObject(size_t allocSize, size_t alignment, Name name) :
+    StaticObject(Address allocSize, Address alignment, Name name) :
         allocSize(allocSize), alignment(alignment), name(name) {}
   };
 
@@ -146,7 +146,7 @@ class LinkerObject {
   using CallList = std::vector<Call*>;
   std::map<Name, CallList> undefinedFunctionCalls;
 
-  std::map<Name, size_t> segments; // name => segment index (in wasm module)
+  std::map<Name, Address> segments; // name => segment index (in wasm module)
 
   std::vector<Name> initializerFunctions;
 
@@ -160,8 +160,8 @@ class LinkerObject {
 // applying the relocations, resulting in an executable wasm module.
 class Linker {
  public:
-  Linker(size_t globalBase, size_t stackAllocation,
-         size_t userInitialMemory, size_t userMaxMemory,
+  Linker(Address globalBase, Address stackAllocation,
+         Address userInitialMemory, Address userMaxMemory,
          bool ignoreUnknownSymbols, Name startFunction,
          bool debug) :
       ignoreUnknownSymbols(ignoreUnknownSymbols),
@@ -221,8 +221,8 @@ class Linker {
 
  private:
   // Allocate a static variable and return its address in linear memory
-  size_t allocateStatic(size_t allocSize, size_t alignment, Name name) {
-    size_t address = alignAddr(nextStatic, alignment);
+  Address allocateStatic(Address allocSize, Address alignment, Name name) {
+    Address address = alignAddr(nextStatic, alignment);
     staticAddresses[name] = address;
     nextStatic = address + allocSize;
     return address;
@@ -230,7 +230,7 @@ class Linker {
 
   // Allocate space for a stack pointer and (if stackAllocation > 0) set up a
   // relocation for it to point to the top of the stack.
-  void placeStackPointer(size_t stackAllocation);
+  void placeStackPointer(Address stackAllocation);
 
   template<class C>
   void printSet(std::ostream& o, C& c) {
@@ -248,7 +248,7 @@ class Linker {
   // signature in the indirect function table.
   void makeDynCallThunks();
 
-  static size_t roundUpToPageSize(size_t size) {
+  static Address roundUpToPageSize(Address size) {
     return (size + Memory::kPageSize - 1) & Memory::kPageMask;
   }
 
@@ -270,16 +270,16 @@ class Linker {
   Name startFunction;
 
   // where globals can start to be statically allocated, i.e., the data segment
-  size_t globalBase;
-  size_t nextStatic; // location of next static allocation
-  size_t userInitialMemory; // Initial memory size (in bytes) specified by the user.
-  size_t userMaxMemory; // Max memory size (in bytes) specified by the user.
+  Address globalBase;
+  Address nextStatic; // location of next static allocation
+  Address userInitialMemory; // Initial memory size (in bytes) specified by the user.
+  Address userMaxMemory; // Max memory size (in bytes) specified by the user.
   //(after linking, this is rounded and set on the wasm object in pages)
-  size_t stackAllocation;
+  Address stackAllocation;
   bool debug;
 
   std::unordered_map<cashew::IString, int32_t> staticAddresses; // name => address
-  std::unordered_map<size_t, size_t> segmentsByAddress; // address => segment index
+  std::unordered_map<Address, Address> segmentsByAddress; // address => segment index
   std::unordered_map<cashew::IString, size_t> functionIndexes;
 
 };

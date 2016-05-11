@@ -89,8 +89,10 @@ struct Name : public cashew::IString {
 };
 
 // An index in a wasm module
-
 typedef uint32_t Index;
+
+// An address in linear memory. For now only wasm32
+typedef uint32_t Address;
 
 // Types
 
@@ -1054,10 +1056,10 @@ public:
   Load() {}
   Load(MixedArena& allocator) {}
 
-  uint32_t bytes;
+  uint8_t bytes;
   bool signed_;
-  uint32_t offset;
-  uint32_t align;
+  Address offset;
+  Address align;
   Expression *ptr;
 
   // type must be set during creation, cannot be inferred
@@ -1068,9 +1070,9 @@ public:
   Store() {}
   Store(MixedArena& allocator) {}
 
-  unsigned bytes;
-  uint32_t offset;
-  unsigned align;
+  uint8_t bytes;
+  Address offset;
+  Address align;
   Expression *ptr, *value;
 
   void finalize() {
@@ -1264,26 +1266,26 @@ public:
 
 class Memory {
 public:
-  static const size_t kPageSize = 64 * 1024;
-  static const size_t kPageMask = ~(kPageSize - 1);
+  static const Address kPageSize = 64 * 1024;
+  static const Address kPageMask = ~(kPageSize - 1);
   struct Segment {
-    size_t offset;
+    Address offset;
     std::vector<char> data; // TODO: optimize
     Segment() {}
-    Segment(size_t offset, const char *init, size_t size) : offset(offset) {
+    Segment(Address offset, const char *init, Address size) : offset(offset) {
       data.resize(size);
       std::copy_n(init, size, data.begin());
     }
-    Segment(size_t offset, std::vector<char>& init) : offset(offset) {
+    Segment(Address offset, std::vector<char>& init) : offset(offset) {
       data.swap(init);
     }
   };
 
-  size_t initial, max; // sizes are in pages
+  Address initial, max; // sizes are in pages
   std::vector<Segment> segments;
   Name exportName;
 
-  Memory() : initial(0), max((uint32_t)-1) {}
+  Memory() : initial(0), max((Address)-1) {}
 };
 
 class Module {

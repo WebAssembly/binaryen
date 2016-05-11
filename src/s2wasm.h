@@ -1028,7 +1028,7 @@ class S2WasmBuilder {
       return;
     }
     skipWhitespace();
-    size_t align = 4; // XXX default?
+    Address align = 4; // XXX default?
     if (match(".globl")) {
       mustMatch(name.str);
       skipWhitespace();
@@ -1037,7 +1037,7 @@ class S2WasmBuilder {
       align = getInt();
       skipWhitespace();
     }
-    align = (size_t)1 << align; // convert from power to actual bytes
+    align = (Address)1 << align; // convert from power to actual bytes
     if (match(".lcomm")) {
       parseLcomm(name, align);
       return;
@@ -1046,7 +1046,7 @@ class S2WasmBuilder {
     mustMatch(":");
     std::vector<char> raw;
     bool zero = true;
-    std::vector<std::pair<LinkerObject::Relocation*, size_t>> currRelocations; // [relocation, offset in raw]
+    std::vector<std::pair<LinkerObject::Relocation*, Address>> currRelocations; // [relocation, offset in raw]
     while (1) {
       skipWhitespace();
       if (match(".asci")) {
@@ -1062,7 +1062,7 @@ class S2WasmBuilder {
         if (z) raw.push_back(0);
         zero = false;
       } else if (match(".zero") || match(".skip")) {
-        int32_t size = getInt();
+        Address size = getInt();
         if (size <= 0) {
           abort_on(".zero with zero or negative size");
         }
@@ -1071,29 +1071,29 @@ class S2WasmBuilder {
           value = getInt();
           if (value != 0) zero = false;
         }
-        for (size_t i = 0, e = size; i < e; i++) {
+        for (Address i = 0, e = size; i < e; i++) {
           raw.push_back(value);
         }
       } else if (match(".int8")) {
-        size_t size = raw.size();
+        Address size = raw.size();
         raw.resize(size + 1);
         (*(int8_t*)(&raw[size])) = getInt();
         zero = false;
       } else if (match(".int16")) {
-        size_t size = raw.size();
+        Address size = raw.size();
         raw.resize(size + 2);
         int16_t val = getInt();
         memcpy(&raw[size], &val, sizeof(val));
         zero = false;
       } else if (match(".int32")) {
-        size_t size = raw.size();
+        Address size = raw.size();
         raw.resize(size + 4);
         if (getConst((uint32_t*)&raw[size])) { // just the size, as we may reallocate; we must fix this later, if it's a relocation
           currRelocations.emplace_back(linkerObj->getCurrentRelocation(), size);
         }
         zero = false;
       } else if (match(".int64")) {
-        size_t size = raw.size();
+        Address size = raw.size();
         raw.resize(size + 8);
         int64_t val = getInt64();
         memcpy(&raw[size], &val, sizeof(val));
@@ -1103,11 +1103,11 @@ class S2WasmBuilder {
       }
     }
     skipWhitespace();
-    size_t size = raw.size();
+    Address size = raw.size();
     if (match(".size")) {
       mustMatch(name.str);
       mustMatch(",");
-      size_t seenSize = atoi(getStr().str); // TODO: optimize
+      Address seenSize = atoi(getStr().str); // TODO: optimize
       assert(seenSize >= size);
       while (raw.size() < seenSize) {
         raw.push_back(0);
@@ -1127,10 +1127,10 @@ class S2WasmBuilder {
     }
   }
 
-  void parseLcomm(Name name, size_t align=1) {
+  void parseLcomm(Name name, Address align=1) {
     mustMatch(name.str);
     skipComma();
-    size_t size = getInt();
+    Address size = getInt();
     if (*s == ',') {
       skipComma();
       getInt();

@@ -111,7 +111,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     abort();
   }
 
-  Literal load(Load* load, size_t addr) override {
+  Literal load(Load* load, Address addr) override {
     switch (load->type) {
       case i32: {
         switch (load->bytes) {
@@ -138,7 +138,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
-  void store(Store* store, size_t addr, Literal value) override {
+  void store(Store* store, Address addr, Literal value) override {
     switch (store->type) {
       case i32: {
         switch (store->bytes) {
@@ -166,7 +166,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
-  void growMemory(size_t /*oldSize*/, size_t newSize) override {
+  void growMemory(Address /*oldSize*/, Address newSize) override {
     memory.resize(newSize);
   }
 
