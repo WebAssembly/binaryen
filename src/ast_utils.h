@@ -131,7 +131,7 @@ struct Measurer : public PostWalker<Measurer, UnifiedExpressionVisitor<Measurer>
   static bool measure(Expression* tree) {
     Measurer measurer;
     measurer.walk(tree);
-    return measurer.size;
+    return !!measurer.size;
   }
 };
 
