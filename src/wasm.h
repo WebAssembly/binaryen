@@ -583,15 +583,15 @@ private:
   }
   Literal rotL(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(RotateLeft(uint32_t(i32), uint32_t(other.i32)));
-      case WasmType::i64: return Literal(RotateLeft(uint64_t(i64), uint64_t(other.i64)));
+      case WasmType::i32: return Literal(RotateLeft(uint32_t(i32), other.i32));
+      case WasmType::i64: return Literal(RotateLeft(uint64_t(i64), other.i64));
       default: WASM_UNREACHABLE();
     }
   }
   Literal rotR(const Literal& other) const {
     switch (type) {
-      case WasmType::i32: return Literal(RotateRight(uint32_t(i32), uint32_t(other.i32)));
-      case WasmType::i64: return Literal(RotateRight(uint64_t(i64), uint64_t(other.i64)));
+      case WasmType::i32: return Literal(RotateRight(uint32_t(i32), other.i32));
+	  case WasmType::i64: return Literal(RotateRight(uint64_t(i64), other.i64));
       default: WASM_UNREACHABLE();
     }
   }
