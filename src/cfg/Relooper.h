@@ -347,7 +347,7 @@ struct Relooper {
   wasm::Expression* Render(RelooperBuilder& Builder);
 
   // Sets whether we must emulate everything with switch-loop code
-  void SetEmulate(int E) { Emulate = E; }
+  void SetEmulate(int E) { Emulate = !!E; }
 
   // Sets us to try to minimize size
   void SetMinSize(bool MinSize_) { MinSize = MinSize_; }
