@@ -21,7 +21,6 @@ This repository contains code that builds the following tools in `bin/`:
  * **wasm-as**: Assembles WebAssembly in text format (currently S-Expression format) into binary format (currently v8 format).
  * **wasm-dis**: Un-assembles WebAssembly in binary format (currently v8 format) into text format (currently S-Expression format).
  * **asm2wasm**: An asm.js-to-WebAssembly compiler, built on Emscripten's asm optimizer infrastructure. This is used by Emscripten in Binaryen mode when it uses Emscripten's fastcomp asm.js backend.
- * **wasm2asm**: A WebAssembly-to-asm.js compiler, the reverse of `asm2wasm`. This is a work in progress.
  * **s2wasm**: A compiler from the `.s` format emitted by the new WebAssembly backend being developed in LLVM. This is used by Emscripten in Binaryen mode when it integrates with the new LLVM backend.
  * **wasm.js**: wasm.js contains Binaryen components compiled to JavaScript, including the interpreter, `asm2wasm`, the S-Expression parser, etc., which allow you to use Binaryen with Emscripten and execute code compiled to WASM even if the browser doesn't have native support yet. This can be useful as a (slow) polyfill.
  * **binaryen.js**: A stand alone library that exposes Binaryen methods for [parsing s-expressions and instantiating WASM modules](https://github.com/WebAssembly/binaryen/blob/master/test/binaryen.js/test.js) in JavaScript.
