@@ -50,10 +50,10 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push0=, 0
-	i32.store	$push1=, c($pop0), $0
+	i32.const	$push1=, 0
+	i32.store	$push0=, c($pop1), $0
 	i32.const	$push2=, 1
-	i32.ne  	$push3=, $pop1, $pop2
+	i32.ne  	$push3=, $pop0, $pop2
 	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$push4=, 2

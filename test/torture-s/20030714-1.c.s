@@ -11,74 +11,74 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.load16_u	$2=, 26($0)
 	block
 	block
-	i32.const	$push1=, 2
-	i32.add 	$push2=, $1, $pop1
-	i32.load8_u	$push3=, 0($pop2)
-	i32.const	$push4=, 4
-	i32.and 	$push5=, $pop3, $pop4
-	br_if   	0, $pop5        # 0: down to label1
+	i32.const	$push0=, 2
+	i32.add 	$push1=, $1, $pop0
+	i32.load8_u	$push2=, 0($pop1)
+	i32.const	$push3=, 4
+	i32.and 	$push4=, $pop2, $pop3
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %sw.default
 	block
-	i32.const	$push34=, 16
-	i32.and 	$push10=, $2, $pop34
-	i32.const	$push36=, 0
-	i32.eq  	$push37=, $pop10, $pop36
-	br_if   	0, $pop37       # 0: down to label2
+	i32.const	$push33=, 16
+	i32.and 	$push9=, $2, $pop33
+	i32.const	$push35=, 0
+	i32.eq  	$push36=, $pop9, $pop35
+	br_if   	0, $pop36       # 0: down to label2
 # BB#2:                                 # %if.then
-	i32.const	$push11=, 26
-	i32.add 	$push12=, $0, $pop11
-	i32.const	$push35=, 16
-	i32.or  	$push0=, $2, $pop35
-	i32.store16	$2=, 0($pop12), $pop0
+	i32.const	$push34=, 16
+	i32.or  	$2=, $2, $pop34
+	i32.const	$push10=, 26
+	i32.add 	$push11=, $0, $pop10
+	i32.store16	$discard=, 0($pop11), $2
 .LBB0_3:                                # %if.end
 	end_block                       # label2:
-	i32.const	$push16=, 26
-	i32.add 	$push17=, $0, $pop16
-	i32.const	$push14=, 65519
-	i32.and 	$push15=, $2, $pop14
-	i32.store16	$discard=, 0($pop17), $pop15
+	i32.const	$push15=, 26
+	i32.add 	$push16=, $0, $pop15
+	i32.const	$push13=, 65519
+	i32.and 	$push14=, $2, $pop13
+	i32.store16	$discard=, 0($pop16), $pop14
 	i32.load	$2=, 0($1)
-	i32.load	$push19=, 28($0)
-	i32.call_indirect	$push20=, $pop19, $0
-	br_if   	1, $pop20       # 1: down to label0
+	i32.load	$push18=, 28($0)
+	i32.call_indirect	$push19=, $pop18, $0
+	br_if   	1, $pop19       # 1: down to label0
 # BB#4:                                 # %if.end
-	i32.const	$push18=, 1572864
-	i32.and 	$push13=, $2, $pop18
-	i32.const	$push38=, 0
-	i32.eq  	$push39=, $pop13, $pop38
-	br_if   	1, $pop39       # 1: down to label0
+	i32.const	$push17=, 1572864
+	i32.and 	$push12=, $2, $pop17
+	i32.const	$push37=, 0
+	i32.eq  	$push38=, $pop12, $pop37
+	br_if   	1, $pop38       # 1: down to label0
 # BB#5:                                 # %if.then39
-	i32.const	$push21=, 26
-	i32.add 	$0=, $0, $pop21
-	i32.load16_u	$push22=, 0($0)
-	i32.const	$push23=, 8
-	i32.or  	$push24=, $pop22, $pop23
-	i32.store16	$discard=, 0($0), $pop24
+	i32.const	$push20=, 26
+	i32.add 	$0=, $0, $pop20
+	i32.load16_u	$push21=, 0($0)
+	i32.const	$push22=, 8
+	i32.or  	$push23=, $pop21, $pop22
+	i32.store16	$discard=, 0($0), $pop23
 	return
 .LBB0_6:                                # %sw.bb
 	end_block                       # label1:
-	i32.const	$push8=, 26
-	i32.add 	$push9=, $0, $pop8
-	i32.const	$push6=, 16
-	i32.or  	$push7=, $2, $pop6
-	i32.store16	$discard=, 0($pop9), $pop7
+	i32.const	$push7=, 26
+	i32.add 	$push8=, $0, $pop7
+	i32.const	$push5=, 16
+	i32.or  	$push6=, $2, $pop5
+	i32.store16	$discard=, 0($pop8), $pop6
 	return
 .LBB0_7:                                # %if.else
 	end_block                       # label0:
 	block
-	i32.load	$push25=, 0($1)
-	i32.const	$push26=, 393216
-	i32.and 	$push27=, $pop25, $pop26
-	i32.const	$push28=, 131072
-	i32.ne  	$push29=, $pop27, $pop28
-	br_if   	0, $pop29       # 0: down to label3
+	i32.load	$push24=, 0($1)
+	i32.const	$push25=, 393216
+	i32.and 	$push26=, $pop24, $pop25
+	i32.const	$push27=, 131072
+	i32.ne  	$push28=, $pop26, $pop27
+	br_if   	0, $pop28       # 0: down to label3
 # BB#8:                                 # %if.then55
-	i32.const	$push30=, 26
-	i32.add 	$0=, $0, $pop30
-	i32.load16_u	$push31=, 0($0)
-	i32.const	$push32=, 64
-	i32.or  	$push33=, $pop31, $pop32
-	i32.store16	$discard=, 0($0), $pop33
+	i32.const	$push29=, 26
+	i32.add 	$0=, $0, $pop29
+	i32.load16_u	$push30=, 0($0)
+	i32.const	$push31=, 64
+	i32.or  	$push32=, $pop30, $pop31
+	i32.store16	$discard=, 0($0), $pop32
 .LBB0_9:                                # %sw.epilog
 	end_block                       # label3:
 	return

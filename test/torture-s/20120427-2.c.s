@@ -108,8 +108,8 @@ main:                                   # @main
 .LBB1_6:                                # %if.end.1
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label12:
-	i32.const	$push58=, 1
-	i32.ne  	$push5=, $6, $pop58
+	i32.const	$push56=, 1
+	i32.ne  	$push5=, $6, $pop56
 	br_if   	2, $pop5        # 2: down to label9
 # BB#7:                                 # %land.lhs.true8.1
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -136,9 +136,9 @@ main:                                   # @main
 .LBB1_11:                               # %land.lhs.true.1
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label10:
-	i32.load	$push57=, 0($7)
-	tee_local	$push56=, $9=, $pop57
-	i32.gt_s	$push32=, $pop56, $2
+	i32.load	$push58=, 0($7)
+	tee_local	$push57=, $9=, $pop58
+	i32.gt_s	$push32=, $pop57, $2
 	br_if   	3, $pop32       # 3: down to label6
 # BB#12:                                # %if.end.i.1
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -175,8 +175,8 @@ main:                                   # @main
 .LBB1_18:                               # %if.end.2
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label13:
-	i32.const	$push64=, 2
-	i32.ne  	$push11=, $6, $pop64
+	i32.const	$push62=, 2
+	i32.ne  	$push11=, $6, $pop62
 	br_if   	1, $pop11       # 1: down to label7
 # BB#19:                                # %land.lhs.true8.2
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -193,9 +193,9 @@ main:                                   # @main
 .LBB1_21:                               # %land.lhs.true.2
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label8:
-	i32.load	$push63=, 0($7)
-	tee_local	$push62=, $7=, $pop63
-	i32.gt_s	$push36=, $pop62, $4
+	i32.load	$push64=, 0($7)
+	tee_local	$push63=, $7=, $pop64
+	i32.gt_s	$push36=, $pop63, $4
 	br_if   	1, $pop36       # 1: down to label6
 # BB#22:                                # %if.end.i.2
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -210,16 +210,16 @@ main:                                   # @main
 .LBB1_24:                               # %if.end14.2
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label7:
-	i32.const	$push65=, 3
-	i32.lt_s	$push12=, $6, $pop65
+	i32.const	$push67=, 3
+	i32.lt_s	$push12=, $6, $pop67
 	br_if   	3, $pop12       # 3: down to label3
 # BB#25:                                # %land.lhs.true16.2
-	i32.load	$push69=, 0($7)
-	tee_local	$push68=, $6=, $pop69
+	i32.load	$push71=, 0($7)
+	tee_local	$push70=, $6=, $pop71
 	i32.const	$push13=, 0
-	i32.load	$push67=, a+20($pop13)
-	tee_local	$push66=, $7=, $pop67
-	i32.gt_s	$push14=, $pop68, $pop66
+	i32.load	$push69=, a+20($pop13)
+	tee_local	$push68=, $7=, $pop69
+	i32.gt_s	$push14=, $pop70, $pop68
 	br_if   	5, $pop14       # 5: down to label2
 # BB#26:                                # %if.end.i45.2
 	i32.lt_s	$push15=, $6, $7
@@ -246,10 +246,10 @@ main:                                   # @main
 .LBB1_31:                               # %for.inc.2
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label3:
-	i32.const	$push71=, 1
-	i32.add 	$6=, $6, $pop71
-	i32.const	$push70=, 4
-	i32.lt_s	$push40=, $6, $pop70
+	i32.const	$push66=, 1
+	i32.add 	$6=, $6, $pop66
+	i32.const	$push65=, 4
+	i32.lt_s	$push40=, $6, $pop65
 	br_if   	0, $pop40       # 0: up to label1
 .LBB1_32:                               # %for.end25
 	end_loop                        # label2:

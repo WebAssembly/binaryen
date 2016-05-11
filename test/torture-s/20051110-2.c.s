@@ -18,23 +18,24 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 .LBB0_1:                                # %a
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	copy_local	$push9=, $0
-	tee_local	$push8=, $3=, $pop9
-	i32.const	$push7=, 7
-	i32.shr_u	$0=, $pop8, $pop7
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $0, $pop12
-	br_if   	1, $pop13       # 1: down to label1
+	copy_local	$push13=, $0
+	tee_local	$push12=, $3=, $pop13
+	i32.const	$push11=, 7
+	i32.shr_u	$push10=, $pop12, $pop11
+	tee_local	$push9=, $0=, $pop10
+	i32.const	$push14=, 0
+	i32.eq  	$push15=, $pop9, $pop14
+	br_if   	1, $pop15       # 1: down to label1
 # BB#2:                                 # %if.then
                                         #   in Loop: Header=BB0_1 Depth=1
 	br_if   	0, $1           # 0: up to label0
 # BB#3:                                 # %if.end7.thread
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push11=, 128
-	i32.or  	$push3=, $3, $pop11
+	i32.const	$push8=, 128
+	i32.or  	$push3=, $3, $pop8
 	i32.store8	$discard=, bytes($2), $pop3
-	i32.const	$push10=, 1
-	i32.add 	$2=, $2, $pop10
+	i32.const	$push7=, 1
+	i32.add 	$2=, $2, $pop7
 	br      	0               # 0: up to label0
 .LBB0_4:                                # %do.end
 	end_loop                        # label1:
@@ -61,23 +62,24 @@ main:                                   # @main
 .LBB1_1:                                # %a.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	copy_local	$push15=, $2
-	tee_local	$push14=, $3=, $pop15
-	i32.const	$push13=, 7
-	i32.shr_u	$2=, $pop14, $pop13
-	i32.const	$push20=, 0
-	i32.eq  	$push21=, $2, $pop20
-	br_if   	1, $pop21       # 1: down to label3
+	copy_local	$push19=, $2
+	tee_local	$push18=, $3=, $pop19
+	i32.const	$push17=, 7
+	i32.shr_u	$push16=, $pop18, $pop17
+	tee_local	$push15=, $2=, $pop16
+	i32.const	$push22=, 0
+	i32.eq  	$push23=, $pop15, $pop22
+	br_if   	1, $pop23       # 1: down to label3
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	br_if   	0, $0           # 0: up to label2
 # BB#3:                                 # %if.end7.thread.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push17=, 128
-	i32.or  	$push0=, $3, $pop17
+	i32.const	$push14=, 128
+	i32.or  	$push0=, $3, $pop14
 	i32.store8	$discard=, bytes($1), $pop0
-	i32.const	$push16=, 1
-	i32.add 	$1=, $1, $pop16
+	i32.const	$push13=, 1
+	i32.add 	$1=, $1, $pop13
 	br      	0               # 0: up to label2
 .LBB1_4:                                # %add_unwind_adjustsp.exit
 	end_loop                        # label3:
@@ -85,14 +87,14 @@ main:                                   # @main
 	i32.and 	$push3=, $3, $pop2
 	i32.store8	$discard=, bytes($1), $pop3
 	block
-	i32.const	$push18=, 0
-	i32.load8_u	$push4=, bytes($pop18)
+	i32.const	$push20=, 0
+	i32.load8_u	$push4=, bytes($pop20)
 	i32.const	$push5=, 136
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label4
 # BB#5:                                 # %add_unwind_adjustsp.exit
-	i32.const	$push19=, 0
-	i32.load8_u	$push1=, bytes+1($pop19)
+	i32.const	$push21=, 0
+	i32.load8_u	$push1=, bytes+1($pop21)
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop1, $pop7
 	i32.const	$push9=, 7

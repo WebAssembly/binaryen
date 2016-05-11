@@ -19,14 +19,15 @@ main:                                   # @main
 build_ref_for_offset:                   # @build_ref_for_offset
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push6=, __stack_pointer
 	i32.const	$push3=, __stack_pointer
 	i32.load	$push4=, 0($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$0=, $pop4, $pop5
-	i32.const	$push6=, __stack_pointer
-	i32.store	$discard=, 0($pop6), $0
+	i32.sub 	$push12=, $pop4, $pop5
+	i32.store	$push14=, 0($pop6), $pop12
+	tee_local	$push13=, $0=, $pop14
 	i32.const	$push10=, 8
-	i32.add 	$push11=, $0, $pop10
+	i32.add 	$push11=, $pop13, $pop10
 	call    	get_addr_base_and_unit_offset@FUNCTION, $pop11
 	i64.load	$push0=, 8($0)
 	i64.const	$push1=, 4

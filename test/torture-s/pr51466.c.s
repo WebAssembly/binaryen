@@ -7,18 +7,17 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, __stack_pointer
 	i32.load	$push6=, 0($pop5)
 	i32.const	$push7=, 16
-	i32.sub 	$1=, $pop6, $pop7
-	i32.const	$push0=, 2
-	i32.shl 	$push1=, $0, $pop0
-	i32.add 	$push2=, $1, $pop1
-	i32.const	$push3=, 6
-	i32.store	$push4=, 0($pop2), $pop3
-	return  	$pop4
+	i32.sub 	$push8=, $pop6, $pop7
+	i32.const	$push1=, 2
+	i32.shl 	$push2=, $0, $pop1
+	i32.add 	$push3=, $pop8, $pop2
+	i32.const	$push4=, 6
+	i32.store	$push0=, 0($pop3), $pop4
+	return  	$pop0
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -30,18 +29,17 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push7=, __stack_pointer
-	i32.load	$push8=, 0($pop7)
-	i32.const	$push9=, 16
-	i32.sub 	$1=, $pop8, $pop9
+	i32.const	$push5=, __stack_pointer
+	i32.load	$push6=, 0($pop5)
+	i32.const	$push7=, 16
+	i32.sub 	$push8=, $pop6, $pop7
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $0, $pop0
-	i32.add 	$push6=, $1, $pop1
-	tee_local	$push5=, $0=, $pop6
+	i32.add 	$push10=, $pop8, $pop1
+	tee_local	$push9=, $0=, $pop10
 	i32.const	$push2=, 6
-	i32.store	$discard=, 0($pop5), $pop2
+	i32.store	$discard=, 0($pop9), $pop2
 	i32.const	$push3=, 8
 	i32.store	$discard=, 0($0), $pop3
 	i32.load	$push4=, 0($0)
@@ -59,16 +57,17 @@ baz:                                    # @baz
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push7=, __stack_pointer
-	i32.load	$push8=, 0($pop7)
-	i32.const	$push9=, 16
-	i32.sub 	$1=, $pop8, $pop9
+	i32.const	$push5=, __stack_pointer
+	i32.load	$push6=, 0($pop5)
+	i32.const	$push7=, 16
+	i32.sub 	$push11=, $pop6, $pop7
+	tee_local	$push10=, $1=, $pop11
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $0, $pop0
-	i32.add 	$push6=, $1, $pop1
-	tee_local	$push5=, $0=, $pop6
+	i32.add 	$push9=, $pop10, $pop1
+	tee_local	$push8=, $0=, $pop9
 	i32.const	$push2=, 6
-	i32.store	$discard=, 0($pop5), $pop2
+	i32.store	$discard=, 0($pop8), $pop2
 	i32.const	$push3=, 8
 	i32.store	$discard=, 0($1), $pop3
 	i32.load	$push4=, 0($0)

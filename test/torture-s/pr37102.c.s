@@ -34,19 +34,18 @@ main:                                   # @main
 	block
 	i32.const	$push8=, 0
 	i32.load	$push0=, c($pop8)
-	i32.const	$push16=, 0
-	i32.eq  	$push17=, $pop0, $pop16
-	br_if   	0, $pop17       # 0: down to label1
+	i32.const	$push14=, 0
+	i32.eq  	$push15=, $pop0, $pop14
+	br_if   	0, $pop15       # 0: down to label1
 # BB#1:                                 # %if.then.3
 	i32.const	$push10=, 0
 	i32.store	$discard=, a($pop10), $0
 .LBB1_2:                                # %for.inc.3
 	end_block                       # label1:
-	i32.const	$push15=, 0
-	i32.store	$push14=, a($pop15), $0
-	tee_local	$push13=, $0=, $pop14
+	i32.const	$push13=, 0
+	i32.store	$discard=, a($pop13), $0
 	i32.const	$push3=, 2
-	i32.shl 	$push4=, $pop13, $pop3
+	i32.shl 	$push4=, $0, $pop3
 	i32.const	$push5=, 1
 	i32.or  	$push6=, $pop4, $pop5
 	i32.const	$push12=, 0

@@ -20,14 +20,14 @@ f:                                      # @f
 # BB#2:                                 # %sw.bb
 	i32.load8_u	$push6=, 0($0)
 	i32.const	$push7=, 1
-	i32.shr_u	$1=, $pop6, $pop7
-	return  	$1
+	i32.shr_u	$push9=, $pop6, $pop7
+	return  	$pop9
 .LBB0_3:                                # %sw.bb3
 	end_block                       # label1:
 	i32.load8_u	$push4=, 3($0)
 	i32.const	$push5=, 4
-	i32.shr_u	$1=, $pop4, $pop5
-	return  	$1
+	i32.shr_u	$push8=, $pop4, $pop5
+	return  	$pop8
 .LBB0_4:                                # %sw.default
 	end_block                       # label0:
 	call    	abort@FUNCTION

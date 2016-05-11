@@ -39,29 +39,30 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label1:
-	i32.const	$push13=, 4
-	i32.add 	$push0=, $1, $pop13
-	i32.call	$push1=, foo@FUNCTION, $pop0
-	i32.const	$push12=, 1
-	i32.eqz 	$push2=, $1
-	i32.const	$push11=, 1
-	i32.shl 	$push3=, $pop2, $pop11
-	i32.sub 	$push4=, $pop12, $pop3
-	i32.ne  	$push5=, $pop1, $pop4
-	br_if   	2, $pop5        # 2: down to label0
+	i32.const	$push11=, 4
+	i32.add 	$push1=, $1, $pop11
+	i32.call	$push2=, foo@FUNCTION, $pop1
+	i32.const	$push10=, 1
+	i32.eqz 	$push3=, $1
+	i32.const	$push9=, 1
+	i32.shl 	$push4=, $pop3, $pop9
+	i32.sub 	$push5=, $pop10, $pop4
+	i32.ne  	$push6=, $pop2, $pop5
+	br_if   	2, $pop6        # 2: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push10=, 5
-	i32.add 	$0=, $1, $pop10
-	i32.const	$push9=, 1
-	i32.add 	$1=, $1, $pop9
-	i32.const	$push8=, 9
-	i32.le_s	$push6=, $0, $pop8
-	br_if   	0, $pop6        # 0: up to label1
+	i32.const	$push14=, 5
+	i32.add 	$0=, $1, $pop14
+	i32.const	$push13=, 1
+	i32.add 	$push0=, $1, $pop13
+	copy_local	$1=, $pop0
+	i32.const	$push12=, 9
+	i32.le_s	$push7=, $0, $pop12
+	br_if   	0, $pop7        # 0: up to label1
 # BB#3:                                 # %for.end
 	end_loop                        # label2:
-	i32.const	$push7=, 0
-	return  	$pop7
+	i32.const	$push8=, 0
+	return  	$pop8
 .LBB1_4:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

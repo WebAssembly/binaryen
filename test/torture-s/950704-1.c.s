@@ -57,10 +57,10 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end28
-	i32.const	$push0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push2=, 0
-	i32.store	$push1=, errflag($pop0), $pop2
-	call    	exit@FUNCTION, $pop1
+	i32.store	$push0=, errflag($pop1), $pop2
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:

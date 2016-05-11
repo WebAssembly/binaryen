@@ -8,8 +8,8 @@ pure_alloc:                             # @pure_alloc
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$0=, bar($pop0)
+	i32.const	$push1=, 0
+	i32.load	$0=, bar($pop1)
 	i32.const	$push13=, 0
 	i32.load	$1=, baz($pop13)
 	block
@@ -18,9 +18,9 @@ pure_alloc:                             # @pure_alloc
 	i32.load	$push10=, foo($pop11)
 	tee_local	$push9=, $2=, $pop10
 	i32.const	$push8=, 2
-	i32.add 	$push1=, $pop9, $pop8
-	i32.store	$push2=, foo($pop12), $pop1
-	i32.lt_u	$push3=, $pop2, $1
+	i32.add 	$push2=, $pop9, $pop8
+	i32.store	$push0=, foo($pop12), $pop2
+	i32.lt_u	$push3=, $pop0, $1
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:
 	i32.const	$push14=, 2

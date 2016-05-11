@@ -9,23 +9,23 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push2=, 0
-	i32.eq  	$push3=, $2, $pop2
-	br_if   	0, $pop3        # 0: down to label0
+	i32.const	$push4=, 0
+	i32.eq  	$push5=, $2, $pop4
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.then
 	block
-	i32.const	$push4=, 0
-	i32.eq  	$push5=, $3, $pop4
-	br_if   	0, $pop5        # 0: down to label1
+	i32.const	$push6=, 0
+	i32.eq  	$push7=, $3, $pop6
+	br_if   	0, $pop7        # 0: down to label1
 # BB#2:                                 # %if.then4
 	i32.select	$push1=, $1, $0, $4
 	i32.select	$push0=, $0, $1, $4
-	i32.sub 	$1=, $pop1, $pop0
-	return  	$1
+	i32.sub 	$push2=, $pop1, $pop0
+	return  	$pop2
 .LBB0_3:
 	end_block                       # label1:
-	i32.sub 	$1=, $0, $1
-	return  	$1
+	i32.sub 	$push3=, $0, $1
+	return  	$pop3
 .LBB0_4:                                # %if.end9
 	end_block                       # label0:
 	call    	abort@FUNCTION

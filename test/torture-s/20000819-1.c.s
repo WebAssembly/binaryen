@@ -23,13 +23,13 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.load	$push4=, 0($1)
-	i32.const	$push12=, 1
-	i32.le_s	$push5=, $pop4, $pop12
+	i32.const	$push11=, 1
+	i32.le_s	$push5=, $pop4, $pop11
 	br_if   	3, $pop5        # 3: down to label0
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push11=, 4
-	i32.add 	$1=, $1, $pop11
+	i32.const	$push12=, 4
+	i32.add 	$1=, $1, $pop12
 	i32.le_u	$push6=, $1, $0
 	br_if   	0, $pop6        # 0: up to label2
 .LBB0_4:                                # %for.end

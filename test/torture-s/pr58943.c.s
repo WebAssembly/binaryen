@@ -29,12 +29,12 @@ main:                                   # @main
 	block
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
-	i32.load	$push0=, x($pop6)
-	i32.const	$push1=, 129
-	i32.or  	$push2=, $pop0, $pop1
-	i32.store	$push3=, x($pop7), $pop2
+	i32.load	$push1=, x($pop6)
+	i32.const	$push2=, 129
+	i32.or  	$push3=, $pop1, $pop2
+	i32.store	$push0=, x($pop7), $pop3
 	i32.const	$push4=, 131
-	i32.ne  	$push5=, $pop3, $pop4
+	i32.ne  	$push5=, $pop0, $pop4
 	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push8=, 0

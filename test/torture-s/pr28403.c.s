@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i32.add 	$push5=, $pop4, $6
 	i32.add 	$push6=, $pop5, $7
 	i32.store	$discard=, global($pop7), $pop6
-	return  	$7
+	return  	$1
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

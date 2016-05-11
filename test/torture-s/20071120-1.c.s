@@ -41,9 +41,9 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	br_if   	0, $pop21       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push14=, 0
-	i32.const	$push0=, -1
-	i32.add 	$push1=, $0, $pop0
-	i32.store	$discard=, deferred_access_no_check($pop14), $pop1
+	i32.const	$push1=, -1
+	i32.add 	$push2=, $0, $pop1
+	i32.store	$discard=, deferred_access_no_check($pop14), $pop2
 	return
 .LBB2_2:                                # %if.else
 	end_block                       # label0:
@@ -62,11 +62,11 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.eq  	$push25=, $pop18, $pop24
 	br_if   	0, $pop25       # 0: down to label2
 # BB#4:                                 # %land.lhs.true.i25
-	i32.const	$push2=, -1
-	i32.add 	$push3=, $1, $pop2
-	i32.store	$push4=, 0($0), $pop3
+	i32.const	$push3=, -1
+	i32.add 	$push4=, $1, $pop3
+	i32.store	$push0=, 0($0), $pop4
 	i32.const	$push26=, 0
-	i32.eq  	$push27=, $pop4, $pop26
+	i32.eq  	$push27=, $pop0, $pop26
 	br_if   	0, $pop27       # 0: down to label2
 # BB#5:                                 # %VEC_deferred_access_base_last.exit29
 	i32.const	$push5=, 3
@@ -100,20 +100,20 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 0
 	i32.const	$push0=, 76
-	i32.call	$push1=, __builtin_malloc@FUNCTION, $pop0
-	i32.store	$push9=, deferred_access_stack($pop2), $pop1
-	tee_local	$push8=, $0=, $pop9
-	i32.const	$push3=, 2
-	i32.store	$discard=, 0($pop8), $pop3
-	i32.const	$push4=, 8
-	i32.add 	$push5=, $0, $pop4
-	i32.const	$push6=, 1
-	i32.store	$discard=, 0($pop5), $pop6
+	i32.call	$push8=, __builtin_malloc@FUNCTION, $pop0
+	tee_local	$push7=, $0=, $pop8
+	i32.const	$push3=, 8
+	i32.add 	$push4=, $pop7, $pop3
+	i32.const	$push5=, 1
+	i32.store	$discard=, 0($pop4), $pop5
+	i32.const	$push2=, 2
+	i32.store	$discard=, 0($0), $pop2
+	i32.const	$push1=, 0
+	i32.store	$discard=, deferred_access_stack($pop1), $0
 	call    	pop_to_parent_deferring_access_checks@FUNCTION
-	i32.const	$push7=, 0
-	return  	$pop7
+	i32.const	$push6=, 0
+	return  	$pop6
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

@@ -6,11 +6,11 @@
 	.type	foo,@function
 foo:                                    # @foo
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push3=, 0
-	i32.const	$push1=, 1
-	i32.store8	$push2=, x($pop3), $pop1
-	i32.store8	$discard=, y($pop0), $pop2
+	i32.const	$push2=, 1
+	i32.store8	$push0=, x($pop3), $pop2
+	i32.store8	$discard=, y($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end0:
@@ -23,11 +23,11 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
-	i32.const	$push1=, 0
+	i32.const	$push2=, 0
 	i32.const	$push4=, 0
-	i32.const	$push0=, 1
-	i32.store8	$push2=, x($pop4), $pop0
-	i32.store8	$discard=, y($pop1), $pop2
+	i32.const	$push1=, 1
+	i32.store8	$push0=, x($pop4), $pop1
+	i32.store8	$discard=, y($pop2), $pop0
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

@@ -9,26 +9,27 @@ new_unit:                               # @new_unit
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.load	$push9=, 4($0)
-	tee_local	$push8=, $1=, $pop9
-	i32.const	$push7=, 1
-	i32.ne  	$push0=, $pop8, $pop7
+	i32.load	$push8=, 4($0)
+	tee_local	$push7=, $1=, $pop8
+	i32.const	$push6=, 1
+	i32.ne  	$push0=, $pop7, $pop6
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then
-	i32.const	$push2=, 4
-	i32.add 	$push3=, $0, $pop2
-	i32.const	$push1=, 0
-	i32.store	$1=, 0($pop3), $pop1
+	i32.const	$1=, 0
+	i32.const	$push1=, 4
+	i32.add 	$push2=, $0, $pop1
+	i32.const	$push9=, 0
+	i32.store	$discard=, 0($pop2), $pop9
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	block
-	i32.load	$push4=, 0($0)
+	i32.load	$push3=, 0($0)
 	i32.const	$push10=, 1
-	i32.ne  	$push5=, $pop4, $pop10
-	br_if   	0, $pop5        # 0: down to label1
+	i32.ne  	$push4=, $pop3, $pop10
+	br_if   	0, $pop4        # 0: down to label1
 # BB#3:                                 # %if.then3
-	i32.const	$push6=, 0
-	i32.store	$discard=, 0($0), $pop6
+	i32.const	$push5=, 0
+	i32.store	$discard=, 0($0), $pop5
 .LBB0_4:                                # %if.end5
 	end_block                       # label1:
 	block

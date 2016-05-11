@@ -23,18 +23,17 @@ get_id:                                 # @get_id
 	.type	get_tok,@function
 get_tok:                                # @get_tok
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.const	$push0=, id_space
-	i32.store	$discard=, curval+2($pop1):p2align=1, $pop0
+	i32.const	$push2=, 0
+	i32.const	$push1=, id_space
+	i32.store	$discard=, curval+2($pop2):p2align=1, $pop1
 	i32.const	$push6=, 0
+	i32.const	$push3=, 99
+	i32.store8	$discard=, id_space($pop6), $pop3
 	i32.const	$push5=, 0
-	i32.store16	$push4=, curval($pop6), $pop5
-	tee_local	$push3=, $0=, $pop4
-	i32.const	$push2=, 99
-	i32.store8	$discard=, id_space($pop3), $pop2
-	return  	$0
+	i32.const	$push4=, 0
+	i32.store16	$push0=, curval($pop5), $pop4
+	return  	$pop0
 	.endfunc
 .Lfunc_end1:
 	.size	get_tok, .Lfunc_end1-get_tok

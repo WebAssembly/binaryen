@@ -8,43 +8,44 @@ doit:                                   # @doit
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push19=, 0
-	i32.load	$push18=, markstack_ptr($pop19)
-	tee_local	$push17=, $3=, $pop18
-	i32.const	$push2=, -4
-	i32.add 	$push3=, $pop17, $pop2
-	i32.load	$push16=, 0($pop3)
-	tee_local	$push15=, $0=, $pop16
-	i32.const	$push4=, 6
-	i32.eq  	$push5=, $pop15, $pop4
-	br_if   	0, $pop5        # 0: down to label0
+	i32.const	$push20=, 0
+	i32.load	$push19=, markstack_ptr($pop20)
+	tee_local	$push18=, $3=, $pop19
+	i32.const	$push3=, -4
+	i32.add 	$push4=, $pop18, $pop3
+	i32.load	$push17=, 0($pop4)
+	tee_local	$push16=, $0=, $pop17
+	i32.const	$push5=, 6
+	i32.eq  	$push6=, $pop16, $pop5
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
-	i32.const	$push22=, 0
-	i32.load	$push0=, stack_base($pop22)
-	i32.const	$push1=, 40
-	i32.add 	$2=, $pop0, $pop1
-	i32.const	$push8=, -6
-	i32.add 	$1=, $0, $pop8
-	i32.const	$push21=, -8
-	i32.add 	$push6=, $3, $pop21
-	i32.load	$push7=, 0($pop6)
-	i32.const	$push9=, 3
-	i32.shl 	$push10=, $pop7, $pop9
-	i32.const	$push20=, 3
-	i32.shl 	$push11=, $0, $pop20
-	i32.sub 	$0=, $pop10, $pop11
+	i32.const	$push23=, 0
+	i32.load	$push1=, stack_base($pop23)
+	i32.const	$push2=, 40
+	i32.add 	$2=, $pop1, $pop2
+	i32.const	$push9=, -6
+	i32.add 	$1=, $0, $pop9
+	i32.const	$push22=, -8
+	i32.add 	$push7=, $3, $pop22
+	i32.load	$push8=, 0($pop7)
+	i32.const	$push10=, 3
+	i32.shl 	$push11=, $pop8, $pop10
+	i32.const	$push21=, 3
+	i32.shl 	$push12=, $0, $pop21
+	i32.sub 	$0=, $pop11, $pop12
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.add 	$push13=, $2, $0
-	i32.const	$push25=, 16
-	i32.add 	$push14=, $pop13, $pop25
-	i64.load	$push12=, 0($2)
-	i64.store	$discard=, 0($pop14), $pop12
+	i32.add 	$push14=, $2, $0
+	i32.const	$push26=, 16
+	i32.add 	$push15=, $pop14, $pop26
+	i64.load	$push13=, 0($2)
+	i64.store	$discard=, 0($pop15), $pop13
+	i32.const	$push25=, 1
+	i32.add 	$1=, $1, $pop25
 	i32.const	$push24=, -8
-	i32.add 	$2=, $2, $pop24
-	i32.const	$push23=, 1
-	i32.add 	$1=, $1, $pop23
+	i32.add 	$push0=, $2, $pop24
+	copy_local	$2=, $pop0
 	br_if   	0, $1           # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop                        # label2:
@@ -74,17 +75,17 @@ main:                                   # @main
 	i32.const	$push11=, list+16
 	i32.store	$discard=, stack_base($pop28), $pop11
 	i32.const	$push27=, 0
-	i64.const	$push0=, 0
-	i64.store	$discard=, list($pop27), $pop0
+	i64.const	$push1=, 0
+	i64.store	$discard=, list($pop27), $pop1
 	i32.const	$push26=, 0
-	i64.const	$push2=, 1
-	i64.store	$discard=, list+8($pop26), $pop2
+	i64.const	$push3=, 1
+	i64.store	$discard=, list+8($pop26), $pop3
 	i32.const	$push25=, 0
-	i64.const	$push3=, 2
-	i64.store	$discard=, list+16($pop25), $pop3
+	i64.const	$push4=, 2
+	i64.store	$discard=, list+16($pop25), $pop4
 	i32.const	$push24=, 0
-	i64.const	$push4=, 3
-	i64.store	$discard=, list+24($pop24), $pop4
+	i64.const	$push5=, 3
+	i64.store	$discard=, list+24($pop24), $pop5
 	i32.const	$push23=, 0
 	i64.const	$push7=, 9
 	i64.store	$discard=, list+72($pop23), $pop7
@@ -99,14 +100,14 @@ main:                                   # @main
 	i64.store	$discard=, list+48($pop20), $pop14
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
-	i64.const	$push5=, 4
-	i64.store	$push6=, list+32($pop18), $pop5
-	i64.store	$discard=, list+40($pop19), $pop6
+	i64.const	$push6=, 4
+	i64.store	$push0=, list+32($pop18), $pop6
+	i64.store	$discard=, list+40($pop19), $pop0
 	block
 	i32.const	$push15=, expect
-	i32.const	$push1=, list
+	i32.const	$push2=, list
 	i32.const	$push16=, 80
-	i32.call	$push17=, memcmp@FUNCTION, $pop15, $pop1, $pop16
+	i32.call	$push17=, memcmp@FUNCTION, $pop15, $pop2, $pop16
 	br_if   	0, $pop17       # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$push32=, 0

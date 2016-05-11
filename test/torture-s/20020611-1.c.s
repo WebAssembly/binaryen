@@ -6,14 +6,14 @@
 	.type	x,@function
 x:                                      # @x
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push6=, 0
 	i32.const	$push5=, 0
-	i32.load	$push1=, n($pop5)
-	i32.const	$push2=, 31
-	i32.lt_u	$push3=, $pop1, $pop2
-	i32.store	$push4=, p($pop6), $pop3
-	i32.store	$discard=, k($pop0), $pop4
+	i32.load	$push2=, n($pop5)
+	i32.const	$push3=, 31
+	i32.lt_u	$push4=, $pop2, $pop3
+	i32.store	$push0=, p($pop6), $pop4
+	i32.store	$discard=, k($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end0:
@@ -30,13 +30,13 @@ main:                                   # @main
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
 	i32.const	$push5=, 0
-	i32.load	$push0=, n($pop5)
-	i32.const	$push1=, 31
-	i32.lt_u	$push2=, $pop0, $pop1
-	i32.store	$push3=, p($pop6), $pop2
-	i32.store	$push4=, k($pop7), $pop3
+	i32.load	$push2=, n($pop5)
+	i32.const	$push3=, 31
+	i32.lt_u	$push4=, $pop2, $pop3
+	i32.store	$push0=, p($pop6), $pop4
+	i32.store	$push1=, k($pop7), $pop0
 	i32.const	$push9=, 0
-	i32.eq  	$push10=, $pop4, $pop9
+	i32.eq  	$push10=, $pop1, $pop9
 	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push8=, 0

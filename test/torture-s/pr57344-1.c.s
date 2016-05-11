@@ -53,7 +53,8 @@ main:                                   # @main
 	i32.const	$push4=, -1
 	i32.gt_s	$push5=, $0, $pop4
 	br_if   	0, $pop5        # 0: down to label1
-.LBB1_2:                                # %for.body.for.body_crit_edge
+# BB#2:                                 # %for.body.for.body_crit_edge.preheader
+.LBB1_3:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.const	$push35=, 0
@@ -81,7 +82,7 @@ main:                                   # @main
 	i32.const	$push24=, 0
 	i32.lt_s	$push15=, $0, $pop24
 	br_if   	0, $pop15       # 0: up to label2
-.LBB1_3:                                # %for.end
+.LBB1_4:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:
 	i32.const	$push36=, 0

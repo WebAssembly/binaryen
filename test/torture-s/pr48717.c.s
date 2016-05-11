@@ -51,14 +51,14 @@ main:                                   # @main
 	i32.const	$push10=, 0
 	i32.load	$push9=, w($pop10)
 	tee_local	$push8=, $0=, $pop9
-	i32.const	$push0=, -1
-	i32.xor 	$push1=, $pop8, $pop0
-	i32.add 	$push2=, $pop1, $0
-	i32.const	$push3=, 65535
-	i32.and 	$push4=, $pop2, $pop3
-	i32.store	$push5=, v($pop11), $pop4
+	i32.const	$push1=, -1
+	i32.xor 	$push2=, $pop8, $pop1
+	i32.add 	$push3=, $pop2, $0
+	i32.const	$push4=, 65535
+	i32.and 	$push5=, $pop3, $pop4
+	i32.store	$push0=, v($pop11), $pop5
 	i32.const	$push7=, 65535
-	i32.ne  	$push6=, $pop5, $pop7
+	i32.ne  	$push6=, $pop0, $pop7
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push12=, 0

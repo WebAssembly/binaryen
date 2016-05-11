@@ -12,8 +12,9 @@ bad:                                    # @bad
 	i32.const	$push3=, __stack_pointer
 	i32.load	$push4=, 0($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$2=, $pop4, $pop5
-	i32.store	$discard=, 8($2), $1
+	i32.sub 	$push9=, $pop4, $pop5
+	tee_local	$push8=, $2=, $pop9
+	i32.store	$discard=, 8($pop8), $1
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $2, $pop6
 	i32.add 	$push0=, $pop7, $0

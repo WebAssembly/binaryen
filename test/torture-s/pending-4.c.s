@@ -28,47 +28,45 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	block
-	block
-	i32.const	$push6=, 1
-	i32.eq  	$push0=, $4, $pop6
-	br_if   	0, $pop0        # 0: down to label3
-# BB#2:                                 # %for.cond
-                                        #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $4, $pop10
-	br_if   	3, $pop11       # 3: down to label1
-# BB#3:                                 # %if.else
-                                        #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push8=, 1
-	i32.add 	$3=, $3, $pop8
-	br      	1               # 1: down to label2
-.LBB1_4:                                # %if.then
+	i32.ne  	$push0=, $4, $pop8
+	br_if   	0, $pop0        # 0: down to label2
+# BB#2:                                 # %if.then
                                         #   in Loop: Header=BB1_1 Depth=1
-	end_block                       # label3:
 	i32.const	$push7=, 1
 	i32.add 	$2=, $2, $pop7
-.LBB1_5:                                # %for.inc
+	i32.const	$push6=, -1
+	i32.add 	$4=, $4, $pop6
+	br      	1               # 1: up to label0
+.LBB1_3:                                # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label2:
+	i32.const	$push11=, 0
+	i32.eq  	$push12=, $4, $pop11
+	br_if   	1, $pop12       # 1: down to label1
+# BB#4:                                 # %if.else
+                                        #   in Loop: Header=BB1_1 Depth=1
+	i32.const	$push10=, 1
+	i32.add 	$3=, $3, $pop10
 	i32.const	$push9=, -1
 	i32.add 	$4=, $4, $pop9
 	br      	0               # 0: up to label0
-.LBB1_6:                                # %for.end
+.LBB1_5:                                # %for.end
 	end_loop                        # label1:
 	block
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $2, $pop1
-	br_if   	0, $pop2        # 0: down to label4
-# BB#7:                                 # %for.end
+	br_if   	0, $pop2        # 0: down to label3
+# BB#6:                                 # %for.end
 	i32.const	$push3=, 7
 	i32.ne  	$push4=, $3, $pop3
-	br_if   	0, $pop4        # 0: down to label4
-# BB#8:                                 # %if.end7
+	br_if   	0, $pop4        # 0: down to label3
+# BB#7:                                 # %if.end7
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
 	unreachable
-.LBB1_9:                                # %if.then6
-	end_block                       # label4:
+.LBB1_8:                                # %if.then6
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

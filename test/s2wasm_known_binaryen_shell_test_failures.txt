@@ -60,7 +60,6 @@ complex-7.c.s.wast
 # abort called: the tests are self-validating and call abort when they detect a
 # failure.  This may not be binaryen's fault (the toolchain may be emitting bad
 # code) but it could be binaryen's fault.
-20030125-1.c.s.wast
 920612-1.c.s.wast
 920625-1.c.s.wast
 920711-1.c.s.wast
@@ -114,7 +113,6 @@ va-arg-pack-1.c.s.wast
 align-2.c.s.wast # __eqtf2
 builtin-bitops-1.c.s.wast # __builtin_clrsb
 complex-5.c.s.wast # __divsc3
-frame-address.c.s.wast # abort
 ipa-sra-2.c.s.wast # calloc
 loop-2f.c.s.wast # open
 loop-2g.c.s.wast # open

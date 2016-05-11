@@ -106,11 +106,11 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	call    	simple_vol_global@FUNCTION
 	call    	simple_vol_file@FUNCTION
-	i32.const	$push1=, 0
+	i32.const	$push2=, 0
 	i32.const	$push4=, 0
-	i32.const	$push0=, str
-	i32.store	$push2=, str+16($pop4), $pop0
-	i32.store	$discard=, vol_str+16($pop1), $pop2
+	i32.const	$push1=, str
+	i32.store	$push0=, str+16($pop4), $pop1
+	i32.store	$discard=, vol_str+16($pop2), $pop0
 	call    	expr_vol_global@FUNCTION
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3

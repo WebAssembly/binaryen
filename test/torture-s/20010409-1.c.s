@@ -71,11 +71,11 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push9=, 0
-	i32.store	$push8=, d+4($pop0), $pop9
-	tee_local	$push7=, $0=, $pop8
 	i32.const	$push1=, a
-	i32.store	$discard=, d($pop7), $pop1
+	i32.store	$discard=, d($pop0), $pop1
+	i32.const	$push8=, 0
+	i32.const	$push7=, 0
+	i32.store	$0=, d+4($pop8), $pop7
 	i32.const	$push2=, .L.str
 	i32.const	$push3=, 200
 	call    	foo@FUNCTION, $0, $pop2, $pop3

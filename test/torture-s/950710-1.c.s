@@ -18,22 +18,22 @@ g:                                      # @g
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push8=, __stack_pointer
-	i32.load	$push9=, 0($pop8)
-	i32.const	$push10=, 32
-	i32.sub 	$2=, $pop9, $pop10
-	i32.const	$push11=, __stack_pointer
-	i32.store	$discard=, 0($pop11), $2
-	i32.const	$push12=, 16
-	i32.add 	$push13=, $2, $pop12
-	i32.sub 	$0=, $2, $pop13
+	i32.const	$push9=, __stack_pointer
+	i32.const	$push6=, __stack_pointer
+	i32.load	$push7=, 0($pop6)
+	i32.const	$push8=, 32
+	i32.sub 	$push12=, $pop7, $pop8
+	i32.store	$0=, 0($pop9), $pop12
+	i32.const	$push10=, 16
+	i32.add 	$push11=, $0, $pop10
+	i32.sub 	$0=, $0, $pop11
 	block
 	i32.const	$push0=, 31
-	i32.shr_s	$push7=, $0, $pop0
-	tee_local	$push6=, $1=, $pop7
-	i32.add 	$push1=, $0, $pop6
+	i32.shr_s	$push14=, $0, $pop0
+	tee_local	$push13=, $1=, $pop14
+	i32.add 	$push1=, $0, $pop13
 	i32.xor 	$push2=, $pop1, $1
 	i32.const	$push3=, 11
 	i32.gt_u	$push4=, $pop2, $pop3

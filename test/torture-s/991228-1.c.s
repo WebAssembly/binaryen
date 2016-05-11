@@ -9,13 +9,14 @@ signbit:                                # @signbit
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
+	i32.const	$push0=, 0
+	i32.load	$1=, endianness_test($pop0)
 	i32.const	$push7=, __stack_pointer
 	i32.load	$push8=, 0($pop7)
 	i32.const	$push9=, 16
-	i32.sub 	$2=, $pop8, $pop9
-	i32.const	$push0=, 0
-	i32.load	$1=, endianness_test($pop0)
-	f64.store	$discard=, 8($2), $0
+	i32.sub 	$push13=, $pop8, $pop9
+	tee_local	$push12=, $2=, $pop13
+	f64.store	$discard=, 8($pop12), $0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $2, $pop10
 	i32.const	$push1=, 2
@@ -37,37 +38,37 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push15=, __stack_pointer
-	i32.load	$push16=, 0($pop15)
-	i32.const	$push17=, 16
-	i32.sub 	$1=, $pop16, $pop17
-	i32.const	$push18=, __stack_pointer
-	i32.store	$discard=, 0($pop18), $1
+	i32.const	$push12=, __stack_pointer
+	i32.const	$push9=, __stack_pointer
+	i32.load	$push10=, 0($pop9)
+	i32.const	$push11=, 16
+	i32.sub 	$push15=, $pop10, $pop11
+	i32.store	$0=, 0($pop12), $pop15
 	block
-	i32.const	$push12=, 0
-	i32.load	$push0=, endianness_test($pop12)
+	i32.const	$push19=, 0
+	i32.load	$push0=, endianness_test($pop19)
 	i32.const	$push1=, 2
-	i32.shl 	$push11=, $pop0, $pop1
-	tee_local	$push10=, $0=, $pop11
-	i32.load	$push2=, u($pop10)
-	i32.const	$push9=, 0
-	i32.lt_s	$push3=, $pop2, $pop9
+	i32.shl 	$push18=, $pop0, $pop1
+	tee_local	$push17=, $1=, $pop18
+	i32.load	$push2=, u($pop17)
+	i32.const	$push16=, 0
+	i32.lt_s	$push3=, $pop2, $pop16
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.then
-	i32.const	$push13=, 0
-	call    	exit@FUNCTION, $pop13
+	i32.const	$push20=, 0
+	call    	exit@FUNCTION, $pop20
 	unreachable
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	i64.const	$push4=, -4625196817309499392
-	i64.store	$discard=, 8($1), $pop4
+	i64.store	$discard=, 8($0), $pop4
 	block
-	i32.const	$push19=, 8
-	i32.add 	$push20=, $1, $pop19
-	i32.add 	$push5=, $pop20, $0
+	i32.const	$push13=, 8
+	i32.add 	$push14=, $0, $pop13
+	i32.add 	$push5=, $pop14, $1
 	i32.load	$push6=, 0($pop5)
-	i32.const	$push14=, 0
-	i32.lt_s	$push7=, $pop6, $pop14
+	i32.const	$push21=, 0
+	i32.lt_s	$push7=, $pop6, $pop21
 	br_if   	0, $pop7        # 0: down to label1
 # BB#3:                                 # %if.then1
 	call    	abort@FUNCTION

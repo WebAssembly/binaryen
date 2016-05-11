@@ -33,11 +33,11 @@ test2:                                  # @test2
 test3:                                  # @test3
 	.param  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 4
-	i32.add 	$push1=, $0, $pop0
-	i32.const	$push2=, 0
-	i32.store	$push3=, 0($pop1), $pop2
-	i32.store	$discard=, 0($0), $pop3
+	i32.const	$push1=, 4
+	i32.add 	$push2=, $0, $pop1
+	i32.const	$push3=, 0
+	i32.store	$push0=, 0($pop2), $pop3
+	i32.store	$discard=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end2:

@@ -50,9 +50,10 @@ get_kind:                               # @get_kind
 	i32.const	$push2=, __stack_pointer
 	i32.load	$push3=, 0($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$0=, $pop3, $pop4
+	i32.sub 	$push6=, $pop3, $pop4
+	tee_local	$push5=, $0=, $pop6
 	i32.const	$push0=, 10
-	i32.store	$discard=, 12($0), $pop0
+	i32.store	$discard=, 12($pop5), $pop0
 	i32.load	$push1=, 12($0)
 	return  	$pop1
 	.endfunc

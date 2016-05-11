@@ -39,11 +39,11 @@ test3:                                  # @test3
 	.type	test4,@function
 test4:                                  # @test4
 # BB#0:                                 # %if.end8
-	i32.const	$push0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push3=, 0
-	i32.const	$push1=, 3
-	i32.store	$push2=, x($pop3), $pop1
-	i32.store	$discard=, y($pop0), $pop2
+	i32.const	$push2=, 3
+	i32.store	$push0=, x($pop3), $pop2
+	i32.store	$discard=, y($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end3:
@@ -55,11 +55,11 @@ test4:                                  # @test4
 	.type	test5,@function
 test5:                                  # @test5
 # BB#0:                                 # %if.end8
-	i32.const	$push0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push3=, 0
-	i32.const	$push1=, 3
-	i32.store	$push2=, x($pop3), $pop1
-	i32.store	$discard=, y($pop0), $pop2
+	i32.const	$push2=, 3
+	i32.store	$push0=, x($pop3), $pop2
+	i32.store	$discard=, y($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end4:
@@ -71,11 +71,11 @@ test5:                                  # @test5
 	.type	test6,@function
 test6:                                  # @test6
 # BB#0:                                 # %if.end8
-	i32.const	$push0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push3=, 0
-	i32.const	$push1=, 3
-	i32.store	$push2=, x($pop3), $pop1
-	i32.store	$discard=, y($pop0), $pop2
+	i32.const	$push2=, 3
+	i32.store	$push0=, x($pop3), $pop2
+	i32.store	$discard=, y($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end5:

@@ -20,16 +20,16 @@ debug:                                  # @debug
 	.param  	i32, i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push32=, __stack_pointer
-	i32.load	$push33=, 0($pop32)
-	i32.const	$push34=, 16
-	i32.sub 	$4=, $pop33, $pop34
-	i32.const	$push35=, __stack_pointer
-	i32.store	$discard=, 0($pop35), $4
-	i32.store	$push31=, 12($4), $1
-	tee_local	$push30=, $1=, $pop31
+	i32.const	$push33=, __stack_pointer
+	i32.const	$push30=, __stack_pointer
+	i32.load	$push31=, 0($pop30)
+	i32.const	$push32=, 16
+	i32.sub 	$push37=, $pop31, $pop32
+	i32.store	$4=, 0($pop33), $pop37
+	i32.store	$push39=, 12($4), $1
+	tee_local	$push38=, $1=, $pop39
 	i32.const	$push0=, 4
-	i32.add 	$push1=, $pop30, $pop0
+	i32.add 	$push1=, $pop38, $pop0
 	i32.store	$2=, 12($4), $pop1
 	block
 	i32.load	$push2=, 0($1)
@@ -77,10 +77,10 @@ debug:                                  # @debug
 	i32.ne  	$push29=, $pop27, $pop28
 	br_if   	0, $pop29       # 0: down to label0
 # BB#6:                                 # %if.end26
-	i32.const	$push38=, __stack_pointer
-	i32.const	$push36=, 16
-	i32.add 	$push37=, $4, $pop36
-	i32.store	$discard=, 0($pop38), $pop37
+	i32.const	$push36=, __stack_pointer
+	i32.const	$push34=, 16
+	i32.add 	$push35=, $4, $pop34
+	i32.store	$discard=, 0($pop36), $pop35
 	return
 .LBB1_7:                                # %if.then25
 	end_block                       # label0:
@@ -96,23 +96,24 @@ debug:                                  # @debug
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push9=, __stack_pointer
 	i32.const	$push6=, __stack_pointer
 	i32.load	$push7=, 0($pop6)
 	i32.const	$push8=, 32
-	i32.sub 	$1=, $pop7, $pop8
-	i32.const	$push9=, __stack_pointer
-	i32.store	$discard=, 0($pop9), $1
+	i32.sub 	$push10=, $pop7, $pop8
+	i32.store	$push12=, 0($pop9), $pop10
+	tee_local	$push11=, $0=, $pop12
 	i32.const	$push0=, 16
-	i32.add 	$push1=, $1, $pop0
+	i32.add 	$push1=, $pop11, $pop0
 	i64.const	$push2=, 455266533481
 	i64.store	$discard=, 0($pop1), $pop2
 	i64.const	$push3=, 446676598887
-	i64.store	$discard=, 8($1), $pop3
+	i64.store	$discard=, 8($0), $pop3
 	i64.const	$push4=, 438086664293
-	i64.store	$discard=, 0($1), $pop4
-	call    	debug@FUNCTION, $0, $1
+	i64.store	$discard=, 0($0), $pop4
+	call    	debug@FUNCTION, $0, $0
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
 	unreachable

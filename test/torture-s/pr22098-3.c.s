@@ -7,13 +7,13 @@
 f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
+	i32.const	$push1=, 0
 	i32.const	$push5=, 0
-	i32.load	$push1=, n($pop5)
-	i32.const	$push2=, 1
-	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$push4=, n($pop0), $pop3
-	return  	$pop4
+	i32.load	$push2=, n($pop5)
+	i32.const	$push3=, 1
+	i32.add 	$push4=, $pop2, $pop3
+	i32.store	$push0=, n($pop1), $pop4
+	return  	$pop0
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

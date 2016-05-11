@@ -19,17 +19,18 @@ f:                                      # @f
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push7=, 1
-	i32.add 	$1=, $1, $pop7
-	i32.const	$push6=, 16
-	i32.shl 	$push1=, $0, $pop6
-	i32.const	$push5=, 17
-	i32.shr_s	$0=, $pop1, $pop5
+	i32.const	$push9=, 1
+	i32.add 	$1=, $1, $pop9
+	i32.const	$push8=, 16
+	i32.shl 	$push1=, $0, $pop8
+	i32.const	$push7=, 17
+	i32.shr_s	$push6=, $pop1, $pop7
+	tee_local	$push5=, $0=, $pop6
 	i32.const	$push4=, 1
-	i32.and 	$push2=, $0, $pop4
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $pop2, $pop8
-	br_if   	0, $pop9        # 0: up to label1
+	i32.and 	$push2=, $pop5, $pop4
+	i32.const	$push10=, 0
+	i32.eq  	$push11=, $pop2, $pop10
+	br_if   	0, $pop11       # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:

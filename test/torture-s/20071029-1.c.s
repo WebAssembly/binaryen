@@ -8,17 +8,17 @@ test:                                   # @test
 	.param  	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.load	$1=, 0($0)
+	i32.load	$2=, 0($0)
 	i32.const	$push1=, 0
 	i32.const	$push19=, 0
 	i32.load	$push18=, test.i($pop19)
 	tee_local	$push17=, $3=, $pop18
 	i32.const	$push2=, 1
 	i32.add 	$push0=, $pop17, $pop2
-	i32.store	$2=, test.i($pop1), $pop0
+	i32.store	$1=, test.i($pop1), $pop0
 	block
 	block
-	i32.ne  	$push3=, $1, $3
+	i32.ne  	$push3=, $2, $3
 	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.load	$push4=, 4($0)
@@ -52,7 +52,7 @@ test:                                   # @test
 	br_if   	0, $pop13       # 0: down to label1
 # BB#11:                                # %if.end34
 	i32.const	$push14=, 20
-	i32.eq  	$push15=, $2, $pop14
+	i32.eq  	$push15=, $1, $pop14
 	br_if   	1, $pop15       # 1: down to label0
 # BB#12:                                # %if.end37
 	return
@@ -77,30 +77,31 @@ foo:                                    # @foo
 	.param  	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push5=, __stack_pointer
-	i32.load	$push6=, 0($pop5)
-	i32.const	$push7=, 64
-	i32.sub 	$2=, $pop6, $pop7
-	i32.const	$push8=, __stack_pointer
-	i32.store	$discard=, 0($pop8), $2
-	i32.const	$push9=, 8
-	i32.add 	$push10=, $2, $pop9
+	i32.const	$push4=, __stack_pointer
+	i32.const	$push1=, __stack_pointer
+	i32.load	$push2=, 0($pop1)
+	i32.const	$push3=, 64
+	i32.sub 	$push9=, $pop2, $pop3
+	i32.store	$push12=, 0($pop4), $pop9
+	tee_local	$push11=, $2=, $pop12
+	i32.const	$push5=, 8
+	i32.add 	$push6=, $pop11, $pop5
 	i32.const	$push0=, 4
-	i32.or  	$1=, $pop10, $pop0
-	i32.const	$push1=, 1
-	i32.add 	$0=, $0, $pop1
+	i32.or  	$1=, $pop6, $pop0
+	i32.const	$push10=, 1
+	i32.add 	$0=, $0, $pop10
 .LBB1_1:                                # %again
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.store	$discard=, 8($2), $0
-	i32.const	$push4=, 0
-	i32.const	$push3=, 52
-	i32.call	$discard=, memset@FUNCTION, $1, $pop4, $pop3
-	i32.const	$push11=, 8
-	i32.add 	$push12=, $2, $pop11
-	call    	test@FUNCTION, $pop12
-	i32.const	$push2=, 1
-	i32.add 	$0=, $0, $pop2
+	i32.const	$push15=, 0
+	i32.const	$push14=, 52
+	i32.call	$discard=, memset@FUNCTION, $1, $pop15, $pop14
+	i32.const	$push7=, 8
+	i32.add 	$push8=, $2, $pop7
+	call    	test@FUNCTION, $pop8
+	i32.const	$push13=, 1
+	i32.add 	$0=, $0, $pop13
 	br      	0               # 0: up to label2
 .LBB1_2:
 	end_loop                        # label3:

@@ -11,11 +11,11 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.load	$5=, 0($0)
 	i32.store	$discard=, 0($0), $2
-	i32.load	$2=, 0($1)
+	i32.load	$1=, 0($1)
 	i32.load	$push0=, 0($4)
 	i32.store	$discard=, 0($3), $pop0
 	i32.load	$0=, 0($0)
-	i32.store	$discard=, 0($5), $2
+	i32.store	$discard=, 0($5), $1
 	i32.const	$push1=, 99
 	i32.store	$discard=, 0($0), $pop1
 	i32.const	$push2=, 3
@@ -32,14 +32,15 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$push24=, __stack_pointer
 	i32.const	$push21=, __stack_pointer
 	i32.load	$push22=, 0($pop21)
 	i32.const	$push23=, 32
-	i32.sub 	$2=, $pop22, $pop23
-	i32.const	$push24=, __stack_pointer
-	i32.store	$discard=, 0($pop24), $2
+	i32.sub 	$push43=, $pop22, $pop23
+	i32.store	$push45=, 0($pop24), $pop43
+	tee_local	$push44=, $2=, $pop45
 	i32.const	$push3=, 42
-	i32.store	$discard=, 28($2), $pop3
+	i32.store	$discard=, 28($pop44), $pop3
 	i32.const	$push5=, 1
 	i32.store	$discard=, 20($2), $pop5
 	i32.const	$push6=, -1
@@ -47,7 +48,7 @@ main:                                   # @main
 	i32.const	$push7=, 55
 	i32.store	$discard=, 12($2), $pop7
 	i32.const	$push4=, 66
-	i32.store	$1=, 24($2), $pop4
+	i32.store	$0=, 24($2), $pop4
 	i32.const	$push25=, 28
 	i32.add 	$push26=, $2, $pop25
 	i32.store	$discard=, 8($2), $pop26
@@ -68,14 +69,14 @@ main:                                   # @main
 	i32.call	$discard=, f@FUNCTION, $pop32, $pop34, $pop36, $pop38, $2
 	i32.const	$push39=, 20
 	i32.add 	$push40=, $2, $pop39
-	copy_local	$0=, $pop40
+	copy_local	$1=, $pop40
 	block
 	i32.load	$push8=, 28($2)
-	i32.ne  	$push9=, $1, $pop8
+	i32.ne  	$push9=, $0, $pop8
 	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.load	$push0=, 8($2)
-	i32.ne  	$push10=, $pop0, $0
+	i32.ne  	$push10=, $pop0, $1
 	br_if   	0, $pop10       # 0: down to label0
 # BB#2:                                 # %entry
 	i32.load	$push1=, 20($2)

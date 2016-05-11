@@ -30,20 +30,21 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push3=, __stack_pointer
-	i32.load	$push4=, 0($pop3)
-	i32.const	$push5=, 16
-	i32.sub 	$0=, $pop4, $pop5
-	i32.const	$push6=, __stack_pointer
-	i32.store	$discard=, 0($pop6), $0
+	i32.const	$push5=, __stack_pointer
+	i32.const	$push2=, __stack_pointer
+	i32.load	$push3=, 0($pop2)
+	i32.const	$push4=, 16
+	i32.sub 	$push8=, $pop3, $pop4
+	i32.store	$push11=, 0($pop5), $pop8
+	tee_local	$push10=, $0=, $pop11
 	i32.const	$push0=, 0
 	i64.load	$push1=, .Lmain.s($pop0):p2align=2
-	i64.store	$discard=, 8($0):p2align=2, $pop1
-	i32.const	$push7=, 8
-	i32.add 	$push8=, $0, $pop7
-	call    	die@FUNCTION, $pop8
-	i32.const	$push2=, 0
-	call    	exit@FUNCTION, $pop2
+	i64.store	$discard=, 8($pop10):p2align=2, $pop1
+	i32.const	$push6=, 8
+	i32.add 	$push7=, $0, $pop6
+	call    	die@FUNCTION, $pop7
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 	.endfunc
 .Lfunc_end1:

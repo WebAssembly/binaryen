@@ -25,15 +25,14 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %if.end
-	i32.const	$push0=, 0
+	i32.const	$push1=, 0
+	i32.const	$push2=, 38
+	i32.store	$discard=, a($pop1), $pop2
 	i32.const	$push4=, 0
-	i32.store	$push3=, b($pop0), $pop4
-	tee_local	$push2=, $0=, $pop3
-	i32.const	$push1=, 38
-	i32.store	$discard=, a($pop2), $pop1
-	call    	exit@FUNCTION, $0
+	i32.const	$push3=, 0
+	i32.store	$push0=, b($pop4), $pop3
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:

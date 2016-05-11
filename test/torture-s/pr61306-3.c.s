@@ -11,18 +11,18 @@ main:                                   # @main
 	block
 	i32.const	$push13=, 0
 	i32.const	$push12=, 0
-	i32.const	$push11=, 0
-	i32.load16_s	$push0=, a($pop11)
-	i32.store8	$push10=, c($pop12), $pop0
-	tee_local	$push9=, $0=, $pop10
-	i32.const	$push1=, 24
-	i32.shl 	$push2=, $pop9, $pop1
-	i32.const	$push8=, 24
-	i32.shr_s	$push3=, $pop2, $pop8
-	i32.or  	$push4=, $pop3, $0
-	i32.store	$push5=, b($pop13), $pop4
+	i32.load16_s	$push11=, a($pop12)
+	tee_local	$push10=, $0=, $pop11
+	i32.const	$push2=, 24
+	i32.shl 	$push3=, $pop10, $pop2
+	i32.const	$push9=, 24
+	i32.shr_s	$push4=, $pop3, $pop9
+	i32.const	$push8=, 0
+	i32.store8	$push0=, c($pop8), $0
+	i32.or  	$push5=, $pop4, $pop0
+	i32.store	$push1=, b($pop13), $pop5
 	i32.const	$push6=, -1
-	i32.ne  	$push7=, $pop5, $pop6
+	i32.ne  	$push7=, $pop1, $pop6
 	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push14=, 0

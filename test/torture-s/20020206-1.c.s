@@ -56,14 +56,15 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push6=, __stack_pointer
 	i32.const	$push3=, __stack_pointer
 	i32.load	$push4=, 0($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$0=, $pop4, $pop5
-	i32.const	$push6=, __stack_pointer
-	i32.store	$discard=, 0($pop6), $0
+	i32.sub 	$push7=, $pop4, $pop5
+	i32.store	$push9=, 0($pop6), $pop7
+	tee_local	$push8=, $0=, $pop9
 	i32.const	$push1=, 31
-	i32.store	$discard=, 8($0), $pop1
+	i32.store	$discard=, 8($pop8), $pop1
 	i64.const	$push0=, 223338299568
 	i64.store	$discard=, 0($0), $pop0
 	call    	baz@FUNCTION, $0

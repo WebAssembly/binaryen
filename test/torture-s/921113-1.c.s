@@ -142,19 +142,20 @@ gitter:                                 # @gitter
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push1=, pos
+	i32.const	$push7=, __stack_pointer
 	i32.const	$push4=, __stack_pointer
 	i32.load	$push5=, 0($pop4)
 	i32.const	$push6=, 16
-	i32.sub 	$1=, $pop5, $pop6
-	i32.const	$push7=, __stack_pointer
-	i32.store	$discard=, 0($pop7), $1
-	i32.const	$push1=, pos
+	i32.sub 	$push12=, $pop5, $pop6
+	i32.store	$push14=, 0($pop7), $pop12
+	tee_local	$push13=, $0=, $pop14
 	i32.const	$push8=, 8
-	i32.add 	$push9=, $1, $pop8
+	i32.add 	$push9=, $pop13, $pop8
 	i32.const	$push10=, 12
-	i32.add 	$push11=, $1, $pop10
+	i32.add 	$push11=, $0, $pop10
 	i32.const	$push0=, limit
 	f32.const	$push2=, 0x1p0
 	i32.call	$discard=, gitter@FUNCTION, $0, $pop1, $pop9, $pop11, $pop0, $pop2

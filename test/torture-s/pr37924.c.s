@@ -38,11 +38,11 @@ test2:                                  # @test2
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end21
-	i32.const	$push1=, 0
+	i32.const	$push2=, 0
 	i32.const	$push4=, 0
-	i32.const	$push0=, 255
-	i32.store8	$push2=, a($pop4), $pop0
-	i32.store8	$discard=, b($pop1), $pop2
+	i32.const	$push1=, 255
+	i32.store8	$push0=, a($pop4), $pop1
+	i32.store8	$discard=, b($pop2), $pop0
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc

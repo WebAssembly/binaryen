@@ -36,15 +36,16 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push1=, 0
+	i32.const	$push9=, __stack_pointer
 	i32.const	$push6=, __stack_pointer
 	i32.load	$push7=, 0($pop6)
 	i32.const	$push8=, 16
-	i32.sub 	$2=, $pop7, $pop8
-	i32.const	$push9=, __stack_pointer
-	i32.store	$discard=, 0($pop9), $2
-	i32.const	$push1=, 0
+	i32.sub 	$push15=, $pop7, $pop8
+	i32.store	$push17=, 0($pop9), $pop15
+	tee_local	$push16=, $2=, $pop17
 	i32.const	$push13=, 12
-	i32.add 	$push14=, $2, $pop13
+	i32.add 	$push14=, $pop16, $pop13
 	i32.store	$discard=, c($pop1), $pop14
 	block
 	i32.store	$push0=, 12($2), $0

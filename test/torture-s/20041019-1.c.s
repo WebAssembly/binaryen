@@ -9,25 +9,26 @@ test_store_ccp:                         # @test_store_ccp
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push12=, __stack_pointer
-	i32.load	$push13=, 0($pop12)
-	i32.const	$push14=, 16
-	i32.sub 	$1=, $pop13, $pop14
-	i32.const	$push19=, 12
-	i32.add 	$push20=, $1, $pop19
-	i32.const	$push15=, 8
+	i32.const	$push10=, __stack_pointer
+	i32.load	$push11=, 0($pop10)
+	i32.const	$push12=, 16
+	i32.sub 	$push22=, $pop11, $pop12
+	tee_local	$push21=, $1=, $pop22
+	i32.const	$push17=, 12
+	i32.add 	$push18=, $pop21, $pop17
+	i32.const	$push13=, 8
+	i32.add 	$push14=, $1, $pop13
+	i32.const	$push15=, 4
 	i32.add 	$push16=, $1, $pop15
-	i32.const	$push17=, 4
-	i32.add 	$push18=, $1, $pop17
 	i32.const	$push2=, 8
 	i32.gt_s	$push3=, $0, $pop2
-	i32.select	$push4=, $pop16, $pop18, $pop3
+	i32.select	$push4=, $pop14, $pop16, $pop3
 	i32.const	$push0=, 5
 	i32.lt_s	$push1=, $0, $pop0
-	i32.select	$push11=, $pop20, $pop4, $pop1
-	tee_local	$push10=, $0=, $pop11
+	i32.select	$push20=, $pop18, $pop4, $pop1
+	tee_local	$push19=, $0=, $pop20
 	i32.const	$push5=, 10
-	i32.store	$discard=, 0($pop10), $pop5
+	i32.store	$discard=, 0($pop19), $pop5
 	i32.const	$push6=, 3
 	i32.store	$discard=, 8($1), $pop6
 	i32.load	$push7=, 0($0)
@@ -47,28 +48,28 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push11=, __stack_pointer
-	i32.load	$push12=, 0($pop11)
-	i32.const	$push13=, 16
-	i32.sub 	$2=, $pop12, $pop13
-	i32.const	$push18=, 12
-	i32.add 	$push19=, $2, $pop18
-	i32.const	$push14=, 8
-	i32.add 	$push15=, $2, $pop14
-	i32.const	$push16=, 4
-	i32.add 	$push17=, $2, $pop16
-	i32.const	$push2=, 8
-	i32.gt_s	$push3=, $0, $pop2
-	i32.select	$push4=, $pop15, $pop17, $pop3
-	i32.const	$push0=, 5
-	i32.lt_s	$push1=, $0, $pop0
-	i32.select	$push10=, $pop19, $pop4, $pop1
-	tee_local	$push9=, $1=, $pop10
-	i32.store	$push5=, 0($pop9), $0
+	i32.const	$push9=, __stack_pointer
+	i32.load	$push10=, 0($pop9)
+	i32.const	$push11=, 16
+	i32.sub 	$1=, $pop10, $pop11
+	i32.const	$push16=, 12
+	i32.add 	$push17=, $1, $pop16
+	i32.const	$push12=, 8
+	i32.add 	$push13=, $1, $pop12
+	i32.const	$push14=, 4
+	i32.add 	$push15=, $1, $pop14
+	i32.const	$push3=, 8
+	i32.gt_s	$push4=, $0, $pop3
+	i32.select	$push5=, $pop13, $pop15, $pop4
+	i32.const	$push1=, 5
+	i32.lt_s	$push2=, $0, $pop1
+	i32.select	$push19=, $pop17, $pop5, $pop2
+	tee_local	$push18=, $2=, $pop19
+	i32.store	$push0=, 0($pop18), $0
 	i32.const	$push6=, 1
-	i32.add 	$push7=, $pop5, $pop6
-	i32.store	$discard=, 8($2), $pop7
-	i32.load	$push8=, 0($1)
+	i32.add 	$push7=, $pop0, $pop6
+	i32.store	$discard=, 8($1), $pop7
+	i32.load	$push8=, 0($2)
 	return  	$pop8
 	.endfunc
 .Lfunc_end1:

@@ -10,13 +10,13 @@ main:                                   # @main
 	block
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
-	i32.load8_u	$push1=, x($pop9)
+	i32.load8_u	$push2=, x($pop9)
 	i32.const	$push8=, 0
-	i32.load16_s	$push0=, y($pop8)
-	i32.div_s	$push2=, $pop1, $pop0
-	i32.store8	$push3=, x($pop10), $pop2
+	i32.load16_s	$push1=, y($pop8)
+	i32.div_s	$push3=, $pop2, $pop1
+	i32.store8	$push0=, x($pop10), $pop3
 	i32.const	$push4=, 255
-	i32.and 	$push5=, $pop3, $pop4
+	i32.and 	$push5=, $pop0, $pop4
 	i32.const	$push6=, 246
 	i32.ne  	$push7=, $pop5, $pop6
 	br_if   	0, $pop7        # 0: down to label0

@@ -99,14 +99,14 @@ get_n:                                  # @get_n
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
-	i32.const	$push1=, 0
-	i32.const	$push0=, 3
-	i32.store8	$discard=, e($pop1), $pop0
+	i32.const	$push2=, 0
+	i32.const	$push1=, 3
+	i32.store8	$discard=, e($pop2), $pop1
 	i32.const	$push6=, 0
 	i32.const	$push5=, 0
-	i32.const	$push2=, 2
-	i32.store16	$push3=, p($pop5), $pop2
-	i32.store16	$discard=, g($pop6), $pop3
+	i32.const	$push3=, 2
+	i32.store16	$push0=, p($pop5), $pop3
+	i32.store16	$discard=, g($pop6), $pop0
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4
 	unreachable

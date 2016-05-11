@@ -40,14 +40,14 @@ main:                                   # @main
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label5:
 	block
-	i32.load	$push25=, 0($3)
-	tee_local	$push24=, $8=, $pop25
-	i32.const	$push23=, 4
-	i32.add 	$push22=, $3, $pop23
-	tee_local	$push21=, $7=, $pop22
-	i32.load	$push20=, 0($pop21)
-	tee_local	$push19=, $6=, $pop20
-	i32.ge_s	$push5=, $pop24, $pop19
+	i32.load	$push24=, 0($3)
+	tee_local	$push23=, $8=, $pop24
+	i32.const	$push22=, 4
+	i32.add 	$push21=, $3, $pop22
+	tee_local	$push20=, $7=, $pop21
+	i32.load	$push19=, 0($pop20)
+	tee_local	$push18=, $6=, $pop19
+	i32.ge_s	$push5=, $pop23, $pop18
 	br_if   	0, $pop5        # 0: down to label7
 # BB#5:                                 # %if.then
                                         #   in Loop: Header=BB0_4 Depth=2
@@ -56,24 +56,24 @@ main:                                   # @main
 .LBB0_6:                                # %for.cond1.backedge
                                         #   in Loop: Header=BB0_4 Depth=2
 	end_block                       # label7:
-	i32.const	$push27=, -1
-	i32.add 	$4=, $4, $pop27
-	i32.const	$push26=, -4
-	i32.add 	$3=, $3, $pop26
+	i32.const	$push26=, -1
+	i32.add 	$4=, $4, $pop26
+	i32.const	$push25=, -4
+	i32.add 	$3=, $3, $pop25
 	i32.gt_s	$push6=, $4, $2
 	br_if   	0, $pop6        # 0: up to label5
 .LBB0_7:                                # %for.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_loop                        # label6:
 	end_block                       # label4:
-	i32.const	$push28=, 1
-	i32.add 	$2=, $2, $pop28
+	i32.const	$push27=, 1
+	i32.add 	$2=, $2, $pop27
 	i32.lt_s	$push7=, $2, $5
 	br_if   	0, $pop7        # 0: up to label2
 # BB#8:                                 # %for.cond15.preheader
 	end_loop                        # label3:
-	i32.const	$push18=, 1
-	i32.lt_s	$push8=, $5, $pop18
+	i32.const	$push28=, 1
+	i32.lt_s	$push8=, $5, $pop28
 	br_if   	0, $pop8        # 0: down to label1
 # BB#9:                                 # %for.body17.preheader
 	i32.const	$3=, 0

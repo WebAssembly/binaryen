@@ -21,7 +21,7 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-                                        # implicit-def: %vreg13
+                                        # implicit-def: %vreg18
 	block
 	i32.const	$push0=, -10
 	i32.add 	$push4=, $0, $pop0
