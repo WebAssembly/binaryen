@@ -100,12 +100,14 @@ class LinkerObject {
 
   // Add an initializer segment for the named static variable.
   void addSegment(Name name, const char* data, Address size) {
-    segments[name] = wasm.memory.segments.size();
+    assert(wasm.memory.segments.size() < std::numeric_limits<Address>::max());
+    segments[name] = static_cast<Address>(wasm.memory.segments.size());
     wasm.memory.segments.emplace_back(0, data, size);
   }
 
   void addSegment(Name name, std::vector<char>& data) {
-    segments[name] = wasm.memory.segments.size();
+    assert(wasm.memory.segments.size() < std::numeric_limits<Address>::max());
+    segments[name] = static_cast<Address>(wasm.memory.segments.size());
     wasm.memory.segments.emplace_back(0, data);
   }
 
