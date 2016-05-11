@@ -27,7 +27,7 @@
 namespace CFG {
 
 template <class T, class U> static bool contains(const T& container, const U& contained) {
-  return container.count(contained);
+  return !!container.count(contained);
 }
 
 #ifdef RELOOPER_DEBUG
@@ -40,9 +40,9 @@ static void PrintDebug(const char *Format, ...);
 
 // Branch
 
-Branch::Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit) : Ancestor(NULL), Condition(ConditionInit), Code(CodeInit) {}
+Branch::Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Condition(ConditionInit), Code(CodeInit) {}
 
-Branch::Branch(wasm::Index IndexInit, wasm::Expression* CodeInit) : Ancestor(NULL), Index(IndexInit), Code(CodeInit) {}
+Branch::Branch(wasm::Index IndexInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Index(IndexInit), Code(CodeInit) {}
 
 wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block *Target, bool SetLabel) {
   auto* Ret = Builder.makeBlock();
@@ -60,7 +60,7 @@ wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block *Target, bool S
 
 // Block
 
-Block::Block(wasm::Expression* CodeInit, wasm::Expression* SwitchConditionInit) : Parent(NULL), Id(-1), Code(CodeInit), SwitchCondition(SwitchConditionInit), IsCheckedMultipleEntry(false) {}
+Block::Block(wasm::Expression* CodeInit, wasm::Expression* SwitchConditionInit) : Parent(nullptr), Id(-1), Code(CodeInit), SwitchCondition(SwitchConditionInit), IsCheckedMultipleEntry(false) {}
 
 Block::~Block() {
   for (BlockBranchMap::iterator iter = ProcessedBranchesOut.begin(); iter != ProcessedBranchesOut.end(); iter++) {
@@ -88,7 +88,7 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   if (!ProcessedBranchesOut.size()) return Ret;
 
   bool SetLabel = true; // in some cases it is clear we can avoid setting label, see later
-  bool ForceSetLabel = Shape::IsEmulated(Parent);
+  bool ForceSetLabel = Shape::IsEmulated(Parent) != nullptr;
 
   // A setting of the label variable (label = x) is necessary if it can
   // cause an impact. The main case is where we set label to x, then elsewhere
@@ -130,7 +130,7 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   // Find the default target, the one without a condition
   for (BlockBranchMap::iterator iter = ProcessedBranchesOut.begin(); iter != ProcessedBranchesOut.end(); iter++) {
     if (!iter->second->Condition) {
-      assert(!DefaultTarget && "block has branches without a default (NULL for the condition)"); // Must be exactly one default
+      assert(!DefaultTarget && "block has branches without a default (nullptr for the condition)"); // Must be exactly one default // nullptr
       DefaultTarget = iter->first;
     }
   }
