@@ -256,7 +256,7 @@ BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex i
 BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenType type, BinaryenExpressionRef ptr) {
   auto* ret = ((Module*)module)->allocator.alloc<Load>();
   ret->bytes = bytes;
-  ret->signed_ = signed_;
+  ret->signed_ = !!signed_;
   ret->offset = offset;
   ret->align = align ? align : bytes;
   ret->type = WasmType(type);
