@@ -190,7 +190,7 @@ public:
     // start
     if (curr->start.is()) {
       auto func = curr->checkFunction(curr->start);
-      if (shouldBeTrue(func, curr->start, "start must be found")) {
+      if (shouldBeTrue(func != nullptr, curr->start, "start must be found")) {
         shouldBeTrue(func->params.size() == 0, curr, "start must have 0 params");
         shouldBeTrue(func->result == none, curr, "start must not return a value");
       }
