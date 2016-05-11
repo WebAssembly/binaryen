@@ -16,6 +16,16 @@
     (nop)
   )
   (func $exported
-    (nop)
+    (call $called2)
+  )
+  (func $called2
+    (call $called2)
+    (call $called3)
+  )
+  (func $called3
+    (call $called4)
+  )
+  (func $called4
+    (call $called3)
   )
 )

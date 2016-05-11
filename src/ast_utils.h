@@ -60,7 +60,7 @@ struct DirectCallGraphAnalyzer : public PostWalker<DirectCallGraphAnalyzer, Visi
     while (queue.size()) {
       Function* curr = queue.back();
       queue.pop_back();
-      if (reachable.find(curr) == reachable.end()) {
+      if (reachable.count(curr) == 0) {
         reachable.insert(curr);
         walk(curr->body);
       }
@@ -68,7 +68,7 @@ struct DirectCallGraphAnalyzer : public PostWalker<DirectCallGraphAnalyzer, Visi
   }
   void visitCall(Call *curr) {
     auto target = module->getFunction(curr->target);
-    if (reachable.find(target) == reachable.end()) {
+    if (reachable.count(target) == 0) {
       queue.push_back(target);
     }
   }

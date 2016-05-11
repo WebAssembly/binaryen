@@ -47,7 +47,7 @@ struct RemoveUnusedFunctions : public Pass {
     // Remove unreachable functions.
     std::vector<std::unique_ptr<Function>>::iterator it = module->functions.begin();
     while (it != module->functions.end()) {
-      if (analyzer.reachable.find(it->get()) == analyzer.reachable.end()) {
+      if (analyzer.reachable.count(it->get()) == 0) {
         it = module->functions.erase(it);
       } else {
         it++;
