@@ -11,6 +11,7 @@ SET(passes_SOURCES
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   ReorderLocals.cpp
+  ReorderFunctions.cpp
   SimplifyLocals.cpp
   Vacuum.cpp
 )
