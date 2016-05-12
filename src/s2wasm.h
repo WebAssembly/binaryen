@@ -341,7 +341,7 @@ class S2WasmBuilder {
 
   // The LLVM backend emits function names as name@FUNCTION.
   bool isFunctionName(Name name) {
-    return strstr(name.str, "@FUNCTION");
+    return !!strstr(name.str, "@FUNCTION");
   }
   // Drop the @ and after it.
   Name cleanFunction(Name name) {
