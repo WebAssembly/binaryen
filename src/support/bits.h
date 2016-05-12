@@ -70,13 +70,13 @@ template <typename T, typename U>
 inline static T RotateLeft(T val, U count) {
   T mask = sizeof(T) * CHAR_BIT - 1;
   count &= mask;
-  return (val << count) | (val >> (-count & mask));
+  return (val << count) | (val >> (-(int)count & mask));
 }
 template <typename T, typename U>
 inline static T RotateRight(T val, U count) {
   T mask = sizeof(T) * CHAR_BIT - 1;
   count &= mask;
-  return (val >> count) | (val << (-count & mask));
+  return (val >> count) | (val << (-(int)count & mask));
 }
 
 extern uint32_t Log2(uint32_t v);
