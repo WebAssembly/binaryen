@@ -108,7 +108,7 @@ int main(int argc, const char *argv[]) {
           : 0;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
 
-  Linker linker(globalBase, stackAllocation, initialMem, maxMem,
+  Linker linker((Address)globalBase, (Address)stackAllocation, (Address)initialMem, (Address)maxMem,
                 ignoreUnknownSymbols, startFunction, options.debug);
 
   S2WasmBuilder mainbuilder(input.c_str(), options.debug);
