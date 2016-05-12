@@ -99,13 +99,13 @@ struct Address {
   Address(uint64_t a) : addr(static_cast<address_t>(a)) {
     assert(a <= std::numeric_limits<address_t>::max());
   }
-  Address& operator =(uint64_t a) {
+  Address& operator=(uint64_t a) {
     assert(a <= std::numeric_limits<address_t>::max());
     addr = static_cast<address_t>(a);
     return *this;
   }
   operator address_t() const { return addr; }
-  Address& operator ++() { ++addr; return *this; }
+  Address& operator++() { ++addr; return *this; }
 };
 
 // Types
@@ -1400,6 +1400,7 @@ private:
 };
 
 } // namespace wasm
+
 namespace std {
 template<> struct hash<wasm::Address> {
   size_t operator()(const wasm::Address a) const {
