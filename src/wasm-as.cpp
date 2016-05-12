@@ -43,13 +43,18 @@ int main(int argc, const char *argv[]) {
 
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
-  if (options.debug) std::cerr << "s-parsing..." << std::endl;
-  SExpressionParser parser(const_cast<char*>(input.c_str()));
-  Element& root = *parser.root;
-
-  if (options.debug) std::cerr << "w-parsing..." << std::endl;
   Module wasm;
-  SExpressionWasmBuilder builder(wasm, *root[0]);
+
+  try{
+    if (options.debug) std::cerr << "s-parsing..." << std::endl;
+    SExpressionParser parser(const_cast<char*>(input.c_str()));
+    Element& root = *parser.root;
+    if (options.debug) std::cerr << "w-parsing..." << std::endl;
+    SExpressionWasmBuilder builder(wasm, *root[0]);
+  } catch (ParseException& p) {
+    p.dump(std::cerr);
+    Fatal() << "error in parsing wasm binary";
+  }
 
   if (options.debug) std::cerr << "binarification..." << std::endl;
   BufferWithRandomAccess buffer(options.debug);
