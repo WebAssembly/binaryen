@@ -58,7 +58,7 @@ struct Ref {
 
   Value& operator*() { return *inst; }
   Value* operator->() { return inst; }
-  Ref& operator[](unsigned x);
+  Ref& operator[](size_t x);
   Ref& operator[](IString x);
 
   // special conveniences
@@ -281,7 +281,7 @@ struct Value {
     if (type != other.type) return false;
     if (type == Array) {
       if (arr->size() != other.arr->size()) return false;
-      for (unsigned i = 0; i < arr->size(); i++) {
+      for (size_t i = 0; i < arr->size(); i++) {
         if (!(*arr)[i]->deepCompare((*other.arr)[i])) return false;
       }
       return true;
@@ -470,7 +470,7 @@ struct Value {
     }
   }
 
-  Ref& operator[](unsigned x) {
+  Ref& operator[](size_t x) {
     assert(isArray());
     return arr->at(x);
   }
@@ -505,7 +505,7 @@ struct Value {
     arr->insert(arr->begin() + x, 1, node);
   }
 
-  int indexOf(Ref other) {
+  size_t indexOf(Ref other) {
     assert(isArray());
     for (size_t i = 0; i < arr->size(); i++) {
       if (other == (*arr)[i]) return i;
@@ -595,7 +595,7 @@ struct JSPrinter {
 
   // Utils
 
-  void ensure(int safety=100) {
+  void ensure(size_t safety=100) {
     if (size < used + safety) {
       size = std::max((size_t)1024, size * 2) + safety;
       if (!buffer) {
@@ -625,7 +625,7 @@ struct JSPrinter {
 
   void emit(const char *s) {
     maybeSpace(*s);
-    int len = strlen(s);
+    size_t len = strlen(s);
     ensure(len+1);
     strncpy(buffer + used, s, len+1);
     used += len;
@@ -920,22 +920,22 @@ struct JSPrinter {
         char *test = end;
         // remove zeros, and also doubles can use at most 24 digits, we can truncate any extras even if not zero
         while ((*test == '0' || test - buffer > 24) && test > buffer) test--;
-        int num = end - test;
+        size_t num = end - test;
         if (num >= 3) {
           test++;
           test[0] = 'e';
           if (num < 10) {
-            test[1] = '0' + num;
+            test[1] = (char)('0' + num);
             test[2] = 0;
           } else if (num < 100) {
-            test[1] = '0' + (num / 10);
-            test[2] = '0' + (num % 10);
+            test[1] = (char)('0' + (num / 10));
+            test[2] = (char)('0' + (num % 10));
             test[3] = 0;
           } else {
             assert(num < 1000);
-            test[1] = '0' + (num / 100);
-            test[2] = '0' + (num % 100) / 10;
-            test[3] = '0' + (num % 10);
+            test[1] = (char)('0' + (num / 100));
+            test[2] = (char)('0' + (num % 100) / 10);
+            test[3] = (char)('0' + (num % 10));
             test[4] = 0;
           }
         }
@@ -1033,7 +1033,7 @@ struct JSPrinter {
     if (finalize && node[1] == PLUS && (node[2][0] == NUM ||
                                        (node[2][0] == UNARY_PREFIX && node[2][1] == MINUS && node[2][2][0] == NUM))) {
       // emit a finalized number
-      int last = used;
+      size_t last = used;
       print(node[2]);
       ensure(1); // we temporarily append a 0
       char *curr = buffer + last; // ensure might invalidate
