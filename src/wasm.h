@@ -1232,7 +1232,7 @@ public:
     return localIndices[name];
   }
   Index getVarIndexBase() {
-    return params.size();
+    return (Index)params.size(); // patch add cast
   }
   WasmType getLocalType(Index index) {
     if (isParam(index)) {
