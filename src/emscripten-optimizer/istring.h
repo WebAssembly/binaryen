@@ -153,7 +153,7 @@ class IStringSet : public std::unordered_set<IString> {
 public:
   IStringSet() {}
   IStringSet(const char *init) { // comma-delimited list
-    int size = strlen(init) + 1;
+    size_t size = strlen(init) + 1;
     data.resize(size);
     char *curr = &data[0];
     strncpy(curr, init, size);
