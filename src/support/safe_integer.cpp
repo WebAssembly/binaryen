@@ -36,14 +36,14 @@ bool wasm::isSInteger32(double x) {
 
 uint32_t wasm::toUInteger32(double x) {
   return std::signbit(x) ? 0 : (x < std::numeric_limits<uint32_t>::max()
-                                    ? x
+                                    ? (uint32_t)x
                                     : std::numeric_limits<uint32_t>::max());
 }
 
 int32_t wasm::toSInteger32(double x) {
   return (x > std::numeric_limits<int32_t>::min() &&
           x < std::numeric_limits<int32_t>::max())
-             ? x
+             ? (int32_t)x
              : (std::signbit(x) ? std::numeric_limits<int32_t>::min()
                                 : std::numeric_limits<int32_t>::max());
 }
