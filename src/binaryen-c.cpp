@@ -419,7 +419,8 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
   try {
     WasmBinaryBuilder parser(*wasm, buffer, false);
     parser.read();
-  } catch (ParseException&) {
+  } catch (ParseException& p) {
+    p.dump(std::cerr);
     Fatal() << "error in parsing wasm binary";
   }
   return wasm;
