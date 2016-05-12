@@ -32,7 +32,7 @@ int main() {
 
   // The parsed code has just one element, the module. Build the module
   // from that (and abort on any errors, but there won't be one here).
-  SExpressionWasmBuilder builder(module, *root[0], [&]() { abort(); });
+  SExpressionWasmBuilder builder(module, *root[0]);
 
   // Print it out
   WasmPrinter::printModule(&module, std::cout);

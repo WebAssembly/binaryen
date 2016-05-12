@@ -32,6 +32,7 @@
 #include "asm_v_wasm.h"
 #include "wasm-builder.h"
 #include "ast_utils.h"
+#include "shell-interface.h"
 #include "wasm-validator.h"
 
 namespace wasm {
@@ -1164,14 +1165,13 @@ class WasmBinaryBuilder {
   Module& wasm;
   MixedArena& allocator;
   std::vector<char>& input;
-  std::function<void ()> onError;
   bool debug;
 
   size_t pos = 0;
   int32_t startIndex = -1;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, std::function<void ()> onError, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), onError(onError), debug(debug) {}
+  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
 
   void read() {
 
@@ -1226,7 +1226,7 @@ public:
   }
 
   uint8_t getInt8() {
-    if (!more()) onError();
+    if (!more()) throw ParseException();
     if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << " (at " << pos << ")" << std::endl;
     return input[pos++];
   }
@@ -1330,27 +1330,27 @@ public:
 
   void verifyInt8(int8_t x) {
     int8_t y = getInt8();
-    if (x != y) onError();
+    if (x != y) throw ParseException();
   }
   void verifyInt16(int16_t x) {
     int16_t y = getInt16();
-    if (x != y) onError();
+    if (x != y) throw ParseException();
   }
   void verifyInt32(int32_t x) {
     int32_t y = getInt32();
-    if (x != y) onError();
+    if (x != y) throw ParseException();
   }
   void verifyInt64(int64_t x) {
     int64_t y = getInt64();
-    if (x != y) onError();
+    if (x != y) throw ParseException();
   }
   void verifyFloat32(float x) {
     float y = getFloat32();
-    if (x != y) onError();
+    if (x != y) throw ParseException();
   }
   void verifyFloat64(double x) {
     double y = getFloat64();
-    if (x != y) onError();
+    if (x != y) throw ParseException();
   }
 
   void ungetInt8() {

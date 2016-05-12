@@ -49,7 +49,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "w-parsing..." << std::endl;
   Module wasm;
-  SExpressionWasmBuilder builder(wasm, *root[0], [&]() { abort(); });
+  SExpressionWasmBuilder builder(wasm, *root[0]);
 
   if (options.debug) std::cerr << "binarification..." << std::endl;
   BufferWithRandomAccess buffer(options.debug);

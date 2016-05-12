@@ -113,10 +113,7 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
       std::unique_ptr<SExpressionWasmBuilder> builder;
       try {
         builder = std::unique_ptr<SExpressionWasmBuilder>(
-          new SExpressionWasmBuilder(wasm, *curr[1], [&]() {
-            invalid = true;
-            throw ParseException();
-          })
+          new SExpressionWasmBuilder(wasm, *curr[1])
         );
       } catch (const ParseException&) {
         invalid = true;
@@ -215,7 +212,8 @@ int main(int argc, const char* argv[]) {
       if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
       Module wasm;
       std::unique_ptr<SExpressionWasmBuilder> builder(
-          new SExpressionWasmBuilder(wasm, *root[i], [&]() { abort(); }));
+        new SExpressionWasmBuilder(wasm, *root[i])
+      );
       i++;
       assert(WasmValidator().validate(wasm));
 
