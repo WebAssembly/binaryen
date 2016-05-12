@@ -32,7 +32,7 @@
 #include "asm_v_wasm.h"
 #include "wasm-builder.h"
 #include "ast_utils.h"
-#include "shell-interface.h"
+#include "parsing.h"
 #include "wasm-validator.h"
 
 namespace wasm {
@@ -1226,7 +1226,7 @@ public:
   }
 
   uint8_t getInt8() {
-    if (!more()) throw ParseException();
+    if (!more()) throw ParseException("unexpected end of input");
     if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << " (at " << pos << ")" << std::endl;
     return input[pos++];
   }
@@ -1330,27 +1330,27 @@ public:
 
   void verifyInt8(int8_t x) {
     int8_t y = getInt8();
-    if (x != y) throw ParseException();
+    if (x != y) throw ParseException("surprising value", 0, pos);
   }
   void verifyInt16(int16_t x) {
     int16_t y = getInt16();
-    if (x != y) throw ParseException();
+    if (x != y) throw ParseException("surprising value", 0, pos);
   }
   void verifyInt32(int32_t x) {
     int32_t y = getInt32();
-    if (x != y) throw ParseException();
+    if (x != y) throw ParseException("surprising value", 0, pos);
   }
   void verifyInt64(int64_t x) {
     int64_t y = getInt64();
-    if (x != y) throw ParseException();
+    if (x != y) throw ParseException("surprising value", 0, pos);
   }
   void verifyFloat32(float x) {
     float y = getFloat32();
-    if (x != y) throw ParseException();
+    if (x != y) throw ParseException("surprising value", 0, pos);
   }
   void verifyFloat64(double x) {
     double y = getFloat64();
-    if (x != y) throw ParseException();
+    if (x != y) throw ParseException("surprising value", 0, pos);
   }
 
   void ungetInt8() {

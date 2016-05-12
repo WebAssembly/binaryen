@@ -29,7 +29,6 @@ namespace wasm {
 
 struct ExitException {};
 struct TrapException {};
-struct ParseException {};
 
 struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   // The underlying memory can be accessed through unaligned pointers which

@@ -17,12 +17,15 @@
 #ifndef wasm_parsing_h
 #define wasm_parsing_h
 
+#include <ostream>
 #include <sstream>
+#include <string>
 
 #include "asmjs/shared-constants.h"
 #include "mixed_arena.h"
 #include "support/utilities.h"
 #include "wasm.h"
+#include "wasm-printing.h"
 
 namespace wasm {
 
@@ -162,6 +165,30 @@ inline Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allo
   return ret;
 }
 
+struct ParseException {
+  std::string text;
+  size_t line, col;
+
+  ParseException() : text("unknown parse error"), line(-1), col(-1) {}
+  ParseException(std::string text) : text(text), line(-1), col(-1) {}
+  ParseException(std::string text, size_t line, size_t col) : text(text), line(line), col(col) {}
+
+  void dump(std::ostream& o) {
+    Colors::magenta(o);
+    o << "[";
+    Colors::red(o);
+    o << "parse exception: ";
+    Colors::green(o);
+    o << text;
+    if (line != size_t(-1)) {
+      Colors::normal(o);
+      o << " (at " << line << ":" << col << ")";
+    }
+    Colors::magenta(o);
+    o << "]";
+    Colors::normal(o);
+  }
+};
 
 } // namespace wasm
 
