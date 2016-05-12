@@ -211,9 +211,13 @@ int main(int argc, const char* argv[]) {
     if (id == MODULE) {
       if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
       Module wasm;
-      std::unique_ptr<SExpressionWasmBuilder> builder(
-        new SExpressionWasmBuilder(wasm, *root[i])
-      );
+      std::unique_ptr<SExpressionWasmBuilder> builder;
+      try {
+        builder = make_unique<SExpressionWasmBuilder>(wasm, *root[i]);
+      } catch (ParseException& p) {
+        p.dump(std::cerr);
+        abort();
+      }
       i++;
       assert(WasmValidator().validate(wasm));
 
