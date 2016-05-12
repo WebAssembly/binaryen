@@ -92,7 +92,21 @@ struct Name : public cashew::IString {
 typedef uint32_t Index;
 
 // An address in linear memory. For now only wasm32
-typedef uint32_t Address;
+struct Address {
+  typedef uint32_t address_t;
+  address_t addr;
+  Address() : addr(0) {}
+  Address(uint64_t a) : addr(static_cast<address_t>(a)) {
+    assert(a <= std::numeric_limits<address_t>::max());
+  }
+  Address& operator=(uint64_t a) {
+    assert(a <= std::numeric_limits<address_t>::max());
+    addr = static_cast<address_t>(a);
+    return *this;
+  }
+  operator address_t() const { return addr; }
+  Address& operator++() { ++addr; return *this; }
+};
 
 // Types
 
@@ -1266,8 +1280,8 @@ public:
 
 class Memory {
 public:
-  static const Address kPageSize = 64 * 1024;
-  static const Address kPageMask = ~(kPageSize - 1);
+  static const Address::address_t kPageSize = 64 * 1024;
+  static const Address::address_t kPageMask = ~(kPageSize - 1);
   struct Segment {
     Address offset;
     std::vector<char> data; // TODO: optimize
@@ -1285,7 +1299,7 @@ public:
   std::vector<Segment> segments;
   Name exportName;
 
-  Memory() : initial(0), max((Address)-1) {}
+  Memory() : initial(0), max(-1U) {}
 };
 
 class Module {
@@ -1386,5 +1400,13 @@ private:
 };
 
 } // namespace wasm
+
+namespace std {
+template<> struct hash<wasm::Address> {
+  size_t operator()(const wasm::Address a) const {
+    return std::hash<uint32_t>()(a.addr);
+  }
+};
+}
 
 #endif // wasm_wasm_h

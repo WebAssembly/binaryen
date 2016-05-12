@@ -1829,7 +1829,7 @@ public:
     curr->type = curr->value->type;
   }
 
-  void readMemoryAccess(uint32_t& alignment, size_t bytes, uint32_t& offset) {
+  void readMemoryAccess(Address& alignment, size_t bytes, Address& offset) {
     alignment = Pow2(getU32LEB());
     offset = getU32LEB();
   }

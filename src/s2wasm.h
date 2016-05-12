@@ -211,7 +211,8 @@ class S2WasmBuilder {
 
   // gets a constant, which may be a relocation for later.
   // returns whether this is a relocation
-  bool getConst(uint32_t* target) {
+  // TODO: Clean up this and the way relocs are created from parsed objects
+  bool getRelocatableConst(uint32_t* target) {
     if (isdigit(*s) || *s == '-') {
       int32_t val = getInt();
       memcpy(target, &val, sizeof(val));
@@ -659,7 +660,7 @@ class S2WasmBuilder {
       curr->signed_ = match("_s");
       match("_u");
       Name assign = getAssign();
-      getConst(&curr->offset);
+      getRelocatableConst(&curr->offset.addr);
       mustMatch("(");
       auto attributes = getAttributes(1);
       curr->ptr = getInput();
@@ -677,7 +678,7 @@ class S2WasmBuilder {
       int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
       Name assign = getAssign();
-      getConst(&curr->offset);
+      getRelocatableConst(&curr->offset.addr);
       mustMatch("(");
       auto attributes = getAttributes(2);
       auto inputs = getInputs(2);
@@ -755,7 +756,7 @@ class S2WasmBuilder {
               // may be a relocation
               auto curr = allocator->alloc<Const>();
               curr->type = curr->value.type = i32;
-              getConst((uint32_t*)curr->value.geti32Ptr());
+              getRelocatableConst((uint32_t*)curr->value.geti32Ptr());
               setOutput(curr, assign);
             } else {
               cashew::IString str = getStr();
@@ -1071,7 +1072,7 @@ class S2WasmBuilder {
           value = getInt();
           if (value != 0) zero = false;
         }
-        for (Address i = 0, e = size; i < e; i++) {
+        for (Address i = 0, e = size; i < e; ++i) {
           raw.push_back(value);
         }
       } else if (match(".int8")) {
@@ -1088,7 +1089,7 @@ class S2WasmBuilder {
       } else if (match(".int32")) {
         Address size = raw.size();
         raw.resize(size + 4);
-        if (getConst((uint32_t*)&raw[size])) { // just the size, as we may reallocate; we must fix this later, if it's a relocation
+        if (getRelocatableConst((uint32_t*)&raw[size])) { // just the size, as we may reallocate; we must fix this later, if it's a relocation
           currRelocations.emplace_back(linkerObj->getCurrentRelocation(), size);
         }
         zero = false;
