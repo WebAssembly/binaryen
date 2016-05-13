@@ -749,7 +749,7 @@ public:
   void writeInlineString(const char* name) {
     size_t size = strlen(name);
     o << U32LEB(size);
-    for (int32_t i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
       o << int8_t(name[i]);
     }
   }
