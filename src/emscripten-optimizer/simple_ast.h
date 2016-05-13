@@ -920,7 +920,7 @@ struct JSPrinter {
         char *test = end;
         // remove zeros, and also doubles can use at most 24 digits, we can truncate any extras even if not zero
         while ((*test == '0' || test - buffer > 24) && test > buffer) test--;
-        size_t num = end - test;
+        ptrdiff_t num = end - test;
         if (num >= 3) {
           test++;
           test[0] = 'e';
