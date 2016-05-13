@@ -373,13 +373,28 @@ private:
 
   void parseFunction(Element& s) {
     size_t i = 1;
-    Name name;
+    Name name, exportName;
     if (s[i]->isStr()) {
-      name = s[i]->str();
-      i++;
-    } else {
+      if (!s[i]->dollared()) {
+        // an export name
+        exportName = s[i]->str();
+        i++;
+      }
+      if (s[i]->isStr()) {
+        assert(s[i]->dollared());
+        name = s[i]->str();
+        i++;
+      }
+    }
+    if (!name.is()) {
       // unnamed, use an index
       name = Name::fromInt(functionCounter);
+    }
+    if (exportName.is()) {
+      auto ex = make_unique<Export>();
+      ex->name = exportName;
+      ex->value = name;
+      wasm.addExport(ex.release());
     }
     functionCounter++;
     Expression* body = nullptr;
