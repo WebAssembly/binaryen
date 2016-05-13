@@ -71,8 +71,10 @@ public:
     } else {
       if (breakTypes[name] == unreachable) {
         breakTypes[name] = valueType;
-      } else {
-        shouldBeEqual(valueType, breakTypes[name], name.str, "breaks to same target must have same type (ignoring unreachable)");
+      } else if (valueType != unreachable) {
+        if (valueType != breakTypes[name]) {
+          breakTypes[name] = none; // a poison value that must not be consumed
+        }
       }
     }
   }
