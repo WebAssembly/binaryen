@@ -71,8 +71,10 @@ public:
     } else {
       if (breakTypes[name] == unreachable) {
         breakTypes[name] = valueType;
-      } else {
-        shouldBeEqual(valueType, breakTypes[name], name.str, "breaks to same target must have same type (ignoring unreachable)");
+      } else if (valueType != unreachable) {
+        if (valueType != breakTypes[name]) {
+          breakTypes[name] = none; // a poison value that must not be consumed
+        }
       }
     }
   }
@@ -86,7 +88,9 @@ public:
     noteBreak(curr->default_, curr->value);
   }
   void visitSetLocal(SetLocal *curr) {
-    shouldBeEqual(curr->type, curr->value->type, curr, "set_local type must be correct");
+    if (curr->value->type != unreachable) {
+      shouldBeEqual(curr->type, curr->value->type, curr, "set_local type must be correct");
+    }
   }
   void visitLoad(Load *curr) {
     validateAlignment(curr->align);
@@ -111,9 +115,9 @@ public:
       case Trunc:
       case Nearest:
       case Sqrt: {
-        //if (curr->value->type != unreachable) {
+        if (curr->value->type != unreachable) {
           shouldBeEqual(curr->value->type, curr->type, curr, "non-conversion unaries must return the same type");
-        //}
+        }
         break;
       }
       case EqZ: {

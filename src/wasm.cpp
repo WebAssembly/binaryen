@@ -33,7 +33,11 @@ struct BlockTypeSeeker : public PostWalker<BlockTypeSeeker, Visitor<BlockTypeSee
       if (other == none) {
         type = none;
       } else if (other != unreachable) {
-        type = other;
+        if (type == unreachable) {
+          type = other;
+        } else if (type != other) {
+          type = none; // poison value, we saw multiple types; this should not be consumed
+        }
       }
     }
   }
