@@ -18,6 +18,9 @@
 // Implementation of the shell interpreter execution environment
 //
 
+#ifndef wasm_shell_interface_h
+#define wasm_shell_interface_h
+
 #include "asmjs/shared-constants.h"
 #include "wasm.h"
 #include "wasm-interpreter.h"
@@ -26,7 +29,6 @@ namespace wasm {
 
 struct ExitException {};
 struct TrapException {};
-struct ParseException {};
 
 struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   // The underlying memory can be accessed through unaligned pointers which
@@ -177,3 +179,5 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 };
 
 }
+
+#endif // wasm_shell_interface_h

@@ -239,7 +239,6 @@ private:
 class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
-  std::function<void ()> onError;
   std::vector<Name> functionNames;
   int functionCounter;
   int importCounter;
@@ -247,7 +246,7 @@ class SExpressionWasmBuilder {
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, Element& module, std::function<void ()> onError) : wasm(wasm), allocator(wasm.allocator), onError(onError), importCounter(0) {
+  SExpressionWasmBuilder(Module& wasm, Element& module) : wasm(wasm), allocator(wasm.allocator), importCounter(0) {
     assert(module[0]->str() == MODULE);
     if (module.size() > 1 && module[1]->isStr()) {
       // these s-expressions contain a binary module, actually
@@ -259,7 +258,7 @@ public:
           stringToBinary(str, size, data);
         }
       }
-      WasmBinaryBuilder binaryBuilder(wasm, data, onError, false);
+      WasmBinaryBuilder binaryBuilder(wasm, data, false);
       binaryBuilder.read();
       return;
     }
@@ -273,9 +272,6 @@ public:
       parseModuleElement(*module[i]);
     }
   }
-
-  // constructor without onError
-  SExpressionWasmBuilder(Module& wasm, Element& module) : SExpressionWasmBuilder(wasm, module, [&]() { abort(); }) {}
 
 private:
 
@@ -303,7 +299,7 @@ private:
         return;
       } else if (id == TYPE) {
         Name typeName = curr[1]->str();
-        if (!wasm.checkFunctionType(typeName)) onError();
+        if (!wasm.checkFunctionType(typeName)) throw ParseException("unknown function");
         FunctionType* type = wasm.getFunctionType(typeName);
         functionTypes[name] = type->result;
         return;
@@ -327,7 +323,7 @@ private:
     if (id == TABLE) return parseTable(curr);
     if (id == TYPE) return; // already done
     std::cerr << "bad module element " << id.str << '\n';
-    onError();
+    throw ParseException("unknown module element");
   }
 
   // function parsing state
@@ -347,7 +343,7 @@ private:
     } else {
       // index
       size_t offset = atoi(s.str().c_str());
-      if (offset >= functionNames.size()) onError();
+      if (offset >= functionNames.size()) throw ParseException("unknown function");
       return functionNames[offset];
     }
   }
@@ -417,7 +413,7 @@ private:
       } else if (id == TYPE) {
         Name name = curr[1]->str();
         type = name;
-        if (!wasm.checkFunctionType(name)) onError();
+        if (!wasm.checkFunctionType(name)) throw ParseException("unknown function");
         FunctionType* type = wasm.getFunctionType(name);
         result = type->result;
         for (size_t j = 0; j < type->params.size(); j++) {
@@ -472,7 +468,7 @@ private:
       if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) return f64;
     }
     if (allowError) return none;
-    onError();
+    throw ParseException("unknown type");
     abort();
   }
 
@@ -481,7 +477,7 @@ public:
     return parseExpression(*s);
   }
 
-  #define abort_on(str) { std::cerr << "aborting on " << str << '\n'; onError(); }
+  #define abort_on(str) { throw ParseException(std::string("abort_on ") + str); }
 
   Expression* parseExpression(Element& s) {
     IString id = s[0]->str();
@@ -820,7 +816,7 @@ private:
 
   Expression* makeConst(Element& s, WasmType type) {
     auto ret = parseConst(s[1]->str(), type, allocator);
-    if (!ret) onError();
+    if (!ret) throw ParseException("bad const");
     return ret;
   }
 
@@ -854,9 +850,9 @@ private:
         ret->align = atoi(eq);
       } else if (str[0] == 'o') {
         uint64_t offset = atoll(eq);
-        if (offset > std::numeric_limits<uint32_t>::max()) onError();
+        if (offset > std::numeric_limits<uint32_t>::max()) throw ParseException("bad offset");
         ret->offset = (uint32_t)offset;
-      } else onError();
+      } else throw ParseException("bad load attribute");
       i++;
     }
     ret->ptr = parseExpression(s[i]);
@@ -892,7 +888,7 @@ private:
         ret->align = atoi(eq);
       } else if (str[0] == 'o') {
         ret->offset = atoi(eq);
-      } else onError();
+      } else throw ParseException("bad store attribute");
       i++;
     }
     ret->ptr = parseExpression(s[i]);
@@ -1140,7 +1136,7 @@ private:
   void parseExport(Element& s) {
     if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
       assert(s[2]->str() == MEMORY);
-      if (!hasMemory) onError();
+      if (!hasMemory) throw ParseException("memory exported but no memory");
       wasm.memory.exportName = s[1]->str();
       return;
     }
@@ -1160,7 +1156,7 @@ private:
     }
     importCounter++;
     im->module = s[i++]->str();
-    if (!s[i]->isStr()) onError();
+    if (!s[i]->isStr()) throw ParseException("no name for import");
     im->base = s[i++]->str();
     std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
     if (s.size() > i) {
@@ -1174,10 +1170,10 @@ private:
         type->result = stringToWasmType(params[1]->str());
       } else if (id == TYPE) {
         IString name = params[1]->str();
-        if (!wasm.checkFunctionType(name)) onError();
+        if (!wasm.checkFunctionType(name)) throw ParseException("bad function type for import");
         *type = *wasm.getFunctionType(name);
       } else {
-        onError();
+        throw ParseException("bad import element");
       }
       if (s.size() > i+1) {
         Element& result = *s[i+1];
