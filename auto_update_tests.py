@@ -104,7 +104,7 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
     print ' '.join(extra)
     subprocess.check_call(extra)
     # Link against the binaryen C library DSO, using an executable-relative rpath
-    cmd = ['example.o', '-lbinaryen-c'] + cmd + ['-Wl,-rpath=$ORIGIN/../lib']
+    cmd = ['example.o', '-lbinaryen'] + cmd + ['-Wl,-rpath=$ORIGIN/../lib']
   else:
     continue
   if os.environ.get('COMPILER_FLAGS'):
@@ -118,6 +118,5 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
     open(os.path.join('test', 'example', '.'.join(t.split('.')[:-1]) + '.txt'), 'w').write(actual)
   finally:
     os.remove(output_file)
-
 
 print '\n[ success! ]'

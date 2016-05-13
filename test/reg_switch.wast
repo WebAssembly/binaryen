@@ -2,10 +2,10 @@
   (memory 0)
   (func $0
     (if
-      (nop)
+      (i32.const 0)
       (block $A
         (br_table $A
-          (nop)
+          (i32.const 0)
         )
       )
     )
