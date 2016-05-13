@@ -50,6 +50,9 @@ public:
       breakTypes.erase(curr->name);
     }
   }
+  void visitIf(If *curr) {
+    shouldBeTrue(curr->condition.type == unreachable || curr->condition.type == i32, "if condition must be i32");
+  }
   void visitLoop(Loop *curr) {
     if (curr->in.is()) {
       LoopChildChecker childChecker(curr->in);
@@ -80,12 +83,28 @@ public:
   }
   void visitBreak(Break *curr) {
     noteBreak(curr->name, curr->value);
+    if (curr->condition) {
+      shouldBeTrue(curr->condition.type == unreachable || curr->condition.type == i32, "break condition must be i32");
+    }
   }
   void visitSwitch(Switch *curr) {
     for (auto& target : curr->targets) {
       noteBreak(target, curr->value);
     }
     noteBreak(curr->default_, curr->value);
+    shouldBeTrue(curr->condition.type == unreachable || curr->condition.type == i32, "br_table condition must be i32");
+  }
+  void visitCall(Call *curr) {
+    auto* target = getModule()->getFunction(curr->target);
+    for (size_t i = 0; i < curr->operands.size(); i++) {
+      shouldBeTrue(curr->operands[i].type == target->params[i].type, "call param types must match");
+    }
+  }
+  void visitCallImport(CallImport *curr) {
+    auto* target = getModule()->getImport(curr->target)->type;
+    for (size_t i = 0; i < curr->operands.size(); i++) {
+      shouldBeTrue(curr->operands[i].type == target->params[i].type, "call param types must match");
+    }
   }
   void visitSetLocal(SetLocal *curr) {
     if (curr->value->type != unreachable) {
@@ -94,9 +113,11 @@ public:
   }
   void visitLoad(Load *curr) {
     validateAlignment(curr->align);
+    shouldBeEqual(curr->ptr->type, i32, curr, "load pointer type must be i32");
   }
   void visitStore(Store *curr) {
     validateAlignment(curr->align);
+    shouldBeEqual(curr->ptr->type, i32, curr, "store pointer type must be i32");
   }
   void visitBinary(Binary *curr) {
     if (curr->left->type != unreachable && curr->right->type != unreachable) {
@@ -124,36 +145,31 @@ public:
         shouldBeEqual(curr->type, i32, curr, "relational unaries must return i32");
         break;
       }
-      case ExtendSInt32:
-      case ExtendUInt32:
-      case WrapInt64:
-      case TruncSFloat32ToInt32:
-      case TruncSFloat32ToInt64:
-      case TruncUFloat32ToInt32:
-      case TruncUFloat32ToInt64:
-      case TruncSFloat64ToInt32:
-      case TruncSFloat64ToInt64:
-      case TruncUFloat64ToInt32:
-      case TruncUFloat64ToInt64:
-      case ReinterpretFloat32:
-      case ReinterpretFloat64:
-      case ConvertUInt32ToFloat32:
-      case ConvertUInt32ToFloat64:
-      case ConvertSInt32ToFloat32:
-      case ConvertSInt32ToFloat64:
-      case ConvertUInt64ToFloat32:
-      case ConvertUInt64ToFloat64:
-      case ConvertSInt64ToFloat32:
-      case ConvertSInt64ToFloat64:
-      case PromoteFloat32:
-      case DemoteFloat64:
-      case ReinterpretInt32:
-      case ReinterpretInt64: {
-        //if (curr->value->type != unreachable) {
-          shouldBeUnequal(curr->value->type, curr->type, curr, "conversion unaries must not return the same type");
-        //}
-        break;
-      }
+      case ExtendSInt32:           shouldBeEqual(curr->value->type, i32, curr, "type must be correct"); break;
+      case ExtendUInt32:           shouldBeEqual(curr->value->type, i32, curr, "type must be correct"); break;
+      case WrapInt64:              shouldBeEqual(curr->value->type, i64, curr, "type must be correct"); break;
+      case TruncSFloat32ToInt32:   shouldBeEqual(curr->value->type, f32, curr, "type must be correct"); break;
+      case TruncSFloat32ToInt64:   shouldBeEqual(curr->value->type, f32, curr, "type must be correct"); break;
+      case TruncUFloat32ToInt32:   shouldBeEqual(curr->value->type, f32, curr, "type must be correct"); break;
+      case TruncUFloat32ToInt64:   shouldBeEqual(curr->value->type, f32, curr, "type must be correct"); break;
+      case TruncSFloat64ToInt32:   shouldBeEqual(curr->value->type, f64, curr, "type must be correct"); break;
+      case TruncSFloat64ToInt64:   shouldBeEqual(curr->value->type, f64, curr, "type must be correct"); break;
+      case TruncUFloat64ToInt32:   shouldBeEqual(curr->value->type, f64, curr, "type must be correct"); break;
+      case TruncUFloat64ToInt64:   shouldBeEqual(curr->value->type, f64, curr, "type must be correct"); break;
+      case ReinterpretFloat32:     shouldBeEqual(curr->value->type, f32, curr, "type must be correct"); break;
+      case ReinterpretFloat64:     shouldBeEqual(curr->value->type, f64, curr, "type must be correct"); break;
+      case ConvertUInt32ToFloat32: shouldBeEqual(curr->value->type, i32, curr, "type must be correct"); break;
+      case ConvertUInt32ToFloat64: shouldBeEqual(curr->value->type, i32, curr, "type must be correct"); break;
+      case ConvertSInt32ToFloat32: shouldBeEqual(curr->value->type, i32, curr, "type must be correct"); break;
+      case ConvertSInt32ToFloat64: shouldBeEqual(curr->value->type, i32, curr, "type must be correct"); break;
+      case ConvertUInt64ToFloat32: shouldBeEqual(curr->value->type, i64, curr, "type must be correct"); break;
+      case ConvertUInt64ToFloat64: shouldBeEqual(curr->value->type, i64, curr, "type must be correct"); break;
+      case ConvertSInt64ToFloat32: shouldBeEqual(curr->value->type, i64, curr, "type must be correct"); break;
+      case ConvertSInt64ToFloat64: shouldBeEqual(curr->value->type, i64, curr, "type must be correct"); break;
+      case PromoteFloat32:         shouldBeEqual(curr->value->type, i32, curr, "type must be correct"); break;
+      case DemoteFloat64:          shouldBeEqual(curr->value->type, f64, curr, "type must be correct"); break;
+      case ReinterpretInt32:       shouldBeEqual(curr->value->type, i32, curr, "type must be correct"); break;
+      case ReinterpretInt64:       shouldBeEqual(curr->value->type, i64, curr, "type must be correct"); break;
       default: abort();
     }
   }
