@@ -60,8 +60,10 @@ class Element {
   IString str_;
   bool dollared_;
 
+  size_t line, col;
+
 public:
-  Element(MixedArena& allocator) : isList_(true), list_(allocator) {}
+  Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1) {}
 
   bool isList() { return isList_; }
   bool isStr() { return !isList_; }
@@ -70,7 +72,7 @@ public:
   // list methods
 
   List& list() {
-    assert(isList_);
+    if (!isList()) throw ParseException("expected list", line, col);
     return list_;
   }
 
@@ -101,6 +103,12 @@ public:
     return this;
   }
 
+  Element* setMetadata(size_t line_, size_t col_) {
+    line = line_;
+    col = col_;
+    return this;
+  }
+
   // printing
 
   friend std::ostream& operator<<(std::ostream& o, Element& e) {
@@ -125,6 +133,8 @@ public:
 
 class SExpressionParser {
   char* input;
+  size_t line;
+  char* lineStart;
 
   MixedArena allocator;
 
@@ -132,6 +142,8 @@ public:
   // Assumes control of and modifies the input.
   SExpressionParser(char* input) : input(input) {
     root = nullptr;
+    line = 0;
+    lineStart = input;
     while (!root) { // keep parsing until we pass an initial comment
       root = parse();
     }
@@ -145,12 +157,11 @@ private:
     Element *curr = allocator.alloc<Element>();
     while (1) {
       skipWhitespace();
-      if (input[0] == 0)
-        break;
+      if (input[0] == 0) break;
       if (input[0] == '(') {
         input++;
         stack.push_back(curr);
-        curr = allocator.alloc<Element>();
+        curr = allocator.alloc<Element>()->setMetadata(line, input - lineStart - 1);
       } else if (input[0] == ')') {
         input++;
         auto last = curr;
@@ -168,9 +179,17 @@ private:
 
   void skipWhitespace() {
     while (1) {
-      while (isspace(input[0])) input++;
+      while (isspace(input[0])) {
+        if (input[0] == '\n') {
+          line++;
+          lineStart = input + 1;
+        }
+        input++;
+      }
       if (input[0] == ';' && input[1] == ';') {
         while (input[0] && input[0] != '\n') input++;
+        line++;
+        lineStart = input;
       } else if (input[0] == '(' && input[1] == ';') {
         // Skip nested block comments.
         input += 2;
@@ -221,12 +240,12 @@ private:
         input++;
       }
       input++;
-      return allocator.alloc<Element>()->setString(IString(str.c_str(), false), dollared);
+      return allocator.alloc<Element>()->setString(IString(str.c_str(), false), dollared)->setMetadata(line, start - lineStart);
     }
     while (input[0] && !isspace(input[0]) && input[0] != ')' && input[0] != '(') input++;
     char temp = input[0];
     input[0] = 0;
-    auto ret = allocator.alloc<Element>()->setString(IString(start, false), dollared); // TODO: reuse the string here, carefully
+    auto ret = allocator.alloc<Element>()->setString(IString(start, false), dollared)->setMetadata(line, start - lineStart);
     input[0] = temp;
     return ret;
   }
@@ -906,7 +925,7 @@ private:
       bool explicitThenElse = false;
       if (s[0]->str() == THEN || s[0]->str() == ELSE) {
         explicitThenElse = true;
-        if (s[1]->dollared()) {
+        if (s[1]->isStr() && s[1]->dollared()) {
           name = s[1]->str();
         }
       }
