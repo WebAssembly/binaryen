@@ -242,7 +242,7 @@ private:
       input++;
       return allocator.alloc<Element>()->setString(IString(str.c_str(), false), dollared)->setMetadata(line, start - lineStart);
     }
-    while (input[0] && !isspace(input[0]) && input[0] != ')' && input[0] != '(') input++;
+    while (input[0] && !isspace(input[0]) && input[0] != ')' && input[0] != '(' && input[0] != ';') input++;
     char temp = input[0];
     input[0] = 0;
     auto ret = allocator.alloc<Element>()->setString(IString(start, false), dollared)->setMetadata(line, start - lineStart);
