@@ -102,7 +102,7 @@ ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
 TARGET_LINK_LIBRARIES(binaryen asmjs ${all_passes} support)
 
 SET(binaryen-shell_SOURCES
-  src/binaryen-shell.cpp
+  src/tools/binaryen-shell.cpp
   src/wasm.cpp
 )
 ADD_EXECUTABLE(binaryen-shell
@@ -113,7 +113,7 @@ SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS binaryen-shell DESTINATION bin)
 
 SET(asm2wasm_SOURCES
-  src/asm2wasm-main.cpp
+  src/tools/asm2wasm.cpp
   src/wasm.cpp
 )
 ADD_EXECUTABLE(asm2wasm
@@ -124,8 +124,8 @@ SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION bin)
 
 SET(s2wasm_SOURCES
+  src/tools/s2wasm.cpp
   src/wasm-linker.cpp
-  src/s2wasm-main.cpp
   src/wasm.cpp
 )
 ADD_EXECUTABLE(s2wasm
@@ -136,7 +136,7 @@ SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS s2wasm DESTINATION bin)
 
 SET(wasm_as_SOURCES
-  src/wasm-as.cpp
+  src/tools/wasm-as.cpp
   src/wasm.cpp
 )
 ADD_EXECUTABLE(wasm-as
@@ -147,7 +147,7 @@ SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION bin)
 
 SET(wasm_dis_SOURCES
-  src/wasm-dis.cpp
+  src/tools/wasm-dis.cpp
   src/wasm.cpp
 )
 ADD_EXECUTABLE(wasm-dis
