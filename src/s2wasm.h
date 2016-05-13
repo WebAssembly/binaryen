@@ -980,7 +980,7 @@ class S2WasmBuilder {
         addToBlock(builder.makeReturn(*s == '$' ? getInput() : nullptr));
       } else if (match("unreachable")) {
         addToBlock(allocator->alloc<Unreachable>());
-      } else if (match("memory_size")) {
+      } else if (match("current_memory")) {
         makeHost(CurrentMemory);
       } else if (match("grow_memory")) {
         makeHost1(GrowMemory);

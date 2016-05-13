@@ -1,14 +1,14 @@
 	.text
 	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/memory-addr32.ll"
-	.globl	memory_size
-	.type	memory_size,@function
-memory_size:
+	.globl	current_memory
+	.type	current_memory,@function
+current_memory:
 	.result 	i32
-	memory_size	$push0=
+	current_memory	$push0=
 	return  	$pop0
 	.endfunc
 .Lfunc_end0:
-	.size	memory_size, .Lfunc_end0-memory_size
+	.size	current_memory, .Lfunc_end0-current_memory
 
 	.globl	grow_memory
 	.type	grow_memory,@function
@@ -19,5 +19,3 @@ grow_memory:
 	.endfunc
 .Lfunc_end1:
 	.size	grow_memory, .Lfunc_end1-grow_memory
-
-
