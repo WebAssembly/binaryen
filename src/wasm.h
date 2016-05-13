@@ -90,6 +90,9 @@ struct Name : public cashew::IString {
 
 // An index in a wasm module
 typedef uint32_t Index;
+inline Index toIndex(size_t index) {
+  return (Index)index;
+}
 
 // An address in linear memory. For now only wasm32
 typedef uint32_t Address;
