@@ -1281,6 +1281,7 @@ public:
 class Memory {
 public:
   static const Address::address_t kPageSize = 64 * 1024;
+  static const Address::address_t kMaxSize = ~Address::address_t(0) / kPageSize;
   static const Address::address_t kPageMask = ~(kPageSize - 1);
   struct Segment {
     Address offset;
@@ -1299,7 +1300,7 @@ public:
   std::vector<Segment> segments;
   Name exportName;
 
-  Memory() : initial(0), max(-1U) {}
+  Memory() : initial(0), max(kMaxSize) {}
 };
 
 class Module {

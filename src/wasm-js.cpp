@@ -76,7 +76,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
     exit(EXIT_FAILURE);
   }
   module->memory.initial = providedMemory / Memory::kPageSize;
-  module->memory.max = pre.memoryGrowth ? -1 : module->memory.initial;
+  module->memory.max = pre.memoryGrowth ? Memory::kMaxSize : module->memory.initial;
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
   asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth, debug, false /* TODO: support imprecise? */);
@@ -110,7 +110,7 @@ void finalizeModule() {
     exit(EXIT_FAILURE);
   }
   module->memory.initial = providedMemory / Memory::kPageSize;
-  module->memory.max = module->checkExport(GROW_WASM_MEMORY) ? -1 : module->memory.initial;
+  module->memory.max = module->checkExport(GROW_WASM_MEMORY) ? Memory::kMaxSize : module->memory.initial;
 
   // global mapping is done in js in post.js
 }
