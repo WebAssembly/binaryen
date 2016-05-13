@@ -491,7 +491,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     incIndent();
     doIndent(o, indent);
     printOpening(o, "memory") << " " << curr->memory.initial;
-    if (curr->memory.max && curr->memory.max != (uint32_t)-1) o << " " << curr->memory.max;
+    if (curr->memory.max && curr->memory.max != Memory::kMaxSize) o << " " << curr->memory.max;
     for (auto segment : curr->memory.segments) {
       o << maybeNewLine;
       o << (minify ? "" : "    ") << "(segment " << segment.offset << " \"";
