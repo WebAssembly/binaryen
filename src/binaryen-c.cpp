@@ -80,7 +80,7 @@ void BinaryenModuleDispose(BinaryenModuleRef module) { delete (Module*)module; }
 BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const char* name, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams) {
   auto* wasm = (Module*)module;
   auto* ret = new FunctionType;
-  ret->name = name;
+  if (name) ret->name = name;
   ret->result = WasmType(result);
   for (BinaryenIndex i = 0; i < numParams; i++) {
     ret->params.push_back(WasmType(paramTypes[i]));
@@ -174,9 +174,7 @@ BinaryenOp BinaryenHasFeature(void) { return HasFeature; }
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren) {
   auto* ret = ((Module*)module)->allocator.alloc<Block>();
-  if (name) {
-    ret->name = name;
-  }
+  if (name) ret->name = name;
   for (BinaryenIndex i = 0; i < numChildren; i++) {
     ret->list.push_back((Expression*)children[i]);
   }

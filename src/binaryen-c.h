@@ -80,6 +80,7 @@ void BinaryenModuleDispose(BinaryenModuleRef module);
 
 typedef void* BinaryenFunctionTypeRef;
 
+// Note: name can be NULL, in which case we auto-generate a name
 BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const char* name, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams);
 
 // Literals. These are passed by value.
