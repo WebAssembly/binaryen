@@ -225,6 +225,10 @@ void test_core() {
   BinaryenFunctionRef starter = BinaryenAddFunction(module, "starter", v, NULL, 0, BinaryenNop(module));
   BinaryenSetStart(module, starter);
 
+  // Unnamed function type
+
+  BinaryenFunctionTypeRef noname = BinaryenAddFunctionType(module, NULL, BinaryenNone(), NULL, 0);
+
   // Verify it validates
   assert(BinaryenModuleValidate(module));
 
