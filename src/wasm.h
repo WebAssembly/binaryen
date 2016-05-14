@@ -1405,7 +1405,7 @@ private:
 namespace std {
 template<> struct hash<wasm::Address> {
   size_t operator()(const wasm::Address a) const {
-    return std::hash<uint32_t>()(a.addr);
+    return std::hash<wasm::Address::address_t>()(a.addr);
   }
 };
 }
