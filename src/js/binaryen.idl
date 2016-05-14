@@ -13,6 +13,8 @@ interface Literal {
   float getf32();
   long geti32();
   double getf64();
+  long geti64Low();
+  long geti64High();
 };
 
 interface I32Literal {
@@ -26,6 +28,12 @@ interface F32Literal {
 };
 
 F32Literal implements Literal;
+
+interface I64Literal {
+  void I64Literal(long x, long y);
+};
+
+I64Literal implements Literal;
 
 interface F64Literal {
   void F64Literal(double x);

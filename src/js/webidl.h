@@ -24,6 +24,10 @@ class F32Literal : public Literal {
 public:
   F32Literal(float  init) : Literal(init) {}
 };
+class I64Literal : public Literal {
+public:
+  I64Literal(int32_t  low, int32_t  high) : Literal(((uint64_t) high) << 32 | (uint32_t) low) {}
+};
 class F64Literal : public Literal {
 public:
   F64Literal(double  init) : Literal(init) {}

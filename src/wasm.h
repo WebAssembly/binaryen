@@ -227,6 +227,15 @@ public:
       default: abort();
     }
   }
+  
+  int32_t geti64Low() {
+    assert(type == WasmType::i64);
+    return geti64() & 0xFFFFFFFF;
+  }
+  int32_t geti64High() {
+    assert(type == WasmType::i64);
+    return geti64() >> 32;
+  }
 
   bool operator==(const Literal& other) const {
     if (type != other.type) return false;

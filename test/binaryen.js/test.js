@@ -3,11 +3,11 @@ Binaryen = Binaryen(); // instantiate the module
 
 var input =
   '(module\n' +
-  '  (export "add" $add)\n' +
-  '  (func $add (param $x f32) (param $y f64) (result i32)\n' +
-  '    (i32.add\n' +
-  '      (i32.trunc_s/f32 (get_local $x))\n' +
-  '      (i32.trunc_s/f64 (get_local $y))\n' +
+  '  (export "sub" $sub)\n' +
+  '  (func $sub (param $x i64) (param $y i64) (result i64)\n' +
+  '    (i64.sub\n' +
+  '      (get_local $x)\n' +
+  '      (get_local $y)\n' +
   '    )\n' +
   '  )\n' +
   ')\n';
@@ -33,12 +33,13 @@ console.log('================');
 var interface_ = new Binaryen.ShellExternalInterface();
 var instance = new Binaryen.ModuleInstance(module, interface_);
 
-var name = new Binaryen.Name('add');
+var name = new Binaryen.Name('sub');
 console.log('name: ' + name.c_str());
 
 var args = new Binaryen.LiteralList();
-args.push_back(new Binaryen.F32Literal(40));
-args.push_back(new Binaryen.F64Literal(2));
+args.push_back(new Binaryen.I64Literal(40, 5145));
+args.push_back(new Binaryen.I64Literal(-2, 5144));
 
-console.log('answer is ' + instance.callExport(name, args).geti32() + '.');
+var result = instance.callExport(name, args);
+console.log('answer is ' + (result.geti64Low() + result.geti64High()) + '.');
 
