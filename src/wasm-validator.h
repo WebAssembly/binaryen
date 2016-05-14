@@ -50,6 +50,9 @@ public:
       breakTypes.erase(curr->name);
     }
   }
+  void visitIf(If *curr) {
+    shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "if condition must be i32");
+  }
   void visitLoop(Loop *curr) {
     if (curr->in.is()) {
       LoopChildChecker childChecker(curr->in);
@@ -80,12 +83,28 @@ public:
   }
   void visitBreak(Break *curr) {
     noteBreak(curr->name, curr->value);
+    if (curr->condition) {
+      shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "break condition must be i32");
+    }
   }
   void visitSwitch(Switch *curr) {
     for (auto& target : curr->targets) {
       noteBreak(target, curr->value);
     }
     noteBreak(curr->default_, curr->value);
+    shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "br_table condition must be i32");
+  }
+  void visitCall(Call *curr) {
+    auto* target = getModule()->getFunction(curr->target);
+    for (size_t i = 0; i < curr->operands.size(); i++) {
+      shouldBeTrue(curr->operands[i]->type == target->params[i], curr, "call param types must match");
+    }
+  }
+  void visitCallImport(CallImport *curr) {
+    auto* target = getModule()->getImport(curr->target)->type;
+    for (size_t i = 0; i < curr->operands.size(); i++) {
+      shouldBeTrue(curr->operands[i]->type == target->params[i], curr, "call param types must match");
+    }
   }
   void visitSetLocal(SetLocal *curr) {
     if (curr->value->type != unreachable) {
@@ -94,9 +113,12 @@ public:
   }
   void visitLoad(Load *curr) {
     validateAlignment(curr->align);
+    shouldBeEqual(curr->ptr->type, i32, curr, "load pointer type must be i32");
   }
   void visitStore(Store *curr) {
     validateAlignment(curr->align);
+    shouldBeEqual(curr->ptr->type, i32, curr, "store pointer type must be i32");
+    shouldBeEqual(curr->value->type, curr->type, curr, "store value type must match");
   }
   void visitBinary(Binary *curr) {
     if (curr->left->type != unreachable && curr->right->type != unreachable) {
@@ -124,36 +146,31 @@ public:
         shouldBeEqual(curr->type, i32, curr, "relational unaries must return i32");
         break;
       }
-      case ExtendSInt32:
-      case ExtendUInt32:
-      case WrapInt64:
-      case TruncSFloat32ToInt32:
-      case TruncSFloat32ToInt64:
-      case TruncUFloat32ToInt32:
-      case TruncUFloat32ToInt64:
-      case TruncSFloat64ToInt32:
-      case TruncSFloat64ToInt64:
-      case TruncUFloat64ToInt32:
-      case TruncUFloat64ToInt64:
-      case ReinterpretFloat32:
-      case ReinterpretFloat64:
-      case ConvertUInt32ToFloat32:
-      case ConvertUInt32ToFloat64:
-      case ConvertSInt32ToFloat32:
-      case ConvertSInt32ToFloat64:
-      case ConvertUInt64ToFloat32:
-      case ConvertUInt64ToFloat64:
-      case ConvertSInt64ToFloat32:
-      case ConvertSInt64ToFloat64:
-      case PromoteFloat32:
-      case DemoteFloat64:
-      case ReinterpretInt32:
-      case ReinterpretInt64: {
-        //if (curr->value->type != unreachable) {
-          shouldBeUnequal(curr->value->type, curr->type, curr, "conversion unaries must not return the same type");
-        //}
-        break;
-      }
+      case ExtendSInt32:           shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
+      case ExtendUInt32:           shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
+      case WrapInt64:              shouldBeEqual(curr->value->type, i64, curr, "wrap type must be correct"); break;
+      case TruncSFloat32ToInt32:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
+      case TruncSFloat32ToInt64:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
+      case TruncUFloat32ToInt32:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
+      case TruncUFloat32ToInt64:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
+      case TruncSFloat64ToInt32:   shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct"); break;
+      case TruncSFloat64ToInt64:   shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct"); break;
+      case TruncUFloat64ToInt32:   shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct"); break;
+      case TruncUFloat64ToInt64:   shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct"); break;
+      case ReinterpretFloat32:     shouldBeEqual(curr->value->type, f32, curr, "reinterpret/f32 type must be correct"); break;
+      case ReinterpretFloat64:     shouldBeEqual(curr->value->type, f64, curr, "reinterpret/f64 type must be correct"); break;
+      case ConvertUInt32ToFloat32: shouldBeEqual(curr->value->type, i32, curr, "convert type must be correct"); break;
+      case ConvertUInt32ToFloat64: shouldBeEqual(curr->value->type, i32, curr, "convert type must be correct"); break;
+      case ConvertSInt32ToFloat32: shouldBeEqual(curr->value->type, i32, curr, "convert type must be correct"); break;
+      case ConvertSInt32ToFloat64: shouldBeEqual(curr->value->type, i32, curr, "convert type must be correct"); break;
+      case ConvertUInt64ToFloat32: shouldBeEqual(curr->value->type, i64, curr, "convert type must be correct"); break;
+      case ConvertUInt64ToFloat64: shouldBeEqual(curr->value->type, i64, curr, "convert type must be correct"); break;
+      case ConvertSInt64ToFloat32: shouldBeEqual(curr->value->type, i64, curr, "convert type must be correct"); break;
+      case ConvertSInt64ToFloat64: shouldBeEqual(curr->value->type, i64, curr, "convert type must be correct"); break;
+      case PromoteFloat32:         shouldBeEqual(curr->value->type, f32, curr, "promote type must be correct"); break;
+      case DemoteFloat64:          shouldBeEqual(curr->value->type, f64, curr, "demote type must be correct"); break;
+      case ReinterpretInt32:       shouldBeEqual(curr->value->type, i32, curr, "reinterpret/i32 type must be correct"); break;
+      case ReinterpretInt64:       shouldBeEqual(curr->value->type, i64, curr, "reinterpret/i64 type must be correct"); break;
       default: abort();
     }
   }
@@ -243,7 +260,7 @@ private:
   template<typename T>
   bool shouldBeTrue(bool result, T curr, const char* text) {
     if (!result) {
-      fail() << "unexpected false: " << text << ", on " << curr << std::endl;
+      fail() << "unexpected false: " << text << ", on \n" << curr << std::endl;
       valid = false;
       return false;
     }
@@ -252,7 +269,7 @@ private:
   template<typename T>
   bool shouldBeFalse(bool result, T curr, const char* text) {
     if (result) {
-      fail() << "unexpected true: " << text << ", on " << curr << std::endl;
+      fail() << "unexpected true: " << text << ", on \n" << curr << std::endl;
       valid = false;
       return false;
     }
@@ -262,7 +279,7 @@ private:
   template<typename T, typename S>
   bool shouldBeEqual(S left, S right, T curr, const char* text) {
     if (left != right) {
-      fail() << "" << left << " != " << right << ": " << text << ", on " << curr << std::endl;
+      fail() << "" << left << " != " << right << ": " << text << ", on \n" << curr << std::endl;
       valid = false;
       return false;
     }
@@ -271,7 +288,7 @@ private:
   template<typename T, typename S, typename U>
   bool shouldBeEqual(S left, S right, T curr, U other, const char* text) {
     if (left != right) {
-      fail() << "" << left << " != " << right << ": " << text << ", on " << curr << " / " << other << std::endl;
+      fail() << "" << left << " != " << right << ": " << text << ", on \n" << curr << " / " << other << std::endl;
       valid = false;
       return false;
     }
@@ -281,7 +298,7 @@ private:
   template<typename T, typename S>
   bool shouldBeUnequal(S left, S right, T curr, const char* text) {
     if (left == right) {
-      fail() << "" << left << " == " << right << ": " << text << ", on " << curr << std::endl;
+      fail() << "" << left << " == " << right << ": " << text << ", on \n" << curr << std::endl;
       valid = false;
       return false;
     }

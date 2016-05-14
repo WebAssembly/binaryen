@@ -307,8 +307,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       case TruncSFloat64ToInt64: o << "trunc_s/f64"; break;
       case TruncUFloat64ToInt32:
       case TruncUFloat64ToInt64: o << "trunc_u/f64"; break;
-      case ReinterpretFloat32:
-      case ReinterpretFloat64: o << "reinterpret/" << (curr->type == i64 ? "f64" : "f32"); break;
+      case ReinterpretFloat32: o << "reinterpret/f32"; break;
+      case ReinterpretFloat64: o << "reinterpret/f64"; break;
       case ConvertUInt32ToFloat32:
       case ConvertUInt32ToFloat64: o << "convert_u/i32"; break;
       case ConvertSInt32ToFloat32:
@@ -319,8 +319,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       case ConvertSInt64ToFloat64: o << "convert_s/i64"; break;
       case PromoteFloat32:   o << "promote/f32"; break;
       case DemoteFloat64:    o << "demote/f64"; break;
-      case ReinterpretInt32:
-      case ReinterpretInt64: o << "reinterpret/" << (curr->type == f64 ? "i64" : "i32"); break;
+      case ReinterpretInt32: o << "reinterpret/i32"; break;
+      case ReinterpretInt64: o << "reinterpret/i64"; break;
       default: abort();
     }
     incIndent();

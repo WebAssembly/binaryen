@@ -118,7 +118,7 @@ void test_core() {
     makeUnary(module, BinaryenPromoteFloat32(), 3),
     makeUnary(module, BinaryenDemoteFloat64(), 4),
     makeUnary(module, BinaryenReinterpretInt32(), 1),
-    makeUnary(module, BinaryenReinterpretInt64(), 1),
+    makeUnary(module, BinaryenReinterpretInt64(), 2),
     // Binary
     makeBinary(module, BinaryenAdd(), 1),
     makeBinary(module, BinaryenSub(), 4),
