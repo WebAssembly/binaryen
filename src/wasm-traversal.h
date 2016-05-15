@@ -148,7 +148,7 @@ struct Walker : public VisitorType {
   // if you do not ad global state that could be raced on, your pass could be
   // function-parallel.
   //
-  // Function-parallel passes create an instance of the Walker class per core.
+  // Function-parallel passes create an instance of the Walker class per function.
   // That means that you can't rely on Walker object properties to persist across
   // your functions, and you can't expect a new object to be created for each
   // function either (which could be very inefficient).
@@ -191,32 +191,34 @@ struct Walker : public VisitorType {
       self->visitExport(curr.get());
     }
 
-    auto processFunction = [](SubType* instance, Function* func) {
+    auto processFunction = [](Module* module, SubType* instance, Function* func) {
+      std::unique_ptr<SubType> allocated;
+      if (!instance) {
+        instance = new SubType;
+        allocated = std::unique_ptr<SubType>(instance);
+        assert(module);
+        instance->setModule(module);
+      }
       instance->setFunction(func);
       instance->walk(func->body);
       instance->visitFunction(func);
-      instance->setFunction(nullptr);
     };
 
     // if this is not a function-parallel traversal, run
     // sequentially
     if (!self->isFunctionParallel()) {
       for (auto& curr : module->functions) {
-        processFunction(self, curr.get());
+        processFunction(nullptr, self, curr.get());
       }
     } else {
       // execute in parallel on helper threads
       size_t num = ThreadPool::get()->size();
-      std::vector<std::unique_ptr<SubType>> instances;
       std::vector<std::function<ThreadWorkState ()>> doWorkers;
       std::atomic<size_t> nextFunction;
       nextFunction.store(0);
       size_t numFunctions = module->functions.size();
       for (size_t i = 0; i < num; i++) {
-        auto* instance = new SubType();
-        instance->setModule(getModule());
-        instances.push_back(std::unique_ptr<SubType>(instance));
-        doWorkers.push_back([instance, &nextFunction, numFunctions, &module, processFunction]() {
+        doWorkers.push_back([&nextFunction, numFunctions, &module, processFunction]() {
           auto index = nextFunction.fetch_add(1);
           // get the next task, if there is one
           if (index >= numFunctions) {
@@ -224,7 +226,7 @@ struct Walker : public VisitorType {
           }
           Function* curr = module->functions[index].get();
           // do the current task
-          processFunction(instance, curr);
+          processFunction(module, nullptr, curr);
           if (index + 1 == numFunctions) {
             return ThreadWorkState::Finished; // we did the last one
           }
