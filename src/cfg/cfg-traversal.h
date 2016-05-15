@@ -72,14 +72,18 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   }
 
   static void doEndBlock(SubType* self, Expression** currp) {
-    // TODO: if no name, no need for a new block
+    auto* curr = (*currp)->cast<Block>();
+    if (!curr->name.is()) return;
+    auto iter = self->branches.find(curr->name);
+    if (iter == self->branches.end()) return;
+    auto& origins = iter->second;
+    if (origins.size() == 0) return;
+    // we have branches to here, so we need a new block
     auto* last = self->currBasicBlock;
     doStartBasicBlock(self, currp);
     self->link(last, self->currBasicBlock); // fallthrough
     // branches to the new one
-    auto* curr = (*currp)->cast<Block>();
     if (curr->name.is()) {
-      auto& origins = self->branches[curr->name];
       for (auto* origin : origins) {
         self->link(origin, self->currBasicBlock);
       }
