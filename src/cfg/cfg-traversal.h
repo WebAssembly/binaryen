@@ -289,15 +289,20 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
 
   std::map<BasicBlock*, size_t> debugIds;
 
-  void dumpCFG(std::string message, Function* func) {
-    std::cout << "<==\nCFG [" << message << "]:\n";
+  void generateDebugIds() {
+    if (debugIds.size() > 0) return;
     for (auto& block : basicBlocks) {
       debugIds[block.get()] = debugIds.size();
     }
+  }
+
+  void dumpCFG(std::string message) {
+    std::cout << "<==\nCFG [" << message << "]:\n";
+    generateDebugIds();
     for (auto& block : basicBlocks) {
       assert(debugIds.count(block.get()) > 0);
       std::cout << "  block " << debugIds[block.get()] << ":\n";
-      block->contents.dump(func);
+      block->contents.dump(static_cast<SubType*>(this)->getFunction());
       for (auto& in : block->in) {
         assert(debugIds.count(in) > 0);
         assert(std::find(in->out.begin(), in->out.end(), block.get()) != in->out.end()); // must be a parallel link back
@@ -307,8 +312,35 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         std::cout << "    out: " << debugIds[out] << "\n";
         assert(std::find(out->in.begin(), out->in.end(), block.get()) != out->in.end()); // must be a parallel link back
       }
+      checkDuplicates(block->in);
+      checkDuplicates(block->out);
     }
     std::cout << "==>\n";
+  }
+
+private:
+  // links in out and in must be unique
+  void checkDuplicates(std::vector<BasicBlock*>& list) {
+    std::unordered_set<BasicBlock*> seen;
+    for (auto* curr : list) {
+      assert(seen.count(curr) == 0);
+      seen.insert(curr);
+    }
+  }
+
+  void removeLink(std::vector<BasicBlock*>& list, BasicBlock* toRemove) {
+    if (list.size() == 1) {
+      list.clear();
+      return;
+    }
+    for (size_t i = 0; i < list.size(); i++) {
+      if (list[i] == toRemove) {
+        list[i] = list.back();
+        list.pop_back();
+        return;
+      }
+    }
+    WASM_UNREACHABLE();
   }
 };
 
