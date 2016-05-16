@@ -221,17 +221,18 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     interferences.resize(numLocals * numLocals);
     std::fill(interferences.begin(), interferences.end(), 0);
     // keep working while stuff is flowing
-    std::vector<BasicBlock*> queue; // TODO set to avoid inserting same block more than once at a time period. TODO optimize, an order might be more efficient
+    std::unordered_set<BasicBlock*> queue;
     for (auto& curr : basicBlocks) {
       if (liveBlocks.count(curr.get()) == 0) continue; // ignore dead blocks
-      queue.push_back(curr.get());
+      queue.insert(curr.get());
       // do the first scan through the block, starting with nothing live at the end, and updating the liveness at the start
       scanLivenessThroughActions(curr->contents.actions, curr->contents.start);
     }
     // at every point in time, we assume we already noted interferences between things already known alive at the end, and scanned back throught the block using that
     while (queue.size() > 0) {
-      auto* curr = queue.back(); // TODO: order?
-      queue.pop_back();
+      auto iter = queue.begin();
+      auto* curr = *iter;
+      queue.erase(iter);
       LocalSet live;
       if (!mergeStartsAndCheckChange(curr->out, curr->contents.end, live)) continue;
 #ifdef CFG_DEBUG
@@ -249,18 +250,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
       assert(curr->contents.start.size() < live.size());
       curr->contents.start = live;
       for (auto* in : curr->in) {
-        queue.push_back(in);
-#ifdef CFG_DEBUG_ORDER
-        // alternative code for changing the flow order; results must be the same, as we detect a property of the graph.
-        if (queue.empty()) {
-          queue.push_back(in);
-        } else {
-          //abort();
-          auto* front = queue[0];
-          queue[0] = in;
-          queue.push_back(front);
-        }
-#endif
+        queue.insert(in);
       }
     }
     // live locals at the entry block include params, obviously, but also
