@@ -275,7 +275,6 @@
     (f32.demote/f64
       (get_local $1)
     )
-    (get_local $0)
     (f32.const 5)
     (f32.const 0)
     (f32.const 5)

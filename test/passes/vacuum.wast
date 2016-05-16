@@ -39,5 +39,29 @@
       (nop)
     )
   )
+  (func $l
+    (local $x i32)
+    (local $y i32)
+    (get_local $x)
+    (set_local $x (get_local $x))
+    (block $in-a-block
+      (get_local $x)
+    )
+    (block $two-in-a-block
+      (get_local $x)
+      (get_local $y)
+    )
+    (set_local $x
+      (block $result-used
+        (get_local $x)
+      )
+    )
+    (set_local $x
+      (block $two-and-result-used
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+  )
 )
 

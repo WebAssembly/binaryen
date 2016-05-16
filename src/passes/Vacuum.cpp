@@ -28,14 +28,24 @@ namespace wasm {
 struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
   bool isFunctionParallel() { return true; }
 
+  std::vector<Expression*> expressionStack;
+
+  bool isDead(Expression* curr, bool resultMayBeUsed) {
+    if (curr->is<Nop>()) return true;
+    // dead get_locals may be generated from coalesce-locals
+    if (curr->is<GetLocal>() && (!resultMayBeUsed || !ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()))) return true;
+    // TODO: more dead code
+    return false;
+  }
+
   void visitBlock(Block *curr) {
-    // compress out nops
+    // compress out nops and other dead code
     int skip = 0;
     auto& list = curr->list;
     size_t size = list.size();
     bool needResize = false;
     for (size_t z = 0; z < size; z++) {
-      if (list[z]->is<Nop>()) {
+      if (isDead(list[z], z == size - 1)) {
         skip++;
         needResize = true;
       } else {
@@ -81,6 +91,23 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
         replaceCurrent(curr->condition);
       }
     }
+  }
+
+  static void visitPre(Vacuum* self, Expression** currp) {
+    self->expressionStack.push_back(*currp);
+  }
+
+  static void visitPost(Vacuum* self, Expression** currp) {
+    self->expressionStack.pop_back();
+  }
+
+  // override scan to add a pre and a post check task to all nodes
+  static void scan(Vacuum* self, Expression** currp) {
+    self->pushTask(visitPost, currp);
+
+    WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>>::scan(self, currp);
+
+    self->pushTask(visitPre, currp);
   }
 };
 
