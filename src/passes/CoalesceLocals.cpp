@@ -32,24 +32,94 @@
 
 namespace wasm {
 
-// A set of locals
-struct LocalSet : std::vector<bool> {
+// A set of locals. This is optimized for comparisons,
+// mergings, and iteration on elements, assuming that there
+// may be a great many potential elements but actual sets
+// may be fairly small. Specifically, we use a sorted
+// vector.
+struct LocalSet : std::vector<Index> {
   LocalSet() {}
-  LocalSet(size_t size) {
-    clear(size);
-  }
 
-  void clear(size_t size) {
-    resize(size);
-    std::fill(begin(), end(), 0);
-  }
-
-  size_t count() {
-    size_t ret = 0;
-    for (size_t i = 0; i < size(); i++) {
-      ret += (*this)[i];
+  LocalSet merge(const LocalSet& other) const {
+    LocalSet ret;
+    ret.resize(size() + other.size());
+    Index i = 0, j = 0, t = 0;
+    while (i < size() && j < other.size()) {
+      auto left = (*this)[i];
+      auto right = other[j];
+      if (left < right) {
+        ret[t++] = left;
+        i++;
+      } else if (left > right) {
+        ret[t++] = right;
+        j++;
+      } else {
+        ret[t++] = left;
+        i++;
+        j++;
+      }
     }
+    while (i < size()) {
+      ret[t++] = (*this)[i];
+      i++;
+    }
+    while (j < other.size()) {
+      ret[t++] = other[j];
+      j++;
+    }
+    ret.resize(t);
     return ret;
+  }
+
+  // TODO: binary search in all the following
+
+  void insert(Index x) {
+    for (size_t i = 0; i < size(); i++) {
+      auto seen = (*this)[i];
+      if (seen == x) return;
+      if (seen > x) {
+        resize(size() + 1);
+        for (size_t j = size() - 1; j > i; j--) {
+          (*this)[j] = (*this)[j - 1];
+        }
+        (*this)[i] = x;
+        return;
+      }
+    }
+    // we didn't find anything larger
+    push_back(x);
+  }
+
+  bool erase(Index x) {
+    for (size_t i = 0; i < size(); i++) {
+      if ((*this)[i] == x) {
+        for (size_t j = i + 1; j < size(); j++) {
+          (*this)[j - 1] = (*this)[j];
+        }
+        resize(size() - 1);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool has(Index x) {
+    for (size_t i = 0; i < size(); i++) {
+      if ((*this)[i] == x) return true;
+    }
+    return false;
+  }
+
+  void verify() const {
+    for (size_t i = 1; i < size(); i++) {
+      assert((*this)[i - 1] < (*this)[i]);
+    }
+  }
+
+  void dump(const char* str = nullptr) const {
+    std::cout << "LocalSet " << (str ? str : "") << ": ";
+    for (auto x : *this) std::cout << x << " ";
+    std::cout << '\n';
   }
 };
 
@@ -88,13 +158,6 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   Index numLocals;
 
-  BasicBlock* makeBasicBlock() {
-    auto ret = new BasicBlock();
-    ret->contents.start.clear(numLocals);
-    ret->contents.end.clear(numLocals);
-    return ret;
-  }
-
   // cfg traversal work
 
   static void doVisitGetLocal(CoalesceLocals* self, Expression** currp) {
@@ -129,7 +192,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   // inteference state
 
-  LocalSet interferences;
+  std::vector<bool> interferences;
   std::unordered_set<BasicBlock*> liveBlocks;
 
   void interfere(Index i, Index j) {
@@ -144,7 +207,8 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
   }
 
   void flowLiveness() {
-    interferences.clear(numLocals * numLocals);
+    interferences.resize(numLocals * numLocals);
+    std::fill(interferences.begin(), interferences.end(), 0);
     // keep working while stuff is flowing
     std::vector<BasicBlock*> queue; // TODO set to avoid inserting same block more than once at a time period. TODO optimize, an order might be more efficient
     for (auto& curr : basicBlocks) {
@@ -157,21 +221,21 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     while (queue.size() > 0) {
       auto* curr = queue.back(); // TODO: order?
       queue.pop_back();
-      LocalSet live(numLocals);
+      LocalSet live;
       if (!mergeStartsAndCheckChange(curr->out, curr->contents.end, live)) continue;
 #ifdef CFG_DEBUG
-      std::cout << "change noticed at end of " << debugIds[curr] << " from " << curr->contents.end.count() << " to " << live.count() << " (out of " << numLocals << ")\n";
+      std::cout << "change noticed at end of " << debugIds[curr] << " from " << curr->contents.end.size() << " to " << live.size() << " (out of " << numLocals << ")\n";
 #endif
-      assert(curr->contents.end.count() < live.count());
+      assert(curr->contents.end.size() < live.size());
       curr->contents.end = live;
       scanLivenessThroughActions(curr->contents.actions, live);
       // liveness is now calculated at the start. if something
       // changed, all predecessor blocks need recomputation
       if (curr->contents.start == live) continue;
 #ifdef CFG_DEBUG
-      std::cout << "change noticed at start of " << debugIds[curr] << " from " << curr->contents.start.count() << " to " << live.count() << ", more work to do\n";
+      std::cout << "change noticed at start of " << debugIds[curr] << " from " << curr->contents.start.size() << " to " << live.size() << ", more work to do\n";
 #endif
-      assert(curr->contents.start.count() < live.count());
+      assert(curr->contents.start.size() < live.size());
       curr->contents.start = live;
       for (auto* in : curr->in) {
         queue.push_back(in);
@@ -210,16 +274,14 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     // merge all the live locals, and add interferences that show up from the merging.
     // we can assume that locals live together already are already known to be in conflict.
     if (blocks.size() == 0) return false;
+    ret = blocks[0]->contents.start;
     if (blocks.size() == 1) {
       // new interferences are impossible, they would have already been in conflict in the single predecessor.
-      ret = blocks[0]->contents.start;
       return old != ret;
     }
     // more than one, so we must merge
-    for (auto* block : blocks) {
-      for (size_t i = 0; i < numLocals; i++) {
-        ret[i] = ret[i] || block->contents.start[i]; // TODO: optimize
-      }
+    for (size_t i = 1; i < blocks.size(); i++) {
+      ret = ret.merge(blocks[i]->contents.start);
     }
     // If there is no change in the merged result, then no new conflicts are possible.
     // Assume the opposite, that we would be missing a conflict between x and y. Then
@@ -235,10 +297,10 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     // before. But that means that x and y were already in conflict in the past, so
     // this is not a new conflict.
     if (ret == old) return false;
-    // look for conflicts TODO: optimize
-    for (size_t i = 0; i < numLocals; i++) {
-      for (size_t j = 0; j < numLocals; j++) {
-        if (ret[i] && ret[j]) interfere(i, j);
+    // add conflicts
+    for (auto i : ret) {
+      for (auto j : ret) {
+        interfere(i, j);
       }
     }
     return true;
@@ -250,14 +312,14 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
       auto& action = actions[i];
       if (action.isGet()) {
         // new live local, interferes with all the rest
-        for (size_t i = 0; i < numLocals; i++) { // TODO: vector?
-          if (live[i]) interfere(i, action.index);
+        for (auto i : live) {
+          interfere(i, action.index);
         }
-        live[action.index] = 1;
+        live.insert(action.index);
+        assert(live.size() <= numLocals);
       } else {
-        if (live[action.index]) {
+        if (live.erase(action.index)) {
           action.effective = true;
-          live[action.index] = 0;
         }
       }
     }
@@ -272,10 +334,11 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     // TODO: take into account distribution (99-1 is better than 50-50 with two registers, for gzip)
     std::vector<Index> indices; // old => new
     std::vector<WasmType> types;
-    LocalSet newInterferences; // new index * numLocals => list of all interferences of locals merged to it
+    std::vector<bool> newInterferences; // new index * numLocals => list of all interferences of locals merged to it
     indices.resize(numLocals);
     types.resize(numLocals);
     newInterferences.resize(numLocals * numLocals);
+    std::fill(newInterferences.begin(), newInterferences.end(), 0);
     Index nextFree = 0;
     // we can't reorder parameters, they are fixed in order, and cannot coalesce
     auto numParams = getFunction()->getNumParams();
