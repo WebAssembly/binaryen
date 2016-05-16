@@ -53,7 +53,7 @@ int main(int argc, const char *argv[]) {
     SExpressionWasmBuilder builder(wasm, *root[0]);
   } catch (ParseException& p) {
     p.dump(std::cerr);
-    Fatal() << "error in parsing wasm binary";
+    Fatal() << "error in parsing input";
   }
 
   if (options.debug) std::cerr << "binarification..." << std::endl;

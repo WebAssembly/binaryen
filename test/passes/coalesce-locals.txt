@@ -1,0 +1,681 @@
+(module
+  (memory 10)
+  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
+  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+  (import $_emscripten_autodebug_i32 "env" "_emscripten_autodebug_i32" (param i32 i32) (result i32))
+  (func $nothing-to-do
+    (local $0 i32)
+    (nop)
+  )
+  (func $merge
+    (local $0 i32)
+    (nop)
+  )
+  (func $leave-type
+    (local $0 i32)
+    (local $1 f32)
+    (nop)
+  )
+  (func $leave-interfere
+    (local $0 i32)
+    (local $1 i32)
+    (set_local $0
+      (i32.const 0)
+    )
+    (set_local $1
+      (i32.const 0)
+    )
+    (get_local $0)
+    (get_local $1)
+  )
+  (func $almost-interfere
+    (local $0 i32)
+    (set_local $0
+      (i32.const 0)
+    )
+    (get_local $0)
+    (set_local $0
+      (i32.const 0)
+    )
+    (get_local $0)
+  )
+  (func $redundant-copy
+    (local $0 i32)
+    (set_local $0
+      (i32.const 0)
+    )
+    (get_local $0)
+    (get_local $0)
+  )
+  (func $ineffective-store
+    (local $0 i32)
+    (i32.const 0)
+    (set_local $0
+      (i32.const 0)
+    )
+    (get_local $0)
+  )
+  (func $block
+    (local $0 i32)
+    (block $block0
+      (set_local $0
+        (i32.const 0)
+      )
+    )
+    (get_local $0)
+  )
+  (func $see-both-sides
+    (local $0 i32)
+    (local $1 i32)
+    (set_local $0
+      (i32.const 0)
+    )
+    (block $block0
+      (set_local $1
+        (i32.const 0)
+      )
+    )
+    (get_local $0)
+    (get_local $1)
+  )
+  (func $see-br-and-ignore-dead
+    (local $0 i32)
+    (set_local $0
+      (i32.const 0)
+    )
+    (block $block
+      (br $block)
+      (i32.const 0)
+      (get_local $0)
+      (i32.const -1)
+    )
+    (get_local $0)
+  )
+  (func $see-block-body
+    (local $0 i32)
+    (local $1 i32)
+    (set_local $0
+      (i32.const 0)
+    )
+    (block $block
+      (set_local $1
+        (i32.const 0)
+      )
+      (get_local $1)
+      (br $block)
+    )
+    (get_local $0)
+  )
+  (func $zero-init
+    (local $0 i32)
+    (local $1 i32)
+    (get_local $0)
+    (get_local $1)
+  )
+  (func $multi
+    (local $0 i32)
+    (local $1 i32)
+    (get_local $0)
+    (get_local $1)
+  )
+  (func $if-else
+    (local $0 i32)
+    (local $1 i32)
+    (if
+      (i32.const 0)
+      (get_local $0)
+      (get_local $1)
+    )
+  )
+  (func $if-else-parallel
+    (local $0 i32)
+    (if
+      (i32.const 0)
+      (block $block1
+        (set_local $0
+          (i32.const 0)
+        )
+        (get_local $0)
+      )
+      (block $block3
+        (set_local $0
+          (i32.const 1)
+        )
+        (get_local $0)
+      )
+    )
+  )
+  (func $if-else-after
+    (local $0 i32)
+    (local $1 i32)
+    (if
+      (i32.const 0)
+      (set_local $0
+        (i32.const 0)
+      )
+      (set_local $1
+        (i32.const 1)
+      )
+    )
+    (get_local $0)
+    (get_local $1)
+  )
+  (func $if-else-through
+    (local $0 i32)
+    (local $1 i32)
+    (set_local $0
+      (i32.const 0)
+    )
+    (set_local $1
+      (i32.const 1)
+    )
+    (if
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+    (get_local $0)
+    (get_local $1)
+  )
+  (func $if-through
+    (local $0 i32)
+    (local $1 i32)
+    (set_local $0
+      (i32.const 0)
+    )
+    (set_local $1
+      (i32.const 1)
+    )
+    (if
+      (i32.const 0)
+      (i32.const 1)
+    )
+    (get_local $0)
+    (get_local $1)
+  )
+  (func $if-through2
+    (local $0 i32)
+    (local $1 i32)
+    (set_local $0
+      (i32.const 0)
+    )
+    (if
+      (i32.const 0)
+      (set_local $1
+        (i32.const 1)
+      )
+    )
+    (get_local $0)
+    (get_local $1)
+  )
+  (func $if-through2
+    (local $0 i32)
+    (local $1 i32)
+    (set_local $0
+      (i32.const 0)
+    )
+    (if
+      (i32.const 0)
+      (block $block1
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $if2
+    (local $0 i32)
+    (local $1 i32)
+    (if
+      (set_local $0
+        (i32.const 0)
+      )
+      (block $block1
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $if3
+    (local $0 i32)
+    (local $1 i32)
+    (if
+      (i32.const 0)
+      (block $block1
+        (set_local $0
+          (i32.const 0)
+        )
+        (get_local $0)
+      )
+    )
+    (get_local $1)
+  )
+  (func $if4
+    (local $0 i32)
+    (if
+      (i32.const 0)
+      (block $block1
+        (set_local $0
+          (i32.const 0)
+        )
+        (get_local $0)
+        (set_local $0
+          (i32.const 1)
+        )
+      )
+    )
+    (get_local $0)
+  )
+  (func $if5
+    (local $0 i32)
+    (local $1 i32)
+    (if
+      (i32.const 0)
+      (block $block1
+        (get_local $0)
+        (set_local $1
+          (i32.const 1)
+        )
+      )
+    )
+    (get_local $1)
+  )
+  (func $loop
+    (local $0 i32)
+    (local $1 i32)
+    (loop $out $in
+      (get_local $0)
+      (set_local $0
+        (i32.const 0)
+      )
+      (get_local $1)
+      (br $in)
+    )
+  )
+  (func $interfere-in-dead
+    (local $0 i32)
+    (block $block
+      (br $block)
+      (get_local $0)
+      (get_local $0)
+    )
+  )
+  (func $interfere-in-dead2
+    (local $0 i32)
+    (block $block
+      (unreachable)
+      (get_local $0)
+      (get_local $0)
+    )
+  )
+  (func $interfere-in-dead3
+    (local $0 i32)
+    (block $block
+      (return)
+      (get_local $0)
+      (get_local $0)
+    )
+  )
+  (func $params (param $0 i32) (param $1 f32)
+    (local $2 i32)
+    (local $3 i32)
+    (get_local $0)
+    (get_local $2)
+    (get_local $3)
+  )
+  (func $interfere-in-dead
+    (local $0 i32)
+    (local $1 i32)
+    (block $block
+      (br_if $block
+        (i32.const 0)
+      )
+      (get_local $0)
+      (get_local $1)
+    )
+  )
+  (func $switch
+    (local $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (block $switch$def
+      (block $switch-case$1
+        (block $switch-case$2
+          (br_table $switch-case$1 $switch-case$2 $switch-case$1 $switch-case$1 $switch$def
+            (i32.const 100)
+          )
+          (get_local $0)
+        )
+        (get_local $0)
+      )
+      (get_local $1)
+    )
+    (get_local $2)
+  )
+  (func $greedy-can-be-happy
+    (local $0 i32)
+    (local $1 i32)
+    (if
+      (i32.const 0)
+      (if
+        (i32.const 1)
+        (if
+          (i32.const 2)
+          (block $block3
+            (set_local $0
+              (i32.const 100)
+            )
+            (set_local $1
+              (i32.const 101)
+            )
+            (get_local $0)
+            (get_local $1)
+          )
+          (block $block5
+            (set_local $0
+              (i32.const 102)
+            )
+            (set_local $1
+              (i32.const 103)
+            )
+            (get_local $0)
+            (get_local $1)
+          )
+        )
+        (if
+          (i32.const 3)
+          (block $block8
+            (set_local $0
+              (i32.const 104)
+            )
+            (set_local $1
+              (i32.const 105)
+            )
+            (get_local $0)
+            (get_local $1)
+          )
+          (block $block10
+            (set_local $0
+              (i32.const 106)
+            )
+            (set_local $1
+              (i32.const 107)
+            )
+            (get_local $0)
+            (get_local $1)
+          )
+        )
+      )
+      (if
+        (i32.const 4)
+        (block $block13
+          (set_local $0
+            (i32.const 108)
+          )
+          (set_local $1
+            (i32.const 109)
+          )
+          (get_local $0)
+          (get_local $1)
+        )
+        (block $block15
+          (set_local $0
+            (i32.const 110)
+          )
+          (set_local $1
+            (i32.const 111)
+          )
+          (get_local $0)
+          (get_local $1)
+        )
+      )
+    )
+  )
+  (func $greedy-can-be-sad
+    (local $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (if
+      (i32.const 0)
+      (if
+        (i32.const 1)
+        (if
+          (i32.const 2)
+          (block $block3
+            (set_local $0
+              (i32.const 100)
+            )
+            (set_local $1
+              (i32.const 101)
+            )
+            (get_local $0)
+            (get_local $1)
+          )
+          (block $block5
+            (set_local $0
+              (i32.const 102)
+            )
+            (set_local $2
+              (i32.const 103)
+            )
+            (get_local $0)
+            (get_local $2)
+          )
+        )
+        (if
+          (i32.const 3)
+          (block $block8
+            (set_local $1
+              (i32.const 104)
+            )
+            (set_local $0
+              (i32.const 105)
+            )
+            (get_local $1)
+            (get_local $0)
+          )
+          (block $block10
+            (set_local $1
+              (i32.const 106)
+            )
+            (set_local $2
+              (i32.const 107)
+            )
+            (get_local $1)
+            (get_local $2)
+          )
+        )
+      )
+      (if
+        (i32.const 4)
+        (block $block13
+          (set_local $2
+            (i32.const 108)
+          )
+          (set_local $0
+            (i32.const 109)
+          )
+          (get_local $2)
+          (get_local $0)
+        )
+        (block $block15
+          (set_local $2
+            (i32.const 110)
+          )
+          (set_local $1
+            (i32.const 111)
+          )
+          (get_local $2)
+          (get_local $1)
+        )
+      )
+    )
+  )
+  (func $_memcpy (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+    (local $3 i32)
+    (if
+      (i32.ge_s
+        (get_local $2)
+        (i32.const 4096)
+      )
+      (get_local $0)
+    )
+    (set_local $3
+      (get_local $0)
+    )
+    (if
+      (i32.eq
+        (i32.and
+          (get_local $0)
+          (i32.const 3)
+        )
+        (i32.and
+          (get_local $1)
+          (i32.const 3)
+        )
+      )
+      (block $block2
+        (loop $while-out$0 $while-in$1
+          (if
+            (i32.eqz
+              (i32.and
+                (get_local $0)
+                (i32.const 3)
+              )
+            )
+            (br $while-out$0)
+          )
+          (block $block4
+            (if
+              (i32.eqz
+                (get_local $2)
+              )
+              (return
+                (get_local $3)
+              )
+            )
+            (i32.store8
+              (get_local $0)
+              (i32.load8_s
+                (get_local $1)
+              )
+            )
+            (set_local $0
+              (i32.add
+                (get_local $0)
+                (i32.const 1)
+              )
+            )
+            (set_local $1
+              (i32.add
+                (get_local $1)
+                (i32.const 1)
+              )
+            )
+            (set_local $2
+              (i32.sub
+                (get_local $2)
+                (i32.const 1)
+              )
+            )
+          )
+          (br $while-in$1)
+        )
+        (loop $while-out$2 $while-in$3
+          (if
+            (i32.eqz
+              (i32.ge_s
+                (get_local $2)
+                (i32.const 4)
+              )
+            )
+            (br $while-out$2)
+          )
+          (block $block7
+            (i32.store
+              (get_local $0)
+              (i32.load
+                (get_local $1)
+              )
+            )
+            (set_local $0
+              (i32.add
+                (get_local $0)
+                (i32.const 4)
+              )
+            )
+            (set_local $1
+              (i32.add
+                (get_local $1)
+                (i32.const 4)
+              )
+            )
+            (set_local $2
+              (i32.sub
+                (get_local $2)
+                (i32.const 4)
+              )
+            )
+          )
+          (br $while-in$3)
+        )
+      )
+    )
+    (loop $while-out$4 $while-in$5
+      (if
+        (i32.eqz
+          (i32.gt_s
+            (get_local $2)
+            (i32.const 0)
+          )
+        )
+        (br $while-out$4)
+      )
+      (block $block9
+        (i32.store8
+          (get_local $0)
+          (i32.load8_s
+            (get_local $1)
+          )
+        )
+        (set_local $0
+          (i32.add
+            (get_local $0)
+            (i32.const 1)
+          )
+        )
+        (set_local $1
+          (i32.add
+            (get_local $1)
+            (i32.const 1)
+          )
+        )
+        (set_local $2
+          (i32.sub
+            (get_local $2)
+            (i32.const 1)
+          )
+        )
+      )
+      (br $while-in$5)
+    )
+    (return
+      (get_local $3)
+    )
+  )
+  (func $this-is-effective-i-tell-you (param $0 i32)
+    (if
+      (i32.const -1)
+      (block $block1
+        (if
+          (i32.const 0)
+          (nop)
+        )
+        (set_local $0
+          (i32.const 1)
+        )
+      )
+      (nop)
+    )
+    (get_local $0)
+  )
+)
