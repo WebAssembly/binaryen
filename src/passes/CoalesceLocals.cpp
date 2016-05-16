@@ -314,9 +314,10 @@ bool CoalesceLocals::mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks,
   // this is not a new conflict.
   if (ret == old) return false;
   // add conflicts
-  for (auto i : ret) {
-    for (auto j : ret) {
-      interfere(i, j);
+  size_t size = ret.size();
+  for (size_t i = 0; i < size; i++) {
+    for (size_t j = i + 1; j < size; j++) {
+      interfere(ret[i], ret[j]);
     }
   }
   return true;
