@@ -191,18 +191,21 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   // interference state
 
-  std::vector<bool> interferences;
+  std::vector<bool> interferences; // canonicalized - accesses should check (low, high)
   std::unordered_set<BasicBlock*> liveBlocks;
 
   void interfere(Index i, Index j) {
     if (i == j) return;
-  #ifdef CFG_DEBUG
-    if (!interferences[i + j * numLocals]) {
-      std::cout << getFunction()->name << ": interfere " << getFunction()->getLocalName(std::min(i, j)) << " : " << getFunction()->getLocalName(std::max(i, j)) << "\n";
-    }
-  #endif
-    interferences[i + j * numLocals] = 1;
-    interferences[j + i * numLocals] = 1;
+    interferences[std::min(i, j) * numLocals + std::max(i, j)] = 1;
+  }
+
+  void interfereLowHigh(Index low, Index high) { // optimized version where you know that low < high
+    assert(low < high);
+    interferences[low * numLocals + high] = 1;
+  }
+
+  bool interferes(Index i, Index j) {
+    return interferences[std::min(i, j) * numLocals + std::max(i, j)];
   }
 };
 
@@ -276,8 +279,7 @@ void CoalesceLocals::flowLiveness() {
   for (size_t i = 0; i < numLocals; i++) {
     std::cout << "int for " << getFunction()->getLocalName(i) << " [" << i << "]: ";
     for (size_t j = 0; j < numLocals; j++) {
-      assert(interferences[i * numLocals + j] == interferences[j * numLocals + i]);
-      if (interferences[i * numLocals + j]) std::cout << getFunction()->getLocalName(j) << " ";
+      if (interferes(i, j)) std::cout << getFunction()->getLocalName(j) << " ";
     }
     std::cout << "\n";
   }
@@ -317,7 +319,7 @@ bool CoalesceLocals::mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks,
   size_t size = ret.size();
   for (size_t i = 0; i < size; i++) {
     for (size_t j = i + 1; j < size; j++) {
-      interfere(ret[i], ret[j]);
+      interfereLowHigh(ret[i], ret[j]);
     }
   }
   return true;
@@ -363,7 +365,9 @@ std::vector<Index> CoalesceLocals::pickIndices() { // returns a vector of oldInd
   for (; i < numParams; i++) {
     indices[i] = i;
     types[i] = getFunction()->getLocalType(i);
-    std::copy(interferences.begin() + numLocals * i, interferences.begin() + numLocals * (i + 1), newInterferences.begin() + numLocals * i);
+    for (size_t j = 0; j < numLocals; j++) {
+      newInterferences[numLocals * i + j] = interferes(i, j);
+    }
     nextFree++;
   }
   for (; i < numLocals; i++) {
@@ -381,7 +385,7 @@ std::vector<Index> CoalesceLocals::pickIndices() { // returns a vector of oldInd
     }
     // merge new interferences for the new index
     for (size_t j = 0; j < numLocals; j++) {
-      newInterferences[found * numLocals + j] = newInterferences[found * numLocals + j] | interferences[i * numLocals + j];
+      newInterferences[found * numLocals + j] = newInterferences[found * numLocals + j] | interferes(i, j);
     }
   }
   return indices;
