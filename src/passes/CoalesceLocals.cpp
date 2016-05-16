@@ -183,7 +183,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     liveBlocks = findLiveBlocks();
     unlinkDeadBlocks(liveBlocks);
 #ifdef CFG_DEBUG
-    dumpCFG("the cfg", getFunction());
+    dumpCFG("the cfg");
 #endif
     // flow liveness across blocks
 #ifdef CFG_PROFILE
