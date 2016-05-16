@@ -29,6 +29,9 @@
 #include "pass.h"
 #include "ast_utils.h"
 #include "cfg/cfg-traversal.h"
+#ifdef CFG_PROFILE
+#include "support/timing.h"
+#endif
 
 namespace wasm {
 
@@ -183,7 +186,15 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     dumpCFG("the cfg", getFunction());
 #endif
     // flow liveness across blocks
+#ifdef CFG_PROFILE
+    static Timer timer("flow");
+    timer.start();
+#endif
     flowLiveness();
+#ifdef CFG_PROFILE
+    timer.stop();
+    timer.dump();
+#endif
     // pick new indices
     auto indices = pickIndices();
     // apply indices
