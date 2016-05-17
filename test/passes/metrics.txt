@@ -1,12 +1,14 @@
 Counts
+ [total]        : 18      
+ [vars]         : 1       
  binary         : 1       
  block          : 1       
  const          : 12      
  if             : 4       
-Total           : 18      
 (module
   (memory 256 256)
-  (func $ifs
+  (func $ifs (param $x i32)
+    (local $y f32)
     (block $block0
       (if
         (i32.const 0)
