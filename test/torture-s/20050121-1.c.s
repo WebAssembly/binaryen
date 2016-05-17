@@ -10,11 +10,11 @@ foo_float:                              # @foo_float
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
 	f32.convert_s/i32	$push2=, $pop1
-	f32.store	$discard=, 0($0), $pop2
+	f32.store	$drop=, 0($0), $pop2
 	i32.const	$push3=, -1
 	i32.add 	$push4=, $1, $pop3
 	f32.convert_s/i32	$push5=, $pop4
-	f32.store	$discard=, 4($0), $pop5
+	f32.store	$drop=, 4($0), $pop5
 	return
 	.endfunc
 .Lfunc_end0:
@@ -28,7 +28,7 @@ bar_float:                              # @bar_float
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1086324736
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end1:
@@ -42,7 +42,7 @@ baz_float:                              # @baz_float
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1082130432
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end2:
@@ -58,11 +58,11 @@ foo_double:                             # @foo_double
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
 	f64.convert_s/i32	$push2=, $pop1
-	f64.store	$discard=, 0($0), $pop2
+	f64.store	$drop=, 0($0), $pop2
 	i32.const	$push3=, -1
 	i32.add 	$push4=, $1, $pop3
 	f64.convert_s/i32	$push5=, $pop4
-	f64.store	$discard=, 8($0), $pop5
+	f64.store	$drop=, 8($0), $pop5
 	return
 	.endfunc
 .Lfunc_end3:
@@ -76,7 +76,7 @@ bar_double:                             # @bar_double
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 4618441417868443648
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end4:
@@ -90,7 +90,7 @@ baz_double:                             # @baz_double
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 4616189618054758400
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end5:
@@ -131,16 +131,16 @@ foo_ldouble_t:                          # @foo_ldouble_t
 	i64.load	$5=, 0($6)
 	i32.const	$push22=, 8
 	i32.add 	$push7=, $0, $pop22
-	i64.store	$discard=, 0($pop7), $2
+	i64.store	$drop=, 0($pop7), $2
 	i32.const	$push8=, 24
 	i32.add 	$push9=, $0, $pop8
-	i64.store	$discard=, 0($pop9), $4
-	i64.store	$discard=, 0($0), $3
-	i64.store	$discard=, 16($0), $5
+	i64.store	$drop=, 0($pop9), $4
+	i64.store	$drop=, 0($0), $3
+	i64.store	$drop=, 16($0), $5
 	i32.const	$push16=, __stack_pointer
 	i32.const	$push14=, 32
 	i32.add 	$push15=, $6, $pop14
-	i32.store	$discard=, 0($pop16), $pop15
+	i32.store	$drop=, 0($pop16), $pop15
 	return
 	.endfunc
 .Lfunc_end6:
@@ -154,11 +154,11 @@ bar_ldouble_t:                          # @bar_ldouble_t
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 0
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	i32.const	$push1=, 8
 	i32.add 	$push2=, $0, $pop1
 	i64.const	$push3=, 4612108230892453888
-	i64.store	$discard=, 0($pop2), $pop3
+	i64.store	$drop=, 0($pop2), $pop3
 	return
 	.endfunc
 .Lfunc_end7:
@@ -172,11 +172,11 @@ baz_ldouble_t:                          # @baz_ldouble_t
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 0
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	i32.const	$push1=, 8
 	i32.add 	$push2=, $0, $pop1
 	i64.const	$push3=, 4611967493404098560
-	i64.store	$discard=, 0($pop2), $pop3
+	i64.store	$drop=, 0($pop2), $pop3
 	return
 	.endfunc
 .Lfunc_end8:
@@ -191,10 +191,10 @@ foo_char:                               # @foo_char
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
-	i32.store8	$discard=, 0($0), $pop1
+	i32.store8	$drop=, 0($0), $pop1
 	i32.const	$push2=, 255
 	i32.add 	$push3=, $1, $pop2
-	i32.store8	$discard=, 1($0), $pop3
+	i32.store8	$drop=, 1($0), $pop3
 	return
 	.endfunc
 .Lfunc_end9:
@@ -208,7 +208,7 @@ bar_char:                               # @bar_char
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
-	i32.store8	$discard=, 0($0), $pop0
+	i32.store8	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end10:
@@ -222,7 +222,7 @@ baz_char:                               # @baz_char
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4
-	i32.store8	$discard=, 0($0), $pop0
+	i32.store8	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end11:
@@ -237,10 +237,10 @@ foo_short:                              # @foo_short
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
-	i32.store16	$discard=, 0($0), $pop1
+	i32.store16	$drop=, 0($0), $pop1
 	i32.const	$push2=, 65535
 	i32.add 	$push3=, $1, $pop2
-	i32.store16	$discard=, 2($0), $pop3
+	i32.store16	$drop=, 2($0), $pop3
 	return
 	.endfunc
 .Lfunc_end12:
@@ -254,7 +254,7 @@ bar_short:                              # @bar_short
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
-	i32.store16	$discard=, 0($0), $pop0
+	i32.store16	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end13:
@@ -268,7 +268,7 @@ baz_short:                              # @baz_short
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4
-	i32.store16	$discard=, 0($0), $pop0
+	i32.store16	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end14:
@@ -283,10 +283,10 @@ foo_int:                                # @foo_int
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
-	i32.store	$discard=, 0($0), $pop1
+	i32.store	$drop=, 0($0), $pop1
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $1, $pop2
-	i32.store	$discard=, 4($0), $pop3
+	i32.store	$drop=, 4($0), $pop3
 	return
 	.endfunc
 .Lfunc_end15:
@@ -300,7 +300,7 @@ bar_int:                                # @bar_int
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end16:
@@ -314,7 +314,7 @@ baz_int:                                # @baz_int
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end17:
@@ -329,10 +329,10 @@ foo_long:                               # @foo_long
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
-	i32.store	$discard=, 0($0), $pop1
+	i32.store	$drop=, 0($0), $pop1
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $1, $pop2
-	i32.store	$discard=, 4($0), $pop3
+	i32.store	$drop=, 4($0), $pop3
 	return
 	.endfunc
 .Lfunc_end18:
@@ -346,7 +346,7 @@ bar_long:                               # @bar_long
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 6
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end19:
@@ -360,7 +360,7 @@ baz_long:                               # @baz_long
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end20:
@@ -376,11 +376,11 @@ foo_llong:                              # @foo_llong
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
 	i64.extend_s/i32	$push2=, $pop1
-	i64.store	$discard=, 0($0), $pop2
+	i64.store	$drop=, 0($0), $pop2
 	i32.const	$push3=, -1
 	i32.add 	$push4=, $1, $pop3
 	i64.extend_s/i32	$push5=, $pop4
-	i64.store	$discard=, 8($0), $pop5
+	i64.store	$drop=, 8($0), $pop5
 	return
 	.endfunc
 .Lfunc_end21:
@@ -394,7 +394,7 @@ bar_llong:                              # @bar_llong
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 6
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end22:
@@ -408,7 +408,7 @@ baz_llong:                              # @baz_llong
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 4
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end23:

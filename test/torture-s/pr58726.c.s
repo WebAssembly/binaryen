@@ -31,10 +31,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 56374
-	i32.store	$discard=, b($pop1), $pop0
+	i32.store	$drop=, b($pop1), $pop0
 	i32.const	$push4=, 0
 	i32.const	$push2=, -9162
-	i32.store	$discard=, c($pop4), $pop2
+	i32.store	$drop=, c($pop4), $pop2
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc

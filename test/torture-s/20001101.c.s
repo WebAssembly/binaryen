@@ -9,7 +9,7 @@ dummy:                                  # @dummy
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push2=, 7
-	i32.store	$discard=, 0($1), $pop2
+	i32.store	$drop=, 0($1), $pop2
 	i32.const	$push1=, 1
 	i32.store	$push0=, 0($0), $pop1
 	return  	$pop0
@@ -27,7 +27,7 @@ bogus:                                  # @bogus
 	i32.load8_u	$push0=, 0($0)
 	i32.const	$push1=, 1
 	i32.or  	$push2=, $pop0, $pop1
-	i32.store8	$discard=, 0($0), $pop2
+	i32.store8	$drop=, 0($0), $pop2
 	block
 	i32.const	$push3=, 7
 	i32.ne  	$push4=, $1, $pop3

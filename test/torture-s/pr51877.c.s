@@ -10,17 +10,17 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.load	$2=, bar.n($pop1)
-	i32.store8	$discard=, 4($0), $1
+	i32.store8	$drop=, 4($0), $1
 	i32.const	$push8=, 0
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $2, $pop2
 	i32.store	$push0=, 0($0), $pop3
-	i32.store	$discard=, bar.n($pop8), $pop0
+	i32.store	$drop=, bar.n($pop8), $pop0
 	i32.const	$push4=, 5
 	i32.add 	$push5=, $0, $pop4
 	i32.const	$push7=, 0
 	i32.const	$push6=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop5, $pop7, $pop6
+	i32.call	$drop=, memset@FUNCTION, $pop5, $pop7, $pop6
 	return
 	.endfunc
 .Lfunc_end0:
@@ -67,21 +67,21 @@ foo:                                    # @foo
 	i32.const	$push16=, 40
 	i32.add 	$push17=, $2, $pop16
 	i32.const	$push6=, 36
-	i32.call	$discard=, memcpy@FUNCTION, $pop5, $pop17, $pop6
+	i32.call	$drop=, memcpy@FUNCTION, $pop5, $pop17, $pop6
 	br      	1               # 1: down to label0
 .LBB2_2:                                # %if.else
 	end_block                       # label1:
 	i32.const	$push2=, 7
 	call    	bar@FUNCTION, $2, $pop2
 	i32.const	$push3=, 36
-	i32.call	$discard=, memcpy@FUNCTION, $0, $2, $pop3
+	i32.call	$drop=, memcpy@FUNCTION, $0, $2, $pop3
 .LBB2_3:                                # %if.end
 	end_block                       # label0:
 	call    	baz@FUNCTION
 	i32.const	$push13=, __stack_pointer
 	i32.const	$push11=, 80
 	i32.add 	$push12=, $2, $pop11
-	i32.store	$discard=, 0($pop13), $pop12
+	i32.store	$drop=, 0($pop13), $pop12
 	return
 	.endfunc
 .Lfunc_end2:
@@ -110,12 +110,12 @@ main:                                   # @main
 	i32.const	$push56=, 40
 	i32.add 	$push57=, $0, $pop56
 	i32.const	$push1=, 36
-	i32.call	$discard=, memcpy@FUNCTION, $pop0, $pop57, $pop1
+	i32.call	$drop=, memcpy@FUNCTION, $pop0, $pop57, $pop1
 	i32.const	$push2=, 4
 	call    	bar@FUNCTION, $0, $pop2
 	i32.const	$push3=, b
 	i32.const	$push60=, 36
-	i32.call	$discard=, memcpy@FUNCTION, $pop3, $0, $pop60
+	i32.call	$drop=, memcpy@FUNCTION, $pop3, $0, $pop60
 	block
 	i32.const	$push59=, 0
 	i32.load	$push4=, a($pop59)
@@ -204,7 +204,7 @@ main:                                   # @main
 	i32.const	$push53=, __stack_pointer
 	i32.const	$push51=, 80
 	i32.add 	$push52=, $0, $pop51
-	i32.store	$discard=, 0($pop53), $pop52
+	i32.store	$drop=, 0($pop53), $pop52
 	i32.const	$push46=, 0
 	return  	$pop46
 .LBB3_13:                               # %if.then39

@@ -11,7 +11,7 @@ one_raw_spinlock:                       # @one_raw_spinlock
 	i32.load	$push1=, ii($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, ii($pop0), $pop3
+	i32.store	$drop=, ii($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -31,7 +31,7 @@ main:                                   # @main
 	tee_local	$push2=, $0=, $pop3
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $pop2, $pop0
-	i32.store	$discard=, ii($pop5), $pop1
+	i32.store	$drop=, ii($pop5), $pop1
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end

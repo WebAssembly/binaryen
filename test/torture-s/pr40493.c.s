@@ -12,12 +12,12 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	i32.const	$push2=, 2
 	i32.store	$push0=, x00($pop8), $pop2
-	i32.store	$discard=, y00($pop3), $pop0
+	i32.store	$drop=, y00($pop3), $pop0
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
 	i32.const	$push4=, 22
 	i32.store	$push1=, x01($pop6), $pop4
-	i32.store	$discard=, y01($pop7), $pop1
+	i32.store	$drop=, y01($pop7), $pop1
 	i32.const	$push5=, 0
 	return  	$pop5
 	.endfunc

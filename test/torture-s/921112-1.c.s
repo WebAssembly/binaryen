@@ -9,7 +9,7 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	i64.load	$push0=, 0($1)
-	i64.store	$discard=, 8($0), $pop0
+	i64.store	$drop=, 8($0), $pop0
 	return  	$1
 	.endfunc
 .Lfunc_end0:
@@ -26,7 +26,7 @@ main:                                   # @main
 	i32.const	$push7=, 0
 	i64.const	$push2=, 8589934593
 	i64.store	$push0=, v($pop7), $pop2
-	i64.store	$discard=, x+8($pop3), $pop0
+	i64.store	$drop=, x+8($pop3), $pop0
 	block
 	i32.const	$push6=, 0
 	br_if   	0, $pop6        # 0: down to label0

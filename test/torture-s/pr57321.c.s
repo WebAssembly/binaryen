@@ -15,7 +15,7 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
 	i32.const	$push2=, 1
-	i32.store	$discard=, 0($pop1), $pop2
+	i32.store	$drop=, 0($pop1), $pop2
 .LBB0_2:                                # %foo.exit
 	end_block                       # label0:
 	i32.const	$push5=, 0

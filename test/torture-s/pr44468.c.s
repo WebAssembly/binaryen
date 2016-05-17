@@ -13,7 +13,7 @@ test1:                                  # @test1
 	i32.const	$push3=, 0
 	i32.store	$1=, s+4($pop0), $pop3
 	i32.const	$push1=, 3
-	i32.store	$discard=, 4($0), $pop1
+	i32.store	$drop=, 4($0), $pop1
 	i32.load	$push2=, s+4($1)
 	return  	$pop2
 	.endfunc
@@ -33,7 +33,7 @@ test2:                                  # @test2
 	i32.const	$push3=, 0
 	i32.store	$1=, s+4($pop0), $pop3
 	i32.const	$push1=, 3
-	i32.store	$discard=, 4($0), $pop1
+	i32.store	$drop=, 4($0), $pop1
 	i32.load	$push2=, s+4($1)
 	return  	$pop2
 	.endfunc
@@ -53,7 +53,7 @@ test3:                                  # @test3
 	i32.const	$push3=, 0
 	i32.store	$1=, s+4($pop0), $pop3
 	i32.const	$push1=, 3
-	i32.store	$discard=, 4($0), $pop1
+	i32.store	$drop=, 4($0), $pop1
 	i32.load	$push2=, s+4($1)
 	return  	$pop2
 	.endfunc
@@ -79,7 +79,7 @@ main:                                   # @main
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push15=, 0
-	i64.store	$discard=, s+4($pop15):p2align=2, $0
+	i64.store	$drop=, s+4($pop15):p2align=2, $0
 	i32.const	$push14=, s
 	i32.call	$push3=, test2@FUNCTION, $pop14
 	i32.const	$push13=, 3
@@ -88,7 +88,7 @@ main:                                   # @main
 # BB#2:                                 # %if.end4
 	i32.const	$push16=, 0
 	i64.const	$push5=, 8589934593
-	i64.store	$discard=, s+4($pop16):p2align=2, $pop5
+	i64.store	$drop=, s+4($pop16):p2align=2, $pop5
 	i32.const	$push6=, s
 	i32.call	$push7=, test3@FUNCTION, $pop6
 	i32.const	$push8=, 3

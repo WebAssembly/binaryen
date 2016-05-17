@@ -9,7 +9,7 @@ reset:                                  # @reset
 	i32.const	$push0=, u
 	i32.const	$push2=, 97
 	i32.const	$push1=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop0, $pop2, $pop1
+	i32.call	$drop=, memset@FUNCTION, $pop0, $pop2, $pop1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -141,14 +141,14 @@ main:                                   # @main
 	i32.const	$push93=, u
 	i32.const	$push92=, 97
 	i32.const	$push91=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop93, $pop92, $pop91
+	i32.call	$drop=, memset@FUNCTION, $pop93, $pop92, $pop91
 	i32.const	$push90=, 1
 	i32.const	$push89=, 0
 	i32.store8	$push88=, u($1), $pop89
 	tee_local	$push87=, $0=, $pop88
 	call    	check@FUNCTION, $1, $pop90, $pop87
 	i32.load8_u	$push33=, A($0)
-	i32.store8	$discard=, u($1), $pop33
+	i32.store8	$drop=, u($1), $pop33
 	i32.const	$push86=, 1
 	i32.const	$push85=, 65
 	call    	check@FUNCTION, $1, $pop86, $pop85
@@ -170,7 +170,7 @@ main:                                   # @main
 	i32.const	$push108=, u
 	i32.const	$push107=, 97
 	i32.const	$push106=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop108, $pop107, $pop106
+	i32.call	$drop=, memset@FUNCTION, $pop108, $pop107, $pop106
 	i32.const	$push105=, 2
 	i32.const	$push104=, 0
 	i32.store16	$push103=, u($1):p2align=0, $pop104
@@ -179,12 +179,12 @@ main:                                   # @main
 	i32.load8_u	$push35=, A($0)
 	i32.const	$push101=, 257
 	i32.mul 	$push36=, $pop35, $pop101
-	i32.store16	$discard=, u($1):p2align=0, $pop36
+	i32.store16	$drop=, u($1):p2align=0, $pop36
 	i32.const	$push100=, 2
 	i32.const	$push99=, 65
 	call    	check@FUNCTION, $1, $pop100, $pop99
 	i32.const	$push98=, 16962
-	i32.store16	$discard=, u($1):p2align=0, $pop98
+	i32.store16	$drop=, u($1):p2align=0, $pop98
 	i32.const	$push97=, 2
 	i32.const	$push96=, 66
 	call    	check@FUNCTION, $1, $pop97, $pop96
@@ -202,7 +202,7 @@ main:                                   # @main
 	i32.const	$push123=, u
 	i32.const	$push122=, 97
 	i32.const	$push121=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop123, $pop122, $pop121
+	i32.call	$drop=, memset@FUNCTION, $pop123, $pop122, $pop121
 	i32.const	$push120=, 3
 	i32.const	$push119=, 0
 	i32.store8	$push1=, u+2($1), $pop119
@@ -213,14 +213,14 @@ main:                                   # @main
 	i32.store8	$push2=, u+2($1), $pop38
 	i32.const	$push116=, 257
 	i32.mul 	$push39=, $pop2, $pop116
-	i32.store16	$discard=, u($1):p2align=0, $pop39
+	i32.store16	$drop=, u($1):p2align=0, $pop39
 	i32.const	$push115=, 3
 	i32.const	$push114=, 65
 	call    	check@FUNCTION, $1, $pop115, $pop114
 	i32.const	$push113=, 66
 	i32.store8	$0=, u+2($1), $pop113
 	i32.const	$push112=, 16962
-	i32.store16	$discard=, u($1):p2align=0, $pop112
+	i32.store16	$drop=, u($1):p2align=0, $pop112
 	i32.const	$push111=, 3
 	call    	check@FUNCTION, $1, $pop111, $0
 	i32.const	$push110=, 1
@@ -237,7 +237,7 @@ main:                                   # @main
 	i32.const	$push138=, u
 	i32.const	$push137=, 97
 	i32.const	$push136=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop138, $pop137, $pop136
+	i32.call	$drop=, memset@FUNCTION, $pop138, $pop137, $pop136
 	i32.const	$push135=, 4
 	i32.const	$push134=, 0
 	i32.store	$push133=, u($1):p2align=0, $pop134
@@ -246,12 +246,12 @@ main:                                   # @main
 	i32.load8_u	$push41=, A($0)
 	i32.const	$push131=, 16843009
 	i32.mul 	$push42=, $pop41, $pop131
-	i32.store	$discard=, u($1):p2align=0, $pop42
+	i32.store	$drop=, u($1):p2align=0, $pop42
 	i32.const	$push130=, 4
 	i32.const	$push129=, 65
 	call    	check@FUNCTION, $1, $pop130, $pop129
 	i32.const	$push128=, 1111638594
-	i32.store	$discard=, u($1):p2align=0, $pop128
+	i32.store	$drop=, u($1):p2align=0, $pop128
 	i32.const	$push127=, 4
 	i32.const	$push126=, 66
 	call    	check@FUNCTION, $1, $pop127, $pop126
@@ -269,7 +269,7 @@ main:                                   # @main
 	i32.const	$push153=, u
 	i32.const	$push152=, 97
 	i32.const	$push151=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop153, $pop152, $pop151
+	i32.call	$drop=, memset@FUNCTION, $pop153, $pop152, $pop151
 	i32.const	$push150=, 5
 	i32.const	$push149=, 0
 	i32.store8	$push3=, u+4($1), $pop149
@@ -280,14 +280,14 @@ main:                                   # @main
 	i32.store8	$push4=, u+4($1), $pop44
 	i32.const	$push146=, 16843009
 	i32.mul 	$push45=, $pop4, $pop146
-	i32.store	$discard=, u($1):p2align=0, $pop45
+	i32.store	$drop=, u($1):p2align=0, $pop45
 	i32.const	$push145=, 5
 	i32.const	$push144=, 65
 	call    	check@FUNCTION, $1, $pop145, $pop144
 	i32.const	$push143=, 66
 	i32.store8	$0=, u+4($1), $pop143
 	i32.const	$push142=, 1111638594
-	i32.store	$discard=, u($1):p2align=0, $pop142
+	i32.store	$drop=, u($1):p2align=0, $pop142
 	i32.const	$push141=, 5
 	call    	check@FUNCTION, $1, $pop141, $0
 	i32.const	$push140=, 1
@@ -304,7 +304,7 @@ main:                                   # @main
 	i32.const	$push172=, u
 	i32.const	$push171=, 97
 	i32.const	$push170=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop172, $pop171, $pop170
+	i32.call	$drop=, memset@FUNCTION, $pop172, $pop171, $pop170
 	i32.const	$push169=, 6
 	i32.const	$push168=, 0
 	i32.store16	$push5=, u+4($1):p2align=0, $pop168
@@ -315,17 +315,17 @@ main:                                   # @main
 	tee_local	$push164=, $0=, $pop165
 	i32.const	$push163=, 257
 	i32.mul 	$push47=, $pop164, $pop163
-	i32.store16	$discard=, u+4($1):p2align=0, $pop47
+	i32.store16	$drop=, u+4($1):p2align=0, $pop47
 	i32.const	$push162=, 16843009
 	i32.mul 	$push48=, $0, $pop162
-	i32.store	$discard=, u($1):p2align=0, $pop48
+	i32.store	$drop=, u($1):p2align=0, $pop48
 	i32.const	$push161=, 6
 	i32.const	$push160=, 65
 	call    	check@FUNCTION, $1, $pop161, $pop160
 	i32.const	$push159=, 16962
-	i32.store16	$discard=, u+4($1):p2align=0, $pop159
+	i32.store16	$drop=, u+4($1):p2align=0, $pop159
 	i32.const	$push158=, 1111638594
-	i32.store	$discard=, u($1):p2align=0, $pop158
+	i32.store	$drop=, u($1):p2align=0, $pop158
 	i32.const	$push157=, 6
 	i32.const	$push156=, 66
 	call    	check@FUNCTION, $1, $pop157, $pop156
@@ -343,7 +343,7 @@ main:                                   # @main
 	i32.const	$push191=, u
 	i32.const	$push190=, 97
 	i32.const	$push189=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop191, $pop190, $pop189
+	i32.call	$drop=, memset@FUNCTION, $pop191, $pop190, $pop189
 	i32.const	$push188=, 7
 	i32.const	$push187=, 0
 	i32.store8	$push6=, u+6($1), $pop187
@@ -356,19 +356,19 @@ main:                                   # @main
 	tee_local	$push183=, $0=, $pop184
 	i32.const	$push182=, 257
 	i32.mul 	$push51=, $pop183, $pop182
-	i32.store16	$discard=, u+4($1):p2align=0, $pop51
+	i32.store16	$drop=, u+4($1):p2align=0, $pop51
 	i32.const	$push181=, 16843009
 	i32.mul 	$push52=, $0, $pop181
-	i32.store	$discard=, u($1):p2align=0, $pop52
+	i32.store	$drop=, u($1):p2align=0, $pop52
 	i32.const	$push180=, 7
 	i32.const	$push179=, 65
 	call    	check@FUNCTION, $1, $pop180, $pop179
 	i32.const	$push178=, 66
 	i32.store8	$0=, u+6($1), $pop178
 	i32.const	$push177=, 16962
-	i32.store16	$discard=, u+4($1):p2align=0, $pop177
+	i32.store16	$drop=, u+4($1):p2align=0, $pop177
 	i32.const	$push176=, 1111638594
-	i32.store	$discard=, u($1):p2align=0, $pop176
+	i32.store	$drop=, u($1):p2align=0, $pop176
 	i32.const	$push175=, 7
 	call    	check@FUNCTION, $1, $pop175, $0
 	i32.const	$push174=, 1
@@ -385,9 +385,9 @@ main:                                   # @main
 	i32.const	$push206=, u
 	i32.const	$push205=, 97
 	i32.const	$push204=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop206, $pop205, $pop204
+	i32.call	$drop=, memset@FUNCTION, $pop206, $pop205, $pop204
 	i64.const	$push203=, 0
-	i64.store	$discard=, u($1):p2align=0, $pop203
+	i64.store	$drop=, u($1):p2align=0, $pop203
 	i32.const	$push202=, 8
 	i32.const	$push201=, 0
 	call    	check@FUNCTION, $1, $pop202, $pop201
@@ -396,12 +396,12 @@ main:                                   # @main
 	i32.const	$push199=, 16843009
 	i32.mul 	$push55=, $pop54, $pop199
 	i32.store	$push8=, u+4($1):p2align=0, $pop55
-	i32.store	$discard=, u($1):p2align=0, $pop8
+	i32.store	$drop=, u($1):p2align=0, $pop8
 	i32.const	$push198=, 8
 	i32.const	$push197=, 65
 	call    	check@FUNCTION, $1, $pop198, $pop197
 	i64.const	$push196=, 4774451407313060418
-	i64.store	$discard=, u($1):p2align=0, $pop196
+	i64.store	$drop=, u($1):p2align=0, $pop196
 	i32.const	$push195=, 8
 	i32.const	$push194=, 66
 	call    	check@FUNCTION, $1, $pop195, $pop194
@@ -419,7 +419,7 @@ main:                                   # @main
 	i32.const	$push221=, u
 	i32.const	$push220=, 97
 	i32.const	$push219=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop221, $pop220, $pop219
+	i32.call	$drop=, memset@FUNCTION, $pop221, $pop220, $pop219
 	i32.const	$push218=, 9
 	i32.const	$push217=, 0
 	i32.store8	$push9=, u+8($1), $pop217
@@ -432,7 +432,7 @@ main:                                   # @main
 	i32.const	$push214=, 16843009
 	i32.mul 	$push58=, $pop11, $pop214
 	i32.store	$push12=, u+4($1):p2align=0, $pop58
-	i32.store	$discard=, u($1):p2align=0, $pop12
+	i32.store	$drop=, u($1):p2align=0, $pop12
 	i32.const	$push213=, 9
 	i32.const	$push212=, 65
 	call    	check@FUNCTION, $1, $pop213, $pop212
@@ -440,7 +440,7 @@ main:                                   # @main
 	i32.store8	$0=, u+8($1), $pop211
 	i32.const	$push210=, 1111638594
 	i32.store	$push13=, u+4($1):p2align=0, $pop210
-	i32.store	$discard=, u($1):p2align=0, $pop13
+	i32.store	$drop=, u($1):p2align=0, $pop13
 	i32.const	$push209=, 9
 	call    	check@FUNCTION, $1, $pop209, $0
 	i32.const	$push208=, 1
@@ -457,7 +457,7 @@ main:                                   # @main
 	i32.const	$push240=, u
 	i32.const	$push239=, 97
 	i32.const	$push238=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop240, $pop239, $pop238
+	i32.call	$drop=, memset@FUNCTION, $pop240, $pop239, $pop238
 	i32.const	$push237=, 10
 	i32.const	$push236=, 0
 	i32.store16	$push14=, u+8($1):p2align=0, $pop236
@@ -469,19 +469,19 @@ main:                                   # @main
 	tee_local	$push232=, $0=, $pop233
 	i32.const	$push231=, 257
 	i32.mul 	$push60=, $pop232, $pop231
-	i32.store16	$discard=, u+8($1):p2align=0, $pop60
+	i32.store16	$drop=, u+8($1):p2align=0, $pop60
 	i32.const	$push230=, 16843009
 	i32.mul 	$push61=, $0, $pop230
 	i32.store	$push16=, u+4($1):p2align=0, $pop61
-	i32.store	$discard=, u($1):p2align=0, $pop16
+	i32.store	$drop=, u($1):p2align=0, $pop16
 	i32.const	$push229=, 10
 	i32.const	$push228=, 65
 	call    	check@FUNCTION, $1, $pop229, $pop228
 	i32.const	$push227=, 16962
-	i32.store16	$discard=, u+8($1):p2align=0, $pop227
+	i32.store16	$drop=, u+8($1):p2align=0, $pop227
 	i32.const	$push226=, 1111638594
 	i32.store	$push17=, u+4($1):p2align=0, $pop226
-	i32.store	$discard=, u($1):p2align=0, $pop17
+	i32.store	$drop=, u($1):p2align=0, $pop17
 	i32.const	$push225=, 10
 	i32.const	$push224=, 66
 	call    	check@FUNCTION, $1, $pop225, $pop224
@@ -499,7 +499,7 @@ main:                                   # @main
 	i32.const	$push259=, u
 	i32.const	$push258=, 97
 	i32.const	$push257=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop259, $pop258, $pop257
+	i32.call	$drop=, memset@FUNCTION, $pop259, $pop258, $pop257
 	i32.const	$push256=, 11
 	i32.const	$push255=, 0
 	i32.store8	$push18=, u+10($1), $pop255
@@ -513,21 +513,21 @@ main:                                   # @main
 	tee_local	$push251=, $0=, $pop252
 	i32.const	$push250=, 257
 	i32.mul 	$push64=, $pop251, $pop250
-	i32.store16	$discard=, u+8($1):p2align=0, $pop64
+	i32.store16	$drop=, u+8($1):p2align=0, $pop64
 	i32.const	$push249=, 16843009
 	i32.mul 	$push65=, $0, $pop249
 	i32.store	$push21=, u+4($1):p2align=0, $pop65
-	i32.store	$discard=, u($1):p2align=0, $pop21
+	i32.store	$drop=, u($1):p2align=0, $pop21
 	i32.const	$push248=, 11
 	i32.const	$push247=, 65
 	call    	check@FUNCTION, $1, $pop248, $pop247
 	i32.const	$push246=, 66
 	i32.store8	$0=, u+10($1), $pop246
 	i32.const	$push245=, 16962
-	i32.store16	$discard=, u+8($1):p2align=0, $pop245
+	i32.store16	$drop=, u+8($1):p2align=0, $pop245
 	i32.const	$push244=, 1111638594
 	i32.store	$push22=, u+4($1):p2align=0, $pop244
-	i32.store	$discard=, u($1):p2align=0, $pop22
+	i32.store	$drop=, u($1):p2align=0, $pop22
 	i32.const	$push243=, 11
 	call    	check@FUNCTION, $1, $pop243, $0
 	i32.const	$push242=, 1
@@ -544,9 +544,9 @@ main:                                   # @main
 	i32.const	$push276=, u
 	i32.const	$push275=, 97
 	i32.const	$push274=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop276, $pop275, $pop274
+	i32.call	$drop=, memset@FUNCTION, $pop276, $pop275, $pop274
 	i64.const	$push273=, 0
-	i64.store	$discard=, u+4($1):p2align=0, $pop273
+	i64.store	$drop=, u+4($1):p2align=0, $pop273
 	i32.const	$push272=, 12
 	i32.const	$push271=, 0
 	i32.store	$push270=, u($1):p2align=0, $pop271
@@ -557,14 +557,14 @@ main:                                   # @main
 	i32.mul 	$push68=, $pop67, $pop268
 	i32.store	$push23=, u+8($1):p2align=0, $pop68
 	i32.store	$push24=, u+4($1):p2align=0, $pop23
-	i32.store	$discard=, u($1):p2align=0, $pop24
+	i32.store	$drop=, u($1):p2align=0, $pop24
 	i32.const	$push267=, 12
 	i32.const	$push266=, 65
 	call    	check@FUNCTION, $1, $pop267, $pop266
 	i64.const	$push265=, 4774451407313060418
-	i64.store	$discard=, u+4($1):p2align=0, $pop265
+	i64.store	$drop=, u+4($1):p2align=0, $pop265
 	i32.const	$push264=, 1111638594
-	i32.store	$discard=, u($1):p2align=0, $pop264
+	i32.store	$drop=, u($1):p2align=0, $pop264
 	i32.const	$push263=, 12
 	i32.const	$push262=, 66
 	call    	check@FUNCTION, $1, $pop263, $pop262
@@ -582,11 +582,11 @@ main:                                   # @main
 	i32.const	$push293=, u
 	i32.const	$push292=, 97
 	i32.const	$push291=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop293, $pop292, $pop291
+	i32.call	$drop=, memset@FUNCTION, $pop293, $pop292, $pop291
 	i32.const	$push290=, 0
 	i32.store8	$0=, u+12($1), $pop290
 	i64.const	$push289=, 0
-	i64.store	$discard=, u+4($1):p2align=0, $pop289
+	i64.store	$drop=, u+4($1):p2align=0, $pop289
 	i32.const	$push288=, 13
 	i32.store	$push287=, u($1):p2align=0, $0
 	tee_local	$push286=, $0=, $pop287
@@ -597,16 +597,16 @@ main:                                   # @main
 	i32.mul 	$push71=, $pop25, $pop285
 	i32.store	$push26=, u+8($1):p2align=0, $pop71
 	i32.store	$push27=, u+4($1):p2align=0, $pop26
-	i32.store	$discard=, u($1):p2align=0, $pop27
+	i32.store	$drop=, u($1):p2align=0, $pop27
 	i32.const	$push284=, 13
 	i32.const	$push283=, 65
 	call    	check@FUNCTION, $1, $pop284, $pop283
 	i32.const	$push282=, 66
 	i32.store8	$0=, u+12($1), $pop282
 	i64.const	$push281=, 4774451407313060418
-	i64.store	$discard=, u+4($1):p2align=0, $pop281
+	i64.store	$drop=, u+4($1):p2align=0, $pop281
 	i32.const	$push280=, 1111638594
-	i32.store	$discard=, u($1):p2align=0, $pop280
+	i32.store	$drop=, u($1):p2align=0, $pop280
 	i32.const	$push279=, 13
 	call    	check@FUNCTION, $1, $pop279, $0
 	i32.const	$push278=, 1
@@ -623,11 +623,11 @@ main:                                   # @main
 	i32.const	$push314=, u
 	i32.const	$push313=, 97
 	i32.const	$push312=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop314, $pop313, $pop312
+	i32.call	$drop=, memset@FUNCTION, $pop314, $pop313, $pop312
 	i32.const	$push311=, 0
 	i32.store16	$0=, u+12($1):p2align=0, $pop311
 	i64.const	$push310=, 0
-	i64.store	$discard=, u+4($1):p2align=0, $pop310
+	i64.store	$drop=, u+4($1):p2align=0, $pop310
 	i32.const	$push309=, 14
 	i32.store	$push308=, u($1):p2align=0, $0
 	tee_local	$push307=, $0=, $pop308
@@ -636,21 +636,21 @@ main:                                   # @main
 	tee_local	$push305=, $0=, $pop306
 	i32.const	$push304=, 257
 	i32.mul 	$push73=, $pop305, $pop304
-	i32.store16	$discard=, u+12($1):p2align=0, $pop73
+	i32.store16	$drop=, u+12($1):p2align=0, $pop73
 	i32.const	$push303=, 16843009
 	i32.mul 	$push74=, $0, $pop303
 	i32.store	$push28=, u+8($1):p2align=0, $pop74
 	i32.store	$push29=, u+4($1):p2align=0, $pop28
-	i32.store	$discard=, u($1):p2align=0, $pop29
+	i32.store	$drop=, u($1):p2align=0, $pop29
 	i32.const	$push302=, 14
 	i32.const	$push301=, 65
 	call    	check@FUNCTION, $1, $pop302, $pop301
 	i32.const	$push300=, 16962
-	i32.store16	$discard=, u+12($1):p2align=0, $pop300
+	i32.store16	$drop=, u+12($1):p2align=0, $pop300
 	i64.const	$push299=, 4774451407313060418
-	i64.store	$discard=, u+4($1):p2align=0, $pop299
+	i64.store	$drop=, u+4($1):p2align=0, $pop299
 	i32.const	$push298=, 1111638594
-	i32.store	$discard=, u($1):p2align=0, $pop298
+	i32.store	$drop=, u($1):p2align=0, $pop298
 	i32.const	$push297=, 14
 	i32.const	$push296=, 66
 	call    	check@FUNCTION, $1, $pop297, $pop296
@@ -668,12 +668,12 @@ main:                                   # @main
 	i32.const	$push335=, u
 	i32.const	$push334=, 97
 	i32.const	$push333=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop335, $pop334, $pop333
+	i32.call	$drop=, memset@FUNCTION, $pop335, $pop334, $pop333
 	i32.const	$push332=, 0
 	i32.store8	$push30=, u+14($1), $pop332
 	i32.store16	$0=, u+12($1):p2align=0, $pop30
 	i64.const	$push331=, 0
-	i64.store	$discard=, u+4($1):p2align=0, $pop331
+	i64.store	$drop=, u+4($1):p2align=0, $pop331
 	i32.const	$push330=, 15
 	i32.store	$push329=, u($1):p2align=0, $0
 	tee_local	$push328=, $0=, $pop329
@@ -683,23 +683,23 @@ main:                                   # @main
 	tee_local	$push326=, $0=, $pop327
 	i32.const	$push325=, 257
 	i32.mul 	$push77=, $pop326, $pop325
-	i32.store16	$discard=, u+12($1):p2align=0, $pop77
+	i32.store16	$drop=, u+12($1):p2align=0, $pop77
 	i32.const	$push324=, 16843009
 	i32.mul 	$push78=, $0, $pop324
 	i32.store	$push31=, u+8($1):p2align=0, $pop78
 	i32.store	$push32=, u+4($1):p2align=0, $pop31
-	i32.store	$discard=, u($1):p2align=0, $pop32
+	i32.store	$drop=, u($1):p2align=0, $pop32
 	i32.const	$push323=, 15
 	i32.const	$push322=, 65
 	call    	check@FUNCTION, $1, $pop323, $pop322
 	i32.const	$push321=, 66
 	i32.store8	$0=, u+14($1), $pop321
 	i32.const	$push320=, 16962
-	i32.store16	$discard=, u+12($1):p2align=0, $pop320
+	i32.store16	$drop=, u+12($1):p2align=0, $pop320
 	i64.const	$push319=, 4774451407313060418
-	i64.store	$discard=, u+4($1):p2align=0, $pop319
+	i64.store	$drop=, u+4($1):p2align=0, $pop319
 	i32.const	$push318=, 1111638594
-	i32.store	$discard=, u($1):p2align=0, $pop318
+	i32.store	$drop=, u($1):p2align=0, $pop318
 	i32.const	$push317=, 15
 	call    	check@FUNCTION, $1, $pop317, $0
 	i32.const	$push316=, 1

@@ -16,7 +16,7 @@
   (export "set_yes" $set_yes)
   (export "set_no" $set_no)
   (export "frame_index" $frame_index)
-  (export "discard_result" $discard_result)
+  (export "drop_result" $drop_result)
   (func $copy_yes (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
     (return
       (call_import $memcpy
@@ -139,7 +139,7 @@
     )
     (return)
   )
-  (func $discard_result (param $$0 i32) (param $$1 i32) (param $$2 i32) (param $$3 i32) (param $$4 i32) (result i32)
+  (func $drop_result (param $$0 i32) (param $$1 i32) (param $$2 i32) (param $$3 i32) (param $$4 i32) (result i32)
     (block $label$0
       (block $label$1
         (br_if $label$1

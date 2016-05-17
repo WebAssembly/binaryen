@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.const	$push54=, u1
 	i32.const	$push53=, 97
 	i32.const	$push52=, 97
-	i32.call	$discard=, memset@FUNCTION, $pop54, $pop53, $pop52
+	i32.call	$drop=, memset@FUNCTION, $pop54, $pop53, $pop52
 	i32.const	$6=, 65
 	i32.const	$8=, -97
 .LBB0_4:                                # %for.body9
@@ -74,7 +74,7 @@ main:                                   # @main
 	end_loop                        # label9:
 	i32.add 	$push5=, $5, $2
 	i32.const	$push61=, 0
-	i32.store8	$discard=, u2($pop5), $pop61
+	i32.store8	$drop=, u2($pop5), $pop61
 	i32.call	$push6=, strcpy@FUNCTION, $1, $3
 	i32.ne  	$push7=, $pop6, $1
 	br_if   	6, $pop7        # 6: down to label1

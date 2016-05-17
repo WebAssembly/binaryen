@@ -11,10 +11,10 @@ gstate_path_memory:                     # @gstate_path_memory
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 0
 	i32.load	$push3=, gstate_initial+8($pop2)
-	i32.store	$discard=, 0($pop1), $pop3
+	i32.store	$drop=, 0($pop1), $pop3
 	i32.const	$push5=, 0
 	i64.load	$push4=, gstate_initial($pop5):p2align=2
-	i64.store	$discard=, 0($0):p2align=2, $pop4
+	i64.store	$drop=, 0($0):p2align=2, $pop4
 	return
 	.endfunc
 .Lfunc_end0:

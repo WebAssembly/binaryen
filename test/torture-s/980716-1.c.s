@@ -27,7 +27,7 @@ stub:                                   # @stub
 	br_if   	0, $3           # 0: up to label0
 # BB#2:                                 # %while.end
 	end_loop                        # label1:
-	i32.store	$discard=, 12($6), $5
+	i32.store	$drop=, 12($6), $5
 .LBB0_3:                                # %while.cond.1
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
@@ -62,11 +62,11 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	i32.store	$0=, 12($pop9), $pop0
 	i32.const	$push1=, .L.str.2
-	i32.store	$discard=, 8($1), $pop1
+	i32.store	$drop=, 8($1), $pop1
 	i32.const	$push2=, .L.str.1
-	i32.store	$discard=, 4($1), $pop2
+	i32.store	$drop=, 4($1), $pop2
 	i32.const	$push3=, .L.str
-	i32.store	$discard=, 0($1), $pop3
+	i32.store	$drop=, 0($1), $pop3
 	call    	stub@FUNCTION, $1, $1
 	call    	exit@FUNCTION, $0
 	unreachable

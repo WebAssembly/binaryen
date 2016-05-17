@@ -10,7 +10,7 @@ main:                                   # @main
 	i32.const	$push3=, t+8
 	i32.const	$push2=, 255
 	i32.const	$push1=, 324
-	i32.call	$discard=, memset@FUNCTION, $pop3, $pop2, $pop1
+	i32.call	$drop=, memset@FUNCTION, $pop3, $pop2, $pop1
 	i32.const	$push4=, 0
 	i32.const	$push5=, 0
 	i32.store	$push0=, t+4($pop4), $pop5

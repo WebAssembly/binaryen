@@ -93,10 +93,10 @@ foo:                                    # @foo
 .LBB1_1:                                # %again
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.store	$discard=, 8($2), $0
+	i32.store	$drop=, 8($2), $0
 	i32.const	$push15=, 0
 	i32.const	$push14=, 52
-	i32.call	$discard=, memset@FUNCTION, $1, $pop15, $pop14
+	i32.call	$drop=, memset@FUNCTION, $1, $pop15, $pop14
 	i32.const	$push7=, 8
 	i32.add 	$push8=, $2, $pop7
 	call    	test@FUNCTION, $pop8

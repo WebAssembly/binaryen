@@ -35,7 +35,7 @@ buildargv:                              # @buildargv
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push13=, 2
 	i32.shl 	$push2=, $1, $pop13
-	i32.store	$discard=, buildargv.arglist($pop2), $0
+	i32.store	$drop=, buildargv.arglist($pop2), $0
 	i32.const	$push12=, 1
 	i32.add 	$1=, $1, $pop12
 .LBB0_5:                                # %while.cond7
@@ -60,7 +60,7 @@ buildargv:                              # @buildargv
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label5:
 	i32.const	$push19=, 0
-	i32.store8	$discard=, 0($0), $pop19
+	i32.store8	$drop=, 0($0), $pop19
 	i32.const	$push18=, 1
 	i32.add 	$push0=, $0, $pop18
 	copy_local	$0=, $pop0
@@ -74,7 +74,7 @@ buildargv:                              # @buildargv
 	i32.const	$push4=, 2
 	i32.shl 	$push5=, $1, $pop4
 	i32.const	$push7=, 0
-	i32.store	$discard=, buildargv.arglist($pop5), $pop7
+	i32.store	$drop=, buildargv.arglist($pop5), $pop7
 	i32.const	$push6=, buildargv.arglist
 	return  	$pop6
 	.endfunc
@@ -98,10 +98,10 @@ main:                                   # @main
 	tee_local	$push23=, $0=, $pop24
 	i32.const	$push22=, 0
 	i32.load8_u	$push1=, .L.str+4($pop22)
-	i32.store8	$discard=, 4($pop23), $pop1
+	i32.store8	$drop=, 4($pop23), $pop1
 	i32.const	$push21=, 0
 	i32.load	$push2=, .L.str($pop21):p2align=0
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$drop=, 0($0), $pop2
 	copy_local	$0=, $0
 	i32.const	$1=, 0
 .LBB1_1:                                # %while.cond1.i
@@ -129,7 +129,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push30=, 2
 	i32.shl 	$push4=, $1, $pop30
-	i32.store	$discard=, buildargv.arglist($pop4), $0
+	i32.store	$drop=, buildargv.arglist($pop4), $0
 	i32.const	$push29=, 1
 	i32.add 	$2=, $1, $pop29
 .LBB1_5:                                # %while.cond7.i
@@ -154,7 +154,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop                        # label11:
 	i32.const	$push36=, 0
-	i32.store8	$discard=, 0($0), $pop36
+	i32.store8	$drop=, 0($0), $pop36
 	i32.const	$push35=, 1
 	i32.add 	$push0=, $0, $pop35
 	copy_local	$0=, $pop0

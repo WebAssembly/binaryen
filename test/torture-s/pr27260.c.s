@@ -11,7 +11,7 @@ foo:                                    # @foo
 	i32.const	$push0=, 2
 	i32.ne  	$push1=, $0, $pop0
 	i32.const	$push3=, 64
-	i32.call	$discard=, memset@FUNCTION, $pop2, $pop1, $pop3
+	i32.call	$drop=, memset@FUNCTION, $pop2, $pop1, $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 	i32.const	$push12=, 0
 	i32.const	$push0=, 2
-	i32.store8	$discard=, buf+64($pop12), $pop0
+	i32.store8	$drop=, buf+64($pop12), $pop0
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
@@ -47,7 +47,7 @@ main:                                   # @main
 	i32.const	$push3=, buf
 	i32.const	$push15=, 1
 	i32.const	$push4=, 64
-	i32.call	$discard=, memset@FUNCTION, $pop3, $pop15, $pop4
+	i32.call	$drop=, memset@FUNCTION, $pop3, $pop15, $pop4
 	i32.const	$1=, 1
 .LBB1_4:                                # %for.cond3
                                         # =>This Inner Loop Header: Depth=1
@@ -73,7 +73,7 @@ main:                                   # @main
 	i32.const	$push6=, buf
 	i32.const	$push8=, 0
 	i32.const	$push7=, 64
-	i32.call	$discard=, memset@FUNCTION, $pop6, $pop8, $pop7
+	i32.call	$drop=, memset@FUNCTION, $pop6, $pop8, $pop7
 	i32.const	$1=, 1
 .LBB1_8:                                # %for.cond16
                                         # =>This Inner Loop Header: Depth=1

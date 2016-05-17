@@ -37,7 +37,7 @@ f:                                      # @f
 	i32.const	$push8=, __stack_pointer
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $2, $pop6
-	i32.store	$discard=, 0($pop8), $pop7
+	i32.store	$drop=, 0($pop8), $pop7
 	return  	$0
 	.endfunc
 .Lfunc_end0:

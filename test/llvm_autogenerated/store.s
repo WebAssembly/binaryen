@@ -4,7 +4,7 @@
 	.type	sti32,@function
 sti32:
 	.param  	i32, i32
-	i32.store	$discard=, 0($0), $1
+	i32.store	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -14,7 +14,7 @@ sti32:
 	.type	sti64,@function
 sti64:
 	.param  	i32, i64
-	i64.store	$discard=, 0($0), $1
+	i64.store	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end1:
@@ -24,7 +24,7 @@ sti64:
 	.type	stf32,@function
 stf32:
 	.param  	i32, f32
-	f32.store	$discard=, 0($0), $1
+	f32.store	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end2:
@@ -34,7 +34,7 @@ stf32:
 	.type	stf64,@function
 stf64:
 	.param  	i32, f64
-	f64.store	$discard=, 0($0), $1
+	f64.store	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end3:

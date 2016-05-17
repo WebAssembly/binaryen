@@ -23,7 +23,7 @@ bar:                                    # @bar
 	i32.const	$push14=, 0
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $3, $pop4
-	i32.store	$discard=, bar.i($pop14), $pop5
+	i32.store	$drop=, bar.i($pop14), $pop5
 	i32.const	$push6=, g
 	i32.add 	$push7=, $2, $pop6
 	i32.ne  	$push8=, $pop7, $1

@@ -48,8 +48,8 @@ main:                                   # @main
 	i32.call	$push4=, malloc@FUNCTION, $pop0
 	tee_local	$push3=, $0=, $pop4
 	i32.const	$push1=, 222
-	i32.store	$discard=, 8($pop3), $pop1
-	i32.call	$discard=, convert_like_real@FUNCTION, $0
+	i32.store	$drop=, 8($pop3), $pop1
+	i32.call	$drop=, convert_like_real@FUNCTION, $0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

@@ -41,9 +41,9 @@ main:                                   # @main
 	tee_local	$push9=, $0=, $pop10
 	i32.const	$push6=, 12
 	i32.add 	$push7=, $pop9, $pop6
-	i32.store	$discard=, pwarn($pop0), $pop7
+	i32.store	$drop=, pwarn($pop0), $pop7
 	i32.const	$push1=, 1
-	i32.store	$discard=, 12($0), $pop1
+	i32.store	$drop=, 12($0), $pop1
 	call    	bla@FUNCTION
 	unreachable
 	.endfunc

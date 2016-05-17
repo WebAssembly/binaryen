@@ -140,12 +140,12 @@ f:                                      # @f
 	i32.const	$push83=, 8
 	i32.add 	$push28=, $6, $pop83
 	i64.load	$push29=, 0($pop28)
-	i64.store	$discard=, 0($pop30), $pop29
-	i64.store	$discard=, 0($0), $1
+	i64.store	$drop=, 0($pop30), $pop29
+	i64.store	$drop=, 0($0), $1
 	i32.const	$push37=, __stack_pointer
 	i32.const	$push35=, 192
 	i32.add 	$push36=, $6, $pop35
-	i32.store	$discard=, 0($pop37), $pop36
+	i32.store	$drop=, 0($pop37), $pop36
 	return
 	.endfunc
 .Lfunc_end0:

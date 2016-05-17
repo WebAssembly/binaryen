@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.store	$push17=, 0($pop12), $pop15
 	tee_local	$push16=, $0=, $pop17
 	i64.const	$push2=, 4295032832
-	i64.store	$discard=, 8($pop16), $pop2
+	i64.store	$drop=, 8($pop16), $pop2
 	block
 	i32.const	$push13=, 8
 	i32.add 	$push14=, $0, $pop13
@@ -66,7 +66,7 @@ foo:                                    # @foo
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 0
 	i32.const	$push2=, 1
-	i32.store	$discard=, lo($pop1), $pop2
+	i32.store	$drop=, lo($pop1), $pop2
 	i32.load	$1=, 4($0)
 .LBB1_2:                                # %if.end
 	end_block                       # label1:
@@ -77,7 +77,7 @@ foo:                                    # @foo
 # BB#3:                                 # %if.then7
 	i32.const	$push4=, 0
 	i32.const	$push5=, 1
-	i32.store	$discard=, hi($pop4), $pop5
+	i32.store	$drop=, hi($pop4), $pop5
 	i32.load	$push14=, 4($0)
 	tee_local	$push13=, $0=, $pop14
 	i32.add 	$1=, $pop13, $1

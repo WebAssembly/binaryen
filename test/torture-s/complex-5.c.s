@@ -13,9 +13,9 @@ p:                                      # @p
 	f32.load	$push0=, 0($1)
 	f32.load	$push1=, 0($2)
 	f32.add 	$push2=, $pop0, $pop1
-	f32.store	$discard=, 0($0), $pop2
+	f32.store	$drop=, 0($0), $pop2
 	f32.add 	$push3=, $3, $4
-	f32.store	$discard=, 4($0), $pop3
+	f32.store	$drop=, 4($0), $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -63,10 +63,10 @@ main:                                   # @main
 	i32.const	$push23=, 0
 	f32.load	$push9=, 8($0)
 	f32.add 	$push10=, $5, $pop9
-	f32.store	$discard=, y($pop23), $pop10
+	f32.store	$drop=, y($pop23), $pop10
 	i32.const	$push22=, 0
 	f32.add 	$push11=, $1, $3
-	f32.store	$discard=, y+4($pop22), $pop11
+	f32.store	$drop=, y+4($pop22), $pop11
 	block
 	f32.ne  	$push12=, $2, $4
 	br_if   	0, $pop12       # 0: down to label0

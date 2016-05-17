@@ -9,7 +9,7 @@ foo_create_got_section:                 # @foo_create_got_section
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.load	$push0=, 0($1)
-	i32.store	$discard=, 8($pop0), $0
+	i32.store	$drop=, 8($pop0), $0
 	i32.const	$push1=, 1
 	return  	$pop1
 	.endfunc
@@ -43,7 +43,7 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 	copy_local	$2=, $pop0
 .LBB1_3:                                # %if.end.i
 	end_block                       # label1:
-	i32.call	$discard=, foo_create_got_section@FUNCTION, $2, $1
+	i32.call	$drop=, foo_create_got_section@FUNCTION, $2, $1
 	i32.const	$push3=, 8
 	i32.add 	$push4=, $3, $pop3
 	i32.load	$2=, 0($pop4)
@@ -63,7 +63,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push6=, 0
 	i32.const	$push0=, hash
-	i32.store	$discard=, link_info($pop6), $pop0
+	i32.store	$drop=, link_info($pop6), $pop0
 	block
 	i32.const	$push2=, abfd
 	i32.const	$push1=, link_info

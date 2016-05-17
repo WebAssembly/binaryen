@@ -61,7 +61,7 @@ f:                                      # @f
 	return  	$0
 .LBB2_3:                                # %alabel
 	end_block                       # label1:
-	i32.call	$discard=, g2@FUNCTION, $0
+	i32.call	$drop=, g2@FUNCTION, $0
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -79,10 +79,10 @@ main:                                   # @main
 	i32.load	$0=, parsefile($pop1)
 	i32.const	$push4=, 0
 	i32.const	$push3=, 0
-	i32.store	$discard=, el($pop4), $pop3
+	i32.store	$drop=, el($pop4), $pop3
 	i32.const	$push2=, -559038737
 	i32.store	$push0=, 0($0), $pop2
-	i32.call	$discard=, g2@FUNCTION, $pop0
+	i32.call	$drop=, g2@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end3:

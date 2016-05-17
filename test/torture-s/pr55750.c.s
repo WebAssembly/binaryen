@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.load8_u	$push1=, arr($0)
 	i32.const	$push3=, 2
 	i32.add 	$push2=, $pop1, $pop3
-	i32.store8	$discard=, arr($0), $pop2
+	i32.store8	$drop=, arr($0), $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -27,10 +27,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push13=, 0
 	i32.const	$push1=, 127
-	i32.store8	$discard=, arr($pop13), $pop1
+	i32.store8	$drop=, arr($pop13), $pop1
 	i32.const	$push12=, 0
 	i32.const	$push2=, 254
-	i32.store8	$discard=, arr+4($pop12), $pop2
+	i32.store8	$drop=, arr+4($pop12), $pop2
 	i32.const	$push11=, 0
 	call    	foo@FUNCTION, $pop11
 	i32.const	$push3=, 1

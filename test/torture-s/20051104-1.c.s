@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push2=, .L.str
-	i32.store	$discard=, s+4($pop1), $pop2
+	i32.store	$drop=, s+4($pop1), $pop2
 	i32.const	$push4=, 0
 	i32.const	$push3=, 0
 	i32.store	$push0=, s($pop4), $pop3

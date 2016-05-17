@@ -8,7 +8,7 @@ bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1084647014
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end0:
@@ -34,7 +34,7 @@ foo:                                    # @foo
 	i32.add 	$push10=, $3, $pop9
 	i32.select	$push1=, $pop8, $pop10, $1
 	i32.const	$push2=, 1084647014
-	i32.store	$discard=, 0($pop1), $pop2
+	i32.store	$drop=, 0($pop1), $pop2
 	i32.const	$push3=, 1
 	i32.store	$push0=, 4($0), $pop3
 	return  	$pop0

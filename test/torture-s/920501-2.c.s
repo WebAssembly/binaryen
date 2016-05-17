@@ -375,7 +375,7 @@ facts:                                  # @facts
 	br_if   	0, $pop32       # 0: down to label33
 # BB#33:                                # %if.then26
                                         #   in Loop: Header=BB2_1 Depth=1
-	i32.store	$discard=, 0($5), $1
+	i32.store	$drop=, 0($5), $1
 	i64.const	$push76=, 4294967295
 	i64.and 	$push33=, $11, $pop76
 	i64.div_u	$0=, $0, $pop33

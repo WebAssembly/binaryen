@@ -80,10 +80,10 @@ main:                                   # @main
 	i32.const	$push4=, 16
 	i32.add 	$push5=, $pop21, $pop4
 	i32.const	$push6=, 0
-	i32.store	$discard=, 0($pop5), $pop6
+	i32.store	$drop=, 0($pop5), $pop6
 	i64.const	$push7=, 0
 	i64.store	$push0=, 8($2), $pop7
-	i64.store	$discard=, 0($2), $pop0
+	i64.store	$drop=, 0($2), $pop0
 	i32.const	$1=, 5
 .LBB1_1:                                # %for.cond1.i
                                         # =>This Inner Loop Header: Depth=1
@@ -113,7 +113,7 @@ main:                                   # @main
 	i32.const	$push19=, __stack_pointer
 	i32.const	$push17=, 48
 	i32.add 	$push18=, $2, $pop17
-	i32.store	$discard=, 0($pop19), $pop18
+	i32.store	$drop=, 0($pop19), $pop18
 	i32.const	$push9=, 0
 	return  	$pop9
 	.endfunc

@@ -11,7 +11,7 @@ init:                                   # @init
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push0=, 0
-	i32.store	$discard=, 0($1), $pop0
+	i32.store	$drop=, 0($1), $pop0
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	return
@@ -81,7 +81,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_2 Depth=1
 	end_block                       # label5:
 	f64.convert_s/i32	$push7=, $4
-	f64.store	$discard=, 0($1), $pop7
+	f64.store	$drop=, 0($1), $pop7
 .LBB1_6:                                # %if.end11
                                         #   in Loop: Header=BB1_2 Depth=1
 	end_block                       # label4:
@@ -97,7 +97,7 @@ main:                                   # @main
 	i32.const	$push18=, __stack_pointer
 	i32.const	$push16=, 6144
 	i32.add 	$push17=, $7, $pop16
-	i32.store	$discard=, 0($pop18), $pop17
+	i32.store	$drop=, 0($pop18), $pop17
 	i32.const	$push11=, 0
 	return  	$pop11
 .LBB1_9:                                # %if.then14

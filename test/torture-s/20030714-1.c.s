@@ -28,14 +28,14 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.or  	$2=, $2, $pop34
 	i32.const	$push10=, 26
 	i32.add 	$push11=, $0, $pop10
-	i32.store16	$discard=, 0($pop11), $2
+	i32.store16	$drop=, 0($pop11), $2
 .LBB0_3:                                # %if.end
 	end_block                       # label2:
 	i32.const	$push15=, 26
 	i32.add 	$push16=, $0, $pop15
 	i32.const	$push13=, 65519
 	i32.and 	$push14=, $2, $pop13
-	i32.store16	$discard=, 0($pop16), $pop14
+	i32.store16	$drop=, 0($pop16), $pop14
 	i32.load	$2=, 0($1)
 	i32.load	$push18=, 28($0)
 	i32.call_indirect	$push19=, $pop18, $0
@@ -51,7 +51,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.load16_u	$push21=, 0($0)
 	i32.const	$push22=, 8
 	i32.or  	$push23=, $pop21, $pop22
-	i32.store16	$discard=, 0($0), $pop23
+	i32.store16	$drop=, 0($0), $pop23
 	return
 .LBB0_6:                                # %sw.bb
 	end_block                       # label1:
@@ -59,7 +59,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.add 	$push8=, $0, $pop7
 	i32.const	$push5=, 16
 	i32.or  	$push6=, $2, $pop5
-	i32.store16	$discard=, 0($pop8), $pop6
+	i32.store16	$drop=, 0($pop8), $pop6
 	return
 .LBB0_7:                                # %if.else
 	end_block                       # label0:
@@ -76,7 +76,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.load16_u	$push30=, 0($0)
 	i32.const	$push31=, 64
 	i32.or  	$push32=, $pop30, $pop31
-	i32.store16	$discard=, 0($0), $pop32
+	i32.store16	$drop=, 0($0), $pop32
 .LBB0_9:                                # %sw.epilog
 	end_block                       # label3:
 	return
@@ -136,19 +136,19 @@ main:                                   # @main
 	i32.load	$1=, g__style($pop14)
 	i32.const	$push13=, 0
 	i32.const	$push3=, RenderBox_isTableCell@FUNCTION
-	i32.store	$discard=, g_this+28($pop13), $pop3
+	i32.store	$drop=, g_this+28($pop13), $pop3
 	i32.const	$push12=, 0
 	i32.const	$push4=, -1966081
 	i32.and 	$push5=, $1, $pop4
 	i32.const	$push6=, 393216
 	i32.or  	$push7=, $pop5, $pop6
-	i32.store	$discard=, g__style($pop12), $pop7
+	i32.store	$drop=, g__style($pop12), $pop7
 	i32.const	$push11=, 0
 	i32.const	$push1=, 65447
 	i32.and 	$push2=, $0, $pop1
 	i32.const	$push8=, 16
 	i32.or  	$push9=, $pop2, $pop8
-	i32.store16	$discard=, g_this+26($pop11), $pop9
+	i32.store16	$drop=, g_this+26($pop11), $pop9
 	i32.const	$push10=, 0
 	call    	exit@FUNCTION, $pop10
 	unreachable

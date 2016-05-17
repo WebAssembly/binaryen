@@ -30,7 +30,7 @@ main:                                   # @main
 	i32.load16_u	$1=, e($pop14)
 	i32.const	$push13=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, a($pop13), $pop0
+	i32.store	$drop=, a($pop13), $pop0
 	block
 	i32.eqz 	$push19=, $0
 	br_if   	0, $pop19       # 0: down to label0
@@ -38,7 +38,7 @@ main:                                   # @main
 	i32.const	$push1=, -1
 	i32.add 	$1=, $1, $pop1
 	i32.const	$push16=, 0
-	i32.store16	$discard=, e($pop16), $1
+	i32.store16	$drop=, e($pop16), $1
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push18=, 0
@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.shl 	$push3=, $1, $pop2
 	i32.const	$push17=, 16
 	i32.shr_s	$push4=, $pop3, $pop17
-	i32.store	$discard=, d($pop18), $pop4
+	i32.store	$drop=, d($pop18), $pop4
 	block
 	i64.extend_u/i32	$push5=, $1
 	i64.const	$push6=, 48

@@ -28,13 +28,13 @@ main:                                   # @main
 	i32.load16_u	$0=, f+4($pop9)
 	i32.const	$push8=, 0
 	i32.const	$push0=, -1
-	i32.store	$discard=, f($pop8), $pop0
+	i32.store	$drop=, f($pop8), $pop0
 	i32.const	$push7=, 0
 	i32.const	$push2=, 57344
 	i32.and 	$push3=, $0, $pop2
 	i32.const	$push4=, 7168
 	i32.or  	$push5=, $pop3, $pop4
-	i32.store16	$discard=, f+4($pop7), $pop5
+	i32.store16	$drop=, f+4($pop7), $pop5
 	block
 	i32.const	$push1=, f
 	i32.call	$push6=, foo@FUNCTION, $pop1

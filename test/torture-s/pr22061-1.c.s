@@ -23,7 +23,7 @@ bar:                                    # @bar
 	i32.load	$push3=, N($pop0)
 	tee_local	$push2=, $1=, $pop3
 	i32.add 	$push1=, $0, $pop2
-	i32.store8	$discard=, 0($pop1), $1
+	i32.store8	$drop=, 0($pop1), $1
 	return
 	.endfunc
 .Lfunc_end1:
@@ -38,7 +38,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 4
-	i32.store	$discard=, N($pop1), $pop0
+	i32.store	$drop=, N($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

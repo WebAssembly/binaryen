@@ -24,7 +24,7 @@ f:                                      # @f
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push10=, -2
-	i32.store	$discard=, 0($2), $pop10
+	i32.store	$drop=, 0($2), $pop10
 	copy_local	$push9=, $1
 	tee_local	$push8=, $0=, $pop9
 	i32.const	$push7=, 2147483645
@@ -54,7 +54,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i64.const	$push0=, -4294967298
-	i64.store	$discard=, a($pop1):p2align=2, $pop0
+	i64.store	$drop=, a($pop1):p2align=2, $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

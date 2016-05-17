@@ -30,7 +30,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push9=, u
 	i32.const	$push8=, 0
-	i32.call	$discard=, memset@FUNCTION, $pop9, $pop8, $1
+	i32.call	$drop=, memset@FUNCTION, $pop9, $pop8, $1
 	copy_local	$4=, $2
 .LBB0_4:                                # %for.cond7.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
@@ -47,11 +47,11 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_block                       # label6:
 	i32.const	$push13=, 0
-	i32.store8	$discard=, 0($4), $pop13
+	i32.store8	$drop=, 0($4), $pop13
 	i32.const	$push12=, 1
 	i32.add 	$push6=, $4, $pop12
 	i64.const	$push11=, 7089336938131513954
-	i64.store	$discard=, 0($pop6):p2align=0, $pop11
+	i64.store	$drop=, 0($pop6):p2align=0, $pop11
 	i32.call	$push1=, strlen@FUNCTION, $0
 	i32.ne  	$push2=, $3, $pop1
 	br_if   	4, $pop2        # 4: down to label0

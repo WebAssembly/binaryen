@@ -190,7 +190,7 @@ plist:                                  # @plist
                                         #   in Loop: Header=BB2_2 Depth=1
 	end_loop                        # label17:
 	end_block                       # label15:
-	i64.store	$discard=, 0($4), $0
+	i64.store	$drop=, 0($4), $0
 	i32.const	$push37=, 8
 	i32.add 	$push0=, $4, $pop37
 	copy_local	$4=, $pop0
@@ -205,7 +205,7 @@ plist:                                  # @plist
 	end_loop                        # label9:
 	end_block                       # label7:
 	i64.const	$push16=, 0
-	i64.store	$discard=, 0($4), $pop16
+	i64.store	$drop=, 0($4), $pop16
 	i32.sub 	$push17=, $4, $2
 	i32.const	$push18=, 3
 	i32.shr_s	$push19=, $pop17, $pop18
@@ -309,7 +309,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_loop                        # label27:
 	end_block                       # label25:
-	i64.store	$discard=, 0($3), $4
+	i64.store	$drop=, 0($3), $4
 	i32.const	$push52=, 8
 	i32.add 	$push0=, $3, $pop52
 	copy_local	$3=, $pop0
@@ -324,7 +324,7 @@ main:                                   # @main
 # BB#11:                                # %plist.exit
 	end_loop                        # label19:
 	i64.const	$push15=, 0
-	i64.store	$discard=, 0($3), $pop15
+	i64.store	$drop=, 0($3), $pop15
 	block
 	i64.load	$push16=, 0($6)
 	i64.const	$push17=, 1234111117

@@ -719,14 +719,14 @@ bigshift:
 	i64.lt_u	$push72=, $17, $pop462
 	tee_local	$push461=, $166=, $pop72
 	i64.select	$push344=, $pop343, $pop463, $pop461
-	i64.store	$discard=, 0($pop345), $pop344
+	i64.store	$drop=, 0($pop345), $pop344
 	i64.const	$push460=, 0
 	i64.select	$push337=, $152, $pop460, $168
 	i64.const	$push459=, 0
 	i64.select	$push338=, $pop337, $pop459, $167
 	i64.const	$push458=, 0
 	i64.select	$push339=, $pop338, $pop458, $166
-	i64.store	$discard=, 0($0), $pop339
+	i64.store	$drop=, 0($0), $pop339
 	i32.const	$push346=, 24
 	i32.add 	$push347=, $0, $pop346
 	i64.or  	$push331=, $149, $150
@@ -739,7 +739,7 @@ bigshift:
 	i64.select	$push335=, $pop334, $pop455, $167
 	i64.const	$push454=, 0
 	i64.select	$push336=, $pop335, $pop454, $166
-	i64.store	$discard=, 0($pop347), $pop336
+	i64.store	$drop=, 0($pop347), $pop336
 	i32.const	$push348=, 16
 	i32.add 	$push349=, $0, $pop348
 	i64.or  	$push324=, $146, $147
@@ -749,7 +749,7 @@ bigshift:
 	i64.select	$push327=, $pop326, $pop453, $167
 	i64.const	$push452=, 0
 	i64.select	$push328=, $pop327, $pop452, $166
-	i64.store	$discard=, 0($pop349), $pop328
+	i64.store	$drop=, 0($pop349), $pop328
 	i32.const	$push350=, 56
 	i32.add 	$push351=, $0, $pop350
 	i64.or  	$push291=, $132, $133
@@ -774,7 +774,7 @@ bigshift:
 	i64.select	$push299=, $8, $pop298, $165
 	i64.const	$push444=, 0
 	i64.select	$push300=, $pop299, $pop444, $166
-	i64.store	$discard=, 0($pop351), $pop300
+	i64.store	$drop=, 0($pop351), $pop300
 	i32.const	$push352=, 48
 	i32.add 	$push353=, $0, $pop352
 	i64.or  	$push275=, $125, $126
@@ -790,7 +790,7 @@ bigshift:
 	i64.select	$push281=, $7, $pop280, $165
 	i64.const	$push442=, 0
 	i64.select	$push282=, $pop281, $pop442, $166
-	i64.store	$discard=, 0($pop353), $pop282
+	i64.store	$drop=, 0($pop353), $pop282
 	i32.const	$push354=, 40
 	i32.add 	$push355=, $0, $pop354
 	i64.const	$push441=, 0
@@ -808,7 +808,7 @@ bigshift:
 	i64.select	$push322=, $6, $pop321, $165
 	i64.const	$push437=, 0
 	i64.select	$push323=, $pop322, $pop437, $166
-	i64.store	$discard=, 0($pop355), $pop323
+	i64.store	$drop=, 0($pop355), $pop323
 	i32.const	$push356=, 32
 	i32.add 	$push357=, $0, $pop356
 	i64.const	$push436=, 0
@@ -823,7 +823,7 @@ bigshift:
 	i64.select	$push308=, $5, $pop307, $165
 	i64.const	$push434=, 0
 	i64.select	$push309=, $pop308, $pop434, $166
-	i64.store	$discard=, 0($pop357), $pop309
+	i64.store	$drop=, 0($pop357), $pop309
 	i32.const	$push358=, 120
 	i32.add 	$push359=, $0, $pop358
 	i64.or  	$push101=, $51, $52
@@ -879,7 +879,7 @@ bigshift:
 	i64.select	$push92=, $8, $pop91, $158
 	i64.select	$push114=, $pop113, $pop92, $166
 	i64.select	$push115=, $16, $pop114, $165
-	i64.store	$discard=, 0($pop359), $pop115
+	i64.store	$drop=, 0($pop359), $pop115
 	i32.const	$push360=, 112
 	i32.add 	$push361=, $0, $pop360
 	i64.or  	$push57=, $40, $41
@@ -911,7 +911,7 @@ bigshift:
 	i64.select	$push50=, $7, $pop49, $158
 	i64.select	$push73=, $pop71, $pop50, $166
 	i64.select	$push74=, $15, $pop73, $165
-	i64.store	$discard=, 0($pop361), $pop74
+	i64.store	$drop=, 0($pop361), $pop74
 	i32.const	$push362=, 104
 	i32.add 	$push363=, $0, $pop362
 	i64.const	$push409=, 0
@@ -948,7 +948,7 @@ bigshift:
 	i64.select	$push269=, $6, $pop268, $158
 	i64.select	$push270=, $pop256, $pop269, $166
 	i64.select	$push271=, $14, $pop270, $165
-	i64.store	$discard=, 0($pop363), $pop271
+	i64.store	$drop=, 0($pop363), $pop271
 	i32.const	$push364=, 96
 	i32.add 	$push365=, $0, $pop364
 	i64.const	$push400=, 0
@@ -979,7 +979,7 @@ bigshift:
 	i64.select	$push233=, $5, $pop232, $158
 	i64.select	$push234=, $pop224, $pop233, $166
 	i64.select	$push235=, $13, $pop234, $165
-	i64.store	$discard=, 0($pop365), $pop235
+	i64.store	$drop=, 0($pop365), $pop235
 	i32.const	$push366=, 72
 	i32.add 	$push367=, $0, $pop366
 	i64.const	$push395=, 0
@@ -1007,7 +1007,7 @@ bigshift:
 	i64.select	$push209=, $pop208, $pop389, $154
 	i64.select	$push210=, $pop206, $pop209, $166
 	i64.select	$push211=, $10, $pop210, $165
-	i64.store	$discard=, 0($pop367), $pop211
+	i64.store	$drop=, 0($pop367), $pop211
 	i32.const	$push368=, 64
 	i32.add 	$push369=, $0, $pop368
 	i64.const	$push388=, 0
@@ -1032,7 +1032,7 @@ bigshift:
 	i64.select	$push183=, $pop182, $pop384, $154
 	i64.select	$push184=, $pop181, $pop183, $166
 	i64.select	$push185=, $9, $pop184, $165
-	i64.store	$discard=, 0($pop369), $pop185
+	i64.store	$drop=, 0($pop369), $pop185
 	i32.const	$push370=, 88
 	i32.add 	$push371=, $0, $pop370
 	i64.or  	$push140=, $67, $68
@@ -1061,7 +1061,7 @@ bigshift:
 	i64.select	$push165=, $pop164, $pop378, $154
 	i64.select	$push166=, $pop158, $pop165, $166
 	i64.select	$push167=, $12, $pop166, $165
-	i64.store	$discard=, 0($pop371), $pop167
+	i64.store	$drop=, 0($pop371), $pop167
 	i32.const	$push372=, 80
 	i32.add 	$push373=, $0, $pop372
 	i64.or  	$push116=, $56, $57
@@ -1087,7 +1087,7 @@ bigshift:
 	i64.select	$push135=, $pop134, $pop374, $154
 	i64.select	$push136=, $pop131, $pop135, $166
 	i64.select	$push137=, $11, $pop136, $165
-	i64.store	$discard=, 0($pop373), $pop137
+	i64.store	$drop=, 0($pop373), $pop137
 	i32.const	$185=, 1024
 	i32.add 	$312=, $312, $185
 	i32.const	$185=, __stack_pointer

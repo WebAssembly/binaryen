@@ -20,7 +20,7 @@ g:                                      # @g
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.load	$push1=, 0($2)
-	i32.call	$discard=, strcpy@FUNCTION, $0, $pop1
+	i32.call	$drop=, strcpy@FUNCTION, $0, $pop1
 	i32.load8_u	$3=, 0($1)
 	i32.const	$push5=, 4
 	i32.add 	$2=, $2, $pop5
@@ -51,7 +51,7 @@ f:                                      # @f
 	i32.sub 	$push8=, $pop2, $pop3
 	i32.store	$3=, 0($pop4), $pop8
 	i32.load8_u	$4=, 0($1)
-	i32.store	$discard=, 12($3), $2
+	i32.store	$drop=, 12($3), $2
 	block
 	i32.eqz 	$push12=, $4
 	br_if   	0, $pop12       # 0: down to label3
@@ -63,7 +63,7 @@ f:                                      # @f
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
 	i32.load	$push0=, 0($2)
-	i32.call	$discard=, strcpy@FUNCTION, $0, $pop0
+	i32.call	$drop=, strcpy@FUNCTION, $0, $pop0
 	i32.load8_u	$4=, 0($1)
 	i32.const	$push11=, 4
 	i32.add 	$2=, $2, $pop11
@@ -76,7 +76,7 @@ f:                                      # @f
 	i32.const	$push7=, __stack_pointer
 	i32.const	$push5=, 16
 	i32.add 	$push6=, $3, $pop5
-	i32.store	$discard=, 0($pop7), $pop6
+	i32.store	$drop=, 0($pop7), $pop6
 	return
 	.endfunc
 .Lfunc_end1:
@@ -114,7 +114,7 @@ main:                                   # @main
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 32
 	i32.add 	$push9=, $2, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return  	$0
 .LBB2_2:                                # %if.then
 	end_block                       # label6:

@@ -11,9 +11,9 @@ bla:                                    # @bla
 	i32.const	$push1=, 0
 	i32.const	$push2=, 1
 	i32.store	$push0=, global($pop1), $pop2
-	i32.store	$discard=, 4($1), $pop0
+	i32.store	$drop=, 4($1), $pop0
 	i32.const	$push3=, 8
-	i32.store	$discard=, 0($0), $pop3
+	i32.store	$drop=, 0($0), $pop3
 	i32.load	$push4=, 4($1)
 	return  	$pop4
 	.endfunc
@@ -29,7 +29,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, global($pop1), $pop0
+	i32.store	$drop=, global($pop1), $pop0
 	i32.const	$push2=, 0
 	return  	$pop2
 	.endfunc

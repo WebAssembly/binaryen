@@ -111,7 +111,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, .L.str
 	i32.const	$push1=, 305419896
-	i32.call	$discard=, sys_mknod@FUNCTION, $pop0, $0, $pop1
+	i32.call	$drop=, sys_mknod@FUNCTION, $pop0, $0, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end3:

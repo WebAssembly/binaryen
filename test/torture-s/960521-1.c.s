@@ -22,7 +22,7 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push13=, -1
-	i32.store	$discard=, 0($0), $pop13
+	i32.store	$drop=, 0($0), $pop13
 	i32.const	$push12=, 1
 	i32.add 	$1=, $1, $pop12
 	i32.const	$push11=, 4
@@ -38,7 +38,7 @@ foo:                                    # @foo
 	i32.load	$push4=, b($pop14)
 	i32.const	$push6=, 255
 	i32.const	$push5=, 522236
-	i32.call	$discard=, memset@FUNCTION, $pop4, $pop6, $pop5
+	i32.call	$drop=, memset@FUNCTION, $pop4, $pop6, $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -55,12 +55,12 @@ main:                                   # @main
 	i32.const	$2=, 0
 	i32.const	$push17=, 0
 	i32.const	$push1=, 130560
-	i32.store	$discard=, n($pop17), $pop1
+	i32.store	$drop=, n($pop17), $pop1
 	i32.const	$push16=, 0
 	i32.const	$push2=, 522240
 	i32.call	$push15=, malloc@FUNCTION, $pop2
 	tee_local	$push14=, $4=, $pop15
-	i32.store	$discard=, a($pop16), $pop14
+	i32.store	$drop=, a($pop16), $pop14
 	i32.const	$push13=, 0
 	i32.const	$push12=, 522240
 	i32.call	$push11=, malloc@FUNCTION, $pop12
@@ -71,12 +71,12 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	i32.load	$1=, n($pop8)
 	i32.const	$push7=, 0
-	i32.store	$discard=, 0($3), $pop7
+	i32.store	$drop=, 0($3), $pop7
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
 	i32.const	$push20=, -1
-	i32.store	$discard=, 0($4), $pop20
+	i32.store	$drop=, 0($4), $pop20
 	i32.const	$push19=, 1
 	i32.add 	$2=, $2, $pop19
 	i32.const	$push18=, 4
@@ -88,7 +88,7 @@ main:                                   # @main
 	i32.load	$2=, 0($3)
 	i32.const	$push5=, 255
 	i32.const	$push4=, 522236
-	i32.call	$discard=, memset@FUNCTION, $0, $pop5, $pop4
+	i32.call	$drop=, memset@FUNCTION, $0, $pop5, $pop4
 	block
 	br_if   	0, $2           # 0: down to label5
 # BB#3:                                 # %if.end

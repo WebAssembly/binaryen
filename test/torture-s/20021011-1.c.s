@@ -23,9 +23,9 @@ main:                                   # @main
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push60=, 0
-	i32.store8	$discard=, buf+8($pop60), $0
+	i32.store8	$drop=, buf+8($pop60), $0
 	i32.const	$push59=, 0
-	i64.store	$discard=, buf($pop59), $1
+	i64.store	$drop=, buf($pop59), $1
 	i32.const	$push58=, buf
 	i32.const	$push57=, .L.str
 	i32.call	$push3=, strcmp@FUNCTION, $pop58, $pop57
@@ -45,9 +45,9 @@ main:                                   # @main
 	br_if   	0, $pop7        # 0: down to label0
 # BB#3:                                 # %for.cond.1
 	i32.const	$push68=, 0
-	i32.store8	$discard=, buf+10($pop68), $0
+	i32.store8	$drop=, buf+10($pop68), $0
 	i32.const	$push67=, 0
-	i64.store	$discard=, buf+2($pop67):p2align=1, $1
+	i64.store	$drop=, buf+2($pop67):p2align=1, $1
 	i32.const	$push8=, buf+2
 	i32.const	$push66=, .L.str
 	i32.call	$push9=, strcmp@FUNCTION, $pop8, $pop66
@@ -67,9 +67,9 @@ main:                                   # @main
 	br_if   	0, $pop13       # 0: down to label0
 # BB#5:                                 # %for.cond.3
 	i32.const	$push76=, 0
-	i32.store8	$discard=, buf+12($pop76), $0
+	i32.store8	$drop=, buf+12($pop76), $0
 	i32.const	$push75=, 0
-	i64.store	$discard=, buf+4($pop75):p2align=2, $1
+	i64.store	$drop=, buf+4($pop75):p2align=2, $1
 	i32.const	$push14=, buf+4
 	i32.const	$push74=, .L.str
 	i32.call	$push15=, strcmp@FUNCTION, $pop14, $pop74
@@ -89,9 +89,9 @@ main:                                   # @main
 	br_if   	0, $pop19       # 0: down to label0
 # BB#7:                                 # %for.cond.5
 	i32.const	$push84=, 0
-	i32.store8	$discard=, buf+14($pop84), $0
+	i32.store8	$drop=, buf+14($pop84), $0
 	i32.const	$push83=, 0
-	i64.store	$discard=, buf+6($pop83):p2align=1, $1
+	i64.store	$drop=, buf+6($pop83):p2align=1, $1
 	i32.const	$push20=, buf+6
 	i32.const	$push82=, .L.str
 	i32.call	$push21=, strcmp@FUNCTION, $pop20, $pop82
@@ -111,9 +111,9 @@ main:                                   # @main
 	br_if   	0, $pop25       # 0: down to label0
 # BB#9:                                 # %for.cond.7
 	i32.const	$push92=, 0
-	i32.store8	$discard=, buf+16($pop92), $0
+	i32.store8	$drop=, buf+16($pop92), $0
 	i32.const	$push91=, 0
-	i64.store	$discard=, buf+8($pop91), $1
+	i64.store	$drop=, buf+8($pop91), $1
 	i32.const	$push26=, buf+8
 	i32.const	$push90=, .L.str
 	i32.call	$push27=, strcmp@FUNCTION, $pop26, $pop90
@@ -133,9 +133,9 @@ main:                                   # @main
 	br_if   	0, $pop31       # 0: down to label0
 # BB#11:                                # %for.cond.9
 	i32.const	$push100=, 0
-	i32.store8	$discard=, buf+18($pop100), $0
+	i32.store8	$drop=, buf+18($pop100), $0
 	i32.const	$push99=, 0
-	i64.store	$discard=, buf+10($pop99):p2align=1, $1
+	i64.store	$drop=, buf+10($pop99):p2align=1, $1
 	i32.const	$push32=, buf+10
 	i32.const	$push98=, .L.str
 	i32.call	$push33=, strcmp@FUNCTION, $pop32, $pop98
@@ -155,9 +155,9 @@ main:                                   # @main
 	br_if   	0, $pop37       # 0: down to label0
 # BB#13:                                # %for.cond.11
 	i32.const	$push108=, 0
-	i32.store8	$discard=, buf+20($pop108), $0
+	i32.store8	$drop=, buf+20($pop108), $0
 	i32.const	$push107=, 0
-	i64.store	$discard=, buf+12($pop107):p2align=2, $1
+	i64.store	$drop=, buf+12($pop107):p2align=2, $1
 	i32.const	$push38=, buf+12
 	i32.const	$push106=, .L.str
 	i32.call	$push39=, strcmp@FUNCTION, $pop38, $pop106
@@ -177,9 +177,9 @@ main:                                   # @main
 	br_if   	0, $pop43       # 0: down to label0
 # BB#15:                                # %for.cond.13
 	i32.const	$push116=, 0
-	i32.store8	$discard=, buf+22($pop116), $0
+	i32.store8	$drop=, buf+22($pop116), $0
 	i32.const	$push115=, 0
-	i64.store	$discard=, buf+14($pop115):p2align=1, $1
+	i64.store	$drop=, buf+14($pop115):p2align=1, $1
 	i32.const	$push44=, buf+14
 	i32.const	$push114=, .L.str
 	i32.call	$push45=, strcmp@FUNCTION, $pop44, $pop114
@@ -188,11 +188,11 @@ main:                                   # @main
 	i32.const	$push120=, 0
 	i32.const	$push119=, 0
 	i32.load8_u	$push46=, .L.str+8($pop119)
-	i32.store8	$discard=, buf+23($pop120), $pop46
+	i32.store8	$drop=, buf+23($pop120), $pop46
 	i32.const	$push118=, 0
 	i32.const	$push117=, 0
 	i64.load	$push47=, .L.str($pop117):p2align=0
-	i64.store	$discard=, buf+15($pop118):p2align=0, $pop47
+	i64.store	$drop=, buf+15($pop118):p2align=0, $pop47
 	i32.const	$push49=, buf+15
 	i32.const	$push48=, .L.str
 	i32.call	$push50=, strcmp@FUNCTION, $pop49, $pop48

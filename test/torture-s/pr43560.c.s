@@ -33,9 +33,9 @@ test:                                   # @test
 	br_if   	1, $pop4        # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.store	$discard=, 0($1), $3
+	i32.store	$drop=, 0($1), $3
 	i32.const	$push19=, 0
-	i32.store8	$discard=, 0($2), $pop19
+	i32.store8	$drop=, 0($2), $pop19
 	i32.load	$push18=, 0($1)
 	tee_local	$push17=, $3=, $pop18
 	i32.const	$push16=, 1

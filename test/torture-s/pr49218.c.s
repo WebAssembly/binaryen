@@ -60,7 +60,7 @@ main:                                   # @main
 	i32.const	$push21=, __stack_pointer
 	i32.const	$push19=, 16
 	i32.add 	$push20=, $2, $pop19
-	i32.store	$discard=, 0($pop21), $pop20
+	i32.store	$drop=, 0($pop21), $pop20
 	i32.const	$push37=, 0
 	return  	$pop37
 	.endfunc

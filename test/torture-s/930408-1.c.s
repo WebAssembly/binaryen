@@ -30,7 +30,7 @@ f:                                      # @f
 	return  	$0
 .LBB1_2:                                # %sw.bb
 	end_block                       # label0:
-	i32.call	$discard=, p@FUNCTION
+	i32.call	$drop=, p@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -45,8 +45,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, s($pop1), $pop0
-	i32.call	$discard=, f@FUNCTION
+	i32.store	$drop=, s($pop1), $pop0
+	i32.call	$drop=, f@FUNCTION
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

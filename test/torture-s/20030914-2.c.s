@@ -32,7 +32,7 @@ main:                                   # @main
 	i32.add 	$push10=, $pop16, $pop9
 	i32.const	$push0=, gs
 	i32.const	$push1=, 72
-	i32.call	$discard=, memcpy@FUNCTION, $pop10, $pop0, $pop1
+	i32.call	$drop=, memcpy@FUNCTION, $pop10, $pop0, $pop1
 	block
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $0, $pop11

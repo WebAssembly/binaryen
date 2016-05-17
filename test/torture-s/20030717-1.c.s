@@ -65,7 +65,7 @@ bar:                                    # @bar
 	i32.const	$push13=, 9
 	i32.shr_u	$push14=, $2, $pop13
 	i32.add 	$push15=, $pop14, $7
-	i32.store	$discard=, 12($pop18), $pop15
+	i32.store	$drop=, 12($pop18), $pop15
 	return  	$5
 	.endfunc
 .Lfunc_end0:

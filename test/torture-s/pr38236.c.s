@@ -20,7 +20,7 @@ foo:                                    # @foo
 	i32.add 	$push10=, $4, $pop9
 	i32.select	$push1=, $pop8, $pop10, $3
 	i32.const	$push2=, 1
-	i32.store	$discard=, 0($pop1), $pop2
+	i32.store	$drop=, 0($pop1), $pop2
 	i32.const	$push11=, 12
 	i32.add 	$push12=, $4, $pop11
 	i32.select	$push0=, $pop12, $0, $2

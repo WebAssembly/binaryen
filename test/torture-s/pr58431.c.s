@@ -51,7 +51,7 @@ main:                                   # @main
 # BB#4:                                 # %for.inc17.preheader
 	i32.const	$push23=, 0
 	i32.const	$push22=, 0
-	i32.store	$discard=, e($pop23), $pop22
+	i32.store	$drop=, e($pop23), $pop22
 	br      	1               # 1: down to label2
 .LBB0_5:                                # %for.cond10thread-pre-split
 	end_block                       # label3:
@@ -63,18 +63,18 @@ main:                                   # @main
 # BB#6:                                 # %for.inc.preheader
 	i32.const	$push26=, 0
 	i32.const	$push9=, 1
-	i32.store	$discard=, d($pop26), $pop9
+	i32.store	$drop=, d($pop26), $pop9
 .LBB0_7:                                # %for.end22
 	end_block                       # label2:
 	i32.const	$push30=, 0
-	i32.store	$discard=, g($pop30), $2
+	i32.store	$drop=, g($pop30), $2
 	i32.const	$push29=, 0
 	i32.load8_u	$0=, h($pop29)
 	i32.const	$push28=, 0
-	i32.store	$discard=, j($pop28), $5
+	i32.store	$drop=, j($pop28), $5
 	i32.const	$push27=, 0
 	i32.const	$push11=, 1
-	i32.store	$discard=, b($pop27), $pop11
+	i32.store	$drop=, b($pop27), $pop11
 	block
 	br_if   	0, $0           # 0: down to label4
 # BB#8:                                 # %if.end27
@@ -87,11 +87,11 @@ main:                                   # @main
 .LBB0_10:                               # %for.end22.thread
 	end_block                       # label1:
 	i32.const	$push34=, 0
-	i32.store	$discard=, g($pop34), $2
+	i32.store	$drop=, g($pop34), $2
 	i32.const	$push33=, 0
-	i32.store	$discard=, j($pop33), $5
+	i32.store	$drop=, j($pop33), $5
 	i32.const	$push32=, 0
-	i32.store	$discard=, b($pop32), $3
+	i32.store	$drop=, b($pop32), $3
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

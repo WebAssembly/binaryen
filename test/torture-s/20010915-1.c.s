@@ -20,15 +20,15 @@ main:                                   # @main
 	i32.add 	$push3=, $pop21, $pop2
 	i32.const	$push20=, 0
 	i32.load	$push1=, .Lmain.args+16($pop20)
-	i32.store	$discard=, 0($pop3), $pop1
+	i32.store	$drop=, 0($pop3), $pop1
 	i32.const	$push19=, 0
 	i64.load	$push4=, .Lmain.args+8($pop19)
-	i64.store	$discard=, 8($2), $pop4
+	i64.store	$drop=, 8($2), $pop4
 	i32.const	$push18=, 0
 	i64.load	$push5=, .Lmain.args($pop18)
-	i64.store	$discard=, 0($2), $pop5
+	i64.store	$drop=, 0($2), $pop5
 	i32.const	$push17=, 5
-	i32.call	$discard=, x@FUNCTION, $pop17, $2
+	i32.call	$drop=, x@FUNCTION, $pop17, $2
 	block
 	i32.const	$push16=, 0
 	i32.load	$push6=, check($pop16)
@@ -94,7 +94,7 @@ x:                                      # @x
 	tee_local	$push38=, $5=, $pop39
 	i32.const	$push10=, 1
 	i32.add 	$push11=, $pop38, $pop10
-	i32.store	$discard=, check($pop9), $pop11
+	i32.store	$drop=, check($pop9), $pop11
 	i32.const	$push12=, 2
 	i32.ge_s	$push13=, $5, $pop12
 	br_if   	0, $pop13       # 0: down to label3
@@ -106,14 +106,14 @@ x:                                      # @x
 	i32.const	$push42=, 0
 	i32.const	$push16=, 2
 	i32.add 	$push17=, $5, $pop16
-	i32.store	$discard=, check($pop42), $pop17
+	i32.store	$drop=, check($pop42), $pop17
 	i32.const	$push41=, 1
 	i32.ge_s	$push18=, $5, $pop41
 	br_if   	0, $pop18       # 0: down to label3
 # BB#7:                                 # %s.exit48
 	i32.const	$push45=, 0
 	i32.const	$push44=, 0
-	i32.store	$discard=, u($pop45), $pop44
+	i32.store	$drop=, u($pop45), $pop44
 	i32.load	$push20=, 0($4)
 	i32.const	$push43=, 1
 	i32.add 	$push19=, $3, $pop43
@@ -163,11 +163,11 @@ x:                                      # @x
 	i32.const	$push66=, 0
 	i32.const	$push65=, 1
 	i32.add 	$push30=, $1, $pop65
-	i32.store	$discard=, r.cnt($pop66), $pop30
+	i32.store	$drop=, r.cnt($pop66), $pop30
 	i32.const	$push64=, 1
 	i32.add 	$3=, $3, $pop64
 	i32.const	$push63=, 0
-	i32.store8	$discard=, r.c.0($pop63), $3
+	i32.store8	$drop=, r.c.0($pop63), $3
 	i32.const	$push62=, 1
 	i32.add 	$5=, $5, $pop62
 	i32.const	$push61=, 4
@@ -195,7 +195,7 @@ x:                                      # @x
 	unreachable
 .LBB1_18:                               # %if.then15
 	end_block                       # label1:
-	i32.call	$discard=, m@FUNCTION, $3
+	i32.call	$drop=, m@FUNCTION, $3
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -221,14 +221,14 @@ s:                                      # @s
 	tee_local	$push7=, $2=, $pop8
 	i32.const	$push6=, 1
 	i32.add 	$push2=, $pop7, $pop6
-	i32.store	$discard=, check($pop10), $pop2
+	i32.store	$drop=, check($pop10), $pop2
 	i32.const	$push3=, 2
 	i32.ge_s	$push4=, $2, $pop3
 	br_if   	0, $pop4        # 0: down to label8
 # BB#2:                                 # %if.end
 	i32.const	$push12=, 1
 	i32.add 	$push5=, $0, $pop12
-	i32.store	$discard=, 0($1), $pop5
+	i32.store	$drop=, 0($1), $pop5
 	i32.const	$push11=, 0
 	return  	$pop11
 .LBB2_3:                                # %if.then
@@ -283,11 +283,11 @@ r:                                      # @r
 	i32.const	$push7=, 0
 	i32.const	$push5=, 1
 	i32.add 	$push6=, $1, $pop5
-	i32.store8	$discard=, r.c.0($pop7), $pop6
+	i32.store8	$drop=, r.c.0($pop7), $pop6
 	i32.const	$push17=, 0
 	i32.const	$push16=, 1
 	i32.add 	$push8=, $0, $pop16
-	i32.store	$discard=, r.cnt($pop17), $pop8
+	i32.store	$drop=, r.cnt($pop17), $pop8
 	i32.const	$push15=, 1
 	return  	$pop15
 .LBB4_4:                                # %if.then

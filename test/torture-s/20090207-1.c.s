@@ -15,12 +15,12 @@ foo:                                    # @foo
 	i32.sub 	$push10=, $pop6, $pop7
 	tee_local	$push9=, $1=, $pop10
 	i64.const	$push0=, 12884901889
-	i64.store	$discard=, 0($pop9), $pop0
+	i64.store	$drop=, 0($pop9), $pop0
 	i32.const	$push1=, 2
 	i32.shl 	$push2=, $0, $pop1
 	i32.add 	$push3=, $1, $pop2
 	i32.const	$push8=, 2
-	i32.store	$discard=, 0($pop3), $pop8
+	i32.store	$drop=, 0($pop3), $pop8
 	i32.load	$push4=, 0($1)
 	return  	$pop4
 	.endfunc

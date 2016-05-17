@@ -10,7 +10,7 @@ sub:                                    # @sub
 	i64.load	$push0=, 0($1)
 	i64.const	$push1=, -8690468286197432320
 	i64.xor 	$push2=, $pop0, $pop1
-	i64.store	$discard=, 0($0), $pop2
+	i64.store	$drop=, 0($0), $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -26,7 +26,7 @@ sub2:                                   # @sub2
 	i64.load	$push0=, 0($1)
 	i64.const	$push1=, 2381903268435576
 	i64.xor 	$push2=, $pop0, $pop1
-	i64.store	$discard=, 0($0), $pop2
+	i64.store	$drop=, 0($0), $pop2
 	return
 	.endfunc
 .Lfunc_end1:
@@ -42,7 +42,7 @@ sub3:                                   # @sub3
 	i64.load	$push0=, 0($1)
 	i64.const	$push1=, -4345234143098716160
 	i64.xor 	$push2=, $pop0, $pop1
-	i64.store	$discard=, 0($0), $pop2
+	i64.store	$drop=, 0($0), $pop2
 	return
 	.endfunc
 .Lfunc_end2:
@@ -58,7 +58,7 @@ sub4:                                   # @sub4
 	i64.load	$push0=, 0($1)
 	i64.const	$push1=, 6885502895806072
 	i64.xor 	$push2=, $pop0, $pop1
-	i64.store	$discard=, 0($0), $pop2
+	i64.store	$drop=, 0($0), $pop2
 	return
 	.endfunc
 .Lfunc_end3:

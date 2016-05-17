@@ -12,7 +12,7 @@ byval_arg:
 	i32.const	$2=, __stack_pointer
 	i32.store	$5=, 0($2), $5
 	i32.load	$push0=, 0($0)
-	i32.store	$discard=, 12($5), $pop0
+	i32.store	$drop=, 12($5), $pop0
 	i32.const	$4=, 12
 	i32.add 	$4=, $5, $4
 	call    	ext_byval_func@FUNCTION, $4
@@ -37,7 +37,7 @@ byval_arg_align8:
 	i32.const	$2=, __stack_pointer
 	i32.store	$5=, 0($2), $5
 	i32.load	$push0=, 0($0):p2align=3
-	i32.store	$discard=, 8($5):p2align=3, $pop0
+	i32.store	$drop=, 8($5):p2align=3, $pop0
 	i32.const	$4=, 8
 	i32.add 	$4=, $5, $4
 	call    	ext_byval_func_align8@FUNCTION, $4
@@ -66,9 +66,9 @@ byval_arg_double:
 	i32.const	$push5=, 8
 	i32.add 	$push1=, $0, $pop5
 	i64.load	$push2=, 0($pop1)
-	i64.store	$discard=, 0($pop3), $pop2
+	i64.store	$drop=, 0($pop3), $pop2
 	i64.load	$push4=, 0($0)
-	i64.store	$discard=, 0($4), $pop4
+	i64.store	$drop=, 0($4), $pop4
 	call    	ext_byval_func_alignedstruct@FUNCTION, $4
 	i32.const	$3=, 16
 	i32.add 	$4=, $4, $3
@@ -97,7 +97,7 @@ byval_arg_big:
 	i32.const	$push20=, 32
 	i32.add 	$push1=, $0, $pop20
 	i32.load8_u	$push2=, 0($pop1)
-	i32.store8	$discard=, 0($pop3):p2align=2, $pop2
+	i32.store8	$drop=, 0($pop3):p2align=2, $pop2
 	i32.const	$push4=, 24
 	i32.const	$5=, 12
 	i32.add 	$5=, $9, $5
@@ -105,7 +105,7 @@ byval_arg_big:
 	i32.const	$push19=, 24
 	i32.add 	$push5=, $0, $pop19
 	i64.load	$push6=, 0($pop5):p2align=0
-	i64.store	$discard=, 0($pop7):p2align=2, $pop6
+	i64.store	$drop=, 0($pop7):p2align=2, $pop6
 	i32.const	$push8=, 16
 	i32.const	$6=, 12
 	i32.add 	$6=, $9, $6
@@ -113,7 +113,7 @@ byval_arg_big:
 	i32.const	$push18=, 16
 	i32.add 	$push9=, $0, $pop18
 	i64.load	$push10=, 0($pop9):p2align=0
-	i64.store	$discard=, 0($pop11):p2align=2, $pop10
+	i64.store	$drop=, 0($pop11):p2align=2, $pop10
 	i32.const	$push12=, 8
 	i32.const	$7=, 12
 	i32.add 	$7=, $9, $7
@@ -121,9 +121,9 @@ byval_arg_big:
 	i32.const	$push17=, 8
 	i32.add 	$push13=, $0, $pop17
 	i64.load	$push14=, 0($pop13):p2align=0
-	i64.store	$discard=, 0($pop15):p2align=2, $pop14
+	i64.store	$drop=, 0($pop15):p2align=2, $pop14
 	i64.load	$push16=, 0($0):p2align=0
-	i64.store	$discard=, 12($9):p2align=2, $pop16
+	i64.store	$drop=, 12($9):p2align=2, $pop16
 	i32.const	$8=, 12
 	i32.add 	$8=, $9, $8
 	call    	ext_byval_func_bigarray@FUNCTION, $8

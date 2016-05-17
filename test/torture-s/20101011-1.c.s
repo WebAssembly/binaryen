@@ -23,7 +23,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 8
 	i32.const	$push0=, sigfpe@FUNCTION
-	i32.call	$discard=, signal@FUNCTION, $pop1, $pop0
+	i32.call	$drop=, signal@FUNCTION, $pop1, $pop0
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

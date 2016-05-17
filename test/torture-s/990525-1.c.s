@@ -39,7 +39,7 @@ main:                                   # @main
 	tee_local	$push10=, $0=, $pop11
 	i32.const	$push0=, 0
 	i64.load	$push1=, .Lmain.s($pop0):p2align=2
-	i64.store	$discard=, 8($pop10):p2align=2, $pop1
+	i64.store	$drop=, 8($pop10):p2align=2, $pop1
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $0, $pop6
 	call    	die@FUNCTION, $pop7

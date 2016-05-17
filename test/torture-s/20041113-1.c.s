@@ -43,7 +43,7 @@ test:                                   # @test
 # BB#3:                                 # %if.end11
 	i32.const	$push15=, 16
 	i32.add 	$push16=, $1, $pop15
-	i32.store	$discard=, 12($4), $pop16
+	i32.store	$drop=, 12($4), $pop16
 	i32.load	$push17=, 0($2)
 	i32.const	$push18=, 4
 	i32.ne  	$push19=, $pop17, $pop18
@@ -52,7 +52,7 @@ test:                                   # @test
 	i32.const	$push26=, __stack_pointer
 	i32.const	$push24=, 16
 	i32.add 	$push25=, $4, $pop24
-	i32.store	$discard=, 0($pop26), $pop25
+	i32.store	$drop=, 0($pop26), $pop25
 	return
 .LBB0_5:                                # %if.then15
 	end_block                       # label0:
@@ -80,15 +80,15 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	f64.load	$3=, a($pop0)
 	i32.const	$push4=, 3
-	i32.store	$discard=, 8($2), $pop4
+	i32.store	$drop=, 8($2), $pop4
 	i32.const	$push5=, 2
-	i32.store	$discard=, 4($2), $pop5
+	i32.store	$drop=, 4($2), $pop5
 	i32.const	$push6=, 1
-	i32.store	$discard=, 0($2), $pop6
+	i32.store	$drop=, 0($2), $pop6
 	f64.const	$push1=, 0x1.4p3
 	f64.div 	$push2=, $3, $pop1
 	i32.trunc_s/f64	$push3=, $pop2
-	i32.store	$discard=, 12($2), $pop3
+	i32.store	$drop=, 12($2), $pop3
 	call    	test@FUNCTION, $2, $2
 	i32.const	$push12=, 0
 	call    	exit@FUNCTION, $pop12

@@ -42,7 +42,7 @@ foo:                                    # @foo
 	br_if   	0, $pop1        # 0: down to label2
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
-	i32.store8	$discard=, e($pop2), $0
+	i32.store8	$drop=, e($pop2), $0
 .LBB1_2:                                # %if.end
 	end_block                       # label2:
 	call    	bar@FUNCTION, $0
@@ -66,7 +66,7 @@ baz:                                    # @baz
 	br_if   	0, $pop1        # 0: down to label3
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
-	i32.store8	$discard=, e($pop2), $0
+	i32.store8	$drop=, e($pop2), $0
 .LBB2_2:                                # %if.end
 	end_block                       # label3:
 	return

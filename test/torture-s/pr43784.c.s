@@ -30,7 +30,7 @@ main:                                   # @main
 	call    	rp@FUNCTION, $0
 	i32.const	$push3=, v+4
 	i32.const	$push2=, 256
-	i32.call	$discard=, memcpy@FUNCTION, $pop3, $0, $pop2
+	i32.call	$drop=, memcpy@FUNCTION, $pop3, $0, $pop2
 	i32.const	$1=, 0
 .LBB0_3:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.const	$push14=, __stack_pointer
 	i32.const	$push12=, 256
 	i32.add 	$push13=, $0, $pop12
-	i32.store	$discard=, 0($pop14), $pop13
+	i32.store	$drop=, 0($pop14), $pop13
 	i32.const	$push7=, 0
 	return  	$pop7
 .LBB0_6:                                # %if.then
@@ -69,7 +69,7 @@ rp:                                     # @rp
 # BB#0:                                 # %entry
 	i32.const	$push0=, v
 	i32.const	$push1=, 256
-	i32.call	$discard=, memcpy@FUNCTION, $0, $pop0, $pop1
+	i32.call	$drop=, memcpy@FUNCTION, $0, $pop0, $pop1
 	return
 	.endfunc
 .Lfunc_end1:

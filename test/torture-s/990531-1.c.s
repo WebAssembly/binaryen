@@ -14,12 +14,12 @@ bad:                                    # @bad
 	i32.const	$push5=, 16
 	i32.sub 	$push9=, $pop4, $pop5
 	tee_local	$push8=, $2=, $pop9
-	i32.store	$discard=, 8($pop8), $1
+	i32.store	$drop=, 8($pop8), $1
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $2, $pop6
 	i32.add 	$push0=, $pop7, $0
 	i32.const	$push1=, 0
-	i32.store8	$discard=, 0($pop0), $pop1
+	i32.store8	$drop=, 0($pop0), $pop1
 	i32.load	$push2=, 8($2)
 	return  	$pop2
 	.endfunc

@@ -49,10 +49,10 @@ main:                                   # @main
 	i32.store	$push10=, 0($pop5), $pop8
 	tee_local	$push9=, $0=, $pop10
 	i64.const	$push0=, 95075992080948
-	i64.store	$discard=, 8($pop9), $pop0
+	i64.store	$drop=, 8($pop9), $pop0
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $0, $pop6
-	i32.call	$discard=, f@FUNCTION, $pop7
+	i32.call	$drop=, f@FUNCTION, $pop7
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
 	unreachable

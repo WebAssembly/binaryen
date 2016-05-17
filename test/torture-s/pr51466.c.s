@@ -39,9 +39,9 @@ bar:                                    # @bar
 	i32.add 	$push10=, $pop8, $pop1
 	tee_local	$push9=, $0=, $pop10
 	i32.const	$push2=, 6
-	i32.store	$discard=, 0($pop9), $pop2
+	i32.store	$drop=, 0($pop9), $pop2
 	i32.const	$push3=, 8
-	i32.store	$discard=, 0($0), $pop3
+	i32.store	$drop=, 0($0), $pop3
 	i32.load	$push4=, 0($0)
 	return  	$pop4
 	.endfunc
@@ -67,9 +67,9 @@ baz:                                    # @baz
 	i32.add 	$push9=, $pop10, $pop1
 	tee_local	$push8=, $0=, $pop9
 	i32.const	$push2=, 6
-	i32.store	$discard=, 0($pop8), $pop2
+	i32.store	$drop=, 0($pop8), $pop2
 	i32.const	$push3=, 8
-	i32.store	$discard=, 0($1), $pop3
+	i32.store	$drop=, 0($1), $pop3
 	i32.load	$push4=, 0($0)
 	return  	$pop4
 	.endfunc
@@ -84,7 +84,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 3
-	i32.call	$discard=, foo@FUNCTION, $pop0
+	i32.call	$drop=, foo@FUNCTION, $pop0
 	block
 	i32.const	$push1=, 2
 	i32.call	$push2=, bar@FUNCTION, $pop1

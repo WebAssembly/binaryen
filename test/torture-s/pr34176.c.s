@@ -9,7 +9,7 @@ hash_find_entry:                        # @hash_find_entry
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	i32.const	$push1=, 0
 	return  	$pop1
 	.endfunc
@@ -31,7 +31,7 @@ foo:                                    # @foo
 	tee_local	$push4=, $1=, $pop5
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $pop4, $pop0
-	i32.store	$discard=, foo.count($pop7), $pop1
+	i32.store	$drop=, foo.count($pop7), $pop1
 	block
 	i32.const	$push3=, 1
 	i32.ge_s	$push2=, $1, $pop3
@@ -64,13 +64,13 @@ main:                                   # @main
 	tee_local	$push13=, $2=, $pop14
 	i32.const	$push8=, 12
 	i32.add 	$push9=, $pop13, $pop8
-	i32.call	$discard=, hash_find_entry@FUNCTION, $pop9
+	i32.call	$drop=, hash_find_entry@FUNCTION, $pop9
 .LBB2_1:                                # %if.end
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_3 Depth 2
 	loop                            # label1:
 	i32.load	$0=, 12($2)
-	i32.call	$discard=, foo@FUNCTION, $0
+	i32.call	$drop=, foo@FUNCTION, $0
 	i32.const	$1=, 0
 	block
 	i32.eqz 	$push17=, $0
@@ -93,7 +93,7 @@ main:                                   # @main
 	end_block                       # label3:
 	i32.const	$push10=, 12
 	i32.add 	$push11=, $2, $pop10
-	i32.call	$discard=, hash_find_entry@FUNCTION, $pop11
+	i32.call	$drop=, hash_find_entry@FUNCTION, $pop11
 	i32.eqz 	$push18=, $1
 	br_if   	0, $pop18       # 0: up to label1
 # BB#5:                                 # %for.end
@@ -101,7 +101,7 @@ main:                                   # @main
 	i32.const	$push7=, __stack_pointer
 	i32.const	$push5=, 16
 	i32.add 	$push6=, $2, $pop5
-	i32.store	$discard=, 0($pop7), $pop6
+	i32.store	$drop=, 0($pop7), $pop6
 	i32.const	$push0=, 0
 	return  	$pop0
 	.endfunc

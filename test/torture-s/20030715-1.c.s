@@ -39,7 +39,7 @@ server_type:                            # @server_type
 .LBB1_2:                                # %if.end9
 	end_block                       # label1:
 	i32.const	$push4=, 0
-	i32.store	$discard=, ap_standalone($pop4), $3
+	i32.store	$drop=, ap_standalone($pop4), $3
 	i32.const	$4=, 0
 .LBB1_3:                                # %cleanup
 	end_block                       # label0:
@@ -57,7 +57,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, ap_standalone($pop1), $pop0
+	i32.store	$drop=, ap_standalone($pop1), $pop0
 	i32.const	$push2=, 0
 	return  	$pop2
 	.endfunc

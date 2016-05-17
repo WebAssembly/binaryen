@@ -40,18 +40,18 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push36=, 0
 	i32.const	$push0=, g
-	i32.store	$discard=, c($pop36), $pop0
+	i32.store	$drop=, c($pop36), $pop0
 	i32.const	$push35=, 0
 	i32.const	$push1=, 4
 	i32.store	$0=, b($pop35), $pop1
 	i32.const	$2=, g+4
 	i32.const	$push34=, 0
 	i32.const	$push33=, g+4
-	i32.store	$discard=, e($pop34), $pop33
+	i32.store	$drop=, e($pop34), $pop33
 	i32.const	$4=, 3
 	i32.const	$push32=, 0
 	i32.const	$push31=, 3
-	i32.store	$discard=, d($pop32), $pop31
+	i32.store	$drop=, d($pop32), $pop31
 	i32.const	$3=, 1
 .LBB2_1:                                # %land.rhs.i
                                         # =>This Inner Loop Header: Depth=1
@@ -118,9 +118,9 @@ main:                                   # @main
 	i32.const	$push48=, -1
 	i32.add 	$4=, $4, $pop48
 	i32.const	$push47=, 0
-	i32.store	$discard=, d($pop47), $4
+	i32.store	$drop=, d($pop47), $4
 	i32.const	$push46=, 0
-	i32.store	$discard=, e($pop46), $1
+	i32.store	$drop=, e($pop46), $1
 .LBB2_10:                               # %sw.epilog.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label10:
@@ -131,7 +131,7 @@ main:                                   # @main
 	i32.store	$1=, d($pop55), $pop52
 	i32.add 	$2=, $2, $0
 	i32.const	$push51=, 0
-	i32.store	$discard=, e($pop51), $2
+	i32.store	$drop=, e($pop51), $2
 	i32.const	$push50=, 1
 	i32.gt_s	$5=, $4, $pop50
 	copy_local	$4=, $1
@@ -163,9 +163,9 @@ main:                                   # @main
 	i32.const	$push8=, -1
 	i32.add 	$push60=, $4, $pop8
 	tee_local	$push59=, $6=, $pop60
-	i32.store	$discard=, d($pop9), $pop59
+	i32.store	$drop=, d($pop9), $pop59
 	i32.const	$push58=, 0
-	i32.store	$discard=, e($pop58), $2
+	i32.store	$drop=, e($pop58), $2
 .LBB2_15:                               # %setup2.exit
 	end_block                       # label4:
 	i32.const	$push61=, 0
@@ -180,12 +180,12 @@ main:                                   # @main
 	i32.const	$push64=, 0
 	i32.const	$push21=, 1
 	i32.add 	$push22=, $6, $pop21
-	i32.store	$discard=, d($pop64), $pop22
+	i32.store	$drop=, d($pop64), $pop22
 	i32.const	$push63=, 0
 	i32.const	$push23=, f
-	i32.store	$discard=, e($pop63), $pop23
+	i32.store	$drop=, e($pop63), $pop23
 	i32.const	$push62=, 0
-	i32.store	$discard=, f($pop62), $4
+	i32.store	$drop=, f($pop62), $4
 	i32.const	$4=, 4
 .LBB2_17:                               # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1

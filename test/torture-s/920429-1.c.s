@@ -16,13 +16,13 @@ f:                                      # @f
 	i32.shr_u	$push2=, $pop12, $pop0
 	i32.const	$push11=, 1
 	i32.and 	$push3=, $pop2, $pop11
-	i32.store	$discard=, i($pop4), $pop3
+	i32.store	$drop=, i($pop4), $pop3
 	i32.const	$push10=, 0
 	i32.const	$push5=, 7
 	i32.and 	$push6=, $1, $pop5
 	i32.const	$push9=, 1
 	i32.add 	$push7=, $pop6, $pop9
-	i32.store	$discard=, j($pop10), $pop7
+	i32.store	$drop=, j($pop10), $pop7
 	i32.const	$push8=, 1
 	i32.add 	$push1=, $0, $pop8
 	return  	$pop1
@@ -39,7 +39,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push2=, 2
-	i32.store	$discard=, j($pop1), $pop2
+	i32.store	$drop=, j($pop1), $pop2
 	i32.const	$push4=, 0
 	i32.const	$push3=, 0
 	i32.store	$push0=, i($pop4), $pop3

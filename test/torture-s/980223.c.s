@@ -46,22 +46,22 @@ foo:                                    # @foo
 	i32.load8_u	$4=, 4($pop20)
 	i64.load	$push19=, 8($1):p2align=2
 	tee_local	$push18=, $5=, $pop19
-	i64.store	$discard=, 0($2):p2align=2, $pop18
+	i64.store	$drop=, 0($2):p2align=2, $pop18
 	i32.const	$push17=, 64
 	i32.and 	$push2=, $4, $pop17
 	br_if   	1, $pop2        # 1: down to label0
 .LBB1_3:                                # %if.end7
 	end_block                       # label1:
-	i64.store	$discard=, 0($0):p2align=2, $5
+	i64.store	$drop=, 0($0):p2align=2, $5
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $3, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return
 .LBB1_4:                                # %if.then6
 	end_block                       # label0:
 	i64.load	$push3=, 0($2):p2align=2
-	i64.store	$discard=, 8($3):p2align=2, $pop3
+	i64.store	$drop=, 8($3):p2align=2, $pop3
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $3, $pop11
 	call    	bar@FUNCTION, $2, $pop12
@@ -88,7 +88,7 @@ main:                                   # @main
 	i32.load8_u	$1=, cons2+4($pop15)
 	i32.const	$push14=, 0
 	i64.load	$push0=, .Lmain.y($pop14)
-	i64.store	$discard=, 8($0), $pop0
+	i64.store	$drop=, 8($0), $pop0
 	block
 	block
 	i32.const	$push13=, 64
@@ -101,7 +101,7 @@ main:                                   # @main
 	tee_local	$push17=, $1=, $pop18
 	i32.load8_u	$2=, 4($pop17)
 	i64.load	$push2=, 8($1):p2align=2
-	i64.store	$discard=, 8($0), $pop2
+	i64.store	$drop=, 8($0), $pop2
 	i32.const	$push16=, 64
 	i32.and 	$push3=, $2, $pop16
 	br_if   	1, $pop3        # 1: down to label3
@@ -110,13 +110,13 @@ main:                                   # @main
 	i32.const	$push11=, __stack_pointer
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $0, $pop9
-	i32.store	$discard=, 0($pop11), $pop10
+	i32.store	$drop=, 0($pop11), $pop10
 	i32.const	$push20=, 0
 	return  	$pop20
 .LBB2_3:                                # %if.then6.i
 	end_block                       # label3:
 	i64.load	$push4=, 8($0)
-	i64.store	$discard=, 0($0):p2align=2, $pop4
+	i64.store	$drop=, 0($0):p2align=2, $pop4
 	call    	bar@FUNCTION, $0, $0
 	unreachable
 	.endfunc

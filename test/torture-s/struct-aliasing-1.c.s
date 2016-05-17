@@ -11,7 +11,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.load	$2=, 0($1)
 	i32.const	$push0=, 0
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	i32.load	$push1=, 0($1)
 	i32.add 	$push2=, $2, $pop1
 	return  	$pop2
@@ -48,7 +48,7 @@ main:                                   # @main
 	i32.const	$push11=, __stack_pointer
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $0, $pop9
-	i32.store	$discard=, 0($pop11), $pop10
+	i32.store	$drop=, 0($pop11), $pop10
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_2:                                # %if.then

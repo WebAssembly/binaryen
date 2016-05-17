@@ -32,15 +32,15 @@ f:                                      # @f
 	i32.add 	$push4=, $pop27, $pop3
 	i32.const	$push1=, 0
 	i32.load16_u	$push2=, .Lf.s+12($pop1):p2align=0
-	i32.store16	$discard=, 0($pop4), $pop2
+	i32.store16	$drop=, 0($pop4), $pop2
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $2, $pop6
 	i32.const	$push26=, 0
 	i32.load	$push5=, .Lf.s+8($pop26):p2align=0
-	i32.store	$discard=, 0($pop7), $pop5
+	i32.store	$drop=, 0($pop7), $pop5
 	i32.const	$push25=, 0
 	i64.load	$push8=, .Lf.s($pop25):p2align=0
-	i64.store	$discard=, 0($2):p2align=2, $pop8
+	i64.store	$drop=, 0($2):p2align=2, $pop8
 	i32.const	$push9=, 13
 	i32.add 	$1=, $2, $pop9
 .LBB1_1:                                # %while.cond
@@ -68,7 +68,7 @@ f:                                      # @f
 	i32.const	$push23=, __stack_pointer
 	i32.const	$push21=, 16
 	i32.add 	$push22=, $2, $pop21
-	i32.store	$discard=, 0($pop23), $pop22
+	i32.store	$drop=, 0($pop23), $pop22
 	return  	$1
 .LBB1_4:                                # %if.then
 	end_block                       # label2:
@@ -85,7 +85,7 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, f@FUNCTION
+	i32.call	$drop=, f@FUNCTION
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable

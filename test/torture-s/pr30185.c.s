@@ -10,7 +10,7 @@ foo:                                    # @foo
 	i64.load	$push0=, 8($1)
 	i64.load	$push1=, 8($2)
 	i64.div_s	$push2=, $pop0, $pop1
-	i64.store	$discard=, 8($0), $pop2
+	i64.store	$drop=, 8($0), $pop2
 	return
 	.endfunc
 .Lfunc_end0:

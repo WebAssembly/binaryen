@@ -22,9 +22,9 @@ scale:                                  # @scale
 	i32.load	$4=, 4($1)
 	i32.load	$push2=, 0($1)
 	i32.mul 	$push3=, $pop2, $3
-	i32.store	$discard=, 0($1), $pop3
+	i32.store	$drop=, 0($1), $pop3
 	i32.mul 	$push4=, $4, $3
-	i32.store	$discard=, 4($1), $pop4
+	i32.store	$drop=, 4($1), $pop4
 	i32.const	$push5=, 1
 	i32.eq  	$push6=, $2, $pop5
 	br_if   	0, $pop6        # 0: down to label0
@@ -43,9 +43,9 @@ scale:                                  # @scale
 	i32.load	$push19=, 0($0)
 	tee_local	$push18=, $5=, $pop19
 	i32.mul 	$push9=, $pop8, $pop18
-	i32.store	$discard=, 0($3), $pop9
+	i32.store	$drop=, 0($3), $pop9
 	i32.mul 	$push10=, $4, $5
-	i32.store	$discard=, 0($1), $pop10
+	i32.store	$drop=, 0($1), $pop10
 	i32.const	$push17=, -1
 	i32.add 	$2=, $2, $pop17
 	i32.const	$push16=, 8

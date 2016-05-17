@@ -7,8 +7,8 @@
 f:                                      # @f
 	.param  	i32, f32, f32
 # BB#0:                                 # %entry
-	f32.store	$discard=, 0($0), $1
-	f32.store	$discard=, 4($0), $2
+	f32.store	$drop=, 0($0), $1
+	f32.store	$drop=, 4($0), $2
 	return
 	.endfunc
 .Lfunc_end0:

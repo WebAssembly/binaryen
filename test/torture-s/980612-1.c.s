@@ -38,7 +38,7 @@ main:                                   # @main
 	i32.load8_u	$0=, f($pop6)
 	i32.const	$push5=, 0
 	i32.const	$push0=, 255
-	i32.store8	$discard=, f+1($pop5), $pop0
+	i32.store8	$drop=, f+1($pop5), $pop0
 	block
 	i32.const	$push1=, 111
 	i32.and 	$push2=, $0, $pop1

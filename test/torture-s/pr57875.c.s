@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.const	$2=, 2
 	i32.const	$push20=, 0
 	i32.const	$push19=, 2
-	i32.store	$discard=, f($pop20), $pop19
+	i32.store	$drop=, f($pop20), $pop19
 .LBB0_6:                                # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label4:
@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.const	$push21=, 0
 	i32.load8_u	$push2=, e($pop21)
 	i32.and 	$push3=, $pop2, $2
-	i32.store8	$discard=, e($pop22), $pop3
+	i32.store8	$drop=, e($pop22), $pop3
 .LBB0_7:                                # %for.inc
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
@@ -64,7 +64,7 @@ main:                                   # @main
 # BB#8:                                 # %for.cond.for.end_crit_edge
 	end_loop                        # label2:
 	i32.const	$push4=, 0
-	i32.store	$discard=, i($pop4), $4
+	i32.store	$drop=, i($pop4), $4
 .LBB0_9:                                # %for.end
 	end_block                       # label0:
 	block

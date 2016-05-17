@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.const	$push5=, -1073741824
 	i32.and 	$push6=, $0, $pop5
 	i32.or  	$push7=, $pop4, $pop6
-	i32.store	$discard=, t($pop12), $pop7
+	i32.store	$drop=, t($pop12), $pop7
 	block
 	i32.const	$push8=, 1073741823
 	i32.and 	$push1=, $0, $pop8

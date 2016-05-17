@@ -13,9 +13,9 @@ main:                                   # @main
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
 	i32.load16_u	$push1=, src+8($pop4)
-	i32.store16	$discard=, dst+8($pop5), $pop1
+	i32.store16	$drop=, dst+8($pop5), $pop1
 	i32.const	$push3=, 0
-	i64.store	$discard=, dst($pop3), $0
+	i64.store	$drop=, dst($pop3), $0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -37,7 +37,7 @@ foo:                                    # @foo
 	i32.eqz 	$push0=, $2
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.call	$discard=, memcpy@FUNCTION, $0, $1, $2
+	i32.call	$drop=, memcpy@FUNCTION, $0, $1, $2
 	i32.const	$3=, 0
 .LBB1_2:                                # %return
 	end_block                       # label0:

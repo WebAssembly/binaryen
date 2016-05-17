@@ -21,7 +21,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$discard=, argp($pop0)
+	i32.load	$drop=, argp($pop0)
 	i32.const	$push1=, 0
 	return  	$pop1
 	.endfunc

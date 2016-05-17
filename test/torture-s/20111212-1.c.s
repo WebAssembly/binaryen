@@ -14,7 +14,7 @@ frob_entry:                             # @frob_entry
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push3=, -1
-	i32.store	$discard=, 0($0):p2align=0, $pop3
+	i32.store	$drop=, 0($0):p2align=0, $pop3
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	return
@@ -38,7 +38,7 @@ main:                                   # @main
 	i32.store	$push15=, 0($pop7), $pop13
 	tee_local	$push14=, $0=, $pop15
 	i64.const	$push0=, 0
-	i64.store	$discard=, 8($pop14), $pop0
+	i64.store	$drop=, 8($pop14), $pop0
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $0, $pop11
 	i32.const	$push1=, 1
@@ -47,7 +47,7 @@ main:                                   # @main
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $0, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc

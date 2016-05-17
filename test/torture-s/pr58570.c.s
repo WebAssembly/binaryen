@@ -26,10 +26,10 @@ main:                                   # @main
 	tee_local	$push25=, $1=, $pop26
 	i64.load16_u	$0=, 0($pop25)
 	i64.const	$push6=, 32769
-	i64.store32	$discard=, d($2):p2align=1, $pop6
+	i64.store32	$drop=, d($2):p2align=1, $pop6
 	i64.const	$push7=, 61440
 	i64.and 	$push8=, $0, $pop7
-	i64.store16	$discard=, 0($1), $pop8
+	i64.store16	$drop=, 0($1), $pop8
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	block

@@ -17,14 +17,14 @@ f:                                      # @f
 	i32.store	$push12=, 0($pop6), $pop10
 	tee_local	$push11=, $1=, $pop12
 	i64.const	$push0=, 4617315517961601024
-	i64.store	$discard=, 0($pop11), $pop0
+	i64.store	$drop=, 0($pop11), $pop0
 	i32.const	$push2=, buf
 	i32.const	$push1=, .L.str
-	i32.call_indirect	$discard=, $0, $pop2, $pop1, $1
+	i32.call_indirect	$drop=, $0, $pop2, $pop1, $1
 	i32.const	$push9=, __stack_pointer
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $1, $pop7
-	i32.store	$discard=, 0($pop9), $pop8
+	i32.store	$drop=, 0($pop9), $pop8
 	return  	$1
 	.endfunc
 .Lfunc_end0:
@@ -46,10 +46,10 @@ main:                                   # @main
 	i32.store	$push17=, 0($pop13), $pop14
 	tee_local	$push16=, $0=, $pop17
 	i64.const	$push1=, 4617315517961601024
-	i64.store	$discard=, 0($pop16), $pop1
+	i64.store	$drop=, 0($pop16), $pop1
 	i32.const	$push3=, buf
 	i32.const	$push2=, .L.str
-	i32.call	$discard=, sprintf@FUNCTION, $pop3, $pop2, $0
+	i32.call	$drop=, sprintf@FUNCTION, $pop3, $pop2, $0
 	block
 	i32.const	$push15=, 0
 	i32.load8_u	$push4=, buf($pop15)

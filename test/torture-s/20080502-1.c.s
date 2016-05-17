@@ -14,10 +14,10 @@ foo:                                    # @foo
 	tee_local	$push7=, $2=, $pop8
 	i64.const	$push3=, 4611846683310179025
 	i64.and 	$push4=, $pop7, $pop3
-	i64.store	$discard=, 0($pop6), $pop4
+	i64.store	$drop=, 0($pop6), $pop4
 	i64.const	$push1=, -8905435550453399112
 	i64.and 	$push2=, $2, $pop1
-	i64.store	$discard=, 0($0), $pop2
+	i64.store	$drop=, 0($0), $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -52,7 +52,7 @@ main:                                   # @main
 	i32.const	$push14=, __stack_pointer
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $0, $pop12
-	i32.store	$discard=, 0($pop14), $pop13
+	i32.store	$drop=, 0($pop14), $pop13
 	i32.const	$push7=, 0
 	return  	$pop7
 .LBB1_2:                                # %if.then

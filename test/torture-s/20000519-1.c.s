@@ -40,7 +40,7 @@ foo:                                    # @foo
 	i32.load	$push4=, 0($pop3)
 	i32.const	$push5=, 16
 	i32.sub 	$push6=, $pop4, $pop5
-	i32.store	$discard=, 12($pop6), $1
+	i32.store	$drop=, 12($pop6), $1
 .LBB1_1:                                # %do.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
@@ -75,7 +75,7 @@ main:                                   # @main
 	i32.store	$push15=, 0($pop9), $pop13
 	tee_local	$push14=, $0=, $pop15
 	i64.const	$push0=, 12884901890
-	i64.store	$discard=, 0($pop14), $pop0
+	i64.store	$drop=, 0($pop14), $pop0
 	block
 	i32.const	$push1=, 1
 	i32.call	$push2=, foo@FUNCTION, $pop1, $0
@@ -86,7 +86,7 @@ main:                                   # @main
 	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$discard=, 0($pop12), $pop11
+	i32.store	$drop=, 0($pop12), $pop11
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB2_2:                                # %if.then

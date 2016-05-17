@@ -27,7 +27,7 @@ bar:                                    # @bar
 	i32.load	$push1=, a($pop5)
 	i32.const	$push4=, 0
 	i32.ne  	$push2=, $pop1, $pop4
-	i32.store	$discard=, b($pop0), $pop2
+	i32.store	$drop=, b($pop0), $pop2
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc
@@ -41,7 +41,7 @@ bar:                                    # @bar
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, bar@FUNCTION
+	i32.call	$drop=, bar@FUNCTION
 	block
 	i32.const	$push3=, 0
 	i32.load	$push0=, b($pop3)

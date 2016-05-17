@@ -83,48 +83,48 @@ main:                                   # @main
 	i32.store	$push43=, 0($pop24), $pop37
 	tee_local	$push42=, $1=, $pop43
 	i32.const	$push0=, 5130
-	i32.store16	$discard=, 16($pop42), $pop0
+	i32.store16	$drop=, 16($pop42), $pop0
 	i32.const	$push1=, 11
-	i32.store8	$discard=, 19($1), $pop1
+	i32.store8	$drop=, 19($1), $pop1
 	i32.const	$push2=, 12
-	i32.store8	$discard=, 22($1), $pop2
+	i32.store8	$drop=, 22($1), $pop2
 	i32.const	$push3=, 21
-	i32.store8	$discard=, 20($1), $pop3
+	i32.store8	$drop=, 20($1), $pop3
 	i32.const	$push4=, 22
-	i32.store8	$discard=, 23($1), $pop4
+	i32.store8	$drop=, 23($1), $pop4
 	i32.const	$push5=, 30
-	i32.store8	$discard=, 18($1), $pop5
+	i32.store8	$drop=, 18($1), $pop5
 	i32.const	$push6=, 31
-	i32.store8	$discard=, 21($1), $pop6
+	i32.store8	$drop=, 21($1), $pop6
 	i32.const	$push7=, 24
 	i32.add 	$push41=, $1, $pop7
 	tee_local	$push40=, $0=, $pop41
 	i32.const	$push8=, 32
-	i32.store8	$discard=, 0($pop40), $pop8
+	i32.store8	$drop=, 0($pop40), $pop8
 	i32.const	$push25=, 12
 	i32.add 	$push26=, $1, $pop25
 	i32.const	$push9=, 2
 	i32.add 	$push10=, $pop26, $pop9
 	i32.load8_u	$push11=, 18($1)
-	i32.store8	$discard=, 0($pop10), $pop11
+	i32.store8	$drop=, 0($pop10), $pop11
 	i32.const	$push27=, 8
 	i32.add 	$push28=, $1, $pop27
 	i32.const	$push39=, 2
 	i32.add 	$push12=, $pop28, $pop39
 	i32.load8_u	$push13=, 21($1)
-	i32.store8	$discard=, 0($pop12), $pop13
+	i32.store8	$drop=, 0($pop12), $pop13
 	i32.load16_u	$push14=, 16($1)
-	i32.store16	$discard=, 12($1), $pop14
+	i32.store16	$drop=, 12($1), $pop14
 	i32.load16_u	$push15=, 19($1):p2align=0
-	i32.store16	$discard=, 8($1), $pop15
+	i32.store16	$drop=, 8($1), $pop15
 	i32.const	$push29=, 4
 	i32.add 	$push30=, $1, $pop29
 	i32.const	$push38=, 2
 	i32.add 	$push16=, $pop30, $pop38
 	i32.load8_u	$push17=, 0($0)
-	i32.store8	$discard=, 0($pop16), $pop17
+	i32.store8	$drop=, 0($pop16), $pop17
 	i32.load16_u	$push18=, 22($1)
-	i32.store16	$discard=, 4($1), $pop18
+	i32.store16	$drop=, 4($1), $pop18
 	i32.const	$push31=, 12
 	i32.add 	$push32=, $1, $pop31
 	i32.const	$push33=, 8
@@ -132,7 +132,7 @@ main:                                   # @main
 	i32.const	$push35=, 4
 	i32.add 	$push36=, $1, $pop35
 	i32.const	$push19=, 123
-	i32.call	$discard=, f@FUNCTION, $1, $pop32, $pop34, $pop36, $pop19
+	i32.call	$drop=, f@FUNCTION, $1, $pop32, $pop34, $pop36, $pop19
 	i32.const	$push20=, 0
 	call    	exit@FUNCTION, $pop20
 	unreachable

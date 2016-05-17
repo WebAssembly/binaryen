@@ -15,7 +15,7 @@ copy_yes:
 	.type	copy_no,@function
 copy_no:
 	.param  	i32, i32, i32
-	i32.call	$discard=, memcpy@FUNCTION, $0, $1, $2
+	i32.call	$drop=, memcpy@FUNCTION, $0, $1, $2
 	return
 	.endfunc
 .Lfunc_end1:
@@ -36,7 +36,7 @@ move_yes:
 	.type	move_no,@function
 move_no:
 	.param  	i32, i32, i32
-	i32.call	$discard=, memmove@FUNCTION, $0, $1, $2
+	i32.call	$drop=, memmove@FUNCTION, $0, $1, $2
 	return
 	.endfunc
 .Lfunc_end3:
@@ -57,7 +57,7 @@ set_yes:
 	.type	set_no,@function
 set_no:
 	.param  	i32, i32, i32
-	i32.call	$discard=, memset@FUNCTION, $0, $1, $2
+	i32.call	$drop=, memset@FUNCTION, $0, $1, $2
 	return
 	.endfunc
 .Lfunc_end5:
@@ -77,10 +77,10 @@ frame_index:
 	i32.const	$push0=, 1024
 	i32.const	$3=, 2048
 	i32.add 	$3=, $4, $3
-	i32.call	$discard=, memset@FUNCTION, $3, $pop1, $pop0
+	i32.call	$drop=, memset@FUNCTION, $3, $pop1, $pop0
 	i32.const	$push3=, 0
 	i32.const	$push2=, 1024
-	i32.call	$discard=, memset@FUNCTION, $4, $pop3, $pop2
+	i32.call	$drop=, memset@FUNCTION, $4, $pop3, $pop2
 	i32.const	$2=, 4096
 	i32.add 	$4=, $4, $2
 	i32.const	$2=, __stack_pointer
@@ -90,9 +90,9 @@ frame_index:
 .Lfunc_end6:
 	.size	frame_index, .Lfunc_end6-frame_index
 
-	.globl	discard_result
-	.type	discard_result,@function
-discard_result:
+	.globl	drop_result
+	.type	drop_result,@function
+drop_result:
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
 	block
@@ -105,12 +105,12 @@ discard_result:
 .LBB7_2:
 	end_block
 	br_if   	0, $4
-	i32.call	$discard=, memset@FUNCTION, $0, $1, $2
+	i32.call	$drop=, memset@FUNCTION, $0, $1, $2
 .LBB7_4:
 	end_block
 	return  	$0
 	.endfunc
 .Lfunc_end7:
-	.size	discard_result, .Lfunc_end7-discard_result
+	.size	drop_result, .Lfunc_end7-drop_result
 
 

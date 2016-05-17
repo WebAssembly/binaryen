@@ -16,7 +16,7 @@ foo:                                    # @foo
 	i32.add 	$push4=, $pop3, $5
 	i32.add 	$push5=, $pop4, $6
 	i32.add 	$push6=, $pop5, $7
-	i32.store	$discard=, global($pop7), $pop6
+	i32.store	$drop=, global($pop7), $pop6
 	return  	$1
 	.endfunc
 .Lfunc_end0:
@@ -38,7 +38,7 @@ bar:                                    # @bar
 	i32.const	$push1=, 4
 	i32.const	$push8=, 1
 	i32.const	$push0=, 5
-	i32.call	$discard=, foo@FUNCTION, $pop4, $pop3, $pop10, $pop2, $pop9, $pop1, $pop8, $pop0
+	i32.call	$drop=, foo@FUNCTION, $pop4, $pop3, $pop10, $pop2, $pop9, $pop1, $pop8, $pop0
 	i32.const	$push5=, 0
 	i64.load32_u	$push6=, global($pop5)
 	i64.shr_u	$push7=, $0, $pop6

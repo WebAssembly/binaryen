@@ -21,7 +21,7 @@ main:                                   # @main
 # BB#2:                                 # %for.body3.i.preheader
 	i32.const	$push6=, 0
 	i32.const	$push7=, 1
-	i32.store	$discard=, b($pop6), $pop7
+	i32.store	$drop=, b($pop6), $pop7
 	i32.const	$push11=, 0
 	call    	exit@FUNCTION, $pop11
 	unreachable
@@ -29,10 +29,10 @@ main:                                   # @main
 	end_block                       # label1:
 	i32.const	$push3=, 0
 	i32.const	$push4=, 1
-	i32.store	$discard=, e($pop3), $pop4
+	i32.store	$drop=, e($pop3), $pop4
 	i32.const	$push12=, 0
 	i32.const	$push5=, 4
-	i32.store	$discard=, c($pop12), $pop5
+	i32.store	$drop=, c($pop12), $pop5
 .LBB0_4:                                # %foo.exit
 	end_block                       # label0:
 	i32.const	$push13=, 0

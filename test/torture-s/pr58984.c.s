@@ -20,7 +20,7 @@ main:                                   # @main
 	i32.load	$push3=, 0($0)
 	i32.const	$push15=, 1
 	i32.xor 	$push4=, $pop3, $pop15
-	i32.store	$discard=, 0($0), $pop4
+	i32.store	$drop=, 0($0), $pop4
 .LBB0_2:                                # %foo.exit
 	end_block                       # label0:
 	block
@@ -40,12 +40,12 @@ main:                                   # @main
 	i32.load	$push8=, 0($1)
 	i32.const	$push9=, 1
 	i32.xor 	$push10=, $pop8, $pop9
-	i32.store	$discard=, 0($1), $pop10
+	i32.store	$drop=, 0($1), $pop10
 	i32.load	$1=, a($0)
 	i32.load	$push11=, m($0)
 	i32.const	$push20=, 1
 	i32.or  	$push12=, $pop11, $pop20
-	i32.store	$discard=, m($0), $pop12
+	i32.store	$drop=, m($0), $pop12
 	br_if   	0, $1           # 0: down to label1
 # BB#4:                                 # %if.end11
 	return  	$0

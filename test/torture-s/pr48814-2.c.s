@@ -34,7 +34,7 @@ main:                                   # @main
 	tee_local	$push12=, $0=, $pop13
 	i32.const	$push11=, 2
 	i32.shl 	$push3=, $pop12, $pop11
-	i32.store	$discard=, arr($pop3), $0
+	i32.store	$drop=, arr($pop3), $0
 	i32.const	$push10=, 0
 	i32.const	$push9=, 2
 	i32.add 	$push0=, $1, $pop9

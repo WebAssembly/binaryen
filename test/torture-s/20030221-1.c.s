@@ -17,10 +17,10 @@ main:                                   # @main
 	tee_local	$push18=, $0=, $pop19
 	i32.const	$push17=, 0
 	i64.load	$push1=, .Lmain.buf+8($pop17)
-	i64.store	$discard=, 8($pop18), $pop1
+	i64.store	$drop=, 8($pop18), $pop1
 	i32.const	$push16=, 0
 	i64.load	$push2=, .Lmain.buf($pop16)
-	i64.store	$discard=, 0($0), $pop2
+	i64.store	$drop=, 0($0), $pop2
 	block
 	i32.call	$push3=, strlen@FUNCTION, $0
 	i32.store8	$push0=, 0($0), $pop3
@@ -33,7 +33,7 @@ main:                                   # @main
 	i32.const	$push14=, __stack_pointer
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $0, $pop12
-	i32.store	$discard=, 0($pop14), $pop13
+	i32.store	$drop=, 0($pop14), $pop13
 	i32.const	$push20=, 0
 	return  	$pop20
 .LBB0_2:                                # %if.then

@@ -13,7 +13,7 @@ bar:                                    # @bar
 	i32.const	$push2=, 16
 	i32.sub 	$push5=, $pop1, $pop2
 	tee_local	$push4=, $1=, $pop5
-	i32.store	$discard=, 12($pop4), $0
+	i32.store	$drop=, 12($pop4), $0
 	i32.const	$push3=, 12
 	i32.add 	$0=, $1, $pop3
 	#APP
@@ -46,7 +46,7 @@ foo:                                    # @foo
 	i32.const	$push7=, __stack_pointer
 	i32.const	$push5=, 16
 	i32.add 	$push6=, $1, $pop5
-	i32.store	$discard=, 0($pop7), $pop6
+	i32.store	$drop=, 0($pop7), $pop6
 	return  	$0
 	.endfunc
 .Lfunc_end1:

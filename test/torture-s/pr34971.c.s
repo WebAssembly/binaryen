@@ -45,7 +45,7 @@ main:                                   # @main
 	i64.and 	$push3=, $pop1, $pop2
 	i64.const	$push4=, 4294967297
 	i64.or  	$push5=, $pop3, $pop4
-	i64.store	$discard=, x($pop0), $pop5
+	i64.store	$drop=, x($pop0), $pop5
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

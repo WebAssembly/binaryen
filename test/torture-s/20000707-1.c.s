@@ -62,10 +62,10 @@ main:                                   # @main
 	i32.add 	$push3=, $pop14, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.x+8($pop0)
-	i32.store	$discard=, 0($pop3), $pop1
+	i32.store	$drop=, 0($pop3), $pop1
 	i32.const	$push13=, 0
 	i64.load	$push4=, .Lmain.x($pop13):p2align=2
-	i64.store	$discard=, 4($0):p2align=2, $pop4
+	i64.store	$drop=, 4($0):p2align=2, $pop4
 	i32.const	$push9=, 4
 	i32.add 	$push10=, $0, $pop9
 	call    	bar@FUNCTION, $pop10, $0, $0

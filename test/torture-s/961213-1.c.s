@@ -11,7 +11,7 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	i64.const	$5=, 0
 	i64.const	$push4=, 0
-	i64.store	$discard=, 0($0), $pop4
+	i64.store	$drop=, 0($0), $pop4
 	block
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $1, $pop0
@@ -32,7 +32,7 @@ g:                                      # @g
 	br_if   	0, $3           # 0: up to label1
 # BB#3:                                 # %for.cond.for.end_crit_edge
 	end_loop                        # label2:
-	i64.store	$discard=, 0($0), $5
+	i64.store	$drop=, 0($0), $5
 .LBB0_4:                                # %for.end
 	end_block                       # label0:
 	return  	$1

@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.const	$push4=, 0
 	i32.load	$push1=, x($pop4)
 	i32.sub 	$push2=, $pop5, $pop1
-	i32.store	$discard=, x($pop0), $pop2
+	i32.store	$drop=, x($pop0), $pop2
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc

@@ -15,7 +15,7 @@ bar:                                    # @bar
 	loop                            # label0:
 	i32.const	$push4=, 1
 	i32.shl 	$1=, $1, $pop4
-	i32.store	$discard=, c($0), $1
+	i32.store	$drop=, c($0), $1
 	i32.const	$push3=, 4
 	i32.add 	$0=, $0, $pop3
 	i32.const	$push2=, 2496
@@ -41,7 +41,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.const	$push5=, 1
-	i32.store	$discard=, c+2496($0), $pop5
+	i32.store	$drop=, c+2496($0), $pop5
 	i32.const	$push4=, 4
 	i32.add 	$0=, $0, $pop4
 	br_if   	0, $0           # 0: up to label2

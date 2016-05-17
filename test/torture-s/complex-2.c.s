@@ -13,9 +13,9 @@ f:                                      # @f
 	f64.load	$push0=, 0($2)
 	f64.load	$push1=, 0($1)
 	f64.add 	$push2=, $pop0, $pop1
-	f64.store	$discard=, 0($0), $pop2
+	f64.store	$drop=, 0($0), $pop2
 	f64.add 	$push3=, $3, $4
-	f64.store	$discard=, 8($0), $pop3
+	f64.store	$drop=, 8($0), $pop3
 	return
 	.endfunc
 .Lfunc_end0:

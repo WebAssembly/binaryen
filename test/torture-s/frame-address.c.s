@@ -15,7 +15,7 @@ check_fa_work:                          # @check_fa_work
 	i32.sub 	$push18=, $pop9, $pop10
 	tee_local	$push17=, $2=, $pop18
 	i32.const	$push0=, 0
-	i32.store8	$discard=, 15($pop17), $pop0
+	i32.store8	$drop=, 15($pop17), $pop0
 	block
 	i32.const	$push11=, 15
 	i32.add 	$push12=, $2, $pop11
@@ -54,7 +54,7 @@ check_fa_mid:                           # @check_fa_mid
 	i32.load	$push5=, 0($pop3)
 	copy_local	$push7=, $pop5
 	tee_local	$push6=, $1=, $pop7
-	i32.store	$discard=, 0($pop4), $pop6
+	i32.store	$drop=, 0($pop4), $pop6
 	i32.call	$push0=, check_fa_work@FUNCTION, $0, $1
 	i32.const	$push1=, 0
 	i32.ne  	$push2=, $pop0, $pop1
@@ -82,7 +82,7 @@ check_fa:                               # @check_fa
 	tee_local	$push13=, $1=, $pop14
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $pop13, $pop7
-	i32.store	$discard=, 0($pop9), $pop8
+	i32.store	$drop=, 0($pop9), $pop8
 	i32.const	$push10=, 15
 	i32.add 	$push11=, $1, $pop10
 	i32.call	$push0=, check_fa_mid@FUNCTION, $pop11

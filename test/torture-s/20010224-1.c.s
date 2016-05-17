@@ -17,7 +17,7 @@ ba_compute_psd:                         # @ba_compute_psd
 	tee_local	$push13=, $3=, $pop14
 	i32.load16_u	$push12=, psd($1)
 	tee_local	$push11=, $2=, $pop12
-	i32.store16	$discard=, bndpsd($pop13), $pop11
+	i32.store16	$drop=, bndpsd($pop13), $pop11
 	block
 	i32.const	$push10=, 1
 	i32.add 	$push9=, $0, $pop10
@@ -48,7 +48,7 @@ ba_compute_psd:                         # @ba_compute_psd
 	br_if   	0, $0           # 0: up to label1
 # BB#3:                                 # %for.cond.for.end_crit_edge
 	end_loop                        # label2:
-	i32.store16	$discard=, 0($3), $2
+	i32.store16	$drop=, 0($3), $2
 .LBB0_4:                                # %for.end
 	end_block                       # label0:
 	return
@@ -98,7 +98,7 @@ main:                                   # @main
 	i32.add 	$push5=, $pop4, $pop3
 	i32.add 	$push7=, $pop6, $pop5
 	i32.add 	$push9=, $pop8, $pop7
-	i32.store16	$discard=, bndpsd($pop2), $pop9
+	i32.store16	$drop=, bndpsd($pop2), $pop9
 	block
 	i32.const	$push13=, 0
 	i32.load16_u	$push10=, bndpsd+2($pop13)

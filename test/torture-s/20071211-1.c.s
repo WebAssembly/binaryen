@@ -13,7 +13,7 @@ main:                                   # @main
 	i64.load	$push0=, sv($pop20)
 	i64.const	$push1=, -1099511627776
 	i64.or  	$push2=, $pop0, $pop1
-	i64.store	$discard=, sv($pop21), $pop2
+	i64.store	$drop=, sv($pop21), $pop2
 	#APP
 	#NO_APP
 	i32.const	$push19=, 0
@@ -30,7 +30,7 @@ main:                                   # @main
 	i64.const	$push7=, 1099511627775
 	i64.and 	$push8=, $1, $pop7
 	i64.or  	$push9=, $pop6, $pop8
-	i64.store	$discard=, sv($pop19), $pop9
+	i64.store	$drop=, sv($pop19), $pop9
 	block
 	i64.const	$push10=, 16777215
 	i64.and 	$push11=, $0, $pop10

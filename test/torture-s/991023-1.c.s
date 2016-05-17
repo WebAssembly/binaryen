@@ -24,7 +24,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 4044
-	i32.store	$discard=, blah($pop1), $pop0
+	i32.store	$drop=, blah($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

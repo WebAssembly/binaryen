@@ -17,7 +17,7 @@ main:                                   # @main
 	i32.select	$push3=, $0, $pop1, $pop2
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$discard=, level($pop8), $pop5
+	i32.store	$drop=, level($pop8), $pop5
 	i32.const	$push6=, 0
 	call    	exit@FUNCTION, $pop6
 	unreachable
@@ -42,7 +42,7 @@ foo:                                    # @foo
 	i32.select	$push3=, $0, $pop1, $pop2
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$discard=, level($pop8), $pop5
+	i32.store	$drop=, level($pop8), $pop5
 	i32.const	$push6=, -42
 	return  	$pop6
 	.endfunc

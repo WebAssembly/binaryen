@@ -35,7 +35,7 @@ main:                                   # @main
 	i32.sub 	$push10=, $pop5, $pop6
 	i32.store	$push12=, 0($pop7), $pop10
 	tee_local	$push11=, $0=, $pop12
-	i32.store	$discard=, 8($pop11), $0
+	i32.store	$drop=, 8($pop11), $0
 	block
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $0, $pop8

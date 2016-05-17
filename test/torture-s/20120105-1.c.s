@@ -23,15 +23,15 @@ main:                                   # @main
 	i32.store8	$push0=, 0($pop2), $pop3
 	i32.store	$0=, 0($pop5), $pop0
 	i64.const	$push6=, 0
-	i64.store	$discard=, 0($1):p2align=2, $pop6
+	i64.store	$drop=, 0($1):p2align=2, $pop6
 	i32.const	$push7=, 1
 	i32.or  	$push8=, $1, $pop7
 	i32.call	$push9=, extract@FUNCTION, $pop8
-	i32.store	$discard=, i($0), $pop9
+	i32.store	$drop=, i($0), $pop9
 	i32.const	$push16=, __stack_pointer
 	i32.const	$push14=, 16
 	i32.add 	$push15=, $1, $pop14
-	i32.store	$discard=, 0($pop16), $pop15
+	i32.store	$drop=, 0($pop16), $pop15
 	return  	$0
 	.endfunc
 .Lfunc_end0:

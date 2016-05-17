@@ -44,7 +44,7 @@ msum_i4:                                # @msum_i4
 	i32.shl 	$push8=, $2, $pop45
 	i32.const	$push44=, -4
 	i32.add 	$push9=, $pop8, $pop44
-	i32.call	$discard=, memset@FUNCTION, $pop29, $pop10, $pop9
+	i32.call	$drop=, memset@FUNCTION, $pop29, $pop10, $pop9
 	i32.const	$push43=, 16
 	i32.add 	$2=, $1, $pop43
 	copy_local	$8=, $3
@@ -58,7 +58,7 @@ msum_i4:                                # @msum_i4
 	i32.add 	$push13=, $2, $pop49
 	i32.load	$push14=, 0($pop13)
 	i32.sub 	$push15=, $pop12, $pop14
-	i32.store	$discard=, 0($8), $pop15
+	i32.store	$drop=, 0($8), $pop15
 	i32.const	$push48=, 4
 	i32.add 	$8=, $8, $pop48
 	i32.const	$push47=, -1
@@ -105,7 +105,7 @@ msum_i4:                                # @msum_i4
 .LBB0_8:                                # %for.end22
                                         #   in Loop: Header=BB0_4 Depth=1
 	end_block                       # label5:
-	i32.store	$discard=, 0($0), $8
+	i32.store	$drop=, 0($0), $8
 	i32.const	$push56=, 4
 	i32.add 	$0=, $0, $pop56
 	i32.load	$push19=, 0($3)
@@ -120,7 +120,7 @@ msum_i4:                                # @msum_i4
 	i32.const	$push27=, __stack_pointer
 	i32.const	$push25=, 64
 	i32.add 	$push26=, $3, $pop25
-	i32.store	$discard=, 0($pop27), $pop26
+	i32.store	$drop=, 0($pop27), $pop26
 	return
 	.endfunc
 .Lfunc_end0:
@@ -140,9 +140,9 @@ main:                                   # @main
 	i32.sub 	$push19=, $pop14, $pop15
 	tee_local	$push18=, $4=, $pop19
 	i32.const	$push1=, 0
-	i32.store	$discard=, 80($pop18), $pop1
+	i32.store	$drop=, 80($pop18), $pop1
 	i32.const	$push2=, 3
-	i32.store	$discard=, 48($4), $pop2
+	i32.store	$drop=, 48($4), $pop2
 	copy_local	$2=, $4
 	i32.const	$push16=, 36
 	i32.add 	$push17=, $4, $pop16
@@ -161,7 +161,7 @@ main:                                   # @main
 	i32.load	$push3=, 0($2)
 	i32.add 	$push6=, $pop5, $pop3
 	i32.add 	$push9=, $pop8, $pop6
-	i32.store	$discard=, 0($3), $pop9
+	i32.store	$drop=, 0($3), $pop9
 	i32.const	$push22=, 4
 	i32.add 	$3=, $3, $pop22
 	i32.const	$push21=, 12

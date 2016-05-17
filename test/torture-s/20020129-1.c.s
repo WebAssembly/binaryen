@@ -27,13 +27,13 @@ foo:                                    # @foo
 	i32.const	$push12=, 28
 	i32.add 	$push3=, $1, $pop12
 	i32.const	$push4=, 0
-	i32.store	$discard=, 0($pop3), $pop4
+	i32.store	$drop=, 0($pop3), $pop4
 	i32.eqz 	$push19=, $2
 	br_if   	0, $pop19       # 0: down to label1
 .LBB0_3:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i32.store	$discard=, 4($3), $0
+	i32.store	$drop=, 4($3), $0
 	i32.load	$3=, 0($3)
 	br_if   	0, $3           # 0: up to label3
 .LBB0_4:                                # %if.end7
@@ -56,14 +56,14 @@ foo:                                    # @foo
 	i32.load	$2=, 16($1)
 	i32.const	$push8=, 12
 	i32.add 	$push9=, $0, $pop8
-	i32.store	$discard=, 0($pop9), $3
-	i32.store	$discard=, 16($0), $2
+	i32.store	$drop=, 0($pop9), $3
+	i32.store	$drop=, 16($0), $2
 	i32.const	$push16=, 12
 	i32.add 	$push10=, $1, $pop16
 	i32.const	$push15=, -1
-	i32.store	$discard=, 0($pop10), $pop15
+	i32.store	$drop=, 0($pop10), $pop15
 	i32.const	$push11=, 0
-	i32.store	$discard=, 16($1), $pop11
+	i32.store	$drop=, 16($1), $pop11
 	return
 .LBB0_8:                                # %if.then26
 	end_block                       # label0:
@@ -82,16 +82,16 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 6
-	i32.store	$discard=, y($pop1), $pop0
+	i32.store	$drop=, y($pop1), $pop0
 	i32.const	$push10=, 0
 	i32.const	$push3=, 145
-	i32.store	$discard=, y+12($pop10), $pop3
+	i32.store	$drop=, y+12($pop10), $pop3
 	i32.const	$push9=, 0
 	i32.const	$push4=, 2448
-	i32.store	$discard=, y+16($pop9), $pop4
+	i32.store	$drop=, y+16($pop9), $pop4
 	i32.const	$push8=, 0
 	i32.const	$push5=, -1
-	i32.store	$discard=, x+12($pop8), $pop5
+	i32.store	$drop=, x+12($pop8), $pop5
 	i32.const	$push6=, x
 	i32.const	$push2=, y
 	call    	foo@FUNCTION, $pop6, $pop2

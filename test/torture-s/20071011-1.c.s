@@ -10,7 +10,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.load	$1=, 0($0)
 	i32.const	$push0=, 0
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	block
 	i32.eqz 	$push1=, $1
 	br_if   	0, $pop1        # 0: down to label0

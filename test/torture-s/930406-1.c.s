@@ -21,7 +21,7 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, f@FUNCTION
+	i32.call	$drop=, f@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:

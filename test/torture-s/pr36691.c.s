@@ -8,7 +8,7 @@ func_1:                                 # @func_1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push1=, 0
-	i32.store8	$discard=, g_5($pop0), $pop1
+	i32.store8	$drop=, g_5($pop0), $pop1
 	return
 	.endfunc
 .Lfunc_end0:

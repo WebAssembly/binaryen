@@ -95,18 +95,18 @@ main:                                   # @main
 	i32.add 	$push5=, $pop18, $pop4
 	i32.const	$push7=, 0
 	i32.const	$push6=, 90
-	i32.call	$discard=, memset@FUNCTION, $pop5, $pop7, $pop6
+	i32.call	$drop=, memset@FUNCTION, $pop5, $pop7, $pop6
 	i32.const	$push8=, 3
-	i32.store	$discard=, 0($0):p2align=0, $pop8
+	i32.store	$drop=, 0($0):p2align=0, $pop8
 	i64.const	$push9=, 555
 	i64.store	$push0=, 10($0):p2align=0, $pop9
-	i64.store	$discard=, 18($0):p2align=0, $pop0
+	i64.store	$drop=, 18($0):p2align=0, $pop0
 	i64.const	$push10=, 999
 	i64.store	$push1=, 40($0):p2align=0, $pop10
-	i64.store	$discard=, 48($0):p2align=0, $pop1
+	i64.store	$drop=, 48($0):p2align=0, $pop1
 	i64.const	$push11=, 4311810305
 	i64.store	$push2=, 70($0):p2align=0, $pop11
-	i64.store	$discard=, 78($0):p2align=0, $pop2
+	i64.store	$drop=, 78($0):p2align=0, $pop2
 	block
 	i64.call	$push12=, Sum@FUNCTION, $0
 	i64.const	$push17=, 4311811859

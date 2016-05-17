@@ -36,7 +36,7 @@ doit:                                   # @doit
 	br_if   	0, $1           # 0: up to label3
 # BB#5:                                 # %do.end16
 	end_loop                        # label4:
-	i64.store	$discard=, 0($2), $3
+	i64.store	$drop=, 0($2), $3
 	i64.eqz 	$push3=, $4
 	return  	$pop3
 .LBB0_6:                                # %do.body.preheader
@@ -54,7 +54,7 @@ doit:                                   # @doit
 	br_if   	0, $1           # 0: up to label5
 # BB#8:                                 # %do.end
 	end_loop                        # label6:
-	i32.store	$discard=, 0($2), $0
+	i32.store	$drop=, 0($2), $0
 	i32.eqz 	$push5=, $5
 	return  	$pop5
 .LBB0_9:                                # %do.body2.preheader
@@ -72,7 +72,7 @@ doit:                                   # @doit
 	br_if   	0, $1           # 0: up to label7
 # BB#11:                                # %do.end7
 	end_loop                        # label8:
-	i32.store	$discard=, 0($2), $0
+	i32.store	$drop=, 0($2), $0
 	i32.eqz 	$push4=, $5
 	return  	$pop4
 .LBB0_12:                               # %sw.default

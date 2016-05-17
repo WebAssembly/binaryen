@@ -96,13 +96,13 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 	br_if   	1, $pop15       # 1: down to label5
 # BB#10:                                # %if.then39
 	i32.const	$push17=, 0
-	i32.store8	$discard=, 0($5), $pop17
+	i32.store8	$drop=, 0($5), $pop17
 	i32.const	$push16=, 1
 	i32.add 	$push0=, $5, $pop16
 	copy_local	$5=, $pop0
 .LBB1_11:                               # %if.end41
 	end_block                       # label6:
-	i32.call	$discard=, strcpy@FUNCTION, $0, $5
+	i32.call	$drop=, strcpy@FUNCTION, $0, $5
 	i32.const	$3=, 168496141
 .LBB1_12:                               # %if.end43
 	end_block                       # label5:
@@ -191,14 +191,14 @@ main:                                   # @main
 	br_if   	1, $pop15       # 1: down to label12
 # BB#10:                                # %if.then39.i
 	i32.const	$push17=, 0
-	i32.store8	$discard=, 0($4), $pop17
+	i32.store8	$drop=, 0($4), $pop17
 	i32.const	$push16=, 1
 	i32.add 	$push0=, $4, $pop16
 	copy_local	$4=, $pop0
 .LBB2_11:                               # %if.end
 	end_block                       # label13:
 	i32.const	$push18=, main.addr
-	i32.call	$discard=, strcpy@FUNCTION, $pop18, $4
+	i32.call	$drop=, strcpy@FUNCTION, $pop18, $4
 	i32.const	$push19=, 0
 	return  	$pop19
 .LBB2_12:                               # %if.then

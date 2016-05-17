@@ -15,11 +15,11 @@ foo:                                    # @foo
 	i32.add 	$push10=, $pop2, $pop3
 	tee_local	$push9=, $1=, $pop10
 	i32.const	$push4=, 0
-	i32.store16	$discard=, 0($pop9), $pop4
+	i32.store16	$drop=, 0($pop9), $pop4
 	i32.const	$push5=, 24
 	i32.add 	$push6=, $0, $pop5
 	i32.const	$push8=, 1
-	i32.store16	$discard=, 0($pop6), $pop8
+	i32.store16	$drop=, 0($pop6), $pop8
 	i32.load16_s	$push7=, 0($1)
 	return  	$pop7
 	.endfunc

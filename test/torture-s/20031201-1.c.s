@@ -11,12 +11,12 @@ f1:                                     # @f1
 	i32.const	$push1=, 0
 	i32.store	$push0=, i($pop1), $0
 	i64.const	$push2=, 137438953504
-	i64.store	$discard=, 0($pop0):p2align=2, $pop2
+	i64.store	$drop=, 0($pop0):p2align=2, $pop2
 	call    	f0@FUNCTION
 	i32.const	$push5=, 0
 	i32.load	$push3=, i($pop5)
 	i64.const	$push4=, 34359738376
-	i64.store	$discard=, 0($pop3):p2align=2, $pop4
+	i64.store	$drop=, 0($pop3):p2align=2, $pop4
 	call    	test@FUNCTION
 	unreachable
 	.endfunc
@@ -38,7 +38,7 @@ f0:                                     # @f0
 	tee_local	$push7=, $1=, $pop8
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop7, $pop1
-	i32.store	$discard=, f0.washere($pop10), $pop2
+	i32.store	$drop=, f0.washere($pop10), $pop2
 	block
 	br_if   	0, $1           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
@@ -108,7 +108,7 @@ main:                                   # @main
 	i32.store	$push0=, 0($pop4), $pop7
 	i32.const	$push5=, 8
 	i32.add 	$push6=, $pop0, $pop5
-	i32.call	$discard=, f1@FUNCTION, $pop6
+	i32.call	$drop=, f1@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end3:

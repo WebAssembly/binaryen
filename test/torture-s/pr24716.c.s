@@ -79,7 +79,7 @@ f:                                      # @f
 # BB#10:                                # %if.then13
                                         #   in Loop: Header=BB0_9 Depth=3
 	i32.const	$push13=, 0
-	i32.store	$discard=, 0($2), $pop13
+	i32.store	$drop=, 0($2), $pop13
 	i32.const	$5=, 1
 .LBB0_11:                               # %do.cond16
                                         #   in Loop: Header=BB0_9 Depth=3
@@ -218,7 +218,7 @@ main:                                   # @main
 # BB#9:                                 # %if.then13.i
                                         #   in Loop: Header=BB1_8 Depth=2
 	i32.const	$push16=, 0
-	i32.store	$discard=, 0($1), $pop16
+	i32.store	$drop=, 0($1), $pop16
 	i32.const	$0=, 1
 .LBB1_10:                               # %do.cond16.i
                                         #   in Loop: Header=BB1_8 Depth=2

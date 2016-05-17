@@ -40,14 +40,14 @@ fn1:                                    # @fn1
 # BB#2:                                 # %if.then
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push20=, 1
-	i32.store	$discard=, c($5), $pop20
+	i32.store	$drop=, c($5), $pop20
 	br      	1               # 1: down to label2
 .LBB0_3:                                # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label3:
 	i32.const	$push21=, 9
 	i32.store	$push0=, i($5), $pop21
-	i32.store	$discard=, h($5), $pop0
+	i32.store	$drop=, h($5), $pop0
 .LBB0_4:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
@@ -56,11 +56,11 @@ fn1:                                    # @fn1
 # BB#5:                                 # %if.then15
 	end_loop                        # label1:
 	i32.const	$push6=, 0
-	i32.store	$discard=, k($pop6), $3
+	i32.store	$drop=, k($pop6), $3
 	i32.const	$push23=, 0
-	i32.store8	$discard=, j($pop23), $4
+	i32.store8	$drop=, j($pop23), $4
 	i32.const	$push22=, 0
-	i32.store8	$discard=, g($pop22), $0
+	i32.store8	$drop=, g($pop22), $0
 	return
 	.endfunc
 .Lfunc_end0:
@@ -106,14 +106,14 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$3=, 1
 	i32.const	$push20=, 1
-	i32.store	$discard=, c($5), $pop20
+	i32.store	$drop=, c($5), $pop20
 	br      	1               # 1: down to label6
 .LBB1_3:                                # %if.else.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label7:
 	i32.const	$push21=, 9
 	i32.store	$push0=, i($5), $pop21
-	i32.store	$discard=, h($5), $pop0
+	i32.store	$drop=, h($5), $pop0
 .LBB1_4:                                # %if.end.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label6:
@@ -122,13 +122,13 @@ main:                                   # @main
 # BB#5:                                 # %fn1.exit
 	end_loop                        # label5:
 	i32.const	$push24=, 0
-	i32.store	$discard=, k($pop24), $4
+	i32.store	$drop=, k($pop24), $4
 	i32.const	$push23=, 0
-	i32.store8	$discard=, j($pop23), $0
+	i32.store8	$drop=, j($pop23), $0
 	i32.const	$push22=, 0
 	i32.const	$push5=, 147
 	i32.mul 	$push6=, $0, $pop5
-	i32.store8	$discard=, g($pop22), $pop6
+	i32.store8	$drop=, g($pop22), $pop6
 	block
 	i32.const	$push7=, 1
 	i32.ne  	$push8=, $3, $pop7

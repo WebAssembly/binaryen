@@ -90,10 +90,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, a+3
-	i32.store	$discard=, a+4($pop1), $pop0
+	i32.store	$drop=, a+4($pop1), $pop0
 	i32.const	$push4=, 0
 	i32.const	$push2=, a
-	i32.store	$discard=, a($pop4), $pop2
+	i32.store	$drop=, a($pop4), $pop2
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

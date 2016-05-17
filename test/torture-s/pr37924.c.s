@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	i32.const	$push1=, 255
 	i32.store8	$push0=, a($pop4), $pop1
-	i32.store8	$discard=, b($pop2), $pop0
+	i32.store8	$drop=, b($pop2), $pop0
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc

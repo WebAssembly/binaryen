@@ -14,7 +14,7 @@ showbug:                                # @showbug
 	i32.const	$push3=, 65528
 	i32.add 	$push9=, $pop2, $pop3
 	tee_local	$push8=, $1=, $pop9
-	i32.store16	$discard=, 0($0), $pop8
+	i32.store16	$drop=, 0($0), $pop8
 	i32.const	$push7=, 65528
 	i32.and 	$push4=, $1, $pop7
 	i32.const	$push5=, 7

@@ -39,14 +39,14 @@ test:                                   # @test
 	i32.const	$push10=, .L.str.1
 	i32.const	$push24=, 0
 	i32.call	$push11=, fn4@FUNCTION, $pop10, $pop24
-	i32.store	$discard=, 0($1), $pop11
+	i32.store	$drop=, 0($1), $pop11
 	call    	fn2@FUNCTION, $3, $1
 .LBB0_3:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push19=, __stack_pointer
 	i32.const	$push17=, 16
 	i32.add 	$push18=, $1, $pop17
-	i32.store	$discard=, 0($pop19), $pop18
+	i32.store	$drop=, 0($pop19), $pop18
 	i32.div_s	$push12=, $2, $0
 	return  	$pop12
 	.endfunc
@@ -146,11 +146,11 @@ main:                                   # @main
 	i32.add 	$push3=, $pop11, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.s+8($pop0)
-	i32.store	$discard=, 0($pop3), $pop1
+	i32.store	$drop=, 0($pop3), $pop1
 	i32.const	$push10=, 0
 	i64.load	$push4=, .Lmain.s($pop10):p2align=2
-	i64.store	$discard=, 0($0), $pop4
-	i32.call	$discard=, test@FUNCTION, $0
+	i64.store	$drop=, 0($0), $pop4
+	i32.call	$drop=, test@FUNCTION, $0
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

@@ -4,7 +4,7 @@
 	.type	trunc_i8_i32,@function
 trunc_i8_i32:
 	.param  	i32, i32
-	i32.store8	$discard=, 0($0), $1
+	i32.store8	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -14,7 +14,7 @@ trunc_i8_i32:
 	.type	trunc_i16_i32,@function
 trunc_i16_i32:
 	.param  	i32, i32
-	i32.store16	$discard=, 0($0), $1
+	i32.store16	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end1:
@@ -24,7 +24,7 @@ trunc_i16_i32:
 	.type	trunc_i8_i64,@function
 trunc_i8_i64:
 	.param  	i32, i64
-	i64.store8	$discard=, 0($0), $1
+	i64.store8	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end2:
@@ -34,7 +34,7 @@ trunc_i8_i64:
 	.type	trunc_i16_i64,@function
 trunc_i16_i64:
 	.param  	i32, i64
-	i64.store16	$discard=, 0($0), $1
+	i64.store16	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end3:
@@ -44,7 +44,7 @@ trunc_i16_i64:
 	.type	trunc_i32_i64,@function
 trunc_i32_i64:
 	.param  	i32, i64
-	i64.store32	$discard=, 0($0), $1
+	i64.store32	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end4:

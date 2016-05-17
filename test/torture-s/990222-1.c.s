@@ -32,7 +32,7 @@ main:                                   # @main
 	i32.const	$push34=, 1
 	i32.add 	$push6=, $1, $pop34
 	i32.const	$push33=, 48
-	i32.store8	$discard=, 0($pop6), $pop33
+	i32.store8	$drop=, 0($pop6), $pop33
 	i32.const	$push32=, 1
 	i32.add 	$push7=, $0, $pop32
 	i32.store8	$0=, 0($1), $pop7

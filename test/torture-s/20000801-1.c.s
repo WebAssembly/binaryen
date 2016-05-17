@@ -30,10 +30,10 @@ foo:                                    # @foo
 	tee_local	$push5=, $6=, $pop6
 	i32.load8_u	$3=, 0($pop5)
 	i32.load8_u	$push1=, 0($0)
-	i32.store8	$discard=, 0($6), $pop1
-	i32.store8	$discard=, 0($7), $5
-	i32.store8	$discard=, 0($1), $4
-	i32.store8	$discard=, 0($0), $3
+	i32.store8	$drop=, 0($6), $pop1
+	i32.store8	$drop=, 0($7), $5
+	i32.store8	$drop=, 0($1), $4
+	i32.store8	$drop=, 0($0), $3
 	i32.const	$push4=, 4
 	i32.add 	$0=, $0, $pop4
 	i32.lt_u	$push2=, $0, $2
@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.store	$0=, 12($pop9), $pop0
 	i32.const	$push1=, 1
 	i32.store16	$1=, 12($2), $pop1
-	i32.store8	$discard=, 14($2), $0
+	i32.store8	$drop=, 14($2), $0
 	block
 	i32.load	$push2=, 12($2)
 	i32.ne  	$push3=, $1, $pop2

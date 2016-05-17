@@ -16,11 +16,11 @@ main:                                   # @main
 	i32.store	$push11=, 0($pop5), $pop8
 	tee_local	$push10=, $0=, $pop11
 	i32.const	$push0=, -2147483648
-	i32.store	$discard=, 12($pop10), $pop0
+	i32.store	$drop=, 12($pop10), $pop0
 	i32.const	$push1=, 0
 	i32.const	$push6=, 12
 	i32.add 	$push7=, $0, $pop6
-	i32.store	$discard=, q($pop1), $pop7
+	i32.store	$drop=, q($pop1), $pop7
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9
 	unreachable

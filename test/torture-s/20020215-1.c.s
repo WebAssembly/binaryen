@@ -16,13 +16,13 @@ foo:                                    # @foo
 	i32.add 	$push6=, $1, $pop4
 	i32.load	$3=, 0($pop6)
 	i32.load	$push3=, 0($1)
-	i32.store	$discard=, 0($0), $pop3
+	i32.store	$drop=, 0($0), $pop3
 	i32.const	$push9=, 8
 	i32.add 	$push5=, $0, $pop9
-	i32.store	$discard=, 0($pop5), $3
+	i32.store	$drop=, 0($pop5), $3
 	i32.const	$push7=, 4
 	i32.add 	$push8=, $0, $pop7
-	i32.store	$discard=, 0($pop8), $2
+	i32.store	$drop=, 0($pop8), $2
 	return
 	.endfunc
 .Lfunc_end0:

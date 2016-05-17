@@ -16,7 +16,7 @@ first:                                  # @first
 	i32.sub 	$push13=, $pop7, $pop8
 	i32.store	$push15=, 0($pop9), $pop13
 	tee_local	$push14=, $3=, $pop15
-	i32.store	$discard=, 12($pop14), $2
+	i32.store	$drop=, 12($pop14), $2
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
@@ -32,11 +32,11 @@ first:                                  # @first
 	tee_local	$push19=, $2=, $pop20
 	i32.const	$push18=, 4
 	i32.add 	$push2=, $pop19, $pop18
-	i32.store	$discard=, 12($3), $pop2
+	i32.store	$drop=, 12($3), $pop2
 	i32.load	$push3=, 0($2)
-	i32.store	$discard=, 0($3), $pop3
+	i32.store	$drop=, 0($3), $pop3
 	i32.const	$push17=, .L.str
-	i32.call	$discard=, sprintf@FUNCTION, $0, $pop17, $3
+	i32.call	$drop=, sprintf@FUNCTION, $0, $pop17, $3
 	i32.call	$push4=, strlen@FUNCTION, $0
 	i32.add 	$0=, $0, $pop4
 	i32.const	$push16=, 1
@@ -49,7 +49,7 @@ first:                                  # @first
 	br_if   	1, $pop26       # 1: down to label1
 # BB#4:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.store8	$discard=, 0($0), $2
+	i32.store8	$drop=, 0($0), $2
 	i32.const	$push25=, 1
 	i32.add 	$push0=, $0, $pop25
 	copy_local	$0=, $pop0
@@ -59,11 +59,11 @@ first:                                  # @first
 .LBB0_5:                                # %for.end
 	end_loop                        # label1:
 	i32.const	$push5=, 0
-	i32.store8	$discard=, 0($0), $pop5
+	i32.store8	$drop=, 0($0), $pop5
 	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $3, $pop10
-	i32.store	$discard=, 0($pop12), $pop11
+	i32.store	$drop=, 0($pop12), $pop11
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -85,7 +85,7 @@ second:                                 # @second
 	i32.sub 	$push13=, $pop7, $pop8
 	i32.store	$push15=, 0($pop9), $pop13
 	tee_local	$push14=, $3=, $pop15
-	i32.store	$discard=, 12($pop14), $2
+	i32.store	$drop=, 12($pop14), $2
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
@@ -101,11 +101,11 @@ second:                                 # @second
 	tee_local	$push19=, $2=, $pop20
 	i32.const	$push18=, 4
 	i32.add 	$push2=, $pop19, $pop18
-	i32.store	$discard=, 12($3), $pop2
+	i32.store	$drop=, 12($3), $pop2
 	i32.load	$push3=, 0($2)
-	i32.store	$discard=, 0($3), $pop3
+	i32.store	$drop=, 0($3), $pop3
 	i32.const	$push17=, .L.str
-	i32.call	$discard=, sprintf@FUNCTION, $0, $pop17, $3
+	i32.call	$drop=, sprintf@FUNCTION, $0, $pop17, $3
 	i32.call	$push4=, strlen@FUNCTION, $0
 	i32.add 	$0=, $0, $pop4
 	i32.const	$push16=, 1
@@ -118,7 +118,7 @@ second:                                 # @second
 	br_if   	1, $pop26       # 1: down to label4
 # BB#4:                                 # %if.else
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.store8	$discard=, 0($0), $2
+	i32.store8	$drop=, 0($0), $2
 	i32.const	$push25=, 1
 	i32.add 	$push0=, $0, $pop25
 	copy_local	$0=, $pop0
@@ -128,11 +128,11 @@ second:                                 # @second
 .LBB1_5:                                # %for.end
 	end_loop                        # label4:
 	i32.const	$push5=, 0
-	i32.store8	$discard=, 0($0), $pop5
+	i32.store8	$drop=, 0($0), $pop5
 	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $3, $pop10
-	i32.store	$discard=, 0($pop12), $pop11
+	i32.store	$drop=, 0($pop12), $pop11
 	return  	$0
 	.endfunc
 .Lfunc_end1:
@@ -160,12 +160,12 @@ main:                                   # @main
 	i32.const	$push1=, .L.str.1
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $1, $pop11
-	i32.call	$discard=, first@FUNCTION, $pop10, $pop1, $pop12
-	i64.store	$discard=, 0($1), $0
+	i32.call	$drop=, first@FUNCTION, $pop10, $pop1, $pop12
+	i64.store	$drop=, 0($1), $0
 	i32.const	$push13=, 32
 	i32.add 	$push14=, $1, $pop13
 	i32.const	$push21=, .L.str.1
-	i32.call	$discard=, second@FUNCTION, $pop14, $pop21, $1
+	i32.call	$drop=, second@FUNCTION, $pop14, $pop21, $1
 	block
 	i32.const	$push20=, .L.str.2
 	i32.const	$push15=, 144

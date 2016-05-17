@@ -8,7 +8,7 @@ not_inlinable:                          # @not_inlinable
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push1=, -10
-	i32.store	$discard=, test_var($pop0), $pop1
+	i32.store	$drop=, test_var($pop0), $pop1
 	return
 	.endfunc
 .Lfunc_end0:

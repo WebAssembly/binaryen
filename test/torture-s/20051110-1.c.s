@@ -29,7 +29,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	i32.shr_u	$push10=, $0, $pop11
 	tee_local	$push9=, $2=, $pop10
 	i32.select	$push5=, $pop4, $pop3, $pop9
-	i32.store8	$discard=, 0($1), $pop5
+	i32.store8	$drop=, 0($1), $pop5
 	i32.const	$push8=, 1
 	i32.add 	$1=, $1, $pop8
 	copy_local	$0=, $2
@@ -63,7 +63,7 @@ main:                                   # @main
 	i32.shr_u	$push14=, $1, $pop15
 	tee_local	$push13=, $2=, $pop14
 	i32.select	$push2=, $pop1, $pop0, $pop13
-	i32.store8	$discard=, 0($0), $pop2
+	i32.store8	$drop=, 0($0), $pop2
 	i32.const	$push12=, 1
 	i32.add 	$0=, $0, $pop12
 	copy_local	$1=, $2

@@ -50,12 +50,12 @@ u2ld:                                   # @u2ld
 	i32.const	$push12=, 8
 	i32.add 	$push1=, $3, $pop12
 	i64.load	$push2=, 0($pop1)
-	i64.store	$discard=, 0($pop3), $pop2
-	i64.store	$discard=, 0($0), $2
+	i64.store	$drop=, 0($pop3), $pop2
+	i64.store	$drop=, 0($0), $2
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $3, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return
 	.endfunc
 .Lfunc_end2:
@@ -111,12 +111,12 @@ s2ld:                                   # @s2ld
 	i32.const	$push12=, 8
 	i32.add 	$push1=, $3, $pop12
 	i64.load	$push2=, 0($pop1)
-	i64.store	$discard=, 0($pop3), $pop2
-	i64.store	$discard=, 0($0), $2
+	i64.store	$drop=, 0($pop3), $pop2
+	i64.store	$drop=, 0($0), $2
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $3, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return
 	.endfunc
 .Lfunc_end5:
@@ -226,7 +226,7 @@ ldnear:                                 # @ldnear
 	i32.const	$push16=, __stack_pointer
 	i32.const	$push14=, 32
 	i32.add 	$push15=, $5, $pop14
-	i32.store	$discard=, 0($pop16), $pop15
+	i32.store	$drop=, 0($pop16), $pop15
 	return  	$4
 	.endfunc
 .Lfunc_end8:
@@ -295,12 +295,12 @@ ull2ld:                                 # @ull2ld
 	i32.const	$push12=, 8
 	i32.add 	$push1=, $2, $pop12
 	i64.load	$push2=, 0($pop1)
-	i64.store	$discard=, 0($pop3), $pop2
-	i64.store	$discard=, 0($0), $1
+	i64.store	$drop=, 0($pop3), $pop2
+	i64.store	$drop=, 0($0), $1
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $2, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return
 	.endfunc
 .Lfunc_end12:
@@ -356,12 +356,12 @@ sll2ld:                                 # @sll2ld
 	i32.const	$push12=, 8
 	i32.add 	$push1=, $2, $pop12
 	i64.load	$push2=, 0($pop1)
-	i64.store	$discard=, 0($pop3), $pop2
-	i64.store	$discard=, 0($0), $1
+	i64.store	$drop=, 0($pop3), $pop2
+	i64.store	$drop=, 0($0), $1
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $2, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return
 	.endfunc
 .Lfunc_end15:

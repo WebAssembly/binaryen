@@ -8,7 +8,7 @@ main:                                   # @main
 .result 	i32
 # BB#0:                                 # %entry
 i32.const	$push0=, .Lstr
-i32.call	$discard=, puts@FUNCTION, $pop0
+i32.call	$drop=, puts@FUNCTION, $pop0
 i32.const	$push1=, 0
 return  	$pop1
 .endfunc

@@ -49,7 +49,7 @@ foo:                                    # @foo
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.call	$discard=, bar@FUNCTION, $1, $0
+	i32.call	$drop=, bar@FUNCTION, $1, $0
 	i32.const	$push13=, -1
 	i32.add 	$1=, $1, $pop13
 	br_if   	0, $1           # 0: up to label2

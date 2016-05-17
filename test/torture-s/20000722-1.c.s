@@ -41,7 +41,7 @@ foo:                                    # @foo
 	i32.const	$push3=, 4
 	i32.add 	$push4=, $0, $pop3
 	i32.const	$push5=, 2
-	i32.store	$discard=, 0($pop4), $pop5
+	i32.store	$drop=, 0($pop4), $pop5
 	return
 .LBB2_2:                                # %if.then
 	end_block                       # label0:

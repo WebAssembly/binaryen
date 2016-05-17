@@ -13,7 +13,7 @@ fn1:                                    # @fn1
 	i32.const	$push23=, 0
 	i32.load	$push10=, a+36($pop23)
 	i32.store	$push1=, a($pop24), $pop10
-	i32.store	$discard=, a+4($pop9), $pop1
+	i32.store	$drop=, a+4($pop9), $pop1
 	i32.const	$push22=, 0
 	i32.load	$1=, a+60($pop22)
 	i32.const	$push21=, 0
@@ -24,7 +24,7 @@ fn1:                                    # @fn1
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.store	$push6=, a($pop18), $1
-	i32.store	$discard=, a+4($pop19), $pop6
+	i32.store	$drop=, a+4($pop19), $pop6
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
@@ -36,7 +36,7 @@ fn1:                                    # @fn1
 	i32.store	$push4=, c($pop14), $pop2
 	i32.store	$push5=, c($pop15), $pop4
 	i32.store	$push7=, c($pop16), $pop5
-	i32.store	$discard=, c($pop17), $pop7
+	i32.store	$drop=, c($pop17), $pop7
 	i32.const	$push11=, 0
 	return  	$pop11
 	.endfunc
@@ -57,7 +57,7 @@ main:                                   # @main
 	i32.const	$push6=, 0
 	i32.const	$push3=, 1
 	i32.store	$push0=, a+48($pop6), $pop3
-	i32.store	$discard=, c($pop7), $pop0
+	i32.store	$drop=, c($pop7), $pop0
 	block
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0

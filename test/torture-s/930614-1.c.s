@@ -9,7 +9,7 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, -4616189618054758400
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	return  	$0
 	.endfunc
 .Lfunc_end0:

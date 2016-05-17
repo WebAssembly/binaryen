@@ -54,7 +54,7 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i32.add 	$push4=, $1, $pop3
 	i32.load	$push5=, 0($pop4)
 	i64.load	$push6=, 0($pop5):p2align=2
-	i64.store	$discard=, 0($2):p2align=2, $pop6
+	i64.store	$drop=, 0($2):p2align=2, $pop6
 	i32.add 	$push0=, $0, $3
 	return  	$pop0
 	.endfunc

@@ -10,7 +10,7 @@ strtoul1:                               # @strtoul1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 3
 	i32.add 	$push1=, $0, $pop0
-	i32.store	$discard=, 0($1), $pop1
+	i32.store	$drop=, 0($1), $pop1
 	i32.const	$1=, 192
 	block
 	block
@@ -138,7 +138,7 @@ string_to_ip:                           # @string_to_ip
 	i32.const	$push26=, __stack_pointer
 	i32.const	$push24=, 16
 	i32.add 	$push25=, $1, $pop24
-	i32.store	$discard=, 0($pop26), $pop25
+	i32.store	$drop=, 0($pop26), $pop25
 	return  	$2
 	.endfunc
 .Lfunc_end1:
@@ -165,12 +165,12 @@ main:                                   # @main
 	i32.const	$push2=, .L.str
 	i32.const	$push14=, 16
 	i32.add 	$push15=, $1, $pop14
-	i32.call	$discard=, printf@FUNCTION, $pop2, $pop15
+	i32.call	$drop=, printf@FUNCTION, $pop2, $pop15
 	i32.const	$push19=, 0
 	i32.load	$push3=, result($pop19)
-	i32.store	$discard=, 0($1), $pop3
+	i32.store	$drop=, 0($1), $pop3
 	i32.const	$push18=, .L.str
-	i32.call	$discard=, printf@FUNCTION, $pop18, $1
+	i32.call	$drop=, printf@FUNCTION, $pop18, $1
 	block
 	i32.const	$push17=, 0
 	i32.load	$push4=, result($pop17)
@@ -178,11 +178,11 @@ main:                                   # @main
 	br_if   	0, $pop5        # 0: down to label5
 # BB#1:                                 # %if.end
 	i32.const	$push6=, .Lstr
-	i32.call	$discard=, puts@FUNCTION, $pop6
+	i32.call	$drop=, puts@FUNCTION, $pop6
 	i32.const	$push13=, __stack_pointer
 	i32.const	$push11=, 32
 	i32.add 	$push12=, $1, $pop11
-	i32.store	$discard=, 0($pop13), $pop12
+	i32.store	$drop=, 0($pop13), $pop12
 	i32.const	$push22=, 0
 	return  	$pop22
 .LBB2_2:                                # %if.then

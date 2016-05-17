@@ -17,7 +17,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	i32.const	$push32=, 1
-	i32.store	$discard=, a+1024($1), $pop32
+	i32.store	$drop=, a+1024($1), $pop32
 	i32.const	$push31=, 4
 	i32.add 	$1=, $1, $pop31
 	br_if   	0, $1           # 0: up to label0
@@ -71,7 +71,7 @@ main:                                   # @main
 	i32.const	$push34=, 2
 	i32.shl 	$push29=, $pop28, $pop34
 	i32.load	$push30=, a($pop29)
-	i32.store	$discard=, b($1), $pop30
+	i32.store	$drop=, b($1), $pop30
 .LBB0_4:                                # %if.end25
 	end_block                       # label2:
 	return  	$1

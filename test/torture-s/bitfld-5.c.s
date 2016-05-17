@@ -59,20 +59,20 @@ main:                                   # @main
 	tee_local	$push17=, $0=, $pop18
 	i32.const	$push0=, 0
 	i64.load	$push1=, .Lmain.s($pop0)
-	i64.store	$discard=, 8($pop17), $pop1
+	i64.store	$drop=, 8($pop17), $pop1
 	i32.const	$push12=, 8
 	i32.add 	$push13=, $0, $pop12
 	i64.const	$push2=, 10
 	call    	f@FUNCTION, $pop13, $pop2
 	i32.const	$push16=, 0
 	i64.load	$push3=, .Lmain.t($pop16)
-	i64.store	$discard=, 0($0), $pop3
+	i64.store	$drop=, 0($0), $pop3
 	i64.const	$push4=, 1099511627778
 	call    	f@FUNCTION, $0, $pop4
 	i32.const	$push11=, __stack_pointer
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $0, $pop9
-	i32.store	$discard=, 0($pop11), $pop10
+	i32.store	$drop=, 0($pop11), $pop10
 	i32.const	$push15=, 0
 	return  	$pop15
 	.endfunc

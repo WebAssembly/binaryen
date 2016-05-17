@@ -37,7 +37,7 @@ main:                                   # @main
 	i32.const	$push29=, 0
 	i32.const	$push28=, 2
 	i32.add 	$push6=, $5, $pop28
-	i32.store	$discard=, g($pop29), $pop6
+	i32.store	$drop=, g($pop29), $pop6
 	i32.const	$push27=, 0
 	i32.store	$0=, h($pop27), $4
 	i32.const	$push26=, 0
@@ -49,7 +49,7 @@ main:                                   # @main
 	i64.extend_u/i32	$push5=, $pop4
 	i64.lt_u	$push23=, $pop5, $1
 	tee_local	$push22=, $4=, $pop23
-	i32.store	$discard=, e($pop26), $pop22
+	i32.store	$drop=, e($pop26), $pop22
 	i32.const	$push21=, 1
 	i32.add 	$5=, $5, $pop21
 	i32.const	$push20=, 0
@@ -58,7 +58,7 @@ main:                                   # @main
 # BB#4:                                 # %for.cond.for.end_crit_edge.i
 	end_loop                        # label3:
 	i32.const	$push8=, 0
-	i32.store16	$discard=, d($pop8), $0
+	i32.store16	$drop=, d($pop8), $0
 .LBB0_5:                                # %foo.exit
 	end_block                       # label0:
 	block

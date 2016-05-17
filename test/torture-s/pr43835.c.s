@@ -77,16 +77,16 @@ main:                                   # @main
 	i32.store	$push14=, 0($pop6), $pop12
 	tee_local	$push13=, $0=, $pop14
 	i32.const	$push1=, 4
-	i32.store	$discard=, 8($pop13), $pop1
+	i32.store	$drop=, 8($pop13), $pop1
 	i64.const	$push0=, 180388626432
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	i32.const	$push10=, 12
 	i32.add 	$push11=, $0, $pop10
 	call    	mark_cell@FUNCTION, $pop11, $0
 	i32.const	$push9=, __stack_pointer
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $0, $pop7
-	i32.store	$discard=, 0($pop9), $pop8
+	i32.store	$drop=, 0($pop9), $pop8
 	i32.const	$push2=, 0
 	return  	$pop2
 	.endfunc

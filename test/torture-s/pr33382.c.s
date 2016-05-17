@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.load	$0=, x+8($pop0)
 	i32.const	$push2=, 0
 	i32.const	$push1=, 1
-	i32.store	$discard=, x+4($pop2), $pop1
+	i32.store	$drop=, x+4($pop2), $pop1
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -30,7 +30,7 @@ main:                                   # @main
 	i32.load	$0=, x+8($pop2)
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, x+4($pop1), $pop0
+	i32.store	$drop=, x+4($pop1), $pop0
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end

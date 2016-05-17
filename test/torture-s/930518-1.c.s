@@ -57,7 +57,7 @@ main:                                   # @main
 	i32.const	$push22=, 0
 	i32.load	$2=, bar($pop22)
 	i64.const	$push2=, 0
-	i64.store	$discard=, 8($1):p2align=2, $pop2
+	i64.store	$drop=, 8($1):p2align=2, $pop2
 	block
 	i32.const	$push3=, 1
 	i32.gt_s	$push4=, $2, $pop3

@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.shr_u	$push9=, $pop0, $pop1
 	tee_local	$push8=, $0=, $pop9
 	i32.or  	$push5=, $pop4, $pop8
-	i32.store8	$discard=, s($pop12), $pop5
+	i32.store8	$drop=, s($pop12), $pop5
 	block
 	i32.const	$push6=, 1
 	i32.ne  	$push7=, $0, $pop6

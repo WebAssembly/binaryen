@@ -10,9 +10,9 @@ ctest_float:                            # @ctest_float
 # BB#0:                                 # %entry
 	f32.load	$2=, 4($1)
 	i32.load	$push0=, 0($1)
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	f32.neg 	$push1=, $2
-	f32.store	$discard=, 4($0), $pop1
+	f32.store	$drop=, 4($0), $pop1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -39,9 +39,9 @@ ctest_double:                           # @ctest_double
 # BB#0:                                 # %entry
 	f64.load	$2=, 8($1)
 	i64.load	$push0=, 0($1)
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	f64.neg 	$push1=, $2
-	f64.store	$discard=, 8($0), $pop1
+	f64.store	$drop=, 8($0), $pop1
 	return
 	.endfunc
 .Lfunc_end2:
@@ -87,18 +87,18 @@ ctest_long_double:                      # @ctest_long_double
 	i32.add 	$push8=, $2, $pop21
 	i64.load	$5=, 0($pop8)
 	i64.load	$6=, 0($2)
-	i64.store	$discard=, 0($0), $4
+	i64.store	$drop=, 0($0), $4
 	i32.const	$push20=, 8
 	i32.add 	$push9=, $0, $pop20
-	i64.store	$discard=, 0($pop9), $3
+	i64.store	$drop=, 0($pop9), $3
 	i32.const	$push19=, 24
 	i32.add 	$push10=, $0, $pop19
-	i64.store	$discard=, 0($pop10), $5
-	i64.store	$discard=, 16($0), $6
+	i64.store	$drop=, 0($pop10), $5
+	i64.store	$drop=, 16($0), $6
 	i32.const	$push17=, __stack_pointer
 	i32.const	$push15=, 16
 	i32.add 	$push16=, $2, $pop15
-	i32.store	$discard=, 0($pop17), $pop16
+	i32.store	$drop=, 0($pop17), $pop16
 	return
 	.endfunc
 .Lfunc_end4:
@@ -125,10 +125,10 @@ ctest_int:                              # @ctest_int
 # BB#0:                                 # %entry
 	i32.load	$2=, 4($1)
 	i32.load	$push0=, 0($1)
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	i32.const	$push1=, 0
 	i32.sub 	$push2=, $pop1, $2
-	i32.store	$discard=, 4($0), $pop2
+	i32.store	$drop=, 4($0), $pop2
 	return
 	.endfunc
 .Lfunc_end6:
@@ -155,10 +155,10 @@ ctest_long_int:                         # @ctest_long_int
 # BB#0:                                 # %entry
 	i32.load	$2=, 4($1)
 	i32.load	$push0=, 0($1)
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	i32.const	$push1=, 0
 	i32.sub 	$push2=, $pop1, $2
-	i32.store	$discard=, 4($0), $pop2
+	i32.store	$drop=, 4($0), $pop2
 	return
 	.endfunc
 .Lfunc_end8:

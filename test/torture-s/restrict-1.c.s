@@ -10,9 +10,9 @@ foo:                                    # @foo
 	i32.load	$push1=, 0($2)
 	i32.load	$push0=, 0($1)
 	i32.add 	$push2=, $pop1, $pop0
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$drop=, 0($0), $pop2
 	i32.const	$push3=, 0
-	i32.store	$discard=, 4($0), $pop3
+	i32.store	$drop=, 4($0), $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -31,7 +31,7 @@ bar:                                    # @bar
 	i32.shl 	$push6=, $pop0, $pop1
 	tee_local	$push5=, $1=, $pop6
 	i64.extend_u/i32	$push2=, $pop5
-	i64.store	$discard=, 0($0):p2align=2, $pop2
+	i64.store	$drop=, 0($0):p2align=2, $pop2
 	block
 	i32.const	$push3=, 2
 	i32.ne  	$push4=, $1, $pop3

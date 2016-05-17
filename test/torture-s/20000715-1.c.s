@@ -43,7 +43,7 @@ test4:                                  # @test4
 	i32.const	$push3=, 0
 	i32.const	$push2=, 3
 	i32.store	$push0=, x($pop3), $pop2
-	i32.store	$discard=, y($pop1), $pop0
+	i32.store	$drop=, y($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end3:
@@ -59,7 +59,7 @@ test5:                                  # @test5
 	i32.const	$push3=, 0
 	i32.const	$push2=, 3
 	i32.store	$push0=, x($pop3), $pop2
-	i32.store	$discard=, y($pop1), $pop0
+	i32.store	$drop=, y($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end4:
@@ -75,7 +75,7 @@ test6:                                  # @test6
 	i32.const	$push3=, 0
 	i32.const	$push2=, 3
 	i32.store	$push0=, x($pop3), $pop2
-	i32.store	$discard=, y($pop1), $pop0
+	i32.store	$drop=, y($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end5:

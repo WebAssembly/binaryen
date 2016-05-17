@@ -45,7 +45,7 @@ bar:                                    # @bar
 	i32.const	$push2=, -8
 	i32.and 	$push3=, $pop1, $pop2
 	i64.load	$4=, 0($pop3)
-	i32.store	$discard=, 12($3), $2
+	i32.store	$drop=, 12($3), $2
 	block
 	i64.const	$push4=, 16
 	i64.ne  	$push5=, $4, $pop4
@@ -54,7 +54,7 @@ bar:                                    # @bar
 	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $3, $pop10
-	i32.store	$discard=, 0($pop12), $pop11
+	i32.store	$drop=, 0($pop12), $pop11
 	return
 .LBB1_2:                                # %if.then.i
 	end_block                       # label1:
@@ -80,7 +80,7 @@ main:                                   # @main
 	i32.store	$push10=, 0($pop5), $pop6
 	tee_local	$push9=, $0=, $pop10
 	i64.const	$push0=, 16
-	i64.store	$discard=, 0($pop9), $pop0
+	i64.store	$drop=, 0($pop9), $pop0
 	i32.const	$push1=, 0
 	i32.const	$push8=, 0
 	call    	bar@FUNCTION, $pop1, $pop8, $0

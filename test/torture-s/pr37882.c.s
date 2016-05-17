@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.and 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 4
 	i32.or  	$push5=, $pop3, $pop4
-	i32.store8	$discard=, s($pop0), $pop5
+	i32.store8	$drop=, s($pop0), $pop5
 	i32.const	$push6=, 0
 	return  	$pop6
 	.endfunc

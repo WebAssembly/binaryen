@@ -45,16 +45,16 @@ main:                                   # @main
 # BB#0:                                 # %if.end7
 	i32.const	$push1=, 0
 	i32.const	$push2=, a
-	i32.store	$discard=, a+512($pop1), $pop2
+	i32.store	$drop=, a+512($pop1), $pop2
 	i32.const	$push10=, 0
 	i32.const	$push3=, a+32
-	i32.store	$discard=, a+256($pop10), $pop3
+	i32.store	$drop=, a+256($pop10), $pop3
 	i32.const	$push9=, 0
 	i32.const	$push4=, a+64
-	i32.store	$discard=, a+128($pop9), $pop4
+	i32.store	$drop=, a+128($pop9), $pop4
 	i32.const	$push8=, 0
 	i32.const	$push5=, a+96
-	i32.store	$discard=, a+64($pop8), $pop5
+	i32.store	$drop=, a+64($pop8), $pop5
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
 	i32.store	$push0=, a+32($pop7), $pop6

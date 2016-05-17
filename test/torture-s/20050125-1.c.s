@@ -8,7 +8,7 @@ seterr:                                 # @seterr
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.store	$discard=, 8($0), $1
+	i32.store	$drop=, 8($0), $1
 	i32.const	$push0=, 0
 	return  	$pop0
 	.endfunc
@@ -33,7 +33,7 @@ bracket_empty:                          # @bracket_empty
 # BB#1:                                 # %land.lhs.true
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $1, $pop2
-	i32.store	$discard=, 0($0), $pop3
+	i32.store	$drop=, 0($0), $pop3
 	i32.load8_u	$push4=, 0($1)
 	i32.const	$push5=, 93
 	i32.eq  	$push6=, $pop4, $pop5
@@ -41,7 +41,7 @@ bracket_empty:                          # @bracket_empty
 .LBB1_2:                                # %lor.lhs.false
 	end_block                       # label1:
 	i32.const	$push7=, 7
-	i32.store	$discard=, 8($0), $pop7
+	i32.store	$drop=, 8($0), $pop7
 .LBB1_3:                                # %if.end
 	end_block                       # label0:
 	return

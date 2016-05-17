@@ -43,11 +43,11 @@ main:                                   # @main
 	i32.store	$push12=, 0($pop7), $pop10
 	tee_local	$push11=, $1=, $pop12
 	i32.const	$push0=, 50462977
-	i32.store	$discard=, 8($pop11), $pop0
+	i32.store	$drop=, 8($pop11), $pop0
 	i32.const	$push1=, 3
-	i32.store8	$discard=, 12($1), $pop1
+	i32.store8	$drop=, 12($1), $pop1
 	i32.const	$push2=, 258
-	i32.store16	$discard=, 13($1):p2align=0, $pop2
+	i32.store16	$drop=, 13($1):p2align=0, $pop2
 	i32.const	$push3=, 0
 	i32.store8	$0=, 15($1), $pop3
 	i32.const	$push8=, 8

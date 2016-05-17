@@ -9,7 +9,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, gs($pop0)
-	i32.store	$discard=, 0($0):p2align=1, $pop1
+	i32.store	$drop=, 0($0):p2align=1, $pop1
 	return
 	.endfunc
 .Lfunc_end0:

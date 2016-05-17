@@ -16,11 +16,11 @@ main:                                   # @main
 	tee_local	$push3=, $1=, $pop4
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $pop3, $pop0
-	i32.store	$discard=, count($pop6), $pop1
+	i32.store	$drop=, count($pop6), $pop1
 	#APP
 	#NO_APP
 	i32.const	$push2=, 0
-	i32.store	$discard=, dummy($pop2), $0
+	i32.store	$drop=, dummy($pop2), $0
 	block
 	br_if   	0, $1           # 0: down to label0
 # BB#1:                                 # %if.end

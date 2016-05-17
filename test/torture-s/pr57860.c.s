@@ -28,7 +28,7 @@ foo:                                    # @foo
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push18=, 0
 	i32.const	$push17=, 0
-	i32.store	$discard=, c($pop18), $pop17
+	i32.store	$drop=, c($pop18), $pop17
 .LBB0_3:                                # %for.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
@@ -40,7 +40,7 @@ foo:                                    # @foo
 	i64.and 	$push5=, $pop4, $pop3
 	i64.gt_s	$push6=, $1, $pop5
 	i32.store	$push0=, 0($3), $pop6
-	i32.store	$discard=, 0($4), $pop0
+	i32.store	$drop=, 0($4), $pop0
 	i32.const	$push22=, 0
 	i32.load	$push21=, g($pop22)
 	tee_local	$push20=, $0=, $pop21
@@ -53,7 +53,7 @@ foo:                                    # @foo
 	i32.const	$push15=, 0
 	i32.const	$push14=, 1
 	i32.add 	$push10=, $0, $pop14
-	i32.store	$discard=, g($pop15), $pop10
+	i32.store	$drop=, g($pop15), $pop10
 	br      	0               # 0: up to label0
 .LBB0_5:                                # %if.then
 	end_loop                        # label1:
@@ -89,7 +89,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push20=, 0
 	i32.const	$push19=, 0
-	i32.store	$discard=, c($pop20), $pop19
+	i32.store	$drop=, c($pop20), $pop19
 .LBB1_3:                                # %for.end.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label5:
@@ -102,7 +102,7 @@ main:                                   # @main
 	i64.const	$push25=, 1
 	i64.lt_s	$push6=, $pop5, $pop25
 	i32.store	$push0=, 0($1), $pop6
-	i32.store	$discard=, 0($2), $pop0
+	i32.store	$drop=, 0($2), $pop0
 	i32.const	$push24=, 0
 	i32.load	$push23=, g($pop24)
 	tee_local	$push22=, $3=, $pop23
@@ -115,7 +115,7 @@ main:                                   # @main
 	i32.const	$push17=, 0
 	i32.const	$push16=, 1
 	i32.add 	$push12=, $3, $pop16
-	i32.store	$discard=, g($pop17), $pop12
+	i32.store	$drop=, g($pop17), $pop12
 	br      	0               # 0: up to label3
 .LBB1_5:                                # %foo.exit
 	end_loop                        # label4:

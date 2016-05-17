@@ -142,7 +142,7 @@ main:                                   # @main
 	i64.load	$push1=, 0($pop18)
 	i64.store	$6=, S+8($pop158), $pop1
 	i32.const	$push156=, 0
-	i64.store	$discard=, S($pop156), $7
+	i64.store	$drop=, S($pop156), $7
 	i32.const	$push97=, 96
 	i32.add 	$push98=, $18, $pop97
 	call    	__subtf3@FUNCTION, $pop98, $12, $13, $5, $4
@@ -155,7 +155,7 @@ main:                                   # @main
 	i64.load	$push0=, 0($pop19)
 	i64.store	$12=, T+8($pop155), $pop0
 	i32.const	$push153=, 0
-	i64.store	$discard=, T($pop153), $13
+	i64.store	$drop=, T($pop153), $13
 	i32.const	$push101=, 208
 	i32.add 	$push102=, $18, $pop101
 	call    	__subtf3@FUNCTION, $pop102, $17, $16, $5, $4
@@ -250,7 +250,7 @@ main:                                   # @main
 	i64.load	$push3=, 0($pop35)
 	i64.store	$4=, Y1+8($pop137), $pop3
 	i32.const	$push135=, 0
-	i64.store	$discard=, Y1($pop135), $17
+	i64.store	$drop=, Y1($pop135), $17
 	block
 	i64.const	$push134=, 0
 	i64.const	$push36=, 4612354521497075712

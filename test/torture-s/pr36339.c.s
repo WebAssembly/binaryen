@@ -16,9 +16,9 @@ try_a:                                  # @try_a
 	i32.sub 	$push12=, $pop4, $pop5
 	i32.store	$push14=, 0($pop6), $pop12
 	tee_local	$push13=, $1=, $pop14
-	i32.store	$discard=, 8($pop13), $0
+	i32.store	$drop=, 8($pop13), $0
 	i32.const	$push0=, 0
-	i32.store	$discard=, 12($1), $pop0
+	i32.store	$drop=, 12($1), $pop0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $1, $pop10
 	i32.const	$push1=, 1
@@ -27,7 +27,7 @@ try_a:                                  # @try_a
 	i32.const	$push9=, __stack_pointer
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $1, $pop7
-	i32.store	$discard=, 0($pop9), $pop8
+	i32.store	$drop=, 0($pop9), $pop8
 	return  	$0
 	.endfunc
 .Lfunc_end0:

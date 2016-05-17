@@ -90,7 +90,7 @@ f:                                      # @f
 	end_block                       # label2:
 	i32.const	$push23=, 4
 	i32.add 	$push24=, $1, $pop23
-	i32.store	$discard=, 12($3), $pop24
+	i32.store	$drop=, 12($3), $pop24
 	i32.load	$push25=, 0($1)
 	i32.const	$push26=, 123
 	i32.ne  	$push27=, $pop25, $pop26
@@ -99,7 +99,7 @@ f:                                      # @f
 	i32.const	$push34=, __stack_pointer
 	i32.const	$push32=, 16
 	i32.add 	$push33=, $3, $pop32
-	i32.store	$discard=, 0($pop34), $pop33
+	i32.store	$drop=, 0($pop34), $pop33
 	return  	$2
 .LBB0_10:                               # %if.then33
 	end_block                       # label1:
@@ -133,84 +133,84 @@ main:                                   # @main
 	i32.const	$push1=, 11
 	i32.add 	$push4=, $pop40, $pop1
 	i32.const	$push5=, 22
-	i32.store8	$discard=, 0($pop4), $pop5
+	i32.store8	$drop=, 0($pop4), $pop5
 	i32.const	$push41=, 48
 	i32.add 	$push42=, $2, $pop41
 	i32.const	$push2=, 12
 	i32.add 	$push8=, $pop42, $pop2
 	i32.const	$push9=, 32
-	i32.store8	$discard=, 0($pop8), $pop9
+	i32.store8	$drop=, 0($pop8), $pop9
 	i32.const	$push11=, 56
 	i32.add 	$push12=, $2, $pop11
 	i32.const	$push13=, 41
-	i32.store8	$discard=, 0($pop12), $pop13
+	i32.store8	$drop=, 0($pop12), $pop13
 	i32.const	$push14=, 61
 	i32.add 	$push15=, $2, $pop14
 	i32.const	$push16=, 42
-	i32.store8	$discard=, 0($pop15), $pop16
+	i32.store8	$drop=, 0($pop15), $pop16
 	i32.const	$push0=, 5130
-	i32.store16	$discard=, 48($2), $pop0
+	i32.store16	$drop=, 48($2), $pop0
 	i32.const	$push63=, 11
-	i32.store8	$discard=, 53($2), $pop63
+	i32.store8	$drop=, 53($2), $pop63
 	i32.const	$push62=, 12
-	i32.store8	$discard=, 58($2), $pop62
+	i32.store8	$drop=, 58($2), $pop62
 	i32.const	$push3=, 21
-	i32.store8	$discard=, 54($2), $pop3
+	i32.store8	$drop=, 54($2), $pop3
 	i32.const	$push6=, 30
-	i32.store8	$discard=, 50($2), $pop6
+	i32.store8	$drop=, 50($2), $pop6
 	i32.const	$push7=, 31
-	i32.store8	$discard=, 55($2), $pop7
+	i32.store8	$drop=, 55($2), $pop7
 	i32.const	$push10=, 40
-	i32.store8	$discard=, 51($2), $pop10
+	i32.store8	$drop=, 51($2), $pop10
 	i32.const	$push17=, 50
-	i32.store8	$discard=, 52($2), $pop17
+	i32.store8	$drop=, 52($2), $pop17
 	i32.const	$push18=, 57
 	i32.add 	$push61=, $2, $pop18
 	tee_local	$push60=, $1=, $pop61
 	i32.const	$push19=, 51
-	i32.store8	$discard=, 0($pop60), $pop19
+	i32.store8	$drop=, 0($pop60), $pop19
 	i32.const	$push20=, 62
 	i32.add 	$push59=, $2, $pop20
 	tee_local	$push58=, $0=, $pop59
 	i32.const	$push21=, 52
-	i32.store8	$discard=, 0($pop58), $pop21
+	i32.store8	$drop=, 0($pop58), $pop21
 	i32.const	$push43=, 40
 	i32.add 	$push44=, $2, $pop43
 	i32.const	$push22=, 4
 	i32.add 	$push23=, $pop44, $pop22
 	i32.load8_u	$push24=, 52($2)
-	i32.store8	$discard=, 0($pop23), $pop24
+	i32.store8	$drop=, 0($pop23), $pop24
 	i32.const	$push45=, 32
 	i32.add 	$push46=, $2, $pop45
 	i32.const	$push57=, 4
 	i32.add 	$push25=, $pop46, $pop57
 	i32.load8_u	$push26=, 0($1)
-	i32.store8	$discard=, 0($pop25), $pop26
+	i32.store8	$drop=, 0($pop25), $pop26
 	i32.load	$push27=, 48($2)
-	i32.store	$discard=, 40($2), $pop27
+	i32.store	$drop=, 40($2), $pop27
 	i32.load	$push28=, 53($2):p2align=0
-	i32.store	$discard=, 32($2), $pop28
+	i32.store	$drop=, 32($2), $pop28
 	i32.const	$push47=, 24
 	i32.add 	$push48=, $2, $pop47
 	i32.const	$push56=, 4
 	i32.add 	$push29=, $pop48, $pop56
 	i32.load8_u	$push30=, 0($0)
-	i32.store8	$discard=, 0($pop29), $pop30
+	i32.store8	$drop=, 0($pop29), $pop30
 	i32.load	$push31=, 58($2):p2align=1
-	i32.store	$discard=, 24($2), $pop31
+	i32.store	$drop=, 24($2), $pop31
 	i32.const	$push32=, 123
-	i32.store	$discard=, 12($2), $pop32
+	i32.store	$drop=, 12($2), $pop32
 	i32.const	$push49=, 24
 	i32.add 	$push50=, $2, $pop49
-	i32.store	$discard=, 8($2), $pop50
+	i32.store	$drop=, 8($2), $pop50
 	i32.const	$push51=, 32
 	i32.add 	$push52=, $2, $pop51
-	i32.store	$discard=, 4($2), $pop52
+	i32.store	$drop=, 4($2), $pop52
 	i32.const	$push53=, 40
 	i32.add 	$push54=, $2, $pop53
-	i32.store	$discard=, 0($2), $pop54
+	i32.store	$drop=, 0($2), $pop54
 	i32.const	$push33=, 3
-	i32.call	$discard=, f@FUNCTION, $pop33, $2
+	i32.call	$drop=, f@FUNCTION, $pop33, $2
 	i32.const	$push34=, 0
 	call    	exit@FUNCTION, $pop34
 	unreachable

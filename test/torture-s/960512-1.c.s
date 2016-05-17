@@ -11,7 +11,7 @@ f:                                      # @f
 	i32.add 	$push3=, $0, $pop2
 	i64.const	$push1=, 0
 	i64.store	$push0=, 0($0), $pop1
-	i64.store	$discard=, 0($pop3), $pop0
+	i64.store	$drop=, 0($pop3), $pop0
 	return
 	.endfunc
 .Lfunc_end0:

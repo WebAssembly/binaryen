@@ -15,7 +15,7 @@ cbrtl:                                  # @cbrtl
 	i32.sub 	$push76=, $pop63, $pop64
 	tee_local	$push75=, $5=, $pop76
 	i64.const	$push1=, 0
-	i64.store	$discard=, 8($pop75), $pop1
+	i64.store	$drop=, 8($pop75), $pop1
 	block
 	f64.store	$push74=, 0($5), $0
 	tee_local	$push73=, $4=, $pop74
@@ -54,11 +54,11 @@ cbrtl:                                  # @cbrtl
 	br_if   	0, $pop10       # 0: down to label3
 # BB#4:                                 # %if.then18
 	i32.const	$push15=, 1129316352
-	i32.store	$discard=, 12($5), $pop15
+	i32.store	$drop=, 12($5), $pop15
 	f64.load	$push16=, 8($5)
 	f64.mul 	$push82=, $pop16, $4
 	tee_local	$push81=, $0=, $pop82
-	f64.store	$discard=, 8($5), $pop81
+	f64.store	$drop=, 8($5), $pop81
 	i64.reinterpret/f64	$push17=, $0
 	i64.const	$push18=, 32
 	i64.shr_u	$push19=, $pop17, $pop18
@@ -67,7 +67,7 @@ cbrtl:                                  # @cbrtl
 	i32.div_u	$push22=, $pop20, $pop21
 	i32.const	$push23=, 696219795
 	i32.add 	$push24=, $pop22, $pop23
-	i32.store	$discard=, 12($5), $pop24
+	i32.store	$drop=, 12($5), $pop24
 	br      	1               # 1: down to label2
 .LBB0_5:                                # %if.else
 	end_block                       # label3:
@@ -75,7 +75,7 @@ cbrtl:                                  # @cbrtl
 	i32.div_u	$push12=, $2, $pop11
 	i32.const	$push13=, 715094163
 	i32.add 	$push14=, $pop12, $pop13
-	i32.store	$discard=, 12($5), $pop14
+	i32.store	$drop=, 12($5), $pop14
 .LBB0_6:                                # %if.end31
 	end_block                       # label2:
 	f64.load	$0=, 8($5)
@@ -99,14 +99,14 @@ cbrtl:                                  # @cbrtl
 	f64.mul 	$push38=, $0, $pop37
 	f64.store	$0=, 8($5), $pop38
 	i32.const	$push39=, 0
-	i32.store	$discard=, 8($5), $pop39
+	i32.store	$drop=, 8($5), $pop39
 	i64.reinterpret/f64	$push40=, $0
 	i64.const	$push41=, 32
 	i64.shr_u	$push42=, $pop40, $pop41
 	i32.wrap/i64	$push43=, $pop42
 	i32.const	$push44=, 1
 	i32.add 	$push45=, $pop43, $pop44
-	i32.store	$discard=, 12($5), $pop45
+	i32.store	$drop=, 12($5), $pop45
 	f64.load	$0=, 8($5)
 	f64.mul 	$push46=, $0, $0
 	f64.div 	$push85=, $7, $pop46
@@ -123,7 +123,7 @@ cbrtl:                                  # @cbrtl
 	i64.shr_u	$push54=, $pop53, $pop83
 	i32.wrap/i64	$push55=, $pop54
 	i32.or  	$push56=, $pop55, $1
-	i32.store	$discard=, 12($5), $pop56
+	i32.store	$drop=, 12($5), $pop56
 	f64.load	$0=, 8($5)
 	f64.mul 	$push57=, $0, $0
 	f64.div 	$push58=, $4, $pop57

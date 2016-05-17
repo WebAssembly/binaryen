@@ -13,7 +13,7 @@ f:                                      # @f
 	i32.load8_u	$push0=, 3($0)
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop0, $pop1
-	i32.store8	$discard=, 3($0), $pop2
+	i32.store8	$drop=, 3($0), $pop2
 	i32.load	$push3=, 0($0)
 	i32.const	$push8=, 16711680
 	i32.and 	$push9=, $pop3, $pop8

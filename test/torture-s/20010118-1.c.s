@@ -44,7 +44,7 @@ bar:                                    # @bar
 	f64.mul 	$push15=, $pop14, $pop10
 	i32.trunc_s/f64	$push16=, $pop15
 	i32.add 	$push18=, $pop16, $2
-	i32.store	$discard=, 0($pop20), $pop18
+	i32.store	$drop=, 0($pop20), $pop18
 	f64.convert_s/i32	$push7=, $5
 	f64.const	$push22=, 0x0p0
 	f64.mul 	$push9=, $pop7, $pop22
@@ -52,9 +52,9 @@ bar:                                    # @bar
 	f64.mul 	$push11=, $pop9, $pop21
 	i32.trunc_s/f64	$push12=, $pop11
 	i32.add 	$push17=, $pop12, $1
-	i32.store	$discard=, 0($0), $pop17
-	i32.store	$discard=, 8($0), $3
-	i32.store	$discard=, 12($0), $4
+	i32.store	$drop=, 0($0), $pop17
+	i32.store	$drop=, 8($0), $3
+	i32.store	$drop=, 12($0), $4
 .LBB1_3:                                # %if.end
 	end_block                       # label0:
 	return

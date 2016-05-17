@@ -82,14 +82,14 @@ main:                                   # @main
 	i32.add 	$push22=, $pop30, $pop21
 	i32.const	$push29=, 0
 	i32.const	$push0=, 1544
-	i32.call	$discard=, memset@FUNCTION, $pop22, $pop29, $pop0
+	i32.call	$drop=, memset@FUNCTION, $pop22, $pop29, $pop0
 	i32.const	$0=, 16
 	i32.const	$push23=, 8
 	i32.add 	$push24=, $3, $pop23
 	i32.const	$push28=, 16
 	i32.add 	$push1=, $pop24, $pop28
 	i32.const	$push2=, 1065353216
-	i32.store	$discard=, 0($pop1), $pop2
+	i32.store	$drop=, 0($pop1), $pop2
 	f32.const	$2=, 0x0p0
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
@@ -128,7 +128,7 @@ main:                                   # @main
 	i32.const	$push20=, __stack_pointer
 	i32.const	$push18=, 1552
 	i32.add 	$push19=, $3, $pop18
-	i32.store	$discard=, 0($pop20), $pop19
+	i32.store	$drop=, 0($pop20), $pop19
 	i32.const	$push13=, 0
 	return  	$pop13
 .LBB1_5:                                # %if.then

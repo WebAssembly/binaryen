@@ -22,7 +22,7 @@ main:                                   # @main
 	i64.store	$push0=, 0($pop4), $pop5
 	i64.store	$push1=, 0($pop7), $pop0
 	i64.store	$push2=, 8($0), $pop1
-	i64.store	$discard=, 0($0), $pop2
+	i64.store	$drop=, 0($0), $pop2
 	i32.const	$push45=, 0
 	i32.load	$push8=, i($pop45)
 	i32.const	$push9=, d+1
@@ -69,9 +69,9 @@ main:                                   # @main
 	end_block                       # label2:
 	i32.add 	$push14=, $0, $3
 	i32.or  	$push13=, $4, $2
-	i32.store8	$discard=, 0($pop14), $pop13
+	i32.store8	$drop=, 0($pop14), $pop13
 	i32.const	$push53=, 0
-	i32.store	$discard=, cp($pop53), $5
+	i32.store	$drop=, cp($pop53), $5
 	i32.const	$push52=, 1
 	i32.add 	$3=, $3, $pop52
 	i32.const	$push51=, 30

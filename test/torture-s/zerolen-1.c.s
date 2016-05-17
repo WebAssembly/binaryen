@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store16	$discard=, entry($pop1):p2align=0, $pop0
+	i32.store16	$drop=, entry($pop1):p2align=0, $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -25,7 +25,7 @@ set:                                    # @set
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	i32.store16	$discard=, 0($0):p2align=0, $pop0
+	i32.store16	$drop=, 0($0):p2align=0, $pop0
 	return
 	.endfunc
 .Lfunc_end1:

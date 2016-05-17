@@ -30,7 +30,7 @@ main:                                   # @main
 	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 15008
 	i32.add 	$push11=, $3, $pop10
-	i32.store	$discard=, 0($pop12), $pop11
+	i32.store	$drop=, 0($pop12), $pop11
 	return  	$2
 .LBB0_2:                                # %if.then.i
 	end_block                       # label0:

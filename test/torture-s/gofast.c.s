@@ -440,16 +440,16 @@ fail:                                   # @fail
 	i32.load	$push1=, fail_count($pop15)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, fail_count($pop0), $pop3
-	i32.store	$discard=, 0($1), $0
+	i32.store	$drop=, fail_count($pop0), $pop3
+	i32.store	$drop=, 0($1), $0
 	i32.const	$push14=, 0
 	i32.load	$push4=, stderr($pop14)
 	i32.const	$push5=, .L.str
-	i32.call	$discard=, fprintf@FUNCTION, $pop4, $pop5, $1
+	i32.call	$drop=, fprintf@FUNCTION, $pop4, $pop5, $1
 	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $1, $pop10
-	i32.store	$discard=, 0($pop12), $pop11
+	i32.store	$drop=, 0($pop12), $pop11
 	return  	$1
 	.endfunc
 .Lfunc_end30:

@@ -13,7 +13,7 @@ x:                                      # @x
 	i32.const	$push3=, 31
 	i32.lt_u	$push4=, $pop2, $pop3
 	i32.store	$push0=, p($pop6), $pop4
-	i32.store	$discard=, k($pop1), $pop0
+	i32.store	$drop=, k($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end0:

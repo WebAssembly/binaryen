@@ -23,7 +23,7 @@ unused_second:
 	.globl	call_something
 	.type	call_something,@function
 call_something:
-	i32.call	$discard=, return_something@FUNCTION
+	i32.call	$drop=, return_something@FUNCTION
 	return
 	.endfunc
 .Lfunc_end2:

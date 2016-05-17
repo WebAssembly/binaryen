@@ -227,11 +227,11 @@ test:                                   # @test
 	br_if   	1, $pop41       # 1: down to label0
 .LBB0_25:                               # %if.end19
 	end_block                       # label1:
-	i32.store	$discard=, 0($2), $5
+	i32.store	$drop=, 0($2), $5
 	i32.const	$push86=, __stack_pointer
 	i32.const	$push84=, 16
 	i32.add 	$push85=, $3, $pop84
-	i32.store	$discard=, 0($pop86), $pop85
+	i32.store	$drop=, 0($pop86), $pop85
 	return
 .LBB0_26:                               # %while.body.10
 	end_block                       # label0:

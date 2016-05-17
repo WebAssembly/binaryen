@@ -24,7 +24,7 @@ check2848va:                            # @check2848va
 	i64.load	$4=, s2848($pop26)
 	i32.const	$push4=, 16
 	i32.add 	$push5=, $1, $pop4
-	i32.store	$discard=, 12($5), $pop5
+	i32.store	$drop=, 12($5), $pop5
 	i32.load	$2=, 8($1)
 	i64.const	$push7=, 32
 	i64.shr_u	$push8=, $3, $pop7
@@ -43,7 +43,7 @@ check2848va:                            # @check2848va
 	i32.load	$push12=, fails($pop31)
 	i32.const	$push13=, 1
 	i32.add 	$push14=, $pop12, $pop13
-	i32.store	$discard=, fails($pop32), $pop14
+	i32.store	$drop=, fails($pop32), $pop14
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	block
@@ -62,7 +62,7 @@ check2848va:                            # @check2848va
 	i32.load	$push19=, fails($pop34)
 	i32.const	$push20=, 1
 	i32.add 	$push21=, $pop19, $pop20
-	i32.store	$discard=, fails($pop18), $pop21
+	i32.store	$drop=, fails($pop18), $pop21
 .LBB0_5:                                # %if.end4
 	end_block                       # label1:
 	return
@@ -86,21 +86,21 @@ main:                                   # @main
 	i32.store	$1=, 0($pop9), $pop15
 	i32.const	$push19=, 0
 	i64.const	$push0=, 3107062874477850347
-	i64.store	$discard=, s2848($pop19), $pop0
+	i64.store	$drop=, s2848($pop19), $pop0
 	i32.const	$push18=, 0
 	i32.const	$push1=, -218144346
 	i32.store	$0=, s2848+8($pop18), $pop1
 	i32.const	$push2=, -267489557
-	i32.store	$discard=, 16($1), $pop2
-	i32.store	$discard=, 24($1), $0
+	i32.store	$drop=, 16($1), $pop2
+	i32.store	$drop=, 24($1), $0
 	i32.const	$push3=, 723419448
-	i32.store	$discard=, 20($1), $pop3
+	i32.store	$drop=, 20($1), $pop3
 	i32.const	$push17=, 0
 	i32.load	$push4=, s2848+12($pop17)
-	i32.store	$discard=, 28($1), $pop4
+	i32.store	$drop=, 28($1), $pop4
 	i32.const	$push13=, 16
 	i32.add 	$push14=, $1, $pop13
-	i32.store	$discard=, 0($1), $pop14
+	i32.store	$drop=, 0($1), $pop14
 	call    	check2848va@FUNCTION, $1, $1
 	block
 	i32.const	$push16=, 0
@@ -110,7 +110,7 @@ main:                                   # @main
 	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 32
 	i32.add 	$push11=, $1, $pop10
-	i32.store	$discard=, 0($pop12), $pop11
+	i32.store	$drop=, 0($pop12), $pop11
 	i32.const	$push20=, 0
 	return  	$pop20
 .LBB1_2:                                # %if.then

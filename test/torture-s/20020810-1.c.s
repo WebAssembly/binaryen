@@ -42,7 +42,7 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i64.load	$push1=, R($pop0)
-	i64.store	$discard=, 0($0):p2align=2, $pop1
+	i64.store	$drop=, 0($0):p2align=2, $pop1
 	return
 	.endfunc
 .Lfunc_end1:

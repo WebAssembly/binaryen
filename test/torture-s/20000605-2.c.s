@@ -28,7 +28,7 @@ f1:                                     # @f1
 	i32.add 	$push3=, $3, $2
 	i32.const	$push14=, 1
 	i32.add 	$push4=, $pop3, $pop14
-	i32.store	$discard=, 0($0), $pop4
+	i32.store	$drop=, 0($0), $pop4
 	i32.const	$push13=, 1
 	i32.add 	$push12=, $2, $pop13
 	tee_local	$push11=, $4=, $pop12
@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.store	$push10=, 0($pop5), $pop8
 	tee_local	$push9=, $1=, $pop10
 	i32.const	$push1=, 1
-	i32.store	$discard=, 0($pop9), $pop1
+	i32.store	$drop=, 0($pop9), $pop1
 	i32.const	$push0=, 0
 	i32.store	$0=, 8($1), $pop0
 	i32.const	$push6=, 8

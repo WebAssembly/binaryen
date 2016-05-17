@@ -14,7 +14,7 @@ foo:                                    # @foo
 	i32.load	$push0=, 0($0)
 	i32.const	$push2=, -10
 	i32.add 	$push3=, $pop0, $pop2
-	i32.store	$discard=, 0($0), $pop3
+	i32.store	$drop=, 0($0), $pop3
 	return  	$1
 	.endfunc
 .Lfunc_end0:

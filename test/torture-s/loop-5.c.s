@@ -53,13 +53,13 @@ main:                                   # @main
 # BB#4:                                 # %testit.exit
 	i32.shl 	$push18=, $3, $0
 	i32.const	$push19=, 1
-	i32.store	$discard=, a($pop18), $pop19
+	i32.store	$drop=, a($pop18), $pop19
 	i32.const	$push17=, 0
 	i64.load	$1=, a($pop17)
 	i32.const	$push49=, 0
 	i32.const	$push15=, 4
 	i32.add 	$push16=, $2, $pop15
-	i32.store	$discard=, t($pop49), $pop16
+	i32.store	$drop=, t($pop49), $pop16
 	i32.wrap/i64	$push20=, $1
 	br_if   	0, $pop20       # 0: down to label0
 # BB#5:                                 # %if.end

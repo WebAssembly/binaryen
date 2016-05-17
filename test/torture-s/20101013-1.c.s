@@ -36,7 +36,7 @@ build_ref_for_offset:                   # @build_ref_for_offset
 	i32.const	$push9=, __stack_pointer
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $0, $pop7
-	i32.store	$discard=, 0($pop9), $pop8
+	i32.store	$drop=, 0($pop9), $pop8
 	return
 	.endfunc
 .Lfunc_end1:
@@ -48,7 +48,7 @@ get_addr_base_and_unit_offset:          # @get_addr_base_and_unit_offset
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 0
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end2:

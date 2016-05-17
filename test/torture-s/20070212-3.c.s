@@ -15,7 +15,7 @@ bar:                                    # @bar
 	tee_local	$push4=, $4=, $pop5
 	i32.load	$2=, 0($pop4)
 	i32.const	$push2=, 1
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$drop=, 0($0), $pop2
 	block
 	i32.eqz 	$push6=, $3
 	br_if   	0, $pop6        # 0: down to label0

@@ -48,7 +48,7 @@ simple_local:                           # @simple_local
 	i32.store	$push0=, 0($pop4), $pop8
 	i32.const	$push5=, 416
 	i32.add 	$push6=, $pop0, $pop5
-	i32.store	$discard=, 0($pop7), $pop6
+	i32.store	$drop=, 0($pop7), $pop6
 	return
 	.endfunc
 .Lfunc_end3:
@@ -65,7 +65,7 @@ simple_arg:                             # @simple_arg
 	i32.load	$push1=, 0($pop0)
 	i32.const	$push2=, 16
 	i32.sub 	$push3=, $pop1, $pop2
-	i32.store	$discard=, 12($pop3), $2
+	i32.store	$drop=, 12($pop3), $2
 	return
 	.endfunc
 .Lfunc_end4:
@@ -91,7 +91,7 @@ expr_local:                             # @expr_local
 	i32.const	$push0=, __stack_pointer
 	i32.load	$push1=, 0($pop0)
 	i32.const	$push2=, 80
-	i32.sub 	$discard=, $pop1, $pop2
+	i32.sub 	$drop=, $pop1, $pop2
 	return
 	.endfunc
 .Lfunc_end6:
@@ -115,7 +115,7 @@ main:                                   # @main
 	call    	simple_arg@FUNCTION, $pop3, $pop1, $pop2
 	i32.const	$push6=, 0
 	i32.const	$push4=, str
-	i32.store	$discard=, str+16($pop6), $pop4
+	i32.store	$drop=, str+16($pop6), $pop4
 	call    	expr_global@FUNCTION
 	call    	expr_local@FUNCTION
 	i32.const	$push5=, 0

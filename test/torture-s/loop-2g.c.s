@@ -17,7 +17,7 @@ f:                                      # @f
 	i32.const	$push5=, 254
 	i32.const	$push3=, 40
 	i32.sub 	$push4=, $pop3, $0
-	i32.call	$discard=, memset@FUNCTION, $pop2, $pop5, $pop4
+	i32.call	$drop=, memset@FUNCTION, $pop2, $pop5, $pop4
 .LBB0_2:                                # %for.end
 	end_block                       # label0:
 	return  	$0
@@ -53,9 +53,9 @@ main:                                   # @main
 	i32.add 	$push10=, $0, $pop9
 	i32.const	$push12=, 254
 	i32.const	$push11=, 39
-	i32.call	$discard=, memset@FUNCTION, $pop10, $pop12, $pop11
+	i32.call	$drop=, memset@FUNCTION, $pop10, $pop12, $pop11
 	i32.const	$push17=, 0
-	i32.store8	$discard=, 32805($0), $pop17
+	i32.store8	$drop=, 32805($0), $pop17
 .LBB1_2:                                # %if.end15
 	end_block                       # label1:
 	i32.const	$push18=, 0

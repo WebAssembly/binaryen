@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.const	$push43=, 348160
 	i32.add 	$push44=, $1, $pop43
 	i32.const	$push4=, 2720
-	i32.call	$discard=, memcpy@FUNCTION, $1, $pop44, $pop4
+	i32.call	$drop=, memcpy@FUNCTION, $1, $pop44, $pop4
 	i32.const	$2=, 0
 .LBB1_3:                                # %for.body6
                                         # =>This Inner Loop Header: Depth=1
@@ -173,7 +173,7 @@ main:                                   # @main
 	i32.const	$push49=, 348160
 	i32.add 	$push50=, $1, $pop49
 	i32.const	$push27=, 348160
-	i32.call	$discard=, memcpy@FUNCTION, $1, $pop50, $pop27
+	i32.call	$drop=, memcpy@FUNCTION, $1, $pop50, $pop27
 	i32.const	$2=, 0
 .LBB1_20:                               # %for.body90
                                         # =>This Inner Loop Header: Depth=1

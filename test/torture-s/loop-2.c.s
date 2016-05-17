@@ -20,7 +20,7 @@ f:                                      # @f
 	loop                            # label1:
 	i32.const	$push4=, -2
 	i32.add 	$push0=, $2, $pop4
-	i32.store	$discard=, 0($1), $pop0
+	i32.store	$drop=, 0($1), $pop0
 	i32.const	$push3=, 1
 	i32.add 	$2=, $2, $pop3
 	i32.const	$push2=, 4
@@ -44,7 +44,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i64.const	$push0=, -2
-	i64.store	$discard=, a($pop1):p2align=2, $pop0
+	i64.store	$drop=, a($pop1):p2align=2, $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

@@ -10,7 +10,7 @@ get_id:                                 # @get_id
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, curval+2($pop0):p2align=1
-	i32.store8	$discard=, 0($pop1), $0
+	i32.store8	$drop=, 0($pop1), $0
 	i32.const	$push2=, 0
 	return  	$pop2
 	.endfunc
@@ -26,10 +26,10 @@ get_tok:                                # @get_tok
 # BB#0:                                 # %entry
 	i32.const	$push2=, 0
 	i32.const	$push1=, id_space
-	i32.store	$discard=, curval+2($pop2):p2align=1, $pop1
+	i32.store	$drop=, curval+2($pop2):p2align=1, $pop1
 	i32.const	$push6=, 0
 	i32.const	$push3=, 99
-	i32.store8	$discard=, id_space($pop6), $pop3
+	i32.store8	$drop=, id_space($pop6), $pop3
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
 	i32.store16	$push0=, curval($pop5), $pop4
@@ -45,7 +45,7 @@ get_tok:                                # @get_tok
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, get_tok@FUNCTION
+	i32.call	$drop=, get_tok@FUNCTION
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable

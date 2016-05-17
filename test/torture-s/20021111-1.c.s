@@ -27,7 +27,7 @@ aim_callhandler:                        # @aim_callhandler
 	i32.const	$push10=, 0
 	i32.const	$push9=, 1
 	i32.add 	$push3=, $1, $pop9
-	i32.store	$discard=, aim_callhandler.i($pop10), $pop3
+	i32.store	$drop=, aim_callhandler.i($pop10), $pop3
 .LBB0_4:                                # %return
 	end_block                       # label1:
 	i32.const	$push4=, 0
@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.const	$push4=, 0
 	i32.const	$push3=, 0
-	i32.call	$discard=, aim_callhandler@FUNCTION, $pop1, $pop0, $pop4, $pop3
+	i32.call	$drop=, aim_callhandler@FUNCTION, $pop1, $pop0, $pop4, $pop3
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

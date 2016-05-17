@@ -16,7 +16,7 @@ main:                                   # @main
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$push11=, 0
 	i32.const	$push10=, 0
-	i32.store	$discard=, a($pop11), $pop10
+	i32.store	$drop=, a($pop11), $pop10
 .LBB0_2:                                # %while.end
 	end_block                       # label0:
 	i32.const	$1=, 255
@@ -40,13 +40,13 @@ main:                                   # @main
 	i32.load	$push7=, d($pop22)
 	i32.const	$push21=, 255
 	i32.and 	$push6=, $1, $pop21
-	i32.store	$discard=, 0($pop7), $pop6
+	i32.store	$drop=, 0($pop7), $pop6
 	i32.const	$push20=, 0
 	i32.load	$0=, b($pop20)
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.store8	$push0=, f($pop18), $1
-	i32.store8	$discard=, e($pop19), $pop0
+	i32.store8	$drop=, e($pop19), $pop0
 	block
 	i32.const	$push17=, 255
 	i32.ne  	$push8=, $0, $pop17

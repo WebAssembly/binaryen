@@ -43,7 +43,7 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	i64.shr_u	$push17=, $pop7, $pop16
 	i64.const	$push18=, 255
 	i64.and 	$push19=, $pop17, $pop18
-	i64.store	$discard=, 0($pop22), $pop19
+	i64.store	$drop=, 0($pop22), $pop19
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	return
@@ -63,10 +63,10 @@ main:                                   # @main
 	i32.load	$0=, r($pop18)
 	i32.const	$push17=, 0
 	i64.const	$push0=, 3160194
-	i64.store	$discard=, b+136($pop17), $pop0
+	i64.store	$drop=, b+136($pop17), $pop0
 	i32.const	$push16=, 0
 	i64.const	$push1=, 6003104017374052362
-	i64.store	$discard=, b+16($pop16), $pop1
+	i64.store	$drop=, b+16($pop16), $pop1
 	i64.load	$push3=, 16($0)
 	i64.load	$push4=, 136($0)
 	i64.const	$push5=, 3
@@ -76,12 +76,12 @@ main:                                   # @main
 	i64.shr_u	$push9=, $pop3, $pop8
 	i64.const	$push10=, 255
 	i64.and 	$push11=, $pop9, $pop10
-	i64.store	$discard=, 16($0), $pop11
+	i64.store	$drop=, 16($0), $pop11
 	i32.const	$push15=, 0
 	i64.load	$1=, b+16($pop15)
 	i32.const	$push14=, 0
 	i32.const	$push2=, -2013265854
-	i32.store	$discard=, pars($pop14), $pop2
+	i32.store	$drop=, pars($pop14), $pop2
 	block
 	i64.const	$push12=, 77
 	i64.ne  	$push13=, $1, $pop12

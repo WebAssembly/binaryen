@@ -49,7 +49,7 @@ main:                                   # @main
 	i32.const	$push6=, 1
 	i32.add 	$push16=, $pop5, $pop6
 	tee_local	$push15=, $0=, $pop16
-	i32.store	$discard=, c($pop4), $pop15
+	i32.store	$drop=, c($pop4), $pop15
 .LBB0_6:                                # %do.end
 	end_block                       # label0:
 	block

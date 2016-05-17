@@ -48,7 +48,7 @@ main:                                   # @main
 	i32.const	$push2=, 1
 	i32.const	$push1=, 2
 	i32.const	$push0=, 3
-	i32.call	$discard=, foobar@FUNCTION, $pop2, $pop1, $pop0
+	i32.call	$drop=, foobar@FUNCTION, $pop2, $pop1, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:

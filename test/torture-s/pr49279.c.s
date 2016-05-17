@@ -31,23 +31,23 @@ foo:                                    # @foo
 	i32.sub 	$push12=, $pop4, $pop5
 	i32.store	$push16=, 0($pop6), $pop12
 	tee_local	$push15=, $3=, $pop16
-	i32.store	$discard=, 12($pop15), $0
+	i32.store	$drop=, 12($pop15), $0
 	i32.const	$push0=, 1
 	i32.store	$0=, 8($3), $pop0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $3, $pop10
 	i32.call	$push1=, bar@FUNCTION, $pop11
-	i32.store	$discard=, 4($pop1), $1
+	i32.store	$drop=, 4($pop1), $1
 	i32.load	$push14=, 12($3)
 	tee_local	$push13=, $2=, $pop14
 	i32.const	$push2=, 0
-	i32.store	$discard=, 0($pop13), $pop2
-	i32.store	$discard=, 0($1), $0
+	i32.store	$drop=, 0($pop13), $pop2
+	i32.store	$drop=, 0($1), $0
 	i32.load	$0=, 0($2)
 	i32.const	$push9=, __stack_pointer
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $3, $pop7
-	i32.store	$discard=, 0($pop9), $pop8
+	i32.store	$drop=, 0($pop9), $pop8
 	return  	$0
 	.endfunc
 .Lfunc_end1:
@@ -81,7 +81,7 @@ main:                                   # @main
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $0, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	i32.const	$push3=, 0
 	return  	$pop3
 .LBB2_2:                                # %if.then

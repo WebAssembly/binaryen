@@ -4,7 +4,7 @@
 f:
         .param          i32
         .param          i32
-        i32.store       $discard=, m+4($0), $1
+        i32.store       $drop=, m+4($0), $1
         return
 .Lfunc_end0:
         .size   f, .Lfunc_end0-f

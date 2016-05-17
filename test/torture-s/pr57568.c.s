@@ -21,7 +21,7 @@ main:                                   # @main
 	tee_local	$push4=, $1=, $pop5
 	i32.const	$push1=, 1
 	i32.shl 	$push2=, $pop4, $pop1
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$drop=, 0($0), $pop2
 	br_if   	1, $1           # 1: down to label0
 .LBB0_2:                                # %if.end
 	end_block                       # label1:

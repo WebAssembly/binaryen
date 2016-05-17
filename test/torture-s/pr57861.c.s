@@ -30,19 +30,19 @@ main:                                   # @main
 	i32.ne  	$push9=, $pop8, $0
 	i32.and 	$push22=, $pop7, $pop9
 	tee_local	$push21=, $3=, $pop22
-	i32.store16	$discard=, a($0), $pop21
-	i32.store16	$discard=, f($0), $0
+	i32.store16	$drop=, a($0), $pop21
+	i32.store16	$drop=, f($0), $0
 .LBB0_2:                                # %for.inc.i.1
 	end_block                       # label0:
 	i32.const	$push10=, 255
 	i32.and 	$push11=, $1, $pop10
 	i32.ne  	$push12=, $pop11, $0
-	i32.store	$discard=, i($0), $pop12
+	i32.store	$drop=, i($0), $pop12
 	i32.load	$1=, g($0)
 	i32.const	$push13=, 2
-	i32.store	$discard=, c($0), $pop13
+	i32.store	$drop=, c($0), $pop13
 	i32.store	$push0=, j($0), $0
-	i32.store	$discard=, 0($1), $pop0
+	i32.store	$drop=, 0($1), $pop0
 	block
 	i32.const	$push14=, 65535
 	i32.and 	$push15=, $3, $pop14

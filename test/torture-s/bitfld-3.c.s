@@ -27,7 +27,7 @@ main:                                   # @main
 	i64.mul 	$push7=, $pop13, $0
 	i64.mul 	$push8=, $1, $1
 	i64.or  	$push9=, $pop7, $pop8
-	i64.eqz 	$discard=, $pop9
+	i64.eqz 	$drop=, $pop9
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	call    	abort@FUNCTION

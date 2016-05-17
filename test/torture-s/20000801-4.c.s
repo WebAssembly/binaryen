@@ -29,7 +29,7 @@ main:                                   # @main
 	i32.store	$push0=, 0($pop5), $pop8
 	i32.const	$push6=, 14
 	i32.add 	$push7=, $pop0, $pop6
-	i32.store	$discard=, t($pop1), $pop7
+	i32.store	$drop=, t($pop1), $pop7
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9
 	unreachable

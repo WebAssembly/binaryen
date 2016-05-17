@@ -21,7 +21,7 @@ f:                                      # @f
 	i32.and 	$push3=, $0, $pop2
 	i32.const	$push4=, an_array
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$discard=, a_ptr($pop8), $pop5
+	i32.store	$drop=, a_ptr($pop8), $pop5
 .LBB0_2:                                # %cleanup
 	end_block                       # label0:
 	return  	$1
@@ -43,7 +43,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end24.i
 	i32.const	$push3=, 0
 	i32.const	$push1=, an_array+1
-	i32.store	$discard=, a_ptr($pop3), $pop1
+	i32.store	$drop=, a_ptr($pop3), $pop1
 .LBB1_2:                                # %if.end
 	end_block                       # label1:
 	i32.const	$push4=, 0

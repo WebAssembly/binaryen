@@ -33,13 +33,13 @@ main:                                   # @main
 # BB#0:                                 # %if.end44
 	i32.const	$push1=, 0
 	i64.const	$push0=, -4294967296
-	i64.store	$discard=, hpart($pop1), $pop0
+	i64.store	$drop=, hpart($pop1), $pop0
 	i32.const	$push6=, 0
 	i64.const	$push2=, 4294967294
-	i64.store	$discard=, lpart($pop6), $pop2
+	i64.store	$drop=, lpart($pop6), $pop2
 	i32.const	$push5=, 0
 	i64.const	$push3=, -2
-	i64.store	$discard=, back($pop5), $pop3
+	i64.store	$drop=, back($pop5), $pop3
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4
 	unreachable

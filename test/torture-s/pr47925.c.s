@@ -59,15 +59,15 @@ main:                                   # @main
 	i32.store	$0=, 0($pop5), $pop13
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $0, $pop9
-	i32.store	$discard=, 8($0), $pop10
+	i32.store	$drop=, 8($0), $pop10
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $0, $pop11
 	i32.const	$push0=, 10
-	i32.call	$discard=, foo@FUNCTION, $pop12, $pop0
+	i32.call	$drop=, foo@FUNCTION, $pop12, $pop0
 	i32.const	$push8=, __stack_pointer
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $0, $pop6
-	i32.store	$discard=, 0($pop8), $pop7
+	i32.store	$drop=, 0($pop8), $pop7
 	i32.const	$push1=, 0
 	return  	$pop1
 	.endfunc

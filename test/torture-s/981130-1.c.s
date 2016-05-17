@@ -34,7 +34,7 @@ main:                                   # @main
 	i32.const	$push5=, 0
 	i64.load	$push4=, s2($pop5)
 	tee_local	$push3=, $0=, $pop4
-	i64.store	$discard=, s1($pop0), $pop3
+	i64.store	$drop=, s1($pop0), $pop3
 	i32.wrap/i64	$push1=, $0
 	i32.const	$push2=, 1
 	call    	check@FUNCTION, $pop1, $pop2

@@ -44,11 +44,11 @@ baz:                                    # @baz
 	i32.const	$push1=, .L.str
 	i32.store	$1=, 0($pop12), $pop1
 	call    	foo@FUNCTION
-	i32.store	$discard=, 0($0), $1
+	i32.store	$drop=, 0($0), $1
 	i32.const	$push8=, __stack_pointer
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $2, $pop6
-	i32.store	$discard=, 0($pop8), $pop7
+	i32.store	$drop=, 0($pop8), $pop7
 	return
 	.endfunc
 .Lfunc_end1:
@@ -67,7 +67,7 @@ main:                                   # @main
 	i32.store	$0=, x($pop1), $pop0
 	call    	foo@FUNCTION
 	i32.const	$push3=, 0
-	i32.store	$discard=, x($pop3), $0
+	i32.store	$drop=, x($pop3), $0
 	i32.const	$push2=, 0
 	return  	$pop2
 	.endfunc

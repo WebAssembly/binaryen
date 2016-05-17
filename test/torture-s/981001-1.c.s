@@ -78,7 +78,7 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	i32.const	$push4=, 256
 	i32.or  	$push5=, $0, $pop4
-	i32.store	$discard=, flg($pop8), $pop5
+	i32.store	$drop=, flg($pop8), $pop5
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %if.then1

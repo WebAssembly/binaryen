@@ -9,10 +9,10 @@ bar:                                    # @bar
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, s
-	i32.store	$discard=, 0($1), $pop0
+	i32.store	$drop=, 0($1), $pop0
 	i32.const	$push1=, 0
 	i32.load	$push2=, t($pop1)
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$drop=, 0($0), $pop2
 	i32.load	$push3=, 0($1)
 	return  	$pop3
 	.endfunc

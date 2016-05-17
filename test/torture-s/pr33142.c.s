@@ -53,9 +53,9 @@ main:                                   # @main
 	i32.store	$push15=, 0($pop9), $pop13
 	tee_local	$push14=, $0=, $pop15
 	i32.const	$push0=, 63
-	i32.store	$discard=, 12($pop14), $pop0
+	i32.store	$drop=, 12($pop14), $pop0
 	i32.const	$push1=, -77
-	i32.store	$discard=, 8($0), $pop1
+	i32.store	$drop=, 8($0), $pop1
 	block
 	i32.load	$push2=, 12($0)
 	i32.load	$push3=, 8($0)
@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$discard=, 0($pop12), $pop11
+	i32.store	$drop=, 0($pop12), $pop11
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB1_2:                                # %if.then

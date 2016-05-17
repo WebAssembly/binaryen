@@ -22,7 +22,7 @@ fdouble:                                # @fdouble
 	tee_local	$push19=, $1=, $pop20
 	i32.const	$push5=, 8
 	i32.add 	$push6=, $pop19, $pop5
-	i32.store	$discard=, 12($2), $pop6
+	i32.store	$drop=, 12($2), $pop6
 	block
 	f64.const	$push7=, 0x1p0
 	f64.ne  	$push8=, $0, $pop7
@@ -36,7 +36,7 @@ fdouble:                                # @fdouble
 	i32.const	$push17=, __stack_pointer
 	i32.const	$push15=, 16
 	i32.add 	$push16=, $2, $pop15
-	i32.store	$discard=, 0($pop17), $pop16
+	i32.store	$drop=, 0($pop17), $pop16
 	return
 .LBB0_3:                                # %if.then
 	end_block                       # label0:
@@ -62,7 +62,7 @@ main:                                   # @main
 	i32.store	$push9=, 0($pop6), $pop7
 	tee_local	$push8=, $0=, $pop9
 	i64.const	$push0=, 4611686018427387904
-	i64.store	$discard=, 0($pop8), $pop0
+	i64.store	$drop=, 0($pop8), $pop0
 	f64.const	$push1=, 0x1p0
 	call    	fdouble@FUNCTION, $pop1, $0
 	i32.const	$push2=, 0

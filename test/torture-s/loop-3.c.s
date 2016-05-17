@@ -14,7 +14,7 @@ g:                                      # @g
 	i32.load	$push1=, n($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, n($pop0), $pop3
+	i32.store	$drop=, n($pop0), $pop3
 	return  	$1
 	.endfunc
 .Lfunc_end0:
@@ -41,7 +41,7 @@ f:                                      # @f
 	i32.add 	$push8=, $pop2, $pop7
 	i32.const	$push9=, 2
 	i32.add 	$push10=, $pop8, $pop9
-	i32.store	$discard=, n($pop0), $pop10
+	i32.store	$drop=, n($pop0), $pop10
 	return  	$0
 	.endfunc
 .Lfunc_end1:
@@ -61,7 +61,7 @@ main:                                   # @main
 	tee_local	$push2=, $0=, $pop3
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $pop2, $pop0
-	i32.store	$discard=, n($pop5), $pop1
+	i32.store	$drop=, n($pop5), $pop1
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end

@@ -9,14 +9,14 @@ init:                                   # @init
 	i32.const	$push0=, 0
 	i32.const	$push7=, 0
 	i32.load8_u	$push1=, .L.str+8($pop7)
-	i32.store8	$discard=, p+8($pop0), $pop1
+	i32.store8	$drop=, p+8($pop0), $pop1
 	i32.const	$push6=, 0
 	i32.const	$push5=, 0
 	i64.load	$push2=, .L.str($pop5):p2align=0
-	i64.store	$discard=, p($pop6):p2align=0, $pop2
+	i64.store	$drop=, p($pop6):p2align=0, $pop2
 	i32.const	$push4=, 0
 	i64.const	$push3=, 6147487297207357523
-	i64.store	$discard=, p+9($pop4):p2align=0, $pop3
+	i64.store	$drop=, p+9($pop4):p2align=0, $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -36,9 +36,9 @@ main:                                   # @main
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
 	i32.load8_u	$push0=, p+8($pop15)
-	i32.store8	$discard=, headline+8($pop16), $pop0
+	i32.store8	$drop=, headline+8($pop16), $pop0
 	i32.const	$push14=, 0
-	i64.store	$discard=, headline($pop14), $1
+	i64.store	$drop=, headline($pop14), $1
 	i32.const	$push13=, 0
 	i32.const	$push1=, 32
 	i32.store8	$0=, headline+17($pop13), $pop1
@@ -46,12 +46,12 @@ main:                                   # @main
 	i64.load	$1=, p+9($pop12):p2align=0
 	i32.const	$push11=, 0
 	i64.const	$push2=, 2314885530818453536
-	i64.store	$discard=, headline+9($pop11):p2align=0, $pop2
+	i64.store	$drop=, headline+9($pop11):p2align=0, $pop2
 	i32.const	$push10=, 0
-	i64.store	$discard=, headline+10($pop10):p2align=1, $1
+	i64.store	$drop=, headline+10($pop10):p2align=1, $1
 	i32.const	$push4=, headline+18
 	i32.const	$push3=, 238
-	i32.call	$discard=, memset@FUNCTION, $pop4, $0, $pop3
+	i32.call	$drop=, memset@FUNCTION, $pop4, $0, $pop3
 	block
 	i32.wrap/i64	$push5=, $1
 	i32.const	$push6=, 255
