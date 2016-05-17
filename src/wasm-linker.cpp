@@ -342,7 +342,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
   }
   o << "]";
 
-  o << " }";
+  o << " }\n";
 }
 
 void Linker::makeDynCallThunks() {
