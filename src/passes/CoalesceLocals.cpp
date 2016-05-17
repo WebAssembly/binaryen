@@ -185,7 +185,9 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   void scanLivenessThroughActions(std::vector<Action>& actions, LocalSet& live);
 
-  std::vector<Index> pickIndices(); // returns a vector of oldIndex => newIndex
+  void pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices);
+
+  virtual void pickIndices(std::vector<Index>& indices); // returns a vector of oldIndex => newIndex
 
   void applyIndices(std::vector<Index>& indices, Expression* root);
 
@@ -230,7 +232,8 @@ void CoalesceLocals::walk(Expression*& root) {
   timer.dump();
 #endif
   // pick new indices
-  auto indices = pickIndices();
+  std::vector<Index> indices;
+  pickIndices(indices);
   // apply indices
   applyIndices(indices, root);
 }
@@ -346,12 +349,11 @@ void CoalesceLocals::scanLivenessThroughActions(std::vector<Action>& actions, Lo
 
 // Indices decision making
 
-std::vector<Index> CoalesceLocals::pickIndices() { // returns a vector of oldIndex => newIndex
+void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices) {
   // simple greedy coloring
   // TODO: multiple orderings
   // TODO: take into account eliminated copies
   // TODO: take into account distribution (99-1 is better than 50-50 with two registers, for gzip)
-  std::vector<Index> indices; // old => new
   std::vector<WasmType> types;
   std::vector<bool> newInterferences; // new index * numLocals => list of all interferences of locals merged to it
   indices.resize(numLocals);
@@ -388,7 +390,17 @@ std::vector<Index> CoalesceLocals::pickIndices() { // returns a vector of oldInd
       newInterferences[found * numLocals + j] = newInterferences[found * numLocals + j] | interferes(i, j);
     }
   }
-  return indices;
+}
+
+void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
+  // use the natural order. this is less arbitrary than it seems, as the program
+  // may have a natural order of locals inherent in it.
+  std::vector<Index> order;
+  order.resize(numLocals);
+  for (size_t i = 0; i < numLocals; i++) {
+    order[i] = i;
+  }
+  pickIndicesFromOrder(order, indices);
 }
 
 void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root) {
