@@ -75,8 +75,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
     std::cerr << "Error: provided memory is not a multiple of the 64k wasm page size\n";
     exit(EXIT_FAILURE);
   }
-  module->memory.initial = providedMemory / Memory::kPageSize;
-  module->memory.max = pre.memoryGrowth ? Memory::kMaxSize : module->memory.initial;
+  module->memory.initial = Address(providedMemory / Memory::kPageSize);
+  module->memory.max = pre.memoryGrowth ? Address(Memory::kMaxSize) : module->memory.initial;
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
   asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth, debug, false /* TODO: support imprecise? */);
@@ -109,8 +109,8 @@ void finalizeModule() {
     std::cerr << "Error: provided memory is not a multiple of the 64k wasm page size\n";
     exit(EXIT_FAILURE);
   }
-  module->memory.initial = providedMemory / Memory::kPageSize;
-  module->memory.max = module->checkExport(GROW_WASM_MEMORY) ? Memory::kMaxSize : module->memory.initial;
+  module->memory.initial = Address(providedMemory / Memory::kPageSize);
+  module->memory.max = module->checkExport(GROW_WASM_MEMORY) ? Address(Memory::kMaxSize) : module->memory.initial;
 
   // global mapping is done in js in post.js
 }
@@ -129,10 +129,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_s_expr2wasm(char *input) {
 
   module = new Module();
   // A .wast may have multiple modules, with some asserts after them, but we just read the first here.
-  sExpressionWasmBuilder = new SExpressionWasmBuilder(*module, *root[0], [&]() {
-    std::cerr << "error in parsing s-expressions to wasm\n";
-    abort();
-  });
+  sExpressionWasmBuilder = new SExpressionWasmBuilder(*module, *root[0]);
 
   finalizeModule();
 }
@@ -239,7 +236,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
     }
 
-    Literal load(Load* load, size_t addr) override {
+    Literal load(Load* load, Address addr) override {
       if (load->align < load->bytes || (addr & (load->bytes-1))) {
         int64_t out64;
         double ret = EM_ASM_DOUBLE({
@@ -270,7 +267,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
           return ret;
-        }, addr, load->bytes, isWasmTypeFloat(load->type), load->signed_, &out64);
+        }, (uint32_t)addr, load->bytes, isWasmTypeFloat(load->type), load->signed_, &out64);
         if (!isWasmTypeFloat(load->type)) {
           if (load->type == i64) {
             if (load->bytes == 8) {
@@ -328,7 +325,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
     }
 
-    void store(Store* store_, size_t addr, Literal value) override {
+    void store(Store* store_, Address addr, Literal value) override {
       // support int64 stores
       if (value.type == WasmType::i64) {
         Store fake = *store_;
@@ -363,7 +360,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             Module["info"].parent["HEAPU8"][addr + i] = HEAPU8[i];
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
-        }, addr, store_->bytes, isWasmTypeFloat(store_->type), isWasmTypeFloat(store_->type) ? value.getFloat() : (double)value.getInteger());
+        }, (uint32_t)addr, store_->bytes, isWasmTypeFloat(store_->type), isWasmTypeFloat(store_->type) ? value.getFloat() : (double)value.getInteger());
         return;
       }
       // nicely aligned
@@ -388,7 +385,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
     }
 
-    void growMemory(size_t oldSize, size_t newSize) override {
+    void growMemory(Address oldSize, Address newSize) override {
       EM_ASM_({
         var size = $0;
         var buffer;
@@ -402,7 +399,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         var temp = new Int8Array(buffer);
         temp.set(oldHEAP8);
         Module['outside']['buffer'] = buffer;
-      }, newSize);
+      }, (uint32_t)newSize);
     }
 
     void trap(const char* why) override {
