@@ -181,6 +181,10 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   void flowLiveness();
 
+  void calculateInterferences();
+
+  void calculateInterferences(LocalSet& locals);
+
   // merge starts of a list of blocks, adding new interferences as necessary. return
   // whether anything changed vs an old state (which indicates further processing is necessary).
   bool mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks, LocalSet& old, LocalSet& ret);
@@ -233,6 +237,8 @@ void CoalesceLocals::walk(Expression*& root) {
   timer.stop();
   timer.dump();
 #endif
+  // use liveness to find interference
+  calculateInterferences();
   // pick new indices
   std::vector<Index> indices;
   pickIndices(indices);
@@ -291,43 +297,18 @@ void CoalesceLocals::flowLiveness() {
 #endif
 }
 
-// merge starts of a list of blocks, adding new interferences as necessary. return
+// merge starts of a list of blocks. return
 // whether anything changed vs an old state (which indicates further processing is necessary).
 bool CoalesceLocals::mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks, LocalSet& old, LocalSet& ret) {
-  // merge all the live locals, and add interferences that show up from the merging.
-  // we can assume that locals live together already are already known to be in conflict.
   if (blocks.size() == 0) return false;
   ret = blocks[0]->contents.start;
-  if (blocks.size() == 1) {
-    // new interferences are impossible, they would have already been in conflict in the single predecessor.
-    return old != ret;
-  }
-  // more than one, so we must merge
-  for (size_t i = 1; i < blocks.size(); i++) {
-    ret = ret.merge(blocks[i]->contents.start);
-  }
-  // If there is no change in the merged result, then no new conflicts are possible.
-  // Assume the opposite, that we would be missing a conflict between x and y. Then
-  // since the merged result has not changed, x and y were present before as well.
-  // If they were present in the same origin block, then they were already in
-  // conflict there, and it is not a new conflict. If not, then they each arrive
-  // from different origins, with x arriving from X = { b_0..b_i } and y arriving from
-  // Y = { b_i+1..b_j }, where all those blocks are unique (since x and y never arrive from
-  // the same block, by assumption). Livenesses are monotonic, i.e., flowing only adds
-  // locals, never removes, so compared to the past state, we only added to X and Y.
-  // Mark the past arrivals X' and Y', and note that those two cannot be empty, since
-  // by assumption the merged result has not changed - x and y were already present
-  // before. But that means that x and y were already in conflict in the past, so
-  // this is not a new conflict.
-  if (ret == old) return false;
-  // add conflicts
-  size_t size = ret.size();
-  for (size_t i = 0; i < size; i++) {
-    for (size_t j = i + 1; j < size; j++) {
-      interfereLowHigh(ret[i], ret[j]);
+  if (blocks.size() > 1) {
+    // more than one, so we must merge
+    for (size_t i = 1; i < blocks.size(); i++) {
+      ret = ret.merge(blocks[i]->contents.start);
     }
   }
-  return true;
+  return old != ret;
 }
 
 void CoalesceLocals::scanLivenessThroughActions(std::vector<Action>& actions, LocalSet& live) {
@@ -335,16 +316,44 @@ void CoalesceLocals::scanLivenessThroughActions(std::vector<Action>& actions, Lo
   for (int i = int(actions.size()) - 1; i >= 0; i--) {
     auto& action = actions[i];
     if (action.isGet()) {
-      // new live local, interferes with all the rest
-      for (auto i : live) {
-        interfere(i, action.index);
-      }
       live.insert(action.index);
-      assert(live.size() <= numLocals);
     } else {
-      if (live.erase(action.index)) {
-        action.effective = true;
+      live.erase(action.index);
+    }
+  }
+}
+
+void CoalesceLocals::calculateInterferences() {
+  for (auto& curr : basicBlocks) {
+    if (liveBlocks.count(curr.get()) == 0) continue; // ignore dead blocks
+    // everything coming in might interfere, as it might come from a different block
+    auto live = curr->contents.end;
+    calculateInterferences(live);
+    // scan through the block itself
+    auto& actions = curr->contents.actions;
+    for (int i = int(actions.size()) - 1; i >= 0; i--) {
+      auto& action = actions[i];
+      auto index = action.index;
+      if (action.isGet()) {
+        // new live local, interferes with all the rest
+        live.insert(index);
+        for (auto i : live) {
+          interfere(i, index);
+        }
+      } else {
+        if (live.erase(index)) {
+          action.effective = true;
+        }
       }
+    }
+  }
+}
+
+void CoalesceLocals::calculateInterferences(LocalSet& locals) {
+  size_t size = locals.size();
+  for (size_t i = 0; i < size; i++) {
+    for (size_t j = i + 1; j < size; j++) {
+      interfereLowHigh(locals[i], locals[j]);
     }
   }
 }
