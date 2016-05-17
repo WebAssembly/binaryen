@@ -22,6 +22,7 @@
 //
 
 
+#include <algorithm>
 #include <memory>
 #include <unordered_set>
 
@@ -29,6 +30,7 @@
 #include "pass.h"
 #include "ast_utils.h"
 #include "cfg/cfg-traversal.h"
+#include "support/learning.h"
 #ifdef CFG_PROFILE
 #include "support/timing.h"
 #endif
@@ -185,7 +187,9 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   void scanLivenessThroughActions(std::vector<Action>& actions, LocalSet& live);
 
-  std::vector<Index> pickIndices(); // returns a vector of oldIndex => newIndex
+  void pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices);
+
+  virtual void pickIndices(std::vector<Index>& indices); // returns a vector of oldIndex => newIndex
 
   void applyIndices(std::vector<Index>& indices, Expression* root);
 
@@ -230,7 +234,8 @@ void CoalesceLocals::walk(Expression*& root) {
   timer.dump();
 #endif
   // pick new indices
-  auto indices = pickIndices();
+  std::vector<Index> indices;
+  pickIndices(indices);
   // apply indices
   applyIndices(indices, root);
 }
@@ -346,12 +351,10 @@ void CoalesceLocals::scanLivenessThroughActions(std::vector<Action>& actions, Lo
 
 // Indices decision making
 
-std::vector<Index> CoalesceLocals::pickIndices() { // returns a vector of oldIndex => newIndex
+void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices) {
   // simple greedy coloring
-  // TODO: multiple orderings
   // TODO: take into account eliminated copies
   // TODO: take into account distribution (99-1 is better than 50-50 with two registers, for gzip)
-  std::vector<Index> indices; // old => new
   std::vector<WasmType> types;
   std::vector<bool> newInterferences; // new index * numLocals => list of all interferences of locals merged to it
   indices.resize(numLocals);
@@ -363,6 +366,7 @@ std::vector<Index> CoalesceLocals::pickIndices() { // returns a vector of oldInd
   auto numParams = getFunction()->getNumParams();
   Index i = 0;
   for (; i < numParams; i++) {
+    assert(order[i] == i); // order must leave the params in place
     indices[i] = i;
     types[i] = getFunction()->getLocalType(i);
     for (size_t j = 0; j < numLocals; j++) {
@@ -371,24 +375,35 @@ std::vector<Index> CoalesceLocals::pickIndices() { // returns a vector of oldInd
     nextFree++;
   }
   for (; i < numLocals; i++) {
+    Index actual = order[i];
     Index found = -1;
     for (Index j = 0; j < nextFree; j++) {
-      if (!newInterferences[j * numLocals + i] && getFunction()->getLocalType(i) == types[j]) {
-        indices[i] = found = j;
+      if (!newInterferences[j * numLocals + actual] && getFunction()->getLocalType(actual) == types[j]) {
+        indices[actual] = found = j;
         break;
       }
     }
     if (found == Index(-1)) {
-      indices[i] = found = nextFree;
-      types[found] = getFunction()->getLocalType(i);
+      indices[actual] = found = nextFree;
+      types[found] = getFunction()->getLocalType(actual);
       nextFree++;
     }
     // merge new interferences for the new index
     for (size_t j = 0; j < numLocals; j++) {
-      newInterferences[found * numLocals + j] = newInterferences[found * numLocals + j] | interferes(i, j);
+      newInterferences[found * numLocals + j] = newInterferences[found * numLocals + j] | interferes(actual, j);
     }
   }
-  return indices;
+}
+
+void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
+  // use the natural order. this is less arbitrary than it seems, as the program
+  // may have a natural order of locals inherent in it.
+  std::vector<Index> order;
+  order.resize(numLocals);
+  for (size_t i = 0; i < numLocals; i++) {
+    order[i] = i;
+  }
+  pickIndicesFromOrder(order, indices);
 }
 
 void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root) {
@@ -431,6 +446,87 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
   getFunction()->localIndices.clear();
 }
 
-static RegisterPass<CoalesceLocals> registerPass("coalesce-locals", "reduce # of locals by coalescing");
+struct CoalesceLocalsWithLearning : public CoalesceLocals {
+  virtual CoalesceLocals* create() override { return new CoalesceLocalsWithLearning; }
+
+  virtual void pickIndices(std::vector<Index>& indices) override;
+};
+
+void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
+  if (getFunction()->getNumVars() <= 1) {
+    // nothing to think about here
+    CoalesceLocals::pickIndices(indices);
+    return;
+  }
+
+  struct Order : public std::vector<Index> {
+    void setFitness(Index f) { fitness = f; }
+    Index getFitness() { return fitness; }
+    void dump(std::string text) {
+      std::cout << text + ": ( ";
+      for (Index i = 0; i < size(); i++) std::cout << (*this)[i] << " ";
+      std::cout << ")\n";
+      std::cout << "of quality: " << getFitness() << "\n";
+    }
+  private:
+    Index fitness;
+  };
+
+  struct Generator {
+    Generator(CoalesceLocalsWithLearning* parent) : parent(parent), noise(42) {}
+
+    Order* makeRandom() {
+      auto* ret = new Order;
+      ret->resize(parent->numLocals);
+      for (Index i = 0; i < parent->numLocals; i++) {
+        (*ret)[i] = i;
+      }
+      if (first) {
+        // as the first guess, use the natural order. this is not arbitrary for two reasons.
+        // first, there may be an inherent order in the input (frequent indices are lower,
+        // etc.). second, by ensuring we start with the natural order, we ensure we are at
+        // least as good as the non-learning variant.
+        first = false;
+      } else {
+        // leave params alone, shuffle the rest
+        std::random_shuffle(ret->begin() + parent->getFunction()->getNumParams(), ret->end(), [this](int i) {
+          return noise() % i;
+        });
+      }
+      // apply the order
+      std::vector<Index> indices; // the phenotype
+      parent->pickIndicesFromOrder(*ret, indices);
+      auto maxIndex = *std::max_element(indices.begin(), indices.end());
+      assert(maxIndex <= parent->numLocals);
+      auto fitness = parent->numLocals - maxIndex; // higher fitness is better
+      ret->setFitness(fitness);
+#ifdef CFG_LEARN_DEBUG
+      ret->dump("new one");
+#endif
+      // all done
+      return ret;
+    }
+
+  private:
+    CoalesceLocalsWithLearning* parent;
+    std::mt19937 noise;
+    bool first = true;
+  };
+
+  Generator generator(this);
+  GeneticLearner<Order, Index, Generator> learner(generator, 10);
+  // TODO: run some generations
+  auto* best = learner.getBest();
+#ifdef CFG_LEARN_DEBUG
+  best->dump("new one");
+#endif
+  pickIndicesFromOrder(*best, indices); // TODO: cache indices in Orders, at the cost of more memory?
+}
+
+// declare passes
+
+static RegisterPass<CoalesceLocals> registerPass1("coalesce-locals", "reduce # of locals by coalescing");
+
+static RegisterPass<CoalesceLocalsWithLearning> registerPass2("coalesce-locals-learning", "reduce # of locals by coalescing and learning");
 
 } // namespace wasm
