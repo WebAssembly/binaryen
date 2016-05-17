@@ -30,9 +30,8 @@ invalidate_memory:                      # @invalidate_memory
 	i32.shl 	$push4=, $3, $pop16
 	i32.load	$push15=, table($pop4)
 	tee_local	$push14=, $0=, $pop15
-	i32.const	$push25=, 0
-	i32.eq  	$push26=, $pop14, $pop25
-	br_if   	0, $pop26       # 0: down to label3
+	i32.eqz 	$push25=, $pop14
+	br_if   	0, $pop25       # 0: down to label3
 .LBB0_2:                                # %for.body6
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
@@ -45,9 +44,8 @@ invalidate_memory:                      # @invalidate_memory
 	tee_local	$push18=, $4=, $pop19
 	i32.const	$push17=, 255
 	i32.and 	$push5=, $pop18, $pop17
-	i32.const	$push27=, 0
-	i32.eq  	$push28=, $pop5, $pop27
-	br_if   	0, $pop28       # 0: down to label6
+	i32.eqz 	$push26=, $pop5
+	br_if   	0, $pop26       # 0: down to label6
 # BB#3:                                 # %land.lhs.true
                                         #   in Loop: Header=BB0_2 Depth=2
 	br_if   	6, $2           # 6: down to label0
@@ -56,9 +54,8 @@ invalidate_memory:                      # @invalidate_memory
 	i32.const	$push22=, 256
 	i32.lt_u	$push8=, $4, $pop22
 	i32.or  	$push6=, $1, $pop8
-	i32.const	$push29=, 0
-	i32.eq  	$push30=, $pop6, $pop29
-	br_if   	6, $pop30       # 6: down to label0
+	i32.eqz 	$push27=, $pop6
+	br_if   	6, $pop27       # 6: down to label0
 .LBB0_5:                                # %for.cond5.backedge
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_block                       # label6:
@@ -146,9 +143,8 @@ main:                                   # @main
 	block
 	loop                            # label8:
 	block
-	i32.const	$push33=, 0
-	i32.eq  	$push34=, $2, $pop33
-	br_if   	0, $pop34       # 0: down to label10
+	i32.eqz 	$push33=, $2
+	br_if   	0, $pop33       # 0: down to label10
 .LBB3_2:                                # %for.body6.i
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2

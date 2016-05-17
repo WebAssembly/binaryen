@@ -10,9 +10,8 @@ f:                                      # @f
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $0, $pop10
-	br_if   	0, $pop11       # 0: down to label0
+	i32.eqz 	$push10=, $0
+	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push1=, 3
 	i32.mul 	$push2=, $0, $pop1

@@ -1062,9 +1062,8 @@ s:                                      # @s
 	tee_local	$push7=, $2=, $pop8
 	i32.store	$discard=, 12($pop7), $1
 	block
-	i32.const	$push17=, 0
-	i32.eq  	$push18=, $0, $pop17
-	br_if   	0, $pop18       # 0: down to label3
+	i32.eqz 	$push17=, $0
+	br_if   	0, $pop17       # 0: down to label3
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push9=, -1
 	i32.add 	$0=, $0, $pop9
@@ -1109,9 +1108,8 @@ z:                                      # @z
 	tee_local	$push10=, $3=, $pop11
 	i32.store	$discard=, 12($pop10), $1
 	block
-	i32.const	$push16=, 0
-	i32.eq  	$push17=, $0, $pop16
-	br_if   	0, $pop17       # 0: down to label6
+	i32.eqz 	$push16=, $0
+	br_if   	0, $pop16       # 0: down to label6
 # BB#1:                                 # %while.body.preheader
 	i32.load	$1=, 12($3)
 .LBB2_2:                                # %while.body
@@ -1164,9 +1162,8 @@ c:                                      # @c
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label10:
-	i32.const	$push22=, 0
-	i32.eq  	$push23=, $0, $pop22
-	br_if   	2, $pop23       # 2: down to label9
+	i32.eqz 	$push22=, $0
+	br_if   	2, $pop22       # 2: down to label9
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB3_1 Depth=1
 	i32.load	$push21=, 12($2)

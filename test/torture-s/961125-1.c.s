@@ -14,9 +14,8 @@ main:                                   # @main
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_3 Depth 2
 	loop                            # label0:
-	i32.const	$push17=, 0
-	i32.eq  	$push18=, $1, $pop17
-	br_if   	1, $pop18       # 1: down to label1
+	i32.eqz 	$push17=, $1
+	br_if   	1, $pop17       # 1: down to label1
 # BB#2:                                 # %while.cond2.preheader.i
                                         #   in Loop: Header=BB0_1 Depth=1
 	block

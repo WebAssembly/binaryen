@@ -1772,9 +1772,8 @@ main:                                   # @main
 	f64.le  	$push4=, $0, $pop3
 	f64.ne  	$push5=, $0, $0
 	i32.or  	$push6=, $pop4, $pop5
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $pop6, $pop10
-	br_if   	0, $pop11       # 0: down to label65
+	i32.eqz 	$push10=, $pop6
+	br_if   	0, $pop10       # 0: down to label65
 # BB#2:                                 # %if.end
 	i32.const	$push7=, 0
 	return  	$pop7

@@ -92,9 +92,8 @@ next:                                   # @next
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label6:
 	i32.load	$push4=, 0($1)
-	i32.const	$push13=, 0
-	i32.eq  	$push14=, $pop4, $pop13
-	br_if   	1, $pop14       # 1: down to label7
+	i32.eqz 	$push13=, $pop4
+	br_if   	1, $pop13       # 1: down to label7
 # BB#3:                                 # %if.then1
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$3=, 0

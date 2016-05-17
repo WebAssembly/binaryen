@@ -11,9 +11,8 @@ main:                                   # @main
 	block
 	i32.const	$push24=, 0
 	i32.load	$push0=, e($pop24)
-	i32.const	$push32=, 0
-	i32.eq  	$push33=, $pop0, $pop32
-	br_if   	0, $pop33       # 0: down to label0
+	i32.eqz 	$push32=, $pop0
+	br_if   	0, $pop32       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push29=, 0
 	i32.load	$push1=, i($pop29)

@@ -3658,15 +3658,15 @@ testO:                                  # @testO
 	i32.const	$push223=, 2047
 	i32.and 	$push222=, $pop62, $pop223
 	tee_local	$push221=, $4=, $pop222
-	i32.add 	$push69=, $3, $pop221
+	i32.add 	$push73=, $pop221, $2
+	i32.const	$push71=, 15
+	i32.rem_u	$push74=, $pop73, $pop71
+	i32.add 	$push69=, $3, $4
 	i32.const	$push220=, 4095
 	i32.and 	$push70=, $pop69, $pop220
-	i32.const	$push71=, 15
-	i32.rem_u	$push72=, $pop70, $pop71
-	i32.add 	$push73=, $4, $2
 	i32.const	$push219=, 15
-	i32.rem_u	$push74=, $pop73, $pop219
-	i32.ne  	$push75=, $pop72, $pop74
+	i32.rem_u	$push72=, $pop70, $pop219
+	i32.ne  	$push75=, $pop74, $pop72
 	br_if   	0, $pop75       # 0: down to label4
 # BB#4:                                 # %lor.lhs.false124
 	i32.const	$push84=, 0
@@ -4053,15 +4053,15 @@ testP:                                  # @testP
 	i32.const	$push223=, 2047
 	i32.and 	$push222=, $pop62, $pop223
 	tee_local	$push221=, $4=, $pop222
-	i32.add 	$push69=, $3, $pop221
+	i32.add 	$push73=, $pop221, $2
+	i32.const	$push71=, 15
+	i32.rem_u	$push74=, $pop73, $pop71
+	i32.add 	$push69=, $3, $4
 	i32.const	$push220=, 4095
 	i32.and 	$push70=, $pop69, $pop220
-	i32.const	$push71=, 15
-	i32.rem_u	$push72=, $pop70, $pop71
-	i32.add 	$push73=, $4, $2
 	i32.const	$push219=, 15
-	i32.rem_u	$push74=, $pop73, $pop219
-	i32.ne  	$push75=, $pop72, $pop74
+	i32.rem_u	$push72=, $pop70, $pop219
+	i32.ne  	$push75=, $pop74, $pop72
 	br_if   	0, $pop75       # 0: down to label5
 # BB#4:                                 # %lor.lhs.false118
 	i32.const	$push84=, 0
@@ -4573,9 +4573,8 @@ testR:                                  # @testR
 	i32.store16	$discard=, sR($pop47), $pop38
 	block
 	i32.const	$push39=, 1
-	i32.const	$push106=, 0
-	i32.eq  	$push107=, $pop39, $pop106
-	br_if   	0, $pop107      # 0: down to label6
+	i32.eqz 	$push106=, $pop39
+	br_if   	0, $pop106      # 0: down to label6
 # BB#1:                                 # %if.end134
 	return
 .LBB108_2:                              # %if.then133
@@ -4813,9 +4812,8 @@ testS:                                  # @testS
 	i32.store16	$discard=, sS($pop47), $pop38
 	block
 	i32.const	$push39=, 1
-	i32.const	$push106=, 0
-	i32.eq  	$push107=, $pop39, $pop106
-	br_if   	0, $pop107      # 0: down to label7
+	i32.eqz 	$push106=, $pop39
+	br_if   	0, $pop106      # 0: down to label7
 # BB#1:                                 # %if.end134
 	return
 .LBB114_2:                              # %if.then133
@@ -5026,9 +5024,8 @@ testT:                                  # @testT
 	i32.or  	$push30=, $pop29, $pop20
 	i32.store16	$discard=, sT($pop87), $pop30
 	i32.const	$push77=, 1
-	i32.const	$push88=, 0
-	i32.eq  	$push89=, $pop77, $pop88
-	br_if   	0, $pop89       # 0: down to label8
+	i32.eqz 	$push88=, $pop77
+	br_if   	0, $pop88       # 0: down to label8
 # BB#2:                                 # %if.end140
 	return
 .LBB120_3:                              # %if.then139
@@ -5338,17 +5335,17 @@ testU:                                  # @testU
 	i32.const	$push194=, 16
 	i32.shr_u	$push193=, $0, $pop194
 	tee_local	$push192=, $1=, $pop193
-	i32.add 	$push61=, $4, $pop192
+	i32.add 	$push65=, $pop192, $3
 	i32.const	$push191=, 1
-	i32.and 	$push62=, $pop61, $pop191
+	i32.and 	$push66=, $pop65, $pop191
 	i32.const	$push63=, 15
-	i32.rem_u	$push64=, $pop62, $pop63
-	i32.add 	$push65=, $1, $3
+	i32.rem_u	$push67=, $pop66, $pop63
+	i32.add 	$push61=, $4, $1
 	i32.const	$push190=, 1
-	i32.and 	$push66=, $pop65, $pop190
+	i32.and 	$push62=, $pop61, $pop190
 	i32.const	$push189=, 15
-	i32.rem_u	$push67=, $pop66, $pop189
-	i32.ne  	$push68=, $pop64, $pop67
+	i32.rem_u	$push64=, $pop62, $pop189
+	i32.ne  	$push68=, $pop67, $pop64
 	br_if   	0, $pop68       # 0: down to label9
 # BB#4:                                 # %lor.lhs.false130
 	i32.const	$push76=, 0
@@ -5626,17 +5623,17 @@ testV:                                  # @testV
 	i32.const	$push135=, 16
 	i32.shr_u	$push134=, $3, $pop135
 	tee_local	$push133=, $2=, $pop134
-	i32.add 	$push37=, $4, $pop133
+	i32.add 	$push41=, $pop133, $0
 	i32.const	$push132=, 1
-	i32.and 	$push38=, $pop37, $pop132
+	i32.and 	$push42=, $pop41, $pop132
 	i32.const	$push39=, 15
-	i32.rem_u	$push40=, $pop38, $pop39
-	i32.add 	$push41=, $2, $0
+	i32.rem_u	$push43=, $pop42, $pop39
+	i32.add 	$push37=, $4, $2
 	i32.const	$push131=, 1
-	i32.and 	$push42=, $pop41, $pop131
+	i32.and 	$push38=, $pop37, $pop131
 	i32.const	$push130=, 15
-	i32.rem_u	$push43=, $pop42, $pop130
-	i32.ne  	$push44=, $pop40, $pop43
+	i32.rem_u	$push40=, $pop38, $pop130
+	i32.ne  	$push44=, $pop43, $pop40
 	br_if   	0, $pop44       # 0: down to label10
 # BB#3:                                 # %lor.lhs.false136
 	i32.const	$push52=, 0

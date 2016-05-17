@@ -41,9 +41,8 @@ main:                                   # @main
 	i32.add 	$push11=, $0, $pop10
 	i32.const	$push1=, -2023406815
 	i32.call	$push2=, f@FUNCTION, $pop11, $pop1
-	i32.const	$push17=, 0
-	i32.eq  	$push18=, $pop2, $pop17
-	br_if   	0, $pop18       # 0: down to label0
+	i32.eqz 	$push17=, $pop2
+	br_if   	0, $pop17       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push9=, __stack_pointer
 	i32.const	$push7=, 16

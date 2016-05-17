@@ -37,9 +37,8 @@ main:                                   # @main
 	block
 	loop                            # label4:
 	i32.const	$push10=, 1
-	i32.const	$push14=, 0
-	i32.eq  	$push15=, $pop10, $pop14
-	br_if   	2, $pop15       # 2: down to label3
+	i32.eqz 	$push14=, $pop10
+	br_if   	2, $pop14       # 2: down to label3
 # BB#5:                                 # %for.cond2
                                         #   in Loop: Header=BB0_4 Depth=1
 	i32.const	$push13=, 1

@@ -60,9 +60,8 @@ string_to_ip:                           # @string_to_ip
 	i32.store	$1=, 0($pop23), $pop35
 	i32.const	$2=, 0
 	block
-	i32.const	$push56=, 0
-	i32.eq  	$push57=, $0, $pop56
-	br_if   	0, $pop57       # 0: down to label2
+	i32.eqz 	$push56=, $0
+	br_if   	0, $pop56       # 0: down to label2
 # BB#1:                                 # %if.end9
 	i32.const	$push27=, 12
 	i32.add 	$push28=, $1, $pop27
@@ -80,9 +79,8 @@ string_to_ip:                           # @string_to_ip
 	i32.load8_u	$push1=, 0($2)
 	i32.select	$push37=, $pop2, $2, $pop1
 	tee_local	$push36=, $2=, $pop37
-	i32.const	$push58=, 0
-	i32.eq  	$push59=, $pop36, $pop58
-	br_if   	0, $pop59       # 0: down to label4
+	i32.eqz 	$push57=, $pop36
+	br_if   	0, $pop57       # 0: down to label4
 # BB#2:                                 # %if.end9.1
 	i32.const	$push29=, 12
 	i32.add 	$push30=, $1, $pop29
@@ -97,9 +95,8 @@ string_to_ip:                           # @string_to_ip
 	i32.load8_u	$push7=, 0($2)
 	i32.select	$push43=, $pop8, $2, $pop7
 	tee_local	$push42=, $2=, $pop43
-	i32.const	$push60=, 0
-	i32.eq  	$push61=, $pop42, $pop60
-	br_if   	0, $pop61       # 0: down to label4
+	i32.eqz 	$push58=, $pop42
+	br_if   	0, $pop58       # 0: down to label4
 # BB#3:                                 # %if.end9.2
 	i32.const	$push31=, 12
 	i32.add 	$push32=, $1, $pop31
@@ -116,9 +113,8 @@ string_to_ip:                           # @string_to_ip
 	i32.load8_u	$push12=, 0($2)
 	i32.select	$push49=, $pop14, $2, $pop12
 	tee_local	$push48=, $2=, $pop49
-	i32.const	$push62=, 0
-	i32.eq  	$push63=, $pop48, $pop62
-	br_if   	1, $pop63       # 1: down to label3
+	i32.eqz 	$push59=, $pop48
+	br_if   	1, $pop59       # 1: down to label3
 # BB#4:                                 # %if.then3.3
 	i32.const	$push33=, 12
 	i32.add 	$push34=, $1, $pop33

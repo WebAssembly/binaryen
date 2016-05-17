@@ -10,9 +10,8 @@ main:                                   # @main
 	block
 	i32.const	$push0=, 1
 	i32.call	$push1=, CallFunctionRec@FUNCTION, $pop0
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $pop1, $pop8
-	br_if   	0, $pop9        # 0: down to label0
+	i32.eqz 	$push8=, $pop1
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %land.rhs.i
 	i32.const	$push2=, 0
 	call    	storemax@FUNCTION, $pop2
@@ -45,9 +44,8 @@ CallFunctionRec:                        # @CallFunctionRec
 	call    	storemax@FUNCTION, $0
 	i32.const	$1=, 0
 	block
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $0, $pop5
-	br_if   	0, $pop6        # 0: down to label2
+	i32.eqz 	$push5=, $0
+	br_if   	0, $pop5        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$1=, 1
 	i32.const	$push0=, 9

@@ -11,9 +11,8 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	block
 	block
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $1, $pop9
-	br_if   	0, $pop10       # 0: down to label1
+	i32.eqz 	$push9=, $1
+	br_if   	0, $pop9        # 0: down to label1
 # BB#1:                                 # %while.body.preheader
 	i32.load	$3=, 0($0)
 	i32.const	$push3=, 4
@@ -23,9 +22,8 @@ foo:                                    # @foo
 	loop                            # label2:
 	i32.const	$push4=, -1
 	i32.add 	$1=, $1, $pop4
-	i32.const	$push11=, 0
-	i32.eq  	$push12=, $1, $pop11
-	br_if   	3, $pop12       # 3: down to label0
+	i32.eqz 	$push10=, $1
+	br_if   	3, $pop10       # 3: down to label0
 # BB#3:                                 # %while.cond.while.body_crit_edge
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$push7=, 0($0)

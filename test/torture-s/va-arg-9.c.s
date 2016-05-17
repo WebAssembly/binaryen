@@ -44,9 +44,8 @@ fap:                                    # @fap
 	loop                            # label3:
 	i32.load8_u	$push8=, 0($1)
 	tee_local	$push7=, $0=, $pop8
-	i32.const	$push14=, 0
-	i32.eq  	$push15=, $pop7, $pop14
-	br_if   	2, $pop15       # 2: down to label2
+	i32.eqz 	$push14=, $pop7
+	br_if   	2, $pop14       # 2: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.load	$push11=, 0($2)
@@ -107,9 +106,8 @@ f0:                                     # @f0
 	loop                            # label7:
 	i32.load8_u	$push17=, 0($0)
 	tee_local	$push16=, $3=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label6
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label6
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB2_2 Depth=1
 	i32.load	$push20=, 0($1)
@@ -174,9 +172,8 @@ f1:                                     # @f1
 	loop                            # label11:
 	i32.load8_u	$push17=, 0($1)
 	tee_local	$push16=, $4=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label10
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label10
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB3_2 Depth=1
 	i32.load	$push20=, 0($2)
@@ -241,9 +238,8 @@ f2:                                     # @f2
 	loop                            # label15:
 	i32.load8_u	$push17=, 0($2)
 	tee_local	$push16=, $5=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label14
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label14
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB4_2 Depth=1
 	i32.load	$push20=, 0($3)
@@ -308,9 +304,8 @@ f3:                                     # @f3
 	loop                            # label19:
 	i32.load8_u	$push17=, 0($3)
 	tee_local	$push16=, $6=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label18
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label18
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB5_2 Depth=1
 	i32.load	$push20=, 0($4)
@@ -375,9 +370,8 @@ f4:                                     # @f4
 	loop                            # label23:
 	i32.load8_u	$push17=, 0($4)
 	tee_local	$push16=, $7=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label22
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label22
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB6_2 Depth=1
 	i32.load	$push20=, 0($5)
@@ -442,9 +436,8 @@ f5:                                     # @f5
 	loop                            # label27:
 	i32.load8_u	$push17=, 0($5)
 	tee_local	$push16=, $8=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label26
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label26
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB7_2 Depth=1
 	i32.load	$push20=, 0($6)
@@ -509,9 +502,8 @@ f6:                                     # @f6
 	loop                            # label31:
 	i32.load8_u	$push17=, 0($6)
 	tee_local	$push16=, $9=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label30
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label30
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB8_2 Depth=1
 	i32.load	$push20=, 0($7)
@@ -576,9 +568,8 @@ f7:                                     # @f7
 	loop                            # label35:
 	i32.load8_u	$push17=, 0($7)
 	tee_local	$push16=, $10=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label34
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label34
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB9_2 Depth=1
 	i32.load	$push20=, 0($8)
@@ -643,9 +634,8 @@ f8:                                     # @f8
 	loop                            # label39:
 	i32.load8_u	$push17=, 0($8)
 	tee_local	$push16=, $11=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label38
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label38
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB10_2 Depth=1
 	i32.load	$push20=, 0($9)
@@ -710,9 +700,8 @@ f9:                                     # @f9
 	loop                            # label43:
 	i32.load8_u	$push17=, 0($9)
 	tee_local	$push16=, $12=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label42
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label42
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB11_2 Depth=1
 	i32.load	$push20=, 0($10)
@@ -777,9 +766,8 @@ f10:                                    # @f10
 	loop                            # label47:
 	i32.load8_u	$push17=, 0($10)
 	tee_local	$push16=, $13=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label46
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label46
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB12_2 Depth=1
 	i32.load	$push20=, 0($11)
@@ -844,9 +832,8 @@ f11:                                    # @f11
 	loop                            # label51:
 	i32.load8_u	$push17=, 0($11)
 	tee_local	$push16=, $14=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label50
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label50
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB13_2 Depth=1
 	i32.load	$push20=, 0($12)
@@ -911,9 +898,8 @@ f12:                                    # @f12
 	loop                            # label55:
 	i32.load8_u	$push17=, 0($12)
 	tee_local	$push16=, $15=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label54
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label54
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB14_2 Depth=1
 	i32.load	$push20=, 0($13)
@@ -978,9 +964,8 @@ f13:                                    # @f13
 	loop                            # label59:
 	i32.load8_u	$push17=, 0($13)
 	tee_local	$push16=, $16=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label58
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label58
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB15_2 Depth=1
 	i32.load	$push20=, 0($14)
@@ -1045,9 +1030,8 @@ f14:                                    # @f14
 	loop                            # label63:
 	i32.load8_u	$push17=, 0($14)
 	tee_local	$push16=, $17=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label62
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label62
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB16_2 Depth=1
 	i32.load	$push20=, 0($15)
@@ -1112,9 +1096,8 @@ f15:                                    # @f15
 	loop                            # label67:
 	i32.load8_u	$push17=, 0($15)
 	tee_local	$push16=, $18=, $pop17
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop16, $pop23
-	br_if   	2, $pop24       # 2: down to label66
+	i32.eqz 	$push23=, $pop16
+	br_if   	2, $pop23       # 2: down to label66
 # BB#3:                                 # %while.body.i
                                         #   in Loop: Header=BB17_2 Depth=1
 	i32.load	$push20=, 0($16)

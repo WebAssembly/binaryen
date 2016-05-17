@@ -45,9 +45,8 @@ regrename_optimize:                     # @regrename_optimize
 	i64.const	$push1=, 0
 	i64.store	$discard=, 8($1):p2align=2, $pop1
 	block
-	i32.const	$push43=, 0
-	i32.eq  	$push44=, $5, $pop43
-	br_if   	0, $pop44       # 0: down to label1
+	i32.eqz 	$push43=, $5
+	br_if   	0, $pop43       # 0: down to label1
 # BB#1:                                 # %for.body.preheader
 	i32.const	$3=, 0
 	i32.const	$2=, -1

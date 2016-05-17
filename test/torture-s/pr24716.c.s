@@ -74,9 +74,8 @@ f:                                      # @f
                                         # =>    This Inner Loop Header: Depth=3
 	loop                            # label9:
 	block
-	i32.const	$push25=, 0
-	i32.eq  	$push26=, $4, $pop25
-	br_if   	0, $pop26       # 0: down to label11
+	i32.eqz 	$push25=, $4
+	br_if   	0, $pop25       # 0: down to label11
 # BB#10:                                # %if.then13
                                         #   in Loop: Header=BB0_9 Depth=3
 	i32.const	$push13=, 0
@@ -214,9 +213,8 @@ main:                                   # @main
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label25:
 	block
-	i32.const	$push20=, 0
-	i32.eq  	$push21=, $3, $pop20
-	br_if   	0, $pop21       # 0: down to label27
+	i32.eqz 	$push20=, $3
+	br_if   	0, $pop20       # 0: down to label27
 # BB#9:                                 # %if.then13.i
                                         #   in Loop: Header=BB1_8 Depth=2
 	i32.const	$push16=, 0
@@ -226,9 +224,8 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_8 Depth=2
 	end_block                       # label27:
 	i32.const	$3=, 0
-	i32.const	$push22=, 0
-	i32.eq  	$push23=, $2, $pop22
-	br_if   	0, $pop23       # 0: up to label25
+	i32.eqz 	$push21=, $2
+	br_if   	0, $pop21       # 0: up to label25
 .LBB1_11:                               # %do.cond33.i
                                         #   Parent Loop BB1_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
@@ -246,9 +243,8 @@ main:                                   # @main
 	end_loop                        # label29:
 	end_block                       # label19:
 	block
-	i32.const	$push24=, 0
-	i32.eq  	$push25=, $0, $pop24
-	br_if   	0, $pop25       # 0: down to label30
+	i32.eqz 	$push22=, $0
+	br_if   	0, $pop22       # 0: down to label30
 # BB#13:                                # %if.end
 	i32.const	$push2=, 0
 	return  	$pop2

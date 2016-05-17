@@ -54,9 +54,8 @@ main:                                   # @main
 	i32.const	$push5=, 0
 	i32.store	$0=, b($pop6), $pop5
 	block
-	i32.const	$push14=, 0
-	i32.eq  	$push15=, $1, $pop14
-	br_if   	0, $pop15       # 0: down to label1
+	i32.eqz 	$push14=, $1
+	br_if   	0, $pop14       # 0: down to label1
 # BB#1:                                 # %while.body.preheader
 	i32.load	$push2=, d($0)
 	i32.const	$push7=, 1
@@ -66,9 +65,8 @@ main:                                   # @main
 	loop                            # label2:
 	i32.const	$push13=, 1
 	i32.and 	$push3=, $0, $pop13
-	i32.const	$push16=, 0
-	i32.eq  	$push17=, $pop3, $pop16
-	br_if   	0, $pop17       # 0: up to label2
+	i32.eqz 	$push15=, $pop3
+	br_if   	0, $pop15       # 0: up to label2
 # BB#3:                                 # %for.cond4.preheader.preheader.i
                                         #   in Loop: Header=BB2_2 Depth=1
 	i32.const	$0=, 0

@@ -26,9 +26,8 @@ main:                                   # @main
 	block
 	i32.const	$push1=, 0
 	i32.load8_u	$push0=, s($pop1)
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $pop0, $pop5
-	br_if   	0, $pop6        # 0: down to label0
+	i32.eqz 	$push5=, $pop0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %while.body
 	i32.const	$push3=, 0
 	i32.const	$push2=, 0

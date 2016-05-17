@@ -12,9 +12,8 @@ main:                                   # @main
 	block
 	i32.const	$push3=, 0
 	i32.load	$push0=, b($pop3)
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $pop0, $pop8
-	br_if   	0, $pop9        # 0: down to label1
+	i32.eqz 	$push8=, $pop0
+	br_if   	0, $pop8        # 0: down to label1
 # BB#1:                                 # %land.lhs.true
 	i32.const	$push6=, 0
 	i32.load	$0=, c($pop6)

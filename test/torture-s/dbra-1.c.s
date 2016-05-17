@@ -12,9 +12,8 @@ f1:                                     # @f1
 	i32.const	$1=, 0
 	block
 	block
-	i32.const	$push21=, 0
-	i32.eq  	$push22=, $0, $pop21
-	br_if   	0, $pop22       # 0: down to label1
+	i32.eqz 	$push21=, $0
+	br_if   	0, $pop21       # 0: down to label1
 # BB#1:                                 # %for.inc
 	i32.const	$1=, 1
 	i32.const	$push12=, 1

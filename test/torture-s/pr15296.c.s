@@ -23,14 +23,12 @@ f:                                      # @f
 	block
 	block
 	block
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $3, $pop12
-	br_if   	0, $pop13       # 0: down to label7
+	i32.eqz 	$push12=, $3
+	br_if   	0, $pop12       # 0: down to label7
 # BB#3:                                 # %if.end3
 	copy_local	$4=, $5
-	i32.const	$push14=, 0
-	i32.eq  	$push15=, $5, $pop14
-	br_if   	1, $pop15       # 1: down to label6
+	i32.eqz 	$push13=, $5
+	br_if   	1, $pop13       # 1: down to label6
 .LBB0_4:                                # %l3
 	end_block                       # label7:
 	i32.const	$push10=, 8
@@ -41,9 +39,8 @@ f:                                      # @f
 	i32.store	$discard=, 0($pop9), $4
 	br_if   	1, $3           # 1: down to label5
 # BB#5:                                 # %if.end19
-	i32.const	$push16=, 0
-	i32.eq  	$push17=, $4, $pop16
-	br_if   	2, $pop17       # 2: down to label4
+	i32.eqz 	$push14=, $4
+	br_if   	2, $pop14       # 2: down to label4
 # BB#6:                                 # %if.end24
 	i32.store	$discard=, 8($4), $3
 	return

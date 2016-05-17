@@ -208,9 +208,8 @@ ldnear:                                 # @ldnear
 	i64.const	$push1=, 0
 	i64.const	$push22=, 0
 	i32.call	$push2=, __eqtf2@FUNCTION, $pop26, $pop23, $pop1, $pop22
-	i32.const	$push31=, 0
-	i32.eq  	$push32=, $pop2, $pop31
-	br_if   	0, $pop32       # 0: down to label2
+	i32.eqz 	$push31=, $pop2
+	br_if   	0, $pop31       # 0: down to label2
 # BB#1:                                 # %lor.rhs
 	call    	__divtf3@FUNCTION, $5, $0, $1, $2, $3
 	i64.load	$push5=, 0($5)

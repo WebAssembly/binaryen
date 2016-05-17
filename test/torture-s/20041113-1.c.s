@@ -69,7 +69,7 @@ test:                                   # @test
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32, f64
 # BB#0:                                 # %entry
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push7=, __stack_pointer
@@ -78,17 +78,17 @@ main:                                   # @main
 	i32.sub 	$push11=, $pop8, $pop9
 	i32.store	$2=, 0($pop10), $pop11
 	i32.const	$push0=, 0
-	f64.load	$push1=, a($pop0)
-	f64.const	$push2=, 0x1.4p3
-	f64.div 	$push3=, $pop1, $pop2
-	i32.trunc_s/f64	$3=, $pop3
+	f64.load	$3=, a($pop0)
 	i32.const	$push4=, 3
 	i32.store	$discard=, 8($2), $pop4
 	i32.const	$push5=, 2
 	i32.store	$discard=, 4($2), $pop5
 	i32.const	$push6=, 1
 	i32.store	$discard=, 0($2), $pop6
-	i32.store	$discard=, 12($2), $3
+	f64.const	$push1=, 0x1.4p3
+	f64.div 	$push2=, $3, $pop1
+	i32.trunc_s/f64	$push3=, $pop2
+	i32.store	$discard=, 12($2), $pop3
 	call    	test@FUNCTION, $2, $2
 	i32.const	$push12=, 0
 	call    	exit@FUNCTION, $pop12

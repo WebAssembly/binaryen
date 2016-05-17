@@ -55,9 +55,8 @@ fap:                                    # @fap
 	loop                            # label3:
 	i32.load8_u	$push24=, 0($2)
 	tee_local	$push23=, $0=, $pop24
-	i32.const	$push41=, 0
-	i32.eq  	$push42=, $pop23, $pop41
-	br_if   	2, $pop42       # 2: down to label2
+	i32.eqz 	$push41=, $pop23
+	br_if   	2, $pop41       # 2: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.load	$push30=, 12($3)
@@ -89,9 +88,8 @@ fap:                                    # @fap
 	loop                            # label6:
 	i32.load8_u	$push33=, 0($1)
 	tee_local	$push32=, $2=, $pop33
-	i32.const	$push43=, 0
-	i32.eq  	$push44=, $pop32, $pop43
-	br_if   	2, $pop44       # 2: down to label5
+	i32.eqz 	$push42=, $pop32
+	br_if   	2, $pop42       # 2: down to label5
 # BB#8:                                 # %while.body8
                                         #   in Loop: Header=BB1_7 Depth=1
 	i32.load	$push39=, 8($3)

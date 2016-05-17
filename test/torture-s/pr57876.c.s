@@ -151,9 +151,8 @@ main:                                   # @main
 	i32.add 	$push85=, $9, $pop84
 	i32.store	$discard=, g($8), $pop85
 	block
-	i32.const	$push106=, 0
-	i32.eq  	$push107=, $10, $pop106
-	br_if   	0, $pop107      # 0: down to label0
+	i32.eqz 	$push106=, $10
+	br_if   	0, $pop106      # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push83=, __stack_pointer
 	i32.const	$push81=, 16

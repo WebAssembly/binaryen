@@ -11,9 +11,8 @@ my_ffs:                                 # @my_ffs
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	block
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $0, $pop7
-	br_if   	0, $pop8        # 0: down to label0
+	i32.eqz 	$push7=, $0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$1=, 0
 .LBB0_2:                                # %for.body
@@ -222,9 +221,8 @@ my_ffsl:                                # @my_ffsl
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	block
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $0, $pop7
-	br_if   	0, $pop8        # 0: down to label13
+	i32.eqz 	$push7=, $0
+	br_if   	0, $pop7        # 0: down to label13
 # BB#1:                                 # %for.body.preheader
 	i32.const	$1=, 0
 .LBB6_2:                                # %for.body
@@ -685,9 +683,8 @@ main:                                   # @main
 	i32.select	$4=, $pop4, $pop212, $10
 	i32.const	$9=, 0
 	block
-	i32.const	$push378=, 0
-	i32.eq  	$push379=, $10, $pop378
-	br_if   	0, $pop379      # 0: down to label43
+	i32.eqz 	$push378=, $10
+	br_if   	0, $pop378      # 0: down to label43
 # BB#2:                                 # %for.body.i.preheader
                                         #   in Loop: Header=BB18_1 Depth=1
 	i32.const	$9=, 0
@@ -719,9 +716,8 @@ main:                                   # @main
 # BB#7:                                 # %if.end
                                         #   in Loop: Header=BB18_1 Depth=1
 	block
-	i32.const	$push380=, 0
-	i32.eq  	$push381=, $10, $pop380
-	br_if   	0, $pop381      # 0: down to label46
+	i32.eqz 	$push379=, $10
+	br_if   	0, $pop379      # 0: down to label46
 # BB#8:                                 # %land.lhs.true
                                         #   in Loop: Header=BB18_1 Depth=1
 	i32.clz 	$1=, $10
@@ -892,9 +888,8 @@ main:                                   # @main
 	i32.select	$4=, $pop36, $pop252, $10
 	i32.const	$9=, 0
 	block
-	i32.const	$push382=, 0
-	i32.eq  	$push383=, $10, $pop382
-	br_if   	0, $pop383      # 0: down to label59
+	i32.eqz 	$push380=, $10
+	br_if   	0, $pop380      # 0: down to label59
 # BB#29:                                # %for.body.i1251.preheader
                                         #   in Loop: Header=BB18_28 Depth=1
 	i32.const	$9=, 0
@@ -926,9 +921,8 @@ main:                                   # @main
 # BB#34:                                # %if.end49
                                         #   in Loop: Header=BB18_28 Depth=1
 	block
-	i32.const	$push384=, 0
-	i32.eq  	$push385=, $10, $pop384
-	br_if   	0, $pop385      # 0: down to label62
+	i32.eqz 	$push381=, $10
+	br_if   	0, $pop381      # 0: down to label62
 # BB#35:                                # %land.lhs.true52
                                         #   in Loop: Header=BB18_28 Depth=1
 	i32.clz 	$1=, $10
@@ -1374,9 +1368,8 @@ main:                                   # @main
 	i32.shr_u	$push142=, $pop344, $10
 	i32.const	$push343=, 1
 	i32.and 	$push143=, $pop142, $pop343
-	i32.const	$push386=, 0
-	i32.eq  	$push387=, $pop143, $pop386
-	br_if   	1, $pop387      # 1: down to label90
+	i32.eqz 	$push382=, $pop143
+	br_if   	1, $pop382      # 1: down to label90
 # BB#94:                                # %for.inc.i1938
                                         #   in Loop: Header=BB18_93 Depth=1
 	i32.const	$push347=, 1
@@ -1406,9 +1399,8 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label91:
 	i32.wrap/i64	$push151=, $7
-	i32.const	$push388=, 0
-	i32.eq  	$push389=, $pop151, $pop388
-	br_if   	1, $pop389      # 1: down to label92
+	i32.eqz 	$push383=, $pop151
+	br_if   	1, $pop383      # 1: down to label92
 # BB#99:                                # %for.inc.i1848
                                         #   in Loop: Header=BB18_98 Depth=1
 	i64.const	$push352=, 1

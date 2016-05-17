@@ -8,9 +8,8 @@ check:                                  # @check
 	.param  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push0=, 0
-	i32.eq  	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label0
+	i32.eqz 	$push0=, $0
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

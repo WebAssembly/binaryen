@@ -80,9 +80,8 @@ x:                                      # @x
 	tee_local	$push36=, $4=, $pop37
 	i32.load	$push35=, 0($pop36)
 	tee_local	$push34=, $3=, $pop35
-	i32.const	$push68=, 0
-	i32.eq  	$push69=, $pop34, $pop68
-	br_if   	0, $pop69       # 0: down to label2
+	i32.eqz 	$push68=, $pop34
+	br_if   	0, $pop68       # 0: down to label2
 # BB#3:                                 # %if.then
 	block
 	i32.const	$push7=, .L.str

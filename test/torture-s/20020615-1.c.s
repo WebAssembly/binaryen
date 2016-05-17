@@ -46,9 +46,8 @@ line_hints:                             # @line_hints
 	i32.xor 	$3=, $pop10, $3
 	block
 	block
-	i32.const	$push56=, 0
-	i32.eq  	$push57=, $0, $pop56
-	br_if   	0, $pop57       # 0: down to label1
+	i32.eqz 	$push56=, $0
+	br_if   	0, $pop56       # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$push49=, 4
 	i32.shr_s	$push1=, $4, $pop49
@@ -68,9 +67,8 @@ line_hints:                             # @line_hints
 	br      	1               # 1: down to label0
 .LBB0_3:                                # %if.else
 	end_block                       # label1:
-	i32.const	$push58=, 0
-	i32.eq  	$push59=, $2, $pop58
-	br_if   	0, $pop59       # 0: down to label0
+	i32.eqz 	$push57=, $2
+	br_if   	0, $pop57       # 0: down to label0
 # BB#4:                                 # %if.else
 	i32.const	$push52=, 4
 	i32.shr_s	$push19=, $3, $pop52

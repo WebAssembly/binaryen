@@ -27,9 +27,8 @@ main:                                   # @main
 	i32.const	$push33=, 0
 	i32.store	$1=, d($pop3), $pop33
 	block
-	i32.const	$push48=, 0
-	i32.eq  	$push49=, $0, $pop48
-	br_if   	0, $pop49       # 0: down to label2
+	i32.eqz 	$push48=, $0
+	br_if   	0, $pop48       # 0: down to label2
 # BB#3:                                 # %fnx.exit
 	i32.load	$push4=, b($1)
 	i32.const	$push5=, 1

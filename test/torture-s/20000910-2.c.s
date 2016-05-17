@@ -13,17 +13,15 @@ main:                                   # @main
 	i32.load	$push0=, list($pop7)
 	i32.const	$push6=, 42
 	i32.call	$push1=, strchr@FUNCTION, $pop0, $pop6
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $pop1, $pop10
-	br_if   	0, $pop11       # 0: down to label1
+	i32.eqz 	$push10=, $pop1
+	br_if   	0, $pop10       # 0: down to label1
 # BB#1:                                 # %if.then.i
 	i32.const	$push9=, 0
 	i32.load	$push2=, list+4($pop9)
 	i32.const	$push8=, 42
 	i32.call	$push3=, strchr@FUNCTION, $pop2, $pop8
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $pop3, $pop12
-	br_if   	1, $pop13       # 1: down to label0
+	i32.eqz 	$push11=, $pop3
+	br_if   	1, $pop11       # 1: down to label0
 # BB#2:                                 # %foo.exit
 	i32.const	$push4=, 0
 	return  	$pop4

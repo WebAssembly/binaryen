@@ -41,9 +41,8 @@ main:                                   # @main
 	block
 	i32.const	$push0=, 97
 	i32.call	$push1=, isprint@FUNCTION, $pop0
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $pop1, $pop5
-	br_if   	0, $pop6        # 0: down to label0
+	i32.eqz 	$push5=, $pop1
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push2=, 2
 	i32.call	$push3=, isprint@FUNCTION, $pop2

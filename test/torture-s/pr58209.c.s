@@ -9,9 +9,8 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $0, $pop6
-	br_if   	0, $pop7        # 0: down to label0
+	i32.eqz 	$push6=, $0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $0, $pop0
@@ -38,9 +37,8 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$1=, buf
 	block
-	i32.const	$push4=, 0
-	i32.eq  	$push5=, $0, $pop4
-	br_if   	0, $pop5        # 0: down to label1
+	i32.eqz 	$push4=, $0
+	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $0, $pop0
@@ -78,9 +76,8 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$2=, buf
 	block
-	i32.const	$push13=, 0
-	i32.eq  	$push14=, $1, $pop13
-	br_if   	0, $pop14       # 0: down to label5
+	i32.eqz 	$push13=, $1
+	br_if   	0, $pop13       # 0: down to label5
 # BB#3:                                 # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push10=, -1

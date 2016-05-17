@@ -301,16 +301,14 @@ main:                                   # @main
 	i32.const	$push50=, 0
 	i32.load	$push23=, good_t0($pop50)
 	i32.call_indirect	$push24=, $pop23
-	i32.const	$push57=, 0
-	i32.eq  	$push58=, $pop24, $pop57
-	br_if   	0, $pop58       # 0: down to label4
+	i32.eqz 	$push57=, $pop24
+	br_if   	0, $pop57       # 0: down to label4
 # BB#12:                                # %for.cond23
 	i32.const	$push51=, 0
 	i32.load	$push25=, good_t0+4($pop51)
 	i32.call_indirect	$push26=, $pop25
-	i32.const	$push59=, 0
-	i32.eq  	$push60=, $pop26, $pop59
-	br_if   	0, $pop60       # 0: down to label4
+	i32.eqz 	$push58=, $pop26
+	br_if   	0, $pop58       # 0: down to label4
 # BB#13:                                # %for.cond23.1
 	i32.const	$push52=, 0
 	i32.load	$push27=, good_t0+8($pop52)
@@ -339,16 +337,14 @@ main:                                   # @main
 	i32.const	$push53=, 0
 	i32.load	$push29=, opt_t0($pop53)
 	i32.call_indirect	$push30=, $pop29
-	i32.const	$push61=, 0
-	i32.eq  	$push62=, $pop30, $pop61
-	br_if   	0, $pop62       # 0: down to label6
+	i32.eqz 	$push59=, $pop30
+	br_if   	0, $pop59       # 0: down to label6
 # BB#19:                                # %for.cond34
 	i32.const	$push54=, 0
 	i32.load	$push31=, opt_t0+4($pop54)
 	i32.call_indirect	$push32=, $pop31
-	i32.const	$push63=, 0
-	i32.eq  	$push64=, $pop32, $pop63
-	br_if   	0, $pop64       # 0: down to label6
+	i32.eqz 	$push60=, $pop32
+	br_if   	0, $pop60       # 0: down to label6
 # BB#20:                                # %for.cond34.1
 	i32.const	$push55=, 0
 	i32.load	$push33=, opt_t0+8($pop55)

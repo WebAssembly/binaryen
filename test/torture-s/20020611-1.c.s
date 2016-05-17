@@ -35,9 +35,8 @@ main:                                   # @main
 	i32.lt_u	$push4=, $pop2, $pop3
 	i32.store	$push0=, p($pop6), $pop4
 	i32.store	$push1=, k($pop7), $pop0
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $pop1, $pop9
-	br_if   	0, $pop10       # 0: down to label0
+	i32.eqz 	$push9=, $pop1
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push8=, 0
 	call    	exit@FUNCTION, $pop8

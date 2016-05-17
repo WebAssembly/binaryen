@@ -158,9 +158,8 @@ main:                                   # @main
 	i32.load8_u	$push0=, a($pop10)
 	i32.const	$push1=, 7
 	i32.shr_u	$push2=, $pop0, $pop1
-	i32.const	$push17=, 0
-	i32.eq  	$push18=, $pop2, $pop17
-	br_if   	0, $pop18       # 0: down to label0
+	i32.eqz 	$push17=, $pop2
+	br_if   	0, $pop17       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push12=, 0
 	i32.load8_s	$push3=, b($pop12)

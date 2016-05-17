@@ -19,9 +19,8 @@ main:                                   # @main
 	block
 	i32.const	$push10=, 1
 	i32.and 	$push0=, $2, $pop10
-	i32.const	$push18=, 0
-	i32.eq  	$push19=, $pop0, $pop18
-	br_if   	0, $pop19       # 0: down to label4
+	i32.eqz 	$push18=, $pop0
+	br_if   	0, $pop18       # 0: down to label4
 # BB#2:                                 # %do.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push11=, 4

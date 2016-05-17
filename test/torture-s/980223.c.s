@@ -93,9 +93,8 @@ main:                                   # @main
 	block
 	i32.const	$push13=, 64
 	i32.and 	$push1=, $1, $pop13
-	i32.const	$push21=, 0
-	i32.eq  	$push22=, $pop1, $pop21
-	br_if   	0, $pop22       # 0: down to label4
+	i32.eqz 	$push21=, $pop1
+	br_if   	0, $pop21       # 0: down to label4
 # BB#1:                                 # %if.then.i
 	i32.const	$push19=, 0
 	i32.load	$push18=, cons2($pop19)

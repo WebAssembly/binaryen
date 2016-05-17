@@ -87,9 +87,8 @@ print_longlong:                         # @print_longlong
 	i64.shr_u	$push1=, $0, $pop0
 	i32.wrap/i64	$push15=, $pop1
 	tee_local	$push14=, $4=, $pop15
-	i32.const	$push16=, 0
-	i32.eq  	$push17=, $pop14, $pop16
-	br_if   	0, $pop17       # 0: down to label1
+	i32.eqz 	$push16=, $pop14
+	br_if   	0, $pop16       # 0: down to label1
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 20($2), $3
 	i32.store	$discard=, 16($2), $4

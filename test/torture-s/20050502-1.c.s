@@ -76,9 +76,8 @@ foo:                                    # @foo
 	i32.const	$push22=, 24
 	i32.shr_s	$push9=, $pop8, $pop22
 	i32.call	$push10=, baz@FUNCTION, $pop9
-	i32.const	$push32=, 0
-	i32.eq  	$push33=, $pop10, $pop32
-	br_if   	2, $pop33       # 2: down to label2
+	i32.eqz 	$push32=, $pop10
+	br_if   	2, $pop32       # 2: down to label2
 .LBB2_5:                                # %while.cond.backedge
                                         #   in Loop: Header=BB2_3 Depth=1
 	end_block                       # label3:
@@ -101,9 +100,8 @@ foo:                                    # @foo
 	i32.const	$push31=, 34
 	i32.eq  	$push15=, $7, $pop31
 	i32.and 	$push11=, $pop15, $3
-	i32.const	$push34=, 0
-	i32.eq  	$push35=, $pop11, $pop34
-	br_if   	0, $pop35       # 0: up to label1
+	i32.eqz 	$push33=, $pop11
+	br_if   	0, $pop33       # 0: up to label1
 	br      	2               # 2: down to label0
 .LBB2_7:
 	end_loop                        # label2:

@@ -43,9 +43,8 @@ foo:                                    # @foo
 	call    	bar@FUNCTION, $pop16
 	block
 	block
-	i32.const	$push20=, 0
-	i32.eq  	$push21=, $0, $pop20
-	br_if   	0, $pop21       # 0: down to label1
+	i32.eqz 	$push20=, $0
+	br_if   	0, $pop20       # 0: down to label1
 # BB#1:                                 # %if.then2
 	i32.load	$push2=, 0($2)
 	i32.load	$push3=, 0($pop2)

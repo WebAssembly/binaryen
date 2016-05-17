@@ -442,9 +442,8 @@ main:                                   # @main
 	i32.add 	$push2=, $pop8, $pop34
 	i32.store	$discard=, ptr($pop36), $pop2
 	i32.const	$push33=, 1
-	i32.const	$push73=, 0
-	i32.eq  	$push74=, $pop33, $pop73
-	br_if   	0, $pop74       # 0: down to label0
+	i32.eqz 	$push73=, $pop33
+	br_if   	0, $pop73       # 0: down to label0
 # BB#3:                                 # %if.end20
 	i32.const	$push40=, 0
 	i32.const	$push39=, 0
@@ -453,9 +452,8 @@ main:                                   # @main
 	i32.add 	$push9=, $pop3, $pop38
 	i32.store	$discard=, ptr($pop40), $pop9
 	i32.const	$push37=, 1
-	i32.const	$push75=, 0
-	i32.eq  	$push76=, $pop37, $pop75
-	br_if   	0, $pop76       # 0: down to label0
+	i32.eqz 	$push74=, $pop37
+	br_if   	0, $pop74       # 0: down to label0
 # BB#4:                                 # %if.end28
 	i32.const	$push44=, 0
 	i32.const	$push43=, 0
@@ -464,9 +462,8 @@ main:                                   # @main
 	i32.add 	$push4=, $pop10, $pop42
 	i32.store	$discard=, ptr($pop44), $pop4
 	i32.const	$push41=, 1
-	i32.const	$push77=, 0
-	i32.eq  	$push78=, $pop41, $pop77
-	br_if   	0, $pop78       # 0: down to label0
+	i32.eqz 	$push75=, $pop41
+	br_if   	0, $pop75       # 0: down to label0
 # BB#5:                                 # %if.end36
 	i32.const	$push48=, 0
 	i32.const	$push47=, 0
@@ -475,9 +472,8 @@ main:                                   # @main
 	i32.add 	$push11=, $pop5, $pop46
 	i32.store	$discard=, ptr($pop48), $pop11
 	i32.const	$push45=, 1
-	i32.const	$push79=, 0
-	i32.eq  	$push80=, $pop45, $pop79
-	br_if   	0, $pop80       # 0: down to label0
+	i32.eqz 	$push76=, $pop45
+	br_if   	0, $pop76       # 0: down to label0
 # BB#6:                                 # %if.end44
 	i32.const	$push52=, 0
 	i32.const	$push51=, 0
@@ -486,9 +482,8 @@ main:                                   # @main
 	i32.add 	$push13=, $pop12, $pop50
 	i32.store	$discard=, arrindex($pop52), $pop13
 	i32.const	$push49=, 1
-	i32.const	$push81=, 0
-	i32.eq  	$push82=, $pop49, $pop81
-	br_if   	0, $pop82       # 0: down to label0
+	i32.eqz 	$push77=, $pop49
+	br_if   	0, $pop77       # 0: down to label0
 # BB#7:                                 # %if.end52
 	i32.const	$push56=, 0
 	i32.const	$push55=, 0
@@ -497,9 +492,8 @@ main:                                   # @main
 	i32.add 	$push15=, $pop14, $pop54
 	i32.store	$discard=, arrindex($pop56), $pop15
 	i32.const	$push53=, 1
-	i32.const	$push83=, 0
-	i32.eq  	$push84=, $pop53, $pop83
-	br_if   	0, $pop84       # 0: down to label0
+	i32.eqz 	$push78=, $pop53
+	br_if   	0, $pop78       # 0: down to label0
 # BB#8:                                 # %if.end64
 	i32.const	$push60=, 0
 	i32.const	$push59=, 0
@@ -508,9 +502,8 @@ main:                                   # @main
 	i32.add 	$push17=, $pop16, $pop58
 	i32.store	$discard=, arrindex($pop60), $pop17
 	i32.const	$push57=, 1
-	i32.const	$push85=, 0
-	i32.eq  	$push86=, $pop57, $pop85
-	br_if   	0, $pop86       # 0: down to label0
+	i32.eqz 	$push79=, $pop57
+	br_if   	0, $pop79       # 0: down to label0
 # BB#9:                                 # %if.end72
 	i32.const	$push64=, 0
 	i32.const	$push63=, 0
@@ -519,9 +512,8 @@ main:                                   # @main
 	i32.add 	$push19=, $pop18, $pop62
 	i32.store	$discard=, arrindex($pop64), $pop19
 	i32.const	$push61=, 1
-	i32.const	$push87=, 0
-	i32.eq  	$push88=, $pop61, $pop87
-	br_if   	0, $pop88       # 0: down to label0
+	i32.eqz 	$push80=, $pop61
+	br_if   	0, $pop80       # 0: down to label0
 # BB#10:                                # %if.end76
 	i32.const	$push68=, 0
 	i32.const	$push67=, 0

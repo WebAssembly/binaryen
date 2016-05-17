@@ -10,9 +10,8 @@ t1:                                     # @t1
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push67=, 0
-	i32.eq  	$push68=, $0, $pop67
-	br_if   	0, $pop68       # 0: down to label0
+	i32.eqz 	$push67=, $0
+	br_if   	0, $pop67       # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push5=, -1
 	i32.add 	$push0=, $0, $pop5
@@ -167,9 +166,8 @@ t2:                                     # @t2
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push67=, 0
-	i32.eq  	$push68=, $0, $pop67
-	br_if   	0, $pop68       # 0: down to label3
+	i32.eqz 	$push67=, $0
+	br_if   	0, $pop67       # 0: down to label3
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push4=, -1
 	i32.add 	$push0=, $0, $pop4
@@ -324,9 +322,8 @@ t3:                                     # @t3
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push67=, 0
-	i32.eq  	$push68=, $0, $pop67
-	br_if   	0, $pop68       # 0: down to label6
+	i32.eqz 	$push67=, $0
+	br_if   	0, $pop67       # 0: down to label6
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push5=, -1
 	i32.add 	$push0=, $0, $pop5
@@ -481,9 +478,8 @@ t4:                                     # @t4
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push67=, 0
-	i32.eq  	$push68=, $0, $pop67
-	br_if   	0, $pop68       # 0: down to label9
+	i32.eqz 	$push67=, $0
+	br_if   	0, $pop67       # 0: down to label9
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push4=, -1
 	i32.add 	$push0=, $0, $pop4
@@ -638,9 +634,8 @@ t5:                                     # @t5
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push65=, 0
-	i32.eq  	$push66=, $0, $pop65
-	br_if   	0, $pop66       # 0: down to label12
+	i32.eqz 	$push65=, $0
+	br_if   	0, $pop65       # 0: down to label12
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push3=, -1
 	i32.add 	$push0=, $0, $pop3
@@ -793,9 +788,8 @@ t6:                                     # @t6
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push65=, 0
-	i32.eq  	$push66=, $0, $pop65
-	br_if   	0, $pop66       # 0: down to label15
+	i32.eqz 	$push65=, $0
+	br_if   	0, $pop65       # 0: down to label15
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push3=, -1
 	i32.add 	$push0=, $0, $pop3
@@ -948,9 +942,8 @@ t7:                                     # @t7
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push67=, 0
-	i32.eq  	$push68=, $0, $pop67
-	br_if   	0, $pop68       # 0: down to label18
+	i32.eqz 	$push67=, $0
+	br_if   	0, $pop67       # 0: down to label18
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push5=, -1
 	i32.add 	$push0=, $0, $pop5
@@ -1105,9 +1098,8 @@ t8:                                     # @t8
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push67=, 0
-	i32.eq  	$push68=, $0, $pop67
-	br_if   	0, $pop68       # 0: down to label21
+	i32.eqz 	$push67=, $0
+	br_if   	0, $pop67       # 0: down to label21
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push5=, -1
 	i32.add 	$push0=, $0, $pop5
@@ -1262,9 +1254,8 @@ t9:                                     # @t9
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push67=, 0
-	i32.eq  	$push68=, $0, $pop67
-	br_if   	0, $pop68       # 0: down to label24
+	i32.eqz 	$push67=, $0
+	br_if   	0, $pop67       # 0: down to label24
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push5=, -1
 	i32.add 	$push0=, $0, $pop5
@@ -1419,9 +1410,8 @@ t10:                                    # @t10
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push68=, 0
-	i32.eq  	$push69=, $0, $pop68
-	br_if   	0, $pop69       # 0: down to label27
+	i32.eqz 	$push68=, $0
+	br_if   	0, $pop68       # 0: down to label27
 # BB#1:                                 # %while.body.lr.ph
 	i32.const	$push6=, 0
 	i64.load	$push0=, gull($pop6)
@@ -1577,9 +1567,8 @@ t11:                                    # @t11
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push68=, 0
-	i32.eq  	$push69=, $0, $pop68
-	br_if   	0, $pop69       # 0: down to label30
+	i32.eqz 	$push68=, $0
+	br_if   	0, $pop68       # 0: down to label30
 # BB#1:                                 # %while.body.lr.ph
 	i32.const	$push6=, 0
 	i64.load	$push0=, gull($pop6)

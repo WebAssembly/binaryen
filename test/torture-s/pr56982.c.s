@@ -24,16 +24,15 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	block
 	i32.load	$push0=, 0($0)
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $pop0, $pop6
-	br_if   	0, $pop7        # 0: down to label0
+	i32.eqz 	$push6=, $pop0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 1
 	return  	$pop1
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push4=, env
-	i32.call	$1=, _setjmp@FUNCTION, $pop4
+	i32.call	$1=, setjmp@FUNCTION, $pop4
 	#APP
 	#NO_APP
 	block

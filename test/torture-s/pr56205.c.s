@@ -45,9 +45,8 @@ f4:                                     # @f4
 	i32.store	$2=, a($pop29), $pop0
 	block
 	block
-	i32.const	$push33=, 0
-	i32.eq  	$push34=, $1, $pop33
-	br_if   	0, $pop34       # 0: down to label2
+	i32.eqz 	$push33=, $1
+	br_if   	0, $pop33       # 0: down to label2
 # BB#4:                                 # %land.rhs.i
 	i32.load8_u	$4=, 0($1)
 	i32.store	$discard=, 20($5), $2
@@ -60,9 +59,8 @@ f4:                                     # @f4
 	i32.add 	$push22=, $5, $pop21
 	call    	f1@FUNCTION, $5, $pop22
 	i32.load8_u	$push13=, 0($1)
-	i32.const	$push35=, 0
-	i32.eq  	$push36=, $pop13, $pop35
-	br_if   	1, $pop36       # 1: down to label1
+	i32.eqz 	$push34=, $pop13
+	br_if   	1, $pop34       # 1: down to label1
 # BB#5:                                 # %if.then.i
 	call    	f2@FUNCTION, $1, $3
 	br      	1               # 1: down to label1

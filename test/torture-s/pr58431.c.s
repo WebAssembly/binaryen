@@ -46,9 +46,8 @@ main:                                   # @main
 	i32.const	$push20=, 0
 	i32.const	$push10=, 1
 	i32.store8	$3=, h($pop20), $pop10
-	i32.const	$push35=, 0
-	i32.eq  	$push36=, $0, $pop35
-	br_if   	2, $pop36       # 2: down to label1
+	i32.eqz 	$push35=, $0
+	br_if   	2, $pop35       # 2: down to label1
 # BB#4:                                 # %for.inc17.preheader
 	i32.const	$push23=, 0
 	i32.const	$push22=, 0

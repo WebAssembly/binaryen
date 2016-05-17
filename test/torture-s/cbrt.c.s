@@ -42,9 +42,8 @@ cbrtl:                                  # @cbrtl
 	block
 	i32.wrap/i64	$push7=, $3
 	i32.or  	$push8=, $pop7, $2
-	i32.const	$push90=, 0
-	i32.eq  	$push91=, $pop8, $pop90
-	br_if   	0, $pop91       # 0: down to label1
+	i32.eqz 	$push90=, $pop8
+	br_if   	0, $pop90       # 0: down to label1
 # BB#3:                                 # %if.end13
 	block
 	block

@@ -33,25 +33,25 @@ bar:                                    # @bar
 	br_if   	1, $pop5        # 1: down to label0
 .LBB1_2:                                # %if.then
 	end_block                       # label1:
-	i32.load	$push6=, 16($0)
-	f64.convert_s/i32	$push8=, $pop6
-	f64.const	$push9=, 0x0p0
-	f64.mul 	$push10=, $pop8, $pop9
-	f64.const	$push11=, 0x1p-1
-	f64.mul 	$push12=, $pop10, $pop11
-	i32.trunc_s/f64	$5=, $pop12
+	i32.load	$5=, 16($0)
 	i32.const	$push19=, 4
 	i32.add 	$push20=, $0, $pop19
-	i32.load	$push7=, 20($0)
-	f64.convert_s/i32	$push13=, $pop7
-	f64.const	$push22=, 0x0p0
-	f64.mul 	$push14=, $pop13, $pop22
-	f64.const	$push21=, 0x1p-1
-	f64.mul 	$push15=, $pop14, $pop21
+	i32.load	$push6=, 20($0)
+	f64.convert_s/i32	$push13=, $pop6
+	f64.const	$push8=, 0x0p0
+	f64.mul 	$push14=, $pop13, $pop8
+	f64.const	$push10=, 0x1p-1
+	f64.mul 	$push15=, $pop14, $pop10
 	i32.trunc_s/f64	$push16=, $pop15
 	i32.add 	$push18=, $pop16, $2
 	i32.store	$discard=, 0($pop20), $pop18
-	i32.add 	$push17=, $5, $1
+	f64.convert_s/i32	$push7=, $5
+	f64.const	$push22=, 0x0p0
+	f64.mul 	$push9=, $pop7, $pop22
+	f64.const	$push21=, 0x1p-1
+	f64.mul 	$push11=, $pop9, $pop21
+	i32.trunc_s/f64	$push12=, $pop11
+	i32.add 	$push17=, $pop12, $1
 	i32.store	$discard=, 0($0), $pop17
 	i32.store	$discard=, 8($0), $3
 	i32.store	$discard=, 12($0), $4

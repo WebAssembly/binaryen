@@ -10,9 +10,8 @@ t:                                      # @t
 # BB#0:                                 # %entry
 	block
 	block
-	i32.const	$push3=, 0
-	i32.eq  	$push4=, $0, $pop3
-	br_if   	0, $pop4        # 0: down to label1
+	i32.eqz 	$push3=, $0
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 256
 	i32.ge_s	$push1=, $0, $pop0

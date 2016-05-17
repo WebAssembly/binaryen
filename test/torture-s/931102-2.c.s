@@ -28,9 +28,8 @@ f:                                      # @f
 	tee_local	$push5=, $0=, $pop6
 	i32.const	$push4=, 1
 	i32.and 	$push2=, $pop5, $pop4
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $pop2, $pop10
-	br_if   	0, $pop11       # 0: up to label1
+	i32.eqz 	$push10=, $pop2
+	br_if   	0, $pop10       # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:

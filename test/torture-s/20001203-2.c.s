@@ -11,9 +11,8 @@ create_array_type:                      # @create_array_type
 # BB#0:                                 # %entry
 	block
 	block
-	i32.const	$push48=, 0
-	i32.eq  	$push49=, $0, $pop48
-	br_if   	0, $pop49       # 0: down to label1
+	i32.eqz 	$push48=, $0
+	br_if   	0, $pop48       # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.load	$push2=, 0($1)
 	i32.const	$push3=, 3
@@ -24,9 +23,8 @@ create_array_type:                      # @create_array_type
 	i32.store16	$discard=, 8($0), $pop5
 	i32.const	$5=, 0
 	block
-	i32.const	$push50=, 0
-	i32.eq  	$push51=, $1, $pop50
-	br_if   	0, $pop51       # 0: down to label2
+	i32.eqz 	$push49=, $1
+	br_if   	0, $pop49       # 0: down to label2
 # BB#2:                                 # %cond.true
 	i32.const	$push6=, 20
 	i32.add 	$push7=, $1, $pop6

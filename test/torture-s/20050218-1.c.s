@@ -11,9 +11,8 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$7=, 0
 	block
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $2, $pop8
-	br_if   	0, $pop9        # 0: down to label0
+	i32.eqz 	$push8=, $2
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$5=, 0
 	i32.const	$4=, a
@@ -32,9 +31,8 @@ foo:                                    # @foo
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.add 	$5=, $8, $5
 	block
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $1, $pop10
-	br_if   	0, $pop11       # 0: down to label3
+	i32.eqz 	$push9=, $1
+	br_if   	0, $pop9        # 0: down to label3
 # BB#4:                                 # %if.then6
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.call	$push2=, strlen@FUNCTION, $1

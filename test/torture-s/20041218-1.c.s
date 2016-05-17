@@ -100,9 +100,8 @@ foo:                                    # @foo
 	i32.store	$3=, 0($2), $pop6
 	block
 	block
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $1, $pop9
-	br_if   	0, $pop10       # 0: down to label2
+	i32.eqz 	$push9=, $1
+	br_if   	0, $pop9        # 0: down to label2
 # BB#1:                                 # %for.body
 	i32.const	$4=, 1
 	i32.load	$push0=, 0($0)

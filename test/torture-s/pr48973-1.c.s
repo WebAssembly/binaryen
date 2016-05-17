@@ -42,9 +42,8 @@ main:                                   # @main
 	i32.or  	$push5=, $pop3, $pop6
 	i32.store8	$discard=, s($pop10), $pop5
 	block
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $0, $pop12
-	br_if   	0, $pop13       # 0: down to label1
+	i32.eqz 	$push12=, $0
+	br_if   	0, $pop12       # 0: down to label1
 # BB#1:                                 # %foo.exit
 	i32.const	$push11=, 0
 	return  	$pop11

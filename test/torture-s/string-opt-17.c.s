@@ -113,9 +113,8 @@ main:                                   # @main
 	i32.const	$push9=, 8020322
 	i32.store	$discard=, 4($0), $pop9
 	i32.const	$push10=, 1
-	i32.const	$push25=, 0
-	i32.eq  	$push26=, $pop10, $pop25
-	br_if   	0, $pop26       # 0: down to label2
+	i32.eqz 	$push25=, $pop10
+	br_if   	0, $pop25       # 0: down to label2
 # BB#3:                                 # %if.end8
 	i32.const	$push24=, 0
 	call    	exit@FUNCTION, $pop24

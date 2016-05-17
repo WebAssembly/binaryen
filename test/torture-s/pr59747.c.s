@@ -32,9 +32,8 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$discard=, a($pop13), $pop0
 	block
-	i32.const	$push19=, 0
-	i32.eq  	$push20=, $0, $pop19
-	br_if   	0, $pop20       # 0: down to label0
+	i32.eqz 	$push19=, $0
+	br_if   	0, $pop19       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push1=, -1
 	i32.add 	$1=, $1, $pop1

@@ -59,9 +59,8 @@ foo:                                    # @foo
 	f32.const	$59=, 0x0p0
 	f32.const	$60=, 0x0p0
 	block
-	i32.const	$push170=, 0
-	i32.eq  	$push171=, $0, $pop170
-	br_if   	0, $pop171      # 0: down to label0
+	i32.eqz 	$push170=, $0
+	br_if   	0, $pop170      # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push145=, 0
 	i64.load	$push144=, incs+72($pop145)

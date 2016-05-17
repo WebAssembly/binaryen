@@ -13,9 +13,8 @@ add512:                                 # @add512
 	i32.const	$push0=, 512
 	i32.add 	$push2=, $0, $pop0
 	tee_local	$push1=, $2=, $pop2
-	i32.const	$push3=, 0
-	i32.eq  	$push4=, $pop1, $pop3
-	br_if   	0, $pop4        # 0: down to label0
+	i32.eqz 	$push3=, $pop1
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.store	$discard=, 0($1), $0
 .LBB0_2:                                # %if.end

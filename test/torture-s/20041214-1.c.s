@@ -11,9 +11,8 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	block
 	i32.load8_u	$push0=, 0($1)
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $pop0, $pop6
-	br_if   	0, $pop7        # 0: down to label0
+	i32.eqz 	$push6=, $pop0
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %do_form_string.preheader
 	i32.const	$push3=, 2
 	i32.add 	$1=, $1, $pop3
@@ -54,9 +53,8 @@ f:                                      # @f
 	i32.load8_u	$4=, 0($1)
 	i32.store	$discard=, 12($3), $2
 	block
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $4, $pop12
-	br_if   	0, $pop13       # 0: down to label3
+	i32.eqz 	$push12=, $4
+	br_if   	0, $pop12       # 0: down to label3
 # BB#1:                                 # %do_form_string.i.preheader
 	i32.load	$2=, 12($3)
 	i32.const	$push9=, 2

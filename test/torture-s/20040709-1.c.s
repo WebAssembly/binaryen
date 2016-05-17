@@ -4206,15 +4206,15 @@ testO:                                  # @testO
 	i32.const	$push223=, 2047
 	i32.and 	$push222=, $pop62, $pop223
 	tee_local	$push221=, $4=, $pop222
-	i32.add 	$push69=, $3, $pop221
+	i32.add 	$push73=, $pop221, $2
+	i32.const	$push71=, 15
+	i32.rem_u	$push74=, $pop73, $pop71
+	i32.add 	$push69=, $3, $4
 	i32.const	$push220=, 4095
 	i32.and 	$push70=, $pop69, $pop220
-	i32.const	$push71=, 15
-	i32.rem_u	$push72=, $pop70, $pop71
-	i32.add 	$push73=, $4, $2
 	i32.const	$push219=, 15
-	i32.rem_u	$push74=, $pop73, $pop219
-	i32.ne  	$push75=, $pop72, $pop74
+	i32.rem_u	$push72=, $pop70, $pop219
+	i32.ne  	$push75=, $pop74, $pop72
 	br_if   	0, $pop75       # 0: down to label9
 # BB#4:                                 # %lor.lhs.false124
 	i32.const	$push84=, 0
@@ -4601,15 +4601,15 @@ testP:                                  # @testP
 	i32.const	$push223=, 2047
 	i32.and 	$push222=, $pop62, $pop223
 	tee_local	$push221=, $4=, $pop222
-	i32.add 	$push69=, $3, $pop221
+	i32.add 	$push73=, $pop221, $2
+	i32.const	$push71=, 15
+	i32.rem_u	$push74=, $pop73, $pop71
+	i32.add 	$push69=, $3, $4
 	i32.const	$push220=, 4095
 	i32.and 	$push70=, $pop69, $pop220
-	i32.const	$push71=, 15
-	i32.rem_u	$push72=, $pop70, $pop71
-	i32.add 	$push73=, $4, $2
 	i32.const	$push219=, 15
-	i32.rem_u	$push74=, $pop73, $pop219
-	i32.ne  	$push75=, $pop72, $pop74
+	i32.rem_u	$push72=, $pop70, $pop219
+	i32.ne  	$push75=, $pop74, $pop72
 	br_if   	0, $pop75       # 0: down to label10
 # BB#4:                                 # %lor.lhs.false118
 	i32.const	$push84=, 0
@@ -5515,9 +5515,8 @@ testS:                                  # @testS
 	i32.store16	$discard=, sS($pop59), $pop50
 	block
 	i32.const	$push51=, 1
-	i32.const	$push154=, 0
-	i32.eq  	$push155=, $pop51, $pop154
-	br_if   	0, $pop155      # 0: down to label11
+	i32.eqz 	$push154=, $pop51
+	br_if   	0, $pop154      # 0: down to label11
 # BB#1:                                 # %if.end134
 	return
 .LBB114_2:                              # %if.then133
@@ -5728,9 +5727,8 @@ testT:                                  # @testT
 	i32.or  	$push30=, $pop29, $pop20
 	i32.store16	$discard=, sT($pop87), $pop30
 	i32.const	$push77=, 1
-	i32.const	$push88=, 0
-	i32.eq  	$push89=, $pop77, $pop88
-	br_if   	0, $pop89       # 0: down to label12
+	i32.eqz 	$push88=, $pop77
+	br_if   	0, $pop88       # 0: down to label12
 # BB#2:                                 # %if.end140
 	return
 .LBB120_3:                              # %if.then139
@@ -6094,17 +6092,17 @@ testU:                                  # @testU
 	i32.const	$push242=, 16
 	i32.shr_u	$push241=, $0, $pop242
 	tee_local	$push240=, $1=, $pop241
-	i32.add 	$push73=, $4, $pop240
+	i32.add 	$push77=, $pop240, $3
 	i32.const	$push239=, 1
-	i32.and 	$push74=, $pop73, $pop239
+	i32.and 	$push78=, $pop77, $pop239
 	i32.const	$push75=, 15
-	i32.rem_u	$push76=, $pop74, $pop75
-	i32.add 	$push77=, $1, $3
+	i32.rem_u	$push79=, $pop78, $pop75
+	i32.add 	$push73=, $4, $1
 	i32.const	$push238=, 1
-	i32.and 	$push78=, $pop77, $pop238
+	i32.and 	$push74=, $pop73, $pop238
 	i32.const	$push237=, 15
-	i32.rem_u	$push79=, $pop78, $pop237
-	i32.ne  	$push80=, $pop76, $pop79
+	i32.rem_u	$push76=, $pop74, $pop237
+	i32.ne  	$push80=, $pop79, $pop76
 	br_if   	0, $pop80       # 0: down to label13
 # BB#4:                                 # %lor.lhs.false130
 	i32.const	$push88=, 0
@@ -6382,17 +6380,17 @@ testV:                                  # @testV
 	i32.const	$push135=, 16
 	i32.shr_u	$push134=, $3, $pop135
 	tee_local	$push133=, $2=, $pop134
-	i32.add 	$push37=, $4, $pop133
+	i32.add 	$push41=, $pop133, $0
 	i32.const	$push132=, 1
-	i32.and 	$push38=, $pop37, $pop132
+	i32.and 	$push42=, $pop41, $pop132
 	i32.const	$push39=, 15
-	i32.rem_u	$push40=, $pop38, $pop39
-	i32.add 	$push41=, $2, $0
+	i32.rem_u	$push43=, $pop42, $pop39
+	i32.add 	$push37=, $4, $2
 	i32.const	$push131=, 1
-	i32.and 	$push42=, $pop41, $pop131
+	i32.and 	$push38=, $pop37, $pop131
 	i32.const	$push130=, 15
-	i32.rem_u	$push43=, $pop42, $pop130
-	i32.ne  	$push44=, $pop40, $pop43
+	i32.rem_u	$push40=, $pop38, $pop130
+	i32.ne  	$push44=, $pop43, $pop40
 	br_if   	0, $pop44       # 0: down to label14
 # BB#3:                                 # %lor.lhs.false136
 	i32.const	$push52=, 0

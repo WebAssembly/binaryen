@@ -42,9 +42,8 @@ num_lshift:                             # @num_lshift
 .LBB0_3:                                # %if.end
 	end_block                       # label7:
 	block
-	i32.const	$push113=, 0
-	i32.eq  	$push114=, $6, $pop113
-	br_if   	0, $pop114      # 0: down to label8
+	i32.eqz 	$push113=, $6
+	br_if   	0, $pop113      # 0: down to label8
 # BB#4:                                 # %if.then10
 	i32.const	$push16=, 32
 	i32.sub 	$push17=, $pop16, $6
@@ -82,9 +81,8 @@ num_lshift:                             # @num_lshift
 .LBB0_8:                                # %if.then
 	end_block                       # label6:
 	i32.load	$push2=, 8($1)
-	i32.const	$push115=, 0
-	i32.eq  	$push116=, $pop2, $pop115
-	br_if   	2, $pop116      # 2: down to label3
+	i32.eqz 	$push114=, $pop2
+	br_if   	2, $pop114      # 2: down to label3
 # BB#9:                                 # %if.then.land.end_crit_edge
 	i32.const	$2=, 0
 	br      	3               # 3: down to label2
@@ -107,9 +105,8 @@ num_lshift:                             # @num_lshift
 	i32.store	$4=, 0($pop38), $7
 	i32.store	$6=, 0($1), $11
 	i32.wrap/i64	$push39=, $5
-	i32.const	$push117=, 0
-	i32.eq  	$push118=, $pop39, $pop117
-	br_if   	2, $pop118      # 2: down to label1
+	i32.eqz 	$push115=, $pop39
+	br_if   	2, $pop115      # 2: down to label1
 # BB#13:                                # %if.then21
 	i32.const	$push40=, 0
 	i32.store	$discard=, 12($1), $pop40
@@ -188,9 +185,8 @@ num_lshift:                             # @num_lshift
 	i32.add 	$push64=, $3, $pop63
 	i32.select	$push105=, $pop64, $3, $4
 	tee_local	$push104=, $3=, $pop105
-	i32.const	$push119=, 0
-	i32.eq  	$push120=, $pop104, $pop119
-	br_if   	0, $pop120      # 0: down to label13
+	i32.eqz 	$push116=, $pop104
+	br_if   	0, $pop116      # 0: down to label13
 # BB#22:                                # %if.then24.i
 	i32.const	$push66=, 32
 	i32.sub 	$push109=, $pop66, $3

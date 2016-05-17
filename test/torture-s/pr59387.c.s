@@ -25,9 +25,8 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop9
 	i32.const	$push8=, 0
 	i32.load	$push2=, d($pop8)
-	i32.const	$push16=, 0
-	i32.eq  	$push17=, $pop2, $pop16
-	br_if   	1, $pop17       # 1: down to label1
+	i32.eqz 	$push16=, $pop2
+	br_if   	1, $pop16       # 1: down to label1
 # BB#2:                                 # %for.inc4
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push13=, 1

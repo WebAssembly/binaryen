@@ -6,23 +6,24 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	block
-	i32.const	$push10=, 0
 	i32.const	$push9=, 0
-	i32.load8_u	$push2=, x($pop9)
+	i32.load16_s	$0=, y($pop9)
+	block
 	i32.const	$push8=, 0
-	i32.load16_s	$push1=, y($pop8)
-	i32.div_s	$push3=, $pop2, $pop1
-	i32.store8	$push0=, x($pop10), $pop3
-	i32.const	$push4=, 255
-	i32.and 	$push5=, $pop0, $pop4
-	i32.const	$push6=, 246
-	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	0, $pop7        # 0: down to label0
+	i32.const	$push7=, 0
+	i32.load8_u	$push1=, x($pop7)
+	i32.div_s	$push2=, $pop1, $0
+	i32.store8	$push0=, x($pop8), $pop2
+	i32.const	$push3=, 255
+	i32.and 	$push4=, $pop0, $pop3
+	i32.const	$push5=, 246
+	i32.ne  	$push6=, $pop4, $pop5
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push11=, 0
-	call    	exit@FUNCTION, $pop11
+	i32.const	$push10=, 0
+	call    	exit@FUNCTION, $pop10
 	unreachable
 .LBB0_2:                                # %if.then
 	end_block                       # label0:

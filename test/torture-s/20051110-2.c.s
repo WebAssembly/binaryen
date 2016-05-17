@@ -23,9 +23,8 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	i32.const	$push11=, 7
 	i32.shr_u	$push10=, $pop12, $pop11
 	tee_local	$push9=, $0=, $pop10
-	i32.const	$push14=, 0
-	i32.eq  	$push15=, $pop9, $pop14
-	br_if   	1, $pop15       # 1: down to label1
+	i32.eqz 	$push14=, $pop9
+	br_if   	1, $pop14       # 1: down to label1
 # BB#2:                                 # %if.then
                                         #   in Loop: Header=BB0_1 Depth=1
 	br_if   	0, $1           # 0: up to label0
@@ -67,9 +66,8 @@ main:                                   # @main
 	i32.const	$push17=, 7
 	i32.shr_u	$push16=, $pop18, $pop17
 	tee_local	$push15=, $2=, $pop16
-	i32.const	$push22=, 0
-	i32.eq  	$push23=, $pop15, $pop22
-	br_if   	1, $pop23       # 1: down to label3
+	i32.eqz 	$push22=, $pop15
+	br_if   	1, $pop22       # 1: down to label3
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	br_if   	0, $0           # 0: up to label2

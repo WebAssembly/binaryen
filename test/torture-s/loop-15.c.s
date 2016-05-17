@@ -175,9 +175,8 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_2 Depth=2
 	end_loop                        # label18:
 	i32.add 	$5=, $5, $0
-	i32.const	$push46=, 0
-	i32.eq  	$push47=, $8, $pop46
-	br_if   	0, $pop47       # 0: up to label8
+	i32.eqz 	$push46=, $8
+	br_if   	0, $pop46       # 0: up to label8
 .LBB1_15:                               # %for.inc41
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop                        # label9:

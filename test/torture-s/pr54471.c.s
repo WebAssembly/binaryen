@@ -15,9 +15,8 @@ foo:                                    # @foo
 	i32.sub 	$push19=, $pop9, $pop10
 	i32.store	$4=, 0($pop11), $pop19
 	block
-	i32.const	$push25=, 0
-	i32.eq  	$push26=, $3, $pop25
-	br_if   	0, $pop26       # 0: down to label0
+	i32.eqz 	$push25=, $3
+	br_if   	0, $pop25       # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i64.const	$6=, 0
 	i64.const	$5=, 1
@@ -47,9 +46,8 @@ foo:                                    # @foo
 	i64.xor 	$push2=, $5, $pop23
 	i64.or  	$push3=, $pop2, $6
 	i64.eqz 	$push4=, $pop3
-	i32.const	$push27=, 0
-	i32.eq  	$push28=, $pop4, $pop27
-	br_if   	0, $pop28       # 0: down to label0
+	i32.eqz 	$push26=, $pop4
+	br_if   	0, $pop26       # 0: down to label0
 # BB#4:                                 # %if.end
 	i64.const	$push24=, 14348907
 	i64.store	$discard=, 0($0), $pop24

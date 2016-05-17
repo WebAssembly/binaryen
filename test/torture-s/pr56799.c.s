@@ -61,9 +61,8 @@ foo:                                    # @foo
 	tee_local	$push10=, $2=, $pop11
 	i32.const	$push9=, 65535
 	i32.and 	$push0=, $pop10, $pop9
-	i32.const	$push15=, 0
-	i32.eq  	$push16=, $pop0, $pop15
-	br_if   	0, $pop16       # 0: down to label1
+	i32.eqz 	$push15=, $pop0
+	br_if   	0, $pop15       # 0: down to label1
 # BB#1:                                 # %if.then
 	i32.const	$push1=, 0
 	i32.const	$push2=, 1

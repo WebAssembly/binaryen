@@ -60,9 +60,8 @@ main:                                   # @main
 	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %lor.lhs.false.i
 	i32.const	$push1=, 1
-	i32.const	$push3=, 0
-	i32.eq  	$push4=, $pop1, $pop3
-	br_if   	0, $pop4        # 0: down to label1
+	i32.eqz 	$push3=, $pop1
+	br_if   	0, $pop3        # 0: down to label1
 # BB#2:                                 # %if.end
 	i32.const	$push2=, 0
 	return  	$pop2

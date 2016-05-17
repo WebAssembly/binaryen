@@ -8,13 +8,11 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $0, $pop5
-	br_if   	0, $pop6        # 0: down to label0
+	i32.eqz 	$push5=, $0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $1, $pop7
-	br_if   	0, $pop8        # 0: down to label0
+	i32.eqz 	$push6=, $1
+	br_if   	0, $pop6        # 0: down to label0
 # BB#2:                                 # %if.then
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0

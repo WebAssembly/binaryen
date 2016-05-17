@@ -59,15 +59,13 @@ compare:                                # @compare
 	block
 	i32.load	$push8=, 0($1)
 	tee_local	$push7=, $1=, $pop8
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $pop7, $pop10
-	br_if   	0, $pop11       # 0: down to label0
+	i32.eqz 	$push10=, $pop7
+	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %land.lhs.true
 	i32.load	$push0=, 0($0)
 	i32.call_indirect	$push1=, $2, $pop0
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $pop1, $pop12
-	br_if   	0, $pop13       # 0: down to label0
+	i32.eqz 	$push11=, $pop1
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.then
 	i32.const	$push2=, 0
 	i32.const	$push9=, 0

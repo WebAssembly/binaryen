@@ -55,9 +55,8 @@ f:                                      # @f
 # BB#1:                                 # %entry
 	i32.const	$push5=, 0
 	i32.load	$push0=, el($pop5)
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $pop0, $pop6
-	br_if   	0, $pop7        # 0: down to label1
+	i32.eqz 	$push6=, $pop0
+	br_if   	0, $pop6        # 0: down to label1
 # BB#2:                                 # %if.end
 	return  	$0
 .LBB2_3:                                # %alabel

@@ -20,9 +20,8 @@ main:                                   # @main
 	i32.shl 	$push5=, $pop4, $0
 	i32.const	$push6=, 1568
 	i32.and 	$push7=, $pop5, $pop6
-	i32.const	$push13=, 0
-	i32.eq  	$push14=, $pop7, $pop13
-	br_if   	0, $pop14       # 0: down to label1
+	i32.eqz 	$push13=, $pop7
+	br_if   	0, $pop13       # 0: down to label1
 # BB#2:                                 # %if.then.i
 	i32.const	$push1=, -9
 	i32.add 	$push0=, $0, $pop1

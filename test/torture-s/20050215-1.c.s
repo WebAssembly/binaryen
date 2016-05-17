@@ -13,9 +13,8 @@ main:                                   # @main
 	i32.const	$push13=, v
 	i32.const	$push0=, 4
 	i32.and 	$push1=, $pop13, $pop0
-	i32.const	$push17=, 0
-	i32.eq  	$push18=, $pop1, $pop17
-	br_if   	0, $pop18       # 0: down to label2
+	i32.eqz 	$push17=, $pop1
+	br_if   	0, $pop17       # 0: down to label2
 # BB#1:                                 # %if.then
 	i32.const	$push14=, v
 	i32.const	$push10=, 7
@@ -34,9 +33,8 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	i32.ne  	$push5=, $pop3, $pop4
 	i32.or  	$push9=, $pop8, $pop5
-	i32.const	$push19=, 0
-	i32.eq  	$push20=, $pop9, $pop19
-	br_if   	1, $pop20       # 1: down to label0
+	i32.eqz 	$push18=, $pop9
+	br_if   	1, $pop18       # 1: down to label0
 .LBB0_3:                                # %if.end3
 	end_block                       # label1:
 	i32.const	$push12=, 0

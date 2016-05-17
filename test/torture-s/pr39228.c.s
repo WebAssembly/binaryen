@@ -15,9 +15,8 @@ main:                                   # @main
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 1
-	i32.const	$push11=, 0
-	i32.eq  	$push12=, $pop4, $pop11
-	br_if   	0, $pop12       # 0: down to label0
+	i32.eqz 	$push11=, $pop4
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.end4
 	i64.const	$push6=, 0
 	i64.const	$push5=, 9223090561878065152

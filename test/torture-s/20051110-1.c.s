@@ -14,9 +14,8 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	i32.const	$push2=, 2
 	i32.shr_s	$push7=, $pop1, $pop2
 	tee_local	$push6=, $0=, $pop7
-	i32.const	$push14=, 0
-	i32.eq  	$push15=, $pop6, $pop14
-	br_if   	0, $pop15       # 0: down to label0
+	i32.eqz 	$push14=, $pop6
+	br_if   	0, $pop14       # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$1=, bytes
 .LBB0_2:                                # %while.body

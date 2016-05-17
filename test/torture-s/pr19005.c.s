@@ -19,9 +19,8 @@ bar:                                    # @bar
 	i32.const	$push17=, 0
 	i32.load	$push16=, s($pop17)
 	tee_local	$push15=, $3=, $pop16
-	i32.const	$push22=, 0
-	i32.eq  	$push23=, $pop15, $pop22
-	br_if   	0, $pop23       # 0: down to label2
+	i32.eqz 	$push22=, $pop15
+	br_if   	0, $pop22       # 0: down to label2
 # BB#1:                                 # %if.else
 	block
 	i32.ne  	$push4=, $2, $1
@@ -91,9 +90,8 @@ foo:                                    # @foo
 	i32.const	$push19=, 0
 	i32.load	$push18=, s($pop19)
 	tee_local	$push17=, $3=, $pop18
-	i32.const	$push35=, 0
-	i32.eq  	$push36=, $pop17, $pop35
-	br_if   	0, $pop36       # 0: down to label8
+	i32.eqz 	$push35=, $pop17
+	br_if   	0, $pop35       # 0: down to label8
 # BB#1:                                 # %if.else.i
 	i32.ne  	$push4=, $0, $2
 	br_if   	3, $pop4        # 3: down to label5

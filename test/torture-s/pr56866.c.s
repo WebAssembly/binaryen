@@ -185,9 +185,8 @@ main:                                   # @main
 # BB#9:                                 # %lor.lhs.false
 	i64.load	$push32=, 3624($4)
 	i64.eqz 	$push33=, $pop32
-	i32.const	$push138=, 0
-	i32.eq  	$push139=, $pop33, $pop138
-	br_if   	0, $pop139      # 0: down to label8
+	i32.eqz 	$push138=, $pop33
+	br_if   	0, $pop138      # 0: down to label8
 # BB#10:                                # %if.end
 	i64.load	$push133=, 1568($4)
 	tee_local	$push132=, $6=, $pop133

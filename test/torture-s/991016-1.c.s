@@ -12,9 +12,8 @@ doit:                                   # @doit
 	block
 	block
 	block
-	i32.const	$push19=, 0
-	i32.eq  	$push20=, $0, $pop19
-	br_if   	0, $pop20       # 0: down to label2
+	i32.eqz 	$push19=, $0
+	br_if   	0, $pop19       # 0: down to label2
 # BB#1:                                 # %entry
 	i32.const	$push6=, 1
 	i32.eq  	$push0=, $0, $pop6

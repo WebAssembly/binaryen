@@ -89,16 +89,15 @@ test:                                   # @test
 	i32.sub 	$push59=, $pop51, $pop52
 	i32.store	$push61=, 0($pop53), $pop59
 	tee_local	$push60=, $3=, $pop61
-	i32.const	$push57=, 8
-	i32.add 	$push58=, $pop60, $pop57
-	copy_local	$2=, $pop58
 	i32.const	$push1=, 0
 	i64.load	$push2=, a($pop1)
-	i64.store	$1=, 8($3), $pop2
+	i64.store	$1=, 8($pop60), $pop2
+	i32.const	$push57=, 8
+	i32.add 	$push58=, $3, $pop57
+	copy_local	$2=, $pop58
 	block
-	i32.const	$push82=, 0
-	i32.eq  	$push83=, $0, $pop82
-	br_if   	0, $pop83       # 0: down to label1
+	i32.eqz 	$push82=, $0
+	br_if   	0, $pop82       # 0: down to label1
 # BB#1:                                 # %if.else
 	block
 	block
@@ -129,9 +128,8 @@ test:                                   # @test
 	end_block                       # label1:
 	block
 	i32.call	$push15=, baz@FUNCTION, $2
-	i32.const	$push84=, 0
-	i32.eq  	$push85=, $pop15, $pop84
-	br_if   	0, $pop85       # 0: down to label4
+	i32.eqz 	$push83=, $pop15
+	br_if   	0, $pop83       # 0: down to label4
 # BB#6:                                 # %if.end9
 	i32.const	$push22=, 32
 	i32.const	$push21=, 4
@@ -152,9 +150,8 @@ test:                                   # @test
 	i32.const	$push23=, 8191
 	i32.and 	$push67=, $pop68, $pop23
 	tee_local	$push66=, $4=, $pop67
-	i32.const	$push86=, 0
-	i32.eq  	$push87=, $pop66, $pop86
-	br_if   	0, $pop87       # 0: down to label6
+	i32.eqz 	$push84=, $pop66
+	br_if   	0, $pop84       # 0: down to label6
 # BB#7:                                 # %if.else17
 	i32.ge_u	$push24=, $4, $0
 	br_if   	1, $pop24       # 1: down to label5
@@ -180,9 +177,8 @@ test:                                   # @test
 # BB#11:                                # %if.end24
 	i32.const	$push30=, 1
 	i32.and 	$push29=, $6, $pop30
-	i32.const	$push88=, 0
-	i32.eq  	$push89=, $pop29, $pop88
-	br_if   	0, $pop89       # 0: down to label7
+	i32.eqz 	$push85=, $pop29
+	br_if   	0, $pop85       # 0: down to label7
 # BB#12:                                # %if.then31
 	i64.load	$push43=, 0($2):p2align=2
 	i64.store	$discard=, 0($3):p2align=2, $pop43

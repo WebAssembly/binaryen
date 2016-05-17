@@ -66,9 +66,8 @@ main:                                   # @main
 	i32.gt_s	$push14=, $3, $0
 	tee_local	$push13=, $2=, $pop14
 	i32.select	$push9=, $3, $0, $pop13
-	i32.const	$push61=, 0
-	i32.eq  	$push62=, $pop9, $pop61
-	br_if   	2, $pop62       # 2: down to label0
+	i32.eqz 	$push61=, $pop9
+	br_if   	2, $pop61       # 2: down to label0
 # BB#2:                                 # %if.end7
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push60=, 9

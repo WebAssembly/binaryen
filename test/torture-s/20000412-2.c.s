@@ -20,9 +20,8 @@ f:                                      # @f
 	tee_local	$push14=, $2=, $pop15
 	i32.store	$push13=, 12($pop14), $0
 	tee_local	$push12=, $0=, $pop13
-	i32.const	$push16=, 0
-	i32.eq  	$push17=, $pop12, $pop16
-	br_if   	0, $pop17       # 0: down to label1
+	i32.eqz 	$push16=, $pop12
+	br_if   	0, $pop16       # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $0, $pop0

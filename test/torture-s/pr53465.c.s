@@ -23,15 +23,13 @@ foo:                                    # @foo
 	copy_local	$2=, $5
 	i32.load	$push5=, 0($0)
 	tee_local	$push4=, $5=, $pop5
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $pop4, $pop8
-	br_if   	1, $pop9        # 1: down to label3
+	i32.eqz 	$push8=, $pop4
+	br_if   	1, $pop8        # 1: down to label3
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	block
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $4, $pop10
-	br_if   	0, $pop11       # 0: down to label4
+	i32.eqz 	$push9=, $4
+	br_if   	0, $pop9        # 0: down to label4
 # BB#4:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.le_s	$push1=, $5, $2

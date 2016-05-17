@@ -44,9 +44,8 @@ baz3:                                   # @baz3
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push1=, 0
-	i32.eq  	$push2=, $0, $pop1
-	br_if   	0, $pop2        # 0: down to label0
+	i32.eqz 	$push1=, $0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 1
 	return  	$pop0
@@ -112,9 +111,8 @@ foo:                                    # @foo
 	i32.const	$8=, 0
 	block
 	i32.or  	$push16=, $2, $3
-	i32.const	$push42=, 0
-	i32.eq  	$push43=, $pop16, $pop42
-	br_if   	0, $pop43       # 0: down to label5
+	i32.eqz 	$push42=, $pop16
+	br_if   	0, $pop42       # 0: down to label5
 # BB#3:                                 # %if.end17
                                         #   in Loop: Header=BB3_2 Depth=1
 	i32.const	$push36=, 1
@@ -134,9 +132,8 @@ foo:                                    # @foo
 	i32.and 	$push19=, $6, $pop18
 	i32.or  	$push20=, $5, $pop19
 	i32.or  	$push21=, $10, $pop20
-	i32.const	$push44=, 0
-	i32.eq  	$push45=, $pop21, $pop44
-	br_if   	4, $pop45       # 4: down to label1
+	i32.eqz 	$push43=, $pop21
+	br_if   	4, $pop43       # 4: down to label1
 .LBB3_6:                                # %while.cond.backedge
                                         #   in Loop: Header=BB3_2 Depth=1
 	end_block                       # label5:

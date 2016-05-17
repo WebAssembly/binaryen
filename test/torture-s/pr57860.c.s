@@ -22,9 +22,8 @@ foo:                                    # @foo
 	block
 	i32.const	$push16=, 0
 	i32.load	$push1=, c($pop16)
-	i32.const	$push25=, 0
-	i32.eq  	$push26=, $pop1, $pop25
-	br_if   	0, $pop26       # 0: down to label2
+	i32.eqz 	$push25=, $pop1
+	br_if   	0, $pop25       # 0: down to label2
 # BB#2:                                 # %for.inc.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push18=, 0
@@ -84,9 +83,8 @@ main:                                   # @main
 	block
 	i32.const	$push18=, 0
 	i32.load	$push1=, c($pop18)
-	i32.const	$push30=, 0
-	i32.eq  	$push31=, $pop1, $pop30
-	br_if   	0, $pop31       # 0: down to label5
+	i32.eqz 	$push30=, $pop1
+	br_if   	0, $pop30       # 0: down to label5
 # BB#2:                                 # %for.inc.preheader.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push20=, 0

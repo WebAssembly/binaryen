@@ -60,6 +60,7 @@ complex-7.c.s.wast
 # abort called: the tests are self-validating and call abort when they detect a
 # failure.  This may not be binaryen's fault (the toolchain may be emitting bad
 # code) but it could be binaryen's fault.
+20030125-1.c.s.wast
 920612-1.c.s.wast
 920625-1.c.s.wast
 920711-1.c.s.wast
@@ -71,6 +72,7 @@ bcp-1.c.s.wast
 bitfld-3.c.s.wast
 builtin-constant.c.s.wast
 eeprof-1.c.s.wast
+frame-address.c.s.wast
 pr22493-1.c.s.wast
 pr32244-1.c.s.wast
 pr34971.c.s.wast
@@ -108,6 +110,8 @@ va-arg-pack-1.c.s.wast
 960405-1.c.s.wast # __eqtf2
 960521-1.c.s.wast # malloc
 980506-3.c.s.wast # memset
+980707-1.c.s.wast # strcmp
+980709-1.c.s.wast # pow
 990628-1.c.s.wast # malloc
 991112-1.c.s.wast # isprint
 align-2.c.s.wast # __eqtf2
@@ -143,6 +147,7 @@ pr53688.c.s.wast # memset
 pr58419.c.s.wast # getpid
 pr59229.c.s.wast # memcpy
 printf-1.c.s.wast # isprint
+printf-chk-1.c.s.wast # vprintf
 regstack-1.c.s.wast # __addtf3
 strcmp-1.c.s.wast # strcmp
 strcpy-1.c.s.wast # memset
@@ -152,3 +157,6 @@ strncmp-1.c.s.wast # strcmp
 struct-cpy-1.c.s.wast # memset
 va-arg-10.c.s.wast # strlen
 va-arg-22.c.s.wast # memcpy
+va-arg-21.c.s.wast # malloc
+vprintf-chk-1.c.s.wast # vprintf
+vprintf-1.c.s.wast # vprintf

@@ -81,9 +81,8 @@ main:                                   # @main
 	block
 	block
 	block
-	i32.const	$push72=, 0
-	i32.eq  	$push73=, $6, $pop72
-	br_if   	0, $pop73       # 0: down to label11
+	i32.eqz 	$push72=, $6
+	br_if   	0, $pop72       # 0: down to label11
 # BB#2:                                 # %if.end14
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push53=, 1

@@ -41,9 +41,8 @@ bug:                                    # @bug
 	loop                            # label2:
 	i32.const	$push6=, 1
 	i32.and 	$push1=, $3, $pop6
-	i32.const	$push11=, 0
-	i32.eq  	$push12=, $pop1, $pop11
-	br_if   	2, $pop12       # 2: down to label1
+	i32.eqz 	$push11=, $pop1
+	br_if   	2, $pop11       # 2: down to label1
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$3=, 0

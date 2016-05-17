@@ -12,9 +12,8 @@ foobar:                                 # @foobar
 	i32.const	$push0=, 1
 	i32.and 	$push11=, $0, $pop0
 	tee_local	$push10=, $0=, $pop11
-	i32.const	$push14=, 0
-	i32.eq  	$push15=, $pop10, $pop14
-	br_if   	0, $pop15       # 0: down to label0
+	i32.eqz 	$push14=, $pop10
+	br_if   	0, $pop14       # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push1=, 3
 	i32.and 	$push13=, $1, $pop1
