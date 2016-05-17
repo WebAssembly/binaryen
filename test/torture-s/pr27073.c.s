@@ -10,9 +10,8 @@ foo:                                    # @foo
 	block
 	i32.const	$push0=, 65535
 	i32.and 	$push1=, $4, $pop0
-	i32.const	$push13=, 0
-	i32.eq  	$push14=, $pop1, $pop13
-	br_if   	0, $pop14       # 0: down to label0
+	i32.eqz 	$push13=, $pop1
+	br_if   	0, $pop13       # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push2=, 0
 	i32.sub 	$4=, $pop2, $4

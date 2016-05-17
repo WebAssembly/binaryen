@@ -159,9 +159,8 @@ foo:                                    # @foo
 	end_loop                        # label3:
 	i32.const	$push84=, 0
 	i32.load	$push29=, stop($pop84)
-	i32.const	$push85=, 0
-	i32.eq  	$push86=, $pop29, $pop85
-	br_if   	0, $pop86       # 0: up to label0
+	i32.eqz 	$push85=, $pop29
+	br_if   	0, $pop85       # 0: up to label0
 # BB#4:                                 # %do.end
 	end_loop                        # label1:
 	return

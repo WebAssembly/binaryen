@@ -53,9 +53,8 @@ check_a:                                # @check_a
 # BB#1:                                 # %land.lhs.true
 	i32.const	$1=, 0
 	i32.load	$push5=, 3($0)
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $pop5, $pop6
-	br_if   	1, $pop7        # 1: down to label0
+	i32.eqz 	$push6=, $pop5
+	br_if   	1, $pop6        # 1: down to label0
 .LBB1_2:                                # %if.end
 	end_block                       # label1:
 	i32.const	$1=, -1

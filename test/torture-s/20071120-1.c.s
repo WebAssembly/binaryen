@@ -36,9 +36,8 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.const	$push13=, 0
 	i32.load	$push12=, deferred_access_no_check($pop13)
 	tee_local	$push11=, $0=, $pop12
-	i32.const	$push20=, 0
-	i32.eq  	$push21=, $pop11, $pop20
-	br_if   	0, $pop21       # 0: down to label0
+	i32.eqz 	$push20=, $pop11
+	br_if   	0, $pop20       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push14=, 0
 	i32.const	$push1=, -1
@@ -52,22 +51,19 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.const	$push17=, 0
 	i32.load	$push16=, deferred_access_stack($pop17)
 	tee_local	$push15=, $0=, $pop16
-	i32.const	$push22=, 0
-	i32.eq  	$push23=, $pop15, $pop22
-	br_if   	0, $pop23       # 0: down to label2
+	i32.eqz 	$push21=, $pop15
+	br_if   	0, $pop21       # 0: down to label2
 # BB#3:                                 # %land.lhs.true.i
 	i32.load	$push19=, 0($0)
 	tee_local	$push18=, $1=, $pop19
-	i32.const	$push24=, 0
-	i32.eq  	$push25=, $pop18, $pop24
-	br_if   	0, $pop25       # 0: down to label2
+	i32.eqz 	$push22=, $pop18
+	br_if   	0, $pop22       # 0: down to label2
 # BB#4:                                 # %land.lhs.true.i25
 	i32.const	$push3=, -1
 	i32.add 	$push4=, $1, $pop3
 	i32.store	$push0=, 0($0), $pop4
-	i32.const	$push26=, 0
-	i32.eq  	$push27=, $pop0, $pop26
-	br_if   	0, $pop27       # 0: down to label2
+	i32.eqz 	$push23=, $pop0
+	br_if   	0, $pop23       # 0: down to label2
 # BB#5:                                 # %VEC_deferred_access_base_last.exit29
 	i32.const	$push5=, 3
 	i32.shl 	$push6=, $1, $pop5
@@ -75,9 +71,8 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.const	$push8=, -8
 	i32.add 	$push9=, $pop7, $pop8
 	i32.load	$push10=, 0($pop9)
-	i32.const	$push28=, 0
-	i32.eq  	$push29=, $pop10, $pop28
-	br_if   	1, $pop29       # 1: down to label1
+	i32.eqz 	$push24=, $pop10
+	br_if   	1, $pop24       # 1: down to label1
 # BB#6:                                 # %if.end16
 	return
 .LBB2_7:                                # %cond.false.i26

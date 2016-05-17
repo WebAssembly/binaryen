@@ -22,9 +22,8 @@ f:                                      # @f
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push2=, 0
-	i32.eq  	$push3=, $0, $pop2
-	br_if   	0, $pop3        # 0: down to label0
+	i32.eqz 	$push2=, $0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %entry
 	br_if   	0, $1           # 0: down to label0
 # BB#2:                                 # %if.then10

@@ -30,9 +30,8 @@ f:                                      # @f
 	i32.shr_s	$0=, $0, $pop7
 	i32.const	$push6=, 1
 	i32.and 	$push1=, $0, $pop6
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $pop1, $pop8
-	br_if   	0, $pop9        # 0: up to label1
+	i32.eqz 	$push8=, $pop1
+	br_if   	0, $pop8        # 0: up to label1
 .LBB0_4:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:

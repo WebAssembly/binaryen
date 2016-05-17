@@ -161,9 +161,8 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	block
 	i32.load	$push7=, 8($3)
 	i32.load	$push8=, 0($pop7)
-	i32.const	$push39=, 0
-	i32.eq  	$push40=, $pop8, $pop39
-	br_if   	0, $pop40       # 0: down to label4
+	i32.eqz 	$push39=, $pop8
+	br_if   	0, $pop39       # 0: down to label4
 # BB#5:                                 # %DUPFFnew.exit167
 	i32.const	$push9=, 12
 	i32.call	$push37=, malloc@FUNCTION, $pop9

@@ -11,9 +11,8 @@ foo:                                    # @foo
 	block
 	i32.load8_u	$push8=, 1($0)
 	tee_local	$push7=, $2=, $pop8
-	i32.const	$push22=, 0
-	i32.eq  	$push23=, $pop7, $pop22
-	br_if   	0, $pop23       # 0: down to label0
+	i32.eqz 	$push22=, $pop7
+	br_if   	0, $pop22       # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push0=, 3
 	i32.add 	$0=, $0, $pop0

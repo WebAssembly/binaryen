@@ -33,9 +33,8 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	loop                            # label0:
 	i32.const	$6=, 1
 	block
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $4, $pop9
-	br_if   	0, $pop10       # 0: down to label2
+	i32.eqz 	$push9=, $4
+	br_if   	0, $pop9        # 0: down to label2
 # BB#2:                                 # %cond.false
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.load	$6=, 0($5)

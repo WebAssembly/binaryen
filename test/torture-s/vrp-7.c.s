@@ -37,9 +37,8 @@ main:                                   # @main
 	i32.load8_u	$push1=, t($pop4)
 	i32.const	$push2=, 1
 	i32.and 	$push3=, $pop1, $pop2
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $pop3, $pop6
-	br_if   	0, $pop7        # 0: down to label0
+	i32.eqz 	$push6=, $pop3
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 0
 	return  	$pop5

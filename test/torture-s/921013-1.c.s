@@ -9,9 +9,8 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $3, $pop10
-	br_if   	0, $pop11       # 0: down to label0
+	i32.eqz 	$push10=, $3
+	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1

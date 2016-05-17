@@ -20,9 +20,8 @@ foo:                                    # @foo
 # BB#2:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	block
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $1, $pop7
-	br_if   	0, $pop8        # 0: down to label3
+	i32.eqz 	$push7=, $1
+	br_if   	0, $pop7        # 0: down to label3
 # BB#3:                                 # %if.then3
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.store8	$discard=, 0($3), $1

@@ -33,23 +33,18 @@ doit:                                   # @doit
 # BB#0:                                 # %entry
 	i32.const	$push1=, 4
 	i32.call	$2=, malloc@FUNCTION, $pop1
-	i32.const	$push10=, 4
-	i32.call	$3=, malloc@FUNCTION, $pop10
-	i32.const	$push2=, 0
-	i32.load	$push3=, stdout($pop2)
-	i32.const	$push4=, .L.str
-	i32.store	$push9=, 0($2), $1
-	tee_local	$push8=, $1=, $pop9
-	i32.call	$discard=, vfprintf@FUNCTION, $pop3, $pop4, $pop8
-	i32.const	$push7=, 0
-	i32.load	$push5=, stdout($pop7)
-	i32.const	$push6=, .L.str
+	i32.const	$push6=, 4
+	i32.call	$3=, malloc@FUNCTION, $pop6
+	i32.const	$push2=, .L.str
+	i32.store	$push5=, 0($2), $1
+	tee_local	$push4=, $1=, $pop5
+	i32.call	$discard=, vprintf@FUNCTION, $pop2, $pop4
+	i32.const	$push3=, .L.str
 	i32.store	$push0=, 0($3), $1
-	i32.call	$discard=, vfprintf@FUNCTION, $pop5, $pop6, $pop0
+	i32.call	$discard=, vprintf@FUNCTION, $pop3, $pop0
 	block
-	i32.const	$push11=, 0
-	i32.eq  	$push12=, $3, $pop11
-	br_if   	0, $pop12       # 0: down to label0
+	i32.eqz 	$push7=, $3
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then

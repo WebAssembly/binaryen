@@ -45,9 +45,8 @@ test:                                   # @test
 	i64.const	$push102=, 0
 	i64.const	$push101=, 0
 	i32.call	$push42=, __eqtf2@FUNCTION, $0, $1, $pop102, $pop101
-	i32.const	$push141=, 0
-	i32.eq  	$push142=, $pop42, $pop141
-	br_if   	1, $pop142      # 1: down to label1
+	i32.eqz 	$push141=, $pop42
+	br_if   	1, $pop141      # 1: down to label1
 # BB#2:                                 # %if.else
 	i64.const	$push103=, 0
 	i64.const	$push43=, 4611404543450677248

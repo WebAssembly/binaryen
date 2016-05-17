@@ -29,9 +29,8 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_2 Depth=1
 	block
 	block
-	i32.const	$push29=, 0
-	i32.eq  	$push30=, $1, $pop29
-	br_if   	0, $pop30       # 0: down to label5
+	i32.eqz 	$push29=, $1
+	br_if   	0, $pop29       # 0: down to label5
 # BB#4:                                 # %if.then.if.end_crit_edge
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push18=, 0

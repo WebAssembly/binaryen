@@ -88,9 +88,8 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 	block
 	i32.load8_u	$push32=, 0($5)
 	tee_local	$push31=, $4=, $pop32
-	i32.const	$push33=, 0
-	i32.eq  	$push34=, $pop31, $pop33
-	br_if   	0, $pop34       # 0: down to label6
+	i32.eqz 	$push33=, $pop31
+	br_if   	0, $pop33       # 0: down to label6
 # BB#9:                                 # %land.lhs.true
 	i32.const	$push14=, 58
 	i32.ne  	$push15=, $4, $pop14
@@ -184,9 +183,8 @@ main:                                   # @main
 	block
 	i32.load8_u	$push34=, 0($4)
 	tee_local	$push33=, $2=, $pop34
-	i32.const	$push35=, 0
-	i32.eq  	$push36=, $pop33, $pop35
-	br_if   	0, $pop36       # 0: down to label13
+	i32.eqz 	$push35=, $pop33
+	br_if   	0, $pop35       # 0: down to label13
 # BB#9:                                 # %land.lhs.true.i
 	i32.const	$push14=, 58
 	i32.ne  	$push15=, $2, $pop14

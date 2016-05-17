@@ -47,9 +47,8 @@ bar:                                    # @bar
 	tee_local	$push12=, $1=, $pop13
 	i32.store	$discard=, e($pop12), $1
 	block
-	i32.const	$push28=, 0
-	i32.eq  	$push29=, $0, $pop28
-	br_if   	0, $pop29       # 0: down to label0
+	i32.eqz 	$push28=, $0
+	br_if   	0, $pop28       # 0: down to label0
 # BB#1:                                 # %if.then
 	i64.const	$push9=, 33
 	i64.shl 	$push10=, $3, $pop9
@@ -99,9 +98,8 @@ baz:                                    # @baz
 	tee_local	$push13=, $0=, $pop14
 	i32.store	$discard=, e($pop13), $0
 	block
-	i32.const	$push29=, 0
-	i32.eq  	$push30=, $1, $pop29
-	br_if   	0, $pop30       # 0: down to label1
+	i32.eqz 	$push29=, $1
+	br_if   	0, $pop29       # 0: down to label1
 # BB#1:                                 # %if.then.i
 	i64.const	$push9=, 33
 	i64.shl 	$push10=, $3, $pop9
@@ -156,9 +154,8 @@ main:                                   # @main
 	tee_local	$push19=, $0=, $pop20
 	i32.store	$discard=, e($pop19), $0
 	block
-	i32.const	$push36=, 0
-	i32.eq  	$push37=, $1, $pop36
-	br_if   	0, $pop37       # 0: down to label2
+	i32.eqz 	$push36=, $1
+	br_if   	0, $pop36       # 0: down to label2
 # BB#1:                                 # %if.then.i.i
 	i64.const	$push9=, 33
 	i64.shl 	$push10=, $3, $pop9

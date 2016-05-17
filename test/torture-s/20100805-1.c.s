@@ -11,9 +11,8 @@ foo:                                    # @foo
 	i32.const	$push0=, 1
 	i32.and 	$0=, $0, $pop0
 	block
-	i32.const	$push3=, 0
-	i32.eq  	$push4=, $1, $pop3
-	br_if   	0, $pop4        # 0: down to label0
+	i32.eqz 	$push3=, $1
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1

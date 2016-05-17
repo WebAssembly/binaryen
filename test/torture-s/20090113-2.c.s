@@ -84,9 +84,8 @@ foobar:                                 # @foobar
 	block
 	i32.load	$push37=, 0($1)
 	tee_local	$push36=, $0=, $pop37
-	i32.const	$push67=, 0
-	i32.eq  	$push68=, $pop36, $pop67
-	br_if   	0, $pop68       # 0: down to label3
+	i32.eqz 	$push67=, $pop36
+	br_if   	0, $pop67       # 0: down to label3
 # BB#2:                                 # %while.cond.preheader.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	block
@@ -103,9 +102,8 @@ foobar:                                 # @foobar
 	i32.add 	$3=, $3, $pop40
 	i32.const	$push39=, 1
 	i32.and 	$push3=, $0, $pop39
-	i32.const	$push69=, 0
-	i32.eq  	$push70=, $pop3, $pop69
-	br_if   	0, $pop70       # 0: up to label5
+	i32.eqz 	$push68=, $pop3
+	br_if   	0, $pop68       # 0: up to label5
 .LBB1_4:                                # %while.end.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop                        # label6:
@@ -178,9 +176,8 @@ foobar:                                 # @foobar
                                         #   in Loop: Header=BB1_6 Depth=2
 	end_block                       # label9:
 	i32.load	$4=, 0($4)
-	i32.const	$push71=, 0
-	i32.eq  	$push72=, $4, $pop71
-	br_if   	4, $pop72       # 4: down to label1
+	i32.eqz 	$push69=, $4
+	br_if   	4, $pop69       # 4: down to label1
 # BB#12:                                # %if.end25.i
                                         #   in Loop: Header=BB1_6 Depth=2
 	i32.load	$push10=, 8($4)
@@ -320,9 +317,8 @@ bmp_iter_set_tail:                      # @bmp_iter_set_tail
 	i32.add 	$2=, $2, $pop8
 	i32.const	$push7=, 1
 	i32.and 	$push1=, $3, $pop7
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $pop1, $pop10
-	br_if   	0, $pop11       # 0: up to label15
+	i32.eqz 	$push10=, $pop1
+	br_if   	0, $pop10       # 0: up to label15
 # BB#3:                                 # %while.cond.while.end_crit_edge
 	end_loop                        # label16:
 	i32.const	$push2=, 12

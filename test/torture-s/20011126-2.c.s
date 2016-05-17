@@ -22,9 +22,10 @@ main:                                   # @main
                                         #       Child Loop BB0_3 Depth 3
                                         #     Child Loop BB0_8 Depth 2
 	loop                            # label0:
-	copy_local	$2=, $1
 	copy_local	$0=, $3
-	i32.load8_u	$push19=, 0($2)
+	copy_local	$push21=, $1
+	tee_local	$push20=, $2=, $pop21
+	i32.load8_u	$push19=, 0($pop20)
 	tee_local	$push18=, $1=, $pop19
 	copy_local	$3=, $pop18
 .LBB0_2:                                # %while.body.outer.i
@@ -36,31 +37,31 @@ main:                                   # @main
 	block
 	loop                            # label5:
 	copy_local	$4=, $2
-	i32.const	$push21=, 255
-	i32.and 	$push1=, $3, $pop21
-	i32.const	$push20=, 97
-	i32.ne  	$push2=, $pop1, $pop20
+	i32.const	$push23=, 255
+	i32.and 	$push1=, $3, $pop23
+	i32.const	$push22=, 97
+	i32.ne  	$push2=, $pop1, $pop22
 	br_if   	2, $pop2        # 2: down to label4
 .LBB0_3:                                # %while.cond2.i
                                         #   Parent Loop BB0_1 Depth=1
                                         #     Parent Loop BB0_2 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
 	loop                            # label7:
-	copy_local	$push29=, $4
-	tee_local	$push28=, $5=, $pop29
-	i32.const	$push27=, 1
-	i32.add 	$push26=, $pop28, $pop27
-	tee_local	$push25=, $4=, $pop26
-	i32.load8_u	$push24=, 0($pop25)
-	tee_local	$push23=, $3=, $pop24
-	i32.const	$push22=, 120
-	i32.eq  	$push3=, $pop23, $pop22
+	copy_local	$push31=, $4
+	tee_local	$push30=, $5=, $pop31
+	i32.const	$push29=, 1
+	i32.add 	$push28=, $pop30, $pop29
+	tee_local	$push27=, $4=, $pop28
+	i32.load8_u	$push26=, 0($pop27)
+	tee_local	$push25=, $3=, $pop26
+	i32.const	$push24=, 120
+	i32.eq  	$push3=, $pop25, $pop24
 	br_if   	0, $pop3        # 0: up to label7
 # BB#4:                                 # %while.cond2.i
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_loop                        # label8:
-	i32.const	$push30=, 98
-	i32.eq  	$push4=, $3, $pop30
+	i32.const	$push32=, 98
+	i32.eq  	$push4=, $3, $pop32
 	br_if   	3, $pop4        # 3: down to label3
 # BB#5:                                 # %while.cond11.preheader.i
                                         #   in Loop: Header=BB0_2 Depth=2
@@ -71,27 +72,27 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label6:
 	i32.store8	$discard=, 0($0), $1
-	i32.const	$push32=, 1
-	i32.add 	$1=, $2, $pop32
-	i32.const	$push31=, 1
-	i32.add 	$3=, $0, $pop31
+	i32.const	$push34=, 1
+	i32.add 	$1=, $2, $pop34
+	i32.const	$push33=, 1
+	i32.add 	$3=, $0, $pop33
 	i32.ge_u	$push7=, $2, $5
 	br_if   	3, $pop7        # 3: up to label0
 # BB#7:                                 # %while.body14.while.body14_crit_edge.i.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.add 	$1=, $0, $5
-	i32.const	$push33=, 0
-	i32.sub 	$0=, $pop33, $2
+	i32.const	$push35=, 0
+	i32.sub 	$0=, $pop35, $2
 .LBB0_8:                                # %while.body14.while.body14_crit_edge.i
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label9:
-	i32.const	$push35=, 1
-	i32.add 	$2=, $2, $pop35
+	i32.const	$push37=, 1
+	i32.add 	$2=, $2, $pop37
 	i32.load8_u	$push8=, 0($2)
 	i32.store8	$discard=, 0($3), $pop8
-	i32.const	$push34=, 1
-	i32.add 	$push0=, $3, $pop34
+	i32.const	$push36=, 1
+	i32.add 	$push0=, $3, $pop36
 	copy_local	$3=, $pop0
 	i32.ne  	$push9=, $5, $2
 	br_if   	0, $pop9        # 0: up to label9

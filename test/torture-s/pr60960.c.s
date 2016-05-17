@@ -7,31 +7,31 @@
 f1:                                     # @f1
 	.param  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 255
-	i32.and 	$push3=, $2, $pop0
-	i32.const	$push8=, 0
-	i32.div_u	$2=, $pop3, $pop8
-	i32.const	$push19=, 255
-	i32.and 	$push2=, $3, $pop19
-	i32.const	$push18=, 0
-	i32.div_u	$3=, $pop2, $pop18
-	i32.const	$push10=, 3
-	i32.add 	$push11=, $0, $pop10
-	i32.const	$push17=, 255
-	i32.and 	$push1=, $4, $pop17
-	i32.const	$push16=, 0
-	i32.div_u	$push9=, $pop1, $pop16
-	i32.store8	$discard=, 0($pop11), $pop9
-	i32.const	$push12=, 2
+	i32.const	$push12=, 3
 	i32.add 	$push13=, $0, $pop12
-	i32.store8	$discard=, 0($pop13), $3
+	i32.const	$push0=, 255
+	i32.and 	$push1=, $4, $pop0
+	i32.const	$push8=, 0
+	i32.div_u	$push11=, $pop1, $pop8
+	i32.store8	$discard=, 0($pop13), $pop11
+	i32.const	$push14=, 2
+	i32.add 	$push15=, $0, $pop14
+	i32.const	$push21=, 255
+	i32.and 	$push2=, $3, $pop21
+	i32.const	$push20=, 0
+	i32.div_u	$push10=, $pop2, $pop20
+	i32.store8	$discard=, 0($pop15), $pop10
 	i32.const	$push6=, 1
-	i32.add 	$push14=, $0, $pop6
-	i32.store8	$discard=, 0($pop14), $2
+	i32.add 	$push16=, $0, $pop6
+	i32.const	$push19=, 255
+	i32.and 	$push3=, $2, $pop19
+	i32.const	$push18=, 0
+	i32.div_u	$push9=, $pop3, $pop18
+	i32.store8	$discard=, 0($pop16), $pop9
 	i32.const	$push4=, 254
 	i32.and 	$push5=, $1, $pop4
-	i32.const	$push15=, 1
-	i32.shr_u	$push7=, $pop5, $pop15
+	i32.const	$push17=, 1
+	i32.shr_u	$push7=, $pop5, $pop17
 	i32.store8	$discard=, 0($0), $pop7
 	return
 	.endfunc
@@ -83,36 +83,36 @@ f2:                                     # @f2
 f3:                                     # @f3
 	.param  	i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.const	$push13=, 3
+	i32.add 	$push14=, $0, $pop13
 	i32.const	$push0=, 255
-	i32.and 	$push8=, $1, $pop0
+	i32.and 	$push2=, $4, $pop0
+	i32.const	$push25=, 255
+	i32.and 	$push1=, $8, $pop25
+	i32.div_u	$push12=, $pop2, $pop1
+	i32.store8	$discard=, 0($pop14), $pop12
+	i32.const	$push15=, 2
+	i32.add 	$push16=, $0, $pop15
+	i32.const	$push24=, 255
+	i32.and 	$push4=, $3, $pop24
+	i32.const	$push23=, 255
+	i32.and 	$push3=, $7, $pop23
+	i32.div_u	$push11=, $pop4, $pop3
+	i32.store8	$discard=, 0($pop16), $pop11
+	i32.const	$push17=, 1
+	i32.add 	$push18=, $0, $pop17
 	i32.const	$push22=, 255
-	i32.and 	$push7=, $5, $pop22
-	i32.div_u	$1=, $pop8, $pop7
+	i32.and 	$push6=, $2, $pop22
 	i32.const	$push21=, 255
-	i32.and 	$push6=, $2, $pop21
+	i32.and 	$push5=, $6, $pop21
+	i32.div_u	$push10=, $pop6, $pop5
+	i32.store8	$discard=, 0($pop18), $pop10
 	i32.const	$push20=, 255
-	i32.and 	$push5=, $6, $pop20
-	i32.div_u	$5=, $pop6, $pop5
+	i32.and 	$push8=, $1, $pop20
 	i32.const	$push19=, 255
-	i32.and 	$push4=, $3, $pop19
-	i32.const	$push18=, 255
-	i32.and 	$push3=, $7, $pop18
-	i32.div_u	$2=, $pop4, $pop3
-	i32.const	$push10=, 3
-	i32.add 	$push11=, $0, $pop10
-	i32.const	$push17=, 255
-	i32.and 	$push2=, $4, $pop17
-	i32.const	$push16=, 255
-	i32.and 	$push1=, $8, $pop16
-	i32.div_u	$push9=, $pop2, $pop1
-	i32.store8	$discard=, 0($pop11), $pop9
-	i32.const	$push12=, 2
-	i32.add 	$push13=, $0, $pop12
-	i32.store8	$discard=, 0($pop13), $2
-	i32.const	$push14=, 1
-	i32.add 	$push15=, $0, $pop14
-	i32.store8	$discard=, 0($pop15), $5
-	i32.store8	$discard=, 0($0), $1
+	i32.and 	$push7=, $5, $pop19
+	i32.div_u	$push9=, $pop8, $pop7
+	i32.store8	$discard=, 0($0), $pop9
 	return
 	.endfunc
 .Lfunc_end2:

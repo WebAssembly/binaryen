@@ -99,9 +99,8 @@ sub:                                    # @sub
 	i32.const	$push4=, 0
 	i32.load	$2=, count($pop4)
 	block
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $0, $pop8
-	br_if   	0, $pop9        # 0: down to label5
+	i32.eqz 	$push8=, $0
+	br_if   	0, $pop8        # 0: down to label5
 # BB#1:                                 # %for.inc.i.preheader.preheader
 .LBB1_2:                                # %for.inc.i.preheader
                                         # =>This Loop Header: Depth=1
@@ -148,9 +147,8 @@ look:                                   # @look
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $0, $pop6
-	br_if   	0, $pop7        # 0: down to label10
+	i32.eqz 	$push6=, $0
+	br_if   	0, $pop6        # 0: down to label10
 .LBB2_1:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label11:

@@ -54,18 +54,16 @@ main:                                   # @main
 	f64.le  	$push1=, $pop22, $pop21
 	f64.ne  	$push2=, $1, $1
 	i32.or  	$push3=, $pop1, $pop2
-	i32.const	$push30=, 0
-	i32.eq  	$push31=, $pop3, $pop30
-	br_if   	0, $pop31       # 0: down to label2
+	i32.eqz 	$push30=, $pop3
+	br_if   	0, $pop30       # 0: down to label2
 # BB#2:                                 # %for.cond.1
 	i32.const	$push4=, 0
 	f64.load	$push26=, a+16($pop4)
 	tee_local	$push25=, $1=, $pop26
 	f64.const	$push5=, 0x0p0
 	f64.gt  	$push6=, $pop25, $pop5
-	i32.const	$push32=, 0
-	i32.eq  	$push33=, $pop6, $pop32
-	br_if   	1, $pop33       # 1: down to label1
+	i32.eqz 	$push31=, $pop6
+	br_if   	1, $pop31       # 1: down to label1
 .LBB1_3:                                # %e
 	end_block                       # label2:
 	f64.store	$discard=, 8($0), $1

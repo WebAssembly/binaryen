@@ -24,9 +24,8 @@ main:                                   # @main
 	loop                            # label3:
 	i32.const	$4=, u
 	block
-	i32.const	$push19=, 0
-	i32.eq  	$push20=, $1, $pop19
-	br_if   	0, $pop20       # 0: down to label5
+	i32.eqz 	$push19=, $1
+	br_if   	0, $pop19       # 0: down to label5
 # BB#3:                                 # %for.body6.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push9=, u
@@ -37,9 +36,8 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_block                       # label5:
 	block
-	i32.const	$push21=, 0
-	i32.eq  	$push22=, $3, $pop21
-	br_if   	0, $pop22       # 0: down to label6
+	i32.eqz 	$push20=, $3
+	br_if   	0, $pop20       # 0: down to label6
 # BB#5:                                 # %for.body9.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push10=, 97

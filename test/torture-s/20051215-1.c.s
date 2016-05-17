@@ -22,9 +22,8 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	block
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $2, $pop10
-	br_if   	0, $pop11       # 0: down to label3
+	i32.eqz 	$push10=, $2
+	br_if   	0, $pop10       # 0: down to label3
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$push1=, 0($2)

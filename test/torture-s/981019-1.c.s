@@ -10,9 +10,8 @@ ff:                                     # @ff
 # BB#0:                                 # %entry
 	block
 	block
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $0, $pop5
-	br_if   	0, $pop6        # 0: down to label1
+	i32.eqz 	$push5=, $0
+	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %entry
 	br_if   	1, $2           # 1: down to label0
 .LBB0_2:                                # %while.cond.preheader
@@ -29,9 +28,8 @@ ff:                                     # @ff
 	br_if   	2, $3           # 2: down to label2
 # BB#4:                                 # %while.body
                                         #   in Loop: Header=BB0_3 Depth=1
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $2, $pop7
-	br_if   	0, $pop8        # 0: up to label3
+	i32.eqz 	$push6=, $2
+	br_if   	0, $pop6        # 0: up to label3
 # BB#5:                                 # %land.lhs.true
 	end_loop                        # label4:
 	i32.const	$push2=, 0
@@ -111,9 +109,8 @@ main:                                   # @main
 	copy_local	$push3=, $0
 	tee_local	$push2=, $1=, $pop3
 	i32.eqz 	$0=, $pop2
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $1, $pop5
-	br_if   	0, $pop6        # 0: up to label5
+	i32.eqz 	$push5=, $1
+	br_if   	0, $pop5        # 0: up to label5
 # BB#2:                                 # %ff.exit
 	end_loop                        # label6:
 	i32.const	$push1=, 0

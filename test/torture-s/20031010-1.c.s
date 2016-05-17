@@ -9,14 +9,12 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push4=, 0
-	i32.eq  	$push5=, $2, $pop4
-	br_if   	0, $pop5        # 0: down to label0
+	i32.eqz 	$push4=, $2
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
 	block
-	i32.const	$push6=, 0
-	i32.eq  	$push7=, $3, $pop6
-	br_if   	0, $pop7        # 0: down to label1
+	i32.eqz 	$push5=, $3
+	br_if   	0, $pop5        # 0: down to label1
 # BB#2:                                 # %if.then4
 	i32.select	$push1=, $1, $0, $4
 	i32.select	$push0=, $0, $1, $4
@@ -48,9 +46,8 @@ main:                                   # @main
 	i32.const	$push6=, 1
 	i32.const	$push5=, 1
 	i32.call	$push3=, foo@FUNCTION, $pop2, $pop1, $pop0, $pop6, $pop5
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $pop3, $pop7
-	br_if   	0, $pop8        # 0: down to label2
+	i32.eqz 	$push7=, $pop3
+	br_if   	0, $pop7        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4

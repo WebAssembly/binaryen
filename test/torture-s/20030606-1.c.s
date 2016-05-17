@@ -11,9 +11,8 @@ foo:                                    # @foo
 	i32.const	$push0=, 55
 	i32.store	$discard=, 0($0), $pop0
 	block
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $1, $pop7
-	br_if   	0, $pop8        # 0: down to label0
+	i32.eqz 	$push7=, $1
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push5=, 4
 	i32.add 	$push2=, $0, $pop5

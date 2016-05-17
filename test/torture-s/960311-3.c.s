@@ -40,9 +40,8 @@ b:                                      # @b
 	block
 	i32.const	$push6=, 1073741824
 	i32.and 	$push7=, $0, $pop6
-	i32.const	$push21=, 0
-	i32.eq  	$push22=, $pop7, $pop21
-	br_if   	0, $pop22       # 0: down to label1
+	i32.eqz 	$push21=, $pop7
+	br_if   	0, $pop21       # 0: down to label1
 # BB#3:                                 # %if.then3
 	i32.const	$push8=, 0
 	i32.const	$push19=, 0
@@ -55,9 +54,8 @@ b:                                      # @b
 	block
 	i32.const	$push12=, 536870912
 	i32.and 	$push13=, $0, $pop12
-	i32.const	$push23=, 0
-	i32.eq  	$push24=, $pop13, $pop23
-	br_if   	0, $pop24       # 0: down to label2
+	i32.eqz 	$push22=, $pop13
+	br_if   	0, $pop22       # 0: down to label2
 # BB#5:                                 # %if.then8
 	i32.const	$push14=, 0
 	i32.const	$push20=, 0

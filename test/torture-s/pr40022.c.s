@@ -35,9 +35,8 @@ bar:                                    # @bar
 	i32.call	$push4=, foo@FUNCTION, $1
 	tee_local	$push3=, $1=, $pop4
 	i32.store	$push0=, 0($0), $pop3
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $pop0, $pop7
-	br_if   	0, $pop8        # 0: down to label0
+	i32.eqz 	$push7=, $pop0
+	br_if   	0, $pop7        # 0: down to label0
 .LBB1_1:                                # %while.cond.while.cond_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -51,9 +50,8 @@ bar:                                    # @bar
 	i32.call	$push6=, foo@FUNCTION, $2
 	tee_local	$push5=, $1=, $pop6
 	i32.store	$push1=, 0($0), $pop5
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $pop1, $pop9
-	br_if   	0, $pop10       # 0: down to label3
+	i32.eqz 	$push8=, $pop1
+	br_if   	0, $pop8        # 0: down to label3
 .LBB1_3:                                # %while.cond2.while.cond2_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
@@ -90,21 +88,18 @@ main:                                   # @main
 	i32.const	$push9=, 0
 	i32.load	$push8=, d($pop9)
 	tee_local	$push7=, $0=, $pop8
-	i32.const	$push15=, 0
-	i32.eq  	$push16=, $pop7, $pop15
-	br_if   	0, $pop16       # 0: down to label6
+	i32.eqz 	$push15=, $pop7
+	br_if   	0, $pop15       # 0: down to label6
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push12=, 0($0)
 	tee_local	$push11=, $0=, $pop12
-	i32.const	$push17=, 0
-	i32.eq  	$push18=, $pop11, $pop17
-	br_if   	0, $pop18       # 0: down to label6
+	i32.eqz 	$push16=, $pop11
+	br_if   	0, $pop16       # 0: down to label6
 # BB#2:                                 # %lor.lhs.false2
 	i32.load	$push14=, 0($0)
 	tee_local	$push13=, $0=, $pop14
-	i32.const	$push19=, 0
-	i32.eq  	$push20=, $pop13, $pop19
-	br_if   	0, $pop20       # 0: down to label6
+	i32.eqz 	$push17=, $pop13
+	br_if   	0, $pop17       # 0: down to label6
 # BB#3:                                 # %lor.lhs.false6
 	i32.load	$push5=, 0($0)
 	br_if   	0, $pop5        # 0: down to label6

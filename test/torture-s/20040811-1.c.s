@@ -8,43 +8,43 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push6=, __stack_pointer
-	i32.load	$push8=, 0($pop6)
-	tee_local	$push7=, $3=, $pop8
-	copy_local	$discard=, $pop7
-	i32.const	$2=, 0
+	i32.const	$push7=, __stack_pointer
+	i32.load	$push9=, 0($pop7)
+	tee_local	$push8=, $2=, $pop9
+	copy_local	$discard=, $pop8
+	i32.const	$1=, 0
 .LBB0_1:                                # %lab
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	copy_local	$1=, $3
-	i32.const	$push20=, 1000
-	i32.rem_s	$push0=, $2, $pop20
-	i32.const	$push19=, 2
-	i32.shl 	$push18=, $pop0, $pop19
-	tee_local	$push17=, $4=, $pop18
-	i32.const	$push16=, 19
-	i32.add 	$push1=, $pop17, $pop16
-	i32.const	$push15=, -16
-	i32.and 	$push2=, $pop1, $pop15
-	i32.sub 	$push14=, $3, $pop2
-	tee_local	$push13=, $3=, $pop14
-	copy_local	$discard=, $pop13
-	i32.const	$push12=, 1
-	i32.store	$0=, 0($3), $pop12
-	i32.add 	$push3=, $3, $4
-	i32.const	$push11=, 2
-	i32.store	$discard=, 0($pop3), $pop11
-	i32.const	$push10=, 0
-	i32.store	$discard=, p($pop10), $3
-	i32.add 	$2=, $2, $0
-	copy_local	$3=, $1
-	i32.const	$push9=, 1000000
-	i32.ne  	$push4=, $2, $pop9
-	br_if   	0, $pop4        # 0: up to label0
+	i32.const	$push21=, 1000
+	i32.rem_s	$push0=, $1, $pop21
+	i32.const	$push20=, 2
+	i32.shl 	$push19=, $pop0, $pop20
+	tee_local	$push18=, $4=, $pop19
+	i32.const	$push17=, 19
+	i32.add 	$push2=, $pop18, $pop17
+	i32.const	$push16=, -16
+	i32.and 	$push3=, $pop2, $pop16
+	i32.sub 	$push15=, $2, $pop3
+	tee_local	$push14=, $3=, $pop15
+	copy_local	$discard=, $pop14
+	i32.const	$push13=, 1
+	i32.store	$0=, 0($3), $pop13
+	i32.add 	$push4=, $3, $4
+	i32.const	$push12=, 2
+	i32.store	$discard=, 0($pop4), $pop12
+	i32.const	$push11=, 0
+	i32.store	$discard=, p($pop11), $3
+	i32.add 	$1=, $1, $0
+	copy_local	$push1=, $2
+	copy_local	$2=, $pop1
+	i32.const	$push10=, 1000000
+	i32.ne  	$push5=, $1, $pop10
+	br_if   	0, $pop5        # 0: up to label0
 # BB#2:                                 # %cleanup3
 	end_loop                        # label1:
-	i32.const	$push5=, 0
-	return  	$pop5
+	i32.const	$push6=, 0
+	return  	$pop6
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

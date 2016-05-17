@@ -72,9 +72,8 @@ main:                                   # @main
 	block
 	i32.load8_s	$push41=, 1($5)
 	tee_local	$push40=, $1=, $pop41
-	i32.const	$push68=, 0
-	i32.eq  	$push69=, $pop40, $pop68
-	br_if   	0, $pop69       # 0: down to label9
+	i32.eqz 	$push68=, $pop40
+	br_if   	0, $pop68       # 0: down to label9
 # BB#3:                                 # %land.lhs.true.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load8_u	$push4=, 2($5)
@@ -109,9 +108,8 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label11:
 	i32.load	$push15=, 4($2)
-	i32.const	$push70=, 0
-	i32.eq  	$push71=, $pop15, $pop70
-	br_if   	6, $pop71       # 6: down to label3
+	i32.eqz 	$push69=, $pop15
+	br_if   	6, $pop69       # 6: down to label3
 # BB#9:                                 # %if.end19.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.add 	$2=, $2, $0
@@ -176,9 +174,8 @@ main:                                   # @main
 	block
 	i32.const	$push19=, 512
 	i32.and 	$push20=, $3, $pop19
-	i32.const	$push72=, 0
-	i32.eq  	$push73=, $pop20, $pop72
-	br_if   	0, $pop73       # 0: down to label13
+	i32.eqz 	$push70=, $pop20
+	br_if   	0, $pop70       # 0: down to label13
 # BB#16:                                # %if.then6.i
 	i32.const	$push64=, 0
 	i32.const	$push21=, 1
@@ -206,9 +203,8 @@ main:                                   # @main
 	end_block                       # label13:
 	i32.const	$push28=, 1024
 	i32.and 	$push29=, $3, $pop28
-	i32.const	$push74=, 0
-	i32.eq  	$push75=, $pop29, $pop74
-	br_if   	1, $pop75       # 1: down to label2
+	i32.eqz 	$push71=, $pop29
+	br_if   	1, $pop71       # 1: down to label2
 # BB#19:                                # %setup1.exit
 	i32.const	$push67=, 0
 	i32.load	$push27=, a+16($pop67)

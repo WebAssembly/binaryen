@@ -19,9 +19,8 @@ t:                                      # @t
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	block
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $1, $pop8
-	br_if   	0, $pop9        # 0: down to label3
+	i32.eqz 	$push8=, $1
+	br_if   	0, $pop8        # 0: down to label3
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push4=, 0

@@ -11,9 +11,8 @@ ffs:                                    # @ffs
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	block
-	i32.const	$push5=, 0
-	i32.eq  	$push6=, $0, $pop5
-	br_if   	0, $pop6        # 0: down to label0
+	i32.eqz 	$push5=, $0
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$2=, 1
 	i32.const	$push2=, 1
@@ -30,9 +29,8 @@ ffs:                                    # @ffs
 	i32.const	$push3=, 1
 	i32.shl 	$1=, $1, $pop3
 	i32.and 	$push1=, $1, $0
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $pop1, $pop7
-	br_if   	0, $pop8        # 0: up to label1
+	i32.eqz 	$push6=, $pop1
+	br_if   	0, $pop6        # 0: up to label1
 .LBB0_4:                                # %cleanup
 	end_loop                        # label2:
 	end_block                       # label0:
@@ -50,9 +48,8 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push0=, 0
-	i32.eq  	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label3
+	i32.eqz 	$push0=, $0
+	br_if   	0, $pop0        # 0: down to label3
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then

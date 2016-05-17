@@ -9,9 +9,8 @@ test:                                   # @test
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push1=, 0
-	i32.eq  	$push2=, $0, $pop1
-	br_if   	0, $pop2        # 0: down to label0
+	i32.eqz 	$push1=, $0
+	br_if   	0, $pop1        # 0: down to label0
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -58,7 +57,7 @@ baz:                                    # @baz
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, __stack_pointer
 	i32.const	$push2=, __stack_pointer
@@ -66,15 +65,15 @@ main:                                   # @main
 	i32.const	$push4=, 16
 	i32.sub 	$push10=, $pop3, $pop4
 	i32.store	$push12=, 0($pop5), $pop10
-	tee_local	$push11=, $1=, $pop12
-	i32.const	$push6=, 12
-	i32.add 	$push7=, $pop11, $pop6
-	copy_local	$0=, $pop7
+	tee_local	$push11=, $0=, $pop12
 	i32.const	$push0=, 0
-	i32.store	$discard=, 8($1), $pop0
-	i32.const	$push8=, 8
-	i32.add 	$push9=, $1, $pop8
-	i32.store	$discard=, 12($1), $pop9
+	i32.store	$discard=, 8($pop11), $pop0
+	i32.const	$push6=, 8
+	i32.add 	$push7=, $0, $pop6
+	i32.store	$discard=, 12($0), $pop7
+	i32.const	$push8=, 12
+	i32.add 	$push9=, $0, $pop8
+	copy_local	$0=, $pop9
 .LBB3_1:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:

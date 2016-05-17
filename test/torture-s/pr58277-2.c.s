@@ -15,9 +15,8 @@ main:                                   # @main
 	i32.store8	$0=, n($pop8), $pop7
 	block
 	block
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $1, $pop12
-	br_if   	0, $pop13       # 0: down to label1
+	i32.eqz 	$push12=, $1
+	br_if   	0, $pop12       # 0: down to label1
 # BB#1:                                 # %fn2.exit.thread.i
 	i32.load	$discard=, d($0)
 	br      	1               # 1: down to label0

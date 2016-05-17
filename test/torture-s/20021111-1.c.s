@@ -10,9 +10,8 @@ aim_callhandler:                        # @aim_callhandler
 # BB#0:                                 # %entry
 	block
 	block
-	i32.const	$push11=, 0
-	i32.eq  	$push12=, $1, $pop11
-	br_if   	0, $pop12       # 0: down to label1
+	i32.eqz 	$push11=, $1
+	br_if   	0, $pop11       # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$push0=, 65535
 	i32.eq  	$push1=, $3, $pop0

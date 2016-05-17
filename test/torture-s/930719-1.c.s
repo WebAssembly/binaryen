@@ -17,9 +17,8 @@ f:                                      # @f
 	i32.ne  	$push1=, $1, $pop0
 	br_if   	1, $pop1        # 1: down to label1
 # BB#2:                                 # %sw.bb.split
-	i32.const	$push3=, 0
-	i32.eq  	$push4=, $2, $pop3
-	br_if   	2, $pop4        # 2: down to label0
+	i32.eqz 	$push3=, $2
+	br_if   	2, $pop3        # 2: down to label0
 .LBB0_3:                                # %cleanup
 	end_block                       # label2:
 	i32.const	$push2=, 0

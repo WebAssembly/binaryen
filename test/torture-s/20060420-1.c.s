@@ -26,9 +26,8 @@ foo:                                    # @foo
 	i32.add 	$push1=, $7, $0
 	i32.const	$push85=, 15
 	i32.and 	$push2=, $pop1, $pop85
-	i32.const	$push156=, 0
-	i32.eq  	$push157=, $pop2, $pop156
-	br_if   	1, $pop157      # 1: down to label2
+	i32.eqz 	$push156=, $pop2
+	br_if   	1, $pop156      # 1: down to label2
 # BB#3:                                 # %for.body
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$push3=, 0($1)

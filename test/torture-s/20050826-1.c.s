@@ -92,9 +92,8 @@ foo:                                    # @foo
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.load8_u	$1=, a($2)
 	i32.add 	$2=, $2, $0
-	i32.const	$push22=, 0
-	i32.eq  	$push23=, $1, $pop22
-	br_if   	0, $pop23       # 0: up to label6
+	i32.eqz 	$push22=, $1
+	br_if   	0, $pop22       # 0: up to label6
 # BB#4:                                 # %if.then2.i
 	end_loop                        # label7:
 	call    	abort@FUNCTION
@@ -157,9 +156,8 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_2 Depth=1
 	i32.load8_u	$1=, a($2)
 	i32.add 	$2=, $2, $0
-	i32.const	$push22=, 0
-	i32.eq  	$push23=, $1, $pop22
-	br_if   	0, $pop23       # 0: up to label10
+	i32.eqz 	$push22=, $1
+	br_if   	0, $pop22       # 0: up to label10
 # BB#4:                                 # %if.then2.i.i
 	end_loop                        # label11:
 	call    	abort@FUNCTION

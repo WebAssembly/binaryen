@@ -73,9 +73,8 @@ main:                                   # @main
 	i32.call	$discard=, foo@FUNCTION, $0
 	i32.const	$1=, 0
 	block
-	i32.const	$push17=, 0
-	i32.eq  	$push18=, $0, $pop17
-	br_if   	0, $pop18       # 0: down to label3
+	i32.eqz 	$push17=, $0
+	br_if   	0, $pop17       # 0: down to label3
 # BB#2:                                 # %while.body.preheader
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$1=, 0
@@ -95,9 +94,8 @@ main:                                   # @main
 	i32.const	$push10=, 12
 	i32.add 	$push11=, $2, $pop10
 	i32.call	$discard=, hash_find_entry@FUNCTION, $pop11
-	i32.const	$push19=, 0
-	i32.eq  	$push20=, $1, $pop19
-	br_if   	0, $pop20       # 0: up to label1
+	i32.eqz 	$push18=, $1
+	br_if   	0, $pop18       # 0: up to label1
 # BB#5:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push7=, __stack_pointer

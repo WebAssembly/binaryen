@@ -15,9 +15,8 @@ foo:                                    # @foo
 	f64.store	$discard=, 8($0), $7
 	block
 	block
-	i32.const	$push53=, 0
-	i32.eq  	$push54=, $2, $pop53
-	br_if   	0, $pop54       # 0: down to label1
+	i32.eqz 	$push53=, $2
+	br_if   	0, $pop53       # 0: down to label1
 # BB#1:                                 # %if.else
 	f64.sub 	$push4=, $7, $8
 	f64.const	$push5=, 0x1p-2
@@ -54,9 +53,8 @@ foo:                                    # @foo
 	i32.const	$push8=, -1
 	i32.add 	$push42=, $2, $pop8
 	tee_local	$push41=, $10=, $pop42
-	i32.const	$push55=, 0
-	i32.eq  	$push56=, $pop41, $pop55
-	br_if   	0, $pop56       # 0: down to label3
+	i32.eqz 	$push54=, $pop41
+	br_if   	0, $pop54       # 0: down to label3
 # BB#5:                                 # %for.body.preheader
 	i32.const	$push43=, 8
 	i32.add 	$0=, $5, $pop43

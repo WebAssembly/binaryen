@@ -45,9 +45,8 @@ first:                                  # @first
 .LBB0_3:                                # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
-	i32.const	$push26=, 0
-	i32.eq  	$push27=, $2, $pop26
-	br_if   	1, $pop27       # 1: down to label1
+	i32.eqz 	$push26=, $2
+	br_if   	1, $pop26       # 1: down to label1
 # BB#4:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.store8	$discard=, 0($0), $2
@@ -115,9 +114,8 @@ second:                                 # @second
 .LBB1_3:                                # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label5:
-	i32.const	$push26=, 0
-	i32.eq  	$push27=, $2, $pop26
-	br_if   	1, $pop27       # 1: down to label4
+	i32.eqz 	$push26=, $2
+	br_if   	1, $pop26       # 1: down to label4
 # BB#4:                                 # %if.else
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.store8	$discard=, 0($0), $2

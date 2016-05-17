@@ -7,26 +7,26 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.load	$push5=, 8($0)
-	tee_local	$push4=, $6=, $pop5
-	i32.load	$1=, 4($pop4)
-	i32.load	$2=, 8($6)
-	i32.const	$push1=, 16
-	i32.add 	$push3=, $0, $pop1
-	tee_local	$push2=, $5=, $pop3
-	i32.load	$4=, 0($pop2)
-	i32.load	$3=, 12($0)
+	i32.load	$push4=, 8($0)
+	tee_local	$push3=, $7=, $pop4
+	i32.load	$1=, 4($pop3)
+	i32.load	$2=, 8($7)
+	i32.load	$3=, 0($7)
+	i32.const	$push0=, 16
+	i32.add 	$push2=, $0, $pop0
+	tee_local	$push1=, $6=, $pop2
+	i32.load	$5=, 0($pop1)
+	i32.load	$4=, 12($0)
 	#APP
 	#NO_APP
-	i32.load	$push0=, 0($6)
-	i32.store	$discard=, 8($6), $pop0
+	i32.store	$discard=, 8($7), $3
+	i32.store	$discard=, 0($7), $5
 	i32.store	$discard=, 0($6), $4
-	i32.store	$discard=, 0($5), $3
 	i32.store	$discard=, 12($0), $2
 	i32.store	$discard=, 4($0), $1
-	i32.store	$discard=, 0($0), $6
+	i32.store	$discard=, 0($0), $7
 	return  	$0
 	.endfunc
 .Lfunc_end0:

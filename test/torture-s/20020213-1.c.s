@@ -19,9 +19,8 @@ foo:                                    # @foo
 	i32.select	$push4=, $pop3, $0, $pop5
 	i32.store	$discard=, a+4($pop8), $pop4
 	block
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $1, $pop9
-	br_if   	0, $pop10       # 0: down to label0
+	i32.eqz 	$push9=, $1
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

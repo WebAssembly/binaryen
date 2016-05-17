@@ -44,9 +44,8 @@ fn1:                                    # @fn1
 	block
 	i32.const	$push7=, 0
 	i32.load	$push3=, p($pop7)
-	i32.const	$push13=, 0
-	i32.eq  	$push14=, $pop3, $pop13
-	br_if   	0, $pop14       # 0: down to label0
+	i32.eqz 	$push13=, $pop3
+	br_if   	0, $pop13       # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 .LBB2_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1

@@ -47,9 +47,8 @@ CalcPing:                               # @CalcPing
 	end_loop                        # label2:
 	i32.const	$1=, 9999
 	block
-	i32.const	$push22=, 0
-	i32.eq  	$push23=, $2, $pop22
-	br_if   	0, $pop23       # 0: down to label3
+	i32.eqz 	$push22=, $2
+	br_if   	0, $pop22       # 0: down to label3
 # BB#5:                                 # %if.end9
 	f32.convert_s/i32	$push6=, $2
 	f32.div 	$push7=, $3, $pop6
@@ -114,9 +113,8 @@ main:                                   # @main
 # BB#2:                                 # %for.end.i
 	end_loop                        # label5:
 	block
-	i32.const	$push39=, 0
-	i32.eq  	$push40=, $1, $pop39
-	br_if   	0, $pop40       # 0: down to label6
+	i32.eqz 	$push39=, $1
+	br_if   	0, $pop39       # 0: down to label6
 # BB#3:                                 # %CalcPing.exit
 	f32.convert_s/i32	$push6=, $1
 	f32.div 	$push7=, $2, $pop6

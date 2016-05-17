@@ -31,9 +31,8 @@ mymemcmp:                               # @mymemcmp
 	block
 	i32.const	$push120=, 3
 	i32.and 	$push0=, $0, $pop120
-	i32.const	$push192=, 0
-	i32.eq  	$push193=, $pop0, $pop192
-	br_if   	0, $pop193      # 0: down to label13
+	i32.eqz 	$push192=, $pop0
+	br_if   	0, $pop192      # 0: down to label13
 # BB#1:                                 # %if.else
 	i32.const	$push5=, -4
 	i32.and 	$4=, $0, $pop5
@@ -47,9 +46,8 @@ mymemcmp:                               # @mymemcmp
 	i32.const	$push123=, 3
 	i32.and 	$push122=, $2, $pop123
 	tee_local	$push121=, $7=, $pop122
-	i32.const	$push194=, 0
-	i32.eq  	$push195=, $pop121, $pop194
-	br_if   	1, $pop195      # 1: down to label12
+	i32.eqz 	$push193=, $pop121
+	br_if   	1, $pop193      # 1: down to label12
 # BB#2:                                 # %if.else
 	i32.const	$push6=, 1
 	i32.eq  	$push7=, $7, $pop6
@@ -70,9 +68,8 @@ mymemcmp:                               # @mymemcmp
 	i32.const	$push129=, 3
 	i32.and 	$push128=, $2, $pop129
 	tee_local	$push127=, $4=, $pop128
-	i32.const	$push196=, 0
-	i32.eq  	$push197=, $pop127, $pop196
-	br_if   	10, $pop197     # 10: down to label2
+	i32.eqz 	$push194=, $pop127
+	br_if   	10, $pop194     # 10: down to label2
 # BB#6:                                 # %if.then
 	i32.const	$push44=, 1
 	i32.eq  	$push45=, $4, $pop44
@@ -317,9 +314,8 @@ mymemcmp:                               # @mymemcmp
 	i32.load	$3=, 12($1)
 	i32.const	$push57=, -4
 	i32.add 	$2=, $2, $pop57
-	i32.const	$push198=, 0
-	i32.eq  	$push199=, $2, $pop198
-	br_if   	69, $pop199     # 69: down to label17
+	i32.eqz 	$push195=, $2
+	br_if   	69, $pop195     # 69: down to label17
 # BB#26:                                #   in Loop: Header=BB0_22 Depth=1
 	i32.const	$10=, 44
 	br      	71              # 71: up to label14
@@ -572,9 +568,8 @@ mymemcmp:                               # @mymemcmp
 	i32.load	$5=, 12($7)
 	i32.const	$push25=, -4
 	i32.add 	$2=, $2, $pop25
-	i32.const	$push200=, 0
-	i32.eq  	$push201=, $2, $pop200
-	br_if   	33, $pop201     # 33: down to label29
+	i32.eqz 	$push196=, $2
+	br_if   	33, $pop196     # 33: down to label29
 # BB#68:                                #   in Loop: Header=BB0_22 Depth=1
 	i32.const	$10=, 19
 	br      	47              # 47: up to label14

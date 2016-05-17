@@ -9,12 +9,8 @@ pr54937.c.s # $exit
 fprintf-1.c.s
 gofast.c.s
 fprintf-chk-1.c.s
-printf-chk-1.c.s
-va-arg-21.c.s
 vfprintf-1.c.s
 vfprintf-chk-1.c.s
-vprintf-1.c.s
-vprintf-chk-1.c.s
 
 # Block address taken.
 20071220-1.c.s

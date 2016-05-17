@@ -13,9 +13,8 @@ foo:                                    # @foo
 	block
 	block
 	i32.load8_u	$push0=, 0($0)
-	i32.const	$push7=, 0
-	i32.eq  	$push8=, $pop0, $pop7
-	br_if   	0, $pop8        # 0: down to label1
+	i32.eqz 	$push7=, $pop0
+	br_if   	0, $pop7        # 0: down to label1
 # BB#1:                                 # %if.end.preheader
 	i32.const	$1=, 0
 .LBB0_2:                                # %if.end
@@ -23,9 +22,8 @@ foo:                                    # @foo
 	loop                            # label2:
 	i32.add 	$push4=, $0, $1
 	tee_local	$push3=, $2=, $pop4
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $pop3, $pop9
-	br_if   	3, $pop10       # 3: down to label0
+	i32.eqz 	$push8=, $pop3
+	br_if   	3, $pop8        # 3: down to label0
 # BB#3:                                 # %if.end5
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push6=, 1

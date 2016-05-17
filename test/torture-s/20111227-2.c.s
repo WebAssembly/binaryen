@@ -66,9 +66,8 @@ foo:                                    # @foo
 	block
 	block
 	block
-	i32.const	$push8=, 0
-	i32.eq  	$push9=, $1, $pop8
-	br_if   	0, $pop9        # 0: down to label6
+	i32.eqz 	$push8=, $1
+	br_if   	0, $pop8        # 0: down to label6
 # BB#1:                                 # %entry
 	i32.const	$push0=, 1
 	i32.eq  	$push1=, $1, $pop0

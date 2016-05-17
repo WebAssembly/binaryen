@@ -9,9 +9,8 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	block
 	i64.eqz 	$push0=, $0
-	i32.const	$push1=, 0
-	i32.eq  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label0
+	i32.eqz 	$push1=, $pop0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then

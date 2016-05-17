@@ -28,9 +28,8 @@ pure_alloc:                             # @pure_alloc
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push16=, 0
-	i32.eq  	$push17=, $1, $pop16
-	br_if   	0, $pop17       # 0: up to label1
+	i32.eqz 	$push16=, $1
+	br_if   	0, $pop16       # 0: up to label1
 # BB#3:                                 # %while.cond.if.then_crit_edge
 	end_loop                        # label2:
 	i32.const	$2=, 0

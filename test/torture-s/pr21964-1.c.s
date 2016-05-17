@@ -8,13 +8,11 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push1=, 0
-	i32.eq  	$push2=, $1, $pop1
-	br_if   	0, $pop2        # 0: down to label0
+	i32.eqz 	$push1=, $1
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$push3=, 0
-	i32.eq  	$push4=, $0, $pop3
-	br_if   	0, $pop4        # 0: down to label0
+	i32.eqz 	$push2=, $0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#2:                                 # %if.then2.split
 	call    	abort@FUNCTION
 	unreachable

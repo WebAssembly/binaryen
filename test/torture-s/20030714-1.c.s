@@ -21,9 +21,8 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	block
 	i32.const	$push33=, 16
 	i32.and 	$push9=, $2, $pop33
-	i32.const	$push35=, 0
-	i32.eq  	$push36=, $pop9, $pop35
-	br_if   	0, $pop36       # 0: down to label2
+	i32.eqz 	$push35=, $pop9
+	br_if   	0, $pop35       # 0: down to label2
 # BB#2:                                 # %if.then
 	i32.const	$push34=, 16
 	i32.or  	$2=, $2, $pop34
@@ -44,9 +43,8 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 # BB#4:                                 # %if.end
 	i32.const	$push17=, 1572864
 	i32.and 	$push12=, $2, $pop17
-	i32.const	$push37=, 0
-	i32.eq  	$push38=, $pop12, $pop37
-	br_if   	1, $pop38       # 1: down to label0
+	i32.eqz 	$push36=, $pop12
+	br_if   	1, $pop36       # 1: down to label0
 # BB#5:                                 # %if.then39
 	i32.const	$push20=, 26
 	i32.add 	$0=, $0, $pop20

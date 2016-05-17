@@ -40,18 +40,16 @@ mark_cell:                              # @mark_cell
 # BB#1:                                 # %land.lhs.true
 	i32.load	$push9=, 0($1)
 	tee_local	$push8=, $1=, $pop9
-	i32.const	$push10=, 0
-	i32.eq  	$push11=, $pop8, $pop10
-	br_if   	0, $pop11       # 0: down to label1
+	i32.eqz 	$push10=, $pop8
+	br_if   	0, $pop10       # 0: down to label1
 # BB#2:                                 # %land.lhs.true1
 	i32.const	$push3=, 2
 	i32.add 	$push4=, $1, $pop3
 	i32.load8_u	$push5=, 0($pop4)
 	i32.const	$push6=, 4
 	i32.and 	$push7=, $pop5, $pop6
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $pop7, $pop12
-	br_if   	1, $pop13       # 1: down to label0
+	i32.eqz 	$push11=, $pop7
+	br_if   	1, $pop11       # 1: down to label0
 .LBB2_3:                                # %if.end
 	end_block                       # label1:
 	return

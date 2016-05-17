@@ -36,7 +36,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i64.const	$push0=, 0
-	i64.store	$discard=, s($pop1):p2align=2, $pop0
+	i64.store	$discard=, s($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -48,7 +48,7 @@ main:                                   # @main
 	.type	s,@object
 	.section	.bss.s,"aw",@nobits
 	.globl	s
-	.p2align	2
+	.p2align	3
 s:
 	.skip	8
 	.size	s, 8

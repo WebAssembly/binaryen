@@ -21,9 +21,8 @@ main:                                   # @main
 	i32.select	$push6=, $pop5, $pop4, $pop7
 	i32.store	$discard=, x($pop10), $pop6
 	block
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $0, $pop12
-	br_if   	0, $pop13       # 0: down to label0
+	i32.eqz 	$push12=, $0
+	br_if   	0, $pop12       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push11=, 0
 	call    	exit@FUNCTION, $pop11

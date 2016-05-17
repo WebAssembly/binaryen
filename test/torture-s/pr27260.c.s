@@ -87,9 +87,8 @@ main:                                   # @main
 	i32.load8_u	$0=, buf($1)
 	i32.const	$push20=, 1
 	i32.add 	$1=, $1, $pop20
-	i32.const	$push21=, 0
-	i32.eq  	$push22=, $0, $pop21
-	br_if   	0, $pop22       # 0: up to label7
+	i32.eqz 	$push21=, $0
+	br_if   	0, $pop21       # 0: up to label7
 # BB#10:                                # %if.then24
 	end_loop                        # label8:
 	call    	abort@FUNCTION

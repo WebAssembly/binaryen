@@ -19,9 +19,8 @@ foo:                                    # @foo
 	i32.const	$push2=, 1
 	i32.and 	$push3=, $pop5, $pop2
 	i32.or  	$push4=, $pop1, $pop3
-	i32.const	$push12=, 0
-	i32.eq  	$push13=, $pop4, $pop12
-	br_if   	0, $pop13       # 0: down to label0
+	i32.eqz 	$push12=, $pop4
+	br_if   	0, $pop12       # 0: down to label0
 .LBB0_1:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -56,9 +55,8 @@ main:                                   # @main
 	i32.const	$push3=, 1
 	i32.and 	$push4=, $pop9, $pop3
 	i32.or  	$push5=, $pop2, $pop4
-	i32.const	$push15=, 0
-	i32.eq  	$push16=, $pop5, $pop15
-	br_if   	0, $pop16       # 0: down to label3
+	i32.eqz 	$push15=, $pop5
+	br_if   	0, $pop15       # 0: down to label3
 .LBB1_1:                                # %for.inc.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:

@@ -139,14 +139,14 @@ main:                                   # @main
 	i32.const	$push15=, 112
 	i32.sub 	$push19=, $pop14, $pop15
 	tee_local	$push18=, $4=, $pop19
-	copy_local	$2=, $pop18
+	i32.const	$push1=, 0
+	i32.store	$discard=, 80($pop18), $pop1
+	i32.const	$push2=, 3
+	i32.store	$discard=, 48($4), $pop2
+	copy_local	$2=, $4
 	i32.const	$push16=, 36
 	i32.add 	$push17=, $4, $pop16
 	copy_local	$3=, $pop17
-	i32.const	$push1=, 0
-	i32.store	$discard=, 80($4), $pop1
-	i32.const	$push2=, 3
-	i32.store	$discard=, 48($4), $pop2
 .LBB1_1:                                # %for.body18.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label8:

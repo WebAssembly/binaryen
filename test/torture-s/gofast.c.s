@@ -427,29 +427,29 @@ fixunsdfsi:                             # @fixunsdfsi
 fail:                                   # @fail
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push8=, __stack_pointer
-	i32.const	$push5=, __stack_pointer
-	i32.load	$push6=, 0($pop5)
-	i32.const	$push7=, 16
-	i32.sub 	$push12=, $pop6, $pop7
-	i32.store	$1=, 0($pop8), $pop12
+	i32.const	$push9=, __stack_pointer
+	i32.const	$push6=, __stack_pointer
+	i32.load	$push7=, 0($pop6)
+	i32.const	$push8=, 16
+	i32.sub 	$push13=, $pop7, $pop8
+	i32.store	$1=, 0($pop9), $pop13
 	i32.const	$push0=, 0
-	i32.load	$2=, stderr($pop0)
-	i32.const	$push14=, 0
-	i32.const	$push13=, 0
-	i32.load	$push1=, fail_count($pop13)
+	i32.const	$push15=, 0
+	i32.load	$push1=, fail_count($pop15)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, fail_count($pop14), $pop3
+	i32.store	$discard=, fail_count($pop0), $pop3
 	i32.store	$discard=, 0($1), $0
-	i32.const	$push4=, .L.str
-	i32.call	$discard=, fprintf@FUNCTION, $2, $pop4, $1
-	i32.const	$push11=, __stack_pointer
-	i32.const	$push9=, 16
-	i32.add 	$push10=, $1, $pop9
-	i32.store	$discard=, 0($pop11), $pop10
+	i32.const	$push14=, 0
+	i32.load	$push4=, stderr($pop14)
+	i32.const	$push5=, .L.str
+	i32.call	$discard=, fprintf@FUNCTION, $pop4, $pop5, $1
+	i32.const	$push12=, __stack_pointer
+	i32.const	$push10=, 16
+	i32.add 	$push11=, $1, $pop10
+	i32.store	$discard=, 0($pop12), $pop11
 	return  	$1
 	.endfunc
 .Lfunc_end30:

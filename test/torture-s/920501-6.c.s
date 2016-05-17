@@ -15,9 +15,8 @@ str2llu:                                # @str2llu
 	block
 	i32.load8_u	$push7=, 1($0)
 	tee_local	$push6=, $3=, $pop7
-	i32.const	$push14=, 0
-	i32.eq  	$push15=, $pop6, $pop14
-	br_if   	0, $pop15       # 0: down to label0
+	i32.eqz 	$push14=, $pop6
+	br_if   	0, $pop14       # 0: down to label0
 # BB#1:                                 # %if.end.preheader
 	i32.const	$push1=, 2
 	i32.add 	$0=, $0, $pop1
@@ -344,9 +343,8 @@ main:                                   # @main
 # BB#14:                                # %lor.lhs.false8
 	i64.load	$push25=, 24($6)
 	i64.eqz 	$push26=, $pop25
-	i32.const	$push55=, 0
-	i32.eq  	$push56=, $pop26, $pop55
-	br_if   	0, $pop56       # 0: down to label28
+	i32.eqz 	$push55=, $pop26
+	br_if   	0, $pop55       # 0: down to label28
 # BB#15:                                # %if.end
 	i32.const	$push27=, 0
 	call    	exit@FUNCTION, $pop27

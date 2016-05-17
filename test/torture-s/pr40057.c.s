@@ -46,9 +46,8 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i64.const	$push2=, 6579460778
 	i32.call	$push3=, foo@FUNCTION, $pop2
-	i32.const	$push9=, 0
-	i32.eq  	$push10=, $pop3, $pop9
-	br_if   	0, $pop10       # 0: down to label0
+	i32.eqz 	$push9=, $pop3
+	br_if   	0, $pop9        # 0: down to label0
 # BB#2:                                 # %if.end4
 	i64.const	$push4=, 6042589866
 	i32.call	$push5=, bar@FUNCTION, $pop4
@@ -56,9 +55,8 @@ main:                                   # @main
 # BB#3:                                 # %if.end8
 	i64.const	$push6=, 6579460778
 	i32.call	$push7=, bar@FUNCTION, $pop6
-	i32.const	$push11=, 0
-	i32.eq  	$push12=, $pop7, $pop11
-	br_if   	0, $pop12       # 0: down to label0
+	i32.eqz 	$push10=, $pop7
+	br_if   	0, $pop10       # 0: down to label0
 # BB#4:                                 # %if.end12
 	i32.const	$push8=, 0
 	return  	$pop8

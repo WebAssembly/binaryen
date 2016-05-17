@@ -9,9 +9,8 @@ maybe_next:                             # @maybe_next
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push0=, 0
-	i32.eq  	$push1=, $1, $pop0
-	br_if   	0, $pop1        # 0: down to label0
+	i32.eqz 	$push0=, $1
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.load	$0=, 0($0):p2align=0
 .LBB0_2:                                # %if.end

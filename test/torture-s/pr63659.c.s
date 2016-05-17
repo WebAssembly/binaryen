@@ -11,9 +11,8 @@ main:                                   # @main
 	block
 	i32.const	$push9=, 0
 	i32.load	$push2=, a($pop9)
-	i32.const	$push24=, 0
-	i32.eq  	$push25=, $pop2, $pop24
-	br_if   	0, $pop25       # 0: down to label0
+	i32.eqz 	$push24=, $pop2
+	br_if   	0, $pop24       # 0: down to label0
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$push11=, 0
 	i32.const	$push10=, 0
@@ -30,9 +29,8 @@ main:                                   # @main
 	i32.shr_s	$push1=, $pop3, $pop4
 	i32.store	$push13=, g($pop16), $pop1
 	tee_local	$push12=, $0=, $pop13
-	i32.const	$push26=, 0
-	i32.eq  	$push27=, $pop12, $pop26
-	br_if   	0, $pop27       # 0: down to label1
+	i32.eqz 	$push25=, $pop12
+	br_if   	0, $pop25       # 0: down to label1
 # BB#3:                                 # %cond.false
 	i32.const	$push5=, -1
 	i32.rem_s	$1=, $pop5, $0

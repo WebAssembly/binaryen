@@ -80,9 +80,8 @@ foobar:                                 # @foobar
 	loop                            # label0:
 	block
 	block
-	i32.const	$push59=, 0
-	i32.eq  	$push60=, $0, $pop59
-	br_if   	0, $pop60       # 0: down to label3
+	i32.eqz 	$push59=, $0
+	br_if   	0, $pop59       # 0: down to label3
 # BB#2:                                 # %while.cond.preheader.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push38=, 1
@@ -96,9 +95,8 @@ foobar:                                 # @foobar
 	i32.shr_u	$0=, $0, $pop40
 	i32.const	$push39=, 1
 	i32.and 	$push2=, $0, $pop39
-	i32.const	$push61=, 0
-	i32.eq  	$push62=, $pop2, $pop61
-	br_if   	0, $pop62       # 0: up to label4
+	i32.eqz 	$push60=, $pop2
+	br_if   	0, $pop60       # 0: up to label4
 # BB#4:                                 # %while.cond.return.loopexit62_crit_edge.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop                        # label5:
@@ -184,9 +182,8 @@ foobar:                                 # @foobar
 	i32.shr_u	$0=, $0, $pop58
 	i32.const	$push57=, 1
 	i32.and 	$push10=, $0, $pop57
-	i32.const	$push63=, 0
-	i32.eq  	$push64=, $pop10, $pop63
-	br_if   	0, $pop64       # 0: up to label11
+	i32.eqz 	$push61=, $pop10
+	br_if   	0, $pop61       # 0: up to label11
 # BB#14:                                # %while.cond16.return.loopexit_crit_edge.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop                        # label12:
