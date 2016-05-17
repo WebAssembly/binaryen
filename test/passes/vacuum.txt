@@ -28,4 +28,25 @@
     )
     (i32.const 104)
   )
+  (func $l
+    (local $x i32)
+    (local $y i32)
+    (set_local $x
+      (get_local $x)
+    )
+    (block $in-a-block
+    )
+    (block $two-in-a-block
+    )
+    (set_local $x
+      (block $result-used
+        (get_local $x)
+      )
+    )
+    (set_local $x
+      (block $two-and-result-used
+        (get_local $y)
+      )
+    )
+  )
 )

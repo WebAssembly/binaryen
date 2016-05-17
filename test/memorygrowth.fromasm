@@ -907,19 +907,17 @@
                             )
                           )
                           (if
-                            (set_local $14
-                              (i32.load
-                                (set_local $2
-                                  (i32.add
-                                    (get_local $1)
-                                    (i32.const 16)
+                            (i32.eqz
+                              (set_local $14
+                                (i32.load
+                                  (set_local $2
+                                    (i32.add
+                                      (get_local $1)
+                                      (i32.const 16)
+                                    )
                                   )
                                 )
                               )
-                            )
-                            (block
-                              (get_local $14)
-                              (get_local $2)
                             )
                             (block
                               (set_local $23
@@ -970,11 +968,7 @@
                                 (get_local $9)
                               )
                             )
-                            (block
-                              (get_local $14)
-                              (get_local $2)
-                              (br $while-out$10)
-                            )
+                            (br $while-out$10)
                           )
                           (br $while-in$11)
                         )
@@ -1621,11 +1615,8 @@
                               )
                             )
                           )
-                          (block
-                            (set_local $2
-                              (get_local $20)
-                            )
-                            (get_local $1)
+                          (set_local $2
+                            (get_local $20)
                           )
                         )
                         (set_local $13
@@ -1705,7 +1696,6 @@
                                 )
                               )
                             )
-                            (get_local $1)
                           )
                         )
                         (br $while-in$18)
@@ -4358,11 +4348,7 @@
                                                         (get_local $12)
                                                       )
                                                     )
-                                                    (block
-                                                      (get_local $0)
-                                                      (get_local $4)
-                                                      (br $while-out$59)
-                                                    )
+                                                    (br $while-out$59)
                                                   )
                                                   (br $while-in$60)
                                                 )
@@ -6398,14 +6384,12 @@
                     )
                   )
                   (if
-                    (set_local $1
-                      (i32.load
-                        (get_local $6)
+                    (i32.eqz
+                      (set_local $1
+                        (i32.load
+                          (get_local $6)
+                        )
                       )
-                    )
-                    (block
-                      (get_local $1)
-                      (get_local $6)
                     )
                     (block
                       (set_local $3
@@ -7077,11 +7061,8 @@
                             (get_local $6)
                           )
                         )
-                        (block
-                          (get_local $0)
-                          (set_local $13
-                            (get_local $6)
-                          )
+                        (set_local $13
+                          (get_local $6)
                         )
                         (block
                           (set_local $12
@@ -7133,7 +7114,6 @@
                           )
                         )
                         (block
-                          (get_local $0)
                           (set_local $1
                             (get_local $13)
                           )
@@ -8160,7 +8140,6 @@
                   (get_local $4)
                 )
               )
-              (get_local $4)
               (set_local $7
                 (get_local $5)
               )
@@ -8170,7 +8149,6 @@
               (get_local $6)
             )
             (block
-              (get_local $4)
               (set_local $7
                 (get_local $5)
               )
@@ -8543,7 +8521,6 @@
           (i32.const 3)
         )
         (block
-          (get_local $0)
           (set_local $4
             (get_local $3)
           )
