@@ -1,9 +1,9 @@
 Counts
+ [total]        : 18      
  binary         : 1       
  block          : 1       
  const          : 12      
  if             : 4       
-Total           : 18      
 (module
   (memory 256 256)
   (func $ifs
